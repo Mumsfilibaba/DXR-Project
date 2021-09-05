@@ -45,6 +45,11 @@
 #define VECTORCALL __vectorcall
 #endif
 
+/* Restric */
+#ifndef RESTRICT
+#define RESTRICT __restrict
+#endif
+
 /* Function signature as a const char* string */
 #ifndef FUNCTION_SIGNATURE
 #define FUNCTION_SIGNATURE __PRETTY_FUNCTION__

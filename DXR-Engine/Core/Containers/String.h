@@ -670,7 +670,7 @@ public:
         }
     }
 
-        /* Returns the position of the last occurance of one of the characters in the searchstring */
+    /* Returns the position of the last occurance of one of the characters in the searchstring */
     FORCEINLINE SizeType ReverseFindOneOf( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
         return ReverseFindOneOf( InString, StringTraits::Length( InString ), Position );
@@ -700,6 +700,9 @@ public:
             ThisLength = NMath::Min( Position, ThisLength );
         }
 
+        // Store the length of the substring outside the loop
+        SizeType SubstringLength = StringTraits::Length( InString );
+
         const CharType* Start = CStr();
         const CharType* End = Start + ThisLength;
         while ( End != Start )
@@ -708,7 +711,7 @@ public:
 
             // Loop each character in substring
             const CharType* SubstringStart = InString;
-            const CharType* SubstringEnd   = SubstringStart + StringTraits::Length( InString );
+            const CharType* SubstringEnd = SubstringStart + SubstringLength;
             while ( SubstringStart != SubstringEnd )
             {
                 // If character is found then return the position
@@ -788,6 +791,9 @@ public:
             ThisLength = NMath::Min( Position, ThisLength );
         }
 
+        // Store the length of the substring outside the loop
+        SizeType SubstringLength = StringTraits::Length( InString );
+
         const CharType* Start = CStr();
         const CharType* End = Start + ThisLength;
         while ( End != Start )
@@ -796,7 +802,7 @@ public:
 
             // Loop each character in substring
             const CharType* SubstringStart = InString;
-            const CharType* SubstringEnd   = SubstringStart + StringTraits::Length( InString );
+            const CharType* SubstringEnd = SubstringStart + SubstringLength;
             while ( SubstringStart != SubstringEnd )
             {
                 // If character is found then return the position

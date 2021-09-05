@@ -281,7 +281,7 @@ public:
     inline ElementType& Emplace( ArgTypes&&... Args ) noexcept
     {
         GrowIfNeeded();
-		
+
         new(Data() + (ArraySize++)) ElementType( Forward<ArgTypes>( Args )... );
         return LastElement();
     }
@@ -923,7 +923,7 @@ private:
     /* Calculate how much the array should grow, will always be at least one */
     static FORCEINLINE SizeType GetGrowCapacity( SizeType NewSize, SizeType CurrentCapacity ) noexcept
     {
-        SizeType NewCapacity = NewSize + SizeType( float(CurrentCapacity) * 0.5f );
+        SizeType NewCapacity = NewSize + SizeType( float( CurrentCapacity ) * 0.5f );
         return (NewCapacity >= 0) ? NewCapacity : 1;
     }
 

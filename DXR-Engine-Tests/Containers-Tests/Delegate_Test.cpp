@@ -102,10 +102,10 @@ CSomeEvent GSomeEvent;
 class CEventDispacher
 {
 public:
-	void Func()
-	{
-		GSomeEvent.Broadcast( 42 );
-	}
+    void Func()
+    {
+        GSomeEvent.Broadcast( 42 );
+    }
 };
 
 /* Test */
@@ -252,8 +252,8 @@ void Delegate_Test()
 
         TDelegate<int32()> Member31 = TDelegate<int32()>::CreateRaw( Base, &CDerived::ConstFunc, 200 );
         Member31.Execute();
-		
-		delete Base;
+
+        delete Base;
     }
 #endif
 
@@ -311,7 +311,7 @@ void Delegate_Test()
 
         GSomeEvent.AddStatic( StaticFunc2 );
 
-		CEventDispacher EventDispacher;
+        CEventDispacher EventDispacher;
         EventDispacher.Func();
     }
 }

@@ -197,7 +197,7 @@ void TArray_Benchmark()
     // Insert
 #if 1
     {
-	#if defined(DEBUG_BUILD) && defined(PLATFORM_WINDOWS)
+    #if defined(DEBUG_BUILD) && defined(PLATFORM_WINDOWS)
         const uint32 Iterations = 1000;
     #else
         const uint32 Iterations = 10000;
@@ -216,9 +216,9 @@ void TArray_Benchmark()
                 }
             }
 
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
-			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
@@ -234,9 +234,9 @@ void TArray_Benchmark()
                 }
             }
 
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-            std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
-			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -244,7 +244,7 @@ void TArray_Benchmark()
 #if 1
     // EmplaceAt
     {
-	#if defined(DEBUG_BUILD) && defined(PLATFORM_WINDOWS)
+    #if defined(DEBUG_BUILD) && defined(PLATFORM_WINDOWS)
         const uint32 Iterations = 1000;
     #else
         const uint32 Iterations = 10000;
@@ -263,9 +263,9 @@ void TArray_Benchmark()
                 }
             }
 
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
-			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
@@ -280,10 +280,10 @@ void TArray_Benchmark()
                     Strings1.EmplaceAt( 0, "My name is jeff" );
                 }
             }
-			
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
-			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -306,16 +306,16 @@ void TArray_Benchmark()
                 }
             }
 
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
-			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
             SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
-				TArray<std::string, TArrayAllocator<std::string>> Strings1;
+                TArray<std::string, TArrayAllocator<std::string>> Strings1;
 
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
@@ -323,10 +323,10 @@ void TArray_Benchmark()
                     Strings1.Push( "My name is jeff" );
                 }
             }
-			
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
-			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -349,16 +349,16 @@ void TArray_Benchmark()
                 }
             }
 
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
-			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
             SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
-				TArray<std::string, TArrayAllocator<std::string>> Strings1;
+                TArray<std::string, TArrayAllocator<std::string>> Strings1;
 
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
@@ -366,10 +366,10 @@ void TArray_Benchmark()
                     Strings1.Emplace( "My name is jeff" );
                 }
             }
-			
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
-			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -394,16 +394,16 @@ void TArray_Benchmark()
                 }
             }
 
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
-			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
             SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
-				TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
+                TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
 
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
@@ -411,10 +411,10 @@ void TArray_Benchmark()
                     Vectors1.Insert( 0, Vec3( 3.0, 5.0, -6.0 ) );
                 }
             }
-			
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
-			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -437,16 +437,16 @@ void TArray_Benchmark()
                 }
             }
 
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
-			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
             SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
-				TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
+                TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
 
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
@@ -454,10 +454,10 @@ void TArray_Benchmark()
                     Vectors1.EmplaceAt( 0, double( j + 1 ), 5.0, -6.0 );
                 }
             }
-			
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
-			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -480,16 +480,16 @@ void TArray_Benchmark()
                 }
             }
 
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
-			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
             SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
-				TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
+                TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
 
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
@@ -497,10 +497,10 @@ void TArray_Benchmark()
                     Vectors1.Push( Vec3( 3.0, 5.0, -6.0 ) );
                 }
             }
-			
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
-			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
@@ -523,16 +523,16 @@ void TArray_Benchmark()
                 }
             }
 
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "std::vector                :" << Duration              << "ns" << std::endl;
-			std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "std::vector                :" << Duration << "ns" << std::endl;
+            std::cout << "std::vector (Per insertion):" << Duration / Iterations << "ns" << std::endl;
         }
 
         {
             SClock Clock;
             for ( uint32 i = 0; i < TestCount; i++ )
             {
-				TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
+                TArray<Vec3, TArrayAllocator<Vec3>> Vectors1;
 
                 SScopedClock SScopedClock( Clock );
                 for ( uint32 j = 0; j < Iterations; j++ )
@@ -541,68 +541,68 @@ void TArray_Benchmark()
                 }
             }
 
-			auto Duration = Clock.GetTotalDuration() / TestCount;
-			std::cout << "TArray                     :" << Duration              << "ns" << std::endl;
-			std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
+            auto Duration = Clock.GetTotalDuration() / TestCount;
+            std::cout << "TArray                     :" << Duration << "ns" << std::endl;
+            std::cout << "TArray (Per insertion)     :" << Duration / Iterations << "ns" << std::endl;
         }
     }
 #endif
 
 #if 1
     {
-#if defined(DEBUG_BUILD)
-		const uint32 SortTestCount = 10;
-#else
-		const uint32 SortTestCount = 100;
-#endif
-		
+    #if defined(DEBUG_BUILD)
+        const uint32 SortTestCount = 10;
+    #else
+        const uint32 SortTestCount = 100;
+    #endif
+
         const uint32 NumNumbers = 1000000;
         std::cout << std::endl << "HeapSort/heap_sort (NumNumbers=" << NumNumbers << ", SortTestCount=" << SortTestCount << ")" << std::endl;
 
         srand( (unsigned int)time( 0 ) );
 
-		{
-			SClock Clock;
-			for ( uint32 i = 0; i < SortTestCount; i++ )
-			{
-				TArray<int32, TArrayAllocator<int32>> Heap;
-				for ( uint32 n = 0; n < NumNumbers; n++ )
-				{
-					Heap.Emplace( rand() );
-				}
+        {
+            SClock Clock;
+            for ( uint32 i = 0; i < SortTestCount; i++ )
+            {
+                TArray<int32, TArrayAllocator<int32>> Heap;
+                for ( uint32 n = 0; n < NumNumbers; n++ )
+                {
+                    Heap.Emplace( rand() );
+                }
 
-				{
-					SScopedClock SScopedClock( Clock );
-					Heap.HeapSort();
-				}
-			}
+                {
+                    SScopedClock SScopedClock( Clock );
+                    Heap.HeapSort();
+                }
+            }
 
-			auto Duration = Clock.GetTotalDuration() / SortTestCount;
-			std::cout << "TArray      Sorting time: " << Duration                 << "ns" << std::endl;
-			std::cout << "TArray      Sorting time: " << Duration / (1000 * 1000) << "ms" << std::endl;
-		}
-		
-		{
-			SClock Clock;
-			for ( uint32 i = 0; i < SortTestCount; i++ )
-			{
-				std::vector<int32> Heap;
-				for ( uint32 n = 0; n < NumNumbers; n++ )
-				{
-					Heap.emplace_back( rand() );
-				}
+            auto Duration = Clock.GetTotalDuration() / SortTestCount;
+            std::cout << "TArray      Sorting time: " << Duration << "ns" << std::endl;
+            std::cout << "TArray      Sorting time: " << Duration / (1000 * 1000) << "ms" << std::endl;
+        }
 
-				{
-					SScopedClock SScopedClock( Clock );
-					std::make_heap(Heap.begin(), Heap.end());
-					std::sort_heap(Heap.begin(), Heap.end());
-				}
-			}
+        {
+            SClock Clock;
+            for ( uint32 i = 0; i < SortTestCount; i++ )
+            {
+                std::vector<int32> Heap;
+                for ( uint32 n = 0; n < NumNumbers; n++ )
+                {
+                    Heap.emplace_back( rand() );
+                }
 
-			auto Duration = Clock.GetTotalDuration() / SortTestCount;
-			std::cout << "std::vector Sorting time: " << Duration                 << "ns" << std::endl;
-			std::cout << "std::vector Sorting time: " << Duration / (1000 * 1000) << "ms" << std::endl;
-		}
+                {
+                    SScopedClock SScopedClock( Clock );
+                    std::make_heap( Heap.begin(), Heap.end() );
+                    std::sort_heap( Heap.begin(), Heap.end() );
+                }
+            }
+
+            auto Duration = Clock.GetTotalDuration() / SortTestCount;
+            std::cout << "std::vector Sorting time: " << Duration << "ns" << std::endl;
+            std::cout << "std::vector Sorting time: " << Duration / (1000 * 1000) << "ms" << std::endl;
+        }
     }
 #endif
 }
@@ -1296,7 +1296,7 @@ void TArray_Test( int32 Argc, const char** Argv )
 
         std::cout << std::endl << "Testing HeapSort" << std::endl;
         {
-			TArray<int32, TArrayAllocator<int32>> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
+            TArray<int32, TArrayAllocator<int32>> Heap = { 1, 3, 5, 4, 6, 13, 10, 9, 8, 15, 17 };
             PrintArr( Heap );
             Heap.HeapSort();
             PrintArr( Heap );

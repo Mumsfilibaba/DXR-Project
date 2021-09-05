@@ -31,9 +31,9 @@ void BenchMarks()
 
 void Tests( int32 Argc, const char* Argv[] )
 {
-	UNREFERENCED_VARIABLE(Argc);
-	UNREFERENCED_VARIABLE(Argv);
-	
+    UNREFERENCED_VARIABLE( Argc );
+    UNREFERENCED_VARIABLE( Argv );
+
 #if RUN_TARRAY_TEST
     TArray_Test( Argc, Argv );
 #endif

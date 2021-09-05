@@ -42,7 +42,12 @@
 
 /* Vectorcall */
 #ifndef VECTORCALL
-#define VECTORCALL __vectorcall
+#define VECTORCALL // Does not seem to be supported
+#endif
+
+/* Restric */
+#ifndef RESTRICT
+#define RESTRICT __restrict
 #endif
 
 /* Function signature as a const char* string */

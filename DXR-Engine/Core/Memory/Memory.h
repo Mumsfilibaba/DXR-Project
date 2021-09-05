@@ -11,16 +11,17 @@ public:
     static void  Free( void* Ptr ) noexcept;
 
     static void* Memmove( void* Destination, const void* Source, uint64 Size ) noexcept;
-    static void* Memcpy( void* Destination, const void* Source, uint64 Size ) noexcept;
+    static void* Memcpy( void* RESTRICT Destination, const void* RESTRICT Source, uint64 Size ) noexcept;
     static void* Memset( void* Destination, uint8 Value, uint64 Size ) noexcept;
     static void* Memzero( void* Destination, uint64 Size ) noexcept;
 
     // TODO: Check if we need all the information from memcmp and refactor in that case
     static bool Memcmp( const void* LHS, const void* RHS, uint64 Size ) noexcept;
 
-    static void Memswap( void* LHS, void* RHS, uint64 Size ) noexcept;
+    /* Assume that LHS and RHS is not the overlapping */
+    static void Memswap( void* RESTRICT LHS, void* RESTRICT RHS, uint64 Size ) noexcept;
 
-    static FORCEINLINE void Memexchange( void* Destination, void* Source, uint64 Size ) noexcept
+    static FORCEINLINE void Memexchange( void* RESTRICT Destination, void* RESTRICT Source, uint64 Size ) noexcept
     {
         if ( Destination != Source )
         {
@@ -38,7 +39,7 @@ public:
     template<typename T>
     static FORCEINLINE T* Realloc( T* Pointer, uint64 Count ) noexcept
     {
-		const uint64 NumBytes = Count * sizeof( T );
+        const uint64 NumBytes = Count * sizeof( T );
         return reinterpret_cast<T*>(Realloc( reinterpret_cast<void*>(Pointer), NumBytes ));
     }
 
@@ -49,7 +50,7 @@ public:
     }
 
     template<typename T>
-    static FORCEINLINE T* Memcpy( T* Destination, const T* Source ) noexcept
+    static FORCEINLINE T* Memcpy( T* RESTRICT Destination, const T* RESTRICT Source ) noexcept
     {
         return reinterpret_cast<T*>(Memcpy( reinterpret_cast<void*>(Destination), reinterpret_cast<const void*>(Source), sizeof( T ) ));
     }
@@ -61,7 +62,7 @@ public:
     }
 
     template<typename T>
-    static FORCEINLINE T* Memexchange( void* Destination, void* Source ) noexcept
+    static FORCEINLINE T* Memexchange( void* RESTRICT Destination, void* RESTRICT Source ) noexcept
     {
         return Memexchange( reinterpret_cast<void*>(Destination), reinterpret_cast<void*>(Source), sizeof( T ) );
     }

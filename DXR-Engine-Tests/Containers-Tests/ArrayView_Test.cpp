@@ -39,7 +39,7 @@ void TArrayView_Test()
 
     TArray<uint32> Arr0 = { 1, 2, 3, 4 };
     TArrayView<uint32> ArrView0 = TArrayView<uint32>( Arr0 );
-	
+
     TStaticArray<uint32, 4> Arr1 = { 11, 12, 13, 14 };
     TArrayView<uint32> ArrView1 = TArrayView<uint32>( Arr1 );
 
@@ -98,7 +98,7 @@ void TArrayView_Test()
     std::cout << "-----------After-----------" << std::endl;
     PrintArrayViewRangeBased( ArrView4 );
 
-	delete[] DynamicPtr;
+    delete[] DynamicPtr;
 }
 
 #endif

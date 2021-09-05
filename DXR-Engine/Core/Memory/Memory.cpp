@@ -43,7 +43,7 @@ void* Memory::Memzero( void* Destination, uint64 Size ) noexcept
     return memset( Destination, 0, Size );
 }
 
-void* Memory::Memcpy( void* Destination, const void* Source, uint64 Size ) noexcept
+void* Memory::Memcpy( void* RESTRICT Destination, const void* RESTRICT Source, uint64 Size ) noexcept
 {
     return memcpy( Destination, Source, Size );
 }
@@ -58,7 +58,7 @@ bool Memory::Memcmp( const void* LHS, const void* RHS, uint64 Size )  noexcept
     return (memcmp( LHS, RHS, Size ) == 0);
 }
 
-void Memory::Memswap( void* LHS, void* RHS, uint64 SizeInBytes ) noexcept
+void Memory::Memswap( void* RESTRICT LHS, void* RESTRICT RHS, uint64 Size ) noexcept
 {
     Assert( LHS != nullptr && RHS != nullptr );
 
@@ -66,7 +66,7 @@ void Memory::Memswap( void* LHS, void* RHS, uint64 SizeInBytes ) noexcept
     uint64* Left = reinterpret_cast<uint64*>(LHS);
     uint64* Right = reinterpret_cast<uint64*>(RHS);
 
-    while ( SizeInBytes >= 8 )
+    while ( Size >= 8 )
     {
         uint64 Temp = *Left;
         *Left = *Right;
@@ -75,14 +75,14 @@ void Memory::Memswap( void* LHS, void* RHS, uint64 SizeInBytes ) noexcept
         Left++;
         Right++;
 
-        SizeInBytes -= 8;
+        Size -= 8;
     }
 
     // Move remaining bytes
     uint8* LeftBytes = reinterpret_cast<uint8*>(LHS);
     uint8* RightBytes = reinterpret_cast<uint8*>(RHS);
 
-    while ( SizeInBytes )
+    while ( Size )
     {
         uint8 Temp = *LeftBytes;
         *LeftBytes = *RightBytes;
@@ -91,6 +91,6 @@ void Memory::Memswap( void* LHS, void* RHS, uint64 SizeInBytes ) noexcept
         LeftBytes++;
         RightBytes++;
 
-        SizeInBytes--;
+        Size--;
     }
 }

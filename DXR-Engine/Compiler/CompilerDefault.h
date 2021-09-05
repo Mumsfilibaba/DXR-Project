@@ -27,6 +27,11 @@
 #define VECTORCALL
 #endif
 
+/* Restric */
+#ifndef RESTRICT
+#define RESTRICT
+#endif
+
 /* Function signature as a const char* string */
 #ifndef FUNCTION_SIGNATURE
 #define FUNCTION_SIGNATURE "NO COMPILER DEFINED, DEFINE TO GET THE FUNCTION_SIGNATURE"
