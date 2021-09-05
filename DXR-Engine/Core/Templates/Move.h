@@ -32,3 +32,9 @@ FORCEINLINE typename TEnableIf<TNot<TIsConst<T>>::Value>::Type Swap( T& LHS, T& 
     LHS = Move( RHS );
     RHS = Move( TempElement );
 }
+
+/* Helps expand variadic packs */
+template<typename... Packs>
+inline void ExpandPacks( Packs&&... )
+{
+}

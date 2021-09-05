@@ -113,7 +113,7 @@ public:
 void Delegate_Test()
 {
     std::cout << std::endl << "----Testing Tuple----" << std::endl << std::endl;
-    TTuple<int, float, double, std::string> Tuple( 5, 0.9f, 5.0, "A string" );
+    TTuple<int32, float, double, std::string> Tuple( 5, 0.9f, 5.0, "A string" );
 
     std::cout << "Size=" << Tuple.Size() << std::endl;
 
@@ -135,10 +135,10 @@ void Delegate_Test()
     std::cout << "TupleGet<float>=" << TupleGet<float>( Tuple ) << std::endl;
     std::cout << "TupleGet<double>=" << TupleGet<double>( Tuple ) << std::endl;
 
-    TTuple<int, float, double, std::string> Tuple2;
+    TTuple<int32, float, double, std::string> Tuple2;
     Tuple2 = Tuple;
 
-    TTuple<int, float, double, std::string> Tuple3 = Move( Tuple2 );
+    TTuple<int32, float, double, std::string> Tuple3 = Move( Tuple2 );
 
     std::cout << "operator==" << std::boolalpha << (Tuple == Tuple3) << std::endl;
     std::cout << "operator!=" << std::boolalpha << (Tuple != Tuple3) << std::endl;
@@ -147,9 +147,10 @@ void Delegate_Test()
 	std::cout << "operator>"  << std::boolalpha << (Tuple > Tuple3) << std::endl;
 	std::cout << "operator>=" << std::boolalpha << (Tuple >= Tuple3) << std::endl;
 	
-	TTuple<int, float, double> Tuple4( 5, 32.0f, 500.0 );
-	TTuple<int, float, double> Tuple5( 2, 22.0f, 100.0 );
-
+	TTuple<int32, float, double> Tuple4( 5, 32.0f, 500.0 );
+	TTuple<int32, float, double> Tuple5( 2, 22.0f, 100.0 );
+	Tuple4.Swap( Tuple5 );
+	
 	std::cout << "operator==" << std::boolalpha << (Tuple4 == Tuple5) << std::endl;
 	std::cout << "operator!=" << std::boolalpha << (Tuple4 != Tuple5) << std::endl;
 	std::cout << "operator<=" << std::boolalpha << (Tuple4 <= Tuple5) << std::endl;
@@ -157,6 +158,13 @@ void Delegate_Test()
 	std::cout << "operator>"  << std::boolalpha << (Tuple4 >  Tuple5) << std::endl;
 	std::cout << "operator>=" << std::boolalpha << (Tuple4 >= Tuple5) << std::endl;
 
+	TTuple<float, float> PairTuple0( 80, 900 );
+	TTuple<float, float> PairTuple1( 50, 100 );
+	PairTuple1.First = 30;
+	PairTuple1.Second = 200;
+	
+	PairTuple0.Swap(PairTuple1);
+	
     TTuple<int32, int32, int32> Args( 10, 20, 30 );
     Args.ApplyAfter( TupleFunc, 99 );
     Args.ApplyBefore( TupleFunc, 99 );

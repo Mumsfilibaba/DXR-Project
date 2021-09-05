@@ -6,15 +6,10 @@
 template<typename FirstType, typename SecondType>
 struct TPair
 {
+    /* Defaults */
+    TPair() = default;
     TPair( const TPair& ) = default;
     TPair( TPair&& ) = default;
-
-    /* Default constructor */
-    FORCEINLINE TPair()
-        : First()
-        , Second()
-    {
-    }
 
     /* Init types */
     FORCEINLINE explicit TPair( const FirstType& InFirst, const SecondType& InSecond )
