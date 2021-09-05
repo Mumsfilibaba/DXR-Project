@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include <Core/Containers/Tuple.h>
+#include <Core/Containers/Pair.h>
 #include <Core/Delegates/Delegate.h>
 #include <Core/Delegates/MulticastDelegate.h>
 #include <Core/Delegates/Event.h>
@@ -126,6 +127,14 @@ void Delegate_Test()
     std::cout << "Get<float>=" << Tuple.Get<float>() << std::endl;
     std::cout << "Get<double>=" << Tuple.Get<double>() << std::endl;
 
+    std::cout << "TupleGetByIndex<0>=" << TupleGetByIndex<0>( Tuple ) << std::endl;
+    std::cout << "TupleGetByIndex<1>=" << TupleGetByIndex<1>( Tuple ) << std::endl;
+    std::cout << "TupleGetByIndex<2>=" << TupleGetByIndex<2>( Tuple ) << std::endl;
+
+    std::cout << "TupleGet<int>=" << TupleGet<int>( Tuple ) << std::endl;
+    std::cout << "TupleGet<float>=" << TupleGet<float>( Tuple ) << std::endl;
+    std::cout << "TupleGet<double>=" << TupleGet<double>( Tuple ) << std::endl;
+
     TTuple<int, float, double, std::string> Tuple2;
     Tuple2 = Tuple;
 
@@ -133,10 +142,19 @@ void Delegate_Test()
 
     std::cout << "operator==" << std::boolalpha << (Tuple == Tuple3) << std::endl;
     std::cout << "operator!=" << std::boolalpha << (Tuple != Tuple3) << std::endl;
+    std::cout << "operator<" << std::boolalpha << (Tuple < Tuple3) << std::endl;
 
     TTuple<int32, int32, int32> Args( 10, 20, 30 );
     Args.ApplyAfter( TupleFunc, 99 );
     Args.ApplyBefore( TupleFunc, 99 );
+
+    TPair<std::string, int32> Pair0( "Pair0", 32 );
+    TPair<std::string, int32> Pair1( "Pair1", 42 );
+
+    std::cout << "operator==" << std::boolalpha << (Pair0 == Pair1) << std::endl;
+    std::cout << "operator!=" << std::boolalpha << (Pair0 != Pair1) << std::endl;
+
+    Pair0.Swap( Pair1 );
 
 #if 1
     std::cout << std::endl << "----Testing Delegate----" << std::endl << std::endl;

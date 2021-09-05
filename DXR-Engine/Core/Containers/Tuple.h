@@ -10,14 +10,14 @@
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/And.h"
 
-/* Forward delcarations */
+/* Forward declarations */
 template <uint32 SearchForIndex, typename... Types>
-struct TTupleGetByIndex;
+class TTupleGetByIndex;
 
 template <typename WantedType, typename... Types>
-struct TTupleGetByElement;
+class TTupleGetByElement;
 
-/* Tuple impl */
+/* Tuple implementation */
 namespace Internal
 {
     /* Leaf of a tuple */
@@ -31,7 +31,8 @@ namespace Internal
         }
 
         /* Construct a leaf by the value */
-        template<typename... ArgTypes, typename = typename TEnableIf<TAnd<TValue<(sizeof... (ArgTypes)) != 0>, TIsConstructible<ValueType, typename TDecay<ArgTypes>::Type...>>::Value>::Type>
+        template<typename... ArgTypes,
+            typename = typename TEnableIf<TAnd<TValue<(sizeof... (ArgTypes)) != 0>, TIsConstructible<ValueType, typename TDecay<ArgTypes>::Type...>>::Value>::Type>
         FORCEINLINE explicit TTupleLeaf( ArgTypes&&... Args )
             : Value( Forward<ArgTypes>( Args )... )
         {
@@ -111,6 +112,11 @@ namespace Internal
     {
         typedef ElementType Type;
 
+        enum
+        {
+            ElementIndex = Index
+        };
+
         template <typename TupleType>
         FORCEINLINE static ElementType& Get( TupleType& Tuple )
         {
@@ -138,9 +144,11 @@ namespace Internal
     template <uint32 Iteration, typename WantedType, typename... Types>
     struct TTupleGetByElementHelper<Iteration, WantedType, WantedType, Types...>
     {
+        typedef WantedType Type;
+
         enum
         {
-            Index = Iteration
+            ElementIndex = Iteration
         };
 
         template <typename TupleType>
@@ -179,7 +187,7 @@ namespace Internal
         {
         }
 
-        /* Retrive an element in the tuple by element */
+        /* Retrieve an element in the tuple by element */
         template<typename ElementType>
         FORCEINLINE auto& Get()
         {
@@ -187,7 +195,7 @@ namespace Internal
             return Type::Get( *this );
         }
 
-        /* Retrive an element in the tuple by element */
+        /* Retrieve an element in the tuple by element */
         template<typename ElementType>
         FORCEINLINE const auto& Get() const
         {
@@ -195,7 +203,7 @@ namespace Internal
             return Type::Get( *this );
         }
 
-        /* Retrive an element in the tuple by index */
+        /* Retrieve an element in the tuple by index */
         template<uint32 Index>
         FORCEINLINE auto& GetByIndex()
         {
@@ -203,7 +211,7 @@ namespace Internal
             return IndexType::Get( *this );
         }
 
-        /* Retrive an element in the tuple by index */
+        /* Retrieve an element in the tuple by index */
         template<uint32 Index>
         FORCEINLINE const auto& GetByIndex() const
         {
@@ -226,7 +234,8 @@ namespace Internal
         }
     };
 
-    /* Equality */
+    /* Equality / LessThan - Helpers */
+
     template <uint32 Index>
     struct TTupleEquallityHelper
     {
@@ -247,18 +256,86 @@ namespace Internal
             return true;
         }
     };
+
+    template <uint32 Index>
+    struct TTupleLessThanHelper
+    {
+        template <typename FirstTupleType, typename SecondTupleType>
+        FORCEINLINE static bool IsLessThan( const FirstTupleType& LHS, const SecondTupleType& RHS )
+        {
+            static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
+            return TTupleEquallityHelper<Index - 1>::IsLessThan( LHS, RHS ) && (LHS.template GetByIndex<Index - 1>() < RHS.template GetByIndex<Index - 1>());
+        }
+    };
+
+    template <>
+    struct TTupleLessThanHelper<0>
+    {
+        template <typename FirstTupleType, typename SecondTupleType>
+        FORCEINLINE static bool IsLessThan( const FirstTupleType&, const SecondTupleType& )
+        {
+            return true;
+        }
+    };
+
+    template <uint32 Index>
+    struct TTupleLessThanHelper
+    {
+        template <typename FirstTupleType, typename SecondTupleType>
+        FORCEINLINE static bool IsLessThan( const FirstTupleType& LHS, const SecondTupleType& RHS )
+        {
+            static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
+            return TTupleEquallityHelper<Index - 1>::IsLessThan( LHS, RHS ) && (LHS.template GetByIndex<Index - 1>() < RHS.template GetByIndex<Index - 1>());
+        }
+    };
+
+    template <>
+    struct TTupleLessThanHelper<0>
+    {
+        template <typename FirstTupleType, typename SecondTupleType>
+        FORCEINLINE static bool IsLessThan( const FirstTupleType&, const SecondTupleType& )
+        {
+            return true;
+        }
+    };
 }
 
-/* Retrive the element for a specific index */
+/* Retrieve the element for a specific index */
 template <uint32 SearchForIndex, typename... Types>
-struct TTupleGetByIndex : Internal::TTupleGetByIndexHelper<0, SearchForIndex, Types...>
+class TTupleGetByIndex : Internal::TTupleGetByIndexHelper<0, SearchForIndex, Types...>
 {
+    using Super = Internal::TTupleGetByIndexHelper<0, SearchForIndex, Types...>;
+
+public:
+    using Super::Get;
+
+public:
+
+    enum
+    {
+        Index = Super::ElementIndex
+    };
+
+    using ElementType = typename Super::Type;
 };
 
-/* Retrive a specific element */
+/* Retrieve a specific element */
 template <typename WantedType, typename... Types>
-struct TTupleGetByElement : Internal::TTupleGetByElementHelper<0, WantedType, Types...>
+class TTupleGetByElement : Internal::TTupleGetByElementHelper<0, WantedType, Types...>
 {
+    using Super = Internal::TTupleGetByElementHelper<0, WantedType, Types...>;
+
+public:
+    using Super::Get;
+
+public:
+
+    enum
+    {
+        Index = Super::ElementIndex
+    };
+
+    using ElementType = typename Super::Type;
 };
 
 /* Tuple implementation */
@@ -270,8 +347,11 @@ class TTuple : public Internal::TTupleStorage<TMakeIntegerSequence<uint32, sizeo
 public:
     using Super::ApplyAfter;
     using Super::ApplyBefore;
+    using Super::Get;
+    using Super::GetByIndex;
 
 public:
+
     enum
     {
         NumElements = sizeof...(Types)
@@ -291,6 +371,8 @@ public:
     {
     }
 
+public:
+
     /* The number of elements in the tuple */
     constexpr uint32 Size() const
     {
@@ -299,14 +381,40 @@ public:
 };
 
 /* Operators */
-template <typename... FirstTypes, typename... SecondTypes>
+template<typename... FirstTypes, typename... SecondTypes>
 inline bool operator==( const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS )
 {
     return Internal::TTupleEquallityHelper<sizeof...(FirstTypes)>::IsEqual( LHS, RHS );
 }
 
-template <typename... FirstTypes, typename... SecondTypes>
+template<typename... FirstTypes, typename... SecondTypes>
 inline bool operator!=( const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS )
 {
     return !(LHS == RHS);
+}
+
+template<typename... FirstTypes, typename... SecondTypes>
+inline bool operator<( const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS )
+{
+    return Internal::TTupleLessThanHelper<sizeof...(FirstTypes)>::IsLessThan( LHS, RHS );
+}
+
+template<typename... FirstTypes, typename... SecondTypes>
+inline bool operator>=( const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS )
+{
+    return !Internal::TTupleLessThanHelper<sizeof...(FirstTypes)>::IsLessThan( LHS, RHS );
+}
+
+/* Helpers */
+
+template<uint32 SearchForIndex, typename... Types>
+inline auto& TupleGetByIndex( const TTuple<Types...>& Tuple ) noexcept
+{
+    return Tuple.GetByIndex<SearchForIndex>();
+}
+
+template<typename ElementType, typename... Types>
+inline auto& TupleGet( const TTuple<Types...>& Tuple ) noexcept
+{
+    return Tuple.Get<ElementType>();
 }
