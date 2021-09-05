@@ -142,7 +142,20 @@ void Delegate_Test()
 
     std::cout << "operator==" << std::boolalpha << (Tuple == Tuple3) << std::endl;
     std::cout << "operator!=" << std::boolalpha << (Tuple != Tuple3) << std::endl;
-    std::cout << "operator<" << std::boolalpha << (Tuple < Tuple3) << std::endl;
+    std::cout << "operator<=" << std::boolalpha << (Tuple <= Tuple3) << std::endl;
+	std::cout << "operator<"  << std::boolalpha << (Tuple < Tuple3) << std::endl;
+	std::cout << "operator>"  << std::boolalpha << (Tuple > Tuple3) << std::endl;
+	std::cout << "operator>=" << std::boolalpha << (Tuple >= Tuple3) << std::endl;
+	
+	TTuple<int, float, double> Tuple4( 5, 32.0f, 500.0 );
+	TTuple<int, float, double> Tuple5( 2, 22.0f, 100.0 );
+
+	std::cout << "operator==" << std::boolalpha << (Tuple4 == Tuple5) << std::endl;
+	std::cout << "operator!=" << std::boolalpha << (Tuple4 != Tuple5) << std::endl;
+	std::cout << "operator<=" << std::boolalpha << (Tuple4 <= Tuple5) << std::endl;
+	std::cout << "operator<"  << std::boolalpha << (Tuple4 <  Tuple5) << std::endl;
+	std::cout << "operator>"  << std::boolalpha << (Tuple4 >  Tuple5) << std::endl;
+	std::cout << "operator>=" << std::boolalpha << (Tuple4 >= Tuple5) << std::endl;
 
     TTuple<int32, int32, int32> Args( 10, 20, 30 );
     Args.ApplyAfter( TupleFunc, 99 );
@@ -156,7 +169,6 @@ void Delegate_Test()
 
     Pair0.Swap( Pair1 );
 
-#if 1
     std::cout << std::endl << "----Testing Delegate----" << std::endl << std::endl;
 
     {
@@ -273,9 +285,7 @@ void Delegate_Test()
 
         delete Base;
     }
-#endif
 
-#if 1
     std::cout << std::endl << "----Testing MultiCastDelegate----" << std::endl << std::endl;
 
     {
@@ -307,14 +317,13 @@ void Delegate_Test()
 
         MultiDelegates.Broadcast( 5000 );
 
-        std::cout << "GetCount=" << MultiDelegates.GetCount() << std::endl;
+        std::cout << "GetCount="      << MultiDelegates.GetCount() << std::endl;
         std::cout << "UnbindIfBound=" << MultiDelegates.UnbindIfBound( Base ) << std::endl;
-        std::cout << "GetCount=" << MultiDelegates.GetCount() << std::endl;
+        std::cout << "GetCount="      << MultiDelegates.GetCount() << std::endl;
         std::cout << "UnbindIfBound=" << MultiDelegates.UnbindIfBound( Base ) << std::endl;
 
         delete Base;
     }
-#endif
 
     std::cout << std::endl << "----Testing Delegate Macros----" << std::endl << std::endl;
     {

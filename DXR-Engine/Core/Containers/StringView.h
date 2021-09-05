@@ -732,25 +732,6 @@ public:
         return TStringView( Data() + Offset, Count );
     }
 
-    /* Compares two containers by comparing each element, returns true if all is equal */
-    template<typename StringType>
-    FORCEINLINE bool operator==( const StringType& Other ) const noexcept
-    {
-        if ( Length() != Other.Length() )
-        {
-            return false;
-        }
-
-        return CompareRange<CharType>( CStr(), Other.CStr(), Length() );
-    }
-
-    /* Compares two containers by comparing each element, returns false if all elements are equal */
-    template<typename StringType>
-    FORCEINLINE bool operator!=( const StringType& Other ) const noexcept
-    {
-        return !(*this == Other);
-    }
-
     /* Retrive an element at a certain position */
     FORCEINLINE const CharType& operator[]( SizeType Index ) const noexcept
     {
