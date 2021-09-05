@@ -57,7 +57,7 @@ public:
 class ShaderCompiler
 {
 public:
-    FORCEINLINE static bool CompileFromFile(
+    static FORCEINLINE bool CompileFromFile(
         const std::string& FilePath,
         const std::string& EntryPoint,
         const TArray<ShaderDefine>* Defines,
@@ -68,7 +68,7 @@ public:
         return GShaderCompiler->CompileFromFile( FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code );
     }
 
-    FORCEINLINE static bool CompileShader(
+    static FORCEINLINE bool CompileShader(
         const std::string& ShaderSource,
         const std::string& EntryPoint,
         const TArray<ShaderDefine>* Defines,

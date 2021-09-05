@@ -4,17 +4,17 @@
 class GenericProcess
 {
 public:
-    FORCEINLINE static uint32 GetNumProcessors()
+    static FORCEINLINE uint32 GetNumProcessors()
     {
         return 1;
     }
 
-    FORCEINLINE static ThreadID GetThreadID()
+    static FORCEINLINE ThreadID GetThreadID()
     {
         return INVALID_THREAD_ID;
     }
 
-    FORCEINLINE static void Sleep( Timestamp Time )
+    static FORCEINLINE void Sleep( Timestamp Time )
     {
         UNREFERENCED_VARIABLE( Time );
     }

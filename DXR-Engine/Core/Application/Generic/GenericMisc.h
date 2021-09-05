@@ -13,23 +13,23 @@
 class GenericMisc
 {
 public:
-    FORCEINLINE static void MessageBox( const std::string& Title, const std::string& Message )
+    static FORCEINLINE void MessageBox( const std::string& Title, const std::string& Message )
     {
     }
 
-    FORCEINLINE static void RequestExit( int32 ExitCode )
+    static FORCEINLINE void RequestExit( int32 ExitCode )
     {
     }
 
-    FORCEINLINE static void DebugBreak()
+    static FORCEINLINE void DebugBreak()
     {
     }
 
-    FORCEINLINE static void OutputDebugString( const std::string& Message )
+    static FORCEINLINE void OutputDebugString( const std::string& Message )
     {
     }
 
-    FORCEINLINE static bool IsDebuggerPresent()
+    static FORCEINLINE bool IsDebuggerPresent()
     {
         return false;
     }

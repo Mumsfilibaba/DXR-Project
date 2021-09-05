@@ -71,25 +71,25 @@ public:
         return *this;
     }
 
-    FORCEINLINE static Timestamp Seconds( double Seconds )
+    static FORCEINLINE Timestamp Seconds( double Seconds )
     {
         constexpr double SECOND = 1000.0 * 1000.0 * 1000.0;
         return Timestamp( static_cast<uint64>(Seconds * SECOND) );
     }
 
-    FORCEINLINE static Timestamp MilliSeconds( double Milliseconds )
+    static FORCEINLINE Timestamp MilliSeconds( double Milliseconds )
     {
         constexpr double MILLISECOND = 1000.0 * 1000.0;
         return Timestamp( static_cast<uint64>(Milliseconds * MILLISECOND) );
     }
 
-    FORCEINLINE static Timestamp MicroSeconds( double Microseconds )
+    static FORCEINLINE Timestamp MicroSeconds( double Microseconds )
     {
         constexpr double MICROSECOND = 1000.0;
         return Timestamp( static_cast<uint64>(Microseconds * MICROSECOND) );
     }
 
-    FORCEINLINE static Timestamp NanoSeconds( uint64 Nanoseconds )
+    static FORCEINLINE Timestamp NanoSeconds( uint64 Nanoseconds )
     {
         return Timestamp( Nanoseconds );
     }

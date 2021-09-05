@@ -72,7 +72,7 @@ public:
 private:
 
     /* Generates a new ID */
-    FORCEINLINE static DelegateHandle GenerateID()
+    static FORCEINLINE DelegateHandle GenerateID()
     {
         return ++NextID;
     }
