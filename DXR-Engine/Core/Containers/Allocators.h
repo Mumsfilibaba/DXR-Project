@@ -54,13 +54,13 @@ public:
         Other.Allocation = nullptr;
     }
 
-    /* Retrive the allocation */
+    /* Retrieve the allocation */
     FORCEINLINE ElementType* GetAllocation() noexcept
     {
         return Allocation;
     }
 
-    /* Retrive the allocation */
+    /* Retrieve the allocation */
     FORCEINLINE const ElementType* GetAllocation() const noexcept
     {
         return Allocation;
@@ -148,30 +148,35 @@ public:
     }
 
     /* Allocates memory if needed */
-    FORCEINLINE ElementType* Realloc( SizeType CurrentCount, SizeType NewCount ) noexcept
+    FORCEINLINE ElementType* Realloc( SizeType CurrentCount, SizeType NewElementCount ) noexcept
     {
         // If allocation is larger than inline-storage, allocate on the heap
-        if ( NewCount > NumInlineElements )
+        if ( NewElementCount > NumInlineElements )
         {
-            /* If we did not have a allocation then the inline storage was proably used, copy it into dynamic memory */
+            // If we did not have a allocation then the inline storage was used, copy it into dynamic memory
             if ( !DynamicAllocator.HasAllocation() )
             {
-                DynamicAllocator.Realloc( CurrentCount, NewCount );
-                RelocateRange<ElementType>( DynamicAllocator.GetAllocation(), InlineAllocation.GetElements(), CurrentCount );
+                Assert( CurrentCount <= NumInlineElements );
+
+                DynamicAllocator.Realloc( CurrentCount, NewElementCount );
+                RelocateRange<ElementType>( reinterpret_cast<void*>(DynamicAllocator.GetAllocation()), InlineAllocation.GetElements(), CurrentCount );
             }
             else
             {
-                DynamicAllocator.Realloc( CurrentCount, NewCount );
+                DynamicAllocator.Realloc( CurrentCount, NewElementCount );
             }
 
             return DynamicAllocator.GetAllocation();
         }
         else
         {
-            /* Copy the old allocation over to the inlineallocation */
+            // Copy the old allocation over to the inline allocation
             if ( DynamicAllocator.HasAllocation() )
             {
-                RelocateRange<ElementType>( InlineAllocation.GetElements(), DynamicAllocator.GetAllocation(), CurrentCount );
+                // Only copy as much as can fit into the inline allocation
+                CurrentCount = (CurrentCount <= NumInlineElements) ? CurrentCount : NumInlineElements;
+
+                RelocateRange<ElementType>( reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocator.GetAllocation(), CurrentCount );
                 Free();
             }
 
@@ -217,13 +222,13 @@ public:
         return sizeof( ElementType ) * NumElements;
     }
 
-    /* Retrive the allocation */
+    /* Retrieve the allocation */
     FORCEINLINE ElementType* GetAllocation() noexcept
     {
         return IsHeapAllocated() ? DynamicAllocator.GetAllocation() : InlineAllocation.GetElements();
     }
 
-    /* Retrive the allocation */
+    /* Retrieve the allocation */
     FORCEINLINE const ElementType* GetAllocation() const noexcept
     {
         return IsHeapAllocated() ? DynamicAllocator.GetAllocation() : InlineAllocation.GetElements();
@@ -231,7 +236,7 @@ public:
 
 private:
 
-    // TODO: Pack memory more effienctly?
+    // TODO: Pack memory more efficiently?
 
     /* Inline bytes */
     TInlineAllocation<ElementType, NumInlineElements> InlineAllocation;

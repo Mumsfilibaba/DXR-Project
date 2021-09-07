@@ -40,12 +40,12 @@
 #define NOINLINE __declspec(noinline)
 #endif
 
-/* Vectorcall */
+/* Vector call */
 #ifndef VECTORCALL
 #define VECTORCALL __vectorcall
 #endif
 
-/* Restric */
+/* Restrict */
 #ifndef RESTRICT
 #define RESTRICT __restrict
 #endif

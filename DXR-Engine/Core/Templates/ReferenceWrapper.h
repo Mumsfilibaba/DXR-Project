@@ -26,19 +26,19 @@ public:
 
     TReferenceWrapper( Type&& ) = delete;
 
-    /* Retrive reference */
+    /* Retrieve reference */
     FORCEINLINE Type& Get() const noexcept
     {
         return *Pointer;
     }
 
-    /* Retrive the raw pointer */
+    /* Retrieve the raw pointer */
     FORCEINLINE Type* AddressOf() const noexcept
     {
         return Pointer;
     }
 
-    /* Retrive reference */
+    /* Retrieve reference */
     FORCEINLINE operator Type& () const noexcept
     {
         return Get();

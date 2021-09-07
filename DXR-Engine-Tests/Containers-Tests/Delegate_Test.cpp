@@ -158,13 +158,26 @@ void Delegate_Test()
 	std::cout << "operator>"  << std::boolalpha << (Tuple4 >  Tuple5) << std::endl;
 	std::cout << "operator>=" << std::boolalpha << (Tuple4 >= Tuple5) << std::endl;
 
-	TTuple<float, float> PairTuple0( 80, 900 );
-	TTuple<float, float> PairTuple1( 50, 100 );
-	PairTuple1.First = 30;
-	PairTuple1.Second = 200;
-	
+	TTuple<float, float> PairTuple0( 80.0f, 900.0f );
+	TTuple<float, float> PairTuple1( 50.0f, 100.0f );
+	PairTuple1.First = 30.0f;
+	PairTuple1.Second = 200.0f;
+
 	PairTuple0.Swap(PairTuple1);
 	
+    std::cout << "First=" << PairTuple0.First << std::endl;
+    std::cout << "Second=" << PairTuple0.Second << std::endl;
+
+    std::cout << "Get<float>=" << PairTuple0.Get<float>() << std::endl;
+    std::cout << "Get<float>=" << PairTuple0.Get<float>() << std::endl;
+
+    std::cout << "GetByIndex<0>=" << PairTuple0.GetByIndex<0>() << std::endl;
+    std::cout << "GetByIndex<1>=" << PairTuple0.GetByIndex<1>() << std::endl;
+
+    TTuple<int32, int32> PairTuple2( 80, 900 );
+    PairTuple2.ApplyAfter( TupleFunc, 30, 99 );
+    PairTuple2.ApplyBefore( TupleFunc, 30, 99 );
+
     TTuple<int32, int32, int32> Args( 10, 20, 30 );
     Args.ApplyAfter( TupleFunc, 99 );
     Args.ApplyBefore( TupleFunc, 99 );

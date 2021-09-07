@@ -50,20 +50,20 @@ public:
         return (Index == Array.Get().Size());
     }
 
-    /* Retrive the raw pointer */
+    /* Retrieve the raw pointer */
     FORCEINLINE ElementType* Raw() const noexcept
     {
         Assert( IsValid() );
         return Array.Get().Data() + GetIndex();
     }
 
-    /* Retrive the useable index */
+    /* Retrieve the usable index */
     FORCEINLINE SizeType GetIndex() const noexcept
     {
         return Index;
     }
 
-    /* Retrive the raw pointer */
+    /* Retrieve the raw pointer */
     FORCEINLINE ElementType* operator->() const noexcept
     {
         return Raw();
@@ -75,7 +75,7 @@ public:
         return *Raw();
     }
 
-    /* Increment the iterator */
+    /* Pre-increment the iterator */
     FORCEINLINE TArrayIterator operator++() noexcept
     {
         Index++;
@@ -84,7 +84,7 @@ public:
         return *this;
     }
 
-    /* Increment the iterator */
+    /* Post-increment the iterator */
     FORCEINLINE TArrayIterator operator++( int ) noexcept
     {
         TArrayIterator NewIterator( *this );
@@ -94,7 +94,7 @@ public:
         return NewIterator;
     }
 
-    /* Decrement the iterator */
+    /* Pre-decrement the iterator */
     FORCEINLINE TArrayIterator operator--() noexcept
     {
         Index--;
@@ -103,7 +103,7 @@ public:
         return *this;
     }
 
-    /* Decrement the iterator */
+    /* Post-decrement the iterator */
     FORCEINLINE TArrayIterator operator--( int ) noexcept
     {
         TArrayIterator NewIterator( *this );
@@ -160,7 +160,7 @@ public:
     /* Convert into a const iterator */
     FORCEINLINE operator TArrayIterator<const ArrayType, const ElementType>() const noexcept
     {
-        /* The arraytype must be const here in order to make the dereference work properly */
+        /* The array type must be const here in order to make the dereference work properly */
         return TArrayIterator<const ArrayType, const ElementType>( Array, Index );
     }
 
@@ -215,26 +215,26 @@ public:
         return (Index >= 0) && (Index <= Array.Get().Size());
     }
 
-    /* Ensure that the pointer is not the endpointer */
+    /* Ensure that the pointer is not the end pointer */
     FORCEINLINE bool IsEnd() const noexcept
     {
         return (Index == 0);
     }
 
-    /* Retrive the raw pointer */
+    /* Retrieve the raw pointer */
     FORCEINLINE ElementType* Raw() const noexcept
     {
         Assert( IsValid() );
         return Array.Get().Data() + GetIndex();
     }
 
-    /* Retrive the useable index */
+    /* Retrieve the usable index */
     FORCEINLINE SizeType GetIndex() const noexcept
     {
         return Index - 1;
     }
 
-    /* Retrive the raw pointer */
+    /* Retrieve the raw pointer */
     FORCEINLINE ElementType* operator->() const noexcept
     {
         return Raw();
@@ -246,15 +246,16 @@ public:
         return *Raw();
     }
 
-    /* Add to the iterator */
+    /* Pre-increment the iterator */
     FORCEINLINE TReverseArrayIterator operator++() noexcept
     {
         Index--;
+
         Assert( IsValid() );
         return *this;
     }
 
-    /* Add to the iterator */
+    /* Post-increment the iterator  */
     FORCEINLINE TReverseArrayIterator operator++( int ) noexcept
     {
         TReverseArrayIterator NewIterator( *this );
@@ -264,7 +265,7 @@ public:
         return NewIterator;
     }
 
-    /* Subtract the iterator */
+    /* Pre-decrement the iterator */
     FORCEINLINE TReverseArrayIterator operator--() noexcept
     {
         Index++;
@@ -273,7 +274,7 @@ public:
         return *this;
     }
 
-    /* Subtract the iterator */
+    /* Post-decrement the iterator */
     FORCEINLINE TReverseArrayIterator operator--( int ) noexcept
     {
         TReverseArrayIterator NewIterator( *this );
@@ -330,7 +331,7 @@ public:
     /* Convert into a const iterator */
     FORCEINLINE operator TReverseArrayIterator<const ArrayType, const ElementType>() const noexcept
     {
-        /* The arraytype must be const here in order to make the dereference work properly */
+        /* The array type must be const here in order to make the dereference work properly */
         return TReverseArrayIterator<const ArrayType, const ElementType>( Array, Index );
     }
 
@@ -347,7 +348,7 @@ FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+( typename TR
     return NewIterator += LHS;
 }
 
-/* Iterator for tree-structurs such as TSet */
+/* Iterator for tree-structures such as TSet */
 template<typename NodeType, typename ElementType>
 class TTreeIterator
 {
@@ -374,14 +375,14 @@ public:
         return (Node != nullptr) && (Node->GetPointer() != nullptr);
     }
 
-    /* Retrive the raw pointer */
+    /* Retrieve the raw pointer */
     FORCEINLINE ElementType* Raw() const noexcept
     {
         Assert( IsValid() );
         return Node->GetPointer();
     }
 
-    /* Retrive the raw pointer */
+    /* Retrieve the raw pointer */
     FORCEINLINE ElementType* operator->() const noexcept
     {
         return Raw();
@@ -393,7 +394,7 @@ public:
         return *Raw();
     }
 
-    /* Add to the iterator */
+    /* Pre-increment the iterator */
     FORCEINLINE TTreeIterator operator++() noexcept
     {
         Assert( IsValid() );
@@ -402,7 +403,7 @@ public:
         return *this;
     }
 
-    /* Add to the iterator */
+    /* Post-increment the iterator */
     FORCEINLINE TTreeIterator operator++( int ) noexcept
     {
         TTreeIterator NewIterator( *this );
@@ -412,7 +413,7 @@ public:
         return NewIterator;
     }
 
-    /* Subtract the iterator */
+    /* Pre-decrement the iterator */
     FORCEINLINE TTreeIterator operator--() noexcept
     {
         Assert( IsValid() );
@@ -421,7 +422,7 @@ public:
         return *this;
     }
 
-    /* Subtract the iterator */
+    /* Post-decrement the iterator */
     FORCEINLINE TTreeIterator operator--( int ) noexcept
     {
         TTreeIterator NewIterator( *this );
@@ -446,7 +447,7 @@ public:
     /* Convert into a const iterator */
     FORCEINLINE operator TTreeIterator<const NodeType, const ElementType>() const noexcept
     {
-        /* The arraytype must be const here in order to make the dereference work properly */
+        /* The array type must be const here in order to make the dereference work properly */
         return TTreeIterator<const NodeType, const ElementType>( Node );
     }
 

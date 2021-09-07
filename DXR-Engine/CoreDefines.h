@@ -31,7 +31,7 @@
 #error No platform defined
 #endif
 
-// TODO: Move asserts to seperate module/header
+// TODO: Move asserts to separate module/header
 
 /* Asserts */
 #ifdef DEBUG_BUILD
@@ -50,32 +50,41 @@
 #endif
 #endif
 
-/* Macro for deleting objects safley */
+/* Macro for deleting objects safely */
 
 #ifndef SafeDelete
-#define SafeDelete(OutObject) \
-    if ((OutObject)) \
-    { \
-        delete (OutObject); \
-        (OutObject) = nullptr; \
-    }
+#define SafeDelete(OutObject)      \
+    do                             \
+    {                              \
+        if ((OutObject))           \
+        {                          \
+            delete (OutObject);    \
+            (OutObject) = nullptr; \
+        }                          \
+    } while (false)
 #endif
 
 #ifndef SafeRelease
-#define SafeRelease(OutObject) \
-    if ((OutObject)) \
-    { \
-        (OutObject)->Release(); \
-        (OutObject) = nullptr; \
-    }
+#define SafeRelease(OutObject)      \
+    do                              \
+    {                               \
+        if ((OutObject))            \
+        {                           \
+            (OutObject)->Release(); \
+            (OutObject) = nullptr;  \
+        }                           \
+    } while (false)
 #endif
 
 #ifndef SafeAddRef
-#define SafeAddRef(OutObject) \
-    if ((OutObject)) \
-    { \
-        (OutObject)->AddRef(); \
-    }
+#define SafeAddRef(OutObject)      \
+    do                             \
+    {                              \
+        if ((OutObject))           \
+        {                          \
+            (OutObject)->AddRef(); \
+        }                          \
+    } while (false);
 #endif
 
 /* Helper Macros */
