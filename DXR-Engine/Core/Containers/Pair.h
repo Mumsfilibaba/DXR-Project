@@ -13,15 +13,15 @@ struct TPair
 
     /* Init types */
     FORCEINLINE explicit TPair( const FirstType& InFirst, const SecondType& InSecond )
-        : First(InFirst)
-        , Second(InSecond)
+        : First( InFirst )
+        , Second( InSecond )
     {
     }
 
     /* Init with rvalue types, with other types */
     template<typename OtherFirstType = FirstType, typename OtherSecondType = SecondType>
     FORCEINLINE explicit TPair( OtherFirstType&& InFirst, OtherSecondType&& InSecond )
-        : First( Forward<OtherFirstType>(InFirst) )
+        : First( Forward<OtherFirstType>( InFirst ) )
         , Second( Forward<OtherSecondType>( InSecond ) )
     {
     }
@@ -133,5 +133,5 @@ inline TPair<FirstType, SecondType> MakePair( const FirstType& First, const Seco
 template<typename FirstType, typename SecondType>
 inline TPair<FirstType, SecondType> MakePair( FirstType&& First, SecondType&& Second ) noexcept
 {
-    return TPair<FirstType, SecondType>( Forward<FirstType>(First), Forward<SecondType>(Second) );
+    return TPair<FirstType, SecondType>( Forward<FirstType>( First ), Forward<SecondType>( Second ) );
 }

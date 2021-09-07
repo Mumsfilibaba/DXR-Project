@@ -35,7 +35,7 @@ namespace Internal
         /* Construct a leaf by the value */
         template<typename... ArgTypes,
             typename = typename TEnableIf<TAnd<TValue<(sizeof... (ArgTypes)) != 0>, TIsConstructible<ValueType, typename TDecay<ArgTypes>::Type...>>::Value>::Type>
-        FORCEINLINE explicit TTupleLeaf( ArgTypes&&... Args ) noexcept
+            FORCEINLINE explicit TTupleLeaf( ArgTypes&&... Args ) noexcept
             : Value( Forward<ArgTypes>( Args )... )
         {
         }
@@ -58,7 +58,7 @@ namespace Internal
             ::Swap<ValueType>( Value, Other.Value );
             return 0;
         }
-        
+
         ValueType Value;
     };
 
@@ -67,14 +67,14 @@ namespace Internal
     struct TTupleLeaf<Index, ValueType&>
     {
         /* Defalts */
-        TTupleLeaf(const TTupleLeaf&) = default;
+        TTupleLeaf( const TTupleLeaf& ) = default;
         TTupleLeaf( TTupleLeaf&& ) = default;
         TTupleLeaf& operator=( const TTupleLeaf& ) = delete;
         TTupleLeaf& operator=( TTupleLeaf&& ) = delete;
 
         /* Move constructor */
         FORCEINLINE explicit TTupleLeaf( ValueType&& InValue ) noexcept
-            : Value( Move(InValue) )
+            : Value( Move( InValue ) )
         {
         }
 
@@ -207,7 +207,7 @@ namespace Internal
         /* Swap this storage with another */
         FORCEINLINE void Swap( TTupleStorage& Other ) noexcept
         {
-            ExpandPacks( TTupleLeaf<Indices, Types>::Swap( static_cast<TTupleLeaf<Indices, Types>&>(Other))... );
+            ExpandPacks( TTupleLeaf<Indices, Types>::Swap( static_cast<TTupleLeaf<Indices, Types>&>(Other) )... );
         }
 
     public:
@@ -263,7 +263,7 @@ namespace Internal
 
     /* Specialization of a TTuple with only two elements making it similar to TPair */
     template<typename FirstType, typename SecondType>
-    class TTupleStorage<TIntegerSequence<uint32, 0, 1>, FirstType, SecondType> 
+    class TTupleStorage<TIntegerSequence<uint32, 0, 1>, FirstType, SecondType>
     {
         template<uint32 Index>
         struct TGetByIndexHelper;
@@ -273,13 +273,13 @@ namespace Internal
         {
             typedef FirstType Type;
 
-            static FORCEINLINE FirstType& Get( TTupleStorage& Tuple) 
-            { 
+            static FORCEINLINE FirstType& Get( TTupleStorage& Tuple )
+            {
                 return Tuple.First;
             }
 
-            static FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple) 
-            { 
+            static FORCEINLINE const FirstType& Get( const TTupleStorage& Tuple )
+            {
                 return Tuple.First;
             }
         };
@@ -289,13 +289,13 @@ namespace Internal
         {
             typedef SecondType Type;
 
-            static FORCEINLINE SecondType& Get( TTupleStorage& Tuple) 
-            { 
+            static FORCEINLINE SecondType& Get( TTupleStorage& Tuple )
+            {
                 return Tuple.Second;
             }
-            
-            static FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple) 
-            { 
+
+            static FORCEINLINE const SecondType& Get( const TTupleStorage& Tuple )
+            {
                 return Tuple.Second;
             }
         };
@@ -312,13 +312,13 @@ namespace Internal
         {
             typedef FirstType Type;
 
-            static FORCEINLINE FirstType& Get( TTupleStorage& Tuple) 
-            { 
+            static FORCEINLINE FirstType& Get( TTupleStorage& Tuple )
+            {
                 return Tuple.First;
             }
 
-            static FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple) 
-            { 
+            static FORCEINLINE const FirstType& Get( const TTupleStorage& Tuple )
+            {
                 return Tuple.First;
             }
         };
@@ -328,13 +328,13 @@ namespace Internal
         {
             typedef SecondType Type;
 
-            static FORCEINLINE SecondType& Get( TTupleStorage& Tuple) 
-            { 
+            static FORCEINLINE SecondType& Get( TTupleStorage& Tuple )
+            {
                 return Tuple.Second;
             }
-            
-            static FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple) 
-            { 
+
+            static FORCEINLINE const SecondType& Get( const TTupleStorage& Tuple )
+            {
                 return Tuple.Second;
             }
         };
@@ -350,15 +350,15 @@ namespace Internal
 
         /* Init types */
         FORCEINLINE explicit TTupleStorage( const FirstType& InFirst, const SecondType& InSecond )
-            : First(InFirst)
-            , Second(InSecond)
+            : First( InFirst )
+            , Second( InSecond )
         {
         }
 
         /* Init with rvalue types, with other types */
         template<typename OtherFirstType, typename OtherSecondType>
         FORCEINLINE explicit TTupleStorage( OtherFirstType&& InFirst, OtherSecondType&& InSecond )
-            : First( Forward<OtherFirstType>(InFirst) )
+            : First( Forward<OtherFirstType>( InFirst ) )
             , Second( Forward<OtherSecondType>( InSecond ) )
         {
         }
@@ -495,10 +495,10 @@ public:
 
     /* Constructor forwarding types */
     template<typename... ArgTypes, typename = typename TEnableIf<(NumElements > 0)>::Type>
-    FORCEINLINE explicit TTuple( ArgTypes&&... Args )
-        : Super( Forward<ArgTypes>( Args )... )
-    {
-    }
+                FORCEINLINE explicit TTuple( ArgTypes&&... Args )
+                    : Super( Forward<ArgTypes>( Args )... )
+                {
+                }
 
 public:
 
@@ -564,5 +564,5 @@ inline auto& TupleGet( const TTuple<Types...>& Tuple ) noexcept
 template<typename... Types>
 inline TTuple<Types...> MakeTuple( Types&&... InTypes ) noexcept
 {
-    return TTuple<Types...>( Forward<Types>( InTypes)... );
+    return TTuple<Types...>( Forward<Types>( InTypes )... );
 }
