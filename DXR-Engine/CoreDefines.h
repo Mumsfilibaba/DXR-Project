@@ -124,12 +124,12 @@
 
 /* Compiler Specific */
 #if COMPILER_MSVC
-#include "Compiler/CompilerMSVC.h"
+#include "CompilerSpecific/CompilerMSVC.h"
 #elif COMPILER_CLANG
-#include "Compiler/CompilerClang.h" 
+#include "CompilerSpecific/CompilerClang.h" 
 #elif COMPILER_GCC 
-#include "Compiler/CompilerGCC.h"
+#include "CompilerSpecific/CompilerGCC.h"
 #elif COMPILER_UNDEFINED 
-#include "Compiler/CompilerDefault.h"
+#include "CompilerSpecific/CompilerDefault.h"
 #error "Unknown Compiler"
 #endif

@@ -6,6 +6,11 @@ RefCountedObject::RefCountedObject()
     AddRef();
 }
 
+RefCountedObject::~RefCountedObject()
+{
+    Assert( StrongReferences.Load == 0 );
+}
+
 int32 RefCountedObject::AddRef()
 {
     return ++StrongReferences;

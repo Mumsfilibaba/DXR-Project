@@ -25,8 +25,8 @@ bool TaskManager::PopTask( Task& OutTask )
 
     if ( !Tasks.IsEmpty() )
     {
-        OutTask = Tasks.Front();
-        Tasks.Erase( Tasks.Begin() );
+        OutTask = Tasks.FirstElement();
+        Tasks.RemoveAt( 0 );
 
         return true;
     }
@@ -45,7 +45,7 @@ void TaskManager::KillWorkers()
 
 void TaskManager::WorkThread()
 {
-    LOG_INFO( "Starting Workthread: " + std::to_string( PlatformProcess::GetThreadID() ) );
+    LOG_INFO( "Starting Work thread: " + std::to_string( PlatformProcess::GetThreadID() ) );
 
     while ( Instance.IsRunning )
     {
@@ -58,12 +58,12 @@ void TaskManager::WorkThread()
         }
         else
         {
-            CurrentTask.Delegate();
+            CurrentTask.Delegate.ExecuteIfBound();
             Instance.TaskCompleted++;
         }
     }
 
-    LOG_INFO( "End Workthread: " + std::to_string( PlatformProcess::GetThreadID() ) );
+    LOG_INFO( "End Work thread: " + std::to_string( PlatformProcess::GetThreadID() ) );
 }
 
 bool TaskManager::Init()
@@ -98,7 +98,7 @@ TaskID TaskManager::AddTask( const Task& NewTask )
 {
     {
         TScopedLock<Mutex> Lock( TaskMutex );
-        Tasks.EmplaceBack( NewTask );
+        Tasks.Emplace( NewTask );
     }
 
     ThreadID NewTaskID = TaskAdded.Increment();

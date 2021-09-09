@@ -8,7 +8,7 @@
 
 #include "Core/Engine/Engine.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Threading/Platform/Mutex.h"
+#include "Core/Threading/Lockable.h"
 
 constexpr float MICROSECONDS = 1000.0f;
 constexpr float MILLISECONDS = 1000.0f * 1000.0f;
@@ -158,11 +158,11 @@ struct ProfilerData
 
     bool EnableProfiler = true;
 
-    std::unordered_map<std::string, ProfileSample> CPUSamples;
-    Mutex CPUSamplesMutex;
+    using ProfileSamplesMap = std::unordered_map<std::string, ProfileSample>;
+    Lockable<ProfileSamplesMap> CPUSamples;
 
-    std::unordered_map<std::string, GPUProfileSample> GPUSamples;
-    Mutex GPUSamplesMutex;
+    using GPUProfileSamplesMap = std::unordered_map<std::string, GPUProfileSample>;
+    Lockable<GPUProfileSamplesMap> GPUSamples;
 };
 
 static ProfilerData GProfilerData;

@@ -1,33 +1,34 @@
 #pragma once
 #include "Windows/Windows.h"
 
-class WindowsMutex
+class CWindowsMutex
 {
-    friend class WindowsConditionVariable;
+    friend class CWindowsConditionVariable;
 
 public:
-    WindowsMutex() noexcept
+
+    FORCEINLINE CWindowsMutex() noexcept
         : Section()
     {
         InitializeCriticalSection( &Section );
     }
 
-    ~WindowsMutex()
+    FORCEINLINE ~CWindowsMutex()
     {
         DeleteCriticalSection( &Section );
     }
 
-    void Lock() noexcept
+    FORCEINLINE void Lock() noexcept
     {
         EnterCriticalSection( &Section );
     }
 
-    bool TryLock() noexcept
+    FORCEINLINE bool TryLock() noexcept
     {
-        return TryEnterCriticalSection( &Section );
+        return !!TryEnterCriticalSection( &Section );
     }
 
-    void Unlock() noexcept
+    FORCEINLINE void Unlock() noexcept
     {
         LeaveCriticalSection( &Section );
     }
@@ -35,5 +36,3 @@ public:
 private:
     CRITICAL_SECTION Section;
 };
-
-typedef WindowsMutex Mutex;

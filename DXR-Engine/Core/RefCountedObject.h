@@ -7,7 +7,7 @@ class RefCountedObject
 {
 public:
     RefCountedObject();
-    virtual ~RefCountedObject() = default;
+    virtual ~RefCountedObject();
 
     int32 AddRef();
     int32 Release();

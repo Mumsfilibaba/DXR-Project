@@ -3,30 +3,35 @@
 
 #include "Core/Threading/ScopedLock.h"
 
-class WindowsConditionVariable
+class CWindowsConditionVariable
 {
 public:
-    WindowsConditionVariable()
+    FORCEINLINE CWindowsConditionVariable()
         : ConditionVariable()
     {
         InitializeConditionVariable( &ConditionVariable );
     }
 
-    void NotifyOne() noexcept
+    FORCEINLINE ~CWindowsConditionVariable()
+    {
+        NotifyAll();
+    }
+
+    FORCEINLINE void NotifyOne() noexcept
     {
         WakeConditionVariable( &ConditionVariable );
     }
 
-    void NotifyAll() noexcept
+    FORCEINLINE void NotifyAll() noexcept
     {
         WakeAllConditionVariable( &ConditionVariable );
     }
 
-    bool Wait( TScopedLock<Mutex>& Lock ) noexcept
+    FORCEINLINE bool Wait( TScopedLock<Mutex>& Lock ) noexcept
     {
         SetLastError( 0 );
 
-        BOOL Result = SleepConditionVariableCS( &ConditionVariable, &Lock.GetLock().Section, INFINITE );
+        bool Result = !!SleepConditionVariableCS( &ConditionVariable, &Lock.GetLock().Section, INFINITE );
         if ( !Result )
         {
             // TODO: Check Error
@@ -41,5 +46,3 @@ public:
 private:
     CONDITION_VARIABLE ConditionVariable;
 };
-
-typedef WindowsConditionVariable ConditionVariable;
