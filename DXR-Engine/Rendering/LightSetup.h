@@ -6,7 +6,7 @@
 #include "Scene/Scene.h"
 #include "Scene/Lights/DirectionalLight.h"
 
-#include "Math/Vector4.h"
+#include "Core/Math/Vector4.h"
 
 struct PointLightData
 {

@@ -38,7 +38,7 @@ struct KeyTypedEvent
     {
     }
 
-    FORCEINLINE const char GetPrintableCharacter() const
+    FORCEINLINE char GetPrintableCharacter() const
     {
         return static_cast<char>(Character);
     }

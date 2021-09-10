@@ -1,7 +1,4 @@
 #pragma once
-#include <DirectXMath.h>
-using namespace DirectX;
-
 #include "AABB.h"
 #include "Matrix4.h"
 #include "Plane.h"

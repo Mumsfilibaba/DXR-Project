@@ -181,7 +181,7 @@ public:
             // Lengths are not equal so the strings cannot be equal
             return -1;
         }
-        else if ( (ThisLength == 0) )
+        else if ( ThisLength == 0 )
         {
             // Lengths are equal, length of view is zero, so they must be equal
             return 0;
@@ -224,7 +224,7 @@ public:
             // Lengths are not equal so the strings cannot be equal
             return -1;
         }
-        else if ( (ThisLength == 0) )
+        else if ( ThisLength == 0 )
         {
             // Lengths are equal, length of view is zero, so they must be equal
             return 0;

@@ -16,12 +16,12 @@ TaskManager::TaskManager()
 
 TaskManager::~TaskManager()
 {
-    // Empty for now
+	KillWorkers();
 }
 
 bool TaskManager::PopTask( Task& OutTask )
 {
-    TScopedLock<Mutex> Lock( TaskMutex );
+    TScopedLock<CCriticalSection> Lock( TaskMutex );
 
     if ( !Tasks.IsEmpty() )
     {
@@ -53,7 +53,7 @@ void TaskManager::WorkThread()
 
         if ( !Instance.PopTask( CurrentTask ) )
         {
-            TScopedLock<Mutex> Lock( Instance.WakeMutex );
+            TScopedLock<CCriticalSection> Lock( Instance.WakeMutex );
             Instance.WakeCondition.Wait( Lock );
         }
         else
@@ -97,7 +97,7 @@ bool TaskManager::Init()
 TaskID TaskManager::AddTask( const Task& NewTask )
 {
     {
-        TScopedLock<Mutex> Lock( TaskMutex );
+        TScopedLock<CCriticalSection> Lock( TaskMutex );
         Tasks.Emplace( NewTask );
     }
 

@@ -4,6 +4,7 @@
 
 #include "Core/Templates/Move.h"
 #include "Core/Templates/FunctionType.h"
+#include "Core/Containers/Tuple.h"
 
 /* Handle type */
 typedef int64 DelegateHandle;
@@ -110,7 +111,7 @@ class TDelegateInstance : public IDelegateInstance
 public:
 
     /* Executes the delegates and calls the stored function or functor */
-    virtual ReturnType Execute( ArgTypes&&... Args ) = 0;
+    virtual ReturnType Execute( ArgTypes... Args ) = 0;
 
 public:
 
@@ -165,7 +166,7 @@ public:
     }
 
     /* Execute the function */
-    virtual ReturnType Execute( ArgTypes&&... Args ) override final
+    virtual ReturnType Execute( ArgTypes... Args ) override final
     {
         return Payload.ApplyAfter( Function, Forward<ArgTypes>( Args )... );
     }
@@ -203,7 +204,7 @@ public:
     }
 
     /* Execute the function */
-    virtual ReturnType Execute( ArgTypes&&... Args ) override final
+    virtual ReturnType Execute( ArgTypes... Args ) override final
     {
         return Function( Forward<ArgTypes>( Args )... );
     }
@@ -245,7 +246,7 @@ public:
     }
 
     /* Execute function */
-    virtual ReturnType Execute( ArgTypes&&... Args ) override final
+    virtual ReturnType Execute( ArgTypes... Args ) override final
     {
         return Payload.ApplyAfter( Function, This, Forward<ArgTypes>( Args )... );
     }
@@ -300,7 +301,7 @@ public:
     }
 
     /* Execute function */
-    virtual ReturnType Execute( ArgTypes&&... Args ) override final
+    virtual ReturnType Execute( ArgTypes... Args ) override final
     {
         return ((*This).*Function)(Forward<ArgTypes>( Args )...);
     }
@@ -354,7 +355,7 @@ public:
     }
 
     /* Execute Functor */
-    virtual ReturnType Execute( ArgTypes&&... Args ) override
+    virtual ReturnType Execute( ArgTypes... Args ) override
     {
         return Payload.ApplyAfter( Functor, Forward<ArgTypes>( Args )... );
     }
@@ -391,7 +392,7 @@ public:
     }
 
     /* Execute Functor */
-    virtual ReturnType Execute( ArgTypes&&... Args ) override
+    virtual ReturnType Execute( ArgTypes... Args ) override
     {
         return Functor( Forward<ArgTypes>( Args )... );
     }

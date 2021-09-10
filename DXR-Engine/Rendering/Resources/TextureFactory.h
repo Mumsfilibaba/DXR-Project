@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderLayer/RenderingCore.h"
 
-#include "Utilities/StringUtilities.h"
+#include "Core/Utilities/StringUtilities.h"
 
 enum ETextureFactoryFlags : uint32
 {

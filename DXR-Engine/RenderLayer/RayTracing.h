@@ -4,6 +4,9 @@
 
 #include "Core/Containers/SharedPtr.h"
 
+#include "Core/Math/Vector3.h"
+#include "Core/Math/Matrix3x4.h"
+
 enum ERayTracingStructureBuildFlag
 {
     RayTracingStructureBuildFlag_None = 0x0,
@@ -66,7 +69,7 @@ struct RayTracingGeometryInstance
     uint32 HitGroupIndex = 0;
     uint32 Flags = RayTracingInstanceFlags_None;
     uint32 Mask = 0xff;
-    DirectX::XMFLOAT3X4 Transform;
+    CMatrix3x4 Transform;
 };
 
 struct RayPayload
@@ -85,22 +88,22 @@ struct RayTracingShaderResources
 {
     void AddConstantBuffer( ConstantBuffer* Buffer )
     {
-        ConstantBuffers.EmplaceBack( Buffer );
+        ConstantBuffers.Emplace( Buffer );
     }
 
     void AddShaderResourceView( ShaderResourceView* View )
     {
-        ShaderResourceViews.EmplaceBack( View );
+        ShaderResourceViews.Emplace( View );
     }
 
     void AddUnorderedAccessView( UnorderedAccessView* View )
     {
-        UnorderedAccessViews.EmplaceBack( View );
+        UnorderedAccessViews.Emplace( View );
     }
 
     void AddSamplerState( SamplerState* State )
     {
-        SamplerStates.EmplaceBack( State );
+        SamplerStates.Emplace( State );
     }
 
     uint32 NumResources() const

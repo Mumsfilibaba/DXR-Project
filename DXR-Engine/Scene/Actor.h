@@ -1,10 +1,12 @@
 #pragma once
 #include "Core/CoreObject/CoreObject.h"
 #include "Core/Containers/Array.h"
+#include "Core/Containers/String.h"
 #include "Core/Math/Vector3.h"
+#include "Core/Math/Matrix3x4.h"
 #include "Core/Math/Matrix4.h"
 
-#include <DirectXMath.h>
+#include <string> // Remove later
 
 class Actor;
 
@@ -70,7 +72,7 @@ public:
         return MatrixInv;
     }
 
-    const DirectX::XMFLOAT3X4& GetTinyMatrix() const
+    const CMatrix3x4& GetTinyMatrix() const
     {
         return TinyMatrix;
     }
@@ -81,7 +83,7 @@ private:
     CMatrix4 Matrix;
     CMatrix4 MatrixInv;
 
-    DirectX::XMFLOAT3X4 TinyMatrix;
+    CMatrix3x4 TinyMatrix;
 
     CVector3 Translation;
     CVector3 Scale;
@@ -155,14 +157,15 @@ public:
     {
         return Transform;
     }
+
     const Transform& GetTransform() const
     {
         return Transform;
     }
 
 private:
-    Scene* Scene = nullptr;
-    Transform Transform;
+    Scene*             Scene = nullptr;
+    Transform          Transform;
     TArray<Component*> Components;
     std::string        Name;
 };

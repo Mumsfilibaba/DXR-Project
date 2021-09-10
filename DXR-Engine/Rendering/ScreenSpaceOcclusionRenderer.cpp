@@ -3,8 +3,8 @@
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
 
-#include "Debug/Profiler.h"
-#include "Debug/Console/Console.h"
+#include "Core/Debug/Profiler.h"
+#include "Core/Debug/Console/Console.h"
 
 TConsoleVariable<float> GSSAORadius( 0.4f );
 TConsoleVariable<float> GSSAOBias( 0.025f );
@@ -57,29 +57,27 @@ bool ScreenSpaceOcclusionRenderer::Init( FrameResources& FrameResources )
     std::uniform_real_distribution<float> RandomFloats( 0.0f, 1.0f );
     std::default_random_engine Generator;
 
-    XMVECTOR Normal = XMVectorSet( 0.0f, 0.0f, 1.0f, 0.0f );
+    CVector3 Normal = CVector3( 0.0f, 0.0f, 1.0f );
 
-    TArray<XMFLOAT3> SSAOKernel;
+    TArray<CVector3> SSAOKernel;
     for ( uint32 i = 0; i < 512 && SSAOKernel.Size() < 64; i++ )
     {
-        XMVECTOR XmSample = XMVectorSet( RandomFloats( Generator ) * 2.0f - 1.0f, RandomFloats( Generator ) * 2.0f - 1.0f, RandomFloats( Generator ), 0.0f );
-        XmSample = XMVector3Normalize( XmSample );
+		CVector3 Sample = CVector3( RandomFloats( Generator ) * 2.0f - 1.0f, RandomFloats( Generator ) * 2.0f - 1.0f, RandomFloats( Generator ) );
+		Sample.Normalize();
 
-        float Dot = XMVectorGetX( XMVector3Dot( XmSample, Normal ) );
+        float Dot = Sample.DotProduct( Normal );
         if ( NMath::Abs( Dot ) > 0.95f )
         {
             continue;
         }
 
-        XmSample = XMVectorScale( XmSample, RandomFloats( Generator ) );
+		Sample *= RandomFloats( Generator );
 
         float Scale = float( i ) / 64.0f;
         Scale = NMath::Lerp( 0.1f, 1.0f, Scale * Scale );
-        XmSample = XMVectorScale( XmSample, Scale );
-
-        XMFLOAT3 Sample;
-        XMStoreFloat3( &Sample, XmSample );
-        SSAOKernel.EmplaceBack( Sample );
+		Sample *= Scale;
+		
+        SSAOKernel.Emplace( Sample );
     }
 
     // Generate noise
@@ -88,10 +86,10 @@ bool ScreenSpaceOcclusionRenderer::Init( FrameResources& FrameResources )
     {
         const float x = RandomFloats( Generator ) * 2.0f - 1.0f;
         const float y = RandomFloats( Generator ) * 2.0f - 1.0f;
-        SSAONoise.EmplaceBack( x );
-        SSAONoise.EmplaceBack( y );
-        SSAONoise.EmplaceBack( 0.0f );
-        SSAONoise.EmplaceBack( 0.0f );
+        SSAONoise.Emplace( x );
+        SSAONoise.Emplace( y );
+        SSAONoise.Emplace( 0.0f );
+        SSAONoise.Emplace( 0.0f );
     }
 
     SSAONoiseTex = CreateTexture2D( EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, EResourceState::NonPixelShaderResource, nullptr );

@@ -2,14 +2,14 @@
 
 #include "Scene/Camera.h"
 
-#include "Math/Math.h"
+#include "Core/Math/Math.h"
 
 DirectionalLight::DirectionalLight()
     : Light()
     , Direction( 0.0f, -1.0f, 0.0f )
     , Rotation( 0.0f, 0.0f, 0.0f )
-    , Position( 0.0f, 0.0f, 0.0f )
     , LookAt( 0.0f, 0.0f, 0.0f )
+	, Position( 0.0f, 0.0f, 0.0f )
     , Matrices()
 {
     CORE_OBJECT_INIT();
@@ -103,7 +103,7 @@ void DirectionalLight::UpdateCascades( Camera& Camera )
         for ( uint32 j = 0; j < 8; j++ )
         {
             CVector4 Corner = InvCamera * FrustumCorners[j];
-            FrustumCorners[j] = FrustumCorners[j] / FrustumCorners[j].w;
+            FrustumCorners[j] = Corner / Corner.w;
         }
 
         for ( uint32 j = 0; j < 4; j++ )

@@ -1,14 +1,13 @@
 #pragma once
 #include "Core.h"
-
 #include "Core/Templates/IsSigned.h"
-
 #include "Core/Threading/Platform/PlatformAtomic.h"
 
 template<typename T>
 class TInterlockedInt
 {
 public:
+	
     typedef T Type;
 
     static_assert(TIsSigned<T>::Value, "InterlockedInt only supports signed types");
@@ -46,7 +45,7 @@ public:
         return Value;
     }
 
-    FORCEINLINE T Sub( T RHS ) noexcept
+    FORCEINLINE T Subtract( T RHS ) noexcept
     {
         PlatformAtomic::InterlockedSub( &Value, RHS );
         return Value;
@@ -128,7 +127,7 @@ public:
 
     FORCEINLINE T operator-=( T RHS ) noexcept
     {
-        return Sub( RHS );
+        return Subtract( RHS );
     }
 
     FORCEINLINE T operator&=( T RHS ) noexcept

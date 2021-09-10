@@ -73,14 +73,17 @@ public:
     {
         return nullptr;
     }
-    virtual class IndexBuffer* AsIndexBuffer()
+    
+	virtual class IndexBuffer* AsIndexBuffer()
     {
         return nullptr;
     }
-    virtual class ConstantBuffer* AsConstantBuffer()
+    
+	virtual class ConstantBuffer* AsConstantBuffer()
     {
         return nullptr;
     }
+	
     virtual class StructuredBuffer* AsStructuredBuffer()
     {
         return nullptr;
@@ -98,11 +101,13 @@ public:
     {
         return (Flags & BufferFlag_Upload);
     }
-    bool IsUAV() const
+    
+	bool IsUAV() const
     {
         return (Flags & BufferFlag_UAV);
     }
-    bool IsSRV() const
+    
+	bool IsSRV() const
     {
         return (Flags & BufferFlag_SRV);
     }
@@ -116,8 +121,8 @@ class VertexBuffer : public Buffer
 public:
     VertexBuffer( uint32 InNumVertices, uint32 InStride, uint32 InFlags )
         : Buffer( InFlags )
+		, NumVertices( InNumVertices )
         , Stride( InStride )
-        , NumVertices( InNumVertices )
     {
     }
 

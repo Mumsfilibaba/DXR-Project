@@ -1,5 +1,5 @@
 #pragma once
-#include "WindowsMutex.h"
+#include "WindowsCriticalSection.h"
 
 #include "Core/Threading/ScopedLock.h"
 
@@ -27,11 +27,11 @@ public:
         WakeAllConditionVariable( &ConditionVariable );
     }
 
-    FORCEINLINE bool Wait( TScopedLock<Mutex>& Lock ) noexcept
+    FORCEINLINE bool Wait( TScopedLock<CCriticalSection>& Lock ) noexcept
     {
         SetLastError( 0 );
 
-        bool Result = !!SleepConditionVariableCS( &ConditionVariable, &Lock.GetLock().Section, INFINITE );
+        bool Result = !!SleepConditionVariableCS( &ConditionVariable, &Lock.GetLock().GetSection(), INFINITE );
         if ( !Result )
         {
             // TODO: Check Error

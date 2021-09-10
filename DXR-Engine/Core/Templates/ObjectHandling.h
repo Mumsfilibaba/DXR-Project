@@ -180,20 +180,11 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type DestructRange( 
     }
 }
 
-#ifdef COMPILER_MSVC
-#pragma warning(push)
-#pragma warning( disable : 4100 ) // Disable unreferenced variable
-#endif
-
 /* For trivial objects, do nothing */
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type DestructRange( const T* StartObject, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type DestructRange( const T*, uint32 ) noexcept
 {
 }
-
-#ifdef COMPILER_MSVC
-#pragma warning(pop)
-#endif
 
 /* Destruct a single object */
 template<typename T>

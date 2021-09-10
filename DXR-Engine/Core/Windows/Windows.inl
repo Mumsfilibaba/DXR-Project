@@ -1,5 +1,9 @@
 #pragma once
 
+#if defined(PLATFORM_WINDOWS)
+
+/* Helper for retreiving a function from DLL */
+
 template<typename T>
 inline T GetTypedProcAddress( HMODULE hModule, LPCSTR lpProcName )
 {
@@ -12,3 +16,5 @@ inline T GetTypedProcAddress( HMODULE hModule, LPCSTR lpProcName )
 
     return Func;
 }
+
+#endif

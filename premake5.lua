@@ -69,6 +69,11 @@ workspace "DXR-Project"
         {
             "PLATFORM_WINDOWS",
         }
+	filter "System:macosx"
+		defines
+		{
+			"PLATFORM_MACOS",
+		}
     filter {}
 
 	-- Dependencies
@@ -181,6 +186,18 @@ workspace "DXR-Project"
 			"DXR-Engine/Math/Tests/**",
 		}
 		
+		-- Remove non macos files
+		filter "system:macosx"
+			excludes 
+			{
+				"DXR-Engine/D3D12/**",
+				"DXR-Engine/Core/Windows/**",
+				"DXR-Engine/Core/Application/Windows/**",
+				"DXR-Engine/Core/Threading/Windows/**",
+				"DXR-Engine/Core/Time/Windows/**",
+			}
+		filter {}
+
 		-- In visual studio show natvis files
 		filter "action:vs*"
 			vpaths { ["Natvis"] = "**.natvis" }

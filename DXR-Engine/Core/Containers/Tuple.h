@@ -183,7 +183,7 @@ namespace Internal
 
     /* Implementation of tuple */
     template <typename Indices, typename... Types>
-    struct TTupleStorage;
+    class TTupleStorage;
 
     template<uint32... Indices, typename... Types>
     class TTupleStorage<TIntegerSequence<uint32, Indices...>, Types...> : public TTupleLeaf<Indices, Types>...

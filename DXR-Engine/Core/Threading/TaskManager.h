@@ -1,7 +1,7 @@
 #pragma once
-#include "ThreadSafeInt.h"
+#include "InterlockedInt.h"
 
-#include "Platform/Mutex.h"
+#include "Platform/CriticalSection.h"
 #include "Platform/ConditionVariable.h"
 
 #include "Generic/GenericThread.h"
@@ -43,13 +43,13 @@ private:
     TArray<TSharedRef<GenericThread>> WorkThreads;
 
     TArray<Task> Tasks;
-    Mutex TaskMutex;
+    CCriticalSection TaskMutex;
 
     ConditionVariable WakeCondition;
-    Mutex WakeMutex;
+    CCriticalSection WakeMutex;
 
-    ThreadSafeInt32 TaskAdded;
-    ThreadSafeInt32 TaskCompleted;
+    InterlockedInt32 TaskAdded;
+    InterlockedInt32 TaskCompleted;
 
     volatile bool IsRunning;
 

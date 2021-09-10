@@ -1,6 +1,8 @@
 #pragma once
 #include "ResourceBase.h"
 
+#include "Core/Math/Float.h"
+
 enum class ESamplerMode : uint8
 {
     Unknown = 0,

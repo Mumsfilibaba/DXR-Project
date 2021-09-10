@@ -4,17 +4,15 @@
 #include "Resources/TextureFactory.h"
 #include "Resources/Mesh.h"
 
-#include "Math/Frustum.h"
-
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
-#include "Core/Engine/Engine.h"
-
 #include "RenderLayer/ShaderCompiler.h"
 
-#include "Debug/Profiler.h"
-#include "Debug/Console/Console.h"
+#include "Core/Math/Frustum.h"
+#include "Core/Engine/Engine.h"
+#include "Core/Debug/Profiler.h"
+#include "Core/Debug/Console/Console.h"
 
 #include <algorithm>
 #include <imgui_internal.h>

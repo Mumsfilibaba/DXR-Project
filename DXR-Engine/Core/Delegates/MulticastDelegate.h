@@ -4,9 +4,9 @@
 
 /* Macros for delcaring delegate types */
 
-#define DECLARE_MULTICAST_DELEGATE( DelegateName, ... )               \
+#define DECLARE_MULTICAST_DELEGATE( DelegateName, ... )         \
     class DelegateName : public TMulticastDelegate<__VA_ARGS__> \
-    {                                                                 \
+    {                                                           \
     };
 
 /* Multicast delegate */
@@ -101,7 +101,7 @@ public:
     }
 
     /* Broadcast to all bound delegates */
-    FORCEINLINE void Broadcast( ArgTypes&&... Args )
+    FORCEINLINE void Broadcast( ArgTypes... Args )
     {
         Super::Lock();
 

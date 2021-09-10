@@ -2,9 +2,14 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Input/InputCodes.h"
 
-#ifdef COMPILER_MSVC
+#if defined(COMPILER_MSVC)
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
+
+#elif defined(COMPILER_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
 #endif
 
 class PlatformCallbacks;
@@ -79,6 +84,7 @@ public:
     static void SetCapture( GenericWindow* Window )
     {
     }
+
     static void SetActiveWindow( GenericWindow* Window )
     {
     }
@@ -87,6 +93,7 @@ public:
     {
         return nullptr;
     }
+
     static GenericWindow* GetActiveWindow()
     {
         return nullptr;
@@ -95,6 +102,7 @@ public:
     static void SetCursor( GenericCursor* Cursor )
     {
     }
+
     static GenericCursor* GetCursor()
     {
         return nullptr;
@@ -103,6 +111,7 @@ public:
     static void SetCursorPos( GenericWindow* RelativeWindow, int32 x, int32 y )
     {
     }
+
     static void GetCursorPos( GenericWindow* RelativeWindow, int32& OutX, int32& OutY )
     {
     }
@@ -114,6 +123,10 @@ protected:
     static PlatformCallbacks* Callbacks;
 };
 
-#ifdef COMPILER_MSVC
+#if defined(COMPILER_MSVC)
 #pragma warning(pop)
+
+#elif defined(COMPILER_CLANG)
+#pragma clang diagnostic pop
+
 #endif

@@ -1,8 +1,7 @@
 #pragma once
 #include "Resources.h"
 
-#include "Memory/Memory.h"
-
+#include "Core/Memory/Memory.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/StaticArray.h"
 

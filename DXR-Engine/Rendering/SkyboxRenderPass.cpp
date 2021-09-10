@@ -4,7 +4,7 @@
 #include "RenderLayer/ShaderCompiler.h"
 #include "Rendering/Resources/TextureFactory.h"
 
-#include "Debug/Profiler.h"
+#include "Core/Debug/Profiler.h"
 
 bool SkyboxRenderPass::Init( FrameResources& FrameResources )
 {

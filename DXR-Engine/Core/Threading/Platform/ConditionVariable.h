@@ -1,7 +1,16 @@
 #pragma once
-#ifdef PLATFORM_WINDOWS
+
+#if defined(PLATFORM_WINDOWS)
 #include "Core/Threading/Windows/WindowsConditionVariable.h"
 typedef CWindowsConditionVariable ConditionVariable;
+
+#elif defined(PLATFORM_MACOS)
+#include "Core/Threading/Generic/GenericConditionVariable.h"
+typedef CGenericConditionVariable ConditionVariable;
+//TODO: MacCondition variable
+
 #else
-#error No Platform Defined
+#include "Core/Threading/Generic/GenericConditionVariable.h"
+typedef CGenericConditionVariable ConditionVariable;
+
 #endif

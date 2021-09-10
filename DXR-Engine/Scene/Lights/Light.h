@@ -1,7 +1,6 @@
 #pragma once
+#include "Core/Math/Vector3.h"
 #include "Core/CoreObject/CoreObject.h"
-
-#include "Math/Vector3.h"
 
 class Light : public CoreObject
 {

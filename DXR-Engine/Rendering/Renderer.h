@@ -1,5 +1,4 @@
 #pragma once
-#include "Time/Timer.h"
 
 #include "Scene/Actor.h"
 #include "Scene/Scene.h"
@@ -24,6 +23,7 @@
 
 #include "DebugUI.h"
 
+#include "Core/Time/Timer.h"
 #include "Core/Threading/TaskManager.h"
 
 class Renderer

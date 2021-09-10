@@ -3,20 +3,19 @@
 #include "Assets/VertexFormat.h"
 #include "Assets/MeshUtilities.h"
 
-#include "Math/Matrix4.h"
-
-#include "Core/Containers/HashTable.h"
-
 #include "Utilities/StringUtilities.h"
+
+#include "Core/Math/Matrix4.h"
+#include "Core/Containers/HashTable.h"
 
 #include <ofbx.h>
 
-static String ExtractPath( const String& FullFilePath )
+static CString ExtractPath( const CString& FullFilePath )
 {
-    auto Pos = FullFilePath.find_last_of( '/' );
-    if ( Pos != String::npos )
+    auto Pos = FullFilePath.ReverseFind( '/' );
+    if ( Pos != CString::InvalidPosition )
     {
-        return FullFilePath.substr( 0, Pos );
+        return FullFilePath.SubString( 0, Pos );
     }
     else
     {
@@ -59,7 +58,7 @@ static void GetMatrix( const ofbx::Object* Mesh, CMatrix4& OutMatrix )
     }
 }
 
-static TSharedPtr<SImage2D> LoadMaterialTexture( const String& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type )
+static TSharedPtr<SImage2D> LoadMaterialTexture( const CString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type )
 {
     const ofbx::Texture* MaterialTexture = Material->getTexture( Type );
     if ( MaterialTexture )
@@ -69,7 +68,7 @@ static TSharedPtr<SImage2D> LoadMaterialTexture( const String& Path, const ofbx:
         MaterialTexture->getRelativeFileName().toString( StringBuffer );
 
         // Make sure that correct slashes are used
-        String Filename = StringBuffer;
+        CString Filename = StringBuffer;
         ConvertBackslashes( Filename );
 
         TSharedPtr<SImage2D> Texture = MakeShared<SImage2D>();
@@ -81,12 +80,12 @@ static TSharedPtr<SImage2D> LoadMaterialTexture( const String& Path, const ofbx:
     }
 }
 
-bool CFBXLoader::LoadFile( const String& Filename, SSceneData& OutScene, uint32 Flags ) noexcept
+bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32 Flags ) noexcept
 {
     OutScene.Models.Clear();
     OutScene.Materials.Clear();
 
-    FILE* File = fopen( Filename.c_str(), "rb" );
+    FILE* File = fopen( Filename.CStr(), "rb" );
     if ( !File )
     {
         LOG_ERROR( "[CFBXLoader]: Failed to open '" + Filename + "'" );

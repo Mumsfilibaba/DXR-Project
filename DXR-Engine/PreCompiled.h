@@ -5,14 +5,8 @@
 #include <random>
 
 /* Windows Specific */
-#ifdef PLATFORM_WINDOWS
-#define NOMINMAX
-#include "Core/Windows/Windows.h"
-
-#include <dxgi1_6.h>
-#include <d3d12.h>
-
-#include <wrl/client.h>
+#if defined(PLATFORM_WINDOWS)
+#include "Core/Windows/PreCompiledWindows.h"
 #endif
 
 #include <imgui.h>
@@ -22,9 +16,9 @@
 
 /* Core */
 #include "Core.h"
+#include "Core/RefCountedObject.h"
 #include "Core/CoreObject/ClassType.h"
 #include "Core/CoreObject/CoreObject.h"
-#include "Core/RefCountedObject.h"
 
 /* Containers */
 #include "Core/Containers/SharedRef.h"
@@ -35,6 +29,7 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/StaticString.h"
 #include "Core/Containers/StringView.h"
 
 /* Templates */
@@ -69,5 +64,5 @@
 #include "Core/Math/SIMD.h"
 
 /* Memory */
-#include "Core/Memory/Memory.h"
 #include "Core/Memory/New.h"
+#include "Core/Memory/Memory.h"

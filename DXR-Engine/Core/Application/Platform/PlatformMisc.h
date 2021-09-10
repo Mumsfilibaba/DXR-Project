@@ -1,8 +1,16 @@
 #pragma once
-#ifdef PLATFORM_WINDOWS
+
+#if defined(PLATFORM_WINDOWS)
 #include "Core/Application/Windows/WindowsMisc.h"
 typedef WindowsMisc PlatformMisc;
+
+#elif defined(PLATFORM_MACOS)
+#include "Core/Application/Generic/GenericMisc.h"
+typedef GenericMisc PlatformMisc;
+// TODO: Create MacMisc
+
 #else
-#include "Core/Application/Generic/Misc.h"
-typedef Misc PlatformMisc;
+#include "Core/Application/Generic/GenericMisc.h"
+typedef GenericMisc PlatformMisc;
+
 #endif

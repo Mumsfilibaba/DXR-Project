@@ -7,6 +7,7 @@
 class ALIGN_16 CMatrix4
 {
 public:
+	
     /* Default constructor (Initialize components to zero) */
     FORCEINLINE CMatrix4() noexcept;
 

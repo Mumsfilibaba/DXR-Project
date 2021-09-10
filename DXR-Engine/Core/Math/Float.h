@@ -1,6 +1,8 @@
 #pragma once
 #include "Core.h"
+
 #include <cmath>
+#include <cfloat>
 
 struct SFloat64
 {

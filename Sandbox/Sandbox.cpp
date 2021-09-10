@@ -1,6 +1,6 @@
 #include "Sandbox.h"
 
-#include "Math/Math.h"
+#include "Core/Math/Math.h"
 
 #include "Rendering/Renderer.h"
 #include "Rendering/DebugUI.h"
@@ -304,7 +304,7 @@ bool Sandbox::Init()
     SSceneData StreetLightData;
     COBJLoader::LoadFile( "../Assets/Models/Street_Light.obj", StreetLightData );
 
-    TSharedPtr<Mesh>     StreetLight = Mesh::Make( StreetLightData.Models.Front().Mesh );
+    TSharedPtr<Mesh>     StreetLight = Mesh::Make( StreetLightData.Models.FirstElement().Mesh );
     TSharedPtr<CMaterial> StreetLightMat = MakeShared<CMaterial>( MatProperties );
 
     for ( uint32 i = 0; i < 4; i++ )
@@ -337,7 +337,7 @@ bool Sandbox::Init()
     SSceneData PillarData;
     COBJLoader::LoadFile( "../Assets/Models/Pillar.obj", StreetLightData );
 
-    TSharedPtr<Mesh>     Pillar = Mesh::Make( PillarData.Models.Front().Mesh );
+    TSharedPtr<Mesh>      Pillar    = Mesh::Make( PillarData.Models.FirstElement().Mesh );
     TSharedPtr<CMaterial> PillarMat = MakeShared<CMaterial>( MatProperties );
 
     for ( uint32 i = 0; i < 8; i++ )

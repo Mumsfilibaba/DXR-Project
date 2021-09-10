@@ -8,5 +8,5 @@ void SSceneData::AddToScene( Scene* Scene )
     Scene->AddActor( NewActor );
 
 
-    NewActor->AddComponent();
+    //NewActor->AddComponent();
 }

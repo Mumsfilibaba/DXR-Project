@@ -2,8 +2,7 @@
 #include "Core.h"
 
 #include "Core/RefCountedObject.h"
-
-#include "Time/Timestamp.h"
+#include "Core/Time/Timestamp.h"
 
 typedef void(*ThreadFunction)();
 typedef uint64 ThreadID;
@@ -15,6 +14,8 @@ typedef uint64 ThreadID;
 class GenericThread : public RefCountedObject
 {
 public:
+
+    GenericThread() = default;
     virtual ~GenericThread() = default;
 
     virtual void Wait() = 0;

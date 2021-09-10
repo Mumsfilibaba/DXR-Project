@@ -4,10 +4,8 @@
 #include "Resources.h"
 #include "ResourceViews.h"
 
-#include "Memory/Memory.h"
-
-#include "Debug/Debug.h"
-
+#include "Core/Debug/Debug.h"
+#include "Core/Memory/Memory.h"
 #include "Core/Application/Log.h"
 #include "Core/Containers/ArrayView.h"
 

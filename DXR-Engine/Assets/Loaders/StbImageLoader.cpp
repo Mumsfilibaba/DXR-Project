@@ -66,12 +66,12 @@ static EFormat GetFloatFormat( int32 Channels )
     }
 }
 
-TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const String& Filename )
+TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
 {
-    FILE* File = fopen( Filename.c_str(), "rb" );
+    FILE* File = fopen( Filename.CStr(), "rb" );
     if ( !File )
     {
-        LOG_ERROR( "[CStbImageLoader]: Failed to open '" + Filename + "'" );
+        LOG_ERROR( ("[CStbImageLoader]: Failed to open '" + Filename + "'").CStr() );
         return nullptr;
     }
 
@@ -123,12 +123,12 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const String& Filename )
     // Check if succeeded
     if ( !Pixels )
     {
-        LOG_ERROR( "[CStbImageLoader]: Failed to load image '" + Filename + "'" );
+        LOG_ERROR( ("[CStbImageLoader]: Failed to load image '" + Filename + "'").CStr() );
         return nullptr;
     }
     else
     {
-        LOG_INFO( "[CStbImageLoader]: Loaded image '" + Filename + "'" );
+        LOG_INFO( ("[CStbImageLoader]: Loaded image '" + Filename + "'").CStr() );
     }
 
     TSharedPtr<SImage2D> Image = MakeShared<SImage2D>( Filename, Width, Height, Format );

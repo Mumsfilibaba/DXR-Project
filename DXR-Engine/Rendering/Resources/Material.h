@@ -3,7 +3,7 @@
 
 #include "Core/Containers/StaticArray.h"
 
-#include "Math/Vector3.h"
+#include "Core/Math/Vector3.h"
 
 struct SMaterialDesc
 {

@@ -7,9 +7,9 @@ class Viewport : public Resource
 public:
     Viewport( EFormat InFormat, uint32 InWidth, uint32 InHeight )
         : Resource()
-        , Format( InFormat )
         , Width( InWidth )
         , Height( InHeight )
+        , Format( InFormat )
     {
     }
 

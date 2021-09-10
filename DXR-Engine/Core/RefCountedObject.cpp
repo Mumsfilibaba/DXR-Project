@@ -8,7 +8,7 @@ RefCountedObject::RefCountedObject()
 
 RefCountedObject::~RefCountedObject()
 {
-    Assert( StrongReferences.Load == 0 );
+    Assert( StrongReferences.Load() == 0 );
 }
 
 int32 RefCountedObject::AddRef()

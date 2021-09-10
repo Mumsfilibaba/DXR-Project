@@ -4,7 +4,7 @@
 // TODO: Move to rendering
 #include "Assets/TextureFormat.h"
 
-#include "Math/Color.h"
+#include "Core/Math/Color.h"
 
 enum class ECubeFace
 {
@@ -336,14 +336,14 @@ struct ResourceData
 
     void Set( const void* InData, EFormat InFormat, uint32 InWidth )
     {
-        Data = InData;
+        Data  = InData;
         Format = InFormat;
-        Width = InWidth;
+        Width  = InWidth;
     }
 
     void Set( const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight )
     {
-        Set( InData, InFormat, InWidth, InHeight );
+        Set( InData, InFormat, InWidth );
         Height = InHeight;
     }
 
@@ -356,10 +356,12 @@ struct ResourceData
     {
         return SizeInBytes;
     }
+	
     uint32 GetPitch() const
     {
         return GetByteStrideFromFormat( Format ) * Width;
     }
+	
     uint32 GetSlicePitch() const
     {
         return GetByteStrideFromFormat( Format ) * Width * Height;

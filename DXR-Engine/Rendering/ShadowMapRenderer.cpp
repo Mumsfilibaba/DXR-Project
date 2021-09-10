@@ -3,16 +3,15 @@
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
 
-#include "Debug/Profiler.h"
-#include "Debug/Console/Console.h"
-
 #include "Rendering/Resources/Mesh.h"
 #include "Rendering/MeshDrawCommand.h"
 
-#include "Math/Frustum.h"
-
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
+
+#include "Core/Math/Frustum.h"
+#include "Core/Debug/Profiler.h"
+#include "Core/Debug/Console/Console.h"
 
 bool ShadowMapRenderer::Init( LightSetup& LightSetup, FrameResources& FrameResources )
 {

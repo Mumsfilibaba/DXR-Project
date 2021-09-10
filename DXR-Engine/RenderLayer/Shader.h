@@ -1,7 +1,7 @@
 #pragma once
 #include "ResourceBase.h"
 
-#include "Math/IntPoint3.h"
+#include "Core/Math/IntPoint3.h"
 
 enum class EShaderStage
 {

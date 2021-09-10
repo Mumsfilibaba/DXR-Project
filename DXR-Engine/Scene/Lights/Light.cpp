@@ -2,10 +2,10 @@
 
 Light::Light()
     : Color()
+	, ShadowNearPlane( 1.0f )
+	, ShadowFarPlane( 30.0f )
     , ShadowBias( 0.005f )
     , MaxShadowBias( 0.05f )
-    , ShadowNearPlane( 1.0f )
-    , ShadowFarPlane( 30.0f )
 {
     CORE_OBJECT_INIT();
 }

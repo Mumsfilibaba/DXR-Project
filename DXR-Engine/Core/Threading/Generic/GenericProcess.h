@@ -14,8 +14,7 @@ public:
         return INVALID_THREAD_ID;
     }
 
-    static FORCEINLINE void Sleep( Timestamp Time )
+    static FORCEINLINE void Sleep( Timestamp )
     {
-        UNREFERENCED_VARIABLE( Time );
     }
 };

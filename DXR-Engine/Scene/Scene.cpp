@@ -54,7 +54,7 @@ void Scene::AddCamera( Camera* InCamera )
 void Scene::AddActor( Actor* InActor )
 {
     Assert( InActor != nullptr );
-    Actors.EmplaceBack( InActor );
+    Actors.Emplace( InActor );
 
     InActor->OnAddedToScene( this );
 
@@ -68,7 +68,7 @@ void Scene::AddActor( Actor* InActor )
 void Scene::AddLight( Light* InLight )
 {
     Assert( InLight != nullptr );
-    Lights.EmplaceBack( InLight );
+    Lights.Emplace( InLight );
 }
 
 void Scene::OnAddedComponent( Component* NewComponent )
@@ -89,5 +89,5 @@ void Scene::AddMeshComponent( MeshComponent* Component )
     Command.IndexBuffer = Component->Mesh->IndexBuffer.Get();
     Command.Material = Component->Material.Get();
     Command.Mesh = Component->Mesh.Get();
-    MeshDrawCommands.PushBack( Command );
+    MeshDrawCommands.Push( Command );
 }

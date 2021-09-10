@@ -1,11 +1,16 @@
 #include "RenderLayer.h"
 #include "CommandList.h"
 
+#if defined(PLATFORM_WINDOWS)
 #include "D3D12/D3D12RenderLayer.h"
 #include "D3D12/D3D12ShaderCompiler.h"
+#else
+#include "RenderLayer/ShaderCompiler.h"
+#endif
 
 bool RenderLayer::Init( ERenderLayerApi InRenderApi )
 {
+#if defined(PLATFORM_WINDOWS)
     // Select RenderLayer
     if ( InRenderApi == ERenderLayerApi::D3D12 )
     {
@@ -19,7 +24,8 @@ bool RenderLayer::Init( ERenderLayerApi InRenderApi )
 
         GShaderCompiler = Compiler;
     }
-    else
+	else
+#endif
     {
         LOG_ERROR( "[RenderLayer::Init] Invalid RenderLayer enum" );
 

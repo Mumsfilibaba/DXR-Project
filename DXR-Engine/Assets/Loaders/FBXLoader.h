@@ -3,6 +3,8 @@
 
 #include "Assets/SceneData.h"
 
+#include "Core/Containers/String.h"
+
 /* Flags for loading */
 enum EFBXFlags : uint8
 {
@@ -17,5 +19,5 @@ enum EFBXFlags : uint8
 class CFBXLoader
 {
 public:
-    static bool LoadFile( const String& Filename, SSceneData& OutScene, uint32 Flags = EFBXFlags::FBXFlags_Default ) noexcept;
+    static bool LoadFile( const CString& Filename, SSceneData& OutScene, uint32 Flags = EFBXFlags::FBXFlags_Default ) noexcept;
 };

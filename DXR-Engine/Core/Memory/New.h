@@ -1,7 +1,7 @@
 #pragma once
 #include <new>
 
-#ifdef _DEBUG
+#if defined(DEBUG_BUILD) && defined(PLATFORM_WINDOWS)
 #define DBG_NEW	new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #else
 #define DBG_NEW	new
