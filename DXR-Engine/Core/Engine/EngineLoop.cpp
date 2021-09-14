@@ -1,27 +1,24 @@
 #include "Engine.h"
 #include "EngineLoop.h"
 
-#include "Core/Engine/EngineGlobals.h"
-#include "Core/Application/Application.h"
-#include "Core/Application/Generic/GenericOutputConsole.h"
-#include "Core/Application/Platform/Platform.h"
-#include "Core/Application/Platform/PlatformMisc.h"
-#include "Core/Input/InputManager.h"
-#include "Core/Threading/TaskManager.h"
-
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Resources/TextureFactory.h"
 
 #include "Editor/Editor.h"
 
-#include "Debug/Profiler.h"
-#include "Debug/Console/Console.h"
-
-#include "Memory/Memory.h"
-
+#include "Core/Memory/Memory.h"
+#include "Core/Engine/EngineGlobals.h"
+#include "Core/Application/Application.h"
+#include "Core/Application/Generic/GenericOutputConsole.h"
+#include "Core/Application/Platform/Platform.h"
+#include "Core/Application/Platform/PlatformMisc.h"
+#include "Core/Input/InputManager.h"
+#include "Core/Debug/Profiler.h"
+#include "Core/Debug/Console/Console.h"
+#include "Core/Threading/TaskManager.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Threading/ThreadSafeInt.h"
+#include "Core/Threading/InterlockedInt.h"
 #include "Core/Threading/Platform/PlatformProcess.h"
 
 bool EngineLoop::Init()
@@ -138,7 +135,7 @@ bool EngineLoop::Release()
 
     TextureFactory::Release();
 
-    if ( GApplication->Release() )
+    if ( GApplication && GApplication->Release() )
     {
         SafeDelete( GApplication );
     }

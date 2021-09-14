@@ -3,11 +3,10 @@
 
 #include "Assets/MeshUtilities.h"
 
-#include "Math/MathCommon.h"
-
+#include "Core/Math/MathCommon.h"
 #include "Core/Containers/HashTable.h"
 
-#include "Utilities/StringUtilities.h"
+#include "Core/Utilities/StringUtilities.h"
 
 #include <tiny_obj_loader.h>
 
@@ -42,12 +41,12 @@ bool COBJLoader::LoadFile( const CString& Filename, SSceneData& OutScene, bool R
     CString MTLFiledir = CString( Filename.CStr(), Filename.ReverseFind( '/' ) );
     if ( !tinyobj::LoadObj( &Attributes, &Shapes, &Materials, &Warning, &Error, Filename.CStr(), MTLFiledir.CStr(), true, false ) )
     {
-        LOG_WARNING( "[COBJLoader]: Failed to load '" + Filename + "'." + " Warning: " + Warning + " Error: " + Error );
+        LOG_WARNING( ("[COBJLoader]: Failed to load '" + Filename + "'." + " Warning: " + Warning.c_str() + " Error: " + Error.c_str()).CStr() );
         return false;
     }
     else
     {
-        LOG_INFO( "[COBJLoader]: Loaded '" + Filename + "'" );
+        LOG_INFO( ("[COBJLoader]: Loaded '" + Filename + "'").CStr() );
     }
 
     // Create All Materials in scene
@@ -55,18 +54,18 @@ bool COBJLoader::LoadFile( const CString& Filename, SSceneData& OutScene, bool R
     {
         // Create new material with default properties
         SMaterialData MaterialData;
-        MaterialData.MetallicTexture = LoadMaterialTexture( MTLFiledir, Mat.ambient_texname );
-        MaterialData.DiffuseTexture = LoadMaterialTexture( MTLFiledir, Mat.diffuse_texname );
-        MaterialData.RoughnessTexture = LoadMaterialTexture( MTLFiledir, Mat.specular_highlight_texname );
-        MaterialData.NormalTexture = LoadMaterialTexture( MTLFiledir, Mat.bump_texname );
-        MaterialData.AlphaMaskTexture = LoadMaterialTexture( MTLFiledir, Mat.alpha_texname );
+        MaterialData.MetallicTexture = LoadMaterialTexture( MTLFiledir, Mat.ambient_texname.c_str() );
+        MaterialData.DiffuseTexture = LoadMaterialTexture( MTLFiledir, Mat.diffuse_texname.c_str() );
+        MaterialData.RoughnessTexture = LoadMaterialTexture( MTLFiledir, Mat.specular_highlight_texname.c_str() );
+        MaterialData.NormalTexture = LoadMaterialTexture( MTLFiledir, Mat.bump_texname.c_str() );
+        MaterialData.AlphaMaskTexture = LoadMaterialTexture( MTLFiledir, Mat.alpha_texname.c_str() );
 
         MaterialData.Diffuse = CVector3( Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2] );
         MaterialData.Metallic = Mat.ambient[0];
         MaterialData.AO = 1.0f;
         MaterialData.Roughness = 1.0f;
 
-        OutScene.Materials.EmplaceBack( MaterialData );
+        OutScene.Materials.Emplace( MaterialData );
     }
 
     // Construct Scene
@@ -85,8 +84,8 @@ bool COBJLoader::LoadFile( const CString& Filename, SSceneData& OutScene, bool R
 
             Data.Mesh.Indices.Reserve( IndexCount );
 
-            uint32 Face = i / 3;
-            const uint32 MaterialID = Shape.mesh.material_ids[Face];
+            int32 Face = i / 3;
+            const int32 MaterialID = Shape.mesh.material_ids[Face];
             for ( ; i < IndexCount; i++ )
             {
                 // Break if material is not the same
@@ -122,10 +121,10 @@ bool COBJLoader::LoadFile( const CString& Filename, SSceneData& OutScene, bool R
                 if ( UniqueVertices.count( TempVertex ) == 0 )
                 {
                     UniqueVertices[TempVertex] = static_cast<uint32>(Data.Mesh.Vertices.Size());
-                    Data.Mesh.Vertices.PushBack( TempVertex );
+                    Data.Mesh.Vertices.Push( TempVertex );
                 }
 
-                Data.Mesh.Indices.EmplaceBack( UniqueVertices[TempVertex] );
+                Data.Mesh.Indices.Emplace( UniqueVertices[TempVertex] );
             }
 
             // Calculate tangents and create mesh
@@ -142,8 +141,8 @@ bool COBJLoader::LoadFile( const CString& Filename, SSceneData& OutScene, bool R
                 Data.MaterialIndex = MaterialID;
             }
 
-            Data.Name = Shape.name;
-            OutScene.Models.EmplaceBack( Data );
+            Data.Name = Shape.name.c_str();
+            OutScene.Models.Emplace( Data );
         }
     }
 

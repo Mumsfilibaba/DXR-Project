@@ -280,6 +280,11 @@ workspace "DXR-Project"
 			{
 				"DXR-Engine/Main/Windows/WindowsMain.cpp",	
 			}
+		filter "system:macosx"
+			files
+			{
+				"DXR-Engine/Main/Mac/MacMain.cpp",	
+			}
 		filter {}
 		
 		-- In visual studio show natvis files

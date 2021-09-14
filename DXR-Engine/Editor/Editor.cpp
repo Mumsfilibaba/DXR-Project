@@ -3,18 +3,17 @@
 #include "Rendering/DebugUI.h"
 #include "Rendering/Renderer.h"
 
-#include "Core/Engine/Engine.h"
-#include "Core/Engine/EngineLoop.h"
-#include "Core/Engine/EngineGlobals.h"
-
 #include "Scene/Scene.h"
 #include "Scene/Lights/DirectionalLight.h"
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Components/MeshComponent.h"
 
+#include "Core/Engine/Engine.h"
+#include "Core/Engine/EngineLoop.h"
+#include "Core/Engine/EngineGlobals.h"
 #include "Core/Application/Application.h"
-
-#include "Debug/Console/Console.h"
+#include "Core/Debug/Console/Console.h"
+#include "Core/Math/Math.h"
 
 #include <imgui_internal.h>
 
@@ -399,16 +398,16 @@ static void DrawSceneInfo()
                     // Rotation
                     CVector3 Rotation = Actor->GetTransform().GetRotation();
                     Rotation = CVector3(
-                        XMConvertToDegrees( Rotation.x ),
-                        XMConvertToDegrees( Rotation.y ),
-                        XMConvertToDegrees( Rotation.z ) );
+						NMath::ToDegrees( Rotation.x ),
+						NMath::ToDegrees( Rotation.y ),
+						NMath::ToDegrees( Rotation.z ) );
 
                     DrawFloat3Control( "Rotation", Rotation, 0.0f, 100.0f, 1.0f );
 
                     Rotation = CVector3(
-                        XMConvertToRadians( Rotation.x ),
-                        XMConvertToRadians( Rotation.y ),
-                        XMConvertToRadians( Rotation.z ) );
+                        NMath::ToRadians( Rotation.x ),
+                        NMath::ToRadians( Rotation.y ),
+                        NMath::ToRadians( Rotation.z ) );
 
                     Actor->GetTransform().SetRotation( Rotation );
 
@@ -674,17 +673,17 @@ static void DrawSceneInfo()
                     {
                         CVector3 Rotation = CurrentDirectionalLight->GetRotation();
                         Rotation = CVector3(
-                            XMConvertToDegrees( Rotation.x ),
-                            XMConvertToDegrees( Rotation.y ),
-                            XMConvertToDegrees( Rotation.z )
+                            NMath::ToDegrees( Rotation.x ),
+                            NMath::ToDegrees( Rotation.y ),
+                            NMath::ToDegrees( Rotation.z )
                         );
 
                         DrawFloat3Control( "Rotation", Rotation, 0.0f, ColumnWidth, 1.0f );
 
                         Rotation = CVector3(
-                            XMConvertToRadians( Rotation.x ),
-                            XMConvertToRadians( Rotation.y ),
-                            XMConvertToRadians( Rotation.z )
+                            NMath::ToRadians( Rotation.x ),
+                            NMath::ToRadians( Rotation.y ),
+                            NMath::ToRadians( Rotation.z )
                         );
 
                         CurrentDirectionalLight->SetRotation( Rotation );

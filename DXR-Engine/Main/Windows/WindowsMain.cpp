@@ -1,5 +1,7 @@
 #include "Main/EngineMain.h"
 
+#if defined(PLATFORM_WINDOWS)
+
 #include "Core/Application/Windows/WindowsPlatform.h"
 #include "Core/Debug/Debug.h"
 #include "Core/Windows/Windows.h"
@@ -27,3 +29,5 @@ int WINAPI WinMain( HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, i
 }
 
 #pragma warning(pop)
+
+#endif

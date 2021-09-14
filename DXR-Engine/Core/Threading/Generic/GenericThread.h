@@ -25,5 +25,8 @@ public:
     virtual ThreadID GetID() = 0;
 
     // TODO: Enable memberfunctions and lambdas
-    static GenericThread* Create( ThreadFunction Func );
+    static GenericThread* Create( ThreadFunction )
+	{
+		return nullptr;
+	}
 };

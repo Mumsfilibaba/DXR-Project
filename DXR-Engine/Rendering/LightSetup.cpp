@@ -2,10 +2,10 @@
 
 #include "RenderLayer/RenderLayer.h"
 
-#include "Debug/Profiler.h"
-
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
+
+#include "Core/Debug/Profiler.h"
 
 bool LightSetup::Init()
 {
@@ -119,8 +119,8 @@ void LightSetup::BeginFrame( CommandList& CmdList, const Scene& Scene )
                 Data.MaxShadowBias = CurrentLight->GetMaxShadowBias();
                 Data.ShadowBias = CurrentLight->GetShadowBias();
 
-                ShadowCastingPointLightsData.EmplaceBack( Data );
-                ShadowCastingPointLightsPosRad.EmplaceBack( PosRad );
+                ShadowCastingPointLightsData.Emplace( Data );
+                ShadowCastingPointLightsPosRad.Emplace( PosRad );
 
                 PointLightShadowMapGenerationData ShadowMapData;
                 ShadowMapData.FarPlane = CurrentLight->GetShadowFarPlane();
@@ -133,15 +133,15 @@ void LightSetup::BeginFrame( CommandList& CmdList, const Scene& Scene )
                     ShadowMapData.ProjMatrix[Face] = CurrentLight->GetProjectionMatrix( Face );
                 }
 
-                PointLightShadowMapsGenerationData.EmplaceBack( ShadowMapData );
+                PointLightShadowMapsGenerationData.Emplace( ShadowMapData );
             }
             else
             {
                 PointLightData Data;
                 Data.Color = Color;
 
-                PointLightsData.EmplaceBack( Data );
-                PointLightsPosRad.EmplaceBack( PosRad );
+                PointLightsData.Emplace( Data );
+                PointLightsPosRad.Emplace( PosRad );
             }
         }
         else if ( IsSubClassOf<DirectionalLight>( Light ) )
@@ -173,7 +173,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const Scene& Scene )
         }
     }
 
-    if ( PointLightsData.SizeInBytes() > PointLightsBuffer->GetSize() )
+    if ( PointLightsData.SizeInBytes() > (int32)PointLightsBuffer->GetSize() )
     {
         CmdList.DiscardResource( PointLightsBuffer.Get() );
 
@@ -184,7 +184,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const Scene& Scene )
         }
     }
 
-    if ( PointLightsPosRad.SizeInBytes() > PointLightsPosRadBuffer->GetSize() )
+    if ( PointLightsPosRad.SizeInBytes() > (int32)PointLightsPosRadBuffer->GetSize() )
     {
         CmdList.DiscardResource( PointLightsPosRadBuffer.Get() );
 
@@ -195,7 +195,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const Scene& Scene )
         }
     }
 
-    if ( ShadowCastingPointLightsData.SizeInBytes() > ShadowCastingPointLightsBuffer->GetSize() )
+    if ( ShadowCastingPointLightsData.SizeInBytes() > (int32)ShadowCastingPointLightsBuffer->GetSize() )
     {
         CmdList.DiscardResource( ShadowCastingPointLightsBuffer.Get() );
 
@@ -210,7 +210,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const Scene& Scene )
         }
     }
 
-    if ( ShadowCastingPointLightsPosRad.SizeInBytes() > ShadowCastingPointLightsPosRadBuffer->GetSize() )
+    if ( ShadowCastingPointLightsPosRad.SizeInBytes() > (int32)ShadowCastingPointLightsPosRadBuffer->GetSize() )
     {
         CmdList.DiscardResource( ShadowCastingPointLightsPosRadBuffer.Get() );
 

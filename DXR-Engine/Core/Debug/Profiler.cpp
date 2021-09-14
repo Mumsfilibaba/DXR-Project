@@ -409,7 +409,7 @@ static void DrawCPUProfileData( float Width )
         ImGui::TableSetupColumn( "Max" );
         ImGui::TableHeadersRow();
 
-        for ( auto& Sample : GProfilerData.CPUSamples )
+        for ( auto& Sample : GProfilerData.CPUSamples.Get() )
         {
             ImGui::TableNextRow();
 
@@ -546,7 +546,7 @@ static void DrawGPUProfileData( float Width )
         ImGui::TableSetupColumn( "Max" );
         ImGui::TableHeadersRow();
 
-        for ( auto& Sample : GProfilerData.GPUSamples )
+        for ( auto& Sample : GProfilerData.GPUSamples.Get() )
         {
             ImGui::TableNextRow();
 
@@ -703,16 +703,16 @@ void Profiler::Reset()
     GProfilerData.GPUFrameTime.Reset();
 
     {
-        TScopedLock<Mutex> Lock( GProfilerData.CPUSamplesMutex );
-        for ( auto& Sample : GProfilerData.CPUSamples )
+        TScopedLock Lock( GProfilerData.CPUSamples );
+        for ( auto& Sample : GProfilerData.CPUSamples.Get() )
         {
             Sample.second.Reset();
         }
     }
 
     {
-        TScopedLock<Mutex> Lock( GProfilerData.GPUSamplesMutex );
-        for ( auto& Sample : GProfilerData.GPUSamples )
+		TScopedLock Lock( GProfilerData.GPUSamples );
+        for ( auto& Sample : GProfilerData.GPUSamples.Get() )
         {
             Sample.second.Reset();
         }
@@ -725,12 +725,12 @@ void Profiler::BeginTraceScope( const char* Name )
     {
         const std::string ScopeName = Name;
 
-        TScopedLock<Mutex> Lock( GProfilerData.CPUSamplesMutex );
+        TScopedLock Lock( GProfilerData.CPUSamples );
 
-        auto Entry = GProfilerData.CPUSamples.find( ScopeName );
-        if ( Entry == GProfilerData.CPUSamples.end() )
+        auto Entry = GProfilerData.CPUSamples.Get().find( ScopeName );
+        if ( Entry == GProfilerData.CPUSamples.Get().end() )
         {
-            auto NewSample = GProfilerData.CPUSamples.insert( std::make_pair( ScopeName, ProfileSample() ) );
+            auto NewSample = GProfilerData.CPUSamples.Get().insert( std::make_pair( ScopeName, ProfileSample() ) );
             NewSample.first->second.Begin();
         }
         else
@@ -746,10 +746,10 @@ void Profiler::EndTraceScope( const char* Name )
     {
         const std::string ScopeName = Name;
 
-        TScopedLock<Mutex> Lock( GProfilerData.CPUSamplesMutex );
+        TScopedLock Lock( GProfilerData.CPUSamples );
 
-        auto Entry = GProfilerData.CPUSamples.find( ScopeName );
-        if ( Entry != GProfilerData.CPUSamples.end() )
+        auto Entry = GProfilerData.CPUSamples.Get().find( ScopeName );
+        if ( Entry != GProfilerData.CPUSamples.Get().end() )
         {
             Entry->second.End();
         }
@@ -777,12 +777,12 @@ void Profiler::BeginGPUTrace( CommandList& CmdList, const char* Name )
         int32 TimeQueryIndex = -1;
 
         {
-            TScopedLock<Mutex> Lock( GProfilerData.GPUSamplesMutex );
+            TScopedLock Lock( GProfilerData.GPUSamples );
 
-            auto Entry = GProfilerData.GPUSamples.find( ScopeName );
-            if ( Entry == GProfilerData.GPUSamples.end() )
+            auto Entry = GProfilerData.GPUSamples.Get().find( ScopeName );
+            if ( Entry == GProfilerData.GPUSamples.Get().end() )
             {
-                auto NewSample = GProfilerData.GPUSamples.insert( std::make_pair( ScopeName, GPUProfileSample() ) );
+                auto NewSample = GProfilerData.GPUSamples.Get().insert( std::make_pair( ScopeName, GPUProfileSample() ) );
                 NewSample.first->second.TimeQueryIndex = ++GProfilerData.CurrentTimeQueryIndex;
                 TimeQueryIndex = NewSample.first->second.TimeQueryIndex;
             }
@@ -807,10 +807,10 @@ void Profiler::EndGPUTrace( CommandList& CmdList, const char* Name )
 
         int32 TimeQueryIndex = -1;
 
-        TScopedLock<Mutex> Lock( GProfilerData.GPUSamplesMutex );
+        TScopedLock Lock( GProfilerData.GPUSamples );
 
-        auto Entry = GProfilerData.GPUSamples.find( ScopeName );
-        if ( Entry != GProfilerData.GPUSamples.end() )
+        auto Entry = GProfilerData.GPUSamples.Get().find( ScopeName );
+        if ( Entry != GProfilerData.GPUSamples.Get().end() )
         {
             TimeQueryIndex = Entry->second.TimeQueryIndex;
             CmdList.EndTimeStamp( GProfilerData.GPUProfiler.Get(), TimeQueryIndex );

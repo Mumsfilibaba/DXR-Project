@@ -15,6 +15,8 @@
 
 #endif
 
+// TODO: Remove
+#include <string>
 
 class GenericMisc
 {

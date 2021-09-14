@@ -53,6 +53,7 @@ public:
     {
         return Sampler.Get();
     }
+	
     ConstantBuffer* GetMaterialBuffer() const
     {
         return MaterialBuffer.Get();
@@ -95,9 +96,9 @@ private:
 
     bool MaterialBufferIsDirty = true;
 
-    bool RenderInForwardPass = false;
+    bool RenderInForwardPass   = false;
 
-    SMaterialDesc        Properties;
+    SMaterialDesc        	   Properties;
     TSharedRef<ConstantBuffer> MaterialBuffer;
     TSharedRef<SamplerState>   Sampler;
 

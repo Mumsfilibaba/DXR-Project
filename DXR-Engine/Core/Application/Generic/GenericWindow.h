@@ -66,6 +66,8 @@ struct WindowShape
     } Position;
 };
 
+typedef void* NativeWindowHandle;
+
 class GenericWindow : public RefCountedObject
 {
 public:
@@ -88,7 +90,7 @@ public:
     virtual uint32 GetWidth()  const = 0;
     virtual uint32 GetHeight() const = 0;
 
-    virtual void* GetNativeHandle() const
+    virtual NativeWindowHandle GetNativeHandle() const
     {
         return nullptr;
     }
@@ -98,7 +100,10 @@ public:
         return WndStyle;
     }
 
-    static GenericWindow* Create( const std::string& Title, uint32 Width, uint32 Height, WindowStyle Style );
+    static GenericWindow* Create( const std::string& Title, uint32 Width, uint32 Height, WindowStyle Style )
+	{
+		return nullptr;
+	}
 
 protected:
     WindowStyle WndStyle;

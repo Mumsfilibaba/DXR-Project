@@ -15,10 +15,10 @@ ConsoleCommand GClearHistory;
 
 void Console::Init()
 {
-    GClearHistory.OnExecute.AddObject( this, &Console::ClearHistory );
+    GClearHistory.OnExecute.AddRaw( this, &Console::ClearHistory );
     INIT_CONSOLE_COMMAND( "ClearHistory", &GClearHistory );
 
-    GEngine.OnKeyPressedEvent.AddObject( this, &Console::OnKeyPressedEvent );
+    GEngine.OnKeyPressedEvent.AddRaw( this, &Console::OnKeyPressedEvent );
 }
 
 void Console::Tick()
@@ -92,17 +92,17 @@ ConsoleVariable* Console::FindVariable( const String& Name )
 
 void Console::PrintMessage( const String& Message )
 {
-    Lines.EmplaceBack( Message, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
+    Lines.Emplace( Message, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
 }
 
 void Console::PrintWarning( const String& Message )
 {
-    Lines.EmplaceBack( Message, ImVec4( 1.0f, 1.0f, 0.0f, 1.0f ) );
+    Lines.Emplace( Message, ImVec4( 1.0f, 1.0f, 0.0f, 1.0f ) );
 }
 
 void Console::PrintError( const String& Message )
 {
-    Lines.EmplaceBack( Message, ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ) );
+    Lines.Emplace( Message, ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ) );
 }
 
 void Console::ClearHistory()
@@ -388,26 +388,26 @@ int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
 
                         if ( ConsoleObject->AsCommand() )
                         {
-                            Candidates.EmplaceBack( Object.first, "[Cmd]" );
+                            Candidates.Emplace( Object.first, "[Cmd]" );
                         }
                         else
                         {
                             ConsoleVariable* Variable = ConsoleObject->AsVariable();
                             if ( Variable->IsBool() )
                             {
-                                Candidates.EmplaceBack( Object.first, "= " + Variable->GetString() + " [Boolean]" );
+                                Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [Boolean]" );
                             }
                             else if ( Variable->IsInt() )
                             {
-                                Candidates.EmplaceBack( Object.first, "= " + Variable->GetString() + " [Integer]" );
+                                Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [Integer]" );
                             }
                             else if ( Variable->IsFloat() )
                             {
-                                Candidates.EmplaceBack( Object.first, "= " + Variable->GetString() + " [float]" );
+                                Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [float]" );
                             }
                             else if ( Variable->IsString() )
                             {
-                                Candidates.EmplaceBack( Object.first, "= " + Variable->GetString() + " [String]" );
+                                Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [String]" );
                             }
                         }
                     }
@@ -540,10 +540,10 @@ void Console::Execute( const String& CmdString )
     PrintMessage( CmdString );
 
     // Erase history
-    History.EmplaceBack( CmdString );
-    if ( History.Size() > HistoryLength )
+    History.Emplace( CmdString );
+    if ( History.Size() > (int32)HistoryLength )
     {
-        History.Erase( History.Begin() );
+        History.RemoveAt( History.StartIterator() );
     }
 
     size_t Pos = CmdString.find_first_of( " " );

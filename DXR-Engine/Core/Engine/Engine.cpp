@@ -2,8 +2,7 @@
 
 #include "Core/Application/Platform/PlatformMisc.h"
 #include "Core/Application/Platform/Platform.h"
-
-#include "Debug/Console/Console.h"
+#include "Core/Debug/Console/Console.h"
 
 ConsoleCommand GToggleFullscreen;
 ConsoleCommand GExit;
@@ -24,7 +23,7 @@ bool Engine::Init()
     {
         MainWindow->Show( false );
 
-        GToggleFullscreen.OnExecute.AddObject( MainWindow.Get(), &GenericWindow::ToggleFullscreen );
+        GToggleFullscreen.OnExecute.AddRaw( MainWindow.Get(), &GenericWindow::ToggleFullscreen );
         INIT_CONSOLE_COMMAND( "a.ToggleFullscreen", &GToggleFullscreen );
     }
     else
@@ -33,7 +32,7 @@ bool Engine::Init()
         return false;
     }
 
-    GExit.OnExecute.AddObject( this, &Engine::Exit );
+    GExit.OnExecute.AddRaw( this, &Engine::Exit );
     INIT_CONSOLE_COMMAND( "a.Exit", &GExit );
 
     IsRunning = true;

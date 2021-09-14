@@ -1,7 +1,7 @@
 #include "MeshFactory.h"
 #include "MeshUtilities.h"
 
-#include "Math/MathCommon.h"
+#include "Core/Math/MathCommon.h"
 
 SMeshData CMeshFactory::CreateCube( float Width, float Height, float Depth ) noexcept
 {

@@ -11,8 +11,8 @@ Component::Component( Actor* InOwningActor )
 
 Actor::Actor()
     : CoreObject()
-    , Components()
     , Transform()
+	, Components()
 {
     CORE_OBJECT_INIT();
 }

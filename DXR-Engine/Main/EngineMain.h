@@ -5,8 +5,23 @@
 #include "Core/Application/Application.h"
 #include "Core/Application/Platform/PlatformMisc.h"
 
+struct SEngineMainGuard
+{
+	~SEngineMainGuard()
+	{
+		if ( !EngineLoop::Release() )
+		{
+			PlatformMisc::MessageBox( "ERROR", "EngineLoop::Release Failed" );
+		}
+	}
+};
+
+// Main function for all implementations
 int32 EngineMain()
 {
+	// Make sure that the engine is released if the main function exits early
+	SEngineMainGuard EngineMainGuard;
+	
     if ( !EngineLoop::Init() )
     {
         PlatformMisc::MessageBox( "ERROR", "EngineLoop::Init Failed" );
@@ -14,12 +29,6 @@ int32 EngineMain()
     }
 
     EngineLoop::Run();
-
-    if ( !EngineLoop::Release() )
-    {
-        PlatformMisc::MessageBox( "ERROR", "EngineLoop::Release Failed" );
-        return -1;
-    }
 
     return 0;
 }

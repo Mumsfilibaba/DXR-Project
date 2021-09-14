@@ -1,7 +1,7 @@
 #pragma once
-#include "Platform/Mutex.h"
+#include "Platform/CriticalSection.h"
 
-template<typename T, typename LockType = Mutex>
+template<typename T, typename LockType = CCriticalSection>
 class Lockable
 {
 public:
@@ -58,12 +58,12 @@ public:
 
 public:
 
-    FORCEINLINE operator==( const ElementType& RHS ) const noexcept
+    FORCEINLINE bool operator==( const ElementType& RHS ) const noexcept
     {
         return (LockableItem == RHS);
     }
 
-    FORCEINLINE operator!=( const ElementType& RHS ) const noexcept
+    FORCEINLINE bool operator!=( const ElementType& RHS ) const noexcept
     {
         return (LockableItem != RHS);
     }

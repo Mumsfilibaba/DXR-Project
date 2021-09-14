@@ -26,7 +26,7 @@ LinearAllocator::LinearAllocator( uint32 StartSize )
     : CurrentArena( nullptr )
     , Arenas()
 {
-    CurrentArena = &Arenas.EmplaceBack( StartSize );
+    CurrentArena = &Arenas.Emplace( StartSize );
 }
 
 void* LinearAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
@@ -48,7 +48,7 @@ void* LinearAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
     }
 
     // Allocate new arena
-    CurrentArena = &Arenas.EmplaceBack( NewArenaSize );
+    CurrentArena = &Arenas.Emplace( NewArenaSize );
 
     Assert( CurrentArena != nullptr );
     return CurrentArena->Allocate( AlignedSize );
@@ -61,8 +61,8 @@ void LinearAllocator::Reset()
 
     if ( Arenas.Size() > 1 )
     {
-        Arenas.Front() = ::Move( Arenas.Back() );
+        Arenas.FirstElement() = Move( Arenas.LastElement() );
         Arenas.Resize( 1 ); // Keep memory for the pointers
-        CurrentArena = &Arenas.Front();
+        CurrentArena = &Arenas.FirstElement();
     }
 }

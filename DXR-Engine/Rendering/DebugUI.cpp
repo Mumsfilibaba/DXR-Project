@@ -1,13 +1,5 @@
 #include "DebugUI.h"
 
-#include "Debug/Profiler.h"
-
-#include "Core/Engine/Engine.h"
-#include "Core/Application/Generic/GenericCursor.h"
-#include "Core/Application/Platform/Platform.h"
-
-#include "Time/Timer.h"
-
 #include "Rendering/Resources/TextureFactory.h"
 #include "Rendering/Renderer.h"
 
@@ -15,6 +7,11 @@
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
 
+#include "Core/Time/Timer.h"
+#include "Core/Engine/Engine.h"
+#include "Core/Application/Generic/GenericCursor.h"
+#include "Core/Application/Platform/Platform.h"
+#include "Core/Debug/Profiler.h"
 #include "Core/Containers/Array.h"
 
 struct ImGuiState
@@ -305,9 +302,9 @@ bool DebugUI::Init()
 
     InputLayoutStateCreateInfo InputLayoutInfo =
     {
-        { "POSITION", 0, EFormat::R32G32_Float,   0, static_cast<UINT>(IM_OFFSETOF( ImDrawVert, pos )), EInputClassification::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,   0, static_cast<UINT>(IM_OFFSETOF( ImDrawVert, uv )),  EInputClassification::Vertex, 0 },
-        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, 0, static_cast<UINT>(IM_OFFSETOF( ImDrawVert, col )), EInputClassification::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF( ImDrawVert, pos )), EInputClassification::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF( ImDrawVert, uv )),  EInputClassification::Vertex, 0 },
+        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, 0, static_cast<uint32>(IM_OFFSETOF( ImDrawVert, col )), EInputClassification::Vertex, 0 },
     };
 
     TSharedRef<InputLayoutState> InputLayout = CreateInputLayout( InputLayoutInfo );
@@ -448,13 +445,13 @@ bool DebugUI::Init()
         return false;
     }
 
-    GEngine.OnKeyPressedEvent.AddFunction( DebugUI::OnKeyPressed );
-    GEngine.OnKeyReleasedEvent.AddFunction( DebugUI::OnKeyReleased );
-    GEngine.OnKeyTypedEvent.AddFunction( DebugUI::OnKeyTyped );
+    GEngine.OnKeyPressedEvent.AddStatic( DebugUI::OnKeyPressed );
+    GEngine.OnKeyReleasedEvent.AddStatic( DebugUI::OnKeyReleased );
+    GEngine.OnKeyTypedEvent.AddStatic( DebugUI::OnKeyTyped );
 
-    GEngine.OnMousePressedEvent.AddFunction( DebugUI::OnMousePressed );
-    GEngine.OnMouseReleasedEvent.AddFunction( DebugUI::OnMouseReleased );
-    GEngine.OnMouseScrolledEvent.AddFunction( DebugUI::OnMouseScrolled );
+    GEngine.OnMousePressedEvent.AddStatic( DebugUI::OnMousePressed );
+    GEngine.OnMouseReleasedEvent.AddStatic( DebugUI::OnMouseReleased );
+    GEngine.OnMouseScrolledEvent.AddStatic( DebugUI::OnMouseScrolled );
 
     return true;
 }
@@ -468,12 +465,12 @@ void DebugUI::Release()
 
 void DebugUI::DrawUI( UIDrawFunc DrawFunc )
 {
-    GlobalDrawFuncs.EmplaceBack( DrawFunc );
+    GlobalDrawFuncs.Emplace( DrawFunc );
 }
 
 void DebugUI::DrawDebugString( const std::string& DebugString )
 {
-    GlobalDebugStrings.EmplaceBack( DebugString );
+    GlobalDebugStrings.Emplace( DebugString );
 }
 
 void DebugUI::OnKeyPressed( const KeyPressedEvent& Event )
@@ -681,7 +678,7 @@ void DebugUI::Render( CommandList& CmdList )
             if ( Cmd->TextureId )
             {
                 ImGuiImage* Image = reinterpret_cast<ImGuiImage*>(Cmd->TextureId);
-                GlobalImGuiState.Images.EmplaceBack( Image );
+                GlobalImGuiState.Images.Emplace( Image );
 
                 if ( Image->BeforeState != EResourceState::PixelShaderResource )
                 {

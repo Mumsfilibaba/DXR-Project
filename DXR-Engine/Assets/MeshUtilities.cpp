@@ -86,23 +86,23 @@ void CMeshUtilities::Subdivide( SMeshData& OutData, uint32 Subdivisions ) noexce
             TempVertices[2].Tangent = Tangent.GetNormalized();
 
             // Push the new Vertices
-            OutData.Vertices.EmplaceBack( TempVertices[0] );
-            OutData.Vertices.EmplaceBack( TempVertices[1] );
-            OutData.Vertices.EmplaceBack( TempVertices[2] );
+            OutData.Vertices.Emplace( TempVertices[0] );
+            OutData.Vertices.Emplace( TempVertices[1] );
+            OutData.Vertices.Emplace( TempVertices[2] );
 
             // Push index of the new triangles
             VertexCount = uint32( OutData.Vertices.Size() );
-            OutData.Indices.EmplaceBack( VertexCount - 3 );
-            OutData.Indices.EmplaceBack( VertexCount - 1 );
-            OutData.Indices.EmplaceBack( VertexCount - 2 );
+            OutData.Indices.Emplace( VertexCount - 3 );
+            OutData.Indices.Emplace( VertexCount - 1 );
+            OutData.Indices.Emplace( VertexCount - 2 );
 
-            OutData.Indices.EmplaceBack( VertexCount - 3 );
-            OutData.Indices.EmplaceBack( OutData.Indices[j + 1] );
-            OutData.Indices.EmplaceBack( VertexCount - 1 );
+            OutData.Indices.Emplace( VertexCount - 3 );
+            OutData.Indices.Emplace( OutData.Indices[j + 1] );
+            OutData.Indices.Emplace( VertexCount - 1 );
 
-            OutData.Indices.EmplaceBack( VertexCount - 2 );
-            OutData.Indices.EmplaceBack( VertexCount - 1 );
-            OutData.Indices.EmplaceBack( OutData.Indices[j + 2] );
+            OutData.Indices.Emplace( VertexCount - 2 );
+            OutData.Indices.Emplace( VertexCount - 1 );
+            OutData.Indices.Emplace( OutData.Indices[j + 2] );
 
             // Reassign the old indexes
             OutData.Indices[j + 1] = VertexCount - 3;
@@ -131,7 +131,7 @@ void CMeshUtilities::Optimize( SMeshData& OutData, uint32 StartVertex ) noexcept
             {
                 if ( i != j )
                 {
-                    OutData.Vertices.Erase( OutData.Vertices.Begin() + i );
+                    OutData.Vertices.RemoveAt( i );
                     VertexCount--;
                     j--;
 
@@ -159,7 +159,7 @@ void CMeshUtilities::CalculateHardNormals( SMeshData& OutData ) noexcept
 {
     Assert( OutData.Indices.Size() % 3 == 0 );
 
-    for ( uint32 i = 0; i < OutData.Indices.Size(); i += 3 )
+    for ( int32 i = 0; i < OutData.Indices.Size(); i += 3 )
     {
         Vertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
         Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
@@ -183,7 +183,7 @@ void CMeshUtilities::CalculateSoftNormals( SMeshData& OutData ) noexcept
     // TODO: Write better version. For now calculate the hard normals and then average all of them
     CalculateHardNormals( OutData );
 
-    for ( uint32 i = 0; i < OutData.Indices.Size(); i += 3 )
+    for ( int32 i = 0; i < OutData.Indices.Size(); i += 3 )
     {
         Vertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
         Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
@@ -224,7 +224,7 @@ void CMeshUtilities::CalculateTangents( SMeshData& OutData ) noexcept
         Vertex1.Tangent = Tangent;
     };
 
-    for ( uint32 i = 0; i < OutData.Indices.Size(); i += 3 )
+    for ( int32 i = 0; i < OutData.Indices.Size(); i += 3 )
     {
         Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
         Vertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];
@@ -240,14 +240,14 @@ void CMeshUtilities::ReverseHandedness( SMeshData& OutData ) noexcept
 {
     Assert( OutData.Indices.Size() % 3 == 0 );
 
-    for ( uint32 i = 0; i < OutData.Indices.Size(); i += 3 )
+    for ( int32 i = 0; i < OutData.Indices.Size(); i += 3 )
     {
         uint32 TempIndex = OutData.Indices[i + 1];
         OutData.Indices[i + 1] = OutData.Indices[i + 2];
         OutData.Indices[i + 2] = TempIndex;
     }
 
-    for ( uint32 i = 0; i < OutData.Vertices.Size(); i++ )
+    for ( int32 i = 0; i < OutData.Vertices.Size(); i++ )
     {
         OutData.Vertices[i].Position.z = OutData.Vertices[i].Position.z * -1.0f;
         OutData.Vertices[i].Normal.z = OutData.Vertices[i].Normal.z * -1.0f;

@@ -5,6 +5,7 @@
 
 #include "Core/Debug/Profiler.h"
 #include "Core/Debug/Console/Console.h"
+#include "Core/Math/Vector3.h"
 
 TConsoleVariable<float> GSSAORadius( 0.4f );
 TConsoleVariable<float> GSSAOBias( 0.025f );
@@ -114,7 +115,7 @@ bool ScreenSpaceOcclusionRenderer::Init( FrameResources& FrameResources )
 
     GCmdListExecutor.ExecuteCommandList( CmdList );
 
-    const uint32 Stride = sizeof( XMFLOAT3 );
+    const uint32 Stride = sizeof( CVector3 );
     ResourceData SSAOSampleData( SSAOKernel.Data(), SSAOKernel.SizeInBytes() );
     SSAOSamples = CreateStructuredBuffer( Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, EResourceState::Common, &SSAOSampleData );
     if ( !SSAOSamples )
@@ -139,7 +140,7 @@ bool ScreenSpaceOcclusionRenderer::Init( FrameResources& FrameResources )
     }
 
     TArray<ShaderDefine> Defines;
-    Defines.EmplaceBack( "HORIZONTAL_PASS", "1" );
+    Defines.Emplace( "HORIZONTAL_PASS", "1" );
 
     // Load shader
     if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
@@ -174,7 +175,7 @@ bool ScreenSpaceOcclusionRenderer::Init( FrameResources& FrameResources )
     }
 
     Defines.Clear();
-    Defines.EmplaceBack( "VERTICAL_PASS", "1" );
+    Defines.Emplace( "VERTICAL_PASS", "1" );
 
     if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
     {
@@ -237,24 +238,24 @@ void ScreenSpaceOcclusionRenderer::Render( CommandList& CmdList, FrameResources&
 
     struct SSAOSettings
     {
-        XMFLOAT2 ScreenSize;
-        XMFLOAT2 NoiseSize;
+        CVector2 ScreenSize;
+		CVector2 NoiseSize;
         float    Radius;
         float    Bias;
         int32    KernelSize;
     } SSAOSettings;
 
-    const uint32 Width = FrameResources.SSAOBuffer->GetWidth();
-    const uint32 Height = FrameResources.SSAOBuffer->GetHeight();
-    SSAOSettings.ScreenSize = XMFLOAT2( float( Width ), float( Height ) );
-    SSAOSettings.NoiseSize = XMFLOAT2( 4.0f, 4.0f );
-    SSAOSettings.Radius = GSSAORadius.GetFloat();
+    const uint32 Width      = FrameResources.SSAOBuffer->GetWidth();
+    const uint32 Height     = FrameResources.SSAOBuffer->GetHeight();
+    SSAOSettings.ScreenSize = CVector2( float( Width ), float( Height ) );
+    SSAOSettings.NoiseSize  = CVector2( 4.0f, 4.0f );
+    SSAOSettings.Radius     = GSSAORadius.GetFloat();
     SSAOSettings.KernelSize = GSSAOKernelSize.GetInt();
-    SSAOSettings.Bias = GSSAOBias.GetFloat();
+    SSAOSettings.Bias       = GSSAOBias.GetFloat();
 
     CmdList.SetConstantBuffer( SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0 );
 
-    FrameResources.DebugTextures.EmplaceBack(
+    FrameResources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( SSAONoiseTex->GetShaderResourceView() ),
         SSAONoiseTex,
         EResourceState::NonPixelShaderResource,

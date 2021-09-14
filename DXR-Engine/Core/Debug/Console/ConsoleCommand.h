@@ -16,5 +16,6 @@ public:
         OnExecute.Broadcast();
     }
 
-    TMulticastDelegate<void> OnExecute;
+    DECLARE_MULTICAST_DELEGATE(CCommandExecutedDelegate);
+    CCommandExecutedDelegate OnExecute;
 };

@@ -961,14 +961,14 @@ public:
     FORCEINLINE TString SubString( SizeType Offset, SizeType Count ) const noexcept
     {
         Assert( (Offset < Length()) && (Offset + Count < Length()) );
-        return TString( Characters + Offset, Count );
+        return TString( Characters.Data() + Offset, Count );
     }
 
     /* Returns a sub-stringview of this string */
     FORCEINLINE ViewType SubStringView( SizeType Offset, SizeType Count ) const noexcept
     {
         Assert( (Offset < Length()) && (Offset + Count < Length()) );
-        return TStringView<CharType>( Characters + Offset, Count );
+        return TStringView<CharType>( Characters.Data() + Offset, Count );
     }
 
     /* Retrive the character at Index */

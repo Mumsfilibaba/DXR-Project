@@ -310,6 +310,14 @@ void Delegate_Test()
     std::cout << std::endl << "----Testing MultiCastDelegate----" << std::endl << std::endl;
 
     {
+		TMulticastDelegate<> VoidMultiDelegates;
+		VoidMultiDelegates.AddLambda([]()
+		{
+			std::cout << "Lambda Void" << std::endl;
+		});
+		
+		VoidMultiDelegates.Broadcast();
+		
         TMulticastDelegate<int32> MultiDelegates;
         std::cout << "IsBound=" << std::boolalpha << MultiDelegates.IsBound() << std::endl;
 

@@ -9,11 +9,11 @@ CMaterial::CMaterial( const SMaterialDesc& InProperties )
     : AlbedoMap()
     , NormalMap()
     , RoughnessMap()
+	, HeightMap()
+	, AOMap()
     , MetallicMap()
-    , AOMap()
-    , HeightMap()
+	, Properties( InProperties )
     , MaterialBuffer()
-    , Properties( InProperties )
 {
 }
 

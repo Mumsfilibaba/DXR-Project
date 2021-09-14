@@ -3,10 +3,10 @@
 #include "Assets/VertexFormat.h"
 #include "Assets/MeshUtilities.h"
 
-#include "Utilities/StringUtilities.h"
 
 #include "Core/Math/Matrix4.h"
 #include "Core/Containers/HashTable.h"
+#include "Core/Utilities/StringUtilities.h"
 
 #include <ofbx.h>
 
@@ -88,7 +88,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
     FILE* File = fopen( Filename.CStr(), "rb" );
     if ( !File )
     {
-        LOG_ERROR( "[CFBXLoader]: Failed to open '" + Filename + "'" );
+        LOG_ERROR( ("[CFBXLoader]: Failed to open '" + Filename + "'").CStr() );
         return false;
     }
 
@@ -113,7 +113,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
 
     if ( NumBytesRead != FileSize )
     {
-        LOG_ERROR( "[CFBXLoader]: Failed to load '" + Filename + "'" );
+        LOG_ERROR( ("[CFBXLoader]: Failed to load '" + Filename + "'").CStr() );
         return false;
     }
 
@@ -122,7 +122,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
     ofbx::IScene* FBXScene = ofbx::load( Bytes, FileSize, (ofbx::u64)ofbx::LoadFlags::TRIANGULATE );
     if ( !FBXScene )
     {
-        LOG_ERROR( "[CMeshFactory]: Failed to load content '" + Filename + "'" );
+        LOG_ERROR( ("[CMeshFactory]: Failed to load content '" + Filename + "'").CStr() );
         return false;
     }
 
@@ -132,7 +132,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
     THashTable<Vertex, uint32, VertexHasher>  UniqueVertices;
     THashTable<const ofbx::Material*, uint32> UniqueMaterials;
 
-    String Path = ExtractPath( Filename );
+    CString Path = ExtractPath( Filename );
 
     SModelData Data;
 
@@ -166,7 +166,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
             //TODO: Other material properties
 
             UniqueMaterials[CurrentMaterial] = OutScene.Materials.Size();
-            OutScene.Materials.EmplaceBack( MaterialData );
+            OutScene.Materials.Emplace( MaterialData );
         }
 
         uint32 VertexCount = CurrentGeom->getVertexCount();
@@ -249,14 +249,14 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
                 {
                     UniqueIndex = static_cast<uint32>(Data.Mesh.Vertices.Size());
                     UniqueVertices[TempVertex] = UniqueIndex;
-                    Data.Mesh.Vertices.PushBack( TempVertex );
+                    Data.Mesh.Vertices.Push( TempVertex );
                 }
                 else
                 {
                     UniqueIndex = UniqueVertices[TempVertex];
                 }
 
-                Data.Mesh.Indices.EmplaceBack( UniqueIndex );
+                Data.Mesh.Indices.Emplace( UniqueIndex );
             }
 
             if ( !Tangents )
@@ -278,7 +278,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
             const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial( LastMaterialIndex );
             Data.MaterialIndex = UniqueMaterials[CurrentMaterial];
 
-            OutScene.Models.EmplaceBack( Data );
+            OutScene.Models.Emplace( Data );
         }
     }
 

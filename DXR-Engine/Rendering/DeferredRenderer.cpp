@@ -7,8 +7,8 @@
 #include "Rendering/Resources/Mesh.h"
 #include "Rendering/Resources/Material.h"
 
-#include "Debug/Profiler.h"
-#include "Debug/Console/Console.h"
+#include "Core/Debug/Profiler.h"
+#include "Core/Debug/Console/Console.h"
 
 TConsoleVariable<bool> GDrawTileDebug( false );
 

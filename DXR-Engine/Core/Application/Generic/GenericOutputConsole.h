@@ -1,6 +1,9 @@
 #pragma once
 #include "Core.h"
 
+// TODO: Remove
+#include <string>
+
 enum class EConsoleColor : uint8
 {
     Red = 0,
@@ -21,7 +24,10 @@ public:
     virtual void SetTitle( const std::string& Title ) = 0;
     virtual void SetColor( EConsoleColor Color ) = 0;
 
-    static GenericOutputConsole* Create();
+    static GenericOutputConsole* Create()
+	{
+		return nullptr;
+	}
 };
 
 extern GenericOutputConsole* GConsoleOutput;

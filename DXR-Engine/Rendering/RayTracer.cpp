@@ -1,12 +1,12 @@
 #include "RayTracer.h"
 
-#include "Debug/Profiler.h"
-
 #include "RenderLayer/RenderLayer.h"
 #include "RenderLayer/ShaderCompiler.h"
 
 #include "Resources/Material.h"
 #include "Resources/Mesh.h"
+
+#include "Core/Debug/Profiler.h"
 
 bool RayTracer::Init( FrameResources& Resources )
 {
@@ -123,7 +123,7 @@ void RayTracer::PreRender( CommandList& CmdList, FrameResources& Resources, cons
         Resources.RTMaterialTextureCache.Add( Mat->AOMap->GetShaderResourceView() );
         Sampler = Mat->GetMaterialSampler();
 
-        const XMFLOAT3X4 TinyTransform = Cmd.CurrentActor->GetTransform().GetTinyMatrix();
+        const CMatrix3x4 TinyTransform = Cmd.CurrentActor->GetTransform().GetTinyMatrix();
         uint32 HitGroupIndex = 0;
 
         auto HitGroupIndexPair = Resources.RTMeshToHitGroupIndex.find( Cmd.Mesh );
@@ -143,7 +143,7 @@ void RayTracer::PreRender( CommandList& CmdList, FrameResources& Resources, cons
                 HitGroupResources.AddShaderResourceView( Cmd.Mesh->IndexBufferSRV.Get() );
             }
 
-            Resources.RTHitGroupResources.EmplaceBack( HitGroupResources );
+            Resources.RTHitGroupResources.Emplace( HitGroupResources );
         }
         else
         {
@@ -157,7 +157,7 @@ void RayTracer::PreRender( CommandList& CmdList, FrameResources& Resources, cons
         Instance.InstanceIndex = AlbedoIndex;
         Instance.Mask = 0xff;
         Instance.Transform = TinyTransform;
-        Resources.RTGeometryInstances.EmplaceBack( Instance );
+        Resources.RTGeometryInstances.Emplace( Instance );
     }
 
     if ( !Resources.RTScene )
@@ -210,7 +210,7 @@ void RayTracer::PreRender( CommandList& CmdList, FrameResources& Resources, cons
 
     CmdList.UnorderedAccessTextureBarrier( Resources.RTOutput.Get() );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( Resources.RTOutput->GetShaderResourceView() ),
         Resources.RTOutput,
         EResourceState::UnorderedAccess,

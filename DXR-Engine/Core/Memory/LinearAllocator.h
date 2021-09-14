@@ -2,9 +2,20 @@
 #include "Memory.h"
 
 #include "Core/Containers/Array.h"
+#include "Core/Templates/IsReallocatable.h"
 
 struct MemoryArena
 {
+	MemoryArena( const MemoryArena& Other ) = delete;
+	MemoryArena& operator=( const MemoryArena& Other ) = delete;
+
+	MemoryArena()
+		: Mem( nullptr )
+		, Offset( 0 )
+		, SizeInBytes( 0 )
+	{
+	}
+	
     MemoryArena( uint64 InSizeInBytes )
         : Mem( nullptr )
         , Offset( 0 )
@@ -13,8 +24,6 @@ struct MemoryArena
         Mem = reinterpret_cast<uint8*>(Memory::Malloc( SizeInBytes ));
         Reset();
     }
-
-    MemoryArena( const MemoryArena& Other ) = delete;
 
     MemoryArena( MemoryArena&& Other )
         : Mem( Other.Mem )
@@ -55,8 +64,6 @@ struct MemoryArena
         return SizeInBytes;
     }
 
-    MemoryArena& operator=( const MemoryArena& Other ) = delete;
-
     MemoryArena& operator=( MemoryArena&& Other )
     {
         if ( Mem )
@@ -78,6 +85,17 @@ struct MemoryArena
     uint8* Mem;
     uint64 Offset;
     uint64 SizeInBytes;
+};
+
+// This should not be necessary, but the move constructor is not called in TArray,
+// it insists of calling the deleted copy constructor, Why?
+template<>
+struct TIsReallocatable<MemoryArena>
+{
+	enum
+	{
+		Value = true
+	};
 };
 
 class LinearAllocator

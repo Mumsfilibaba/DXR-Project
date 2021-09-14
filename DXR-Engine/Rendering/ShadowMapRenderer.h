@@ -63,27 +63,27 @@ private:
 
     bool CreateShadowMaps( LightSetup& LightSetup, FrameResources& FrameResources );
 
-    TSharedRef<ConstantBuffer> PerShadowMapBuffer;
+    TSharedRef<ConstantBuffer>        PerShadowMapBuffer;
 
     TSharedRef<GraphicsPipelineState> DirectionalLightPSO;
     TSharedRef<VertexShader>          DirectionalLightShader;
 
-    TSharedRef<ComputePipelineState> DirectionalShadowMaskPSO;
-    TSharedRef<ComputeShader>        DirectionalShadowMaskShader;
+    TSharedRef<ComputePipelineState>  DirectionalShadowMaskPSO;
+    TSharedRef<ComputeShader>         DirectionalShadowMaskShader;
 
     TSharedRef<GraphicsPipelineState> PointLightPipelineState;
     TSharedRef<VertexShader>          PointLightVertexShader;
     TSharedRef<PixelShader>           PointLightPixelShader;
 
-    TSharedRef<ConstantBuffer> PerCascadeBuffer;
-    TSharedRef<ConstantBuffer> CascadeGenerationData;
+    TSharedRef<ConstantBuffer>        PerCascadeBuffer;
+    TSharedRef<ConstantBuffer>        CascadeGenerationData;
 
-    TSharedRef<ComputePipelineState> CascadeGen;
-    TSharedRef<ComputeShader>        CascadeGenShader;
+    TSharedRef<ComputePipelineState>  CascadeGen;
+    TSharedRef<ComputeShader>         CascadeGenShader;
 
-    bool UpdateDirLight = true;
-    bool UpdatePointLight = true;
+    bool UpdateDirLight    = true;
+    bool UpdatePointLight  = true;
 
-    uint64 DirLightFrame = 0;
+    uint64 DirLightFrame   = 0;
     uint64 PointLightFrame = 0;
 };

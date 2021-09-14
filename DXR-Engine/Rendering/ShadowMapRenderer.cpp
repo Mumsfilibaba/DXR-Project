@@ -19,7 +19,11 @@ bool ShadowMapRenderer::Init( LightSetup& LightSetup, FrameResources& FrameResou
     {
         return false;
     }
-
+	
+	UNREFERENCED_VARIABLE(UpdateDirLight);
+	UNREFERENCED_VARIABLE(DirLightFrame);
+	UNREFERENCED_VARIABLE(PointLightFrame);
+	
     TArray<uint8> ShaderCode;
 
     // Point Shadow Maps
@@ -423,7 +427,7 @@ void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const Lig
         } ShadowPerObjectBuffer;
 
         SPerShadowMap PerShadowMapData;
-        for ( uint32 i = 0; i < LightSetup.PointLightShadowMapsGenerationData.Size(); i++ )
+        for ( int32 i = 0; i < LightSetup.PointLightShadowMapsGenerationData.Size(); i++ )
         {
             for ( uint32 Face = 0; Face < 6; Face++ )
             {

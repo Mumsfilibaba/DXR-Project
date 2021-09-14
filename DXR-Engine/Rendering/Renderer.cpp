@@ -76,11 +76,11 @@ void Renderer::PerformFrustumCulling( const Scene& Scene )
         {
             if ( Command.Material->ShouldRenderInForwardPass() )
             {
-                Resources.ForwardVisibleCommands.EmplaceBack( Command );
+                Resources.ForwardVisibleCommands.Emplace( Command );
             }
             else
             {
-                Resources.DeferredVisibleCommands.EmplaceBack( Command );
+                Resources.DeferredVisibleCommands.Emplace( Command );
             }
         }
     }
@@ -357,11 +357,11 @@ void Renderer::Tick( const Scene& Scene )
         {
             if ( Command.Material->HasAlphaMask() )
             {
-                Resources.ForwardVisibleCommands.EmplaceBack( Command );
+                Resources.ForwardVisibleCommands.Emplace( Command );
             }
             else
             {
-                Resources.DeferredVisibleCommands.EmplaceBack( Command );
+                Resources.DeferredVisibleCommands.Emplace( Command );
             }
         }
     }
@@ -465,7 +465,7 @@ void Renderer::Tick( const Scene& Scene )
 
     MainCmdList.TransitionTexture( Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView() ),
         Resources.GBuffer[GBUFFER_ALBEDO_INDEX],
         EResourceState::NonPixelShaderResource,
@@ -473,7 +473,7 @@ void Renderer::Tick( const Scene& Scene )
 
     MainCmdList.TransitionTexture( Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView() ),
         Resources.GBuffer[GBUFFER_NORMAL_INDEX],
         EResourceState::NonPixelShaderResource,
@@ -481,7 +481,7 @@ void Renderer::Tick( const Scene& Scene )
 
     MainCmdList.TransitionTexture( Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView() ),
         Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX],
         EResourceState::NonPixelShaderResource,
@@ -489,7 +489,7 @@ void Renderer::Tick( const Scene& Scene )
 
     MainCmdList.TransitionTexture( Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView() ),
         Resources.GBuffer[GBUFFER_MATERIAL_INDEX],
         EResourceState::NonPixelShaderResource,
@@ -509,7 +509,7 @@ void Renderer::Tick( const Scene& Scene )
 
     MainCmdList.TransitionTexture( Resources.SSAOBuffer.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( Resources.SSAOBuffer->GetShaderResourceView() ),
         Resources.SSAOBuffer,
         EResourceState::NonPixelShaderResource,
@@ -534,31 +534,31 @@ void Renderer::Tick( const Scene& Scene )
 
     MainCmdList.TransitionTexture( LightSetup.PointLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( LightSetup.DirectionalShadowMask->GetShaderResourceView() ),
         LightSetup.DirectionalShadowMask,
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( LightSetup.ShadowMapCascades[0]->GetShaderResourceView() ),
         LightSetup.ShadowMapCascades[0],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( LightSetup.ShadowMapCascades[1]->GetShaderResourceView() ),
         LightSetup.ShadowMapCascades[1],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( LightSetup.ShadowMapCascades[2]->GetShaderResourceView() ),
         LightSetup.ShadowMapCascades[2],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( LightSetup.ShadowMapCascades[3]->GetShaderResourceView() ),
         LightSetup.ShadowMapCascades[3],
         EResourceState::NonPixelShaderResource,
@@ -568,7 +568,7 @@ void Renderer::Tick( const Scene& Scene )
     MainCmdList.TransitionTexture( LightSetup.SpecularIrradianceMap.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource );
     MainCmdList.TransitionTexture( Resources.IntegrationLUT.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( Resources.IntegrationLUT->GetShaderResourceView() ),
         Resources.IntegrationLUT,
         EResourceState::PixelShaderResource,
@@ -582,7 +582,7 @@ void Renderer::Tick( const Scene& Scene )
 
     MainCmdList.TransitionTexture( Resources.FinalTarget.Get(), EResourceState::RenderTarget, EResourceState::PixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( Resources.FinalTarget->GetShaderResourceView() ),
         Resources.FinalTarget,
         EResourceState::PixelShaderResource,
@@ -590,7 +590,7 @@ void Renderer::Tick( const Scene& Scene )
 
     MainCmdList.TransitionTexture( Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::PixelShaderResource );
 
-    Resources.DebugTextures.EmplaceBack(
+    Resources.DebugTextures.Emplace(
         MakeSharedRef<ShaderResourceView>( Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView() ),
         Resources.GBuffer[GBUFFER_DEPTH_INDEX],
         EResourceState::PixelShaderResource,
@@ -838,7 +838,7 @@ bool Renderer::Init()
     GCmdListExecutor.ExecuteCommandList( MainCmdList );
 
     // Register EventFunc
-    GEngine.OnWindowResizedEvent.AddObject( this, &Renderer::OnWindowResize );
+    GEngine.OnWindowResizedEvent.AddRaw( this, &Renderer::OnWindowResize );
 
     return true;
 }
@@ -1042,22 +1042,22 @@ bool Renderer::InitBoundingBoxDebugPass()
         AABBDebugPipelineState->SetName( "Debug PipelineState" );
     }
 
-    TStaticArray<XMFLOAT3, 8> Vertices =
+    TStaticArray<CVector3, 8> Vertices =
     {
-        XMFLOAT3( -0.5f, -0.5f,  0.5f ),
-        XMFLOAT3( 0.5f, -0.5f,  0.5f ),
-        XMFLOAT3( -0.5f,  0.5f,  0.5f ),
-        XMFLOAT3( 0.5f,  0.5f,  0.5f ),
+		CVector3( -0.5f, -0.5f,  0.5f ),
+		CVector3( 0.5f, -0.5f,  0.5f ),
+		CVector3( -0.5f,  0.5f,  0.5f ),
+		CVector3( 0.5f,  0.5f,  0.5f ),
 
-        XMFLOAT3( 0.5f, -0.5f, -0.5f ),
-        XMFLOAT3( -0.5f, -0.5f, -0.5f ),
-        XMFLOAT3( 0.5f,  0.5f, -0.5f ),
-        XMFLOAT3( -0.5f,  0.5f, -0.5f )
+		CVector3( 0.5f, -0.5f, -0.5f ),
+		CVector3( -0.5f, -0.5f, -0.5f ),
+		CVector3( 0.5f,  0.5f, -0.5f ),
+		CVector3( -0.5f,  0.5f, -0.5f )
     };
 
     ResourceData VertexData( Vertices.Data(), Vertices.SizeInBytes() );
 
-    AABBVertexBuffer = CreateVertexBuffer<XMFLOAT3>( Vertices.Size(), BufferFlag_Default, EResourceState::Common, &VertexData );
+    AABBVertexBuffer = CreateVertexBuffer<CVector3>( Vertices.Size(), BufferFlag_Default, EResourceState::Common, &VertexData );
     if ( !AABBVertexBuffer )
     {
         Debug::DebugBreak();

@@ -29,7 +29,7 @@ public:
         {
             int32 NewIndex = Resources.Size();
             ResourceIndices[Resource] = NewIndex;
-            Resources.EmplaceBack( Resource );
+            Resources.Emplace( Resource );
 
             return NewIndex;
         }
