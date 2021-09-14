@@ -2,11 +2,6 @@
 
 #include "Core/Threading/ScopedLock.h"
 
-GenericOutputConsole* GenericOutputConsole::Create()
-{
-    return DBG_NEW WindowsOutputConsole();
-}
-
 WindowsOutputConsole::WindowsOutputConsole()
     : ConsoleHandle( 0 )
 {

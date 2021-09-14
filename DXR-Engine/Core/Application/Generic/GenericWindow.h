@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/RefCountedObject.h"
+#include "Core/RefCounted.h"
 
 #include <string>
 
@@ -68,7 +68,7 @@ struct WindowShape
 
 typedef void* NativeWindowHandle;
 
-class GenericWindow : public RefCountedObject
+class GenericWindow : public CRefCounted
 {
 public:
     virtual void Show( bool Maximized ) = 0;

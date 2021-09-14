@@ -1,10 +1,10 @@
 #pragma once
-#include "Core/RefCountedObject.h"
+#include "Core/RefCounted.h"
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/IsConvertible.h"
 #include "Core/Templates/IsNullptr.h"
 
-/* TSharedRef - Helper class when using objects with RefCountedObject as a base */
+/* TSharedRef - Helper class when using objects with CRefCounted as a base */
 template<typename T>
 class TSharedRef
 {

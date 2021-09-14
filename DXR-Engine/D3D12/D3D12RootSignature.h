@@ -3,7 +3,7 @@
 #include "D3D12Device.h"
 #include "D3D12Shader.h"
 
-#include "Core/RefCountedObject.h"
+#include "Core/RefCounted.h"
 
 #include "Utilities/StringUtilities.h"
 #include "Utilities/HashUtilities.h"
@@ -68,7 +68,7 @@ private:
     uint32 NumDescriptorRanges = 0;
 };
 
-class D3D12RootSignature : public D3D12DeviceChild, public RefCountedObject
+class D3D12RootSignature : public D3D12DeviceChild, public CRefCounted
 {
 public:
     D3D12RootSignature( D3D12Device* InDevice );

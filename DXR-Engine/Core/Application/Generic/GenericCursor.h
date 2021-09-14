@@ -1,7 +1,7 @@
 #pragma once
 #include "Core.h"
 
-#include "Core/RefCountedObject.h"
+#include "Core/RefCounted.h"
 #include "Core/Containers/SharedRef.h"
 
 #ifdef COMPILER_MSVC
@@ -11,7 +11,7 @@
 
 class GenericWindow;
 
-class GenericCursor : public RefCountedObject
+class GenericCursor : public CRefCounted
 {
 public:
     virtual ~GenericCursor() = default;

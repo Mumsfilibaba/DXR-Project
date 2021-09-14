@@ -25,7 +25,7 @@ bool EngineLoop::Init()
 {
     TRACE_FUNCTION_SCOPE();
 
-    GConsoleOutput = GenericOutputConsole::Create();
+    GConsoleOutput = PlatformMisc::CreateOutputConsole();
     if ( !GConsoleOutput )
     {
         return false;

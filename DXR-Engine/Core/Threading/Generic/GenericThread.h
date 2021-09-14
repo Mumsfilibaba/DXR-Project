@@ -1,7 +1,7 @@
 #pragma once
 #include "Core.h"
 
-#include "Core/RefCountedObject.h"
+#include "Core/RefCounted.h"
 #include "Core/Time/Timestamp.h"
 
 typedef void(*ThreadFunction)();
@@ -11,7 +11,7 @@ typedef uint64 ThreadID;
 // See: https://docs.microsoft.com/en-us/windows/win32/procthread/thread-handles-and-identifiers
 #define INVALID_THREAD_ID 0
 
-class GenericThread : public RefCountedObject
+class GenericThread : public CRefCounted
 {
 public:
 

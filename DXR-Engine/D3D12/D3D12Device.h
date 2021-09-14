@@ -6,7 +6,7 @@
 
 #include "D3D12Helpers.h"
 
-#include "Core/RefCountedObject.h"
+#include "Core/RefCounted.h"
 
 class D3D12OfflineDescriptorHeap;
 class D3D12OnlineDescriptorHeap;

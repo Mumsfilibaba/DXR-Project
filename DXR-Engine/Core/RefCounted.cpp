@@ -1,22 +1,22 @@
-#include "RefCountedObject.h"
+#include "RefCounted.h"
 
-RefCountedObject::RefCountedObject()
+CRefCounted::CRefCounted()
     : StrongReferences( 0 )
 {
     AddRef();
 }
 
-RefCountedObject::~RefCountedObject()
+CRefCounted::~CRefCounted()
 {
     Assert( StrongReferences.Load() == 0 );
 }
 
-int32 RefCountedObject::AddRef()
+int32 CRefCounted::AddRef()
 {
     return ++StrongReferences;
 }
 
-int32 RefCountedObject::Release()
+int32 CRefCounted::Release()
 {
     int32 NewRefCount = --StrongReferences;
     if ( StrongReferences.Load() <= 0 )
@@ -27,7 +27,7 @@ int32 RefCountedObject::Release()
     return NewRefCount;
 }
 
-int32 RefCountedObject::GetRefCount() const
+int32 CRefCounted::GetRefCount() const
 {
     return StrongReferences.Load();
 }

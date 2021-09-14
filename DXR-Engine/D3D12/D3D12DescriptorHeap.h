@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/RefCountedObject.h"
+#include "Core/RefCounted.h"
 #include "Core/Containers/Array.h"
 
 #include "Utilities/StringUtilities.h"
@@ -7,7 +7,7 @@
 #include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
 
-class D3D12DescriptorHeap : public D3D12DeviceChild, public RefCountedObject
+class D3D12DescriptorHeap : public D3D12DeviceChild, public CRefCounted
 {
 public:
     D3D12DescriptorHeap( D3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE Type, uint32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS Flags );
@@ -60,7 +60,7 @@ private:
     uint32 DescriptorHandleIncrementSize;
 };
 
-class D3D12OfflineDescriptorHeap : public D3D12DeviceChild, public RefCountedObject
+class D3D12OfflineDescriptorHeap : public D3D12DeviceChild, public CRefCounted
 {
     struct DescriptorRange
     {
@@ -127,7 +127,7 @@ private:
     uint32 DescriptorSize = 0;
 };
 
-class D3D12OnlineDescriptorHeap : public D3D12DeviceChild, public RefCountedObject
+class D3D12OnlineDescriptorHeap : public D3D12DeviceChild, public CRefCounted
 {
 public:
     D3D12OnlineDescriptorHeap( D3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType );

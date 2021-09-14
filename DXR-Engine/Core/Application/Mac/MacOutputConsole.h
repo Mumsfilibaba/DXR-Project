@@ -1,17 +1,19 @@
 #pragma once
 
-#if defined(PLATFORM_WINDOWS)
-
+#if defined(PLATFORM_MACOS)
 #include "Core/Application/Generic/GenericOutputConsole.h"
-#include "Core/Threading/Platform/CriticalSection.h"
 
-#include "Windows/Windows.h"
+#if defined(__OBJC__)
+@class CCocoaConsoleWindow;
+#else
+class CCocoaConsoleWindow;
+#endif
 
-class WindowsOutputConsole : public CGenericOutputConsole
+class CMacOutputConsole : public CGenericOutputConsole
 {
 public:
-    WindowsOutputConsole();
-    ~WindowsOutputConsole();
+	CMacOutputConsole();
+    ~CMacOutputConsole();
 
     virtual void Print( const std::string& Message ) override final;
 
@@ -21,8 +23,7 @@ public:
     virtual void SetColor( EConsoleColor Color )      override final;
 
 private:
-    HANDLE           ConsoleHandle;
-    CCriticalSection ConsoleMutex;
+	CCocoaConsoleWindow* Window;
 };
 
 #endif

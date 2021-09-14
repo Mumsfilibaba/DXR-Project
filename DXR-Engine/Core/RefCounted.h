@@ -4,12 +4,12 @@
 #include "Core/Threading/InterlockedInt.h"
 
 /* Base-class for intrusive refcounted object */
-class RefCountedObject
+class CRefCounted
 {
 public:
 	
-    RefCountedObject();
-    virtual ~RefCountedObject();
+    CRefCounted();
+    virtual ~CRefCounted();
 
     int32 AddRef();
     int32 Release();

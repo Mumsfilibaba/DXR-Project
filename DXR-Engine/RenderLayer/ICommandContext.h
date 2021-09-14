@@ -5,7 +5,7 @@
 
 #include "Core/Containers/ArrayView.h"
 
-class ICommandContext : public RefCountedObject
+class ICommandContext : public CRefCounted
 {
 public:
     virtual void Begin() = 0;

@@ -1,9 +1,9 @@
 #pragma once
 #include "RenderingCore.h"
 
-#include "Core/RefCountedObject.h"
+#include "Core/RefCounted.h"
 
-class Resource : public RefCountedObject
+class Resource : public CRefCounted
 {
 public:
     virtual void* GetNativeResource() const

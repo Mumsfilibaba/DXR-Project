@@ -186,8 +186,13 @@ workspace "DXR-Project"
 			"DXR-Engine/Math/Tests/**",
 		}
 		
-		-- Remove non macos files
+		-- Remove non-macos and add macos-specific files
 		filter "system:macosx"
+			files 
+			{ 
+				"%{prj.name}/**.mm",
+			}
+
 			excludes 
 			{
 				"DXR-Engine/D3D12/**",
@@ -229,6 +234,15 @@ workspace "DXR-Project"
 			"tinyobjloader",
 			"OpenFBX"
 		}
+
+		filter "system:macosx"
+			links
+			{
+				-- Native
+				"Cocoa.framework",
+				"AppKit.framework",
+			}
+		filter {}
 
         -- Includes
 		includedirs
@@ -309,5 +323,15 @@ workspace "DXR-Project"
 			"DXR-Engine",
 		}
 		
+		-- TODO: Check why this is necessary
+		filter "system:macosx"
+			links
+			{
+				-- Native
+				"Cocoa.framework",
+				"AppKit.framework",
+			}
+		filter {}
+
 	project "*"
 	

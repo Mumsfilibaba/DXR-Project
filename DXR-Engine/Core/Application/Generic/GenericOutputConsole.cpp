@@ -1,3 +1,3 @@
 #include "GenericOutputConsole.h"
 
-GenericOutputConsole* GConsoleOutput;
+CGenericOutputConsole* GConsoleOutput = nullptr;

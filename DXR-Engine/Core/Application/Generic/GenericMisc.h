@@ -18,9 +18,15 @@
 // TODO: Remove
 #include <string>
 
-class GenericMisc
+class CGenericMisc
 {
 public:
+
+    /* Creates an output console if the platform supports it */
+    static FORCEINLINE class CGenericOutputConsole* CreateOutputConsole()
+    {
+        return nullptr;
+    }
 
     /* Takes the title of the messagebox and the message to be displayed */
     static FORCEINLINE void MessageBox( const std::string& Title, const std::string& Message )
@@ -32,6 +38,7 @@ public:
     {
     }
 
+    /* If the debugger is attached, a breakpoint will be set at this point of the code */
     static FORCEINLINE void DebugBreak()
     {
     }
@@ -41,6 +48,7 @@ public:
     {
     }
 
+    /* Checks weather or not the application is running inside a debugger */
     static FORCEINLINE bool IsDebuggerPresent()
     {
         return false;

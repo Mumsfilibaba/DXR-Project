@@ -2,15 +2,14 @@
 
 #if defined(PLATFORM_WINDOWS)
 #include "Core/Application/Windows/WindowsMisc.h"
-typedef WindowsMisc PlatformMisc;
+typedef CWindowsMisc PlatformMisc;
 
 #elif defined(PLATFORM_MACOS)
-#include "Core/Application/Generic/GenericMisc.h"
-typedef GenericMisc PlatformMisc;
-// TODO: Create MacMisc
+#include "Core/Application/Mac/MacMisc.h"
+typedef CMacMisc PlatformMisc;
 
 #else
 #include "Core/Application/Generic/GenericMisc.h"
-typedef GenericMisc PlatformMisc;
+typedef CGenericMisc PlatformMisc;
 
 #endif

@@ -16,7 +16,7 @@
 
 /* Core */
 #include "Core.h"
-#include "Core/RefCountedObject.h"
+#include "Core/RefCounted.h"
 #include "Core/CoreObject/ClassType.h"
 #include "Core/CoreObject/CoreObject.h"
 
