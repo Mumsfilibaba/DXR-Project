@@ -9,13 +9,13 @@
 
 /* Architecture */
 #if defined(_M_IX86) || defined(_M_X64)
-#ifndef ARCH_X86_X64
-#define ARCH_X86_X64 (1)
+#ifndef ARCHITECTURE_X86_X64
+#define ARCHITECTURE_X86_X64 (1)
 #endif
-#endif // ARCH_X86_X64
+#endif // ARCHITECTURE_X86_X64
 
 /* Use SSE intrinsics if we can*/
-#if ARCH_X86_X64
+#if ARCHITECTURE_X86_X64
 #ifndef ENABLE_SEE_INTRIN
 #define ENABLE_SEE_INTRIN (1)
 #endif

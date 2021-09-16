@@ -35,7 +35,7 @@ static void DrawFloat3Control( const std::string& Label, CVector3& Value, float 
 
     // Text
     ImGui::SetColumnWidth( 0, ColumnWidth );
-    ImGui::Text( Label.c_str() );
+    ImGui::Text( "%s", Label.c_str() );
     ImGui::NextColumn();
 
     // Drag Floats

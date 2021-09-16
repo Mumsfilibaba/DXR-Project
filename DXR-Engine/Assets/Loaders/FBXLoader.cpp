@@ -94,12 +94,13 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
 
     // TODO: Utility to read in full file?
     fseek( File, 0, SEEK_END );
-    uint32 FileSize = ftell( File );
+    uint32 FileSize = (uint32)ftell( File );
     rewind( File );
 
     TArray<ofbx::u8> FileContent( FileSize );
     uint32 SizeInBytes = FileContent.SizeInBytes();
-
+	UNREFERENCED_VARIABLE(SizeInBytes);
+	
     ofbx::u8* Bytes = FileContent.Data();
 
     const uint32 ChunkSize = 1024;

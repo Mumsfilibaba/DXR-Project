@@ -5,8 +5,8 @@
 
 void CMacApplicationMisc::MessageBox( const std::string& Title, const std::string& Message )
 {
-    CFStringRef CaptionRef  = CFStringCreateWithCString(0, Title.c_str(), Title.size());
-    CFStringRef TextRef     = CFStringCreateWithCString(0, Message.c_str(), Message.size());
+    CFStringRef CaptionRef  = CFStringCreateWithCString(0, Title.c_str(),   static_cast<CFStringEncoding>(Title.size()));
+    CFStringRef TextRef     = CFStringCreateWithCString(0, Message.c_str(), static_cast<CFStringEncoding>(Message.size()));
         
     CFOptionFlags Result    = 0;
     CFOptionFlags Flags     = kCFUserNotificationStopAlertLevel;

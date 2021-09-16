@@ -600,7 +600,7 @@ void DebugUI::Render( CommandList& CmdList )
 
         for ( const std::string& Str : GlobalDebugStrings )
         {
-            ImGui::Text( Str.c_str() );
+            ImGui::Text( "%s", Str.c_str() );
         }
         GlobalDebugStrings.Clear();
 

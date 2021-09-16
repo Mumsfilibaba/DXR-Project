@@ -440,7 +440,7 @@ void Renderer::Tick( const Scene& Scene )
         ShadingRateCmdList.SetShadingRate( EShadingRate::VRS_1x1 );
     }
 
-    if ( false/*IsRayTracingSupported())*/ )
+	if ( /* DISABLES CODE */ (false)/*IsRayTracingSupported())*/ )
     {
         const auto RenderRayTracing = [&]()
         {

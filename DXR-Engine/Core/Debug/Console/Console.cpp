@@ -230,7 +230,7 @@ void Console::DrawInterface()
             ImGui::SameLine( ColumnWidth );
 
             ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 0.7f, 0.7f, 0.7f, 1.0f ) );
-            ImGui::Text( Candidate.PostFix.c_str() );
+            ImGui::Text( "%s", Candidate.PostFix.c_str() );
             ImGui::PopStyleColor();
 
             ImGui::PopID();
@@ -364,9 +364,9 @@ int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
                 break;
             }
 
-            for ( const std::pair<String, ConsoleObject*>& Object : ConsoleObjects )
+            for ( const auto& Object : ConsoleObjects )
             {
-                if ( WordLength <= Object.first.size() )
+                if ( WordLength <= (int32)Object.first.size() )
                 {
                     const char* Command = Object.first.c_str();
                     int32 d = -1;

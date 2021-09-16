@@ -37,7 +37,7 @@ namespace NMath
     // TODO: Move all math functions and constants to one location
     FORCEINLINE float VECTORCALL Sqrt( float v )
     {
-    #if ARCH_X86_X64
+    #if ARCHITECTURE_X86_X64
         return _mm_cvtss_f32( _mm_sqrt_ss( _mm_load_ss( &v ) ) );
     #else
         return sqrtf( v );

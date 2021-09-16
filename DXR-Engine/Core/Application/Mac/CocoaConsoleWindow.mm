@@ -62,14 +62,14 @@
 {
     SCOPED_AUTORELEASE_POOL();
     
-    NSAttributedString* AttributedString = [[NSAttributedString alloc] initWithString:String Attributes:ConsoleColor];
+    NSAttributedString* AttributedString = [[NSAttributedString alloc] initWithString:String attributes:ConsoleColor];
         
     NSTextStorage* Storage = [TextView textStorage];
     [Storage beginEditing];
     
     // Remove lines
     NSUInteger LineCount  = [self getLineCount];
-    NSString*  TextString = [TextView String];
+    NSString*  TextString = [TextView string];
     if (LineCount >= 196)
     {
         NSUInteger LineIndex;

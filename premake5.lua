@@ -58,6 +58,24 @@ workspace "DXR-Project"
         }
     filter {}
 
+	-- Architecture defines
+	filter "architecture:x86"
+		defines
+		{
+			"ARCHITECTURE_X86=1",
+		}
+	filter "architecture:x86_x64"
+		defines
+		{
+			"ARCHITECTURE_X86_X64=1",
+		}
+	filter "architecture:ARM"
+		defines
+		{
+			"ARCHITECTURE_ARM=1",
+		}
+	filter {}
+
     -- IDE options
 	filter "action:vs*"
         defines
