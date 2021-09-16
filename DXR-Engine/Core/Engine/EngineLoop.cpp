@@ -13,6 +13,7 @@
 #include "Core/Application/Generic/GenericOutputConsole.h"
 #include "Core/Application/Platform/Platform.h"
 #include "Core/Application/Platform/PlatformMisc.h"
+#include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Input/InputManager.h"
 #include "Core/Debug/Profiler.h"
 #include "Core/Debug/Console/Console.h"
@@ -39,7 +40,7 @@ bool EngineLoop::Init()
 
     if ( !Platform::Init() )
     {
-        PlatformMisc::MessageBox( "ERROR", "Failed to init Platform" );
+        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to init Platform" );
         return false;
     }
 
@@ -82,7 +83,7 @@ bool EngineLoop::Init()
 
     if ( !GRenderer.Init() )
     {
-        PlatformMisc::MessageBox( "ERROR", "FAILED to create Renderer" );
+        PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create Renderer" );
         return false;
     }
 
@@ -90,7 +91,7 @@ bool EngineLoop::Init()
 
     if ( !DebugUI::Init() )
     {
-        PlatformMisc::MessageBox( "ERROR", "FAILED to create ImGuiContext" );
+		PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create ImGuiContext" );
         return false;
     }
 

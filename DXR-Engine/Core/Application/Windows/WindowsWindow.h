@@ -1,7 +1,9 @@
 #pragma once
-#include "Windows.h"
 
+#if defined(PLATFORM_WINDOWS)
 #include "Core/Application/Generic/GenericWindow.h"
+
+#include "Windows.h"
 
 class WindowsWindow : public GenericWindow
 {
@@ -50,3 +52,5 @@ private:
 
     WINDOWPLACEMENT StoredPlacement;
 };
+
+#endif

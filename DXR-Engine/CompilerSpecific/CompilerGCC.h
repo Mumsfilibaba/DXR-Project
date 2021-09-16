@@ -46,8 +46,8 @@
 #endif
 
 /* Restric */
-#ifndef RESTRICT
-#define RESTRICT __restrict
+#ifndef restrict
+#define restrict __restrict
 #endif
 
 /* Function signature as a const char* string */

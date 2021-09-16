@@ -2,6 +2,7 @@
 
 #include "Core/Application/Platform/PlatformMisc.h"
 #include "Core/Application/Platform/Platform.h"
+#include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Console/Console.h"
 
 ConsoleCommand GToggleFullscreen;
@@ -28,7 +29,7 @@ bool Engine::Init()
     }
     else
     {
-        PlatformMisc::MessageBox( "ERROR", "Failed to create Engine" );
+        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create Engine" );
         return false;
     }
 
@@ -142,7 +143,7 @@ void Engine::OnWindowClosed( const TSharedRef<GenericWindow>& InWindow )
 
     if ( InWindow == MainWindow )
     {
-        PlatformMisc::RequestExit( 0 );
+        PlatformApplicationMisc::RequestExit( 0 );
     }
 }
 

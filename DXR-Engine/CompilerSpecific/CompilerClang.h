@@ -45,9 +45,9 @@
 #define VECTORCALL __vectorcall
 #endif
 
-/* Restric */
-#ifndef RESTRICT
-#define RESTRICT __restrict
+/* Restric a pointer */
+#ifndef restrict
+#define restrict __restrict
 #endif
 
 /* Function signature as a const char* string */

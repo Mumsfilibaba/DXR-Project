@@ -524,7 +524,7 @@ void DebugUI::Render( CommandList& CmdList )
         Platform::SetCursorPos( Window, static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) );
     }
 
-    WindowShape CurrentWindowShape;
+    SWindowShape CurrentWindowShape;
     Window->GetWindowShape( CurrentWindowShape );
 
     Timestamp Delta = GlobalImGuiState.FrameClock.GetDeltaTime();

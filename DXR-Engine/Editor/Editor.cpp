@@ -188,7 +188,7 @@ static void DrawRenderSettings()
 {
     ImGui::BeginChild( "RendererInfo" );
 
-    WindowShape WindowShape;
+	SWindowShape WindowShape;
     GEngine.MainWindow->GetWindowShape( WindowShape );
 
     ImGui::Spacing();
@@ -373,7 +373,7 @@ static void DrawSceneInfo()
     ImGui::Text( "Current Scene" );
     ImGui::Separator();
 
-    WindowShape WindowShape;
+	SWindowShape WindowShape;
     GEngine.MainWindow->GetWindowShape( WindowShape );
 
     // Actors

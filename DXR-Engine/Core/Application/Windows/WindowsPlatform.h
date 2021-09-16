@@ -1,4 +1,6 @@
 #pragma once
+
+#if defined(PLATFORM_WINDOWS)
 #include "Core/Input/InputCodes.h"
 #include "Core/Application/Generic/GenericPlatform.h"
 #include "Core/Application/Platform/PlatformCallbacks.h"
@@ -100,3 +102,5 @@ private:
 
     static HINSTANCE Instance;
 };
+
+#endif

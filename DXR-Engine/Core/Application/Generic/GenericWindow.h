@@ -1,7 +1,18 @@
 #pragma once
 #include "Core/RefCounted.h"
 
+// TODO: Remove
 #include <string>
+
+#if defined(COMPILER_MSVC)
+#pragma warning(push)
+#pragma warning(disable : 4100) // Disable unreferenced variable
+
+#elif defined(COMPILER_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
+#endif
 
 enum EWindowStyleFlag : uint32
 {
@@ -13,11 +24,11 @@ enum EWindowStyleFlag : uint32
     WindowStyleFlag_Resizeable = FLAG( 5 ),
 };
 
-struct WindowStyle
+struct SWindowStyle
 {
-    WindowStyle() = default;
+    SWindowStyle() = default;
 
-    WindowStyle( uint32 InStyle )
+    SWindowStyle( uint32 InStyle )
         : Style( InStyle )
     {
     }
@@ -46,11 +57,11 @@ struct WindowStyle
     uint32 Style = 0;
 };
 
-struct WindowShape
+struct SWindowShape
 {
-    WindowShape() = default;
+    SWindowShape() = default;
 
-    WindowShape( uint32 InWidth, uint32 InHeight, int32 x, int32 y )
+    SWindowShape( uint32 InWidth, uint32 InHeight, int32 x, int32 y )
         : Width( InWidth )
         , Height( InHeight )
         , Position( { x, y } )
@@ -84,8 +95,8 @@ public:
     virtual void SetTitle( const std::string& Title ) = 0;
     virtual void GetTitle( std::string& OutTitle ) = 0;
 
-    virtual void SetWindowShape( const WindowShape& Shape, bool Move ) = 0;
-    virtual void GetWindowShape( WindowShape& OutWindowShape ) const = 0;
+    virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) = 0;
+    virtual void GetWindowShape( SWindowShape& OutWindowShape ) const = 0;
 
     virtual uint32 GetWidth()  const = 0;
     virtual uint32 GetHeight() const = 0;
@@ -95,16 +106,24 @@ public:
         return nullptr;
     }
 
-    WindowStyle GetStyle() const
+    FORCEINLINE SWindowStyle GetStyle() const
     {
-        return WndStyle;
+        return Style;
     }
 
-    static GenericWindow* Create( const std::string& Title, uint32 Width, uint32 Height, WindowStyle Style )
+    static GenericWindow* Create( const std::string& Title, uint32 Width, uint32 Height, SWindowStyle Style )
 	{
 		return nullptr;
 	}
 
 protected:
-    WindowStyle WndStyle;
+    SWindowStyle Style;
 };
+
+#if defined(COMPILER_MSVC)
+#pragma warning(pop)
+
+#elif defined(COMPILER_CLANG)
+#pragma clang diagnostic pop
+
+#endif

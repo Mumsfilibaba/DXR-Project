@@ -4,9 +4,13 @@ function findProjectDir()
 end
 
 workspace "DXR-Project"
-    startproject 	"Sandbox"
-    architecture 	"x64"
-    warnings 		"extra"    
+    startproject     "Sandbox"
+    architecture      "x64"
+    warnings          "extra"
+	exceptionhandling "Off"
+	rtti              "Off"
+	floatingpoint     "Fast"
+	vectorextensions  "SSE2"
 	flags { "MultiProcessorCompile" }
     
 	-- Set output dir

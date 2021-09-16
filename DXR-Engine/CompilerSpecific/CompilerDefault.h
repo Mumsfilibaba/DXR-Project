@@ -28,8 +28,8 @@
 #endif
 
 /* Restric */
-#ifndef RESTRICT
-#define RESTRICT
+#ifndef restrict
+#define restrict
 #endif
 
 /* Function signature as a const char* string */

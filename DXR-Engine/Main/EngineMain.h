@@ -3,7 +3,7 @@
 
 #include "Core/Engine/EngineLoop.h"
 #include "Core/Application/Application.h"
-#include "Core/Application/Platform/PlatformMisc.h"
+#include "Core/Application/Platform/PlatformApplicationMisc.h"
 
 struct SEngineMainGuard
 {
@@ -11,7 +11,7 @@ struct SEngineMainGuard
 	{
 		if ( !EngineLoop::Release() )
 		{
-			PlatformMisc::MessageBox( "ERROR", "EngineLoop::Release Failed" );
+			PlatformApplicationMisc::MessageBox( "ERROR", "EngineLoop::Release Failed" );
 		}
 	}
 };
@@ -24,7 +24,7 @@ int32 EngineMain()
 	
     if ( !EngineLoop::Init() )
     {
-        PlatformMisc::MessageBox( "ERROR", "EngineLoop::Init Failed" );
+		PlatformApplicationMisc::MessageBox( "ERROR", "EngineLoop::Init Failed" );
         return -1;
     }
 

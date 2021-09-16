@@ -1,4 +1,6 @@
 #pragma once
+
+#if defined(PLATFORM_WINDOWS)
 #include "Core/Application/Generic/GenericCursor.h"
 
 #include "Windows.h"
@@ -29,3 +31,5 @@ private:
     HCURSOR Cursor;
     LPCSTR  CursorName;
 };
+
+#endif
