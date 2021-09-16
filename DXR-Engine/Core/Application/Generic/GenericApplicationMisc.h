@@ -23,6 +23,12 @@
 class CGenericApplicationMisc
 {
 public:
+
+    /* Creates an application */
+    static FORCEINLINE class CGenericApplication* MakeApplication()
+    {
+        return nullptr;
+    }
     
     /* Takes the title of the messagebox and the message to be displayed */
     static FORCEINLINE void MessageBox( const std::string& Title, const std::string& Message )

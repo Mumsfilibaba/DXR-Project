@@ -187,8 +187,8 @@ workspace "DXR-Project"
 		}
 
         -- Targets
-		targetdir 	("Build/bin/" .. outputdir .. "/%{prj.name}")
-		objdir 		("Build/bin-int/" .. outputdir .. "/%{prj.name}")	
+		targetdir 	("Build/bin/" .. outputdir)
+		objdir 		("Build/bin-int/" .. outputdir)	
     
         -- Files to include
 		files 
@@ -285,8 +285,8 @@ workspace "DXR-Project"
 		characterset 	"Ascii"
 	
 	    -- Targets
-		targetdir 	("Build/bin/" .. outputdir .. "/%{prj.name}")
-		objdir 		("Build/bin-int/" .. outputdir .. "/%{prj.name}")	
+		targetdir 	("Build/bin/" .. outputdir)
+		objdir 		("Build/bin-int/" .. outputdir)
 	
 		sysincludedirs
 		{
