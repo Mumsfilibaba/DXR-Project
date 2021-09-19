@@ -44,7 +44,7 @@ static void DrawFloat3Control( const std::string& Label, CVector3& Value, float 
     ImGui::PushStyleVar( ImGuiStyleVar_FrameRounding, 0.0f );
 
     float    LineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-    ImVec2    ButtonSize = ImVec2( LineHeight + 3.0f, LineHeight );
+    ImVec2   ButtonSize = ImVec2( LineHeight + 3.0f, LineHeight );
 
     // X
     ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.8f, 0.1f, 0.15f, 1.0f ) );
@@ -111,12 +111,12 @@ static void DrawMenu()
             {
                 if ( ImGui::MenuItem( "Toggle Fullscreen" ) )
                 {
-                    GEngine.MainWindow->ToggleFullscreen();
+                    GEngine->MainWindow->ToggleFullscreen();
                 }
 
                 if ( ImGui::MenuItem( "Quit" ) )
                 {
-                    GEngine.Exit();
+                    GEngine->Exit();
                 }
 
                 ImGui::EndMenu();
@@ -141,8 +141,8 @@ static void DrawSideWindow()
 {
     DebugUI::DrawUI( []
     {
-        const uint32 WindowWidth = GEngine.MainWindow->GetWidth();
-        const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
+		const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
+		const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
         const float Width = NMath::Max( WindowWidth * 0.3f, 400.0f );
         const float Height = WindowHeight * 0.7f;
 
@@ -189,7 +189,7 @@ static void DrawRenderSettings()
     ImGui::BeginChild( "RendererInfo" );
 
 	SWindowShape WindowShape;
-    GEngine.MainWindow->GetWindowShape( WindowShape );
+	GEngine->MainWindow->GetWindowShape( WindowShape );
 
     ImGui::Spacing();
     ImGui::Text( "Renderer Info" );
@@ -374,7 +374,7 @@ static void DrawSceneInfo()
     ImGui::Separator();
 
 	SWindowShape WindowShape;
-    GEngine.MainWindow->GetWindowShape( WindowShape );
+	GEngine->MainWindow->GetWindowShape( WindowShape );
 
     // Actors
     if ( ImGui::TreeNode( "Actors" ) )

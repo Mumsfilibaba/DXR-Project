@@ -19,6 +19,13 @@ CMaterial::CMaterial( const SMaterialDesc& InProperties )
 
 void CMaterial::Init()
 {
+	// TODO: Have a null layer to avoid these checks
+	if (!GRenderLayer)
+	{
+		LOG_WARNING(" No RenderAPI available Material not initialized ");
+		return;
+	}
+	
     MaterialBuffer = CreateConstantBuffer<SMaterialDesc>( BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
     if ( MaterialBuffer )
     {

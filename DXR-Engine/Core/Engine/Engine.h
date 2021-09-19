@@ -3,36 +3,36 @@
 
 #include "Core/Input/InputCodes.h"
 #include "Core/Application/Events.h"
-#include "Core/Application/Platform/PlatformCallbacks.h"
+#include "Core/Application/Generic/GenericApplicationMessageListener.h"
 #include "Core/Delegates/Event.h"
 
 #include "RenderLayer/Viewport.h"
 
-class Engine : public PlatformCallbacks
+class Engine : public CGenericApplicationMessageListener
 {
 public:
-    bool Init();
+    bool Init( class CGenericApplication* InApplication );
 
     bool Release();
 
     void Exit();
 
 public:
-    virtual void OnKeyReleased( EKey KeyCode, const ModifierKeyState& ModierKeyState ) override final;
-    virtual void OnKeyPressed( EKey KeyCode, bool IsRepeat, const ModifierKeyState& ModierKeyState ) override final;
+    virtual void OnKeyReleased( EKey KeyCode, SModifierKeyState ModierKeyState ) override final;
+    virtual void OnKeyPressed( EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState ) override final;
     virtual void OnKeyTyped( uint32 Character ) override final;
 
     virtual void OnMouseMove( int32 x, int32 y ) override final;
-    virtual void OnMouseReleased( EMouseButton Button, const ModifierKeyState& ModierKeyState ) override final;
-    virtual void OnMousePressed( EMouseButton Button, const ModifierKeyState& ModierKeyState ) override final;
+    virtual void OnMouseReleased( EMouseButton Button, SModifierKeyState ModierKeyState ) override final;
+    virtual void OnMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState ) override final;
     virtual void OnMouseScrolled( float HorizontalDelta, float VerticalDelta ) override final;
 
-    virtual void OnWindowResized( const TSharedRef<GenericWindow>& Window, uint16 Width, uint16 Height ) override final;
-    virtual void OnWindowMoved( const TSharedRef<GenericWindow>& Window, int16 x, int16 y ) override final;
-    virtual void OnWindowFocusChanged( const TSharedRef<GenericWindow>& Window, bool HasFocus ) override final;
-    virtual void OnWindowMouseLeft( const TSharedRef<GenericWindow>& Window ) override final;
-    virtual void OnWindowMouseEntered( const TSharedRef<GenericWindow>& Window ) override final;
-    virtual void OnWindowClosed( const TSharedRef<GenericWindow>& Window ) override final;
+    virtual void OnWindowResized( const TSharedRef<CGenericWindow>& Window, uint16 Width, uint16 Height ) override final;
+    virtual void OnWindowMoved( const TSharedRef<CGenericWindow>& Window, int16 x, int16 y ) override final;
+    virtual void OnWindowFocusChanged( const TSharedRef<CGenericWindow>& Window, bool HasFocus ) override final;
+    virtual void OnWindowMouseLeft( const TSharedRef<CGenericWindow>& Window ) override final;
+    virtual void OnWindowMouseEntered( const TSharedRef<CGenericWindow>& Window ) override final;
+    virtual void OnWindowClosed( const TSharedRef<CGenericWindow>& Window ) override final;
 
     virtual void OnApplicationExit( int32 ExitCode ) override final;
 
@@ -74,10 +74,12 @@ public:
     OnApplicationExitEvent OnApplicationExitEvent;
 
 public:
-    TSharedRef<GenericWindow>   MainWindow;
-    TSharedRef<Viewport> MainViewport;
+    TSharedRef<CGenericWindow> MainWindow;
+    TSharedRef<Viewport>       MainViewport;
+	
+	class CGenericApplication* Application = nullptr;
 
     bool IsRunning = false;
 };
 
-extern Engine GEngine;
+extern TSharedPtr<Engine> GEngine;

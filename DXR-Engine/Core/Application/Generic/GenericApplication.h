@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Application/ICursor.h"
+#include "Core/Application/IKeyboard.h"
 #include "Core/Containers/SharedPtr.h"
 
 #include "GenericApplicationMessageListener.h"
@@ -12,11 +13,14 @@ class CGenericApplication
 {
 public: 
 
-    CGenericApplication() = default;
-    ~CGenericApplication() = default;
+    /* Creates the mac application */
+    static FORCEINLINE CGenericApplication* Make()
+    {
+        return nullptr;
+    }
 
     /* Create a window */
-    virtual GenericWindow* MakeWindow( const std::string& Title, uint32 Width, uint32 Height, struct SWindowStyle& Style ) = 0;
+    virtual CGenericWindow* MakeWindow() = 0;
 
     /* Initialized the application */
     virtual bool Init() = 0;
@@ -30,20 +34,25 @@ public:
     /* Retrive the cursor interface */
     virtual ICursor* GetCursor() = 0;
 
+    /* Retrive the keyboard interface */
+    virtual IKeyboard* GetKeyboard() = 0;
+
     /* Sets the window that currently has the keyboard focus */
-    virtual void SetCapture( GenericWindow* Window ) = 0;
+    virtual void SetCapture( CGenericWindow* )
+	{
+	}
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( GenericWindow* Window ) = 0;
+    virtual void SetActiveWindow( CGenericWindow* Window ) = 0;
 
     /* Retrives the window that currently has the keyboard focus, since macOS does not support keyboard focus, we return null as standard */
-    virtual GenericWindow* GetCapture() const 
+    virtual CGenericWindow* GetCapture() const 
     {
         return nullptr;
     }
 
     /* Retrives the window that is currently active */
-    virtual GenericWindow* GetActiveWindow() = 0;
+    virtual CGenericWindow* GetActiveWindow() const = 0;
 
     /* Sets the message listener */
     FORCEINLINE void SetMessageListener( const TSharedPtr<CGenericApplicationMessageListener>& InMessageListener )
@@ -57,6 +66,10 @@ public:
         return MessageListener;
     }
 
-public:
+protected:
+    
+    CGenericApplication()  = default;
+    ~CGenericApplication() = default;
+
     TSharedPtr<CGenericApplicationMessageListener> MessageListener;
 };

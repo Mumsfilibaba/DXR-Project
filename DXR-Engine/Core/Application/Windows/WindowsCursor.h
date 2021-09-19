@@ -5,7 +5,7 @@
 
 #include "Windows.h"
 
-class GenericWindow;
+class CGenericWindow;
 
 class WindowsCursor : public GenericCursor
 {

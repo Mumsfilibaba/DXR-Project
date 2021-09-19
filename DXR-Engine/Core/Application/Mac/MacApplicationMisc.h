@@ -16,14 +16,10 @@ public:
     static void MessageBox( const std::string& Title, const std::string& Message );
 
     /* Sends a Exit Message to the application with a certain exitcode */
-    static FORCEINLINE void RequestExit( int32 ExitCode )
-    {
-    }
+	static void RequestExit( int32 ExitCode );
 
     /* Pumps the application's message queue */
-    static FORCEINLINE void PumpMessages( bool UntilEmpty )
-    {
-    }
+    static void PumpMessages( bool UntilEmpty );
 };
 
 #if defined(COMPILER_CLANG)

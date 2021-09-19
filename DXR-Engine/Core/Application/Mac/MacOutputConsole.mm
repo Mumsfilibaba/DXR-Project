@@ -3,6 +3,8 @@
 #include "CocoaConsoleWindow.h"
 #include "ScopedAutoreleasePool.h"
 
+#include "Core/Application/Platform/PlatformApplicationMisc.h"
+
 CMacOutputConsole::CMacOutputConsole()
     : Window( nullptr )
 {
@@ -10,8 +12,8 @@ CMacOutputConsole::CMacOutputConsole()
     SCOPED_AUTORELEASE_POOL();
     
     // TODO: Control with console vars? 
-    const CGFloat Width  = 1280.0f;
-    const CGFloat Height = 720.0f;
+    const CGFloat Width  = 640.0f;
+    const CGFloat Height = 360.0f;
     
     Window = [[CCocoaConsoleWindow alloc] init: Width Height:Height];
     [Window setColor:EConsoleColor::White];
@@ -19,7 +21,7 @@ CMacOutputConsole::CMacOutputConsole()
     Assert(Window != nullptr);
 
     // TODO: Pump events here
-    //MacApplication::PeekEvents();
+	PlatformApplicationMisc::PumpMessages( true );
 }
 
 CMacOutputConsole::~CMacOutputConsole()
@@ -29,7 +31,7 @@ CMacOutputConsole::~CMacOutputConsole()
         // TODO: Ensure mainthread
         SCOPED_AUTORELEASE_POOL();
         
-        //MacApplication::PeekEvents();
+		PlatformApplicationMisc::PumpMessages( true );
         
         [Window release];
         Window = nullptr;
@@ -40,18 +42,31 @@ void CMacOutputConsole::Print(const std::string& Message )
 {
     if (Window)
     {
-        NSString* String      = [NSString stringWithUTF8String:Message.c_str()];
-        NSString* FinalString = [String stringByAppendingString:@"\n"];
+		//TODO: Make sure this is the mainthread
+		SCOPED_AUTORELEASE_POOL();
 
-        //TODO: Make sure this is the mainthread
-        SCOPED_AUTORELEASE_POOL();
+		NSString* String = [NSString stringWithUTF8String:Message.c_str()];
+
+        [Window appendStringAndScroll:String];
         
-        [Window appendStringAndScroll:FinalString];
-        [FinalString release];
-        
-        // TODO: Pump messages
-        //MacApplication::PeekEvents();
+		PlatformApplicationMisc::PumpMessages( true );
     }
+}
+
+void CMacOutputConsole::PrintLine(const std::string& Message )
+{
+	if (Window)
+	{
+		//TODO: Make sure this is the mainthread
+		SCOPED_AUTORELEASE_POOL();
+
+		NSString* String      = [NSString stringWithUTF8String:Message.c_str()];
+		NSString* FinalString = [String stringByAppendingString:@"\n"];
+		
+		[Window appendStringAndScroll:FinalString];
+		
+		PlatformApplicationMisc::PumpMessages( true );
+	}
 }
 
 void CMacOutputConsole::Clear()
@@ -60,6 +75,11 @@ void CMacOutputConsole::Clear()
     {
         [Window clearWindow];
     }
+}
+
+void CMacOutputConsole::ClearLastLine()
+{
+	//TODO: Implement
 }
 
 void CMacOutputConsole::SetTitle(const std::string& InTitle)

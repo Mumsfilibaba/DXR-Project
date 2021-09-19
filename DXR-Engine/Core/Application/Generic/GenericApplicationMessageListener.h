@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Input/InputCodes.h"
+#include "Core/Application/ModifierKeyState.h"
 
 #include "GenericWindow.h"
 
@@ -12,36 +13,6 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 #endif
-
-/* Struct containing the state of modifierkeys */
-struct SModifierKeyState
-{
-public:
-    SModifierKeyState() = default;
-
-    FORCEINLINE SModifierKeyState( uint8 InModifierMask )
-        : ModifierMask( InModifierMask )
-    {
-    }
-
-    union
-    {
-        /* Flags */
-        struct
-        {
-            uint8 IsCtrlDown     : 1;
-            uint8 IsAltDown      : 1;
-            uint8 IsShiftDown    : 1;
-            uint8 IsCapsLockDown : 1;
-            uint8 IsSuperKeyDown : 1;
-            uint8 IsNumPadDown   : 1;
-        };
-
-        /* Mask */
-        uint8 ModifierMask = 0;
-    };
-    
-};
 
 /* Interface for a listener to OS events */
 class CGenericApplicationMessageListener
@@ -78,27 +49,27 @@ public:
     {
     }
 
-    virtual void OnWindowResized( const TSharedRef<GenericWindow>& Window, uint16 Width, uint16 Height )
+    virtual void OnWindowResized( const TSharedRef<CGenericWindow>& Window, uint16 Width, uint16 Height )
     {
     }
 
-    virtual void OnWindowMoved( const TSharedRef<GenericWindow>& Window, int16 x, int16 y )
+    virtual void OnWindowMoved( const TSharedRef<CGenericWindow>& Window, int16 x, int16 y )
     {
     }
 
-    virtual void OnWindowFocusChanged( const TSharedRef<GenericWindow>& Window, bool HasFocus )
+    virtual void OnWindowFocusChanged( const TSharedRef<CGenericWindow>& Window, bool HasFocus )
     {
     }
 
-    virtual void OnWindowMouseLeft( const TSharedRef<GenericWindow>& Window )
+    virtual void OnWindowMouseLeft( const TSharedRef<CGenericWindow>& Window )
     {
     }
 
-    virtual void OnWindowMouseEntered( const TSharedRef<GenericWindow>& Window )
+    virtual void OnWindowMouseEntered( const TSharedRef<CGenericWindow>& Window )
     {
     }
 
-    virtual void OnWindowClosed( const TSharedRef<GenericWindow>& Window )
+    virtual void OnWindowClosed( const TSharedRef<CGenericWindow>& Window )
     {
     }
 

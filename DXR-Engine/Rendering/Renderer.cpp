@@ -189,8 +189,8 @@ void Renderer::RenderDebugInterface()
         constexpr float InvAspectRatio = 16.0f / 9.0f;
         constexpr float AspectRatio = 9.0f / 16.0f;
 
-        const uint32 WindowWidth = GEngine.MainWindow->GetWidth();
-        const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
+        const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
+        const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
         const float Width = NMath::Max( WindowWidth * 0.6f, 400.0f );
         const float Height = WindowHeight * 0.75f;
 
@@ -263,8 +263,8 @@ void Renderer::RenderDebugInterface()
 
     if ( GDrawRendererInfo.GetBool() )
     {
-        const uint32 WindowWidth = GEngine.MainWindow->GetWidth();
-        const uint32 WindowHeight = GEngine.MainWindow->GetHeight();
+		const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
+		const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
         const float Width = 300.0f;
         const float Height = WindowHeight * 0.8f;
 
@@ -317,6 +317,13 @@ void Renderer::RenderDebugInterface()
 
 void Renderer::Tick( const Scene& Scene )
 {
+	// TODO: Have null renderlayer to avoid these checks
+	if (!GRenderLayer)
+	{
+		LOG_WARNING("No RenderLayer available renderer is disabled");
+		return;
+	}
+	
     Resources.BackBuffer = Resources.MainWindowViewport->GetBackBuffer();
 
     // Prepare Lights
@@ -673,6 +680,13 @@ void Renderer::Tick( const Scene& Scene )
 
 bool Renderer::Init()
 {
+	// TODO: Have null renderlayer to avoid these checks
+	if (!GRenderLayer)
+	{
+		LOG_WARNING("No RenderLayer available Renderer is disabled");
+		return true;
+	}
+	
     INIT_CONSOLE_VARIABLE( "r.DrawTextureDebugger", &GDrawTextureDebugger );
     INIT_CONSOLE_VARIABLE( "r.DrawRendererInfo", &GDrawRendererInfo );
     INIT_CONSOLE_VARIABLE( "r.EnableSSAO", &GEnableSSAO );
@@ -684,8 +698,8 @@ bool Renderer::Init()
     INIT_CONSOLE_VARIABLE( "r.EnableFrustumCulling", &GFrustumCullEnabled );
     INIT_CONSOLE_VARIABLE( "r.EnableRayTracing", &GRayTracingEnabled );
     INIT_CONSOLE_VARIABLE( "r.FXAADebug", &GFXAADebug );
-
-    Resources.MainWindowViewport = CreateViewport( GEngine.MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown );
+	
+	Resources.MainWindowViewport = CreateViewport( GEngine->MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown );
     if ( !Resources.MainWindowViewport )
     {
         Debug::DebugBreak();
@@ -838,7 +852,7 @@ bool Renderer::Init()
     GCmdListExecutor.ExecuteCommandList( MainCmdList );
 
     // Register EventFunc
-    GEngine.OnWindowResizedEvent.AddRaw( this, &Renderer::OnWindowResize );
+	GEngine->OnWindowResizedEvent.AddRaw( this, &Renderer::OnWindowResize );
 
     return true;
 }

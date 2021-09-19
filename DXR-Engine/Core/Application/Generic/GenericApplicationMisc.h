@@ -1,5 +1,5 @@
 #pragma once 
-#include "Core.h"
+#include "Core/Application/ModifierKeyState.h"
 
 // TODO: Remove
 #include <string>
@@ -23,26 +23,26 @@
 class CGenericApplicationMisc
 {
 public:
-
-    /* Creates an application */
-    static FORCEINLINE class CGenericApplication* MakeApplication()
-    {
-        return nullptr;
-    }
     
     /* Takes the title of the messagebox and the message to be displayed */
     static FORCEINLINE void MessageBox( const std::string& Title, const std::string& Message )
     {
     }
 
-    /* Sends a Exit Message to the application with a certain exitcode */
+    /* Sends a Exit Message to the application with a certain exitcode, this way the application instance is not required to pump the messages */
     static FORCEINLINE void RequestExit( int32 ExitCode )
     {
     }
 
-    /* Pumps the application's message queue */
+    /* Pumps the application's message queue, this way the application instance is not required to pump the messages */
     static FORCEINLINE void PumpMessages( bool UntilEmpty )
     {
+    }
+
+    /* Retrives the state of modifer keys */
+    static FORCEINLINE SModifierKeyState GetModifierKeyState()
+    {
+        return SModifierKeyState();
     }
 };
 

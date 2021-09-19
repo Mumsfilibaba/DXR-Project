@@ -263,6 +263,7 @@ workspace "DXR-Project"
 				-- Native
 				"Cocoa.framework",
 				"AppKit.framework",
+				"MetalKit.framework",
 			}
 		filter {}
 
@@ -352,6 +353,7 @@ workspace "DXR-Project"
 				-- Native
 				"Cocoa.framework",
 				"AppKit.framework",
+				"MetalKit.framework",
 			}
 		filter {}
 

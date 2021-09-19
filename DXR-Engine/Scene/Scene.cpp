@@ -74,7 +74,7 @@ void Scene::AddLight( Light* InLight )
 void Scene::OnAddedComponent( Component* NewComponent )
 {
     MeshComponent* Component = Cast<MeshComponent>( NewComponent );
-    if ( Component )
+    if ( Component && Component->Mesh )
     {
         AddMeshComponent( Component );
     }

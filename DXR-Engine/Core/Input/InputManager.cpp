@@ -8,9 +8,9 @@ bool InputManager::Init()
 {
     InitKeyTable();
 
-    GEngine.OnKeyPressedEvent.AddRaw( this, &InputManager::OnKeyPressed );
-    GEngine.OnKeyReleasedEvent.AddRaw( this, &InputManager::OnKeyReleased );
-    GEngine.OnWindowFocusChangedEvent.AddRaw( this, &InputManager::OnWindowFocusChanged );
+	GEngine->OnKeyPressedEvent.AddRaw( this, &InputManager::OnKeyPressed );
+	GEngine->OnKeyReleasedEvent.AddRaw( this, &InputManager::OnKeyReleased );
+	GEngine->OnWindowFocusChangedEvent.AddRaw( this, &InputManager::OnWindowFocusChanged );
 
     return true;
 }

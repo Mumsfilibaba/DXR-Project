@@ -7,21 +7,34 @@
 
 #include "Windows/Windows.h"
 
-class WindowsOutputConsole : public CGenericOutputConsole
+class CWindowsOutputConsole : public CGenericOutputConsole
 {
 public:
-    WindowsOutputConsole();
-    ~WindowsOutputConsole();
 
-    virtual void Print( const std::string& Message ) override final;
+    /* Creates a new console, can only be called once */
+    static FORCEINLINE CWindowsOutputConsole* Make()
+    {
+        return new CWindowsOutputConsole();
+    }
 
-    virtual void Clear() override final;
+    virtual void Print( const std::string& Message )     override final;
+    virtual void PrintLine( const std::string& Message ) override final;
+
+    virtual void Clear()     override final;
+    virtual void ClearLine() override final;
 
     virtual void SetTitle( const std::string& Title ) override final;
     virtual void SetColor( EConsoleColor Color )      override final;
 
 private:
-    HANDLE           ConsoleHandle;
+    
+    CWindowsOutputConsole();
+    ~CWindowsOutputConsole();
+
+    /* Handle to the console window */
+    HANDLE ConsoleHandle;
+
+    /* Mutex protecting for errors when printing from multiple threads */
     CCriticalSection ConsoleMutex;
 };
 

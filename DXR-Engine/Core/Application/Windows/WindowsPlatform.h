@@ -62,17 +62,17 @@ public:
 
     static ModifierKeyState GetModifierKeyState();
 
-    static void SetCapture( GenericWindow* Window );
-    static void SetActiveWindow( GenericWindow* Window );
+    static void SetCapture( CGenericWindow* Window );
+    static void SetActiveWindow( CGenericWindow* Window );
 
-    static GenericWindow* GetCapture();
-    static GenericWindow* GetActiveWindow();
+    static CGenericWindow* GetCapture();
+    static CGenericWindow* GetActiveWindow();
 
     static void SetCursor( GenericCursor* Cursor );
     static GenericCursor* GetCursor();
 
-    static void SetCursorPos( GenericWindow* RelativeWindow, int32 x, int32 y );
-    static void GetCursorPos( GenericWindow* RelativeWindow, int32& OutX, int32& OutY );
+    static void SetCursorPos( CGenericWindow* RelativeWindow, int32 x, int32 y );
+    static void GetCursorPos( CGenericWindow* RelativeWindow, int32& OutX, int32& OutY );
 
     static LPCSTR GetWindowClassName()
     {

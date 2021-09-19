@@ -1,7 +1,7 @@
 #include "WindowsWindow.h"
 #include "WindowsPlatform.h"
 
-GenericWindow* GenericWindow::Create( const std::string& InTitle, uint32 InWidth, uint32 InHeight, WindowStyle InStyle )
+CGenericWindow* CGenericWindow::Create( const std::string& InTitle, uint32 InWidth, uint32 InHeight, WindowStyle InStyle )
 {
     TSharedRef<WindowsWindow> NewWindow = DBG_NEW WindowsWindow();
     if ( !NewWindow->Init( InTitle, InWidth, InHeight, InStyle ) )
@@ -13,7 +13,7 @@ GenericWindow* GenericWindow::Create( const std::string& InTitle, uint32 InWidth
 }
 
 WindowsWindow::WindowsWindow()
-    : GenericWindow()
+    : CGenericWindow()
     , Window( 0 )
     , Style( 0 )
     , StyleEx( 0 )

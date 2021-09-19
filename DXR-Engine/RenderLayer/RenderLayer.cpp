@@ -29,6 +29,7 @@ bool RenderLayer::Init( ERenderLayerApi InRenderApi )
 	if ( InRenderApi == ERenderLayerApi::Unknown )
 	{
 		LOG_WARNING( "[RenderLayer::Init] No RenderAPI available for MacOS" );
+		return true;
 	}
 	else
 #endif

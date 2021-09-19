@@ -61,6 +61,13 @@ static TArray<std::string>         GlobalDebugStrings;
 
 bool DebugUI::Init()
 {
+	// TODO: Have null renderlayer to avoid these checks
+	if (!GRenderLayer)
+	{
+		LOG_WARNING("No RenderLayer available renderer is disabled");
+		return true;
+	}
+	
     // Create context
     IMGUI_CHECKVERSION();
 
@@ -75,7 +82,7 @@ bool DebugUI::Init()
     IO.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
     IO.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
     IO.BackendPlatformName = "Windows";
-    IO.ImeWindowHandle = GEngine.MainWindow->GetNativeHandle();
+	IO.ImeWindowHandle = GEngine->MainWindow->GetNativeHandle();
 
     // Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
     IO.KeyMap[ImGuiKey_Tab] = EKey::Key_Tab;
@@ -445,22 +452,25 @@ bool DebugUI::Init()
         return false;
     }
 
-    GEngine.OnKeyPressedEvent.AddStatic( DebugUI::OnKeyPressed );
-    GEngine.OnKeyReleasedEvent.AddStatic( DebugUI::OnKeyReleased );
-    GEngine.OnKeyTypedEvent.AddStatic( DebugUI::OnKeyTyped );
+	GEngine->OnKeyPressedEvent.AddStatic( DebugUI::OnKeyPressed );
+	GEngine->OnKeyReleasedEvent.AddStatic( DebugUI::OnKeyReleased );
+	GEngine->OnKeyTypedEvent.AddStatic( DebugUI::OnKeyTyped );
 
-    GEngine.OnMousePressedEvent.AddStatic( DebugUI::OnMousePressed );
-    GEngine.OnMouseReleasedEvent.AddStatic( DebugUI::OnMouseReleased );
-    GEngine.OnMouseScrolledEvent.AddStatic( DebugUI::OnMouseScrolled );
+	GEngine->OnMousePressedEvent.AddStatic( DebugUI::OnMousePressed );
+	GEngine->OnMouseReleasedEvent.AddStatic( DebugUI::OnMouseReleased );
+	GEngine->OnMouseScrolledEvent.AddStatic( DebugUI::OnMouseScrolled );
 
     return true;
 }
 
 void DebugUI::Release()
 {
+	if (GlobalImGuiState.Context)
+	{
+		ImGui::DestroyContext( GlobalImGuiState.Context );
+	}
+	
     GlobalImGuiState.Reset();
-
-    ImGui::DestroyContext( GlobalImGuiState.Context );
 }
 
 void DebugUI::DrawUI( UIDrawFunc DrawFunc )
@@ -518,7 +528,7 @@ void DebugUI::Render( CommandList& CmdList )
 
     ImGuiIO& IO = ImGui::GetIO();
 
-    GenericWindow* Window = GEngine.MainWindow.Get();
+	CGenericWindow* Window = GEngine->MainWindow.Get();
     if ( IO.WantSetMousePos )
     {
         Platform::SetCursorPos( Window, static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) );

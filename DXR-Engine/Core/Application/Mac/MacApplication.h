@@ -2,24 +2,41 @@
 
 #if defined(PLATFORM_MACOS)
 #include "Core/Application/Generic/GenericApplication.h"
+#include "Core/Application/Mac/MacCursor.h"
+#include "Core/Application/Mac/MacKeyboard.h"
 #include "Core/Containers/Array.h"
 
 #if defined(__OBJC__)
-@class CocoaAppDelegate;
+@class NSNotification;
+@class NSWindow;
+@class NSEvent;
+@class NSString;
+@class CCocoaAppDelegate;
+@class CCocoaWindow;
 #else
-class CocoaAppDelegate;
+class NSNotification;
+class NSWindow;
+class NSEvent;
+class NSString;
+class CCocoaAppDelegate;
+class CCocoaWindow;
 #endif
+
+class CMacWindow;
 
 /* Mac specific implementation of the application */
 class CMacApplication final : public CGenericApplication
 {
 public:
 
-    CMacApplication();
-    ~CMacApplication();
+    /* Creates the mac application */
+    static FORCEINLINE CMacApplication* Make()
+    {
+        return new CMacApplication();
+    }
 
     /* Create a window */
-    virtual GenericWindow* MakeWindow( const std::string& Title, uint32 Width, uint32 Height, struct SWindowStyle& Style ) override final;
+    virtual CGenericWindow* MakeWindow() override final;
 
     /* Initialized the application */
     virtual bool Init() override final;
@@ -31,24 +48,63 @@ public:
     virtual void Release() override final;
 
     /* Retrive the cursor interface */
-    virtual ICursor* GetCursor() override final;
+    virtual ICursor* GetCursor() override final
+    {
+        return &Cursor;
+    }
 
-    /* Sets the window that currently has the keyboard focus */
-    virtual void SetCapture( GenericWindow* Window ) override final;
+    /* Retrive the keyboard interface */
+    virtual IKeyboard* GetKeyboard() override final
+	{
+		return &Keyboard;
+	}
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( GenericWindow* Window ) override final;
+    virtual void SetActiveWindow( CGenericWindow* Window ) override final;
 
     /* Retrives the window that is currently active */
-    virtual GenericWindow* GetActiveWindow() override final;
+    virtual CGenericWindow* GetActiveWindow() const override final;
+
+    /* Retrives a from a NSWindow */
+    CMacWindow* GetWindowFromNSWindow( NSWindow* Window ) const;
+
+	/* Handles a notification */
+	void HandleNotification( const struct SNotification& Notification );
+	
+	/* Handles an event */
+	void HandleEvent( NSEvent* Event );
+	
+	/* Handle key typed event */
+	void HandleKeyTypedEvent( NSString* Text );
+	
+    /* Returs the native appdelegate */
+    FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const 
+    {
+        return AppDelegate;
+    }
 
 private:
 
+    CMacApplication();
+    ~CMacApplication();
+
+    /* Initializes the applications menu in the menubar */
+    bool InitAppMenu();
+
     /* Delegate to talk with macOS */
-	CocoaAppDelegate* AppDelegate = nullptr;
+	CCocoaAppDelegate* AppDelegate = nullptr;
 
     /* All the windows of the application */
-    TArray<TSharedRef<GenericWindow>> Windows;
+    TArray<TSharedRef<CMacWindow>> Windows;
+
+    /* Cursor interface */
+    CMacCursor Cursor;
+	
+	/* Keyboard Interface */
+	CMacKeyboard Keyboard;
+
+    /* If the application has been terminating or not */
+    bool IsTerminating = false;
 };
 
 #endif

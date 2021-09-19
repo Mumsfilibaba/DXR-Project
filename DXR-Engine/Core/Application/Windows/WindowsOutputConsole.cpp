@@ -2,7 +2,7 @@
 
 #include "Core/Threading/ScopedLock.h"
 
-WindowsOutputConsole::WindowsOutputConsole()
+CWindowsOutputConsole::CWindowsOutputConsole()
     : ConsoleHandle( 0 )
 {
     if ( AllocConsole() )
@@ -12,7 +12,7 @@ WindowsOutputConsole::WindowsOutputConsole()
     }
 }
 
-WindowsOutputConsole::~WindowsOutputConsole()
+CWindowsOutputConsole::~CWindowsOutputConsole()
 {
     if ( ConsoleHandle )
     {
@@ -21,7 +21,7 @@ WindowsOutputConsole::~WindowsOutputConsole()
     }
 }
 
-void WindowsOutputConsole::Print( const std::string& Message )
+void CWindowsOutputConsole::Print( const std::string& Message )
 {
     if ( ConsoleHandle )
     {
@@ -31,7 +31,7 @@ void WindowsOutputConsole::Print( const std::string& Message )
     }
 }
 
-void WindowsOutputConsole::Clear()
+void CWindowsOutputConsole::Clear()
 {
     if ( ConsoleHandle )
     {
@@ -52,7 +52,7 @@ void WindowsOutputConsole::Clear()
     }
 }
 
-void WindowsOutputConsole::SetTitle( const std::string& Title )
+void CWindowsOutputConsole::SetTitle( const std::string& Title )
 {
     if ( ConsoleHandle )
     {
@@ -62,7 +62,7 @@ void WindowsOutputConsole::SetTitle( const std::string& Title )
     }
 }
 
-void WindowsOutputConsole::SetColor( EConsoleColor Color )
+void CWindowsOutputConsole::SetColor( EConsoleColor Color )
 {
     if ( ConsoleHandle )
     {

@@ -10,10 +10,10 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Engine/EngineGlobals.h"
 #include "Core/Application/Application.h"
-#include "Core/Application/Generic/GenericOutputConsole.h"
 #include "Core/Application/Platform/Platform.h"
-#include "Core/Application/Platform/PlatformMisc.h"
+#include "Core/Application/Platform/PlatformApplication.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
+#include "Core/Application/Platform/PlatformOutputConsole.h"
 #include "Core/Input/InputManager.h"
 #include "Core/Debug/Profiler.h"
 #include "Core/Debug/Console/Console.h"
@@ -26,7 +26,7 @@ bool EngineLoop::Init()
 {
     TRACE_FUNCTION_SCOPE();
 
-    GConsoleOutput = PlatformMisc::CreateOutputConsole();
+    GConsoleOutput = PlatformOutputConsole::Make();
     if ( !GConsoleOutput )
     {
         return false;
@@ -38,9 +38,10 @@ bool EngineLoop::Init()
 
     Profiler::Init();
 
-    if ( !Platform::Init() )
+    CGenericApplication* Application = PlatformApplication::Make();
+    if ( Application && !Application->Init() )
     {
-        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to init Platform" );
+        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create PlatformApplication" );
         return false;
     }
 
@@ -49,13 +50,22 @@ bool EngineLoop::Init()
         return false;
     }
 
-    if ( !GEngine.Init() )
+	GEngine = MakeShared<Engine>();
+	Application->SetMessageListener( GEngine );
+
+	if ( !GEngine->Init( Application ) )
     {
         return false;
     }
-
+	
     // RenderAPI
-    if ( !RenderLayer::Init( ERenderLayerApi::D3D12 ) )
+	ERenderLayerApi RenderApi =
+#if defined(PLATFORM_MACOS)
+	ERenderLayerApi::Unknown;
+#else
+	ERenderLayerApi::D3D12;
+#endif
+    if ( !RenderLayer::Init( RenderApi ) )
     {
         return false;
     }
@@ -67,13 +77,9 @@ bool EngineLoop::Init()
 
     // Init Application
     GApplication = CreateApplication();
-    Assert( GApplication != nullptr );
-
-    Platform::SetCallbacks( &GEngine );
-
-    if ( !GApplication->Init() )
+    if ( GApplication && !GApplication->Init() )
     {
-        return false;
+		LOG_WARNING("Application Init failed, may not behave as intended");
     }
 
     if ( !InputManager::Get().Init() )
@@ -104,11 +110,13 @@ void EngineLoop::Tick( Timestamp Deltatime )
 {
     TRACE_FUNCTION_SCOPE();
 
-    Platform::Tick();
+    GEngine->Application->Tick( Deltatime.AsMilliSeconds() );
 
     GApplication->Tick( Deltatime );
 
     GConsole.Tick();
+	
+	LOG_INFO("Tick");
 
     Editor::Tick();
 
@@ -121,7 +129,7 @@ void EngineLoop::Run()
 {
     Timer Timer;
 
-    while ( GEngine.IsRunning )
+    while ( GEngine->IsRunning )
     {
         Timer.Tick();
         EngineLoop::Tick( Timer.GetDeltaTime() );
@@ -144,16 +152,7 @@ bool EngineLoop::Release()
     {
         return false;
     }
-
-    if ( GEngine.Release() )
-    {
-        Platform::SetCallbacks( nullptr );
-    }
-    else
-    {
-        return false;
-    }
-
+	
     DebugUI::Release();
 
     GRenderer.Release();
@@ -162,12 +161,10 @@ bool EngineLoop::Release()
 
     TaskManager::Get().Release();
 
-    if ( !Platform::Release() )
-    {
-        return false;
-    }
+	SafeDelete( GConsoleOutput );
 
-    SafeDelete( GConsoleOutput );
+	GEngine->Release();
+	GEngine.Reset();
 
     return true;
 }

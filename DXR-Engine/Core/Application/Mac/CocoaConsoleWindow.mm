@@ -12,7 +12,7 @@
     NSUInteger StyleMask   = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskMiniaturizable;
     
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:NSBackingStoreBuffered defer:NO];
-    if (self != nil)
+    if (self)
     {
         NSRect ContentFrame = [[self contentView] frame];
         ScrollView = [[NSScrollView alloc] initWithFrame:ContentFrame];

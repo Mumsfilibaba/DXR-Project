@@ -100,8 +100,10 @@ public:
     /* Adds a reference to the stored pointer */
     FORCEINLINE void AddRef() noexcept
     {
-        Assert( IsValid() );
-        Ptr->AddRef();
+        if ( Ptr )
+		{
+			Ptr->AddRef();
+		}
     }
 
     /* Retrive the rawpointer */

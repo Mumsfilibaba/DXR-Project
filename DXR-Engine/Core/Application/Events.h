@@ -2,12 +2,12 @@
 #include "Core.h"
 
 #include "Core/Input/InputCodes.h"
-#include "Core/Application/Generic/GenericPlatform.h"
+#include "Core/Application/ModifierKeyState.h"
 #include "Core/Application/Generic/GenericWindow.h"
 
 struct KeyPressedEvent
 {
-    KeyPressedEvent( EKey InKey, bool InIsRepeat, const ModifierKeyState& InModifiers )
+    KeyPressedEvent( EKey InKey, bool InIsRepeat, SModifierKeyState InModifiers )
         : Key( InKey )
         , IsRepeat( InIsRepeat )
         , Modifiers( InModifiers )
@@ -16,19 +16,19 @@ struct KeyPressedEvent
 
     EKey Key;
     bool IsRepeat;
-    ModifierKeyState Modifiers;
+	SModifierKeyState Modifiers;
 };
 
 struct KeyReleasedEvent
 {
-    KeyReleasedEvent( EKey InKey, const ModifierKeyState& InModifiers )
+    KeyReleasedEvent( EKey InKey, SModifierKeyState InModifiers )
         : Key( InKey )
         , Modifiers( InModifiers )
     {
     }
 
-    EKey             Key;
-    ModifierKeyState Modifiers;
+    EKey              Key;
+	SModifierKeyState Modifiers;
 };
 
 struct KeyTypedEvent
@@ -60,26 +60,26 @@ struct MouseMovedEvent
 
 struct MousePressedEvent
 {
-    MousePressedEvent( EMouseButton InButton, const ModifierKeyState& InModifiers )
+    MousePressedEvent( EMouseButton InButton, SModifierKeyState InModifiers )
         : Button( InButton )
         , Modifiers( InModifiers )
     {
     }
 
-    EMouseButton     Button;
-    ModifierKeyState Modifiers;
+    EMouseButton      Button;
+    SModifierKeyState Modifiers;
 };
 
 struct MouseReleasedEvent
 {
-    MouseReleasedEvent( EMouseButton InButton, const ModifierKeyState& InModifiers )
+    MouseReleasedEvent( EMouseButton InButton, SModifierKeyState InModifiers )
         : Button( InButton )
         , Modifiers( InModifiers )
     {
     }
 
-    EMouseButton     Button;
-    ModifierKeyState Modifiers;
+    EMouseButton      Button;
+    SModifierKeyState Modifiers;
 };
 
 
@@ -97,39 +97,39 @@ struct MouseScrolledEvent
 
 struct WindowResizeEvent
 {
-    WindowResizeEvent( const TSharedRef<GenericWindow>& InWindow, uint16 InWidth, uint16 InHeight )
+    WindowResizeEvent( const TSharedRef<CGenericWindow>& InWindow, uint16 InWidth, uint16 InHeight )
         : Window( InWindow )
         , Width( InWidth )
         , Height( InHeight )
     {
     }
 
-    TSharedRef<GenericWindow> Window;
+    TSharedRef<CGenericWindow> Window;
     uint16 Width;
     uint16 Height;
 };
 
 struct WindowFocusChangedEvent
 {
-    WindowFocusChangedEvent( const TSharedRef<GenericWindow>& InWindow, bool hasFocus )
+    WindowFocusChangedEvent( const TSharedRef<CGenericWindow>& InWindow, bool hasFocus )
         : Window( InWindow )
         , HasFocus( hasFocus )
     {
     }
 
-    TSharedRef<GenericWindow> Window;
+    TSharedRef<CGenericWindow> Window;
     bool HasFocus;
 };
 
 struct WindowMovedEvent
 {
-    WindowMovedEvent( const TSharedRef<GenericWindow>& InWindow, int16 x, int16 y )
+    WindowMovedEvent( const TSharedRef<CGenericWindow>& InWindow, int16 x, int16 y )
         : Window( InWindow )
         , Position( { x, y } )
     {
     }
 
-    TSharedRef<GenericWindow> Window;
+    TSharedRef<CGenericWindow> Window;
     struct
     {
         int16 x;
@@ -139,30 +139,30 @@ struct WindowMovedEvent
 
 struct WindowMouseLeftEvent
 {
-    WindowMouseLeftEvent( const TSharedRef<GenericWindow>& InWindow )
+    WindowMouseLeftEvent( const TSharedRef<CGenericWindow>& InWindow )
         : Window( InWindow )
     {
     }
 
-    TSharedRef<GenericWindow> Window;
+    TSharedRef<CGenericWindow> Window;
 };
 
 struct WindowMouseEnteredEvent
 {
-    WindowMouseEnteredEvent( const TSharedRef<GenericWindow>& InWindow )
+    WindowMouseEnteredEvent( const TSharedRef<CGenericWindow>& InWindow )
         : Window( InWindow )
     {
     }
 
-    TSharedRef<GenericWindow> Window;
+    TSharedRef<CGenericWindow> Window;
 };
 
 struct WindowClosedEvent
 {
-    WindowClosedEvent( const TSharedRef<GenericWindow>& InWindow )
+    WindowClosedEvent( const TSharedRef<CGenericWindow>& InWindow )
         : Window( InWindow )
     {
     }
 
-    TSharedRef<GenericWindow> Window;
+    TSharedRef<CGenericWindow> Window;
 };

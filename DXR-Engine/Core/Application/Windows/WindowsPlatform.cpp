@@ -3,6 +3,34 @@
 
 #include "Core/Input/InputManager.h"
 
+/* A small wrapper for moved message */
+struct SSizeMessage
+{
+    FORCEINLINE SSizeMessage( LPARAM InParam )
+        : Param(InParam)
+    {
+    }
+
+    union
+    {
+        /* Used for resize messages */
+        struct
+        {
+            uint16 Width;
+            uint16 Height;
+        };
+
+        /* Used for move messages */
+        struct
+        {
+            int16 x;
+            int16 y;
+        };
+
+        LPARAM Param;
+    };
+};
+
 TArray<WindowsEvent> WindowsPlatform::Messages;
 
 TSharedRef<WindowsCursor> WindowsPlatform::CurrentCursor;
@@ -125,9 +153,8 @@ void WindowsPlatform::HandleStoredMessage( HWND Window, UINT Message, WPARAM wPa
         {
             if ( MessageWindow )
             {
-                const uint16 Width = LOWORD( lParam );
-                const uint16 Height = HIWORD( lParam );
-                Callbacks->OnWindowResized( MessageWindow, Width, Height );
+                const SSizeMessage Size(lParam);
+                Callbacks->OnWindowResized( MessageWindow, Size.Width, Size.Height );
             }
 
             break;
@@ -137,9 +164,8 @@ void WindowsPlatform::HandleStoredMessage( HWND Window, UINT Message, WPARAM wPa
         {
             if ( MessageWindow )
             {
-                const int16 x = (int16)LOWORD( lParam );
-                const int16 y = (int16)HIWORD( lParam );
-                Callbacks->OnWindowMoved( MessageWindow, x, y );
+                const SSizeMessage Size(lParam);
+                Callbacks->OnWindowMoved( MessageWindow, Size.x, Size.y );
             }
 
             break;
@@ -291,7 +317,7 @@ void WindowsPlatform::HandleStoredMessage( HWND Window, UINT Message, WPARAM wPa
     }
 }
 
-void WindowsPlatform::SetActiveWindow( GenericWindow* Window )
+void WindowsPlatform::SetActiveWindow( CGenericWindow* Window )
 {
     TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>( Window );
     HWND hActiveWindow = WinWindow->GetHandle();
@@ -301,7 +327,7 @@ void WindowsPlatform::SetActiveWindow( GenericWindow* Window )
     }
 }
 
-void WindowsPlatform::SetCapture( GenericWindow* CaptureWindow )
+void WindowsPlatform::SetCapture( CGenericWindow* CaptureWindow )
 {
     if ( CaptureWindow )
     {
@@ -318,13 +344,13 @@ void WindowsPlatform::SetCapture( GenericWindow* CaptureWindow )
     }
 }
 
-GenericWindow* WindowsPlatform::GetActiveWindow()
+CGenericWindow* WindowsPlatform::GetActiveWindow()
 {
     HWND hActiveWindow = GetForegroundWindow();
     return WindowHandle( hActiveWindow ).GetWindow();
 }
 
-GenericWindow* WindowsPlatform::GetCapture()
+CGenericWindow* WindowsPlatform::GetCapture()
 {
     HWND hCapture = ::GetCapture();
     return WindowHandle( hCapture ).GetWindow();
@@ -408,7 +434,7 @@ GenericCursor* WindowsPlatform::GetCursor()
     return nullptr;
 }
 
-void WindowsPlatform::SetCursorPos( GenericWindow* RelativeWindow, int32 x, int32 y )
+void WindowsPlatform::SetCursorPos( CGenericWindow* RelativeWindow, int32 x, int32 y )
 {
     if ( RelativeWindow )
     {
@@ -423,7 +449,7 @@ void WindowsPlatform::SetCursorPos( GenericWindow* RelativeWindow, int32 x, int3
     }
 }
 
-void WindowsPlatform::GetCursorPos( GenericWindow* RelativeWindow, int32& OutX, int32& OutY )
+void WindowsPlatform::GetCursorPos( CGenericWindow* RelativeWindow, int32& OutX, int32& OutY )
 {
     POINT CursorPos = { };
     if ( !::GetCursorPos( &CursorPos ) )

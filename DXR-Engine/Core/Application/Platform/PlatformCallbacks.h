@@ -11,7 +11,7 @@
 
 #endif
 
-class GenericWindow;
+class CGenericWindow;
 struct ModifierKeyState;
 
 class PlatformCallbacks
@@ -47,27 +47,27 @@ public:
     {
     }
 
-    virtual void OnWindowResized( const TSharedRef<GenericWindow>& Window, uint16 Width, uint16 Height )
+    virtual void OnWindowResized( const TSharedRef<CGenericWindow>& Window, uint16 Width, uint16 Height )
     {
     }
 
-    virtual void OnWindowMoved( const TSharedRef<GenericWindow>& Window, int16 x, int16 y )
+    virtual void OnWindowMoved( const TSharedRef<CGenericWindow>& Window, int16 x, int16 y )
     {
     }
 
-    virtual void OnWindowFocusChanged( const TSharedRef<GenericWindow>& Window, bool HasFocus )
+    virtual void OnWindowFocusChanged( const TSharedRef<CGenericWindow>& Window, bool HasFocus )
     {
     }
 
-    virtual void OnWindowMouseLeft( const TSharedRef<GenericWindow>& Window )
+    virtual void OnWindowMouseLeft( const TSharedRef<CGenericWindow>& Window )
     {
     }
 
-    virtual void OnWindowMouseEntered( const TSharedRef<GenericWindow>& Window )
+    virtual void OnWindowMouseEntered( const TSharedRef<CGenericWindow>& Window )
     {
     }
 
-    virtual void OnWindowClosed( const TSharedRef<GenericWindow>& Window )
+    virtual void OnWindowClosed( const TSharedRef<CGenericWindow>& Window )
     {
     }
 

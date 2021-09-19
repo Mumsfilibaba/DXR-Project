@@ -16,12 +16,12 @@
 
 enum EWindowStyleFlag : uint32
 {
-    WindowStyleFlag_None = 0x0,
-    WindowStyleFlag_Titled = FLAG( 1 ),
-    WindowStyleFlag_Closable = FLAG( 2 ),
+    WindowStyleFlag_None        = 0x0,
+    WindowStyleFlag_Titled      = FLAG( 1 ),
+    WindowStyleFlag_Closable    = FLAG( 2 ),
     WindowStyleFlag_Minimizable = FLAG( 3 ),
     WindowStyleFlag_Maximizable = FLAG( 4 ),
-    WindowStyleFlag_Resizeable = FLAG( 5 ),
+    WindowStyleFlag_Resizeable  = FLAG( 5 ),
 };
 
 struct SWindowStyle
@@ -37,18 +37,22 @@ struct SWindowStyle
     {
         return Style & WindowStyleFlag_Titled;
     }
+
     bool IsClosable() const
     {
         return Style & WindowStyleFlag_Closable;
     }
+
     bool IsMinimizable() const
     {
         return Style & WindowStyleFlag_Minimizable;
     }
+
     bool IsMaximizable() const
     {
         return Style & WindowStyleFlag_Maximizable;
     }
+    
     bool IsResizeable() const
     {
         return Style & WindowStyleFlag_Resizeable;
@@ -79,44 +83,71 @@ struct SWindowShape
 
 typedef void* NativeWindowHandle;
 
-class GenericWindow : public CRefCounted
+class CGenericWindow : public CRefCounted
 {
 public:
+
+    /* Initializes the window */
+    virtual bool Init( const std::string& Title, uint32 Width, uint32 Height, SWindowStyle Style ) = 0;
+
+    /* Shows the window */
     virtual void Show( bool Maximized ) = 0;
+
+    /* Minimizes the window */
     virtual void Minimize() = 0;
+
+    /* Maximizes the window */
     virtual void Maximize() = 0;
+    
+    /* Closes the window */
     virtual void Close() = 0;
+    
+    /* Restores the window after being minimized or maximized */
     virtual void Restore() = 0;
+
+    /* Makes the window a borderless fullscreen window */
     virtual void ToggleFullscreen() = 0;
 
+    /* Checks if the underlaying native handle of the window is valid */
     virtual bool IsValid() const = 0;
+
+    /* Checks if this window is the currently active window */
     virtual bool IsActiveWindow() const = 0;
 
+    /* Sets the title */
     virtual void SetTitle( const std::string& Title ) = 0;
+    
+    /* Retrive the window title */
     virtual void GetTitle( std::string& OutTitle ) = 0;
 
+    /* Set the shape of the window */
     virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) = 0;
+    
+    /* Retrive the shape of the window */
     virtual void GetWindowShape( SWindowShape& OutWindowShape ) const = 0;
 
+    /* Retrive the width of the window */
     virtual uint32 GetWidth()  const = 0;
+
+    /* Retrive the height of the window */
     virtual uint32 GetHeight() const = 0;
 
+    /* Retrive the native handle */
     virtual NativeWindowHandle GetNativeHandle() const
     {
         return nullptr;
     }
 
+    /* Retrive the style of the window */
     FORCEINLINE SWindowStyle GetStyle() const
     {
         return Style;
     }
 
-    static GenericWindow* Create( const std::string& Title, uint32 Width, uint32 Height, SWindowStyle Style )
-	{
-		return nullptr;
-	}
-
 protected:
+    CGenericWindow()  = default;
+    ~CGenericWindow() = default;
+
     SWindowStyle Style;
 };
 

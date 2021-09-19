@@ -60,7 +60,7 @@ bool Sandbox::Init()
     TSharedRef<Texture2D> BaseTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !BaseTexture )
     {
-        return false;
+		LOG_WARNING("Failed to create BaseTexture");
     }
     else
     {
@@ -74,7 +74,7 @@ bool Sandbox::Init()
     TSharedRef<Texture2D> BaseNormal = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !BaseNormal )
     {
-        return false;
+		LOG_WARNING("Failed to create BaseNormalTexture");
     }
     else
     {
@@ -88,7 +88,7 @@ bool Sandbox::Init()
     TSharedRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !WhiteTexture )
     {
-        return false;
+		LOG_WARNING("Failed to create WhiteTexture");
     }
     else
     {
@@ -158,63 +158,39 @@ bool Sandbox::Init()
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
 
     TSharedRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
-    if ( !AlbedoMap )
+    if ( AlbedoMap )
     {
-        return false;
-    }
-    else
-    {
-        AlbedoMap->SetName( "AlbedoMap" );
+		AlbedoMap->SetName( "AlbedoMap" );
     }
 
     TSharedRef<Texture2D> NormalMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
-    if ( !NormalMap )
+    if ( NormalMap )
     {
-        return false;
-    }
-    else
-    {
-        NormalMap->SetName( "NormalMap" );
+		NormalMap->SetName( "NormalMap" );
     }
 
     TSharedRef<Texture2D> AOMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
-    if ( !AOMap )
+    if ( AOMap )
     {
-        return false;
-    }
-    else
-    {
-        AOMap->SetName( "AOMap" );
+		AOMap->SetName( "AOMap" );
     }
 
     TSharedRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
-    if ( !RoughnessMap )
+    if ( RoughnessMap )
     {
-        return false;
-    }
-    else
-    {
-        RoughnessMap->SetName( "RoughnessMap" );
+		RoughnessMap->SetName( "RoughnessMap" );
     }
 
     TSharedRef<Texture2D> HeightMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
-    if ( !HeightMap )
+    if ( HeightMap )
     {
-        return false;
-    }
-    else
-    {
-        HeightMap->SetName( "HeightMap" );
+		HeightMap->SetName( "HeightMap" );
     }
 
     TSharedRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Metallic.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
-    if ( !MetallicMap )
+    if ( MetallicMap )
     {
-        return false;
-    }
-    else
-    {
-        MetallicMap->SetName( "MetallicMap" );
+		MetallicMap->SetName( "MetallicMap" );
     }
 
     NewComponent->Material->AlbedoMap = AlbedoMap;
@@ -252,47 +228,27 @@ bool Sandbox::Init()
     NewActor->AddComponent( NewComponent );
 
     AlbedoMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/BaseColor.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
-    if ( !AlbedoMap )
+    if ( AlbedoMap )
     {
-        Debug::DebugBreak();
-        return false;
+		AlbedoMap->SetName( "AlbedoMap" );
     }
-    else
-    {
-        AlbedoMap->SetName( "AlbedoMap" );
-    }
-
+	
     NormalMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Normal.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
-    if ( !NormalMap )
+    if ( NormalMap )
     {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        NormalMap->SetName( "NormalMap" );
+		NormalMap->SetName( "NormalMap" );
     }
 
     RoughnessMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Roughness.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
-    if ( !RoughnessMap )
+    if ( RoughnessMap )
     {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        RoughnessMap->SetName( "RoughnessMap" );
+		RoughnessMap->SetName( "RoughnessMap" );
     }
 
     MetallicMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Metallic.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
-    if ( !MetallicMap )
+    if ( MetallicMap )
     {
-        Debug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        MetallicMap->SetName( "MetallicMap" );
+		MetallicMap->SetName( "MetallicMap" );
     }
 
     MatProperties.AO = 1.0f;
@@ -304,7 +260,7 @@ bool Sandbox::Init()
     SSceneData StreetLightData;
     COBJLoader::LoadFile( "../Assets/Models/Street_Light.obj", StreetLightData );
 
-    TSharedPtr<Mesh>     StreetLight = Mesh::Make( StreetLightData.Models.FirstElement().Mesh );
+    TSharedPtr<Mesh>      StreetLight    = StreetLightData.HasData() ? Mesh::Make( StreetLightData.Models.FirstElement().Mesh ) : nullptr;
     TSharedPtr<CMaterial> StreetLightMat = MakeShared<CMaterial>( MatProperties );
 
     for ( uint32 i = 0; i < 4; i++ )
@@ -337,7 +293,7 @@ bool Sandbox::Init()
     SSceneData PillarData;
     COBJLoader::LoadFile( "../Assets/Models/Pillar.obj", StreetLightData );
 
-    TSharedPtr<Mesh>      Pillar    = Mesh::Make( PillarData.Models.FirstElement().Mesh );
+    TSharedPtr<Mesh>      Pillar    = PillarData.HasData() ? Mesh::Make( PillarData.Models.FirstElement().Mesh ) : nullptr;
     TSharedPtr<CMaterial> PillarMat = MakeShared<CMaterial>( MatProperties );
 
     for ( uint32 i = 0; i < 8; i++ )

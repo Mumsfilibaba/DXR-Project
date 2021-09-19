@@ -5,7 +5,7 @@
 
 #include "Windows.h"
 
-class WindowsWindow : public GenericWindow
+class WindowsWindow : public CGenericWindow
 {
 public:
     WindowsWindow();

@@ -9,7 +9,7 @@
 #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
-class GenericWindow;
+class CGenericWindow;
 
 class GenericCursor : public CRefCounted
 {
