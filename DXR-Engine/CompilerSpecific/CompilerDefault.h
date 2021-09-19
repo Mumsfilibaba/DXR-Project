@@ -28,8 +28,8 @@
 #endif
 
 /* Restric */
-#ifndef restrict
-#define restrict
+#ifndef restrict_ptr
+#define restrict_ptr
 #endif
 
 /* Function signature as a const char* string */

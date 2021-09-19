@@ -3,7 +3,7 @@
 
 #include "Core/Threading/InterlockedInt.h"
 
-/* Base-class for intrusive refcounted object */
+/* Base-class for intrusive ref-counted object */
 class CRefCounted
 {
 public:

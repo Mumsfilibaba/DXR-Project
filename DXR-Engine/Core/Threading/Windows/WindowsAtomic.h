@@ -1,7 +1,9 @@
 #pragma once
-#include "Core/Windows/Windows.h"
 
+#if defined(PLATFORM_WINDOWS)
 #include "Core/Threading/Generic/GenericAtomic.h"
+
+#include "Core/Windows/Windows.h"
 
 /* Atomic operations on the windows platform */
 class CWindowsAtomic : public CGenericAtomic
@@ -10,6 +12,10 @@ public:
 
     // See: https://docs.microsoft.com/en-us/cpp/intrinsics/interlockedexchangeadd-intrinsic-functions?view=msvc-160
     //      https://docs.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-interlockedincrement16
+    
+    static_assert(sizeof(int32) == sizeof(long) && alignof(int32) == alignof(long), "int32 must have the same size and alignment as LONG");
+
+    /* InterlockedAdd: Adds value and return original value of Dest */
 
     static FORCEINLINE int8 InterlockedAdd( volatile int8* Dest, int32 Value )
     {
@@ -23,14 +29,15 @@ public:
 
     static FORCEINLINE int32 InterlockedAdd( volatile int32* Dest, int32 Value )
     {
-        static_assert(sizeof(int32) == sizeof(LONG) && alignof(int32) == alignof(LONG), "int32 must have the same size and alignment as LONG");
-        return static_cast<int32>(_InterlockedExchangeAdd( static_cast<volatile LONG*>(Dest), Value ));
+        return static_cast<int32>(_InterlockedExchangeAdd( static_cast<volatile long*>(Dest), Value ));
     }
 
     static FORCEINLINE int64 InterlockedAdd( volatile int64* Dest, int64 Value )
     {
-        return static_cast<int64>(_InterlockedExchangeAdd64( static_cast<volatile __int64*>(Dest), Value ));
+        return static_cast<int64>(_InterlockedExchangeAdd64( static_cast<volatile long long*>(Dest), Value ));
     }
+
+    /* InterlockedSub: Subtracts value and return original value of Dest */
 
     static FORCEINLINE int32 InterlockedSub( volatile int32* Dest, int32 Value )
     {
@@ -82,3 +89,5 @@ public:
         return _InterlockedExchange64( Dest, Value );
     }
 };
+
+#endif

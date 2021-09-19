@@ -45,9 +45,9 @@
 #define VECTORCALL __vectorcall
 #endif
 
-/* Restrict */
-#ifndef restrict
-#define restrict __restrict
+/* Restrict - Is already a keyword in MSVC, however fro consistency we make a define */
+#ifndef restrict_ptr
+#define restrict_ptr __restrict
 #endif
 
 /* Function signature as a const char* string */

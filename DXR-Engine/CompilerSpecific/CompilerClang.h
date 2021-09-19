@@ -46,8 +46,8 @@
 #endif
 
 /* Restric a pointer */
-#ifndef restrict
-#define restrict __restrict
+#ifndef restrict_ptr
+#define restrict_ptr __restrict
 #endif
 
 /* Function signature as a const char* string */

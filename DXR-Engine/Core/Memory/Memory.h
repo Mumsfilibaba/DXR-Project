@@ -11,7 +11,7 @@ public:
     static void  Free( void* Ptr ) noexcept;
 
     static void* Memmove( void* Destination, const void* Source, uint64 Size ) noexcept;
-    static void* Memcpy( void* restrict Destination, const void* restrict Source, uint64 Size ) noexcept;
+    static void* Memcpy( void* restrict_ptr Destination, const void* restrict_ptr Source, uint64 Size ) noexcept;
     static void* Memset( void* Destination, uint8 Value, uint64 Size ) noexcept;
     static void* Memzero( void* Destination, uint64 Size ) noexcept;
 
@@ -19,9 +19,9 @@ public:
     static bool Memcmp( const void* LHS, const void* RHS, uint64 Size ) noexcept;
 
     /* Assume that LHS and RHS is not the overlapping */
-    static void Memswap( void* restrict LHS, void* restrict RHS, uint64 Size ) noexcept;
+    static void Memswap( void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size ) noexcept;
 
-    static FORCEINLINE void Memexchange( void* restrict Destination, void* restrict Source, uint64 Size ) noexcept
+    static FORCEINLINE void Memexchange( void* restrict_ptr Destination, void* restrict_ptr Source, uint64 Size ) noexcept
     {
         if ( Destination != Source )
         {
@@ -50,7 +50,7 @@ public:
     }
 
     template<typename T>
-    static FORCEINLINE T* Memcpy( T* restrict Destination, const T* restrict Source ) noexcept
+    static FORCEINLINE T* Memcpy( T* restrict_ptr Destination, const T* restrict_ptr Source ) noexcept
     {
         return reinterpret_cast<T*>(Memcpy( reinterpret_cast<void*>(Destination), reinterpret_cast<const void*>(Source), sizeof( T ) ));
     }
@@ -62,7 +62,7 @@ public:
     }
 
     template<typename T>
-    static FORCEINLINE T* Memexchange( void* restrict Destination, void* restrict Source ) noexcept
+    static FORCEINLINE T* Memexchange( void* restrict_ptr Destination, void* restrict_ptr Source ) noexcept
     {
         return Memexchange( reinterpret_cast<void*>(Destination), reinterpret_cast<void*>(Source), sizeof( T ) );
     }

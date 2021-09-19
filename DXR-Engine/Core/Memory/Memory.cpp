@@ -43,7 +43,7 @@ void* Memory::Memzero( void* Destination, uint64 Size ) noexcept
     return memset( Destination, 0, Size );
 }
 
-void* Memory::Memcpy( void* restrict Destination, const void* restrict Source, uint64 Size ) noexcept
+void* Memory::Memcpy( void* restrict_ptr Destination, const void* restrict_ptr Source, uint64 Size ) noexcept
 {
     return memcpy( Destination, Source, Size );
 }
@@ -58,7 +58,7 @@ bool Memory::Memcmp( const void* LHS, const void* RHS, uint64 Size )  noexcept
     return (memcmp( LHS, RHS, Size ) == 0);
 }
 
-void Memory::Memswap( void* restrict LHS, void* restrict RHS, uint64 Size ) noexcept
+void Memory::Memswap( void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size ) noexcept
 {
     Assert( LHS != nullptr && RHS != nullptr );
 

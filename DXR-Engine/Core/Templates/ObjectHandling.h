@@ -39,7 +39,7 @@ FORCEINLINE void DefaultConstruct( void* Address ) noexcept
 
 /* Construct range and initialize all values to a certain lvalue */
 template<typename T>
-FORCEINLINE void ConstructRangeFrom( void* restrict StartAddress, uint32 Count, const T& Element ) noexcept
+FORCEINLINE void ConstructRangeFrom( void* restrict_ptr StartAddress, uint32 Count, const T& Element ) noexcept
 {
     while ( Count )
     {
@@ -51,7 +51,7 @@ FORCEINLINE void ConstructRangeFrom( void* restrict StartAddress, uint32 Count, 
 
 /* Construct range and initialize all values to a certain rvalue */
 template<typename T>
-FORCEINLINE void ConstructRangeFrom( void* restrict StartAddress, uint32 Count, T&& Element ) noexcept
+FORCEINLINE void ConstructRangeFrom( void* restrict_ptr StartAddress, uint32 Count, T&& Element ) noexcept
 {
     while ( Count )
     {
@@ -63,7 +63,7 @@ FORCEINLINE void ConstructRangeFrom( void* restrict StartAddress, uint32 Count, 
 
 /* Construct the objects in the range by calling the copy contructor */
 template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyConstructRange( void* restrict StartAddress, const T* restrict Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyConstructRange( void* restrict_ptr StartAddress, const T* restrict_ptr Source, uint32 Count ) noexcept
 {
     while ( Count )
     {
@@ -76,21 +76,21 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyConstructRa
 
 /* For trivial objects, construct the objects in the range by calling Memory::Memcpy */
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type CopyConstructRange( void* restrict StartAddress, const T* restrict Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type CopyConstructRange( void* restrict_ptr StartAddress, const T* restrict_ptr Source, uint32 Count ) noexcept
 {
     Memory::Memcpy( StartAddress, Source, sizeof( T ) * Count );
 }
 
 /* Copy-construct a single object */
 template<typename T>
-FORCEINLINE void CopyConstruct( void* const restrict Address, const T* restrict Source ) noexcept
+FORCEINLINE void CopyConstruct( void* const restrict_ptr Address, const T* restrict_ptr Source ) noexcept
 {
     CopyConstructRange<T>( Address, Source, 1 );
 }
 
 /* Copy assign objects in range with the copy assignment operator */
 template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyAssignRange( T* restrict Destination, const T* restrict Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyAssignRange( T* restrict_ptr Destination, const T* restrict_ptr Source, uint32 Count ) noexcept
 {
     while ( Count )
     {
@@ -103,14 +103,14 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyAssignRange
 
 /* For trivial objects, copy assign objects in range with Memory::Memcpy */
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type CopyAssignRange( T* restrict Destination, const T* restrict Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type CopyAssignRange( T* restrict_ptr Destination, const T* restrict_ptr Source, uint32 Count ) noexcept
 {
     Memory::Memcpy( Destination, Source, sizeof( T ) * Count );
 }
 
 /* Copy-assign a single object */
 template<typename T>
-FORCEINLINE void CopyConstruct( T* restrict Destination, const T* restrict Source ) noexcept
+FORCEINLINE void CopyConstruct( T* restrict_ptr Destination, const T* restrict_ptr Source ) noexcept
 {
     CopyConstructRange<T>( Destination, Source, 1 );
 }
