@@ -971,14 +971,14 @@ public:
         return TStringView<CharType>( Characters.Data() + Offset, Count );
     }
 
-    /* Retrive the character at Index */
+    /* Retrieve the character at Index */
     FORCEINLINE CharType& At( SizeType Index ) noexcept
     {
         Assert( Index < Length() );
         return Data()[Index];
     }
 
-    /* Retrive the character at Index */
+    /* Retrieve the character at Index */
     FORCEINLINE const CharType& At( SizeType Index ) const noexcept
     {
         Assert( Index < Length() );
@@ -1033,7 +1033,7 @@ public:
         return Characters.Capacity() * sizeof( CharType );
     }
 
-    /* Retrive the size of the string in bytes */
+    /* Retrieve the size of the string in bytes */
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
         return Length() * sizeof( CharType );
@@ -1067,13 +1067,13 @@ public:
         return *this;
     }
 
-    /* Retrive an element at a certain position */
+    /* Retrieve an element at a certain position */
     FORCEINLINE CharType& operator[]( SizeType Index ) noexcept
     {
         return At( Index );
     }
 
-    /* Retrive an element at a certain position */
+    /* Retrieve an element at a certain position */
     FORCEINLINE const CharType& operator[]( SizeType Index ) const noexcept
     {
         return At( Index );

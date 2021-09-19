@@ -71,42 +71,42 @@ public:
         return (ViewSize == 0);
     }
 
-    /* Retrive the first element */
+    /* Retrieve the first element */
     FORCEINLINE ElementType& FirstElement() noexcept
     {
         Assert( IsEmpty() );
         return Data()[0];
     }
 
-    /* Retrive the first element */
+    /* Retrieve the first element */
     FORCEINLINE const ElementType& FirstElement() const noexcept
     {
         Assert( IsEmpty() );
         return Data()[0];
     }
 
-    /* Retrive the last element */
+    /* Retrieve the last element */
     FORCEINLINE ElementType& LastElement() noexcept
     {
         Assert( IsEmpty() );
         return Data()[ViewSize - 1];
     }
 
-    /* Retrive the last element */
+    /* Retrieve the last element */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
         Assert( IsEmpty() );
         return Data()[ViewSize - 1];
     }
 
-    /* Retrive an element at a certain position */
+    /* Retrieve an element at a certain position */
     FORCEINLINE ElementType& At( SizeType Index ) noexcept
     {
         Assert( Index < ViewSize );
         return Data()[Index];
     }
 
-    /* Retrive an element at a certain position */
+    /* Retrieve an element at a certain position */
     FORCEINLINE const ElementType& At( SizeType Index ) const noexcept
     {
         Assert( Index < ViewSize );
@@ -130,31 +130,31 @@ public:
         }
     }
 
-    /* Retrive the last valid index for the view */
+    /* Retrieve the last valid index for the view */
     FORCEINLINE SizeType LastElementIndex() const noexcept
     {
         return ViewSize > 0 ? ViewSize - 1 : 0;
     }
 
-    /* Retrive the size of the view */
+    /* Retrieve the size of the view */
     FORCEINLINE SizeType Size() const noexcept
     {
         return ViewSize;
     }
 
-    /* Retrive the size of the view in bytes */
+    /* Retrieve the size of the view in bytes */
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
         return Size() * sizeof( ElementType );
     }
 
-    /* Retrive the data of the view */
+    /* Retrieve the data of the view */
     FORCEINLINE ElementType* Data() noexcept
     {
         return View;
     }
 
-    /* Retrive the data of the view */
+    /* Retrieve the data of the view */
     FORCEINLINE const ElementType* Data() const noexcept
     {
         return View;
@@ -186,13 +186,13 @@ public:
         return !(*this == Other);
     }
 
-    /* Retrive an element at a certain position */
+    /* Retrieve an element at a certain position */
     FORCEINLINE ElementType& operator[]( SizeType Index ) noexcept
     {
         return At( Index );
     }
 
-    /* Retrive an element at a certain position */
+    /* Retrieve an element at a certain position */
     FORCEINLINE const ElementType& operator[]( SizeType Index ) const noexcept
     {
         return At( Index );

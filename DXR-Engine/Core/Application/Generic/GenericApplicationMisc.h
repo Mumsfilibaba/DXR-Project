@@ -39,7 +39,7 @@ public:
     {
     }
 
-    /* Retrives the state of modifer keys */
+    /* Retrieves the state of modifer keys */
     static FORCEINLINE SModifierKeyState GetModifierKeyState()
     {
         return SModifierKeyState();

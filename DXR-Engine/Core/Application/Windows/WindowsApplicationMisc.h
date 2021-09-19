@@ -5,6 +5,10 @@
 
 #include "Windows.h"
 
+#ifdef MessageBox
+#undef MessageBox
+#endif
+
 class CWindowsApplicationMisc : public CGenericApplicationMisc
 {
 public:

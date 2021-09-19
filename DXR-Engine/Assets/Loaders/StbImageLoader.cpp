@@ -75,7 +75,7 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
         return nullptr;
     }
 
-    // Retrive info about the file
+    // Retrieve info about the file
     int32 Width = 0;
     int32 Height = 0;
     int32 ChannelCount = 0;

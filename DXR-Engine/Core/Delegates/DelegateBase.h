@@ -87,7 +87,7 @@ public:
         }
     }
 
-    /* Retrive the bound object, returns nullptr for non-member delegates */
+    /* Retrieve the bound object, returns nullptr for non-member delegates */
     FORCEINLINE const void* GetBoundObject() const
     {
         if ( IsBound() )
@@ -100,7 +100,7 @@ public:
         }
     }
 
-    /* Retrive the delegate handle for this object */
+    /* Retrieve the delegate handle for this object */
     FORCEINLINE CDelegateHandle GetHandle() const
     {
         if ( IsBound() )
@@ -186,13 +186,13 @@ protected:
         return reinterpret_cast<const IDelegateInstance*>(Storage.GetAllocation());
     }
 
-    /* Retrive the storage */
+    /* Retrieve the storage */
     FORCEINLINE AllocatorType& GetStorage()
     {
         return Storage;
     }
 
-    /* Retrive the storage */
+    /* Retrieve the storage */
     FORCEINLINE const AllocatorType& GetStorage() const
     {
         return Storage;

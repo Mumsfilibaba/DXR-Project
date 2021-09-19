@@ -53,22 +53,22 @@ public:
     /* Sets the title */
     virtual void SetTitle( const std::string& Title ) override final;
     
-    /* Retrive the window title */
+    /* Retrieve the window title */
     virtual void GetTitle( std::string& OutTitle ) override final;
 
     /* Set the shape of the window */
     virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) override final;
     
-    /* Retrive the shape of the window */
+    /* Retrieve the shape of the window */
     virtual void GetWindowShape( SWindowShape& OutWindowShape ) const override final;
 
-    /* Retrive the width of the window */
+    /* Retrieve the width of the window */
     virtual uint32 GetWidth()  const override final;
 
-    /* Retrive the height of the window */
+    /* Retrieve the height of the window */
     virtual uint32 GetHeight() const override final;
 
-    /* Retrive the native handle */
+    /* Retrieve the native handle */
     virtual NativeWindowHandle GetNativeHandle() const override final
     {
         return reinterpret_cast<void*>(Window);

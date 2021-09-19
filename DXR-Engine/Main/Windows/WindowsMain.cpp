@@ -23,8 +23,6 @@ int WINAPI WinMain( HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, i
 {
     InitCRunTime();
 
-    WindowsPlatform::PreMainInit( Instance );
-
     return EngineMain();
 }
 

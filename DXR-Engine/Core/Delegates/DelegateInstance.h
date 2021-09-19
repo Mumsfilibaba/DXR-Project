@@ -46,7 +46,7 @@ public:
         Handle = InvalidHandle;
     }
 
-    /* Retrive the ID */
+    /* Retrieve the ID */
     FORCEINLINE DelegateHandle GetNative() const
     {
         return Handle;
@@ -91,13 +91,13 @@ public:
     IDelegateInstance() = default;
     virtual ~IDelegateInstance() noexcept = default;
 
-    /* Retrive the object of the function, returns nullptr for non-member delegates */
+    /* Retrieve the object of the function, returns nullptr for non-member delegates */
     virtual const void* GetBoundObject() const = 0;
 
     /* Check if the object is the one that is bound to the delegate instance */
     virtual bool IsObjectBound( const void* ) const = 0;
 
-    /* Retrive the handle to the delegate */
+    /* Retrieve the handle to the delegate */
     virtual CDelegateHandle GetHandle() const = 0;
 
     /* Clones the delegate and stores it in the specified memory */
@@ -115,7 +115,7 @@ public:
 
 public:
 
-    /* Retrive the object of the function, returns nullptr for non-member delegates */
+    /* Retrieve the object of the function, returns nullptr for non-member delegates */
     virtual const void* GetBoundObject() const override
     {
         return nullptr;
@@ -127,7 +127,7 @@ public:
         return false;
     }
 
-    /* Retrive the handle to the delegate */
+    /* Retrieve the handle to the delegate */
     virtual CDelegateHandle GetHandle() const override final
     {
         return Handle;

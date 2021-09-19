@@ -106,27 +106,27 @@ public:
 		}
     }
 
-    /* Retrive the rawpointer */
+    /* Retrieve the rawpointer */
     FORCEINLINE ElementType* Get() const noexcept
     {
         return Ptr;
     }
 
-    /* Retrive the current reference count of the object */
+    /* Retrieve the current reference count of the object */
     FORCEINLINE ElementType* GetRefCount() const noexcept
     {
         Assert( IsValid() );
         return Ptr->GetRefCount();
     }
 
-    /* Retrive the raw pointer and add a reference */
+    /* Retrieve the raw pointer and add a reference */
     FORCEINLINE ElementType* GetAndAddRef() noexcept
     {
         AddRef();
         return Ptr;
     }
 
-    /* Retrive the pointer as another type that is convertible */
+    /* Retrieve the pointer as another type that is convertible */
     template<typename CastType>
     FORCEINLINE typename TEnableIf<TIsConvertible<CastType*, ElementType*>::Value, CastType*>::Type GetAs() const noexcept
     {
@@ -151,13 +151,13 @@ public:
         return (Ptr != nullptr);
     }
 
-    /* Retrive the raw pointer */
+    /* Retrieve the raw pointer */
     FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
 
-    /* Retrive the address of the pointer */
+    /* Retrieve the address of the pointer */
     FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();

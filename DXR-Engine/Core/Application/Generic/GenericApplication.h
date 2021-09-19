@@ -31,10 +31,10 @@ public:
     /* Releases the application */
     virtual void Release() = 0;
 
-    /* Retrive the cursor interface */
+    /* Retrieve the cursor interface */
     virtual ICursor* GetCursor() = 0;
 
-    /* Retrive the keyboard interface */
+    /* Retrieve the keyboard interface */
     virtual IKeyboard* GetKeyboard() = 0;
 
     /* Sets the window that currently has the keyboard focus */
@@ -45,13 +45,13 @@ public:
     /* Sets the window that is currently active */
     virtual void SetActiveWindow( CGenericWindow* Window ) = 0;
 
-    /* Retrives the window that currently has the keyboard focus, since macOS does not support keyboard focus, we return null as standard */
+    /* Retrieves the window that currently has the keyboard focus, since macOS does not support keyboard focus, we return null as standard */
     virtual CGenericWindow* GetCapture() const 
     {
         return nullptr;
     }
 
-    /* Retrives the window that is currently active */
+    /* Retrieves the window that is currently active */
     virtual CGenericWindow* GetActiveWindow() const = 0;
 
     /* Sets the message listener */
@@ -60,7 +60,7 @@ public:
         MessageListener = InMessageListener;
     }
 
-    /* Retrives the message listener */
+    /* Retrieves the message listener */
     FORCEINLINE TSharedPtr<CGenericApplicationMessageListener> GetMessageListener() const
     {
         return MessageListener;

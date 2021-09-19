@@ -168,7 +168,7 @@ private:
         Node->Parent = Left;
     }
 
-    /* Retrive the nullnode as constant */
+    /* Retrieve the nullnode as constant */
     FORCEINLINE const STreeNode* GetNull() const noexcept
     {
         return NullNode;

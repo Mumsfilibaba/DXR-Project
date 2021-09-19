@@ -21,6 +21,18 @@
 #undef InterlockedExchange
 #endif
 
+#ifdef InterlockedAnd
+#undef InterlockedAnd
+#endif
+
+#ifdef InterlockedOr
+#undef InterlockedOr
+#endif
+
+#ifdef InterlockedXor
+#undef InterlockedXor
+#endif
+
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable

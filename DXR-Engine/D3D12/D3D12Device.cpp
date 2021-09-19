@@ -314,7 +314,7 @@ bool D3D12Device::Init()
     }
     else
     {
-        // Retrive newer factory interface
+        // Retrieve newer factory interface
         TComPtr<IDXGIFactory5> Factory5;
         if ( FAILED( Factory.As( &Factory5 ) ) )
         {

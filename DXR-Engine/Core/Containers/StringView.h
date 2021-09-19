@@ -660,21 +660,21 @@ public:
         return (Length() == 0);
     }
 
-    /* Retrive the first element */
+    /* Retrieve the first element */
     FORCEINLINE const CharType& FirstElement() const noexcept
     {
         Assert( IsEmpty() );
         return Data()[0];
     }
 
-    /* Retrive the last element */
+    /* Retrieve the last element */
     FORCEINLINE const CharType& LastElement() const noexcept
     {
         Assert( IsEmpty() );
         return Data()[LastElementIndex()];
     }
 
-    /* Retrive an element at a certain position */
+    /* Retrieve an element at a certain position */
     FORCEINLINE const CharType& At( SizeType Index ) const noexcept
     {
         Assert( Index < Length() );
@@ -688,32 +688,32 @@ public:
         ::Swap<const CharType*>( ViewEnd, Other.ViewEnd );
     }
 
-    /* Retrive the last valid index for the view */
+    /* Retrieve the last valid index for the view */
     FORCEINLINE SizeType LastElementIndex() const noexcept
     {
         SizeType Len = Length();
         return (Len > 0) ? (Len - 1) : 0;
     }
 
-    /* Retrive the size of the view */
+    /* Retrieve the size of the view */
     FORCEINLINE SizeType Size() const noexcept
     {
         return Length();
     }
 
-    /* Retrive the length of the view */
+    /* Retrieve the length of the view */
     FORCEINLINE SizeType Length() const noexcept
     {
         return static_cast<SizeType>(static_cast<intptr_t>(ViewEnd - ViewStart));
     }
 
-    /* Retrive the size of the view in bytes */
+    /* Retrieve the size of the view in bytes */
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
         return Size() * sizeof( CharType );
     }
 
-    /* Retrive the data of the view */
+    /* Retrieve the data of the view */
     FORCEINLINE const CharType* Data() const noexcept
     {
         return ViewStart;
@@ -732,7 +732,7 @@ public:
         return TStringView( Data() + Offset, Count );
     }
 
-    /* Retrive an element at a certain position */
+    /* Retrieve an element at a certain position */
     FORCEINLINE const CharType& operator[]( SizeType Index ) const noexcept
     {
         return At( Index );

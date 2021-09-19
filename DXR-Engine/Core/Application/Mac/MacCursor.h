@@ -15,13 +15,13 @@ public:
     /* Sets the postion of the cursor */
     virtual void SetCursorPosition( CGenericWindow* RelativeWindow, int32 x, int32 y ) const override final;
 
-    /* Retrive the cursor position of a window */
+    /* Retrieve the cursor position of a window */
     virtual void GetCursorPosition( CGenericWindow* RelativeWindow, int32& OutX, int32& OutY ) const override final;
 
     /* Show or hide the mouse */
     virtual void SetVisibility( bool IsVisible ) override final;
 
-    /* Retrive the mouse visibility */
+    /* Retrieve the mouse visibility */
     virtual bool IsVisible() const override final
 	{
 		return IsCursorVisible;

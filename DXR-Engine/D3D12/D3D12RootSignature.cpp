@@ -253,7 +253,7 @@ bool D3D12RootSignature::Init( const void* BlobWithRootSignature, uint64 BlobLen
     HRESULT Result = D3D12CreateRootSignatureDeserializerFunc( BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS( &Deserializer ) );
     if ( FAILED( Result ) )
     {
-        LOG_ERROR( "[D3D12RootSignature]: FAILED to Retrive Root Signature Desc" );
+        LOG_ERROR( "[D3D12RootSignature]: FAILED to Retrieve Root Signature Desc" );
 
         Debug::DebugBreak();
         return false;

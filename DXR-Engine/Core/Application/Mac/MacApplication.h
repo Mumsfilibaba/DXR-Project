@@ -47,13 +47,13 @@ public:
     /* Releases the application */
     virtual void Release() override final;
 
-    /* Retrive the cursor interface */
+    /* Retrieve the cursor interface */
     virtual ICursor* GetCursor() override final
     {
         return &Cursor;
     }
 
-    /* Retrive the keyboard interface */
+    /* Retrieve the keyboard interface */
     virtual IKeyboard* GetKeyboard() override final
 	{
 		return &Keyboard;
@@ -62,10 +62,10 @@ public:
     /* Sets the window that is currently active */
     virtual void SetActiveWindow( CGenericWindow* Window ) override final;
 
-    /* Retrives the window that is currently active */
+    /* Retrieves the window that is currently active */
     virtual CGenericWindow* GetActiveWindow() const override final;
 
-    /* Retrives a from a NSWindow */
+    /* Retrieves a from a NSWindow */
     CMacWindow* GetWindowFromNSWindow( NSWindow* Window ) const;
 
 	/* Handles a notification */

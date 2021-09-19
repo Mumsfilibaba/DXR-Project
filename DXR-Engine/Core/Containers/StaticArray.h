@@ -26,38 +26,38 @@ public:
 
     static_assert(NumElements > 0, "The number of elements has to be more than zero");
 
-    /* Retrive the first element */
+    /* Retrieve the first element */
     FORCEINLINE ElementType& FirstElement() noexcept
     {
         return Elements[0];
     }
 
-    /* Retrive the first element */
+    /* Retrieve the first element */
     FORCEINLINE const ElementType& FirstElement() const noexcept
     {
         return Elements[0];
     }
 
-    /* Retrive the last element */
+    /* Retrieve the last element */
     FORCEINLINE ElementType& LastElement() noexcept
     {
         return Elements[NumElements - 1];
     }
 
-    /* Retrive the last element */
+    /* Retrieve the last element */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
         return Elements[NumElements - 1];
     }
 
-    /* Retrive the element at a certain position */
+    /* Retrieve the element at a certain position */
     FORCEINLINE ElementType& At( SizeType Index ) noexcept
     {
         Assert( Index < NumElements );
         return Elements[Index];
     }
 
-    /* Retrive the element at a certain position */
+    /* Retrieve the element at a certain position */
     FORCEINLINE const ElementType& At( SizeType Index ) const noexcept
     {
         Assert( Index < NumElements );
@@ -81,25 +81,25 @@ public:
         Other = Move( TempArray );
     }
 
-    /* Retrive the data of the array */
+    /* Retrieve the data of the array */
     FORCEINLINE ElementType* Data() noexcept
     {
         return Elements;
     }
 
-    /* Retrive the data of the array */
+    /* Retrieve the data of the array */
     FORCEINLINE const ElementType* Data() const noexcept
     {
         return Elements;
     }
 
-    /* Retrive the element at a certain position */
+    /* Retrieve the element at a certain position */
     FORCEINLINE ElementType& operator[]( SizeType Index ) noexcept
     {
         return At( Index );
     }
 
-    /* Retrive the element at a certain position */
+    /* Retrieve the element at a certain position */
     FORCEINLINE const ElementType& operator[]( SizeType Index ) const noexcept
     {
         return At( Index );
@@ -126,19 +126,19 @@ public:
 
 public:
 
-    /* Retrive the last valid index */
+    /* Retrieve the last valid index */
     constexpr SizeType LastElementIndex() const noexcept
     {
         return NumElements - 1;
     }
 
-    /* Retrive the size of the array */
+    /* Retrieve the size of the array */
     constexpr SizeType Size() const noexcept
     {
         return NumElements;
     }
 
-    /* Retrive the size of the array in bytes */
+    /* Retrieve the size of the array in bytes */
     constexpr SizeType SizeInBytes() const noexcept
     {
         return Size() * sizeof( ElementType );

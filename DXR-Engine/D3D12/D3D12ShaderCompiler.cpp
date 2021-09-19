@@ -483,7 +483,7 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
 
     if ( FAILED( Result->GetStatus( &hResult ) ) )
     {
-        LOG_ERROR( "[D3D12ShaderCompiler]: FAILED to Retrive result. Unknown Error." );
+        LOG_ERROR( "[D3D12ShaderCompiler]: FAILED to Retrieve result. Unknown Error." );
 
         Debug::DebugBreak();
         return false;

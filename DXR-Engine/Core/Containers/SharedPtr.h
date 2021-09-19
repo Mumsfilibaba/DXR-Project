@@ -47,13 +47,13 @@ public:
         return NumStrongRefs--;
     }
 
-    /* Retrive the weak reference count */
+    /* Retrieve the weak reference count */
     FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
         return NumWeakRefs.Load();
     }
 
-    /* Retrive the strong reference count */
+    /* Retrieve the strong reference count */
     FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
         return NumStrongRefs.Load();
@@ -250,14 +250,14 @@ public:
         return Counter;
     }
 
-    /* Retrive the weak reference count */
+    /* Retrieve the weak reference count */
     FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
         Assert( Counter != nullptr );
         return Counter->GetWeakRefCount();
     }
 
-    /* Retrive the strong reference count */
+    /* Retrieve the strong reference count */
     FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
         Assert( Counter != nullptr );
@@ -486,7 +486,7 @@ public:
         return GetAddressOf();
     }
 
-    /* Retrive element at a certain index */
+    /* Retrieve element at a certain index */
     template<typename U = T>
     FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[]( SizeType Index ) const noexcept
@@ -823,7 +823,7 @@ public:
         return GetAddressOf();
     }
 
-    /* Retrive element at a certain index */
+    /* Retrieve element at a certain index */
     template<typename U = T>
     FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[]( SizeType Index ) const noexcept
