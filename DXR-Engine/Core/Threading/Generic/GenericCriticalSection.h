@@ -6,19 +6,19 @@
 class CGenericCriticalSection
 {
 public:
-    CGenericCriticalSection()  = default;
+    CGenericCriticalSection() = default;
     ~CGenericCriticalSection() = default;
 
-	FORCEINLINE void Lock() noexcept
+    FORCEINLINE void Lock() noexcept
     {
     }
 
-	FORCEINLINE bool TryLock() noexcept
+    FORCEINLINE bool TryLock() noexcept
     {
         return false;
     }
 
-	FORCEINLINE void Unlock() noexcept
+    FORCEINLINE void Unlock() noexcept
     {
     }
 };

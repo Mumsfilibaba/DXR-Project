@@ -1,20 +1,20 @@
-#pragma once 
+#pragma once
 
-#if defined(PLATFORM_MACOS)
+#if defined(PLATFORM_WINDOWS)
 #include "Core/Application/Generic/GenericKeyboard.h"
 
-class CMacKeyboard final : public CGenericKeyboard
+class CWindowsKeyboard final : public CGenericKeyboard
 {
-    friend class CMacApplication;
+    friend class CWindowsApplication;
 
 private:
 
-    CMacKeyboard()
+    FORCEINLINE CWindowsKeyboard()
         : CGenericKeyboard()
     {
     }
 
-    ~CMacKeyboard() = default;
+    ~CWindowsKeyboard() = default;
 
     // TODO: Maybe store all the keys in a bit-array? 
     FORCEINLINE void SetKeyState( EKey KeyCode, bool State )

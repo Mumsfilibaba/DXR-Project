@@ -55,9 +55,9 @@ public:
 
     /* Retrieve the keyboard interface */
     virtual IKeyboard* GetKeyboard() override final
-	{
-		return &Keyboard;
-	}
+    {
+        return &Keyboard;
+    }
 
     /* Sets the window that is currently active */
     virtual void SetActiveWindow( CGenericWindow* Window ) override final;
@@ -68,17 +68,17 @@ public:
     /* Retrieves a from a NSWindow */
     CMacWindow* GetWindowFromNSWindow( NSWindow* Window ) const;
 
-	/* Handles a notification */
-	void HandleNotification( const struct SNotification& Notification );
-	
-	/* Handles an event */
-	void HandleEvent( NSEvent* Event );
-	
-	/* Handle key typed event */
-	void HandleKeyTypedEvent( NSString* Text );
-	
+    /* Handles a notification */
+    void HandleNotification( const struct SNotification& Notification );
+
+    /* Handles an event */
+    void HandleEvent( NSEvent* Event );
+
+    /* Handle key typed event */
+    void HandleKeyTypedEvent( NSString* Text );
+
     /* Returs the native appdelegate */
-    FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const 
+    FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const
     {
         return AppDelegate;
     }
@@ -92,16 +92,16 @@ private:
     bool InitAppMenu();
 
     /* Delegate to talk with macOS */
-	CCocoaAppDelegate* AppDelegate = nullptr;
+    CCocoaAppDelegate* AppDelegate = nullptr;
 
     /* All the windows of the application */
     TArray<TSharedRef<CMacWindow>> Windows;
 
     /* Cursor interface */
     CMacCursor Cursor;
-	
-	/* Keyboard Interface */
-	CMacKeyboard Keyboard;
+
+    /* Keyboard Interface */
+    CMacKeyboard Keyboard;
 
     /* If the application has been terminating or not */
     bool IsTerminating = false;

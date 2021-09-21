@@ -25,12 +25,12 @@ struct SNotification
     CGSize Size;
 
     /* The position of the NSWindow */
-	CGPoint Position;
-	
-	FORCEINLINE bool IsValid() const
-	{
-		return (Notification != nullptr);
-	}
+    CGPoint Position;
+
+    FORCEINLINE bool IsValid() const
+    {
+        return (Notification != nullptr);
+    }
 };
 
 #endif

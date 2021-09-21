@@ -50,20 +50,20 @@ bool EngineLoop::Init()
         return false;
     }
 
-	GEngine = MakeShared<Engine>();
-	Application->SetMessageListener( GEngine );
+    GEngine = MakeShared<Engine>();
+    Application->SetMessageListener( GEngine );
 
-	if ( !GEngine->Init( Application ) )
+    if ( !GEngine->Init( Application ) )
     {
         return false;
     }
-	
+
     // RenderAPI
-	ERenderLayerApi RenderApi =
-#if defined(PLATFORM_MACOS)
-	ERenderLayerApi::Unknown;
+    ERenderLayerApi RenderApi =
+    #if defined(PLATFORM_MACOS)
+        ERenderLayerApi::Unknown;
 #else
-	ERenderLayerApi::D3D12;
+        ERenderLayerApi::D3D12;
 #endif
     if ( !RenderLayer::Init( RenderApi ) )
     {
@@ -79,7 +79,7 @@ bool EngineLoop::Init()
     GApplication = CreateApplication();
     if ( GApplication && !GApplication->Init() )
     {
-		LOG_WARNING("Application Init failed, may not behave as intended");
+        LOG_WARNING( "Application Init failed, may not behave as intended" );
     }
 
     if ( !InputManager::Get().Init() )
@@ -97,7 +97,7 @@ bool EngineLoop::Init()
 
     if ( !DebugUI::Init() )
     {
-		PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create ImGuiContext" );
+        PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create ImGuiContext" );
         return false;
     }
 
@@ -115,8 +115,8 @@ void EngineLoop::Tick( Timestamp Deltatime )
     GApplication->Tick( Deltatime );
 
     GConsole.Tick();
-	
-	LOG_INFO("Tick");
+
+    LOG_INFO( "Tick" );
 
     Editor::Tick();
 
@@ -152,7 +152,7 @@ bool EngineLoop::Release()
     {
         return false;
     }
-	
+
     DebugUI::Release();
 
     GRenderer.Release();
@@ -161,10 +161,10 @@ bool EngineLoop::Release()
 
     TaskManager::Get().Release();
 
-	SafeDelete( GConsoleOutput );
+    SafeDelete( GConsoleOutput );
 
-	GEngine->Release();
-	GEngine.Reset();
+    GEngine->Release();
+    GEngine.Reset();
 
     return true;
 }

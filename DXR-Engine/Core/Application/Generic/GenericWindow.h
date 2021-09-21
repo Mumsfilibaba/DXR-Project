@@ -16,12 +16,12 @@
 
 enum EWindowStyleFlag : uint32
 {
-    WindowStyleFlag_None        = 0x0,
-    WindowStyleFlag_Titled      = FLAG( 1 ),
-    WindowStyleFlag_Closable    = FLAG( 2 ),
+    WindowStyleFlag_None = 0x0,
+    WindowStyleFlag_Titled = FLAG( 1 ),
+    WindowStyleFlag_Closable = FLAG( 2 ),
     WindowStyleFlag_Minimizable = FLAG( 3 ),
     WindowStyleFlag_Maximizable = FLAG( 4 ),
-    WindowStyleFlag_Resizeable  = FLAG( 5 ),
+    WindowStyleFlag_Resizeable = FLAG( 5 ),
 };
 
 struct SWindowStyle
@@ -52,7 +52,7 @@ struct SWindowStyle
     {
         return Style & WindowStyleFlag_Maximizable;
     }
-    
+
     bool IsResizeable() const
     {
         return Style & WindowStyleFlag_Resizeable;
@@ -98,10 +98,10 @@ public:
 
     /* Maximizes the window */
     virtual void Maximize() = 0;
-    
+
     /* Closes the window */
     virtual void Close() = 0;
-    
+
     /* Restores the window after being minimized or maximized */
     virtual void Restore() = 0;
 
@@ -116,13 +116,13 @@ public:
 
     /* Sets the title */
     virtual void SetTitle( const std::string& Title ) = 0;
-    
+
     /* Retrieve the window title */
     virtual void GetTitle( std::string& OutTitle ) = 0;
 
     /* Set the shape of the window */
     virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) = 0;
-    
+
     /* Retrieve the shape of the window */
     virtual void GetWindowShape( SWindowShape& OutWindowShape ) const = 0;
 
@@ -145,7 +145,8 @@ public:
     }
 
 protected:
-    CGenericWindow()  = default;
+
+    CGenericWindow() = default;
     ~CGenericWindow() = default;
 
     SWindowStyle Style;

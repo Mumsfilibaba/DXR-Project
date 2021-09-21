@@ -13,7 +13,8 @@ class CMacApplication;
     CMacApplication* Application;
 }
 
-- (id) init:(CMacApplication*) InApplication;
+- (id)init : (CMacApplication*)InApplication;
+
 @end
 
 #else

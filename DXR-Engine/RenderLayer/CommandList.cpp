@@ -26,10 +26,10 @@ void CommandListExecutor::ExecuteCommandLists( CommandList* const* CmdLists, uin
 
 void CommandListExecutor::WaitForGPU()
 {
-	if ( CmdContext )
-	{
-		CmdContext->Flush();
-	}
+    if ( CmdContext )
+    {
+        CmdContext->Flush();
+    }
 }
 
 void CommandListExecutor::InternalExecuteCommandList( CommandList& CmdList )

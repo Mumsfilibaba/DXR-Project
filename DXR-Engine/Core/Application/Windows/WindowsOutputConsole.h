@@ -27,7 +27,7 @@ public:
     virtual void SetColor( EConsoleColor Color )      override final;
 
 private:
-    
+
     CWindowsOutputConsole();
     ~CWindowsOutputConsole();
 

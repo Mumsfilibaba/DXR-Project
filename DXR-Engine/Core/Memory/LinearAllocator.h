@@ -6,16 +6,16 @@
 
 struct MemoryArena
 {
-	MemoryArena( const MemoryArena& Other ) = delete;
-	MemoryArena& operator=( const MemoryArena& Other ) = delete;
+    MemoryArena( const MemoryArena& Other ) = delete;
+    MemoryArena& operator=( const MemoryArena& Other ) = delete;
 
-	MemoryArena()
-		: Mem( nullptr )
-		, Offset( 0 )
-		, SizeInBytes( 0 )
-	{
-	}
-	
+    MemoryArena()
+        : Mem( nullptr )
+        , Offset( 0 )
+        , SizeInBytes( 0 )
+    {
+    }
+
     MemoryArena( uint64 InSizeInBytes )
         : Mem( nullptr )
         , Offset( 0 )
@@ -92,10 +92,10 @@ struct MemoryArena
 template<>
 struct TIsReallocatable<MemoryArena>
 {
-	enum
-	{
-		Value = true
-	};
+    enum
+    {
+        Value = true
+    };
 };
 
 class LinearAllocator

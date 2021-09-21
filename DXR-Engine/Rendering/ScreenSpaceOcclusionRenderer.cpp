@@ -63,8 +63,8 @@ bool ScreenSpaceOcclusionRenderer::Init( FrameResources& FrameResources )
     TArray<CVector3> SSAOKernel;
     for ( uint32 i = 0; i < 512 && SSAOKernel.Size() < 64; i++ )
     {
-		CVector3 Sample = CVector3( RandomFloats( Generator ) * 2.0f - 1.0f, RandomFloats( Generator ) * 2.0f - 1.0f, RandomFloats( Generator ) );
-		Sample.Normalize();
+        CVector3 Sample = CVector3( RandomFloats( Generator ) * 2.0f - 1.0f, RandomFloats( Generator ) * 2.0f - 1.0f, RandomFloats( Generator ) );
+        Sample.Normalize();
 
         float Dot = Sample.DotProduct( Normal );
         if ( NMath::Abs( Dot ) > 0.95f )
@@ -72,12 +72,12 @@ bool ScreenSpaceOcclusionRenderer::Init( FrameResources& FrameResources )
             continue;
         }
 
-		Sample *= RandomFloats( Generator );
+        Sample *= RandomFloats( Generator );
 
         float Scale = float( i ) / 64.0f;
         Scale = NMath::Lerp( 0.1f, 1.0f, Scale * Scale );
-		Sample *= Scale;
-		
+        Sample *= Scale;
+
         SSAOKernel.Emplace( Sample );
     }
 
@@ -239,19 +239,19 @@ void ScreenSpaceOcclusionRenderer::Render( CommandList& CmdList, FrameResources&
     struct SSAOSettings
     {
         CVector2 ScreenSize;
-		CVector2 NoiseSize;
+        CVector2 NoiseSize;
         float    Radius;
         float    Bias;
         int32    KernelSize;
     } SSAOSettings;
 
-    const uint32 Width      = FrameResources.SSAOBuffer->GetWidth();
-    const uint32 Height     = FrameResources.SSAOBuffer->GetHeight();
+    const uint32 Width = FrameResources.SSAOBuffer->GetWidth();
+    const uint32 Height = FrameResources.SSAOBuffer->GetHeight();
     SSAOSettings.ScreenSize = CVector2( float( Width ), float( Height ) );
-    SSAOSettings.NoiseSize  = CVector2( 4.0f, 4.0f );
-    SSAOSettings.Radius     = GSSAORadius.GetFloat();
+    SSAOSettings.NoiseSize = CVector2( 4.0f, 4.0f );
+    SSAOSettings.Radius = GSSAORadius.GetFloat();
     SSAOSettings.KernelSize = GSSAOKernelSize.GetInt();
-    SSAOSettings.Bias       = GSSAOBias.GetFloat();
+    SSAOSettings.Bias = GSSAOBias.GetFloat();
 
     CmdList.SetConstantBuffer( SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0 );
 

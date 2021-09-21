@@ -12,8 +12,8 @@ public:
 
     // See: https://docs.microsoft.com/en-us/cpp/intrinsics/interlockedexchangeadd-intrinsic-functions?view=msvc-160
     //      https://docs.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-interlockedincrement16
-    
-    static_assert(sizeof(int32) == sizeof(long) && alignof(int32) == alignof(long), "int32 must have the same size and alignment as long");
+
+    static_assert(sizeof( int32 ) == sizeof( long ) && alignof(int32) == alignof(long), "int32 must have the same size and alignment as long");
 
     /* InterlockedAdd: Adds value and return original value of Dest */
 
@@ -21,7 +21,7 @@ public:
     {
         return static_cast<int8>(::_InterlockedExchangeAdd8( static_cast<volatile char*>(Dest), static_cast<char>(Value) ));
     }
-    
+
     static FORCEINLINE int16 InterlockedAdd( volatile int16* Dest, int16 Value )
     {
         return static_cast<int16>(::_InterlockedExchangeAdd16( static_cast<volatile short*>(Dest), static_cast<short>(Value) ));
@@ -41,7 +41,7 @@ public:
 
     static FORCEINLINE int8 InterlockedSub( volatile int8* Dest, int8 Value )
     {
-        return static_cast<int8>(::_InterlockedExchangeAdd8(static_cast<volatile char*>(Dest), -static_cast<char>(Value)));
+        return static_cast<int8>(::_InterlockedExchangeAdd8( static_cast<volatile char*>(Dest), -static_cast<char>(Value) ));
     }
 
     static FORCEINLINE int16 InterlockedSub( volatile int16* Dest, int16 Value )
@@ -63,7 +63,7 @@ public:
 
     static FORCEINLINE int8 InterlockedAnd( volatile int8* Dest, int8 Value )
     {
-        return static_cast<int8>(::_InterlockedAnd8(static_cast<volatile char*>(Dest), static_cast<char>(Value)));
+        return static_cast<int8>(::_InterlockedAnd8( static_cast<volatile char*>(Dest), static_cast<char>(Value) ));
     }
 
     static FORCEINLINE int16 InterlockedAnd( volatile int16* Dest, int16 Value )

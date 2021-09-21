@@ -24,15 +24,15 @@ bool RenderLayer::Init( ERenderLayerApi InRenderApi )
 
         GShaderCompiler = Compiler;
     }
-	else
-#elif defined(PLATFORM_MACOS)
-	if ( InRenderApi == ERenderLayerApi::Unknown )
-	{
-		LOG_WARNING( "[RenderLayer::Init] No RenderAPI available for MacOS" );
-		return true;
-	}
-	else
-#endif
+    else
+    #elif defined(PLATFORM_MACOS)
+    if ( InRenderApi == ERenderLayerApi::Unknown )
+    {
+        LOG_WARNING( "[RenderLayer::Init] No RenderAPI available for MacOS" );
+        return true;
+    }
+    else
+    #endif
     {
         LOG_ERROR( "[RenderLayer::Init] Invalid RenderLayer enum" );
 

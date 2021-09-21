@@ -319,7 +319,7 @@ public:
     FORCEINLINE TUniquePtr& operator=( TUniquePtr&& RHS ) noexcept
     {
         TUniquePtr( Move( RHS ) ).Swap( *this );
-		return *this;
+        return *this;
     }
 
     /* Move-assign from another, with another type */

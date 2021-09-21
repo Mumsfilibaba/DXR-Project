@@ -9,10 +9,10 @@ class CMacApplication;
 
 @interface CCocoaAppDelegate : NSObject<NSApplicationDelegate>
 {
-	CMacApplication* Application;
+    CMacApplication* Application;
 }
 
-- (id) init:(CMacApplication*) InApplication;
+- (id)init : (CMacApplication*)InApplication;
 
 @end
 

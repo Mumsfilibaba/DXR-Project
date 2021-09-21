@@ -31,10 +31,10 @@ public:
 
     /* Maximizes the window */
     virtual void Maximize() override final;
-    
+
     /* Closes the window */
     virtual void Close() override final;
-    
+
     /* Restores the window after being minimized or maximized */
     virtual void Restore() override final;
 
@@ -43,22 +43,22 @@ public:
 
     /* Checks if the underlaying native handle of the window is valid */
     virtual bool IsValid() const override final
-	{
-		return (Window != nullptr);
-	}
+    {
+        return (Window != nullptr);
+    }
 
     /* Checks if this window is the currently active window */
     virtual bool IsActiveWindow() const override final;
 
     /* Sets the title */
     virtual void SetTitle( const std::string& Title ) override final;
-    
+
     /* Retrieve the window title */
     virtual void GetTitle( std::string& OutTitle ) override final;
 
     /* Set the shape of the window */
     virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) override final;
-    
+
     /* Retrieve the shape of the window */
     virtual void GetWindowShape( SWindowShape& OutWindowShape ) const override final;
 
@@ -75,9 +75,9 @@ public:
     }
 
 private:
-	CMacApplication*   Application = nullptr;
-    CCocoaWindow*      Window      = nullptr;
-    CCocoaContentView* View        = nullptr;
+    CMacApplication* Application = nullptr;
+    CCocoaWindow* Window = nullptr;
+    CCocoaContentView* View = nullptr;
 };
 
 #endif

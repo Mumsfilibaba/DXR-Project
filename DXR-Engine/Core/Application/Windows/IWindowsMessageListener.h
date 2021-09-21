@@ -7,7 +7,7 @@ class IWindowsMessageListener
 {
 public:
 
-	/*
+    /*
     * Handles messages sent from the application's messageproc
     * See https://docs.microsoft.com/en-us/windows/win32/learnwin32/writing-the-window-procedure
     */

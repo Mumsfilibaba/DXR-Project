@@ -49,15 +49,15 @@ inline const char* ToString( EComparisonFunc ComparisonFunc )
 {
     switch ( ComparisonFunc )
     {
-        case EComparisonFunc::Never:        return "Never";
-        case EComparisonFunc::Less:         return "Less";
-        case EComparisonFunc::Equal:        return "Equal";
-        case EComparisonFunc::LessEqual:    return "LessEqual";
-        case EComparisonFunc::Greater:      return "Greater";
-        case EComparisonFunc::NotEqual:     return "NotEqual";
-        case EComparisonFunc::GreaterEqual: return "GreaterEqual";
-        case EComparisonFunc::Always:       return "Always";
-        default: return "Unknown";
+    case EComparisonFunc::Never:        return "Never";
+    case EComparisonFunc::Less:         return "Less";
+    case EComparisonFunc::Equal:        return "Equal";
+    case EComparisonFunc::LessEqual:    return "LessEqual";
+    case EComparisonFunc::Greater:      return "Greater";
+    case EComparisonFunc::NotEqual:     return "NotEqual";
+    case EComparisonFunc::GreaterEqual: return "GreaterEqual";
+    case EComparisonFunc::Always:       return "Always";
+    default: return "Unknown";
     }
 }
 
@@ -74,12 +74,12 @@ inline const char* ToString( EPrimitiveTopologyType PrimitveTopologyType )
 {
     switch ( PrimitveTopologyType )
     {
-        case EPrimitiveTopologyType::Undefined: return "Undefined";
-        case EPrimitiveTopologyType::Point:     return "Point";
-        case EPrimitiveTopologyType::Line:      return "Line";
-        case EPrimitiveTopologyType::Triangle:  return "Triangle";
-        case EPrimitiveTopologyType::Patch:     return "Patch";
-        default: return "Unknown";
+    case EPrimitiveTopologyType::Undefined: return "Undefined";
+    case EPrimitiveTopologyType::Point:     return "Point";
+    case EPrimitiveTopologyType::Line:      return "Line";
+    case EPrimitiveTopologyType::Triangle:  return "Triangle";
+    case EPrimitiveTopologyType::Patch:     return "Patch";
+    default: return "Unknown";
     }
 }
 
@@ -108,23 +108,23 @@ inline const char* ToString( EResourceState ResourceState )
 {
     switch ( ResourceState )
     {
-        case EResourceState::Common:                          return "Common";
-        case EResourceState::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
-        case EResourceState::IndexBuffer:                     return "IndexBuffer";
-        case EResourceState::RenderTarget:                    return "RenderTarget";
-        case EResourceState::UnorderedAccess:                 return "UnorderedAccess";
-        case EResourceState::DepthWrite:                      return "DepthWrite";
-        case EResourceState::DepthRead:                       return "DepthRead";
-        case EResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
-        case EResourceState::PixelShaderResource:             return "PixelShaderResource";
-        case EResourceState::CopyDest:                        return "CopyDest";
-        case EResourceState::CopySource:                      return "CopySource";
-        case EResourceState::ResolveDest:                     return "ResolveDest";
-        case EResourceState::ResolveSource:                   return "ResolveSource";
-        case EResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
-        case EResourceState::ShadingRateSource:               return "ShadingRateSource";
-        case EResourceState::Present:                         return "Present";
-        default: return "Unknown";
+    case EResourceState::Common:                          return "Common";
+    case EResourceState::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
+    case EResourceState::IndexBuffer:                     return "IndexBuffer";
+    case EResourceState::RenderTarget:                    return "RenderTarget";
+    case EResourceState::UnorderedAccess:                 return "UnorderedAccess";
+    case EResourceState::DepthWrite:                      return "DepthWrite";
+    case EResourceState::DepthRead:                       return "DepthRead";
+    case EResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
+    case EResourceState::PixelShaderResource:             return "PixelShaderResource";
+    case EResourceState::CopyDest:                        return "CopyDest";
+    case EResourceState::CopySource:                      return "CopySource";
+    case EResourceState::ResolveDest:                     return "ResolveDest";
+    case EResourceState::ResolveSource:                   return "ResolveSource";
+    case EResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
+    case EResourceState::ShadingRateSource:               return "ShadingRateSource";
+    case EResourceState::Present:                         return "Present";
+    default: return "Unknown";
     }
 }
 
@@ -142,13 +142,13 @@ inline const char* ToString( EPrimitiveTopology ResourceState )
 {
     switch ( ResourceState )
     {
-        case EPrimitiveTopology::Undefined:     return "Undefined";
-        case EPrimitiveTopology::PointList:     return "PointList";
-        case EPrimitiveTopology::LineList:      return "LineList";
-        case EPrimitiveTopology::LineStrip:     return "LineStrip";
-        case EPrimitiveTopology::TriangleList:  return "TriangleList";
-        case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
-        default: return "Unknown";
+    case EPrimitiveTopology::Undefined:     return "Undefined";
+    case EPrimitiveTopology::PointList:     return "PointList";
+    case EPrimitiveTopology::LineList:      return "LineList";
+    case EPrimitiveTopology::LineStrip:     return "LineStrip";
+    case EPrimitiveTopology::TriangleList:  return "TriangleList";
+    case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
+    default: return "Unknown";
     }
 }
 
@@ -167,14 +167,14 @@ inline const char* ToString( EShadingRate ShadingRate )
 {
     switch ( ShadingRate )
     {
-        case EShadingRate::VRS_1x1: return "VRS_1x1";
-        case EShadingRate::VRS_1x2: return "VRS_1x2";
-        case EShadingRate::VRS_2x1: return "VRS_2x1";
-        case EShadingRate::VRS_2x2: return "VRS_2x2";
-        case EShadingRate::VRS_2x4: return "VRS_2x4";
-        case EShadingRate::VRS_4x2: return "VRS_4x2";
-        case EShadingRate::VRS_4x4: return "VRS_4x4";
-        default: return "Unknown";
+    case EShadingRate::VRS_1x1: return "VRS_1x1";
+    case EShadingRate::VRS_1x2: return "VRS_1x2";
+    case EShadingRate::VRS_2x1: return "VRS_2x1";
+    case EShadingRate::VRS_2x2: return "VRS_2x2";
+    case EShadingRate::VRS_2x4: return "VRS_2x4";
+    case EShadingRate::VRS_4x2: return "VRS_4x2";
+    case EShadingRate::VRS_4x4: return "VRS_4x4";
+    default: return "Unknown";
     }
 }
 
@@ -336,9 +336,9 @@ struct ResourceData
 
     void Set( const void* InData, EFormat InFormat, uint32 InWidth )
     {
-        Data  = InData;
+        Data = InData;
         Format = InFormat;
-        Width  = InWidth;
+        Width = InWidth;
     }
 
     void Set( const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight )
@@ -356,12 +356,12 @@ struct ResourceData
     {
         return SizeInBytes;
     }
-	
+
     uint32 GetPitch() const
     {
         return GetByteStrideFromFormat( Format ) * Width;
     }
-	
+
     uint32 GetSlicePitch() const
     {
         return GetByteStrideFromFormat( Format ) * Width * Height;

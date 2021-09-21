@@ -16,7 +16,7 @@ public:
 
     template<typename... ArgTypes>
     FORCEINLINE Lockable( ArgTypes&&... Args ) noexcept
-        : LockableItem( Forward<ArgTypes>(Args)... )
+        : LockableItem( Forward<ArgTypes>( Args )... )
         , ItemLock()
     {
     }
@@ -78,12 +78,12 @@ public:
         return &LockableItem;
     }
 
-    FORCEINLINE operator ElementType&() noexcept
+    FORCEINLINE operator ElementType& () noexcept
     {
         return Get();
     }
 
-    FORCEINLINE operator const ElementType&() const noexcept
+    FORCEINLINE operator const ElementType& () const noexcept
     {
         return Get();
     }

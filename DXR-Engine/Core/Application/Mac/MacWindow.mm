@@ -8,7 +8,7 @@
 
 CMacWindow::CMacWindow( CMacApplication* InApplication )
     : CGenericWindow()
-	, Application( InApplication )
+    , Application( InApplication )
     , Window(nullptr)
     , View(nullptr)
 {
@@ -97,27 +97,27 @@ void CMacWindow::Show( bool Maximized )
 {
    //MacMainThread::MakeCall(^
    //{
-	   [Window makeKeyAndOrderFront:Window];
-	
-		if ( Maximized )
-		{
-			[Window zoom:Window];
-		}
-	
-		PlatformApplicationMisc::PumpMessages( true );
+       [Window makeKeyAndOrderFront:Window];
+    
+        if ( Maximized )
+        {
+            [Window zoom:Window];
+        }
+    
+        PlatformApplicationMisc::PumpMessages( true );
    //}, true);
 }
 
 void CMacWindow::Close()
 {
-	if (Style.IsClosable())
+    if (Style.IsClosable())
     {
-	   //MacMainThread::MakeCall(^
-	   //{
-		   [Window performClose:Window];
-	   //}, true);
-		
-		PlatformApplicationMisc::PumpMessages( true );
+       //MacMainThread::MakeCall(^
+       //{
+           [Window performClose:Window];
+       //}, true);
+        
+        PlatformApplicationMisc::PumpMessages( true );
    }
 }
 
@@ -125,12 +125,12 @@ void CMacWindow::Minimize()
 {
    if (Style.IsMinimizable())
    {
-	   //MacMainThread::MakeCall(^
-	   //{
-		   [Window miniaturize:Window];
-	   //}, true);
-	   
-	   PlatformApplicationMisc::PumpMessages( true );
+       //MacMainThread::MakeCall(^
+       //{
+           [Window miniaturize:Window];
+       //}, true);
+       
+       PlatformApplicationMisc::PumpMessages( true );
    }
 }
 
@@ -138,17 +138,17 @@ void CMacWindow::Maximize()
 {
    if (Style.IsMaximizable())
    {
-	   //MacMainThread::MakeCall(^
-	   //{
-		   if ([Window isMiniaturized])
-		   {
-			   [Window deminiaturize:Window];
-		   }
-		   
-		   [Window zoom:Window];
-	   
-	   PlatformApplicationMisc::PumpMessages( true );
-	   //}, true);
+       //MacMainThread::MakeCall(^
+       //{
+           if ([Window isMiniaturized])
+           {
+               [Window deminiaturize:Window];
+           }
+           
+           [Window zoom:Window];
+       
+       PlatformApplicationMisc::PumpMessages( true );
+       //}, true);
    }
 }
 
@@ -162,17 +162,17 @@ void CMacWindow::Restore()
 {
    //MacMainThread::MakeCall(^
    //{
-	   if ([Window isMiniaturized])
-	   {
-		   [Window deminiaturize:Window];
-	   }
-	   
-	   if ([Window isZoomed])
-	   {
-		   [Window zoom:Window];
-	   }
-	
-	PlatformApplicationMisc::PumpMessages( true );
+       if ([Window isMiniaturized])
+       {
+           [Window deminiaturize:Window];
+       }
+       
+       if ([Window isZoomed])
+       {
+           [Window zoom:Window];
+       }
+    
+    PlatformApplicationMisc::PumpMessages( true );
    //}, true);
 }
 
@@ -180,10 +180,10 @@ void CMacWindow::ToggleFullscreen()
 {
    if (Style.IsResizeable())
    {
-	   //MacMainThread::MakeCall(^
-	   //{
-		   [Window toggleFullScreen:Window];
-	   //, true);
+       //MacMainThread::MakeCall(^
+       //{
+           [Window toggleFullScreen:Window];
+       //, true);
    }
 }
 
@@ -194,53 +194,53 @@ void CMacWindow::SetTitle( const std::string& InTitle )
    NSString* Title = [NSString stringWithUTF8String:InTitle.c_str()];
    if (Style.IsTitled())
    {
-	   //MacMainThread::MakeCall(^
-	   //{
-		   [Window setTitle:Title];
-	   //}, true);
+       //MacMainThread::MakeCall(^
+       //{
+           [Window setTitle:Title];
+       //}, true);
    }
 }
 
 void CMacWindow::GetTitle( std::string& OutTitle )
 {
-	if (Style.IsTitled())
-	{
-		NSString* Title = [Window title];
-		NSInteger Length = [Title length];
-		OutTitle.resize(Length);
-		
-		const char* UTF8Title = [Title UTF8String];
-		Memory::Memcpy(OutTitle.data(), UTF8Title, sizeof(char) * Length);
-	}
+    if (Style.IsTitled())
+    {
+        NSString* Title = [Window title];
+        NSInteger Length = [Title length];
+        OutTitle.resize(Length);
+        
+        const char* UTF8Title = [Title UTF8String];
+        Memory::Memcpy(OutTitle.data(), UTF8Title, sizeof(char) * Length);
+    }
 }
 
 void CMacWindow::SetWindowShape( const SWindowShape& Shape, bool Move )
 {
-	NSRect Frame = [Window frame];
-	if (Style.IsResizeable())
-	{
-		Frame.size.width  = Shape.Width;
-		Frame.size.height = Shape.Height;
-		[Window setFrame: Frame display: YES animate: YES];
-	}
-	
-	if (Move)
-	{
-		// TODO: Make sure this is correct
-		[Window setFrameOrigin:NSMakePoint(Shape.Position.x, Shape.Position.y - Frame.size.height + 1)];
-	}
-	
-	PlatformApplicationMisc::PumpMessages( true );
+    NSRect Frame = [Window frame];
+    if (Style.IsResizeable())
+    {
+        Frame.size.width  = Shape.Width;
+        Frame.size.height = Shape.Height;
+        [Window setFrame: Frame display: YES animate: YES];
+    }
+    
+    if (Move)
+    {
+        // TODO: Make sure this is correct
+        [Window setFrameOrigin:NSMakePoint(Shape.Position.x, Shape.Position.y - Frame.size.height + 1)];
+    }
+    
+    PlatformApplicationMisc::PumpMessages( true );
 }
 
 void CMacWindow::GetWindowShape( SWindowShape& OutWindowShape ) const
 {
-	NSRect Frame       = [Window frame];
-	NSRect ContentRect = [Window contentRectForFrameRect:[Window frame]];
-	OutWindowShape.Width      = ContentRect.size.width;
-	OutWindowShape.Height     = ContentRect.size.height;
-	OutWindowShape.Position.x = Frame.origin.x;
-	OutWindowShape.Position.y = Frame.origin.y;
+    NSRect Frame       = [Window frame];
+    NSRect ContentRect = [Window contentRectForFrameRect:[Window frame]];
+    OutWindowShape.Width      = ContentRect.size.width;
+    OutWindowShape.Height     = ContentRect.size.height;
+    OutWindowShape.Position.x = Frame.origin.x;
+    OutWindowShape.Position.y = Frame.origin.y;
 }
 
 uint32 CMacWindow::GetWidth() const
@@ -250,7 +250,7 @@ uint32 CMacWindow::GetWidth() const
    /*__block*/ NSRect ContentRect;
    //MacMainThread::MakeCall(^
    //{
-	ContentRect = [Window contentRectForFrameRect:[Window frame]];
+    ContentRect = [Window contentRectForFrameRect:[Window frame]];
    //}, true);
    
    return uint32(ContentRect.size.width);
@@ -263,7 +263,7 @@ uint32 CMacWindow::GetHeight() const
    /*__block*/ NSRect ContentRect;
    //MacMainThread::MakeCall(^
    //{
-	ContentRect = [Window contentRectForFrameRect:[Window frame]];
+    ContentRect = [Window contentRectForFrameRect:[Window frame]];
    //}, true);
    
    return uint32(ContentRect.size.height);

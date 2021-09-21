@@ -21,7 +21,7 @@ CMacOutputConsole::CMacOutputConsole()
     Assert(Window != nullptr);
 
     // TODO: Pump events here
-	PlatformApplicationMisc::PumpMessages( true );
+    PlatformApplicationMisc::PumpMessages( true );
 }
 
 CMacOutputConsole::~CMacOutputConsole()
@@ -31,7 +31,7 @@ CMacOutputConsole::~CMacOutputConsole()
         // TODO: Ensure mainthread
         SCOPED_AUTORELEASE_POOL();
         
-		PlatformApplicationMisc::PumpMessages( true );
+        PlatformApplicationMisc::PumpMessages( true );
         
         [Window release];
         Window = nullptr;
@@ -42,31 +42,31 @@ void CMacOutputConsole::Print(const std::string& Message )
 {
     if (Window)
     {
-		//TODO: Make sure this is the mainthread
-		SCOPED_AUTORELEASE_POOL();
+        //TODO: Make sure this is the mainthread
+        SCOPED_AUTORELEASE_POOL();
 
-		NSString* String = [NSString stringWithUTF8String:Message.c_str()];
+        NSString* String = [NSString stringWithUTF8String:Message.c_str()];
 
         [Window appendStringAndScroll:String];
         
-		PlatformApplicationMisc::PumpMessages( true );
+        PlatformApplicationMisc::PumpMessages( true );
     }
 }
 
 void CMacOutputConsole::PrintLine(const std::string& Message )
 {
-	if (Window)
-	{
-		//TODO: Make sure this is the mainthread
-		SCOPED_AUTORELEASE_POOL();
+    if (Window)
+    {
+        //TODO: Make sure this is the mainthread
+        SCOPED_AUTORELEASE_POOL();
 
-		NSString* String      = [NSString stringWithUTF8String:Message.c_str()];
-		NSString* FinalString = [String stringByAppendingString:@"\n"];
-		
-		[Window appendStringAndScroll:FinalString];
-		
-		PlatformApplicationMisc::PumpMessages( true );
-	}
+        NSString* String      = [NSString stringWithUTF8String:Message.c_str()];
+        NSString* FinalString = [String stringByAppendingString:@"\n"];
+        
+        [Window appendStringAndScroll:FinalString];
+        
+        PlatformApplicationMisc::PumpMessages( true );
+    }
 }
 
 void CMacOutputConsole::Clear()
@@ -79,7 +79,7 @@ void CMacOutputConsole::Clear()
 
 void CMacOutputConsole::ClearLastLine()
 {
-	//TODO: Implement
+    //TODO: Implement
 }
 
 void CMacOutputConsole::SetTitle(const std::string& InTitle)

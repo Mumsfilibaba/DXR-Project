@@ -1,38 +1,43 @@
 #pragma once
-#include "Core.h"
+#include "Core/Application/ICursor.h"
 
-#include "Core/RefCounted.h"
-#include "Core/Containers/SharedRef.h"
-
-#ifdef COMPILER_MSVC
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-#endif
-
-class CGenericWindow;
-
-class GenericCursor : public CRefCounted
+class CGenericCursor : public ICursor
 {
 public:
-    virtual ~GenericCursor() = default;
 
-    virtual void* GetNativeHandle() const
+    /* Retrieve the mouse visibility */
+    virtual bool IsVisible() const override final
     {
-        return nullptr;
+        return IsCursorVisible;
     }
 
-public:
-    static TSharedRef<GenericCursor> Arrow;
-    static TSharedRef<GenericCursor> TextInput;
-    static TSharedRef<GenericCursor> ResizeAll;
-    static TSharedRef<GenericCursor> ResizeEW;
-    static TSharedRef<GenericCursor> ResizeNS;
-    static TSharedRef<GenericCursor> ResizeNESW;
-    static TSharedRef<GenericCursor> ResizeNWSE;
-    static TSharedRef<GenericCursor> Hand;
-    static TSharedRef<GenericCursor> NotAllowed;
-};
+    /* Check if the current button state is pressed */
+    virtual bool IsButtonDown( EMouseButton Button ) const override final
+    {
+        return ButtonState[Button];
+    }
 
-#ifdef COMPILER_MSVC
-#pragma warning(pop)
-#endif
+    /* Check if the current button state is released */
+    virtual bool IsButtonUp( EMouseButton Button ) const override final
+    {
+        return !ButtonState[Button];
+    }
+
+protected:
+
+    CGenericCursor()
+        : ICursor()
+        , ButtonState()
+        , IsCursorVisible( true )
+    {
+        Memory::Memzero( ButtonState.Data(), ButtonState.SizeInBytes() );
+    }
+
+    ~CGenericCursor() = default;
+
+    /* The state of the mouse-buttons */
+    TStaticArray<bool, EMouseButton::MouseButton_Count> ButtonState;
+
+    /* Checks if the mouse is visible or not */
+    bool IsCursorVisible;
+};

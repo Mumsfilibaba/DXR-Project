@@ -9,23 +9,23 @@
 
 @interface CCocoaConsoleWindow : NSWindow<NSWindowDelegate>
 {
-    NSTextView*   TextView;
+    NSTextView* TextView;
     NSScrollView* ScrollView;
     NSDictionary* ConsoleColor;
 }
 
 // Instance
-- (id) init:(CGFloat) Width Height:(CGFloat) Height;
+- (id)init:(CGFloat)Width Height : (CGFloat)Height;
 
-- (void) appendStringAndScroll:(NSString*) String;
-- (void) clearWindow;
+-(void)appendStringAndScroll:(NSString*)String;
+-(void)clearWindow;
 
-- (void) setColor:(EConsoleColor) Color;
+-(void)setColor:(EConsoleColor)Color;
 
-- (NSUInteger) getLineCount;
+-(NSUInteger)getLineCount;
 
 // Static
-+ (NSString*) convertStringWithArgs:(const char*) Format Args:(va_list) Args;
++(NSString*)convertStringWithArgs:(const char*)Format Args : (va_list)Args;
 
 @end
 

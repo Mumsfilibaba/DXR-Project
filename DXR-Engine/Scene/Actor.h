@@ -164,7 +164,7 @@ public:
     }
 
 private:
-    Scene*             Scene = nullptr;
+    Scene* Scene = nullptr;
     Transform          Transform;
     TArray<Component*> Components;
     std::string        Name;

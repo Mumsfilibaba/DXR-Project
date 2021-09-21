@@ -23,7 +23,7 @@
 
 - (void) dealloc
 {
-	[super dealloc];
+    [super dealloc];
 }
 
 - (BOOL) canBecomeKeyWindow
@@ -48,101 +48,101 @@
 
 - (void) windowWillClose:(NSNotification* ) InNotification
 {
-	SNotification Notification;
-	Notification.Notification = InNotification;
-	Notification.Window       = self;
-	
-	Application->HandleNotification( Notification );
+    SNotification Notification;
+    Notification.Notification = InNotification;
+    Notification.Window       = self;
+    
+    Application->HandleNotification( Notification );
 }
 
 - (void) windowDidResize:(NSNotification* ) InNotification
 {
-	SNotification Notification;
-	Notification.Notification = InNotification;
-	Notification.Window       = self;
-	
-	const NSRect contentRect = [[self contentView] frame];
-	Notification.Size = contentRect.size;
-	
-	Application->HandleNotification( Notification );
+    SNotification Notification;
+    Notification.Notification = InNotification;
+    Notification.Window       = self;
+    
+    const NSRect contentRect = [[self contentView] frame];
+    Notification.Size = contentRect.size;
+    
+    Application->HandleNotification( Notification );
 }
 
 - (void) windowDidMove:(NSNotification* ) InNotification
 {
-	SNotification Notification;
-	Notification.Notification = InNotification;
-	Notification.Window       = self;
-	
-	const NSRect contentRect = [self contentRectForFrameRect:[self frame]];
-	Notification.Position = contentRect.origin;
-	
-	Application->HandleNotification( Notification );
+    SNotification Notification;
+    Notification.Notification = InNotification;
+    Notification.Window       = self;
+    
+    const NSRect contentRect = [self contentRectForFrameRect:[self frame]];
+    Notification.Position = contentRect.origin;
+    
+    Application->HandleNotification( Notification );
 }
 
 - (void) windowDidMiniaturize:(NSNotification*) InNotification
 {
-	SNotification Notification;
-	Notification.Notification = InNotification;
-	Notification.Window       = self;
-	
-	const NSRect contentRect = [self contentRectForFrameRect:[self frame]];
-	Notification.Size = contentRect.size;
-	
-	Application->HandleNotification( Notification );
+    SNotification Notification;
+    Notification.Notification = InNotification;
+    Notification.Window       = self;
+    
+    const NSRect contentRect = [self contentRectForFrameRect:[self frame]];
+    Notification.Size = contentRect.size;
+    
+    Application->HandleNotification( Notification );
 }
 
 - (void) windowDidDeminiaturize:(NSNotification*) InNotification
 {
-	SNotification Notification;
-	Notification.Notification = InNotification;
-	Notification.Window       = self;
-	
-	const NSRect contentRect = [[self contentView] frame];
-	Notification.Size = contentRect.size;
-	
-	Application->HandleNotification( Notification );
+    SNotification Notification;
+    Notification.Notification = InNotification;
+    Notification.Window       = self;
+    
+    const NSRect contentRect = [[self contentView] frame];
+    Notification.Size = contentRect.size;
+    
+    Application->HandleNotification( Notification );
 }
 
 - (void) windowDidEnterFullScreen:(NSNotification*) InNotification
 {
-	SNotification Notification;
-	Notification.Notification = InNotification;
-	Notification.Window       = self;
-	
-	const NSRect contentRect = [[self contentView] frame];
-	Notification.Size = contentRect.size;
-	
-	Application->HandleNotification( Notification );
+    SNotification Notification;
+    Notification.Notification = InNotification;
+    Notification.Window       = self;
+    
+    const NSRect contentRect = [[self contentView] frame];
+    Notification.Size = contentRect.size;
+    
+    Application->HandleNotification( Notification );
 }
 
 - (void) windowDidExitFullScreen:(NSNotification*) InNotification
 {
-	SNotification Notification;
-	Notification.Notification = InNotification;
-	Notification.Window       = self;
-	
-	const NSRect contentRect = [[self contentView] frame];
-	Notification.Size = contentRect.size;
-	
-	Application->HandleNotification( Notification );
+    SNotification Notification;
+    Notification.Notification = InNotification;
+    Notification.Window       = self;
+    
+    const NSRect contentRect = [[self contentView] frame];
+    Notification.Size = contentRect.size;
+    
+    Application->HandleNotification( Notification );
 }
 
 - (void) windowDidBecomeKey:(NSNotification*) InNotification
 {
-	SNotification Notification;
-	Notification.Notification = InNotification;
-	Notification.Window       = self;
-	
-	Application->HandleNotification( Notification );
+    SNotification Notification;
+    Notification.Notification = InNotification;
+    Notification.Window       = self;
+    
+    Application->HandleNotification( Notification );
 }
 
 - (void) windowDidResignKey:(NSNotification*) InNotification
 {
-	SNotification Notification;
-	Notification.Notification = InNotification;
-	Notification.Window       = self;
-	
-	Application->HandleNotification( Notification );
+    SNotification Notification;
+    Notification.Notification = InNotification;
+    Notification.Window       = self;
+    
+    Application->HandleNotification( Notification );
 }
 
 @end

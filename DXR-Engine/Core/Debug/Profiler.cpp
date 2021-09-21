@@ -268,7 +268,7 @@ static float ImGui_GetMaxLimit( float Num )
 
 static void DrawFPS()
 {
-	const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
+    const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
 
     ImGui::PushStyleVar( ImGuiStyleVar_WindowMinSize, ImVec2( 5.0f, 5.0f ) );
     ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 2.0f, 1.0f ) );
@@ -571,8 +571,8 @@ static void DrawGPUProfileData( float Width )
 static void DrawProfiler()
 {
     // Draw DebugWindow with DebugStrings
-	const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
-	const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
+    const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
+    const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
     const float Width = NMath::Max( WindowWidth * 0.6f, 400.0f );
     const float Height = WindowHeight * 0.75f;
 
@@ -711,7 +711,7 @@ void Profiler::Reset()
     }
 
     {
-		TScopedLock Lock( GProfilerData.GPUSamples );
+        TScopedLock Lock( GProfilerData.GPUSamples );
         for ( auto& Sample : GProfilerData.GPUSamples.Get() )
         {
             Sample.second.Reset();

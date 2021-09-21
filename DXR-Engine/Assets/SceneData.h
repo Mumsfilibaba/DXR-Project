@@ -105,9 +105,9 @@ struct SSceneData
     TArray<SMaterialData> Materials;
 
     void AddToScene( class Scene* Scene );
-	
-	FORCEINLINE bool HasData() const
-	{
-		return !Models.IsEmpty() && !Materials.IsEmpty();
-	}
+
+    FORCEINLINE bool HasData() const
+    {
+        return !Models.IsEmpty() && !Materials.IsEmpty();
+    }
 };

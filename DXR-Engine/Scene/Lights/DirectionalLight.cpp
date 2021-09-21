@@ -9,7 +9,7 @@ DirectionalLight::DirectionalLight()
     , Direction( 0.0f, -1.0f, 0.0f )
     , Rotation( 0.0f, 0.0f, 0.0f )
     , LookAt( 0.0f, 0.0f, 0.0f )
-	, Position( 0.0f, 0.0f, 0.0f )
+    , Position( 0.0f, 0.0f, 0.0f )
     , Matrices()
 {
     CORE_OBJECT_INIT();
@@ -81,8 +81,8 @@ void DirectionalLight::UpdateCascades( Camera& Camera )
     {
         2048.0f, 2048.0f, 2048.0f, 4096.0f
     };
-	
-	UNREFERENCED_VARIABLE(CascadeSizes);
+
+    UNREFERENCED_VARIABLE( CascadeSizes );
 
     float LastSplitDist = 0.0f;
     for ( uint32 i = 0; i < 4; i++ )

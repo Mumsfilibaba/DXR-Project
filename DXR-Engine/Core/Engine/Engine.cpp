@@ -12,7 +12,7 @@ TSharedPtr<Engine> GEngine;
 
 bool Engine::Init( class CGenericApplication* InApplication )
 {
-	Application = InApplication;
+    Application = InApplication;
 
     const uint32 Style =
         WindowStyleFlag_Titled |
@@ -20,9 +20,9 @@ bool Engine::Init( class CGenericApplication* InApplication )
         WindowStyleFlag_Minimizable |
         WindowStyleFlag_Maximizable |
         WindowStyleFlag_Resizeable;
-	
-	MainWindow = Application->MakeWindow();
-    if ( MainWindow && MainWindow->Init( "DXR Engine", 1920, 1080, Style ))
+
+    MainWindow = Application->MakeWindow();
+    if ( MainWindow && MainWindow->Init( "DXR Engine", 1920, 1080, Style ) )
     {
         MainWindow->Show( false );
 
@@ -44,14 +44,14 @@ bool Engine::Init( class CGenericApplication* InApplication )
 
 bool Engine::Release()
 {
-	Application->SetMessageListener( nullptr );
-	Application->Release();
+    Application->SetMessageListener( nullptr );
+    Application->Release();
     return true;
 }
 
 void Engine::Exit()
 {
-	PlatformApplicationMisc::RequestExit( 0 );
+    PlatformApplicationMisc::RequestExit( 0 );
     IsRunning = false;
 }
 

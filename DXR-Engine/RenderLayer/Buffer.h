@@ -12,9 +12,9 @@ inline const char* ToString( EIndexFormat IndexFormat )
 {
     switch ( IndexFormat )
     {
-        case EIndexFormat::uint16: return "uint16";
-        case EIndexFormat::uint32: return "uint32";
-        default: return "Unknown";
+    case EIndexFormat::uint16: return "uint16";
+    case EIndexFormat::uint32: return "uint32";
+    default: return "Unknown";
     }
 }
 
@@ -73,17 +73,17 @@ public:
     {
         return nullptr;
     }
-    
-	virtual class IndexBuffer* AsIndexBuffer()
+
+    virtual class IndexBuffer* AsIndexBuffer()
     {
         return nullptr;
     }
-    
-	virtual class ConstantBuffer* AsConstantBuffer()
+
+    virtual class ConstantBuffer* AsConstantBuffer()
     {
         return nullptr;
     }
-	
+
     virtual class StructuredBuffer* AsStructuredBuffer()
     {
         return nullptr;
@@ -101,13 +101,13 @@ public:
     {
         return (Flags & BufferFlag_Upload);
     }
-    
-	bool IsUAV() const
+
+    bool IsUAV() const
     {
         return (Flags & BufferFlag_UAV);
     }
-    
-	bool IsSRV() const
+
+    bool IsSRV() const
     {
         return (Flags & BufferFlag_SRV);
     }
@@ -121,7 +121,7 @@ class VertexBuffer : public Buffer
 public:
     VertexBuffer( uint32 InNumVertices, uint32 InStride, uint32 InFlags )
         : Buffer( InFlags )
-		, NumVertices( InNumVertices )
+        , NumVertices( InNumVertices )
         , Stride( InStride )
     {
     }

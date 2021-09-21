@@ -99,8 +99,8 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
 
     TArray<ofbx::u8> FileContent( FileSize );
     uint32 SizeInBytes = FileContent.SizeInBytes();
-	UNREFERENCED_VARIABLE(SizeInBytes);
-	
+    UNREFERENCED_VARIABLE( SizeInBytes );
+
     ofbx::u8* Bytes = FileContent.Data();
 
     const uint32 ChunkSize = 1024;

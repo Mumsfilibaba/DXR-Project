@@ -17,12 +17,12 @@ public:
         /* Flags */
         struct
         {
-            uint8 IsCtrlDown     : 1;
-            uint8 IsAltDown      : 1;
-            uint8 IsShiftDown    : 1;
+            uint8 IsCtrlDown : 1;
+            uint8 IsAltDown : 1;
+            uint8 IsShiftDown : 1;
             uint8 IsCapsLockDown : 1;
             uint8 IsSuperKeyDown : 1;
-            uint8 IsNumPadDown   : 1;
+            uint8 IsNumPadDown : 1;
         };
 
         /* Mask */

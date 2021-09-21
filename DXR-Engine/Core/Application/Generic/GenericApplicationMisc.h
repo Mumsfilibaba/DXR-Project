@@ -23,7 +23,7 @@
 class CGenericApplicationMisc
 {
 public:
-    
+
     /* Takes the title of the messagebox and the message to be displayed */
     static FORCEINLINE void MessageBox( const std::string& Title, const std::string& Message )
     {

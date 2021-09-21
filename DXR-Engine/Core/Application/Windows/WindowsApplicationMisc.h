@@ -12,7 +12,7 @@
 class CWindowsApplicationMisc : public CGenericApplicationMisc
 {
 public:
-    
+
     /* Shows a message box with desired title and message */
     static FORCEINLINE void MessageBox( const std::string& Title, const std::string& Message )
     {
@@ -26,9 +26,10 @@ public:
     }
 
     /* Pumps the application's message queue */
-    static FORCEINLINE void PumpMessages( bool UntilEmpty )
-    {
-    }
+    static void PumpMessages( bool UntilEmpty );
+
+    /* Retrieves the current modifier key- state */
+    static SModifierKeyState GetModifierKeyState();
 };
 
 #endif

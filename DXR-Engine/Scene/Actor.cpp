@@ -12,7 +12,7 @@ Component::Component( Actor* InOwningActor )
 Actor::Actor()
     : CoreObject()
     , Transform()
-	, Components()
+    , Components()
 {
     CORE_OBJECT_INIT();
 }

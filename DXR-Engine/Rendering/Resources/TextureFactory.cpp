@@ -25,13 +25,13 @@ static TextureFactoryData GlobalFactoryData;
 
 bool TextureFactory::Init()
 {
-	// TODO: Have a null layer to avoid these checks
-	if (!GRenderLayer)
-	{
-		LOG_WARNING(" No RenderAPI available TextureFactory not initialized ");
-		return true;
-	}
-	
+    // TODO: Have a null layer to avoid these checks
+    if ( !GRenderLayer )
+    {
+        LOG_WARNING( " No RenderAPI available TextureFactory not initialized " );
+        return true;
+    }
+
     // Compile and create shader
     TArray<uint8> Code;
     if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/CubeMapGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
@@ -66,13 +66,13 @@ void TextureFactory::Release()
 
 Texture2D* TextureFactory::LoadFromFile( const std::string& Filepath, uint32 CreateFlags, EFormat Format )
 {
-	// TODO: Have a null layer to avoid these checks
-	if (!GRenderLayer)
-	{
-		LOG_WARNING(" No RenderAPI available TextureFactory not initialized. Failed to load '" + Filepath + "'.");
-		return nullptr;
-	}
-	
+    // TODO: Have a null layer to avoid these checks
+    if ( !GRenderLayer )
+    {
+        LOG_WARNING( " No RenderAPI available TextureFactory not initialized. Failed to load '" + Filepath + "'." );
+        return nullptr;
+    }
+
     int32 Width = 0;
     int32 Height = 0;
     int32 ChannelCount = 0;
@@ -113,13 +113,13 @@ Texture2D* TextureFactory::LoadFromFile( const std::string& Filepath, uint32 Cre
 
 Texture2D* TextureFactory::LoadFromMemory( const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format )
 {
-	// TODO: Have a null layer to avoid these checks
-	if (!GRenderLayer)
-	{
-		LOG_WARNING(" No RenderAPI available TextureFactory not initialized ");
-		return nullptr;
-	}
-	
+    // TODO: Have a null layer to avoid these checks
+    if ( !GRenderLayer )
+    {
+        LOG_WARNING( " No RenderAPI available TextureFactory not initialized " );
+        return nullptr;
+    }
+
     if ( Format != EFormat::R8_Unorm && Format != EFormat::R8G8B8A8_Unorm && Format != EFormat::R32G32B32A32_Float )
     {
         LOG_ERROR( "[TextureFactory]: Format not supported" );

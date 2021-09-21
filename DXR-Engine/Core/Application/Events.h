@@ -16,7 +16,7 @@ struct KeyPressedEvent
 
     EKey Key;
     bool IsRepeat;
-	SModifierKeyState Modifiers;
+    SModifierKeyState Modifiers;
 };
 
 struct KeyReleasedEvent
@@ -28,7 +28,7 @@ struct KeyReleasedEvent
     }
 
     EKey              Key;
-	SModifierKeyState Modifiers;
+    SModifierKeyState Modifiers;
 };
 
 struct KeyTypedEvent

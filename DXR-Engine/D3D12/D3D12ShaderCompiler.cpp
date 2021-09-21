@@ -39,147 +39,147 @@ static LPCWSTR GetTargetProfile( EShaderStage Stage, EShaderModel Model )
 {
     switch ( Stage )
     {
-        case EShaderStage::Compute:
+    case EShaderStage::Compute:
+    {
+        switch ( Model )
         {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"cs_5_0";
-                case EShaderModel::SM_5_1: return L"cs_5_1";
-                case EShaderModel::SM_6_0: return L"cs_6_0";
-                case EShaderModel::SM_6_1: return L"cs_6_1";
-                case EShaderModel::SM_6_2: return L"cs_6_2";
-                case EShaderModel::SM_6_3: return L"cs_6_3";
-                case EShaderModel::SM_6_4: return L"cs_6_4";
-                case EShaderModel::SM_6_5: return L"cs_6_5";
-                default: break;
-            }
+        case EShaderModel::SM_5_0: return L"cs_5_0";
+        case EShaderModel::SM_5_1: return L"cs_5_1";
+        case EShaderModel::SM_6_0: return L"cs_6_0";
+        case EShaderModel::SM_6_1: return L"cs_6_1";
+        case EShaderModel::SM_6_2: return L"cs_6_2";
+        case EShaderModel::SM_6_3: return L"cs_6_3";
+        case EShaderModel::SM_6_4: return L"cs_6_4";
+        case EShaderModel::SM_6_5: return L"cs_6_5";
+        default: break;
         }
+    }
 
-        case EShaderStage::Vertex:
+    case EShaderStage::Vertex:
+    {
+        switch ( Model )
         {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"vs_5_0";
-                case EShaderModel::SM_5_1: return L"vs_5_1";
-                case EShaderModel::SM_6_0: return L"vs_6_0";
-                case EShaderModel::SM_6_1: return L"vs_6_1";
-                case EShaderModel::SM_6_2: return L"vs_6_2";
-                case EShaderModel::SM_6_3: return L"vs_6_3";
-                case EShaderModel::SM_6_4: return L"vs_6_4";
-                case EShaderModel::SM_6_5: return L"vs_6_5";
-                default: break;
-            }
+        case EShaderModel::SM_5_0: return L"vs_5_0";
+        case EShaderModel::SM_5_1: return L"vs_5_1";
+        case EShaderModel::SM_6_0: return L"vs_6_0";
+        case EShaderModel::SM_6_1: return L"vs_6_1";
+        case EShaderModel::SM_6_2: return L"vs_6_2";
+        case EShaderModel::SM_6_3: return L"vs_6_3";
+        case EShaderModel::SM_6_4: return L"vs_6_4";
+        case EShaderModel::SM_6_5: return L"vs_6_5";
+        default: break;
         }
+    }
 
-        case EShaderStage::Hull:
+    case EShaderStage::Hull:
+    {
+        switch ( Model )
         {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"hs_5_0";
-                case EShaderModel::SM_5_1: return L"hs_5_1";
-                case EShaderModel::SM_6_0: return L"hs_6_0";
-                case EShaderModel::SM_6_1: return L"hs_6_1";
-                case EShaderModel::SM_6_2: return L"hs_6_2";
-                case EShaderModel::SM_6_3: return L"hs_6_3";
-                case EShaderModel::SM_6_4: return L"hs_6_4";
-                case EShaderModel::SM_6_5: return L"hs_6_5";
-                default: break;
-            }
+        case EShaderModel::SM_5_0: return L"hs_5_0";
+        case EShaderModel::SM_5_1: return L"hs_5_1";
+        case EShaderModel::SM_6_0: return L"hs_6_0";
+        case EShaderModel::SM_6_1: return L"hs_6_1";
+        case EShaderModel::SM_6_2: return L"hs_6_2";
+        case EShaderModel::SM_6_3: return L"hs_6_3";
+        case EShaderModel::SM_6_4: return L"hs_6_4";
+        case EShaderModel::SM_6_5: return L"hs_6_5";
+        default: break;
         }
+    }
 
-        case EShaderStage::Domain:
+    case EShaderStage::Domain:
+    {
+        switch ( Model )
         {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"ds_5_0";
-                case EShaderModel::SM_5_1: return L"ds_5_1";
-                case EShaderModel::SM_6_0: return L"ds_6_0";
-                case EShaderModel::SM_6_1: return L"ds_6_1";
-                case EShaderModel::SM_6_2: return L"ds_6_2";
-                case EShaderModel::SM_6_3: return L"ds_6_3";
-                case EShaderModel::SM_6_4: return L"ds_6_4";
-                case EShaderModel::SM_6_5: return L"ds_6_5";
-                default: break;
-            }
+        case EShaderModel::SM_5_0: return L"ds_5_0";
+        case EShaderModel::SM_5_1: return L"ds_5_1";
+        case EShaderModel::SM_6_0: return L"ds_6_0";
+        case EShaderModel::SM_6_1: return L"ds_6_1";
+        case EShaderModel::SM_6_2: return L"ds_6_2";
+        case EShaderModel::SM_6_3: return L"ds_6_3";
+        case EShaderModel::SM_6_4: return L"ds_6_4";
+        case EShaderModel::SM_6_5: return L"ds_6_5";
+        default: break;
         }
+    }
 
-        case EShaderStage::Geometry:
+    case EShaderStage::Geometry:
+    {
+        switch ( Model )
         {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"gs_5_0";
-                case EShaderModel::SM_5_1: return L"gs_5_1";
-                case EShaderModel::SM_6_0: return L"gs_6_0";
-                case EShaderModel::SM_6_1: return L"gs_6_1";
-                case EShaderModel::SM_6_2: return L"gs_6_2";
-                case EShaderModel::SM_6_3: return L"gs_6_3";
-                case EShaderModel::SM_6_4: return L"gs_6_4";
-                case EShaderModel::SM_6_5: return L"gs_6_5";
-                default: break;
-            }
+        case EShaderModel::SM_5_0: return L"gs_5_0";
+        case EShaderModel::SM_5_1: return L"gs_5_1";
+        case EShaderModel::SM_6_0: return L"gs_6_0";
+        case EShaderModel::SM_6_1: return L"gs_6_1";
+        case EShaderModel::SM_6_2: return L"gs_6_2";
+        case EShaderModel::SM_6_3: return L"gs_6_3";
+        case EShaderModel::SM_6_4: return L"gs_6_4";
+        case EShaderModel::SM_6_5: return L"gs_6_5";
+        default: break;
         }
+    }
 
-        case EShaderStage::Pixel:
+    case EShaderStage::Pixel:
+    {
+        switch ( Model )
         {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"ps_5_0";
-                case EShaderModel::SM_5_1: return L"ps_5_1";
-                case EShaderModel::SM_6_0: return L"ps_6_0";
-                case EShaderModel::SM_6_1: return L"ps_6_1";
-                case EShaderModel::SM_6_2: return L"ps_6_2";
-                case EShaderModel::SM_6_3: return L"ps_6_3";
-                case EShaderModel::SM_6_4: return L"ps_6_4";
-                case EShaderModel::SM_6_5: return L"ps_6_5";
-                default: break;
-            }
+        case EShaderModel::SM_5_0: return L"ps_5_0";
+        case EShaderModel::SM_5_1: return L"ps_5_1";
+        case EShaderModel::SM_6_0: return L"ps_6_0";
+        case EShaderModel::SM_6_1: return L"ps_6_1";
+        case EShaderModel::SM_6_2: return L"ps_6_2";
+        case EShaderModel::SM_6_3: return L"ps_6_3";
+        case EShaderModel::SM_6_4: return L"ps_6_4";
+        case EShaderModel::SM_6_5: return L"ps_6_5";
+        default: break;
         }
+    }
 
-        case EShaderStage::Mesh:
+    case EShaderStage::Mesh:
+    {
+        switch ( Model )
         {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"ms_5_0";
-                case EShaderModel::SM_5_1: return L"ms_5_1";
-                case EShaderModel::SM_6_0: return L"ms_6_0";
-                case EShaderModel::SM_6_1: return L"ms_6_1";
-                case EShaderModel::SM_6_2: return L"ms_6_2";
-                case EShaderModel::SM_6_3: return L"ms_6_3";
-                case EShaderModel::SM_6_4: return L"ms_6_4";
-                case EShaderModel::SM_6_5: return L"ms_6_5";
-                default: break;
-            }
+        case EShaderModel::SM_5_0: return L"ms_5_0";
+        case EShaderModel::SM_5_1: return L"ms_5_1";
+        case EShaderModel::SM_6_0: return L"ms_6_0";
+        case EShaderModel::SM_6_1: return L"ms_6_1";
+        case EShaderModel::SM_6_2: return L"ms_6_2";
+        case EShaderModel::SM_6_3: return L"ms_6_3";
+        case EShaderModel::SM_6_4: return L"ms_6_4";
+        case EShaderModel::SM_6_5: return L"ms_6_5";
+        default: break;
         }
+    }
 
-        case EShaderStage::Amplification:
+    case EShaderStage::Amplification:
+    {
+        switch ( Model )
         {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"as_5_0";
-                case EShaderModel::SM_5_1: return L"as_5_1";
-                case EShaderModel::SM_6_0: return L"as_6_0";
-                case EShaderModel::SM_6_1: return L"as_6_1";
-                case EShaderModel::SM_6_2: return L"as_6_2";
-                case EShaderModel::SM_6_3: return L"as_6_3";
-                case EShaderModel::SM_6_4: return L"as_6_4";
-                case EShaderModel::SM_6_5: return L"as_6_5";
-                default: break;
-            }
+        case EShaderModel::SM_5_0: return L"as_5_0";
+        case EShaderModel::SM_5_1: return L"as_5_1";
+        case EShaderModel::SM_6_0: return L"as_6_0";
+        case EShaderModel::SM_6_1: return L"as_6_1";
+        case EShaderModel::SM_6_2: return L"as_6_2";
+        case EShaderModel::SM_6_3: return L"as_6_3";
+        case EShaderModel::SM_6_4: return L"as_6_4";
+        case EShaderModel::SM_6_5: return L"as_6_5";
+        default: break;
         }
+    }
 
-        case EShaderStage::RayGen:
-        case EShaderStage::RayAnyHit:
-        case EShaderStage::RayClosestHit:
-        case EShaderStage::RayMiss:
+    case EShaderStage::RayGen:
+    case EShaderStage::RayAnyHit:
+    case EShaderStage::RayClosestHit:
+    case EShaderStage::RayMiss:
+    {
+        switch ( Model )
         {
-            switch ( Model )
-            {
-                case EShaderModel::SM_6_3: return L"lib_6_3";
-                case EShaderModel::SM_6_4: return L"lib_6_4";
-                case EShaderModel::SM_6_5: return L"lib_6_5";
-                default: break;
-            }
+        case EShaderModel::SM_6_3: return L"lib_6_3";
+        case EShaderModel::SM_6_4: return L"lib_6_4";
+        case EShaderModel::SM_6_5: return L"lib_6_5";
+        default: break;
         }
+    }
     }
 
     return L"Unknown";

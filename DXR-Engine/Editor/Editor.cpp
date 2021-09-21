@@ -141,8 +141,8 @@ static void DrawSideWindow()
 {
     DebugUI::DrawUI( []
     {
-		const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
-		const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
+        const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
+        const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
         const float Width = NMath::Max( WindowWidth * 0.3f, 400.0f );
         const float Height = WindowHeight * 0.7f;
 
@@ -188,8 +188,8 @@ static void DrawRenderSettings()
 {
     ImGui::BeginChild( "RendererInfo" );
 
-	SWindowShape WindowShape;
-	GEngine->MainWindow->GetWindowShape( WindowShape );
+    SWindowShape WindowShape;
+    GEngine->MainWindow->GetWindowShape( WindowShape );
 
     ImGui::Spacing();
     ImGui::Text( "Renderer Info" );
@@ -373,8 +373,8 @@ static void DrawSceneInfo()
     ImGui::Text( "Current Scene" );
     ImGui::Separator();
 
-	SWindowShape WindowShape;
-	GEngine->MainWindow->GetWindowShape( WindowShape );
+    SWindowShape WindowShape;
+    GEngine->MainWindow->GetWindowShape( WindowShape );
 
     // Actors
     if ( ImGui::TreeNode( "Actors" ) )
@@ -398,9 +398,9 @@ static void DrawSceneInfo()
                     // Rotation
                     CVector3 Rotation = Actor->GetTransform().GetRotation();
                     Rotation = CVector3(
-						NMath::ToDegrees( Rotation.x ),
-						NMath::ToDegrees( Rotation.y ),
-						NMath::ToDegrees( Rotation.z ) );
+                        NMath::ToDegrees( Rotation.x ),
+                        NMath::ToDegrees( Rotation.y ),
+                        NMath::ToDegrees( Rotation.z ) );
 
                     DrawFloat3Control( "Rotation", Rotation, 0.0f, 100.0f, 1.0f );
 

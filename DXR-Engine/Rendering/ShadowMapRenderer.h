@@ -81,9 +81,9 @@ private:
     TSharedRef<ComputePipelineState>  CascadeGen;
     TSharedRef<ComputeShader>         CascadeGenShader;
 
-    bool UpdateDirLight    = true;
-    bool UpdatePointLight  = true;
+    bool UpdateDirLight = true;
+    bool UpdatePointLight = true;
 
-    uint64 DirLightFrame   = 0;
+    uint64 DirLightFrame = 0;
     uint64 PointLightFrame = 0;
 };

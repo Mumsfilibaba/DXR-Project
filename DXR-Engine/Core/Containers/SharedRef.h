@@ -101,9 +101,9 @@ public:
     FORCEINLINE void AddRef() noexcept
     {
         if ( Ptr )
-		{
-			Ptr->AddRef();
-		}
+        {
+            Ptr->AddRef();
+        }
     }
 
     /* Retrieve the rawpointer */

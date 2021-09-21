@@ -26,7 +26,7 @@ public:
 
     // TODO: Enable memberfunctions and lambdas
     static GenericThread* Create( ThreadFunction )
-	{
-		return nullptr;
-	}
+    {
+        return nullptr;
+    }
 };

@@ -7,13 +7,13 @@
 
 - (id) init:(CMacApplication*) InApplication
 {
-	self = [super init];
-	if (self)
-	{
-		Application = InApplication;
-	}
-	
-	return self;
+    self = [super init];
+    if (self)
+    {
+        Application = InApplication;
+    }
+    
+    return self;
 }
 
 - (BOOL) canBecomeKeyView
@@ -56,67 +56,67 @@
 {
     // Interpret key Event and make sure we get a KeyTyped Event
     [self interpretKeyEvents:[NSArray arrayWithObject: Event]];
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) keyUp:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) mouseDown:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) mouseDragged:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) mouseUp:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) mouseMoved:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) rightMouseDown:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) rightMouseDragged:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) rightMouseUp:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) otherMouseDown:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) otherMouseDragged:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) otherMouseUp:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) scrollWheel:(NSEvent*) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) insertText:(id) String replacementRange:(NSRange) ReplacementRange
@@ -128,14 +128,14 @@
     if ([String isKindOfClass:[NSAttributedString class]])
     {
         NSAttributedString* AttributedString = (NSAttributedString*)String;
-		Characters = [AttributedString string];
+        Characters = [AttributedString string];
     }
     else
     {
-		Characters = (NSString*)String;
+        Characters = (NSString*)String;
     }
     
-	Application->HandleKeyTypedEvent( Characters );
+    Application->HandleKeyTypedEvent( Characters );
 }
 
 /* Necessary methods for NSTextInputClient */
@@ -185,7 +185,7 @@
 
 - (void) mouseExited:(NSEvent* ) Event
 {
-	Application->HandleEvent(Event);
+    Application->HandleEvent(Event);
 }
 
 - (void) mouseEntered:(NSEvent* )Event

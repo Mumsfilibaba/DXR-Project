@@ -19,11 +19,11 @@ bool ShadowMapRenderer::Init( LightSetup& LightSetup, FrameResources& FrameResou
     {
         return false;
     }
-	
-	UNREFERENCED_VARIABLE(UpdateDirLight);
-	UNREFERENCED_VARIABLE(DirLightFrame);
-	UNREFERENCED_VARIABLE(PointLightFrame);
-	
+
+    UNREFERENCED_VARIABLE( UpdateDirLight );
+    UNREFERENCED_VARIABLE( DirLightFrame );
+    UNREFERENCED_VARIABLE( PointLightFrame );
+
     TArray<uint8> ShaderCode;
 
     // Point Shadow Maps

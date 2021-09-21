@@ -3,33 +3,37 @@
 #if defined(PLATFORM_WINDOWS)
 #include "Core/Application/Generic/GenericCursor.h"
 
-#include "Windows.h"
-
-class CGenericWindow;
-
-class WindowsCursor : public GenericCursor
+class CWindowsCursor : public CGenericCursor
 {
+    friend class CWindowsApplication;
+
 public:
-    WindowsCursor();
-    ~WindowsCursor();
 
-    bool Init( LPCSTR InCursorName );
+    /* Sets the type of cursor that is being used */
+    virtual void SetCursor( ECursor Cursor ) override final;
 
-    virtual void* GetNativeHandle() const override final
-    {
-        return reinterpret_cast<void*>(Cursor);
-    }
+    /* Sets the position of the cursor */
+    virtual void SetCursorPosition( CGenericWindow* RelativeWindow, int32 x, int32 y ) const override final;
 
-    HCURSOR GetHandle() const
-    {
-        return Cursor;
-    }
+    /* Retrieve the cursor position of a window */
+    virtual void GetCursorPosition( CGenericWindow* RelativeWindow, int32& OutX, int32& OutY ) const override final;
 
-    static GenericCursor* Create( LPCSTR CursorName );
+    /* Show or hide the mouse */
+    virtual void SetVisibility( bool IsVisible ) override final;
 
 private:
-    HCURSOR Cursor;
-    LPCSTR  CursorName;
+
+    FORCEINLINE CWindowsCursor()
+        : CGenericCursor()
+    {
+    }
+
+    ~CWindowsCursor() = default;
+
+    FORCEINLINE void RegisterButtonState( EMouseButton Button, bool State )
+    {
+        ButtonState[Button] = State;
+    }
 };
 
 #endif

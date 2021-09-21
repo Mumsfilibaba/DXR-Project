@@ -13,7 +13,7 @@ class CWindowsDebugMisc : public CGenericDebugMisc
 {
 public:
 
-     /* If the debugger is attached, a breakpoint will be set at this point of the code */
+    /* If the debugger is attached, a breakpoint will be set at this point of the code */
     static FORCEINLINE void DebugBreak()
     {
         __debugbreak();

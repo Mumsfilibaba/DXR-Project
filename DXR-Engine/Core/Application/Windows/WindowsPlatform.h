@@ -28,21 +28,6 @@ public:
     static CGenericWindow* GetCapture();
     static CGenericWindow* GetActiveWindow();
 
-    static void SetCursor( GenericCursor* Cursor );
-    static GenericCursor* GetCursor();
-
-    static void SetCursorPos( CGenericWindow* RelativeWindow, int32 x, int32 y );
-    static void GetCursorPos( CGenericWindow* RelativeWindow, int32& OutX, int32& OutY );
-
-    static LPCSTR GetWindowClassName()
-    {
-        return "WindowClass";
-    }
-    static HINSTANCE GetInstance()
-    {
-        return Instance;
-    }
-
 private:
     static bool InitCursors();
 

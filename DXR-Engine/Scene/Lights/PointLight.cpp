@@ -4,7 +4,7 @@
 
 PointLight::PointLight()
     : Light()
-	, Matrices()
+    , Matrices()
     , Position( 0.0f, 0.0f, 0.0f )
 {
     CORE_OBJECT_INIT();

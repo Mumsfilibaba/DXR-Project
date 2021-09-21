@@ -14,7 +14,7 @@
     if (self)
     {
         Application = InApplication;
-		Assert( Application != nullptr );
+        Assert( Application != nullptr );
     }
 
     return self;
@@ -22,9 +22,9 @@
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *) Sender
 {
-	// TODO: Maybe check some state before returning yes, but for now just terminate
-	PlatformDebugMisc::OutputDebugString("Should Terminate");
-	return NSTerminateNow;
+    // TODO: Maybe check some state before returning yes, but for now just terminate
+    PlatformDebugMisc::OutputDebugString("Should Terminate");
+    return NSTerminateNow;
 }
 
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication* ) Sender
@@ -35,11 +35,11 @@
 
 - (void) applicationWillTerminate:(NSNotification* ) InNotification
 {
-	SNotification Notification;
-	Notification.Notification = InNotification;
+    SNotification Notification;
+    Notification.Notification = InNotification;
     Application->HandleNotification(Notification);
-	
-	PlatformDebugMisc::OutputDebugString("Will Terminate");
+    
+    PlatformDebugMisc::OutputDebugString("Will Terminate");
 }
 
 @end

@@ -18,18 +18,18 @@ class CGenericConditionVariable
 {
 public:
 
-    CGenericConditionVariable()  = default;
+    CGenericConditionVariable() = default;
     ~CGenericConditionVariable() = default;
 
-	FORCEINLINE void NotifyOne() noexcept
+    FORCEINLINE void NotifyOne() noexcept
     {
     }
 
-	FORCEINLINE void NotifyAll() noexcept
+    FORCEINLINE void NotifyAll() noexcept
     {
     }
 
-	FORCEINLINE bool Wait( TScopedLock<CCriticalSection>& Lock ) noexcept
+    FORCEINLINE bool Wait( TScopedLock<CCriticalSection>& Lock ) noexcept
     {
         return false;
     }

@@ -16,7 +16,7 @@ TaskManager::TaskManager()
 
 TaskManager::~TaskManager()
 {
-	KillWorkers();
+    KillWorkers();
 }
 
 bool TaskManager::PopTask( Task& OutTask )
@@ -70,13 +70,13 @@ bool TaskManager::Init()
 {
     uint32 ThreadCount = NMath::Max<int32>( PlatformProcess::GetNumProcessors() - 1, 1 );
     WorkThreads.Resize( ThreadCount );
-	
-	if ( ThreadCount == 1 )
-	{
-		LOG_INFO( "[TaskManager]: No workers available, tasks will be executing on the main thread" );
-		WorkThreads.Clear();
-		return true;
-	}
+
+    if ( ThreadCount == 1 )
+    {
+        LOG_INFO( "[TaskManager]: No workers available, tasks will be executing on the main thread" );
+        WorkThreads.Clear();
+        return true;
+    }
 
     LOG_INFO( "[TaskManager]: Starting '" + std::to_string( ThreadCount ) + "' Workers" );
 
@@ -103,17 +103,17 @@ bool TaskManager::Init()
 
 TaskID TaskManager::AddTask( const Task& NewTask )
 {
-	if (WorkThreads.IsEmpty())
-	{
-		// Execute task on mainthread
-		Task MainThreadTask = NewTask;
-		MainThreadTask.Delegate.ExecuteIfBound();
-	
-		// Make sure that both fences is incremented
-		Instance.TaskCompleted++;
-		return TaskAdded.Increment();
-	}
-	
+    if ( WorkThreads.IsEmpty() )
+    {
+        // Execute task on mainthread
+        Task MainThreadTask = NewTask;
+        MainThreadTask.Delegate.ExecuteIfBound();
+
+        // Make sure that both fences is incremented
+        Instance.TaskCompleted++;
+        return TaskAdded.Increment();
+    }
+
     {
         TScopedLock<CCriticalSection> Lock( TaskMutex );
         Tasks.Emplace( NewTask );

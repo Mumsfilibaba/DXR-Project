@@ -13,14 +13,14 @@ void CMacApplicationMisc::MessageBox( const std::string& Title, const std::strin
     CFOptionFlags Result = 0;
     CFOptionFlags Flags  = kCFUserNotificationStopAlertLevel;
     CFUserNotificationDisplayAlert( 0, Flags, 0, 0, 0, CaptionRef, TextRef, 0, 0, 0, &Result );
-	
+    
     CFRelease( CaptionRef );
     CFRelease( TextRef );
 }
 
 void CMacApplicationMisc::RequestExit( int32 ExitCode )
 {
-	[NSApp terminate:nil];
+    [NSApp terminate:nil];
 }
 
 void CMacApplicationMisc::PumpMessages( bool UntilEmpty )

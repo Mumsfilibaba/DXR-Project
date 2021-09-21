@@ -30,11 +30,11 @@ public:
 
 private:
 
-	CMacOutputConsole();
+    CMacOutputConsole();
     ~CMacOutputConsole();
 
     /* Console window*/
-	CCocoaConsoleWindow* Window;
+    CCocoaConsoleWindow* Window;
 };
 
 #endif

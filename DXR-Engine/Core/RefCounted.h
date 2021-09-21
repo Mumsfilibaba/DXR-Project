@@ -7,7 +7,7 @@
 class CRefCounted
 {
 public:
-	
+
     CRefCounted();
     virtual ~CRefCounted();
 

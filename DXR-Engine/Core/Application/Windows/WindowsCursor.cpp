@@ -1,43 +1,111 @@
+#if defined(PLATFORM_WINDOWS)
 #include "WindowsCursor.h"
+#include "WindowsWindow.h"
+#include "Windows.h"
 
-GenericCursor* WindowsCursor::Create( LPCSTR CursorName )
+void CWindowsCursor::SetCursor( ECursor Cursor )
 {
-    TSharedRef<WindowsCursor> NewCursor = DBG_NEW WindowsCursor();
-    if ( !NewCursor->Init( CursorName ) )
+    LPSTR CursorName = NULL;
+    switch ( Cursor )
     {
-        return nullptr;
+    case ECursor::Arrow:
+        CursorName = IDC_ARROW;
+        break;
+    case ECursor::TextInput:
+        CursorName = IDC_IBEAM;
+        break;
+    case ECursor::ResizeAll:
+        CursorName = IDC_SIZEALL;
+        break;
+    case ECursor::ResizeEW:
+        CursorName = IDC_SIZEWE;
+        break;
+    case ECursor::ResizeNS:
+        CursorName = IDC_SIZENS;
+        break;
+    case ECursor::ResizeNESW:
+        CursorName = IDC_SIZENESW;
+        break;
+    case ECursor::ResizeNWSE:
+        CursorName = IDC_SIZENWSE;
+        break;
+    case ECursor::Hand:
+        CursorName = IDC_HAND;
+        break;
+    case ECursor::NotAllowed:
+        CursorName = IDC_NO;
+        break;
+    default:
+        CursorName = NULL;
+        break;
+    }
+
+    HCURSOR CursorHandle = ::LoadCursor( NULL, CursorName );
+    if ( CursorHandle )
+    {
+        ::SetCursor( CursorHandle );
+    }
+
+    // TODO: Log error
+}
+
+void CWindowsCursor::SetCursorPosition( CGenericWindow* RelativeWindow, int32 x, int32 y ) const
+{
+    POINT CursorPos = { x, y };
+    if ( RelativeWindow )
+    {
+        TSharedRef<CWindowsWindow> WinWindow = MakeSharedRef<CWindowsWindow>( RelativeWindow );
+
+        HWND hRelative = WinWindow->GetHandle();
+        if ( !ClientToScreen( hRelative, &CursorPos ) )
+        {
+            return;
+        }
+    }
+    
+    ::SetCursorPos( CursorPos.x, CursorPos.y );
+}
+
+void CWindowsCursor::GetCursorPosition( CGenericWindow* RelativeWindow, int32& OutX, int32& OutY ) const
+{
+    POINT CursorPos = { };
+    if ( !::GetCursorPos( &CursorPos ) )
+    {
+        return;
+    }
+
+    if ( RelativeWindow )
+    {
+        TSharedRef<CWindowsWindow> WinRelative = MakeSharedRef<CWindowsWindow>( RelativeWindow );
+        
+        HWND Relative = WinRelative->GetHandle();
+        if ( !ScreenToClient( Relative, &CursorPos ) )
+        {
+            return;
+        }
+    }
+
+    OutX = CursorPos.x;
+    OutY = CursorPos.y;
+}
+
+void CWindowsCursor::SetVisibility( bool Visible )
+{
+    // TODO: Investigate if we need to do more in order to keep track of the ShowCursor calls
+    if ( Visible )
+    {
+        if ( !IsCursorVisible )
+        {
+            ShowCursor( true );
+        }
     }
     else
     {
-        return NewCursor.ReleaseOwnership();
+        if ( IsCursorVisible )
+        {
+            ShowCursor( false );
+        }
     }
 }
 
-WindowsCursor::WindowsCursor()
-    : GenericCursor()
-    , Cursor( 0 )
-    , CursorName( nullptr )
-{
-}
-
-WindowsCursor::~WindowsCursor()
-{
-    if ( !CursorName )
-    {
-        DestroyCursor( Cursor );
-    }
-}
-
-bool WindowsCursor::Init( LPCSTR InCursorName )
-{
-    CursorName = InCursorName;
-    if ( CursorName )
-    {
-        Cursor = LoadCursor( 0, CursorName );
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
+#endif

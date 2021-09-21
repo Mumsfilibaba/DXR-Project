@@ -11,14 +11,14 @@ class CScopedAutoreleasePool
 {
 public:
     FORCEINLINE CScopedAutoreleasePool()
-        : Pool(nullptr)
+        : Pool( nullptr )
     {
-        Pool = [[NSAutoreleasePool alloc] init];
+        Pool = [[NSAutoreleasePool alloc]init];
     }
 
     FORCEINLINE ~CScopedAutoreleasePool()
     {
-        [Pool release];
+        [Pool release] ;
     }
 
 private:

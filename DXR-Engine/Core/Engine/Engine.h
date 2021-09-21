@@ -76,8 +76,8 @@ public:
 public:
     TSharedRef<CGenericWindow> MainWindow;
     TSharedRef<Viewport>       MainViewport;
-	
-	class CGenericApplication* Application = nullptr;
+
+    class CGenericApplication* Application = nullptr;
 
     bool IsRunning = false;
 };

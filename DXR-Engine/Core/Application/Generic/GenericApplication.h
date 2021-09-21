@@ -11,7 +11,7 @@
 /* Generic application interface */
 class CGenericApplication
 {
-public: 
+public:
 
     /* Creates the mac application */
     static FORCEINLINE CGenericApplication* Make()
@@ -39,14 +39,14 @@ public:
 
     /* Sets the window that currently has the keyboard focus */
     virtual void SetCapture( CGenericWindow* )
-	{
-	}
+    {
+    }
 
     /* Sets the window that is currently active */
     virtual void SetActiveWindow( CGenericWindow* Window ) = 0;
 
     /* Retrieves the window that currently has the keyboard focus, since macOS does not support keyboard focus, we return null as standard */
-    virtual CGenericWindow* GetCapture() const 
+    virtual CGenericWindow* GetCapture() const
     {
         return nullptr;
     }
@@ -67,8 +67,8 @@ public:
     }
 
 protected:
-    
-    CGenericApplication()  = default;
+
+    CGenericApplication() = default;
     ~CGenericApplication() = default;
 
     TSharedPtr<CGenericApplicationMessageListener> MessageListener;

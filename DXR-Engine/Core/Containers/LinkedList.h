@@ -11,9 +11,9 @@ struct TLinkedListNode
     }
 
     template<typename... ArgTypes>
-    FORCEINLINE TLinkedListNode(ArgTypes&&... Args) noexcept
+    FORCEINLINE TLinkedListNode( ArgTypes&&... Args ) noexcept
         : Next( nullptr )
-        , Item( Forward<ArgTypes>(Args)... )
+        , Item( Forward<ArgTypes>( Args )... )
     {
     }
 
@@ -32,9 +32,9 @@ struct TDoubleLinkedListNode
     }
 
     template<typename... ArgTypes>
-    FORCEINLINE TDoubleLinkedListNode(ArgTypes&&... Args) noexcept
+    FORCEINLINE TDoubleLinkedListNode( ArgTypes&&... Args ) noexcept
         : Next( nullptr )
-        , Item( Forward<ArgTypes>(Args)... )
+        , Item( Forward<ArgTypes>( Args )... )
     {
     }
 

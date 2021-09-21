@@ -8,12 +8,13 @@
 
 #include "WindowsWindow.h"
 #include "IWindowsMessageListener.h"
+#include "WindowsCursor.h"
+#include "WindowsKeyboard.h"
 
-class CWindowsCursor;
-
-struct SWindowsEvent
+/* Strict used to store messages between calls to PumpMessages and CWindowsApplication::Tick */
+struct SWindowsMessage
 {
-    SWindowsEvent( HWND InWindow, uint32 InMessage, WPARAM InwParam, LPARAM InlParam )
+    FORCEINLINE SWindowsMessage( HWND InWindow, uint32 InMessage, WPARAM InwParam, LPARAM InlParam )
         : Window( InWindow )
         , Message( InMessage )
         , wParam( InwParam )
@@ -27,17 +28,13 @@ struct SWindowsEvent
     LPARAM lParam;
 };
 
+/* Class representing an application on the windows- platform */
 class CWindowsApplication final : public CGenericApplication
 {
 public:
 
     /* Creates an instance of the WindowsApplication, also loads the icon */
-    static FORCEINLINE CWindowsApplication* Make()
-    {
-        HINSTANCE Instance = (HINSTANCE)GetModuleHandleA( 0 );
-        // TODO: Load icon here
-        return new CWindowsApplication( Instance );
-    }
+    static CWindowsApplication* Make();
 
     /* Creates a window */
     virtual CGenericWindow* MakeWindow() override final;
@@ -71,7 +68,7 @@ public:
 
     /* Add a native message listener */
     void AddWindowsMessageListener( IWindowsMessageListener* NewWindowsMessageListener );
-    
+
     /* Remove a native message listener */
     void RemoveWindowsMessageListener( IWindowsMessageListener* WindowsMessageListener );
 
@@ -97,9 +94,12 @@ private:
     /* Stores messages for handling in the future */
     void StoreMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
 
-    /* Static message proc sent into registerwindowclass */
-    static LRESULT MessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
-    
+    /* Message-proc which handles the messages for the instance */
+    LRESULT MessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
+
+    /* Static message-proc sent into registerwindowclass */
+    static LRESULT StaticMessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
+
     /* Handles stored messages in Tick */
     void HandleStoredMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
 
@@ -107,7 +107,7 @@ private:
     TArray<TSharedRef<CWindowsWindow>> Windows;
 
     /* buffered events, this is done since not all events are fired in the calls to PumpMessages */
-    TArray<SWindowsEvent> Messages;
+    TArray<SWindowsMessage> Messages;
 
     /* buffered events, this is done since not all events are fired in the calls to PumpMessages */
     TArray<IWindowsMessageListener*> WindowsMessageListeners;
@@ -125,7 +125,7 @@ private:
     HINSTANCE Instance;
 };
 
-/* Pointer to the windowsapplication */
+/* Pointer to the windowsapplication needed in the static */
 extern CWindowsApplication* GWindowsApplication;
 
 #endif

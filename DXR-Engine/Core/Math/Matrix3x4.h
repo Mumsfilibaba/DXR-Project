@@ -5,10 +5,10 @@
 class CMatrix3x4
 {
 public:
-    
-	/* Default constructor (Initialize components to zero) */
-	FORCEINLINE CMatrix3x4() noexcept;
-	
+
+    /* Default constructor (Initialize components to zero) */
+    FORCEINLINE CMatrix3x4() noexcept;
+
     /**
      * Constructor initializing all values with corresponding value
      *
@@ -47,9 +47,9 @@ public:
 };
 
 FORCEINLINE CMatrix3x4::CMatrix3x4() noexcept
-	: m00( 0.0f ), m01( 0.0f ), m02( 0.0f ), m03( 0.0f )
-	, m10( 0.0f ), m11( 0.0f ), m12( 0.0f ), m13( 0.0f )
-	, m20( 0.0f ), m21( 0.0f ), m22( 0.0f ), m23( 0.0f )
+    : m00( 0.0f ), m01( 0.0f ), m02( 0.0f ), m03( 0.0f )
+    , m10( 0.0f ), m11( 0.0f ), m12( 0.0f ), m13( 0.0f )
+    , m20( 0.0f ), m21( 0.0f ), m22( 0.0f ), m23( 0.0f )
 {
 }
 

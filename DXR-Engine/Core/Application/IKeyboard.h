@@ -5,11 +5,11 @@ class IKeyboard
 {
 public:
 
-    /* Check if the current keystate is pressed */
+    /* Check if the current key-state is pressed */
     virtual bool IsKeyDown( EKey KeyCode ) const = 0;
 
-    /* Check if the current keystate is released */
-    virtual bool IsKeyUp( EKey KeyCode ) const  = 0;
+    /* Check if the current key-state is released */
+    virtual bool IsKeyUp( EKey KeyCode ) const = 0;
 
 protected:
     ~IKeyboard() = default;
