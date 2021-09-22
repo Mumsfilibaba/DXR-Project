@@ -7,24 +7,24 @@
 
 struct SEngineMainGuard
 {
-	~SEngineMainGuard()
-	{
-		if ( !EngineLoop::Release() )
-		{
-			PlatformApplicationMisc::MessageBox( "ERROR", "EngineLoop::Release Failed" );
-		}
-	}
+    ~SEngineMainGuard()
+    {
+        if ( !EngineLoop::Release() )
+        {
+            PlatformApplicationMisc::MessageBox( "ERROR", "EngineLoop::Release Failed" );
+        }
+    }
 };
 
 // Main function for all implementations
 int32 EngineMain()
 {
-	// Make sure that the engine is released if the main function exits early
-	SEngineMainGuard EngineMainGuard;
-	
+    // Make sure that the engine is released if the main function exits early
+    SEngineMainGuard EngineMainGuard;
+    
     if ( !EngineLoop::Init() )
     {
-		PlatformApplicationMisc::MessageBox( "ERROR", "EngineLoop::Init Failed" );
+        PlatformApplicationMisc::MessageBox( "ERROR", "EngineLoop::Init Failed" );
         return -1;
     }
 

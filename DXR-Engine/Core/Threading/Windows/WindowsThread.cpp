@@ -4,9 +4,9 @@
 
 #include <condition_variable>
 
-GenericThread* WindowsThread::Create( ThreadFunction Func )
+CGenericThread* CWindowsThread::Make( ThreadFunction Func )
 {
-    TSharedRef<WindowsThread> NewThread = DBG_NEW WindowsThread();
+    TSharedRef<CWindowsThread> NewThread = DBG_NEW CWindowsThread();
     if ( !NewThread->Init( Func ) )
     {
         return nullptr;
@@ -17,14 +17,14 @@ GenericThread* WindowsThread::Create( ThreadFunction Func )
     }
 }
 
-WindowsThread::WindowsThread()
-    : GenericThread()
+CWindowsThread::CWindowsThread()
+    : CGenericThread()
     , Thread( 0 )
     , hThreadID( 0 )
 {
 }
 
-WindowsThread::~WindowsThread()
+CWindowsThread::~CWindowsThread()
 {
     if ( Thread )
     {
@@ -32,14 +32,14 @@ WindowsThread::~WindowsThread()
     }
 }
 
-bool WindowsThread::Init( ThreadFunction InFunc )
+bool CWindowsThread::Init( ThreadFunction InFunc )
 {
     Func = InFunc;
 
-    Thread = CreateThread( NULL, 0, WindowsThread::ThreadRoutine, (LPVOID)this, 0, &hThreadID );
+    Thread = CreateThread( NULL, 0, CWindowsThread::ThreadRoutine, (LPVOID)this, 0, &hThreadID );
     if ( !Thread )
     {
-        LOG_ERROR( "[WindowsThread] Failed to create thread" );
+        LOG_ERROR( "[CWindowsThread] Failed to create thread" );
         return false;
     }
     else
@@ -48,25 +48,25 @@ bool WindowsThread::Init( ThreadFunction InFunc )
     }
 }
 
-void WindowsThread::Wait()
+void CWindowsThread::Wait()
 {
     WaitForSingleObject( Thread, INFINITE );
 }
 
-void WindowsThread::SetName( const std::string& Name )
+void CWindowsThread::SetName( const std::string& Name )
 {
     WString WideName = CharToWide( CString( Name.c_str(), Name.length() ) );
     SetThreadDescription( Thread, WideName.CStr() );
 }
 
-ThreadID WindowsThread::GetID()
+ThreadID CWindowsThread::GetID()
 {
     return hThreadID;
 }
 
-DWORD WINAPI WindowsThread::ThreadRoutine( LPVOID ThreadParameter )
+DWORD WINAPI CWindowsThread::ThreadRoutine( LPVOID ThreadParameter )
 {
-    volatile WindowsThread* CurrentThread = (WindowsThread*)ThreadParameter;
+    volatile CWindowsThread* CurrentThread = (CWindowsThread*)ThreadParameter;
     if ( CurrentThread )
     {
         Assert( CurrentThread->Func != nullptr );

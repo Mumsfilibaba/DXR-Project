@@ -43,6 +43,9 @@ bool Sandbox::Init()
     SSceneData SceneData;
     COBJLoader::LoadFile( "../Assets/Scenes/Sponza/Sponza.obj", SceneData );
 
+    // TODO: Fix this
+    SceneData.AddToScene( CurrentScene );
+
     //CFBXLoader::LoadFile( "../Assets/Scenes/Bistro/BistroExterior.fbx", SceneData );
 
     // Create Spheres

@@ -11,12 +11,15 @@ typedef uint64 ThreadID;
 // See: https://docs.microsoft.com/en-us/windows/win32/procthread/thread-handles-and-identifiers
 #define INVALID_THREAD_ID 0
 
-class GenericThread : public CRefCounted
+class CGenericThread : public CRefCounted
 {
 public:
 
-    GenericThread() = default;
-    virtual ~GenericThread() = default;
+    // TODO: Enable member-functions and lambdas
+    static CGenericThread* Make( ThreadFunction )
+    {
+        return nullptr;
+    }
 
     virtual void Wait() = 0;
 
@@ -24,9 +27,8 @@ public:
 
     virtual ThreadID GetID() = 0;
 
-    // TODO: Enable memberfunctions and lambdas
-    static GenericThread* Create( ThreadFunction )
-    {
-        return nullptr;
-    }
+protected:
+
+    CGenericThread() = default;
+    virtual ~CGenericThread() = default;
 };

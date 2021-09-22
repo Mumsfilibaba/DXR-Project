@@ -3,8 +3,7 @@
 
 #include "Platform/CriticalSection.h"
 #include "Platform/ConditionVariable.h"
-
-#include "Generic/GenericThread.h"
+#include "Platform/PlatformThread.h"
 
 #include "Core/Delegates/Delegate.h"
 
@@ -40,7 +39,7 @@ private:
     static void WorkThread();
 
 private:
-    TArray<TSharedRef<GenericThread>> WorkThreads;
+    TArray<TSharedRef<CGenericThread>> WorkThreads;
 
     TArray<Task> Tasks;
     CCriticalSection TaskMutex;

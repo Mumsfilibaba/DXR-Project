@@ -17,7 +17,7 @@ private:
     ~CMacKeyboard() = default;
 
     // TODO: Maybe store all the keys in a bit-array? 
-    FORCEINLINE void SetKeyState( EKey KeyCode, bool State )
+    FORCEINLINE void RegisterKeyState( EKey KeyCode, bool State )
     {
         KeyStates[KeyCode] = State;
     }

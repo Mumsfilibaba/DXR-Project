@@ -46,7 +46,7 @@ bool EngineLoop::Init()
     if ( !TaskManager::Get().Init() )
     {
         return false;
-    }
+    } 
 
     GEngine = MakeShared<Engine>();
     Application->SetMessageListener( GEngine );

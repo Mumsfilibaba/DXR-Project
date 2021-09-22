@@ -85,7 +85,7 @@ bool TaskManager::Init()
 
     for ( uint32 i = 0; i < ThreadCount; i++ )
     {
-        TSharedRef<GenericThread> NewThread = GenericThread::Create( TaskManager::WorkThread );
+        TSharedRef<CGenericThread> NewThread = PlatformThread::Make( TaskManager::WorkThread );
         if ( NewThread )
         {
             WorkThreads[i] = NewThread;
@@ -146,7 +146,7 @@ void TaskManager::Release()
 {
     KillWorkers();
 
-    for ( TSharedRef<GenericThread> Thread : WorkThreads )
+    for ( TSharedRef<CGenericThread> Thread : WorkThreads )
     {
         Thread->Wait();
     }

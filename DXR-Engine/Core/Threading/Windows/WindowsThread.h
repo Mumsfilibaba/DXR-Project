@@ -1,11 +1,11 @@
 #pragma once
 #include "Core/Threading/Generic/GenericThread.h"
 
-class WindowsThread : public GenericThread
+class CWindowsThread : public CGenericThread
 {
 public:
-    WindowsThread();
-    ~WindowsThread();
+
+    static CGenericThread* Make( ThreadFunction InFunction );
 
     bool Init( ThreadFunction InFunc );
 
@@ -15,9 +15,11 @@ public:
 
     virtual ThreadID GetID() override final;
 
-    static GenericThread* Create( ThreadFunction InFunction ); 
-
 private:
+
+    CWindowsThread();
+    ~CWindowsThread();
+
     static DWORD WINAPI ThreadRoutine( LPVOID ThreadParameter );
 
     HANDLE Thread;
