@@ -41,4 +41,34 @@ void CMacApplicationMisc::PumpMessages( bool UntilEmpty )
     } while ( UntilEmpty );
 }
 
+
+SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
+{
+    NSUInteger CurrentModifiers = ([NSEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask);
+
+    uint32 Mask = 0;
+    if (CurrentModifiers & NSEventModifierFlagControl)
+    {
+        Mask |= FModifierFlag::ModifierFlag_Ctrl;
+    }
+    if (CurrentModifiers & NSEventModifierFlagShift)
+    {
+        Mask |= FModifierFlag::ModifierFlag_Shift;
+    }
+    if (CurrentModifiers & NSEventModifierFlagOption)
+    {
+        Mask |= FModifierFlag::ModifierFlag_Alt;
+    }
+    if (CurrentModifiers & NSEventModifierFlagCommand)
+    {
+        Mask |= FModifierFlag::ModifierFlag_Super;
+    }
+    if (CurrentModifiers & NSEventModifierFlagCapsLock)
+    {
+        Mask |= FModifierFlag::ModifierFlag_CapsLock;
+    }
+        
+    return SModifierKeyState( Mask );
+}
+
 #endif

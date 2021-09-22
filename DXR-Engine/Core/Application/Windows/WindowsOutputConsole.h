@@ -5,7 +5,7 @@
 #include "Core/Application/Generic/GenericOutputConsole.h"
 #include "Core/Threading/Platform/CriticalSection.h"
 
-#include "Windows/Windows.h"
+#include "Core/Windows/Windows.h"
 
 class CWindowsOutputConsole : public CGenericOutputConsole
 {
@@ -20,8 +20,8 @@ public:
     virtual void Print( const std::string& Message )     override final;
     virtual void PrintLine( const std::string& Message ) override final;
 
-    virtual void Clear()     override final;
-    virtual void ClearLine() override final;
+    virtual void Clear()         override final;
+    virtual void ClearLastLine() override final;
 
     virtual void SetTitle( const std::string& Title ) override final;
     virtual void SetColor( EConsoleColor Color )      override final;

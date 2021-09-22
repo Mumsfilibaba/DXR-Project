@@ -60,7 +60,7 @@ public:
 
     void SetName( const std::string& Name )
     {
-        std::wstring WideName = ConvertToWide( Name );
+        std::wstring WideName = CharToWide( CString( Name.c_str(), Name.length() ) ).CStr();
         Fence->SetName( WideName.c_str() );
     }
 

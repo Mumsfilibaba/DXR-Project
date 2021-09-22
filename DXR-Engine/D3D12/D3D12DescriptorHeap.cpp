@@ -87,14 +87,14 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3D12OfflineDescriptorHeap::Allocate( uint32& OutHea
 
     // Get the heap and the first free range
     DescriptorHeap& Heap = Heaps[HeapIndex];
-    DescriptorRange& Range = Heap.FreeList.Front();
+    DescriptorRange& Range = Heap.FreeList.FirstElement();
 
     D3D12_CPU_DESCRIPTOR_HANDLE Handle = Range.Begin;
     Range.Begin.ptr += DescriptorSize;
 
     if ( !Range.IsValid() )
     {
-        Heap.FreeList.Erase( Heap.FreeList.Begin() );
+        Heap.FreeList.RemoveAt( 0 );
     }
 
     OutHeapIndex = HeapIndex;
@@ -131,7 +131,7 @@ void D3D12OfflineDescriptorHeap::Free( D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint3
     if ( !FoundRange )
     {
         D3D12_CPU_DESCRIPTOR_HANDLE End = { Handle.ptr + DescriptorSize };
-        Heap.FreeList.EmplaceBack( Handle, End );
+        Heap.FreeList.Emplace( Handle, End );
     }
 }
 
@@ -160,7 +160,7 @@ bool D3D12OfflineDescriptorHeap::AllocateHeap()
             Heap->SetName( DbgName.c_str() );
         }
 
-        Heaps.EmplaceBack( Heap );
+        Heaps.Emplace( Heap );
         return true;
     }
     else
@@ -196,7 +196,7 @@ void D3D12OnlineDescriptorHeap::Reset()
     {
         for ( TSharedRef<D3D12DescriptorHeap>& CurrentHeap : DiscardedHeaps )
         {
-            HeapPool.EmplaceBack( CurrentHeap );
+            HeapPool.Emplace( CurrentHeap );
         }
 
         DiscardedHeaps.Clear();
@@ -228,7 +228,7 @@ uint32 D3D12OnlineDescriptorHeap::AllocateHandles( uint32 NumHandles )
 
 bool D3D12OnlineDescriptorHeap::AllocateFreshHeap()
 {
-    DiscardedHeaps.EmplaceBack( Heap );
+    DiscardedHeaps.Emplace( Heap );
 
     if ( HeapPool.IsEmpty() )
     {
@@ -241,8 +241,8 @@ bool D3D12OnlineDescriptorHeap::AllocateFreshHeap()
     }
     else
     {
-        Heap = HeapPool.Back();
-        HeapPool.PopBack();
+        Heap = HeapPool.LastElement();
+        HeapPool.Pop();
     }
 
     CurrentHandle = 0;

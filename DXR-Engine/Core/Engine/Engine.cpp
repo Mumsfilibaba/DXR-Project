@@ -1,6 +1,5 @@
 #include "Engine.h"
 
-#include "Core/Application/Platform/Platform.h"
 #include "Core/Application/Platform/PlatformApplication.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Console/Console.h"
@@ -84,7 +83,7 @@ void Engine::OnMouseReleased( EMouseButton Button, SModifierKeyState ModfierKeyS
     CGenericWindow* CaptureWindow = Application->GetCapture();
     if ( CaptureWindow )
     {
-        Platform::SetCapture( nullptr );
+        Application->SetCapture( nullptr );
     }
 
     MouseReleasedEvent Event( Button, ModfierKeyState );
@@ -93,11 +92,11 @@ void Engine::OnMouseReleased( EMouseButton Button, SModifierKeyState ModfierKeyS
 
 void Engine::OnMousePressed( EMouseButton Button, SModifierKeyState ModfierKeyState )
 {
-    CGenericWindow* CaptureWindow = Platform::GetCapture();
+    CGenericWindow* CaptureWindow = Application->GetCapture();
     if ( !CaptureWindow )
     {
-        CGenericWindow* ActiveWindow = Platform::GetActiveWindow();
-        Platform::SetCapture( ActiveWindow );
+        CGenericWindow* ActiveWindow = Application->GetActiveWindow();
+        Application->SetCapture( ActiveWindow );
     }
 
     MousePressedEvent Event( Button, ModfierKeyState );

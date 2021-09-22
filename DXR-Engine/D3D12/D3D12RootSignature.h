@@ -5,8 +5,8 @@
 
 #include "Core/RefCounted.h"
 
-#include "Utilities/StringUtilities.h"
-#include "Utilities/HashUtilities.h"
+#include "Core/Utilities/StringUtilities.h"
+#include "Core/Utilities/HashUtilities.h"
 
 #include <unordered_map>
 
@@ -91,8 +91,8 @@ public:
 
     void SetName( const std::string& Name )
     {
-        std::wstring WideName = ConvertToWide( Name );
-        RootSignature->SetName( WideName.c_str() );
+        WString WideName = CharToWide( CString( Name.c_str(), Name.length() ) );
+        RootSignature->SetName( WideName.CStr() );
     }
 
     ID3D12RootSignature* GetRootSignature() const

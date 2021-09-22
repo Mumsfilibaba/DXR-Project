@@ -88,7 +88,7 @@ bool CMacWindow::Init( const std::string& InTitle, uint32 Width, uint32 Height, 
     [Window setCollectionBehavior:Behavior];
     
     // Set styleflags
-    Style = InStyle;
+    StyleParams = InStyle;
 
     return true;
 }

@@ -2,7 +2,10 @@
 
 #if defined(PLATFORM_WINDOWS)
 
-/* Helper for retreiving a function from DLL */
+// Included here since MSVC still cannot find the log-macro when right above this file (Retarded compiler?)
+#include "Core/Application/Log.h"
+
+/* Helper for retrieving a function from DLL */
 
 template<typename T>
 inline T GetTypedProcAddress( HMODULE hModule, LPCSTR lpProcName )

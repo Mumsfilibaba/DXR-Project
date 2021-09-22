@@ -1,7 +1,6 @@
 #pragma once
-#include "Time/Generic/GenericTime.h"
-
-#include "Windows/Windows.h"
+#include "Core/Time/Generic/GenericTime.h"
+#include "Core/Windows/Windows.h"
 
 class WindowsTime : public GenericTime
 {

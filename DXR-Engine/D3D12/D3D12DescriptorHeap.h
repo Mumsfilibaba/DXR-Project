@@ -2,7 +2,7 @@
 #include "Core/RefCounted.h"
 #include "Core/Containers/Array.h"
 
-#include "Utilities/StringUtilities.h"
+#include "Core/Utilities/StringUtilities.h"
 
 #include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
@@ -17,8 +17,8 @@ public:
 
     void SetName( const std::string& Name )
     {
-        std::wstring WideName = ConvertToWide( Name );
-        Heap->SetName( WideName.c_str() );
+        WString WideName = CharToWide( CString(Name.c_str(), Name.length() ));
+        Heap->SetName( WideName.CStr() );
     }
 
     ID3D12DescriptorHeap* GetHeap() const
@@ -90,7 +90,7 @@ class D3D12OfflineDescriptorHeap : public D3D12DeviceChild, public CRefCounted
             DescriptorRange WholeRange;
             WholeRange.Begin = Heap->GetCPUDescriptorHandleForHeapStart();
             WholeRange.End.ptr = WholeRange.Begin.ptr + (Heap->GetDescriptorHandleIncrementSize() * Heap->GetNumDescriptors());
-            FreeList.EmplaceBack( WholeRange );
+            FreeList.Emplace( WholeRange );
         }
 
         TArray<DescriptorRange>   FreeList;

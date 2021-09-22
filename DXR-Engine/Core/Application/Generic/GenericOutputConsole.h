@@ -21,8 +21,6 @@ public:
         return nullptr;
     }
 
-    virtual ~CGenericOutputConsole() = default;
-
     virtual void Print( const std::string& Message ) = 0;
     virtual void PrintLine( const std::string& Message ) = 0;
 
@@ -32,10 +30,15 @@ public:
     virtual void SetTitle( const std::string& Title ) = 0;
     virtual void SetColor( EConsoleColor Color ) = 0;
 
+    virtual void Release()
+    {
+        delete this;
+    }
+
 protected:
 
     CGenericOutputConsole() = default;
-    ~CGenericOutputConsole() = default;
+    virtual ~CGenericOutputConsole() = default;
 };
 
 extern CGenericOutputConsole* GConsoleOutput;

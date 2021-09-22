@@ -28,32 +28,32 @@ struct SWindowStyle
 {
     SWindowStyle() = default;
 
-    SWindowStyle( uint32 InStyle )
+    FORCEINLINE SWindowStyle( uint32 InStyle )
         : Style( InStyle )
     {
     }
 
-    bool IsTitled() const
+    FORCEINLINE bool IsTitled() const
     {
         return Style & WindowStyleFlag_Titled;
     }
 
-    bool IsClosable() const
+    FORCEINLINE bool IsClosable() const
     {
         return Style & WindowStyleFlag_Closable;
     }
 
-    bool IsMinimizable() const
+    FORCEINLINE bool IsMinimizable() const
     {
         return Style & WindowStyleFlag_Minimizable;
     }
 
-    bool IsMaximizable() const
+    FORCEINLINE bool IsMaximizable() const
     {
         return Style & WindowStyleFlag_Maximizable;
     }
 
-    bool IsResizeable() const
+    FORCEINLINE bool IsResizeable() const
     {
         return Style & WindowStyleFlag_Resizeable;
     }
@@ -65,7 +65,7 @@ struct SWindowShape
 {
     SWindowShape() = default;
 
-    SWindowShape( uint32 InWidth, uint32 InHeight, int32 x, int32 y )
+    FORCEINLINE SWindowShape( uint32 InWidth, uint32 InHeight, int32 x, int32 y )
         : Width( InWidth )
         , Height( InHeight )
         , Position( { x, y } )
@@ -81,7 +81,7 @@ struct SWindowShape
     } Position;
 };
 
-typedef void* NativeWindowHandle;
+typedef void* PlatformWindowHandle;
 
 class CGenericWindow : public CRefCounted
 {
@@ -133,7 +133,7 @@ public:
     virtual uint32 GetHeight() const = 0;
 
     /* Retrieve the native handle */
-    virtual NativeWindowHandle GetNativeHandle() const
+    virtual PlatformWindowHandle GetNativeHandle() const
     {
         return nullptr;
     }
@@ -141,7 +141,7 @@ public:
     /* Retrieve the style of the window */
     FORCEINLINE SWindowStyle GetStyle() const
     {
-        return Style;
+        return StyleParams;
     }
 
 protected:
@@ -149,7 +149,7 @@ protected:
     CGenericWindow() = default;
     ~CGenericWindow() = default;
 
-    SWindowStyle Style;
+    SWindowStyle StyleParams;
 };
 
 #if defined(COMPILER_MSVC)

@@ -258,7 +258,7 @@ bool D3D12RayTracingScene::Build( D3D12CommandContext& CmdContext, const RayTrac
     for ( uint32 i = 0; i < InstanceDescs.Size(); i++ )
     {
         D3D12RayTracingGeometry* DxGeometry = static_cast<D3D12RayTracingGeometry*>(InInstances[i].Instance.Get());
-        Memory::Memcpy( &InstanceDescs[i].Transform, &InInstances[i].Transform, sizeof( XMFLOAT3X4 ) );
+        Memory::Memcpy( &InstanceDescs[i].Transform, &InInstances[i].Transform, sizeof( CMatrix3x4 ) );
 
         InstanceDescs[i].AccelerationStructure = DxGeometry->GetGPUVirtualAddress();
         InstanceDescs[i].InstanceID = InInstances[i].InstanceIndex;
@@ -324,7 +324,7 @@ bool D3D12RayTracingScene::Build( D3D12CommandContext& CmdContext, const RayTrac
     CmdContext.UnorderedAccessBarrier( ResultBuffer.Get() );
 
     // Copy the instances
-    Instances = TArray<RayTracingGeometryInstance>( InInstances, InInstances + NumInstances );
+    Instances = TArray<RayTracingGeometryInstance>( InInstances, NumInstances );
     return true;
 }
 

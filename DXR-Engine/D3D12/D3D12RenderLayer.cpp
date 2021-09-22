@@ -1447,7 +1447,7 @@ Viewport* D3D12RenderLayer::CreateViewport( CGenericWindow* Window, uint32 Width
 
     // TODO: Take DepthFormat into account
 
-    TSharedRef<WindowsWindow> WinWindow = MakeSharedRef<WindowsWindow>( Window );
+    TSharedRef<CWindowsWindow> WinWindow = MakeSharedRef<CWindowsWindow>( Window );
     if ( Width == 0 )
     {
         Width = WinWindow->GetWidth();

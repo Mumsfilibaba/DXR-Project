@@ -14,7 +14,9 @@
 #include "Scene/Lights/DirectionalLight.h"
 #include "Scene/Components/MeshComponent.h"
 
-#include "Core/Input/InputManager.h"
+#include "Core/Engine/Engine.h"
+#include "Core/Application/IKeyboard.h"
+#include "Core/Application/Generic/GenericApplication.h"
 
 #include <random>
 
@@ -60,7 +62,7 @@ bool Sandbox::Init()
     TSharedRef<Texture2D> BaseTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !BaseTexture )
     {
-		LOG_WARNING("Failed to create BaseTexture");
+        LOG_WARNING("Failed to create BaseTexture");
     }
     else
     {
@@ -74,7 +76,7 @@ bool Sandbox::Init()
     TSharedRef<Texture2D> BaseNormal = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !BaseNormal )
     {
-		LOG_WARNING("Failed to create BaseNormalTexture");
+        LOG_WARNING("Failed to create BaseNormalTexture");
     }
     else
     {
@@ -88,7 +90,7 @@ bool Sandbox::Init()
     TSharedRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !WhiteTexture )
     {
-		LOG_WARNING("Failed to create WhiteTexture");
+        LOG_WARNING("Failed to create WhiteTexture");
     }
     else
     {
@@ -160,37 +162,37 @@ bool Sandbox::Init()
     TSharedRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( AlbedoMap )
     {
-		AlbedoMap->SetName( "AlbedoMap" );
+        AlbedoMap->SetName( "AlbedoMap" );
     }
 
     TSharedRef<Texture2D> NormalMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( NormalMap )
     {
-		NormalMap->SetName( "NormalMap" );
+        NormalMap->SetName( "NormalMap" );
     }
 
     TSharedRef<Texture2D> AOMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( AOMap )
     {
-		AOMap->SetName( "AOMap" );
+        AOMap->SetName( "AOMap" );
     }
 
     TSharedRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( RoughnessMap )
     {
-		RoughnessMap->SetName( "RoughnessMap" );
+        RoughnessMap->SetName( "RoughnessMap" );
     }
 
     TSharedRef<Texture2D> HeightMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( HeightMap )
     {
-		HeightMap->SetName( "HeightMap" );
+        HeightMap->SetName( "HeightMap" );
     }
 
     TSharedRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Metallic.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( MetallicMap )
     {
-		MetallicMap->SetName( "MetallicMap" );
+        MetallicMap->SetName( "MetallicMap" );
     }
 
     NewComponent->Material->AlbedoMap = AlbedoMap;
@@ -230,25 +232,25 @@ bool Sandbox::Init()
     AlbedoMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/BaseColor.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( AlbedoMap )
     {
-		AlbedoMap->SetName( "AlbedoMap" );
+        AlbedoMap->SetName( "AlbedoMap" );
     }
-	
+    
     NormalMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Normal.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( NormalMap )
     {
-		NormalMap->SetName( "NormalMap" );
+        NormalMap->SetName( "NormalMap" );
     }
 
     RoughnessMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Roughness.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( RoughnessMap )
     {
-		RoughnessMap->SetName( "RoughnessMap" );
+        RoughnessMap->SetName( "RoughnessMap" );
     }
 
     MetallicMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Metallic.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( MetallicMap )
     {
-		MetallicMap->SetName( "MetallicMap" );
+        MetallicMap->SetName( "MetallicMap" );
     }
 
     MatProperties.AO = 1.0f;
@@ -403,54 +405,55 @@ void Sandbox::Tick( Timestamp DeltaTime )
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
 
-    if ( InputManager::Get().IsKeyDown( EKey::Key_Right ) )
+    IKeyboard* Keyboard = GEngine->Application->GetKeyboard();
+    if ( Keyboard->IsKeyDown( EKey::Key_Right ) )
     {
         CurrentCamera->Rotate( 0.0f, NMath::ToRadians( RotationSpeed * Delta ), 0.0f );
     }
-    else if ( InputManager::Get().IsKeyDown( EKey::Key_Left ) )
+    else if ( Keyboard->IsKeyDown( EKey::Key_Left ) )
     {
         CurrentCamera->Rotate( 0.0f, NMath::ToRadians( -RotationSpeed * Delta ), 0.0f );
     }
 
-    if ( InputManager::Get().IsKeyDown( EKey::Key_Up ) )
+    if ( Keyboard->IsKeyDown( EKey::Key_Up ) )
     {
         CurrentCamera->Rotate( NMath::ToRadians( -RotationSpeed * Delta ), 0.0f, 0.0f );
     }
-    else if ( InputManager::Get().IsKeyDown( EKey::Key_Down ) )
+    else if ( Keyboard->IsKeyDown( EKey::Key_Down ) )
     {
         CurrentCamera->Rotate( NMath::ToRadians( RotationSpeed * Delta ), 0.0f, 0.0f );
     }
 
     float Acceleration = 15.0f;
-    if ( InputManager::Get().IsKeyDown( EKey::Key_LeftShift ) )
+    if ( Keyboard->IsKeyDown( EKey::Key_LeftShift ) )
     {
         Acceleration = Acceleration * 3;
     }
 
     CVector3 CameraAcceleration;
-    if ( InputManager::Get().IsKeyDown( EKey::Key_W ) )
+    if ( Keyboard->IsKeyDown( EKey::Key_W ) )
     {
         CameraAcceleration.z = Acceleration;
     }
-    else if ( InputManager::Get().IsKeyDown( EKey::Key_S ) )
+    else if ( Keyboard->IsKeyDown( EKey::Key_S ) )
     {
         CameraAcceleration.z = -Acceleration;
     }
 
-    if ( InputManager::Get().IsKeyDown( EKey::Key_A ) )
+    if ( Keyboard->IsKeyDown( EKey::Key_A ) )
     {
         CameraAcceleration.x = Acceleration;
     }
-    else if ( InputManager::Get().IsKeyDown( EKey::Key_D ) )
+    else if ( Keyboard->IsKeyDown( EKey::Key_D ) )
     {
         CameraAcceleration.x = -Acceleration;
     }
 
-    if ( InputManager::Get().IsKeyDown( EKey::Key_Q ) )
+    if ( Keyboard->IsKeyDown( EKey::Key_Q ) )
     {
         CameraAcceleration.y = Acceleration;
     }
-    else if ( InputManager::Get().IsKeyDown( EKey::Key_E ) )
+    else if ( Keyboard->IsKeyDown( EKey::Key_E ) )
     {
         CameraAcceleration.y = -Acceleration;
     }

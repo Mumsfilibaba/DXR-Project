@@ -86,7 +86,7 @@ public:
     {
         if ( InResource )
         {
-            Resources.EmplaceBack( MakeSharedRef<Resource>( InResource ) );
+            Resources.Emplace( MakeSharedRef<Resource>( InResource ) );
         }
     }
 
@@ -94,7 +94,7 @@ public:
     {
         if ( InResource )
         {
-            DxResources.EmplaceBack( MakeSharedRef<D3D12Resource>( InResource ) );
+            DxResources.Emplace( MakeSharedRef<D3D12Resource>( InResource ) );
         }
     }
 
@@ -102,7 +102,7 @@ public:
     {
         if ( InResource )
         {
-            NativeResources.EmplaceBack( InResource );
+            NativeResources.Emplace( InResource );
         }
     }
 
@@ -160,7 +160,7 @@ public:
         Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
         Barrier.UAV.pResource = Resource;
 
-        Barriers.EmplaceBack( Barrier );
+        Barriers.Emplace( Barrier );
     }
 
     void FlushBarriers( D3D12CommandListHandle& CmdList )

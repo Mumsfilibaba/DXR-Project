@@ -66,7 +66,7 @@ public:
 
     void SetName( const std::string& Name )
     {
-        std::wstring WideDebugName = ConvertToWide( Name );
+        std::wstring WideDebugName = CharToWide( CString( Name.c_str(), Name.length() ) ).CStr();
         Queue->SetName( WideDebugName.c_str() );
     }
 

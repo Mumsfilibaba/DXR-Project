@@ -1,11 +1,12 @@
 #include "D3D12ShaderCompiler.h"
 
-#include "Utilities/StringUtilities.h"
+#include "Core/Utilities/StringUtilities.h"
 
-#include "Windows/Windows.h"
-#include "Windows/Windows.inl"
+#include "Core/Application/Log.h"
+#include "Core/Windows/Windows.h"
+#include "Core/Windows/Windows.inl"
 
-#include "Core/Application/Platform/PlatformMisc.h"
+#include "Core/Application/Platform/PlatformApplicationMisc.h"
 
 DxcCreateInstanceProc DxcCreateInstanceFunc = nullptr;
 
@@ -39,147 +40,147 @@ static LPCWSTR GetTargetProfile( EShaderStage Stage, EShaderModel Model )
 {
     switch ( Stage )
     {
-    case EShaderStage::Compute:
-    {
-        switch ( Model )
+        case EShaderStage::Compute:
         {
-        case EShaderModel::SM_5_0: return L"cs_5_0";
-        case EShaderModel::SM_5_1: return L"cs_5_1";
-        case EShaderModel::SM_6_0: return L"cs_6_0";
-        case EShaderModel::SM_6_1: return L"cs_6_1";
-        case EShaderModel::SM_6_2: return L"cs_6_2";
-        case EShaderModel::SM_6_3: return L"cs_6_3";
-        case EShaderModel::SM_6_4: return L"cs_6_4";
-        case EShaderModel::SM_6_5: return L"cs_6_5";
-        default: break;
+            switch ( Model )
+            {
+                case EShaderModel::SM_5_0: return L"cs_5_0";
+                case EShaderModel::SM_5_1: return L"cs_5_1";
+                case EShaderModel::SM_6_0: return L"cs_6_0";
+                case EShaderModel::SM_6_1: return L"cs_6_1";
+                case EShaderModel::SM_6_2: return L"cs_6_2";
+                case EShaderModel::SM_6_3: return L"cs_6_3";
+                case EShaderModel::SM_6_4: return L"cs_6_4";
+                case EShaderModel::SM_6_5: return L"cs_6_5";
+                default: break;
+            }
         }
-    }
 
-    case EShaderStage::Vertex:
-    {
-        switch ( Model )
+        case EShaderStage::Vertex:
         {
-        case EShaderModel::SM_5_0: return L"vs_5_0";
-        case EShaderModel::SM_5_1: return L"vs_5_1";
-        case EShaderModel::SM_6_0: return L"vs_6_0";
-        case EShaderModel::SM_6_1: return L"vs_6_1";
-        case EShaderModel::SM_6_2: return L"vs_6_2";
-        case EShaderModel::SM_6_3: return L"vs_6_3";
-        case EShaderModel::SM_6_4: return L"vs_6_4";
-        case EShaderModel::SM_6_5: return L"vs_6_5";
-        default: break;
+            switch ( Model )
+            {
+                case EShaderModel::SM_5_0: return L"vs_5_0";
+                case EShaderModel::SM_5_1: return L"vs_5_1";
+                case EShaderModel::SM_6_0: return L"vs_6_0";
+                case EShaderModel::SM_6_1: return L"vs_6_1";
+                case EShaderModel::SM_6_2: return L"vs_6_2";
+                case EShaderModel::SM_6_3: return L"vs_6_3";
+                case EShaderModel::SM_6_4: return L"vs_6_4";
+                case EShaderModel::SM_6_5: return L"vs_6_5";
+                default: break;
+            }
         }
-    }
 
-    case EShaderStage::Hull:
-    {
-        switch ( Model )
+        case EShaderStage::Hull:
         {
-        case EShaderModel::SM_5_0: return L"hs_5_0";
-        case EShaderModel::SM_5_1: return L"hs_5_1";
-        case EShaderModel::SM_6_0: return L"hs_6_0";
-        case EShaderModel::SM_6_1: return L"hs_6_1";
-        case EShaderModel::SM_6_2: return L"hs_6_2";
-        case EShaderModel::SM_6_3: return L"hs_6_3";
-        case EShaderModel::SM_6_4: return L"hs_6_4";
-        case EShaderModel::SM_6_5: return L"hs_6_5";
-        default: break;
+            switch ( Model )
+            {
+                case EShaderModel::SM_5_0: return L"hs_5_0";
+                case EShaderModel::SM_5_1: return L"hs_5_1";
+                case EShaderModel::SM_6_0: return L"hs_6_0";
+                case EShaderModel::SM_6_1: return L"hs_6_1";
+                case EShaderModel::SM_6_2: return L"hs_6_2";
+                case EShaderModel::SM_6_3: return L"hs_6_3";
+                case EShaderModel::SM_6_4: return L"hs_6_4";
+                case EShaderModel::SM_6_5: return L"hs_6_5";
+                default: break;
+            }
         }
-    }
 
-    case EShaderStage::Domain:
-    {
-        switch ( Model )
+        case EShaderStage::Domain:
         {
-        case EShaderModel::SM_5_0: return L"ds_5_0";
-        case EShaderModel::SM_5_1: return L"ds_5_1";
-        case EShaderModel::SM_6_0: return L"ds_6_0";
-        case EShaderModel::SM_6_1: return L"ds_6_1";
-        case EShaderModel::SM_6_2: return L"ds_6_2";
-        case EShaderModel::SM_6_3: return L"ds_6_3";
-        case EShaderModel::SM_6_4: return L"ds_6_4";
-        case EShaderModel::SM_6_5: return L"ds_6_5";
-        default: break;
+            switch ( Model )
+            {
+                case EShaderModel::SM_5_0: return L"ds_5_0";
+                case EShaderModel::SM_5_1: return L"ds_5_1";
+                case EShaderModel::SM_6_0: return L"ds_6_0";
+                case EShaderModel::SM_6_1: return L"ds_6_1";
+                case EShaderModel::SM_6_2: return L"ds_6_2";
+                case EShaderModel::SM_6_3: return L"ds_6_3";
+                case EShaderModel::SM_6_4: return L"ds_6_4";
+                case EShaderModel::SM_6_5: return L"ds_6_5";
+                default: break;
+            }
         }
-    }
 
-    case EShaderStage::Geometry:
-    {
-        switch ( Model )
+        case EShaderStage::Geometry:
         {
-        case EShaderModel::SM_5_0: return L"gs_5_0";
-        case EShaderModel::SM_5_1: return L"gs_5_1";
-        case EShaderModel::SM_6_0: return L"gs_6_0";
-        case EShaderModel::SM_6_1: return L"gs_6_1";
-        case EShaderModel::SM_6_2: return L"gs_6_2";
-        case EShaderModel::SM_6_3: return L"gs_6_3";
-        case EShaderModel::SM_6_4: return L"gs_6_4";
-        case EShaderModel::SM_6_5: return L"gs_6_5";
-        default: break;
+            switch ( Model )
+            {
+                case EShaderModel::SM_5_0: return L"gs_5_0";
+                case EShaderModel::SM_5_1: return L"gs_5_1";
+                case EShaderModel::SM_6_0: return L"gs_6_0";
+                case EShaderModel::SM_6_1: return L"gs_6_1";
+                case EShaderModel::SM_6_2: return L"gs_6_2";
+                case EShaderModel::SM_6_3: return L"gs_6_3";
+                case EShaderModel::SM_6_4: return L"gs_6_4";
+                case EShaderModel::SM_6_5: return L"gs_6_5";
+                default: break;
+            }
         }
-    }
 
-    case EShaderStage::Pixel:
-    {
-        switch ( Model )
+        case EShaderStage::Pixel:
         {
-        case EShaderModel::SM_5_0: return L"ps_5_0";
-        case EShaderModel::SM_5_1: return L"ps_5_1";
-        case EShaderModel::SM_6_0: return L"ps_6_0";
-        case EShaderModel::SM_6_1: return L"ps_6_1";
-        case EShaderModel::SM_6_2: return L"ps_6_2";
-        case EShaderModel::SM_6_3: return L"ps_6_3";
-        case EShaderModel::SM_6_4: return L"ps_6_4";
-        case EShaderModel::SM_6_5: return L"ps_6_5";
-        default: break;
+            switch ( Model )
+            {
+                case EShaderModel::SM_5_0: return L"ps_5_0";
+                case EShaderModel::SM_5_1: return L"ps_5_1";
+                case EShaderModel::SM_6_0: return L"ps_6_0";
+                case EShaderModel::SM_6_1: return L"ps_6_1";
+                case EShaderModel::SM_6_2: return L"ps_6_2";
+                case EShaderModel::SM_6_3: return L"ps_6_3";
+                case EShaderModel::SM_6_4: return L"ps_6_4";
+                case EShaderModel::SM_6_5: return L"ps_6_5";
+                default: break;
+            }
         }
-    }
 
-    case EShaderStage::Mesh:
-    {
-        switch ( Model )
+        case EShaderStage::Mesh:
         {
-        case EShaderModel::SM_5_0: return L"ms_5_0";
-        case EShaderModel::SM_5_1: return L"ms_5_1";
-        case EShaderModel::SM_6_0: return L"ms_6_0";
-        case EShaderModel::SM_6_1: return L"ms_6_1";
-        case EShaderModel::SM_6_2: return L"ms_6_2";
-        case EShaderModel::SM_6_3: return L"ms_6_3";
-        case EShaderModel::SM_6_4: return L"ms_6_4";
-        case EShaderModel::SM_6_5: return L"ms_6_5";
-        default: break;
+            switch ( Model )
+            {
+                case EShaderModel::SM_5_0: return L"ms_5_0";
+                case EShaderModel::SM_5_1: return L"ms_5_1";
+                case EShaderModel::SM_6_0: return L"ms_6_0";
+                case EShaderModel::SM_6_1: return L"ms_6_1";
+                case EShaderModel::SM_6_2: return L"ms_6_2";
+                case EShaderModel::SM_6_3: return L"ms_6_3";
+                case EShaderModel::SM_6_4: return L"ms_6_4";
+                case EShaderModel::SM_6_5: return L"ms_6_5";
+                default: break;
+            }
         }
-    }
 
-    case EShaderStage::Amplification:
-    {
-        switch ( Model )
+        case EShaderStage::Amplification:
         {
-        case EShaderModel::SM_5_0: return L"as_5_0";
-        case EShaderModel::SM_5_1: return L"as_5_1";
-        case EShaderModel::SM_6_0: return L"as_6_0";
-        case EShaderModel::SM_6_1: return L"as_6_1";
-        case EShaderModel::SM_6_2: return L"as_6_2";
-        case EShaderModel::SM_6_3: return L"as_6_3";
-        case EShaderModel::SM_6_4: return L"as_6_4";
-        case EShaderModel::SM_6_5: return L"as_6_5";
-        default: break;
+            switch ( Model )
+            {
+                case EShaderModel::SM_5_0: return L"as_5_0";
+                case EShaderModel::SM_5_1: return L"as_5_1";
+                case EShaderModel::SM_6_0: return L"as_6_0";
+                case EShaderModel::SM_6_1: return L"as_6_1";
+                case EShaderModel::SM_6_2: return L"as_6_2";
+                case EShaderModel::SM_6_3: return L"as_6_3";
+                case EShaderModel::SM_6_4: return L"as_6_4";
+                case EShaderModel::SM_6_5: return L"as_6_5";
+                default: break;
+            }
         }
-    }
 
-    case EShaderStage::RayGen:
-    case EShaderStage::RayAnyHit:
-    case EShaderStage::RayClosestHit:
-    case EShaderStage::RayMiss:
-    {
-        switch ( Model )
+        case EShaderStage::RayGen:
+        case EShaderStage::RayAnyHit:
+        case EShaderStage::RayClosestHit:
+        case EShaderStage::RayMiss:
         {
-        case EShaderModel::SM_6_3: return L"lib_6_3";
-        case EShaderModel::SM_6_4: return L"lib_6_4";
-        case EShaderModel::SM_6_5: return L"lib_6_5";
-        default: break;
+            switch ( Model )
+            {
+                case EShaderModel::SM_6_3: return L"lib_6_3";
+                case EShaderModel::SM_6_4: return L"lib_6_4";
+                case EShaderModel::SM_6_5: return L"lib_6_5";
+                default: break;
+            }
         }
-    }
     }
 
     return L"Unknown";
@@ -291,11 +292,11 @@ bool D3D12ShaderCompiler::CompileFromFile(
 {
     Code.Clear();
 
-    std::wstring WideFilePath = ConvertToWide( FilePath );
-    std::wstring WideEntrypoint = ConvertToWide( EntryPoint );
+    WString WideFilePath   = CharToWide( CString( FilePath.c_str(), FilePath.length() ) );
+    WString WideEntrypoint = CharToWide( CString( EntryPoint.c_str(), EntryPoint.length() ) );
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
-    HRESULT Result = DxLibrary->CreateBlobFromFile( WideFilePath.c_str(), nullptr, &SourceBlob );
+    HRESULT Result = DxLibrary->CreateBlobFromFile( WideFilePath.CStr(), nullptr, &SourceBlob );
     if ( FAILED( Result ) )
     {
         LOG_ERROR( "[D3D12ShaderCompiler]: FAILED to create Source Data" );
@@ -304,7 +305,7 @@ bool D3D12ShaderCompiler::CompileFromFile(
         return false;
     }
 
-    return InternalCompileFromSource( SourceBlob.Get(), WideFilePath.c_str(), WideEntrypoint.c_str(), ShaderStage, ShaderModel, Defines, Code );
+    return InternalCompileFromSource( SourceBlob.Get(), WideFilePath.CStr(), WideEntrypoint.CStr(), ShaderStage, ShaderModel, Defines, Code );
 }
 
 bool D3D12ShaderCompiler::CompileShader(
@@ -315,7 +316,7 @@ bool D3D12ShaderCompiler::CompileShader(
     EShaderModel ShaderModel,
     TArray<uint8>& Code )
 {
-    std::wstring WideEntrypoint = ConvertToWide( EntryPoint );
+    WString WideEntrypoint = CharToWide( CString( EntryPoint.c_str(), EntryPoint.length() ) );
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
     HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(
@@ -331,7 +332,7 @@ bool D3D12ShaderCompiler::CompileShader(
         return false;
     }
 
-    return InternalCompileFromSource( SourceBlob.Get(), nullptr, WideEntrypoint.c_str(), ShaderStage, ShaderModel, Defines, Code );
+    return InternalCompileFromSource( SourceBlob.Get(), nullptr, WideEntrypoint.CStr(), ShaderStage, ShaderModel, Defines, Code );
 }
 
 bool D3D12ShaderCompiler::GetReflection( D3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection )
@@ -379,7 +380,7 @@ bool D3D12ShaderCompiler::Init()
     DxCompilerDLL = ::LoadLibrary( "dxcompiler.dll" );
     if ( !DxCompilerDLL )
     {
-        PlatformMisc::MessageBox( "ERROR", "FAILED to load dxcompiler.dll" );
+        PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to load dxcompiler.dll" );
         return false;
     }
 
@@ -444,13 +445,13 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
 
     if ( ShaderStageIsRayTracing( ShaderStage ) )
     {
-        Args.EmplaceBack( L"-exports" );
-        Args.EmplaceBack( Entrypoint );
+        Args.Emplace( L"-exports" );
+        Args.Emplace( Entrypoint );
     }
 
     // Convert defines
     TArray<DxcDefine> DxDefines;
-    TArray<std::wstring> StrBuff;
+    TArray<WString> StrBuff;
     if ( Defines )
     {
         StrBuff.Reserve( Defines->Size() * 2 );
@@ -458,9 +459,9 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
 
         for ( const ShaderDefine& Define : *Defines )
         {
-            const std::wstring& WideDefine = StrBuff.EmplaceBack( ConvertToWide( Define.Define ) );
-            const std::wstring& WideValue = StrBuff.EmplaceBack( ConvertToWide( Define.Value ) );
-            DxDefines.PushBack( { WideDefine.c_str(), WideValue.c_str() } );
+            const WString& WideDefine = StrBuff.Emplace( CharToWide( CString(Define.Define.c_str(), Define.Define.length() ) ) );
+            const WString& WideValue  = StrBuff.Emplace( CharToWide( CString( Define.Value.c_str(), Define.Value.length() ) ) );
+            DxDefines.Push( { WideDefine.CStr(), WideValue.CStr() } );
         }
     }
 
@@ -511,7 +512,7 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
         return false;
     }
 
-    std::string AsciiFilePath = FilePath != nullptr ? ConvertToAscii( FilePath ) : "";
+    std::string AsciiFilePath = FilePath != nullptr ? WideToChar( WString(FilePath) ).CStr() : "";
     if ( PrintBlob8 && PrintBlob8->GetBufferSize() > 0 )
     {
         LOG_INFO( "[D3D12ShaderCompiler]: Successfully compiled shader '" + AsciiFilePath + "' with the following output:" );

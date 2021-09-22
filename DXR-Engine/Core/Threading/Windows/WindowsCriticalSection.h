@@ -1,5 +1,5 @@
 #pragma once
-#include "Windows/Windows.h"
+#include "Core/Windows/Windows.h"
 
 class CWindowsCriticalSection
 {
@@ -30,7 +30,12 @@ public:
         LeaveCriticalSection( &Section );
     }
 
-    FORCEINLINE CRITICAL_SECTION GetSection() const noexcept
+    FORCEINLINE CRITICAL_SECTION& GetSection() noexcept
+    {
+        return Section;
+    }
+
+    FORCEINLINE const CRITICAL_SECTION& GetSection() const noexcept
     {
         return Section;
     }

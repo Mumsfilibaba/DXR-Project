@@ -1,7 +1,7 @@
 #include "DebugUI.h"
 
-#include "Rendering/Resources/TextureFactory.h"
 #include "Rendering/Renderer.h"
+#include "Rendering/Resources/TextureFactory.h"
 
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/RenderLayer.h"
@@ -9,8 +9,9 @@
 
 #include "Core/Time/Timer.h"
 #include "Core/Engine/Engine.h"
-#include "Core/Application/Generic/GenericCursor.h"
-#include "Core/Application/Platform/Platform.h"
+#include "Core/Application/ICursor.h"
+#include "Core/Application/Generic/GenericApplication.h"
+#include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Profiler.h"
 #include "Core/Containers/Array.h"
 
@@ -47,12 +48,12 @@ static uint32 GetMouseButtonIndex( EMouseButton Button )
 {
     switch ( Button )
     {
-    case MouseButton_Left:    return 0;
-    case MouseButton_Right:   return 1;
-    case MouseButton_Middle:  return 2;
-    case MouseButton_Back:    return 3;
-    case MouseButton_Forward: return 4;
-    default:                  return static_cast<uint32>(-1);
+        case MouseButton_Left:    return 0;
+        case MouseButton_Right:   return 1;
+        case MouseButton_Middle:  return 2;
+        case MouseButton_Back:    return 3;
+        case MouseButton_Forward: return 4;
+        default:                  return static_cast<uint32>(-1);
     }
 }
 
@@ -528,10 +529,12 @@ void DebugUI::Render( CommandList& CmdList )
 
     ImGuiIO& IO = ImGui::GetIO();
 
+    ICursor* Cursor = GEngine->Application->GetCursor();
+
     CGenericWindow* Window = GEngine->MainWindow.Get();
     if ( IO.WantSetMousePos )
     {
-        Platform::SetCursorPos( Window, static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) );
+        Cursor->SetCursorPosition( Window, static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) );
     }
 
     SWindowShape CurrentWindowShape;
@@ -544,40 +547,37 @@ void DebugUI::Render( CommandList& CmdList )
 
     int32 x = 0;
     int32 y = 0;
-    Platform::GetCursorPos( Window, x, y );
+    Cursor->GetCursorPosition( Window, x, y );
 
     IO.MousePos = ImVec2( static_cast<float>(x), static_cast<float>(y) );
 
-    ModifierKeyState KeyState = Platform::GetModifierKeyState();
-    IO.KeyCtrl = KeyState.IsCtrlDown();
-    IO.KeyShift = KeyState.IsShiftDown();
-    IO.KeyAlt = KeyState.IsAltDown();
-    IO.KeySuper = KeyState.IsSuperKeyDown();
+    SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
+    IO.KeyCtrl = KeyState.IsCtrlDown;
+    IO.KeyShift = KeyState.IsShiftDown;
+    IO.KeyAlt = KeyState.IsAltDown;
+    IO.KeySuper = KeyState.IsSuperKeyDown;
 
     if ( !(IO.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) )
     {
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
         if ( ImguiCursor == ImGuiMouseCursor_None || IO.MouseDrawCursor )
         {
-            Platform::SetCursor( nullptr );
+            Cursor->SetCursor( ECursor::None );
         }
         else
         {
-            TSharedRef<GenericCursor> Cursor = Platform::GetCursor();
             switch ( ImguiCursor )
             {
-            case ImGuiMouseCursor_Arrow:      Cursor = GenericCursor::Arrow;      break;
-            case ImGuiMouseCursor_TextInput:  Cursor = GenericCursor::TextInput;  break;
-            case ImGuiMouseCursor_ResizeAll:  Cursor = GenericCursor::ResizeAll;  break;
-            case ImGuiMouseCursor_ResizeEW:   Cursor = GenericCursor::ResizeEW;   break;
-            case ImGuiMouseCursor_ResizeNS:   Cursor = GenericCursor::ResizeNS;   break;
-            case ImGuiMouseCursor_ResizeNESW: Cursor = GenericCursor::ResizeNESW; break;
-            case ImGuiMouseCursor_ResizeNWSE: Cursor = GenericCursor::ResizeNWSE; break;
-            case ImGuiMouseCursor_Hand:       Cursor = GenericCursor::Hand;       break;
-            case ImGuiMouseCursor_NotAllowed: Cursor = GenericCursor::NotAllowed; break;
+                case ImGuiMouseCursor_Arrow:      Cursor->SetCursor( ECursor::Arrow );      break;
+                case ImGuiMouseCursor_TextInput:  Cursor->SetCursor( ECursor::TextInput );  break;
+                case ImGuiMouseCursor_ResizeAll:  Cursor->SetCursor( ECursor::ResizeAll );  break;
+                case ImGuiMouseCursor_ResizeEW:   Cursor->SetCursor( ECursor::ResizeEW );   break;
+                case ImGuiMouseCursor_ResizeNS:   Cursor->SetCursor( ECursor::ResizeNS );   break;
+                case ImGuiMouseCursor_ResizeNESW: Cursor->SetCursor( ECursor::ResizeNESW ); break;
+                case ImGuiMouseCursor_ResizeNWSE: Cursor->SetCursor( ECursor::ResizeNWSE ); break;
+                case ImGuiMouseCursor_Hand:       Cursor->SetCursor( ECursor::Hand );       break;
+                case ImGuiMouseCursor_NotAllowed: Cursor->SetCursor( ECursor::NotAllowed ); break;
             }
-
-            Platform::SetCursor( Cursor.Get() );
         }
     }
 

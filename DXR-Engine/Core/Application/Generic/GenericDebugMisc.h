@@ -4,6 +4,14 @@
 // TODO: Remove
 #include <string>
 
+#ifdef MessageBox
+#undef MessageBox
+#endif
+
+#ifdef OutputDebugString
+#undef OutputDebugString
+#endif
+
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable

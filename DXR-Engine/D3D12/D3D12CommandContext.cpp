@@ -1,4 +1,4 @@
-#include "Debug/Profiler.h"
+#include "Core/Debug/Profiler.h"
 
 #include "D3D12CommandContext.h"
 #include "D3D12Device.h"
@@ -23,7 +23,7 @@ void D3D12ResourceBarrierBatcher::AddTransitionBarrier( ID3D12Resource* Resource
     if ( BeforeState != AfterState )
     {
         // Make sure we are not already have transition for this resource
-        for ( TArray<D3D12_RESOURCE_BARRIER>::Iterator It = Barriers.Begin(); It != Barriers.End(); It++ )
+        for ( TArray<D3D12_RESOURCE_BARRIER>::IteratorType It = Barriers.StartIterator(); It != Barriers.EndIterator(); It++ )
         {
             if ( (*It).Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION )
             {
@@ -31,7 +31,7 @@ void D3D12ResourceBarrierBatcher::AddTransitionBarrier( ID3D12Resource* Resource
                 {
                     if ( (*It).Transition.StateBefore == AfterState )
                     {
-                        It = Barriers.Erase( It );
+                        It = Barriers.RemoveAt( It );
                     }
                     else
                     {
@@ -53,7 +53,7 @@ void D3D12ResourceBarrierBatcher::AddTransitionBarrier( ID3D12Resource* Resource
         Barrier.Transition.StateBefore = BeforeState;
         Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
-        Barriers.EmplaceBack( Barrier );
+        Barriers.Emplace( Barrier );
     }
 }
 
@@ -77,7 +77,7 @@ bool D3D12GPUResourceUploader::Reserve( uint32 InSizeInBytes )
     if ( Resource )
     {
         Resource->Unmap( 0, nullptr );
-        GarbageResources.EmplaceBack( Resource );
+        GarbageResources.Emplace( Resource );
         Resource.Reset();
     }
 
@@ -234,7 +234,7 @@ bool D3D12CommandContext::Init()
     // TODO: Have support for more than 6 commandbatches?
     for ( uint32 i = 0; i < D3D12_NUM_BACK_BUFFERS; i++ )
     {
-        D3D12CommandBatch& Batch = CmdBatches.EmplaceBack( GetDevice() );
+        D3D12CommandBatch& Batch = CmdBatches.Emplace( GetDevice() );
         if ( !Batch.Init() )
         {
             return false;
@@ -404,7 +404,7 @@ void D3D12CommandContext::BeginTimeStamp( GPUProfiler* Profiler, uint32 Index )
 
     DxProfiler->BeginQuery( DxCmdList, Index );
 
-    ResolveProfilers.EmplaceBack( MakeSharedRef<D3D12GPUProfiler>( DxProfiler ) );
+    ResolveProfilers.Emplace( MakeSharedRef<D3D12GPUProfiler>( DxProfiler ) );
 }
 
 void D3D12CommandContext::EndTimeStamp( GPUProfiler* Profiler, uint32 Index )
@@ -1151,7 +1151,7 @@ void D3D12CommandContext::GenerateMips( Texture* Texture )
     {
         uint32   SrcMipLevel;
         uint32   NumMipLevels;
-        XMFLOAT2 TexelSize;
+        CVector2 TexelSize;
     } ConstantData;
 
     uint32 DstWidth = static_cast<uint32>(Desc.Width);
@@ -1162,7 +1162,7 @@ void D3D12CommandContext::GenerateMips( Texture* Texture )
     uint32 RemainingMiplevels = Desc.MipLevels;
     for ( uint32 i = 0; i < NumDispatches; i++ )
     {
-        ConstantData.TexelSize = XMFLOAT2( 1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight) );
+        ConstantData.TexelSize = CVector2( 1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight) );
         ConstantData.NumMipLevels = NMath::Min<uint32>( 4, RemainingMiplevels );
 
         CmdList.SetComputeRoot32BitConstants( &ConstantData, 4, 0, 0 );

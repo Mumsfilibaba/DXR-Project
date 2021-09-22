@@ -281,8 +281,8 @@ public:
 
     FORCEINLINE void SetName( const std::string& Name )
     {
-        std::wstring WideName = ConvertToWide( Name );
-        CmdList->SetName( WideName.c_str() );
+        WString WideName = CharToWide( CString(Name.c_str(), Name.length() ) );
+        CmdList->SetName( WideName.CStr() );
     }
 
     FORCEINLINE ID3D12CommandList* GetCommandList()         const

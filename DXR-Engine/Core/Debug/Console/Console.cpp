@@ -339,89 +339,10 @@ int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
 
     switch ( Data->EventFlag )
     {
-    case ImGuiInputTextFlags_CallbackEdit:
-    {
-        const char* WordEnd = Data->Buf + Data->CursorPos;
-        const char* WordStart = WordEnd;
-        while ( WordStart > Data->Buf )
+        case ImGuiInputTextFlags_CallbackEdit:
         {
-            const char c = WordStart[-1];
-            if ( c == ' ' || c == '\t' || c == ',' || c == ';' )
-            {
-                break;
-            }
-
-            WordStart--;
-        }
-
-        Candidates.Clear();
-        CandidateSelectionChanged = true;
-        CandidatesIndex = -1;
-
-        const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
-        if ( WordLength <= 0 )
-        {
-            break;
-        }
-
-        for ( const auto& Object : ConsoleObjects )
-        {
-            if ( WordLength <= (int32)Object.first.size() )
-            {
-                const char* Command = Object.first.c_str();
-                int32 d = -1;
-                int32 n = WordLength;
-
-                const char* CmdIt = Command;
-                const char* WordIt = WordStart;
-                while ( n > 0 && (d = toupper( *WordIt ) - toupper( *CmdIt )) == 0 )
-                {
-                    CmdIt++;
-                    WordIt++;
-                    n--;
-                }
-
-                if ( d == 0 )
-                {
-                    ConsoleObject* ConsoleObject = Object.second;
-                    Assert( ConsoleObject != nullptr );
-
-                    if ( ConsoleObject->AsCommand() )
-                    {
-                        Candidates.Emplace( Object.first, "[Cmd]" );
-                    }
-                    else
-                    {
-                        ConsoleVariable* Variable = ConsoleObject->AsVariable();
-                        if ( Variable->IsBool() )
-                        {
-                            Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [Boolean]" );
-                        }
-                        else if ( Variable->IsInt() )
-                        {
-                            Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [Integer]" );
-                        }
-                        else if ( Variable->IsFloat() )
-                        {
-                            Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [float]" );
-                        }
-                        else if ( Variable->IsString() )
-                        {
-                            Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [String]" );
-                        }
-                    }
-                }
-            }
-        }
-
-        break;
-    }
-    case ImGuiInputTextFlags_CallbackCompletion:
-    {
-        const char* WordEnd = Data->Buf + Data->CursorPos;
-        const char* WordStart = WordEnd;
-        if ( Data->BufTextLen > 0 )
-        {
+            const char* WordEnd = Data->Buf + Data->CursorPos;
+            const char* WordStart = WordEnd;
             while ( WordStart > Data->Buf )
             {
                 const char c = WordStart[-1];
@@ -432,104 +353,183 @@ int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
 
                 WordStart--;
             }
-        }
 
-        const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
-        if ( WordLength > 0 )
-        {
-            if ( Candidates.Size() == 1 )
+            Candidates.Clear();
+            CandidateSelectionChanged = true;
+            CandidatesIndex = -1;
+
+            const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
+            if ( WordLength <= 0 )
             {
-                const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
-                const int32 Count = WordLength;
-                Data->DeleteChars( Pos, Count );
-                Data->InsertChars( Data->CursorPos, Candidates[0].Text.c_str() );
-
-                CandidatesIndex = -1;
-                CandidateSelectionChanged = true;
-                Candidates.Clear();
+                break;
             }
-            else if ( !Candidates.IsEmpty() && CandidatesIndex != -1 )
-            {
-                const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
-                const int32 Count = WordLength;
-                Data->DeleteChars( Pos, Count );
-                Data->InsertChars( Data->CursorPos, PopupSelectedText.c_str() );
 
-                PopupSelectedText = "";
-
-                Candidates.Clear();
-                CandidatesIndex = -1;
-                CandidateSelectionChanged = true;
-            }
-        }
-
-        break;
-    }
-    case ImGuiInputTextFlags_CallbackHistory:
-    {
-        if ( Candidates.IsEmpty() )
-        {
-            const int32 PrevHistoryIndex = HistoryIndex;
-            if ( Data->EventKey == ImGuiKey_UpArrow )
+            for ( const auto& Object : ConsoleObjects )
             {
-                if ( HistoryIndex == -1 )
+                if ( WordLength <= (int32)Object.first.size() )
                 {
-                    HistoryIndex = History.Size() - 1;
-                }
-                else if ( HistoryIndex > 0 )
-                {
-                    HistoryIndex--;
-                }
-            }
-            else if ( Data->EventKey == ImGuiKey_DownArrow )
-            {
-                if ( HistoryIndex != -1 )
-                {
-                    HistoryIndex++;
-                    if ( HistoryIndex >= static_cast<int32>(History.Size()) )
+                    const char* Command = Object.first.c_str();
+                    int32 d = -1;
+                    int32 n = WordLength;
+
+                    const char* CmdIt = Command;
+                    const char* WordIt = WordStart;
+                    while ( n > 0 && (d = toupper( *WordIt ) - toupper( *CmdIt )) == 0 )
                     {
-                        HistoryIndex = -1;
+                        CmdIt++;
+                        WordIt++;
+                        n--;
+                    }
+
+                    if ( d == 0 )
+                    {
+                        ConsoleObject* ConsoleObject = Object.second;
+                        Assert( ConsoleObject != nullptr );
+
+                        if ( ConsoleObject->AsCommand() )
+                        {
+                            Candidates.Emplace( Object.first, "[Cmd]" );
+                        }
+                        else
+                        {
+                            ConsoleVariable* Variable = ConsoleObject->AsVariable();
+                            if ( Variable->IsBool() )
+                            {
+                                Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [Boolean]" );
+                            }
+                            else if ( Variable->IsInt() )
+                            {
+                                Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [Integer]" );
+                            }
+                            else if ( Variable->IsFloat() )
+                            {
+                                Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [float]" );
+                            }
+                            else if ( Variable->IsString() )
+                            {
+                                Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [String]" );
+                            }
+                        }
                     }
                 }
             }
 
-            if ( PrevHistoryIndex != HistoryIndex )
-            {
-                const char* HistoryStr = (HistoryIndex >= 0) ? History[HistoryIndex].c_str() : "";
-                Data->DeleteChars( 0, Data->BufTextLen );
-                Data->InsertChars( 0, HistoryStr );
-            }
+            break;
         }
-        else
+        case ImGuiInputTextFlags_CallbackCompletion:
         {
-            if ( Data->EventKey == ImGuiKey_UpArrow )
+            const char* WordEnd = Data->Buf + Data->CursorPos;
+            const char* WordStart = WordEnd;
+            if ( Data->BufTextLen > 0 )
             {
-                CandidateSelectionChanged = true;
-                if ( CandidatesIndex <= 0 )
+                while ( WordStart > Data->Buf )
                 {
-                    CandidatesIndex = Candidates.Size() - 1;
-                }
-                else
-                {
-                    CandidatesIndex--;
-                }
-            }
-            else if ( Data->EventKey == ImGuiKey_DownArrow )
-            {
-                CandidateSelectionChanged = true;
-                if ( CandidatesIndex >= int32( Candidates.Size() ) - 1 )
-                {
-                    CandidatesIndex = 0;
-                }
-                else
-                {
-                    CandidatesIndex++;
-                }
-            }
-        }
+                    const char c = WordStart[-1];
+                    if ( c == ' ' || c == '\t' || c == ',' || c == ';' )
+                    {
+                        break;
+                    }
 
-        break;
-    }
+                    WordStart--;
+                }
+            }
+
+            const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
+            if ( WordLength > 0 )
+            {
+                if ( Candidates.Size() == 1 )
+                {
+                    const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
+                    const int32 Count = WordLength;
+                    Data->DeleteChars( Pos, Count );
+                    Data->InsertChars( Data->CursorPos, Candidates[0].Text.c_str() );
+
+                    CandidatesIndex = -1;
+                    CandidateSelectionChanged = true;
+                    Candidates.Clear();
+                }
+                else if ( !Candidates.IsEmpty() && CandidatesIndex != -1 )
+                {
+                    const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
+                    const int32 Count = WordLength;
+                    Data->DeleteChars( Pos, Count );
+                    Data->InsertChars( Data->CursorPos, PopupSelectedText.c_str() );
+
+                    PopupSelectedText = "";
+
+                    Candidates.Clear();
+                    CandidatesIndex = -1;
+                    CandidateSelectionChanged = true;
+                }
+            }
+
+            break;
+        }
+        case ImGuiInputTextFlags_CallbackHistory:
+        {
+            if ( Candidates.IsEmpty() )
+            {
+                const int32 PrevHistoryIndex = HistoryIndex;
+                if ( Data->EventKey == ImGuiKey_UpArrow )
+                {
+                    if ( HistoryIndex == -1 )
+                    {
+                        HistoryIndex = History.Size() - 1;
+                    }
+                    else if ( HistoryIndex > 0 )
+                    {
+                        HistoryIndex--;
+                    }
+                }
+                else if ( Data->EventKey == ImGuiKey_DownArrow )
+                {
+                    if ( HistoryIndex != -1 )
+                    {
+                        HistoryIndex++;
+                        if ( HistoryIndex >= static_cast<int32>(History.Size()) )
+                        {
+                            HistoryIndex = -1;
+                        }
+                    }
+                }
+
+                if ( PrevHistoryIndex != HistoryIndex )
+                {
+                    const char* HistoryStr = (HistoryIndex >= 0) ? History[HistoryIndex].c_str() : "";
+                    Data->DeleteChars( 0, Data->BufTextLen );
+                    Data->InsertChars( 0, HistoryStr );
+                }
+            }
+            else
+            {
+                if ( Data->EventKey == ImGuiKey_UpArrow )
+                {
+                    CandidateSelectionChanged = true;
+                    if ( CandidatesIndex <= 0 )
+                    {
+                        CandidatesIndex = Candidates.Size() - 1;
+                    }
+                    else
+                    {
+                        CandidatesIndex--;
+                    }
+                }
+                else if ( Data->EventKey == ImGuiKey_DownArrow )
+                {
+                    CandidateSelectionChanged = true;
+                    if ( CandidatesIndex >= int32( Candidates.Size() ) - 1 )
+                    {
+                        CandidatesIndex = 0;
+                    }
+                    else
+                    {
+                        CandidatesIndex++;
+                    }
+                }
+            }
+
+            break;
+        }
     }
 
     return 0;

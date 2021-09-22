@@ -17,9 +17,6 @@ class CMacWindow : public CGenericWindow
 {
 public:
 
-    CMacWindow( CMacApplication* InApplication );
-    ~CMacWindow();
-
     /* Initializes the window */
     virtual bool Init( const std::string& Title, uint32 Width, uint32 Height, SWindowStyle Style ) override final;
 
@@ -69,13 +66,32 @@ public:
     virtual uint32 GetHeight() const override final;
 
     /* Retrieve the native handle */
-    virtual NativeWindowHandle GetNativeHandle() const override final
+    virtual PlatformWindowHandle GetNativeHandle() const override final
     {
         return reinterpret_cast<void*>(Window);
     }
 
+    /* Get the window */
+    FORCEINLINE CCocoaWindow* GetCocoaWindow() const
+    {
+        return Window;
+    }
+
+    /* Get the content view */
+    FORCEINLINE CCocoaWindow* GetCocoaContentVíew() const
+    {
+        return Window;
+    }
+
 private:
+
+    CMacWindow( CMacApplication* InApplication );
+    ~CMacWindow();
+
+    /* Reference to the parent application */
     CMacApplication* Application = nullptr;
+
+    /* The native window and view */
     CCocoaWindow* Window = nullptr;
     CCocoaContentView* View = nullptr;
 };

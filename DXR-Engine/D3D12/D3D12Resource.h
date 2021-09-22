@@ -1,5 +1,5 @@
 #pragma once
-#include "Utilities/StringUtilities.h"
+#include "Core/Utilities/StringUtilities.h"
 
 #include "Core/RefCounted.h"
 
@@ -20,8 +20,8 @@ public:
 
     void SetName( const std::string& Name )
     {
-        std::wstring WideName = ConvertToWide( Name );
-        DxResource->SetName( WideName.c_str() );
+        WString WideName = CharToWide( CString(Name.c_str(), Name.length()) );
+        DxResource->SetName( WideName.CStr() );
     }
 
     ID3D12Resource* GetResource() const

@@ -25,17 +25,20 @@ void CWindowsOutputConsole::Print( const std::string& Message )
 {
     if ( ConsoleHandle )
     {
-        TScopedLock<Mutex> Lock( ConsoleMutex );
-
+        TScopedLock<CCriticalSection> Lock( ConsoleMutex );
         WriteConsoleA( ConsoleHandle, Message.c_str(), static_cast<DWORD>(Message.size()), 0, NULL );
     }
+}
+
+void CWindowsOutputConsole::PrintLine( const std::string& Message )
+{
 }
 
 void CWindowsOutputConsole::Clear()
 {
     if ( ConsoleHandle )
     {
-        TScopedLock<Mutex> Lock( ConsoleMutex );
+        TScopedLock<CCriticalSection> Lock( ConsoleMutex );
 
         CONSOLE_SCREEN_BUFFER_INFO CSBI;
         Memory::Memzero( &CSBI );
@@ -52,12 +55,15 @@ void CWindowsOutputConsole::Clear()
     }
 }
 
+void CWindowsOutputConsole::ClearLastLine()
+{
+}
+
 void CWindowsOutputConsole::SetTitle( const std::string& Title )
 {
     if ( ConsoleHandle )
     {
-        TScopedLock<Mutex> Lock( ConsoleMutex );
-
+        TScopedLock<CCriticalSection> Lock( ConsoleMutex );
         SetConsoleTitleA( Title.c_str() );
     }
 }
@@ -66,25 +72,25 @@ void CWindowsOutputConsole::SetColor( EConsoleColor Color )
 {
     if ( ConsoleHandle )
     {
-        TScopedLock<Mutex> Lock( ConsoleMutex );
+        TScopedLock<CCriticalSection> Lock( ConsoleMutex );
 
         WORD wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
         switch ( Color )
         {
-        case EConsoleColor::Red:
-            wColor = FOREGROUND_RED | FOREGROUND_INTENSITY;
-            break;
+            case EConsoleColor::Red:
+                wColor = FOREGROUND_RED | FOREGROUND_INTENSITY;
+                break;
 
-        case EConsoleColor::Green:
-            wColor = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
-            break;
+            case EConsoleColor::Green:
+                wColor = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+                break;
 
-        case EConsoleColor::Yellow:
-            wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
-            break;
+            case EConsoleColor::Yellow:
+                wColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+                break;
 
-        case EConsoleColor::White:
-            break;
+            case EConsoleColor::White:
+                break;
         }
 
         SetConsoleTextAttribute( ConsoleHandle, wColor );

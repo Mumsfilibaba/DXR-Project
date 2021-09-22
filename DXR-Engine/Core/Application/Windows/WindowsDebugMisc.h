@@ -9,6 +9,10 @@
 #undef MessageBox
 #endif
 
+#ifdef OutputDebugString
+#undef OutputDebugString
+#endif
+
 class CWindowsDebugMisc : public CGenericDebugMisc
 {
 public:

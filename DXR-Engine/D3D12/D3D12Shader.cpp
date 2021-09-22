@@ -108,7 +108,7 @@ bool D3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Refl
             }
             else
             {
-                ConstantBufferParameters.EmplaceBack( ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, SizeInBytes );
+                ConstantBufferParameters.Emplace( ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, SizeInBytes );
                 if ( ShaderBindDesc.Space == 0 )
                 {
                     ResourceCount.Ranges.NumCBVs = NMath::Max( ResourceCount.Ranges.NumCBVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount );
@@ -121,7 +121,7 @@ bool D3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Refl
         }
         else if ( ShaderBindDesc.Type == D3D_SIT_SAMPLER )
         {
-            SamplerParameters.EmplaceBack( ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, 0 );
+            SamplerParameters.Emplace( ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, 0 );
 
             if ( ShaderBindDesc.Space == 0 )
             {
@@ -136,7 +136,7 @@ bool D3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Refl
         {
             const uint32 NumDescriptors = ShaderBindDesc.BindCount != 0 ? ShaderBindDesc.BindCount : UINT_MAX;
 
-            ShaderResourceParameters.EmplaceBack( ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, NumDescriptors, 0 );
+            ShaderResourceParameters.Emplace( ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, NumDescriptors, 0 );
 
             if ( ShaderBindDesc.Space == 0 )
             {
@@ -149,7 +149,7 @@ bool D3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Refl
         }
         else if ( IsUnorderedAccessView( ShaderBindDesc.Type ) )
         {
-            UnorderedAccessParameters.EmplaceBack( ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, 0 );
+            UnorderedAccessParameters.Emplace( ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, 0 );
 
             if ( ShaderBindDesc.Space == 0 )
             {

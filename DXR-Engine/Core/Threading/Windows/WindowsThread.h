@@ -15,6 +15,8 @@ public:
 
     virtual ThreadID GetID() override final;
 
+    static GenericThread* Create( ThreadFunction InFunction ); 
+
 private:
     static DWORD WINAPI ThreadRoutine( LPVOID ThreadParameter );
 

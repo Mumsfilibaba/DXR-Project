@@ -1,13 +1,11 @@
 #include "WindowsThread.h"
 
-#include "Utilities/StringUtilities.h"
+#include "Core/Utilities/StringUtilities.h"
 
 #include <condition_variable>
 
-GenericThread* GenericThread::Create( ThreadFunction Func )
+GenericThread* WindowsThread::Create( ThreadFunction Func )
 {
-    std::condition_variable var;
-
     TSharedRef<WindowsThread> NewThread = DBG_NEW WindowsThread();
     if ( !NewThread->Init( Func ) )
     {
@@ -57,8 +55,8 @@ void WindowsThread::Wait()
 
 void WindowsThread::SetName( const std::string& Name )
 {
-    std::wstring WideString = ConvertToWide( Name );
-    SetThreadDescription( Thread, WideString.c_str() );
+    WString WideName = CharToWide( CString( Name.c_str(), Name.length() ) );
+    SetThreadDescription( Thread, WideName.CStr() );
 }
 
 ThreadID WindowsThread::GetID()

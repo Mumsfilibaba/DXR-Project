@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderLayer/Resources.h"
 
-#include "Utilities/StringUtilities.h"
+#include "Core/Utilities/StringUtilities.h"
 
 #include "D3D12Shader.h"
 #include "D3D12Helpers.h"
@@ -21,14 +21,14 @@ public:
         for ( const InputElement& Element : CreateInfo.Elements )
         {
             D3D12_INPUT_ELEMENT_DESC DxElement;
-            DxElement.SemanticName = SemanticNames.EmplaceBack( Element.Semantic ).c_str();
+            DxElement.SemanticName = SemanticNames.Emplace( Element.Semantic ).c_str();
             DxElement.SemanticIndex = Element.SemanticIndex;
             DxElement.Format = ConvertFormat( Element.Format );
             DxElement.InputSlot = Element.InputSlot;
             DxElement.AlignedByteOffset = Element.ByteOffset;
             DxElement.InputSlotClass = ConvertInputClassification( Element.InputClassification );
             DxElement.InstanceDataStepRate = Element.InstanceStepRate;
-            ElementDesc.EmplaceBack( DxElement );
+            ElementDesc.Emplace( DxElement );
         }
 
         Desc.NumElements = GetElementCount();
@@ -145,8 +145,8 @@ public:
     {
         Resource::SetName( InName );
 
-        std::wstring WideName = ConvertToWide( InName );
-        PipelineState->SetName( WideName.c_str() );
+        WString WideName = CharToWide( CString(InName.c_str(), InName.length() ) );
+        PipelineState->SetName( WideName.CStr() );
     }
 
     virtual void* GetNativeResource() const override final
@@ -185,8 +185,8 @@ public:
     {
         Resource::SetName( InName );
 
-        std::wstring WideName = ConvertToWide( InName );
-        PipelineState->SetName( WideName.c_str() );
+        WString WideName = CharToWide( CString( InName.c_str(), InName.length() ) );
+        PipelineState->SetName( WideName.CStr() );
     }
 
     virtual void* GetNativeResource() const override final
@@ -231,7 +231,7 @@ public:
     {
         Resource::SetName( InName );
 
-        std::wstring WideName = ConvertToWide( InName );
+        std::wstring WideName = CharToWide( CString( InName.c_str(), InName.length() ) ).CStr();
         StateObject->SetName( WideName.c_str() );
     }
 

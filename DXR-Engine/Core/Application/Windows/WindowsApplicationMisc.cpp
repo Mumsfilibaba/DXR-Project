@@ -1,10 +1,32 @@
 #if defined(PLATFORM_WINDOWS)
+#include "WindowsApplication.h"
 #include "WindowsApplicationMisc.h"
 
 #include "Core/Application/ModifierKeyState.h"
 
 void CWindowsApplicationMisc::PumpMessages( bool UntilEmpty )
 {
+    MSG Message;
+
+    do
+    {
+        BOOL Result = PeekMessage( &Message, 0, 0, 0, PM_REMOVE );
+        if ( !Result )
+        {
+            break;
+        }
+
+        TranslateMessage( &Message );
+        DispatchMessage( &Message );
+
+        if ( Message.message == WM_QUIT )
+        {
+            if (GWindowsApplication)
+            {
+                GWindowsApplication->StoreMessage( Message.hwnd, Message.message, Message.wParam, Message.lParam );
+            }
+        }
+    } while( UntilEmpty );
 }
 
 SModifierKeyState CWindowsApplicationMisc::GetModifierKeyState()

@@ -10,11 +10,9 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Engine/EngineGlobals.h"
 #include "Core/Application/Application.h"
-#include "Core/Application/Platform/Platform.h"
 #include "Core/Application/Platform/PlatformApplication.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Application/Platform/PlatformOutputConsole.h"
-#include "Core/Input/InputManager.h"
 #include "Core/Debug/Profiler.h"
 #include "Core/Debug/Console/Console.h"
 #include "Core/Threading/TaskManager.h"
@@ -80,11 +78,6 @@ bool EngineLoop::Init()
     if ( GApplication && !GApplication->Init() )
     {
         LOG_WARNING( "Application Init failed, may not behave as intended" );
-    }
-
-    if ( !InputManager::Get().Init() )
-    {
-        return false;
     }
 
     if ( !GRenderer.Init() )
@@ -161,7 +154,7 @@ bool EngineLoop::Release()
 
     TaskManager::Get().Release();
 
-    SafeDelete( GConsoleOutput );
+    SafeRelease( GConsoleOutput );
 
     GEngine->Release();
     GEngine.Reset();

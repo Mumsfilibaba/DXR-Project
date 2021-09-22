@@ -34,7 +34,7 @@ public:
             TComponent* Component = Actor->GetComponentOfType<TComponent>();
             if ( Component )
             {
-                Components.EmplaceBack( *Component );
+                Components.Emplace( *Component );
             }
         }
 

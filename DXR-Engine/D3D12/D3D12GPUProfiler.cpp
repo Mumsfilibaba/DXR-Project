@@ -173,7 +173,7 @@ bool D3D12GPUProfiler::AllocateReadResource()
     if ( ReadResource->Init( D3D12_RESOURCE_STATE_COPY_DEST, nullptr ) )
     {
         ReadResource->SetName( "Query Readback Resource" );
-        ReadResources.EmplaceBack( ReadResource );
+        ReadResources.Emplace( ReadResource );
     }
     else
     {

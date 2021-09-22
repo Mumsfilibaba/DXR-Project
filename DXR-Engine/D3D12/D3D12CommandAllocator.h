@@ -38,8 +38,8 @@ public:
 
     FORCEINLINE void SetName( const std::string& Name )
     {
-        std::wstring WideName = ConvertToWide( Name );
-        Allocator->SetName( WideName.c_str() );
+        WString WideName = CharToWide( CString(Name.c_str(), Name.length()) );
+        Allocator->SetName( WideName.CStr() );
     }
 
     FORCEINLINE ID3D12CommandAllocator* GetAllocator() const
