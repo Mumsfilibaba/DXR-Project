@@ -132,7 +132,7 @@ void CWindowsKeyMapping::Init()
     KeyCodeFromScanCodeTable[0x137] = EKey::Key_PrintScreen;
     KeyCodeFromScanCodeTable[0x146] = EKey::Key_Pause;
 
-    for ( uint16 Index = 0; Index < 512; Index++ )
+    for ( uint16 Index = 0; Index < KeyCodeFromScanCodeTable.Size(); Index++ )
     {
         if ( KeyCodeFromScanCodeTable[Index] != EKey::Key_Unknown )
         {

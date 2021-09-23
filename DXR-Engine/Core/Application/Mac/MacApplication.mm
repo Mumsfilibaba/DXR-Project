@@ -202,7 +202,7 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         {
             const uint16 MacKey = [Event keyCode];
             const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
-            const EKey Key = Keyboard.GetKeyFromKeyCode(MacKey);
+			const EKey Key = CMacKeyMappings::GetKeyCodeFromScanCode( MacKey );
             MessageListener->OnKeyReleased( Key, ModiferKeyState );
             
             Keyboard.RegisterKeyState( Key, false );
@@ -213,7 +213,7 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         {
             const uint16 MacKey = [Event keyCode];
             const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
-            const EKey Key = Keyboard.GetKeyFromKeyCode(MacKey);
+			const EKey Key = CMacKeyMappings::GetKeyCodeFromScanCode( MacKey );
             MessageListener->OnKeyPressed( Key, [Event isARepeat], ModiferKeyState );
             
             Keyboard.RegisterKeyState( Key, true );
@@ -225,7 +225,7 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         case NSEventTypeOtherMouseUp:
         {
             const NSInteger	   MacButton = [Event buttonNumber];
-            const EMouseButton Button	 = Cursor.GetButtonFromIndex(MacButton);
+			const EMouseButton Button	 = CMacKeyMappings::GetButtonFromIndex( MacButton );
             const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
             MessageListener->OnMouseReleased( Button, ModiferKeyState );
             
@@ -238,7 +238,7 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         case NSEventTypeOtherMouseDown:
         {
             const NSInteger	   MacButton = [Event buttonNumber];
-            const EMouseButton Button	 = Cursor.GetButtonFromIndex(MacButton);
+			const EMouseButton Button	 = CMacKeyMappings::GetButtonFromIndex( MacButton );
             const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
             MessageListener->OnMousePressed( Button, ModiferKeyState );
             

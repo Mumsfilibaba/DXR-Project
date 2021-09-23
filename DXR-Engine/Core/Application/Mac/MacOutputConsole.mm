@@ -40,6 +40,12 @@ CMacOutputConsole::~CMacOutputConsole()
 
 void CMacOutputConsole::Print(const std::string& Message )
 {
+	// TODO: Quick hack for now
+	if (![NSThread isMainThread])
+	{
+		return;
+	}
+	
     if (Window)
     {
         //TODO: Make sure this is the mainthread
@@ -55,6 +61,12 @@ void CMacOutputConsole::Print(const std::string& Message )
 
 void CMacOutputConsole::PrintLine(const std::string& Message )
 {
+	// TODO: Quick hack for now
+	if (![NSThread isMainThread])
+	{
+		return;
+	}
+	
     if (Window)
     {
         //TODO: Make sure this is the mainthread
@@ -71,6 +83,12 @@ void CMacOutputConsole::PrintLine(const std::string& Message )
 
 void CMacOutputConsole::Clear()
 {
+	// TODO: Quick hack for now
+	if (![NSThread isMainThread])
+	{
+		return;
+	}
+	
     if (Window)
     {
         [Window clearWindow];
@@ -84,6 +102,12 @@ void CMacOutputConsole::ClearLastLine()
 
 void CMacOutputConsole::SetTitle(const std::string& InTitle)
 {
+	// TODO: Quick hack for now
+	if (![NSThread isMainThread])
+	{
+		return;
+	}
+	
     if (Window)
     {
         SCOPED_AUTORELEASE_POOL();
@@ -95,6 +119,12 @@ void CMacOutputConsole::SetTitle(const std::string& InTitle)
 
 void CMacOutputConsole::SetColor(EConsoleColor Color)
 {
+	// TODO: Quick hack for now
+	if (![NSThread isMainThread])
+	{
+		return;
+	}
+	
     if (Window)
     {
         [Window setColor:Color];

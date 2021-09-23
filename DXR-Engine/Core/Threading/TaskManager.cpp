@@ -1,10 +1,10 @@
 #include "TaskManager.h"
 
-#include "Platform/PlatformProcess.h"
+#include "Platform/PlatformThreadMisc.h"
 
 #include "ScopedLock.h"
 
-#include <condition_variable>
+#include <string>
 
 TaskManager TaskManager::Instance;
 
@@ -45,7 +45,7 @@ void TaskManager::KillWorkers()
 
 void TaskManager::WorkThread()
 {
-    LOG_INFO( "Starting Work thread: " + std::to_string( PlatformProcess::GetThreadID() ) );
+    LOG_INFO( "Starting Work thread: " + std::to_string( PlatformThreadMisc::GetThreadHandle() ) );
 
     while ( Instance.IsRunning )
     {
@@ -63,12 +63,12 @@ void TaskManager::WorkThread()
         }
     }
 
-    LOG_INFO( "End Work thread: " + std::to_string( PlatformProcess::GetThreadID() ) );
+    LOG_INFO( "End Work thread: " + std::to_string( PlatformThreadMisc::GetThreadHandle() ) );
 }
 
 bool TaskManager::Init()
 {
-    uint32 ThreadCount = NMath::Max<int32>( PlatformProcess::GetNumProcessors() - 1, 1 );
+    uint32 ThreadCount = NMath::Max<int32>( PlatformThreadMisc::GetNumProcessors() - 1, 1 );
     WorkThreads.Resize( ThreadCount );
 
     if ( ThreadCount == 1 )
@@ -90,6 +90,8 @@ bool TaskManager::Init()
         {
             WorkThreads[i] = NewThread;
             NewThread->SetName( "WorkerThread " + std::to_string( i ) );
+			
+			NewThread->Start();
         }
         else
         {
@@ -119,7 +121,7 @@ TaskID TaskManager::AddTask( const Task& NewTask )
         Tasks.Emplace( NewTask );
     }
 
-    ThreadID NewTaskID = TaskAdded.Increment();
+    TaskID NewTaskID = TaskAdded.Increment();
     WakeCondition.NotifyOne();
     return NewTaskID;
 }
@@ -129,7 +131,7 @@ void TaskManager::WaitForTask( TaskID Task )
     while ( TaskCompleted.Load() < Task )
     {
         // Look into proper yeild
-        PlatformProcess::Sleep( 0 );
+        PlatformThreadMisc::Sleep( 0 );
     }
 }
 
@@ -138,7 +140,7 @@ void TaskManager::WaitForAllTasks()
     while ( TaskCompleted.Load() < TaskAdded.Load() )
     {
         // Look into proper yeild
-        PlatformProcess::Sleep( 0 );
+        PlatformThreadMisc::Sleep( 0 );
     }
 }
 
@@ -148,7 +150,7 @@ void TaskManager::Release()
 
     for ( TSharedRef<CGenericThread> Thread : WorkThreads )
     {
-        Thread->Wait();
+        Thread->WaitUntilFinished();
     }
 
     WorkThreads.Clear();

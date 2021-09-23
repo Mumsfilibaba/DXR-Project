@@ -15,6 +15,8 @@ class CMacApplication;
 
 class CMacWindow : public CGenericWindow
 {
+	friend class CMacApplication;
+	
 public:
 
     /* Initializes the window */
@@ -78,7 +80,7 @@ public:
     }
 
     /* Get the content view */
-    FORCEINLINE CCocoaWindow* GetCocoaContentVíew() const
+    FORCEINLINE CCocoaWindow* GetCocoaContentView() const
     {
         return Window;
     }

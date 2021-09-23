@@ -110,7 +110,7 @@ void CMacWindow::Show( bool Maximized )
 
 void CMacWindow::Close()
 {
-    if (Style.IsClosable())
+    if (StyleParams.IsClosable())
     {
        //MacMainThread::MakeCall(^
        //{
@@ -123,7 +123,7 @@ void CMacWindow::Close()
 
 void CMacWindow::Minimize()
 {
-   if (Style.IsMinimizable())
+   if (StyleParams.IsMinimizable())
    {
        //MacMainThread::MakeCall(^
        //{
@@ -136,7 +136,7 @@ void CMacWindow::Minimize()
 
 void CMacWindow::Maximize()
 {
-   if (Style.IsMaximizable())
+   if (StyleParams.IsMaximizable())
    {
        //MacMainThread::MakeCall(^
        //{
@@ -178,7 +178,7 @@ void CMacWindow::Restore()
 
 void CMacWindow::ToggleFullscreen()
 {
-   if (Style.IsResizeable())
+   if (StyleParams.IsResizeable())
    {
        //MacMainThread::MakeCall(^
        //{
@@ -192,7 +192,7 @@ void CMacWindow::SetTitle( const std::string& InTitle )
    SCOPED_AUTORELEASE_POOL();
    
    NSString* Title = [NSString stringWithUTF8String:InTitle.c_str()];
-   if (Style.IsTitled())
+   if (StyleParams.IsTitled())
    {
        //MacMainThread::MakeCall(^
        //{
@@ -203,7 +203,7 @@ void CMacWindow::SetTitle( const std::string& InTitle )
 
 void CMacWindow::GetTitle( std::string& OutTitle )
 {
-    if (Style.IsTitled())
+    if (StyleParams.IsTitled())
     {
         NSString* Title = [Window title];
         NSInteger Length = [Title length];
@@ -217,7 +217,7 @@ void CMacWindow::GetTitle( std::string& OutTitle )
 void CMacWindow::SetWindowShape( const SWindowShape& Shape, bool Move )
 {
     NSRect Frame = [Window frame];
-    if (Style.IsResizeable())
+    if (StyleParams.IsResizeable())
     {
         Frame.size.width  = Shape.Width;
         Frame.size.height = Shape.Height;

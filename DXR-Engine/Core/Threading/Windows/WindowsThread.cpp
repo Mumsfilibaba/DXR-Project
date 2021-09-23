@@ -1,24 +1,11 @@
+#if defined(PLATFORM_WINDOWS)
 #include "WindowsThread.h"
 
 #include "Core/Utilities/StringUtilities.h"
 
-#include <condition_variable>
-
-CGenericThread* CWindowsThread::Make( ThreadFunction Func )
-{
-    TSharedRef<CWindowsThread> NewThread = DBG_NEW CWindowsThread();
-    if ( !NewThread->Init( Func ) )
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewThread.ReleaseOwnership();
-    }
-}
-
-CWindowsThread::CWindowsThread()
+CWindowsThread::CWindowsThread( ThreadFunction InFunction )
     : CGenericThread()
+    , Function( InFunction )
     , Thread( 0 )
     , hThreadID( 0 )
 {
@@ -32,11 +19,9 @@ CWindowsThread::~CWindowsThread()
     }
 }
 
-bool CWindowsThread::Init( ThreadFunction InFunc )
+bool CWindowsThread::Start()
 {
-    Func = InFunc;
-
-    Thread = CreateThread( NULL, 0, CWindowsThread::ThreadRoutine, (LPVOID)this, 0, &hThreadID );
+    Thread = CreateThread( NULL, 0, CWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), 0, &hThreadID );
     if ( !Thread )
     {
         LOG_ERROR( "[CWindowsThread] Failed to create thread" );
@@ -48,7 +33,7 @@ bool CWindowsThread::Init( ThreadFunction InFunc )
     }
 }
 
-void CWindowsThread::Wait()
+void CWindowsThread::WaitUntilFinished()
 {
     WaitForSingleObject( Thread, INFINITE );
 }
@@ -71,9 +56,11 @@ DWORD WINAPI CWindowsThread::ThreadRoutine( LPVOID ThreadParameter )
     {
         Assert( CurrentThread->Func != nullptr );
 
-        CurrentThread->Func();
+        CurrentThread->Function();
         return 0;
     }
 
     return (DWORD)-1;
 }
+
+#endif

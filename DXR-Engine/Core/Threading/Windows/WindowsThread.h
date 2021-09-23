@@ -5,11 +5,14 @@ class CWindowsThread : public CGenericThread
 {
 public:
 
-    static CGenericThread* Make( ThreadFunction InFunction );
+    static FORCEINLINE CWindowsThread* Make( ThreadFunction InFunction )
+    {
+        return DBG_NEW CWindowsThread( InFunction );
+    }
 
-    bool Init( ThreadFunction InFunc );
+    virtual bool Start() override final;
 
-    virtual void Wait() override final;
+    virtual void WaitUntilFinished() override final;
 
     virtual void SetName( const std::string& Name ) override final;
 
@@ -17,7 +20,7 @@ public:
 
 private:
 
-    CWindowsThread();
+    CWindowsThread( ThreadFunction InFunction );
     ~CWindowsThread();
 
     static DWORD WINAPI ThreadRoutine( LPVOID ThreadParameter );
@@ -25,5 +28,5 @@ private:
     HANDLE Thread;
     DWORD  hThreadID;
 
-    ThreadFunction Func;
+    ThreadFunction Function;
 };

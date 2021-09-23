@@ -31,7 +31,7 @@ public:
     /* Retrieve the mouse-button-index from the mouse-button */
     static FORCEINLINE uint32 GetButtonFromIndex( EMouseButton Button )
     {
-        return static_cast<uint32>(ScanCodeFromKeyCodeTable[KeyCode]);
+        return static_cast<uint32>(ButtonIndexFromButton[Button]);
     }
 
 private:
@@ -39,10 +39,10 @@ private:
     static void Init();
 
     /* Lookup table for converting from scan-code to enum */
-    static TStaticArray<EKey, 256> KeyCodeFromScanCode[256];
+    static TStaticArray<EKey, 256> KeyCodeFromScanCodeTable;
 
     /* Lookup table for converting from scan-code to enum */
-    static TStaticArray<uint16, 256> ScanCodeFromKeyCode[256];
+    static TStaticArray<uint16, 256> ScanCodeFromKeyCodeTable;
 
     /* Converts the button-index to mouse button */
     static TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> ButtonFromButtonIndex;

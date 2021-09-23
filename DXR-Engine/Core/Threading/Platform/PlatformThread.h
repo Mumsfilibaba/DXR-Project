@@ -5,8 +5,8 @@
 typedef CWindowsThread PlatformThread;
 
 #elif defined(PLATFORM_MACOS)
-#include "Core/Threading/Generic/GenericThread.h"
-typedef CGenericThread PlatformThread;
+#include "Core/Threading/Mac/MacThread.h"
+typedef CMacThread PlatformThread;
 
 #else
 #include "Core/Threading/Generic/GenericThread.h"

@@ -2,6 +2,8 @@
 #include "MacApplicationMisc.h"
 #include "ScopedAutoreleasePool.h"
 
+#include "Core/Input/InputCodes.h"
+
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
 
@@ -49,23 +51,23 @@ SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
     uint32 Mask = 0;
     if (CurrentModifiers & NSEventModifierFlagControl)
     {
-        Mask |= FModifierFlag::ModifierFlag_Ctrl;
+        Mask |= EModifierFlag::ModifierFlag_Ctrl;
     }
     if (CurrentModifiers & NSEventModifierFlagShift)
     {
-        Mask |= FModifierFlag::ModifierFlag_Shift;
+        Mask |= EModifierFlag::ModifierFlag_Shift;
     }
     if (CurrentModifiers & NSEventModifierFlagOption)
     {
-        Mask |= FModifierFlag::ModifierFlag_Alt;
+        Mask |= EModifierFlag::ModifierFlag_Alt;
     }
     if (CurrentModifiers & NSEventModifierFlagCommand)
     {
-        Mask |= FModifierFlag::ModifierFlag_Super;
+        Mask |= EModifierFlag::ModifierFlag_Super;
     }
     if (CurrentModifiers & NSEventModifierFlagCapsLock)
     {
-        Mask |= FModifierFlag::ModifierFlag_CapsLock;
+        Mask |= EModifierFlag::ModifierFlag_CapsLock;
     }
         
     return SModifierKeyState( Mask );

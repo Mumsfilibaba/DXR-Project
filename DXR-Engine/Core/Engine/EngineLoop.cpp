@@ -18,7 +18,7 @@
 #include "Core/Threading/TaskManager.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/InterlockedInt.h"
-#include "Core/Threading/Platform/PlatformProcess.h"
+#include "Core/Threading/Platform/PlatformThreadMisc.h"
 
 bool EngineLoop::Init()
 {

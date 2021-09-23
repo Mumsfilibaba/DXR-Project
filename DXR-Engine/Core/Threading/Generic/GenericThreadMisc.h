@@ -1,7 +1,7 @@
 #pragma once
 #include "GenericThread.h"
 
-class GenericProcess
+class CGenericThreadMisc
 {
 public:
     static FORCEINLINE uint32 GetNumProcessors()
@@ -9,7 +9,7 @@ public:
         return 1;
     }
 
-    static FORCEINLINE ThreadID GetThreadID()
+    static FORCEINLINE PlatformThreadHandle GetThreadHandle()
     {
         return INVALID_THREAD_ID;
     }

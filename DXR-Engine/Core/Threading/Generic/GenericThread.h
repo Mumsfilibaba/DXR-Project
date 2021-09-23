@@ -5,7 +5,7 @@
 #include "Core/Time/Timestamp.h"
 
 typedef void(*ThreadFunction)();
-typedef uint64 ThreadID;
+typedef uint64 PlatformThreadHandle;
 
 // Might need to be different on other platforms. However this is valid on windows. 
 // See: https://docs.microsoft.com/en-us/windows/win32/procthread/thread-handles-and-identifiers
@@ -21,14 +21,16 @@ public:
         return nullptr;
     }
 
-    virtual void Wait() = 0;
+    virtual bool Start() = 0;
+
+    virtual void WaitUntilFinished() = 0;
 
     virtual void SetName( const std::string& Name ) = 0;
 
-    virtual ThreadID GetID() = 0;
+    virtual PlatformThreadHandle GetPlatformHandle() = 0;
 
 protected:
 
     CGenericThread() = default;
-    virtual ~CGenericThread() = default;
+    ~CGenericThread() = default;
 };
