@@ -4,6 +4,7 @@
 #include "Core/Threading/Generic/GenericThreadMisc.h"
 
 #include <unistd.h>
+#include <pthread.h>
 
 class CMacThreadMisc : public CGenericThreadMisc
 {
@@ -14,7 +15,8 @@ public:
 
     static FORCEINLINE PlatformThreadHandle GetThreadHandle()
     {
-		return (PlatformThreadHandle)nullptr;
+		pthread_t CurrentThread = pthread_self();
+		return reinterpret_cast<PlatformThreadHandle>(CurrentThread);
     }
 
 	/* Make the current thread sleep for a specified amount of time */

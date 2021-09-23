@@ -18,7 +18,8 @@ public:
 
     virtual void WaitUntilFinished() override final;
 
-    virtual void SetName( const std::string& Name ) override final;
+	/* On macOS it only works to call this before the thread is started */
+    virtual void SetName( const std::string& InName ) override final;
 
     virtual PlatformThreadHandle GetPlatformHandle() override final;
 
@@ -29,8 +30,12 @@ private:
     static void* ThreadRoutine( void* ThreadParameter );
 
     pthread_t Thread;
+	
+	ThreadFunction Function;
 
-    ThreadFunction Function;
+	std::string Name;
+		
+	bool IsRunning;
 };
 
 #endif

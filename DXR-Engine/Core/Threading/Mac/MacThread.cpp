@@ -1,10 +1,13 @@
 #if defined(PLATFORM_MACOS)
 #include "MacThread.h"
+#include "MacThreadMisc.h"
 
 CMacThread::CMacThread( ThreadFunction InFunction )
     : CGenericThread()
-    , Function( InFunction )
     , Thread()
+	, Function( InFunction )
+	, Name()
+	, IsRunning( false )
 {
 }
 
@@ -32,10 +35,19 @@ void CMacThread::WaitUntilFinished()
 	pthread_join(Thread, NULL);
 }
 
-void CMacThread::SetName( const std::string& Name )
+void CMacThread::SetName( const std::string& InName )
 {
-	UNREFERENCED_VARIABLE( Name );
-	// Empty for now
+	// The name can always be set from the current thread
+	const bool CurrentThreadIsMyself = GetPlatformHandle() == CMacThreadMisc::GetThreadHandle();
+	if ( CurrentThreadIsMyself )
+	{
+		Name = InName;
+		pthread_setname_np( Name.c_str() );
+	}
+	else if ( !IsRunning )
+	{
+		Name = InName;
+	}
 }
 
 PlatformThreadHandle CMacThread::GetPlatformHandle()
@@ -45,9 +57,12 @@ PlatformThreadHandle CMacThread::GetPlatformHandle()
 
 void* CMacThread::ThreadRoutine( void* ThreadParameter )
 {
-    volatile CMacThread* CurrentThread = (CMacThread*)ThreadParameter;
+    CMacThread* CurrentThread = reinterpret_cast<CMacThread*>(ThreadParameter);
     if ( CurrentThread )
     {
+		// Can only set the current thread's name
+		pthread_setname_np( CurrentThread->Name.c_str() );
+		
         Assert( CurrentThread->Function != nullptr );
         CurrentThread->Function();
     }
