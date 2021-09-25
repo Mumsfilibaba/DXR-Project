@@ -401,7 +401,7 @@ bool Sandbox::Init()
     return true;
 }
 
-void Sandbox::Tick( Timestamp DeltaTime )
+void Sandbox::Tick( CTimestamp DeltaTime )
 {
     Application::Tick( DeltaTime );
 

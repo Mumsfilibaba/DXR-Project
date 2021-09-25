@@ -36,7 +36,7 @@ Scene::~Scene()
     SafeDelete( CurrentCamera );
 }
 
-void Scene::Tick( Timestamp DeltaTime )
+void Scene::Tick( CTimestamp DeltaTime )
 {
     UNREFERENCED_VARIABLE( DeltaTime );
 }

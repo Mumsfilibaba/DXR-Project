@@ -1,35 +1,40 @@
 #pragma once
 #include "Timestamp.h"
 
-class Timer
+class CTimer
 {
 public:
-    Timer();
+
+    CTimer();
+    ~CTimer() = default;
 
     /*
-    * Measures the deltatime between this and the latest call to Clock::Tick. It also updates the totalTime that the clock
-    * has been active. This is the time between the last call to Clock::Reset and this call to Clock::Tick
+    * Measures the deltatime between this and the latest call to CTimer::Tick. It also updates the totalTime that the clock
+    * has been active. This is the time between the last call to CTimer::Reset and this call to Clock::Tick
     */
+
     void Tick();
 
-    void Reset()
+    FORCEINLINE void Reset()
     {
-        DeltaTime = Timestamp( 0 );
-        TotalTime = Timestamp( 0 );
+        DeltaTime = CTimestamp( 0 );
+        TotalTime = CTimestamp( 0 );
     }
 
-    const Timestamp& GetDeltaTime() const
+    FORCEINLINE const CTimestamp& GetDeltaTime() const
     {
         return DeltaTime;
     }
-    const Timestamp& GetTotalTime() const
+
+    FORCEINLINE const CTimestamp& GetTotalTime() const
     {
         return TotalTime;
     }
 
 private:
-    Timestamp TotalTime = Timestamp( 0 );
-    Timestamp DeltaTime = Timestamp( 0 );
-    uint64 LastTime = 0;
+    CTimestamp TotalTime;
+    CTimestamp DeltaTime;
+    
+    uint64 LastTime  = 0;
     uint64 Frequency = 0;
 };

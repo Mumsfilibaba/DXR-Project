@@ -6,137 +6,139 @@
 #pragma warning(disable : 4251)
 #endif
 
-class Timestamp
+class CTimestamp
 {
 public:
-    FORCEINLINE Timestamp( uint64 Nanoseconds = 0 )
-        : TimestampInNS( Nanoseconds )
+
+    FORCEINLINE CTimestamp( uint64 InNanoseconds = 0 )
+        : Nanoseconds( InNanoseconds )
     {
     }
 
     FORCEINLINE double AsSeconds() const
     {
         constexpr double SECONDS = 1000.0 * 1000.0 * 1000.0;
-        return double( TimestampInNS ) / SECONDS;
+        return double( Nanoseconds ) / SECONDS;
     }
 
     FORCEINLINE double AsMilliSeconds() const
     {
         constexpr double MILLISECONDS = 1000.0 * 1000.0;
-        return double( TimestampInNS ) / MILLISECONDS;
+        return double( Nanoseconds ) / MILLISECONDS;
     }
 
     FORCEINLINE double AsMicroSeconds() const
     {
         constexpr double MICROSECONDS = 1000.0;
-        return double( TimestampInNS ) / MICROSECONDS;
+        return double( Nanoseconds ) / MICROSECONDS;
     }
 
     FORCEINLINE uint64 AsNanoSeconds() const
     {
-        return TimestampInNS;
+        return Nanoseconds;
     }
 
-    FORCEINLINE bool operator==( const Timestamp& Other ) const
+    FORCEINLINE bool operator==( const CTimestamp& Other ) const
     {
-        return TimestampInNS == Other.TimestampInNS;
+        return Nanoseconds == Other.Nanoseconds;
     }
 
-    FORCEINLINE bool operator!=( const Timestamp& Other ) const
+    FORCEINLINE bool operator!=( const CTimestamp& Other ) const
     {
-        return TimestampInNS != Other.TimestampInNS;
+        return Nanoseconds != Other.Nanoseconds;
     }
 
-    FORCEINLINE Timestamp& operator+=( const Timestamp& Right )
+    FORCEINLINE CTimestamp& operator+=( const CTimestamp& Right )
     {
-        TimestampInNS += Right.TimestampInNS;
+        Nanoseconds += Right.Nanoseconds;
         return *this;
     }
 
-    FORCEINLINE Timestamp& operator-=( const Timestamp& Right )
+    FORCEINLINE CTimestamp& operator-=( const CTimestamp& Right )
     {
-        TimestampInNS -= Right.TimestampInNS;
+        Nanoseconds -= Right.Nanoseconds;
         return *this;
     }
 
-    FORCEINLINE Timestamp& operator*=( const Timestamp& Right )
+    FORCEINLINE CTimestamp& operator*=( const CTimestamp& Right )
     {
-        TimestampInNS *= Right.TimestampInNS;
+        Nanoseconds *= Right.Nanoseconds;
         return *this;
     }
 
-    FORCEINLINE Timestamp& operator/=( const Timestamp& Right )
+    FORCEINLINE CTimestamp& operator/=( const CTimestamp& Right )
     {
-        TimestampInNS /= Right.TimestampInNS;
+        Nanoseconds /= Right.Nanoseconds;
         return *this;
     }
 
-    static FORCEINLINE Timestamp Seconds( double Seconds )
+    static FORCEINLINE CTimestamp Seconds( double Seconds )
     {
         constexpr double SECOND = 1000.0 * 1000.0 * 1000.0;
-        return Timestamp( static_cast<uint64>(Seconds * SECOND) );
+        return CTimestamp( static_cast<uint64>(Seconds * SECOND) );
     }
 
-    static FORCEINLINE Timestamp MilliSeconds( double Milliseconds )
+    static FORCEINLINE CTimestamp MilliSeconds( double Milliseconds )
     {
         constexpr double MILLISECOND = 1000.0 * 1000.0;
-        return Timestamp( static_cast<uint64>(Milliseconds * MILLISECOND) );
+        return CTimestamp( static_cast<uint64>(Milliseconds * MILLISECOND) );
     }
 
-    static FORCEINLINE Timestamp MicroSeconds( double Microseconds )
+    static FORCEINLINE CTimestamp MicroSeconds( double Microseconds )
     {
         constexpr double MICROSECOND = 1000.0;
-        return Timestamp( static_cast<uint64>(Microseconds * MICROSECOND) );
+        return CTimestamp( static_cast<uint64>(Microseconds * MICROSECOND) );
     }
 
-    static FORCEINLINE Timestamp NanoSeconds( uint64 Nanoseconds )
+    static FORCEINLINE CTimestamp NanoSeconds( uint64 Nanoseconds )
     {
-        return Timestamp( Nanoseconds );
+        return CTimestamp( Nanoseconds );
     }
 
 public:
-    FORCEINLINE friend Timestamp operator+( const Timestamp& Left, const Timestamp& Right )
+
+    FORCEINLINE friend CTimestamp operator+( const CTimestamp& Left, const CTimestamp& Right )
     {
-        return Timestamp( Left.TimestampInNS + Right.TimestampInNS );
+        return CTimestamp( Left.Nanoseconds + Right.Nanoseconds );
     }
 
-    FORCEINLINE friend Timestamp operator-( const Timestamp& Left, const Timestamp& Right )
+    FORCEINLINE friend CTimestamp operator-( const CTimestamp& Left, const CTimestamp& Right )
     {
-        return Timestamp( Left.TimestampInNS - Right.TimestampInNS );
+        return CTimestamp( Left.Nanoseconds - Right.Nanoseconds );
     }
 
-    FORCEINLINE friend Timestamp operator*( const Timestamp& Left, const Timestamp& Right )
+    FORCEINLINE friend CTimestamp operator*( const CTimestamp& Left, const CTimestamp& Right )
     {
-        return Timestamp( Left.TimestampInNS * Right.TimestampInNS );
+        return CTimestamp( Left.Nanoseconds * Right.Nanoseconds );
     }
 
-    FORCEINLINE friend Timestamp operator/( const Timestamp& Left, const Timestamp& Right )
+    FORCEINLINE friend CTimestamp operator/( const CTimestamp& Left, const CTimestamp& Right )
     {
-        return Timestamp( Left.TimestampInNS / Right.TimestampInNS );
+        return CTimestamp( Left.Nanoseconds / Right.Nanoseconds );
     }
 
-    FORCEINLINE friend bool operator>( const Timestamp& Left, const Timestamp& Right )
+    FORCEINLINE friend bool operator>( const CTimestamp& Left, const CTimestamp& Right )
     {
-        return Left.TimestampInNS > Right.TimestampInNS;
+        return Left.Nanoseconds > Right.Nanoseconds;
     }
 
-    FORCEINLINE friend bool operator<( const Timestamp& Left, const Timestamp& Right )
+    FORCEINLINE friend bool operator<( const CTimestamp& Left, const CTimestamp& Right )
     {
-        return Left.TimestampInNS < Right.TimestampInNS;
+        return Left.Nanoseconds < Right.Nanoseconds;
     }
 
-    FORCEINLINE friend bool operator>=( const Timestamp& Left, const Timestamp& Right )
+    FORCEINLINE friend bool operator>=( const CTimestamp& Left, const CTimestamp& Right )
     {
-        return (Left.TimestampInNS >= Right.TimestampInNS);
+        return (Left.Nanoseconds >= Right.Nanoseconds);
     }
 
-    FORCEINLINE friend bool operator<=( const Timestamp& Left, const Timestamp& Right )
+    FORCEINLINE friend bool operator<=( const CTimestamp& Left, const CTimestamp& Right )
     {
-        return (Left.TimestampInNS <= Right.TimestampInNS);
+        return (Left.Nanoseconds <= Right.Nanoseconds);
     }
 
 private:
-    uint64 TimestampInNS = 0;
+    uint64 Nanoseconds = 0;
 };
 
 #ifdef COMPILER_MSVC

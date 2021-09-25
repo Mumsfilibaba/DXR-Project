@@ -15,7 +15,7 @@ public:
     Scene();
     ~Scene();
 
-    void Tick( Timestamp DeltaTime );
+    void Tick( CTimestamp DeltaTime );
 
     void AddCamera( Camera* InCamera );
     void AddActor( Actor* InActor );

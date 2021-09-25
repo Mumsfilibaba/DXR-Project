@@ -44,7 +44,7 @@ private:
     TArray<Task> Tasks;
     CCriticalSection TaskMutex;
 
-    ConditionVariable WakeCondition;
+    CConditionVariable WakeCondition;
     CCriticalSection WakeMutex;
 
     InterlockedInt32 TaskAdded;

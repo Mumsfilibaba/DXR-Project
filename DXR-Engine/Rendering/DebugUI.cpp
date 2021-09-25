@@ -28,7 +28,7 @@ struct ImGuiState
         PShader.Reset();
     }
 
-    Timer FrameClock;
+    CTimer FrameClock;
 
     TSharedRef<Texture2D>             FontTexture;
     TSharedRef<GraphicsPipelineState> PipelineState;
@@ -540,7 +540,7 @@ void DebugUI::Render( CommandList& CmdList )
     SWindowShape CurrentWindowShape;
     Window->GetWindowShape( CurrentWindowShape );
 
-    Timestamp Delta = GlobalImGuiState.FrameClock.GetDeltaTime();
+    CTimestamp Delta = GlobalImGuiState.FrameClock.GetDeltaTime();
     IO.DeltaTime = static_cast<float>(Delta.AsSeconds());
     IO.DisplaySize = ImVec2( float( CurrentWindowShape.Width ), float( CurrentWindowShape.Height ) );
     IO.DisplayFramebufferScale = ImVec2( 1.0f, 1.0f );

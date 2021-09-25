@@ -20,7 +20,7 @@ public:
     }
 
 	/* Make the current thread sleep for a specified amount of time */
-    static FORCEINLINE void Sleep( Timestamp Time )
+    static FORCEINLINE void Sleep( CTimestamp Time )
     {
         float MicroSeconds = Time.AsMicroSeconds();
         usleep( static_cast<useconds_t>(MicroSeconds) );

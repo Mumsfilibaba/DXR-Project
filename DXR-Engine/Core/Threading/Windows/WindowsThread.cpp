@@ -44,7 +44,7 @@ void CWindowsThread::SetName( const std::string& Name )
     SetThreadDescription( Thread, WideName.CStr() );
 }
 
-ThreadID CWindowsThread::GetID()
+PlatformThreadHandle CWindowsThread::GetPlatformHandle()
 {
     return hThreadID;
 }

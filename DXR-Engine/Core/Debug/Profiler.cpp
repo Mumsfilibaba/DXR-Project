@@ -82,7 +82,7 @@ struct ProfileSample
     }
 
     TStaticArray<float, NUM_PROFILER_SAMPLES> Samples;
-    Timer Clock;
+    CTimer Clock;
     float Max = -FLT_MAX;
     float Min = FLT_MAX;
     int32 SampleCount = 0;
@@ -151,7 +151,7 @@ struct ProfilerData
     ProfileSample    CPUFrameTime;
     GPUProfileSample GPUFrameTime;
 
-    Timer Clock;
+    CTimer Clock;
 
     int32 CurrentFps = 0;
     int32 Fps = 0;
@@ -647,7 +647,7 @@ void Profiler::Init()
 
 void Profiler::Tick()
 {
-    Timer& Clock = GProfilerData.Clock;
+    CTimer& Clock = GProfilerData.Clock;
     Clock.Tick();
 
     GProfilerData.CurrentFps++;

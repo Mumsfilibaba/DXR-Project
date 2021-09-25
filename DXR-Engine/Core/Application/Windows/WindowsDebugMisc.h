@@ -1,6 +1,7 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
+#include "Core/Containers/String.h"
 #include "Core/Application/Generic/GenericDebugMisc.h"
 
 #include "Windows.h"
@@ -34,6 +35,10 @@ public:
     {
         return ::IsDebuggerPresent();
     }
+
+    /* Calls GetLastError and retrives a string from it */
+    static void GetLastErrorString( CString& OutErrorString );
+
 };
 
 #endif

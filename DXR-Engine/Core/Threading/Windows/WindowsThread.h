@@ -16,7 +16,7 @@ public:
 
     virtual void SetName( const std::string& Name ) override final;
 
-    virtual ThreadID GetID() override final;
+    virtual PlatformThreadHandle GetPlatformHandle() override final;
 
 private:
 

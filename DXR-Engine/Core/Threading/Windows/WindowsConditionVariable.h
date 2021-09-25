@@ -1,11 +1,18 @@
 #pragma once
 #include "WindowsCriticalSection.h"
 
+#include "Core/Application/Windows/WindowsDebugMisc.h"
 #include "Core/Threading/ScopedLock.h"
 
 class CWindowsConditionVariable
 {
 public:
+
+	typedef CONDITION_VARIABLE* PlatformHandle;
+
+	CWindowsConditionVariable( const CWindowsConditionVariable& )            = delete;
+	CWindowsConditionVariable& operator=( const CWindowsConditionVariable& ) = delete;
+
     FORCEINLINE CWindowsConditionVariable()
         : ConditionVariable()
     {
@@ -31,16 +38,27 @@ public:
     {
         SetLastError( 0 );
 
-        bool Result = !!SleepConditionVariableCS( &ConditionVariable, &Lock.GetLock().GetSection(), INFINITE );
+        CWindowsCriticalSection::PlatformHandle CriticalSection = Lock.GetLock().GetPlatformHandle();
+
+        bool Result = !!SleepConditionVariableCS( &ConditionVariable, CriticalSection, INFINITE );
         if ( !Result )
         {
-            // TODO: Check Error
+            CString ErrorString;
+            CWindowsDebugMisc::GetLastErrorString( ErrorString );
+
+            LOG_ERROR( ErrorString.CStr() );
+
             return false;
         }
         else
         {
             return true;
         }
+    }
+
+    FORCEINLINE PlatformHandle GetSection() noexcept
+    {
+        return &ConditionVariable;
     }
 
 private:

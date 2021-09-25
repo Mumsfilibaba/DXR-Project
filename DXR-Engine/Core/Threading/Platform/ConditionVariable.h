@@ -2,15 +2,14 @@
 
 #if defined(PLATFORM_WINDOWS)
 #include "Core/Threading/Windows/WindowsConditionVariable.h"
-typedef CWindowsConditionVariable ConditionVariable;
+typedef CWindowsConditionVariable CConditionVariable;
 
 #elif defined(PLATFORM_MACOS)
-#include "Core/Threading/Generic/GenericConditionVariable.h"
-typedef CGenericConditionVariable ConditionVariable;
-//TODO: MacCondition variable
+#include "Core/Threading/Mac/MacConditionVariable.h"
+typedef CMacConditionVariable CConditionVariable;
 
 #else
 #include "Core/Threading/Generic/GenericConditionVariable.h"
-typedef CGenericConditionVariable ConditionVariable;
+typedef CGenericConditionVariable CConditionVariable;
 
 #endif

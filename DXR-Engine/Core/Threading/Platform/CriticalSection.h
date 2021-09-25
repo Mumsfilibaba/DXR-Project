@@ -5,9 +5,8 @@
 typedef CWindowsCriticalSection CCriticalSection;
 
 #elif defined(PLATFORM_MACOS)
-#include "Core/Threading/Generic/GenericCriticalSection.h"
-typedef CGenericCriticalSection CCriticalSection;
-// TODO: MacMutex
+#include "Core/Threading/Mac/MacCriticalSection.h"
+typedef CMacCriticalSection CCriticalSection;
 
 #else
 #include "Core/Threading/Generic/GenericCriticalSection.h"

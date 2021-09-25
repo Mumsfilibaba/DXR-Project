@@ -7,7 +7,7 @@ class Sandbox : public Application
 public:
     virtual bool Init() override;
 
-    virtual void Tick( Timestamp DeltaTime ) override;
+	virtual void Tick( CTimestamp DeltaTime ) override;
 
 private:
     Camera* CurrentCamera = nullptr;

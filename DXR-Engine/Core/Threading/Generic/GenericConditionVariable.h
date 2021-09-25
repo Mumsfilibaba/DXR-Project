@@ -18,6 +18,8 @@ class CGenericConditionVariable
 {
 public:
 
+	typedef void* PlatformHandle;
+	
     CGenericConditionVariable() = default;
     ~CGenericConditionVariable() = default;
 
@@ -33,6 +35,11 @@ public:
     {
         return false;
     }
+	
+	FORCEINLINE PlatformHandle GetPlatformHandle()
+	{
+		return nullptr;
+	}
 };
 
 #if defined(COMPILER_MSVC)

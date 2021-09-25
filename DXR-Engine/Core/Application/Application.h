@@ -10,7 +10,7 @@ public:
 
     virtual bool Init();
 
-    virtual void Tick( Timestamp Deltatime );
+    virtual void Tick( CTimestamp Deltatime );
 
     virtual bool Release();
 

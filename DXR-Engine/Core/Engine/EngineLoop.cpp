@@ -99,7 +99,7 @@ bool EngineLoop::Init()
     return true;
 }
 
-void EngineLoop::Tick( Timestamp Deltatime )
+void EngineLoop::Tick( CTimestamp Deltatime )
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -109,7 +109,7 @@ void EngineLoop::Tick( Timestamp Deltatime )
 
     GConsole.Tick();
 
-    LOG_INFO( "Tick" );
+    LOG_INFO( "Tick: " + std::to_string(Deltatime.AsMilliSeconds()) + "ms" );
 
     Editor::Tick();
 
@@ -120,12 +120,12 @@ void EngineLoop::Tick( Timestamp Deltatime )
 
 void EngineLoop::Run()
 {
-    Timer Timer;
+    CTimer CTimer;
 
     while ( GEngine->IsRunning )
     {
-        Timer.Tick();
-        EngineLoop::Tick( Timer.GetDeltaTime() );
+        CTimer.Tick();
+        EngineLoop::Tick( CTimer.GetDeltaTime() );
     }
 }
 

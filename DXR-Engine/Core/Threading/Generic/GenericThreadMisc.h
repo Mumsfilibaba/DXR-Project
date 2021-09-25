@@ -14,7 +14,7 @@ public:
         return INVALID_THREAD_ID;
     }
 
-    static FORCEINLINE void Sleep( Timestamp )
+    static FORCEINLINE void Sleep( CTimestamp )
     {
     }
 };

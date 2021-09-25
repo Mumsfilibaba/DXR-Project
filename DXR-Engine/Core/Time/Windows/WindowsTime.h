@@ -1,10 +1,14 @@
 #pragma once
+
+#if defined(PLATFORM_WINDOWS)
 #include "Core/Time/Generic/GenericTime.h"
 #include "Core/Windows/Windows.h"
 
-class WindowsTime : public GenericTime
+class CWindowsTime : public CGenericTime
 {
 public:
+
+        /* Query the current state of the performance counter */
     static FORCEINLINE uint64 QueryPerformanceCounter()
     {
         LARGE_INTEGER Counter;
@@ -12,6 +16,7 @@ public:
         return Counter.QuadPart;
     }
 
+    /* Query the frequency of the performance counter */
     static FORCEINLINE uint64 QueryPerformanceFrequency()
     {
         LARGE_INTEGER Counter;
@@ -19,3 +24,4 @@ public:
         return Counter.QuadPart;
     }
 };
+#endif
