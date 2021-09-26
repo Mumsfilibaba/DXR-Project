@@ -16,41 +16,41 @@ class CWindowMessageHandler
 {
 public:
 
-	/* Handle Window Resized event, if the handler handles the event, return true */
-	virtual bool OnWindowResized( const SWindowResizeEvent& ResizeEvent )
+    /* Handle Window Resized event, if the handler handles the event, return true */
+    virtual bool OnWindowResized( const SWindowResizeEvent& ResizeEvent )
     {
-		return false;
+        return false;
     }
-	
-	/* Handle Window Moved  event, if the handler handles the event, return true */
-	virtual bool OnWindowMoved( const SWindowMovedEvent& WindowMovedEvent )
+
+    /* Handle Window Moved  event, if the handler handles the event, return true */
+    virtual bool OnWindowMoved( const SWindowMovedEvent& WindowMovedEvent )
     {
-		return false;
+        return false;
     }
-	
-	/* Handle Window Focus changed event, if the handler handles the event, return true */
-	virtual bool OnWindowFocusChanged( const SWindowFocusChangedEvent& FocusEvent )
+
+    /* Handle Window Focus changed event, if the handler handles the event, return true */
+    virtual bool OnWindowFocusChanged( const SWindowFocusChangedEvent& FocusEvent )
     {
-		return false;
+        return false;
     }
-	
-	/* Handle Mouse entered or exited the window frame- event, if the handler handles the event, return true */
-	virtual bool OnWindowFrameMouseEvent( const SWindowFrameMouseEvent& MouseEnteredOrLeftEvent )
+
+    /* Handle Mouse entered or exited the window frame- event, if the handler handles the event, return true */
+    virtual bool OnWindowFrameMouseEvent( const SWindowFrameMouseEvent& MouseEnteredOrLeftEvent )
     {
-		return false;
+        return false;
     }
-	
-	/* Handle Window closed event, if the handler handles the event, return true */
-	virtual bool OnWindowClosed( const SWindowClosedEvent& Window )
+
+    /* Handle Window closed event, if the handler handles the event, return true */
+    virtual bool OnWindowClosed( const SWindowClosedEvent& Window )
     {
-		return false;
+        return false;
     }
-	
-	/* Return the priority of this inputhandler, higher will be processed first */
-	virtual uint32 GetPriority() const
-	{
-		return 0;
-	}
+
+    /* Return the priority of this inputhandler, higher will be processed first */
+    virtual uint32 GetPriority() const
+    {
+        return 0;
+    }
 };
 
 #if defined(COMPILER_MSVC)

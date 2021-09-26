@@ -539,7 +539,7 @@ bool D3D12RayTracingPipelineState::Init( const RayTracingPipelineStateCreateInfo
             return false;
         }
 
-        std::wstring AnyHitIdentifier = CharToWide( CString( DxAnyHit->GetIdentifier().c_str(), DxAnyHit->GetIdentifier().length() ) ).CStr(); 
+        std::wstring AnyHitIdentifier = CharToWide( CString( DxAnyHit->GetIdentifier().c_str(), DxAnyHit->GetIdentifier().length() ) ).CStr();
         PipelineStream.AddLibrary( DxAnyHit->GetByteCode(), { AnyHitIdentifier } );
         PipelineStream.AddRootSignatureAssociation( HitLocalRootSignature->GetRootSignature(), { AnyHitIdentifier } );
         PipelineStream.PayLoadExportNames.Emplace( AnyHitIdentifier );

@@ -8,7 +8,7 @@ class CWindowsTime : public CGenericTime
 {
 public:
 
-        /* Query the current state of the performance counter */
+    /* Query the current state of the performance counter */
     static FORCEINLINE uint64 QueryPerformanceCounter()
     {
         LARGE_INTEGER Counter;

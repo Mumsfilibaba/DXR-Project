@@ -39,20 +39,20 @@ bool EngineLoop::Init()
 
     Profiler::Init();
 
-	TSharedPtr<CGenericApplication> PlatformApplication = PlatformApplication::Make();
+    TSharedPtr<CGenericApplication> PlatformApplication = PlatformApplication::Make();
     if ( PlatformApplication && !PlatformApplication->Init() )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create PlatformApplication" );
         return false;
     }
 
-	TSharedPtr<CMainApplication> Application = CMainApplication::Make( PlatformApplication );
-	if ( !Application )
-	{
-		PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create MainApplication" );
-		return false;
-	}
-	
+    TSharedPtr<CMainApplication> Application = CMainApplication::Make( PlatformApplication );
+    if ( !Application )
+    {
+        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create MainApplication" );
+        return false;
+    }
+
     if ( !TaskManager::Get().Init() )
     {
         return false;
@@ -116,7 +116,7 @@ void EngineLoop::Tick( CTimestamp Deltatime )
 
     GConsole.Tick();
 
-    LOG_INFO( "Tick: " + std::to_string(Deltatime.AsMilliSeconds()) + "ms" );
+    LOG_INFO( "Tick: " + std::to_string( Deltatime.AsMilliSeconds() ) + "ms" );
 
     Editor::Tick();
 
@@ -163,7 +163,7 @@ bool EngineLoop::Release()
 
     SafeRelease( GConsoleOutput );
 
-	CEngine::Get().Release();
-	
+    CEngine::Get().Release();
+
     return true;
 }

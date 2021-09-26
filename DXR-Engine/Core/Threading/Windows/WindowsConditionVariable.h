@@ -8,10 +8,10 @@ class CWindowsConditionVariable
 {
 public:
 
-	typedef CONDITION_VARIABLE* PlatformHandle;
+    typedef CONDITION_VARIABLE* PlatformHandle;
 
-	CWindowsConditionVariable( const CWindowsConditionVariable& )            = delete;
-	CWindowsConditionVariable& operator=( const CWindowsConditionVariable& ) = delete;
+    CWindowsConditionVariable( const CWindowsConditionVariable& ) = delete;
+    CWindowsConditionVariable& operator=( const CWindowsConditionVariable& ) = delete;
 
     FORCEINLINE CWindowsConditionVariable()
         : ConditionVariable()

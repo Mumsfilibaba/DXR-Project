@@ -21,8 +21,8 @@ public:
     /* Pumps the application's message queue */
     static void PumpMessages( bool UntilEmpty );
 
-	/* Retrieves the state of modifer keys */
-	static SModifierKeyState GetModifierKeyState();
+    /* Retrieves the state of modifer keys */
+    static SModifierKeyState GetModifierKeyState();
 };
 
 #if defined(COMPILER_CLANG)

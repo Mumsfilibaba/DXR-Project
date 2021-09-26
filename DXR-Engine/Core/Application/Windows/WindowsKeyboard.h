@@ -27,7 +27,7 @@ private:
     // When application loses focus, reset the state
     FORCEINLINE void ResetState()
     {
-       Memory::Memzero( KeyStates.Data(), KeyStates.SizeInBytes() );
+        Memory::Memzero( KeyStates.Data(), KeyStates.SizeInBytes() );
     }
 };
 

@@ -9,17 +9,17 @@
 class CMacThreadMisc : public CGenericThreadMisc
 {
 public:
-	
-	/* Retreives the number of logical cores available on the system */
-	static uint32 GetNumProcessors();
+
+    /* Retreives the number of logical cores available on the system */
+    static uint32 GetNumProcessors();
 
     static FORCEINLINE PlatformThreadHandle GetThreadHandle()
     {
-		pthread_t CurrentThread = pthread_self();
-		return reinterpret_cast<PlatformThreadHandle>(CurrentThread);
+        pthread_t CurrentThread = pthread_self();
+        return reinterpret_cast<PlatformThreadHandle>(CurrentThread);
     }
 
-	/* Make the current thread sleep for a specified amount of time */
+    /* Make the current thread sleep for a specified amount of time */
     static FORCEINLINE void Sleep( CTimestamp Time )
     {
         float MicroSeconds = Time.AsMicroSeconds();

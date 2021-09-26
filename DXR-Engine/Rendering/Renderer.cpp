@@ -853,8 +853,8 @@ bool Renderer::Init()
     GCmdListExecutor.ExecuteCommandList( MainCmdList );
 
     // Register EventFunc
-	WindowHandler.WindowResizedDelegate.BindRaw( this, &Renderer::OnWindowResize );
-	CMainApplication::Get().AddWindowMessageHandler( &WindowHandler );
+    WindowHandler.WindowResizedDelegate.BindRaw( this, &Renderer::OnWindowResize );
+    CMainApplication::Get().AddWindowMessageHandler( &WindowHandler );
 
     return true;
 }

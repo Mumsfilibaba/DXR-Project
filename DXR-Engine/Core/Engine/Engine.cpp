@@ -19,20 +19,20 @@ CEngine::~CEngine()
 
 bool CEngine::Init()
 {
-	/* Register for events about exiting the application */
-	OnApplicationExitHandle = CMainApplication::Get().ApplicationExitEvent.AddRaw( this, &CEngine::OnApplicationExit );
-	
-	/* Get notifyed when the main-window closes */
-	WindowHandler.WindowClosedDelegate.BindLambda([this]( const SWindowClosedEvent& ClosedEvent )
-	{
-		if (this->MainWindow == ClosedEvent.Window)
-		{
-			this->Exit();
-		}
-	});
-	
-	CMainApplication::Get().AddWindowMessageHandler( &WindowHandler );
-	
+    /* Register for events about exiting the application */
+    OnApplicationExitHandle = CMainApplication::Get().ApplicationExitEvent.AddRaw( this, &CEngine::OnApplicationExit );
+
+    /* Get notifyed when the main-window closes */
+    WindowHandler.WindowClosedDelegate.BindLambda( [this]( const SWindowClosedEvent& ClosedEvent )
+    {
+        if ( this->MainWindow == ClosedEvent.Window )
+        {
+            this->Exit();
+        }
+    } );
+
+    CMainApplication::Get().AddWindowMessageHandler( &WindowHandler );
+
     const uint32 Style =
         WindowStyleFlag_Titled |
         WindowStyleFlag_Closable |
@@ -63,15 +63,15 @@ bool CEngine::Init()
 
 bool CEngine::Release()
 {
-	/* Unregister for events */
-	CMainApplication::Get().ApplicationExitEvent.Unbind( OnApplicationExitHandle );
-	
+    /* Unregister for events */
+    CMainApplication::Get().ApplicationExitEvent.Unbind( OnApplicationExitHandle );
+
     return true;
 }
 
 void CEngine::OnApplicationExit( int32 )
 {
-	IsRunning = false;
+    IsRunning = false;
 }
 
 void CEngine::Exit()

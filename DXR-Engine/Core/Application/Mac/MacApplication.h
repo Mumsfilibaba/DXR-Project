@@ -29,8 +29,8 @@ class CMacApplication final : public CGenericApplication
 {
 public:
 
-	/* Public destructor for TSharedPtr */
-	~CMacApplication();
+    /* Public destructor for TSharedPtr */
+    ~CMacApplication();
 
     /* Creates the mac application */
     static FORCEINLINE TSharedPtr<CMacApplication> Make()

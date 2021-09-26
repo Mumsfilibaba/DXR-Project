@@ -15,8 +15,8 @@ class CMacApplication;
 
 class CMacWindow : public CGenericWindow
 {
-	friend class CMacApplication;
-	
+    friend class CMacApplication;
+
 public:
 
     /* Initializes the window */

@@ -8,8 +8,8 @@
 
 enum EWindowsMasks : uint32
 {
-    ScanCodeMask   = 0x01ff,
-    KeyRepeatMask  = 0x40000000,
+    ScanCodeMask = 0x01ff,
+    KeyRepeatMask = 0x40000000,
     BackButtonMask = 0x0001
 };
 
@@ -42,15 +42,15 @@ struct SSizeMessage
 };
 
 /* Global instance of the windows- application */
-CWindowsApplication* GWindowsApplication = nullptr;
+CWindowsApplication* CWindowsApplication::ApplicationInstance = nullptr;
 
 /* Create the application and load icon */
-CWindowsApplication* CWindowsApplication::Make()
+TSharedPtr<CWindowsApplication> CWindowsApplication::Make()
 {
     HINSTANCE Instance = (HINSTANCE)GetModuleHandleA( 0 );
 
     // TODO: Load icon here
-    return new CWindowsApplication( Instance );
+    return TSharedPtr<CWindowsApplication>( DBG_NEW CWindowsApplication( Instance ) );
 }
 
 CWindowsApplication::CWindowsApplication( HINSTANCE InInstance )
@@ -64,18 +64,14 @@ CWindowsApplication::CWindowsApplication( HINSTANCE InInstance )
     , Keyboard()
 {
     // Always the last instance created 
-    GWindowsApplication = this;
+    ApplicationInstance = this;
 }
 
 CWindowsApplication::~CWindowsApplication()
 {
     Windows.Clear();
 
-    // Should be all cases but this protect those times that it is not true
-    if ( GWindowsApplication )
-    {
-        GWindowsApplication = nullptr;
-    }
+    ApplicationInstance = nullptr;
 }
 
 bool CWindowsApplication::RegisterWindowClass()
@@ -99,7 +95,7 @@ bool CWindowsApplication::RegisterWindowClass()
     return true;
 }
 
-CGenericWindow* CWindowsApplication::MakeWindow()
+TSharedRef<CGenericWindow> CWindowsApplication::MakeWindow()
 {
     TSharedRef<CWindowsWindow> NewWindow = new CWindowsWindow( this );
     Windows.Emplace( NewWindow );
@@ -138,16 +134,11 @@ void CWindowsApplication::Tick( float )
     }
 }
 
-void CWindowsApplication::Release()
-{
-    delete this;
-}
-
-void CWindowsApplication::SetCapture( CGenericWindow* Window )
+void CWindowsApplication::SetCapture( const TSharedRef<CGenericWindow>& Window )
 {
     if ( Window )
     {
-        TSharedRef<CWindowsWindow> WindowsWindow = MakeSharedRef<CWindowsWindow>( Window );
+        TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>( Window );
 
         HWND hCapture = WindowsWindow->GetHandle();
         if ( WindowsWindow->IsValid() )
@@ -161,9 +152,9 @@ void CWindowsApplication::SetCapture( CGenericWindow* Window )
     }
 }
 
-void CWindowsApplication::SetActiveWindow( CGenericWindow* Window )
+void CWindowsApplication::SetActiveWindow( const TSharedRef<CGenericWindow>& Window )
 {
-    TSharedRef<CWindowsWindow> WindowsWindow = MakeSharedRef<CWindowsWindow>( Window );
+    TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>( Window );
 
     HWND hActiveWindow = WindowsWindow->GetHandle();
     if ( WindowsWindow->IsValid() )
@@ -172,27 +163,27 @@ void CWindowsApplication::SetActiveWindow( CGenericWindow* Window )
     }
 }
 
-CGenericWindow* CWindowsApplication::GetCapture() const
+TSharedRef<CGenericWindow> CWindowsApplication::GetCapture() const
 {
     // TODO: Should we add a reference here
     HWND CaptureWindow = ::GetCapture();
     return GetWindowsWindowFromHWND( CaptureWindow );
 }
 
-CGenericWindow* CWindowsApplication::GetActiveWindow() const
+TSharedRef<CGenericWindow> CWindowsApplication::GetActiveWindow() const
 {
     // TODO: Should we add a reference here
     HWND ActiveWindow = ::GetActiveWindow();
     return GetWindowsWindowFromHWND( ActiveWindow );
 }
 
-CWindowsWindow* CWindowsApplication::GetWindowsWindowFromHWND( HWND InWindow ) const
+TSharedRef<CWindowsWindow> CWindowsApplication::GetWindowsWindowFromHWND( HWND InWindow ) const
 {
     for ( const TSharedRef<CWindowsWindow>& Window : Windows )
     {
         if ( Window->GetHandle() == InWindow )
         {
-            return Window.Get();
+            return Window;
         }
     }
 
@@ -238,9 +229,9 @@ bool CWindowsApplication::IsWindowsMessageListener( IWindowsMessageListener* InW
 
 LRESULT CWindowsApplication::StaticMessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam )
 {
-    if ( GWindowsApplication )
+    if ( ApplicationInstance )
     {
-        return GWindowsApplication->MessageProc( Window, Message, wParam, lParam );
+        return ApplicationInstance->MessageProc( Window, Message, wParam, lParam );
     }
     else
     {
@@ -250,7 +241,7 @@ LRESULT CWindowsApplication::StaticMessageProc( HWND Window, UINT Message, WPARA
 
 void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam )
 {
-    TSharedRef<CWindowsWindow> MessageWindow = MakeSharedRef<CWindowsWindow>( GetWindowsWindowFromHWND( Window ) );
+    TSharedRef<CWindowsWindow> MessageWindow = GetWindowsWindowFromHWND( Window );
     switch ( Message )
     {
         case WM_CLOSE:
@@ -318,7 +309,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
         {
             const uint32 ScanCode = static_cast<uint32>(HIWORD( lParam ) & ScanCodeMask);
             const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode( ScanCode );
-            
+
             Keyboard.RegisterKeyState( Key, false );
 
             MessageListener->OnKeyReleased( Key, PlatformApplicationMisc::GetModifierKeyState() );
@@ -331,9 +322,9 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             const bool IsRepeat = !!(lParam & KeyRepeatMask);
             const uint32 ScanCode = static_cast<uint32>(HIWORD( lParam ) & ScanCodeMask);
             const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode( ScanCode );
-            
+
             Keyboard.RegisterKeyState( Key, true );
-            
+
             MessageListener->OnKeyPressed( Key, IsRepeat, PlatformApplicationMisc::GetModifierKeyState() );
             break;
         }

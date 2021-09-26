@@ -21,17 +21,18 @@ void CWindowsApplicationMisc::PumpMessages( bool UntilEmpty )
 
         if ( Message.message == WM_QUIT )
         {
-            if (GWindowsApplication)
+            CWindowsApplication* Application = CWindowsApplication::Get();
+            if ( Application )
             {
-                GWindowsApplication->StoreMessage( Message.hwnd, Message.message, Message.wParam, Message.lParam );
+                Application->StoreMessage( Message.hwnd, Message.message, Message.wParam, Message.lParam );
             }
         }
-    } while( UntilEmpty );
+    } while ( UntilEmpty );
 }
 
 SModifierKeyState CWindowsApplicationMisc::GetModifierKeyState()
 {
-    uint32 ModifierMask = 0;
+    uint8 ModifierMask = 0;
     if ( GetKeyState( VK_CONTROL ) & 0x8000 )
     {
         ModifierMask |= EModifierFlag::ModifierFlag_Ctrl;

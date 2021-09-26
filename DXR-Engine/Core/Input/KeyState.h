@@ -14,7 +14,7 @@ struct SKeyState
 
     /* The key for this keystate */
     EKey KeyCode;
-    
+
     /* Indicates if the current state of the key is down */
     uint8 IsDown : 1;
 

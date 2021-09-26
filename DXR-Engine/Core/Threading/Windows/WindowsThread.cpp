@@ -69,7 +69,7 @@ DWORD WINAPI CWindowsThread::ThreadRoutine( LPVOID ThreadParameter )
         if ( !CurrentThread->Name.IsEmpty() )
         {
             WString WideName = CharToWide( CurrentThread->Name );
-            SetThreadDescription( Thread, WideName.CStr() );
+            SetThreadDescription( CurrentThread->Thread, WideName.CStr() );
         }
 
         Assert( CurrentThread->Func != nullptr );

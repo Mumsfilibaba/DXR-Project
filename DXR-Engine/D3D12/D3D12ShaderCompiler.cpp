@@ -292,7 +292,7 @@ bool D3D12ShaderCompiler::CompileFromFile(
 {
     Code.Clear();
 
-    WString WideFilePath   = CharToWide( CString( FilePath.c_str(), FilePath.length() ) );
+    WString WideFilePath = CharToWide( CString( FilePath.c_str(), FilePath.length() ) );
     WString WideEntrypoint = CharToWide( CString( EntryPoint.c_str(), EntryPoint.length() ) );
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
@@ -459,8 +459,8 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
 
         for ( const ShaderDefine& Define : *Defines )
         {
-            const WString& WideDefine = StrBuff.Emplace( CharToWide( CString(Define.Define.c_str(), Define.Define.length() ) ) );
-            const WString& WideValue  = StrBuff.Emplace( CharToWide( CString( Define.Value.c_str(), Define.Value.length() ) ) );
+            const WString& WideDefine = StrBuff.Emplace( CharToWide( CString( Define.Define.c_str(), Define.Define.length() ) ) );
+            const WString& WideValue = StrBuff.Emplace( CharToWide( CString( Define.Value.c_str(), Define.Value.length() ) ) );
             DxDefines.Push( { WideDefine.CStr(), WideValue.CStr() } );
         }
     }
@@ -512,7 +512,7 @@ bool D3D12ShaderCompiler::InternalCompileFromSource(
         return false;
     }
 
-    std::string AsciiFilePath = FilePath != nullptr ? WideToChar( WString(FilePath) ).CStr() : "";
+    std::string AsciiFilePath = FilePath != nullptr ? WideToChar( WString( FilePath ) ).CStr() : "";
     if ( PrintBlob8 && PrintBlob8->GetBufferSize() > 0 )
     {
         LOG_INFO( "[D3D12ShaderCompiler]: Successfully compiled shader '" + AsciiFilePath + "' with the following output:" );

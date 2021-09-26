@@ -13,7 +13,7 @@ void CMacKeyMappings::Init()
 {
     /* Keys */
     Memory::Memzero( KeyCodeFromScanCodeTable.Data(), KeyCodeFromScanCodeTable.SizeInBytes() );
-	Memory::Memzero( ScanCodeFromKeyCodeTable.Data(), ScanCodeFromKeyCodeTable.SizeInBytes() );
+    Memory::Memzero( ScanCodeFromKeyCodeTable.Data(), ScanCodeFromKeyCodeTable.SizeInBytes() );
 
     KeyCodeFromScanCodeTable[0x33] = EKey::Key_Backspace;
     KeyCodeFromScanCodeTable[0x30] = EKey::Key_Tab;

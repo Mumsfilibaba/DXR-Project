@@ -15,20 +15,28 @@
 #define INIT_CONSOLE_VARIABLE(Name, Variable) GConsole.RegisterVariable(Name, Variable)
 #define INIT_CONSOLE_COMMAND(Name, Command)   GConsole.RegisterCommand(Name, Command)
 
-class CConsoleInputHandler : public CInputHandler
+class CConsoleInputHandler final : public CInputHandler
 {
 public:
-	CConsoleInputHandler() = default;
-	~CConsoleInputHandler() = default;
-	
-	virtual bool HandleKeyEvent( const SKeyEvent& KeyEvent )
-	{
-		HandleKeyEventDelegate.Execute( KeyEvent );
-		return true;
-	}
-	
-	DECLARE_DELEGATE( CHandleKeyEventDelegate, const SKeyEvent& );
-	CHandleKeyEventDelegate HandleKeyEventDelegate;
+
+    DECLARE_DELEGATE( CHandleKeyEventDelegate, const SKeyEvent& );
+    CHandleKeyEventDelegate HandleKeyEventDelegate;
+
+    CConsoleInputHandler() = default;
+    ~CConsoleInputHandler() = default;
+
+    virtual bool OnKeyEvent( const SKeyEvent& KeyEvent ) override final
+    {
+        HandleKeyEventDelegate.Execute( KeyEvent );
+        return ConsoleActivated;
+    }
+
+    virtual uint32 GetPriority() const override final
+    {
+        return static_cast<uint32>(-1);
+    }
+
+    bool ConsoleActivated = false;
 };
 
 
@@ -116,8 +124,8 @@ private:
     bool CandidateSelectionChanged = false;
     bool ScrollDown = false;
     bool IsActive = false;
-	
-	CConsoleInputHandler InputHandler;
+
+    CConsoleInputHandler InputHandler;
 };
 
 extern Console GConsole;

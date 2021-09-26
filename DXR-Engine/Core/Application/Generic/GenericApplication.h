@@ -14,7 +14,7 @@ class CGenericApplication
 {
 public:
 
-	virtual ~CGenericApplication() = default;
+    virtual ~CGenericApplication() = default;
 
     /* Creates the mac application */
     static FORCEINLINE TSharedPtr<CGenericApplication> Make()
@@ -68,9 +68,9 @@ public:
 
 protected:
 
-	/* Protected constructor, use Make */
+    /* Protected constructor, use Make */
     CGenericApplication() = default;
 
-	/* Listener for platform messages/events */
+    /* Listener for platform messages/events */
     TSharedPtr<CGenericApplicationMessageListener> MessageListener;
 };

@@ -5,10 +5,10 @@ class CWindowsCriticalSection
 {
 public:
 
-	typedef CRITICAL_SECTION* PlatformHandle;
+    typedef CRITICAL_SECTION* PlatformHandle;
 
-	CWindowsCriticalSection( const CWindowsCriticalSection& )            = delete;
-	CWindowsCriticalSection& operator=( const CWindowsCriticalSection& ) = delete;
+    CWindowsCriticalSection( const CWindowsCriticalSection& ) = delete;
+    CWindowsCriticalSection& operator=( const CWindowsCriticalSection& ) = delete;
 
     FORCEINLINE CWindowsCriticalSection() noexcept
         : Section()
@@ -36,7 +36,7 @@ public:
         LeaveCriticalSection( &Section );
     }
 
-    FORCEINLINE PlatformHandle GetSection() noexcept
+    FORCEINLINE PlatformHandle GetPlatformHandle() noexcept
     {
         return &Section;
     }

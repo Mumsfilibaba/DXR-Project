@@ -455,14 +455,14 @@ bool DebugUI::Init()
         return false;
     }
 
-	// Setup input callbacks
-	InputHandler.KeyEventDelegate.BindStatic( DebugUI::OnKeyEvent );
-	InputHandler.KeyTypedDelegate.BindStatic( DebugUI::OnKeyTyped );
-	InputHandler.MouseButtonDelegate.BindStatic( DebugUI::OnMouseButtonEvent );
-	InputHandler.MouseScrolledDelegate.BindStatic( DebugUI::OnMouseScrolled );
-	
-	// Add the input handler
-	CMainApplication::Get().AddInputHandler( &InputHandler );
+    // Setup input callbacks
+    InputHandler.KeyEventDelegate.BindStatic( DebugUI::OnKeyEvent );
+    InputHandler.KeyTypedDelegate.BindStatic( DebugUI::OnKeyTyped );
+    InputHandler.MouseButtonDelegate.BindStatic( DebugUI::OnMouseButtonEvent );
+    InputHandler.MouseScrolledDelegate.BindStatic( DebugUI::OnMouseScrolled );
+
+    // Add the input handler
+    CMainApplication::Get().AddInputHandler( &InputHandler );
 
     return true;
 }
@@ -499,17 +499,17 @@ void DebugUI::OnKeyTyped( SKeyTypedEvent Event )
     IO.AddInputCharacter( Event.Character );
 }
 
-void DebugUI::OnMouseButtonEvent(const SMouseButtonEvent& Event)
+void DebugUI::OnMouseButtonEvent( const SMouseButtonEvent& Event )
 {
-	ImGuiIO& IO = ImGui::GetIO();
-	const uint32 ButtonIndex = GetMouseButtonIndex( Event.Button );
-	IO.MouseDown[ButtonIndex] = Event.IsDown;
+    ImGuiIO& IO = ImGui::GetIO();
+    const uint32 ButtonIndex = GetMouseButtonIndex( Event.Button );
+    IO.MouseDown[ButtonIndex] = Event.IsDown;
 }
 
 void DebugUI::OnMouseScrolled( const SMouseScrolledEvent& Event )
 {
     ImGuiIO& IO = ImGui::GetIO();
-    IO.MouseWheel  += Event.VerticalDelta;
+    IO.MouseWheel += Event.VerticalDelta;
     IO.MouseWheelH += Event.HorizontalDelta;
 }
 
@@ -522,7 +522,7 @@ void DebugUI::Render( CommandList& CmdList )
     TSharedRef<CGenericWindow> Window = CEngine::Get().MainWindow;
     if ( IO.WantSetMousePos )
     {
-        CMainApplication::Get().SetCursorPosition( Window, CIntPoint2( static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y)) );
+        CMainApplication::Get().SetCursorPosition( Window, CIntPoint2( static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) ) );
     }
 
     SWindowShape CurrentWindowShape;
@@ -547,11 +547,11 @@ void DebugUI::Render( CommandList& CmdList )
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
         if ( ImguiCursor == ImGuiMouseCursor_None || IO.MouseDrawCursor )
         {
-			CMainApplication::Get().SetCursor( ECursor::None );
+            CMainApplication::Get().SetCursor( ECursor::None );
         }
         else
         {
-			ECursor Cursor = ECursor::Arrow;
+            ECursor Cursor = ECursor::Arrow;
             switch ( ImguiCursor )
             {
                 case ImGuiMouseCursor_Arrow:      Cursor = ECursor::Arrow;      break;
@@ -564,8 +564,8 @@ void DebugUI::Render( CommandList& CmdList )
                 case ImGuiMouseCursor_Hand:       Cursor = ECursor::Hand;       break;
                 case ImGuiMouseCursor_NotAllowed: Cursor = ECursor::NotAllowed; break;
             }
-			
-			CMainApplication::Get().SetCursor( Cursor );
+
+            CMainApplication::Get().SetCursor( Cursor );
         }
     }
 

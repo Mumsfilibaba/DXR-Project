@@ -57,7 +57,7 @@ struct SWindowStyle
     {
         return Style & WindowStyleFlag_Resizeable;
     }
-	
+
     uint32 Style = 0;
 };
 

@@ -11,54 +11,54 @@
 class CEngineWindowHandler : public CWindowMessageHandler
 {
 public:
-	
-	DECLARE_DELEGATE( CWindowClosedDelegate, const SWindowClosedEvent& ClosedEvent );
-	CWindowClosedDelegate WindowClosedDelegate;
-	
-	CEngineWindowHandler() = default;
-	~CEngineWindowHandler() = default;
-	
-	virtual bool OnWindowClosed( const SWindowClosedEvent& ClosedEvent ) override final
-	{
-		WindowClosedDelegate.Execute( ClosedEvent );
-		return true;
-	}
+
+    DECLARE_DELEGATE( CWindowClosedDelegate, const SWindowClosedEvent& ClosedEvent );
+    CWindowClosedDelegate WindowClosedDelegate;
+
+    CEngineWindowHandler() = default;
+    ~CEngineWindowHandler() = default;
+
+    virtual bool OnWindowClosed( const SWindowClosedEvent& ClosedEvent ) override final
+    {
+        WindowClosedDelegate.Execute( ClosedEvent );
+        return true;
+    }
 };
 
 class CEngine
 {
 public:
-	
-	CEngine();
-	~CEngine();
-	
-	/* Init engine */
+
+    CEngine();
+    ~CEngine();
+
+    /* Init engine */
     bool Init();
 
-	/* Release engine resources */
+    /* Release engine resources */
     bool Release();
 
-	/* Request exit from the engine */
+    /* Request exit from the engine */
     void Exit();
-	
-	static FORCEINLINE CEngine& Get()
-	{
-		return Instance;
-	}
-	
+
+    static FORCEINLINE CEngine& Get()
+    {
+        return Instance;
+    }
+
     TSharedRef<CGenericWindow> MainWindow;
     TSharedRef<Viewport>       MainViewport;
 
     bool IsRunning = false;
 
 private:
-	
-	CEngineWindowHandler WindowHandler;
-	
-	/* Handle when the application is exited */
-	void OnApplicationExit( int32 ExitCode );
-	
-	CDelegateHandle OnApplicationExitHandle;
-		
-	static CEngine Instance;
+
+    CEngineWindowHandler WindowHandler;
+
+    /* Handle when the application is exited */
+    void OnApplicationExit( int32 ExitCode );
+
+    CDelegateHandle OnApplicationExitHandle;
+
+    static CEngine Instance;
 };

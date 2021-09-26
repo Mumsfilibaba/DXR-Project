@@ -5,29 +5,29 @@
 CMacThread::CMacThread( ThreadFunction InFunction )
     : CGenericThread()
     , Thread()
-	, Function( InFunction )
-	, Name()
-	, IsRunning( false )
+    , Function( InFunction )
+    , Name()
+    , IsRunning( false )
 {
 }
 
 CMacThread::CMacThread( ThreadFunction InFunction, const CString& InName )
-	: CGenericThread()
-	, Thread()
-	, Function( InFunction )
-	, Name( InName )
-	, IsRunning( false )
+    : CGenericThread()
+    , Thread()
+    , Function( InFunction )
+    , Name( InName )
+    , IsRunning( false )
 {
 }
 
 CMacThread::~CMacThread()
 {
-	// Empty for now
+    // Empty for now
 }
 
 bool CMacThread::Start()
 {
-	int Result = pthread_create(&Thread, NULL, CMacThread::ThreadRoutine, reinterpret_cast<void*>(this));
+    int Result = pthread_create( &Thread, NULL, CMacThread::ThreadRoutine, reinterpret_cast<void*>(this) );
     if ( Result )
     {
         LOG_ERROR( "[CMacThread] Failed to create thread" );
@@ -41,22 +41,22 @@ bool CMacThread::Start()
 
 void CMacThread::WaitUntilFinished()
 {
-	pthread_join(Thread, NULL);
+    pthread_join( Thread, NULL );
 }
 
 void CMacThread::SetName( const CString& InName )
 {
-	// The name can always be set from the current thread
-	const bool CurrentThreadIsMyself = GetPlatformHandle() == CMacThreadMisc::GetThreadHandle();
-	if ( CurrentThreadIsMyself )
-	{
-		Name = InName;
-		pthread_setname_np( Name.CStr() );
-	}
-	else if ( !IsRunning )
-	{
-		Name = InName;
-	}
+    // The name can always be set from the current thread
+    const bool CurrentThreadIsMyself = GetPlatformHandle() == CMacThreadMisc::GetThreadHandle();
+    if ( CurrentThreadIsMyself )
+    {
+        Name = InName;
+        pthread_setname_np( Name.CStr() );
+    }
+    else if ( !IsRunning )
+    {
+        Name = InName;
+    }
 }
 
 PlatformThreadHandle CMacThread::GetPlatformHandle()
@@ -69,17 +69,17 @@ void* CMacThread::ThreadRoutine( void* ThreadParameter )
     CMacThread* CurrentThread = reinterpret_cast<CMacThread*>(ThreadParameter);
     if ( CurrentThread )
     {
-		// Can only set the current thread's name
-		if ( !CurrentThread->Name.IsEmpty() )
-		{
-			pthread_setname_np( CurrentThread->Name.CStr() );
-		}
-		
+        // Can only set the current thread's name
+        if ( !CurrentThread->Name.IsEmpty() )
+        {
+            pthread_setname_np( CurrentThread->Name.CStr() );
+        }
+
         Assert( CurrentThread->Function != nullptr );
         CurrentThread->Function();
     }
 
-	pthread_exit(NULL);
+    pthread_exit( NULL );
     return nullptr;
 }
 #endif

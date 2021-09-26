@@ -38,7 +38,7 @@ public:
 
     FORCEINLINE void SetName( const std::string& Name )
     {
-        WString WideName = CharToWide( CString(Name.c_str(), Name.length()) );
+        WString WideName = CharToWide( CString( Name.c_str(), Name.length() ) );
         Allocator->SetName( WideName.CStr() );
     }
 

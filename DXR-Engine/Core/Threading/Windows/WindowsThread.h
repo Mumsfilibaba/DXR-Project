@@ -11,9 +11,9 @@ public:
     }
 
     static FORCEINLINE CWindowsThread* Make( ThreadFunction InFunction, const CString& InName )
-	{
-		return new CWindowsThread( InFunction, InName );
-	}
+    {
+        return DBG_NEW CWindowsThread( InFunction, InName );
+    }
 
     virtual bool Start() override final;
 

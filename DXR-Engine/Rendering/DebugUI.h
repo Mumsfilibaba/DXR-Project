@@ -33,45 +33,45 @@ struct ImGuiImage
 class CUIInputHandler : public CInputHandler
 {
 public:
-	
-	CUIInputHandler() = default;
-	~CUIInputHandler() = default;
-	
-	virtual bool OnKeyEvent( const SKeyEvent& KeyEvent ) override final
-	{
-		KeyEventDelegate.Execute( KeyEvent );
-		return ImGui::GetIO().WantCaptureKeyboard ? true : false;
-	}
-	
-	virtual bool OnKeyTyped( SKeyTypedEvent KeyTypedEvent ) override final
-	{
-		KeyTypedDelegate.Execute( KeyTypedEvent );
-		return ImGui::GetIO().WantCaptureKeyboard ? true : false;
-	}
-	
-	virtual bool OnMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent ) override final
-	{
-		MouseButtonDelegate.Execute( MouseButtonEvent );
-		return ImGui::GetIO().WantCaptureMouse ? true : false;
-	}
-	
-	virtual bool OnMouseScrolled( const SMouseScrolledEvent& MouseScrolledEvent ) override final
-	{
-		MouseScrolledDelegate.Execute( MouseScrolledEvent );
-		return ImGui::GetIO().WantCaptureMouse ? true : false;
-	}
-	
-	DECLARE_DELEGATE( CKeyEventDelegate, const SKeyEvent& );
-	CKeyEventDelegate KeyEventDelegate;
-	
-	DECLARE_DELEGATE( CKeyTypedDelegate, SKeyTypedEvent );
-	CKeyTypedDelegate KeyTypedDelegate;
-	
-	DECLARE_DELEGATE( CMouseButtonDelegate, const SMouseButtonEvent& );
-	CMouseButtonDelegate MouseButtonDelegate;
-	
-	DECLARE_DELEGATE( CMouseScrolledDelegate, const SMouseScrolledEvent& );
-	CMouseScrolledDelegate MouseScrolledDelegate;
+
+    CUIInputHandler() = default;
+    ~CUIInputHandler() = default;
+
+    virtual bool OnKeyEvent( const SKeyEvent& KeyEvent ) override final
+    {
+        KeyEventDelegate.Execute( KeyEvent );
+        return ImGui::GetIO().WantCaptureKeyboard ? true : false;
+    }
+
+    virtual bool OnKeyTyped( SKeyTypedEvent KeyTypedEvent ) override final
+    {
+        KeyTypedDelegate.Execute( KeyTypedEvent );
+        return ImGui::GetIO().WantCaptureKeyboard ? true : false;
+    }
+
+    virtual bool OnMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent ) override final
+    {
+        MouseButtonDelegate.Execute( MouseButtonEvent );
+        return ImGui::GetIO().WantCaptureMouse ? true : false;
+    }
+
+    virtual bool OnMouseScrolled( const SMouseScrolledEvent& MouseScrolledEvent ) override final
+    {
+        MouseScrolledDelegate.Execute( MouseScrolledEvent );
+        return ImGui::GetIO().WantCaptureMouse ? true : false;
+    }
+
+    DECLARE_DELEGATE( CKeyEventDelegate, const SKeyEvent& );
+    CKeyEventDelegate KeyEventDelegate;
+
+    DECLARE_DELEGATE( CKeyTypedDelegate, SKeyTypedEvent );
+    CKeyTypedDelegate KeyTypedDelegate;
+
+    DECLARE_DELEGATE( CMouseButtonDelegate, const SMouseButtonEvent& );
+    CMouseButtonDelegate MouseButtonDelegate;
+
+    DECLARE_DELEGATE( CMouseScrolledDelegate, const SMouseScrolledEvent& );
+    CMouseScrolledDelegate MouseScrolledDelegate;
 };
 
 class DebugUI

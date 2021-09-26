@@ -30,9 +30,6 @@ struct SWindowsMessage
     LPARAM lParam;
 };
 
-/* Pointer to the windows-application needed in the static */
-extern class CWindowsApplication* GWindowsApplication;
-
 /* Class representing an application on the windows- platform */
 class CWindowsApplication final : public CGenericApplication
 {
@@ -40,20 +37,20 @@ class CWindowsApplication final : public CGenericApplication
 
 public:
 
+    /* Public destructor for TSharedPtr */
+    ~CWindowsApplication();
+
     /* Creates an instance of the WindowsApplication, also loads the icon */
-    static CWindowsApplication* Make();
+    static TSharedPtr<CWindowsApplication> Make();
 
     /* Creates a window */
-    virtual CGenericWindow* MakeWindow() override final;
+    virtual TSharedRef<CGenericWindow> MakeWindow() override final;
 
     /* Initialized the application */
     virtual bool Init() override final;
 
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick( float Delta ) override final;
-
-    /* Releases the application */
-    virtual void Release() override final;
 
     /* Retrieve the cursor interface */
     virtual ICursor* GetCursor() override final
@@ -68,19 +65,19 @@ public:
     }
 
     /* Sets the window that currently has the keyboard focus */
-    virtual void SetCapture( CGenericWindow* Window ) override final;
+    virtual void SetCapture( const TSharedRef<CGenericWindow>& Window ) override final;
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( CGenericWindow* Window ) override final;
+    virtual void SetActiveWindow( const TSharedRef<CGenericWindow>& Window ) override final;
 
     /* Retrieves the window that currently has the keyboard focus */
-    virtual CGenericWindow* GetCapture() const override final;
+    virtual TSharedRef<CGenericWindow> GetCapture() const override final;
 
     /* Retrieves the window that is currently active */
-    virtual CGenericWindow* GetActiveWindow() const override final;
+    virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
 
     /* Searches all the created windows and return the one with the specified handle */
-    CWindowsWindow* GetWindowsWindowFromHWND( HWND Window ) const;
+    TSharedRef<CWindowsWindow> GetWindowsWindowFromHWND( HWND Window ) const;
 
     /* Add a native message listener */
     void AddWindowsMessageListener( IWindowsMessageListener* NewWindowsMessageListener );
@@ -106,13 +103,18 @@ public:
     /* Returns the HINSTANCE of the application or retrieves it in case the application is not initialized */
     static FORCEINLINE HINSTANCE GetInstanceStatic()
     {
-        return GWindowsApplication ? GWindowsApplication->GetInstance() : static_cast<HINSTANCE>(GetModuleHandle( 0 ));
+        return ApplicationInstance ? ApplicationInstance->GetInstance() : static_cast<HINSTANCE>(GetModuleHandle( 0 ));
+    }
+
+    /* Returns the instance of the windows application */
+    static FORCEINLINE CWindowsApplication* Get()
+    {
+        return ApplicationInstance;
     }
 
 private:
 
     CWindowsApplication( HINSTANCE InInstance );
-    ~CWindowsApplication();
 
     /* Registers the window class used to create windows */
     bool RegisterWindowClass();
@@ -152,6 +154,8 @@ private:
 
     /* Instance of the application */
     HINSTANCE Instance;
+
+    static CWindowsApplication* ApplicationInstance;
 };
 
 #endif

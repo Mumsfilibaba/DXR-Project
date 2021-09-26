@@ -85,14 +85,14 @@ bool TaskManager::Init()
 
     for ( uint32 i = 0; i < ThreadCount; i++ )
     {
-		CString ThreadName;
-		ThreadName.Format( "WorkerThread[%d]", i );
-		
+        CString ThreadName;
+        ThreadName.Format( "WorkerThread[%d]", i );
+
         TSharedRef<CGenericThread> NewThread = PlatformThread::Make( TaskManager::WorkThread, ThreadName );
         if ( NewThread )
         {
             WorkThreads[i] = NewThread;
-			NewThread->Start();
+            NewThread->Start();
         }
         else
         {

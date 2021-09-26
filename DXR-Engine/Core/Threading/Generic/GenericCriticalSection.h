@@ -6,9 +6,9 @@
 class CGenericCriticalSection
 {
 public:
-	
-	typedef void* PlatformHandle;
-	
+
+    typedef void* PlatformHandle;
+
     CGenericCriticalSection() = default;
     ~CGenericCriticalSection() = default;
 
@@ -24,9 +24,9 @@ public:
     FORCEINLINE void Unlock() noexcept
     {
     }
-	
-	FORCEINLINE PlatformHandle GetPlatformHandle()
-	{
-		return nullptr;
-	}
+
+    FORCEINLINE PlatformHandle GetPlatformHandle()
+    {
+        return nullptr;
+    }
 };

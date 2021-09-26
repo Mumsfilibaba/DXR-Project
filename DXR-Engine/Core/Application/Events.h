@@ -7,31 +7,31 @@
 
 struct SKeyEvent
 {
-	FORCEINLINE SKeyEvent( EKey InKeyCode, bool InIsDown, bool InIsRepeat, SModifierKeyState InModiferKeyState )
-		: KeyCode( InKeyCode )
-		, IsDown( InIsDown )
-		, IsRepeat( InIsRepeat )
-		, ModiferKeyState( InModiferKeyState )
-	{
-	}
+    FORCEINLINE SKeyEvent( EKey InKeyCode, bool InIsDown, bool InIsRepeat, SModifierKeyState InModiferKeyState )
+        : KeyCode( InKeyCode )
+        , IsDown( InIsDown )
+        , IsRepeat( InIsRepeat )
+        , ModiferKeyState( InModiferKeyState )
+    {
+    }
 
-	/* The KeyCode for this event */
-	EKey KeyCode;
-	
-	/* If the key was down or nor */
-	bool IsDown : 1;
-	
-	/* Is a repeated key event */
-	bool IsRepeat : 1;
-	
-	/* The other modifer keys that where down at the same time as the event */
-	SModifierKeyState ModiferKeyState;
+    /* The KeyCode for this event */
+    EKey KeyCode;
+
+    /* If the key was down or nor */
+    bool IsDown : 1;
+
+    /* Is a repeated key event */
+    bool IsRepeat : 1;
+
+    /* The other modifer keys that where down at the same time as the event */
+    SModifierKeyState ModiferKeyState;
 };
 
 
 struct SKeyTypedEvent
 {
-	FORCEINLINE SKeyTypedEvent( uint32 InCharacter )
+    FORCEINLINE SKeyTypedEvent( uint32 InCharacter )
         : Character( InCharacter )
     {
     }
@@ -41,13 +41,13 @@ struct SKeyTypedEvent
         return static_cast<char>(Character);
     }
 
-	/* The character that where pressed, this is a ascii character in most cases */
+    /* The character that where pressed, this is a ascii character in most cases */
     uint32 Character;
 };
 
 struct SMouseMovedEvent
 {
-	FORCEINLINE SMouseMovedEvent( int32 InX, int32 InY )
+    FORCEINLINE SMouseMovedEvent( int32 InX, int32 InY )
         : x( InX )
         , y( InY )
     {
@@ -59,26 +59,26 @@ struct SMouseMovedEvent
 
 struct SMouseButtonEvent
 {
-	FORCEINLINE SMouseButtonEvent( EMouseButton InButton, bool InIsDown, SModifierKeyState InModifiers )
+    FORCEINLINE SMouseButtonEvent( EMouseButton InButton, bool InIsDown, SModifierKeyState InModifiers )
         : Button( InButton )
-		, IsDown( InIsDown )
+        , IsDown( InIsDown )
         , Modifiers( InModifiers )
     {
     }
 
-	/* The mouse button that for the event */
+    /* The mouse button that for the event */
     EMouseButton Button;
-	
-	/* If the button where pressed or released */
-	bool IsDown;
-	
-	/* The modifier keys that also where pressed */
+
+    /* If the button where pressed or released */
+    bool IsDown;
+
+    /* The modifier keys that also where pressed */
     SModifierKeyState Modifiers;
 };
 
 struct SMouseScrolledEvent
 {
-	FORCEINLINE SMouseScrolledEvent( float InHorizontalDelta, float InVerticalDelta )
+    FORCEINLINE SMouseScrolledEvent( float InHorizontalDelta, float InVerticalDelta )
         : HorizontalDelta( InHorizontalDelta )
         , VerticalDelta( InVerticalDelta )
     {
@@ -90,7 +90,7 @@ struct SMouseScrolledEvent
 
 struct SWindowResizeEvent
 {
-	FORCEINLINE SWindowResizeEvent( const TSharedRef<CGenericWindow>& InWindow, uint16 InWidth, uint16 InHeight )
+    FORCEINLINE SWindowResizeEvent( const TSharedRef<CGenericWindow>& InWindow, uint16 InWidth, uint16 InHeight )
         : Window( InWindow )
         , Width( InWidth )
         , Height( InHeight )
@@ -104,7 +104,7 @@ struct SWindowResizeEvent
 
 struct SWindowFocusChangedEvent
 {
-	FORCEINLINE SWindowFocusChangedEvent( const TSharedRef<CGenericWindow>& InWindow, bool hasFocus )
+    FORCEINLINE SWindowFocusChangedEvent( const TSharedRef<CGenericWindow>& InWindow, bool hasFocus )
         : Window( InWindow )
         , HasFocus( hasFocus )
     {
@@ -116,33 +116,33 @@ struct SWindowFocusChangedEvent
 
 struct SWindowMovedEvent
 {
-	FORCEINLINE SWindowMovedEvent( const TSharedRef<CGenericWindow>& InWindow, int16 InX, int16 InY )
+    FORCEINLINE SWindowMovedEvent( const TSharedRef<CGenericWindow>& InWindow, int16 InX, int16 InY )
         : Window( InWindow )
         , x( InX )
-		, y( InY )
+        , y( InY )
     {
     }
 
     TSharedRef<CGenericWindow> Window;
-	int16 x;
+    int16 x;
     int16 y;
 };
 
 struct SWindowFrameMouseEvent
 {
-	FORCEINLINE SWindowFrameMouseEvent( const TSharedRef<CGenericWindow>& InWindow, bool InMouseEntered )
+    FORCEINLINE SWindowFrameMouseEvent( const TSharedRef<CGenericWindow>& InWindow, bool InMouseEntered )
         : Window( InWindow )
-		, MouseEntered( InMouseEntered )
+        , MouseEntered( InMouseEntered )
     {
     }
 
     TSharedRef<CGenericWindow> Window;
-	bool MouseEntered;
+    bool MouseEntered;
 };
 
 struct SWindowClosedEvent
 {
-	FORCEINLINE SWindowClosedEvent( const TSharedRef<CGenericWindow>& InWindow )
+    FORCEINLINE SWindowClosedEvent( const TSharedRef<CGenericWindow>& InWindow )
         : Window( InWindow )
     {
     }

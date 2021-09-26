@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "Core/Threading/Generic/GenericAtomic.h"
+#include "Core/Threading/Generic/GenericInterlocked.h"
 
 #include "Core/Windows/Windows.h"
 

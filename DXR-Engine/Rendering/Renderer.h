@@ -30,28 +30,28 @@
 class CRendererWindowHandler final : public CWindowMessageHandler
 {
 public:
-	
-	DECLARE_DELEGATE( CWindowResizedDelegate, const SWindowResizeEvent& ResizeEvent );
-	CWindowResizedDelegate WindowResizedDelegate;
-	
-	CRendererWindowHandler() = default;
-	~CRendererWindowHandler() = default;
-	
-	virtual bool OnWindowResized( const SWindowResizeEvent& ResizeEvent ) override final
-	{
-		WindowResizedDelegate.Execute( ResizeEvent );
-		return true;
-	}
+
+    DECLARE_DELEGATE( CWindowResizedDelegate, const SWindowResizeEvent& ResizeEvent );
+    CWindowResizedDelegate WindowResizedDelegate;
+
+    CRendererWindowHandler() = default;
+    ~CRendererWindowHandler() = default;
+
+    virtual bool OnWindowResized( const SWindowResizeEvent& ResizeEvent ) override final
+    {
+        WindowResizedDelegate.Execute( ResizeEvent );
+        return true;
+    }
 };
 
 class Renderer
 {
 public:
-	
-	Renderer() = default;
-	~Renderer() = default;
-	
-	bool Init();
+
+    Renderer() = default;
+    ~Renderer() = default;
+
+    bool Init();
 
     void Tick( const Scene& Scene );
 
@@ -66,7 +66,7 @@ public:
     void RenderDebugInterface();
 
 private:
-	
+
     void OnWindowResize( const SWindowResizeEvent& Event );
 
     bool InitBoundingBoxDebugPass();
@@ -75,8 +75,8 @@ private:
 
     void ResizeResources( uint32 Width, uint32 Height );
 
-	CRendererWindowHandler WindowHandler;
-	
+    CRendererWindowHandler WindowHandler;
+
     CommandList PreShadowsCmdList;
     CommandList PointShadowCmdList;
     CommandList DirShadowCmdList;

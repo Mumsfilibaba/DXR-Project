@@ -145,7 +145,7 @@ public:
     {
         Resource::SetName( InName );
 
-        WString WideName = CharToWide( CString(InName.c_str(), InName.length() ) );
+        WString WideName = CharToWide( CString( InName.c_str(), InName.length() ) );
         PipelineState->SetName( WideName.CStr() );
     }
 

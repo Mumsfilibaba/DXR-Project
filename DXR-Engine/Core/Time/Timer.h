@@ -34,7 +34,7 @@ public:
 private:
     CTimestamp TotalTime;
     CTimestamp DeltaTime;
-    
-    uint64 LastTime  = 0;
+
+    uint64 LastTime = 0;
     uint64 Frequency = 0;
 };

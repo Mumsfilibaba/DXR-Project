@@ -30,11 +30,11 @@ public:
     {
         return nullptr;
     }
-	
-	static FORCEINLINE CGenericThread* Make( ThreadFunction InFunction, const CString& InName )
-	{
-		return nullptr;
-	}
+
+    static FORCEINLINE CGenericThread* Make( ThreadFunction InFunction, const CString& InName )
+    {
+        return nullptr;
+    }
 
     virtual bool Start() = 0;
 

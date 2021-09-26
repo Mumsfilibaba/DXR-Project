@@ -18,8 +18,8 @@ void Console::Init()
     GClearHistory.OnExecute.AddRaw( this, &Console::ClearHistory );
     INIT_CONSOLE_COMMAND( "ClearHistory", &GClearHistory );
 
-	InputHandler.HandleKeyEventDelegate.BindRaw( this, &Console::OnKeyPressedEvent );
-	CMainApplication::Get().AddInputHandler( &InputHandler );
+    InputHandler.HandleKeyEventDelegate.BindRaw( this, &Console::OnKeyPressedEvent );
+    CMainApplication::Get().AddInputHandler( &InputHandler );
 }
 
 void Console::Tick()
@@ -114,9 +114,15 @@ void Console::ClearHistory()
 
 void Console::OnKeyPressedEvent( const SKeyEvent& Event )
 {
-    if ( !Event.IsRepeat && Event.KeyCode == EKey::Key_GraveAccent )
+    InputHandler.ConsoleActivated = false;
+
+    if ( Event.IsDown)
     {
-        IsActive = !IsActive;
+        if ( !Event.IsRepeat && Event.KeyCode == EKey::Key_GraveAccent )
+        {
+            IsActive = !IsActive;
+            InputHandler.ConsoleActivated = true;
+        }
     }
 }
 

@@ -7,7 +7,7 @@ class CWindowsThreadMisc : public CGenericThreadMisc
 {
 public:
 
-    /* Retreives the number of logical cores available on the system */
+    /* Retrieves the number of logical cores available on the system */
     static FORCEINLINE uint32 GetNumProcessors()
     {
         SYSTEM_INFO SystemInfo;
@@ -20,11 +20,11 @@ public:
 
     static FORCEINLINE PlatformThreadHandle GetThreadHandle()
     {
-        DWORD CurrentHandle = GetCurrentThreadId();
-        return (PlatformThreadHandle)CurrentID;
+        DWORD CurrentHandle = ::GetCurrentThreadId();
+        return (PlatformThreadHandle)CurrentHandle;
     }
 
-	/* Make the current thread sleep for a specified amount of time */
+    /* Make the current thread sleep for a specified amount of time */
     static FORCEINLINE void Sleep( CTimestamp Time )
     {
         DWORD Milliseconds = (DWORD)Time.AsMilliSeconds();
