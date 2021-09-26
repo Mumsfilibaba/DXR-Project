@@ -11,6 +11,7 @@
 
 #include "Core/Math/Frustum.h"
 #include "Core/Engine/Engine.h"
+#include "Core/Application/MainApplication.h"
 #include "Core/Debug/Profiler.h"
 #include "Core/Debug/Console/Console.h"
 
@@ -189,8 +190,8 @@ void Renderer::RenderDebugInterface()
         constexpr float InvAspectRatio = 16.0f / 9.0f;
         constexpr float AspectRatio = 9.0f / 16.0f;
 
-        const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
-        const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
+        const uint32 WindowWidth = CEngine::Get().MainWindow->GetWidth();
+        const uint32 WindowHeight = CEngine::Get().MainWindow->GetHeight();
         const float Width = NMath::Max( WindowWidth * 0.6f, 400.0f );
         const float Height = WindowHeight * 0.75f;
 
@@ -263,8 +264,8 @@ void Renderer::RenderDebugInterface()
 
     if ( GDrawRendererInfo.GetBool() )
     {
-        const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
-        const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
+        const uint32 WindowWidth = CEngine::Get().MainWindow->GetWidth();
+        const uint32 WindowHeight = CEngine::Get().MainWindow->GetHeight();
         const float Width = 300.0f;
         const float Height = WindowHeight * 0.8f;
 
@@ -699,7 +700,7 @@ bool Renderer::Init()
     INIT_CONSOLE_VARIABLE( "r.EnableRayTracing", &GRayTracingEnabled );
     INIT_CONSOLE_VARIABLE( "r.FXAADebug", &GFXAADebug );
 
-    Resources.MainWindowViewport = CreateViewport( GEngine->MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown );
+    Resources.MainWindowViewport = CreateViewport( CEngine::Get().MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown );
     if ( !Resources.MainWindowViewport )
     {
         Debug::DebugBreak();
@@ -852,7 +853,8 @@ bool Renderer::Init()
     GCmdListExecutor.ExecuteCommandList( MainCmdList );
 
     // Register EventFunc
-    GEngine->OnWindowResizedEvent.AddRaw( this, &Renderer::OnWindowResize );
+	WindowHandler.WindowResizedDelegate.BindRaw( this, &Renderer::OnWindowResize );
+	CMainApplication::Get().AddWindowMessageHandler( &WindowHandler );
 
     return true;
 }
@@ -907,7 +909,7 @@ void Renderer::Release()
     LastFrameNumCommands = 0;
 }
 
-void Renderer::OnWindowResize( const WindowResizeEvent& Event )
+void Renderer::OnWindowResize( const SWindowResizeEvent& Event )
 {
     const uint32 Width = Event.Width;
     const uint32 Height = Event.Height;

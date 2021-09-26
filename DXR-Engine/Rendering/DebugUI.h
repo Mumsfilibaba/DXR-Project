@@ -1,9 +1,10 @@
 #pragma once
-#include "Core/Input/InputCodes.h"
-#include "Core/Application/Events.h"
+#include "Core/Application/InputHandler.h"
 
 #include "RenderLayer/Resources.h"
 #include "RenderLayer/ResourceViews.h"
+
+#include "Core/Delegates/Delegate.h"
 
 #include "Core/Containers/SharedRef.h"
 
@@ -29,6 +30,50 @@ struct ImGuiImage
     bool AllowBlending = false;
 };
 
+class CUIInputHandler : public CInputHandler
+{
+public:
+	
+	CUIInputHandler() = default;
+	~CUIInputHandler() = default;
+	
+	virtual bool OnKeyEvent( const SKeyEvent& KeyEvent ) override final
+	{
+		KeyEventDelegate.Execute( KeyEvent );
+		return ImGui::GetIO().WantCaptureKeyboard ? true : false;
+	}
+	
+	virtual bool OnKeyTyped( SKeyTypedEvent KeyTypedEvent ) override final
+	{
+		KeyTypedDelegate.Execute( KeyTypedEvent );
+		return ImGui::GetIO().WantCaptureKeyboard ? true : false;
+	}
+	
+	virtual bool OnMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent ) override final
+	{
+		MouseButtonDelegate.Execute( MouseButtonEvent );
+		return ImGui::GetIO().WantCaptureMouse ? true : false;
+	}
+	
+	virtual bool OnMouseScrolled( const SMouseScrolledEvent& MouseScrolledEvent ) override final
+	{
+		MouseScrolledDelegate.Execute( MouseScrolledEvent );
+		return ImGui::GetIO().WantCaptureMouse ? true : false;
+	}
+	
+	DECLARE_DELEGATE( CKeyEventDelegate, const SKeyEvent& );
+	CKeyEventDelegate KeyEventDelegate;
+	
+	DECLARE_DELEGATE( CKeyTypedDelegate, SKeyTypedEvent );
+	CKeyTypedDelegate KeyTypedDelegate;
+	
+	DECLARE_DELEGATE( CMouseButtonDelegate, const SMouseButtonEvent& );
+	CMouseButtonDelegate MouseButtonDelegate;
+	
+	DECLARE_DELEGATE( CMouseScrolledDelegate, const SMouseScrolledEvent& );
+	CMouseScrolledDelegate MouseScrolledDelegate;
+};
+
 class DebugUI
 {
 public:
@@ -40,13 +85,11 @@ public:
     static void DrawUI( UIDrawFunc DrawFunc );
     static void DrawDebugString( const std::string& DebugString );
 
-    static void OnKeyPressed( const KeyPressedEvent& Event );
-    static void OnKeyReleased( const KeyReleasedEvent& Event );
-    static void OnKeyTyped( const KeyTypedEvent& Event );
+    static void OnKeyEvent( const SKeyEvent& Event );
+    static void OnKeyTyped( SKeyTypedEvent Event );
 
-    static void OnMousePressed( const MousePressedEvent& Event );
-    static void OnMouseReleased( const MouseReleasedEvent& Event );
-    static void OnMouseScrolled( const MouseScrolledEvent& Event );
+    static void OnMouseButtonEvent( const SMouseButtonEvent& Event );
+    static void OnMouseScrolled( const SMouseScrolledEvent& Event );
 
     // Should only be called by the renderer
     static void Render( class CommandList& CmdList );

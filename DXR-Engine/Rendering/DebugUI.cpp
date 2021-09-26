@@ -10,7 +10,7 @@
 #include "Core/Time/Timer.h"
 #include "Core/Engine/Engine.h"
 #include "Core/Application/ICursor.h"
-#include "Core/Application/Generic/GenericApplication.h"
+#include "Core/Application/MainApplication.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Profiler.h"
 #include "Core/Containers/Array.h"
@@ -60,6 +60,8 @@ static uint32 GetMouseButtonIndex( EMouseButton Button )
 static TArray<DebugUI::UIDrawFunc> GlobalDrawFuncs;
 static TArray<std::string>         GlobalDebugStrings;
 
+static CUIInputHandler InputHandler;
+
 bool DebugUI::Init()
 {
     // TODO: Have null renderlayer to avoid these checks
@@ -83,7 +85,7 @@ bool DebugUI::Init()
     IO.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
     IO.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
     IO.BackendPlatformName = "Windows";
-    IO.ImeWindowHandle = GEngine->MainWindow->GetNativeHandle();
+    IO.ImeWindowHandle = CEngine::Get().MainWindow->GetNativeHandle();
 
     // Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
     IO.KeyMap[ImGuiKey_Tab] = EKey::Key_Tab;
@@ -427,7 +429,7 @@ bool DebugUI::Init()
     }
 
     GlobalImGuiState.IndexBuffer = CreateIndexBuffer(
-        sizeof( ImDrawIdx ) == 2 ? EIndexFormat::uint16 : EIndexFormat::uint32,
+        (sizeof( ImDrawIdx ) == 2) ? EIndexFormat::uint16 : EIndexFormat::uint32,
         1024 * 1024,
         BufferFlag_Default,
         EResourceState::Common,
@@ -453,13 +455,14 @@ bool DebugUI::Init()
         return false;
     }
 
-    GEngine->OnKeyPressedEvent.AddStatic( DebugUI::OnKeyPressed );
-    GEngine->OnKeyReleasedEvent.AddStatic( DebugUI::OnKeyReleased );
-    GEngine->OnKeyTypedEvent.AddStatic( DebugUI::OnKeyTyped );
-
-    GEngine->OnMousePressedEvent.AddStatic( DebugUI::OnMousePressed );
-    GEngine->OnMouseReleasedEvent.AddStatic( DebugUI::OnMouseReleased );
-    GEngine->OnMouseScrolledEvent.AddStatic( DebugUI::OnMouseScrolled );
+	// Setup input callbacks
+	InputHandler.KeyEventDelegate.BindStatic( DebugUI::OnKeyEvent );
+	InputHandler.KeyTypedDelegate.BindStatic( DebugUI::OnKeyTyped );
+	InputHandler.MouseButtonDelegate.BindStatic( DebugUI::OnMouseButtonEvent );
+	InputHandler.MouseScrolledDelegate.BindStatic( DebugUI::OnMouseScrolled );
+	
+	// Add the input handler
+	CMainApplication::Get().AddInputHandler( &InputHandler );
 
     return true;
 }
@@ -484,42 +487,29 @@ void DebugUI::DrawDebugString( const std::string& DebugString )
     GlobalDebugStrings.Emplace( DebugString );
 }
 
-void DebugUI::OnKeyPressed( const KeyPressedEvent& Event )
+void DebugUI::OnKeyEvent( const SKeyEvent& KeyEvent )
 {
     ImGuiIO& IO = ImGui::GetIO();
-    IO.KeysDown[Event.Key] = true;
+    IO.KeysDown[KeyEvent.KeyCode] = KeyEvent.IsDown;
 }
 
-void DebugUI::OnKeyReleased( const KeyReleasedEvent& Event )
-{
-    ImGuiIO& IO = ImGui::GetIO();
-    IO.KeysDown[Event.Key] = false;
-}
-
-void DebugUI::OnKeyTyped( const KeyTypedEvent& Event )
+void DebugUI::OnKeyTyped( SKeyTypedEvent Event )
 {
     ImGuiIO& IO = ImGui::GetIO();
     IO.AddInputCharacter( Event.Character );
 }
 
-void DebugUI::OnMousePressed( const MousePressedEvent& Event )
+void DebugUI::OnMouseButtonEvent(const SMouseButtonEvent& Event)
 {
-    ImGuiIO& IO = ImGui::GetIO();
-    const uint32 ButtonIndex = GetMouseButtonIndex( Event.Button );
-    IO.MouseDown[ButtonIndex] = true;
+	ImGuiIO& IO = ImGui::GetIO();
+	const uint32 ButtonIndex = GetMouseButtonIndex( Event.Button );
+	IO.MouseDown[ButtonIndex] = Event.IsDown;
 }
 
-void DebugUI::OnMouseReleased( const MouseReleasedEvent& Event )
+void DebugUI::OnMouseScrolled( const SMouseScrolledEvent& Event )
 {
     ImGuiIO& IO = ImGui::GetIO();
-    const uint32 ButtonIndex = GetMouseButtonIndex( Event.Button );
-    IO.MouseDown[ButtonIndex] = false;
-}
-
-void DebugUI::OnMouseScrolled( const MouseScrolledEvent& Event )
-{
-    ImGuiIO& IO = ImGui::GetIO();
-    IO.MouseWheel += Event.VerticalDelta;
+    IO.MouseWheel  += Event.VerticalDelta;
     IO.MouseWheelH += Event.HorizontalDelta;
 }
 
@@ -529,12 +519,10 @@ void DebugUI::Render( CommandList& CmdList )
 
     ImGuiIO& IO = ImGui::GetIO();
 
-    ICursor* Cursor = GEngine->Application->GetCursor();
-
-    CGenericWindow* Window = GEngine->MainWindow.Get();
+    TSharedRef<CGenericWindow> Window = CEngine::Get().MainWindow;
     if ( IO.WantSetMousePos )
     {
-        Cursor->SetCursorPosition( Window, static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) );
+        CMainApplication::Get().SetCursorPosition( Window, CIntPoint2( static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y)) );
     }
 
     SWindowShape CurrentWindowShape;
@@ -545,11 +533,8 @@ void DebugUI::Render( CommandList& CmdList )
     IO.DisplaySize = ImVec2( float( CurrentWindowShape.Width ), float( CurrentWindowShape.Height ) );
     IO.DisplayFramebufferScale = ImVec2( 1.0f, 1.0f );
 
-    int32 x = 0;
-    int32 y = 0;
-    Cursor->GetCursorPosition( Window, x, y );
-
-    IO.MousePos = ImVec2( static_cast<float>(x), static_cast<float>(y) );
+    CIntPoint2 Position = CMainApplication::Get().GetCursorPosition( Window );
+    IO.MousePos = ImVec2( static_cast<float>(Position.x), static_cast<float>(Position.y) );
 
     SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
     IO.KeyCtrl = KeyState.IsCtrlDown;
@@ -562,22 +547,25 @@ void DebugUI::Render( CommandList& CmdList )
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
         if ( ImguiCursor == ImGuiMouseCursor_None || IO.MouseDrawCursor )
         {
-            Cursor->SetCursor( ECursor::None );
+			CMainApplication::Get().SetCursor( ECursor::None );
         }
         else
         {
+			ECursor Cursor = ECursor::Arrow;
             switch ( ImguiCursor )
             {
-                case ImGuiMouseCursor_Arrow:      Cursor->SetCursor( ECursor::Arrow );      break;
-                case ImGuiMouseCursor_TextInput:  Cursor->SetCursor( ECursor::TextInput );  break;
-                case ImGuiMouseCursor_ResizeAll:  Cursor->SetCursor( ECursor::ResizeAll );  break;
-                case ImGuiMouseCursor_ResizeEW:   Cursor->SetCursor( ECursor::ResizeEW );   break;
-                case ImGuiMouseCursor_ResizeNS:   Cursor->SetCursor( ECursor::ResizeNS );   break;
-                case ImGuiMouseCursor_ResizeNESW: Cursor->SetCursor( ECursor::ResizeNESW ); break;
-                case ImGuiMouseCursor_ResizeNWSE: Cursor->SetCursor( ECursor::ResizeNWSE ); break;
-                case ImGuiMouseCursor_Hand:       Cursor->SetCursor( ECursor::Hand );       break;
-                case ImGuiMouseCursor_NotAllowed: Cursor->SetCursor( ECursor::NotAllowed ); break;
+                case ImGuiMouseCursor_Arrow:      Cursor = ECursor::Arrow;      break;
+                case ImGuiMouseCursor_TextInput:  Cursor = ECursor::TextInput;  break;
+                case ImGuiMouseCursor_ResizeAll:  Cursor = ECursor::ResizeAll;  break;
+                case ImGuiMouseCursor_ResizeEW:   Cursor = ECursor::ResizeEW;   break;
+                case ImGuiMouseCursor_ResizeNS:   Cursor = ECursor::ResizeNS;   break;
+                case ImGuiMouseCursor_ResizeNESW: Cursor = ECursor::ResizeNESW; break;
+                case ImGuiMouseCursor_ResizeNWSE: Cursor = ECursor::ResizeNWSE; break;
+                case ImGuiMouseCursor_Hand:       Cursor = ECursor::Hand;       break;
+                case ImGuiMouseCursor_NotAllowed: Cursor = ECursor::NotAllowed; break;
             }
+			
+			CMainApplication::Get().SetCursor( Cursor );
         }
     }
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "Core.h"
 #include "Core/Templates/IsSigned.h"
-#include "Core/Threading/Platform/PlatformAtomic.h"
+#include "Core/Threading/Platform/PlatformInterlocked.h"
 
 template<typename T>
 class TInterlockedInt
@@ -31,54 +31,54 @@ public:
 
     FORCEINLINE T Increment() noexcept
     {
-        return PlatformAtomic::InterlockedIncrement( &Value );
+        return PlatformInterlocked::Increment( &Value );
     }
 
     FORCEINLINE T Decrement() noexcept
     {
-        return PlatformAtomic::InterlockedDecrement( &Value );
+        return PlatformInterlocked::Decrement( &Value );
     }
 
     FORCEINLINE T Add( T RHS ) noexcept
     {
-        PlatformAtomic::InterlockedAdd( &Value, RHS );
+        PlatformInterlocked::Add( &Value, RHS );
         return Value;
     }
 
     FORCEINLINE T Subtract( T RHS ) noexcept
     {
-        PlatformAtomic::InterlockedSub( &Value, RHS );
+        PlatformInterlocked::Sub( &Value, RHS );
         return Value;
     }
 
     FORCEINLINE T And( T RHS ) noexcept
     {
-        PlatformAtomic::InterlockedAnd( &Value, RHS );
+        PlatformInterlocked::And( &Value, RHS );
         return Value;
     }
 
     FORCEINLINE T Or( T RHS ) noexcept
     {
-        PlatformAtomic::InterlockedOr( &Value, RHS );
+        PlatformInterlocked::Or( &Value, RHS );
         return Value;
     }
 
     FORCEINLINE T Xor( T RHS ) noexcept
     {
-        PlatformAtomic::InterlockedXor( &Value, RHS );
+        PlatformInterlocked::Xor( &Value, RHS );
         return Value;
     }
 
     FORCEINLINE T Load() const noexcept
     {
         // Makes sure that all prior accesses has completed
-        PlatformAtomic::InterlockedCompareExchange( &Value, 0, 0 );
+        PlatformInterlocked::CompareExchange( &Value, 0, 0 );
         return Value;
     }
 
     FORCEINLINE void Store( T InValue ) noexcept
     {
-        PlatformAtomic::InterlockedExchange( &Value, InValue );
+        PlatformInterlocked::Exchange( &Value, InValue );
     }
 
 public:

@@ -4,6 +4,16 @@
 #include "Core/RefCounted.h"
 #include "Core/Time/Timestamp.h"
 
+#if defined(COMPILER_MSVC)
+#pragma warning(push)
+#pragma warning(disable : 4100) // Disable unreferenced variable
+
+#elif defined(COMPILER_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
+#endif
+
 typedef void(*ThreadFunction)();
 typedef uint64 PlatformThreadHandle;
 
@@ -16,16 +26,21 @@ class CGenericThread : public CRefCounted
 public:
 
     // TODO: Enable member-functions and lambdas
-    static CGenericThread* Make( ThreadFunction )
+    static FORCEINLINE CGenericThread* Make( ThreadFunction InFunction )
     {
         return nullptr;
     }
+	
+	static FORCEINLINE CGenericThread* Make( ThreadFunction InFunction, const CString& InName )
+	{
+		return nullptr;
+	}
 
     virtual bool Start() = 0;
 
     virtual void WaitUntilFinished() = 0;
 
-    virtual void SetName( const std::string& Name ) = 0;
+    virtual void SetName( const CString& Name ) = 0;
 
     virtual PlatformThreadHandle GetPlatformHandle() = 0;
 
@@ -34,3 +49,11 @@ protected:
     CGenericThread() = default;
     ~CGenericThread() = default;
 };
+
+#if defined(COMPILER_MSVC)
+#pragma warning(pop)
+
+#elif defined(COMPILER_CLANG)
+#pragma clang diagnostic pop
+
+#endif

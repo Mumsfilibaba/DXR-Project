@@ -23,11 +23,11 @@ CMacApplication::~CMacApplication()
     [AppDelegate release];
 }
 
-CGenericWindow* CMacApplication::MakeWindow()
+TSharedRef<CGenericWindow> CMacApplication::MakeWindow()
 {
     TSharedRef<CMacWindow> NewWindow = new CMacWindow( this );
     Windows.Emplace(NewWindow);
-    return NewWindow.Get();
+    return NewWindow;
 }
 
 bool CMacApplication::Init()
@@ -116,24 +116,19 @@ void CMacApplication::Tick( float )
     PlatformApplicationMisc::PumpMessages(true);
 }
 
-void CMacApplication::Release()
-{
-    delete this;
-}
-
-void CMacApplication::SetActiveWindow( CGenericWindow* Window )
+void CMacApplication::SetActiveWindow( const TSharedRef<CGenericWindow>& Window )
 {
     CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window->GetNativeHandle());
     [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
 }
 
-CGenericWindow* CMacApplication::GetActiveWindow() const
+TSharedRef<CGenericWindow> CMacApplication::GetActiveWindow() const
 {
     NSWindow* KeyWindow = [NSApp keyWindow];
     return GetWindowFromNSWindow( KeyWindow );
 }
 
-CMacWindow* CMacApplication::GetWindowFromNSWindow( NSWindow* Window ) const
+TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow( NSWindow* Window ) const
 {
     if (Window && [Window isKindOfClass:[CCocoaWindow class]])
     {
@@ -143,7 +138,7 @@ CMacWindow* CMacApplication::GetWindowFromNSWindow( NSWindow* Window ) const
             Assert( MacWindow != nullptr );
             if ( CocoaWindow == reinterpret_cast<CCocoaWindow*>(MacWindow->GetNativeHandle()) )
             {
-                return MacWindow.Get();
+				return MacWindow;
             }
         }
     }
@@ -156,7 +151,7 @@ void CMacApplication::HandleNotification( const SNotification& Notification )
     if (Notification.IsValid())
     {
         NSNotificationName     NotificationName = [Notification.Notification name];
-        TSharedRef<CMacWindow> Window           = MakeSharedRef<CMacWindow>(GetWindowFromNSWindow(Notification.Window));
+        TSharedRef<CMacWindow> Window           = GetWindowFromNSWindow(Notification.Window);
 
         if (NotificationName == NSWindowWillCloseNotification)
         {
@@ -282,7 +277,7 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         case NSEventTypeMouseEntered:
         {
             NSWindow* EventWindow = [Event window];
-            TSharedRef<CMacWindow> Window = MakeSharedRef<CMacWindow>(GetWindowFromNSWindow(EventWindow));
+            TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(EventWindow);
             if (Window)
             {
                 MessageListener->OnWindowMouseEntered(Window);
@@ -294,7 +289,7 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         case NSEventTypeMouseExited:
         {
             NSWindow* EventWindow = [Event window];
-            TSharedRef<CMacWindow> Window = MakeSharedRef<CMacWindow>(GetWindowFromNSWindow(EventWindow));
+            TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(EventWindow);
             if (Window)
             {
                 MessageListener->OnWindowMouseLeft(Window);

@@ -25,11 +25,33 @@
 
 #include "Core/Time/Timer.h"
 #include "Core/Threading/TaskManager.h"
+#include "Core/Application/WindowMessageHandler.h"
+
+class CRendererWindowHandler final : public CWindowMessageHandler
+{
+public:
+	
+	DECLARE_DELEGATE( CWindowResizedDelegate, const SWindowResizeEvent& ResizeEvent );
+	CWindowResizedDelegate WindowResizedDelegate;
+	
+	CRendererWindowHandler() = default;
+	~CRendererWindowHandler() = default;
+	
+	virtual bool OnWindowResized( const SWindowResizeEvent& ResizeEvent ) override final
+	{
+		WindowResizedDelegate.Execute( ResizeEvent );
+		return true;
+	}
+};
 
 class Renderer
 {
 public:
-    bool Init();
+	
+	Renderer() = default;
+	~Renderer() = default;
+	
+	bool Init();
 
     void Tick( const Scene& Scene );
 
@@ -44,7 +66,8 @@ public:
     void RenderDebugInterface();
 
 private:
-    void OnWindowResize( const WindowResizeEvent& Event );
+	
+    void OnWindowResize( const SWindowResizeEvent& Event );
 
     bool InitBoundingBoxDebugPass();
     bool InitAA();
@@ -52,6 +75,8 @@ private:
 
     void ResizeResources( uint32 Width, uint32 Height );
 
+	CRendererWindowHandler WindowHandler;
+	
     CommandList PreShadowsCmdList;
     CommandList PointShadowCmdList;
     CommandList DirShadowCmdList;

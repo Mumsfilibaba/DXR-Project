@@ -111,12 +111,12 @@ static void DrawMenu()
             {
                 if ( ImGui::MenuItem( "Toggle Fullscreen" ) )
                 {
-                    GEngine->MainWindow->ToggleFullscreen();
+                    CEngine::Get().MainWindow->ToggleFullscreen();
                 }
 
                 if ( ImGui::MenuItem( "Quit" ) )
                 {
-                    GEngine->Exit();
+                    CEngine::Get().Exit();
                 }
 
                 ImGui::EndMenu();
@@ -141,8 +141,8 @@ static void DrawSideWindow()
 {
     DebugUI::DrawUI( []
     {
-        const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
-        const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
+        const uint32 WindowWidth = CEngine::Get().MainWindow->GetWidth();
+        const uint32 WindowHeight = CEngine::Get().MainWindow->GetHeight();
         const float Width = NMath::Max( WindowWidth * 0.3f, 400.0f );
         const float Height = WindowHeight * 0.7f;
 
@@ -189,7 +189,7 @@ static void DrawRenderSettings()
     ImGui::BeginChild( "RendererInfo" );
 
     SWindowShape WindowShape;
-    GEngine->MainWindow->GetWindowShape( WindowShape );
+    CEngine::Get().MainWindow->GetWindowShape( WindowShape );
 
     ImGui::Spacing();
     ImGui::Text( "Renderer Info" );
@@ -374,7 +374,7 @@ static void DrawSceneInfo()
     ImGui::Separator();
 
     SWindowShape WindowShape;
-    GEngine->MainWindow->GetWindowShape( WindowShape );
+    CEngine::Get().MainWindow->GetWindowShape( WindowShape );
 
     // Actors
     if ( ImGui::TreeNode( "Actors" ) )

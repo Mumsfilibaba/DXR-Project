@@ -29,23 +29,23 @@ class CMacApplication final : public CGenericApplication
 {
 public:
 
+	/* Public destructor for TSharedPtr */
+	~CMacApplication();
+
     /* Creates the mac application */
-    static FORCEINLINE CMacApplication* Make()
+    static FORCEINLINE TSharedPtr<CMacApplication> Make()
     {
-        return new CMacApplication();
+        return TSharedPtr<CMacApplication>( new CMacApplication() );
     }
 
     /* Create a window */
-    virtual CGenericWindow* MakeWindow() override final;
+    virtual TSharedRef<CGenericWindow> MakeWindow() override final;
 
     /* Initialized the application */
     virtual bool Init() override final;
 
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick( float Delta ) override final;
-
-    /* Releases the application */
-    virtual void Release() override final;
 
     /* Retrieve the cursor interface */
     virtual ICursor* GetCursor() override final
@@ -60,13 +60,13 @@ public:
     }
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( CGenericWindow* Window ) override final;
+    virtual void SetActiveWindow( const TSharedRef<CGenericWindow>& Window ) override final;
 
     /* Retrieves the window that is currently active */
-    virtual CGenericWindow* GetActiveWindow() const override final;
+    virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
 
     /* Retrieves a from a NSWindow */
-    CMacWindow* GetWindowFromNSWindow( NSWindow* Window ) const;
+    TSharedRef<CMacWindow> GetWindowFromNSWindow( NSWindow* Window ) const;
 
     /* Handles a notification */
     void HandleNotification( const struct SNotification& Notification );
@@ -86,7 +86,6 @@ public:
 private:
 
     CMacApplication();
-    ~CMacApplication();
 
     /* Initializes the applications menu in the menubar */
     bool InitAppMenu();

@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Application/Events.h"
+#include "Core/Application/InputHandler.h"
 
 #include "ConsoleVariable.h"
 #include "ConsoleCommand.h"
@@ -13,6 +14,23 @@
 
 #define INIT_CONSOLE_VARIABLE(Name, Variable) GConsole.RegisterVariable(Name, Variable)
 #define INIT_CONSOLE_COMMAND(Name, Command)   GConsole.RegisterCommand(Name, Command)
+
+class CConsoleInputHandler : public CInputHandler
+{
+public:
+	CConsoleInputHandler() = default;
+	~CConsoleInputHandler() = default;
+	
+	virtual bool HandleKeyEvent( const SKeyEvent& KeyEvent )
+	{
+		HandleKeyEventDelegate.Execute( KeyEvent );
+		return true;
+	}
+	
+	DECLARE_DELEGATE( CHandleKeyEventDelegate, const SKeyEvent& );
+	CHandleKeyEventDelegate HandleKeyEventDelegate;
+};
+
 
 class Console
 {
@@ -66,7 +84,7 @@ public:
     void ClearHistory();
 
 private:
-    void OnKeyPressedEvent( const KeyPressedEvent& Event );
+    void OnKeyPressedEvent( const SKeyEvent& Event );
 
     void DrawInterface();
 
@@ -98,6 +116,8 @@ private:
     bool CandidateSelectionChanged = false;
     bool ScrollDown = false;
     bool IsActive = false;
+	
+	CConsoleInputHandler InputHandler;
 };
 
 extern Console GConsole;

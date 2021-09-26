@@ -452,6 +452,53 @@ public:
         RemoveAt( Iterator.GetIndex() );
         return Iterator;
     }
+	
+	/* Compares the elements in the array and removes the element if found */
+	FORCEINLINE void Remove( const ElementType& Element ) noexcept
+	{
+		for ( IteratorType Iterator = StartIterator(); Iterator != EndIterator(); )
+		{
+			if ( Element == *Iterator )
+			{
+				Iterator = RemoveAt( Iterator );
+				break;
+			}
+			else
+			{
+				++Iterator;
+			}
+		}
+	}
+	
+	/* Compares all the elements in the array and removes all instance of the element if found */
+	FORCEINLINE void RemoveAllOf( const ElementType& Element ) noexcept
+	{
+		for ( IteratorType Iterator = StartIterator(); Iterator != EndIterator(); )
+		{
+			if ( Element == *Iterator )
+			{
+				Iterator = RemoveAt( Iterator );
+			}
+			else
+			{
+				++Iterator;
+			}
+		}
+	}
+	
+	/* Returns true if the element exists in the array */
+	FORCEINLINE bool Contains( const ElementType& Element ) const noexcept
+	{
+		for ( ConstIteratorType Iterator = StartIterator(); Iterator != EndIterator(); ++Iterator )
+		{
+			if ( Element == *Iterator )
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
 
     /* Swaps container with another */
     FORCEINLINE void Swap( TArray& Other ) noexcept

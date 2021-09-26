@@ -2,6 +2,7 @@
 #include "Core/Application/ICursor.h"
 #include "Core/Application/IKeyboard.h"
 #include "Core/Containers/SharedPtr.h"
+#include "Core/Containers/SharedRef.h"
 
 #include "GenericApplicationMessageListener.h"
 
@@ -13,23 +14,22 @@ class CGenericApplication
 {
 public:
 
+	virtual ~CGenericApplication() = default;
+
     /* Creates the mac application */
-    static FORCEINLINE CGenericApplication* Make()
+    static FORCEINLINE TSharedPtr<CGenericApplication> Make()
     {
         return nullptr;
     }
 
     /* Create a window */
-    virtual CGenericWindow* MakeWindow() = 0;
+    virtual TSharedRef<CGenericWindow> MakeWindow() = 0;
 
     /* Initialized the application */
     virtual bool Init() = 0;
 
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick( float Delta ) = 0;
-
-    /* Releases the application */
-    virtual void Release() = 0;
 
     /* Retrieve the cursor interface */
     virtual ICursor* GetCursor() = 0;
@@ -38,21 +38,21 @@ public:
     virtual IKeyboard* GetKeyboard() = 0;
 
     /* Sets the window that currently has the keyboard focus */
-    virtual void SetCapture( CGenericWindow* )
+    virtual void SetCapture( const TSharedRef<CGenericWindow>& )
     {
     }
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( CGenericWindow* Window ) = 0;
+    virtual void SetActiveWindow( const TSharedRef<CGenericWindow>& Window ) = 0;
 
     /* Retrieves the window that currently has the keyboard focus, since macOS does not support keyboard focus, we return null as standard */
-    virtual CGenericWindow* GetCapture() const
+    virtual TSharedRef<CGenericWindow> GetCapture() const
     {
         return nullptr;
     }
 
     /* Retrieves the window that is currently active */
-    virtual CGenericWindow* GetActiveWindow() const = 0;
+    virtual TSharedRef<CGenericWindow> GetActiveWindow() const = 0;
 
     /* Sets the message listener */
     FORCEINLINE void SetMessageListener( const TSharedPtr<CGenericApplicationMessageListener>& InMessageListener )
@@ -68,8 +68,9 @@ public:
 
 protected:
 
+	/* Protected constructor, use Make */
     CGenericApplication() = default;
-    ~CGenericApplication() = default;
 
+	/* Listener for platform messages/events */
     TSharedPtr<CGenericApplicationMessageListener> MessageListener;
 };

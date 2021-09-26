@@ -5,7 +5,7 @@
 #include "Core/Engine/EngineLoop.h"
 #include "Core/Engine/Engine.h"
 
-#include "Core/Application/Application.h"
+#include "Core/Application/MainApplication.h"
 
 #include <regex>
 
@@ -18,7 +18,8 @@ void Console::Init()
     GClearHistory.OnExecute.AddRaw( this, &Console::ClearHistory );
     INIT_CONSOLE_COMMAND( "ClearHistory", &GClearHistory );
 
-    GEngine->OnKeyPressedEvent.AddRaw( this, &Console::OnKeyPressedEvent );
+	InputHandler.HandleKeyEventDelegate.BindRaw( this, &Console::OnKeyPressedEvent );
+	CMainApplication::Get().AddInputHandler( &InputHandler );
 }
 
 void Console::Tick()
@@ -111,9 +112,9 @@ void Console::ClearHistory()
     HistoryIndex = -1;
 }
 
-void Console::OnKeyPressedEvent( const KeyPressedEvent& Event )
+void Console::OnKeyPressedEvent( const SKeyEvent& Event )
 {
-    if ( !Event.IsRepeat && Event.Key == EKey::Key_GraveAccent )
+    if ( !Event.IsRepeat && Event.KeyCode == EKey::Key_GraveAccent )
     {
         IsActive = !IsActive;
     }
@@ -121,8 +122,8 @@ void Console::OnKeyPressedEvent( const KeyPressedEvent& Event )
 
 void Console::DrawInterface()
 {
-    const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
-    const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
+    const uint32 WindowWidth = CEngine::Get().MainWindow->GetWidth();
+    const uint32 WindowHeight = CEngine::Get().MainWindow->GetHeight();
     const float Width = 640;
     const float Height = 160;
     const ImVec2 Offset( 8.0f, 8.0f );

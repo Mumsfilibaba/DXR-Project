@@ -13,12 +13,15 @@
 #include "Core/Application/Platform/PlatformApplication.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Application/Platform/PlatformOutputConsole.h"
+#include "Core/Application/MainApplication.h"
 #include "Core/Debug/Profiler.h"
 #include "Core/Debug/Console/Console.h"
 #include "Core/Threading/TaskManager.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/InterlockedInt.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
+
+#include <chrono>
 
 bool EngineLoop::Init()
 {
@@ -36,22 +39,26 @@ bool EngineLoop::Init()
 
     Profiler::Init();
 
-    CGenericApplication* Application = PlatformApplication::Make();
-    if ( Application && !Application->Init() )
+	TSharedPtr<CGenericApplication> PlatformApplication = PlatformApplication::Make();
+    if ( PlatformApplication && !PlatformApplication->Init() )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create PlatformApplication" );
         return false;
     }
 
+	TSharedPtr<CMainApplication> Application = CMainApplication::Make( PlatformApplication );
+	if ( !Application )
+	{
+		PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create MainApplication" );
+		return false;
+	}
+	
     if ( !TaskManager::Get().Init() )
     {
         return false;
-    } 
+    }
 
-    GEngine = MakeShared<Engine>();
-    Application->SetMessageListener( GEngine );
-
-    if ( !GEngine->Init( Application ) )
+    if ( !CEngine::Get().Init() )
     {
         return false;
     }
@@ -103,7 +110,7 @@ void EngineLoop::Tick( CTimestamp Deltatime )
 {
     TRACE_FUNCTION_SCOPE();
 
-    GEngine->Application->Tick( Deltatime.AsMilliSeconds() );
+    CMainApplication::Get().Tick( Deltatime );
 
     GApplication->Tick( Deltatime );
 
@@ -122,7 +129,7 @@ void EngineLoop::Run()
 {
     CTimer CTimer;
 
-    while ( GEngine->IsRunning )
+    while ( CEngine::Get().IsRunning )
     {
         CTimer.Tick();
         EngineLoop::Tick( CTimer.GetDeltaTime() );
@@ -156,8 +163,7 @@ bool EngineLoop::Release()
 
     SafeRelease( GConsoleOutput );
 
-    GEngine->Release();
-    GEngine.Reset();
-
+	CEngine::Get().Release();
+	
     return true;
 }

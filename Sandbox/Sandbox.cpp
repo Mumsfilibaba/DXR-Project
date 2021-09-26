@@ -16,7 +16,7 @@
 
 #include "Core/Engine/Engine.h"
 #include "Core/Application/IKeyboard.h"
-#include "Core/Application/Generic/GenericApplication.h"
+#include "Core/Application/MainApplication.h"
 
 #include <random>
 
@@ -408,7 +408,7 @@ void Sandbox::Tick( CTimestamp DeltaTime )
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
 
-    IKeyboard* Keyboard = GEngine->Application->GetKeyboard();
+    IKeyboard* Keyboard = CMainApplication::Get().GetKeyboard();
     if ( Keyboard->IsKeyDown( EKey::Key_Right ) )
     {
         CurrentCamera->Rotate( 0.0f, NMath::ToRadians( RotationSpeed * Delta ), 0.0f );

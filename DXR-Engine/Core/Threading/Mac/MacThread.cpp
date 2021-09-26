@@ -11,6 +11,15 @@ CMacThread::CMacThread( ThreadFunction InFunction )
 {
 }
 
+CMacThread::CMacThread( ThreadFunction InFunction, const CString& InName )
+	: CGenericThread()
+	, Thread()
+	, Function( InFunction )
+	, Name( InName )
+	, IsRunning( false )
+{
+}
+
 CMacThread::~CMacThread()
 {
 	// Empty for now
@@ -35,14 +44,14 @@ void CMacThread::WaitUntilFinished()
 	pthread_join(Thread, NULL);
 }
 
-void CMacThread::SetName( const std::string& InName )
+void CMacThread::SetName( const CString& InName )
 {
 	// The name can always be set from the current thread
 	const bool CurrentThreadIsMyself = GetPlatformHandle() == CMacThreadMisc::GetThreadHandle();
 	if ( CurrentThreadIsMyself )
 	{
 		Name = InName;
-		pthread_setname_np( Name.c_str() );
+		pthread_setname_np( Name.CStr() );
 	}
 	else if ( !IsRunning )
 	{
@@ -61,7 +70,10 @@ void* CMacThread::ThreadRoutine( void* ThreadParameter )
     if ( CurrentThread )
     {
 		// Can only set the current thread's name
-		pthread_setname_np( CurrentThread->Name.c_str() );
+		if ( !CurrentThread->Name.IsEmpty() )
+		{
+			pthread_setname_np( CurrentThread->Name.CStr() );
+		}
 		
         Assert( CurrentThread->Function != nullptr );
         CurrentThread->Function();

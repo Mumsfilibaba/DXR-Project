@@ -5,9 +5,19 @@
 
 CWindowsThread::CWindowsThread( ThreadFunction InFunction )
     : CGenericThread()
-    , Function( InFunction )
     , Thread( 0 )
     , hThreadID( 0 )
+    , Name()
+    , Function( InFunction )
+{
+}
+
+CWindowsThread::CWindowsThread( ThreadFunction InFunction, const CString& InName )
+    : CGenericThread()
+    , Thread( 0 )
+    , hThreadID( 0 )
+    , Name( InName )
+    , Function( InFunction )
 {
 }
 
@@ -38,10 +48,12 @@ void CWindowsThread::WaitUntilFinished()
     WaitForSingleObject( Thread, INFINITE );
 }
 
-void CWindowsThread::SetName( const std::string& Name )
+void CWindowsThread::SetName( const CString& InName )
 {
-    WString WideName = CharToWide( CString( Name.c_str(), Name.length() ) );
+    WString WideName = CharToWide( InName );
     SetThreadDescription( Thread, WideName.CStr() );
+
+    Name = InName;
 }
 
 PlatformThreadHandle CWindowsThread::GetPlatformHandle()
@@ -51,9 +63,15 @@ PlatformThreadHandle CWindowsThread::GetPlatformHandle()
 
 DWORD WINAPI CWindowsThread::ThreadRoutine( LPVOID ThreadParameter )
 {
-    volatile CWindowsThread* CurrentThread = (CWindowsThread*)ThreadParameter;
+    CWindowsThread* CurrentThread = (CWindowsThread*)ThreadParameter;
     if ( CurrentThread )
     {
+        if ( !CurrentThread->Name.IsEmpty() )
+        {
+            WString WideName = CharToWide( CurrentThread->Name );
+            SetThreadDescription( Thread, WideName.CStr() );
+        }
+
         Assert( CurrentThread->Func != nullptr );
 
         CurrentThread->Function();
