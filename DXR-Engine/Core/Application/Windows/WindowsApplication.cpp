@@ -61,7 +61,6 @@ CWindowsApplication::CWindowsApplication( HINSTANCE InInstance )
     , WindowsMessageListeners()
     , IsTrackingMouse( false )
     , Cursor()
-    , Keyboard()
 {
     // Always the last instance created 
     ApplicationInstance = this;
@@ -261,11 +260,6 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             {
                 const bool HasFocus = (Message == WM_SETFOCUS);
                 MessageListener->OnWindowFocusChanged( MessageWindow, HasFocus );
-
-                if ( HasFocus )
-                {
-                    Keyboard.ResetState();
-                }
             }
 
             break;
@@ -310,8 +304,6 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             const uint32 ScanCode = static_cast<uint32>(HIWORD( lParam ) & ScanCodeMask);
             const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode( ScanCode );
 
-            Keyboard.RegisterKeyState( Key, false );
-
             MessageListener->OnKeyReleased( Key, PlatformApplicationMisc::GetModifierKeyState() );
             break;
         }
@@ -322,8 +314,6 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             const bool IsRepeat = !!(lParam & KeyRepeatMask);
             const uint32 ScanCode = static_cast<uint32>(HIWORD( lParam ) & ScanCodeMask);
             const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode( ScanCode );
-
-            Keyboard.RegisterKeyState( Key, true );
 
             MessageListener->OnKeyPressed( Key, IsRepeat, PlatformApplicationMisc::GetModifierKeyState() );
             break;
@@ -392,8 +382,6 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
                 Button = EMouseButton::MouseButton_Forward;
             }
 
-            Cursor.RegisterButtonState( Button, true );
-
             MessageListener->OnMousePressed( Button, PlatformApplicationMisc::GetModifierKeyState() );
             break;
         }
@@ -424,8 +412,6 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             {
                 Button = EMouseButton::MouseButton_Forward;
             }
-
-            Cursor.RegisterButtonState( Button, true );
 
             MessageListener->OnMouseReleased( Button, PlatformApplicationMisc::GetModifierKeyState() );
             break;

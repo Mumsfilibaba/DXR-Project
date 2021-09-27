@@ -23,17 +23,12 @@ public:
 
 private:
 
-    CMacCursor()
+    FORCEINLINE MacCursor()
         : CGenericCursor()
     {
     }
 
     ~CMacCursor() = default;
-
-    FORCEINLINE void RegisterButtonState( EMouseButton Button, bool State )
-    {
-        ButtonState[Button] = State;
-    }
 };
 
 #endif

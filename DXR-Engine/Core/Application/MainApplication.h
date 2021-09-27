@@ -3,7 +3,7 @@
 #include "InputHandler.h"
 #include "WindowMessageHandler.h"
 #include "ICursor.h"
-#include "IKeyboard.h"
+#include "ApplicationUser.h"
 
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
@@ -29,7 +29,7 @@ public:
         return ApplicationInstance;
     }
 
-    /* Inits the singleton from an existing application - Used for classes inheriting from CMainApplication */
+    /* Init the singleton from an existing application - Used for classes inheriting from CMainApplication */
     static FORCEINLINE TSharedPtr<CMainApplication> Make( const TSharedPtr<CMainApplication>& InApplication )
     {
         ApplicationInstance = InApplication;
@@ -106,6 +106,38 @@ public:
     /* Set the platform application */
     virtual void SetPlatformApplication( const TSharedPtr<CGenericApplication>& InPlatformApplication );
 
+    /* Register a new user to the application */
+    FORCEINLINE void RegisterUser( const TSharedPtr<CApplicationUser>& NewUser )
+    {
+        RegisteredUsers.Push( NewUser );
+    }
+
+    /* Retrieve the first user */
+    FORCEINLINE TSharedPtr<CApplicationUser> GetFirstUser() const
+    {
+        if ( !RegisteredUsers.IsEmpty() )
+        {
+            return RegisteredUsers.FirstElement();
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+    /* Retrieve a user from user index */
+    FORCEINLINE TSharedPtr<CApplicationUser> GetUserFromIndex( uint32 UserIndex ) const
+    {
+        if ( UserIndex < (uint32)RegisteredUsers.Size() )
+        {
+            return RegisteredUsers[UserIndex];
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
 public: // CGenericApplicationMessageListener interface
 
     /* Key Events */
@@ -157,10 +189,10 @@ public:
         return PlatformApplication->GetCursor();
     }
 
-    /* Retrieve the cursor interface */
-    FORCEINLINE IKeyboard* GetKeyboard() const
+    /* Get the number of registered users */
+    FORCEINLINE uint32 GetNumUsers() const
     {
-        return PlatformApplication->GetKeyboard();
+        return static_cast<uint32>( RegisteredUsers.Size() );
     }
 
 protected:
@@ -188,6 +220,9 @@ protected:
 
     /* Input handlers in the application */
     TArray<CWindowMessageHandler*> WindowMessageHandlers;
+
+    /* All registered users */
+    TArray<TSharedPtr<CApplicationUser>> RegisteredUsers;
 
     static TSharedPtr<CMainApplication> ApplicationInstance;
 };

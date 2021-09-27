@@ -138,7 +138,7 @@ TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow( NSWindow* Window 
             Assert( MacWindow != nullptr );
             if ( CocoaWindow == reinterpret_cast<CCocoaWindow*>(MacWindow->GetNativeHandle()) )
             {
-				return MacWindow;
+                return MacWindow;
             }
         }
     }
@@ -197,7 +197,7 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         {
             const uint16 MacKey = [Event keyCode];
             const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
-			const EKey Key = CMacKeyMappings::GetKeyCodeFromScanCode( MacKey );
+            const EKey Key = CMacKeyMappings::GetKeyCodeFromScanCode( MacKey );
             MessageListener->OnKeyReleased( Key, ModiferKeyState );
             
             Keyboard.RegisterKeyState( Key, false );
@@ -208,10 +208,8 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         {
             const uint16 MacKey = [Event keyCode];
             const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
-			const EKey Key = CMacKeyMappings::GetKeyCodeFromScanCode( MacKey );
+            const EKey Key = CMacKeyMappings::GetKeyCodeFromScanCode( MacKey );
             MessageListener->OnKeyPressed( Key, [Event isARepeat], ModiferKeyState );
-            
-            Keyboard.RegisterKeyState( Key, true );
             break;
         }
 
@@ -220,11 +218,9 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         case NSEventTypeOtherMouseUp:
         {
             const NSInteger	   MacButton = [Event buttonNumber];
-			const EMouseButton Button	 = CMacKeyMappings::GetButtonFromIndex( MacButton );
+            const EMouseButton Button	 = CMacKeyMappings::GetButtonFromIndex( MacButton );
             const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
             MessageListener->OnMouseReleased( Button, ModiferKeyState );
-            
-            Cursor.RegisterButtonState( Button, false );
             break;
         }
 
@@ -233,11 +229,9 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         case NSEventTypeOtherMouseDown:
         {
             const NSInteger	   MacButton = [Event buttonNumber];
-			const EMouseButton Button	 = CMacKeyMappings::GetButtonFromIndex( MacButton );
+            const EMouseButton Button	 = CMacKeyMappings::GetButtonFromIndex( MacButton );
             const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
             MessageListener->OnMousePressed( Button, ModiferKeyState );
-            
-            Cursor.RegisterButtonState( Button, true );
             break;
         }
 

@@ -500,6 +500,37 @@ public:
         return false;
     }
 
+    /* Returns the index of the element if found, otherwise -1 */
+    FORCEINLINE SizeType Find( const ElementType& Element ) const noexcept
+    {
+        const SizeType CurrentSize = Size();
+        for ( SizeType Index = 0; Index < CurrentSize; ++Index )
+        {
+            if ( Element == At(Index) )
+            {
+                return Index;
+            }
+        }
+
+        return SizeType(-1);
+    }
+
+    /* Returns the index of the element if found, otherwise -1 */
+    template<class ComparatorType>
+    FORCEINLINE SizeType Find( const ElementType& Element, ComparatorType Comparator ) const noexcept
+    {
+        const SizeType CurrentSize = Size();
+        for ( SizeType Index = 0; Index < CurrentSize; ++Index )
+        {
+            if ( Comparator( Element, At( Index ) ) )
+            {
+                return Index;
+            }
+        }
+
+        return SizeType( -1 );
+    }
+
     /* Swaps container with another */
     FORCEINLINE void Swap( TArray& Other ) noexcept
     {

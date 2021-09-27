@@ -53,12 +53,6 @@ public:
         return &Cursor;
     }
 
-    /* Retrieve the keyboard interface */
-    virtual IKeyboard* GetKeyboard() override final
-    {
-        return &Keyboard;
-    }
-
     /* Sets the window that is currently active */
     virtual void SetActiveWindow( const TSharedRef<CGenericWindow>& Window ) override final;
 
@@ -98,9 +92,6 @@ private:
 
     /* Cursor interface */
     CMacCursor Cursor;
-
-    /* Keyboard Interface */
-    CMacKeyboard Keyboard;
 
     /* If the application has been terminating or not */
     bool IsTerminating = false;

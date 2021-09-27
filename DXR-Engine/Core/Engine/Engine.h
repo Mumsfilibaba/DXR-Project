@@ -3,11 +3,13 @@
 
 #include "Core/Input/InputCodes.h"
 #include "Core/Application/Events.h"
+#include "Core/Application/ApplicationUser.h"
 #include "Core/Application/WindowMessageHandler.h"
 #include "Core/Delegates/Event.h"
 
 #include "RenderLayer/Viewport.h"
 
+// TODO: Later we should bind this to the viewport? 
 class CEngineWindowHandler : public CWindowMessageHandler
 {
 public:
@@ -25,33 +27,53 @@ public:
     }
 };
 
+/* Class representing the engine */
 class CEngine
 {
 public:
 
-    CEngine();
-    ~CEngine();
+    /* Create a new engine instance */
+    static FORCEINLINE TSharedPtr<CEngine> Make()
+    {
+        EngineInstance = TSharedPtr<CEngine>( DBG_NEW CEngine() );
+        return EngineInstance;
+    }
 
-    /* Init engine */
-    bool Init();
+    /* Init engine instance from an existing instance */
+    static FORCEINLINE TSharedPtr<CEngine> Make( const TSharedPtr<CEngine>& InEngineInstance )
+    {
+        EngineInstance = InEngineInstance;
+        return EngineInstance;
+    }
 
-    /* Release engine resources */
-    bool Release();
-
-    /* Request exit from the engine */
-    void Exit();
-
+    /* Retrieve the engine instance */
     static FORCEINLINE CEngine& Get()
     {
-        return Instance;
+        return *EngineInstance;
     }
+
+    /* Public destructor for the TSharedPtr */
+    virtual ~CEngine();
+
+    /* Init engine */
+    virtual bool Init();
+
+    /* Release engine resources */
+    virtual bool Release();
+
+    /* Request exit from the engine */
+    virtual void Exit();
 
     TSharedRef<CGenericWindow> MainWindow;
     TSharedRef<Viewport>       MainViewport;
 
+    TSharedPtr<CApplicationUser> User;
+
     bool IsRunning = false;
 
 private:
+
+    CEngine();
 
     CEngineWindowHandler WindowHandler;
 
@@ -60,5 +82,5 @@ private:
 
     CDelegateHandle OnApplicationExitHandle;
 
-    static CEngine Instance;
+    static TSharedPtr<CEngine> EngineInstance;
 };

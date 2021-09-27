@@ -1,6 +1,6 @@
 #include "MainApplication.h"
 
-#include "Core/Input/KeyState.h"
+#include "Core/Input/InputStates.h"
 
 TSharedPtr<CMainApplication> CMainApplication::ApplicationInstance;
 
@@ -25,6 +25,14 @@ void CMainApplication::Tick( CTimestamp DeltaTime )
 {
     const float Delta = static_cast<float>(DeltaTime.AsMilliSeconds());
     PlatformApplication->Tick( Delta );
+
+    if ( !RegisteredUsers.IsEmpty() )
+    {
+        for ( const TSharedPtr<CApplicationUser>& User : RegisteredUsers )
+        {
+            User->Tick( DeltaTime );
+        }
+    }
 }
 
 void CMainApplication::SetCursor( ECursor InCursor )
@@ -174,7 +182,13 @@ void CMainApplication::OnKeyEvent( const SKeyEvent& KeyEvent )
         }
     }
 
-    // TODO: Update global keystates
+    if ( !RegisteredUsers.IsEmpty() )
+    {
+        for ( const TSharedPtr<CApplicationUser>& User : RegisteredUsers )
+        {
+            User->HandleKeyEvent( KeyEvent );
+        }
+    }
 
     // TODO: Update viewport
 }
@@ -201,6 +215,14 @@ void CMainApplication::OnMouseMove( int32 x, int32 y )
         if ( Handler->OnMouseMove( MouseMovedEvent ) )
         {
             break;
+        }
+    }
+
+    if ( !RegisteredUsers.IsEmpty() )
+    {
+        for ( const TSharedPtr<CApplicationUser>& User : RegisteredUsers )
+        {
+            User->HandleMouseMovedEvent( MouseMovedEvent );
         }
     }
 }
@@ -240,6 +262,14 @@ void CMainApplication::OnMouseButtonEvent( const SMouseButtonEvent& MouseButtonE
             break;
         }
     }
+
+    if ( !RegisteredUsers.IsEmpty() )
+    {
+        for ( const TSharedPtr<CApplicationUser>& User : RegisteredUsers )
+        {
+            User->HandleMouseButtonEvent( MouseButtonEvent );
+        }
+    }
 }
 
 void CMainApplication::OnMouseScrolled( float HorizontalDelta, float VerticalDelta )
@@ -251,6 +281,14 @@ void CMainApplication::OnMouseScrolled( float HorizontalDelta, float VerticalDel
         if ( Handler->OnMouseScrolled( MouseScrolledEvent ) )
         {
             break;
+        }
+    }
+
+    if ( !RegisteredUsers.IsEmpty() )
+    {
+        for ( const TSharedPtr<CApplicationUser>& User : RegisteredUsers )
+        {
+            User->HandleMouseScrolledEvent( MouseScrolledEvent );
         }
     }
 }

@@ -24,12 +24,12 @@ class CGenericApplicationMisc
 {
 public:
 
-    /* Takes the title of the messagebox and the message to be displayed */
+    /* Takes the title of the MessageBox and the message to be displayed */
     static FORCEINLINE void MessageBox( const std::string& Title, const std::string& Message )
     {
     }
 
-    /* Sends a Exit Message to the application with a certain exitcode, this way the application instance is not required to pump the messages */
+    /* Sends a Exit Message to the application with a certain ExitCode, this way the application instance is not required to pump the messages */
     static FORCEINLINE void RequestExit( int32 ExitCode )
     {
     }
@@ -39,7 +39,7 @@ public:
     {
     }
 
-    /* Retrieves the state of modifer keys */
+    /* Retrieves the state of modifier keys */
     static FORCEINLINE SModifierKeyState GetModifierKeyState()
     {
         return SModifierKeyState();

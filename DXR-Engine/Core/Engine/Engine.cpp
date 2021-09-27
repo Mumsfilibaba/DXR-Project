@@ -4,10 +4,12 @@
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Console/Console.h"
 
+/* Console vars */
 ConsoleCommand GToggleFullscreen;
 ConsoleCommand GExit;
 
-CEngine CEngine::Instance;
+/* Global engine instance */
+TSharedPtr<CEngine> CEngine::EngineInstance;
 
 CEngine::CEngine()
 {
@@ -22,7 +24,7 @@ bool CEngine::Init()
     /* Register for events about exiting the application */
     OnApplicationExitHandle = CMainApplication::Get().ApplicationExitEvent.AddRaw( this, &CEngine::OnApplicationExit );
 
-    /* Get notifyed when the main-window closes */
+    /* Get notified when the main-window closes */
     WindowHandler.WindowClosedDelegate.BindLambda( [this]( const SWindowClosedEvent& ClosedEvent )
     {
         if ( this->MainWindow == ClosedEvent.Window )
@@ -53,6 +55,15 @@ bool CEngine::Init()
         PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create Engine" );
         return false;
     }
+
+    ICursor* CursorDevice = CMainApplication::Get().GetCursor();
+    User = CApplicationUser::Make( 0, CursorDevice );
+    if ( !User )
+    {
+        return false;
+    }
+
+    CMainApplication::Get().RegisterUser( User );
 
     GExit.OnExecute.AddRaw( this, &CEngine::Exit );
     INIT_CONSOLE_COMMAND( "a.Exit", &GExit );

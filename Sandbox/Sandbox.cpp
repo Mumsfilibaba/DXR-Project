@@ -15,7 +15,6 @@
 #include "Scene/Components/MeshComponent.h"
 
 #include "Core/Engine/Engine.h"
-#include "Core/Application/IKeyboard.h"
 #include "Core/Application/MainApplication.h"
 
 #include <random>
@@ -408,55 +407,55 @@ void Sandbox::Tick( CTimestamp DeltaTime )
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
 
-    IKeyboard* Keyboard = CMainApplication::Get().GetKeyboard();
-    if ( Keyboard->IsKeyDown( EKey::Key_Right ) )
+    TSharedPtr<CApplicationUser> User = CMainApplication::Get().GetFirstUser();
+    if ( User->IsKeyDown( EKey::Key_Right ) )
     {
         CurrentCamera->Rotate( 0.0f, NMath::ToRadians( RotationSpeed * Delta ), 0.0f );
     }
-    else if ( Keyboard->IsKeyDown( EKey::Key_Left ) )
+    else if ( User->IsKeyDown( EKey::Key_Left ) )
     {
         CurrentCamera->Rotate( 0.0f, NMath::ToRadians( -RotationSpeed * Delta ), 0.0f );
     }
 
-    if ( Keyboard->IsKeyDown( EKey::Key_Up ) )
+    if ( User->IsKeyDown( EKey::Key_Up ) )
     {
         CurrentCamera->Rotate( NMath::ToRadians( -RotationSpeed * Delta ), 0.0f, 0.0f );
     }
-    else if ( Keyboard->IsKeyDown( EKey::Key_Down ) )
+    else if ( User->IsKeyDown( EKey::Key_Down ) )
     {
         CurrentCamera->Rotate( NMath::ToRadians( RotationSpeed * Delta ), 0.0f, 0.0f );
     }
 
     float Acceleration = 15.0f;
-    if ( Keyboard->IsKeyDown( EKey::Key_LeftShift ) )
+    if ( User->IsKeyDown( EKey::Key_LeftShift ) )
     {
         Acceleration = Acceleration * 3;
     }
 
     CVector3 CameraAcceleration;
-    if ( Keyboard->IsKeyDown( EKey::Key_W ) )
+    if ( User->IsKeyDown( EKey::Key_W ) )
     {
         CameraAcceleration.z = Acceleration;
     }
-    else if ( Keyboard->IsKeyDown( EKey::Key_S ) )
+    else if ( User->IsKeyDown( EKey::Key_S ) )
     {
         CameraAcceleration.z = -Acceleration;
     }
 
-    if ( Keyboard->IsKeyDown( EKey::Key_A ) )
+    if ( User->IsKeyDown( EKey::Key_A ) )
     {
         CameraAcceleration.x = Acceleration;
     }
-    else if ( Keyboard->IsKeyDown( EKey::Key_D ) )
+    else if ( User->IsKeyDown( EKey::Key_D ) )
     {
         CameraAcceleration.x = -Acceleration;
     }
 
-    if ( Keyboard->IsKeyDown( EKey::Key_Q ) )
+    if ( User->IsKeyDown( EKey::Key_Q ) )
     {
         CameraAcceleration.y = Acceleration;
     }
-    else if ( Keyboard->IsKeyDown( EKey::Key_E ) )
+    else if ( User->IsKeyDown( EKey::Key_E ) )
     {
         CameraAcceleration.y = -Acceleration;
     }

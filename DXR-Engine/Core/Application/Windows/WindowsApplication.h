@@ -1,17 +1,16 @@
 #pragma once 
 
 #if defined(PLATFORM_WINDOWS)
+#include "WindowsWindow.h"
+#include "IWindowsMessageListener.h"
+#include "WindowsCursor.h"
+
 #include "Core/Input/InputCodes.h"
 #include "Core/Application/Generic/GenericApplicationMessageListener.h"
 #include "Core/Application/Generic/GenericApplication.h"
 #include "Core/Containers/Array.h"
 
 #include "Core/Threading/Platform/CriticalSection.h"
-
-#include "WindowsWindow.h"
-#include "IWindowsMessageListener.h"
-#include "WindowsCursor.h"
-#include "WindowsKeyboard.h"
 
 /* Strict used to store messages between calls to PumpMessages and CWindowsApplication::Tick */
 struct SWindowsMessage
@@ -56,12 +55,6 @@ public:
     virtual ICursor* GetCursor() override final
     {
         return &Cursor;
-    }
-
-    /* Retrieve the keyboard interface */
-    virtual IKeyboard* GetKeyboard() override final
-    {
-        return &Keyboard;
     }
 
     /* Sets the window that currently has the keyboard focus */
@@ -145,9 +138,6 @@ private:
 
     /* Cursor interface */
     CWindowsCursor Cursor;
-
-    /* Cursor interface */
-    CWindowsKeyboard Keyboard;
 
     /* Checks weather or not the mouse-cursor is tracked, this is for MouseEntered/MouseLeft events */
     bool IsTrackingMouse;

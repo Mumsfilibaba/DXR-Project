@@ -24,7 +24,7 @@ public:
     /* Sets the type of cursor that is being used */
     virtual void SetCursor( ECursor Cursor ) = 0;
 
-    /* Sets the postion of the cursor */
+    /* Sets the position of the cursor */
     virtual void SetCursorPosition( CGenericWindow* RelativeWindow, int32 x, int32 y ) const = 0;
 
     /* Retrieve the cursor position of a window */
@@ -35,12 +35,6 @@ public:
 
     /* Retrieve the mouse visibility */
     virtual bool IsVisible() const = 0;
-
-    /* Check if the current buttonstate is pressed */
-    virtual bool IsButtonDown( EMouseButton Button ) const = 0;
-
-    /* Check if the current buttonstate is released */
-    virtual bool IsButtonUp( EMouseButton Button ) const = 0;
 
 protected:
     ~ICursor() = default;

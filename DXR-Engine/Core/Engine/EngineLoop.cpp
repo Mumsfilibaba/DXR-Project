@@ -27,6 +27,7 @@ bool EngineLoop::Init()
 {
     TRACE_FUNCTION_SCOPE();
 
+    /* Init console */
     GConsoleOutput = PlatformOutputConsole::Make();
     if ( !GConsoleOutput )
     {
@@ -39,6 +40,7 @@ bool EngineLoop::Init()
 
     Profiler::Init();
 
+    /* Create the platform application */
     TSharedPtr<CGenericApplication> PlatformApplication = PlatformApplication::Make();
     if ( PlatformApplication && !PlatformApplication->Init() )
     {
@@ -46,6 +48,7 @@ bool EngineLoop::Init()
         return false;
     }
 
+    /* Create the actual application */
     TSharedPtr<CMainApplication> Application = CMainApplication::Make( PlatformApplication );
     if ( !Application )
     {
@@ -58,6 +61,8 @@ bool EngineLoop::Init()
         return false;
     }
 
+    // Create the engine 
+    CEngine::Make();
     if ( !CEngine::Get().Init() )
     {
         return false;
@@ -80,7 +85,7 @@ bool EngineLoop::Init()
         return false;
     }
 
-    // Init Application
+    // Init Application Plug-In
     GApplication = CreateApplication();
     if ( GApplication && !GApplication->Init() )
     {
