@@ -1,22 +1,22 @@
 #pragma once
 #include "Events.h"
-#include "ICursor.h"
+#include "ICursorDevice.h"
 
 #include "Core/Input/InputStates.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Time/Timestamp.h"
-#include "Core/Math/IntPoint2.h"
+#include "Core/Math/IntVector2.h"
 
 /* Holds the state of one user */
 class CApplicationUser
 {
-    friend class CMainApplication;
+    friend class CApplication;
 
 public:
 
     /* Create a new application user */
-    static FORCEINLINE TSharedPtr<CApplicationUser> Make( uint32 InUserIndex, ICursor* InCursorDevice )
+    static FORCEINLINE TSharedPtr<CApplicationUser> Make( uint32 InUserIndex, ICursorDevice* InCursorDevice )
     {
         return TSharedPtr<CApplicationUser>( DBG_NEW CApplicationUser( InUserIndex, InCursorDevice ) );
     }
@@ -39,10 +39,10 @@ public:
     virtual void HandleMouseScrolledEvent( const SMouseScrolledEvent& MouseScolledEvent );
 
     /* Set the cursor position */
-    virtual void SetCursorPosition( const CIntPoint2& Postion );
+    virtual void SetCursorPosition( const CIntVector2& Postion );
 
     /* Retrieve the cursor position */
-    virtual CIntPoint2 GetCursorPosition() const;
+    virtual CIntVector2 GetCursorPosition() const;
 
     /* Retrieve the current key state */
     FORCEINLINE SKeyState GetKeyState( EKey KeyCode ) const 
@@ -115,7 +115,7 @@ public:
     }
 
     /* Retrieve the cursor */
-    FORCEINLINE ICursor* GetCursorDevice() const 
+    FORCEINLINE ICursorDevice* GetCursorDevice() const 
     {
         return CursorDevice;
     }
@@ -128,7 +128,7 @@ public:
 
 private:
 
-    CApplicationUser( uint32 InUserIndex, ICursor* InCursorDevice );
+    CApplicationUser( uint32 InUserIndex, ICursorDevice* InCursorDevice );
 
     /* Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode( EKey KeyCode ) const
@@ -154,7 +154,7 @@ private:
     const uint32 UserIndex;
 
     /* The cursor that is controlled by this user */
-    ICursor* CursorDevice; 
+    ICursorDevice* CursorDevice; 
 
     /* The key-state of this user */
     TArray<SKeyState> KeyStates; // TODO: Use a map instead? 

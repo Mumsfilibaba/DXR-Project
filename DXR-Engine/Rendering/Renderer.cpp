@@ -11,7 +11,7 @@
 
 #include "Core/Math/Frustum.h"
 #include "Core/Engine/Engine.h"
-#include "Core/Application/MainApplication.h"
+#include "Core/Application/Application.h"
 #include "Core/Debug/Profiler.h"
 #include "Core/Debug/Console/Console.h"
 
@@ -854,7 +854,7 @@ bool Renderer::Init()
 
     // Register EventFunc
     WindowHandler.WindowResizedDelegate.BindRaw( this, &Renderer::OnWindowResize );
-    CMainApplication::Get().AddWindowMessageHandler( &WindowHandler );
+    CApplication::Get().AddWindowMessageHandler( &WindowHandler );
 
     return true;
 }

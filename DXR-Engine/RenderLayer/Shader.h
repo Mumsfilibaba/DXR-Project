@@ -1,7 +1,7 @@
 #pragma once
 #include "ResourceBase.h"
 
-#include "Core/Math/IntPoint3.h"
+#include "Core/Math/IntVector3.h"
 
 enum class EShaderStage
 {
@@ -90,7 +90,7 @@ public:
         return this;
     }
 
-    virtual CIntPoint3 GetThreadGroupXYZ() const = 0;
+    virtual CIntVector3 GetThreadGroupXYZ() const = 0;
 };
 
 class VertexShader : public Shader

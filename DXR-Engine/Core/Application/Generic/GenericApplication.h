@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Application/ICursor.h"
+#include "Core/Application/ICursorDevice.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/SharedRef.h"
 
@@ -31,7 +31,7 @@ public:
     virtual void Tick( float Delta ) = 0;
 
     /* Retrieve the cursor interface */
-    virtual ICursor* GetCursor() = 0;
+    virtual ICursorDevice* GetCursor() = 0;
 
     /* Sets the window that currently has the keyboard focus */
     virtual void SetCapture( const TSharedRef<CGenericWindow>& )

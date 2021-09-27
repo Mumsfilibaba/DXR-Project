@@ -1,13 +1,17 @@
-#include <Core/Application/Application.h>
+#include <Core/Application/ApplicationModule.h>
 
 #include <Scene/Camera.h>
 
-class Sandbox : public Application
+class CSandbox : public CApplicationModule
 {
 public:
+
+    CSandbox() = default;
+    ~CSandbox() = default;
+
     virtual bool Init() override;
 
-	virtual void Tick( CTimestamp DeltaTime ) override;
+    virtual void Tick( CTimestamp DeltaTime ) override;
 
 private:
     Camera* CurrentCamera = nullptr;

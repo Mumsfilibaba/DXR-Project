@@ -636,7 +636,7 @@ void ShadowMapRenderer::RenderDirectionalLightShadows( CommandList& CmdList, con
 
         CmdList.SetSamplerState( DirectionalShadowMaskShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 0 );
 
-        const CIntPoint3 ThreadGroupXYZ = DirectionalShadowMaskShader->GetThreadGroupXYZ();
+        const CIntVector3 ThreadGroupXYZ = DirectionalShadowMaskShader->GetThreadGroupXYZ();
         const uint32 ThreadsX = NMath::DivideByMultiple( LightSetup.DirectionalShadowMask->GetWidth(), ThreadGroupXYZ.x );
         const uint32 ThreadsY = NMath::DivideByMultiple( LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y );
         CmdList.Dispatch( ThreadsX, ThreadsY, 1 );

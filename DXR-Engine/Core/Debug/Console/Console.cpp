@@ -5,7 +5,7 @@
 #include "Core/Engine/EngineLoop.h"
 #include "Core/Engine/Engine.h"
 
-#include "Core/Application/MainApplication.h"
+#include "Core/Application/Application.h"
 
 #include <regex>
 
@@ -19,7 +19,7 @@ void Console::Init()
     INIT_CONSOLE_COMMAND( "ClearHistory", &GClearHistory );
 
     InputHandler.HandleKeyEventDelegate.BindRaw( this, &Console::OnKeyPressedEvent );
-    CMainApplication::Get().AddInputHandler( &InputHandler );
+    CApplication::Get().AddInputHandler( &InputHandler );
 }
 
 void Console::Tick()

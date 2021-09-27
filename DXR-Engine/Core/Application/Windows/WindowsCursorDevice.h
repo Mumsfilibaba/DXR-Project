@@ -1,11 +1,11 @@
 #pragma once
 
-#if defined(PLATFORM_MACOS)
-#include "Core/Application/Generic/GenericCursor.h"
+#if defined(PLATFORM_WINDOWS)
+#include "Core/Application/Generic/GenericCursorDevice.h"
 
-class CMacCursor final : public CGenericCursor
+class CWindowsCursorDevice : public CGenericCursorDevice
 {
-    friend class CMacApplication;
+    friend class CWindowsApplication;
 
 public:
 
@@ -23,12 +23,12 @@ public:
 
 private:
 
-    FORCEINLINE MacCursor()
-        : CGenericCursor()
+    FORCEINLINE CWindowsCursorDevice()
+        : CGenericCursorDevice()
     {
     }
 
-    ~CMacCursor() = default;
+    ~CWindowsCursorDevice() = default;
 };
 
 #endif

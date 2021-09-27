@@ -1,7 +1,7 @@
 #include "ApplicationUser.h"
-#include "MainApplication.h"
+#include "Application.h"
 
-CApplicationUser::CApplicationUser( uint32 InUserIndex, ICursor* InCursorDevice )
+CApplicationUser::CApplicationUser( uint32 InUserIndex, ICursorDevice* InCursorDevice )
     : UserIndex( InUserIndex )
     , CursorDevice( InCursorDevice )
     , KeyStates()
@@ -46,7 +46,7 @@ void CApplicationUser::HandleKeyEvent( const SKeyEvent& KeyEvent )
             KeyState.PreviousState = KeyState.IsDown;
             KeyState.IsDown        = KeyEvent.IsDown;
             
-            if ( KeyState.PreviousState )
+            if ( KeyEvent.IsRepeat )
             {
                 KeyState.RepeatCount++;
             }
@@ -62,6 +62,7 @@ void CApplicationUser::HandleKeyEvent( const SKeyEvent& KeyEvent )
     else
     {
         SKeyState NewKeyState( KeyEvent.KeyCode );
+        NewKeyState.IsDown = KeyEvent.IsDown;
         KeyStates.Push( NewKeyState );
     }
 }
@@ -87,6 +88,7 @@ void CApplicationUser::HandleMouseButtonEvent( const SMouseButtonEvent& MouseBut
     else
     {
         SMouseButtonState NewMouseButtonState( MouseButtonEvent.Button );
+        NewMouseButtonState.IsDown = MouseButtonEvent.IsDown;
         MouseButtonStates.Push( NewMouseButtonState );
     }
 }
@@ -101,7 +103,7 @@ void CApplicationUser::HandleMouseScrolledEvent( const SMouseScrolledEvent& Mous
     // TODO: Call all attached player controllers
 }
 
-void CApplicationUser::SetCursorPosition( const CIntPoint2& Postion )
+void CApplicationUser::SetCursorPosition( const CIntVector2& Postion )
 {
     if (CursorDevice)
     {
@@ -110,16 +112,16 @@ void CApplicationUser::SetCursorPosition( const CIntPoint2& Postion )
     }
 }
 
-CIntPoint2 CApplicationUser::GetCursorPosition() const
+CIntVector2 CApplicationUser::GetCursorPosition() const
 {
     if ( CursorDevice )
     {
-        CIntPoint2 Position;
+        CIntVector2 Position;
         CursorDevice->GetCursorPosition( nullptr, Position.x, Position.y );
         return Position;
     }
     else
     {
-        return CIntPoint2( -1, -1 );
+        return CIntVector2( -1, -1 );
     }
 }

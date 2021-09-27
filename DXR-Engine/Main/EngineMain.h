@@ -2,7 +2,7 @@
 #include "Core.h"
 
 #include "Core/Engine/EngineLoop.h"
-#include "Core/Application/Application.h"
+#include "Core/Application/ApplicationModule.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 
 struct SEngineMainGuard

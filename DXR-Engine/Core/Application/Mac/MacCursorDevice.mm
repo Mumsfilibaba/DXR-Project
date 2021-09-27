@@ -1,5 +1,5 @@
 #if defined(PLATFORM_MACOS)
-#include "MacCursor.h"
+#include "MacCursorDevice.h"
 #include "MacWindow.h"
 #include "CocoaWindow.h"
 
@@ -19,7 +19,7 @@ See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
 @end
 
 /* Implementation */
-void CMacCursor::SetCursor( ECursor Cursor )
+void CMacCursorDevice::SetCursor( ECursor Cursor )
 {
     NSCursor* SelectedCursor = nullptr;
     switch(Cursor)
@@ -70,7 +70,7 @@ void CMacCursor::SetCursor( ECursor Cursor )
     [SelectedCursor set];
 }
 
-void CMacCursor::SetCursorPosition( CGenericWindow* InRelativeWindow, int32 x, int32 y ) const
+void CMacCursorDevice::SetCursorPosition( CGenericWindow* InRelativeWindow, int32 x, int32 y ) const
 {
     CGPoint NewPosition;
     if (InRelativeWindow)
@@ -94,7 +94,7 @@ void CMacCursor::SetCursorPosition( CGenericWindow* InRelativeWindow, int32 x, i
     }
 }
 
-void CMacCursor::GetCursorPosition( CGenericWindow* InRelativeWindow, int32& OutX, int32& OutY ) const
+void CMacCursorDevice::GetCursorPosition( CGenericWindow* InRelativeWindow, int32& OutX, int32& OutY ) const
 {
     NSPoint CursorPosition;
     if (InRelativeWindow)
@@ -111,7 +111,7 @@ void CMacCursor::GetCursorPosition( CGenericWindow* InRelativeWindow, int32& Out
     OutY = CursorPosition.y;
 }
 
-void CMacCursor::SetVisibility( bool Visible )
+void CMacCursorDevice::SetVisibility( bool Visible )
 {
     if (Visible)
     {

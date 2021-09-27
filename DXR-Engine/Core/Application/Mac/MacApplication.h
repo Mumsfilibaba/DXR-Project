@@ -2,7 +2,7 @@
 
 #if defined(PLATFORM_MACOS)
 #include "Core/Application/Generic/GenericApplication.h"
-#include "Core/Application/Mac/MacCursor.h"
+#include "Core/Application/Mac/MacCursorDevice.h"
 #include "Core/Application/Mac/MacKeyboard.h"
 #include "Core/Containers/Array.h"
 
@@ -48,7 +48,7 @@ public:
     virtual void Tick( float Delta ) override final;
 
     /* Retrieve the cursor interface */
-    virtual ICursor* GetCursor() override final
+    virtual ICursorDevice* GetCursor() override final
     {
         return &Cursor;
     }
@@ -91,7 +91,7 @@ private:
     TArray<TSharedRef<CMacWindow>> Windows;
 
     /* Cursor interface */
-    CMacCursor Cursor;
+    CMacCursorDevice Cursor;
 
     /* If the application has been terminating or not */
     bool IsTerminating = false;

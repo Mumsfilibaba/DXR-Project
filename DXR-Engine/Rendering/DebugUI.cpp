@@ -9,8 +9,8 @@
 
 #include "Core/Time/Timer.h"
 #include "Core/Engine/Engine.h"
-#include "Core/Application/ICursor.h"
-#include "Core/Application/MainApplication.h"
+#include "Core/Application/ICursorDevice.h"
+#include "Core/Application/Application.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Profiler.h"
 #include "Core/Containers/Array.h"
@@ -462,7 +462,7 @@ bool DebugUI::Init()
     InputHandler.MouseScrolledDelegate.BindStatic( DebugUI::OnMouseScrolled );
 
     // Add the input handler
-    CMainApplication::Get().AddInputHandler( &InputHandler );
+    CApplication::Get().AddInputHandler( &InputHandler );
 
     return true;
 }
@@ -522,7 +522,7 @@ void DebugUI::Render( CommandList& CmdList )
     TSharedRef<CGenericWindow> Window = CEngine::Get().MainWindow;
     if ( IO.WantSetMousePos )
     {
-        CMainApplication::Get().SetCursorPosition( Window, CIntPoint2( static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) ) );
+        CApplication::Get().SetCursorPosition( Window, CIntVector2( static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) ) );
     }
 
     SWindowShape CurrentWindowShape;
@@ -533,7 +533,7 @@ void DebugUI::Render( CommandList& CmdList )
     IO.DisplaySize = ImVec2( float( CurrentWindowShape.Width ), float( CurrentWindowShape.Height ) );
     IO.DisplayFramebufferScale = ImVec2( 1.0f, 1.0f );
 
-    CIntPoint2 Position = CMainApplication::Get().GetCursorPosition( Window );
+    CIntVector2 Position = CApplication::Get().GetCursorPosition( Window );
     IO.MousePos = ImVec2( static_cast<float>(Position.x), static_cast<float>(Position.y) );
 
     SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
@@ -547,7 +547,7 @@ void DebugUI::Render( CommandList& CmdList )
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
         if ( ImguiCursor == ImGuiMouseCursor_None || IO.MouseDrawCursor )
         {
-            CMainApplication::Get().SetCursor( ECursor::None );
+            CApplication::Get().SetCursor( ECursor::None );
         }
         else
         {
@@ -565,7 +565,7 @@ void DebugUI::Render( CommandList& CmdList )
                 case ImGuiMouseCursor_NotAllowed: Cursor = ECursor::NotAllowed; break;
             }
 
-            CMainApplication::Get().SetCursor( Cursor );
+            CApplication::Get().SetCursor( Cursor );
         }
     }
 

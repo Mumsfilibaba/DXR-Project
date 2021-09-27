@@ -17,7 +17,7 @@ enum class ECursor
 
 class CGenericWindow;
 
-class ICursor
+class ICursorDevice
 {
 public:
 
@@ -37,5 +37,5 @@ public:
     virtual bool IsVisible() const = 0;
 
 protected:
-    ~ICursor() = default;
+    ~ICursorDevice() = default;
 };

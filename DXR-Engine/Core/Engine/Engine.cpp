@@ -1,6 +1,6 @@
 #include "Engine.h"
 
-#include "Core/Application/MainApplication.h"
+#include "Core/Application/Application.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Console/Console.h"
 
@@ -22,7 +22,7 @@ CEngine::~CEngine()
 bool CEngine::Init()
 {
     /* Register for events about exiting the application */
-    OnApplicationExitHandle = CMainApplication::Get().ApplicationExitEvent.AddRaw( this, &CEngine::OnApplicationExit );
+    OnApplicationExitHandle = CApplication::Get().ApplicationExitEvent.AddRaw( this, &CEngine::OnApplicationExit );
 
     /* Get notified when the main-window closes */
     WindowHandler.WindowClosedDelegate.BindLambda( [this]( const SWindowClosedEvent& ClosedEvent )
@@ -33,7 +33,7 @@ bool CEngine::Init()
         }
     } );
 
-    CMainApplication::Get().AddWindowMessageHandler( &WindowHandler );
+    CApplication::Get().AddWindowMessageHandler( &WindowHandler );
 
     const uint32 Style =
         WindowStyleFlag_Titled |
@@ -42,7 +42,7 @@ bool CEngine::Init()
         WindowStyleFlag_Maximizable |
         WindowStyleFlag_Resizeable;
 
-    MainWindow = CMainApplication::Get().MakeWindow();
+    MainWindow = CApplication::Get().MakeWindow();
     if ( MainWindow && MainWindow->Init( "DXR Engine", 1920, 1080, Style ) )
     {
         MainWindow->Show( false );
@@ -56,14 +56,14 @@ bool CEngine::Init()
         return false;
     }
 
-    ICursor* CursorDevice = CMainApplication::Get().GetCursor();
+    ICursorDevice* CursorDevice = CApplication::Get().GetCursor();
     User = CApplicationUser::Make( 0, CursorDevice );
     if ( !User )
     {
         return false;
     }
 
-    CMainApplication::Get().RegisterUser( User );
+    CApplication::Get().RegisterUser( User );
 
     GExit.OnExecute.AddRaw( this, &CEngine::Exit );
     INIT_CONSOLE_COMMAND( "a.Exit", &GExit );
@@ -75,7 +75,7 @@ bool CEngine::Init()
 bool CEngine::Release()
 {
     /* Unregister for events */
-    CMainApplication::Get().ApplicationExitEvent.Unbind( OnApplicationExitHandle );
+    CApplication::Get().ApplicationExitEvent.Unbind( OnApplicationExitHandle );
 
     return true;
 }

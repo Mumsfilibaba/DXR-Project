@@ -11,7 +11,7 @@
 #include "Core/Engine/Engine.h"
 #include "Core/Engine/EngineLoop.h"
 #include "Core/Engine/EngineGlobals.h"
-#include "Core/Application/Application.h"
+#include "Core/Application/ApplicationModule.h"
 #include "Core/Debug/Console/Console.h"
 #include "Core/Math/Math.h"
 
@@ -379,9 +379,9 @@ static void DrawSceneInfo()
     // Actors
     if ( ImGui::TreeNode( "Actors" ) )
     {
-        ImGui::Text( "Total Actor Count: %d", GApplication->CurrentScene->GetActors().Size() );
+        ImGui::Text( "Total Actor Count: %d", GApplicationModule->CurrentScene->GetActors().Size() );
 
-        for ( Actor* Actor : GApplication->CurrentScene->GetActors() )
+        for ( Actor* Actor : GApplicationModule->CurrentScene->GetActors() )
         {
             ImGui::PushID( Actor );
 
@@ -519,7 +519,7 @@ static void DrawSceneInfo()
     // Lights
     if ( ImGui::TreeNode( "Lights" ) )
     {
-        for ( Light* CurrentLight : GApplication->CurrentScene->GetLights() )
+        for ( Light* CurrentLight : GApplicationModule->CurrentScene->GetLights() )
         {
             ImGui::PushID( CurrentLight );
 

@@ -1,9 +1,9 @@
 #if defined(PLATFORM_WINDOWS)
-#include "WindowsCursor.h"
+#include "WindowsCursorDevice.h"
 #include "WindowsWindow.h"
 #include "Windows.h"
 
-void CWindowsCursor::SetCursor( ECursor Cursor )
+void CWindowsCursorDevice::SetCursor( ECursor Cursor )
 {
     LPSTR CursorName = NULL;
     switch ( Cursor )
@@ -49,7 +49,7 @@ void CWindowsCursor::SetCursor( ECursor Cursor )
     // TODO: Log error
 }
 
-void CWindowsCursor::SetCursorPosition( CGenericWindow* RelativeWindow, int32 x, int32 y ) const
+void CWindowsCursorDevice::SetCursorPosition( CGenericWindow* RelativeWindow, int32 x, int32 y ) const
 {
     POINT CursorPos = { x, y };
     if ( RelativeWindow )
@@ -66,7 +66,7 @@ void CWindowsCursor::SetCursorPosition( CGenericWindow* RelativeWindow, int32 x,
     ::SetCursorPos( CursorPos.x, CursorPos.y );
 }
 
-void CWindowsCursor::GetCursorPosition( CGenericWindow* RelativeWindow, int32& OutX, int32& OutY ) const
+void CWindowsCursorDevice::GetCursorPosition( CGenericWindow* RelativeWindow, int32& OutX, int32& OutY ) const
 {
     POINT CursorPos = { };
     if ( !::GetCursorPos( &CursorPos ) )
@@ -89,7 +89,7 @@ void CWindowsCursor::GetCursorPosition( CGenericWindow* RelativeWindow, int32& O
     OutY = CursorPos.y;
 }
 
-void CWindowsCursor::SetVisibility( bool Visible )
+void CWindowsCursorDevice::SetVisibility( bool Visible )
 {
     // TODO: Investigate if we need to do more in order to keep track of the ShowCursor calls
     if ( Visible )

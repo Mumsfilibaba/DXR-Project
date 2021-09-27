@@ -1,7 +1,7 @@
 #pragma once
-#include "Core/Application/ICursor.h"
+#include "Core/Application/ICursorDevice.h"
 
-class CGenericCursor : public ICursor
+class CGenericCursorDevice : public ICursorDevice
 {
 public:
 
@@ -13,13 +13,13 @@ public:
 
 protected:
 
-    FORCEINLINE CGenericCursor()
-        : ICursor()
+    FORCEINLINE CGenericCursorDevice()
+        : ICursorDevice()
         , IsCursorVisible( true )
     {
     }
 
-    ~CGenericCursor() = default;
+    ~CGenericCursorDevice() = default;
 
     /* Checks if the mouse is visible or not */
     bool IsCursorVisible;

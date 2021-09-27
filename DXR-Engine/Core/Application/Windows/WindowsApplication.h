@@ -3,7 +3,7 @@
 #if defined(PLATFORM_WINDOWS)
 #include "WindowsWindow.h"
 #include "IWindowsMessageListener.h"
-#include "WindowsCursor.h"
+#include "WindowsCursorDevice.h"
 
 #include "Core/Input/InputCodes.h"
 #include "Core/Application/Generic/GenericApplicationMessageListener.h"
@@ -52,7 +52,7 @@ public:
     virtual void Tick( float Delta ) override final;
 
     /* Retrieve the cursor interface */
-    virtual ICursor* GetCursor() override final
+    virtual ICursorDevice* GetCursor() override final
     {
         return &Cursor;
     }
@@ -137,7 +137,7 @@ private:
     TArray<IWindowsMessageListener*> WindowsMessageListeners;
 
     /* Cursor interface */
-    CWindowsCursor Cursor;
+    CWindowsCursorDevice Cursor;
 
     /* Checks weather or not the mouse-cursor is tracked, this is for MouseEntered/MouseLeft events */
     bool IsTrackingMouse;

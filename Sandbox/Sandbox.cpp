@@ -15,20 +15,20 @@
 #include "Scene/Components/MeshComponent.h"
 
 #include "Core/Engine/Engine.h"
-#include "Core/Application/MainApplication.h"
+#include "Core/Application/Application.h"
 
 #include <random>
 
 #define ENABLE_LIGHT_TEST 0
 
-Application* CreateApplication()
+CApplicationModule* CreateApplicationModule()
 {
-    return DBG_NEW Sandbox();
+    return DBG_NEW CSandbox();
 }
 
-bool Sandbox::Init()
+bool CSandbox::Init()
 {
-    if ( !Application::Init() )
+    if ( !CApplicationModule::Init() )
     {
         return false;
     }
@@ -400,14 +400,14 @@ bool Sandbox::Init()
     return true;
 }
 
-void Sandbox::Tick( CTimestamp DeltaTime )
+void CSandbox::Tick( CTimestamp DeltaTime )
 {
-    Application::Tick( DeltaTime );
+    CApplicationModule::Tick( DeltaTime );
 
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
 
-    TSharedPtr<CApplicationUser> User = CMainApplication::Get().GetFirstUser();
+    TSharedPtr<CApplicationUser> User = CApplication::Get().GetFirstUser();
     if ( User->IsKeyDown( EKey::Key_Right ) )
     {
         CurrentCamera->Rotate( 0.0f, NMath::ToRadians( RotationSpeed * Delta ), 0.0f );
