@@ -5,6 +5,8 @@
 
 #include "Core/Windows/Windows.h"
 
+#include <intrin.h>
+
 /* Atomic operations on the windows platform */
 class CWindowsInterlocked : public CGenericInterlocked
 {

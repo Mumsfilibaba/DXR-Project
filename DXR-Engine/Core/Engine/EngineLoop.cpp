@@ -21,9 +21,17 @@
 #include "Core/Threading/InterlockedInt.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
 
-#include <chrono>
+CEngineLoop GEngineLoop;
 
-bool EngineLoop::Init()
+CEngineLoop::CEngineLoop()
+{
+}
+
+CEngineLoop::~CEngineLoop()
+{
+}
+
+bool CEngineLoop::PreInit()
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -111,7 +119,12 @@ bool EngineLoop::Init()
     return true;
 }
 
-void EngineLoop::Tick( CTimestamp Deltatime )
+bool CEngineLoop::Init()
+{
+    return true;
+}
+
+void CEngineLoop::Tick( CTimestamp Deltatime )
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -130,18 +143,7 @@ void EngineLoop::Tick( CTimestamp Deltatime )
     GRenderer.Tick( *GApplicationModule->CurrentScene );
 }
 
-void EngineLoop::Run()
-{
-    CTimer CTimer;
-
-    while ( CEngine::Get().IsRunning )
-    {
-        CTimer.Tick();
-        EngineLoop::Tick( CTimer.GetDeltaTime() );
-    }
-}
-
-bool EngineLoop::Release()
+bool CEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 

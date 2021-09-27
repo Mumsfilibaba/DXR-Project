@@ -1,14 +1,24 @@
 #pragma once
 #include "Core/Time/Timer.h"
 
-class EngineLoop
+class CEngineLoop
 {
 public:
-    static bool Init();
 
-    static void Tick( CTimestamp Deltatime );
+    CEngineLoop();
+    virtual ~CEngineLoop();
 
-    static void Run();
+    /* Creates the application and load modules */
+    virtual bool PreInit();
 
-    static bool Release();
+    /* Initializes and starts up the engine */
+    virtual bool Init();
+
+    /* Ticks the engine */
+    virtual void Tick( CTimestamp Deltatime );
+
+    /* Releases the engine */
+    virtual bool Release();
 };
+
+extern CEngineLoop GEngineLoop;

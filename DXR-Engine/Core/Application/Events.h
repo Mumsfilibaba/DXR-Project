@@ -2,6 +2,7 @@
 #include "Core.h"
 
 #include "Core/Input/InputCodes.h"
+#include "Core/Containers/SharedRef.h"
 #include "Core/Application/ModifierKeyState.h"
 #include "Core/Application/Generic/GenericWindow.h"
 
@@ -24,7 +25,7 @@ struct SKeyEvent
     /* Is a repeated key event */
     bool IsRepeat : 1;
 
-    /* The other modifer keys that where down at the same time as the event */
+    /* The other modifier keys that where down at the same time as the event */
     SModifierKeyState ModiferKeyState;
 };
 
