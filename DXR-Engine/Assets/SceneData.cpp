@@ -4,7 +4,7 @@
 
 void SSceneData::AddToScene( Scene* Scene )
 {
-    Actor* NewActor = DBG_NEW Actor();
+    CActor* NewActor = DBG_NEW CActor();
     Scene->AddActor( NewActor );
 
 

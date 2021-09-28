@@ -18,10 +18,10 @@ public:
     void Tick( CTimestamp DeltaTime );
 
     void AddCamera( Camera* InCamera );
-    void AddActor( Actor* InActor );
+    void AddActor( CActor* InActor );
     void AddLight( Light* InLight );
 
-    void OnAddedComponent( Component* NewComponent );
+    void OnAddedComponent( CComponent* NewComponent );
 
     template<typename TComponent>
     FORCEINLINE const TArray<TComponent> GetAllComponentsOfType() const
@@ -29,7 +29,7 @@ public:
         // TODO: Cache this result
 
         TArray<TComponent> Components;
-        for ( Actor* Actor : Actors )
+        for ( CActor* Actor : Actors )
         {
             TComponent* Component = Actor->GetComponentOfType<TComponent>();
             if ( Component )
@@ -41,7 +41,7 @@ public:
         return Move( Components );
     }
 
-    FORCEINLINE const TArray<Actor*>& GetActors() const
+    FORCEINLINE const TArray<CActor*>& GetActors() const
     {
         return Actors;
     }
@@ -64,7 +64,7 @@ public:
 private:
     void AddMeshComponent( class MeshComponent* Component );
 
-    TArray<Actor*> Actors;
+    TArray<CActor*> Actors;
     TArray<Light*> Lights;
     TArray<MeshDrawCommand> MeshDrawCommands;
 

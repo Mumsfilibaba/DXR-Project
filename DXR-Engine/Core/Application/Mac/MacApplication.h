@@ -3,7 +3,6 @@
 #if defined(PLATFORM_MACOS)
 #include "Core/Application/Generic/GenericApplication.h"
 #include "Core/Application/Mac/MacCursorDevice.h"
-#include "Core/Application/Mac/MacKeyboard.h"
 #include "Core/Containers/Array.h"
 
 #if defined(__OBJC__)

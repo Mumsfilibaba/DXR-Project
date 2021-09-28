@@ -1,25 +1,43 @@
 #include "Actor.h"
 #include "Scene.h"
 
-Component::Component( Actor* InOwningActor )
-    : CoreObject()
+/* Component Implementation */
+
+CComponent::CComponent()
+	: CCoreObject()
+	, OwningActor( nullptr )
+	, Tickable( true )
+{
+	CORE_OBJECT_INIT();
+}
+
+CComponent::CComponent( CActor* InOwningActor )
+    : CCoreObject()
     , OwningActor( InOwningActor )
+	, Tickable( true )
 {
     Assert( InOwningActor != nullptr );
     CORE_OBJECT_INIT();
 }
 
-Actor::Actor()
-    : CoreObject()
+void CComponent::Tick( CTimestamp DeltaTime )
+{
+	UNREFERENCED_VARIABLE( DeltaTime );
+}
+
+/* Actor Implementation */
+
+CActor::CActor()
+    : CCoreObject()
     , Transform()
     , Components()
 {
     CORE_OBJECT_INIT();
 }
 
-Actor::~Actor()
+CActor::~CActor()
 {
-    for ( Component* CurrentComponent : Components )
+    for ( CComponent* CurrentComponent : Components )
     {
         SafeDelete( CurrentComponent );
     }
@@ -27,7 +45,18 @@ Actor::~Actor()
     Components.Clear();
 }
 
-void Actor::AddComponent( Component* InComponent )
+void CActor::Tick( CTimestamp DeltaTime )
+{
+	for ( CComponent* Component : Components )
+	{
+		if ( Component->IsTickable() )
+		{
+			Component->Tick( DeltaTime );
+		}
+	}
+}
+
+void CActor::AddComponent( CComponent* InComponent )
 {
     Assert( InComponent != nullptr );
     Components.Emplace( InComponent );
@@ -38,7 +67,7 @@ void Actor::AddComponent( Component* InComponent )
     }
 }
 
-void Actor::SetName( const std::string& InName )
+void CActor::SetName( const std::string& InName )
 {
     Name = InName;
 }

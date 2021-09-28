@@ -1,7 +1,6 @@
 #if defined(PLATFORM_MACOS)
 #include "CocoaWindow.h"
 #include "MacApplication.h"
-#include "MacKeyboard.h"
 #include "ScopedAutoreleasePool.h"
 #include "Notification.h"
 

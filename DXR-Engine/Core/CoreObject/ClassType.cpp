@@ -1,18 +1,21 @@
 #include "ClassType.h"
 
-ClassType::ClassType(
-    const char* InName,
-    const ClassType* InSuperClass,
-    uint32 SizeInBytes )
-    : Name( InName )
+CClassType::CClassType( const CClassType* InSuperClass, const SClassDescription& ClassDescription )
+    : Name( nullptr )
     , SuperClass( InSuperClass )
-    , SizeInBytes( SizeInBytes )
+    , SizeInBytes( 0 )
+	, Alignment( 0 )
 {
+	Constructor = ClassDescription.Constructor;
+	Destructor  = ClassDescription.Destructor;
+	Name        = ClassDescription.Name;
+	SizeInBytes = ClassDescription.SizeInBytes;
+	Alignment   = ClassDescription.Alignment;
 }
 
-bool ClassType::IsSubClassOf( const ClassType* Class ) const
+bool CClassType::IsSubClassOf( const CClassType* Class ) const
 {
-    for ( const ClassType* Current = this; Current; Current = Current->GetSuperClass() )
+    for ( const CClassType* Current = this; Current; Current = Current->GetSuperClass() )
     {
         if ( Current == Class )
         {

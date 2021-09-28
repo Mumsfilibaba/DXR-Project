@@ -199,8 +199,6 @@ void CMacApplication::HandleEvent( NSEvent* Event )
             const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
             const EKey Key = CMacKeyMappings::GetKeyCodeFromScanCode( MacKey );
             MessageListener->OnKeyReleased( Key, ModiferKeyState );
-            
-            Keyboard.RegisterKeyState( Key, false );
             break;
         }
            

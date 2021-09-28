@@ -21,7 +21,7 @@ Scene::Scene()
 
 Scene::~Scene()
 {
-    for ( Actor* CurrentActor : Actors )
+    for ( CActor* CurrentActor : Actors )
     {
         SafeDelete( CurrentActor );
     }
@@ -38,7 +38,13 @@ Scene::~Scene()
 
 void Scene::Tick( CTimestamp DeltaTime )
 {
-    UNREFERENCED_VARIABLE( DeltaTime );
+	for ( CActor* Actor : Actors )
+	{
+		if ( Actor->IsTickable() )
+		{
+			Actor->Tick( DeltaTime );
+		}
+	}
 }
 
 void Scene::AddCamera( Camera* InCamera )
@@ -51,7 +57,7 @@ void Scene::AddCamera( Camera* InCamera )
     CurrentCamera = InCamera;
 }
 
-void Scene::AddActor( Actor* InActor )
+void Scene::AddActor( CActor* InActor )
 {
     Assert( InActor != nullptr );
     Actors.Emplace( InActor );
@@ -71,7 +77,7 @@ void Scene::AddLight( Light* InLight )
     Lights.Emplace( InLight );
 }
 
-void Scene::OnAddedComponent( Component* NewComponent )
+void Scene::OnAddedComponent( CComponent* NewComponent )
 {
     MeshComponent* Component = Cast<MeshComponent>( NewComponent );
     if ( Component && Component->Mesh )

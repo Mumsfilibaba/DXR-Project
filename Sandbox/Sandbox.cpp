@@ -34,7 +34,7 @@ bool CSandbox::Init()
     }
 
     // Initialize Scene
-    Actor* NewActor = nullptr;
+    CActor* NewActor = nullptr;
     MeshComponent* NewComponent = nullptr;
     CurrentScene = DBG_NEW Scene(); // TODO: Scene should be the renderer side only, and should reside in the engine
 
@@ -115,7 +115,7 @@ bool CSandbox::Init()
     {
         for ( uint32 x = 0; x < SphereCountX; x++ )
         {
-            NewActor = DBG_NEW Actor();
+            NewActor = DBG_NEW CActor();
             NewActor->GetTransform().SetTranslation( StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset) );
 
             NewActor->SetName( "Sphere[" + std::to_string( SphereIndex ) + "]" );
@@ -146,7 +146,7 @@ bool CSandbox::Init()
     // Create Other Meshes
     SMeshData CubeMeshData = CMeshFactory::CreateCube();
 
-    NewActor = DBG_NEW Actor();
+	NewActor = DBG_NEW CActor();
     CurrentScene->AddActor( NewActor );
 
     NewActor->SetName( "Cube" );
@@ -206,7 +206,7 @@ bool CSandbox::Init()
     NewComponent->Material->Init();
     NewActor->AddComponent( NewComponent );
 
-    NewActor = DBG_NEW Actor();
+	NewActor = DBG_NEW CActor();
     CurrentScene->AddActor( NewActor );
 
     NewActor->SetName( "Plane" );
@@ -269,7 +269,7 @@ bool CSandbox::Init()
 
     for ( uint32 i = 0; i < 4; i++ )
     {
-        NewActor = DBG_NEW Actor();
+		NewActor = DBG_NEW CActor();
         CurrentScene->AddActor( NewActor );
 
         NewActor->SetName( "Street Light " + std::to_string( i ) );
@@ -302,7 +302,7 @@ bool CSandbox::Init()
 
     for ( uint32 i = 0; i < 8; i++ )
     {
-        NewActor = DBG_NEW Actor();
+		NewActor = DBG_NEW CActor();
         CurrentScene->AddActor( NewActor );
 
         NewActor->SetName( "Pillar " + std::to_string( i ) );

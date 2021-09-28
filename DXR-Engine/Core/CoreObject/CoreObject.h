@@ -1,49 +1,87 @@
 #pragma once
 #include "ClassType.h"
 
-#define CORE_OBJECT(TCoreObject, TSuperClass) \
-private: \
-    typedef TCoreObject This; \
-    typedef TSuperClass Super; \
-\
-public: \
-    static ClassType* GetStaticClass() \
-    { \
-        static ClassType ClassInfo(#TCoreObject, Super::GetStaticClass(), sizeof(TCoreObject)); \
-        return &ClassInfo; \
-    }
+#define CLASS_DESCRIPTION( TCoreObject )        \
+	static SClassDescription ClassDescription = \
+	{                                           \
+		TCoreObject::Constructor,               \
+		TCoreObject::Destructor,                \
+		#TCoreObject,                           \
+		sizeof(TCoreObject),                    \
+		alignof(TCoreObject),                   \
+	}
 
-#define CORE_OBJECT_INIT() \
+
+#define CORE_OBJECT( TCoreObject, TSuperClass )                                   \
+private:                                                                          \
+    typedef TCoreObject This;                                                     \
+    typedef TSuperClass Super;                                                    \
+                                                                                  \
+	static void Constructor( void* Memory )                                       \
+    {                                                                             \
+		new(Memory) TCoreObject();                                                \
+    }																			  \
+                                                                                  \
+	static void Destructor( void* Memory )                                        \
+	{                                                                             \
+		new(Memory) TCoreObject();                                                \
+	}																			  \
+                                                                                  \
+public:                                                                           \
+    static CClassType* GetStaticClass()                                           \
+    {                                                                             \
+		CLASS_DESCRIPTION( TCoreObject );										  \
+        static CClassType ClassInfo( Super::GetStaticClass(), ClassDescription ); \
+        return &ClassInfo;                                                        \
+    }                                                                             \
+                                                                                  \
+private:
+
+#define CORE_OBJECT_INIT()                 \
     this->SetClass(This::GetStaticClass())
 
-class CoreObject
+class CCoreObject
 {
 public:
-    virtual ~CoreObject() = default;
+	
+    virtual ~CCoreObject() = default;
 
-    FORCEINLINE const ClassType* GetClass() const
+    FORCEINLINE const CClassType* GetClass() const
     {
         return Class;
     }
 
-    static const ClassType* GetStaticClass()
+    static const CClassType* GetStaticClass()
     {
-        static ClassType ClassInfo( "CoreObject", nullptr, sizeof( CoreObject ) );
+		CLASS_DESCRIPTION( CCoreObject );
+        static CClassType ClassInfo( nullptr, ClassDescription );
         return &ClassInfo;
     }
 
 protected:
-    FORCEINLINE void SetClass( const ClassType* InClass )
+	
+    FORCEINLINE void SetClass( const CClassType* InClass )
     {
         Class = InClass;
     }
 
 private:
-    const ClassType* Class = nullptr;
+	
+	static void Constructor( void* Memory )
+	{
+		new(Memory) CCoreObject();
+	}
+											
+	static void Destructor( void* Memory )
+	{
+		new(Memory) CCoreObject();
+	}
+	
+    const CClassType* Class = nullptr;
 };
 
 template<typename T>
-bool IsSubClassOf( CoreObject* Object )
+inline bool IsSubClassOf( CCoreObject* Object )
 {
     Assert( Object != nullptr );
     Assert( Object->GetClass() != nullptr );
@@ -51,7 +89,7 @@ bool IsSubClassOf( CoreObject* Object )
 }
 
 template<typename T>
-T* Cast( CoreObject* Object )
+inline T* Cast( CCoreObject* Object )
 {
     return IsSubClassOf<T>( Object ) ? static_cast<T*>(Object) : nullptr;
 }

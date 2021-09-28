@@ -381,7 +381,7 @@ static void DrawSceneInfo()
     {
         ImGui::Text( "Total Actor Count: %d", GApplicationModule->CurrentScene->GetActors().Size() );
 
-        for ( Actor* Actor : GApplicationModule->CurrentScene->GetActors() )
+        for ( CActor* Actor : GApplicationModule->CurrentScene->GetActors() )
         {
             ImGui::PushID( Actor );
 

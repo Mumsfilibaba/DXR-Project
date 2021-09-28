@@ -2,9 +2,9 @@
 #include "Core/Math/Vector3.h"
 #include "Core/CoreObject/CoreObject.h"
 
-class Light : public CoreObject
+class Light : public CCoreObject
 {
-    CORE_OBJECT( Light, CoreObject );
+    CORE_OBJECT( Light, CCoreObject );
 
 public:
     Light();
