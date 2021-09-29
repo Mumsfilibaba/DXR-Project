@@ -4,8 +4,6 @@
 #define CLASS_DESCRIPTION( TCoreObject )        \
 	static SClassDescription ClassDescription = \
 	{                                           \
-		TCoreObject::Constructor,               \
-		TCoreObject::Destructor,                \
 		#TCoreObject,                           \
 		sizeof(TCoreObject),                    \
 		alignof(TCoreObject),                   \
@@ -16,16 +14,6 @@
 private:                                                                          \
     typedef TCoreObject This;                                                     \
     typedef TSuperClass Super;                                                    \
-                                                                                  \
-	static void Constructor( void* Memory )                                       \
-    {                                                                             \
-		new(Memory) TCoreObject();                                                \
-    }																			  \
-                                                                                  \
-	static void Destructor( void* Memory )                                        \
-	{                                                                             \
-		new(Memory) TCoreObject();                                                \
-	}																			  \
                                                                                   \
 public:                                                                           \
     static CClassType* GetStaticClass()                                           \
@@ -60,6 +48,8 @@ public:
 
 protected:
 	
+	CCoreObject() = default;
+	
     FORCEINLINE void SetClass( const CClassType* InClass )
     {
         Class = InClass;
@@ -67,16 +57,7 @@ protected:
 
 private:
 	
-	static void Constructor( void* Memory )
-	{
-		new(Memory) CCoreObject();
-	}
-											
-	static void Destructor( void* Memory )
-	{
-		new(Memory) CCoreObject();
-	}
-	
+	/* Object representing the class */
     const CClassType* Class = nullptr;
 };
 

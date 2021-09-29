@@ -3,14 +3,6 @@
 
 /* Component Implementation */
 
-CComponent::CComponent()
-	: CCoreObject()
-	, OwningActor( nullptr )
-	, Tickable( true )
-{
-	CORE_OBJECT_INIT();
-}
-
 CComponent::CComponent( CActor* InOwningActor )
     : CCoreObject()
     , OwningActor( InOwningActor )

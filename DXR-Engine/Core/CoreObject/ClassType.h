@@ -1,17 +1,8 @@
 #pragma once
 #include "Core.h"
 
-typedef void(*ConstructorType)(void*);
-typedef void(*DestructorType)(void*);
-
 struct SClassDescription
 {
-	/* The constructor of the class */
-	ConstructorType Constructor = nullptr;
-	
-	/* The destructor of the class */
-	DestructorType Destructor = nullptr;
-	
 	/* Name of the class */
 	const char* Name = nullptr;
 	
@@ -31,8 +22,6 @@ public:
     ~CClassType() = default;
 
     bool IsSubClassOf( const CClassType* Class ) const;
-
-	class CCoreObject* Construct() const;
 	
     template<typename T>
     FORCEINLINE bool IsSubClassOf() const
@@ -57,12 +46,6 @@ public:
 
 private:
 	
-	/* The constructor of the class */
-	ConstructorType Constructor = nullptr;
-	
-	/* The destructor of the class */
-	DestructorType Destructor = nullptr;
-	
 	/* Name of the class */
     const char* Name;
 	
@@ -75,17 +58,3 @@ private:
 	/* Alignment of the class in bytes */
 	uint32 Alignment;
 };
-
-/* Helper to construct a new object */
-inline class CCoreObject* NewObject( CClassType* Class )
-{
-	Assert( Class != nullptr );
-	return Class->Construct();
-}
-
-/* Helper to construct a new object */
-template<typename CoreObjectType>
-inline CoreObjectType* NewObject()
-{
-	return NewObject( CoreObjectType::GetStaticClass() );
-}

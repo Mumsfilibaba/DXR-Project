@@ -15,8 +15,6 @@ class CActor;
 class CComponent : public CCoreObject
 {
     CORE_OBJECT( CComponent, CCoreObject );
-
-	CComponent();
 	
 public:
 	

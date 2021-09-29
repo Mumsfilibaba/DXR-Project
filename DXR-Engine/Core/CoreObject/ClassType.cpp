@@ -6,8 +6,6 @@ CClassType::CClassType( const CClassType* InSuperClass, const SClassDescription&
     , SizeInBytes( 0 )
 	, Alignment( 0 )
 {
-	Constructor = ClassDescription.Constructor;
-	Destructor  = ClassDescription.Destructor;
 	Name        = ClassDescription.Name;
 	SizeInBytes = ClassDescription.SizeInBytes;
 	Alignment   = ClassDescription.Alignment;
