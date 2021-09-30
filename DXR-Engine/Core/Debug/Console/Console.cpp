@@ -116,7 +116,7 @@ void Console::OnKeyPressedEvent( const SKeyEvent& Event )
 {
     InputHandler.ConsoleActivated = false;
 
-    if ( Event.IsDown)
+    if ( Event.IsDown )
     {
         if ( !Event.IsRepeat && Event.KeyCode == EKey::Key_GraveAccent )
         {

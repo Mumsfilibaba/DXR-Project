@@ -192,7 +192,7 @@ public:
     /* Get the number of registered users */
     FORCEINLINE uint32 GetNumUsers() const
     {
-        return static_cast<uint32>( RegisteredUsers.Size() );
+        return static_cast<uint32>(RegisteredUsers.Size());
     }
 
 protected:

@@ -506,13 +506,13 @@ public:
         const SizeType CurrentSize = Size();
         for ( SizeType Index = 0; Index < CurrentSize; ++Index )
         {
-            if ( Element == At(Index) )
+            if ( Element == At( Index ) )
             {
                 return Index;
             }
         }
 
-        return SizeType(-1);
+        return SizeType( -1 );
     }
 
     /* Returns the index of the element if found, otherwise -1 */

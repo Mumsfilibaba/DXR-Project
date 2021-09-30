@@ -6,7 +6,7 @@ class MeshComponent : public CComponent
     CORE_OBJECT( MeshComponent, CComponent );
 
 public:
-		
+
     MeshComponent( CActor* InOwningActor )
         : CComponent( InOwningActor )
         , Material( nullptr )

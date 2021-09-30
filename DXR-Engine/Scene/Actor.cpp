@@ -6,7 +6,7 @@
 CComponent::CComponent( CActor* InOwningActor )
     : CCoreObject()
     , OwningActor( InOwningActor )
-	, Tickable( true )
+    , Tickable( true )
 {
     Assert( InOwningActor != nullptr );
     CORE_OBJECT_INIT();
@@ -14,7 +14,7 @@ CComponent::CComponent( CActor* InOwningActor )
 
 void CComponent::Tick( CTimestamp DeltaTime )
 {
-	UNREFERENCED_VARIABLE( DeltaTime );
+    UNREFERENCED_VARIABLE( DeltaTime );
 }
 
 /* Actor Implementation */
@@ -39,13 +39,13 @@ CActor::~CActor()
 
 void CActor::Tick( CTimestamp DeltaTime )
 {
-	for ( CComponent* Component : Components )
-	{
-		if ( Component->IsTickable() )
-		{
-			Component->Tick( DeltaTime );
-		}
-	}
+    for ( CComponent* Component : Components )
+    {
+        if ( Component->IsTickable() )
+        {
+            Component->Tick( DeltaTime );
+        }
+    }
 }
 
 void CActor::AddComponent( CComponent* InComponent )

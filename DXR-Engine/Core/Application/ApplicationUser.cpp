@@ -44,8 +44,8 @@ void CApplicationUser::HandleKeyEvent( const SKeyEvent& KeyEvent )
         if ( KeyEvent.IsDown )
         {
             KeyState.PreviousState = KeyState.IsDown;
-            KeyState.IsDown        = KeyEvent.IsDown;
-            
+            KeyState.IsDown = KeyEvent.IsDown;
+
             if ( KeyEvent.IsRepeat )
             {
                 KeyState.RepeatCount++;
@@ -53,10 +53,10 @@ void CApplicationUser::HandleKeyEvent( const SKeyEvent& KeyEvent )
         }
         else
         {
-            KeyState.IsDown        = 0;
+            KeyState.IsDown = 0;
             KeyState.PreviousState = 0;
-            KeyState.RepeatCount   = 0;
-            KeyState.TimePressed   = 0.0f;
+            KeyState.RepeatCount = 0;
+            KeyState.TimePressed = 0.0f;
         }
     }
     else
@@ -76,13 +76,13 @@ void CApplicationUser::HandleMouseButtonEvent( const SMouseButtonEvent& MouseBut
         if ( MouseButtonState.IsDown )
         {
             MouseButtonState.PreviousState = MouseButtonState.IsDown;
-            MouseButtonState.IsDown        = MouseButtonEvent.IsDown;
+            MouseButtonState.IsDown = MouseButtonEvent.IsDown;
         }
         else
         {
-            MouseButtonState.IsDown        = 0;
+            MouseButtonState.IsDown = 0;
             MouseButtonState.PreviousState = 0;
-            MouseButtonState.TimePressed   = 0.0f;
+            MouseButtonState.TimePressed = 0.0f;
         }
     }
     else
@@ -105,7 +105,7 @@ void CApplicationUser::HandleMouseScrolledEvent( const SMouseScrolledEvent& Mous
 
 void CApplicationUser::SetCursorPosition( const CIntVector2& Postion )
 {
-    if (CursorDevice)
+    if ( CursorDevice )
     {
         // TODO: Relative window
         CursorDevice->SetCursorPosition( nullptr, Postion.x, Postion.y );

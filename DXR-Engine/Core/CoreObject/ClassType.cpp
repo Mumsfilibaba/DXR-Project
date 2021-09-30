@@ -4,11 +4,11 @@ CClassType::CClassType( const CClassType* InSuperClass, const SClassDescription&
     : Name( nullptr )
     , SuperClass( InSuperClass )
     , SizeInBytes( 0 )
-	, Alignment( 0 )
+    , Alignment( 0 )
 {
-	Name        = ClassDescription.Name;
-	SizeInBytes = ClassDescription.SizeInBytes;
-	Alignment   = ClassDescription.Alignment;
+    Name = ClassDescription.Name;
+    SizeInBytes = ClassDescription.SizeInBytes;
+    Alignment = ClassDescription.Alignment;
 }
 
 bool CClassType::IsSubClassOf( const CClassType* Class ) const

@@ -45,12 +45,12 @@ public:
     virtual CIntVector2 GetCursorPosition() const;
 
     /* Retrieve the current key state */
-    FORCEINLINE SKeyState GetKeyState( EKey KeyCode ) const 
+    FORCEINLINE SKeyState GetKeyState( EKey KeyCode ) const
     {
         int32 Index = GetKeyStateIndexFromKeyCode( KeyCode );
         if ( Index < 0 )
         {
-            return SKeyState(KeyCode);
+            return SKeyState( KeyCode );
         }
         else
         {
@@ -71,7 +71,7 @@ public:
             return MouseButtonStates[Index];
         }
     }
-    
+
     /* Check if key is down */
     FORCEINLINE bool IsKeyDown( EKey KeyCode ) const
     {
@@ -115,7 +115,7 @@ public:
     }
 
     /* Retrieve the cursor */
-    FORCEINLINE ICursorDevice* GetCursorDevice() const 
+    FORCEINLINE ICursorDevice* GetCursorDevice() const
     {
         return CursorDevice;
     }
@@ -154,7 +154,7 @@ private:
     const uint32 UserIndex;
 
     /* The cursor that is controlled by this user */
-    ICursorDevice* CursorDevice; 
+    ICursorDevice* CursorDevice;
 
     /* The key-state of this user */
     TArray<SKeyState> KeyStates; // TODO: Use a map instead? 

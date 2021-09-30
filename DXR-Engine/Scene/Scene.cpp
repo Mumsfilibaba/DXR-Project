@@ -38,13 +38,13 @@ Scene::~Scene()
 
 void Scene::Tick( CTimestamp DeltaTime )
 {
-	for ( CActor* Actor : Actors )
-	{
-		if ( Actor->IsTickable() )
-		{
-			Actor->Tick( DeltaTime );
-		}
-	}
+    for ( CActor* Actor : Actors )
+    {
+        if ( Actor->IsTickable() )
+        {
+            Actor->Tick( DeltaTime );
+        }
+    }
 }
 
 void Scene::AddCamera( Camera* InCamera )

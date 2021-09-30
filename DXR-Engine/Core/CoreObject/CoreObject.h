@@ -31,7 +31,7 @@ private:
 class CCoreObject
 {
 public:
-	
+
     virtual ~CCoreObject() = default;
 
     FORCEINLINE const CClassType* GetClass() const
@@ -41,23 +41,23 @@ public:
 
     static const CClassType* GetStaticClass()
     {
-		CLASS_DESCRIPTION( CCoreObject );
+        CLASS_DESCRIPTION( CCoreObject );
         static CClassType ClassInfo( nullptr, ClassDescription );
         return &ClassInfo;
     }
 
 protected:
-	
-	CCoreObject() = default;
-	
+
+    CCoreObject() = default;
+
     FORCEINLINE void SetClass( const CClassType* InClass )
     {
         Class = InClass;
     }
 
 private:
-	
-	/* Object representing the class */
+
+    /* Object representing the class */
     const CClassType* Class = nullptr;
 };
 
