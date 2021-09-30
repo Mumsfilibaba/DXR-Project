@@ -9,16 +9,28 @@
 #include "Core/Time/Timestamp.h"
 #include "Core/Containers/Array.h"
 
-class Scene
+class CScene
 {
 public:
-    Scene();
-    ~Scene();
+    CScene();
+    ~CScene();
 
+    /* Create a new actor and add it to the scene */
+    class CActor* MakeActor();
+
+    /* Start game */
+    void Start();
+
+    /* Ticks all actors in the scene, should be called once per frame */
     void Tick( CTimestamp DeltaTime );
 
+    /* Adds a camera into the scene */
     void AddCamera( Camera* InCamera );
+
+    /* Adds an actor into the scene */
     void AddActor( CActor* InActor );
+
+    /* Adds a new light into the scene*/
     void AddLight( Light* InLight );
 
     void OnAddedComponent( CComponent* NewComponent );
@@ -62,7 +74,7 @@ public:
     }
 
 private:
-    void AddMeshComponent( class MeshComponent* Component );
+    void AddMeshComponent( class CMeshComponent* Component );
 
     TArray<CActor*> Actors;
     TArray<Light*> Lights;

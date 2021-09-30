@@ -128,8 +128,8 @@ void Console::OnKeyPressedEvent( const SKeyEvent& Event )
 
 void Console::DrawInterface()
 {
-    const uint32 WindowWidth = CEngine::Get().MainWindow->GetWidth();
-    const uint32 WindowHeight = CEngine::Get().MainWindow->GetHeight();
+    const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
+    const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
     const float Width = 640;
     const float Height = 160;
     const ImVec2 Offset( 8.0f, 8.0f );

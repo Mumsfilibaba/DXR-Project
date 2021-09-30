@@ -53,8 +53,8 @@ public:
 
     void Release();
 
-    void RenderPointLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const Scene& Scene );
-    void RenderDirectionalLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources, const Scene& Scene );
+    void RenderPointLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const CScene& Scene );
+    void RenderDirectionalLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources, const CScene& Scene );
 
     bool ResizeResources( uint32 Width, uint32 Height, LightSetup& LightSetup );
 

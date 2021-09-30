@@ -85,7 +85,7 @@ bool DebugUI::Init()
     IO.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
     IO.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
     IO.BackendPlatformName = "Windows";
-    IO.ImeWindowHandle = CEngine::Get().MainWindow->GetNativeHandle();
+    IO.ImeWindowHandle = GEngine->MainWindow->GetNativeHandle();
 
     // Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
     IO.KeyMap[ImGuiKey_Tab] = EKey::Key_Tab;
@@ -519,7 +519,7 @@ void DebugUI::Render( CommandList& CmdList )
 
     ImGuiIO& IO = ImGui::GetIO();
 
-    TSharedRef<CCoreWindow> Window = CEngine::Get().MainWindow;
+    TSharedRef<CCoreWindow> Window = GEngine->MainWindow;
     if ( IO.WantSetMousePos )
     {
         CApplication::Get().SetCursorPosition( Window, CIntVector2( static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) ) );

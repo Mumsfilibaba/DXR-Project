@@ -393,7 +393,7 @@ bool ShadowMapRenderer::Init( LightSetup& LightSetup, FrameResources& FrameResou
     return true;
 }
 
-void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const Scene& Scene )
+void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const CScene& Scene )
 {
     //PointLightFrame++;
     //if (PointLightFrame > 6)
@@ -506,7 +506,7 @@ void ShadowMapRenderer::RenderPointLightShadows( CommandList& CmdList, const Lig
     CmdList.TransitionTexture( LightSetup.PointLightShadowMaps.Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource );
 }
 
-void ShadowMapRenderer::RenderDirectionalLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources, const Scene& Scene )
+void ShadowMapRenderer::RenderDirectionalLightShadows( CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources, const CScene& Scene )
 {
     // Generate matrices for directional light
     {

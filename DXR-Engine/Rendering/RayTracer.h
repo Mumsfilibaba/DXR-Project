@@ -14,7 +14,7 @@ public:
     bool Init( FrameResources& Resources );
     void Release();
 
-    void PreRender( CommandList& CmdList, FrameResources& Resources, const Scene& Scene );
+    void PreRender( CommandList& CmdList, FrameResources& Resources, const CScene& Scene );
 
 private:
     TSharedRef<RayTracingPipelineState> Pipeline;

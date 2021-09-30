@@ -173,7 +173,7 @@ bool SkyboxRenderPass::Init( FrameResources& FrameResources )
     return true;
 }
 
-void SkyboxRenderPass::Render( CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene )
+void SkyboxRenderPass::Render( CommandList& CmdList, const FrameResources& FrameResources, const CScene& Scene )
 {
     INSERT_DEBUG_CMDLIST_MARKER( CmdList, "Begin Skybox" );
 

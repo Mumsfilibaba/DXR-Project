@@ -46,6 +46,7 @@ bool CEngineLoop::PreInit()
         GConsoleOutput->SetTitle( "DXR-Engine Error Console" );
     }
 
+    /* Profiler */
     Profiler::Init();
 
     /* Create the platform application */
@@ -64,14 +65,10 @@ bool CEngineLoop::PreInit()
         return false;
     }
 
-    if ( !TaskManager::Get().Init() )
-    {
-        return false;
-    }
+    /* Console */ // TODO: Separate panel from console (CConsoleManager, and CConsolePanel)
+    GConsole.Init();
 
-    // Create the engine 
-    CEngine::Make();
-    if ( !CEngine::Get().Init() )
+    if ( !TaskManager::Get().Init() )
     {
         return false;
     }
@@ -93,6 +90,20 @@ bool CEngineLoop::PreInit()
         return false;
     }
 
+    // Create the engine 
+    GEngine = CEngine::Make();
+    if ( !GEngine->Init() )
+    {
+        return false;
+    }
+
+    /* UI */
+    if ( !DebugUI::Init() )
+    {
+        PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create ImGuiContext" );
+        return false;
+    }
+
     // Init Application Plug-In
     GApplicationModule = CreateApplicationModule();
     if ( GApplicationModule && !GApplicationModule->Init() )
@@ -106,14 +117,6 @@ bool CEngineLoop::PreInit()
         return false;
     }
 
-    GConsole.Init();
-
-    if ( !DebugUI::Init() )
-    {
-        PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create ImGuiContext" );
-        return false;
-    }
-
     Editor::Init();
 
     return true;
@@ -121,6 +124,11 @@ bool CEngineLoop::PreInit()
 
 bool CEngineLoop::Init()
 {
+    if ( !GEngine->Start())
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -134,13 +142,15 @@ void CEngineLoop::Tick( CTimestamp Deltatime )
 
     GConsole.Tick();
 
+    GEngine->Tick( Deltatime );
+
     LOG_INFO( "Tick: " + std::to_string( Deltatime.AsMilliSeconds() ) + "ms" );
 
     Editor::Tick();
 
     Profiler::Tick();
 
-    GRenderer.Tick( *GApplicationModule->CurrentScene );
+    GRenderer.Tick( *GEngine->Scene );
 }
 
 bool CEngineLoop::Release()
@@ -164,13 +174,14 @@ bool CEngineLoop::Release()
 
     GRenderer.Release();
 
+    GEngine->Release();
+    GEngine.Reset();
+
     RenderLayer::Release();
 
     TaskManager::Get().Release();
 
     SafeRelease( GConsoleOutput );
-
-    CEngine::Get().Release();
 
     return true;
 }

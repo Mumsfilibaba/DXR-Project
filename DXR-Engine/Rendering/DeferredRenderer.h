@@ -16,7 +16,7 @@ public:
 
     void Release();
 
-    void RenderPrePass( CommandList& CmdList, FrameResources& FrameResources, const Scene& Scene );
+    void RenderPrePass( CommandList& CmdList, FrameResources& FrameResources, const CScene& Scene );
     void RenderBasePass( CommandList& CmdList, const FrameResources& FrameResources );
     void RenderDeferredTiledLightPass( CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup );
 

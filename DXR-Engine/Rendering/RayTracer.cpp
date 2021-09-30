@@ -99,7 +99,7 @@ void RayTracer::Release()
     Pipeline.Reset();
 }
 
-void RayTracer::PreRender( CommandList& CmdList, FrameResources& Resources, const Scene& Scene )
+void RayTracer::PreRender( CommandList& CmdList, FrameResources& Resources, const CScene& Scene )
 {
     TRACE_SCOPE( "Gather Instances" );
 

@@ -3,13 +3,14 @@
 #include "Core/Application/Application.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Console/Console.h"
+#include "Rendering/Resources/TextureFactory.h"
 
 /* Console vars */
 ConsoleCommand GToggleFullscreen;
 ConsoleCommand GExit;
 
 /* Global engine instance */
-TSharedPtr<CEngine> CEngine::EngineInstance;
+TSharedPtr<CEngine> GEngine;
 
 CEngine::CEngine()
 {
@@ -68,8 +69,73 @@ bool CEngine::Init()
     GExit.OnExecute.AddRaw( this, &CEngine::Exit );
     INIT_CONSOLE_COMMAND( "a.Exit", &GExit );
 
+    // Create standard textures
+    uint8 Pixels[] =
+    {
+        255,
+        255,
+        255,
+        255
+    };
+
+    BaseTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
+    if ( !BaseTexture )
+    {
+        LOG_WARNING( "Failed to create BaseTexture" );
+    }
+    else
+    {
+        BaseTexture->SetName( "BaseTexture" );
+    }
+
+    Pixels[0] = 127;
+    Pixels[1] = 127;
+    Pixels[2] = 255;
+
+    BaseNormal = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
+    if ( !BaseNormal )
+    {
+        LOG_WARNING( "Failed to create BaseNormal-Texture" );
+    }
+    else
+    {
+        BaseNormal->SetName( "BaseNormal" );
+    }
+
+    /* Base material */
+    SMaterialDesc MaterialDesc;
+    MaterialDesc.AO = 1.0f;
+    MaterialDesc.Metallic = 0.0f;
+    MaterialDesc.Roughness = 1.0f;
+    MaterialDesc.EnableHeight = 0;
+    MaterialDesc.Albedo = CVector3( 1.0f );
+
+    BaseMaterial = MakeShared<CMaterial>( MaterialDesc );
+    BaseMaterial->AlbedoMap = GEngine->BaseTexture;
+    BaseMaterial->NormalMap = GEngine->BaseNormal;
+    BaseMaterial->RoughnessMap = GEngine->BaseTexture;
+    BaseMaterial->AOMap = GEngine->BaseTexture;
+    BaseMaterial->MetallicMap = GEngine->BaseTexture;
+    BaseMaterial->Init();
+
+    /* Create the start scene */
+    Scene = MakeShared<CScene>();
+
+    return true;
+}
+
+bool CEngine::Start()
+{
     IsRunning = true;
     return true;
+}
+
+void CEngine::Tick( CTimestamp DeltaTime )
+{
+    if ( Scene )
+    {
+        Scene->Tick( DeltaTime );
+    }
 }
 
 bool CEngine::Release()

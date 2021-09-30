@@ -8,15 +8,16 @@ class CApplicationModule
 public:
 
     CApplicationModule() = default;
-    virtual ~CApplicationModule();
+    virtual ~CApplicationModule() = default;
 
+    /* Init the application module */
     virtual bool Init();
 
+    /* Tick the application module */
     virtual void Tick( CTimestamp Deltatime );
 
+    /* Release the application module */
     virtual bool Release();
-
-    class Scene* CurrentScene = nullptr;
 };
 
 extern CApplicationModule* GApplicationModule;

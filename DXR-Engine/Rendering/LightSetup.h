@@ -63,7 +63,7 @@ struct LightSetup
 
     bool Init();
 
-    void BeginFrame( CommandList& CmdList, const Scene& Scene );
+    void BeginFrame( CommandList& CmdList, const CScene& Scene );
     void Release();
 
     TArray<CVector4>       PointLightsPosRad;

@@ -35,7 +35,7 @@ int32 EngineMain()
     }
 
     CTimer Timer;
-    while ( CEngine::Get().IsRunning )
+    while ( GEngine->IsRunning )
     {
         Timer.Tick();
         GEngineLoop.Tick( Timer.GetDeltaTime() );

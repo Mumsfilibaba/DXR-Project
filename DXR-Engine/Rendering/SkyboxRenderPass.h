@@ -15,7 +15,7 @@ public:
 
     bool Init( FrameResources& FrameResources );
 
-    void Render( CommandList& CmdList, const FrameResources& FrameResources, const Scene& Scene );
+    void Render( CommandList& CmdList, const FrameResources& FrameResources, const CScene& Scene );
 
     void Release();
 

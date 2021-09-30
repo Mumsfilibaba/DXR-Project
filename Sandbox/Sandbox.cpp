@@ -35,69 +35,21 @@ bool CSandbox::Init()
 
     // Initialize Scene
     CActor* NewActor = nullptr;
-    MeshComponent* NewComponent = nullptr;
-    CurrentScene = DBG_NEW Scene(); // TODO: Scene should be the renderer side only, and should reside in the engine
+    CMeshComponent* NewComponent = nullptr;
+    
+    CScene* CurrentScene = GEngine->Scene.Get();
 
     // Load Scene
     SSceneData SceneData;
     COBJLoader::LoadFile( "../Assets/Scenes/Sponza/Sponza.obj", SceneData );
-
-    // TODO: Fix this
-    SceneData.AddToScene( CurrentScene );
-
     //CFBXLoader::LoadFile( "../Assets/Scenes/Bistro/BistroExterior.fbx", SceneData );
+    
+    SceneData.Scale = 0.015f;
+    SceneData.AddToScene( CurrentScene );
 
     // Create Spheres
     SMeshData SphereMeshData = CMeshFactory::CreateSphere( 3 );
     TSharedPtr<Mesh> SphereMesh = Mesh::Make( SphereMeshData );
-
-    // Create standard textures
-    uint8 Pixels[] =
-    {
-        255,
-        255,
-        255,
-        255
-    };
-
-    // TODO: Base texture should be stored and created in the engine and not in the application module
-    TSharedRef<Texture2D> BaseTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
-    if ( !BaseTexture )
-    {
-        LOG_WARNING("Failed to create BaseTexture");
-    }
-    else
-    {
-        BaseTexture->SetName( "BaseTexture" );
-    }
-
-    Pixels[0] = 127;
-    Pixels[1] = 127;
-    Pixels[2] = 255;
-
-    TSharedRef<Texture2D> BaseNormal = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
-    if ( !BaseNormal )
-    {
-        LOG_WARNING("Failed to create BaseNormalTexture");
-    }
-    else
-    {
-        BaseNormal->SetName( "BaseNormal" );
-    }
-
-    Pixels[0] = 255;
-    Pixels[1] = 255;
-    Pixels[2] = 255;
-
-    TSharedRef<Texture2D> WhiteTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
-    if ( !WhiteTexture )
-    {
-        LOG_WARNING("Failed to create WhiteTexture");
-    }
-    else
-    {
-        WhiteTexture->SetName( "WhiteTexture" );
-    }
 
     constexpr float  SphereOffset = 1.25f;
     constexpr uint32 SphereCountX = 8;
@@ -115,23 +67,21 @@ bool CSandbox::Init()
     {
         for ( uint32 x = 0; x < SphereCountX; x++ )
         {
-            NewActor = DBG_NEW CActor();
+            NewActor = CurrentScene->MakeActor();
             NewActor->GetTransform().SetTranslation( StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset) );
 
             NewActor->SetName( "Sphere[" + std::to_string( SphereIndex ) + "]" );
             SphereIndex++;
 
-            CurrentScene->AddActor( NewActor );
-
-            NewComponent = DBG_NEW MeshComponent( NewActor );
+            NewComponent = DBG_NEW CMeshComponent( NewActor );
             NewComponent->Mesh = SphereMesh;
             NewComponent->Material = MakeShared<CMaterial>( MatProperties );
 
-            NewComponent->Material->AlbedoMap = BaseTexture;
-            NewComponent->Material->NormalMap = BaseNormal;
-            NewComponent->Material->RoughnessMap = WhiteTexture;
-            NewComponent->Material->AOMap = WhiteTexture;
-            NewComponent->Material->MetallicMap = WhiteTexture;
+            NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
+            NewComponent->Material->NormalMap = GEngine->BaseNormal;
+            NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
+            NewComponent->Material->AOMap = GEngine->BaseTexture;
+            NewComponent->Material->MetallicMap = GEngine->BaseTexture;
             NewComponent->Material->Init();
 
             NewActor->AddComponent( NewComponent );
@@ -146,8 +96,7 @@ bool CSandbox::Init()
     // Create Other Meshes
     SMeshData CubeMeshData = CMeshFactory::CreateCube();
 
-	NewActor = DBG_NEW CActor();
-    CurrentScene->AddActor( NewActor );
+    NewActor = CurrentScene->MakeActor();
 
     NewActor->SetName( "Cube" );
     NewActor->GetTransform().SetTranslation( 0.0f, 2.0f, 50.0f );
@@ -157,7 +106,7 @@ bool CSandbox::Init()
     MatProperties.Roughness = 1.0f;
     MatProperties.EnableHeight = 1;
 
-    NewComponent = DBG_NEW MeshComponent( NewActor );
+    NewComponent = DBG_NEW CMeshComponent( NewActor );
     NewComponent->Mesh = Mesh::Make( CubeMeshData );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
 
@@ -206,8 +155,7 @@ bool CSandbox::Init()
     NewComponent->Material->Init();
     NewActor->AddComponent( NewComponent );
 
-	NewActor = DBG_NEW CActor();
-    CurrentScene->AddActor( NewActor );
+    NewActor = CurrentScene->MakeActor();
 
     NewActor->SetName( "Plane" );
     NewActor->GetTransform().SetRotation( NMath::HALF_PI_F, 0.0f, 0.0f );
@@ -220,14 +168,14 @@ bool CSandbox::Init()
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo = CVector3( 1.0f );
 
-    NewComponent = DBG_NEW MeshComponent( NewActor );
+    NewComponent = DBG_NEW CMeshComponent( NewActor );
     NewComponent->Mesh = Mesh::Make( CMeshFactory::CreatePlane( 10, 10 ) );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
-    NewComponent->Material->AlbedoMap = BaseTexture;
-    NewComponent->Material->NormalMap = BaseNormal;
-    NewComponent->Material->RoughnessMap = WhiteTexture;
-    NewComponent->Material->AOMap = WhiteTexture;
-    NewComponent->Material->MetallicMap = WhiteTexture;
+    NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
+    NewComponent->Material->NormalMap = GEngine->BaseNormal;
+    NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
+    NewComponent->Material->AOMap = GEngine->BaseTexture;
+    NewComponent->Material->MetallicMap = GEngine->BaseTexture;
     NewComponent->Material->Init();
     NewActor->AddComponent( NewComponent );
 
@@ -264,25 +212,24 @@ bool CSandbox::Init()
     SSceneData StreetLightData;
     COBJLoader::LoadFile( "../Assets/Models/Street_Light.obj", StreetLightData );
 
-    TSharedPtr<Mesh>      StreetLight    = StreetLightData.HasData() ? Mesh::Make( StreetLightData.Models.FirstElement().Mesh ) : nullptr;
+    TSharedPtr<Mesh>      StreetLight    = StreetLightData.HasModelData() ? Mesh::Make( StreetLightData.Models.FirstElement().Mesh ) : nullptr;
     TSharedPtr<CMaterial> StreetLightMat = MakeShared<CMaterial>( MatProperties );
 
     for ( uint32 i = 0; i < 4; i++ )
     {
-		NewActor = DBG_NEW CActor();
-        CurrentScene->AddActor( NewActor );
+        NewActor = CurrentScene->MakeActor();
 
         NewActor->SetName( "Street Light " + std::to_string( i ) );
         NewActor->GetTransform().SetUniformScale( 0.25f );
         NewActor->GetTransform().SetTranslation( 15.0f, 0.0f, 55.0f - ((float)i * 3.0f) );
 
-        NewComponent = DBG_NEW MeshComponent( NewActor );
+        NewComponent = DBG_NEW CMeshComponent( NewActor );
         NewComponent->Mesh = StreetLight;
         NewComponent->Material = StreetLightMat;
         NewComponent->Material->AlbedoMap = AlbedoMap;
         NewComponent->Material->NormalMap = NormalMap;
         NewComponent->Material->RoughnessMap = RoughnessMap;
-        NewComponent->Material->AOMap = WhiteTexture;
+        NewComponent->Material->AOMap = GEngine->BaseTexture;
         NewComponent->Material->MetallicMap = MetallicMap;
         NewComponent->Material->Init();
         NewActor->AddComponent( NewComponent );
@@ -295,27 +242,26 @@ bool CSandbox::Init()
     MatProperties.Albedo = CVector3( 0.4f );
 
     SSceneData PillarData;
-    COBJLoader::LoadFile( "../Assets/Models/Pillar.obj", StreetLightData );
+    COBJLoader::LoadFile( "../Assets/Models/Pillar.obj", PillarData );
 
-    TSharedPtr<Mesh>      Pillar    = PillarData.HasData() ? Mesh::Make( PillarData.Models.FirstElement().Mesh ) : nullptr;
+    TSharedPtr<Mesh>      Pillar    = PillarData.HasModelData() ? Mesh::Make( PillarData.Models.FirstElement().Mesh ) : nullptr;
     TSharedPtr<CMaterial> PillarMat = MakeShared<CMaterial>( MatProperties );
 
     for ( uint32 i = 0; i < 8; i++ )
     {
-		NewActor = DBG_NEW CActor();
-        CurrentScene->AddActor( NewActor );
+        NewActor = CurrentScene->MakeActor();
 
         NewActor->SetName( "Pillar " + std::to_string( i ) );
         NewActor->GetTransform().SetUniformScale( 0.25f );
         NewActor->GetTransform().SetTranslation( -15.0f + ((float)i * 1.75f), 0.0f, 60.0f );
 
-        NewComponent = DBG_NEW MeshComponent( NewActor );
+        NewComponent = DBG_NEW CMeshComponent( NewActor );
         NewComponent->Mesh = Pillar;
         NewComponent->Material = PillarMat;
-        NewComponent->Material->AlbedoMap = BaseTexture;
-        NewComponent->Material->NormalMap = BaseNormal;
-        NewComponent->Material->RoughnessMap = WhiteTexture;
-        NewComponent->Material->AOMap = WhiteTexture;
+        NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
+        NewComponent->Material->NormalMap = GEngine->BaseNormal;
+        NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
+        NewComponent->Material->AOMap = GEngine->BaseTexture;
         NewComponent->Material->MetallicMap = MetallicMap;
         NewComponent->Material->Init();
         NewActor->AddComponent( NewComponent );
@@ -383,7 +329,7 @@ bool CSandbox::Init()
         Light->SetPosition( x, y, z );
         Light->SetColor( RandomFloats( Generator ), RandomFloats( Generator ), RandomFloats( Generator ) );
         Light->SetIntensity( Intentsity );
-        Scene->AddLight( Light );
+        CScene->AddLight( Light );
     }
 #endif
 

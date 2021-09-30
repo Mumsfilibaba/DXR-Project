@@ -500,7 +500,7 @@ void DeferredRenderer::Release()
     ReduceDepthShader.Reset();
 }
 
-void DeferredRenderer::RenderPrePass( CommandList& CmdList, FrameResources& FrameResources, const Scene& Scene )
+void DeferredRenderer::RenderPrePass( CommandList& CmdList, FrameResources& FrameResources, const CScene& Scene )
 {
     const float RenderWidth = float( FrameResources.MainWindowViewport->GetWidth() );
     const float RenderHeight = float( FrameResources.MainWindowViewport->GetHeight() );

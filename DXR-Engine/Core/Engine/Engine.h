@@ -9,6 +9,10 @@
 
 #include "RenderLayer/Viewport.h"
 
+#include "Rendering/Resources/Material.h"
+
+#include "Scene/Scene.h"
+
 // TODO: Later we should bind this to the viewport? 
 class CEngineWindowHandler : public CWindowMessageHandler
 {
@@ -35,21 +39,7 @@ public:
     /* Create a new engine instance */
     static FORCEINLINE TSharedPtr<CEngine> Make()
     {
-        EngineInstance = TSharedPtr<CEngine>( DBG_NEW CEngine() );
-        return EngineInstance;
-    }
-
-    /* Init engine instance from an existing instance */
-    static FORCEINLINE TSharedPtr<CEngine> Make( const TSharedPtr<CEngine>& InEngineInstance )
-    {
-        EngineInstance = InEngineInstance;
-        return EngineInstance;
-    }
-
-    /* Retrieve the engine instance */
-    static FORCEINLINE CEngine& Get()
-    {
-        return *EngineInstance;
+        return TSharedPtr<CEngine>( DBG_NEW CEngine() );;
     }
 
     /* Public destructor for the TSharedPtr */
@@ -58,16 +48,37 @@ public:
     /* Init engine */
     virtual bool Init();
 
+    /* Start the engine */
+    virtual bool Start();
+
+    /* Tick should be called once per frame */
+    virtual void Tick( CTimestamp DeltaTime );
+
     /* Release engine resources */
     virtual bool Release();
 
     /* Request exit from the engine */
     virtual void Exit();
 
+    /* The main window of the app */
     TSharedRef<CCoreWindow> MainWindow;
-    TSharedRef<Viewport>       MainViewport;
+
+    /* The main viewport */
+    TSharedRef<Viewport> MainViewport;
 
     TSharedPtr<CApplicationUser> User;
+
+    /* The current scene */
+    TSharedPtr<CScene> Scene;
+
+    /* A completely white texture */
+    TSharedRef<Texture2D> BaseTexture;
+
+    /* A completely flat normal map*/
+    TSharedRef<Texture2D> BaseNormal;
+
+    /* A completely white material */
+    TSharedPtr<CMaterial> BaseMaterial;
 
     bool IsRunning = false;
 
@@ -81,6 +92,6 @@ private:
     void OnApplicationExit( int32 ExitCode );
 
     CDelegateHandle OnApplicationExitHandle;
-
-    static TSharedPtr<CEngine> EngineInstance;
 };
+
+extern TSharedPtr<CEngine> GEngine;

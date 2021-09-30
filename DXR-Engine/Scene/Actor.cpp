@@ -3,13 +3,18 @@
 
 /* Component Implementation */
 
-CComponent::CComponent( CActor* InOwningActor )
+CComponent::CComponent( CActor* InActorOwner )
     : CCoreObject()
-    , OwningActor( InOwningActor )
+    , ActorOwner( InActorOwner )
+    , Startable( true )
     , Tickable( true )
 {
-    Assert( InOwningActor != nullptr );
+    Assert( InActorOwner != nullptr );
     CORE_OBJECT_INIT();
+}
+
+void CComponent::Start()
+{
 }
 
 void CComponent::Tick( CTimestamp DeltaTime )
@@ -19,10 +24,14 @@ void CComponent::Tick( CTimestamp DeltaTime )
 
 /* Actor Implementation */
 
-CActor::CActor()
+CActor::CActor( class CScene* InSceneOwner )
     : CCoreObject()
+    , Name()
+    , SceneOwner( InSceneOwner )
     , Transform()
     , Components()
+    , Startable( true )
+    , Tickable( true )
 {
     CORE_OBJECT_INIT();
 }
@@ -35,6 +44,17 @@ CActor::~CActor()
     }
 
     Components.Clear();
+}
+
+void CActor::Start()
+{
+    for ( CComponent* Component : Components )
+    {
+        if ( Component->IsStartable() )
+        {
+            Component->Start();
+        }
+    }
 }
 
 void CActor::Tick( CTimestamp DeltaTime )
@@ -53,9 +73,9 @@ void CActor::AddComponent( CComponent* InComponent )
     Assert( InComponent != nullptr );
     Components.Emplace( InComponent );
 
-    if ( Scene )
+    if ( SceneOwner )
     {
-        Scene->OnAddedComponent( InComponent );
+        SceneOwner->OnAddedComponent( InComponent );
     }
 }
 
@@ -64,7 +84,35 @@ void CActor::SetName( const std::string& InName )
     Name = InName;
 }
 
-Transform::Transform()
+bool CActor::HasComponentOfClass( class CClassType* ComponentClass ) const
+{
+    for ( CComponent* Component : Components )
+    {
+        if ( IsSubClassOf( Component, ComponentClass ) )
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+CComponent* CActor::GetComponentOfClass( class CClassType* ComponentClass ) const
+{
+    for ( CComponent* Component : Components )
+    {
+        if ( IsSubClassOf( Component, ComponentClass ) )
+        {
+            return Component;
+        }
+    }
+
+    return nullptr;
+}
+
+/* Transform implementation */
+
+CTransform::CTransform()
     : Matrix()
     , Translation( 0.0f, 0.0f, 0.0f )
     , Scale( 1.0f, 1.0f, 1.0f )
@@ -73,40 +121,40 @@ Transform::Transform()
     CalculateMatrix();
 }
 
-void Transform::SetTranslation( float x, float y, float z )
+void CTransform::SetTranslation( float x, float y, float z )
 {
     SetTranslation( CVector3( x, y, z ) );
 }
 
-void Transform::SetTranslation( const CVector3& InPosition )
+void CTransform::SetTranslation( const CVector3& InPosition )
 {
     Translation = InPosition;
     CalculateMatrix();
 }
 
-void Transform::SetScale( float x, float y, float z )
+void CTransform::SetScale( float x, float y, float z )
 {
     SetScale( CVector3( x, y, z ) );
 }
 
-void Transform::SetScale( const CVector3& InScale )
+void CTransform::SetScale( const CVector3& InScale )
 {
     Scale = InScale;
     CalculateMatrix();
 }
 
-void Transform::SetRotation( float x, float y, float z )
+void CTransform::SetRotation( float x, float y, float z )
 {
     SetRotation( CVector3( x, y, z ) );
 }
 
-void Transform::SetRotation( const CVector3& InRotation )
+void CTransform::SetRotation( const CVector3& InRotation )
 {
     Rotation = InRotation;
     CalculateMatrix();
 }
 
-void Transform::CalculateMatrix()
+void CTransform::CalculateMatrix()
 {
     CMatrix4 ScaleMatrix = CMatrix4::Scale( Scale );
     CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw( Rotation );

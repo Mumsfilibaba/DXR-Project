@@ -14,12 +14,12 @@
 
 #include <unordered_map>
 
-Scene::Scene()
+CScene::CScene()
     : Actors()
 {
 }
 
-Scene::~Scene()
+CScene::~CScene()
 {
     for ( CActor* CurrentActor : Actors )
     {
@@ -36,7 +36,25 @@ Scene::~Scene()
     SafeDelete( CurrentCamera );
 }
 
-void Scene::Tick( CTimestamp DeltaTime )
+CActor* CScene::MakeActor()
+{
+    CActor* NewActor = new CActor( this );
+    AddActor( NewActor );
+    return NewActor;
+}
+
+void CScene::Start()
+{
+    for ( CActor* Actor : Actors )
+    {
+        if ( Actor->IsStartable() )
+        {
+            Actor->Start();
+        }
+    }
+}
+
+void CScene::Tick( CTimestamp DeltaTime )
 {
     for ( CActor* Actor : Actors )
     {
@@ -47,7 +65,7 @@ void Scene::Tick( CTimestamp DeltaTime )
     }
 }
 
-void Scene::AddCamera( Camera* InCamera )
+void CScene::AddCamera( Camera* InCamera )
 {
     if ( CurrentCamera )
     {
@@ -57,39 +75,37 @@ void Scene::AddCamera( Camera* InCamera )
     CurrentCamera = InCamera;
 }
 
-void Scene::AddActor( CActor* InActor )
+void CScene::AddActor( CActor* InActor )
 {
     Assert( InActor != nullptr );
     Actors.Emplace( InActor );
 
-    InActor->OnAddedToScene( this );
-
-    MeshComponent* Component = InActor->GetComponentOfType<MeshComponent>();
+    CMeshComponent* Component = InActor->GetComponentOfType<CMeshComponent>();
     if ( Component )
     {
         AddMeshComponent( Component );
     }
 }
 
-void Scene::AddLight( Light* InLight )
+void CScene::AddLight( Light* InLight )
 {
     Assert( InLight != nullptr );
     Lights.Emplace( InLight );
 }
 
-void Scene::OnAddedComponent( CComponent* NewComponent )
+void CScene::OnAddedComponent( CComponent* NewComponent )
 {
-    MeshComponent* Component = Cast<MeshComponent>( NewComponent );
+    CMeshComponent* Component = Cast<CMeshComponent>( NewComponent );
     if ( Component && Component->Mesh )
     {
         AddMeshComponent( Component );
     }
 }
 
-void Scene::AddMeshComponent( MeshComponent* Component )
+void CScene::AddMeshComponent( CMeshComponent* Component )
 {
     MeshDrawCommand Command;
-    Command.CurrentActor = Component->GetOwningActor();
+    Command.CurrentActor = Component->GetActor();
     Command.Geometry = Component->Mesh->RTGeometry.Get();
     Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();
     Command.IndexBuffer = Component->Mesh->IndexBuffer.Get();

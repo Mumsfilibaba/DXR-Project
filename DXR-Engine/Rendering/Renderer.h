@@ -53,11 +53,11 @@ public:
 
     bool Init();
 
-    void Tick( const Scene& Scene );
+    void Tick( const CScene& Scene );
 
     void Release();
 
-    void PerformFrustumCulling( const Scene& Scene );
+    void PerformFrustumCulling( const CScene& Scene );
     void PerformFXAA( CommandList& InCmdList );
     void PerformBackBufferBlit( CommandList& InCmdList );
 

@@ -111,12 +111,12 @@ static void DrawMenu()
             {
                 if ( ImGui::MenuItem( "Toggle Fullscreen" ) )
                 {
-                    CEngine::Get().MainWindow->ToggleFullscreen();
+                    GEngine->MainWindow->ToggleFullscreen();
                 }
 
                 if ( ImGui::MenuItem( "Quit" ) )
                 {
-                    CEngine::Get().Exit();
+                    GEngine->Exit();
                 }
 
                 ImGui::EndMenu();
@@ -141,8 +141,8 @@ static void DrawSideWindow()
 {
     DebugUI::DrawUI( []
     {
-        const uint32 WindowWidth = CEngine::Get().MainWindow->GetWidth();
-        const uint32 WindowHeight = CEngine::Get().MainWindow->GetHeight();
+        const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
+        const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
         const float Width = NMath::Max( WindowWidth * 0.3f, 400.0f );
         const float Height = WindowHeight * 0.7f;
 
@@ -189,7 +189,7 @@ static void DrawRenderSettings()
     ImGui::BeginChild( "RendererInfo" );
 
     SWindowShape WindowShape;
-    CEngine::Get().MainWindow->GetWindowShape( WindowShape );
+    GEngine->MainWindow->GetWindowShape( WindowShape );
 
     ImGui::Spacing();
     ImGui::Text( "Renderer Info" );
@@ -374,14 +374,14 @@ static void DrawSceneInfo()
     ImGui::Separator();
 
     SWindowShape WindowShape;
-    CEngine::Get().MainWindow->GetWindowShape( WindowShape );
+    GEngine->MainWindow->GetWindowShape( WindowShape );
 
     // Actors
     if ( ImGui::TreeNode( "Actors" ) )
     {
-        ImGui::Text( "Total Actor Count: %d", GApplicationModule->CurrentScene->GetActors().Size() );
+        ImGui::Text( "Total Actor Count: %d", GEngine->Scene->GetActors().Size() );
 
-        for ( CActor* Actor : GApplicationModule->CurrentScene->GetActors() )
+        for ( CActor* Actor : GEngine->Scene->GetActors() )
         {
             ImGui::PushID( Actor );
 
@@ -450,7 +450,7 @@ static void DrawSceneInfo()
                 }
 
                 // MeshComponent
-                MeshComponent* MComponent = Actor->GetComponentOfType<MeshComponent>();
+                CMeshComponent* MComponent = Actor->GetComponentOfType<CMeshComponent>();
                 if ( MComponent )
                 {
                     if ( ImGui::TreeNode( "MeshComponent" ) )
@@ -519,7 +519,7 @@ static void DrawSceneInfo()
     // Lights
     if ( ImGui::TreeNode( "Lights" ) )
     {
-        for ( Light* CurrentLight : GApplicationModule->CurrentScene->GetLights() )
+        for ( Light* CurrentLight : GEngine->Scene->GetLights() )
         {
             ImGui::PushID( CurrentLight );
 

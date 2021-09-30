@@ -104,10 +104,23 @@ struct SSceneData
     TArray<SModelData> Models;
     TArray<SMaterialData> Materials;
 
-    void AddToScene( class Scene* Scene );
+    /* A scale used to scale each actor when using add to scene */
+    float Scale = 1.0f;
+
+    void AddToScene( class CScene* Scene );
 
     FORCEINLINE bool HasData() const
     {
         return !Models.IsEmpty() && !Materials.IsEmpty();
+    }
+
+    FORCEINLINE bool HasModelData() const
+    {
+        return !Models.IsEmpty();
+    }
+
+    FORCEINLINE bool HasMaterialData() const
+    {
+        return !Materials.IsEmpty();
     }
 };

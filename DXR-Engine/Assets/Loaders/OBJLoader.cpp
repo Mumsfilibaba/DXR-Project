@@ -73,7 +73,7 @@ bool COBJLoader::LoadFile( const CString& Filename, SSceneData& OutScene, bool R
     THashTable<Vertex, uint32, VertexHasher> UniqueVertices;
     for ( const tinyobj::shape_t& Shape : Shapes )
     {
-        // Start at index zero for eaxh mesh and loop until all indices are processed
+        // Start at index zero for each mesh and loop until all indices are processed
         uint32 i = 0;
         uint32 IndexCount = static_cast<uint32>(Shape.mesh.indices.size());
         while ( i < IndexCount )

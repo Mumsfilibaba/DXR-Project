@@ -2,13 +2,12 @@
 #include "ClassType.h"
 
 #define CLASS_DESCRIPTION( TCoreObject )        \
-	static SClassDescription ClassDescription = \
-	{                                           \
-		#TCoreObject,                           \
-		sizeof(TCoreObject),                    \
-		alignof(TCoreObject),                   \
-	}
-
+    static SClassDescription ClassDescription = \
+    {                                           \
+        #TCoreObject,                           \
+        sizeof(TCoreObject),                    \
+        alignof(TCoreObject),                   \
+    }
 
 #define CORE_OBJECT( TCoreObject, TSuperClass )                                   \
 private:                                                                          \
@@ -18,7 +17,7 @@ private:                                                                        
 public:                                                                           \
     static CClassType* GetStaticClass()                                           \
     {                                                                             \
-		CLASS_DESCRIPTION( TCoreObject );										  \
+        CLASS_DESCRIPTION( TCoreObject );										  \
         static CClassType ClassInfo( Super::GetStaticClass(), ClassDescription ); \
         return &ClassInfo;                                                        \
     }                                                                             \
@@ -61,12 +60,17 @@ private:
     const CClassType* Class = nullptr;
 };
 
-template<typename T>
-inline bool IsSubClassOf( CCoreObject* Object )
+inline bool IsSubClassOf( CCoreObject* CoreObject, CClassType* ClassType )
 {
-    Assert( Object != nullptr );
-    Assert( Object->GetClass() != nullptr );
-    return Object->GetClass()->IsSubClassOf<T>();
+    Assert( CoreObject != nullptr );
+    Assert( CoreObject->GetClass() != nullptr );
+    return CoreObject->GetClass()->IsSubClassOf( ClassType );
+}
+
+template<typename T>
+inline bool IsSubClassOf( CCoreObject* CoreObject )
+{
+    return IsSubClassOf( CoreObject, T::GetStaticClass() );
 }
 
 template<typename T>

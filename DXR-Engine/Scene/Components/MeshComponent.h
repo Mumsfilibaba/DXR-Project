@@ -1,13 +1,13 @@
 #pragma once
 #include "Scene/Actor.h"
 
-class MeshComponent : public CComponent
+class CMeshComponent : public CComponent
 {
-    CORE_OBJECT( MeshComponent, CComponent );
+    CORE_OBJECT( CMeshComponent, CComponent );
 
 public:
 
-    MeshComponent( CActor* InOwningActor )
+    CMeshComponent( CActor* InOwningActor )
         : CComponent( InOwningActor )
         , Material( nullptr )
         , Mesh( nullptr )

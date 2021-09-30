@@ -18,35 +18,46 @@ class CComponent : public CCoreObject
 
 public:
 
-    CComponent( CActor* InOwningActor );
+    CComponent( CActor* InActorOwner );
     virtual ~CComponent() = default;
 
+    /* Start component, called in the beginning of the run, perform initialization here */
+    virtual void Start();
+
+    /* Tick component, should be called once every frame */
     virtual void Tick( CTimestamp DeltaTime );
 
-    FORCEINLINE CActor* GetOwningActor() const
+    FORCEINLINE CActor* GetActor() const
     {
-        return OwningActor;
+        return ActorOwner;
+    }
+
+    FORCEINLINE bool IsStartable() const
+    {
+        return Startable;
     }
 
     FORCEINLINE bool IsTickable() const
     {
         return Tickable;
     }
-
 protected:
 
     /* The actor that this component belongs to */
-    CActor* OwningActor = nullptr;
+    CActor* ActorOwner = nullptr;
+
+    /* Flags for this component that decides if it should start or not */
+    bool Startable : 1;
 
     /* Flags for this component that decides if it should tick or not */
     bool Tickable : 1;
 };
 
-class Transform
+class CTransform
 {
 public:
-    Transform();
-    ~Transform() = default;
+    CTransform();
+    ~CTransform() = default;
 
     void SetTranslation( float x, float y, float z );
     void SetTranslation( const CVector3& InPosition );
@@ -105,7 +116,7 @@ private:
     CVector3 Rotation;
 };
 
-class Scene;
+class CScene;
 
 class CActor : public CCoreObject
 {
@@ -113,50 +124,40 @@ class CActor : public CCoreObject
 
 public:
 
-    CActor();
+    CActor( class CScene* InSceneOwner );
     ~CActor();
 
+    /* Start actor, called in the beginning of the run, perform initialization here */
+    virtual void Start();
+
+    /* Tick actor, should be called once every frame */
     virtual void Tick( CTimestamp DeltaTime );
 
+    /* Add a new component to the actor */
     void AddComponent( CComponent* InComponent );
 
-    template<typename TComponent>
-    FORCEINLINE bool HasComponentOfType() const noexcept
-    {
-        TComponent* Result = nullptr;
-        for ( CComponent* Component : Components )
-        {
-            if ( IsSubClassOf<TComponent>( Component ) )
-            {
-                return true;
-            }
-        }
+    /* Set name of the actor */
+    void SetName( const std::string& InName );
 
-        return false;
+    /* Check if the actor has a component of the component-class */
+    bool HasComponentOfClass( class CClassType* ComponentClass ) const;
+
+    template<typename TComponent>
+    inline bool HasComponentOfType() const
+    {
+        return HasComponentOfClass( TComponent::GetStaticClass() );
     }
+
+    /* Retrieve a component from the actor of the component-class */
+    CComponent* GetComponentOfClass( class CClassType* ComponentClass ) const;
 
     template <typename TComponent>
-    FORCEINLINE TComponent* GetComponentOfType() const
+    inline TComponent* GetComponentOfType() const
     {
-        for ( CComponent* Component : Components )
-        {
-            if ( IsSubClassOf<TComponent>( Component ) )
-            {
-                return static_cast<TComponent*>(Component);
-            }
-        }
-
-        return nullptr;
+        return static_cast<TComponent*>( GetComponentOfClass( TComponent::GetStaticClass() ) );
     }
 
-    FORCEINLINE void OnAddedToScene( Scene* InScene )
-    {
-        Scene = InScene;
-    }
-
-    void SetName( const std::string& InDebugName );
-
-    FORCEINLINE void SetTransform( const Transform& InTransform )
+    FORCEINLINE void SetTransform( const CTransform& InTransform )
     {
         Transform = InTransform;
     }
@@ -166,19 +167,24 @@ public:
         return Name;
     }
 
-    FORCEINLINE Scene* GetScene() const
+    FORCEINLINE CScene* GetScene() const
     {
-        return Scene;
+        return SceneOwner;
     }
 
-    FORCEINLINE Transform& GetTransform()
+    FORCEINLINE CTransform& GetTransform()
     {
         return Transform;
     }
 
-    FORCEINLINE const Transform& GetTransform() const
+    FORCEINLINE const CTransform& GetTransform() const
     {
         return Transform;
+    }
+
+    FORCEINLINE bool IsStartable() const
+    {
+        return Startable;
     }
 
     FORCEINLINE bool IsTickable() const
@@ -188,17 +194,20 @@ public:
 
 private:
 
+    /* The name of this actor */
+    std::string Name;
+
     /* The scene that this actor belongs to */
-    Scene* Scene = nullptr;
+    CScene* SceneOwner = nullptr;
 
     /* The transform of this actor */
-    Transform Transform;
-
+    CTransform Transform;
+    
     /* The components of this actor */
     TArray<CComponent*> Components;
 
-    /* The name of this actor */
-    std::string Name;
+    /* Flags for this component that decides if it should start or not */
+    bool Startable : 1;
 
     /* Flags for this component that decides if it should tick or not */
     bool Tickable : 1;

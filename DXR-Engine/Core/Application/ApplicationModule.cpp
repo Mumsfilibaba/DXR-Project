@@ -4,11 +4,6 @@
 
 CApplicationModule* GApplicationModule;
 
-CApplicationModule::~CApplicationModule()
-{
-    SafeDelete( CurrentScene );
-}
-
 bool CApplicationModule::Init()
 {
     return true;
