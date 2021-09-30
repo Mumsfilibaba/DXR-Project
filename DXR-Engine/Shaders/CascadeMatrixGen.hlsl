@@ -46,7 +46,7 @@ void Main(ComputeShaderInput Input)
     }
 
     // TODO: This should be moved to the settings
-    const float CascadeSize = 1024.0f;
+    const float CascadeSize = 8182;
 
     float LastSplitDist = (CascadeIndex == 0) ? MinMaxDepth.x : CascadeSplits[CascadeIndex - 1];
     float SplitDist = CascadeSplits[CascadeIndex];

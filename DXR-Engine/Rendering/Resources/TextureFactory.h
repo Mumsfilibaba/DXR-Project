@@ -16,6 +16,7 @@ public:
     static void Release();
 
     // TODO: Supports R8G8B8A8 and R32G32B32A32 for now, support more formats? Such as Float16?
+    static class Texture2D* LoadFromImage2D( struct SImage2D* InImage, uint32 CreateFlags );
     static class Texture2D* LoadFromFile( const std::string& Filepath, uint32 CreateFlags, EFormat Format );
     static class Texture2D* LoadFromMemory( const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format );
 

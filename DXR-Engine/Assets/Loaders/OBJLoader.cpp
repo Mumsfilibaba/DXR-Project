@@ -5,8 +5,9 @@
 
 #include "Core/Math/MathCommon.h"
 #include "Core/Containers/HashTable.h"
-
 #include "Core/Utilities/StringUtilities.h"
+
+#include "Core/Threading/TaskManager.h"
 
 #include <tiny_obj_loader.h>
 
@@ -148,5 +149,8 @@ bool COBJLoader::LoadFile( const CString& Filename, SSceneData& OutScene, bool R
 
     OutScene.Models.ShrinkToFit();
     OutScene.Materials.ShrinkToFit();
+
+    TaskManager::Get().WaitForAllTasks();
+
     return true;
 }

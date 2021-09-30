@@ -1,5 +1,7 @@
 #include "StbImageLoader.h"
 
+#include "Core/Threading/TaskManager.h"
+
 #include <stb_image.h>
 
 static EFormat GetByteFormat( int32 Channels )
@@ -68,70 +70,84 @@ static EFormat GetFloatFormat( int32 Channels )
 
 TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
 {
-    FILE* File = fopen( Filename.CStr(), "rb" );
-    if ( !File )
+    TSharedPtr<SImage2D> Image = MakeShared<SImage2D>( Filename, 0, 0, EFormat::Unknown );
+    
+    const auto LoadImageAsync = [Image, Filename]()
     {
-        LOG_ERROR( ("[CStbImageLoader]: Failed to open '" + Filename + "'").CStr() );
-        return nullptr;
-    }
-
-    // Retrieve info about the file
-    int32 Width = 0;
-    int32 Height = 0;
-    int32 ChannelCount = 0;
-    stbi_info_from_file( File, &Width, &Height, &ChannelCount );
-
-    const bool IsFloat = stbi_is_hdr_from_file( File );
-    const bool IsExtented = stbi_is_16_bit_from_file( File );
-
-    EFormat Format = EFormat::Unknown;
-
-    // Load based on format
-    TUniquePtr<uint8[]> Pixels;
-    if ( IsExtented )
-    {
-        if ( ChannelCount == 3 )
+        FILE* File = fopen( Filename.CStr(), "rb" );
+        if ( !File )
         {
-            Pixels = TUniquePtr<uint8[]>( reinterpret_cast<uint8*>(stbi_load_from_file_16( File, &Width, &Height, &ChannelCount, 4 )) );
+            LOG_ERROR( ("[CStbImageLoader]: Failed to open '" + Filename + "'").CStr() );
+            return;
+        }
+
+        // Retrieve info about the file
+        int32 Width = 0;
+        int32 Height = 0;
+        int32 ChannelCount = 0;
+        stbi_info_from_file( File, &Width, &Height, &ChannelCount );
+
+        const bool IsFloat = stbi_is_hdr_from_file( File );
+        const bool IsExtented = stbi_is_16_bit_from_file( File );
+
+        EFormat Format = EFormat::Unknown;
+
+        // Load based on format
+        TUniquePtr<uint8[]> Pixels;
+        if ( IsExtented )
+        {
+            if ( ChannelCount == 3 )
+            {
+                Pixels = TUniquePtr<uint8[]>( reinterpret_cast<uint8*>(stbi_load_from_file_16( File, &Width, &Height, &ChannelCount, 4 )) );
+            }
+            else
+            {
+                Pixels = TUniquePtr<uint8[]>( reinterpret_cast<uint8*>(stbi_load_from_file_16( File, &Width, &Height, &ChannelCount, 0 )) );
+            }
+
+            Format = GetExtendedFormat( ChannelCount );
+        }
+        else if ( IsFloat )
+        {
+            Pixels = TUniquePtr<uint8[]>( reinterpret_cast<uint8*>(stbi_loadf_from_file( File, &Width, &Height, &ChannelCount, 0 )) );
+            Format = GetFloatFormat( ChannelCount );
         }
         else
         {
-            Pixels = TUniquePtr<uint8[]>( reinterpret_cast<uint8*>(stbi_load_from_file_16( File, &Width, &Height, &ChannelCount, 0 )) );
+            if ( ChannelCount == 3 )
+            {
+                Pixels = TUniquePtr<uint8[]>( stbi_load_from_file( File, &Width, &Height, &ChannelCount, 4 ) );
+            }
+            else
+            {
+                Pixels = TUniquePtr<uint8[]>( stbi_load_from_file( File, &Width, &Height, &ChannelCount, 0 ) );
+            }
+
+            Format = GetByteFormat( ChannelCount );
         }
 
-        Format = GetExtendedFormat( ChannelCount );
-    }
-    else if ( IsFloat )
-    {
-        Pixels = TUniquePtr<uint8[]>( reinterpret_cast<uint8*>(stbi_loadf_from_file( File, &Width, &Height, &ChannelCount, 0 )) );
-        Format = GetFloatFormat( ChannelCount );
-    }
-    else
-    {
-        if ( ChannelCount == 3 )
+        // Check if succeeded
+        if ( !Pixels )
         {
-            Pixels = TUniquePtr<uint8[]>( stbi_load_from_file( File, &Width, &Height, &ChannelCount, 4 ) );
+            LOG_ERROR( ("[CStbImageLoader]: Failed to load image '" + Filename + "'").CStr() );
+            return;
         }
         else
         {
-            Pixels = TUniquePtr<uint8[]>( stbi_load_from_file( File, &Width, &Height, &ChannelCount, 0 ) );
+            LOG_INFO( ("[CStbImageLoader]: Loaded image '" + Filename + "'").CStr() );
         }
 
-        Format = GetByteFormat( ChannelCount );
-    }
+        Image->Image    = TSharedPtr<uint8[]>( Move( Pixels ) );
+        Image->Format   = Format;
+        Image->Width    = Width;
+        Image->Height   = Height;
+        Image->IsLoaded = true;
+    };
+    
+    Task NewTask;
+    NewTask.Delegate.BindLambda( LoadImageAsync );
 
-    // Check if succeeded
-    if ( !Pixels )
-    {
-        LOG_ERROR( ("[CStbImageLoader]: Failed to load image '" + Filename + "'").CStr() );
-        return nullptr;
-    }
-    else
-    {
-        LOG_INFO( ("[CStbImageLoader]: Loaded image '" + Filename + "'").CStr() );
-    }
+    TaskManager::Get().AddTask( NewTask );
 
-    TSharedPtr<SImage2D> Image = MakeShared<SImage2D>( Filename, Width, Height, Format );
-    Image->Image = TSharedPtr<uint8[]>( ::Move( Pixels ) );
     return Image;
 }

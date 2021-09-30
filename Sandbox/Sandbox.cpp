@@ -41,10 +41,13 @@ bool CSandbox::Init()
 
     // Load Scene
     SSceneData SceneData;
+#if 0
     COBJLoader::LoadFile( "../Assets/Scenes/Sponza/Sponza.obj", SceneData );
-    //CFBXLoader::LoadFile( "../Assets/Scenes/Bistro/BistroExterior.fbx", SceneData );
-    
     SceneData.Scale = 0.015f;
+#else
+    CFBXLoader::LoadFile( "../Assets/Scenes/Bistro/BistroExterior.fbx", SceneData );
+#endif
+
     SceneData.AddToScene( CurrentScene );
 
     // Create Spheres

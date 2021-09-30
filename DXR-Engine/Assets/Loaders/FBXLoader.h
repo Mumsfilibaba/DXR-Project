@@ -12,7 +12,7 @@ enum EFBXFlags : uint8
     FBXFlags_ApplyScaleFactor = BIT( 1 ),
     FBXFlags_EnsureLeftHanded = BIT( 2 ),
 
-    FBXFlags_Default = FBXFlags_ApplyScaleFactor | FBXFlags_EnsureLeftHanded
+    FBXFlags_Default = FBXFlags_EnsureLeftHanded
 };
 
 // TODO: Extend to save as well? 

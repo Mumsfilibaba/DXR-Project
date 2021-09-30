@@ -11,7 +11,8 @@ typedef int64 TaskID;
 
 struct Task
 {
-    TDelegate<void()> Delegate;
+    DECLARE_DELEGATE(CTaskDelegate);
+    CTaskDelegate Delegate;
 };
 
 class TaskManager

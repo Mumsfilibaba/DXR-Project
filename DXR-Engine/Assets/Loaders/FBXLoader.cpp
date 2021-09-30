@@ -60,6 +60,7 @@ static void GetMatrix( const ofbx::Object* Mesh, CMatrix4& OutMatrix )
 
 static TSharedPtr<SImage2D> LoadMaterialTexture( const CString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type )
 {
+#if 0
     const ofbx::Texture* MaterialTexture = Material->getTexture( Type );
     if ( MaterialTexture )
     {
@@ -75,6 +76,7 @@ static TSharedPtr<SImage2D> LoadMaterialTexture( const CString& Path, const ofbx
         return Texture;
     }
     else
+#endif
     {
         return TSharedPtr<SImage2D>();
     }
@@ -166,8 +168,8 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
 
             //TODO: Other material properties
 
-            UniqueMaterials[CurrentMaterial] = OutScene.Materials.Size();
-            OutScene.Materials.Emplace( MaterialData );
+            //UniqueMaterials[CurrentMaterial] = OutScene.Materials.Size();
+            //OutScene.Materials.Emplace( MaterialData );
         }
 
         uint32 VertexCount = CurrentGeom->getVertexCount();
@@ -195,9 +197,9 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
         CMatrix4 GeometricMatrix = ToFloat4x4( CurrentMesh->getGeometricMatrix() );
         CMatrix4 Transform = Matrix * GeometricMatrix;
 
-        uint32 CurrentIndex = 0;
-        uint32 MaterialIndex = 0;
-        uint32 LastMaterialIndex = 0;
+        int32 CurrentIndex = 0;
+        int32 MaterialIndex = -1;
+        int32 LastMaterialIndex = 0;
         while ( CurrentIndex < IndexCount )
         {
             Data.MaterialIndex = -1;
@@ -244,7 +246,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
                     TempVertex.Tangent = Transform.TransformDirection( Tangent );
                 }
 
-                // Only pushback unique vertices
+                // Only push unique vertices
                 uint32 UniqueIndex = 0;
                 if ( UniqueVertices.count( TempVertex ) == 0 )
                 {
@@ -265,7 +267,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
                 CMeshUtilities::CalculateTangents( Data.Mesh );
             }
 
-            // Convert to lefthanded
+            // Convert to left-handed
             if ( Flags & EFBXFlags::FBXFlags_EnsureLeftHanded )
             {
                 if ( Settings->CoordAxis == ofbx::CoordSystem_RightHanded )
@@ -277,9 +279,23 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
             Data.Name = CurrentMesh->name;
 
             const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial( LastMaterialIndex );
-            Data.MaterialIndex = UniqueMaterials[CurrentMaterial];
+            if ( UniqueMaterials.count( CurrentMaterial ) != 0)
+            {
+                Data.MaterialIndex = UniqueMaterials[CurrentMaterial];
+            }
+            else
+            {
+                Data.MaterialIndex = -1;
+            }
 
-            OutScene.Models.Emplace( Data );
+            if (Data.Mesh.Hasdata())
+            {
+                OutScene.Models.Emplace( Data );
+            }
+            else
+            {
+                LOG_WARNING( "Tried to load mesh without any data" );
+            }
         }
     }
 

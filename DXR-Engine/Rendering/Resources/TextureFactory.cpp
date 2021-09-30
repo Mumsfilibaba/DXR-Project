@@ -1,5 +1,7 @@
 #include "TextureFactory.h"
 
+#include "Assets/SceneData.h"
+
 #include "RenderLayer/CommandList.h"
 #include "RenderLayer/PipelineState.h"
 #include "RenderLayer/RenderLayer.h"
@@ -62,6 +64,27 @@ void TextureFactory::Release()
 {
     GlobalFactoryData.PanoramaPSO.Reset();
     GlobalFactoryData.ComputeShader.Reset();
+}
+
+Texture2D* TextureFactory::LoadFromImage2D( SImage2D* InImage, uint32 CreateFlags )
+{
+    if ( !InImage || (InImage && !InImage->IsLoaded) )
+    {
+        return nullptr;
+    }
+
+    const uint8* Pixels = InImage->Image.Get();
+    uint32 Width   = InImage->Width;
+    uint32 Height  = InImage->Height;
+    EFormat Format = InImage->Format;
+
+    Texture2D* NewTexture = LoadFromMemory( Pixels, Width, Height, CreateFlags, Format );
+    if ( NewTexture )
+    {
+        NewTexture->SetName( InImage->Path.CStr() );
+    }
+
+    return NewTexture;
 }
 
 Texture2D* TextureFactory::LoadFromFile( const std::string& Filepath, uint32 CreateFlags, EFormat Format )

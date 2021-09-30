@@ -17,6 +17,11 @@ struct SMeshData
         Vertices.Clear();
         Indices.Clear();
     }
+
+    inline bool Hasdata() const
+    {
+        return !Vertices.IsEmpty();
+    }
 };
 
 struct SModelData
@@ -57,6 +62,8 @@ struct SImage2D
 
     /* The format that the image was loaded as */
     EFormat Format = EFormat::Unknown;
+
+    bool IsLoaded = false;
 };
 
 /* Contains loaded data from a material */

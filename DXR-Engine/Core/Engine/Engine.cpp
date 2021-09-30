@@ -3,6 +3,8 @@
 #include "Core/Application/Application.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Console/Console.h"
+#include "Core/Debug/Profiler.h"
+
 #include "Rendering/Resources/TextureFactory.h"
 
 /* Console vars */
@@ -132,6 +134,8 @@ bool CEngine::Start()
 
 void CEngine::Tick( CTimestamp DeltaTime )
 {
+    TRACE_FUNCTION_SCOPE();
+
     if ( Scene )
     {
         Scene->Tick( DeltaTime );

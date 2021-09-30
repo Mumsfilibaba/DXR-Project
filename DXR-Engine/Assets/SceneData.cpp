@@ -8,44 +8,64 @@
 
 #include "Rendering/Resources/Mesh.h"
 #include "Rendering/Resources/Material.h"
+#include "Rendering/Resources/TextureFactory.h"
 
 void SSceneData::AddToScene( CScene* Scene )
 {
-    if ( !HasData() )
+    if (!HasModelData())
     {
         return;
     }
 
     for ( const SModelData& ModelData : Models )
     {
-        CActor* NewActor = Scene->MakeActor();
-        NewActor->SetName( ModelData.Name.CStr() );
-        NewActor->GetTransform().SetUniformScale( Scale );
-
-        CMeshComponent* MeshComponent = new CMeshComponent( NewActor );
-        MeshComponent->Mesh = Mesh::Make( ModelData.Mesh );
-        MeshComponent->Material = GEngine->BaseMaterial;
-
-        if (ModelData.MaterialIndex >= 0)
+        if (ModelData.Mesh.Hasdata())
         {
-            const SMaterialData& MaterialData = Materials[ModelData.MaterialIndex];
+            CActor* NewActor = Scene->MakeActor();
+            NewActor->SetName( ModelData.Name.CStr() );
+            NewActor->GetTransform().SetUniformScale( Scale );
 
-            SMaterialDesc Desc;
-            Desc.Albedo    = MaterialData.Diffuse;
-            Desc.AO        = MaterialData.AO;
-            Desc.Metallic  = MaterialData.Metallic;
-            Desc.Roughness = MaterialData.Roughness;
+            CMeshComponent* MeshComponent = new CMeshComponent( NewActor );
+            MeshComponent->Mesh = Mesh::Make( ModelData.Mesh );
+            MeshComponent->Material = GEngine->BaseMaterial;
 
-            // TODO: Should probably have a better separation between RHITexture and a Texture
+            if (ModelData.MaterialIndex >= 0)
+            {
+                const SMaterialData& MaterialData = Materials[ModelData.MaterialIndex];
 
-            //TSharedPtr<CMaterial> Material = MeshComponent->Material = DBG_NEW CMaterial( Desc );
-            //Material->AlbedoMap = MaterialData.DiffuseTexture;
-            //Material->AlbedoMap = MaterialData.DiffuseTexture;
-            //Material->AlbedoMap = MaterialData.DiffuseTexture;
-            //Material->AlbedoMap = MaterialData.DiffuseTexture;
-            //Material->AlbedoMap = MaterialData.DiffuseTexture;
+                SMaterialDesc Desc;
+                Desc.Albedo    = MaterialData.Diffuse;
+                Desc.AO        = MaterialData.AO;
+                Desc.Metallic  = MaterialData.Metallic;
+                Desc.Roughness = MaterialData.Roughness;
+
+                // TODO: Should probably have a better separation between RHITexture and a Texture
+
+                TSharedPtr<CMaterial> Material = MeshComponent->Material = DBG_NEW CMaterial( Desc );
+                Material->AlbedoMap = TextureFactory::LoadFromImage2D( MaterialData.DiffuseTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->AlbedoMap = Material->AlbedoMap ? Material->AlbedoMap : GEngine->BaseTexture;
+            
+                Material->AlphaMask = TextureFactory::LoadFromImage2D( MaterialData.AlphaMaskTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->AlphaMask = Material->AlphaMask ? Material->AlphaMask : GEngine->BaseTexture;
+            
+                Material->AOMap = TextureFactory::LoadFromImage2D( MaterialData.AOTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->AOMap = Material->AOMap ? Material->AOMap : GEngine->BaseTexture;
+            
+                Material->MetallicMap = TextureFactory::LoadFromImage2D( MaterialData.MetallicTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->MetallicMap = Material->MetallicMap ? Material->MetallicMap : GEngine->BaseTexture;
+            
+                Material->NormalMap = TextureFactory::LoadFromImage2D( MaterialData.NormalTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->NormalMap = Material->NormalMap ? Material->NormalMap : GEngine->BaseNormal;
+            
+                Material->RoughnessMap = TextureFactory::LoadFromImage2D( MaterialData.RoughnessTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->RoughnessMap = Material->RoughnessMap ? Material->RoughnessMap : GEngine->BaseTexture;
+            
+                Material->HeightMap = GEngine->BaseTexture;
+
+                Material->Init();
+            }
+
+            NewActor->AddComponent( MeshComponent );
         }
-
-        NewActor->AddComponent( MeshComponent );
     }
 }
