@@ -70,7 +70,7 @@ void CMacCursorDevice::SetCursor( ECursor Cursor )
     [SelectedCursor set];
 }
 
-void CMacCursorDevice::SetCursorPosition( CGenericWindow* InRelativeWindow, int32 x, int32 y ) const
+void CMacCursorDevice::SetCursorPosition( CCoreWindow* InRelativeWindow, int32 x, int32 y ) const
 {
     CGPoint NewPosition;
     if (InRelativeWindow)
@@ -94,7 +94,7 @@ void CMacCursorDevice::SetCursorPosition( CGenericWindow* InRelativeWindow, int3
     }
 }
 
-void CMacCursorDevice::GetCursorPosition( CGenericWindow* InRelativeWindow, int32& OutX, int32& OutY ) const
+void CMacCursorDevice::GetCursorPosition( CCoreWindow* InRelativeWindow, int32& OutX, int32& OutY ) const
 {
     NSPoint CursorPosition;
     if (InRelativeWindow)

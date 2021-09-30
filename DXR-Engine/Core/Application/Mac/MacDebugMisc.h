@@ -1,9 +1,9 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS) 
-#include "Core/Application/Generic/GenericDebugMisc.h"
+#include "Core/Application/Core/CoreDebugMisc.h"
 
-class CMacDebugMisc : public CGenericDebugMisc
+class CMacDebugMisc : public CCoreDebugMisc
 {
 public:
 

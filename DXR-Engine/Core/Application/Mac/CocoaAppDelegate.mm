@@ -1,10 +1,10 @@
 #if defined(PLATFORM_MACOS)
+#include "Notification.h"
+#include "CocoaAppDelegate.h"
+
 #include "Core/Application/Platform/PlatformApplication.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Application/Platform/PlatformDebugMisc.h"
-#include "Notification.h"
-
-#include "Core/Application/Mac/CocoaAppDelegate.h"
 
 @implementation CCocoaAppDelegate
 

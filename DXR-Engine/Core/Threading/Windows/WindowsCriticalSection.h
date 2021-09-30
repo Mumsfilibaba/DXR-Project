@@ -1,7 +1,8 @@
 #pragma once
+#include "Core/Threading/Core/CoreCriticalSection.h"
 #include "Core/Windows/Windows.h"
 
-class CWindowsCriticalSection
+class CWindowsCriticalSection final : public CCoreCriticalSection
 {
 public:
 

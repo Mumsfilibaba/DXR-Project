@@ -15,7 +15,7 @@ enum class ECursor
     NotAllowed = 9,
 };
 
-class CGenericWindow;
+class CCoreWindow;
 
 class ICursorDevice
 {
@@ -25,10 +25,10 @@ public:
     virtual void SetCursor( ECursor Cursor ) = 0;
 
     /* Sets the position of the cursor */
-    virtual void SetCursorPosition( CGenericWindow* RelativeWindow, int32 x, int32 y ) const = 0;
+    virtual void SetCursorPosition( CCoreWindow* RelativeWindow, int32 x, int32 y ) const = 0;
 
     /* Retrieve the cursor position of a window */
-    virtual void GetCursorPosition( CGenericWindow* RelativeWindow, int32& OutX, int32& OutY ) const = 0;
+    virtual void GetCursorPosition( CCoreWindow* RelativeWindow, int32& OutX, int32& OutY ) const = 0;
 
     /* Show or hide the mouse */
     virtual void SetVisibility( bool IsVisible ) = 0;

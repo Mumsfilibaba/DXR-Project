@@ -64,7 +64,7 @@ public:
     /* Request exit from the engine */
     virtual void Exit();
 
-    TSharedRef<CGenericWindow> MainWindow;
+    TSharedRef<CCoreWindow> MainWindow;
     TSharedRef<Viewport>       MainViewport;
 
     TSharedPtr<CApplicationUser> User;

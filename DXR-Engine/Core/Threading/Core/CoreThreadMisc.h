@@ -1,7 +1,7 @@
 #pragma once
-#include "GenericThread.h"
+#include "CoreThread.h"
 
-class CGenericThreadMisc
+class CCoreThreadMisc
 {
 public:
     static FORCEINLINE uint32 GetNumProcessors()
@@ -11,7 +11,7 @@ public:
 
     static FORCEINLINE PlatformThreadHandle GetThreadHandle()
     {
-        return INVALID_THREAD_ID;
+        return static_cast<PlatformThreadHandle>(INVALID_THREAD_ID);
     }
 
     static FORCEINLINE void Sleep( CTimestamp )

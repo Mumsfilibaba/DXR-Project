@@ -47,7 +47,7 @@ bool CEngine::Init()
     {
         MainWindow->Show( false );
 
-        GToggleFullscreen.OnExecute.AddRaw( MainWindow.Get(), &CGenericWindow::ToggleFullscreen );
+        GToggleFullscreen.OnExecute.AddRaw( MainWindow.Get(), &CCoreWindow::ToggleFullscreen );
         INIT_CONSOLE_COMMAND( "a.ToggleFullscreen", &GToggleFullscreen );
     }
     else

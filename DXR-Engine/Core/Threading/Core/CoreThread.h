@@ -21,17 +21,17 @@ typedef uint64 PlatformThreadHandle;
 // See: https://docs.microsoft.com/en-us/windows/win32/procthread/thread-handles-and-identifiers
 #define INVALID_THREAD_ID 0
 
-class CGenericThread : public CRefCounted
+class CCoreThread : public CRefCounted
 {
 public:
 
     // TODO: Enable member-functions and lambdas
-    static FORCEINLINE CGenericThread* Make( ThreadFunction InFunction )
+    static FORCEINLINE CCoreThread* Make( ThreadFunction InFunction )
     {
         return nullptr;
     }
 
-    static FORCEINLINE CGenericThread* Make( ThreadFunction InFunction, const CString& InName )
+    static FORCEINLINE CCoreThread* Make( ThreadFunction InFunction, const CString& InName )
     {
         return nullptr;
     }
@@ -46,8 +46,8 @@ public:
 
 protected:
 
-    CGenericThread() = default;
-    ~CGenericThread() = default;
+    CCoreThread() = default;
+    ~CCoreThread() = default;
 };
 
 #if defined(COMPILER_MSVC)

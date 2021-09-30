@@ -20,7 +20,7 @@
 
 // TODO: Enable other types of Modal windows for supported platforms
 
-class CGenericApplicationMisc
+class CCoreApplicationMisc
 {
 public:
 

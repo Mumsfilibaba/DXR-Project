@@ -1,5 +1,5 @@
 #pragma once
-#include "GenericConditionVariable.h"
+#include "CoreConditionVariable.h"
 
 #include "Core/Threading/ScopedLock.h"
 
@@ -14,14 +14,14 @@
 #endif
 
 /* Generic ConditionVariable*/
-class CGenericConditionVariable
+class CCoreConditionVariable
 {
 public:
 
     typedef void* PlatformHandle;
 
-    CGenericConditionVariable() = default;
-    ~CGenericConditionVariable() = default;
+    CCoreConditionVariable() = default;
+    ~CCoreConditionVariable() = default;
 
     FORCEINLINE void NotifyOne() noexcept
     {

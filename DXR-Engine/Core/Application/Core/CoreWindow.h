@@ -83,7 +83,7 @@ struct SWindowShape
 
 typedef void* PlatformWindowHandle;
 
-class CGenericWindow : public CRefCounted
+class CCoreWindow : public CRefCounted
 {
 public:
 
@@ -146,8 +146,8 @@ public:
 
 protected:
 
-    CGenericWindow() = default;
-    ~CGenericWindow() = default;
+    CCoreWindow() = default;
+    ~CCoreWindow() = default;
 
     SWindowStyle StyleParams;
 };

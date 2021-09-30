@@ -1,7 +1,7 @@
 #pragma once
-#include "Core/Threading/Generic/GenericThread.h"
+#include "Core/Threading/Core/CoreThread.h"
 
-class CWindowsThread : public CGenericThread
+class CWindowsThread final : public CCoreThread
 {
 public:
 

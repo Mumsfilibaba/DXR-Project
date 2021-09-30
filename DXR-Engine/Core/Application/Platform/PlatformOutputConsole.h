@@ -9,7 +9,7 @@ typedef CWindowsOutputConsole PlatformOutputConsole;
 typedef CMacOutputConsole PlatformOutputConsole;
 
 #else
-#include "Core/Application/Generic/GenericOutputConsole.h"
-typedef CGenericOutputConsole PlatformOutputConsole;
+#include "Core/Application/Core/CoreOutputConsole.h"
+typedef CCoreOutputConsole PlatformOutputConsole;
 
 #endif

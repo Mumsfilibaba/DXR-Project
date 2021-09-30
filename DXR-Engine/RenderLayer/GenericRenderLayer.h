@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Application/Generic/GenericWindow.h"
+#include "Core/Application/Core/CoreWindow.h"
 
 #include "RenderingCore.h"
 #include "Resources.h"
@@ -161,7 +161,7 @@ public:
 
     virtual class GPUProfiler* CreateProfiler() = 0;
 
-    virtual class Viewport* CreateViewport( CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) = 0;
+    virtual class Viewport* CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) = 0;
 
     virtual class ICommandContext* GetDefaultCommandContext() = 0;
 
@@ -731,7 +731,7 @@ FORCEINLINE class GPUProfiler* CreateProfiler()
     return GRenderLayer->CreateProfiler();
 }
 
-FORCEINLINE class Viewport* CreateViewport( CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat )
+FORCEINLINE class Viewport* CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat )
 {
     return GRenderLayer->CreateViewport( Window, Width, Height, ColorFormat, DepthFormat );
 }

@@ -1,14 +1,14 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "Core/Threading/Generic/GenericInterlocked.h"
+#include "Core/Threading/Core/CoreInterlocked.h"
 
 #include "Core/Windows/Windows.h"
 
 #include <intrin.h>
 
 /* Atomic operations on the windows platform */
-class CWindowsInterlocked : public CGenericInterlocked
+class CWindowsInterlocked : public CCoreInterlocked
 {
 public:
 

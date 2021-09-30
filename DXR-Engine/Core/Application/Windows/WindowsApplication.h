@@ -6,8 +6,7 @@
 #include "WindowsCursorDevice.h"
 
 #include "Core/Input/InputCodes.h"
-#include "Core/Application/Generic/GenericApplicationMessageListener.h"
-#include "Core/Application/Generic/GenericApplication.h"
+#include "Core/Application/Core/CoreApplication.h"
 #include "Core/Containers/Array.h"
 
 #include "Core/Threading/Platform/CriticalSection.h"
@@ -30,7 +29,7 @@ struct SWindowsMessage
 };
 
 /* Class representing an application on the windows- platform */
-class CWindowsApplication final : public CGenericApplication
+class CWindowsApplication final : public CCoreApplication
 {
     friend class CWindowsApplicationMisc;
 
@@ -43,7 +42,7 @@ public:
     static TSharedPtr<CWindowsApplication> Make();
 
     /* Creates a window */
-    virtual TSharedRef<CGenericWindow> MakeWindow() override final;
+    virtual TSharedRef<CCoreWindow> MakeWindow() override final;
 
     /* Initialized the application */
     virtual bool Init() override final;
@@ -58,16 +57,16 @@ public:
     }
 
     /* Sets the window that currently has the keyboard focus */
-    virtual void SetCapture( const TSharedRef<CGenericWindow>& Window ) override final;
+    virtual void SetCapture( const TSharedRef<CCoreWindow>& Window ) override final;
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( const TSharedRef<CGenericWindow>& Window ) override final;
+    virtual void SetActiveWindow( const TSharedRef<CCoreWindow>& Window ) override final;
 
     /* Retrieves the window that currently has the keyboard focus */
-    virtual TSharedRef<CGenericWindow> GetCapture() const override final;
+    virtual TSharedRef<CCoreWindow> GetCapture() const override final;
 
     /* Retrieves the window that is currently active */
-    virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
+    virtual TSharedRef<CCoreWindow> GetActiveWindow() const override final;
 
     /* Searches all the created windows and return the one with the specified handle */
     TSharedRef<CWindowsWindow> GetWindowsWindowFromHWND( HWND Window ) const;

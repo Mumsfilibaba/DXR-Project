@@ -9,7 +9,7 @@ typedef CWindowsInterlocked PlatformInterlocked;
 typedef CMacInterlocked PlatformInterlocked;
 
 #else
-#include "Core/Threading/Generic/GenericInterlocked.h"
-typedef CGenericInterlocked PlatformInterlocked;
+#include "Core/Threading/Core/CoreInterlocked.h"
+typedef CCoreInterlocked PlatformInterlocked;
 
 #endif

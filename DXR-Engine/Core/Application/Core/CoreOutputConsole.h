@@ -12,11 +12,11 @@ enum class EConsoleColor : uint8
     White = 3
 };
 
-class CGenericOutputConsole
+class CCoreOutputConsole
 {
 public:
 
-    static FORCEINLINE CGenericOutputConsole* Make()
+    static FORCEINLINE CCoreOutputConsole* Make()
     {
         return nullptr;
     }
@@ -37,8 +37,8 @@ public:
 
 protected:
 
-    CGenericOutputConsole() = default;
-    virtual ~CGenericOutputConsole() = default;
+    CCoreOutputConsole() = default;
+    virtual ~CCoreOutputConsole() = default;
 };
 
-extern CGenericOutputConsole* GConsoleOutput;
+extern CCoreOutputConsole* GConsoleOutput;

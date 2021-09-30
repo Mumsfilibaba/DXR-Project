@@ -2,7 +2,7 @@
 
 #if defined(PLATFORM_WINDOWS)
 #include "Core/Containers/String.h"
-#include "Core/Application/Generic/GenericDebugMisc.h"
+#include "Core/Application/Core/CoreDebugMisc.h"
 
 #include "Windows.h"
 
@@ -14,7 +14,7 @@
 #undef OutputDebugString
 #endif
 
-class CWindowsDebugMisc : public CGenericDebugMisc
+class CWindowsDebugMisc : public CCoreDebugMisc
 {
 public:
 

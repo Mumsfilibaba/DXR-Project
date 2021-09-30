@@ -1,11 +1,11 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS)
-#include "Core/Threading/Generic/GenericCriticalSection.h"
+#include "Core/Threading/Core/CoreCriticalSection.h"
 
 #include <pthread.h>
 
-class CMacCriticalSection : public CGenericCriticalSection
+class CMacCriticalSection final : public CCoreCriticalSection
 {
 public:
 

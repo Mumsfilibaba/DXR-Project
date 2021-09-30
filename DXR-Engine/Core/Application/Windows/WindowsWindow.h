@@ -1,11 +1,11 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "Core/Application/Generic/GenericWindow.h"
+#include "Core/Application/Core/CoreWindow.h"
 
 #include "Windows.h"
 
-class CWindowsWindow : public CGenericWindow
+class CWindowsWindow final : public CCoreWindow
 {
     friend class CWindowsApplication;
 

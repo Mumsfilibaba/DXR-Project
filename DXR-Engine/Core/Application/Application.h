@@ -8,13 +8,13 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
 #include "Core/Time/Timestamp.h"
-#include "Core/Application/Generic/GenericApplication.h"
-#include "Core/Application/Generic/GenericApplicationMessageListener.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Delegates/Event.h"
 
+#include "Core/Application/Core/CoreApplication.h"
+
 /* Application class for the engine */
-class CApplication : public CGenericApplicationMessageListener
+class CApplication : public CCoreApplicationMessageHandler
 {
 public:
 
@@ -22,7 +22,7 @@ public:
     virtual ~CApplication();
 
     /* Creates a standard main application */
-    static FORCEINLINE TSharedPtr<CApplication> Make( const TSharedPtr<CGenericApplication>& InPlatformApplication )
+    static FORCEINLINE TSharedPtr<CApplication> Make( const TSharedPtr<CCoreApplication>& InPlatformApplication )
     {
         ApplicationInstance = TSharedPtr<CApplication>( DBG_NEW CApplication( InPlatformApplication ) );
         InPlatformApplication->SetMessageListener( ApplicationInstance );
@@ -53,7 +53,7 @@ public:
     CApplicationExitEvent ApplicationExitEvent;
 
     /* Creates a window */
-    virtual TSharedRef<CGenericWindow> MakeWindow();
+    virtual TSharedRef<CCoreWindow> MakeWindow();
 
     /* Tick the application */
     virtual void Tick( CTimestamp DeltaTime );
@@ -65,13 +65,13 @@ public:
     virtual void SetCursorPosition( const CIntVector2& Position );
 
     /* Set the cursor position */
-    virtual void SetCursorPosition( const TSharedRef<CGenericWindow>& RelativeWindow, const CIntVector2& Position );
+    virtual void SetCursorPosition( const TSharedRef<CCoreWindow>& RelativeWindow, const CIntVector2& Position );
 
     /* Retrieve the current cursor position */
     virtual CIntVector2 GetCursorPosition() const;
 
     /* Retrieve the current cursor position */
-    virtual CIntVector2 GetCursorPosition( const TSharedRef<CGenericWindow>& RelativeWindow ) const;
+    virtual CIntVector2 GetCursorPosition( const TSharedRef<CCoreWindow>& RelativeWindow ) const;
 
     /* Set the visibility of the cursor */
     virtual void SetCursorVisibility( bool IsVisible );
@@ -80,16 +80,16 @@ public:
     virtual bool IsCursorVisibile() const;
 
     /* Sets the window that currently has the keyboard focus */
-    virtual void SetCapture( const TSharedRef<CGenericWindow>& CaptureWindow );
+    virtual void SetCapture( const TSharedRef<CCoreWindow>& CaptureWindow );
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( const TSharedRef<CGenericWindow>& ActiveWindow );
+    virtual void SetActiveWindow( const TSharedRef<CCoreWindow>& ActiveWindow );
 
     /* Retrieves the window that currently has the keyboard focus, can return nullptr */
-    virtual TSharedRef<CGenericWindow> GetCapture() const;
+    virtual TSharedRef<CCoreWindow> GetCapture() const;
 
     /* Retrieves the window that is currently active */
-    virtual TSharedRef<CGenericWindow> GetActiveWindow() const;
+    virtual TSharedRef<CCoreWindow> GetActiveWindow() const;
 
     /* Adds a InputHandler to the application, which gets processed before the game */
     virtual void AddInputHandler( CInputHandler* NewInputHandler );
@@ -104,7 +104,7 @@ public:
     virtual void RemoveWindowMessageHandler( CWindowMessageHandler* WindowMessageHandler );
 
     /* Set the platform application */
-    virtual void SetPlatformApplication( const TSharedPtr<CGenericApplication>& InPlatformApplication );
+    virtual void SetPlatformApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
 
     /* Register a new user to the application */
     FORCEINLINE void RegisterUser( const TSharedPtr<CApplicationUser>& NewUser )
@@ -138,7 +138,7 @@ public:
         }
     }
 
-public: // CGenericApplicationMessageListener interface
+public: // CCoreApplicationMessageHandler interface
 
     /* Key Events */
 
@@ -160,17 +160,17 @@ public: // CGenericApplicationMessageListener interface
 
     /* Window Events */
 
-    virtual void OnWindowResized( const TSharedRef<CGenericWindow>& Window, uint16 Width, uint16 Height ) override;
+    virtual void OnWindowResized( const TSharedRef<CCoreWindow>& Window, uint16 Width, uint16 Height ) override;
 
-    virtual void OnWindowMoved( const TSharedRef<CGenericWindow>& Window, int16 x, int16 y ) override;
+    virtual void OnWindowMoved( const TSharedRef<CCoreWindow>& Window, int16 x, int16 y ) override;
 
-    virtual void OnWindowFocusChanged( const TSharedRef<CGenericWindow>& Window, bool HasFocus ) override;
+    virtual void OnWindowFocusChanged( const TSharedRef<CCoreWindow>& Window, bool HasFocus ) override;
 
-    virtual void OnWindowMouseLeft( const TSharedRef<CGenericWindow>& Window ) override;
+    virtual void OnWindowMouseLeft( const TSharedRef<CCoreWindow>& Window ) override;
 
-    virtual void OnWindowMouseEntered( const TSharedRef<CGenericWindow>& Window ) override;
+    virtual void OnWindowMouseEntered( const TSharedRef<CCoreWindow>& Window ) override;
 
-    virtual void OnWindowClosed( const TSharedRef<CGenericWindow>& Window ) override;
+    virtual void OnWindowClosed( const TSharedRef<CCoreWindow>& Window ) override;
 
     /* Other Application Events */
     virtual void OnApplicationExit( int32 ExitCode ) override;
@@ -178,7 +178,7 @@ public: // CGenericApplicationMessageListener interface
 public:
 
     /* Retrieve the platform application */
-    FORCEINLINE TSharedPtr<CGenericApplication> GetPlatformApplication() const
+    FORCEINLINE TSharedPtr<CCoreApplication> GetPlatformApplication() const
     {
         return PlatformApplication;
     }
@@ -197,7 +197,7 @@ public:
 
 protected:
 
-    CApplication( const TSharedPtr<CGenericApplication>& InPlatformApplication );
+    CApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
 
     /* Handles key events */
     void OnKeyEvent( const SKeyEvent& KeyEvent );
@@ -213,7 +213,7 @@ protected:
     static void InsertMessageHandler( TArray<MessageHandlerType*>& OutMessageHandlerArray, MessageHandlerType* NewMessageHandler );
 
     /* The native platform application */
-    TSharedPtr<CGenericApplication> PlatformApplication;
+    TSharedPtr<CCoreApplication> PlatformApplication;
 
     /* Input handlers in the application */
     TArray<CInputHandler*> InputHandlers;

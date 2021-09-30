@@ -7,7 +7,7 @@
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 
 CMacWindow::CMacWindow( CMacApplication* InApplication )
-    : CGenericWindow()
+    : CCoreWindow()
     , Application( InApplication )
     , Window(nullptr)
     , View(nullptr)

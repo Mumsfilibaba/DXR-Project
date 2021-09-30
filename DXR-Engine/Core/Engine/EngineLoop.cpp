@@ -49,7 +49,7 @@ bool CEngineLoop::PreInit()
     Profiler::Init();
 
     /* Create the platform application */
-    TSharedPtr<CGenericApplication> PlatformApplication = PlatformApplication::Make();
+    TSharedPtr<CCoreApplication> PlatformApplication = PlatformApplication::Make();
     if ( PlatformApplication && !PlatformApplication->Init() )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create PlatformApplication" );

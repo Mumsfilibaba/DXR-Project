@@ -4,8 +4,8 @@
 
 TSharedPtr<CApplication> CApplication::ApplicationInstance;
 
-CApplication::CApplication( const TSharedPtr<CGenericApplication>& InPlatformApplication )
-    : CGenericApplicationMessageListener()
+CApplication::CApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication )
+    : CCoreApplicationMessageHandler()
     , PlatformApplication( InPlatformApplication )
     , InputHandlers()
     , WindowMessageHandlers()
@@ -16,7 +16,7 @@ CApplication::~CApplication()
 {
 }
 
-TSharedRef<CGenericWindow> CApplication::MakeWindow()
+TSharedRef<CCoreWindow> CApplication::MakeWindow()
 {
     return PlatformApplication->MakeWindow();
 }
@@ -47,7 +47,7 @@ void CApplication::SetCursorPosition( const CIntVector2& Position )
     Cursor->SetCursorPosition( nullptr, Position.x, Position.y );
 }
 
-void CApplication::SetCursorPosition( const TSharedRef<CGenericWindow>& RelativeWindow, const CIntVector2& Position )
+void CApplication::SetCursorPosition( const TSharedRef<CCoreWindow>& RelativeWindow, const CIntVector2& Position )
 {
     ICursorDevice* Cursor = GetCursor();
     Cursor->SetCursorPosition( RelativeWindow.Get(), Position.x, Position.y );
@@ -63,7 +63,7 @@ CIntVector2 CApplication::GetCursorPosition() const
     return CursorPosition;
 }
 
-CIntVector2 CApplication::GetCursorPosition( const TSharedRef<CGenericWindow>& RelativeWindow ) const
+CIntVector2 CApplication::GetCursorPosition( const TSharedRef<CCoreWindow>& RelativeWindow ) const
 {
     ICursorDevice* Cursor = GetCursor();
 
@@ -85,22 +85,22 @@ bool CApplication::IsCursorVisibile() const
     return Cursor->IsVisible();
 }
 
-void CApplication::SetCapture( const TSharedRef<CGenericWindow>& CaptureWindow )
+void CApplication::SetCapture( const TSharedRef<CCoreWindow>& CaptureWindow )
 {
     PlatformApplication->SetCapture( CaptureWindow );
 }
 
-void CApplication::SetActiveWindow( const TSharedRef<CGenericWindow>& ActiveWindow )
+void CApplication::SetActiveWindow( const TSharedRef<CCoreWindow>& ActiveWindow )
 {
     PlatformApplication->SetActiveWindow( ActiveWindow );
 }
 
-TSharedRef<CGenericWindow> CApplication::GetCapture() const
+TSharedRef<CCoreWindow> CApplication::GetCapture() const
 {
     return PlatformApplication->GetCapture();
 }
 
-TSharedRef<CGenericWindow> CApplication::GetActiveWindow() const
+TSharedRef<CCoreWindow> CApplication::GetActiveWindow() const
 {
     return PlatformApplication->GetActiveWindow();
 }
@@ -149,7 +149,7 @@ void CApplication::RemoveWindowMessageHandler( CWindowMessageHandler* InputHandl
     WindowMessageHandlers.Remove( InputHandler );
 }
 
-void CApplication::SetPlatformApplication( const TSharedPtr<CGenericApplication>& InPlatformApplication )
+void CApplication::SetPlatformApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication )
 {
     if ( InPlatformApplication )
     {
@@ -229,7 +229,7 @@ void CApplication::OnMouseMove( int32 x, int32 y )
 
 void CApplication::OnMouseReleased( EMouseButton Button, SModifierKeyState ModierKeyState )
 {
-    TSharedRef<CGenericWindow> CaptureWindow = PlatformApplication->GetCapture();
+    TSharedRef<CCoreWindow> CaptureWindow = PlatformApplication->GetCapture();
     if ( CaptureWindow )
     {
         PlatformApplication->SetCapture( nullptr );
@@ -241,10 +241,10 @@ void CApplication::OnMouseReleased( EMouseButton Button, SModifierKeyState Modie
 
 void CApplication::OnMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState )
 {
-    TSharedRef<CGenericWindow> CaptureWindow = PlatformApplication->GetCapture();
+    TSharedRef<CCoreWindow> CaptureWindow = PlatformApplication->GetCapture();
     if ( !CaptureWindow )
     {
-        TSharedRef<CGenericWindow> ActiveWindow = PlatformApplication->GetActiveWindow();
+        TSharedRef<CCoreWindow> ActiveWindow = PlatformApplication->GetActiveWindow();
         PlatformApplication->SetCapture( ActiveWindow );
     }
 
@@ -293,7 +293,7 @@ void CApplication::OnMouseScrolled( float HorizontalDelta, float VerticalDelta )
     }
 }
 
-void CApplication::OnWindowResized( const TSharedRef<CGenericWindow>& Window, uint16 Width, uint16 Height )
+void CApplication::OnWindowResized( const TSharedRef<CCoreWindow>& Window, uint16 Width, uint16 Height )
 {
     SWindowResizeEvent WindowResizeEvent( Window, Width, Height );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
@@ -306,7 +306,7 @@ void CApplication::OnWindowResized( const TSharedRef<CGenericWindow>& Window, ui
     }
 }
 
-void CApplication::OnWindowMoved( const TSharedRef<CGenericWindow>& Window, int16 x, int16 y )
+void CApplication::OnWindowMoved( const TSharedRef<CCoreWindow>& Window, int16 x, int16 y )
 {
     SWindowMovedEvent WindowsMovedEvent( Window, x, y );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
@@ -319,7 +319,7 @@ void CApplication::OnWindowMoved( const TSharedRef<CGenericWindow>& Window, int1
     }
 }
 
-void CApplication::OnWindowFocusChanged( const TSharedRef<CGenericWindow>& Window, bool HasFocus )
+void CApplication::OnWindowFocusChanged( const TSharedRef<CCoreWindow>& Window, bool HasFocus )
 {
     SWindowFocusChangedEvent WindowFocusChangedEvent( Window, HasFocus );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
@@ -332,13 +332,13 @@ void CApplication::OnWindowFocusChanged( const TSharedRef<CGenericWindow>& Windo
     }
 }
 
-void CApplication::OnWindowMouseLeft( const TSharedRef<CGenericWindow>& Window )
+void CApplication::OnWindowMouseLeft( const TSharedRef<CCoreWindow>& Window )
 {
     SWindowFrameMouseEvent WindowFrameMouseEvent( Window, false );
     OnWindowFrameMouseEvent( WindowFrameMouseEvent );
 }
 
-void CApplication::OnWindowMouseEntered( const TSharedRef<CGenericWindow>& Window )
+void CApplication::OnWindowMouseEntered( const TSharedRef<CCoreWindow>& Window )
 {
     SWindowFrameMouseEvent WindowFrameMouseEvent( Window, true );
     OnWindowFrameMouseEvent( WindowFrameMouseEvent );
@@ -356,7 +356,7 @@ void CApplication::OnWindowFrameMouseEvent( const SWindowFrameMouseEvent& Window
     }
 }
 
-void CApplication::OnWindowClosed( const TSharedRef<CGenericWindow>& Window )
+void CApplication::OnWindowClosed( const TSharedRef<CCoreWindow>& Window )
 {
     SWindowClosedEvent WindowClosedEvent( Window );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )

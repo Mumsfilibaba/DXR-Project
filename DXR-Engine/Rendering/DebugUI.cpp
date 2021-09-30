@@ -519,7 +519,7 @@ void DebugUI::Render( CommandList& CmdList )
 
     ImGuiIO& IO = ImGui::GetIO();
 
-    TSharedRef<CGenericWindow> Window = CEngine::Get().MainWindow;
+    TSharedRef<CCoreWindow> Window = CEngine::Get().MainWindow;
     if ( IO.WantSetMousePos )
     {
         CApplication::Get().SetCursorPosition( Window, CIntVector2( static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) ) );

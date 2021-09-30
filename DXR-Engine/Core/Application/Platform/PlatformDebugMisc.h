@@ -9,7 +9,7 @@ typedef CWindowsDebugMisc PlatformDebugMisc;
 typedef CMacDebugMisc PlatformDebugMisc;
 
 #else
-#include "Core/Application/Generic/GenericDebugMisc.h"
-typedef CGenericDebugMisc PlatformDebugMisc;
+#include "Core/Application/Core/CoreDebugMisc.h"
+typedef CCoreDebugMisc PlatformDebugMisc;
 
 #endif

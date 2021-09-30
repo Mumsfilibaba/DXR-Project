@@ -2,12 +2,12 @@
 
 #if defined(PLATFORM_WINDOWS)
 
-#include "Core/Application/Generic/GenericOutputConsole.h"
+#include "Core/Application/Core/CoreOutputConsole.h"
 #include "Core/Threading/Platform/CriticalSection.h"
 
 #include "Core/Windows/Windows.h"
 
-class CWindowsOutputConsole : public CGenericOutputConsole
+class CWindowsOutputConsole final : public CCoreOutputConsole
 {
 public:
 

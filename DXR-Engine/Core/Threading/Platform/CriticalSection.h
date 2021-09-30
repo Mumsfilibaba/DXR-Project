@@ -9,7 +9,7 @@ typedef CWindowsCriticalSection CCriticalSection;
 typedef CMacCriticalSection CCriticalSection;
 
 #else
-#include "Core/Threading/Generic/GenericCriticalSection.h"
-typedef CGenericCriticalSection CCriticalSection;
+#include "Core/Threading/Core/CoreCriticalSection.h"
+typedef CCoreCriticalSection CCriticalSection;
 
 #endif

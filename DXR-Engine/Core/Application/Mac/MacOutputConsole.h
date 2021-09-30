@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS)
-#include "Core/Application/Generic/GenericOutputConsole.h"
+#include "Core/Application/Core/CoreOutputConsole.h"
 
 #if defined(__OBJC__)
 @class CCocoaConsoleWindow;
@@ -9,7 +9,7 @@
 class CCocoaConsoleWindow;
 #endif
 
-class CMacOutputConsole final : public CGenericOutputConsole
+class CMacOutputConsole final : public CCoreOutputConsole
 {
 public:
 

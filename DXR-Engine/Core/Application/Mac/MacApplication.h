@@ -1,8 +1,9 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS)
-#include "Core/Application/Generic/GenericApplication.h"
-#include "Core/Application/Mac/MacCursorDevice.h"
+#include "MacCursorDevice.h"
+
+#include "Core/Application/Core/CoreApplication.h"
 #include "Core/Containers/Array.h"
 
 #if defined(__OBJC__)
@@ -24,7 +25,7 @@ class CCocoaWindow;
 class CMacWindow;
 
 /* Mac specific implementation of the application */
-class CMacApplication final : public CGenericApplication
+class CMacApplication final : public CCoreApplication
 {
 public:
 
@@ -38,7 +39,7 @@ public:
     }
 
     /* Create a window */
-    virtual TSharedRef<CGenericWindow> MakeWindow() override final;
+    virtual TSharedRef<CCoreWindow> MakeWindow() override final;
 
     /* Initialized the application */
     virtual bool Init() override final;
@@ -53,10 +54,10 @@ public:
     }
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( const TSharedRef<CGenericWindow>& Window ) override final;
+    virtual void SetActiveWindow( const TSharedRef<CCoreWindow>& Window ) override final;
 
     /* Retrieves the window that is currently active */
-    virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
+    virtual TSharedRef<CCoreWindow> GetActiveWindow() const override final;
 
     /* Retrieves a from a NSWindow */
     TSharedRef<CMacWindow> GetWindowFromNSWindow( NSWindow* Window ) const;

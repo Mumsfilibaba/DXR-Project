@@ -9,7 +9,7 @@ typedef CWindowsConditionVariable CConditionVariable;
 typedef CMacConditionVariable CConditionVariable;
 
 #else
-#include "Core/Threading/Generic/GenericConditionVariable.h"
-typedef CGenericConditionVariable CConditionVariable;
+#include "Core/Threading/Core/CoreConditionVariable.h"
+typedef CCoreConditionVariable CConditionVariable;
 
 #endif

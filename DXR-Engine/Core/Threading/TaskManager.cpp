@@ -88,7 +88,7 @@ bool TaskManager::Init()
         CString ThreadName;
         ThreadName.Format( "WorkerThread[%d]", i );
 
-        TSharedRef<CGenericThread> NewThread = PlatformThread::Make( TaskManager::WorkThread, ThreadName );
+        TSharedRef<CCoreThread> NewThread = PlatformThread::Make( TaskManager::WorkThread, ThreadName );
         if ( NewThread )
         {
             WorkThreads[i] = NewThread;
@@ -149,7 +149,7 @@ void TaskManager::Release()
 {
     KillWorkers();
 
-    for ( TSharedRef<CGenericThread> Thread : WorkThreads )
+    for ( TSharedRef<CCoreThread> Thread : WorkThreads )
     {
         Thread->WaitUntilFinished();
     }

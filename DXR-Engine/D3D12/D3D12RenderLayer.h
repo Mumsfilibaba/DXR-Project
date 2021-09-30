@@ -161,7 +161,7 @@ public:
 
     virtual class GPUProfiler* CreateProfiler() override final;
 
-    virtual class Viewport* CreateViewport( CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) override final;
+    virtual class Viewport* CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) override final;
 
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
     virtual bool UAVSupportsFormat( EFormat Format ) override final;

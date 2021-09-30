@@ -23,7 +23,7 @@ CMacApplication::~CMacApplication()
     [AppDelegate release];
 }
 
-TSharedRef<CGenericWindow> CMacApplication::MakeWindow()
+TSharedRef<CCoreWindow> CMacApplication::MakeWindow()
 {
     TSharedRef<CMacWindow> NewWindow = new CMacWindow( this );
     Windows.Emplace(NewWindow);
@@ -116,13 +116,13 @@ void CMacApplication::Tick( float )
     PlatformApplicationMisc::PumpMessages(true);
 }
 
-void CMacApplication::SetActiveWindow( const TSharedRef<CGenericWindow>& Window )
+void CMacApplication::SetActiveWindow( const TSharedRef<CCoreWindow>& Window )
 {
     CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window->GetNativeHandle());
     [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
 }
 
-TSharedRef<CGenericWindow> CMacApplication::GetActiveWindow() const
+TSharedRef<CCoreWindow> CMacApplication::GetActiveWindow() const
 {
     NSWindow* KeyWindow = [NSApp keyWindow];
     return GetWindowFromNSWindow( KeyWindow );

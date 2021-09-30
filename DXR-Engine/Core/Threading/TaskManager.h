@@ -39,7 +39,7 @@ private:
     static void WorkThread();
 
 private:
-    TArray<TSharedRef<CGenericThread>> WorkThreads;
+    TArray<TSharedRef<CCoreThread>> WorkThreads;
 
     TArray<Task> Tasks;
     CCriticalSection TaskMutex;

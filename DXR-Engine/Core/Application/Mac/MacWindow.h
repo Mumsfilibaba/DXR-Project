@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS)
-#include "Core/Application/Generic/GenericWindow.h"
+#include "Core/Application/Core/CoreWindow.h"
 
 #if defined(__OBJC__)
 @class CCocoaWindow;
@@ -13,7 +13,7 @@ class CCocoaContentView;
 
 class CMacApplication;
 
-class CMacWindow : public CGenericWindow
+class CMacWindow final : public CCoreWindow
 {
     friend class CMacApplication;
 

@@ -2,7 +2,7 @@
 #include "WindowsApplication.h"
 
 CWindowsWindow::CWindowsWindow( CWindowsApplication* InApplication )
-    : CGenericWindow()
+    : CCoreWindow()
     , Application( InApplication )
     , Window( 0 )
     , Style( 0 )

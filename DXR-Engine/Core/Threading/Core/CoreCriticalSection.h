@@ -3,14 +3,14 @@
 #include "CoreDefines.h"
 
 /* Generic CriticalSection */
-class CGenericCriticalSection
+class CCoreCriticalSection
 {
 public:
 
     typedef void* PlatformHandle;
 
-    CGenericCriticalSection() = default;
-    ~CGenericCriticalSection() = default;
+    CCoreCriticalSection() = default;
+    ~CCoreCriticalSection() = default;
 
     FORCEINLINE void Lock() noexcept
     {

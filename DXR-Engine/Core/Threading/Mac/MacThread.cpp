@@ -3,7 +3,7 @@
 #include "MacThreadMisc.h"
 
 CMacThread::CMacThread( ThreadFunction InFunction )
-    : CGenericThread()
+    : CCoreThread()
     , Thread()
     , Function( InFunction )
     , Name()
@@ -12,7 +12,7 @@ CMacThread::CMacThread( ThreadFunction InFunction )
 }
 
 CMacThread::CMacThread( ThreadFunction InFunction, const CString& InName )
-    : CGenericThread()
+    : CCoreThread()
     , Thread()
     , Function( InFunction )
     , Name( InName )

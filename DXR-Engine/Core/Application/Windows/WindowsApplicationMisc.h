@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "Core/Application/Generic/GenericApplicationMisc.h"
+#include "Core/Application/Core/CoreApplicationMisc.h"
 
 #include "Windows.h"
 
@@ -9,7 +9,7 @@
 #undef MessageBox
 #endif
 
-class CWindowsApplicationMisc : public CGenericApplicationMisc
+class CWindowsApplicationMisc : public CCoreApplicationMisc
 {
 public:
 

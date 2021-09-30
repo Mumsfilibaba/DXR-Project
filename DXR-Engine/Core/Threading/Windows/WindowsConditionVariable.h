@@ -1,10 +1,11 @@
 #pragma once
-#include "WindowsCriticalSection.h"
-
+#include "Core/Threading/Core/CoreConditionVariable.h"
 #include "Core/Application/Windows/WindowsDebugMisc.h"
 #include "Core/Threading/ScopedLock.h"
 
-class CWindowsConditionVariable
+#include "WindowsCriticalSection.h"
+
+class CWindowsConditionVariable final : public CCoreConditionVariable
 {
 public:
 

@@ -49,7 +49,7 @@ void CWindowsCursorDevice::SetCursor( ECursor Cursor )
     // TODO: Log error
 }
 
-void CWindowsCursorDevice::SetCursorPosition( CGenericWindow* RelativeWindow, int32 x, int32 y ) const
+void CWindowsCursorDevice::SetCursorPosition( CCoreWindow* RelativeWindow, int32 x, int32 y ) const
 {
     POINT CursorPos = { x, y };
     if ( RelativeWindow )
@@ -66,7 +66,7 @@ void CWindowsCursorDevice::SetCursorPosition( CGenericWindow* RelativeWindow, in
     ::SetCursorPos( CursorPos.x, CursorPos.y );
 }
 
-void CWindowsCursorDevice::GetCursorPosition( CGenericWindow* RelativeWindow, int32& OutX, int32& OutY ) const
+void CWindowsCursorDevice::GetCursorPosition( CCoreWindow* RelativeWindow, int32& OutX, int32& OutY ) const
 {
     POINT CursorPos = { };
     if ( !::GetCursorPos( &CursorPos ) )

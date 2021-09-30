@@ -1,11 +1,11 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS)
-#include "Core/Threading/Generic/GenericThread.h"
+#include "Core/Threading/Core/CoreThread.h"
 
 #include <pthread.h>
 
-class CMacThread : public CGenericThread
+class CMacThread final : public CCoreThread
 {
 public:
 

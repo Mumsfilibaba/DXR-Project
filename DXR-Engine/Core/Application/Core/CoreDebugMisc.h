@@ -22,7 +22,7 @@
 
 #endif
 
-class CGenericDebugMisc
+class CCoreDebugMisc
 {
 public:
 

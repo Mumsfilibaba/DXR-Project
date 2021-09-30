@@ -1,5 +1,7 @@
 #pragma once
-#include "Generic/GenericOutputConsole.h"
+#include "Platform/PlatformOutputConsole.h"
+
+// TODO: Use print line instead of print
 
 #define LOG_ERROR(Message) \
     { \

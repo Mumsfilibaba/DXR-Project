@@ -9,7 +9,7 @@ typedef CWindowsThreadMisc PlatformThreadMisc;
 typedef CMacThreadMisc PlatformThreadMisc;
 
 #else
-#include "Core/Threading/Generic/GenericThreadMisc.h"
-typedef CGenericThreadMisc PlatformThreadMisc;
+#include "Core/Threading/Core/CoreThreadMisc.h"
+typedef CCoreThreadMisc PlatformThreadMisc;
 
 #endif

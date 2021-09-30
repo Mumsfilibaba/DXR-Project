@@ -9,7 +9,7 @@ typedef CWindowsApplicationMisc PlatformApplicationMisc;
 typedef CMacApplicationMisc PlatformApplicationMisc;
 
 #else
-#include "Core/Application/Generic/GenericApplicationMisc.h"
-typedef CGenericApplicationMisc PlatformApplicationMisc;
+#include "Core/Application/Core/CoreApplicationMisc.h"
+typedef CCoreApplicationMisc PlatformApplicationMisc;
 
 #endif

@@ -1,10 +1,11 @@
 #pragma once
 #include "Core.h"
+#include "ModifierKeyState.h"
+
+#include "Core/CoreWindow.h"
 
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/SharedRef.h"
-#include "Core/Application/ModifierKeyState.h"
-#include "Core/Application/Generic/GenericWindow.h"
 
 struct SKeyEvent
 {
@@ -91,62 +92,62 @@ struct SMouseScrolledEvent
 
 struct SWindowResizeEvent
 {
-    FORCEINLINE SWindowResizeEvent( const TSharedRef<CGenericWindow>& InWindow, uint16 InWidth, uint16 InHeight )
+    FORCEINLINE SWindowResizeEvent( const TSharedRef<CCoreWindow>& InWindow, uint16 InWidth, uint16 InHeight )
         : Window( InWindow )
         , Width( InWidth )
         , Height( InHeight )
     {
     }
 
-    TSharedRef<CGenericWindow> Window;
+    TSharedRef<CCoreWindow> Window;
     uint16 Width;
     uint16 Height;
 };
 
 struct SWindowFocusChangedEvent
 {
-    FORCEINLINE SWindowFocusChangedEvent( const TSharedRef<CGenericWindow>& InWindow, bool hasFocus )
+    FORCEINLINE SWindowFocusChangedEvent( const TSharedRef<CCoreWindow>& InWindow, bool hasFocus )
         : Window( InWindow )
         , HasFocus( hasFocus )
     {
     }
 
-    TSharedRef<CGenericWindow> Window;
+    TSharedRef<CCoreWindow> Window;
     bool HasFocus;
 };
 
 struct SWindowMovedEvent
 {
-    FORCEINLINE SWindowMovedEvent( const TSharedRef<CGenericWindow>& InWindow, int16 InX, int16 InY )
+    FORCEINLINE SWindowMovedEvent( const TSharedRef<CCoreWindow>& InWindow, int16 InX, int16 InY )
         : Window( InWindow )
         , x( InX )
         , y( InY )
     {
     }
 
-    TSharedRef<CGenericWindow> Window;
+    TSharedRef<CCoreWindow> Window;
     int16 x;
     int16 y;
 };
 
 struct SWindowFrameMouseEvent
 {
-    FORCEINLINE SWindowFrameMouseEvent( const TSharedRef<CGenericWindow>& InWindow, bool InMouseEntered )
+    FORCEINLINE SWindowFrameMouseEvent( const TSharedRef<CCoreWindow>& InWindow, bool InMouseEntered )
         : Window( InWindow )
         , MouseEntered( InMouseEntered )
     {
     }
 
-    TSharedRef<CGenericWindow> Window;
+    TSharedRef<CCoreWindow> Window;
     bool MouseEntered;
 };
 
 struct SWindowClosedEvent
 {
-    FORCEINLINE SWindowClosedEvent( const TSharedRef<CGenericWindow>& InWindow )
+    FORCEINLINE SWindowClosedEvent( const TSharedRef<CCoreWindow>& InWindow )
         : Window( InWindow )
     {
     }
 
-    TSharedRef<CGenericWindow> Window;
+    TSharedRef<CCoreWindow> Window;
 };
