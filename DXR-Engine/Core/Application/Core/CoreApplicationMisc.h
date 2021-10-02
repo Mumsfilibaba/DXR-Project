@@ -1,9 +1,6 @@
 #pragma once 
 #include "Core/Application/ModifierKeyState.h"
 
-// TODO: Remove
-#include <string>
-
 #ifdef MessageBox
 #undef MessageBox
 #endif
@@ -25,7 +22,7 @@ class CCoreApplicationMisc
 public:
 
     /* Takes the title of the MessageBox and the message to be displayed */
-    static FORCEINLINE void MessageBox( const std::string& Title, const std::string& Message )
+    static FORCEINLINE void MessageBox( const CString& Title, const CString& Message )
     {
     }
 

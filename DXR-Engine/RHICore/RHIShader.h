@@ -1,7 +1,8 @@
 #pragma once
-#include "ResourceBase.h"
+#include "RHIResourceBase.h"
 
 #include "Core/Math/IntVector3.h"
+#include "Core/Containers/String.h"
 
 enum class EShaderStage
 {
@@ -19,7 +20,7 @@ enum class EShaderStage
     RayMiss = 12,
 };
 
-struct ShaderParameterInfo
+struct SShaderParameterInfo
 {
     uint32 NumConstantBuffers = 0;
     uint32 NumShaderResourceViews = 0;
@@ -27,65 +28,72 @@ struct ShaderParameterInfo
     uint32 NumSamplerStates = 0;
 };
 
-class Shader : public Resource
+class CRHIShader : public CRHIResource
 {
 public:
-    virtual class VertexShader* AsVertexShader()
-    {
-        return nullptr;
-    }
-    virtual class HullShader* AsHullShader()
-    {
-        return nullptr;
-    }
-    virtual class DomainShader* AsDomainShader()
-    {
-        return nullptr;
-    }
-    virtual class GeometryShader* AsGeometryShader()
-    {
-        return nullptr;
-    }
-    virtual class PixelShader* AsPixelShader()
+    virtual class CRHIVertexShader* AsVertexShader()
     {
         return nullptr;
     }
 
-    virtual class ComputeShader* AsComputeShader()
+    virtual class CRHIHullShader* AsHullShader()
     {
         return nullptr;
     }
 
-    virtual class RayGenShader* AsRayGenShader()
-    {
-        return nullptr;
-    }
-    virtual class RayAnyHitShader* AsRayAnyHitShader()
-    {
-        return nullptr;
-    }
-    virtual class RayClosestHitShader* AsRayClosestHitShader()
-    {
-        return nullptr;
-    }
-    virtual class RayMissShader* AsRayMissShader()
+    virtual class CRHIDomainShader* AsDomainShader()
     {
         return nullptr;
     }
 
-    virtual void GetShaderParameterInfo( ShaderParameterInfo& OutShaderParameterInfo ) const = 0;
+    virtual class CRHIGeometryShader* AsGeometryShader()
+    {
+        return nullptr;
+    }
+
+    virtual class CRHIPixelShader* AsPixelShader()
+    {
+        return nullptr;
+    }
+
+    virtual class CRHIComputeShader* AsComputeShader()
+    {
+        return nullptr;
+    }
+
+    virtual class CRHIRayGenShader* AsRayGenShader()
+    {
+        return nullptr;
+    }
+
+    virtual class CRHIRayAnyHitShader* AsRayAnyHitShader()
+    {
+        return nullptr;
+    }
+
+    virtual class CRHIRayClosestHitShader* AsRayClosestHitShader()
+    {
+        return nullptr;
+    }
+
+    virtual class CRHIRayMissShader* AsRayMissShader()
+    {
+        return nullptr;
+    }
+
+    virtual void GetShaderParameterInfo( SShaderParameterInfo& OutShaderParameterInfo ) const = 0;
 
     // Returns false if no parameter with the specified name exists
-    virtual bool GetConstantBufferIndexByName( const std::string& InName, uint32& OutIndex ) const = 0;
-    virtual bool GetUnorderedAccessViewIndexByName( const std::string& InName, uint32& OutIndex ) const = 0;
-    virtual bool GetShaderResourceViewIndexByName( const std::string& InName, uint32& OutIndex ) const = 0;
-    virtual bool GetSamplerIndexByName( const std::string& InName, uint32& OutIndex ) const = 0;
+    virtual bool GetConstantBufferIndexByName( const CString& InName, uint32& OutIndex ) const = 0;
+    virtual bool GetUnorderedAccessViewIndexByName( const CString& InName, uint32& OutIndex ) const = 0;
+    virtual bool GetShaderResourceViewIndexByName( const CString& InName, uint32& OutIndex ) const = 0;
+    virtual bool GetSamplerIndexByName( const CString& InName, uint32& OutIndex ) const = 0;
 };
 
-class ComputeShader : public Shader
+class CRHIComputeShader : public CRHIShader
 {
 public:
-    virtual ComputeShader* AsComputeShader()
+    virtual CRHIComputeShader* AsComputeShader()
     {
         return this;
     }
@@ -93,90 +101,90 @@ public:
     virtual CIntVector3 GetThreadGroupXYZ() const = 0;
 };
 
-class VertexShader : public Shader
+class CRHIVertexShader : public CRHIShader
 {
 public:
-    virtual VertexShader* AsVertexShader()
+    virtual CRHIVertexShader* AsVertexShader()
     {
         return this;
     }
 };
 
-class HullShader : public Shader
+class CRHIHullShader : public CRHIShader
 {
 public:
-    virtual HullShader* AsHullShader()
+    virtual CRHIHullShader* AsHullShader()
     {
         return this;
     }
 };
 
-class DomainShader : public Shader
+class CRHIDomainShader : public CRHIShader
 {
 public:
-    virtual DomainShader* AsDomainShader()
+    virtual CRHIDomainShader* AsDomainShader()
     {
         return this;
     }
 };
 
-class GeometryShader : public Shader
+class CRHIGeometryShader : public CRHIShader
 {
 public:
-    virtual GeometryShader* AsGeometryShader()
+    virtual CRHIGeometryShader* AsGeometryShader()
     {
         return this;
     }
 };
 
-class MeshShader : public Shader
+class CRHIMeshShader : public CRHIShader
 {
 };
 
-class AmplificationShader : public Shader
+class CRHIAmplificationShader : public CRHIShader
 {
 };
 
-class PixelShader : public Shader
+class CRHIPixelShader : public CRHIShader
 {
 public:
-    virtual PixelShader* AsPixelShader()
+    virtual CRHIPixelShader* AsPixelShader()
     {
         return this;
     }
 };
 
-class RayGenShader : public Shader
+class CRHIRayGenShader : public CRHIShader
 {
 public:
-    virtual RayGenShader* AsRayGenShader()
+    virtual CRHIRayGenShader* AsRayGenShader()
     {
         return this;
     }
 };
 
-class RayAnyHitShader : public Shader
+class CRHIRayAnyHitShader : public CRHIShader
 {
 public:
-    virtual RayAnyHitShader* AsRayAnyHitShader()
+    virtual CRHIRayAnyHitShader* AsRayAnyHitShader()
     {
         return this;
     }
 };
 
-class RayClosestHitShader : public Shader
+class CRHIRayClosestHitShader : public CRHIShader
 {
 public:
-    virtual RayClosestHitShader* AsRayClosestHitShader()
+    virtual CRHIRayClosestHitShader* AsRayClosestHitShader()
     {
         return this;
     }
 };
 
-class RayMissShader : public Shader
+class CRHIRayMissShader : public CRHIShader
 {
 public:
-    virtual RayMissShader* AsRayMissShader()
+    virtual CRHIRayMissShader* AsRayMissShader()
     {
         return this;
     }

@@ -11,7 +11,7 @@ public:
     static FORCEINLINE uint32 GetNumProcessors()
     {
         SYSTEM_INFO SystemInfo;
-        Memory::Memzero( &SystemInfo );
+        CMemory::Memzero( &SystemInfo );
 
         GetSystemInfo( &SystemInfo );
 

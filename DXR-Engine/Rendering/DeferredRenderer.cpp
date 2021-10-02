@@ -1,18 +1,18 @@
 #include "DeferredRenderer.h"
 
-#include "RenderLayer/RenderLayer.h"
-#include "RenderLayer/ShaderCompiler.h"
+#include "RHICore/RHIModule.h"
+#include "RHICore/RHIShaderCompiler.h"
 
 #include "Rendering/MeshDrawCommand.h"
 #include "Rendering/Resources/Mesh.h"
 #include "Rendering/Resources/Material.h"
 
 #include "Core/Debug/Profiler.h"
-#include "Core/Debug/Console/Console.h"
+#include "Core/Debug/Console/ConsoleManager.h"
 
 TConsoleVariable<bool> GDrawTileDebug( false );
 
-bool DeferredRenderer::Init( FrameResources& FrameResources )
+bool CDeferredRenderer::Init( SFrameResources& FrameResources )
 {
     INIT_CONSOLE_VARIABLE( "r.DrawTileDebug", &GDrawTileDebug );
 
@@ -22,7 +22,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
     }
 
     {
-        SamplerStateCreateInfo CreateInfo;
+        SSamplerStateCreateInfo CreateInfo;
         CreateInfo.AddressU = ESamplerMode::Clamp;
         CreateInfo.AddressV = ESamplerMode::Clamp;
         CreateInfo.AddressW = ESamplerMode::Clamp;
@@ -37,22 +37,22 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
 
     TArray<uint8> ShaderCode;
     {
-        TArray<ShaderDefine> Defines =
+        TArray<SShaderDefine> Defines =
         {
             { "ENABLE_PARALLAX_MAPPING", "1" },
             { "ENABLE_NORMAL_MAPPING",   "1" },
         };
 
-        if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/GeometryPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/GeometryPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
 
         BaseVertexShader = CreateVertexShader( ShaderCode );
         if ( !BaseVertexShader )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -60,16 +60,16 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             BaseVertexShader->SetName( "GeometryPass VertexShader" );
         }
 
-        if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/GeometryPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/GeometryPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
 
         BasePixelShader = CreatePixelShader( ShaderCode );
         if ( !BasePixelShader )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -77,15 +77,15 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             BasePixelShader->SetName( "GeometryPass PixelShader" );
         }
 
-        DepthStencilStateCreateInfo DepthStencilStateInfo;
+        SDepthStencilStateCreateInfo DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
         DepthStencilStateInfo.DepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<DepthStencilState> GeometryDepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+        TSharedRef<CRHIDepthStencilState> GeometryDepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
         if ( !GeometryDepthStencilState )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -93,13 +93,13 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             GeometryDepthStencilState->SetName( "GeometryPass DepthStencilState" );
         }
 
-        RasterizerStateCreateInfo RasterizerStateInfo;
+        SRasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<RasterizerState> GeometryRasterizerState = CreateRasterizerState( RasterizerStateInfo );
+        TSharedRef<CRHIRasterizerState> GeometryRasterizerState = CreateRasterizerState( RasterizerStateInfo );
         if ( !GeometryRasterizerState )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -107,14 +107,14 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             GeometryRasterizerState->SetName( "GeometryPass RasterizerState" );
         }
 
-        BlendStateCreateInfo BlendStateInfo;
+        SBlendStateCreateInfo BlendStateInfo;
         BlendStateInfo.IndependentBlendEnable = false;
         BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-        TSharedRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
+        TSharedRef<CRHIBlendState> BlendState = CreateBlendState( BlendStateInfo );
         if ( !BlendState )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -122,7 +122,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             BlendState->SetName( "GeometryPass BlendState" );
         }
 
-        GraphicsPipelineStateCreateInfo PipelineStateInfo;
+        SGraphicsPipelineStateCreateInfo PipelineStateInfo;
         PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
         PipelineStateInfo.BlendState = BlendState.Get();
         PipelineStateInfo.DepthStencilState = GeometryDepthStencilState.Get();
@@ -139,7 +139,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         PipelineState = CreateGraphicsPipelineState( PipelineStateInfo );
         if ( !PipelineState )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -150,16 +150,16 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
 
     // PrePass
     {
-        if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/PrePass.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/PrePass.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
 
         PrePassVertexShader = CreateVertexShader( ShaderCode );
         if ( !PrePassVertexShader )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -167,15 +167,15 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             PrePassVertexShader->SetName( "PrePass VertexShader" );
         }
 
-        DepthStencilStateCreateInfo DepthStencilStateInfo;
+        SDepthStencilStateCreateInfo DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = EComparisonFunc::Less;
         DepthStencilStateInfo.DepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<DepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+        TSharedRef<CRHIDepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
         if ( !DepthStencilState )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -183,13 +183,13 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             DepthStencilState->SetName( "Prepass DepthStencilState" );
         }
 
-        RasterizerStateCreateInfo RasterizerStateInfo;
+        SRasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<RasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+        TSharedRef<CRHIRasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
         if ( !RasterizerState )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -197,22 +197,22 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             RasterizerState->SetName( "Prepass RasterizerState" );
         }
 
-        BlendStateCreateInfo BlendStateInfo;
+        SBlendStateCreateInfo BlendStateInfo;
         BlendStateInfo.IndependentBlendEnable = false;
         BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-        TSharedRef<BlendState> BlendState = CreateBlendState( BlendStateInfo );
+        TSharedRef<CRHIBlendState> BlendState = CreateBlendState( BlendStateInfo );
         if ( !BlendState )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
         {
-            BlendState->SetName( "Prepass BlendState" );
+            BlendState->SetName( "Pre-pass BlendState" );
         }
 
-        GraphicsPipelineStateCreateInfo PipelineStateInfo;
+        SGraphicsPipelineStateCreateInfo PipelineStateInfo;
         PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
         PipelineStateInfo.BlendState = BlendState.Get();
         PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
@@ -223,7 +223,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         PrePassPipelineState = CreateGraphicsPipelineState( PipelineStateInfo );
         if ( !PrePassPipelineState )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -238,14 +238,14 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
     {
         LOG_ERROR( "[Renderer]: R16G16_Float is not supported for UAVs" );
 
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
 
-    TSharedRef<Texture2D> StagingTexture = CreateTexture2D( LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceState::Common, nullptr );
+    TSharedRef<CRHITexture2D> StagingTexture = CreateTexture2D( LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceState::Common, nullptr );
     if ( !StagingTexture )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -256,7 +256,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
     FrameResources.IntegrationLUT = CreateTexture2D( LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_SRV, EResourceState::Common, nullptr );
     if ( !FrameResources.IntegrationLUT )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -264,7 +264,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         FrameResources.IntegrationLUT->SetName( "IntegrationLUT" );
     }
 
-    SamplerStateCreateInfo CreateInfo;
+    SSamplerStateCreateInfo CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;
@@ -273,7 +273,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
     FrameResources.IntegrationLUTSampler = CreateSamplerState( CreateInfo );
     if ( !FrameResources.IntegrationLUTSampler )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -281,16 +281,16 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
         FrameResources.IntegrationLUTSampler->SetName( "IntegrationLUT Sampler" );
     }
 
-    if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/BRDFIntegationGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/BRDFIntegationGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
 
-    TSharedRef<ComputeShader> CShader = CreateComputeShader( ShaderCode );
+    TSharedRef<CRHIComputeShader> CShader = CreateComputeShader( ShaderCode );
     if ( !CShader )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -299,13 +299,13 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
     }
 
     {
-        ComputePipelineStateCreateInfo PipelineStateInfo;
+        SComputePipelineStateCreateInfo PipelineStateInfo;
         PipelineStateInfo.Shader = CShader.Get();
 
-        TSharedRef<ComputePipelineState> BRDF_PipelineState = CreateComputePipelineState( PipelineStateInfo );
+        TSharedRef<CRHIComputePipelineState> BRDF_PipelineState = CreateComputePipelineState( PipelineStateInfo );
         if ( !BRDF_PipelineState )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -313,13 +313,13 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             BRDF_PipelineState->SetName( "BRDFIntegationGen PipelineState" );
         }
 
-        CommandList CmdList;
+        CRHICommandList CmdList;
 
         CmdList.TransitionTexture( StagingTexture.Get(), EResourceState::Common, EResourceState::UnorderedAccess );
 
         CmdList.SetComputePipelineState( BRDF_PipelineState.Get() );
 
-        UnorderedAccessView* StagingUAV = StagingTexture->GetUnorderedAccessView();
+        CRHIUnorderedAccessView* StagingUAV = StagingTexture->GetUnorderedAccessView();
         CmdList.SetUnorderedAccessView( CShader.Get(), StagingUAV, 0 );
 
         constexpr uint32 ThreadCount = 16;
@@ -340,16 +340,16 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
     }
 
     {
-        if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
 
         TiledLightShader = CreateComputeShader( ShaderCode );
         if ( !TiledLightShader )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -357,13 +357,13 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             TiledLightShader->SetName( "DeferredLightPass Shader" );
         }
 
-        ComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
+        SComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
         DeferredLightPassCreateInfo.Shader = TiledLightShader.Get();
 
         TiledLightPassPSO = CreateComputePipelineState( DeferredLightPassCreateInfo );
         if ( !TiledLightPassPSO )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -373,21 +373,21 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
     }
 
     {
-        TArray<ShaderDefine> Defines =
+        TArray<SShaderDefine> Defines =
         {
-            ShaderDefine( "DRAW_TILE_DEBUG", "1" )
+            SShaderDefine( "DRAW_TILE_DEBUG", "1" )
         };
 
-        if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
 
         TiledLightDebugShader = CreateComputeShader( ShaderCode );
         if ( !TiledLightDebugShader )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -395,13 +395,13 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             TiledLightDebugShader->SetName( "DeferredLightPass Debug Shader" );
         }
 
-        ComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
+        SComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
         DeferredLightPassCreateInfo.Shader = TiledLightDebugShader.Get();
 
         TiledLightPassPSODebug = CreateComputePipelineState( DeferredLightPassCreateInfo );
         if ( !TiledLightPassPSODebug )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -411,16 +411,16 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
     }
 
     {
-        if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DepthReduction.hlsl", "ReductionMainInital", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DepthReduction.hlsl", "ReductionMainInital", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
 
         ReduceDepthInitalShader = CreateComputeShader( ShaderCode );
         if ( !ReduceDepthInitalShader )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -428,13 +428,13 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             ReduceDepthInitalShader->SetName( "DepthReduction Inital ComputeShader" );
         }
 
-        ComputePipelineStateCreateInfo PipelineStateInfo;
+        SComputePipelineStateCreateInfo PipelineStateInfo;
         PipelineStateInfo.Shader = ReduceDepthInitalShader.Get();
 
         ReduceDepthInitalPSO = CreateComputePipelineState( PipelineStateInfo );
         if ( !ReduceDepthInitalPSO )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -444,16 +444,16 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
     }
 
     {
-        if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DepthReduction.hlsl", "ReductionMain", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DepthReduction.hlsl", "ReductionMain", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
 
         ReduceDepthShader = CreateComputeShader( ShaderCode );
         if ( !ReduceDepthShader )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -461,13 +461,13 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
             ReduceDepthShader->SetName( "DepthReduction ComputeShader" );
         }
 
-        ComputePipelineStateCreateInfo PipelineStateInfo;
+        SComputePipelineStateCreateInfo PipelineStateInfo;
         PipelineStateInfo.Shader = ReduceDepthShader.Get();
 
         ReduceDepthPSO = CreateComputePipelineState( PipelineStateInfo );
         if ( !ReduceDepthPSO )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
         else
@@ -479,7 +479,7 @@ bool DeferredRenderer::Init( FrameResources& FrameResources )
     return true;
 }
 
-void DeferredRenderer::Release()
+void CDeferredRenderer::Release()
 {
     PrePassPipelineState.Reset();
     PrePassVertexShader.Reset();
@@ -500,7 +500,7 @@ void DeferredRenderer::Release()
     ReduceDepthShader.Reset();
 }
 
-void DeferredRenderer::RenderPrePass( CommandList& CmdList, FrameResources& FrameResources, const CScene& Scene )
+void CDeferredRenderer::RenderPrePass( CRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene )
 {
     const float RenderWidth = float( FrameResources.MainWindowViewport->GetWidth() );
     const float RenderHeight = float( FrameResources.MainWindowViewport->GetHeight() );
@@ -526,7 +526,7 @@ void DeferredRenderer::RenderPrePass( CommandList& CmdList, FrameResources& Fram
 
         CmdList.SetConstantBuffer( PrePassVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0 );
 
-        for ( const MeshDrawCommand& Command : FrameResources.DeferredVisibleCommands )
+        for ( const SMeshDrawCommand& Command : FrameResources.DeferredVisibleCommands )
         {
             if ( Command.Material->ShouldRenderInPrePass() )
             {
@@ -607,7 +607,7 @@ void DeferredRenderer::RenderPrePass( CommandList& CmdList, FrameResources& Fram
     INSERT_DEBUG_CMDLIST_MARKER( CmdList, "End Depth Reduction" );
 }
 
-void DeferredRenderer::RenderBasePass( CommandList& CmdList, const FrameResources& FrameResources )
+void CDeferredRenderer::RenderBasePass( CRHICommandList& CmdList, const SFrameResources& FrameResources )
 {
     INSERT_DEBUG_CMDLIST_MARKER( CmdList, "Begin GeometryPass" );
 
@@ -619,7 +619,7 @@ void DeferredRenderer::RenderBasePass( CommandList& CmdList, const FrameResource
     CmdList.SetViewport( RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f );
     CmdList.SetScissorRect( RenderWidth, RenderHeight, 0, 0 );
 
-    RenderTargetView* RenderTargets[] =
+    CRHIRenderTargetView* RenderTargets[] =
     {
         FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(),
         FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(),
@@ -637,7 +637,7 @@ void DeferredRenderer::RenderBasePass( CommandList& CmdList, const FrameResource
         CMatrix4 TransformInv;
     } TransformPerObject;
 
-    for ( const MeshDrawCommand& Command : FrameResources.DeferredVisibleCommands )
+    for ( const SMeshDrawCommand& Command : FrameResources.DeferredVisibleCommands )
     {
         CmdList.SetVertexBuffers( &Command.VertexBuffer, 1, 0 );
         CmdList.SetIndexBuffer( Command.IndexBuffer );
@@ -649,13 +649,13 @@ void DeferredRenderer::RenderBasePass( CommandList& CmdList, const FrameResource
 
         CmdList.SetConstantBuffer( BaseVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0 );
 
-        ConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
+        CRHIConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
         CmdList.SetConstantBuffer( BasePixelShader.Get(), MaterialBuffer, 0 );
 
         TransformPerObject.Transform = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
 
-        ShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
+        CRHIShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
         CmdList.SetShaderResourceView( BasePixelShader.Get(), ShaderResourceViews[0], 0 );
         CmdList.SetShaderResourceView( BasePixelShader.Get(), ShaderResourceViews[1], 1 );
         CmdList.SetShaderResourceView( BasePixelShader.Get(), ShaderResourceViews[2], 2 );
@@ -664,7 +664,7 @@ void DeferredRenderer::RenderBasePass( CommandList& CmdList, const FrameResource
         CmdList.SetShaderResourceView( BasePixelShader.Get(), ShaderResourceViews[5], 5 );
         CmdList.SetShaderResourceView( BasePixelShader.Get(), ShaderResourceViews[6], 6 );
 
-        SamplerState* Sampler = Command.Material->GetMaterialSampler();
+        CRHISamplerState* Sampler = Command.Material->GetMaterialSampler();
         CmdList.SetSamplerState( BasePixelShader.Get(), Sampler, 0 );
 
         CmdList.Set32BitShaderConstants( BaseVertexShader.Get(), &TransformPerObject, 32 );
@@ -675,13 +675,13 @@ void DeferredRenderer::RenderBasePass( CommandList& CmdList, const FrameResource
     INSERT_DEBUG_CMDLIST_MARKER( CmdList, "End GeometryPass" );
 }
 
-void DeferredRenderer::RenderDeferredTiledLightPass( CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup )
+void CDeferredRenderer::RenderDeferredTiledLightPass( CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup )
 {
     INSERT_DEBUG_CMDLIST_MARKER( CmdList, "Begin LightPass" );
 
     TRACE_SCOPE( "LightPass" );
 
-    ComputeShader* LightPassShader = nullptr;
+    CRHIComputeShader* LightPassShader = nullptr;
     if ( GDrawTileDebug.GetBool() )
     {
         LightPassShader = TiledLightDebugShader.Get();
@@ -720,7 +720,7 @@ void DeferredRenderer::RenderDeferredTiledLightPass( CommandList& CmdList, const
     CmdList.SetSamplerState( LightPassShader, FrameResources.PointLightShadowSampler.Get(), 2 );
     //CmdList.SetSamplerState(LightPassShader, FrameResources.DirectionalLightShadowSampler.Get(), 3);
 
-    UnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
+    CRHIUnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
     CmdList.SetUnorderedAccessView( LightPassShader, FinalTargetUAV, 0 );
 
     struct LightPassSettings
@@ -748,12 +748,12 @@ void DeferredRenderer::RenderDeferredTiledLightPass( CommandList& CmdList, const
     INSERT_DEBUG_CMDLIST_MARKER( CmdList, "End LightPass" );
 }
 
-bool DeferredRenderer::ResizeResources( FrameResources& FrameResources )
+bool CDeferredRenderer::ResizeResources( SFrameResources& FrameResources )
 {
     return CreateGBuffer( FrameResources );
 }
 
-bool DeferredRenderer::CreateGBuffer( FrameResources& FrameResources )
+bool CDeferredRenderer::CreateGBuffer( SFrameResources& FrameResources )
 {
     const uint32 Width = FrameResources.MainWindowViewport->GetWidth();
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
@@ -833,7 +833,7 @@ bool DeferredRenderer::CreateGBuffer( FrameResources& FrameResources )
             nullptr );
         if ( FrameResources.ReducedDepthBuffer[i] )
         {
-            FrameResources.ReducedDepthBuffer[i]->SetName( "Reduced DepthStencil[" + std::to_string( i ) + "]" );
+            FrameResources.ReducedDepthBuffer[i]->SetName( "Reduced DepthStencil[" + ToString( i ) + "]" );
         }
         else
         {

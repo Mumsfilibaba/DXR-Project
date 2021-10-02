@@ -1,8 +1,8 @@
-#include "CommandList.h"
+#include "RHICommandList.h"
 
-CommandListExecutor GCmdListExecutor;
+CRHICommandQueue GCmdListExecutor;
 
-void CommandListExecutor::ExecuteCommandList( CommandList& CmdList )
+void CRHICommandQueue::ExecuteCommandList( CRHICommandList& CmdList )
 {
     GetContext().Begin();
 
@@ -11,20 +11,20 @@ void CommandListExecutor::ExecuteCommandList( CommandList& CmdList )
     GetContext().End();
 }
 
-void CommandListExecutor::ExecuteCommandLists( CommandList* const* CmdLists, uint32 NumCmdLists )
+void CRHICommandQueue::ExecuteCommandLists( CRHICommandList* const* CmdLists, uint32 NumCmdLists )
 {
     GetContext().Begin();
 
     for ( uint32 i = 0; i < NumCmdLists; i++ )
     {
-        CommandList* CurrentCmdList = CmdLists[i];
+        CRHICommandList* CurrentCmdList = CmdLists[i];
         InternalExecuteCommandList( *CurrentCmdList );
     }
 
     GetContext().End();
 }
 
-void CommandListExecutor::WaitForGPU()
+void CRHICommandQueue::WaitForGPU()
 {
     if ( CmdContext )
     {
@@ -32,16 +32,16 @@ void CommandListExecutor::WaitForGPU()
     }
 }
 
-void CommandListExecutor::InternalExecuteCommandList( CommandList& CmdList )
+void CRHICommandQueue::InternalExecuteCommandList( CRHICommandList& CmdList )
 {
-    RenderCommand* Cmd = CmdList.First;
+    SRHIRenderCommand* Cmd = CmdList.First;
     while ( Cmd != nullptr )
     {
-        RenderCommand* Old = Cmd;
+        SRHIRenderCommand* Old = Cmd;
         Cmd = Cmd->NextCmd;
 
         Old->Execute( GetContext() );
-        Old->~RenderCommand();
+        Old->~SRHIRenderCommand();
     }
 
     CmdList.First = nullptr;

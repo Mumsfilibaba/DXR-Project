@@ -12,8 +12,8 @@ TStaticArray<uint8, EMouseButton::MouseButton_Count>        CMacKeyMappings::But
 void CMacKeyMappings::Init()
 {
     /* Keys */
-    Memory::Memzero( KeyCodeFromScanCodeTable.Data(), KeyCodeFromScanCodeTable.SizeInBytes() );
-    Memory::Memzero( ScanCodeFromKeyCodeTable.Data(), ScanCodeFromKeyCodeTable.SizeInBytes() );
+    CMemory::Memzero( KeyCodeFromScanCodeTable.Data(), KeyCodeFromScanCodeTable.SizeInBytes() );
+    CMemory::Memzero( ScanCodeFromKeyCodeTable.Data(), ScanCodeFromKeyCodeTable.SizeInBytes() );
 
     KeyCodeFromScanCodeTable[0x33] = EKey::Key_Backspace;
     KeyCodeFromScanCodeTable[0x30] = EKey::Key_Tab;
@@ -136,8 +136,8 @@ void CMacKeyMappings::Init()
     }
 
     /* Mouse buttons */
-    Memory::Memzero( ButtonFromButtonIndex.Data(), ButtonFromButtonIndex.SizeInBytes() );
-    Memory::Memzero( ButtonIndexFromButton.Data(), ButtonIndexFromButton.SizeInBytes() );
+    CMemory::Memzero( ButtonFromButtonIndex.Data(), ButtonFromButtonIndex.SizeInBytes() );
+    CMemory::Memzero( ButtonIndexFromButton.Data(), ButtonIndexFromButton.SizeInBytes() );
 
     ButtonFromButtonIndex[0] = EMouseButton::MouseButton_Left;
     ButtonFromButtonIndex[1] = EMouseButton::MouseButton_Right;

@@ -1,22 +1,22 @@
-#include "RenderLayer.h"
-#include "CommandList.h"
+#include "RHIModule.h"
+#include "RHICommandList.h"
 
 #if defined(PLATFORM_WINDOWS)
-#include "D3D12/D3D12RenderLayer.h"
+#include "D3D12/D3D12RHICore.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 #else
-#include "RenderLayer/ShaderCompiler.h"
+#include "RHICore/ShaderCompiler.h"
 #endif
 
-bool RenderLayer::Init( ERenderLayerApi InRenderApi )
+bool CRHIModule::Init( ERenderLayerApi InRenderApi )
 {
 #if defined(PLATFORM_WINDOWS)
     // Select RenderLayer
     if ( InRenderApi == ERenderLayerApi::D3D12 )
     {
-        GRenderLayer = DBG_NEW D3D12RenderLayer();
+        GRHICore = DBG_NEW CD3D12RHICore();
 
-        D3D12ShaderCompiler* Compiler = DBG_NEW D3D12ShaderCompiler();
+        CD3D12ShaderCompiler* Compiler = DBG_NEW CD3D12ShaderCompiler();
         if ( !Compiler->Init() )
         {
             return false;
@@ -36,7 +36,7 @@ bool RenderLayer::Init( ERenderLayerApi InRenderApi )
     {
         LOG_ERROR( "[RenderLayer::Init] Invalid RenderLayer enum" );
 
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
 
@@ -49,9 +49,9 @@ bool RenderLayer::Init( ERenderLayerApi InRenderApi )
 #endif
 
     // Init
-    if ( GRenderLayer->Init( EnableDebug ) )
+    if ( GRHICore->Init( EnableDebug ) )
     {
-        ICommandContext* CmdContext = GRenderLayer->GetDefaultCommandContext();
+        IRHICommandContext* CmdContext = GRHICore->GetDefaultCommandContext();
         GCmdListExecutor.SetContext( CmdContext );
 
         return true;
@@ -62,8 +62,8 @@ bool RenderLayer::Init( ERenderLayerApi InRenderApi )
     }
 }
 
-void RenderLayer::Release()
+void CRHIModule::Release()
 {
-    SafeDelete( GRenderLayer );
+    SafeDelete( GRHICore );
     SafeDelete( GShaderCompiler );
 }

@@ -1,20 +1,20 @@
 #pragma once
-#include "RenderLayer/Resources.h"
-#include "RenderLayer/ResourceViews.h"
-#include "RenderLayer/CommandList.h"
+#include "RHICore/RHIResources.h"
+#include "RHICore/RHIResourceViews.h"
+#include "RHICore/RHICommandList.h"
 
 #include "Scene/Scene.h"
 #include "Scene/Lights/DirectionalLight.h"
 
 #include "Core/Math/Vector4.h"
 
-struct PointLightData
+struct SPointLightData
 {
     CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
     float Padding0;
 };
 
-struct ShadowCastingPointLightData
+struct SShadowCastingPointLightData
 {
     CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
     float ShadowBias = 0.005f;
@@ -24,7 +24,7 @@ struct ShadowCastingPointLightData
     float Padding1;
 };
 
-struct PointLightShadowMapGenerationData
+struct SPointLightShadowMapGenerationData
 {
     TStaticArray<CMatrix4, 6> Matrix;
     TStaticArray<CMatrix4, 6> ViewMatrix;
@@ -33,7 +33,7 @@ struct PointLightShadowMapGenerationData
     CVector3 Position;
 };
 
-struct DirectionalLightData
+struct SDirectionalLightData
 {
     CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
     float ShadowBias = 0.005f;
@@ -43,7 +43,7 @@ struct DirectionalLightData
     float LightSize;
 };
 
-struct LightSetup
+struct SLightSetup
 {
     const EFormat ShadowMapFormat = EFormat::D32_Float;
     const EFormat LightProbeFormat = EFormat::R11G11B10_Float;
@@ -58,54 +58,54 @@ struct LightSetup
     const uint16 SpecularIrradianceSize = 256;
     const uint16 PointLightShadowSize = 512;
 
-    LightSetup() = default;
-    ~LightSetup() = default;
+    SLightSetup() = default;
+    ~SLightSetup() = default;
 
     bool Init();
 
-    void BeginFrame( CommandList& CmdList, const CScene& Scene );
+    void BeginFrame( CRHICommandList& CmdList, const CScene& Scene );
     void Release();
 
     TArray<CVector4>       PointLightsPosRad;
-    TArray<PointLightData> PointLightsData;
+    TArray<SPointLightData> PointLightsData;
 
-    TSharedRef<ConstantBuffer> PointLightsBuffer;
-    TSharedRef<ConstantBuffer> PointLightsPosRadBuffer;
+    TSharedRef<CRHIConstantBuffer> PointLightsBuffer;
+    TSharedRef<CRHIConstantBuffer> PointLightsPosRadBuffer;
 
-    TArray<PointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
+    TArray<SPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
 
     TArray<CVector4>                    ShadowCastingPointLightsPosRad;
-    TArray<ShadowCastingPointLightData> ShadowCastingPointLightsData;
+    TArray<SShadowCastingPointLightData> ShadowCastingPointLightsData;
 
-    TSharedRef<ConstantBuffer> ShadowCastingPointLightsBuffer;
-    TSharedRef<ConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
+    TSharedRef<CRHIConstantBuffer> ShadowCastingPointLightsBuffer;
+    TSharedRef<CRHIConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
 
-    TSharedRef<TextureCubeArray>       PointLightShadowMaps;
+    TSharedRef<CRHITextureCubeArray>       PointLightShadowMaps;
     TArray<DepthStencilViewCube> PointLightShadowMapDSVs;
 
     // NOTE: Only one directional light
-    DirectionalLightData DirectionalLightData;
+    SDirectionalLightData DirectionalLightData;
     bool DirectionalLightDataDirty = true;
 
     float CascadeSplitLambda;
 
-    TSharedRef<ConstantBuffer> DirectionalLightsBuffer;
+    TSharedRef<CRHIConstantBuffer> DirectionalLightsBuffer;
 
-    TSharedRef<Texture2D> ShadowMapCascades[4];
-    TSharedRef<Texture2D> DirectionalShadowMask;
+    TSharedRef<CRHITexture2D> ShadowMapCascades[4];
+    TSharedRef<CRHITexture2D> DirectionalShadowMask;
 
-    TSharedRef<StructuredBuffer>    CascadeMatrixBuffer;
-    TSharedRef<ShaderResourceView>  CascadeMatrixBufferSRV;
-    TSharedRef<UnorderedAccessView> CascadeMatrixBufferUAV;
+    TSharedRef<CRHIStructuredBuffer>    CascadeMatrixBuffer;
+    TSharedRef<CRHIShaderResourceView>  CascadeMatrixBufferSRV;
+    TSharedRef<CRHIUnorderedAccessView> CascadeMatrixBufferUAV;
 
-    TSharedRef<StructuredBuffer>    CascadeSplitsBuffer;
-    TSharedRef<ShaderResourceView>  CascadeSplitsBufferSRV;
-    TSharedRef<UnorderedAccessView> CascadeSplitsBufferUAV;
+    TSharedRef<CRHIStructuredBuffer>    CascadeSplitsBuffer;
+    TSharedRef<CRHIShaderResourceView>  CascadeSplitsBufferSRV;
+    TSharedRef<CRHIUnorderedAccessView> CascadeSplitsBufferUAV;
 
-    TSharedRef<TextureCube>         IrradianceMap;
-    TSharedRef<UnorderedAccessView> IrradianceMapUAV;
+    TSharedRef<CRHITextureCube>         IrradianceMap;
+    TSharedRef<CRHIUnorderedAccessView> IrradianceMapUAV;
 
-    TSharedRef<TextureCube>                 SpecularIrradianceMap;
-    TArray<TSharedRef<UnorderedAccessView>> SpecularIrradianceMapUAVs;
-    TArray<UnorderedAccessView*>      WeakSpecularIrradianceMapUAVs;
+    TSharedRef<CRHITextureCube>                 SpecularIrradianceMap;
+    TArray<TSharedRef<CRHIUnorderedAccessView>> SpecularIrradianceMapUAVs;
+    TArray<CRHIUnorderedAccessView*>      WeakSpecularIrradianceMapUAVs;
 };

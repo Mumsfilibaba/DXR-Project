@@ -5,6 +5,7 @@
 struct SModifierKeyState
 {
 public:
+    
     SModifierKeyState() = default;
 
     FORCEINLINE SModifierKeyState( uint8 InModifierMask )

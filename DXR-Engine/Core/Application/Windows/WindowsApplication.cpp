@@ -76,7 +76,7 @@ CWindowsApplication::~CWindowsApplication()
 bool CWindowsApplication::RegisterWindowClass()
 {
     WNDCLASS WindowClass;
-    Memory::Memzero( &WindowClass );
+    CMemory::Memzero( &WindowClass );
 
     WindowClass.hInstance = Instance;
     WindowClass.lpszClassName = CWindowsApplication::GetWindowClassName();
@@ -204,7 +204,7 @@ void CWindowsApplication::AddWindowsMessageListener( IWindowsMessageListener* Ne
 
 void CWindowsApplication::RemoveWindowsMessageListener( IWindowsMessageListener* InWindowsMessageListener )
 {
-    for ( uint32 Index = 0; Index < WindowsMessageListeners.Size(); Index++ )
+    for ( int32 Index = 0; Index < WindowsMessageListeners.Size(); Index++ )
     {
         if ( WindowsMessageListeners[Index] == InWindowsMessageListener )
         {
@@ -335,7 +335,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             if ( !IsTrackingMouse )
             {
                 TRACKMOUSEEVENT TrackEvent;
-                Memory::Memzero( &TrackEvent );
+                CMemory::Memzero( &TrackEvent );
 
                 TrackEvent.cbSize = sizeof( TRACKMOUSEEVENT );
                 TrackEvent.dwFlags = TME_LEAVE;

@@ -8,10 +8,10 @@
 
 #include "Core/RefCounted.h"
 
-class D3D12OfflineDescriptorHeap;
-class D3D12OnlineDescriptorHeap;
-class D3D12ComputePipelineState;
-class D3D12RootSignature;
+class CD3D12OfflineDescriptorHeap;
+class CD3D12OnlineDescriptorHeap;
+class CD3D12ComputePipelineState;
+class CD3D12RootSignature;
 
 #define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
 #define D3D12_ENABLE_PIX_MARKERS              0
@@ -30,19 +30,19 @@ extern PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVers
 extern PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc;
 extern PFN_SetMarkerOnCommandList                             SetMarkerOnCommandListFunc;
 
-void DeviceRemovedHandler( class D3D12Device* Device );
+void DeviceRemovedHandler( class CD3D12Device* Device );
 
-class D3D12Device
+class CD3D12Device
 {
 public:
-    D3D12Device( bool InEnableDebugLayer, bool InEnableGPUValidation, bool InEnableDRED );
-    ~D3D12Device();
+    CD3D12Device( bool InEnableDebugLayer, bool InEnableGPUValidation, bool InEnableDRED );
+    ~CD3D12Device();
 
     bool Init();
 
     int32 GetMultisampleQuality( DXGI_FORMAT Format, uint32 SampleCount );
 
-    std::string GetAdapterName() const;
+    CString GetAdapterName() const;
 
     FORCEINLINE HRESULT CreateRootSignature( UINT NodeMask, const void* BlobWithRootSignature, SIZE_T BlobLengthInBytes, REFIID Riid, void** RootSignature )
     {
@@ -86,11 +86,7 @@ public:
         Device->CreateShaderResourceView( Resource, Desc, DestDescriptor );
     }
 
-    FORCEINLINE void CreateUnorderedAccessView(
-        ID3D12Resource* Resource,
-        ID3D12Resource* CounterResource,
-        const D3D12_UNORDERED_ACCESS_VIEW_DESC* Desc,
-        D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor )
+    FORCEINLINE void CreateUnorderedAccessView( ID3D12Resource* Resource, ID3D12Resource* CounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor )
     {
         Device->CreateUnorderedAccessView( Resource, CounterResource, Desc, DestDescriptor );
     }
@@ -109,28 +105,15 @@ public:
         const uint32* SrcDescriptorRangeSizes,
         D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType )
     {
-        Device->CopyDescriptors(
-            NumDestDescriptorRanges,
-            DestDescriptorRangeStarts,
-            DestDescriptorRangeSizes,
-            NumSrcDescriptorRanges,
-            SrcDescriptorRangeStarts,
-            SrcDescriptorRangeSizes,
-            DescriptorHeapsType );
+        Device->CopyDescriptors(NumDestDescriptorRanges, DestDescriptorRangeStarts, DestDescriptorRangeSizes, NumSrcDescriptorRanges, SrcDescriptorRangeStarts, SrcDescriptorRangeSizes, DescriptorHeapsType );
     }
 
-    FORCEINLINE void CopyDescriptorsSimple(
-        uint32 NumDescriptors,
-        D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptorRangeStart,
-        D3D12_CPU_DESCRIPTOR_HANDLE SrcDescriptorRangeStart,
-        D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType )
+    FORCEINLINE void CopyDescriptorsSimple(uint32 NumDescriptors, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptorRangeStart, D3D12_CPU_DESCRIPTOR_HANDLE SrcDescriptorRangeStart, D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType )
     {
         Device->CopyDescriptorsSimple( NumDescriptors, DestDescriptorRangeStart, SrcDescriptorRangeStart, DescriptorHeapsType );
     }
 
-    FORCEINLINE void GetRaytracingAccelerationStructurePrebuildInfo(
-        const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* Desc,
-        D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO* Info )
+    FORCEINLINE void GetRaytracingAccelerationStructurePrebuildInfo(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* Desc, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO* Info )
     {
         DXRDevice->GetRaytracingAccelerationStructurePrebuildInfo( Desc, Info );
     }
@@ -140,10 +123,11 @@ public:
         return Device->GetDescriptorHandleIncrementSize( DescriptorHeapType );
     }
 
-    FORCEINLINE ID3D12Device* GetDevice()    const
+    FORCEINLINE ID3D12Device* GetDevice() const
     {
         return Device.Get();
     }
+
     FORCEINLINE ID3D12Device5* GetDXRDevice() const
     {
         return DXRDevice.Get();
@@ -169,19 +153,22 @@ public:
         return AllowTearing;
     }
 
-    FORCEINLINE D3D12_RAYTRACING_TIER GetRayTracingTier()                     const
+    FORCEINLINE D3D12_RAYTRACING_TIER GetRayTracingTier() const
     {
         return RayTracingTier;
     }
-    FORCEINLINE D3D12_SAMPLER_FEEDBACK_TIER GetSamplerFeedbackTier()          const
+    
+    FORCEINLINE D3D12_SAMPLER_FEEDBACK_TIER GetSamplerFeedbackTier() const
     {
         return SamplerFeedBackTier;
     }
+    
     FORCEINLINE D3D12_VARIABLE_SHADING_RATE_TIER GetVariableRateShadingTier() const
     {
         return VariableShadingRateTier;
     }
-    FORCEINLINE D3D12_MESH_SHADER_TIER GetMeshShaderTier()                    const
+
+    FORCEINLINE D3D12_MESH_SHADER_TIER GetMeshShaderTier() const
     {
         return MeshShaderTier;
     }

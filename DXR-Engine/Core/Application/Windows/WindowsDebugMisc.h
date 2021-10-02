@@ -25,9 +25,9 @@ public:
     }
 
     /* Outputs a debug string to the attached debugger */
-    static FORCEINLINE void OutputDebugString( const std::string& Message )
+    static FORCEINLINE void OutputDebugString( const CString& Message )
     {
-        OutputDebugStringA( Message.c_str() );
+        OutputDebugStringA( Message.CStr() );
     }
 
     /* Checks weather or not the application is running inside a debugger */
@@ -36,7 +36,7 @@ public:
         return ::IsDebuggerPresent();
     }
 
-    /* Calls GetLastError and retrives a string from it */
+    /* Calls GetLastError and retrieves a string from it */
     static void GetLastErrorString( CString& OutErrorString );
 
 };

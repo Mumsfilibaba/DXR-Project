@@ -38,20 +38,20 @@ CMacOutputConsole::~CMacOutputConsole()
     }
 }
 
-void CMacOutputConsole::Print(const std::string& Message )
+void CMacOutputConsole::Print(const CString& Message )
 {
-	// TODO: Quick hack for now
-	if (![NSThread isMainThread])
-	{
-		return;
-	}
-	
+    // TODO: Quick hack for now
+    if (![NSThread isMainThread])
+    {
+        return;
+    }
+    
     if (Window)
     {
         //TODO: Make sure this is the mainthread
         SCOPED_AUTORELEASE_POOL();
 
-        NSString* String = [NSString stringWithUTF8String:Message.c_str()];
+        NSString* String = [NSString stringWithUTF8String:Message.CStr()];
 
         [Window appendStringAndScroll:String];
         
@@ -59,20 +59,20 @@ void CMacOutputConsole::Print(const std::string& Message )
     }
 }
 
-void CMacOutputConsole::PrintLine(const std::string& Message )
+void CMacOutputConsole::PrintLine(const CString& Message )
 {
-	// TODO: Quick hack for now
-	if (![NSThread isMainThread])
-	{
-		return;
-	}
-	
+    // TODO: Quick hack for now
+    if (![NSThread isMainThread])
+    {
+        return;
+    }
+    
     if (Window)
     {
         //TODO: Make sure this is the mainthread
         SCOPED_AUTORELEASE_POOL();
 
-        NSString* String      = [NSString stringWithUTF8String:Message.c_str()];
+        NSString* String      = [NSString stringWithUTF8String:Message.CStr()];
         NSString* FinalString = [String stringByAppendingString:@"\n"];
         
         [Window appendStringAndScroll:FinalString];
@@ -83,12 +83,12 @@ void CMacOutputConsole::PrintLine(const std::string& Message )
 
 void CMacOutputConsole::Clear()
 {
-	// TODO: Quick hack for now
-	if (![NSThread isMainThread])
-	{
-		return;
-	}
-	
+    // TODO: Quick hack for now
+    if (![NSThread isMainThread])
+    {
+        return;
+    }
+    
     if (Window)
     {
         [Window clearWindow];
@@ -100,31 +100,31 @@ void CMacOutputConsole::ClearLastLine()
     //TODO: Implement
 }
 
-void CMacOutputConsole::SetTitle(const std::string& InTitle)
+void CMacOutputConsole::SetTitle(const CString& InTitle)
 {
-	// TODO: Quick hack for now
-	if (![NSThread isMainThread])
-	{
-		return;
-	}
-	
+    // TODO: Quick hack for now
+    if (![NSThread isMainThread])
+    {
+        return;
+    }
+    
     if (Window)
     {
         SCOPED_AUTORELEASE_POOL();
         
-        NSString* Title = [NSString stringWithUTF8String:InTitle.c_str()];
+        NSString* Title = [NSString stringWithUTF8String:InTitle.CStr()];
         [Window setTitle:Title];
     }
 }
 
 void CMacOutputConsole::SetColor(EConsoleColor Color)
 {
-	// TODO: Quick hack for now
-	if (![NSThread isMainThread])
-	{
-		return;
-	}
-	
+    // TODO: Quick hack for now
+    if (![NSThread isMainThread])
+    {
+        return;
+    }
+    
     if (Window)
     {
         [Window setColor:Color];

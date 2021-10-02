@@ -97,13 +97,13 @@ public:
     /* Copy two strings */
     static FORCEINLINE CharType* Copy( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
     {
-        return reinterpret_cast<CharType*>(Memory::Memcpy( Destination, Source, Length * sizeof( CharType ) ));
+        return reinterpret_cast<CharType*>(CMemory::Memcpy( Destination, Source, Length * sizeof( CharType ) ));
     }
 
     /* Move two strings */
     static FORCEINLINE CharType* Move( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
     {
-        return reinterpret_cast<CharType*>(Memory::Memmove( Destination, Source, Length * sizeof( CharType ) ));
+        return reinterpret_cast<CharType*>(CMemory::Memmove( Destination, Source, Length * sizeof( CharType ) ));
     }
 
     /* Compare two strings */
@@ -211,13 +211,13 @@ public:
     /* Copy two strings */
     static FORCEINLINE CharType* Copy( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
     {
-        return reinterpret_cast<CharType*>(Memory::Memcpy( Destination, Source, Length * sizeof( CharType ) ));
+        return reinterpret_cast<CharType*>(CMemory::Memcpy( Destination, Source, Length * sizeof( CharType ) ));
     }
 
     /* Move two strings */
     static FORCEINLINE CharType* Move( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
     {
-        return reinterpret_cast<CharType*>(Memory::Memmove( Destination, Source, Length * sizeof( CharType ) ));
+        return reinterpret_cast<CharType*>(CMemory::Memmove( Destination, Source, Length * sizeof( CharType ) ));
     }
 
     /* Compare two strings */

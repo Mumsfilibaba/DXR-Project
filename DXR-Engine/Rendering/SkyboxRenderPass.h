@@ -3,29 +3,29 @@
 
 #include "Assets/MeshFactory.h"
 
-#include "RenderLayer/CommandList.h"
+#include "RHICore/RHICommandList.h"
 
 #include "Scene/Scene.h"
 
-class SkyboxRenderPass final
+class CSkyboxRenderPass final
 {
 public:
-    SkyboxRenderPass() = default;
-    ~SkyboxRenderPass() = default;
+    CSkyboxRenderPass() = default;
+    ~CSkyboxRenderPass() = default;
 
-    bool Init( FrameResources& FrameResources );
+    bool Init( SFrameResources& FrameResources );
 
-    void Render( CommandList& CmdList, const FrameResources& FrameResources, const CScene& Scene );
+    void Render( CRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene );
 
     void Release();
 
 private:
-    TSharedRef<GraphicsPipelineState> PipelineState;
-    TSharedRef<VertexShader> SkyboxVertexShader;
-    TSharedRef<PixelShader>  SkyboxPixelShader;
-    TSharedRef<VertexBuffer> SkyboxVertexBuffer;
-    TSharedRef<IndexBuffer>  SkyboxIndexBuffer;
-    TSharedRef<SamplerState> SkyboxSampler;
+    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
+    TSharedRef<CRHIVertexShader> SkyboxVertexShader;
+    TSharedRef<CRHIPixelShader>  SkyboxPixelShader;
+    TSharedRef<CRHIVertexBuffer> SkyboxVertexBuffer;
+    TSharedRef<CRHIIndexBuffer>  SkyboxIndexBuffer;
+    TSharedRef<CRHISamplerState> SkyboxSampler;
 
     SMeshData SkyboxMesh;
 };

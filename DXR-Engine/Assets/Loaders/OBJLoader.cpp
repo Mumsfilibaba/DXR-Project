@@ -71,7 +71,7 @@ bool COBJLoader::LoadFile( const CString& Filename, SSceneData& OutScene, bool R
 
     // Construct Scene
     SModelData Data;
-    THashTable<Vertex, uint32, VertexHasher> UniqueVertices;
+    THashTable<SVertex, uint32, SVertexHasher> UniqueVertices;
     for ( const tinyobj::shape_t& Shape : Shapes )
     {
         // Start at index zero for each mesh and loop until all indices are processed
@@ -98,7 +98,7 @@ bool COBJLoader::LoadFile( const CString& Filename, SSceneData& OutScene, bool R
 
                 const tinyobj::index_t& Index = Shape.mesh.indices[i];
 
-                Vertex TempVertex;
+                SVertex TempVertex;
 
                 // Normals and texcoords are optional, Positions are required
                 Assert( Index.vertex_index >= 0 );
@@ -150,7 +150,7 @@ bool COBJLoader::LoadFile( const CString& Filename, SSceneData& OutScene, bool R
     OutScene.Models.ShrinkToFit();
     OutScene.Materials.ShrinkToFit();
 
-    TaskManager::Get().WaitForAllTasks();
+    CTaskManager::Get().WaitForAllTasks();
 
     return true;
 }

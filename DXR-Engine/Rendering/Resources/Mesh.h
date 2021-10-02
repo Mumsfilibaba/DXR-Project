@@ -3,34 +3,34 @@
 
 #include "Core/Containers/Array.h"
 
-#include "RenderLayer/Resources.h"
-#include "RenderLayer/CommandList.h"
+#include "RHICore/RHIResources.h"
+#include "RHICore/RHICommandList.h"
 
 #include "Core/Math/AABB.h"
 
-class Mesh
+class CMesh
 {
 public:
-    Mesh() = default;
-    ~Mesh() = default;
+    CMesh() = default;
+    ~CMesh() = default;
 
     bool Init( const SMeshData& Data );
 
-    bool BuildAccelerationStructure( CommandList& CmdList );
+    bool BuildAccelerationStructure( CRHICommandList& CmdList );
 
-    static TSharedPtr<Mesh> Make( const SMeshData& Data );
+    static TSharedPtr<CMesh> Make( const SMeshData& Data );
 
 public:
     void CreateBoundingBox( const SMeshData& Data );
 
-    TSharedRef<VertexBuffer>       VertexBuffer;
-    TSharedRef<ShaderResourceView> VertexBufferSRV;
-    TSharedRef<IndexBuffer>        IndexBuffer;
-    TSharedRef<ShaderResourceView> IndexBufferSRV;
-    TSharedRef<RayTracingGeometry> RTGeometry;
+    TSharedRef<CRHIVertexBuffer>       VertexBuffer;
+    TSharedRef<CRHIShaderResourceView> VertexBufferSRV;
+    TSharedRef<CRHIIndexBuffer>        IndexBuffer;
+    TSharedRef<CRHIShaderResourceView> IndexBufferSRV;
+    TSharedRef<CRHIRayTracingGeometry> RTGeometry;
 
     uint32 VertexCount = 0;
     uint32 IndexCount = 0;
 
-    AABB BoundingBox;
+    SAABB BoundingBox;
 };

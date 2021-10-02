@@ -9,7 +9,7 @@
 
 struct SMeshData
 {
-    TArray<Vertex> Vertices;
+    TArray<SVertex> Vertices;
     TArray<uint32> Indices;
 
     inline void Clear()

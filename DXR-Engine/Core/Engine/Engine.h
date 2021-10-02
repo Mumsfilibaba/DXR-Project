@@ -7,7 +7,7 @@
 #include "Core/Application/WindowMessageHandler.h"
 #include "Core/Delegates/Event.h"
 
-#include "RenderLayer/Viewport.h"
+#include "RHICore/RHIViewport.h"
 
 #include "Rendering/Resources/Material.h"
 
@@ -64,7 +64,7 @@ public:
     TSharedRef<CCoreWindow> MainWindow;
 
     /* The main viewport */
-    TSharedRef<Viewport> MainViewport;
+    TSharedRef<CRHIViewport> MainViewport;
 
     TSharedPtr<CApplicationUser> User;
 
@@ -72,10 +72,10 @@ public:
     TSharedPtr<CScene> Scene;
 
     /* A completely white texture */
-    TSharedRef<Texture2D> BaseTexture;
+    TSharedRef<CRHITexture2D> BaseTexture;
 
     /* A completely flat normal map*/
-    TSharedRef<Texture2D> BaseNormal;
+    TSharedRef<CRHITexture2D> BaseNormal;
 
     /* A completely white material */
     TSharedPtr<CMaterial> BaseMaterial;

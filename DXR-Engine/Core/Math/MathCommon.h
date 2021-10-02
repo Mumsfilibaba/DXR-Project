@@ -7,7 +7,8 @@
 
 /* Windows specific */
 #if defined(PLATFORM_WINDOWS)
-#include <xmmintrin.h>
+#include <intrin.h>
+#include <smmintrin.h>
 
 /* MacOS specific */
 #elif defined(PLATFORM_MACOS)

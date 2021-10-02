@@ -137,7 +137,7 @@ class TFunction<ReturnType( ArgTypes... )>
             : IFunctor()
             , Functor( Move( Other.Functor ) )
         {
-            Memory::Memzero<TGenericFunctor>( &Other );
+            CMemory::Memzero<TGenericFunctor>( &Other );
         }
 
         /* Invoke the functor */

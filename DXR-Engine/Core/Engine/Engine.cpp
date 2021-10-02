@@ -2,14 +2,14 @@
 
 #include "Core/Application/Application.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
-#include "Core/Debug/Console/Console.h"
+#include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Debug/Profiler.h"
 
 #include "Rendering/Resources/TextureFactory.h"
 
 /* Console vars */
-ConsoleCommand GToggleFullscreen;
-ConsoleCommand GExit;
+CConsoleCommand GToggleFullscreen;
+CConsoleCommand GExit;
 
 /* Global engine instance */
 TSharedPtr<CEngine> GEngine;
@@ -80,7 +80,7 @@ bool CEngine::Init()
         255
     };
 
-    BaseTexture = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
+    BaseTexture = CTextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !BaseTexture )
     {
         LOG_WARNING( "Failed to create BaseTexture" );
@@ -94,7 +94,7 @@ bool CEngine::Init()
     Pixels[1] = 127;
     Pixels[2] = 255;
 
-    BaseNormal = TextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
+    BaseNormal = CTextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
     if ( !BaseNormal )
     {
         LOG_WARNING( "Failed to create BaseNormal-Texture" );

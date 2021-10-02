@@ -7,7 +7,7 @@
 #include <crtdbg.h>
 #endif
 
-void* Memory::Malloc( uint64 Size ) noexcept
+void* CMemory::Malloc( uint64 Size ) noexcept
 {
     /*
     * Since malloc is not guarateed to return nullptr, we check for it here
@@ -23,42 +23,42 @@ void* Memory::Malloc( uint64 Size ) noexcept
     }
 }
 
-void* Memory::Realloc( void* Pointer, uint64 Size ) noexcept
+void* CMemory::Realloc( void* Pointer, uint64 Size ) noexcept
 {
     return realloc( Pointer, Size );
 }
 
-void Memory::Free( void* Ptr ) noexcept
+void CMemory::Free( void* Ptr ) noexcept
 {
     free( Ptr );
 }
 
-void* Memory::Memset( void* Destination, uint8 Value, uint64 Size ) noexcept
+void* CMemory::Memset( void* Destination, uint8 Value, uint64 Size ) noexcept
 {
     return memset( Destination, static_cast<int>(Value), Size );
 }
 
-void* Memory::Memzero( void* Destination, uint64 Size ) noexcept
+void* CMemory::Memzero( void* Destination, uint64 Size ) noexcept
 {
     return memset( Destination, 0, Size );
 }
 
-void* Memory::Memcpy( void* restrict_ptr Destination, const void* restrict_ptr Source, uint64 Size ) noexcept
+void* CMemory::Memcpy( void* restrict_ptr Destination, const void* restrict_ptr Source, uint64 Size ) noexcept
 {
     return memcpy( Destination, Source, Size );
 }
 
-void* Memory::Memmove( void* Destination, const void* Source, uint64 Size ) noexcept
+void* CMemory::Memmove( void* Destination, const void* Source, uint64 Size ) noexcept
 {
     return memmove( Destination, Source, Size );
 }
 
-bool Memory::Memcmp( const void* LHS, const void* RHS, uint64 Size )  noexcept
+bool CMemory::Memcmp( const void* LHS, const void* RHS, uint64 Size )  noexcept
 {
     return (memcmp( LHS, RHS, Size ) == 0);
 }
 
-void Memory::Memswap( void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size ) noexcept
+void CMemory::Memswap( void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size ) noexcept
 {
     Assert( LHS != nullptr && RHS != nullptr );
 

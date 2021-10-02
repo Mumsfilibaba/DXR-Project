@@ -26,7 +26,7 @@ void SSceneData::AddToScene( CScene* Scene )
             NewActor->GetTransform().SetUniformScale( Scale );
 
             CMeshComponent* MeshComponent = new CMeshComponent( NewActor );
-            MeshComponent->Mesh = Mesh::Make( ModelData.Mesh );
+            MeshComponent->Mesh = CMesh::Make( ModelData.Mesh );
             MeshComponent->Material = GEngine->BaseMaterial;
 
             if (ModelData.MaterialIndex >= 0)
@@ -42,22 +42,22 @@ void SSceneData::AddToScene( CScene* Scene )
                 // TODO: Should probably have a better separation between RHITexture and a Texture
 
                 TSharedPtr<CMaterial> Material = MeshComponent->Material = DBG_NEW CMaterial( Desc );
-                Material->AlbedoMap = TextureFactory::LoadFromImage2D( MaterialData.DiffuseTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->AlbedoMap = CTextureFactory::LoadFromImage2D( MaterialData.DiffuseTexture.Get(), TextureFactoryFlag_GenerateMips );
                 Material->AlbedoMap = Material->AlbedoMap ? Material->AlbedoMap : GEngine->BaseTexture;
             
-                Material->AlphaMask = TextureFactory::LoadFromImage2D( MaterialData.AlphaMaskTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->AlphaMask = CTextureFactory::LoadFromImage2D( MaterialData.AlphaMaskTexture.Get(), TextureFactoryFlag_GenerateMips );
                 Material->AlphaMask = Material->AlphaMask ? Material->AlphaMask : GEngine->BaseTexture;
             
-                Material->AOMap = TextureFactory::LoadFromImage2D( MaterialData.AOTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->AOMap = CTextureFactory::LoadFromImage2D( MaterialData.AOTexture.Get(), TextureFactoryFlag_GenerateMips );
                 Material->AOMap = Material->AOMap ? Material->AOMap : GEngine->BaseTexture;
             
-                Material->MetallicMap = TextureFactory::LoadFromImage2D( MaterialData.MetallicTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->MetallicMap = CTextureFactory::LoadFromImage2D( MaterialData.MetallicTexture.Get(), TextureFactoryFlag_GenerateMips );
                 Material->MetallicMap = Material->MetallicMap ? Material->MetallicMap : GEngine->BaseTexture;
             
-                Material->NormalMap = TextureFactory::LoadFromImage2D( MaterialData.NormalTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->NormalMap = CTextureFactory::LoadFromImage2D( MaterialData.NormalTexture.Get(), TextureFactoryFlag_GenerateMips );
                 Material->NormalMap = Material->NormalMap ? Material->NormalMap : GEngine->BaseNormal;
             
-                Material->RoughnessMap = TextureFactory::LoadFromImage2D( MaterialData.RoughnessTexture.Get(), TextureFactoryFlag_GenerateMips );
+                Material->RoughnessMap = CTextureFactory::LoadFromImage2D( MaterialData.RoughnessTexture.Get(), TextureFactoryFlag_GenerateMips );
                 Material->RoughnessMap = Material->RoughnessMap ? Material->RoughnessMap : GEngine->BaseTexture;
             
                 Material->HeightMap = GEngine->BaseTexture;

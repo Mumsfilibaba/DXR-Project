@@ -1,9 +1,9 @@
 #include "D3D12Resource.h"
 #include "D3D12Device.h"
 
-D3D12Resource::D3D12Resource( D3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource )
+D3D12Resource::D3D12Resource( CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource )
     : CRefCounted()
-    , D3D12DeviceChild( InDevice )
+    , CD3D12DeviceChild( InDevice )
     , DxResource( InNativeResource )
     , HeapType( D3D12_HEAP_TYPE_DEFAULT )
     , ResourceState( D3D12_RESOURCE_STATE_COMMON )
@@ -12,9 +12,9 @@ D3D12Resource::D3D12Resource( D3D12Device* InDevice, const TComPtr<ID3D12Resourc
 {
 }
 
-D3D12Resource::D3D12Resource( D3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType )
+D3D12Resource::D3D12Resource( CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType )
     : CRefCounted()
-    , D3D12DeviceChild( InDevice )
+    , CD3D12DeviceChild( InDevice )
     , DxResource( nullptr )
     , HeapType( InHeapType )
     , ResourceState( D3D12_RESOURCE_STATE_COMMON )
@@ -26,7 +26,7 @@ D3D12Resource::D3D12Resource( D3D12Device* InDevice, const D3D12_RESOURCE_DESC& 
 bool D3D12Resource::Init( D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue )
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    Memory::Memzero( &HeapProperties );
+    CMemory::Memzero( &HeapProperties );
 
     HeapProperties.Type = HeapType;
     HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;

@@ -25,13 +25,13 @@ public:
     void Tick( CTimestamp DeltaTime );
 
     /* Adds a camera into the scene */
-    void AddCamera( Camera* InCamera );
+    void AddCamera( CCamera* InCamera );
 
     /* Adds an actor into the scene */
     void AddActor( CActor* InActor );
 
     /* Adds a new light into the scene*/
-    void AddLight( Light* InLight );
+    void AddLight( CLight* InLight );
 
     void OnAddedComponent( CComponent* NewComponent );
 
@@ -58,17 +58,17 @@ public:
         return Actors;
     }
 
-    FORCEINLINE const TArray<Light*>& GetLights() const
+    FORCEINLINE const TArray<CLight*>& GetLights() const
     {
         return Lights;
     }
 
-    FORCEINLINE const TArray<MeshDrawCommand>& GetMeshDrawCommands() const
+    FORCEINLINE const TArray<SMeshDrawCommand>& GetMeshDrawCommands() const
     {
         return MeshDrawCommands;
     }
 
-    FORCEINLINE Camera* GetCamera() const
+    FORCEINLINE CCamera* GetCamera() const
     {
         return CurrentCamera;
     }
@@ -77,8 +77,8 @@ private:
     void AddMeshComponent( class CMeshComponent* Component );
 
     TArray<CActor*> Actors;
-    TArray<Light*> Lights;
-    TArray<MeshDrawCommand> MeshDrawCommands;
+    TArray<CLight*> Lights;
+    TArray<SMeshDrawCommand> MeshDrawCommands;
 
-    Camera* CurrentCamera = nullptr;
+    CCamera* CurrentCamera = nullptr;
 };

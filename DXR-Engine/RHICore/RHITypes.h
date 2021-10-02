@@ -178,11 +178,11 @@ inline const char* ToString( EShadingRate ShadingRate )
     }
 }
 
-struct DepthStencilF
+struct SDepthStencilF
 {
-    DepthStencilF() = default;
+    SDepthStencilF() = default;
 
-    DepthStencilF( float InDepth, uint8 InStencil )
+    FORCEINLINE SDepthStencilF( float InDepth, uint8 InStencil )
         : Depth( InDepth )
         , Stencil( InStencil )
     {
@@ -192,9 +192,10 @@ struct DepthStencilF
     uint8 Stencil = 0;
 };
 
-struct ClearValue
+struct SClearValue
 {
 public:
+
     enum class EType
     {
         Color = 1,
@@ -202,28 +203,28 @@ public:
     };
 
     // NOTE: Default clear color is black
-    ClearValue()
+    FORCEINLINE SClearValue()
         : Type( EType::Color )
         , Format( EFormat::Unknown )
         , Color( 0.0f, 0.0f, 0.0f, 1.0f )
     {
     }
 
-    ClearValue( EFormat InFormat, float Depth, uint8 Stencil )
+    FORCEINLINE SClearValue( EFormat InFormat, float Depth, uint8 Stencil )
         : Type( EType::DepthStencil )
         , Format( InFormat )
         , DepthStencil( Depth, Stencil )
     {
     }
 
-    ClearValue( EFormat InFormat, float r, float g, float b, float a )
+    FORCEINLINE SClearValue( EFormat InFormat, float r, float g, float b, float a )
         : Type( EType::Color )
         , Format( InFormat )
         , Color( r, g, b, a )
     {
     }
 
-    ClearValue( const ClearValue& Other )
+    FORCEINLINE SClearValue( const SClearValue& Other )
         : Type( Other.Type )
         , Format( Other.Format )
         , Color()
@@ -238,7 +239,7 @@ public:
         }
     }
 
-    ClearValue& operator=( const ClearValue& Other )
+    FORCEINLINE SClearValue& operator=( const SClearValue& Other )
     {
         Type = Other.Type;
         Format = Other.Format;
@@ -255,35 +256,35 @@ public:
         return *this;
     }
 
-    EType GetType() const
+    FORCEINLINE EType GetType() const
     {
         return Type;
     }
 
-    EFormat GetFormat() const
+    FORCEINLINE EFormat GetFormat() const
     {
         return Format;
     }
 
-    ColorF& AsColor()
+    FORCEINLINE SColorF& AsColor()
     {
         Assert( Type == EType::Color );
         return Color;
     }
 
-    const ColorF& AsColor() const
+    FORCEINLINE const SColorF& AsColor() const
     {
         Assert( Type == EType::Color );
         return Color;
     }
 
-    DepthStencilF& AsDepthStencil()
+    FORCEINLINE SDepthStencilF& AsDepthStencil()
     {
         Assert( Type == EType::DepthStencil );
         return DepthStencil;
     }
 
-    const DepthStencilF& AsDepthStencil() const
+    FORCEINLINE const SDepthStencilF& AsDepthStencil() const
     {
         Assert( Type == EType::DepthStencil );
         return DepthStencil;
@@ -294,25 +295,25 @@ private:
     EFormat Format;
     union
     {
-        ColorF        Color;
-        DepthStencilF DepthStencil;
+        SColorF        Color;
+        SDepthStencilF DepthStencil;
     };
 };
 
-struct ResourceData
+struct SResourceData
 {
-    ResourceData()
+    FORCEINLINE SResourceData()
         : Data( nullptr )
     {
     }
 
-    ResourceData( const void* InData, uint32 InSizeInBytes )
+    FORCEINLINE SResourceData( const void* InData, uint32 InSizeInBytes )
         : Data( InData )
         , SizeInBytes( InSizeInBytes )
     {
     }
 
-    ResourceData( const void* InData, EFormat InFormat, uint32 InWidth )
+    FORCEINLINE SResourceData( const void* InData, EFormat InFormat, uint32 InWidth )
         : Data( InData )
         , Format( InFormat )
         , Width( InWidth )
@@ -320,7 +321,7 @@ struct ResourceData
     {
     }
 
-    ResourceData( const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight )
+    FORCEINLINE SResourceData( const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight )
         : Data( InData )
         , Format( InFormat )
         , Width( InWidth )
@@ -328,41 +329,41 @@ struct ResourceData
     {
     }
 
-    void Set( const void* InData, uint32 InSizeInBytes )
+    FORCEINLINE void Set( const void* InData, uint32 InSizeInBytes )
     {
         Data = InData;
         SizeInBytes = InSizeInBytes;
     }
 
-    void Set( const void* InData, EFormat InFormat, uint32 InWidth )
+    FORCEINLINE void Set( const void* InData, EFormat InFormat, uint32 InWidth )
     {
         Data = InData;
         Format = InFormat;
         Width = InWidth;
     }
 
-    void Set( const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight )
+    FORCEINLINE void Set( const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight )
     {
         Set( InData, InFormat, InWidth );
         Height = InHeight;
     }
 
-    const void* GetData() const
+    FORCEINLINE const void* GetData() const
     {
         return Data;
     }
 
-    uint32 GetSizeInBytes() const
+    FORCEINLINE uint32 GetSizeInBytes() const
     {
         return SizeInBytes;
     }
 
-    uint32 GetPitch() const
+    FORCEINLINE uint32 GetPitch() const
     {
         return GetByteStrideFromFormat( Format ) * Width;
     }
 
-    uint32 GetSlicePitch() const
+    FORCEINLINE uint32 GetSlicePitch() const
     {
         return GetByteStrideFromFormat( Format ) * Width * Height;
     }
@@ -384,11 +385,11 @@ private:
     };
 };
 
-struct CopyBufferInfo
+struct SCopyBufferInfo
 {
-    CopyBufferInfo() = default;
+    SCopyBufferInfo() = default;
 
-    CopyBufferInfo( uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes )
+    FORCEINLINE SCopyBufferInfo( uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes )
         : SourceOffset( InSourceOffset )
         , DestinationOffset( InDestinationOffset )
         , SizeInBytes( InSizeInBytes )
@@ -400,11 +401,11 @@ struct CopyBufferInfo
     uint32 SizeInBytes = 0;
 };
 
-struct CopyTextureSubresourceInfo
+struct SCopyTextureSubresourceInfo
 {
-    CopyTextureSubresourceInfo() = default;
+    SCopyTextureSubresourceInfo() = default;
 
-    CopyTextureSubresourceInfo( uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex )
+    FORCEINLINE SCopyTextureSubresourceInfo( uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex )
         : x( InX )
         , y( InY )
         , z( InZ )
@@ -418,10 +419,10 @@ struct CopyTextureSubresourceInfo
     uint32 SubresourceIndex = 0;
 };
 
-struct CopyTextureInfo
+struct SCopyTextureInfo
 {
-    CopyTextureSubresourceInfo Source;
-    CopyTextureSubresourceInfo Destination;
+    SCopyTextureSubresourceInfo Source;
+    SCopyTextureSubresourceInfo Destination;
     uint32 Width = 0;
     uint32 Height = 0;
     uint32 Depth = 0;

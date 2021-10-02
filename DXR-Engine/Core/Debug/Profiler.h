@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Time/Timer.h"
 
-#include "RenderLayer/CommandList.h"
+#include "RHICore/RHICommandList.h"
 
 #include "Core/Containers/HashTable.h"
 
@@ -9,10 +9,10 @@
 #define NUM_PROFILER_SAMPLES 200
 
 #if ENABLE_PROFILER
-#define TRACE_SCOPE(Name)      ScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
+#define TRACE_SCOPE(Name)      SScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
 #define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(FUNCTION_SIGNATURE)
 
-#define GPU_TRACE_SCOPE(CmdList, Name) GPUScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(CmdList, Name)
+#define GPU_TRACE_SCOPE(CmdList, Name) SGPUScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(CmdList, Name)
 #else
 #define TRACE_SCOPE(Name)
 #define TRACE_FUNCTION_SCOPE()
@@ -20,7 +20,7 @@
 #define GPU_TRACE_SCOPE(CmdList, Name)
 #endif
 
-class Profiler
+class CProfiler
 {
 public:
     static void Init();
@@ -33,48 +33,48 @@ public:
     static void BeginTraceScope( const char* Name );
     static void EndTraceScope( const char* Name );
 
-    static void BeginGPUFrame( CommandList& CmdList );
-    static void BeginGPUTrace( CommandList& CmdList, const char* Name );
-    static void EndGPUTrace( CommandList& CmdList, const char* Name );
-    static void EndGPUFrame( CommandList& CmdList );
+    static void BeginGPUFrame( CRHICommandList& CmdList );
+    static void BeginGPUTrace( CRHICommandList& CmdList, const char* Name );
+    static void EndGPUTrace( CRHICommandList& CmdList, const char* Name );
+    static void EndGPUFrame( CRHICommandList& CmdList );
 
-    static void SetGPUProfiler( class GPUProfiler* Profiler );
+    static void SetGPUProfiler( class CGPUProfiler* Profiler );
 };
 
-struct ScopedTrace
+struct SScopedTrace
 {
 public:
-    ScopedTrace( const char* InName )
+    FORCEINLINE SScopedTrace( const char* InName )
         : Name( InName )
     {
-        Profiler::BeginTraceScope( Name );
+        CProfiler::BeginTraceScope( Name );
     }
 
-    ~ScopedTrace()
+    FORCEINLINE ~SScopedTrace()
     {
-        Profiler::EndTraceScope( Name );
+        CProfiler::EndTraceScope( Name );
     }
 
 private:
     const char* Name = nullptr;
 };
 
-struct GPUScopedTrace
+struct SGPUScopedTrace
 {
 public:
-    GPUScopedTrace( CommandList& InCmdList, const char* InName )
+    FORCEINLINE SGPUScopedTrace( CRHICommandList& InCmdList, const char* InName )
         : CmdList( InCmdList )
         , Name( InName )
     {
-        Profiler::BeginGPUTrace( CmdList, Name );
+        CProfiler::BeginGPUTrace( CmdList, Name );
     }
 
-    ~GPUScopedTrace()
+    FORCEINLINE ~SGPUScopedTrace()
     {
-        Profiler::EndGPUTrace( CmdList, Name );
+        CProfiler::EndGPUTrace( CmdList, Name );
     }
 
 private:
-    CommandList& CmdList;
+    CRHICommandList& CmdList;
     const char* Name = nullptr;
 };

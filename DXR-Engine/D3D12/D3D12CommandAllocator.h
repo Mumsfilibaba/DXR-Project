@@ -1,11 +1,11 @@
 #pragma once
 #include "D3D12Device.h"
 
-class D3D12CommandAllocatorHandle : public D3D12DeviceChild
+class CD3D12CommandAllocator : public CD3D12DeviceChild
 {
 public:
-    D3D12CommandAllocatorHandle( D3D12Device* InDevice )
-        : D3D12DeviceChild( InDevice )
+    CD3D12CommandAllocator( CD3D12Device* InDevice )
+        : CD3D12DeviceChild( InDevice )
         , Allocator( nullptr )
     {
     }
@@ -36,9 +36,9 @@ public:
         return SUCCEEDED( Result );
     }
 
-    FORCEINLINE void SetName( const std::string& Name )
+    FORCEINLINE void SetName( const CString& Name )
     {
-        WString WideName = CharToWide( CString( Name.c_str(), Name.length() ) );
+        WString WideName = CharToWide( Name );
         Allocator->SetName( WideName.CStr() );
     }
 

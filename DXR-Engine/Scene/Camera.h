@@ -4,11 +4,11 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix4.h"
 
-class Camera
+class CCamera
 {
 public:
-    Camera();
-    ~Camera() = default;
+    CCamera();
+    ~CCamera() = default;
 
     void Move( float x, float y, float z );
 

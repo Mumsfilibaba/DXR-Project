@@ -1,24 +1,24 @@
 #pragma once
 #include "Vector3.h"
 
-struct AABB
+struct SAABB
 {
-    CVector3 GetCenter() const
+    FORCEINLINE CVector3 GetCenter() const
     {
         return (Bottom + Top) * 0.5f;
     }
 
-    float GetWidth() const
+    FORCEINLINE float GetWidth() const
     {
         return Top.x - Bottom.x;
     }
 
-    float GetHeight() const
+    FORCEINLINE float GetHeight() const
     {
         return Top.y - Bottom.y;
     }
 
-    float GetDepth() const
+    FORCEINLINE float GetDepth() const
     {
         return Top.z - Bottom.z;
     }

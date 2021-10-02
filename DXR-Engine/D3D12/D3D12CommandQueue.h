@@ -3,11 +3,11 @@
 #include "D3D12Fence.h"
 #include "D3D12CommandList.h"
 
-class D3D12CommandQueueHandle : public D3D12DeviceChild
+class CD3D12CommandQueue : public CD3D12DeviceChild
 {
 public:
-    D3D12CommandQueueHandle( D3D12Device* InDevice )
-        : D3D12DeviceChild( InDevice )
+    CD3D12CommandQueue( CD3D12Device* InDevice )
+        : CD3D12DeviceChild( InDevice )
         , Queue( nullptr )
         , Desc()
     {
@@ -16,7 +16,7 @@ public:
     bool Init( D3D12_COMMAND_LIST_TYPE Type )
     {
         D3D12_COMMAND_QUEUE_DESC QueueDesc;
-        Memory::Memzero( &QueueDesc );
+        CMemory::Memzero( &QueueDesc );
 
         QueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
         QueueDesc.NodeMask = 1;
@@ -58,29 +58,29 @@ public:
         return SUCCEEDED( Result );
     }
 
-    void ExecuteCommandList( D3D12CommandListHandle* CommandList )
+    FORCEINLINE void ExecuteCommandList( CD3D12CommandList* CommandList )
     {
         ID3D12CommandList* CommandLists[] = { CommandList->GetCommandList() };
         Queue->ExecuteCommandLists( 1, CommandLists );
     }
 
-    void SetName( const std::string& Name )
+    FORCEINLINE void SetName( const CString& Name )
     {
-        std::wstring WideDebugName = CharToWide( CString( Name.c_str(), Name.length() ) ).CStr();
-        Queue->SetName( WideDebugName.c_str() );
+        WString WideDebugName = CharToWide( Name );
+        Queue->SetName( WideDebugName.CStr() );
     }
 
-    ID3D12CommandQueue* GetQueue() const
+    FORCEINLINE ID3D12CommandQueue* GetQueue() const
     {
         return Queue.Get();
     }
 
-    const D3D12_COMMAND_QUEUE_DESC& GetDesc() const
+    FORCEINLINE const D3D12_COMMAND_QUEUE_DESC& GetDesc() const
     {
         return Desc;
     }
 
-    D3D12_COMMAND_LIST_TYPE GetType() const
+    FORCEINLINE D3D12_COMMAND_LIST_TYPE GetType() const
     {
         return Desc.Type;
     }

@@ -6,20 +6,20 @@
 
 #include <string>
 
-TaskManager TaskManager::Instance;
+CTaskManager CTaskManager::Instance;
 
-TaskManager::TaskManager()
+CTaskManager::CTaskManager()
     : TaskMutex()
     , IsRunning( false )
 {
 }
 
-TaskManager::~TaskManager()
+CTaskManager::~CTaskManager()
 {
     KillWorkers();
 }
 
-bool TaskManager::PopTask( Task& OutTask )
+bool CTaskManager::PopTask( SExecutableTask& OutTask )
 {
     TScopedLock<CCriticalSection> Lock( TaskMutex );
 
@@ -36,20 +36,20 @@ bool TaskManager::PopTask( Task& OutTask )
     }
 }
 
-void TaskManager::KillWorkers()
+void CTaskManager::KillWorkers()
 {
     IsRunning = false;
 
     WakeCondition.NotifyAll();
 }
 
-void TaskManager::WorkThread()
+void CTaskManager::WorkThread()
 {
-    LOG_INFO( "Starting Work thread: " + std::to_string( PlatformThreadMisc::GetThreadHandle() ) );
+    LOG_INFO( "Starting Work thread: " + ToString( PlatformThreadMisc::GetThreadHandle() ) );
 
     while ( Instance.IsRunning )
     {
-        Task CurrentTask;
+        SExecutableTask CurrentTask;
 
         if ( !Instance.PopTask( CurrentTask ) )
         {
@@ -63,22 +63,22 @@ void TaskManager::WorkThread()
         }
     }
 
-    LOG_INFO( "End Work thread: " + std::to_string( PlatformThreadMisc::GetThreadHandle() ) );
+    LOG_INFO( "End Work thread: " + ToString( PlatformThreadMisc::GetThreadHandle() ) );
 }
 
-bool TaskManager::Init()
+bool CTaskManager::Init()
 {
     uint32 ThreadCount = NMath::Max<int32>( PlatformThreadMisc::GetNumProcessors() - 1, 1 );
     WorkThreads.Resize( ThreadCount );
 
     if ( ThreadCount == 1 )
     {
-        LOG_INFO( "[TaskManager]: No workers available, tasks will be executing on the main thread" );
+        LOG_INFO( "[CTaskManager]: No workers available, tasks will be executing on the main thread" );
         WorkThreads.Clear();
         return true;
     }
 
-    LOG_INFO( "[TaskManager]: Starting '" + std::to_string( ThreadCount ) + "' Workers" );
+    LOG_INFO( "[CTaskManager]: Starting '" + ToString( ThreadCount ) + "' Workers" );
 
     // Start so that workers now that they should be running
     IsRunning = true;
@@ -88,7 +88,7 @@ bool TaskManager::Init()
         CString ThreadName;
         ThreadName.Format( "WorkerThread[%d]", i );
 
-        TSharedRef<CCoreThread> NewThread = PlatformThread::Make( TaskManager::WorkThread, ThreadName );
+        TSharedRef<CCoreThread> NewThread = PlatformThread::Make( CTaskManager::WorkThread, ThreadName );
         if ( NewThread )
         {
             WorkThreads[i] = NewThread;
@@ -104,12 +104,12 @@ bool TaskManager::Init()
     return true;
 }
 
-TaskID TaskManager::AddTask( const Task& NewTask )
+TaskID CTaskManager::AddTask( const SExecutableTask& NewTask )
 {
     if ( WorkThreads.IsEmpty() )
     {
         // Execute task on mainthread
-        Task MainThreadTask = NewTask;
+        SExecutableTask MainThreadTask = NewTask;
         MainThreadTask.Delegate.ExecuteIfBound();
 
         // Make sure that both fences is incremented
@@ -127,7 +127,7 @@ TaskID TaskManager::AddTask( const Task& NewTask )
     return NewTaskID;
 }
 
-void TaskManager::WaitForTask( TaskID Task )
+void CTaskManager::WaitForTask( TaskID Task )
 {
     while ( TaskCompleted.Load() < Task )
     {
@@ -136,7 +136,7 @@ void TaskManager::WaitForTask( TaskID Task )
     }
 }
 
-void TaskManager::WaitForAllTasks()
+void CTaskManager::WaitForAllTasks()
 {
     while ( TaskCompleted.Load() < TaskAdded.Load() )
     {
@@ -145,7 +145,7 @@ void TaskManager::WaitForAllTasks()
     }
 }
 
-void TaskManager::Release()
+void CTaskManager::Release()
 {
     KillWorkers();
 
@@ -157,7 +157,7 @@ void TaskManager::Release()
     WorkThreads.Clear();
 }
 
-TaskManager& TaskManager::Get()
+CTaskManager& CTaskManager::Get()
 {
     return Instance;
 }

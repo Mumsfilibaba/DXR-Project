@@ -1,10 +1,10 @@
 #include "D3D12DescriptorCache.h"
 #include "D3D12DescriptorHeap.h"
-#include "D3D12RenderLayer.h"
+#include "D3D12RHICore.h"
 #include "D3D12CommandContext.h"
 
-D3D12DescriptorCache::D3D12DescriptorCache( D3D12Device* InDevice )
-    : D3D12DeviceChild( InDevice )
+CD3D12DescriptorCache::CD3D12DescriptorCache( CD3D12Device* InDevice )
+    : CD3D12DeviceChild( InDevice )
     , NullCBV( nullptr )
     , NullSRV( nullptr )
     , NullUAV( nullptr )
@@ -17,7 +17,7 @@ D3D12DescriptorCache::D3D12DescriptorCache( D3D12Device* InDevice )
 {
 }
 
-D3D12DescriptorCache::~D3D12DescriptorCache()
+CD3D12DescriptorCache::~CD3D12DescriptorCache()
 {
     SafeDelete( NullCBV );
     SafeDelete( NullSRV );
@@ -25,15 +25,15 @@ D3D12DescriptorCache::~D3D12DescriptorCache()
     SafeDelete( NullSampler );
 }
 
-bool D3D12DescriptorCache::Init()
+bool CD3D12DescriptorCache::Init()
 {
     D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
-    Memory::Memzero( &CBVDesc );
+    CMemory::Memzero( &CBVDesc );
 
     CBVDesc.BufferLocation = 0;
     CBVDesc.SizeInBytes = 0;
 
-    NullCBV = DBG_NEW D3D12ConstantBufferView( GetDevice(), GD3D12RenderLayer->GetResourceOfflineDescriptorHeap() );
+    NullCBV = DBG_NEW CD3D12ConstantBufferView( GetDevice(), GD3D12RenderLayer->GetResourceOfflineDescriptorHeap() );
     if ( !NullCBV->Init() )
     {
         return false;
@@ -45,14 +45,14 @@ bool D3D12DescriptorCache::Init()
     }
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
-    Memory::Memzero( &UAVDesc );
+    CMemory::Memzero( &UAVDesc );
 
     UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
     UAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     UAVDesc.Texture2D.MipSlice = 0;
     UAVDesc.Texture2D.PlaneSlice = 0;
 
-    NullUAV = DBG_NEW D3D12UnorderedAccessView( GetDevice(), GD3D12RenderLayer->GetResourceOfflineDescriptorHeap() );
+    NullUAV = DBG_NEW CD3D12UnorderedAccessView( GetDevice(), GD3D12RenderLayer->GetResourceOfflineDescriptorHeap() );
     if ( !NullUAV->Init() )
     {
         return false;
@@ -64,7 +64,7 @@ bool D3D12DescriptorCache::Init()
     }
 
     D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-    Memory::Memzero( &SRVDesc );
+    CMemory::Memzero( &SRVDesc );
 
     SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     SRVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -74,7 +74,7 @@ bool D3D12DescriptorCache::Init()
     SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     SRVDesc.Texture2D.PlaneSlice = 0;
 
-    NullSRV = DBG_NEW D3D12ShaderResourceView( GetDevice(), GD3D12RenderLayer->GetResourceOfflineDescriptorHeap() );
+    NullSRV = DBG_NEW CD3D12ShaderResourceView( GetDevice(), GD3D12RenderLayer->GetResourceOfflineDescriptorHeap() );
     if ( !NullSRV->Init() )
     {
         return false;
@@ -86,7 +86,7 @@ bool D3D12DescriptorCache::Init()
     }
 
     D3D12_SAMPLER_DESC SamplerDesc;
-    Memory::Memzero( &SamplerDesc );
+    CMemory::Memzero( &SamplerDesc );
 
     SamplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
     SamplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -102,7 +102,7 @@ bool D3D12DescriptorCache::Init()
     SamplerDesc.MinLOD = -FLT_MAX;
     SamplerDesc.MipLODBias = 0.0f;
 
-    NullSampler = DBG_NEW D3D12SamplerState( GetDevice(), GD3D12RenderLayer->GetSamplerOfflineDescriptorHeap() );
+    NullSampler = DBG_NEW CD3D12SamplerState( GetDevice(), GD3D12RenderLayer->GetSamplerOfflineDescriptorHeap() );
     if ( !NullSampler->Init( SamplerDesc ) )
     {
         return false;
@@ -116,7 +116,7 @@ bool D3D12DescriptorCache::Init()
     return true;
 }
 
-void D3D12DescriptorCache::CommitGraphicsDescriptors( D3D12CommandListHandle& CmdList, D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature )
+void CD3D12DescriptorCache::CommitGraphicsDescriptors( CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature )
 {
     Assert( CmdBatch != nullptr );
     Assert( RootSignature != nullptr );
@@ -125,8 +125,8 @@ void D3D12DescriptorCache::CommitGraphicsDescriptors( D3D12CommandListHandle& Cm
     RenderTargetCache.CommitState( CmdList );
 
     ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
-    D3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
+    CD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
+    CD3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
 
     CopyDescriptorsAndSetHeaps( DxCmdList, ResourceHeap, SamplerHeap );
 
@@ -168,14 +168,14 @@ void D3D12DescriptorCache::CommitGraphicsDescriptors( D3D12CommandListHandle& Cm
     }
 }
 
-void D3D12DescriptorCache::CommitComputeDescriptors( D3D12CommandListHandle& CmdList, D3D12CommandBatch* CmdBatch, D3D12RootSignature* RootSignature )
+void CD3D12DescriptorCache::CommitComputeDescriptors( CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature )
 {
     Assert( CmdBatch != nullptr );
     Assert( RootSignature != nullptr );
 
     ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
-    D3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    D3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
+    CD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
+    CD3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
 
     CopyDescriptorsAndSetHeaps( DxCmdList, ResourceHeap, SamplerHeap );
 
@@ -214,7 +214,7 @@ void D3D12DescriptorCache::CommitComputeDescriptors( D3D12CommandListHandle& Cmd
     }
 }
 
-void D3D12DescriptorCache::Reset()
+void CD3D12DescriptorCache::Reset()
 {
     VertexBufferCache.Reset();
     RenderTargetCache.Reset();
@@ -228,10 +228,10 @@ void D3D12DescriptorCache::Reset()
     PreviousDescriptorHeaps[1] = nullptr;
 }
 
-void D3D12DescriptorCache::CopyDescriptorsAndSetHeaps(
+void CD3D12DescriptorCache::CopyDescriptorsAndSetHeaps(
     ID3D12GraphicsCommandList* CmdList,
-    D3D12OnlineDescriptorHeap* ResourceHeap,
-    D3D12OnlineDescriptorHeap* SamplerHeap )
+    CD3D12OnlineDescriptorHeap* ResourceHeap,
+    CD3D12OnlineDescriptorHeap* SamplerHeap )
 {
     uint32 NumResourceDescriptors =
         ConstantBufferViewCache.CountNeededDescriptors() +

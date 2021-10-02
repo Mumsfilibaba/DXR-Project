@@ -3,7 +3,7 @@
 #include "Core/Math/Math.h"
 
 #include "Rendering/Renderer.h"
-#include "Rendering/DebugUI.h"
+#include "Rendering/UIRenderer.h"
 #include "Rendering/Resources/TextureFactory.h"
 
 #include "Assets/Loaders/OBJLoader.h"
@@ -41,7 +41,7 @@ bool CSandbox::Init()
 
     // Load Scene
     SSceneData SceneData;
-#if 0
+#if 1
     COBJLoader::LoadFile( "../Assets/Scenes/Sponza/Sponza.obj", SceneData );
     SceneData.Scale = 0.015f;
 #else
@@ -52,7 +52,7 @@ bool CSandbox::Init()
 
     // Create Spheres
     SMeshData SphereMeshData = CMeshFactory::CreateSphere( 3 );
-    TSharedPtr<Mesh> SphereMesh = Mesh::Make( SphereMeshData );
+    TSharedPtr<CMesh> SphereMesh = CMesh::Make( SphereMeshData );
 
     constexpr float  SphereOffset = 1.25f;
     constexpr uint32 SphereCountX = 8;
@@ -73,7 +73,7 @@ bool CSandbox::Init()
             NewActor = CurrentScene->MakeActor();
             NewActor->GetTransform().SetTranslation( StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset) );
 
-            NewActor->SetName( "Sphere[" + std::to_string( SphereIndex ) + "]" );
+            NewActor->SetName( "Sphere[" + ToString( SphereIndex ) + "]" );
             SphereIndex++;
 
             NewComponent = DBG_NEW CMeshComponent( NewActor );
@@ -110,40 +110,40 @@ bool CSandbox::Init()
     MatProperties.EnableHeight = 1;
 
     NewComponent = DBG_NEW CMeshComponent( NewActor );
-    NewComponent->Mesh = Mesh::Make( CubeMeshData );
+    NewComponent->Mesh = CMesh::Make( CubeMeshData );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
 
-    TSharedRef<Texture2D> AlbedoMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    TSharedRef<CRHITexture2D> AlbedoMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( AlbedoMap )
     {
         AlbedoMap->SetName( "AlbedoMap" );
     }
 
-    TSharedRef<Texture2D> NormalMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    TSharedRef<CRHITexture2D> NormalMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( NormalMap )
     {
         NormalMap->SetName( "NormalMap" );
     }
 
-    TSharedRef<Texture2D> AOMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> AOMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( AOMap )
     {
         AOMap->SetName( "AOMap" );
     }
 
-    TSharedRef<Texture2D> RoughnessMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> RoughnessMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( RoughnessMap )
     {
         RoughnessMap->SetName( "RoughnessMap" );
     }
 
-    TSharedRef<Texture2D> HeightMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> HeightMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( HeightMap )
     {
         HeightMap->SetName( "HeightMap" );
     }
 
-    TSharedRef<Texture2D> MetallicMap = TextureFactory::LoadFromFile( "../Assets/Textures/Gate_Metallic.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> MetallicMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_Metallic.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( MetallicMap )
     {
         MetallicMap->SetName( "MetallicMap" );
@@ -172,7 +172,7 @@ bool CSandbox::Init()
     MatProperties.Albedo = CVector3( 1.0f );
 
     NewComponent = DBG_NEW CMeshComponent( NewActor );
-    NewComponent->Mesh = Mesh::Make( CMeshFactory::CreatePlane( 10, 10 ) );
+    NewComponent->Mesh = CMesh::Make( CMeshFactory::CreatePlane( 10, 10 ) );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
     NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
     NewComponent->Material->NormalMap = GEngine->BaseNormal;
@@ -182,25 +182,25 @@ bool CSandbox::Init()
     NewComponent->Material->Init();
     NewActor->AddComponent( NewComponent );
 
-    AlbedoMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/BaseColor.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    AlbedoMap = CTextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/BaseColor.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( AlbedoMap )
     {
         AlbedoMap->SetName( "AlbedoMap" );
     }
     
-    NormalMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Normal.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    NormalMap = CTextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Normal.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( NormalMap )
     {
         NormalMap->SetName( "NormalMap" );
     }
 
-    RoughnessMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Roughness.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    RoughnessMap = CTextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Roughness.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( RoughnessMap )
     {
         RoughnessMap->SetName( "RoughnessMap" );
     }
 
-    MetallicMap = TextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Metallic.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    MetallicMap = CTextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Metallic.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( MetallicMap )
     {
         MetallicMap->SetName( "MetallicMap" );
@@ -215,14 +215,14 @@ bool CSandbox::Init()
     SSceneData StreetLightData;
     COBJLoader::LoadFile( "../Assets/Models/Street_Light.obj", StreetLightData );
 
-    TSharedPtr<Mesh>      StreetLight    = StreetLightData.HasModelData() ? Mesh::Make( StreetLightData.Models.FirstElement().Mesh ) : nullptr;
+    TSharedPtr<CMesh>     StreetLight    = StreetLightData.HasModelData() ? CMesh::Make( StreetLightData.Models.FirstElement().Mesh ) : nullptr;
     TSharedPtr<CMaterial> StreetLightMat = MakeShared<CMaterial>( MatProperties );
 
     for ( uint32 i = 0; i < 4; i++ )
     {
         NewActor = CurrentScene->MakeActor();
 
-        NewActor->SetName( "Street Light " + std::to_string( i ) );
+        NewActor->SetName( "Street Light " + ToString( i ) );
         NewActor->GetTransform().SetUniformScale( 0.25f );
         NewActor->GetTransform().SetTranslation( 15.0f, 0.0f, 55.0f - ((float)i * 3.0f) );
 
@@ -247,14 +247,14 @@ bool CSandbox::Init()
     SSceneData PillarData;
     COBJLoader::LoadFile( "../Assets/Models/Pillar.obj", PillarData );
 
-    TSharedPtr<Mesh>      Pillar    = PillarData.HasModelData() ? Mesh::Make( PillarData.Models.FirstElement().Mesh ) : nullptr;
+    TSharedPtr<CMesh>     Pillar    = PillarData.HasModelData() ? CMesh::Make( PillarData.Models.FirstElement().Mesh ) : nullptr;
     TSharedPtr<CMaterial> PillarMat = MakeShared<CMaterial>( MatProperties );
 
     for ( uint32 i = 0; i < 8; i++ )
     {
         NewActor = CurrentScene->MakeActor();
 
-        NewActor->SetName( "Pillar " + std::to_string( i ) );
+        NewActor->SetName( "Pillar " + ToString( i ) );
         NewActor->GetTransform().SetUniformScale( 0.25f );
         NewActor->GetTransform().SetTranslation( -15.0f + ((float)i * 1.75f), 0.0f, 60.0f );
 
@@ -270,13 +270,13 @@ bool CSandbox::Init()
         NewActor->AddComponent( NewComponent );
     }
 
-    CurrentCamera = DBG_NEW Camera();
+    CurrentCamera = DBG_NEW CCamera();
     CurrentScene->AddCamera( CurrentCamera );
 
     // Add PointLight- Source
     const float Intensity = 50.0f;
 
-    PointLight* Light0 = DBG_NEW PointLight();
+    CPointLight* Light0 = DBG_NEW CPointLight();
     Light0->SetPosition( 16.5f, 1.0f, 0.0f );
     Light0->SetColor( 1.0f, 1.0f, 1.0f );
     Light0->SetShadowBias( 0.001f );
@@ -286,7 +286,7 @@ bool CSandbox::Init()
     Light0->SetShadowCaster( true );
     CurrentScene->AddLight( Light0 );
 
-    PointLight* Light1 = DBG_NEW PointLight();
+    CPointLight* Light1 = DBG_NEW CPointLight();
     Light1->SetPosition( -17.5f, 1.0f, 0.0f );
     Light1->SetColor( 1.0f, 1.0f, 1.0f );
     Light1->SetShadowBias( 0.001f );
@@ -296,7 +296,7 @@ bool CSandbox::Init()
     Light1->SetShadowCaster( true );
     CurrentScene->AddLight( Light1 );
 
-    PointLight* Light2 = DBG_NEW PointLight();
+    CPointLight* Light2 = DBG_NEW CPointLight();
     Light2->SetPosition( 16.5f, 11.0f, 0.0f );
     Light2->SetColor( 1.0f, 1.0f, 1.0f );
     Light2->SetShadowBias( 0.001f );
@@ -306,7 +306,7 @@ bool CSandbox::Init()
     Light2->SetShadowCaster( true );
     CurrentScene->AddLight( Light2 );
 
-    PointLight* Light3 = DBG_NEW PointLight();
+    CPointLight* Light3 = DBG_NEW CPointLight();
     Light3->SetPosition( -17.5f, 11.0f, 0.0f );
     Light3->SetColor( 1.0f, 1.0f, 1.0f );
     Light3->SetShadowBias( 0.001f );
@@ -328,7 +328,7 @@ bool CSandbox::Init()
         float z = RandomFloats( Generator ) * 16.0f - 8.0f;
         float Intentsity = RandomFloats( Generator ) * 5.0f + 1.0f;
 
-        PointLight* Light = DBG_NEW PointLight();
+        CPointLight* Light = DBG_NEW CPointLight();
         Light->SetPosition( x, y, z );
         Light->SetColor( RandomFloats( Generator ), RandomFloats( Generator ), RandomFloats( Generator ) );
         Light->SetIntensity( Intentsity );
@@ -337,7 +337,7 @@ bool CSandbox::Init()
 #endif
 
     // Add DirectionalLight- Source
-    DirectionalLight* Light4 = DBG_NEW DirectionalLight();
+    CDirectionalLight* Light4 = DBG_NEW CDirectionalLight();
     Light4->SetShadowBias( 0.0002f );
     Light4->SetMaxShadowBias( 0.0015f );
     Light4->SetColor( 1.0f, 1.0f, 1.0f );

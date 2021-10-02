@@ -1,23 +1,19 @@
 #pragma once
-#include "Core.h"
+#include "Core/Containers/String.h"
 
-#include <string>
+class CConsoleVariable;
+class CConsoleCommand;
 
-class ConsoleVariable;
-class ConsoleCommand;
-
-using String = std::string;
-
-class ConsoleObject
+class CConsoleObject
 {
 public:
-    virtual ~ConsoleObject() = default;
+    virtual ~CConsoleObject() = default;
 
-    virtual ConsoleCommand* AsCommand()
+    virtual CConsoleCommand* AsCommand()
     {
         return nullptr;
     }
-    virtual ConsoleVariable* AsVariable()
+    virtual CConsoleVariable* AsVariable()
     {
         return nullptr;
     }

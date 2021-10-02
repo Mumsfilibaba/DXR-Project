@@ -6,11 +6,11 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12Helpers.h"
 
-class D3D12Resource : public D3D12DeviceChild, public CRefCounted
+class D3D12Resource : public CD3D12DeviceChild, public CRefCounted
 {
 public:
-    D3D12Resource( D3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource );
-    D3D12Resource( D3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType );
+    D3D12Resource( CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource );
+    D3D12Resource( CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType );
     ~D3D12Resource() = default;
 
     bool Init( D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue );
@@ -18,9 +18,9 @@ public:
     void* Map( uint32 SubResource, const D3D12_RANGE* Range );
     void  Unmap( uint32 SubResource, const D3D12_RANGE* Range );
 
-    void SetName( const std::string& Name )
+    void SetName( const CString& Name )
     {
-        WString WideName = CharToWide( CString( Name.c_str(), Name.length() ) );
+        WString WideName = CharToWide( Name );
         DxResource->SetName( WideName.CStr() );
     }
 

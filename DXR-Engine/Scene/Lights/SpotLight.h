@@ -1,13 +1,13 @@
 #pragma once
 #include "Light.h"
 
-class SpotLight : public Light
+class CSpotLight : public CLight
 {
-    CORE_OBJECT( SpotLight, Light );
+    CORE_OBJECT( CSpotLight, CLight );
 
 public:
-    SpotLight();
-    ~SpotLight();
+    CSpotLight();
+    ~CSpotLight();
 
     void SetConeAngle( float InConeAngle );
 

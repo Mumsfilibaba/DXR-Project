@@ -3,19 +3,20 @@
 
 #include "Core/Delegates/MulticastDelegate.h"
 
-class ConsoleCommand : public ConsoleObject
+class CConsoleCommand : public CConsoleObject
 {
 public:
-    virtual ConsoleCommand* AsCommand() override
+
+    DECLARE_MULTICAST_DELEGATE( CCommandExecutedDelegate );
+    CCommandExecutedDelegate OnExecute;
+
+    virtual CConsoleCommand* AsCommand() override
     {
         return this;
     }
 
-    void Execute()
+    FORCEINLINE void Execute()
     {
         OnExecute.Broadcast();
     }
-
-    DECLARE_MULTICAST_DELEGATE( CCommandExecutedDelegate );
-    CCommandExecutedDelegate OnExecute;
 };

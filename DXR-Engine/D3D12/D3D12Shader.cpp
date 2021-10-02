@@ -2,20 +2,20 @@
 #include "D3D12ShaderCompiler.h"
 #include "D3D12RootSignature.h"
 
-D3D12BaseShader::D3D12BaseShader( D3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility )
-    : D3D12DeviceChild( InDevice )
+CD3D12BaseShader::CD3D12BaseShader( CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility )
+    : CD3D12DeviceChild( InDevice )
     , ByteCode()
     , Visibility( InVisibility )
 {
     ByteCode.BytecodeLength = InCode.SizeInBytes();
-    ByteCode.pShaderBytecode = Memory::Malloc( ByteCode.BytecodeLength );
+    ByteCode.pShaderBytecode = CMemory::Malloc( ByteCode.BytecodeLength );
 
-    Memory::Memcpy( (void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength );
+    CMemory::Memcpy( (void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength );
 }
 
-D3D12BaseShader::~D3D12BaseShader()
+CD3D12BaseShader::~CD3D12BaseShader()
 {
-    Memory::Free( (void*)ByteCode.pShaderBytecode );
+    CMemory::Free( (void*)ByteCode.pShaderBytecode );
 
     ByteCode.pShaderBytecode = nullptr;
     ByteCode.BytecodeLength = 0;
@@ -55,19 +55,19 @@ static bool IsLegalRegisterSpace( const D3D12_SHADER_INPUT_BIND_DESC& ShaderBind
 }
 
 template<typename TD3D12ReflectionInterface>
-bool D3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Reflection, D3D12BaseShader* Shader, uint32 NumBoundResources )
+bool CD3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Reflection, CD3D12BaseShader* Shader, uint32 NumBoundResources )
 {
-    ShaderResourceCount          ResourceCount;
-    ShaderResourceCount          RTLocalResourceCount;
-    TArray<D3D12ShaderParameter> ConstantBufferParameters;
-    TArray<D3D12ShaderParameter> SamplerParameters;
-    TArray<D3D12ShaderParameter> ShaderResourceParameters;
-    TArray<D3D12ShaderParameter> UnorderedAccessParameters;
+    SShaderResourceCount          ResourceCount;
+    SShaderResourceCount          RTLocalResourceCount;
+    TArray<SD3D12ShaderParameter> ConstantBufferParameters;
+    TArray<SD3D12ShaderParameter> SamplerParameters;
+    TArray<SD3D12ShaderParameter> ShaderResourceParameters;
+    TArray<SD3D12ShaderParameter> UnorderedAccessParameters;
 
     D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc;
     for ( uint32 i = 0; i < NumBoundResources; i++ )
     {
-        Memory::Memzero( &ShaderBindDesc );
+        CMemory::Memzero( &ShaderBindDesc );
 
         if ( FAILED( Reflection->GetResourceBindingDesc( i, &ShaderBindDesc ) ) )
         {
@@ -76,7 +76,7 @@ bool D3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Refl
 
         if ( !IsLegalRegisterSpace( ShaderBindDesc ) )
         {
-            LOG_ERROR( "Shader Parameter '" + std::string( ShaderBindDesc.Name ) + "' has register space '" + std::to_string( ShaderBindDesc.Space ) + "' specified, which is invalid." );
+            LOG_ERROR( "Shader Parameter '" + CString( ShaderBindDesc.Name ) + "' has register space '" + ToString( ShaderBindDesc.Space ) + "' specified, which is invalid." );
             return false;
         }
 
@@ -172,7 +172,7 @@ bool D3D12BaseShader::GetShaderResourceBindings( TD3D12ReflectionInterface* Refl
     return true;
 }
 
-bool D3D12BaseShader::GetShaderReflection( D3D12BaseShader* Shader )
+bool CD3D12BaseShader::GetShaderReflection( CD3D12BaseShader* Shader )
 {
     Assert( Shader != nullptr );
 
@@ -202,7 +202,7 @@ bool D3D12BaseShader::GetShaderReflection( D3D12BaseShader* Shader )
     return true;
 }
 
-bool D3D12BaseRayTracingShader::GetRayTracingShaderReflection( D3D12BaseRayTracingShader* Shader )
+bool CD3D12BaseRayTracingShader::GetRayTracingShaderReflection( CD3D12BaseRayTracingShader* Shader )
 {
     Assert( Shader != nullptr );
 
@@ -213,7 +213,7 @@ bool D3D12BaseRayTracingShader::GetRayTracingShaderReflection( D3D12BaseRayTraci
     }
 
     D3D12_LIBRARY_DESC LibDesc;
-    Memory::Memzero( &LibDesc );
+    CMemory::Memzero( &LibDesc );
 
     HRESULT Result = Reflection->GetDesc( &LibDesc );
     if ( FAILED( Result ) )
@@ -227,7 +227,7 @@ bool D3D12BaseRayTracingShader::GetRayTracingShaderReflection( D3D12BaseRayTraci
     ID3D12FunctionReflection* Function = Reflection->GetFunctionByIndex( 0 );
 
     D3D12_FUNCTION_DESC FuncDesc;
-    Memory::Memzero( &FuncDesc );
+    CMemory::Memzero( &FuncDesc );
 
     Function->GetDesc( &FuncDesc );
     if ( FAILED( Result ) )
@@ -242,21 +242,21 @@ bool D3D12BaseRayTracingShader::GetRayTracingShaderReflection( D3D12BaseRayTraci
     }
 
     // NOTE: Since the Nvidia driver can't handle these names, we have to change the names :(
-    std::string Identifier = FuncDesc.Name;
+    CString Identifier = FuncDesc.Name;
 
-    auto NameStart = Identifier.find_last_of( "\x1?" );
-    if ( NameStart != std::string::npos )
+    auto NameStart = Identifier.ReverseFindOneOf( "\x1?" );
+    if ( NameStart != CString::InvalidPosition )
     {
         NameStart++;
     }
 
-    auto NameEnd = Identifier.find_first_of( "@" );
+    auto NameEnd = Identifier.Find( "@" );
 
-    Shader->Identifier = Identifier.substr( NameStart, NameEnd - NameStart );
+    Shader->Identifier = Identifier.SubString( NameStart, NameEnd - NameStart );
     return true;
 }
 
-bool D3D12BaseComputeShader::Init()
+bool CD3D12BaseComputeShader::Init()
 {
     TComPtr<ID3D12ShaderReflection> Reflection;
     if ( !GD3D12ShaderCompiler->GetReflection( this, &Reflection ) )
@@ -292,7 +292,7 @@ bool D3D12BaseComputeShader::Init()
     return true;
 }
 
-void ShaderResourceCount::Combine( const ShaderResourceCount& Other )
+void SShaderResourceCount::Combine( const SShaderResourceCount& Other )
 {
     Ranges.NumCBVs = NMath::Max( Ranges.NumCBVs, Other.Ranges.NumCBVs );
     Ranges.NumSRVs = NMath::Max( Ranges.NumSRVs, Other.Ranges.NumSRVs );
@@ -301,7 +301,7 @@ void ShaderResourceCount::Combine( const ShaderResourceCount& Other )
     Num32BitConstants = NMath::Max( Num32BitConstants, Other.Num32BitConstants );
 }
 
-bool ShaderResourceCount::IsCompatible( const ShaderResourceCount& Other ) const
+bool SShaderResourceCount::IsCompatible( const SShaderResourceCount& Other ) const
 {
     if ( Num32BitConstants > Other.Num32BitConstants )
     {

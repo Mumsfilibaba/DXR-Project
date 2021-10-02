@@ -7,7 +7,7 @@ void CMeshUtilities::Subdivide( SMeshData& OutData, uint32 Subdivisions ) noexce
         return;
     }
 
-    Vertex TempVertices[3];
+    SVertex TempVertices[3];
     uint32 IndexCount = 0;
     uint32 VertexCount = 0;
     uint32 OldVertexCount = 0;
@@ -161,9 +161,9 @@ void CMeshUtilities::CalculateHardNormals( SMeshData& OutData ) noexcept
 
     for ( int32 i = 0; i < OutData.Indices.Size(); i += 3 )
     {
-        Vertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
-        Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
-        Vertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 2]];
+        SVertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
+        SVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
+        SVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 2]];
 
         CVector3 Edge0 = Vertex2.Position - Vertex0.Position;
         CVector3 Edge1 = Vertex1.Position - Vertex0.Position;
@@ -185,9 +185,9 @@ void CMeshUtilities::CalculateSoftNormals( SMeshData& OutData ) noexcept
 
     for ( int32 i = 0; i < OutData.Indices.Size(); i += 3 )
     {
-        Vertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
-        Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
-        Vertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 2]];
+        SVertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
+        SVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
+        SVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 2]];
 
         CVector3 Edge0 = Vertex2.Position - Vertex0.Position;
         CVector3 Edge1 = Vertex1.Position - Vertex0.Position;
@@ -208,7 +208,7 @@ void CMeshUtilities::CalculateTangents( SMeshData& OutData ) noexcept
 {
     Assert( OutData.Indices.Size() % 3 == 0 );
 
-    auto CalculateTangentFromVectors = []( Vertex& Vertex1, const Vertex& Vertex2, const Vertex& Vertex3 )
+    auto CalculateTangentFromVectors = []( SVertex& Vertex1, const SVertex& Vertex2, const SVertex& Vertex3 )
     {
         CVector3 Edge1 = Vertex2.Position - Vertex1.Position;
         CVector3 Edge2 = Vertex3.Position - Vertex1.Position;
@@ -226,9 +226,9 @@ void CMeshUtilities::CalculateTangents( SMeshData& OutData ) noexcept
 
     for ( int32 i = 0; i < OutData.Indices.Size(); i += 3 )
     {
-        Vertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
-        Vertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];
-        Vertex& Vertex3 = OutData.Vertices[OutData.Indices[i + 2]];
+        SVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
+        SVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];
+        SVertex& Vertex3 = OutData.Vertices[OutData.Indices[i + 2]];
 
         CalculateTangentFromVectors( Vertex1, Vertex2, Vertex3 );
         CalculateTangentFromVectors( Vertex2, Vertex3, Vertex1 );

@@ -1,7 +1,7 @@
 #include "Material.h"
 
-#include "RenderLayer/RenderLayer.h"
-#include "RenderLayer/CommandList.h"
+#include "RHICore/RHIModule.h"
+#include "RHICore/RHICommandList.h"
 
 #define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetShaderResourceView() : nullptr
 
@@ -20,7 +20,7 @@ CMaterial::CMaterial( const SMaterialDesc& InProperties )
 void CMaterial::Init()
 {
     // TODO: Have a null layer to avoid these checks
-    if ( !GRenderLayer )
+    if ( !GRHICore )
     {
         LOG_WARNING( " No RenderAPI available Material not initialized " );
         return;
@@ -32,7 +32,7 @@ void CMaterial::Init()
         MaterialBuffer->SetName( "MaterialBuffer" );
     }
 
-    SamplerStateCreateInfo CreateInfo;
+    SSamplerStateCreateInfo CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Wrap;
     CreateInfo.AddressV = ESamplerMode::Wrap;
     CreateInfo.AddressW = ESamplerMode::Wrap;
@@ -46,7 +46,7 @@ void CMaterial::Init()
     Sampler = CreateSamplerState( CreateInfo );
 }
 
-void CMaterial::BuildBuffer( CommandList& CmdList )
+void CMaterial::BuildBuffer( CRHICommandList& CmdList )
 {
     CmdList.TransitionBuffer( MaterialBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest );
     CmdList.UpdateBuffer( MaterialBuffer.Get(), 0, sizeof( SMaterialDesc ), &Properties );
@@ -100,12 +100,12 @@ void CMaterial::EnableAlphaMask( bool InEnableAlphaMask )
     Properties.EnableMask = (int32)InEnableAlphaMask;
 }
 
-void CMaterial::SetDebugName( const std::string& InDebugName )
+void CMaterial::SetDebugName( const CString& InDebugName )
 {
     DebugName = InDebugName;
 }
 
-ShaderResourceView* const* CMaterial::GetShaderResourceViews() const
+CRHIShaderResourceView* const* CMaterial::GetShaderResourceViews() const
 {
     ShaderResourceViews[0] = GET_SAFE_SRV( AlbedoMap );
     ShaderResourceViews[1] = GET_SAFE_SRV( NormalMap );

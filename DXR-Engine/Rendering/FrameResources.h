@@ -1,9 +1,9 @@
 #pragma once
-#include "RenderLayer/Resources.h"
-#include "RenderLayer/Viewport.h"
+#include "RHICore/RHIResources.h"
+#include "RHICore/RHIViewport.h"
 
 #include "Rendering/MeshDrawCommand.h"
-#include "Rendering/DebugUI.h"
+#include "Rendering/UIRenderer.h"
 
 #include <unordered_map>
 
@@ -14,7 +14,7 @@
 #define GBUFFER_VIEW_NORMAL_INDEX 4
 
 template<typename TResource>
-class ResourceCache
+class TResourceCache
 {
 public:
     int32 Add( TResource* Resource )
@@ -54,10 +54,10 @@ private:
     std::unordered_map<TResource*, int32> ResourceIndices;
 };
 
-struct FrameResources
+struct SFrameResources
 {
-    FrameResources() = default;
-    ~FrameResources() = default;
+    SFrameResources() = default;
+    ~SFrameResources() = default;
 
     void Release();
 
@@ -71,49 +71,49 @@ struct FrameResources
     const EFormat NormalFormat = EFormat::R10G10B10A2_Unorm;
     const EFormat ViewNormalFormat = EFormat::R10G10B10A2_Unorm;
 
-    Texture2D* BackBuffer = nullptr;
+    CRHITexture2D* BackBuffer = nullptr;
 
-    TSharedRef<ConstantBuffer> CameraBuffer;
-    TSharedRef<ConstantBuffer> TransformBuffer;
+    TSharedRef<CRHIConstantBuffer> CameraBuffer;
+    TSharedRef<CRHIConstantBuffer> TransformBuffer;
 
-    TSharedRef<SamplerState> PointLightShadowSampler;
-    TSharedRef<SamplerState> DirectionalLightShadowSampler;
-    TSharedRef<SamplerState> IrradianceSampler;
+    TSharedRef<CRHISamplerState> PointLightShadowSampler;
+    TSharedRef<CRHISamplerState> DirectionalLightShadowSampler;
+    TSharedRef<CRHISamplerState> IrradianceSampler;
 
-    TSharedRef<TextureCube> Skybox;
+    TSharedRef<CRHITextureCube> Skybox;
 
-    TSharedRef<Texture2D>    IntegrationLUT;
-    TSharedRef<SamplerState> IntegrationLUTSampler;
+    TSharedRef<CRHITexture2D>    IntegrationLUT;
+    TSharedRef<CRHISamplerState> IntegrationLUTSampler;
 
-    TSharedRef<Texture2D> SSAOBuffer;
-    TSharedRef<Texture2D> FinalTarget;
-    TSharedRef<Texture2D> GBuffer[5];
+    TSharedRef<CRHITexture2D> SSAOBuffer;
+    TSharedRef<CRHITexture2D> FinalTarget;
+    TSharedRef<CRHITexture2D> GBuffer[5];
 
-    // Two resources that can be ping ponged inbetween
-    TSharedRef<Texture2D> ReducedDepthBuffer[2];
+    // Two resources that can be ping-ponged between
+    TSharedRef<CRHITexture2D> ReducedDepthBuffer[2];
 
-    TSharedRef<SamplerState> GBufferSampler;
-    TSharedRef<SamplerState> FXAASampler;
+    TSharedRef<CRHISamplerState> GBufferSampler;
+    TSharedRef<CRHISamplerState> FXAASampler;
 
-    TSharedRef<InputLayoutState> StdInputLayout;
+    TSharedRef<CRHIInputLayoutState> StdInputLayout;
 
-    TSharedRef<Texture2D>       RTOutput;
-    TSharedRef<RayTracingScene> RTScene;
+    TSharedRef<CRHITexture2D>       RTOutput;
+    TSharedRef<CRHIRayTracingScene> RTScene;
 
-    RayTracingShaderResources GlobalResources;
-    RayTracingShaderResources RayGenLocalResources;
-    RayTracingShaderResources MissLocalResources;
-    TArray<RayTracingGeometryInstance> RTGeometryInstances;
+    SRayTracingShaderResources GlobalResources;
+    SRayTracingShaderResources RayGenLocalResources;
+    SRayTracingShaderResources MissLocalResources;
+    TArray<SRayTracingGeometryInstance> RTGeometryInstances;
 
-    TArray<RayTracingShaderResources>       RTHitGroupResources;
-    std::unordered_map<class Mesh*, uint32> RTMeshToHitGroupIndex;
-    ResourceCache<ShaderResourceView>       RTMaterialTextureCache;
+    TArray<SRayTracingShaderResources>       RTHitGroupResources;
+    std::unordered_map<class CMesh*, uint32> RTMeshToHitGroupIndex;
+    TResourceCache<CRHIShaderResourceView>       RTMaterialTextureCache;
 
-    TArray<MeshDrawCommand> DeferredVisibleCommands;
-    TArray<MeshDrawCommand> ForwardVisibleCommands;
+    TArray<SMeshDrawCommand> DeferredVisibleCommands;
+    TArray<SMeshDrawCommand> ForwardVisibleCommands;
 
-    TArray<ImGuiImage> DebugTextures;
+    TArray<SImGuiImage> DebugTextures;
 
-    TSharedRef<Viewport> MainWindowViewport;
+    TSharedRef<CRHIViewport> MainWindowViewport;
 };
 

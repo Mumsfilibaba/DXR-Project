@@ -8,7 +8,7 @@
 #include "Rendering/Resources/Material.h"
 #include "Rendering/Resources/Mesh.h"
 
-#include "RenderLayer/Resources.h"
+#include "RHICore/RHIResources.h"
 
 #include <tiny_obj_loader.h>
 
@@ -27,7 +27,7 @@ CScene::~CScene()
     }
     Actors.Clear();
 
-    for ( Light* CurrentLight : Lights )
+    for ( CLight* CurrentLight : Lights )
     {
         SafeDelete( CurrentLight );
     }
@@ -65,7 +65,7 @@ void CScene::Tick( CTimestamp DeltaTime )
     }
 }
 
-void CScene::AddCamera( Camera* InCamera )
+void CScene::AddCamera( CCamera* InCamera )
 {
     if ( CurrentCamera )
     {
@@ -87,7 +87,7 @@ void CScene::AddActor( CActor* InActor )
     }
 }
 
-void CScene::AddLight( Light* InLight )
+void CScene::AddLight( CLight* InLight )
 {
     Assert( InLight != nullptr );
     Lights.Emplace( InLight );
@@ -104,7 +104,7 @@ void CScene::OnAddedComponent( CComponent* NewComponent )
 
 void CScene::AddMeshComponent( CMeshComponent* Component )
 {
-    MeshDrawCommand Command;
+    SMeshDrawCommand Command;
     Command.CurrentActor = Component->GetActor();
     Command.Geometry = Component->Mesh->RTGeometry.Get();
     Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();

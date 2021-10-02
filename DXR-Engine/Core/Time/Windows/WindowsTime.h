@@ -1,10 +1,10 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "Core/Time/Generic/GenericTime.h"
+#include "Core/Time/Core/CoreTime.h"
 #include "Core/Windows/Windows.h"
 
-class CWindowsTime : public CGenericTime
+class CWindowsTime : public CCoreTime
 {
 public:
 

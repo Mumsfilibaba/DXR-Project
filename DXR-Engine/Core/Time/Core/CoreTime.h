@@ -1,7 +1,7 @@
 #pragma once
 #include "Core.h"
 
-class CGenericTime
+class CCoreTime
 {
 public:
 

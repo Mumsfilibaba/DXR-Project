@@ -27,7 +27,7 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type DefaultConstruc
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type DefaultConstructRange( void* StartAddress, uint32 Count ) noexcept
 {
-    Memory::Memzero( StartAddress, sizeof( T ) * Count );
+    CMemory::Memzero( StartAddress, sizeof( T ) * Count );
 }
 
 /* Default construct a single object */
@@ -78,7 +78,7 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyConstructRa
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type CopyConstructRange( void* restrict_ptr StartAddress, const T* restrict_ptr Source, uint32 Count ) noexcept
 {
-    Memory::Memcpy( StartAddress, Source, sizeof( T ) * Count );
+    CMemory::Memcpy( StartAddress, Source, sizeof( T ) * Count );
 }
 
 /* Copy-construct a single object */
@@ -105,7 +105,7 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyAssignRange
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value>::Type CopyAssignRange( T* restrict_ptr Destination, const T* restrict_ptr Source, uint32 Count ) noexcept
 {
-    Memory::Memcpy( Destination, Source, sizeof( T ) * Count );
+    CMemory::Memcpy( Destination, Source, sizeof( T ) * Count );
 }
 
 /* Copy-assign a single object */
@@ -132,7 +132,7 @@ FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<T>>::Value>::Type MoveConst
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type MoveConstructRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
-    Memory::Memexchange( StartAddress, Source, sizeof( T ) * Count );
+    CMemory::Memexchange( StartAddress, Source, sizeof( T ) * Count );
 }
 
 /* Move-construct a single object */
@@ -159,7 +159,7 @@ FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<T>>::Value>::Type MoveAssig
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type MoveAssignRange( T* Destination, const T* Source, uint32 Count ) noexcept
 {
-    Memory::Memexchange( Destination, Source, sizeof( T ) * Count );
+    CMemory::Memexchange( Destination, Source, sizeof( T ) * Count );
 }
 
 /* Move-assign a single object */
@@ -269,7 +269,7 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsCopyConstructa
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
 {
-    Memory::Memmove( StartAddress, reinterpret_cast<const void*>(Source), sizeof( T ) * Count );
+    CMemory::Memmove( StartAddress, reinterpret_cast<const void*>(Source), sizeof( T ) * Count );
 }
 
 /* Compares elements in the range if they are equal or not */
@@ -293,5 +293,5 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value, bool>::Type CompareRa
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value, bool>::Type CompareRange( const T* LHS, const T* RHS, uint32 Count ) noexcept
 {
-    return Memory::Memcmp<T>( LHS, RHS, Count );
+    return CMemory::Memcmp<T>( LHS, RHS, Count );
 }

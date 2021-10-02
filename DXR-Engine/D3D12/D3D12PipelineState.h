@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderLayer/Resources.h"
+#include "RHICore/RHIResources.h"
 
 #include "Core/Utilities/StringUtilities.h"
 
@@ -7,21 +7,21 @@
 #include "D3D12Helpers.h"
 #include "D3D12RootSignature.h"
 
-class D3D12InputLayoutState : public InputLayoutState, public D3D12DeviceChild
+class CD3D12InputLayoutState : public CRHIInputLayoutState, public CD3D12DeviceChild
 {
 public:
-    D3D12InputLayoutState( D3D12Device* InDevice, const InputLayoutStateCreateInfo& CreateInfo )
-        : InputLayoutState()
-        , D3D12DeviceChild( InDevice )
+    CD3D12InputLayoutState( CD3D12Device* InDevice, const SInputLayoutStateCreateInfo& CreateInfo )
+        : CRHIInputLayoutState()
+        , CD3D12DeviceChild( InDevice )
         , SemanticNames()
         , ElementDesc()
         , Desc()
     {
         SemanticNames.Reserve( CreateInfo.Elements.Size() );
-        for ( const InputElement& Element : CreateInfo.Elements )
+        for ( const SInputElement& Element : CreateInfo.Elements )
         {
             D3D12_INPUT_ELEMENT_DESC DxElement;
-            DxElement.SemanticName = SemanticNames.Emplace( Element.Semantic ).c_str();
+            DxElement.SemanticName = SemanticNames.Emplace( Element.Semantic ).CStr();
             DxElement.SemanticIndex = Element.SemanticIndex;
             DxElement.Format = ConvertFormat( Element.Format );
             DxElement.InputSlot = Element.InputSlot;
@@ -40,33 +40,34 @@ public:
         return true;
     }
 
-    const D3D12_INPUT_ELEMENT_DESC* GetElementData() const
+    FORCEINLINE const D3D12_INPUT_ELEMENT_DESC* GetElementData() const
     {
         return ElementDesc.Data();
     }
 
-    uint32 GetElementCount() const
+    FORCEINLINE uint32 GetElementCount() const
     {
         return ElementDesc.Size();
     }
 
-    const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
+    FORCEINLINE const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
     {
         return Desc;
     }
 
 private:
-    TArray<std::string> SemanticNames;
-    TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
     D3D12_INPUT_LAYOUT_DESC Desc;
+
+    TArray<CString> SemanticNames;
+    TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
 };
 
-class D3D12DepthStencilState : public DepthStencilState, public D3D12DeviceChild
+class CD3D12DepthStencilState : public CRHIDepthStencilState, public CD3D12DeviceChild
 {
 public:
-    D3D12DepthStencilState( D3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc )
-        : DepthStencilState()
-        , D3D12DeviceChild( InDevice )
+    CD3D12DepthStencilState( CD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc )
+        : CRHIDepthStencilState()
+        , CD3D12DeviceChild( InDevice )
         , Desc( InDesc )
     {
     }
@@ -76,7 +77,7 @@ public:
         return true;
     }
 
-    const D3D12_DEPTH_STENCIL_DESC& GetDesc() const
+    FORCEINLINE const D3D12_DEPTH_STENCIL_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -85,12 +86,12 @@ private:
     D3D12_DEPTH_STENCIL_DESC Desc;
 };
 
-class D3D12RasterizerState : public RasterizerState, public D3D12DeviceChild
+class CD3D12RasterizerState : public CRHIRasterizerState, public CD3D12DeviceChild
 {
 public:
-    D3D12RasterizerState( D3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc )
-        : RasterizerState()
-        , D3D12DeviceChild( InDevice )
+    CD3D12RasterizerState( CD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc )
+        : CRHIRasterizerState()
+        , CD3D12DeviceChild( InDevice )
         , Desc( InDesc )
     {
     }
@@ -100,7 +101,7 @@ public:
         return true;
     }
 
-    const D3D12_RASTERIZER_DESC& GetDesc() const
+    FORCEINLINE const D3D12_RASTERIZER_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -109,12 +110,12 @@ private:
     D3D12_RASTERIZER_DESC Desc;
 };
 
-class D3D12BlendState : public BlendState, public D3D12DeviceChild
+class CD3D12BlendState : public CRHIBlendState, public CD3D12DeviceChild
 {
 public:
-    D3D12BlendState( D3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc )
-        : BlendState()
-        , D3D12DeviceChild( InDevice )
+    CD3D12BlendState( CD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc )
+        : CRHIBlendState()
+        , CD3D12DeviceChild( InDevice )
         , Desc( InDesc )
     {
     }
@@ -124,7 +125,7 @@ public:
         return true;
     }
 
-    const D3D12_BLEND_DESC& GetDesc() const
+    FORCEINLINE const D3D12_BLEND_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -133,19 +134,19 @@ private:
     D3D12_BLEND_DESC Desc;
 };
 
-class D3D12GraphicsPipelineState : public GraphicsPipelineState, public D3D12DeviceChild
+class CD3D12GraphicsPipelineState : public CRHIGraphicsPipelineState, public CD3D12DeviceChild
 {
 public:
-    D3D12GraphicsPipelineState( D3D12Device* InDevice );
-    ~D3D12GraphicsPipelineState() = default;
+    CD3D12GraphicsPipelineState( CD3D12Device* InDevice );
+    ~CD3D12GraphicsPipelineState() = default;
 
-    bool Init( const GraphicsPipelineStateCreateInfo& CreateInfo );
+    bool Init( const SGraphicsPipelineStateCreateInfo& CreateInfo );
 
-    virtual void SetName( const std::string& InName ) override final
+    virtual void SetName( const CString& InName ) override final
     {
-        Resource::SetName( InName );
+        CRHIResource::SetName( InName );
 
-        WString WideName = CharToWide( CString( InName.c_str(), InName.length() ) );
+        WString WideName = CharToWide( InName );
         PipelineState->SetName( WideName.CStr() );
     }
 
@@ -159,33 +160,34 @@ public:
         return PipelineState != nullptr && RootSignature != nullptr;
     }
 
-    ID3D12PipelineState* GetPipeline()      const
+    FORCEINLINE ID3D12PipelineState* GetPipeline() const
     {
         return PipelineState.Get();
     }
-    D3D12RootSignature* GetRootSignature() const
+
+    FORCEINLINE CD3D12RootSignature* GetRootSignature() const
     {
         return RootSignature.Get();
     }
 
 private:
-    TComPtr<ID3D12PipelineState> PipelineState;
-    TSharedRef<D3D12RootSignature>     RootSignature;
+    TComPtr<ID3D12PipelineState>    PipelineState;
+    TSharedRef<CD3D12RootSignature> RootSignature;
 };
 
-class D3D12ComputePipelineState : public ComputePipelineState, public D3D12DeviceChild
+class CD3D12ComputePipelineState : public CRHIComputePipelineState, public CD3D12DeviceChild
 {
 public:
-    D3D12ComputePipelineState( D3D12Device* InDevice, const TSharedRef<D3D12ComputeShader>& InShader );
-    ~D3D12ComputePipelineState() = default;
+    CD3D12ComputePipelineState( CD3D12Device* InDevice, const TSharedRef<CD3D12ComputeShader>& InShader );
+    ~CD3D12ComputePipelineState() = default;
 
     bool Init();
 
-    virtual void SetName( const std::string& InName ) override final
+    virtual void SetName( const CString& InName ) override final
     {
-        Resource::SetName( InName );
+        CRHIResource::SetName( InName );
 
-        WString WideName = CharToWide( CString( InName.c_str(), InName.length() ) );
+        WString WideName = CharToWide( InName );
         PipelineState->SetName( WideName.CStr() );
     }
 
@@ -199,40 +201,41 @@ public:
         return PipelineState != nullptr && RootSignature != nullptr;
     }
 
-    ID3D12PipelineState* GetPipeline()      const
+    FORCEINLINE ID3D12PipelineState* GetPipeline() const
     {
         return PipelineState.Get();
     }
-    D3D12RootSignature* GetRootSignature() const
+
+    FORCEINLINE CD3D12RootSignature* GetRootSignature() const
     {
         return RootSignature.Get();
     }
 
 private:
-    TComPtr<ID3D12PipelineState> PipelineState;
-    TSharedRef<D3D12ComputeShader>     Shader;
-    TSharedRef<D3D12RootSignature>     RootSignature;
+    TComPtr<ID3D12PipelineState>    PipelineState;
+    TSharedRef<CD3D12ComputeShader>  Shader;
+    TSharedRef<CD3D12RootSignature> RootSignature;
 };
 
-struct RayTracingShaderIdentifer
+struct SRayTracingShaderIdentifer
 {
     char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
 };
 
-class D3D12RayTracingPipelineState : public RayTracingPipelineState, public D3D12DeviceChild
+class CD3D12RayTracingPipelineState : public CRHIRayTracingPipelineState, public CD3D12DeviceChild
 {
 public:
-    D3D12RayTracingPipelineState( D3D12Device* InDevice );
-    ~D3D12RayTracingPipelineState() = default;
+    CD3D12RayTracingPipelineState( CD3D12Device* InDevice );
+    ~CD3D12RayTracingPipelineState() = default;
 
-    bool Init( const RayTracingPipelineStateCreateInfo& CreateInfo );
+    bool Init( const SRayTracingPipelineStateCreateInfo& CreateInfo );
 
-    virtual void SetName( const std::string& InName ) override
+    virtual void SetName( const CString& InName ) override
     {
-        Resource::SetName( InName );
+        CRHIResource::SetName( InName );
 
-        std::wstring WideName = CharToWide( CString( InName.c_str(), InName.length() ) ).CStr();
-        StateObject->SetName( WideName.c_str() );
+        WString WideName = CharToWide( InName );
+        StateObject->SetName( WideName.CStr() );
     }
 
     virtual void* GetNativeResource() const override final
@@ -245,30 +248,34 @@ public:
         return StateObject != nullptr;
     }
 
-    void* GetShaderIdentifer( const std::string& ExportName );
+    void* GetShaderIdentifer( const CString& ExportName );
 
-    ID3D12StateObject* GetStateObject()           const
+    FORCEINLINE ID3D12StateObject* GetStateObject() const
     {
         return StateObject.Get();
     }
-    ID3D12StateObjectProperties* GetStateObjectProperties() const
+
+    FORCEINLINE ID3D12StateObjectProperties* GetStateObjectProperties() const
     {
         return StateObjectProperties.Get();
     }
 
-    D3D12RootSignature* GetGlobalRootSignature()      const
+    FORCEINLINE CD3D12RootSignature* GetGlobalRootSignature() const
     {
         return GlobalRootSignature.Get();
     }
-    D3D12RootSignature* GetRayGenLocalRootSignature() const
+    
+    FORCEINLINE CD3D12RootSignature* GetRayGenLocalRootSignature() const
     {
         return RayGenLocalRootSignature.Get();
     }
-    D3D12RootSignature* GetMissLocalRootSignature()   const
+    
+    FORCEINLINE CD3D12RootSignature* GetMissLocalRootSignature() const
     {
         return MissLocalRootSignature.Get();
     }
-    D3D12RootSignature* GetHitLocalRootSignature()    const
+    
+    FORCEINLINE CD3D12RootSignature* GetHitLocalRootSignature() const
     {
         return HitLocalRootSignature.Get();
     }
@@ -276,11 +283,12 @@ public:
 private:
     TComPtr<ID3D12StateObject>           StateObject;
     TComPtr<ID3D12StateObjectProperties> StateObjectProperties;
-    // TODO: There could be more than one rootdignature for locals
-    TSharedRef<D3D12RootSignature> GlobalRootSignature;
-    TSharedRef<D3D12RootSignature> RayGenLocalRootSignature;
-    TSharedRef<D3D12RootSignature> MissLocalRootSignature;
-    TSharedRef<D3D12RootSignature> HitLocalRootSignature;
 
-    std::unordered_map<std::string, RayTracingShaderIdentifer> ShaderIdentifers;
+    // TODO: There could be more than one root signature for locals
+    TSharedRef<CD3D12RootSignature> GlobalRootSignature;
+    TSharedRef<CD3D12RootSignature> RayGenLocalRootSignature;
+    TSharedRef<CD3D12RootSignature> MissLocalRootSignature;
+    TSharedRef<CD3D12RootSignature> HitLocalRootSignature;
+
+    std::unordered_map<CString, SRayTracingShaderIdentifer, SStringHasher> ShaderIdentifers;
 };

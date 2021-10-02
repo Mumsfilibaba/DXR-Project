@@ -6,8 +6,8 @@ TStaticArray<uint16, 512> CWindowsKeyMapping::ScanCodeFromKeyCodeTable;
 
 void CWindowsKeyMapping::Init()
 {
-    Memory::Memzero( KeyCodeFromScanCodeTable.Data(), KeyCodeFromScanCodeTable.SizeInBytes() );
-    Memory::Memzero( ScanCodeFromKeyCodeTable.Data(), ScanCodeFromKeyCodeTable.SizeInBytes() );
+    CMemory::Memzero( KeyCodeFromScanCodeTable.Data(), KeyCodeFromScanCodeTable.SizeInBytes() );
+    CMemory::Memzero( ScanCodeFromKeyCodeTable.Data(), ScanCodeFromKeyCodeTable.SizeInBytes() );
 
     KeyCodeFromScanCodeTable[0x00B] = EKey::Key_0;
     KeyCodeFromScanCodeTable[0x002] = EKey::Key_1;

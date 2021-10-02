@@ -1,15 +1,15 @@
 #pragma once
-#include "RenderLayer/GPUProfiler.h"
+#include "RHICore/GPUProfiler.h"
 
 #include "D3D12Resource.h"
 
-class D3D12GPUProfiler : public GPUProfiler, public D3D12DeviceChild
+class CD3D12GPUProfiler : public CGPUProfiler, public CD3D12DeviceChild
 {
 public:
-    D3D12GPUProfiler( D3D12Device* InDevice );
-    ~D3D12GPUProfiler() = default;
+    CD3D12GPUProfiler( CD3D12Device* InDevice );
+    ~CD3D12GPUProfiler() = default;
 
-    virtual void GetTimeQuery( TimeQuery& OutQuery, uint32 Index ) const override final;
+    virtual void GetTimeQuery( STimeQuery& OutQuery, uint32 Index ) const override final;
 
     virtual uint64 GetFrequency() const override final
     {
@@ -19,14 +19,14 @@ public:
     void BeginQuery( ID3D12GraphicsCommandList* CmdList, uint32 Index );
     void EndQuery( ID3D12GraphicsCommandList* CmdList, uint32 Index );
 
-    void ResolveQueries( class D3D12CommandContext& CmdContext );
+    void ResolveQueries( class CD3D12CommandContext& CmdContext );
 
-    ID3D12QueryHeap* GetQueryHeap() const
+    FORCEINLINE ID3D12QueryHeap* GetQueryHeap() const
     {
         return QueryHeap.Get();
     }
 
-    static D3D12GPUProfiler* Create( D3D12Device* InDevice );
+    static CD3D12GPUProfiler* Create( CD3D12Device* InDevice );
 
 private:
     bool AllocateReadResource();
@@ -35,7 +35,7 @@ private:
     TSharedRef<D3D12Resource>      WriteResource;
 
     TArray<TSharedRef<D3D12Resource>> ReadResources;
-    TArray<TimeQuery> TimeQueries;
+    TArray<STimeQuery> TimeQueries;
 
     UINT64 Frequency;
 };

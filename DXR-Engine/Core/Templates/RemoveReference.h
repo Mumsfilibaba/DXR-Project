@@ -1,6 +1,6 @@
 #pragma once
 
-/* Removes reference and retrives the types */
+/* Removes reference and retrieves the types */
 template<typename T>
 struct TRemoveReference
 {

@@ -2,21 +2,21 @@
 #include "FrameResources.h"
 #include "LightSetup.h"
 
-#include "RenderLayer/CommandList.h"
+#include "RHICore/RHICommandList.h"
 
-class ForwardRenderer
+class CForwardRenderer
 {
 public:
-    ForwardRenderer() = default;
-    ~ForwardRenderer() = default;
+    CForwardRenderer() = default;
+    ~CForwardRenderer() = default;
 
-    bool Init( FrameResources& FrameResources );
+    bool Init( SFrameResources& FrameResources );
     void Release();
 
-    void Render( CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup );
+    void Render( CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup );
 
 private:
-    TSharedRef<GraphicsPipelineState> PipelineState;
-    TSharedRef<VertexShader>          VShader;
-    TSharedRef<PixelShader>           PShader;
+    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
+    TSharedRef<CRHIVertexShader>          VShader;
+    TSharedRef<CRHIPixelShader>           PShader;
 };

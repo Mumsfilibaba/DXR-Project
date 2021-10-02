@@ -13,7 +13,7 @@ class CMacApplicationMisc : public CCoreApplicationMisc
 public:
 
     /* Takes the title of the messagebox and the message to be displayed */
-    static void MessageBox( const std::string& Title, const std::string& Message );
+    static void MessageBox( const CString& Title, const CString& Message );
 
     /* Sends a Exit Message to the application with a certain exitcode */
     static void RequestExit( int32 ExitCode );

@@ -1,5 +1,5 @@
 #pragma once
-#include "Resources.h"
+#include "RHIResources.h"
 
 enum class EShaderModel
 {
@@ -14,53 +14,53 @@ enum class EShaderModel
     SM_6_5 = 8,
 };
 
-struct ShaderDefine
+struct SShaderDefine
 {
-    ShaderDefine( const std::string& InDefine )
+    FORCEINLINE SShaderDefine( const CString& InDefine )
         : Define( InDefine )
         , Value()
     {
     }
 
-    ShaderDefine( const std::string& InDefine, const std::string& InValue )
+    FORCEINLINE SShaderDefine( const CString& InDefine, const CString& InValue )
         : Define( InDefine )
         , Value( InValue )
     {
     }
 
-    std::string Define;
-    std::string Value;
+    CString Define;
+    CString Value;
 };
 
-class IShaderCompiler
+class IRHIShaderCompiler
 {
 public:
-    virtual ~IShaderCompiler() = default;
+    virtual ~IRHIShaderCompiler() = default;
 
     virtual bool CompileFromFile(
-        const std::string& FilePath,
-        const std::string& EntryPoint,
-        const TArray<ShaderDefine>* Defines,
+        const CString& FilePath,
+        const CString& EntryPoint,
+        const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         TArray<uint8>& Code ) = 0;
 
     virtual bool CompileShader(
-        const std::string& ShaderSource,
-        const std::string& EntryPoint,
-        const TArray<ShaderDefine>* Defines,
+        const CString& ShaderSource,
+        const CString& EntryPoint,
+        const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         TArray<uint8>& Code ) = 0;
 };
 
-class ShaderCompiler
+class CRHIShaderCompiler
 {
 public:
     static FORCEINLINE bool CompileFromFile(
-        const std::string& FilePath,
-        const std::string& EntryPoint,
-        const TArray<ShaderDefine>* Defines,
+        const CString& FilePath,
+        const CString& EntryPoint,
+        const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         TArray<uint8>& Code )
@@ -69,9 +69,9 @@ public:
     }
 
     static FORCEINLINE bool CompileShader(
-        const std::string& ShaderSource,
-        const std::string& EntryPoint,
-        const TArray<ShaderDefine>* Defines,
+        const CString& ShaderSource,
+        const CString& EntryPoint,
+        const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         TArray<uint8>& Code )

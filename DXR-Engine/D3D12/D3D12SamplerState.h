@@ -1,15 +1,15 @@
 #pragma once
-#include "RenderLayer/Resources.h"
+#include "RHICore/RHIResources.h"
 
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Device.h"
 
-class D3D12SamplerState : public SamplerState, public D3D12DeviceChild
+class CD3D12SamplerState : public CRHISamplerState, public CD3D12DeviceChild
 {
 public:
-    D3D12SamplerState( D3D12Device* InDevice, D3D12OfflineDescriptorHeap* InOfflineHeap )
-        : SamplerState()
-        , D3D12DeviceChild( InDevice )
+    CD3D12SamplerState( CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap )
+        : CRHISamplerState()
+        , CD3D12DeviceChild( InDevice )
         , OfflineHeap( InOfflineHeap )
         , OfflineHandle( { 0 } )
         , Desc()
@@ -17,7 +17,7 @@ public:
         Assert( InOfflineHeap != nullptr );
     }
 
-    ~D3D12SamplerState()
+    ~CD3D12SamplerState()
     {
         OfflineHeap->Free( OfflineHandle, OfflineHeapIndex );
     }
@@ -47,18 +47,18 @@ public:
         return OfflineHandle != 0;
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
+    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
     {
         return OfflineHandle;
     }
 
-    const D3D12_SAMPLER_DESC& GetDesc() const
+    FORCEINLINE const D3D12_SAMPLER_DESC& GetDesc() const
     {
         return Desc;
     }
 
 private:
-    D3D12OfflineDescriptorHeap* OfflineHeap = nullptr;
+    CD3D12OfflineDescriptorHeap* OfflineHeap = nullptr;
     uint32                      OfflineHeapIndex = 0;
     D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle;
     D3D12_SAMPLER_DESC          Desc;

@@ -1,5 +1,5 @@
 #pragma once
 #include "CoreTypes.h"
 
-extern class GenericRenderLayer* GRenderLayer;
-extern class IShaderCompiler* GShaderCompiler;
+extern class CRHICore* GRHICore;
+extern class IRHIShaderCompiler* GShaderCompiler;

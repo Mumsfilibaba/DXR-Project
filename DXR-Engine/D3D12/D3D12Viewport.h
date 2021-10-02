@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/ArrayView.h"
 
-#include "RenderLayer/Viewport.h"
+#include "RHICore/RHIViewport.h"
 
 #include "Core/Windows/Windows.h"
 
@@ -10,11 +10,11 @@
 #include "D3D12Views.h"
 #include "D3D12CommandContext.h"
 
-class D3D12Viewport : public Viewport, public D3D12DeviceChild
+class CD3D12Viewport : public CRHIViewport, public CD3D12DeviceChild
 {
 public:
-    D3D12Viewport( D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight );
-    ~D3D12Viewport();
+    CD3D12Viewport( CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight );
+    ~CD3D12Viewport();
 
     bool Init();
 
@@ -22,14 +22,14 @@ public:
 
     virtual bool Present( bool VerticalSync ) override final;
 
-    virtual void SetName( const std::string& Name ) override final;
+    virtual void SetName( const CString& Name ) override final;
 
-    virtual RenderTargetView* GetRenderTargetView() const override final
+    virtual CRHIRenderTargetView* GetRenderTargetView() const override final
     {
         return BackBufferViews[BackBufferIndex].Get();
     }
 
-    virtual Texture2D* GetBackBuffer() const override final
+    virtual CRHITexture2D* GetBackBuffer() const override final
     {
         return BackBuffers[BackBufferIndex].Get();
     }
@@ -49,7 +49,7 @@ private:
 
     TComPtr<IDXGISwapChain3> SwapChain;
 
-    D3D12CommandContext* CmdContext;
+    CD3D12CommandContext* CmdContext;
 
     HWND Hwnd = 0;
 
@@ -59,6 +59,6 @@ private:
 
     HANDLE SwapChainWaitableObject = 0;
 
-    TArray<TSharedRef<D3D12Texture2D>>        BackBuffers;
-    TArray<TSharedRef<D3D12RenderTargetView>> BackBufferViews;
+    TArray<TSharedRef<CD3D12Texture2D>>        BackBuffers;
+    TArray<TSharedRef<CD3D12RenderTargetView>> BackBufferViews;
 };

@@ -1,26 +1,26 @@
 #include "RayTracer.h"
 
-#include "RenderLayer/RenderLayer.h"
-#include "RenderLayer/ShaderCompiler.h"
+#include "RHICore/RHIModule.h"
+#include "RHICore/RHIShaderCompiler.h"
 
 #include "Resources/Material.h"
 #include "Resources/Mesh.h"
 
 #include "Core/Debug/Profiler.h"
 
-bool RayTracer::Init( FrameResources& Resources )
+bool CRayTracer::Init( SFrameResources& Resources )
 {
     TArray<uint8> Code;
-    if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/RayGen.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/RayGen.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code ) )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
 
     RayGenShader = CreateRayGenShader( Code );
     if ( !RayGenShader )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -28,16 +28,16 @@ bool RayTracer::Init( FrameResources& Resources )
         RayGenShader->SetName( "RayGenShader" );
     }
 
-    if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code ) )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
 
     RayClosestHitShader = CreateRayClosestHitShader( Code );
     if ( !RayClosestHitShader )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -45,16 +45,16 @@ bool RayTracer::Init( FrameResources& Resources )
         RayClosestHitShader->SetName( "RayClosestHitShader" );
     }
 
-    if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/Miss.hlsl", "Miss", nullptr, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/Miss.hlsl", "Miss", nullptr, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code ) )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
 
     RayMissShader = CreateRayMissShader( Code );
     if ( !RayMissShader )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -62,19 +62,19 @@ bool RayTracer::Init( FrameResources& Resources )
         RayMissShader->SetName( "RayMissShader" );
     }
 
-    RayTracingPipelineStateCreateInfo CreateInfo;
+    SRayTracingPipelineStateCreateInfo CreateInfo;
     CreateInfo.RayGen = RayGenShader.Get();
     CreateInfo.ClosestHitShaders = { RayClosestHitShader.Get() };
     CreateInfo.MissShaders = { RayMissShader.Get() };
-    CreateInfo.HitGroups = { RayTracingHitGroup( "HitGroup", nullptr, RayClosestHitShader.Get() ) };
+    CreateInfo.HitGroups = { SRayTracingHitGroup( "HitGroup", nullptr, RayClosestHitShader.Get() ) };
     CreateInfo.MaxRecursionDepth = 4;
-    CreateInfo.MaxAttributeSizeInBytes = sizeof( RayIntersectionAttributes );
-    CreateInfo.MaxPayloadSizeInBytes = sizeof( RayPayload );
+    CreateInfo.MaxAttributeSizeInBytes = sizeof( SRayIntersectionAttributes );
+    CreateInfo.MaxPayloadSizeInBytes = sizeof( SRayPayload );
 
     Pipeline = CreateRayTracingPipelineState( CreateInfo );
     if ( !Pipeline )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
 
@@ -83,7 +83,7 @@ bool RayTracer::Init( FrameResources& Resources )
     Resources.RTOutput = CreateTexture2D( Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr );
     if ( !Resources.RTOutput )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -94,20 +94,20 @@ bool RayTracer::Init( FrameResources& Resources )
     return true;
 }
 
-void RayTracer::Release()
+void CRayTracer::Release()
 {
     Pipeline.Reset();
 }
 
-void RayTracer::PreRender( CommandList& CmdList, FrameResources& Resources, const CScene& Scene )
+void CRayTracer::PreRender( CRHICommandList& CmdList, SFrameResources& Resources, const CScene& Scene )
 {
     TRACE_SCOPE( "Gather Instances" );
 
     Resources.RTGeometryInstances.Clear();
 
-    SamplerState* Sampler = nullptr;
+    CRHISamplerState* Sampler = nullptr;
 
-    for ( const MeshDrawCommand& Cmd : Scene.GetMeshDrawCommands() )
+    for ( const SMeshDrawCommand& Cmd : Scene.GetMeshDrawCommands() )
     {
         CMaterial* Mat = Cmd.Material;
         if ( Cmd.Material->HasAlphaMask() )
@@ -132,7 +132,7 @@ void RayTracer::PreRender( CommandList& CmdList, FrameResources& Resources, cons
             HitGroupIndex = Resources.RTHitGroupResources.Size();
             Resources.RTMeshToHitGroupIndex[Cmd.Mesh] = HitGroupIndex;
 
-            RayTracingShaderResources HitGroupResources;
+            SRayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";
             if ( Cmd.Mesh->VertexBufferSRV )
             {
@@ -150,8 +150,8 @@ void RayTracer::PreRender( CommandList& CmdList, FrameResources& Resources, cons
             HitGroupIndex = HitGroupIndexPair->second;
         }
 
-        RayTracingGeometryInstance Instance;
-        Instance.Instance = MakeSharedRef<RayTracingGeometry>( Cmd.Geometry );
+        SRayTracingGeometryInstance Instance;
+        Instance.Instance = MakeSharedRef<CRHIRayTracingGeometry>( Cmd.Geometry );
         Instance.Flags = RayTracingInstanceFlags_None;
         Instance.HitGroupIndex = HitGroupIndex;
         Instance.InstanceIndex = AlbedoIndex;
@@ -211,7 +211,7 @@ void RayTracer::PreRender( CommandList& CmdList, FrameResources& Resources, cons
     CmdList.UnorderedAccessTextureBarrier( Resources.RTOutput.Get() );
 
     Resources.DebugTextures.Emplace(
-        MakeSharedRef<ShaderResourceView>( Resources.RTOutput->GetShaderResourceView() ),
+        MakeSharedRef<CRHIShaderResourceView>( Resources.RTOutput->GetShaderResourceView() ),
         Resources.RTOutput,
         EResourceState::UnorderedAccess,
         EResourceState::UnorderedAccess );

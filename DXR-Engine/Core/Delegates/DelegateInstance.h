@@ -58,13 +58,13 @@ public:
         return IsValid();
     }
 
-    /* Checks equallity between two handles */
+    /* Checks equality between two handles */
     FORCEINLINE bool operator==( CDelegateHandle RHS ) const
     {
         return (Handle == RHS.Handle);
     }
 
-    /* Checks equallity between two handles */
+    /* Checks equality between two handles */
     FORCEINLINE bool operator!=( CDelegateHandle RHS ) const
     {
         return !(*this == RHS);

@@ -1,6 +1,6 @@
 #include "Editor.h"
 
-#include "Rendering/DebugUI.h"
+#include "Rendering/UIRenderer.h"
 #include "Rendering/Renderer.h"
 
 #include "Scene/Scene.h"
@@ -12,7 +12,7 @@
 #include "Core/Engine/EngineLoop.h"
 #include "Core/Engine/EngineGlobals.h"
 #include "Core/Application/ApplicationModule.h"
-#include "Core/Debug/Console/Console.h"
+#include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Math/Math.h"
 
 #include <imgui_internal.h>
@@ -28,14 +28,14 @@ static void DrawSideWindow();
 static void DrawRenderSettings();
 static void DrawSceneInfo();
 
-static void DrawFloat3Control( const std::string& Label, CVector3& Value, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f )
+static void DrawFloat3Control( const CString& Label, CVector3& Value, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f )
 {
-    ImGui::PushID( Label.c_str() );
+    ImGui::PushID( Label.CStr() );
     ImGui::Columns( 2, nullptr, false );
 
     // Text
     ImGui::SetColumnWidth( 0, ColumnWidth );
-    ImGui::Text( "%s", Label.c_str() );
+    ImGui::Text( "%s", Label.CStr() );
     ImGui::NextColumn();
 
     // Drag Floats
@@ -99,7 +99,7 @@ static void DrawFloat3Control( const std::string& Label, CVector3& Value, float 
 
 static void DrawMenu()
 {
-    DebugUI::DrawUI( []
+    CUIRenderer::DrawUI( []
     {
         if ( ImGui::BeginMainMenuBar() )
         {
@@ -139,7 +139,7 @@ static void DrawMenu()
 
 static void DrawSideWindow()
 {
-    DebugUI::DrawUI( []
+    CUIRenderer::DrawUI( []
     {
         const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
         const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
@@ -385,7 +385,7 @@ static void DrawSceneInfo()
         {
             ImGui::PushID( Actor );
 
-            if ( ImGui::TreeNode( Actor->GetName().c_str() ) )
+            if ( ImGui::TreeNode( Actor->GetName().CStr() ) )
             {
                 // Transform
                 if ( ImGui::TreeNode( "Transform" ) )
@@ -519,13 +519,13 @@ static void DrawSceneInfo()
     // Lights
     if ( ImGui::TreeNode( "Lights" ) )
     {
-        for ( Light* CurrentLight : GEngine->Scene->GetLights() )
+        for ( CLight* CurrentLight : GEngine->Scene->GetLights() )
         {
             ImGui::PushID( CurrentLight );
 
-            if ( IsSubClassOf<PointLight>( CurrentLight ) )
+            if ( IsSubClassOf<CPointLight>( CurrentLight ) )
             {
-                PointLight* CurrentPointLight = Cast<PointLight>( CurrentLight );
+                CPointLight* CurrentPointLight = Cast<CPointLight>( CurrentLight );
                 if ( ImGui::TreeNode( "PointLight" ) )
                 {
                     const float ColumnWidth = 150.0f;
@@ -631,9 +631,9 @@ static void DrawSceneInfo()
                     ImGui::TreePop();
                 }
             }
-            else if ( IsSubClassOf<DirectionalLight>( CurrentLight ) )
+            else if ( IsSubClassOf<CDirectionalLight>( CurrentLight ) )
             {
-                DirectionalLight* CurrentDirectionalLight = Cast<DirectionalLight>( CurrentLight );
+                CDirectionalLight* CurrentDirectionalLight = Cast<CDirectionalLight>( CurrentLight );
                 if ( ImGui::TreeNode( "DirectionalLight" ) )
                 {
                     const float ColumnWidth = 150.0f;

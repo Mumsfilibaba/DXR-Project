@@ -1,12 +1,12 @@
 #include "Mesh.h"
 
-#include "RenderLayer/CommandList.h"
-#include "RenderLayer/RenderLayer.h"
+#include "RHICore/RHICommandList.h"
+#include "RHICore/RHIModule.h"
 
-bool Mesh::Init( const SMeshData& Data )
+bool CMesh::Init( const SMeshData& Data )
 {
     // TODO: Have a null layer to avoid these checks
-    if ( !GRenderLayer )
+    if ( !GRHICore )
     {
         LOG_WARNING( " No RenderAPI available Mesh not initialized " );
         return true;
@@ -17,8 +17,8 @@ bool Mesh::Init( const SMeshData& Data )
 
     const uint32 BufferFlags = IsRayTracingSupported() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
 
-    ResourceData InitialData( Data.Vertices.Data(), Data.Vertices.SizeInBytes() );
-    VertexBuffer = CreateVertexBuffer<Vertex>( VertexCount, BufferFlags, EResourceState::VertexAndConstantBuffer, &InitialData );
+    SResourceData InitialData( Data.Vertices.Data(), Data.Vertices.SizeInBytes() );
+    VertexBuffer = CreateVertexBuffer<SVertex>( VertexCount, BufferFlags, EResourceState::VertexAndConstantBuffer, &InitialData );
     if ( !VertexBuffer )
     {
         return false;
@@ -30,7 +30,7 @@ bool Mesh::Init( const SMeshData& Data )
 
     const bool RTOn = IsRayTracingSupported();
 
-    InitialData = ResourceData( Data.Indices.Data(), Data.Indices.SizeInBytes() );
+    InitialData = SResourceData( Data.Indices.Data(), Data.Indices.SizeInBytes() );
     IndexBuffer = CreateIndexBuffer( EIndexFormat::uint32, IndexCount, BufferFlags, EResourceState::IndexBuffer, &InitialData );
     if ( !IndexBuffer )
     {
@@ -70,32 +70,32 @@ bool Mesh::Init( const SMeshData& Data )
     return true;
 }
 
-bool Mesh::BuildAccelerationStructure( CommandList& CmdList )
+bool CMesh::BuildAccelerationStructure( CRHICommandList& CmdList )
 {
     CmdList.BuildRayTracingGeometry( RTGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), true );
     return true;
 }
 
-TSharedPtr<Mesh> Mesh::Make( const SMeshData& Data )
+TSharedPtr<CMesh> CMesh::Make( const SMeshData& Data )
 {
-    TSharedPtr<Mesh> Result = MakeShared<Mesh>();
+    TSharedPtr<CMesh> Result = MakeShared<CMesh>();
     if ( Result->Init( Data ) )
     {
         return Result;
     }
     else
     {
-        return TSharedPtr<Mesh>( nullptr );
+        return TSharedPtr<CMesh>();
     }
 }
 
-void Mesh::CreateBoundingBox( const SMeshData& Data )
+void CMesh::CreateBoundingBox( const SMeshData& Data )
 {
     constexpr float Inf = std::numeric_limits<float>::infinity();
     CVector3 MinBounds = CVector3( Inf, Inf, Inf );
     CVector3 MaxBounds = CVector3( -Inf, -Inf, -Inf );
 
-    for ( const Vertex& Vertex : Data.Vertices )
+    for ( const SVertex& Vertex : Data.Vertices )
     {
         MinBounds = Min( MinBounds, Vertex.Position );
         MaxBounds = Max( MaxBounds, Vertex.Position );

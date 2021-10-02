@@ -1,12 +1,12 @@
 #include "Frustum.h"
 
-Frustum::Frustum( float FarPlane, const CMatrix4& View, const CMatrix4& Projection )
+CFrustum::CFrustum( float FarPlane, const CMatrix4& View, const CMatrix4& Projection )
     : Planes()
 {
     Create( FarPlane, View, Projection );
 }
 
-void Frustum::Create( float FarPlane, const CMatrix4& View, const CMatrix4& Projection )
+void CFrustum::Create( float FarPlane, const CMatrix4& View, const CMatrix4& Projection )
 {
     // Calculate the minimum Z distance in the frustum.
     CMatrix4 TempProjection = Projection;
@@ -62,7 +62,7 @@ void Frustum::Create( float FarPlane, const CMatrix4& View, const CMatrix4& Proj
     Planes[5].Normalize();
 }
 
-bool Frustum::CheckAABB( const AABB& Box )
+bool CFrustum::CheckAABB( const SAABB& Box )
 {
     const CVector3 Center = Box.GetCenter();
     const float Width = Box.GetWidth() / 2.0f;

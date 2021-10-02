@@ -556,98 +556,98 @@ private:
     PointerStorage Storage;
 };
 
-/* Check the equallity between sharedptr and a raw pointer */
+/* Check the equality between sharedptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TSharedPtr<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-/* Check the equallity between sharedptr and a raw pointer */
+/* Check the equality between sharedptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( T* LHS, const TSharedPtr<U>& RHS ) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-/* Check the inequallity between sharedptr and a raw pointer */
+/* Check the inequality between sharedptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TSharedPtr<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-/* Check the inequallity between sharedptr and a raw pointer */
+/* Check the inequality between sharedptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( T* LHS, const TSharedPtr<U>& RHS ) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-/* Check the equallity between sharedptrs */
+/* Check the equality between sharedptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the inequallity between sharedptrs */
+/* Check the inequality between sharedptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS ) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the equallity between sharedptr and a nullptr */
+/* Check the equality between sharedptr and a nullptr */
 template<typename T>
 FORCEINLINE bool operator==( const TSharedPtr<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
-/* Check the equallity between sharedptr and a nullptr */
+/* Check the equality between sharedptr and a nullptr */
 template<typename T>
 FORCEINLINE bool operator==( NullptrType, const TSharedPtr<T>& RHS ) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
-/* Check the equallity between sharedptr and a nullptr */
+/* Check the equality between sharedptr and a nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( const TSharedPtr<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
-/* Check the equallity between sharedptr and a nullptr */
+/* Check the equality between sharedptr and a nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( NullptrType, const TSharedPtr<T>& RHS ) noexcept
 {
     return (nullptr != RHS.Get());
 }
 
-/* Check the equallity between sharedptr and uniqueptr */
+/* Check the equality between sharedptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the equallity between sharedptr and uniqueptr */
+/* Check the equality between sharedptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the inequallity between sharedptr and uniqueptr */
+/* Check the inequality between sharedptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the inequallity between sharedptr and uniqueptr */
+/* Check the inequality between sharedptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS ) noexcept
 {
@@ -893,126 +893,126 @@ private:
     PointerStorage Storage;
 };
 
-/* Check the equallity between weakptr and a raw pointer */
+/* Check the equality between weakptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TWeakPtr<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-/* Check the equallity between weakptr and a raw pointer */
+/* Check the equality between weakptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( T* LHS, const TWeakPtr<U>& RHS ) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-/* Check the inequallity between weakptr and a raw pointer */
+/* Check the inequality between weakptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TWeakPtr<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-/* Check the inequallity between weakptr and a raw pointer */
+/* Check the inequality between weakptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( T* LHS, const TWeakPtr<U>& RHS ) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-/* Check the equallity between weakptrs */
+/* Check the equality between weakptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the inequallity between weakptrs */
+/* Check the inequality between weakptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS ) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the equallity between weakptr and nullptr */
+/* Check the equality between weakptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator==( const TWeakPtr<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
-/* Check the equallity between weakptr and nullptr */
+/* Check the equality between weakptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator==( NullptrType, const TWeakPtr<T>& RHS ) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
-/* Check the inequallity between weakptr and nullptr */
+/* Check the inequality between weakptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( const TWeakPtr<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
-/* Check the inequallity between weakptr and nullptr */
+/* Check the inequality between weakptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( NullptrType, const TWeakPtr<T>& RHS ) noexcept
 {
     return (nullptr != RHS.Get());
 }
 
-/* Check the equallity between weakptr and sharedptr */
+/* Check the equality between weakptr and sharedptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the equallity between weakptr and sharedptr */
+/* Check the equality between weakptr and sharedptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the inequallity between weakptr and sharedptr */
+/* Check the inequality between weakptr and sharedptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS ) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the inequallity between weakptr and sharedptr */
+/* Check the inequality between weakptr and sharedptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS ) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the equallity between weakptr and uniqueptr */
+/* Check the equality between weakptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the equallity between weakptr and uniqueptr */
+/* Check the equality between weakptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the inequallity between weakptr and uniqueptr */
+/* Check the inequality between weakptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the inequallity between weakptr and uniqueptr */
+/* Check the inequality between weakptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS ) noexcept
 {

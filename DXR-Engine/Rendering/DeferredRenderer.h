@@ -4,42 +4,42 @@
 
 #include "Scene/Scene.h"
 
-#include "RenderLayer/CommandList.h"
+#include "RHICore/RHICommandList.h"
 
-class DeferredRenderer
+class CDeferredRenderer
 {
 public:
-    DeferredRenderer() = default;
-    ~DeferredRenderer() = default;
+    CDeferredRenderer() = default;
+    ~CDeferredRenderer() = default;
 
-    bool Init( FrameResources& FrameResources );
+    bool Init( SFrameResources& FrameResources );
 
     void Release();
 
-    void RenderPrePass( CommandList& CmdList, FrameResources& FrameResources, const CScene& Scene );
-    void RenderBasePass( CommandList& CmdList, const FrameResources& FrameResources );
-    void RenderDeferredTiledLightPass( CommandList& CmdList, const FrameResources& FrameResources, const LightSetup& LightSetup );
+    void RenderPrePass( CRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene );
+    void RenderBasePass( CRHICommandList& CmdList, const SFrameResources& FrameResources );
+    void RenderDeferredTiledLightPass( CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup );
 
-    bool ResizeResources( FrameResources& FrameResources );
+    bool ResizeResources( SFrameResources& FrameResources );
 
 private:
-    bool CreateGBuffer( FrameResources& FrameResources );
+    bool CreateGBuffer( SFrameResources& FrameResources );
 
-    TSharedRef<GraphicsPipelineState> PipelineState;
-    TSharedRef<VertexShader>          BaseVertexShader;
-    TSharedRef<PixelShader>           BasePixelShader;
+    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
+    TSharedRef<CRHIVertexShader>          BaseVertexShader;
+    TSharedRef<CRHIPixelShader>           BasePixelShader;
 
-    TSharedRef<GraphicsPipelineState> PrePassPipelineState;
-    TSharedRef<VertexShader>          PrePassVertexShader;
+    TSharedRef<CRHIGraphicsPipelineState> PrePassPipelineState;
+    TSharedRef<CRHIVertexShader>          PrePassVertexShader;
 
-    TSharedRef<ComputePipelineState>  TiledLightPassPSO;
-    TSharedRef<ComputeShader>         TiledLightShader;
-    TSharedRef<ComputePipelineState>  TiledLightPassPSODebug;
-    TSharedRef<ComputeShader>         TiledLightDebugShader;
+    TSharedRef<CRHIComputePipelineState>  TiledLightPassPSO;
+    TSharedRef<CRHIComputeShader>         TiledLightShader;
+    TSharedRef<CRHIComputePipelineState>  TiledLightPassPSODebug;
+    TSharedRef<CRHIComputeShader>         TiledLightDebugShader;
 
-    TSharedRef<ComputePipelineState> ReduceDepthInitalPSO;
-    TSharedRef<ComputeShader>        ReduceDepthInitalShader;
+    TSharedRef<CRHIComputePipelineState> ReduceDepthInitalPSO;
+    TSharedRef<CRHIComputeShader>        ReduceDepthInitalShader;
 
-    TSharedRef<ComputePipelineState> ReduceDepthPSO;
-    TSharedRef<ComputeShader>        ReduceDepthShader;
+    TSharedRef<CRHIComputePipelineState> ReduceDepthPSO;
+    TSharedRef<CRHIComputeShader>        ReduceDepthShader;
 };

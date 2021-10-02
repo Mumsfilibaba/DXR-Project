@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Application/InputHandler.h"
 
-#include "RenderLayer/Resources.h"
-#include "RenderLayer/ResourceViews.h"
+#include "RHICore/RHIResources.h"
+#include "RHICore/RHIResourceViews.h"
 
 #include "Core/Delegates/Delegate.h"
 
@@ -11,11 +11,11 @@
 #include <imgui.h>
 
 // Used when rendering images with ImGui
-struct ImGuiImage
+struct SImGuiImage
 {
-    ImGuiImage() = default;
+    SImGuiImage() = default;
 
-    ImGuiImage( const TSharedRef<ShaderResourceView>& InImageView, const TSharedRef<Texture>& InImage, EResourceState InBefore, EResourceState InAfter )
+    SImGuiImage( const TSharedRef<CRHIShaderResourceView>& InImageView, const TSharedRef<CRHITexture>& InImage, EResourceState InBefore, EResourceState InAfter )
         : ImageView( InImageView )
         , Image( InImage )
         , BeforeState( InBefore )
@@ -23,8 +23,8 @@ struct ImGuiImage
     {
     }
 
-    TSharedRef<ShaderResourceView> ImageView;
-    TSharedRef<Texture>  Image;
+    TSharedRef<CRHIShaderResourceView> ImageView;
+    TSharedRef<CRHITexture> Image;
     EResourceState BeforeState;
     EResourceState AfterState;
     bool AllowBlending = false;
@@ -74,7 +74,7 @@ public:
     CMouseScrolledDelegate MouseScrolledDelegate;
 };
 
-class DebugUI
+class CUIRenderer
 {
 public:
     typedef void(*UIDrawFunc)();
@@ -83,7 +83,7 @@ public:
     static void Release();
 
     static void DrawUI( UIDrawFunc DrawFunc );
-    static void DrawDebugString( const std::string& DebugString );
+    static void DrawDebugString( const CString& DebugString );
 
     static void OnKeyEvent( const SKeyEvent& Event );
     static void OnKeyTyped( SKeyTypedEvent Event );
@@ -92,7 +92,7 @@ public:
     static void OnMouseScrolled( const SMouseScrolledEvent& Event );
 
     // Should only be called by the renderer
-    static void Render( class CommandList& CmdList );
+    static void Render( class CRHICommandList& CmdList );
 
     static ImGuiContext* GetCurrentContext();
 };

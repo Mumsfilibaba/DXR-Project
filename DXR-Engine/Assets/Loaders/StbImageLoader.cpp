@@ -70,8 +70,9 @@ static EFormat GetFloatFormat( int32 Channels )
 
 TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
 {
-    TSharedPtr<SImage2D> Image = MakeShared<SImage2D>( Filename, 0, 0, EFormat::Unknown );
+    TSharedPtr<SImage2D> Image = MakeShared<SImage2D>( Filename, uint16( 0 ), uint16( 0 ), EFormat::Unknown );
     
+    // Async lambda
     const auto LoadImageAsync = [Image, Filename]()
     {
         FILE* File = fopen( Filename.CStr(), "rb" );
@@ -139,15 +140,15 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
 
         Image->Image    = TSharedPtr<uint8[]>( Move( Pixels ) );
         Image->Format   = Format;
-        Image->Width    = Width;
-        Image->Height   = Height;
+        Image->Width    = (uint16)Width;
+        Image->Height   = (uint16)Height;
         Image->IsLoaded = true;
     };
     
-    Task NewTask;
+    SExecutableTask NewTask;
     NewTask.Delegate.BindLambda( LoadImageAsync );
 
-    TaskManager::Get().AddTask( NewTask );
+    CTaskManager::Get().AddTask( NewTask );
 
     return Image;
 }

@@ -5,15 +5,15 @@
 
 #define NUM_SHADOW_CASCADES (4)
 
-class DirectionalLight : public Light
+class CDirectionalLight : public CLight
 {
-    CORE_OBJECT( DirectionalLight, Light );
+    CORE_OBJECT( CDirectionalLight, CLight );
 
 public:
-    DirectionalLight();
-    ~DirectionalLight();
+    CDirectionalLight();
+    ~CDirectionalLight();
 
-    void UpdateCascades( class Camera& Camera );
+    void UpdateCascades( class CCamera& Camera );
 
     // Rotation in Radians
     void SetRotation( const CVector3& InRotation );
@@ -22,74 +22,75 @@ public:
     void SetLookAt( const CVector3& InInLookAt );
     void SetLookAt( float x, float y, float z );
 
-    void SetCascadeSplitLambda( float InCascadeSplitLambda )
+    FORCEINLINE void SetCascadeSplitLambda( float InCascadeSplitLambda )
     {
         CascadeSplitLambda = InCascadeSplitLambda;
     }
 
-    void SetSize( float InSize )
+    FORCEINLINE void SetSize( float InSize )
     {
         Size = InSize;
     }
 
-    const CVector3& GetDirection() const
+    FORCEINLINE const CVector3& GetDirection() const
     {
         return Direction;
     }
 
-    const CVector3& GetUp() const
+    FORCEINLINE const CVector3& GetUp() const
     {
         return Up;
     }
 
-    const CVector3& GetRotation() const
+    FORCEINLINE const CVector3& GetRotation() const
     {
         return Rotation;
     }
 
-    const CVector3& GetPosition() const
+    FORCEINLINE const CVector3& GetPosition() const
     {
         return Position;
     }
 
-    const CVector3& GetLookAt() const
+    FORCEINLINE const CVector3& GetLookAt() const
     {
         return LookAt;
     }
 
-    const CMatrix4& GetMatrix( uint32 CascadeIndex ) const
+    FORCEINLINE const CMatrix4& GetMatrix( uint32 CascadeIndex ) const
     {
         Assert( CascadeIndex < NUM_SHADOW_CASCADES );
         return Matrices[CascadeIndex];
     }
 
-    const CMatrix4& GetViewMatrix( uint32 CascadeIndex ) const
+    FORCEINLINE const CMatrix4& GetViewMatrix( uint32 CascadeIndex ) const
     {
         Assert( CascadeIndex < NUM_SHADOW_CASCADES );
         return ViewMatrices[CascadeIndex];
     }
 
-    const CMatrix4& GetProjectionMatrix( uint32 CascadeIndex ) const
+    FORCEINLINE const CMatrix4& GetProjectionMatrix( uint32 CascadeIndex ) const
     {
         Assert( CascadeIndex < NUM_SHADOW_CASCADES );
         return ProjectionMatrices[CascadeIndex];
     }
 
-    float GetCascadeSplitLambda() const
+    FORCEINLINE float GetCascadeSplitLambda() const
     {
         return CascadeSplitLambda;
     }
 
-    float GetCascadeSplit( uint32 CascadeIndex ) const
+    FORCEINLINE float GetCascadeSplit( uint32 CascadeIndex ) const
     {
         return CascadeSplits[CascadeIndex];
     }
-    float GetCascadeRadius( uint32 CascadeIndex ) const
+    
+    FORCEINLINE float GetCascadeRadius( uint32 CascadeIndex ) const
     {
         return CascadeRadius[CascadeIndex];
     }
 
-    float GetSize() const
+    FORCEINLINE float GetSize() const
     {
         return Size;
     }

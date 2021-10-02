@@ -137,7 +137,7 @@ public:
     void AddComponent( CComponent* InComponent );
 
     /* Set name of the actor */
-    void SetName( const std::string& InName );
+    void SetName( const CString& InName );
 
     /* Check if the actor has a component of the component-class */
     bool HasComponentOfClass( class CClassType* ComponentClass ) const;
@@ -162,7 +162,7 @@ public:
         Transform = InTransform;
     }
 
-    FORCEINLINE const std::string& GetName() const
+    FORCEINLINE const CString& GetName() const
     {
         return Name;
     }
@@ -195,7 +195,7 @@ public:
 private:
 
     /* The name of this actor */
-    std::string Name;
+    CString Name;
 
     /* The scene that this actor belongs to */
     CScene* SceneOwner = nullptr;

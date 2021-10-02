@@ -2,11 +2,11 @@
 
 #include "D3D12Viewport.h"
 #include "D3D12CommandQueue.h"
-#include "D3D12RenderLayer.h"
+#include "D3D12RHICore.h"
 
-D3D12Viewport::D3D12Viewport( D3D12Device* InDevice, D3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight )
-    : D3D12DeviceChild( InDevice )
-    , Viewport( InFormat, InWidth, InHeight )
+CD3D12Viewport::CD3D12Viewport( CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight )
+    : CD3D12DeviceChild( InDevice )
+    , CRHIViewport( InFormat, InWidth, InHeight )
     , Hwnd( InHwnd )
     , SwapChain( nullptr )
     , CmdContext( InCmdContext )
@@ -15,7 +15,7 @@ D3D12Viewport::D3D12Viewport( D3D12Device* InDevice, D3D12CommandContext* InCmdC
 {
 }
 
-D3D12Viewport::~D3D12Viewport()
+CD3D12Viewport::~CD3D12Viewport()
 {
     BOOL FullscreenState;
 
@@ -34,7 +34,7 @@ D3D12Viewport::~D3D12Viewport()
     }
 }
 
-bool D3D12Viewport::Init()
+bool CD3D12Viewport::Init()
 {
     // Save the flags
     Flags = GetDevice()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
@@ -46,7 +46,7 @@ bool D3D12Viewport::Init()
     Assert( Width > 0 && Height > 0 );
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
-    Memory::Memzero( &SwapChainDesc );
+    CMemory::Memzero( &SwapChainDesc );
 
     SwapChainDesc.Width = Width;
     SwapChainDesc.Height = Height;
@@ -61,7 +61,7 @@ bool D3D12Viewport::Init()
     SwapChainDesc.Flags = Flags;
 
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc;
-    Memory::Memzero( &FullscreenDesc );
+    CMemory::Memzero( &FullscreenDesc );
 
     FullscreenDesc.RefreshRate.Numerator = 0;
     FullscreenDesc.RefreshRate.Denominator = 1;
@@ -106,7 +106,7 @@ bool D3D12Viewport::Init()
     return true;
 }
 
-bool D3D12Viewport::Resize( uint32 InWidth, uint32 InHeight )
+bool CD3D12Viewport::Resize( uint32 InWidth, uint32 InHeight )
 {
     // TODO: Make sure that we release the old surfaces
 
@@ -140,7 +140,7 @@ bool D3D12Viewport::Resize( uint32 InWidth, uint32 InHeight )
     return true;
 }
 
-bool D3D12Viewport::Present( bool VerticalSync )
+bool CD3D12Viewport::Present( bool VerticalSync )
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -175,34 +175,34 @@ bool D3D12Viewport::Present( bool VerticalSync )
     }
 }
 
-void D3D12Viewport::SetName( const std::string& InName )
+void CD3D12Viewport::SetName( const CString& InName )
 {
-    SwapChain->SetPrivateData( WKPDID_D3DDebugObjectName, static_cast<UINT>(InName.size()), InName.data() );
+    SwapChain->SetPrivateData( WKPDID_D3DDebugObjectName, static_cast<UINT>(InName.Size()), InName.Data() );
 
     uint32 Index = 0;
-    for ( TSharedRef<D3D12Texture2D>& Buffer : BackBuffers )
+    for ( TSharedRef<CD3D12Texture2D>& Buffer : BackBuffers )
     {
-        Buffer->SetName( InName + "Buffer [" + std::to_string( Index ) + "]" );
+        Buffer->SetName( InName + "Buffer [" + ToString( Index ) + "]" );
         Index++;
     }
 }
 
-bool D3D12Viewport::RetriveBackBuffers()
+bool CD3D12Viewport::RetriveBackBuffers()
 {
-    if ( BackBuffers.Size() < NumBackBuffers )
+    if ( BackBuffers.Size() < (int32)NumBackBuffers )
     {
-        BackBuffers.Resize( NumBackBuffers );
+        BackBuffers.Resize( (int32)NumBackBuffers );
     }
 
-    if ( BackBufferViews.Size() < NumBackBuffers )
+    if ( BackBufferViews.Size() < (int32)NumBackBuffers )
     {
-        D3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RenderLayer->GetRenderTargetOfflineDescriptorHeap();
+        CD3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RenderLayer->GetRenderTargetOfflineDescriptorHeap();
         BackBufferViews.Resize( NumBackBuffers );
-        for ( TSharedRef<D3D12RenderTargetView>& View : BackBufferViews )
+        for ( TSharedRef<CD3D12RenderTargetView>& View : BackBufferViews )
         {
             if ( !View )
             {
-                View = DBG_NEW D3D12RenderTargetView( GetDevice(), RenderTargetOfflineHeap );
+                View = DBG_NEW CD3D12RenderTargetView( GetDevice(), RenderTargetOfflineHeap );
                 if ( !View->Init() )
                 {
                     return false;
@@ -217,15 +217,15 @@ bool D3D12Viewport::RetriveBackBuffers()
         HRESULT Result = SwapChain->GetBuffer( i, IID_PPV_ARGS( &BackBufferResource ) );
         if ( FAILED( Result ) )
         {
-            LOG_INFO( "[D3D12Viewport]: GetBuffer(" + std::to_string( i ) + ") Failed" );
+            LOG_INFO( "[D3D12Viewport]: GetBuffer(" + ToString( i ) + ") Failed" );
             return false;
         }
 
-        BackBuffers[i] = DBG_NEW D3D12Texture2D( GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, ClearValue() );
+        BackBuffers[i] = DBG_NEW CD3D12Texture2D( GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, SClearValue() );
         BackBuffers[i]->SetResource( DBG_NEW D3D12Resource( GetDevice(), BackBufferResource ) );
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;
-        Memory::Memzero( &Desc );
+        CMemory::Memzero( &Desc );
 
         Desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
         Desc.Format = BackBuffers[i]->GetNativeFormat();

@@ -21,17 +21,18 @@ CWindowsOutputConsole::~CWindowsOutputConsole()
     }
 }
 
-void CWindowsOutputConsole::Print( const std::string& Message )
+void CWindowsOutputConsole::Print( const CString& Message )
 {
     if ( ConsoleHandle )
     {
         TScopedLock<CCriticalSection> Lock( ConsoleMutex );
-        WriteConsoleA( ConsoleHandle, Message.c_str(), static_cast<DWORD>(Message.size()), 0, NULL );
+        WriteConsoleA( ConsoleHandle, Message.CStr(), static_cast<DWORD>(Message.Length()), 0, NULL );
     }
 }
 
-void CWindowsOutputConsole::PrintLine( const std::string& Message )
+void CWindowsOutputConsole::PrintLine( const CString& Message )
 {
+    UNREFERENCED_VARIABLE( Message );
 }
 
 void CWindowsOutputConsole::Clear()
@@ -41,7 +42,7 @@ void CWindowsOutputConsole::Clear()
         TScopedLock<CCriticalSection> Lock( ConsoleMutex );
 
         CONSOLE_SCREEN_BUFFER_INFO CSBI;
-        Memory::Memzero( &CSBI );
+        CMemory::Memzero( &CSBI );
 
         if ( GetConsoleScreenBufferInfo( ConsoleHandle, &CSBI ) )
         {
@@ -59,12 +60,12 @@ void CWindowsOutputConsole::ClearLastLine()
 {
 }
 
-void CWindowsOutputConsole::SetTitle( const std::string& Title )
+void CWindowsOutputConsole::SetTitle( const CString& Title )
 {
     if ( ConsoleHandle )
     {
         TScopedLock<CCriticalSection> Lock( ConsoleMutex );
-        SetConsoleTitleA( Title.c_str() );
+        SetConsoleTitleA( Title.CStr() );
     }
 }
 

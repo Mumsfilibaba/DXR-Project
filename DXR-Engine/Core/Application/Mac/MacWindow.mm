@@ -22,7 +22,7 @@ CMacWindow::~CMacWindow()
     [View release];
 }
 
-bool CMacWindow::Init( const std::string& InTitle, uint32 Width, uint32 Height, SWindowStyle InStyle )
+bool CMacWindow::Init( const CString& InTitle, uint32 Width, uint32 Height, SWindowStyle InStyle )
 {
     SCOPED_AUTORELEASE_POOL();
         
@@ -65,7 +65,7 @@ bool CMacWindow::Init( const std::string& InTitle, uint32 Width, uint32 Height, 
     
     if (InStyle.IsTitled())
     {
-        NSString* Title = [NSString stringWithUTF8String:InTitle.c_str()];
+        NSString* Title = [NSString stringWithUTF8String:InTitle.CStr()];
         [Window setTitle:Title];
     }
     
@@ -187,11 +187,11 @@ void CMacWindow::ToggleFullscreen()
    }
 }
 
-void CMacWindow::SetTitle( const std::string& InTitle )
+void CMacWindow::SetTitle( const CString& InTitle )
 {
    SCOPED_AUTORELEASE_POOL();
    
-   NSString* Title = [NSString stringWithUTF8String:InTitle.c_str()];
+   NSString* Title = [NSString stringWithUTF8String:InTitle.CStr()];
    if (StyleParams.IsTitled())
    {
        //MacMainThread::MakeCall(^
@@ -201,13 +201,13 @@ void CMacWindow::SetTitle( const std::string& InTitle )
    }
 }
 
-void CMacWindow::GetTitle( std::string& OutTitle )
+void CMacWindow::GetTitle( CString& OutTitle )
 {
     if (StyleParams.IsTitled())
     {
         NSString* Title = [Window title];
         NSInteger Length = [Title length];
-        OutTitle.resize(Length);
+        OutTitle.Resize(Length);
         
         const char* UTF8Title = [Title UTF8String];
         Memory::Memcpy(OutTitle.data(), UTF8Title, sizeof(char) * Length);

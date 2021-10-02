@@ -50,13 +50,13 @@ public:
         Other.Ptr = nullptr;
     }
 
-    /* Create a sharedref from a raw pointer */
+    /* Create a shared-ref from a raw pointer */
     FORCEINLINE TSharedRef( ElementType* InPtr ) noexcept
         : Ptr( InPtr )
     {
     }
 
-    /* Create a sharedref from a raw pointer of a convertible type */
+    /* Create a shared-ref from a raw pointer of a convertible type */
     template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedRef( OtherType* InPtr ) noexcept
         : Ptr( InPtr )
@@ -175,14 +175,14 @@ public:
         return IsValid();
     }
 
-    /* Copy another sharedref into this */
+    /* Copy another shared-ref into this */
     FORCEINLINE TSharedRef& operator=( const TSharedRef& RHS ) noexcept
     {
         TSharedRef( RHS ).Swap( *this );
         return *this;
     }
 
-    /* Copy another sharedref into this of another type */
+    /* Copy another shared-ref into this of another type */
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=( const TSharedRef<OtherType>& RHS ) noexcept
     {
@@ -190,14 +190,14 @@ public:
         return *this;
     }
 
-    /* Move another sharedref into this */
+    /* Move another shared-ref into this */
     FORCEINLINE TSharedRef& operator=( TSharedRef&& RHS ) noexcept
     {
         TSharedRef( RHS ).Swap( *this );
         return *this;
     }
 
-    /* Move another sharedref into this of another type */
+    /* Move another shared-ref into this of another type */
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=( TSharedRef<OtherType>&& RHS ) noexcept
     {
@@ -240,70 +240,70 @@ private:
     ElementType* Ptr;
 };
 
-/* Check the equallity between sharedref and a raw pointer */
+/* Check the equality between shared ref and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TSharedRef<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-/* Check the equallity between sharedref and a raw pointer */
+/* Check the equality between shared ref and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( T* LHS, const TSharedRef<U>& RHS ) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-/* Check the inequallity between sharedref and a raw pointer */
+/* Check the inequality between shared ref and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TSharedRef<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-/* Check the inequallity between sharedref and a raw pointer */
+/* Check the inequality between shared-ref and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( T* LHS, const TSharedRef<U>& RHS ) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-/* Check the equallity between sharedrefs */
+/* Check the equality between shared-refs */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TSharedRef<T>& LHS, const TSharedRef<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the equallity between sharedrefs */
+/* Check the equality between shared-refs */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TSharedRef<T>& LHS, const TSharedRef<U>& RHS ) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the equallity between sharedref and nullptr */
+/* Check the equality between shared-refs and nullptr */
 template<typename T>
 FORCEINLINE bool operator==( const TSharedRef<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
-/* Check the equallity between sharedref and nullptr */
+/* Check the equality between shared-ref and nullptr */
 template<typename T>
 FORCEINLINE bool operator==( NullptrType, const TSharedRef<T>& RHS ) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
-/* Check the inequallity between sharedref and nullptr */
+/* Check the inequality between shared-ref and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( const TSharedRef<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
-/* Check the inequallity between sharedref and nullptr */
+/* Check the inequality between shared-ref and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( NullptrType, const TSharedRef<T>& RHS ) noexcept
 {

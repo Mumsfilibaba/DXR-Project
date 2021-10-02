@@ -1,18 +1,18 @@
 #include "LightSetup.h"
 
-#include "RenderLayer/RenderLayer.h"
+#include "RHICore/RHIModule.h"
 
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
 #include "Core/Debug/Profiler.h"
 
-bool LightSetup::Init()
+bool SLightSetup::Init()
 {
     DirectionalLightsBuffer = CreateConstantBuffer( sizeof( DirectionalLightData ), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
     if ( !DirectionalLightsBuffer )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -24,7 +24,7 @@ bool LightSetup::Init()
     PointLightsBuffer = CreateConstantBuffer( PointLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
     if ( !PointLightsBuffer )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -36,7 +36,7 @@ bool LightSetup::Init()
     PointLightsPosRadBuffer = CreateConstantBuffer( PointLightsPosRad.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
     if ( !PointLightsPosRadBuffer )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -52,7 +52,7 @@ bool LightSetup::Init()
         nullptr );
     if ( !ShadowCastingPointLightsBuffer )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -68,7 +68,7 @@ bool LightSetup::Init()
         nullptr );
     if ( !ShadowCastingPointLightsPosRadBuffer )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -79,7 +79,7 @@ bool LightSetup::Init()
     return true;
 }
 
-void LightSetup::BeginFrame( CommandList& CmdList, const CScene& Scene )
+void SLightSetup::BeginFrame( CRHICommandList& CmdList, const CScene& Scene )
 {
     PointLightsPosRad.Clear();
     PointLightsData.Clear();
@@ -91,18 +91,18 @@ void LightSetup::BeginFrame( CommandList& CmdList, const CScene& Scene )
 
     TRACE_SCOPE( "Update LightBuffers" );
 
-    Camera* Camera = Scene.GetCamera();
+    CCamera* Camera = Scene.GetCamera();
     Assert( Camera != nullptr );
 
-    for ( Light* Light : Scene.GetLights() )
+    for ( CLight* Light : Scene.GetLights() )
     {
         float Intensity = Light->GetIntensity();
         CVector3 Color = Light->GetColor();
         Color = Color * Intensity;
 
-        if ( IsSubClassOf<PointLight>( Light ) )
+        if ( IsSubClassOf<CPointLight>( Light ) )
         {
-            PointLight* CurrentLight = Cast<PointLight>( Light );
+            CPointLight* CurrentLight = Cast<CPointLight>( Light );
             Assert( CurrentLight != nullptr );
 
             constexpr float MinLuma = 0.005f;
@@ -113,7 +113,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const CScene& Scene )
             CVector4 PosRad = CVector4( Position, Radius );
             if ( CurrentLight->IsShadowCaster() )
             {
-                ShadowCastingPointLightData Data;
+                SShadowCastingPointLightData Data;
                 Data.Color = Color;
                 Data.FarPlane = CurrentLight->GetShadowFarPlane();
                 Data.MaxShadowBias = CurrentLight->GetMaxShadowBias();
@@ -122,7 +122,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const CScene& Scene )
                 ShadowCastingPointLightsData.Emplace( Data );
                 ShadowCastingPointLightsPosRad.Emplace( PosRad );
 
-                PointLightShadowMapGenerationData ShadowMapData;
+                SPointLightShadowMapGenerationData ShadowMapData;
                 ShadowMapData.FarPlane = CurrentLight->GetShadowFarPlane();
                 ShadowMapData.Position = CurrentLight->GetPosition();
 
@@ -137,16 +137,16 @@ void LightSetup::BeginFrame( CommandList& CmdList, const CScene& Scene )
             }
             else
             {
-                PointLightData Data;
+                SPointLightData Data;
                 Data.Color = Color;
 
                 PointLightsData.Emplace( Data );
                 PointLightsPosRad.Emplace( PosRad );
             }
         }
-        else if ( IsSubClassOf<DirectionalLight>( Light ) )
+        else if ( IsSubClassOf<CDirectionalLight>( Light ) )
         {
-            DirectionalLight* CurrentLight = Cast<DirectionalLight>( Light );
+            CDirectionalLight* CurrentLight = Cast<CDirectionalLight>( Light );
             Assert( CurrentLight != nullptr );
 
             CurrentLight->UpdateCascades( *Camera );
@@ -180,7 +180,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const CScene& Scene )
         PointLightsBuffer = CreateConstantBuffer( PointLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
         if ( !PointLightsBuffer )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
         }
     }
 
@@ -191,7 +191,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const CScene& Scene )
         PointLightsPosRadBuffer = CreateConstantBuffer( PointLightsPosRad.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
         if ( !PointLightsPosRadBuffer )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
         }
     }
 
@@ -206,7 +206,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const CScene& Scene )
             nullptr );
         if ( !ShadowCastingPointLightsBuffer )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
         }
     }
 
@@ -221,7 +221,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const CScene& Scene )
             nullptr );
         if ( !ShadowCastingPointLightsPosRadBuffer )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
         }
     }
 
@@ -259,7 +259,7 @@ void LightSetup::BeginFrame( CommandList& CmdList, const CScene& Scene )
     INSERT_DEBUG_CMDLIST_MARKER( CmdList, "End Update Lights" );
 }
 
-void LightSetup::Release()
+void SLightSetup::Release()
 {
     DirectionalShadowMask.Reset();
 

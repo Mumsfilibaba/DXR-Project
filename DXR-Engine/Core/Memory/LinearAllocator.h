@@ -4,28 +4,28 @@
 #include "Core/Containers/Array.h"
 #include "Core/Templates/IsReallocatable.h"
 
-struct MemoryArena
+struct SMemoryArena
 {
-    MemoryArena( const MemoryArena& Other ) = delete;
-    MemoryArena& operator=( const MemoryArena& Other ) = delete;
+    SMemoryArena( const SMemoryArena& Other ) = delete;
+    SMemoryArena& operator=( const SMemoryArena& Other ) = delete;
 
-    MemoryArena()
+    FORCEINLINE SMemoryArena()
         : Mem( nullptr )
         , Offset( 0 )
         , SizeInBytes( 0 )
     {
     }
 
-    MemoryArena( uint64 InSizeInBytes )
+    FORCEINLINE SMemoryArena( uint64 InSizeInBytes )
         : Mem( nullptr )
         , Offset( 0 )
         , SizeInBytes( InSizeInBytes )
     {
-        Mem = reinterpret_cast<uint8*>(Memory::Malloc( SizeInBytes ));
+        Mem = reinterpret_cast<uint8*>(CMemory::Malloc( SizeInBytes ));
         Reset();
     }
 
-    MemoryArena( MemoryArena&& Other )
+    FORCEINLINE SMemoryArena( SMemoryArena&& Other )
         : Mem( Other.Mem )
         , Offset( Other.Offset )
         , SizeInBytes( Other.SizeInBytes )
@@ -35,12 +35,12 @@ struct MemoryArena
         Other.SizeInBytes = 0;
     }
 
-    ~MemoryArena()
+    FORCEINLINE ~SMemoryArena()
     {
-        Memory::Free( Mem );
+        CMemory::Free( Mem );
     }
 
-    void* Allocate( uint64 InSizeInBytes )
+    FORCEINLINE void* Allocate( uint64 InSizeInBytes )
     {
         Assert( ReservedSize() >= InSizeInBytes );
 
@@ -49,7 +49,7 @@ struct MemoryArena
         return Allocated;
     }
 
-    uint64 ReservedSize()
+    FORCEINLINE uint64 ReservedSize()
     {
         return SizeInBytes - Offset;
     }
@@ -59,16 +59,16 @@ struct MemoryArena
         Offset = 0;
     }
 
-    uint64 GetSizeInBytes() const
+    FORCEINLINE uint64 GetSizeInBytes() const
     {
         return SizeInBytes;
     }
 
-    MemoryArena& operator=( MemoryArena&& Other )
+    FORCEINLINE SMemoryArena& operator=( SMemoryArena&& Other )
     {
         if ( Mem )
         {
-            Memory::Free( Mem );
+            CMemory::Free( Mem );
         }
 
         Mem = Other.Mem;
@@ -90,7 +90,7 @@ struct MemoryArena
 // This should not be necessary, but the move constructor is not called in TArray,
 // it insists of calling the deleted copy constructor, Why?
 template<>
-struct TIsReallocatable<MemoryArena>
+struct TIsReallocatable<SMemoryArena>
 {
     enum
     {
@@ -98,11 +98,11 @@ struct TIsReallocatable<MemoryArena>
     };
 };
 
-class LinearAllocator
+class CLinearAllocator
 {
 public:
-    LinearAllocator( uint32 StartSize = 4096 );
-    ~LinearAllocator() = default;
+    CLinearAllocator( uint32 StartSize = 4096 );
+    ~CLinearAllocator() = default;
 
     void* Allocate( uint64 SizeInBytes, uint64 Alignment );
 
@@ -114,17 +114,17 @@ public:
         return Allocate( sizeof( T ), alignof(T) );
     }
 
-    uint8* AllocateBytes( uint64 SizeInBytes, uint64 Alignment )
+    FORCEINLINE uint8* AllocateBytes( uint64 SizeInBytes, uint64 Alignment )
     {
         return reinterpret_cast<uint8*>(Allocate( SizeInBytes, Alignment ));
     }
 
 private:
-    MemoryArena* CurrentArena;
-    TArray<MemoryArena> Arenas;
+    SMemoryArena* CurrentArena;
+    TArray<SMemoryArena> Arenas;
 };
 
-void* operator new  (size_t Size, LinearAllocator& Allocator);
-void* operator new[]( size_t Size, LinearAllocator& Allocator );
-void  operator delete  (void*, LinearAllocator&);
-void  operator delete[]( void*, LinearAllocator& );
+void* operator new  (size_t Size, CLinearAllocator& Allocator);
+void* operator new[]( size_t Size, CLinearAllocator& Allocator );
+void  operator delete  (void*, CLinearAllocator&);
+void  operator delete[]( void*, CLinearAllocator& );

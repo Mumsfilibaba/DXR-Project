@@ -9,31 +9,31 @@
 
 typedef int64 TaskID;
 
-struct Task
+struct SExecutableTask
 {
     DECLARE_DELEGATE(CTaskDelegate);
     CTaskDelegate Delegate;
 };
 
-class TaskManager
+class CTaskManager
 {
 public:
     bool Init();
 
-    TaskID AddTask( const Task& NewTask );
+    TaskID AddTask( const SExecutableTask& NewTask );
 
     void WaitForTask( TaskID Task );
     void WaitForAllTasks();
 
     void Release();
 
-    static TaskManager& Get();
+    static CTaskManager& Get();
 
 private:
-    TaskManager();
-    ~TaskManager();
+    CTaskManager();
+    ~CTaskManager();
 
-    bool PopTask( Task& OutTask );
+    bool PopTask( SExecutableTask& OutTask );
 
     void KillWorkers();
 
@@ -42,7 +42,7 @@ private:
 private:
     TArray<TSharedRef<CCoreThread>> WorkThreads;
 
-    TArray<Task> Tasks;
+    TArray<SExecutableTask> Tasks;
     CCriticalSection TaskMutex;
 
     CConditionVariable WakeCondition;
@@ -53,5 +53,5 @@ private:
 
     volatile bool IsRunning;
 
-    static TaskManager Instance;
+    static CTaskManager Instance;
 };

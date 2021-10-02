@@ -2,53 +2,55 @@
 #include "Core/Math/Vector3.h"
 #include "Core/CoreObject/CoreObject.h"
 
-class Light : public CCoreObject
+class CLight : public CCoreObject
 {
-    CORE_OBJECT( Light, CCoreObject );
+    CORE_OBJECT( CLight, CCoreObject );
 
 public:
-    Light();
-    virtual ~Light() = default;
+    CLight();
+    virtual ~CLight() = default;
 
     void SetColor( const CVector3& InColor );
     void SetColor( float R, float G, float B );
 
     void SetIntensity( float InIntensity );
 
-    void SetShadowBias( float InShadowBias )
+    FORCEINLINE void SetShadowBias( float InShadowBias )
     {
         ShadowBias = InShadowBias;
     }
 
-    void SetMaxShadowBias( float InShadowBias )
+    FORCEINLINE void SetMaxShadowBias( float InShadowBias )
     {
         MaxShadowBias = InShadowBias;
     }
 
-    float GetIntensity() const
+    FORCEINLINE float GetIntensity() const
     {
         return Intensity;
     }
 
-    const CVector3& GetColor() const
+    FORCEINLINE const CVector3& GetColor() const
     {
         return Color;
     }
 
-    float GetShadowNearPlane() const
+    FORCEINLINE float GetShadowNearPlane() const
     {
         return ShadowNearPlane;
     }
-    float GetShadowFarPlane() const
+
+    FORCEINLINE float GetShadowFarPlane() const
     {
         return ShadowFarPlane;
     }
 
-    float GetShadowBias() const
+    FORCEINLINE float GetShadowBias() const
     {
         return ShadowBias;
     }
-    float GetMaxShadowBias() const
+
+    FORCEINLINE float GetMaxShadowBias() const
     {
         return MaxShadowBias;
     }

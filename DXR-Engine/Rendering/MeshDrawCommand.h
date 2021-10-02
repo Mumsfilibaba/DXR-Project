@@ -1,14 +1,14 @@
 #pragma once
 #include "Core.h"
 
-struct MeshDrawCommand
+struct SMeshDrawCommand
 {
     class CMaterial* Material = nullptr;
-    class Mesh* Mesh = nullptr;
+    class CMesh* Mesh = nullptr;
     class CActor* CurrentActor = nullptr;
 
-    class VertexBuffer* VertexBuffer = nullptr;
-    class IndexBuffer* IndexBuffer = nullptr;
+    class CRHIVertexBuffer* VertexBuffer = nullptr;
+    class CRHIIndexBuffer* IndexBuffer = nullptr;
 
-    class RayTracingGeometry* Geometry = nullptr;
+    class CRHIRayTracingGeometry* Geometry = nullptr;
 };

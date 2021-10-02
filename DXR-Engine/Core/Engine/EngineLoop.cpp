@@ -1,7 +1,7 @@
 #include "Engine.h"
 #include "EngineLoop.h"
 
-#include "Rendering/DebugUI.h"
+#include "Rendering/UIRenderer.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Resources/TextureFactory.h"
 
@@ -15,7 +15,7 @@
 #include "Core/Application/Platform/PlatformOutputConsole.h"
 #include "Core/Application/Application.h"
 #include "Core/Debug/Profiler.h"
-#include "Core/Debug/Console/Console.h"
+#include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Threading/TaskManager.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/InterlockedInt.h"
@@ -47,7 +47,7 @@ bool CEngineLoop::PreInit()
     }
 
     /* Profiler */
-    Profiler::Init();
+    CProfiler::Init();
 
     /* Create the platform application */
     TSharedPtr<CCoreApplication> PlatformApplication = PlatformApplication::Make();
@@ -68,7 +68,7 @@ bool CEngineLoop::PreInit()
     /* Console */ // TODO: Separate panel from console (CConsoleManager, and CConsolePanel)
     GConsole.Init();
 
-    if ( !TaskManager::Get().Init() )
+    if ( !CTaskManager::Get().Init() )
     {
         return false;
     }
@@ -80,12 +80,12 @@ bool CEngineLoop::PreInit()
 #else
         ERenderLayerApi::D3D12;
 #endif
-    if ( !RenderLayer::Init( RenderApi ) )
+    if ( !CRHIModule::Init( RenderApi ) )
     {
         return false;
     }
 
-    if ( !TextureFactory::Init() )
+    if ( !CTextureFactory::Init() )
     {
         return false;
     }
@@ -98,7 +98,7 @@ bool CEngineLoop::PreInit()
     }
 
     /* UI */
-    if ( !DebugUI::Init() )
+    if ( !CUIRenderer::Init() )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create ImGuiContext" );
         return false;
@@ -144,11 +144,11 @@ void CEngineLoop::Tick( CTimestamp Deltatime )
 
     GEngine->Tick( Deltatime );
 
-    LOG_INFO( "Tick: " + std::to_string( Deltatime.AsMilliSeconds() ) + "ms" );
+    LOG_INFO( "Tick: " + ToString( Deltatime.AsMilliSeconds() ) + "ms" );
 
     Editor::Tick();
 
-    Profiler::Tick();
+    CProfiler::Tick();
 
     GRenderer.Tick( *GEngine->Scene );
 }
@@ -159,7 +159,7 @@ bool CEngineLoop::Release()
 
     GCmdListExecutor.WaitForGPU();
 
-    TextureFactory::Release();
+    CTextureFactory::Release();
 
     if ( GApplicationModule && GApplicationModule->Release() )
     {
@@ -170,16 +170,16 @@ bool CEngineLoop::Release()
         return false;
     }
 
-    DebugUI::Release();
+    CUIRenderer::Release();
 
     GRenderer.Release();
 
     GEngine->Release();
     GEngine.Reset();
 
-    RenderLayer::Release();
+    CRHIModule::Release();
 
-    TaskManager::Get().Release();
+    CTaskManager::Get().Release();
 
     SafeRelease( GConsoleOutput );
 

@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-Camera::Camera()
+CCamera::CCamera()
     : View()
     , Projection()
     , ViewProjection()
@@ -19,7 +19,7 @@ Camera::Camera()
     UpdateMatrices();
 }
 
-void Camera::Move( float x, float y, float z )
+void CCamera::Move( float x, float y, float z )
 {
     const CVector3 TempRight = Right * x;
     const CVector3 TempUp = Up * y;
@@ -27,7 +27,7 @@ void Camera::Move( float x, float y, float z )
     Position = Position + TempRight + TempUp + TempForward;
 }
 
-void Camera::Rotate( float Pitch, float Yaw, float Roll )
+void CCamera::Rotate( float Pitch, float Yaw, float Roll )
 {
     Rotation.x += Pitch;
     Rotation.x = NMath::Max<float>( NMath::ToRadians( -89.0f ), NMath::Min<float>( NMath::ToRadians( 89.0f ), Rotation.x ) );
@@ -47,7 +47,7 @@ void Camera::Rotate( float Pitch, float Yaw, float Roll )
     Up.Normalize();
 }
 
-void Camera::UpdateMatrices()
+void CCamera::UpdateMatrices()
 {
     FOV = NMath::ToRadians( 80.0f );
     Width = 1920.0f;

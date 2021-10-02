@@ -1,9 +1,8 @@
 #pragma once
-#include "ResourceBase.h"
-#include "ResourceViews.h"
+#include "RHIResourceBase.h"
+#include "RHIResourceViews.h"
 
 #include "Core/Containers/SharedPtr.h"
-
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix3x4.h"
 
@@ -25,15 +24,15 @@ enum ERayTracingInstanceFlags
 };
 
 // RayTracing Geometry (Bottom Level Acceleration Structure)
-class RayTracingGeometry : public Resource
+class CRHIRayTracingGeometry : public CRHIResource
 {
 public:
-    RayTracingGeometry( uint32 InFlags )
+    CRHIRayTracingGeometry( uint32 InFlags )
         : Flags( InFlags )
     {
     }
 
-    uint32 GetFlags() const
+    FORCEINLINE uint32 GetFlags() const
     {
         return Flags;
     }
@@ -43,17 +42,17 @@ private:
 };
 
 // RayTracing Scene (Top Level Acceleration Structure)
-class RayTracingScene : public Resource
+class CRHIRayTracingScene : public CRHIResource
 {
 public:
-    RayTracingScene( uint32 InFlags )
+    CRHIRayTracingScene( uint32 InFlags )
         : Flags( InFlags )
     {
     }
 
-    virtual ShaderResourceView* GetShaderResourceView() const = 0;
+    virtual CRHIShaderResourceView* GetShaderResourceView() const = 0;
 
-    uint32 GetFlags() const
+    FORCEINLINE uint32 GetFlags() const
     {
         return Flags;
     }
@@ -62,9 +61,9 @@ private:
     uint32 Flags;
 };
 
-struct RayTracingGeometryInstance
+struct SRayTracingGeometryInstance
 {
-    TSharedRef<RayTracingGeometry> Instance;
+    TSharedRef<CRHIRayTracingGeometry> Instance;
     uint32 InstanceIndex = 0;
     uint32 HitGroupIndex = 0;
     uint32 Flags = RayTracingInstanceFlags_None;
@@ -72,36 +71,36 @@ struct RayTracingGeometryInstance
     CMatrix3x4 Transform;
 };
 
-struct RayPayload
+struct SRayPayload
 {
     CVector3 Color;
     uint32   CurrentDepth;
 };
 
-struct RayIntersectionAttributes
+struct SRayIntersectionAttributes
 {
     float Attrib0;
     float Attrib1;
 };
 
-struct RayTracingShaderResources
+struct SRayTracingShaderResources
 {
-    void AddConstantBuffer( ConstantBuffer* Buffer )
+    void AddConstantBuffer( CRHIConstantBuffer* Buffer )
     {
         ConstantBuffers.Emplace( Buffer );
     }
 
-    void AddShaderResourceView( ShaderResourceView* View )
+    void AddShaderResourceView( CRHIShaderResourceView* View )
     {
         ShaderResourceViews.Emplace( View );
     }
 
-    void AddUnorderedAccessView( UnorderedAccessView* View )
+    void AddUnorderedAccessView( CRHIUnorderedAccessView* View )
     {
         UnorderedAccessViews.Emplace( View );
     }
 
-    void AddSamplerState( SamplerState* State )
+    void AddSamplerState( CRHISamplerState* State )
     {
         SamplerStates.Emplace( State );
     }
@@ -124,9 +123,10 @@ struct RayTracingShaderResources
         SamplerStates.Clear();
     }
 
-    std::string Identifier;
-    TArray<ConstantBuffer*>      ConstantBuffers;
-    TArray<ShaderResourceView*>  ShaderResourceViews;
-    TArray<UnorderedAccessView*> UnorderedAccessViews;
-    TArray<SamplerState*>        SamplerStates;
+    CString Identifier;
+
+    TArray<CRHIConstantBuffer*>      ConstantBuffers;
+    TArray<CRHIShaderResourceView*>  ShaderResourceViews;
+    TArray<CRHIUnorderedAccessView*> UnorderedAccessViews;
+    TArray<CRHISamplerState*>        SamplerStates;
 };

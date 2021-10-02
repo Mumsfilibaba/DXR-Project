@@ -290,7 +290,7 @@ public:
         if ( Index > 0 )
         {
             Len -= Index;
-            Memory::Memmove( Characters, Characters + Index, SizeInBytes() );
+            CMemory::Memmove( Characters, Characters + Index, SizeInBytes() );
         }
     }
 
@@ -772,7 +772,7 @@ public:
         CharType* Src = Dst + Count;
 
         SizeType Num = Len - (Position + Count);
-        Memory::Memmove( Dst, Src, Num * sizeof( CharType ) );
+        CMemory::Memmove( Dst, Src, Num * sizeof( CharType ) );
     }
 
     /* Insert a string at position */
@@ -1115,7 +1115,7 @@ private:
         Len = Other.Len;
         Other.Len = 0;
 
-        Memory::Memexchange( Characters, Other.Characters, SizeInBytes() );
+        CMemory::Memexchange( Characters, Other.Characters, SizeInBytes() );
         Characters[Len] = StringTraits::Null;
     }
 

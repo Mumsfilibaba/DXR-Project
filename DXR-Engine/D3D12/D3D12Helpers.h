@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderLayer/Resources.h"
+#include "RHICore/RHIResources.h"
 
 #include "D3D12Constants.h"
 
@@ -19,7 +19,7 @@ using TComPtr = Microsoft::WRL::ComPtr<T>;
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    Memory::Memzero( &HeapProperties );
+    CMemory::Memzero( &HeapProperties );
 
     HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
     HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -34,7 +34,7 @@ inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    Memory::Memzero( &HeapProperties );
+    CMemory::Memzero( &HeapProperties );
 
     HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
     HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -211,7 +211,7 @@ inline D3D12_STENCIL_OP ConvertStencilOp( EStencilOp StencilOp )
 }
 
 // Converts DepthStencilOp to D3D12_DEPTH_STENCILOP_DESC
-inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp( const DepthStencilOp& DepthStencilOp )
+inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp( const SDepthStencilOp& DepthStencilOp )
 {
     return
     {
@@ -314,7 +314,7 @@ inline D3D12_LOGIC_OP ConvertLogicOp( ELogicOp LogicOp )
 }
 
 // Converts RenderTargetWriteState to D3D12 RenderTargetWriteMask
-inline uint8 ConvertRenderTargetWriteState( const RenderTargetWriteState& RenderTargetWriteState )
+inline uint8 ConvertRenderTargetWriteState( const SRenderTargetWriteState& RenderTargetWriteState )
 {
     uint8 RenderTargetWriteMask = 0;
     if ( RenderTargetWriteState.WriteAll() )

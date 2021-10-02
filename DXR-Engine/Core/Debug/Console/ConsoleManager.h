@@ -39,39 +39,38 @@ public:
     bool ConsoleActivated = false;
 };
 
-
-class Console
+class CConsoleManager
 {
-    struct Line
+    struct SLine
     {
-        Line() = default;
+        SLine() = default;
 
-        Line( const String& InString, ImVec4 InColor )
+        FORCEINLINE SLine( const CString& InString, ImVec4 InColor )
             : String( InString )
             , Color( InColor )
         {
         }
 
-        String String;
+        CString String;
         ImVec4 Color;
     };
 
-    struct Candidate
+    struct SCandidate
     {
         static constexpr float TextPadding = 20.0f;
 
-        Candidate() = default;
+        SCandidate() = default;
 
-        Candidate( const String& InText, const String& InPostFix )
+        FORCEINLINE SCandidate( const CString& InText, const CString& InPostFix )
             : Text( InText )
             , PostFix( InPostFix )
         {
-            TextSize = ImGui::CalcTextSize( Text.c_str() );
+            TextSize = ImGui::CalcTextSize( Text.CStr() );
             TextSize.x += TextPadding;
         }
 
-        String Text;
-        String PostFix;
+        CString Text;
+        CString PostFix;
         ImVec2 TextSize;
     };
 
@@ -79,15 +78,15 @@ public:
     void Init();
     void Tick();
 
-    void RegisterCommand( const String& Name, ConsoleCommand* Object );
-    void RegisterVariable( const String& Name, ConsoleVariable* Variable );
+    void RegisterCommand( const CString& Name, CConsoleCommand* Object );
+    void RegisterVariable( const CString& Name, CConsoleVariable* Variable );
 
-    ConsoleCommand* FindCommand( const String& Name );
-    ConsoleVariable* FindVariable( const String& Name );
+    CConsoleCommand* FindCommand( const CString& Name );
+    CConsoleVariable* FindVariable( const CString& Name );
 
-    void PrintMessage( const String& Message );
-    void PrintWarning( const String& Message );
-    void PrintError( const String& Message );
+    void PrintMessage( const CString& Message );
+    void PrintWarning( const CString& Message );
+    void PrintError( const CString& Message );
 
     void ClearHistory();
 
@@ -96,27 +95,27 @@ private:
 
     void DrawInterface();
 
-    bool RegisterObject( const String& Name, ConsoleObject* Variable );
+    bool RegisterObject( const CString& Name, CConsoleObject* Variable );
 
-    ConsoleObject* FindConsoleObject( const String& Name );
+    CConsoleObject* FindConsoleObject( const CString& Name );
 
     int32 TextCallback( ImGuiInputTextCallbackData* Data );
 
-    void Execute( const String& CmdString );
+    void Execute( const CString& CmdString );
 
 private:
-    std::unordered_map<String, ConsoleObject*> ConsoleObjects;
+    std::unordered_map<CString, CConsoleObject*, SStringHasher> ConsoleObjects;
 
-    String PopupSelectedText;
+    CString PopupSelectedText;
 
-    TArray<Candidate> Candidates;
+    TArray<SCandidate> Candidates;
     int32 CandidatesIndex = -1;
 
     TStaticArray<char, 256> TextBuffer;
 
-    TArray<Line> Lines;
+    TArray<SLine> Lines;
 
-    TArray<String> History;
+    TArray<CString> History;
     uint32 HistoryLength = 50;
     int32  HistoryIndex = -1;
 
@@ -128,7 +127,7 @@ private:
     CConsoleInputHandler InputHandler;
 };
 
-extern Console GConsole;
+extern CConsoleManager GConsole;
 
 #ifdef COMPILER_MSVC
 #pragma warning(pop)

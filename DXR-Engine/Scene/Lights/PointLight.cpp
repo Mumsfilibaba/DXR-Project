@@ -2,8 +2,8 @@
 
 #include "Rendering/Renderer.h"
 
-PointLight::PointLight()
-    : Light()
+CPointLight::CPointLight()
+    : CLight()
     , Matrices()
     , Position( 0.0f, 0.0f, 0.0f )
 {
@@ -12,18 +12,18 @@ PointLight::PointLight()
     CalculateMatrices();
 }
 
-void PointLight::SetPosition( const CVector3& InPosition )
+void CPointLight::SetPosition( const CVector3& InPosition )
 {
     Position = InPosition;
     CalculateMatrices();
 }
 
-void PointLight::SetPosition( float x, float y, float z )
+void CPointLight::SetPosition( float x, float y, float z )
 {
     SetPosition( CVector3( x, y, z ) );
 }
 
-void PointLight::SetShadowNearPlane( float InShadowNearPlane )
+void CPointLight::SetShadowNearPlane( float InShadowNearPlane )
 {
     if ( InShadowNearPlane > 0.0f )
     {
@@ -35,7 +35,7 @@ void PointLight::SetShadowNearPlane( float InShadowNearPlane )
     }
 }
 
-void PointLight::SetShadowFarPlane( float InShadowFarPlane )
+void CPointLight::SetShadowFarPlane( float InShadowFarPlane )
 {
     if ( InShadowFarPlane > 0.0f )
     {
@@ -47,7 +47,7 @@ void PointLight::SetShadowFarPlane( float InShadowFarPlane )
     }
 }
 
-void PointLight::CalculateMatrices()
+void CPointLight::CalculateMatrices()
 {
     if ( !ShadowCaster )
     {

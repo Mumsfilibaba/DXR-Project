@@ -14,6 +14,6 @@ public:
     virtual void Tick( CTimestamp DeltaTime ) override;
 
 private:
-    Camera* CurrentCamera = nullptr;
+    CCamera* CurrentCamera = nullptr;
     CVector3 CameraSpeed;
 };

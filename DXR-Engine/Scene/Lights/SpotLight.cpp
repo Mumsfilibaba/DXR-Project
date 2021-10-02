@@ -1,17 +1,17 @@
 #include "SpotLight.h"
 
-SpotLight::SpotLight()
-    : Light()
+CSpotLight::CSpotLight()
+    : CLight()
     , ConeAngle( 45.0f )
 {
     CORE_OBJECT_INIT();
 }
 
-SpotLight::~SpotLight()
+CSpotLight::~CSpotLight()
 {
 }
 
-void SpotLight::SetConeAngle( float InConeAngle )
+void CSpotLight::SetConeAngle( float InConeAngle )
 {
     ConeAngle = InConeAngle;
 }

@@ -3,7 +3,7 @@
 #include "CoreDefines.h"
 
 /* Class handling memory */
-class Memory
+class CMemory
 {
 public:
     static void* Malloc( uint64 Size ) noexcept;

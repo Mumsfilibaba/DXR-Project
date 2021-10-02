@@ -1,35 +1,35 @@
 #include "LinearAllocator.h"
 
-void* operator new(size_t Size, LinearAllocator& Allocator)
+void* operator new(size_t Size, CLinearAllocator& Allocator)
 {
     void* Memory = Allocator.Allocate( Size, 1 );
     Assert( Memory != nullptr );
     return Memory;
 }
 
-void* operator new[]( size_t Size, LinearAllocator& Allocator )
+void* operator new[]( size_t Size, CLinearAllocator& Allocator )
 {
     void* Memory = Allocator.Allocate( Size, 1 );
     Assert( Memory != nullptr );
     return Memory;
 }
 
-void operator delete (void*, LinearAllocator&)
+void operator delete (void*, CLinearAllocator&)
 {
 }
 
-void operator delete[]( void*, LinearAllocator& )
+void operator delete[]( void*, CLinearAllocator& )
 {
 }
 
-LinearAllocator::LinearAllocator( uint32 StartSize )
+CLinearAllocator::CLinearAllocator( uint32 StartSize )
     : CurrentArena( nullptr )
     , Arenas()
 {
     CurrentArena = &Arenas.Emplace( StartSize );
 }
 
-void* LinearAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
+void* CLinearAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
 {
     Assert( CurrentArena != nullptr );
 
@@ -54,7 +54,7 @@ void* LinearAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
     return CurrentArena->Allocate( AlignedSize );
 }
 
-void LinearAllocator::Reset()
+void CLinearAllocator::Reset()
 {
     Assert( CurrentArena != nullptr );
     CurrentArena->Reset();

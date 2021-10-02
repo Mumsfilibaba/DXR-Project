@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceBase.h"
+#include "RHIResourceBase.h"
 
 #include "Core/Math/Float.h"
 
@@ -75,7 +75,7 @@ inline const char* ToString( ESamplerFilter SamplerFilter )
     }
 }
 
-struct SamplerStateCreateInfo
+struct SSamplerStateCreateInfo
 {
     ESamplerMode    AddressU = ESamplerMode::Clamp;
     ESamplerMode    AddressV = ESamplerMode::Clamp;
@@ -84,11 +84,11 @@ struct SamplerStateCreateInfo
     EComparisonFunc ComparisonFunc = EComparisonFunc::Never;
     float           MipLODBias = 0.0f;
     uint32          MaxAnisotropy = 1;
-    ColorF          BorderColor;
+    SColorF          BorderColor;
     float           MinLOD = -FLT_MAX;
     float           MaxLOD = FLT_MAX;
 };
 
-class SamplerState : public Resource
+class CRHISamplerState : public CRHIResource
 {
 };

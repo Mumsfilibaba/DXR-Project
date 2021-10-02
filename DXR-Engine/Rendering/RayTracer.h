@@ -1,24 +1,24 @@
 #pragma once
 #include "FrameResources.h"
 
-#include "RenderLayer/CommandList.h"
+#include "RHICore/RHICommandList.h"
 
 #include "Scene/Scene.h"
 
-class RayTracer
+class CRayTracer
 {
 public:
-    RayTracer() = default;
-    ~RayTracer() = default;
+    CRayTracer() = default;
+    ~CRayTracer() = default;
 
-    bool Init( FrameResources& Resources );
+    bool Init( SFrameResources& Resources );
     void Release();
 
-    void PreRender( CommandList& CmdList, FrameResources& Resources, const CScene& Scene );
+    void PreRender( CRHICommandList& CmdList, SFrameResources& Resources, const CScene& Scene );
 
 private:
-    TSharedRef<RayTracingPipelineState> Pipeline;
-    TSharedRef<RayGenShader>        RayGenShader;
-    TSharedRef<RayMissShader>       RayMissShader;
-    TSharedRef<RayClosestHitShader> RayClosestHitShader;
+    TSharedRef<CRHIRayTracingPipelineState> Pipeline;
+    TSharedRef<CRHIRayGenShader>        RayGenShader;
+    TSharedRef<CRHIRayMissShader>       RayMissShader;
+    TSharedRef<CRHIRayClosestHitShader> RayClosestHitShader;
 };

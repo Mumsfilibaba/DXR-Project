@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderLayer/ShaderCompiler.h"
+#include "RHICore/RHIShaderCompiler.h"
 
 #include "D3D12Helpers.h"
 #include "D3D12Shader.h"
@@ -8,34 +8,34 @@
 
 #include <d3d12shader.h>
 
-class D3D12ShaderCompiler : public IShaderCompiler
+class CD3D12ShaderCompiler : public IRHIShaderCompiler
 {
 public:
-    D3D12ShaderCompiler();
-    ~D3D12ShaderCompiler();
+    CD3D12ShaderCompiler();
+    ~CD3D12ShaderCompiler();
 
     bool Init();
 
     virtual bool CompileFromFile(
-        const std::string& FilePath,
-        const std::string& EntryPoint,
-        const TArray<ShaderDefine>* Defines,
+        const CString& FilePath,
+        const CString& EntryPoint,
+        const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         TArray<uint8>& Code ) override final;
 
     virtual bool CompileShader(
-        const std::string& ShaderSource,
-        const std::string& EntryPoint,
-        const TArray<ShaderDefine>* Defines,
+        const CString& ShaderSource,
+        const CString& EntryPoint,
+        const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         TArray<uint8>& Code ) override final;
 
-    bool GetReflection( D3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection );
-    bool GetLibraryReflection( D3D12BaseShader* Shader, ID3D12LibraryReflection** Reflection );
+    bool GetReflection( CD3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection );
+    bool GetLibraryReflection( CD3D12BaseShader* Shader, ID3D12LibraryReflection** Reflection );
 
-    bool HasRootSignature( D3D12BaseShader* Shader );
+    bool HasRootSignature( CD3D12BaseShader* Shader );
 
 private:
     bool InternalCompileFromSource(
@@ -44,7 +44,7 @@ private:
         LPCWSTR Entrypoint,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        const TArray<ShaderDefine>* Defines,
+        const TArray<SShaderDefine>* Defines,
         TArray<uint8>& Code );
 
     bool InternalGetReflection( const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject );
@@ -60,5 +60,5 @@ private:
     HMODULE DxCompilerDLL;
 };
 
-extern D3D12ShaderCompiler* GD3D12ShaderCompiler;
+extern CD3D12ShaderCompiler* GD3D12ShaderCompiler;
 extern DxcCreateInstanceProc DxcCreateInstanceFunc;

@@ -356,70 +356,70 @@ private:
     ElementType* Ptr;
 };
 
-/* Check the equallity between uniqueptr and a raw pointer */
+/* Check the equality between uniqueptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TUniquePtr<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-/* Check the equallity between uniqueptr and a raw pointer */
+/* Check the equality between uniqueptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==( T* LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-/* Check the inequallity between uniqueptr and a raw pointer */
+/* Check the inequality between uniqueptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, U* RHS ) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-/* Check the inequallity between uniqueptr and a raw pointer */
+/* Check the inequality between uniqueptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( T* LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-/* Check the equallity between uniqueptrs */
+/* Check the equality between uniqueptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator==( const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the inequallity between uniqueptrs */
+/* Check the inequality between uniqueptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS ) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the equallity between uniqueptr and nullptr */
+/* Check the equality between uniqueptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator==( const TUniquePtr<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
-/* Check the equallity between uniqueptr and nullptr */
+/* Check the equality between uniqueptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator==( NullptrType, const TUniquePtr<T>& RHS ) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
-/* Check the inequallity between uniqueptr and nullptr */
+/* Check the inequality between uniqueptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( const TUniquePtr<T>& LHS, NullptrType ) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
-/* Check the inequallity between uniqueptr and nullptr */
+/* Check the inequality between uniqueptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=( NullptrType, const TUniquePtr<T>& RHS ) noexcept
 {

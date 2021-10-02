@@ -1,7 +1,6 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-
 #include "Core/Application/Core/CoreOutputConsole.h"
 #include "Core/Threading/Platform/CriticalSection.h"
 
@@ -17,14 +16,14 @@ public:
         return new CWindowsOutputConsole();
     }
 
-    virtual void Print( const std::string& Message )     override final;
-    virtual void PrintLine( const std::string& Message ) override final;
+    virtual void Print( const CString& Message )     override final;
+    virtual void PrintLine( const CString& Message ) override final;
 
     virtual void Clear()         override final;
     virtual void ClearLastLine() override final;
 
-    virtual void SetTitle( const std::string& Title ) override final;
-    virtual void SetColor( EConsoleColor Color )      override final;
+    virtual void SetTitle( const CString& Title ) override final;
+    virtual void SetColor( EConsoleColor Color )  override final;
 
 private:
 

@@ -1,9 +1,9 @@
 #pragma once
 #include "Core.h"
 
-struct ColorF
+struct SColorF
 {
-    ColorF()
+    FORCEINLINE SColorF()
         : r( 0.0f )
         , g( 0.0f )
         , b( 0.0f )
@@ -11,7 +11,7 @@ struct ColorF
     {
     }
 
-    ColorF( float InR, float InG, float InB, float InA )
+    FORCEINLINE SColorF( float InR, float InG, float InB, float InA )
         : r( InR )
         , g( InG )
         , b( InB )
@@ -19,7 +19,7 @@ struct ColorF
     {
     }
 
-    void Set( float InR, float InG, float InB, float InA )
+    FORCEINLINE void Set( float InR, float InG, float InB, float InA )
     {
         r = InR;
         g = InG;

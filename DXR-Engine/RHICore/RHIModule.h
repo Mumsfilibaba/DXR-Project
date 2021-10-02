@@ -1,12 +1,12 @@
 #pragma once
-#include "GenericRenderLayer.h"
+#include "RHICore.h"
 
 // TODO: Maybe should be in a config file
-#define ENABLE_API_DEBUGGING       (1)
-#define ENABLE_API_GPU_DEBUGGING   (1)
+#define ENABLE_API_DEBUGGING       (0)
+#define ENABLE_API_GPU_DEBUGGING   (0)
 #define ENABLE_API_GPU_BREADCRUMBS (0)
 
-class RenderLayer
+class CRHIModule
 {
 public:
     static bool Init( ERenderLayerApi InRenderApi );

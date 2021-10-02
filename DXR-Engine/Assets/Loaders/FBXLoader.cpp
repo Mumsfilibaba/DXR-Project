@@ -64,7 +64,7 @@ static TSharedPtr<SImage2D> LoadMaterialTexture( const CString& Path, const ofbx
     const ofbx::Texture* MaterialTexture = Material->getTexture( Type );
     if ( MaterialTexture )
     {
-        // Non-static buffer to support multithreading
+        // Non-static buffer to support multi threading
         char StringBuffer[256];
         MaterialTexture->getRelativeFileName().toString( StringBuffer );
 
@@ -76,6 +76,10 @@ static TSharedPtr<SImage2D> LoadMaterialTexture( const CString& Path, const ofbx
         return Texture;
     }
     else
+#else
+    UNREFERENCED_VARIABLE( Path );
+    UNREFERENCED_VARIABLE( Material );
+    UNREFERENCED_VARIABLE( Type );
 #endif
     {
         return TSharedPtr<SImage2D>();
@@ -132,7 +136,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
     const ofbx::GlobalSettings* Settings = FBXScene->getGlobalSettings();
 
     // Unique tables
-    THashTable<Vertex, uint32, VertexHasher>  UniqueVertices;
+    THashTable<SVertex, uint32, SVertexHasher>  UniqueVertices;
     THashTable<const ofbx::Material*, uint32> UniqueMaterials;
 
     CString Path = ExtractPath( Filename );
@@ -172,15 +176,13 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
             //OutScene.Materials.Emplace( MaterialData );
         }
 
-        uint32 VertexCount = CurrentGeom->getVertexCount();
-        uint32 IndexCount = CurrentGeom->getIndexCount();
+        int32 VertexCount = (int32)CurrentGeom->getVertexCount();
+        int32 IndexCount = (int32)CurrentGeom->getIndexCount();
         Data.Mesh.Indices.Reserve( IndexCount );
         Data.Mesh.Vertices.Reserve( VertexCount );
         UniqueVertices.reserve( VertexCount );
 
         const int* Materials = CurrentGeom->getMaterials();
-        const int* Indices = CurrentGeom->getFaceIndices();
-        Assert( Indices != nullptr );
 
         const ofbx::Vec3* Vertices = CurrentGeom->getVertices();
         Assert( Vertices != nullptr );
@@ -220,7 +222,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
                     }
                 }
 
-                Vertex TempVertex;
+                SVertex TempVertex;
 
                 // Position
                 CVector3 Position = CVector3( (float)Vertices[CurrentIndex].x, (float)Vertices[CurrentIndex].y, (float)Vertices[CurrentIndex].z );

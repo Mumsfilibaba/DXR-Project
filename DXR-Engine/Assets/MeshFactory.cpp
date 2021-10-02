@@ -51,27 +51,27 @@ SMeshData CMeshFactory::CreateCube( float Width, float Height, float Depth ) noe
 
     Cube.Indices =
     {
-        // FRONT FACE
+        // Front Face
         0, 1, 2,
         1, 3, 2,
-
-        // BACK FACE
+        
+        // Back Face
         4, 5, 6,
         5, 7, 6,
 
-        // RIGHT FACE
+        // Right Face
         8, 9, 10,
         9, 11, 10,
-
-        // LEFT FACE
+        
+        // Left Face
         14, 13, 12,
         14, 15, 13,
 
-        // TOP FACE
+        // Top Face
         16, 17, 18,
         17, 19, 18,
 
-        // BOTTOM FACE
+        // Bottom Face
         20, 21, 22,
         21, 23, 22
     };

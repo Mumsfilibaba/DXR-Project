@@ -7,10 +7,10 @@
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
 
-void CMacApplicationMisc::MessageBox( const std::string& Title, const std::string& Message )
+void CMacApplicationMisc::MessageBox( const CString& Title, const CString& Message )
 {
-    CFStringRef CaptionRef = CFStringCreateWithCString( 0, Title.c_str(),   static_cast<CFStringEncoding>(Title.size()) );
-    CFStringRef TextRef    = CFStringCreateWithCString( 0, Message.c_str(), static_cast<CFStringEncoding>(Message.size()) );
+    CFStringRef CaptionRef = CFStringCreateWithCString( 0, Title.CStr(),   static_cast<CFStringEncoding>(Title.Length()) );
+    CFStringRef TextRef    = CFStringCreateWithCString( 0, Message.CStr(), static_cast<CFStringEncoding>(Message.Length()) );
         
     CFOptionFlags Result = 0;
     CFOptionFlags Flags  = kCFUserNotificationStopAlertLevel;

@@ -6,19 +6,19 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Device.h"
 
-class D3D12ComputePipelineState;
+class CD3D12ComputePipelineState;
 
-class D3D12CommandListHandle : public D3D12DeviceChild
+class CD3D12CommandList : public CD3D12DeviceChild
 {
 public:
-    D3D12CommandListHandle( D3D12Device* InDevice )
-        : D3D12DeviceChild( InDevice )
+    FORCEINLINE CD3D12CommandList( CD3D12Device* InDevice )
+        : CD3D12DeviceChild( InDevice )
         , CmdList( nullptr )
         , CmdList5( nullptr )
     {
     }
 
-    FORCEINLINE bool Init( D3D12_COMMAND_LIST_TYPE Type, D3D12CommandAllocatorHandle& Allocator, ID3D12PipelineState* InitalPipeline )
+    FORCEINLINE bool Init( D3D12_COMMAND_LIST_TYPE Type, CD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline )
     {
         HRESULT Result = GetDevice()->GetDevice()->CreateCommandList( 1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS( &CmdList ) );
         if ( SUCCEEDED( Result ) )
@@ -44,7 +44,7 @@ public:
         }
     }
 
-    FORCEINLINE bool Reset( D3D12CommandAllocatorHandle& Allocator )
+    FORCEINLINE bool Reset( CD3D12CommandAllocator& Allocator )
     {
         IsReady = true;
 
@@ -80,7 +80,7 @@ public:
         CmdList->ClearDepthStencilView( DepthStencilView, Flags, Depth, Stencil, 0, nullptr );
     }
 
-    FORCEINLINE void ClearUnorderedAccessViewFloat( D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const D3D12UnorderedAccessView* View, const float ClearColor[4] )
+    FORCEINLINE void ClearUnorderedAccessViewFloat( D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const CD3D12UnorderedAccessView* View, const float ClearColor[4] )
     {
         const D3D12Resource* Resource = View->GetResource();
         CmdList->ClearUnorderedAccessViewFloat( GPUHandle, View->GetOfflineHandle(), Resource->GetResource(), ClearColor, 0, nullptr );
@@ -165,12 +165,12 @@ public:
         CmdList->SetPipelineState( PipelineState );
     }
 
-    FORCEINLINE void SetComputeRootSignature( D3D12RootSignature* RootSignature )
+    FORCEINLINE void SetComputeRootSignature( CD3D12RootSignature* RootSignature )
     {
         CmdList->SetComputeRootSignature( RootSignature->GetRootSignature() );
     }
 
-    FORCEINLINE void SetGraphicsRootSignature( D3D12RootSignature* RootSignature )
+    FORCEINLINE void SetGraphicsRootSignature( CD3D12RootSignature* RootSignature )
     {
         CmdList->SetGraphicsRootSignature( RootSignature->GetRootSignature() );
     }
@@ -252,7 +252,7 @@ public:
     FORCEINLINE void TransitionBarrier( ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, UINT Subresource )
     {
         D3D12_RESOURCE_BARRIER Barrier;
-        Memory::Memzero( &Barrier );
+        CMemory::Memzero( &Barrier );
 
         Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
         Barrier.Transition.pResource = Resource;
@@ -266,7 +266,7 @@ public:
     FORCEINLINE void UnorderedAccessBarrier( ID3D12Resource* Resource )
     {
         D3D12_RESOURCE_BARRIER Barrier;
-        Memory::Memzero( &Barrier );
+        CMemory::Memzero( &Barrier );
 
         Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
         Barrier.UAV.pResource = Resource;
@@ -279,9 +279,9 @@ public:
         return IsReady;
     }
 
-    FORCEINLINE void SetName( const std::string& Name )
+    FORCEINLINE void SetName( const CString& Name )
     {
-        WString WideName = CharToWide( CString( Name.c_str(), Name.length() ) );
+        WString WideName = CharToWide( Name );
         CmdList->SetName( WideName.CStr() );
     }
 

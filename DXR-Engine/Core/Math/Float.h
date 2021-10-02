@@ -1,8 +1,20 @@
 #pragma once
-#include "Core.h"
+#include "MathCommon.h"
 
-#include <cmath>
 #include <cfloat>
+
+#if defined(COMPILER_MSVC)
+#pragma warning(push)
+#pragma warning(disable : 4556) // Disable "value of intrinsic immediate argument '8' is out of range '0 - 7'"
+#endif
+
+// Constant masks
+#define FP32_HIDDEN_BIT   (0x800000U)
+#define FP32_MAX_EXPONENT (0xff)
+#define FP16_MAX_EXPONENT (0x1f)
+#define MAX_EXPONENT      (FP16_MAX_EXPONENT + 127 - 15)
+#define DENORM_EXPONENT   (127 - 15)
+#define MIN_EXPONENT      (DENORM_EXPONENT - 10)
 
 struct SFloat64
 {
@@ -128,13 +140,11 @@ struct SFloat16
 
     FORCEINLINE void SetFloat( float Float32 )
     {
-        // Constant masks
-        constexpr uint32 FP32_HIDDEN_BIT = 0x800000U;
-        constexpr uint16 FP16_MAX_EXPONENT = 0x1f;
-        constexpr uint32 MAX_EXPONENT = FP16_MAX_EXPONENT + 127 - 15;
-        constexpr uint32 DENORM_EXPONENT = (127 - 15);
-        constexpr uint32 MIN_EXPONENT = DENORM_EXPONENT - 10;
-
+    #if ARCHITECTURE_X86_X64
+        __m128  Reg0 = _mm_set_ss( Float32 );
+        __m128i Reg1 = _mm_cvtps_ph( Reg0, _MM_FROUND_NO_EXC );
+        Encoded = static_cast<uint16>(_mm_cvtsi128_si32( Reg1 ));
+    #else
         // Convert
         const SFloat32 In( Float32 );
         Sign = In.Sign;
@@ -150,7 +160,7 @@ struct SFloat16
         }
         else if ( In.Exponent <= MIN_EXPONENT )
         {
-            // These values are too small to be represented by Fp16, these values reults in +/- zero
+            // These values are too small to be represented by Fp16, these values results in +/- zero
             Exponent = 0;
             Mantissa = 0;
         }
@@ -158,7 +168,7 @@ struct SFloat16
         {
             // Calculate new mantissa with hidden bit
             const uint32 NewMantissa = FP32_HIDDEN_BIT | In.Mantissa;
-            const uint32 Shift = 125u - In.Exponent; // Calculate how much to shift to go from normalized to demormalized
+            const uint32 Shift = 125u - In.Exponent; // Calculate how much to shift to go from normalized to de-normalized
 
             Exponent = 0;
             Mantissa = NewMantissa >> (Shift + 1);
@@ -178,21 +188,30 @@ struct SFloat16
             const int32 NewMantissa = int32( In.Mantissa ) >> 13; // Bit-Shift diff in number of mantissa bits
             Mantissa = uint16( NewMantissa );
         }
+    #endif
     }
 
     FORCEINLINE void SetFloatFast( float Float32 )
     {
+    #if ARCHITECTURE_X86_X64
+        __m128  Reg0 = _mm_set_ss( Float32 );
+        __m128i Reg1 = _mm_cvtps_ph( Reg0, _MM_FROUND_NO_EXC );
+        Encoded = static_cast<uint16>(_mm_cvtsi128_si32( Reg1 ));
+    #else
         SFloat32 In( Float32 );
         Exponent = uint16( int32( In.Exponent ) - 127 + 15 ); // Unbias and bias the exponents
         Mantissa = uint16( In.Mantissa >> 13 );               // Bit-Shift diff in number of mantissa bits
         Sign = In.Sign;
+    #endif
     }
 
     FORCEINLINE float GetFloat() const
     {
-        constexpr uint32 FP32_MAX_EXPONENT = 0xff;
-        constexpr uint16 FP16_MAX_EXPONENT = 0x1f;
-
+    #if ARCHITECTURE_X86_X64
+        __m128i Reg0 = _mm_cvtsi32_si128( static_cast<uint32_t>(Encoded) );
+        __m128  Reg1 = _mm_cvtph_ps( Reg0 );
+        return _mm_cvtss_f32( Reg1 );
+    #else
         SFloat32 Ret;
         Ret.Sign = Sign;
 
@@ -212,7 +231,7 @@ struct SFloat16
             }
             else
             {
-                // Denormalized
+                // De-normalized
                 const uint32 Shift = 10 - uint32( std::log2( (float)Mantissa ) );
                 Ret.Exponent = 127 - 14 - Shift;
                 Ret.Mantissa = Mantissa << (Shift + 13);
@@ -229,6 +248,7 @@ struct SFloat16
         }
 
         return Ret.Float32;
+    #endif
     }
 
     FORCEINLINE SFloat16& operator=( float F32 )
@@ -254,3 +274,7 @@ struct SFloat16
         };
     };
 };
+
+#if defined(COMPILER_MSVC)
+#pragma warning(pop)
+#endif

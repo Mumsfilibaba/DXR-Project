@@ -2,25 +2,25 @@
 #include "FrameResources.h"
 #include "LightSetup.h"
 
-#include "RenderLayer/CommandList.h"
+#include "RHICore/RHICommandList.h"
 
-class LightProbeRenderer
+class CLightProbeRenderer
 {
 public:
-    LightProbeRenderer() = default;
-    ~LightProbeRenderer() = default;
+    CLightProbeRenderer() = default;
+    ~CLightProbeRenderer() = default;
 
-    bool Init( LightSetup& LightSetup, FrameResources& FrameResources );
+    bool Init( SLightSetup& LightSetup, SFrameResources& FrameResources );
 
     void Release();
 
-    void RenderSkyLightProbe( CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& Resources );
+    void RenderSkyLightProbe( CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& Resources );
 
 private:
-    bool CreateSkyLightResources( LightSetup& LightSetup );
+    bool CreateSkyLightResources( SLightSetup& LightSetup );
 
-    TSharedRef<ComputePipelineState> IrradianceGenPSO;
-    TSharedRef<ComputeShader>        IrradianceGenShader;
-    TSharedRef<ComputePipelineState> SpecularIrradianceGenPSO;
-    TSharedRef<ComputeShader>        SpecularIrradianceGenShader;
+    TSharedRef<CRHIComputePipelineState> IrradianceGenPSO;
+    TSharedRef<CRHIComputeShader>        IrradianceGenShader;
+    TSharedRef<CRHIComputePipelineState> SpecularIrradianceGenPSO;
+    TSharedRef<CRHIComputeShader>        SpecularIrradianceGenShader;
 };

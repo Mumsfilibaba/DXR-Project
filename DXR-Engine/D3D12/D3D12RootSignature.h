@@ -10,7 +10,7 @@
 
 #include <unordered_map>
 
-class D3D12RootSignature;
+class CD3D12RootSignature;
 
 enum class ERootSignatureType
 {
@@ -21,85 +21,71 @@ enum class ERootSignatureType
     RayTracingLocal = 4,
 };
 
-struct D3D12RootSignatureResourceCount
+struct SD3D12RootSignatureResourceCount
 {
-    bool IsCompatible( const D3D12RootSignatureResourceCount& Other ) const;
+    bool IsCompatible( const SD3D12RootSignatureResourceCount& Other ) const;
 
     ERootSignatureType  Type = ERootSignatureType::Unknown;
-    ShaderResourceCount ResourceCounts[ShaderVisibility_Count];
+    SShaderResourceCount ResourceCounts[ShaderVisibility_Count];
     bool AllowInputAssembler = false;
 };
 
-struct D3D12RootSignatureDescHelper
+class CD3D12RootSignatureDescHelper
 {
 public:
-    D3D12RootSignatureDescHelper( const D3D12RootSignatureResourceCount& RootSignatureInfo );
-    ~D3D12RootSignatureDescHelper() = default;
+    CD3D12RootSignatureDescHelper( const SD3D12RootSignatureResourceCount& RootSignatureInfo );
+    ~CD3D12RootSignatureDescHelper() = default;
 
-    const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const
+    FORCEINLINE const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const
     {
         return Desc;
     }
 
 private:
-    static void InitDescriptorRange(
-        D3D12_DESCRIPTOR_RANGE& OutRange,
-        D3D12_DESCRIPTOR_RANGE_TYPE Type,
-        uint32 NumDescriptors,
-        uint32 BaseShaderRegister,
-        uint32 RegisterSpace );
-
-    static void InitDescriptorTable(
-        D3D12_ROOT_PARAMETER& OutParameter,
-        D3D12_SHADER_VISIBILITY ShaderVisibility,
-        const D3D12_DESCRIPTOR_RANGE* DescriptorRanges,
-        uint32 NumDescriptorRanges );
-
-    static void Init32BitConstantRange(
-        D3D12_ROOT_PARAMETER& OutParameter,
-        D3D12_SHADER_VISIBILITY ShaderVisibility,
-        uint32 Num32BitConstants,
-        uint32 ShaderRegister,
-        uint32 RegisterSpace );
+    static void InitDescriptorRange( D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace );
+    static void InitDescriptorTable( D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges );
+    static void Init32BitConstantRange( D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace );
 
     D3D12_ROOT_SIGNATURE_DESC Desc;
     D3D12_ROOT_PARAMETER      Parameters[D3D12_MAX_ROOT_PARAMETERS];
     D3D12_DESCRIPTOR_RANGE    DescriptorRanges[D3D12_MAX_DESCRIPTOR_RANGES];
+
     uint32 NumDescriptorRanges = 0;
 };
 
-class D3D12RootSignature : public D3D12DeviceChild, public CRefCounted
+class CD3D12RootSignature : public CD3D12DeviceChild, public CRefCounted
 {
 public:
-    D3D12RootSignature( D3D12Device* InDevice );
-    ~D3D12RootSignature() = default;
+    CD3D12RootSignature( CD3D12Device* InDevice );
+    ~CD3D12RootSignature() = default;
 
-    bool Init( const D3D12RootSignatureResourceCount& RootSignatureInfo );
+    bool Init( const SD3D12RootSignatureResourceCount& RootSignatureInfo );
     bool Init( const D3D12_ROOT_SIGNATURE_DESC& Desc );
     bool Init( const void* BlobWithRootSignature, uint64 BlobLengthInBytes );
 
     // Returns -1 if root parameter is not valid
-    int32 GetRootParameterIndex( EShaderVisibility Visibility, EResourceType Type ) const
+    FORCEINLINE int32 GetRootParameterIndex( EShaderVisibility Visibility, EResourceType Type ) const
     {
         return RootParameterMap[Visibility][Type];
     }
 
-    int32 Get32BitConstantsIndex() const
+    FORCEINLINE int32 Get32BitConstantsIndex() const
     {
         return ConstantRootParameterIndex;
     }
 
-    void SetName( const std::string& Name )
+    FORCEINLINE void SetName( const CString& Name )
     {
-        WString WideName = CharToWide( CString( Name.c_str(), Name.length() ) );
+        WString WideName = CharToWide( Name );
         RootSignature->SetName( WideName.CStr() );
     }
 
-    ID3D12RootSignature* GetRootSignature() const
+    FORCEINLINE ID3D12RootSignature* GetRootSignature() const
     {
         return RootSignature.Get();
     }
-    ID3D12RootSignature* const* GetAddressOfRootSignature() const
+
+    FORCEINLINE ID3D12RootSignature* const* GetAddressOfRootSignature() const
     {
         return RootSignature.GetAddressOf();
     }
@@ -116,25 +102,25 @@ private:
     int32 ConstantRootParameterIndex;
 };
 
-class D3D12RootSignatureCache : public D3D12DeviceChild
+class CD3D12RootSignatureCache : public CD3D12DeviceChild
 {
 public:
-    D3D12RootSignatureCache( D3D12Device* Device );
-    ~D3D12RootSignatureCache();
+    CD3D12RootSignatureCache( CD3D12Device* Device );
+    ~CD3D12RootSignatureCache();
 
     bool Init();
     void ReleaseAll();
 
-    D3D12RootSignature* GetOrCreateRootSignature( const D3D12RootSignatureResourceCount& ResourceCount );
+    CD3D12RootSignature* GetOrCreateRootSignature( const SD3D12RootSignatureResourceCount& ResourceCount );
 
-    static D3D12RootSignatureCache& Get();
+    static CD3D12RootSignatureCache& Get();
 
 private:
-    D3D12RootSignature* CreateRootSignature( const D3D12RootSignatureResourceCount& ResourceCount );
+    CD3D12RootSignature* CreateRootSignature( const SD3D12RootSignatureResourceCount& ResourceCount );
 
     // TODO: Use a hash instead, this is beacuse == operator does not make sense, use it anyway?
-    TArray<TSharedRef<D3D12RootSignature>>        RootSignatures;
-    TArray<D3D12RootSignatureResourceCount> ResourceCounts;
+    TArray<TSharedRef<CD3D12RootSignature>>        RootSignatures;
+    TArray<SD3D12RootSignatureResourceCount> ResourceCounts;
 
-    static D3D12RootSignatureCache* Instance;
+    static CD3D12RootSignatureCache* Instance;
 };

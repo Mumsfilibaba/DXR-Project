@@ -20,7 +20,7 @@ class CMacWindow final : public CCoreWindow
 public:
 
     /* Initializes the window */
-    virtual bool Init( const std::string& Title, uint32 Width, uint32 Height, SWindowStyle Style ) override final;
+    virtual bool Init( const CString& Title, uint32 Width, uint32 Height, SWindowStyle Style ) override final;
 
     /* Shows the window */
     virtual void Show( bool Maximized ) override final;
@@ -50,10 +50,10 @@ public:
     virtual bool IsActiveWindow() const override final;
 
     /* Sets the title */
-    virtual void SetTitle( const std::string& Title ) override final;
+    virtual void SetTitle( const CString& Title ) override final;
 
     /* Retrieve the window title */
-    virtual void GetTitle( std::string& OutTitle ) override final;
+    virtual void GetTitle( CString& OutTitle ) override final;
 
     /* Set the shape of the window */
     virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) override final;

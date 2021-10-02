@@ -4,8 +4,8 @@
 
 #include "Core/Math/Math.h"
 
-DirectionalLight::DirectionalLight()
-    : Light()
+CDirectionalLight::CDirectionalLight()
+    : CLight()
     , Direction( 0.0f, -1.0f, 0.0f )
     , Rotation( 0.0f, 0.0f, 0.0f )
     , LookAt( 0.0f, 0.0f, 0.0f )
@@ -22,12 +22,12 @@ DirectionalLight::DirectionalLight()
     }
 }
 
-DirectionalLight::~DirectionalLight()
+CDirectionalLight::~CDirectionalLight()
 {
     // Empty for now
 }
 
-void DirectionalLight::UpdateCascades( Camera& Camera )
+void CDirectionalLight::UpdateCascades( CCamera& Camera )
 {
     //XMVECTOR XmDirection = XMVectorSet( 0.0, -1.0f, 0.0f, 0.0f );
     //XMMATRIX XmRotation = XMMatrixRotationRollPitchYaw( Rotation.x, Rotation.y, Rotation.z );
@@ -179,22 +179,22 @@ void DirectionalLight::UpdateCascades( Camera& Camera )
     return;
 }
 
-void DirectionalLight::SetRotation( const CVector3& InRotation )
+void CDirectionalLight::SetRotation( const CVector3& InRotation )
 {
     Rotation = InRotation;
 }
 
-void DirectionalLight::SetRotation( float x, float y, float z )
+void CDirectionalLight::SetRotation( float x, float y, float z )
 {
     SetRotation( CVector3( x, y, z ) );
 }
 
-void DirectionalLight::SetLookAt( const CVector3& InLookAt )
+void CDirectionalLight::SetLookAt( const CVector3& InLookAt )
 {
     LookAt = InLookAt;
 }
 
-void DirectionalLight::SetLookAt( float x, float y, float z )
+void CDirectionalLight::SetLookAt( float x, float y, float z )
 {
     SetLookAt( CVector3( x, y, z ) );
 }

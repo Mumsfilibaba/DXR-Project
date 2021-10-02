@@ -1,8 +1,7 @@
 #pragma once
 #include "Core.h"
 
-// TODO: Remove
-#include <string>
+#include "Core/Containers/String.h"
 
 enum class EConsoleColor : uint8
 {
@@ -21,13 +20,13 @@ public:
         return nullptr;
     }
 
-    virtual void Print( const std::string& Message ) = 0;
-    virtual void PrintLine( const std::string& Message ) = 0;
+    virtual void Print( const CString& Message ) = 0;
+    virtual void PrintLine( const CString& Message ) = 0;
 
     virtual void Clear() = 0;
     virtual void ClearLastLine() = 0;
 
-    virtual void SetTitle( const std::string& Title ) = 0;
+    virtual void SetTitle( const CString& Title ) = 0;
     virtual void SetColor( EConsoleColor Color ) = 0;
 
     virtual void Release()

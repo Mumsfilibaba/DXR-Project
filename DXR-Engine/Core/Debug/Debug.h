@@ -5,7 +5,7 @@
 #undef OutputDebugString
 #endif
 
-class Debug
+class CDebug
 {
 public:
     static FORCEINLINE void DebugBreak()
@@ -13,7 +13,7 @@ public:
         PlatformDebugMisc::DebugBreak();
     }
 
-    static FORCEINLINE void OutputDebugString( const std::string& Message )
+    static FORCEINLINE void OutputDebugString( const CString& Message )
     {
         PlatformDebugMisc::OutputDebugString( Message );
     }

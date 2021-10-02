@@ -1,6 +1,6 @@
-#include "Console.h"
+#include "ConsoleManager.h"
 
-#include "Rendering/DebugUI.h"
+#include "Rendering/UIRenderer.h"
 
 #include "Core/Engine/EngineLoop.h"
 #include "Core/Engine/Engine.h"
@@ -9,31 +9,31 @@
 
 #include <regex>
 
-Console GConsole;
+CConsoleManager GConsole;
 
-ConsoleCommand GClearHistory;
+CConsoleCommand GClearHistory;
 
-void Console::Init()
+void CConsoleManager::Init()
 {
-    GClearHistory.OnExecute.AddRaw( this, &Console::ClearHistory );
+    GClearHistory.OnExecute.AddRaw( this, &CConsoleManager::ClearHistory );
     INIT_CONSOLE_COMMAND( "ClearHistory", &GClearHistory );
 
-    InputHandler.HandleKeyEventDelegate.BindRaw( this, &Console::OnKeyPressedEvent );
+    InputHandler.HandleKeyEventDelegate.BindRaw( this, &CConsoleManager::OnKeyPressedEvent );
     CApplication::Get().AddInputHandler( &InputHandler );
 }
 
-void Console::Tick()
+void CConsoleManager::Tick()
 {
     if ( IsActive )
     {
-        DebugUI::DrawUI( []()
+        CUIRenderer::DrawUI( []()
         {
             GConsole.DrawInterface();
         } );
     }
 }
 
-void Console::RegisterCommand( const String& Name, ConsoleCommand* Command )
+void CConsoleManager::RegisterCommand( const CString& Name, CConsoleCommand* Command )
 {
     if ( !RegisterObject( Name, Command ) )
     {
@@ -41,7 +41,7 @@ void Console::RegisterCommand( const String& Name, ConsoleCommand* Command )
     }
 }
 
-void Console::RegisterVariable( const String& Name, ConsoleVariable* Variable )
+void CConsoleManager::RegisterVariable( const CString& Name, CConsoleVariable* Variable )
 {
     if ( !RegisterObject( Name, Variable ) )
     {
@@ -49,16 +49,16 @@ void Console::RegisterVariable( const String& Name, ConsoleVariable* Variable )
     }
 }
 
-ConsoleCommand* Console::FindCommand( const String& Name )
+CConsoleCommand* CConsoleManager::FindCommand( const CString& Name )
 {
-    ConsoleObject* Object = FindConsoleObject( Name );
+    CConsoleObject* Object = FindConsoleObject( Name );
     if ( !Object )
     {
         LOG_ERROR( "Could not find ConsoleCommand '" + Name + '\'' );
         return nullptr;
     }
 
-    ConsoleCommand* Command = Object->AsCommand();
+    CConsoleCommand* Command = Object->AsCommand();
     if ( !Command )
     {
         LOG_ERROR( '\'' + Name + "'Is not a ConsoleCommand'" );
@@ -70,16 +70,16 @@ ConsoleCommand* Console::FindCommand( const String& Name )
     }
 }
 
-ConsoleVariable* Console::FindVariable( const String& Name )
+CConsoleVariable* CConsoleManager::FindVariable( const CString& Name )
 {
-    ConsoleObject* Object = FindConsoleObject( Name );
+    CConsoleObject* Object = FindConsoleObject( Name );
     if ( !Object )
     {
         LOG_ERROR( "Could not find ConsoleVariable '" + Name + '\'' );
         return nullptr;
     }
 
-    ConsoleVariable* Variable = Object->AsVariable();
+    CConsoleVariable* Variable = Object->AsVariable();
     if ( !Variable )
     {
         LOG_ERROR( '\'' + Name + "'Is not a ConsoleVariable'" );
@@ -91,28 +91,28 @@ ConsoleVariable* Console::FindVariable( const String& Name )
     }
 }
 
-void Console::PrintMessage( const String& Message )
+void CConsoleManager::PrintMessage( const CString& Message )
 {
     Lines.Emplace( Message, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
 }
 
-void Console::PrintWarning( const String& Message )
+void CConsoleManager::PrintWarning( const CString& Message )
 {
     Lines.Emplace( Message, ImVec4( 1.0f, 1.0f, 0.0f, 1.0f ) );
 }
 
-void Console::PrintError( const String& Message )
+void CConsoleManager::PrintError( const CString& Message )
 {
     Lines.Emplace( Message, ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ) );
 }
 
-void Console::ClearHistory()
+void CConsoleManager::ClearHistory()
 {
     History.Clear();
     HistoryIndex = -1;
 }
 
-void Console::OnKeyPressedEvent( const SKeyEvent& Event )
+void CConsoleManager::OnKeyPressedEvent( const SKeyEvent& Event )
 {
     InputHandler.ConsoleActivated = false;
 
@@ -126,7 +126,7 @@ void Console::OnKeyPressedEvent( const SKeyEvent& Event )
     }
 }
 
-void Console::DrawInterface()
+void CConsoleManager::DrawInterface()
 {
     const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
     const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
@@ -203,7 +203,7 @@ void Console::DrawInterface()
         ImGui::PushAllowKeyboardFocus( false );
 
         float ColumnWidth = 0.0f;
-        for ( const Candidate& Candidate : Candidates )
+        for ( const SCandidate& Candidate : Candidates )
         {
             if ( Candidate.TextSize.x > ColumnWidth )
             {
@@ -216,13 +216,13 @@ void Console::DrawInterface()
 
         for ( int32 i = 0; i < (int32)Candidates.Size(); i++ )
         {
-            const Candidate& Candidate = Candidates[i];
+            const SCandidate& Candidate = Candidates[i];
             IsActiveIndex = (CandidatesIndex == i);
 
             ImGui::PushID( i );
-            if ( ImGui::Selectable( Candidate.Text.c_str(), &IsActiveIndex ) )
+            if ( ImGui::Selectable( Candidate.Text.CStr(), &IsActiveIndex ) )
             {
-                strcpy( TextBuffer.Data(), Candidate.Text.c_str() );
+                strcpy( TextBuffer.Data(), Candidate.Text.CStr() );
                 PopupSelectedText = Candidate.Text;
 
                 Candidates.Clear();
@@ -237,7 +237,7 @@ void Console::DrawInterface()
             ImGui::SameLine( ColumnWidth );
 
             ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 0.7f, 0.7f, 0.7f, 1.0f ) );
-            ImGui::Text( "%s", Candidate.PostFix.c_str() );
+            ImGui::Text( "%s", Candidate.PostFix.CStr() );
             ImGui::PopStyleColor();
 
             ImGui::PopID();
@@ -259,9 +259,9 @@ void Console::DrawInterface()
     }
     else
     {
-        for ( const Line& Text : Lines )
+        for ( const SLine& Text : Lines )
         {
-            ImGui::TextColored( Text.Color, "%s", Text.String.c_str() );
+            ImGui::TextColored( Text.Color, "%s", Text.String.CStr() );
         }
 
         if ( ScrollDown )
@@ -289,7 +289,7 @@ void Console::DrawInterface()
 
     auto Callback = []( ImGuiInputTextCallbackData* Data )->int32
     {
-        Console* This = reinterpret_cast<Console*>(Data->UserData);
+        CConsoleManager* This = reinterpret_cast<CConsoleManager*>(Data->UserData);
         return This->TextCallback( Data );
     };
 
@@ -298,7 +298,7 @@ void Console::DrawInterface()
     {
         if ( CandidatesIndex != -1 )
         {
-            strcpy( TextBuffer.Data(), PopupSelectedText.c_str() );
+            strcpy( TextBuffer.Data(), PopupSelectedText.CStr() );
 
             Candidates.Clear();
             CandidatesIndex = -1;
@@ -307,7 +307,7 @@ void Console::DrawInterface()
         }
         else
         {
-            const String Text = String( TextBuffer.Data() );
+            const CString Text = CString( TextBuffer.Data() );
             Execute( Text );
 
             TextBuffer[0] = 0;
@@ -334,12 +334,12 @@ void Console::DrawInterface()
     ImGui::End();
 }
 
-int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
+int32 CConsoleManager::TextCallback( ImGuiInputTextCallbackData* Data )
 {
     if ( UpdateCursorPosition )
     {
-        Data->CursorPos = int32( PopupSelectedText.length() );
-        PopupSelectedText.clear();
+        Data->CursorPos = int32( PopupSelectedText.Length() );
+        PopupSelectedText.Clear();
 
         UpdateCursorPosition = false;
     }
@@ -373,9 +373,9 @@ int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
 
             for ( const auto& Object : ConsoleObjects )
             {
-                if ( WordLength <= (int32)Object.first.size() )
+                if ( WordLength <= (int32)Object.first.Length() )
                 {
-                    const char* Command = Object.first.c_str();
+                    const char* Command = Object.first.CStr();
                     int32 d = -1;
                     int32 n = WordLength;
 
@@ -390,7 +390,7 @@ int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
 
                     if ( d == 0 )
                     {
-                        ConsoleObject* ConsoleObject = Object.second;
+                        CConsoleObject* ConsoleObject = Object.second;
                         Assert( ConsoleObject != nullptr );
 
                         if ( ConsoleObject->AsCommand() )
@@ -399,7 +399,7 @@ int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
                         }
                         else
                         {
-                            ConsoleVariable* Variable = ConsoleObject->AsVariable();
+                            CConsoleVariable* Variable = ConsoleObject->AsVariable();
                             if ( Variable->IsBool() )
                             {
                                 Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [Boolean]" );
@@ -449,7 +449,7 @@ int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
                     const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
                     const int32 Count = WordLength;
                     Data->DeleteChars( Pos, Count );
-                    Data->InsertChars( Data->CursorPos, Candidates[0].Text.c_str() );
+                    Data->InsertChars( Data->CursorPos, Candidates[0].Text.CStr() );
 
                     CandidatesIndex = -1;
                     CandidateSelectionChanged = true;
@@ -460,7 +460,7 @@ int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
                     const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
                     const int32 Count = WordLength;
                     Data->DeleteChars( Pos, Count );
-                    Data->InsertChars( Data->CursorPos, PopupSelectedText.c_str() );
+                    Data->InsertChars( Data->CursorPos, PopupSelectedText.CStr() );
 
                     PopupSelectedText = "";
 
@@ -502,7 +502,7 @@ int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
 
                 if ( PrevHistoryIndex != HistoryIndex )
                 {
-                    const char* HistoryStr = (HistoryIndex >= 0) ? History[HistoryIndex].c_str() : "";
+                    const char* HistoryStr = (HistoryIndex >= 0) ? History[HistoryIndex].CStr() : "";
                     Data->DeleteChars( 0, Data->BufTextLen );
                     Data->InsertChars( 0, HistoryStr );
                 }
@@ -542,7 +542,7 @@ int32 Console::TextCallback( ImGuiInputTextCallbackData* Data )
     return 0;
 }
 
-void Console::Execute( const String& CmdString )
+void CConsoleManager::Execute( const CString& CmdString )
 {
     PrintMessage( CmdString );
 
@@ -553,13 +553,13 @@ void Console::Execute( const String& CmdString )
         History.RemoveAt( History.StartIterator() );
     }
 
-    size_t Pos = CmdString.find_first_of( " " );
-    if ( Pos == String::npos )
+    int32 Pos = CmdString.FindOneOf( " " );
+    if ( Pos == CString::InvalidPosition )
     {
-        ConsoleCommand* Command = FindCommand( CmdString );
+        CConsoleCommand* Command = FindCommand( CmdString );
         if ( !Command )
         {
-            const String Message = "'" + CmdString + "' is not a registered command";
+            const CString Message = "'" + CmdString + "' is not a registered command";
             PrintError( Message );
         }
         else
@@ -569,9 +569,9 @@ void Console::Execute( const String& CmdString )
     }
     else
     {
-        String VariableName( CmdString.c_str(), Pos );
+        CString VariableName( CmdString.CStr(), Pos );
 
-        ConsoleVariable* Variable = FindVariable( VariableName );
+        CConsoleVariable* Variable = FindVariable( VariableName );
         if ( !Variable )
         {
             PrintError( "'" + CmdString + "' is not a registered variable" );
@@ -580,16 +580,16 @@ void Console::Execute( const String& CmdString )
 
         Pos++;
 
-        String Value( CmdString.c_str() + Pos, CmdString.length() - Pos );
-        if ( std::regex_match( Value, std::regex( "[-]?[0-9]+" ) ) )
+        CString Value( CmdString.CStr() + Pos, CmdString.Length() - Pos );
+        if ( std::regex_match( Value.CStr(), std::regex( "[-]?[0-9]+" ) ) )
         {
             Variable->SetString( Value );
         }
-        else if ( std::regex_match( Value, std::regex( "[-]?[0-9]*[.][0-9]+" ) ) && Variable->IsFloat() )
+        else if ( std::regex_match( Value.CStr(), std::regex( "[-]?[0-9]*[.][0-9]+" ) ) && Variable->IsFloat() )
         {
             Variable->SetString( Value );
         }
-        else if ( std::regex_match( Value, std::regex( "(false)|(true)" ) ) && Variable->IsBool() )
+        else if ( std::regex_match( Value.CStr(), std::regex( "(false)|(true)" ) ) && Variable->IsBool() )
         {
             Variable->SetString( Value );
         }
@@ -601,14 +601,14 @@ void Console::Execute( const String& CmdString )
             }
             else
             {
-                const String Message = "'" + Value + "' Is an invalid value for '" + VariableName + "'";
+                const CString Message = "'" + Value + "' Is an invalid value for '" + VariableName + "'";
                 PrintError( Message );
             }
         }
     }
 }
 
-bool Console::RegisterObject( const String& Name, ConsoleObject* Object )
+bool CConsoleManager::RegisterObject( const CString& Name, CConsoleObject* Object )
 {
     auto ExistingObject = ConsoleObjects.find( Name );
     if ( ExistingObject == ConsoleObjects.end() )
@@ -622,7 +622,7 @@ bool Console::RegisterObject( const String& Name, ConsoleObject* Object )
     }
 }
 
-ConsoleObject* Console::FindConsoleObject( const String& Name )
+CConsoleObject* CConsoleManager::FindConsoleObject( const CString& Name )
 {
     auto ExisitingObject = ConsoleObjects.find( Name );
     if ( ExisitingObject != ConsoleObjects.end() )

@@ -14,7 +14,7 @@ inline T GetTypedProcAddress( HMODULE hModule, LPCSTR lpProcName )
     if ( !Func )
     {
         const char* ProcName = lpProcName;
-        LOG_ERROR( "Failed to load " + std::string( ProcName ) );
+        LOG_ERROR( "Failed to load " + CString( ProcName ) );
     }
 
     return Func;

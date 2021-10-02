@@ -14,9 +14,9 @@ class CWindowsApplicationMisc : public CCoreApplicationMisc
 public:
 
     /* Shows a message box with desired title and message */
-    static FORCEINLINE void MessageBox( const std::string& Title, const std::string& Message )
+    static FORCEINLINE void MessageBox( const CString& Title, const CString& Message )
     {
-        MessageBoxA( 0, Message.c_str(), Title.c_str(), MB_ICONERROR | MB_OK );
+        MessageBoxA( 0, Message.CStr(), Title.CStr(), MB_ICONERROR | MB_OK );
     }
 
     /* Sends a quit message which then is handled in the applications message loop */

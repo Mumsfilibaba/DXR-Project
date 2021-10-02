@@ -1,6 +1,6 @@
 #include "Core/Application/Windows/WindowsWindow.h"
 
-#include "D3D12RenderLayer.h"
+#include "D3D12RHICore.h"
 #include "D3D12Texture.h"
 #include "D3D12Buffer.h"
 #include "D3D12CommandList.h"
@@ -21,34 +21,34 @@
 
 #include <algorithm>
 
-D3D12RenderLayer* GD3D12RenderLayer = nullptr;
+CD3D12RHICore* GD3D12RenderLayer = nullptr;
 
 template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2D>()
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12Texture2D>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture2DArray>()
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12Texture2DArray>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCube>()
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12TextureCube>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12TextureCubeArray>()
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12TextureCubeArray>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<D3D12Texture3D>()
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12Texture3D>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
 }
@@ -60,26 +60,26 @@ inline bool IsTextureCube()
 }
 
 template<>
-inline bool IsTextureCube<D3D12TextureCube>()
+inline bool IsTextureCube<CD3D12TextureCube>()
 {
     return true;
 }
 
 template<>
-inline bool IsTextureCube<D3D12TextureCubeArray>()
+inline bool IsTextureCube<CD3D12TextureCubeArray>()
 {
     return true;
 }
 
-D3D12RenderLayer::D3D12RenderLayer()
-    : GenericRenderLayer( ERenderLayerApi::D3D12 )
+CD3D12RHICore::CD3D12RHICore()
+    : CRHICore( ERenderLayerApi::D3D12 )
     , Device( nullptr )
     , DirectCmdContext( nullptr )
 {
     GD3D12RenderLayer = this;
 }
 
-D3D12RenderLayer::~D3D12RenderLayer()
+CD3D12RHICore::~CD3D12RHICore()
 {
     DirectCmdContext.Reset();
 
@@ -95,7 +95,7 @@ D3D12RenderLayer::~D3D12RenderLayer()
     GD3D12RenderLayer = nullptr;
 }
 
-bool D3D12RenderLayer::Init( bool EnableDebug )
+bool CD3D12RHICore::Init( bool EnableDebug )
 {
     // NOTE: GPUBasedValidation does not work with ray tracing since it causes Device Removed (2021-02-25)
     bool GPUBasedValidationOn =
@@ -111,43 +111,43 @@ bool D3D12RenderLayer::Init( bool EnableDebug )
         false;
 #endif
 
-    Device = DBG_NEW D3D12Device( EnableDebug, GPUBasedValidationOn, DREDOn );
+    Device = DBG_NEW CD3D12Device( EnableDebug, GPUBasedValidationOn, DREDOn );
     if ( !Device->Init() )
     {
         return false;
     }
 
-    RootSignatureCache = DBG_NEW D3D12RootSignatureCache( Device );
+    RootSignatureCache = DBG_NEW CD3D12RootSignatureCache( Device );
     if ( !RootSignatureCache->Init() )
     {
         return false;
     }
 
-    ResourceOfflineDescriptorHeap = DBG_NEW D3D12OfflineDescriptorHeap( Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV );
+    ResourceOfflineDescriptorHeap = DBG_NEW CD3D12OfflineDescriptorHeap( Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV );
     if ( !ResourceOfflineDescriptorHeap->Init() )
     {
         return false;
     }
 
-    RenderTargetOfflineDescriptorHeap = DBG_NEW D3D12OfflineDescriptorHeap( Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV );
+    RenderTargetOfflineDescriptorHeap = DBG_NEW CD3D12OfflineDescriptorHeap( Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV );
     if ( !RenderTargetOfflineDescriptorHeap->Init() )
     {
         return false;
     }
 
-    DepthStencilOfflineDescriptorHeap = DBG_NEW D3D12OfflineDescriptorHeap( Device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV );
+    DepthStencilOfflineDescriptorHeap = DBG_NEW CD3D12OfflineDescriptorHeap( Device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV );
     if ( !DepthStencilOfflineDescriptorHeap->Init() )
     {
         return false;
     }
 
-    SamplerOfflineDescriptorHeap = DBG_NEW D3D12OfflineDescriptorHeap( Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
+    SamplerOfflineDescriptorHeap = DBG_NEW CD3D12OfflineDescriptorHeap( Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
     if ( !SamplerOfflineDescriptorHeap->Init() )
     {
         return false;
     }
 
-    DirectCmdContext = DBG_NEW D3D12CommandContext( Device );
+    DirectCmdContext = DBG_NEW CD3D12CommandContext( Device );
     if ( !DirectCmdContext->Init() )
     {
         return false;
@@ -157,20 +157,20 @@ bool D3D12RenderLayer::Init( bool EnableDebug )
 }
 
 template<typename TD3D12Texture>
-TD3D12Texture* D3D12RenderLayer::CreateTexture(
+TD3D12Texture* CD3D12RHICore::CreateTexture(
     EFormat Format,
     uint32 SizeX, uint32 SizeY, uint32 SizeZ,
     uint32 NumMips,
     uint32 NumSamples,
     uint32 Flags,
     EResourceState InitialState,
-    const ResourceData* InitialData,
-    const ClearValue& OptimalClearValue )
+    const SResourceData* InitialData,
+    const SClearValue& OptimalClearValue )
 {
     TSharedRef<TD3D12Texture> NewTexture = DBG_NEW TD3D12Texture( Device, Format, SizeX, SizeY, SizeZ, NumMips, NumSamples, Flags, OptimalClearValue );
 
     D3D12_RESOURCE_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     Desc.Dimension = GetD3D12TextureResourceDimension<TD3D12Texture>();
     Desc.Flags = ConvertTextureFlags( Flags );
@@ -198,15 +198,15 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
     if ( Flags & TextureFlag_RTV || Flags & TextureFlag_DSV )
     {
         ClearValue.Format = OptimalClearValue.GetFormat() != EFormat::Unknown ? ConvertFormat( OptimalClearValue.GetFormat() ) : Desc.Format;
-        if ( OptimalClearValue.GetType() == ClearValue::EType::DepthStencil )
+        if ( OptimalClearValue.GetType() == SClearValue::EType::DepthStencil )
         {
             ClearValue.DepthStencil.Depth = OptimalClearValue.AsDepthStencil().Depth;
             ClearValue.DepthStencil.Stencil = OptimalClearValue.AsDepthStencil().Stencil;
             ClearValuePtr = &ClearValue;
         }
-        else if ( OptimalClearValue.GetType() == ClearValue::EType::Color )
+        else if ( OptimalClearValue.GetType() == SClearValue::EType::Color )
         {
-            Memory::Memcpy( ClearValue.Color, OptimalClearValue.AsColor().Elements );
+            CMemory::Memcpy( ClearValue.Color, OptimalClearValue.AsColor().Elements, sizeof(float[4]) );
             ClearValuePtr = &ClearValue;
         }
     }
@@ -224,7 +224,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
     if ( Flags & TextureFlag_SRV && !(Flags & TextureFlag_NoDefaultSRV) )
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc;
-        Memory::Memzero( &ViewDesc );
+        CMemory::Memzero( &ViewDesc );
 
         // TODO: Handle typeless
         ViewDesc.Format = CastShaderResourceFormat( Desc.Format );
@@ -280,7 +280,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
             return nullptr;
         }
 
-        TSharedRef<D3D12ShaderResourceView> SRV = DBG_NEW D3D12ShaderResourceView( Device, ResourceOfflineDescriptorHeap );
+        TSharedRef<CD3D12ShaderResourceView> SRV = DBG_NEW CD3D12ShaderResourceView( Device, ResourceOfflineDescriptorHeap );
         if ( !SRV->Init() )
         {
             return nullptr;
@@ -298,10 +298,10 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
     const bool IsTexture2D = (Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D) && (SizeZ == 1);
     if ( Flags & TextureFlag_RTV && !(Flags & TextureFlag_NoDefaultRTV) && IsTexture2D )
     {
-        D3D12Texture2D* NewTexture2D = static_cast<D3D12Texture2D*>(NewTexture->AsTexture2D());
+        CD3D12Texture2D* NewTexture2D = static_cast<CD3D12Texture2D*>(NewTexture->AsTexture2D());
 
         D3D12_RENDER_TARGET_VIEW_DESC ViewDesc;
-        Memory::Memzero( &ViewDesc );
+        CMemory::Memzero( &ViewDesc );
 
         // TODO: Handle typeless
         ViewDesc.Format = Desc.Format;
@@ -309,7 +309,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         ViewDesc.Texture2D.MipSlice = 0;
         ViewDesc.Texture2D.PlaneSlice = 0;
 
-        TSharedRef<D3D12RenderTargetView> RTV = DBG_NEW D3D12RenderTargetView( Device, RenderTargetOfflineDescriptorHeap );
+        TSharedRef<CD3D12RenderTargetView> RTV = DBG_NEW CD3D12RenderTargetView( Device, RenderTargetOfflineDescriptorHeap );
         if ( !RTV->Init() )
         {
             return nullptr;
@@ -325,17 +325,17 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
 
     if ( Flags & TextureFlag_DSV && !(Flags & TextureFlag_NoDefaultDSV) && IsTexture2D )
     {
-        D3D12Texture2D* NewTexture2D = static_cast<D3D12Texture2D*>(NewTexture->AsTexture2D());
+        CD3D12Texture2D* NewTexture2D = static_cast<CD3D12Texture2D*>(NewTexture->AsTexture2D());
 
         D3D12_DEPTH_STENCIL_VIEW_DESC ViewDesc;
-        Memory::Memzero( &ViewDesc );
+        CMemory::Memzero( &ViewDesc );
 
         // TODO: Handle typeless
         ViewDesc.Format = Desc.Format;
         ViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
         ViewDesc.Texture2D.MipSlice = 0;
 
-        TSharedRef<D3D12DepthStencilView> DSV = DBG_NEW D3D12DepthStencilView( Device, DepthStencilOfflineDescriptorHeap );
+        TSharedRef<CD3D12DepthStencilView> DSV = DBG_NEW CD3D12DepthStencilView( Device, DepthStencilOfflineDescriptorHeap );
         if ( !DSV->Init() )
         {
             return nullptr;
@@ -351,10 +351,10 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
 
     if ( Flags & TextureFlag_UAV && !(Flags & TextureFlag_NoDefaultUAV) && IsTexture2D )
     {
-        D3D12Texture2D* NewTexture2D = static_cast<D3D12Texture2D*>(NewTexture->AsTexture2D());
+        CD3D12Texture2D* NewTexture2D = static_cast<CD3D12Texture2D*>(NewTexture->AsTexture2D());
 
         D3D12_UNORDERED_ACCESS_VIEW_DESC ViewDesc;
-        Memory::Memzero( &ViewDesc );
+        CMemory::Memzero( &ViewDesc );
 
         // TODO: Handle typeless
         ViewDesc.Format = Desc.Format;
@@ -362,7 +362,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
         ViewDesc.Texture2D.MipSlice = 0;
         ViewDesc.Texture2D.PlaneSlice = 0;
 
-        TSharedRef<D3D12UnorderedAccessView> UAV = DBG_NEW D3D12UnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
+        TSharedRef<CD3D12UnorderedAccessView> UAV = DBG_NEW CD3D12UnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
         if ( !UAV->Init() )
         {
             return nullptr;
@@ -380,7 +380,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
     {
         // TODO: Support other types than texture 2D
 
-        Texture2D* Texture2D = NewTexture->AsTexture2D();
+        CRHITexture2D* Texture2D = NewTexture->AsTexture2D();
         if ( !Texture2D )
         {
             return nullptr;
@@ -409,7 +409,7 @@ TD3D12Texture* D3D12RenderLayer::CreateTexture(
     return NewTexture.ReleaseOwnership();
 }
 
-Texture2D* D3D12RenderLayer::CreateTexture2D(
+CRHITexture2D* CD3D12RHICore::CreateTexture2D(
     EFormat Format,
     uint32 Width,
     uint32 Height,
@@ -417,13 +417,13 @@ Texture2D* D3D12RenderLayer::CreateTexture2D(
     uint32 NumSamples,
     uint32 Flags,
     EResourceState InitialState,
-    const ResourceData* InitialData,
-    const ClearValue& OptimalClearValue )
+    const SResourceData* InitialData,
+    const SClearValue& OptimalClearValue )
 {
-    return CreateTexture<D3D12Texture2D>( Format, Width, Height, 1, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue );
+    return CreateTexture<CD3D12Texture2D>( Format, Width, Height, 1, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue );
 }
 
-Texture2DArray* D3D12RenderLayer::CreateTexture2DArray(
+CRHITexture2DArray* CD3D12RHICore::CreateTexture2DArray(
     EFormat Format,
     uint32 Width,
     uint32 Height,
@@ -432,39 +432,39 @@ Texture2DArray* D3D12RenderLayer::CreateTexture2DArray(
     uint32 NumArraySlices,
     uint32 Flags,
     EResourceState InitialState,
-    const ResourceData* InitialData,
-    const ClearValue& OptimalClearValue )
+    const SResourceData* InitialData,
+    const SClearValue& OptimalClearValue )
 {
-    return CreateTexture<D3D12Texture2DArray>( Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue );
+    return CreateTexture<CD3D12Texture2DArray>( Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue );
 }
 
-TextureCube* D3D12RenderLayer::CreateTextureCube(
+CRHITextureCube* CD3D12RHICore::CreateTextureCube(
     EFormat Format,
     uint32 Size,
     uint32 NumMips,
     uint32 Flags,
     EResourceState InitialState,
-    const ResourceData* InitialData,
-    const ClearValue& OptimalClearValue )
+    const SResourceData* InitialData,
+    const SClearValue& OptimalClearValue )
 {
-    return CreateTexture<D3D12TextureCube>( Format, Size, Size, TEXTURE_CUBE_FACE_COUNT, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue );
+    return CreateTexture<CD3D12TextureCube>( Format, Size, Size, TEXTURE_CUBE_FACE_COUNT, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue );
 }
 
-TextureCubeArray* D3D12RenderLayer::CreateTextureCubeArray(
+CRHITextureCubeArray* CD3D12RHICore::CreateTextureCubeArray(
     EFormat Format,
     uint32 Size,
     uint32 NumMips,
     uint32 NumArraySlices,
     uint32 Flags,
     EResourceState InitialState,
-    const ResourceData* InitialData,
-    const ClearValue& OptimalClearValue )
+    const SResourceData* InitialData,
+    const SClearValue& OptimalClearValue )
 {
     const uint32 ArraySlices = NumArraySlices * TEXTURE_CUBE_FACE_COUNT;
-    return CreateTexture<D3D12TextureCubeArray>( Format, Size, Size, ArraySlices, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue );
+    return CreateTexture<CD3D12TextureCubeArray>( Format, Size, Size, ArraySlices, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue );
 }
 
-Texture3D* D3D12RenderLayer::CreateTexture3D(
+CRHITexture3D* CD3D12RHICore::CreateTexture3D(
     EFormat Format,
     uint32 Width,
     uint32 Height,
@@ -472,16 +472,16 @@ Texture3D* D3D12RenderLayer::CreateTexture3D(
     uint32 NumMips,
     uint32 Flags,
     EResourceState InitialState,
-    const ResourceData* InitialData,
-    const ClearValue& OptimalClearValue )
+    const SResourceData* InitialData,
+    const SClearValue& OptimalClearValue )
 {
-    return CreateTexture<D3D12Texture3D>( Format, Width, Height, Depth, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue );
+    return CreateTexture<CD3D12Texture3D>( Format, Width, Height, Depth, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue );
 }
 
-SamplerState* D3D12RenderLayer::CreateSamplerState( const SamplerStateCreateInfo& CreateInfo )
+CRHISamplerState* CD3D12RHICore::CreateSamplerState( const SSamplerStateCreateInfo& CreateInfo )
 {
     D3D12_SAMPLER_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     Desc.AddressU = ConvertSamplerMode( CreateInfo.AddressU );
     Desc.AddressV = ConvertSamplerMode( CreateInfo.AddressV );
@@ -493,9 +493,9 @@ SamplerState* D3D12RenderLayer::CreateSamplerState( const SamplerStateCreateInfo
     Desc.MinLOD = CreateInfo.MinLOD;
     Desc.MipLODBias = CreateInfo.MipLODBias;
 
-    Memory::Memcpy( Desc.BorderColor, CreateInfo.BorderColor.Elements, sizeof( Desc.BorderColor ) );
+    CMemory::Memcpy( Desc.BorderColor, CreateInfo.BorderColor.Elements, sizeof( Desc.BorderColor ) );
 
-    TSharedRef<D3D12SamplerState> Sampler = DBG_NEW D3D12SamplerState( Device, SamplerOfflineDescriptorHeap );
+    TSharedRef<CD3D12SamplerState> Sampler = DBG_NEW CD3D12SamplerState( Device, SamplerOfflineDescriptorHeap );
     if ( !Sampler->Init( Desc ) )
     {
         return nullptr;
@@ -507,10 +507,10 @@ SamplerState* D3D12RenderLayer::CreateSamplerState( const SamplerStateCreateInfo
 }
 
 template<typename TD3D12Buffer>
-bool D3D12RenderLayer::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInBytes, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData )
+bool CD3D12RHICore::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInBytes, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
     D3D12_RESOURCE_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
     Desc.Flags = ConvertBufferFlags( Flags );
@@ -554,7 +554,7 @@ bool D3D12RenderLayer::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 Size
                 return false;
             }
 
-            Memory::Memcpy( HostData, InitialData->GetData(), InitialData->GetSizeInBytes() );
+            CMemory::Memcpy( HostData, InitialData->GetData(), InitialData->GetSizeInBytes() );
             Buffer->Unmap( 0, 0 );
         }
         else
@@ -583,12 +583,12 @@ bool D3D12RenderLayer::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 Size
     return true;
 }
 
-VertexBuffer* D3D12RenderLayer::CreateVertexBuffer( uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData )
+CRHIVertexBuffer* CD3D12RHICore::CreateVertexBuffer( uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
     const uint32 SizeInBytes = NumVertices * Stride;
 
-    TSharedRef<D3D12VertexBuffer> NewBuffer = DBG_NEW D3D12VertexBuffer( Device, NumVertices, Stride, Flags );
-    if ( !FinalizeBufferResource<D3D12VertexBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )
+    TSharedRef<CD3D12VertexBuffer> NewBuffer = DBG_NEW CD3D12VertexBuffer( Device, NumVertices, Stride, Flags );
+    if ( !FinalizeBufferResource<CD3D12VertexBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to create VertexBuffer" );
         return nullptr;
@@ -599,13 +599,13 @@ VertexBuffer* D3D12RenderLayer::CreateVertexBuffer( uint32 Stride, uint32 NumVer
     }
 }
 
-IndexBuffer* D3D12RenderLayer::CreateIndexBuffer( EIndexFormat Format, uint32 NumIndices, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData )
+CRHIIndexBuffer* CD3D12RHICore::CreateIndexBuffer( EIndexFormat Format, uint32 NumIndices, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
     const uint32 SizeInBytes = NumIndices * GetStrideFromIndexFormat( Format );
     const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>( SizeInBytes, sizeof( uint32 ) );
 
-    TSharedRef<D3D12IndexBuffer> NewBuffer = DBG_NEW D3D12IndexBuffer( Device, Format, NumIndices, Flags );
-    if ( !FinalizeBufferResource<D3D12IndexBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )
+    TSharedRef<CD3D12IndexBuffer> NewBuffer = DBG_NEW CD3D12IndexBuffer( Device, Format, NumIndices, Flags );
+    if ( !FinalizeBufferResource<CD3D12IndexBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to create IndexBuffer" );
         return nullptr;
@@ -616,14 +616,14 @@ IndexBuffer* D3D12RenderLayer::CreateIndexBuffer( EIndexFormat Format, uint32 Nu
     }
 }
 
-ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer( uint32 Size, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData )
+CRHIConstantBuffer* CD3D12RHICore::CreateConstantBuffer( uint32 Size, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
     Assert( !(Flags & BufferFlag_UAV) && !(Flags & BufferFlag_SRV) );
 
     const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>( Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT );
 
-    TSharedRef<D3D12ConstantBuffer> NewBuffer = DBG_NEW D3D12ConstantBuffer( Device, ResourceOfflineDescriptorHeap, Size, Flags );
-    if ( !FinalizeBufferResource<D3D12ConstantBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )
+    TSharedRef<CD3D12ConstantBuffer> NewBuffer = DBG_NEW CD3D12ConstantBuffer( Device, ResourceOfflineDescriptorHeap, Size, Flags );
+    if ( !FinalizeBufferResource<CD3D12ConstantBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to create ConstantBuffer" );
         return nullptr;
@@ -634,12 +634,12 @@ ConstantBuffer* D3D12RenderLayer::CreateConstantBuffer( uint32 Size, uint32 Flag
     }
 }
 
-StructuredBuffer* D3D12RenderLayer::CreateStructuredBuffer( uint32 Stride, uint32 NumElements, uint32 Flags, EResourceState InitialState, const ResourceData* InitialData )
+CRHIStructuredBuffer* CD3D12RHICore::CreateStructuredBuffer( uint32 Stride, uint32 NumElements, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
     const uint32 SizeInBytes = NumElements * Stride;
 
-    TSharedRef<D3D12StructuredBuffer> NewBuffer = DBG_NEW D3D12StructuredBuffer( Device, NumElements, Stride, Flags );
-    if ( !FinalizeBufferResource<D3D12StructuredBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )
+    TSharedRef<CD3D12StructuredBuffer> NewBuffer = DBG_NEW CD3D12StructuredBuffer( Device, NumElements, Stride, Flags );
+    if ( !FinalizeBufferResource<CD3D12StructuredBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to create StructuredBuffer" );
         return nullptr;
@@ -650,20 +650,20 @@ StructuredBuffer* D3D12RenderLayer::CreateStructuredBuffer( uint32 Stride, uint3
     }
 }
 
-RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry( uint32 Flags, VertexBuffer* VertexBuffer, IndexBuffer* IndexBuffer )
+CRHIRayTracingGeometry* CD3D12RHICore::CreateRayTracingGeometry( uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer )
 {
-    D3D12VertexBuffer* DxVertexBuffer = static_cast<D3D12VertexBuffer*>(VertexBuffer);
-    D3D12IndexBuffer* DxIndexBuffer = static_cast<D3D12IndexBuffer*>(IndexBuffer);
+    CD3D12VertexBuffer* DxVertexBuffer = static_cast<CD3D12VertexBuffer*>(VertexBuffer);
+    CD3D12IndexBuffer* DxIndexBuffer = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
 
-    TSharedRef<D3D12RayTracingGeometry> Geometry = DBG_NEW D3D12RayTracingGeometry( Device, Flags );
-    Geometry->VertexBuffer = MakeSharedRef<D3D12VertexBuffer>( DxVertexBuffer );
-    Geometry->IndexBuffer = MakeSharedRef<D3D12IndexBuffer>( DxIndexBuffer );
+    TSharedRef<CD3D12RayTracingGeometry> Geometry = DBG_NEW CD3D12RayTracingGeometry( Device, Flags );
+    Geometry->VertexBuffer = MakeSharedRef<CD3D12VertexBuffer>( DxVertexBuffer );
+    Geometry->IndexBuffer = MakeSharedRef<CD3D12IndexBuffer>( DxIndexBuffer );
 
     DirectCmdContext->Begin();
 
     if ( !Geometry->Build( *DirectCmdContext, false ) )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         Geometry.Reset();
     }
 
@@ -672,15 +672,15 @@ RayTracingGeometry* D3D12RenderLayer::CreateRayTracingGeometry( uint32 Flags, Ve
     return Geometry.ReleaseOwnership();
 }
 
-RayTracingScene* D3D12RenderLayer::CreateRayTracingScene( uint32 Flags, RayTracingGeometryInstance* Instances, uint32 NumInstances )
+CRHIRayTracingScene* CD3D12RHICore::CreateRayTracingScene( uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances )
 {
-    TSharedRef<D3D12RayTracingScene> Scene = DBG_NEW D3D12RayTracingScene( Device, Flags );
+    TSharedRef<CD3D12RayTracingScene> Scene = DBG_NEW CD3D12RayTracingScene( Device, Flags );
 
     DirectCmdContext->Begin();
 
     if ( !Scene->Build( *DirectCmdContext, Instances, NumInstances, false ) )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         Scene.Reset();
     }
 
@@ -689,19 +689,19 @@ RayTracingScene* D3D12RenderLayer::CreateRayTracingScene( uint32 Flags, RayTraci
     return Scene.ReleaseOwnership();
 }
 
-ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView( const ShaderResourceViewCreateInfo& CreateInfo )
+CRHIShaderResourceView* CD3D12RHICore::CreateShaderResourceView( const SShaderResourceViewCreateInfo& CreateInfo )
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     // TODO: Expose in ShaderResourceViewCreateInfo
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     D3D12Resource* Resource = nullptr;
-    if ( CreateInfo.Type == ShaderResourceViewCreateInfo::EType::Texture2D )
+    if ( CreateInfo.Type == SShaderResourceViewCreateInfo::EType::Texture2D )
     {
-        Texture2D* Texture = CreateInfo.Texture2D.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITexture2D* Texture = CreateInfo.Texture2D.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsSRV() && CreateInfo.Texture2D.Format != EFormat::Unknown );
@@ -720,10 +720,10 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView( const ShaderReso
             Desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
         }
     }
-    else if ( CreateInfo.Type == ShaderResourceViewCreateInfo::EType::Texture2DArray )
+    else if ( CreateInfo.Type == SShaderResourceViewCreateInfo::EType::Texture2DArray )
     {
-        Texture2DArray* Texture = CreateInfo.Texture2DArray.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITexture2DArray* Texture = CreateInfo.Texture2DArray.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsSRV() && CreateInfo.Texture2DArray.Format != EFormat::Unknown );
@@ -746,10 +746,10 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView( const ShaderReso
             Desc.Texture2DMSArray.FirstArraySlice = CreateInfo.Texture2DArray.ArraySlice;
         }
     }
-    else if ( CreateInfo.Type == ShaderResourceViewCreateInfo::EType::TextureCube )
+    else if ( CreateInfo.Type == SShaderResourceViewCreateInfo::EType::TextureCube )
     {
-        TextureCube* Texture = CreateInfo.TextureCube.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITextureCube* Texture = CreateInfo.TextureCube.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsSRV() && CreateInfo.TextureCube.Format != EFormat::Unknown );
@@ -760,10 +760,10 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView( const ShaderReso
         Desc.TextureCube.MostDetailedMip = CreateInfo.TextureCube.Mip;
         Desc.TextureCube.ResourceMinLODClamp = CreateInfo.TextureCube.MinMipBias;
     }
-    else if ( CreateInfo.Type == ShaderResourceViewCreateInfo::EType::TextureCubeArray )
+    else if ( CreateInfo.Type == SShaderResourceViewCreateInfo::EType::TextureCubeArray )
     {
-        TextureCubeArray* Texture = CreateInfo.TextureCubeArray.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITextureCubeArray* Texture = CreateInfo.TextureCubeArray.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsSRV() && CreateInfo.TextureCubeArray.Format != EFormat::Unknown );
@@ -777,10 +777,10 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView( const ShaderReso
         Desc.TextureCubeArray.First2DArrayFace = CreateInfo.TextureCubeArray.ArraySlice * TEXTURE_CUBE_FACE_COUNT;
         Desc.TextureCubeArray.NumCubes = CreateInfo.TextureCubeArray.NumArraySlices;
     }
-    else if ( CreateInfo.Type == ShaderResourceViewCreateInfo::EType::Texture3D )
+    else if ( CreateInfo.Type == SShaderResourceViewCreateInfo::EType::Texture3D )
     {
-        Texture3D* Texture = CreateInfo.Texture3D.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITexture3D* Texture = CreateInfo.Texture3D.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsSRV() && CreateInfo.Texture3D.Format != EFormat::Unknown );
@@ -791,10 +791,10 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView( const ShaderReso
         Desc.Texture3D.MostDetailedMip = CreateInfo.Texture3D.Mip;
         Desc.Texture3D.ResourceMinLODClamp = CreateInfo.Texture3D.MinMipBias;
     }
-    else if ( CreateInfo.Type == ShaderResourceViewCreateInfo::EType::VertexBuffer )
+    else if ( CreateInfo.Type == SShaderResourceViewCreateInfo::EType::VertexBuffer )
     {
-        VertexBuffer* Buffer = CreateInfo.VertexBuffer.Buffer;
-        D3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
+        CRHIVertexBuffer* Buffer = CreateInfo.VertexBuffer.Buffer;
+        CD3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
         Resource = DxBuffer->GetResource();
 
         Assert( Buffer->IsSRV() );
@@ -806,10 +806,10 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView( const ShaderReso
         Desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
         Desc.Buffer.StructureByteStride = Buffer->GetStride();
     }
-    else if ( CreateInfo.Type == ShaderResourceViewCreateInfo::EType::IndexBuffer )
+    else if ( CreateInfo.Type == SShaderResourceViewCreateInfo::EType::IndexBuffer )
     {
-        IndexBuffer* Buffer = CreateInfo.IndexBuffer.Buffer;
-        D3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
+        CRHIIndexBuffer* Buffer = CreateInfo.IndexBuffer.Buffer;
+        CD3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
         Resource = DxBuffer->GetResource();
 
         Assert( Buffer->IsSRV() );
@@ -822,10 +822,10 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView( const ShaderReso
         Desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
         Desc.Buffer.StructureByteStride = 0;
     }
-    else if ( CreateInfo.Type == ShaderResourceViewCreateInfo::EType::StructuredBuffer )
+    else if ( CreateInfo.Type == SShaderResourceViewCreateInfo::EType::StructuredBuffer )
     {
-        StructuredBuffer* Buffer = CreateInfo.StructuredBuffer.Buffer;
-        D3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
+        CRHIStructuredBuffer* Buffer = CreateInfo.StructuredBuffer.Buffer;
+        CD3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
         Resource = DxBuffer->GetResource();
 
         Assert( Buffer->IsSRV() );
@@ -840,7 +840,7 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView( const ShaderReso
 
     Assert( Resource != nullptr );
 
-    TSharedRef<D3D12ShaderResourceView> DxView = DBG_NEW D3D12ShaderResourceView( Device, ResourceOfflineDescriptorHeap );
+    TSharedRef<CD3D12ShaderResourceView> DxView = DBG_NEW CD3D12ShaderResourceView( Device, ResourceOfflineDescriptorHeap );
     if ( !DxView->Init() )
     {
         return nullptr;
@@ -856,16 +856,16 @@ ShaderResourceView* D3D12RenderLayer::CreateShaderResourceView( const ShaderReso
     }
 }
 
-UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView( const UnorderedAccessViewCreateInfo& CreateInfo )
+CRHIUnorderedAccessView* CD3D12RHICore::CreateUnorderedAccessView( const SUnorderedAccessViewCreateInfo& CreateInfo )
 {
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     D3D12Resource* Resource = nullptr;
-    if ( CreateInfo.Type == UnorderedAccessViewCreateInfo::EType::Texture2D )
+    if ( CreateInfo.Type == SUnorderedAccessViewCreateInfo::EType::Texture2D )
     {
-        Texture2D* Texture = CreateInfo.Texture2D.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITexture2D* Texture = CreateInfo.Texture2D.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsUAV() && CreateInfo.Texture2D.Format != EFormat::Unknown );
@@ -875,10 +875,10 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView( const Unordere
         Desc.Texture2D.MipSlice = CreateInfo.Texture2D.Mip;
         Desc.Texture2D.PlaneSlice = 0;
     }
-    else if ( CreateInfo.Type == UnorderedAccessViewCreateInfo::EType::Texture2DArray )
+    else if ( CreateInfo.Type == SUnorderedAccessViewCreateInfo::EType::Texture2DArray )
     {
-        Texture2DArray* Texture = CreateInfo.Texture2DArray.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITexture2DArray* Texture = CreateInfo.Texture2DArray.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsUAV() && CreateInfo.Texture2DArray.Format != EFormat::Unknown );
@@ -890,10 +890,10 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView( const Unordere
         Desc.Texture2DArray.FirstArraySlice = CreateInfo.Texture2DArray.ArraySlice;
         Desc.Texture2DArray.PlaneSlice = 0;
     }
-    else if ( CreateInfo.Type == UnorderedAccessViewCreateInfo::EType::TextureCube )
+    else if ( CreateInfo.Type == SUnorderedAccessViewCreateInfo::EType::TextureCube )
     {
-        TextureCube* Texture = CreateInfo.TextureCube.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITextureCube* Texture = CreateInfo.TextureCube.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsUAV() && CreateInfo.TextureCube.Format != EFormat::Unknown );
@@ -905,10 +905,10 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView( const Unordere
         Desc.Texture2DArray.FirstArraySlice = 0;
         Desc.Texture2DArray.PlaneSlice = 0;
     }
-    else if ( CreateInfo.Type == UnorderedAccessViewCreateInfo::EType::TextureCubeArray )
+    else if ( CreateInfo.Type == SUnorderedAccessViewCreateInfo::EType::TextureCubeArray )
     {
-        TextureCubeArray* Texture = CreateInfo.TextureCubeArray.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITextureCubeArray* Texture = CreateInfo.TextureCubeArray.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsUAV() && CreateInfo.TextureCubeArray.Format != EFormat::Unknown );
@@ -920,10 +920,10 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView( const Unordere
         Desc.Texture2DArray.FirstArraySlice = CreateInfo.TextureCubeArray.ArraySlice * TEXTURE_CUBE_FACE_COUNT;
         Desc.Texture2DArray.PlaneSlice = 0;
     }
-    else if ( CreateInfo.Type == UnorderedAccessViewCreateInfo::EType::Texture3D )
+    else if ( CreateInfo.Type == SUnorderedAccessViewCreateInfo::EType::Texture3D )
     {
-        Texture3D* Texture = CreateInfo.Texture3D.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITexture3D* Texture = CreateInfo.Texture3D.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsUAV() && CreateInfo.Texture3D.Format != EFormat::Unknown );
@@ -934,10 +934,10 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView( const Unordere
         Desc.Texture3D.FirstWSlice = CreateInfo.Texture3D.DepthSlice;
         Desc.Texture3D.WSize = CreateInfo.Texture3D.NumDepthSlices;
     }
-    else if ( CreateInfo.Type == UnorderedAccessViewCreateInfo::EType::VertexBuffer )
+    else if ( CreateInfo.Type == SUnorderedAccessViewCreateInfo::EType::VertexBuffer )
     {
-        VertexBuffer* Buffer = CreateInfo.VertexBuffer.Buffer;
-        D3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
+        CRHIVertexBuffer* Buffer = CreateInfo.VertexBuffer.Buffer;
+        CD3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
         Resource = DxBuffer->GetResource();
 
         Assert( Buffer->IsUAV() );
@@ -949,10 +949,10 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView( const Unordere
         Desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
         Desc.Buffer.StructureByteStride = Buffer->GetStride();
     }
-    else if ( CreateInfo.Type == UnorderedAccessViewCreateInfo::EType::IndexBuffer )
+    else if ( CreateInfo.Type == SUnorderedAccessViewCreateInfo::EType::IndexBuffer )
     {
-        IndexBuffer* Buffer = CreateInfo.IndexBuffer.Buffer;
-        D3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
+        CRHIIndexBuffer* Buffer = CreateInfo.IndexBuffer.Buffer;
+        CD3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
         Resource = DxBuffer->GetResource();
 
         Assert( Buffer->IsUAV() );
@@ -968,10 +968,10 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView( const Unordere
         Desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
         Desc.Buffer.StructureByteStride = 0;
     }
-    else if ( CreateInfo.Type == UnorderedAccessViewCreateInfo::EType::StructuredBuffer )
+    else if ( CreateInfo.Type == SUnorderedAccessViewCreateInfo::EType::StructuredBuffer )
     {
-        StructuredBuffer* Buffer = CreateInfo.StructuredBuffer.Buffer;
-        D3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
+        CRHIStructuredBuffer* Buffer = CreateInfo.StructuredBuffer.Buffer;
+        CD3D12BaseBuffer* DxBuffer = D3D12BufferCast( Buffer );
         Resource = DxBuffer->GetResource();
 
         Assert( Buffer->IsUAV() );
@@ -984,7 +984,7 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView( const Unordere
         Desc.Buffer.StructureByteStride = Buffer->GetStride();
     }
 
-    TSharedRef<D3D12UnorderedAccessView> DxView = DBG_NEW D3D12UnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
+    TSharedRef<CD3D12UnorderedAccessView> DxView = DBG_NEW CD3D12UnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
     if ( !DxView->Init() )
     {
         return nullptr;
@@ -1003,20 +1003,20 @@ UnorderedAccessView* D3D12RenderLayer::CreateUnorderedAccessView( const Unordere
     }
 }
 
-RenderTargetView* D3D12RenderLayer::CreateRenderTargetView( const RenderTargetViewCreateInfo& CreateInfo )
+CRHIRenderTargetView* CD3D12RHICore::CreateRenderTargetView( const SRenderTargetViewCreateInfo& CreateInfo )
 {
     D3D12_RENDER_TARGET_VIEW_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     D3D12Resource* Resource = nullptr;
 
     Desc.Format = ConvertFormat( CreateInfo.Format );
     Assert( CreateInfo.Format != EFormat::Unknown );
 
-    if ( CreateInfo.Type == RenderTargetViewCreateInfo::EType::Texture2D )
+    if ( CreateInfo.Type == SRenderTargetViewCreateInfo::EType::Texture2D )
     {
-        Texture2D* Texture = CreateInfo.Texture2D.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITexture2D* Texture = CreateInfo.Texture2D.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsRTV() );
@@ -1032,10 +1032,10 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView( const RenderTargetVi
             Desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
         }
     }
-    else if ( CreateInfo.Type == RenderTargetViewCreateInfo::EType::Texture2DArray )
+    else if ( CreateInfo.Type == SRenderTargetViewCreateInfo::EType::Texture2DArray )
     {
-        Texture2DArray* Texture = CreateInfo.Texture2DArray.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITexture2DArray* Texture = CreateInfo.Texture2DArray.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsRTV() );
@@ -1055,10 +1055,10 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView( const RenderTargetVi
             Desc.Texture2DMSArray.FirstArraySlice = CreateInfo.Texture2DArray.ArraySlice;
         }
     }
-    else if ( CreateInfo.Type == RenderTargetViewCreateInfo::EType::TextureCube )
+    else if ( CreateInfo.Type == SRenderTargetViewCreateInfo::EType::TextureCube )
     {
-        TextureCube* Texture = CreateInfo.TextureCube.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITextureCube* Texture = CreateInfo.TextureCube.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsRTV() );
@@ -1069,10 +1069,10 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView( const RenderTargetVi
         Desc.Texture2DArray.FirstArraySlice = GetCubeFaceIndex( CreateInfo.TextureCube.CubeFace );
         Desc.Texture2DArray.PlaneSlice = 0;
     }
-    else if ( CreateInfo.Type == RenderTargetViewCreateInfo::EType::TextureCubeArray )
+    else if ( CreateInfo.Type == SRenderTargetViewCreateInfo::EType::TextureCubeArray )
     {
-        TextureCubeArray* Texture = CreateInfo.TextureCubeArray.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITextureCubeArray* Texture = CreateInfo.TextureCubeArray.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsRTV() );
@@ -1083,10 +1083,10 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView( const RenderTargetVi
         Desc.Texture2DArray.FirstArraySlice = CreateInfo.TextureCubeArray.ArraySlice * TEXTURE_CUBE_FACE_COUNT + GetCubeFaceIndex( CreateInfo.TextureCube.CubeFace );
         Desc.Texture2DArray.PlaneSlice = 0;
     }
-    else if ( CreateInfo.Type == RenderTargetViewCreateInfo::EType::Texture3D )
+    else if ( CreateInfo.Type == SRenderTargetViewCreateInfo::EType::Texture3D )
     {
-        Texture3D* Texture = CreateInfo.Texture3D.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITexture3D* Texture = CreateInfo.Texture3D.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsRTV() );
@@ -1097,7 +1097,7 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView( const RenderTargetVi
         Desc.Texture3D.WSize = CreateInfo.Texture3D.NumDepthSlices;
     }
 
-    TSharedRef<D3D12RenderTargetView> DxView = DBG_NEW D3D12RenderTargetView( Device, RenderTargetOfflineDescriptorHeap );
+    TSharedRef<CD3D12RenderTargetView> DxView = DBG_NEW CD3D12RenderTargetView( Device, RenderTargetOfflineDescriptorHeap );
     if ( !DxView->Init() )
     {
         return nullptr;
@@ -1115,20 +1115,20 @@ RenderTargetView* D3D12RenderLayer::CreateRenderTargetView( const RenderTargetVi
     }
 }
 
-DepthStencilView* D3D12RenderLayer::CreateDepthStencilView( const DepthStencilViewCreateInfo& CreateInfo )
+CRHIDepthStencilView* CD3D12RHICore::CreateDepthStencilView( const SDepthStencilViewCreateInfo& CreateInfo )
 {
     D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     D3D12Resource* Resource = nullptr;
 
     Desc.Format = ConvertFormat( CreateInfo.Format );
     Assert( CreateInfo.Format != EFormat::Unknown );
 
-    if ( CreateInfo.Type == DepthStencilViewCreateInfo::EType::Texture2D )
+    if ( CreateInfo.Type == SDepthStencilViewCreateInfo::EType::Texture2D )
     {
-        Texture2D* Texture = CreateInfo.Texture2D.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITexture2D* Texture = CreateInfo.Texture2D.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsDSV() );
@@ -1143,10 +1143,10 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView( const DepthStencilVi
             Desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
         }
     }
-    else if ( CreateInfo.Type == DepthStencilViewCreateInfo::EType::Texture2DArray )
+    else if ( CreateInfo.Type == SDepthStencilViewCreateInfo::EType::Texture2DArray )
     {
-        Texture2DArray* Texture = CreateInfo.Texture2DArray.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITexture2DArray* Texture = CreateInfo.Texture2DArray.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsDSV() );
@@ -1165,10 +1165,10 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView( const DepthStencilVi
             Desc.Texture2DMSArray.FirstArraySlice = CreateInfo.Texture2DArray.ArraySlice;
         }
     }
-    else if ( CreateInfo.Type == DepthStencilViewCreateInfo::EType::TextureCube )
+    else if ( CreateInfo.Type == SDepthStencilViewCreateInfo::EType::TextureCube )
     {
-        TextureCube* Texture = CreateInfo.TextureCube.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITextureCube* Texture = CreateInfo.TextureCube.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsDSV() );
@@ -1178,10 +1178,10 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView( const DepthStencilVi
         Desc.Texture2DArray.ArraySize = 1;
         Desc.Texture2DArray.FirstArraySlice = GetCubeFaceIndex( CreateInfo.TextureCube.CubeFace );
     }
-    else if ( CreateInfo.Type == DepthStencilViewCreateInfo::EType::TextureCubeArray )
+    else if ( CreateInfo.Type == SDepthStencilViewCreateInfo::EType::TextureCubeArray )
     {
-        TextureCubeArray* Texture = CreateInfo.TextureCubeArray.Texture;
-        D3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
+        CRHITextureCubeArray* Texture = CreateInfo.TextureCubeArray.Texture;
+        CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
         Resource = DxTexture->GetResource();
 
         Assert( Texture->IsDSV() );
@@ -1192,7 +1192,7 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView( const DepthStencilVi
         Desc.Texture2DArray.FirstArraySlice = CreateInfo.TextureCubeArray.ArraySlice * TEXTURE_CUBE_FACE_COUNT + GetCubeFaceIndex( CreateInfo.TextureCube.CubeFace );
     }
 
-    TSharedRef<D3D12DepthStencilView> DxView = DBG_NEW D3D12DepthStencilView( Device, DepthStencilOfflineDescriptorHeap );
+    TSharedRef<CD3D12DepthStencilView> DxView = DBG_NEW CD3D12DepthStencilView( Device, DepthStencilOfflineDescriptorHeap );
     if ( !DxView->Init() )
     {
         return nullptr;
@@ -1208,9 +1208,9 @@ DepthStencilView* D3D12RenderLayer::CreateDepthStencilView( const DepthStencilVi
     }
 }
 
-ComputeShader* D3D12RenderLayer::CreateComputeShader( const TArray<uint8>& ShaderCode )
+CRHIComputeShader* CD3D12RHICore::CreateComputeShader( const TArray<uint8>& ShaderCode )
 {
-    TSharedRef<D3D12ComputeShader> Shader = DBG_NEW D3D12ComputeShader( Device, ShaderCode );
+    TSharedRef<CD3D12ComputeShader> Shader = DBG_NEW CD3D12ComputeShader( Device, ShaderCode );
     if ( !Shader->Init() )
     {
         return nullptr;
@@ -1219,10 +1219,10 @@ ComputeShader* D3D12RenderLayer::CreateComputeShader( const TArray<uint8>& Shade
     return Shader.ReleaseOwnership();
 }
 
-VertexShader* D3D12RenderLayer::CreateVertexShader( const TArray<uint8>& ShaderCode )
+CRHIVertexShader* CD3D12RHICore::CreateVertexShader( const TArray<uint8>& ShaderCode )
 {
-    TSharedRef<D3D12VertexShader> Shader = DBG_NEW D3D12VertexShader( Device, ShaderCode );
-    if ( !D3D12BaseShader::GetShaderReflection( Shader.Get() ) )
+    TSharedRef<CD3D12VertexShader> Shader = DBG_NEW CD3D12VertexShader( Device, ShaderCode );
+    if ( !CD3D12BaseShader::GetShaderReflection( Shader.Get() ) )
     {
         return nullptr;
     }
@@ -1230,45 +1230,45 @@ VertexShader* D3D12RenderLayer::CreateVertexShader( const TArray<uint8>& ShaderC
     return Shader.ReleaseOwnership();
 }
 
-HullShader* D3D12RenderLayer::CreateHullShader( const TArray<uint8>& ShaderCode )
+CRHIHullShader* CD3D12RHICore::CreateHullShader( const TArray<uint8>& ShaderCode )
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE( ShaderCode );
     return nullptr;
 }
 
-DomainShader* D3D12RenderLayer::CreateDomainShader( const TArray<uint8>& ShaderCode )
+CRHIDomainShader* CD3D12RHICore::CreateDomainShader( const TArray<uint8>& ShaderCode )
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE( ShaderCode );
     return nullptr;
 }
 
-GeometryShader* D3D12RenderLayer::CreateGeometryShader( const TArray<uint8>& ShaderCode )
+CRHIGeometryShader* CD3D12RHICore::CreateGeometryShader( const TArray<uint8>& ShaderCode )
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE( ShaderCode );
     return nullptr;
 }
 
-MeshShader* D3D12RenderLayer::CreateMeshShader( const TArray<uint8>& ShaderCode )
+CRHIMeshShader* CD3D12RHICore::CreateMeshShader( const TArray<uint8>& ShaderCode )
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE( ShaderCode );
     return nullptr;
 }
 
-AmplificationShader* D3D12RenderLayer::CreateAmplificationShader( const TArray<uint8>& ShaderCode )
+CRHIAmplificationShader* CD3D12RHICore::CreateAmplificationShader( const TArray<uint8>& ShaderCode )
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE( ShaderCode );
     return nullptr;
 }
 
-PixelShader* D3D12RenderLayer::CreatePixelShader( const TArray<uint8>& ShaderCode )
+CRHIPixelShader* CD3D12RHICore::CreatePixelShader( const TArray<uint8>& ShaderCode )
 {
-    TSharedRef<D3D12PixelShader> Shader = DBG_NEW D3D12PixelShader( Device, ShaderCode );
-    if ( !D3D12BaseShader::GetShaderReflection( Shader.Get() ) )
+    TSharedRef<CD3D12PixelShader> Shader = DBG_NEW CD3D12PixelShader( Device, ShaderCode );
+    if ( !CD3D12BaseShader::GetShaderReflection( Shader.Get() ) )
     {
         return nullptr;
     }
@@ -1276,10 +1276,10 @@ PixelShader* D3D12RenderLayer::CreatePixelShader( const TArray<uint8>& ShaderCod
     return Shader.ReleaseOwnership();
 }
 
-RayGenShader* D3D12RenderLayer::CreateRayGenShader( const TArray<uint8>& ShaderCode )
+CRHIRayGenShader* CD3D12RHICore::CreateRayGenShader( const TArray<uint8>& ShaderCode )
 {
-    TSharedRef<D3D12RayGenShader> Shader = DBG_NEW D3D12RayGenShader( Device, ShaderCode );
-    if ( !D3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
+    TSharedRef<CD3D12RayGenShader> Shader = DBG_NEW CD3D12RayGenShader( Device, ShaderCode );
+    if ( !CD3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
         return nullptr;
@@ -1290,10 +1290,10 @@ RayGenShader* D3D12RenderLayer::CreateRayGenShader( const TArray<uint8>& ShaderC
     }
 }
 
-RayAnyHitShader* D3D12RenderLayer::CreateRayAnyHitShader( const TArray<uint8>& ShaderCode )
+CRHIRayAnyHitShader* CD3D12RHICore::CreateRayAnyHitShader( const TArray<uint8>& ShaderCode )
 {
-    TSharedRef<D3D12RayAnyHitShader> Shader = DBG_NEW D3D12RayAnyHitShader( Device, ShaderCode );
-    if ( !D3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
+    TSharedRef<CD3D12RayAnyHitShader> Shader = DBG_NEW CD3D12RayAnyHitShader( Device, ShaderCode );
+    if ( !CD3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
         return nullptr;
@@ -1304,10 +1304,10 @@ RayAnyHitShader* D3D12RenderLayer::CreateRayAnyHitShader( const TArray<uint8>& S
     }
 }
 
-RayClosestHitShader* D3D12RenderLayer::CreateRayClosestHitShader( const TArray<uint8>& ShaderCode )
+CRHIRayClosestHitShader* CD3D12RHICore::CreateRayClosestHitShader( const TArray<uint8>& ShaderCode )
 {
-    TSharedRef<D3D12RayClosestHitShader> Shader = DBG_NEW D3D12RayClosestHitShader( Device, ShaderCode );
-    if ( !D3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
+    TSharedRef<CD3D12RayClosestHitShader> Shader = DBG_NEW CD3D12RayClosestHitShader( Device, ShaderCode );
+    if ( !CD3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
         return nullptr;
@@ -1318,10 +1318,10 @@ RayClosestHitShader* D3D12RenderLayer::CreateRayClosestHitShader( const TArray<u
     }
 }
 
-RayMissShader* D3D12RenderLayer::CreateRayMissShader( const TArray<uint8>& ShaderCode )
+CRHIRayMissShader* CD3D12RHICore::CreateRayMissShader( const TArray<uint8>& ShaderCode )
 {
-    TSharedRef<D3D12RayMissShader> Shader = DBG_NEW D3D12RayMissShader( Device, ShaderCode );
-    if ( !D3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
+    TSharedRef<CD3D12RayMissShader> Shader = DBG_NEW CD3D12RayMissShader( Device, ShaderCode );
+    if ( !CD3D12BaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
         LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
         return nullptr;
@@ -1332,10 +1332,10 @@ RayMissShader* D3D12RenderLayer::CreateRayMissShader( const TArray<uint8>& Shade
     }
 }
 
-DepthStencilState* D3D12RenderLayer::CreateDepthStencilState( const DepthStencilStateCreateInfo& CreateInfo )
+CRHIDepthStencilState* CD3D12RHICore::CreateDepthStencilState( const SDepthStencilStateCreateInfo& CreateInfo )
 {
     D3D12_DEPTH_STENCIL_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     Desc.DepthEnable = CreateInfo.DepthEnable;
     Desc.DepthFunc = ConvertComparisonFunc( CreateInfo.DepthFunc );
@@ -1346,13 +1346,13 @@ DepthStencilState* D3D12RenderLayer::CreateDepthStencilState( const DepthStencil
     Desc.FrontFace = ConvertDepthStencilOp( CreateInfo.FrontFace );
     Desc.BackFace = ConvertDepthStencilOp( CreateInfo.BackFace );
 
-    return DBG_NEW D3D12DepthStencilState( Device, Desc );
+    return DBG_NEW CD3D12DepthStencilState( Device, Desc );
 }
 
-RasterizerState* D3D12RenderLayer::CreateRasterizerState( const RasterizerStateCreateInfo& CreateInfo )
+CRHIRasterizerState* CD3D12RHICore::CreateRasterizerState( const SRasterizerStateCreateInfo& CreateInfo )
 {
     D3D12_RASTERIZER_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     Desc.AntialiasedLineEnable = CreateInfo.AntialiasedLineEnable;
     Desc.ConservativeRaster = (CreateInfo.EnableConservativeRaster) ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
@@ -1366,13 +1366,13 @@ RasterizerState* D3D12RenderLayer::CreateRasterizerState( const RasterizerStateC
     Desc.FrontCounterClockwise = CreateInfo.FrontCounterClockwise;
     Desc.MultisampleEnable = CreateInfo.MultisampleEnable;
 
-    return DBG_NEW D3D12RasterizerState( Device, Desc );
+    return DBG_NEW CD3D12RasterizerState( Device, Desc );
 }
 
-BlendState* D3D12RenderLayer::CreateBlendState( const BlendStateCreateInfo& CreateInfo )
+CRHIBlendState* CD3D12RHICore::CreateBlendState( const SBlendStateCreateInfo& CreateInfo )
 {
     D3D12_BLEND_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     Desc.AlphaToCoverageEnable = CreateInfo.AlphaToCoverageEnable;
     Desc.IndependentBlendEnable = CreateInfo.IndependentBlendEnable;
@@ -1390,17 +1390,17 @@ BlendState* D3D12RenderLayer::CreateBlendState( const BlendStateCreateInfo& Crea
         Desc.RenderTarget[i].RenderTargetWriteMask = ConvertRenderTargetWriteState( CreateInfo.RenderTarget[i].RenderTargetWriteMask );
     }
 
-    return DBG_NEW D3D12BlendState( Device, Desc );
+    return DBG_NEW CD3D12BlendState( Device, Desc );
 }
 
-InputLayoutState* D3D12RenderLayer::CreateInputLayout( const InputLayoutStateCreateInfo& CreateInfo )
+CRHIInputLayoutState* CD3D12RHICore::CreateInputLayout( const SInputLayoutStateCreateInfo& CreateInfo )
 {
-    return DBG_NEW D3D12InputLayoutState( Device, CreateInfo );
+    return DBG_NEW CD3D12InputLayoutState( Device, CreateInfo );
 }
 
-GraphicsPipelineState* D3D12RenderLayer::CreateGraphicsPipelineState( const GraphicsPipelineStateCreateInfo& CreateInfo )
+CRHIGraphicsPipelineState* CD3D12RHICore::CreateGraphicsPipelineState( const SGraphicsPipelineStateCreateInfo& CreateInfo )
 {
-    TSharedRef<D3D12GraphicsPipelineState> NewPipelineState = DBG_NEW D3D12GraphicsPipelineState( Device );
+    TSharedRef<CD3D12GraphicsPipelineState> NewPipelineState = DBG_NEW CD3D12GraphicsPipelineState( Device );
     if ( !NewPipelineState->Init( CreateInfo ) )
     {
         return nullptr;
@@ -1409,12 +1409,12 @@ GraphicsPipelineState* D3D12RenderLayer::CreateGraphicsPipelineState( const Grap
     return NewPipelineState.ReleaseOwnership();
 }
 
-ComputePipelineState* D3D12RenderLayer::CreateComputePipelineState( const ComputePipelineStateCreateInfo& Info )
+CRHIComputePipelineState* CD3D12RHICore::CreateComputePipelineState( const SComputePipelineStateCreateInfo& Info )
 {
     Assert( Info.Shader != nullptr );
 
-    TSharedRef<D3D12ComputeShader> Shader = MakeSharedRef<D3D12ComputeShader>( Info.Shader );
-    TSharedRef<D3D12ComputePipelineState> NewPipelineState = DBG_NEW D3D12ComputePipelineState( Device, Shader );
+    TSharedRef<CD3D12ComputeShader> Shader = MakeSharedRef<CD3D12ComputeShader>( Info.Shader );
+    TSharedRef<CD3D12ComputePipelineState> NewPipelineState = DBG_NEW CD3D12ComputePipelineState( Device, Shader );
     if ( !NewPipelineState->Init() )
     {
         return nullptr;
@@ -1423,9 +1423,9 @@ ComputePipelineState* D3D12RenderLayer::CreateComputePipelineState( const Comput
     return NewPipelineState.ReleaseOwnership();
 }
 
-RayTracingPipelineState* D3D12RenderLayer::CreateRayTracingPipelineState( const RayTracingPipelineStateCreateInfo& CreateInfo )
+CRHIRayTracingPipelineState* CD3D12RHICore::CreateRayTracingPipelineState( const SRayTracingPipelineStateCreateInfo& CreateInfo )
 {
-    TSharedRef<D3D12RayTracingPipelineState> NewPipelineState = DBG_NEW D3D12RayTracingPipelineState( Device );
+    TSharedRef<CD3D12RayTracingPipelineState> NewPipelineState = DBG_NEW CD3D12RayTracingPipelineState( Device );
     if ( NewPipelineState->Init( CreateInfo ) )
     {
         return NewPipelineState.ReleaseOwnership();
@@ -1436,12 +1436,12 @@ RayTracingPipelineState* D3D12RenderLayer::CreateRayTracingPipelineState( const 
     }
 }
 
-GPUProfiler* D3D12RenderLayer::CreateProfiler()
+CGPUProfiler* CD3D12RHICore::CreateProfiler()
 {
-    return D3D12GPUProfiler::Create( Device );
+    return CD3D12GPUProfiler::Create( Device );
 }
 
-Viewport* D3D12RenderLayer::CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat )
+CRHIViewport* CD3D12RHICore::CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat )
 {
     UNREFERENCED_VARIABLE( DepthFormat );
 
@@ -1458,7 +1458,7 @@ Viewport* D3D12RenderLayer::CreateViewport( CCoreWindow* Window, uint32 Width, u
         Height = WinWindow->GetHeight();
     }
 
-    TSharedRef<D3D12Viewport> Viewport = DBG_NEW D3D12Viewport( Device, DirectCmdContext.Get(), WinWindow->GetHandle(), ColorFormat, Width, Height );
+    TSharedRef<CD3D12Viewport> Viewport = DBG_NEW CD3D12Viewport( Device, DirectCmdContext.Get(), WinWindow->GetHandle(), ColorFormat, Width, Height );
     if ( Viewport->Init() )
     {
         return Viewport.ReleaseOwnership();
@@ -1469,10 +1469,10 @@ Viewport* D3D12RenderLayer::CreateViewport( CCoreWindow* Window, uint32 Width, u
     }
 }
 
-bool D3D12RenderLayer::UAVSupportsFormat( EFormat Format )
+bool CD3D12RHICore::UAVSupportsFormat( EFormat Format )
 {
     D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
-    Memory::Memzero( &FeatureData, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS ) );
+    CMemory::Memzero( &FeatureData, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS ) );
 
     HRESULT Result = Device->GetDevice()->CheckFeatureSupport( D3D12_FEATURE_D3D12_OPTIONS, &FeatureData, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS ) );
     if ( SUCCEEDED( Result ) )
@@ -1497,7 +1497,7 @@ bool D3D12RenderLayer::UAVSupportsFormat( EFormat Format )
     return true;
 }
 
-void D3D12RenderLayer::CheckRayTracingSupport( RayTracingSupport& OutSupport )
+void CD3D12RHICore::CheckRayTracingSupport( SRayTracingSupport& OutSupport )
 {
     D3D12_RAYTRACING_TIER Tier = Device->GetRayTracingTier();
     if ( Tier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED )
@@ -1519,7 +1519,7 @@ void D3D12RenderLayer::CheckRayTracingSupport( RayTracingSupport& OutSupport )
     }
 }
 
-void D3D12RenderLayer::CheckShadingRateSupport( ShadingRateSupport& OutSupport )
+void CD3D12RHICore::CheckShadingRateSupport( SShadingRateSupport& OutSupport )
 {
     D3D12_VARIABLE_SHADING_RATE_TIER Tier = Device->GetVariableRateShadingTier();
     if ( Tier == D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED )

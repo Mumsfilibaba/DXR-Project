@@ -1,9 +1,9 @@
 #include "LightProbeRenderer.h"
 
-#include "RenderLayer/RenderLayer.h"
-#include "RenderLayer/ShaderCompiler.h"
+#include "RHICore/RHIModule.h"
+#include "RHICore/RHIShaderCompiler.h"
 
-bool LightProbeRenderer::Init( LightSetup& LightSetup, FrameResources& FrameResources )
+bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameResources )
 {
     if ( !CreateSkyLightResources( LightSetup ) )
     {
@@ -11,63 +11,63 @@ bool LightProbeRenderer::Init( LightSetup& LightSetup, FrameResources& FrameReso
     }
 
     TArray<uint8> Code;
-    if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
     {
         LOG_ERROR( "Failed to compile IrradianceGen Shader" );
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
     }
 
     IrradianceGenShader = CreateComputeShader( Code );
     if ( !IrradianceGenShader )
     {
         LOG_ERROR( "Failed to create IrradianceGen Shader" );
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
     }
     else
     {
         IrradianceGenShader->SetName( "IrradianceGen Shader" );
     }
 
-    IrradianceGenPSO = CreateComputePipelineState( ComputePipelineStateCreateInfo( IrradianceGenShader.Get() ) );
+    IrradianceGenPSO = CreateComputePipelineState( SComputePipelineStateCreateInfo( IrradianceGenShader.Get() ) );
     if ( !IrradianceGenPSO )
     {
         LOG_ERROR( "Failed to create IrradianceGen PipelineState" );
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
     }
     else
     {
         IrradianceGenPSO->SetName( "IrradianceGen PSO" );
     }
 
-    if ( !ShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
     {
         LOG_ERROR( "Failed to compile SpecularIrradianceGen Shader" );
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
     }
 
     SpecularIrradianceGenShader = CreateComputeShader( Code );
     if ( !SpecularIrradianceGenShader )
     {
         LOG_ERROR( "Failed to create Specular IrradianceGen Shader" );
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
     }
     else
     {
         SpecularIrradianceGenShader->SetName( "Specular IrradianceGen Shader" );
     }
 
-    SpecularIrradianceGenPSO = CreateComputePipelineState( ComputePipelineStateCreateInfo( SpecularIrradianceGenShader.Get() ) );
+    SpecularIrradianceGenPSO = CreateComputePipelineState( SComputePipelineStateCreateInfo( SpecularIrradianceGenShader.Get() ) );
     if ( !SpecularIrradianceGenPSO )
     {
         LOG_ERROR( "Failed to create Specular IrradianceGen PipelineState" );
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
     }
     else
     {
         SpecularIrradianceGenPSO->SetName( "Specular IrradianceGen PSO" );
     }
 
-    SamplerStateCreateInfo CreateInfo;
+    SSamplerStateCreateInfo CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Wrap;
     CreateInfo.AddressV = ESamplerMode::Wrap;
     CreateInfo.AddressW = ESamplerMode::Wrap;
@@ -82,7 +82,7 @@ bool LightProbeRenderer::Init( LightSetup& LightSetup, FrameResources& FrameReso
     return true;
 }
 
-void LightProbeRenderer::Release()
+void CLightProbeRenderer::Release()
 {
     IrradianceGenPSO.Reset();
     SpecularIrradianceGenPSO.Reset();
@@ -90,7 +90,7 @@ void LightProbeRenderer::Release()
     SpecularIrradianceGenShader.Reset();
 }
 
-void LightProbeRenderer::RenderSkyLightProbe( CommandList& CmdList, const LightSetup& LightSetup, const FrameResources& FrameResources )
+void CLightProbeRenderer::RenderSkyLightProbe( CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources )
 {
     const uint32 IrradianceMapSize = static_cast<uint32>(LightSetup.IrradianceMap->GetSize());
 
@@ -99,7 +99,7 @@ void LightProbeRenderer::RenderSkyLightProbe( CommandList& CmdList, const LightS
 
     CmdList.SetComputePipelineState( IrradianceGenPSO.Get() );
 
-    ShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
+    CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
     CmdList.SetShaderResourceView( IrradianceGenShader.Get(), SkyboxSRV, 0 );
     CmdList.SetUnorderedAccessView( IrradianceGenShader.Get(), LightSetup.IrradianceMapUAV.Get(), 0 );
 
@@ -146,13 +146,13 @@ void LightProbeRenderer::RenderSkyLightProbe( CommandList& CmdList, const LightS
     CmdList.TransitionTexture( LightSetup.SpecularIrradianceMap.Get(), EResourceState::UnorderedAccess, EResourceState::PixelShaderResource );
 }
 
-bool LightProbeRenderer::CreateSkyLightResources( LightSetup& LightSetup )
+bool CLightProbeRenderer::CreateSkyLightResources( SLightSetup& LightSetup )
 {
     // Generate global irradiance (From Skybox)
     LightSetup.IrradianceMap = CreateTextureCube( LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, TextureFlags_RWTexture, EResourceState::Common, nullptr );
     if ( !LightSetup.IrradianceMap )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -163,7 +163,7 @@ bool LightProbeRenderer::CreateSkyLightResources( LightSetup& LightSetup )
     LightSetup.IrradianceMapUAV = CreateUnorderedAccessView( LightSetup.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0 );
     if ( !LightSetup.IrradianceMapUAV )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
 
@@ -177,7 +177,7 @@ bool LightProbeRenderer::CreateSkyLightResources( LightSetup& LightSetup )
         nullptr );
     if ( !LightSetup.SpecularIrradianceMap )
     {
-        Debug::DebugBreak();
+        CDebug::DebugBreak();
         return false;
     }
     else
@@ -187,7 +187,7 @@ bool LightProbeRenderer::CreateSkyLightResources( LightSetup& LightSetup )
 
     for ( uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++ )
     {
-        TSharedRef<UnorderedAccessView> Uav = CreateUnorderedAccessView( LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel );
+        TSharedRef<CRHIUnorderedAccessView> Uav = CreateUnorderedAccessView( LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel );
         if ( Uav )
         {
             LightSetup.SpecularIrradianceMapUAVs.Emplace( Uav );
@@ -195,7 +195,7 @@ bool LightProbeRenderer::CreateSkyLightResources( LightSetup& LightSetup )
         }
         else
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return false;
         }
     }

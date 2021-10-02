@@ -77,11 +77,11 @@ const char* ToString( D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp )
 
 static const char* gDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 
-void DeviceRemovedHandler( D3D12Device* Device )
+void DeviceRemovedHandler( CD3D12Device* Device )
 {
     Assert( Device != nullptr );
 
-    std::string Message = "[D3D12] Device Removed";
+    CString Message = "[D3D12] Device Removed";
     LOG_ERROR( Message );
 
     ID3D12Device* DxDevice = Device->GetDevice();
@@ -107,7 +107,7 @@ void DeviceRemovedHandler( D3D12Device* Device )
     FILE* File = fopen( gDeviceRemovedDumpFile, "w" );
     if ( File )
     {
-        fwrite( Message.data(), 1, Message.size(), File );
+        fwrite( Message.Data(), 1, Message.Size(), File );
         fputc( '\n', File );
     }
 
@@ -118,18 +118,18 @@ void DeviceRemovedHandler( D3D12Device* Device )
         Message = "BreadCrumbs:";
         if ( File )
         {
-            fwrite( Message.data(), 1, Message.size(), File );
+            fwrite( Message.Data(), 1, Message.Size(), File );
             fputc( '\n', File );
         }
 
         LOG_ERROR( Message );
         for ( uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++ )
         {
-            Message = "    " + std::string( ToString( CurrentNode->pCommandHistory[i] ) );
+            Message = "    " + CString( ToString( CurrentNode->pCommandHistory[i] ) );
             LOG_ERROR( Message );
             if ( File )
             {
-                fwrite( Message.data(), 1, Message.size(), File );
+                fwrite( Message.Data(), 1, Message.Size(), File );
                 fputc( '\n', File );
             }
         }
@@ -146,7 +146,7 @@ void DeviceRemovedHandler( D3D12Device* Device )
     PlatformApplicationMisc::MessageBox( "Error", " [D3D12] Device Removed" );
 }
 
-D3D12Device::D3D12Device( bool InEnableDebugLayer, bool InEnableGPUValidation, bool InEnableDRED )
+CD3D12Device::CD3D12Device( bool InEnableDebugLayer, bool InEnableGPUValidation, bool InEnableDRED )
     : Factory( nullptr )
     , Adapter( nullptr )
     , Device( nullptr )
@@ -157,7 +157,7 @@ D3D12Device::D3D12Device( bool InEnableDebugLayer, bool InEnableGPUValidation, b
 {
 }
 
-D3D12Device::~D3D12Device()
+CD3D12Device::~CD3D12Device()
 {
     if ( EnableDebugLayer )
     {
@@ -188,7 +188,7 @@ D3D12Device::~D3D12Device()
     D3D12Lib = 0;
 }
 
-bool D3D12Device::Init()
+bool CD3D12Device::Init()
 {
     DXGILib = ::LoadLibrary( "dxgi.dll" );
     if ( DXGILib == NULL )
@@ -405,7 +405,7 @@ bool D3D12Device::Init()
             };
 
             D3D12_INFO_QUEUE_FILTER Filter;
-            Memory::Memzero( &Filter );
+            CMemory::Memzero( &Filter );
 
             Filter.DenyList.NumIDs = _countof( Hide );
             Filter.DenyList.pIDList = Hide;
@@ -447,7 +447,7 @@ bool D3D12Device::Init()
     // Check for Ray-Tracing support
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
-        Memory::Memzero( &Features5, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS5 ) );
+        CMemory::Memzero( &Features5, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS5 ) );
 
         Result = Device->CheckFeatureSupport( D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS5 ) );
         if ( SUCCEEDED( Result ) )
@@ -459,7 +459,7 @@ bool D3D12Device::Init()
     // Checking for Variable Shading Rate
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
-        Memory::Memzero( &Features6, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS6 ) );
+        CMemory::Memzero( &Features6, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS6 ) );
 
         Result = Device->CheckFeatureSupport( D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS6 ) );
         if ( SUCCEEDED( Result ) )
@@ -472,7 +472,7 @@ bool D3D12Device::Init()
     // Check for Mesh-Shaders support
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
-        Memory::Memzero( &Features7, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS7 ) );
+        CMemory::Memzero( &Features7, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS7 ) );
 
         Result = Device->CheckFeatureSupport( D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS7 ) );
         if ( SUCCEEDED( Result ) )
@@ -485,10 +485,10 @@ bool D3D12Device::Init()
     return true;
 }
 
-int32 D3D12Device::GetMultisampleQuality( DXGI_FORMAT Format, uint32 SampleCount )
+int32 CD3D12Device::GetMultisampleQuality( DXGI_FORMAT Format, uint32 SampleCount )
 {
     D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data;
-    Memory::Memzero( &Data );
+    CMemory::Memzero( &Data );
 
     Data.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
     Data.Format = Format;
@@ -504,11 +504,11 @@ int32 D3D12Device::GetMultisampleQuality( DXGI_FORMAT Format, uint32 SampleCount
     return static_cast<uint32>(Data.NumQualityLevels - 1);
 }
 
-std::string D3D12Device::GetAdapterName() const
+CString CD3D12Device::GetAdapterName() const
 {
     DXGI_ADAPTER_DESC Desc;
     Adapter->GetDesc( &Desc );
 
     WString WideName = Desc.Description;
-    return WideToChar( WideName ).CStr();
+    return WideToChar( WideName );
 }

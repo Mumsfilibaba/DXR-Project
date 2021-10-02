@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderLayer/Resources.h"
+#include "RHICore/RHIResources.h"
 
 #include "Core/Containers/StaticArray.h"
 
@@ -24,7 +24,7 @@ public:
 
     void Init();
 
-    void BuildBuffer( class CommandList& CmdList );
+    void BuildBuffer( class CRHICommandList& CmdList );
 
     FORCEINLINE bool IsBufferDirty() const
     {
@@ -32,7 +32,7 @@ public:
     }
 
     void SetAlbedo( const CVector3& Albedo );
-    void SetAlbedo( float R, float G, float B );
+    void SetAlbedo( float r, float g, float b );
 
     void SetMetallic( float Metallic );
     void SetRoughness( float Roughness );
@@ -43,18 +43,18 @@ public:
     void EnableHeightMap( bool InEnableHeightMap );
     void EnableAlphaMask( bool InEnableAlphaMask );
 
-    void SetDebugName( const std::string& InDebugName );
+    void SetDebugName( const CString& InDebugName );
 
     // ShaderResourceView are sorted in the way that the deferred rendering pass wants them
     // This means that one can call BindShaderResourceViews directly with this function
-    ShaderResourceView* const* GetShaderResourceViews() const;
+    CRHIShaderResourceView* const* GetShaderResourceViews() const;
 
-    SamplerState* GetMaterialSampler() const
+    FORCEINLINE CRHISamplerState* GetMaterialSampler() const
     {
         return Sampler.Get();
     }
 
-    ConstantBuffer* GetMaterialBuffer() const
+    FORCEINLINE CRHIConstantBuffer* GetMaterialBuffer() const
     {
         return MaterialBuffer.Get();
     }
@@ -63,6 +63,7 @@ public:
     {
         return !HasAlphaMask() && !HasHeightMap() && !RenderInForwardPass;
     }
+
     FORCEINLINE bool ShouldRenderInForwardPass()
     {
         return RenderInForwardPass;
@@ -72,35 +73,36 @@ public:
     {
         return AlphaMask;
     }
+
     FORCEINLINE bool HasHeightMap() const
     {
         return HeightMap;
     }
 
-    const SMaterialDesc& GetMaterialProperties() const
+    FORCEINLINE const SMaterialDesc& GetMaterialProperties() const
     {
         return Properties;
     }
 
 public:
-    TSharedRef<Texture2D> AlbedoMap;
-    TSharedRef<Texture2D> NormalMap;
-    TSharedRef<Texture2D> RoughnessMap;
-    TSharedRef<Texture2D> HeightMap;
-    TSharedRef<Texture2D> AOMap;
-    TSharedRef<Texture2D> MetallicMap;
-    TSharedRef<Texture2D> AlphaMask;
+    TSharedRef<CRHITexture2D> AlbedoMap;
+    TSharedRef<CRHITexture2D> NormalMap;
+    TSharedRef<CRHITexture2D> RoughnessMap;
+    TSharedRef<CRHITexture2D> HeightMap;
+    TSharedRef<CRHITexture2D> AOMap;
+    TSharedRef<CRHITexture2D> MetallicMap;
+    TSharedRef<CRHITexture2D> AlphaMask;
 
 private:
-    std::string DebugName;
+    CString DebugName;
 
     bool MaterialBufferIsDirty = true;
 
     bool RenderInForwardPass = false;
 
     SMaterialDesc        	   Properties;
-    TSharedRef<ConstantBuffer> MaterialBuffer;
-    TSharedRef<SamplerState>   Sampler;
+    TSharedRef<CRHIConstantBuffer> MaterialBuffer;
+    TSharedRef<CRHISamplerState>   Sampler;
 
-    mutable TStaticArray<ShaderResourceView*, 7> ShaderResourceViews;
+    mutable TStaticArray<CRHIShaderResourceView*, 7> ShaderResourceViews;
 };

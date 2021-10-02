@@ -1,17 +1,17 @@
 #pragma once
 #include "D3D12DeviceChild.h"
 
-class D3D12FenceHandle : public D3D12DeviceChild
+class D3D12FenceHandle : public CD3D12DeviceChild
 {
 public:
-    D3D12FenceHandle( D3D12Device* InDevice )
-        : D3D12DeviceChild( InDevice )
+    FORCEINLINE D3D12FenceHandle( CD3D12Device* InDevice )
+        : CD3D12DeviceChild( InDevice )
         , Fence( nullptr )
         , Event( 0 )
     {
     }
 
-    ~D3D12FenceHandle()
+    FORCEINLINE ~D3D12FenceHandle()
     {
         if ( Event )
         {
@@ -52,19 +52,19 @@ public:
         }
     }
 
-    bool Signal( uint64 Value )
+    FORCEINLINE bool Signal( uint64 Value )
     {
         HRESULT Result = Fence->Signal( Value );
         return SUCCEEDED( Result );
     }
 
-    void SetName( const std::string& Name )
+    FORCEINLINE void SetName( const CString& Name )
     {
-        std::wstring WideName = CharToWide( CString( Name.c_str(), Name.length() ) ).CStr();
-        Fence->SetName( WideName.c_str() );
+        WString WideName = CharToWide( Name );
+        Fence->SetName( WideName.CStr() );
     }
 
-    ID3D12Fence* GetFence() const
+    FORCEINLINE ID3D12Fence* GetFence() const
     {
         return Fence.Get();
     }

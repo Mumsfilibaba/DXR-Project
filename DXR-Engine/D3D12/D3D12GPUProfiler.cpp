@@ -2,9 +2,9 @@
 #include "D3D12Device.h"
 #include "D3D12CommandContext.h"
 
-D3D12GPUProfiler::D3D12GPUProfiler( D3D12Device* InDevice )
-    : D3D12DeviceChild( InDevice )
-    , GPUProfiler()
+CD3D12GPUProfiler::CD3D12GPUProfiler( CD3D12Device* InDevice )
+    : CD3D12DeviceChild( InDevice )
+    , CGPUProfiler()
     , QueryHeap( nullptr )
     , WriteResource( nullptr )
     , ReadResources()
@@ -13,9 +13,9 @@ D3D12GPUProfiler::D3D12GPUProfiler( D3D12Device* InDevice )
 {
 }
 
-void D3D12GPUProfiler::GetTimeQuery( TimeQuery& OutQuery, uint32 Index ) const
+void CD3D12GPUProfiler::GetTimeQuery( STimeQuery& OutQuery, uint32 Index ) const
 {
-    if ( Index >= TimeQueries.Size() )
+    if ( Index >= (uint32)TimeQueries.Size() )
     {
         OutQuery.Begin = 0;
         OutQuery.End = 0;
@@ -26,7 +26,7 @@ void D3D12GPUProfiler::GetTimeQuery( TimeQuery& OutQuery, uint32 Index ) const
     }
 }
 
-void D3D12GPUProfiler::BeginQuery( ID3D12GraphicsCommandList* CmdList, uint32 Index )
+void CD3D12GPUProfiler::BeginQuery( ID3D12GraphicsCommandList* CmdList, uint32 Index )
 {
     Assert( Index < D3D12_DEFAULT_QUERY_COUNT );
     Assert( CmdList != nullptr );
@@ -34,13 +34,13 @@ void D3D12GPUProfiler::BeginQuery( ID3D12GraphicsCommandList* CmdList, uint32 In
     CmdList->EndQuery( QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2) );
 
     uint32 QueryCount = Index + 1;
-    if ( QueryCount >= TimeQueries.Size() )
+    if ( QueryCount >= (uint32)TimeQueries.Size() )
     {
         TimeQueries.Resize( QueryCount );
     }
 }
 
-void D3D12GPUProfiler::EndQuery( ID3D12GraphicsCommandList* CmdList, uint32 Index )
+void CD3D12GPUProfiler::EndQuery( ID3D12GraphicsCommandList* CmdList, uint32 Index )
 {
     Assert( CmdList != nullptr );
     Assert( Index < TimeQueries.Size() );
@@ -48,9 +48,9 @@ void D3D12GPUProfiler::EndQuery( ID3D12GraphicsCommandList* CmdList, uint32 Inde
     CmdList->EndQuery( QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2) + 1 );
 }
 
-void D3D12GPUProfiler::ResolveQueries( class D3D12CommandContext& CmdContext )
+void CD3D12GPUProfiler::ResolveQueries( class CD3D12CommandContext& CmdContext )
 {
-    D3D12CommandListHandle CmdList = CmdContext.GetCommandList();
+    CD3D12CommandList CmdList = CmdContext.GetCommandList();
     ID3D12CommandQueue* CmdQueue = CmdContext.GetQueue().GetQueue();
     ID3D12GraphicsCommandList* GfxCmdList = CmdList.GetGraphicsCommandList();
 
@@ -58,23 +58,23 @@ void D3D12GPUProfiler::ResolveQueries( class D3D12CommandContext& CmdContext )
     Assert( GfxCmdList != nullptr );
 
     uint32 ReadIndex = CmdContext.GetCurrentEpochValue();
-    if ( ReadIndex >= ReadResources.Size() )
+    if ( ReadIndex >= (uint32)ReadResources.Size() )
     {
         if ( !AllocateReadResource() )
         {
-            Debug::DebugBreak();
+            CDebug::DebugBreak();
             return;
         }
     }
 
-    // NOTE: Read the current, the first frames the result will be zero, howver this would be expected
+    // NOTE: Read the current, the first frames the result will be zero, however this would be expected
     D3D12Resource* CurrentReadResource = ReadResources[ReadIndex].Get();
     void* Data = CurrentReadResource->Map( 0, nullptr );
     if ( Data )
     {
         const uint32 SizeInBytes = TimeQueries.SizeInBytes();
 
-        Memory::Memcpy( TimeQueries.Data(), Data, SizeInBytes );
+        CMemory::Memcpy( TimeQueries.Data(), Data, SizeInBytes );
         CurrentReadResource->Unmap( 0, nullptr );
     }
 
@@ -92,14 +92,14 @@ void D3D12GPUProfiler::ResolveQueries( class D3D12CommandContext& CmdContext )
     }
 }
 
-D3D12GPUProfiler* D3D12GPUProfiler::Create( D3D12Device* InDevice )
+CD3D12GPUProfiler* CD3D12GPUProfiler::Create( CD3D12Device* InDevice )
 {
-    TSharedRef<D3D12GPUProfiler> NewProfiler = DBG_NEW D3D12GPUProfiler( InDevice );
+    TSharedRef<CD3D12GPUProfiler> NewProfiler = DBG_NEW CD3D12GPUProfiler( InDevice );
 
     ID3D12Device* DxDevice = InDevice->GetDevice();
 
     D3D12_QUERY_HEAP_DESC QueryHeap;
-    Memory::Memzero( &QueryHeap );
+    CMemory::Memzero( &QueryHeap );
 
     QueryHeap.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
     QueryHeap.Count = D3D12_DEFAULT_QUERY_COUNT * 2;
@@ -114,13 +114,13 @@ D3D12GPUProfiler* D3D12GPUProfiler::Create( D3D12Device* InDevice )
     }
 
     D3D12_RESOURCE_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
     Desc.Flags = D3D12_RESOURCE_FLAG_NONE;
     Desc.Format = DXGI_FORMAT_UNKNOWN;
     Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width = D3D12_DEFAULT_QUERY_COUNT * sizeof( TimeQuery );
+    Desc.Width = D3D12_DEFAULT_QUERY_COUNT * sizeof( STimeQuery );
     Desc.Height = 1;
     Desc.DepthOrArraySize = 1;
     Desc.MipLevels = 1;
@@ -152,16 +152,16 @@ D3D12GPUProfiler* D3D12GPUProfiler::Create( D3D12Device* InDevice )
     return NewProfiler.ReleaseOwnership();
 }
 
-bool D3D12GPUProfiler::AllocateReadResource()
+bool CD3D12GPUProfiler::AllocateReadResource()
 {
     D3D12_RESOURCE_DESC Desc;
-    Memory::Memzero( &Desc );
+    CMemory::Memzero( &Desc );
 
     Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
     Desc.Flags = D3D12_RESOURCE_FLAG_NONE;
     Desc.Format = DXGI_FORMAT_UNKNOWN;
     Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width = D3D12_DEFAULT_QUERY_COUNT * sizeof( TimeQuery );
+    Desc.Width = D3D12_DEFAULT_QUERY_COUNT * sizeof( STimeQuery );
     Desc.Height = 1;
     Desc.DepthOrArraySize = 1;
     Desc.MipLevels = 1;

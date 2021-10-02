@@ -3,13 +3,13 @@
 
 #include "Core/Math/Matrix4.h"
 
-class PointLight : public Light
+class CPointLight : public CLight
 {
-    CORE_OBJECT( PointLight, Light );
+    CORE_OBJECT( CPointLight, CLight );
 
 public:
-    PointLight();
-    ~PointLight() = default;
+    CPointLight();
+    ~CPointLight() = default;
 
     void SetPosition( const CVector3& InPosition );
     void SetPosition( float x, float y, float z );
@@ -17,35 +17,35 @@ public:
     void SetShadowNearPlane( float InShadowNearPlane );
     void SetShadowFarPlane( float InShadowFarPlane );
 
-    void SetShadowCaster( bool InShadowCaster )
+    FORCEINLINE void SetShadowCaster( bool InShadowCaster )
     {
         ShadowCaster = InShadowCaster;
         CalculateMatrices();
     }
 
-    bool IsShadowCaster() const
+    FORCEINLINE bool IsShadowCaster() const
     {
         return ShadowCaster;
     }
 
-    const CVector3& GetPosition() const
+    FORCEINLINE const CVector3& GetPosition() const
     {
         return Position;
     }
 
-    const CMatrix4& GetMatrix( uint32 Index ) const
+    FORCEINLINE const CMatrix4& GetMatrix( uint32 Index ) const
     {
         Assert( Index < 6 );
         return Matrices[Index];
     }
 
-    const CMatrix4& GetViewMatrix( uint32 Index ) const
+    FORCEINLINE const CMatrix4& GetViewMatrix( uint32 Index ) const
     {
         Assert( Index < 6 );
         return ViewMatrices[Index];
     }
 
-    const CMatrix4& GetProjectionMatrix( uint32 Index ) const
+    FORCEINLINE const CMatrix4& GetProjectionMatrix( uint32 Index ) const
     {
         Assert( Index < 6 );
         return ProjMatrices[Index];

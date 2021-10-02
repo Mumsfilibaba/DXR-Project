@@ -1,8 +1,6 @@
 #pragma once
 #include "Core/RefCounted.h"
-
-// TODO: Remove
-#include <string>
+#include "Core/Containers/String.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
@@ -88,7 +86,7 @@ class CCoreWindow : public CRefCounted
 public:
 
     /* Initializes the window */
-    virtual bool Init( const std::string& Title, uint32 Width, uint32 Height, SWindowStyle Style ) = 0;
+    virtual bool Init( const CString& Title, uint32 Width, uint32 Height, SWindowStyle Style ) = 0;
 
     /* Shows the window */
     virtual void Show( bool Maximized ) = 0;
@@ -115,10 +113,10 @@ public:
     virtual bool IsActiveWindow() const = 0;
 
     /* Sets the title */
-    virtual void SetTitle( const std::string& Title ) = 0;
+    virtual void SetTitle( const CString& Title ) = 0;
 
     /* Retrieve the window title */
-    virtual void GetTitle( std::string& OutTitle ) = 0;
+    virtual void GetTitle( CString& OutTitle ) = 0;
 
     /* Set the shape of the window */
     virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) = 0;

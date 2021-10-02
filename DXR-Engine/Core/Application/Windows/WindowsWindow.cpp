@@ -19,7 +19,7 @@ CWindowsWindow::~CWindowsWindow()
     }
 }
 
-bool CWindowsWindow::Init( const std::string& InTitle, uint32 InWidth, uint32 InHeight, SWindowStyle InStyle )
+bool CWindowsWindow::Init( const CString& InTitle, uint32 InWidth, uint32 InHeight, SWindowStyle InStyle )
 {
     // Determine the window style for WinAPI
     DWORD dwStyle = 0;
@@ -61,7 +61,7 @@ bool CWindowsWindow::Init( const std::string& InTitle, uint32 InWidth, uint32 In
 
     HINSTANCE Instance = Application->GetInstance();
     LPCSTR WindowClassName = CWindowsApplication::GetWindowClassName();
-    Window = CreateWindowEx( 0, WindowClassName, InTitle.c_str(), dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, Instance, NULL );
+    Window = CreateWindowEx( 0, WindowClassName, InTitle.CStr(), dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, Instance, NULL );
     if ( Window == 0 )
     {
         LOG_ERROR( "[CWindowsWindow]: FAILED to create window\n" );
@@ -69,7 +69,7 @@ bool CWindowsWindow::Init( const std::string& InTitle, uint32 InWidth, uint32 In
     }
     else
     {
-        // If the window has a sysmenu we check if the closebutton should be active
+        // If the window has a sys-menu we check if the close-button should be active
         if ( dwStyle & WS_SYSMENU )
         {
             if ( !(InStyle.IsClosable()) )
@@ -221,7 +221,7 @@ bool CWindowsWindow::IsActiveWindow() const
     return (hActive == Window);
 }
 
-void CWindowsWindow::SetTitle( const std::string& Title )
+void CWindowsWindow::SetTitle( const CString& Title )
 {
     Assert( Window != 0 );
 
@@ -229,19 +229,19 @@ void CWindowsWindow::SetTitle( const std::string& Title )
     {
         if ( IsValid() )
         {
-            SetWindowTextA( Window, Title.c_str() );
+            SetWindowTextA( Window, Title.CStr() );
         }
     }
 }
 
-void CWindowsWindow::GetTitle( std::string& OutTitle )
+void CWindowsWindow::GetTitle( CString& OutTitle )
 {
     if ( IsValid() )
     {
         int32 Size = GetWindowTextLengthA( Window );
-        OutTitle.resize( Size );
+        OutTitle.Resize( Size );
 
-        GetWindowTextA( Window, OutTitle.data(), Size );
+        GetWindowTextA( Window, OutTitle.Data(), Size );
     }
 }
 

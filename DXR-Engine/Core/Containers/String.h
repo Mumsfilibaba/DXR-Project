@@ -219,7 +219,7 @@ public:
             BufferSize += BufferSize;
 
             // Allocate more memory
-            DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc( DynamicBuffer, BufferSize * sizeof( CharType ) ));
+            DynamicBuffer = reinterpret_cast<CharType*>(CMemory::Realloc( DynamicBuffer, BufferSize * sizeof( CharType ) ));
             WrittenString = DynamicBuffer;
 
             // Try print again
@@ -232,7 +232,7 @@ public:
 
         if ( DynamicBuffer )
         {
-            Memory::Free( DynamicBuffer );
+            CMemory::Free( DynamicBuffer );
         }
 
         Characters.Emplace( StringTraits::Null );
@@ -264,7 +264,7 @@ public:
             BufferSize += BufferSize;
 
             // Allocate more memory
-            DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc( DynamicBuffer, BufferSize * sizeof( CharType ) ));
+            DynamicBuffer = reinterpret_cast<CharType*>(CMemory::Realloc( DynamicBuffer, BufferSize * sizeof( CharType ) ));
             WrittenString = DynamicBuffer;
 
             // Try print again
@@ -279,7 +279,7 @@ public:
 
         if ( DynamicBuffer )
         {
-            Memory::Free( DynamicBuffer );
+            CMemory::Free( DynamicBuffer );
         }
 
         Characters.Emplace( StringTraits::Null );
@@ -1420,5 +1420,122 @@ inline CString WideToChar( const WString& WideString ) noexcept
 
     wcstombs( NewString.Data(), WideString.CStr(), WideString.Length() );
 
+    return NewString;
+}
+
+/* Hashing for strings */
+template<typename TChar>
+struct TStringHasher
+{
+    // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
+    FORCEINLINE size_t operator()( const TString<TChar>& String ) const
+    {
+        // NOTE: How good is this for wide chars?
+
+        const TChar* Key = String.CStr();
+        int32 Length = String.Length();
+
+        size_t Index = 0;
+        size_t Hash  = 0;
+        while ( Index != Length )
+        {
+            Hash += Key[Index++];
+            Hash += Hash << 10;
+            Hash ^= Hash >> 6;
+        }
+        Hash += Hash << 3;
+        Hash ^= Hash >> 11;
+        Hash += Hash << 15;
+        return Hash;
+    }
+};
+
+using SStringHasher     = TStringHasher<char>;
+using SWideStringHasher = TStringHasher<wchar_t>;
+
+// Helper for converting to a string
+template<typename T>
+typename TEnableIf<TIsFloatingPoint<T>::Value, CString>::Type ToString( T Element )
+{
+    CString NewString;
+    NewString.Format( "%f", Element );
+    return NewString;
+}
+
+template<typename T>
+typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, CString>::Type ToString( T Element );
+
+template<>
+inline CString ToString<int32>( int32 Element )
+{
+    CString NewString;
+    NewString.Format( "%d", Element );
+    return NewString;
+}
+
+template<>
+inline CString ToString<int64>( int64 Element )
+{
+    CString NewString;
+    NewString.Format( "%lld", Element );
+    return NewString;
+}
+
+template<>
+inline CString ToString<uint32>( uint32 Element )
+{
+    CString NewString;
+    NewString.Format( "%u", Element );
+    return NewString;
+}
+
+template<>
+inline CString ToString<uint64>( uint64 Element )
+{
+    CString NewString;
+    NewString.Format( "%llu", Element );
+    return NewString;
+}
+
+template<typename T>
+typename TEnableIf<TIsFloatingPoint<T>::Value, WString>::Type ToWideString( T Element )
+{
+    WString NewString;
+    NewString.Format( L"%f", Element );
+    return NewString;
+}
+
+template<typename T>
+typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, WString>::Type ToWideString( T Element );
+
+template<>
+inline WString ToWideString<int32>( int32 Element )
+{
+    WString NewString;
+    NewString.Format( L"%d", Element );
+    return NewString;
+}
+
+template<>
+inline WString ToWideString<int64>( int64 Element )
+{
+    WString NewString;
+    NewString.Format( L"%lld", Element );
+    return NewString;
+}
+
+template<>
+inline WString ToWideString<uint32>( uint32 Element )
+{
+    WString NewString;
+    NewString.Format( L"%u", Element );
+    return NewString;
+}
+
+template<>
+inline WString ToWideString<uint64>( uint64 Element )
+{
+    WString NewString;
+    NewString.Format( L"%llu", Element );
     return NewString;
 }

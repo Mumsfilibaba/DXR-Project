@@ -95,11 +95,13 @@ void CApplicationUser::HandleMouseButtonEvent( const SMouseButtonEvent& MouseBut
 
 void CApplicationUser::HandleMouseMovedEvent( const SMouseMovedEvent& MouseMovedEvent )
 {
+    UNREFERENCED_VARIABLE(MouseMovedEvent);
     // TODO: Call all attached player controllers 
 }
 
 void CApplicationUser::HandleMouseScrolledEvent( const SMouseScrolledEvent& MouseScolledEvent )
 {
+    UNREFERENCED_VARIABLE( MouseScolledEvent );
     // TODO: Call all attached player controllers
 }
 

@@ -1,19 +1,21 @@
 #pragma once
-#include "ResourceBase.h"
-#include "Shader.h"
+#include "RHIShader.h"
+#include "RHIResourceBase.h"
 
-class PipelineState : public Resource
+class CRHIPipelineState : public CRHIResource
 {
 public:
-    virtual class GraphicsPipelineState* AsGraphics()
+    virtual class CRHIGraphicsPipelineState* AsGraphics()
     {
         return nullptr;
     }
-    virtual class ComputePipelineState* AsCompute()
+
+    virtual class CRHIComputePipelineState* AsCompute()
     {
         return nullptr;
     }
-    virtual class RayTracingPipelineState* AsRayTracing()
+
+    virtual class CRHIRayTracingPipelineState* AsRayTracing()
     {
         return nullptr;
     }
@@ -63,7 +65,7 @@ inline const char* ToString( EStencilOp StencilOp )
     }
 }
 
-struct DepthStencilOp
+struct SDepthStencilOp
 {
     EStencilOp      StencilFailOp = EStencilOp::Keep;
     EStencilOp      StencilDepthFailOp = EStencilOp::Keep;
@@ -71,7 +73,7 @@ struct DepthStencilOp
     EComparisonFunc StencilFunc = EComparisonFunc::Always;
 };
 
-struct DepthStencilStateCreateInfo
+struct SDepthStencilStateCreateInfo
 {
     EDepthWriteMask DepthWriteMask = EDepthWriteMask::All;
     EComparisonFunc DepthFunc = EComparisonFunc::Less;
@@ -79,11 +81,11 @@ struct DepthStencilStateCreateInfo
     uint8           StencilReadMask = 0xff;
     uint8           StencilWriteMask = 0xff;
     bool            StencilEnable = false;
-    DepthStencilOp  FrontFace = DepthStencilOp();
-    DepthStencilOp  BackFace = DepthStencilOp();
+    SDepthStencilOp  FrontFace = SDepthStencilOp();
+    SDepthStencilOp  BackFace = SDepthStencilOp();
 };
 
-class DepthStencilState : public Resource
+class CRHIDepthStencilState : public CRHIResource
 {
 };
 
@@ -121,7 +123,7 @@ inline const char* ToString( EFillMode FillMode )
     }
 }
 
-struct RasterizerStateCreateInfo
+struct SRasterizerStateCreateInfo
 {
     EFillMode FillMode = EFillMode::Solid;
     ECullMode CullMode = ECullMode::Back;
@@ -136,7 +138,7 @@ struct RasterizerStateCreateInfo
     bool   EnableConservativeRaster = false;
 };
 
-class RasterizerState : public Resource
+class CRHIRasterizerState : public CRHIResource
 {
 };
 
@@ -262,36 +264,41 @@ enum EColorWriteFlag : uint8
     ColorWriteFlag_All = (((ColorWriteFlag_Red | ColorWriteFlag_Green) | ColorWriteFlag_Blue) | ColorWriteFlag_Alpha)
 };
 
-struct RenderTargetWriteState
+struct SRenderTargetWriteState
 {
-    RenderTargetWriteState() = default;
+    SRenderTargetWriteState() = default;
 
-    RenderTargetWriteState( uint8 InMask )
+    SRenderTargetWriteState( uint8 InMask )
         : Mask( InMask )
     {
     }
 
-    bool WriteNone() const
+    FORCEINLINE bool WriteNone() const
     {
         return Mask == ColorWriteFlag_None;
     }
-    bool WriteRed() const
+    
+    FORCEINLINE bool WriteRed() const
     {
         return (Mask & ColorWriteFlag_Red);
     }
-    bool WriteGreen() const
+    
+    FORCEINLINE bool WriteGreen() const
     {
         return (Mask & ColorWriteFlag_Green);
     }
-    bool WriteBlue() const
+    
+    FORCEINLINE bool WriteBlue() const
     {
         return (Mask & ColorWriteFlag_Blue);
     }
-    bool WriteAlpha() const
+    
+    FORCEINLINE bool WriteAlpha() const
     {
         return (Mask & ColorWriteFlag_Alpha);
     }
-    bool WriteAll() const
+
+    FORCEINLINE bool WriteAll() const
     {
         return Mask == ColorWriteFlag_All;
     }
@@ -299,7 +306,7 @@ struct RenderTargetWriteState
     uint8 Mask = ColorWriteFlag_All;
 };
 
-struct RenderTargetBlendState
+struct SRenderTargetBlendState
 {
     EBlend   SrcBlend = EBlend::One;
     EBlend   DestBlend = EBlend::Zero;
@@ -308,19 +315,21 @@ struct RenderTargetBlendState
     EBlend   DestBlendAlpha = EBlend::Zero;
     EBlendOp BlendOpAlpha = EBlendOp::Add;;
     ELogicOp LogicOp = ELogicOp::Noop;
-    bool     BlendEnable = false;
-    bool     LogicOpEnable = false;
-    RenderTargetWriteState RenderTargetWriteMask;
+
+    bool BlendEnable = false;
+    bool LogicOpEnable = false;
+    
+    SRenderTargetWriteState RenderTargetWriteMask;
 };
 
-struct BlendStateCreateInfo
+struct SBlendStateCreateInfo
 {
     bool AlphaToCoverageEnable = false;
     bool IndependentBlendEnable = false;
-    RenderTargetBlendState RenderTarget[8];
+    SRenderTargetBlendState RenderTarget[8];
 };
 
-class BlendState : public Resource
+class CRHIBlendState : public CRHIResource
 {
 };
 
@@ -340,9 +349,9 @@ inline const char* ToString( EInputClassification BlendOp )
     }
 }
 
-struct InputElement
+struct SInputElement
 {
-    std::string          Semantic = "";
+    CString              Semantic = "";
     uint32               SemanticIndex = 0;
     EFormat              Format = EFormat::Unknown;
     uint32               InputSlot = 0;
@@ -351,24 +360,24 @@ struct InputElement
     uint32               InstanceStepRate = 0;
 };
 
-struct InputLayoutStateCreateInfo
+struct SInputLayoutStateCreateInfo
 {
-    InputLayoutStateCreateInfo() = default;
+    SInputLayoutStateCreateInfo() = default;
 
-    InputLayoutStateCreateInfo( const TArray<InputElement>& InElements )
+    SInputLayoutStateCreateInfo( const TArray<SInputElement>& InElements )
         : Elements( InElements )
     {
     }
 
-    InputLayoutStateCreateInfo( std::initializer_list<InputElement> InList )
+    SInputLayoutStateCreateInfo( std::initializer_list<SInputElement> InList )
         : Elements( InList )
     {
     }
 
-    TArray<InputElement> Elements;
+    TArray<SInputElement> Elements;
 };
 
-class InputLayoutState : public Resource
+class CRHIInputLayoutState : public CRHIResource
 {
 };
 
@@ -390,104 +399,108 @@ inline const char* ToString( EIndexBufferStripCutValue IndexBufferStripCutValue 
     }
 }
 
-struct PipelineRenderTargetFormats
+struct SPipelineRenderTargetFormats
 {
     EFormat RenderTargetFormats[8];
     uint32  NumRenderTargets = 0;
     EFormat DepthStencilFormat = EFormat::Unknown;
 };
 
-struct GraphicsPipelineShaderState
+struct SGraphicsPipelineShaderState
 {
-    GraphicsPipelineShaderState() = default;
+    SGraphicsPipelineShaderState() = default;
 
-    GraphicsPipelineShaderState( VertexShader* InVertexShader, PixelShader* InPixelShader )
+    SGraphicsPipelineShaderState( CRHIVertexShader* InVertexShader, CRHIPixelShader* InPixelShader )
         : VertexShader( InVertexShader )
         , PixelShader( InPixelShader )
     {
     }
 
-    VertexShader* VertexShader = nullptr;
-    PixelShader* PixelShader = nullptr;
+    CRHIVertexShader* VertexShader = nullptr;
+    CRHIPixelShader* PixelShader = nullptr;
 };
 
-struct GraphicsPipelineStateCreateInfo
+struct SGraphicsPipelineStateCreateInfo
 {
-    InputLayoutState* InputLayoutState = nullptr;
-    DepthStencilState* DepthStencilState = nullptr;
-    RasterizerState* RasterizerState = nullptr;
-    BlendState* BlendState = nullptr;
-    uint32                      SampleCount = 1;
-    uint32                      SampleQuality = 0;
-    uint32                      SampleMask = 0xffffffff;
+    CRHIInputLayoutState*  InputLayoutState = nullptr;
+    CRHIDepthStencilState* DepthStencilState = nullptr;
+    CRHIRasterizerState*   RasterizerState = nullptr;
+    CRHIBlendState*        BlendState = nullptr;
+
+    uint32 SampleCount = 1;
+    uint32 SampleQuality = 0;
+    uint32 SampleMask = 0xffffffff;
+
     EIndexBufferStripCutValue   IBStripCutValue = EIndexBufferStripCutValue::Disabled;
     EPrimitiveTopologyType      PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
-    GraphicsPipelineShaderState ShaderState;
-    PipelineRenderTargetFormats PipelineFormats;
+    SGraphicsPipelineShaderState ShaderState;
+    SPipelineRenderTargetFormats PipelineFormats;
 };
 
-class GraphicsPipelineState : public PipelineState
+class CRHIGraphicsPipelineState : public CRHIPipelineState
 {
 public:
-    virtual GraphicsPipelineState* AsGraphics() override
+    virtual CRHIGraphicsPipelineState* AsGraphics() override
     {
         return this;
     }
 };
 
-struct ComputePipelineStateCreateInfo
+struct SComputePipelineStateCreateInfo
 {
-    ComputePipelineStateCreateInfo() = default;
+    SComputePipelineStateCreateInfo() = default;
 
-    ComputePipelineStateCreateInfo( ComputeShader* InShader )
+    SComputePipelineStateCreateInfo( CRHIComputeShader* InShader )
         : Shader( InShader )
     {
     }
 
-    ComputeShader* Shader = nullptr;
+    CRHIComputeShader* Shader = nullptr;
 };
 
-class ComputePipelineState : public PipelineState
+class CRHIComputePipelineState : public CRHIPipelineState
 {
 public:
-    virtual ComputePipelineState* AsCompute() override
+    virtual CRHIComputePipelineState* AsCompute() override
     {
         return this;
     }
 };
 
-struct RayTracingHitGroup
+struct SRayTracingHitGroup
 {
-    RayTracingHitGroup() = default;
+    SRayTracingHitGroup() = default;
 
-    RayTracingHitGroup( const std::string& InName, RayAnyHitShader* InAnyHit, RayClosestHitShader* InClosestHit )
+    SRayTracingHitGroup( const CString& InName, CRHIRayAnyHitShader* InAnyHit, CRHIRayClosestHitShader* InClosestHit )
         : Name( InName )
         , AnyHit( InAnyHit )
         , ClosestHit( InClosestHit )
     {
     }
 
-    std::string          Name;
-    RayAnyHitShader* AnyHit;
-    RayClosestHitShader* ClosestHit;
+    CString              Name;
+    CRHIRayAnyHitShader*     AnyHit;
+    CRHIRayClosestHitShader* ClosestHit;
 };
 
-struct RayTracingPipelineStateCreateInfo
+struct SRayTracingPipelineStateCreateInfo
 {
-    RayGenShader* RayGen = nullptr;
-    TArray<RayAnyHitShader*>     AnyHitShaders;
-    TArray<RayClosestHitShader*> ClosestHitShaders;
-    TArray<RayMissShader*>       MissShaders;
-    TArray<RayTracingHitGroup>   HitGroups;
+    CRHIRayGenShader* RayGen = nullptr;
+    
+    TArray<CRHIRayAnyHitShader*>     AnyHitShaders;
+    TArray<CRHIRayClosestHitShader*> ClosestHitShaders;
+    TArray<CRHIRayMissShader*>       MissShaders;
+    TArray<SRayTracingHitGroup>  HitGroups;
+
     uint32 MaxAttributeSizeInBytes = 0;
     uint32 MaxPayloadSizeInBytes = 0;
     uint32 MaxRecursionDepth = 1;
 };
 
-class RayTracingPipelineState : public PipelineState
+class CRHIRayTracingPipelineState : public CRHIPipelineState
 {
 public:
-    virtual RayTracingPipelineState* AsRayTracing() override
+    virtual CRHIRayTracingPipelineState* AsRayTracing() override
     {
         return this;
     }

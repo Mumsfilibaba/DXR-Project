@@ -1,9 +1,10 @@
 #pragma once
-#include "RenderingCore.h"
+#include "RHITypes.h"
 
 #include "Core/RefCounted.h"
+#include "Core/Containers/String.h"
 
-class Resource : public CRefCounted
+class CRHIResource : public CRefCounted
 {
 public:
     virtual void* GetNativeResource() const
@@ -16,16 +17,16 @@ public:
         return false;
     }
 
-    virtual void SetName( const std::string& InName )
+    virtual void SetName( const CString& InName )
     {
         Name = InName;
     }
 
-    const std::string& GetName() const
+    FORCEINLINE const CString& GetName() const
     {
         return Name;
     }
 
 private:
-    std::string Name;
+    CString Name;
 };

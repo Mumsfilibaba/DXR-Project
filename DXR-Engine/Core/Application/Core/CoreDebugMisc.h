@@ -32,7 +32,7 @@ public:
     }
 
     /* Outputs a debug string to the attached debugger */
-    static FORCEINLINE void OutputDebugString( const std::string& Message )
+    static FORCEINLINE void OutputDebugString( const CString& Message )
     {
     }
 
