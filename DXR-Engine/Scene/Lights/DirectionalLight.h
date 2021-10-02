@@ -84,7 +84,7 @@ public:
     {
         return CascadeSplits[CascadeIndex];
     }
-    
+
     FORCEINLINE float GetCascadeRadius( uint32 CascadeIndex ) const
     {
         return CascadeRadius[CascadeIndex];

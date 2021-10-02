@@ -318,7 +318,7 @@ struct SD3D12RootSignatureAssociation
     }
 
     D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION ExportAssociation;
-    
+
     ID3D12RootSignature* RootSignature;
 
     TArray<WString> ShaderExportNames;

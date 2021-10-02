@@ -172,7 +172,7 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper( const SD3D12RootSi
     }
 }
 
-void CD3D12RootSignatureDescHelper::InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace )
+void CD3D12RootSignatureDescHelper::InitDescriptorRange( D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace )
 {
     OutRange.BaseShaderRegister = BaseShaderRegister;
     OutRange.NumDescriptors = NumDescriptors;
@@ -181,7 +181,7 @@ void CD3D12RootSignatureDescHelper::InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& 
     OutRange.OffsetInDescriptorsFromTableStart = 0;
 }
 
-void CD3D12RootSignatureDescHelper::InitDescriptorTable(D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges )
+void CD3D12RootSignatureDescHelper::InitDescriptorTable( D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges )
 {
     OutParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     OutParameter.ShaderVisibility = ShaderVisibility;

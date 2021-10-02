@@ -76,7 +76,7 @@ static TSharedPtr<SImage2D> LoadMaterialTexture( const CString& Path, const ofbx
         return Texture;
     }
     else
-#else
+    #else
     UNREFERENCED_VARIABLE( Path );
     UNREFERENCED_VARIABLE( Material );
     UNREFERENCED_VARIABLE( Type );
@@ -281,7 +281,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
             Data.Name = CurrentMesh->name;
 
             const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial( LastMaterialIndex );
-            if ( UniqueMaterials.count( CurrentMaterial ) != 0)
+            if ( UniqueMaterials.count( CurrentMaterial ) != 0 )
             {
                 Data.MaterialIndex = UniqueMaterials[CurrentMaterial];
             }
@@ -290,7 +290,7 @@ bool CFBXLoader::LoadFile( const CString& Filename, SSceneData& OutScene, uint32
                 Data.MaterialIndex = -1;
             }
 
-            if (Data.Mesh.Hasdata())
+            if ( Data.Mesh.Hasdata() )
             {
                 OutScene.Models.Emplace( Data );
             }

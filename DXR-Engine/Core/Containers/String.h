@@ -1436,7 +1436,7 @@ struct TStringHasher
         int32 Length = String.Length();
 
         size_t Index = 0;
-        size_t Hash  = 0;
+        size_t Hash = 0;
         while ( Index != Length )
         {
             Hash += Key[Index++];
@@ -1450,7 +1450,7 @@ struct TStringHasher
     }
 };
 
-using SStringHasher     = TStringHasher<char>;
+using SStringHasher = TStringHasher<char>;
 using SWideStringHasher = TStringHasher<wchar_t>;
 
 // Helper for converting to a string

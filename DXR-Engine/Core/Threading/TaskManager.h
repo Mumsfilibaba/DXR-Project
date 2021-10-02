@@ -11,7 +11,7 @@ typedef int64 TaskID;
 
 struct SExecutableTask
 {
-    DECLARE_DELEGATE(CTaskDelegate);
+    DECLARE_DELEGATE( CTaskDelegate );
     CTaskDelegate Delegate;
 };
 

@@ -360,7 +360,7 @@ struct SRHISetRayTracingBindingsRenderCommand : public SRHIRenderCommand
 
     TSharedRef<CRHIRayTracingScene>         Scene;
     TSharedRef<CRHIRayTracingPipelineState> PipelineState;
-    
+
     const SRayTracingShaderResources* GlobalResources;
     const SRayTracingShaderResources* RayGenLocalResources;
     const SRayTracingShaderResources* MissLocalResources;
@@ -417,7 +417,7 @@ struct SRHISet32BitShaderConstantsRenderCommand : public SRHIRenderCommand
     }
 
     TSharedRef<CRHIShader> Shader;
-    
+
     const void* Shader32BitConstants;
     uint32      Num32BitConstants;
 };
@@ -493,7 +493,7 @@ struct SRHISetUnorderedAccessViewRenderCommand : public SRHIRenderCommand
 
     TSharedRef<CRHIShader>              Shader;
     TSharedRef<CRHIUnorderedAccessView> UnorderedAccessView;
-    
+
     uint32 ParameterIndex;
 };
 
@@ -547,7 +547,7 @@ struct SRHISetConstantBufferRenderCommand : public SRHIRenderCommand
 
     TSharedRef<CRHIShader>         Shader;
     TSharedRef<CRHIConstantBuffer> ConstantBuffer;
-    
+
     uint32 ParameterIndex;
 };
 
@@ -578,7 +578,7 @@ struct SRHISetConstantBuffersRenderCommand : public SRHIRenderCommand
     }
 
     TSharedRef<CRHIShader> Shader;
-    CRHIConstantBuffer**   ConstantBuffers;
+    CRHIConstantBuffer** ConstantBuffers;
 
     uint32 NumConstantBuffers;
     uint32 ParameterIndex;
@@ -632,7 +632,7 @@ struct SRHISetSamplerStatesRenderCommand : public SRHIRenderCommand
     }
 
     TSharedRef<CRHIShader> Shader;
-    CRHISamplerState**     SamplerStates;
+    CRHISamplerState** SamplerStates;
 
     uint32 NumSamplerStates;
     uint32 ParameterIndex;

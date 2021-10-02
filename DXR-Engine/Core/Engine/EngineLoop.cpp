@@ -124,7 +124,7 @@ bool CEngineLoop::PreInit()
 
 bool CEngineLoop::Init()
 {
-    if ( !GEngine->Start())
+    if ( !GEngine->Start() )
     {
         return false;
     }

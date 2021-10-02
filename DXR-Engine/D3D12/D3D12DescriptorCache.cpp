@@ -3,6 +3,8 @@
 #include "D3D12RHICore.h"
 #include "D3D12CommandContext.h"
 
+#include "Core/Debug/Profiler.h"
+
 CD3D12DescriptorCache::CD3D12DescriptorCache( CD3D12Device* InDevice )
     : CD3D12DeviceChild( InDevice )
     , NullCBV( nullptr )
@@ -108,7 +110,7 @@ bool CD3D12DescriptorCache::Init()
         return false;
     }
 
-    for ( uint32 i = 0; i < NUM_DESCRIPTORS; i++ )
+    for ( uint32 i = 0; i < D3D12_CACHED_DESCRIPTORS_COUNT; i++ )
     {
         RangeSizes[i] = 1;
     }
@@ -118,6 +120,8 @@ bool CD3D12DescriptorCache::Init()
 
 void CD3D12DescriptorCache::CommitGraphicsDescriptors( CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature )
 {
+    TRACE_FUNCTION_SCOPE();
+
     Assert( CmdBatch != nullptr );
     Assert( RootSignature != nullptr );
 
@@ -125,6 +129,7 @@ void CD3D12DescriptorCache::CommitGraphicsDescriptors( CD3D12CommandList& CmdLis
     RenderTargetCache.CommitState( CmdList );
 
     ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+
     CD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     CD3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
 
@@ -170,6 +175,8 @@ void CD3D12DescriptorCache::CommitGraphicsDescriptors( CD3D12CommandList& CmdLis
 
 void CD3D12DescriptorCache::CommitComputeDescriptors( CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature )
 {
+    TRACE_FUNCTION_SCOPE();
+
     Assert( CmdBatch != nullptr );
     Assert( RootSignature != nullptr );
 
@@ -228,18 +235,12 @@ void CD3D12DescriptorCache::Reset()
     PreviousDescriptorHeaps[1] = nullptr;
 }
 
-void CD3D12DescriptorCache::CopyDescriptorsAndSetHeaps(
-    ID3D12GraphicsCommandList* CmdList,
-    CD3D12OnlineDescriptorHeap* ResourceHeap,
-    CD3D12OnlineDescriptorHeap* SamplerHeap )
+void CD3D12DescriptorCache::CopyDescriptorsAndSetHeaps( ID3D12GraphicsCommandList* CmdList, CD3D12OnlineDescriptorHeap* ResourceHeap, CD3D12OnlineDescriptorHeap* SamplerHeap )
 {
-    uint32 NumResourceDescriptors =
-        ConstantBufferViewCache.CountNeededDescriptors() +
-        ShaderResourceViewCache.CountNeededDescriptors() +
-        UnorderedAccessViewCache.CountNeededDescriptors();
-
+    uint32 NumResourceDescriptors = ConstantBufferViewCache.CountNeededDescriptors() + ShaderResourceViewCache.CountNeededDescriptors() + UnorderedAccessViewCache.CountNeededDescriptors();
     if ( !ResourceHeap->HasSpace( NumResourceDescriptors ) )
     {
+        // TODO: There is a but here, fix it
         ResourceHeap->AllocateFreshHeap();
 
         ConstantBufferViewCache.InvalidateAll();
@@ -260,10 +261,10 @@ void CD3D12DescriptorCache::CopyDescriptorsAndSetHeaps(
 
     SamplerStateCache.PrepareForCopy( NullSampler );
 
-    Assert( NumResourceDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT );
+    Assert( NumResourceDescriptors < D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT );
     uint32 ResourceDescriptorHandle = ResourceHeap->AllocateHandles( NumResourceDescriptors );
 
-    Assert( NumSamplerDescriptors < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT );
+    Assert( NumSamplerDescriptors < D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT );
     uint32 SamplerDescriptorHandle = SamplerHeap->AllocateHandles( NumSamplerDescriptors );
 
     ID3D12DescriptorHeap* DescriptorHeaps[] =

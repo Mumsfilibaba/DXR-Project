@@ -179,8 +179,8 @@ bool CD3D12CommandBatch::Init()
     }
 
     OnlineSamplerDescriptorHeap = DBG_NEW CD3D12OnlineDescriptorHeap( Device,
-                                                                     D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
-                                                                     D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
+                                                                      D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
+                                                                      D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
     if ( !OnlineSamplerDescriptorHeap->Init() )
     {
         return false;
@@ -196,8 +196,8 @@ bool CD3D12CommandBatch::Init()
     }
 
     OnlineRayTracingSamplerDescriptorHeap = DBG_NEW CD3D12OnlineDescriptorHeap( Device,
-                                                                               D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
-                                                                               D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
+                                                                                D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
+                                                                                D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
     if ( !OnlineRayTracingSamplerDescriptorHeap->Init() )
     {
         return false;

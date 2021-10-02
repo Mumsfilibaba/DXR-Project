@@ -49,7 +49,7 @@ public:
     }
 
     virtual void SetString( const CString& InValue ) override;
-    
+
     virtual CString GetString() const override;
 
     virtual void SetInt( int32 InValue ) override
@@ -118,14 +118,14 @@ private:
 };
 
 // int32
-template<> 
+template<>
 inline void TConsoleVariable<int32>::SetString( const CString& InValue )
 {
     Value = atoi( InValue.CStr() );
     OnChanged();
 }
 
-template<> 
+template<>
 inline bool TConsoleVariable<int32>::IsInt() const
 {
     return true;
@@ -139,7 +139,7 @@ inline CString TConsoleVariable<int32>::GetString() const
 }
 
 // float
-template<> 
+template<>
 inline void TConsoleVariable<float>::SetString( const CString& InValue )
 {
     Value = (float)atof( InValue.CStr() );

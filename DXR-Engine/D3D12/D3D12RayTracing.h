@@ -68,7 +68,7 @@ private:
 
     D3D12_CPU_DESCRIPTOR_HANDLE ResourceHandles[1024];
     D3D12_CPU_DESCRIPTOR_HANDLE SamplerHandles[1024];
-    
+
     // Online resources
     D3D12_CPU_DESCRIPTOR_HANDLE GPUResourceHandles[1024];
     D3D12_CPU_DESCRIPTOR_HANDLE GPUSamplerHandles[1024];
@@ -125,12 +125,12 @@ public:
     {
         return ResultBuffer.Get();
     }
-    
+
     FORCEINLINE D3D12Resource* GetInstanceuffer() const
     {
         return InstanceBuffer.Get();
     }
-    
+
     FORCEINLINE D3D12Resource* GetBindingTable()  const
     {
         return BindingTable.Get();

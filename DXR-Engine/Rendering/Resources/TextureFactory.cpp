@@ -74,8 +74,8 @@ CRHITexture2D* CTextureFactory::LoadFromImage2D( SImage2D* InImage, uint32 Creat
     }
 
     const uint8* Pixels = InImage->Image.Get();
-    uint32 Width   = InImage->Width;
-    uint32 Height  = InImage->Height;
+    uint32 Width = InImage->Width;
+    uint32 Height = InImage->Height;
     EFormat Format = InImage->Format;
 
     CRHITexture2D* NewTexture = LoadFromMemory( Pixels, Width, Height, CreateFlags, Format );

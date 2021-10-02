@@ -154,7 +154,7 @@ public:
     template <typename TComponent>
     inline TComponent* GetComponentOfType() const
     {
-        return static_cast<TComponent*>( GetComponentOfClass( TComponent::GetStaticClass() ) );
+        return static_cast<TComponent*>(GetComponentOfClass( TComponent::GetStaticClass() ));
     }
 
     FORCEINLINE void SetTransform( const CTransform& InTransform )
@@ -202,7 +202,7 @@ private:
 
     /* The transform of this actor */
     CTransform Transform;
-    
+
     /* The components of this actor */
     TArray<CComponent*> Components;
 

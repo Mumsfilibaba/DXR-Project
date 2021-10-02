@@ -195,7 +195,7 @@ public:
     bool Init();
 
     void UpdateBuffer( D3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData );
-    
+
     FORCEINLINE CD3D12CommandQueue& GetQueue()
     {
         return CmdQueue;

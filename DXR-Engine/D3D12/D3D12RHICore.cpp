@@ -206,7 +206,7 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
         }
         else if ( OptimalClearValue.GetType() == SClearValue::EType::Color )
         {
-            CMemory::Memcpy( ClearValue.Color, OptimalClearValue.AsColor().Elements, sizeof(float[4]) );
+            CMemory::Memcpy( ClearValue.Color, OptimalClearValue.AsColor().Elements, sizeof( float[4] ) );
             ClearValuePtr = &ClearValue;
         }
     }

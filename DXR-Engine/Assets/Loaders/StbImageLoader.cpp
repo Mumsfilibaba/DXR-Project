@@ -71,7 +71,7 @@ static EFormat GetFloatFormat( int32 Channels )
 TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
 {
     TSharedPtr<SImage2D> Image = MakeShared<SImage2D>( Filename, uint16( 0 ), uint16( 0 ), EFormat::Unknown );
-    
+
     // Async lambda
     const auto LoadImageAsync = [Image, Filename]()
     {
@@ -138,13 +138,13 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
             LOG_INFO( ("[CStbImageLoader]: Loaded image '" + Filename + "'").CStr() );
         }
 
-        Image->Image    = TSharedPtr<uint8[]>( Move( Pixels ) );
-        Image->Format   = Format;
-        Image->Width    = (uint16)Width;
-        Image->Height   = (uint16)Height;
+        Image->Image = TSharedPtr<uint8[]>( Move( Pixels ) );
+        Image->Format = Format;
+        Image->Width = (uint16)Width;
+        Image->Height = (uint16)Height;
         Image->IsLoaded = true;
     };
-    
+
     SExecutableTask NewTask;
     NewTask.Delegate.BindLambda( LoadImageAsync );
 

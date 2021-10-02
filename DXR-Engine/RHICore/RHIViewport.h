@@ -25,7 +25,7 @@ public:
     {
         return Width;
     }
-    
+
     FORCEINLINE uint32 GetHeight() const
     {
         return Height;

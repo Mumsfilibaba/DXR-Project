@@ -24,7 +24,7 @@ public:
     {
         Resource = InResource;
     }
-    
+
     FORCEINLINE void SetShaderResourceView( CD3D12ShaderResourceView* InShaderResourceView )
     {
         ShaderResourceView = InShaderResourceView;

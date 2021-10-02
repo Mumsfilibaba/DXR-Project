@@ -165,7 +165,7 @@ public:
     {
         return Format;
     }
-    
+
     FORCEINLINE uint32 GetNumIndicies() const
     {
         return NumIndicies;

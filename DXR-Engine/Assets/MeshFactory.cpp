@@ -54,7 +54,7 @@ SMeshData CMeshFactory::CreateCube( float Width, float Height, float Depth ) noe
         // Front Face
         0, 1, 2,
         1, 3, 2,
-        
+
         // Back Face
         4, 5, 6,
         5, 7, 6,
@@ -62,7 +62,7 @@ SMeshData CMeshFactory::CreateCube( float Width, float Height, float Depth ) noe
         // Right Face
         8, 9, 10,
         9, 11, 10,
-        
+
         // Left Face
         14, 13, 12,
         14, 15, 13,

@@ -277,22 +277,22 @@ struct SRenderTargetWriteState
     {
         return Mask == ColorWriteFlag_None;
     }
-    
+
     FORCEINLINE bool WriteRed() const
     {
         return (Mask & ColorWriteFlag_Red);
     }
-    
+
     FORCEINLINE bool WriteGreen() const
     {
         return (Mask & ColorWriteFlag_Green);
     }
-    
+
     FORCEINLINE bool WriteBlue() const
     {
         return (Mask & ColorWriteFlag_Blue);
     }
-    
+
     FORCEINLINE bool WriteAlpha() const
     {
         return (Mask & ColorWriteFlag_Alpha);
@@ -318,7 +318,7 @@ struct SRenderTargetBlendState
 
     bool BlendEnable = false;
     bool LogicOpEnable = false;
-    
+
     SRenderTargetWriteState RenderTargetWriteMask;
 };
 
@@ -422,10 +422,10 @@ struct SGraphicsPipelineShaderState
 
 struct SGraphicsPipelineStateCreateInfo
 {
-    CRHIInputLayoutState*  InputLayoutState = nullptr;
+    CRHIInputLayoutState* InputLayoutState = nullptr;
     CRHIDepthStencilState* DepthStencilState = nullptr;
-    CRHIRasterizerState*   RasterizerState = nullptr;
-    CRHIBlendState*        BlendState = nullptr;
+    CRHIRasterizerState* RasterizerState = nullptr;
+    CRHIBlendState* BlendState = nullptr;
 
     uint32 SampleCount = 1;
     uint32 SampleQuality = 0;
@@ -479,14 +479,14 @@ struct SRayTracingHitGroup
     }
 
     CString              Name;
-    CRHIRayAnyHitShader*     AnyHit;
+    CRHIRayAnyHitShader* AnyHit;
     CRHIRayClosestHitShader* ClosestHit;
 };
 
 struct SRayTracingPipelineStateCreateInfo
 {
     CRHIRayGenShader* RayGen = nullptr;
-    
+
     TArray<CRHIRayAnyHitShader*>     AnyHitShaders;
     TArray<CRHIRayClosestHitShader*> ClosestHitShaders;
     TArray<CRHIRayMissShader*>       MissShaders;

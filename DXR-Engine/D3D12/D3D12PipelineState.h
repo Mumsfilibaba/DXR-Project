@@ -264,17 +264,17 @@ public:
     {
         return GlobalRootSignature.Get();
     }
-    
+
     FORCEINLINE CD3D12RootSignature* GetRayGenLocalRootSignature() const
     {
         return RayGenLocalRootSignature.Get();
     }
-    
+
     FORCEINLINE CD3D12RootSignature* GetMissLocalRootSignature() const
     {
         return MissLocalRootSignature.Get();
     }
-    
+
     FORCEINLINE CD3D12RootSignature* GetHitLocalRootSignature() const
     {
         return HitLocalRootSignature.Get();

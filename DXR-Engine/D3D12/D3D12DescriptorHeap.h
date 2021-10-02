@@ -56,7 +56,7 @@ private:
 
     D3D12_CPU_DESCRIPTOR_HANDLE CPUStart;
     D3D12_GPU_DESCRIPTOR_HANDLE GPUStart;
-    
+
     D3D12_DESCRIPTOR_HEAP_TYPE  Type;
     D3D12_DESCRIPTOR_HEAP_FLAGS Flags;
 
@@ -128,7 +128,7 @@ private:
     CString Name;
 
     TArray<SDescriptorHeap> Heaps;
-    
+
     D3D12_DESCRIPTOR_HEAP_TYPE Type;
     uint32 DescriptorSize = 0;
 };

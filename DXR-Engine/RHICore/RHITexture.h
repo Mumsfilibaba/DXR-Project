@@ -34,19 +34,19 @@ public:
     {
         return nullptr;
     }
-    
+
     /* Cast to Texture2DArray */
     virtual class CRHITexture2DArray* AsTexture2DArray()
     {
         return nullptr;
     }
-    
+
     /* Cast to TextureCube */
     virtual class CRHITextureCube* AsTextureCube()
     {
         return nullptr;
     }
-    
+
     /* Cast to TextureCubeArray */
     virtual class CRHITextureCubeArray* AsTextureCubeArray()
     {
@@ -89,12 +89,12 @@ public:
     {
         return (Flags & TextureFlag_UAV) && !(Flags & TextureFlag_NoDefaultUAV);
     }
-    
+
     FORCEINLINE bool IsSRV() const
     {
         return (Flags & TextureFlag_SRV) && !(Flags & TextureFlag_NoDefaultSRV);
     }
-    
+
     FORCEINLINE bool IsRTV() const
     {
         return (Flags & TextureFlag_RTV) && !(Flags & TextureFlag_NoDefaultRTV);
@@ -285,7 +285,7 @@ public:
     {
         return Width;
     }
-    
+
     FORCEINLINE uint32 GetHeight() const
     {
         return Height;

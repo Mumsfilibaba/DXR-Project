@@ -105,15 +105,15 @@ public:
         const uint32* SrcDescriptorRangeSizes,
         D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType )
     {
-        Device->CopyDescriptors(NumDestDescriptorRanges, DestDescriptorRangeStarts, DestDescriptorRangeSizes, NumSrcDescriptorRanges, SrcDescriptorRangeStarts, SrcDescriptorRangeSizes, DescriptorHeapsType );
+        Device->CopyDescriptors( NumDestDescriptorRanges, DestDescriptorRangeStarts, DestDescriptorRangeSizes, NumSrcDescriptorRanges, SrcDescriptorRangeStarts, SrcDescriptorRangeSizes, DescriptorHeapsType );
     }
 
-    FORCEINLINE void CopyDescriptorsSimple(uint32 NumDescriptors, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptorRangeStart, D3D12_CPU_DESCRIPTOR_HANDLE SrcDescriptorRangeStart, D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType )
+    FORCEINLINE void CopyDescriptorsSimple( uint32 NumDescriptors, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptorRangeStart, D3D12_CPU_DESCRIPTOR_HANDLE SrcDescriptorRangeStart, D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType )
     {
         Device->CopyDescriptorsSimple( NumDescriptors, DestDescriptorRangeStart, SrcDescriptorRangeStart, DescriptorHeapsType );
     }
 
-    FORCEINLINE void GetRaytracingAccelerationStructurePrebuildInfo(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* Desc, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO* Info )
+    FORCEINLINE void GetRaytracingAccelerationStructurePrebuildInfo( const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* Desc, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO* Info )
     {
         DXRDevice->GetRaytracingAccelerationStructurePrebuildInfo( Desc, Info );
     }
@@ -157,12 +157,12 @@ public:
     {
         return RayTracingTier;
     }
-    
+
     FORCEINLINE D3D12_SAMPLER_FEEDBACK_TIER GetSamplerFeedbackTier() const
     {
         return SamplerFeedBackTier;
     }
-    
+
     FORCEINLINE D3D12_VARIABLE_SHADING_RATE_TIER GetVariableRateShadingTier() const
     {
         return VariableShadingRateTier;

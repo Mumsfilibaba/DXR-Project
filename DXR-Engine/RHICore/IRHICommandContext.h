@@ -73,7 +73,7 @@ public:
         const SRayTracingShaderResources* GlobalResource,
         const SRayTracingShaderResources* RayGenLocalResources,
         const SRayTracingShaderResources* MissLocalResources,
-        const SRayTracingShaderResources* HitGroupResources, 
+        const SRayTracingShaderResources* HitGroupResources,
         uint32 NumHitGroupResources ) = 0;
 
     virtual void GenerateMips( CRHITexture* Texture ) = 0;

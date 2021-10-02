@@ -6,13 +6,10 @@
 #include "D3D12SamplerState.h"
 #include "D3D12CommandList.h"
 
-#define NUM_VISIBILITIES (ShaderVisibility_Count)
-#define NUM_DESCRIPTORS  (D3D12_MAX_ONLINE_DESCRIPTOR_COUNT / 4)
-
-template <typename TD3D12DescriptorViewType>
-struct TD3D12DescriptorViewCache
+template <typename ViewType>
+struct TD3D12ViewCache
 {
-    TD3D12DescriptorViewCache()
+    TD3D12ViewCache()
         : DescriptorViews()
         , Descriptors()
         , CopyDescriptors()
@@ -23,11 +20,11 @@ struct TD3D12DescriptorViewCache
         Reset();
     }
 
-    void Set( TD3D12DescriptorViewType* DescriptorView, EShaderVisibility Visibility, uint32 ShaderRegister )
+    void Set( ViewType* DescriptorView, EShaderVisibility Visibility, uint32 ShaderRegister )
     {
         Assert( DescriptorView != nullptr );
 
-        TD3D12DescriptorViewType* CurrentDescriptorView = DescriptorViews[Visibility][ShaderRegister];
+        ViewType* CurrentDescriptorView = DescriptorViews[Visibility][ShaderRegister];
         if ( DescriptorView != CurrentDescriptorView )
         {
             DescriptorViews[Visibility][ShaderRegister] = DescriptorView;
@@ -65,7 +62,7 @@ struct TD3D12DescriptorViewCache
         return NumDescriptors;
     }
 
-    void PrepareForCopy( TD3D12DescriptorViewType* DefaultView )
+    void PrepareForCopy( ViewType* DefaultView )
     {
         TotalNumDescriptors = 0;
         for ( uint32 i = 0; i < ShaderVisibility_Count; i++ )
@@ -76,11 +73,11 @@ struct TD3D12DescriptorViewCache
                 uint32 Offset = TotalNumDescriptors;
 
                 TotalNumDescriptors += NumDescriptors;
-                Assert( TotalNumDescriptors <= NUM_DESCRIPTORS );
+                Assert( TotalNumDescriptors <= D3D12_CACHED_DESCRIPTORS_COUNT );
 
                 for ( uint32 d = 0; d < NumDescriptors; d++ )
                 {
-                    TD3D12DescriptorViewType* View = DescriptorViews[i][d];
+                    ViewType* View = DescriptorViews[i][d];
                     if ( !View )
                     {
                         DescriptorViews[i][d] = View = DefaultView;
@@ -108,29 +105,32 @@ struct TD3D12DescriptorViewCache
 
     FORCEINLINE void InvalidateAll()
     {
-        for ( uint32 i = 0; i < NUM_VISIBILITIES; i++ )
+        for ( uint32 i = 0; i < D3D12_CACHED_DESCRIPTORS_NUM_STAGES; i++ )
         {
             Dirty[i] = true;
         }
     }
 
-    TD3D12DescriptorViewType* DescriptorViews[NUM_VISIBILITIES][NUM_DESCRIPTORS];
-    D3D12_GPU_DESCRIPTOR_HANDLE Descriptors[NUM_VISIBILITIES];
-    D3D12_CPU_DESCRIPTOR_HANDLE CopyDescriptors[NUM_DESCRIPTORS];
-    bool   Dirty[NUM_VISIBILITIES];
-    uint32 DescriptorRangeLengths[NUM_VISIBILITIES];
+    ViewType* DescriptorViews[D3D12_CACHED_DESCRIPTORS_NUM_STAGES][D3D12_CACHED_DESCRIPTORS_COUNT];
+
+    D3D12_GPU_DESCRIPTOR_HANDLE Descriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
+    D3D12_CPU_DESCRIPTOR_HANDLE CopyDescriptors[D3D12_CACHED_DESCRIPTORS_COUNT];
+
+    bool Dirty[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
+
+    uint32 DescriptorRangeLengths[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
     uint32 TotalNumDescriptors;
 };
 
-using D3D12ConstantBufferViewCache = TD3D12DescriptorViewCache<CD3D12ConstantBufferView>;
-using D3D12ShaderResourceViewCache = TD3D12DescriptorViewCache<CD3D12ShaderResourceView>;
-using D3D12UnorderedAccessViewCache = TD3D12DescriptorViewCache<CD3D12UnorderedAccessView>;
-using D3D12SamplerStateCache = TD3D12DescriptorViewCache<CD3D12SamplerState>;
+using CD3D12ConstantBufferViewCache = TD3D12ViewCache<CD3D12ConstantBufferView>;
+using CD3D12ShaderResourceViewCache = TD3D12ViewCache<CD3D12ShaderResourceView>;
+using CD3D12UnorderedAccessViewCache = TD3D12ViewCache<CD3D12UnorderedAccessView>;
+using CD3D12SamplerStateCache = TD3D12ViewCache<CD3D12SamplerState>;
 
-class D3D12VertexBufferCache
+class CD3D12VertexBufferCache
 {
 public:
-    D3D12VertexBufferCache()
+    CD3D12VertexBufferCache()
         : VertexBuffers()
         , VertexBufferViews()
         , NumVertexBuffers( 0 )
@@ -229,10 +229,10 @@ private:
     bool IndexBufferDirty;
 };
 
-class D3D12RenderTargetState
+class CD3D12RenderTargetState
 {
 public:
-    D3D12RenderTargetState()
+    CD3D12RenderTargetState()
         : RenderTargetViewHandles()
         , NumRenderTargets( 0 )
         , DepthStencilViewHandle( { 0 } )
@@ -295,8 +295,10 @@ public:
 private:
     D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetViewHandles[D3D12_MAX_RENDER_TARGET_COUNT];
     uint32 NumRenderTargets;
+
     D3D12_CPU_DESCRIPTOR_HANDLE  DepthStencilViewHandle;
     D3D12_CPU_DESCRIPTOR_HANDLE* DSVPtr;
+
     bool Dirty;
 };
 
@@ -381,16 +383,16 @@ private:
     CD3D12UnorderedAccessView* NullUAV = nullptr;
     CD3D12SamplerState* NullSampler = nullptr;
 
-    D3D12VertexBufferCache        VertexBufferCache;
-    D3D12RenderTargetState        RenderTargetCache;
-    D3D12ShaderResourceViewCache  ShaderResourceViewCache;
-    D3D12UnorderedAccessViewCache UnorderedAccessViewCache;
-    D3D12ConstantBufferViewCache  ConstantBufferViewCache;
-    D3D12SamplerStateCache        SamplerStateCache;
+    CD3D12VertexBufferCache        VertexBufferCache;
+    CD3D12RenderTargetState        RenderTargetCache;
+    CD3D12ShaderResourceViewCache  ShaderResourceViewCache;
+    CD3D12UnorderedAccessViewCache UnorderedAccessViewCache;
+    CD3D12ConstantBufferViewCache  ConstantBufferViewCache;
+    CD3D12SamplerStateCache        SamplerStateCache;
 
     ID3D12DescriptorHeap* PreviousDescriptorHeaps[2] = { nullptr, nullptr };
 
-    UINT RangeSizes[NUM_DESCRIPTORS];
+    UINT RangeSizes[D3D12_CACHED_DESCRIPTORS_COUNT];
 };
 
 class CD3D12ShaderConstantsCache
