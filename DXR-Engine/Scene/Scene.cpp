@@ -38,7 +38,7 @@ CScene::~CScene()
 
 CActor* CScene::MakeActor()
 {
-    CActor* NewActor = new CActor( this );
+    CActor* NewActor = DBG_NEW CActor( this );
     AddActor( NewActor );
     return NewActor;
 }

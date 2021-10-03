@@ -947,14 +947,14 @@ void CD3D12CommandContext::SetRayTracingBindings(
         NumSamplersNeeded += HitGroupResources[i].NumSamplers();
     }
 
-    Assert( NumDescriptorsNeeded < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT );
+    Assert( NumDescriptorsNeeded < D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT );
     CD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     if ( !ResourceHeap->HasSpace( NumDescriptorsNeeded ) )
     {
         ResourceHeap->AllocateFreshHeap();
     }
 
-    Assert( NumSamplersNeeded < D3D12_MAX_ONLINE_DESCRIPTOR_COUNT );
+    Assert( NumSamplersNeeded < D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT );
     CD3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
     if ( !SamplerHeap->HasSpace( NumSamplersNeeded ) )
     {

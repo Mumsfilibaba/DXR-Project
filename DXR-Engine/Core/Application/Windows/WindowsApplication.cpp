@@ -96,7 +96,7 @@ bool CWindowsApplication::RegisterWindowClass()
 
 TSharedRef<CCoreWindow> CWindowsApplication::MakeWindow()
 {
-    TSharedRef<CWindowsWindow> NewWindow = new CWindowsWindow( this );
+    TSharedRef<CWindowsWindow> NewWindow = DBG_NEW CWindowsWindow( this );
     Windows.Emplace( NewWindow );
     return NewWindow.Get();
 }

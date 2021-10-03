@@ -43,7 +43,7 @@ void CD3D12GPUProfiler::BeginQuery( ID3D12GraphicsCommandList* CmdList, uint32 I
 void CD3D12GPUProfiler::EndQuery( ID3D12GraphicsCommandList* CmdList, uint32 Index )
 {
     Assert( CmdList != nullptr );
-    Assert( Index < TimeQueries.Size() );
+    Assert( Index < (uint32)TimeQueries.Size() );
 
     CmdList->EndQuery( QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2) + 1 );
 }

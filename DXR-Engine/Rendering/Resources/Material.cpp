@@ -3,6 +3,8 @@
 #include "RHICore/RHIModule.h"
 #include "RHICore/RHICommandList.h"
 
+#include "Core/Engine/Engine.h"
+
 #define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetShaderResourceView() : nullptr
 
 CMaterial::CMaterial( const SMaterialDesc& InProperties )
@@ -32,18 +34,7 @@ void CMaterial::Init()
         MaterialBuffer->SetName( "MaterialBuffer" );
     }
 
-    SSamplerStateCreateInfo CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::Wrap;
-    CreateInfo.AddressV = ESamplerMode::Wrap;
-    CreateInfo.AddressW = ESamplerMode::Wrap;
-    CreateInfo.ComparisonFunc = EComparisonFunc::Never;
-    CreateInfo.Filter = ESamplerFilter::Anistrotopic;
-    CreateInfo.MaxAnisotropy = 16;
-    CreateInfo.MaxLOD = FLT_MAX;
-    CreateInfo.MinLOD = -FLT_MAX;
-    CreateInfo.MipLODBias = 0.0f;
-
-    Sampler = CreateSamplerState( CreateInfo );
+    Sampler = GEngine->BaseMaterialSampler;
 }
 
 void CMaterial::BuildBuffer( CRHICommandList& CmdList )

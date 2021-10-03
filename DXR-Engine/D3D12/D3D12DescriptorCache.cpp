@@ -22,9 +22,9 @@ CD3D12DescriptorCache::CD3D12DescriptorCache( CD3D12Device* InDevice )
 CD3D12DescriptorCache::~CD3D12DescriptorCache()
 {
     SafeDelete( NullCBV );
-    SafeDelete( NullSRV );
-    SafeDelete( NullUAV );
-    SafeDelete( NullSampler );
+    SafeRelease( NullSRV );
+    SafeRelease( NullUAV );
+    SafeRelease( NullSampler );
 }
 
 bool CD3D12DescriptorCache::Init()

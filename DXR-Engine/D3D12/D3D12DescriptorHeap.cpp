@@ -105,7 +105,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE CD3D12OfflineDescriptorHeap::Allocate( uint32& OutHe
 
 void CD3D12OfflineDescriptorHeap::Free( D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex )
 {
-    Assert( HeapIndex < Heaps.Size() );
+    Assert( HeapIndex < (uint32)Heaps.Size() );
     SDescriptorHeap& Heap = Heaps[HeapIndex];
 
     // Find a suitable range

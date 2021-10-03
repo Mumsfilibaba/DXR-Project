@@ -6,7 +6,7 @@
 #include "D3D12SamplerState.h"
 #include "D3D12CommandList.h"
 
-template <typename ViewType, D3D12_DESCRIPTOR_HEAP_TYPE HeapType>
+template <typename ViewType, D3D12_DESCRIPTOR_HEAP_TYPE HeapType, uint32 kDescriptorTableSize>
 class TD3D12ViewCache
 {
 public:
@@ -14,6 +14,11 @@ public:
     static FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetDescriptorHeapType()
     {
         return HeapType;
+    }
+
+    static FORCEINLINE uint32 GetDescriptorTableSize()
+    {
+        return kDescriptorTableSize;
     }
 
     TD3D12ViewCache()
@@ -49,7 +54,7 @@ public:
             Dirty[Stage] = true;
             
             // Set each descriptor to the default view
-            for (uint32 Index = 0; Index < D3D12_CACHED_DESCRIPTORS_COUNT; Index++ )
+            for (uint32 Index = 0; Index < kDescriptorTableSize; Index++ )
             {
                 ResourceViews[Stage][Index] = DefaultView;
             }
@@ -63,7 +68,7 @@ public:
         {
             if ( Dirty[Stage] )
             {
-                NumDescriptors += D3D12_CACHED_DESCRIPTORS_COUNT;
+                NumDescriptors += kDescriptorTableSize;
             }
         }
 
@@ -76,7 +81,7 @@ public:
         {
             if ( Dirty[Stage] )
             {
-                for ( uint32 Index = 0; Index < D3D12_CACHED_DESCRIPTORS_COUNT; Index++ )
+                for ( uint32 Index = 0; Index < kDescriptorTableSize; Index++ )
                 {
                     ViewType* View = ResourceViews[Stage][Index];
                     Assert( View != nullptr );
@@ -95,10 +100,10 @@ public:
             {
                 // We keep the host descriptors for when the descriptors are copied to the device
                 HostDescriptors[Stage] = HostStartHandle;
-                HostStartHandle.ptr += (uint64)(D3D12_CACHED_DESCRIPTORS_COUNT * IncreamentDescriptorSize);
+                HostStartHandle.ptr += (uint64)(kDescriptorTableSize * IncreamentDescriptorSize);
 
                 DeviceDescriptors[Stage] = DeviceStartHandle;
-                DeviceStartHandle.ptr += (uint64)(D3D12_CACHED_DESCRIPTORS_COUNT * IncreamentDescriptorSize);
+                DeviceStartHandle.ptr += (uint64)(kDescriptorTableSize * IncreamentDescriptorSize);
             }
         }
     }
@@ -112,10 +117,10 @@ public:
         }
     }
 
-    ViewType* ResourceViews[D3D12_CACHED_DESCRIPTORS_NUM_STAGES][D3D12_CACHED_DESCRIPTORS_COUNT];
+    ViewType* ResourceViews[D3D12_CACHED_DESCRIPTORS_NUM_STAGES][kDescriptorTableSize];
 
     /* Offline handles to the currently bound ResourceViews */
-    D3D12_CPU_DESCRIPTOR_HANDLE CopyDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES][D3D12_CACHED_DESCRIPTORS_COUNT];
+    D3D12_CPU_DESCRIPTOR_HANDLE CopyDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES][kDescriptorTableSize];
 
     /* The beginning of each stage's descriptor table */
     D3D12_CPU_DESCRIPTOR_HANDLE HostDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
@@ -125,10 +130,10 @@ public:
     bool Dirty[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
 };
 
-using CD3D12ConstantBufferViewCache  = TD3D12ViewCache<CD3D12ConstantBufferView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV>;
-using CD3D12ShaderResourceViewCache  = TD3D12ViewCache<CD3D12ShaderResourceView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV>;
-using CD3D12UnorderedAccessViewCache = TD3D12ViewCache<CD3D12UnorderedAccessView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV>;
-using CD3D12SamplerStateCache        = TD3D12ViewCache<CD3D12SamplerState, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER>;
+using CD3D12ConstantBufferViewCache  = TD3D12ViewCache<CD3D12ConstantBufferView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT>;
+using CD3D12ShaderResourceViewCache  = TD3D12ViewCache<CD3D12ShaderResourceView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT>;
+using CD3D12UnorderedAccessViewCache = TD3D12ViewCache<CD3D12UnorderedAccessView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT>;
+using CD3D12SamplerStateCache        = TD3D12ViewCache<CD3D12SamplerState, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DEFAULT_SAMPLER_STATE_COUNT>;
 
 class CD3D12VertexBufferCache
 {
@@ -397,8 +402,8 @@ private:
         const EShaderVisibility ShaderVisibility = ShaderVisibility_All; 
         if ( ParameterIndex >= 0 && ResourceViewCache.Dirty[ShaderVisibility] )
         {
-            const UINT DestRangeSize = D3D12_CACHED_DESCRIPTORS_COUNT;
-            const UINT NumSrcRanges  = D3D12_CACHED_DESCRIPTORS_COUNT;
+            const UINT DestRangeSize = TResourveViewCache::GetDescriptorTableSize();
+            const UINT NumSrcRanges  = TResourveViewCache::GetDescriptorTableSize();
 
             const D3D12_CPU_DESCRIPTOR_HANDLE* SrcHostStarts = ResourceViewCache.CopyDescriptors[ShaderVisibility];
 
@@ -418,8 +423,8 @@ private:
     {
         if ( ParameterIndex >= 0 && ResourceViewCache.Dirty[ShaderVisibility] )
         {
-            const UINT DestRangeSize = D3D12_CACHED_DESCRIPTORS_COUNT;
-            const UINT NumSrcRanges  = D3D12_CACHED_DESCRIPTORS_COUNT;
+            const UINT DestRangeSize = TResourveViewCache::GetDescriptorTableSize();
+            const UINT NumSrcRanges  = TResourveViewCache::GetDescriptorTableSize();
 
             const D3D12_CPU_DESCRIPTOR_HANDLE* SrcHostStarts = ResourceViewCache.CopyDescriptors[ShaderVisibility];
 

@@ -81,6 +81,7 @@ CRHITexture2D* CTextureFactory::LoadFromImage2D( SImage2D* InImage, uint32 Creat
     CRHITexture2D* NewTexture = LoadFromMemory( Pixels, Width, Height, CreateFlags, Format );
     if ( NewTexture )
     {
+        // Set debug name
         NewTexture->SetName( InImage->Path.CStr() );
     }
 
@@ -148,6 +149,8 @@ CRHITexture2D* CTextureFactory::LoadFromMemory( const uint8* Pixels, uint32 Widt
         LOG_ERROR( "[CTextureFactory]: Format not supported" );
         return nullptr;
     }
+
+    Assert( Pixels != nullptr );
 
     const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const uint32 NumMips = GenerateMips ? NMath::Max<uint32>( NMath::Log2( NMath::Max( Width, Height ) ), 1u ) : 1;

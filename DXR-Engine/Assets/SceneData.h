@@ -54,7 +54,7 @@ struct SImage2D
     CString Path;
 
     /* Pointer to image data */
-    TSharedPtr<uint8[]> Image;
+    TUniquePtr<uint8[]> Image;
 
     /* Size of the image */
     uint16 Width = 0;

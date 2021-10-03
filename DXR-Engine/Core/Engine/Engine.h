@@ -77,6 +77,9 @@ public:
     /* A completely flat normal map*/
     TSharedRef<CRHITexture2D> BaseNormal;
 
+    /* Base sampler used by all materials */
+    TSharedRef<CRHISamplerState> BaseMaterialSampler;
+
     /* A completely white material */
     TSharedPtr<CMaterial> BaseMaterial;
 
