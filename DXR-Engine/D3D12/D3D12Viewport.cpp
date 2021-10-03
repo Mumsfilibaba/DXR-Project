@@ -222,7 +222,7 @@ bool CD3D12Viewport::RetriveBackBuffers()
         }
 
         BackBuffers[i] = DBG_NEW CD3D12Texture2D( GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, SClearValue() );
-        BackBuffers[i]->SetResource( DBG_NEW D3D12Resource( GetDevice(), BackBufferResource ) );
+        BackBuffers[i]->SetResource( DBG_NEW CD3D12Resource( GetDevice(), BackBufferResource ) );
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;
         CMemory::Memzero( &Desc );

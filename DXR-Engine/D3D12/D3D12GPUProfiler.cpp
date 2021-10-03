@@ -68,7 +68,7 @@ void CD3D12GPUProfiler::ResolveQueries( class CD3D12CommandContext& CmdContext )
     }
 
     // NOTE: Read the current, the first frames the result will be zero, however this would be expected
-    D3D12Resource* CurrentReadResource = ReadResources[ReadIndex].Get();
+    CD3D12Resource* CurrentReadResource = ReadResources[ReadIndex].Get();
     void* Data = CurrentReadResource->Map( 0, nullptr );
     if ( Data )
     {
@@ -128,7 +128,7 @@ CD3D12GPUProfiler* CD3D12GPUProfiler::Create( CD3D12Device* InDevice )
     Desc.SampleDesc.Count = 1;
     Desc.SampleDesc.Quality = 0;
 
-    TSharedRef<D3D12Resource> WriteResource = DBG_NEW D3D12Resource( InDevice, Desc, D3D12_HEAP_TYPE_DEFAULT );
+    TSharedRef<CD3D12Resource> WriteResource = DBG_NEW CD3D12Resource( InDevice, Desc, D3D12_HEAP_TYPE_DEFAULT );
     if ( !WriteResource->Init( D3D12_RESOURCE_STATE_COMMON, nullptr ) )
     {
         return nullptr;
@@ -169,7 +169,7 @@ bool CD3D12GPUProfiler::AllocateReadResource()
     Desc.SampleDesc.Count = 1;
     Desc.SampleDesc.Quality = 0;
 
-    TSharedRef<D3D12Resource> ReadResource = DBG_NEW D3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK );
+    TSharedRef<CD3D12Resource> ReadResource = DBG_NEW CD3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK );
     if ( ReadResource->Init( D3D12_RESOURCE_STATE_COPY_DEST, nullptr ) )
     {
         ReadResource->SetName( "Query Readback Resource" );

@@ -11,7 +11,7 @@ struct SCascadeGenerationInfo
     CVector3 LightDirection;
     float CascadeSplitLambda;
     CVector3 LightUp;
-    float Padding0;
+    float CascadeResolution;
 };
 
 struct SCascadeMatrices

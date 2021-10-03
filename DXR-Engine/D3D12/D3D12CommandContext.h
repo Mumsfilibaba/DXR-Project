@@ -82,7 +82,7 @@ public:
         }
     }
 
-    void AddInUseResource( CRHIResource* InResource )
+    FORCEINLINE void AddInUseResource( CRHIResource* InResource )
     {
         if ( InResource )
         {
@@ -90,15 +90,15 @@ public:
         }
     }
 
-    void AddInUseResource( D3D12Resource* InResource )
+    FORCEINLINE void AddInUseResource( CD3D12Resource* InResource )
     {
         if ( InResource )
         {
-            DxResources.Emplace( MakeSharedRef<D3D12Resource>( InResource ) );
+            DxResources.Emplace( MakeSharedRef<CD3D12Resource>( InResource ) );
         }
     }
 
-    void AddInUseResource( const TComPtr<ID3D12Resource>& InResource )
+    FORCEINLINE void AddInUseResource( const TComPtr<ID3D12Resource>& InResource )
     {
         if ( InResource )
         {
@@ -128,8 +128,8 @@ public:
 
     CD3D12Device* Device = nullptr;
 
-    CD3D12CommandAllocator CmdAllocator;
-    CD3D12GPUResourceUploader    GpuResourceUploader;
+    CD3D12CommandAllocator    CmdAllocator;
+    CD3D12GPUResourceUploader GpuResourceUploader;
 
     TSharedRef<CD3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
     TSharedRef<CD3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
@@ -137,7 +137,7 @@ public:
     TSharedRef<CD3D12OnlineDescriptorHeap> OnlineRayTracingResourceDescriptorHeap;
     TSharedRef<CD3D12OnlineDescriptorHeap> OnlineRayTracingSamplerDescriptorHeap;
 
-    TArray<TSharedRef<D3D12Resource>> DxResources;
+    TArray<TSharedRef<CD3D12Resource>> DxResources;
     TArray<TSharedRef<CRHIResource>>  Resources;
     TArray<TComPtr<ID3D12Resource>>   NativeResources;
 };
@@ -194,45 +194,6 @@ public:
 
     bool Init();
 
-    void UpdateBuffer( D3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData );
-
-    FORCEINLINE CD3D12CommandQueue& GetQueue()
-    {
-        return CmdQueue;
-    }
-
-    FORCEINLINE CD3D12CommandList& GetCommandList()
-    {
-        return CmdList;
-    }
-
-    FORCEINLINE uint32 GetCurrentEpochValue() const
-    {
-        uint32 MaxValue = NMath::Max<int32>( (int32)CmdBatches.Size() - 1, 0 );
-        return NMath::Min<uint32>( NextCmdBatch - 1, MaxValue );
-    }
-
-    FORCEINLINE void UnorderedAccessBarrier( D3D12Resource* Resource )
-    {
-        BarrierBatcher.AddUnorderedAccessBarrier( Resource->GetResource() );
-    }
-
-    FORCEINLINE void TransitionResource( D3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState )
-    {
-        BarrierBatcher.AddTransitionBarrier( Resource->GetResource(), BeforeState, AfterState );
-    }
-
-    FORCEINLINE void FlushResourceBarriers()
-    {
-        BarrierBatcher.FlushBarriers( CmdList );
-    }
-
-    FORCEINLINE void DiscardResource( D3D12Resource* Resource )
-    {
-        CmdBatch->AddInUseResource( Resource );
-    }
-
-public:
     virtual void Begin() override final;
     virtual void End()   override final;
 
@@ -247,7 +208,7 @@ public:
     virtual void SetShadingRateImage( CRHITexture2D* ShadingImage ) override final;
 
     virtual void BeginRenderPass() override final;
-    virtual void EndRenderPass()   override final;
+    virtual void EndRenderPass() override final;
 
     virtual void SetViewport( float Width, float Height, float MinDepth, float MaxDepth, float x, float y ) override final;
     virtual void SetScissorRect( float Width, float Height, float x, float y ) override final;
@@ -311,22 +272,11 @@ public:
     virtual void Draw( uint32 VertexCount, uint32 StartVertexLocation ) override final;
     virtual void DrawIndexed( uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation ) override final;
     virtual void DrawInstanced( uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation ) override final;
-
-    virtual void DrawIndexedInstanced(
-        uint32 IndexCountPerInstance,
-        uint32 InstanceCount,
-        uint32 StartIndexLocation,
-        uint32 BaseVertexLocation,
-        uint32 StartInstanceLocation ) override final;
+    virtual void DrawIndexedInstanced( uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation ) override final;
 
     virtual void Dispatch( uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ ) override final;
 
-    virtual void DispatchRays(
-        CRHIRayTracingScene* InScene,
-        CRHIRayTracingPipelineState* InPipelineState,
-        uint32 InWidth,
-        uint32 InHeight,
-        uint32 InDepth ) override final;
+    virtual void DispatchRays( CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth ) override final;
 
     virtual void ClearState() override final;
     virtual void Flush() override final;
@@ -335,6 +285,44 @@ public:
 
     virtual void BeginExternalCapture() override final;
     virtual void EndExternalCapture()   override final;
+
+    void UpdateBuffer( CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData );
+
+    FORCEINLINE CD3D12CommandQueue& GetQueue()
+    {
+        return CmdQueue;
+    }
+
+    FORCEINLINE CD3D12CommandList& GetCommandList()
+    {
+        return CmdList;
+    }
+
+    FORCEINLINE uint32 GetCurrentEpochValue() const
+    {
+        uint32 MaxValue = NMath::Max<int32>( (int32)CmdBatches.Size() - 1, 0 );
+        return NMath::Min<uint32>( NextCmdBatch - 1, MaxValue );
+    }
+
+    FORCEINLINE void UnorderedAccessBarrier( CD3D12Resource* Resource )
+    {
+        BarrierBatcher.AddUnorderedAccessBarrier( Resource->GetResource() );
+    }
+
+    FORCEINLINE void TransitionResource( CD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState )
+    {
+        BarrierBatcher.AddTransitionBarrier( Resource->GetResource(), BeforeState, AfterState );
+    }
+
+    FORCEINLINE void FlushResourceBarriers()
+    {
+        BarrierBatcher.FlushBarriers( CmdList );
+    }
+
+    FORCEINLINE void DiscardResource( CD3D12Resource* Resource )
+    {
+        CmdBatch->AddInUseResource( Resource );
+    }
 
 private:
     void InternalClearState();

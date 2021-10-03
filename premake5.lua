@@ -36,7 +36,7 @@ workspace "DXR-Project"
         defines
         {
             "_DEBUG",
-            "DEBUG_BUILD",
+            "DEBUG_BUILD=(1)",
         }
     filter "configurations:Release"
         symbols "on"
@@ -45,7 +45,7 @@ workspace "DXR-Project"
         defines
         {
             "NDEBUG",
-            "RELEASE_BUILD",
+            "RELEASE_BUILD=(1)",
         }
     filter "configurations:Production"
         symbols "off"
@@ -54,7 +54,7 @@ workspace "DXR-Project"
         defines
         {
             "NDEBUG",
-            "PRODUCTION_BUILD",
+            "PRODUCTION_BUILD=(1)",
         }
     filter {}
 

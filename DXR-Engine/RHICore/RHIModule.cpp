@@ -52,7 +52,7 @@ bool CRHIModule::Init( ERenderLayerApi InRenderApi )
     if ( GRHICore->Init( EnableDebug ) )
     {
         IRHICommandContext* CmdContext = GRHICore->GetDefaultCommandContext();
-        GCmdListExecutor.SetContext( CmdContext );
+        GCommandQueue.SetContext( CmdContext );
 
         return true;
     }

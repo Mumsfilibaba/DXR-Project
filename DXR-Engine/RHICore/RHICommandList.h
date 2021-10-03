@@ -519,6 +519,10 @@ private:
 class CRHICommandQueue
 {
 public:
+
+    CRHICommandQueue();
+    ~CRHICommandQueue();
+
     void ExecuteCommandList( CRHICommandList& CmdList );
     void ExecuteCommandLists( CRHICommandList* const* CmdLists, uint32 NumCmdLists );
 
@@ -536,10 +540,39 @@ public:
         return *CmdContext;
     }
 
+    FORCEINLINE uint32 GetNumDrawCalls() const
+    {
+        return NumDrawCalls;
+    }
+
+    FORCEINLINE uint32 GetNumDispatchCalls() const
+    {
+        return NumDispatchCalls;
+    }
+
+    FORCEINLINE uint32 GetNumCommands() const
+    {
+        return NumCommands;
+    }
+
 private:
+    
+    /* Goes through all the commands and executes them on a command list */
     void InternalExecuteCommandList( CRHICommandList& CmdList );
 
-    IRHICommandContext* CmdContext = nullptr;
+    FORCEINLINE void ResetStatistics()
+    {
+        NumDrawCalls = 0;
+        NumDispatchCalls = 0;
+        NumCommands = 0;
+    }
+
+    IRHICommandContext* CmdContext;
+    
+    // Statistics
+    uint32 NumDrawCalls;
+    uint32 NumDispatchCalls;
+    uint32 NumCommands;
 };
 
-extern CRHICommandQueue GCmdListExecutor;
+extern CRHICommandQueue GCommandQueue;

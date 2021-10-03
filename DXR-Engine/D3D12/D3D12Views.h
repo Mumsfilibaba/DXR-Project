@@ -20,13 +20,13 @@ public:
         return OfflineHandle;
     }
 
-    FORCEINLINE const D3D12Resource* GetResource() const
+    FORCEINLINE const CD3D12Resource* GetResource() const
     {
         return Resource.Get();
     }
 
 protected:
-    TSharedRef<D3D12Resource> Resource;
+    TSharedRef<CD3D12Resource> Resource;
     CD3D12OfflineDescriptorHeap* Heap = nullptr;
     uint32                      OfflineHeapIndex = 0;
     D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle;
@@ -38,7 +38,7 @@ public:
     CD3D12ConstantBufferView( CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap );
     ~CD3D12ConstantBufferView() = default;
 
-    bool CreateView( D3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc );
+    bool CreateView( CD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc );
 
     FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const
     {
@@ -55,7 +55,7 @@ public:
     CD3D12BaseShaderResourceView( CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap );
     ~CD3D12BaseShaderResourceView() = default;
 
-    bool CreateView( D3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc );
+    bool CreateView( CD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc );
 
     FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
     {
@@ -72,20 +72,20 @@ public:
     CD3D12BaseUnorderedAccessView( CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap );
     ~CD3D12BaseUnorderedAccessView() = default;
 
-    bool CreateView( D3D12Resource* InCounterResource, D3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc );
+    bool CreateView( CD3D12Resource* InCounterResource, CD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc );
 
     FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
     {
         return Desc;
     }
 
-    FORCEINLINE const D3D12Resource* GetCounterResource() const
+    FORCEINLINE const CD3D12Resource* GetCounterResource() const
     {
         return CounterResource.Get();
     }
 
 private:
-    TSharedRef<D3D12Resource> CounterResource;
+    TSharedRef<CD3D12Resource> CounterResource;
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
 };
 
@@ -95,7 +95,7 @@ public:
     CD3D12BaseRenderTargetView( CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap );
     ~CD3D12BaseRenderTargetView() = default;
 
-    bool CreateView( D3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc );
+    bool CreateView( CD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc );
 
     FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const
     {
@@ -112,7 +112,7 @@ public:
     CD3D12BaseDepthStencilView( CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap );
     ~CD3D12BaseDepthStencilView() = default;
 
-    bool CreateView( D3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc );
+    bool CreateView( CD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc );
 
     FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const
     {

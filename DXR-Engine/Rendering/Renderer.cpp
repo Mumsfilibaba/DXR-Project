@@ -647,11 +647,6 @@ void CRenderer::Tick( const CScene& Scene )
 
     MainCmdList.EndExternalCapture();
 
-    // NOTE: These are no longer accurate
-    LastFrameNumDrawCalls = MainCmdList.GetNumDrawCalls();
-    LastFrameNumDispatchCalls = MainCmdList.GetNumDispatchCalls();
-    LastFrameNumCommands = MainCmdList.GetNumCommands();
-
     CTaskManager::Get().WaitForAllTasks();
 
     {
@@ -670,7 +665,11 @@ void CRenderer::Tick( const CScene& Scene )
             &MainCmdList
         };
 
-        GCmdListExecutor.ExecuteCommandLists( CmdLists, ArrayCount( CmdLists ) );
+        GCommandQueue.ExecuteCommandLists( CmdLists, ArrayCount( CmdLists ) );
+
+        LastFrameNumDrawCalls     = GCommandQueue.GetNumDrawCalls();
+        LastFrameNumDispatchCalls = GCommandQueue.GetNumDispatchCalls();
+        LastFrameNumCommands      = GCommandQueue.GetNumCommands();
     }
 
     {
@@ -850,7 +849,7 @@ bool CRenderer::Init()
 
     LightProbeRenderer.RenderSkyLightProbe( MainCmdList, LightSetup, Resources );
 
-    GCmdListExecutor.ExecuteCommandList( MainCmdList );
+    GCommandQueue.ExecuteCommandList( MainCmdList );
 
     // Register EventFunc
     WindowHandler.WindowResizedDelegate.BindRaw( this, &CRenderer::OnWindowResize );
@@ -861,7 +860,7 @@ bool CRenderer::Init()
 
 void CRenderer::Release()
 {
-    GCmdListExecutor.WaitForGPU();
+    GCommandQueue.WaitForGPU();
 
     PreShadowsCmdList.Reset();
     PointShadowCmdList.Reset();

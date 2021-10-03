@@ -37,7 +37,7 @@ SamplerState Sampler : register(s0);
 #define BLEND_CASCADES  (0)
 #define BAND_PERCENTAGE (0.15f)
 #define ROTATE_SAMPLES  (0)
-#define ENABLE_PCSS     (1)
+#define ENABLE_PCSS     (0)
 
 // Based on: http://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf
 float SearchWidth(float LightSize, float LightNear, float ReciverZ)

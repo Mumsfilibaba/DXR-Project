@@ -35,8 +35,8 @@ public:
 
     TSharedRef<CD3D12VertexBuffer> VertexBuffer;
     TSharedRef<CD3D12IndexBuffer>  IndexBuffer;
-    TSharedRef<D3D12Resource>     ResultBuffer;
-    TSharedRef<D3D12Resource>     ScratchBuffer;
+    TSharedRef<CD3D12Resource>     ResultBuffer;
+    TSharedRef<CD3D12Resource>     ScratchBuffer;
 };
 
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) SD3D12ShaderBindingTableEntry
@@ -121,17 +121,17 @@ public:
         return ResultBuffer->GetGPUVirtualAddress();
     }
 
-    FORCEINLINE D3D12Resource* GetResultBuffer()  const
+    FORCEINLINE CD3D12Resource* GetResultBuffer()  const
     {
         return ResultBuffer.Get();
     }
 
-    FORCEINLINE D3D12Resource* GetInstanceuffer() const
+    FORCEINLINE CD3D12Resource* GetInstanceuffer() const
     {
         return InstanceBuffer.Get();
     }
 
-    FORCEINLINE D3D12Resource* GetBindingTable()  const
+    FORCEINLINE CD3D12Resource* GetBindingTable()  const
     {
         return BindingTable.Get();
     }
@@ -140,10 +140,10 @@ private:
     TArray<SRayTracingGeometryInstance> Instances;
     TSharedRef<CD3D12ShaderResourceView>      View;
 
-    TSharedRef<D3D12Resource> ResultBuffer;
-    TSharedRef<D3D12Resource> ScratchBuffer;
-    TSharedRef<D3D12Resource> InstanceBuffer;
-    TSharedRef<D3D12Resource> BindingTable;
+    TSharedRef<CD3D12Resource> ResultBuffer;
+    TSharedRef<CD3D12Resource> ScratchBuffer;
+    TSharedRef<CD3D12Resource> InstanceBuffer;
+    TSharedRef<CD3D12Resource> BindingTable;
 
     uint32 BindingTableStride = 0;
     uint32 NumHitGroups = 0;

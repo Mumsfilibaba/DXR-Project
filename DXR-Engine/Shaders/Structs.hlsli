@@ -68,7 +68,7 @@ struct SCascadeGenerationInfo
     float3 LightDirection;
     float  CascadeSplitLambda;
     float3 LightUp;
-    float  Padding0;
+    float  CascadeResolution;
 };
 
 struct DirectionalLight

@@ -2,6 +2,8 @@
 #include "D3D12Device.h"
 #include "D3D12Views.h"
 
+#include "Core/Debug/Profiler.h"
+
 CD3D12DescriptorHeap::CD3D12DescriptorHeap( CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags )
     : CD3D12DeviceChild( InDevice )
     , Heap( nullptr )
@@ -228,6 +230,8 @@ uint32 CD3D12OnlineDescriptorHeap::AllocateHandles( uint32 NumHandles )
 
 bool CD3D12OnlineDescriptorHeap::AllocateFreshHeap()
 {
+    TRACE_FUNCTION_SCOPE();
+
     DiscardedHeaps.Emplace( Heap );
 
     if ( HeapPool.IsEmpty() )

@@ -5,8 +5,8 @@
 
 #define NUM_THREADS 4
 
-ConstantBuffer<Camera>             CameraBuffer : register(b0);
-ConstantBuffer<SCascadeGenerationInfo> Settings : register(b1);
+ConstantBuffer<Camera>                 CameraBuffer : register(b0);
+ConstantBuffer<SCascadeGenerationInfo> Settings     : register(b1);
 
 RWStructuredBuffer<SCascadeMatrices> MatrixBuffer : register(u0);
 RWStructuredBuffer<SCascadeSplit>    SplitBuffer  : register(u1);
@@ -38,15 +38,14 @@ void Main(ComputeShaderInput Input)
     // Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
     for (uint i = 0; i < 4; i++)
     {
-        float p = (i + 1) / float(NUM_SHADOW_CASCADES);
-        float Log = MinDepth * pow(Ratio, p);
+        float p       = (i + 1) / float(NUM_SHADOW_CASCADES);
+        float Log     = MinDepth * pow(Ratio, p);
         float Uniform = MinDepth + Range * p;
-        float d = Settings.CascadeSplitLambda * (Log - Uniform) + Uniform;
+        float d       = Settings.CascadeSplitLambda * (Log - Uniform) + Uniform;
         CascadeSplits[i] = (d - NearPlane) / ClipRange;
     }
 
-    // TODO: This should be moved to the settings
-    const float CascadeSize = 8182;
+    const float CascadeResolution = Settings.CascadeResolution;
 
     float LastSplitDist = (CascadeIndex == 0) ? MinMaxDepth.x : CascadeSplits[CascadeIndex - 1];
     float SplitDist = CascadeSplits[CascadeIndex];
@@ -121,11 +120,11 @@ void Main(ComputeShaderInput Input)
     // Stabilize cascades
     float4x4 ShadowMatrix = mul(ViewMat, OrtoMat);
     float3 ShadowOrigin = mul(float4(Float3(0.0f), 1.0f), ShadowMatrix);
-    ShadowOrigin *= (CascadeSize / 2.0f);
+    ShadowOrigin *= (CascadeResolution / 2.0f);
     
     float3 RoundedOrigin = round(ShadowOrigin);
     float3 RoundedOffset = RoundedOrigin - ShadowOrigin;
-    RoundedOffset = RoundedOffset * (2.0f / CascadeSize);
+    RoundedOffset = RoundedOffset * (2.0f / CascadeResolution);
 
     OrtoMat[3][0] += RoundedOffset.x;
     OrtoMat[3][1] += RoundedOffset.y;

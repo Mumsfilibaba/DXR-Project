@@ -211,7 +211,7 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
         }
     }
 
-    TSharedRef<D3D12Resource> Resource = DBG_NEW D3D12Resource( Device, Desc, D3D12_HEAP_TYPE_DEFAULT );
+    TSharedRef<CD3D12Resource> Resource = DBG_NEW CD3D12Resource( Device, Desc, D3D12_HEAP_TYPE_DEFAULT );
     if ( !Resource->Init( D3D12_RESOURCE_STATE_COMMON, ClearValuePtr ) )
     {
         return nullptr;
@@ -532,7 +532,7 @@ bool CD3D12RHICore::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInB
         DxInitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
-    TSharedRef<D3D12Resource> Resource = DBG_NEW D3D12Resource( Device, Desc, DxHeapType );
+    TSharedRef<CD3D12Resource> Resource = DBG_NEW CD3D12Resource( Device, Desc, DxHeapType );
     if ( !Resource->Init( DxInitialState, nullptr ) )
     {
         return false;
@@ -697,7 +697,7 @@ CRHIShaderResourceView* CD3D12RHICore::CreateShaderResourceView( const SShaderRe
     // TODO: Expose in ShaderResourceViewCreateInfo
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    D3D12Resource* Resource = nullptr;
+    CD3D12Resource* Resource = nullptr;
     if ( CreateInfo.Type == SShaderResourceViewCreateInfo::EType::Texture2D )
     {
         CRHITexture2D* Texture = CreateInfo.Texture2D.Texture;
@@ -861,7 +861,7 @@ CRHIUnorderedAccessView* CD3D12RHICore::CreateUnorderedAccessView( const SUnorde
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     CMemory::Memzero( &Desc );
 
-    D3D12Resource* Resource = nullptr;
+    CD3D12Resource* Resource = nullptr;
     if ( CreateInfo.Type == SUnorderedAccessViewCreateInfo::EType::Texture2D )
     {
         CRHITexture2D* Texture = CreateInfo.Texture2D.Texture;
@@ -1008,7 +1008,7 @@ CRHIRenderTargetView* CD3D12RHICore::CreateRenderTargetView( const SRenderTarget
     D3D12_RENDER_TARGET_VIEW_DESC Desc;
     CMemory::Memzero( &Desc );
 
-    D3D12Resource* Resource = nullptr;
+    CD3D12Resource* Resource = nullptr;
 
     Desc.Format = ConvertFormat( CreateInfo.Format );
     Assert( CreateInfo.Format != EFormat::Unknown );
@@ -1120,7 +1120,7 @@ CRHIDepthStencilView* CD3D12RHICore::CreateDepthStencilView( const SDepthStencil
     D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
     CMemory::Memzero( &Desc );
 
-    D3D12Resource* Resource = nullptr;
+    CD3D12Resource* Resource = nullptr;
 
     Desc.Format = ConvertFormat( CreateInfo.Format );
     Assert( CreateInfo.Format != EFormat::Unknown );

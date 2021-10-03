@@ -68,7 +68,11 @@ class CD3D12OfflineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
 {
     struct SDescriptorRange
     {
-        SDescriptorRange() = default;
+        FORCEINLINE SDescriptorRange()
+            : Begin( { 0 } )
+            , End( { 0 } )
+        {
+        }
 
         FORCEINLINE SDescriptorRange( D3D12_CPU_DESCRIPTOR_HANDLE InBegin, D3D12_CPU_DESCRIPTOR_HANDLE InEnd )
             : Begin( InBegin )
@@ -91,13 +95,13 @@ class CD3D12OfflineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
             : FreeList()
             , Heap( InHeap )
         {
-            SDescriptorRange WholeRange;
-            WholeRange.Begin = Heap->GetCPUDescriptorHandleForHeapStart();
-            WholeRange.End.ptr = WholeRange.Begin.ptr + (Heap->GetDescriptorHandleIncrementSize() * Heap->GetNumDescriptors());
-            FreeList.Emplace( WholeRange );
+            SDescriptorRange EntireRange;
+            EntireRange.Begin = Heap->GetCPUDescriptorHandleForHeapStart();
+            EntireRange.End   = { EntireRange.Begin.ptr + (uint64)(Heap->GetDescriptorHandleIncrementSize() * Heap->GetNumDescriptors()) };
+            FreeList.Emplace( EntireRange );
         }
 
-        TArray<SDescriptorRange>   FreeList;
+        TArray<SDescriptorRange>         FreeList;
         TSharedRef<CD3D12DescriptorHeap> Heap;
     };
 
@@ -107,7 +111,10 @@ public:
 
     bool Init();
 
+    /* Allocates new offline handles and returns the Host handle. OutHeapIndex is the Index to the heap the handle belongs to */
     D3D12_CPU_DESCRIPTOR_HANDLE Allocate( uint32& OutHeapIndex );
+
+    /* Frees a offline handle */
     void Free( D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex );
 
     void SetName( const CString& InName );
@@ -141,11 +148,16 @@ public:
 
     bool Init();
 
+    /* Allocates a number of descriptors and returns the first handle to the allocated range */
     uint32 AllocateHandles( uint32 NumHandles );
+
+    /* Allocates a new heap, this means that the heap that is currently bound needs to rebound */
     bool AllocateFreshHeap();
 
+    /* Returns true if the current heap can allocate the required number of descriptors. If false then a fresh heap has to be allocated */
     bool HasSpace( uint32 NumHandles ) const;
 
+    /* Resets the current handle so that new handles will be allocated from the start, and overwrite the current handles */
     void Reset();
 
     FORCEINLINE void SetName( const CString& Name )
@@ -155,12 +167,12 @@ public:
 
     FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleAt( uint32 Index ) const
     {
-        return { Heap->GetCPUDescriptorHandleForHeapStart().ptr + (Index * Heap->GetDescriptorHandleIncrementSize()) };
+        return D3D12_CPU_DESCRIPTOR_HANDLE{ Heap->GetCPUDescriptorHandleForHeapStart().ptr + (Index * Heap->GetDescriptorHandleIncrementSize()) };
     }
 
     FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleAt( uint32 Index ) const
     {
-        return { Heap->GetGPUDescriptorHandleForHeapStart().ptr + (Index * Heap->GetDescriptorHandleIncrementSize()) };
+        return D3D12_GPU_DESCRIPTOR_HANDLE{ Heap->GetGPUDescriptorHandleForHeapStart().ptr + (Index * Heap->GetDescriptorHandleIncrementSize()) };
     }
 
     FORCEINLINE uint32 GetDescriptorHandleIncrementSize() const

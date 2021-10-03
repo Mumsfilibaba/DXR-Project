@@ -52,7 +52,7 @@ struct SLightSetup
     const uint32 MaxDirectionalLights = 256;
     const uint32 MaxPointLightShadows = 8;
 
-    const uint16 CascadeSize = 8182;
+    const uint16 CascadeSize = 1024;
 
     const uint16 IrradianceSize = 32;
     const uint16 SpecularIrradianceSize = 256;
@@ -66,7 +66,7 @@ struct SLightSetup
     void BeginFrame( CRHICommandList& CmdList, const CScene& Scene );
     void Release();
 
-    TArray<CVector4>       PointLightsPosRad;
+    TArray<CVector4>        PointLightsPosRad;
     TArray<SPointLightData> PointLightsData;
 
     TSharedRef<CRHIConstantBuffer> PointLightsBuffer;
@@ -74,14 +74,14 @@ struct SLightSetup
 
     TArray<SPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
 
-    TArray<CVector4>                    ShadowCastingPointLightsPosRad;
+    TArray<CVector4>                     ShadowCastingPointLightsPosRad;
     TArray<SShadowCastingPointLightData> ShadowCastingPointLightsData;
 
     TSharedRef<CRHIConstantBuffer> ShadowCastingPointLightsBuffer;
     TSharedRef<CRHIConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
 
-    TSharedRef<CRHITextureCubeArray>       PointLightShadowMaps;
-    TArray<DepthStencilViewCube> PointLightShadowMapDSVs;
+    TSharedRef<CRHITextureCubeArray> PointLightShadowMaps;
+    TArray<DepthStencilViewCube>     PointLightShadowMapDSVs;
 
     // NOTE: Only one directional light
     SDirectionalLightData DirectionalLightData;
@@ -107,5 +107,5 @@ struct SLightSetup
 
     TSharedRef<CRHITextureCube>                 SpecularIrradianceMap;
     TArray<TSharedRef<CRHIUnorderedAccessView>> SpecularIrradianceMapUAVs;
-    TArray<CRHIUnorderedAccessView*>      WeakSpecularIrradianceMapUAVs;
+    TArray<CRHIUnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
 };

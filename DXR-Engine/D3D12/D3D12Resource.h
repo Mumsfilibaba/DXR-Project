@@ -6,53 +6,58 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12Helpers.h"
 
-class D3D12Resource : public CD3D12DeviceChild, public CRefCounted
+class CD3D12Resource : public CD3D12DeviceChild, public CRefCounted
 {
 public:
-    D3D12Resource( CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource );
-    D3D12Resource( CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType );
-    ~D3D12Resource() = default;
+    CD3D12Resource( CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource );
+    CD3D12Resource( CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType );
+    ~CD3D12Resource() = default;
 
     bool Init( D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue );
 
+    /* Maps the resource to the host */
     void* Map( uint32 SubResource, const D3D12_RANGE* Range );
-    void  Unmap( uint32 SubResource, const D3D12_RANGE* Range );
+    
+    /* Unmaps the resource from the host */
+    void Unmap( uint32 SubResource, const D3D12_RANGE* Range );
 
-    void SetName( const CString& Name )
+    FORCEINLINE void SetName( const CString& Name )
     {
         WString WideName = CharToWide( Name );
         DxResource->SetName( WideName.CStr() );
     }
 
-    ID3D12Resource* GetResource() const
+    FORCEINLINE ID3D12Resource* GetResource() const
     {
         return DxResource.Get();
     }
 
-    D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
+    FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
     {
         return Address;
     }
 
-    D3D12_HEAP_TYPE GetHeapType() const
+    FORCEINLINE D3D12_HEAP_TYPE GetHeapType() const
     {
         return HeapType;
     }
-    D3D12_RESOURCE_DIMENSION GetDimension() const
+    
+    FORCEINLINE D3D12_RESOURCE_DIMENSION GetDimension() const
     {
         return Desc.Dimension;
     }
-    D3D12_RESOURCE_STATES GetState() const
+
+    FORCEINLINE D3D12_RESOURCE_STATES GetState() const
     {
         return ResourceState;
     }
 
-    const D3D12_RESOURCE_DESC& GetDesc() const
+    FORCEINLINE const D3D12_RESOURCE_DESC& GetDesc() const
     {
         return Desc;
     }
 
-    uint64 GetWidth() const
+    FORCEINLINE uint64 GetWidth() const
     {
         return Desc.Width;
     }

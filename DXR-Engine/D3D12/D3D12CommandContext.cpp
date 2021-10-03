@@ -169,35 +169,26 @@ bool CD3D12CommandBatch::Init()
         return false;
     }
 
-    OnlineResourceDescriptorHeap = DBG_NEW CD3D12OnlineDescriptorHeap(
-        Device,
-        D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV );
+    OnlineResourceDescriptorHeap = DBG_NEW CD3D12OnlineDescriptorHeap( Device, D3D12_DEFAULT_ONLINE_RESOURCE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV );
     if ( !OnlineResourceDescriptorHeap->Init() )
     {
         return false;
     }
 
-    OnlineSamplerDescriptorHeap = DBG_NEW CD3D12OnlineDescriptorHeap( Device,
-                                                                      D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
-                                                                      D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
+    OnlineSamplerDescriptorHeap = DBG_NEW CD3D12OnlineDescriptorHeap( Device, D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
     if ( !OnlineSamplerDescriptorHeap->Init() )
     {
         return false;
     }
 
-    OnlineRayTracingResourceDescriptorHeap = DBG_NEW CD3D12OnlineDescriptorHeap(
-        Device,
-        D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV );
+    // TODO: Remove?
+    OnlineRayTracingResourceDescriptorHeap = DBG_NEW CD3D12OnlineDescriptorHeap( Device, D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV );
     if ( !OnlineRayTracingResourceDescriptorHeap->Init() )
     {
         return false;
     }
 
-    OnlineRayTracingSamplerDescriptorHeap = DBG_NEW CD3D12OnlineDescriptorHeap( Device,
-                                                                                D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT,
-                                                                                D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
+    OnlineRayTracingSamplerDescriptorHeap = DBG_NEW CD3D12OnlineDescriptorHeap( Device, D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
     if ( !OnlineRayTracingSamplerDescriptorHeap->Init() )
     {
         return false;
@@ -311,7 +302,7 @@ bool CD3D12CommandContext::Init()
     return true;
 }
 
-void CD3D12CommandContext::UpdateBuffer( D3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData )
+void CD3D12CommandContext::UpdateBuffer( CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData )
 {
     if ( SizeInBytes != 0 )
     {
@@ -370,7 +361,6 @@ void CD3D12CommandContext::End()
     FlushResourceBarriers();
 
     CmdBatch = nullptr;
-    IsReady = false;
 
     const uint64 NewFenceValue = ++FenceValue;
     for ( int32 i = 0; i < ResolveProfilers.Size(); i++ )
@@ -393,6 +383,8 @@ void CD3D12CommandContext::End()
         CDebug::DebugBreak();
         return;
     }
+
+    IsReady = false;
 }
 
 void CD3D12CommandContext::BeginTimeStamp( CGPUProfiler* Profiler, uint32 Index )
@@ -1029,7 +1021,7 @@ void CD3D12CommandContext::GenerateMips( CRHITexture* Texture )
     Assert( Desc.MipLevels > 1 );
 
     // TODO: Create this placed from a Heap? See what performance is 
-    TSharedRef<D3D12Resource> StagingTexture = DBG_NEW D3D12Resource( GetDevice(), Desc, DxTexture->GetResource()->GetHeapType() );
+    TSharedRef<CD3D12Resource> StagingTexture = DBG_NEW CD3D12Resource( GetDevice(), Desc, DxTexture->GetResource()->GetHeapType() );
     if ( !StagingTexture->Init( D3D12_RESOURCE_STATE_COMMON, nullptr ) )
     {
         LOG_ERROR( "[D3D12CommandContext] Failed to create StagingTexture for GenerateMips" );

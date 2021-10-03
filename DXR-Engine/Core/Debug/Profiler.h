@@ -5,19 +5,21 @@
 
 #include "Core/Containers/HashTable.h"
 
-#define ENABLE_PROFILER      1
-#define NUM_PROFILER_SAMPLES 200
+#define ENABLE_PROFILER      (1)
+#define NUM_PROFILER_SAMPLES (200)
 
 #if ENABLE_PROFILER
 #define TRACE_SCOPE(Name)      SScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
 #define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(FUNCTION_SIGNATURE)
 
-#define GPU_TRACE_SCOPE(CmdList, Name) SGPUScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(CmdList, Name)
+#define GPU_TRACE_SCOPE(CmdList, Name) SGPUScopedTrace PREPROCESS_CONCAT(GPUScopedTrace_Line_, __LINE__)(CmdList, Name)
+
 #else
 #define TRACE_SCOPE(Name)
 #define TRACE_FUNCTION_SCOPE()
 
 #define GPU_TRACE_SCOPE(CmdList, Name)
+
 #endif
 
 class CProfiler

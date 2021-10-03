@@ -9,7 +9,7 @@
 #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
-constexpr uint32 TEXTURE_CUBE_FACE_COUNT = 6;
+#define TEXTURE_CUBE_FACE_COUNT (6)
 
 class CD3D12BaseTexture : public CD3D12DeviceChild
 {
@@ -20,7 +20,7 @@ public:
     {
     }
 
-    FORCEINLINE void SetResource( D3D12Resource* InResource )
+    FORCEINLINE void SetResource( CD3D12Resource* InResource )
     {
         Resource = InResource;
     }
@@ -35,13 +35,13 @@ public:
         return Resource->GetDesc().Format;
     }
 
-    FORCEINLINE D3D12Resource* GetResource()
+    FORCEINLINE CD3D12Resource* GetResource()
     {
         return Resource.Get();
     }
 
 protected:
-    TSharedRef<D3D12Resource>           Resource;
+    TSharedRef<CD3D12Resource>           Resource;
     TSharedRef<CD3D12ShaderResourceView> ShaderResourceView;
 };
 
@@ -214,11 +214,11 @@ public:
     }
 };
 
-using CD3D12Texture2D = TD3D12BaseTexture<CD3D12BaseTexture2D>;
-using CD3D12Texture2DArray = TD3D12BaseTexture<CD3D12BaseTexture2DArray>;
-using CD3D12TextureCube = TD3D12BaseTexture<CD3D12BaseTextureCube>;
+using CD3D12Texture2D        = TD3D12BaseTexture<CD3D12BaseTexture2D>;
+using CD3D12Texture2DArray   = TD3D12BaseTexture<CD3D12BaseTexture2DArray>;
+using CD3D12TextureCube      = TD3D12BaseTexture<CD3D12BaseTextureCube>;
 using CD3D12TextureCubeArray = TD3D12BaseTexture<CD3D12BaseTextureCubeArray>;
-using CD3D12Texture3D = TD3D12BaseTexture<CD3D12BaseTexture3D>;
+using CD3D12Texture3D        = TD3D12BaseTexture<CD3D12BaseTexture3D>;
 
 inline CD3D12BaseTexture* D3D12TextureCast( CRHITexture* Texture )
 {

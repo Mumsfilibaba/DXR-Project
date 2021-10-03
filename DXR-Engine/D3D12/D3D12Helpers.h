@@ -1,16 +1,35 @@
 #pragma once
+#include "Core.h"
+#include "D3D12Constants.h"
+
 #include "RHICore/RHIResources.h"
 
-#include "D3D12Constants.h"
+#include "Core/Application/Log.h"
+#include "Core/Debug/Debug.h"
 
 #include <dxcapi.h>
 #include <d3d12.h>
 
 #include <wrl/client.h>
 
-#include "Core.h"
 
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
+
+#if !PRODUCTION_BUILD
+#define D3D12_ERROR( Condition, ErrorMessage ) \
+    do                                         \
+    {                                          \
+        if (!(Condition))                      \
+        {                                      \
+            LOG_ERROR( ErrorMessage );         \
+            CDebug::DebugBreak();              \
+        }                                      \
+    } while ( 0 )
+
+#else
+#define D3D12_ERROR( Condtion, ErrorString ) do {} while( 0 )
+
+#endif
 
 template<typename T>
 using TComPtr = Microsoft::WRL::ComPtr<T>;

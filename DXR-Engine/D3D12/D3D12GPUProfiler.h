@@ -32,9 +32,9 @@ private:
     bool AllocateReadResource();
 
     TComPtr<ID3D12QueryHeap> QueryHeap;
-    TSharedRef<D3D12Resource>      WriteResource;
+    TSharedRef<CD3D12Resource>      WriteResource;
 
-    TArray<TSharedRef<D3D12Resource>> ReadResources;
+    TArray<TSharedRef<CD3D12Resource>> ReadResources;
     TArray<STimeQuery> TimeQueries;
 
     UINT64 Frequency;

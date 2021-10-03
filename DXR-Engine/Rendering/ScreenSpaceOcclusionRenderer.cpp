@@ -113,7 +113,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
 
     CmdList.TransitionTexture( SSAONoiseTex.Get(), EResourceState::CopyDest, EResourceState::NonPixelShaderResource );
 
-    GCmdListExecutor.ExecuteCommandList( CmdList );
+    GCommandQueue.ExecuteCommandList( CmdList );
 
     const uint32 Stride = sizeof( CVector3 );
     SResourceData SSAOSampleData( SSAOKernel.Data(), SSAOKernel.SizeInBytes() );

@@ -82,11 +82,11 @@ public:
 
     FORCEINLINE void ClearUnorderedAccessViewFloat( D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const CD3D12UnorderedAccessView* View, const float ClearColor[4] )
     {
-        const D3D12Resource* Resource = View->GetResource();
+        const CD3D12Resource* Resource = View->GetResource();
         CmdList->ClearUnorderedAccessViewFloat( GPUHandle, View->GetOfflineHandle(), Resource->GetResource(), ClearColor, 0, nullptr );
     }
 
-    FORCEINLINE void CopyBufferRegion( D3D12Resource* Destination, uint64 DestinationOffset, D3D12Resource* Source, uint64 SourceOffset, uint64 SizeInBytes )
+    FORCEINLINE void CopyBufferRegion( CD3D12Resource* Destination, uint64 DestinationOffset, CD3D12Resource* Source, uint64 SourceOffset, uint64 SizeInBytes )
     {
         CopyBufferRegion( Destination->GetResource(), DestinationOffset, Source->GetResource(), SourceOffset, SizeInBytes );
     }
@@ -105,7 +105,7 @@ public:
         CmdList->CopyTextureRegion( Destination, x, y, z, Source, SourceBox );
     }
 
-    FORCEINLINE void CopyResource( D3D12Resource* Destination, D3D12Resource* Source )
+    FORCEINLINE void CopyResource( CD3D12Resource* Destination, CD3D12Resource* Source )
     {
         CopyResource( Destination->GetResource(), Source->GetResource() );
     }
@@ -115,7 +115,7 @@ public:
         CmdList->CopyResource( Destination, Source );
     }
 
-    FORCEINLINE void ResolveSubresource( D3D12Resource* Destination, D3D12Resource* Source, DXGI_FORMAT Format )
+    FORCEINLINE void ResolveSubresource( CD3D12Resource* Destination, CD3D12Resource* Source, DXGI_FORMAT Format )
     {
         CmdList->ResolveSubresource( Destination->GetResource(), 0, Source->GetResource(), 0, Format );
     }

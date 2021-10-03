@@ -75,7 +75,7 @@ bool CD3D12RayTracingGeometry::Build( CD3D12CommandContext& CmdContext, bool Upd
         Desc.SampleDesc.Count = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TSharedRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
+        TSharedRef<CD3D12Resource> Buffer = DBG_NEW CD3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
         if ( !Buffer->Init( D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr ) )
         {
             CDebug::DebugBreak();
@@ -106,7 +106,7 @@ bool CD3D12RayTracingGeometry::Build( CD3D12CommandContext& CmdContext, bool Upd
         Desc.SampleDesc.Count = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TSharedRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
+        TSharedRef<CD3D12Resource> Buffer = DBG_NEW CD3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
         if ( !Buffer->Init( D3D12_RESOURCE_STATE_COMMON, nullptr ) )
         {
             CDebug::DebugBreak();
@@ -191,7 +191,7 @@ bool CD3D12RayTracingScene::Build( CD3D12CommandContext& CmdContext, const SRayT
         Desc.SampleDesc.Count = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TSharedRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
+        TSharedRef<CD3D12Resource> Buffer = DBG_NEW CD3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
         if ( !Buffer->Init( D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr ) )
         {
             CDebug::DebugBreak();
@@ -240,7 +240,7 @@ bool CD3D12RayTracingScene::Build( CD3D12CommandContext& CmdContext, const SRayT
         Desc.SampleDesc.Count = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TSharedRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
+        TSharedRef<CD3D12Resource> Buffer = DBG_NEW CD3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
         if ( !Buffer->Init( D3D12_RESOURCE_STATE_COMMON, nullptr ) )
         {
             CDebug::DebugBreak();
@@ -285,7 +285,7 @@ bool CD3D12RayTracingScene::Build( CD3D12CommandContext& CmdContext, const SRayT
         Desc.SampleDesc.Count = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TSharedRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
+        TSharedRef<CD3D12Resource> Buffer = DBG_NEW CD3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
         if ( !Buffer->Init( D3D12_RESOURCE_STATE_COMMON, nullptr ) )
         {
             CDebug::DebugBreak();
@@ -402,7 +402,7 @@ bool CD3D12RayTracingScene::BuildBindingTable(
         Desc.SampleDesc.Count = 1;
         Desc.SampleDesc.Quality = 0;
 
-        TSharedRef<D3D12Resource> Buffer = DBG_NEW D3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
+        TSharedRef<CD3D12Resource> Buffer = DBG_NEW CD3D12Resource( GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT );
         if ( !Buffer->Init( D3D12_RESOURCE_STATE_COMMON, nullptr ) )
         {
             CDebug::DebugBreak();

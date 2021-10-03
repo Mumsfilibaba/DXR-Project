@@ -13,7 +13,7 @@ public:
     {
     }
 
-    virtual void SetResource( D3D12Resource* InResource )
+    virtual void SetResource( CD3D12Resource* InResource )
     {
         Resource = InResource;
     }
@@ -23,13 +23,13 @@ public:
         return static_cast<uint64>(Resource->GetDesc().Width);
     }
 
-    FORCEINLINE D3D12Resource* GetResource()
+    FORCEINLINE CD3D12Resource* GetResource()
     {
         return Resource.Get();
     }
 
 protected:
-    TSharedRef<D3D12Resource> Resource;
+    TSharedRef<CD3D12Resource> Resource;
 };
 
 class CD3D12BaseVertexBuffer : public CRHIVertexBuffer, public CD3D12BaseBuffer
@@ -42,7 +42,7 @@ public:
     {
     }
 
-    virtual void SetResource( D3D12Resource* InResource ) override
+    virtual void SetResource( CD3D12Resource* InResource ) override
     {
         CD3D12BaseBuffer::SetResource( InResource );
 
@@ -71,7 +71,7 @@ public:
     {
     }
 
-    virtual void SetResource( D3D12Resource* InResource ) override
+    virtual void SetResource( CD3D12Resource* InResource ) override
     {
         CD3D12BaseBuffer::SetResource( InResource );
 
@@ -105,7 +105,7 @@ public:
     {
     }
 
-    virtual void SetResource( D3D12Resource* InResource ) override
+    virtual void SetResource( CD3D12Resource* InResource ) override
     {
         CD3D12BaseBuffer::SetResource( InResource );
 
