@@ -40,23 +40,22 @@ public:
 
     bool Init();
 
+    /* Retrieve the multi sample quality for a certain format and sample count */
     int32 GetMultisampleQuality( DXGI_FORMAT Format, uint32 SampleCount );
 
+    /* Retrieves the adapter name for the graphics card that is represented by this device */
     CString GetAdapterName() const;
+
+public:
+
+    // Wrappers
 
     FORCEINLINE HRESULT CreateRootSignature( UINT NodeMask, const void* BlobWithRootSignature, SIZE_T BlobLengthInBytes, REFIID Riid, void** RootSignature )
     {
         return Device->CreateRootSignature( NodeMask, BlobWithRootSignature, BlobLengthInBytes, Riid, RootSignature );
     }
 
-    FORCEINLINE HRESULT CreateCommitedResource(
-        const D3D12_HEAP_PROPERTIES* HeapProperties,
-        D3D12_HEAP_FLAGS HeapFlags,
-        const D3D12_RESOURCE_DESC* Desc,
-        D3D12_RESOURCE_STATES InitialResourceState,
-        const D3D12_CLEAR_VALUE* OptimizedClearValue,
-        REFIID RiidResource,
-        void** Resource )
+    FORCEINLINE HRESULT CreateCommitedResource( const D3D12_HEAP_PROPERTIES* HeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* Desc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* OptimizedClearValue, REFIID RiidResource, void** Resource )
     {
         return Device->CreateCommittedResource( HeapProperties, HeapFlags, Desc, InitialResourceState, OptimizedClearValue, RiidResource, Resource );
     }
@@ -96,14 +95,7 @@ public:
         Device->CreateSampler( Desc, DestDescriptor );
     }
 
-    FORCEINLINE void CopyDescriptors(
-        uint32 NumDestDescriptorRanges,
-        const D3D12_CPU_DESCRIPTOR_HANDLE* DestDescriptorRangeStarts,
-        const uint32* DestDescriptorRangeSizes,
-        uint32 NumSrcDescriptorRanges,
-        const D3D12_CPU_DESCRIPTOR_HANDLE* SrcDescriptorRangeStarts,
-        const uint32* SrcDescriptorRangeSizes,
-        D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType )
+    FORCEINLINE void CopyDescriptors( uint32 NumDestDescriptorRanges, const D3D12_CPU_DESCRIPTOR_HANDLE* DestDescriptorRangeStarts, const uint32* DestDescriptorRangeSizes, uint32 NumSrcDescriptorRanges, const D3D12_CPU_DESCRIPTOR_HANDLE* SrcDescriptorRangeStarts, const uint32* SrcDescriptorRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType )
     {
         Device->CopyDescriptors( NumDestDescriptorRanges, DestDescriptorRangeStarts, DestDescriptorRangeSizes, NumSrcDescriptorRanges, SrcDescriptorRangeStarts, SrcDescriptorRangeSizes, DescriptorHeapsType );
     }

@@ -318,7 +318,7 @@ void CRenderer::RenderDebugInterface()
 
 void CRenderer::Tick( const CScene& Scene )
 {
-    // TODO: Have null renderlayer to avoid these checks
+    // TODO: Have null render layer to avoid these checks
     if ( !GRHICore )
     {
         LOG_WARNING( "No RenderLayer available renderer is disabled" );

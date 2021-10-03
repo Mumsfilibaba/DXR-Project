@@ -701,13 +701,9 @@ bool CShadowMapRenderer::CreateShadowMaps( SLightSetup& LightSetup, SFrameResour
         return false;
     }
 
-    LightSetup.PointLightShadowMaps = RHICreateTextureCubeArray(
-        LightSetup.ShadowMapFormat,
-        LightSetup.PointLightShadowSize,
-        1, LightSetup.MaxPointLightShadows,
-        TextureFlags_ShadowMap,
-        EResourceState::PixelShaderResource,
-        nullptr );
+    const SClearValue DepthClearValue( LightSetup.ShadowMapFormat, 1.0f, 0 );
+
+    LightSetup.PointLightShadowMaps = RHICreateTextureCubeArray( LightSetup.ShadowMapFormat, LightSetup.PointLightShadowSize, 1, LightSetup.MaxPointLightShadows, TextureFlags_ShadowMap, EResourceState::PixelShaderResource, nullptr, DepthClearValue );
     if ( LightSetup.PointLightShadowMaps )
     {
         LightSetup.PointLightShadowMaps->SetName( "PointLight ShadowMaps" );
@@ -718,10 +714,7 @@ bool CShadowMapRenderer::CreateShadowMaps( SLightSetup& LightSetup, SFrameResour
             for ( uint32 Face = 0; Face < 6; Face++ )
             {
                 TStaticArray<TSharedRef<CRHIDepthStencilView>, 6>& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
-                DepthCube[Face] = RHICreateDepthStencilView(
-                    LightSetup.PointLightShadowMaps.Get(),
-                    LightSetup.ShadowMapFormat,
-                    GetCubeFaceFromIndex( Face ), 0, i );
+                DepthCube[Face] = RHICreateDepthStencilView( LightSetup.PointLightShadowMaps.Get(), LightSetup.ShadowMapFormat, GetCubeFaceFromIndex( Face ), 0, i );
                 if ( !DepthCube[Face] )
                 {
                     CDebug::DebugBreak();
@@ -739,7 +732,7 @@ bool CShadowMapRenderer::CreateShadowMaps( SLightSetup& LightSetup, SFrameResour
     {
         const uint16 CascadeSize = LightSetup.CascadeSize;
 
-        LightSetup.ShadowMapCascades[i] = RHICreateTexture2D( LightSetup.ShadowMapFormat, CascadeSize, CascadeSize, 1, 1, TextureFlags_ShadowMap, EResourceState::NonPixelShaderResource );
+        LightSetup.ShadowMapCascades[i] = RHICreateTexture2D( LightSetup.ShadowMapFormat, CascadeSize, CascadeSize, 1, 1, TextureFlags_ShadowMap, EResourceState::NonPixelShaderResource, nullptr, DepthClearValue );
         if ( LightSetup.ShadowMapCascades[i] )
         {
             LightSetup.ShadowMapCascades[i]->SetName( "Shadow Map Cascade[" + ToString( i ) + "]" );

@@ -197,7 +197,7 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
     D3D12_CLEAR_VALUE  ClearValue;
     if ( Flags & TextureFlag_RTV || Flags & TextureFlag_DSV )
     {
-        ClearValue.Format = OptimalClearValue.GetFormat() != EFormat::Unknown ? ConvertFormat( OptimalClearValue.GetFormat() ) : Desc.Format;
+        ClearValue.Format = (OptimalClearValue.GetFormat() != EFormat::Unknown) ? ConvertFormat( OptimalClearValue.GetFormat() ) : Desc.Format;
         if ( OptimalClearValue.GetType() == SClearValue::EType::DepthStencil )
         {
             ClearValue.DepthStencil.Depth = OptimalClearValue.AsDepthStencil().Depth;
@@ -221,7 +221,7 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
         NewTexture->SetResource( Resource.ReleaseOwnership() );
     }
 
-    if ( Flags & TextureFlag_SRV && !(Flags & TextureFlag_NoDefaultSRV) )
+    if ( (Flags & TextureFlag_SRV) && !(Flags & TextureFlag_NoDefaultSRV) )
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc;
         CMemory::Memzero( &ViewDesc );
