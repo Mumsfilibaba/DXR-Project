@@ -41,14 +41,14 @@ bool CTextureFactory::Init()
         return false;
     }
 
-    GlobalFactoryData.ComputeShader = CreateComputeShader( Code );
+    GlobalFactoryData.ComputeShader = RHICreateComputeShader( Code );
     if ( !GlobalFactoryData.ComputeShader )
     {
         return false;
     }
 
     // Create pipeline
-    GlobalFactoryData.PanoramaPSO = CreateComputePipelineState( SComputePipelineStateCreateInfo( GlobalFactoryData.ComputeShader.Get() ) );
+    GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState( SComputePipelineStateCreateInfo( GlobalFactoryData.ComputeShader.Get() ) );
     if ( GlobalFactoryData.PanoramaPSO )
     {
         GlobalFactoryData.PanoramaPSO->SetName( "Generate CubeMap RootSignature" );
@@ -163,7 +163,7 @@ CRHITexture2D* CTextureFactory::LoadFromMemory( const uint8* Pixels, uint32 Widt
     Assert( RowPitch > 0 );
 
     SResourceData InitalData = SResourceData( Pixels, Format, Width );
-    TSharedRef<CRHITexture2D> Texture = CreateTexture2D( Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceState::PixelShaderResource, &InitalData );
+    TSharedRef<CRHITexture2D> Texture = RHICreateTexture2D( Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceState::PixelShaderResource, &InitalData );
     if ( !Texture )
     {
         CDebug::DebugBreak();
@@ -189,7 +189,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma( CRHITexture2D* P
     const bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const uint32 NumMips = (GenerateNumMips) ? NMath::Max<uint32>( NMath::Log2( CubeMapSize ), 1u ) : 1u;
 
-    TSharedRef<CRHITextureCube> StagingTexture = CreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr );
+    TSharedRef<CRHITextureCube> StagingTexture = RHICreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr );
     if ( !StagingTexture )
     {
         return nullptr;
@@ -199,7 +199,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma( CRHITexture2D* P
         StagingTexture->SetName( "TextureCube From Panorama StagingTexture" );
     }
 
-    TSharedRef<CRHIUnorderedAccessView> StagingTextureUAV = CreateUnorderedAccessView( StagingTexture.Get(), Format, 0 );
+    TSharedRef<CRHIUnorderedAccessView> StagingTextureUAV = RHICreateUnorderedAccessView( StagingTexture.Get(), Format, 0 );
     if ( !StagingTextureUAV )
     {
         return nullptr;
@@ -209,7 +209,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma( CRHITexture2D* P
         StagingTexture->SetName( "TextureCube From Panorama StagingTexture UAV" );
     }
 
-    TSharedRef<CRHITextureCube> Texture = CreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceState::Common, nullptr );
+    TSharedRef<CRHITextureCube> Texture = RHICreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceState::Common, nullptr );
     if ( !Texture )
     {
         return nullptr;

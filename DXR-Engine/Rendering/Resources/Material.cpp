@@ -28,7 +28,7 @@ void CMaterial::Init()
         return;
     }
 
-    MaterialBuffer = CreateConstantBuffer<SMaterialDesc>( BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
+    MaterialBuffer = RHICreateConstantBuffer<SMaterialDesc>( BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
     if ( MaterialBuffer )
     {
         MaterialBuffer->SetName( "MaterialBuffer" );

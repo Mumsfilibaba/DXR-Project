@@ -11,7 +11,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
     SkyboxMesh = CMeshFactory::CreateSphere( 1 );
 
     SResourceData VertexData = SResourceData( SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes() );
-    SkyboxVertexBuffer = CreateVertexBuffer<SVertex>( SkyboxMesh.Vertices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &VertexData );
+    SkyboxVertexBuffer = RHICreateVertexBuffer<SVertex>( SkyboxMesh.Vertices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &VertexData );
     if ( !SkyboxVertexBuffer )
     {
         return false;
@@ -22,7 +22,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
     }
 
     SResourceData IndexData = SResourceData( SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes() );
-    SkyboxIndexBuffer = CreateIndexBuffer( EIndexFormat::uint32, SkyboxMesh.Indices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &IndexData );
+    SkyboxIndexBuffer = RHICreateIndexBuffer( EIndexFormat::uint32, SkyboxMesh.Indices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &IndexData );
     if ( !SkyboxIndexBuffer )
     {
         return false;
@@ -62,7 +62,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
     CreateInfo.MinLOD = 0.0f;
     CreateInfo.MaxLOD = 0.0f;
 
-    SkyboxSampler = CreateSamplerState( CreateInfo );
+    SkyboxSampler = RHICreateSamplerState( CreateInfo );
     if ( !SkyboxSampler )
     {
         return false;
@@ -75,7 +75,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
         return false;
     }
 
-    SkyboxVertexShader = CreateVertexShader( ShaderCode );
+    SkyboxVertexShader = RHICreateVertexShader( ShaderCode );
     if ( !SkyboxVertexShader )
     {
         CDebug::DebugBreak();
@@ -92,7 +92,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
         return false;
     }
 
-    SkyboxPixelShader = CreatePixelShader( ShaderCode );
+    SkyboxPixelShader = RHICreatePixelShader( ShaderCode );
     if ( !SkyboxPixelShader )
     {
         CDebug::DebugBreak();
@@ -106,7 +106,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
     SRasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState( RasterizerStateInfo );
     if ( !RasterizerState )
     {
         CDebug::DebugBreak();
@@ -121,7 +121,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
     BlendStateInfo.IndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-    TSharedRef<CRHIBlendState> BlendState = CreateBlendState( BlendStateInfo );
+    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState( BlendStateInfo );
     if ( !BlendState )
     {
         CDebug::DebugBreak();
@@ -137,7 +137,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
     DepthStencilStateInfo.DepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
     if ( !DepthStencilState )
     {
         CDebug::DebugBreak();
@@ -159,7 +159,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
     PipelineStateInfo.PipelineFormats.NumRenderTargets = 1;
     PipelineStateInfo.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
 
-    PipelineState = CreateGraphicsPipelineState( PipelineStateInfo );
+    PipelineState = RHICreateGraphicsPipelineState( PipelineStateInfo );
     if ( !PipelineState )
     {
         CDebug::DebugBreak();
@@ -184,12 +184,10 @@ void CSkyboxRenderPass::Render( CRHICommandList& CmdList, const SFrameResources&
     const float RenderWidth = float( FrameResources.FinalTarget->GetWidth() );
     const float RenderHeight = float( FrameResources.FinalTarget->GetHeight() );
 
-    CRHIRenderTargetView* RenderTarget[] = { FrameResources.FinalTarget->GetRenderTargetView() };
-    CmdList.SetRenderTargets( RenderTarget, 1, nullptr );
-
     CmdList.SetViewport( RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f );
     CmdList.SetScissorRect( RenderWidth, RenderHeight, 0, 0 );
 
+    CRHIRenderTargetView* RenderTarget[] = { FrameResources.FinalTarget->GetRenderTargetView() };
     CmdList.SetRenderTargets( RenderTarget, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView() );
 
     CmdList.SetPrimitiveTopology( EPrimitiveTopology::TriangleList );

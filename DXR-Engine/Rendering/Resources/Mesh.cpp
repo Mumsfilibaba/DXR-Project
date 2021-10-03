@@ -15,10 +15,10 @@ bool CMesh::Init( const SMeshData& Data )
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
     IndexCount = static_cast<uint32>(Data.Indices.Size());
 
-    const uint32 BufferFlags = IsRayTracingSupported() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
+    const uint32 BufferFlags = RHISupportsRayTracing() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
 
     SResourceData InitialData( Data.Vertices.Data(), Data.Vertices.SizeInBytes() );
-    VertexBuffer = CreateVertexBuffer<SVertex>( VertexCount, BufferFlags, EResourceState::VertexAndConstantBuffer, &InitialData );
+    VertexBuffer = RHICreateVertexBuffer<SVertex>( VertexCount, BufferFlags, EResourceState::VertexAndConstantBuffer, &InitialData );
     if ( !VertexBuffer )
     {
         return false;
@@ -28,10 +28,10 @@ bool CMesh::Init( const SMeshData& Data )
         VertexBuffer->SetName( "VertexBuffer" );
     }
 
-    const bool RTOn = IsRayTracingSupported();
+    const bool RTOn = RHISupportsRayTracing();
 
     InitialData = SResourceData( Data.Indices.Data(), Data.Indices.SizeInBytes() );
-    IndexBuffer = CreateIndexBuffer( EIndexFormat::uint32, IndexCount, BufferFlags, EResourceState::IndexBuffer, &InitialData );
+    IndexBuffer = RHICreateIndexBuffer( EIndexFormat::uint32, IndexCount, BufferFlags, EResourceState::IndexBuffer, &InitialData );
     if ( !IndexBuffer )
     {
         return false;
@@ -43,7 +43,7 @@ bool CMesh::Init( const SMeshData& Data )
 
     if ( RTOn )
     {
-        RTGeometry = CreateRayTracingGeometry( RayTracingStructureBuildFlag_None, VertexBuffer.Get(), IndexBuffer.Get() );
+        RTGeometry = RHICreateRayTracingGeometry( RayTracingStructureBuildFlag_None, VertexBuffer.Get(), IndexBuffer.Get() );
         if ( !RTGeometry )
         {
             return false;
@@ -53,13 +53,13 @@ bool CMesh::Init( const SMeshData& Data )
             RTGeometry->SetName( "RayTracing Geometry" );
         }
 
-        VertexBufferSRV = CreateShaderResourceView( VertexBuffer.Get(), 0, VertexCount );
+        VertexBufferSRV = RHICreateShaderResourceView( VertexBuffer.Get(), 0, VertexCount );
         if ( !VertexBufferSRV )
         {
             return false;
         }
 
-        IndexBufferSRV = CreateShaderResourceView( IndexBuffer.Get(), 0, IndexCount );
+        IndexBufferSRV = RHICreateShaderResourceView( IndexBuffer.Get(), 0, IndexCount );
         if ( !IndexBufferSRV )
         {
             return false;

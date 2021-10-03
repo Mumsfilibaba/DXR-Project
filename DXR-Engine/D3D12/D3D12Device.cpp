@@ -77,7 +77,7 @@ const char* ToString( D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp )
 
 static const char* gDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 
-void DeviceRemovedHandler( CD3D12Device* Device )
+void RHID3D12DeviceRemovedHandler( CD3D12Device* Device )
 {
     Assert( Device != nullptr );
 

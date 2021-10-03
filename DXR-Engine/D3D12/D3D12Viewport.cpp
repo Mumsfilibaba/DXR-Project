@@ -155,7 +155,7 @@ bool CD3D12Viewport::Present( bool VerticalSync )
     HRESULT Result = SwapChain->Present( SyncInterval, PresentFlags );
     if ( Result == DXGI_ERROR_DEVICE_REMOVED )
     {
-        DeviceRemovedHandler( GetDevice() );
+        RHID3D12DeviceRemovedHandler( GetDevice() );
     }
 
     if ( SUCCEEDED( Result ) )

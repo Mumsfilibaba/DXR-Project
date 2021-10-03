@@ -36,23 +36,23 @@ public:
         }
     }
 
-    bool SignalFence( D3D12FenceHandle& Fence, uint64 FenceValue )
+    FORCEINLINE bool SignalFence( D3D12FenceHandle& Fence, uint64 FenceValue )
     {
         HRESULT Result = Queue->Signal( Fence.GetFence(), FenceValue );
         if ( Result == DXGI_ERROR_DEVICE_REMOVED )
         {
-            DeviceRemovedHandler( GetDevice() );
+            RHID3D12DeviceRemovedHandler( GetDevice() );
         }
 
         return SUCCEEDED( Result );
     }
 
-    bool WaitForFence( D3D12FenceHandle& Fence, uint64 FenceValue )
+    FORCEINLINE bool WaitForFence( D3D12FenceHandle& Fence, uint64 FenceValue )
     {
         HRESULT Result = Queue->Wait( Fence.GetFence(), FenceValue );
         if ( Result == DXGI_ERROR_DEVICE_REMOVED )
         {
-            DeviceRemovedHandler( GetDevice() );
+            RHID3D12DeviceRemovedHandler( GetDevice() );
         }
 
         return SUCCEEDED( Result );

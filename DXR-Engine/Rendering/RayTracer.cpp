@@ -17,7 +17,7 @@ bool CRayTracer::Init( SFrameResources& Resources )
         return false;
     }
 
-    RayGenShader = CreateRayGenShader( Code );
+    RayGenShader = RHICreateRayGenShader( Code );
     if ( !RayGenShader )
     {
         CDebug::DebugBreak();
@@ -34,7 +34,7 @@ bool CRayTracer::Init( SFrameResources& Resources )
         return false;
     }
 
-    RayClosestHitShader = CreateRayClosestHitShader( Code );
+    RayClosestHitShader = RHICreateRayClosestHitShader( Code );
     if ( !RayClosestHitShader )
     {
         CDebug::DebugBreak();
@@ -51,7 +51,7 @@ bool CRayTracer::Init( SFrameResources& Resources )
         return false;
     }
 
-    RayMissShader = CreateRayMissShader( Code );
+    RayMissShader = RHICreateRayMissShader( Code );
     if ( !RayMissShader )
     {
         CDebug::DebugBreak();
@@ -71,7 +71,7 @@ bool CRayTracer::Init( SFrameResources& Resources )
     CreateInfo.MaxAttributeSizeInBytes = sizeof( SRayIntersectionAttributes );
     CreateInfo.MaxPayloadSizeInBytes = sizeof( SRayPayload );
 
-    Pipeline = CreateRayTracingPipelineState( CreateInfo );
+    Pipeline = RHICreateRayTracingPipelineState( CreateInfo );
     if ( !Pipeline )
     {
         CDebug::DebugBreak();
@@ -80,7 +80,7 @@ bool CRayTracer::Init( SFrameResources& Resources )
 
     uint32 Width = Resources.MainWindowViewport->GetWidth();
     uint32 Height = Resources.MainWindowViewport->GetHeight();
-    Resources.RTOutput = CreateTexture2D( Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr );
+    Resources.RTOutput = RHICreateTexture2D( Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::UnorderedAccess, nullptr );
     if ( !Resources.RTOutput )
     {
         CDebug::DebugBreak();
@@ -162,7 +162,7 @@ void CRayTracer::PreRender( CRHICommandList& CmdList, SFrameResources& Resources
 
     if ( !Resources.RTScene )
     {
-        Resources.RTScene = CreateRayTracingScene( RayTracingStructureBuildFlag_None, Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size() );
+        Resources.RTScene = RHICreateRayTracingScene( RayTracingStructureBuildFlag_None, Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size() );
         if ( Resources.RTScene )
         {
             Resources.RTScene->SetName( "RayTracingScene" );

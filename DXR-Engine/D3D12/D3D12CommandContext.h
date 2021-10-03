@@ -346,6 +346,8 @@ private:
     TSharedRef<CD3D12ComputePipelineState>  CurrentComputePipelineState;
     TSharedRef<CD3D12RootSignature>         CurrentRootSignature;
 
+    D3D12_PRIMITIVE_TOPOLOGY CurrentPrimitiveTolpology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+
     CD3D12ShaderConstantsCache   ShaderConstantsCache;
     CD3D12DescriptorCache        DescriptorCache;
     CD3D12ResourceBarrierBatcher BarrierBatcher;

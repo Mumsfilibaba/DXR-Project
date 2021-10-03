@@ -524,7 +524,11 @@ void CD3D12CommandContext::SetBlendFactor( const SColorF& Color )
 void CD3D12CommandContext::SetPrimitiveTopology( EPrimitiveTopology InPrimitveTopology )
 {
     const D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = ConvertPrimitiveTopology( InPrimitveTopology );
-    CmdList.IASetPrimitiveTopology( PrimitiveTopology );
+    if ( CurrentPrimitiveTolpology != PrimitiveTopology )
+    {
+        CmdList.IASetPrimitiveTopology( PrimitiveTopology );
+        CurrentPrimitiveTolpology = PrimitiveTopology;
+    }
 }
 
 void CD3D12CommandContext::SetVertexBuffers( CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot )
@@ -1381,4 +1385,6 @@ void CD3D12CommandContext::InternalClearState()
     CurrentGraphicsPipelineState.Reset();
     CurrentRootSignature.Reset();
     CurrentComputePipelineState.Reset();
+
+    CurrentPrimitiveTolpology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 }

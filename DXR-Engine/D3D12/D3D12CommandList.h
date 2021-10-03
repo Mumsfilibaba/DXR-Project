@@ -51,7 +51,7 @@ public:
         HRESULT Result = CmdList->Reset( Allocator.GetAllocator(), nullptr );
         if ( Result == DXGI_ERROR_DEVICE_REMOVED )
         {
-            DeviceRemovedHandler( GetDevice() );
+            RHID3D12DeviceRemovedHandler( GetDevice() );
         }
 
         return SUCCEEDED( Result );
@@ -64,7 +64,7 @@ public:
         HRESULT Result = CmdList->Close();
         if ( Result == DXGI_ERROR_DEVICE_REMOVED )
         {
-            DeviceRemovedHandler( GetDevice() );
+            RHID3D12DeviceRemovedHandler( GetDevice() );
         }
 
         return SUCCEEDED( Result );
@@ -96,11 +96,7 @@ public:
         CmdList->CopyBufferRegion( Destination, DestinationOffset, Source, SourceOffset, SizeInBytes );
     }
 
-    FORCEINLINE void CopyTextureRegion(
-        const D3D12_TEXTURE_COPY_LOCATION* Destination,
-        uint32 x, uint32 y, uint32 z,
-        const D3D12_TEXTURE_COPY_LOCATION* Source,
-        const D3D12_BOX* SourceBox )
+    FORCEINLINE void CopyTextureRegion(const D3D12_TEXTURE_COPY_LOCATION* Destination, uint32 x, uint32 y, uint32 z, const D3D12_TEXTURE_COPY_LOCATION* Source, const D3D12_BOX* SourceBox )
     {
         CmdList->CopyTextureRegion( Destination, x, y, z, Source, SourceBox );
     }
@@ -140,12 +136,7 @@ public:
         CmdList->DrawInstanced( VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation );
     }
 
-    FORCEINLINE void DrawIndexedInstanced(
-        uint32 IndexCountPerInstance,
-        uint32 InstanceCount,
-        uint32 StartIndexLocation,
-        uint32 BaseVertexLocation,
-        uint32 StartInstanceLocation )
+    FORCEINLINE void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation )
     {
         CmdList->DrawIndexedInstanced( IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation );
     }
@@ -235,11 +226,7 @@ public:
         CmdList->OMSetBlendFactor( BlendFactor );
     }
 
-    FORCEINLINE void OMSetRenderTargets(
-        const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors,
-        uint32 NumRenderTargetDescriptors,
-        bool RTsSingleHandleToDescriptorRange,
-        const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor )
+    FORCEINLINE void OMSetRenderTargets(const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors, uint32 NumRenderTargetDescriptors, bool RTsSingleHandleToDescriptorRange, const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor )
     {
         CmdList->OMSetRenderTargets( NumRenderTargetDescriptors, RenderTargetDescriptors, RTsSingleHandleToDescriptorRange, DepthStencilDescriptor );
     }
@@ -285,15 +272,17 @@ public:
         CmdList->SetName( WideName.CStr() );
     }
 
-    FORCEINLINE ID3D12CommandList* GetCommandList()         const
+    FORCEINLINE ID3D12CommandList* GetCommandList() const
     {
         return CmdList.Get();
     }
+    
     FORCEINLINE ID3D12GraphicsCommandList* GetGraphicsCommandList() const
     {
         return CmdList.Get();
     }
-    FORCEINLINE ID3D12GraphicsCommandList4* GetDXRCommandList()      const
+
+    FORCEINLINE ID3D12GraphicsCommandList4* GetDXRCommandList() const
     {
         return CmdList5.Get();
     }

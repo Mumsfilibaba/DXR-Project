@@ -118,7 +118,7 @@ bool CEngine::Init()
     SamplerCreateInfo.MinLOD = -FLT_MAX;
     SamplerCreateInfo.MipLODBias = 0.0f;
 
-    BaseMaterialSampler = CreateSamplerState( SamplerCreateInfo );
+    BaseMaterialSampler = RHICreateSamplerState( SamplerCreateInfo );
 
     /* Base material */
     SMaterialDesc MaterialDesc;

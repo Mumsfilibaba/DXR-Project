@@ -14,7 +14,7 @@ class CD3D12ComputePipelineState;
 class CD3D12RootSignature;
 
 #define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
-#define D3D12_ENABLE_PIX_MARKERS              0
+#define D3D12_ENABLE_PIX_MARKERS              (1)
 
 typedef HRESULT( WINAPI* PFN_CREATE_DXGI_FACTORY_2 )(UINT Flags, REFIID riid, _COM_Outptr_ void** ppFactory);
 typedef HRESULT( WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1 )(UINT Flags, REFIID riid, _COM_Outptr_ void** pDebug);
@@ -30,7 +30,7 @@ extern PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVers
 extern PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc;
 extern PFN_SetMarkerOnCommandList                             SetMarkerOnCommandListFunc;
 
-void DeviceRemovedHandler( class CD3D12Device* Device );
+void RHID3D12DeviceRemovedHandler( class CD3D12Device* Device );
 
 class CD3D12Device
 {

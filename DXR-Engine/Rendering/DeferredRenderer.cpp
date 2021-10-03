@@ -28,7 +28,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         CreateInfo.AddressW = ESamplerMode::Clamp;
         CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
 
-        FrameResources.GBufferSampler = CreateSamplerState( CreateInfo );
+        FrameResources.GBufferSampler = RHICreateSamplerState( CreateInfo );
         if ( !FrameResources.GBufferSampler )
         {
             return false;
@@ -49,7 +49,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
             return false;
         }
 
-        BaseVertexShader = CreateVertexShader( ShaderCode );
+        BaseVertexShader = RHICreateVertexShader( ShaderCode );
         if ( !BaseVertexShader )
         {
             CDebug::DebugBreak();
@@ -66,7 +66,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
             return false;
         }
 
-        BasePixelShader = CreatePixelShader( ShaderCode );
+        BasePixelShader = RHICreatePixelShader( ShaderCode );
         if ( !BasePixelShader )
         {
             CDebug::DebugBreak();
@@ -82,7 +82,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         DepthStencilStateInfo.DepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> GeometryDepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+        TSharedRef<CRHIDepthStencilState> GeometryDepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
         if ( !GeometryDepthStencilState )
         {
             CDebug::DebugBreak();
@@ -96,7 +96,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         SRasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<CRHIRasterizerState> GeometryRasterizerState = CreateRasterizerState( RasterizerStateInfo );
+        TSharedRef<CRHIRasterizerState> GeometryRasterizerState = RHICreateRasterizerState( RasterizerStateInfo );
         if ( !GeometryRasterizerState )
         {
             CDebug::DebugBreak();
@@ -111,7 +111,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         BlendStateInfo.IndependentBlendEnable = false;
         BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-        TSharedRef<CRHIBlendState> BlendState = CreateBlendState( BlendStateInfo );
+        TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState( BlendStateInfo );
         if ( !BlendState )
         {
             CDebug::DebugBreak();
@@ -136,7 +136,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[3] = FrameResources.ViewNormalFormat;
         PipelineStateInfo.PipelineFormats.NumRenderTargets = 4;
 
-        PipelineState = CreateGraphicsPipelineState( PipelineStateInfo );
+        PipelineState = RHICreateGraphicsPipelineState( PipelineStateInfo );
         if ( !PipelineState )
         {
             CDebug::DebugBreak();
@@ -156,7 +156,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
             return false;
         }
 
-        PrePassVertexShader = CreateVertexShader( ShaderCode );
+        PrePassVertexShader = RHICreateVertexShader( ShaderCode );
         if ( !PrePassVertexShader )
         {
             CDebug::DebugBreak();
@@ -172,7 +172,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         DepthStencilStateInfo.DepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
         if ( !DepthStencilState )
         {
             CDebug::DebugBreak();
@@ -186,7 +186,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         SRasterizerStateCreateInfo RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<CRHIRasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+        TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState( RasterizerStateInfo );
         if ( !RasterizerState )
         {
             CDebug::DebugBreak();
@@ -201,7 +201,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         BlendStateInfo.IndependentBlendEnable = false;
         BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-        TSharedRef<CRHIBlendState> BlendState = CreateBlendState( BlendStateInfo );
+        TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState( BlendStateInfo );
         if ( !BlendState )
         {
             CDebug::DebugBreak();
@@ -220,7 +220,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         PipelineStateInfo.ShaderState.VertexShader = PrePassVertexShader.Get();
         PipelineStateInfo.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
 
-        PrePassPipelineState = CreateGraphicsPipelineState( PipelineStateInfo );
+        PrePassPipelineState = RHICreateGraphicsPipelineState( PipelineStateInfo );
         if ( !PrePassPipelineState )
         {
             CDebug::DebugBreak();
@@ -234,7 +234,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
 
     constexpr uint32  LUTSize = 512;
     constexpr EFormat LUTFormat = EFormat::R16G16_Float;
-    if ( !UAVSupportsFormat( LUTFormat ) )
+    if ( !RHIUAVSupportsFormat( LUTFormat ) )
     {
         LOG_ERROR( "[Renderer]: R16G16_Float is not supported for UAVs" );
 
@@ -242,7 +242,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         return false;
     }
 
-    TSharedRef<CRHITexture2D> StagingTexture = CreateTexture2D( LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceState::Common, nullptr );
+    TSharedRef<CRHITexture2D> StagingTexture = RHICreateTexture2D( LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceState::Common, nullptr );
     if ( !StagingTexture )
     {
         CDebug::DebugBreak();
@@ -253,7 +253,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         StagingTexture->SetName( "Staging IntegrationLUT" );
     }
 
-    FrameResources.IntegrationLUT = CreateTexture2D( LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_SRV, EResourceState::Common, nullptr );
+    FrameResources.IntegrationLUT = RHICreateTexture2D( LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_SRV, EResourceState::Common, nullptr );
     if ( !FrameResources.IntegrationLUT )
     {
         CDebug::DebugBreak();
@@ -270,7 +270,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
     CreateInfo.AddressW = ESamplerMode::Clamp;
     CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
 
-    FrameResources.IntegrationLUTSampler = CreateSamplerState( CreateInfo );
+    FrameResources.IntegrationLUTSampler = RHICreateSamplerState( CreateInfo );
     if ( !FrameResources.IntegrationLUTSampler )
     {
         CDebug::DebugBreak();
@@ -287,7 +287,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         return false;
     }
 
-    TSharedRef<CRHIComputeShader> CShader = CreateComputeShader( ShaderCode );
+    TSharedRef<CRHIComputeShader> CShader = RHICreateComputeShader( ShaderCode );
     if ( !CShader )
     {
         CDebug::DebugBreak();
@@ -302,7 +302,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         SComputePipelineStateCreateInfo PipelineStateInfo;
         PipelineStateInfo.Shader = CShader.Get();
 
-        TSharedRef<CRHIComputePipelineState> BRDF_PipelineState = CreateComputePipelineState( PipelineStateInfo );
+        TSharedRef<CRHIComputePipelineState> BRDF_PipelineState = RHICreateComputePipelineState( PipelineStateInfo );
         if ( !BRDF_PipelineState )
         {
             CDebug::DebugBreak();
@@ -346,7 +346,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
             return false;
         }
 
-        TiledLightShader = CreateComputeShader( ShaderCode );
+        TiledLightShader = RHICreateComputeShader( ShaderCode );
         if ( !TiledLightShader )
         {
             CDebug::DebugBreak();
@@ -360,7 +360,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         SComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
         DeferredLightPassCreateInfo.Shader = TiledLightShader.Get();
 
-        TiledLightPassPSO = CreateComputePipelineState( DeferredLightPassCreateInfo );
+        TiledLightPassPSO = RHICreateComputePipelineState( DeferredLightPassCreateInfo );
         if ( !TiledLightPassPSO )
         {
             CDebug::DebugBreak();
@@ -384,7 +384,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
             return false;
         }
 
-        TiledLightDebugShader = CreateComputeShader( ShaderCode );
+        TiledLightDebugShader = RHICreateComputeShader( ShaderCode );
         if ( !TiledLightDebugShader )
         {
             CDebug::DebugBreak();
@@ -398,7 +398,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         SComputePipelineStateCreateInfo DeferredLightPassCreateInfo;
         DeferredLightPassCreateInfo.Shader = TiledLightDebugShader.Get();
 
-        TiledLightPassPSODebug = CreateComputePipelineState( DeferredLightPassCreateInfo );
+        TiledLightPassPSODebug = RHICreateComputePipelineState( DeferredLightPassCreateInfo );
         if ( !TiledLightPassPSODebug )
         {
             CDebug::DebugBreak();
@@ -417,7 +417,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
             return false;
         }
 
-        ReduceDepthInitalShader = CreateComputeShader( ShaderCode );
+        ReduceDepthInitalShader = RHICreateComputeShader( ShaderCode );
         if ( !ReduceDepthInitalShader )
         {
             CDebug::DebugBreak();
@@ -431,7 +431,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         SComputePipelineStateCreateInfo PipelineStateInfo;
         PipelineStateInfo.Shader = ReduceDepthInitalShader.Get();
 
-        ReduceDepthInitalPSO = CreateComputePipelineState( PipelineStateInfo );
+        ReduceDepthInitalPSO = RHICreateComputePipelineState( PipelineStateInfo );
         if ( !ReduceDepthInitalPSO )
         {
             CDebug::DebugBreak();
@@ -450,7 +450,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
             return false;
         }
 
-        ReduceDepthShader = CreateComputeShader( ShaderCode );
+        ReduceDepthShader = RHICreateComputeShader( ShaderCode );
         if ( !ReduceDepthShader )
         {
             CDebug::DebugBreak();
@@ -464,7 +464,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         SComputePipelineStateCreateInfo PipelineStateInfo;
         PipelineStateInfo.Shader = ReduceDepthShader.Get();
 
-        ReduceDepthPSO = CreateComputePipelineState( PipelineStateInfo );
+        ReduceDepthPSO = RHICreateComputePipelineState( PipelineStateInfo );
         if ( !ReduceDepthPSO )
         {
             CDebug::DebugBreak();
@@ -511,6 +511,8 @@ void CDeferredRenderer::RenderPrePass( CRHICommandList& CmdList, SFrameResources
         TRACE_SCOPE( "PrePass" );
 
         GPU_TRACE_SCOPE( CmdList, "Pre Pass" );
+
+        CmdList.SetPrimitiveTopology( EPrimitiveTopology::TriangleList );
 
         CmdList.SetViewport( RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f );
         CmdList.SetScissorRect( RenderWidth, RenderHeight, 0, 0 );
@@ -613,8 +615,12 @@ void CDeferredRenderer::RenderBasePass( CRHICommandList& CmdList, const SFrameRe
 
     TRACE_SCOPE( "GeometryPass" );
 
+    GPU_TRACE_SCOPE( CmdList, "Base Pass" );
+
     const float RenderWidth = float( FrameResources.MainWindowViewport->GetWidth() );
     const float RenderHeight = float( FrameResources.MainWindowViewport->GetHeight() );
+
+    CmdList.SetPrimitiveTopology( EPrimitiveTopology::TriangleList );
 
     CmdList.SetViewport( RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f );
     CmdList.SetScissorRect( RenderWidth, RenderHeight, 0, 0 );
@@ -680,6 +686,8 @@ void CDeferredRenderer::RenderDeferredTiledLightPass( CRHICommandList& CmdList, 
     INSERT_DEBUG_CMDLIST_MARKER( CmdList, "Begin LightPass" );
 
     TRACE_SCOPE( "LightPass" );
+
+    GPU_TRACE_SCOPE( CmdList, "Light Pass" );
 
     CRHIComputeShader* LightPassShader = nullptr;
     if ( GDrawTileDebug.GetBool() )
@@ -760,7 +768,7 @@ bool CDeferredRenderer::CreateGBuffer( SFrameResources& FrameResources )
     const uint32 Usage = TextureFlags_RenderTarget;
 
     // Albedo
-    FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = CreateTexture2D(
+    FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = RHICreateTexture2D(
         FrameResources.AlbedoFormat,
         Width, Height, 1, 1, Usage,
         EResourceState::Common,
@@ -775,7 +783,7 @@ bool CDeferredRenderer::CreateGBuffer( SFrameResources& FrameResources )
     }
 
     // Normal
-    FrameResources.GBuffer[GBUFFER_NORMAL_INDEX] = CreateTexture2D(
+    FrameResources.GBuffer[GBUFFER_NORMAL_INDEX] = RHICreateTexture2D(
         FrameResources.NormalFormat,
         Width, Height, 1, 1, Usage,
         EResourceState::Common,
@@ -790,7 +798,7 @@ bool CDeferredRenderer::CreateGBuffer( SFrameResources& FrameResources )
     }
 
     // Material Properties
-    FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX] = CreateTexture2D(
+    FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX] = RHICreateTexture2D(
         FrameResources.MaterialFormat,
         Width, Height, 1, 1, Usage,
         EResourceState::Common,
@@ -806,7 +814,7 @@ bool CDeferredRenderer::CreateGBuffer( SFrameResources& FrameResources )
 
     // DepthStencil
     const uint32 UsageDS = TextureFlag_DSV | TextureFlag_SRV;
-    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = CreateTexture2D(
+    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RHICreateTexture2D(
         FrameResources.DepthBufferFormat,
         Width, Height, 1, 1, UsageDS,
         EResourceState::Common,
@@ -826,7 +834,7 @@ bool CDeferredRenderer::CreateGBuffer( SFrameResources& FrameResources )
 
     for ( uint32 i = 0; i < 2; i++ )
     {
-        FrameResources.ReducedDepthBuffer[i] = CreateTexture2D(
+        FrameResources.ReducedDepthBuffer[i] = RHICreateTexture2D(
             EFormat::R32G32_Float,
             ReducedWidth, ReducedHeight, 1, 1, TextureFlags_RWTexture,
             EResourceState::NonPixelShaderResource,
@@ -842,7 +850,7 @@ bool CDeferredRenderer::CreateGBuffer( SFrameResources& FrameResources )
     }
 
     // View Normal
-    FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = CreateTexture2D(
+    FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = RHICreateTexture2D(
         FrameResources.ViewNormalFormat,
         Width, Height, 1, 1, Usage,
         EResourceState::Common,
@@ -857,7 +865,7 @@ bool CDeferredRenderer::CreateGBuffer( SFrameResources& FrameResources )
     }
 
     // Final Image
-    FrameResources.FinalTarget = CreateTexture2D(
+    FrameResources.FinalTarget = RHICreateTexture2D(
         FrameResources.FinalTargetFormat,
         Width, Height, 1, 1,
         Usage | TextureFlag_UAV,
