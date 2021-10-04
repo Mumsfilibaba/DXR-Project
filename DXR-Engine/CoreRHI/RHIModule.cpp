@@ -4,8 +4,8 @@
 #include "NullRHI/NullRHICore.h"
 
 #if defined(PLATFORM_WINDOWS)
-#include "D3D12/D3D12RHICore.h"
-#include "D3D12/D3D12ShaderCompiler.h"
+#include "D3D12RHI/D3D12RHICore.h"
+#include "D3D12RHI/D3D12ShaderCompiler.h"
 #else
 #include "CoreRHI/ShaderCompiler.h"
 #endif
@@ -17,7 +17,7 @@ bool CRHIModule::Init( ERHIModule InRenderApi )
     {
         GRHICore = CD3D12RHICore::Make();
 
-        CD3D12ShaderCompiler* Compiler = DBG_NEW CD3D12ShaderCompiler();
+        CD3D12RHIShaderCompiler* Compiler = DBG_NEW CD3D12RHIShaderCompiler();
         if ( !Compiler->Init() )
         {
             return false;
