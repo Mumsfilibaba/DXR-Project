@@ -1,7 +1,7 @@
 #include "Material.h"
 
-#include "RHICore/RHIModule.h"
-#include "RHICore/RHICommandList.h"
+#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHICommandList.h"
 
 #include "Core/Engine/Engine.h"
 
@@ -21,13 +21,6 @@ CMaterial::CMaterial( const SMaterialDesc& InProperties )
 
 void CMaterial::Init()
 {
-    // TODO: Have a null layer to avoid these checks
-    if ( !GRHICore )
-    {
-        LOG_WARNING( " No RenderAPI available Material not initialized " );
-        return;
-    }
-
     MaterialBuffer = RHICreateConstantBuffer<SMaterialDesc>( BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
     if ( MaterialBuffer )
     {

@@ -9,6 +9,6 @@
 class CRHIModule
 {
 public:
-    static bool Init( ERenderLayerApi InRenderApi );
+    static bool Init( ERHIModule InRenderApi );
     static void Release();
 };

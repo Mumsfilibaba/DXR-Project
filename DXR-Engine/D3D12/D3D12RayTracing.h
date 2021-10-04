@@ -1,5 +1,5 @@
 #pragma once
-#include "RHICore/RHIRayTracing.h"
+#include "CoreRHI/RHIRayTracing.h"
 
 #include "D3D12DeviceChild.h"
 #include "D3D12Buffer.h"

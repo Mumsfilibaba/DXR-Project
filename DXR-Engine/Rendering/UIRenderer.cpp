@@ -3,9 +3,9 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/Resources/TextureFactory.h"
 
-#include "RHICore/RHIResources.h"
-#include "RHICore/RHIModule.h"
-#include "RHICore/RHIShaderCompiler.h"
+#include "CoreRHI/RHIResources.h"
+#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHIShaderCompiler.h"
 
 #include "Core/Time/Timer.h"
 #include "Core/Engine/Engine.h"
@@ -64,13 +64,6 @@ static CUIInputHandler InputHandler;
 
 bool CUIRenderer::Init()
 {
-    // TODO: Have null renderlayer to avoid these checks
-    if ( !GRHICore )
-    {
-        LOG_WARNING( "No RenderLayer available renderer is disabled" );
-        return true;
-    }
-
     // Create context
     IMGUI_CHECKVERSION();
 

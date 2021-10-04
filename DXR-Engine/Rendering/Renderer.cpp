@@ -7,7 +7,7 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
-#include "RHICore/RHIShaderCompiler.h"
+#include "CoreRHI/RHIShaderCompiler.h"
 
 #include "Core/Math/Frustum.h"
 #include "Core/Engine/Engine.h"
@@ -318,13 +318,6 @@ void CRenderer::RenderDebugInterface()
 
 void CRenderer::Tick( const CScene& Scene )
 {
-    // TODO: Have null render layer to avoid these checks
-    if ( !GRHICore )
-    {
-        LOG_WARNING( "No RenderLayer available renderer is disabled" );
-        return;
-    }
-
     Resources.BackBuffer = Resources.MainWindowViewport->GetBackBuffer();
 
     // Prepare Lights
@@ -683,13 +676,6 @@ void CRenderer::Tick( const CScene& Scene )
 
 bool CRenderer::Init()
 {
-    // TODO: Have null renderlayer to avoid these checks
-    if ( !GRHICore )
-    {
-        LOG_WARNING( "No RenderLayer available Renderer is disabled" );
-        return true;
-    }
-
     INIT_CONSOLE_VARIABLE( "r.DrawTextureDebugger", &GDrawTextureDebugger );
     INIT_CONSOLE_VARIABLE( "r.DrawRendererInfo", &GDrawRendererInfo );
     INIT_CONSOLE_VARIABLE( "r.EnableSSAO", &GEnableSSAO );

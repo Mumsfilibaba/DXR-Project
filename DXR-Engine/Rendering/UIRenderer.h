@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Application/InputHandler.h"
 
-#include "RHICore/RHIResources.h"
-#include "RHICore/RHIResourceViews.h"
+#include "CoreRHI/RHIResources.h"
+#include "CoreRHI/RHIResourceViews.h"
 
 #include "Core/Delegates/Delegate.h"
 

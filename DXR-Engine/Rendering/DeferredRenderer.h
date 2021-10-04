@@ -4,7 +4,7 @@
 
 #include "Scene/Scene.h"
 
-#include "RHICore/RHICommandList.h"
+#include "CoreRHI/RHICommandList.h"
 
 class CDeferredRenderer
 {

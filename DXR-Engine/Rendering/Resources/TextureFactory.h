@@ -1,5 +1,5 @@
 #pragma once
-#include "RHICore/RHITypes.h"
+#include "CoreRHI/RHITypes.h"
 
 #include "Core/Utilities/StringUtilities.h"
 

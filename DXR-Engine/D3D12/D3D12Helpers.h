@@ -2,7 +2,7 @@
 #include "Core.h"
 #include "D3D12Constants.h"
 
-#include "RHICore/RHIResources.h"
+#include "CoreRHI/RHIResources.h"
 
 #include "Core/Application/Log.h"
 #include "Core/Debug/Debug.h"

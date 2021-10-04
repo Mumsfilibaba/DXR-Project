@@ -1,5 +1,5 @@
 #pragma once
-#include "RHICore/IRHICommandContext.h"
+#include "CoreRHI/IRHICommandContext.h"
 
 #include "Core/Containers/SharedRef.h"
 
@@ -189,12 +189,27 @@ private:
 class CD3D12CommandContext : public IRHICommandContext, public CD3D12DeviceChild
 {
 public:
-    CD3D12CommandContext( CD3D12Device* InDevice );
-    ~CD3D12CommandContext();
 
-    bool Init();
+    // TODO: Move initialization to the IRHICOmmandContext to be cosistent with init-pattern 
 
+    /* Create and initialize a new CommandContext */
+    static FORCEINLINE CD3D12CommandContext* Make( CD3D12Device* InDevice )
+    {
+        TSharedRef<CD3D12CommandContext> NewContext = DBG_NEW CD3D12CommandContext( InDevice );
+        if ( NewContext && NewContext->Init() )
+        {
+            return NewContext.ReleaseOwnership();
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+    /* Begin recording commands on this context */
     virtual void Begin() override final;
+
+    /* End recording of commands on this context */
     virtual void End()   override final;
 
     virtual void BeginTimeStamp( CGPUProfiler* Profiler, uint32 Index ) override final;
@@ -325,13 +340,19 @@ public:
     }
 
 private:
+
+    CD3D12CommandContext( CD3D12Device* InDevice );
+    ~CD3D12CommandContext();
+
+    bool Init();
+
     void InternalClearState();
 
     CD3D12CommandList  CmdList;
-    D3D12FenceHandle        Fence;
+    D3D12FenceHandle   Fence;
     CD3D12CommandQueue CmdQueue;
 
-    uint64 FenceValue = 0;
+    uint64 FenceValue   = 0;
     uint32 NextCmdBatch = 0;
 
     TArray<CD3D12CommandBatch> CmdBatches;

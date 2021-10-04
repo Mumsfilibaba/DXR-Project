@@ -1,17 +1,10 @@
 #include "Mesh.h"
 
-#include "RHICore/RHICommandList.h"
-#include "RHICore/RHIModule.h"
+#include "CoreRHI/RHICommandList.h"
+#include "CoreRHI/RHIModule.h"
 
 bool CMesh::Init( const SMeshData& Data )
 {
-    // TODO: Have a null layer to avoid these checks
-    if ( !GRHICore )
-    {
-        LOG_WARNING( " No RenderAPI available Mesh not initialized " );
-        return true;
-    }
-
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
     IndexCount = static_cast<uint32>(Data.Indices.Size());
 

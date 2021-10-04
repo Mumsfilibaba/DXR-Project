@@ -8,7 +8,7 @@
 #include "Rendering/Resources/Material.h"
 #include "Rendering/Resources/Mesh.h"
 
-#include "RHICore/RHIResources.h"
+#include "CoreRHI/RHIResources.h"
 
 #include <tiny_obj_loader.h>
 

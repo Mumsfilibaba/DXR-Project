@@ -12,17 +12,18 @@ struct SClearValue;
 class CRHIRayTracingGeometry;
 class CRHIRayTracingScene;
 
-enum class ERenderLayerApi : uint32
+enum class ERHIModule : uint32
 {
     Unknown = 0,
-    D3D12 = 1,
+    Null    = 1,
+    D3D12   = 2,
 };
 
-inline const char* ToString( ERenderLayerApi RenderLayerApi )
+inline const char* ToString( ERHIModule RenderLayerApi )
 {
     switch ( RenderLayerApi )
     {
-        case ERenderLayerApi::D3D12: return "D3D12";
+        case ERHIModule::D3D12: return "D3D12";
         default: return "Unknown";
     }
 }
@@ -56,10 +57,6 @@ struct SRayTracingSupport
 class CRHICore
 {
 public:
-    FORCEINLINE CRHICore( ERenderLayerApi InApi )
-        : Api( InApi )
-    {
-    }
 
     virtual ~CRHICore() = default;
 
@@ -166,28 +163,36 @@ public:
 
     virtual class IRHICommandContext* GetDefaultCommandContext() = 0;
 
-    virtual CString GetAdapterName()
+    virtual CString GetAdapterName() const
     {
         return CString();
     }
 
-    virtual void CheckRayTracingSupport( SRayTracingSupport& OutSupport ) = 0;
-    virtual void CheckShadingRateSupport( SShadingRateSupport& OutSupport ) = 0;
+    virtual void CheckRayTracingSupport( SRayTracingSupport& OutSupport ) const = 0;
+    virtual void CheckShadingRateSupport( SShadingRateSupport& OutSupport ) const = 0;
 
-    virtual bool UAVSupportsFormat( EFormat Format )
+    virtual bool UAVSupportsFormat( EFormat Format ) const
     {
         UNREFERENCED_VARIABLE( Format );
         return false;
     }
 
-    FORCEINLINE ERenderLayerApi GetApi() const
+    FORCEINLINE ERHIModule GetApi() const
     {
-        return Api;
+        return CurrentRHI;
     }
 
-private:
-    ERenderLayerApi Api;
+protected:
+
+    FORCEINLINE CRHICore( ERHIModule InCurrentRHI )
+        : CurrentRHI( InCurrentRHI )
+    {
+    }
+
+    ERHIModule CurrentRHI;
 };
+
+/* Helper functions */
 
 FORCEINLINE CRHITexture2D* RHICreateTexture2D(
     EFormat Format,

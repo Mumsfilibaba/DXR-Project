@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Time/Timer.h"
 
-#include "RHICore/RHICommandList.h"
+#include "CoreRHI/RHICommandList.h"
 
 #include "Core/Containers/HashTable.h"
 

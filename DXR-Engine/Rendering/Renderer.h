@@ -17,9 +17,9 @@
 #include "ForwardRenderer.h"
 #include "RayTracer.h"
 
-#include "RHICore/RHIModule.h"
-#include "RHICore/RHICommandList.h"
-#include "RHICore/RHIViewport.h"
+#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHICommandList.h"
+#include "CoreRHI/RHIViewport.h"
 
 #include "UIRenderer.h"
 

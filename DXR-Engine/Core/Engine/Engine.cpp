@@ -7,7 +7,7 @@
 
 #include "Rendering/Resources/TextureFactory.h"
 
-#include "RHICore/RHICore.h"
+#include "CoreRHI/RHICore.h"
 
 /* Console vars */
 CConsoleCommand GToggleFullscreen;

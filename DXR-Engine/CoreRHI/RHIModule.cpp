@@ -1,20 +1,21 @@
 #include "RHIModule.h"
 #include "RHICommandList.h"
 
+#include "NullRHI/NullRHICore.h"
+
 #if defined(PLATFORM_WINDOWS)
 #include "D3D12/D3D12RHICore.h"
 #include "D3D12/D3D12ShaderCompiler.h"
 #else
-#include "RHICore/ShaderCompiler.h"
+#include "CoreRHI/ShaderCompiler.h"
 #endif
 
-bool CRHIModule::Init( ERenderLayerApi InRenderApi )
+bool CRHIModule::Init( ERHIModule InRenderApi )
 {
 #if defined(PLATFORM_WINDOWS)
-    // Select RenderLayer
-    if ( InRenderApi == ERenderLayerApi::D3D12 )
+    if ( InRenderApi == ERHIModule::D3D12 )
     {
-        GRHICore = DBG_NEW CD3D12RHICore();
+        GRHICore = CD3D12RHICore::Make();
 
         CD3D12ShaderCompiler* Compiler = DBG_NEW CD3D12ShaderCompiler();
         if ( !Compiler->Init() )
@@ -24,15 +25,15 @@ bool CRHIModule::Init( ERenderLayerApi InRenderApi )
 
         GShaderCompiler = Compiler;
     }
-    else
-    #elif defined(PLATFORM_MACOS)
-    if ( InRenderApi == ERenderLayerApi::Unknown )
+    else 
+#endif
+    if ( InRenderApi == ERHIModule::Null )
     {
-        LOG_WARNING( "[RenderLayer::Init] No RenderAPI available for MacOS" );
-        return true;
+        GRHICore = CNullRHICore::Make();
+
+        LOG_WARNING( "[RenderLayer::Init] Initialized NullRHI" );
     }
     else
-    #endif
     {
         LOG_ERROR( "[RenderLayer::Init] Invalid RenderLayer enum" );
 
@@ -49,7 +50,7 @@ bool CRHIModule::Init( ERenderLayerApi InRenderApi )
 #endif
 
     // Init
-    if ( GRHICore->Init( EnableDebug ) )
+    if ( GRHICore && GRHICore->Init( EnableDebug ) )
     {
         IRHICommandContext* CmdContext = GRHICore->GetDefaultCommandContext();
         GCommandQueue.SetContext( CmdContext );

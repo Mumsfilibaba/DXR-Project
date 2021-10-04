@@ -72,7 +72,7 @@ inline bool IsTextureCube<CD3D12TextureCubeArray>()
 }
 
 CD3D12RHICore::CD3D12RHICore()
-    : CRHICore( ERenderLayerApi::D3D12 )
+    : CRHICore( ERHIModule::D3D12 )
     , Device( nullptr )
     , DirectCmdContext( nullptr )
 {
@@ -147,8 +147,8 @@ bool CD3D12RHICore::Init( bool EnableDebug )
         return false;
     }
 
-    DirectCmdContext = DBG_NEW CD3D12CommandContext( Device );
-    if ( !DirectCmdContext->Init() )
+    DirectCmdContext = CD3D12CommandContext::Make( Device );
+    if ( !DirectCmdContext )
     {
         return false;
     }
@@ -1469,7 +1469,7 @@ CRHIViewport* CD3D12RHICore::CreateViewport( CCoreWindow* Window, uint32 Width, 
     }
 }
 
-bool CD3D12RHICore::UAVSupportsFormat( EFormat Format )
+bool CD3D12RHICore::UAVSupportsFormat( EFormat Format ) const
 {
     D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
     CMemory::Memzero( &FeatureData, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS ) );
@@ -1497,7 +1497,7 @@ bool CD3D12RHICore::UAVSupportsFormat( EFormat Format )
     return true;
 }
 
-void CD3D12RHICore::CheckRayTracingSupport( SRayTracingSupport& OutSupport )
+void CD3D12RHICore::CheckRayTracingSupport( SRayTracingSupport& OutSupport ) const
 {
     D3D12_RAYTRACING_TIER Tier = Device->GetRayTracingTier();
     if ( Tier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED )
@@ -1519,7 +1519,7 @@ void CD3D12RHICore::CheckRayTracingSupport( SRayTracingSupport& OutSupport )
     }
 }
 
-void CD3D12RHICore::CheckShadingRateSupport( SShadingRateSupport& OutSupport )
+void CD3D12RHICore::CheckShadingRateSupport( SShadingRateSupport& OutSupport ) const
 {
     D3D12_VARIABLE_SHADING_RATE_TIER Tier = Device->GetVariableRateShadingTier();
     if ( Tier == D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED )

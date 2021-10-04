@@ -1,5 +1,5 @@
 #pragma once
-#include "RHICore/RHIResources.h"
+#include "CoreRHI/RHIResources.h"
 
 #include "Core/Containers/StaticArray.h"
 

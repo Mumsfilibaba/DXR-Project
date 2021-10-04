@@ -1,4 +1,4 @@
-#include "RHICore/RHIModule.h"
+#include "CoreRHI/RHIModule.h"
 
 #include "Assets/MeshFactory.h"
 

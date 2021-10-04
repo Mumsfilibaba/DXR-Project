@@ -1,5 +1,5 @@
 #pragma once
-#include "RHICore/GPUProfiler.h"
+#include "CoreRHI/GPUProfiler.h"
 
 #include "D3D12Resource.h"
 

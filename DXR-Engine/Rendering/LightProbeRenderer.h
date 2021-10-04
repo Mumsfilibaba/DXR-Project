@@ -2,7 +2,7 @@
 #include "FrameResources.h"
 #include "LightSetup.h"
 
-#include "RHICore/RHICommandList.h"
+#include "CoreRHI/RHICommandList.h"
 
 class CLightProbeRenderer
 {

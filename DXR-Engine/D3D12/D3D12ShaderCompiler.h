@@ -1,5 +1,5 @@
 #pragma once
-#include "RHICore/RHIShaderCompiler.h"
+#include "CoreRHI/RHIShaderCompiler.h"
 
 #include "D3D12Helpers.h"
 #include "D3D12Shader.h"

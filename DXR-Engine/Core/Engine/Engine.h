@@ -7,7 +7,7 @@
 #include "Core/Application/WindowMessageHandler.h"
 #include "Core/Delegates/Event.h"
 
-#include "RHICore/RHIViewport.h"
+#include "CoreRHI/RHIViewport.h"
 
 #include "Rendering/Resources/Material.h"
 

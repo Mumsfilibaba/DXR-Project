@@ -1,5 +1,5 @@
 #pragma once
-#include "RHICore/RHIResourceViews.h"
+#include "CoreRHI/RHIResourceViews.h"
 
 #include "D3D12DeviceChild.h"
 #include "D3D12Resource.h"

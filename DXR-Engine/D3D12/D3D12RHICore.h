@@ -1,5 +1,5 @@
 #pragma once
-#include "RHICore/RHICore.h"
+#include "CoreRHI/RHICore.h"
 
 #include "Core/Application/Windows/WindowsWindow.h"
 
@@ -19,29 +19,14 @@ bool IsTextureCube();
 class CD3D12RHICore : public CRHICore
 {
 public:
-    CD3D12RHICore();
-    ~CD3D12RHICore();
 
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap()
+    /* Make a new RHI core */
+    static FORCEINLINE CRHICore* Make()
     {
-        return ResourceOfflineDescriptorHeap;
+        return DBG_NEW CD3D12RHICore();
     }
 
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap()
-    {
-        return RenderTargetOfflineDescriptorHeap;
-    }
-
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap()
-    {
-        return DepthStencilOfflineDescriptorHeap;
-    }
-
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap()
-    {
-        return SamplerOfflineDescriptorHeap;
-    }
-
+    /* Init the RHI Core, create device etc. */
     virtual bool Init( bool EnableDebug ) override final;
 
     virtual CRHITexture2D* CreateTexture2D(
@@ -99,32 +84,10 @@ public:
 
     virtual class CRHISamplerState* CreateSamplerState( const struct SSamplerStateCreateInfo& CreateInfo ) override final;
 
-    virtual CRHIVertexBuffer* CreateVertexBuffer(
-        uint32 Stride,
-        uint32 NumVertices,
-        uint32 Flags,
-        EResourceState InitialState,
-        const SResourceData* InitalData ) override final;
-
-    virtual CRHIIndexBuffer* CreateIndexBuffer(
-        EIndexFormat Format,
-        uint32 NumIndices,
-        uint32 Flags,
-        EResourceState InitialState,
-        const SResourceData* InitalData ) override final;
-
-    virtual CRHIConstantBuffer* CreateConstantBuffer(
-        uint32 Size,
-        uint32 Flags,
-        EResourceState InitialState,
-        const SResourceData* InitalData ) override final;
-
-    virtual CRHIStructuredBuffer* CreateStructuredBuffer(
-        uint32 Stride,
-        uint32 NumElements,
-        uint32 Flags,
-        EResourceState InitialState,
-        const SResourceData* InitalData ) override final;
+    virtual CRHIVertexBuffer* CreateVertexBuffer( uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const SResourceData* InitalData ) override final;
+    virtual CRHIIndexBuffer* CreateIndexBuffer( EIndexFormat Format, uint32 NumIndices, uint32 Flags, EResourceState InitialState, const SResourceData* InitalData ) override final;
+    virtual CRHIConstantBuffer* CreateConstantBuffer( uint32 Size, uint32 Flags, EResourceState InitialState, const SResourceData* InitalData ) override final;
+    virtual CRHIStructuredBuffer* CreateStructuredBuffer( uint32 Stride, uint32 NumElements, uint32 Flags, EResourceState InitialState, const SResourceData* InitalData ) override final;
 
     virtual class CRHIRayTracingScene* CreateRayTracingScene( uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances ) override final;
     virtual class CRHIRayTracingGeometry* CreateRayTracingGeometry( uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer ) override final;
@@ -163,22 +126,46 @@ public:
     virtual class CRHIViewport* CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) override final;
 
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
-    virtual bool UAVSupportsFormat( EFormat Format ) override final;
+    virtual bool UAVSupportsFormat( EFormat Format ) const override final;
 
     virtual class IRHICommandContext* GetDefaultCommandContext() override final
     {
         return DirectCmdContext.Get();
     }
 
-    virtual CString GetAdapterName() override final
+    virtual CString GetAdapterName() const override final
     {
         return Device->GetAdapterName();
     }
 
-    virtual void CheckRayTracingSupport( SRayTracingSupport& OutSupport ) override final;
-    virtual void CheckShadingRateSupport( SShadingRateSupport& OutSupport ) override final;
+    virtual void CheckRayTracingSupport( SRayTracingSupport& OutSupport ) const override final;
+    virtual void CheckShadingRateSupport( SShadingRateSupport& OutSupport ) const override final;
+
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap()
+    {
+        return ResourceOfflineDescriptorHeap;
+    }
+
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap()
+    {
+        return RenderTargetOfflineDescriptorHeap;
+    }
+
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap()
+    {
+        return DepthStencilOfflineDescriptorHeap;
+    }
+
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap()
+    {
+        return SamplerOfflineDescriptorHeap;
+    }
 
 private:
+
+    CD3D12RHICore();
+    ~CD3D12RHICore();
+    
     template<typename TD3D12Texture>
     TD3D12Texture* CreateTexture(
         EFormat Format,
@@ -193,7 +180,6 @@ private:
     template<typename TD3D12Buffer>
     bool FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInBytes, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData );
 
-private:
     CD3D12Device* Device;
     TSharedRef<CD3D12CommandContext> DirectCmdContext;
     CD3D12RootSignatureCache* RootSignatureCache;

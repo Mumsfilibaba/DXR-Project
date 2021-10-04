@@ -1,6 +1,6 @@
 #pragma once
-#include "RHICore/RHIResources.h"
-#include "RHICore/RHIViewport.h"
+#include "CoreRHI/RHIResources.h"
+#include "CoreRHI/RHIViewport.h"
 
 #include "Rendering/MeshDrawCommand.h"
 #include "Rendering/UIRenderer.h"
