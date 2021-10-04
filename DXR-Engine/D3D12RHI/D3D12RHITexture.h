@@ -25,7 +25,7 @@ public:
         Resource = InResource;
     }
 
-    FORCEINLINE void SetShaderResourceView( CD3D12ShaderResourceView* InShaderResourceView )
+    FORCEINLINE void SetShaderResourceView( CD3D12RHIShaderResourceView* InShaderResourceView )
     {
         ShaderResourceView = InShaderResourceView;
     }
@@ -42,7 +42,7 @@ public:
 
 protected:
     TSharedRef<CD3D12Resource>           Resource;
-    TSharedRef<CD3D12ShaderResourceView> ShaderResourceView;
+    TSharedRef<CD3D12RHIShaderResourceView> ShaderResourceView;
 };
 
 class CD3D12RHIBaseTexture2D : public CRHITexture2D, public CD3D12BaseTexture
@@ -87,7 +87,7 @@ public:
         DepthStencilView = InDepthStencilView;
     }
 
-    FORCEINLINE void SetUnorderedAccessView( CD3D12UnorderedAccessView* InUnorderedAccessView )
+    FORCEINLINE void SetUnorderedAccessView( CD3D12RHIUnorderedAccessView* InUnorderedAccessView )
     {
         UnorderedAccessView = InUnorderedAccessView;
     }
@@ -105,7 +105,7 @@ public:
 private:
     TSharedRef<CD3D12RenderTargetView> RenderTargetView;
     TSharedRef<CD3D12DepthStencilView> DepthStencilView;
-    TSharedRef<CD3D12UnorderedAccessView> UnorderedAccessView;
+    TSharedRef<CD3D12RHIUnorderedAccessView> UnorderedAccessView;
 };
 
 class CD3D12RHIBaseTexture2DArray : public CRHITexture2DArray, public CD3D12BaseTexture
@@ -214,11 +214,11 @@ public:
     }
 };
 
-using CD3D12RHITexture2D        = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2D>;
-using CD3D12RHITexture2DArray   = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2DArray>;
-using CD3D12RHITextureCube      = TD3D12RHIBaseTexture<CD3D12RHIBaseTextureCube>;
+using CD3D12RHITexture2D = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2D>;
+using CD3D12RHITexture2DArray = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2DArray>;
+using CD3D12RHITextureCube = TD3D12RHIBaseTexture<CD3D12RHIBaseTextureCube>;
 using CD3D12RHITextureCubeArray = TD3D12RHIBaseTexture<CD3D12RHIBaseTextureCubeArray>;
-using CD3D12RHITexture3D        = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture3D>;
+using CD3D12RHITexture3D = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture3D>;
 
 inline CD3D12BaseTexture* D3D12TextureCast( CRHITexture* Texture )
 {

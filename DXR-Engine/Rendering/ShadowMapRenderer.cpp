@@ -517,9 +517,9 @@ void CShadowMapRenderer::RenderDirectionalLightShadows( CRHICommandList& CmdList
 
         SCascadeGenerationInfo GenerationInfo;
         GenerationInfo.CascadeSplitLambda = LightSetup.CascadeSplitLambda;
-        GenerationInfo.LightUp            = LightSetup.DirectionalLightData.Up;
-        GenerationInfo.LightDirection     = LightSetup.DirectionalLightData.Direction;
-        GenerationInfo.CascadeResolution  = (float)LightSetup.CascadeSize;
+        GenerationInfo.LightUp = LightSetup.DirectionalLightData.Up;
+        GenerationInfo.LightDirection = LightSetup.DirectionalLightData.Direction;
+        GenerationInfo.CascadeResolution = (float)LightSetup.CascadeSize;
 
         CmdList.TransitionBuffer( CascadeGenerationData.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest );
         CmdList.UpdateBuffer( CascadeGenerationData.Get(), 0, sizeof( SCascadeGenerationInfo ), &GenerationInfo );
@@ -678,7 +678,7 @@ void CShadowMapRenderer::Release()
 
 bool CShadowMapRenderer::CreateShadowMask( uint32 Width, uint32 Height, SLightSetup& LightSetup )
 {
-    LightSetup.DirectionalShadowMask = RHICreateTexture2D(EFormat::R16_Float, Width, Height, 1, 1, ETextureFlags::TextureFlags_RWTexture, EResourceState::NonPixelShaderResource, nullptr );
+    LightSetup.DirectionalShadowMask = RHICreateTexture2D( EFormat::R16_Float, Width, Height, 1, 1, ETextureFlags::TextureFlags_RWTexture, EResourceState::NonPixelShaderResource, nullptr );
     if ( LightSetup.DirectionalShadowMask )
     {
         LightSetup.DirectionalShadowMask->SetName( "Directional Shadow Mask" );

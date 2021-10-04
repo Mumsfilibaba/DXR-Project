@@ -25,21 +25,21 @@ bool CRHIModule::Init( ERHIModule InRenderApi )
 
         GShaderCompiler = Compiler;
     }
-    else 
-#endif
-    if ( InRenderApi == ERHIModule::Null )
-    {
-        GRHICore = CNullRHICore::Make();
-
-        LOG_WARNING( "[RenderLayer::Init] Initialized NullRHI" );
-    }
     else
-    {
-        LOG_ERROR( "[RenderLayer::Init] Invalid RenderLayer enum" );
+    #endif
+        if ( InRenderApi == ERHIModule::Null )
+        {
+            GRHICore = CNullRHICore::Make();
 
-        CDebug::DebugBreak();
-        return false;
-    }
+            LOG_WARNING( "[RenderLayer::Init] Initialized NullRHI" );
+        }
+        else
+        {
+            LOG_ERROR( "[RenderLayer::Init] Invalid RenderLayer enum" );
+
+            CDebug::DebugBreak();
+            return false;
+        }
 
     // TODO: This should be in EngineConfig
     const bool EnableDebug =

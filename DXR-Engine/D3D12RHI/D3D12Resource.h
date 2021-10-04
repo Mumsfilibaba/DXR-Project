@@ -17,7 +17,7 @@ public:
 
     /* Maps the resource to the host */
     void* Map( uint32 SubResource, const D3D12_RANGE* Range );
-    
+
     /* Unmaps the resource from the host */
     void Unmap( uint32 SubResource, const D3D12_RANGE* Range );
 
@@ -41,7 +41,7 @@ public:
     {
         return HeapType;
     }
-    
+
     FORCEINLINE D3D12_RESOURCE_DIMENSION GetDimension() const
     {
         return Desc.Dimension;

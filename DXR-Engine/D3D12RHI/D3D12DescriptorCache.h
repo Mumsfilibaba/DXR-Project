@@ -52,9 +52,9 @@ public:
         {
             // Set each stage to be dirty
             Dirty[Stage] = true;
-            
+
             // Set each descriptor to the default view
-            for (uint32 Index = 0; Index < kDescriptorTableSize; Index++ )
+            for ( uint32 Index = 0; Index < kDescriptorTableSize; Index++ )
             {
                 ResourceViews[Stage][Index] = DefaultView;
             }
@@ -130,10 +130,10 @@ public:
     bool Dirty[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
 };
 
-using CD3D12ConstantBufferViewCache  = TD3D12ViewCache<CD3D12ConstantBufferView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT>;
-using CD3D12ShaderResourceViewCache  = TD3D12ViewCache<CD3D12ShaderResourceView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT>;
-using CD3D12UnorderedAccessViewCache = TD3D12ViewCache<CD3D12UnorderedAccessView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT>;
-using CD3D12SamplerStateCache        = TD3D12ViewCache<CD3D12RHISamplerState, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DEFAULT_SAMPLER_STATE_COUNT>;
+using CD3D12ConstantBufferViewCache = TD3D12ViewCache<CD3D12RHIConstantBufferView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT>;
+using CD3D12ShaderResourceViewCache = TD3D12ViewCache<CD3D12RHIShaderResourceView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT>;
+using CD3D12UnorderedAccessViewCache = TD3D12ViewCache<CD3D12RHIUnorderedAccessView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT>;
+using CD3D12SamplerStateCache = TD3D12ViewCache<CD3D12RHISamplerState, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DEFAULT_SAMPLER_STATE_COUNT>;
 
 class CD3D12VertexBufferCache
 {
@@ -219,7 +219,7 @@ public:
     FORCEINLINE void Reset()
     {
         CMemory::Memzero( VertexBuffers, sizeof( VertexBuffers ) );
-    
+
         NumVertexBuffers = 0;
         VertexBuffersDirty = true;
 
@@ -324,7 +324,7 @@ public:
 
     /* Binds all descriptors that is necessary for the graphics pipeline */
     void CommitGraphicsDescriptors( CD3D12CommandList& CmdList, class CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature );
-    
+
     /* Binds all descriptors that is necessary for the compute pipeline */
     void CommitComputeDescriptors( CD3D12CommandList& CmdList, class CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature );
 
@@ -351,7 +351,7 @@ public:
         RenderTargetCache.SetDepthStencilView( DepthStencilView );
     }
 
-    FORCEINLINE void SetConstantBufferView( CD3D12ConstantBufferView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister )
+    FORCEINLINE void SetConstantBufferView( CD3D12RHIConstantBufferView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister )
     {
         if ( !Descriptor )
         {
@@ -361,7 +361,7 @@ public:
         ConstantBufferViewCache.SetView( Descriptor, Visibility, ShaderRegister );
     }
 
-    FORCEINLINE void SetShaderResourceView( CD3D12ShaderResourceView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister )
+    FORCEINLINE void SetShaderResourceView( CD3D12RHIShaderResourceView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister )
     {
         if ( !Descriptor )
         {
@@ -371,7 +371,7 @@ public:
         ShaderResourceViewCache.SetView( Descriptor, Visibility, ShaderRegister );
     }
 
-    FORCEINLINE void SetUnorderedAccessView( CD3D12UnorderedAccessView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister )
+    FORCEINLINE void SetUnorderedAccessView( CD3D12RHIUnorderedAccessView* Descriptor, EShaderVisibility Visibility, uint32 ShaderRegister )
     {
         if ( !Descriptor )
         {
@@ -399,16 +399,16 @@ private:
     template<typename TResourveViewCache>
     void CopyAndBindComputeDescriptors( ID3D12Device* DxDevice, ID3D12GraphicsCommandList* DxCmdList, TResourveViewCache& ResourceViewCache, int32 ParameterIndex )
     {
-        const EShaderVisibility ShaderVisibility = ShaderVisibility_All; 
+        const EShaderVisibility ShaderVisibility = ShaderVisibility_All;
         if ( ParameterIndex >= 0 && ResourceViewCache.Dirty[ShaderVisibility] )
         {
             const UINT DestRangeSize = TResourveViewCache::GetDescriptorTableSize();
-            const UINT NumSrcRanges  = TResourveViewCache::GetDescriptorTableSize();
+            const UINT NumSrcRanges = TResourveViewCache::GetDescriptorTableSize();
 
             const D3D12_CPU_DESCRIPTOR_HANDLE* SrcHostStarts = ResourceViewCache.CopyDescriptors[ShaderVisibility];
 
             D3D12_CPU_DESCRIPTOR_HANDLE HostHandle = ResourceViewCache.HostDescriptors[ShaderVisibility];
-            DxDevice->CopyDescriptors( 1, &HostHandle, &DestRangeSize, NumSrcRanges, SrcHostStarts, RangeSizes, TResourveViewCache::GetDescriptorHeapType());
+            DxDevice->CopyDescriptors( 1, &HostHandle, &DestRangeSize, NumSrcRanges, SrcHostStarts, RangeSizes, TResourveViewCache::GetDescriptorHeapType() );
 
             D3D12_GPU_DESCRIPTOR_HANDLE DeviceHandle = ResourceViewCache.DeviceDescriptors[ShaderVisibility];
             DxCmdList->SetComputeRootDescriptorTable( ParameterIndex, DeviceHandle );
@@ -424,7 +424,7 @@ private:
         if ( ParameterIndex >= 0 && ResourceViewCache.Dirty[ShaderVisibility] )
         {
             const UINT DestRangeSize = TResourveViewCache::GetDescriptorTableSize();
-            const UINT NumSrcRanges  = TResourveViewCache::GetDescriptorTableSize();
+            const UINT NumSrcRanges = TResourveViewCache::GetDescriptorTableSize();
 
             const D3D12_CPU_DESCRIPTOR_HANDLE* SrcHostStarts = ResourceViewCache.CopyDescriptors[ShaderVisibility];
 
@@ -439,10 +439,10 @@ private:
         }
     }
 
-    CD3D12ConstantBufferView*  NullCBV     = nullptr;
-    CD3D12ShaderResourceView*  NullSRV     = nullptr;
-    CD3D12UnorderedAccessView* NullUAV     = nullptr;
-    CD3D12RHISamplerState*        NullSampler = nullptr;
+    CD3D12RHIConstantBufferView* NullCBV = nullptr;
+    CD3D12RHIShaderResourceView* NullSRV = nullptr;
+    CD3D12RHIUnorderedAccessView* NullUAV = nullptr;
+    CD3D12RHISamplerState* NullSampler = nullptr;
 
     CD3D12VertexBufferCache        VertexBufferCache;
     CD3D12RenderTargetState        RenderTargetCache;
@@ -489,7 +489,7 @@ public:
     FORCEINLINE void CommitCompute( CD3D12CommandList& CmdList, CD3D12RootSignature* RootSignature )
     {
         ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
-        
+
         int32 RootIndex = RootSignature->Get32BitConstantsIndex();
         if ( RootIndex >= 0 )
         {

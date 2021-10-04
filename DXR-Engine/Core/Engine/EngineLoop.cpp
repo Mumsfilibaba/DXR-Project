@@ -76,7 +76,7 @@ bool CEngineLoop::PreInit()
     // RenderAPI
     ERHIModule RenderApi =
     #if defined(PLATFORM_MACOS)
-        ERHIModule::Unknown;
+        ERHIModule::Null;
 #else
         ERHIModule::D3D12;
 #endif

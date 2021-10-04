@@ -280,7 +280,7 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
             return nullptr;
         }
 
-        TSharedRef<CD3D12ShaderResourceView> SRV = DBG_NEW CD3D12ShaderResourceView( Device, ResourceOfflineDescriptorHeap );
+        TSharedRef<CD3D12RHIShaderResourceView> SRV = DBG_NEW CD3D12RHIShaderResourceView( Device, ResourceOfflineDescriptorHeap );
         if ( !SRV->Init() )
         {
             return nullptr;
@@ -362,7 +362,7 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
         ViewDesc.Texture2D.MipSlice = 0;
         ViewDesc.Texture2D.PlaneSlice = 0;
 
-        TSharedRef<CD3D12UnorderedAccessView> UAV = DBG_NEW CD3D12UnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
+        TSharedRef<CD3D12RHIUnorderedAccessView> UAV = DBG_NEW CD3D12RHIUnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
         if ( !UAV->Init() )
         {
             return nullptr;
@@ -840,7 +840,7 @@ CRHIShaderResourceView* CD3D12RHICore::CreateShaderResourceView( const SShaderRe
 
     Assert( Resource != nullptr );
 
-    TSharedRef<CD3D12ShaderResourceView> DxView = DBG_NEW CD3D12ShaderResourceView( Device, ResourceOfflineDescriptorHeap );
+    TSharedRef<CD3D12RHIShaderResourceView> DxView = DBG_NEW CD3D12RHIShaderResourceView( Device, ResourceOfflineDescriptorHeap );
     if ( !DxView->Init() )
     {
         return nullptr;
@@ -984,7 +984,7 @@ CRHIUnorderedAccessView* CD3D12RHICore::CreateUnorderedAccessView( const SUnorde
         Desc.Buffer.StructureByteStride = Buffer->GetStride();
     }
 
-    TSharedRef<CD3D12UnorderedAccessView> DxView = DBG_NEW CD3D12UnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
+    TSharedRef<CD3D12RHIUnorderedAccessView> DxView = DBG_NEW CD3D12RHIUnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
     if ( !DxView->Init() )
     {
         return nullptr;

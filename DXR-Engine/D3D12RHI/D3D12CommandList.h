@@ -80,7 +80,7 @@ public:
         CmdList->ClearDepthStencilView( DepthStencilView, Flags, Depth, Stencil, 0, nullptr );
     }
 
-    FORCEINLINE void ClearUnorderedAccessViewFloat( D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const CD3D12UnorderedAccessView* View, const float ClearColor[4] )
+    FORCEINLINE void ClearUnorderedAccessViewFloat( D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const CD3D12RHIUnorderedAccessView* View, const float ClearColor[4] )
     {
         const CD3D12Resource* Resource = View->GetResource();
         CmdList->ClearUnorderedAccessViewFloat( GPUHandle, View->GetOfflineHandle(), Resource->GetResource(), ClearColor, 0, nullptr );
@@ -96,7 +96,7 @@ public:
         CmdList->CopyBufferRegion( Destination, DestinationOffset, Source, SourceOffset, SizeInBytes );
     }
 
-    FORCEINLINE void CopyTextureRegion(const D3D12_TEXTURE_COPY_LOCATION* Destination, uint32 x, uint32 y, uint32 z, const D3D12_TEXTURE_COPY_LOCATION* Source, const D3D12_BOX* SourceBox )
+    FORCEINLINE void CopyTextureRegion( const D3D12_TEXTURE_COPY_LOCATION* Destination, uint32 x, uint32 y, uint32 z, const D3D12_TEXTURE_COPY_LOCATION* Source, const D3D12_BOX* SourceBox )
     {
         CmdList->CopyTextureRegion( Destination, x, y, z, Source, SourceBox );
     }
@@ -136,7 +136,7 @@ public:
         CmdList->DrawInstanced( VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation );
     }
 
-    FORCEINLINE void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation )
+    FORCEINLINE void DrawIndexedInstanced( uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation )
     {
         CmdList->DrawIndexedInstanced( IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation );
     }
@@ -226,7 +226,7 @@ public:
         CmdList->OMSetBlendFactor( BlendFactor );
     }
 
-    FORCEINLINE void OMSetRenderTargets(const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors, uint32 NumRenderTargetDescriptors, bool RTsSingleHandleToDescriptorRange, const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor )
+    FORCEINLINE void OMSetRenderTargets( const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors, uint32 NumRenderTargetDescriptors, bool RTsSingleHandleToDescriptorRange, const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor )
     {
         CmdList->OMSetRenderTargets( NumRenderTargetDescriptors, RenderTargetDescriptors, RTsSingleHandleToDescriptorRange, DepthStencilDescriptor );
     }
@@ -276,7 +276,7 @@ public:
     {
         return CmdList.Get();
     }
-    
+
     FORCEINLINE ID3D12GraphicsCommandList* GetGraphicsCommandList() const
     {
         return CmdList.Get();

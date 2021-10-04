@@ -55,7 +55,7 @@ public:
 
     /* Render Point light shadows */
     void RenderPointLightShadows( CRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene );
-    
+
     /* Render Directional light shadows */
     void RenderDirectionalLightShadows( CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene );
 

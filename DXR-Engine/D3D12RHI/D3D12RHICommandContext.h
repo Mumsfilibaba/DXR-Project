@@ -352,7 +352,7 @@ private:
     CD3D12FenceHandle   Fence;
     CD3D12CommandQueue CmdQueue;
 
-    uint64 FenceValue   = 0;
+    uint64 FenceValue = 0;
     uint32 NextCmdBatch = 0;
 
     TArray<CD3D12CommandBatch> CmdBatches;

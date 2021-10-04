@@ -6,6 +6,7 @@ class CD3D12Device;
 class CD3D12DeviceChild
 {
 public:
+
     CD3D12DeviceChild( CD3D12Device* InDevice )
         : Device( InDevice )
     {

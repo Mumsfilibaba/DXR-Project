@@ -23,13 +23,13 @@ bool CD3D12View::Init()
     return OfflineHandle != 0;
 }
 
-CD3D12ConstantBufferView::CD3D12ConstantBufferView( CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap )
+CD3D12RHIConstantBufferView::CD3D12RHIConstantBufferView( CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap )
     : CD3D12View( InDevice, InHeap )
     , Desc()
 {
 }
 
-bool CD3D12ConstantBufferView::CreateView( CD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc )
+bool CD3D12RHIConstantBufferView::CreateView( CD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc )
 {
     Assert( OfflineHandle != 0 );
 

@@ -556,7 +556,7 @@ public:
     }
 
 private:
-    
+
     /* Goes through all the commands and executes them on a command list */
     void InternalExecuteCommandList( CRHICommandList& CmdList );
 
@@ -568,7 +568,7 @@ private:
     }
 
     IRHICommandContext* CmdContext;
-    
+
     // Statistics
     uint32 NumDrawCalls;
     uint32 NumDispatchCalls;

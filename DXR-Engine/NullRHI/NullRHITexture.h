@@ -28,7 +28,7 @@ public:
     {
         return RenderTargetView.Get();
     }
-    
+
     virtual CRHIDepthStencilView* GetDepthStencilView() const override
     {
         return DepthStencilView.Get();
@@ -57,7 +57,7 @@ public:
 class CNullRHITextureCube : public CRHITextureCube
 {
 public:
-    CNullRHITextureCube( EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CNullRHITextureCube( EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue )
         : CRHITextureCube( InFormat, InSize, InNumMips, InFlags, InOptimalClearValue )
     {
     }
@@ -66,7 +66,7 @@ public:
 class CNullRHITextureCubeArray : public CRHITextureCubeArray
 {
 public:
-    CNullRHITextureCubeArray(EFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue )
+    CNullRHITextureCubeArray( EFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue )
         : CRHITextureCubeArray( InFormat, InSizeX, InNumMips, InSizeZ, InFlags, InOptimalClearValue )
     {
     }
@@ -75,7 +75,7 @@ public:
 class CNullRHITexture3D : public CRHITexture3D
 {
 public:
-    CNullRHITexture3D(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CNullRHITexture3D( EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue )
         : CRHITexture3D( InFormat, InSizeX, InSizeY, InSizeZ, InNumMips, InFlags, InOptimalClearValue )
     {
     }
@@ -86,8 +86,8 @@ class TNullRHITexture : public TBaseTexture
 {
 public:
     template<typename... ArgTypes>
-    TNullRHITexture(ArgTypes&&... Args)
-        : TBaseTexture( Forward<ArgTypes>(Args)... )
+    TNullRHITexture( ArgTypes&&... Args )
+        : TBaseTexture( Forward<ArgTypes>( Args )... )
         , ShaderResourceView( DBG_NEW CNullRHIShaderResourceView() )
     {
     }

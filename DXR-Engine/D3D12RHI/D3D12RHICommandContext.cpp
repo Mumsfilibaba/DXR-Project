@@ -439,7 +439,7 @@ void CD3D12RHICommandContext::ClearUnorderedAccessViewFloat( CRHIUnorderedAccess
 {
     FlushResourceBarriers();
 
-    CD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12UnorderedAccessView*>(UnorderedAccessView);
+    CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(UnorderedAccessView);
     CmdBatch->AddInUseResource( DxUnorderedAccessView );
 
     CD3D12OnlineDescriptorHeap* OnlineDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
@@ -626,7 +626,7 @@ void CD3D12RHICommandContext::SetShaderResourceView( CRHIShader* Shader, CRHISha
     Assert( ParameterInfo.Space == 0 );
     Assert( ParameterInfo.NumDescriptors == 1 );
 
-    CD3D12ShaderResourceView* DxShaderResourceView = static_cast<CD3D12ShaderResourceView*>(ShaderResourceView);
+    CD3D12RHIShaderResourceView* DxShaderResourceView = static_cast<CD3D12RHIShaderResourceView*>(ShaderResourceView);
     DescriptorCache.SetShaderResourceView( DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register );
 }
 
@@ -641,7 +641,7 @@ void CD3D12RHICommandContext::SetShaderResourceViews( CRHIShader* Shader, CRHISh
 
     for ( uint32 i = 0; i < NumShaderResourceViews; i++ )
     {
-        CD3D12ShaderResourceView* DxShaderResourceView = static_cast<CD3D12ShaderResourceView*>(ShaderResourceView[i]);
+        CD3D12RHIShaderResourceView* DxShaderResourceView = static_cast<CD3D12RHIShaderResourceView*>(ShaderResourceView[i]);
         DescriptorCache.SetShaderResourceView( DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i );
     }
 }
@@ -655,7 +655,7 @@ void CD3D12RHICommandContext::SetUnorderedAccessView( CRHIShader* Shader, CRHIUn
     Assert( ParameterInfo.Space == 0 );
     Assert( ParameterInfo.NumDescriptors == 1 );
 
-    CD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12UnorderedAccessView*>(UnorderedAccessView);
+    CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(UnorderedAccessView);
     DescriptorCache.SetUnorderedAccessView( DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register );
 }
 
@@ -670,7 +670,7 @@ void CD3D12RHICommandContext::SetUnorderedAccessViews( CRHIShader* Shader, CRHIU
 
     for ( uint32 i = 0; i < NumUnorderedAccessViews; i++ )
     {
-        CD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12UnorderedAccessView*>(UnorderedAccessViews[i]);
+        CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(UnorderedAccessViews[i]);
         DescriptorCache.SetUnorderedAccessView( DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i );
     }
 }
@@ -686,7 +686,7 @@ void CD3D12RHICommandContext::SetConstantBuffer( CRHIShader* Shader, CRHIConstan
 
     if ( ConstantBuffer )
     {
-        CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffer)->GetView();
+        CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffer)->GetView();
         DescriptorCache.SetConstantBufferView( &DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register );
     }
     else
@@ -708,7 +708,7 @@ void CD3D12RHICommandContext::SetConstantBuffers( CRHIShader* Shader, CRHIConsta
     {
         if ( ConstantBuffers[i] )
         {
-            CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffers[i])->GetView();
+            CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffers[i])->GetView();
             DescriptorCache.SetConstantBufferView( &DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register );
         }
         else
@@ -976,7 +976,7 @@ void CD3D12RHICommandContext::SetRayTracingBindings(
     {
         for ( int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++ )
         {
-            CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
+            CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
             DescriptorCache.SetConstantBufferView( &DxConstantBufferView, ShaderVisibility_All, i );
         }
     }
@@ -984,7 +984,7 @@ void CD3D12RHICommandContext::SetRayTracingBindings(
     {
         for ( int32 i = 0; i < GlobalResource->ShaderResourceViews.Size(); i++ )
         {
-            CD3D12ShaderResourceView* DxShaderResourceView = static_cast<CD3D12ShaderResourceView*>(GlobalResource->ShaderResourceViews[i]);
+            CD3D12RHIShaderResourceView* DxShaderResourceView = static_cast<CD3D12RHIShaderResourceView*>(GlobalResource->ShaderResourceViews[i]);
             DescriptorCache.SetShaderResourceView( DxShaderResourceView, ShaderVisibility_All, i );
         }
     }
@@ -992,7 +992,7 @@ void CD3D12RHICommandContext::SetRayTracingBindings(
     {
         for ( int32 i = 0; i < GlobalResource->UnorderedAccessViews.Size(); i++ )
         {
-            CD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12UnorderedAccessView*>(GlobalResource->UnorderedAccessViews[i]);
+            CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(GlobalResource->UnorderedAccessViews[i]);
             DescriptorCache.SetUnorderedAccessView( DxUnorderedAccessView, ShaderVisibility_All, i );
         }
     }

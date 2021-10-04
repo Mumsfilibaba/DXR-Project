@@ -663,9 +663,9 @@ void CRenderer::Tick( const CScene& Scene )
 
         GCommandQueue.ExecuteCommandLists( CmdLists, ArrayCount( CmdLists ) );
 
-        LastFrameNumDrawCalls     = GCommandQueue.GetNumDrawCalls();
+        LastFrameNumDrawCalls = GCommandQueue.GetNumDrawCalls();
         LastFrameNumDispatchCalls = GCommandQueue.GetNumDispatchCalls();
-        LastFrameNumCommands      = GCommandQueue.GetNumCommands();
+        LastFrameNumCommands = GCommandQueue.GetNumCommands();
     }
 
     {

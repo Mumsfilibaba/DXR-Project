@@ -97,7 +97,7 @@ class CD3D12OfflineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
         {
             SDescriptorRange EntireRange;
             EntireRange.Begin = Heap->GetCPUDescriptorHandleForHeapStart();
-            EntireRange.End   = { EntireRange.Begin.ptr + (uint64)(Heap->GetDescriptorHandleIncrementSize() * Heap->GetNumDescriptors()) };
+            EntireRange.End = { EntireRange.Begin.ptr + (uint64)(Heap->GetDescriptorHandleIncrementSize() * Heap->GetNumDescriptors()) };
             FreeList.Emplace( EntireRange );
         }
 

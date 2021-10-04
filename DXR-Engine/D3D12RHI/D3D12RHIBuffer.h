@@ -126,18 +126,18 @@ public:
         View.CreateView( CD3D12BaseBuffer::Resource.Get(), ViewDesc );
     }
 
-    FORCEINLINE CD3D12ConstantBufferView& GetView()
+    FORCEINLINE CD3D12RHIConstantBufferView& GetView()
     {
         return View;
     }
 
-    FORCEINLINE const CD3D12ConstantBufferView& GetView() const
+    FORCEINLINE const CD3D12RHIConstantBufferView& GetView() const
     {
         return View;
     }
 
 private:
-    CD3D12ConstantBufferView View;
+    CD3D12RHIConstantBufferView View;
 };
 
 class CD3D12RHIBaseStructuredBuffer : public CRHIStructuredBuffer, public CD3D12BaseBuffer

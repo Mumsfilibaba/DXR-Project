@@ -15,8 +15,8 @@ class CRHIRayTracingScene;
 enum class ERHIModule : uint32
 {
     Unknown = 0,
-    Null    = 1,
-    D3D12   = 2,
+    Null = 1,
+    D3D12 = 2,
 };
 
 inline const char* ToString( ERHIModule RenderLayerApi )
@@ -267,7 +267,7 @@ FORCEINLINE class CRHISamplerState* RHICreateSamplerState( const struct SSampler
     return GRHICore->CreateSamplerState( CreateInfo );
 }
 
-FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
+FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer( uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
     return GRHICore->CreateVertexBuffer( Stride, NumVertices, Flags, InitialState, InitialData );
 }
@@ -334,7 +334,7 @@ FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView( CRHITexture2D* 
     return RHICreateShaderResourceView( CreateInfo );
 }
 
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITexture2DArray* Texture, EFormat Format, uint32 Mip, uint32 NumMips, uint32 ArraySlice, uint32 NumArraySlices, float MinMipBias )
+FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView( CRHITexture2DArray* Texture, EFormat Format, uint32 Mip, uint32 NumMips, uint32 ArraySlice, uint32 NumArraySlices, float MinMipBias )
 {
     SShaderResourceViewCreateInfo CreateInfo( SShaderResourceViewCreateInfo::EType::Texture2DArray );
     CreateInfo.Texture2DArray.Texture = Texture;

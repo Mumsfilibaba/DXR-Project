@@ -165,7 +165,7 @@ private:
 
     CD3D12RHICore();
     ~CD3D12RHICore();
-    
+
     template<typename TD3D12Texture>
     TD3D12Texture* CreateTexture(
         EFormat Format,

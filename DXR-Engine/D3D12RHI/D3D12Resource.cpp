@@ -45,7 +45,7 @@ bool CD3D12Resource::Init( D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR
     }
     else if ( Result == E_OUTOFMEMORY )
     {
-        LOG_ERROR( "[D3D12Resource]: Failed to create resource since the device ran out of memory");
+        LOG_ERROR( "[D3D12Resource]: Failed to create resource since the device ran out of memory" );
         return false;
     }
     else

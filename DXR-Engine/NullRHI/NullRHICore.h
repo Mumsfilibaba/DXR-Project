@@ -33,7 +33,7 @@ public:
 
     ~CNullRHICore() = default;
 
-    virtual bool Init( bool EnableDebug ) override final 
+    virtual bool Init( bool EnableDebug ) override final
     {
         return true;
     }
@@ -47,7 +47,7 @@ public:
         uint32 Flags,
         EResourceState InitialState,
         const SResourceData* InitalData,
-        const SClearValue& OptimizedClearValue ) override final 
+        const SClearValue& OptimizedClearValue ) override final
     {
         return DBG_NEW TNullRHITexture<CNullRHITexture2D>( Format, Width, Height, NumMips, NumSamples, Flags, OptimizedClearValue );
     }
@@ -61,8 +61,8 @@ public:
         uint32 NumArraySlices,
         uint32 Flags,
         EResourceState InitialState,
-        const SResourceData * InitalData,
-        const SClearValue & OptimizedClearValue ) override final 
+        const SResourceData* InitalData,
+        const SClearValue& OptimizedClearValue ) override final
     {
         return DBG_NEW TNullRHITexture<CNullRHITexture2DArray>( Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, OptimizedClearValue );
     }
@@ -73,8 +73,8 @@ public:
         uint32 NumMips,
         uint32 Flags,
         EResourceState InitialState,
-        const SResourceData * InitalData,
-        const SClearValue & OptimizedClearValue ) override final 
+        const SResourceData* InitalData,
+        const SClearValue& OptimizedClearValue ) override final
     {
         return DBG_NEW TNullRHITexture<CNullRHITextureCube>( Format, Size, NumMips, Flags, OptimizedClearValue );
     }
@@ -86,8 +86,8 @@ public:
         uint32 NumArraySlices,
         uint32 Flags,
         EResourceState InitialState,
-        const SResourceData * InitalData,
-        const SClearValue & OptimizedClearValue ) override final 
+        const SResourceData* InitalData,
+        const SClearValue& OptimizedClearValue ) override final
     {
         return DBG_NEW TNullRHITexture<CNullRHITextureCubeArray>( Format, Size, NumArraySlices, NumMips, Flags, OptimizedClearValue );
     }
@@ -100,173 +100,173 @@ public:
         uint32 NumMips,
         uint32 Flags,
         EResourceState InitialState,
-        const SResourceData * InitalData,
-        const SClearValue & OptimizedClearValue ) override final 
+        const SResourceData* InitalData,
+        const SClearValue& OptimizedClearValue ) override final
     {
         return DBG_NEW TNullRHITexture<CNullRHITexture3D>( Format, Width, Height, Depth, NumMips, Flags, OptimizedClearValue );
     }
 
-    virtual class CRHISamplerState* CreateSamplerState( const struct SSamplerStateCreateInfo& CreateInfo ) override final 
+    virtual class CRHISamplerState* CreateSamplerState( const struct SSamplerStateCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHISamplerState();
     }
 
-    virtual CRHIVertexBuffer* CreateVertexBuffer( uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const SResourceData * InitalData ) override final 
+    virtual CRHIVertexBuffer* CreateVertexBuffer( uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const SResourceData* InitalData ) override final
     {
         return DBG_NEW TNullRHIBuffer<CNullRHIVertexBuffer>( NumVertices, Stride, Flags );
     }
 
-    virtual CRHIIndexBuffer* CreateIndexBuffer( EIndexFormat Format, uint32 NumIndices, uint32 Flags, EResourceState InitialState, const SResourceData * InitalData ) override final 
+    virtual CRHIIndexBuffer* CreateIndexBuffer( EIndexFormat Format, uint32 NumIndices, uint32 Flags, EResourceState InitialState, const SResourceData* InitalData ) override final
     {
         return DBG_NEW TNullRHIBuffer<CNullRHIIndexBuffer>( Format, NumIndices, Flags );
     }
 
-    virtual CRHIConstantBuffer* CreateConstantBuffer( uint32 Size, uint32 Flags, EResourceState InitialState, const SResourceData * InitalData ) override final 
+    virtual CRHIConstantBuffer* CreateConstantBuffer( uint32 Size, uint32 Flags, EResourceState InitialState, const SResourceData* InitalData ) override final
     {
         return DBG_NEW TNullRHIBuffer<CNullRHIConstantBuffer>( Size, Flags );
     }
 
-    virtual CRHIStructuredBuffer* CreateStructuredBuffer( uint32 Stride, uint32 NumElements, uint32 Flags, EResourceState InitialState, const SResourceData * InitalData ) override final 
+    virtual CRHIStructuredBuffer* CreateStructuredBuffer( uint32 Stride, uint32 NumElements, uint32 Flags, EResourceState InitialState, const SResourceData* InitalData ) override final
     {
         return DBG_NEW TNullRHIBuffer<CNullRHIStructuredBuffer>( Stride * NumElements, Stride, Flags );
     }
 
-    virtual CRHIRayTracingScene* CreateRayTracingScene( uint32 Flags, SRayTracingGeometryInstance * Instances, uint32 NumInstances ) override final 
+    virtual CRHIRayTracingScene* CreateRayTracingScene( uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances ) override final
     {
         return DBG_NEW CNullRHIRayTracingScene( Flags );
     }
 
-    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry( uint32 Flags, CRHIVertexBuffer * VertexBuffer, CRHIIndexBuffer * IndexBuffer ) override final 
+    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry( uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer ) override final
     {
         return DBG_NEW CNullRHIRayTracingGeometry( Flags );
     }
 
-    virtual CRHIShaderResourceView* CreateShaderResourceView( const SShaderResourceViewCreateInfo & CreateInfo ) override final 
+    virtual CRHIShaderResourceView* CreateShaderResourceView( const SShaderResourceViewCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHIShaderResourceView();
     }
 
-    virtual CRHIUnorderedAccessView* CreateUnorderedAccessView( const SUnorderedAccessViewCreateInfo & CreateInfo ) override final 
+    virtual CRHIUnorderedAccessView* CreateUnorderedAccessView( const SUnorderedAccessViewCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHIUnorderedAccessView();
     }
 
-    virtual CRHIRenderTargetView* CreateRenderTargetView( const SRenderTargetViewCreateInfo & CreateInfo ) override final 
+    virtual CRHIRenderTargetView* CreateRenderTargetView( const SRenderTargetViewCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHIRenderTargetView();
     }
 
-    virtual CRHIDepthStencilView* CreateDepthStencilView( const SDepthStencilViewCreateInfo & CreateInfo ) override final 
+    virtual CRHIDepthStencilView* CreateDepthStencilView( const SDepthStencilViewCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHIDepthStencilView();
     }
 
-    virtual class CRHIComputeShader* CreateComputeShader( const TArray<uint8>&ShaderCode ) override final 
+    virtual class CRHIComputeShader* CreateComputeShader( const TArray<uint8>& ShaderCode ) override final
     {
         return DBG_NEW TNullRHIShader<CNullRHIComputeShader>();
     }
 
-    virtual class CRHIVertexShader* CreateVertexShader( const TArray<uint8>&ShaderCode ) override final 
+    virtual class CRHIVertexShader* CreateVertexShader( const TArray<uint8>& ShaderCode ) override final
     {
         return DBG_NEW TNullRHIShader<CNullRHIVertexShader>();
     }
 
-    virtual class CRHIHullShader* CreateHullShader( const TArray<uint8>&ShaderCode ) override final 
-    {
-        return nullptr;
-    }
-    
-    virtual class CRHIDomainShader* CreateDomainShader( const TArray<uint8>&ShaderCode ) override final 
+    virtual class CRHIHullShader* CreateHullShader( const TArray<uint8>& ShaderCode ) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIGeometryShader* CreateGeometryShader( const TArray<uint8>&ShaderCode ) override final 
-    {
-        return nullptr;
-    }
-    
-    virtual class CRHIMeshShader* CreateMeshShader( const TArray<uint8>&ShaderCode ) override final 
+    virtual class CRHIDomainShader* CreateDomainShader( const TArray<uint8>& ShaderCode ) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIAmplificationShader* CreateAmplificationShader( const TArray<uint8>&ShaderCode ) override final 
+    virtual class CRHIGeometryShader* CreateGeometryShader( const TArray<uint8>& ShaderCode ) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIPixelShader* CreatePixelShader( const TArray<uint8>&ShaderCode ) override final 
+    virtual class CRHIMeshShader* CreateMeshShader( const TArray<uint8>& ShaderCode ) override final
+    {
+        return nullptr;
+    }
+
+    virtual class CRHIAmplificationShader* CreateAmplificationShader( const TArray<uint8>& ShaderCode ) override final
+    {
+        return nullptr;
+    }
+
+    virtual class CRHIPixelShader* CreatePixelShader( const TArray<uint8>& ShaderCode ) override final
     {
         return DBG_NEW TNullRHIShader<CNullRHIPixelShader>();
     }
 
-    virtual class CRHIRayGenShader* CreateRayGenShader( const TArray<uint8>& ShaderCode ) override final 
+    virtual class CRHIRayGenShader* CreateRayGenShader( const TArray<uint8>& ShaderCode ) override final
     {
         return DBG_NEW TNullRHIShader<CNullRHIRayGenShader>();
     }
-    
-    virtual class CRHIRayAnyHitShader* CreateRayAnyHitShader( const TArray<uint8>& ShaderCode ) override final 
+
+    virtual class CRHIRayAnyHitShader* CreateRayAnyHitShader( const TArray<uint8>& ShaderCode ) override final
     {
         return DBG_NEW TNullRHIShader<CNullRHIRayAnyhitShader>();
     }
 
-    virtual class CRHIRayClosestHitShader* CreateRayClosestHitShader( const TArray<uint8>& ShaderCode ) override final 
+    virtual class CRHIRayClosestHitShader* CreateRayClosestHitShader( const TArray<uint8>& ShaderCode ) override final
     {
         return DBG_NEW TNullRHIShader<CNullRHIRayClosestHitShader>();
     }
 
-    virtual class CRHIRayMissShader* CreateRayMissShader( const TArray<uint8>&ShaderCode ) override final 
+    virtual class CRHIRayMissShader* CreateRayMissShader( const TArray<uint8>& ShaderCode ) override final
     {
         return DBG_NEW TNullRHIShader<CNullRHIRayMissShader>();
     }
 
-    virtual class CRHIDepthStencilState* CreateDepthStencilState( const SDepthStencilStateCreateInfo & CreateInfo ) override final 
+    virtual class CRHIDepthStencilState* CreateDepthStencilState( const SDepthStencilStateCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHIDepthStencilState();
     }
 
-    virtual class CRHIRasterizerState* CreateRasterizerState( const SRasterizerStateCreateInfo & CreateInfo ) override final 
+    virtual class CRHIRasterizerState* CreateRasterizerState( const SRasterizerStateCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHIRasterizerState();
     }
 
-    virtual class CRHIBlendState* CreateBlendState( const SBlendStateCreateInfo & CreateInfo ) override final 
+    virtual class CRHIBlendState* CreateBlendState( const SBlendStateCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHIBlendState();
     }
 
-    virtual class CRHIInputLayoutState* CreateInputLayout( const SInputLayoutStateCreateInfo & CreateInfo ) override final 
+    virtual class CRHIInputLayoutState* CreateInputLayout( const SInputLayoutStateCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHIInputLayoutState();
     }
 
-    virtual class CRHIGraphicsPipelineState* CreateGraphicsPipelineState( const SGraphicsPipelineStateCreateInfo & CreateInfo ) override final 
+    virtual class CRHIGraphicsPipelineState* CreateGraphicsPipelineState( const SGraphicsPipelineStateCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHIGraphicsPipelineState();
     }
 
-    virtual class CRHIComputePipelineState* CreateComputePipelineState( const SComputePipelineStateCreateInfo & CreateInfo ) override final 
+    virtual class CRHIComputePipelineState* CreateComputePipelineState( const SComputePipelineStateCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHIComputePipelineState();
     }
 
-    virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState( const SRayTracingPipelineStateCreateInfo & CreateInfo ) override final 
+    virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState( const SRayTracingPipelineStateCreateInfo& CreateInfo ) override final
     {
         return DBG_NEW CNullRHIRayTracingPipelineState();
     }
 
-    virtual class CGPUProfiler* CreateProfiler() override final 
+    virtual class CGPUProfiler* CreateProfiler() override final
     {
         return DBG_NEW CNullGPUProfiler();
     }
 
-    virtual class CRHIViewport* CreateViewport( CCoreWindow * Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) override final 
+    virtual class CRHIViewport* CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) override final
     {
         return DBG_NEW CNullRHIViewport( ColorFormat, Width, Height );
     }
 
-    virtual class IRHICommandContext* GetDefaultCommandContext() override final 
+    virtual class IRHICommandContext* GetDefaultCommandContext() override final
     {
         return CommandContext.Get();
     }
@@ -276,12 +276,12 @@ public:
         return CString();
     }
 
-    virtual void CheckRayTracingSupport( SRayTracingSupport& OutSupport ) const override final 
+    virtual void CheckRayTracingSupport( SRayTracingSupport& OutSupport ) const override final
     {
         OutSupport = SRayTracingSupport();
     }
 
-    virtual void CheckShadingRateSupport( SShadingRateSupport& OutSupport ) const override final 
+    virtual void CheckShadingRateSupport( SShadingRateSupport& OutSupport ) const override final
     {
         OutSupport = SShadingRateSupport();
     }

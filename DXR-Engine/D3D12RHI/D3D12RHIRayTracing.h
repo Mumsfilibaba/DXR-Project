@@ -138,7 +138,7 @@ public:
 
 private:
     TArray<SRayTracingGeometryInstance> Instances;
-    TSharedRef<CD3D12ShaderResourceView>      View;
+    TSharedRef<CD3D12RHIShaderResourceView>      View;
 
     TSharedRef<CD3D12Resource> ResultBuffer;
     TSharedRef<CD3D12Resource> ScratchBuffer;
