@@ -26,8 +26,8 @@ void Main(ComputeShaderInput Input)
     float FarPlane  = CameraBuffer.FarPlane;
     float ClipRange = FarPlane - NearPlane;
 
-    float MinDepth = NearPlane + ClipRange * 0.0f;
-    float MaxDepth = NearPlane + ClipRange * 1.0f;
+    float MinDepth = NearPlane + ClipRange * MinMaxDepth.x;
+    float MaxDepth = NearPlane + ClipRange * MinMaxDepth.y;
 
     float Range = MaxDepth - MinDepth;
     float Ratio = MaxDepth / MinDepth;
@@ -102,7 +102,7 @@ void Main(ComputeShaderInput Input)
     Radius = ceil(Radius);
     
     float3 MaxExtents = Float3(Radius);
-    MaxExtents.z = min(max(MaxExtents.z * 6.0f, 30.0f), 100.0f); // Tweakable?
+    MaxExtents.z = clamp(MaxExtents.z * 6.0f, 30.0f, 100.0f); // Tweakable?
     
     float3 MinExtents = -MaxExtents;
     float3 CascadeExtents = MaxExtents - MinExtents;
