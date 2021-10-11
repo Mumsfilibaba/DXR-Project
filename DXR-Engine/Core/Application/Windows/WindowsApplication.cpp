@@ -247,7 +247,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
         {
             if ( MessageWindow )
             {
-                MessageListener->OnWindowClosed( MessageWindow );
+                MessageListener->HandleWindowClosed( MessageWindow );
             }
 
             break;
@@ -259,7 +259,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             if ( MessageWindow )
             {
                 const bool HasFocus = (Message == WM_SETFOCUS);
-                MessageListener->OnWindowFocusChanged( MessageWindow, HasFocus );
+                MessageListener->HandleWindowFocusChanged( MessageWindow, HasFocus );
             }
 
             break;
@@ -269,7 +269,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
         {
             if ( MessageWindow )
             {
-                MessageListener->OnWindowMouseLeft( MessageWindow );
+                MessageListener->HandleWindowMouseLeft( MessageWindow );
             }
 
             IsTrackingMouse = false;
@@ -281,7 +281,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             if ( MessageWindow )
             {
                 const SSizeMessage Size( lParam );
-                MessageListener->OnWindowResized( MessageWindow, Size.Width, Size.Height );
+                MessageListener->HandleWindowResized( MessageWindow, Size.Width, Size.Height );
             }
 
             break;
@@ -292,7 +292,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             if ( MessageWindow )
             {
                 const SSizeMessage Size( lParam );
-                MessageListener->OnWindowMoved( MessageWindow, Size.x, Size.y );
+                MessageListener->HandleWindowMoved( MessageWindow, Size.x, Size.y );
             }
 
             break;
@@ -304,7 +304,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             const uint32 ScanCode = static_cast<uint32>(HIWORD( lParam ) & ScanCodeMask);
             const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode( ScanCode );
 
-            MessageListener->OnKeyReleased( Key, PlatformApplicationMisc::GetModifierKeyState() );
+            MessageListener->HandleKeyReleased( Key, PlatformApplicationMisc::GetModifierKeyState() );
             break;
         }
 
@@ -315,7 +315,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             const uint32 ScanCode = static_cast<uint32>(HIWORD( lParam ) & ScanCodeMask);
             const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode( ScanCode );
 
-            MessageListener->OnKeyPressed( Key, IsRepeat, PlatformApplicationMisc::GetModifierKeyState() );
+            MessageListener->HandleKeyPressed( Key, IsRepeat, PlatformApplicationMisc::GetModifierKeyState() );
             break;
         }
 
@@ -323,7 +323,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
         case WM_CHAR:
         {
             const uint32 Character = static_cast<uint32>(wParam);
-            MessageListener->OnKeyTyped( Character );
+            MessageListener->HandleKeyTyped( Character );
             break;
         }
 
@@ -342,12 +342,12 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
                 TrackEvent.hwndTrack = Window;
                 TrackMouseEvent( &TrackEvent );
 
-                MessageListener->OnWindowMouseEntered( MessageWindow );
+                MessageListener->HandleWindowMouseEntered( MessageWindow );
 
                 IsTrackingMouse = true;
             }
 
-            MessageListener->OnMouseMove( x, y );
+            MessageListener->HandleMouseMove( x, y );
             break;
         }
 
@@ -382,7 +382,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
                 Button = EMouseButton::MouseButton_Forward;
             }
 
-            MessageListener->OnMousePressed( Button, PlatformApplicationMisc::GetModifierKeyState() );
+            MessageListener->HandleMousePressed( Button, PlatformApplicationMisc::GetModifierKeyState() );
             break;
         }
 
@@ -413,28 +413,28 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
                 Button = EMouseButton::MouseButton_Forward;
             }
 
-            MessageListener->OnMouseReleased( Button, PlatformApplicationMisc::GetModifierKeyState() );
+            MessageListener->HandleMouseReleased( Button, PlatformApplicationMisc::GetModifierKeyState() );
             break;
         }
 
         case WM_MOUSEWHEEL:
         {
             const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM( wParam )) / static_cast<float>(WHEEL_DELTA);
-            MessageListener->OnMouseScrolled( 0.0f, WheelDelta );
+            MessageListener->HandleMouseScrolled( 0.0f, WheelDelta );
             break;
         }
 
         case WM_MOUSEHWHEEL:
         {
             const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM( wParam )) / static_cast<float>(WHEEL_DELTA);
-            MessageListener->OnMouseScrolled( WheelDelta, 0.0f );
+            MessageListener->HandleMouseScrolled( WheelDelta, 0.0f );
             break;
         }
 
         case WM_QUIT:
         {
             int32 ExitCode = (int32)wParam;
-            MessageListener->OnApplicationExit( ExitCode );
+            MessageListener->HandleApplicationExit( ExitCode );
             break;
         }
 

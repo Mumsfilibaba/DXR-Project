@@ -21,59 +21,59 @@ public:
 
     virtual ~CCoreApplicationMessageHandler() = default;
 
-    virtual void OnKeyReleased( EKey KeyCode, SModifierKeyState ModierKeyState )
+    virtual void HandleKeyReleased( EKey KeyCode, SModifierKeyState ModierKeyState )
     {
     }
 
-    virtual void OnKeyPressed( EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState )
+    virtual void HandleKeyPressed( EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState )
     {
     }
 
-    virtual void OnKeyTyped( uint32 Character )
+    virtual void HandleKeyTyped( uint32 Character )
     {
     }
 
-    virtual void OnMouseMove( int32 x, int32 y )
+    virtual void HandleMouseMove( int32 x, int32 y )
     {
     }
 
-    virtual void OnMouseReleased( EMouseButton Button, SModifierKeyState ModierKeyState )
+    virtual void HandleMouseReleased( EMouseButton Button, SModifierKeyState ModierKeyState )
     {
     }
 
-    virtual void OnMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState )
+    virtual void HandleMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState )
     {
     }
 
-    virtual void OnMouseScrolled( float HorizontalDelta, float VerticalDelta )
+    virtual void HandleMouseScrolled( float HorizontalDelta, float VerticalDelta )
     {
     }
 
-    virtual void OnWindowResized( const TSharedRef<CCoreWindow>& Window, uint16 Width, uint16 Height )
+    virtual void HandleWindowResized( const TSharedRef<CCoreWindow>& Window, uint16 Width, uint16 Height )
     {
     }
 
-    virtual void OnWindowMoved( const TSharedRef<CCoreWindow>& Window, int16 x, int16 y )
+    virtual void HandleWindowMoved( const TSharedRef<CCoreWindow>& Window, int16 x, int16 y )
     {
     }
 
-    virtual void OnWindowFocusChanged( const TSharedRef<CCoreWindow>& Window, bool HasFocus )
+    virtual void HandleWindowFocusChanged( const TSharedRef<CCoreWindow>& Window, bool HasFocus )
     {
     }
 
-    virtual void OnWindowMouseLeft( const TSharedRef<CCoreWindow>& Window )
+    virtual void HandleWindowMouseLeft( const TSharedRef<CCoreWindow>& Window )
     {
     }
 
-    virtual void OnWindowMouseEntered( const TSharedRef<CCoreWindow>& Window )
+    virtual void HandleWindowMouseEntered( const TSharedRef<CCoreWindow>& Window )
     {
     }
 
-    virtual void OnWindowClosed( const TSharedRef<CCoreWindow>& Window )
+    virtual void HandleWindowClosed( const TSharedRef<CCoreWindow>& Window )
     {
     }
 
-    virtual void OnApplicationExit( int32 ExitCode )
+    virtual void HandleApplicationExit( int32 ExitCode )
     {
     }
 };

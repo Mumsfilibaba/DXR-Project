@@ -25,7 +25,7 @@ public:
     CConsoleInputHandler() = default;
     ~CConsoleInputHandler() = default;
 
-    virtual bool OnKeyEvent( const SKeyEvent& KeyEvent ) override final
+    virtual bool HandleKeyEvent( const SKeyEvent& KeyEvent ) override final
     {
         HandleKeyEventDelegate.Execute( KeyEvent );
         return ConsoleActivated;

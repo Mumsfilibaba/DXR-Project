@@ -61,7 +61,7 @@ bool CEngine::Init()
         return false;
     }
 
-    ICursorDevice* CursorDevice = CApplication::Get().GetCursor();
+    ICursor* CursorDevice = CApplication::Get().GetCursor();
     User = CApplicationUser::Make( 0, CursorDevice );
     if ( !User )
     {

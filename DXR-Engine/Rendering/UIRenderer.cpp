@@ -9,7 +9,7 @@
 
 #include "Core/Time/Timer.h"
 #include "Core/Engine/Engine.h"
-#include "Core/Application/ICursorDevice.h"
+#include "Core/Application/ICursor.h"
 #include "Core/Application/Application.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Profiler.h"
@@ -502,7 +502,7 @@ void CUIRenderer::OnMouseScrolled( const SMouseScrolledEvent& Event )
     IO.MouseWheelH += Event.HorizontalDelta;
 }
 
-void CUIRenderer::Render( CRHICommandList& CmdList )
+void CUIRenderer::Tick()
 {
     GlobalImGuiState.FrameClock.Tick();
 
@@ -595,10 +595,14 @@ void CUIRenderer::Render( CRHICommandList& CmdList )
         ImGui::PopStyleColor();
         ImGui::End();
 
-        // EndFrame
-        ImGui::EndFrame();
     }
 
+    // EndFrame
+    ImGui::EndFrame();
+}
+
+void CUIRenderer::Render( CRHICommandList& CmdList )
+{
     // Render ImgGui draw data
     ImGui::Render();
 

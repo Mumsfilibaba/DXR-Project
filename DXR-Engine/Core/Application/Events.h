@@ -7,7 +7,18 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/SharedRef.h"
 
-struct SKeyEvent
+struct SEvent
+{
+    FORCEINLINE SEvent()
+        : IsConsumed( false )
+    {
+    }
+
+    /* If the key was down or nor */
+    bool IsConsumed;
+};
+
+struct SKeyEvent : public SEvent
 {
     FORCEINLINE SKeyEvent( EKey InKeyCode, bool InIsDown, bool InIsRepeat, SModifierKeyState InModiferKeyState )
         : KeyCode( InKeyCode )
@@ -31,7 +42,7 @@ struct SKeyEvent
 };
 
 
-struct SKeyTypedEvent
+struct SKeyTypedEvent : public SEvent
 {
     FORCEINLINE SKeyTypedEvent( uint32 InCharacter )
         : Character( InCharacter )
@@ -47,7 +58,7 @@ struct SKeyTypedEvent
     uint32 Character;
 };
 
-struct SMouseMovedEvent
+struct SMouseMovedEvent : public SEvent
 {
     FORCEINLINE SMouseMovedEvent( int32 InX, int32 InY )
         : x( InX )
@@ -59,7 +70,7 @@ struct SMouseMovedEvent
     int32 y;
 };
 
-struct SMouseButtonEvent
+struct SMouseButtonEvent : public SEvent
 {
     FORCEINLINE SMouseButtonEvent( EMouseButton InButton, bool InIsDown, SModifierKeyState InModifiers )
         : Button( InButton )
@@ -78,7 +89,7 @@ struct SMouseButtonEvent
     SModifierKeyState Modifiers;
 };
 
-struct SMouseScrolledEvent
+struct SMouseScrolledEvent : public SEvent
 {
     FORCEINLINE SMouseScrolledEvent( float InHorizontalDelta, float InVerticalDelta )
         : HorizontalDelta( InHorizontalDelta )
@@ -90,7 +101,7 @@ struct SMouseScrolledEvent
     float VerticalDelta;
 };
 
-struct SWindowResizeEvent
+struct SWindowResizeEvent : public SEvent
 {
     FORCEINLINE SWindowResizeEvent( const TSharedRef<CCoreWindow>& InWindow, uint16 InWidth, uint16 InHeight )
         : Window( InWindow )
@@ -104,7 +115,7 @@ struct SWindowResizeEvent
     uint16 Height;
 };
 
-struct SWindowFocusChangedEvent
+struct SWindowFocusChangedEvent : public SEvent
 {
     FORCEINLINE SWindowFocusChangedEvent( const TSharedRef<CCoreWindow>& InWindow, bool hasFocus )
         : Window( InWindow )
@@ -116,7 +127,7 @@ struct SWindowFocusChangedEvent
     bool HasFocus;
 };
 
-struct SWindowMovedEvent
+struct SWindowMovedEvent : public SEvent
 {
     FORCEINLINE SWindowMovedEvent( const TSharedRef<CCoreWindow>& InWindow, int16 InX, int16 InY )
         : Window( InWindow )
@@ -130,7 +141,7 @@ struct SWindowMovedEvent
     int16 y;
 };
 
-struct SWindowFrameMouseEvent
+struct SWindowFrameMouseEvent : public SEvent
 {
     FORCEINLINE SWindowFrameMouseEvent( const TSharedRef<CCoreWindow>& InWindow, bool InMouseEntered )
         : Window( InWindow )
@@ -142,7 +153,7 @@ struct SWindowFrameMouseEvent
     bool MouseEntered;
 };
 
-struct SWindowClosedEvent
+struct SWindowClosedEvent : public SEvent
 {
     FORCEINLINE SWindowClosedEvent( const TSharedRef<CCoreWindow>& InWindow )
         : Window( InWindow )

@@ -1,7 +1,7 @@
 #include "ApplicationUser.h"
 #include "Application.h"
 
-CApplicationUser::CApplicationUser( uint32 InUserIndex, ICursorDevice* InCursorDevice )
+CApplicationUser::CApplicationUser( uint32 InUserIndex, ICursor* InCursorDevice )
     : UserIndex( InUserIndex )
     , CursorDevice( InCursorDevice )
     , KeyStates()
@@ -110,7 +110,7 @@ void CApplicationUser::SetCursorPosition( const CIntVector2& Postion )
     if ( CursorDevice )
     {
         // TODO: Relative window
-        CursorDevice->SetCursorPosition( nullptr, Postion.x, Postion.y );
+        CursorDevice->SetPosition( nullptr, Postion.x, Postion.y );
     }
 }
 

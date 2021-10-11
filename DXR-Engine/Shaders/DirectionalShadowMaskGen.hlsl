@@ -32,12 +32,13 @@ SamplerState Sampler : register(s0);
 
 // Soft shadows settings
 #define NUM_BLOCKER_SAMPLES (32)
-#define NUM_PCF_SAMPLES     (16)
+#define NUM_PCF_SAMPLES     (32)
 
 // Cascaded Shadow Mapping
 #define ENABLE_PCSS    (0)
 #define BLEND_CASCADES (1)
 #define CASCADE_FADING (0.2f)
+#define PCF_RADIUS     (0.002f)
 #define ROTATE_SAMPLES (1)
 
 /* Shadow Helpers */
@@ -185,7 +186,7 @@ float PCSSDirectionalLight( in Texture2D<float> ShadowMap, uint CascadeIndex, fl
 
     return PCFDirectionalLight(ShadowMap, ShadowCoords.xy, CompareDepth, PenumbraRadius, Scale, RandomSeed);
 #else
-    return PCFDirectionalLight(ShadowMap, ShadowCoords.xy, CompareDepth, 0.0025f, Scale, RandomSeed);
+    return PCFDirectionalLight(ShadowMap, ShadowCoords.xy, CompareDepth, PCF_RADIUS, Scale, RandomSeed);
 #endif
 }
 

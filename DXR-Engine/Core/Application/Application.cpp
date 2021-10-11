@@ -2,7 +2,29 @@
 
 #include "Core/Input/InputStates.h"
 
+#include "Rendering/UIRenderer.h"
+
 TSharedPtr<CApplication> CApplication::ApplicationInstance;
+
+TSharedPtr<CApplication> CApplication::Make( const TSharedPtr<CCoreApplication>& InPlatformApplication )
+{
+    ApplicationInstance = TSharedPtr<CApplication>( DBG_NEW CApplication( InPlatformApplication ) );
+    InPlatformApplication->SetMessageListener( ApplicationInstance );
+    return ApplicationInstance;
+}
+
+/* Init the singleton from an existing application - Used for classes inheriting from CApplication */
+TSharedPtr<CApplication> CApplication::Make( const TSharedPtr<CApplication>& InApplication )
+{
+    ApplicationInstance = InApplication;
+    return ApplicationInstance;
+}
+
+void CApplication::Release()
+{
+    ApplicationInstance->SetPlatformApplication( nullptr );
+    ApplicationInstance.Reset();
+}
 
 CApplication::CApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication )
     : CCoreApplicationMessageHandler()
@@ -23,6 +45,8 @@ TSharedRef<CCoreWindow> CApplication::MakeWindow()
 
 void CApplication::Tick( CTimestamp DeltaTime )
 {
+    CUIRenderer::Tick();
+
     const float Delta = static_cast<float>(DeltaTime.AsMilliSeconds());
     PlatformApplication->Tick( Delta );
 
@@ -37,25 +61,25 @@ void CApplication::Tick( CTimestamp DeltaTime )
 
 void CApplication::SetCursor( ECursor InCursor )
 {
-    ICursorDevice* Cursor = GetCursor();
+    ICursor* Cursor = GetCursor();
     Cursor->SetCursor( InCursor );
 }
 
 void CApplication::SetCursorPosition( const CIntVector2& Position )
 {
-    ICursorDevice* Cursor = GetCursor();
-    Cursor->SetCursorPosition( nullptr, Position.x, Position.y );
+    ICursor* Cursor = GetCursor();
+    Cursor->SetPosition( nullptr, Position.x, Position.y );
 }
 
 void CApplication::SetCursorPosition( const TSharedRef<CCoreWindow>& RelativeWindow, const CIntVector2& Position )
 {
-    ICursorDevice* Cursor = GetCursor();
-    Cursor->SetCursorPosition( RelativeWindow.Get(), Position.x, Position.y );
+    ICursor* Cursor = GetCursor();
+    Cursor->SetPosition( RelativeWindow.Get(), Position.x, Position.y );
 }
 
 CIntVector2 CApplication::GetCursorPosition() const
 {
-    ICursorDevice* Cursor = GetCursor();
+    ICursor* Cursor = GetCursor();
 
     CIntVector2 CursorPosition;
     Cursor->GetCursorPosition( nullptr, CursorPosition.x, CursorPosition.y );
@@ -65,7 +89,7 @@ CIntVector2 CApplication::GetCursorPosition() const
 
 CIntVector2 CApplication::GetCursorPosition( const TSharedRef<CCoreWindow>& RelativeWindow ) const
 {
-    ICursorDevice* Cursor = GetCursor();
+    ICursor* Cursor = GetCursor();
 
     CIntVector2 CursorPosition;
     Cursor->GetCursorPosition( RelativeWindow.Get(), CursorPosition.x, CursorPosition.y );
@@ -75,13 +99,13 @@ CIntVector2 CApplication::GetCursorPosition( const TSharedRef<CCoreWindow>& Rela
 
 void CApplication::SetCursorVisibility( bool IsVisible )
 {
-    ICursorDevice* Cursor = GetCursor();
+    ICursor* Cursor = GetCursor();
     Cursor->SetVisibility( IsVisible );
 }
 
 bool CApplication::IsCursorVisibile() const
 {
-    ICursorDevice* Cursor = GetCursor();
+    ICursor* Cursor = GetCursor();
     return Cursor->IsVisible();
 }
 
@@ -159,13 +183,13 @@ void CApplication::SetPlatformApplication( const TSharedPtr<CCoreApplication>& I
     PlatformApplication = InPlatformApplication;
 }
 
-void CApplication::OnKeyReleased( EKey KeyCode, SModifierKeyState ModierKeyState )
+void CApplication::HandleKeyReleased( EKey KeyCode, SModifierKeyState ModierKeyState )
 {
     SKeyEvent KeyEvent( KeyCode, false, false, ModierKeyState );
     OnKeyEvent( KeyEvent );
 }
 
-void CApplication::OnKeyPressed( EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState )
+void CApplication::HandleKeyPressed( EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState )
 {
     SKeyEvent KeyEvent( KeyCode, true, IsRepeat, ModierKeyState );
     OnKeyEvent( KeyEvent );
@@ -173,52 +197,53 @@ void CApplication::OnKeyPressed( EKey KeyCode, bool IsRepeat, SModifierKeyState 
 
 void CApplication::OnKeyEvent( const SKeyEvent& KeyEvent )
 {
+    SKeyEvent Event = KeyEvent;
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
         CInputHandler* Handler = InputHandlers[Index];
-        if ( Handler->OnKeyEvent( KeyEvent ) )
+        if ( Handler->HandleKeyEvent( Event ) )
         {
-            break;
+            Event.IsConsumed = true;
         }
     }
 
-    if ( !RegisteredUsers.IsEmpty() )
+    if ( !Event.IsConsumed && !RegisteredUsers.IsEmpty() )
     {
         for ( const TSharedPtr<CApplicationUser>& User : RegisteredUsers )
         {
-            User->HandleKeyEvent( KeyEvent );
+            User->HandleKeyEvent( Event );
         }
     }
 
     // TODO: Update viewport
 }
 
-void CApplication::OnKeyTyped( uint32 Character )
+void CApplication::HandleKeyTyped( uint32 Character )
 {
     SKeyTypedEvent KeyTypedEvent( Character );
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
         CInputHandler* Handler = InputHandlers[Index];
-        if ( Handler->OnKeyTyped( KeyTypedEvent ) )
+        if ( Handler->HandleKeyTyped( KeyTypedEvent ) )
         {
-            break;
+            KeyTypedEvent.IsConsumed = true;
         }
     }
 }
 
-void CApplication::OnMouseMove( int32 x, int32 y )
+void CApplication::HandleMouseMove( int32 x, int32 y )
 {
     SMouseMovedEvent MouseMovedEvent( x, y );
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
         CInputHandler* Handler = InputHandlers[Index];
-        if ( Handler->OnMouseMove( MouseMovedEvent ) )
+        if ( Handler->HandleMouseMove( MouseMovedEvent ) )
         {
-            break;
+            MouseMovedEvent.IsConsumed = true;
         }
     }
 
-    if ( !RegisteredUsers.IsEmpty() )
+    if ( !MouseMovedEvent.IsConsumed && !RegisteredUsers.IsEmpty() )
     {
         for ( const TSharedPtr<CApplicationUser>& User : RegisteredUsers )
         {
@@ -227,7 +252,7 @@ void CApplication::OnMouseMove( int32 x, int32 y )
     }
 }
 
-void CApplication::OnMouseReleased( EMouseButton Button, SModifierKeyState ModierKeyState )
+void CApplication::HandleMouseReleased( EMouseButton Button, SModifierKeyState ModierKeyState )
 {
     TSharedRef<CCoreWindow> CaptureWindow = PlatformApplication->GetCapture();
     if ( CaptureWindow )
@@ -239,7 +264,7 @@ void CApplication::OnMouseReleased( EMouseButton Button, SModifierKeyState Modie
     OnMouseButtonEvent( MouseButtonEvent );
 }
 
-void CApplication::OnMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState )
+void CApplication::HandleMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState )
 {
     TSharedRef<CCoreWindow> CaptureWindow = PlatformApplication->GetCapture();
     if ( !CaptureWindow )
@@ -254,37 +279,38 @@ void CApplication::OnMousePressed( EMouseButton Button, SModifierKeyState Modier
 
 void CApplication::OnMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent )
 {
+    SMouseButtonEvent Event = MouseButtonEvent;
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
         CInputHandler* Handler = InputHandlers[Index];
-        if ( Handler->OnMouseButtonEvent( MouseButtonEvent ) )
+        if ( Handler->HandleMouseButtonEvent( Event ) )
         {
-            break;
+            Event.IsConsumed = true;
         }
     }
 
-    if ( !RegisteredUsers.IsEmpty() )
+    if ( !Event.IsConsumed && !RegisteredUsers.IsEmpty() )
     {
         for ( const TSharedPtr<CApplicationUser>& User : RegisteredUsers )
         {
-            User->HandleMouseButtonEvent( MouseButtonEvent );
+            User->HandleMouseButtonEvent( Event );
         }
     }
 }
 
-void CApplication::OnMouseScrolled( float HorizontalDelta, float VerticalDelta )
+void CApplication::HandleMouseScrolled( float HorizontalDelta, float VerticalDelta )
 {
     SMouseScrolledEvent MouseScrolledEvent( HorizontalDelta, VerticalDelta );
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
         CInputHandler* Handler = InputHandlers[Index];
-        if ( Handler->OnMouseScrolled( MouseScrolledEvent ) )
+        if ( Handler->HandleMouseScrolled( MouseScrolledEvent ) )
         {
-            break;
+            MouseScrolledEvent.IsConsumed = true;
         }
     }
 
-    if ( !RegisteredUsers.IsEmpty() )
+    if ( !MouseScrolledEvent.IsConsumed && !RegisteredUsers.IsEmpty() )
     {
         for ( const TSharedPtr<CApplicationUser>& User : RegisteredUsers )
         {
@@ -293,7 +319,7 @@ void CApplication::OnMouseScrolled( float HorizontalDelta, float VerticalDelta )
     }
 }
 
-void CApplication::OnWindowResized( const TSharedRef<CCoreWindow>& Window, uint16 Width, uint16 Height )
+void CApplication::HandleWindowResized( const TSharedRef<CCoreWindow>& Window, uint16 Width, uint16 Height )
 {
     SWindowResizeEvent WindowResizeEvent( Window, Width, Height );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
@@ -301,12 +327,12 @@ void CApplication::OnWindowResized( const TSharedRef<CCoreWindow>& Window, uint1
         CWindowMessageHandler* Handler = WindowMessageHandlers[Index];
         if ( Handler->OnWindowResized( WindowResizeEvent ) )
         {
-            break;
+            WindowResizeEvent.IsConsumed = true;
         }
     }
 }
 
-void CApplication::OnWindowMoved( const TSharedRef<CCoreWindow>& Window, int16 x, int16 y )
+void CApplication::HandleWindowMoved( const TSharedRef<CCoreWindow>& Window, int16 x, int16 y )
 {
     SWindowMovedEvent WindowsMovedEvent( Window, x, y );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
@@ -314,12 +340,12 @@ void CApplication::OnWindowMoved( const TSharedRef<CCoreWindow>& Window, int16 x
         CWindowMessageHandler* Handler = WindowMessageHandlers[Index];
         if ( Handler->OnWindowMoved( WindowsMovedEvent ) )
         {
-            break;
+            WindowsMovedEvent.IsConsumed = true;
         }
     }
 }
 
-void CApplication::OnWindowFocusChanged( const TSharedRef<CCoreWindow>& Window, bool HasFocus )
+void CApplication::HandleWindowFocusChanged( const TSharedRef<CCoreWindow>& Window, bool HasFocus )
 {
     SWindowFocusChangedEvent WindowFocusChangedEvent( Window, HasFocus );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
@@ -327,18 +353,18 @@ void CApplication::OnWindowFocusChanged( const TSharedRef<CCoreWindow>& Window, 
         CWindowMessageHandler* Handler = WindowMessageHandlers[Index];
         if ( Handler->OnWindowFocusChanged( WindowFocusChangedEvent ) )
         {
-            break;
+            WindowFocusChangedEvent.IsConsumed = true;
         }
     }
 }
 
-void CApplication::OnWindowMouseLeft( const TSharedRef<CCoreWindow>& Window )
+void CApplication::HandleWindowMouseLeft( const TSharedRef<CCoreWindow>& Window )
 {
     SWindowFrameMouseEvent WindowFrameMouseEvent( Window, false );
     OnWindowFrameMouseEvent( WindowFrameMouseEvent );
 }
 
-void CApplication::OnWindowMouseEntered( const TSharedRef<CCoreWindow>& Window )
+void CApplication::HandleWindowMouseEntered( const TSharedRef<CCoreWindow>& Window )
 {
     SWindowFrameMouseEvent WindowFrameMouseEvent( Window, true );
     OnWindowFrameMouseEvent( WindowFrameMouseEvent );
@@ -346,17 +372,18 @@ void CApplication::OnWindowMouseEntered( const TSharedRef<CCoreWindow>& Window )
 
 void CApplication::OnWindowFrameMouseEvent( const SWindowFrameMouseEvent& WindowFrameMouseEvent )
 {
+    SWindowFrameMouseEvent Event = WindowFrameMouseEvent;
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
         CWindowMessageHandler* Handler = WindowMessageHandlers[Index];
-        if ( Handler->OnWindowFrameMouseEvent( WindowFrameMouseEvent ) )
+        if ( Handler->OnWindowFrameMouseEvent( Event ) )
         {
-            break;
+            Event.IsConsumed = true;
         }
     }
 }
 
-void CApplication::OnWindowClosed( const TSharedRef<CCoreWindow>& Window )
+void CApplication::HandleWindowClosed( const TSharedRef<CCoreWindow>& Window )
 {
     SWindowClosedEvent WindowClosedEvent( Window );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
@@ -364,12 +391,12 @@ void CApplication::OnWindowClosed( const TSharedRef<CCoreWindow>& Window )
         CWindowMessageHandler* Handler = WindowMessageHandlers[Index];
         if ( Handler->OnWindowClosed( WindowClosedEvent ) )
         {
-            break;
+            WindowClosedEvent.IsConsumed = true;
         }
     }
 }
 
-void CApplication::OnApplicationExit( int32 ExitCode )
+void CApplication::HandleApplicationExit( int32 ExitCode )
 {
     ApplicationExitEvent.Broadcast( ExitCode );
 }

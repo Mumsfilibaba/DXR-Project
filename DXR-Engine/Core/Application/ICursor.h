@@ -17,7 +17,7 @@ enum class ECursor
 
 class CCoreWindow;
 
-class ICursorDevice
+class ICursor
 {
 public:
 
@@ -25,7 +25,7 @@ public:
     virtual void SetCursor( ECursor Cursor ) = 0;
 
     /* Sets the position of the cursor */
-    virtual void SetCursorPosition( CCoreWindow* RelativeWindow, int32 x, int32 y ) const = 0;
+    virtual void SetPosition( CCoreWindow* RelativeWindow, int32 x, int32 y ) const = 0;
 
     /* Retrieve the cursor position of a window */
     virtual void GetCursorPosition( CCoreWindow* RelativeWindow, int32& OutX, int32& OutY ) const = 0;
@@ -37,5 +37,5 @@ public:
     virtual bool IsVisible() const = 0;
 
 protected:
-    ~ICursorDevice() = default;
+    ~ICursor() = default;
 };

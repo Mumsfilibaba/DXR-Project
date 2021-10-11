@@ -1,6 +1,6 @@
 #pragma once
 #include "Events.h"
-#include "ICursorDevice.h"
+#include "ICursor.h"
 
 #include "Core/Input/InputStates.h"
 #include "Core/Containers/Array.h"
@@ -16,7 +16,7 @@ class CApplicationUser
 public:
 
     /* Create a new application user */
-    static FORCEINLINE TSharedPtr<CApplicationUser> Make( uint32 InUserIndex, ICursorDevice* InCursorDevice )
+    static FORCEINLINE TSharedPtr<CApplicationUser> Make( uint32 InUserIndex, ICursor* InCursorDevice )
     {
         return TSharedPtr<CApplicationUser>( DBG_NEW CApplicationUser( InUserIndex, InCursorDevice ) );
     }
@@ -115,7 +115,7 @@ public:
     }
 
     /* Retrieve the cursor */
-    FORCEINLINE ICursorDevice* GetCursorDevice() const
+    FORCEINLINE ICursor* GetCursorDevice() const
     {
         return CursorDevice;
     }
@@ -128,7 +128,7 @@ public:
 
 private:
 
-    CApplicationUser( uint32 InUserIndex, ICursorDevice* InCursorDevice );
+    CApplicationUser( uint32 InUserIndex, ICursor* InCursorDevice );
 
     /* Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode( EKey KeyCode ) const
@@ -154,7 +154,7 @@ private:
     const uint32 UserIndex;
 
     /* The cursor that is controlled by this user */
-    ICursorDevice* CursorDevice;
+    ICursor* CursorDevice;
 
     /* The key-state of this user */
     TArray<SKeyState> KeyStates; // TODO: Use a map instead? 
