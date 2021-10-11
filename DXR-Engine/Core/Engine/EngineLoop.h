@@ -5,20 +5,15 @@ class CEngineLoop
 {
 public:
 
-    CEngineLoop();
-    virtual ~CEngineLoop();
-
     /* Creates the application and load modules */
-    virtual bool PreInit();
+    static bool PreInit();
 
     /* Initializes and starts up the engine */
-    virtual bool Init();
+    static bool Init();
 
     /* Ticks the engine */
-    virtual void Tick( CTimestamp Deltatime );
+    static void Tick( CTimestamp Deltatime );
 
     /* Releases the engine */
-    virtual bool Release();
+    static bool Release();
 };
-
-extern CEngineLoop GEngineLoop;

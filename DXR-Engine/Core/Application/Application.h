@@ -16,6 +16,10 @@
 /* Application class for the engine */
 class CApplication : public CCoreApplicationMessageHandler
 {
+    /* Delegate for when the application is about to exit */
+    DECLARE_EVENT( CApplicationExitEvent, CApplication, int32 );
+    CApplicationExitEvent ApplicationExitEvent;
+
 public:
 
     /* Creates a standard main application */
@@ -35,10 +39,6 @@ public:
     /* Public destructor for the TSharedPtr */
     virtual ~CApplication();
 
-    /* Delegate for when the application is about to exit */
-    DECLARE_EVENT( CApplicationExitEvent, CApplication, int32 );
-    CApplicationExitEvent ApplicationExitEvent;
-
     /* Creates a window */
     virtual TSharedRef<CCoreWindow> MakeWindow();
 
@@ -49,19 +49,19 @@ public:
     virtual void SetCursor( ECursor Cursor );
 
     /* Set the cursor position */
-    virtual void SetCursorPosition( const CIntVector2& Position );
+    virtual void SetCursorPos( const CIntVector2& Position );
 
     /* Set the cursor position */
-    virtual void SetCursorPosition( const TSharedRef<CCoreWindow>& RelativeWindow, const CIntVector2& Position );
+    virtual void SetCursorPos( const TSharedRef<CCoreWindow>& RelativeWindow, const CIntVector2& Position );
 
     /* Retrieve the current cursor position */
-    virtual CIntVector2 GetCursorPosition() const;
+    virtual CIntVector2 GetCursorPos() const;
 
     /* Retrieve the current cursor position */
-    virtual CIntVector2 GetCursorPosition( const TSharedRef<CCoreWindow>& RelativeWindow ) const;
+    virtual CIntVector2 GetCursorPos( const TSharedRef<CCoreWindow>& RelativeWindow ) const;
 
     /* Set the visibility of the cursor */
-    virtual void SetCursorVisibility( bool IsVisible );
+    virtual void ShowCursor( bool IsVisible );
 
     /* Check the visibility for the cursor */
     virtual bool IsCursorVisibile() const;
@@ -79,19 +79,38 @@ public:
     virtual TSharedRef<CCoreWindow> GetActiveWindow() const;
 
     /* Adds a InputHandler to the application, which gets processed before the game */
-    virtual void AddInputHandler( CInputHandler* NewInputHandler );
+    void AddInputHandler( CInputHandler* NewInputHandler );
 
     /* Removes a InputHandler from the application */
-    virtual void RemoveInputHandler( CInputHandler* InputHandler );
+    void RemoveInputHandler( CInputHandler* InputHandler );
 
-    /* Adds a InputHandler to the application, which gets processed before the game */
-    virtual void AddWindowMessageHandler( CWindowMessageHandler* NewWindowMessageHandler );
+    /* Adds a InputHandler to the application, which gets processed before the application module */
+    void AddWindowMessageHandler( CWindowMessageHandler* NewWindowMessageHandler );
 
-    /* Removes a InputHandler from the application */
-    virtual void RemoveWindowMessageHandler( CWindowMessageHandler* WindowMessageHandler );
+    void RemoveWindowMessageHandler( CWindowMessageHandler* WindowMessageHandler );
 
-    /* Set the platform application */
-    virtual void SetPlatformApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
+    void SetPlatformApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
+
+    FORCEINLINE TSharedPtr<CCoreApplication> GetPlatformApplication() const
+    {
+        return PlatformApplication;
+    }
+
+    FORCEINLINE ICursor* GetCursor() const
+    {
+        return PlatformApplication->GetCursor();
+    }
+
+    FORCEINLINE bool IsRunning() const 
+    {
+        return Running;
+    }
+
+    /* Get the number of registered users */
+    FORCEINLINE uint32 GetNumUsers() const
+    {
+        return static_cast<uint32>(RegisteredUsers.Size());
+    }
 
     /* Register a new user to the application */
     FORCEINLINE void RegisterUser( const TSharedPtr<CApplicationUser>& NewUser )
@@ -145,26 +164,6 @@ public:
 
     virtual void HandleApplicationExit( int32 ExitCode ) override;
 
-public:
-
-    /* Retrieve the platform application */
-    FORCEINLINE TSharedPtr<CCoreApplication> GetPlatformApplication() const
-    {
-        return PlatformApplication;
-    }
-
-    /* Retrieve the cursor interface */
-    FORCEINLINE ICursor* GetCursor() const
-    {
-        return PlatformApplication->GetCursor();
-    }
-
-    /* Get the number of registered users */
-    FORCEINLINE uint32 GetNumUsers() const
-    {
-        return static_cast<uint32>(RegisteredUsers.Size());
-    }
-
 protected:
 
     CApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
@@ -193,6 +192,9 @@ protected:
 
     /* All registered users */
     TArray<TSharedPtr<CApplicationUser>> RegisteredUsers;
+
+    // Is false when the platform application reports that the application should exit
+    bool Running = true;
 
     static TSharedPtr<CApplication> ApplicationInstance;
 };

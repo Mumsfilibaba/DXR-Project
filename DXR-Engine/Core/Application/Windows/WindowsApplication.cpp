@@ -248,6 +248,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             if ( MessageWindow )
             {
                 MessageListener->HandleWindowClosed( MessageWindow );
+                DestroyWindow( Window );
             }
 
             break;

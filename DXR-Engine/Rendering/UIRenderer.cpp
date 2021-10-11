@@ -511,7 +511,7 @@ void CUIRenderer::Tick()
     TSharedRef<CCoreWindow> Window = GEngine->MainWindow;
     if ( IO.WantSetMousePos )
     {
-        CApplication::Get().SetCursorPosition( Window, CIntVector2( static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) ) );
+        CApplication::Get().SetCursorPos( Window, CIntVector2( static_cast<int32>(IO.MousePos.x), static_cast<int32>(IO.MousePos.y) ) );
     }
 
     SWindowShape CurrentWindowShape;
@@ -522,7 +522,7 @@ void CUIRenderer::Tick()
     IO.DisplaySize = ImVec2( float( CurrentWindowShape.Width ), float( CurrentWindowShape.Height ) );
     IO.DisplayFramebufferScale = ImVec2( 1.0f, 1.0f );
 
-    CIntVector2 Position = CApplication::Get().GetCursorPosition( Window );
+    CIntVector2 Position = CApplication::Get().GetCursorPos( Window );
     IO.MousePos = ImVec2( static_cast<float>(Position.x), static_cast<float>(Position.y) );
 
     SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();

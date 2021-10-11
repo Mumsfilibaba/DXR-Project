@@ -13,24 +13,6 @@
 
 #include "Scene/Scene.h"
 
-// TODO: Later we should bind this to the viewport? 
-class CEngineWindowHandler : public CWindowMessageHandler
-{
-public:
-
-    DECLARE_DELEGATE( CWindowClosedDelegate, const SWindowClosedEvent& ClosedEvent );
-    CWindowClosedDelegate WindowClosedDelegate;
-
-    CEngineWindowHandler() = default;
-    ~CEngineWindowHandler() = default;
-
-    virtual bool OnWindowClosed( const SWindowClosedEvent& ClosedEvent ) override final
-    {
-        WindowClosedDelegate.Execute( ClosedEvent );
-        return true;
-    }
-};
-
 /* Class representing the engine */
 class CEngine
 {
@@ -43,7 +25,7 @@ public:
     }
 
     /* Public destructor for the TSharedPtr */
-    virtual ~CEngine();
+    virtual ~CEngine() = default;
 
     /* Init engine */
     virtual bool Init();
@@ -88,13 +70,6 @@ public:
 private:
 
     CEngine();
-
-    CEngineWindowHandler WindowHandler;
-
-    /* Handle when the application is exited */
-    void OnApplicationExit( int32 ExitCode );
-
-    CDelegateHandle OnApplicationExitHandle;
 };
 
 extern TSharedPtr<CEngine> GEngine;

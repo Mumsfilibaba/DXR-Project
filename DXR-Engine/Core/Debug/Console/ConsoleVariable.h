@@ -29,7 +29,8 @@ public:
     virtual bool IsBool() const = 0;
     virtual bool IsString() const = 0;
 
-    TMulticastDelegate<CConsoleVariable*> OnChangedDelegate;
+    DECLARE_MULTICAST_DELEGATE( COnChangedDelegate, CConsoleVariable* );
+    COnChangedDelegate OnChangedDelegate;
 };
 
 template<typename T>
@@ -54,35 +55,35 @@ public:
 
     virtual void SetInt( int32 InValue ) override
     {
-        Value = (T)InValue;
+        Value = static_cast<T>(InValue);
         OnChanged();
     }
 
     virtual void SetFloat( float InValue ) override
     {
-        Value = (T)InValue;
+        Value = static_cast<T>(InValue);
         OnChanged();
     }
 
     virtual void SetBool( bool InValue ) override
     {
-        Value = (T)InValue;
+        Value = static_cast<T>(InValue);
         OnChanged();
     }
 
     virtual int32 GetInt() const override
     {
-        return (int32)Value;
+        return static_cast<int32>(Value);
     }
 
     virtual float GetFloat() const override
     {
-        return (float)Value;
+        return static_cast<float>(Value);
     }
 
     virtual bool GetBool() const override
     {
-        return (bool)Value;
+        return static_cast<bool>(Value);
     }
 
     virtual bool IsInt() const override
@@ -216,6 +217,7 @@ template<> inline void TConsoleVariable<CString>::SetBool( bool InValue )
 template<> inline void TConsoleVariable<CString>::SetString( const CString& InValue )
 {
     Value = InValue;
+    OnChanged();
 }
 
 template<> inline bool TConsoleVariable<CString>::IsString() const

@@ -13,6 +13,7 @@ public:
     {
         return nullptr;
     }
+
     virtual CConsoleVariable* AsVariable()
     {
         return nullptr;

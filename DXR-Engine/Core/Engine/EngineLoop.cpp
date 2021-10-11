@@ -7,6 +7,8 @@
 
 #include "Editor/Editor.h"
 
+#include "Core/Modules/ModuleManger.h"
+
 #include "Core/Memory/Memory.h"
 #include "Core/Engine/EngineGlobals.h"
 #include "Core/Application/ApplicationModule.h"
@@ -20,16 +22,6 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/InterlockedInt.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
-
-CEngineLoop GEngineLoop;
-
-CEngineLoop::CEngineLoop()
-{
-}
-
-CEngineLoop::~CEngineLoop()
-{
-}
 
 bool CEngineLoop::PreInit()
 {
@@ -74,6 +66,8 @@ bool CEngineLoop::PreInit()
     }
 
     // RenderAPI
+    GModuleManager.LoadModule( "D3D12RHI" );
+
     ERHIModule RenderApi =
     #if defined(PLATFORM_MACOS)
         ERHIModule::Null;

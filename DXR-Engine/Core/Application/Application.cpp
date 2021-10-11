@@ -1,8 +1,10 @@
 #include "Application.h"
 
-#include "Core/Input/InputStates.h"
+#include "Platform/PlatformApplicationMisc.h"
 
 #include "Rendering/UIRenderer.h"
+
+#include "Core/Input/InputStates.h"
 
 TSharedPtr<CApplication> CApplication::ApplicationInstance;
 
@@ -65,19 +67,19 @@ void CApplication::SetCursor( ECursor InCursor )
     Cursor->SetCursor( InCursor );
 }
 
-void CApplication::SetCursorPosition( const CIntVector2& Position )
+void CApplication::SetCursorPos( const CIntVector2& Position )
 {
     ICursor* Cursor = GetCursor();
     Cursor->SetPosition( nullptr, Position.x, Position.y );
 }
 
-void CApplication::SetCursorPosition( const TSharedRef<CCoreWindow>& RelativeWindow, const CIntVector2& Position )
+void CApplication::SetCursorPos( const TSharedRef<CCoreWindow>& RelativeWindow, const CIntVector2& Position )
 {
     ICursor* Cursor = GetCursor();
     Cursor->SetPosition( RelativeWindow.Get(), Position.x, Position.y );
 }
 
-CIntVector2 CApplication::GetCursorPosition() const
+CIntVector2 CApplication::GetCursorPos() const
 {
     ICursor* Cursor = GetCursor();
 
@@ -87,7 +89,7 @@ CIntVector2 CApplication::GetCursorPosition() const
     return CursorPosition;
 }
 
-CIntVector2 CApplication::GetCursorPosition( const TSharedRef<CCoreWindow>& RelativeWindow ) const
+CIntVector2 CApplication::GetCursorPos( const TSharedRef<CCoreWindow>& RelativeWindow ) const
 {
     ICursor* Cursor = GetCursor();
 
@@ -97,7 +99,7 @@ CIntVector2 CApplication::GetCursorPosition( const TSharedRef<CCoreWindow>& Rela
     return CursorPosition;
 }
 
-void CApplication::SetCursorVisibility( bool IsVisible )
+void CApplication::ShowCursor( bool IsVisible )
 {
     ICursor* Cursor = GetCursor();
     Cursor->SetVisibility( IsVisible );
@@ -394,9 +396,13 @@ void CApplication::HandleWindowClosed( const TSharedRef<CCoreWindow>& Window )
             WindowClosedEvent.IsConsumed = true;
         }
     }
+
+    // TODO: Register a main viewport and when that closes, request exit for now just exit
+    PlatformApplicationMisc::RequestExit( 0 );
 }
 
 void CApplication::HandleApplicationExit( int32 ExitCode )
 {
+    Running = false;
     ApplicationExitEvent.Broadcast( ExitCode );
 }

@@ -13,10 +13,19 @@ CConsoleManager GConsole;
 
 CConsoleCommand GClearHistory;
 
+TConsoleVariable<CString> GEcho;
+
 void CConsoleManager::Init()
 {
     GClearHistory.OnExecute.AddRaw( this, &CConsoleManager::ClearHistory );
     INIT_CONSOLE_COMMAND( "ClearHistory", &GClearHistory );
+
+    GEcho.OnChangedDelegate.AddLambda([this]( CConsoleVariable* InVariable ) -> void
+    {
+        this->PrintMessage( InVariable->GetString() );
+    });
+
+    INIT_CONSOLE_VARIABLE( "Echo", &GEcho );
 
     InputHandler.HandleKeyEventDelegate.BindRaw( this, &CConsoleManager::OnKeyPressedEvent );
     CApplication::Get().AddInputHandler( &InputHandler );
