@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Time/Timestamp.h"
 
-extern class CApplicationModule* CreateApplicationModule();
+#include "Core/Modules/IEngineModule.h"
 
-class CApplicationModule
+class CApplicationModule : public IEngineModule
 {
 public:
 
@@ -18,6 +18,15 @@ public:
 
     /* Release the application module */
     virtual bool Release();
+
+    /* Called when the module is first loaded into the application */
+    virtual bool Load() override;
+
+    /* Called before the module is unloaded by the application */
+    virtual bool Unload() override;
+
+    /* The name of the module */
+    virtual const char* GetName() override;
 };
 
 extern CApplicationModule* GApplicationModule;

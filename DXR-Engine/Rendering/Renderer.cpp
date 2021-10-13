@@ -7,6 +7,7 @@
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
 
+#include "CoreRHI/RHICore.h"
 #include "CoreRHI/RHIShaderCompiler.h"
 
 #include "Core/Math/Frustum.h"

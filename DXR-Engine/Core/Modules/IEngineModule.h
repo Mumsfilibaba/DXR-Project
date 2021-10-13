@@ -5,6 +5,8 @@ class IEngineModule
 {
 public:
 
+    virtual ~IEngineModule() = default;
+
     /* Called when the module is first loaded into the application */
     virtual bool Load() = 0;
 

@@ -1,6 +1,6 @@
 #include "Material.h"
 
-#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHICore.h"
 #include "CoreRHI/RHICommandList.h"
 
 #include "Core/Engine/Engine.h"

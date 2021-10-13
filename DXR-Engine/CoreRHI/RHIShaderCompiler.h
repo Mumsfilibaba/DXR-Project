@@ -1,5 +1,6 @@
 #pragma once
-#include "RHIResources.h"
+#include "RHIModule.h"
+#include "RHIShader.h"
 
 enum class EShaderModel
 {

@@ -18,3 +18,18 @@ bool CApplicationModule::Release()
 {
     return true;
 }
+
+bool CApplicationModule::Load()
+{
+    return true;
+}
+
+bool CApplicationModule::Unload()
+{
+    return true;
+}
+
+const char* CApplicationModule::GetName()
+{
+    return "ApplicationModule";
+}

@@ -1,6 +1,6 @@
 #include "SkyboxRenderPass.h"
 
-#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHICore.h"
 #include "CoreRHI/RHIShaderCompiler.h"
 #include "Rendering/Resources/TextureFactory.h"
 

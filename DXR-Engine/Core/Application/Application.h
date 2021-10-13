@@ -17,14 +17,14 @@
 class CApplication : public CCoreApplicationMessageHandler
 {
     /* Delegate for when the application is about to exit */
-    DECLARE_EVENT( CApplicationExitEvent, CApplication, int32 );
-    CApplicationExitEvent ApplicationExitEvent;
+    DECLARE_EVENT( CExitEvent, CApplication, int32 );
+    CExitEvent ExitEvent;
 
 public:
 
     /* Creates a standard main application */
     static TSharedPtr<CApplication> Make( const TSharedPtr<CCoreApplication>& InPlatformApplication );
-
+    
     /* Init the singleton from an existing application - Used for classes inheriting from CApplication */
     static TSharedPtr<CApplication> Make( const TSharedPtr<CApplication>& InApplication );
 
@@ -33,7 +33,7 @@ public:
     /* Retrieve the singleton application instance */
     static FORCEINLINE CApplication& Get()
     {
-        return *ApplicationInstance;
+        return *Instance;
     }
 
     /* Public destructor for the TSharedPtr */
@@ -104,6 +104,11 @@ public:
     FORCEINLINE bool IsRunning() const 
     {
         return Running;
+    }
+
+    FORCEINLINE CExitEvent GetExitEvent() const
+    {
+        return ExitEvent;
     }
 
     /* Get the number of registered users */
@@ -195,6 +200,7 @@ protected:
 
     // Is false when the platform application reports that the application should exit
     bool Running = true;
-
-    static TSharedPtr<CApplication> ApplicationInstance;
+    
+    static TSharedPtr<CApplication> Instance;
 };
+

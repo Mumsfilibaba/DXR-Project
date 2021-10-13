@@ -6,26 +6,26 @@
 
 #include "Core/Input/InputStates.h"
 
-TSharedPtr<CApplication> CApplication::ApplicationInstance;
+TSharedPtr<CApplication> CApplication::Instance;
 
 TSharedPtr<CApplication> CApplication::Make( const TSharedPtr<CCoreApplication>& InPlatformApplication )
 {
-    ApplicationInstance = TSharedPtr<CApplication>( DBG_NEW CApplication( InPlatformApplication ) );
-    InPlatformApplication->SetMessageListener( ApplicationInstance );
-    return ApplicationInstance;
+    Instance = TSharedPtr<CApplication>( DBG_NEW CApplication( InPlatformApplication ) );
+    InPlatformApplication->SetMessageListener( Instance );
+    return Instance;
 }
 
 /* Init the singleton from an existing application - Used for classes inheriting from CApplication */
 TSharedPtr<CApplication> CApplication::Make( const TSharedPtr<CApplication>& InApplication )
 {
-    ApplicationInstance = InApplication;
-    return ApplicationInstance;
+    Instance = InApplication;
+    return Instance;
 }
 
 void CApplication::Release()
 {
-    ApplicationInstance->SetPlatformApplication( nullptr );
-    ApplicationInstance.Reset();
+    Instance->SetPlatformApplication( nullptr );
+    Instance.Reset();
 }
 
 CApplication::CApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication )
@@ -179,7 +179,8 @@ void CApplication::SetPlatformApplication( const TSharedPtr<CCoreApplication>& I
 {
     if ( InPlatformApplication )
     {
-        InPlatformApplication->SetMessageListener( ApplicationInstance );
+        Assert( this == Instance );
+        InPlatformApplication->SetMessageListener( Instance );
     }
 
     PlatformApplication = InPlatformApplication;
@@ -404,5 +405,5 @@ void CApplication::HandleWindowClosed( const TSharedRef<CCoreWindow>& Window )
 void CApplication::HandleApplicationExit( int32 ExitCode )
 {
     Running = false;
-    ApplicationExitEvent.Broadcast( ExitCode );
+    ExitEvent.Broadcast( ExitCode );
 }

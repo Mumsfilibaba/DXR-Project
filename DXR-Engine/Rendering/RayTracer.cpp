@@ -1,6 +1,6 @@
 #include "RayTracer.h"
 
-#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHICore.h"
 #include "CoreRHI/RHIShaderCompiler.h"
 
 #include "Resources/Material.h"

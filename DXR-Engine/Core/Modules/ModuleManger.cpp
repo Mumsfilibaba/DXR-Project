@@ -5,14 +5,9 @@
 
 #include "Core/Templates/StringTraits.h"
 
-CORE_API CModuleManger GModuleManager;
+CModuleManager CModuleManager::Instance;
 
-CModuleManger::CModuleManger()
-    : Modules()
-{
-}
-
-IEngineModule* CModuleManger::LoadModule( const char* ModuleName )
+IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
 {
     Assert( ModuleName != nullptr );
 
@@ -24,6 +19,7 @@ IEngineModule* CModuleManger::LoadModule( const char* ModuleName )
         return nullptr;
     }
 
+    // Requires that the module has a LoadEngineModule function exported
     PFNLoadEngineModule LoadEngineModule = GetTypedProcAddress<PFNLoadEngineModule>( Module, "LoadEngineModule" );
     if ( !LoadEngineModule )
     {
@@ -37,6 +33,7 @@ IEngineModule* CModuleManger::LoadModule( const char* ModuleName )
         return nullptr;
     }
 
+    // TODO: The check should happen before we try to load since that is more expensive (Have a public function?)
     TPair<CString, IEngineModule*> NewPair( ModuleName, NewModule );
     int32 Index = Modules.Find( NewPair, []( const TPair<CString, IEngineModule*>& LHS, const TPair<CString, IEngineModule*>& RHS ) -> bool
     {
@@ -57,15 +54,15 @@ IEngineModule* CModuleManger::LoadModule( const char* ModuleName )
     }
 }
 
-IEngineModule* CModuleManger::GetModule( const char* ModuleName )
+IEngineModule* CModuleManager::GetEngineModule( const char* ModuleName )
 {
     return nullptr;
 }
 
-void CModuleManger::ReleaseModule( const char* ModuleName )
+void CModuleManager::ReleaseModule( const char* ModuleName )
 {
 }
 
-void CModuleManger::ReleaseAllModule()
+void CModuleManager::ReleaseAllModule()
 {
 }

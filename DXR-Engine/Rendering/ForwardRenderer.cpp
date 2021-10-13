@@ -1,6 +1,6 @@
 #include "ForwardRenderer.h"
 
-#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHICore.h"
 #include "CoreRHI/RHIShaderCompiler.h"
 
 #include "Rendering/MeshDrawCommand.h"

@@ -1,8 +1,10 @@
+#include "SandboxCore.h"
+
 #include <Core/Application/ApplicationModule.h>
 
 #include <Scene/Camera.h>
 
-class CSandbox : public CApplicationModule
+class SANDBOX_API CSandbox : public CApplicationModule
 {
 public:
 

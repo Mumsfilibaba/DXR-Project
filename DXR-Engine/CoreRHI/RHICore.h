@@ -3,30 +3,14 @@
 #include "RHIResources.h"
 #include "RHIResourceViews.h"
 #include "RHICommandList.h"
+#include "RHIModule.h"
 
-#include "Core/Engine/EngineGlobals.h"
 #include "Core/Application/Core/CoreWindow.h"
 
 struct SResourceData;
 struct SClearValue;
 class CRHIRayTracingGeometry;
 class CRHIRayTracingScene;
-
-enum class ERHIModule : uint32
-{
-    Unknown = 0,
-    Null = 1,
-    D3D12 = 2,
-};
-
-inline const char* ToString( ERHIModule RenderLayerApi )
-{
-    switch ( RenderLayerApi )
-    {
-        case ERHIModule::D3D12: return "D3D12";
-        default: return "Unknown";
-    }
-}
 
 enum class EShadingRateTier
 {

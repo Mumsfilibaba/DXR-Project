@@ -1,6 +1,6 @@
 #include "ScreenSpaceOcclusionRenderer.h"
 
-#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHICore.h"
 #include "CoreRHI/RHIShaderCompiler.h"
 
 #include "Core/Debug/Profiler.h"

@@ -2,9 +2,9 @@
 
 #include "Assets/SceneData.h"
 
+#include "CoreRHI/RHICore.h"
 #include "CoreRHI/RHICommandList.h"
 #include "CoreRHI/RHIPipelineState.h"
-#include "CoreRHI/RHIModule.h"
 #include "CoreRHI/RHIShaderCompiler.h"
 
 #ifdef min

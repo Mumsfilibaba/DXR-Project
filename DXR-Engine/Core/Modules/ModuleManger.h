@@ -5,18 +5,21 @@
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/String.h"
 
-class CORE_API CModuleManger
+class CORE_API CModuleManager
 {
 public:
 
-    CModuleManger();
-    ~CModuleManger() = default;
+    /* Create the instance with make */
+    static FORCEINLINE CModuleManager& Get()
+    {
+        return Instance;
+    }
 
     /* Load a new module into the engine. ModuleName is without platform extension. */
-    IEngineModule* LoadModule( const char* ModuleName );
+    IEngineModule* LoadEngineModule( const char* ModuleName );
 
     /* Retrieve a already loaded module interface. ModuleName is without platform extension. */
-    IEngineModule* GetModule( const char* ModuleName );
+    IEngineModule* GetEngineModule( const char* ModuleName );
 
     /* Release a single module */
     void ReleaseModule( const char* ModuleName );
@@ -25,20 +28,24 @@ public:
     void ReleaseAllModule();
 
     template<typename ModuleType>
-    FORCEINLINE ModuleType* LoadModule( const char* ModuleName )
+    FORCEINLINE ModuleType* LoadEngineModule( const char* ModuleName )
     {
-        return static_cast<ModuleType*>(LoadModule( ModuleName ));
+        return static_cast<ModuleType*>(LoadEngineModule( ModuleName ));
     }
 
     template<typename ModuleType>
-    FORCEINLINE ModuleType* GetModule( const char* ModuleName )
+    FORCEINLINE ModuleType* GetEngineModule( const char* ModuleName )
     {
-        return static_cast<ModuleType*>(GetModule( ModuleName ));
+        return static_cast<ModuleType*>(GetEngineModule( ModuleName ));
     }
 
 private:
+    
+    CModuleManager() = default;
+    ~CModuleManager() = default;
+
     /* Array of all the loaded modules, the string is the name used to load the module from disk */
     TArray<TPair<CString, IEngineModule*>> Modules;
-};
 
-extern CModuleManger GModuleManager;
+    static CModuleManager Instance;
+};

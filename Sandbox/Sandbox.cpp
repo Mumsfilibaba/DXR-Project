@@ -21,11 +21,16 @@
 
 #define ENABLE_LIGHT_TEST 0
 
-CApplicationModule* CreateApplicationModule()
+extern "C"
 {
-    return DBG_NEW CSandbox();
+    // Function for loading the sandbox into the application
+    SANDBOX_API IEngineModule* LoadEngineModule()
+    {
+        return DBG_NEW CSandbox();
+    }
 }
 
+// Actual ApplicationModule interface
 bool CSandbox::Init()
 {
     if ( !CApplicationModule::Init() )

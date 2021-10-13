@@ -3,8 +3,8 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/Resources/TextureFactory.h"
 
+#include "CoreRHI/RHICore.h"
 #include "CoreRHI/RHIResources.h"
-#include "CoreRHI/RHIModule.h"
 #include "CoreRHI/RHIShaderCompiler.h"
 
 #include "Core/Time/Timer.h"

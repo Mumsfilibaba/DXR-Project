@@ -10,7 +10,6 @@
 #include "Core/Modules/ModuleManger.h"
 
 #include "Core/Memory/Memory.h"
-#include "Core/Engine/EngineGlobals.h"
 #include "Core/Application/ApplicationModule.h"
 #include "Core/Application/Platform/PlatformApplication.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
@@ -66,8 +65,6 @@ bool CEngineLoop::PreInit()
     }
 
     // RenderAPI
-    GModuleManager.LoadModule( "D3D12RHI" );
-
     ERHIModule RenderApi =
     #if defined(PLATFORM_MACOS)
         ERHIModule::Null;
@@ -98,9 +95,9 @@ bool CEngineLoop::PreInit()
         return false;
     }
 
-    // Init Application Plug-In
-    GApplicationModule = CreateApplicationModule();
-    if ( GApplicationModule && !GApplicationModule->Init() )
+    // Init Application Module // TODO: Do not have the name hardcoded ffs
+    GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>("Sandbox.dll");
+    if ( !GApplicationModule || (GApplicationModule && !GApplicationModule->Init()) )
     {
         LOG_WARNING( "Application Init failed, may not behave as intended" );
     }

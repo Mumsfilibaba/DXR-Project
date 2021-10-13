@@ -4,8 +4,6 @@
 
 #include "Core/Memory/New.h"
 
-#include "Core/Engine/EngineGlobals.h"
-
 //<--
 // TODO: Move to templates
 // Preparation for enum class usage

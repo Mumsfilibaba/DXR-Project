@@ -1,7 +1,7 @@
 #include "Mesh.h"
 
+#include "CoreRHI/RHICore.h"
 #include "CoreRHI/RHICommandList.h"
-#include "CoreRHI/RHIModule.h"
 
 bool CMesh::Init( const SMeshData& Data )
 {

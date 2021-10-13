@@ -10,10 +10,9 @@
 
 #include "Core/Engine/Engine.h"
 #include "Core/Engine/EngineLoop.h"
-#include "Core/Engine/EngineGlobals.h"
+#include "Core/Math/Math.h"
 #include "Core/Application/ApplicationModule.h"
 #include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Math/Math.h"
 
 #include <imgui_internal.h>
 

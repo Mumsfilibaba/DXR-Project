@@ -1,6 +1,6 @@
 #include "ShadowMapRenderer.h"
 
-#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHICore.h"
 #include "CoreRHI/RHIShaderCompiler.h"
 
 #include "Rendering/Resources/Mesh.h"
