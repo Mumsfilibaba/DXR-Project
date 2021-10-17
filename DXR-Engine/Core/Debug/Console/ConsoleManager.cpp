@@ -17,12 +17,15 @@ TConsoleVariable<CString> GEcho;
 
 void CConsoleManager::Init()
 {
-    GClearHistory.OnExecute.AddRaw( this, &CConsoleManager::ClearHistory );
+    GClearHistory.GetExecutedDelgate().AddRaw( this, &CConsoleManager::ClearHistory );
     INIT_CONSOLE_COMMAND( "ClearHistory", &GClearHistory );
 
-    GEcho.OnChangedDelegate.AddLambda([this]( CConsoleVariable* InVariable ) -> void
+    GEcho.GetChangedDelegate().AddLambda([this]( IConsoleVariable* InVariable ) -> void
     {
-        this->PrintMessage( InVariable->GetString() );
+        if ( InVariable->IsString() )
+        {
+            this->PrintMessage( InVariable->GetString() );
+        }
     });
 
     INIT_CONSOLE_VARIABLE( "Echo", &GEcho );
@@ -42,32 +45,35 @@ void CConsoleManager::Tick()
     }
 }
 
-void CConsoleManager::RegisterCommand( const CString& Name, CConsoleCommand* Command )
+void CConsoleManager::RegisterCommand( const CString& Name, IConsoleCommand* Command )
 {
-    if ( !RegisterObject( Name, Command ) )
+    // TODO: This feels hacky, fix
+    IConsoleObject* Object = reinterpret_cast<IConsoleObject*>(Command);
+    if ( !RegisterObject( Name, Object ) )
     {
         LOG_WARNING( "ConsoleCommand '" + Name + "' is already registered" );
     }
 }
 
-void CConsoleManager::RegisterVariable( const CString& Name, CConsoleVariable* Variable )
+void CConsoleManager::RegisterVariable( const CString& Name, IConsoleVariable* Variable )
 {
-    if ( !RegisterObject( Name, Variable ) )
+    IConsoleObject* Object = reinterpret_cast<IConsoleObject*>(Variable);
+    if ( !RegisterObject( Name, Object ) )
     {
         LOG_WARNING( "ConsoleVariable '" + Name + "' is already registered" );
     }
 }
 
-CConsoleCommand* CConsoleManager::FindCommand( const CString& Name )
+IConsoleCommand* CConsoleManager::FindCommand( const CString& Name )
 {
-    CConsoleObject* Object = FindConsoleObject( Name );
+    IConsoleObject* Object = FindConsoleObject( Name );
     if ( !Object )
     {
         LOG_ERROR( "Could not find ConsoleCommand '" + Name + '\'' );
         return nullptr;
     }
 
-    CConsoleCommand* Command = Object->AsCommand();
+    IConsoleCommand* Command = Object->AsCommand();
     if ( !Command )
     {
         LOG_ERROR( '\'' + Name + "'Is not a ConsoleCommand'" );
@@ -79,16 +85,16 @@ CConsoleCommand* CConsoleManager::FindCommand( const CString& Name )
     }
 }
 
-CConsoleVariable* CConsoleManager::FindVariable( const CString& Name )
+IConsoleVariable* CConsoleManager::FindVariable( const CString& Name )
 {
-    CConsoleObject* Object = FindConsoleObject( Name );
+    IConsoleObject* Object = FindConsoleObject( Name );
     if ( !Object )
     {
         LOG_ERROR( "Could not find ConsoleVariable '" + Name + '\'' );
         return nullptr;
     }
 
-    CConsoleVariable* Variable = Object->AsVariable();
+    IConsoleVariable* Variable = Object->AsVariable();
     if ( !Variable )
     {
         LOG_ERROR( '\'' + Name + "'Is not a ConsoleVariable'" );
@@ -370,7 +376,7 @@ int32 CConsoleManager::TextCallback( ImGuiInputTextCallbackData* Data )
 
                     if ( d == 0 )
                     {
-                        CConsoleObject* ConsoleObject = Object.second;
+                        IConsoleObject* ConsoleObject = Object.second;
                         Assert( ConsoleObject != nullptr );
 
                         if ( ConsoleObject->AsCommand() )
@@ -379,7 +385,7 @@ int32 CConsoleManager::TextCallback( ImGuiInputTextCallbackData* Data )
                         }
                         else
                         {
-                            CConsoleVariable* Variable = ConsoleObject->AsVariable();
+                            IConsoleVariable* Variable = ConsoleObject->AsVariable();
                             if ( Variable->IsBool() )
                             {
                                 Candidates.Emplace( Object.first, "= " + Variable->GetString() + " [Boolean]" );
@@ -536,7 +542,7 @@ void CConsoleManager::Execute( const CString& CmdString )
     int32 Pos = CmdString.FindOneOf( " " );
     if ( Pos == CString::InvalidPosition )
     {
-        CConsoleCommand* Command = FindCommand( CmdString );
+        IConsoleCommand* Command = FindCommand( CmdString );
         if ( !Command )
         {
             const CString Message = "'" + CmdString + "' is not a registered command";
@@ -551,7 +557,7 @@ void CConsoleManager::Execute( const CString& CmdString )
     {
         CString VariableName( CmdString.CStr(), Pos );
 
-        CConsoleVariable* Variable = FindVariable( VariableName );
+        IConsoleVariable* Variable = FindVariable( VariableName );
         if ( !Variable )
         {
             PrintError( "'" + CmdString + "' is not a registered variable" );
@@ -588,7 +594,7 @@ void CConsoleManager::Execute( const CString& CmdString )
     }
 }
 
-bool CConsoleManager::RegisterObject( const CString& Name, CConsoleObject* Object )
+bool CConsoleManager::RegisterObject( const CString& Name, IConsoleObject* Object )
 {
     auto ExistingObject = ConsoleObjects.find( Name );
     if ( ExistingObject == ConsoleObjects.end() )
@@ -602,7 +608,7 @@ bool CConsoleManager::RegisterObject( const CString& Name, CConsoleObject* Objec
     }
 }
 
-CConsoleObject* CConsoleManager::FindConsoleObject( const CString& Name )
+IConsoleObject* CConsoleManager::FindConsoleObject( const CString& Name )
 {
     auto ExisitingObject = ConsoleObjects.find( Name );
     if ( ExisitingObject != ConsoleObjects.end() )

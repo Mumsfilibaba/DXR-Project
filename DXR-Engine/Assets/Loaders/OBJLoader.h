@@ -1,10 +1,10 @@
 #pragma once
-#include "Core.h"
-
+#include "Core/CoreAPI.h"
 #include "Core/Containers/String.h"
+
 #include "Assets/SceneData.h"
 
-class COBJLoader
+class CORE_API COBJLoader
 {
 public:
     static bool LoadFile( const CString& Filename, SSceneData& OutScene, bool ReverseHandedness = false );

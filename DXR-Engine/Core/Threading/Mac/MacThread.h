@@ -9,12 +9,12 @@ class CMacThread final : public CCoreThread
 {
 public:
 
-    static FORCEINLINE CMacThread* Make( ThreadFunction InFunction )
+    static TSharedRef<CWindowsThread> Make( ThreadFunction InFunction )
     {
         return new CMacThread( InFunction );
     }
 
-    static FORCEINLINE CMacThread* Make( ThreadFunction InFunction, const CString& InName )
+    static TSharedRef<CWindowsThread> Make( ThreadFunction InFunction, const CString& InName )
     {
         return new CMacThread( InFunction, InName );
     }

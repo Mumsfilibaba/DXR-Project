@@ -38,7 +38,7 @@ public:
     bool ConsoleActivated = false;
 };
 
-class CConsoleManager
+class CORE_API CConsoleManager
 {
     struct SLine
     {
@@ -77,11 +77,11 @@ public:
     void Init();
     void Tick();
 
-    void RegisterCommand( const CString& Name, CConsoleCommand* Object );
-    void RegisterVariable( const CString& Name, CConsoleVariable* Variable );
+    void RegisterCommand( const CString& Name, IConsoleCommand* Object );
+    void RegisterVariable( const CString& Name, IConsoleVariable* Variable );
 
-    CConsoleCommand* FindCommand( const CString& Name );
-    CConsoleVariable* FindVariable( const CString& Name );
+    IConsoleCommand* FindCommand( const CString& Name );
+    IConsoleVariable* FindVariable( const CString& Name );
 
     void PrintMessage( const CString& Message );
     void PrintWarning( const CString& Message );
@@ -94,16 +94,16 @@ private:
 
     void DrawInterface();
 
-    bool RegisterObject( const CString& Name, CConsoleObject* Variable );
+    bool RegisterObject( const CString& Name, IConsoleObject* Variable );
 
-    CConsoleObject* FindConsoleObject( const CString& Name );
+    IConsoleObject* FindConsoleObject( const CString& Name );
 
     int32 TextCallback( ImGuiInputTextCallbackData* Data );
 
     void Execute( const CString& CmdString );
 
 private:
-    std::unordered_map<CString, CConsoleObject*, SStringHasher> ConsoleObjects;
+    THashTable<CString, IConsoleObject*, SStringHasher> ConsoleObjects;
 
     CString PopupSelectedText;
 

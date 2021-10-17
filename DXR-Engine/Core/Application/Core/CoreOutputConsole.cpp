@@ -1,3 +1,3 @@
 #include "CoreOutputConsole.h"
 
-CCoreOutputConsole* GConsoleOutput = nullptr;
+CORE_API CCoreOutputConsole* GConsoleOutput = nullptr;

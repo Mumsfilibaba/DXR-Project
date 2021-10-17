@@ -61,7 +61,7 @@ FORCEINLINE void ConstructRangeFrom( void* restrict_ptr StartAddress, uint32 Cou
     }
 }
 
-/* Construct the objects in the range by calling the copy contructor */
+/* Construct the objects in the range by calling the copy constructor */
 template<typename T>
 FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyConstructRange( void* restrict_ptr StartAddress, const T* restrict_ptr Source, uint32 Count ) noexcept
 {
@@ -195,7 +195,7 @@ FORCEINLINE void Destruct( const T* const Object ) noexcept
 
 /* Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty */
 template<typename T>
-FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsMoveConstructable<T>>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsMoveConstructable<T>>::Value>::Type RelocateRange( void* StartAddress, T* Source, uint32 Count ) noexcept
 {
     // Ensures that the function works for overlapping ranges
     if ( (Source < StartAddress) && (StartAddress < Source + Count) )
@@ -231,7 +231,7 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsMoveConstructa
 
 /* Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty */
 template<typename T>
-FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsCopyConstructable<T>, TNot<TIsMoveConstructable<T>>>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsCopyConstructable<T>, TNot<TIsMoveConstructable<T>>>::Value>::Type RelocateRange( void* StartAddress, T* Source, uint32 Count ) noexcept
 {
     // Ensures that the function works for overlapping ranges
     if ( (Source < StartAddress) && (StartAddress < Source + Count) )
@@ -267,7 +267,7 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsCopyConstructa
 
 /* Relocates the range to a new memory location, the memory at destination is assumed to be trivial or empty */
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type RelocateRange( void* StartAddress, const T* Source, uint32 Count ) noexcept
+FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type RelocateRange( void* StartAddress, T* Source, uint32 Count ) noexcept
 {
     CMemory::Memmove( StartAddress, reinterpret_cast<const void*>(Source), sizeof( T ) * Count );
 }

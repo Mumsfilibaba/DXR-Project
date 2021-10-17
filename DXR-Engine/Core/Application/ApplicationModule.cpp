@@ -2,7 +2,7 @@
 
 #include "Scene/Scene.h"
 
-CApplicationModule* GApplicationModule;
+CORE_API CApplicationModule* GApplicationModule;
 
 bool CApplicationModule::Init()
 {

@@ -24,7 +24,7 @@
 #include "UIRenderer.h"
 
 #include "Core/Time/Timer.h"
-#include "Core/Threading/TaskManager.h"
+#include "Core/Threading/DispatchQueue.h"
 #include "Core/Application/WindowMessageHandler.h"
 
 class CRendererWindowHandler final : public CWindowMessageHandler
@@ -44,7 +44,7 @@ public:
     }
 };
 
-class CRenderer
+class CORE_API CRenderer
 {
 public:
 
@@ -87,11 +87,11 @@ private:
     CRHICommandList BasePassCmdList;
     CRHICommandList MainCmdList;
 
-    SExecutableTask PointShadowTask;
-    SExecutableTask DirShadowTask;
-    SExecutableTask PrePassTask;
-    SExecutableTask BasePassTask;
-    SExecutableTask RayTracingTask;
+    SDispatch PointShadowTask;
+    SDispatch DirShadowTask;
+    SDispatch PrePassTask;
+    SDispatch BasePassTask;
+    SDispatch RayTracingTask;
 
     CDeferredRenderer             DeferredRenderer;
     CShadowMapRenderer            ShadowMapRenderer;

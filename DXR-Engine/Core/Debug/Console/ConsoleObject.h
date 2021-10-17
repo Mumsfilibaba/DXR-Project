@@ -1,20 +1,20 @@
 #pragma once
+#include "IConsoleObject.h"
+
+#include "Core/CoreAPI.h"
 #include "Core/Containers/String.h"
 
-class CConsoleVariable;
-class CConsoleCommand;
-
-class CConsoleObject
+class CORE_API CConsoleObject : public IConsoleObject
 {
 public:
     virtual ~CConsoleObject() = default;
 
-    virtual CConsoleCommand* AsCommand()
+    virtual IConsoleCommand* AsCommand() override
     {
         return nullptr;
     }
 
-    virtual CConsoleVariable* AsVariable()
+    virtual IConsoleVariable* AsVariable() override
     {
         return nullptr;
     }

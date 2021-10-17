@@ -1,26 +1,7 @@
 #include "Actor.h"
 #include "Scene.h"
 
-/* Component Implementation */
-
-CComponent::CComponent( CActor* InActorOwner )
-    : CCoreObject()
-    , ActorOwner( InActorOwner )
-    , Startable( true )
-    , Tickable( true )
-{
-    Assert( InActorOwner != nullptr );
-    CORE_OBJECT_INIT();
-}
-
-void CComponent::Start()
-{
-}
-
-void CComponent::Tick( CTimestamp DeltaTime )
-{
-    UNREFERENCED_VARIABLE( DeltaTime );
-}
+#include "Components/Component.h"
 
 /* Actor Implementation */
 

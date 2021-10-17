@@ -21,6 +21,11 @@ CWindowsOutputConsole::~CWindowsOutputConsole()
     }
 }
 
+CWindowsOutputConsole* CWindowsOutputConsole::Make()
+{
+    return DBG_NEW CWindowsOutputConsole();
+}
+
 void CWindowsOutputConsole::Print( const CString& Message )
 {
     if ( ConsoleHandle )
@@ -54,10 +59,6 @@ void CWindowsOutputConsole::Clear()
             SetConsoleCursorPosition( ConsoleHandle, CursorPos );
         }
     }
-}
-
-void CWindowsOutputConsole::ClearLastLine()
-{
 }
 
 void CWindowsOutputConsole::SetTitle( const CString& Title )

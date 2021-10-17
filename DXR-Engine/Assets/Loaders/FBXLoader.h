@@ -1,8 +1,7 @@
 #pragma once
-#include "Core.h"
-
 #include "Assets/SceneData.h"
 
+#include "Core/CoreAPI.h"
 #include "Core/Containers/String.h"
 
 /* Flags for loading */
@@ -16,7 +15,7 @@ enum EFBXFlags : uint8
 };
 
 // TODO: Extend to save as well? 
-class CFBXLoader
+class CORE_API CFBXLoader
 {
 public:
     static bool LoadFile( const CString& Filename, SSceneData& OutScene, uint32 Flags = EFBXFlags::FBXFlags_Default ) noexcept;

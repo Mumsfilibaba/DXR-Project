@@ -1,8 +1,9 @@
 #pragma once
-#include "Core.h"
 #include "SceneData.h"
 
-class CMeshFactory
+#include "Core/CoreAPI.h"
+
+class CORE_API CMeshFactory
 {
 public:
     static SMeshData CreateCube( float Width = 1.0f, float Height = 1.0f, float Depth = 1.0f ) noexcept;

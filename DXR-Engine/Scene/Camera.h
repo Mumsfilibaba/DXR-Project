@@ -4,7 +4,7 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix4.h"
 
-class CCamera
+class CORE_API CCamera
 {
 public:
     CCamera();

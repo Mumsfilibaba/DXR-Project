@@ -6,44 +6,44 @@
 #include <cstdlib>
 #include <sstream>
 
-class CConsoleVariable : public CConsoleObject
+class CORE_API CConsoleVariable : public CConsoleObject, public IConsoleVariable
 {
 public:
-    virtual CConsoleVariable* AsVariable() override
+
+    CConsoleVariable()
+        : CConsoleObject()
+        , IConsoleVariable()
+        , ChangedDelegate()
+    {
+    }
+
+    virtual ~CConsoleVariable() = default;
+
+    virtual IConsoleVariable* AsVariable() override
     {
         return this;
     }
 
-    virtual void SetInt( int32 InValue ) = 0;
-    virtual void SetFloat( float InValue ) = 0;
-    virtual void SetBool( bool InValue ) = 0;
-    virtual void SetString( const CString& InValue ) = 0;
+    virtual CChangedDelegate& GetChangedDelegate() override
+    {
+        return ChangedDelegate;
+    }
 
-    virtual int32 GetInt() const = 0;
-    virtual float GetFloat() const = 0;
-    virtual bool GetBool() const = 0;
-    virtual CString GetString() const = 0;
-
-    virtual bool IsInt() const = 0;
-    virtual bool IsFloat() const = 0;
-    virtual bool IsBool() const = 0;
-    virtual bool IsString() const = 0;
-
-    DECLARE_MULTICAST_DELEGATE( COnChangedDelegate, CConsoleVariable* );
-    COnChangedDelegate OnChangedDelegate;
+protected:
+    CChangedDelegate ChangedDelegate;
 };
 
 template<typename T>
 class TConsoleVariable : public CConsoleVariable
 {
 public:
-    FORCEINLINE TConsoleVariable()
+    TConsoleVariable()
         : CConsoleVariable()
         , Value()
     {
     }
 
-    FORCEINLINE TConsoleVariable( T StartValue )
+    TConsoleVariable( T StartValue )
         : CConsoleVariable()
         , Value( StartValue )
     {
@@ -109,9 +109,9 @@ public:
 private:
     FORCEINLINE void OnChanged()
     {
-        if ( OnChangedDelegate.IsBound() )
+        if ( ChangedDelegate.IsBound() )
         {
-            OnChangedDelegate.Broadcast( this );
+            ChangedDelegate.Broadcast( this );
         }
     }
 

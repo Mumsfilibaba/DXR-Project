@@ -1,5 +1,5 @@
 #pragma once
-#include "Core.h"
+#include "Core/CoreAPI.h"
 
 struct SClassDescription
 {
@@ -14,7 +14,7 @@ struct SClassDescription
 };
 
 // ClassType stores info about a class, for now inheritance
-class CClassType
+class CORE_API CClassType
 {
 public:
 

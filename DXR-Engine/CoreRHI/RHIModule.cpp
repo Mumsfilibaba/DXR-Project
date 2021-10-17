@@ -10,8 +10,8 @@
 #include "CoreRHI/ShaderCompiler.h"
 #endif
 
-CRHICore*           GRHICore        = nullptr;
-IRHIShaderCompiler* GShaderCompiler = nullptr;
+CORE_API CRHICore*           GRHICore        = nullptr;
+CORE_API IRHIShaderCompiler* GShaderCompiler = nullptr;
 
 bool CRHIModule::Init( ERHIModule InRenderApi )
 {

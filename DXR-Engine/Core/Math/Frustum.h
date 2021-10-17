@@ -3,7 +3,9 @@
 #include "Matrix4.h"
 #include "Plane.h"
 
-class CFrustum
+#include "Core/CoreAPI.h"
+
+class CORE_API CFrustum
 {
 public:
     CFrustum() = default;

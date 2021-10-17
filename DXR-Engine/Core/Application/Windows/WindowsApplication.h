@@ -8,7 +8,6 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Application/Core/CoreApplication.h"
 #include "Core/Containers/Array.h"
-
 #include "Core/Threading/Platform/CriticalSection.h"
 
 /* Strict used to store messages between calls to PumpMessages and CWindowsApplication::Tick */
@@ -29,7 +28,7 @@ struct SWindowsMessage
 };
 
 /* Class representing an application on the windows- platform */
-class CWindowsApplication final : public CCoreApplication
+class CORE_API CWindowsApplication final : public CCoreApplication
 {
     friend class CWindowsApplicationMisc;
 
@@ -41,6 +40,24 @@ public:
     /* Creates an instance of the WindowsApplication, also loads the icon */
     static TSharedPtr<CWindowsApplication> Make();
 
+    /* Retrieve the window-class name */
+    static FORCEINLINE LPCSTR GetWindowClassName()
+    {
+        return "WindowClass";
+    }
+
+    /* Returns the HINSTANCE of the application or retrieves it in case the application is not initialized */
+    static FORCEINLINE HINSTANCE GetInstanceStatic()
+    {
+        return InstancePtr ? InstancePtr->GetInstance() : static_cast<HINSTANCE>(GetModuleHandle( 0 ));
+    }
+
+    /* Returns the instance of the windows application */
+    static FORCEINLINE CWindowsApplication* Get()
+    {
+        return InstancePtr;
+    }
+
     /* Creates a window */
     virtual TSharedRef<CCoreWindow> MakeWindow() override final;
 
@@ -51,10 +68,7 @@ public:
     virtual void Tick( float Delta ) override final;
 
     /* Retrieve the cursor interface */
-    virtual ICursor* GetCursor() override final
-    {
-        return &Cursor;
-    }
+    virtual ICursor* GetCursor() override final;
 
     /* Sets the window that currently has the keyboard focus */
     virtual void SetCapture( const TSharedRef<CCoreWindow>& Window ) override final;
@@ -84,24 +98,6 @@ public:
     FORCEINLINE HINSTANCE GetInstance() const
     {
         return Instance;
-    }
-
-    /* Retrieve the window-class name */
-    static FORCEINLINE LPCSTR GetWindowClassName()
-    {
-        return "WindowClass";
-    }
-
-    /* Returns the HINSTANCE of the application or retrieves it in case the application is not initialized */
-    static FORCEINLINE HINSTANCE GetInstanceStatic()
-    {
-        return ApplicationInstance ? ApplicationInstance->GetInstance() : static_cast<HINSTANCE>(GetModuleHandle( 0 ));
-    }
-
-    /* Returns the instance of the windows application */
-    static FORCEINLINE CWindowsApplication* Get()
-    {
-        return ApplicationInstance;
     }
 
 private:
@@ -144,7 +140,7 @@ private:
     /* Instance of the application */
     HINSTANCE Instance;
 
-    static CWindowsApplication* ApplicationInstance;
+    static CWindowsApplication* InstancePtr;
 };
 
 #endif

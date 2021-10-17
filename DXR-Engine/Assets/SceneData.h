@@ -1,8 +1,8 @@
 #pragma once
-#include "Core.h"
 #include "VertexFormat.h"
 #include "TextureFormat.h"
 
+#include "Core/CoreAPI.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
@@ -106,7 +106,7 @@ struct SMaterialData
     float Metallic = 1.0f;
 };
 
-struct SSceneData
+struct CORE_API SSceneData
 {
     TArray<SModelData> Models;
     TArray<SMaterialData> Materials;

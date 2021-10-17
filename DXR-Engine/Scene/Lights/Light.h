@@ -2,7 +2,7 @@
 #include "Core/Math/Vector3.h"
 #include "Core/CoreObject/CoreObject.h"
 
-class CLight : public CCoreObject
+class CORE_API CLight : public CCoreObject
 {
     CORE_OBJECT( CLight, CCoreObject );
 
@@ -11,7 +11,7 @@ public:
     virtual ~CLight() = default;
 
     void SetColor( const CVector3& InColor );
-    void SetColor( float R, float G, float B );
+    void SetColor( float r, float g, float b );
 
     void SetIntensity( float InIntensity );
 

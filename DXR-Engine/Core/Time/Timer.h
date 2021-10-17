@@ -1,7 +1,7 @@
 #pragma once
 #include "Timestamp.h"
 
-class CTimer
+class CORE_API CTimer
 {
 public:
 

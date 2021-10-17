@@ -1,10 +1,10 @@
 #pragma once
-#include "Core.h"
+#include "CoreAPI.h"
 
 #include "Core/Threading/InterlockedInt.h"
 
 /* Base-class for intrusive ref-counted object */
-class CRefCounted
+class CORE_API CRefCounted
 {
 public:
 

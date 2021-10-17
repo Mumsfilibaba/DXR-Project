@@ -17,7 +17,7 @@ private:                                                                        
 public:                                                                           \
     static CClassType* GetStaticClass()                                           \
     {                                                                             \
-        CLASS_DESCRIPTION( TCoreObject );										  \
+        CLASS_DESCRIPTION( TCoreObject );                                         \
         static CClassType ClassInfo( Super::GetStaticClass(), ClassDescription ); \
         return &ClassInfo;                                                        \
     }                                                                             \
@@ -27,7 +27,7 @@ private:
 #define CORE_OBJECT_INIT()                 \
     this->SetClass(This::GetStaticClass())
 
-class CCoreObject
+class CORE_API CCoreObject
 {
 public:
 

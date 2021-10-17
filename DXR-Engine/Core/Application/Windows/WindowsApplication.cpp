@@ -1,10 +1,9 @@
 #if defined(PLATFORM_WINDOWS)
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
+#include "WindowsApplication.h"
 
 #include "Core/Threading/ScopedLock.h"
-
-#include "WindowsApplication.h"
-#include "WindowsKeyMapping.h"
+#include "Core/Application/Platform/PlatformApplicationMisc.h"
+#include "Core/Input/Windows/WindowsKeyMapping.h"
 
 enum EWindowsMasks : uint32
 {
@@ -42,12 +41,12 @@ struct SSizeMessage
 };
 
 /* Global instance of the windows- application */
-CWindowsApplication* CWindowsApplication::ApplicationInstance = nullptr;
+CWindowsApplication* CWindowsApplication::InstancePtr = nullptr;
 
 /* Create the application and load icon */
 TSharedPtr<CWindowsApplication> CWindowsApplication::Make()
 {
-    HINSTANCE Instance = (HINSTANCE)GetModuleHandleA( 0 );
+    HINSTANCE Instance = static_cast<HINSTANCE>(GetModuleHandleA( 0 ));
 
     // TODO: Load icon here
     return TSharedPtr<CWindowsApplication>( DBG_NEW CWindowsApplication( Instance ) );
@@ -55,22 +54,23 @@ TSharedPtr<CWindowsApplication> CWindowsApplication::Make()
 
 CWindowsApplication::CWindowsApplication( HINSTANCE InInstance )
     : CCoreApplication()
-    , Instance( InInstance )
     , Windows()
     , Messages()
+    , MessagesCriticalSection()
     , WindowsMessageListeners()
-    , IsTrackingMouse( false )
     , Cursor()
+    , IsTrackingMouse( false )
+    , Instance( InInstance )
 {
     // Always the last instance created 
-    ApplicationInstance = this;
+    InstancePtr = this;
 }
 
 CWindowsApplication::~CWindowsApplication()
 {
     Windows.Clear();
 
-    ApplicationInstance = nullptr;
+    InstancePtr = nullptr;
 }
 
 bool CWindowsApplication::RegisterWindowClass()
@@ -131,6 +131,11 @@ void CWindowsApplication::Tick( float )
     {
         HandleStoredMessage( Message.Window, Message.Message, Message.wParam, Message.lParam );
     }
+}
+
+ICursor* CWindowsApplication::GetCursor()
+{
+    return &Cursor;
 }
 
 void CWindowsApplication::SetCapture( const TSharedRef<CCoreWindow>& Window )
@@ -228,9 +233,9 @@ bool CWindowsApplication::IsWindowsMessageListener( IWindowsMessageListener* InW
 
 LRESULT CWindowsApplication::StaticMessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam )
 {
-    if ( ApplicationInstance )
+    if ( InstancePtr )
     {
-        return ApplicationInstance->MessageProc( Window, Message, wParam, lParam );
+        return InstancePtr->MessageProc( Window, Message, wParam, lParam );
     }
     else
     {

@@ -1,15 +1,17 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
+#include "Windows.h"
+
+#include "Core/CoreAPI.h"
 #include "Core/Application/Core/CoreApplicationMisc.h"
 
-#include "Windows.h"
 
 #ifdef MessageBox
 #undef MessageBox
 #endif
 
-class CWindowsApplicationMisc : public CCoreApplicationMisc
+class CORE_API CWindowsApplicationMisc : public CCoreApplicationMisc
 {
 public:
 

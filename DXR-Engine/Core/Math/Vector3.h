@@ -5,6 +5,13 @@
 class CVector3
 {
 public:
+
+    CVector3( CVector3&& ) = default;
+    CVector3( const CVector3& ) = default;
+
+    CVector3& operator=( CVector3&& ) = default;
+    CVector3& operator=( const CVector3& ) = default;
+
     /* Default constructor (Initialize components to zero) */
     FORCEINLINE CVector3() noexcept;
 

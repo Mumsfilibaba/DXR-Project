@@ -10,11 +10,10 @@
 #include "Core/Time/Timestamp.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Delegates/Event.h"
-
 #include "Core/Application/Core/CoreApplication.h"
 
 /* Application class for the engine */
-class CApplication : public CCoreApplicationMessageHandler
+class CORE_API CApplication : public CCoreApplicationMessageHandler
 {
     /* Delegate for when the application is about to exit */
     DECLARE_EVENT( CExitEvent, CApplication, int32 );
@@ -23,10 +22,10 @@ class CApplication : public CCoreApplicationMessageHandler
 public:
 
     /* Creates a standard main application */
-    static TSharedPtr<CApplication> Make( const TSharedPtr<CCoreApplication>& InPlatformApplication );
+    static bool Make();
     
     /* Init the singleton from an existing application - Used for classes inheriting from CApplication */
-    static TSharedPtr<CApplication> Make( const TSharedPtr<CApplication>& InApplication );
+    static bool Make( const TSharedPtr<CApplication>& InApplication );
 
     static void Release();
 
@@ -37,7 +36,7 @@ public:
     }
 
     /* Public destructor for the TSharedPtr */
-    virtual ~CApplication();
+    virtual ~CApplication() = default;
 
     /* Creates a window */
     virtual TSharedRef<CCoreWindow> MakeWindow();
@@ -79,17 +78,17 @@ public:
     virtual TSharedRef<CCoreWindow> GetActiveWindow() const;
 
     /* Adds a InputHandler to the application, which gets processed before the game */
-    void AddInputHandler( CInputHandler* NewInputHandler );
+    virtual void AddInputHandler( CInputHandler* NewInputHandler );
 
     /* Removes a InputHandler from the application */
-    void RemoveInputHandler( CInputHandler* InputHandler );
+    virtual void RemoveInputHandler( CInputHandler* InputHandler );
 
     /* Adds a InputHandler to the application, which gets processed before the application module */
     void AddWindowMessageHandler( CWindowMessageHandler* NewWindowMessageHandler );
 
     void RemoveWindowMessageHandler( CWindowMessageHandler* WindowMessageHandler );
 
-    void SetPlatformApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
+    virtual void SetPlatformApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
 
     FORCEINLINE TSharedPtr<CCoreApplication> GetPlatformApplication() const
     {
@@ -171,6 +170,7 @@ public:
 
 protected:
 
+    /* Hidden constructor, use make */
     CApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
 
     /* Handles key events */

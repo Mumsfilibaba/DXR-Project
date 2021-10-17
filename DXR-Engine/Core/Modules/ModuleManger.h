@@ -5,6 +5,8 @@
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/String.h"
 
+typedef HMODULE PlatformModule;
+
 class CORE_API CModuleManager
 {
 public:
@@ -21,11 +23,17 @@ public:
     /* Retrieve a already loaded module interface. ModuleName is without platform extension. */
     IEngineModule* GetEngineModule( const char* ModuleName );
 
+    /* Load platform module */
+    PlatformModule LoadModule( const char* ModuleName );
+
+    /* Check if a module is already loaded */
+    bool IsModuleLoaded( const char* ModuleName );
+
     /* Release a single module */
-    void ReleaseModule( const char* ModuleName );
+    void UnloadModule( const char* ModuleName );
 
     /* Releases all modules that are loaded */
-    void ReleaseAllModule();
+    void ReleaseAllModules();
 
     template<typename ModuleType>
     FORCEINLINE ModuleType* LoadEngineModule( const char* ModuleName )
@@ -41,11 +49,22 @@ public:
 
 private:
     
-    CModuleManager() = default;
+    CModuleManager()
+        : ModuleNames()
+        , Modules()
+    {
+    }
+
     ~CModuleManager() = default;
 
+    /* Returns the index of the specified module, if not found it returns -1 */
+    int32 GetModuleIndex( const char* ModuleName );
+
+    /* Platform handles to modules that are loaded */
+    TArray<CString> ModuleNames;
+
     /* Array of all the loaded modules, the string is the name used to load the module from disk */
-    TArray<TPair<CString, IEngineModule*>> Modules;
+    TArray<TPair<IEngineModule*, PlatformModule>> Modules;
 
     static CModuleManager Instance;
 };

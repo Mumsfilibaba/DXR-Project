@@ -8,7 +8,6 @@
 #include "Editor/Editor.h"
 
 #include "Core/Modules/ModuleManger.h"
-
 #include "Core/Memory/Memory.h"
 #include "Core/Application/ApplicationModule.h"
 #include "Core/Application/Platform/PlatformApplication.h"
@@ -17,7 +16,7 @@
 #include "Core/Application/Application.h"
 #include "Core/Debug/Profiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Threading/TaskManager.h"
+#include "Core/Threading/DispatchQueue.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/InterlockedInt.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
@@ -40,17 +39,8 @@ bool CEngineLoop::PreInit()
     /* Profiler */
     CProfiler::Init();
 
-    /* Create the platform application */
-    TSharedPtr<CCoreApplication> PlatformApplication = PlatformApplication::Make();
-    if ( PlatformApplication && !PlatformApplication->Init() )
-    {
-        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create PlatformApplication" );
-        return false;
-    }
-
     /* Create the actual application */
-    TSharedPtr<CApplication> Application = CApplication::Make( PlatformApplication );
-    if ( !Application )
+    if ( !CApplication::Make() )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create MainApplication" );
         return false;
@@ -59,7 +49,7 @@ bool CEngineLoop::PreInit()
     /* Console */ // TODO: Separate panel from console (CConsoleManager, and CConsolePanel)
     GConsole.Init();
 
-    if ( !CTaskManager::Get().Init() )
+    if ( !CDispatchQueue::Get().Init() )
     {
         return false;
     }
@@ -170,7 +160,7 @@ bool CEngineLoop::Release()
 
     CRHIModule::Release();
 
-    CTaskManager::Get().Release();
+    CDispatchQueue::Get().Release();
 
     SafeRelease( GConsoleOutput );
 

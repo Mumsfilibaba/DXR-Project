@@ -72,6 +72,7 @@ public:
     }
 
     /* Copy-constructs an array from another array */
+    template<typename = typename TEnableIf<TIsCopyConstructable<ElementType>::Value>::Type>
     FORCEINLINE TArray( const TArray& Other ) noexcept
         : Allocator()
         , ArraySize( 0 )

@@ -1,6 +1,5 @@
 #pragma once
-#include "Core.h"
-
+#include "Core/CoreAPI.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Application/Events.h"
 #include "Core/Application/ApplicationUser.h"
@@ -14,7 +13,7 @@
 #include "Scene/Scene.h"
 
 /* Class representing the engine */
-class CEngine
+class CORE_API CEngine
 {
 public:
 
@@ -72,4 +71,4 @@ private:
     CEngine();
 };
 
-extern TSharedPtr<CEngine> GEngine;
+extern CORE_API TSharedPtr<CEngine> GEngine;

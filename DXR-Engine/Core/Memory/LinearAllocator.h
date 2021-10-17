@@ -121,7 +121,7 @@ public:
 
 private:
     SMemoryArena* CurrentArena;
-    TArray<SMemoryArena> Arenas;
+    TArray<TUniquePtr<SMemoryArena>> Arenas;
 };
 
 void* operator new  (size_t Size, CLinearAllocator& Allocator);

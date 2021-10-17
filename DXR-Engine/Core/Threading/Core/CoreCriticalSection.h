@@ -1,6 +1,5 @@
 #pragma once
-#include "CoreTypes.h"
-#include "CoreDefines.h"
+#include "Core.h"
 
 /* Generic CriticalSection */
 class CCoreCriticalSection

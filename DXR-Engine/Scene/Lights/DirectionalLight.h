@@ -5,7 +5,7 @@
 
 #define NUM_SHADOW_CASCADES (4)
 
-class CDirectionalLight : public CLight
+class CORE_API CDirectionalLight : public CLight
 {
     CORE_OBJECT( CDirectionalLight, CLight );
 

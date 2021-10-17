@@ -1,8 +1,9 @@
 #pragma once
-#include "Core.h"
 #include "SceneData.h"
 
-class CMeshUtilities
+#include "Core/CoreAPI.h"
+
+class CORE_API CMeshUtilities
 {
 public:
     static void Subdivide( SMeshData& OutData, uint32 Subdivisions = 1 ) noexcept;

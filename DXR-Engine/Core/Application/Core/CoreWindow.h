@@ -86,55 +86,52 @@ class CCoreWindow : public CRefCounted
 public:
 
     /* Initializes the window */
-    virtual bool Init( const CString& Title, uint32 Width, uint32 Height, SWindowStyle Style ) = 0;
+    virtual bool Init( const CString& Title, uint32 Width, uint32 Height, SWindowStyle Style ) { return true; }
 
     /* Shows the window */
-    virtual void Show( bool Maximized ) = 0;
+    virtual void Show( bool Maximized ) {}
 
     /* Minimizes the window */
-    virtual void Minimize() = 0;
+    virtual void Minimize() {}
 
     /* Maximizes the window */
-    virtual void Maximize() = 0;
+    virtual void Maximize() {}
 
     /* Closes the window */
-    virtual void Close() = 0;
+    virtual void Close() {}
 
     /* Restores the window after being minimized or maximized */
-    virtual void Restore() = 0;
+    virtual void Restore() {}
 
     /* Makes the window a borderless fullscreen window */
-    virtual void ToggleFullscreen() = 0;
+    virtual void ToggleFullscreen() {}
 
     /* Checks if the underlaying native handle of the window is valid */
-    virtual bool IsValid() const = 0;
+    virtual bool IsValid() const { return false; }
 
     /* Checks if this window is the currently active window */
-    virtual bool IsActiveWindow() const = 0;
+    virtual bool IsActiveWindow() const { return false; }
 
     /* Sets the title */
-    virtual void SetTitle( const CString& Title ) = 0;
+    virtual void SetTitle( const CString& Title ) {}
 
     /* Retrieve the window title */
-    virtual void GetTitle( CString& OutTitle ) = 0;
+    virtual void GetTitle( CString& OutTitle ) {}
 
     /* Set the shape of the window */
-    virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) = 0;
+    virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) {}
 
     /* Retrieve the shape of the window */
-    virtual void GetWindowShape( SWindowShape& OutWindowShape ) const = 0;
+    virtual void GetWindowShape( SWindowShape& OutWindowShape ) const {}
 
     /* Retrieve the width of the window */
-    virtual uint32 GetWidth()  const = 0;
+    virtual uint32 GetWidth()  const { return 0; }
 
     /* Retrieve the height of the window */
-    virtual uint32 GetHeight() const = 0;
+    virtual uint32 GetHeight() const { return 0; }
 
     /* Retrieve the native handle */
-    virtual PlatformWindowHandle GetNativeHandle() const
-    {
-        return nullptr;
-    }
+    virtual PlatformWindowHandle GetNativeHandle() const { return nullptr; }
 
     /* Retrieve the style of the window */
     FORCEINLINE SWindowStyle GetStyle() const
@@ -144,7 +141,11 @@ public:
 
 protected:
 
-    CCoreWindow() = default;
+    CCoreWindow()
+        : StyleParams()
+    {
+    }
+
     ~CCoreWindow() = default;
 
     SWindowStyle StyleParams;

@@ -26,7 +26,7 @@ CLinearAllocator::CLinearAllocator( uint32 StartSize )
     : CurrentArena( nullptr )
     , Arenas()
 {
-    CurrentArena = &Arenas.Emplace( StartSize );
+    CurrentArena = Arenas.Push( MakeUnique<SMemoryArena>(StartSize) ).Get();
 }
 
 void* CLinearAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
@@ -48,7 +48,7 @@ void* CLinearAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
     }
 
     // Allocate new arena
-    CurrentArena = &Arenas.Emplace( NewArenaSize );
+    CurrentArena = Arenas.Push( MakeUnique<SMemoryArena>( NewArenaSize ) ).Get();
 
     Assert( CurrentArena != nullptr );
     return CurrentArena->Allocate( AlignedSize );
@@ -63,6 +63,6 @@ void CLinearAllocator::Reset()
     {
         Arenas.FirstElement() = Move( Arenas.LastElement() );
         Arenas.Resize( 1 ); // Keep memory for the pointers
-        CurrentArena = &Arenas.FirstElement();
+        CurrentArena = Arenas.FirstElement().Get();
     }
 }

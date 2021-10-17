@@ -1,5 +1,6 @@
 #include "Application.h"
 
+#include "Platform/PlatformApplication.h"
 #include "Platform/PlatformApplicationMisc.h"
 
 #include "Rendering/UIRenderer.h"
@@ -8,18 +9,26 @@
 
 TSharedPtr<CApplication> CApplication::Instance;
 
-TSharedPtr<CApplication> CApplication::Make( const TSharedPtr<CCoreApplication>& InPlatformApplication )
+bool CApplication::Make()
 {
-    Instance = TSharedPtr<CApplication>( DBG_NEW CApplication( InPlatformApplication ) );
-    InPlatformApplication->SetMessageListener( Instance );
-    return Instance;
+    /* Create the platform application */
+    TSharedPtr<CCoreApplication> Application = PlatformApplication::Make();
+    if ( Application && !Application->Init() )
+    {
+        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create PlatformApplication" );
+        return false;
+    }
+
+    Instance = TSharedPtr<CApplication>( DBG_NEW CApplication( Application ) );
+    Application->SetMessageListener( Instance );
+    return true;
 }
 
 /* Init the singleton from an existing application - Used for classes inheriting from CApplication */
-TSharedPtr<CApplication> CApplication::Make( const TSharedPtr<CApplication>& InApplication )
+bool CApplication::Make( const TSharedPtr<CApplication>& InApplication )
 {
     Instance = InApplication;
-    return Instance;
+    return (Instance != nullptr);
 }
 
 void CApplication::Release()
@@ -33,10 +42,8 @@ CApplication::CApplication( const TSharedPtr<CCoreApplication>& InPlatformApplic
     , PlatformApplication( InPlatformApplication )
     , InputHandlers()
     , WindowMessageHandlers()
-{
-}
-
-CApplication::~CApplication()
+    , RegisteredUsers()
+    , Running( true )
 {
 }
 

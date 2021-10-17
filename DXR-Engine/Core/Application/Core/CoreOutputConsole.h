@@ -1,7 +1,16 @@
 #pragma once
-#include "Core.h"
-
+#include "Core/CoreAPI.h"
 #include "Core/Containers/String.h"
+
+#if defined(COMPILER_MSVC)
+#pragma warning(push)
+#pragma warning(disable : 4100) // Disable unreferenced variable
+
+#elif defined(COMPILER_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
+#endif
 
 enum class EConsoleColor : uint8
 {
@@ -15,19 +24,18 @@ class CCoreOutputConsole
 {
 public:
 
-    static FORCEINLINE CCoreOutputConsole* Make()
+    static CCoreOutputConsole* Make()
     {
-        return nullptr;
+        return DBG_NEW CCoreOutputConsole();
     }
 
-    virtual void Print( const CString& Message ) = 0;
-    virtual void PrintLine( const CString& Message ) = 0;
+    virtual void Print( const CString& Message ) {}
+    virtual void PrintLine( const CString& Message ) {}
 
-    virtual void Clear() = 0;
-    virtual void ClearLastLine() = 0;
+    virtual void Clear() {}
 
-    virtual void SetTitle( const CString& Title ) = 0;
-    virtual void SetColor( EConsoleColor Color ) = 0;
+    virtual void SetTitle( const CString& Title ) {}
+    virtual void SetColor( EConsoleColor Color ) {}
 
     virtual void Release()
     {
@@ -40,4 +48,12 @@ protected:
     virtual ~CCoreOutputConsole() = default;
 };
 
-extern CCoreOutputConsole* GConsoleOutput;
+extern CORE_API CCoreOutputConsole* GConsoleOutput;
+
+#if defined(COMPILER_MSVC)
+#pragma warning(pop)
+
+#elif defined(COMPILER_CLANG)
+#pragma clang diagnostic pop
+#endif
+

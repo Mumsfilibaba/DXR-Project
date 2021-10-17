@@ -1,7 +1,7 @@
 #pragma once
 #include "Light.h"
 
-class CSpotLight : public CLight
+class CORE_API CSpotLight : public CLight
 {
     CORE_OBJECT( CSpotLight, CLight );
 

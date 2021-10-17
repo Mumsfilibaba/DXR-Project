@@ -1,7 +1,5 @@
 #pragma once
-#include "CoreTypes.h"
-#include "CoreDefines.h"
-
+#include "Core/CoreAPI.h"
 #include "Core/Templates/Move.h"
 #include "Core/Templates/FunctionType.h"
 #include "Core/Containers/Tuple.h"
@@ -80,8 +78,7 @@ private:
 
     DelegateHandle Handle;
 
-    //TODO: This needs to be exported when using DLLs
-    inline static DelegateHandle NextID = 0;
+    static CORE_API DelegateHandle NextID;
 };
 
 /* Basetype for delegates */

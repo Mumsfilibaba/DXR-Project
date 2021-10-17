@@ -1,6 +1,8 @@
 #pragma once
-#include "Core/Threading/Core/CoreCriticalSection.h"
+
+#if defined(PLATFORM_WINDOWS)
 #include "Core/Windows/Windows.h"
+#include "Core/Threading/Core/CoreCriticalSection.h"
 
 class CWindowsCriticalSection final : public CCoreCriticalSection
 {
@@ -45,3 +47,5 @@ public:
 private:
     CRITICAL_SECTION Section;
 };
+
+#endif

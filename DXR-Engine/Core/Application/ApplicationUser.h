@@ -9,7 +9,7 @@
 #include "Core/Math/IntVector2.h"
 
 /* Holds the state of one user */
-class CApplicationUser
+class CORE_API CApplicationUser
 {
     friend class CApplication;
 

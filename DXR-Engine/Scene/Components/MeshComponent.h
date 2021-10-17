@@ -1,5 +1,5 @@
 #pragma once
-#include "Scene/Actor.h"
+#include "Component.h"
 
 class CMeshComponent : public CComponent
 {

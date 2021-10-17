@@ -58,6 +58,9 @@
 /* Disable some warnings */
 #pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
 #pragma warning(disable : 4324) // structure was padded due to alignment specifier
+// TODO: Investigate if this can be removed
+#pragma warning(disable : 4275) // Non DLL-interface class used '...' as base for DLL-interface class '...'
+#pragma warning(disable : 4251) // Class '...' needs to have DLL-interface to be used by clients of class '...'
 
 /* Declare warnings as errors */
 #pragma warning(error : 4099) // wrong forward declaration

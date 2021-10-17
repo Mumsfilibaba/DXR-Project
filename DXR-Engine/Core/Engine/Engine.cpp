@@ -14,7 +14,7 @@ CConsoleCommand GToggleFullscreen;
 CConsoleCommand GExit;
 
 /* Global engine instance */
-TSharedPtr<CEngine> GEngine;
+CORE_API TSharedPtr<CEngine> GEngine;
 
 CEngine::CEngine()
 {
@@ -34,7 +34,7 @@ bool CEngine::Init()
     {
         MainWindow->Show( false );
 
-        GToggleFullscreen.OnExecute.AddRaw( MainWindow.Get(), &CCoreWindow::ToggleFullscreen );
+        GToggleFullscreen.GetExecutedDelgate().AddRaw( MainWindow.Get(), &CCoreWindow::ToggleFullscreen );
         INIT_CONSOLE_COMMAND( "a.ToggleFullscreen", &GToggleFullscreen );
     }
     else
@@ -52,7 +52,7 @@ bool CEngine::Init()
 
     CApplication::Get().RegisterUser( User );
 
-    GExit.OnExecute.AddRaw( this, &CEngine::Exit );
+    GExit.GetExecutedDelgate().AddRaw( this, &CEngine::Exit );
     INIT_CONSOLE_COMMAND( "a.Exit", &GExit );
 
     // Create standard textures

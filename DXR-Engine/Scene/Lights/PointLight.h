@@ -3,7 +3,7 @@
 
 #include "Core/Math/Matrix4.h"
 
-class CPointLight : public CLight
+class CORE_API CPointLight : public CLight
 {
     CORE_OBJECT( CPointLight, CLight );
 

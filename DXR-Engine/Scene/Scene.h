@@ -9,7 +9,7 @@
 #include "Core/Time/Timestamp.h"
 #include "Core/Containers/Array.h"
 
-class CScene
+class CORE_API CScene
 {
 public:
     CScene();

@@ -1,9 +1,11 @@
 #pragma once
+
+#if defined(PLATFORM_WINDOWS)
+#include "WindowsCriticalSection.h"
+
+#include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Core/CoreConditionVariable.h"
 #include "Core/Application/Windows/WindowsDebugMisc.h"
-#include "Core/Threading/ScopedLock.h"
-
-#include "WindowsCriticalSection.h"
 
 class CWindowsConditionVariable final : public CCoreConditionVariable
 {
@@ -65,3 +67,5 @@ public:
 private:
     CONDITION_VARIABLE ConditionVariable;
 };
+
+#endif

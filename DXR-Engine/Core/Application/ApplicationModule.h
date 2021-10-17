@@ -1,9 +1,9 @@
 #pragma once
+#include "Core/CoreAPI.h"
 #include "Core/Time/Timestamp.h"
-
 #include "Core/Modules/IEngineModule.h"
 
-class CApplicationModule : public IEngineModule
+class CORE_API CApplicationModule : public IEngineModule
 {
 public:
 
@@ -29,4 +29,4 @@ public:
     virtual const char* GetName() override;
 };
 
-extern CApplicationModule* GApplicationModule;
+extern CORE_API CApplicationModule* GApplicationModule;

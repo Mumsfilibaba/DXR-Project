@@ -22,7 +22,7 @@
 
 #endif
 
-class CProfiler
+class CORE_API CProfiler
 {
 public:
     static void Init();

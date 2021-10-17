@@ -1,32 +1,29 @@
-#include "TaskManager.h"
+#include "ScopedLock.h"
+#include "DispatchQueue.h"
 
 #include "Platform/PlatformThreadMisc.h"
 
-#include "ScopedLock.h"
+CDispatchQueue CDispatchQueue::Instance;
 
-#include <string>
-
-CTaskManager CTaskManager::Instance;
-
-CTaskManager::CTaskManager()
-    : TaskMutex()
+CDispatchQueue::CDispatchQueue()
+    : QueueMutex()
     , IsRunning( false )
 {
 }
 
-CTaskManager::~CTaskManager()
+CDispatchQueue::~CDispatchQueue()
 {
     KillWorkers();
 }
 
-bool CTaskManager::PopTask( SExecutableTask& OutTask )
+bool CDispatchQueue::PopDispatch( SDispatch& OutTask )
 {
-    TScopedLock<CCriticalSection> Lock( TaskMutex );
+    TScopedLock<CCriticalSection> Lock( QueueMutex );
 
-    if ( !Tasks.IsEmpty() )
+    if ( !Queue.IsEmpty() )
     {
-        OutTask = Tasks.FirstElement();
-        Tasks.RemoveAt( 0 );
+        OutTask = Queue.FirstElement();
+        Queue.RemoveAt( 0 );
 
         return true;
     }
@@ -36,22 +33,22 @@ bool CTaskManager::PopTask( SExecutableTask& OutTask )
     }
 }
 
-void CTaskManager::KillWorkers()
+void CDispatchQueue::KillWorkers()
 {
     IsRunning = false;
 
     WakeCondition.NotifyAll();
 }
 
-void CTaskManager::WorkThread()
+void CDispatchQueue::WorkThread()
 {
     LOG_INFO( "Starting Work thread: " + ToString( PlatformThreadMisc::GetThreadHandle() ) );
 
     while ( Instance.IsRunning )
     {
-        SExecutableTask CurrentTask;
+        SDispatch CurrentTask;
 
-        if ( !Instance.PopTask( CurrentTask ) )
+        if ( !Instance.PopDispatch( CurrentTask ) )
         {
             TScopedLock<CCriticalSection> Lock( Instance.WakeMutex );
             Instance.WakeCondition.Wait( Lock );
@@ -59,22 +56,22 @@ void CTaskManager::WorkThread()
         else
         {
             CurrentTask.Delegate.ExecuteIfBound();
-            Instance.TaskCompleted++;
+            Instance.DispatchCompleted++;
         }
     }
 
     LOG_INFO( "End Work thread: " + ToString( PlatformThreadMisc::GetThreadHandle() ) );
 }
 
-bool CTaskManager::Init()
+bool CDispatchQueue::Init()
 {
     uint32 ThreadCount = NMath::Max<int32>( PlatformThreadMisc::GetNumProcessors() - 1, 1 );
-    WorkThreads.Resize( ThreadCount );
+    WorkerThreads.Resize( ThreadCount );
 
     if ( ThreadCount == 1 )
     {
         LOG_INFO( "[CTaskManager]: No workers available, tasks will be executing on the main thread" );
-        WorkThreads.Clear();
+        WorkerThreads.Clear();
         return true;
     }
 
@@ -88,10 +85,10 @@ bool CTaskManager::Init()
         CString ThreadName;
         ThreadName.Format( "WorkerThread[%d]", i );
 
-        TSharedRef<CCoreThread> NewThread = PlatformThread::Make( CTaskManager::WorkThread, ThreadName );
+        TSharedRef<CCoreThread> NewThread = PlatformThread::Make( CDispatchQueue::WorkThread, ThreadName );
         if ( NewThread )
         {
-            WorkThreads[i] = NewThread;
+            WorkerThreads[i] = NewThread;
             NewThread->Start();
         }
         else
@@ -104,60 +101,60 @@ bool CTaskManager::Init()
     return true;
 }
 
-TaskID CTaskManager::AddTask( const SExecutableTask& NewTask )
+DispatchID CDispatchQueue::Dispatch( const SDispatch& NewTask )
 {
-    if ( WorkThreads.IsEmpty() )
+    if ( WorkerThreads.IsEmpty() )
     {
-        // Execute task on mainthread
-        SExecutableTask MainThreadTask = NewTask;
+        // Execute task on main-thread
+        SDispatch MainThreadTask = NewTask;
         MainThreadTask.Delegate.ExecuteIfBound();
 
         // Make sure that both fences is incremented
-        Instance.TaskCompleted++;
-        return TaskAdded.Increment();
+        Instance.DispatchCompleted++;
+        return DispatchAdded.Increment();
     }
 
     {
-        TScopedLock<CCriticalSection> Lock( TaskMutex );
-        Tasks.Emplace( NewTask );
+        TScopedLock<CCriticalSection> Lock( QueueMutex );
+        Queue.Emplace( NewTask );
     }
 
-    TaskID NewTaskID = TaskAdded.Increment();
+    DispatchID NewTaskID = DispatchAdded.Increment();
     WakeCondition.NotifyOne();
     return NewTaskID;
 }
 
-void CTaskManager::WaitForTask( TaskID Task )
+void CDispatchQueue::WaitFor( DispatchID Task )
 {
-    while ( TaskCompleted.Load() < Task )
+    while ( DispatchCompleted.Load() < Task )
     {
-        // Look into proper yeild
+        // Look into proper yield
         PlatformThreadMisc::Sleep( 0 );
     }
 }
 
-void CTaskManager::WaitForAllTasks()
+void CDispatchQueue::WaitForAll()
 {
-    while ( TaskCompleted.Load() < TaskAdded.Load() )
+    while ( DispatchCompleted.Load() < DispatchAdded.Load() )
     {
-        // Look into proper yeild
+        // Look into proper yield
         PlatformThreadMisc::Sleep( 0 );
     }
 }
 
-void CTaskManager::Release()
+void CDispatchQueue::Release()
 {
     KillWorkers();
 
-    for ( TSharedRef<CCoreThread> Thread : WorkThreads )
+    for ( TSharedRef<CCoreThread> Thread : WorkerThreads )
     {
         Thread->WaitUntilFinished();
     }
 
-    WorkThreads.Clear();
+    WorkerThreads.Clear();
 }
 
-CTaskManager& CTaskManager::Get()
+CDispatchQueue& CDispatchQueue::Get()
 {
     return Instance;
 }

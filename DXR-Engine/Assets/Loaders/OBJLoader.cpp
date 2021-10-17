@@ -7,7 +7,7 @@
 #include "Core/Containers/HashTable.h"
 #include "Core/Utilities/StringUtilities.h"
 
-#include "Core/Threading/TaskManager.h"
+#include "Core/Threading/DispatchQueue.h"
 
 #include <tiny_obj_loader.h>
 
@@ -150,7 +150,7 @@ bool COBJLoader::LoadFile( const CString& Filename, SSceneData& OutScene, bool R
     OutScene.Models.ShrinkToFit();
     OutScene.Materials.ShrinkToFit();
 
-    CTaskManager::Get().WaitForAllTasks();
+    CDispatchQueue::Get().WaitForAll();
 
     return true;
 }

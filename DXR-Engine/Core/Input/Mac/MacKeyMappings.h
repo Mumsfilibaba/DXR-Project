@@ -3,8 +3,9 @@
 #if defined(PLATFORM_MACOS)
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/StaticArray.h"
+#include "Core/Input/Interface/PlatformKeyMapping.h"
 
-class CMacKeyMappings
+class CMacKeyMappings : public CPlatformKeyMapping
 {
     friend class CMacApplication;
 

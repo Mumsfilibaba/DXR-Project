@@ -1,16 +1,18 @@
 #pragma once
+
+#if defined(PLATFORM_WINDOWS)
 #include "Core/Threading/Core/CoreThread.h"
 
-class CWindowsThread final : public CCoreThread
+class CORE_API CWindowsThread final : public CCoreThread
 {
 public:
 
-    static FORCEINLINE CWindowsThread* Make( ThreadFunction InFunction )
+    static TSharedRef<CWindowsThread> Make( ThreadFunction InFunction )
     {
         return DBG_NEW CWindowsThread( InFunction );
     }
 
-    static FORCEINLINE CWindowsThread* Make( ThreadFunction InFunction, const CString& InName )
+    static TSharedRef<CWindowsThread> Make( ThreadFunction InFunction, const CString& InName )
     {
         return DBG_NEW CWindowsThread( InFunction, InName );
     }
@@ -38,3 +40,4 @@ private:
 
     ThreadFunction Function;
 };
+#endif

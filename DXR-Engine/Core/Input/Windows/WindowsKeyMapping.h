@@ -1,10 +1,12 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
+#include "Core/CoreAPI.h"
 #include "Core/Input/InputCodes.h"
+#include "Core/Input/Interface/PlatformKeyMapping.h"
 
 /* Class that maps key-code from scan-codes and the reverse */
-class CWindowsKeyMapping
+class CORE_API CWindowsKeyMapping : public CPlatformKeyMapping
 {
     friend class CWindowsApplication;
 

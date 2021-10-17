@@ -7,7 +7,6 @@ template<typename T>
 class TInterlockedInt
 {
 public:
-
     typedef T Type;
 
     static_assert(TIsSigned<T>::Value, "InterlockedInt only supports signed types");
@@ -89,6 +88,7 @@ public:
     {
         T TempInteger = Other.Load();
         Store( TempInteger );
+        return *this;
     }
 
     FORCEINLINE T operator=( T RHS ) noexcept

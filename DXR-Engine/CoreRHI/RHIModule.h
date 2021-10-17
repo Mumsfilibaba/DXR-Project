@@ -30,5 +30,5 @@ public:
     static void Release();
 };
 
-extern class CRHICore* GRHICore;
-extern class IRHIShaderCompiler* GShaderCompiler;
+extern CORE_API class CRHICore* GRHICore;
+extern CORE_API class IRHIShaderCompiler* GShaderCompiler;
