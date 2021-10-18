@@ -4,6 +4,7 @@
 
 #include <Core/Containers/SharedPtr.h>
 #include <Core/Containers/UniquePtr.h>
+#include <Core/Containers/Array.h>
 
 #include <iostream>
 
@@ -244,6 +245,16 @@ void TSharedPtr_Test()
         uint32* Raw = Unique0.Release();
         delete[] Raw;
     }
+
+    std::cout << "----Testing UniquePtr with TArray----" << std::endl;
+
+    TArray<TUniquePtr<int32>> UniqueArray;
+    for ( uint32 i = 0; i < 200;i++)
+    {
+        UniqueArray.Emplace( MakeUnique<int32>(i) );
+    }
+
+    TArray<TUniquePtr<int32>> UniqueArray2 = Move(UniqueArray);
 }
 
 #endif

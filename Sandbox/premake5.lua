@@ -91,8 +91,7 @@ project "SandboxLauncher"
 	
 	links
 	{ 
-		"DXR-Engine",
-		"Sandbox",
+		"DXR-Engine"
 	}
 
 	-- Include EntryPoint

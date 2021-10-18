@@ -662,11 +662,11 @@ void CRenderer::Tick( const CScene& Scene )
             &MainCmdList
         };
 
-        GCommandQueue.ExecuteCommandLists( CmdLists, ArrayCount( CmdLists ) );
+        CRHICommandQueue::Get().ExecuteCommandLists( CmdLists, ArrayCount( CmdLists ) );
 
-        LastFrameNumDrawCalls = GCommandQueue.GetNumDrawCalls();
-        LastFrameNumDispatchCalls = GCommandQueue.GetNumDispatchCalls();
-        LastFrameNumCommands = GCommandQueue.GetNumCommands();
+        LastFrameNumDrawCalls = CRHICommandQueue::Get().GetNumDrawCalls();
+        LastFrameNumDispatchCalls = CRHICommandQueue::Get().GetNumDispatchCalls();
+        LastFrameNumCommands = CRHICommandQueue::Get().GetNumCommands();
     }
 
     {
@@ -839,7 +839,7 @@ bool CRenderer::Init()
 
     LightProbeRenderer.RenderSkyLightProbe( MainCmdList, LightSetup, Resources );
 
-    GCommandQueue.ExecuteCommandList( MainCmdList );
+    CRHICommandQueue::Get().ExecuteCommandList( MainCmdList );
 
     // Register EventFunc
     WindowHandler.WindowResizedDelegate.BindRaw( this, &CRenderer::OnWindowResize );
@@ -850,7 +850,7 @@ bool CRenderer::Init()
 
 void CRenderer::Release()
 {
-    GCommandQueue.WaitForGPU();
+    CRHICommandQueue::Get().WaitForGPU();
 
     PreShadowsCmdList.Reset();
     PointShadowCmdList.Reset();

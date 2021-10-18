@@ -1,6 +1,7 @@
 #pragma once
 #include "Delete.h"
 
+#include "Core/Memory/New.h"
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/RemoveExtent.h"
 #include "Core/Templates/IsArray.h"

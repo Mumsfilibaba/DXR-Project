@@ -9,6 +9,15 @@
 
 struct SMeshData
 {
+    // C++ Being retarded?
+    SMeshData() = default;
+
+    SMeshData( SMeshData&& ) = default;
+    SMeshData( const SMeshData& ) = default;
+
+    SMeshData& operator=( SMeshData&& ) = default;
+    SMeshData& operator=( const SMeshData& ) = default;
+
     TArray<SVertex> Vertices;
     TArray<uint32> Indices;
 
@@ -26,6 +35,14 @@ struct SMeshData
 
 struct SModelData
 {
+    SModelData() = default;
+
+    SModelData( SModelData&& ) = default;
+    SModelData( const SModelData& ) = default;
+
+    SModelData& operator=( SModelData&& ) = default;
+    SModelData& operator=( const SModelData& ) = default;
+
     /* Name of the mesh specified in the model-file */
     CString Name;
 

@@ -155,7 +155,7 @@ CRHITexture2D* CTextureFactory::LoadFromMemory( const uint8* Pixels, uint32 Widt
         CmdList.TransitionTexture( Texture.Get(), EResourceState::PixelShaderResource, EResourceState::CopyDest );
         CmdList.GenerateMips( Texture.Get() );
         CmdList.TransitionTexture( Texture.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource );
-        GCommandQueue.ExecuteCommandList( CmdList );
+        CRHICommandQueue::Get().ExecuteCommandList( CmdList );
     }
 
     return Texture.ReleaseOwnership();
@@ -231,7 +231,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma( CRHITexture2D* P
 
     CmdList.TransitionTexture( Texture.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource );
 
-    GCommandQueue.ExecuteCommandList( CmdList );
+    CRHICommandQueue::Get().ExecuteCommandList( CmdList );
 
     return Texture.ReleaseOwnership();
 }

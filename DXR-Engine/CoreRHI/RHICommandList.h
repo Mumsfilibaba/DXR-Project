@@ -3,7 +3,40 @@
 #include "RHIRenderCommand.h"
 #include "GPUProfiler.h"
 
-#include "Core/Memory/LinearAllocator.h"
+class CORE_API CCommandAllocator
+{
+public:
+
+    CCommandAllocator( uint32 StartSize = 4096 );
+    ~CCommandAllocator();
+    
+    /* The memory uses realloc which means that all objects that gets allocated must be memcpy-able */
+    void* Allocate( uint32 SizeInBytes, uint32 Alignment );
+
+    /* Resets the allocator*/
+    void Reset();
+
+    template<typename T>
+    void* Allocate()
+    {
+        return Allocate( sizeof( T ), alignof(T) );
+    }
+
+    FORCEINLINE uint8* AllocateBytes( uint32 SizeInBytes, uint32 Alignment )
+    {
+        return reinterpret_cast<uint8*>(Allocate( SizeInBytes, Alignment ));
+    }
+
+private:
+    uint8* Memory;
+    uint32 Size;
+    uint32 Offset;
+};
+
+void* operator new  (size_t Size, CCommandAllocator& Allocator);
+void* operator new[]( size_t Size, CCommandAllocator& Allocator );
+void  operator delete  (void*, CCommandAllocator&);
+void  operator delete[]( void*, CCommandAllocator& );
 
 class CRHIRenderTargetView;
 class CRHIDepthStencilView;
@@ -270,7 +303,7 @@ public:
 
     void UpdateBuffer( CRHIBuffer* Destination, uint64 DestinationOffsetInBytes, uint64 SizeInBytes, const void* SourceData )
     {
-        void* TempSourceData = CmdAllocator.Allocate( SizeInBytes, 1 );
+        void* TempSourceData = CmdAllocator.Allocate( static_cast<uint32>(SizeInBytes), 1 );
         CMemory::Memcpy( TempSourceData, SourceData, SizeInBytes );
 
         SafeAddRef( Destination );
@@ -507,7 +540,8 @@ private:
         NumCommands++;
     }
 
-    CLinearAllocator CmdAllocator;
+    CCommandAllocator CmdAllocator;
+
     SRHIRenderCommand* First;
     SRHIRenderCommand* Last;
 
@@ -516,12 +550,14 @@ private:
     uint32 NumCommands = 0;
 };
 
-class CRHICommandQueue
+class CORE_API CRHICommandQueue
 {
 public:
 
-    CRHICommandQueue();
-    ~CRHICommandQueue();
+    static FORCEINLINE CRHICommandQueue& Get()
+    {
+        return Instance;
+    }
 
     void ExecuteCommandList( CRHICommandList& CmdList );
     void ExecuteCommandLists( CRHICommandList* const* CmdLists, uint32 NumCmdLists );
@@ -557,6 +593,9 @@ public:
 
 private:
 
+    CRHICommandQueue();
+    ~CRHICommandQueue() = default;
+
     /* Goes through all the commands and executes them on a command list */
     void InternalExecuteCommandList( CRHICommandList& CmdList );
 
@@ -573,6 +612,6 @@ private:
     uint32 NumDrawCalls;
     uint32 NumDispatchCalls;
     uint32 NumCommands;
-};
 
-extern CRHICommandQueue GCommandQueue;
+    static CRHICommandQueue Instance;
+};

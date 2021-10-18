@@ -9,7 +9,7 @@ workspace "DXR-Engine-Tests"
 	flags { "MultiProcessorCompile" }
     
 	-- Set output dir
-    outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}-%{cfg.platform}"
+    outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
 
     -- Platform
 	platforms
@@ -89,6 +89,8 @@ workspace "DXR-Engine-Tests"
 			"%{prj.name}/**.cpp",
 			
 			"../DXR-Engine/Core/Memory/Memory.cpp",
+			"../DXR-Engine/Core/Memory/New.cpp",
+			"../DXR-Engine/Core/Delegates/DelegateInstance.cpp",
         }
 			
 		-- In visual studio show natvis files

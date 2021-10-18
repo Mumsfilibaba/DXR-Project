@@ -138,7 +138,7 @@ bool CEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
-    GCommandQueue.WaitForGPU();
+    CRHICommandQueue::Get().WaitForGPU();
 
     CTextureFactory::Release();
 

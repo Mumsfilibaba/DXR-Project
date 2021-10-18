@@ -336,7 +336,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
 
         CmdList.TransitionTexture( FrameResources.IntegrationLUT.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource );
 
-        GCommandQueue.ExecuteCommandList( CmdList );
+        CRHICommandQueue::Get().ExecuteCommandList( CmdList );
     }
 
     {

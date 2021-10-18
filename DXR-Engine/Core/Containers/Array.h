@@ -59,7 +59,7 @@ public:
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        EmptyCopyFrom( InputArray, Count );
+        CopyConstructFrom( InputArray, Count );
     }
 
     /* Creates an array from an std::initializer_list */
@@ -68,17 +68,16 @@ public:
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        EmptyCopyFrom( InitList.begin(), static_cast<SizeType>(InitList.size()) );
+        CopyConstructFrom( InitList.begin(), static_cast<SizeType>(InitList.size()) );
     }
 
     /* Copy-constructs an array from another array */
-    template<typename = typename TEnableIf<TIsCopyConstructable<ElementType>::Value>::Type>
     FORCEINLINE TArray( const TArray& Other ) noexcept
         : Allocator()
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        EmptyCopyFrom( Other.Data(), Other.Size() );
+        CopyConstructFrom( Other.Data(), Other.Size() );
     }
 
     /* Copy-constructs an array from another array */
@@ -88,7 +87,7 @@ public:
         , ArraySize( 0 )
         , ArrayCapacity( 0 )
     {
-        EmptyCopyFrom( Other.Data(), Other.Size() );
+        CopyConstructFrom( Other.Data(), Other.Size() );
     }
 
     /* Move-constructs an array from another array */
@@ -167,7 +166,7 @@ public:
 
             if ( Count )
             {
-                EmptyCopyFrom( InputArray, Count );
+                CopyConstructFrom( InputArray, Count );
             }
             else
             {
@@ -862,7 +861,7 @@ private:
     }
 
     /* Copy from array, assumes that the container is currently empty */
-    FORCEINLINE void EmptyCopyFrom( const ElementType* From, SizeType Count )
+    FORCEINLINE void CopyConstructFrom( const ElementType* From, SizeType Count )
     {
         InitUnitialized( Count );
         CopyConstructRange<ElementType>( Data(), From, Count );

@@ -56,7 +56,7 @@ bool CRHIModule::Init( ERHIModule InRenderApi )
     if ( GRHICore && GRHICore->Init( EnableDebug ) )
     {
         IRHICommandContext* CmdContext = GRHICore->GetDefaultCommandContext();
-        GCommandQueue.SetContext( CmdContext );
+        CRHICommandQueue::Get().SetContext( CmdContext );
 
         return true;
     }

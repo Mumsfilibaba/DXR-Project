@@ -2,7 +2,68 @@
 
 #include "Core/Debug/Profiler.h"
 
-CRHICommandQueue GCommandQueue;
+void* operator new( size_t Size, CCommandAllocator& Allocator )
+{
+    return Allocator.Allocate( static_cast<uint32>(Size), 16 );
+}
+
+void* operator new[]( size_t Size, CCommandAllocator& Allocator )
+{
+    return Allocator.Allocate( static_cast<uint32>(Size), 16 );
+}
+
+void operator delete ( void*, CCommandAllocator& )
+{
+}
+
+void operator delete[]( void*, CCommandAllocator& )
+{
+}
+
+CCommandAllocator::CCommandAllocator( uint32 StartSize )
+    : Memory( nullptr )
+    , Size( StartSize )
+    , Offset( 0 )
+{
+    Memory = CMemory::Realloc( Memory, Size );
+}
+
+CCommandAllocator::~CCommandAllocator()
+{
+    SafeDelete( Memory );
+}
+
+void* CCommandAllocator::Allocate( uint32 SizeInBytes, uint32 Alignment )
+{
+    Assert( Memory != nullptr );
+
+    const uint32 AlignedSize = NMath::AlignUp( SizeInBytes, Alignment );
+    const uint32 NewOffset   = Offset + AlignedSize;
+    if ( NewOffset >= Size )
+    {
+        void* Result = Memory + Offset;
+        Offset = NewOffset;
+        return Result;
+    }
+    else
+    {
+        const uint32 NewSize = Size + Size;
+        Memory = CMemory::Realloc( Memory, NewSize );
+        Size = NewSize;
+        
+        void* Result = Memory + Offset;
+        Offset = NewOffset;
+        return Result;
+    }
+}
+
+void CCommandAllocator::Reset()
+{
+    // TODO: Calculate the average amount needed and resize the allocator to a smaller size to prevent to much waste
+    Offset = 0;
+}
+
+CRHICommandQueue CRHICommandQueue::Instance;
 
 CRHICommandQueue::CRHICommandQueue()
     : CmdContext( nullptr )
@@ -10,11 +71,6 @@ CRHICommandQueue::CRHICommandQueue()
     , NumDispatchCalls( 0 )
     , NumCommands( 0 )
 {
-}
-
-CRHICommandQueue::~CRHICommandQueue()
-{
-    // Empty for now
 }
 
 void CRHICommandQueue::ExecuteCommandList( CRHICommandList& CmdList )
