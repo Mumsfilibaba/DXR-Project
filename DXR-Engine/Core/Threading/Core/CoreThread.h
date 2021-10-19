@@ -26,12 +26,12 @@ public:
     // TODO: Enable member-functions and lambdas
     static TSharedRef<CCoreThread> Make( ThreadFunction InFunction )
     {
-        return DBG_NEW CCoreThread();
+        return dbg_new CCoreThread();
     }
 
     static TSharedRef<CCoreThread> Make( ThreadFunction InFunction, const CString& InName )
     {
-        return DBG_NEW CCoreThread();
+        return dbg_new CCoreThread();
     }
 
     virtual bool Start() { return true; }

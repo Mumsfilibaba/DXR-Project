@@ -23,7 +23,7 @@ public:
     /* Make a new RHI core */
     static FORCEINLINE CRHICore* Make()
     {
-        return DBG_NEW CD3D12RHICore();
+        return dbg_new CD3D12RHICore();
     }
 
     /* Init the RHI Core, create device etc. */

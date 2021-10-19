@@ -54,7 +54,7 @@ private:
     std::unordered_map<TResource*, int32> ResourceIndices;
 };
 
-struct SFrameResources
+struct CORE_API SFrameResources
 {
     SFrameResources() = default;
     ~SFrameResources() = default;

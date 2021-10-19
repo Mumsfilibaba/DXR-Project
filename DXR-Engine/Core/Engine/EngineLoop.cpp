@@ -47,7 +47,7 @@ bool CEngineLoop::PreInit()
     }
 
     /* Console */ // TODO: Separate panel from console (CConsoleManager, and CConsolePanel)
-    GConsole.Init();
+    CConsoleManager::Init();
 
     if ( !CDispatchQueue::Get().Init() )
     {
@@ -121,7 +121,7 @@ void CEngineLoop::Tick( CTimestamp Deltatime )
 
     GApplicationModule->Tick( Deltatime );
 
-    GConsole.Tick();
+    CConsoleManager::Get().Tick();
 
     GEngine->Tick( Deltatime );
 

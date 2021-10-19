@@ -26,7 +26,7 @@ public:
 
     static CCoreOutputConsole* Make()
     {
-        return DBG_NEW CCoreOutputConsole();
+        return dbg_new CCoreOutputConsole();
     }
 
     virtual void Print( const CString& Message ) {}

@@ -6,7 +6,7 @@
 #if CORE_API_EXPORT
 #define CORE_API __declspec(dllexport)
 #else
-#define CORE_API
+#define CORE_API __declspec(dllimport)
 #endif
 
 #else

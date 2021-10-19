@@ -8,7 +8,7 @@
 
 #include "Core/Math/AABB.h"
 
-class CMesh
+class CORE_API CMesh
 {
 public:
     CMesh() = default;

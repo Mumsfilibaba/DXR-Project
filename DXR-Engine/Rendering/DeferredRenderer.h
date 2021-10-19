@@ -6,7 +6,7 @@
 
 #include "CoreRHI/RHICommandList.h"
 
-class CDeferredRenderer
+class CORE_API CDeferredRenderer
 {
 public:
     CDeferredRenderer() = default;

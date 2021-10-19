@@ -9,7 +9,7 @@ enum ETextureFactoryFlags : uint32
     TextureFactoryFlag_GenerateMips = FLAG( 1 ),
 };
 
-class CTextureFactory
+class CORE_API CTextureFactory
 {
 public:
     static bool Init();

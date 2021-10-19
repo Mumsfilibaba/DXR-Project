@@ -16,7 +16,7 @@ struct SMaterialDesc
     int32 EnableMask = 0;
 };
 
-class CMaterial
+class CORE_API CMaterial
 {
 public:
     CMaterial( const SMaterialDesc& InProperties );

@@ -5,7 +5,7 @@
 class CActor;
 
 // CComponent BaseClass
-class CComponent : public CCoreObject
+class CORE_API CComponent : public CCoreObject
 {
     CORE_OBJECT( CComponent, CCoreObject );
 
@@ -34,6 +34,7 @@ public:
     {
         return Tickable;
     }
+
 protected:
 
     /* The actor that this component belongs to */

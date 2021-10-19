@@ -81,7 +81,8 @@ project "SandboxLauncher"
 
 	sysincludedirs
 	{
-		"%{wks.location}/DXR-Engine"
+		"%{wks.location}/DXR-Engine",
+		"%{wks.location}/Dependencies/imgui",
 	}
 
 	defines
@@ -92,6 +93,12 @@ project "SandboxLauncher"
 	links
 	{ 
 		"DXR-Engine"
+	}
+
+	-- Include EngineLoop | TODO: Make lib?
+	files
+	{
+		"%{wks.location}/DXR-Engine/Core/Engine/EngineLoop.cpp",	
 	}
 
 	-- Include EntryPoint

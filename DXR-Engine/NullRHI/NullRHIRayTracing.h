@@ -39,7 +39,7 @@ class CNullRHIRayTracingScene : public CRHIRayTracingScene
 public:
     CNullRHIRayTracingScene( uint32 InFlags )
         : CRHIRayTracingScene( InFlags )
-        , View( DBG_NEW CNullRHIShaderResourceView() )
+        , View( dbg_new CNullRHIShaderResourceView() )
     {
     }
 

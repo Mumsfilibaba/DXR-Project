@@ -43,7 +43,7 @@ struct SPerCascade
     int32 Padding2;
 };
 
-class CShadowMapRenderer
+class CORE_API CShadowMapRenderer
 {
 public:
     CShadowMapRenderer() = default;

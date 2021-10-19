@@ -9,12 +9,12 @@ public:
 
     static TSharedRef<CWindowsThread> Make( ThreadFunction InFunction )
     {
-        return DBG_NEW CWindowsThread( InFunction );
+        return dbg_new CWindowsThread( InFunction );
     }
 
     static TSharedRef<CWindowsThread> Make( ThreadFunction InFunction, const CString& InName )
     {
-        return DBG_NEW CWindowsThread( InFunction, InName );
+        return dbg_new CWindowsThread( InFunction, InName );
     }
 
     virtual bool Start() override final;

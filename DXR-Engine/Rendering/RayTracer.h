@@ -5,7 +5,7 @@
 
 #include "Scene/Scene.h"
 
-class CRayTracer
+class CORE_API CRayTracer
 {
 public:
     CRayTracer() = default;

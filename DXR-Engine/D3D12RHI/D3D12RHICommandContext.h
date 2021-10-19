@@ -195,7 +195,7 @@ public:
     /* Create and initialize a new CommandContext */
     static FORCEINLINE CD3D12RHICommandContext* Make( CD3D12Device* InDevice )
     {
-        TSharedRef<CD3D12RHICommandContext> NewContext = DBG_NEW CD3D12RHICommandContext( InDevice );
+        TSharedRef<CD3D12RHICommandContext> NewContext = dbg_new CD3D12RHICommandContext( InDevice );
         if ( NewContext && NewContext->Init() )
         {
             return NewContext.ReleaseOwnership();

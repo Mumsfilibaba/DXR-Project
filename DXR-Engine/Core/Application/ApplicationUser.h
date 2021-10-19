@@ -18,7 +18,7 @@ public:
     /* Create a new application user */
     static FORCEINLINE TSharedPtr<CApplicationUser> Make( uint32 InUserIndex, ICursor* InCursorDevice )
     {
-        return TSharedPtr<CApplicationUser>( DBG_NEW CApplicationUser( InUserIndex, InCursorDevice ) );
+        return TSharedPtr<CApplicationUser>( dbg_new CApplicationUser( InUserIndex, InCursorDevice ) );
     }
 
     virtual ~CApplicationUser();

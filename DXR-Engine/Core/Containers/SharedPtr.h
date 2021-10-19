@@ -1025,7 +1025,7 @@ FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TSharedPtr<T>>::Type MakeSha
 {
     typedef typename TRemoveExtent<T>::Type Type;
 
-    Type* RefCountedPtr = DBG_NEW Type( Forward<ArgTypes>( Args )... );
+    Type* RefCountedPtr = dbg_new Type( Forward<ArgTypes>( Args )... );
     return TSharedPtr<T>( RefCountedPtr );
 }
 
@@ -1034,7 +1034,7 @@ FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShar
 {
     typedef typename TRemoveExtent<T>::Type Type;
 
-    Type* RefCountedPtr = DBG_NEW Type[Size];
+    Type* RefCountedPtr = dbg_new Type[Size];
     return TSharedPtr<T>( RefCountedPtr );
 }
 

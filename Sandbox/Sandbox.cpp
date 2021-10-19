@@ -26,7 +26,7 @@ extern "C"
     // Function for loading the sandbox into the application
     SANDBOX_API IEngineModule* LoadEngineModule()
     {
-        return DBG_NEW CSandbox();
+        return dbg_new CSandbox();
     }
 }
 
@@ -42,7 +42,7 @@ bool CSandbox::Init()
     CActor* NewActor = nullptr;
     CMeshComponent* NewComponent = nullptr;
     
-    CScene* CurrentScene = GEngine->Scene.Get();
+    TSharedPtr<CScene> CurrentScene = GEngine->Scene;
 
     // Load Scene
     SSceneData SceneData;
@@ -51,11 +51,11 @@ bool CSandbox::Init()
     SceneData.Scale = 0.015f;
 #else
     CFBXLoader::LoadFile( "../Assets/Scenes/Bistro/BistroInterior.fbx", SceneData );
-    SceneData.AddToScene( CurrentScene );
+    SceneData.AddToScene( CurrentScene.Get() );
 
     CFBXLoader::LoadFile( "../Assets/Scenes/Bistro/BistroExterior.fbx", SceneData );
 #endif
-    SceneData.AddToScene( CurrentScene );
+    SceneData.AddToScene( CurrentScene.Get() );
 
     // Create Spheres
     SMeshData SphereMeshData = CMeshFactory::CreateSphere( 3 );
@@ -83,7 +83,7 @@ bool CSandbox::Init()
             NewActor->SetName( "Sphere[" + ToString( SphereIndex ) + "]" );
             SphereIndex++;
 
-            NewComponent = DBG_NEW CMeshComponent( NewActor );
+            NewComponent = dbg_new CMeshComponent( NewActor );
             NewComponent->Mesh = SphereMesh;
             NewComponent->Material = MakeShared<CMaterial>( MatProperties );
 
@@ -116,7 +116,7 @@ bool CSandbox::Init()
     MatProperties.Roughness = 1.0f;
     MatProperties.EnableHeight = 1;
 
-    NewComponent = DBG_NEW CMeshComponent( NewActor );
+    NewComponent = dbg_new CMeshComponent( NewActor );
     NewComponent->Mesh = CMesh::Make( CubeMeshData );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
 
@@ -178,7 +178,7 @@ bool CSandbox::Init()
     MatProperties.EnableHeight = 0;
     MatProperties.Albedo = CVector3( 1.0f );
 
-    NewComponent = DBG_NEW CMeshComponent( NewActor );
+    NewComponent = dbg_new CMeshComponent( NewActor );
     NewComponent->Mesh = CMesh::Make( CMeshFactory::CreatePlane( 10, 10 ) );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
     NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
@@ -233,7 +233,7 @@ bool CSandbox::Init()
         NewActor->GetTransform().SetUniformScale( 0.25f );
         NewActor->GetTransform().SetTranslation( 15.0f, 0.0f, 55.0f - ((float)i * 3.0f) );
 
-        NewComponent = DBG_NEW CMeshComponent( NewActor );
+        NewComponent = dbg_new CMeshComponent( NewActor );
         NewComponent->Mesh = StreetLight;
         NewComponent->Material = StreetLightMat;
         NewComponent->Material->AlbedoMap = AlbedoMap;
@@ -265,7 +265,7 @@ bool CSandbox::Init()
         NewActor->GetTransform().SetUniformScale( 0.25f );
         NewActor->GetTransform().SetTranslation( -15.0f + ((float)i * 1.75f), 0.0f, 60.0f );
 
-        NewComponent = DBG_NEW CMeshComponent( NewActor );
+        NewComponent = dbg_new CMeshComponent( NewActor );
         NewComponent->Mesh = Pillar;
         NewComponent->Material = PillarMat;
         NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
@@ -277,13 +277,13 @@ bool CSandbox::Init()
         NewActor->AddComponent( NewComponent );
     }
 
-    CurrentCamera = DBG_NEW CCamera();
+    CurrentCamera = dbg_new CCamera();
     CurrentScene->AddCamera( CurrentCamera );
 
     // Add PointLight- Source
     const float Intensity = 50.0f;
 
-    CPointLight* Light0 = DBG_NEW CPointLight();
+    CPointLight* Light0 = dbg_new CPointLight();
     Light0->SetPosition( 16.5f, 1.0f, 0.0f );
     Light0->SetColor( 1.0f, 1.0f, 1.0f );
     Light0->SetShadowBias( 0.001f );
@@ -293,7 +293,7 @@ bool CSandbox::Init()
     Light0->SetShadowCaster( true );
     CurrentScene->AddLight( Light0 );
 
-    CPointLight* Light1 = DBG_NEW CPointLight();
+    CPointLight* Light1 = dbg_new CPointLight();
     Light1->SetPosition( -17.5f, 1.0f, 0.0f );
     Light1->SetColor( 1.0f, 1.0f, 1.0f );
     Light1->SetShadowBias( 0.001f );
@@ -303,7 +303,7 @@ bool CSandbox::Init()
     Light1->SetShadowCaster( true );
     CurrentScene->AddLight( Light1 );
 
-    CPointLight* Light2 = DBG_NEW CPointLight();
+    CPointLight* Light2 = dbg_new CPointLight();
     Light2->SetPosition( 16.5f, 11.0f, 0.0f );
     Light2->SetColor( 1.0f, 1.0f, 1.0f );
     Light2->SetShadowBias( 0.001f );
@@ -313,7 +313,7 @@ bool CSandbox::Init()
     Light2->SetShadowCaster( true );
     CurrentScene->AddLight( Light2 );
 
-    CPointLight* Light3 = DBG_NEW CPointLight();
+    CPointLight* Light3 = dbg_new CPointLight();
     Light3->SetPosition( -17.5f, 11.0f, 0.0f );
     Light3->SetColor( 1.0f, 1.0f, 1.0f );
     Light3->SetShadowBias( 0.001f );
@@ -344,7 +344,7 @@ bool CSandbox::Init()
 #endif
 
     // Add DirectionalLight- Source
-    CDirectionalLight* Light4 = DBG_NEW CDirectionalLight();
+    CDirectionalLight* Light4 = dbg_new CDirectionalLight();
     Light4->SetShadowBias( 0.0002f );
     Light4->SetMaxShadowBias( 0.0015f );
     Light4->SetColor( 1.0f, 1.0f, 1.0f );

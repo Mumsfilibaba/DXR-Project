@@ -11,8 +11,8 @@
 #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
-#define INIT_CONSOLE_VARIABLE(Name, Variable) GConsole.RegisterVariable(Name, Variable)
-#define INIT_CONSOLE_COMMAND(Name, Command)   GConsole.RegisterCommand(Name, Command)
+#define INIT_CONSOLE_VARIABLE(Name, Variable) CConsoleManager::Get().RegisterVariable(Name, Variable)
+#define INIT_CONSOLE_COMMAND(Name, Command)   CConsoleManager::Get().RegisterCommand(Name, Command)
 
 class CConsoleInputHandler final : public CInputHandler
 {
@@ -74,35 +74,59 @@ class CORE_API CConsoleManager
     };
 
 public:
-    void Init();
+
+    /* Init the console */
+    static void Init();
+
+    static FORCEINLINE CConsoleManager& Get()
+    {
+        return Instance;
+    }
+
+    /* Tick the console */
     void Tick();
 
+    /* Register a console command */
     void RegisterCommand( const CString& Name, IConsoleCommand* Object );
+    
+    /* Register a console variable */
     void RegisterVariable( const CString& Name, IConsoleVariable* Variable );
 
+    /* Finds a console-command, returns nullptr otherwise, including if the object is a variable */
     IConsoleCommand* FindCommand( const CString& Name );
+    
+    /* Finds a console-variable, returns nullptr otherwise, including if the object is a command */
     IConsoleVariable* FindVariable( const CString& Name );
 
+    /* Print messages with different severity */
     void PrintMessage( const CString& Message );
     void PrintWarning( const CString& Message );
     void PrintError( const CString& Message );
 
+    /* Clears the console history */
     void ClearHistory();
 
 private:
+
+    /* Called when a key is pressed */
     void OnKeyPressedEvent( const SKeyEvent& Event );
 
+    /* Draws the console interface */
     void DrawInterface();
 
+    /* Registers a new console object */
     bool RegisterObject( const CString& Name, IConsoleObject* Variable );
 
+    /* Returns a console object if the it exists, otherwise it returns nullptr */
     IConsoleObject* FindConsoleObject( const CString& Name );
 
+    /* Callback from the input */
     int32 TextCallback( ImGuiInputTextCallbackData* Data );
 
+    /* Execute a string from the console */
     void Execute( const CString& CmdString );
 
-private:
+    /* All console objects */
     THashTable<CString, IConsoleObject*, SStringHasher> ConsoleObjects;
 
     CString PopupSelectedText;
@@ -124,9 +148,9 @@ private:
     bool IsActive = false;
 
     CConsoleInputHandler InputHandler;
-};
 
-extern CConsoleManager GConsole;
+    static CConsoleManager Instance;
+};
 
 #ifdef COMPILER_MSVC
 #pragma warning(pop)

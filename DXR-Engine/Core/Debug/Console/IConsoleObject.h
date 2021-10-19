@@ -12,7 +12,7 @@ public:
 
 DECLARE_MULTICAST_DELEGATE( CChangedDelegate, IConsoleVariable* );
 
-class IConsoleVariable
+class IConsoleVariable : public IConsoleObject
 {
 public:
     virtual void SetInt( int32 InValue ) = 0;
@@ -35,7 +35,7 @@ public:
 
 DECLARE_MULTICAST_DELEGATE( CExecutedDelegate );
 
-class IConsoleCommand
+class IConsoleCommand : public IConsoleObject
 {
 public:
 

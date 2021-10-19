@@ -245,7 +245,7 @@ bool CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection( CD3D12RHIBase
     CString Identifier = FuncDesc.Name;
 
     auto NameStart = Identifier.ReverseFindOneOf( "\x1?" );
-    if ( NameStart != CString::InvalidPosition )
+    if ( NameStart != CString::NPos )
     {
         NameStart++;
     }

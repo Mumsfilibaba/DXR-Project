@@ -1,6 +1,7 @@
 #pragma once
-#include "CoreTypes.h"
-#include "CoreDefines.h"
+#include "Core.h"
+
+#define STANDARD_ALIGNMENT (__STDCPP_DEFAULT_NEW_ALIGNMENT__)
 
 /* Class handling memory */
 class CORE_API CMemory

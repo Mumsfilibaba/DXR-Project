@@ -128,4 +128,4 @@ private:
     uint32 LastFrameNumCommands = 0;
 };
 
-extern CRenderer GRenderer;
+extern CORE_API CRenderer GRenderer;

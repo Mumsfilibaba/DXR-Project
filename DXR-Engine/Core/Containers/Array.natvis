@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?> 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
-  <Type Name="TArray&lt;*&gt;">
+  <Type Name="TArray&lt;*,TDefaultArrayAllocator&lt;*&gt;&gt;">
     <DisplayString>{{ Size={ArraySize} Capacity={ArrayCapacity} }}</DisplayString>
     <Expand>
       <Item Name="[Size]">ArraySize</Item>
@@ -8,6 +8,33 @@
       <ArrayItems>
         <Size>ArraySize</Size>
         <ValuePointer>Allocator.Allocation</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  
+  <Type Name="TArray&lt;*, TInlineArrayAllocator&lt;*,*&gt;&gt;">
+    <DisplayString>{{ Size={ArraySize} Capacity={ArrayCapacity} }}</DisplayString>
+    <Expand>
+      <Item Name="[Size]">ArraySize</Item>
+      <Item Name="[Capacity]">ArrayCapacity</Item>
+      <ArrayItems>
+        <Size>ArraySize</Size>
+        <ValuePointer Condition="ArrayCapacity &lt;= $T3">Allocator.InlineAllocation.InlineAllocation</ValuePointer>
+        <ValuePointer Condition="ArrayCapacity &gt; $T3">Allocator.DynamicAllocator.Allocation</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="TArray&lt;char, TInlineArrayAllocator&lt;char,*&gt;&gt;">
+    <DisplayString Condition="ArrayCapacity &lt;= $T1">{{ {Allocator.InlineAllocation.InlineAllocation,s} Size={ArraySize} Capacity={ArrayCapacity} }}</DisplayString>
+    <DisplayString Condition="ArrayCapacity &gt;  $T1">{{ {Allocator.DynamicAllocator.Allocation,s} Size={ArraySize} Capacity={ArrayCapacity} }}</DisplayString>
+    <Expand>
+      <Item Name="[Size]">ArraySize</Item>
+      <Item Name="[Capacity]">ArrayCapacity</Item>
+      <ArrayItems>
+        <Size>ArraySize</Size>
+        <ValuePointer Condition="ArrayCapacity &lt;= $T1">Allocator.InlineAllocation.InlineAllocation</ValuePointer>
+        <ValuePointer Condition="ArrayCapacity &gt; $T1">Allocator.DynamicAllocator.Allocation</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>

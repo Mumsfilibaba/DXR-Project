@@ -23,7 +23,7 @@ CWindowsOutputConsole::~CWindowsOutputConsole()
 
 CWindowsOutputConsole* CWindowsOutputConsole::Make()
 {
-    return DBG_NEW CWindowsOutputConsole();
+    return dbg_new CWindowsOutputConsole();
 }
 
 void CWindowsOutputConsole::Print( const CString& Message )

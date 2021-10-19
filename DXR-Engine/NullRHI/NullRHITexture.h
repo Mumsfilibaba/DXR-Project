@@ -18,9 +18,9 @@ class CNullRHITexture2D : public CRHITexture2D
 public:
     CNullRHITexture2D( EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue )
         : CRHITexture2D( InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue )
-        , RenderTargetView( DBG_NEW CNullRHIRenderTargetView() )
-        , DepthStencilView( DBG_NEW CNullRHIDepthStencilView() )
-        , UnorderedAccessView( DBG_NEW CNullRHIUnorderedAccessView() )
+        , RenderTargetView( dbg_new CNullRHIRenderTargetView() )
+        , DepthStencilView( dbg_new CNullRHIDepthStencilView() )
+        , UnorderedAccessView( dbg_new CNullRHIUnorderedAccessView() )
     {
     }
 
@@ -88,7 +88,7 @@ public:
     template<typename... ArgTypes>
     TNullRHITexture( ArgTypes&&... Args )
         : TBaseTexture( Forward<ArgTypes>( Args )... )
-        , ShaderResourceView( DBG_NEW CNullRHIShaderResourceView() )
+        , ShaderResourceView( dbg_new CNullRHIShaderResourceView() )
     {
     }
 

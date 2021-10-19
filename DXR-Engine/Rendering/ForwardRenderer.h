@@ -4,7 +4,7 @@
 
 #include "CoreRHI/RHICommandList.h"
 
-class CForwardRenderer
+class CORE_API CForwardRenderer
 {
 public:
     CForwardRenderer() = default;

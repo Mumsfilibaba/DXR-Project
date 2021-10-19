@@ -333,13 +333,13 @@ bool CD3D12RHIShaderCompiler::CompileShader(
 
 bool CD3D12RHIShaderCompiler::GetReflection( CD3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection )
 {
-    TComPtr<IDxcBlob> ShaderBlob = DBG_NEW ExistingBlob( (LPVOID)Shader->GetCode(), Shader->GetCodeSize() );
+    TComPtr<IDxcBlob> ShaderBlob = dbg_new ExistingBlob( (LPVOID)Shader->GetCode(), Shader->GetCodeSize() );
     return InternalGetReflection( ShaderBlob, IID_PPV_ARGS( Reflection ) );
 }
 
 bool CD3D12RHIShaderCompiler::GetLibraryReflection( CD3D12BaseShader* Shader, ID3D12LibraryReflection** Reflection )
 {
-    TComPtr<IDxcBlob> ShaderBlob = DBG_NEW ExistingBlob( (LPVOID)Shader->GetCode(), Shader->GetCodeSize() );
+    TComPtr<IDxcBlob> ShaderBlob = dbg_new ExistingBlob( (LPVOID)Shader->GetCode(), Shader->GetCodeSize() );
     return InternalGetReflection( ShaderBlob, IID_PPV_ARGS( Reflection ) );
 }
 
@@ -353,7 +353,7 @@ bool CD3D12RHIShaderCompiler::HasRootSignature( CD3D12BaseShader* Shader )
         return false;
     }
 
-    TComPtr<IDxcBlob> ShaderBlob = DBG_NEW ExistingBlob( (LPVOID)Shader->GetCode(), Shader->GetCodeSize() );
+    TComPtr<IDxcBlob> ShaderBlob = dbg_new ExistingBlob( (LPVOID)Shader->GetCode(), Shader->GetCodeSize() );
     Result = Reflection->Load( ShaderBlob.Get() );
     if ( FAILED( Result ) )
     {
@@ -611,7 +611,7 @@ bool CD3D12RHIShaderCompiler::ValidateRayTracingShader( const TComPtr<IDxcBlob>&
 
     CString FuncName( FuncDesc.Name );
     auto result = FuncName.Find( Buffer );
-    if ( result == CString::InvalidPosition )
+    if ( result == CString::NPos )
     {
         LOG_ERROR( "[D3D12ShaderCompiler]: First exported function does not have correct entrypoint '" + CString( Buffer ) + "'. Name=" + FuncName );
         return false;

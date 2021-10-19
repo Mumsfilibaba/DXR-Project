@@ -202,7 +202,7 @@ bool CD3D12RHIViewport::RetriveBackBuffers()
         {
             if ( !View )
             {
-                View = DBG_NEW CD3D12RenderTargetView( GetDevice(), RenderTargetOfflineHeap );
+                View = dbg_new CD3D12RenderTargetView( GetDevice(), RenderTargetOfflineHeap );
                 if ( !View->Init() )
                 {
                     return false;
@@ -221,8 +221,8 @@ bool CD3D12RHIViewport::RetriveBackBuffers()
             return false;
         }
 
-        BackBuffers[i] = DBG_NEW CD3D12RHITexture2D( GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, SClearValue() );
-        BackBuffers[i]->SetResource( DBG_NEW CD3D12Resource( GetDevice(), BackBufferResource ) );
+        BackBuffers[i] = dbg_new CD3D12RHITexture2D( GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, SClearValue() );
+        BackBuffers[i]->SetResource( dbg_new CD3D12Resource( GetDevice(), BackBufferResource ) );
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;
         CMemory::Memzero( &Desc );

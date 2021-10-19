@@ -23,7 +23,7 @@ inline const char* ToString( ERHIModule RenderLayerApi )
     }
 }
 
-class CRHIModule
+class CORE_API CRHIModule
 {
 public:
     static bool Init( ERHIModule InRenderApi );

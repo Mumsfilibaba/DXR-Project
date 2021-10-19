@@ -20,7 +20,7 @@ public:
     /* Create a new engine instance */
     static FORCEINLINE TSharedPtr<CEngine> Make()
     {
-        return TSharedPtr<CEngine>( DBG_NEW CEngine() );;
+        return TSharedPtr<CEngine>( dbg_new CEngine() );;
     }
 
     /* Public destructor for the TSharedPtr */

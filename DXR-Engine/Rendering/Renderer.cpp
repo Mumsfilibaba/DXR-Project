@@ -21,7 +21,7 @@
 
 static const uint32 ShadowMapSampleCount = 2;
 
-CRenderer GRenderer;
+CORE_API CRenderer GRenderer;
 
 TConsoleVariable<bool> GDrawTextureDebugger( false );
 TConsoleVariable<bool> GDrawRendererInfo( false );
@@ -688,6 +688,8 @@ bool CRenderer::Init()
     INIT_CONSOLE_VARIABLE( "r.EnableFrustumCulling", &GFrustumCullEnabled );
     INIT_CONSOLE_VARIABLE( "r.EnableRayTracing", &GRayTracingEnabled );
     INIT_CONSOLE_VARIABLE( "r.FXAADebug", &GFXAADebug );
+
+    CConsoleManager Console = CConsoleManager::Get();
 
     Resources.MainWindowViewport = RHICreateViewport( GEngine->MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown );
     if ( !Resources.MainWindowViewport )

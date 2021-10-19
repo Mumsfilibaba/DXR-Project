@@ -1,7 +1,7 @@
 #pragma once
 #include "Core.h"
 
-class Editor
+class CORE_API Editor
 {
 public:
     static void Init();

@@ -20,7 +20,7 @@ public:
     /* Create and initialize a new CommandContext */
     static FORCEINLINE CNullRHICommandContext* Make()
     {
-        return DBG_NEW CNullRHICommandContext();
+        return dbg_new CNullRHICommandContext();
     }
 
     /* Begin recording commands on this context */

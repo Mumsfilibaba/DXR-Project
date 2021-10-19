@@ -21,7 +21,7 @@ public:
     /* Constants */
     enum
     {
-        InvalidPosition = SizeType( -1 )
+        NPos = SizeType( -1 )
     };
 
     /* Iterators */
@@ -422,7 +422,7 @@ public:
         const CharType* Result = StringTraits::Find( Start, InString );
         if ( !Result )
         {
-            return InvalidPosition;
+            return NPos;
         }
         else
         {
@@ -444,7 +444,7 @@ public:
         const CharType* Result = StringTraits::FindChar( Start, Char );
         if ( !Result )
         {
-            return InvalidPosition;
+            return NPos;
         }
         else
         {
@@ -501,7 +501,7 @@ public:
             }
         }
 
-        return InvalidPosition;
+        return NPos;
     }
 
     /* Returns the position of the first occurance of char by searching from the end */
@@ -534,7 +534,7 @@ public:
 
         if ( !Result )
         {
-            return InvalidPosition;
+            return NPos;
         }
         else
         {
@@ -569,7 +569,7 @@ public:
         const CharType* Result = StringTraits::FindOneOf( Start, InString );
         if ( !Result )
         {
-            return InvalidPosition;
+            return NPos;
         }
         else
         {
@@ -625,7 +625,7 @@ public:
             }
         }
 
-        return InvalidPosition;
+        return NPos;
     }
 
     /* Returns the position of the the first character not a part of the searchstring */
@@ -655,7 +655,7 @@ public:
         SizeType Ret = Pos + Position;
         if ( Ret >= Len )
         {
-            return InvalidPosition;
+            return NPos;
         }
         else
         {
@@ -716,51 +716,51 @@ public:
             }
         }
 
-        return InvalidPosition;
+        return NPos;
     }
 
     /* Returns true if the searchstring exists withing the string */
     FORCEINLINE bool Contains( const CharType* InString, SizeType InOffset = 0 ) const noexcept
     {
-        return (Find( InString, InOffset ) != InvalidPosition);
+        return (Find( InString, InOffset ) != NPos);
     }
 
     /* Returns true if the searchstring exists withing the string */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Contains( const StringType& InString, SizeType InOffset = 0 ) const noexcept
     {
-        return (Find( InString, InOffset ) != InvalidPosition);
+        return (Find( InString, InOffset ) != NPos);
     }
 
     /* Returns true if the searchstring exists withing the string */
     FORCEINLINE bool Contains( const CharType* InString, SizeType InLength, SizeType InOffset = 0 ) const noexcept
     {
-        return (Find( InString, InLength, InOffset ) != InvalidPosition);
+        return (Find( InString, InLength, InOffset ) != NPos);
     }
 
     /* Returns true if the searchstring exists withing the string */
     FORCEINLINE bool Contains( CharType Char, SizeType InOffset = 0 ) const noexcept
     {
-        return (Find( Char, InOffset ) != InvalidPosition);
+        return (Find( Char, InOffset ) != NPos);
     }
 
     /* Returns the position of the the first found character in the searchstring */
     FORCEINLINE bool ContainsOneOf( const CharType* InString, SizeType InOffset = 0 ) const noexcept
     {
-        return (FindOneOf( InString, InOffset ) != InvalidPosition);
+        return (FindOneOf( InString, InOffset ) != NPos);
     }
 
     /* Returns true if the searchstring exists withing the string */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type ContainsOneOf( const StringType& InString, SizeType InLength, SizeType InOffset = 0 ) const noexcept
     {
-        return (FindOneOf<StringType>( InString, InLength, InOffset ) != InvalidPosition);
+        return (FindOneOf<StringType>( InString, InLength, InOffset ) != NPos);
     }
 
     /* Returns true if the searchstring exists withing the string */
     FORCEINLINE bool ContainsOneOf( const CharType* InString, SizeType InLength, SizeType InOffset = 0 ) const noexcept
     {
-        return (FindOneOf( InString, InLength, InOffset ) != InvalidPosition);
+        return (FindOneOf( InString, InLength, InOffset ) != NPos);
     }
 
     /* Removes count characters from position and forward */

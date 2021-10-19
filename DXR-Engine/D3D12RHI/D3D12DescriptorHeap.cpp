@@ -153,7 +153,7 @@ bool CD3D12OfflineDescriptorHeap::AllocateHeap()
 {
     constexpr uint32 DescriptorCount = D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT;
 
-    TSharedRef<CD3D12DescriptorHeap> Heap = DBG_NEW CD3D12DescriptorHeap( GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE );
+    TSharedRef<CD3D12DescriptorHeap> Heap = dbg_new CD3D12DescriptorHeap( GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE );
     if ( Heap->Init() )
     {
         if ( !Name.IsEmpty() )
@@ -181,7 +181,7 @@ CD3D12OnlineDescriptorHeap::CD3D12OnlineDescriptorHeap( CD3D12Device* InDevice, 
 
 bool CD3D12OnlineDescriptorHeap::Init()
 {
-    Heap = DBG_NEW CD3D12DescriptorHeap( GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE );
+    Heap = dbg_new CD3D12DescriptorHeap( GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE );
     if ( Heap->Init() )
     {
         return true;
@@ -236,7 +236,7 @@ bool CD3D12OnlineDescriptorHeap::AllocateFreshHeap()
 
     if ( HeapPool.IsEmpty() )
     {
-        Heap = DBG_NEW CD3D12DescriptorHeap( GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE );
+        Heap = dbg_new CD3D12DescriptorHeap( GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE );
         if ( !Heap->Init() )
         {
             CDebug::DebugBreak();

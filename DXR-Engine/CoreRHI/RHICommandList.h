@@ -10,8 +10,8 @@ public:
     CCommandAllocator( uint32 StartSize = 4096 );
     ~CCommandAllocator();
     
-    /* The memory uses realloc which means that all objects that gets allocated must be memcpy-able */
-    void* Allocate( uint32 SizeInBytes, uint32 Alignment );
+    /* Allocate memory, */
+    void* Allocate( uint64 SizeInBytes, uint64 Alignment = STANDARD_ALIGNMENT );
 
     /* Resets the allocator*/
     void Reset();
@@ -22,15 +22,26 @@ public:
         return Allocate( sizeof( T ), alignof(T) );
     }
 
-    FORCEINLINE uint8* AllocateBytes( uint32 SizeInBytes, uint32 Alignment )
+    FORCEINLINE uint8* AllocateBytes( uint64 SizeInBytes, uint64 Alignment = STANDARD_ALIGNMENT )
     {
         return reinterpret_cast<uint8*>(Allocate( SizeInBytes, Alignment ));
     }
 
 private:
-    uint8* Memory;
-    uint32 Size;
-    uint32 Offset;
+
+    void ReleaseDiscardedMemory();
+
+    /* The current pointer */
+    uint8* CurrentMemory;
+
+    /* Size of Current Memory*/
+    uint64 Size;
+
+    /* Offset into Current Memory*/
+    uint64 Offset;
+
+    /* Discarded memory, kept alive so until reset is called */
+    TArray<uint8*> DiscardedMemory;
 };
 
 void* operator new  (size_t Size, CCommandAllocator& Allocator);

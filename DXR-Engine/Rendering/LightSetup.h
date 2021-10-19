@@ -43,7 +43,7 @@ struct SDirectionalLightData
     float LightSize;
 };
 
-struct SLightSetup
+struct CORE_API SLightSetup
 {
     const EFormat ShadowMapFormat = EFormat::D32_Float;
     const EFormat LightProbeFormat = EFormat::R11G11B10_Float;

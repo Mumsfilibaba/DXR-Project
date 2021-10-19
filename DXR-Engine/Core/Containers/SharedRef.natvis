@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <Type Name="TSharedRef&lt;*&gt;">
-    <DisplayString>{{ References={RefPtr->StrongReferences} }}</DisplayString>
+    <DisplayString>{{ References={Ptr->StrongReferences} }}</DisplayString>
     <Expand>
-      <Item Name="[References]">RefPtr->StrongReferences</Item>
-      <Item Name="[Ptr]">RefPtr</Item>
+      <Item Name="[References]">Ptr->StrongReferences</Item>
+      <Item Name="[Ptr]">Ptr</Item>
     </Expand>
   </Type>
 </AutoVisualizer>

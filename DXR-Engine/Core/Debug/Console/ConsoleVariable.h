@@ -1,23 +1,27 @@
 #pragma once
-#include "ConsoleObject.h"
+#include "IConsoleObject.h"
 
 #include "Core/Delegates/MulticastDelegate.h"
 
 #include <cstdlib>
 #include <sstream>
 
-class CORE_API CConsoleVariable : public CConsoleObject, public IConsoleVariable
+class CORE_API CConsoleVariable : public IConsoleVariable
 {
 public:
 
     CConsoleVariable()
-        : CConsoleObject()
-        , IConsoleVariable()
+        : IConsoleVariable()
         , ChangedDelegate()
     {
     }
 
     virtual ~CConsoleVariable() = default;
+
+    virtual IConsoleCommand* AsCommand() override
+    {
+        return nullptr;
+    }
 
     virtual IConsoleVariable* AsVariable() override
     {
@@ -186,61 +190,72 @@ inline void TConsoleVariable<bool>::SetString( const CString& InValue )
     }
 }
 
-template<> inline CString TConsoleVariable<bool>::GetString() const
+template<> 
+inline CString TConsoleVariable<bool>::GetString() const
 {
     return Value ? "true" : "false";
 }
 
-template<> inline bool TConsoleVariable<bool>::IsBool() const
+template<> 
+inline bool TConsoleVariable<bool>::IsBool() const
 {
     return true;
 }
 
 // String
-template<> inline void TConsoleVariable<CString>::SetInt( int32 InValue )
+template<> 
+inline void TConsoleVariable<CString>::SetInt( int32 InValue )
 {
     Value.Format( "%d", InValue );
 }
 
-template<> inline void TConsoleVariable<CString>::SetFloat( float InValue )
+template<>
+inline void TConsoleVariable<CString>::SetFloat( float InValue )
 {
     Value.Format( "%.4f", InValue );
 }
 
-template<> inline void TConsoleVariable<CString>::SetBool( bool InValue )
+template<>
+inline void TConsoleVariable<CString>::SetBool( bool InValue )
 {
     std::stringstream Stream;
     Stream << std::boolalpha << InValue;
     Value = Stream.str().c_str();
 }
 
-template<> inline void TConsoleVariable<CString>::SetString( const CString& InValue )
+template<>
+inline void TConsoleVariable<CString>::SetString( const CString& InValue )
 {
     Value = InValue;
     OnChanged();
 }
 
-template<> inline bool TConsoleVariable<CString>::IsString() const
+template<> 
+inline bool TConsoleVariable<CString>::IsString() const
 {
     return true;
 }
 
-template<> inline int32 TConsoleVariable<CString>::GetInt() const
+template<>
+inline int32 TConsoleVariable<CString>::GetInt() const
 {
     return 0;
 }
 
-template<> inline float TConsoleVariable<CString>::GetFloat() const
+template<>
+inline float TConsoleVariable<CString>::GetFloat() const
 {
     return 0.0f;
 }
 
-template<> inline bool TConsoleVariable<CString>::GetBool() const
+template<>
+inline bool TConsoleVariable<CString>::GetBool() const
 {
     return false;
 }
 
-template<> inline CString TConsoleVariable<CString>::GetString() const
+template<>
+inline CString TConsoleVariable<CString>::GetString() const
 {
     return Value;
 }

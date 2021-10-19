@@ -7,7 +7,7 @@
 
 #include "Scene/Scene.h"
 
-class CSkyboxRenderPass final
+class CORE_API CSkyboxRenderPass final
 {
 public:
     CSkyboxRenderPass() = default;

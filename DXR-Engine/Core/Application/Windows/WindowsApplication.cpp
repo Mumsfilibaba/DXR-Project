@@ -49,7 +49,7 @@ TSharedPtr<CWindowsApplication> CWindowsApplication::Make()
     HINSTANCE Instance = static_cast<HINSTANCE>(GetModuleHandleA( 0 ));
 
     // TODO: Load icon here
-    return TSharedPtr<CWindowsApplication>( DBG_NEW CWindowsApplication( Instance ) );
+    return TSharedPtr<CWindowsApplication>( dbg_new CWindowsApplication( Instance ) );
 }
 
 CWindowsApplication::CWindowsApplication( HINSTANCE InInstance )
@@ -96,7 +96,7 @@ bool CWindowsApplication::RegisterWindowClass()
 
 TSharedRef<CCoreWindow> CWindowsApplication::MakeWindow()
 {
-    TSharedRef<CWindowsWindow> NewWindow = DBG_NEW CWindowsWindow( this );
+    TSharedRef<CWindowsWindow> NewWindow = dbg_new CWindowsWindow( this );
     Windows.Emplace( NewWindow );
     return NewWindow.Get();
 }

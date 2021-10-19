@@ -197,7 +197,7 @@ bool CD3D12RHIGraphicsPipelineState::Init( const SGraphicsPipelineStateCreateInf
         // TODO: Maybe use all shaders and create one that fits all
         D3D12_SHADER_BYTECODE ByteCode = ShadersWithRootSignature.FirstElement()->GetByteCode();
 
-        RootSignature = DBG_NEW CD3D12RootSignature( GetDevice() );
+        RootSignature = dbg_new CD3D12RootSignature( GetDevice() );
         if ( !RootSignature->Init( ByteCode.pShaderBytecode, ByteCode.BytecodeLength ) )
         {
             return false;
@@ -271,7 +271,7 @@ bool CD3D12RHIComputePipelineState::Init()
     {
         D3D12_SHADER_BYTECODE ByteCode = Shader->GetByteCode();
 
-        RootSignature = DBG_NEW CD3D12RootSignature( GetDevice() );
+        RootSignature = dbg_new CD3D12RootSignature( GetDevice() );
         if ( !RootSignature->Init( ByteCode.pShaderBytecode, ByteCode.BytecodeLength ) )
         {
             return false;

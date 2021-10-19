@@ -9,29 +9,33 @@
 
 #include <regex>
 
-CConsoleManager GConsole;
+/* Commands */
 
 CConsoleCommand GClearHistory;
 
 TConsoleVariable<CString> GEcho;
 
+/* ConsoleManager */
+
+CConsoleManager CConsoleManager::Instance;
+
 void CConsoleManager::Init()
 {
-    GClearHistory.GetExecutedDelgate().AddRaw( this, &CConsoleManager::ClearHistory );
+    GClearHistory.GetExecutedDelgate().AddRaw( &Instance, &CConsoleManager::ClearHistory );
     INIT_CONSOLE_COMMAND( "ClearHistory", &GClearHistory );
 
-    GEcho.GetChangedDelegate().AddLambda([this]( IConsoleVariable* InVariable ) -> void
+    GEcho.GetChangedDelegate().AddLambda([]( IConsoleVariable* InVariable ) -> void
     {
         if ( InVariable->IsString() )
         {
-            this->PrintMessage( InVariable->GetString() );
+            Instance.PrintMessage( InVariable->GetString() );
         }
     });
 
     INIT_CONSOLE_VARIABLE( "Echo", &GEcho );
 
-    InputHandler.HandleKeyEventDelegate.BindRaw( this, &CConsoleManager::OnKeyPressedEvent );
-    CApplication::Get().AddInputHandler( &InputHandler );
+    Instance.InputHandler.HandleKeyEventDelegate.BindRaw( &Instance, &CConsoleManager::OnKeyPressedEvent );
+    CApplication::Get().AddInputHandler( &Instance.InputHandler );
 }
 
 void CConsoleManager::Tick()
@@ -40,16 +44,14 @@ void CConsoleManager::Tick()
     {
         CUIRenderer::DrawUI( []()
         {
-            GConsole.DrawInterface();
+            Instance.DrawInterface();
         } );
     }
 }
 
 void CConsoleManager::RegisterCommand( const CString& Name, IConsoleCommand* Command )
 {
-    // TODO: This feels hacky, fix
-    IConsoleObject* Object = reinterpret_cast<IConsoleObject*>(Command);
-    if ( !RegisterObject( Name, Object ) )
+    if ( !RegisterObject( Name, Command ) )
     {
         LOG_WARNING( "ConsoleCommand '" + Name + "' is already registered" );
     }
@@ -57,8 +59,7 @@ void CConsoleManager::RegisterCommand( const CString& Name, IConsoleCommand* Com
 
 void CConsoleManager::RegisterVariable( const CString& Name, IConsoleVariable* Variable )
 {
-    IConsoleObject* Object = reinterpret_cast<IConsoleObject*>(Variable);
-    if ( !RegisterObject( Name, Object ) )
+    if ( !RegisterObject( Name, Variable ) )
     {
         LOG_WARNING( "ConsoleVariable '" + Name + "' is already registered" );
     }
@@ -229,11 +230,11 @@ void CConsoleManager::DrawInterface()
 
             ImGui::PopID();
 
-            if ( IsActiveIndex && GConsole.CandidateSelectionChanged )
+            if ( IsActiveIndex && Instance.CandidateSelectionChanged )
             {
                 ImGui::SetScrollHere();
-                GConsole.PopupSelectedText = Candidate.Text;
-                GConsole.CandidateSelectionChanged = false;
+                Instance.PopupSelectedText = Candidate.Text;
+                Instance.CandidateSelectionChanged = false;
             }
         }
 
@@ -279,7 +280,7 @@ void CConsoleManager::DrawInterface()
         return This->TextCallback( Data );
     };
 
-    const bool Result = ImGui::InputText( "###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(&GConsole) );
+    const bool Result = ImGui::InputText( "###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(&Instance) );
     if ( Result && TextBuffer[0] != 0 )
     {
         if ( CandidatesIndex != -1 )
@@ -540,7 +541,7 @@ void CConsoleManager::Execute( const CString& CmdString )
     }
 
     int32 Pos = CmdString.FindOneOf( " " );
-    if ( Pos == CString::InvalidPosition )
+    if ( Pos == CString::NPos )
     {
         IConsoleCommand* Command = FindCommand( CmdString );
         if ( !Command )

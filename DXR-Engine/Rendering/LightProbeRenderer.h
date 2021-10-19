@@ -4,7 +4,7 @@
 
 #include "CoreRHI/RHICommandList.h"
 
-class CLightProbeRenderer
+class CORE_API CLightProbeRenderer
 {
 public:
     CLightProbeRenderer() = default;

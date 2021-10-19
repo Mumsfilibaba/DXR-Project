@@ -7,11 +7,10 @@
 #include "Core/Math/Matrix4.h"
 #include "Core/Time/Timestamp.h"
 
-#include <string> // Remove later
-
-class CTransform
+class CORE_API CTransform
 {
 public:
+
     CTransform();
     ~CTransform() = default;
 
@@ -75,7 +74,7 @@ private:
 class CScene;
 class CComponent;
 
-class CActor : public CCoreObject
+class CORE_API CActor : public CCoreObject
 {
     CORE_OBJECT( CActor, CCoreObject );
 

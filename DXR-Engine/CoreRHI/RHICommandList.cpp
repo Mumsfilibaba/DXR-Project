@@ -4,12 +4,12 @@
 
 void* operator new( size_t Size, CCommandAllocator& Allocator )
 {
-    return Allocator.Allocate( static_cast<uint32>(Size), 16 );
+    return Allocator.Allocate( static_cast<uint32>(Size), STANDARD_ALIGNMENT );
 }
 
 void* operator new[]( size_t Size, CCommandAllocator& Allocator )
 {
-    return Allocator.Allocate( static_cast<uint32>(Size), 16 );
+    return Allocator.Allocate( static_cast<uint32>(Size), STANDARD_ALIGNMENT );
 }
 
 void operator delete ( void*, CCommandAllocator& )
@@ -21,46 +21,69 @@ void operator delete[]( void*, CCommandAllocator& )
 }
 
 CCommandAllocator::CCommandAllocator( uint32 StartSize )
-    : Memory( nullptr )
+    : CurrentMemory( nullptr )
     , Size( StartSize )
     , Offset( 0 )
+    , DiscardedMemory()
 {
-    Memory = CMemory::Realloc( Memory, Size );
+    CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc( Size ));
+    Assert( CurrentMemory != nullptr );
 }
 
 CCommandAllocator::~CCommandAllocator()
 {
-    SafeDelete( Memory );
+    ReleaseDiscardedMemory();
+
+    SafeDelete( CurrentMemory );
 }
 
-void* CCommandAllocator::Allocate( uint32 SizeInBytes, uint32 Alignment )
+void* CCommandAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
 {
-    Assert( Memory != nullptr );
+    Assert( CurrentMemory != nullptr );
 
-    const uint32 AlignedSize = NMath::AlignUp( SizeInBytes, Alignment );
-    const uint32 NewOffset   = Offset + AlignedSize;
-    if ( NewOffset >= Size )
+    const uint64 AlignedSize = NMath::AlignUp( SizeInBytes, Alignment );
+    const uint64 NewOffset = Offset + AlignedSize;
+    if ( NewOffset <= Size )
     {
-        void* Result = Memory + Offset;
+        void* Result = CurrentMemory + Offset;
         Offset = NewOffset;
         return Result;
     }
     else
     {
-        const uint32 NewSize = Size + Size;
-        Memory = CMemory::Realloc( Memory, NewSize );
-        Size = NewSize;
+        // Discard the current pointer 
+        DiscardedMemory.Emplace( CurrentMemory );
+
+        // Allocate a new block of memory
+        const uint64 NewSize = NMath::Max(Size + Size, AlignedSize);
         
-        void* Result = Memory + Offset;
-        Offset = NewOffset;
-        return Result;
+        CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc( NewSize ));
+        Assert( CurrentMemory != nullptr );
+
+        Size = NewSize;
+        Offset = AlignedSize;
+
+        // Return the newly allocated block
+        return CurrentMemory;
     }
 }
 
 void CCommandAllocator::Reset()
 {
+    ReleaseDiscardedMemory();
+
     // TODO: Calculate the average amount needed and resize the allocator to a smaller size to prevent to much waste
     Offset = 0;
+}
+
+void CCommandAllocator::ReleaseDiscardedMemory()
+{
+    for ( uint8* Memory : DiscardedMemory )
+    {
+        SafeDelete( Memory );
+    }
+
+    DiscardedMemory.Empty();
 }
 
 CRHICommandQueue CRHICommandQueue::Instance;

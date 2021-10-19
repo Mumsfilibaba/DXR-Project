@@ -451,7 +451,7 @@ void CShadowMapRenderer::RenderPointLightShadows( CRHICommandList& CmdList, cons
                 CmdList.SetConstantBuffer( PointLightPixelShader.Get(), PerShadowMapBuffer.Get(), 0 );
 
                 // Draw all objects to depth buffer
-                IConsoleVariable* GlobalFrustumCullEnabled = GConsole.FindVariable( "r.EnableFrustumCulling" );
+                IConsoleVariable* GlobalFrustumCullEnabled = CConsoleManager::Get().FindVariable( "r.EnableFrustumCulling" );
                 if ( GlobalFrustumCullEnabled->GetBool() )
                 {
                     CFrustum CameraFrustum = CFrustum( Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face] );

@@ -74,7 +74,7 @@ public:
     }
 };
 
-class CUIRenderer
+class CORE_API CUIRenderer
 {
 public:
     typedef void(*UIDrawFunc)();

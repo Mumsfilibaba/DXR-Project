@@ -491,7 +491,7 @@ CD3D12RootSignatureCache& CD3D12RootSignatureCache::Get()
 
 CD3D12RootSignature* CD3D12RootSignatureCache::CreateRootSignature( const SD3D12RootSignatureResourceCount& ResourceCount )
 {
-    TSharedRef<CD3D12RootSignature> NewRootSignature = DBG_NEW CD3D12RootSignature( GetDevice() );
+    TSharedRef<CD3D12RootSignature> NewRootSignature = dbg_new CD3D12RootSignature( GetDevice() );
     if ( !NewRootSignature->Init( ResourceCount ) )
     {
         return nullptr;

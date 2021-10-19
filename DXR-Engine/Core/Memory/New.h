@@ -2,9 +2,9 @@
 #include <new>
 
 #if defined(DEBUG_BUILD) && defined(PLATFORM_WINDOWS)
-#define DBG_NEW	new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define dbg_new	new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #else
-#define DBG_NEW	new
+#define dbg_new	new
 #endif
 
 void* operator new  (size_t Size);

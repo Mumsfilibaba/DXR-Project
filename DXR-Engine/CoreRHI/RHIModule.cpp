@@ -20,7 +20,7 @@ bool CRHIModule::Init( ERHIModule InRenderApi )
     {
         GRHICore = CD3D12RHICore::Make();
 
-        CD3D12RHIShaderCompiler* Compiler = DBG_NEW CD3D12RHIShaderCompiler();
+        CD3D12RHIShaderCompiler* Compiler = dbg_new CD3D12RHIShaderCompiler();
         if ( !Compiler->Init() )
         {
             return false;

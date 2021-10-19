@@ -5,7 +5,7 @@
 
 #include "Scene/Scene.h"
 
-class CScreenSpaceOcclusionRenderer
+class CORE_API CScreenSpaceOcclusionRenderer
 {
 public:
     CScreenSpaceOcclusionRenderer() = default;

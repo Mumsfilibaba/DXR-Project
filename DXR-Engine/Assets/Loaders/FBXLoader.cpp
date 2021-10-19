@@ -13,7 +13,7 @@
 static CString ExtractPath( const CString& FullFilePath )
 {
     auto Pos = FullFilePath.ReverseFind( '/' );
-    if ( Pos != CString::InvalidPosition )
+    if ( Pos != CString::NPos )
     {
         return FullFilePath.SubString( 0, Pos );
     }

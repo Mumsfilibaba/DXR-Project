@@ -1,9 +1,9 @@
 #pragma once
-#include "ConsoleObject.h"
+#include "IConsoleObject.h"
 
 #include "Core/Delegates/MulticastDelegate.h"
 
-class CORE_API CConsoleCommand : public CConsoleObject, public IConsoleCommand
+class CORE_API CConsoleCommand : public IConsoleCommand
 {
 public:
 
@@ -17,6 +17,11 @@ public:
     virtual IConsoleCommand* AsCommand() override
     {
         return this;
+    }
+
+    virtual IConsoleVariable* AsVariable() override
+    {
+        return nullptr;
     }
 
     virtual void Execute() override 

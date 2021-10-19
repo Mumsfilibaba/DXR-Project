@@ -67,7 +67,7 @@ void SSceneData::AddToScene( CScene* Scene )
             NewActor->SetName( ModelData.Name.CStr() );
             NewActor->GetTransform().SetUniformScale( Scale );
 
-            CMeshComponent* MeshComponent = DBG_NEW CMeshComponent( NewActor );
+            CMeshComponent* MeshComponent = dbg_new CMeshComponent( NewActor );
             MeshComponent->Mesh = CMesh::Make( ModelData.Mesh );
 
             if ( ModelData.MaterialIndex >= 0 )

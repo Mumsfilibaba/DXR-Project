@@ -19,7 +19,7 @@ bool CApplication::Make()
         return false;
     }
 
-    Instance = TSharedPtr<CApplication>( DBG_NEW CApplication( Application ) );
+    Instance = TSharedPtr<CApplication>( dbg_new CApplication( Application ) );
     Application->SetMessageListener( Instance );
     return true;
 }
