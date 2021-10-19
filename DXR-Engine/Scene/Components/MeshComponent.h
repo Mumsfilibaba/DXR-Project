@@ -1,7 +1,7 @@
 #pragma once
 #include "Component.h"
 
-class CMeshComponent : public CComponent
+class CORE_API CMeshComponent : public CComponent
 {
     CORE_OBJECT( CMeshComponent, CComponent );
 
