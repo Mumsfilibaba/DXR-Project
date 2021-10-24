@@ -1,7 +1,7 @@
 #include "ForwardRenderer.h"
 
-#include "RHICore/RHIModule.h"
-#include "RHICore/RHIShaderCompiler.h"
+#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHIShaderCompiler.h"
 
 #include "Rendering/MeshDrawCommand.h"
 #include "Rendering/Resources/Mesh.h"
@@ -26,7 +26,7 @@ bool CForwardRenderer::Init( SFrameResources& FrameResources )
         return false;
     }
 
-    VShader = CreateVertexShader( ShaderCode );
+    VShader = RHICreateVertexShader( ShaderCode );
     if ( !VShader )
     {
         CDebug::DebugBreak();
@@ -43,7 +43,7 @@ bool CForwardRenderer::Init( SFrameResources& FrameResources )
         return false;
     }
 
-    PShader = CreatePixelShader( ShaderCode );
+    PShader = RHICreatePixelShader( ShaderCode );
     if ( !PShader )
     {
         CDebug::DebugBreak();
@@ -59,7 +59,7 @@ bool CForwardRenderer::Init( SFrameResources& FrameResources )
     DepthStencilStateInfo.DepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
     if ( !DepthStencilState )
     {
         CDebug::DebugBreak();
@@ -73,7 +73,7 @@ bool CForwardRenderer::Init( SFrameResources& FrameResources )
     SRasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState( RasterizerStateInfo );
     if ( !RasterizerState )
     {
         CDebug::DebugBreak();
@@ -88,7 +88,7 @@ bool CForwardRenderer::Init( SFrameResources& FrameResources )
     BlendStateInfo.IndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].BlendEnable = true;
 
-    TSharedRef<CRHIBlendState> BlendState = CreateBlendState( BlendStateInfo );
+    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState( BlendStateInfo );
     if ( !BlendState )
     {
         CDebug::DebugBreak();
@@ -111,7 +111,7 @@ bool CForwardRenderer::Init( SFrameResources& FrameResources )
     PSOProperties.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
     PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
 
-    PipelineState = CreateGraphicsPipelineState( PSOProperties );
+    PipelineState = RHICreateGraphicsPipelineState( PSOProperties );
     if ( !PipelineState )
     {
         CDebug::DebugBreak();
@@ -143,6 +143,8 @@ void CForwardRenderer::Render( CRHICommandList& CmdList, const SFrameResources& 
 
     const float RenderWidth = float( FrameResources.FinalTarget->GetWidth() );
     const float RenderHeight = float( FrameResources.FinalTarget->GetHeight() );
+
+    CmdList.SetPrimitiveTopology( EPrimitiveTopology::TriangleList );
 
     CmdList.SetViewport( RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f );
     CmdList.SetScissorRect( RenderWidth, RenderHeight, 0, 0 );

@@ -13,7 +13,7 @@ public:
     /* Creates a new console, can only be called once */
     static FORCEINLINE CWindowsOutputConsole* Make()
     {
-        return new CWindowsOutputConsole();
+        return DBG_NEW CWindowsOutputConsole();
     }
 
     virtual void Print( const CString& Message )     override final;

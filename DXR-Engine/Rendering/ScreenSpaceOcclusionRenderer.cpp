@@ -1,7 +1,7 @@
 #include "ScreenSpaceOcclusionRenderer.h"
 
-#include "RHICore/RHIModule.h"
-#include "RHICore/RHIShaderCompiler.h"
+#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHIShaderCompiler.h"
 
 #include "Core/Debug/Profiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
@@ -29,7 +29,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
         return false;
     }
 
-    SSAOShader = CreateComputeShader( ShaderCode );
+    SSAOShader = RHICreateComputeShader( ShaderCode );
     if ( !SSAOShader )
     {
         CDebug::DebugBreak();
@@ -43,7 +43,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
     SComputePipelineStateCreateInfo PipelineStateInfo;
     PipelineStateInfo.Shader = SSAOShader.Get();
 
-    PipelineState = CreateComputePipelineState( PipelineStateInfo );
+    PipelineState = RHICreateComputePipelineState( PipelineStateInfo );
     if ( !PipelineState )
     {
         CDebug::DebugBreak();
@@ -93,7 +93,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
         SSAONoise.Emplace( 0.0f );
     }
 
-    SSAONoiseTex = CreateTexture2D( EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, EResourceState::NonPixelShaderResource, nullptr );
+    SSAONoiseTex = RHICreateTexture2D( EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, EResourceState::NonPixelShaderResource, nullptr );
     if ( !SSAONoiseTex )
     {
         CDebug::DebugBreak();
@@ -113,11 +113,11 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
 
     CmdList.TransitionTexture( SSAONoiseTex.Get(), EResourceState::CopyDest, EResourceState::NonPixelShaderResource );
 
-    GCmdListExecutor.ExecuteCommandList( CmdList );
+    GCommandQueue.ExecuteCommandList( CmdList );
 
     const uint32 Stride = sizeof( CVector3 );
     SResourceData SSAOSampleData( SSAOKernel.Data(), SSAOKernel.SizeInBytes() );
-    SSAOSamples = CreateStructuredBuffer( Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, EResourceState::Common, &SSAOSampleData );
+    SSAOSamples = RHICreateStructuredBuffer( Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, EResourceState::Common, &SSAOSampleData );
     if ( !SSAOSamples )
     {
         CDebug::DebugBreak();
@@ -128,7 +128,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
         SSAOSamples->SetName( "SSAO Samples" );
     }
 
-    SSAOSamplesSRV = CreateShaderResourceView( SSAOSamples.Get(), 0, SSAOKernel.Size() );
+    SSAOSamplesSRV = RHICreateShaderResourceView( SSAOSamples.Get(), 0, SSAOKernel.Size() );
     if ( !SSAOSamplesSRV )
     {
         CDebug::DebugBreak();
@@ -149,7 +149,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
         return false;
     }
 
-    BlurHorizontalShader = CreateComputeShader( ShaderCode );
+    BlurHorizontalShader = RHICreateComputeShader( ShaderCode );
     if ( !BlurHorizontalShader )
     {
         CDebug::DebugBreak();
@@ -163,7 +163,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
     SComputePipelineStateCreateInfo PSOProperties;
     PSOProperties.Shader = BlurHorizontalShader.Get();
 
-    BlurHorizontalPSO = CreateComputePipelineState( PSOProperties );
+    BlurHorizontalPSO = RHICreateComputePipelineState( PSOProperties );
     if ( !BlurHorizontalPSO )
     {
         CDebug::DebugBreak();
@@ -183,7 +183,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
         return false;
     }
 
-    BlurVerticalShader = CreateComputeShader( ShaderCode );
+    BlurVerticalShader = RHICreateComputeShader( ShaderCode );
     if ( !BlurVerticalShader )
     {
         CDebug::DebugBreak();
@@ -196,7 +196,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
 
     PSOProperties.Shader = BlurVerticalShader.Get();
 
-    BlurVerticalPSO = CreateComputePipelineState( PSOProperties );
+    BlurVerticalPSO = RHICreateComputePipelineState( PSOProperties );
     if ( !BlurVerticalPSO )
     {
         CDebug::DebugBreak();
@@ -304,7 +304,7 @@ bool CScreenSpaceOcclusionRenderer::CreateRenderTarget( SFrameResources& FrameRe
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
     const uint32 Flags = TextureFlags_RWTexture;
 
-    FrameResources.SSAOBuffer = CreateTexture2D( FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceState::Common, nullptr );
+    FrameResources.SSAOBuffer = RHICreateTexture2D( FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceState::Common, nullptr );
     if ( !FrameResources.SSAOBuffer )
     {
         CDebug::DebugBreak();

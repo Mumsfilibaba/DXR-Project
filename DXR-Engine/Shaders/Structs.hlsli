@@ -58,9 +58,9 @@ struct SCascadeMatrices
 struct SCascadeSplit
 {
     float3 MinExtent;
-    float Split;
+    float  Split;
     float3 MaxExtent;
-    float FarPlane;
+    float  FarPlane;
 };
 
 struct SCascadeGenerationInfo
@@ -68,7 +68,7 @@ struct SCascadeGenerationInfo
     float3 LightDirection;
     float  CascadeSplitLambda;
     float3 LightUp;
-    float  Padding0;
+    float  CascadeResolution;
 };
 
 struct DirectionalLight
@@ -78,7 +78,7 @@ struct DirectionalLight
     float3 Direction;
     float  MaxShadowBias;
     float3 Up;
-    float LightSize;
+    float  LightSize;
 };
 
 struct Vertex
@@ -98,11 +98,11 @@ struct Transform
 struct SMaterial
 {
     float3 Albedo;
-    float Roughness;
-    float Metallic;
-    float AO;
-    int EnableHeight;
-    int EnableMask;
+    float  Roughness;
+    float  Metallic;
+    float  AO;
+    int    EnableHeight;
+    int    EnableMask;
 };
 
 #endif

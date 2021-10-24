@@ -1,6 +1,6 @@
 #include "LightSetup.h"
 
-#include "RHICore/RHIModule.h"
+#include "CoreRHI/RHIModule.h"
 
 #include "Scene/Lights/PointLight.h"
 #include "Scene/Lights/DirectionalLight.h"
@@ -9,7 +9,7 @@
 
 bool SLightSetup::Init()
 {
-    DirectionalLightsBuffer = CreateConstantBuffer( sizeof( DirectionalLightData ), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
+    DirectionalLightsBuffer = RHICreateConstantBuffer( sizeof( DirectionalLightData ), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
     if ( !DirectionalLightsBuffer )
     {
         CDebug::DebugBreak();
@@ -21,7 +21,7 @@ bool SLightSetup::Init()
     }
 
     PointLightsData.Reserve( 256 );
-    PointLightsBuffer = CreateConstantBuffer( PointLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
+    PointLightsBuffer = RHICreateConstantBuffer( PointLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
     if ( !PointLightsBuffer )
     {
         CDebug::DebugBreak();
@@ -33,7 +33,7 @@ bool SLightSetup::Init()
     }
 
     PointLightsPosRad.Reserve( 256 );
-    PointLightsPosRadBuffer = CreateConstantBuffer( PointLightsPosRad.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
+    PointLightsPosRadBuffer = RHICreateConstantBuffer( PointLightsPosRad.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
     if ( !PointLightsPosRadBuffer )
     {
         CDebug::DebugBreak();
@@ -45,7 +45,7 @@ bool SLightSetup::Init()
     }
 
     ShadowCastingPointLightsData.Reserve( 8 );
-    ShadowCastingPointLightsBuffer = CreateConstantBuffer(
+    ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(
         ShadowCastingPointLightsData.CapacityInBytes(),
         BufferFlag_Default,
         EResourceState::VertexAndConstantBuffer,
@@ -61,7 +61,7 @@ bool SLightSetup::Init()
     }
 
     ShadowCastingPointLightsPosRad.Reserve( 8 );
-    ShadowCastingPointLightsPosRadBuffer = CreateConstantBuffer(
+    ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(
         ShadowCastingPointLightsPosRad.CapacityInBytes(),
         BufferFlag_Default,
         EResourceState::VertexAndConstantBuffer,
@@ -177,7 +177,7 @@ void SLightSetup::BeginFrame( CRHICommandList& CmdList, const CScene& Scene )
     {
         CmdList.DiscardResource( PointLightsBuffer.Get() );
 
-        PointLightsBuffer = CreateConstantBuffer( PointLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
+        PointLightsBuffer = RHICreateConstantBuffer( PointLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
         if ( !PointLightsBuffer )
         {
             CDebug::DebugBreak();
@@ -188,7 +188,7 @@ void SLightSetup::BeginFrame( CRHICommandList& CmdList, const CScene& Scene )
     {
         CmdList.DiscardResource( PointLightsPosRadBuffer.Get() );
 
-        PointLightsPosRadBuffer = CreateConstantBuffer( PointLightsPosRad.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
+        PointLightsPosRadBuffer = RHICreateConstantBuffer( PointLightsPosRad.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
         if ( !PointLightsPosRadBuffer )
         {
             CDebug::DebugBreak();
@@ -199,7 +199,7 @@ void SLightSetup::BeginFrame( CRHICommandList& CmdList, const CScene& Scene )
     {
         CmdList.DiscardResource( ShadowCastingPointLightsBuffer.Get() );
 
-        ShadowCastingPointLightsBuffer = CreateConstantBuffer(
+        ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(
             ShadowCastingPointLightsData.CapacityInBytes(),
             BufferFlag_Default,
             EResourceState::VertexAndConstantBuffer,
@@ -214,7 +214,7 @@ void SLightSetup::BeginFrame( CRHICommandList& CmdList, const CScene& Scene )
     {
         CmdList.DiscardResource( ShadowCastingPointLightsPosRadBuffer.Get() );
 
-        ShadowCastingPointLightsPosRadBuffer = CreateConstantBuffer(
+        ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(
             ShadowCastingPointLightsPosRad.CapacityInBytes(),
             BufferFlag_Default,
             EResourceState::VertexAndConstantBuffer,

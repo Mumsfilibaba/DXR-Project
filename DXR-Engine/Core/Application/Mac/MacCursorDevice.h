@@ -3,7 +3,7 @@
 #if defined(PLATFORM_MACOS)
 #include "Core/Application/Core/CoreCursorDevice.h"
 
-class CMacCursorDevice final : public CCoreCursorDevice
+class CMacCursorDevice final : public CCoreCursor
 {
     friend class CMacApplication;
 
@@ -24,7 +24,7 @@ public:
 private:
 
     FORCEINLINE CMacCursorDevice()
-        : CCoreCursorDevice()
+        : CCoreCursor()
     {
     }
 

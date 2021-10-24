@@ -2,7 +2,7 @@
 #include "Core.h"
 #include "InputHandler.h"
 #include "WindowMessageHandler.h"
-#include "ICursorDevice.h"
+#include "ICursor.h"
 #include "ApplicationUser.h"
 
 #include "Core/Containers/SharedPtr.h"
@@ -18,35 +18,22 @@ class CApplication : public CCoreApplicationMessageHandler
 {
 public:
 
-    /* Public destructor for the TSharedPtr */
-    virtual ~CApplication();
-
     /* Creates a standard main application */
-    static FORCEINLINE TSharedPtr<CApplication> Make( const TSharedPtr<CCoreApplication>& InPlatformApplication )
-    {
-        ApplicationInstance = TSharedPtr<CApplication>( DBG_NEW CApplication( InPlatformApplication ) );
-        InPlatformApplication->SetMessageListener( ApplicationInstance );
-        return ApplicationInstance;
-    }
+    static TSharedPtr<CApplication> Make( const TSharedPtr<CCoreApplication>& InPlatformApplication );
 
     /* Init the singleton from an existing application - Used for classes inheriting from CApplication */
-    static FORCEINLINE TSharedPtr<CApplication> Make( const TSharedPtr<CApplication>& InApplication )
-    {
-        ApplicationInstance = InApplication;
-        return ApplicationInstance;
-    }
+    static TSharedPtr<CApplication> Make( const TSharedPtr<CApplication>& InApplication );
 
-    static FORCEINLINE void Release()
-    {
-        ApplicationInstance->SetPlatformApplication( nullptr );
-        ApplicationInstance.Reset();
-    }
+    static void Release();
 
     /* Retrieve the singleton application instance */
     static FORCEINLINE CApplication& Get()
     {
         return *ApplicationInstance;
     }
+
+    /* Public destructor for the TSharedPtr */
+    virtual ~CApplication();
 
     /* Delegate for when the application is about to exit */
     DECLARE_EVENT( CApplicationExitEvent, CApplication, int32 );
@@ -138,42 +125,25 @@ public:
         }
     }
 
-public: // CCoreApplicationMessageHandler interface
+public:
 
-    /* Key Events */
+    virtual void HandleKeyReleased( EKey KeyCode, SModifierKeyState ModierKeyState ) override;
+    virtual void HandleKeyPressed( EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState ) override;
+    virtual void HandleKeyTyped( uint32 Character ) override;
 
-    virtual void OnKeyReleased( EKey KeyCode, SModifierKeyState ModierKeyState ) override;
+    virtual void HandleMouseMove( int32 x, int32 y ) override;
+    virtual void HandleMouseReleased( EMouseButton Button, SModifierKeyState ModierKeyState ) override;
+    virtual void HandleMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState ) override;
+    virtual void HandleMouseScrolled( float HorizontalDelta, float VerticalDelta ) override;
 
-    virtual void OnKeyPressed( EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState ) override;
+    virtual void HandleWindowResized( const TSharedRef<CCoreWindow>& Window, uint16 Width, uint16 Height ) override;
+    virtual void HandleWindowMoved( const TSharedRef<CCoreWindow>& Window, int16 x, int16 y ) override;
+    virtual void HandleWindowFocusChanged( const TSharedRef<CCoreWindow>& Window, bool HasFocus ) override;
+    virtual void HandleWindowMouseLeft( const TSharedRef<CCoreWindow>& Window ) override;
+    virtual void HandleWindowMouseEntered( const TSharedRef<CCoreWindow>& Window ) override;
+    virtual void HandleWindowClosed( const TSharedRef<CCoreWindow>& Window ) override;
 
-    virtual void OnKeyTyped( uint32 Character ) override;
-
-    /* Mouse Events */
-
-    virtual void OnMouseMove( int32 x, int32 y ) override;
-
-    virtual void OnMouseReleased( EMouseButton Button, SModifierKeyState ModierKeyState ) override;
-
-    virtual void OnMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState ) override;
-
-    virtual void OnMouseScrolled( float HorizontalDelta, float VerticalDelta ) override;
-
-    /* Window Events */
-
-    virtual void OnWindowResized( const TSharedRef<CCoreWindow>& Window, uint16 Width, uint16 Height ) override;
-
-    virtual void OnWindowMoved( const TSharedRef<CCoreWindow>& Window, int16 x, int16 y ) override;
-
-    virtual void OnWindowFocusChanged( const TSharedRef<CCoreWindow>& Window, bool HasFocus ) override;
-
-    virtual void OnWindowMouseLeft( const TSharedRef<CCoreWindow>& Window ) override;
-
-    virtual void OnWindowMouseEntered( const TSharedRef<CCoreWindow>& Window ) override;
-
-    virtual void OnWindowClosed( const TSharedRef<CCoreWindow>& Window ) override;
-
-    /* Other Application Events */
-    virtual void OnApplicationExit( int32 ExitCode ) override;
+    virtual void HandleApplicationExit( int32 ExitCode ) override;
 
 public:
 
@@ -184,7 +154,7 @@ public:
     }
 
     /* Retrieve the cursor interface */
-    FORCEINLINE ICursorDevice* GetCursor() const
+    FORCEINLINE ICursor* GetCursor() const
     {
         return PlatformApplication->GetCursor();
     }

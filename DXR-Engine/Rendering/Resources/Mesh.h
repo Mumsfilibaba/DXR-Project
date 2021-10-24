@@ -3,8 +3,8 @@
 
 #include "Core/Containers/Array.h"
 
-#include "RHICore/RHIResources.h"
-#include "RHICore/RHICommandList.h"
+#include "CoreRHI/RHIResources.h"
+#include "CoreRHI/RHICommandList.h"
 
 #include "Core/Math/AABB.h"
 

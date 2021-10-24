@@ -3,8 +3,8 @@
 
 #include "Rendering/UIRenderer.h"
 
-#include "RHICore/RHIModule.h"
-#include "RHICore/GPUProfiler.h"
+#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/GPUProfiler.h"
 
 #include "Core/Engine/Engine.h"
 #include "Core/Threading/ScopedLock.h"

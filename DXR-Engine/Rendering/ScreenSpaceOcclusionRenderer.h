@@ -1,7 +1,7 @@
 #pragma once
 #include "FrameResources.h"
 
-#include "RHICore/RHICommandList.h"
+#include "CoreRHI/RHICommandList.h"
 
 #include "Scene/Scene.h"
 

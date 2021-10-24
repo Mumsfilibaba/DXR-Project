@@ -3,13 +3,13 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/Resources/TextureFactory.h"
 
-#include "RHICore/RHIResources.h"
-#include "RHICore/RHIModule.h"
-#include "RHICore/RHIShaderCompiler.h"
+#include "CoreRHI/RHIResources.h"
+#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHIShaderCompiler.h"
 
 #include "Core/Time/Timer.h"
 #include "Core/Engine/Engine.h"
-#include "Core/Application/ICursorDevice.h"
+#include "Core/Application/ICursor.h"
 #include "Core/Application/Application.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Profiler.h"
@@ -64,13 +64,6 @@ static CUIInputHandler InputHandler;
 
 bool CUIRenderer::Init()
 {
-    // TODO: Have null renderlayer to avoid these checks
-    if ( !GRHICore )
-    {
-        LOG_WARNING( "No RenderLayer available renderer is disabled" );
-        return true;
-    }
-
     // Create context
     IMGUI_CHECKVERSION();
 
@@ -274,7 +267,7 @@ bool CUIRenderer::Init()
         return false;
     }
 
-    TSharedRef<CRHIVertexShader> VShader = CreateVertexShader( ShaderCode );
+    TSharedRef<CRHIVertexShader> VShader = RHICreateVertexShader( ShaderCode );
     if ( !VShader )
     {
         CDebug::DebugBreak();
@@ -303,7 +296,7 @@ bool CUIRenderer::Init()
         return false;
     }
 
-    GlobalImGuiState.PShader = CreatePixelShader( ShaderCode );
+    GlobalImGuiState.PShader = RHICreatePixelShader( ShaderCode );
     if ( !GlobalImGuiState.PShader )
     {
         CDebug::DebugBreak();
@@ -317,7 +310,7 @@ bool CUIRenderer::Init()
         { "COLOR",    0, EFormat::R8G8B8A8_Unorm, 0, static_cast<uint32>(IM_OFFSETOF( ImDrawVert, col )), EInputClassification::Vertex, 0 },
     };
 
-    TSharedRef<CRHIInputLayoutState> InputLayout = CreateInputLayout( InputLayoutInfo );
+    TSharedRef<CRHIInputLayoutState> InputLayout = RHICreateInputLayout( InputLayoutInfo );
     if ( !InputLayout )
     {
         CDebug::DebugBreak();
@@ -332,7 +325,7 @@ bool CUIRenderer::Init()
     DepthStencilStateInfo.DepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = CreateDepthStencilState( DepthStencilStateInfo );
+    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
     if ( !DepthStencilState )
     {
         CDebug::DebugBreak();
@@ -346,7 +339,7 @@ bool CUIRenderer::Init()
     SRasterizerStateCreateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = CreateRasterizerState( RasterizerStateInfo );
+    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState( RasterizerStateInfo );
     if ( !RasterizerState )
     {
         CDebug::DebugBreak();
@@ -367,7 +360,7 @@ bool CUIRenderer::Init()
     BlendStateInfo.RenderTarget[0].BlendOpAlpha = EBlendOp::Add;
     BlendStateInfo.RenderTarget[0].BlendOp = EBlendOp::Add;
 
-    TSharedRef<CRHIBlendState> BlendStateBlending = CreateBlendState( BlendStateInfo );
+    TSharedRef<CRHIBlendState> BlendStateBlending = RHICreateBlendState( BlendStateInfo );
     if ( !BlendStateBlending )
     {
         CDebug::DebugBreak();
@@ -380,7 +373,7 @@ bool CUIRenderer::Init()
 
     BlendStateInfo.RenderTarget[0].BlendEnable = false;
 
-    TSharedRef<CRHIBlendState> BlendStateNoBlending = CreateBlendState( BlendStateInfo );
+    TSharedRef<CRHIBlendState> BlendStateNoBlending = RHICreateBlendState( BlendStateInfo );
     if ( !BlendStateBlending )
     {
         CDebug::DebugBreak();
@@ -402,7 +395,7 @@ bool CUIRenderer::Init()
     PSOProperties.PipelineFormats.NumRenderTargets = 1;
     PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
 
-    GlobalImGuiState.PipelineState = CreateGraphicsPipelineState( PSOProperties );
+    GlobalImGuiState.PipelineState = RHICreateGraphicsPipelineState( PSOProperties );
     if ( !GlobalImGuiState.PipelineState )
     {
         CDebug::DebugBreak();
@@ -411,14 +404,14 @@ bool CUIRenderer::Init()
 
     PSOProperties.BlendState = BlendStateNoBlending.Get();
 
-    GlobalImGuiState.PipelineStateNoBlending = CreateGraphicsPipelineState( PSOProperties );
+    GlobalImGuiState.PipelineStateNoBlending = RHICreateGraphicsPipelineState( PSOProperties );
     if ( !GlobalImGuiState.PipelineStateNoBlending )
     {
         CDebug::DebugBreak();
         return false;
     }
 
-    GlobalImGuiState.VertexBuffer = CreateVertexBuffer<ImDrawVert>( 1024 * 1024, BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
+    GlobalImGuiState.VertexBuffer = RHICreateVertexBuffer<ImDrawVert>( 1024 * 1024, BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
     if ( !GlobalImGuiState.VertexBuffer )
     {
         return false;
@@ -428,12 +421,8 @@ bool CUIRenderer::Init()
         GlobalImGuiState.VertexBuffer->SetName( "ImGui VertexBuffer" );
     }
 
-    GlobalImGuiState.IndexBuffer = CreateIndexBuffer(
-        (sizeof( ImDrawIdx ) == 2) ? EIndexFormat::uint16 : EIndexFormat::uint32,
-        1024 * 1024,
-        BufferFlag_Default,
-        EResourceState::Common,
-        nullptr );
+    const EIndexFormat IndexFormat = (sizeof( ImDrawIdx ) == 2) ? EIndexFormat::uint16 : EIndexFormat::uint32;
+    GlobalImGuiState.IndexBuffer = RHICreateIndexBuffer( IndexFormat, 1024 * 1024, BufferFlag_Default, EResourceState::Common, nullptr );
     if ( !GlobalImGuiState.IndexBuffer )
     {
         return false;
@@ -449,7 +438,7 @@ bool CUIRenderer::Init()
     CreateInfo.AddressW = ESamplerMode::Clamp;
     CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
 
-    GlobalImGuiState.PointSampler = CreateSamplerState( CreateInfo );
+    GlobalImGuiState.PointSampler = RHICreateSamplerState( CreateInfo );
     if ( !GlobalImGuiState.PointSampler )
     {
         return false;
@@ -513,7 +502,7 @@ void CUIRenderer::OnMouseScrolled( const SMouseScrolledEvent& Event )
     IO.MouseWheelH += Event.HorizontalDelta;
 }
 
-void CUIRenderer::Render( CRHICommandList& CmdList )
+void CUIRenderer::Tick()
 {
     GlobalImGuiState.FrameClock.Tick();
 
@@ -606,10 +595,14 @@ void CUIRenderer::Render( CRHICommandList& CmdList )
         ImGui::PopStyleColor();
         ImGui::End();
 
-        // EndFrame
-        ImGui::EndFrame();
     }
 
+    // EndFrame
+    ImGui::EndFrame();
+}
+
+void CUIRenderer::Render( CRHICommandList& CmdList )
+{
     // Render ImgGui draw data
     ImGui::Render();
 

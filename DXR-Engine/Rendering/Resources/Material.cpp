@@ -1,7 +1,9 @@
 #include "Material.h"
 
-#include "RHICore/RHIModule.h"
-#include "RHICore/RHICommandList.h"
+#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHICommandList.h"
+
+#include "Core/Engine/Engine.h"
 
 #define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetShaderResourceView() : nullptr
 
@@ -19,31 +21,13 @@ CMaterial::CMaterial( const SMaterialDesc& InProperties )
 
 void CMaterial::Init()
 {
-    // TODO: Have a null layer to avoid these checks
-    if ( !GRHICore )
-    {
-        LOG_WARNING( " No RenderAPI available Material not initialized " );
-        return;
-    }
-
-    MaterialBuffer = CreateConstantBuffer<SMaterialDesc>( BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
+    MaterialBuffer = RHICreateConstantBuffer<SMaterialDesc>( BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
     if ( MaterialBuffer )
     {
         MaterialBuffer->SetName( "MaterialBuffer" );
     }
 
-    SSamplerStateCreateInfo CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::Wrap;
-    CreateInfo.AddressV = ESamplerMode::Wrap;
-    CreateInfo.AddressW = ESamplerMode::Wrap;
-    CreateInfo.ComparisonFunc = EComparisonFunc::Never;
-    CreateInfo.Filter = ESamplerFilter::Anistrotopic;
-    CreateInfo.MaxAnisotropy = 16;
-    CreateInfo.MaxLOD = FLT_MAX;
-    CreateInfo.MinLOD = -FLT_MAX;
-    CreateInfo.MipLODBias = 0.0f;
-
-    Sampler = CreateSamplerState( CreateInfo );
+    Sampler = GEngine->BaseMaterialSampler;
 }
 
 void CMaterial::BuildBuffer( CRHICommandList& CmdList )

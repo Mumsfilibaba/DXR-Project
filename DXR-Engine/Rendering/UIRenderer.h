@@ -1,8 +1,8 @@
 #pragma once
 #include "Core/Application/InputHandler.h"
 
-#include "RHICore/RHIResources.h"
-#include "RHICore/RHIResourceViews.h"
+#include "CoreRHI/RHIResources.h"
+#include "CoreRHI/RHIResourceViews.h"
 
 #include "Core/Delegates/Delegate.h"
 
@@ -37,41 +37,41 @@ public:
     CUIInputHandler() = default;
     ~CUIInputHandler() = default;
 
-    virtual bool OnKeyEvent( const SKeyEvent& KeyEvent ) override final
-    {
-        KeyEventDelegate.Execute( KeyEvent );
-        return ImGui::GetIO().WantCaptureKeyboard ? true : false;
-    }
-
-    virtual bool OnKeyTyped( SKeyTypedEvent KeyTypedEvent ) override final
-    {
-        KeyTypedDelegate.Execute( KeyTypedEvent );
-        return ImGui::GetIO().WantCaptureKeyboard ? true : false;
-    }
-
-    virtual bool OnMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent ) override final
-    {
-        MouseButtonDelegate.Execute( MouseButtonEvent );
-        return ImGui::GetIO().WantCaptureMouse ? true : false;
-    }
-
-    virtual bool OnMouseScrolled( const SMouseScrolledEvent& MouseScrolledEvent ) override final
-    {
-        MouseScrolledDelegate.Execute( MouseScrolledEvent );
-        return ImGui::GetIO().WantCaptureMouse ? true : false;
-    }
-
     DECLARE_DELEGATE( CKeyEventDelegate, const SKeyEvent& );
     CKeyEventDelegate KeyEventDelegate;
+
+    virtual bool HandleKeyEvent( const SKeyEvent& KeyEvent ) override final
+    {
+        KeyEventDelegate.Execute( KeyEvent );
+        return ImGui::GetIO().WantCaptureKeyboard;
+    }
 
     DECLARE_DELEGATE( CKeyTypedDelegate, SKeyTypedEvent );
     CKeyTypedDelegate KeyTypedDelegate;
 
+    virtual bool HandleKeyTyped( SKeyTypedEvent KeyTypedEvent ) override final
+    {
+        KeyTypedDelegate.Execute( KeyTypedEvent );
+        return ImGui::GetIO().WantCaptureKeyboard;
+    }
+
     DECLARE_DELEGATE( CMouseButtonDelegate, const SMouseButtonEvent& );
     CMouseButtonDelegate MouseButtonDelegate;
 
+    virtual bool HandleMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent ) override final
+    {
+        MouseButtonDelegate.Execute( MouseButtonEvent );
+        return ImGui::GetIO().WantCaptureMouse;
+    }
+
     DECLARE_DELEGATE( CMouseScrolledDelegate, const SMouseScrolledEvent& );
     CMouseScrolledDelegate MouseScrolledDelegate;
+
+    virtual bool HandleMouseScrolled( const SMouseScrolledEvent& MouseScrolledEvent ) override final
+    {
+        MouseScrolledDelegate.Execute( MouseScrolledEvent );
+        return ImGui::GetIO().WantCaptureMouse;
+    }
 };
 
 class CUIRenderer
@@ -90,6 +90,9 @@ public:
 
     static void OnMouseButtonEvent( const SMouseButtonEvent& Event );
     static void OnMouseScrolled( const SMouseScrolledEvent& Event );
+
+    // Update the UI should be called in the application before handling input
+    static void Tick();
 
     // Should only be called by the renderer
     static void Render( class CRHICommandList& CmdList );

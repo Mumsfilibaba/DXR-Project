@@ -8,7 +8,7 @@
 #include "Rendering/Resources/Material.h"
 #include "Rendering/Resources/Mesh.h"
 
-#include "RHICore/RHIResources.h"
+#include "CoreRHI/RHIResources.h"
 
 #include <tiny_obj_loader.h>
 
@@ -38,7 +38,7 @@ CScene::~CScene()
 
 CActor* CScene::MakeActor()
 {
-    CActor* NewActor = new CActor( this );
+    CActor* NewActor = DBG_NEW CActor( this );
     AddActor( NewActor );
     return NewActor;
 }

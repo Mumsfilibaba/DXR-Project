@@ -74,11 +74,11 @@ bool CEngineLoop::PreInit()
     }
 
     // RenderAPI
-    ERenderLayerApi RenderApi =
+    ERHIModule RenderApi =
     #if defined(PLATFORM_MACOS)
-        ERenderLayerApi::Unknown;
+        ERHIModule::Null;
 #else
-        ERenderLayerApi::D3D12;
+        ERHIModule::D3D12;
 #endif
     if ( !CRHIModule::Init( RenderApi ) )
     {
@@ -157,7 +157,7 @@ bool CEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
-    GCmdListExecutor.WaitForGPU();
+    GCommandQueue.WaitForGPU();
 
     CTextureFactory::Release();
 

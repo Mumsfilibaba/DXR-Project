@@ -1,7 +1,7 @@
 #include "LightProbeRenderer.h"
 
-#include "RHICore/RHIModule.h"
-#include "RHICore/RHIShaderCompiler.h"
+#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHIShaderCompiler.h"
 
 bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameResources )
 {
@@ -17,7 +17,7 @@ bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameR
         CDebug::DebugBreak();
     }
 
-    IrradianceGenShader = CreateComputeShader( Code );
+    IrradianceGenShader = RHICreateComputeShader( Code );
     if ( !IrradianceGenShader )
     {
         LOG_ERROR( "Failed to create IrradianceGen Shader" );
@@ -28,7 +28,7 @@ bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameR
         IrradianceGenShader->SetName( "IrradianceGen Shader" );
     }
 
-    IrradianceGenPSO = CreateComputePipelineState( SComputePipelineStateCreateInfo( IrradianceGenShader.Get() ) );
+    IrradianceGenPSO = RHICreateComputePipelineState( SComputePipelineStateCreateInfo( IrradianceGenShader.Get() ) );
     if ( !IrradianceGenPSO )
     {
         LOG_ERROR( "Failed to create IrradianceGen PipelineState" );
@@ -45,7 +45,7 @@ bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameR
         CDebug::DebugBreak();
     }
 
-    SpecularIrradianceGenShader = CreateComputeShader( Code );
+    SpecularIrradianceGenShader = RHICreateComputeShader( Code );
     if ( !SpecularIrradianceGenShader )
     {
         LOG_ERROR( "Failed to create Specular IrradianceGen Shader" );
@@ -56,7 +56,7 @@ bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameR
         SpecularIrradianceGenShader->SetName( "Specular IrradianceGen Shader" );
     }
 
-    SpecularIrradianceGenPSO = CreateComputePipelineState( SComputePipelineStateCreateInfo( SpecularIrradianceGenShader.Get() ) );
+    SpecularIrradianceGenPSO = RHICreateComputePipelineState( SComputePipelineStateCreateInfo( SpecularIrradianceGenShader.Get() ) );
     if ( !SpecularIrradianceGenPSO )
     {
         LOG_ERROR( "Failed to create Specular IrradianceGen PipelineState" );
@@ -73,7 +73,7 @@ bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameR
     CreateInfo.AddressW = ESamplerMode::Wrap;
     CreateInfo.Filter = ESamplerFilter::MinMagMipLinear;
 
-    FrameResources.IrradianceSampler = CreateSamplerState( CreateInfo );
+    FrameResources.IrradianceSampler = RHICreateSamplerState( CreateInfo );
     if ( !FrameResources.IrradianceSampler )
     {
         return false;
@@ -149,7 +149,7 @@ void CLightProbeRenderer::RenderSkyLightProbe( CRHICommandList& CmdList, const S
 bool CLightProbeRenderer::CreateSkyLightResources( SLightSetup& LightSetup )
 {
     // Generate global irradiance (From Skybox)
-    LightSetup.IrradianceMap = CreateTextureCube( LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, TextureFlags_RWTexture, EResourceState::Common, nullptr );
+    LightSetup.IrradianceMap = RHICreateTextureCube( LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, TextureFlags_RWTexture, EResourceState::Common, nullptr );
     if ( !LightSetup.IrradianceMap )
     {
         CDebug::DebugBreak();
@@ -160,7 +160,7 @@ bool CLightProbeRenderer::CreateSkyLightResources( SLightSetup& LightSetup )
         LightSetup.IrradianceMap->SetName( "Irradiance Map" );
     }
 
-    LightSetup.IrradianceMapUAV = CreateUnorderedAccessView( LightSetup.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0 );
+    LightSetup.IrradianceMapUAV = RHICreateUnorderedAccessView( LightSetup.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0 );
     if ( !LightSetup.IrradianceMapUAV )
     {
         CDebug::DebugBreak();
@@ -168,7 +168,7 @@ bool CLightProbeRenderer::CreateSkyLightResources( SLightSetup& LightSetup )
     }
 
     const uint16 SpecularIrradianceMiplevels = NMath::Max<uint16>( NMath::Log2( LightSetup.SpecularIrradianceSize ), 1u );
-    LightSetup.SpecularIrradianceMap = CreateTextureCube(
+    LightSetup.SpecularIrradianceMap = RHICreateTextureCube(
         LightSetup.LightProbeFormat,
         LightSetup.SpecularIrradianceSize,
         SpecularIrradianceMiplevels,
@@ -187,7 +187,7 @@ bool CLightProbeRenderer::CreateSkyLightResources( SLightSetup& LightSetup )
 
     for ( uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++ )
     {
-        TSharedRef<CRHIUnorderedAccessView> Uav = CreateUnorderedAccessView( LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel );
+        TSharedRef<CRHIUnorderedAccessView> Uav = RHICreateUnorderedAccessView( LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel );
         if ( Uav )
         {
             LightSetup.SpecularIrradianceMapUAVs.Emplace( Uav );

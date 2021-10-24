@@ -48,7 +48,7 @@ public:
     virtual void Tick( float Delta ) override final;
 
     /* Retrieve the cursor interface */
-    virtual ICursorDevice* GetCursor() override final
+    virtual ICursor* GetCursor() override final
     {
         return &Cursor;
     }

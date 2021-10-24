@@ -430,7 +430,7 @@ FORCEINLINE bool operator!=( NullptrType, const TUniquePtr<T>& RHS ) noexcept
 template<typename T, typename... ArgTypes>
 FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TUniquePtr<T>>::Type MakeUnique( ArgTypes&&... Args ) noexcept
 {
-    T* UniquePtr = new T( Forward<ArgTypes>( Args )... );
+    T* UniquePtr = DBG_NEW T( Forward<ArgTypes>( Args )... );
     return TUniquePtr<T>( UniquePtr );
 }
 
@@ -439,6 +439,6 @@ FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TUniquePtr<T>>::Type MakeUniq
 {
     typedef typename TRemoveExtent<T>::Type Type;
 
-    Type* UniquePtr = new Type[Size];
+    Type* UniquePtr = DBG_NEW Type[Size];
     return TUniquePtr<T>( UniquePtr );
 }

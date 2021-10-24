@@ -130,44 +130,16 @@ void CConsoleManager::DrawInterface()
 {
     const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
     const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
-    const float Width = 640;
-    const float Height = 160;
-    const ImVec2 Offset( 8.0f, 8.0f );
     const ImVec2 WindowPadding( 4.0f, 1.0f );
-    const ImVec2 ConsoleTextSize = ImGui::CalcTextSize( "Console" );
-
-    ImGui::PushStyleVar( ImGuiStyleVar_WindowMinSize, ImVec2( 8.0f, 8.0f ) );
-    ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, WindowPadding );
-    ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 0.0f, 0.0f, 0.0f, 1.0f ) );
-    ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
-
-    const ImGuiWindowFlags Flags =
-        ImGuiWindowFlags_NoDecoration |
-        ImGuiWindowFlags_NoInputs |
-        ImGuiWindowFlags_AlwaysAutoResize |
-        ImGuiWindowFlags_NoBringToFrontOnFocus |
-        ImGuiWindowFlags_NoFocusOnAppearing |
-        ImGuiWindowFlags_NoSavedSettings;
-
-    ImGui::SetNextWindowPos( ImVec2( Offset.x + ConsoleTextSize.x + WindowPadding.x * 2.0f, Offset.y ), ImGuiCond_Always, ImVec2( 1.0f, 0.0f ) );
-
-    ImGui::Begin( "Console Text Window", nullptr, Flags );
-    ImGui::Text( "Console" );
-
-    const ImVec2 TitleBarSize = ImGui::GetWindowSize();
-
-    ImGui::End();
-
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
-    ImGui::PopStyleVar();
-    ImGui::PopStyleVar();
+    const float Width  = WindowWidth - (WindowPadding.x * 4.0f);
+    const float Height = 200;
+    const ImVec2 Offset( 8.0f, 0.0f );
 
     ImGui::PushStyleColor( ImGuiCol_ResizeGrip, 0 );
     ImGui::PushStyleColor( ImGuiCol_ResizeGripHovered, 0 );
     ImGui::PushStyleColor( ImGuiCol_ResizeGripActive, 0 );
 
-    ImGui::SetNextWindowPos( ImVec2( Offset.x + 0.0f, Offset.y + TitleBarSize.y ), ImGuiCond_Always, ImVec2( 0.0f, 0.0f ) );
+    ImGui::SetNextWindowPos( ImVec2( Offset.x + 0.0f, Offset.y  ), ImGuiCond_Always, ImVec2( 0.0f, 0.0f ) );
     ImGui::SetNextWindowSize( ImVec2( Width, Height ), ImGuiCond_Always );
 
     const ImGuiWindowFlags StyleFlags =
@@ -255,7 +227,6 @@ void CConsoleManager::DrawInterface()
 
         ImGui::PopAllowKeyboardFocus();
         ImGui::PopStyleVar();
-        //ImGui::End();
     }
     else
     {

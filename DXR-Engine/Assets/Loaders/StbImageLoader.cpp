@@ -138,7 +138,7 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
             LOG_INFO( ("[CStbImageLoader]: Loaded image '" + Filename + "'").CStr() );
         }
 
-        Image->Image = TSharedPtr<uint8[]>( Move( Pixels ) );
+        Image->Image = Move( Pixels );
         Image->Format = Format;
         Image->Width = (uint16)Width;
         Image->Height = (uint16)Height;

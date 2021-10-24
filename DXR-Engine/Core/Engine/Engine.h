@@ -7,7 +7,7 @@
 #include "Core/Application/WindowMessageHandler.h"
 #include "Core/Delegates/Event.h"
 
-#include "RHICore/RHIViewport.h"
+#include "CoreRHI/RHIViewport.h"
 
 #include "Rendering/Resources/Material.h"
 
@@ -76,6 +76,9 @@ public:
 
     /* A completely flat normal map*/
     TSharedRef<CRHITexture2D> BaseNormal;
+
+    /* Base sampler used by all materials */
+    TSharedRef<CRHISamplerState> BaseMaterialSampler;
 
     /* A completely white material */
     TSharedPtr<CMaterial> BaseMaterial;

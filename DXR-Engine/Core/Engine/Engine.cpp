@@ -7,6 +7,8 @@
 
 #include "Rendering/Resources/TextureFactory.h"
 
+#include "CoreRHI/RHICore.h"
+
 /* Console vars */
 CConsoleCommand GToggleFullscreen;
 CConsoleCommand GExit;
@@ -59,7 +61,7 @@ bool CEngine::Init()
         return false;
     }
 
-    ICursorDevice* CursorDevice = CApplication::Get().GetCursor();
+    ICursor* CursorDevice = CApplication::Get().GetCursor();
     User = CApplicationUser::Make( 0, CursorDevice );
     if ( !User )
     {
@@ -103,6 +105,20 @@ bool CEngine::Init()
     {
         BaseNormal->SetName( "BaseNormal" );
     }
+
+    /* Create material sampler (Used for now by all materials) */
+    SSamplerStateCreateInfo SamplerCreateInfo;
+    SamplerCreateInfo.AddressU = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressV = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressW = ESamplerMode::Wrap;
+    SamplerCreateInfo.ComparisonFunc = EComparisonFunc::Never;
+    SamplerCreateInfo.Filter = ESamplerFilter::Anistrotopic;
+    SamplerCreateInfo.MaxAnisotropy = 16;
+    SamplerCreateInfo.MaxLOD = FLT_MAX;
+    SamplerCreateInfo.MinLOD = -FLT_MAX;
+    SamplerCreateInfo.MipLODBias = 0.0f;
+
+    BaseMaterialSampler = RHICreateSamplerState( SamplerCreateInfo );
 
     /* Base material */
     SMaterialDesc MaterialDesc;

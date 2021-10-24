@@ -51,7 +51,7 @@ public:
     virtual void Tick( float Delta ) override final;
 
     /* Retrieve the cursor interface */
-    virtual ICursorDevice* GetCursor() override final
+    virtual ICursor* GetCursor() override final
     {
         return &Cursor;
     }
@@ -136,7 +136,7 @@ private:
     TArray<IWindowsMessageListener*> WindowsMessageListeners;
 
     /* Cursor interface */
-    CWindowsCursorDevice Cursor;
+    CWindowsCursor Cursor;
 
     /* Checks weather or not the mouse-cursor is tracked, this is for MouseEntered/MouseLeft events */
     bool IsTrackingMouse;

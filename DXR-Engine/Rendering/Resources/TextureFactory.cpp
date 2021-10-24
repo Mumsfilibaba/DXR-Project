@@ -2,10 +2,10 @@
 
 #include "Assets/SceneData.h"
 
-#include "RHICore/RHICommandList.h"
-#include "RHICore/RHIPipelineState.h"
-#include "RHICore/RHIModule.h"
-#include "RHICore/RHIShaderCompiler.h"
+#include "CoreRHI/RHICommandList.h"
+#include "CoreRHI/RHIPipelineState.h"
+#include "CoreRHI/RHIModule.h"
+#include "CoreRHI/RHIShaderCompiler.h"
 
 #ifdef min
 #undef min
@@ -27,13 +27,6 @@ static TextureFactoryData GlobalFactoryData;
 
 bool CTextureFactory::Init()
 {
-    // TODO: Have a null layer to avoid these checks
-    if ( !GRHICore )
-    {
-        LOG_WARNING( " No RenderAPI available CTextureFactory not initialized " );
-        return true;
-    }
-
     // Compile and create shader
     TArray<uint8> Code;
     if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/CubeMapGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
@@ -41,14 +34,14 @@ bool CTextureFactory::Init()
         return false;
     }
 
-    GlobalFactoryData.ComputeShader = CreateComputeShader( Code );
+    GlobalFactoryData.ComputeShader = RHICreateComputeShader( Code );
     if ( !GlobalFactoryData.ComputeShader )
     {
         return false;
     }
 
     // Create pipeline
-    GlobalFactoryData.PanoramaPSO = CreateComputePipelineState( SComputePipelineStateCreateInfo( GlobalFactoryData.ComputeShader.Get() ) );
+    GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState( SComputePipelineStateCreateInfo( GlobalFactoryData.ComputeShader.Get() ) );
     if ( GlobalFactoryData.PanoramaPSO )
     {
         GlobalFactoryData.PanoramaPSO->SetName( "Generate CubeMap RootSignature" );
@@ -81,6 +74,7 @@ CRHITexture2D* CTextureFactory::LoadFromImage2D( SImage2D* InImage, uint32 Creat
     CRHITexture2D* NewTexture = LoadFromMemory( Pixels, Width, Height, CreateFlags, Format );
     if ( NewTexture )
     {
+        // Set debug name
         NewTexture->SetName( InImage->Path.CStr() );
     }
 
@@ -89,13 +83,6 @@ CRHITexture2D* CTextureFactory::LoadFromImage2D( SImage2D* InImage, uint32 Creat
 
 CRHITexture2D* CTextureFactory::LoadFromFile( const CString& Filepath, uint32 CreateFlags, EFormat Format )
 {
-    // TODO: Have a null layer to avoid these checks
-    if ( !GRHICore )
-    {
-        LOG_WARNING( " No RenderAPI available CTextureFactory not initialized. Failed to load '" + Filepath + "'." );
-        return nullptr;
-    }
-
     int32 Width = 0;
     int32 Height = 0;
     int32 ChannelCount = 0;
@@ -136,18 +123,13 @@ CRHITexture2D* CTextureFactory::LoadFromFile( const CString& Filepath, uint32 Cr
 
 CRHITexture2D* CTextureFactory::LoadFromMemory( const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format )
 {
-    // TODO: Have a null layer to avoid these checks
-    if ( !GRHICore )
-    {
-        LOG_WARNING( " No RenderAPI available CTextureFactory not initialized " );
-        return nullptr;
-    }
-
     if ( Format != EFormat::R8_Unorm && Format != EFormat::R8G8B8A8_Unorm && Format != EFormat::R32G32B32A32_Float )
     {
         LOG_ERROR( "[CTextureFactory]: Format not supported" );
         return nullptr;
     }
+
+    Assert( Pixels != nullptr );
 
     const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const uint32 NumMips = GenerateMips ? NMath::Max<uint32>( NMath::Log2( NMath::Max( Width, Height ) ), 1u ) : 1;
@@ -160,7 +142,7 @@ CRHITexture2D* CTextureFactory::LoadFromMemory( const uint8* Pixels, uint32 Widt
     Assert( RowPitch > 0 );
 
     SResourceData InitalData = SResourceData( Pixels, Format, Width );
-    TSharedRef<CRHITexture2D> Texture = CreateTexture2D( Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceState::PixelShaderResource, &InitalData );
+    TSharedRef<CRHITexture2D> Texture = RHICreateTexture2D( Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceState::PixelShaderResource, &InitalData );
     if ( !Texture )
     {
         CDebug::DebugBreak();
@@ -173,7 +155,7 @@ CRHITexture2D* CTextureFactory::LoadFromMemory( const uint8* Pixels, uint32 Widt
         CmdList.TransitionTexture( Texture.Get(), EResourceState::PixelShaderResource, EResourceState::CopyDest );
         CmdList.GenerateMips( Texture.Get() );
         CmdList.TransitionTexture( Texture.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource );
-        GCmdListExecutor.ExecuteCommandList( CmdList );
+        GCommandQueue.ExecuteCommandList( CmdList );
     }
 
     return Texture.ReleaseOwnership();
@@ -186,7 +168,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma( CRHITexture2D* P
     const bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const uint32 NumMips = (GenerateNumMips) ? NMath::Max<uint32>( NMath::Log2( CubeMapSize ), 1u ) : 1u;
 
-    TSharedRef<CRHITextureCube> StagingTexture = CreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr );
+    TSharedRef<CRHITextureCube> StagingTexture = RHICreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceState::Common, nullptr );
     if ( !StagingTexture )
     {
         return nullptr;
@@ -196,7 +178,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma( CRHITexture2D* P
         StagingTexture->SetName( "TextureCube From Panorama StagingTexture" );
     }
 
-    TSharedRef<CRHIUnorderedAccessView> StagingTextureUAV = CreateUnorderedAccessView( StagingTexture.Get(), Format, 0 );
+    TSharedRef<CRHIUnorderedAccessView> StagingTextureUAV = RHICreateUnorderedAccessView( StagingTexture.Get(), Format, 0 );
     if ( !StagingTextureUAV )
     {
         return nullptr;
@@ -206,7 +188,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma( CRHITexture2D* P
         StagingTexture->SetName( "TextureCube From Panorama StagingTexture UAV" );
     }
 
-    TSharedRef<CRHITextureCube> Texture = CreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceState::Common, nullptr );
+    TSharedRef<CRHITextureCube> Texture = RHICreateTextureCube( Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceState::Common, nullptr );
     if ( !Texture )
     {
         return nullptr;
@@ -249,7 +231,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma( CRHITexture2D* P
 
     CmdList.TransitionTexture( Texture.Get(), EResourceState::CopyDest, EResourceState::PixelShaderResource );
 
-    GCmdListExecutor.ExecuteCommandList( CmdList );
+    GCommandQueue.ExecuteCommandList( CmdList );
 
     return Texture.ReleaseOwnership();
 }
