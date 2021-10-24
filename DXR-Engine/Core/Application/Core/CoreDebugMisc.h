@@ -1,8 +1,7 @@
 #pragma once
 #include "Core.h"
 
-// TODO: Remove
-#include <string>
+#include "Core/Containers/String.h"
 
 #ifdef MessageBox
 #undef MessageBox
