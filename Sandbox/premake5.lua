@@ -1,24 +1,28 @@
 --TODO: Auto-Generate this file when creating a new project (In editor)
-project "Sandbox"
+
+projectname = "Sandbox"
+
+project ( projectname )
 	language 		"C++"
 	cppdialect 		"C++17"
 	systemversion 	"latest"
 	kind 			"SharedLib"
-	location        "%{wks.location}/Sandbox"
+	location        ( "%{wks.location}/" .. projectname )
 	characterset 	"Ascii"
 
 	-- All targets except the dependencies
-	targetdir ("%{wks.location}/Build/bin/"     .. outputdir)
-	objdir    ("%{wks.location}/Build/bin-int/" .. outputdir)
+	targetdir ( "%{wks.location}/Build/bin/"     .. outputdir )
+	objdir    ( "%{wks.location}/Build/bin-int/" .. outputdir )
 
 	sysincludedirs
 	{
-		"%{wks.location}/DXR-Engine",	
+		"%{wks.location}/Runtime",	
 		"%{wks.location}/Dependencies/imgui",
 	}
 
 	defines
 	{
+		"PROJECT_NAME=" .. "\"" .. projectname .. "\"",
 		"PROJECT_LOCATION=" .. "\"" .. findProjectDir().. "\"",
 		"SANDBOX_EXPORT=(1)"
 	}
@@ -44,7 +48,10 @@ project "Sandbox"
 
 	links
 	{ 
-		"DXR-Engine",
+		"Core",
+		"RHI",
+		"Engine",
+		"Renderer",
 	}
 
 	-- In visual studio show natvis files
@@ -67,12 +74,12 @@ project "Sandbox"
 		}
 	
 -- Sandbox Project
-project "SandboxLauncher"
+project (projectname .. "Launcher")
 	language 		"C++"
 	cppdialect 		"C++17"
 	systemversion 	"latest"
 	kind 			"WindowedApp"
-	location        "%{wks.location}/Sandbox"
+	location        ( "%{wks.location}/" .. projectname )
 	characterset 	"Ascii"
 
 	-- All targets except the dependencies
@@ -81,36 +88,40 @@ project "SandboxLauncher"
 
 	sysincludedirs
 	{
-		"%{wks.location}/DXR-Engine",
+		"%{wks.location}/Runtime",
 		"%{wks.location}/Dependencies/imgui",
 	}
 
 	defines
 	{
+		"PROJECT_NAME=" .. "\"" .. projectname .. "\"",
 		"PROJECT_LOCATION=" .. "\"" .. findProjectDir().. "\""
 	}
 	
 	links
 	{ 
-		"DXR-Engine"
+		"Core",
+		"RHI",
+		"Engine",
+		"Renderer",
 	}
 
 	-- Include EngineLoop | TODO: Make lib?
 	files
 	{
-		"%{wks.location}/DXR-Engine/Core/Engine/EngineLoop.cpp",	
+		"%{wks.location}/Runtime/Main/EngineLoop.cpp",	
 	}
 
 	-- Include EntryPoint
 	filter "system:windows"
 		files
 		{
-			"%{wks.location}/DXR-Engine/Main/Windows/WindowsMain.cpp",	
+			"%{wks.location}/Runtime/Main/Windows/WindowsMain.cpp",	
 		}
 	filter "system:macosx"
 		files
 		{
-			"%{wks.location}/DXR-Engine/Main/Mac/MacMain.cpp",	
+			"%{wks.location}/Runtime/Main/Mac/MacMain.cpp",	
 		}
 	
 	-- In visual studio show natvis files

@@ -1,8 +1,8 @@
-#include "SandboxCore.h"
+#include "SandboxAPI.h"
 
-#include <Core/Application/ApplicationModule.h>
+#include <Core/Modules/ApplicationModule.h>
 
-#include <Scene/Camera.h>
+#include <Engine/Scene/Camera.h>
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)

@@ -206,114 +206,13 @@ group "Dependencies"
 		
 group ""
 
--- Engine Project
-project "DXR-Engine"
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location 		"DXR-Engine"
-	kind 			"SharedLib"
-	characterset 	"Ascii"
-	
-	-- Pre-Compiled Headers
-	pchheader "PreCompiled.h"
-	pchsource "%{prj.name}/PreCompiled.cpp"
-
-	-- All targets except the dependencies
-	targetdir 	("Build/bin/"     .. outputdir)
-	objdir 		("Build/bin-int/" .. outputdir)	
-
-	-- Includes
-	includedirs
-	{
-		"%{prj.name}",
-		"%{prj.name}/Include",
-	}
-
-	forceincludes  
-	{ 
-		"PreCompiled.h"
-	}
-
-	-- Defines
-	defines
-	{
-		"CORE_API_EXPORT=(1)"
-	}
-
-	-- Files to include
-	files 
-	{ 
-		"%{prj.name}/**.h",
-		"%{prj.name}/**.hpp",
-		"%{prj.name}/**.inl",
-		"%{prj.name}/**.c",
-		"%{prj.name}/**.cpp",
-		"%{prj.name}/**.hlsl",
-		"%{prj.name}/**.hlsli",	
-	}
-	
-	excludes 
-	{
-		"%{prj.name}/Main/**",
-		"%{prj.name}/Math/Tests/**",
-	}
-
-	-- We do not want to compile HLSL files so exclude them from project
-	excludes 
-	{	
-		"**.hlsl",
-		"**.hlsli",
-	}
-
-	sysincludedirs
-	{
-		"Dependencies/imgui",
-		"Dependencies/stb_image",
-		"Dependencies/tinyobjloader",
-		"Dependencies/OpenFBX/src",
-	}
-	
-	links 
-	{ 
-		"ImGui",
-		"tinyobjloader",
-		"OpenFBX",
-	}
-	
-	-- Remove non-macos and add macos-specific files
-	filter "system:macosx"
-		files 
-		{ 
-			"%{prj.name}/**.mm",
-		}
-
-		excludes 
-		{
-			"%{prj.name}/D3D12/**",
-			"%{prj.name}/Core/Windows/**",
-			"%{prj.name}/Core/Application/Windows/**",
-			"%{prj.name}/Core/Threading/Windows/**",
-			"%{prj.name}/Core/Time/Windows/**",
-		}
-
-	-- In visual studio show natvis files
-	filter "action:vs*"
-		vpaths { ["Natvis"] = "**.natvis" }
-		
-		files 
-		{
-			"%{prj.name}/**.natvis",
-		}        
-
-	filter "system:macosx"
-		links
-		{
-			-- Native
-			"Cocoa.framework",
-			"AppKit.framework",
-			"MetalKit.framework",
-		}
+-- Engine Projects
+include "Runtime/Core"
+include "Runtime/RHI"
+include "Runtime/D3D12RHI"
+include "Runtime/NullRHI"
+include "Runtime/Engine"
+include "Runtime/Renderer"
 
 -- Project
 include "Sandbox"

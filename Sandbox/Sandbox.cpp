@@ -2,19 +2,18 @@
 
 #include "Core/Math/Math.h"
 
-#include "Rendering/Renderer.h"
-#include "Rendering/UIRenderer.h"
-#include "Rendering/Resources/TextureFactory.h"
+#include "Renderer/Renderer.h"
+#include "Renderer/UIRenderer.h"
+#include "Renderer/Resources/TextureFactory.h"
 
-#include "Assets/Loaders/OBJLoader.h"
-#include "Assets/Loaders/FBXLoader.h"
+#include "Engine/Engine.h"
+#include "Engine/Assets/Loaders/OBJLoader.h"
+#include "Engine/Assets/Loaders/FBXLoader.h"
+#include "Engine/Scene/Scene.h"
+#include "Engine/Scene/Lights/PointLight.h"
+#include "Engine/Scene/Lights/DirectionalLight.h"
+#include "Engine/Scene/Components/MeshComponent.h"
 
-#include "Scene/Scene.h"
-#include "Scene/Lights/PointLight.h"
-#include "Scene/Lights/DirectionalLight.h"
-#include "Scene/Components/MeshComponent.h"
-
-#include "Core/Engine/Engine.h"
 #include "Core/Application/Application.h"
 
 #include <random>
@@ -47,13 +46,13 @@ bool CSandbox::Init()
     // Load Scene
     SSceneData SceneData;
 #if 1
-    COBJLoader::LoadFile( "../Assets/Scenes/Sponza/Sponza.obj", SceneData );
+    COBJLoader::LoadFile( "../Core/Assets/Scenes/Sponza/Sponza.obj", SceneData );
     SceneData.Scale = 0.015f;
 #else
-    CFBXLoader::LoadFile( "../Assets/Scenes/Bistro/BistroInterior.fbx", SceneData );
+    CFBXLoader::LoadFile( "../Core/Assets/Scenes/Bistro/BistroInterior.fbx", SceneData );
     SceneData.AddToScene( CurrentScene.Get() );
 
-    CFBXLoader::LoadFile( "../Assets/Scenes/Bistro/BistroExterior.fbx", SceneData );
+    CFBXLoader::LoadFile( "../Core/Assets/Scenes/Bistro/BistroExterior.fbx", SceneData );
 #endif
     SceneData.AddToScene( CurrentScene.Get() );
 
@@ -120,37 +119,37 @@ bool CSandbox::Init()
     NewComponent->Mesh = CMesh::Make( CubeMeshData );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
 
-    TSharedRef<CRHITexture2D> AlbedoMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    TSharedRef<CRHITexture2D> AlbedoMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( AlbedoMap )
     {
         AlbedoMap->SetName( "AlbedoMap" );
     }
 
-    TSharedRef<CRHITexture2D> NormalMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    TSharedRef<CRHITexture2D> NormalMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( NormalMap )
     {
         NormalMap->SetName( "NormalMap" );
     }
 
-    TSharedRef<CRHITexture2D> AOMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> AOMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( AOMap )
     {
         AOMap->SetName( "AOMap" );
     }
 
-    TSharedRef<CRHITexture2D> RoughnessMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> RoughnessMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( RoughnessMap )
     {
         RoughnessMap->SetName( "RoughnessMap" );
     }
 
-    TSharedRef<CRHITexture2D> HeightMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> HeightMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( HeightMap )
     {
         HeightMap->SetName( "HeightMap" );
     }
 
-    TSharedRef<CRHITexture2D> MetallicMap = CTextureFactory::LoadFromFile( "../Assets/Textures/Gate_Metallic.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> MetallicMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_Metallic.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( MetallicMap )
     {
         MetallicMap->SetName( "MetallicMap" );
@@ -189,25 +188,25 @@ bool CSandbox::Init()
     NewComponent->Material->Init();
     NewActor->AddComponent( NewComponent );
 
-    AlbedoMap = CTextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/BaseColor.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    AlbedoMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/StreetLight/BaseColor.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( AlbedoMap )
     {
         AlbedoMap->SetName( "AlbedoMap" );
     }
     
-    NormalMap = CTextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Normal.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    NormalMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/StreetLight/Normal.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( NormalMap )
     {
         NormalMap->SetName( "NormalMap" );
     }
 
-    RoughnessMap = CTextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Roughness.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    RoughnessMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/StreetLight/Roughness.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( RoughnessMap )
     {
         RoughnessMap->SetName( "RoughnessMap" );
     }
 
-    MetallicMap = CTextureFactory::LoadFromFile( "../Assets/Textures/StreetLight/Metallic.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    MetallicMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/StreetLight/Metallic.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( MetallicMap )
     {
         MetallicMap->SetName( "MetallicMap" );
@@ -220,7 +219,7 @@ bool CSandbox::Init()
     MatProperties.Albedo = CVector3( 1.0f, 1.0f, 1.0f );
 
     SSceneData StreetLightData;
-    COBJLoader::LoadFile( "../Assets/Models/Street_Light.obj", StreetLightData );
+    COBJLoader::LoadFile( "../Core/Assets/Models/Street_Light.obj", StreetLightData );
 
     TSharedPtr<CMesh>     StreetLight    = StreetLightData.HasModelData() ? CMesh::Make( StreetLightData.Models.FirstElement().Mesh ) : nullptr;
     TSharedPtr<CMaterial> StreetLightMat = MakeShared<CMaterial>( MatProperties );
@@ -252,7 +251,7 @@ bool CSandbox::Init()
     MatProperties.Albedo = CVector3( 0.4f );
 
     SSceneData PillarData;
-    COBJLoader::LoadFile( "../Assets/Models/Pillar.obj", PillarData );
+    COBJLoader::LoadFile( "../Core/Assets/Models/Pillar.obj", PillarData );
 
     TSharedPtr<CMesh>     Pillar    = PillarData.HasModelData() ? CMesh::Make( PillarData.Models.FirstElement().Mesh ) : nullptr;
     TSharedPtr<CMaterial> PillarMat = MakeShared<CMaterial>( MatProperties );
