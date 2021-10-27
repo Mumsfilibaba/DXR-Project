@@ -1,5 +1,5 @@
 #pragma once
-#include "Renderer/RendererAPI.h"
+#include "Engine/EngineAPI.h"
 
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
@@ -10,7 +10,7 @@
 
 #include "Engine/Assets/MeshFactory.h"
 
-class RENDERER_API CMesh
+class ENGINE_API CMesh
 {
 public:
     CMesh() = default;

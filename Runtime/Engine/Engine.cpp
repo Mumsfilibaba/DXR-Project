@@ -5,9 +5,8 @@
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Debug/FrameProfiler.h"
 
-#include "Renderer/Resources/Material.h"
-#include "Renderer/Resources/TextureFactory.h"
-
+#include "Engine/Resources/Material.h"
+#include "Engine/Resources/TextureFactory.h"
 #include "Engine/Windows/GameConsoleWindow.h"
 #include "Engine/Windows/FrameProfilerWindow.h"
 
@@ -18,7 +17,14 @@ CConsoleCommand GToggleFullscreen;
 CConsoleCommand GExit;
 
 /* Global engine instance */
-CORE_API TSharedPtr<CEngine> GEngine;
+ENGINE_API TSharedPtr<CEngine> GEngine;
+
+/* Engine implementation */
+
+TSharedPtr<CEngine> CEngine::Make()
+{
+    return TSharedPtr<CEngine>( dbg_new CEngine() );
+}
 
 CEngine::CEngine()
 {

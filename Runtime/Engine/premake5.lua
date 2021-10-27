@@ -67,6 +67,7 @@ project "Engine"
 		"tinyobjloader",
 		"OpenFBX",
 		"Core",
+		"RHI",
 	}
 
 	-- Remove non-macos and add macos-specific files

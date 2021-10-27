@@ -17,10 +17,26 @@ public:
     /* Resets the allocator*/
     void Reset();
 
+    /* Typed version of allocate */
     template<typename T>
-    void* Allocate()
+    FORCEINLINE T* Allocate()
     {
-        return Allocate( sizeof( T ), alignof(T) );
+        return reinterpret_cast<T*>(Allocate( sizeof( T ), alignof(T) ));
+    }
+
+    /* Types array version of allocate */
+    template<typename T>
+    FORCEINLINE T* Allocate( uint32 NumElements )
+    {
+        return reinterpret_cast<T*>( Allocate( sizeof( T ) * NumElements, alignof(T) ) );
+    }
+
+    /* Constructs a new item by calling the constructor */
+    template<typename T, typename... ArgTypes>
+    FORCEINLINE T* Construct( ArgTypes&&... Args )
+    {
+        void* Memory = Allocate<T>();
+        return new(Memory) T( Forward<ArgTypes>(Args)... );
     }
 
     FORCEINLINE uint8* AllocateBytes( uint64 SizeInBytes, uint64 Alignment = STANDARD_ALIGNMENT )
@@ -44,11 +60,6 @@ private:
     /* Discarded memory, kept alive so until reset is called */
     TArray<uint8*> DiscardedMemory;
 };
-
-void* operator new  (size_t Size, CCommandAllocator& Allocator);
-void* operator new[]( size_t Size, CCommandAllocator& Allocator );
-void  operator delete  (void*, CCommandAllocator&);
-void  operator delete[]( void*, CCommandAllocator& );
 
 class CRHIRenderTargetView;
 class CRHIDepthStencilView;
@@ -83,38 +94,30 @@ public:
 
     void BeginTimeStamp( CGPUProfiler* Profiler, uint32 Index )
     {
-        SafeAddRef( Profiler );
-        InsertCommand<SRHIBeginTimeStampRenderCommand>( Profiler, Index );
+        InsertCommand<SRHIBeginTimeStampRenderCommand>( AddRef( Profiler ), Index );
     }
 
     void EndTimeStamp( CGPUProfiler* Profiler, uint32 Index )
     {
-        SafeAddRef( Profiler );
-        InsertCommand<SRHIEndTimeStampRenderCommand>( Profiler, Index );
+        InsertCommand<SRHIEndTimeStampRenderCommand>( AddRef( Profiler ), Index );
     }
 
     void ClearRenderTargetView( CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor )
     {
         Assert( RenderTargetView != nullptr );
-
-        RenderTargetView->AddRef();
-        InsertCommand<SRHIClearRenderTargetViewRenderCommand>( RenderTargetView, ClearColor );
+        InsertCommand<SRHIClearRenderTargetViewRenderCommand>( AddRef( RenderTargetView ), ClearColor );
     }
 
     void ClearDepthStencilView( CRHIDepthStencilView* DepthStencilView, const SDepthStencilF& ClearValue )
     {
         Assert( DepthStencilView != nullptr );
-
-        DepthStencilView->AddRef();
-        InsertCommand<SRHIClearDepthStencilViewRenderCommand>( DepthStencilView, ClearValue );
+        InsertCommand<SRHIClearDepthStencilViewRenderCommand>( AddRef( DepthStencilView ), ClearValue );
     }
 
     void ClearUnorderedAccessView( CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor )
     {
         Assert( UnorderedAccessView != nullptr );
-
-        UnorderedAccessView->AddRef();
-        InsertCommand<SRHIClearUnorderedAccessViewFloatRenderCommand>( UnorderedAccessView, ClearColor );
+        InsertCommand<SRHIClearUnorderedAccessViewFloatRenderCommand>( AddRef( UnorderedAccessView ), ClearColor );
     }
 
     void SetShadingRate( EShadingRate ShadingRate )
@@ -124,8 +127,7 @@ public:
 
     void SetShadingRateImage( CRHITexture2D* ShadingRateImage )
     {
-        SafeAddRef( ShadingRateImage );
-        InsertCommand<SRHISetShadingRateImageRenderCommand>( ShadingRateImage );
+        InsertCommand<SRHISetShadingRateImageRenderCommand>( AddRef( ShadingRateImage ) );
     }
 
     void BeginRenderPass()
@@ -155,15 +157,13 @@ public:
 
     void SetRenderTargets( CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView )
     {
-        CRHIRenderTargetView** RenderTargets = new(CmdAllocator) CRHIRenderTargetView * [RenderTargetCount];
+        CRHIRenderTargetView** RenderTargets = CmdAllocator.Allocate<CRHIRenderTargetView*>( RenderTargetCount );
         for ( uint32 i = 0; i < RenderTargetCount; i++ )
         {
-            RenderTargets[i] = RenderTargetViews[i];
-            SafeAddRef( RenderTargets[i] );
+            RenderTargets[i] = AddRef<CRHIRenderTargetView>(RenderTargetViews[i]);
         }
 
-        SafeAddRef( DepthStencilView );
-        InsertCommand<SRHISetRenderTargetsRenderCommand>( RenderTargets, RenderTargetCount, DepthStencilView );
+        InsertCommand<SRHISetRenderTargetsRenderCommand>( RenderTargets, RenderTargetCount, MakeSharedRef<CRHIDepthStencilView>(DepthStencilView) );
     }
 
     void SetPrimitiveTopology( EPrimitiveTopology PrimitveTopologyType )
@@ -173,11 +173,10 @@ public:
 
     void SetVertexBuffers( CRHIVertexBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot )
     {
-        CRHIVertexBuffer** Buffers = new(CmdAllocator) CRHIVertexBuffer * [VertexBufferCount];
+        CRHIVertexBuffer** Buffers = CmdAllocator.Allocate<CRHIVertexBuffer*>( VertexBufferCount );
         for ( uint32 i = 0; i < VertexBufferCount; i++ )
         {
-            Buffers[i] = VertexBuffers[i];
-            SafeAddRef( Buffers[i] );
+            Buffers[i] = AddRef<CRHIVertexBuffer>( VertexBuffers[i] );
         }
 
         InsertCommand<SRHISetVertexBuffersRenderCommand>( Buffers, VertexBufferCount, BufferSlot );
@@ -185,8 +184,7 @@ public:
 
     void SetIndexBuffer( CRHIIndexBuffer* IndexBuffer )
     {
-        SafeAddRef( IndexBuffer );
-        InsertCommand<SRHISetIndexBufferRenderCommand>( IndexBuffer );
+        InsertCommand<SRHISetIndexBufferRenderCommand>( MakeSharedRef<CRHIIndexBuffer>( IndexBuffer ) );
     }
 
     void SetRayTracingBindings(
@@ -198,119 +196,96 @@ public:
         const SRayTracingShaderResources* HitGroupResources,
         uint32 NumHitGroupResources )
     {
-        SafeAddRef( RayTracingScene );
-        SafeAddRef( PipelineState );
-        InsertCommand<SRHISetRayTracingBindingsRenderCommand>( RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources );
+        InsertCommand<SRHISetRayTracingBindingsRenderCommand>( AddRef( RayTracingScene ), AddRef( PipelineState ), GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources );
     }
 
     void SetGraphicsPipelineState( CRHIGraphicsPipelineState* PipelineState )
     {
-        SafeAddRef( PipelineState );
-        InsertCommand<SRHISetGraphicsPipelineStateRenderCommand>( PipelineState );
+        InsertCommand<SRHISetGraphicsPipelineStateRenderCommand>( AddRef( PipelineState ) );
     }
 
     void SetComputePipelineState( CRHIComputePipelineState* PipelineState )
     {
-        SafeAddRef( PipelineState );
-        InsertCommand<SRHISetComputePipelineStateRenderCommand>( PipelineState );
+        InsertCommand<SRHISetComputePipelineStateRenderCommand>( AddRef( PipelineState ) );
     }
 
     void Set32BitShaderConstants( CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants )
     {
         const uint32 Num32BitConstantsInBytes = Num32BitConstants * 4;
+
         void* Shader32BitConstantsMemory = CmdAllocator.Allocate( Num32BitConstantsInBytes, 1 );
         CMemory::Memcpy( Shader32BitConstantsMemory, Shader32BitConstants, Num32BitConstantsInBytes );
 
-        SafeAddRef( Shader );
-        InsertCommand<SRHISet32BitShaderConstantsRenderCommand>( Shader, Shader32BitConstantsMemory, Num32BitConstants );
+        InsertCommand<SRHISet32BitShaderConstantsRenderCommand>( AddRef( Shader ), Shader32BitConstantsMemory, Num32BitConstants );
     }
 
     void SetShaderResourceView( CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex )
     {
-        SafeAddRef( Shader );
-        SafeAddRef( ShaderResourceView );
-        InsertCommand<SRHISetShaderResourceViewRenderCommand>( Shader, ShaderResourceView, ParameterIndex );
+        InsertCommand<SRHISetShaderResourceViewRenderCommand>( AddRef( Shader ), AddRef( ShaderResourceView ), ParameterIndex );
     }
 
     void SetShaderResourceViews( CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceViews, uint32 NumShaderResourceViews, uint32 ParameterIndex )
     {
-        SafeAddRef( Shader );
-
-        CRHIShaderResourceView** TempShaderResourceViews = new(CmdAllocator) CRHIShaderResourceView * [NumShaderResourceViews];
+        CRHIShaderResourceView** TempShaderResourceViews = CmdAllocator.Allocate<CRHIShaderResourceView*>(NumShaderResourceViews);
         for ( uint32 i = 0; i < NumShaderResourceViews; i++ )
         {
-            TempShaderResourceViews[i] = ShaderResourceViews[i];
-            SafeAddRef( TempShaderResourceViews[i] );
+            TempShaderResourceViews[i] = AddRef( ShaderResourceViews[i] );
         }
 
-        InsertCommand<SRHISetShaderResourceViewsRenderCommand>( Shader, TempShaderResourceViews, NumShaderResourceViews, ParameterIndex );
+        InsertCommand<SRHISetShaderResourceViewsRenderCommand>( AddRef( Shader ), TempShaderResourceViews, NumShaderResourceViews, ParameterIndex );
     }
 
     void SetUnorderedAccessView( CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex )
     {
-        SafeAddRef( Shader );
-        SafeAddRef( UnorderedAccessView );
-        InsertCommand<SRHISetUnorderedAccessViewRenderCommand>( Shader, UnorderedAccessView, ParameterIndex );
+        InsertCommand<SRHISetUnorderedAccessViewRenderCommand>( AddRef( Shader ), AddRef( UnorderedAccessView ), ParameterIndex );
     }
 
     void SetUnorderedAccessViews( CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex )
     {
-        CRHIUnorderedAccessView** TempUnorderedAccessViews = new(CmdAllocator) CRHIUnorderedAccessView * [NumUnorderedAccessViews];
+        CRHIUnorderedAccessView** TempUnorderedAccessViews = CmdAllocator.Allocate<CRHIUnorderedAccessView*>( NumUnorderedAccessViews );
         for ( uint32 i = 0; i < NumUnorderedAccessViews; i++ )
         {
-            TempUnorderedAccessViews[i] = UnorderedAccessViews[i];
-            SafeAddRef( TempUnorderedAccessViews[i] );
+            TempUnorderedAccessViews[i] = AddRef( UnorderedAccessViews[i] );
         }
 
-        SafeAddRef( Shader );
-        InsertCommand<SRHISetUnorderedAccessViewsRenderCommand>( Shader, TempUnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex );
+        InsertCommand<SRHISetUnorderedAccessViewsRenderCommand>( AddRef( Shader ), TempUnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex );
     }
 
     void SetConstantBuffer( CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex )
     {
-        SafeAddRef( Shader );
-        SafeAddRef( ConstantBuffer );
-        InsertCommand<SRHISetConstantBufferRenderCommand>( Shader, ConstantBuffer, ParameterIndex );
+        InsertCommand<SRHISetConstantBufferRenderCommand>( AddRef( Shader ), AddRef( ConstantBuffer ), ParameterIndex );
     }
 
     void SetConstantBuffers( CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex )
     {
-        CRHIConstantBuffer** TempConstantBuffers = new(CmdAllocator) CRHIConstantBuffer * [NumConstantBuffers];
+        CRHIConstantBuffer** TempConstantBuffers = CmdAllocator.Allocate<CRHIConstantBuffer*>( NumConstantBuffers );
         for ( uint32 i = 0; i < NumConstantBuffers; i++ )
         {
-            TempConstantBuffers[i] = ConstantBuffers[i];
-            SafeAddRef( TempConstantBuffers[i] );
+            TempConstantBuffers[i] = AddRef( ConstantBuffers[i] );
         }
 
-        SafeAddRef( Shader );
-        InsertCommand<SRHISetConstantBuffersRenderCommand>( Shader, TempConstantBuffers, NumConstantBuffers, ParameterIndex );
+        InsertCommand<SRHISetConstantBuffersRenderCommand>( AddRef( Shader ), TempConstantBuffers, NumConstantBuffers, ParameterIndex );
     }
 
     void SetSamplerState( CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex )
     {
-        SafeAddRef( Shader );
-        SafeAddRef( SamplerState );
-        InsertCommand<SRHISetSamplerStateRenderCommand>( Shader, SamplerState, ParameterIndex );
+        InsertCommand<SRHISetSamplerStateRenderCommand>( AddRef( Shader ), AddRef( SamplerState ), ParameterIndex );
     }
 
     void SetSamplerStates( CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex )
     {
-        CRHISamplerState** TempSamplerStates = new(CmdAllocator) CRHISamplerState * [NumSamplerStates];
+        CRHISamplerState** TempSamplerStates = CmdAllocator.Allocate<CRHISamplerState*>( NumSamplerStates );
         for ( uint32 i = 0; i < NumSamplerStates; i++ )
         {
-            TempSamplerStates[i] = SamplerStates[i];
-            SafeAddRef( TempSamplerStates[i] );
+            TempSamplerStates[i] = AddRef( SamplerStates[i] );
         }
 
-        SafeAddRef( Shader );
-        InsertCommand<SRHISetSamplerStatesRenderCommand>( Shader, TempSamplerStates, NumSamplerStates, ParameterIndex );
+        InsertCommand<SRHISetSamplerStatesRenderCommand>( AddRef( Shader ), TempSamplerStates, NumSamplerStates, ParameterIndex );
     }
 
     void ResolveTexture( CRHITexture* Destination, CRHITexture* Source )
     {
-        SafeAddRef( Destination );
-        SafeAddRef( Source );
-        InsertCommand<SRHIResolveTextureRenderCommand>( Destination, Source );
+        InsertCommand<SRHIResolveTextureRenderCommand>( AddRef( Destination ), AddRef( Source ) );
     }
 
     void UpdateBuffer( CRHIBuffer* Destination, uint64 DestinationOffsetInBytes, uint64 SizeInBytes, const void* SourceData )
@@ -318,86 +293,62 @@ public:
         void* TempSourceData = CmdAllocator.Allocate( static_cast<uint32>(SizeInBytes), 1 );
         CMemory::Memcpy( TempSourceData, SourceData, SizeInBytes );
 
-        SafeAddRef( Destination );
-        InsertCommand<SRHIUpdateBufferRenderCommand>( Destination, DestinationOffsetInBytes, SizeInBytes, TempSourceData );
+        InsertCommand<SRHIUpdateBufferRenderCommand>( AddRef( Destination ), DestinationOffsetInBytes, SizeInBytes, TempSourceData );
     }
 
     void UpdateTexture2D( CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData )
     {
-        Assert( Destination != nullptr );
-
         const uint32 SizeInBytes = Width * Height * GetByteStrideFromFormat( Destination->GetFormat() );
 
         void* TempSourceData = CmdAllocator.Allocate( SizeInBytes, 1 );
         CMemory::Memcpy( TempSourceData, SourceData, SizeInBytes );
 
-        Destination->AddRef();
-        InsertCommand<SRHIUpdateTexture2DRenderCommand>( Destination, Width, Height, MipLevel, TempSourceData );
+        InsertCommand<SRHIUpdateTexture2DRenderCommand>(  AddRef( Destination ), Width, Height, MipLevel, TempSourceData );
     }
 
     void CopyBuffer( CRHIBuffer* Destination, CRHIBuffer* Source, const SCopyBufferInfo& CopyInfo )
     {
-        SafeAddRef( Destination );
-        SafeAddRef( Source );
-        InsertCommand<SRHICopyBufferRenderCommand>( Destination, Source, CopyInfo );
+        InsertCommand<SRHICopyBufferRenderCommand>( AddRef( Destination ), AddRef( Source ), CopyInfo );
     }
 
     void CopyTexture( CRHITexture* Destination, CRHITexture* Source )
     {
-        SafeAddRef( Destination );
-        SafeAddRef( Source );
-        InsertCommand<SRHICopyTextureRenderCommand>( Destination, Source );
+        InsertCommand<SRHICopyTextureRenderCommand>( AddRef( Destination ), AddRef( Source ) );
     }
 
     void CopyTextureRegion( CRHITexture* Destination, CRHITexture* Source, const SCopyTextureInfo& CopyTextureInfo )
     {
-        SafeAddRef( Destination );
-        SafeAddRef( Source );
-        InsertCommand<SRHICopyTextureRegionRenderCommand>( Destination, Source, CopyTextureInfo );
+        InsertCommand<SRHICopyTextureRegionRenderCommand>( AddRef( Destination ), AddRef( Source ), CopyTextureInfo );
     }
 
     void DiscardResource( CRHIResource* Resource )
     {
-        SafeAddRef( Resource );
-        InsertCommand<SRHIDiscardResourceRenderCommand>( Resource );
+        InsertCommand<SRHIDiscardResourceRenderCommand>( AddRef( Resource ) );
     }
 
     void BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool Update )
     {
-        Assert( Geometry != nullptr );
-        Assert( !Update || (Update && Geometry->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate) );
-
-        SafeAddRef( Geometry );
-        SafeAddRef( VertexBuffer );
-        SafeAddRef( IndexBuffer );
-        InsertCommand<SRHIBuildRayTracingGeometryRenderCommand>( Geometry, VertexBuffer, IndexBuffer, Update );
+        Assert( (Geometry != nullptr) && (!Update || (Update && Geometry->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)) );
+        InsertCommand<SRHIBuildRayTracingGeometryRenderCommand>( AddRef( Geometry ), AddRef( VertexBuffer ), AddRef( IndexBuffer ), Update );
     }
 
     void BuildRayTracingScene( CRHIRayTracingScene* Scene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update )
     {
-        Assert( Scene != nullptr );
-        Assert( !Update || (Update && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate) );
-
-        SafeAddRef( Scene );
-        InsertCommand<SRHIBuildRayTracingSceneRenderCommand>( Scene, Instances, NumInstances, Update );
+        Assert( (Scene != nullptr) && (!Update || (Update && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate) ) );
+        InsertCommand<SRHIBuildRayTracingSceneRenderCommand>( AddRef( Scene ), Instances, NumInstances, Update );
     }
 
     void GenerateMips( CRHITexture* Texture )
     {
         Assert( Texture != nullptr );
-
-        Texture->AddRef();
-        InsertCommand<SRHIGenerateMipsRenderCommand>( Texture );
+        InsertCommand<SRHIGenerateMipsRenderCommand>( AddRef( Texture ) );
     }
 
     void TransitionTexture( CRHITexture* Texture, EResourceState BeforeState, EResourceState AfterState )
     {
-        Assert( Texture != nullptr );
-
         if ( BeforeState != AfterState )
         {
-            Texture->AddRef();
-            InsertCommand<SRHITransitionTextureRenderCommand>( Texture, BeforeState, AfterState );
+            InsertCommand<SRHITransitionTextureRenderCommand>( AddRef( Texture ), BeforeState, AfterState );
         }
         else
         {
@@ -411,24 +362,23 @@ public:
 
         if ( BeforeState != AfterState )
         {
-            Buffer->AddRef();
-            InsertCommand<SRHITransitionBufferRenderCommand>( Buffer, BeforeState, AfterState );
+            InsertCommand<SRHITransitionBufferRenderCommand>( AddRef( Buffer ), BeforeState, AfterState );
+        }
+        else
+        {
+            LOG_WARNING( "Buffer '" + Buffer->GetName() + "' Was transitioned with the same Before- and AfterState (=" + ToString( BeforeState ) + ")" );
         }
     }
 
     void UnorderedAccessTextureBarrier( CRHITexture* Texture )
     {
         Assert( Texture != nullptr );
-
-        Texture->AddRef();
-        InsertCommand<SRHIUnorderedAccessTextureBarrierRenderCommand>( Texture );
+        InsertCommand<SRHIUnorderedAccessTextureBarrierRenderCommand>( AddRef( Texture ) );
     }
 
     void UnorderedAccessBufferBarrier( CRHIBuffer* Buffer )
     {
         Assert( Buffer != nullptr );
-
-        Buffer->AddRef();
         InsertCommand<SRHIUnorderedAccessBufferBarrierRenderCommand>( Buffer );
     }
 
@@ -469,9 +419,7 @@ public:
 
     void DispatchRays( CRHIRayTracingScene* Scene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth )
     {
-        SafeAddRef( Scene );
-        SafeAddRef( PipelineState );
-        InsertCommand<SRHIDispatchRaysRenderCommand>( Scene, PipelineState, Width, Height, Depth );
+        InsertCommand<SRHIDispatchRaysRenderCommand>( AddRef( Scene ), AddRef( PipelineState ), Width, Height, Depth );
     }
 
     void InsertCommandListMarker( const CString& Marker )
@@ -537,7 +485,7 @@ private:
     template<typename TCommand, typename... TArgs>
     void InsertCommand( TArgs&&... Args )
     {
-        TCommand* Cmd = new(CmdAllocator) TCommand( Forward<TArgs>( Args )... );
+        TCommand* Cmd = CmdAllocator.Construct<TCommand>( Forward<TArgs>( Args )... );
         if ( Last )
         {
             Last->NextCmd = Cmd;

@@ -1,7 +1,7 @@
 #pragma once
 #include "RHI/RHITypes.h"
 
-#include "Renderer/RendererAPI.h"
+#include "Engine/EngineAPI.h"
 
 #include "Core/Utilities/StringUtilities.h"
 
@@ -11,7 +11,7 @@ enum ETextureFactoryFlags : uint32
     TextureFactoryFlag_GenerateMips = FLAG( 1 ),
 };
 
-class RENDERER_API CTextureFactory
+class ENGINE_API CTextureFactory
 {
 public:
     static bool Init();

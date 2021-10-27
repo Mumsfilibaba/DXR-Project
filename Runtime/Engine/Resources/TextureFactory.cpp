@@ -7,7 +7,6 @@
 #include "RHI/RHIPipelineState.h"
 #include "RHI/RHIShaderCompiler.h"
 
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 struct TextureFactoryData

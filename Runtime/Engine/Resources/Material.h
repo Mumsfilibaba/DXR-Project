@@ -1,5 +1,5 @@
 #pragma once
-#include "Renderer/RendererAPI.h"
+#include "Engine/EngineAPI.h"
 
 #include "RHI/RHIResources.h"
 
@@ -17,7 +17,7 @@ struct SMaterialDesc
     int32 EnableMask   = 0;
 };
 
-class RENDERER_API CMaterial
+class ENGINE_API CMaterial
 {
 public:
     CMaterial( const SMaterialDesc& InProperties );
@@ -95,13 +95,17 @@ public:
     TSharedRef<CRHITexture2D> AlphaMask;
 
 private:
+
+    /* Name for the material mostly used for debug purposes */
     CString DebugName;
 
+    /* This indicates that the constantbuffer is dirty and needs updating */
     bool MaterialBufferIsDirty = true;
 
+    /* True if the material should render in the forward pass (Transparent surfaces) */
     bool RenderInForwardPass = false;
 
-    SMaterialDesc        	   Properties;
+    SMaterialDesc        	       Properties;
     TSharedRef<CRHIConstantBuffer> MaterialBuffer;
     TSharedRef<CRHISamplerState>   Sampler;
 

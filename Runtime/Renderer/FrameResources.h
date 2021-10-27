@@ -107,9 +107,9 @@ struct RENDERER_API SFrameResources
     SRayTracingShaderResources MissLocalResources;
     TArray<SRayTracingGeometryInstance> RTGeometryInstances;
 
-    TArray<SRayTracingShaderResources>       RTHitGroupResources;
-    std::unordered_map<class CMesh*, uint32> RTMeshToHitGroupIndex;
-    TResourceCache<CRHIShaderResourceView>       RTMaterialTextureCache;
+    TArray<SRayTracingShaderResources>     RTHitGroupResources;
+    THashTable<class CMesh*, uint32>       RTMeshToHitGroupIndex;
+    TResourceCache<CRHIShaderResourceView> RTMaterialTextureCache;
 
     TArray<SMeshDrawCommand> DeferredVisibleCommands;
     TArray<SMeshDrawCommand> ForwardVisibleCommands;

@@ -288,7 +288,7 @@ struct SRHISetVertexBuffersRenderCommand : public SRHIRenderCommand
 // Set IndexBuffer RenderCommand
 struct SRHISetIndexBufferRenderCommand : public SRHIRenderCommand
 {
-    SRHISetIndexBufferRenderCommand( CRHIIndexBuffer* InIndexBuffer )
+    SRHISetIndexBufferRenderCommand( const TSharedRef<CRHIIndexBuffer>& InIndexBuffer )
         : IndexBuffer( InIndexBuffer )
     {
     }
@@ -304,7 +304,7 @@ struct SRHISetIndexBufferRenderCommand : public SRHIRenderCommand
 // Set RenderTargets RenderCommand
 struct SRHISetRenderTargetsRenderCommand : public SRHIRenderCommand
 {
-    SRHISetRenderTargetsRenderCommand( CRHIRenderTargetView** InRenderTargetViews, uint32 InRenderTargetViewCount, CRHIDepthStencilView* InDepthStencilView )
+    SRHISetRenderTargetsRenderCommand( CRHIRenderTargetView** InRenderTargetViews, uint32 InRenderTargetViewCount, const TSharedRef<CRHIDepthStencilView>& InDepthStencilView )
         : RenderTargetViews( InRenderTargetViews )
         , RenderTargetViewCount( InRenderTargetViewCount )
         , DepthStencilView( InDepthStencilView )

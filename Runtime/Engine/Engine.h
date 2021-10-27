@@ -8,9 +8,8 @@
 
 #include "RHI/RHIViewport.h"
 
-#include "Renderer/Resources/Material.h"
-
 #include "Engine/Scene/Scene.h"
+#include "Engine/Resources/Material.h"
 
 /* Class representing the engine */
 class ENGINE_API CEngine
@@ -18,28 +17,25 @@ class ENGINE_API CEngine
 public:
 
     /* Create a new engine instance */
-    static FORCEINLINE TSharedPtr<CEngine> Make()
-    {
-        return TSharedPtr<CEngine>( dbg_new CEngine() );
-    }
+    static TSharedPtr<CEngine> Make();
 
     /* Public destructor for the TSharedPtr */
-    virtual ~CEngine() = default;
+    ~CEngine() = default;
 
     /* Init engine */
-    virtual bool Init();
+    bool Init();
 
     /* Start the engine */
-    virtual bool Start();
+    bool Start();
 
     /* Tick should be called once per frame */
-    virtual void Tick( CTimestamp DeltaTime );
+    void Tick( CTimestamp DeltaTime );
 
     /* Release engine resources */
-    virtual bool Release();
+    bool Release();
 
     /* Request exit from the engine */
-    virtual void Exit();
+    void Exit();
 
     /* The main window of the app */
     TSharedRef<CCoreWindow> MainWindow;
@@ -66,7 +62,8 @@ public:
 
 private:
 
+    /* Engine should be constructed with the Make function */
     CEngine();
 };
 
-extern CORE_API TSharedPtr<CEngine> GEngine;
+extern ENGINE_API TSharedPtr<CEngine> GEngine;

@@ -358,22 +358,6 @@ FORCEINLINE TSharedRef<T> ReinterpretCast( TSharedRef<U>&& Pointer )
     return TSharedRef<T>( RawPointer );
 }
 
-/* dynamic_cast */
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> DynamicCast( const TSharedRef<U>& Pointer )
-{
-    T* RawPointer = dynamic_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>( RawPointer );
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> DynamicCast( TSharedRef<U>&& Pointer )
-{
-    T* RawPointer = dynamic_cast<T*>(Pointer.Get());
-    return TSharedRef<T>( RawPointer );
-}
-
 /* Converts a raw pointer into a TSharedRef */
 template<typename T, typename U>
 FORCEINLINE TSharedRef<T> MakeSharedRef( U* InRefCountedObject )
@@ -384,5 +368,5 @@ FORCEINLINE TSharedRef<T> MakeSharedRef( U* InRefCountedObject )
         return TSharedRef<T>( static_cast<T*>(InRefCountedObject) );
     }
 
-    return TSharedRef<T>();
+    return nullptr;
 }

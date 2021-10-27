@@ -3,10 +3,9 @@
 #include "Engine/Engine.h"
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Components/MeshComponent.h"
-
-#include "Renderer/Resources/Mesh.h"
-#include "Renderer/Resources/Material.h"
-#include "Renderer/Resources/TextureFactory.h"
+#include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Material.h"
+#include "Engine/Resources/TextureFactory.h"
 
 void SSceneData::AddToScene( CScene* Scene )
 {
