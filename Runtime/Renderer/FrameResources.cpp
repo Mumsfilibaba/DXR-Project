@@ -43,7 +43,5 @@ void SFrameResources::Release()
     DeferredVisibleCommands.Clear();
     ForwardVisibleCommands.Clear();
 
-    DebugTextures.Clear();
-
     MainWindowViewport.Reset();
 }

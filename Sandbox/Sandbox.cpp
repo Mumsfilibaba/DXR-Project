@@ -4,7 +4,6 @@
 
 #include "Renderer/Renderer.h"
 #include "Renderer/UIRenderer.h"
-#include "Renderer/Resources/TextureFactory.h"
 
 #include "Engine/Engine.h"
 #include "Engine/Assets/Loaders/OBJLoader.h"
@@ -13,6 +12,7 @@
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "Engine/Scene/Components/MeshComponent.h"
+#include "Engine/Resources/TextureFactory.h"
 
 #include "Core/Application/Application.h"
 

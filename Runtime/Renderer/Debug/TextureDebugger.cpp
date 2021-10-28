@@ -1,4 +1,4 @@
-#include "TextureDebugWindow.h"
+#include "TextureDebugger.h"
 
 #include "Core/Application/Application.h"
 #include "Core/Debug/Console/ConsoleManager.h"
@@ -52,7 +52,7 @@ void CTextureDebugWindow::Tick()
         {
             ImGui::BeginChild( "##ScrollBox", ImVec2( Width * 0.985f, Height * 0.125f ), true, ImGuiWindowFlags_HorizontalScrollbar );
 
-            const int32 Count = Resources.DebugTextures.Size();
+            const int32 Count = DebugTextures.Size();
             if ( SelectedTextureIndex >= Count )
             {
                 SelectedTextureIndex = -1;
@@ -72,7 +72,7 @@ void CTextureDebugWindow::Tick()
                 ImVec4 BgCol   = ImVec4( 0.0f, 0.0f, 0.0f, 1.0f );
                 ImVec4 TintCol = ImVec4( 1.0f, 1.0f, 1.0f, 1.0f );
 
-                SImGuiImage* CurrImage = &Resources.DebugTextures[i];
+                SUIImage* CurrImage = &DebugTextures[i];
                 if ( ImGui::ImageButton( CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol ) )
                 {
                     SelectedTextureIndex = i;
@@ -97,7 +97,7 @@ void CTextureDebugWindow::Tick()
             const float ImageHeight = ImageWidth * AspectRatio;
             const int32 ImageIndex  = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
 
-            SImGuiImage* CurrImage = &Resources.DebugTextures[ImageIndex];
+            SUIImage* CurrImage = &DebugTextures[ImageIndex];
             ImGui::Image( CurrImage, ImVec2( ImageWidth, ImageHeight ) );
         }
 

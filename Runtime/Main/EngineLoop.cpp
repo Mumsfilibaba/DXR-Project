@@ -1,10 +1,10 @@
 #include "EngineLoop.h"
 
 #include "Engine/Engine.h"
+#include "Engine/Resources/TextureFactory.h"
 
 #include "Renderer/UIRenderer.h"
 #include "Renderer/Renderer.h"
-#include "Renderer/Resources/TextureFactory.h"
 
 // TODO: Try and avoid the relative path
 #include "../Editor/Editor.h"

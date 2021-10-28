@@ -1,12 +1,11 @@
 #include "Renderer.h"
 #include "UIRenderer.h"
 
-#include "Resources/TextureFactory.h"
-#include "Resources/Mesh.h"
-
 #include "RHI/RHICore.h"
 #include "RHI/RHIShaderCompiler.h"
 
+#include "Engine/Resources/TextureFactory.h"
+#include "Engine/Resources/Mesh.h"
 #include "Engine/Engine.h"
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
@@ -54,6 +53,177 @@ struct SCameraBufferDesc
     CVector3 Right;
     float    AspectRatio;
 };
+
+bool CRenderer::Init()
+{
+    INIT_CONSOLE_VARIABLE( "r.EnableSSAO", &GEnableSSAO );
+    INIT_CONSOLE_VARIABLE( "r.EnableFXAA", &GEnableFXAA );
+    INIT_CONSOLE_VARIABLE( "r.EnableVariableRateShading", &GEnableVariableRateShading );
+    INIT_CONSOLE_VARIABLE( "r.EnablePrePass", &GPrePassEnabled );
+    INIT_CONSOLE_VARIABLE( "r.EnableDrawAABBs", &GDrawAABBs );
+    INIT_CONSOLE_VARIABLE( "r.EnableVerticalSync", &GVSyncEnabled );
+    INIT_CONSOLE_VARIABLE( "r.EnableFrustumCulling", &GFrustumCullEnabled );
+    INIT_CONSOLE_VARIABLE( "r.EnableRayTracing", &GRayTracingEnabled );
+    INIT_CONSOLE_VARIABLE( "r.FXAADebug", &GFXAADebug );
+
+    Resources.MainWindowViewport = RHICreateViewport( GEngine->MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown );
+    if ( !Resources.MainWindowViewport )
+    {
+        CDebug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        Resources.MainWindowViewport->SetName( "Main Window Viewport" );
+    }
+
+    Resources.CameraBuffer = RHICreateConstantBuffer<SCameraBufferDesc>( BufferFlag_Default, EResourceState::Common, nullptr );
+    if ( !Resources.CameraBuffer )
+    {
+        LOG_ERROR( "[Renderer]: Failed to create CameraBuffer" );
+        return false;
+    }
+    else
+    {
+        Resources.CameraBuffer->SetName( "CameraBuffer" );
+    }
+
+    // Init standard input layout
+    SInputLayoutStateCreateInfo InputLayout =
+    {
+        { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0,  EInputClassification::Vertex, 0 },
+        { "NORMAL",   0, EFormat::R32G32B32_Float, 0, 12, EInputClassification::Vertex, 0 },
+        { "TANGENT",  0, EFormat::R32G32B32_Float, 0, 24, EInputClassification::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,    0, 36, EInputClassification::Vertex, 0 },
+    };
+
+    Resources.StdInputLayout = RHICreateInputLayout( InputLayout );
+    if ( !Resources.StdInputLayout )
+    {
+        CDebug::DebugBreak();
+        return false;
+    }
+    else
+    {
+        Resources.StdInputLayout->SetName( "Standard InputLayoutState" );
+    }
+
+    {
+        SSamplerStateCreateInfo CreateInfo;
+        CreateInfo.AddressU = ESamplerMode::Border;
+        CreateInfo.AddressV = ESamplerMode::Border;
+        CreateInfo.AddressW = ESamplerMode::Border;
+        CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
+        CreateInfo.BorderColor = SColorF( 1.0f, 1.0f, 1.0f, 1.0f );
+
+        Resources.DirectionalLightShadowSampler = RHICreateSamplerState( CreateInfo );
+        if ( !Resources.DirectionalLightShadowSampler )
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            Resources.DirectionalLightShadowSampler->SetName( "ShadowMap Sampler" );
+        }
+    }
+
+    {
+        SSamplerStateCreateInfo CreateInfo;
+        CreateInfo.AddressU = ESamplerMode::Wrap;
+        CreateInfo.AddressV = ESamplerMode::Wrap;
+        CreateInfo.AddressW = ESamplerMode::Wrap;
+        CreateInfo.Filter = ESamplerFilter::Comparison_MinMagMipLinear;
+        CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
+
+        Resources.PointLightShadowSampler = RHICreateSamplerState( CreateInfo );
+        if ( !Resources.PointLightShadowSampler )
+        {
+            CDebug::DebugBreak();
+            return false;
+        }
+        else
+        {
+            Resources.PointLightShadowSampler->SetName( "ShadowMap Comparison Sampler" );
+        }
+    }
+
+    GPUProfiler = RHICreateProfiler();
+    if ( !GPUProfiler )
+    {
+        return false;
+    }
+
+    CFrameProfiler::Get().SetGPUProfiler( GPUProfiler.Get() );
+
+    if ( !InitAA() )
+    {
+        return false;
+    }
+
+    if ( !InitBoundingBoxDebugPass() )
+    {
+        return false;
+    }
+
+    if ( !InitShadingImage() )
+    {
+        return false;
+    }
+
+    if ( !LightSetup.Init() )
+    {
+        return false;
+    }
+
+    if ( !DeferredRenderer.Init( Resources ) )
+    {
+        return false;
+    }
+
+    if ( !ShadowMapRenderer.Init( LightSetup, Resources ) )
+    {
+        return false;
+    }
+
+    if ( !SSAORenderer.Init( Resources ) )
+    {
+        return false;
+    }
+
+    if ( !LightProbeRenderer.Init( LightSetup, Resources ) )
+    {
+        return false;
+    }
+
+    if ( !SkyboxRenderPass.Init( Resources ) )
+    {
+        return false;
+    }
+
+    if ( !ForwardRenderer.Init( Resources ) )
+    {
+        return false;
+    }
+
+    if ( RHISupportsRayTracing() )
+    {
+        if ( !RayTracer.Init( Resources ) )
+        {
+            return false;
+        }
+    }
+
+    LightProbeRenderer.RenderSkyLightProbe( MainCmdList, LightSetup, Resources );
+
+    CRHICommandQueue::Get().ExecuteCommandList( MainCmdList );
+
+    // Register EventFunc
+    WindowHandler.WindowResizedDelegate.BindRaw( this, &CRenderer::OnWindowResize );
+    CApplication::Get().AddWindowMessageHandler( &WindowHandler );
+
+    return true;
+}
 
 void CRenderer::PerformFrustumCulling( const CScene& Scene )
 {
@@ -184,64 +354,6 @@ void CRenderer::PerformAABBDebugPass( CRHICommandList& InCmdList )
     INSERT_DEBUG_CMDLIST_MARKER( InCmdList, "End DebugPass" );
 }
 
-void CRenderer::RenderDebugInterface()
-{
-    if ( GDrawRendererInfo.GetBool() )
-    {
-        TSharedRef<CCoreWindow> MainViewport = CApplication::Get().GetMainViewport();
-
-        const uint32 WindowWidth  = MainViewport->GetWidth();
-        const uint32 WindowHeight = MainViewport->GetHeight();
-        const float Width  = 300.0f;
-        const float Height = WindowHeight * 0.8f;
-
-        ImGui::SetNextWindowPos( ImVec2( float( WindowWidth ), 10.0f ), ImGuiCond_Always, ImVec2( 1.0f, 0.0f ) );
-        ImGui::SetNextWindowSize( ImVec2( Width, Height ), ImGuiCond_Always );
-
-        const ImGuiWindowFlags Flags =
-            ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoDecoration |
-            ImGuiWindowFlags_NoFocusOnAppearing |
-            ImGuiWindowFlags_NoSavedSettings;
-
-        ImGui::Begin( "Renderer Window", nullptr, Flags );
-
-        ImGui::Text( "Renderer Status:" );
-        ImGui::Separator();
-
-        ImGui::Columns( 2, nullptr, false );
-        ImGui::SetColumnWidth( 0, 100.0f );
-
-        const CString AdapterName = RHIGetAdapterName();
-        ImGui::Text( "Adapter: " );
-        ImGui::NextColumn();
-
-        ImGui::Text( "%s", AdapterName.CStr() );
-        ImGui::NextColumn();
-
-        ImGui::Text( "DrawCalls: " );
-        ImGui::NextColumn();
-
-        ImGui::Text( "%d", LastFrameNumDrawCalls );
-        ImGui::NextColumn();
-
-        ImGui::Text( "DispatchCalls: " );
-        ImGui::NextColumn();
-
-        ImGui::Text( "%d", LastFrameNumDispatchCalls );
-        ImGui::NextColumn();
-
-        ImGui::Text( "Command Count: " );
-        ImGui::NextColumn();
-
-        ImGui::Text( "%d", LastFrameNumCommands );
-
-        ImGui::Columns( 1 );
-
-        ImGui::End();
-    }
-}
-
 void CRenderer::Tick( const CScene& Scene )
 {
     Resources.BackBuffer = Resources.MainWindowViewport->GetBackBuffer();
@@ -278,7 +390,8 @@ void CRenderer::Tick( const CScene& Scene )
     // Perform frustum culling
     Resources.DeferredVisibleCommands.Clear();
     Resources.ForwardVisibleCommands.Clear();
-    Resources.DebugTextures.Clear();
+    
+    TextureDebugger->ClearImages();
 
     if ( !GFrustumCullEnabled.GetBool() )
     {
@@ -598,178 +711,6 @@ void CRenderer::Tick( const CScene& Scene )
         TRACE_SCOPE( "Present" );
         Resources.MainWindowViewport->Present( GVSyncEnabled.GetBool() );
     }
-}
-
-bool CRenderer::Init()
-{
-    INIT_CONSOLE_VARIABLE( "r.DrawRendererInfo", &GDrawRendererInfo );
-    INIT_CONSOLE_VARIABLE( "r.EnableSSAO", &GEnableSSAO );
-    INIT_CONSOLE_VARIABLE( "r.EnableFXAA", &GEnableFXAA );
-    INIT_CONSOLE_VARIABLE( "r.EnableVariableRateShading", &GEnableVariableRateShading );
-    INIT_CONSOLE_VARIABLE( "r.EnablePrePass", &GPrePassEnabled );
-    INIT_CONSOLE_VARIABLE( "r.EnableDrawAABBs", &GDrawAABBs );
-    INIT_CONSOLE_VARIABLE( "r.EnableVerticalSync", &GVSyncEnabled );
-    INIT_CONSOLE_VARIABLE( "r.EnableFrustumCulling", &GFrustumCullEnabled );
-    INIT_CONSOLE_VARIABLE( "r.EnableRayTracing", &GRayTracingEnabled );
-    INIT_CONSOLE_VARIABLE( "r.FXAADebug", &GFXAADebug );
-
-    Resources.MainWindowViewport = RHICreateViewport( GEngine->MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown );
-    if ( !Resources.MainWindowViewport )
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        Resources.MainWindowViewport->SetName( "Main Window Viewport" );
-    }
-
-    Resources.CameraBuffer = RHICreateConstantBuffer<SCameraBufferDesc>( BufferFlag_Default, EResourceState::Common, nullptr );
-    if ( !Resources.CameraBuffer )
-    {
-        LOG_ERROR( "[Renderer]: Failed to create CameraBuffer" );
-        return false;
-    }
-    else
-    {
-        Resources.CameraBuffer->SetName( "CameraBuffer" );
-    }
-
-    // Init standard input layout
-    SInputLayoutStateCreateInfo InputLayout =
-    {
-        { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0,  EInputClassification::Vertex, 0 },
-        { "NORMAL",   0, EFormat::R32G32B32_Float, 0, 12, EInputClassification::Vertex, 0 },
-        { "TANGENT",  0, EFormat::R32G32B32_Float, 0, 24, EInputClassification::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,    0, 36, EInputClassification::Vertex, 0 },
-    };
-
-    Resources.StdInputLayout = RHICreateInputLayout( InputLayout );
-    if ( !Resources.StdInputLayout )
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        Resources.StdInputLayout->SetName( "Standard InputLayoutState" );
-    }
-
-    {
-        SSamplerStateCreateInfo CreateInfo;
-        CreateInfo.AddressU = ESamplerMode::Border;
-        CreateInfo.AddressV = ESamplerMode::Border;
-        CreateInfo.AddressW = ESamplerMode::Border;
-        CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
-        CreateInfo.BorderColor = SColorF( 1.0f, 1.0f, 1.0f, 1.0f );
-
-        Resources.DirectionalLightShadowSampler = RHICreateSamplerState( CreateInfo );
-        if ( !Resources.DirectionalLightShadowSampler )
-        {
-            CDebug::DebugBreak();
-            return false;
-        }
-        else
-        {
-            Resources.DirectionalLightShadowSampler->SetName( "ShadowMap Sampler" );
-        }
-    }
-
-    {
-        SSamplerStateCreateInfo CreateInfo;
-        CreateInfo.AddressU = ESamplerMode::Wrap;
-        CreateInfo.AddressV = ESamplerMode::Wrap;
-        CreateInfo.AddressW = ESamplerMode::Wrap;
-        CreateInfo.Filter = ESamplerFilter::Comparison_MinMagMipLinear;
-        CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
-
-        Resources.PointLightShadowSampler = RHICreateSamplerState( CreateInfo );
-        if ( !Resources.PointLightShadowSampler )
-        {
-            CDebug::DebugBreak();
-            return false;
-        }
-        else
-        {
-            Resources.PointLightShadowSampler->SetName( "ShadowMap Comparison Sampler" );
-        }
-    }
-
-    GPUProfiler = RHICreateProfiler();
-    if ( !GPUProfiler )
-    {
-        return false;
-    }
-
-    CFrameProfiler::Get().SetGPUProfiler( GPUProfiler.Get() );
-
-    if ( !InitAA() )
-    {
-        return false;
-    }
-
-    if ( !InitBoundingBoxDebugPass() )
-    {
-        return false;
-    }
-
-    if ( !InitShadingImage() )
-    {
-        return false;
-    }
-
-    if ( !LightSetup.Init() )
-    {
-        return false;
-    }
-
-    if ( !DeferredRenderer.Init( Resources ) )
-    {
-        return false;
-    }
-
-    if ( !ShadowMapRenderer.Init( LightSetup, Resources ) )
-    {
-        return false;
-    }
-
-    if ( !SSAORenderer.Init( Resources ) )
-    {
-        return false;
-    }
-
-    if ( !LightProbeRenderer.Init( LightSetup, Resources ) )
-    {
-        return false;
-    }
-
-    if ( !SkyboxRenderPass.Init( Resources ) )
-    {
-        return false;
-    }
-
-    if ( !ForwardRenderer.Init( Resources ) )
-    {
-        return false;
-    }
-
-    if ( RHISupportsRayTracing() )
-    {
-        if ( !RayTracer.Init( Resources ) )
-        {
-            return false;
-        }
-    }
-
-    LightProbeRenderer.RenderSkyLightProbe( MainCmdList, LightSetup, Resources );
-
-    CRHICommandQueue::Get().ExecuteCommandList( MainCmdList );
-
-    // Register EventFunc
-    WindowHandler.WindowResizedDelegate.BindRaw( this, &CRenderer::OnWindowResize );
-    CApplication::Get().AddWindowMessageHandler( &WindowHandler );
-
-    return true;
 }
 
 void CRenderer::Release()

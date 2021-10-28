@@ -1,36 +1,18 @@
 #pragma once
 #include "Core/Application/UI/IUIWindow.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Application/UI/UIImage.h"
 
 #include "RHI/RHIResourceViews.h"
-
-// Used when rendering images with ImGui
-struct SImGuiImage
-{
-    SImGuiImage() = default;
-
-    SImGuiImage( const TSharedRef<CRHIShaderResourceView>& InImageView, const TSharedRef<CRHITexture>& InImage, EResourceState InBefore, EResourceState InAfter )
-        : ImageView( InImageView )
-        , Image( InImage )
-        , BeforeState( InBefore )
-        , AfterState( InAfter )
-    {
-    }
-
-    TSharedRef<CRHIShaderResourceView> ImageView;
-    TSharedRef<CRHITexture> Image;
-
-    EResourceState BeforeState;
-    EResourceState AfterState;
-    
-    bool AllowBlending = false;
-};
 
 class CTextureDebugWindow : public IUIWindow
 {
 public:
 
-    static TSharedRef<CTextureDebugWindow> Make();
+    static TSharedRef<CTextureDebugWindow> Make()
+    {
+        return dbg_new CTextureDebugWindow();
+    }
 
     /* Initializes the panel. The context handle should be set if the global context is not yet, this ensures that panels can be created from different DLLs*/
     virtual void InitContext( UIContextHandle ContextHandle ) override final;
@@ -44,13 +26,18 @@ public:
     /* Add image for debug drawing */
     void AddTextureForDebugging();
 
+    void ClearImages()
+    {
+        DebugTextures.Clear();
+    }
+
 private:
 
     CTextureDebugWindow() = default;
     ~CTextureDebugWindow() = default;
 
     /* Debug images */
-    TArray<SImGuiImage*> Images;
+    TArray<SUIImage> DebugTextures;
 
     /* The selected image */
     int32 SelectedTextureIndex = -1;

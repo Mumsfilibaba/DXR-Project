@@ -1,9 +1,8 @@
 #include "UIRenderer.h"
+#include "Renderer.h"
 
 #include "Engine/Engine.h"
-
-#include "Renderer.h"
-#include "Resources/TextureFactory.h"
+#include "Engine/Resources/TextureFactory.h"
 
 #include "RHI/RHICore.h"
 #include "RHI/RHIResources.h"

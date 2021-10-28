@@ -12,13 +12,14 @@
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Camera.h"
 #include "Engine/Assets/MeshFactory.h"
-
-#include "Resources/Mesh.h"
-#include "Resources/Material.h"
+#include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Material.h"
 
 #include "RHI/RHIModule.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIViewport.h"
+
+#include "Debug/TextureDebugger.h"
 
 #include "Core/Time/Timer.h"
 #include "Core/Threading/DispatchQueue.h"
@@ -62,6 +63,11 @@ public:
 
     void RenderDebugInterface();
 
+    FORCEINLINE TSharedRef<CTextureDebugWindow> GetTextureDebugger() const
+    {
+        return TextureDebugger;
+    }
+
 private:
 
     void OnWindowResize( const SWindowResizeEvent& Event );
@@ -73,6 +79,8 @@ private:
     void ResizeResources( uint32 Width, uint32 Height );
 
     CRendererWindowHandler WindowHandler;
+
+    TSharedRef<CTextureDebugWindow> TextureDebugger;
 
     CRHICommandList PreShadowsCmdList;
     CRHICommandList PointShadowCmdList;
@@ -105,8 +113,8 @@ private:
     TSharedRef<CRHIComputePipelineState> ShadingRatePipeline;
     TSharedRef<CRHIComputeShader>        ShadingRateShader;
 
-    TSharedRef<CRHIVertexBuffer> AABBVertexBuffer;
-    TSharedRef<CRHIIndexBuffer>  AABBIndexBuffer;
+    TSharedRef<CRHIVertexBuffer>          AABBVertexBuffer;
+    TSharedRef<CRHIIndexBuffer>           AABBIndexBuffer;
     TSharedRef<CRHIGraphicsPipelineState> AABBDebugPipelineState;
     TSharedRef<CRHIVertexShader>          AABBVertexShader;
     TSharedRef<CRHIPixelShader>           AABBPixelShader;

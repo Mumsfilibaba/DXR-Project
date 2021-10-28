@@ -52,8 +52,8 @@ public:
     }
 
 private:
-    TArray<TResource*>                    Resources;
-    std::unordered_map<TResource*, int32> ResourceIndices;
+    TArray<TResource*>            Resources;
+    THashTable<TResource*, int32> ResourceIndices;
 };
 
 struct RENDERER_API SFrameResources
@@ -113,8 +113,6 @@ struct RENDERER_API SFrameResources
 
     TArray<SMeshDrawCommand> DeferredVisibleCommands;
     TArray<SMeshDrawCommand> ForwardVisibleCommands;
-
-    TArray<SImGuiImage> DebugTextures;
 
     TSharedRef<CRHIViewport> MainWindowViewport;
 };

@@ -3,8 +3,8 @@
 #include "RHI/RHICore.h"
 #include "RHI/RHIShaderCompiler.h"
 
-#include "Renderer/Resources/Mesh.h"
-#include "Renderer/MeshDrawCommand.h"
+#include "Engine/Resources/Mesh.h"
+#include "Engine/MeshDrawCommand.h"
 
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"

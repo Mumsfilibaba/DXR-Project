@@ -3,8 +3,8 @@
 #include "RHI/RHICore.h"
 #include "RHI/RHIShaderCompiler.h"
 
-#include "Resources/Material.h"
-#include "Resources/Mesh.h"
+#include "Engine/Resources/Material.h"
+#include "Engine/Resources/Mesh.h"
 
 #include "Core/Debug/FrameProfiler.h"
 

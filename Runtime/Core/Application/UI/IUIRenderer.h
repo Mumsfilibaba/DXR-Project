@@ -1,5 +1,6 @@
 #pragma once
 #include "IUIWindow.h"
+#include "UIImage.h"
 
 #include "Core/Containers/SharedRef.h"
 
