@@ -7,18 +7,18 @@
 #include "Renderer/Renderer.h"
 
 #if PROJECT_EDITOR
-#include "../Editor/Editor.h"
+#include "EditorEngine.h"
 #endif
 
 #include "Core/Debug/FrameProfiler.h"
-#include "Core/Modules/ModuleManger.h"
+#include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Modules/ModuleManger.h"
 #include "Core/Modules/ApplicationModule.h"
 #include "Core/Application/Platform/PlatformApplication.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Application/Platform/PlatformOutputConsole.h"
 #include "Core/Application/Application.h"
-#include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Threading/DispatchQueue.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/InterlockedInt.h"

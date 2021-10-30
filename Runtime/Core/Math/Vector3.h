@@ -83,6 +83,7 @@ public:
      * @return False if the any value equals infinity or NaN, true if not
      */
     FORCEINLINE bool IsValid() const noexcept;
+    FORCEINLINE bool IsValid() const noexcept;
 
     /**
      * Returns the length of this vector
@@ -673,4 +674,19 @@ FORCEINLINE bool CVector3::operator==( const CVector3& Other ) const noexcept
 FORCEINLINE bool CVector3::operator!=( const CVector3& Other ) const noexcept
 {
     return !IsEqual( Other );
+}
+
+namespace NMath
+{
+    template<>
+    FORCEINLINE CVector3 ToDegrees( CVector3 Radians )
+    {
+        return CVector3( ToDegrees( Radians.x ), ToDegrees( Radians.y ), ToDegrees( Radians.z ) );
+    }
+
+    template<>
+    FORCEINLINE CVector3 ToRadians( CVector3 Degrees )
+    {
+        return CVector3( ToRadians( Degrees.x ), ToRadians( Degrees.y ), ToRadians( Degrees.z ) );
+    }
 }

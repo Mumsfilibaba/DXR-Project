@@ -1143,3 +1143,18 @@ FORCEINLINE bool CVector4::operator!=( const CVector4& Other ) const noexcept
 {
     return !IsEqual( Other );
 }
+
+namespace NMath
+{
+    template<>
+    FORCEINLINE CVector4 ToDegrees( CVector4 Radians )
+    {
+        return CVector4( ToDegrees( Radians.x ), ToDegrees( Radians.y ), ToDegrees( Radians.z ), ToDegrees( Radians.w ) );
+    }
+
+    template<>
+    FORCEINLINE CVector4 ToRadians( CVector4 Degrees )
+    {
+        return CVector4( ToRadians( Degrees.x ), ToRadians( Degrees.y ), ToRadians( Degrees.z ), ToRadians( Degrees.w ) );
+    }
+}
