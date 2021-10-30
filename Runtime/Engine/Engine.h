@@ -17,22 +17,22 @@ class ENGINE_API CEngine
 public:
 
     /* Create a new engine instance */
-    static TSharedPtr<CEngine> Make();
+    static CEngine* Make();
 
     /* Public destructor for the TSharedPtr */
     ~CEngine() = default;
 
     /* Init engine */
-    bool Init();
+    virtual bool Init();
 
     /* Start the engine */
-    bool Start();
+    virtual bool Start();
 
     /* Tick should be called once per frame */
-    void Tick( CTimestamp DeltaTime );
+    virtual void Tick( CTimestamp DeltaTime );
 
     /* Release engine resources */
-    bool Release();
+    virtual bool Release();
 
     /* Request exit from the engine */
     void Exit();
@@ -42,7 +42,8 @@ public:
 
     /* The main viewport */
     TSharedRef<CRHIViewport> MainViewport;
-
+ 
+    // TODO: Remove
     TSharedPtr<CApplicationUser> User;
 
     /* The current scene */
@@ -60,10 +61,11 @@ public:
     /* A completely white material */
     TSharedPtr<CMaterial> BaseMaterial;
 
-private:
+protected:
 
     /* Engine should be constructed with the Make function */
     CEngine();
 };
 
-extern ENGINE_API TSharedPtr<CEngine> GEngine;
+/* Global Engine Pointer */
+extern ENGINE_API CEngine* GEngine;

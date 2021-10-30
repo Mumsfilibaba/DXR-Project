@@ -9,7 +9,7 @@
 #include "D3D12RHITexture.h"
 #include "D3D12RHIPipelineState.h"
 #include "D3D12RHIRayTracing.h"
-#include "D3D12RHIGPUProfiler.h"
+#include "D3D12RHITimestampQuery.h"
 #include "D3D12RHICommandContext.h"
 
 #include "Core/Debug/FrameProfiler.h"
@@ -388,25 +388,25 @@ void CD3D12RHICommandContext::End()
     IsReady = false;
 }
 
-void CD3D12RHICommandContext::BeginTimeStamp( CGPUProfiler* Profiler, uint32 Index )
+void CD3D12RHICommandContext::BeginTimeStamp( CRHITimestampQuery* Profiler, uint32 Index )
 {
     ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
 
-    CD3D12GPUProfiler* DxProfiler = static_cast<CD3D12GPUProfiler*>(Profiler);
+    CD3D12RHITimestampQuery* DxProfiler = static_cast<CD3D12RHITimestampQuery*>(Profiler);
     Assert( Profiler );
 
     DxProfiler->BeginQuery( DxCmdList, Index );
 
-    ResolveProfilers.Emplace( MakeSharedRef<CD3D12GPUProfiler>( DxProfiler ) );
+    ResolveProfilers.Emplace( MakeSharedRef<CD3D12RHITimestampQuery>( DxProfiler ) );
 }
 
-void CD3D12RHICommandContext::EndTimeStamp( CGPUProfiler* Profiler, uint32 Index )
+void CD3D12RHICommandContext::EndTimeStamp( CRHITimestampQuery* Profiler, uint32 Index )
 {
     Assert( Profiler );
 
     ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
 
-    CD3D12GPUProfiler* DxProfiler = static_cast<CD3D12GPUProfiler*>(Profiler);
+    CD3D12RHITimestampQuery* DxProfiler = static_cast<CD3D12RHITimestampQuery*>(Profiler);
     Assert( Profiler );
 
     DxProfiler->EndQuery( DxCmdList, Index );

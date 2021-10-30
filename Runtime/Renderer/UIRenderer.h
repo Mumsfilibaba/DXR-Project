@@ -10,8 +10,6 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Time/Timer.h"
 
-#include <imgui.h>
-
 class CUIInputHandler : public CInputHandler
 {
 public:
@@ -22,38 +20,22 @@ public:
     DECLARE_DELEGATE( CKeyEventDelegate, const SKeyEvent& );
     CKeyEventDelegate KeyEventDelegate;
 
-    virtual bool HandleKeyEvent( const SKeyEvent& KeyEvent ) override final
-    {
-        KeyEventDelegate.Execute( KeyEvent );
-        return ImGui::GetIO().WantCaptureKeyboard;
-    }
+    virtual bool HandleKeyEvent( const SKeyEvent& KeyEvent ) override final;
 
     DECLARE_DELEGATE( CKeyTypedDelegate, SKeyTypedEvent );
     CKeyTypedDelegate KeyTypedDelegate;
 
-    virtual bool HandleKeyTyped( SKeyTypedEvent KeyTypedEvent ) override final
-    {
-        KeyTypedDelegate.Execute( KeyTypedEvent );
-        return ImGui::GetIO().WantCaptureKeyboard;
-    }
+    virtual bool HandleKeyTyped( SKeyTypedEvent KeyTypedEvent ) override final;
 
     DECLARE_DELEGATE( CMouseButtonDelegate, const SMouseButtonEvent& );
     CMouseButtonDelegate MouseButtonDelegate;
 
-    virtual bool HandleMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent ) override final
-    {
-        MouseButtonDelegate.Execute( MouseButtonEvent );
-        return ImGui::GetIO().WantCaptureMouse;
-    }
+    virtual bool HandleMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent ) override final;
 
     DECLARE_DELEGATE( CMouseScrolledDelegate, const SMouseScrolledEvent& );
     CMouseScrolledDelegate MouseScrolledDelegate;
 
-    virtual bool HandleMouseScrolled( const SMouseScrolledEvent& MouseScrolledEvent ) override final
-    {
-        MouseScrolledDelegate.Execute( MouseScrolledEvent );
-        return ImGui::GetIO().WantCaptureMouse;
-    }
+    virtual bool HandleMouseScrolled( const SMouseScrolledEvent& MouseScrolledEvent ) override final;
 };
 
 class RENDERER_API CUIRenderer final : public IUIRenderer
@@ -89,6 +71,8 @@ private:
     
     CUIInputHandler InputHandler;
 
+    TArray<SUIImage*> RenderedImages;
+
     CTimer FrameClock;
 
     TSharedRef<CRHITexture2D>             FontTexture;
@@ -99,5 +83,5 @@ private:
     TSharedRef<CRHIIndexBuffer>           IndexBuffer;
     TSharedRef<CRHISamplerState>          PointSampler;
 
-    ImGuiContext* Context = nullptr;
+    struct ImGuiContext* Context = nullptr;
 };

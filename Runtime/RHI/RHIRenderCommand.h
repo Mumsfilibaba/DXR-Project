@@ -27,7 +27,7 @@ struct SRHIRenderCommand
 // BeginTimeStamp RenderCommand
 struct SRHIBeginTimeStampRenderCommand : public SRHIRenderCommand
 {
-    SRHIBeginTimeStampRenderCommand( CGPUProfiler* InProfiler, uint32 InIndex )
+    SRHIBeginTimeStampRenderCommand( CRHITimestampQuery* InProfiler, uint32 InIndex )
         : Profiler( InProfiler )
         , Index( InIndex )
     {
@@ -38,14 +38,14 @@ struct SRHIBeginTimeStampRenderCommand : public SRHIRenderCommand
         CmdContext.BeginTimeStamp( Profiler.Get(), Index );
     }
 
-    TSharedRef<CGPUProfiler> Profiler;
+    TSharedRef<CRHITimestampQuery> Profiler;
     uint32 Index;
 };
 
 // EndTimeStamp RenderCommand
 struct SRHIEndTimeStampRenderCommand : public SRHIRenderCommand
 {
-    SRHIEndTimeStampRenderCommand( CGPUProfiler* InProfiler, uint32 InIndex )
+    SRHIEndTimeStampRenderCommand( CRHITimestampQuery* InProfiler, uint32 InIndex )
         : Profiler( InProfiler )
         , Index( InIndex )
     {
@@ -56,7 +56,7 @@ struct SRHIEndTimeStampRenderCommand : public SRHIRenderCommand
         CmdContext.EndTimeStamp( Profiler.Get(), Index );
     }
 
-    TSharedRef<CGPUProfiler> Profiler;
+    TSharedRef<CRHITimestampQuery> Profiler;
     uint32 Index;
 };
 

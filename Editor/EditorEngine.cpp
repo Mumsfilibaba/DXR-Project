@@ -1,19 +1,19 @@
-#include "Editor.h"
+#include "EditorEngine.h"
 
-#include "Rendering/UIRenderer.h"
-#include "Rendering/Renderer.h"
+#include "Renderer/UIRenderer.h"
+#include "Renderer/Renderer.h"
 
-#include "Scene/Scene.h"
-#include "Scene/Lights/DirectionalLight.h"
-#include "Scene/Lights/PointLight.h"
-#include "Scene/Components/MeshComponent.h"
+#include "Engine/Engine.h"
+#include "Engine/Scene/Scene.h"
+#include "Engine/Scene/Lights/DirectionalLight.h"
+#include "Engine/Scene/Lights/PointLight.h"
+#include "Engine/Scene/Components/MeshComponent.h"
 
-#include "Core/Engine/Engine.h"
-#include "Core/Engine/EngineLoop.h"
 #include "Core/Math/Math.h"
-#include "Core/Application/ApplicationModule.h"
+#include "Core/Modules/ApplicationModule.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
+#include <imgui.h>
 #include <imgui_internal.h>
 
 static float MainMenuBarHeight = 0.0f;
@@ -21,6 +21,8 @@ static float MainMenuBarHeight = 0.0f;
 static bool ShowRenderSettings = false;
 
 TConsoleVariable<bool> GShowSceneGraph( false );
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void DrawMenu();
 static void DrawSideWindow();
@@ -820,13 +822,23 @@ static void DrawSceneInfo()
     }
 }
 
-void Editor::Init()
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+CEditorEngine* CEditorEngine::Make()
 {
-    INIT_CONSOLE_VARIABLE( "ShowSceneGraph", &GShowSceneGraph );
+    return dbg_new CEditorEngine();
 }
 
-void Editor::Tick()
+bool CEditorEngine::Init()
 {
+    INIT_CONSOLE_VARIABLE( "ShowSceneGraph", &GShowSceneGraph );
+    return true;
+}
+
+void CEditorEngine::Tick( CTimestamp Deltatime )
+{
+    UNREFERENCED_VARIABLE( Deltatime );
+
 #if 0
     DrawMenu();
 #endif

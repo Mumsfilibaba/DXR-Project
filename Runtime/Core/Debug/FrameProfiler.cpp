@@ -24,8 +24,8 @@ void CFrameProfiler::Tick()
 
         if ( GPUProfiler )
         {
-            STimeQuery Query;
-            GPUProfiler->GetTimeQuery( Query, GPUFrameTime.TimeQueryIndex );
+            SRHITimestamp Query;
+            GPUProfiler->GetTimestampFromIndex( Query, GPUFrameTime.TimeQueryIndex );
 
             const double Frequency = static_cast<double>(GPUProfiler->GetFrequency());
             const double DeltaTime = static_cast<double>(Query.End - Query.Begin);
@@ -166,8 +166,8 @@ void CFrameProfiler::EndGPUTrace( CRHICommandList& CmdList, const char* Name )
 
             if ( TimeQueryIndex >= 0 )
             {
-                STimeQuery Query;
-                GPUProfiler->GetTimeQuery( Query, TimeQueryIndex );
+                SRHITimestamp Query;
+                GPUProfiler->GetTimestampFromIndex( Query, TimeQueryIndex );
 
                 const double Frequency = static_cast<double>(GPUProfiler->GetFrequency());
 
@@ -178,9 +178,9 @@ void CFrameProfiler::EndGPUTrace( CRHICommandList& CmdList, const char* Name )
     }
 }
 
-void CFrameProfiler::SetGPUProfiler( CGPUProfiler* Profiler )
+void CFrameProfiler::SetGPUProfiler( CRHITimestampQuery* Profiler )
 {
-    GPUProfiler = MakeSharedRef<CGPUProfiler>( Profiler );
+    GPUProfiler = MakeSharedRef<CRHITimestampQuery>( Profiler );
 }
 
 void CFrameProfiler::GetCPUSamples( ProfileSamplesTable& OutCPUSamples )

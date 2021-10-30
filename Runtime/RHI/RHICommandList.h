@@ -2,7 +2,7 @@
 #include "RHIAPI.h"
 #include "RHIResources.h"
 #include "RHIRenderCommand.h"
-#include "GPUProfiler.h"
+#include "RHITimestampQuery.h"
 
 class RHI_API CCommandAllocator
 {
@@ -92,12 +92,12 @@ public:
         Reset();
     }
 
-    void BeginTimeStamp( CGPUProfiler* Profiler, uint32 Index )
+    void BeginTimeStamp( CRHITimestampQuery* Profiler, uint32 Index )
     {
         InsertCommand<SRHIBeginTimeStampRenderCommand>( AddRef( Profiler ), Index );
     }
 
-    void EndTimeStamp( CGPUProfiler* Profiler, uint32 Index )
+    void EndTimeStamp( CRHITimestampQuery* Profiler, uint32 Index )
     {
         InsertCommand<SRHIEndTimeStampRenderCommand>( AddRef( Profiler ), Index );
     }

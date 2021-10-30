@@ -3,7 +3,7 @@
 #include "RHI/RHICore.h"
 #include "RHI/RHIShaderCompiler.h"
 
-#include "Renderer/Resources/TextureFactory.h"
+#include "Engine/Resources/TextureFactory.h"
 
 #include "Core/Debug/FrameProfiler.h"
 

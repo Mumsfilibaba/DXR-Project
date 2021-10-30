@@ -79,17 +79,3 @@ void ReleaseRHI()
     SafeDelete( GRHICore );
     SafeDelete( GShaderCompiler );
 }
-
-/* RHI Module */
-
-bool CRHIModule::Load()
-{
-    /* Empty for now */
-    return true;
-}
-
-bool CRHIModule::Unload()
-{
-    /* Empty for now */
-    return true;
-}

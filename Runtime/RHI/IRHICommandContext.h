@@ -15,8 +15,8 @@ public:
     /* Stop recording commands with this command context */
     virtual void End() = 0;
 
-    virtual void BeginTimeStamp( CGPUProfiler* Profiler, uint32 Index ) = 0;
-    virtual void EndTimeStamp( CGPUProfiler* Profiler, uint32 Index ) = 0;
+    virtual void BeginTimeStamp( CRHITimestampQuery* Profiler, uint32 Index ) = 0;
+    virtual void EndTimeStamp( CRHITimestampQuery* Profiler, uint32 Index ) = 0;
 
     virtual void ClearRenderTargetView( CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor ) = 0;
     virtual void ClearDepthStencilView( CRHIDepthStencilView* DepthStencilView, const SDepthStencilF& ClearValue ) = 0;

@@ -5,12 +5,11 @@
 
 #include <imgui.h>
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 TConsoleVariable<bool> GDrawTextureDebugger( false );
 
-TSharedRef<CTextureDebugWindow> CTextureDebugWindow::Make()
-{
-    return dbg_new CTextureDebugWindow();
-}
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CTextureDebugWindow::InitContext( UIContextHandle ContextHandle )
 {
@@ -110,4 +109,9 @@ void CTextureDebugWindow::Tick()
 bool CTextureDebugWindow::IsTickable()
 {
     return GDrawTextureDebugger.GetBool();
+}
+
+void CTextureDebugWindow::AddTextureForDebugging( const TSharedRef<CRHIShaderResourceView>& ImageView, const TSharedRef<CRHITexture>& Image, EResourceState BeforeState, EResourceState AfterState )
+{
+    DebugTextures.Emplace( ImageView, Image, BeforeState, AfterState );
 }

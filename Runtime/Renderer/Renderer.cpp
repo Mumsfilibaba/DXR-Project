@@ -130,10 +130,10 @@ bool CRenderer::Init()
 
     {
         SSamplerStateCreateInfo CreateInfo;
-        CreateInfo.AddressU = ESamplerMode::Wrap;
-        CreateInfo.AddressV = ESamplerMode::Wrap;
-        CreateInfo.AddressW = ESamplerMode::Wrap;
-        CreateInfo.Filter = ESamplerFilter::Comparison_MinMagMipLinear;
+        CreateInfo.AddressU       = ESamplerMode::Wrap;
+        CreateInfo.AddressV       = ESamplerMode::Wrap;
+        CreateInfo.AddressW       = ESamplerMode::Wrap;
+        CreateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
         CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
 
         Resources.PointLightShadowSampler = RHICreateSamplerState( CreateInfo );
@@ -218,9 +218,17 @@ bool CRenderer::Init()
 
     CRHICommandQueue::Get().ExecuteCommandList( MainCmdList );
 
+    CApplication& Application = CApplication::Get();
+
     // Register EventFunc
     WindowHandler.WindowResizedDelegate.BindRaw( this, &CRenderer::OnWindowResize );
-    CApplication::Get().AddWindowMessageHandler( &WindowHandler );
+    Application.AddWindowMessageHandler( &WindowHandler );
+
+    // Register Windows
+    TextureDebugger = CTextureDebugWindow::Make();
+    Application.AddWindow(TextureDebugger);
+
+
 
     return true;
 }
@@ -375,7 +383,11 @@ void CRenderer::Tick( const CScene& Scene )
         CRenderer::ShadowMapRenderer.RenderPointLightShadows( PointShadowCmdList, LightSetup, Scene );
     };
 
-    PointShadowTask.Delegate.BindLambda( RenderPointShadows );
+    if ( !PointShadowTask.Delegate.IsBound() )
+    {
+        PointShadowTask.Delegate.BindLambda( RenderPointShadows );
+    }
+
     CDispatchQueue::Get().Dispatch( PointShadowTask );
 
     // Init directional light task
@@ -391,6 +403,8 @@ void CRenderer::Tick( const CScene& Scene )
     Resources.DeferredVisibleCommands.Clear();
     Resources.ForwardVisibleCommands.Clear();
     
+    // Clear the images that were debuggable last frame 
+    // TODO: Make this persistent, we do not need to do this every frame, right know it is because the resource-state system needs overhaul
     TextureDebugger->ClearImages();
 
     if ( !GFrustumCullEnabled.GetBool() )
@@ -414,18 +428,18 @@ void CRenderer::Tick( const CScene& Scene )
 
     // Update camera-buffer
     SCameraBufferDesc CamBuff;
-    CamBuff.ViewProjection = Scene.GetCamera()->GetViewProjectionMatrix();
-    CamBuff.View = Scene.GetCamera()->GetViewMatrix();
-    CamBuff.ViewInv = Scene.GetCamera()->GetViewInverseMatrix();
-    CamBuff.Projection = Scene.GetCamera()->GetProjectionMatrix();
-    CamBuff.ProjectionInv = Scene.GetCamera()->GetProjectionInverseMatrix();
+    CamBuff.ViewProjection    = Scene.GetCamera()->GetViewProjectionMatrix();
+    CamBuff.View              = Scene.GetCamera()->GetViewMatrix();
+    CamBuff.ViewInv           = Scene.GetCamera()->GetViewInverseMatrix();
+    CamBuff.Projection        = Scene.GetCamera()->GetProjectionMatrix();
+    CamBuff.ProjectionInv     = Scene.GetCamera()->GetProjectionInverseMatrix();
     CamBuff.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
-    CamBuff.Position = Scene.GetCamera()->GetPosition();
-    CamBuff.Forward = Scene.GetCamera()->GetForward();
-    CamBuff.Right = Scene.GetCamera()->GetRight();
-    CamBuff.NearPlane = Scene.GetCamera()->GetNearPlane();
-    CamBuff.FarPlane = Scene.GetCamera()->GetFarPlane();
-    CamBuff.AspectRatio = Scene.GetCamera()->GetAspectRatio();
+    CamBuff.Position          = Scene.GetCamera()->GetPosition();
+    CamBuff.Forward           = Scene.GetCamera()->GetForward();
+    CamBuff.Right             = Scene.GetCamera()->GetRight();
+    CamBuff.NearPlane         = Scene.GetCamera()->GetNearPlane();
+    CamBuff.FarPlane          = Scene.GetCamera()->GetFarPlane();
+    CamBuff.AspectRatio       = Scene.GetCamera()->GetAspectRatio();
 
     PrepareGBufferCmdList.TransitionBuffer( Resources.CameraBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest );
 
@@ -506,7 +520,7 @@ void CRenderer::Tick( const CScene& Scene )
 
     MainCmdList.TransitionTexture( Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView() ),
         Resources.GBuffer[GBUFFER_ALBEDO_INDEX],
         EResourceState::NonPixelShaderResource,
@@ -514,7 +528,7 @@ void CRenderer::Tick( const CScene& Scene )
 
     MainCmdList.TransitionTexture( Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView() ),
         Resources.GBuffer[GBUFFER_NORMAL_INDEX],
         EResourceState::NonPixelShaderResource,
@@ -522,7 +536,7 @@ void CRenderer::Tick( const CScene& Scene )
 
     MainCmdList.TransitionTexture( Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView() ),
         Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX],
         EResourceState::NonPixelShaderResource,
@@ -530,7 +544,7 @@ void CRenderer::Tick( const CScene& Scene )
 
     MainCmdList.TransitionTexture( Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView() ),
         Resources.GBuffer[GBUFFER_MATERIAL_INDEX],
         EResourceState::NonPixelShaderResource,
@@ -550,7 +564,7 @@ void CRenderer::Tick( const CScene& Scene )
 
     MainCmdList.TransitionTexture( Resources.SSAOBuffer.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( Resources.SSAOBuffer->GetShaderResourceView() ),
         Resources.SSAOBuffer,
         EResourceState::NonPixelShaderResource,
@@ -575,31 +589,31 @@ void CRenderer::Tick( const CScene& Scene )
 
     MainCmdList.TransitionTexture( LightSetup.PointLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( LightSetup.DirectionalShadowMask->GetShaderResourceView() ),
         LightSetup.DirectionalShadowMask,
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( LightSetup.ShadowMapCascades[0]->GetShaderResourceView() ),
         LightSetup.ShadowMapCascades[0],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( LightSetup.ShadowMapCascades[1]->GetShaderResourceView() ),
         LightSetup.ShadowMapCascades[1],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( LightSetup.ShadowMapCascades[2]->GetShaderResourceView() ),
         LightSetup.ShadowMapCascades[2],
         EResourceState::NonPixelShaderResource,
         EResourceState::NonPixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( LightSetup.ShadowMapCascades[3]->GetShaderResourceView() ),
         LightSetup.ShadowMapCascades[3],
         EResourceState::NonPixelShaderResource,
@@ -609,7 +623,7 @@ void CRenderer::Tick( const CScene& Scene )
     MainCmdList.TransitionTexture( LightSetup.SpecularIrradianceMap.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource );
     MainCmdList.TransitionTexture( Resources.IntegrationLUT.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( Resources.IntegrationLUT->GetShaderResourceView() ),
         Resources.IntegrationLUT,
         EResourceState::PixelShaderResource,
@@ -623,7 +637,7 @@ void CRenderer::Tick( const CScene& Scene )
 
     MainCmdList.TransitionTexture( Resources.FinalTarget.Get(), EResourceState::RenderTarget, EResourceState::PixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( Resources.FinalTarget->GetShaderResourceView() ),
         Resources.FinalTarget,
         EResourceState::PixelShaderResource,
@@ -631,7 +645,7 @@ void CRenderer::Tick( const CScene& Scene )
 
     MainCmdList.TransitionTexture( Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::PixelShaderResource );
 
-    Resources.DebugTextures.Emplace(
+    TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>( Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView() ),
         Resources.GBuffer[GBUFFER_DEPTH_INDEX],
         EResourceState::PixelShaderResource,
@@ -655,11 +669,6 @@ void CRenderer::Tick( const CScene& Scene )
 
     {
         TRACE_SCOPE( "Render UI" );
-
-        CUIRenderer::DrawUI( []()
-        {
-            GRenderer.RenderDebugInterface();
-        } );
 
         if ( RHISupportsVariableRateShading() )
         {
@@ -702,9 +711,9 @@ void CRenderer::Tick( const CScene& Scene )
 
         CRHICommandQueue::Get().ExecuteCommandLists( CmdLists, ArrayCount( CmdLists ) );
 
-        LastFrameNumDrawCalls = CRHICommandQueue::Get().GetNumDrawCalls();
-        LastFrameNumDispatchCalls = CRHICommandQueue::Get().GetNumDispatchCalls();
-        LastFrameNumCommands = CRHICommandQueue::Get().GetNumCommands();
+        FrameStatistics.NumDrawCalls      = CRHICommandQueue::Get().GetNumDrawCalls();
+        FrameStatistics.NumDispatchCalls  = CRHICommandQueue::Get().GetNumDispatchCalls();
+        FrameStatistics.NumRenderCommands = CRHICommandQueue::Get().GetNumCommands();
     }
 
     {
@@ -758,9 +767,7 @@ void CRenderer::Release()
     GPUProfiler.Reset();
     CFrameProfiler::Get().SetGPUProfiler( nullptr );
 
-    LastFrameNumDrawCalls = 0;
-    LastFrameNumDispatchCalls = 0;
-    LastFrameNumCommands = 0;
+    FrameStatistics.Reset();
 }
 
 void CRenderer::OnWindowResize( const SWindowResizeEvent& Event )

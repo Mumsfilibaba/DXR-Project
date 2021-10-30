@@ -2,7 +2,7 @@
 #include "Core/Time/Timer.h"
 
 #include "RHI/RHICommandList.h"
-#include "RHI/GPUProfiler.h"
+#include "RHI/RHITimestampQuery.h"
 
 #include "Core/Threading/Lockable.h"
 #include "Core/Containers/HashTable.h"
@@ -190,7 +190,7 @@ public:
     void EndGPUTrace( CRHICommandList& CmdList, const char* Name );
     void EndGPUFrame( CRHICommandList& CmdList );
 
-    void SetGPUProfiler( class CGPUProfiler* Profiler );
+    void SetGPUProfiler( class CRHITimestampQuery* Profiler );
 
     void GetCPUSamples( ProfileSamplesTable& OutCPUSamples );
     void GetGPUSamples( GPUProfileSamplesTable& OutGPUSamples );
@@ -215,7 +215,7 @@ private:
     CFrameProfiler() = default;
     ~CFrameProfiler() = default;
 
-    TSharedRef<CGPUProfiler> GPUProfiler;
+    TSharedRef<CRHITimestampQuery> GPUProfiler;
 
     uint32 CurrentTimeQueryIndex = 0;
 

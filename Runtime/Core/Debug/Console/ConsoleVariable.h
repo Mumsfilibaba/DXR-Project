@@ -1,5 +1,5 @@
 #pragma once
-#include "IConsoleObject.h"
+#include "IConsoleVariable.h"
 
 #include "Core/Delegates/MulticastDelegate.h"
 #include "Core/Containers/String.h"
@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <sstream>
 
-class CORE_API CConsoleVariable : public IConsoleVariable
+class CConsoleVariable : public IConsoleVariable
 {
 public:
 

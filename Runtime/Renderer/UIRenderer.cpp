@@ -15,6 +15,8 @@
 #include "Core/Debug/FrameProfiler.h"
 #include "Core/Containers/Array.h"
 
+#include <imgui.h>
+
 static uint32 GetMouseButtonIndex( EMouseButton Button )
 {
     switch ( Button )
@@ -26,6 +28,30 @@ static uint32 GetMouseButtonIndex( EMouseButton Button )
         case MouseButton_Forward: return 4;
         default:                  return static_cast<uint32>(-1);
     }
+}
+
+bool CUIInputHandler::HandleKeyEvent( const SKeyEvent& KeyEvent )
+{
+    KeyEventDelegate.Execute( KeyEvent );
+    return ImGui::GetIO().WantCaptureKeyboard;
+}
+
+bool CUIInputHandler::HandleKeyTyped( SKeyTypedEvent KeyTypedEvent )
+{
+    KeyTypedDelegate.Execute( KeyTypedEvent );
+    return ImGui::GetIO().WantCaptureKeyboard;
+}
+
+bool CUIInputHandler::HandleMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent )
+{
+    MouseButtonDelegate.Execute( MouseButtonEvent );
+    return ImGui::GetIO().WantCaptureMouse;
+}
+
+bool CUIInputHandler::HandleMouseScrolled( const SMouseScrolledEvent& MouseScrolledEvent )
+{
+    MouseScrolledDelegate.Execute( MouseScrolledEvent );
+    return ImGui::GetIO().WantCaptureMouse;
 }
 
 CUIRenderer::~CUIRenderer()
@@ -209,30 +235,33 @@ bool CUIRenderer::Init()
 
     static const char* VSSource =
         R"*(
-    cbuffer VertexBuffer : register(b0, space1)
-    {
-        float4x4 ProjectionMatrix;
-    };
-    struct VS_INPUT
-    {
-        float2 Position : POSITION;
-        float4 Color    : COLOR0;
-        float2 TexCoord : TEXCOORD0;
-    };
-    struct PS_INPUT
-    {
-        float4 Position : SV_POSITION;
-        float4 Color    : COLOR0;
-        float2 TexCoord : TEXCOORD0;
-    };
-    PS_INPUT Main(VS_INPUT Input)
-    {
-        PS_INPUT Output;
-        Output.Position = mul(ProjectionMatrix, float4(Input.Position.xy, 0.0f, 1.0f));
-        Output.Color    = Input.Color;
-        Output.TexCoord = Input.TexCoord;
-        return Output;
-    })*";
+        cbuffer VertexBuffer : register(b0, space1)
+        {
+            float4x4 ProjectionMatrix;
+        };
+
+        struct VS_INPUT
+        {
+            float2 Position : POSITION;
+            float4 Color    : COLOR0;
+            float2 TexCoord : TEXCOORD0;
+        };
+
+        struct PS_INPUT
+        {
+            float4 Position : SV_POSITION;
+            float4 Color    : COLOR0;
+            float2 TexCoord : TEXCOORD0;
+        };
+
+        PS_INPUT Main(VS_INPUT Input)
+        {
+            PS_INPUT Output;
+            Output.Position = mul(ProjectionMatrix, float4(Input.Position.xy, 0.0f, 1.0f));
+            Output.Color    = Input.Color;
+            Output.TexCoord = Input.TexCoord;
+            return Output;
+        })*";
 
     TArray<uint8> ShaderCode;
     if ( !CRHIShaderCompiler::CompileShader( VSSource, "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
@@ -256,8 +285,10 @@ bool CUIRenderer::Init()
             float4 Color    : COLOR0;
             float2 TexCoord : TEXCOORD0;
         };
+
         SamplerState Sampler0 : register(s0);
         Texture2D    Texture0 : register(t0);
+
         float4 Main(PS_INPUT Input) : SV_Target
         {
             float4 OutColor = Input.Color * Texture0.Sample(Sampler0, Input.TexCoord);
@@ -600,8 +631,8 @@ void CUIRenderer::Render( CRHICommandList& CmdList )
             const ImDrawCmd* Cmd = &DrawCmdList->CmdBuffer[CmdIndex];
             if ( Cmd->TextureId )
             {
-                SImGuiImage* Image = reinterpret_cast<SImGuiImage*>(Cmd->TextureId);
-                Images.Emplace( Image );
+                SUIImage* Image = reinterpret_cast<SUIImage*>(Cmd->TextureId);
+                RenderedImages.Emplace( Image );
 
                 if ( Image->BeforeState != EResourceState::PixelShaderResource )
                 {
@@ -633,7 +664,7 @@ void CUIRenderer::Render( CRHICommandList& CmdList )
         GlobalVertexOffset += DrawCmdList->VtxBuffer.Size;
     }
 
-    for ( SImGuiImage* Image : Images )
+    for ( SUIImage* Image : RenderedImages )
     {
         Assert( Image != nullptr );
 
@@ -643,8 +674,7 @@ void CUIRenderer::Render( CRHICommandList& CmdList )
         }
     }
 
-
-    Images.Clear();
+    RenderedImages.Clear();
 }
 
 UIContextHandle CUIRenderer::GetContext() const

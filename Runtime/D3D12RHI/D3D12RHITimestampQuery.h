@@ -1,15 +1,15 @@
 #pragma once
-#include "RHI/GPUProfiler.h"
+#include "RHI/RHITimestampQuery.h"
 
 #include "D3D12Resource.h"
 
-class CD3D12GPUProfiler : public CGPUProfiler, public CD3D12DeviceChild
+class CD3D12RHITimestampQuery : public CRHITimestampQuery, public CD3D12DeviceChild
 {
 public:
-    CD3D12GPUProfiler( CD3D12Device* InDevice );
-    ~CD3D12GPUProfiler() = default;
+    CD3D12RHITimestampQuery( CD3D12Device* InDevice );
+    ~CD3D12RHITimestampQuery() = default;
 
-    virtual void GetTimeQuery( STimeQuery& OutQuery, uint32 Index ) const override final;
+    virtual void GetTimestampFromIndex( SRHITimestamp& OutQuery, uint32 Index ) const override final;
 
     virtual uint64 GetFrequency() const override final
     {
@@ -26,7 +26,7 @@ public:
         return QueryHeap.Get();
     }
 
-    static CD3D12GPUProfiler* Create( CD3D12Device* InDevice );
+    static CD3D12RHITimestampQuery* Create( CD3D12Device* InDevice );
 
 private:
     bool AllocateReadResource();
@@ -35,7 +35,7 @@ private:
     TSharedRef<CD3D12Resource>      WriteResource;
 
     TArray<TSharedRef<CD3D12Resource>> ReadResources;
-    TArray<STimeQuery> TimeQueries;
+    TArray<SRHITimestamp> TimeQueries;
 
     UINT64 Frequency;
 };

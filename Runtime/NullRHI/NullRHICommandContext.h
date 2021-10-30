@@ -33,11 +33,11 @@ public:
     {
     }
 
-    virtual void BeginTimeStamp( CGPUProfiler* Profiler, uint32 Index ) override final
+    virtual void BeginTimeStamp( CRHITimestampQuery* Profiler, uint32 Index ) override final
     {
     }
 
-    virtual void EndTimeStamp( CGPUProfiler* Profiler, uint32 Index ) override final
+    virtual void EndTimeStamp( CRHITimestampQuery* Profiler, uint32 Index ) override final
     {
     }
 

@@ -3,15 +3,16 @@
 #include "Core/Application/Log.h"
 #include "Core/Application/Application.h"
 
+// TODO: Remove (Make own? Slow?)
 #include <regex>
 
-/* Commands */
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CConsoleCommand GClearHistory;
 
 TConsoleVariable<CString> GEcho;
 
-/* ConsoleManager */
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CConsoleManager CConsoleManager::Instance;
 

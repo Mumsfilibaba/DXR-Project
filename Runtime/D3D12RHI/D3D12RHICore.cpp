@@ -17,9 +17,7 @@
 #include "D3D12RHIBuffer.h"
 #include "D3D12RHISamplerState.h"
 #include "D3D12RHIViewport.h"
-#include "D3D12RHIGPUProfiler.h"
-
-#include <algorithm>
+#include "D3D12RHITimestampQuery.h"
 
 CD3D12RHICore* GD3D12RenderLayer = nullptr;
 
@@ -1436,9 +1434,9 @@ CRHIRayTracingPipelineState* CD3D12RHICore::CreateRayTracingPipelineState( const
     }
 }
 
-CGPUProfiler* CD3D12RHICore::CreateProfiler()
+CRHITimestampQuery* CD3D12RHICore::CreateProfiler()
 {
-    return CD3D12GPUProfiler::Create( Device );
+    return CD3D12RHITimestampQuery::Create( Device );
 }
 
 CRHIViewport* CD3D12RHICore::CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat )

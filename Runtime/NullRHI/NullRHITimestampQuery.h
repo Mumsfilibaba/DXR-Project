@@ -1,5 +1,5 @@
 #pragma once
-#include "RHI/GPUProfiler.h"
+#include "RHI/RHITimestampQuery.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
@@ -11,15 +11,15 @@
 
 #endif
 
-class CNullGPUProfiler : public CGPUProfiler
+class CNullRHITimestampQuery : public CRHITimestampQuery
 {
 public:
-    CNullGPUProfiler() = default;
-    ~CNullGPUProfiler() = default;
+    CNullRHITimestampQuery() = default;
+    ~CNullRHITimestampQuery() = default;
 
-    virtual void GetTimeQuery( STimeQuery& OutQuery, uint32 Index ) const override final
+    virtual void GetTimestampFromIndex( SRHITimestamp& OutQuery, uint32 Index ) const override final
     {
-        OutQuery = STimeQuery();
+        OutQuery = SRHITimestamp();
     }
 
     virtual uint64 GetFrequency() const override final

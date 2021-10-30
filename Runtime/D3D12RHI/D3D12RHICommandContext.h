@@ -15,7 +15,7 @@
 #include "D3D12RHIViews.h"
 #include "D3D12RHISamplerState.h"
 #include "D3D12RHIPipelineState.h"
-#include "D3D12RHIGPUProfiler.h"
+#include "D3D12RHITimestampQuery.h"
 
 struct SD3D12UploadAllocation
 {
@@ -212,8 +212,8 @@ public:
     /* End recording of commands on this context */
     virtual void End()   override final;
 
-    virtual void BeginTimeStamp( CGPUProfiler* Profiler, uint32 Index ) override final;
-    virtual void EndTimeStamp( CGPUProfiler* Profiler, uint32 Index ) override final;
+    virtual void BeginTimeStamp( CRHITimestampQuery* Profiler, uint32 Index ) override final;
+    virtual void EndTimeStamp( CRHITimestampQuery* Profiler, uint32 Index ) override final;
 
     virtual void ClearRenderTargetView( CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor ) override final;
     virtual void ClearDepthStencilView( CRHIDepthStencilView* DepthStencilView, const SDepthStencilF& ClearValue ) override final;
@@ -358,7 +358,7 @@ private:
     TArray<CD3D12CommandBatch> CmdBatches;
     CD3D12CommandBatch* CmdBatch = nullptr;
 
-    TArray<TSharedRef<CD3D12GPUProfiler>> ResolveProfilers;
+    TArray<TSharedRef<CD3D12RHITimestampQuery>> ResolveProfilers;
 
     TSharedRef<CD3D12RHIComputePipelineState> GenerateMipsTex2D_PSO;
     TSharedRef<CD3D12RHIComputePipelineState> GenerateMipsTexCube_PSO;

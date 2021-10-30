@@ -1,4 +1,5 @@
 #include "ScreenSpaceOcclusionRenderer.h"
+#include "Renderer.h"
 
 #include "RHI/RHICore.h"
 #include "RHI/RHIShaderCompiler.h"
@@ -8,11 +9,16 @@
 #include "Core/Math/Vector2.h"
 #include "Core/Math/Vector3.h"
 
+// TODO: Remove and replace. There are better and easier implementations to do yourself
 #include <random>
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 TConsoleVariable<float> GSSAORadius( 0.4f );
 TConsoleVariable<float> GSSAOBias( 0.025f );
 TConsoleVariable<int32> GSSAOKernelSize( 32 );
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
 {
@@ -258,7 +264,7 @@ void CScreenSpaceOcclusionRenderer::Render( CRHICommandList& CmdList, SFrameReso
 
     CmdList.SetConstantBuffer( SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0 );
 
-    FrameResources.DebugTextures.Emplace(
+    AddDebugTexture(
         MakeSharedRef<CRHIShaderResourceView>( SSAONoiseTex->GetShaderResourceView() ),
         SSAONoiseTex,
         EResourceState::NonPixelShaderResource,

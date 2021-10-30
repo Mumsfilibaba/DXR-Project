@@ -1,4 +1,5 @@
 #include "RayTracer.h"
+#include "Renderer.h"
 
 #include "RHI/RHICore.h"
 #include "RHI/RHIShaderCompiler.h"
@@ -210,7 +211,7 @@ void CRayTracer::PreRender( CRHICommandList& CmdList, SFrameResources& Resources
 
     CmdList.UnorderedAccessTextureBarrier( Resources.RTOutput.Get() );
 
-    Resources.DebugTextures.Emplace(
+    AddDebugTexture(
         MakeSharedRef<CRHIShaderResourceView>( Resources.RTOutput->GetShaderResourceView() ),
         Resources.RTOutput,
         EResourceState::UnorderedAccess,

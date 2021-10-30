@@ -17,13 +17,13 @@ CConsoleCommand GToggleFullscreen;
 CConsoleCommand GExit;
 
 /* Global engine instance */
-ENGINE_API TSharedPtr<CEngine> GEngine;
+ENGINE_API CEngine* GEngine;
 
 /* Engine implementation */
 
-TSharedPtr<CEngine> CEngine::Make()
+CEngine* CEngine::Make()
 {
-    return TSharedPtr<CEngine>( dbg_new CEngine() );
+    return dbg_new CEngine();
 }
 
 CEngine::CEngine()

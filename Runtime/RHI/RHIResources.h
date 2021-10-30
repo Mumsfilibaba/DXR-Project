@@ -6,4 +6,4 @@
 #include "RHIPipelineState.h"
 #include "RHISamplerState.h"
 #include "RHIRayTracing.h"
-#include "GPUProfiler.h"
+#include "RHITimestampQuery.h"

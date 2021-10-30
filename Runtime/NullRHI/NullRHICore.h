@@ -8,7 +8,7 @@
 #include "NullRHIViewport.h"
 #include "NullRHIShader.h"
 #include "NullRHICommandContext.h"
-#include "NullRHIGPUProfiler.h"
+#include "NullRHITimestampQuery.h"
 #include "NullRHIPipelineState.h"
 #include "NullRHIRayTracing.h"
 
@@ -257,9 +257,9 @@ public:
         return dbg_new CNullRHIRayTracingPipelineState();
     }
 
-    virtual class CGPUProfiler* CreateProfiler() override final
+    virtual class CRHITimestampQuery* CreateProfiler() override final
     {
-        return dbg_new CNullGPUProfiler();
+        return dbg_new CNullRHITimestampQuery();
     }
 
     virtual class CRHIViewport* CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) override final

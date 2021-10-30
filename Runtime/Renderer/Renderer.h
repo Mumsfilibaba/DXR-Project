@@ -20,6 +20,7 @@
 #include "RHI/RHIViewport.h"
 
 #include "Debug/TextureDebugger.h"
+#include "Debug/RendererInfoWindow.h"
 
 #include "Core/Time/Timer.h"
 #include "Core/Threading/DispatchQueue.h"
@@ -39,6 +40,20 @@ public:
     {
         WindowResizedDelegate.Execute( ResizeEvent );
         return true;
+    }
+};
+
+struct SRendererStatistics
+{
+    uint32 NumDrawCalls      = 0;
+    uint32 NumDispatchCalls  = 0;
+    uint32 NumRenderCommands = 0;
+
+    void Reset()
+    {
+        NumDrawCalls      = 0;
+        NumDispatchCalls  = 0;
+        NumRenderCommands = 0;
     }
 };
 
@@ -68,6 +83,11 @@ public:
         return TextureDebugger;
     }
 
+    FORCEINLINE const SRendererStatistics& GetStatistics() const 
+    {
+        return FrameStatistics;
+    }
+
 private:
 
     void OnWindowResize( const SWindowResizeEvent& Event );
@@ -76,11 +96,10 @@ private:
     bool InitAA();
     bool InitShadingImage();
 
-    void ResizeResources( uint32 Width, uint32 Height );
-
     CRendererWindowHandler WindowHandler;
 
     TSharedRef<CTextureDebugWindow> TextureDebugger;
+    TSharedRef<CRendererInfoWindow> InfoWindow;
 
     CRHICommandList PreShadowsCmdList;
     CRHICommandList PointShadowCmdList;
@@ -126,11 +145,15 @@ private:
     TSharedRef<CRHIGraphicsPipelineState> FXAADebugPSO;
     TSharedRef<CRHIPixelShader>           FXAADebugShader;
 
-    TSharedRef<CGPUProfiler> GPUProfiler;
+    TSharedRef<CRHITimestampQuery> GPUProfiler;
 
-    uint32 LastFrameNumDrawCalls = 0;
-    uint32 LastFrameNumDispatchCalls = 0;
-    uint32 LastFrameNumCommands = 0;
+    SRendererStatistics FrameStatistics;
+
 };
 
 extern RENDERER_API CRenderer GRenderer;
+
+inline void AddDebugTexture( const TSharedRef<CRHIShaderResourceView>& ImageView, const TSharedRef<CRHITexture>& Image, EResourceState BeforeState, EResourceState AfterState )
+{
+    GRenderer.GetTextureDebugger()->AddTextureForDebugging( ImageView, Image, BeforeState, AfterState );
+}

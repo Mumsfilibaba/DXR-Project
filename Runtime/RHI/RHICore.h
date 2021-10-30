@@ -141,7 +141,7 @@ public:
     virtual class CRHIComputePipelineState* CreateComputePipelineState( const SComputePipelineStateCreateInfo& CreateInfo ) = 0;
     virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState( const SRayTracingPipelineStateCreateInfo& CreateInfo ) = 0;
 
-    virtual class CGPUProfiler* CreateProfiler() = 0;
+    virtual class CRHITimestampQuery* CreateProfiler() = 0;
 
     virtual class CRHIViewport* CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) = 0;
 
@@ -676,7 +676,7 @@ FORCEINLINE CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState( const
     return GRHICore->CreateRayTracingPipelineState( CreateInfo );
 }
 
-FORCEINLINE class CGPUProfiler* RHICreateProfiler()
+FORCEINLINE class CRHITimestampQuery* RHICreateProfiler()
 {
     return GRHICore->CreateProfiler();
 }

@@ -1,9 +1,9 @@
 #pragma once
-#include "IConsoleObject.h"
+#include "IConsoleCommand.h"
 
 #include "Core/Delegates/MulticastDelegate.h"
 
-class CORE_API CConsoleCommand : public IConsoleCommand
+class CConsoleCommand : public IConsoleCommand
 {
 public:
 

@@ -8,6 +8,8 @@
 #define ENABLE_API_GPU_DEBUGGING   (0)
 #define ENABLE_API_GPU_BREADCRUMBS (0)
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 enum class ERHIModule : uint32
 {
     Unknown = 0,
@@ -25,19 +27,17 @@ inline const char* ToString( ERHIModule RenderLayerApi )
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 RHI_API bool InitRHI( ERHIModule InRenderApi );
 RHI_API void ReleaseRHI();
 
-class RHI_API CRHIModule : public IEngineModule
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+class RHI_API CRHIModule : public CDefaultEngineModule
 {
 public:
     
-    /* Called when the module is first loaded into the application */
-    virtual bool Load() override;
-
-    /* Called before the module is unloaded by the application */
-    virtual bool Unload() override;
-
     /* Creates the core RHI object */
     virtual class CRHICore* CreateCore() = 0;
 
@@ -49,6 +49,8 @@ protected:
     CRHIModule() = default;
     ~CRHIModule() = default;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern RHI_API class CRHICore* GRHICore;
 extern RHI_API class IRHIShaderCompiler* GShaderCompiler;

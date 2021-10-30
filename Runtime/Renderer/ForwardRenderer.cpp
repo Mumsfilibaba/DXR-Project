@@ -1,12 +1,11 @@
 #include "ForwardRenderer.h"
+#include "MeshDrawCommand.h"
 
 #include "RHI/RHICore.h"
 #include "RHI/RHIShaderCompiler.h"
 
-#include "Renderer/MeshDrawCommand.h"
-#include "Renderer/Resources/Mesh.h"
-#include "Renderer/Resources/Material.h"
-
+#include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Material.h"
 #include "Engine/Scene/Actor.h"
 
 #include "Core/Debug/FrameProfiler.h"
@@ -163,7 +162,7 @@ void CForwardRenderer::Render( CRHICommandList& CmdList, const SFrameResources& 
     CmdList.SetShaderResourceView( PShader.Get(), LightSetup.IrradianceMap->GetShaderResourceView(), 0 );
     CmdList.SetShaderResourceView( PShader.Get(), LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 1 );
     CmdList.SetShaderResourceView( PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2 );
-    //TODO: Fix Dirlight shadows
+    //TODO: Fix dirlight shadows
     //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView( PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 3 );
 

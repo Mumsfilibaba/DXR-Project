@@ -6,8 +6,9 @@
 #include "Renderer/UIRenderer.h"
 #include "Renderer/Renderer.h"
 
-// TODO: Try and avoid the relative path
+#if PROJECT_EDITOR
 #include "../Editor/Editor.h"
+#endif
 
 #include "Core/Debug/FrameProfiler.h"
 #include "Core/Modules/ModuleManger.h"
@@ -86,15 +87,17 @@ bool CEngineLoop::PreInit()
         return false;
     }
 
-    Editor::Init();
-
     return true;
 }
 
 bool CEngineLoop::Init()
 {
     // Create the engine 
+#if PROJECT_EDITOR
+    GEngine = CEditorEngine::Make();
+#else
     GEngine = CEngine::Make();
+#endif
     if ( !GEngine->Init() )
     {
         return false;
@@ -131,9 +134,6 @@ void CEngineLoop::Tick( CTimestamp Deltatime )
     // Run the engine, which means that all scene data etc. is updated
     GEngine->Tick( Deltatime );
 
-    // TODO: Should be moved outside of this function
-    Editor::Tick();
-
     // Update the profiler
     CFrameProfiler::Get().Tick();
 
@@ -161,7 +161,7 @@ bool CEngineLoop::Release()
     GRenderer.Release();
 
     GEngine->Release();
-    GEngine.Reset();
+    SafeDelete( GEngine );
 
     CApplication::Get().SetRenderer( nullptr );
 

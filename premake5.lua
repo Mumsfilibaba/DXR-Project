@@ -214,5 +214,8 @@ include "Runtime/NullRHI"
 include "Runtime/Engine"
 include "Runtime/Renderer"
 
+-- Editor
+include "Editor"
+
 -- Project
 include "Sandbox"
