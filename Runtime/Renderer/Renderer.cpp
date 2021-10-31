@@ -15,12 +15,7 @@
 #include "Core/Debug/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include <algorithm>
-#include <imgui_internal.h>
-
-static const uint32 ShadowMapSampleCount = 2;
-
-RENDERER_API CRenderer GRenderer;
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 TConsoleVariable<bool> GEnableSSAO( true );
 
@@ -34,6 +29,10 @@ TConsoleVariable<bool> GDrawAABBs( false );
 TConsoleVariable<bool> GVSyncEnabled( false );
 TConsoleVariable<bool> GFrustumCullEnabled( true );
 TConsoleVariable<bool> GRayTracingEnabled( true );
+
+static const uint32 ShadowMapSampleCount = 2;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct SCameraBufferDesc
 {
@@ -53,6 +52,12 @@ struct SCameraBufferDesc
     CVector3 Right;
     float    AspectRatio;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+RENDERER_API CRenderer GRenderer;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool CRenderer::Init()
 {

@@ -70,7 +70,8 @@ project ( projectname )
 		"ImGui",
 		"Core",
 		"RHI",
-		"Engine"
+		"Engine",
+		"Renderer"
 	}
 
 	-- Include EntryPoint

@@ -83,7 +83,6 @@ public:
      * @return False if the any value equals infinity or NaN, true if not
      */
     FORCEINLINE bool IsValid() const noexcept;
-    FORCEINLINE bool IsValid() const noexcept;
 
     /**
      * Returns the length of this vector

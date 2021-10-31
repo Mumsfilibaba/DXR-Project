@@ -11,15 +11,13 @@
 #define NUM_PROFILER_SAMPLES (200)
 
 #if ENABLE_PROFILER
-#define TRACE_SCOPE(Name)      SScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
-#define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(FUNCTION_SIGNATURE)
-
+#define TRACE_SCOPE(Name)              SScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
+#define TRACE_FUNCTION_SCOPE()         TRACE_SCOPE(FUNCTION_SIGNATURE)
 #define GPU_TRACE_SCOPE(CmdList, Name) SGPUScopedTrace PREPROCESS_CONCAT(GPUScopedTrace_Line_, __LINE__)(CmdList, Name)
 
 #else
 #define TRACE_SCOPE(Name)
 #define TRACE_FUNCTION_SCOPE()
-
 #define GPU_TRACE_SCOPE(CmdList, Name)
 
 #endif
@@ -99,66 +97,7 @@ struct SProfileSample
     int32 TotalCalls = 0;
 };
 
-struct SGPUProfileSample
-{
-    FORCEINLINE void AddSample( float NewSample )
-    {
-        Samples[CurrentSample] = NewSample;
-
-        Min = NMath::Min( NewSample, Min );
-        Max = NMath::Max( NewSample, Max );
-
-        SampleCount = NMath::Min<int32>( Samples.Size(), SampleCount + 1 );
-
-        CurrentSample++;
-        if ( CurrentSample >= int32( Samples.Size() ) )
-        {
-            CurrentSample = 0;
-        }
-    }
-
-    FORCEINLINE float GetAverage() const
-    {
-        if ( SampleCount < 1 )
-        {
-            return 0.0f;
-        }
-
-        float Average = 0.0f;
-        for ( int32 n = 0; n < SampleCount; n++ )
-        {
-            Average += Samples[n];
-        }
-
-        return Average / float( SampleCount );
-    }
-
-    FORCEINLINE void Reset()
-    {
-        Samples.Fill( 0.0f );
-
-        SampleCount = 0;
-        CurrentSample = 0;
-        TotalCalls = 0;
-
-        Max = -FLT_MAX;
-        Min = FLT_MAX;
-    }
-
-    TStaticArray<float, NUM_PROFILER_SAMPLES> Samples;
-
-    float Max = -FLT_MAX;
-    float Min = FLT_MAX;
-
-    int32 SampleCount = 0;
-    int32 CurrentSample = 0;
-    int32 TotalCalls = 0;
-
-    uint32 TimeQueryIndex = 0;
-};
-
-using ProfileSamplesTable    = THashTable<CString, SProfileSample, SStringHasher>;
-using GPUProfileSamplesTable = THashTable<CString, SGPUProfileSample, SStringHasher>;
+using ProfileSamplesTable = THashTable<CString, SProfileSample, SStringHasher>;
 
 class CORE_API CFrameProfiler
 {
@@ -183,17 +122,12 @@ public:
 
     /* Starts a scope for a function */
     void BeginTraceScope( const char* Name );
+
+    /* Ends a scope for a function */
     void EndTraceScope( const char* Name );
 
-    void BeginGPUFrame( CRHICommandList& CmdList );
-    void BeginGPUTrace( CRHICommandList& CmdList, const char* Name );
-    void EndGPUTrace( CRHICommandList& CmdList, const char* Name );
-    void EndGPUFrame( CRHICommandList& CmdList );
-
-    void SetGPUProfiler( class CRHITimestampQuery* Profiler );
-
+    /* CPU Profiler samples */
     void GetCPUSamples( ProfileSamplesTable& OutCPUSamples );
-    void GetGPUSamples( GPUProfileSamplesTable& OutGPUSamples );
 
     FORCEINLINE int32 GetFramesPerSecond() const
     {
@@ -205,22 +139,12 @@ public:
         return CPUFrameTime;
     }
 
-    FORCEINLINE const SGPUProfileSample& GetGPUFrameTime() const
-    {
-        return GPUFrameTime;
-    }
-
 private:
 
     CFrameProfiler() = default;
     ~CFrameProfiler() = default;
 
-    TSharedRef<CRHITimestampQuery> GPUProfiler;
-
-    uint32 CurrentTimeQueryIndex = 0;
-
-    SProfileSample    CPUFrameTime;
-    SGPUProfileSample GPUFrameTime;
+    SProfileSample CPUFrameTime;
 
     CTimer Clock;
 
@@ -229,8 +153,7 @@ private:
 
     bool EnableProfiler = true;
 
-    Lockable<ProfileSamplesTable>    CPUSamples;
-    Lockable<GPUProfileSamplesTable> GPUSamples;
+    Lockable<ProfileSamplesTable> CPUSamples;
 
     static CFrameProfiler Instance;
 };
@@ -238,6 +161,7 @@ private:
 struct SScopedTrace
 {
 public:
+
     FORCEINLINE SScopedTrace( const char* InName )
         : Name( InName )
     {
@@ -250,25 +174,5 @@ public:
     }
 
 private:
-    const char* Name = nullptr;
-};
-
-struct SGPUScopedTrace
-{
-public:
-    FORCEINLINE SGPUScopedTrace( CRHICommandList& InCmdList, const char* InName )
-        : CmdList( InCmdList )
-        , Name( InName )
-    {
-        CFrameProfiler::Get().BeginGPUTrace( CmdList, Name );
-    }
-
-    FORCEINLINE ~SGPUScopedTrace()
-    {
-        CFrameProfiler::Get().EndGPUTrace( CmdList, Name );
-    }
-
-private:
-    CRHICommandList& CmdList;
     const char* Name = nullptr;
 };

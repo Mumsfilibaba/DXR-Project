@@ -3,6 +3,9 @@
 
 #include "Core/Containers/SharedPtr.h"
 
+#include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Material.h"
+
 class ENGINE_API CMeshComponent : public CComponent
 {
     CORE_OBJECT( CMeshComponent, CComponent );
@@ -17,6 +20,6 @@ public:
         CORE_OBJECT_INIT();
     }
 
-    TSharedPtr<class CMaterial> Material;
-    TSharedPtr<class CMesh>     Mesh;
+    TSharedPtr<CMaterial> Material;
+    TSharedPtr<CMesh>     Mesh;
 };

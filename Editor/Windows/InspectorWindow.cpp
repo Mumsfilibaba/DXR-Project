@@ -18,7 +18,11 @@ TConsoleVariable<bool> GShowSceneGraph( false );
 
 void CInspectorWindow::InitContext( UIContextHandle ContextHandle )
 {
+    /* Context */
     INIT_CONTEXT( ContextHandle );
+
+    /* CVars */
+    INIT_CONSOLE_VARIABLE( "ShowSceneGraph", &GShowSceneGraph );
 }
 
 void CInspectorWindow::DrawSceneInfo()
