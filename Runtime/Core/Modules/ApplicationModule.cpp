@@ -17,14 +17,15 @@ bool CApplicationModule::Release()
     return true;
 }
 
+// TODO: Remove init and release? 
 bool CApplicationModule::Load()
 {
-    return true;
+    return Init();
 }
 
 bool CApplicationModule::Unload()
 {
-    return true;
+    return Release();
 }
 
 const char* CApplicationModule::GetName()

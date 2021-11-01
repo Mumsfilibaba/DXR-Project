@@ -30,13 +30,17 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
     PFNLoadEngineModule LoadEngineModule = GetTypedProcAddress<PFNLoadEngineModule>( Module, "LoadEngineModule" );
     if ( !LoadEngineModule )
     {
+        FreeLibrary( Module );
         return nullptr;
     }
 
+    // The pointer is owned by the ModuleManager and should not be released anywhere else
     IEngineModule* NewModule = LoadEngineModule();
     if ( !NewModule || (NewModule && !NewModule->Load()))
     {
         LOG_ERROR( "Failed to load module '" + CString( ModuleName ) + "', resulting interface was nullptr" );
+        FreeLibrary( Module );
+
         return nullptr;
     }
     else
@@ -117,7 +121,8 @@ void CModuleManager::UnloadModule( const char* ModuleName )
 
 void CModuleManager::ReleaseAllModules()
 {
-    for ( int32 Index = 0; Index < Modules.Size(); Index++ )
+    const int32 NumModules = Modules.Size();
+    for ( int32 Index = 0; Index < NumModules; Index++ )
     {
         const TPair<IEngineModule*, PlatformModule>& Pair = Modules[Index];
 
@@ -125,6 +130,9 @@ void CModuleManager::ReleaseAllModules()
         if ( EngineModule )
         {
             EngineModule->Unload();
+
+            // The pointer is owned by the ModuleManager and should not be released anywhere else
+            SafeDelete( EngineModule );
         }
 
         HMODULE Module = Pair.Second;

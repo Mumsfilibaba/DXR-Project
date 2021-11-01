@@ -11,15 +11,11 @@
 #define NUM_PROFILER_SAMPLES (200)
 
 #if ENABLE_PROFILER
-#define TRACE_SCOPE(Name)              SScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
-#define TRACE_FUNCTION_SCOPE()         TRACE_SCOPE(FUNCTION_SIGNATURE)
-#define GPU_TRACE_SCOPE(CmdList, Name) SGPUScopedTrace PREPROCESS_CONCAT(GPUScopedTrace_Line_, __LINE__)(CmdList, Name)
-
+#define TRACE_SCOPE(Name)      SScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
+#define TRACE_FUNCTION_SCOPE() TRACE_SCOPE(FUNCTION_SIGNATURE)
 #else
 #define TRACE_SCOPE(Name)
 #define TRACE_FUNCTION_SCOPE()
-#define GPU_TRACE_SCOPE(CmdList, Name)
-
 #endif
 
 struct SProfileSample
@@ -109,10 +105,10 @@ public:
     }
     
     /* Enables the collection of samples (Resume) */
-    void Enable();
+    static void Enable();
 
     /* Disables the collection of samples (Pause) */
-    void Disable();
+    static void Disable();
 
     /* Updates the profiler, should be called once per frame */
     void Tick();
@@ -151,7 +147,7 @@ private:
     int32 CurrentFps = 0;
     int32 Fps = 0;
 
-    bool EnableProfiler = true;
+    bool Enabled = true;
 
     Lockable<ProfileSamplesTable> CPUSamples;
 

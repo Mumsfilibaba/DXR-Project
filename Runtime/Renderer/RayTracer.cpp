@@ -7,7 +7,7 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Mesh.h"
 
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 
 bool CRayTracer::Init( SFrameResources& Resources )
 {

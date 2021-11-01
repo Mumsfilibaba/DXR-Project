@@ -9,8 +9,10 @@
 #include "Engine/Scene/Lights/DirectionalLight.h"
 
 #include "Core/Math/Frustum.h"
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
+
+#include "Renderer/Debug/GPUProfiler.h"
 
 bool CShadowMapRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameResources )
 {

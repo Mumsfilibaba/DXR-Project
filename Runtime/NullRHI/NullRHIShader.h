@@ -11,60 +11,6 @@
 
 #endif
 
-class CNullRHIVertexShader : public CRHIVertexShader
-{
-public:
-    CNullRHIVertexShader()
-        : CRHIVertexShader()
-    {
-    }
-};
-
-class CNullRHIPixelShader : public CRHIPixelShader
-{
-public:
-    CNullRHIPixelShader()
-        : CRHIPixelShader()
-    {
-    }
-};
-
-class CNullRHIRayGenShader : public CRHIRayGenShader
-{
-public:
-    CNullRHIRayGenShader()
-        : CRHIRayGenShader()
-    {
-    }
-};
-
-class CNullRHIRayAnyhitShader : public CRHIRayAnyHitShader
-{
-public:
-    CNullRHIRayAnyhitShader()
-        : CRHIRayAnyHitShader()
-    {
-    }
-};
-
-class CNullRHIRayClosestHitShader : public CRHIRayClosestHitShader
-{
-public:
-    CNullRHIRayClosestHitShader()
-        : CRHIRayClosestHitShader()
-    {
-    }
-};
-
-class CNullRHIRayMissShader : public CRHIRayMissShader
-{
-public:
-    CNullRHIRayMissShader()
-        : CRHIRayMissShader()
-    {
-    }
-};
-
 class CNullRHIComputeShader : public CRHIComputeShader
 {
 public:
@@ -75,7 +21,7 @@ public:
 
     virtual CIntVector3 GetThreadGroupXYZ() const override
     {
-        return CIntVector3();
+        return CIntVector3( 1, 1, 1 );
     }
 };
 

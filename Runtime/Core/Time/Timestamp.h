@@ -62,17 +62,17 @@ public:
 
     FORCEINLINE double AsSeconds() const
     {
-        return static_cast<double>( NTime::ToSeconds(Nanoseconds) );
+        return NTime::ToSeconds( static_cast<double>(Nanoseconds) );
     }
 
     FORCEINLINE double AsMilliSeconds() const
     {
-        return static_cast<double>(NTime::ToMilliseconds( Nanoseconds ));
+        return NTime::ToMilliseconds( static_cast<double>(Nanoseconds) );
     }
 
     FORCEINLINE double AsMicroSeconds() const
     {
-        return static_cast<double>(NTime::ToMicroseconds( Nanoseconds ));
+        return NTime::ToMicroseconds( static_cast<double>(Nanoseconds) );
     }
 
     FORCEINLINE uint64 AsNanoSeconds() const

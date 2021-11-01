@@ -9,10 +9,8 @@
 
 void* CMemory::Malloc( uint64 Size ) noexcept
 {
-    /*
-    * Since malloc is not guarateed to return nullptr, we check for it here
-    * Source: https://www.cplusplus.com/reference/cstdlib/malloc/
-    */
+    // Since malloc is not guaranteed to return nullptr, we check for it here
+    // Source: https://www.cplusplus.com/reference/cstdlib/malloc/
     if ( Size )
     {
         return malloc( Size );

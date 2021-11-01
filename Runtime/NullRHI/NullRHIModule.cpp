@@ -5,7 +5,7 @@
 extern "C"
 {
     // Function for loading the NullRHI into the application
-    NULL_API IEngineModule* LoadEngineModule()
+    NULLRHI_API IEngineModule* LoadEngineModule()
     {
         return dbg_new CNullRHIModule();
     }

@@ -1,11 +1,14 @@
 #include "SkyboxRenderPass.h"
 
+#include "Renderer/Debug/GPUProfiler.h"
+
 #include "RHI/RHICore.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/TextureFactory.h"
 
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Debug.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 
 bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
 {
@@ -34,10 +37,11 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
     }
 
     // Create Texture Cube
-    const CString PanoramaSourceFilename = "../Core/Assets/Textures/arches.hdr";
+    const CString PanoramaSourceFilename = PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Textures/arches.hdr" );
     TSharedRef<CRHITexture2D> Panorama = CTextureFactory::LoadFromFile( PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float );
     if ( !Panorama )
     {
+        CDebug::DebugBreak();
         return false;
     }
     else

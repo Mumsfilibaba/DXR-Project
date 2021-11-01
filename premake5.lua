@@ -3,6 +3,12 @@ function findProjectDir()
 	return os.getcwd() .. projectName 
 end
 
+function findWorkspaceDir()
+	local workspaceName = "%{wks.location}"
+	--return path.getabsolute(workspaceName, os.getcwd()) I must be missing something because it feels like this should work
+	return os.getcwd()
+end
+
 -- Solution
 workspace "DXR-Project"
     startproject      "SandboxLauncher"
@@ -12,10 +18,13 @@ workspace "DXR-Project"
 	rtti              "Off"
 	floatingpoint     "Fast"
 	vectorextensions  "SSE2"
-	
+	editandcontinue   "Off"
+	intrinsics        "On"
+
 	flags 
 	{ 
-		"MultiProcessorCompile"
+		"MultiProcessorCompile",
+		"NoIncrementalLink",
 	}
     
 	-- Set output dir
@@ -34,6 +43,11 @@ workspace "DXR-Project"
         "Release",
         "Production",
     }
+
+	defines
+	{
+		"WORKSPACE_LOCATION=" .. "\"" .. findWorkspaceDir().. "\"",
+	}
 
     filter "configurations:Debug"
         symbols "on"

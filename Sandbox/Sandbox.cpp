@@ -16,7 +16,10 @@
 
 #include "Core/Application/Application.h"
 
+// TODO: Custom random
 #include <random>
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define ENABLE_LIGHT_TEST 0
 
@@ -29,7 +32,8 @@ extern "C"
     }
 }
 
-// Actual ApplicationModule interface
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool CSandbox::Init()
 {
     if ( !CApplicationModule::Init() )
@@ -46,26 +50,27 @@ bool CSandbox::Init()
     // Load Scene
     SSceneData SceneData;
 #if 1
-    COBJLoader::LoadFile( "../Core/Assets/Scenes/Sponza/Sponza.obj", SceneData );
+    COBJLoader::LoadFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Scenes/Sponza/Sponza.obj" ), SceneData );
     SceneData.Scale = 0.015f;
 #else
-    CFBXLoader::LoadFile( "../Core/Assets/Scenes/Bistro/BistroInterior.fbx", SceneData );
+    CFBXLoader::LoadFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Scenes/Bistro/BistroInterior.fbx" ), SceneData );
     SceneData.AddToScene( CurrentScene.Get() );
 
-    CFBXLoader::LoadFile( "../Core/Assets/Scenes/Bistro/BistroExterior.fbx", SceneData );
+    CFBXLoader::LoadFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Scenes/Bistro/BistroExterior.fbx" ), SceneData );
 #endif
     SceneData.AddToScene( CurrentScene.Get() );
 
     // Create Spheres
     SMeshData SphereMeshData = CMeshFactory::CreateSphere( 3 );
+
     TSharedPtr<CMesh> SphereMesh = CMesh::Make( SphereMeshData );
 
-    constexpr float  SphereOffset = 1.25f;
-    constexpr uint32 SphereCountX = 8;
+    constexpr float  SphereOffset   = 1.25f;
+    constexpr uint32 SphereCountX   = 8;
     constexpr float  StartPositionX = (-static_cast<float>(SphereCountX) * SphereOffset) / 2.0f;
-    constexpr uint32 SphereCountY = 8;
+    constexpr uint32 SphereCountY   = 8;
     constexpr float  StartPositionY = (-static_cast<float>(SphereCountY) * SphereOffset) / 2.0f;
-    constexpr float  MetallicDelta = 1.0f / SphereCountY;
+    constexpr float  MetallicDelta  = 1.0f / SphereCountY;
     constexpr float  RoughnessDelta = 1.0f / SphereCountX;
 
     SMaterialDesc MatProperties;
@@ -86,11 +91,11 @@ bool CSandbox::Init()
             NewComponent->Mesh = SphereMesh;
             NewComponent->Material = MakeShared<CMaterial>( MatProperties );
 
-            NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
-            NewComponent->Material->NormalMap = GEngine->BaseNormal;
+            NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+            NewComponent->Material->NormalMap    = GEngine->BaseNormal;
             NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-            NewComponent->Material->AOMap = GEngine->BaseTexture;
-            NewComponent->Material->MetallicMap = GEngine->BaseTexture;
+            NewComponent->Material->AOMap        = GEngine->BaseTexture;
+            NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
             NewComponent->Material->Init();
 
             NewActor->AddComponent( NewComponent );
@@ -119,48 +124,48 @@ bool CSandbox::Init()
     NewComponent->Mesh = CMesh::Make( CubeMeshData );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
 
-    TSharedRef<CRHITexture2D> AlbedoMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_Albedo.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    TSharedRef<CRHITexture2D> AlbedoMap = CTextureFactory::LoadFromFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Textures/Gate_Albedo.png" ), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( AlbedoMap )
     {
         AlbedoMap->SetName( "AlbedoMap" );
     }
 
-    TSharedRef<CRHITexture2D> NormalMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_Normal.png", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    TSharedRef<CRHITexture2D> NormalMap = CTextureFactory::LoadFromFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Textures/Gate_Normal.png" ), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( NormalMap )
     {
         NormalMap->SetName( "NormalMap" );
     }
 
-    TSharedRef<CRHITexture2D> AOMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_AO.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> AOMap = CTextureFactory::LoadFromFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Textures/Gate_AO.png" ), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( AOMap )
     {
         AOMap->SetName( "AOMap" );
     }
 
-    TSharedRef<CRHITexture2D> RoughnessMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_Roughness.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> RoughnessMap = CTextureFactory::LoadFromFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Textures/Gate_Roughness.png" ), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( RoughnessMap )
     {
         RoughnessMap->SetName( "RoughnessMap" );
     }
 
-    TSharedRef<CRHITexture2D> HeightMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_Height.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> HeightMap = CTextureFactory::LoadFromFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Textures/Gate_Height.png" ), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( HeightMap )
     {
         HeightMap->SetName( "HeightMap" );
     }
 
-    TSharedRef<CRHITexture2D> MetallicMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/Gate_Metallic.png", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    TSharedRef<CRHITexture2D> MetallicMap = CTextureFactory::LoadFromFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Textures/Gate_Metallic.png" ), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( MetallicMap )
     {
         MetallicMap->SetName( "MetallicMap" );
     }
 
-    NewComponent->Material->AlbedoMap = AlbedoMap;
-    NewComponent->Material->NormalMap = NormalMap;
+    NewComponent->Material->AlbedoMap    = AlbedoMap;
+    NewComponent->Material->NormalMap    = NormalMap;
     NewComponent->Material->RoughnessMap = RoughnessMap;
-    NewComponent->Material->HeightMap = HeightMap;
-    NewComponent->Material->AOMap = AOMap;
-    NewComponent->Material->MetallicMap = MetallicMap;
+    NewComponent->Material->HeightMap    = HeightMap;
+    NewComponent->Material->AOMap        = AOMap;
+    NewComponent->Material->MetallicMap  = MetallicMap;
     NewComponent->Material->Init();
     NewActor->AddComponent( NewComponent );
 
@@ -180,46 +185,46 @@ bool CSandbox::Init()
     NewComponent = dbg_new CMeshComponent( NewActor );
     NewComponent->Mesh = CMesh::Make( CMeshFactory::CreatePlane( 10, 10 ) );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
-    NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
-    NewComponent->Material->NormalMap = GEngine->BaseNormal;
+    NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+    NewComponent->Material->NormalMap    = GEngine->BaseNormal;
     NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-    NewComponent->Material->AOMap = GEngine->BaseTexture;
-    NewComponent->Material->MetallicMap = GEngine->BaseTexture;
+    NewComponent->Material->AOMap        = GEngine->BaseTexture;
+    NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
     NewComponent->Material->Init();
     NewActor->AddComponent( NewComponent );
 
-    AlbedoMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/StreetLight/BaseColor.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    AlbedoMap = CTextureFactory::LoadFromFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Textures/StreetLight/BaseColor.jpg" ), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( AlbedoMap )
     {
         AlbedoMap->SetName( "AlbedoMap" );
     }
     
-    NormalMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/StreetLight/Normal.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
+    NormalMap = CTextureFactory::LoadFromFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Textures/StreetLight/Normal.jpg" ), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm );
     if ( NormalMap )
     {
         NormalMap->SetName( "NormalMap" );
     }
 
-    RoughnessMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/StreetLight/Roughness.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    RoughnessMap = CTextureFactory::LoadFromFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Textures/StreetLight/Roughness.jpg" ), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( RoughnessMap )
     {
         RoughnessMap->SetName( "RoughnessMap" );
     }
 
-    MetallicMap = CTextureFactory::LoadFromFile( "../Core/Assets/Textures/StreetLight/Metallic.jpg", TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
+    MetallicMap = CTextureFactory::LoadFromFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Textures/StreetLight/Metallic.jpg" ), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm );
     if ( MetallicMap )
     {
         MetallicMap->SetName( "MetallicMap" );
     }
 
-    MatProperties.AO = 1.0f;
-    MatProperties.Metallic = 1.0f;
-    MatProperties.Roughness = 1.0f;
+    MatProperties.AO           = 1.0f;
+    MatProperties.Metallic     = 1.0f;
+    MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo = CVector3( 1.0f, 1.0f, 1.0f );
+    MatProperties.Albedo       = CVector3( 1.0f, 1.0f, 1.0f );
 
     SSceneData StreetLightData;
-    COBJLoader::LoadFile( "../Core/Assets/Models/Street_Light.obj", StreetLightData );
+    COBJLoader::LoadFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Models/Street_Light.obj" ), StreetLightData );
 
     TSharedPtr<CMesh>     StreetLight    = StreetLightData.HasModelData() ? CMesh::Make( StreetLightData.Models.FirstElement().Mesh ) : nullptr;
     TSharedPtr<CMaterial> StreetLightMat = MakeShared<CMaterial>( MatProperties );
@@ -235,23 +240,23 @@ bool CSandbox::Init()
         NewComponent = dbg_new CMeshComponent( NewActor );
         NewComponent->Mesh = StreetLight;
         NewComponent->Material = StreetLightMat;
-        NewComponent->Material->AlbedoMap = AlbedoMap;
-        NewComponent->Material->NormalMap = NormalMap;
+        NewComponent->Material->AlbedoMap    = AlbedoMap;
+        NewComponent->Material->NormalMap    = NormalMap;
         NewComponent->Material->RoughnessMap = RoughnessMap;
-        NewComponent->Material->AOMap = GEngine->BaseTexture;
-        NewComponent->Material->MetallicMap = MetallicMap;
+        NewComponent->Material->AOMap        = GEngine->BaseTexture;
+        NewComponent->Material->MetallicMap  = MetallicMap;
         NewComponent->Material->Init();
         NewActor->AddComponent( NewComponent );
     }
 
-    MatProperties.AO = 1.0f;
-    MatProperties.Metallic = 0.0f;
-    MatProperties.Roughness = 1.0f;
+    MatProperties.AO           = 1.0f;
+    MatProperties.Metallic     = 0.0f;
+    MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo = CVector3( 0.4f );
+    MatProperties.Albedo       = CVector3( 0.4f );
 
     SSceneData PillarData;
-    COBJLoader::LoadFile( "../Core/Assets/Models/Pillar.obj", PillarData );
+    COBJLoader::LoadFile( PREPROCESS_CONCAT( WORKSPACE_LOCATION, "/Assets/Models/Pillar.obj" ), PillarData );
 
     TSharedPtr<CMesh>     Pillar    = PillarData.HasModelData() ? CMesh::Make( PillarData.Models.FirstElement().Mesh ) : nullptr;
     TSharedPtr<CMaterial> PillarMat = MakeShared<CMaterial>( MatProperties );
@@ -267,11 +272,11 @@ bool CSandbox::Init()
         NewComponent = dbg_new CMeshComponent( NewActor );
         NewComponent->Mesh = Pillar;
         NewComponent->Material = PillarMat;
-        NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
-        NewComponent->Material->NormalMap = GEngine->BaseNormal;
+        NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+        NewComponent->Material->NormalMap    = GEngine->BaseNormal;
         NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-        NewComponent->Material->AOMap = GEngine->BaseTexture;
-        NewComponent->Material->MetallicMap = MetallicMap;
+        NewComponent->Material->AOMap        = GEngine->BaseTexture;
+        NewComponent->Material->MetallicMap  = MetallicMap;
         NewComponent->Material->Init();
         NewActor->AddComponent( NewComponent );
     }

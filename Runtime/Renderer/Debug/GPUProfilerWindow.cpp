@@ -1,4 +1,4 @@
-#include "FrameProfilerWindow.h"
+#include "GPUProfilerWindow.h"
 
 #include "Core/Application/Application.h"
 #include "Core/Application/UI/UIUtilities.h"
@@ -7,92 +7,56 @@
 
 #include <imgui.h>
 
-TConsoleVariable<bool> GDrawFrameProfiler( false );
-TConsoleVariable<bool> GDrawFps( false );
+TConsoleVariable<bool> GDrawGPUProfiler( false );
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-TSharedRef<CFrameProfilerWindow> CFrameProfilerWindow::Make()
+TSharedRef<CGPUProfilerWindow> CGPUProfilerWindow::Make()
 {
-    return dbg_new CFrameProfilerWindow();
+    return dbg_new CGPUProfilerWindow();
 }
 
-void CFrameProfilerWindow::InitContext( UIContextHandle ContextHandle )
+void CGPUProfilerWindow::InitContext( UIContextHandle ContextHandle )
 {
     // Context
     INIT_CONTEXT( ContextHandle );
 
     // Console Variables
-    INIT_CONSOLE_VARIABLE( "r.DrawFps", &GDrawFps );
-    INIT_CONSOLE_VARIABLE( "r.DrawFrameProfiler", &GDrawFrameProfiler );
+    INIT_CONSOLE_VARIABLE( "r.DrawGPUProfiler", &GDrawGPUProfiler );
 }
 
-void CFrameProfilerWindow::Tick()
+void CGPUProfilerWindow::Tick()
 {
-    if ( GDrawFps.GetBool() )
-    {
-        DrawFPS();
-    }
-
-    if ( GDrawFrameProfiler.GetBool() )
+    if ( GDrawGPUProfiler.GetBool() )
     {
         DrawWindow();
     }
 }
 
-bool CFrameProfilerWindow::IsTickable()
+bool CGPUProfilerWindow::IsTickable()
 {
-    return GDrawFps.GetBool() || GDrawFrameProfiler.GetBool();
+    return GDrawGPUProfiler.GetBool();
 }
 
-void CFrameProfilerWindow::DrawFPS()
-{
-    const uint32 WindowWidth = CApplication::Get().GetMainViewport()->GetWidth();
-
-    ImGui::PushStyleVar( ImGuiStyleVar_WindowMinSize, ImVec2( 5.0f, 5.0f ) );
-    ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 2.0f, 1.0f ) );
-    ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 0.0f, 1.0f, 0.2f, 1.0f ) );
-
-    ImGui::SetNextWindowPos( ImVec2( float( WindowWidth ), 0.0f ), ImGuiCond_Always, ImVec2( 1.0f, 0.0f ) );
-
-    const ImGuiWindowFlags Flags =
-        ImGuiWindowFlags_NoDecoration |
-        ImGuiWindowFlags_NoInputs |
-        ImGuiWindowFlags_AlwaysAutoResize |
-        ImGuiWindowFlags_NoBringToFrontOnFocus |
-        ImGuiWindowFlags_NoFocusOnAppearing |
-        ImGuiWindowFlags_NoSavedSettings;
-
-    ImGui::Begin( "FPS Window", nullptr, Flags );
-
-    const CString FpsString = ToString( CFrameProfiler::Get().GetFramesPerSecond() );
-    ImGui::Text( "%s", FpsString.CStr() );
-
-    ImGui::End();
-
-    ImGui::PopStyleColor();
-    ImGui::PopStyleVar();
-    ImGui::PopStyleVar();
-}
-
-void CFrameProfilerWindow::DrawCPUData( float Width )
+void CGPUProfilerWindow::DrawGPUData( float Width )
 {
     const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
+
     if ( ImGui::BeginTable( "Frame Statistics", 1, TableFlags ) )
     {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex( 0 );
 
-        const SProfileSample& CPUFrameTime = CFrameProfiler::Get().GetCPUFrameTime();
+        const SGPUProfileSample& GPUFrameTime = CGPUProfiler::Get().GetGPUFrameTime();
 
-        float Avg = CPUFrameTime.GetAverage();
-        float Min = CPUFrameTime.Min;
+        float Avg = GPUFrameTime.GetAverage();
+        float Min = GPUFrameTime.Min;
         if ( Min == FLT_MAX )
         {
             Min = 0.0f;
         }
 
-        float Max = CPUFrameTime.Max;
+        float Max = GPUFrameTime.Max;
         if ( Max == -FLT_MAX )
         {
             Max = 0.0f;
@@ -110,9 +74,9 @@ void CFrameProfilerWindow::DrawCPUData( float Width )
 
         ImGui::PlotHistogram(
             "",
-            CPUFrameTime.Samples.Data(),
-            CPUFrameTime.SampleCount,
-            CPUFrameTime.CurrentSample,
+            GPUFrameTime.Samples.Data(),
+            GPUFrameTime.SampleCount,
+            GPUFrameTime.CurrentSample,
             nullptr,
             0.0f,
             ImGui_GetMaxLimit( Avg ),
@@ -178,17 +142,15 @@ void CFrameProfilerWindow::DrawCPUData( float Width )
     //    ImGui::EndTable();
     //}
 
-    if ( ImGui::BeginTable( "Functions", 5, TableFlags ) )
+    if ( ImGui::BeginTable( "Functions", 4, TableFlags ) )
     {
         ImGui::TableSetupColumn( "Trace Name" );
-        ImGui::TableSetupColumn( "Total Calls" );
         ImGui::TableSetupColumn( "Avg" );
         ImGui::TableSetupColumn( "Min" );
         ImGui::TableSetupColumn( "Max" );
         ImGui::TableHeadersRow();
 
-        // Retrieve a copy of the CPU samples
-        CFrameProfiler::Get().GetCPUSamples( Samples );
+        CGPUProfiler::Get().GetGPUSamples( Samples );
         for ( auto& Sample : Samples )
         {
             ImGui::TableNextRow();
@@ -196,17 +158,14 @@ void CFrameProfilerWindow::DrawCPUData( float Width )
             float Avg = Sample.second.GetAverage();
             float Min = Sample.second.Min;
             float Max = Sample.second.Max;
-            int32 Calls = Sample.second.TotalCalls;
 
             ImGui::TableSetColumnIndex( 0 );
             ImGui::Text( "%s", Sample.first.CStr() );
             ImGui::TableSetColumnIndex( 1 );
-            ImGui::Text( "%d", Calls );
-            ImGui::TableSetColumnIndex( 2 );
             ImGui_PrintTime( Avg );
-            ImGui::TableSetColumnIndex( 3 );
+            ImGui::TableSetColumnIndex( 2 );
             ImGui_PrintTime( Min );
-            ImGui::TableSetColumnIndex( 4 );
+            ImGui::TableSetColumnIndex( 3 );
             ImGui_PrintTime( Max );
         }
 
@@ -216,7 +175,7 @@ void CFrameProfilerWindow::DrawCPUData( float Width )
     }
 }
 
-void CFrameProfilerWindow::DrawWindow()
+void CGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
     TSharedRef<CCoreWindow> MainViewport = CApplication::Get().GetMainViewport();
@@ -240,29 +199,29 @@ void CFrameProfilerWindow::DrawWindow()
         ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoSavedSettings;
 
-    bool TempDrawProfiler = GDrawFrameProfiler.GetBool();
+    bool TempDrawProfiler = GDrawGPUProfiler.GetBool();
     if ( ImGui::Begin( "Profiler", &TempDrawProfiler, Flags ) )
     {
         if ( ImGui::Button( "Start Profile" ) )
         {
-            CFrameProfiler::Get().Enable();
+            CGPUProfiler::Get().Enable();
         }
 
         ImGui::SameLine();
 
         if ( ImGui::Button( "Stop Profile" ) )
         {
-            CFrameProfiler::Get().Disable();
+            CGPUProfiler::Get().Disable();
         }
 
         ImGui::SameLine();
 
         if ( ImGui::Button( "Reset" ) )
         {
-            CFrameProfiler::Get().Reset();
+            CGPUProfiler::Get().Reset();
         }
 
-        DrawCPUData( Width );
+        DrawGPUData( Width );
 
         ImGui::Separator();
     }
@@ -273,5 +232,5 @@ void CFrameProfilerWindow::DrawWindow()
 
     ImGui::End();
 
-    GDrawFrameProfiler.SetBool( TempDrawProfiler );
+    GDrawGPUProfiler.SetBool( TempDrawProfiler );
 }

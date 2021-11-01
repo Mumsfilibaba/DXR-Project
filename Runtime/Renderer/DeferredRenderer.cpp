@@ -7,10 +7,16 @@
 #include "Engine/Resources/Mesh.h"
 #include "Engine//Resources/Material.h"
 
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
+#include "Renderer/Debug/GPUProfiler.h"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 TConsoleVariable<bool> GDrawTileDebug( false );
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool CDeferredRenderer::Init( SFrameResources& FrameResources )
 {

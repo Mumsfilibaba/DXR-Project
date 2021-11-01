@@ -3,7 +3,7 @@
 
 #include "RHI/RHIModule.h"
 
-class NULL_API CNullRHIModule : public CRHIModule
+class NULLRHI_API CNullRHIModule : public CRHIModule
 {
 public:
 

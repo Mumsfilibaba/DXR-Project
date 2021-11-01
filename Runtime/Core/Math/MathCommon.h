@@ -82,19 +82,20 @@ namespace NMath
     template <typename T>
     FORCEINLINE T Min( T a, T b )
     {
-        return a <= b ? a : b;
+        return (a <= b) ? a : b;
     }
 
     template <typename T>
     FORCEINLINE T Max( T a, T b )
     {
-        return a >= b ? a : b;
+        return (a >= b) ? a : b;
     }
 
     template <typename T>
     FORCEINLINE T Abs( T a )
     {
-        return (a * a) / a;
+        return ::abs( a );
+        // return (a > T( 0 )) ? ((a * a) / a) : T( 0 ); // TODO: Causes crash?
     }
 
     template <typename T>

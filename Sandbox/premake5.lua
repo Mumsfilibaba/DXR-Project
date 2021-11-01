@@ -24,7 +24,7 @@ project ( projectname )
 	{
 		"PROJECT_NAME=" .. "\"" .. projectname .. "\"",
 		"PROJECT_LOCATION=" .. "\"" .. findProjectDir().. "\"",
-		"SANDBOX_EXPORT=(1)"
+		"SANDBOX_EXPORT=(1)",
 	}
 	
 	-- Files to include
@@ -95,7 +95,7 @@ project (projectname .. "Launcher")
 	defines
 	{
 		"PROJECT_NAME=" .. "\"" .. projectname .. "\"",
-		"PROJECT_LOCATION=" .. "\"" .. findProjectDir().. "\""
+		"PROJECT_LOCATION=" .. "\"" .. findProjectDir().. "\"",
 	}
 	
 	links

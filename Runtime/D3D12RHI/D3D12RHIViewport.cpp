@@ -2,7 +2,7 @@
 #include "D3D12RHICore.h"
 #include "D3D12RHIViewport.h"
 
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 
 CD3D12RHIViewport::CD3D12RHIViewport( CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight )
     : CD3D12DeviceChild( InDevice )

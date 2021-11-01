@@ -3,7 +3,7 @@
 #include "Core/Application/Application.h"
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/TextureFactory.h"
@@ -12,14 +12,16 @@
 
 #include "RHI/RHICore.h"
 
-/* Console vars */
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 CConsoleCommand GToggleFullscreen;
 CConsoleCommand GExit;
 
-/* Global engine instance */
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 ENGINE_API CEngine* GEngine;
 
-/* Engine implementation */
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CEngine* CEngine::Make()
 {
@@ -39,7 +41,9 @@ bool CEngine::Init()
         WindowStyleFlag_Maximizable |
         WindowStyleFlag_Resizeable;
 
-    MainWindow = CApplication::Get().MakeWindow();
+    CApplication& Application = CApplication::Get();
+
+    MainWindow = Application.MakeWindow();
     if ( MainWindow && MainWindow->Init( "DXR Engine", 1920, 1080, Style ) )
     {
         MainWindow->Show( false );
@@ -53,16 +57,16 @@ bool CEngine::Init()
         return false;
     }
 
-    CApplication::Get().RegisterMainViewport( MainWindow );
+    Application.RegisterMainViewport( MainWindow );
 
-    ICursor* CursorDevice = CApplication::Get().GetCursor();
+    ICursor* CursorDevice = Application.GetCursor();
     User = CApplicationUser::Make( 0, CursorDevice );
     if ( !User )
     {
         return false;
     }
 
-    CApplication::Get().RegisterUser( User );
+    Application.RegisterUser( User );
 
     GExit.GetExecutedDelgate().AddRaw( this, &CEngine::Exit );
     INIT_CONSOLE_COMMAND( "a.Exit", &GExit );
@@ -135,10 +139,10 @@ bool CEngine::Init()
 
     /* Create windows */
     TSharedRef<CFrameProfilerWindow> ProfilerWindow = CFrameProfilerWindow::Make();
-    CApplication::Get().AddWindow( ProfilerWindow );
+    Application.AddWindow( ProfilerWindow );
 
     TSharedRef<CGameConsoleWindow> ConsoleWindow = CGameConsoleWindow::Make();
-    CApplication::Get().AddWindow( ConsoleWindow );
+    Application.AddWindow( ConsoleWindow );
 
     return true;
 }

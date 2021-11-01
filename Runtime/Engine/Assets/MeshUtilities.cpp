@@ -11,6 +11,7 @@ void CMeshUtilities::Subdivide( SMeshData& OutData, uint32 Subdivisions ) noexce
     uint32 IndexCount = 0;
     uint32 VertexCount = 0;
     uint32 OldVertexCount = 0;
+
     OutData.Vertices.Reserve( (OutData.Vertices.Size() * static_cast<uint32>(pow( 2, Subdivisions ))) );
     OutData.Indices.Reserve( (OutData.Indices.Size() * static_cast<uint32>(pow( 4, Subdivisions ))) );
 

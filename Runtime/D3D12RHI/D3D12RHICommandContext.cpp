@@ -12,8 +12,8 @@
 #include "D3D12RHITimestampQuery.h"
 #include "D3D12RHICommandContext.h"
 
-#include "Core/Debug/FrameProfiler.h"
 #include "Core/Math/Vector2.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 
 #include <pix.h>
 

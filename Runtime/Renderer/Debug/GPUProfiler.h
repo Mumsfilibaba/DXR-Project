@@ -16,9 +16,11 @@
 #define GPU_TRACE_SCOPE(CmdList, Name)
 #endif
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SGPUProfileSample
 {
-    FORCEINLINE void AddSample( float NewSample )
+    void AddSample( float NewSample )
     {
         Samples[CurrentSample] = NewSample;
 
@@ -34,7 +36,7 @@ struct SGPUProfileSample
         }
     }
 
-    FORCEINLINE float GetAverage() const
+    float GetAverage() const
     {
         if ( SampleCount < 1 )
         {
@@ -50,7 +52,7 @@ struct SGPUProfileSample
         return Average / float( SampleCount );
     }
 
-    FORCEINLINE void Reset()
+    void Reset()
     {
         Samples.Fill( 0.0f );
 
@@ -73,6 +75,8 @@ struct SGPUProfileSample
 
     uint32 TimeQueryIndex = 0;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 using GPUProfileSamplesTable = THashTable<CString, SGPUProfileSample, SStringHasher>;
 
@@ -117,27 +121,31 @@ public:
 
     FORCEINLINE const SGPUProfileSample& GetGPUFrameTime() const
     {
-        return GPUFrameTime;
+        return FrameTime;
     }
 
 private:
 
-    CGPUProfiler()  = default;
+    CGPUProfiler();
     ~CGPUProfiler() = default;
 
     /* Queries for GPUTimeStamps */
-    TSharedRef<CRHITimestampQuery> GPUProfiler;
+    TSharedRef<CRHITimestampQuery> Timequeries;
 
     uint32 CurrentTimeQueryIndex = 0;
 
     /* Sample for the GPU FrameTime */
-    SGPUProfileSample GPUFrameTime;
+    SGPUProfileSample FrameTime;
 
     /* Lockable table for GPU- samples */
-    Lockable<GPUProfileSamplesTable> GPUSamples;
+    Lockable<GPUProfileSamplesTable> Samples;
+
+    bool Enabled;
 
     static CGPUProfiler Instance;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct SGPUScopedTrace
 {

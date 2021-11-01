@@ -36,7 +36,7 @@ project ( projectname )
 	{
 		"PROJECT_NAME=" .. "\"" .. projectname .. "\"",
 		"PROJECT_LOCATION=" .. "\"" .. findProjectDir().. "\"",
-		"PROJECT_EDITOR=(1)"
+		"PROJECT_EDITOR=(1)",
 	}
 
 	-- Files to include

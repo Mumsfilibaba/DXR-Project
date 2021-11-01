@@ -10,7 +10,7 @@
 #include "EditorEngine.h"
 #endif
 
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Modules/ModuleManger.h"
@@ -26,7 +26,7 @@
 
 bool CEngineLoop::PreInit()
 {
-    CFrameProfiler::Get().Enable();
+    CFrameProfiler::Enable();
 
     TRACE_FUNCTION_SCOPE();
 
@@ -74,25 +74,12 @@ bool CEngineLoop::PreInit()
         return false;
     }
 
-    // Init Application Module // TODO: Do not have the name hardcoded
-    GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>("Sandbox.dll");
-    if ( !GApplicationModule || (GApplicationModule && !GApplicationModule->Init()) )
-    {
-        LOG_WARNING( "Application Init failed, may not behave as intended" );
-    }
-
-    if ( !GRenderer.Init() )
-    {
-        PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create Renderer" );
-        return false;
-    }
-
     return true;
 }
 
 bool CEngineLoop::Init()
 {
-    // Create the engine 
+    // Create the engine
 #if PROJECT_EDITOR
     GEngine = CEditorEngine::Make();
 #else
@@ -101,6 +88,19 @@ bool CEngineLoop::Init()
     if ( !GEngine->Init() )
     {
         return false;
+    }
+
+    if ( !GRenderer.Init() )
+    {
+        PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create Renderer" );
+        return false;
+    }
+
+    // Init Application Module // TODO: Do not have the name hardcoded
+    GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>( "Sandbox.dll" );
+    if ( !GApplicationModule )
+    {
+        LOG_WARNING( "Application Init failed, may not behave as intended" );
     }
 
     // UI // TODO: Has to be initialized after the engine, however, there should be a delegate on the application that notifies when a viewport is registered*/
@@ -113,6 +113,7 @@ bool CEngineLoop::Init()
 
     CApplication::Get().SetRenderer( UIRenderer );
 
+    // Start the engine
     if ( !GEngine->Start() )
     {
         return false;
@@ -131,6 +132,8 @@ void CEngineLoop::Tick( CTimestamp Deltatime )
     // TODO: This should be bound via delegates?
     GApplicationModule->Tick( Deltatime );
 
+    LOG_INFO("Tick: " + ToString( Deltatime.AsMilliSeconds() ) );
+
     // Run the engine, which means that all scene data etc. is updated
     GEngine->Tick( Deltatime );
 
@@ -147,29 +150,22 @@ bool CEngineLoop::Release()
 
     CRHICommandQueue::Get().WaitForGPU();
 
-    CTextureFactory::Release();
-
-    if ( GApplicationModule && GApplicationModule->Release() )
-    {
-        SafeDelete( GApplicationModule );
-    }
-    else
-    {
-        return false;
-    }
-
     GRenderer.Release();
+
+    CApplication::Get().SetRenderer( nullptr );
 
     GEngine->Release();
     SafeDelete( GEngine );
 
-    CApplication::Get().SetRenderer( nullptr );
-
-    CDispatchQueue::Get().Release();
+    CTextureFactory::Release();
     
     ReleaseRHI();
 
     CModuleManager::Get().ReleaseAllModules();
+
+    CDispatchQueue::Get().Release();
+
+    CApplication::Release();
 
     SafeRelease( GConsoleOutput );
 

@@ -1,6 +1,6 @@
 #include "RHICommandList.h"
 
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 
 void* operator new( size_t Size, CCommandAllocator& Allocator )
 {

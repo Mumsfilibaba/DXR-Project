@@ -169,7 +169,7 @@ public:
 
     virtual class CRHIVertexShader* CreateVertexShader( const TArray<uint8>& ShaderCode ) override final
     {
-        return dbg_new TNullRHIShader<CNullRHIVertexShader>();
+        return dbg_new TNullRHIShader<CRHIVertexShader>();
     }
 
     virtual class CRHIHullShader* CreateHullShader( const TArray<uint8>& ShaderCode ) override final
@@ -199,27 +199,27 @@ public:
 
     virtual class CRHIPixelShader* CreatePixelShader( const TArray<uint8>& ShaderCode ) override final
     {
-        return dbg_new TNullRHIShader<CNullRHIPixelShader>();
+        return dbg_new TNullRHIShader<CRHIPixelShader>();
     }
 
     virtual class CRHIRayGenShader* CreateRayGenShader( const TArray<uint8>& ShaderCode ) override final
     {
-        return dbg_new TNullRHIShader<CNullRHIRayGenShader>();
+        return dbg_new TNullRHIShader<CRHIRayGenShader>();
     }
 
     virtual class CRHIRayAnyHitShader* CreateRayAnyHitShader( const TArray<uint8>& ShaderCode ) override final
     {
-        return dbg_new TNullRHIShader<CNullRHIRayAnyhitShader>();
+        return dbg_new TNullRHIShader<CRHIRayAnyHitShader>();
     }
 
     virtual class CRHIRayClosestHitShader* CreateRayClosestHitShader( const TArray<uint8>& ShaderCode ) override final
     {
-        return dbg_new TNullRHIShader<CNullRHIRayClosestHitShader>();
+        return dbg_new TNullRHIShader<CRHIRayClosestHitShader>();
     }
 
     virtual class CRHIRayMissShader* CreateRayMissShader( const TArray<uint8>& ShaderCode ) override final
     {
-        return dbg_new TNullRHIShader<CNullRHIRayMissShader>();
+        return dbg_new TNullRHIShader<CRHIRayMissShader>();
     }
 
     virtual class CRHIDepthStencilState* CreateDepthStencilState( const SDepthStencilStateCreateInfo& CreateInfo ) override final
@@ -289,7 +289,7 @@ public:
 
     virtual bool UAVSupportsFormat( EFormat Format ) const override final
     {
-        return false;
+        return true;
     }
 
 private:

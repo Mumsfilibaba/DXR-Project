@@ -8,7 +8,7 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/Scene/Actor.h"
 
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 
 bool CForwardRenderer::Init( SFrameResources& FrameResources )
 {

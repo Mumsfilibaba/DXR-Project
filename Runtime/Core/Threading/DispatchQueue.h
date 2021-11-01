@@ -18,18 +18,26 @@ struct SDispatch
 class CORE_API CDispatchQueue
 {
 public:
-    bool Init();
-
-    DispatchID Dispatch( const SDispatch& NewTask );
-
-    void WaitFor( DispatchID Task );
-    void WaitForAll();
-
-    void Release();
-
+    
     static CDispatchQueue& Get();
 
+    /* Init DispatchQueue by starting worker threads */
+    bool Init();
+
+    /* Queue a new dispatch for being executed */
+    DispatchID Dispatch( const SDispatch& NewTask );
+
+    /* Wait for a specific task */
+    void WaitFor( DispatchID Task );
+
+    /* Wait for all queued up dispatched */
+    void WaitForAll();
+
+    /* Release the DispatchQueue */
+    void Release();
+
 private:
+
     CDispatchQueue();
     ~CDispatchQueue();
 
@@ -39,7 +47,6 @@ private:
 
     static void WorkThread();
 
-private:
     TArray<TSharedRef<CCoreThread>> WorkerThreads;
 
     TArray<SDispatch> Queue;

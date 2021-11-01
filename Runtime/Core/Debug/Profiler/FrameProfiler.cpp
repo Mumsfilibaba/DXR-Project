@@ -17,39 +17,26 @@ void CFrameProfiler::Tick()
         Clock.Reset();
     }
 
-    if ( EnableProfiler )
+    if ( Enabled )
     {
         const double Delta = Clock.GetDeltaTime().AsMilliSeconds();
         CPUFrameTime.AddSample( float( Delta ) );
-
-        if ( GPUProfiler )
-        {
-            SRHITimestamp Query;
-            GPUProfiler->GetTimestampFromIndex( Query, GPUFrameTime.TimeQueryIndex );
-
-            const double Frequency = static_cast<double>(GPUProfiler->GetFrequency());
-            const double DeltaTime = static_cast<double>(Query.End - Query.Begin);
-
-            double Duration  = (DeltaTime / Frequency) * 1000.0;
-            GPUFrameTime.AddSample( (float)Duration );
-        }
     }
 }
 
 void CFrameProfiler::Enable()
 {
-    EnableProfiler = true;
+    Instance.Enabled = true;
 }
 
 void CFrameProfiler::Disable()
 {
-    EnableProfiler = false;
+    Instance.Enabled = false;
 }
 
 void CFrameProfiler::Reset()
 {
     CPUFrameTime.Reset();
-    GPUFrameTime.Reset();
 
     {
         TScopedLock Lock( CPUSamples );
@@ -58,19 +45,11 @@ void CFrameProfiler::Reset()
             Sample.second.Reset();
         }
     }
-
-    {
-        TScopedLock Lock( GPUSamples );
-        for ( auto& Sample : GPUSamples.Get() )
-        {
-            Sample.second.Reset();
-        }
-    }
 }
 
 void CFrameProfiler::BeginTraceScope( const char* Name )
 {
-    if ( EnableProfiler )
+    if ( Enabled )
     {
         TScopedLock Lock( CPUSamples );
 
@@ -91,7 +70,7 @@ void CFrameProfiler::BeginTraceScope( const char* Name )
 
 void CFrameProfiler::EndTraceScope( const char* Name )
 {
-    if ( EnableProfiler )
+    if ( Enabled )
     {
         const CString ScopeName = Name;
 
@@ -109,96 +88,8 @@ void CFrameProfiler::EndTraceScope( const char* Name )
     }
 }
 
-void CFrameProfiler::BeginGPUFrame( CRHICommandList& CmdList )
-{
-    if ( GPUProfiler && EnableProfiler )
-    {
-        CmdList.BeginTimeStamp( GPUProfiler.Get(), GPUFrameTime.TimeQueryIndex );
-    }
-}
-
-void CFrameProfiler::BeginGPUTrace( CRHICommandList& CmdList, const char* Name )
-{
-    if ( GPUProfiler && EnableProfiler )
-    {
-        const CString ScopeName = Name;
-
-        int32 TimeQueryIndex = -1;
-
-        {
-            TScopedLock Lock( GPUSamples );
-
-            auto Entry = GPUSamples.Get().find( ScopeName );
-            if ( Entry == GPUSamples.Get().end() )
-            {
-                auto NewSample = GPUSamples.Get().insert( std::make_pair( ScopeName, SGPUProfileSample() ) );
-                NewSample.first->second.TimeQueryIndex = ++CurrentTimeQueryIndex;
-                TimeQueryIndex = NewSample.first->second.TimeQueryIndex;
-            }
-            else
-            {
-                TimeQueryIndex = Entry->second.TimeQueryIndex;
-            }
-        }
-
-        if ( TimeQueryIndex >= 0 )
-        {
-            CmdList.BeginTimeStamp( GPUProfiler.Get(), TimeQueryIndex );
-        }
-    }
-}
-
-void CFrameProfiler::EndGPUTrace( CRHICommandList& CmdList, const char* Name )
-{
-    if ( GPUProfiler && EnableProfiler )
-    {
-        const CString ScopeName = Name;
-
-        int32 TimeQueryIndex = -1;
-
-        TScopedLock Lock( GPUSamples );
-
-        auto Entry = GPUSamples.Get().find( ScopeName );
-        if ( Entry != GPUSamples.Get().end() )
-        {
-            TimeQueryIndex = Entry->second.TimeQueryIndex;
-            CmdList.EndTimeStamp( GPUProfiler.Get(), TimeQueryIndex );
-
-            if ( TimeQueryIndex >= 0 )
-            {
-                SRHITimestamp Query;
-                GPUProfiler->GetTimestampFromIndex( Query, TimeQueryIndex );
-
-                const double Frequency = static_cast<double>(GPUProfiler->GetFrequency());
-
-                double Duration  = NTime::ToSeconds(static_cast<double>((Query.End - Query.Begin) / Frequency));
-                Entry->second.AddSample( (float)Duration );
-            }
-        }
-    }
-}
-
-void CFrameProfiler::SetGPUProfiler( CRHITimestampQuery* Profiler )
-{
-    GPUProfiler = MakeSharedRef<CRHITimestampQuery>( Profiler );
-}
-
 void CFrameProfiler::GetCPUSamples( ProfileSamplesTable& OutCPUSamples )
 {
     TScopedLock Lock( CPUSamples );
     OutCPUSamples = CPUSamples.Get();
-}
-
-void CFrameProfiler::GetGPUSamples( GPUProfileSamplesTable& OutGPUSamples )
-{
-    TScopedLock Lock( GPUSamples );
-    OutGPUSamples = GPUSamples.Get();
-}
-
-void CFrameProfiler::EndGPUFrame( CRHICommandList& CmdList )
-{
-    if ( GPUProfiler && EnableProfiler )
-    {
-        CmdList.EndTimeStamp( GPUProfiler.Get(), GPUFrameTime.TimeQueryIndex );
-    }
 }

@@ -3,7 +3,7 @@
 #include "D3D12RHICore.h"
 #include "D3D12RHICommandContext.h"
 
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 
 CD3D12DescriptorCache::CD3D12DescriptorCache( CD3D12Device* InDevice )
     : CD3D12DeviceChild( InDevice )

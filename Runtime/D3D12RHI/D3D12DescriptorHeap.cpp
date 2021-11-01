@@ -2,7 +2,7 @@
 #include "D3D12Device.h"
 #include "D3D12RHIViews.h"
 
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 
 CD3D12DescriptorHeap::CD3D12DescriptorHeap( CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags )
     : CD3D12DeviceChild( InDevice )

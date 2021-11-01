@@ -12,8 +12,10 @@
 
 #include "Core/Math/Frustum.h"
 #include "Core/Application/Application.h"
-#include "Core/Debug/FrameProfiler.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
+
+#include "Renderer/Debug/GPUProfiler.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -153,14 +155,6 @@ bool CRenderer::Init()
         }
     }
 
-    GPUProfiler = RHICreateProfiler();
-    if ( !GPUProfiler )
-    {
-        return false;
-    }
-
-    CFrameProfiler::Get().SetGPUProfiler( GPUProfiler.Get() );
-
     if ( !InitAA() )
     {
         return false;
@@ -232,8 +226,6 @@ bool CRenderer::Init()
     // Register Windows
     TextureDebugger = CTextureDebugWindow::Make();
     Application.AddWindow(TextureDebugger);
-
-
 
     return true;
 }
@@ -376,7 +368,7 @@ void CRenderer::Tick( const CScene& Scene )
     PreShadowsCmdList.BeginExternalCapture();
 #endif
 
-    CFrameProfiler::Get().BeginGPUFrame( PreShadowsCmdList );
+    CGPUProfiler::Get().BeginGPUFrame( PreShadowsCmdList );
 
     INSERT_DEBUG_CMDLIST_MARKER( PreShadowsCmdList, "--BEGIN FRAME--" );
 
@@ -690,7 +682,7 @@ void CRenderer::Tick( const CScene& Scene )
 
     INSERT_DEBUG_CMDLIST_MARKER( MainCmdList, "--END FRAME--" );
 
-    CFrameProfiler::Get().EndGPUFrame( MainCmdList );
+    CGPUProfiler::Get().EndGPUFrame( MainCmdList );
 
 #if 1
     MainCmdList.EndExternalCapture();
@@ -770,7 +762,6 @@ void CRenderer::Release()
     ShadingRateShader.Reset();
 
     GPUProfiler.Reset();
-    CFrameProfiler::Get().SetGPUProfiler( nullptr );
 
     FrameStatistics.Reset();
 }

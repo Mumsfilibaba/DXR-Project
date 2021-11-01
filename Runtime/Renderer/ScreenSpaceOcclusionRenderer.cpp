@@ -4,10 +4,10 @@
 #include "RHI/RHICore.h"
 #include "RHI/RHIShaderCompiler.h"
 
-#include "Core/Debug/FrameProfiler.h"
-#include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Math/Vector2.h"
 #include "Core/Math/Vector3.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Debug/Console/ConsoleManager.h"
 
 // TODO: Remove and replace. There are better and easier implementations to do yourself
 #include <random>

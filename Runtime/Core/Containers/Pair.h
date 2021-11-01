@@ -76,7 +76,7 @@ struct TPair
     template<typename OtherFirstType, typename OtherSecondType>
     FORCEINLINE TPair& operator=( TPair<OtherFirstType, OtherSecondType>&& Other ) noexcept
     {
-        First = Move( Other.First );
+        First  = Move( Other.First );
         Second = Move( Other.Second );
         return *this;
     }
