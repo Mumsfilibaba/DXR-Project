@@ -33,13 +33,17 @@ public:
         return dbg_new CCoreThread();
     }
 
-    virtual bool Start() { return true; }
+    virtual bool Start() {
+        return true;
+    }
 
     virtual void WaitUntilFinished() {}
 
     virtual void SetName( const CString& Name ) {}
 
-    virtual PlatformThreadHandle GetPlatformHandle() { return static_cast<PlatformThreadHandle>( 0 ); }
+    virtual PlatformThreadHandle GetPlatformHandle() {
+        return static_cast<PlatformThreadHandle>(0);
+    }
 
 protected:
 

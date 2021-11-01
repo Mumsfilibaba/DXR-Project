@@ -18,7 +18,7 @@ public:
     virtual bool IsTickable() override final;
 
 private:
-    
+
     /* Draws the scene info, should only be called from tick */
     void DrawSceneInfo();
 };

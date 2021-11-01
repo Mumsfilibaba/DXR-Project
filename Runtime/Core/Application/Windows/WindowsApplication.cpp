@@ -98,7 +98,7 @@ TSharedRef<CCoreWindow> CWindowsApplication::MakeWindow()
 {
     TSharedRef<CWindowsWindow> NewWindow = dbg_new CWindowsWindow( this );
     Windows.Emplace( NewWindow );
-    return NewWindow.Get();
+    return NewWindow;
 }
 
 bool CWindowsApplication::Init()

@@ -10,7 +10,7 @@ public:
 
     CCommandAllocator( uint32 StartSize = 4096 );
     ~CCommandAllocator();
-    
+
     /* Allocate memory, */
     void* Allocate( uint64 SizeInBytes, uint64 Alignment = STANDARD_ALIGNMENT );
 
@@ -28,7 +28,7 @@ public:
     template<typename T>
     FORCEINLINE T* Allocate( uint32 NumElements )
     {
-        return reinterpret_cast<T*>( Allocate( sizeof( T ) * NumElements, alignof(T) ) );
+        return reinterpret_cast<T*>(Allocate( sizeof( T ) * NumElements, alignof(T) ));
     }
 
     /* Constructs a new item by calling the constructor */
@@ -36,7 +36,7 @@ public:
     FORCEINLINE T* Construct( ArgTypes&&... Args )
     {
         void* Memory = Allocate<T>();
-        return new(Memory) T( Forward<ArgTypes>(Args)... );
+        return new(Memory) T( Forward<ArgTypes>( Args )... );
     }
 
     FORCEINLINE uint8* AllocateBytes( uint64 SizeInBytes, uint64 Alignment = STANDARD_ALIGNMENT )
@@ -160,10 +160,10 @@ public:
         CRHIRenderTargetView** RenderTargets = CmdAllocator.Allocate<CRHIRenderTargetView*>( RenderTargetCount );
         for ( uint32 i = 0; i < RenderTargetCount; i++ )
         {
-            RenderTargets[i] = AddRef<CRHIRenderTargetView>(RenderTargetViews[i]);
+            RenderTargets[i] = AddRef<CRHIRenderTargetView>( RenderTargetViews[i] );
         }
 
-        InsertCommand<SRHISetRenderTargetsRenderCommand>( RenderTargets, RenderTargetCount, MakeSharedRef<CRHIDepthStencilView>(DepthStencilView) );
+        InsertCommand<SRHISetRenderTargetsRenderCommand>( RenderTargets, RenderTargetCount, MakeSharedRef<CRHIDepthStencilView>( DepthStencilView ) );
     }
 
     void SetPrimitiveTopology( EPrimitiveTopology PrimitveTopologyType )
@@ -226,7 +226,7 @@ public:
 
     void SetShaderResourceViews( CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceViews, uint32 NumShaderResourceViews, uint32 ParameterIndex )
     {
-        CRHIShaderResourceView** TempShaderResourceViews = CmdAllocator.Allocate<CRHIShaderResourceView*>(NumShaderResourceViews);
+        CRHIShaderResourceView** TempShaderResourceViews = CmdAllocator.Allocate<CRHIShaderResourceView*>( NumShaderResourceViews );
         for ( uint32 i = 0; i < NumShaderResourceViews; i++ )
         {
             TempShaderResourceViews[i] = AddRef( ShaderResourceViews[i] );
@@ -303,7 +303,7 @@ public:
         void* TempSourceData = CmdAllocator.Allocate( SizeInBytes, 1 );
         CMemory::Memcpy( TempSourceData, SourceData, SizeInBytes );
 
-        InsertCommand<SRHIUpdateTexture2DRenderCommand>(  AddRef( Destination ), Width, Height, MipLevel, TempSourceData );
+        InsertCommand<SRHIUpdateTexture2DRenderCommand>( AddRef( Destination ), Width, Height, MipLevel, TempSourceData );
     }
 
     void CopyBuffer( CRHIBuffer* Destination, CRHIBuffer* Source, const SCopyBufferInfo& CopyInfo )
@@ -334,7 +334,7 @@ public:
 
     void BuildRayTracingScene( CRHIRayTracingScene* Scene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update )
     {
-        Assert( (Scene != nullptr) && (!Update || (Update && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate) ) );
+        Assert( (Scene != nullptr) && (!Update || (Update && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)) );
         InsertCommand<SRHIBuildRayTracingSceneRenderCommand>( AddRef( Scene ), Instances, NumInstances, Update );
     }
 

@@ -24,7 +24,7 @@ public:
         return nullptr;
     }
 
-    virtual void Execute() override 
+    virtual void Execute() override
     {
         ExecuteDelegate.Broadcast();
     }

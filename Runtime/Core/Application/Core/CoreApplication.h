@@ -21,33 +21,45 @@ class CCoreApplication
 public:
 
     virtual ~CCoreApplication() = default;
-    
+
     /* Creates the application */
-    static TSharedPtr<CCoreApplication> Make() { return TSharedPtr<CCoreApplication>(); }
+    static TSharedPtr<CCoreApplication> Make() {
+        return TSharedPtr<CCoreApplication>();
+    }
 
     /* Create a window */
-    virtual TSharedRef<CCoreWindow> MakeWindow() { return TSharedRef<CCoreWindow>(); }
+    virtual TSharedRef<CCoreWindow> MakeWindow() {
+        return TSharedRef<CCoreWindow>();
+    }
 
     /* Initialized the application */
-    virtual bool Init() { return true; }
+    virtual bool Init() {
+        return true;
+    }
 
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick( float Delta ) {}
 
     /* Retrieve the cursor interface */
-    virtual ICursor* GetCursor() { return nullptr; }
+    virtual ICursor* GetCursor() {
+        return nullptr;
+    }
 
     /* Sets the window that is currently active */
     virtual void SetActiveWindow( const TSharedRef<CCoreWindow>& Window ) {}
 
     /* Retrieves the window that is currently active */
-    virtual TSharedRef<CCoreWindow> GetActiveWindow() const { return TSharedRef<CCoreWindow>(); }
+    virtual TSharedRef<CCoreWindow> GetActiveWindow() const {
+        return TSharedRef<CCoreWindow>();
+    }
 
     /* Sets the window that currently has the keyboard focus */
     virtual void SetCapture( const TSharedRef<CCoreWindow>& ) {}
 
     /* Retrieves the window that currently has the keyboard focus, since macOS does not support keyboard focus, we return null as standard */
-    virtual TSharedRef<CCoreWindow> GetCapture() const { return TSharedRef<CCoreWindow>(); }
+    virtual TSharedRef<CCoreWindow> GetCapture() const {
+        return TSharedRef<CCoreWindow>();
+    }
 
     /* Sets the message handler */
     virtual void SetMessageListener( const TSharedPtr<CCoreApplicationMessageHandler>& InMessageHandler )

@@ -42,7 +42,7 @@ public:
     {
         return ViewProjection;
     }
-    
+
     const CMatrix4& GetViewProjectionInverseMatrix() const
     {
         return ViewProjectionInverse;
@@ -67,7 +67,7 @@ public:
     {
         return Up;
     }
-    
+
     CVector3 GetRight() const
     {
         return Right;

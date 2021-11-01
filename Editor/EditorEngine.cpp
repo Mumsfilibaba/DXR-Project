@@ -21,7 +21,7 @@ CEditorEngine* CEditorEngine::Make()
 
 bool CEditorEngine::Init()
 {
-    if (!CEngine::Init())
+    if ( !CEngine::Init() )
     {
         return false;
     }
@@ -31,7 +31,7 @@ bool CEditorEngine::Init()
 
     TSharedRef<CInspectorWindow> InspectorWindow = dbg_new CInspectorWindow();
     Application.AddWindow( InspectorWindow );
-    
+
     TSharedRef<CEditorMenuWidget> MenuBar = dbg_new CEditorMenuWidget();
     Application.AddWindow( MenuBar );
 

@@ -140,7 +140,7 @@ public:
     }
 };
 
-using CD3D12RenderTargetView       = TD3D12RHIBaseView<CD3D12RHIBaseRenderTargetView>;
-using CD3D12DepthStencilView       = TD3D12RHIBaseView<CD3D12RHIBaseDepthStencilView>;
+using CD3D12RenderTargetView = TD3D12RHIBaseView<CD3D12RHIBaseRenderTargetView>;
+using CD3D12DepthStencilView = TD3D12RHIBaseView<CD3D12RHIBaseDepthStencilView>;
 using CD3D12RHIUnorderedAccessView = TD3D12RHIBaseView<CD3D12RHIBaseUnorderedAccessView>;
-using CD3D12RHIShaderResourceView  = TD3D12RHIBaseView<CD3D12RHIBaseShaderResourceView>;
+using CD3D12RHIShaderResourceView = TD3D12RHIBaseView<CD3D12RHIBaseShaderResourceView>;

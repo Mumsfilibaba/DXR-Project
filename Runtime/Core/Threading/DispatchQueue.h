@@ -18,7 +18,7 @@ struct SDispatch
 class CORE_API CDispatchQueue
 {
 public:
-    
+
     static CDispatchQueue& Get();
 
     /* Init DispatchQueue by starting worker threads */

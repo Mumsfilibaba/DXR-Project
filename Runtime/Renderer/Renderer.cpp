@@ -47,10 +47,10 @@ struct SCameraBufferDesc
 
     CVector3 Position;
     float    NearPlane;
-    
+
     CVector3 Forward;
     float    FarPlane;
-    
+
     CVector3 Right;
     float    AspectRatio;
 };
@@ -137,10 +137,10 @@ bool CRenderer::Init()
 
     {
         SSamplerStateCreateInfo CreateInfo;
-        CreateInfo.AddressU       = ESamplerMode::Wrap;
-        CreateInfo.AddressV       = ESamplerMode::Wrap;
-        CreateInfo.AddressW       = ESamplerMode::Wrap;
-        CreateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
+        CreateInfo.AddressU = ESamplerMode::Wrap;
+        CreateInfo.AddressV = ESamplerMode::Wrap;
+        CreateInfo.AddressW = ESamplerMode::Wrap;
+        CreateInfo.Filter = ESamplerFilter::Comparison_MinMagMipLinear;
         CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
 
         Resources.PointLightShadowSampler = RHICreateSamplerState( CreateInfo );
@@ -225,7 +225,7 @@ bool CRenderer::Init()
 
     // Register Windows
     TextureDebugger = CTextureDebugWindow::Make();
-    Application.AddWindow(TextureDebugger);
+    Application.AddWindow( TextureDebugger );
 
     return true;
 }
@@ -399,7 +399,7 @@ void CRenderer::Tick( const CScene& Scene )
     // Perform frustum culling
     Resources.DeferredVisibleCommands.Clear();
     Resources.ForwardVisibleCommands.Clear();
-    
+
     // Clear the images that were debuggable last frame 
     // TODO: Make this persistent, we do not need to do this every frame, right know it is because the resource-state system needs overhaul
     TextureDebugger->ClearImages();
@@ -425,18 +425,18 @@ void CRenderer::Tick( const CScene& Scene )
 
     // Update camera-buffer
     SCameraBufferDesc CamBuff;
-    CamBuff.ViewProjection    = Scene.GetCamera()->GetViewProjectionMatrix();
-    CamBuff.View              = Scene.GetCamera()->GetViewMatrix();
-    CamBuff.ViewInv           = Scene.GetCamera()->GetViewInverseMatrix();
-    CamBuff.Projection        = Scene.GetCamera()->GetProjectionMatrix();
-    CamBuff.ProjectionInv     = Scene.GetCamera()->GetProjectionInverseMatrix();
+    CamBuff.ViewProjection = Scene.GetCamera()->GetViewProjectionMatrix();
+    CamBuff.View = Scene.GetCamera()->GetViewMatrix();
+    CamBuff.ViewInv = Scene.GetCamera()->GetViewInverseMatrix();
+    CamBuff.Projection = Scene.GetCamera()->GetProjectionMatrix();
+    CamBuff.ProjectionInv = Scene.GetCamera()->GetProjectionInverseMatrix();
     CamBuff.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
-    CamBuff.Position          = Scene.GetCamera()->GetPosition();
-    CamBuff.Forward           = Scene.GetCamera()->GetForward();
-    CamBuff.Right             = Scene.GetCamera()->GetRight();
-    CamBuff.NearPlane         = Scene.GetCamera()->GetNearPlane();
-    CamBuff.FarPlane          = Scene.GetCamera()->GetFarPlane();
-    CamBuff.AspectRatio       = Scene.GetCamera()->GetAspectRatio();
+    CamBuff.Position = Scene.GetCamera()->GetPosition();
+    CamBuff.Forward = Scene.GetCamera()->GetForward();
+    CamBuff.Right = Scene.GetCamera()->GetRight();
+    CamBuff.NearPlane = Scene.GetCamera()->GetNearPlane();
+    CamBuff.FarPlane = Scene.GetCamera()->GetFarPlane();
+    CamBuff.AspectRatio = Scene.GetCamera()->GetAspectRatio();
 
     PrepareGBufferCmdList.TransitionBuffer( Resources.CameraBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest );
 
@@ -708,8 +708,8 @@ void CRenderer::Tick( const CScene& Scene )
 
         CRHICommandQueue::Get().ExecuteCommandLists( CmdLists, ArrayCount( CmdLists ) );
 
-        FrameStatistics.NumDrawCalls      = CRHICommandQueue::Get().GetNumDrawCalls();
-        FrameStatistics.NumDispatchCalls  = CRHICommandQueue::Get().GetNumDispatchCalls();
+        FrameStatistics.NumDrawCalls = CRHICommandQueue::Get().GetNumDrawCalls();
+        FrameStatistics.NumDispatchCalls = CRHICommandQueue::Get().GetNumDispatchCalls();
         FrameStatistics.NumRenderCommands = CRHICommandQueue::Get().GetNumCommands();
     }
 
@@ -764,6 +764,13 @@ void CRenderer::Release()
     GPUProfiler.Reset();
 
     FrameStatistics.Reset();
+
+    CApplication& Application = CApplication::Get();
+    Application.RemoveWindow( TextureDebugger );
+    TextureDebugger.Reset();
+
+    Application.RemoveWindow( InfoWindow );
+    InfoWindow.Reset();
 }
 
 void CRenderer::OnWindowResize( const SWindowResizeEvent& Event )

@@ -2,7 +2,7 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
-void* operator new( size_t Size, CCommandAllocator& Allocator )
+void* operator new(size_t Size, CCommandAllocator& Allocator)
 {
     return Allocator.Allocate( static_cast<uint32>(Size), STANDARD_ALIGNMENT );
 }
@@ -12,7 +12,7 @@ void* operator new[]( size_t Size, CCommandAllocator& Allocator )
     return Allocator.Allocate( static_cast<uint32>(Size), STANDARD_ALIGNMENT );
 }
 
-void operator delete ( void*, CCommandAllocator& )
+void operator delete (void*, CCommandAllocator&)
 {
 }
 
@@ -55,8 +55,8 @@ void* CCommandAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
         DiscardedMemory.Emplace( CurrentMemory );
 
         // Allocate a new block of memory
-        const uint64 NewSize = NMath::Max(Size + Size, AlignedSize);
-        
+        const uint64 NewSize = NMath::Max( Size + Size, AlignedSize );
+
         CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc( NewSize ));
         Assert( CurrentMemory != nullptr );
 

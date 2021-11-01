@@ -233,6 +233,7 @@ public:
     }
 
 private:
+
     FORCEINLINE void Release() noexcept
     {
         if ( Ptr )

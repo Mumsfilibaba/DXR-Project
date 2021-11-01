@@ -11,10 +11,10 @@ struct SMaterialDesc
     CVector3 Albedo = CVector3( 1.0f );
     float Roughness = 0.0f;
 
-    float Metallic     = 0.0f;
-    float AO           = 0.5f;
+    float Metallic = 0.0f;
+    float AO = 0.5f;
     int32 EnableHeight = 0;
-    int32 EnableMask   = 0;
+    int32 EnableMask = 0;
 };
 
 class ENGINE_API CMaterial

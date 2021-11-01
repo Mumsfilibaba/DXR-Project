@@ -13,8 +13,8 @@
 enum class ERHIModule : uint32
 {
     Unknown = 0,
-    Null    = 1,
-    D3D12   = 2,
+    Null = 1,
+    D3D12 = 2,
 };
 
 inline const char* ToString( ERHIModule RenderLayerApi )
@@ -37,7 +37,7 @@ RHI_API void ReleaseRHI();
 class RHI_API CRHIModule : public CDefaultEngineModule
 {
 public:
-    
+
     /* Creates the core RHI object */
     virtual class CRHICore* CreateCore() = 0;
 

@@ -23,11 +23,11 @@ void CGameConsoleWindow::Tick()
 {
     TSharedRef<CCoreWindow> MainWindow = CApplication::Get().GetMainViewport();
 
-    const uint32 WindowWidth  = MainWindow->GetWidth();
+    const uint32 WindowWidth = MainWindow->GetWidth();
     const uint32 WindowHeight = MainWindow->GetHeight();
     const ImVec2 WindowPadding( 4.0f, 1.0f );
     const ImVec2 Offset( 8.0f, 0.0f );
-    
+
     const float Width = WindowWidth - (WindowPadding.x * 4.0f);
     const float Height = 200;
 
@@ -79,7 +79,7 @@ void CGameConsoleWindow::Tick()
             const TPair<IConsoleObject*, CString>& Candidate = Candidates[i];
             IsActiveIndex = (CandidatesIndex == i);
 
-            ColumnWidth = NMath::Max(ColumnWidth, ImGui::CalcTextSize( Candidate.Second.CStr() ).x);
+            ColumnWidth = NMath::Max( ColumnWidth, ImGui::CalcTextSize( Candidate.Second.CStr() ).x );
 
             ImGui::PushID( i );
             if ( ImGui::Selectable( Candidate.Second.CStr(), &IsActiveIndex ) )
@@ -259,7 +259,7 @@ int32 CGameConsoleWindow::TextCallback( ImGuiInputTextCallbackData* Data )
     {
         case ImGuiInputTextFlags_CallbackEdit:
         {
-            const char* WordEnd   = Data->Buf + Data->CursorPos;
+            const char* WordEnd = Data->Buf + Data->CursorPos;
             const char* WordStart = WordEnd;
             while ( WordStart > Data->Buf )
             {
@@ -274,7 +274,7 @@ int32 CGameConsoleWindow::TextCallback( ImGuiInputTextCallbackData* Data )
 
             Candidates.Clear();
             CandidateSelectionChanged = true;
-            CandidatesIndex           = -1;
+            CandidatesIndex = -1;
 
             const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
             if ( WordLength <= 0 )

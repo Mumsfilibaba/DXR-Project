@@ -48,7 +48,7 @@ public:
     }
 
 private:
-    
+
     CModuleManager()
         : ModuleNames()
         , Modules()

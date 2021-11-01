@@ -32,7 +32,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         CreateInfo.AddressU = ESamplerMode::Clamp;
         CreateInfo.AddressV = ESamplerMode::Clamp;
         CreateInfo.AddressW = ESamplerMode::Clamp;
-        CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
+        CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
 
         FrameResources.GBufferSampler = RHICreateSamplerState( CreateInfo );
         if ( !FrameResources.GBufferSampler )

@@ -86,7 +86,9 @@ class CCoreWindow : public CRefCounted
 public:
 
     /* Initializes the window */
-    virtual bool Init( const CString& Title, uint32 Width, uint32 Height, SWindowStyle Style ) { return true; }
+    virtual bool Init( const CString& Title, uint32 Width, uint32 Height, SWindowStyle Style ) {
+        return true;
+    }
 
     /* Shows the window */
     virtual void Show( bool Maximized ) {}
@@ -107,10 +109,14 @@ public:
     virtual void ToggleFullscreen() {}
 
     /* Checks if the underlaying native handle of the window is valid */
-    virtual bool IsValid() const { return false; }
+    virtual bool IsValid() const {
+        return false;
+    }
 
     /* Checks if this window is the currently active window */
-    virtual bool IsActiveWindow() const { return false; }
+    virtual bool IsActiveWindow() const {
+        return false;
+    }
 
     /* Sets the title */
     virtual void SetTitle( const CString& Title ) {}
@@ -125,13 +131,19 @@ public:
     virtual void GetWindowShape( SWindowShape& OutWindowShape ) const {}
 
     /* Retrieve the width of the window */
-    virtual uint32 GetWidth()  const { return 0; }
+    virtual uint32 GetWidth()  const {
+        return 0;
+    }
 
     /* Retrieve the height of the window */
-    virtual uint32 GetHeight() const { return 0; }
+    virtual uint32 GetHeight() const {
+        return 0;
+    }
 
     /* Retrieve the native handle */
-    virtual PlatformWindowHandle GetNativeHandle() const { return nullptr; }
+    virtual PlatformWindowHandle GetNativeHandle() const {
+        return nullptr;
+    }
 
     /* Retrieve the style of the window */
     FORCEINLINE SWindowStyle GetStyle() const

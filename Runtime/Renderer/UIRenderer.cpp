@@ -108,13 +108,13 @@ bool CUIRenderer::Init()
     ImGui::StyleColorsDark();
 
     ImGuiStyle& Style = ImGui::GetStyle();
-    Style.WindowRounding    = 0.0f;
-    Style.FrameRounding     = 0.0f;
-    Style.GrabRounding      = 0.0f;
-    Style.TabRounding       = 0.0f;
-    Style.WindowBorderSize  = 0.0f;
+    Style.WindowRounding = 0.0f;
+    Style.FrameRounding = 0.0f;
+    Style.GrabRounding = 0.0f;
+    Style.TabRounding = 0.0f;
+    Style.WindowBorderSize = 0.0f;
     Style.ScrollbarRounding = 0.0f;
-    Style.ScrollbarSize     = 12.0f;
+    Style.ScrollbarSize = 12.0f;
 
     Style.Colors[ImGuiCol_WindowBg].x = 0.2f;
     Style.Colors[ImGuiCol_WindowBg].y = 0.2f;
@@ -327,7 +327,7 @@ bool CUIRenderer::Init()
     }
 
     SDepthStencilStateCreateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthEnable    = false;
+    DepthStencilStateInfo.DepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
@@ -356,14 +356,14 @@ bool CUIRenderer::Init()
     }
 
     SBlendStateCreateInfo BlendStateInfo;
-    BlendStateInfo.IndependentBlendEnable         = false;
-    BlendStateInfo.RenderTarget[0].BlendEnable    = true;
-    BlendStateInfo.RenderTarget[0].SrcBlend       = EBlend::SrcAlpha;
-    BlendStateInfo.RenderTarget[0].SrcBlendAlpha  = EBlend::InvSrcAlpha;
-    BlendStateInfo.RenderTarget[0].DestBlend      = EBlend::InvSrcAlpha;
+    BlendStateInfo.IndependentBlendEnable = false;
+    BlendStateInfo.RenderTarget[0].BlendEnable = true;
+    BlendStateInfo.RenderTarget[0].SrcBlend = EBlend::SrcAlpha;
+    BlendStateInfo.RenderTarget[0].SrcBlendAlpha = EBlend::InvSrcAlpha;
+    BlendStateInfo.RenderTarget[0].DestBlend = EBlend::InvSrcAlpha;
     BlendStateInfo.RenderTarget[0].DestBlendAlpha = EBlend::Zero;
-    BlendStateInfo.RenderTarget[0].BlendOpAlpha   = EBlendOp::Add;
-    BlendStateInfo.RenderTarget[0].BlendOp        = EBlendOp::Add;
+    BlendStateInfo.RenderTarget[0].BlendOpAlpha = EBlendOp::Add;
+    BlendStateInfo.RenderTarget[0].BlendOp = EBlendOp::Add;
 
     TSharedRef<CRHIBlendState> BlendStateBlending = RHICreateBlendState( BlendStateInfo );
     if ( !BlendStateBlending )
@@ -390,15 +390,15 @@ bool CUIRenderer::Init()
     }
 
     SGraphicsPipelineStateCreateInfo PSOProperties;
-    PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PShader.Get();
-    PSOProperties.InputLayoutState                       = InputLayout.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.BlendState                             = BlendStateBlending.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
+    PSOProperties.ShaderState.VertexShader = VShader.Get();
+    PSOProperties.ShaderState.PixelShader = PShader.Get();
+    PSOProperties.InputLayoutState = InputLayout.Get();
+    PSOProperties.DepthStencilState = DepthStencilState.Get();
+    PSOProperties.BlendState = BlendStateBlending.Get();
+    PSOProperties.RasterizerState = RasterizerState.Get();
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
+    PSOProperties.PipelineFormats.NumRenderTargets = 1;
+    PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
 
     PipelineState = RHICreateGraphicsPipelineState( PSOProperties );
     if ( !PipelineState )
@@ -506,7 +506,7 @@ void CUIRenderer::BeginTick()
     Window->GetWindowShape( CurrentWindowShape );
 
     CTimestamp Delta = FrameClock.GetDeltaTime();
-    UIState.DeltaTime   = static_cast<float>(Delta.AsSeconds());
+    UIState.DeltaTime = static_cast<float>(Delta.AsSeconds());
     UIState.DisplaySize = ImVec2( float( CurrentWindowShape.Width ), float( CurrentWindowShape.Height ) );
     UIState.DisplayFramebufferScale = ImVec2( 1.0f, 1.0f );
 
@@ -514,9 +514,9 @@ void CUIRenderer::BeginTick()
     UIState.MousePos = ImVec2( static_cast<float>(Position.x), static_cast<float>(Position.y) );
 
     SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
-    UIState.KeyCtrl  = KeyState.IsCtrlDown;
+    UIState.KeyCtrl = KeyState.IsCtrlDown;
     UIState.KeyShift = KeyState.IsShiftDown;
-    UIState.KeyAlt   = KeyState.IsAltDown;
+    UIState.KeyAlt = KeyState.IsAltDown;
     UIState.KeySuper = KeyState.IsSuperKeyDown;
 
     if ( !(UIState.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) )

@@ -106,32 +106,32 @@ bool CEngine::Init()
 
     /* Create material sampler (Used for now by all materials) */
     SSamplerStateCreateInfo SamplerCreateInfo;
-    SamplerCreateInfo.AddressU       = ESamplerMode::Wrap;
-    SamplerCreateInfo.AddressV       = ESamplerMode::Wrap;
-    SamplerCreateInfo.AddressW       = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressU = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressV = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressW = ESamplerMode::Wrap;
     SamplerCreateInfo.ComparisonFunc = EComparisonFunc::Never;
-    SamplerCreateInfo.Filter         = ESamplerFilter::Anistrotopic;
-    SamplerCreateInfo.MaxAnisotropy  = 16;
-    SamplerCreateInfo.MaxLOD         = FLT_MAX;
-    SamplerCreateInfo.MinLOD         = -FLT_MAX;
-    SamplerCreateInfo.MipLODBias     = 0.0f;
+    SamplerCreateInfo.Filter = ESamplerFilter::Anistrotopic;
+    SamplerCreateInfo.MaxAnisotropy = 16;
+    SamplerCreateInfo.MaxLOD = FLT_MAX;
+    SamplerCreateInfo.MinLOD = -FLT_MAX;
+    SamplerCreateInfo.MipLODBias = 0.0f;
 
     BaseMaterialSampler = RHICreateSamplerState( SamplerCreateInfo );
 
     /* Base material */
     SMaterialDesc MaterialDesc;
-    MaterialDesc.AO           = 1.0f;
-    MaterialDesc.Metallic     = 0.0f;
-    MaterialDesc.Roughness    = 1.0f;
+    MaterialDesc.AO = 1.0f;
+    MaterialDesc.Metallic = 0.0f;
+    MaterialDesc.Roughness = 1.0f;
     MaterialDesc.EnableHeight = 0;
-    MaterialDesc.Albedo       = CVector3( 1.0f );
+    MaterialDesc.Albedo = CVector3( 1.0f );
 
     BaseMaterial = MakeShared<CMaterial>( MaterialDesc );
-    BaseMaterial->AlbedoMap    = GEngine->BaseTexture;
-    BaseMaterial->NormalMap    = GEngine->BaseNormal;
+    BaseMaterial->AlbedoMap = GEngine->BaseTexture;
+    BaseMaterial->NormalMap = GEngine->BaseNormal;
     BaseMaterial->RoughnessMap = GEngine->BaseTexture;
-    BaseMaterial->AOMap        = GEngine->BaseTexture;
-    BaseMaterial->MetallicMap  = GEngine->BaseTexture;
+    BaseMaterial->AOMap = GEngine->BaseTexture;
+    BaseMaterial->MetallicMap = GEngine->BaseTexture;
     BaseMaterial->Init();
 
     /* Create the start scene */

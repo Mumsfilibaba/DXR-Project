@@ -18,7 +18,7 @@ public:
     virtual const char* GetName() = 0;
 };
 
-typedef IEngineModule*(*PFNLoadEngineModule)();
+typedef IEngineModule* (*PFNLoadEngineModule)();
 
 /* Default EngineModule that implements empty Load and Unload functions for modules that do not require these */
 class CDefaultEngineModule : public IEngineModule
@@ -32,7 +32,7 @@ public:
     }
 
     /* Called before the module is unloaded by the application */
-    virtual bool Unload() override 
+    virtual bool Unload() override
     {
         return true;
     }

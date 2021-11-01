@@ -26,14 +26,14 @@ void CTextureDebugWindow::Tick()
     {
         // NOTE: This may need to be dynamic
         constexpr float InvAspectRatio = 16.0f / 9.0f;
-        constexpr float AspectRatio    = 9.0f / 16.0f;
+        constexpr float AspectRatio = 9.0f / 16.0f;
 
         TSharedRef<CCoreWindow> MainViewport = CApplication::Get().GetMainViewport();
 
-        const uint32 WindowWidth  = MainViewport->GetWidth();
+        const uint32 WindowWidth = MainViewport->GetWidth();
         const uint32 WindowHeight = MainViewport->GetHeight();
-        
-        const float Width  = NMath::Max( WindowWidth * 0.6f, 400.0f );
+
+        const float Width = NMath::Max( WindowWidth * 0.6f, 400.0f );
         const float Height = WindowHeight * 0.75f;
 
         ImGui::SetNextWindowPos( ImVec2( float( WindowWidth ) * 0.5f, float( WindowHeight ) * 0.175f ), ImGuiCond_Appearing, ImVec2( 0.5f, 0.0f ) );
@@ -62,13 +62,13 @@ void CTextureDebugWindow::Tick()
                 ImGui::PushID( i );
 
                 constexpr float MenuImageSize = 96.0f;
-                
+
                 int32 FramePadding = 2;
-                
-                ImVec2 Size    = ImVec2( MenuImageSize * InvAspectRatio, MenuImageSize );
-                ImVec2 Uv0     = ImVec2( 0.0f, 0.0f );
-                ImVec2 Uv1     = ImVec2( 1.0f, 1.0f );
-                ImVec4 BgCol   = ImVec4( 0.0f, 0.0f, 0.0f, 1.0f );
+
+                ImVec2 Size = ImVec2( MenuImageSize * InvAspectRatio, MenuImageSize );
+                ImVec2 Uv0 = ImVec2( 0.0f, 0.0f );
+                ImVec2 Uv1 = ImVec2( 1.0f, 1.0f );
+                ImVec4 BgCol = ImVec4( 0.0f, 0.0f, 0.0f, 1.0f );
                 ImVec4 TintCol = ImVec4( 1.0f, 1.0f, 1.0f, 1.0f );
 
                 SUIImage* CurrImage = &DebugTextures[i];
@@ -92,9 +92,9 @@ void CTextureDebugWindow::Tick()
 
             ImGui::EndChild();
 
-            const float ImageWidth  = Width * 0.985f;
+            const float ImageWidth = Width * 0.985f;
             const float ImageHeight = ImageWidth * AspectRatio;
-            const int32 ImageIndex  = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
+            const int32 ImageIndex = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
 
             SUIImage* CurrImage = &DebugTextures[ImageIndex];
             ImGui::Image( CurrImage, ImVec2( ImageWidth, ImageHeight ) );

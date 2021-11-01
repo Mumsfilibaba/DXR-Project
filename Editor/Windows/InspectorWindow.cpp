@@ -464,9 +464,9 @@ void CInspectorWindow::DrawSceneInfo()
 
 void CInspectorWindow::Tick()
 {
-    const uint32 WindowWidth  = GEngine->MainWindow->GetWidth();
+    const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
     const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
-    const float Width  = NMath::Max( WindowWidth * 0.3f, 400.0f );
+    const float Width = NMath::Max( WindowWidth * 0.3f, 400.0f );
     const float Height = WindowHeight * 0.7f;
 
     ImGui::PushStyleColor( ImGuiCol_ResizeGrip, 0 );

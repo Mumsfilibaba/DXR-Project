@@ -12,7 +12,7 @@ namespace NTime
     template<typename T>
     inline constexpr T ToMicroseconds( T Nanoseconds )
     {
-        return Nanoseconds / T(1000);
+        return Nanoseconds / T( 1000 );
     }
 
     /* Returns the number of milliseconds from nanoseconds */

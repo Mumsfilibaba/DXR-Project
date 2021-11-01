@@ -180,7 +180,7 @@ void CGPUProfilerWindow::DrawWindow()
     // Draw DebugWindow with DebugStrings
     TSharedRef<CCoreWindow> MainViewport = CApplication::Get().GetMainViewport();
 
-    const uint32 WindowWidth  = MainViewport->GetWidth();
+    const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();
 
     const float Width = NMath::Max( WindowWidth * 0.6f, 400.0f );

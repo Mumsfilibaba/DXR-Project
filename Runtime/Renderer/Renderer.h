@@ -45,14 +45,14 @@ public:
 
 struct SRendererStatistics
 {
-    uint32 NumDrawCalls      = 0;
-    uint32 NumDispatchCalls  = 0;
+    uint32 NumDrawCalls = 0;
+    uint32 NumDispatchCalls = 0;
     uint32 NumRenderCommands = 0;
 
     void Reset()
     {
-        NumDrawCalls      = 0;
-        NumDispatchCalls  = 0;
+        NumDrawCalls = 0;
+        NumDispatchCalls = 0;
         NumRenderCommands = 0;
     }
 };
@@ -83,7 +83,7 @@ public:
         return TextureDebugger;
     }
 
-    FORCEINLINE const SRendererStatistics& GetStatistics() const 
+    FORCEINLINE const SRendererStatistics& GetStatistics() const
     {
         return FrameStatistics;
     }

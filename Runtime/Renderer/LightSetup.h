@@ -44,7 +44,7 @@ struct SDirectionalLightData
 
     CVector3 Direction = CVector3( 0.0f, -1.0f, 0.0f );
     float MaxShadowBias = 0.05f;
-    
+
     CVector3 Up = CVector3( 0.0f, 0.0f, -1.0f );
     float LightSize;
 };
@@ -52,7 +52,7 @@ struct SDirectionalLightData
 struct RENDERER_API SLightSetup
 {
     const EFormat ShadowMaskFormat = EFormat::R8_Unorm;
-    const EFormat ShadowMapFormat  = EFormat::D32_Float;
+    const EFormat ShadowMapFormat = EFormat::D32_Float;
     const EFormat LightProbeFormat = EFormat::R11G11B10_Float;
 
     const uint32 MaxPointLights = 256;
@@ -61,9 +61,9 @@ struct RENDERER_API SLightSetup
 
     const uint16 CascadeSize = 4096;
 
-    const uint16 IrradianceSize         = 32;
+    const uint16 IrradianceSize = 32;
     const uint16 SpecularIrradianceSize = 256;
-    const uint16 PointLightShadowSize   = 512;
+    const uint16 PointLightShadowSize = 512;
 
     SLightSetup() = default;
     ~SLightSetup() = default;

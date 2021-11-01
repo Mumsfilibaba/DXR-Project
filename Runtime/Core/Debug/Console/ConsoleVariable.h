@@ -191,20 +191,20 @@ inline void TConsoleVariable<bool>::SetString( const CString& InValue )
     }
 }
 
-template<> 
+template<>
 inline CString TConsoleVariable<bool>::GetString() const
 {
     return Value ? "true" : "false";
 }
 
-template<> 
+template<>
 inline bool TConsoleVariable<bool>::IsBool() const
 {
     return true;
 }
 
 // String
-template<> 
+template<>
 inline void TConsoleVariable<CString>::SetInt( int32 InValue )
 {
     Value.Format( "%d", InValue );
@@ -231,7 +231,7 @@ inline void TConsoleVariable<CString>::SetString( const CString& InValue )
     OnChanged();
 }
 
-template<> 
+template<>
 inline bool TConsoleVariable<CString>::IsString() const
 {
     return true;

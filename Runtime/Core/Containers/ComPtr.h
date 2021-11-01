@@ -118,7 +118,7 @@ public:
     FORCEINLINE uint64 GetRefCount() const noexcept
     {
         Assert( IsValid() );
-        
+
         // There are no function to retrieve the refcount for COM-Objects, add a ref and then release it
         Ptr->AddRef();
         return Ptr->Release();

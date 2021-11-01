@@ -5,7 +5,7 @@ class CEditorMenuWidget : public IUIWindow
 {
 public:
 
-    CEditorMenuWidget()  = default;
+    CEditorMenuWidget() = default;
     ~CEditorMenuWidget() = default;
 
     /* Initializes the panel. The context handle should be set if the global context is not yet, this ensures that panels can be created from different DLLs*/

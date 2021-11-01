@@ -59,7 +59,7 @@ bool CEngineLoop::PreInit()
 
     // RenderAPI // TODO: Decide this via command line
     ERHIModule RenderApi =
-#if defined(PLATFORM_MACOS)
+    #if defined(PLATFORM_MACOS)
         ERHIModule::Null;
 #else
         ERHIModule::D3D12;
@@ -132,7 +132,7 @@ void CEngineLoop::Tick( CTimestamp Deltatime )
     // TODO: This should be bound via delegates?
     GApplicationModule->Tick( Deltatime );
 
-    LOG_INFO("Tick: " + ToString( Deltatime.AsMilliSeconds() ) );
+    LOG_INFO( "Tick: " + ToString( Deltatime.AsMilliSeconds() ) );
 
     // Run the engine, which means that all scene data etc. is updated
     GEngine->Tick( Deltatime );
@@ -158,7 +158,7 @@ bool CEngineLoop::Release()
     SafeDelete( GEngine );
 
     CTextureFactory::Release();
-    
+
     ReleaseRHI();
 
     CModuleManager::Get().ReleaseAllModules();

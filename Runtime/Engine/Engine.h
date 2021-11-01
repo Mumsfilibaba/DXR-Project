@@ -42,7 +42,7 @@ public:
 
     /* The main viewport */
     TSharedRef<CRHIViewport> MainViewport;
- 
+
     // TODO: Remove
     TSharedPtr<CApplicationUser> User;
 

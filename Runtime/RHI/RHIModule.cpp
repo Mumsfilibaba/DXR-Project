@@ -5,7 +5,7 @@
 
 #include "Core/Modules/ModuleManger.h"
 
-RHI_API CRHICore*           GRHICore        = nullptr;
+RHI_API CRHICore* GRHICore = nullptr;
 RHI_API IRHIShaderCompiler* GShaderCompiler = nullptr;
 
 static CRHIModule* LoadNullRHI()
@@ -19,7 +19,7 @@ bool InitRHI( ERHIModule InRenderApi )
     CRHIModule* RHIModule = nullptr;
     if ( InRenderApi == ERHIModule::D3D12 )
     {
-        RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>("D3D12RHI.dll");
+        RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>( "D3D12RHI.dll" );
     }
     else if ( InRenderApi == ERHIModule::Null )
     {
@@ -40,10 +40,10 @@ bool InitRHI( ERHIModule InRenderApi )
     }
 
     // Init RHI objects
-    
+
     // TODO: This should be in EngineConfig and/or CCommandLine
     const bool EnableDebug =
-#if ENABLE_API_DEBUGGING
+    #if ENABLE_API_DEBUGGING
         true;
 #else
         false;

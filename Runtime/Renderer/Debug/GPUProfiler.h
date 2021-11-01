@@ -80,7 +80,7 @@ struct SGPUProfileSample
 
 using GPUProfileSamplesTable = THashTable<CString, SGPUProfileSample, SStringHasher>;
 
-class RENDERER_API CGPUProfiler 
+class RENDERER_API CGPUProfiler
 {
 public:
 

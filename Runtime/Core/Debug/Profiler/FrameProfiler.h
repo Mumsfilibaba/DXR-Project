@@ -103,7 +103,7 @@ public:
     {
         return Instance;
     }
-    
+
     /* Enables the collection of samples (Resume) */
     static void Enable();
 

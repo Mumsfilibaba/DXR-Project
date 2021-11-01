@@ -19,10 +19,10 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
     }
 
     // TODO: Abstract the Win-Api
-    HMODULE Module = LoadLibraryA(ModuleName);
+    HMODULE Module = LoadLibraryA( ModuleName );
     if ( Module == NULL )
     {
-        LOG_ERROR( "Failed to find module '" + CString( ModuleName ) + "'");
+        LOG_ERROR( "Failed to find module '" + CString( ModuleName ) + "'" );
         return nullptr;
     }
 
@@ -36,7 +36,7 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
 
     // The pointer is owned by the ModuleManager and should not be released anywhere else
     IEngineModule* NewModule = LoadEngineModule();
-    if ( !NewModule || (NewModule && !NewModule->Load()))
+    if ( !NewModule || (NewModule && !NewModule->Load()) )
     {
         LOG_ERROR( "Failed to load module '" + CString( ModuleName ) + "', resulting interface was nullptr" );
         FreeLibrary( Module );
@@ -46,7 +46,7 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
     else
     {
         LOG_INFO( "Loaded module'" + CString( ModuleName ) + "'" );
-        
+
         TPair<IEngineModule*, PlatformModule> NewPair = MakePair<IEngineModule*, PlatformModule>( NewModule, Module );
         Modules.Emplace( NewPair );
         ModuleNames.Emplace( ModuleName );
@@ -60,11 +60,11 @@ IEngineModule* CModuleManager::GetEngineModule( const char* ModuleName )
     if ( Index >= 0 )
     {
         const TPair<IEngineModule*, PlatformModule>& Pair = Modules[Index];
-        
+
         IEngineModule* EngineModule = Pair.First;
         if ( EngineModule )
         {
-            LOG_WARNING("Module is loaded but does not contain an EngineModule interface");
+            LOG_WARNING( "Module is loaded but does not contain an EngineModule interface" );
             return nullptr;
         }
         else
@@ -100,11 +100,11 @@ bool CModuleManager::IsModuleLoaded( const char* ModuleName )
 
 void CModuleManager::UnloadModule( const char* ModuleName )
 {
-    int32 Index = GetModuleIndex(ModuleName);
+    int32 Index = GetModuleIndex( ModuleName );
     if ( Index >= 0 )
     {
         const TPair<IEngineModule*, PlatformModule>& Pair = Modules[Index];
-        
+
         IEngineModule* EngineModule = Pair.First;
         if ( EngineModule )
         {
@@ -114,8 +114,8 @@ void CModuleManager::UnloadModule( const char* ModuleName )
         HMODULE Module = Pair.Second;
         FreeLibrary( Module );
 
-        Modules.RemoveAt(Index);
-        ModuleNames.RemoveAt(Index);
+        Modules.RemoveAt( Index );
+        ModuleNames.RemoveAt( Index );
     }
 }
 

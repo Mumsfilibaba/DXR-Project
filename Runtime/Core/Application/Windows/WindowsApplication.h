@@ -47,7 +47,7 @@ public:
     }
 
     /* Returns the HINSTANCE of the application or retrieves it in case the application is not initialized */
-    static FORCEINLINE HINSTANCE GetInstanceStatic()
+    static FORCEINLINE HINSTANCE GetStaticInstance()
     {
         return InstancePtr ? InstancePtr->GetInstance() : static_cast<HINSTANCE>(GetModuleHandle( 0 ));
     }

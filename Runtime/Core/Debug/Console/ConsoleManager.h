@@ -37,13 +37,13 @@ public:
 
     /* Register a console command */
     void RegisterCommand( const CString& Name, IConsoleCommand* Object );
-    
+
     /* Register a console variable */
     void RegisterVariable( const CString& Name, IConsoleVariable* Variable );
 
     /* Finds a console-command, returns nullptr otherwise, including if the object is a variable */
     IConsoleCommand* FindCommand( const CString& Name );
-    
+
     /* Finds a console-variable, returns nullptr otherwise, including if the object is a command */
     IConsoleVariable* FindVariable( const CString& Name );
 

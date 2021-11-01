@@ -63,12 +63,12 @@ private:
 
     bool Init();
 
-    void OnKeyEvent( const SKeyEvent& Event );
+    void OnKeyEvent( const SKeyEvent & Event );
     void OnKeyTyped( SKeyTypedEvent Event );
-    
-    void OnMouseButtonEvent( const SMouseButtonEvent& Event );
-    void OnMouseScrolled( const SMouseScrolledEvent& Event );
-    
+
+    void OnMouseButtonEvent( const SMouseButtonEvent & Event );
+    void OnMouseScrolled( const SMouseScrolledEvent & Event );
+
     CUIInputHandler InputHandler;
 
     TArray<SUIImage*> RenderedImages;

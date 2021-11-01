@@ -12,7 +12,7 @@ public:
         return dbg_new CWindowsThread( InFunction );
     }
 
-    static TSharedRef<CWindowsThread> Make( ThreadFunction InFunction, const CString& InName )
+    static TSharedRef<CWindowsThread> Make( ThreadFunction InFunction, const CString & InName )
     {
         return dbg_new CWindowsThread( InFunction, InName );
     }

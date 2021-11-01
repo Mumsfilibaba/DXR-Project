@@ -18,7 +18,7 @@ class CORE_API CWindowsOutputConsole final : public CCoreOutputConsole
 public:
 
     /* Creates a new console, can only be called once */
-    static CWindowsOutputConsole* Make();
+    static CWindowsOutputConsole * Make();
 
     virtual void Print( const CString& Message ) override final;
     virtual void PrintLine( const CString& Message ) override final;

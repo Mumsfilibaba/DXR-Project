@@ -24,7 +24,7 @@ bool CApplication::Make()
     }
 
     Instance = TSharedPtr<CApplication>( dbg_new CApplication( Application ) );
-    
+
     // Set the application to listen to messages from the platform application
     Application->SetMessageListener( Instance );
 
@@ -63,18 +63,18 @@ TSharedRef<CCoreWindow> CApplication::MakeWindow()
 void CApplication::Tick( CTimestamp DeltaTime )
 {
     // Update all the UI windows
-    if (Renderer)
+    if ( Renderer )
     {
         Renderer->BeginTick();
 
         // Update all windows
         UIWindows.Foreach( []( const TSharedRef<IUIWindow>& Window )
         {
-            if (Window->IsTickable())
+            if ( Window->IsTickable() )
             {
                 Window->Tick();
             }
-        });
+        } );
 
         // Render all strings last
         RenderStrings();
@@ -202,7 +202,7 @@ void CApplication::RemoveInputHandler( CInputHandler* InputHandler )
 void CApplication::RegisterMainViewport( const TSharedRef<CCoreWindow>& NewMainViewport )
 {
     MainViewport = NewMainViewport;
-    if ( MainViewportChange.IsBound())
+    if ( MainViewportChange.IsBound() )
     {
         MainViewportChange.Broadcast( MainViewport );
     }
@@ -223,15 +223,15 @@ void CApplication::SetRenderer( const TSharedRef<IUIRenderer>& NewRenderer )
     INIT_CONTEXT( NewContext );
 
     // Init all the windows
-    UIWindows.Foreach([=]( const TSharedRef<IUIWindow>& Window )
+    UIWindows.Foreach( [=]( const TSharedRef<IUIWindow>& Window )
     {
         Window->InitContext( NewContext );
-    });
+    } );
 }
 
 void CApplication::AddWindow( const TSharedRef<IUIWindow>& NewWindow )
 {
-    if (!UIWindows.Contains(NewWindow))
+    if ( !UIWindows.Contains( NewWindow ) )
     {
         UIWindows.Emplace( NewWindow );
         if ( Renderer )
@@ -495,12 +495,12 @@ void CApplication::RenderStrings()
 
         ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( 0.3f, 0.3f, 0.3f, 0.6f ) );
 
-        const ImGuiWindowFlags WindowFlags = 
+        const ImGuiWindowFlags WindowFlags =
             ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoDecoration |
             ImGuiWindowFlags_NoSavedSettings;
 
-        ImGui::Begin( "DebugWindow", nullptr, WindowFlags);
+        ImGui::Begin( "DebugWindow", nullptr, WindowFlags );
         ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
 
         for ( const CString& String : DebugStrings )

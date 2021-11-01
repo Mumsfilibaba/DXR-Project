@@ -21,13 +21,13 @@ void CConsoleManager::Init()
     GClearHistory.GetExecutedDelgate().AddRaw( &Instance, &CConsoleManager::ClearHistory );
     INIT_CONSOLE_COMMAND( "ClearHistory", &GClearHistory );
 
-    GEcho.GetChangedDelegate().AddLambda([]( IConsoleVariable* InVariable ) -> void
+    GEcho.GetChangedDelegate().AddLambda( []( IConsoleVariable* InVariable ) -> void
     {
         if ( InVariable->IsString() )
         {
             Instance.PrintMessage( InVariable->GetString(), EConsoleSeverity::Info );
         }
-    });
+    } );
 
     INIT_CONSOLE_VARIABLE( "Echo", &GEcho );
 }
@@ -111,7 +111,7 @@ void CConsoleManager::FindCandidates( const CStringView& CandidateName, TArray<T
         {
             const char* Command = ObjectName.CStr();
             const char* WordIt = CandidateName.CStr();
-            
+
             int32 CharDiff = -1;
             while ( Length > 0 && (CharDiff = (toupper( *WordIt ) - toupper( *Command ))) == 0 )
             {

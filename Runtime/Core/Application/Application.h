@@ -29,7 +29,7 @@ public:
 
     /* Creates a standard main application */
     static bool Make();
-    
+
     /* Init the singleton from an existing application - Used for classes inheriting from CApplication */
     static bool Make( const TSharedPtr<CApplication>& InApplication );
 
@@ -136,7 +136,7 @@ public:
         return PlatformApplication->GetCursor();
     }
 
-    FORCEINLINE bool IsRunning() const 
+    FORCEINLINE bool IsRunning() const
     {
         return Running;
     }
@@ -256,7 +256,7 @@ protected:
 
     // Is false when the platform application reports that the application should exit
     bool Running = true;
-    
+
     static TSharedPtr<CApplication> Instance;
 };
 
