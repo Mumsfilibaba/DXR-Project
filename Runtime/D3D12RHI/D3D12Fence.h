@@ -2,17 +2,17 @@
 #include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
 
-class CD3D12FenceHandle : public CD3D12DeviceChild
+class CD3D12Fence : public CD3D12DeviceChild
 {
 public:
-    FORCEINLINE CD3D12FenceHandle( CD3D12Device* InDevice )
+    FORCEINLINE CD3D12Fence( CD3D12Device* InDevice )
         : CD3D12DeviceChild( InDevice )
         , Fence( nullptr )
         , Event( 0 )
     {
     }
 
-    FORCEINLINE ~CD3D12FenceHandle()
+    FORCEINLINE ~CD3D12Fence()
     {
         if ( Event )
         {

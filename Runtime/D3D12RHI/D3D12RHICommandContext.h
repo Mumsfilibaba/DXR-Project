@@ -47,9 +47,12 @@ public:
 
 private:
     uint8* MappedMemory = nullptr;
+    
     uint32 SizeInBytes = 0;
     uint32 OffsetInBytes = 0;
+
     TComPtr<ID3D12Resource> Resource;
+
     TArray<TComPtr<ID3D12Resource>> GarbageResources;
 };
 
@@ -349,7 +352,7 @@ private:
     void InternalClearState();
 
     CD3D12CommandList  CmdList;
-    CD3D12FenceHandle   Fence;
+    CD3D12Fence        Fence;
     CD3D12CommandQueue CmdQueue;
 
     uint64 FenceValue = 0;
@@ -365,7 +368,8 @@ private:
 
     TSharedRef<CD3D12RHIGraphicsPipelineState> CurrentGraphicsPipelineState;
     TSharedRef<CD3D12RHIComputePipelineState>  CurrentComputePipelineState;
-    TSharedRef<CD3D12RootSignature>         CurrentRootSignature;
+
+    TSharedRef<CD3D12RootSignature> CurrentRootSignature;
 
     D3D12_PRIMITIVE_TOPOLOGY CurrentPrimitiveTolpology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 

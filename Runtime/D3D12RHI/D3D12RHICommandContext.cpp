@@ -48,9 +48,9 @@ void CD3D12ResourceBarrierBatcher::AddTransitionBarrier( ID3D12Resource* Resourc
         D3D12_RESOURCE_BARRIER Barrier;
         CMemory::Memzero( &Barrier );
 
-        Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        Barrier.Transition.pResource = Resource;
-        Barrier.Transition.StateAfter = AfterState;
+        Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        Barrier.Transition.pResource   = Resource;
+        Barrier.Transition.StateAfter  = AfterState;
         Barrier.Transition.StateBefore = BeforeState;
         Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 

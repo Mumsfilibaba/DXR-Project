@@ -36,7 +36,7 @@ public:
         }
     }
 
-    FORCEINLINE bool SignalFence( CD3D12FenceHandle& Fence, uint64 FenceValue )
+    FORCEINLINE bool SignalFence( CD3D12Fence& Fence, uint64 FenceValue )
     {
         HRESULT Result = Queue->Signal( Fence.GetFence(), FenceValue );
         if ( Result == DXGI_ERROR_DEVICE_REMOVED )
@@ -47,7 +47,7 @@ public:
         return SUCCEEDED( Result );
     }
 
-    FORCEINLINE bool WaitForFence( CD3D12FenceHandle& Fence, uint64 FenceValue )
+    FORCEINLINE bool WaitForFence( CD3D12Fence& Fence, uint64 FenceValue )
     {
         HRESULT Result = Queue->Wait( Fence.GetFence(), FenceValue );
         if ( Result == DXGI_ERROR_DEVICE_REMOVED )
