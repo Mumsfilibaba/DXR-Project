@@ -9,6 +9,8 @@
 #include "Core/Containers/Pair.h"
 #include "Core/Debug/Console/IConsoleObject.h"
 
+#include <imgui.h>
+
 class CConsoleInputHandler final : public CInputHandler
 {
 public:
@@ -22,7 +24,7 @@ public:
     virtual bool HandleKeyEvent( const SKeyEvent& KeyEvent ) override final
     {
         HandleKeyEventDelegate.Execute( KeyEvent );
-        return ConsoleActivated;
+        return ConsoleToggled;
     }
 
     virtual uint32 GetPriority() const override final
@@ -30,18 +32,18 @@ public:
         return static_cast<uint32>(-1);
     }
 
-    bool ConsoleActivated = false;
+    bool ConsoleToggled = false;
 };
 
 /* Panel that render the console window */
 class CGameConsoleWindow final : public IUIWindow
 {
+    INTERFACE_GENERATE_BODY();
+
 public:
 
+    /* Create and initialize the console window */
     static TSharedRef<CGameConsoleWindow> Make();
-
-    /* Initializes the panel */
-    virtual void InitContext( UIContextHandle ContextHandle ) override final;
 
     /* Update and render the console */
     virtual void Tick() override final;

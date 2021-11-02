@@ -14,17 +14,11 @@ TConsoleVariable<bool> GDrawFps( false );
 
 TSharedRef<CFrameProfilerWindow> CFrameProfilerWindow::Make()
 {
-    return dbg_new CFrameProfilerWindow();
-}
-
-void CFrameProfilerWindow::InitContext( UIContextHandle ContextHandle )
-{
-    // Context
-    INIT_CONTEXT( ContextHandle );
-
     // Console Variables
     INIT_CONSOLE_VARIABLE( "r.DrawFps", &GDrawFps );
     INIT_CONSOLE_VARIABLE( "r.DrawFrameProfiler", &GDrawFrameProfiler );
+    
+    return dbg_new CFrameProfilerWindow();
 }
 
 void CFrameProfilerWindow::Tick()

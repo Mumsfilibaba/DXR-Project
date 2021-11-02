@@ -7,15 +7,11 @@
 
 class CTextureDebugWindow : public IUIWindow
 {
+    INTERFACE_GENERATE_BODY
+
 public:
 
-    static TSharedRef<CTextureDebugWindow> Make()
-    {
-        return dbg_new CTextureDebugWindow();
-    }
-
-    /* Initializes the panel. The context handle should be set if the global context is not yet, this ensures that panels can be created from different DLLs*/
-    virtual void InitContext( UIContextHandle ContextHandle ) override final;
+    static TSharedRef<CTextureDebugWindow> Make();
 
     /* Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;

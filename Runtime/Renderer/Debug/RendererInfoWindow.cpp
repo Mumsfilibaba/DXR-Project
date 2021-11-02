@@ -9,13 +9,17 @@
 
 #include <imgui.h>
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 TConsoleVariable<bool> GDrawRendererInfo( false );
 
-void CRendererInfoWindow::InitContext( UIContextHandle ContextHandle )
-{
-    INIT_CONTEXT( ContextHandle );
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
+TSharedRef<CRendererInfoWindow> CRendererInfoWindow::Make()
+{
     INIT_CONSOLE_VARIABLE( "r.DrawRendererInfo", &GDrawRendererInfo );
+
+    return dbg_new CRendererInfoWindow();
 }
 
 void CRendererInfoWindow::Tick()

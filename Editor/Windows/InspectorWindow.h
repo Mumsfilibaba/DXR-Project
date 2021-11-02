@@ -3,13 +3,11 @@
 
 class CInspectorWindow : public IUIWindow
 {
+    INTERFACE_GENERATE_BODY();
+
 public:
 
-    CInspectorWindow() = default;
-    ~CInspectorWindow() = default;
-
-    /* Initializes the panel. The context handle should be set if the global context is not yet, this ensures that panels can be created from different DLLs*/
-    virtual void InitContext( UIContextHandle ContextHandle ) override final;
+    static TSharedRef<CInspectorWindow> Make();
 
     /* Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;
@@ -18,6 +16,9 @@ public:
     virtual bool IsTickable() override final;
 
 private:
+
+    CInspectorWindow() = default;
+    ~CInspectorWindow() = default;
 
     /* Draws the scene info, should only be called from tick */
     void DrawSceneInfo();

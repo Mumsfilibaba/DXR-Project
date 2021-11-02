@@ -181,7 +181,7 @@ void CApplication::InsertMessageHandler( TArray<MessageHandlerType*>& OutMessage
             else
             {
                 OutMessageHandlerArray.Insert( Index, NewMessageHandler );
-                break;
+                return;
             }
         }
 

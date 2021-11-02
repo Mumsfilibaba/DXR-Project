@@ -196,11 +196,6 @@ static void DrawRenderSettings()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CEditorMenuWidget::InitContext( UIContextHandle ContextHandle )
-{
-    INIT_CONTEXT( ContextHandle );
-}
-
 void CEditorMenuWidget::Tick()
 {
     if ( ImGui::BeginMainMenuBar() )

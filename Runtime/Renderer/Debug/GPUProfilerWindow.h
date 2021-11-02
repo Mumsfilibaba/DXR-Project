@@ -5,11 +5,11 @@
 
 class CGPUProfilerWindow : public IUIWindow
 {
-public:
-    static TSharedRef<CGPUProfilerWindow> Make();
+    INTERFACE_GENERATE_BODY
 
-    /* Initializes the panel. The context handle should be set if the global context is not yet, this ensures that panels can be created from different DLLs*/
-    virtual void InitContext( UIContextHandle ContextHandle ) override final;
+public:
+
+    static TSharedRef<CGPUProfilerWindow> Make();
 
     /* Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;

@@ -13,16 +13,10 @@ TConsoleVariable<bool> GDrawGPUProfiler( false );
 
 TSharedRef<CGPUProfilerWindow> CGPUProfilerWindow::Make()
 {
-    return dbg_new CGPUProfilerWindow();
-}
-
-void CGPUProfilerWindow::InitContext( UIContextHandle ContextHandle )
-{
-    // Context
-    INIT_CONTEXT( ContextHandle );
-
     // Console Variables
     INIT_CONSOLE_VARIABLE( "r.DrawGPUProfiler", &GDrawGPUProfiler );
+
+    return dbg_new CGPUProfilerWindow();
 }
 
 void CGPUProfilerWindow::Tick()

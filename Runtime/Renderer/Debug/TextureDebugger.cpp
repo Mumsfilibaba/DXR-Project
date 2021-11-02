@@ -11,13 +11,12 @@ TConsoleVariable<bool> GDrawTextureDebugger( false );
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CTextureDebugWindow::InitContext( UIContextHandle ContextHandle )
+static TSharedRef<CTextureDebugWindow> CTextureDebugWindow::Make()
 {
-    // Context
-    INIT_CONTEXT( ContextHandle );
-
     // Console Variables
     INIT_CONSOLE_VARIABLE( "r.DrawTextureDebugger", &GDrawTextureDebugger );
+
+    return dbg_new CTextureDebugWindow();
 }
 
 void CTextureDebugWindow::Tick()

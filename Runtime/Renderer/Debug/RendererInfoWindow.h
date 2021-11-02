@@ -4,15 +4,11 @@
 
 class CRendererInfoWindow : public IUIWindow
 {
+    INTERFACE_GENERATE_BODY
+
 public:
 
-    static TSharedRef<CRendererInfoWindow> Make()
-    {
-        return dbg_new CRendererInfoWindow();
-    }
-
-    /* Initializes the panel. The context handle should be set if the global context is not yet, this ensures that panels can be created from different DLLs*/
-    virtual void InitContext( UIContextHandle ContextHandle ) override final;
+    static TSharedRef<CRendererInfoWindow> Make();
 
     /* Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;

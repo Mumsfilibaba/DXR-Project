@@ -29,7 +29,7 @@ bool CEditorEngine::Init()
     /* Create Editor windows */
     CApplication& Application = CApplication::Get();
 
-    TSharedRef<CInspectorWindow> InspectorWindow = dbg_new CInspectorWindow();
+    TSharedRef<CInspectorWindow> InspectorWindow = CInspectorWindow::Make();
     Application.AddWindow( InspectorWindow );
 
     TSharedRef<CEditorMenuWidget> MenuBar = dbg_new CEditorMenuWidget();

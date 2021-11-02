@@ -7,16 +7,12 @@
 
 TSharedRef<CGameConsoleWindow> CGameConsoleWindow::Make()
 {
-    return dbg_new CGameConsoleWindow();
-}
-
-void CGameConsoleWindow::InitContext( UIContextHandle ContextHandle )
-{
-    // Make sure that there is a context available
-    INIT_CONTEXT( ContextHandle );
-
-    InputHandler.HandleKeyEventDelegate.BindRaw( this, &CGameConsoleWindow::HandleKeyPressedEvent );
-    CApplication::Get().AddInputHandler( &InputHandler );
+    TSharedRef<CGameConsoleWindow> NewWindow = dbg_new CGameConsoleWindow();
+    
+    NewWindow->InputHandler.HandleKeyEventDelegate.BindRaw( NewWindow.Get(), &CGameConsoleWindow::HandleKeyPressedEvent );
+    CApplication::Get().AddInputHandler( &NewWindow->InputHandler );
+    
+    return NewWindow;
 }
 
 void CGameConsoleWindow::Tick()
@@ -242,7 +238,7 @@ void CGameConsoleWindow::Tick()
 
 bool CGameConsoleWindow::IsTickable()
 {
-    return false;
+    return IsActive;
 }
 
 int32 CGameConsoleWindow::TextCallback( ImGuiInputTextCallbackData* Data )
@@ -413,14 +409,14 @@ int32 CGameConsoleWindow::TextCallback( ImGuiInputTextCallbackData* Data )
 
 void CGameConsoleWindow::HandleKeyPressedEvent( const SKeyEvent& Event )
 {
-    InputHandler.ConsoleActivated = false;
+    InputHandler.ConsoleToggled = false;
 
     if ( Event.IsDown )
     {
         if ( !Event.IsRepeat && Event.KeyCode == EKey::Key_GraveAccent )
         {
             IsActive = !IsActive;
-            InputHandler.ConsoleActivated = true;
+            InputHandler.ConsoleToggled = true;
         }
     }
 }

@@ -16,13 +16,12 @@ TConsoleVariable<bool> GShowSceneGraph( false );
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CInspectorWindow::InitContext( UIContextHandle ContextHandle )
+TSharedRef<CInspectorWindow> CInspectorWindow::Make()
 {
-    /* Context */
-    INIT_CONTEXT( ContextHandle );
-
     /* CVars */
     INIT_CONSOLE_VARIABLE( "ShowSceneGraph", &GShowSceneGraph );
+
+    return dbg_new CInspectorWindow();
 }
 
 void CInspectorWindow::DrawSceneInfo()
