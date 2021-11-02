@@ -15,7 +15,7 @@ public:
     virtual bool Unload() = 0;
 
     /* The name of the module */
-    virtual const char* GetName() = 0;
+    virtual const char* GetName() const = 0;
 };
 
 typedef IEngineModule* (*PFNLoadEngineModule)();

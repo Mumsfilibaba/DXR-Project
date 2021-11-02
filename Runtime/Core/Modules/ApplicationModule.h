@@ -26,7 +26,7 @@ public:
     virtual bool Unload() override;
 
     /* The name of the module */
-    virtual const char* GetName() override;
+    virtual const char* GetName() const override;
 };
 
 extern CORE_API CApplicationModule* GApplicationModule;

@@ -49,7 +49,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
             { "ENABLE_NORMAL_MAPPING",   "1" },
         };
 
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/GeometryPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/GeometryPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;
@@ -66,7 +66,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
             BaseVertexShader->SetName( "GeometryPass VertexShader" );
         }
 
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/GeometryPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/GeometryPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;
@@ -156,7 +156,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
 
     // PrePass
     {
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/PrePass.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/PrePass.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;
@@ -287,7 +287,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         FrameResources.IntegrationLUTSampler->SetName( "IntegrationLUT Sampler" );
     }
 
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/BRDFIntegationGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/BRDFIntegationGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -346,7 +346,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
     }
 
     {
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;
@@ -384,7 +384,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
             SShaderDefine( "DRAW_TILE_DEBUG", "1" )
         };
 
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DeferredLightPass.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/DeferredLightPass.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;
@@ -417,7 +417,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
     }
 
     {
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DepthReduction.hlsl", "ReductionMainInital", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/DepthReduction.hlsl", "ReductionMainInital", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;
@@ -450,7 +450,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
     }
 
     {
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DepthReduction.hlsl", "ReductionMain", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/DepthReduction.hlsl", "ReductionMain", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;

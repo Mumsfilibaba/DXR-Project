@@ -209,7 +209,7 @@ bool CD3D12RHIRayTracingScene::Build( CD3D12RHICommandContext& CmdContext, const
         SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
 
-        View = dbg_new CD3D12RHIShaderResourceView( GetDevice(), GD3D12RenderLayer->GetResourceOfflineDescriptorHeap() );
+        View = dbg_new CD3D12RHIShaderResourceView( GetDevice(), GD3D12RHICore->GetResourceOfflineDescriptorHeap() );
         if ( !View->Init() )
         {
             return false;

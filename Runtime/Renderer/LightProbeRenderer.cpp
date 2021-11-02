@@ -11,7 +11,7 @@ bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameR
     }
 
     TArray<uint8> Code;
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
     {
         LOG_ERROR( "Failed to compile IrradianceGen Shader" );
         CDebug::DebugBreak();
@@ -39,7 +39,7 @@ bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameR
         IrradianceGenPSO->SetName( "IrradianceGen PSO" );
     }
 
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
     {
         LOG_ERROR( "Failed to compile SpecularIrradianceGen Shader" );
         CDebug::DebugBreak();

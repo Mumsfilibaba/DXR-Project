@@ -40,7 +40,7 @@ bool CShadowMapRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameRe
             PerShadowMapBuffer->SetName( "Per ShadowMap Buffer" );
         }
 
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/ShadowMap.hlsl", "Point_VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/ShadowMap.hlsl", "Point_VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;
@@ -57,7 +57,7 @@ bool CShadowMapRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameRe
             PointLightVertexShader->SetName( "Point ShadowMap VertexShader" );
         }
 
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/ShadowMap.hlsl", "Point_PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/ShadowMap.hlsl", "Point_PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;
@@ -157,7 +157,7 @@ bool CShadowMapRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameRe
             PerCascadeBuffer->SetName( "Per Cascade Buffer" );
         }
 
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/ShadowMap.hlsl", "Cascade_VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/ShadowMap.hlsl", "Cascade_VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;
@@ -245,7 +245,7 @@ bool CShadowMapRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameRe
 
     // Cascade Matrix Generation
     {
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/CascadeMatrixGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/CascadeMatrixGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;
@@ -359,7 +359,7 @@ bool CShadowMapRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameRe
 
     // Directional Light ShadowMask
     {
-        if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/DirectionalShadowMaskGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+        if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/DirectionalShadowMaskGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
         {
             CDebug::DebugBreak();
             return false;

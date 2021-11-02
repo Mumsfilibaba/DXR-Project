@@ -1,7 +1,7 @@
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 
 #include "D3D12Device.h"
-#include "D3D12ShaderCompiler.h"
+#include "D3D12RHIShaderCompiler.h"
 #include "D3D12DescriptorHeap.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandAllocator.h"

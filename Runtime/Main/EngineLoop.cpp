@@ -3,9 +3,6 @@
 #include "Engine/Engine.h"
 #include "Engine/Resources/TextureFactory.h"
 
-#include "Renderer/UIRenderer.h"
-#include "Renderer/Renderer.h"
-
 #if PROJECT_EDITOR
 #include "EditorEngine.h"
 #endif
@@ -23,6 +20,10 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/InterlockedInt.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
+
+#include "Renderer/UIRenderer.h"
+#include "Renderer/Renderer.h"
+#include "Renderer/Debug/GPUProfiler.h"
 
 bool CEngineLoop::PreInit()
 {
@@ -67,6 +68,11 @@ bool CEngineLoop::PreInit()
     if ( !InitRHI( RenderApi ) )
     {
         return false;
+    }
+
+    if ( !CGPUProfiler::Init() )
+    {
+        LOG_ERROR( "CGPUProfiler failed to be initialized" );
     }
 
     if ( !CTextureFactory::Init() )
@@ -139,6 +145,9 @@ void CEngineLoop::Tick( CTimestamp Deltatime )
 
     // Update the profiler
     CFrameProfiler::Get().Tick();
+
+    // Update the GPUProfiler
+    CGPUProfiler::Get().Tick();
 
     // Finally render
     GRenderer.Tick( *GEngine->Scene );

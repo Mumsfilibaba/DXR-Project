@@ -806,7 +806,7 @@ void CRenderer::OnWindowResize( const SWindowResizeEvent& Event )
 bool CRenderer::InitBoundingBoxDebugPass()
 {
     TArray<uint8> ShaderCode;
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/Debug.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/Debug.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -823,7 +823,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         AABBVertexShader->SetName( "Debug VertexShader" );
     }
 
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/Debug.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/Debug.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -984,7 +984,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
 bool CRenderer::InitAA()
 {
     TArray<uint8> ShaderCode;
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/FullscreenVS.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/FullscreenVS.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -1001,7 +1001,7 @@ bool CRenderer::InitAA()
         VShader->SetName( "Fullscreen VertexShader" );
     }
 
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/PostProcessPS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/PostProcessPS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -1099,7 +1099,7 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/FXAA_PS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/FXAA_PS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -1134,7 +1134,7 @@ bool CRenderer::InitAA()
         SShaderDefine( "ENABLE_DEBUG", "1" )
     };
 
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/FXAA_PS.hlsl", "Main", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/FXAA_PS.hlsl", "Main", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -1191,7 +1191,7 @@ bool CRenderer::InitShadingImage()
     }
 
     TArray<uint8> ShaderCode;
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/ShadingImage.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/ShadingImage.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;

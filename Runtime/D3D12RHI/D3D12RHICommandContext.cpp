@@ -2,13 +2,13 @@
 #include "D3D12CommandQueue.h"
 #include "D3D12CommandList.h"
 #include "D3D12Helpers.h"
-#include "D3D12ShaderCompiler.h"
 #include "D3D12Shader.h"
 #include "D3D12RHICore.h"
 #include "D3D12RHIBuffer.h"
 #include "D3D12RHITexture.h"
 #include "D3D12RHIPipelineState.h"
 #include "D3D12RHIRayTracing.h"
+#include "D3D12RHIShaderCompiler.h"
 #include "D3D12RHITimestampQuery.h"
 #include "D3D12RHICommandContext.h"
 
@@ -249,8 +249,10 @@ bool CD3D12RHICommandContext::Init()
         return false;
     }
 
+    Assert( GD3D12ShaderCompiler != nullptr );
+
     TArray<uint8> Code;
-    if ( !GD3D12ShaderCompiler->CompileFromFile( "../DXR-Engine/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
+    if ( !GD3D12ShaderCompiler->CompileFromFile( "../Runtime/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
     {
         LOG_ERROR( "[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader" );
 
@@ -276,7 +278,7 @@ bool CD3D12RHICommandContext::Init()
         GenerateMipsTex2D_PSO->SetName( "GenerateMipsTex2D Gen PSO" );
     }
 
-    if ( !GD3D12ShaderCompiler->CompileFromFile( "../DXR-Engine/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
+    if ( !GD3D12ShaderCompiler->CompileFromFile( "../Runtime/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
     {
         LOG_ERROR( "[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader" );
         CDebug::DebugBreak();

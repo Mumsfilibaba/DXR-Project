@@ -196,7 +196,7 @@ bool CD3D12RHIViewport::RetriveBackBuffers()
 
     if ( BackBufferViews.Size() < (int32)NumBackBuffers )
     {
-        CD3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RenderLayer->GetRenderTargetOfflineDescriptorHeap();
+        CD3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RHICore->GetRenderTargetOfflineDescriptorHeap();
         BackBufferViews.Resize( NumBackBuffers );
         for ( TSharedRef<CD3D12RenderTargetView>& View : BackBufferViews )
         {

@@ -32,7 +32,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
     }
 
     TArray<uint8> ShaderCode;
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/SSAO.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/SSAO.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -152,7 +152,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
     Defines.Emplace( "HORIZONTAL_PASS", "1" );
 
     // Load shader
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -186,7 +186,7 @@ bool CScreenSpaceOcclusionRenderer::Init( SFrameResources& FrameResources )
     Defines.Clear();
     Defines.Emplace( "VERTICAL_PASS", "1" );
 
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;

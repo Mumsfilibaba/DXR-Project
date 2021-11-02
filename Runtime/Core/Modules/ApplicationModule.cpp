@@ -28,7 +28,7 @@ bool CApplicationModule::Unload()
     return Release();
 }
 
-const char* CApplicationModule::GetName()
+const char* CApplicationModule::GetName() const
 {
     return "ApplicationModule";
 }

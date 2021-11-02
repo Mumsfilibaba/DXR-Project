@@ -11,13 +11,17 @@
 
 class CD3D12RHICommandContext;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 template<typename TD3D12Texture>
 D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
 
 template<typename TD3D12Texture>
 bool IsTextureCube();
 
-class D3D12_API CD3D12RHICore : public CRHICore
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+class CD3D12RHICore : public CRHICore
 {
 public:
 
@@ -191,4 +195,4 @@ private:
     CD3D12OfflineDescriptorHeap* SamplerOfflineDescriptorHeap = nullptr;
 };
 
-extern CD3D12RHICore* GD3D12RenderLayer;
+extern CD3D12RHICore* GD3D12RHICore;

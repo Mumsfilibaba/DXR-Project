@@ -7,8 +7,6 @@
 #include "D3D12Fence.h"
 #include "D3D12RootSignature.h"
 #include "D3D12Helpers.h"
-#include "D3D12ShaderCompiler.h"
-#include "D3D12Shader.h"
 #include "D3D12RHICore.h"
 #include "D3D12RHIViews.h"
 #include "D3D12RHIRayTracing.h"
@@ -17,9 +15,10 @@
 #include "D3D12RHIBuffer.h"
 #include "D3D12RHISamplerState.h"
 #include "D3D12RHIViewport.h"
+#include "D3D12RHIShaderCompiler.h"
 #include "D3D12RHITimestampQuery.h"
 
-CD3D12RHICore* GD3D12RenderLayer = nullptr;
+CD3D12RHICore* GD3D12RHICore = nullptr;
 
 template<>
 inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12RHITexture2D>()
@@ -74,7 +73,7 @@ CD3D12RHICore::CD3D12RHICore()
     , Device( nullptr )
     , DirectCmdContext( nullptr )
 {
-    GD3D12RenderLayer = this;
+    GD3D12RHICore = this;
 }
 
 CD3D12RHICore::~CD3D12RHICore()
@@ -90,7 +89,7 @@ CD3D12RHICore::~CD3D12RHICore()
 
     SafeDelete( Device );
 
-    GD3D12RenderLayer = nullptr;
+    GD3D12RHICore = nullptr;
 }
 
 bool CD3D12RHICore::Init( bool EnableDebug )
@@ -141,6 +140,13 @@ bool CD3D12RHICore::Init( bool EnableDebug )
 
     SamplerOfflineDescriptorHeap = dbg_new CD3D12OfflineDescriptorHeap( Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
     if ( !SamplerOfflineDescriptorHeap->Init() )
+    {
+        return false;
+    }
+
+    // Shader has to be initialized here before the CommandContext
+    GD3D12ShaderCompiler = dbg_new CD3D12RHIShaderCompiler();
+    if (!GD3D12ShaderCompiler->Init())
     {
         return false;
     }

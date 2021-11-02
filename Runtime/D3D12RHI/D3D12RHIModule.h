@@ -1,14 +1,14 @@
 #pragma once
-#include "NullAPI.h"
+#include "D3D12API.h"
 
 #include "RHI/RHIModule.h"
 
-class CNullRHIModule final : public CRHIModule
+class CD3D12RHIModule final : public CRHIModule
 {
 public:
 
-    CNullRHIModule() = default;
-    ~CNullRHIModule() = default;
+    CD3D12RHIModule() = default;
+    ~CD3D12RHIModule() = default;
 
     /* Creates the core RHI object */
     virtual class CRHICore* CreateCore() override final;
@@ -16,6 +16,7 @@ public:
     /* Creates the RHI shader compiler */
     virtual class IRHIShaderCompiler* CreateCompiler() override final;
 
-    /* Return the NullRHI module name */
+    /* Retrieve the module's name */
     virtual const char* GetName() const override final;
+
 };

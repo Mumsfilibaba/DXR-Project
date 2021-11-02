@@ -12,7 +12,7 @@
 bool CRayTracer::Init( SFrameResources& Resources )
 {
     TArray<uint8> Code;
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/RayGen.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/RayGen.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -29,7 +29,7 @@ bool CRayTracer::Init( SFrameResources& Resources )
         RayGenShader->SetName( "RayGenShader" );
     }
 
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -46,7 +46,7 @@ bool CRayTracer::Init( SFrameResources& Resources )
         RayClosestHitShader->SetName( "RayClosestHitShader" );
     }
 
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/Miss.hlsl", "Miss", nullptr, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/Miss.hlsl", "Miss", nullptr, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code ) )
     {
         CDebug::DebugBreak();
         return false;

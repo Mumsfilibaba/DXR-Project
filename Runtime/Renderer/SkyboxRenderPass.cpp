@@ -74,7 +74,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
     }
 
     TArray<uint8> ShaderCode;
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/Skybox.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/Skybox.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;
@@ -91,7 +91,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
         SkyboxVertexShader->SetName( "Skybox VertexShader" );
     }
 
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/Skybox.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/Skybox.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode ) )
     {
         CDebug::DebugBreak();
         return false;

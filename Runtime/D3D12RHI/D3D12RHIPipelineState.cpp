@@ -1,4 +1,4 @@
-#include "D3D12ShaderCompiler.h"
+#include "D3D12RHIShaderCompiler.h"
 #include "D3D12RHIPipelineState.h"
 
 CD3D12RHIGraphicsPipelineState::CD3D12RHIGraphicsPipelineState( CD3D12Device* InDevice )

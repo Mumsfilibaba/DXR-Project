@@ -1,5 +1,5 @@
 #include "D3D12Shader.h"
-#include "D3D12ShaderCompiler.h"
+#include "D3D12RHIShaderCompiler.h"
 #include "D3D12RootSignature.h"
 
 CD3D12BaseShader::CD3D12BaseShader( CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility )

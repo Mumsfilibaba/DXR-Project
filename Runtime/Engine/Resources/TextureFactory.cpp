@@ -22,7 +22,7 @@ bool CTextureFactory::Init()
 {
     // Compile and create shader
     TArray<uint8> Code;
-    if ( !CRHIShaderCompiler::CompileFromFile( "../DXR-Engine/Shaders/CubeMapGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
+    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/CubeMapGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
     {
         return false;
     }

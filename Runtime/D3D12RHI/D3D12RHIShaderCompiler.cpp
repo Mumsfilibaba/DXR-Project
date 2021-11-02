@@ -1,4 +1,4 @@
-#include "D3D12ShaderCompiler.h"
+#include "D3D12RHIShaderCompiler.h"
 
 #include "Core/Utilities/StringUtilities.h"
 
@@ -264,7 +264,7 @@ CD3D12RHIShaderCompiler::CD3D12RHIShaderCompiler()
     , DxLibrary( nullptr )
     , DxLinker( nullptr )
     , DxIncludeHandler( nullptr )
-    , DxCompilerDLL()
+    , DxCompilerDLL( 0 )
 {
     GD3D12ShaderCompiler = this;
 }

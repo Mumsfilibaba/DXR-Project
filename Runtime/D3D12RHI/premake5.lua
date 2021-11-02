@@ -26,7 +26,7 @@ project "D3D12RHI"
 	-- Defines
 	defines
 	{
-		"D3D12_API_EXPORT=(1)"
+		"D3D12RHI_API_EXPORT=(1)"
 	}
 
 	-- Files to include

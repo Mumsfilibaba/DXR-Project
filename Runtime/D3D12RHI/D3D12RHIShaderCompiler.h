@@ -55,8 +55,9 @@ private:
     TComPtr<IDxcCompiler>       DxCompiler;
     TComPtr<IDxcLibrary>        DxLibrary;
     TComPtr<IDxcLinker>         DxLinker;
-    TComPtr<IDxcIncludeHandler> DxIncludeHandler;
+    TComPtr<IDxcIncludeHandler>      DxIncludeHandler;
     TComPtr<IDxcContainerReflection> DxReflection;
+
     HMODULE DxCompilerDLL;
 };
 
