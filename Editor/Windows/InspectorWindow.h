@@ -1,5 +1,8 @@
 #pragma once
 #include "Core/Application/UI/IUIWindow.h"
+#include "Core/Containers/SharedRef.h"
+
+#include <imgui.h>
 
 class CInspectorWindow : public IUIWindow
 {

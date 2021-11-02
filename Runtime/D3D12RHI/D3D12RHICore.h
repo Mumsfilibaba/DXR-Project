@@ -126,7 +126,7 @@ public:
     virtual class CRHIComputePipelineState* CreateComputePipelineState( const SComputePipelineStateCreateInfo& CreateInfo ) override final;
     virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState( const SRayTracingPipelineStateCreateInfo& CreateInfo ) override final;
 
-    virtual class CRHITimestampQuery* CreateProfiler() override final;
+    virtual class CRHITimestampQuery* CreateTimestampQuery() override final;
 
     virtual class CRHIViewport* CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) override final;
 

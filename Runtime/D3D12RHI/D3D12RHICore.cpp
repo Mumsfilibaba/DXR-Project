@@ -1440,7 +1440,7 @@ CRHIRayTracingPipelineState* CD3D12RHICore::CreateRayTracingPipelineState( const
     }
 }
 
-CRHITimestampQuery* CD3D12RHICore::CreateProfiler()
+CRHITimestampQuery* CD3D12RHICore::CreateTimestampQuery()
 {
     return CD3D12RHITimestampQuery::Create( Device );
 }

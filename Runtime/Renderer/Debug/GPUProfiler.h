@@ -87,6 +87,9 @@ public:
     /* Creates the profiler, requires the RHI to be initialized */
     static bool Init();
 
+    /* Release the resources */
+    static void Release();
+
     static FORCEINLINE CGPUProfiler& Get()
     {
         return Instance;

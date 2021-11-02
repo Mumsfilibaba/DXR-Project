@@ -3,6 +3,8 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Time/Timestamp.h"
 
+#include "RHI/RHICore.h"
+
 CGPUProfiler CGPUProfiler::Instance;
 
 CGPUProfiler::CGPUProfiler()
@@ -15,7 +17,18 @@ CGPUProfiler::CGPUProfiler()
 
 bool CGPUProfiler::Init()
 {
+    Instance.Timequeries = RHICreateTimestampQuery();
+    if ( !Instance.Timequeries )
+    {
+        return false;
+    }
+
     return true;
+}
+
+void CGPUProfiler::Release()
+{
+    Instance.Timequeries.Reset();
 }
 
 void CGPUProfiler::Enable()

@@ -2,6 +2,8 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Application/UI/IUIWindow.h"
 
+#include <imgui.h>
+
 class CFrameProfilerWindow : public IUIWindow
 {
     INTERFACE_GENERATE_BODY();

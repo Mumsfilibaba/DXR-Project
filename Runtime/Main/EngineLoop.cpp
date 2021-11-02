@@ -159,6 +159,8 @@ bool CEngineLoop::Release()
 
     CRHICommandQueue::Get().WaitForGPU();
 
+    CGPUProfiler::Release();
+
     GRenderer.Release();
 
     CApplication::Get().SetRenderer( nullptr );

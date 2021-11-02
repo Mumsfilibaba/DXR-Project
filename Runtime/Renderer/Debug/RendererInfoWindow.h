@@ -2,9 +2,11 @@
 #include "Core/Application/UI/IUIWindow.h"
 #include "Core/Containers/SharedRef.h"
 
+#include <imgui.h>
+
 class CRendererInfoWindow : public IUIWindow
 {
-    INTERFACE_GENERATE_BODY
+    INTERFACE_GENERATE_BODY();
 
 public:
 

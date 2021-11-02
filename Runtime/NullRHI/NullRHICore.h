@@ -257,7 +257,7 @@ public:
         return dbg_new CNullRHIRayTracingPipelineState();
     }
 
-    virtual class CRHITimestampQuery* CreateProfiler() override final
+    virtual class CRHITimestampQuery* CreateTimestampQuery() override final
     {
         return dbg_new CNullRHITimestampQuery();
     }

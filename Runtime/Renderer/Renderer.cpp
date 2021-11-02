@@ -227,6 +227,8 @@ bool CRenderer::Init()
     TextureDebugger = CTextureDebugWindow::Make();
     Application.AddWindow( TextureDebugger );
 
+
+
     return true;
 }
 

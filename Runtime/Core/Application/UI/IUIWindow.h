@@ -20,7 +20,7 @@ public:                                                                      \
                                                                              \
     virtual void InitContext( UIContextHandle ContextHandle ) override final \
     {                                                                        \
-        INIT_CONTEXT( ContextHandle )                                        \
+        INIT_CONTEXT( ContextHandle );                                       \
     }                                                                        \
                                                                              \
 private:

@@ -3,9 +3,11 @@
 
 #include "Core/Application/UI/IUIWindow.h"
 
+#include <imgui.h>
+
 class CGPUProfilerWindow : public IUIWindow
 {
-    INTERFACE_GENERATE_BODY
+    INTERFACE_GENERATE_BODY();
 
 public:
 

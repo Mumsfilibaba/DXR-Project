@@ -5,9 +5,11 @@
 
 #include "RHI/RHIResourceViews.h"
 
+#include <imgui.h>
+
 class CTextureDebugWindow : public IUIWindow
 {
-    INTERFACE_GENERATE_BODY
+    INTERFACE_GENERATE_BODY();
 
 public:
 

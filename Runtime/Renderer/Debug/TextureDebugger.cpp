@@ -11,7 +11,7 @@ TConsoleVariable<bool> GDrawTextureDebugger( false );
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-static TSharedRef<CTextureDebugWindow> CTextureDebugWindow::Make()
+TSharedRef<CTextureDebugWindow> CTextureDebugWindow::Make()
 {
     // Console Variables
     INIT_CONSOLE_VARIABLE( "r.DrawTextureDebugger", &GDrawTextureDebugger );
