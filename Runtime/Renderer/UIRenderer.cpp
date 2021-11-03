@@ -74,11 +74,11 @@ bool CUIRenderer::Init()
     }
 
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
-    UIState.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
-    UIState.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
+    UIState.BackendFlags       |= ImGuiBackendFlags_HasMouseCursors;
+    UIState.BackendFlags       |= ImGuiBackendFlags_HasSetMousePos;
+    UIState.BackendFlags       |= ImGuiBackendFlags_RendererHasVtxOffset;
     UIState.BackendPlatformName = "Windows";
-    UIState.ImeWindowHandle = GEngine->MainWindow->GetNativeHandle();
+    UIState.ImeWindowHandle     = GEngine->MainWindow->GetNativeHandle();
 
     // Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
     UIState.KeyMap[ImGuiKey_Tab] = EKey::Key_Tab;
@@ -108,13 +108,19 @@ bool CUIRenderer::Init()
     ImGui::StyleColorsDark();
 
     ImGuiStyle& Style = ImGui::GetStyle();
-    Style.WindowRounding = 0.0f;
-    Style.FrameRounding = 0.0f;
-    Style.GrabRounding = 0.0f;
-    Style.TabRounding = 0.0f;
-    Style.WindowBorderSize = 0.0f;
-    Style.ScrollbarRounding = 0.0f;
-    Style.ScrollbarSize = 12.0f;
+    // Size
+    Style.WindowBorderSize  = 1.0f;
+    Style.FrameBorderSize   = 1.0f;
+    Style.ChildBorderSize   = 1.0f;
+    Style.PopupBorderSize   = 1.0f;
+    Style.ScrollbarSize     = 14.0f;
+    // Rounding
+    Style.WindowRounding    = 8.0f;
+    Style.FrameRounding     = 4.0f;
+    Style.PopupRounding     = 4.0f;
+    Style.GrabRounding      = 4.0f;
+    Style.TabRounding       = 4.0f;
+    Style.ScrollbarRounding = 8.0f;
 
     Style.Colors[ImGuiCol_WindowBg].x = 0.2f;
     Style.Colors[ImGuiCol_WindowBg].y = 0.2f;

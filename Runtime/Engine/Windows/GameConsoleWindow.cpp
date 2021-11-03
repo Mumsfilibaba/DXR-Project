@@ -2,6 +2,7 @@
 
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Application/Application.h"
+#include "Core/Templates/StringTraits.h"
 
 #include <imgui.h>
 
@@ -21,8 +22,8 @@ void CGameConsoleWindow::Tick()
 
     const uint32 WindowWidth = MainWindow->GetWidth();
     const uint32 WindowHeight = MainWindow->GetHeight();
-    const ImVec2 WindowPadding( 4.0f, 1.0f );
-    const ImVec2 Offset( 8.0f, 0.0f );
+    const ImVec2 WindowPadding( 20.0f, 1.0f );
+    const ImVec2 Offset( 40.0f, 0.0f );
 
     const float Width = WindowWidth - (WindowPadding.x * 4.0f);
     const float Height = 200;
@@ -80,7 +81,7 @@ void CGameConsoleWindow::Tick()
             ImGui::PushID( i );
             if ( ImGui::Selectable( Candidate.Second.CStr(), &IsActiveIndex ) )
             {
-                strcpy( TextBuffer.Data(), Candidate.Second.CStr() );
+                CStringTraits::Copy( TextBuffer.Data(), Candidate.Second.CStr() );
                 PopupSelectedText = Candidate.Second;
 
                 Candidates.Clear();
@@ -194,6 +195,8 @@ void CGameConsoleWindow::Tick()
         CGameConsoleWindow* This = reinterpret_cast<CGameConsoleWindow*>(Data->UserData);
         return This->TextCallback( Data );
     };
+
+    ImGui::ShowDemoWindow();
 
     const bool Result = ImGui::InputText( "###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(this) );
     if ( Result && TextBuffer[0] != 0 )

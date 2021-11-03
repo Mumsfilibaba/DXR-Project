@@ -95,6 +95,12 @@ public:
     }
 
     /* Copy two strings */
+    static FORCEINLINE CharType* Copy( CharType* Destination, const CharType* Source ) noexcept
+    {
+        return Copy( Destination, Source, Length( Source ) );
+    }
+
+    /* Copy two strings */
     static FORCEINLINE CharType* Copy( CharType* Destination, const CharType* Source, uint64 Length ) noexcept
     {
         return reinterpret_cast<CharType*>(CMemory::Memcpy( Destination, Source, Length * sizeof( CharType ) ));
@@ -206,6 +212,12 @@ public:
     static FORCEINLINE CharType ToUpper( CharType Char ) noexcept
     {
         return static_cast<CharType>(towupper( static_cast<wint_t>(Char) ));
+    }
+
+    /* Copy two strings */
+    static FORCEINLINE CharType* Copy( CharType* Destination, const CharType* Source ) noexcept
+    {
+        return Copy( Destination, Source, Length( Source) );
     }
 
     /* Copy two strings */
