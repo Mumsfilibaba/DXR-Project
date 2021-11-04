@@ -2,11 +2,11 @@
 #include "RHI/RHIResourceViews.h"
 
 // Used when rendering images with ImGui
-struct SUIImage
+struct SInterfaceImage
 {
-    SUIImage() = default;
+    SInterfaceImage() = default;
 
-    SUIImage( const TSharedRef<CRHIShaderResourceView>& InImageView, const TSharedRef<CRHITexture>& InImage, EResourceState InBefore, EResourceState InAfter )
+    SInterfaceImage( const TSharedRef<CRHIShaderResourceView>& InImageView, const TSharedRef<CRHITexture>& InImage, EResourceState InBefore, EResourceState InAfter )
         : ImageView( InImageView )
         , Image( InImage )
         , BeforeState( InBefore )

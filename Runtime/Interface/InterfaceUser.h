@@ -9,19 +9,19 @@
 #include "Core/Math/IntVector2.h"
 
 /* Holds the state of one user */
-class CORE_API CApplicationUser
+class CORE_API CInterfaceUser
 {
-    friend class CApplication;
+    friend class CInterfaceApplication;
 
 public:
 
     /* Create a new application user */
-    static FORCEINLINE TSharedPtr<CApplicationUser> Make( uint32 InUserIndex, ICursor* InCursorDevice )
+    static FORCEINLINE TSharedPtr<CInterfaceUser> Make( uint32 InUserIndex, ICursor* InCursorDevice )
     {
-        return TSharedPtr<CApplicationUser>( dbg_new CApplicationUser( InUserIndex, InCursorDevice ) );
+        return TSharedPtr<CInterfaceUser>( dbg_new CApplicationUser( InUserIndex, InCursorDevice ) );
     }
 
-    virtual ~CApplicationUser();
+    virtual ~CInterfaceUser();
 
     /* Tick the user every frame */
     virtual void Tick( CTimestamp DeltaTime );
@@ -128,7 +128,7 @@ public:
 
 private:
 
-    CApplicationUser( uint32 InUserIndex, ICursor* InCursorDevice );
+    CInterfaceUser( uint32 InUserIndex, ICursor* InCursorDevice );
 
     /* Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode( EKey KeyCode ) const

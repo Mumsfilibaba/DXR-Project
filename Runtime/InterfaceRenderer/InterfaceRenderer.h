@@ -1,16 +1,18 @@
 #pragma once
 #include "RendererAPI.h"
 
-#include "RHI/RHIResources.h"
-#include "RHI/RHIResourceViews.h"
-
-#include "Core/Application/InputHandler.h"
-#include "Core/Application/UI/IUIRenderer.h"
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Time/Timer.h"
 
-class CUIInputHandler : public CInputHandler
+#include "RHI/RHIResources.h"
+#include "RHI/RHIResourceViews.h"
+
+#include "Interface/InputHandler.h"
+#include "Interface/IInterfaceRenderer.h"
+
+// TODO: Remove since application should handle it directly
+class CInputHandler : public CInputHandler
 {
 public:
 
@@ -38,11 +40,11 @@ public:
     virtual bool HandleMouseScrolled( const SMouseScrolledEvent& MouseScrolledEvent ) override final;
 };
 
-class RENDERER_API CUIRenderer final : public IUIRenderer
+class RENDERER_API CInterfaceRenderer final : public IInterfaceRenderer
 {
 public:
 
-    static TSharedRef<CUIRenderer> Make();
+    static TSharedRef<CInterfaceRenderer> Make();
 
     /* Start the update of the UI, after the call to this function, calls to UI window's tick are valid */
     virtual void BeginTick() override final;
@@ -58,8 +60,8 @@ public:
 
 private:
 
-    CUIRenderer() = default;
-    ~CUIRenderer();
+    CInterfaceRenderer() = default;
+    ~CInterfaceRenderer();
 
     bool Init();
 

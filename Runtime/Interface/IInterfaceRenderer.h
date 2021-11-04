@@ -1,14 +1,14 @@
 #pragma once
-#include "IUIWindow.h"
-#include "UIImage.h"
+#include "IInterfaceWindow.h"
+#include "InterfaceImage.h"
 
 #include "Core/Containers/SharedRef.h"
 
-class IUIRenderer : public CRefCounted
+class IInterfaceRenderer : public CRefCounted
 {
 public:
 
-    virtual ~IUIRenderer() = default;
+    virtual ~IInterfaceRenderer() = default;
 
     /* Start the update of the UI, after the call to this function, calls to UI window's tick are valid */
     virtual void BeginTick() = 0;
@@ -20,5 +20,5 @@ public:
     virtual void Render( class CRHICommandList& Commandlist ) = 0;
 
     /* Retrieve the context handle */
-    virtual UIContextHandle GetContext() const = 0;
+    virtual InterfaceContext GetContext() const = 0;
 };

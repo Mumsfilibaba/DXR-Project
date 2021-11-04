@@ -7,6 +7,7 @@
 //<--
 // TODO: Move to templates
 // Preparation for enum class usage
+#if 0
 template <int64 SIZE>
 struct _EnumIntegerSize;
 
@@ -53,4 +54,5 @@ using EnumIntegerType = typename _EnumIntegerType<T>::Type;
     inline Type& operator|=(Type& LHS, Type RHS) noexcept { return (Type&)(((EnumIntegerType<Type>&)LHS) |= ((EnumIntegerType<Type>)RHS)); } \
     inline Type& operator&=(Type& LHS, Type RHS) noexcept { return (Type&)(((EnumIntegerType<Type>&)LHS) &= ((EnumIntegerType<Type>)RHS)); } \
     inline Type& operator^=(Type& LHS, Type RHS) noexcept { return (Type&)(((EnumIntegerType<Type>&)LHS) ^= ((EnumIntegerType<Type>)RHS)); } \
+#endif
 //-->

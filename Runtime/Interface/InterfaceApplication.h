@@ -2,27 +2,27 @@
 #include "Core.h"
 #include "InputHandler.h"
 #include "WindowMessageHandler.h"
-#include "ICursor.h"
-#include "ApplicationUser.h"
-
-#include "UI/IUIRenderer.h"
+#include "InterfaceUser.h"
+#include "IInterfaceRenderer.h"
 
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
 #include "Core/Time/Timestamp.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Delegates/Event.h"
-#include "Core/Application/Core/CoreApplication.h"
+
+#include "CoreApplication/ICursor.h"
+#include "CoreApplication/Core/CoreApplication.h"
 
 /* Application class for the engine */
-class CORE_API CApplication : public CCoreApplicationMessageHandler
+class INTERFACE_API CInterfaceApplication : public CCoreApplicationMessageHandler
 {
     /* Delegate for when the application is about to exit */
-    DECLARE_EVENT( CExitEvent, CApplication, int32 );
+    DECLARE_EVENT( CExitEvent, CInterfaceApplication, int32 );
     CExitEvent ExitEvent;
 
     /* Delegate for when the application gets a new main-viewport */
-    DECLARE_EVENT( CMainViewportChange, CApplication, const TSharedRef<CCoreWindow>& );
+    DECLARE_EVENT( CMainViewportChange, CInterfaceApplication, const TSharedRef<CCoreWindow>& );
     CMainViewportChange MainViewportChange;
 
 public:
@@ -31,19 +31,25 @@ public:
     static bool Make();
 
     /* Init the singleton from an existing application - Used for classes inheriting from CApplication */
-    static bool Make( const TSharedPtr<CApplication>& InApplication );
+    static bool Make( const TSharedPtr<CInterfaceApplication>& InApplication );
 
     /* Releases the global application instance, before calling release the platform application should be set to nullptr */
     static void Release();
 
     /* Retrieve the singleton application instance */
-    static FORCEINLINE CApplication& Get()
+    static FORCEINLINE CInterfaceApplication& Get()
     {
         return *Instance;
     }
 
+    /* Returns true if the application has been initialized */
+    static FORCEINLINE bool IsInitialized()
+    {
+        return Instance.IsValid();
+    } 
+
     /* Public destructor for the TSharedPtr */
-    virtual ~CApplication() = default;
+    virtual ~CInterfaceApplication() = default;
 
     /* Creates a window */
     TSharedRef<CCoreWindow> MakeWindow();
@@ -94,13 +100,13 @@ public:
     void RegisterMainViewport( const TSharedRef<CCoreWindow>& NewMainViewport );
 
     /* Sets the UI renderer */
-    void SetRenderer( const TSharedRef<IUIRenderer>& NewRenderer );
+    void SetRenderer( const TSharedRef<IInterfaceRenderer>& NewRenderer );
 
     /* Register a new UI window */
-    void AddWindow( const TSharedRef<IUIWindow>& NewWindow );
+    void AddWindow( const TSharedRef<IInterfaceWindow>& NewWindow );
 
     /* Removes a UI window */
-    void RemoveWindow( const TSharedRef<IUIWindow>& Window );
+    void RemoveWindow( const TSharedRef<IInterfaceWindow>& Window );
 
     /* Draws a string in the viewport during the current frame, the strings are reset every frame */
     void DrawString( const CString& NewString );
@@ -158,13 +164,13 @@ public:
     }
 
     /* Register a new user to the application */
-    FORCEINLINE void RegisterUser( const TSharedPtr<CApplicationUser>& NewUser )
+    FORCEINLINE void RegisterUser( const TSharedPtr<CInterfaceUser>& NewUser )
     {
         RegisteredUsers.Push( NewUser );
     }
 
     /* Retrieve the first user */
-    FORCEINLINE TSharedPtr<CApplicationUser> GetFirstUser() const
+    FORCEINLINE TSharedPtr<CInterfaceUser> GetFirstUser() const
     {
         if ( !RegisteredUsers.IsEmpty() )
         {
@@ -177,7 +183,7 @@ public:
     }
 
     /* Retrieve a user from user index */
-    FORCEINLINE TSharedPtr<CApplicationUser> GetUserFromIndex( uint32 UserIndex ) const
+    FORCEINLINE TSharedPtr<CInterfaceUser> GetUserFromIndex( uint32 UserIndex ) const
     {
         if ( UserIndex < (uint32)RegisteredUsers.Size() )
         {
@@ -212,7 +218,7 @@ public:
 protected:
 
     /* Hidden constructor, use make */
-    CApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
+    CInterfaceApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
 
     /* Handles key events */
     void OnKeyEvent( const SKeyEvent& KeyEvent );
@@ -240,7 +246,7 @@ protected:
     TSharedRef<CCoreWindow> MainViewport;
 
     /* All registered UI windows */
-    TArray<TSharedRef<IUIWindow>> UIWindows;
+    TArray<TSharedRef<IInterfaceWindow>> UIWindows;
 
     /* Debug strings */
     TArray<CString> DebugStrings;
@@ -252,11 +258,11 @@ protected:
     TArray<CWindowMessageHandler*> WindowMessageHandlers;
 
     /* All registered users */
-    TArray<TSharedPtr<CApplicationUser>> RegisteredUsers;
+    TArray<TSharedPtr<CInterfaceUser>> RegisteredUsers;
 
     // Is false when the platform application reports that the application should exit
     bool Running = true;
 
-    static TSharedPtr<CApplication> Instance;
+    static TSharedPtr<CInterfaceApplication> Instance;
 };
 
