@@ -18,21 +18,23 @@ TSharedRef<CGameConsoleWindow> CGameConsoleWindow::Make()
 
 void CGameConsoleWindow::Tick()
 {
+    ImGui::ShowDemoWindow();
+
     TSharedRef<CCoreWindow> MainWindow = CApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainWindow->GetWidth();
     const uint32 WindowHeight = MainWindow->GetHeight();
-    const ImVec2 WindowPadding( 20.0f, 1.0f );
-    const ImVec2 Offset( 40.0f, 0.0f );
+    // HACK: Push window up above titlebar to remove the rounded corners
+    const ImVec2 Offset( 20.0f, -20.0f );
 
-    const float Width = WindowWidth - (WindowPadding.x * 4.0f);
-    const float Height = 200;
+    const float Width = WindowWidth - (Offset.x * 2.0f);
+    const float Height = 270.0f + Offset.y;
 
     ImGui::PushStyleColor( ImGuiCol_ResizeGrip, 0 );
     ImGui::PushStyleColor( ImGuiCol_ResizeGripHovered, 0 );
     ImGui::PushStyleColor( ImGuiCol_ResizeGripActive, 0 );
 
-    ImGui::SetNextWindowPos( ImVec2( Offset.x + 0.0f, Offset.y ), ImGuiCond_Always, ImVec2( 0.0f, 0.0f ) );
+    ImGui::SetNextWindowPos( ImVec2( Offset.x, Offset.y ), ImGuiCond_Always, ImVec2( 0.0f, 0.0f ) );
     ImGui::SetNextWindowSize( ImVec2( Width, Height ), ImGuiCond_Always );
 
     const ImGuiWindowFlags StyleFlags =
@@ -44,199 +46,240 @@ void CGameConsoleWindow::Tick()
         ImGuiWindowFlags_NoScrollWithMouse |
         ImGuiWindowFlags_NoSavedSettings;
 
+    ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 20.0f, 30.0f));
+
     ImGui::Begin( "Console Window", nullptr, StyleFlags );
-
-    ImGui::PushStyleColor( ImGuiCol_ScrollbarBg, ImVec4( 0.3f, 0.3f, 0.3f, 0.6f ) );
-
-    const ImVec2 ParentSize = ImGui::GetWindowSize();
-    const float TextWindowWidth = Width * 0.985f;
-    const float TextWindowHeight = ParentSize.y - 40.0f;
-
-    const ImGuiWindowFlags PopupFlags =
-        ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoSavedSettings |
-        ImGuiWindowFlags_NoFocusOnAppearing;
-
-    ImGui::BeginChild( "##ChildWindow", ImVec2( TextWindowWidth, TextWindowHeight ), false, PopupFlags );
-    if ( !Candidates.IsEmpty() )
     {
-        bool IsActiveIndex = false;
+        ImGui::PushStyleColor( ImGuiCol_ScrollbarBg, ImVec4( 0.3f, 0.3f, 0.3f, 0.6f ) );
 
-        ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 4, 2 ) );
-        ImGui::PushAllowKeyboardFocus( false );
+        const ImVec2 ParentSize = ImGui::GetWindowSize();
+        const float TextWindowWidth = Width * 0.985f;
+        const float TextWindowHeight = ParentSize.y - 64.0f;
 
-        ImGui::PushStyleColor( ImGuiCol_Header, ImVec4( 0.4f, 0.4f, 0.4f, 1.0f ) );
-        ImGui::PushStyleColor( ImGuiCol_HeaderHovered, ImVec4( 0.2f, 0.2f, 0.2f, 1.0f ) );
+        const ImGuiWindowFlags PopupFlags =
+            ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoSavedSettings |
+            ImGuiWindowFlags_NoFocusOnAppearing;
 
-        float ColumnWidth = 0.0f;
-        for ( int32 i = 0; i < Candidates.Size(); i++ )
+        ImGui::BeginChild( "##ChildWindow", ImVec2( TextWindowWidth, TextWindowHeight ), false, PopupFlags );
+        if ( !Candidates.IsEmpty() )
         {
-            const TPair<IConsoleObject*, CString>& Candidate = Candidates[i];
-            IsActiveIndex = (CandidatesIndex == i);
+            bool IsActiveIndex = false;
 
-            ColumnWidth = NMath::Max( ColumnWidth, ImGui::CalcTextSize( Candidate.Second.CStr() ).x );
+            ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 4, 2 ) );
+            ImGui::PushAllowKeyboardFocus( false );
 
-            ImGui::PushID( i );
-            if ( ImGui::Selectable( Candidate.Second.CStr(), &IsActiveIndex ) )
+            ImGui::PushStyleColor( ImGuiCol_Header, ImVec4( 0.4f, 0.4f, 0.4f, 1.0f ) );
+            ImGui::PushStyleColor( ImGuiCol_HeaderHovered, ImVec4( 0.2f, 0.2f, 0.2f, 1.0f ) );
+
+            const float Padding = 8.0f;
+            float VariableNameWidth  = 30.0f;
+            float VariableValueWidth = 20.0f;
+
+            // First find the maximum length of each column for the selectable
+            Candidates.Foreach([&]( const TPair<IConsoleObject*, CString>& Candidate )
             {
-                CStringTraits::Copy( TextBuffer.Data(), Candidate.Second.CStr() );
-                PopupSelectedText = Candidate.Second;
+                VariableNameWidth = NMath::Max( VariableNameWidth, ImGui::CalcTextSize( Candidate.Second.CStr() ).x );
+
+                IConsoleVariable* Variable = Candidate.First->AsVariable();
+                if ( Variable )
+                {
+                    CString Value = Variable->GetString();
+                    VariableValueWidth = NMath::Max( VariableValueWidth, ImGui::CalcTextSize( Value.CStr() ).x );
+                }
+            });
+
+            VariableNameWidth  += Padding;
+            VariableValueWidth += Padding;
+
+            // Draw UI
+            for ( int32 i = 0; i < Candidates.Size(); i++ )
+            {
+                const TPair<IConsoleObject*, CString>& Candidate = Candidates[i];
+                IsActiveIndex = (CandidatesIndex == i);
+
+                // VariableName
+                ImGui::PushID( i );
+                if ( ImGui::Selectable( Candidate.Second.CStr(), &IsActiveIndex ) )
+                {
+                    CStringTraits::Copy( TextBuffer.Data(), Candidate.Second.CStr() );
+                    PopupSelectedText = Candidate.Second;
+
+                    Candidates.Clear();
+                    CandidatesIndex = -1;
+
+                    UpdateCursorPosition = true;
+
+                    ImGui::PopID();
+                    break;
+                }
+
+                ImGui::SameLine( VariableNameWidth );
+
+                ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 0.7f, 0.7f, 0.7f, 1.0f ) );
+
+                const char* PostFix = "";
+                
+                // Value
+                IConsoleVariable* Variable = Candidate.First->AsVariable();
+                if ( Variable )
+                {
+                    CString Value = Variable->GetString();
+                    ImGui::Text( "%s", Value.CStr() );
+
+                    if ( Variable->IsBool() )
+                    {
+                        PostFix = "Boolean";
+                    }
+                    else if ( Variable->IsInt() )
+                    {
+                        PostFix = "Integer";
+                    }
+                    else if ( Variable->IsFloat() )
+                    {
+                        PostFix = "Float";
+                    }
+                    else if ( Variable->IsString() )
+                    {
+                        PostFix = "String";
+                    }
+                }
+                else if ( Candidate.First->AsCommand() )
+                {
+                    PostFix = "Command";
+                }
+                
+                // Offset from the start is name + value 
+                ImGui::SameLine( VariableNameWidth + VariableValueWidth );
+                
+                // PostFix
+                ImGui::Text( "[%s]", PostFix );
+
+                ImGui::PopStyleColor();
+
+                ImGui::PopID();
+
+                if ( IsActiveIndex && CandidateSelectionChanged )
+                {
+                    ImGui::SetScrollHere();
+                    PopupSelectedText = Candidate.Second;
+                    CandidateSelectionChanged = false;
+                }
+            }
+
+            ImGui::PopStyleColor();
+            ImGui::PopStyleColor();
+
+            ImGui::PopAllowKeyboardFocus();
+            ImGui::PopStyleVar();
+        }
+        else
+        {
+            const TArray<TPair<CString, EConsoleSeverity>>& ConsoleMessages = CConsoleManager::Get().GetMessages();
+            for ( const TPair<CString, EConsoleSeverity>& Text : ConsoleMessages )
+            {
+                ImVec4 Color;
+                if ( Text.Second == EConsoleSeverity::Info )
+                {
+                    Color = ImVec4( 1.0f, 1.0f, 1.0f, 1.0f );
+                }
+                else if ( Text.Second == EConsoleSeverity::Warning )
+                {
+                    Color = ImVec4( 1.0f, 1.0f, 0.0f, 1.0f );
+                }
+                else if ( Text.Second == EConsoleSeverity::Error )
+                {
+                    Color = ImVec4( 1.0f, 0.0f, 0.0f, 1.0f );
+                }
+
+                ImGui::TextColored( Color, "%s", Text.First.CStr() );
+            }
+
+            if ( ScrollDown )
+            {
+                ImGui::SetScrollHereY();
+                ScrollDown = false;
+            }
+        }
+
+        ImGui::EndChild();
+
+        ImGui::PushStyleColor( ImGuiCol_FrameBg, ImVec4( 0.1f, 0.1f, 0.1f, 0.5f ) );
+
+        // Draw the Input Sign for the text input 
+        {
+            ImVec2 CursorPos = ImGui::GetCursorScreenPos();
+            ImGui::SetCursorScreenPos( ImVec2( CursorPos.x, CursorPos.y + 2.0f) );
+
+            ImGui::Text( ">" );
+
+            ImGui::SameLine();
+            
+            CursorPos = ImGui::GetCursorScreenPos();
+            ImGui::SetCursorScreenPos( ImVec2( CursorPos.x, CursorPos.y - 2.0f ) );
+        }
+
+        // Text Input
+        ImGui::PushItemWidth( TextWindowWidth - 25.0f );
+
+        const ImGuiInputTextFlags InputFlags =
+            ImGuiInputTextFlags_EnterReturnsTrue |
+            ImGuiInputTextFlags_CallbackCompletion |
+            ImGuiInputTextFlags_CallbackHistory |
+            ImGuiInputTextFlags_CallbackAlways |
+            ImGuiInputTextFlags_CallbackEdit;
+
+        // Prepare callback for ImGui
+        auto Callback = []( ImGuiInputTextCallbackData* Data )->int32
+        {
+            CGameConsoleWindow* This = reinterpret_cast<CGameConsoleWindow*>(Data->UserData);
+            return This->TextCallback( Data );
+        };
+
+        const bool Result = ImGui::InputText( "###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(this) );
+        if ( Result && TextBuffer[0] != 0 )
+        {
+            if ( CandidatesIndex != -1 )
+            {
+                CStringTraits::Copy( TextBuffer.Data(), PopupSelectedText.CStr() );
 
                 Candidates.Clear();
                 CandidatesIndex = -1;
 
                 UpdateCursorPosition = true;
-
-                ImGui::PopID();
-                break;
-            }
-
-            ImGui::SameLine( ColumnWidth );
-
-            ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 0.7f, 0.7f, 0.7f, 1.0f ) );
-
-            const char* PostFix = "";
-
-            IConsoleObject* ConsoleObject = Candidate.First;
-            if ( ConsoleObject->AsCommand() )
-            {
-                PostFix = "Cmd";
             }
             else
             {
-                IConsoleVariable* Variable = ConsoleObject->AsVariable();
-                if ( Variable->IsBool() )
-                {
-                    PostFix = "Boolean";
-                }
-                else if ( Variable->IsInt() )
-                {
-                    PostFix = "Integer";
-                }
-                else if ( Variable->IsFloat() )
-                {
-                    PostFix = "Float";
-                }
-                else if ( Variable->IsString() )
-                {
-                    PostFix = "String";
-                }
-            }
+                const CString Text = CString( TextBuffer.Data() );
+                CConsoleManager::Get().Execute( Text );
 
-            ImGui::Text( "%s = [%s]", Candidate.Second.CStr(), PostFix );
-            ImGui::PopStyleColor();
+                TextBuffer[0] = 0;
+                ScrollDown = true;
 
-            ImGui::PopID();
-
-            if ( IsActiveIndex && CandidateSelectionChanged )
-            {
-                ImGui::SetScrollHere();
-                PopupSelectedText = Candidate.Second;
-                CandidateSelectionChanged = false;
+                ImGui::SetItemDefaultFocus();
+                ImGui::SetKeyboardFocusHere( -1 );
             }
         }
 
-        ImGui::PopStyleColor();
-        ImGui::PopStyleColor();
-
-        ImGui::PopAllowKeyboardFocus();
-        ImGui::PopStyleVar();
-    }
-    else
-    {
-        const TArray<TPair<CString, EConsoleSeverity>>& ConsoleMessages = CConsoleManager::Get().GetMessages();
-        for ( const TPair<CString, EConsoleSeverity>& Text : ConsoleMessages )
+        if ( ImGui::IsWindowFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked( 0 ) )
         {
-            ImVec4 Color;
-            if ( Text.Second == EConsoleSeverity::Info )
-            {
-                Color = ImVec4( 1.0f, 1.0f, 1.0f, 1.0f );
-            }
-            else if ( Text.Second == EConsoleSeverity::Warning )
-            {
-                Color = ImVec4( 1.0f, 1.0f, 0.0f, 1.0f );
-            }
-            else if ( Text.Second == EConsoleSeverity::Error )
-            {
-                Color = ImVec4( 1.0f, 0.0f, 0.0f, 1.0f );
-            }
-
-            ImGui::TextColored( Color, "%s", Text.First.CStr() );
-        }
-
-        if ( ScrollDown )
-        {
-            ImGui::SetScrollHereY();
-            ScrollDown = false;
-        }
-    }
-
-    ImGui::EndChild();
-
-    ImGui::PushStyleColor( ImGuiCol_FrameBg, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
-
-    ImGui::Text( ">" );
-    ImGui::SameLine();
-
-    ImGui::PushItemWidth( TextWindowWidth - 25.0f );
-
-    const ImGuiInputTextFlags InputFlags =
-        ImGuiInputTextFlags_EnterReturnsTrue |
-        ImGuiInputTextFlags_CallbackCompletion |
-        ImGuiInputTextFlags_CallbackHistory |
-        ImGuiInputTextFlags_CallbackAlways |
-        ImGuiInputTextFlags_CallbackEdit;
-
-    // Prepare callback for ImGui
-    auto Callback = []( ImGuiInputTextCallbackData* Data )->int32
-    {
-        CGameConsoleWindow* This = reinterpret_cast<CGameConsoleWindow*>(Data->UserData);
-        return This->TextCallback( Data );
-    };
-
-    ImGui::ShowDemoWindow();
-
-    const bool Result = ImGui::InputText( "###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(this) );
-    if ( Result && TextBuffer[0] != 0 )
-    {
-        if ( CandidatesIndex != -1 )
-        {
-            strcpy( TextBuffer.Data(), PopupSelectedText.CStr() );
-
-            Candidates.Clear();
-            CandidatesIndex = -1;
-
-            UpdateCursorPosition = true;
-        }
-        else
-        {
-            const CString Text = CString( TextBuffer.Data() );
-            CConsoleManager::Get().Execute( Text );
-
-            TextBuffer[0] = 0;
-            ScrollDown = true;
-
-            ImGui::SetItemDefaultFocus();
             ImGui::SetKeyboardFocusHere( -1 );
         }
+
+        ImGui::PopItemWidth();
+
+        ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
+
     }
-
-    if ( ImGui::IsWindowFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked( 0 ) )
-    {
-        ImGui::SetKeyboardFocusHere( -1 );
-    }
-
-    ImGui::PopItemWidth();
-
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
-
     ImGui::End();
+
+    ImGui::PopStyleVar();
 }
 
 bool CGameConsoleWindow::IsTickable()

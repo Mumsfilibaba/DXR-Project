@@ -108,19 +108,22 @@ bool CUIRenderer::Init()
     ImGui::StyleColorsDark();
 
     ImGuiStyle& Style = ImGui::GetStyle();
+    // Padding
+    Style.FramePadding      = ImVec2( 6.0f, 4.0f );
     // Size
-    Style.WindowBorderSize  = 1.0f;
+    Style.WindowBorderSize  = 0.0f;
     Style.FrameBorderSize   = 1.0f;
     Style.ChildBorderSize   = 1.0f;
     Style.PopupBorderSize   = 1.0f;
     Style.ScrollbarSize     = 14.0f;
+    Style.GrabMinSize       = 20.0f;
     // Rounding
-    Style.WindowRounding    = 8.0f;
+    Style.WindowRounding    = 4.0f;
     Style.FrameRounding     = 4.0f;
     Style.PopupRounding     = 4.0f;
     Style.GrabRounding      = 4.0f;
     Style.TabRounding       = 4.0f;
-    Style.ScrollbarRounding = 8.0f;
+    Style.ScrollbarRounding = 6.0f;
 
     Style.Colors[ImGuiCol_WindowBg].x = 0.2f;
     Style.Colors[ImGuiCol_WindowBg].y = 0.2f;

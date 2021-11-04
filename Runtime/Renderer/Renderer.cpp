@@ -227,7 +227,11 @@ bool CRenderer::Init()
     TextureDebugger = CTextureDebugWindow::Make();
     Application.AddWindow( TextureDebugger );
 
+    InfoWindow = CRendererInfoWindow::Make();
+    Application.AddWindow( InfoWindow );
 
+    GPUProfilerWindow = CGPUProfilerWindow::Make();
+    Application.AddWindow( GPUProfilerWindow );
 
     return true;
 }
@@ -763,7 +767,7 @@ void CRenderer::Release()
     ShadingRatePipeline.Reset();
     ShadingRateShader.Reset();
 
-    GPUProfiler.Reset();
+    TimestampQueries.Reset();
 
     FrameStatistics.Reset();
 
@@ -773,6 +777,9 @@ void CRenderer::Release()
 
     Application.RemoveWindow( InfoWindow );
     InfoWindow.Reset();
+
+    Application.RemoveWindow( GPUProfilerWindow );
+    GPUProfilerWindow.Reset();
 }
 
 void CRenderer::OnWindowResize( const SWindowResizeEvent& Event )

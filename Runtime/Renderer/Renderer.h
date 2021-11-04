@@ -21,6 +21,7 @@
 
 #include "Debug/TextureDebugger.h"
 #include "Debug/RendererInfoWindow.h"
+#include "Debug/GPUProfilerWindow.h"
 
 #include "Core/Time/Timer.h"
 #include "Core/Threading/DispatchQueue.h"
@@ -76,8 +77,6 @@ public:
 
     void PerformAABBDebugPass( CRHICommandList& InCmdList );
 
-    void RenderDebugInterface();
-
     FORCEINLINE TSharedRef<CTextureDebugWindow> GetTextureDebugger() const
     {
         return TextureDebugger;
@@ -100,6 +99,7 @@ private:
 
     TSharedRef<CTextureDebugWindow> TextureDebugger;
     TSharedRef<CRendererInfoWindow> InfoWindow;
+    TSharedRef<CGPUProfilerWindow>  GPUProfilerWindow;
 
     CRHICommandList PreShadowsCmdList;
     CRHICommandList PointShadowCmdList;
@@ -145,7 +145,7 @@ private:
     TSharedRef<CRHIGraphicsPipelineState> FXAADebugPSO;
     TSharedRef<CRHIPixelShader>           FXAADebugShader;
 
-    TSharedRef<CRHITimestampQuery> GPUProfiler;
+    TSharedRef<CRHITimestampQuery> TimestampQueries;
 
     SRendererStatistics FrameStatistics;
 
