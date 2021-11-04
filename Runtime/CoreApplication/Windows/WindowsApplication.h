@@ -6,9 +6,10 @@
 #include "WindowsCursorDevice.h"
 
 #include "Core/Input/InputCodes.h"
-#include "Core/Application/Core/CoreApplication.h"
 #include "Core/Containers/Array.h"
 #include "Core/Threading/Platform/CriticalSection.h"
+
+#include "CoreApplication/Interface/PlatformApplication.h"
 
 /* Strict used to store messages between calls to PumpMessages and CWindowsApplication::Tick */
 struct SWindowsMessage
@@ -27,8 +28,10 @@ struct SWindowsMessage
     LPARAM lParam;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 /* Class representing an application on the windows- platform */
-class CORE_API CWindowsApplication final : public CCoreApplication
+class CORE_API CWindowsApplication final : public CPlatformApplication
 {
     friend class CWindowsApplicationMisc;
 
@@ -58,8 +61,14 @@ public:
         return InstancePtr;
     }
 
+    /* Returns true if the WindowsApplication has been created */
+    static FORCEINLINE bool IsInitialized()
+    {
+        return (InstancePtr != nullptr);
+    }
+
     /* Creates a window */
-    virtual TSharedRef<CCoreWindow> MakeWindow() override final;
+    virtual TSharedRef<CPlatformWindow> MakeWindow() override final;
 
     /* Initialized the application */
     virtual bool Init() override final;
@@ -71,16 +80,16 @@ public:
     virtual ICursor* GetCursor() override final;
 
     /* Sets the window that currently has the keyboard focus */
-    virtual void SetCapture( const TSharedRef<CCoreWindow>& Window ) override final;
+    virtual void SetCapture( const TSharedRef<CPlatformWindow>& Window ) override final;
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( const TSharedRef<CCoreWindow>& Window ) override final;
+    virtual void SetActiveWindow( const TSharedRef<CPlatformWindow>& Window ) override final;
 
     /* Retrieves the window that currently has the keyboard focus */
-    virtual TSharedRef<CCoreWindow> GetCapture() const override final;
+    virtual TSharedRef<CPlatformWindow> GetCapture() const override final;
 
     /* Retrieves the window that is currently active */
-    virtual TSharedRef<CCoreWindow> GetActiveWindow() const override final;
+    virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
 
     /* Searches all the created windows and return the one with the specified handle */
     TSharedRef<CWindowsWindow> GetWindowsWindowFromHWND( HWND Window ) const;

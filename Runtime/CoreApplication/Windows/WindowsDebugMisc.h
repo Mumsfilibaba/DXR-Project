@@ -5,7 +5,8 @@
 
 #include "Core/CoreAPI.h"
 #include "Core/Containers/String.h"
-#include "Core/Application/Core/CoreDebugMisc.h"
+
+#include "CoreApplication/Interface/PlatformeDebugMisc.h"
 
 #ifdef MessageBox
 #undef MessageBox
@@ -15,7 +16,7 @@
 #undef OutputDebugString
 #endif
 
-class CORE_API CWindowsDebugMisc : public CCoreDebugMisc
+class CORE_API CWindowsDebugMisc final : public CPlatformDebugMisc
 {
 public:
 

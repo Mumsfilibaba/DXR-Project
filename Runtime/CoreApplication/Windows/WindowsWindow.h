@@ -4,9 +4,10 @@
 #include "Windows.h"
 
 #include "Core/CoreAPI.h"
-#include "Core/Application/Core/CoreWindow.h"
 
-class CORE_API CWindowsWindow final : public CCoreWindow
+#include "CoreApplication/Interface/PlatformWindow.h"
+
+class CORE_API CWindowsWindow final : public CPlatformWindow
 {
     friend class CWindowsApplication;
 

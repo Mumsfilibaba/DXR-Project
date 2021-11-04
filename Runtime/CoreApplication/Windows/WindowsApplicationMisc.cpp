@@ -2,7 +2,7 @@
 #include "WindowsApplication.h"
 #include "WindowsApplicationMisc.h"
 
-#include "Core/Application/ModifierKeyState.h"
+#include "Core/Input/ModifierKeyState.h"
 
 void CWindowsApplicationMisc::PumpMessages( bool UntilEmpty )
 {

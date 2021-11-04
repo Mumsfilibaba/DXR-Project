@@ -5,7 +5,7 @@
 
 #include "Core/Application/Platform/PlatformApplicationMisc.h"
 
-CMacOutputConsole::CMacOutputConsole()
+CMacConsoleWindow::CMacConsoleWindow()
     : Window( nullptr )
 {
     // TODO: This needs to happen on the mainthread, make sure that there is some mechanism for this 
@@ -24,7 +24,7 @@ CMacOutputConsole::CMacOutputConsole()
     PlatformApplicationMisc::PumpMessages( true );
 }
 
-CMacOutputConsole::~CMacOutputConsole()
+CMacConsoleWindow::~CMacConsoleWindow()
 {
     if ( Window )
     {
@@ -38,7 +38,7 @@ CMacOutputConsole::~CMacOutputConsole()
     }
 }
 
-void CMacOutputConsole::Print(const CString& Message )
+void CMacConsoleWindow::Print(const CString& Message )
 {
     // TODO: Quick hack for now
     if (![NSThread isMainThread])
@@ -59,7 +59,7 @@ void CMacOutputConsole::Print(const CString& Message )
     }
 }
 
-void CMacOutputConsole::PrintLine(const CString& Message )
+void CMacConsoleWindow::PrintLine(const CString& Message )
 {
     // TODO: Quick hack for now
     if (![NSThread isMainThread])
@@ -81,7 +81,7 @@ void CMacOutputConsole::PrintLine(const CString& Message )
     }
 }
 
-void CMacOutputConsole::Clear()
+void CMacConsoleWindow::Clear()
 {
     // TODO: Quick hack for now
     if (![NSThread isMainThread])
@@ -95,12 +95,12 @@ void CMacOutputConsole::Clear()
     }
 }
 
-void CMacOutputConsole::ClearLastLine()
+void CMacConsoleWindow::ClearLastLine()
 {
     //TODO: Implement
 }
 
-void CMacOutputConsole::SetTitle(const CString& InTitle)
+void CMacConsoleWindow::SetTitle(const CString& InTitle)
 {
     // TODO: Quick hack for now
     if (![NSThread isMainThread])
@@ -117,7 +117,7 @@ void CMacOutputConsole::SetTitle(const CString& InTitle)
     }
 }
 
-void CMacOutputConsole::SetColor(EConsoleColor Color)
+void CMacConsoleWindow::SetColor(EConsoleColor Color)
 {
     // TODO: Quick hack for now
     if (![NSThread isMainThread])

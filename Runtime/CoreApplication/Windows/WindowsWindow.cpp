@@ -1,3 +1,5 @@
+
+#if defined(PLATFORM_WINDOWS)
 #include "WindowsWindow.h"
 #include "WindowsApplication.h"
 
@@ -318,3 +320,5 @@ uint32 CWindowsWindow::GetHeight() const
 
     return 0;
 }
+
+#endif

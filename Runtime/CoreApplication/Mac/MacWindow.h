@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS)
-#include "Core/Application/Core/CoreWindow.h"
+#include "CoreApplication/Interface/PlatformWindow.h"
 
 #if defined(__OBJC__)
 @class CCocoaWindow;
@@ -11,9 +11,11 @@ class CCocoaWindow;
 class CCocoaContentView;
 #endif
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CMacApplication;
 
-class CMacWindow final : public CCoreWindow
+class CMacWindow final : public CPlatformWindow
 {
     friend class CMacApplication;
 
@@ -41,10 +43,7 @@ public:
     virtual void ToggleFullscreen() override final;
 
     /* Checks if the underlaying native handle of the window is valid */
-    virtual bool IsValid() const override final
-    {
-        return (Window != nullptr);
-    }
+    virtual bool IsValid() const override final { return (Window != nullptr); }
 
     /* Checks if this window is the currently active window */
     virtual bool IsActiveWindow() const override final;

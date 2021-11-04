@@ -1,8 +1,9 @@
-#include "WindowsOutputConsole.h"
+#if defined(PLATFORM_WINDOWS)
+#include "WindowsConsoleWindow.h"
 
 #include "Core/Threading/ScopedLock.h"
 
-CWindowsOutputConsole::CWindowsOutputConsole()
+CWindowsConsoleWindow::CWindowsConsoleWindow()
     : ConsoleHandle( 0 )
 {
     if ( AllocConsole() )
@@ -12,7 +13,7 @@ CWindowsOutputConsole::CWindowsOutputConsole()
     }
 }
 
-CWindowsOutputConsole::~CWindowsOutputConsole()
+CWindowsConsoleWindow::~CWindowsConsoleWindow()
 {
     if ( ConsoleHandle )
     {
@@ -21,12 +22,12 @@ CWindowsOutputConsole::~CWindowsOutputConsole()
     }
 }
 
-CWindowsOutputConsole* CWindowsOutputConsole::Make()
+CWindowsConsoleWindow* CWindowsConsoleWindow::Make()
 {
-    return dbg_new CWindowsOutputConsole();
+    return dbg_new CWindowsConsoleWindow();
 }
 
-void CWindowsOutputConsole::Print( const CString& Message )
+void CWindowsConsoleWindow::Print( const CString& Message )
 {
     if ( ConsoleHandle )
     {
@@ -35,12 +36,12 @@ void CWindowsOutputConsole::Print( const CString& Message )
     }
 }
 
-void CWindowsOutputConsole::PrintLine( const CString& Message )
+void CWindowsConsoleWindow::PrintLine( const CString& Message )
 {
     UNREFERENCED_VARIABLE( Message );
 }
 
-void CWindowsOutputConsole::Clear()
+void CWindowsConsoleWindow::Clear()
 {
     if ( ConsoleHandle )
     {
@@ -61,7 +62,7 @@ void CWindowsOutputConsole::Clear()
     }
 }
 
-void CWindowsOutputConsole::SetTitle( const CString& Title )
+void CWindowsConsoleWindow::SetTitle( const CString& Title )
 {
     if ( ConsoleHandle )
     {
@@ -70,7 +71,7 @@ void CWindowsOutputConsole::SetTitle( const CString& Title )
     }
 }
 
-void CWindowsOutputConsole::SetColor( EConsoleColor Color )
+void CWindowsConsoleWindow::SetColor( EConsoleColor Color )
 {
     if ( ConsoleHandle )
     {
@@ -98,3 +99,5 @@ void CWindowsOutputConsole::SetColor( EConsoleColor Color )
         SetConsoleTextAttribute( ConsoleHandle, wColor );
     }
 }
+
+#endif

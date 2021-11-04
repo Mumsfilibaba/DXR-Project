@@ -1,9 +1,10 @@
 #pragma once
-#include "Core/Application/ICursor.h"
+#include "PlatformApplicationMessageHandler.h"
+
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/SharedRef.h"
 
-#include "CoreApplicationMessageHandler.h"
+#include "CoreApplication/ICursor.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
@@ -16,73 +17,58 @@
 #endif
 
 /* Generic application interface */
-class CCoreApplication
+class CPlatformApplication
 {
 public:
 
-    virtual ~CCoreApplication() = default;
-
     /* Creates the application */
-    static TSharedPtr<CCoreApplication> Make() {
-        return TSharedPtr<CCoreApplication>();
-    }
+    static TSharedPtr<CPlatformApplication> Make() { return TSharedPtr<CPlatformApplication>(); }
+
+    virtual ~CPlatformApplication() = default;
 
     /* Create a window */
-    virtual TSharedRef<CCoreWindow> MakeWindow() {
-        return TSharedRef<CCoreWindow>();
-    }
+    virtual TSharedRef<CPlatformWindow> MakeWindow() { return TSharedRef<CPlatformWindow>(); }
 
     /* Initialized the application */
-    virtual bool Init() {
-        return true;
-    }
+    virtual bool Init() { return true; }
 
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick( float Delta ) {}
 
     /* Retrieve the cursor interface */
-    virtual ICursor* GetCursor() {
-        return nullptr;
-    }
+    virtual ICursor* GetCursor() { return nullptr; }
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( const TSharedRef<CCoreWindow>& Window ) {}
+    virtual void SetActiveWindow( const TSharedRef<CPlatformWindow>& Window ) {}
 
     /* Retrieves the window that is currently active */
-    virtual TSharedRef<CCoreWindow> GetActiveWindow() const {
-        return TSharedRef<CCoreWindow>();
-    }
+    virtual TSharedRef<CPlatformWindow> GetActiveWindow() const { return TSharedRef<CPlatformWindow>(); }
 
     /* Sets the window that currently has the keyboard focus */
-    virtual void SetCapture( const TSharedRef<CCoreWindow>& ) {}
+    virtual void SetCapture( const TSharedRef<CPlatformWindow>& ) {}
 
     /* Retrieves the window that currently has the keyboard focus, since macOS does not support keyboard focus, we return null as standard */
-    virtual TSharedRef<CCoreWindow> GetCapture() const {
-        return TSharedRef<CCoreWindow>();
-    }
+    virtual TSharedRef<CPlatformWindow> GetCapture() const { return TSharedRef<CPlatformWindow>(); }
 
     /* Sets the message handler */
-    virtual void SetMessageListener( const TSharedPtr<CCoreApplicationMessageHandler>& InMessageHandler )
-    {
-        MessageListener = InMessageHandler;
-    }
+    virtual void SetMessageListener( const TSharedPtr<CPlatfromApplicationMessageHandler>& InMessageHandler ) { MessageListener = InMessageHandler; }
 
     /* Retrieves the message handler */
-    FORCEINLINE TSharedPtr<CCoreApplicationMessageHandler> GetMessageListener() const
-    {
+    FORCEINLINE TSharedPtr<CPlatformApplicationMessageHandler> GetMessageListener() const
+    { 
         return MessageListener;
     }
 
 protected:
 
     /* Protected constructor, use Make */
-    CCoreApplication()
-        : MessageListener()
+    CPlatformApplication()
+        : MessageListener( nullptr )
     {
     }
 
     /* Handler for platform messages/events */
-    TSharedPtr<CCoreApplicationMessageHandler> MessageListener;
+    TSharedPtr<CPlatformApplicationMessageHandler> MessageListener;
 };
 
 #if defined(COMPILER_MSVC)

@@ -20,13 +20,13 @@ enum class EConsoleColor : uint8
     White = 3
 };
 
-class CCoreOutputConsole
+class CPlatformConsoleWindow
 {
 public:
 
-    static CCoreOutputConsole* Make()
+    static CPlatformConsoleWindow* Make()
     {
-        return dbg_new CCoreOutputConsole();
+        return dbg_new CPlatformConsoleWindow();
     }
 
     virtual void Print( const CString& Message ) {}
@@ -44,11 +44,12 @@ public:
 
 protected:
 
-    CCoreOutputConsole() = default;
-    virtual ~CCoreOutputConsole() = default;
+    CPlatformConsoleWindow() = default;
+    virtual ~CPlatformConsoleWindow() = default;
 };
 
-extern CORE_API CCoreOutputConsole* GConsoleOutput;
+// TODO: Move out from COREAPPLICATION_API
+extern CORE_API CPlatformConsoleWindow* GConsoleWindow;
 
 #if defined(COMPILER_MSVC)
 #pragma warning(pop)

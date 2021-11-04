@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS)
-#include "Core/Application/Core/CoreOutputConsole.h"
+#include "CoreApplication/Interface/PlatformConsoleWindow.h"
 
 #if defined(__OBJC__)
 @class CCocoaConsoleWindow;
@@ -9,14 +9,14 @@
 class CCocoaConsoleWindow;
 #endif
 
-class CMacOutputConsole final : public CCoreOutputConsole
+class CMacConsoleWindow final : public CPlatformConsoleWindow
 {
 public:
 
     /* Creates a new console */
-    static FORCEINLINE CMacOutputConsole* Make()
+    static FORCEINLINE CMacConsoleWindow* Make()
     {
-        return new CMacOutputConsole();
+        return new CMacConsoleWindow();
     }
 
     virtual void Print( const CString& Message )     override final;
@@ -30,8 +30,8 @@ public:
 
 private:
 
-    CMacOutputConsole();
-    ~CMacOutputConsole();
+    CMacConsoleWindow();
+    ~CMacConsoleWindow();
 
     /* Console window*/
     CCocoaConsoleWindow* Window;

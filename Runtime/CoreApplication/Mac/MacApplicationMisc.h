@@ -1,14 +1,14 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS) 
-#include "Core/Application/Core/CoreApplicationMisc.h"
+#include "CoreApplication/Interface/PlatformApplicationMisc.h"
 
 #if defined(COMPILER_CLANG)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-class CMacApplicationMisc : public CCoreApplicationMisc
+class CMacApplicationMisc final : public CPlatformApplicationMisc
 {
 public:
 

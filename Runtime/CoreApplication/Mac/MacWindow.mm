@@ -4,7 +4,7 @@
 #include "CocoaWindow.h"
 #include "CocoaContentView.h"
 
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 CMacWindow::CMacWindow( CMacApplication* InApplication )
     : CCoreWindow()

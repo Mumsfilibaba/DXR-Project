@@ -18,30 +18,21 @@
 
 // TODO: Enable other types of Modal windows for supported platforms
 
-class CCoreApplicationMisc
+class CPlatformApplicationMisc
 {
 public:
 
     /* Takes the title of the MessageBox and the message to be displayed */
-    static FORCEINLINE void MessageBox( const CString& Title, const CString& Message )
-    {
-    }
+    static FORCEINLINE void MessageBox( const CString& Title, const CString& Message ) {}
 
     /* Sends a Exit Message to the application with a certain ExitCode, this way the application instance is not required to pump the messages */
-    static FORCEINLINE void RequestExit( int32 ExitCode )
-    {
-    }
+    static FORCEINLINE void RequestExit( int32 ExitCode ) {}
 
     /* Pumps the application's message queue, this way the application instance is not required to pump the messages */
-    static FORCEINLINE void PumpMessages( bool UntilEmpty )
-    {
-    }
+    static FORCEINLINE void PumpMessages( bool UntilEmpty ) {}
 
     /* Retrieves the state of modifier keys */
-    static FORCEINLINE SModifierKeyState GetModifierKeyState()
-    {
-        return SModifierKeyState();
-    }
+    static FORCEINLINE SModifierKeyState GetModifierKeyState() { return SModifierKeyState(); }
 };
 
 #if defined(COMPILER_MSVC)

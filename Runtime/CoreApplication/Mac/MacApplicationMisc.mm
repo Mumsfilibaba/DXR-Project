@@ -43,7 +43,6 @@ void CMacApplicationMisc::PumpMessages( bool UntilEmpty )
     } while ( UntilEmpty );
 }
 
-
 SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
 {
     NSUInteger CurrentModifiers = ([NSEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask);

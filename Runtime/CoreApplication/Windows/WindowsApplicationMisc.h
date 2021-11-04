@@ -4,14 +4,14 @@
 #include "Windows.h"
 
 #include "Core/CoreAPI.h"
-#include "Core/Application/Core/CoreApplicationMisc.h"
 
+#include "CoreApplication/Interface/PlatformApplicationMisc.h"
 
 #ifdef MessageBox
 #undef MessageBox
 #endif
 
-class CORE_API CWindowsApplicationMisc : public CCoreApplicationMisc
+class CORE_API CWindowsApplicationMisc final : public CPlatformApplicationMisc
 {
 public:
 

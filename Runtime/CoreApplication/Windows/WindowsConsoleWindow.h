@@ -4,8 +4,9 @@
 #include "Core/Windows/Windows.h"
 
 #include "Core/CoreAPI.h"
-#include "Core/Application/Core/CoreOutputConsole.h"
 #include "Core/Threading/Platform/CriticalSection.h"
+
+#include "CoreApplication/Interface/PlatformConsoleWindow.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
@@ -13,12 +14,12 @@
 #pragma warning(disable : 4251) // Class '...' needs to have DLL-interface to be used by clients of class '...'
 #endif
 
-class CORE_API CWindowsOutputConsole final : public CCoreOutputConsole
+class CORE_API CWindowsConsoleWindow final : public CPlatformConsoleWindow
 {
 public:
 
     /* Creates a new console, can only be called once */
-    static CWindowsOutputConsole * Make();
+    static CWindowsConsoleWindow* Make();
 
     virtual void Print( const CString& Message ) override final;
     virtual void PrintLine( const CString& Message ) override final;
@@ -30,8 +31,8 @@ public:
 
 private:
 
-    CWindowsOutputConsole();
-    ~CWindowsOutputConsole();
+    CWindowsConsoleWindow();
+    ~CWindowsConsoleWindow();
 
     /* Handle to the console window */
     HANDLE ConsoleHandle;

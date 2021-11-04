@@ -1,15 +1,15 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "Core/Application/Windows/WindowsDebugMisc.h"
+#include "CoreApplication/Windows/WindowsDebugMisc.h"
 typedef CWindowsDebugMisc PlatformDebugMisc;
 
 #elif defined(PLATFORM_MACOS)
-#include "Core/Application/Mac/MacDebugMisc.h"
+#include "CoreApplication/Mac/MacDebugMisc.h"
 typedef CMacDebugMisc PlatformDebugMisc;
 
 #else
-#include "Core/Application/Core/CoreDebugMisc.h"
-typedef CCoreDebugMisc PlatformDebugMisc;
+#include "CoreApplication/Platform/PlatformDebugMisc.h"
+typedef CPlatformDebugMisc PlatformDebugMisc;
 
 #endif

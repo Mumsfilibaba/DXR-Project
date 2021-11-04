@@ -40,6 +40,8 @@ struct SSizeMessage
     };
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 /* Global instance of the windows- application */
 CWindowsApplication* CWindowsApplication::InstancePtr = nullptr;
 
@@ -94,7 +96,7 @@ bool CWindowsApplication::RegisterWindowClass()
     return true;
 }
 
-TSharedRef<CCoreWindow> CWindowsApplication::MakeWindow()
+TSharedRef<CoreApplicat> CWindowsApplication::MakeWindow()
 {
     TSharedRef<CWindowsWindow> NewWindow = dbg_new CWindowsWindow( this );
     Windows.Emplace( NewWindow );
@@ -138,7 +140,7 @@ ICursor* CWindowsApplication::GetCursor()
     return &Cursor;
 }
 
-void CWindowsApplication::SetCapture( const TSharedRef<CCoreWindow>& Window )
+void CWindowsApplication::SetCapture( const TSharedRef<CoreApplicat>& Window )
 {
     if ( Window )
     {
@@ -156,7 +158,7 @@ void CWindowsApplication::SetCapture( const TSharedRef<CCoreWindow>& Window )
     }
 }
 
-void CWindowsApplication::SetActiveWindow( const TSharedRef<CCoreWindow>& Window )
+void CWindowsApplication::SetActiveWindow( const TSharedRef<CoreApplicat>& Window )
 {
     TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>( Window );
 
@@ -167,14 +169,14 @@ void CWindowsApplication::SetActiveWindow( const TSharedRef<CCoreWindow>& Window
     }
 }
 
-TSharedRef<CCoreWindow> CWindowsApplication::GetCapture() const
+TSharedRef<CoreApplicat> CWindowsApplication::GetCapture() const
 {
     // TODO: Should we add a reference here
     HWND CaptureWindow = ::GetCapture();
     return GetWindowsWindowFromHWND( CaptureWindow );
 }
 
-TSharedRef<CCoreWindow> CWindowsApplication::GetActiveWindow() const
+TSharedRef<CoreApplicat> CWindowsApplication::GetActiveWindow() const
 {
     // TODO: Should we add a reference here
     HWND ActiveWindow = ::GetActiveWindow();

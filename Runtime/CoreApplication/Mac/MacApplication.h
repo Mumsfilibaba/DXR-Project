@@ -3,8 +3,9 @@
 #if defined(PLATFORM_MACOS)
 #include "MacCursorDevice.h"
 
-#include "Core/Application/Core/CoreApplication.h"
 #include "Core/Containers/Array.h"
+
+#include "CoreApplication/Interface/PlatformApplication.h"
 
 #if defined(__OBJC__)
 @class NSNotification;
@@ -24,13 +25,12 @@ class CCocoaWindow;
 
 class CMacWindow;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 /* Mac specific implementation of the application */
-class CMacApplication final : public CCoreApplication
+class CMacApplication final : public CPlatformApplication
 {
 public:
-
-    /* Public destructor for TSharedPtr */
-    ~CMacApplication();
 
     /* Creates the mac application */
     static FORCEINLINE TSharedPtr<CMacApplication> Make()
@@ -38,8 +38,11 @@ public:
         return TSharedPtr<CMacApplication>( new CMacApplication() );
     }
 
+    /* Public destructor for TSharedPtr */
+    ~CMacApplication();
+
     /* Create a window */
-    virtual TSharedRef<CCoreWindow> MakeWindow() override final;
+    virtual TSharedRef<CPlatformWindow> MakeWindow() override final;
 
     /* Initialized the application */
     virtual bool Init() override final;
@@ -48,16 +51,13 @@ public:
     virtual void Tick( float Delta ) override final;
 
     /* Retrieve the cursor interface */
-    virtual ICursor* GetCursor() override final
-    {
-        return &Cursor;
-    }
+    virtual ICursor* GetCursor() override final { return &Cursor; }
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( const TSharedRef<CCoreWindow>& Window ) override final;
+    virtual void SetActiveWindow( const TSharedRef<CPlatformWindow>& Window ) override final;
 
     /* Retrieves the window that is currently active */
-    virtual TSharedRef<CCoreWindow> GetActiveWindow() const override final;
+    virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
 
     /* Retrieves a from a NSWindow */
     TSharedRef<CMacWindow> GetWindowFromNSWindow( NSWindow* Window ) const;
