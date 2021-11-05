@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 #include "Core/Time/Timestamp.h"
 #include "Core/Modules/IEngineModule.h"
 
@@ -27,6 +27,9 @@ public:
 
     /* The name of the module */
     virtual const char* GetName() const override;
+
+protected:
+    CDelegateHandle TickHandle;
 };
 
 extern CORE_API CApplicationModule* GApplicationModule;

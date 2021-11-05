@@ -4,7 +4,7 @@
 #include "Core/Utilities/StringUtilities.h"
 
 CWindowsThread::CWindowsThread( ThreadFunction InFunction )
-    : CCoreThread()
+    : CPlatformThread()
     , Thread( 0 )
     , hThreadID( 0 )
     , Name()
@@ -13,7 +13,7 @@ CWindowsThread::CWindowsThread( ThreadFunction InFunction )
 }
 
 CWindowsThread::CWindowsThread( ThreadFunction InFunction, const CString& InName )
-    : CCoreThread()
+    : CPlatformThread()
     , Thread( 0 )
     , hThreadID( 0 )
     , Name( InName )

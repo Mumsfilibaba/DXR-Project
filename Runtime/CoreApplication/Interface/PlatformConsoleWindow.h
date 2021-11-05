@@ -1,6 +1,7 @@
 #pragma once
-#include "Core/CoreAPI.h"
 #include "Core/Containers/String.h"
+
+#include "CoreApplication/CoreApplicationModule.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
@@ -49,7 +50,7 @@ protected:
 };
 
 // TODO: Move out from COREAPPLICATION_API
-extern CORE_API CPlatformConsoleWindow* GConsoleWindow;
+extern COREAPPLICATION_API CPlatformConsoleWindow* GConsoleWindow;
 
 #if defined(COMPILER_MSVC)
 #pragma warning(pop)

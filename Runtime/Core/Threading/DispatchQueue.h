@@ -47,7 +47,7 @@ private:
 
     static void WorkThread();
 
-    TArray<TSharedRef<CCoreThread>> WorkerThreads;
+    TArray<TSharedRef<CPlatformThread>> WorkerThreads;
 
     TArray<SDispatch> Queue;
     CCriticalSection QueueMutex;

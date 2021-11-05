@@ -1,12 +1,12 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS)
-#include "Core/Threading/Core/CoreThreadMisc.h"
+#include "Core/Threading/Interface/PlatformThreadMisc.h"
 
 #include <unistd.h>
 #include <pthread.h>
 
-class CMacThreadMisc : public CCoreThreadMisc
+class CMacThreadMisc : public CPlatformThreadMisc
 {
 public:
 

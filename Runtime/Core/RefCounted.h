@@ -1,5 +1,5 @@
 #pragma once
-#include "CoreAPI.h"
+#include "CoreModule.h"
 
 #include "Core/Threading/InterlockedInt.h"
 #include "Core/Templates/IsBaseOf.h"

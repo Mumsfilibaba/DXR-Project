@@ -1,9 +1,9 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "Core/Threading/Core/CoreThreadMisc.h"
+#include "Core/Threading/Interface/PlatformThreadMisc.h"
 
-class CWindowsThreadMisc : public CCoreThreadMisc
+class CWindowsThreadMisc : public CPlatformThreadMisc
 {
 public:
 

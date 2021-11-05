@@ -46,6 +46,8 @@ public:
         return false;
     }
 
+    // TODO: Store the priority as a pair in the application
+
     /* Return the priority of this input-handler, higher will be processed first */
     virtual uint32 GetPriority() const
     {

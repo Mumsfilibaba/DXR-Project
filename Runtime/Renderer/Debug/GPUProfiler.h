@@ -1,11 +1,11 @@
 #pragma once
-#include "RHI/RHITimestampQuery.h"
-#include "RHI/RHICommandList.h"
-
-#include "Renderer/RendererAPI.h"
-
 #include "Core/Containers/HashTable.h"
 #include "Core/Threading/Lockable.h"
+
+#include "Renderer/RendererModule.h"
+
+#include "RHI/RHITimestampQuery.h"
+#include "RHI/RHICommandList.h"
 
 #define ENABLE_GPU_PROFILER      (1)
 #define NUM_GPU_PROFILER_SAMPLES (200)

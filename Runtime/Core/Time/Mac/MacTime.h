@@ -1,11 +1,11 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS)
-#include "Core/Time/Core/CoreTime.h"
+#include "Core/Time/Interface/PlatformTime.h"
 
 #include <mach/mach_time.h>
 
-class CMacTime : public CCoreTime
+class CMacTime : public CPlatformTime
 {
 public:
 

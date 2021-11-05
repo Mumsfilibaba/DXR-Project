@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 #include "Core/Containers/String.h"
 
 #include "Engine/Assets/SceneData.h"

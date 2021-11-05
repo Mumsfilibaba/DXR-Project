@@ -1,5 +1,5 @@
 #pragma once
-#include "Core.h"
+#include "CoreApplication/CoreApplicationModule.h"
 
 #ifdef MessageBox
 #undef MessageBox

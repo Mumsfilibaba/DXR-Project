@@ -48,6 +48,27 @@ public:
     typedef TReverseArrayIterator<TString, CharType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TString, const CharType> ReverseConstIteratorType;
 
+    /* Create a new string based on a format string (similar to snprintf) */
+    static NOINLINE TString Format( const CharType* Format, ... ) noexcept
+    {
+        TString NewString;
+
+        va_list ArgsList;
+        va_start( ArgsList, Format );
+        NewString.FormatV( Format, ArgsList );
+        va_end( ArgsList );
+
+        return NewString;
+    }
+
+    /* Create a new string based on a format string and a va_list (similar to snprintf) */
+    static FORCEINLINE TString FormatV( const CharType* Format, va_list ArgsList ) noexcept
+    {
+        TString NewString;
+        NewString.FormatV( Format, ArgsList );
+        return NewString;
+    }
+
     /* Empty constructor */
     FORCEINLINE TString() noexcept
         : Characters()
@@ -1457,9 +1478,7 @@ using SWideStringHasher = TStringHasher<wchar_t>;
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, CString>::Type ToString( T Element )
 {
-    CString NewString;
-    NewString.Format( "%f", Element );
-    return NewString;
+    return CString::Format( "%f", Element );
 }
 
 template<typename T>
@@ -1468,41 +1487,31 @@ typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, CString>::Type ToString( T 
 template<>
 inline CString ToString<int32>( int32 Element )
 {
-    CString NewString;
-    NewString.Format( "%d", Element );
-    return NewString;
+    return CString::Format( "%d", Element );
 }
 
 template<>
 inline CString ToString<int64>( int64 Element )
 {
-    CString NewString;
-    NewString.Format( "%lld", Element );
-    return NewString;
+    return CString::Format( "%lld", Element );
 }
 
 template<>
 inline CString ToString<uint32>( uint32 Element )
 {
-    CString NewString;
-    NewString.Format( "%u", Element );
-    return NewString;
+    return CString::Format( "%u", Element );
 }
 
 template<>
 inline CString ToString<uint64>( uint64 Element )
 {
-    CString NewString;
-    NewString.Format( "%llu", Element );
-    return NewString;
+    return CString::Format( "%llu", Element );
 }
 
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, WString>::Type ToWideString( T Element )
 {
-    WString NewString;
-    NewString.Format( L"%f", Element );
-    return NewString;
+    return WString::Format( L"%f", Element );
 }
 
 template<typename T>
@@ -1511,31 +1520,23 @@ typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, WString>::Type ToWideString
 template<>
 inline WString ToWideString<int32>( int32 Element )
 {
-    WString NewString;
-    NewString.Format( L"%d", Element );
-    return NewString;
+    return WString::Format( L"%d", Element );
 }
 
 template<>
 inline WString ToWideString<int64>( int64 Element )
 {
-    WString NewString;
-    NewString.Format( L"%lld", Element );
-    return NewString;
+    return WString::Format( L"%lld", Element );
 }
 
 template<>
 inline WString ToWideString<uint32>( uint32 Element )
 {
-    WString NewString;
-    NewString.Format( L"%u", Element );
-    return NewString;
+    return WString::Format( L"%u", Element );
 }
 
 template<>
 inline WString ToWideString<uint64>( uint64 Element )
 {
-    WString NewString;
-    NewString.Format( L"%llu", Element );
-    return NewString;
+    return WString::Format( L"%llu", Element );
 }

@@ -1,11 +1,11 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS)
-#include "Core/Threading/Core/CoreConditionVariable.h"
+#include "Core/Threading/Interface/PlatformConditionVariable.h"
 
 #include <pthread.h>
 
-class CMacConditionVariable final : public CCoreConditionVariable
+class CMacConditionVariable final : public CPlatformConditionVariable
 {
 public:
 

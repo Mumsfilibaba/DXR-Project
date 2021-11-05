@@ -30,6 +30,26 @@ public:
     typedef TReverseArrayIterator<TStaticString, CharType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TStaticString, const CharType> ReverseConstIteratorType;
 
+    static NOINLINE TStaticString Format( const CharType* Format, ... ) noexcept
+    {
+        TStaticString NewString;
+
+        va_list ArgsList;
+        va_start( ArgsList, Format );
+        NewString.FormatV( Format, ArgsList );
+        va_end( ArgsList );
+
+        return NewString;
+    }
+
+    /* Format string with a va_list (similar to snprintf) */
+    static FORCEINLINE void FormatV( const CharType* Format, va_list ArgsList ) noexcept
+    {
+        TStaticString NewString;
+        NewString.FormatV( Format, ArgsList );
+        return NewString;
+    }
+
     /* Empty constructor */
     FORCEINLINE TStaticString() noexcept
         : Characters()

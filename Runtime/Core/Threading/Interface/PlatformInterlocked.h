@@ -44,7 +44,7 @@
 #endif
 
 /* Base atomic operations, should not be used directly */
-class CCoreInterlocked
+class CPlatformInterlocked
 {
 public:
 

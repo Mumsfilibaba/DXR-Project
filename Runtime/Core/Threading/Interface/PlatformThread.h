@@ -18,19 +18,19 @@ typedef uint64 PlatformThreadHandle;
 // See: https://docs.microsoft.com/en-us/windows/win32/procthread/thread-handles-and-identifiers
 #define INVALID_THREAD_ID 0
 
-class CCoreThread : public CRefCounted
+class CPlatformThread : public CRefCounted
 {
 public:
 
     // TODO: Enable member-functions and lambdas
-    static TSharedRef<CCoreThread> Make( ThreadFunction InFunction )
+    static TSharedRef<CPlatformThread> Make( ThreadFunction InFunction )
     {
-        return dbg_new CCoreThread();
+        return dbg_new CPlatformThread();
     }
 
-    static TSharedRef<CCoreThread> Make( ThreadFunction InFunction, const CString& InName )
+    static TSharedRef<CPlatformThread> Make( ThreadFunction InFunction, const CString& InName )
     {
-        return dbg_new CCoreThread();
+        return dbg_new CPlatformThread();
     }
 
     virtual bool Start() {
@@ -47,8 +47,8 @@ public:
 
 protected:
 
-    CCoreThread() = default;
-    ~CCoreThread() = default;
+    CPlatformThread() = default;
+    ~CPlatformThread() = default;
 };
 
 #if defined(COMPILER_MSVC)

@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Input/Interface/PlatformKeyMapping.h"

@@ -1,6 +1,6 @@
 #pragma once
 #include "Events.h"
-#include "InterfaceAPI.h"
+#include "InterfaceModule.h"
 
 #include "Core/Input/InputStates.h"
 #include "Core/Containers/Array.h"

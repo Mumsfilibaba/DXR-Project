@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 
 /* Interface that all engine modules must implement */
 class IEngineModule

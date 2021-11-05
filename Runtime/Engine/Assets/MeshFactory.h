@@ -1,7 +1,7 @@
 #pragma once
 #include "SceneData.h"
 
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 
 class ENGINE_API CMeshFactory
 {

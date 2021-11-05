@@ -9,7 +9,7 @@ typedef CWindowsThread PlatformThread;
 typedef CMacThread PlatformThread;
 
 #else
-#include "Core/Threading/Core/CoreThread.h"
-typedef CCoreThread PlatformThread;
+#include "Core/Threading/Interface/PlatformThread.h"
+typedef CPlatformThread PlatformThread;
 
 #endif

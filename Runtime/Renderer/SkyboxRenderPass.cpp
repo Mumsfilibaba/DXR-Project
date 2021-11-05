@@ -1,5 +1,8 @@
 #include "SkyboxRenderPass.h"
 
+#include "Core/Debug/Debug.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
+
 #include "Renderer/Debug/GPUProfiler.h"
 
 #include "RHI/RHICore.h"
@@ -7,8 +10,6 @@
 
 #include "Engine/Resources/TextureFactory.h"
 
-#include "Core/Debug/Debug.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
 
 bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
 {

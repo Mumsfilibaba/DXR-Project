@@ -85,7 +85,7 @@ bool CDispatchQueue::Init()
         CString ThreadName;
         ThreadName.Format( "WorkerThread[%d]", i );
 
-        TSharedRef<CCoreThread> NewThread = PlatformThread::Make( CDispatchQueue::WorkThread, ThreadName );
+        TSharedRef<CPlatformThread> NewThread = PlatformThread::Make( CDispatchQueue::WorkThread, ThreadName );
         if ( NewThread )
         {
             WorkerThreads[i] = NewThread;
@@ -146,7 +146,7 @@ void CDispatchQueue::Release()
 {
     KillWorkers();
 
-    for ( TSharedRef<CCoreThread> Thread : WorkerThreads )
+    for ( TSharedRef<CPlatformThread> Thread : WorkerThreads )
     {
         Thread->WaitUntilFinished();
     }

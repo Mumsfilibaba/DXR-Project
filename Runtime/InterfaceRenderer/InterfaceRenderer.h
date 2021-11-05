@@ -1,6 +1,4 @@
 #pragma once
-#include "RendererAPI.h"
-
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Time/Timer.h"

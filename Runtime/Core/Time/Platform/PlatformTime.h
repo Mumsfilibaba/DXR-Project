@@ -10,6 +10,6 @@ typedef CMacTime PlatformTime;
 
 #else
 #include "Core/Time/Generic/GenericTime.h"
-typedef CCoreTime PlatformTime;
+typedef CPlatformTime PlatformTime;
 
 #endif

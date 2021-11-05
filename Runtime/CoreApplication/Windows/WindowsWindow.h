@@ -3,11 +3,11 @@
 #if defined(PLATFORM_WINDOWS)
 #include "Windows.h"
 
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 
 #include "CoreApplication/Interface/PlatformWindow.h"
 
-class CORE_API CWindowsWindow final : public CPlatformWindow
+class COREAPPLICATION_API CWindowsWindow final : public CPlatformWindow
 {
     friend class CWindowsApplication;
 

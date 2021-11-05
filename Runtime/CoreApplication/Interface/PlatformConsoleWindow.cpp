@@ -1,3 +1,3 @@
 #include "PlatformConsoleWindow.h"
 
-CORE_API CPlatformConsoleWindow* GConsoleWindow = nullptr;
+COREAPPLICATION_API CPlatformConsoleWindow* GConsoleWindow = nullptr;

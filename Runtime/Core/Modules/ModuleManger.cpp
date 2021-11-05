@@ -5,7 +5,11 @@
 
 #include "Core/Templates/StringTraits.h"
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 CModuleManager CModuleManager::Instance;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
 {
@@ -19,7 +23,7 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
     }
 
     // TODO: Abstract the Win-Api
-    HMODULE Module = LoadLibraryA( ModuleName );
+    PlatformModule Module = PlatformLibrary::LoadDynamicLib( ModuleName );
     if ( Module == NULL )
     {
         LOG_ERROR( "Failed to find module '" + CString( ModuleName ) + "'" );
@@ -27,10 +31,10 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
     }
 
     // Requires that the module has a LoadEngineModule function exported
-    PFNLoadEngineModule LoadEngineModule = GetTypedProcAddress<PFNLoadEngineModule>( Module, "LoadEngineModule" );
+    PFNLoadEngineModule LoadEngineModule = PlatformLibrary::LoadSymbolAddress<PFNLoadEngineModule>( Module, "LoadEngineModule" );
     if ( !LoadEngineModule )
     {
-        FreeLibrary( Module );
+        PlatformLibrary::FreeDynamicLib( Module );
         return nullptr;
     }
 
@@ -39,7 +43,7 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
     if ( !NewModule || (NewModule && !NewModule->Load()) )
     {
         LOG_ERROR( "Failed to load module '" + CString( ModuleName ) + "', resulting interface was nullptr" );
-        FreeLibrary( Module );
+        PlatformLibrary::FreeDynamicLib( Module );
 
         return nullptr;
     }
@@ -47,6 +51,10 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
     {
         LOG_INFO( "Loaded module'" + CString( ModuleName ) + "'" );
 
+        // Broadcast to engine systems that a new module was loaded
+        ModuleLoadedDelegate.Broadcast( ModuleName, NewModule );
+
+        // Add module in the module list
         TPair<IEngineModule*, PlatformModule> NewPair = MakePair<IEngineModule*, PlatformModule>( NewModule, Module );
         Modules.Emplace( NewPair );
         ModuleNames.Emplace( ModuleName );
@@ -111,8 +119,8 @@ void CModuleManager::UnloadModule( const char* ModuleName )
             EngineModule->Unload();
         }
 
-        HMODULE Module = Pair.Second;
-        FreeLibrary( Module );
+        PlatformModule Module = Pair.Second;
+        PlatformLibrary::FreeDynamicLib( Module );
 
         Modules.RemoveAt( Index );
         ModuleNames.RemoveAt( Index );
@@ -135,8 +143,8 @@ void CModuleManager::ReleaseAllModules()
             SafeDelete( EngineModule );
         }
 
-        HMODULE Module = Pair.Second;
-        FreeLibrary( Module );
+        PlatformModule Module = Pair.Second;
+        PlatformLibrary::FreeDynamicLib( Module );
     }
 
     Modules.Clear();

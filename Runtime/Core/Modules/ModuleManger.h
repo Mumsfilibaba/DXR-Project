@@ -1,11 +1,18 @@
 #pragma once
 #include "IEngineModule.h"
 
+#include "Platform/PlatformLibrary.h"
+
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/String.h"
+#include "Core/Delegates/MulticastDelegate.h"
 
-typedef HMODULE PlatformModule;
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef PlatformLibrary::PlatformHandle PlatformModule;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CORE_API CModuleManager
 {
@@ -35,6 +42,21 @@ public:
     /* Releases all modules that are loaded */
     void ReleaseAllModules();
 
+    /* Delegate for when a new module is loaded into the engine, name and IEngineModule pointer is the arguments */
+    DECLARE_MULTICAST_DELEGATE( CModuleLoadedDelegate, const char*, IEngineModule* );
+    FORCEINLINE CModuleLoadedDelegate GetModuleLoadedDelegate()
+    {
+        return ModuleLoadedDelegate;
+    }
+
+    FORCEINLINE IEngineModule& LoadEngineModuleRef( const char* ModuleName )
+    {
+        IEngineModule* Module = LoadEngineModule( ModuleName );
+        Assert( Module != nullptr );
+
+        return *Module;
+    } 
+
     template<typename ModuleType>
     FORCEINLINE ModuleType* LoadEngineModule( const char* ModuleName )
     {
@@ -42,9 +64,29 @@ public:
     }
 
     template<typename ModuleType>
+    FORCEINLINE ModuleType& LoadEngineModuleRef( const char* ModuleName )
+    {
+        return static_cast<ModuleType&>(LoadEngineModuleRef( ModuleName ));
+    }
+
+    FORCEINLINE IEngineModule& GetEngineModuleRef(  const char* ModuleName )
+    {
+        IEngineModule* Module = GetEngineModule( ModuleName );
+        Assert( Module != nullptr );
+
+        return *Module;
+    }
+
+    template<typename ModuleType>
     FORCEINLINE ModuleType* GetEngineModule( const char* ModuleName )
     {
         return static_cast<ModuleType*>(GetEngineModule( ModuleName ));
+    }
+
+    template<typename ModuleType>
+    FORCEINLINE ModuleType& GetEngineModuleRef( const char* ModuleName )
+    {
+        return static_cast<ModuleType&>(GetEngineModuleRef( ModuleName ));
     }
 
 private:
@@ -59,6 +101,9 @@ private:
 
     /* Returns the index of the specified module, if not found it returns -1 */
     int32 GetModuleIndex( const char* ModuleName );
+
+    /* Delegate that is fired when a new module is loaded */ 
+    CModuleLoadedDelegate ModuleLoadedDelegate;
 
     /* Platform handles to modules that are loaded */
     TArray<CString> ModuleNames;

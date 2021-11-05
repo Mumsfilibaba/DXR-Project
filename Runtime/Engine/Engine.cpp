@@ -1,6 +1,6 @@
 #include "Engine.h"
 
-#include "CoreApplication/Application.h"
+#include "Interface/InterfaceApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"

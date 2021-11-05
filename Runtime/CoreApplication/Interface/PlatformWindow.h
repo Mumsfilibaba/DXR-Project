@@ -2,6 +2,8 @@
 #include "Core/RefCounted.h"
 #include "Core/Containers/String.h"
 
+#include "CoreApplication/CoreApplicationModule.h"
+
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable

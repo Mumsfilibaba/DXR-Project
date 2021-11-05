@@ -1,10 +1,10 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "Core/Time/Core/CoreTime.h"
+#include "Core/Time/Interface/PlatformTime.h"
 #include "Core/Windows/Windows.h"
 
-class CWindowsTime : public CCoreTime
+class CWindowsTime : public CPlatformTime
 {
 public:
 

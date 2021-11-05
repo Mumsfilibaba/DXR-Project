@@ -3,7 +3,7 @@
 #if defined(PLATFORM_WINDOWS)
 #include "Windows.h"
 
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 #include "Core/Containers/String.h"
 
 #include "CoreApplication/Interface/PlatformDebugMisc.h"
@@ -16,7 +16,7 @@
 #undef OutputDebugString
 #endif
 
-class CORE_API CWindowsDebugMisc final : public CPlatformDebugMisc
+class COREAPPLICATION_API CWindowsDebugMisc final : public CPlatformDebugMisc
 {
 public:
 

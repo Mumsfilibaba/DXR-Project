@@ -12,16 +12,21 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Modules/ModuleManger.h"
 #include "Core/Modules/ApplicationModule.h"
-#include "CoreApplication/Platform/PlatformApplication.h"
-#include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "CoreApplication/Platform/PlatformOutputConsole.h"
-#include "CoreApplication/Application.h"
 #include "Core/Threading/DispatchQueue.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/InterlockedInt.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
+#include "Core/Misc/EngineLoopDelegates.h"
+#include "Core/Misc/EngineLoopTicker.h"
 
-#include "Renderer/UIRenderer.h"
+#include "Interface/InterfaceApplication.h"
+
+#include "InterfaceRenderer/InterfaceRenderer.h"
+
+#include "CoreApplication/Platform/PlatformApplication.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Platform/PlatformConsoleWindow.h"
+
 #include "Renderer/Renderer.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
@@ -48,7 +53,7 @@ bool CEngineLoop::PreInit()
     /* Create the actual application */
     if ( !CInterfaceApplication::Make() )
     {
-        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create MainApplication" );
+        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create Application" );
         return false;
     }
 
@@ -70,6 +75,10 @@ bool CEngineLoop::PreInit()
         return false;
     }
 
+    // Notify systems that the RHI is loaded
+    CEngineLoopDelegates::PostInitRHIDelegate.Broadcast();
+
+    // Init GPU Profiler
     if ( !CGPUProfiler::Init() )
     {
         LOG_ERROR( "CGPUProfiler failed to be initialized" );
@@ -80,11 +89,17 @@ bool CEngineLoop::PreInit()
         return false;
     }
 
+    // Notify systems that the PreInit phase is over
+    CEngineLoopDelegates::PreInitFinishedDelegate.Broadcast();
+
     return true;
 }
 
 bool CEngineLoop::Init()
 {
+    // Notify systems that the Engine is about to be created
+    CEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
+
     // Create the engine
 #if PROJECT_EDITOR
     GEngine = CEditorEngine::Make();
@@ -96,11 +111,18 @@ bool CEngineLoop::Init()
         return false;
     }
 
+    // Notify systems that the Engine is was initialized
+    CEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
+
+    // Init Renderer
     if ( !GRenderer.Init() )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create Renderer" );
         return false;
     }
+
+    // Notify systems that the Application is going to be loaded
+    CEngineLoopDelegates::PreApplicationLoadedDelegate.Broadcast();
 
     // Init Application Module // TODO: Do not have the name hardcoded
     GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>( "Sandbox.dll" );
@@ -108,16 +130,21 @@ bool CEngineLoop::Init()
     {
         LOG_WARNING( "Application Init failed, may not behave as intended" );
     }
+    else
+    {
+        // Notify systems that the Application is was loaded successfully
+        CEngineLoopDelegates::PostApplicationLoadedDelegate.Broadcast();
+    }
 
     // UI // TODO: Has to be initialized after the engine, however, there should be a delegate on the application that notifies when a viewport is registered*/
-    TSharedRef<IInterfaceRenderer> UIRenderer = CInterfaceRenderer::Make();
-    if ( !UIRenderer )
+    TSharedRef<IInterfaceRenderer> InterfaceRenderer = CModuleManager::Get().LoadEngineModule<IInterfaceRenderer>( "InterfaceRenderer" );
+    if ( !InterfaceRenderer )
     {
-        PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create UIRenderer" );
+        PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create InterfaceRenderer" );
         return false;
     }
 
-    CInterfaceApplication::Get().SetRenderer( UIRenderer );
+    CInterfaceApplication::Get().SetRenderer( InterfaceRenderer );
 
     // Start the engine
     if ( !GEngine->Start() )
@@ -135,8 +162,7 @@ void CEngineLoop::Tick( CTimestamp Deltatime )
     // Application and event-handling
     CInterfaceApplication::Get().Tick( Deltatime );
 
-    // TODO: This should be bound via delegates?
-    GApplicationModule->Tick( Deltatime );
+    CEngineLoopTicker::Get().Tick( Deltatime );
 
     LOG_INFO( "Tick: " + ToString( Deltatime.AsMilliSeconds() ) );
 

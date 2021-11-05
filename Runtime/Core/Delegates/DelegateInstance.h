@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 #include "Core/Templates/Move.h"
 #include "Core/Templates/FunctionType.h"
 #include "Core/Containers/Tuple.h"

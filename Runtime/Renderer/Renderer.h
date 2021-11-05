@@ -6,7 +6,9 @@
 #include "SkyboxRenderPass.h"
 #include "ForwardRenderer.h"
 #include "RayTracer.h"
-#include "InterfaceRenderer.h"
+
+#include "Core/Time/Timer.h"
+#include "Core/Threading/DispatchQueue.h"
 
 #include "Engine/Scene/Actor.h"
 #include "Engine/Scene/Scene.h"
@@ -23,9 +25,8 @@
 #include "Debug/RendererInfoWindow.h"
 #include "Debug/GPUProfilerWindow.h"
 
-#include "Core/Time/Timer.h"
-#include "Core/Threading/DispatchQueue.h"
-#include "CoreApplication/WindowMessageHandler.h"
+#include "Interface/WindowMessageHandler.h"
+#include "InterfaceRenderer/InterfaceRenderer.h"
 
 class CRendererWindowHandler final : public CWindowMessageHandler
 {

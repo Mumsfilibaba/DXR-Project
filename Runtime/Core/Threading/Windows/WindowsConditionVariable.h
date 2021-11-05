@@ -4,11 +4,11 @@
 #include "WindowsCriticalSection.h"
 
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Threading/Core/CoreConditionVariable.h"
+#include "Core/Threading/Interface/PlatformConditionVariable.h"
 #include "CoreApplication/Windows/WindowsDebugMisc.h"
 #include "Core/Logging/Log.h"
 
-class CWindowsConditionVariable final : public CCoreConditionVariable
+class CWindowsConditionVariable final : public CPlatformConditionVariable
 {
 public:
 

@@ -1,7 +1,7 @@
 #include "GameConsoleWindow.h"
 
 #include "Core/Debug/Console/ConsoleManager.h"
-#include "CoreApplication/Application.h"
+#include "Interface/InterfaceApplication.h"
 #include "Core/Templates/StringTraits.h"
 
 #include <imgui.h>

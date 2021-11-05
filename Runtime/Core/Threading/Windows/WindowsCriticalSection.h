@@ -2,9 +2,9 @@
 
 #if defined(PLATFORM_WINDOWS)
 #include "Core/Windows/Windows.h"
-#include "Core/Threading/Core/CoreCriticalSection.h"
+#include "Core/Threading/Interface/PlatformCriticalSection.h"
 
-class CWindowsCriticalSection final : public CCoreCriticalSection
+class CWindowsCriticalSection final : public CPlatformCriticalSection
 {
 public:
 

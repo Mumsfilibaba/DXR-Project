@@ -1,7 +1,22 @@
 #pragma once
-#include "RHIAPI.h"
+#include "Core.h"
 
 #include "Core/Modules/IEngineModule.h"
+
+#if PLATFORM_WINDOWS
+
+#if RHI_API_EXPORT
+#define RHI_API __declspec(dllexport)
+#else
+#define RHI_API __declspec(dllimport)
+#endif
+
+#else 
+#define RHI_API
+
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // TODO: Should be in a config file
 #define ENABLE_API_DEBUGGING       (0)

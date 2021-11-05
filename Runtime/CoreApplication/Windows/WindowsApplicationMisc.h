@@ -3,7 +3,7 @@
 #if defined(PLATFORM_WINDOWS)
 #include "Windows.h"
 
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 
 #include "CoreApplication/Interface/PlatformApplicationMisc.h"
 
@@ -11,7 +11,7 @@
 #undef MessageBox
 #endif
 
-class CORE_API CWindowsApplicationMisc final : public CPlatformApplicationMisc
+class COREAPPLICATION_API CWindowsApplicationMisc final : public CPlatformApplicationMisc
 {
 public:
 

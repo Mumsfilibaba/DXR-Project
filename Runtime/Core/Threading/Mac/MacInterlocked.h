@@ -1,8 +1,8 @@
 #pragma once
-#include "Core/Threading/Core/CoreInterlocked.h"
+#include "Core/Threading/Interface/PlatformInterlocked.h"
 
 /* Atomic operations on the MacOS platform */
-class CMacInterlocked : public CCoreInterlocked
+class CMacInterlocked : public CPlatformInterlocked
 {
 public:
 

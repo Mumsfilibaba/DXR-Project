@@ -1,5 +1,5 @@
 #pragma once
-#include "Engine/EngineAPI.h"
+#include "Engine/EngineModule.h"
 
 #include "RHI/RHIResources.h"
 

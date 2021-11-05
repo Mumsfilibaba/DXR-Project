@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Delegates/Event.h"
 

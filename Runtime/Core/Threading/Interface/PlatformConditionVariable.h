@@ -14,14 +14,14 @@
 #endif
 
 /* Generic ConditionVariable*/
-class CCoreConditionVariable
+class CPlatformConditionVariable
 {
 public:
 
     typedef void* PlatformHandle;
 
-    CCoreConditionVariable() = default;
-    ~CCoreConditionVariable() = default;
+    CPlatformConditionVariable() = default;
+    ~CPlatformConditionVariable() = default;
 
     FORCEINLINE void NotifyOne() noexcept
     {

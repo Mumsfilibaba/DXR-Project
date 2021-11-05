@@ -1,9 +1,10 @@
 #include "GPUProfilerWindow.h"
 
-#include "CoreApplication/Application.h"
-#include "Interface/UIUtilities.h"
-#include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Time/Timer.h"
+#include "Core/Debug/Console/ConsoleManager.h"
+
+#include "Interface/InterfaceUtilities.h"
+#include "Interface/InterfaceApplication.h"
 
 #include <imgui.h>
 

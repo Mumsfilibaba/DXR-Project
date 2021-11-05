@@ -31,7 +31,7 @@ struct SWindowsMessage
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Class representing an application on the windows- platform */
-class CORE_API CWindowsApplication final : public CPlatformApplication
+class COREAPPLICATION_API CWindowsApplication final : public CPlatformApplication
 {
     friend class CWindowsApplicationMisc;
 

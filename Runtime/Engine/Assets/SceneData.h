@@ -1,9 +1,9 @@
 #pragma once
 #include "VertexFormat.h"
 
-#include "Engine/EngineAPI.h"
+#include "Engine/EngineModule.h"
 
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"

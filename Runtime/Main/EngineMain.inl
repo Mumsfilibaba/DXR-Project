@@ -5,7 +5,7 @@
 
 #include "Main/EngineLoop.h"
 
-#include "CoreApplication/Application.h"
+#include "Interface/InterfaceApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 // Main function for all implementations

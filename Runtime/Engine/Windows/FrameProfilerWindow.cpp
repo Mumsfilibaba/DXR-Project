@@ -1,6 +1,6 @@
 #include "FrameProfilerWindow.h"
 
-#include "CoreApplication/Application.h"
+#include "Interface/InterfaceApplication.h"
 #include "Interface/UIUtilities.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Time/Timer.h"

@@ -1,10 +1,10 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 #include "CoreApplication/Interface/PlatformCursor.h"
 
-class CORE_API CWindowsCursor final : public CPlatformCursor
+class COREAPPLICATION_API CWindowsCursor final : public CPlatformCursor
 {
     friend class CWindowsApplication;
 

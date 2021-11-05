@@ -3,7 +3,7 @@
 #include "Matrix4.h"
 #include "Plane.h"
 
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 
 class CORE_API CFrustum
 {

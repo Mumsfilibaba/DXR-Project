@@ -3,7 +3,7 @@
 #if defined(PLATFORM_WINDOWS)
 #include "Core/Windows/Windows.h"
 
-#include "Core/CoreAPI.h"
+#include "Core/CoreModule.h"
 #include "Core/Threading/Platform/CriticalSection.h"
 
 #include "CoreApplication/Interface/PlatformConsoleWindow.h"
@@ -14,7 +14,7 @@
 #pragma warning(disable : 4251) // Class '...' needs to have DLL-interface to be used by clients of class '...'
 #endif
 
-class CORE_API CWindowsConsoleWindow final : public CPlatformConsoleWindow
+class COREAPPLICATION_API CWindowsConsoleWindow final : public CPlatformConsoleWindow
 {
 public:
 
