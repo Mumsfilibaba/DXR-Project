@@ -1,6 +1,6 @@
 #pragma once
 #include "Events.h"
-#include "ICursor.h"
+#include "InterfaceAPI.h"
 
 #include "Core/Input/InputStates.h"
 #include "Core/Containers/Array.h"
@@ -8,8 +8,10 @@
 #include "Core/Time/Timestamp.h"
 #include "Core/Math/IntVector2.h"
 
+#include "CoreApplication/ICursor.h"
+
 /* Holds the state of one user */
-class CORE_API CInterfaceUser
+class INTERFACE_API CInterfaceUser
 {
     friend class CInterfaceApplication;
 
@@ -18,7 +20,7 @@ public:
     /* Create a new application user */
     static FORCEINLINE TSharedPtr<CInterfaceUser> Make( uint32 InUserIndex, ICursor* InCursorDevice )
     {
-        return TSharedPtr<CInterfaceUser>( dbg_new CApplicationUser( InUserIndex, InCursorDevice ) );
+        return TSharedPtr<CInterfaceUser>( dbg_new CInterfaceUser( InUserIndex, InCursorDevice ) );
     }
 
     virtual ~CInterfaceUser();

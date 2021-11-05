@@ -2,11 +2,11 @@
 
 #include "Core/Utilities/StringUtilities.h"
 
-#include "Core/Application/Log.h"
+#include "Core/Logging/Log.h"
 #include "Core/Windows/Windows.h"
 #include "Core/Windows/Windows.inl"
 
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 DxcCreateInstanceProc DxcCreateInstanceFunc = nullptr;
 

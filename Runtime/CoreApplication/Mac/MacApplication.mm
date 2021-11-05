@@ -1,5 +1,5 @@
 #if defined(PLATFORM_MACOS)
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 #include "MacApplication.h"
 #include "MacWindow.h"
@@ -23,7 +23,7 @@ CMacApplication::~CMacApplication()
     [AppDelegate release];
 }
 
-TSharedRef<CCoreWindow> CMacApplication::MakeWindow()
+TSharedRef<CPlatformWindow> CMacApplication::MakeWindow()
 {
     TSharedRef<CMacWindow> NewWindow = new CMacWindow( this );
     Windows.Emplace(NewWindow);
@@ -116,13 +116,13 @@ void CMacApplication::Tick( float )
     PlatformApplicationMisc::PumpMessages(true);
 }
 
-void CMacApplication::SetActiveWindow( const TSharedRef<CCoreWindow>& Window )
+void CMacApplication::SetActiveWindow( const TSharedRef<CPlatformWindow>& Window )
 {
     CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window->GetNativeHandle());
     [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
 }
 
-TSharedRef<CCoreWindow> CMacApplication::GetActiveWindow() const
+TSharedRef<CPlatformWindow> CMacApplication::GetActiveWindow() const
 {
     NSWindow* KeyWindow = [NSApp keyWindow];
     return GetWindowFromNSWindow( KeyWindow );

@@ -5,7 +5,7 @@
 #include "RHICommandList.h"
 #include "RHIModule.h"
 
-#include "Core/Application/Core/CoreWindow.h"
+#include "CoreApplication/Interface/PlatformWindow.h"
 
 struct SResourceData;
 struct SClearValue;
@@ -143,7 +143,7 @@ public:
 
     virtual class CRHITimestampQuery* CreateTimestampQuery() = 0;
 
-    virtual class CRHIViewport* CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) = 0;
+    virtual class CRHIViewport* CreateViewport( CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) = 0;
 
     virtual class IRHICommandContext* GetDefaultCommandContext() = 0;
 
@@ -681,7 +681,7 @@ FORCEINLINE class CRHITimestampQuery* RHICreateTimestampQuery()
     return GRHICore->CreateTimestampQuery();
 }
 
-FORCEINLINE class CRHIViewport* RHICreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat )
+FORCEINLINE class CRHIViewport* RHICreateViewport( CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat )
 {
     return GRHICore->CreateViewport( Window, Width, Height, ColorFormat, DepthFormat );
 }

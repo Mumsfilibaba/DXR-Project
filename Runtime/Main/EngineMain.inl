@@ -5,8 +5,8 @@
 
 #include "Main/EngineLoop.h"
 
-#include "Core/Application/Application.h"
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Application.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 // Main function for all implementations
 int32 EngineMain()
@@ -39,7 +39,7 @@ int32 EngineMain()
     }
 
     CTimer Timer;
-    while ( CApplication::Get().IsRunning() )
+    while ( CInterfaceApplication::Get().IsRunning() )
     {
         Timer.Tick();
         CEngineLoop::Tick( Timer.GetDeltaTime() );

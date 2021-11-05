@@ -3,6 +3,7 @@
 
 #include "Core/Input/InputCodes.h"
 #include "Core/Input/ModifierKeyState.h"
+#include "Core/Containers/SharedRef.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)

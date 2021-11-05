@@ -53,6 +53,7 @@ using EnumIntegerType = typename _EnumIntegerType<T>::Type;
 \
     inline Type& operator|=(Type& LHS, Type RHS) noexcept { return (Type&)(((EnumIntegerType<Type>&)LHS) |= ((EnumIntegerType<Type>)RHS)); } \
     inline Type& operator&=(Type& LHS, Type RHS) noexcept { return (Type&)(((EnumIntegerType<Type>&)LHS) &= ((EnumIntegerType<Type>)RHS)); } \
-    inline Type& operator^=(Type& LHS, Type RHS) noexcept { return (Type&)(((EnumIntegerType<Type>&)LHS) ^= ((EnumIntegerType<Type>)RHS)); } \
+    inline Type& operator^=(Type& LHS, Type RHS) noexcept { return (Type&)(((EnumIntegerType<Type>&)LHS) ^= ((EnumIntegerType<Type>)RHS)); }
+
 #endif
 //-->

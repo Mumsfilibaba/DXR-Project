@@ -1,15 +1,15 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "CoreApplication/Windows/WindowsOutputConsole.h"
-typedef CWindowsOutputConsole PlatformOutputConsole;
+#include "CoreApplication/Windows/WindowsConsoleWindow.h"
+typedef CWindowsConsoleWindow PlatformConsoleWindow;
 
 #elif defined(PLATFORM_MACOS)
-#include "CoreApplication/Mac/MacOutputConsole.h"
-typedef CMacOutputConsole PlatformOutputConsole;
+#include "CoreApplication/Mac/MacConsoleWindow.h"
+typedef CMacConsoleWindow PlatformConsoleWindow;
 
 #else
 #include "CoreApplication/Interface/PlatformConsoleWindow.h"
-typedef CPlatformConsoleWindow PlatformOutputConsole;
+typedef CPlatformConsoleWindow PlatformConsoleWindow;
 
 #endif

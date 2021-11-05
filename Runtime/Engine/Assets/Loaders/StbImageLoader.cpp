@@ -1,7 +1,7 @@
 #include "StbImageLoader.h"
 
 #include "Core/Threading/DispatchQueue.h"
-#include "Core/Application/Log.h"
+#include "Core/Logging/Log.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>

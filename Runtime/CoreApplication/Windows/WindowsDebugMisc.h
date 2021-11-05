@@ -6,7 +6,7 @@
 #include "Core/CoreAPI.h"
 #include "Core/Containers/String.h"
 
-#include "CoreApplication/Interface/PlatformeDebugMisc.h"
+#include "CoreApplication/Interface/PlatformDebugMisc.h"
 
 #ifdef MessageBox
 #undef MessageBox

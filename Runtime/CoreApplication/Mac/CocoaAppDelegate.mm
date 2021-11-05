@@ -2,9 +2,9 @@
 #include "Notification.h"
 #include "CocoaAppDelegate.h"
 
-#include "Core/Application/Platform/PlatformApplication.h"
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
-#include "Core/Application/Platform/PlatformDebugMisc.h"
+#include "CoreApplication/Platform/PlatformApplication.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Platform/PlatformDebugMisc.h"
 
 @implementation CCocoaAppDelegate
 

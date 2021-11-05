@@ -1,7 +1,7 @@
 #pragma once
-#include "Core/Application/UI/IUIWindow.h"
-#include "Core/Application/InputHandler.h"
-#include "Core/Application/Events.h"
+#include "Interface/IInterfaceWindow.h"
+#include "CoreApplication/InputHandler.h"
+#include "CoreApplication/Events.h"
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/StaticArray.h"
@@ -36,7 +36,7 @@ public:
 };
 
 /* Panel that render the console window */
-class CGameConsoleWindow final : public IUIWindow
+class CGameConsoleWindow final : public IInterfaceWindow
 {
     INTERFACE_GENERATE_BODY();
 

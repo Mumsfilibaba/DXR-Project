@@ -1,7 +1,7 @@
 #include "GPUProfilerWindow.h"
 
-#include "Core/Application/Application.h"
-#include "Core/Application/UI/UIUtilities.h"
+#include "CoreApplication/Application.h"
+#include "Interface/UIUtilities.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Time/Timer.h"
 
@@ -172,7 +172,7 @@ void CGPUProfilerWindow::DrawGPUData( float Width )
 void CGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    TSharedRef<CCoreWindow> MainViewport = CApplication::Get().GetMainViewport();
+    TSharedRef<CPlatformWindow> MainViewport = CInterfaceApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

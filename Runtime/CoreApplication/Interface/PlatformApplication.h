@@ -24,6 +24,7 @@ public:
     /* Creates the application */
     static TSharedPtr<CPlatformApplication> Make() { return TSharedPtr<CPlatformApplication>(); }
 
+    /* Public destructor for TSharedPtr */
     virtual ~CPlatformApplication() = default;
 
     /* Create a window */
@@ -51,7 +52,7 @@ public:
     virtual TSharedRef<CPlatformWindow> GetCapture() const { return TSharedRef<CPlatformWindow>(); }
 
     /* Sets the message handler */
-    virtual void SetMessageListener( const TSharedPtr<CPlatfromApplicationMessageHandler>& InMessageHandler ) { MessageListener = InMessageHandler; }
+    virtual void SetMessageListener( const TSharedPtr<CPlatformApplicationMessageHandler>& InMessageHandler ) { MessageListener = InMessageHandler; }
 
     /* Retrieves the message handler */
     FORCEINLINE TSharedPtr<CPlatformApplicationMessageHandler> GetMessageListener() const

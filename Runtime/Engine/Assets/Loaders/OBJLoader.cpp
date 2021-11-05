@@ -5,7 +5,7 @@
 #include "Core/Containers/HashTable.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Threading/DispatchQueue.h"
-#include "Core/Application/Log.h"
+#include "Core/Logging/Log.h"
 
 #include "Engine/Assets/MeshUtilities.h"
 

@@ -1,4 +1,4 @@
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 #include "D3D12Device.h"
 #include "D3D12RHIShaderCompiler.h"

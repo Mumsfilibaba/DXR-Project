@@ -11,6 +11,19 @@
 #include "Interface/InputHandler.h"
 #include "Interface/IInterfaceRenderer.h"
 
+#if PLATFORM_WINDOWS
+
+#if INTERFACE_RENDERER_API_EXPORT
+#define INTERFACE_RENDERER_API __declspec(dllexport)
+#else
+#define INTERFACE_RENDERER_API
+
+#endif
+
+#else
+#define INTERFACE_RENDERER_API
+#endif
+
 // TODO: Remove since application should handle it directly
 class CInputHandler : public CInputHandler
 {
@@ -40,7 +53,9 @@ public:
     virtual bool HandleMouseScrolled( const SMouseScrolledEvent& MouseScrolledEvent ) override final;
 };
 
-class RENDERER_API CInterfaceRenderer final : public IInterfaceRenderer
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+class INTERFACE_RENDERER_API CInterfaceRenderer final : public IInterfaceRenderer
 {
 public:
 
@@ -56,7 +71,7 @@ public:
     virtual void Render( class CRHICommandList& Commandlist ) override final;
 
     /* Retrieve the context handle */
-    virtual UIContextHandle GetContext() const override final;
+    virtual InterfaceContext GetContext() const override final;
 
 private:
 

@@ -10,7 +10,7 @@
 #include "Engine/Scene/Components/MeshComponent.h"
 
 #include "Core/Math/Math.h"
-#include "Core/Application/Application.h"
+#include "CoreApplication/Application.h"
 #include "Core/Modules/ApplicationModule.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
@@ -27,7 +27,7 @@ bool CEditorEngine::Init()
     }
 
     /* Create Editor windows */
-    CApplication& Application = CApplication::Get();
+    CInterfaceApplication& Application = CInterfaceApplication::Get();
 
     TSharedRef<CInspectorWindow> InspectorWindow = CInspectorWindow::Make();
     Application.AddWindow( InspectorWindow );

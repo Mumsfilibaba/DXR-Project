@@ -4,7 +4,7 @@
 #include "RHI/RHIResources.h"
 
 #include "Core/Debug/Debug.h"
-#include "Core/Application/Log.h"
+#include "Core/Logging/Log.h"
 
 #include <d3d12.h>
 #include <dxcapi.h>

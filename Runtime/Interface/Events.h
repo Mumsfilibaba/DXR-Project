@@ -1,11 +1,11 @@
 #pragma once
 #include "Core.h"
-#include "ModifierKeyState.h"
 
-#include "Core/CoreWindow.h"
-
+#include "Core/Input/ModifierKeyState.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/SharedRef.h"
+
+#include "CoreApplication/Interface/PlatformWindow.h"
 
 struct SEvent
 {
@@ -31,7 +31,7 @@ struct SKeyEvent : public SEvent
     /* The KeyCode for this event */
     EKey KeyCode;
 
-    /* If the key was down or nor */
+    /* If the key was down or not */
     bool IsDown : 1;
 
     /* Is a repeated key event */
@@ -103,62 +103,62 @@ struct SMouseScrolledEvent : public SEvent
 
 struct SWindowResizeEvent : public SEvent
 {
-    FORCEINLINE SWindowResizeEvent( const TSharedRef<CCoreWindow>& InWindow, uint16 InWidth, uint16 InHeight )
+    FORCEINLINE SWindowResizeEvent( const TSharedRef<CPlatformWindow>& InWindow, uint16 InWidth, uint16 InHeight )
         : Window( InWindow )
         , Width( InWidth )
         , Height( InHeight )
     {
     }
 
-    TSharedRef<CCoreWindow> Window;
+    TSharedRef<CPlatformWindow> Window;
     uint16 Width;
     uint16 Height;
 };
 
 struct SWindowFocusChangedEvent : public SEvent
 {
-    FORCEINLINE SWindowFocusChangedEvent( const TSharedRef<CCoreWindow>& InWindow, bool hasFocus )
+    FORCEINLINE SWindowFocusChangedEvent( const TSharedRef<CPlatformWindow>& InWindow, bool hasFocus )
         : Window( InWindow )
         , HasFocus( hasFocus )
     {
     }
 
-    TSharedRef<CCoreWindow> Window;
+    TSharedRef<CPlatformWindow> Window;
     bool HasFocus;
 };
 
 struct SWindowMovedEvent : public SEvent
 {
-    FORCEINLINE SWindowMovedEvent( const TSharedRef<CCoreWindow>& InWindow, int16 InX, int16 InY )
+    FORCEINLINE SWindowMovedEvent( const TSharedRef<CPlatformWindow>& InWindow, int16 InX, int16 InY )
         : Window( InWindow )
         , x( InX )
         , y( InY )
     {
     }
 
-    TSharedRef<CCoreWindow> Window;
+    TSharedRef<CPlatformWindow> Window;
     int16 x;
     int16 y;
 };
 
 struct SWindowFrameMouseEvent : public SEvent
 {
-    FORCEINLINE SWindowFrameMouseEvent( const TSharedRef<CCoreWindow>& InWindow, bool InMouseEntered )
+    FORCEINLINE SWindowFrameMouseEvent( const TSharedRef<CPlatformWindow>& InWindow, bool InMouseEntered )
         : Window( InWindow )
         , MouseEntered( InMouseEntered )
     {
     }
 
-    TSharedRef<CCoreWindow> Window;
+    TSharedRef<CPlatformWindow> Window;
     bool MouseEntered;
 };
 
 struct SWindowClosedEvent : public SEvent
 {
-    FORCEINLINE SWindowClosedEvent( const TSharedRef<CCoreWindow>& InWindow )
+    FORCEINLINE SWindowClosedEvent( const TSharedRef<CPlatformWindow>& InWindow )
         : Window( InWindow )
     {
     }
 
-    TSharedRef<CCoreWindow> Window;
+    TSharedRef<CPlatformWindow> Window;
 };

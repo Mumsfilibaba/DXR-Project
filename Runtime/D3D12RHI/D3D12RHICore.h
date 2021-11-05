@@ -7,7 +7,7 @@
 
 #include "RHI/RHICore.h"
 
-#include "Core/Application/Windows/WindowsWindow.h"
+#include "CoreApplication/Windows/WindowsWindow.h"
 
 class CD3D12RHICommandContext;
 
@@ -128,7 +128,7 @@ public:
 
     virtual class CRHITimestampQuery* CreateTimestampQuery() override final;
 
-    virtual class CRHIViewport* CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) override final;
+    virtual class CRHIViewport* CreateViewport( CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) override final;
 
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
     virtual bool UAVSupportsFormat( EFormat Format ) const override final;

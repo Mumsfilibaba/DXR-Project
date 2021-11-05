@@ -222,6 +222,9 @@ group ""
 
 -- Engine Projects
 include "Runtime/Core"
+include "Runtime/CoreApplication"
+include "Runtime/Interface"
+include "Runtime/InterfaceRenderer"
 include "Runtime/RHI"
 include "Runtime/D3D12RHI"
 include "Runtime/NullRHI"

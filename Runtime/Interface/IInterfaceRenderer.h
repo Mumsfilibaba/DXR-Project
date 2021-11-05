@@ -1,10 +1,11 @@
 #pragma once
-#include "IInterfaceWindow.h"
 #include "InterfaceImage.h"
+#include "IInterfaceWindow.h"
 
+#include "Core/Modules/IEngineModule.h"
 #include "Core/Containers/SharedRef.h"
 
-class IInterfaceRenderer : public CRefCounted
+class IInterfaceRenderer : public CDefaultEngineModule, public CRefCounted
 {
 public:
 

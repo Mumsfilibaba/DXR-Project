@@ -1,10 +1,10 @@
 #pragma once
 #include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Application/UI/IUIWindow.h"
+#include "Interface/IInterfaceWindow.h"
 
 #include <imgui.h>
 
-class CFrameProfilerWindow : public IUIWindow
+class CFrameProfilerWindow : public IInterfaceWindow
 {
     INTERFACE_GENERATE_BODY();
 

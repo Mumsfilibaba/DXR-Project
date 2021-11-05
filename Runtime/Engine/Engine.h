@@ -1,10 +1,11 @@
 #pragma once
 #include "Core/CoreAPI.h"
 #include "Core/Input/InputCodes.h"
-#include "Core/Application/Events.h"
-#include "Core/Application/ApplicationUser.h"
-#include "Core/Application/WindowMessageHandler.h"
 #include "Core/Delegates/Event.h"
+
+#include "Interface/Events.h"
+#include "Interface/InterfaceUser.h"
+#include "Interface/WindowMessageHandler.h"
 
 #include "RHI/RHIViewport.h"
 
@@ -38,13 +39,13 @@ public:
     void Exit();
 
     /* The main window of the app */
-    TSharedRef<CCoreWindow> MainWindow;
+    TSharedRef<CPlatformWindow> MainWindow;
 
     /* The main viewport */
     TSharedRef<CRHIViewport> MainViewport;
 
     // TODO: Remove
-    TSharedPtr<CApplicationUser> User;
+    TSharedPtr<CInterfaceUser> User;
 
     /* The current scene */
     TSharedPtr<CScene> Scene;

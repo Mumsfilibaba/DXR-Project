@@ -6,7 +6,7 @@
 #include "SkyboxRenderPass.h"
 #include "ForwardRenderer.h"
 #include "RayTracer.h"
-#include "UIRenderer.h"
+#include "InterfaceRenderer.h"
 
 #include "Engine/Scene/Actor.h"
 #include "Engine/Scene/Scene.h"
@@ -25,7 +25,7 @@
 
 #include "Core/Time/Timer.h"
 #include "Core/Threading/DispatchQueue.h"
-#include "Core/Application/WindowMessageHandler.h"
+#include "CoreApplication/WindowMessageHandler.h"
 
 class CRendererWindowHandler final : public CWindowMessageHandler
 {

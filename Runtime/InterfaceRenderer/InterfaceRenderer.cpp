@@ -1,4 +1,4 @@
-#include "UIRenderer.h"
+#include "InterfaceRenderer.h"
 #include "Renderer.h"
 
 #include "Engine/Engine.h"
@@ -8,12 +8,14 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShaderCompiler.h"
 
+#include "CoreApplication/ICursor.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
+
 #include "Core/Time/Timer.h"
-#include "Core/Application/ICursor.h"
-#include "Core/Application/Application.h"
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Containers/Array.h"
+
+#include "Interface/InterfaceApplication.h"
 
 #include <imgui.h>
 
@@ -54,7 +56,19 @@ bool CUIInputHandler::HandleMouseScrolled( const SMouseScrolledEvent& MouseScrol
     return ImGui::GetIO().WantCaptureMouse;
 }
 
-CUIRenderer::~CUIRenderer()
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern "C"
+{
+    INTERFACE_RENDERER_API IEngineModule* LoadEngineModule()
+    {
+        return dbg_new CInterfaceRenderer();
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+CInterfaceRenderer::~CInterfaceRenderer()
 {
     if ( Context )
     {
@@ -62,7 +76,7 @@ CUIRenderer::~CUIRenderer()
     }
 }
 
-bool CUIRenderer::Init()
+bool CInterfaceRenderer::Init()
 {
     // Create context
     IMGUI_CHECKVERSION();
@@ -81,28 +95,28 @@ bool CUIRenderer::Init()
     UIState.ImeWindowHandle     = GEngine->MainWindow->GetNativeHandle();
 
     // Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
-    UIState.KeyMap[ImGuiKey_Tab] = EKey::Key_Tab;
-    UIState.KeyMap[ImGuiKey_LeftArrow] = EKey::Key_Left;
-    UIState.KeyMap[ImGuiKey_RightArrow] = EKey::Key_Right;
-    UIState.KeyMap[ImGuiKey_UpArrow] = EKey::Key_Up;
-    UIState.KeyMap[ImGuiKey_DownArrow] = EKey::Key_Down;
-    UIState.KeyMap[ImGuiKey_PageUp] = EKey::Key_PageUp;
-    UIState.KeyMap[ImGuiKey_PageDown] = EKey::Key_PageDown;
-    UIState.KeyMap[ImGuiKey_Home] = EKey::Key_Home;
-    UIState.KeyMap[ImGuiKey_End] = EKey::Key_End;
-    UIState.KeyMap[ImGuiKey_Insert] = EKey::Key_Insert;
-    UIState.KeyMap[ImGuiKey_Delete] = EKey::Key_Delete;
-    UIState.KeyMap[ImGuiKey_Backspace] = EKey::Key_Backspace;
-    UIState.KeyMap[ImGuiKey_Space] = EKey::Key_Space;
-    UIState.KeyMap[ImGuiKey_Enter] = EKey::Key_Enter;
-    UIState.KeyMap[ImGuiKey_Escape] = EKey::Key_Escape;
+    UIState.KeyMap[ImGuiKey_Tab]         = EKey::Key_Tab;
+    UIState.KeyMap[ImGuiKey_LeftArrow]   = EKey::Key_Left;
+    UIState.KeyMap[ImGuiKey_RightArrow]  = EKey::Key_Right;
+    UIState.KeyMap[ImGuiKey_UpArrow]     = EKey::Key_Up;
+    UIState.KeyMap[ImGuiKey_DownArrow]   = EKey::Key_Down;
+    UIState.KeyMap[ImGuiKey_PageUp]      = EKey::Key_PageUp;
+    UIState.KeyMap[ImGuiKey_PageDown]    = EKey::Key_PageDown;
+    UIState.KeyMap[ImGuiKey_Home]        = EKey::Key_Home;
+    UIState.KeyMap[ImGuiKey_End]         = EKey::Key_End;
+    UIState.KeyMap[ImGuiKey_Insert]      = EKey::Key_Insert;
+    UIState.KeyMap[ImGuiKey_Delete]      = EKey::Key_Delete;
+    UIState.KeyMap[ImGuiKey_Backspace]   = EKey::Key_Backspace;
+    UIState.KeyMap[ImGuiKey_Space]       = EKey::Key_Space;
+    UIState.KeyMap[ImGuiKey_Enter]       = EKey::Key_Enter;
+    UIState.KeyMap[ImGuiKey_Escape]      = EKey::Key_Escape;
     UIState.KeyMap[ImGuiKey_KeyPadEnter] = EKey::Key_KeypadEnter;
-    UIState.KeyMap[ImGuiKey_A] = EKey::Key_A;
-    UIState.KeyMap[ImGuiKey_C] = EKey::Key_C;
-    UIState.KeyMap[ImGuiKey_V] = EKey::Key_V;
-    UIState.KeyMap[ImGuiKey_X] = EKey::Key_X;
-    UIState.KeyMap[ImGuiKey_Y] = EKey::Key_Y;
-    UIState.KeyMap[ImGuiKey_Z] = EKey::Key_Z;
+    UIState.KeyMap[ImGuiKey_A]           = EKey::Key_A;
+    UIState.KeyMap[ImGuiKey_C]           = EKey::Key_C;
+    UIState.KeyMap[ImGuiKey_V]           = EKey::Key_V;
+    UIState.KeyMap[ImGuiKey_X]           = EKey::Key_X;
+    UIState.KeyMap[ImGuiKey_Y]           = EKey::Key_Y;
+    UIState.KeyMap[ImGuiKey_Z]           = EKey::Key_Z;
 
     // Setup style
     ImGui::StyleColorsDark();
@@ -459,30 +473,30 @@ bool CUIRenderer::Init()
     }
 
     // Setup input callbacks
-    InputHandler.KeyEventDelegate.BindRaw( this, &CUIRenderer::OnKeyEvent );
-    InputHandler.KeyTypedDelegate.BindRaw( this, &CUIRenderer::OnKeyTyped );
-    InputHandler.MouseButtonDelegate.BindRaw( this, &CUIRenderer::OnMouseButtonEvent );
-    InputHandler.MouseScrolledDelegate.BindRaw( this, &CUIRenderer::OnMouseScrolled );
+    InputHandler.KeyEventDelegate.BindRaw( this, &CInterfaceRenderer::OnKeyEvent );
+    InputHandler.KeyTypedDelegate.BindRaw( this, &CInterfaceRenderer::OnKeyTyped );
+    InputHandler.MouseButtonDelegate.BindRaw( this, &CInterfaceRenderer::OnMouseButtonEvent );
+    InputHandler.MouseScrolledDelegate.BindRaw( this, &CInterfaceRenderer::OnMouseScrolled );
 
     // Add the input handler
-    CApplication::Get().AddInputHandler( &InputHandler );
+    CInterfaceApplication::Get().AddInputHandler( &InputHandler );
 
     return true;
 }
 
-void CUIRenderer::OnKeyEvent( const SKeyEvent& KeyEvent )
+void CInterfaceRenderer::OnKeyEvent( const SKeyEvent& KeyEvent )
 {
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.KeysDown[KeyEvent.KeyCode] = KeyEvent.IsDown;
 }
 
-void CUIRenderer::OnKeyTyped( SKeyTypedEvent Event )
+void CInterfaceRenderer::OnKeyTyped( SKeyTypedEvent Event )
 {
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.AddInputCharacter( Event.Character );
 }
 
-void CUIRenderer::OnMouseButtonEvent( const SMouseButtonEvent& Event )
+void CInterfaceRenderer::OnMouseButtonEvent( const SMouseButtonEvent& Event )
 {
     ImGuiIO& UIState = ImGui::GetIO();
 
@@ -490,14 +504,14 @@ void CUIRenderer::OnMouseButtonEvent( const SMouseButtonEvent& Event )
     UIState.MouseDown[ButtonIndex] = Event.IsDown;
 }
 
-void CUIRenderer::OnMouseScrolled( const SMouseScrolledEvent& Event )
+void CInterfaceRenderer::OnMouseScrolled( const SMouseScrolledEvent& Event )
 {
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.MouseWheel += Event.VerticalDelta;
     UIState.MouseWheelH += Event.HorizontalDelta;
 }
 
-void CUIRenderer::BeginTick()
+void CInterfaceRenderer::BeginTick()
 {
     FrameClock.Tick();
 
@@ -505,10 +519,10 @@ void CUIRenderer::BeginTick()
 
 
 
-    TSharedRef<CCoreWindow> Window = GEngine->MainWindow;
+    TSharedRef<CPlatformWindow> Window = GEngine->MainWindow;
     if ( UIState.WantSetMousePos )
     {
-        CApplication::Get().SetCursorPos( Window, CIntVector2( static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y) ) );
+        CInterfaceApplication::Get().SetCursorPos( Window, CIntVector2( static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y) ) );
     }
 
     SWindowShape CurrentWindowShape;
@@ -519,7 +533,7 @@ void CUIRenderer::BeginTick()
     UIState.DisplaySize = ImVec2( float( CurrentWindowShape.Width ), float( CurrentWindowShape.Height ) );
     UIState.DisplayFramebufferScale = ImVec2( 1.0f, 1.0f );
 
-    CIntVector2 Position = CApplication::Get().GetCursorPos( Window );
+    CIntVector2 Position = CInterfaceApplication::Get().GetCursorPos( Window );
     UIState.MousePos = ImVec2( static_cast<float>(Position.x), static_cast<float>(Position.y) );
 
     SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
@@ -533,7 +547,7 @@ void CUIRenderer::BeginTick()
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
         if ( ImguiCursor == ImGuiMouseCursor_None || UIState.MouseDrawCursor )
         {
-            CApplication::Get().SetCursor( ECursor::None );
+            CInterfaceApplication::Get().SetCursor( ECursor::None );
         }
         else
         {
@@ -551,7 +565,7 @@ void CUIRenderer::BeginTick()
                 case ImGuiMouseCursor_NotAllowed: Cursor = ECursor::NotAllowed; break;
             }
 
-            CApplication::Get().SetCursor( Cursor );
+            CInterfaceApplication::Get().SetCursor( Cursor );
         }
     }
 
@@ -559,15 +573,15 @@ void CUIRenderer::BeginTick()
     ImGui::NewFrame();
 }
 
-void CUIRenderer::EndTick()
+void CInterfaceRenderer::EndTick()
 {
     // EndFrame
     ImGui::EndFrame();
 }
 
-TSharedRef<CUIRenderer> CUIRenderer::Make()
+TSharedRef<CInterfaceRenderer> CInterfaceRenderer::Make()
 {
-    TSharedRef<CUIRenderer> NewRenderer = dbg_new CUIRenderer();
+    TSharedRef<CInterfaceRenderer> NewRenderer = dbg_new CInterfaceRenderer();
     if ( NewRenderer->Init() )
     {
         return NewRenderer;
@@ -576,7 +590,7 @@ TSharedRef<CUIRenderer> CUIRenderer::Make()
     return nullptr;
 }
 
-void CUIRenderer::Render( CRHICommandList& CmdList )
+void CInterfaceRenderer::Render( CRHICommandList& CmdList )
 {
     // Render ImgGui draw data
     ImGui::Render();
@@ -689,7 +703,7 @@ void CUIRenderer::Render( CRHICommandList& CmdList )
     RenderedImages.Clear();
 }
 
-UIContextHandle CUIRenderer::GetContext() const
+InterfaceContext CInterfaceRenderer::GetContext() const
 {
-    return reinterpret_cast<UIContextHandle>(Context);
+    return reinterpret_cast<InterfaceContext>(Context);
 }

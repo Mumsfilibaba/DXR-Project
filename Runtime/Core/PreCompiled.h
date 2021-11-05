@@ -37,7 +37,7 @@
 #include "Core/Templates/ObjectHandling.h"
 
 /* Application */
-#include "Core/Application/Log.h"
+#include "Core/Logging/Log.h"
 
 /* Utilities */
 #include "Core/Utilities/HashUtilities.h"

@@ -1,11 +1,11 @@
 #pragma once
 #include "GPUProfiler.h"
 
-#include "Core/Application/UI/IUIWindow.h"
+#include "Interface/IInterfaceWindow.h"
 
 #include <imgui.h>
 
-class CGPUProfilerWindow : public IUIWindow
+class CGPUProfilerWindow : public IInterfaceWindow
 {
     INTERFACE_GENERATE_BODY();
 

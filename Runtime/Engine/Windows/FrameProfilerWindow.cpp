@@ -1,7 +1,7 @@
 #include "FrameProfilerWindow.h"
 
-#include "Core/Application/Application.h"
-#include "Core/Application/UI/UIUtilities.h"
+#include "CoreApplication/Application.h"
+#include "Interface/UIUtilities.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Time/Timer.h"
 
@@ -41,7 +41,7 @@ bool CFrameProfilerWindow::IsTickable()
 
 void CFrameProfilerWindow::DrawFPS()
 {
-    const uint32 WindowWidth = CApplication::Get().GetMainViewport()->GetWidth();
+    const uint32 WindowWidth = CInterfaceApplication::Get().GetMainViewport()->GetWidth();
 
     ImGui::PushStyleVar( ImGuiStyleVar_WindowMinSize, ImVec2( 5.0f, 5.0f ) );
     ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 2.0f, 1.0f ) );
@@ -213,7 +213,7 @@ void CFrameProfilerWindow::DrawCPUData( float Width )
 void CFrameProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    TSharedRef<CCoreWindow> MainViewport = CApplication::Get().GetMainViewport();
+    TSharedRef<CPlatformWindow> MainViewport = CInterfaceApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

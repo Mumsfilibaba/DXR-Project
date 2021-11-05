@@ -4,7 +4,7 @@
 #include "WindowsApplication.h"
 
 CWindowsWindow::CWindowsWindow( CWindowsApplication* InApplication )
-    : CCoreWindow()
+    : CPlatformWindow()
     , Application( InApplication )
     , Window( 0 )
     , Style( 0 )

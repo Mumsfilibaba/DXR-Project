@@ -1,10 +1,10 @@
 #pragma once
-#include "Core/Application/UI/IUIWindow.h"
+#include "Interface/IInterfaceWindow.h"
 #include "Core/Containers/SharedRef.h"
 
 #include <imgui.h>
 
-class CRendererInfoWindow : public IUIWindow
+class CRendererInfoWindow : public IInterfaceWindow
 {
     INTERFACE_GENERATE_BODY();
 

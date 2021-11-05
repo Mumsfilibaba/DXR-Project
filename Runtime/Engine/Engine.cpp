@@ -1,7 +1,7 @@
 #include "Engine.h"
 
-#include "Core/Application/Application.h"
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Application.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
@@ -41,14 +41,14 @@ bool CEngine::Init()
         WindowStyleFlag_Maximizable |
         WindowStyleFlag_Resizeable;
 
-    CApplication& Application = CApplication::Get();
+    CInterfaceApplication& Application = CInterfaceApplication::Get();
 
     MainWindow = Application.MakeWindow();
     if ( MainWindow && MainWindow->Init( "DXR Engine", 1920, 1080, Style ) )
     {
         MainWindow->Show( false );
 
-        GToggleFullscreen.GetExecutedDelgate().AddRaw( MainWindow.Get(), &CCoreWindow::ToggleFullscreen );
+        GToggleFullscreen.GetExecutedDelgate().AddRaw( MainWindow.Get(), &CPlatformWindow::ToggleFullscreen );
         INIT_CONSOLE_COMMAND( "a.ToggleFullscreen", &GToggleFullscreen );
     }
     else
@@ -60,7 +60,7 @@ bool CEngine::Init()
     Application.RegisterMainViewport( MainWindow );
 
     ICursor* CursorDevice = Application.GetCursor();
-    User = CApplicationUser::Make( 0, CursorDevice );
+    User = CInterfaceUser::Make( 0, CursorDevice );
     if ( !User )
     {
         return false;

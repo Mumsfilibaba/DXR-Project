@@ -5,7 +5,8 @@
 #include "RHI/RHIViewport.h"
 
 #include "Renderer/MeshDrawCommand.h"
-#include "Renderer/UIRenderer.h"
+
+#include "InterfaceRenderer/InterfaceRenderer.h"
 
 #include "Core/Containers/HashTable.h"
 

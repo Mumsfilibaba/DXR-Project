@@ -262,7 +262,7 @@ public:
         return dbg_new CNullRHITimestampQuery();
     }
 
-    virtual class CRHIViewport* CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) override final
+    virtual class CRHIViewport* CreateViewport( CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat ) override final
     {
         return dbg_new CNullRHIViewport( ColorFormat, Width, Height );
     }

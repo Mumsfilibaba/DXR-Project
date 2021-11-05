@@ -1,7 +1,8 @@
 #include "ConsoleManager.h"
 
-#include "Core/Application/Log.h"
-#include "Core/Application/Application.h"
+#include "Core/Logging/Log.h"
+
+#include "Interface/InterfaceApplication.h"
 
 // TODO: Remove (Make own? Slow?)
 #include <regex>

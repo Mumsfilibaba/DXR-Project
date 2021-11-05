@@ -1,13 +1,13 @@
 #pragma once
-#include "Core/Application/UI/IUIWindow.h"
+#include "Interface/IInterfaceWindow.h"
 #include "Core/Containers/SharedRef.h"
-#include "Core/Application/UI/UIImage.h"
+#include "Interface/UIImage.h"
 
 #include "RHI/RHIResourceViews.h"
 
 #include <imgui.h>
 
-class CTextureDebugWindow : public IUIWindow
+class CTextureDebugWindow : public IInterfaceWindow
 {
     INTERFACE_GENERATE_BODY();
 

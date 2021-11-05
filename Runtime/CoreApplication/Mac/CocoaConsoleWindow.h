@@ -1,7 +1,7 @@
 #pragma once 
 
 #if defined(PLATFORM_MACOS) && defined(__OBJC__)
-#include "Core/Application/Generic/GenericOutputConsole.h"
+#include "CoreApplication/Generic/GenericOutputConsole.h"
 
 #include <stdarg.h>
 

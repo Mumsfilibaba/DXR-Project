@@ -3,7 +3,7 @@
 #if defined(PLATFORM_WINDOWS)
 
 // Included here since MSVC still cannot find the log-macro when right above this file (Retarded compiler?)
-#include "Core/Application/Log.h"
+#include "Core/Logging/Log.h"
 
 /* Helper for retrieving a function from DLL */
 

@@ -12,17 +12,17 @@
 #include "Core/Delegates/Event.h"
 
 #include "CoreApplication/ICursor.h"
-#include "CoreApplication/Core/CoreApplication.h"
+#include "CoreApplication/Interface/PlatformApplication.h"
 
 /* Application class for the engine */
-class INTERFACE_API CInterfaceApplication : public CCoreApplicationMessageHandler
+class INTERFACE_API CInterfaceApplication : public CPlatformApplicationMessageHandler
 {
     /* Delegate for when the application is about to exit */
     DECLARE_EVENT( CExitEvent, CInterfaceApplication, int32 );
     CExitEvent ExitEvent;
 
     /* Delegate for when the application gets a new main-viewport */
-    DECLARE_EVENT( CMainViewportChange, CInterfaceApplication, const TSharedRef<CCoreWindow>& );
+    DECLARE_EVENT( CMainViewportChange, CInterfaceApplication, const TSharedRef<CPlatformWindow>& );
     CMainViewportChange MainViewportChange;
 
 public:
@@ -30,7 +30,7 @@ public:
     /* Creates a standard main application */
     static bool Make();
 
-    /* Init the singleton from an existing application - Used for classes inheriting from CApplication */
+    /* Init the singleton from an existing application - Used for classes inheriting from CInterfaceApplication */
     static bool Make( const TSharedPtr<CInterfaceApplication>& InApplication );
 
     /* Releases the global application instance, before calling release the platform application should be set to nullptr */
@@ -52,7 +52,7 @@ public:
     virtual ~CInterfaceApplication() = default;
 
     /* Creates a window */
-    TSharedRef<CCoreWindow> MakeWindow();
+    TSharedRef<CPlatformWindow> MakeWindow();
 
     /* Tick the application */
     void Tick( CTimestamp DeltaTime );
@@ -64,13 +64,13 @@ public:
     void SetCursorPos( const CIntVector2& Position );
 
     /* Set the cursor position */
-    void SetCursorPos( const TSharedRef<CCoreWindow>& RelativeWindow, const CIntVector2& Position );
+    void SetCursorPos( const TSharedRef<CPlatformWindow>& RelativeWindow, const CIntVector2& Position );
 
     /* Retrieve the current cursor position */
     CIntVector2 GetCursorPos() const;
 
     /* Retrieve the current cursor position */
-    CIntVector2 GetCursorPos( const TSharedRef<CCoreWindow>& RelativeWindow ) const;
+    CIntVector2 GetCursorPos( const TSharedRef<CPlatformWindow>& RelativeWindow ) const;
 
     /* Set the visibility of the cursor */
     void ShowCursor( bool IsVisible );
@@ -79,16 +79,16 @@ public:
     bool IsCursorVisibile() const;
 
     /* Sets the window that currently has the keyboard focus */
-    void SetCapture( const TSharedRef<CCoreWindow>& CaptureWindow );
+    void SetCapture( const TSharedRef<CPlatformWindow>& CaptureWindow );
 
     /* Sets the window that is currently active */
-    void SetActiveWindow( const TSharedRef<CCoreWindow>& ActiveWindow );
+    void SetActiveWindow( const TSharedRef<CPlatformWindow>& ActiveWindow );
 
     /* Retrieves the window that currently has the keyboard focus, can return nullptr */
-    TSharedRef<CCoreWindow> GetCapture() const;
+    TSharedRef<CPlatformWindow> GetCapture() const;
 
     /* Retrieves the window that is currently active */
-    TSharedRef<CCoreWindow> GetActiveWindow() const;
+    TSharedRef<CPlatformWindow> GetActiveWindow() const;
 
     /* Adds a InputHandler to the application, which gets processed before the game */
     void AddInputHandler( CInputHandler* NewInputHandler );
@@ -97,7 +97,7 @@ public:
     void RemoveInputHandler( CInputHandler* InputHandler );
 
     /* Registers the main window of the application */
-    void RegisterMainViewport( const TSharedRef<CCoreWindow>& NewMainViewport );
+    void RegisterMainViewport( const TSharedRef<CPlatformWindow>& NewMainViewport );
 
     /* Sets the UI renderer */
     void SetRenderer( const TSharedRef<IInterfaceRenderer>& NewRenderer );
@@ -115,24 +115,24 @@ public:
     void DrawWindows( class CRHICommandList& CommandList );
 
     /* Sets the platform application used to dispatch messages from the OS, should be set to nullptr before releasing the application */
-    void SetPlatformApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
+    void SetPlatformApplication( const TSharedPtr<CPlatformApplication>& InPlatformApplication );
 
     /* Adds a InputHandler to the application, which gets processed before the application module */
     void AddWindowMessageHandler( CWindowMessageHandler* NewWindowMessageHandler );
 
     void RemoveWindowMessageHandler( CWindowMessageHandler* WindowMessageHandler );
 
-    FORCEINLINE TSharedPtr<CCoreApplication> GetPlatformApplication() const
+    FORCEINLINE TSharedPtr<CPlatformApplication> GetPlatformApplication() const
     {
         return PlatformApplication;
     }
 
-    FORCEINLINE TSharedRef<IUIRenderer> GetRenderer() const
+    FORCEINLINE TSharedRef<IInterfaceRenderer> GetRenderer() const
     {
         return Renderer;
     }
 
-    FORCEINLINE TSharedRef<CCoreWindow> GetMainViewport() const
+    FORCEINLINE TSharedRef<CPlatformWindow> GetMainViewport() const
     {
         return MainViewport;
     }
@@ -206,19 +206,19 @@ public:
     virtual void HandleMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState ) override;
     virtual void HandleMouseScrolled( float HorizontalDelta, float VerticalDelta ) override;
 
-    virtual void HandleWindowResized( const TSharedRef<CCoreWindow>& Window, uint16 Width, uint16 Height ) override;
-    virtual void HandleWindowMoved( const TSharedRef<CCoreWindow>& Window, int16 x, int16 y ) override;
-    virtual void HandleWindowFocusChanged( const TSharedRef<CCoreWindow>& Window, bool HasFocus ) override;
-    virtual void HandleWindowMouseLeft( const TSharedRef<CCoreWindow>& Window ) override;
-    virtual void HandleWindowMouseEntered( const TSharedRef<CCoreWindow>& Window ) override;
-    virtual void HandleWindowClosed( const TSharedRef<CCoreWindow>& Window ) override;
+    virtual void HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint16 Width, uint16 Height ) override;
+    virtual void HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int16 x, int16 y ) override;
+    virtual void HandleWindowFocusChanged( const TSharedRef<CPlatformWindow>& Window, bool HasFocus ) override;
+    virtual void HandleWindowMouseLeft( const TSharedRef<CPlatformWindow>& Window ) override;
+    virtual void HandleWindowMouseEntered( const TSharedRef<CPlatformWindow>& Window ) override;
+    virtual void HandleWindowClosed( const TSharedRef<CPlatformWindow>& Window ) override;
 
     virtual void HandleApplicationExit( int32 ExitCode ) override;
 
 protected:
 
     /* Hidden constructor, use make */
-    CInterfaceApplication( const TSharedPtr<CCoreApplication>& InPlatformApplication );
+    CInterfaceApplication( const TSharedPtr<CPlatformApplication>& InPlatformApplication );
 
     /* Handles key events */
     void OnKeyEvent( const SKeyEvent& KeyEvent );
@@ -237,13 +237,13 @@ protected:
     void RenderStrings();
 
     /* The native platform application */
-    TSharedPtr<CCoreApplication> PlatformApplication;
+    TSharedPtr<CPlatformApplication> PlatformApplication;
 
     /* Renderer for the UI */
-    TSharedRef<IUIRenderer> Renderer;
+    TSharedRef<IInterfaceRenderer> Renderer;
 
     /* Renderer for the UI */
-    TSharedRef<CCoreWindow> MainViewport;
+    TSharedRef<CPlatformWindow> MainViewport;
 
     /* All registered UI windows */
     TArray<TSharedRef<IInterfaceWindow>> UIWindows;

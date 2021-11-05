@@ -5,8 +5,8 @@
 
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Core/CoreConditionVariable.h"
-#include "Core/Application/Windows/WindowsDebugMisc.h"
-#include "Core/Application/Log.h"
+#include "CoreApplication/Windows/WindowsDebugMisc.h"
+#include "Core/Logging/Log.h"
 
 class CWindowsConditionVariable final : public CCoreConditionVariable
 {

@@ -3,7 +3,7 @@
 #include "CocoaConsoleWindow.h"
 #include "ScopedAutoreleasePool.h"
 
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 CMacConsoleWindow::CMacConsoleWindow()
     : Window( nullptr )

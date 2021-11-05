@@ -12,10 +12,10 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Modules/ModuleManger.h"
 #include "Core/Modules/ApplicationModule.h"
-#include "Core/Application/Platform/PlatformApplication.h"
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
-#include "Core/Application/Platform/PlatformOutputConsole.h"
-#include "Core/Application/Application.h"
+#include "CoreApplication/Platform/PlatformApplication.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Platform/PlatformOutputConsole.h"
+#include "CoreApplication/Application.h"
 #include "Core/Threading/DispatchQueue.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/InterlockedInt.h"
@@ -32,21 +32,21 @@ bool CEngineLoop::PreInit()
     TRACE_FUNCTION_SCOPE();
 
     /* Init output console */
-    GConsoleOutput = PlatformOutputConsole::Make();
-    if ( !GConsoleOutput )
+    GConsoleWindow = PlatformOutputConsole::Make();
+    if ( !GConsoleWindow )
     {
         return false;
     }
     else
     {
-        GConsoleOutput->SetTitle( PREPROCESS_CONCAT( PROJECT_NAME, ": Error Console" ) );
+        GConsoleWindow->SetTitle( PREPROCESS_CONCAT( PROJECT_NAME, ": Error Console" ) );
     }
 
     /* Console */
     CConsoleManager::Init();
 
     /* Create the actual application */
-    if ( !CApplication::Make() )
+    if ( !CInterfaceApplication::Make() )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create MainApplication" );
         return false;
@@ -110,14 +110,14 @@ bool CEngineLoop::Init()
     }
 
     // UI // TODO: Has to be initialized after the engine, however, there should be a delegate on the application that notifies when a viewport is registered*/
-    TSharedRef<IUIRenderer> UIRenderer = CUIRenderer::Make();
+    TSharedRef<IInterfaceRenderer> UIRenderer = CInterfaceRenderer::Make();
     if ( !UIRenderer )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create UIRenderer" );
         return false;
     }
 
-    CApplication::Get().SetRenderer( UIRenderer );
+    CInterfaceApplication::Get().SetRenderer( UIRenderer );
 
     // Start the engine
     if ( !GEngine->Start() )
@@ -133,7 +133,7 @@ void CEngineLoop::Tick( CTimestamp Deltatime )
     TRACE_FUNCTION_SCOPE();
 
     // Application and event-handling
-    CApplication::Get().Tick( Deltatime );
+    CInterfaceApplication::Get().Tick( Deltatime );
 
     // TODO: This should be bound via delegates?
     GApplicationModule->Tick( Deltatime );
@@ -163,7 +163,7 @@ bool CEngineLoop::Release()
 
     GRenderer.Release();
 
-    CApplication::Get().SetRenderer( nullptr );
+    CInterfaceApplication::Get().SetRenderer( nullptr );
 
     GEngine->Release();
     SafeDelete( GEngine );
@@ -176,9 +176,9 @@ bool CEngineLoop::Release()
 
     CDispatchQueue::Get().Release();
 
-    CApplication::Release();
+    CInterfaceApplication::Release();
 
-    SafeRelease( GConsoleOutput );
+    SafeRelease( GConsoleWindow );
 
     return true;
 }

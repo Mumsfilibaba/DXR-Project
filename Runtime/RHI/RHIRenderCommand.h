@@ -6,7 +6,7 @@
 
 #include "Core/Debug/Debug.h"
 #include "Core/Memory/Memory.h"
-#include "Core/Application/Log.h"
+#include "Core/Logging/Log.h"
 #include "Core/Containers/ArrayView.h"
 
 // Base render command

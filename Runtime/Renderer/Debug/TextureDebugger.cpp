@@ -1,6 +1,6 @@
 #include "TextureDebugger.h"
 
-#include "Core/Application/Application.h"
+#include "CoreApplication/Application.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
 #include <imgui.h>
@@ -27,7 +27,7 @@ void CTextureDebugWindow::Tick()
         constexpr float InvAspectRatio = 16.0f / 9.0f;
         constexpr float AspectRatio = 9.0f / 16.0f;
 
-        TSharedRef<CCoreWindow> MainViewport = CApplication::Get().GetMainViewport();
+        TSharedRef<CPlatformWindow> MainViewport = CInterfaceApplication::Get().GetMainViewport();
 
         const uint32 WindowWidth = MainViewport->GetWidth();
         const uint32 WindowHeight = MainViewport->GetHeight();

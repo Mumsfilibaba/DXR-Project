@@ -1,4 +1,4 @@
-#include "Core/Application/Windows/WindowsWindow.h"
+#include "CoreApplication/Windows/WindowsWindow.h"
 
 #include "D3D12CommandList.h"
 #include "D3D12CommandQueue.h"
@@ -1445,7 +1445,7 @@ CRHITimestampQuery* CD3D12RHICore::CreateTimestampQuery()
     return CD3D12RHITimestampQuery::Create( Device );
 }
 
-CRHIViewport* CD3D12RHICore::CreateViewport( CCoreWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat )
+CRHIViewport* CD3D12RHICore::CreateViewport( CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat )
 {
     UNREFERENCED_VARIABLE( DepthFormat );
 

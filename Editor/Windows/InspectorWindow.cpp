@@ -5,7 +5,7 @@
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "Engine/Scene/Components/MeshComponent.h"
 
-#include "Core/Application/UI/UIUtilities.h"
+#include "Interface/UIUtilities.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
 #include <imgui.h>

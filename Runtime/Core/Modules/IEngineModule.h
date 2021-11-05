@@ -20,6 +20,8 @@ public:
 
 typedef IEngineModule* (*PFNLoadEngineModule)();
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 /* Default EngineModule that implements empty Load and Unload functions for modules that do not require these */
 class CDefaultEngineModule : public IEngineModule
 {

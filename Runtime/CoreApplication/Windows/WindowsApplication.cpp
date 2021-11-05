@@ -2,7 +2,7 @@
 #include "WindowsApplication.h"
 
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Application/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Core/Input/Windows/WindowsKeyMapping.h"
 
 enum EWindowsMasks : uint32
@@ -55,7 +55,7 @@ TSharedPtr<CWindowsApplication> CWindowsApplication::Make()
 }
 
 CWindowsApplication::CWindowsApplication( HINSTANCE InInstance )
-    : CCoreApplication()
+    : CPlatformApplication()
     , Windows()
     , Messages()
     , MessagesCriticalSection()

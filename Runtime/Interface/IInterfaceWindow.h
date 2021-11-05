@@ -15,14 +15,14 @@ typedef void* InterfaceContext;
     }
 
 /* Helper for generating the default init-context function since it is unsure how DLLs handle the UIContext */
-#define INTERFACE_GENERATE_BODY()                                            \
-public:                                                                      \
-                                                                             \
+#define INTERFACE_GENERATE_BODY()                                             \
+public:                                                                       \
+                                                                              \
     virtual void InitContext( InterfaceContext ContextHandle ) override final \
-    {                                                                        \
-        INIT_CONTEXT( ContextHandle );                                       \
-    }                                                                        \
-                                                                             \
+    {                                                                         \
+        INIT_CONTEXT( ContextHandle );                                        \
+    }                                                                         \
+                                                                              \
 private:
 
 class IInterfaceWindow : public CRefCounted

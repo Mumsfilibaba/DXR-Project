@@ -2,8 +2,8 @@
 
 #if defined(PLATFORM_WINDOWS)
 #include "WindowsWindow.h"
+#include "WindowsCursor.h"
 #include "IWindowsMessageListener.h"
-#include "WindowsCursorDevice.h"
 
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/Array.h"

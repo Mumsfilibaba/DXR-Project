@@ -1,5 +1,5 @@
 #if defined(PLATFORM_WINDOWS)
-#include "WindowsCursorDevice.h"
+#include "WindowsCursor.h"
 #include "WindowsWindow.h"
 #include "Windows.h"
 
@@ -49,7 +49,7 @@ void CWindowsCursor::SetCursor( ECursor Cursor )
     // TODO: Log error
 }
 
-void CWindowsCursor::SetPosition( CCoreWindow* RelativeWindow, int32 x, int32 y ) const
+void CWindowsCursor::SetPosition( CPlatformWindow* RelativeWindow, int32 x, int32 y ) const
 {
     POINT CursorPos = { x, y };
     if ( RelativeWindow )
@@ -66,7 +66,7 @@ void CWindowsCursor::SetPosition( CCoreWindow* RelativeWindow, int32 x, int32 y 
     ::SetCursorPos( CursorPos.x, CursorPos.y );
 }
 
-void CWindowsCursor::GetCursorPosition( CCoreWindow* RelativeWindow, int32& OutX, int32& OutY ) const
+void CWindowsCursor::GetCursorPosition( CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY ) const
 {
     POINT CursorPos = { };
     if ( !::GetCursorPos( &CursorPos ) )

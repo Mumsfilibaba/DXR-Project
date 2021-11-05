@@ -14,7 +14,7 @@
 #include "Engine/Scene/Components/MeshComponent.h"
 #include "Engine/Resources/TextureFactory.h"
 
-#include "Core/Application/Application.h"
+#include "CoreApplication/Application.h"
 
 // TODO: Custom random
 #include <random>
@@ -367,7 +367,7 @@ void CSandbox::Tick( CTimestamp DeltaTime )
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
 
-    TSharedPtr<CApplicationUser> User = CApplication::Get().GetFirstUser();
+    TSharedPtr<CInterfaceUser> User = CInterfaceApplication::Get().GetFirstUser();
     if ( User->IsKeyDown( EKey::Key_Right ) )
     {
         CurrentCamera->Rotate( 0.0f, NMath::ToRadians( RotationSpeed * Delta ), 0.0f );

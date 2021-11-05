@@ -3,7 +3,7 @@
 #include "Renderer/Renderer.h"
 
 #include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Application/Application.h"
+#include "CoreApplication/Application.h"
 
 #include "RHI/RHICore.h"
 
@@ -24,7 +24,7 @@ TSharedRef<CRendererInfoWindow> CRendererInfoWindow::Make()
 
 void CRendererInfoWindow::Tick()
 {
-    TSharedRef<CCoreWindow> MainViewport = CApplication::Get().GetMainViewport();
+    TSharedRef<CPlatformWindow> MainViewport = CInterfaceApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();
