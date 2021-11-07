@@ -2,9 +2,9 @@
 #include "RHIResourceBase.h"
 #include "RHIResourceViews.h"
 
-#include "Core/Containers/SharedPtr.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix3x4.h"
+#include "Core/Containers/SharedRef.h"
 
 enum ERayTracingStructureBuildFlag
 {

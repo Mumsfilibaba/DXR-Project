@@ -1,6 +1,19 @@
 #pragma once
 #include "Core/CoreModule.h"
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define IMPLEMENT_ENGINE_MODULE( ModuleClassType )  \
+extern "C"                                          \
+{                                                   \
+    MODULE_EXPORT IEngineModule* LoadEngineModule() \
+    {                                               \
+        return dbg_new ModuleClassType();           \
+    }                                               \
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 /* Interface that all engine modules must implement */
 class IEngineModule
 {

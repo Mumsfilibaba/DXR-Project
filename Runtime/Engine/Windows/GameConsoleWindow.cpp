@@ -18,8 +18,6 @@ TSharedRef<CGameConsoleWindow> CGameConsoleWindow::Make()
 
 void CGameConsoleWindow::Tick()
 {
-    ImGui::ShowDemoWindow();
-
     TSharedRef<CPlatformWindow> MainWindow = CInterfaceApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainWindow->GetWidth();

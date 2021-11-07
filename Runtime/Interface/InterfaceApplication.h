@@ -49,7 +49,7 @@ public:
     } 
 
     /* Public destructor for the TSharedPtr */
-    virtual ~CInterfaceApplication() = default;
+    virtual ~CInterfaceApplication();
 
     /* Creates a window */
     TSharedRef<CPlatformWindow> MakeWindow();
@@ -120,6 +120,7 @@ public:
     /* Adds a InputHandler to the application, which gets processed before the application module */
     void AddWindowMessageHandler( CWindowMessageHandler* NewWindowMessageHandler );
 
+    /* Removes a InputHandler to the application, which gets processed before the application module */
     void RemoveWindowMessageHandler( CWindowMessageHandler* WindowMessageHandler );
 
     FORCEINLINE TSharedPtr<CPlatformApplication> GetPlatformApplication() const
@@ -220,14 +221,17 @@ protected:
     /* Hidden constructor, use make */
     CInterfaceApplication( const TSharedPtr<CPlatformApplication>& InPlatformApplication );
 
+    /* Creates a context for the UI */
+    bool CreateContext();
+
     /* Handles key events */
-    void OnKeyEvent( const SKeyEvent& KeyEvent );
+    void HandleKeyEvent( const SKeyEvent& KeyEvent );
 
     /* Handles mouse button events */
-    void OnMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent );
+    void HandleMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent );
 
     /* Handles mouse exit window or entered window events */
-    void OnWindowFrameMouseEvent( const SWindowFrameMouseEvent& WindowFrameMouseEvent );
+    void HandleWindowFrameMouseEvent( const SWindowFrameMouseEvent& WindowFrameMouseEvent );
 
     /* Templated insertion method */
     template<typename MessageHandlerType>
@@ -262,6 +266,9 @@ protected:
 
     // Is false when the platform application reports that the application should exit
     bool Running = true;
+
+    /* Context for ImGui */
+    struct ImGuiContext* Context = nullptr;
 
     static TSharedPtr<CInterfaceApplication> Instance;
 };

@@ -137,7 +137,14 @@ bool CEngineLoop::Init()
     }
 
     // UI // TODO: Has to be initialized after the engine, however, there should be a delegate on the application that notifies when a viewport is registered*/
-    TSharedRef<IInterfaceRenderer> InterfaceRenderer = CModuleManager::Get().LoadEngineModule<IInterfaceRenderer>( "InterfaceRenderer" );
+    IInterfaceRendererModule* InterfaceRendererModule = CModuleManager::Get().LoadEngineModule<IInterfaceRendererModule>( "InterfaceRenderer" );
+    if ( !InterfaceRendererModule )
+    {
+        PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to load InterfaceRenderer" );
+        return false;
+    }
+
+    TSharedRef<IInterfaceRenderer> InterfaceRenderer = InterfaceRendererModule->CreateRenderer();
     if ( !InterfaceRenderer )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create InterfaceRenderer" );

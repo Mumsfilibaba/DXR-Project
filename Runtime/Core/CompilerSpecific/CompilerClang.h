@@ -55,6 +55,15 @@
 #define FUNCTION_SIGNATURE __PRETTY_FUNCTION__
 #endif
 
+/* Dynamic Lib Export and import */
+#ifndef MODULE_EXPORT
+#define MODULE_EXPORT
+#endif
+
+#ifndef MODULE_IMPORT
+#define MODULE_IMPORT
+#endif
+
 #else
 #error "Clang Compiler-file included in non Clang- compiler"
 #endif

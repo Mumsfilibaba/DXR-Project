@@ -22,12 +22,12 @@
 #define NOINLINE
 #endif
 
-/* Vectorcall */
+/* Vector-call */
 #ifndef VECTORCALL
 #define VECTORCALL
 #endif
 
-/* Restric */
+/* Restrict */
 #ifndef restrict_ptr
 #define restrict_ptr
 #endif
@@ -35,6 +35,15 @@
 /* Function signature as a const char* string */
 #ifndef FUNCTION_SIGNATURE
 #define FUNCTION_SIGNATURE "NO COMPILER DEFINED, DEFINE TO GET THE FUNCTION_SIGNATURE"
+#endif
+
+/* Dynamic Lib Export and import */
+#ifndef MODULE_EXPORT
+#define MODULE_EXPORT
+#endif
+
+#ifndef MODULE_IMPORT
+#define MODULE_IMPORT
 #endif
 
 #endif

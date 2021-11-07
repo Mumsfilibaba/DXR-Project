@@ -55,6 +55,15 @@
 #define FUNCTION_SIGNATURE __FUNCTION__
 #endif
 
+/* Dynamic Lib Export and import */
+#ifndef MODULE_EXPORT
+#define MODULE_EXPORT __declspec(dllexport)
+#endif
+
+#ifndef MODULE_IMPORT
+#define MODULE_IMPORT __declspec(dllimport)
+#endif
+
 /* Disable some warnings */
 #pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
 #pragma warning(disable : 4324) // structure was padded due to alignment specifier
