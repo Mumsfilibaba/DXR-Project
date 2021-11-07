@@ -1,5 +1,5 @@
 #pragma once
-#include "D3D12API.h"
+#include "D3D12RHIModule.h"
 #include "D3D12Device.h"
 #include "D3D12RootSignature.h"
 #include "D3D12RHICommandContext.h"

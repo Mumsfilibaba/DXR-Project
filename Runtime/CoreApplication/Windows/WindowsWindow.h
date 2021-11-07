@@ -3,8 +3,7 @@
 #if defined(PLATFORM_WINDOWS)
 #include "Windows.h"
 
-#include "Core/CoreModule.h"
-
+#include "CoreApplication/CoreApplicationModule.h"
 #include "CoreApplication/Interface/PlatformWindow.h"
 
 class COREAPPLICATION_API CWindowsWindow final : public CPlatformWindow

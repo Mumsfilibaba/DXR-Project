@@ -3,17 +3,13 @@
 
 #include "Core/Templates/FunctionType.h"
 
-/* Macros for delcaring delegate types */
+/* Macros for declaring delegate types */
 
-#define DECLARE_DELEGATE( DelegateName, ... )        \
-    class DelegateName : public TDelegate<void(__VA_ARGS__)> \
-    {                                                \
-    };
+#define DECLARE_DELEGATE( DelegateName, ... ) \
+    typedef TDelegate<void(__VA_ARGS__)> DelegateName;
 
-#define DECLARE_RETURN_DELEGATE( DelegateName, ReturnType, ... )        \
-    class DelegateName : public TDelegate<ReturnType(__VA_ARGS__)> \
-    {                                                \
-    };
+#define DECLARE_RETURN_DELEGATE( DelegateName, ReturnType, ... ) \
+    typedef TDelegate<ReturnType(__VA_ARGS__)> DelegateName;
 
 /* Delegate class, similar to TFunction, but allows direct binding of functions instead of binding a functor type*/
 template<typename InvokableType>

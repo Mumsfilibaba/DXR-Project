@@ -3,7 +3,6 @@
 #include "Core/Math/Math.h"
 
 #include "Renderer/Renderer.h"
-#include "Renderer/UIRenderer.h"
 
 #include "Engine/Engine.h"
 #include "Engine/Assets/Loaders/OBJLoader.h"
@@ -14,7 +13,9 @@
 #include "Engine/Scene/Components/MeshComponent.h"
 #include "Engine/Resources/TextureFactory.h"
 
-#include "CoreApplication/Application.h"
+#include "Interface/InterfaceApplication.h"
+
+#include "InterfaceRenderer/InterfaceRenderer.h"
 
 // TODO: Custom random
 #include <random>

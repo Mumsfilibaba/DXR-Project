@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(PLATFORM_WINDOWS)
-#include "Core/CoreModule.h"
+#include "CoreApplication/CoreApplicationModule.h"
 #include "CoreApplication/Interface/PlatformCursor.h"
 
 class COREAPPLICATION_API CWindowsCursor final : public CPlatformCursor

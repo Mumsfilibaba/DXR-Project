@@ -62,6 +62,7 @@ project "Interface"
 	{ 
 		"ImGui",
 		"Core",
+		"CoreApplication",
 	}
 
 	-- Remove non-macos and add macos-specific files

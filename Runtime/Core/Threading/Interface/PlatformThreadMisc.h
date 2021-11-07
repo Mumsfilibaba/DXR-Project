@@ -1,7 +1,17 @@
 #pragma once
-#include "CoreThread.h"
+#include "PlatformThread.h"
 
 #include "Core/Time/Timestamp.h"
+
+#if defined(COMPILER_MSVC)
+#pragma warning(push)
+#pragma warning(disable : 4100) // Disable unreferenced variable
+
+#elif defined(COMPILER_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
+#endif
 
 class CPlatformThreadMisc
 {
@@ -13,6 +23,13 @@ public:
     /* Retrieves the current thread's system ID */
     static FORCEINLINE PlatformThreadHandle GetThreadHandle() { return static_cast<PlatformThreadHandle>(INVALID_THREAD_ID); }
 
-    /* Makes the current threas sleep for a specified amount of time */
-    static FORCEINLINE void Sleep( CTimestamp ) { }
+    /* Makes the current thread sleep for a specified amount of time */
+    static FORCEINLINE void Sleep( CTimestamp Time ) { }
 };
+
+#if defined(COMPILER_MSVC)
+#pragma warning(pop)
+
+#elif defined(COMPILER_CLANG)
+#pragma clang diagnostic pop
+#endif

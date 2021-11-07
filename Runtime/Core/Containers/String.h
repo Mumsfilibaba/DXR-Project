@@ -49,7 +49,7 @@ public:
     typedef TReverseArrayIterator<const TString, const CharType> ReverseConstIteratorType;
 
     /* Create a new string based on a format string (similar to snprintf) */
-    static NOINLINE TString Format( const CharType* Format, ... ) noexcept
+    static NOINLINE TString MakeFormated( const CharType* Format, ... ) noexcept
     {
         TString NewString;
 
@@ -62,7 +62,7 @@ public:
     }
 
     /* Create a new string based on a format string and a va_list (similar to snprintf) */
-    static FORCEINLINE TString FormatV( const CharType* Format, va_list ArgsList ) noexcept
+    static FORCEINLINE TString MakeFormatedV( const CharType* Format, va_list ArgsList ) noexcept
     {
         TString NewString;
         NewString.FormatV( Format, ArgsList );
@@ -1478,7 +1478,7 @@ using SWideStringHasher = TStringHasher<wchar_t>;
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, CString>::Type ToString( T Element )
 {
-    return CString::Format( "%f", Element );
+    return CString::MakeFormated( "%f", Element );
 }
 
 template<typename T>
@@ -1487,25 +1487,25 @@ typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, CString>::Type ToString( T 
 template<>
 inline CString ToString<int32>( int32 Element )
 {
-    return CString::Format( "%d", Element );
+    return CString::MakeFormated( "%d", Element );
 }
 
 template<>
 inline CString ToString<int64>( int64 Element )
 {
-    return CString::Format( "%lld", Element );
+    return CString::MakeFormated( "%lld", Element );
 }
 
 template<>
 inline CString ToString<uint32>( uint32 Element )
 {
-    return CString::Format( "%u", Element );
+    return CString::MakeFormated( "%u", Element );
 }
 
 template<>
 inline CString ToString<uint64>( uint64 Element )
 {
-    return CString::Format( "%llu", Element );
+    return CString::MakeFormated( "%llu", Element );
 }
 
 template<typename T>
@@ -1520,23 +1520,23 @@ typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, WString>::Type ToWideString
 template<>
 inline WString ToWideString<int32>( int32 Element )
 {
-    return WString::Format( L"%d", Element );
+    return WString::MakeFormated( L"%d", Element );
 }
 
 template<>
 inline WString ToWideString<int64>( int64 Element )
 {
-    return WString::Format( L"%lld", Element );
+    return WString::MakeFormated( L"%lld", Element );
 }
 
 template<>
 inline WString ToWideString<uint32>( uint32 Element )
 {
-    return WString::Format( L"%u", Element );
+    return WString::MakeFormated( L"%u", Element );
 }
 
 template<>
 inline WString ToWideString<uint64>( uint64 Element )
 {
-    return WString::Format( L"%llu", Element );
+    return WString::MakeFormated( L"%llu", Element );
 }

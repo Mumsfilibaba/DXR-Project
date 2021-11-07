@@ -1,7 +1,6 @@
 #pragma once
-#include "CoreConditionVariable.h"
-
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Threading/Platform/CriticalSection.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)

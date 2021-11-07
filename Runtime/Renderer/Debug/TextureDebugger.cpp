@@ -71,7 +71,7 @@ void CTextureDebugWindow::Tick()
                 ImVec4 BgCol = ImVec4( 0.0f, 0.0f, 0.0f, 1.0f );
                 ImVec4 TintCol = ImVec4( 1.0f, 1.0f, 1.0f, 1.0f );
 
-                SUIImage* CurrImage = &DebugTextures[i];
+                SInterfaceImage* CurrImage = &DebugTextures[i];
                 if ( ImGui::ImageButton( CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol ) )
                 {
                     SelectedTextureIndex = i;
@@ -96,7 +96,7 @@ void CTextureDebugWindow::Tick()
             const float ImageHeight = ImageWidth * AspectRatio;
             const int32 ImageIndex = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
 
-            SUIImage* CurrImage = &DebugTextures[ImageIndex];
+            SInterfaceImage* CurrImage = &DebugTextures[ImageIndex];
             ImGui::Image( CurrImage, ImVec2( ImageWidth, ImageHeight ) );
         }
 

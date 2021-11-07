@@ -3,6 +3,8 @@
 #include "WindowsWindow.h"
 #include "WindowsApplication.h"
 
+#include "Core/Logging/Log.h"
+
 CWindowsWindow::CWindowsWindow( CWindowsApplication* InApplication )
     : CPlatformWindow()
     , Application( InApplication )

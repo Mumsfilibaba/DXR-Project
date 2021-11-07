@@ -56,6 +56,7 @@ project "D3D12RHI"
 	links 
 	{ 
 		"Core",
+		"CoreApplication",
 		"RHI",
 	}
 

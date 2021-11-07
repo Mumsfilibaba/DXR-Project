@@ -1,5 +1,5 @@
 #pragma once
-#include "CoreModule.h"
+#include "Core/CoreModule.h"
 #include "Core/Delegates/MulticastDelegate.h"
 
 namespace NEngineLoopDelegates
@@ -20,11 +20,11 @@ namespace NEngineLoopDelegates
     DECLARE_MULTICAST_DELEGATE( CPostEngineInitDelegate );
     extern CORE_API CPostEngineInitDelegate PostEngineInitDelegate;
 
-    /* Delegate that gets called before the Application-Module is laoded */
+    /* Delegate that gets called before the Application-Module is loaded */
     DECLARE_MULTICAST_DELEGATE( CPreApplicationLoadedDelegate );
     extern CORE_API CPreApplicationLoadedDelegate PreApplicationLoadedDelegate;
 
-    /* Delegate that gets called after the Application-Module is laoded */
+    /* Delegate that gets called after the Application-Module is loaded */
     DECLARE_MULTICAST_DELEGATE( CPostApplicationLoadedDelegate );
     extern CORE_API CPostApplicationLoadedDelegate PostApplicationLoadedDelegate;
 };

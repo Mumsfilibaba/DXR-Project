@@ -46,9 +46,12 @@ project ( projectname )
 		"**.hlsli",
 	}
 
+
 	links
-	{ 
+	{
 		"Core",
+		"CoreApplication",
+		"Interface",
 		"RHI",
 		"Engine",
 		"Renderer",
@@ -100,7 +103,10 @@ project (projectname .. "Launcher")
 	
 	links
 	{ 
+		"ImGui",
 		"Core",
+		"CoreApplication",
+		"Interface",
 		"RHI",
 		"Engine",
 		"Renderer",

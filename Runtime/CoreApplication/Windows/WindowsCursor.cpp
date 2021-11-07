@@ -3,6 +3,8 @@
 #include "WindowsWindow.h"
 #include "Windows.h"
 
+#include "Core/Containers/SharedRef.h"
+
 void CWindowsCursor::SetCursor( ECursor Cursor )
 {
     LPSTR CursorName = NULL;

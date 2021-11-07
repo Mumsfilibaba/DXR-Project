@@ -2,8 +2,10 @@
 #include "WindowsApplication.h"
 
 #include "Core/Threading/ScopedLock.h"
-#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Core/Input/Windows/WindowsKeyMapping.h"
+#include "Core/Logging/Log.h"
+
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 enum EWindowsMasks : uint32
 {
@@ -96,7 +98,7 @@ bool CWindowsApplication::RegisterWindowClass()
     return true;
 }
 
-TSharedRef<CoreApplicat> CWindowsApplication::MakeWindow()
+TSharedRef<CPlatformWindow> CWindowsApplication::MakeWindow()
 {
     TSharedRef<CWindowsWindow> NewWindow = dbg_new CWindowsWindow( this );
     Windows.Emplace( NewWindow );
@@ -140,7 +142,7 @@ ICursor* CWindowsApplication::GetCursor()
     return &Cursor;
 }
 
-void CWindowsApplication::SetCapture( const TSharedRef<CoreApplicat>& Window )
+void CWindowsApplication::SetCapture( const TSharedRef<CPlatformWindow>& Window )
 {
     if ( Window )
     {
@@ -158,7 +160,7 @@ void CWindowsApplication::SetCapture( const TSharedRef<CoreApplicat>& Window )
     }
 }
 
-void CWindowsApplication::SetActiveWindow( const TSharedRef<CoreApplicat>& Window )
+void CWindowsApplication::SetActiveWindow( const TSharedRef<CPlatformWindow>& Window )
 {
     TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>( Window );
 
@@ -169,14 +171,14 @@ void CWindowsApplication::SetActiveWindow( const TSharedRef<CoreApplicat>& Windo
     }
 }
 
-TSharedRef<CoreApplicat> CWindowsApplication::GetCapture() const
+TSharedRef<CPlatformWindow> CWindowsApplication::GetCapture() const
 {
     // TODO: Should we add a reference here
     HWND CaptureWindow = ::GetCapture();
     return GetWindowsWindowFromHWND( CaptureWindow );
 }
 
-TSharedRef<CoreApplicat> CWindowsApplication::GetActiveWindow() const
+TSharedRef<CPlatformWindow> CWindowsApplication::GetActiveWindow() const
 {
     // TODO: Should we add a reference here
     HWND ActiveWindow = ::GetActiveWindow();

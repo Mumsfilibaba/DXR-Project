@@ -3,21 +3,20 @@
 #if PLATFORM_WINDOWS
 #include "Core/Containers/String.h"
 #include "Core/Modules/Interface/PlatformLibrary.h"
-
-#include "Windows/Windows.h"
+#include "core/Windows/Windows.h"
 
 class CWindowsLibrary final : public CPlatformLibrary
 {
 public:
     
-    typedef HANDLE PlatformHandle;
+    typedef HMODULE PlatformHandle;
 
     /* Load a dynamic library on the platform */
     static FORCEINLINE PlatformHandle LoadDynamicLib( const char* LibraryName ) 
     { 
         CString CombinedName = LibraryName;
         CombinedName.Append( GetDynamicLibExtension() );
-        return LoadLibrary( LibraryName );
+        return LoadLibraryA( LibraryName );
     }
 
     /* Free a dynamic library on the platform */
@@ -32,17 +31,17 @@ public:
         return GetProcAddress( LibraryHandle, SymbolName );
     }
 
-    /* Retrive the extension that dynamic libraries use on the platform */
+    /* Retrieve the extension that dynamic libraries use on the platform */
     static FORCEINLINE const char* GetDynamicLibExtension()
     {
         return ".dll";
     }
 
     /* Loads a typed function or variable from with specified name from the specified library */
-    template<typename T>
-    static FORCEINLINE T LoadSymbolAddress( const char* SymbolName, PlatformHandle LibraryHandle ) 
+    template<typename SymbolType>
+    static FORCEINLINE SymbolType LoadSymbolAddress( const char* SymbolName, PlatformHandle LibraryHandle )
     { 
-        return reinterpret_cast<T>(LoadSymbolAddress( SymbolName, LibraryHandle ));
+        return reinterpret_cast<SymbolType>(LoadSymbolAddress( SymbolName, LibraryHandle ));
     }
 };
 

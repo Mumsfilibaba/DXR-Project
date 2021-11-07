@@ -23,7 +23,7 @@
 #endif
 
 // TODO: Remove since application should handle it directly
-class CInputHandler : public CInputHandler
+class CUIInputHandler : public CInputHandler
 {
 public:
 
@@ -57,7 +57,7 @@ class INTERFACE_RENDERER_API CInterfaceRenderer final : public IInterfaceRendere
 {
 public:
 
-    static TSharedRef<CInterfaceRenderer> Make();
+    static CInterfaceRenderer* Make();
 
     /* Start the update of the UI, after the call to this function, calls to UI window's tick are valid */
     virtual void BeginTick() override final;
@@ -70,6 +70,9 @@ public:
 
     /* Retrieve the context handle */
     virtual InterfaceContext GetContext() const override final;
+
+    /* The name of the module */
+    virtual const char* GetName() const override final;
 
 private:
 
@@ -86,7 +89,7 @@ private:
 
     CUIInputHandler InputHandler;
 
-    TArray<SUIImage*> RenderedImages;
+    TArray<SInterfaceImage*> RenderedImages;
 
     CTimer FrameClock;
 

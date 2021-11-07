@@ -1,5 +1,5 @@
 #pragma once
-#include "RHIAPI.h"
+#include "RHIModule.h"
 #include "RHIResources.h"
 #include "RHIRenderCommand.h"
 #include "RHITimestampQuery.h"

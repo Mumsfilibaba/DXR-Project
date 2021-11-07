@@ -21,7 +21,7 @@ workspace "DXR-Project"
 	editandcontinue   "Off"
 	intrinsics        "On"
 
-	flags 
+	flags
 	{ 
 		"MultiProcessorCompile",
 		"NoIncrementalLink",

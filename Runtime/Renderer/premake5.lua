@@ -65,8 +65,10 @@ project "Renderer"
 	{ 
 		"ImGui",
 		"Core",
+		"CoreApplication",
+		"Interface",
 		"RHI",
-		"Engine"
+		"Engine",
 	}
 
 	-- Remove non-macos and add macos-specific files

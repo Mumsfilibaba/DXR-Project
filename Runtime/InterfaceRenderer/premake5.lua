@@ -26,7 +26,7 @@ project "InterfaceRenderer"
 	-- Defines
 	defines
 	{
-		"ENGINE_API_EXPORT=(1)"
+		"INTERFACE_RENDERER_API_EXPORT=(1)"
 	}
 
 	-- Files to include
@@ -64,9 +64,10 @@ project "InterfaceRenderer"
 	links 
 	{ 
 		"ImGui",
-		"tinyobjloader",
-		"OpenFBX",
 		"Core",
+		"CoreApplication",
+		"Interface",
+		"Engine",
 		"RHI",
 	}
 

@@ -1,6 +1,5 @@
 #pragma once
-#include "CoreModule.h"
-
+#include "Core/CoreModule.h"
 #include "Core/Time/Timestamp.h"
 #include "Core/Containers/Array.h"
 #include "Core/Delegates/Delegate.h"
@@ -25,7 +24,7 @@ public:
     /* Ensures that all delegates are fired */
     void Tick( CTimestamp Deltatime );
 
-    /* Add a new element that should be called when the engineloop ticks */ 
+    /* Add a new element that should be called when the EngineLoop ticks */ 
     void AddElement( const CTickDelegate& NewElement );
 
     /* Remove all instances of a delegate from the Tick-loop */

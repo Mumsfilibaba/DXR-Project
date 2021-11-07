@@ -65,13 +65,15 @@ project ( projectname )
 		"**.hlsli",
 	}
 
-	links 
+	links
 	{ 
 		"ImGui",
 		"Core",
+		"CoreApplication",
+		"Interface",
 		"RHI",
 		"Engine",
-		"Renderer"
+		"Renderer",
 	}
 
 	-- Include EntryPoint

@@ -3,7 +3,7 @@
 
 #include "RHI/RHIResourceViews.h"
 
-#include "Interface/UIImage.h"
+#include "Interface/InterfaceImage.h"
 #include "Interface/IInterfaceWindow.h"
 
 #include <imgui.h>
@@ -36,7 +36,7 @@ private:
     ~CTextureDebugWindow() = default;
 
     /* Debug images */
-    TArray<SUIImage> DebugTextures;
+    TArray<SInterfaceImage> DebugTextures;
 
     /* The selected image */
     int32 SelectedTextureIndex = -1;

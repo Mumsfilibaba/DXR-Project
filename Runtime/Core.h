@@ -6,6 +6,7 @@
 
 //<--
 // TODO: Move to templates
+// TODO: use TUnderlyingType instead
 // Preparation for enum class usage
 #if 0
 template <int64 SIZE>

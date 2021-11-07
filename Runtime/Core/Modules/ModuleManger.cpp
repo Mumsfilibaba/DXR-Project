@@ -22,7 +22,6 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
         return ExistingModule;
     }
 
-    // TODO: Abstract the Win-Api
     PlatformModule Module = PlatformLibrary::LoadDynamicLib( ModuleName );
     if ( Module == NULL )
     {
@@ -31,7 +30,7 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
     }
 
     // Requires that the module has a LoadEngineModule function exported
-    PFNLoadEngineModule LoadEngineModule = PlatformLibrary::LoadSymbolAddress<PFNLoadEngineModule>( Module, "LoadEngineModule" );
+    PFNLoadEngineModule LoadEngineModule = PlatformLibrary::LoadSymbolAddress<PFNLoadEngineModule>( "LoadEngineModule", Module );
     if ( !LoadEngineModule )
     {
         PlatformLibrary::FreeDynamicLib( Module );

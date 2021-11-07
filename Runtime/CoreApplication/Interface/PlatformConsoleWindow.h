@@ -49,9 +49,6 @@ protected:
     virtual ~CPlatformConsoleWindow() = default;
 };
 
-// TODO: Move out from COREAPPLICATION_API
-extern COREAPPLICATION_API CPlatformConsoleWindow* GConsoleWindow;
-
 #if defined(COMPILER_MSVC)
 #pragma warning(pop)
 

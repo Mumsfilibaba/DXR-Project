@@ -37,14 +37,14 @@ bool CEngineLoop::PreInit()
     TRACE_FUNCTION_SCOPE();
 
     /* Init output console */
-    GConsoleWindow = PlatformOutputConsole::Make();
-    if ( !GConsoleWindow )
+    NErrorDevice::ConsoleWindow = PlatformConsoleWindow::Make();
+    if ( !NErrorDevice::ConsoleWindow )
     {
         return false;
     }
     else
     {
-        GConsoleWindow->SetTitle( PREPROCESS_CONCAT( PROJECT_NAME, ": Error Console" ) );
+        NErrorDevice::ConsoleWindow->SetTitle( PREPROCESS_CONCAT( PROJECT_NAME, ": Error Console" ) );
     }
 
     /* Console */
@@ -76,7 +76,7 @@ bool CEngineLoop::PreInit()
     }
 
     // Notify systems that the RHI is loaded
-    CEngineLoopDelegates::PostInitRHIDelegate.Broadcast();
+    NEngineLoopDelegates::PostInitRHIDelegate.Broadcast();
 
     // Init GPU Profiler
     if ( !CGPUProfiler::Init() )
@@ -90,7 +90,7 @@ bool CEngineLoop::PreInit()
     }
 
     // Notify systems that the PreInit phase is over
-    CEngineLoopDelegates::PreInitFinishedDelegate.Broadcast();
+    NEngineLoopDelegates::PreInitFinishedDelegate.Broadcast();
 
     return true;
 }
@@ -98,7 +98,7 @@ bool CEngineLoop::PreInit()
 bool CEngineLoop::Init()
 {
     // Notify systems that the Engine is about to be created
-    CEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
+    NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
 
     // Create the engine
 #if PROJECT_EDITOR
@@ -112,7 +112,7 @@ bool CEngineLoop::Init()
     }
 
     // Notify systems that the Engine is was initialized
-    CEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
+    NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
 
     // Init Renderer
     if ( !GRenderer.Init() )
@@ -122,7 +122,7 @@ bool CEngineLoop::Init()
     }
 
     // Notify systems that the Application is going to be loaded
-    CEngineLoopDelegates::PreApplicationLoadedDelegate.Broadcast();
+    NEngineLoopDelegates::PreApplicationLoadedDelegate.Broadcast();
 
     // Init Application Module // TODO: Do not have the name hardcoded
     GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>( "Sandbox.dll" );
@@ -133,7 +133,7 @@ bool CEngineLoop::Init()
     else
     {
         // Notify systems that the Application is was loaded successfully
-        CEngineLoopDelegates::PostApplicationLoadedDelegate.Broadcast();
+        NEngineLoopDelegates::PostApplicationLoadedDelegate.Broadcast();
     }
 
     // UI // TODO: Has to be initialized after the engine, however, there should be a delegate on the application that notifies when a viewport is registered*/
@@ -204,7 +204,7 @@ bool CEngineLoop::Release()
 
     CInterfaceApplication::Release();
 
-    SafeRelease( GConsoleWindow );
+    SafeRelease( NErrorDevice::ConsoleWindow );
 
     return true;
 }

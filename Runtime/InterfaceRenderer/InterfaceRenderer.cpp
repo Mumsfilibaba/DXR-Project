@@ -1,5 +1,6 @@
 #include "InterfaceRenderer.h"
-#include "Renderer.h"
+
+#include "Renderer/Renderer.h"
 
 #include "Engine/Engine.h"
 #include "Engine/Resources/TextureFactory.h"
@@ -62,11 +63,22 @@ extern "C"
 {
     INTERFACE_RENDERER_API IEngineModule* LoadEngineModule()
     {
-        return dbg_new CInterfaceRenderer();
+        return CInterfaceRenderer::Make();
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+CInterfaceRenderer* CInterfaceRenderer::Make()
+{
+    TSharedRef<CInterfaceRenderer> NewRenderer = dbg_new CInterfaceRenderer();
+    if ( NewRenderer->Init() )
+    {
+        return NewRenderer.ReleaseOwnership();
+    }
+
+    return nullptr;
+}
 
 CInterfaceRenderer::~CInterfaceRenderer()
 {
@@ -579,17 +591,6 @@ void CInterfaceRenderer::EndTick()
     ImGui::EndFrame();
 }
 
-TSharedRef<CInterfaceRenderer> CInterfaceRenderer::Make()
-{
-    TSharedRef<CInterfaceRenderer> NewRenderer = dbg_new CInterfaceRenderer();
-    if ( NewRenderer->Init() )
-    {
-        return NewRenderer;
-    }
-
-    return nullptr;
-}
-
 void CInterfaceRenderer::Render( CRHICommandList& CmdList )
 {
     // Render ImgGui draw data
@@ -657,7 +658,7 @@ void CInterfaceRenderer::Render( CRHICommandList& CmdList )
             const ImDrawCmd* Cmd = &DrawCmdList->CmdBuffer[CmdIndex];
             if ( Cmd->TextureId )
             {
-                SUIImage* Image = reinterpret_cast<SUIImage*>(Cmd->TextureId);
+                SInterfaceImage* Image = reinterpret_cast<SInterfaceImage*>(Cmd->TextureId);
                 RenderedImages.Emplace( Image );
 
                 if ( Image->BeforeState != EResourceState::PixelShaderResource )
@@ -690,7 +691,7 @@ void CInterfaceRenderer::Render( CRHICommandList& CmdList )
         GlobalVertexOffset += DrawCmdList->VtxBuffer.Size;
     }
 
-    for ( SUIImage* Image : RenderedImages )
+    for ( SInterfaceImage* Image : RenderedImages )
     {
         Assert( Image != nullptr );
 
@@ -706,4 +707,9 @@ void CInterfaceRenderer::Render( CRHICommandList& CmdList )
 InterfaceContext CInterfaceRenderer::GetContext() const
 {
     return reinterpret_cast<InterfaceContext>(Context);
+}
+
+const char* CInterfaceRenderer::GetName() const
+{
+    return "InterfaceRenderer";
 }

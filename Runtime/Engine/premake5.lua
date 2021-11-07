@@ -67,6 +67,8 @@ project "Engine"
 		"tinyobjloader",
 		"OpenFBX",
 		"Core",
+		"CoreApplication",
+		"Interface",
 		"RHI",
 	}
 

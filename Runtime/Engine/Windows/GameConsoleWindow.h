@@ -1,7 +1,8 @@
 #pragma once
 #include "Interface/IInterfaceWindow.h"
-#include "CoreApplication/InputHandler.h"
-#include "CoreApplication/Events.h"
+#include "Interface/InputHandler.h"
+#include "Interface/Events.h"
+
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/StaticArray.h"
