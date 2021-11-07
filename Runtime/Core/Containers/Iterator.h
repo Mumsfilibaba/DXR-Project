@@ -473,7 +473,7 @@ public:
     TBitFieldIterator& operator=( TBitFieldIterator&& ) = default;
 
     explicit TBitFieldIterator( const BitFieldType& InBitField, uint32 InIndex )
-        : Index( Invalid )
+        : Index( InIndex )
         , BitField( InBitField )
     {
     }
@@ -498,7 +498,7 @@ public:
 
     FORCEINLINE bool Valid() const
     {
-        return Index < BitFieldType::::Capacity();
+        return Index < BitFieldType::Capacity();
     }
 
     FORCEINLINE uint32 Value() const

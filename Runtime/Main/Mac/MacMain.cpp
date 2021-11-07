@@ -1,4 +1,4 @@
-#include "Main/EngineMain.h"
+#include "Main/EngineMain.inl"
 
 #if defined(PLATFORM_MACOS)
 

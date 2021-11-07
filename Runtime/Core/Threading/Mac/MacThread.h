@@ -9,16 +9,17 @@ class CMacThread final : public CPlatformThread
 {
 public:
 
-    static TSharedRef<CWindowsThread> Make( ThreadFunction InFunction )
+    static TSharedRef<CMacThread> Make( ThreadFunction InFunction )
     {
         return new CMacThread( InFunction );
     }
 
-    static TSharedRef<CWindowsThread> Make( ThreadFunction InFunction, const CString& InName )
+    static TSharedRef<CMacThread> Make( ThreadFunction InFunction, const CString& InName )
     {
         return new CMacThread( InFunction, InName );
     }
 
+	/* Starts the thread so that it can start perform work */
     virtual bool Start() override final;
 
     virtual void WaitUntilFinished() override final;

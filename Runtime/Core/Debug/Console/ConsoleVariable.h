@@ -137,6 +137,7 @@ inline bool TConsoleVariable<int32>::IsInt() const
     return true;
 }
 
+template<>
 inline CString TConsoleVariable<int32>::GetString() const
 {
     CString String;
@@ -158,6 +159,7 @@ inline bool TConsoleVariable<float>::IsFloat() const
     return true;
 }
 
+template<>
 inline CString TConsoleVariable<float>::GetString() const
 {
     CString String;

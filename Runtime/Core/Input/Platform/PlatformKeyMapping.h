@@ -2,14 +2,14 @@
 
 #if defined(PLATFORM_WINDOWS)
 #include "Core/Input/Windows/WindowsKeyMapping.h"
-typedef CWindowsKeyMapping PlaformKeyMapping;
+typedef CWindowsKeyMapping PlatformKeyMapping;
 
 #elif defined(PLATFORM_MACOS)
 #include "Core/Input/Mac/MacKeyMapping.h"
-typedef CMacKeyMapping PlaformKeyMapping;
+typedef CMacKeyMapping PlatformKeyMapping;
 
 #else
 #include "Core/Input/Interface/PlatformKeyMapping.h"
-typedef CPlaformKeyMapping PlaformKeyMapping;
+typedef CPlaformKeyMapping PlatformKeyMapping;
 
 #endif

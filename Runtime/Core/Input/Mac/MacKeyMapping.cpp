@@ -1,15 +1,15 @@
 #if defined(PLATFORM_MACOS)
-#include "MacKeyMappings.h"
+#include "MacKeyMapping.h"
 
 /* Keys */
-TStaticArray<EKey, 256>   CMacKeyMappings::KeyCodeFromScanCodeTable;
-TStaticArray<uint16, 256> CMacKeyMappings::ScanCodeFromKeyCodeTable;
+TStaticArray<EKey, 256>   CMacKeyMapping::KeyCodeFromScanCodeTable;
+TStaticArray<uint16, 256> CMacKeyMapping::ScanCodeFromKeyCodeTable;
 
 /* Buttons */
-TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> CMacKeyMappings::ButtonFromButtonIndex;
-TStaticArray<uint8, EMouseButton::MouseButton_Count>        CMacKeyMappings::ButtonIndexFromButton;
+TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> CMacKeyMapping::ButtonFromButtonIndex;
+TStaticArray<uint8, EMouseButton::MouseButton_Count>        CMacKeyMapping::ButtonIndexFromButton;
 
-void CMacKeyMappings::Init()
+void CMacKeyMapping::Init()
 {
     /* Keys */
     CMemory::Memzero( KeyCodeFromScanCodeTable.Data(), KeyCodeFromScanCodeTable.SizeInBytes() );

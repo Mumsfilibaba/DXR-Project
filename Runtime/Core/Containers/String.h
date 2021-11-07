@@ -1511,7 +1511,7 @@ inline CString ToString<uint64>( uint64 Element )
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, WString>::Type ToWideString( T Element )
 {
-    return WString::Format( L"%f", Element );
+    return WString::MakeFormated( L"%f", Element );
 }
 
 template<typename T>

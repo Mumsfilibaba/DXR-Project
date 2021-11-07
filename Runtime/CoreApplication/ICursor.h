@@ -28,7 +28,7 @@ public:
     virtual void SetPosition( CPlatformWindow* RelativeWindow, int32 x, int32 y ) const = 0;
 
     /* Retrieve the cursor position of a window */
-    virtual void GetCursorPosition( CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY ) const = 0;
+    virtual void GetPosition( CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY ) const = 0;
 
     /* Show or hide the mouse */
     virtual void SetVisibility( bool IsVisible ) = 0;

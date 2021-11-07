@@ -354,7 +354,7 @@ CIntVector2 CInterfaceApplication::GetCursorPos() const
     ICursor* Cursor = GetCursor();
 
     CIntVector2 CursorPosition;
-    Cursor->GetCursorPosition( nullptr, CursorPosition.x, CursorPosition.y );
+    Cursor->GetPosition( nullptr, CursorPosition.x, CursorPosition.y );
 
     return CursorPosition;
 }
@@ -364,7 +364,7 @@ CIntVector2 CInterfaceApplication::GetCursorPos( const TSharedRef<CPlatformWindo
     ICursor* Cursor = GetCursor();
 
     CIntVector2 CursorPosition;
-    Cursor->GetCursorPosition( RelativeWindow.Get(), CursorPosition.x, CursorPosition.y );
+    Cursor->GetPosition( RelativeWindow.Get(), CursorPosition.x, CursorPosition.y );
 
     return CursorPosition;
 }
@@ -785,6 +785,7 @@ void CInterfaceApplication::RenderStrings()
         {
             ImGui::Text( "%s", String.CStr() );
         }
+		
         DebugStrings.Clear();
 
         ImGui::PopStyleColor();

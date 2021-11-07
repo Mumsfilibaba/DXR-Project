@@ -1,5 +1,5 @@
 #if defined(PLATFORM_MACOS) && defined(__OBJC__)
-#include "MacOutputConsole.h"
+#include "MacConsoleWindow.h"
 #include "CocoaConsoleWindow.h"
 #include "ScopedAutoreleasePool.h"
 
@@ -93,11 +93,6 @@ void CMacConsoleWindow::Clear()
     {
         [Window clearWindow];
     }
-}
-
-void CMacConsoleWindow::ClearLastLine()
-{
-    //TODO: Implement
 }
 
 void CMacConsoleWindow::SetTitle(const CString& InTitle)

@@ -3,6 +3,7 @@
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/IsConvertible.h"
 #include "Core/Templates/IsNullptr.h"
+#include "Core/Templates/Move.h"
 
 /* TSharedRef - Helper class when using objects with CRefCounted as a base */
 template<typename T>

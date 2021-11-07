@@ -4,6 +4,8 @@
 #include "CocoaWindow.h"
 #include "CocoaContentView.h"
 
+#include "Core/Logging/Log.h"
+
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 CMacWindow::CMacWindow( CMacApplication* InApplication )
@@ -207,10 +209,10 @@ void CMacWindow::GetTitle( CString& OutTitle )
     {
         NSString* Title = [Window title];
         NSInteger Length = [Title length];
-        OutTitle.Resize(Length);
+        OutTitle.Resize( static_cast<int32>(Length) );
         
         const char* UTF8Title = [Title UTF8String];
-        Memory::Memcpy(OutTitle.data(), UTF8Title, sizeof(char) * Length);
+		CMemory::Memcpy(OutTitle.Data(), UTF8Title, sizeof(char) * Length);
     }
 }
 

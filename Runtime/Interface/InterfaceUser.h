@@ -119,7 +119,7 @@ public:
     /* Retrieve the cursor */
     FORCEINLINE ICursor* GetCursorDevice() const
     {
-        return CursorDevice;
+        return Cursor;
     }
 
     /* Retrieve the user's index */
@@ -156,7 +156,7 @@ private:
     const uint32 UserIndex;
 
     /* The cursor that is controlled by this user */
-    ICursor* CursorDevice;
+    ICursor* Cursor;
 
     /* The key-state of this user */
     TArray<SKeyState> KeyStates; // TODO: Use a map instead? 

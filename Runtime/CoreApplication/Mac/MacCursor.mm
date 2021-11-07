@@ -1,5 +1,5 @@
 #if defined(PLATFORM_MACOS)
-#include "MacCursorDevice.h"
+#include "MacCursor.h"
 #include "MacWindow.h"
 #include "CocoaWindow.h"
 
@@ -70,7 +70,7 @@ void CMacCursor::SetCursor( ECursor Cursor )
     [SelectedCursor set];
 }
 
-void CMacCursor::SetCursorPosition( CPlatformWindow* InRelativeWindow, int32 x, int32 y ) const
+void CMacCursor::SetPosition( CPlatformWindow* InRelativeWindow, int32 x, int32 y ) const
 {
     CGPoint NewPosition;
     if (InRelativeWindow)
@@ -94,7 +94,7 @@ void CMacCursor::SetCursorPosition( CPlatformWindow* InRelativeWindow, int32 x, 
     }
 }
 
-void CMacCursor::GetCursorPosition( CPlatformWindow* InRelativeWindow, int32& OutX, int32& OutY ) const
+void CMacCursor::GetPosition( CPlatformWindow* InRelativeWindow, int32& OutX, int32& OutY ) const
 {
     NSPoint CursorPosition;
     if (InRelativeWindow)

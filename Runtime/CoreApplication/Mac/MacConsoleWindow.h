@@ -22,8 +22,7 @@ public:
     virtual void Print( const CString& Message )     override final;
     virtual void PrintLine( const CString& Message ) override final;
 
-    virtual void Clear()         override final;
-    virtual void ClearLastLine() override final;
+    virtual void Clear() override final;
 
     virtual void SetTitle( const CString& Title ) override final;
     virtual void SetColor( EConsoleColor Color )  override final;

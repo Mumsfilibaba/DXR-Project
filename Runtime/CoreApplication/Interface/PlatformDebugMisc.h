@@ -1,4 +1,6 @@
 #pragma once
+#include "Core/Containers/String.h"
+
 #include "CoreApplication/CoreApplicationModule.h"
 
 #ifdef MessageBox

@@ -5,7 +5,7 @@
 #include "Core/Containers/StaticArray.h"
 #include "Core/Input/Interface/PlatformKeyMapping.h"
 
-class CMacKeyMappings : public CPlatformKeyMapping
+class CMacKeyMapping : public CPlatformKeyMapping
 {
     friend class CMacApplication;
 

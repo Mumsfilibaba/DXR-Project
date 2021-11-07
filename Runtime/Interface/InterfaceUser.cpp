@@ -3,7 +3,7 @@
 
 CInterfaceUser::CInterfaceUser( uint32 InUserIndex, ICursor* InCursorDevice )
     : UserIndex( InUserIndex )
-    , CursorDevice( InCursorDevice )
+    , Cursor( InCursorDevice )
     , KeyStates()
     , MouseButtonStates()
 {
@@ -107,19 +107,19 @@ void CInterfaceUser::HandleMouseScrolledEvent( const SMouseScrolledEvent& MouseS
 
 void CInterfaceUser::SetCursorPosition( const CIntVector2& Postion )
 {
-    if ( CursorDevice )
+    if ( Cursor )
     {
         // TODO: Relative window
-        CursorDevice->SetPosition( nullptr, Postion.x, Postion.y );
+        Cursor->SetPosition( nullptr, Postion.x, Postion.y );
     }
 }
 
 CIntVector2 CInterfaceUser::GetCursorPosition() const
 {
-    if ( CursorDevice )
+    if ( Cursor )
     {
         CIntVector2 Position;
-        CursorDevice->GetCursorPosition( nullptr, Position.x, Position.y );
+        Cursor->GetPosition( nullptr, Position.x, Position.y );
         return Position;
     }
     else

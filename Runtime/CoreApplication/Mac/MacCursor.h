@@ -13,10 +13,10 @@ public:
     virtual void SetCursor( ECursor Cursor ) override final;
 
     /* Sets the position of the cursor */
-    virtual void SetCursorPosition( CPlatformWindow* RelativeWindow, int32 x, int32 y ) const override final;
+    virtual void SetPosition( CPlatformWindow* RelativeWindow, int32 x, int32 y ) const override final;
 
     /* Retrieve the cursor position of a window */
-    virtual void GetCursorPosition( CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY ) const override final;
+    virtual void GetPosition( CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY ) const override final;
 
     /* Show or hide the mouse */
     virtual void SetVisibility( bool IsVisible ) override final;
@@ -24,7 +24,7 @@ public:
 private:
 
     FORCEINLINE CMacCursor()
-        : CCoreCursor()
+        : CPlatformCursor()
     {
     }
 

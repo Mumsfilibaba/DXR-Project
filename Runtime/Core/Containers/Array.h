@@ -1036,7 +1036,7 @@ struct TIsTArrayType<TArray<T, AllocatorType>>
 template<typename T, typename AllocatorType>
 inline TUniquePtr<T[]> MakeUniquePtr( const TArray<T, AllocatorType>& Array ) noexcept
 {
-    T* Memory = Memory::Malloc<T>( Array.Size() );
+    T* Memory = CMemory::Malloc<T>( Array.Size() );
     CopyConstructRange<T>( Memory, Array.Data(), Array.Size() );
     return TUniquePtr<T[]>( Memory );
 }

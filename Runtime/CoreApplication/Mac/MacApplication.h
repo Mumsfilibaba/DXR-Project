@@ -1,7 +1,7 @@
 #pragma once
 
 #if defined(PLATFORM_MACOS)
-#include "MacCursorDevice.h"
+#include "MacCursor.h"
 
 #include "Core/Containers/Array.h"
 
@@ -91,7 +91,7 @@ private:
     TArray<TSharedRef<CMacWindow>> Windows;
 
     /* Cursor interface */
-    CMacCursorDevice Cursor;
+    CMacCursor Cursor;
 
     /* If the application has been terminating or not */
     bool IsTerminating = false;
