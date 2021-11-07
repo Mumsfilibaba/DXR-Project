@@ -2,24 +2,6 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
-void* operator new(size_t Size, CCommandAllocator& Allocator)
-{
-    return Allocator.Allocate( static_cast<uint32>(Size), STANDARD_ALIGNMENT );
-}
-
-void* operator new[]( size_t Size, CCommandAllocator& Allocator )
-{
-    return Allocator.Allocate( static_cast<uint32>(Size), STANDARD_ALIGNMENT );
-}
-
-void operator delete (void*, CCommandAllocator&)
-{
-}
-
-void operator delete[]( void*, CCommandAllocator& )
-{
-}
-
 CCommandAllocator::CCommandAllocator( uint32 StartSize )
     : CurrentMemory( nullptr )
     , Size( StartSize )
@@ -28,6 +10,8 @@ CCommandAllocator::CCommandAllocator( uint32 StartSize )
 {
     CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc( Size ));
     Assert( CurrentMemory != nullptr );
+
+    AverageMemoryUsage = Size;
 }
 
 CCommandAllocator::~CCommandAllocator()
@@ -61,6 +45,7 @@ void* CCommandAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
         Assert( CurrentMemory != nullptr );
 
         Size = NewSize;
+        AverageMemoryUsage = Size;
         Offset = AlignedSize;
 
         // Return the newly allocated block
@@ -72,7 +57,26 @@ void CCommandAllocator::Reset()
 {
     ReleaseDiscardedMemory();
 
-    // TODO: Calculate the average amount needed and resize the allocator to a smaller size to prevent to much waste
+    // Moving average for the memory usage
+    const float Alpha = 0.2f;
+    AverageMemoryUsage = uint64(Offset * Alpha) + uint64((1.0f - Alpha) * AverageMemoryUsage);
+
+    // Resize if to much memory is used 
+    const uint64 SlackSize = Size - AverageMemoryUsage;
+    if ( NMemoryUtils::BytesToMegaBytes( SlackSize ) > 1 )
+    {
+        SafeDelete( CurrentMemory );
+
+        const uint64 NewSize = AverageMemoryUsage + NMemoryUtils::MegaBytesToBytes( 1 );
+
+        CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc( NewSize ));
+        Assert( CurrentMemory != nullptr );
+
+        Size = NewSize;
+        AverageMemoryUsage = Size;
+    }
+
+    // Reset
     Offset = 0;
 }
 

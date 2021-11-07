@@ -57,6 +57,9 @@ private:
     /* Offset into Current Memory*/
     uint64 Offset;
 
+    /* Holds the average number of bytes allocated between each reset */
+    uint64 AverageMemoryUsage;
+
     /* Discarded memory, kept alive so until reset is called */
     TArray<uint8*> DiscardedMemory;
 };

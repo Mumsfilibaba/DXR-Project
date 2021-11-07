@@ -3,6 +3,23 @@
 
 #define STANDARD_ALIGNMENT (__STDCPP_DEFAULT_NEW_ALIGNMENT__)
 
+namespace NMemoryUtils
+{
+    template<typename T>
+    inline constexpr T BytesToMegaBytes( T Bytes )
+    {
+        return Bytes / T(1024 * 1024);
+    }
+
+    template<typename T>
+    inline constexpr T MegaBytesToBytes( T MegaBytes )
+    {
+        return MegaBytes * T( 1024 * 1024 );
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 /* Class handling memory */
 class CORE_API CMemory
 {

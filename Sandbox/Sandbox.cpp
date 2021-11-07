@@ -87,11 +87,11 @@ bool CSandbox::Init()
             NewComponent->Mesh = SphereMesh;
             NewComponent->Material = MakeShared<CMaterial>( MatProperties );
 
-            NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
-            NewComponent->Material->NormalMap = GEngine->BaseNormal;
+            NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+            NewComponent->Material->NormalMap    = GEngine->BaseNormal;
             NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-            NewComponent->Material->AOMap = GEngine->BaseTexture;
-            NewComponent->Material->MetallicMap = GEngine->BaseTexture;
+            NewComponent->Material->AOMap        = GEngine->BaseTexture;
+            NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
             NewComponent->Material->Init();
 
             NewActor->AddComponent( NewComponent );
@@ -181,11 +181,11 @@ bool CSandbox::Init()
     NewComponent = dbg_new CMeshComponent( NewActor );
     NewComponent->Mesh = CMesh::Make( CMeshFactory::CreatePlane( 10, 10 ) );
     NewComponent->Material = MakeShared<CMaterial>( MatProperties );
-    NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
-    NewComponent->Material->NormalMap = GEngine->BaseNormal;
+    NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+    NewComponent->Material->NormalMap    = GEngine->BaseNormal;
     NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-    NewComponent->Material->AOMap = GEngine->BaseTexture;
-    NewComponent->Material->MetallicMap = GEngine->BaseTexture;
+    NewComponent->Material->AOMap        = GEngine->BaseTexture;
+    NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
     NewComponent->Material->Init();
     NewActor->AddComponent( NewComponent );
 
