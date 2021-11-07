@@ -74,6 +74,7 @@ project ( projectname )
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
+	filter {}
 	
 -- Sandbox Project
 project (projectname .. "Launcher")
@@ -147,4 +148,12 @@ project (projectname .. "Launcher")
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
+		-- TODO: See if there is a better way to handle dependencies
+		dependson
+		{
+			( projectname ),
+			"InterfaceRenderer",
+			"NullRHI",
+		}
+	filter {}
 	

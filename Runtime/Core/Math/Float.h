@@ -16,6 +16,8 @@
 #define DENORM_EXPONENT   (127 - 15)
 #define MIN_EXPONENT      (DENORM_EXPONENT - 10)
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SFloat64
 {
     FORCEINLINE SFloat64()
@@ -67,6 +69,8 @@ struct SFloat64
         };
     };
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct SFloat32
 {
@@ -120,6 +124,8 @@ struct SFloat32
     };
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SFloat16
 {
     FORCEINLINE SFloat16()
@@ -140,7 +146,7 @@ struct SFloat16
 
     FORCEINLINE void SetFloat( float Float32 )
     {
-    #if ARCHITECTURE_X86_X64
+    #if ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
         __m128  Reg0 = _mm_set_ss( Float32 );
         __m128i Reg1 = _mm_cvtps_ph( Reg0, _MM_FROUND_NO_EXC );
         Encoded = static_cast<uint16>(_mm_cvtsi128_si32( Reg1 ));

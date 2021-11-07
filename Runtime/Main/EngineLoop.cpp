@@ -44,7 +44,7 @@ bool CEngineLoop::PreInit()
     }
     else
     {
-        NErrorDevice::ConsoleWindow->SetTitle( PREPROCESS_CONCAT( PROJECT_NAME, ": Error Console" ) );
+        NErrorDevice::ConsoleWindow->SetTitle( (PROJECT_NAME": Error Console") );
     }
 
     /* Console */
@@ -125,7 +125,7 @@ bool CEngineLoop::Init()
     NEngineLoopDelegates::PreApplicationLoadedDelegate.Broadcast();
 
     // Init Application Module // TODO: Do not have the name hardcoded
-    GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>( "Sandbox.dll" );
+    GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>( "Sandbox" );
     if ( !GApplicationModule )
     {
         LOG_WARNING( "Application Init failed, may not behave as intended" );
@@ -197,8 +197,14 @@ bool CEngineLoop::Release()
 
     CInterfaceApplication::Get().SetRenderer( nullptr );
 
-    GEngine->Release();
-    SafeDelete( GEngine );
+	// Release the engine. Protect against failed initialization where the global pointer was never initialized
+	if ( GEngine )
+	{
+		GEngine->Release();
+		
+		delete GEngine;
+		GEngine = nullptr;
+	}
 
     CTextureFactory::Release();
 

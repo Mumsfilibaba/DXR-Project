@@ -9,7 +9,6 @@
 // Lazy mode resolves symbols when they are called for the first time, disable to load everything at loadtime
 #define ENABLE_LIBRARY_LAZY_MODE (1)
 
-
 class CMacLibrary final : public CPlatformLibrary
 {
 public:
@@ -18,8 +17,9 @@ public:
 
     /* Load a dynamic library on the platform */
     static FORCEINLINE PlatformHandle LoadDynamicLib( const char* LibraryName ) 
-    { 
-        CString CombinedName = LibraryName;
+    {
+		// TODO: MacOS seems to prefix all libraries with lib*, it would be nice if we could decide if this should happen or not
+        CString CombinedName = CString("lib") + LibraryName;
         CombinedName.Append( GetDynamicLibExtension() );
 
 #if ENABLE_LIBRARY_LAZY_MODE
@@ -27,7 +27,9 @@ public:
 #else
         const int32 Mode = RTLD_NOW;
 #endif
-        return dlopen( LibraryName, Mode );
+		
+		const char* LibraryNameWithExtension = CombinedName.CStr();
+        return dlopen( LibraryNameWithExtension, Mode );
     }
 
     /* Free a dynamic library on the platform */
@@ -45,7 +47,7 @@ public:
     /* Retrive the extension that dynamic libraries use on the platform */
     static FORCEINLINE const char* GetDynamicLibExtension()
     {
-        return ".so";
+        return ".dylib";
     }
 
     /* Loads a typed function or variable from with specified name from the specified library */

@@ -14,7 +14,7 @@ RHI_API IRHIShaderCompiler* GShaderCompiler = nullptr;
 
 static CRHIModule* LoadNullRHI()
 {
-    return CModuleManager::Get().LoadEngineModule<CRHIModule>( "NullRHI.dll" );
+    return CModuleManager::Get().LoadEngineModule<CRHIModule>( "NullRHI" );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,7 +25,7 @@ bool InitRHI( ERHIModule InRenderApi )
     CRHIModule* RHIModule = nullptr;
     if ( InRenderApi == ERHIModule::D3D12 )
     {
-        RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>( "D3D12RHI.dll" );
+        RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>( "D3D12RHI" );
     }
     else if ( InRenderApi == ERHIModule::Null )
     {

@@ -16,7 +16,7 @@ public:
     { 
         CString CombinedName = LibraryName;
         CombinedName.Append( GetDynamicLibExtension() );
-        return LoadLibraryA( LibraryName );
+        return LoadLibraryA( CombinedName.CStr() );
     }
 
     /* Free a dynamic library on the platform */

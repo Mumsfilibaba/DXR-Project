@@ -23,7 +23,7 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
     }
 
     PlatformModule Module = PlatformLibrary::LoadDynamicLib( ModuleName );
-    if ( Module == NULL )
+    if ( !Module )
     {
         LOG_ERROR( "Failed to find module '" + CString( ModuleName ) + "'" );
         return nullptr;
