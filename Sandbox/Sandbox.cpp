@@ -13,6 +13,8 @@
 #include "Engine/Scene/Components/MeshComponent.h"
 #include "Engine/Resources/TextureFactory.h"
 
+#include "Core/Logging/Log.h"
+
 #include "Interface/InterfaceApplication.h"
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
@@ -357,6 +359,8 @@ bool CSandbox::Init()
 void CSandbox::Tick( CTimestamp DeltaTime )
 {
     CApplicationModule::Tick( DeltaTime );
+
+    LOG_INFO( "Tick: " + ToString( DeltaTime.AsMilliSeconds() ) );
 
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;

@@ -1,5 +1,9 @@
 #include "InterfaceRenderer.h"
 
+#include "Core/Time/Timer.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Containers/Array.h"
+
 #include "Engine/Engine.h"
 #include "Engine/Resources/TextureFactory.h"
 
@@ -8,10 +12,6 @@
 #include "RHI/RHIShaderCompiler.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-
-#include "Core/Time/Timer.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Containers/Array.h"
 
 #include <imgui.h>
 

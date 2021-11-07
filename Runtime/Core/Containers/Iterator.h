@@ -454,3 +454,64 @@ public:
 private:
     NodeType* Node;
 };
+
+/* Iterator for Bit fields */
+template<typename BitFieldType>
+class TBitFieldIterator
+{
+public:
+
+    enum 
+    {
+        Invalid = ~0
+    };
+
+    TBitFieldIterator( const TBitFieldIterator& ) = default;
+    TBitFieldIterator( TBitFieldIterator&& ) = default;
+    ~TBitFieldIterator() = default;
+    TBitFieldIterator& operator=( const TBitFieldIterator& ) = default;
+    TBitFieldIterator& operator=( TBitFieldIterator&& ) = default;
+
+    explicit TBitFieldIterator( const BitFieldType& InBitField, uint32 InIndex )
+        : Index( Invalid )
+        , BitField( InBitField )
+    {
+    }
+
+    FORCEINLINE void operator++()
+    {
+        while ( ++Index < BitFieldType::Capacity() )
+        {
+            if ( BitField.Get().GetBit( Index ) )
+            {
+                return;
+            }
+        }
+
+        Index = Invalid;
+    }
+
+    FORCEINLINE bool operator!=( const TBitFieldIterator& other )
+    {
+        return (Index != other.Index);
+    }
+
+    FORCEINLINE bool Valid() const
+    {
+        return Index < BitFieldType::::Capacity();
+    }
+
+    FORCEINLINE uint32 Value() const
+    {
+        return Index;
+    }
+
+    FORCEINLINE uint32 operator*() const
+    {
+        return Index;
+    }
+
+private:
+    TReferenceWrapper<BitFieldType> BitField;
+    uint32 Index;
+};

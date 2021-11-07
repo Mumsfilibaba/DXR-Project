@@ -136,7 +136,7 @@ bool CEngineLoop::Init()
         NEngineLoopDelegates::PostApplicationLoadedDelegate.Broadcast();
     }
 
-    // UI // TODO: Has to be initialized after the engine, however, there should be a delegate on the application that notifies when a viewport is registered*/
+    // Init the interface renderer
     IInterfaceRendererModule* InterfaceRendererModule = CModuleManager::Get().LoadEngineModule<IInterfaceRendererModule>( "InterfaceRenderer" );
     if ( !InterfaceRendererModule )
     {
@@ -169,9 +169,8 @@ void CEngineLoop::Tick( CTimestamp Deltatime )
     // Application and event-handling
     CInterfaceApplication::Get().Tick( Deltatime );
 
+    // Tick all the registered systems
     CEngineLoopTicker::Get().Tick( Deltatime );
-
-    LOG_INFO( "Tick: " + ToString( Deltatime.AsMilliSeconds() ) );
 
     // Run the engine, which means that all scene data etc. is updated
     GEngine->Tick( Deltatime );

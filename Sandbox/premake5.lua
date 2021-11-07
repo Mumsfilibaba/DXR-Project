@@ -46,7 +46,6 @@ project ( projectname )
 		"**.hlsli",
 	}
 
-
 	links
 	{
 		"Core",
