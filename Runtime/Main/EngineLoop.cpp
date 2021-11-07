@@ -18,6 +18,7 @@
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
 #include "Core/Misc/EngineLoopDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
+#include "Core/Misc/CommandLine.h"
 
 #include "Interface/InterfaceApplication.h"
 
@@ -29,6 +30,11 @@
 
 #include "Renderer/Renderer.h"
 #include "Renderer/Debug/GPUProfiler.h"
+
+void CEngineLoop::InitCommandLineArgs( int32 NumCommandLineArgs, const char** CommandLineArgs )
+{
+	
+}
 
 bool CEngineLoop::PreInit()
 {
@@ -45,6 +51,13 @@ bool CEngineLoop::PreInit()
     else
     {
         NErrorDevice::ConsoleWindow->SetTitle( (PROJECT_NAME": Error Console") );
+    }
+
+    // Init platform specific thread utilities
+    if ( !PlatformThreadMisc::Init() )
+    {
+        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to init PlatformThreadMisc" );
+        return false;
     }
 
     /* Console */
@@ -215,6 +228,8 @@ bool CEngineLoop::Release()
     CDispatchQueue::Get().Release();
 
     CInterfaceApplication::Release();
+
+    PlatformThreadMisc::Release();
 
     SafeRelease( NErrorDevice::ConsoleWindow );
 

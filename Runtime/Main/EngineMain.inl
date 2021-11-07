@@ -9,7 +9,7 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 // Main function for all implementations
-int32 EngineMain()
+int32 EngineMain( int32 NumCommandLineArgs, const char** CommandLineArgs )
 {
     struct SEngineMainGuard
     {
@@ -24,6 +24,8 @@ int32 EngineMain()
 
     // Make sure that the engine is released if the main function exits early
     SEngineMainGuard EngineMainGuard;
+	
+	// Start by init the commandline
     
     // Run loop
     if ( !CEngineLoop::PreInit() )

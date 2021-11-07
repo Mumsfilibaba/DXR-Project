@@ -22,7 +22,8 @@ int WINAPI WinMain( HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, i
 {
     InitCRunTime();
 
-    return EngineMain();
+    // TODO: Investigate if this is the proper way
+    return EngineMain( 1, CmdLine );
 }
 
 #pragma warning(pop)

@@ -1,6 +1,8 @@
 #pragma once
 
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
+#include "MacRunLoop.h"
+
 #include "Core/Threading/Interface/PlatformThreadMisc.h"
 
 #include <unistd.h>
@@ -10,9 +12,22 @@ class CMacThreadMisc : public CPlatformThreadMisc
 {
 public:
 
+    /* Performs platform specific initialization of threadhandling */
+    static FORCEINLINE bool Init() 
+    { 
+        return CMacMainThread::Init();
+    }
+
+    /* Releases platform specific resources for threadhandling */
+    static FORCEINLINE void Release() 
+    {
+        CMacMainThread::Release();
+    }
+
     /* Retreives the number of logical cores available on the system */
     static uint32 GetNumProcessors();
 
+    /* Retrieves the current thread's system ID */
     static FORCEINLINE PlatformThreadHandle GetThreadHandle()
     {
         pthread_t CurrentThread = pthread_self();

@@ -17,6 +17,12 @@ class CPlatformThreadMisc
 {
 public:
 
+    /* Performs platform specific initialization of threadhandling */
+    static FORCEINLINE bool Init() { return true; } 
+
+    /* Releases platform specific resources for threadhandling */
+    static FORCEINLINE void Release() {}
+
     /* Returns the number of logical processors on the system */
     static FORCEINLINE uint32 GetNumProcessors() { return 1; }
 

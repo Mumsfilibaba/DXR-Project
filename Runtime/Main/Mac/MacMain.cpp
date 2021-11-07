@@ -2,10 +2,9 @@
 
 #if defined(PLATFORM_MACOS)
 
-// TODO: The commandline should be saved somewhere
-int main( int , const char** )
+int main( int NumArgs, const char** Args )
 {
-    return EngineMain();
+    return EngineMain( NumArgs, Args );
 }
 
 #endif
