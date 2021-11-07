@@ -95,3 +95,4 @@ project "Core"
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
+	filter {}

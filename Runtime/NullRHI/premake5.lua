@@ -89,3 +89,4 @@ project "NullRHI"
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
+	filter {}

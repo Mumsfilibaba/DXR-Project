@@ -95,3 +95,4 @@ project "Interface"
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
+	filter {}

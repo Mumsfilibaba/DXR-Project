@@ -102,3 +102,4 @@ project "Engine"
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
+	filter {}

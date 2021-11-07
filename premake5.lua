@@ -113,6 +113,7 @@ workspace "DXR-Project"
 		{
 			"PLATFORM_MACOS",
 		}
+	filter {}
 
 -- Dependencies
 group "Dependencies"
@@ -154,6 +155,7 @@ group "Dependencies"
 			symbols 	"off"
 			runtime 	"Release"
 			optimize 	"Full"
+		filter {}
 	
 	-- tinyobjloader Project
 	project "tinyobjloader"
@@ -184,7 +186,7 @@ group "Dependencies"
 			symbols 	"off"
 			runtime 	"Release"
 			optimize 	"Full"	
-				
+		filter {}
 	
 	-- OpenFBX Project
 	project "OpenFBX"
@@ -217,7 +219,7 @@ group "Dependencies"
 			symbols 	"off"
 			runtime 	"Release"
 			optimize 	"Full"
-		
+		filter {}
 group ""
 
 -- Engine Projects
@@ -226,10 +228,14 @@ include "Runtime/CoreApplication"
 include "Runtime/Interface"
 include "Runtime/InterfaceRenderer"
 include "Runtime/RHI"
-include "Runtime/D3D12RHI"
 include "Runtime/NullRHI"
 include "Runtime/Engine"
 include "Runtime/Renderer"
+
+-- The D3D12RHI is only available on Windows
+filter "system:windows"
+	include "Runtime/D3D12RHI"
+filter {}
 
 -- Editor
 include "Editor"

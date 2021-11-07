@@ -1,3 +1,5 @@
+
+
 project "CoreApplication"
 	language 		"C++"
 	cppdialect 		"C++17"
@@ -71,16 +73,6 @@ project "CoreApplication"
 			"**/Windows/**",
 		}
 
-	-- In visual studio show natvis files
-	filter "action:vs*"
-		vpaths { ["Natvis"] = "**.natvis" }
-		
-		files 
-		{
-			"%{prj.name}/**.natvis",
-		}        
-
-	filter "system:macosx"
 		links
 		{
 			-- Native
@@ -88,3 +80,13 @@ project "CoreApplication"
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
+
+	-- In visual studio show natvis files
+	filter "action:vs*"
+		vpaths { ["Natvis"] = "**.natvis" }
+		
+		files 
+		{
+			"%{prj.name}/**.natvis",
+		}
+	filter {}

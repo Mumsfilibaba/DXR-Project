@@ -101,3 +101,4 @@ project "Renderer"
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
+	filter {}

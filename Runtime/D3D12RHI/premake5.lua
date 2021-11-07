@@ -81,12 +81,4 @@ project "D3D12RHI"
 		{
 			"%{prj.name}/**.natvis",
 		}
-
-	filter "system:macosx"
-		links
-		{
-			-- Native
-			"Cocoa.framework",
-			"AppKit.framework",
-			"MetalKit.framework",
-		}
+	filter {}

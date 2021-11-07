@@ -88,3 +88,4 @@ project "RHI"
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
+	filter {}
