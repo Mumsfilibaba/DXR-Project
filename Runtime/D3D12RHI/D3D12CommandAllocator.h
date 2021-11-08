@@ -4,7 +4,8 @@
 class CD3D12CommandAllocator : public CD3D12DeviceChild
 {
 public:
-    CD3D12CommandAllocator( CD3D12Device* InDevice )
+
+    FORCEINLINE CD3D12CommandAllocator( CD3D12Device* InDevice )
         : CD3D12DeviceChild( InDevice )
         , Allocator( nullptr )
     {
@@ -15,12 +16,12 @@ public:
         HRESULT Result = GetDevice()->GetDevice()->CreateCommandAllocator( Type, IID_PPV_ARGS( &Allocator ) );
         if ( SUCCEEDED( Result ) )
         {
-            LOG_INFO( "[D3D12Device]: Created CommandAllocator" );
+            LOG_INFO( "[CD3D12CommandAllocator]: Created CommandAllocator" );
             return true;
         }
         else
         {
-            LOG_ERROR( "[D3D12Device]: FAILED to create CommandAllocator" );
+            LOG_ERROR( "[CD3D12CommandAllocator]: FAILED to create CommandAllocator" );
             return false;
         }
     }

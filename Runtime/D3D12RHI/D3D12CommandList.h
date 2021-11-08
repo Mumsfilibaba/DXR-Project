@@ -11,6 +11,7 @@ class CD3D12RHIComputePipelineState;
 class CD3D12CommandList : public CD3D12DeviceChild
 {
 public:
+
     FORCEINLINE CD3D12CommandList( CD3D12Device* InDevice )
         : CD3D12DeviceChild( InDevice )
         , CmdList( nullptr )
@@ -25,11 +26,11 @@ public:
         {
             CmdList->Close();
 
-            LOG_INFO( "[D3D12Device]: Created CommandList" );
+            LOG_INFO( "[CD3D12CommandList]: Created CommandList" );
 
             if ( FAILED( CmdList.As<ID3D12GraphicsCommandList5>( &CmdList5 ) ) )
             {
-                LOG_ERROR( "[D3D12CommandList]: FAILED to retrive DXR-CommandList" );
+                LOG_ERROR( "[CD3D12CommandList]: FAILED to retrive DXR-CommandList" );
                 return false;
             }
             else
@@ -39,7 +40,7 @@ public:
         }
         else
         {
-            LOG_ERROR( "[D3D12CommandList]: FAILED to create CommandList" );
+            LOG_ERROR( "[CD3D12CommandList]: FAILED to create CommandList" );
             return false;
         }
     }

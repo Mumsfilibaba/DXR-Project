@@ -21,7 +21,7 @@ public:
         return kDescriptorTableSize;
     }
 
-    TD3D12ViewCache()
+    FORCEINLINE TD3D12ViewCache()
         : ResourceViews()
         , HostDescriptors()
         , DeviceDescriptors()
@@ -130,15 +130,19 @@ public:
     bool Dirty[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 using CD3D12ConstantBufferViewCache = TD3D12ViewCache<CD3D12RHIConstantBufferView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT>;
 using CD3D12ShaderResourceViewCache = TD3D12ViewCache<CD3D12RHIShaderResourceView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT>;
 using CD3D12UnorderedAccessViewCache = TD3D12ViewCache<CD3D12RHIUnorderedAccessView, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT>;
 using CD3D12SamplerStateCache = TD3D12ViewCache<CD3D12RHISamplerState, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DEFAULT_SAMPLER_STATE_COUNT>;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12VertexBufferCache
 {
 public:
-    CD3D12VertexBufferCache()
+    FORCEINLINE CD3D12VertexBufferCache()
         : VertexBuffers()
         , VertexBufferViews()
         , NumVertexBuffers( 0 )
@@ -238,6 +242,8 @@ private:
     bool IndexBufferDirty;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RenderTargetState
 {
 public:
@@ -313,6 +319,8 @@ private:
 
     bool Dirty;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12DescriptorCache : public CD3D12DeviceChild
 {
@@ -439,10 +447,10 @@ private:
         }
     }
 
-    CD3D12RHIConstantBufferView* NullCBV = nullptr;
-    CD3D12RHIShaderResourceView* NullSRV = nullptr;
+    CD3D12RHIConstantBufferView*  NullCBV = nullptr;
+    CD3D12RHIShaderResourceView*  NullSRV = nullptr;
     CD3D12RHIUnorderedAccessView* NullUAV = nullptr;
-    CD3D12RHISamplerState* NullSampler = nullptr;
+    CD3D12RHISamplerState*        NullSampler = nullptr;
 
     CD3D12VertexBufferCache        VertexBufferCache;
     CD3D12RenderTargetState        RenderTargetCache;
@@ -456,11 +464,13 @@ private:
     UINT RangeSizes[D3D12_CACHED_DESCRIPTORS_COUNT];
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12ShaderConstantsCache
 {
 public:
 
-    CD3D12ShaderConstantsCache()
+    FORCEINLINE CD3D12ShaderConstantsCache()
         : Constants()
         , NumConstants()
     {

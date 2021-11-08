@@ -35,158 +35,55 @@ enum DxilFourCC
 
 #undef MAKEFOURCC
 
-// TODO: Maybe a compile time version?
-static LPCWSTR GetTargetProfile( EShaderStage Stage, EShaderModel Model )
+static LPCWSTR GetShaderStageText( EShaderStage Stage )
 {
     switch ( Stage )
     {
-        case EShaderStage::Compute:
-        {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"cs_5_0";
-                case EShaderModel::SM_5_1: return L"cs_5_1";
-                case EShaderModel::SM_6_0: return L"cs_6_0";
-                case EShaderModel::SM_6_1: return L"cs_6_1";
-                case EShaderModel::SM_6_2: return L"cs_6_2";
-                case EShaderModel::SM_6_3: return L"cs_6_3";
-                case EShaderModel::SM_6_4: return L"cs_6_4";
-                case EShaderModel::SM_6_5: return L"cs_6_5";
-                default: break;
-            }
-        }
+        // Compute
+        case EShaderStage::Compute:       return L"cs";
 
-        case EShaderStage::Vertex:
-        {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"vs_5_0";
-                case EShaderModel::SM_5_1: return L"vs_5_1";
-                case EShaderModel::SM_6_0: return L"vs_6_0";
-                case EShaderModel::SM_6_1: return L"vs_6_1";
-                case EShaderModel::SM_6_2: return L"vs_6_2";
-                case EShaderModel::SM_6_3: return L"vs_6_3";
-                case EShaderModel::SM_6_4: return L"vs_6_4";
-                case EShaderModel::SM_6_5: return L"vs_6_5";
-                default: break;
-            }
-        }
+        // Graphics
+        case EShaderStage::Vertex:        return L"vs";
+        case EShaderStage::Hull:          return L"hs";
+        case EShaderStage::Domain:        return L"ds";
+        case EShaderStage::Geometry:      return L"gs";
+        case EShaderStage::Pixel:         return L"ps";
 
-        case EShaderStage::Hull:
-        {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"hs_5_0";
-                case EShaderModel::SM_5_1: return L"hs_5_1";
-                case EShaderModel::SM_6_0: return L"hs_6_0";
-                case EShaderModel::SM_6_1: return L"hs_6_1";
-                case EShaderModel::SM_6_2: return L"hs_6_2";
-                case EShaderModel::SM_6_3: return L"hs_6_3";
-                case EShaderModel::SM_6_4: return L"hs_6_4";
-                case EShaderModel::SM_6_5: return L"hs_6_5";
-                default: break;
-            }
-        }
+        // New Graphics Pipeline
+        case EShaderStage::Mesh:          return L"ms";
+        case EShaderStage::Amplification: return L"as";
 
-        case EShaderStage::Domain:
-        {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"ds_5_0";
-                case EShaderModel::SM_5_1: return L"ds_5_1";
-                case EShaderModel::SM_6_0: return L"ds_6_0";
-                case EShaderModel::SM_6_1: return L"ds_6_1";
-                case EShaderModel::SM_6_2: return L"ds_6_2";
-                case EShaderModel::SM_6_3: return L"ds_6_3";
-                case EShaderModel::SM_6_4: return L"ds_6_4";
-                case EShaderModel::SM_6_5: return L"ds_6_5";
-                default: break;
-            }
-        }
-
-        case EShaderStage::Geometry:
-        {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"gs_5_0";
-                case EShaderModel::SM_5_1: return L"gs_5_1";
-                case EShaderModel::SM_6_0: return L"gs_6_0";
-                case EShaderModel::SM_6_1: return L"gs_6_1";
-                case EShaderModel::SM_6_2: return L"gs_6_2";
-                case EShaderModel::SM_6_3: return L"gs_6_3";
-                case EShaderModel::SM_6_4: return L"gs_6_4";
-                case EShaderModel::SM_6_5: return L"gs_6_5";
-                default: break;
-            }
-        }
-
-        case EShaderStage::Pixel:
-        {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"ps_5_0";
-                case EShaderModel::SM_5_1: return L"ps_5_1";
-                case EShaderModel::SM_6_0: return L"ps_6_0";
-                case EShaderModel::SM_6_1: return L"ps_6_1";
-                case EShaderModel::SM_6_2: return L"ps_6_2";
-                case EShaderModel::SM_6_3: return L"ps_6_3";
-                case EShaderModel::SM_6_4: return L"ps_6_4";
-                case EShaderModel::SM_6_5: return L"ps_6_5";
-                default: break;
-            }
-        }
-
-        case EShaderStage::Mesh:
-        {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"ms_5_0";
-                case EShaderModel::SM_5_1: return L"ms_5_1";
-                case EShaderModel::SM_6_0: return L"ms_6_0";
-                case EShaderModel::SM_6_1: return L"ms_6_1";
-                case EShaderModel::SM_6_2: return L"ms_6_2";
-                case EShaderModel::SM_6_3: return L"ms_6_3";
-                case EShaderModel::SM_6_4: return L"ms_6_4";
-                case EShaderModel::SM_6_5: return L"ms_6_5";
-                default: break;
-            }
-        }
-
-        case EShaderStage::Amplification:
-        {
-            switch ( Model )
-            {
-                case EShaderModel::SM_5_0: return L"as_5_0";
-                case EShaderModel::SM_5_1: return L"as_5_1";
-                case EShaderModel::SM_6_0: return L"as_6_0";
-                case EShaderModel::SM_6_1: return L"as_6_1";
-                case EShaderModel::SM_6_2: return L"as_6_2";
-                case EShaderModel::SM_6_3: return L"as_6_3";
-                case EShaderModel::SM_6_4: return L"as_6_4";
-                case EShaderModel::SM_6_5: return L"as_6_5";
-                default: break;
-            }
-        }
-
+        // Ray tracing
         case EShaderStage::RayGen:
         case EShaderStage::RayAnyHit:
         case EShaderStage::RayClosestHit:
-        case EShaderStage::RayMiss:
-        {
-            switch ( Model )
-            {
-                case EShaderModel::SM_6_3: return L"lib_6_3";
-                case EShaderModel::SM_6_4: return L"lib_6_4";
-                case EShaderModel::SM_6_5: return L"lib_6_5";
-                default: break;
-            }
-        }
+        case EShaderStage::RayMiss:       return L"lib";
     }
 
-    return L"Unknown";
+    return L"xxx";
 }
 
-// Custom blob for existing data
+static LPCWSTR GetShaderModelText( EShaderModel Model )
+{
+    switch ( Model )
+    {
+        case EShaderModel::SM_5_0: return L"5_0";
+        case EShaderModel::SM_5_1: return L"5_1";
+        case EShaderModel::SM_6_0: return L"6_0";
+        case EShaderModel::SM_6_1: return L"6_1";
+        case EShaderModel::SM_6_2: return L"6_2";
+        case EShaderModel::SM_6_3: return L"6_3";
+        case EShaderModel::SM_6_4: return L"6_4";
+        case EShaderModel::SM_6_5: return L"6_5";
+        default: break;
+    }
+
+    return L"0_0";
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Custom blob for existing data */
 class ExistingBlob : public IDxcBlob
 {
 public:
@@ -255,6 +152,8 @@ private:
     SIZE_T SizeInBytes;
     ULONG  References;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CD3D12RHIShaderCompiler* GD3D12ShaderCompiler = nullptr;
 
@@ -461,7 +360,13 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
         }
     }
 
-    LPCWSTR TargetProfile = GetTargetProfile( ShaderStage, ShaderModel );
+    // Retrive the shader target
+    LPCWSTR ShaderStageText = GetShaderStageText( ShaderStage );
+    LPCWSTR ShaderModelText = GetShaderModelText( ShaderModel );
+
+    constexpr uint32 BufferLength = sizeof("xxx_x_x"); 
+    wchar_t TargetProfile[BufferLength];
+    WStringTraits::FormatBuffer( TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText );
 
     TComPtr<IDxcOperationResult> Result;
     HRESULT hResult = DxCompiler->Compile(

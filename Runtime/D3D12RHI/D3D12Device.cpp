@@ -7,6 +7,7 @@
 #include "D3D12CommandAllocator.h"
 #include "D3D12CommandQueue.h"
 #include "D3D12RHIPipelineState.h"
+#include "D3D12FunctionPointers.h"
 
 #include "Core/Windows/Windows.h"
 #include "Core/Windows/Windows.inl"
@@ -14,17 +15,9 @@
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 
-PFN_CREATE_DXGI_FACTORY_2                              CreateDXGIFactory2Func = nullptr;
-PFN_DXGI_GET_DEBUG_INTERFACE_1                         DXGIGetDebugInterface1Func = nullptr;
-PFN_D3D12_CREATE_DEVICE                                D3D12CreateDeviceFunc = nullptr;
-PFN_D3D12_GET_DEBUG_INTERFACE                          D3D12GetDebugInterfaceFunc = nullptr;
-PFN_D3D12_SERIALIZE_ROOT_SIGNATURE                     D3D12SerializeRootSignatureFunc = nullptr;
-PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER           D3D12CreateRootSignatureDeserializerFunc = nullptr;
-PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVersionedRootSignatureFunc = nullptr;
-PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializerFunc = nullptr;
-PFN_SetMarkerOnCommandList                             SetMarkerOnCommandListFunc = nullptr;
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const char* ToString( D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp )
+static const char* ToString( D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp )
 {
     switch ( BreadCrumbOp )
     {
@@ -71,12 +64,14 @@ const char* ToString( D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp )
         case D3D12_AUTO_BREADCRUMB_OP_INITIALIZEEXTENSIONCOMMAND:                       return "D3D12_AUTO_BREADCRUMB_OP_INITIALIZEEXTENSIONCOMMAND";
         case D3D12_AUTO_BREADCRUMB_OP_EXECUTEEXTENSIONCOMMAND:                          return "D3D12_AUTO_BREADCRUMB_OP_EXECUTEEXTENSIONCOMMAND";
         case D3D12_AUTO_BREADCRUMB_OP_DISPATCHMESH:                                     return "D3D12_AUTO_BREADCRUMB_OP_DISPATCHMESH";
-        default: return "UNKNOWN";
+        default:                                                                        return "UNKNOWN";
     }
 }
 
-static const char* gDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
+static const char* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+                  
 void RHID3D12DeviceRemovedHandler( CD3D12Device* Device )
 {
     Assert( Device != nullptr );
@@ -104,7 +99,7 @@ void RHID3D12DeviceRemovedHandler( CD3D12Device* Device )
         return;
     }
 
-    FILE* File = fopen( gDeviceRemovedDumpFile, "w" );
+    FILE* File = fopen( GDeviceRemovedDumpFile, "w" );
     if ( File )
     {
         fwrite( Message.Data(), 1, Message.Size(), File );
@@ -146,6 +141,8 @@ void RHID3D12DeviceRemovedHandler( CD3D12Device* Device )
     PlatformApplicationMisc::MessageBox( "Error", " [D3D12] Device Removed" );
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 CD3D12Device::CD3D12Device( bool InEnableDebugLayer, bool InEnableGPUValidation, bool InEnableDRED )
     : Factory( nullptr )
     , Adapter( nullptr )
@@ -171,7 +168,7 @@ CD3D12Device::~CD3D12Device()
 
         if ( PIXLib )
         {
-            ::FreeLibrary( PIXLib );
+            FreeLibrary( PIXLib );
             PIXLib = 0;
         }
     }
@@ -181,16 +178,17 @@ CD3D12Device::~CD3D12Device()
     Device.Reset();
     DXRDevice.Reset();
 
-    ::FreeLibrary( DXGILib );
+    FreeLibrary( DXGILib );
     DXGILib = 0;
 
-    ::FreeLibrary( D3D12Lib );
+    FreeLibrary( D3D12Lib );
     D3D12Lib = 0;
 }
 
 bool CD3D12Device::Init()
 {
-    DXGILib = ::LoadLibrary( "dxgi.dll" );
+    // Load DLLs
+    DXGILib = LoadLibrary( "dxgi.dll" );
     if ( DXGILib == NULL )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to load dxgi.dll" );
@@ -201,7 +199,7 @@ bool CD3D12Device::Init()
         LOG_INFO( "Loaded dxgi.dll" );
     }
 
-    D3D12Lib = ::LoadLibrary( "d3d12.dll" );
+    D3D12Lib = LoadLibrary( "d3d12.dll" );
     if ( D3D12Lib == NULL )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to load d3d12.dll" );
@@ -212,33 +210,26 @@ bool CD3D12Device::Init()
         LOG_INFO( "Loaded d3d12.dll" );
     }
 
-    CreateDXGIFactory2Func = GetTypedProcAddress<PFN_CREATE_DXGI_FACTORY_2>( DXGILib, "CreateDXGIFactory2" );
+    // Load DXGI functions 
+    NDXGIFunctions::CreateDXGIFactory2     = GetTypedProcAddress<PFN_CREATE_DXGI_FACTORY_2>( DXGILib, "CreateDXGIFactory2" );
+    NDXGIFunctions::DXGIGetDebugInterface1 = GetTypedProcAddress<PFN_DXGI_GET_DEBUG_INTERFACE_1>( DXGILib, "DXGIGetDebugInterface1" );
 
-    DXGIGetDebugInterface1Func = GetTypedProcAddress<PFN_DXGI_GET_DEBUG_INTERFACE_1>( DXGILib, "DXGIGetDebugInterface1" );
+    // Load D3D12 functions
+    ND3D12Functions::D3D12CreateDevice                             = GetTypedProcAddress<PFN_D3D12_CREATE_DEVICE>( D3D12Lib, "D3D12CreateDevice" );
+    ND3D12Functions::D3D12GetDebugInterface                        = GetTypedProcAddress<PFN_D3D12_GET_DEBUG_INTERFACE>( D3D12Lib, "D3D12GetDebugInterface" );
+    ND3D12Functions::D3D12SerializeRootSignature                   = GetTypedProcAddress<PFN_D3D12_SERIALIZE_ROOT_SIGNATURE>( D3D12Lib, "D3D12SerializeRootSignature" );
+    ND3D12Functions::D3D12SerializeVersionedRootSignature          = GetTypedProcAddress<PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE>( D3D12Lib, "D3D12SerializeVersionedRootSignature" );
+    ND3D12Functions::D3D12CreateRootSignatureDeserializer          = GetTypedProcAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>( D3D12Lib, "D3D12CreateRootSignatureDeserializer" );
+    ND3D12Functions::D3D12CreateVersionedRootSignatureDeserializer = GetTypedProcAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>( D3D12Lib, "D3D12CreateVersionedRootSignatureDeserializer" );
 
-    D3D12CreateDeviceFunc = GetTypedProcAddress<PFN_D3D12_CREATE_DEVICE>( D3D12Lib, "D3D12CreateDevice" );
-
-    D3D12GetDebugInterfaceFunc = GetTypedProcAddress<PFN_D3D12_GET_DEBUG_INTERFACE>( D3D12Lib, "D3D12GetDebugInterface" );
-
-    D3D12SerializeRootSignatureFunc = GetTypedProcAddress<PFN_D3D12_SERIALIZE_ROOT_SIGNATURE>( D3D12Lib, "D3D12SerializeRootSignature" );
-
-    D3D12SerializeVersionedRootSignatureFunc = GetTypedProcAddress<PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE>(
-        D3D12Lib,
-        "D3D12SerializeVersionedRootSignature" );
-    D3D12CreateRootSignatureDeserializerFunc = GetTypedProcAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>(
-        D3D12Lib,
-        "D3D12CreateRootSignatureDeserializer" );
-    D3D12CreateVersionedRootSignatureDeserializerFunc = GetTypedProcAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>(
-        D3D12Lib,
-        "D3D12CreateVersionedRootSignatureDeserializer" );
-
+    // Start creation of device
     if ( EnableDebugLayer )
     {
         PIXLib = LoadLibrary( "WinPixEventRuntime.dll" );
         if ( PIXLib != NULL )
         {
             LOG_INFO( "Loaded WinPixEventRuntime.dll" );
-            SetMarkerOnCommandListFunc = GetTypedProcAddress<PFN_SetMarkerOnCommandList>( PIXLib, "PIXSetMarkerOnCommandList" );
+            ND3D12Functions::SetMarkerOnCommandList = GetTypedProcAddress<PFN_SetMarkerOnCommandList>( PIXLib, "PIXSetMarkerOnCommandList" );
         }
         else
         {
@@ -246,7 +237,7 @@ bool CD3D12Device::Init()
         }
 
         TComPtr<ID3D12Debug> DebugInterface;
-        if ( FAILED( D3D12GetDebugInterfaceFunc( IID_PPV_ARGS( &DebugInterface ) ) ) )
+        if ( FAILED( ND3D12Functions::D3D12GetDebugInterface( IID_PPV_ARGS( &DebugInterface ) ) ) )
         {
             LOG_ERROR( "[D3D12Device]: FAILED to enable DebugLayer" );
             return false;
@@ -259,7 +250,7 @@ bool CD3D12Device::Init()
         if ( EnableDRED )
         {
             TComPtr<ID3D12DeviceRemovedExtendedDataSettings> DredSettings;
-            if ( SUCCEEDED( D3D12GetDebugInterfaceFunc( IID_PPV_ARGS( &DredSettings ) ) ) )
+            if ( SUCCEEDED( ND3D12Functions::D3D12GetDebugInterface( IID_PPV_ARGS( &DredSettings ) ) ) )
             {
                 DredSettings->SetAutoBreadcrumbsEnablement( D3D12_DRED_ENABLEMENT_FORCED_ON );
                 DredSettings->SetPageFaultEnablement( D3D12_DRED_ENABLEMENT_FORCED_ON );
@@ -285,7 +276,7 @@ bool CD3D12Device::Init()
         }
 
         TComPtr<IDXGIInfoQueue> InfoQueue;
-        if ( SUCCEEDED( DXGIGetDebugInterface1Func( 0, IID_PPV_ARGS( &InfoQueue ) ) ) )
+        if ( SUCCEEDED( NDXGIFunctions::DXGIGetDebugInterface1( 0, IID_PPV_ARGS( &InfoQueue ) ) ) )
         {
             InfoQueue->SetBreakOnSeverity( DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true );
             InfoQueue->SetBreakOnSeverity( DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true );
@@ -296,7 +287,7 @@ bool CD3D12Device::Init()
         }
 
         TComPtr<IDXGraphicsAnalysis> TempPIXCaptureInterface;
-        if ( SUCCEEDED( DXGIGetDebugInterface1Func( 0, IID_PPV_ARGS( &TempPIXCaptureInterface ) ) ) )
+        if ( SUCCEEDED( NDXGIFunctions::DXGIGetDebugInterface1( 0, IID_PPV_ARGS( &TempPIXCaptureInterface ) ) ) )
         {
             PIXCaptureInterface = TempPIXCaptureInterface;
         }
@@ -307,7 +298,7 @@ bool CD3D12Device::Init()
     }
 
     // Create factory
-    if ( FAILED( CreateDXGIFactory2Func( 0, IID_PPV_ARGS( &Factory ) ) ) )
+    if ( FAILED( NDXGIFunctions::CreateDXGIFactory2( 0, IID_PPV_ARGS( &Factory ) ) ) )
     {
         LOG_ERROR( "[D3D12Device]: FAILED to create factory" );
         return false;
@@ -356,7 +347,7 @@ bool CD3D12Device::Init()
         }
 
         // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-        if ( SUCCEEDED( D3D12CreateDeviceFunc( TempAdapter.Get(), MinFeatureLevel, _uuidof( ID3D12Device ), nullptr ) ) )
+        if ( SUCCEEDED( ND3D12Functions::D3D12CreateDevice( TempAdapter.Get(), MinFeatureLevel, _uuidof( ID3D12Device ), nullptr ) ) )
         {
             AdapterID = ID;
 
@@ -379,7 +370,7 @@ bool CD3D12Device::Init()
     }
 
     // Create Device
-    if ( FAILED( D3D12CreateDeviceFunc( Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS( &Device ) ) ) )
+    if ( FAILED( ND3D12Functions::D3D12CreateDevice( Adapter.Get(), MinFeatureLevel, IID_PPV_ARGS( &Device ) ) ) )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to create device" );
         return false;
@@ -407,7 +398,7 @@ bool CD3D12Device::Init()
             D3D12_INFO_QUEUE_FILTER Filter;
             CMemory::Memzero( &Filter );
 
-            Filter.DenyList.NumIDs = _countof( Hide );
+            Filter.DenyList.NumIDs  = _countof( Hide );
             Filter.DenyList.pIDList = Hide;
             InfoQueue->AddStorageFilterEntries( &Filter );
         }
@@ -456,7 +447,7 @@ bool CD3D12Device::Init()
         }
     }
 
-    // Checking for Variable Shading Rate
+    // Checking for Variable Shading Rate support
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
         CMemory::Memzero( &Features6, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS6 ) );
@@ -469,7 +460,7 @@ bool CD3D12Device::Init()
         }
     }
 
-    // Check for Mesh-Shaders support
+    // Check for Mesh-Shaders, and SamplerFeedback support
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
         CMemory::Memzero( &Features7, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS7 ) );
@@ -477,7 +468,7 @@ bool CD3D12Device::Init()
         Result = Device->CheckFeatureSupport( D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof( D3D12_FEATURE_DATA_D3D12_OPTIONS7 ) );
         if ( SUCCEEDED( Result ) )
         {
-            MeshShaderTier = Features7.MeshShaderTier;
+            MeshShaderTier      = Features7.MeshShaderTier;
             SamplerFeedBackTier = Features7.SamplerFeedbackTier;
         }
     }

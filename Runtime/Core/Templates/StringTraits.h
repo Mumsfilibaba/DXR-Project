@@ -77,9 +77,20 @@ public:
     }
 
     /* Format into buffer */
-    static FORCEINLINE int32 PrintVA( CharType* Data, int32 Len, const CharType* Format, va_list Args ) noexcept
+    static FORCEINLINE int32 FormatBuffer( CharType* Buffer, int32 Len, const CharType* Format, ... ) noexcept
     {
-        return vsnprintf( Data, Len, Format, Args );
+        va_list Args;
+        va_start( Args, Format );
+        int32 Result = FormatBufferV( Buffer, Len, Format, Args );
+        va_end( Args );
+
+        return Result;
+    }
+
+    /* Format into buffer */
+    static FORCEINLINE int32 FormatBufferV( CharType* Buffer, int32 Len, const CharType* Format, va_list Args ) noexcept
+    {
+        return vsnprintf( Buffer, Len, Format, Args );
     }
 
     /* Convert to lower-case */
@@ -197,7 +208,18 @@ public:
     }
 
     /* Format into buffer */
-    static FORCEINLINE int32 PrintVA( CharType* Data, int32 Len, const CharType* Format, va_list Args ) noexcept
+    static FORCEINLINE int32 FormatBuffer( CharType* Buffer, int32 Len, const CharType* Format, ... ) noexcept
+    {
+        va_list Args;
+        va_start( Args, Format );
+        int32 Result = FormatBufferV( Buffer, Len, Format, Args );
+        va_end( Args );
+
+        return Result;
+    }
+
+    /* Format into buffer */
+    static FORCEINLINE int32 FormatBufferV( CharType* Data, int32 Len, const CharType* Format, va_list Args ) noexcept
     {
         return vswprintf( Data, Len, Format, Args );
     }

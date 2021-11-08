@@ -193,7 +193,7 @@ public:
     /* Format string with a va_list (similar to snprintf) */
     FORCEINLINE void FormatV( const CharType* Format, va_list ArgList ) noexcept
     {
-        SizeType WrittenChars = StringTraits::PrintVA( Characters, CharCount - 1, Format, ArgList );
+        SizeType WrittenChars = StringTraits::FormatBufferV( Characters, CharCount - 1, Format, ArgList );
         if ( WrittenChars < CharCount )
         {
             Len = WrittenChars;
@@ -218,7 +218,7 @@ public:
     /* Same as FormatV, but appends the result to the current string */
     FORCEINLINE void AppendFormatV( const CharType* Format, va_list ArgList ) noexcept
     {
-        const SizeType WrittenChars = StringTraits::PrintVA( Characters + Len, CharCount, Format, ArgList );
+        const SizeType WrittenChars = StringTraits::FormatBufferV( Characters + Len, CharCount, Format, ArgList );
         const SizeType NewLength = Len + WrittenChars;
         if ( NewLength < CharCount )
         {

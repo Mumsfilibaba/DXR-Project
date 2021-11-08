@@ -6,14 +6,15 @@
 class CD3D12CommandQueue : public CD3D12DeviceChild
 {
 public:
-    CD3D12CommandQueue( CD3D12Device* InDevice )
+
+    FORCEINLINE CD3D12CommandQueue( CD3D12Device* InDevice )
         : CD3D12DeviceChild( InDevice )
         , Queue( nullptr )
         , Desc()
     {
     }
 
-    bool Init( D3D12_COMMAND_LIST_TYPE Type )
+    FORCEINLINE bool Init( D3D12_COMMAND_LIST_TYPE Type )
     {
         D3D12_COMMAND_QUEUE_DESC QueueDesc;
         CMemory::Memzero( &QueueDesc );
@@ -26,12 +27,12 @@ public:
         HRESULT Result = GetDevice()->GetDevice()->CreateCommandQueue( &QueueDesc, IID_PPV_ARGS( &Queue ) );
         if ( SUCCEEDED( Result ) )
         {
-            LOG_INFO( "[D3D12CommandQueueHandle]: Created CommandQueue" );
+            LOG_INFO( "[CD3D12CommandQueue]: Created CommandQueue" );
             return true;
         }
         else
         {
-            LOG_ERROR( "[D3D12CommandQueueHandle]: FAILED to create CommandQueue" );
+            LOG_ERROR( "[CD3D12CommandQueue]: FAILED to create CommandQueue" );
             return false;
         }
     }

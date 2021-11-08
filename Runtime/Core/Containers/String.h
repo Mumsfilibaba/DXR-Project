@@ -233,7 +233,7 @@ public:
         CharType* WrittenString = Buffer;
 
         // Try print to buffer
-        SizeType WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
+        SizeType WrittenChars = StringTraits::FormatBufferV( WrittenString, BufferSize, Format, ArgsList );
         while ( (WrittenChars > BufferSize) || (WrittenChars == -1) )
         {
             // Double size of buffer
@@ -244,7 +244,7 @@ public:
             WrittenString = DynamicBuffer;
 
             // Try print again
-            WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
+            WrittenChars = StringTraits::FormatBufferV( WrittenString, BufferSize, Format, ArgsList );
         }
 
         // Resize to make sure there is enough room in the string
@@ -278,7 +278,7 @@ public:
         CharType* WrittenString = Buffer;
 
         // Try print to buffer
-        SizeType WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
+        SizeType WrittenChars = StringTraits::FormatBufferV( WrittenString, BufferSize, Format, ArgsList );
         while ( (WrittenChars > BufferSize) || (WrittenChars == -1) )
         {
             // Double size of buffer
@@ -289,7 +289,7 @@ public:
             WrittenString = DynamicBuffer;
 
             // Try print again
-            WrittenChars = StringTraits::PrintVA( WrittenString, BufferSize, Format, ArgsList );
+            WrittenChars = StringTraits::FormatBufferV( WrittenString, BufferSize, Format, ArgsList );
         }
 
         // Remove nullterminator
