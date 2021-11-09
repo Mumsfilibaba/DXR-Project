@@ -1,4 +1,4 @@
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
 #include "MacApplication.h"
 #include "MacWindow.h"
 #include "ScopedAutoreleasePool.h"

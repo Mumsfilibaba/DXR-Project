@@ -1,10 +1,10 @@
 #pragma once
 
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "CoreApplication/Windows/WindowsDebugMisc.h"
 typedef CWindowsDebugMisc PlatformDebugMisc;
 
-#elif defined(PLATFORM_MACOS)
+#elif PLATFORM_MACOS
 #include "CoreApplication/Mac/MacDebugMisc.h"
 typedef CMacDebugMisc PlatformDebugMisc;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
 #include "Core/Time/Interface/PlatformTime.h"
 
 #include <mach/mach_time.h>

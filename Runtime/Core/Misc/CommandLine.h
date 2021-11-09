@@ -14,5 +14,4 @@ public:
 
 private:
     static CString CommandLine;
-    static THashTable<CString, CString> 
 };

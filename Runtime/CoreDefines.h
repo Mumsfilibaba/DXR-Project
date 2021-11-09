@@ -27,7 +27,7 @@
 #endif
 
 /* Check that a platform is defined */
-#if (!defined(PLATFORM_WINDOWS)) && (!defined(PLATFORM_MACOS))
+#if (!PLATFORM_WINDOWS) && (!PLATFORM_MACOS)
 #error No platform defined
 #endif
 

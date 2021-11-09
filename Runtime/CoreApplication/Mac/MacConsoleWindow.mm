@@ -1,4 +1,4 @@
-#if defined(PLATFORM_MACOS) && defined(__OBJC__)
+#if PLATFORM_MACOS && defined(__OBJC__)
 #include "MacConsoleWindow.h"
 #include "CocoaConsoleWindow.h"
 #include "ScopedAutoreleasePool.h"

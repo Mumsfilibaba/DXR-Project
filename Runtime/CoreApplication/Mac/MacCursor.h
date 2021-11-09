@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
 #include "CoreApplication/Interface/PlatformCursor.h"
 
 class CMacCursor final : public CPlatformCursor

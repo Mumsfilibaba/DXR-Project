@@ -1,6 +1,6 @@
 #include "Main/EngineMain.inl"
 
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 
 #include "Core/Debug/Debug.h"
 #include "Core/Windows/Windows.h"

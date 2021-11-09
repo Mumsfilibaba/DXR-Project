@@ -64,6 +64,15 @@
 #define MODULE_IMPORT __declspec(dllimport)
 #endif
 
+/* Pause the thread */
+#ifndef PauseInstruction
+#include <immintrin.h>
+#define PauseInstruction _mm_pause
+#endif
+
+// Define the rest of the defines to a default value
+#include "CompilerDefault.h"
+
 /* Disable some warnings */
 #pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
 #pragma warning(disable : 4324) // structure was padded due to alignment specifier

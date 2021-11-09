@@ -64,6 +64,14 @@
 #define MODULE_IMPORT
 #endif
 
+/* Pause the thread */
+#ifndef PauseInstruction
+#define PauseInstruction __builtin_ia32_pause
+#endif
+
+// Define the rest of the defines to a default value
+#include "CompilerDefault.h"
+
 #else
 #error "GCC Compiler-file included in non GCC- compiler"
 #endif

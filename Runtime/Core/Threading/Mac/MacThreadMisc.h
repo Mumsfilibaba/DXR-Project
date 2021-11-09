@@ -15,7 +15,8 @@ public:
     /* Performs platform specific initialization of threadhandling */
     static FORCEINLINE bool Init() 
     { 
-        return CMacMainThread::Init();
+        CMacMainThread::Init();
+		return true;
     }
 
     /* Releases platform specific resources for threadhandling */

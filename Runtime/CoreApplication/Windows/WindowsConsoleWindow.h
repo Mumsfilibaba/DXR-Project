@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "Core/Windows/Windows.h"
 
 #include "Core/CoreModule.h"

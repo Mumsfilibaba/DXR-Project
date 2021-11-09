@@ -1,4 +1,4 @@
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "WindowsThread.h"
 
 #include "Core/Utilities/StringUtilities.h"

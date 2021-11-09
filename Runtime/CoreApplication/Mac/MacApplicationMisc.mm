@@ -1,4 +1,4 @@
-#if defined(PLATFORM_MACOS) && defined(__OBJC__)
+#if PLATFORM_MACOS && defined(__OBJC__)
 #include "MacApplicationMisc.h"
 #include "ScopedAutoreleasePool.h"
 

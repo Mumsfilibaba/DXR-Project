@@ -1,10 +1,10 @@
 #pragma once
 
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "CoreApplication/Windows/WindowsConsoleWindow.h"
 typedef CWindowsConsoleWindow PlatformConsoleWindow;
 
-#elif defined(PLATFORM_MACOS)
+#elif PLATFORM_MACOS
 #include "CoreApplication/Mac/MacConsoleWindow.h"
 typedef CMacConsoleWindow PlatformConsoleWindow;
 

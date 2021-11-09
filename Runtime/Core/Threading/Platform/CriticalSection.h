@@ -1,10 +1,10 @@
 #pragma once
 
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "Core/Threading/Windows/WindowsCriticalSection.h"
 typedef CWindowsCriticalSection CCriticalSection;
 
-#elif defined(PLATFORM_MACOS)
+#elif PLATFORM_MACOS
 #include "Core/Threading/Mac/MacCriticalSection.h"
 typedef CMacCriticalSection CCriticalSection;
 

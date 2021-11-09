@@ -1,4 +1,4 @@
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "WindowsConsoleWindow.h"
 
 #include "Core/Threading/ScopedLock.h"

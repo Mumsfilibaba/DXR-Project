@@ -1,7 +1,7 @@
 #pragma once
 #include "CoreModule.h"
 
-#include "Core/Threading/InterlockedInt.h"
+#include "Core/Threading/AtomicInt.h"
 #include "Core/Templates/IsBaseOf.h"
 #include "Core/Templates/EnableIf.h"
 
@@ -19,7 +19,7 @@ public:
     int32 GetRefCount() const;
 
 private:
-    mutable InterlockedInt32 StrongReferences;
+    mutable AtomicInt32 StrongReferences;
 };
 
 template<typename T>

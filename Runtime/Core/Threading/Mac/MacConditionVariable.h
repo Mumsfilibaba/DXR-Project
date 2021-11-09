@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
 #include "Core/Threading/Interface/PlatformConditionVariable.h"
 
 #include <pthread.h>

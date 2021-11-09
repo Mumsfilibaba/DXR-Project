@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "Core/Threading/Interface/PlatformThread.h"
 
 class CORE_API CWindowsThread final : public CPlatformThread

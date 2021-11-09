@@ -10,12 +10,12 @@
 #include <cmath>
 
 /* Windows specific */
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include <intrin.h>
 #include <smmintrin.h>
 
 /* MacOS specific */
-#elif defined(PLATFORM_MACOS)
+#elif PLATFORM_MACOS
 #include <immintrin.h>
 #else
 

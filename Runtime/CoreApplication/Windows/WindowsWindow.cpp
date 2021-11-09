@@ -1,5 +1,5 @@
 
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "WindowsWindow.h"
 #include "WindowsApplication.h"
 

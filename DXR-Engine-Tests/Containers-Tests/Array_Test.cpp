@@ -197,7 +197,7 @@ void TArray_Benchmark()
     // Insert
 #if 1
     {
-    #if defined(DEBUG_BUILD) && defined(PLATFORM_WINDOWS)
+    #if defined(DEBUG_BUILD) && PLATFORM_WINDOWS
         const uint32 Iterations = 1000;
     #else
         const uint32 Iterations = 10000;
@@ -244,7 +244,7 @@ void TArray_Benchmark()
 #if 1
     // EmplaceAt
     {
-    #if defined(DEBUG_BUILD) && defined(PLATFORM_WINDOWS)
+    #if defined(DEBUG_BUILD) && PLATFORM_WINDOWS
         const uint32 Iterations = 1000;
     #else
         const uint32 Iterations = 10000;

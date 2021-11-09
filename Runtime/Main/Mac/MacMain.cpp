@@ -1,6 +1,6 @@
 #include "Main/EngineMain.inl"
 
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
 
 int main( int NumArgs, const char** Args )
 {

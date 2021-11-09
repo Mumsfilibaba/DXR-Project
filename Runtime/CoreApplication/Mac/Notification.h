@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
 #include "CoreDefines.h"
 
 #include <CoreGraphics/CoreGraphics.h>

@@ -9,12 +9,9 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Memory/Memory.h"
 #include "Core/Modules/ModuleManger.h"
 #include "Core/Modules/ApplicationModule.h"
 #include "Core/Threading/DispatchQueue.h"
-#include "Core/Threading/ScopedLock.h"
-#include "Core/Threading/InterlockedInt.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
 #include "Core/Misc/EngineLoopDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
@@ -78,7 +75,7 @@ bool CEngineLoop::PreInit()
 
     // RenderAPI // TODO: Decide this via command line
     ERHIModule RenderApi =
-    #if defined(PLATFORM_MACOS)
+    #if PLATFORM_MACOS
         ERHIModule::Null;
 #else
         ERHIModule::D3D12;

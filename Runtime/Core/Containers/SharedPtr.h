@@ -7,14 +7,14 @@
 #include "Core/Templates/AddReference.h"
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/And.h"
-#include "Core/Threading/InterlockedInt.h"
+#include "Core/Threading/AtomicInt.h"
 
 /* CPointerReferenceCounter - Counting references in TWeak- and TSharedPtr */
 class CPointerReferenceCounter
 {
 public:
 
-    using CounterType = InterlockedInt32::Type;
+    using CounterType = AtomicInt32::Type;
 
     /* Default constructor setting both counters to zero */
     FORCEINLINE CPointerReferenceCounter() noexcept
@@ -60,8 +60,8 @@ public:
     }
 
 private:
-    InterlockedInt32 NumWeakRefs;
-    InterlockedInt32 NumStrongRefs;
+    AtomicInt32 NumWeakRefs;
+    AtomicInt32 NumStrongRefs;
 };
 
 /* Helper object for shared ref counter */

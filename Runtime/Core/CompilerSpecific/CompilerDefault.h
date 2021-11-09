@@ -5,8 +5,6 @@
 * For now this file should only be included into CoreDefines.h
 */
 
-#if COMPILER_UNDEFINED
-
 /* Forceinline */
 #ifndef FORCEINLINE
 #define FORCEINLINE inline
@@ -46,4 +44,7 @@
 #define MODULE_IMPORT
 #endif
 
+/* Pause the thread */
+#ifndef PauseInstruction
+#define PauseInstruction() (void)0
 #endif
