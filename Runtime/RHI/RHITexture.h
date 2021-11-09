@@ -17,9 +17,12 @@ enum ETextureFlags
     TextureFlags_ShadowMap = TextureFlag_DSV | TextureFlag_SRV,
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CRHITexture : public CRHIResource
 {
 public:
+
     CRHITexture( EFormat InFormat, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue )
         : CRHIResource()
         , Format( InFormat )
@@ -30,40 +33,18 @@ public:
     }
 
     /* Cast to Texture2D */
-    virtual class CRHITexture2D* AsTexture2D()
-    {
-        return nullptr;
-    }
-
+    virtual class CRHITexture2D* AsTexture2D() { return nullptr; }
     /* Cast to Texture2DArray */
-    virtual class CRHITexture2DArray* AsTexture2DArray()
-    {
-        return nullptr;
-    }
-
+    virtual class CRHITexture2DArray* AsTexture2DArray() { return nullptr; }
     /* Cast to TextureCube */
-    virtual class CRHITextureCube* AsTextureCube()
-    {
-        return nullptr;
-    }
-
+    virtual class CRHITextureCube* AsTextureCube() { return nullptr; }
     /* Cast to TextureCubeArray */
-    virtual class CRHITextureCubeArray* AsTextureCubeArray()
-    {
-        return nullptr;
-    }
-
+    virtual class CRHITextureCubeArray* AsTextureCubeArray() { return nullptr; }
     /* Cast to Texture3D */
-    virtual class CRHITexture3D* AsTexture3D()
-    {
-        return nullptr;
-    }
+    virtual class CRHITexture3D* AsTexture3D() { return nullptr; }
 
     /* Returns a ShaderResourceView of the full resource if texture is created with TextureFlag_SRV */
-    virtual class CRHIShaderResourceView* GetShaderResourceView() const
-    {
-        return nullptr;
-    }
+    virtual class CRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
 
     FORCEINLINE EFormat GetFormat() const
     {
@@ -112,9 +93,12 @@ private:
     SClearValue OptimalClearValue;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CRHITexture2D : public CRHITexture
 {
 public:
+
     CRHITexture2D( EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimizedClearValue )
         : CRHITexture( InFormat, InNumMips, InFlags, InOptimizedClearValue )
         , Width( InWidth )
@@ -124,28 +108,14 @@ public:
     }
 
     /* Cast to Texture2D */
-    virtual CRHITexture2D* AsTexture2D() override
-    {
-        return this;
-    }
+    virtual CRHITexture2D* AsTexture2D() override { return this; }
 
     // Returns a RenderTargetView if texture is created with TextureFlag_RTV
-    virtual class CRHIRenderTargetView* GetRenderTargetView() const
-    {
-        return nullptr;
-    }
-
+    virtual class CRHIRenderTargetView* GetRenderTargetView() const { return nullptr; }
     // Returns a DepthStencilView if texture is created with TextureFlag_DSV
-    virtual class CRHIDepthStencilView* GetDepthStencilView() const
-    {
-        return nullptr;
-    }
-
+    virtual class CRHIDepthStencilView* GetDepthStencilView() const { return nullptr; }
     // Returns a UnorderedAccessView if texture is created with TextureFlag_UAV
-    virtual class CRHIUnorderedAccessView* GetUnorderedAccessView() const
-    {
-        return nullptr;
-    }
+    virtual class CRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
     FORCEINLINE uint32 GetWidth() const
     {
@@ -180,9 +150,12 @@ private:
     uint32 NumSamples;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CRHITexture2DArray : public CRHITexture2D
 {
 public:
+
     CRHITexture2DArray( EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InNumArraySlices, uint32 InFlags, const SClearValue& InOptimizedClearValue )
         : CRHITexture2D( InFormat, InWidth, InHeight, InNumMips, InNumSamples, InFlags, InOptimizedClearValue )
         , NumArraySlices( InNumArraySlices )
@@ -190,16 +163,9 @@ public:
     }
 
     /* Cast to Texture2D */
-    virtual CRHITexture2D* AsTexture2D() override
-    {
-        return nullptr;
-    }
-
+    virtual CRHITexture2D* AsTexture2D() override { return nullptr; }
     /* Cast to Texture2DArray */
-    virtual CRHITexture2DArray* AsTexture2DArray() override
-    {
-        return this;
-    }
+    virtual CRHITexture2DArray* AsTexture2DArray() override { return this; }
 
     FORCEINLINE uint32 GetNumArraySlices() const
     {
@@ -210,9 +176,12 @@ private:
     uint32 NumArraySlices;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CRHITextureCube : public CRHITexture
 {
 public:
+
     CRHITextureCube( EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimizedClearValue )
         : CRHITexture( InFormat, InNumMips, InFlags, InOptimizedClearValue )
         , Size( InSize )
@@ -220,10 +189,7 @@ public:
     }
 
     /* Cast to TextureCube */
-    virtual CRHITextureCube* AsTextureCube() override
-    {
-        return this;
-    }
+    virtual CRHITextureCube* AsTextureCube() override { return this; }
 
     FORCEINLINE uint32 GetSize() const
     {
@@ -233,6 +199,8 @@ public:
 private:
     uint32 Size;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CRHITextureCubeArray : public CRHITextureCube
 {
@@ -244,16 +212,9 @@ public:
     }
 
     /* Cast to TextureCube */
-    virtual CRHITextureCube* AsTextureCube() override
-    {
-        return nullptr;
-    }
-
+    virtual CRHITextureCube* AsTextureCube() override { return nullptr; }
     /* Cast to TextureCubeArray */
-    virtual CRHITextureCubeArray* AsTextureCubeArray() override
-    {
-        return this;
-    }
+    virtual CRHITextureCubeArray* AsTextureCubeArray() override { return this; }
 
     FORCEINLINE uint32 GetNumArraySlices() const
     {
@@ -264,9 +225,12 @@ private:
     uint32 NumArraySlices;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CRHITexture3D : public CRHITexture
 {
 public:
+
     CRHITexture3D( EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimizedClearValue )
         : CRHITexture( InFormat, InNumMips, InFlags, InOptimizedClearValue )
         , Width( InWidth )
@@ -276,10 +240,7 @@ public:
     }
 
     /* Cast to Texture3D */
-    virtual CRHITexture3D* AsTexture3D() override
-    {
-        return this;
-    }
+    virtual CRHITexture3D* AsTexture3D() override { return this; }
 
     FORCEINLINE uint32 GetWidth()  const
     {

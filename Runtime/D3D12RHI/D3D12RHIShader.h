@@ -28,6 +28,8 @@ enum EResourceType
     ResourceType_Unknown = 5,
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SShaderResourceRange
 {
     uint32 NumCBVs = 0;
@@ -44,6 +46,8 @@ struct SShaderResourceCount
     SShaderResourceRange Ranges;
     uint32              Num32BitConstants = 0;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct SD3D12ShaderParameter
 {
@@ -64,6 +68,8 @@ struct SD3D12ShaderParameter
     uint32 NumDescriptors = 0;
     uint32 SizeInBytes = 0;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12BaseShader : public CD3D12DeviceChild
 {
@@ -166,6 +172,8 @@ protected:
     bool ContainsRootSignature = false;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIBaseVertexShader : public CRHIVertexShader, public CD3D12BaseShader
 {
 public:
@@ -176,6 +184,8 @@ public:
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIBasePixelShader : public CRHIPixelShader, public CD3D12BaseShader
 {
 public:
@@ -185,6 +195,8 @@ public:
     {
     }
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RHIBaseRayTracingShader : public CD3D12BaseShader
 {
@@ -205,6 +217,8 @@ protected:
     CString Identifier;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIBaseRayGenShader : public CRHIRayGenShader, public CD3D12RHIBaseRayTracingShader
 {
 public:
@@ -214,6 +228,8 @@ public:
     {
     }
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RHIBaseRayAnyhitShader : public CRHIRayAnyHitShader, public CD3D12RHIBaseRayTracingShader
 {
@@ -225,6 +241,8 @@ public:
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIBaseRayClosestHitShader : public CRHIRayClosestHitShader, public CD3D12RHIBaseRayTracingShader
 {
 public:
@@ -235,6 +253,8 @@ public:
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIBaseRayMissShader : public CRHIRayMissShader, public CD3D12RHIBaseRayTracingShader
 {
 public:
@@ -244,6 +264,8 @@ public:
     {
     }
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RHIBaseComputeShader : public CRHIComputeShader, public CD3D12BaseShader
 {
@@ -265,6 +287,8 @@ public:
 protected:
     CIntVector3 ThreadGroupXYZ;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<typename BaseShaderType>
 class TD3D12RHIShader : public BaseShaderType
@@ -324,6 +348,8 @@ private:
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 using CD3D12RHIVertexShader = TD3D12RHIShader<CD3D12RHIBaseVertexShader>;
 using CD3D12RHIPixelShader = TD3D12RHIShader<CD3D12RHIBasePixelShader>;
 
@@ -333,6 +359,8 @@ using CD3D12RHIRayGenShader = TD3D12RHIShader<CD3D12RHIBaseRayGenShader>;
 using CD3D12RHIRayAnyHitShader = TD3D12RHIShader<CD3D12RHIBaseRayAnyhitShader>;
 using CD3D12RayClosestHitShader = TD3D12RHIShader<CD3D12RHIBaseRayClosestHitShader>;
 using CD3D12RHIRayMissShader = TD3D12RHIShader<CD3D12RHIBaseRayMissShader>;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 inline CD3D12BaseShader* D3D12ShaderCast( CRHIShader* Shader )
 {

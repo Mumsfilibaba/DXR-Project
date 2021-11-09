@@ -75,6 +75,8 @@ inline const char* ToString( ESamplerFilter SamplerFilter )
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SSamplerStateCreateInfo
 {
     ESamplerMode    AddressU = ESamplerMode::Clamp;

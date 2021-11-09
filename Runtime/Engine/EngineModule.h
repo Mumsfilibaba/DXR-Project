@@ -1,15 +1,8 @@
 #pragma once
 #include "Core.h"
 
-#if PLATFORM_WINDOWS
-
 #if ENGINE_API_EXPORT
-#define ENGINE_API __declspec(dllexport)
+#define ENGINE_API MODULE_EXPORT
 #else
-#define ENGINE_API __declspec(dllimport)
-
-#endif
-
-#else
-#define ENGINE_API
+#define ENGINE_API MODULE_IMPORT
 #endif

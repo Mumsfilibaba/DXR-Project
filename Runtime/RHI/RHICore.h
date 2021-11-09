@@ -38,6 +38,8 @@ struct SRayTracingSupport
     uint32          MaxRecursionDepth;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CRHICore
 {
 public:
@@ -176,7 +178,8 @@ protected:
     ERHIModule CurrentRHI;
 };
 
-/* Helper functions */
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper functions
 
 FORCEINLINE CRHITexture2D* RHICreateTexture2D(
     EFormat Format,

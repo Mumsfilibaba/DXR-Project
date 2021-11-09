@@ -4,6 +4,9 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// CD3D12DescriptorHeap
+
 CD3D12DescriptorHeap::CD3D12DescriptorHeap( CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags )
     : CD3D12DeviceChild( InDevice )
     , Heap( nullptr )
@@ -44,6 +47,9 @@ bool CD3D12DescriptorHeap::Init()
 
     return true;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// CD3D12OfflineDescriptorHeap
 
 CD3D12OfflineDescriptorHeap::CD3D12OfflineDescriptorHeap( CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType )
     : CD3D12DeviceChild( InDevice )
@@ -171,6 +177,9 @@ bool CD3D12OfflineDescriptorHeap::AllocateHeap()
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// CD3D12OnlineDescriptorHeap 
+
 CD3D12OnlineDescriptorHeap::CD3D12OnlineDescriptorHeap( CD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType )
     : CD3D12DeviceChild( InDevice )
     , Heap( nullptr )
@@ -190,25 +199,6 @@ bool CD3D12OnlineDescriptorHeap::Init()
     {
         return false;
     }
-}
-
-void CD3D12OnlineDescriptorHeap::Reset()
-{
-    if ( !HeapPool.IsEmpty() )
-    {
-        for ( TSharedRef<CD3D12DescriptorHeap>& CurrentHeap : DiscardedHeaps )
-        {
-            HeapPool.Emplace( CurrentHeap );
-        }
-
-        DiscardedHeaps.Clear();
-    }
-    else
-    {
-        HeapPool.Swap( DiscardedHeaps );
-    }
-
-    CurrentHandle = 0;
 }
 
 uint32 CD3D12OnlineDescriptorHeap::AllocateHandles( uint32 NumHandles )
@@ -257,4 +247,32 @@ bool CD3D12OnlineDescriptorHeap::HasSpace( uint32 NumHandles ) const
 {
     const uint32 NewCurrentHandle = CurrentHandle + NumHandles;
     return NewCurrentHandle < DescriptorCount;
+}
+
+void CD3D12OnlineDescriptorHeap::Reset()
+{
+    if ( !HeapPool.IsEmpty() )
+    {
+        for ( TSharedRef<CD3D12DescriptorHeap>& CurrentHeap : DiscardedHeaps )
+        {
+            HeapPool.Emplace( CurrentHeap );
+        }
+
+        DiscardedHeaps.Clear();
+    }
+    else
+    {
+        HeapPool.Swap( DiscardedHeaps );
+    }
+
+    CurrentHandle = 0;
+}
+
+void CD3D12OnlineDescriptorHeap::SetNumPooledHeaps( uint32 NumHeaps )
+{
+    // Will only shrink the size of the pool, and not grow it 
+    if ( NumHeaps > HeapPool.Size() )
+    {
+        HeapPool.Resize( NumHeaps );
+    }
 }

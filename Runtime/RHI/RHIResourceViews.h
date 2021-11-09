@@ -5,23 +5,11 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/StaticArray.h"
 
-class CRHIShaderResourceView : public CRHIResource
-{
-};
-
-class CRHIUnorderedAccessView : public CRHIResource
-{
-};
-
-class CRHIDepthStencilView : public CRHIResource
-{
-};
-
-class CRHIRenderTargetView : public CRHIResource
-{
-};
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 using DepthStencilViewCube = TStaticArray<TSharedRef<CRHIDepthStencilView>, 6>;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct SShaderResourceViewCreateInfo
 {
@@ -112,6 +100,8 @@ struct SShaderResourceViewCreateInfo
     };
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SUnorderedAccessViewCreateInfo
 {
     enum class EType
@@ -191,6 +181,8 @@ struct SUnorderedAccessViewCreateInfo
     };
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SRenderTargetViewCreateInfo
 {
     // TODO: Add support for texel buffers?
@@ -247,6 +239,8 @@ struct SRenderTargetViewCreateInfo
     };
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SDepthStencilViewCreateInfo
 {
     enum class EType
@@ -293,4 +287,22 @@ struct SDepthStencilViewCreateInfo
             uint32    ArraySlice = 0;
         } TextureCubeArray;
     };
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+class CRHIShaderResourceView : public CRHIResource
+{
+};
+
+class CRHIUnorderedAccessView : public CRHIResource
+{
+};
+
+class CRHIDepthStencilView : public CRHIResource
+{
+};
+
+class CRHIRenderTargetView : public CRHIResource
+{
 };

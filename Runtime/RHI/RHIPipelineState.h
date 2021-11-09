@@ -2,25 +2,6 @@
 #include "RHIShader.h"
 #include "RHIResourceBase.h"
 
-class CRHIPipelineState : public CRHIResource
-{
-public:
-    virtual class CRHIGraphicsPipelineState* AsGraphics()
-    {
-        return nullptr;
-    }
-
-    virtual class CRHIComputePipelineState* AsCompute()
-    {
-        return nullptr;
-    }
-
-    virtual class CRHIRayTracingPipelineState* AsRayTracing()
-    {
-        return nullptr;
-    }
-};
-
 enum class EDepthWriteMask
 {
     Zero = 0,
@@ -65,6 +46,8 @@ inline const char* ToString( EStencilOp StencilOp )
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SDepthStencilOp
 {
     EStencilOp      StencilFailOp = EStencilOp::Keep;
@@ -88,6 +71,8 @@ struct SDepthStencilStateCreateInfo
 class CRHIDepthStencilState : public CRHIResource
 {
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum class ECullMode
 {
@@ -123,6 +108,8 @@ inline const char* ToString( EFillMode FillMode )
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SRasterizerStateCreateInfo
 {
     EFillMode FillMode = EFillMode::Solid;
@@ -141,6 +128,8 @@ struct SRasterizerStateCreateInfo
 class CRHIRasterizerState : public CRHIResource
 {
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum class EBlend
 {
@@ -306,6 +295,8 @@ struct SRenderTargetWriteState
     uint8 Mask = ColorWriteFlag_All;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SRenderTargetBlendState
 {
     EBlend   SrcBlend = EBlend::One;
@@ -332,6 +323,8 @@ struct SBlendStateCreateInfo
 class CRHIBlendState : public CRHIResource
 {
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum class EInputClassification
 {
@@ -381,6 +374,8 @@ class CRHIInputLayoutState : public CRHIResource
 {
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 enum class EIndexBufferStripCutValue
 {
     Disabled = 0,
@@ -399,12 +394,27 @@ inline const char* ToString( EIndexBufferStripCutValue IndexBufferStripCutValue 
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SPipelineRenderTargetFormats
 {
     EFormat RenderTargetFormats[8];
     uint32  NumRenderTargets = 0;
     EFormat DepthStencilFormat = EFormat::Unknown;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+class CRHIPipelineState : public CRHIResource
+{
+public:
+
+    virtual class CRHIGraphicsPipelineState* AsGraphics() { return nullptr; }
+    virtual class CRHIComputePipelineState* AsCompute() { return nullptr; }
+    virtual class CRHIRayTracingPipelineState* AsRayTracing() { return nullptr; }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct SGraphicsPipelineShaderState
 {
@@ -440,11 +450,10 @@ struct SGraphicsPipelineStateCreateInfo
 class CRHIGraphicsPipelineState : public CRHIPipelineState
 {
 public:
-    virtual CRHIGraphicsPipelineState* AsGraphics() override
-    {
-        return this;
-    }
+    virtual CRHIGraphicsPipelineState* AsGraphics() override { return this; }
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct SComputePipelineStateCreateInfo
 {
@@ -461,11 +470,10 @@ struct SComputePipelineStateCreateInfo
 class CRHIComputePipelineState : public CRHIPipelineState
 {
 public:
-    virtual CRHIComputePipelineState* AsCompute() override
-    {
-        return this;
-    }
+    virtual CRHIComputePipelineState* AsCompute() override { return this; }
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct SRayTracingHitGroup
 {
@@ -500,8 +508,5 @@ struct SRayTracingPipelineStateCreateInfo
 class CRHIRayTracingPipelineState : public CRHIPipelineState
 {
 public:
-    virtual CRHIRayTracingPipelineState* AsRayTracing() override
-    {
-        return this;
-    }
+    virtual CRHIRayTracingPipelineState* AsRayTracing() override { return this; }
 };

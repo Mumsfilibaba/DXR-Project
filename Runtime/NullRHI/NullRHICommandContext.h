@@ -45,7 +45,7 @@ public:
     {
     }
 
-    virtual void ClearDepthStencilView( CRHIDepthStencilView* DepthStencilView, const SDepthStencilF& ClearValue ) override final
+    virtual void ClearDepthStencilView( CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue ) override final
     {
     }
 

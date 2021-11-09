@@ -6,6 +6,7 @@
 class CD3D12RHITimestampQuery : public CRHITimestampQuery, public CD3D12DeviceChild
 {
 public:
+
     CD3D12RHITimestampQuery( CD3D12Device* InDevice );
     ~CD3D12RHITimestampQuery() = default;
 
@@ -13,7 +14,7 @@ public:
 
     virtual uint64 GetFrequency() const override final
     {
-        return (uint64)Frequency;
+        return static_cast<uint64>(Frequency);
     }
 
     void BeginQuery( ID3D12GraphicsCommandList* CmdList, uint32 Index );
@@ -29,6 +30,8 @@ public:
     static CD3D12RHITimestampQuery* Create( CD3D12Device* InDevice );
 
 private:
+
+    // TODO: The download resource should be allocated in the context
     bool AllocateReadResource();
 
     TComPtr<ID3D12QueryHeap> QueryHeap;

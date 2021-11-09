@@ -81,7 +81,7 @@ struct SRHIClearRenderTargetViewRenderCommand : public SRHIRenderCommand
 // Clear DepthStencil RenderCommand
 struct SRHIClearDepthStencilViewRenderCommand : public SRHIRenderCommand
 {
-    SRHIClearDepthStencilViewRenderCommand( CRHIDepthStencilView* InDepthStencilView, const SDepthStencilF& InClearValue )
+    SRHIClearDepthStencilViewRenderCommand( CRHIDepthStencilView* InDepthStencilView, const SDepthStencil& InClearValue )
         : DepthStencilView( InDepthStencilView )
         , ClearValue( InClearValue )
     {
@@ -93,7 +93,7 @@ struct SRHIClearDepthStencilViewRenderCommand : public SRHIRenderCommand
     }
 
     TSharedRef<CRHIDepthStencilView> DepthStencilView;
-    SDepthStencilF ClearValue;
+    SDepthStencil ClearValue;
 };
 
 // Clear UnorderedAccessView RenderCommand

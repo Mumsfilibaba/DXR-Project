@@ -11,6 +11,8 @@
 
 #define TEXTURE_CUBE_FACE_COUNT (6)
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12BaseTexture : public CD3D12DeviceChild
 {
 public:
@@ -41,9 +43,15 @@ public:
     }
 
 protected:
-    TSharedRef<CD3D12Resource>           Resource;
+
+    // Native resource storing the texture
+    TSharedRef<CD3D12Resource>              Resource;
+
+    // Default ShaderResourceView created at creation 
     TSharedRef<CD3D12RHIShaderResourceView> ShaderResourceView;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RHIBaseTexture2D : public CRHITexture2D, public CD3D12BaseTexture
 {
@@ -64,18 +72,9 @@ public:
     {
     }
 
-    virtual CRHIRenderTargetView* GetRenderTargetView() const override
-    {
-        return RenderTargetView.Get();
-    }
-    virtual CRHIDepthStencilView* GetDepthStencilView() const override
-    {
-        return DepthStencilView.Get();
-    }
-    virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override
-    {
-        return UnorderedAccessView.Get();
-    }
+    virtual CRHIRenderTargetView* GetRenderTargetView() const override { return RenderTargetView.Get(); }
+    virtual CRHIDepthStencilView* GetDepthStencilView() const override { return DepthStencilView.Get(); }
+    virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
 
     FORCEINLINE void SetRenderTargetView( CD3D12RenderTargetView* InRenderTargetView )
     {
@@ -103,10 +102,16 @@ public:
     }
 
 private:
+
+    // Default RenderTargetView created at creation 
     TSharedRef<CD3D12RenderTargetView> RenderTargetView;
+    // Default DepthStencilView created at creation 
     TSharedRef<CD3D12DepthStencilView> DepthStencilView;
+    // Default UnorderedAccessView created at creation 
     TSharedRef<CD3D12RHIUnorderedAccessView> UnorderedAccessView;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RHIBaseTexture2DArray : public CRHITexture2DArray, public CD3D12BaseTexture
 {
@@ -125,6 +130,8 @@ public:
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIBaseTextureCube : public CRHITextureCube, public CD3D12BaseTexture
 {
 public:
@@ -141,6 +148,8 @@ public:
     {
     }
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RHIBaseTextureCubeArray : public CRHITextureCubeArray, public CD3D12BaseTexture
 {
@@ -159,6 +168,8 @@ public:
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIBaseTexture3D : public CRHITexture3D, public CD3D12BaseTexture
 {
 public:
@@ -175,6 +186,8 @@ public:
     {
     }
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<typename BaseTextureType>
 class TD3D12RHIBaseTexture : public BaseTextureType
@@ -194,7 +207,10 @@ public:
 
     virtual void SetName( const CString& InName ) override
     {
+        // Save the debug string for fast lookup
         CRHIResource::SetName( InName );
+
+        // Set the native resource name
         CD3D12BaseTexture::Resource->SetName( InName );
     }
 
@@ -214,11 +230,15 @@ public:
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 using CD3D12RHITexture2D = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2D>;
 using CD3D12RHITexture2DArray = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2DArray>;
 using CD3D12RHITextureCube = TD3D12RHIBaseTexture<CD3D12RHIBaseTextureCube>;
 using CD3D12RHITextureCubeArray = TD3D12RHIBaseTexture<CD3D12RHIBaseTextureCubeArray>;
 using CD3D12RHITexture3D = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture3D>;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 inline CD3D12BaseTexture* D3D12TextureCast( CRHITexture* Texture )
 {

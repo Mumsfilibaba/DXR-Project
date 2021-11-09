@@ -18,6 +18,8 @@ inline const char* ToString( EIndexFormat IndexFormat )
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 inline EIndexFormat GetIndexFormatFromStride( uint32 StrideInBytes )
 {
     if ( StrideInBytes == 2 )
@@ -50,15 +52,20 @@ inline uint32 GetStrideFromIndexFormat( EIndexFormat IndexFormat )
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 enum EBufferFlags : uint32
 {
-    BufferFlag_None = 0,
+    BufferFlag_None    = 0,
     BufferFlag_Default = FLAG( 1 ), // Default Device Memory
-    BufferFlag_Upload = FLAG( 2 ), // Upload Memory
-    BufferFlag_UAV = FLAG( 3 ), // Can be used in UseUnorderedAccessViews
-    BufferFlag_SRV = FLAG( 4 ), // Can be used in UseShaderResourceViews
+    BufferFlag_Dynamic = FLAG( 2 ), // Dynamic Memory
+    BufferFlag_UAV     = FLAG( 3 ), // Can be used in UnorderedAccessViews
+    BufferFlag_SRV     = FLAG( 4 ), // Can be used in ShaderResourceViews
+
     BufferFlags_RWBuffer = BufferFlag_UAV | BufferFlag_SRV
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CRHIBuffer : public CRHIResource
 {
@@ -69,37 +76,17 @@ public:
     {
     }
 
-    virtual class CRHIVertexBuffer* AsVertexBuffer()
-    {
-        return nullptr;
-    }
-
-    virtual class CRHIIndexBuffer* AsIndexBuffer()
-    {
-        return nullptr;
-    }
-
-    virtual class CRHIConstantBuffer* AsConstantBuffer()
-    {
-        return nullptr;
-    }
-
-    virtual class CRHIStructuredBuffer* AsStructuredBuffer()
-    {
-        return nullptr;
-    }
+    virtual class CRHIVertexBuffer* AsVertexBuffer() { return nullptr; }
+    virtual class CRHIIndexBuffer* AsIndexBuffer() { return nullptr; }
+    virtual class CRHIConstantBuffer* AsConstantBuffer() { return nullptr; }
+    virtual class CRHIStructuredBuffer* AsStructuredBuffer() { return nullptr; }
 
     virtual void* Map( uint32 Offset, uint32 Size ) = 0;
     virtual void  Unmap( uint32 Offset, uint32 Size ) = 0;
 
-    FORCEINLINE uint32 GetFlags() const
+    FORCEINLINE bool IsDynamic() const
     {
-        return Flags;
-    }
-
-    FORCEINLINE bool IsUpload() const
-    {
-        return (Flags & BufferFlag_Upload);
+        return (Flags & BufferFlag_Dynamic);
     }
 
     FORCEINLINE bool IsUAV() const
@@ -112,9 +99,16 @@ public:
         return (Flags & BufferFlag_SRV);
     }
 
+    FORCEINLINE uint32 GetFlags() const
+    {
+        return Flags;
+    }
+
 private:
     uint32 Flags;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CRHIVertexBuffer : public CRHIBuffer
 {
@@ -126,10 +120,7 @@ public:
     {
     }
 
-    virtual CRHIVertexBuffer* AsVertexBuffer() override
-    {
-        return this;
-    }
+    virtual CRHIVertexBuffer* AsVertexBuffer() override { return this; }
 
     FORCEINLINE uint32 GetStride() const
     {
@@ -146,6 +137,8 @@ private:
     uint32 Stride;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CRHIIndexBuffer : public CRHIBuffer
 {
 public:
@@ -156,10 +149,7 @@ public:
     {
     }
 
-    virtual CRHIIndexBuffer* AsIndexBuffer() override
-    {
-        return this;
-    }
+    virtual CRHIIndexBuffer* AsIndexBuffer() override { return this; }
 
     FORCEINLINE EIndexFormat GetFormat() const
     {
@@ -176,19 +166,19 @@ private:
     uint32       NumIndicies;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CRHIConstantBuffer : public CRHIBuffer
 {
 public:
+
     CRHIConstantBuffer( uint32 InSize, uint32 InFlags )
         : CRHIBuffer( InFlags )
         , Size( InSize )
     {
     }
 
-    virtual CRHIConstantBuffer* AsConstantBuffer() override
-    {
-        return this;
-    }
+    virtual CRHIConstantBuffer* AsConstantBuffer() override { return this; }
 
     FORCEINLINE uint32 GetSize() const
     {
@@ -199,9 +189,12 @@ private:
     uint32 Size;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CRHIStructuredBuffer : public CRHIBuffer
 {
 public:
+
     CRHIStructuredBuffer( uint32 InNumElements, uint32 InStride, uint32 InFlags )
         : CRHIBuffer( InFlags )
         , Stride( InStride )
@@ -209,10 +202,7 @@ public:
     {
     }
 
-    virtual CRHIStructuredBuffer* AsStructuredBuffer() override
-    {
-        return this;
-    }
+    virtual CRHIStructuredBuffer* AsStructuredBuffer() override { return this; }
 
     FORCEINLINE uint32 GetStride() const
     {

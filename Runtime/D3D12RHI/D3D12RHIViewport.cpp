@@ -189,21 +189,22 @@ void CD3D12RHIViewport::SetName( const CString& InName )
 
 bool CD3D12RHIViewport::RetriveBackBuffers()
 {
-    if ( BackBuffers.Size() < (int32)NumBackBuffers )
+    if ( BackBuffers.Size() < NumBackBuffers )
     {
-        BackBuffers.Resize( (int32)NumBackBuffers );
+        BackBuffers.Resize( NumBackBuffers );
     }
 
-    if ( BackBufferViews.Size() < (int32)NumBackBuffers )
+    if ( BackBufferViews.Size() < NumBackBuffers )
     {
         CD3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RHICore->GetRenderTargetOfflineDescriptorHeap();
         BackBufferViews.Resize( NumBackBuffers );
+
         for ( TSharedRef<CD3D12RenderTargetView>& View : BackBufferViews )
         {
             if ( !View )
             {
                 View = dbg_new CD3D12RenderTargetView( GetDevice(), RenderTargetOfflineHeap );
-                if ( !View->Init() )
+                if ( !View->AllocateHandle() )
                 {
                     return false;
                 }

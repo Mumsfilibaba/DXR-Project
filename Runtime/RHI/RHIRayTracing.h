@@ -23,7 +23,9 @@ enum ERayTracingInstanceFlags
     RayTracingInstanceFlags_ForceNonOpaque = FLAG( 4 ),
 };
 
-// RayTracing Geometry (Bottom Level Acceleration Structure)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* RayTracing Geometry (Bottom Level Acceleration Structure) */
 class CRHIRayTracingGeometry : public CRHIResource
 {
 public:
@@ -41,7 +43,9 @@ private:
     uint32 Flags;
 };
 
-// RayTracing Scene (Top Level Acceleration Structure)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* RayTracing Scene (Top Level Acceleration Structure) */
 class CRHIRayTracingScene : public CRHIResource
 {
 public:
@@ -60,6 +64,8 @@ public:
 private:
     uint32 Flags;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct SRayTracingGeometryInstance
 {

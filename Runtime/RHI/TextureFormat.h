@@ -134,6 +134,8 @@ inline const char* ToString( EFormat Format )
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 inline uint32 GetByteStrideFromFormat( EFormat Format )
 {
     switch ( Format )

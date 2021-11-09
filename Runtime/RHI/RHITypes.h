@@ -30,6 +30,8 @@ inline ECubeFace GetCubeFaceFromIndex( uint32 Index )
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 enum class EComparisonFunc
 {
     Never = 1,
@@ -58,6 +60,8 @@ inline const char* ToString( EComparisonFunc ComparisonFunc )
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 enum class EPrimitiveTopologyType
 {
     Undefined = 0,
@@ -79,6 +83,8 @@ inline const char* ToString( EPrimitiveTopologyType PrimitveTopologyType )
         default: return "Unknown";
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum class EResourceState
 {
@@ -125,6 +131,8 @@ inline const char* ToString( EResourceState ResourceState )
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 enum class EPrimitiveTopology
 {
     Undefined = 0,
@@ -148,6 +156,8 @@ inline const char* ToString( EPrimitiveTopology ResourceState )
         default: return "Unknown";
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum class EShadingRate
 {
@@ -175,11 +185,13 @@ inline const char* ToString( EShadingRate ShadingRate )
     }
 }
 
-struct SDepthStencilF
-{
-    SDepthStencilF() = default;
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    FORCEINLINE SDepthStencilF( float InDepth, uint8 InStencil )
+struct SDepthStencil
+{
+    SDepthStencil() = default;
+
+    FORCEINLINE SDepthStencil( float InDepth, uint8 InStencil )
         : Depth( InDepth )
         , Stencil( InStencil )
     {
@@ -275,13 +287,13 @@ public:
         return Color;
     }
 
-    FORCEINLINE SDepthStencilF& AsDepthStencil()
+    FORCEINLINE SDepthStencil& AsDepthStencil()
     {
         Assert( Type == EType::DepthStencil );
         return DepthStencil;
     }
 
-    FORCEINLINE const SDepthStencilF& AsDepthStencil() const
+    FORCEINLINE const SDepthStencil& AsDepthStencil() const
     {
         Assert( Type == EType::DepthStencil );
         return DepthStencil;
@@ -293,9 +305,11 @@ private:
     union
     {
         SColorF        Color;
-        SDepthStencilF DepthStencil;
+        SDepthStencil DepthStencil;
     };
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct SResourceData
 {
@@ -382,6 +396,8 @@ private:
     };
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct SCopyBufferInfo
 {
     SCopyBufferInfo() = default;
@@ -397,6 +413,8 @@ struct SCopyBufferInfo
     uint32 DestinationOffset = 0;
     uint32 SizeInBytes = 0;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct SCopyTextureSubresourceInfo
 {

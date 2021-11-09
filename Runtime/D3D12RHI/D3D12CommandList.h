@@ -291,5 +291,6 @@ public:
 private:
     TComPtr<ID3D12GraphicsCommandList>  CmdList;
     TComPtr<ID3D12GraphicsCommandList5> CmdList5;
+    
     bool IsReady = false;
 };

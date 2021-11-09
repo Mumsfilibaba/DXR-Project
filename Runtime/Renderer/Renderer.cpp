@@ -463,7 +463,7 @@ void CRenderer::Tick( const CScene& Scene )
     PrepareGBufferCmdList.ClearRenderTargetView( Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor );
     PrepareGBufferCmdList.ClearRenderTargetView( Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(), BlackClearColor );
     PrepareGBufferCmdList.ClearRenderTargetView( Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor );
-    PrepareGBufferCmdList.ClearDepthStencilView( Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), SDepthStencilF( 1.0f, 0 ) );
+    PrepareGBufferCmdList.ClearDepthStencilView( Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), SDepthStencil( 1.0f, 0 ) );
 
     if ( GPrePassEnabled.GetBool() )
     {

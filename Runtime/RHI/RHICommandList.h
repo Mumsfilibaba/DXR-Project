@@ -4,6 +4,22 @@
 #include "RHIRenderCommand.h"
 #include "RHITimestampQuery.h"
 
+class CRHIRenderTargetView;
+class CRHIDepthStencilView;
+class CRHIShaderResourceView;
+class CRHIUnorderedAccessView;
+class CRHIShader;
+
+#define ENABLE_INSERT_DEBUG_CMDLIST_MARKER 0
+
+#if ENABLE_INSERT_DEBUG_CMDLIST_MARKER
+#define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString) CmdList.InsertCommandListMarker(MarkerString);
+#else
+#define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString)
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class RHI_API CCommandAllocator
 {
 public:
@@ -64,25 +80,14 @@ private:
     TArray<uint8*> DiscardedMemory;
 };
 
-class CRHIRenderTargetView;
-class CRHIDepthStencilView;
-class CRHIShaderResourceView;
-class CRHIUnorderedAccessView;
-class CRHIShader;
-
-#define ENABLE_INSERT_DEBUG_CMDLIST_MARKER 0
-
-#if ENABLE_INSERT_DEBUG_CMDLIST_MARKER
-#define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString) CmdList.InsertCommandListMarker(MarkerString);
-#else
-#define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString)
-#endif
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CRHICommandList
 {
     friend class CRHICommandQueue;
 
 public:
+
     CRHICommandList()
         : CmdAllocator()
         , First( nullptr )
@@ -111,7 +116,7 @@ public:
         InsertCommand<SRHIClearRenderTargetViewRenderCommand>( AddRef( RenderTargetView ), ClearColor );
     }
 
-    void ClearDepthStencilView( CRHIDepthStencilView* DepthStencilView, const SDepthStencilF& ClearValue )
+    void ClearDepthStencilView( CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue )
     {
         Assert( DepthStencilView != nullptr );
         InsertCommand<SRHIClearDepthStencilViewRenderCommand>( AddRef( DepthStencilView ), ClearValue );
@@ -512,6 +517,8 @@ private:
     uint32 NumDispatchCalls = 0;
     uint32 NumCommands = 0;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class RHI_API CRHICommandQueue
 {

@@ -146,24 +146,39 @@ public:
     virtual void CheckRayTracingSupport( SRayTracingSupport& OutSupport ) const override final;
     virtual void CheckShadingRateSupport( SShadingRateSupport& OutSupport ) const override final;
 
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap()
+    FORCEINLINE CD3D12Device* GetDevice() const
+    {
+        return Device;
+    }
+
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap() const
     {
         return ResourceOfflineDescriptorHeap;
     }
 
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap()
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap() const
     {
         return RenderTargetOfflineDescriptorHeap;
     }
 
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap()
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap() const
     {
         return DepthStencilOfflineDescriptorHeap;
     }
 
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap()
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap() const
     {
         return SamplerOfflineDescriptorHeap;
+    }
+
+    FORCEINLINE TSharedRef<CD3D12RHIComputePipelineState> GetGenerateMipsPipelineTexure2D() const
+    {
+        return GenerateMipsTex2D_PSO;
+    }
+
+    FORCEINLINE TSharedRef<CD3D12RHIComputePipelineState> GetGenerateMipsPipelineTexureCube() const
+    {
+        return GenerateMipsTexCube_PSO;
     }
 
 private:
@@ -185,14 +200,26 @@ private:
     template<typename TD3D12Buffer>
     bool FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInBytes, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData );
 
-    CD3D12Device* Device;
+    // The Device Object
+    CD3D12Device* Device = nullptr;
+    // Default Command Context
     TSharedRef<CD3D12RHICommandContext> DirectCmdContext;
-    CD3D12RootSignatureCache* RootSignatureCache;
+    // RootSignature cache
+    CD3D12RootSignatureCache* RootSignatureCache = nullptr;
 
+    // Resource Offline-Heap
     CD3D12OfflineDescriptorHeap* ResourceOfflineDescriptorHeap = nullptr;
+    // RenderTarget Offline-Heap
     CD3D12OfflineDescriptorHeap* RenderTargetOfflineDescriptorHeap = nullptr;
+    // DepthStencil Offline-Heap
     CD3D12OfflineDescriptorHeap* DepthStencilOfflineDescriptorHeap = nullptr;
+    // Sampler Offline-Heap
     CD3D12OfflineDescriptorHeap* SamplerOfflineDescriptorHeap = nullptr;
+
+    // PipelineSate for GenerateMips (Texture2D)
+    TSharedRef<CD3D12RHIComputePipelineState> GenerateMipsTex2D_PSO;
+    // PipelineSate for GenerateMips (TextureCube)
+    TSharedRef<CD3D12RHIComputePipelineState> GenerateMipsTexCube_PSO;
 };
 
 extern CD3D12RHICore* GD3D12RHICore;

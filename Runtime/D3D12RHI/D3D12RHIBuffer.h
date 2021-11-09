@@ -4,6 +4,8 @@
 
 #include "RHI/RHIResources.h"
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12BaseBuffer : public CD3D12DeviceChild
 {
 public:
@@ -31,6 +33,8 @@ public:
 protected:
     TSharedRef<CD3D12Resource> Resource;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RHIBaseVertexBuffer : public CRHIVertexBuffer, public CD3D12BaseBuffer
 {
@@ -60,6 +64,8 @@ public:
 private:
     D3D12_VERTEX_BUFFER_VIEW View;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RHIBaseIndexBuffer : public CRHIIndexBuffer, public CD3D12BaseBuffer
 {
@@ -94,6 +100,8 @@ public:
 private:
     D3D12_INDEX_BUFFER_VIEW View;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RHIBaseConstantBuffer : public CRHIConstantBuffer, public CD3D12BaseBuffer
 {
@@ -140,6 +148,8 @@ private:
     CD3D12RHIConstantBufferView View;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIBaseStructuredBuffer : public CRHIStructuredBuffer, public CD3D12BaseBuffer
 {
 public:
@@ -149,6 +159,8 @@ public:
     {
     }
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<typename BaseBufferType>
 class TD3D12RHIBaseBuffer : public BaseBufferType
@@ -204,6 +216,8 @@ public:
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIVertexBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseVertexBuffer>
 {
 public:
@@ -212,6 +226,8 @@ public:
     {
     }
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RHIIndexBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseIndexBuffer>
 {
@@ -222,6 +238,8 @@ public:
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIConstantBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseConstantBuffer>
 {
 public:
@@ -231,6 +249,8 @@ public:
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIStructuredBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseStructuredBuffer>
 {
 public:
@@ -239,6 +259,8 @@ public:
     {
     }
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 inline CD3D12BaseBuffer* D3D12BufferCast( CRHIBuffer* Buffer )
 {

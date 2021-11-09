@@ -1,5 +1,5 @@
 #pragma once
-#include "D3D12Helpers.h"
+#include "D3D12Core.h"
 #include <dxgi1_6.h>
 
 #include <DXProgrammableCapture.h>
@@ -40,9 +40,9 @@ public:
         return DXRDevice.Get();
     }
 
-    FORCEINLINE IDXGraphicsAnalysis* GetPIXCaptureInterface() const
+    FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysisInterface() const
     {
-        return PIXCaptureInterface.Get();
+        return GraphicsAnalysisInterface.Get();
     }
 
     FORCEINLINE IDXGIFactory2* GetFactory() const
@@ -158,7 +158,7 @@ private:
     TComPtr<ID3D12Device>  Device;
     TComPtr<ID3D12Device5> DXRDevice;
 
-    TComPtr<IDXGraphicsAnalysis> PIXCaptureInterface;
+    TComPtr<IDXGraphicsAnalysis> GraphicsAnalysisInterface;
 
     D3D_FEATURE_LEVEL MinFeatureLevel = D3D_FEATURE_LEVEL_12_0;
     D3D_FEATURE_LEVEL ActiveFeatureLevel = D3D_FEATURE_LEVEL_11_0;

@@ -4,7 +4,7 @@
 #include "Core/Utilities/StringUtilities.h"
 
 #include "D3D12Shader.h"
-#include "D3D12Helpers.h"
+#include "D3D12Core.h"
 #include "D3D12RootSignature.h"
 
 class CD3D12RHIInputLayoutState : public CRHIInputLayoutState, public CD3D12DeviceChild

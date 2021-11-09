@@ -8,6 +8,8 @@
 class CD3D12CommandList;
 class CMaterial;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RHIRayTracingGeometry : public CRHIRayTracingGeometry, public CD3D12DeviceChild
 {
 public:
@@ -45,6 +47,8 @@ struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) SD3D12ShaderBinding
     D3D12_GPU_DESCRIPTOR_HANDLE	RootDescriptorTables[4] = { 0, 0, 0, 0 };
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12ShaderBindingTableBuilder : public CD3D12DeviceChild
 {
 public:
@@ -80,6 +84,8 @@ private:
     uint32 GPUResourceIndex = 0;
     uint32 GPUSamplerIndex = 0;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RHIRayTracingScene : public CRHIRayTracingScene, public CD3D12DeviceChild
 {

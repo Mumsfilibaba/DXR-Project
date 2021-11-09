@@ -6,7 +6,7 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Fence.h"
 #include "D3D12RootSignature.h"
-#include "D3D12Helpers.h"
+#include "D3D12Core.h"
 #include "D3D12RHICore.h"
 #include "D3D12RHIViews.h"
 #include "D3D12RHIRayTracing.h"
@@ -18,7 +18,7 @@
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12RHITimestampQuery.h"
 
-CD3D12RHICore* GD3D12RHICore = nullptr;
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<>
 inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12RHITexture2D>()
@@ -50,6 +50,8 @@ inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12RHITextur
     return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 template<typename TD3D12Texture>
 inline bool IsTextureCube()
 {
@@ -67,6 +69,12 @@ inline bool IsTextureCube<CD3D12RHITextureCubeArray>()
 {
     return true;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+CD3D12RHICore* GD3D12RHICore = nullptr;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CD3D12RHICore::CD3D12RHICore()
     : CRHICore( ERHIModule::D3D12 )
@@ -114,12 +122,14 @@ bool CD3D12RHICore::Init( bool EnableDebug )
         return false;
     }
 
+    // RootSignature cache
     RootSignatureCache = dbg_new CD3D12RootSignatureCache( Device );
     if ( !RootSignatureCache->Init() )
     {
         return false;
     }
 
+    // Init Offline Descriptor heaps
     ResourceOfflineDescriptorHeap = dbg_new CD3D12OfflineDescriptorHeap( Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV );
     if ( !ResourceOfflineDescriptorHeap->Init() )
     {
@@ -144,13 +154,66 @@ bool CD3D12RHICore::Init( bool EnableDebug )
         return false;
     }
 
-    // Shader has to be initialized here before the CommandContext
+    // Init shader compiler
     GD3D12ShaderCompiler = dbg_new CD3D12RHIShaderCompiler();
     if (!GD3D12ShaderCompiler->Init())
     {
         return false;
     }
 
+    // Init GenerateMips Shaders and pipeline states 
+    TArray<uint8> Code;
+    if ( !GD3D12ShaderCompiler->CompileFromFile( "../Runtime/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
+    {
+        LOG_ERROR( "[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader" );
+
+        CDebug::DebugBreak();
+        return false;
+    }
+
+    TSharedRef<CD3D12RHIComputeShader> Shader = dbg_new CD3D12RHIComputeShader( GetDevice(), Code );
+    if ( !Shader->Init() )
+    {
+        CDebug::DebugBreak();
+        return false;
+    }
+
+    GenerateMipsTex2D_PSO = dbg_new CD3D12RHIComputePipelineState( GetDevice(), Shader );
+    if ( !GenerateMipsTex2D_PSO->Init() )
+    {
+        LOG_ERROR( "[D3D12CommandContext]: Failed to create GenerateMipsTex2D PipelineState" );
+        return false;
+    }
+    else
+    {
+        GenerateMipsTex2D_PSO->SetName( "GenerateMipsTex2D Gen PSO" );
+    }
+
+    if ( !GD3D12ShaderCompiler->CompileFromFile( "../Runtime/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
+    {
+        LOG_ERROR( "[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader" );
+        CDebug::DebugBreak();
+    }
+
+    Shader = dbg_new CD3D12RHIComputeShader( GetDevice(), Code );
+    if ( !Shader->Init() )
+    {
+        CDebug::DebugBreak();
+        return false;
+    }
+
+    GenerateMipsTexCube_PSO = dbg_new CD3D12RHIComputePipelineState( GetDevice(), Shader );
+    if ( !GenerateMipsTexCube_PSO->Init() )
+    {
+        LOG_ERROR( "[D3D12CommandContext]: Failed to create GenerateMipsTexCube PipelineState" );
+        return false;
+    }
+    else
+    {
+        GenerateMipsTexCube_PSO->SetName( "GenerateMipsTexCube Gen PSO" );
+    }
+
+    // Init context
     DirectCmdContext = CD3D12RHICommandContext::Make( Device );
     if ( !DirectCmdContext )
     {
@@ -530,7 +593,7 @@ bool CD3D12RHICore::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInB
 
     D3D12_HEAP_TYPE       DxHeapType = D3D12_HEAP_TYPE_DEFAULT;
     D3D12_RESOURCE_STATES DxInitialState = D3D12_RESOURCE_STATE_COMMON;
-    if ( Flags & BufferFlag_Upload )
+    if ( Flags & BufferFlag_Dynamic )
     {
         DxHeapType = D3D12_HEAP_TYPE_UPLOAD;
         DxInitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
@@ -548,7 +611,7 @@ bool CD3D12RHICore::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInB
 
     if ( InitialData )
     {
-        if ( Buffer->IsUpload() )
+        if ( Buffer->IsDynamic() )
         {
             Assert( Buffer->GetSizeInBytes() <= SizeInBytes );
 
@@ -576,7 +639,7 @@ bool CD3D12RHICore::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInB
     }
     else
     {
-        if ( InitialState != EResourceState::Common && !Buffer->IsUpload() )
+        if ( InitialState != EResourceState::Common && !Buffer->IsDynamic() )
         {
             DirectCmdContext->Begin();
             DirectCmdContext->TransitionBuffer( Buffer, EResourceState::Common, InitialState );
@@ -845,7 +908,7 @@ CRHIShaderResourceView* CD3D12RHICore::CreateShaderResourceView( const SShaderRe
     Assert( Resource != nullptr );
 
     TSharedRef<CD3D12RHIShaderResourceView> DxView = dbg_new CD3D12RHIShaderResourceView( Device, ResourceOfflineDescriptorHeap );
-    if ( !DxView->Init() )
+    if ( !DxView->AllocateHandle() )
     {
         return nullptr;
     }
@@ -989,7 +1052,7 @@ CRHIUnorderedAccessView* CD3D12RHICore::CreateUnorderedAccessView( const SUnorde
     }
 
     TSharedRef<CD3D12RHIUnorderedAccessView> DxView = dbg_new CD3D12RHIUnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
-    if ( !DxView->Init() )
+    if ( !DxView->AllocateHandle() )
     {
         return nullptr;
     }
@@ -1102,7 +1165,7 @@ CRHIRenderTargetView* CD3D12RHICore::CreateRenderTargetView( const SRenderTarget
     }
 
     TSharedRef<CD3D12RenderTargetView> DxView = dbg_new CD3D12RenderTargetView( Device, RenderTargetOfflineDescriptorHeap );
-    if ( !DxView->Init() )
+    if ( !DxView->AllocateHandle() )
     {
         return nullptr;
     }
@@ -1197,7 +1260,7 @@ CRHIDepthStencilView* CD3D12RHICore::CreateDepthStencilView( const SDepthStencil
     }
 
     TSharedRef<CD3D12DepthStencilView> DxView = dbg_new CD3D12DepthStencilView( Device, DepthStencilOfflineDescriptorHeap );
-    if ( !DxView->Init() )
+    if ( !DxView->AllocateHandle() )
     {
         return nullptr;
     }

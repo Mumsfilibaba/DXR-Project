@@ -5,16 +5,14 @@
 
 #include "Core/Debug/Debug.h"
 #include "Core/Logging/Log.h"
+#include "Core/Containers/ComPtr.h"
 
 #include <d3d12.h>
 #include <dxcapi.h>
 
-#include <wrl/client.h>
-
-template<typename T>
-using TComPtr = Microsoft::WRL::ComPtr<T>;
-
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #if !PRODUCTION_BUILD
 #define D3D12_ERROR( Condition, ErrorMessage ) \
@@ -31,6 +29,8 @@ using TComPtr = Microsoft::WRL::ComPtr<T>;
 #define D3D12_ERROR( Condtion, ErrorString ) do {} while( 0 )
 
 #endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Returns upload heap properties
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
@@ -61,6 +61,8 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 
     return HeapProperties;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Converts EBufferFlag- flags to D3D12_RESOURCE_FLAGS
 inline D3D12_RESOURCE_FLAGS ConvertBufferFlags( uint32 Flag )
@@ -478,6 +480,50 @@ inline D3D12_SHADING_RATE ConvertShadingRate( EShadingRate ShadingRate )
     return D3D12_SHADING_RATE();
 }
 
+inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags( uint32 InFlags )
+{
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+    if ( InFlags & RayTracingStructureBuildFlag_AllowUpdate )
+    {
+        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
+    }
+    if ( InFlags & RayTracingStructureBuildFlag_PreferFastTrace )
+    {
+        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+    }
+    if ( InFlags & RayTracingStructureBuildFlag_PreferFastBuild )
+    {
+        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
+    }
+
+    return Flags;
+}
+
+inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags( uint32 InFlags )
+{
+    D3D12_RAYTRACING_INSTANCE_FLAGS Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+    if ( InFlags & RayTracingInstanceFlags_CullDisable )
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
+    }
+    if ( InFlags & RayTracingInstanceFlags_FrontCounterClockwise )
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
+    }
+    if ( InFlags & RayTracingInstanceFlags_ForceOpaque )
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
+    }
+    if ( InFlags & RayTracingInstanceFlags_ForceNonOpaque )
+    {
+        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
+    }
+
+    return Flags;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 // Operators for D3D12_GPU_DESCRIPTOR_HANDLE
 inline bool operator==( D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value )
 {
@@ -499,6 +545,8 @@ inline bool operator!=( D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_H
     return !(Left == Right);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 // Operators for D3D12_CPU_DESCRIPTOR_HANDLE
 inline bool operator==( D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value )
 {
@@ -519,6 +567,8 @@ inline bool operator!=( D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_H
 {
     return !(Left == Right);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 inline uint32 GetFormatStride( DXGI_FORMAT Format )
 {
@@ -643,46 +693,4 @@ inline DXGI_FORMAT CastShaderResourceFormat( DXGI_FORMAT Format )
         case DXGI_FORMAT_R8_TYPELESS:           return DXGI_FORMAT_R8_UNORM;
         default: return Format;
     }
-}
-
-inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags( uint32 InFlags )
-{
-    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-    if ( InFlags & RayTracingStructureBuildFlag_AllowUpdate )
-    {
-        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
-    }
-    if ( InFlags & RayTracingStructureBuildFlag_PreferFastTrace )
-    {
-        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
-    }
-    if ( InFlags & RayTracingStructureBuildFlag_PreferFastBuild )
-    {
-        Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
-    }
-
-    return Flags;
-}
-
-inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags( uint32 InFlags )
-{
-    D3D12_RAYTRACING_INSTANCE_FLAGS Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-    if ( InFlags & RayTracingInstanceFlags_CullDisable )
-    {
-        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
-    }
-    if ( InFlags & RayTracingInstanceFlags_FrontCounterClockwise )
-    {
-        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
-    }
-    if ( InFlags & RayTracingInstanceFlags_ForceOpaque )
-    {
-        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
-    }
-    if ( InFlags & RayTracingInstanceFlags_ForceNonOpaque )
-    {
-        Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
-    }
-
-    return Flags;
 }

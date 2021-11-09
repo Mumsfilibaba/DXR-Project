@@ -164,7 +164,7 @@ CD3D12Device::~CD3D12Device()
             DebugDevice->ReportLiveDeviceObjects( D3D12_RLDO_DETAIL );
         }
 
-        PIXCaptureInterface.Reset();
+        GraphicsAnalysisInterface.Reset();
 
         if ( PIXLib )
         {
@@ -286,10 +286,10 @@ bool CD3D12Device::Init()
             LOG_ERROR( "[D3D12Device]: FAILED to retrive InfoQueue" );
         }
 
-        TComPtr<IDXGraphicsAnalysis> TempPIXCaptureInterface;
-        if ( SUCCEEDED( NDXGIFunctions::DXGIGetDebugInterface1( 0, IID_PPV_ARGS( &TempPIXCaptureInterface ) ) ) )
+        TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysisInterface;
+        if ( SUCCEEDED( NDXGIFunctions::DXGIGetDebugInterface1( 0, IID_PPV_ARGS( &TempGraphicsAnalysisInterface ) ) ) )
         {
-            PIXCaptureInterface = TempPIXCaptureInterface;
+            GraphicsAnalysisInterface = TempGraphicsAnalysisInterface;
         }
         else
         {

@@ -1,7 +1,7 @@
 #include "D3D12Device.h"
 #include "D3D12CommandQueue.h"
 #include "D3D12CommandList.h"
-#include "D3D12Helpers.h"
+#include "D3D12Core.h"
 #include "D3D12Shader.h"
 #include "D3D12RHICore.h"
 #include "D3D12RHIBuffer.h"
@@ -16,6 +16,8 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
 #include <pix.h>
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CD3D12ResourceBarrierBatcher::AddTransitionBarrier( ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState )
 {
@@ -57,6 +59,8 @@ void CD3D12ResourceBarrierBatcher::AddTransitionBarrier( ID3D12Resource* Resourc
         Barriers.Emplace( Barrier );
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CD3D12GPUResourceUploader::CD3D12GPUResourceUploader( CD3D12Device* InDevice )
     : CD3D12DeviceChild( InDevice )
@@ -152,6 +156,8 @@ SD3D12UploadAllocation CD3D12GPUResourceUploader::LinearAllocate( uint32 InSizeI
     return Allocation;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 CD3D12CommandBatch::CD3D12CommandBatch( CD3D12Device* InDevice )
     : Device( InDevice )
     , CmdAllocator( InDevice )
@@ -182,22 +188,11 @@ bool CD3D12CommandBatch::Init()
         return false;
     }
 
-    // TODO: Remove?
-    OnlineRayTracingResourceDescriptorHeap = dbg_new CD3D12OnlineDescriptorHeap( Device, D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV );
-    if ( !OnlineRayTracingResourceDescriptorHeap->Init() )
-    {
-        return false;
-    }
-
-    OnlineRayTracingSamplerDescriptorHeap = dbg_new CD3D12OnlineDescriptorHeap( Device, D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER );
-    if ( !OnlineRayTracingSamplerDescriptorHeap->Init() )
-    {
-        return false;
-    }
-
     GpuResourceUploader.Reserve( 1024 );
     return true;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CD3D12RHICommandContext::CD3D12RHICommandContext( CD3D12Device* InDevice )
     : IRHICommandContext()
@@ -247,59 +242,6 @@ bool CD3D12RHICommandContext::Init()
     if ( !DescriptorCache.Init() )
     {
         return false;
-    }
-
-    Assert( GD3D12ShaderCompiler != nullptr );
-
-    TArray<uint8> Code;
-    if ( !GD3D12ShaderCompiler->CompileFromFile( "../Runtime/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
-    {
-        LOG_ERROR( "[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader" );
-
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    TSharedRef<CD3D12RHIComputeShader> Shader = dbg_new CD3D12RHIComputeShader( GetDevice(), Code );
-    if ( !Shader->Init() )
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    GenerateMipsTex2D_PSO = dbg_new CD3D12RHIComputePipelineState( GetDevice(), Shader );
-    if ( !GenerateMipsTex2D_PSO->Init() )
-    {
-        LOG_ERROR( "[D3D12CommandContext]: Failed to create GenerateMipsTex2D PipelineState" );
-        return false;
-    }
-    else
-    {
-        GenerateMipsTex2D_PSO->SetName( "GenerateMipsTex2D Gen PSO" );
-    }
-
-    if ( !GD3D12ShaderCompiler->CompileFromFile( "../Runtime/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
-    {
-        LOG_ERROR( "[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader" );
-        CDebug::DebugBreak();
-    }
-
-    Shader = dbg_new CD3D12RHIComputeShader( GetDevice(), Code );
-    if ( !Shader->Init() )
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    GenerateMipsTexCube_PSO = dbg_new CD3D12RHIComputePipelineState( GetDevice(), Shader );
-    if ( !GenerateMipsTexCube_PSO->Init() )
-    {
-        LOG_ERROR( "[D3D12CommandContext]: Failed to create GenerateMipsTexCube PipelineState" );
-        return false;
-    }
-    else
-    {
-        GenerateMipsTexCube_PSO->SetName( "GenerateMipsTexCube Gen PSO" );
     }
 
     return true;
@@ -426,7 +368,7 @@ void CD3D12RHICommandContext::ClearRenderTargetView( CRHIRenderTargetView* Rende
     CmdList.ClearRenderTargetView( DxRenderTargetView->GetOfflineHandle(), ClearColor.Elements, 0, nullptr );
 }
 
-void CD3D12RHICommandContext::ClearDepthStencilView( CRHIDepthStencilView* DepthStencilView, const SDepthStencilF& ClearValue )
+void CD3D12RHICommandContext::ClearDepthStencilView( CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue )
 {
     Assert( DepthStencilView != nullptr );
 
@@ -1133,13 +1075,15 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
 
     if ( IsTextureCube )
     {
-        CmdList.SetPipelineState( GenerateMipsTexCube_PSO->GetPipeline() );
-        CmdList.SetComputeRootSignature( GenerateMipsTexCube_PSO->GetRootSignature() );
+        TSharedRef<CD3D12RHIComputePipelineState> PipelineState = GD3D12RHICore->GetGenerateMipsPipelineTexureCube();
+        CmdList.SetPipelineState( PipelineState->GetPipeline() );
+        CmdList.SetComputeRootSignature( PipelineState->GetRootSignature() );
     }
     else
     {
-        CmdList.SetPipelineState( GenerateMipsTex2D_PSO->GetPipeline() );
-        CmdList.SetComputeRootSignature( GenerateMipsTex2D_PSO->GetRootSignature() );
+        TSharedRef<CD3D12RHIComputePipelineState> PipelineState = GD3D12RHICore->GetGenerateMipsPipelineTexure2D();
+        CmdList.SetPipelineState( PipelineState->GetPipeline() );
+        CmdList.SetComputeRootSignature( PipelineState->GetRootSignature() );
     }
 
     const D3D12_GPU_DESCRIPTOR_HANDLE SrvHandle_GPU = ResourceHeap->GetGPUDescriptorHandleAt( StartDescriptorHandleIndex );
@@ -1273,12 +1217,7 @@ void CD3D12RHICommandContext::DrawInstanced( uint32 VertexCountPerInstance, uint
     CmdList.DrawInstanced( VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation );
 }
 
-void CD3D12RHICommandContext::DrawIndexedInstanced(
-    uint32 IndexCountPerInstance,
-    uint32 InstanceCount,
-    uint32 StartIndexLocation,
-    uint32 BaseVertexLocation,
-    uint32 StartInstanceLocation )
+void CD3D12RHICommandContext::DrawIndexedInstanced( uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation )
 {
     FlushResourceBarriers();
 
@@ -1298,12 +1237,7 @@ void CD3D12RHICommandContext::Dispatch( uint32 ThreadGroupCountX, uint32 ThreadG
     CmdList.Dispatch( ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ );
 }
 
-void CD3D12RHICommandContext::DispatchRays(
-    CRHIRayTracingScene* Scene,
-    CRHIRayTracingPipelineState* PipelineState,
-    uint32 Width,
-    uint32 Height,
-    uint32 Depth )
+void CD3D12RHICommandContext::DispatchRays( CRHIRayTracingScene* Scene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth )
 {
     CD3D12RHIRayTracingScene* DxScene = static_cast<CD3D12RHIRayTracingScene*>(Scene);
     CD3D12RHIRayTracingPipelineState* DxPipelineState = static_cast<CD3D12RHIRayTracingPipelineState*>(PipelineState);
@@ -1362,20 +1296,20 @@ void CD3D12RHICommandContext::InsertMarker( const CString& Message )
 
 void CD3D12RHICommandContext::BeginExternalCapture()
 {
-    IDXGraphicsAnalysis* PIX = GetDevice()->GetPIXCaptureInterface();
-    if ( PIX && !IsCapturing )
+    IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetGraphicsAnalysisInterface();
+    if ( GraphicsAnalysis && !IsCapturing )
     {
-        PIX->BeginCapture();
+        GraphicsAnalysis->BeginCapture();
         IsCapturing = true;
     }
 }
 
 void CD3D12RHICommandContext::EndExternalCapture()
 {
-    IDXGraphicsAnalysis* PIX = GetDevice()->GetPIXCaptureInterface();
-    if ( PIX && IsCapturing )
+    IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetGraphicsAnalysisInterface();
+    if ( GraphicsAnalysis && IsCapturing )
     {
-        PIX->EndCapture();
+        GraphicsAnalysis->EndCapture();
         IsCapturing = false;
     }
 }

@@ -5,7 +5,7 @@
 
 #include "Core/Windows/Windows.h"
 
-#include "D3D12Helpers.h"
+#include "D3D12Core.h"
 #include "D3D12RHITexture.h"
 #include "D3D12RHIViews.h"
 #include "D3D12RHICommandContext.h"
@@ -13,6 +13,7 @@
 class CD3D12RHIViewport : public CRHIViewport, public CD3D12DeviceChild
 {
 public:
+
     CD3D12RHIViewport( CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight );
     ~CD3D12RHIViewport();
 

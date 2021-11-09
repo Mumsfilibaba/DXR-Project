@@ -5,6 +5,7 @@
 class CRHIViewport : public CRHIResource
 {
 public:
+
     CRHIViewport( EFormat InFormat, uint32 InWidth, uint32 InHeight )
         : CRHIResource()
         , Width( InWidth )

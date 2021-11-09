@@ -1,19 +1,13 @@
 #pragma once
 #include "Core.h"
 
-#if PLATFORM_WINDOWS
+#include "RHI/RHIModule.h"
 
 #if NULLRHI_API_EXPORT
-#define NULLRHI_API __declspec(dllexport)
+#define NULLRHI_API MODULE_EXPORT
 #else
 #define NULLRHI_API 
 #endif
-
-#else
-#define NULLRHI_API 
-#endif
-
-#include "RHI/RHIModule.h"
 
 class CNullRHIModule final : public CRHIModule
 {

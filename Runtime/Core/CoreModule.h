@@ -1,14 +1,8 @@
 #pragma once
 #include "Core.h"
 
-#if PLATFORM_WINDOWS
-
 #if CORE_API_EXPORT
-#define CORE_API __declspec(dllexport)
+#define CORE_API MODULE_EXPORT
 #else
-#define CORE_API __declspec(dllimport)
-#endif
-
-#else
-#define CORE_API
+#define CORE_API MODULE_IMPORT
 #endif

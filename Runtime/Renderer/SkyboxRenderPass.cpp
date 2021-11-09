@@ -16,7 +16,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
     SkyboxMesh = CMeshFactory::CreateSphere( 1 );
 
     SResourceData VertexData = SResourceData( SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes() );
-    SkyboxVertexBuffer = RHICreateVertexBuffer<SVertex>( SkyboxMesh.Vertices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &VertexData );
+    SkyboxVertexBuffer = RHICreateVertexBuffer<SVertex>( SkyboxMesh.Vertices.Size(), BufferFlag_Dynamic, EResourceState::VertexAndConstantBuffer, &VertexData );
     if ( !SkyboxVertexBuffer )
     {
         return false;
@@ -27,7 +27,7 @@ bool CSkyboxRenderPass::Init( SFrameResources& FrameResources )
     }
 
     SResourceData IndexData = SResourceData( SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes() );
-    SkyboxIndexBuffer = RHICreateIndexBuffer( EIndexFormat::uint32, SkyboxMesh.Indices.Size(), BufferFlag_Upload, EResourceState::VertexAndConstantBuffer, &IndexData );
+    SkyboxIndexBuffer = RHICreateIndexBuffer( EIndexFormat::uint32, SkyboxMesh.Indices.Size(), BufferFlag_Dynamic, EResourceState::VertexAndConstantBuffer, &IndexData );
     if ( !SkyboxIndexBuffer )
     {
         return false;

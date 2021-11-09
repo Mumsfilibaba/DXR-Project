@@ -7,15 +7,15 @@
 class CRHIResource : public CRefCounted
 {
 public:
-    virtual void* GetNativeResource() const
-    {
-        return nullptr;
-    }
+ 
+    CRHIResource() = default;
+    ~CRHIResource() = default;
 
-    virtual bool IsValid() const
-    {
-        return false;
-    }
+    /* Retrive a handle to the native resource, if there is any */
+    virtual void* GetNativeResource() const { return nullptr; }
+
+    /* Returns true if the native resource is valid to use */
+    virtual bool IsValid() const { return false; }
 
     virtual void SetName( const CString& InName )
     {

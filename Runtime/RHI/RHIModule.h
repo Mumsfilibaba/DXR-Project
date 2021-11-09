@@ -3,17 +3,10 @@
 
 #include "Core/Modules/IEngineModule.h"
 
-#if PLATFORM_WINDOWS
-
 #if RHI_API_EXPORT
-#define RHI_API __declspec(dllexport)
+#define RHI_API MODULE_EXPORT
 #else
-#define RHI_API __declspec(dllimport)
-#endif
-
-#else 
-#define RHI_API
-
+#define RHI_API MODULE_IMPORT
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

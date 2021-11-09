@@ -1,39 +1,45 @@
 #include "D3D12Device.h"
 #include "D3D12RootSignature.h"
-#include "D3D12Helpers.h"
+#include "D3D12Core.h"
 #include "D3D12RHIShader.h"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+static D3D12_SHADER_VISIBILITY DxShaderVisibility[ShaderVisibility_Count] =
+{
+    D3D12_SHADER_VISIBILITY_ALL,
+    D3D12_SHADER_VISIBILITY_VERTEX,
+    D3D12_SHADER_VISIBILITY_HULL,
+    D3D12_SHADER_VISIBILITY_DOMAIN,
+    D3D12_SHADER_VISIBILITY_GEOMETRY,
+    D3D12_SHADER_VISIBILITY_PIXEL,
+};
 
 static D3D12_SHADER_VISIBILITY GetD3D12ShaderVisibility( uint32 Visbility )
 {
-    static D3D12_SHADER_VISIBILITY DxShaderVisibility[ShaderVisibility_Count] =
-    {
-        D3D12_SHADER_VISIBILITY_ALL,
-        D3D12_SHADER_VISIBILITY_VERTEX,
-        D3D12_SHADER_VISIBILITY_HULL,
-        D3D12_SHADER_VISIBILITY_DOMAIN,
-        D3D12_SHADER_VISIBILITY_GEOMETRY,
-        D3D12_SHADER_VISIBILITY_PIXEL,
-    };
-
     Assert( Visbility < ShaderVisibility_Count );
     return DxShaderVisibility[Visbility];
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+static EShaderVisibility ShaderVisibility[ShaderVisibility_Count] =
+{
+    ShaderVisibility_All,
+    ShaderVisibility_Vertex,
+    ShaderVisibility_Hull,
+    ShaderVisibility_Domain,
+    ShaderVisibility_Geometry,
+    ShaderVisibility_Pixel
+};
+
 static EShaderVisibility GetShaderVisibility( uint32 Visbility )
 {
-    static EShaderVisibility ShaderVisibility[ShaderVisibility_Count] =
-    {
-        ShaderVisibility_All,
-        ShaderVisibility_Vertex,
-        ShaderVisibility_Hull,
-        ShaderVisibility_Domain,
-        ShaderVisibility_Geometry,
-        ShaderVisibility_Pixel
-    };
-
     Assert( Visbility < ShaderVisibility_Count );
     return ShaderVisibility[Visbility];
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 static EResourceType GetResourceType( D3D12_DESCRIPTOR_RANGE_TYPE Type )
 {
@@ -48,6 +54,8 @@ static EResourceType GetResourceType( D3D12_DESCRIPTOR_RANGE_TYPE Type )
             return ResourceType_Unknown;
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool SD3D12RootSignatureResourceCount::IsCompatible( const SD3D12RootSignatureResourceCount& Other ) const
 {
@@ -67,6 +75,8 @@ bool SD3D12RootSignatureResourceCount::IsCompatible( const SD3D12RootSignatureRe
     return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper( const SD3D12RootSignatureResourceCount& RootSignatureInfo )
     : Desc()
     , Parameters()
@@ -83,8 +93,8 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper( const SD3D12RootSi
         D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS,
     };
 
-    // NOTE: This can crash it pipeline is using to many tables, max is 64
-    uint32 Space = RootSignatureInfo.Type == ERootSignatureType::RayTracingLocal ? D3D12_SHADER_REGISTER_SPACE_RT_LOCAL : 0;
+    // NOTE: This can crash if the pipeline is using to many tables, max is 64
+    uint32 Space = (RootSignatureInfo.Type == ERootSignatureType::RayTracingLocal) ? D3D12_SHADER_REGISTER_SPACE_RT_LOCAL : 0;
     uint32 NumRootParameters = 0;
     for ( uint32 i = 0; i < ShaderVisibility_Count; i++ )
     {
@@ -103,6 +113,7 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper( const SD3D12RootSi
 
             AddFlag = false;
         }
+
         if ( ResourceCounts.Ranges.NumSRVs > 0 )
         {
             Assert( NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES );
@@ -115,6 +126,7 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper( const SD3D12RootSi
 
             AddFlag = false;
         }
+
         if ( ResourceCounts.Ranges.NumUAVs > 0 )
         {
             Assert( NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES );
@@ -127,6 +139,7 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper( const SD3D12RootSi
 
             AddFlag = false;
         }
+
         if ( ResourceCounts.Ranges.NumSamplers > 0 )
         {
             Assert( NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES );
@@ -139,6 +152,7 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper( const SD3D12RootSi
 
             AddFlag = false;
         }
+
         if ( ResourceCounts.Num32BitConstants > 0 )
         {
             Assert( ResourceCounts.Num32BitConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT );
@@ -158,6 +172,7 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper( const SD3D12RootSi
 
     Desc.NumParameters = NumRootParameters;
     Desc.pParameters = Parameters;
+    
     // TODO: Enable Static Samplers
     Desc.NumStaticSamplers = 0;
     Desc.pStaticSamplers = nullptr;
@@ -197,6 +212,8 @@ void CD3D12RootSignatureDescHelper::Init32BitConstantRange( D3D12_ROOT_PARAMETER
     OutParameter.Constants.ShaderRegister = ShaderRegister;
     OutParameter.Constants.RegisterSpace = RegisterSpace;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CD3D12RootSignature::CD3D12RootSignature( CD3D12Device* InDevice )
     : CD3D12DeviceChild( InDevice )
@@ -323,6 +340,8 @@ bool CD3D12RootSignature::Serialize( const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3D
 
     return true;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CD3D12RootSignatureCache* CD3D12RootSignatureCache::Instance = nullptr;
 

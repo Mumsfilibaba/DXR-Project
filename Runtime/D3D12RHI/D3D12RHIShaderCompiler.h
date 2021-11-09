@@ -1,7 +1,7 @@
 #pragma once
 #include "RHI/RHIShaderCompiler.h"
 
-#include "D3D12Helpers.h"
+#include "D3D12Core.h"
 #include "D3D12RHIShader.h"
 
 #include <string>

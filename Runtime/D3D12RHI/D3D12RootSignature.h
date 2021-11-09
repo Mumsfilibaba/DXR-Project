@@ -4,13 +4,13 @@
 #include "D3D12RHIShader.h"
 
 #include "Core/RefCounted.h"
-
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Utilities/HashUtilities.h"
-
-#include <unordered_map>
+#include "Core/Containers/HashTable.h"
 
 class CD3D12RootSignature;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum class ERootSignatureType
 {
@@ -30,6 +30,8 @@ struct SD3D12RootSignatureResourceCount
     bool AllowInputAssembler = false;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RootSignatureDescHelper
 {
 public:
@@ -42,6 +44,7 @@ public:
     }
 
 private:
+
     static void InitDescriptorRange( D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace );
     static void InitDescriptorTable( D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges );
     static void Init32BitConstantRange( D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace );
@@ -52,6 +55,8 @@ private:
 
     uint32 NumDescriptorRanges = 0;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CD3D12RootSignature : public CD3D12DeviceChild, public CRefCounted
 {
@@ -102,6 +107,8 @@ private:
     int32 ConstantRootParameterIndex;
 };
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CD3D12RootSignatureCache : public CD3D12DeviceChild
 {
 public:
@@ -119,7 +126,7 @@ private:
     CD3D12RootSignature* CreateRootSignature( const SD3D12RootSignatureResourceCount& ResourceCount );
 
     // TODO: Use a hash instead, this is beacuse == operator does not make sense, use it anyway?
-    TArray<TSharedRef<CD3D12RootSignature>>        RootSignatures;
+    TArray<TSharedRef<CD3D12RootSignature>>  RootSignatures;
     TArray<SD3D12RootSignatureResourceCount> ResourceCounts;
 
     static CD3D12RootSignatureCache* Instance;

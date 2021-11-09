@@ -1,14 +1,8 @@
 #pragma once
 #include "Core.h"
 
-#if PLATFORM_WINDOWS
-
 #if RENDERER_API_EXPORT
-#define RENDERER_API __declspec(dllexport)
+#define RENDERER_API MODULE_EXPORT
 #else
-#define RENDERER_API __declspec(dllimport)
-#endif
-
-#else
-#define RENDERER_API
+#define RENDERER_API MODULE_IMPORT
 #endif
