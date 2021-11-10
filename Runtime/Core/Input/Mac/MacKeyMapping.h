@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Input/Interface/PlatformKeyMapping.h"

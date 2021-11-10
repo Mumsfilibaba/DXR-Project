@@ -1,10 +1,10 @@
 #pragma once
 
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "CoreApplication/Windows/WindowsApplication.h"
 typedef CWindowsApplication PlatformApplication;
 
-#elif defined(PLATFORM_MACOS)
+#elif PLATFORM_MACOS
 #include "CoreApplication/Mac/MacApplication.h"
 typedef CMacApplication PlatformApplication;
 

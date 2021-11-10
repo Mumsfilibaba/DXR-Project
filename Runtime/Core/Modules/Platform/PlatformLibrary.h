@@ -1,10 +1,10 @@
 #pragma once
 
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "Core/Modules/Windows/WindowsLibrary.h"
 typedef CWindowsLibrary PlatformLibrary;
 
-#elif defined(PLATFORM_MACOS)
+#elif PLATFORM_MACOS
 #include "Core/Modules/Mac/MacLibrary.h"
 typedef CMacLibrary PlatformLibrary;
 

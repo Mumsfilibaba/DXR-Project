@@ -1,4 +1,4 @@
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
 #include "MacCursor.h"
 #include "MacWindow.h"
 #include "CocoaWindow.h"

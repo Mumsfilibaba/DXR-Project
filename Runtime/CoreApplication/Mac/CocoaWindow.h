@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
 #if defined(__OBJC__)
 
 #include <AppKit/AppKit.h>

@@ -20,7 +20,7 @@ public:
     static void Init();
     static void Release();
     
-    static FORCEINLINE IsInitialized()
+    static FORCEINLINE bool IsInitialized()
     {
         return (MainThread != nullptr);
     }

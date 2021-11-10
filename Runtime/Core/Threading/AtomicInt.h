@@ -2,31 +2,35 @@
 #include "Core.h"
 #include "Core/Templates/IsSigned.h"
 #include "Core/Threading/Platform/PlatformInterlocked.h"
+#include "Core/Threading/Platform/PlatformAtomic.h"
 
 template<typename T>
-class TInterlockedInt
+class TAtomicInt
 {
 public:
+
     typedef T Type;
 
-    static_assert(TIsSigned<T>::Value, "InterlockedInt only supports signed types");
+    static_assert(TIsSigned<T>::Value, "AtomicInt only supports signed types");
 
-    FORCEINLINE TInterlockedInt() noexcept
+    FORCEINLINE TAtomicInt() noexcept
         : Value( 0 )
     {
     }
 
-    FORCEINLINE TInterlockedInt( const TInterlockedInt& Other )
+    FORCEINLINE TAtomicInt( const TAtomicInt& Other )
         : Value( 0 )
     {
         T TempInteger = Other.Load();
         Store( TempInteger );
     }
 
-    FORCEINLINE TInterlockedInt( T InValue ) noexcept
+    FORCEINLINE TAtomicInt( T InValue ) noexcept
         : Value( InValue )
     {
     }
+
+    ~TAtomicInt() = default;
 
     FORCEINLINE T Increment() noexcept
     {
@@ -70,21 +74,35 @@ public:
 
     FORCEINLINE T Load() const noexcept
     {
-        // Makes sure that all prior accesses has completed
-        PlatformInterlocked::CompareExchange( &Value, 0, 0 );
-        return Value;
+        // Makes sure that all prior accesses has completed 
+        return PlatformAtomic::Read( &Value );
+    }
+
+    FORCEINLINE T RelaxedLoad() const noexcept
+    {
+        return PlatformAtomic::RelaxedRead( &Value );
+    }
+
+    FORCEINLINE T Exchange( T InValue ) noexcept
+    {
+        return PlatformInterlocked::Exchange( &Value, InValue );
     }
 
     FORCEINLINE void Store( T InValue ) noexcept
     {
-        PlatformInterlocked::Exchange( &Value, InValue );
+        PlatformAtomic::Store( &Value, InValue );
+    }
+
+    FORCEINLINE void RelaxedStore( T InValue ) noexcept
+    {
+        PlatformAtomic::RelaxedStore( &Value, InValue );
     }
 
 public:
 
     /* Operators */
 
-    FORCEINLINE TInterlockedInt& operator=( const TInterlockedInt& Other )
+    FORCEINLINE TAtomicInt& operator=( const TAtomicInt& Other )
     {
         T TempInteger = Other.Load();
         Store( TempInteger );
@@ -150,7 +168,7 @@ private:
 };
 
 /* Predefined types*/
-typedef TInterlockedInt<int8>  InterlockedInt8;
-typedef TInterlockedInt<int16> InterlockedInt16;
-typedef TInterlockedInt<int32> InterlockedInt32;
-typedef TInterlockedInt<int64> InterlockedInt64;
+typedef TAtomicInt<int8>  AtomicInt8;
+typedef TAtomicInt<int16> AtomicInt16;
+typedef TAtomicInt<int32> AtomicInt32;
+typedef TAtomicInt<int64> AtomicInt64;

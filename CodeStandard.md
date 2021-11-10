@@ -286,9 +286,9 @@ typedef CWindowsApplication PlatformApplication;
 //PlatformApplication.h
 
 #pragma once
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
   #include "Application/Windows/WindowsApplication.h"
-#elif defined(PLATFORM_MACOS)
+#elif PLATFORM_MACOS
   #include "Application/Mac/MacApplication.h"
 #else
   #error No platform defined

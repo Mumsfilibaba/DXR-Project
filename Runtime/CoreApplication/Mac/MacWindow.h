@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
 #include "CoreApplication/Interface/PlatformWindow.h"
 
 #if defined(__OBJC__)

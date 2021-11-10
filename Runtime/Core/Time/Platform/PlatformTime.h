@@ -1,10 +1,10 @@
 #pragma once
 
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "Core/Time/Windows/WindowsTime.h"
 typedef CWindowsTime PlatformTime;
 
-#elif defined(PLATFORM_MACOS)
+#elif PLATFORM_MACOS
 #include "Core/Time/Mac/MacTime.h"
 typedef CMacTime PlatformTime;
 

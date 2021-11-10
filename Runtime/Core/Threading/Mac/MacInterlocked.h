@@ -1,4 +1,6 @@
 #pragma once
+
+#if PLATFORM_MACOS
 #include "Core/Threading/Interface/PlatformInterlocked.h"
 
 /* Atomic operations on the MacOS platform */
@@ -212,3 +214,5 @@ public:
         return __sync_lock_test_and_set( Dest, Exchange );
     }
 };
+
+#endif

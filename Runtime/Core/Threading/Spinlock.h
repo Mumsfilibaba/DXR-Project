@@ -1,44 +1,56 @@
 #pragma once
-#include "Platform/PlatformInterlocked.h"
+#include "Core.h"
+#include "AtomicInt.h"
 
-class CSpinlock
+class CSpinLock
 {
+    enum
+    {
+        State_Unlocked = 0,
+        State_Locked   = 1,
+    };
+
 public:
 
-    CSpinlock( const CSpinlock& ) = delete;
-    CSpinlock& operator=( const CSpinlock& ) = delete;
+    CSpinLock( const CSpinLock& ) = delete;
+    CSpinLock& operator=( const CSpinLock& ) = delete;
 
-    FORCEINLINE CSpinlock() noexcept
-        : Section()
+    FORCEINLINE CSpinLock() noexcept
+        : State( State_Unlocked )
     {
-        InitializeCriticalSection( &Section );
     }
 
-    FORCEINLINE ~CSpinlock()
-    {
-        DeleteCriticalSection( &Section );
-    }
+    ~CSpinLock() = default;
 
     FORCEINLINE void Lock() noexcept
     {
-        EnterCriticalSection( &Section );
+        // Try locking until success
+        for ( ;; )
+        {
+            // When the previous value is unlocked => success
+            if ( State.Exchange( State_Locked ) == State_Unlocked )
+            {
+                break;
+            }
+
+            while ( State.RelaxedLoad() == State_Locked )
+            {
+                PauseInstruction();
+            }
+        }
     }
 
     FORCEINLINE bool TryLock() noexcept
     {
-        return !!TryEnterCriticalSection( &Section );
+        // The first relaxed load is in order to prevent unnecessary cache misses when trying to lock in a loop: See Lock
+		return (State.RelaxedLoad() == State_Unlocked) && (State.Exchange( State_Locked ) == State_Unlocked);
     }
 
     FORCEINLINE void Unlock() noexcept
     {
-        LeaveCriticalSection( &Section );
-    }
-
-    FORCEINLINE PlatformHandle GetPlatformHandle() noexcept
-    {
-        return &Section;
+		State.Store( State_Unlocked );
     }
 
 private:
-    CRITICAL_SECTION Section;
+    AtomicInt32 State;
 };

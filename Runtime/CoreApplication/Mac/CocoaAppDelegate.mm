@@ -1,4 +1,4 @@
-#if defined(PLATFORM_MACOS)
+#if PLATFORM_MACOS
 #include "Notification.h"
 #include "CocoaAppDelegate.h"
 

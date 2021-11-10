@@ -1,5 +1,5 @@
 #pragma once
-#include "InterlockedInt.h"
+#include "AtomicInt.h"
 
 #include "Platform/CriticalSection.h"
 #include "Platform/ConditionVariable.h"
@@ -55,8 +55,8 @@ private:
     CConditionVariable WakeCondition;
     CCriticalSection WakeMutex;
 
-    InterlockedInt32 DispatchAdded;
-    InterlockedInt32 DispatchCompleted;
+    AtomicInt32 DispatchAdded;
+    AtomicInt32 DispatchCompleted;
 
     volatile bool IsRunning;
 

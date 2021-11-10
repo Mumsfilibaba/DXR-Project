@@ -5,7 +5,7 @@
 #include <random>
 
 /* Windows Specific */
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "Core/Windows/PreCompiledWindows.h"
 #endif
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "Core/CoreModule.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Input/InputCodes.h"

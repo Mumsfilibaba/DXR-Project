@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_MACOS) 
+#if PLATFORM_MACOS 
 #include "CoreApplication/Interface/PlatformDebugMisc.h"
 
 class CMacDebugMisc final : public CPlatformDebugMisc

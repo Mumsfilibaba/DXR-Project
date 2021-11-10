@@ -1,8 +1,8 @@
 #include "MacRunLoop.h"
 
-#include "Core/Containers/TArray.h"
-#include "Core/Threading/SpinLock.h"
-#include "Core/Threading/Platform/CriticalSection.h"
+#include "Core/Containers/Array.h"
+#include "Core/Threading/Spinlock.h"
+#include "Core/Threading/ScopedLock.h"
 
 #include <Foundation/Foundation.h>
 
@@ -38,7 +38,7 @@ public:
 
         // Add block and signal source to perform next runloop iteration
         {
-            TScopedLock<SpinLock> Lock( BlockLock );
+			TScopedLock Lock( BlockLock );
             Blocks.Push( CopyBlock );
         }
         
@@ -50,7 +50,7 @@ public:
         // Copy blocks
         TArray<dispatch_block_t> CopiedBlocks;
         {
-            TScopedLock<SpinLock> Lock(BlockLock);
+			TScopedLock Lock(BlockLock);
             
             CopiedBlocks = TArray<dispatch_block_t>( Blocks );
             Blocks.Clear();
@@ -89,32 +89,32 @@ private:
     CFRunLoopSourceRef  Source        = nullptr;
     NSString*           RunLoopMode   = nullptr;
     
-    SpinLock BlockLock;
+    CSpinLock BlockLock;
     TArray<dispatch_block_t> Blocks;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-CMacRunLoopSource* MacMainThread::MainThread = nullptr;
+CMacRunLoopSource* CMacMainThread::MainThread = nullptr;
 
-void MacMainThread::Init()
+void CMacMainThread::Init()
 {
     CFRunLoopRef MainLoop = CFRunLoopGetMain();
     MainThread = dbg_new CMacRunLoopSource( MainLoop, NSDefaultRunLoopMode );
 }
 
-void MacMainThread::Release()
+void CMacMainThread::Release()
 {
     SafeDelete( MainThread );
 }
 
-void MacMainThread::Tick()
+void CMacMainThread::Tick()
 {
     Assert( MainThread != nullptr );
     MainThread->RunInMode( (CFRunLoopMode)NSDefaultRunLoopMode );
 }
 
-void MacMainThread::MakeCall( dispatch_block_t Block, bool WaitUntilFinished )
+void CMacMainThread::MakeCall( dispatch_block_t Block, bool WaitUntilFinished )
 {
     dispatch_block_t CopiedBlock = Block_copy( Block );
     

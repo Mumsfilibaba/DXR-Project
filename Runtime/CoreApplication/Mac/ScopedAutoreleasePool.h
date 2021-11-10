@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(PLATFORM_MACOS) && defined(__OBJC__)
+#if PLATFORM_MACOS && defined(__OBJC__)
 #include "CoreDefines.h"
 
 #include <Foundation/Foundation.h>

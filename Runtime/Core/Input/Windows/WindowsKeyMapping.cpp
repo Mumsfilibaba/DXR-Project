@@ -1,4 +1,4 @@
-#if defined(PLATFORM_WINDOWS)
+#if PLATFORM_WINDOWS
 #include "WindowsKeyMapping.h"
 
 TStaticArray<EKey, 512>   CWindowsKeyMapping::KeyCodeFromScanCodeTable;
