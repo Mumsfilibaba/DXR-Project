@@ -271,7 +271,19 @@ bool CD3D12Device::Init()
             }
             else
             {
-                DebugInterface1->SetEnableGPUBasedValidation( TRUE );
+                DebugInterface1->SetEnableGPUBasedValidation( true );
+            }
+        }
+
+        {
+            TComPtr<ID3D12Debug5> DebugInterface5;
+            if ( FAILED( DebugInterface.As( &DebugInterface5 ) ) )
+            {
+                LOG_ERROR( "[D3D12Device]: FAILED to enable auto-naming of objects" );
+            }
+            else
+            {
+                DebugInterface5->SetEnableAutoName( true );
             }
         }
 
