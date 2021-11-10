@@ -10,11 +10,12 @@
 
 - (id) init:(CMacApplication*) InApplication
 {
+    Assert( InApplication != nullptr );
+    
     self = [super init];
     if (self)
     {
         Application = InApplication;
-        Assert( Application != nullptr );
     }
 
     return self;
@@ -23,13 +24,11 @@
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *) Sender
 {
     // TODO: Maybe check some state before returning yes, but for now just terminate
-    PlatformDebugMisc::OutputDebugString("Should Terminate");
     return NSTerminateNow;
 }
 
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication* ) Sender
 {
-    PlatformDebugMisc::OutputDebugString("Terminate After Last Window Closed");
     return YES;
 }
 
@@ -38,8 +37,6 @@
     SNotification Notification;
     Notification.Notification = InNotification;
     Application->HandleNotification(Notification);
-    
-    PlatformDebugMisc::OutputDebugString("Will Terminate");
 }
 
 @end

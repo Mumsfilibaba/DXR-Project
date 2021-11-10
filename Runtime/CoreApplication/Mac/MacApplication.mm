@@ -8,6 +8,7 @@
 
 #include "Core/Logging/Log.h"
 #include "Core/Input/Platform/PlatformKeyMapping.h"
+#include "Core/Threading/Mac/MacRunLoop.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -36,9 +37,8 @@ bool CMacApplication::Init()
 {
     SCOPED_AUTORELEASE_POOL();
 
-    // TODO: Put this check in PlatformThreadMisc to avoid repetiton
-    const bool IsMainThread = [NSThread isMainThread];
-    Assert( IsMainThread == true ); 
+    const bool IsMainThread = PlatformThreadMisc::IsMainThread();
+    Assert( IsMainThread ); 
 
     /* Init application singleton */
     [NSApplication sharedApplication];
@@ -50,8 +50,6 @@ bool CMacApplication::Init()
     
     AppDelegate = [[CCocoaAppDelegate alloc] init:this];
     [NSApp setDelegate:AppDelegate];
-    
-    // TOOD Init mac mainthread, the initialization should always happen on mainthread so it should be fine anywhere within this function
     
 	PlatformKeyMapping::Init();
 
@@ -70,7 +68,11 @@ bool CMacApplication::InitAppMenu()
 {
     SCOPED_AUTORELEASE_POOL();
 
-    /* Init the default macOS menu */
+    // This should only be init from the main thread, but assert just to be sure. 
+    const bool IsMainThread = PlatformThreadMisc::IsMainThread();
+    Assert( IsMainThread ); 
+
+    // Init the default macOS menu
     NSMenu*     MenuBar     = [[NSMenu alloc] init];
     NSMenuItem* AppMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
     NSMenu*     AppMenu     = [[NSMenu alloc] init];
@@ -79,7 +81,7 @@ bool CMacApplication::InitAppMenu()
     [AppMenu addItemWithTitle:@"DXR-Engine" action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
     [AppMenu addItem: [NSMenuItem separatorItem]];
     
-    //Lambda Engine menu item
+    // Engine menu item
     NSMenu* ServiceMenu = [[NSMenu alloc] init];
     [[AppMenu addItemWithTitle:@"Services" action:nil keyEquivalent:@""] setSubmenu:ServiceMenu];
     [AppMenu addItem:[NSMenuItem separatorItem]];
@@ -89,7 +91,7 @@ bool CMacApplication::InitAppMenu()
     [AppMenu addItem:[NSMenuItem separatorItem]];
     [AppMenu addItemWithTitle:@"Quit DXR-Engine" action:@selector(terminate:) keyEquivalent:@"q"];
     
-    //Window menu
+    // Window menu
     NSMenuItem* WindowMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
     NSMenu*     WindowMenu     = [[NSMenu alloc] initWithTitle:@"Window"];
     [WindowMenuItem setSubmenu:WindowMenu];
@@ -120,8 +122,11 @@ void CMacApplication::Tick( float )
 
 void CMacApplication::SetActiveWindow( const TSharedRef<CPlatformWindow>& Window )
 {
-    CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window->GetNativeHandle());
-    [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
+    MakeMainThreadCall(^
+    {
+        CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window->GetNativeHandle());
+        [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
+    }, true);
 }
 
 TSharedRef<CPlatformWindow> CMacApplication::GetActiveWindow() const
@@ -152,9 +157,9 @@ void CMacApplication::HandleNotification( const SNotification& Notification )
 {
     if (Notification.IsValid())
     {
-        NSNotificationName     NotificationName = [Notification.Notification name];
-        TSharedRef<CMacWindow> Window           = GetWindowFromNSWindow(Notification.Window);
+        TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(Notification.Window);
 
+        NSNotificationName NotificationName = [Notification.Notification name];
         if (NotificationName == NSWindowWillCloseNotification)
         {
             MessageListener->HandleWindowClosed(Window);
@@ -197,18 +202,16 @@ void CMacApplication::HandleEvent( NSEvent* Event )
     {
         case NSEventTypeKeyUp:
         {
-            const uint16 MacKey = [Event keyCode];
             const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
-            const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode( MacKey );
+            const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode( [Event keyCode] );
             MessageListener->HandleKeyReleased( Key, ModiferKeyState );
             break;
         }
            
         case NSEventTypeKeyDown:
         {
-            const uint16 MacKey = [Event keyCode];
             const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
-            const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode( MacKey );
+            const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode( [Event keyCode] );
             MessageListener->HandleKeyPressed( Key, [Event isARepeat], ModiferKeyState );
             break;
         }
@@ -217,9 +220,8 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         case NSEventTypeRightMouseUp:
         case NSEventTypeOtherMouseUp:
         {
-            const NSInteger	   MacButton = [Event buttonNumber];
-            const EMouseButton Button	 = CMacKeyMapping::GetButtonFromIndex( static_cast<int32>(MacButton) );
-            const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
+            const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex( static_cast<int32>([Event buttonNumber]) );
+            const SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
             MessageListener->HandleMouseReleased( Button, ModiferKeyState );
             break;
         }
@@ -228,9 +230,8 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         case NSEventTypeRightMouseDown:
         case NSEventTypeOtherMouseDown:
         {
-            const NSInteger	   MacButton = [Event buttonNumber];
-            const EMouseButton Button	 = CMacKeyMapping::GetButtonFromIndex( MacButton );
-            const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
+            const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex( static_cast<int32>([Event buttonNumber]) );
+            const SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
             MessageListener->HandleMousePressed( Button, ModiferKeyState );
             break;
         }

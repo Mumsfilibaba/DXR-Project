@@ -3,6 +3,8 @@
 
 #include <Foundation/Foundation.h>
 
+PlatformThreadHandle CMacThreadMisc::MainThreadHandle;
+
 uint32 CMacThreadMisc::GetNumProcessors()
 {
     NSUInteger NumProcessors = [[NSProcessInfo processInfo] processorCount];

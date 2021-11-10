@@ -28,6 +28,7 @@ void CMacApplicationMisc::RequestExit( int32 ExitCode )
 void CMacApplicationMisc::PumpMessages( bool UntilEmpty )
 {
     SCOPED_AUTORELEASE_POOL();
+    
     Assert( NSApp != nullptr );
     
     NSEvent* Event = nullptr;

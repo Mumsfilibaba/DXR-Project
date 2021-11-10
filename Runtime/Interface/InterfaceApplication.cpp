@@ -402,15 +402,14 @@ TSharedRef<CPlatformWindow> CInterfaceApplication::GetActiveWindow() const
 }
 
 template<typename MessageHandlerType>
-void CInterfaceApplication::InsertMessageHandler( TArray<MessageHandlerType*>& OutMessageHandlerArray, MessageHandlerType* NewMessageHandler )
+void CInterfaceApplication::InsertMessageHandler( TArray<TSharedPtr<MessageHandlerType>>& OutMessageHandlerArray, const TSharedPtr<MessageHandlerType>& NewMessageHandler, uint32 NewPriority )
 {
     if ( !OutMessageHandlerArray.Contains( NewMessageHandler ) )
     {
-        const uint32 NewPriority = NewMessageHandler->GetPriority();
         for ( int32 Index = 0; Index < OutMessageHandlerArray.Size(); )
         {
-            MessageHandlerType* Handler = OutMessageHandlerArray[Index];
-            if ( NewPriority <= Handler->GetPriority() )
+            const TPair<TSharedPtr<MessageHandlerType>, uint32> Handler = OutMessageHandlerArray[Index];
+            if ( NewPriority <= Handler.Second )
             {
                 Index++;
             }
@@ -421,18 +420,27 @@ void CInterfaceApplication::InsertMessageHandler( TArray<MessageHandlerType*>& O
             }
         }
 
+        // If all the handlers has been checked then push the new one to the back
         OutMessageHandlerArray.Push( NewMessageHandler );
     }
 }
 
-void CInterfaceApplication::AddInputHandler( CInputHandler* NewInputHandler )
+void CInterfaceApplication::AddInputHandler( const TSharedPtr<CInputHandler>& NewInputHandler, uint32 Priority )
 {
-    InsertMessageHandler( InputHandlers, NewInputHandler );
+    InsertMessageHandler( InputHandlers, NewInputHandler, Priority );
 }
 
-void CInterfaceApplication::RemoveInputHandler( CInputHandler* InputHandler )
+void CInterfaceApplication::RemoveInputHandler( const TSharedPtr<CInputHandler>& InputHandler )
 {
-    InputHandlers.Remove( InputHandler );
+    for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
+    {
+        const TPair<TSharedPtr<CWindowMessageHandler>, uint32> Handler = InputHandlers[Index];
+        if ( Handler.First == InputHandler )
+        {
+            InputHandlers.RemoveAt( Index );
+            break;
+        }
+    }
 }
 
 void CInterfaceApplication::RegisterMainViewport( const TSharedRef<CPlatformWindow>& NewMainViewport )
@@ -495,14 +503,22 @@ void CInterfaceApplication::DrawWindows( CRHICommandList& CommandList )
     }
 }
 
-void CInterfaceApplication::AddWindowMessageHandler( CWindowMessageHandler* NewWindowMessageHandler )
+void CInterfaceApplication::AddWindowMessageHandler( const TSharedPtr<CWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority )
 {
-    InsertMessageHandler( WindowMessageHandlers, NewWindowMessageHandler );
+    InsertMessageHandler( WindowMessageHandlers, NewWindowMessageHandler, Priority );
 }
 
-void CInterfaceApplication::RemoveWindowMessageHandler( CWindowMessageHandler* InputHandler )
+void CInterfaceApplication::RemoveWindowMessageHandler( const TSharedPtr<CWindowMessageHandler>& WindowMessageHandler )
 {
-    WindowMessageHandlers.Remove( InputHandler );
+    for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
+    {
+        const TPair<TSharedPtr<CWindowMessageHandler>, uint32> Handler = WindowMessageHandlers[Index];
+        if ( Handler.First == WindowMessageHandler )
+        {
+            WindowMessageHandlers.RemoveAt( Index );
+            break;
+        }
+    }
 }
 
 void CInterfaceApplication::SetPlatformApplication( const TSharedPtr<CPlatformApplication>& InPlatformApplication )
@@ -533,7 +549,7 @@ void CInterfaceApplication::HandleKeyEvent( const SKeyEvent& KeyEvent )
     SKeyEvent Event = KeyEvent;
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
-        CInputHandler* Handler = InputHandlers[Index];
+        TSharedPtr<CInputHandler> Handler = InputHandlers[Index];
         if ( Handler->HandleKeyEvent( Event ) )
         {
             Event.IsConsumed = true;
@@ -564,7 +580,7 @@ void CInterfaceApplication::HandleKeyTyped( uint32 Character )
     SKeyTypedEvent Event( Character );
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
-        CInputHandler* Handler = InputHandlers[Index];
+        TSharedPtr<CInputHandler> Handler = InputHandlers[Index];
         if ( Handler->HandleKeyTyped( Event ) )
         {
             Event.IsConsumed = true;
@@ -580,7 +596,7 @@ void CInterfaceApplication::HandleMouseMove( int32 x, int32 y )
     SMouseMovedEvent MouseMovedEvent( x, y );
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
-        CInputHandler* Handler = InputHandlers[Index];
+        TSharedPtr<CInputHandler> Handler = InputHandlers[Index];
         if ( Handler->HandleMouseMove( MouseMovedEvent ) )
         {
             MouseMovedEvent.IsConsumed = true;
@@ -639,7 +655,7 @@ void CInterfaceApplication::HandleMouseButtonEvent( const SMouseButtonEvent& Mou
     SMouseButtonEvent Event = MouseButtonEvent;
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
-        CInputHandler* Handler = InputHandlers[Index];
+        TSharedPtr<CInputHandler> Handler = InputHandlers[Index];
         if ( Handler->HandleMouseButtonEvent( Event ) )
         {
             Event.IsConsumed = true;
@@ -670,7 +686,7 @@ void CInterfaceApplication::HandleMouseScrolled( float HorizontalDelta, float Ve
     SMouseScrolledEvent Event( HorizontalDelta, VerticalDelta );
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
-        CInputHandler* Handler = InputHandlers[Index];
+        TSharedPtr<CInputHandler> Handler = InputHandlers[Index];
         if ( Handler->HandleMouseScrolled( Event ) )
         {
             Event.IsConsumed = true;
@@ -700,7 +716,7 @@ void CInterfaceApplication::HandleWindowResized( const TSharedRef<CPlatformWindo
     SWindowResizeEvent WindowResizeEvent( Window, Width, Height );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
-        CWindowMessageHandler* Handler = WindowMessageHandlers[Index];
+        TSharedPtr<CWindowMessageHandler> Handler = WindowMessageHandlers[Index];
         if ( Handler->OnWindowResized( WindowResizeEvent ) )
         {
             WindowResizeEvent.IsConsumed = true;
@@ -713,7 +729,7 @@ void CInterfaceApplication::HandleWindowMoved( const TSharedRef<CPlatformWindow>
     SWindowMovedEvent WindowsMovedEvent( Window, x, y );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
-        CWindowMessageHandler* Handler = WindowMessageHandlers[Index];
+        TSharedPtr<CWindowMessageHandler> Handler = WindowMessageHandlers[Index];
         if ( Handler->OnWindowMoved( WindowsMovedEvent ) )
         {
             WindowsMovedEvent.IsConsumed = true;
@@ -726,7 +742,7 @@ void CInterfaceApplication::HandleWindowFocusChanged( const TSharedRef<CPlatform
     SWindowFocusChangedEvent WindowFocusChangedEvent( Window, HasFocus );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
-        CWindowMessageHandler* Handler = WindowMessageHandlers[Index];
+        TSharedPtr<CWindowMessageHandler> Handler = WindowMessageHandlers[Index];
         if ( Handler->OnWindowFocusChanged( WindowFocusChangedEvent ) )
         {
             WindowFocusChangedEvent.IsConsumed = true;
@@ -751,7 +767,7 @@ void CInterfaceApplication::HandleWindowFrameMouseEvent( const SWindowFrameMouse
     SWindowFrameMouseEvent Event = WindowFrameMouseEvent;
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
-        CWindowMessageHandler* Handler = WindowMessageHandlers[Index];
+        TSharedPtr<CWindowMessageHandler> Handler = WindowMessageHandlers[Index];
         if ( Handler->OnWindowFrameMouseEvent( Event ) )
         {
             Event.IsConsumed = true;
@@ -773,10 +789,7 @@ void CInterfaceApplication::RenderStrings()
 
         ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( 0.3f, 0.3f, 0.3f, 0.6f ) );
 
-        const ImGuiWindowFlags WindowFlags =
-            ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoDecoration |
-            ImGuiWindowFlags_NoSavedSettings;
+        const ImGuiWindowFlags WindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings;
 
         ImGui::Begin( "DebugWindow", nullptr, WindowFlags );
         ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
@@ -799,7 +812,7 @@ void CInterfaceApplication::HandleWindowClosed( const TSharedRef<CPlatformWindow
     SWindowClosedEvent WindowClosedEvent( Window );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
-        CWindowMessageHandler* Handler = WindowMessageHandlers[Index];
+        TSharedPtr<CWindowMessageHandler> Handler = WindowMessageHandlers[Index];
         if ( Handler->OnWindowClosed( WindowClosedEvent ) )
         {
             WindowClosedEvent.IsConsumed = true;

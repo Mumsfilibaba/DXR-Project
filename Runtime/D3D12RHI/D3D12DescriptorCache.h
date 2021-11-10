@@ -477,7 +477,7 @@ public:
         Reset();
     }
 
-    FORCEINLINE void Set32BitShaderConstants( uint32* InConstants, uint32 InNumConstants )
+    FORCEINLINE void Set32BitShaderConstants( const uint32* InConstants, uint32 InNumConstants )
     {
         D3D12_ERROR( InNumConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT, "[D3D12]: Trying to set a number of shader-constants (NumConstants=" + ToString( InNumConstants ) + ") higher than the maximum (MaxShaderConstants=" + ToString( D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT ) + ") " );
 

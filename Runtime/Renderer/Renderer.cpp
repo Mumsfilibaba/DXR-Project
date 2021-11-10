@@ -63,6 +63,11 @@ RENDERER_API CRenderer GRenderer;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+CRenderer::CRenderer()
+    : WindowHandler( MakeShared<CRendererWindowHandler>() )
+{
+}
+
 bool CRenderer::Init()
 {
     INIT_CONSOLE_VARIABLE( "r.EnableSSAO", &GEnableSSAO );

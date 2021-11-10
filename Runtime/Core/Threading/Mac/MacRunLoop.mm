@@ -10,6 +10,7 @@
 class CMacRunLoopSource
 {
 public:
+
     CMacRunLoopSource(CFRunLoopRef InRunLoop, NSString* InRunLoopMode)
         : RunLoop(InRunLoop)
         , RunLoopMode(InRunLoopMode)
@@ -118,7 +119,7 @@ void CMacMainThread::MakeCall( dispatch_block_t Block, bool WaitUntilFinished )
 {
     dispatch_block_t CopiedBlock = Block_copy( Block );
     
-    if ([NSThread isMainThread])
+    if ( PlatformThreadMisc::IsMainThread() )
     {
         // If already on mainthread, execute Block here
         CopiedBlock();
@@ -131,8 +132,8 @@ void CMacMainThread::MakeCall( dispatch_block_t Block, bool WaitUntilFinished )
         if (WaitUntilFinished)
         {
             dispatch_semaphore_t WaitSemaphore = dispatch_semaphore_create(0);
-            dispatch_block_t     WaitableBlock = Block_copy(
-            ^{
+            dispatch_block_t     WaitableBlock = Block_copy(^
+            {
                 CopiedBlock();
                 dispatch_semaphore_signal( WaitSemaphore );
             });

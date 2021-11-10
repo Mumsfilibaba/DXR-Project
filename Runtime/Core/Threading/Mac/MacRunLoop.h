@@ -13,7 +13,9 @@ class NSString;
 
 class CMacRunLoopSource;
 
-class CORE_API CMacMainThread
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+class CMacMainThread
 {
 public:
 
@@ -33,7 +35,9 @@ private:
     static CMacRunLoopSource* MainThread;
 };
 
-inline void MakeMainThreadCall( dispatch_block_t Block, bool WaitUntilFinished )
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+FORCEINLINE void MakeMainThreadCall( dispatch_block_t Block, bool WaitUntilFinished )
 {
     CMacMainThread::MakeCall( Block, WaitUntilFinished );
 }

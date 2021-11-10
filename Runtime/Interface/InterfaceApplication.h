@@ -7,6 +7,7 @@
 
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Pair.h"
 #include "Core/Time/Timestamp.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Delegates/Event.h"
@@ -91,10 +92,10 @@ public:
     TSharedRef<CPlatformWindow> GetActiveWindow() const;
 
     /* Adds a InputHandler to the application, which gets processed before the game */
-    void AddInputHandler( CInputHandler* NewInputHandler );
+    void AddInputHandler( const TSharedPtr<CInputHandler>& NewInputHandler, uint32 Priority );
 
     /* Removes a InputHandler from the application */
-    void RemoveInputHandler( CInputHandler* InputHandler );
+    void RemoveInputHandler( const TSharedPtr<CInputHandler>& InputHandler );
 
     /* Registers the main window of the application */
     void RegisterMainViewport( const TSharedRef<CPlatformWindow>& NewMainViewport );
@@ -118,10 +119,10 @@ public:
     void SetPlatformApplication( const TSharedPtr<CPlatformApplication>& InPlatformApplication );
 
     /* Adds a InputHandler to the application, which gets processed before the application module */
-    void AddWindowMessageHandler( CWindowMessageHandler* NewWindowMessageHandler );
+    void AddWindowMessageHandler( const TSharedPtr<CWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority );
 
     /* Removes a InputHandler to the application, which gets processed before the application module */
-    void RemoveWindowMessageHandler( CWindowMessageHandler* WindowMessageHandler );
+    void RemoveWindowMessageHandler( const TSharedPtr<CWindowMessageHandler>& WindowMessageHandler );
 
     FORCEINLINE TSharedPtr<CPlatformApplication> GetPlatformApplication() const
     {
@@ -235,7 +236,7 @@ protected:
 
     /* Templated insertion method */
     template<typename MessageHandlerType>
-    static void InsertMessageHandler( TArray<MessageHandlerType*>& OutMessageHandlerArray, MessageHandlerType* NewMessageHandler );
+    static void InsertMessageHandler( TArray<TSharedPtr<MessageHandlerType>>& OutMessageHandlerArray, const TSharedPtr<MessageHandlerType>& NewMessageHandler, uint32 NewPriority );
 
     /* Render all the debug strings and clear the array */
     void RenderStrings();
@@ -256,10 +257,10 @@ protected:
     TArray<CString> DebugStrings;
 
     /* Input handlers in the application */
-    TArray<CInputHandler*> InputHandlers;
+    TArray<TPair<TSharedPtr<CInputHandler>, uint32>> InputHandlers;
 
     /* Input handlers in the application */
-    TArray<CWindowMessageHandler*> WindowMessageHandlers;
+    TArray<TPair<TSharedPtr<CWindowMessageHandler>, uint32>> WindowMessageHandlers;
 
     /* All registered users */
     TArray<TSharedPtr<CInterfaceUser>> RegisteredUsers;

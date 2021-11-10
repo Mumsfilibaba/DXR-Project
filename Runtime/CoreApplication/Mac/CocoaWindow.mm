@@ -8,6 +8,8 @@
 
 - (id) init:(CMacApplication*) InApplication ContentRect:(NSRect)ContentRect StyleMask:(NSWindowStyleMask)StyleMask Backing:(NSBackingStoreType)BackingStoreType Defer:(BOOL)Flag
 {
+    Assert(InApplication != nullptr);
+
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:BackingStoreType defer:Flag];
     if (self)
     {

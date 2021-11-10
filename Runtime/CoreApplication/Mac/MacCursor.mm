@@ -18,7 +18,8 @@ See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
 + (id)_windowResizeEastWestCursor;
 @end
 
-/* Implementation */
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void CMacCursor::SetCursor( ECursor Cursor )
 {
     NSCursor* SelectedCursor = nullptr;

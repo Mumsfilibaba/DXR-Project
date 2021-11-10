@@ -45,12 +45,6 @@ public:
     {
         return false;
     }
-
-    /* Return the priority of this inputhandler, higher will be processed first */
-    virtual uint32 GetPriority() const
-    {
-        return 0;
-    }
 };
 
 #if defined(COMPILER_MSVC)

@@ -242,32 +242,31 @@ using CD3D12RHITexture3D = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture3D>;
 
 inline CD3D12BaseTexture* D3D12TextureCast( CRHITexture* Texture )
 {
-    Assert( Texture != nullptr );
-
-    if ( Texture->AsTexture2D() != nullptr )
+    if ( Texture )
     {
-        return static_cast<CD3D12RHITexture2D*>(Texture);
+        if ( Texture->AsTexture2D() != nullptr )
+        {
+            return static_cast<CD3D12RHITexture2D*>(Texture);
+        }
+        else if ( Texture->AsTexture2DArray() != nullptr )
+        {
+            return static_cast<CD3D12RHITexture2DArray*>(Texture);
+        }
+        else if ( Texture->AsTextureCube() != nullptr )
+        {
+            return static_cast<CD3D12RHITextureCube*>(Texture);
+        }
+        else if ( Texture->AsTextureCubeArray() != nullptr )
+        {
+            return static_cast<CD3D12RHITextureCubeArray*>(Texture);
+        }
+        else if ( Texture->AsTexture3D() != nullptr )
+        {
+            return static_cast<CD3D12RHITexture3D*>(Texture);
+        }
     }
-    else if ( Texture->AsTexture2DArray() != nullptr )
-    {
-        return static_cast<CD3D12RHITexture2DArray*>(Texture);
-    }
-    else if ( Texture->AsTextureCube() != nullptr )
-    {
-        return static_cast<CD3D12RHITextureCube*>(Texture);
-    }
-    else if ( Texture->AsTextureCubeArray() != nullptr )
-    {
-        return static_cast<CD3D12RHITextureCubeArray*>(Texture);
-    }
-    else if ( Texture->AsTexture3D() != nullptr )
-    {
-        return static_cast<CD3D12RHITexture3D*>(Texture);
-    }
-    else
-    {
-        return nullptr;
-    }
+    
+    return nullptr;
 }
 
 #ifdef COMPILER_MSVC

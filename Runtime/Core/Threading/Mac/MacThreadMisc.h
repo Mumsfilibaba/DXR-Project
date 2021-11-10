@@ -15,6 +15,10 @@ public:
     /* Performs platform specific initialization of threadhandling */
     static FORCEINLINE bool Init() 
     { 
+        // This must be executed on the mainthread
+        MainThreadHandle = GetThreadHandle();
+
+        // Then init the mainthread runloop
         CMacMainThread::Init();
 		return true;
     }
@@ -41,5 +45,14 @@ public:
         float MicroSeconds = Time.AsMicroSeconds();
         usleep( static_cast<useconds_t>(MicroSeconds) );
     }
+
+    /* Checks weather or not the current thread is the main thread */
+    static FORCEINLINE bool IsMainThread() 
+    { 
+        return (MainThreadHandle == GetThreadHandle());
+    }
+
+private:
+    static PlatformThreadHandle MainThreadHandle;
 };
 #endif

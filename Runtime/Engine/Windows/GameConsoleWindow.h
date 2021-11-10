@@ -54,7 +54,7 @@ public:
 
 private:
 
-    CGameConsoleWindow() = default;
+    CGameConsoleWindow();
     ~CGameConsoleWindow() = default;
 
     /* Callback from the input */
@@ -63,7 +63,7 @@ private:
     /* Called when a key is pressed */
     void HandleKeyPressedEvent( const SKeyEvent& Event );
 
-    CConsoleInputHandler InputHandler;
+    TSharedPtr<CConsoleInputHandler> InputHandler;
 
     /* Text to display in the input box when browsing through the history */
     CString PopupSelectedText;

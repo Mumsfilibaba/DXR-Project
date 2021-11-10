@@ -30,6 +30,7 @@ public:
     virtual PlatformThreadHandle GetPlatformHandle() override final;
 
 private:
+
     CMacThread( ThreadFunction InFunction );
     CMacThread( ThreadFunction InFunction, const CString& InName );
     ~CMacThread();

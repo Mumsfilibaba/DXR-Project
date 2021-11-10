@@ -1,11 +1,20 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
+#include "Core/CoreModule.h"
 #include "Core/Threading/Interface/PlatformThreadMisc.h"
 
 class CWindowsThreadMisc : public CPlatformThreadMisc
 {
 public:
+
+    /* Performs platform specific initialization of threadhandling */
+    static FORCEINLINE bool Init() 
+    { 
+        // This must be executed on the mainthread
+        MainThreadHandle = GetThreadHandle();
+		return true;
+    }
 
     /* Retrieves the number of logical cores available on the system */
     static FORCEINLINE uint32 GetNumProcessors()
@@ -30,5 +39,15 @@ public:
         DWORD Milliseconds = static_cast<DWORD>(Time.AsMilliSeconds());
         ::Sleep( Milliseconds );
     }
+
+    /* Checks weather or not the current thread is the main thread */
+    static FORCEINLINE bool IsMainThread() 
+    { 
+        return (MainThreadHandle == GetThreadHandle());
+    }
+
+private:
+    static CORE_API PlatformThreadHandle MainThreadHandle;
 };
+
 #endif

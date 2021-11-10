@@ -94,6 +94,7 @@ public:
 
     FORCEINLINE SD3D12ShaderParameter GetConstantBufferParameter( uint32 ParameterIndex )
     {
+        D3D12_ERROR( ParameterIndex < ConstantBufferParameters.Size(), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(ConstantBufferParameters.Size()) + " slots");
         return ConstantBufferParameters[ParameterIndex];
     }
 
@@ -104,6 +105,7 @@ public:
 
     FORCEINLINE SD3D12ShaderParameter GetShaderResourceParameter( uint32 ParameterIndex )
     {
+        D3D12_ERROR( ParameterIndex < ShaderResourceParameters.Size(), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(ShaderResourceParameters.Size()) + " slots");
         return ShaderResourceParameters[ParameterIndex];
     }
 
@@ -114,6 +116,7 @@ public:
 
     FORCEINLINE SD3D12ShaderParameter GetUnorderedAccessParameter( uint32 ParameterIndex )
     {
+        D3D12_ERROR( ParameterIndex < UnorderedAccessParameters.Size(), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(UnorderedAccessParameters.Size()) + " slots");
         return UnorderedAccessParameters[ParameterIndex];
     }
 
@@ -124,6 +127,7 @@ public:
 
     FORCEINLINE SD3D12ShaderParameter GetSamplerStateParameter( uint32 ParameterIndex )
     {
+        D3D12_ERROR( ParameterIndex < SamplerParameters.Size(), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(SamplerParameters.Size()) + " slots");
         return SamplerParameters[ParameterIndex];
     }
 

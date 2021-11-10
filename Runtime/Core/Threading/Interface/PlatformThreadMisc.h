@@ -30,7 +30,10 @@ public:
     static FORCEINLINE PlatformThreadHandle GetThreadHandle() { return static_cast<PlatformThreadHandle>(INVALID_THREAD_ID); }
 
     /* Makes the current thread sleep for a specified amount of time */
-    static FORCEINLINE void Sleep( CTimestamp Time ) { }
+    static FORCEINLINE void Sleep( CTimestamp Time ) {}
+
+    /* Checks weather or not the current thread is the main thread */
+    static FORCEINLINE bool IsMainThread() { return false; }
 };
 
 #if defined(COMPILER_MSVC)

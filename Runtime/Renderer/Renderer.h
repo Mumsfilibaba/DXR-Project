@@ -63,7 +63,7 @@ class RENDERER_API CRenderer
 {
 public:
 
-    CRenderer() = default;
+    CRenderer();
     ~CRenderer() = default;
 
     bool Init();
@@ -96,7 +96,7 @@ private:
     bool InitAA();
     bool InitShadingImage();
 
-    CRendererWindowHandler WindowHandler;
+    TSharedPtr<CRendererWindowHandler> WindowHandler;
 
     TSharedRef<CTextureDebugWindow> TextureDebugger;
     TSharedRef<CRendererInfoWindow> InfoWindow;

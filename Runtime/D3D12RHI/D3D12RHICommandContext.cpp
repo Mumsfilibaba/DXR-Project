@@ -224,23 +224,27 @@ bool CD3D12RHICommandContext::Init()
         CD3D12CommandBatch& Batch = CmdBatches.Emplace( GetDevice() );
         if ( !Batch.Init() )
         {
+            D3D12_ERROR_ALWAYS( "Failed to initialize D3D12CommandBatch" );
             return false;
         }
     }
 
     if ( !CmdList.Init( D3D12_COMMAND_LIST_TYPE_DIRECT, CmdBatches[0].GetCommandAllocator(), nullptr ) )
     {
+        D3D12_ERROR_ALWAYS( "Failed to initialize CommandList" );
         return false;
     }
 
     FenceValue = 0;
     if ( !Fence.Init( FenceValue ) )
     {
+        D3D12_ERROR_ALWAYS( "Failed to initialize Fence" );
         return false;
     }
 
     if ( !DescriptorCache.Init() )
     {
+        D3D12_ERROR_ALWAYS( "Failed to initialize DescriptorCache" );
         return false;
     }
 
@@ -249,8 +253,12 @@ bool CD3D12RHICommandContext::Init()
 
 void CD3D12RHICommandContext::UpdateBuffer( CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData )
 {
-    if ( SizeInBytes != 0 )
+    D3D12_ERROR( Resource != nullptr, "Resource cannot be nullptr");
+
+    if ( SizeInBytes )
     {
+        D3D12_ERROR( SourceData != nullptr, "SourceData cannot be nullptr ");
+
         FlushResourceBarriers();
 
         CD3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
@@ -282,7 +290,7 @@ void CD3D12RHICommandContext::Begin()
 
     if ( !CmdBatch->Reset() )
     {
-        CDebug::DebugBreak();
+        D3D12_ERROR_ALWAYS( "Failed to reset D3D12CommandBatch" );
         return;
     }
 
@@ -290,7 +298,7 @@ void CD3D12RHICommandContext::Begin()
 
     if ( !CmdList.Reset( CmdBatch->GetCommandAllocator() ) )
     {
-        CDebug::DebugBreak();
+        D3D12_ERROR_ALWAYS( "Failed to reset Commandlist" );
         return;
     }
 
@@ -312,12 +320,13 @@ void CD3D12RHICommandContext::End()
     {
         ResolveProfilers[i]->ResolveQueries( *this );
     }
+
     ResolveProfilers.Clear();
 
     // Execute
     if ( !CmdList.Close() )
     {
-        CDebug::DebugBreak();
+        D3D12_ERROR_ALWAYS( "Failed to close CommandList" );
         return;
     }
 
@@ -325,40 +334,36 @@ void CD3D12RHICommandContext::End()
 
     if ( !CmdQueue.SignalFence( Fence, NewFenceValue ) )
     {
-        CDebug::DebugBreak();
+        D3D12_ERROR_ALWAYS( "Failed to signal Fence on the GPU" );
         return;
     }
 
     IsReady = false;
 }
 
-void CD3D12RHICommandContext::BeginTimeStamp( CRHITimestampQuery* Profiler, uint32 Index )
+void CD3D12RHICommandContext::BeginTimeStamp( CRHITimestampQuery* TimestampQuery, uint32 Index )
 {
+    CD3D12RHITimestampQuery* DxTimestampQuery = static_cast<CD3D12RHITimestampQuery*>(TimestampQuery);
+    D3D12_ERROR( DxTimestampQuery != nullptr, "TimestampQuery cannot be nullptr" );
+
     ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+    DxTimestampQuery->BeginQuery( DxCmdList, Index );
 
-    CD3D12RHITimestampQuery* DxProfiler = static_cast<CD3D12RHITimestampQuery*>(Profiler);
-    Assert( Profiler );
-
-    DxProfiler->BeginQuery( DxCmdList, Index );
-
-    ResolveProfilers.Emplace( MakeSharedRef<CD3D12RHITimestampQuery>( DxProfiler ) );
+    ResolveProfilers.Emplace( MakeSharedRef<CD3D12RHITimestampQuery>( DxTimestampQuery ) );
 }
 
-void CD3D12RHICommandContext::EndTimeStamp( CRHITimestampQuery* Profiler, uint32 Index )
+void CD3D12RHICommandContext::EndTimeStamp( CRHITimestampQuery* TimestampQuery, uint32 Index )
 {
-    Assert( Profiler );
+    CD3D12RHITimestampQuery* DxTimestampQuery = static_cast<CD3D12RHITimestampQuery*>(TimestampQuery);
+    D3D12_ERROR( DxTimestampQuery != nullptr, "TimestampQuery cannot be nullptr" );
 
     ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
-
-    CD3D12RHITimestampQuery* DxProfiler = static_cast<CD3D12RHITimestampQuery*>(Profiler);
-    Assert( Profiler );
-
-    DxProfiler->EndQuery( DxCmdList, Index );
+    DxTimestampQuery->EndQuery( DxCmdList, Index );
 }
 
 void CD3D12RHICommandContext::ClearRenderTargetView( CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor )
 {
-    Assert( RenderTargetView != nullptr );
+    D3D12_ERROR( RenderTargetView != nullptr, "RenderTargetView cannot be nullptr when clearing the surface" );
 
     FlushResourceBarriers();
 
@@ -370,7 +375,7 @@ void CD3D12RHICommandContext::ClearRenderTargetView( CRHIRenderTargetView* Rende
 
 void CD3D12RHICommandContext::ClearDepthStencilView( CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue )
 {
-    Assert( DepthStencilView != nullptr );
+    D3D12_ERROR( DepthStencilView != nullptr, "DepthStencilView cannot be nullptr when clearing the surface" );
 
     FlushResourceBarriers();
 
@@ -382,6 +387,8 @@ void CD3D12RHICommandContext::ClearDepthStencilView( CRHIDepthStencilView* Depth
 
 void CD3D12RHICommandContext::ClearUnorderedAccessViewFloat( CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor )
 {
+    D3D12_ERROR( UnorderedAccessView != nullptr, "UnorderedAccessView cannot be nullptr when clearing the surface" );
+
     FlushResourceBarriers();
 
     CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(UnorderedAccessView);
@@ -419,6 +426,7 @@ void CD3D12RHICommandContext::SetShadingRateImage( CRHITexture2D* ShadingImage )
     {
         CD3D12BaseTexture* DxTexture = D3D12TextureCast( ShadingImage );
         CmdList.RSSetShadingRateImage( DxTexture->GetResource()->GetResource() );
+
         CmdBatch->AddInUseResource( ShadingImage );
     }
     else
@@ -478,7 +486,7 @@ void CD3D12RHICommandContext::SetPrimitiveTopology( EPrimitiveTopology InPrimitv
 
 void CD3D12RHICommandContext::SetVertexBuffers( CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot )
 {
-    Assert( BufferSlot + BufferCount < D3D12_MAX_VERTEX_BUFFER_SLOTS );
+    D3D12_ERROR( BufferSlot + BufferCount < D3D12_MAX_VERTEX_BUFFER_SLOTS, "Trying to set a VertexBuffer to an invalid slot" );
 
     for ( uint32 i = 0; i < BufferCount; i++ )
     {
@@ -502,10 +510,10 @@ void CD3D12RHICommandContext::SetIndexBuffer( CRHIIndexBuffer* IndexBuffer )
 
 void CD3D12RHICommandContext::SetRenderTargets( CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView )
 {
-    for ( uint32 i = 0; i < RenderTargetCount; i++ )
+    for ( uint32 Slot = 0; Slot < RenderTargetCount; Slot++ )
     {
         CD3D12RenderTargetView* DxRenderTargetView = static_cast<CD3D12RenderTargetView*>(RenderTargetViews[i]);
-        DescriptorCache.SetRenderTargetView( DxRenderTargetView, i );
+        DescriptorCache.SetRenderTargetView( DxRenderTargetView, Slot );
 
         // TODO: Maybe this should be handled by the descriptorcache
         CmdBatch->AddInUseResource( DxRenderTargetView );
@@ -513,22 +521,24 @@ void CD3D12RHICommandContext::SetRenderTargets( CRHIRenderTargetView* const* Ren
 
     CD3D12DepthStencilView* DxDepthStencilView = static_cast<CD3D12DepthStencilView*>(DepthStencilView);
     DescriptorCache.SetDepthStencilView( DxDepthStencilView );
+
     CmdBatch->AddInUseResource( DxDepthStencilView );
 }
 
 void CD3D12RHICommandContext::SetGraphicsPipelineState( class CRHIGraphicsPipelineState* PipelineState )
 {
-    Assert( PipelineState != nullptr );
+    // TODO: Maybe it should be supported to unbind pipelines by setting it to nullptr
+    D3D12_ERROR( PipelineState != nullptr, "PipelineState cannot be nullptr ");
 
     CD3D12RHIGraphicsPipelineState* DxPipelineState = static_cast<CD3D12RHIGraphicsPipelineState*>(PipelineState);
-    if ( DxPipelineState != CurrentGraphicsPipelineState.Get() )
+    if ( DxPipelineState != CurrentGraphicsPipelineState )
     {
         CurrentGraphicsPipelineState = MakeSharedRef<CD3D12RHIGraphicsPipelineState>( DxPipelineState );
         CmdList.SetPipelineState( CurrentGraphicsPipelineState->GetPipeline() );
     }
 
     CD3D12RootSignature* DxRootSignature = DxPipelineState->GetRootSignature();
-    if ( DxRootSignature != CurrentRootSignature.Get() )
+    if ( DxRootSignature != CurrentRootSignature )
     {
         CurrentRootSignature = MakeSharedRef<CD3D12RootSignature>( DxRootSignature );
         CmdList.SetGraphicsRootSignature( CurrentRootSignature.Get() );
@@ -537,7 +547,8 @@ void CD3D12RHICommandContext::SetGraphicsPipelineState( class CRHIGraphicsPipeli
 
 void CD3D12RHICommandContext::SetComputePipelineState( class CRHIComputePipelineState* PipelineState )
 {
-    Assert( PipelineState != nullptr );
+    // TODO: Maybe it should be supported to unbind pipelines by setting it to nullptr
+    D3D12_ERROR( PipelineState != nullptr, "PipelineState cannot be nullptr ");
 
     CD3D12RHIComputePipelineState* DxPipelineState = static_cast<CD3D12RHIComputePipelineState*>(PipelineState);
     if ( DxPipelineState != CurrentComputePipelineState.Get() )
@@ -557,19 +568,17 @@ void CD3D12RHICommandContext::SetComputePipelineState( class CRHIComputePipeline
 void CD3D12RHICommandContext::Set32BitShaderConstants( CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants )
 {
     UNREFERENCED_VARIABLE( Shader );
-
-    Assert( Num32BitConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT );
-    ShaderConstantsCache.Set32BitShaderConstants( (uint32*)Shader32BitConstants, Num32BitConstants );
+    ShaderConstantsCache.Set32BitShaderConstants( reinterpret_cast<const uint32*>(Shader32BitConstants), Num32BitConstants );
 }
 
 void CD3D12RHICommandContext::SetShaderResourceView( CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex )
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast( Shader );
-    Assert( DxShader != nullptr );
+    D3D12_ERROR( DxShader != nullptr, "Cannot bind resources to a shader that is nullptr" );
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetShaderResourceParameter( ParameterIndex );
-    Assert( ParameterInfo.Space == 0 );
-    Assert( ParameterInfo.NumDescriptors == 1 );
+    D3D12_ERROR( ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace = 0");
+    D3D12_ERROR( ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString( ParameterIndex ));
 
     CD3D12RHIShaderResourceView* DxShaderResourceView = static_cast<CD3D12RHIShaderResourceView*>(ShaderResourceView);
     DescriptorCache.SetShaderResourceView( DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register );
@@ -578,11 +587,11 @@ void CD3D12RHICommandContext::SetShaderResourceView( CRHIShader* Shader, CRHISha
 void CD3D12RHICommandContext::SetShaderResourceViews( CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex )
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast( Shader );
-    Assert( DxShader != nullptr );
+    D3D12_ERROR( DxShader != nullptr, "Cannot bind resources to a shader that is nullptr" );
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetShaderResourceParameter( ParameterIndex );
-    Assert( ParameterInfo.Space == 0 );
-    Assert( ParameterInfo.NumDescriptors == NumShaderResourceViews );
+    D3D12_ERROR( ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace = 0");
+    D3D12_ERROR( ParameterInfo.NumDescriptors == NumShaderResourceViews, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString( ParameterIndex ));
 
     for ( uint32 i = 0; i < NumShaderResourceViews; i++ )
     {
@@ -594,11 +603,11 @@ void CD3D12RHICommandContext::SetShaderResourceViews( CRHIShader* Shader, CRHISh
 void CD3D12RHICommandContext::SetUnorderedAccessView( CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex )
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast( Shader );
-    Assert( DxShader != nullptr );
+    D3D12_ERROR( DxShader != nullptr, "Cannot bind resources to a shader that is nullptr" );
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetUnorderedAccessParameter( ParameterIndex );
-    Assert( ParameterInfo.Space == 0 );
-    Assert( ParameterInfo.NumDescriptors == 1 );
+    D3D12_ERROR( ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace = 0");
+    D3D12_ERROR( ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString( ParameterIndex ));
 
     CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(UnorderedAccessView);
     DescriptorCache.SetUnorderedAccessView( DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register );
@@ -607,11 +616,11 @@ void CD3D12RHICommandContext::SetUnorderedAccessView( CRHIShader* Shader, CRHIUn
 void CD3D12RHICommandContext::SetUnorderedAccessViews( CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex )
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast( Shader );
-    Assert( DxShader != nullptr );
+    D3D12_ERROR( DxShader != nullptr, "Cannot bind resources to a shader that is nullptr" );
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetUnorderedAccessParameter( ParameterIndex );
-    Assert( ParameterInfo.Space == 0 );
-    Assert( ParameterInfo.NumDescriptors == NumUnorderedAccessViews );
+    D3D12_ERROR( ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace = 0");
+    D3D12_ERROR( ParameterInfo.NumDescriptors == NumUnorderedAccessViews, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString( ParameterIndex ));
 
     for ( uint32 i = 0; i < NumUnorderedAccessViews; i++ )
     {
@@ -623,11 +632,11 @@ void CD3D12RHICommandContext::SetUnorderedAccessViews( CRHIShader* Shader, CRHIU
 void CD3D12RHICommandContext::SetConstantBuffer( CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex )
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast( Shader );
-    Assert( DxShader != nullptr );
+    D3D12_ERROR( DxShader != nullptr, "Cannot bind resources to a shader that is nullptr" );
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetConstantBufferParameter( ParameterIndex );
-    Assert( ParameterInfo.Space == 0 );
-    Assert( ParameterInfo.NumDescriptors == 1 );
+    D3D12_ERROR( ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace = 0");
+    D3D12_ERROR( ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString( ParameterIndex ));
 
     if ( ConstantBuffer )
     {
@@ -643,11 +652,11 @@ void CD3D12RHICommandContext::SetConstantBuffer( CRHIShader* Shader, CRHIConstan
 void CD3D12RHICommandContext::SetConstantBuffers( CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex )
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast( Shader );
-    Assert( DxShader != nullptr );
+    D3D12_ERROR( DxShader != nullptr, "Cannot bind resources to a shader that is nullptr" );
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetConstantBufferParameter( ParameterIndex );
-    Assert( ParameterInfo.Space == 0 );
-    Assert( ParameterInfo.NumDescriptors == NumConstantBuffers );
+    D3D12_ERROR( ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace = 0");
+    D3D12_ERROR( ParameterInfo.NumDescriptors == NumConstantBuffers, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString( ParameterIndex ));
 
     for ( uint32 i = 0; i < NumConstantBuffers; i++ )
     {
@@ -666,11 +675,11 @@ void CD3D12RHICommandContext::SetConstantBuffers( CRHIShader* Shader, CRHIConsta
 void CD3D12RHICommandContext::SetSamplerState( CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex )
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast( Shader );
-    Assert( DxShader != nullptr );
+    D3D12_ERROR( DxShader != nullptr, "Cannot bind resources to a shader that is nullptr" );
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetSamplerStateParameter( ParameterIndex );
-    Assert( ParameterInfo.Space == 0 );
-    Assert( ParameterInfo.NumDescriptors == 1 );
+    D3D12_ERROR( ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace = 0");
+    D3D12_ERROR( ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString( ParameterIndex ));
 
     CD3D12RHISamplerState* DxSamplerState = static_cast<CD3D12RHISamplerState*>(SamplerState);
     DescriptorCache.SetSamplerState( DxSamplerState, DxShader->GetShaderVisibility(), ParameterInfo.Register );
@@ -679,11 +688,11 @@ void CD3D12RHICommandContext::SetSamplerState( CRHIShader* Shader, CRHISamplerSt
 void CD3D12RHICommandContext::SetSamplerStates( CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex )
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast( Shader );
-    Assert( DxShader != nullptr );
+    D3D12_ERROR( DxShader != nullptr, "Cannot bind resources to a shader that is nullptr" );
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetSamplerStateParameter( ParameterIndex );
-    Assert( ParameterInfo.Space == 0 );
-    Assert( ParameterInfo.NumDescriptors == NumSamplerStates );
+    D3D12_ERROR( ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace = 0");
+    D3D12_ERROR( ParameterInfo.NumDescriptors == NumSamplerStates, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString( ParameterIndex ));
 
     for ( uint32 i = 0; i < NumSamplerStates; i++ )
     {
@@ -694,6 +703,8 @@ void CD3D12RHICommandContext::SetSamplerStates( CRHIShader* Shader, CRHISamplerS
 
 void CD3D12RHICommandContext::ResolveTexture( CRHITexture* Destination, CRHITexture* Source )
 {
+    D3D12_ERROR( Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr" );
+
     FlushResourceBarriers();
 
     CD3D12BaseTexture* DxDestination = D3D12TextureCast( Destination );
@@ -702,7 +713,7 @@ void CD3D12RHICommandContext::ResolveTexture( CRHITexture* Destination, CRHIText
     const DXGI_FORMAT SrcFormat = DxSource->GetNativeFormat();
 
     //TODO: For now texture must be the same format. I.e typeless does probably not work
-    Assert( DstFormat == SrcFormat );
+    D3D12_ERROR( DstFormat == SrcFormat, "Destination and Source texture must have the same format" );
 
     CmdList.ResolveSubresource( DxDestination->GetResource(), DxSource->GetResource(), DstFormat );
 
@@ -712,16 +723,23 @@ void CD3D12RHICommandContext::ResolveTexture( CRHITexture* Destination, CRHIText
 
 void CD3D12RHICommandContext::UpdateBuffer( CRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData )
 {
-    CD3D12BaseBuffer* DxDestination = D3D12BufferCast( Destination );
-    UpdateBuffer( DxDestination->GetResource(), OffsetInBytes, SizeInBytes, SourceData );
+    if ( SizeInBytes > 0 )
+    {
+        CD3D12BaseBuffer* DxDestination = D3D12BufferCast( Destination );
+        UpdateBuffer( DxDestination->GetResource(), OffsetInBytes, SizeInBytes, SourceData );
 
-    CmdBatch->AddInUseResource( Destination );
+        CmdBatch->AddInUseResource( Destination );
+    }
 }
 
 void CD3D12RHICommandContext::UpdateTexture2D( CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData )
 {
+    D3D12_ERROR( Destination != nullptr, "Destination cannot be nullptr" );
+
     if ( Width > 0 && Height > 0 )
     {
+        D3D12_ERROR( SourceData != nullptr, "SourceData cannot be nullptr" );
+
         FlushResourceBarriers();
 
         CD3D12BaseTexture* DxDestination = D3D12TextureCast( Destination );
@@ -768,6 +786,8 @@ void CD3D12RHICommandContext::UpdateTexture2D( CRHITexture2D* Destination, uint3
 
 void CD3D12RHICommandContext::CopyBuffer( CRHIBuffer* Destination, CRHIBuffer* Source, const SCopyBufferInfo& CopyInfo )
 {
+    D3D12_ERROR( Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr" );
+
     FlushResourceBarriers();
 
     CD3D12BaseBuffer* DxDestination = D3D12BufferCast( Destination );
@@ -780,6 +800,8 @@ void CD3D12RHICommandContext::CopyBuffer( CRHIBuffer* Destination, CRHIBuffer* S
 
 void CD3D12RHICommandContext::CopyTexture( CRHITexture* Destination, CRHITexture* Source )
 {
+    D3D12_ERROR( Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr" );
+
     FlushResourceBarriers();
 
     CD3D12BaseTexture* DxDestination = D3D12TextureCast( Destination );
@@ -792,6 +814,8 @@ void CD3D12RHICommandContext::CopyTexture( CRHITexture* Destination, CRHITexture
 
 void CD3D12RHICommandContext::CopyTextureRegion( CRHITexture* Destination, CRHITexture* Source, const SCopyTextureInfo& CopyInfo )
 {
+    D3D12_ERROR( Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr" );
+
     CD3D12BaseTexture* DxDestination = D3D12TextureCast( Destination );
     CD3D12BaseTexture* DxSource = D3D12TextureCast( Source );
 
@@ -834,10 +858,14 @@ void CD3D12RHICommandContext::DiscardResource( CRHIResource* Resource )
 
 void CD3D12RHICommandContext::BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool Update )
 {
+    D3D12_ERROR( Geometry != nullptr, "Geometry cannot be nullptr" );
+
     FlushResourceBarriers();
 
     CD3D12RHIVertexBuffer* DxVertexBuffer = static_cast<CD3D12RHIVertexBuffer*>(VertexBuffer);
     CD3D12RHIIndexBuffer* DxIndexBuffer = static_cast<CD3D12RHIIndexBuffer*>(IndexBuffer);
+    D3D12_ERROR( DxVertexBuffer != nullptr, "VertexBuffer cannot be nullptr" );
+
     CD3D12RHIRayTracingGeometry* DxGeometry = static_cast<CD3D12RHIRayTracingGeometry*>(Geometry);
     DxGeometry->VertexBuffer = DxVertexBuffer;
     DxGeometry->IndexBuffer = DxIndexBuffer;
@@ -850,6 +878,8 @@ void CD3D12RHICommandContext::BuildRayTracingGeometry( CRHIRayTracingGeometry* G
 
 void CD3D12RHICommandContext::BuildRayTracingScene( CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update )
 {
+    D3D12_ERROR( RayTracingScene != nullptr, "RayTracingScene cannot be nullptr" );
+
     FlushResourceBarriers();
 
     CD3D12RHIRayTracingScene* DxScene = static_cast<CD3D12RHIRayTracingScene*>(RayTracingScene);
@@ -869,8 +899,8 @@ void CD3D12RHICommandContext::SetRayTracingBindings(
 {
     CD3D12RHIRayTracingScene* DxScene = static_cast<CD3D12RHIRayTracingScene*>(RayTracingScene);
     CD3D12RHIRayTracingPipelineState* DxPipelineState = static_cast<CD3D12RHIRayTracingPipelineState*>(PipelineState);
-    Assert( DxScene != nullptr );
-    Assert( DxPipelineState != nullptr );
+    D3D12_ERROR( DxScene != nullptr, "RayTracingScene cannot be nullptr" );
+    D3D12_ERROR( DxPipelineState != nullptr, "PipelineState cannot be nullptr" );
 
     uint32 NumDescriptorsNeeded = 0;
     uint32 NumSamplersNeeded = 0;
@@ -896,14 +926,16 @@ void CD3D12RHICommandContext::SetRayTracingBindings(
         NumSamplersNeeded += HitGroupResources[i].NumSamplers();
     }
 
-    Assert( NumDescriptorsNeeded < D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT );
+    D3D12_ERROR( NumDescriptorsNeeded < D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, "NumDescriptorsNeeded=" + ToString( NumDescriptorsNeeded ) + ", but the maximum is '" + ToString( D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT ) + "'");
+
     CD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     if ( !ResourceHeap->HasSpace( NumDescriptorsNeeded ) )
     {
         ResourceHeap->AllocateFreshHeap();
     }
 
-    Assert( NumSamplersNeeded < D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT );
+    D3D12_ERROR( NumSamplersNeeded < D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, "NumDescriptorsNeeded=" + ToString( NumSamplersNeeded ) + ", but the maximum is '" + ToString( D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT ) + "'");
+
     CD3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
     if ( !SamplerHeap->HasSpace( NumSamplersNeeded ) )
     {
@@ -912,41 +944,42 @@ void CD3D12RHICommandContext::SetRayTracingBindings(
 
     if ( !DxScene->BuildBindingTable( *this, DxPipelineState, ResourceHeap, SamplerHeap, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources ) )
     {
-        LOG_ERROR( "[D3D12CommandContext]: FAILED to Build Shader Binding Table" );
+        D3D12_ERROR_ALWAYS( "[D3D12CommandContext]: FAILED to Build Shader Binding Table" );
     }
-
-    Assert( GlobalResource != nullptr );
-
-    if ( !GlobalResource->ConstantBuffers.IsEmpty() )
+  
+    if (GlobalResource)
     {
-        for ( int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++ )
+        if ( !GlobalResource->ConstantBuffers.IsEmpty() )
         {
-            CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
-            DescriptorCache.SetConstantBufferView( &DxConstantBufferView, ShaderVisibility_All, i );
+            for ( int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++ )
+            {
+                CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
+                DescriptorCache.SetConstantBufferView( &DxConstantBufferView, ShaderVisibility_All, i );
+            }
         }
-    }
-    if ( !GlobalResource->ShaderResourceViews.IsEmpty() )
-    {
-        for ( int32 i = 0; i < GlobalResource->ShaderResourceViews.Size(); i++ )
+        if ( !GlobalResource->ShaderResourceViews.IsEmpty() )
         {
-            CD3D12RHIShaderResourceView* DxShaderResourceView = static_cast<CD3D12RHIShaderResourceView*>(GlobalResource->ShaderResourceViews[i]);
-            DescriptorCache.SetShaderResourceView( DxShaderResourceView, ShaderVisibility_All, i );
+            for ( int32 i = 0; i < GlobalResource->ShaderResourceViews.Size(); i++ )
+            {
+                CD3D12RHIShaderResourceView* DxShaderResourceView = static_cast<CD3D12RHIShaderResourceView*>(GlobalResource->ShaderResourceViews[i]);
+                DescriptorCache.SetShaderResourceView( DxShaderResourceView, ShaderVisibility_All, i );
+            }
         }
-    }
-    if ( !GlobalResource->UnorderedAccessViews.IsEmpty() )
-    {
-        for ( int32 i = 0; i < GlobalResource->UnorderedAccessViews.Size(); i++ )
+        if ( !GlobalResource->UnorderedAccessViews.IsEmpty() )
         {
-            CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(GlobalResource->UnorderedAccessViews[i]);
-            DescriptorCache.SetUnorderedAccessView( DxUnorderedAccessView, ShaderVisibility_All, i );
+            for ( int32 i = 0; i < GlobalResource->UnorderedAccessViews.Size(); i++ )
+            {
+                CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(GlobalResource->UnorderedAccessViews[i]);
+                DescriptorCache.SetUnorderedAccessView( DxUnorderedAccessView, ShaderVisibility_All, i );
+            }
         }
-    }
-    if ( !GlobalResource->SamplerStates.IsEmpty() )
-    {
-        for ( int32 i = 0; i < GlobalResource->SamplerStates.Size(); i++ )
+        if ( !GlobalResource->SamplerStates.IsEmpty() )
         {
-            CD3D12RHISamplerState* DxSampler = static_cast<CD3D12RHISamplerState*>(GlobalResource->SamplerStates[i]);
-            DescriptorCache.SetSamplerState( DxSampler, ShaderVisibility_All, i );
+            for ( int32 i = 0; i < GlobalResource->SamplerStates.Size(); i++ )
+            {
+                CD3D12RHISamplerState* DxSampler = static_cast<CD3D12RHISamplerState*>(GlobalResource->SamplerStates[i]);
+                DescriptorCache.SetSamplerState( DxSampler, ShaderVisibility_All, i );
+            }
         }
     }
 
@@ -954,6 +987,7 @@ void CD3D12RHICommandContext::SetRayTracingBindings(
 
     CD3D12RootSignature* GlobalRootSignature = DxPipelineState->GetGlobalRootSignature();
     CurrentRootSignature = MakeSharedRef<CD3D12RootSignature>( GlobalRootSignature );
+
     DXRCommandList->SetComputeRootSignature( CurrentRootSignature->GetRootSignature() );
 
     DescriptorCache.CommitComputeDescriptors( CmdList, CmdBatch, CurrentRootSignature.Get() );
@@ -962,12 +996,12 @@ void CD3D12RHICommandContext::SetRayTracingBindings(
 void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
 {
     CD3D12BaseTexture* DxTexture = D3D12TextureCast( Texture );
-    Assert( DxTexture != nullptr );
+    D3D12_ERROR( DxTexture != nullptr, "Texture cannot be nullptr" );
 
     D3D12_RESOURCE_DESC Desc = DxTexture->GetResource()->GetDesc();
     Desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
-    Assert( Desc.MipLevels > 1 );
+    D3D12_ERROR( Desc.MipLevels > 1, "MipLevels must be more than one in order to generate any MipLevels" );
 
     // TODO: Create this placed from a Heap? See what performance is 
     TSharedRef<CD3D12Resource> StagingTexture = dbg_new CD3D12Resource( GetDevice(), Desc, DxTexture->GetResource()->GetHeapType() );
@@ -982,7 +1016,7 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
     }
 
     // Check Type
-    const bool IsTextureCube = Texture->AsTextureCube();
+    const bool IsTextureCube = (Texture->AsTextureCube() != nullptr);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
     CMemory::Memzero( &SrvDesc );
@@ -1028,6 +1062,7 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
 
     // Allocate an extra handle for SRV
     const uint32 StartDescriptorHandleIndex = ResourceHeap->AllocateHandles( UavDescriptorHandleCount + 1 );
+
     const D3D12_CPU_DESCRIPTOR_HANDLE SrvHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt( StartDescriptorHandleIndex );
     GetDevice()->CreateShaderResourceView( DxTexture->GetResource()->GetResource(), &SrvDesc, SrvHandle_CPU );
 
@@ -1087,6 +1122,7 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
     }
 
     const D3D12_GPU_DESCRIPTOR_HANDLE SrvHandle_GPU = ResourceHeap->GetGPUDescriptorHandleAt( StartDescriptorHandleIndex );
+
     ID3D12DescriptorHeap* OnlineResourceHeap = ResourceHeap->GetHeap()->GetHeap();
     CmdList.SetDescriptorHeaps( &OnlineResourceHeap, 1 );
 
@@ -1102,6 +1138,7 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
     ConstantData.SrcMipLevel = 0;
 
     const uint32 ThreadsZ = IsTextureCube ? 6 : 1;
+
     uint32 RemainingMiplevels = Desc.MipLevels;
     for ( uint32 i = 0; i < NumDispatches; i++ )
     {
@@ -1109,15 +1146,15 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
         ConstantData.NumMipLevels = NMath::Min<uint32>( 4, RemainingMiplevels );
 
         CmdList.SetComputeRoot32BitConstants( &ConstantData, 4, 0, 0 );
-
-        // Because of DATA_STATIC_WHILE_SET_AT_EXECUTE error. Why we get this when we only use Root Signature 1.0 is beyond me.
         CmdList.SetComputeRootDescriptorTable( SrvHandle_GPU, 1 );
 
         const uint32 GPUDescriptorHandleIndex = i * MipLevelsPerDispatch;
+
         const D3D12_GPU_DESCRIPTOR_HANDLE UavHandle_GPU = ResourceHeap->GetGPUDescriptorHandleAt( UavStartDescriptorHandleIndex + GPUDescriptorHandleIndex );
         CmdList.SetComputeRootDescriptorTable( UavHandle_GPU, 2 );
 
         constexpr uint32 ThreadCount = 8;
+
         const uint32 ThreadsX = NMath::DivideByMultiple( DstWidth, ThreadCount );
         const uint32 ThreadsY = NMath::DivideByMultiple( DstHeight, ThreadCount );
         CmdList.Dispatch( ThreadsX, ThreadsY, ThreadsZ );
@@ -1152,7 +1189,7 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
 void CD3D12RHICommandContext::TransitionTexture( CRHITexture* Texture, EResourceState BeforeState, EResourceState AfterState )
 {
     const D3D12_RESOURCE_STATES DxBeforeState = ConvertResourceState( BeforeState );
-    const D3D12_RESOURCE_STATES DxAfterState = ConvertResourceState( AfterState );
+    const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState( AfterState );
 
     CD3D12BaseTexture* Resource = D3D12TextureCast( Texture );
     TransitionResource( Resource->GetResource(), DxBeforeState, DxAfterState );
@@ -1191,76 +1228,96 @@ void CD3D12RHICommandContext::Draw( uint32 VertexCount, uint32 StartVertexLocati
 {
     FlushResourceBarriers();
 
-    ShaderConstantsCache.CommitGraphics( CmdList, CurrentRootSignature.Get() );
-    DescriptorCache.CommitGraphicsDescriptors( CmdList, CmdBatch, CurrentRootSignature.Get() );
+    if ( VertexCount )
+    {
+        ShaderConstantsCache.CommitGraphics( CmdList, CurrentRootSignature.Get() );
+        DescriptorCache.CommitGraphicsDescriptors( CmdList, CmdBatch, CurrentRootSignature.Get() );
 
-    CmdList.DrawInstanced( VertexCount, 1, StartVertexLocation, 0 );
+        CmdList.DrawInstanced( VertexCount, 1, StartVertexLocation, 0 );
+    }
 }
 
 void CD3D12RHICommandContext::DrawIndexed( uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation )
 {
     FlushResourceBarriers();
 
-    ShaderConstantsCache.CommitGraphics( CmdList, CurrentRootSignature.Get() );
-    DescriptorCache.CommitGraphicsDescriptors( CmdList, CmdBatch, CurrentRootSignature.Get() );
+    if ( IndexCount )
+    {
+        ShaderConstantsCache.CommitGraphics( CmdList, CurrentRootSignature.Get() );
+        DescriptorCache.CommitGraphicsDescriptors( CmdList, CmdBatch, CurrentRootSignature.Get() );
 
-    CmdList.DrawIndexedInstanced( IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0 );
+        CmdList.DrawIndexedInstanced( IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0 );
+    }
 }
 
 void CD3D12RHICommandContext::DrawInstanced( uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation )
 {
     FlushResourceBarriers();
 
-    ShaderConstantsCache.CommitGraphics( CmdList, CurrentRootSignature.Get() );
-    DescriptorCache.CommitGraphicsDescriptors( CmdList, CmdBatch, CurrentRootSignature.Get() );
+    if ( VertexCountPerInstance > 0 && InstanceCount > 0 )
+    {
+        ShaderConstantsCache.CommitGraphics( CmdList, CurrentRootSignature.Get() );
+        DescriptorCache.CommitGraphicsDescriptors( CmdList, CmdBatch, CurrentRootSignature.Get() );
 
-    CmdList.DrawInstanced( VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation );
+        CmdList.DrawInstanced( VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation );
+    }
 }
 
 void CD3D12RHICommandContext::DrawIndexedInstanced( uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation )
 {
     FlushResourceBarriers();
 
-    ShaderConstantsCache.CommitGraphics( CmdList, CurrentRootSignature.Get() );
-    DescriptorCache.CommitGraphicsDescriptors( CmdList, CmdBatch, CurrentRootSignature.Get() );
+    if ( IndexCountPerInstance > 0 && InstanceCount > 0 )
+    {
+        ShaderConstantsCache.CommitGraphics( CmdList, CurrentRootSignature.Get() );
+        DescriptorCache.CommitGraphicsDescriptors( CmdList, CmdBatch, CurrentRootSignature.Get() );
 
-    CmdList.DrawIndexedInstanced( IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation );
+        CmdList.DrawIndexedInstanced( IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation );
+    }
 }
 
 void CD3D12RHICommandContext::Dispatch( uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ )
 {
     FlushResourceBarriers();
 
-    ShaderConstantsCache.CommitCompute( CmdList, CurrentRootSignature.Get() );
-    DescriptorCache.CommitComputeDescriptors( CmdList, CmdBatch, CurrentRootSignature.Get() );
+    if ( ThreadGroupCountX > 0 || ThreadGroupCountY > 0 || ThreadGroupCountZ > 0 )
+    {
+        ShaderConstantsCache.CommitCompute( CmdList, CurrentRootSignature.Get() );
+        DescriptorCache.CommitComputeDescriptors( CmdList, CmdBatch, CurrentRootSignature.Get() );
 
-    CmdList.Dispatch( ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ );
+        CmdList.Dispatch( ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ );
+    }
 }
 
-void CD3D12RHICommandContext::DispatchRays( CRHIRayTracingScene* Scene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth )
+void CD3D12RHICommandContext::DispatchRays( CRHIRayTracingScene* RayTracingScene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth )
 {
-    CD3D12RHIRayTracingScene* DxScene = static_cast<CD3D12RHIRayTracingScene*>(Scene);
+    CD3D12RHIRayTracingScene* DxScene = static_cast<CD3D12RHIRayTracingScene*>(RayTracingScene);
+    D3D12_ERROR( DxScene != nullptr, "RayTracingScene cannot be nullptr" );
+    
     CD3D12RHIRayTracingPipelineState* DxPipelineState = static_cast<CD3D12RHIRayTracingPipelineState*>(PipelineState);
-    Assert( DxScene != nullptr );
-    Assert( DxPipelineState != nullptr );
+    D3D12_ERROR( DxPipelineState != nullptr, "PipelineState cannot be nullptr" );
 
     ID3D12GraphicsCommandList4* DXRCommandList = CmdList.GetDXRCommandList();
+    D3D12_ERROR( DXRCommandList != nullptr, "DXRCommandList is nullptr, DXR is not supported" );
 
     FlushResourceBarriers();
 
-    D3D12_DISPATCH_RAYS_DESC RayDispatchDesc;
-    CMemory::Memzero( &RayDispatchDesc );
+    if ( Width > 0 || Height > 0 || Depth > 0 )
+    {
+        D3D12_DISPATCH_RAYS_DESC RayDispatchDesc;
+        CMemory::Memzero( &RayDispatchDesc );
 
-    RayDispatchDesc.RayGenerationShaderRecord = DxScene->GetRayGenShaderRecord();
-    RayDispatchDesc.MissShaderTable = DxScene->GetMissShaderTable();
-    RayDispatchDesc.HitGroupTable = DxScene->GetHitGroupTable();
+        RayDispatchDesc.RayGenerationShaderRecord = DxScene->GetRayGenShaderRecord();
+        RayDispatchDesc.MissShaderTable = DxScene->GetMissShaderTable();
+        RayDispatchDesc.HitGroupTable   = DxScene->GetHitGroupTable();
 
-    RayDispatchDesc.Width = Width;
-    RayDispatchDesc.Height = Height;
-    RayDispatchDesc.Depth = Depth;
+        RayDispatchDesc.Width  = Width;
+        RayDispatchDesc.Height = Height;
+        RayDispatchDesc.Depth  = Depth;
 
-    DXRCommandList->SetPipelineState1( DxPipelineState->GetStateObject() );
-    DXRCommandList->DispatchRays( &RayDispatchDesc );
+        DXRCommandList->SetPipelineState1( DxPipelineState->GetStateObject() );
+        DXRCommandList->DispatchRays( &RayDispatchDesc );
+    }
 }
 
 void CD3D12RHICommandContext::ClearState()

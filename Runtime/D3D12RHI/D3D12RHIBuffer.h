@@ -264,24 +264,25 @@ public:
 
 inline CD3D12BaseBuffer* D3D12BufferCast( CRHIBuffer* Buffer )
 {
-    if ( Buffer->AsVertexBuffer() )
+    if ( Buffer )
     {
-        return static_cast<CD3D12RHIVertexBuffer*>(Buffer);
+        if ( Buffer->AsVertexBuffer() )
+        {
+            return static_cast<CD3D12RHIVertexBuffer*>(Buffer);
+        }
+        else if ( Buffer->AsIndexBuffer() )
+        {
+            return static_cast<CD3D12RHIIndexBuffer*>(Buffer);
+        }
+        else if ( Buffer->AsConstantBuffer() )
+        {
+            return static_cast<CD3D12RHIConstantBuffer*>(Buffer);
+        }
+        else if ( Buffer->AsStructuredBuffer() )
+        {
+            return static_cast<CD3D12RHIStructuredBuffer*>(Buffer);
+        }
     }
-    else if ( Buffer->AsIndexBuffer() )
-    {
-        return static_cast<CD3D12RHIIndexBuffer*>(Buffer);
-    }
-    else if ( Buffer->AsConstantBuffer() )
-    {
-        return static_cast<CD3D12RHIConstantBuffer*>(Buffer);
-    }
-    else if ( Buffer->AsStructuredBuffer() )
-    {
-        return static_cast<CD3D12RHIStructuredBuffer*>(Buffer);
-    }
-    else
-    {
-        return nullptr;
-    }
+    
+    return nullptr;
 }

@@ -214,9 +214,9 @@ public:
 
 public:
 
-    /* Start recording commands with this command context */
+    /* Start recording commands with this context */
     virtual void Begin() override final;
-    /* Stop recording commands with this command context */
+    /* Stop recording commands with this context */
     virtual void End() override final;
 
     /* Begins the timestamp with the specifed index in the timestampquery */
@@ -383,11 +383,13 @@ public:
 
     FORCEINLINE void UnorderedAccessBarrier( CD3D12Resource* Resource )
     {
+        D3D12_ERROR( Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
         BarrierBatcher.AddUnorderedAccessBarrier( Resource->GetResource() );
     }
 
     FORCEINLINE void TransitionResource( CD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState )
     {
+        D3D12_ERROR( Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
         BarrierBatcher.AddTransitionBarrier( Resource->GetResource(), BeforeState, AfterState );
     }
 
@@ -421,9 +423,6 @@ private:
     CD3D12CommandBatch* CmdBatch = nullptr;
 
     TArray<TSharedRef<CD3D12RHITimestampQuery>> ResolveProfilers;
-
-    TSharedRef<CD3D12RHIComputePipelineState> GenerateMipsTex2D_PSO;
-    TSharedRef<CD3D12RHIComputePipelineState> GenerateMipsTexCube_PSO;
 
     TSharedRef<CD3D12RHIGraphicsPipelineState> CurrentGraphicsPipelineState;
     TSharedRef<CD3D12RHIComputePipelineState>  CurrentComputePipelineState;
