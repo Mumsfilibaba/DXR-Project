@@ -8,6 +8,7 @@
 #include "Core/Containers/StaticArray.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/Pair.h"
+#include "Core/Containers/SharedPtr.h"
 #include "Core/Debug/Console/IConsoleObject.h"
 
 #include <imgui.h>
@@ -26,11 +27,6 @@ public:
     {
         HandleKeyEventDelegate.Execute( KeyEvent );
         return ConsoleToggled;
-    }
-
-    virtual uint32 GetPriority() const override final
-    {
-        return static_cast<uint32>(-1);
     }
 
     bool ConsoleToggled = false;

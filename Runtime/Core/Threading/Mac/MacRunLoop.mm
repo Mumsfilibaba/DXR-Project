@@ -3,6 +3,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Threading/Spinlock.h"
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Threading/Platform/PlatformThreadMisc.h"
 
 #include <Foundation/Foundation.h>
 
@@ -12,8 +13,8 @@ class CMacRunLoopSource
 public:
 
     CMacRunLoopSource(CFRunLoopRef InRunLoop, NSString* InRunLoopMode)
-        : RunLoop(InRunLoop)
-        , RunLoopMode(InRunLoopMode)
+        : RunLoop( InRunLoop )
+        , RunLoopMode( InRunLoopMode )
         , BlockLock()
         , Blocks()
     {
@@ -21,14 +22,14 @@ public:
         SourceContext.info    = reinterpret_cast<void*>( this );
         SourceContext.version = 0;
         SourceContext.perform = CMacRunLoopSource::Perform;
-        
+		
         Source = CFRunLoopSourceCreate(kCFAllocatorDefault, 0, &SourceContext);
         
         Assert(Source != nullptr);
         
-        CFStringRef cfRunLoopMode = (CFStringRef)RunLoopMode;
-        CFRunLoopAddSource(RunLoop, Source, cfRunLoopMode);
-        CFRelease(Source);
+        CFStringRef RunLoopModeName = (CFStringRef)RunLoopMode;
+        CFRunLoopAddSource( RunLoop, Source, RunLoopModeName );
+        CFRelease( Source );
     }
     
     ~CMacRunLoopSource() = default;
@@ -101,7 +102,7 @@ CMacRunLoopSource* CMacMainThread::MainThread = nullptr;
 void CMacMainThread::Init()
 {
     CFRunLoopRef MainLoop = CFRunLoopGetMain();
-    MainThread = dbg_new CMacRunLoopSource( MainLoop, NSDefaultRunLoopMode );
+    MainThread = new CMacRunLoopSource( MainLoop, NSDefaultRunLoopMode );
 }
 
 void CMacMainThread::Release()
@@ -119,7 +120,8 @@ void CMacMainThread::MakeCall( dispatch_block_t Block, bool WaitUntilFinished )
 {
     dispatch_block_t CopiedBlock = Block_copy( Block );
     
-    if ( PlatformThreadMisc::IsMainThread() )
+	// Have to be careful here about when things are run, since this function may be called before the PlatformThreadMisc::Init is called
+    if ( [NSThread isMainThread] )
     {
         // If already on mainthread, execute Block here
         CopiedBlock();

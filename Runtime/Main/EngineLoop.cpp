@@ -35,6 +35,7 @@ void CEngineLoop::InitCommandLineArgs( int32 NumCommandLineArgs, const char** Co
 
 bool CEngineLoop::PreInit()
 {
+	/* Enable the profiler */
     CFrameProfiler::Enable();
 
     TRACE_FUNCTION_SCOPE();
@@ -50,16 +51,16 @@ bool CEngineLoop::PreInit()
         NErrorDevice::ConsoleWindow->SetTitle( (PROJECT_NAME": Error Console") );
     }
 
-    // Init platform specific thread utilities
-    if ( !PlatformThreadMisc::Init() )
-    {
-        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to init PlatformThreadMisc" );
-        return false;
-    }
-
     /* Console */
     CConsoleManager::Init();
 
+	// Init platform specific thread utilities
+	if ( !PlatformThreadMisc::Init() )
+	{
+		PlatformApplicationMisc::MessageBox( "ERROR", "Failed to init PlatformThreadMisc" );
+		return false;
+	}
+	
     /* Create the actual application */
     if ( !CInterfaceApplication::Make() )
     {

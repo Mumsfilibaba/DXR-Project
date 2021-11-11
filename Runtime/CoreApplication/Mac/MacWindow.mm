@@ -5,6 +5,7 @@
 #include "CocoaContentView.h"
 
 #include "Core/Logging/Log.h"
+#include "Core/Threading/Mac/MacRunLoop.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 

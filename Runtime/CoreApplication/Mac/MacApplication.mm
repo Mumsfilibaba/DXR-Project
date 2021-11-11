@@ -9,6 +9,7 @@
 #include "Core/Logging/Log.h"
 #include "Core/Input/Platform/PlatformKeyMapping.h"
 #include "Core/Threading/Mac/MacRunLoop.h"
+#include "Core/Threading/Platform/PlatformThreadMisc.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -222,7 +223,7 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         {
             const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex( static_cast<int32>([Event buttonNumber]) );
             const SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
-            MessageListener->HandleMouseReleased( Button, ModiferKeyState );
+            MessageListener->HandleMouseReleased( Button, KeyState );
             break;
         }
 
@@ -232,7 +233,7 @@ void CMacApplication::HandleEvent( NSEvent* Event )
         {
             const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex( static_cast<int32>([Event buttonNumber]) );
             const SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
-            MessageListener->HandleMousePressed( Button, ModiferKeyState );
+            MessageListener->HandleMousePressed( Button, KeyState );
             break;
         }
 

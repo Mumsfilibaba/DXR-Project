@@ -227,8 +227,8 @@ bool CRenderer::Init()
     CInterfaceApplication& Application = CInterfaceApplication::Get();
 
     // Register EventFunc
-    WindowHandler.WindowResizedDelegate.BindRaw( this, &CRenderer::OnWindowResize );
-    Application.AddWindowMessageHandler( &WindowHandler );
+    WindowHandler->WindowResizedDelegate.BindRaw( this, &CRenderer::OnWindowResize );
+    Application.AddWindowMessageHandler( WindowHandler, uint32(-1) );
 
     // Register Windows
     TextureDebugger = CTextureDebugWindow::Make();

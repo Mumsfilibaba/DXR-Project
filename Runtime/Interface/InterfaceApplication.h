@@ -236,7 +236,7 @@ protected:
 
     /* Templated insertion method */
     template<typename MessageHandlerType>
-    static void InsertMessageHandler( TArray<TSharedPtr<MessageHandlerType>>& OutMessageHandlerArray, const TSharedPtr<MessageHandlerType>& NewMessageHandler, uint32 NewPriority );
+    static void InsertMessageHandler( TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray, const TSharedPtr<MessageHandlerType>& NewMessageHandler, uint32 NewPriority );
 
     /* Render all the debug strings and clear the array */
     void RenderStrings();

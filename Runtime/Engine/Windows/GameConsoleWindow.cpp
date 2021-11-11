@@ -11,7 +11,7 @@ TSharedRef<CGameConsoleWindow> CGameConsoleWindow::Make()
     TSharedRef<CGameConsoleWindow> NewWindow = dbg_new CGameConsoleWindow();
     
     NewWindow->InputHandler->HandleKeyEventDelegate.BindRaw( NewWindow.Get(), &CGameConsoleWindow::HandleKeyPressedEvent );
-    CInterfaceApplication::Get().AddInputHandler( NewWindow->InputHandler );
+    CInterfaceApplication::Get().AddInputHandler( NewWindow->InputHandler, uint32(-1) );
     
     return NewWindow;
 }
