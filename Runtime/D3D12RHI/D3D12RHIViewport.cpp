@@ -73,7 +73,7 @@ bool CD3D12RHIViewport::Init()
     HRESULT Result = GetDevice()->GetFactory()->CreateSwapChainForHwnd( CmdContext->GetQueue().GetQueue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain );
     if ( SUCCEEDED( Result ) )
     {
-        Result = TempSwapChain.As<IDXGISwapChain3>( &SwapChain );
+        Result = TempSwapChain.GetAs<IDXGISwapChain3>( &SwapChain );
         if ( FAILED( Result ) )
         {
             LOG_ERROR( "[D3D12Viewport]: FAILED to retrive IDXGISwapChain3" );
@@ -189,12 +189,12 @@ void CD3D12RHIViewport::SetName( const CString& InName )
 
 bool CD3D12RHIViewport::RetriveBackBuffers()
 {
-    if ( BackBuffers.Size() < NumBackBuffers )
+    if ( BackBuffers.Size() < (int32)NumBackBuffers )
     {
         BackBuffers.Resize( NumBackBuffers );
     }
 
-    if ( BackBufferViews.Size() < NumBackBuffers )
+    if ( BackBufferViews.Size() < (int32)NumBackBuffers )
     {
         CD3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RHICore->GetRenderTargetOfflineDescriptorHeap();
         BackBufferViews.Resize( NumBackBuffers );

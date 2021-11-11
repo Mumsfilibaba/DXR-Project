@@ -140,7 +140,13 @@ public:
     }
 
     /* Get the address of the raw pointer */
-    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
+    FORCEINLINE ElementType** GetAddressOf() noexcept
+    {
+        return &Ptr;
+    }
+
+    /* Get the address of the raw pointer */
+    FORCEINLINE const ElementType** GetAddressOf() const noexcept
     {
         return &Ptr;
     }
@@ -164,13 +170,25 @@ public:
     }
 
     /* Retrieve the address of the pointer */
-    FORCEINLINE ElementType* const* operator&() const noexcept
+    FORCEINLINE ElementType** operator&() noexcept
+    {
+        return GetAddressOf();
+    }
+
+    /* Retrieve the address of the pointer */
+    FORCEINLINE const ElementType** operator&() const noexcept
     {
         return GetAddressOf();
     }
 
     /* Dereference the pointer */
-    FORCEINLINE ElementType& operator*() const noexcept
+    FORCEINLINE ElementType& operator*() noexcept
+    {
+        return Dereference();
+    }
+
+    /* Dereference the pointer */
+    FORCEINLINE const ElementType& operator*() const noexcept
     {
         return Dereference();
     }

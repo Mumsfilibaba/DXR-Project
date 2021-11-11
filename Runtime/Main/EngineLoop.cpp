@@ -30,12 +30,13 @@
 
 void CEngineLoop::InitCommandLineArgs( int32 NumCommandLineArgs, const char** CommandLineArgs )
 {
-	
+    UNREFERENCED_VARIABLE( NumCommandLineArgs );
+    UNREFERENCED_VARIABLE( CommandLineArgs );
 }
 
 bool CEngineLoop::PreInit()
 {
-	/* Enable the profiler */
+    /* Enable the profiler */
     CFrameProfiler::Enable();
 
     TRACE_FUNCTION_SCOPE();
@@ -54,13 +55,13 @@ bool CEngineLoop::PreInit()
     /* Console */
     CConsoleManager::Init();
 
-	// Init platform specific thread utilities
-	if ( !PlatformThreadMisc::Init() )
-	{
-		PlatformApplicationMisc::MessageBox( "ERROR", "Failed to init PlatformThreadMisc" );
-		return false;
-	}
-	
+    // Init platform specific thread utilities
+    if ( !PlatformThreadMisc::Init() )
+    {
+        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to init PlatformThreadMisc" );
+        return false;
+    }
+    
     /* Create the actual application */
     if ( !CInterfaceApplication::Make() )
     {
@@ -208,14 +209,14 @@ bool CEngineLoop::Release()
 
     CInterfaceApplication::Get().SetRenderer( nullptr );
 
-	// Release the engine. Protect against failed initialization where the global pointer was never initialized
-	if ( GEngine )
-	{
-		GEngine->Release();
-		
-		delete GEngine;
-		GEngine = nullptr;
-	}
+    // Release the engine. Protect against failed initialization where the global pointer was never initialized
+    if ( GEngine )
+    {
+        GEngine->Release();
+        
+        delete GEngine;
+        GEngine = nullptr;
+    }
 
     CTextureFactory::Release();
 

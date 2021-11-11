@@ -140,22 +140,12 @@ public:
 
     /* Retrieve the pointer as another type that is convertible */
     template<typename CastType>
-    FORCEINLINE TComPtr<CastType> GetAs() const noexcept
+    FORCEINLINE HRESULT GetAs( CastType** NewPointer ) const noexcept
     {
-        TComPtr<CastType> NewPointer;
-
-        HRESULT Result = Ptr->QueryInterface( IID_PPV_ARGS( &NewPointer ) );
-        if ( SUCCEEDED( Result ) )
-        {
-            return NewPointer;
-        }
-        else
-        {
-            return nullptr;
-        }
+        return Ptr->QueryInterface( IID_PPV_ARGS( NewPointer ) );
     }
 
-    FORCEINLINE bool GetAs( REFIID Riid, TComPtr<IUnknown>* ComObject ) const
+    FORCEINLINE HRESULT GetAs( REFIID Riid, TComPtr<IUnknown>* ComObject ) const
     {
         TComPtr<IUnknown> NewPointer;
 
@@ -163,16 +153,19 @@ public:
         if ( SUCCEEDED( Result ) )
         {
             *ComObject = NewPointer;
-            return true;
         }
-        else
-        {
-            return false;
-        }
+        
+        return Result;
     }
 
     /* Get the address of the raw pointer */
-    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
+    FORCEINLINE ElementType** GetAddressOf() noexcept
+    {
+        return &Ptr;
+    }
+
+    /* Get the address of the raw pointer */
+    FORCEINLINE const ElementType** GetAddressOf() const noexcept
     {
         return &Ptr;
     }
@@ -190,13 +183,25 @@ public:
     }
 
     /* Retrieve the address of the pointer */
-    FORCEINLINE ElementType* const* operator&() const noexcept
+    FORCEINLINE ElementType** operator&() noexcept
+    {
+        return GetAddressOf();
+    }
+
+    /* Retrieve the address of the pointer */
+    FORCEINLINE const ElementType** operator&() const noexcept
     {
         return GetAddressOf();
     }
 
     /* Dereference the pointer */
-    FORCEINLINE ElementType& operator*() const noexcept
+    FORCEINLINE ElementType& operator*() noexcept
+    {
+        return Dereference();
+    }
+
+    /* Dereference the pointer */
+    FORCEINLINE const ElementType& operator*() const noexcept
     {
         return Dereference();
     }

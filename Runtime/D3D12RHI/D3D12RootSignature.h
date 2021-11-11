@@ -90,7 +90,7 @@ public:
         return RootSignature.Get();
     }
 
-    FORCEINLINE ID3D12RootSignature* const* GetAddressOfRootSignature() const
+    FORCEINLINE ID3D12RootSignature** GetAddressOfRootSignature()
     {
         return RootSignature.GetAddressOf();
     }

@@ -12,6 +12,7 @@
 #include "D3D12RHITimestampQuery.h"
 #include "D3D12RHICommandContext.h"
 #include "D3D12ResourceCast.inl"
+#include "D3D12FunctionPointers.h"
 
 #include "Core/Math/Vector2.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
@@ -505,7 +506,7 @@ void CD3D12RHICommandContext::SetIndexBuffer( CRHIIndexBuffer* IndexBuffer )
     CD3D12RHIIndexBuffer* DxIndexBuffer = static_cast<CD3D12RHIIndexBuffer*>(IndexBuffer);
     DescriptorCache.SetIndexBuffer( DxIndexBuffer );
 
-    // TODO: Maybe this should be done by the descriptorcache
+    // TODO: Maybe this should be done by the descriptor cache
     CmdBatch->AddInUseResource( DxIndexBuffer );
 }
 
@@ -513,10 +514,10 @@ void CD3D12RHICommandContext::SetRenderTargets( CRHIRenderTargetView* const* Ren
 {
     for ( uint32 Slot = 0; Slot < RenderTargetCount; Slot++ )
     {
-        CD3D12RenderTargetView* DxRenderTargetView = static_cast<CD3D12RenderTargetView*>(RenderTargetViews[i]);
+        CD3D12RenderTargetView* DxRenderTargetView = static_cast<CD3D12RenderTargetView*>(RenderTargetViews[Slot]);
         DescriptorCache.SetRenderTargetView( DxRenderTargetView, Slot );
 
-        // TODO: Maybe this should be handled by the descriptorcache
+        // TODO: Maybe this should be handled by the descriptor cache
         CmdBatch->AddInUseResource( DxRenderTargetView );
     }
 
@@ -1358,9 +1359,9 @@ void CD3D12RHICommandContext::Flush()
 
 void CD3D12RHICommandContext::InsertMarker( const CString& Message )
 {
-    if ( SetMarkerOnCommandListFunc )
+    if ( ND3D12Functions::SetMarkerOnCommandList )
     {
-        SetMarkerOnCommandListFunc( CmdList.GetGraphicsCommandList(), PIX_COLOR( 255, 255, 255 ), Message.CStr() );
+        ND3D12Functions::SetMarkerOnCommandList( CmdList.GetGraphicsCommandList(), PIX_COLOR( 255, 255, 255 ), Message.CStr() );
     }
 }
 

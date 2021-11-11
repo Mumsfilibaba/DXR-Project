@@ -42,7 +42,7 @@ void CWindowsCursor::SetCursor( ECursor Cursor )
             break;
     }
 
-    HCURSOR CursorHandle = ::LoadCursor( NULL, CursorName );
+    HCURSOR CursorHandle = LoadCursor( NULL, CursorName );
     if ( CursorHandle )
     {
         ::SetCursor( CursorHandle );
@@ -68,10 +68,10 @@ void CWindowsCursor::SetPosition( CPlatformWindow* RelativeWindow, int32 x, int3
     ::SetCursorPos( CursorPos.x, CursorPos.y );
 }
 
-void CWindowsCursor::GetCursorPosition( CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY ) const
+void CWindowsCursor::GetPosition( CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY ) const
 {
     POINT CursorPos = { };
-    if ( !::GetCursorPos( &CursorPos ) )
+    if ( !GetCursorPos( &CursorPos ) )
     {
         return;
     }

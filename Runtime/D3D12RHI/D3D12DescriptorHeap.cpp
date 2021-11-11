@@ -271,7 +271,7 @@ void CD3D12OnlineDescriptorHeap::Reset()
 void CD3D12OnlineDescriptorHeap::SetNumPooledHeaps( uint32 NumHeaps )
 {
     // Will only shrink the size of the pool, and not grow it 
-    if ( NumHeaps > HeapPool.Size() )
+    if ( NumHeaps > static_cast<uint32>(HeapPool.Size()) )
     {
         HeapPool.Resize( NumHeaps );
     }

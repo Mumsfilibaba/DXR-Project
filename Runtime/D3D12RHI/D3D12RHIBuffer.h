@@ -185,13 +185,15 @@ public:
             if ( Offset != 0 || InSize != 0 )
             {
                 D3D12_RANGE MapRange = { Offset, InSize };
-                DxResource->Map( 0, &MapRange );
+                return DxResource->Map( 0, &MapRange );
             }
             else
             {
-                DxResource->Map( 0, nullptr );
+                return DxResource->Map( 0, nullptr );
             }
         }
+
+        return nullptr;
     }
 
     // Unmap the buffer

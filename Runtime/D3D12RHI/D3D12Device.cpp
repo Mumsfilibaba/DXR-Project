@@ -159,7 +159,7 @@ CD3D12Device::~CD3D12Device()
     if ( EnableDebugLayer )
     {
         TComPtr<ID3D12DebugDevice> DebugDevice;
-        if ( SUCCEEDED( Device.As( &DebugDevice ) ) )
+        if ( SUCCEEDED( Device.GetAs( &DebugDevice ) ) )
         {
             DebugDevice->ReportLiveDeviceObjects( D3D12_RLDO_DETAIL );
         }
@@ -264,7 +264,7 @@ bool CD3D12Device::Init()
         if ( EnableGPUValidation )
         {
             TComPtr<ID3D12Debug1> DebugInterface1;
-            if ( FAILED( DebugInterface.As( &DebugInterface1 ) ) )
+            if ( FAILED( DebugInterface.GetAs( &DebugInterface1 ) ) )
             {
                 LOG_ERROR( "[D3D12Device]: FAILED to enable GPU- Validation" );
                 return false;
@@ -275,9 +275,10 @@ bool CD3D12Device::Init()
             }
         }
 
+    #if 0 // Only for certain SDKs
         {
             TComPtr<ID3D12Debug5> DebugInterface5;
-            if ( FAILED( DebugInterface.As( &DebugInterface5 ) ) )
+            if ( FAILED( DebugInterface.GetAs( &DebugInterface5 ) ) )
             {
                 LOG_ERROR( "[D3D12Device]: FAILED to enable auto-naming of objects" );
             }
@@ -286,6 +287,7 @@ bool CD3D12Device::Init()
                 DebugInterface5->SetEnableAutoName( true );
             }
         }
+    #endif
 
         TComPtr<IDXGIInfoQueue> InfoQueue;
         if ( SUCCEEDED( NDXGIFunctions::DXGIGetDebugInterface1( 0, IID_PPV_ARGS( &InfoQueue ) ) ) )
@@ -319,7 +321,7 @@ bool CD3D12Device::Init()
     {
         // Retrieve newer factory interface
         TComPtr<IDXGIFactory5> Factory5;
-        if ( FAILED( Factory.As( &Factory5 ) ) )
+        if ( FAILED( Factory.GetAs( &Factory5 ) ) )
         {
             LOG_ERROR( "[D3D12Device]: FAILED to retrive IDXGIFactory5" );
             return false;
@@ -396,7 +398,7 @@ bool CD3D12Device::Init()
     if ( EnableDebugLayer )
     {
         TComPtr<ID3D12InfoQueue> InfoQueue;
-        if ( SUCCEEDED( Device.As( &InfoQueue ) ) )
+        if ( SUCCEEDED( Device.GetAs( &InfoQueue ) ) )
         {
             InfoQueue->SetBreakOnSeverity( D3D12_MESSAGE_SEVERITY_CORRUPTION, true );
             InfoQueue->SetBreakOnSeverity( D3D12_MESSAGE_SEVERITY_ERROR, true );
@@ -417,7 +419,7 @@ bool CD3D12Device::Init()
     }
 
     // Get DXR Interfaces
-    if ( FAILED( Device.As<ID3D12Device5>( &DXRDevice ) ) )
+    if ( FAILED( Device.GetAs<ID3D12Device5>( &DXRDevice ) ) )
     {
         LOG_ERROR( "[D3D12Device]: Failed to retrive DXR-Device" );
         return false;

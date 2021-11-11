@@ -8,29 +8,29 @@ class CWindowsAtomic final : public CPlatformAtomic
 {
 public:
 
-    // Read: Perform a atomic read. All loads and stores are synched
+    // Read: Perform a atomic read. All loads and stores are synced
 
     static FORCEINLINE int8 Read( volatile const int8* Source )
     {
-        return PlatformInterlocked::CompareExchange( (int8*)Src, 0, 0 );
+        return PlatformInterlocked::CompareExchange( (int8*)Source, 0, 0 );
     }
 
     static FORCEINLINE int16 Read( volatile const int16* Source )
     {
-        return PlatformInterlocked::CompareExchange( (int16*)Src, 0, 0 );
+        return PlatformInterlocked::CompareExchange( (int16*)Source, 0, 0 );
     }
 
     static FORCEINLINE int32 Read( volatile const int32* Source )
     {
-        return PlatformInterlocked::CompareExchange( (int32*)Src, 0, 0 );
+        return PlatformInterlocked::CompareExchange( (int32*)Source, 0, 0 );
     }
 
     static FORCEINLINE int64 Read( volatile const int64* Source )
     {
-        return PlatformInterlocked::CompareExchange( (int64*)Src, 0, 0 );
+        return PlatformInterlocked::CompareExchange( (int64*)Source, 0, 0 );
     }
 
-    // RelaxedRead: Performs a releaxed atomic read. No barriers or synchronization takes place. Only guaranteed to be atomic.
+    // RelaxedRead: Performs a relaxed atomic read. No barriers or synchronization takes place. Only guaranteed to be atomic.
 
     static FORCEINLINE int8 RelaxedRead( volatile const int8* Source )
     {
@@ -52,29 +52,29 @@ public:
         return *Source;
     }
 
-    // Store: Perform a atomic Store. All loads and stores are synched.
+    // Store: Perform a atomic Store. All loads and stores are synced.
 
     static FORCEINLINE void Store( volatile int8* Dest, int8 Value )
     {
-        return PlatformInterlocked::Exchange( (int8*)Dest, Value );
+        PlatformInterlocked::Exchange( (int8*)Dest, Value );
     }
 
     static FORCEINLINE void Store( volatile int16* Dest, int16 Value  )
     {
-        return PlatformInterlocked::Exchange( (int16*)Dest, Value );
+        PlatformInterlocked::Exchange( (int16*)Dest, Value );
     }
 
     static FORCEINLINE void Store( volatile int32* Dest, int32 Value  )
     {
-        return PlatformInterlocked::Exchange( (int32*)Dest, Value );
+        PlatformInterlocked::Exchange( (int32*)Dest, Value );
     }
 
     static FORCEINLINE void Store( volatile int64* Dest, int64 Value  )
     {
-        return PlatformInterlocked::Exchange( (int64*)Dest, Value );
+        PlatformInterlocked::Exchange( (int64*)Dest, Value );
     }
 
-    // RelaxedStore: Perform a relaxted atomic Store. No barriers or synchronization takes place. Only guaranteed to be atomic.
+    // RelaxedStore: Perform a relaxed atomic Store. No barriers or synchronization takes place. Only guaranteed to be atomic.
 
     static FORCEINLINE void RelaxedStore( volatile int8* Dest, int8 Value )
     {

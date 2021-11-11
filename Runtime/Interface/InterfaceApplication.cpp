@@ -304,7 +304,7 @@ void CInterfaceApplication::Tick( CTimestamp DeltaTime )
         Renderer->BeginTick();
 
         // Update all windows
-        UIWindows.Foreach( []( const TSharedRef<IInterfaceWindow>& Window )
+        UIWindows.Foreach( []( TSharedRef<IInterfaceWindow>& Window )
         {
             if ( Window->IsTickable() )
             {
@@ -404,7 +404,7 @@ TSharedRef<CPlatformWindow> CInterfaceApplication::GetActiveWindow() const
 template<typename MessageHandlerType>
 void CInterfaceApplication::InsertMessageHandler( TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray, const TSharedPtr<MessageHandlerType>& NewMessageHandler, uint32 NewPriority )
 {
-	TPair NewPair(NewMessageHandler, NewPriority);
+    TPair NewPair(NewMessageHandler, NewPriority);
     if ( !OutMessageHandlerArray.Contains( NewPair ) )
     {
         for ( int32 Index = 0; Index < OutMessageHandlerArray.Size(); )
@@ -479,9 +479,8 @@ void CInterfaceApplication::AddWindow( const TSharedRef<IInterfaceWindow>& NewWi
 {
     if ( NewWindow && !UIWindows.Contains( NewWindow ) )
     {
-        UIWindows.Emplace( NewWindow );
-        
-        NewWindow->InitContext( Context );
+        TSharedRef<IInterfaceWindow>& Window = UIWindows.Emplace( NewWindow );
+        Window->InitContext( Context );
     }
 }
 
@@ -581,7 +580,7 @@ void CInterfaceApplication::HandleKeyTyped( uint32 Character )
     SKeyTypedEvent Event( Character );
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
-		const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
+        const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
         if ( Handler.First->HandleKeyTyped( Event ) )
         {
             Event.IsConsumed = true;
@@ -597,7 +596,7 @@ void CInterfaceApplication::HandleMouseMove( int32 x, int32 y )
     SMouseMovedEvent MouseMovedEvent( x, y );
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
-		const TPair<TSharedPtr<CInputHandler>, uint32>& Handler= InputHandlers[Index];
+        const TPair<TSharedPtr<CInputHandler>, uint32>& Handler= InputHandlers[Index];
         if ( Handler.First->HandleMouseMove( MouseMovedEvent ) )
         {
             MouseMovedEvent.IsConsumed = true;
@@ -656,7 +655,7 @@ void CInterfaceApplication::HandleMouseButtonEvent( const SMouseButtonEvent& Mou
     SMouseButtonEvent Event = MouseButtonEvent;
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
-		const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
+        const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
         if ( Handler.First->HandleMouseButtonEvent( Event ) )
         {
             Event.IsConsumed = true;
@@ -687,7 +686,7 @@ void CInterfaceApplication::HandleMouseScrolled( float HorizontalDelta, float Ve
     SMouseScrolledEvent Event( HorizontalDelta, VerticalDelta );
     for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
     {
-		const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
+        const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
         if ( Handler.First->HandleMouseScrolled( Event ) )
         {
             Event.IsConsumed = true;
@@ -717,7 +716,7 @@ void CInterfaceApplication::HandleWindowResized( const TSharedRef<CPlatformWindo
     SWindowResizeEvent WindowResizeEvent( Window, Width, Height );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
-		const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
+        const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if ( Handler.First->OnWindowResized( WindowResizeEvent ) )
         {
             WindowResizeEvent.IsConsumed = true;
@@ -730,7 +729,7 @@ void CInterfaceApplication::HandleWindowMoved( const TSharedRef<CPlatformWindow>
     SWindowMovedEvent WindowsMovedEvent( Window, x, y );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
-		const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
+        const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if ( Handler.First->OnWindowMoved( WindowsMovedEvent ) )
         {
             WindowsMovedEvent.IsConsumed = true;
@@ -743,7 +742,7 @@ void CInterfaceApplication::HandleWindowFocusChanged( const TSharedRef<CPlatform
     SWindowFocusChangedEvent WindowFocusChangedEvent( Window, HasFocus );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
-		const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
+        const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if ( Handler.First->OnWindowFocusChanged( WindowFocusChangedEvent ) )
         {
             WindowFocusChangedEvent.IsConsumed = true;
@@ -768,7 +767,7 @@ void CInterfaceApplication::HandleWindowFrameMouseEvent( const SWindowFrameMouse
     SWindowFrameMouseEvent Event = WindowFrameMouseEvent;
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
-		const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
+        const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if ( Handler.First->OnWindowFrameMouseEvent( Event ) )
         {
             Event.IsConsumed = true;
@@ -799,7 +798,7 @@ void CInterfaceApplication::RenderStrings()
         {
             ImGui::Text( "%s", String.CStr() );
         }
-		
+        
         DebugStrings.Clear();
 
         ImGui::PopStyleColor();
@@ -813,7 +812,7 @@ void CInterfaceApplication::HandleWindowClosed( const TSharedRef<CPlatformWindow
     SWindowClosedEvent WindowClosedEvent( Window );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
-		const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
+        const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if ( Handler.First->OnWindowClosed( WindowClosedEvent ) )
         {
             WindowClosedEvent.IsConsumed = true;

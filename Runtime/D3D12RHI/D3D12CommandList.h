@@ -28,7 +28,7 @@ public:
 
             LOG_INFO( "[CD3D12CommandList]: Created CommandList" );
 
-            if ( FAILED( CmdList.As<ID3D12GraphicsCommandList5>( &CmdList5 ) ) )
+            if ( FAILED( CmdList.GetAs<ID3D12GraphicsCommandList5>( &CmdList5 ) ) )
             {
                 LOG_ERROR( "[CD3D12CommandList]: FAILED to retrive DXR-CommandList" );
                 return false;

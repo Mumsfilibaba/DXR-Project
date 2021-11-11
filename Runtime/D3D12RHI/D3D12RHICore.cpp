@@ -348,7 +348,7 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
         }
 
         TSharedRef<CD3D12RHIShaderResourceView> SRV = dbg_new CD3D12RHIShaderResourceView( Device, ResourceOfflineDescriptorHeap );
-        if ( !SRV->Init() )
+        if ( !SRV->AllocateHandle() )
         {
             return nullptr;
         }
@@ -377,7 +377,7 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
         ViewDesc.Texture2D.PlaneSlice = 0;
 
         TSharedRef<CD3D12RenderTargetView> RTV = dbg_new CD3D12RenderTargetView( Device, RenderTargetOfflineDescriptorHeap );
-        if ( !RTV->Init() )
+        if ( !RTV->AllocateHandle() )
         {
             return nullptr;
         }
@@ -403,7 +403,7 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
         ViewDesc.Texture2D.MipSlice = 0;
 
         TSharedRef<CD3D12DepthStencilView> DSV = dbg_new CD3D12DepthStencilView( Device, DepthStencilOfflineDescriptorHeap );
-        if ( !DSV->Init() )
+        if ( !DSV->AllocateHandle() )
         {
             return nullptr;
         }
@@ -430,7 +430,7 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
         ViewDesc.Texture2D.PlaneSlice = 0;
 
         TSharedRef<CD3D12RHIUnorderedAccessView> UAV = dbg_new CD3D12RHIUnorderedAccessView( Device, ResourceOfflineDescriptorHeap );
-        if ( !UAV->Init() )
+        if ( !UAV->AllocateHandle() )
         {
             return nullptr;
         }

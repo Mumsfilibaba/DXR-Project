@@ -169,6 +169,10 @@ public:
     {
     }
 
+    virtual void DiscardResource( class CRHIMemoryResource* Resource ) override final
+    {
+    }
+
     virtual void BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool Update ) override final
     {
     }

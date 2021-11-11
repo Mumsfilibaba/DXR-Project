@@ -23,7 +23,8 @@ int WINAPI WinMain( HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, i
     InitCRunTime();
 
     // TODO: Investigate if this is the proper way
-    return EngineMain( 1, CmdLine );
+    const char* CmdLineArgs = CmdLine;
+    return EngineMain( 1, &CmdLineArgs );
 }
 
 #pragma warning(pop)

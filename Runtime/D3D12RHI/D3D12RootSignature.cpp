@@ -2,10 +2,11 @@
 #include "D3D12RootSignature.h"
 #include "D3D12Core.h"
 #include "D3D12RHIShader.h"
+#include "D3D12FunctionPointers.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-static D3D12_SHADER_VISIBILITY DxShaderVisibility[ShaderVisibility_Count] =
+static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[ShaderVisibility_Count] =
 {
     D3D12_SHADER_VISIBILITY_ALL,
     D3D12_SHADER_VISIBILITY_VERTEX,
@@ -18,12 +19,12 @@ static D3D12_SHADER_VISIBILITY DxShaderVisibility[ShaderVisibility_Count] =
 static D3D12_SHADER_VISIBILITY GetD3D12ShaderVisibility( uint32 Visbility )
 {
     Assert( Visbility < ShaderVisibility_Count );
-    return DxShaderVisibility[Visbility];
+    return GD3D12ShaderVisibility[Visbility];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-static EShaderVisibility ShaderVisibility[ShaderVisibility_Count] =
+static EShaderVisibility GShaderVisibility[ShaderVisibility_Count] =
 {
     ShaderVisibility_All,
     ShaderVisibility_Vertex,
@@ -36,7 +37,7 @@ static EShaderVisibility ShaderVisibility[ShaderVisibility_Count] =
 static EShaderVisibility GetShaderVisibility( uint32 Visbility )
 {
     Assert( Visbility < ShaderVisibility_Count );
-    return ShaderVisibility[Visbility];
+    return GShaderVisibility[Visbility];
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -253,7 +254,7 @@ bool CD3D12RootSignature::Init( const D3D12_ROOT_SIGNATURE_DESC& Desc )
 bool CD3D12RootSignature::Init( const void* BlobWithRootSignature, uint64 BlobLengthInBytes )
 {
     TComPtr<ID3D12RootSignatureDeserializer> Deserializer;
-    HRESULT Result = D3D12CreateRootSignatureDeserializerFunc( BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS( &Deserializer ) );
+    HRESULT Result = ND3D12Functions::D3D12CreateRootSignatureDeserializer( BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS( &Deserializer ) );
     if ( FAILED( Result ) )
     {
         LOG_ERROR( "[D3D12RootSignature]: FAILED to Retrieve Root Signature Desc" );
@@ -328,7 +329,7 @@ bool CD3D12RootSignature::Serialize( const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3D
 {
     TComPtr<ID3DBlob> ErrorBlob;
 
-    HRESULT Result = D3D12SerializeRootSignatureFunc( &Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob );
+    HRESULT Result = ND3D12Functions::D3D12SerializeRootSignature( &Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob );
     if ( FAILED( Result ) )
     {
         LOG_ERROR( "[D3D12RootSignature]: FAILED to Serialize RootSignature" );

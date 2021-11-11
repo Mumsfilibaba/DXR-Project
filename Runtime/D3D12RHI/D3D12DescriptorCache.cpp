@@ -36,7 +36,7 @@ bool CD3D12DescriptorCache::Init()
     CBVDesc.SizeInBytes = 0;
 
     NullCBV = dbg_new CD3D12RHIConstantBufferView( GetDevice(), GD3D12RHICore->GetResourceOfflineDescriptorHeap() );
-    if ( !NullCBV->Init() )
+    if ( !NullCBV->AllocateHandle() )
     {
         return false;
     }
@@ -55,7 +55,7 @@ bool CD3D12DescriptorCache::Init()
     UAVDesc.Texture2D.PlaneSlice = 0;
 
     NullUAV = dbg_new CD3D12RHIUnorderedAccessView( GetDevice(), GD3D12RHICore->GetResourceOfflineDescriptorHeap() );
-    if ( !NullUAV->Init() )
+    if ( !NullUAV->AllocateHandle() )
     {
         return false;
     }
@@ -77,7 +77,7 @@ bool CD3D12DescriptorCache::Init()
     SRVDesc.Texture2D.PlaneSlice = 0;
 
     NullSRV = dbg_new CD3D12RHIShaderResourceView( GetDevice(), GD3D12RHICore->GetResourceOfflineDescriptorHeap() );
-    if ( !NullSRV->Init() )
+    if ( !NullSRV->AllocateHandle() )
     {
         return false;
     }

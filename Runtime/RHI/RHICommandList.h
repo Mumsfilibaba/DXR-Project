@@ -334,7 +334,7 @@ public:
         InsertCommand<SRHIDestroyResourceRenderCommand>( AddRef( Resource ) );
     }
 
-    void DiscardResource( CRHIResource* Resource )
+    void DiscardResource( CRHIMemoryResource* Resource )
     {
         InsertCommand<SRHIDiscardResourceRenderCommand>( AddRef( Resource ) );
     }

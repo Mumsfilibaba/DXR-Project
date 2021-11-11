@@ -52,7 +52,7 @@ public:
     /* Check if the dynamic library is already loaded into the application */
     static FORCEINLINE bool IsLibraryLoaded( const char* LibraryName ) 
     { 
-        return GetLoadedHandle( LibraryName ) != 0);
+        return (GetLoadedHandle( LibraryName ) != nullptr);
     }
 
     /* Loads a typed function or variable from with specified name from the specified library */
