@@ -19,18 +19,21 @@ enum ETextureFlags
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CRHITexture : public CRHIResource
+class CRHITexture : public CRHIMemoryResource
 {
 public:
 
     CRHITexture( EFormat InFormat, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue )
-        : CRHIResource()
+        : CRHIMemoryResource()
         , Format( InFormat )
         , NumMips( InNumMips )
         , Flags( InFlags )
         , OptimalClearValue( InOptimalClearValue )
     {
     }
+
+    /* Cast memory resource to texture */
+    virtual CRHITexture* AsTexture() { return this; }
 
     /* Cast to Texture2D */
     virtual class CRHITexture2D* AsTexture2D() { return nullptr; }

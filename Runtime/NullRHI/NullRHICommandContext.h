@@ -165,7 +165,7 @@ public:
     {
     }
 
-    virtual void DiscardResource( class CRHIResource* Resource ) override final
+    virtual void DestroyResource( class CRHIResource* Resource ) override final
     {
     }
 

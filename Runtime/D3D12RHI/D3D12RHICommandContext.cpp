@@ -11,6 +11,7 @@
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12RHITimestampQuery.h"
 #include "D3D12RHICommandContext.h"
+#include "D3D12ResourceCast.inl"
 
 #include "Core/Math/Vector2.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
@@ -817,7 +818,7 @@ void CD3D12RHICommandContext::CopyTextureRegion( CRHITexture* Destination, CRHIT
     D3D12_ERROR( Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr" );
 
     CD3D12BaseTexture* DxDestination = D3D12TextureCast( Destination );
-    CD3D12BaseTexture* DxSource = D3D12TextureCast( Source );
+    CD3D12BaseTexture* DxSource      = D3D12TextureCast( Source );
 
     // Source
     D3D12_TEXTURE_COPY_LOCATION SourceLocation;
@@ -828,12 +829,12 @@ void CD3D12RHICommandContext::CopyTextureRegion( CRHITexture* Destination, CRHIT
     SourceLocation.SubresourceIndex = CopyInfo.Source.SubresourceIndex;
 
     D3D12_BOX SourceBox;
-    SourceBox.left = CopyInfo.Source.x;
-    SourceBox.right = CopyInfo.Source.x + CopyInfo.Width;
+    SourceBox.left   = CopyInfo.Source.x;
+    SourceBox.right  = CopyInfo.Source.x + CopyInfo.Width;
     SourceBox.bottom = CopyInfo.Source.y;
-    SourceBox.top = CopyInfo.Source.y + CopyInfo.Height;
-    SourceBox.front = CopyInfo.Source.z;
-    SourceBox.back = CopyInfo.Source.z + CopyInfo.Depth;
+    SourceBox.top    = CopyInfo.Source.y + CopyInfo.Height;
+    SourceBox.front  = CopyInfo.Source.z;
+    SourceBox.back   = CopyInfo.Source.z + CopyInfo.Depth;
 
     // Destination
     D3D12_TEXTURE_COPY_LOCATION DestinationLocation;
@@ -851,9 +852,21 @@ void CD3D12RHICommandContext::CopyTextureRegion( CRHITexture* Destination, CRHIT
     CmdBatch->AddInUseResource( Source );
 }
 
-void CD3D12RHICommandContext::DiscardResource( CRHIResource* Resource )
+void CD3D12RHICommandContext::DestroyResource( CRHIResource* Resource )
 {
     CmdBatch->AddInUseResource( Resource );
+}
+
+void CD3D12RHICommandContext::DiscardResource( CRHIMemoryResource* Resource )
+{
+    // TODO: Enable regions to be discarded
+    
+    CD3D12Resource* DxResource = D3D12ResourceCast( Resource );
+    if ( DxResource )
+    {
+        CmdList.DiscardResource( DxResource->GetResource() );
+        CmdBatch->AddInUseResource( Resource );
+    }
 }
 
 void CD3D12RHICommandContext::BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool Update )
@@ -1293,7 +1306,7 @@ void CD3D12RHICommandContext::DispatchRays( CRHIRayTracingScene* RayTracingScene
 {
     CD3D12RHIRayTracingScene* DxScene = static_cast<CD3D12RHIRayTracingScene*>(RayTracingScene);
     D3D12_ERROR( DxScene != nullptr, "RayTracingScene cannot be nullptr" );
-    
+
     CD3D12RHIRayTracingPipelineState* DxPipelineState = static_cast<CD3D12RHIRayTracingPipelineState*>(PipelineState);
     D3D12_ERROR( DxPipelineState != nullptr, "PipelineState cannot be nullptr" );
 

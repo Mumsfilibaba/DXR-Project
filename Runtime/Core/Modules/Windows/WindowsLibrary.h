@@ -14,9 +14,15 @@ public:
     /* Load a dynamic library on the platform */
     static FORCEINLINE PlatformHandle LoadDynamicLib( const char* LibraryName ) 
     { 
-        CString CombinedName = LibraryName;
-        CombinedName.Append( GetDynamicLibExtension() );
-        return LoadLibraryA( CombinedName.CStr() );
+        CString RealName = GetRealName( LibraryName );
+        return LoadLibraryA( RealName.CStr() );
+    }
+
+    /* Retrieves a handle a dynamic handle if the library is already loaded into the application */
+    static FORCEINLINE PlatformHandle GetLoadedHandle( const char* LibraryName )
+    { 
+        CString RealName = GetRealName( LibraryName );
+        return GetModuleHandleA( RealName.CStr() );
     }
 
     /* Free a dynamic library on the platform */
@@ -35,6 +41,18 @@ public:
     static FORCEINLINE const char* GetDynamicLibExtension()
     {
         return ".dll";
+    }
+
+    /* Retrieve the real name for the library including prefixes and extension */
+    static FORCEINLINE CString GetRealName( const char* LibraryName ) 
+    { 
+        return CString( LibraryName ) + GetDynamicLibExtension();
+    }
+
+    /* Check if the dynamic library is already loaded into the application */
+    static FORCEINLINE bool IsLibraryLoaded( const char* LibraryName ) 
+    { 
+        return GetLoadedHandle( LibraryName ) != 0);
     }
 
     /* Loads a typed function or variable from with specified name from the specified library */

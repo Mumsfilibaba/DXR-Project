@@ -175,7 +175,7 @@ void SLightSetup::BeginFrame( CRHICommandList& CmdList, const CScene& Scene )
 
     if ( PointLightsData.SizeInBytes() > (int32)PointLightsBuffer->GetSize() )
     {
-        CmdList.DiscardResource( PointLightsBuffer.Get() );
+        CmdList.DestroyResource( PointLightsBuffer.Get() );
 
         PointLightsBuffer = RHICreateConstantBuffer( PointLightsData.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
         if ( !PointLightsBuffer )
@@ -186,7 +186,7 @@ void SLightSetup::BeginFrame( CRHICommandList& CmdList, const CScene& Scene )
 
     if ( PointLightsPosRad.SizeInBytes() > (int32)PointLightsPosRadBuffer->GetSize() )
     {
-        CmdList.DiscardResource( PointLightsPosRadBuffer.Get() );
+        CmdList.DestroyResource( PointLightsPosRadBuffer.Get() );
 
         PointLightsPosRadBuffer = RHICreateConstantBuffer( PointLightsPosRad.CapacityInBytes(), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr );
         if ( !PointLightsPosRadBuffer )
@@ -197,7 +197,7 @@ void SLightSetup::BeginFrame( CRHICommandList& CmdList, const CScene& Scene )
 
     if ( ShadowCastingPointLightsData.SizeInBytes() > (int32)ShadowCastingPointLightsBuffer->GetSize() )
     {
-        CmdList.DiscardResource( ShadowCastingPointLightsBuffer.Get() );
+        CmdList.DestroyResource( ShadowCastingPointLightsBuffer.Get() );
 
         ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(
             ShadowCastingPointLightsData.CapacityInBytes(),
@@ -212,7 +212,7 @@ void SLightSetup::BeginFrame( CRHICommandList& CmdList, const CScene& Scene )
 
     if ( ShadowCastingPointLightsPosRad.SizeInBytes() > (int32)ShadowCastingPointLightsPosRadBuffer->GetSize() )
     {
-        CmdList.DiscardResource( ShadowCastingPointLightsPosRadBuffer.Get() );
+        CmdList.DestroyResource( ShadowCastingPointLightsPosRadBuffer.Get() );
 
         ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(
             ShadowCastingPointLightsPosRad.CapacityInBytes(),

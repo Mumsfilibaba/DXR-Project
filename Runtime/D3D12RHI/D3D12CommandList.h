@@ -237,6 +237,11 @@ public:
         CmdList->ResourceBarrier( NumBarriers, Barriers );
     }
 
+    FORCEINLINE void DiscardResource( ID3D12Resource* Resource, const D3D12_DISCARD_REGION* Region )
+    {
+        CmdList->DiscardResource( Resource, Region );
+    }
+
     FORCEINLINE void TransitionBarrier( ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, UINT Subresource )
     {
         D3D12_RESOURCE_BARRIER Barrier;

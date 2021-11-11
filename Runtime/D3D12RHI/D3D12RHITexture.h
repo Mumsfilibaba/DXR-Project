@@ -45,7 +45,7 @@ public:
 protected:
 
     // Native resource storing the texture
-    TSharedRef<CD3D12Resource>              Resource;
+    TSharedRef<CD3D12Resource> Resource;
 
     // Default ShaderResourceView created at creation 
     TSharedRef<CD3D12RHIShaderResourceView> ShaderResourceView;
@@ -244,23 +244,23 @@ inline CD3D12BaseTexture* D3D12TextureCast( CRHITexture* Texture )
 {
     if ( Texture )
     {
-        if ( Texture->AsTexture2D() != nullptr )
+        if ( Texture->AsTexture2D() )
         {
             return static_cast<CD3D12RHITexture2D*>(Texture);
         }
-        else if ( Texture->AsTexture2DArray() != nullptr )
+        else if ( Texture->AsTexture2DArray() )
         {
             return static_cast<CD3D12RHITexture2DArray*>(Texture);
         }
-        else if ( Texture->AsTextureCube() != nullptr )
+        else if ( Texture->AsTextureCube() )
         {
             return static_cast<CD3D12RHITextureCube*>(Texture);
         }
-        else if ( Texture->AsTextureCubeArray() != nullptr )
+        else if ( Texture->AsTextureCubeArray() )
         {
             return static_cast<CD3D12RHITextureCubeArray*>(Texture);
         }
-        else if ( Texture->AsTexture3D() != nullptr )
+        else if ( Texture->AsTexture3D() )
         {
             return static_cast<CD3D12RHITexture3D*>(Texture);
         }

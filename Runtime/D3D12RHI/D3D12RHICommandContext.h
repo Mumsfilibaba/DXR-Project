@@ -294,6 +294,7 @@ public:
 
     /* Resolves a multisampled texture, must have the same sizes and compatable formats */
     virtual void ResolveTexture( CRHITexture* Destination, CRHITexture* Source ) override final;
+
     /* Copies the contents from one buffer to another */
     virtual void CopyBuffer( CRHIBuffer* Destination, CRHIBuffer* Source, const SCopyBufferInfo& CopyInfo ) override final;   
     /* Copies the entire contents of one texture to another, which require the size and formats to be the same */
@@ -302,7 +303,9 @@ public:
     virtual void CopyTextureRegion( CRHITexture* Destination, CRHITexture* Source, const SCopyTextureInfo& CopyTextureInfo ) override final;
 
     /* Discards a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying commandlist is completed */
-    virtual void DiscardResource( class CRHIResource* Resource ) override final;
+    virtual void DestroyResource( class CRHIResource* Resource ) override final;
+    /* Signal the driver that the contents can be discarded */
+    virtual void DiscardsResource( class CRHIMemoryResource* Resource ) override final;
 
     /* Builds the Bottom Level Acceleration Structure for ray tracing */
     virtual void BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool Update ) override final; 
@@ -398,7 +401,7 @@ public:
         BarrierBatcher.FlushBarriers( CmdList );
     }
 
-    FORCEINLINE void DiscardResource( CD3D12Resource* Resource )
+    FORCEINLINE void DestroyResource( CD3D12Resource* Resource )
     {
         CmdBatch->AddInUseResource( Resource );
     }

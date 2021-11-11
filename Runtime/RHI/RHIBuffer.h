@@ -67,21 +67,30 @@ enum EBufferFlags : uint32
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CRHIBuffer : public CRHIResource
+class CRHIBuffer : public CRHIMemoryResource
 {
 public:
     CRHIBuffer( uint32 InFlags )
-        : CRHIResource()
+        : CRHIMemoryResource()
         , Flags( InFlags )
     {
     }
 
+    /* Cast memory resource to texture */
+    virtual CRHIBuffer* AsBuffer() { return this; }
+
+    /* Cast to vertexbuffer */
     virtual class CRHIVertexBuffer* AsVertexBuffer() { return nullptr; }
+    /* Cast to indexbuffer */
     virtual class CRHIIndexBuffer* AsIndexBuffer() { return nullptr; }
+    /* Cast to constantbuffer */
     virtual class CRHIConstantBuffer* AsConstantBuffer() { return nullptr; }
+    /* Cast to structuredbuffer */
     virtual class CRHIStructuredBuffer* AsStructuredBuffer() { return nullptr; }
 
+    /* Map GPU buffer memory to the CPU */
     virtual void* Map( uint32 Offset, uint32 Size ) = 0;
+    /* Unmap GPU buffer memory from the CPU */
     virtual void  Unmap( uint32 Offset, uint32 Size ) = 0;
 
     FORCEINLINE bool IsDynamic() const
@@ -120,6 +129,7 @@ public:
     {
     }
 
+    /* Cast to vertexbuffer */
     virtual CRHIVertexBuffer* AsVertexBuffer() override { return this; }
 
     FORCEINLINE uint32 GetStride() const
@@ -149,6 +159,7 @@ public:
     {
     }
 
+    /* Cast to indexbuffer */
     virtual CRHIIndexBuffer* AsIndexBuffer() override { return this; }
 
     FORCEINLINE EIndexFormat GetFormat() const
@@ -178,6 +189,7 @@ public:
     {
     }
 
+    /* Cast to constantbuffer */
     virtual CRHIConstantBuffer* AsConstantBuffer() override { return this; }
 
     FORCEINLINE uint32 GetSize() const
@@ -202,6 +214,7 @@ public:
     {
     }
 
+    /* Cast to structedbuffer */
     virtual CRHIStructuredBuffer* AsStructuredBuffer() override { return this; }
 
     FORCEINLINE uint32 GetStride() const

@@ -15,10 +15,8 @@ public:
     {
     }
 
-    virtual void SetResource( CD3D12Resource* InResource )
-    {
-        Resource = InResource;
-    }
+    // Set the native resource, this function takes ownership of the current reference, call AddRef to use it in more places
+    virtual void SetResource( CD3D12Resource* InResource ) { Resource = InResource; }
 
     FORCEINLINE uint64 GetSizeInBytes() const
     {
@@ -46,7 +44,8 @@ public:
     {
     }
 
-    virtual void SetResource( CD3D12Resource* InResource ) override
+    // Set the resource and construct the view
+    virtual void SetResource( CD3D12Resource* InResource ) override final
     {
         CD3D12BaseBuffer::SetResource( InResource );
 
@@ -77,7 +76,8 @@ public:
     {
     }
 
-    virtual void SetResource( CD3D12Resource* InResource ) override
+    // Set the resource and construct the view
+    virtual void SetResource( CD3D12Resource* InResource ) override final
     {
         CD3D12BaseBuffer::SetResource( InResource );
 
@@ -113,7 +113,8 @@ public:
     {
     }
 
-    virtual void SetResource( CD3D12Resource* InResource ) override
+    // Set the resource and construct the view
+    virtual void SetResource( CD3D12Resource* InResource ) override final
     {
         CD3D12BaseBuffer::SetResource( InResource );
 
@@ -125,7 +126,7 @@ public:
 
         if ( View.GetOfflineHandle() == 0 )
         {
-            if ( !View.Init() )
+            if ( !View.AllocateHandle() )
             {
                 return;
             }
@@ -166,53 +167,79 @@ template<typename BaseBufferType>
 class TD3D12RHIBaseBuffer : public BaseBufferType
 {
 public:
+    
     template<typename... TBufferArgs>
     TD3D12RHIBaseBuffer( CD3D12Device* InDevice, TBufferArgs&&... BufferArgs )
-        : BaseBufferType( InDevice, ::Forward<TBufferArgs>( BufferArgs )... )
+        : BaseBufferType( InDevice, Forward<TBufferArgs>( BufferArgs )... )
     {
     }
 
+    // Map the buffer
     virtual void* Map( uint32 Offset, uint32 InSize ) override
     {
-        if ( Offset != 0 || InSize != 0 )
+        D3D12_ERROR( IsDynamic(), "Map is only supported on dynamic buffers");
+
+        CD3D12Resource* DxResource = CD3D12BaseBuffer::Resource.Get();
+        if ( DxResource )
         {
-            D3D12_RANGE MapRange = { Offset, InSize };
-            return CD3D12BaseBuffer::Resource->Map( 0, &MapRange );
-        }
-        else
-        {
-            return CD3D12BaseBuffer::Resource->Map( 0, nullptr );
+            if ( Offset != 0 || InSize != 0 )
+            {
+                D3D12_RANGE MapRange = { Offset, InSize };
+                DxResource->Map( 0, &MapRange );
+            }
+            else
+            {
+                DxResource->Map( 0, nullptr );
+            }
         }
     }
 
+    // Unmap the buffer
     virtual void Unmap( uint32 Offset, uint32 InSize ) override
     {
-        if ( Offset != 0 || InSize != 0 )
+        D3D12_ERROR( IsDynamic(), "Unmap is only supported on dynamic buffers");
+
+        CD3D12Resource* DxResource = CD3D12BaseBuffer::Resource.Get();
+        if ( DxResource )
         {
-            D3D12_RANGE MapRange = { Offset, InSize };
-            CD3D12BaseBuffer::Resource->Unmap( 0, &MapRange );
-        }
-        else
-        {
-            CD3D12BaseBuffer::Resource->Unmap( 0, nullptr );
+            if ( Offset != 0 || InSize != 0 )
+            {
+                D3D12_RANGE MapRange = { Offset, InSize };
+                DxResource->Unmap( 0, &MapRange );
+            }
+            else
+            {
+                DxResource->Unmap( 0, nullptr );
+            }
         }
     }
 
+    // Set the name of the resource
     virtual void SetName( const CString& InName ) override final
     {
+        // Set the resource name
         CRHIResource::SetName( InName );
 
-        CD3D12BaseBuffer::Resource->SetName( InName );
+        // Name the native resource
+        CD3D12Resource* DxResource = CD3D12BaseBuffer::Resource.Get();
+        if ( DxResource )
+        {
+            DxResource->SetName( InName );
+        }
     }
 
+    // Retrieve the ID3D12Resource, make sure to check if the resource exits since nullptr is valid
     virtual void* GetNativeResource() const override final
     {
-        return reinterpret_cast<void*>(CD3D12BaseBuffer::Resource->GetResource());
+        CD3D12Resource* DxResource = CD3D12BaseBuffer::Resource.Get();
+        return DxResource ? reinterpret_cast<void*>(DxResource->GetResource()) : nullptr;
     }
 
+    // Check the validity of the resource
     virtual bool IsValid() const override
     {
-        return CD3D12BaseBuffer::Resource->GetResource() != nullptr;
+        CD3D12Resource* DxResource = CD3D12BaseBuffer::Resource.Get();
+        return DxResource ? (CD3D12BaseBuffer::Resource->GetResource() != nullptr) : false;
     }
 };
 

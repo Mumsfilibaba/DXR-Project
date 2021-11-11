@@ -20,6 +20,9 @@ public:
     /* Load a dynamic library on the platform */
     static FORCEINLINE PlatformHandle LoadDynamicLib( const char* LibraryName ) { return nullptr; }
 
+    /* Retrieves a handle a dynamic handle if the library is already loaded into the application */
+    static FORCEINLINE PlatformHandle GetLoadedHandle( const char* LibraryName ) { return nullptr; }
+
     /* Free a dynamic library on the platform */
     static FORCEINLINE void FreeDynamicLib( PlatformHandle LibraryHandle ) {}
 
@@ -28,6 +31,12 @@ public:
 
     /* Retrive the extension that dynamic libraries use on the platform */
     static FORCEINLINE const char* GetDynamicLibExtension() { return ""; }
+
+    /* Retrieve the real name for the library including prefixes and extension */
+    static FORCEINLINE CString GetRealName( const char* LibraryName ) { return ""; }
+
+    /* Check if the dynamic library is already loaded into the application */
+    static FORCEINLINE bool IsLibraryLoaded( const char* LibraryName ) { return false; }
 
     /* Loads a typed function or variable from with specified name from the specified library */
     template<typename T>

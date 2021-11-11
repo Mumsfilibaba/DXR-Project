@@ -61,9 +61,17 @@ public:
     }
 
 private:
-    TComPtr<ID3D12Resource>   DxResource;
-    D3D12_HEAP_TYPE           HeapType;
-    D3D12_RESOURCE_STATES     ResourceState;
-    D3D12_RESOURCE_DESC       Desc;
+
+    // Native resource
+    TComPtr<ID3D12Resource> DxResource;
+
+    // Initial resource-state 
+    D3D12_RESOURCE_STATES ResourceState;
+
+    // Cached heap-type
+    D3D12_HEAP_TYPE HeapType;
+    // Cached description
+    D3D12_RESOURCE_DESC Desc;
+    // Cached GPU address
     D3D12_GPU_VIRTUAL_ADDRESS Address = 0;
 };

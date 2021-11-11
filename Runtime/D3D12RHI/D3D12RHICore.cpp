@@ -245,8 +245,8 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
     Desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     Desc.Width = SizeX;
     Desc.Height = SizeY;
-    Desc.DepthOrArraySize = (UINT16)SizeZ;
-    Desc.MipLevels = (UINT16)NumMips;
+    Desc.DepthOrArraySize = static_cast<UINT16>(SizeZ);
+    Desc.MipLevels = static_cast<UINT16>(NumMips);
     Desc.Alignment = 0;
     Desc.SampleDesc.Count = NumSamples;
 
@@ -343,7 +343,7 @@ TD3D12Texture* CD3D12RHICore::CreateTexture(
         }
         else
         {
-            Assert( false );
+            D3D12_ERROR_ALWAYS( "Unsupported resource dimension" );
             return nullptr;
         }
 
@@ -609,19 +609,26 @@ bool CD3D12RHICore::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInB
         Buffer->SetResource( Resource.ReleaseOwnership() );
     }
 
+    D3D12_ERROR( InitialData->GetSizeInBytes() <= SizeInBytes, "Size of InitialData is larger than the allocated memory" );
+
     if ( InitialData )
     {
+        D3D12_ERROR( InitialData->GetSizeInBytes() <= SizeInBytes, "Size of InitialData is larger than the allocated memory" );
+        
         if ( Buffer->IsDynamic() )
         {
-            Assert( Buffer->GetSizeInBytes() <= SizeInBytes );
-
             void* HostData = Buffer->Map( 0, 0 );
             if ( !HostData )
             {
                 return false;
             }
 
-            CMemory::Memcpy( HostData, InitialData->GetData(), InitialData->GetSizeInBytes() );
+            // Copy over relevant data
+            const uint32 InitialDataSize = InitialData->GetSizeInBytes();
+            CMemory::Memcpy( HostData, InitialData->GetData(), InitialDataSize );
+            // Set the remaining, unused memory to zero
+            CMemory::Memzero( reinterpret_cast<uint8*>(HostData) + InitialDataSize, SizeInBytes - InitialDataSize);
+
             Buffer->Unmap( 0, 0 );
         }
         else
@@ -653,6 +660,10 @@ bool CD3D12RHICore::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInB
 CRHIVertexBuffer* CD3D12RHICore::CreateVertexBuffer( uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
     const uint32 SizeInBytes = NumVertices * Stride;
+    if ( Flags & BufferFlag_Dynamic )
+    {
+        
+    }
 
     TSharedRef<CD3D12RHIVertexBuffer> NewBuffer = dbg_new CD3D12RHIVertexBuffer( Device, NumVertices, Stride, Flags );
     if ( !FinalizeBufferResource<CD3D12RHIVertexBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )
