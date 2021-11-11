@@ -305,7 +305,7 @@ public:
     /* Discards a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying commandlist is completed */
     virtual void DestroyResource( class CRHIResource* Resource ) override final;
     /* Signal the driver that the contents can be discarded */
-    virtual void DiscardsResource( class CRHIMemoryResource* Resource ) override final;
+    virtual void DiscardResource( class CRHIMemoryResource* Resource ) override final;
 
     /* Builds the Bottom Level Acceleration Structure for ray tracing */
     virtual void BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool Update ) override final; 

@@ -864,7 +864,7 @@ void CD3D12RHICommandContext::DiscardResource( CRHIMemoryResource* Resource )
     CD3D12Resource* DxResource = D3D12ResourceCast( Resource );
     if ( DxResource )
     {
-        CmdList.DiscardResource( DxResource->GetResource() );
+        CmdList.DiscardResource( DxResource->GetResource(), nullptr );
         CmdBatch->AddInUseResource( Resource );
     }
 }

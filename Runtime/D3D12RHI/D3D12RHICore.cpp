@@ -660,10 +660,6 @@ bool CD3D12RHICore::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInB
 CRHIVertexBuffer* CD3D12RHICore::CreateVertexBuffer( uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
     const uint32 SizeInBytes = NumVertices * Stride;
-    if ( Flags & BufferFlag_Dynamic )
-    {
-        
-    }
 
     TSharedRef<CD3D12RHIVertexBuffer> NewBuffer = dbg_new CD3D12RHIVertexBuffer( Device, NumVertices, Stride, Flags );
     if ( !FinalizeBufferResource<CD3D12RHIVertexBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )

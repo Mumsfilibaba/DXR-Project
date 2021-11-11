@@ -782,7 +782,7 @@ struct SRHIDestroyResourceRenderCommand : public SRHIRenderCommand
 // Discard Resource RenderCommand
 struct SRHIDiscardResourceRenderCommand : public SRHIRenderCommand
 {
-    SRHIDiscardResourceRenderCommand( CRHIResource* InResource )
+    SRHIDiscardResourceRenderCommand( CRHIMemoryResource* InResource )
         : Resource( InResource )
     {
     }
@@ -792,7 +792,7 @@ struct SRHIDiscardResourceRenderCommand : public SRHIRenderCommand
         CmdContext.DiscardResource( Resource.Get() );
     }
 
-    TSharedRef<CRHIResource> Resource;
+    TSharedRef<CRHIMemoryResource> Resource;
 };
 
 // Build RayTracing Geometry RenderCommand
