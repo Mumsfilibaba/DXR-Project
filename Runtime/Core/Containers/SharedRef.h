@@ -119,7 +119,7 @@ public:
     }
 
     /* Releases the objects and returns the address of Ptr */
-    FORCEINLINE ElementType** ReleaseAndAddressOf() noexcept
+    FORCEINLINE ElementType** ReleaseAndGetAddressOf() noexcept
     {
         Ptr->Release();
         return &Ptr;
@@ -146,7 +146,7 @@ public:
     }
 
     /* Get the address of the raw pointer */
-    FORCEINLINE const ElementType** GetAddressOf() const noexcept
+    FORCEINLINE ElementType* const * GetAddressOf() const noexcept
     {
         return &Ptr;
     }
@@ -176,19 +176,13 @@ public:
     }
 
     /* Retrieve the address of the pointer */
-    FORCEINLINE const ElementType** operator&() const noexcept
+    FORCEINLINE ElementType* const * operator&() const noexcept
     {
         return GetAddressOf();
     }
 
     /* Dereference the pointer */
-    FORCEINLINE ElementType& operator*() noexcept
-    {
-        return Dereference();
-    }
-
-    /* Dereference the pointer */
-    FORCEINLINE const ElementType& operator*() const noexcept
+    FORCEINLINE ElementType& operator*() const noexcept
     {
         return Dereference();
     }
