@@ -35,7 +35,6 @@ project ( projectname )
 	defines
 	{
 		"PROJECT_NAME=" .. "\"" .. projectname .. "\"",
-		"PROJECT_LOCATION=" .. "\"" .. findProjectDir().. "\"",
 		"PROJECT_EDITOR=(1)",
 	}
 

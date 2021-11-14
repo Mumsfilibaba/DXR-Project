@@ -45,8 +45,11 @@ bool CInterfaceApplication::Make( const TSharedPtr<CInterfaceApplication>& InApp
 
 void CInterfaceApplication::Release()
 {
-    Instance->SetPlatformApplication( nullptr );
-    Instance.Reset();
+	if ( Instance )
+	{
+		Instance->SetPlatformApplication( nullptr );
+		Instance.Reset();
+	}
 }
 
 CInterfaceApplication::CInterfaceApplication( const TSharedPtr<CPlatformApplication>& InPlatformApplication )

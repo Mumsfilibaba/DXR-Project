@@ -56,7 +56,7 @@ void CDispatchQueue::WorkThread()
         else
         {
             CurrentTask.Delegate.ExecuteIfBound();
-            Instance.DispatchCompleted++;
+            Instance.DispatchCompleted.Increment();
         }
     }
 
@@ -110,7 +110,7 @@ DispatchID CDispatchQueue::Dispatch( const SDispatch& NewTask )
         MainThreadTask.Delegate.ExecuteIfBound();
 
         // Make sure that both fences is incremented
-        Instance.DispatchCompleted++;
+        Instance.DispatchCompleted.Increment();
         return DispatchAdded.Increment();
     }
 

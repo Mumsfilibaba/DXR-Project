@@ -23,7 +23,6 @@ project ( projectname )
 	defines
 	{
 		"PROJECT_NAME=" .. "\"" .. projectname .. "\"",
-		"PROJECT_LOCATION=" .. "\"" .. findProjectDir().. "\"",
 		"SANDBOX_EXPORT=(1)",
 	}
 	
@@ -98,7 +97,7 @@ project (projectname .. "Launcher")
 	defines
 	{
 		"PROJECT_NAME=" .. "\"" .. projectname .. "\"",
-		"PROJECT_LOCATION=" .. "\"" .. findProjectDir().. "\"",
+		"PROJECT_LOCATION=" .. "\"" .. findWorkspaceDir() .. "/" .. projectname .. "\"",
 	}
 	
 	links

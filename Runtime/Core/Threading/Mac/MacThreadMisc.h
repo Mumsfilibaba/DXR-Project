@@ -8,6 +8,10 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#if defined(__OBJC__)
+#include <Foundation/Foundation.h>
+#endif
+
 class CMacThreadMisc : public CPlatformThreadMisc
 {
 public:
@@ -42,14 +46,24 @@ public:
     /* Make the current thread sleep for a specified amount of time */
     static FORCEINLINE void Sleep( CTimestamp Time )
     {
+		// HACK: When the thread sleeps and we are on mainthread, run the mainloop
+		if ( IsMainThread() )
+		{
+			CMacMainThread::Tick();
+		}
+		
         float MicroSeconds = Time.AsMicroSeconds();
         usleep( static_cast<useconds_t>(MicroSeconds) );
     }
 
     /* Checks weather or not the current thread is the main thread */
     static FORCEINLINE bool IsMainThread() 
-    { 
-        return (MainThreadHandle == GetThreadHandle());
+    {
+#if defined(__OBJC__)
+		return [NSThread isMainThread];
+#else
+		return (MainThreadHandle == GetThreadHandle());
+#endif
     }
 
 private:

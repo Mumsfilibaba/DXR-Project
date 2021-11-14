@@ -19,7 +19,9 @@ public:
         , Blocks()
     {
         CFRunLoopSourceContext SourceContext;
-        SourceContext.info    = reinterpret_cast<void*>( this );
+		CMemory::Memzero( &SourceContext );
+		
+        SourceContext.info    = reinterpret_cast<void*>(this);
         SourceContext.version = 0;
         SourceContext.perform = CMacRunLoopSource::Perform;
 		
@@ -131,7 +133,7 @@ void CMacMainThread::MakeCall( dispatch_block_t Block, bool WaitUntilFinished )
         // Otherwise schedule Block on main thread
         Assert( MainThread != nullptr );
 
-        if (WaitUntilFinished)
+        if ( WaitUntilFinished )
         {
             dispatch_semaphore_t WaitSemaphore = dispatch_semaphore_create( 0 );
 			

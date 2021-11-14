@@ -62,6 +62,12 @@ public:
     }
 
     template<typename T>
+    static FORCEINLINE T* Memzero( T* Destination, uint64 SizeInBytes ) noexcept
+    {
+        return reinterpret_cast<T*>(Memzero( reinterpret_cast<void*>(Destination), SizeInBytes ));
+    }
+
+    template<typename T>
     static FORCEINLINE T* Memzero( T* Destination ) noexcept
     {
         return reinterpret_cast<T*>(Memzero( reinterpret_cast<void*>(Destination), sizeof( T ) ));

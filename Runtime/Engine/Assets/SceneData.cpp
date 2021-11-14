@@ -14,6 +14,8 @@ void SSceneData::AddToScene( CScene* Scene )
         return;
     }
 
+	LOG_INFO("AddToScene");
+	
     TArray<TSharedPtr<CMaterial>> CreatedMaterials;
     if ( !Materials.IsEmpty() )
     {

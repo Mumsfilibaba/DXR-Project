@@ -778,15 +778,18 @@ void CRenderer::Release()
 
     FrameStatistics.Reset();
 
-    CInterfaceApplication& Application = CInterfaceApplication::Get();
-    Application.RemoveWindow( TextureDebugger );
-    TextureDebugger.Reset();
+	if ( CInterfaceApplication::IsInitialized() )
+	{
+		CInterfaceApplication& Application = CInterfaceApplication::Get();
+		Application.RemoveWindow( TextureDebugger );
+		TextureDebugger.Reset();
 
-    Application.RemoveWindow( InfoWindow );
-    InfoWindow.Reset();
+		Application.RemoveWindow( InfoWindow );
+		InfoWindow.Reset();
 
-    Application.RemoveWindow( GPUProfilerWindow );
-    GPUProfilerWindow.Reset();
+		Application.RemoveWindow( GPUProfilerWindow );
+		GPUProfilerWindow.Reset();
+	}
 }
 
 void CRenderer::OnWindowResize( const SWindowResizeEvent& Event )

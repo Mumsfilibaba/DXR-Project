@@ -1,6 +1,7 @@
 #include "EngineLoop.h"
 
 #include "Engine/Engine.h"
+#include "Engine/Project/ProjectManager.h"
 #include "Engine/Resources/TextureFactory.h"
 
 #if PROJECT_EDITOR
@@ -41,6 +42,14 @@ bool CEngineLoop::PreInit()
 
     TRACE_FUNCTION_SCOPE();
 
+    /* Init project information */
+	CString ProjectLocation = WORKSPACE_LOCATION;
+    if (!CProjectManager::Initialize( PROJECT_NAME, (ProjectLocation + "/" + PROJECT_NAME).CStr() ))
+    {
+        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to initialize Project" );
+        return false;
+    }
+
     /* Init output console */
     NErrorDevice::ConsoleWindow = PlatformConsoleWindow::Make();
     if ( !NErrorDevice::ConsoleWindow )
@@ -49,8 +58,13 @@ bool CEngineLoop::PreInit()
     }
     else
     {
-        NErrorDevice::ConsoleWindow->SetTitle( (PROJECT_NAME": Error Console") );
+		NErrorDevice::ConsoleWindow->SetTitle( CString( CProjectManager::GetProjectName() ) + ": Error Console");
     }
+
+#if !PRODUCTION_BUILD
+    LOG_INFO( "ProjectName=" + CString( CProjectManager::GetProjectName() ) );
+    LOG_INFO( "ProjectPath=" + CString( CProjectManager::GetProjectPath() ) );
+#endif
 
     /* Console */
     CConsoleManager::Init();
@@ -207,7 +221,10 @@ bool CEngineLoop::Release()
 
     GRenderer.Release();
 
-    CInterfaceApplication::Get().SetRenderer( nullptr );
+	if ( CInterfaceApplication::IsInitialized() )
+	{
+		CInterfaceApplication::Get().SetRenderer( nullptr );
+	}
 
     // Release the engine. Protect against failed initialization where the global pointer was never initialized
     if ( GEngine )

@@ -1,11 +1,4 @@
-function findProjectDir()
-	local projectName = "/%{prj.name}"
-	return os.getcwd() .. projectName 
-end
-
 function findWorkspaceDir()
-	local workspaceName = "%{wks.location}"
-	--return path.getabsolute(workspaceName, os.getcwd()) I must be missing something because it feels like this should work
 	return os.getcwd()
 end
 
@@ -80,17 +73,17 @@ workspace "DXR-Project"
 	filter "architecture:x86"
 		defines
 		{
-			"ARCHITECTURE_X86=1",
+			"ARCHITECTURE_X86=(1)",
 		}
 	filter "architecture:x86_x64"
 		defines
 		{
-			"ARCHITECTURE_X86_X64=1",
+			"ARCHITECTURE_X86_X64=(1)",
 		}
 	filter "architecture:ARM"
 		defines
 		{
-			"ARCHITECTURE_ARM=1",
+			"ARCHITECTURE_ARM=(1)",
 		}
 
     -- IDE options

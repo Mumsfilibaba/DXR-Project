@@ -1,14 +1,17 @@
 #include "Engine.h"
 
-#include "Interface/InterfaceApplication.h"
-#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
+
+#include "Interface/InterfaceApplication.h"
+
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/TextureFactory.h"
 #include "Engine/Windows/GameConsoleWindow.h"
 #include "Engine/Windows/FrameProfilerWindow.h"
+#include "Engine/Project/ProjectManager.h"
 
 #include "RHI/RHICore.h"
 
@@ -43,11 +46,11 @@ bool CEngine::Init()
 
     CInterfaceApplication& Application = CInterfaceApplication::Get();
 
-    const uint32 WindowWidth = 1920;
+    const uint32 WindowWidth  = 1920;
     const uint32 WindowHeight = 1080;
 
     MainWindow = Application.MakeWindow();
-    if ( MainWindow && MainWindow->Initialize( "DXR Engine", WindowWidth, WindowHeight, 0, 0, Style ) )
+    if ( MainWindow && MainWindow->Initialize( CProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style ) )
     {
         MainWindow->Show( false );
 
