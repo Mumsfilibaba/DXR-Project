@@ -12,7 +12,7 @@ class CMacRunLoopSource
 {
 public:
 
-    CMacRunLoopSource(CFRunLoopRef InRunLoop, NSString* InRunLoopMode)
+    CMacRunLoopSource( CFRunLoopRef InRunLoop, NSString* InRunLoopMode )
         : RunLoop( InRunLoop )
         , RunLoopMode( InRunLoopMode )
         , BlockLock()
@@ -23,8 +23,7 @@ public:
         SourceContext.version = 0;
         SourceContext.perform = CMacRunLoopSource::Perform;
 		
-        Source = CFRunLoopSourceCreate(kCFAllocatorDefault, 0, &SourceContext);
-        
+        Source = CFRunLoopSourceCreate( kCFAllocatorDefault, 0, &SourceContext );
         Assert(Source != nullptr);
         
         CFStringRef RunLoopModeName = (CFStringRef)RunLoopMode;
@@ -44,7 +43,7 @@ public:
             Blocks.Push( CopyBlock );
         }
         
-        CFRunLoopSourceSignal(Source);
+        CFRunLoopSourceSignal( Source );
     }
     
     void Execute()
@@ -52,43 +51,44 @@ public:
         // Copy blocks
         TArray<dispatch_block_t> CopiedBlocks;
         {
-			TScopedLock Lock(BlockLock);
+			TScopedLock Lock( BlockLock );
             
             CopiedBlocks = TArray<dispatch_block_t>( Blocks );
             Blocks.Clear();
         }
         
         // Execute all blocks
-        for (dispatch_block_t Block : CopiedBlocks)
+        for ( dispatch_block_t Block : CopiedBlocks )
         {
             Block();
-            Block_release(Block);
+            Block_release( Block );
         }
     }
     
     void RunInMode(CFRunLoopMode RunMode)
     {
-        CFRunLoopRunInMode(RunMode, 0, true);
+        CFRunLoopRunInMode( RunMode, 0, true );
     }
     
     void WakeUp()
     {
-        CFRunLoopWakeUp(RunLoop);
+        CFRunLoopWakeUp( RunLoop );
     }
     
 private:
+	
     static void Perform(void* Info)
     {
         CMacRunLoopSource* RunLoopSource = reinterpret_cast<CMacRunLoopSource*>(Info);
-        if (RunLoopSource)
+        if ( RunLoopSource )
         {
             RunLoopSource->Execute();
         }
     }
     
-    CFRunLoopRef        RunLoop       = nullptr;
-    CFRunLoopSourceRef  Source        = nullptr;
-    NSString*           RunLoopMode   = nullptr;
+    CFRunLoopRef       RunLoop     = nullptr;
+    CFRunLoopSourceRef Source      = nullptr;
+    NSString*          RunLoopMode = nullptr;
     
 	// Blocks that are going to be executed
     CSpinLock BlockLock;
@@ -133,8 +133,9 @@ void CMacMainThread::MakeCall( dispatch_block_t Block, bool WaitUntilFinished )
 
         if (WaitUntilFinished)
         {
-            dispatch_semaphore_t WaitSemaphore = dispatch_semaphore_create(0);
-            dispatch_block_t     WaitableBlock = Block_copy(^
+            dispatch_semaphore_t WaitSemaphore = dispatch_semaphore_create( 0 );
+			
+            dispatch_block_t WaitableBlock = Block_copy(^
             {
                 CopiedBlock();
                 dispatch_semaphore_signal( WaitSemaphore );
@@ -153,5 +154,5 @@ void CMacMainThread::MakeCall( dispatch_block_t Block, bool WaitUntilFinished )
         }
     }
     
-    Block_release(CopiedBlock);
+    Block_release( CopiedBlock );
 }
