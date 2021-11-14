@@ -1,6 +1,8 @@
 #pragma once
 
 #if PLATFORM_MACOS
+#include "Core/Containers/SharedRef.h"
+
 #include "CoreApplication/Interface/PlatformWindow.h"
 
 #if defined(__OBJC__)
@@ -17,12 +19,12 @@ class CMacApplication;
 
 class CMacWindow final : public CPlatformWindow
 {
-    friend class CMacApplication;
-
 public:
 
+	static TSharedRef<CMacWindow> Make( CMacApplication* InApplication );
+	
     /* Initializes the window */
-    virtual bool Initialize( const CString& Title, uint32 Width, uint32 Height, SWindowStyle Style ) override final;
+    virtual bool Initialize( const CString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style ) override final;
 
     /* Shows the window */
     virtual void Show( bool Maximized ) override final;
@@ -93,8 +95,8 @@ private:
     CMacApplication* Application = nullptr;
 
     /* The native window and view */
-    CCocoaWindow* Window = nullptr;
-    CCocoaContentView* View = nullptr;
+    CCocoaWindow*      Window = nullptr;
+    CCocoaContentView* View   = nullptr;
 };
 
 #endif

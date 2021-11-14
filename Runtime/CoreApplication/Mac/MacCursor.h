@@ -1,14 +1,19 @@
 #pragma once
 
 #if PLATFORM_MACOS
+#include "Core/Containers/SharedPtr.h"
+
 #include "CoreApplication/Interface/PlatformCursor.h"
 
 class CMacCursor final : public CPlatformCursor
 {
-    friend class CMacApplication;
-
 public:
 
+	static TSharedPtr<CMacCursor> Make();
+	
+	/* Public destructor for TSharedPtr */
+	~CMacCursor() = default;
+	
     /* Sets the type of cursor that is being used */
     virtual void SetCursor( ECursor Cursor ) override final;
 
@@ -23,12 +28,10 @@ public:
 
 private:
 
-    FORCEINLINE CMacCursor()
+    CMacCursor()
         : CPlatformCursor()
     {
     }
-
-    ~CMacCursor() = default;
 };
 
 #endif

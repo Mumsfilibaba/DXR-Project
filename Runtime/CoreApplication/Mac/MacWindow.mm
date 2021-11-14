@@ -9,6 +9,11 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
+TSharedRef<CMacWindow> CMacWindow::Make( CMacApplication* InApplication )
+{
+	return dbg_new CMacWindow( InApplication );
+}
+
 CMacWindow::CMacWindow( CMacApplication* InApplication )
     : CPlatformWindow()
     , Application( InApplication )
@@ -28,7 +33,7 @@ CMacWindow::~CMacWindow()
     }, true);
 }
 
-bool CMacWindow::Init( const CString& InTitle, uint32 Width, uint32 Height, SWindowStyle InStyle )
+bool CMacWindow::Initialize( const CString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle )
 {
     __block bool Result = false;
     MakeMainThreadCall(^
@@ -57,7 +62,7 @@ bool CMacWindow::Init( const CString& InTitle, uint32 Width, uint32 Height, SWin
             WindowStyle = NSWindowStyleMaskBorderless;
         }
         
-        const NSRect WindowRect = NSMakeRect(0.0f, 0.0f, CGFloat(Width), CGFloat(Height));
+        const NSRect WindowRect = NSMakeRect( CGFloat(x), CGFloat(y), CGFloat(InWidth), CGFloat(InHeight) );
         Window = [[CCocoaWindow alloc] init:Application ContentRect:WindowRect StyleMask:WindowStyle Backing:NSBackingStoreBuffered Defer:NO];
         if (!Window)
         {

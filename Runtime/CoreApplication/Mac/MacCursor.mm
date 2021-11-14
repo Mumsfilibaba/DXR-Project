@@ -20,6 +20,11 @@ See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+TSharedPtr<CMacCursor> CMacCursor::Make()
+{
+	return TSharedPtr<CMacCursor>( dbg_new CMacCursor() );
+}
+
 void CMacCursor::SetCursor( ECursor Cursor )
 {
     NSCursor* SelectedCursor = nullptr;

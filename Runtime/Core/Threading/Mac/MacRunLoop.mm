@@ -86,11 +86,11 @@ private:
         }
     }
     
-private:
     CFRunLoopRef        RunLoop       = nullptr;
     CFRunLoopSourceRef  Source        = nullptr;
     NSString*           RunLoopMode   = nullptr;
     
+	// Blocks that are going to be executed
     CSpinLock BlockLock;
     TArray<dispatch_block_t> Blocks;
 };

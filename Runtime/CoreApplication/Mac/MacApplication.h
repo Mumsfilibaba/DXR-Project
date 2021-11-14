@@ -33,10 +33,7 @@ class CMacApplication final : public CPlatformApplication
 public:
 
     /* Creates the mac application */
-    static FORCEINLINE TSharedPtr<CMacApplication> Make()
-    {
-        return TSharedPtr<CMacApplication>( new CMacApplication() );
-    }
+	static TSharedPtr<CMacApplication> Make();
 
     /* Public destructor for TSharedPtr */
     ~CMacApplication();
@@ -49,9 +46,6 @@ public:
 
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick( float Delta ) override final;
-
-    /* Retrieve the cursor interface */
-    virtual ICursor* GetCursor() override final { return &Cursor; }
 
     /* Sets the window that is currently active */
     virtual void SetActiveWindow( const TSharedRef<CPlatformWindow>& Window ) override final;
@@ -89,9 +83,6 @@ private:
 
     /* All the windows of the application */
     TArray<TSharedRef<CMacWindow>> Windows;
-
-    /* Cursor interface */
-    CMacCursor Cursor;
 
     /* If the application has been terminating or not */
     bool IsTerminating = false;

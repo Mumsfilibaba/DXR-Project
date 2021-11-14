@@ -1,6 +1,7 @@
 #if PLATFORM_MACOS
 #include "MacApplication.h"
 #include "MacWindow.h"
+#include "MacCursor.h"
 #include "ScopedAutoreleasePool.h"
 #include "CocoaAppDelegate.h"
 #include "CocoaWindow.h"
@@ -15,9 +16,16 @@
 
 #include <AppKit/AppKit.h>
 
+TSharedPtr<CMacApplication> CMacApplication::Make()
+{
+	return TSharedPtr<CMacApplication>( dbg_new CMacApplication() );
+}
+
 CMacApplication::CMacApplication()
-    : AppDelegate(nullptr)
+    : CPlatformApplication( CMacCursor::Make() )
+	, AppDelegate(nullptr)
     , Windows()
+	, IsTerminating( false )
 {
 }
 
@@ -29,12 +37,12 @@ CMacApplication::~CMacApplication()
 
 TSharedRef<CPlatformWindow> CMacApplication::MakeWindow()
 {
-    TSharedRef<CMacWindow> NewWindow = new CMacWindow( this );
+    TSharedRef<CMacWindow> NewWindow = CMacWindow::Make( this );
     Windows.Emplace(NewWindow);
     return NewWindow;
 }
 
-bool CMacApplication::Init()
+bool CMacApplication::Initialize()
 {
     SCOPED_AUTORELEASE_POOL();
 
