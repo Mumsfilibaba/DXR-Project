@@ -127,6 +127,11 @@ bool CMacApplication::InitAppMenu()
 void CMacApplication::Tick( float )
 {
     PlatformApplicationMisc::PumpMessages(true);
+	
+	if ( PlatformThreadMisc::IsMainThread() )
+	{
+		CMacMainThread::Tick();
+	}
 }
 
 void CMacApplication::SetActiveWindow( const TSharedRef<CPlatformWindow>& Window )
