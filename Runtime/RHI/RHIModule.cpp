@@ -82,6 +82,8 @@ bool InitRHI( ERHIModule InRenderApi )
 
 void ReleaseRHI()
 {
+    CRHICommandQueue::Get().SetContext( nullptr );
+
     SafeDelete( GRHICore );
     SafeDelete( GShaderCompiler );
 }

@@ -213,9 +213,9 @@ public:
     }
 
 private:
-    TComPtr<ID3D12PipelineState>    PipelineState;
-    TSharedRef<CD3D12RHIComputeShader>  Shader;
-    TSharedRef<CD3D12RootSignature> RootSignature;
+    TComPtr<ID3D12PipelineState>       PipelineState;
+    TSharedRef<CD3D12RHIComputeShader> Shader;
+    TSharedRef<CD3D12RootSignature>    RootSignature;
 };
 
 struct SRayTracingShaderIdentifer

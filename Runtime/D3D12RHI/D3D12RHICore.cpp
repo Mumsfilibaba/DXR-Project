@@ -88,6 +88,9 @@ CD3D12RHICore::~CD3D12RHICore()
 {
     DirectCmdContext.Reset();
 
+    GenerateMipsTex2D_PSO.Reset();
+    GenerateMipsTexCube_PSO.Reset();
+
     SafeDelete( RootSignatureCache );
 
     SafeRelease( ResourceOfflineDescriptorHeap );

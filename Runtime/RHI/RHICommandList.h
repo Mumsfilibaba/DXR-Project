@@ -541,7 +541,6 @@ public:
 
     FORCEINLINE void SetContext( IRHICommandContext* InCmdContext )
     {
-        Assert( InCmdContext != nullptr );
         CmdContext = InCmdContext;
     }
 
