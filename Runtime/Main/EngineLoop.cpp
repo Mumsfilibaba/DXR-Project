@@ -29,13 +29,12 @@
 #include "Renderer/Renderer.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
-void CEngineLoop::InitCommandLineArgs( int32 NumCommandLineArgs, const char** CommandLineArgs )
+void CEngineLoop::InitializeCommandLine( int32 NumCommandLineArgs, const char** CommandLineArgs )
 {
-    UNREFERENCED_VARIABLE( NumCommandLineArgs );
-    UNREFERENCED_VARIABLE( CommandLineArgs );
+	CCommandLine::Initialize(const char *RawCommandLine);
 }
 
-bool CEngineLoop::PreInit()
+bool CEngineLoop::PreInitialize()
 {
     /* Enable the profiler */
     CFrameProfiler::Enable();
@@ -54,6 +53,7 @@ bool CEngineLoop::PreInit()
     NErrorDevice::ConsoleWindow = PlatformConsoleWindow::Make();
     if ( !NErrorDevice::ConsoleWindow )
     {
+		PlatformApplicationMisc::MessageBox( "ERROR", "Failed to initialize ConsoleWindow" );
         return false;
     }
     else
@@ -91,7 +91,7 @@ bool CEngineLoop::PreInit()
 
     // RenderAPI // TODO: Decide this via command line
     ERHIModule RenderApi =
-    #if PLATFORM_MACOS
+#if PLATFORM_MACOS
         ERHIModule::Null;
 #else
         ERHIModule::D3D12;
@@ -121,7 +121,7 @@ bool CEngineLoop::PreInit()
     return true;
 }
 
-bool CEngineLoop::Init()
+bool CEngineLoop::Initialize()
 {
     // Notify systems that the Engine is about to be created
     NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();

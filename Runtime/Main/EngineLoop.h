@@ -5,14 +5,14 @@ class CEngineLoop
 {
 public:
 
-	// Initialize the commandlin by parsing all the arguments 
-	static void InitCommandLineArgs(  int32 NumCommandLineArgs, const char** CommandLineArgs );
+	// Initialize the commandline by parsing all the arguments 
+	static void InitializeCommandLine(  int32 NumCommandLineArgs, const char** CommandLineArgs );
 	
     /* Creates the application and load modules */
-    static bool PreInit();
+    static bool PreInitialize();
 
     /* Initializes and starts up the engine */
-    static bool Init();
+    static bool Initialize();
 
     /* Ticks the engine */
     static void Tick( CTimestamp Deltatime );

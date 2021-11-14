@@ -2,16 +2,21 @@
 #include "Core/CoreModule.h"
 #include "Core/Containers/String.h"
 
+#define MAX_COMMANDLINE_LENGTH (512)
+
 class CORE_API CCommandLine
 {
 public:
-    static bool Parse( const char* RawCommandLine );
+	
+	/* Initialize the commandline args and parse all the arguments */
+    static void Initialize( int32 NumCommandLineArgs, const char** CommandLineArgs );
 
-    static bool GetInt( const char* Parameter, int& Value );
-    static bool GetBool( const char* parameter );
-
-    static const CString& Get();
+	/* Retrieve the commandline */
+    static FORCEINLINE const char* Get()
+	{
+		return CommandLine;
+	}
 
 private:
-    static CString CommandLine;
+    static char CommandLine[MAX_COMMANDLINE_LENGTH];
 };

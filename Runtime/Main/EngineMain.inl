@@ -30,13 +30,13 @@ int32 EngineMain( int32 NumCommandLineArgs, const char** CommandLineArgs )
     UNREFERENCED_VARIABLE( CommandLineArgs );
 
     // Run loop
-    if ( !CEngineLoop::PreInit() )
+    if ( !CEngineLoop::PreInitialize() )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "CEngineLoop::PreInit Failed" );
         return -1;
     }
 
-    if ( !CEngineLoop::Init() )
+    if ( !CEngineLoop::Initialize() )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "CEngineLoop::Init Failed" );
         return -1;
