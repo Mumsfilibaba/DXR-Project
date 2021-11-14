@@ -18,9 +18,9 @@ class INTERFACE_API CInterfaceUser
 public:
 
     /* Create a new application user */
-    static FORCEINLINE TSharedPtr<CInterfaceUser> Make( uint32 InUserIndex, ICursor* InCursorDevice )
+    static FORCEINLINE TSharedPtr<CInterfaceUser> Make( uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor )
     {
-        return TSharedPtr<CInterfaceUser>( dbg_new CInterfaceUser( InUserIndex, InCursorDevice ) );
+        return TSharedPtr<CInterfaceUser>( dbg_new CInterfaceUser( InUserIndex, InCursor ) );
     }
 
     virtual ~CInterfaceUser();
@@ -117,7 +117,7 @@ public:
     }
 
     /* Retrieve the cursor */
-    FORCEINLINE ICursor* GetCursorDevice() const
+    FORCEINLINE TSharedPtr<ICursor> GetCursorDevice() const
     {
         return Cursor;
     }
@@ -130,7 +130,7 @@ public:
 
 private:
 
-    CInterfaceUser( uint32 InUserIndex, ICursor* InCursorDevice );
+    CInterfaceUser( uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor );
 
     /* Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode( EKey KeyCode ) const
@@ -156,7 +156,7 @@ private:
     const uint32 UserIndex;
 
     /* The cursor that is controlled by this user */
-    ICursor* Cursor;
+    TSharedPtr<ICursor> Cursor;
 
     /* The key-state of this user */
     TArray<SKeyState> KeyStates; // TODO: Use a map instead? 

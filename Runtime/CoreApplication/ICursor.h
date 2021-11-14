@@ -21,6 +21,8 @@ class ICursor
 {
 public:
 
+    virtual ~ICursor() = default;
+    
     /* Sets the type of cursor that is being used */
     virtual void SetCursor( ECursor Cursor ) = 0;
 
@@ -35,7 +37,4 @@ public:
 
     /* Retrieve the mouse visibility */
     virtual bool IsVisible() const = 0;
-
-protected:
-    ~ICursor() = default;
 };

@@ -1,14 +1,19 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
+#include "Core/Containers/SharedPtr.h"
+
 #include "CoreApplication/CoreApplicationModule.h"
 #include "CoreApplication/Interface/PlatformCursor.h"
 
 class COREAPPLICATION_API CWindowsCursor final : public CPlatformCursor
 {
-    friend class CWindowsApplication;
-
 public:
+
+    static TSharedPtr<CWindowsCursor> Make();
+
+    /* Public constructor for the TSharedPtr*/
+    ~CWindowsCursor() = default;
 
     /* Sets the type of cursor that is being used */
     virtual void SetCursor( ECursor Cursor ) override final;
@@ -24,12 +29,10 @@ public:
 
 private:
 
-    FORCEINLINE CWindowsCursor()
+    CWindowsCursor()
         : CPlatformCursor()
     {
     }
-
-    ~CWindowsCursor() = default;
 };
 
 #endif

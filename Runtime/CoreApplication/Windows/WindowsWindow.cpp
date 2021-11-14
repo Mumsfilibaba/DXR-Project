@@ -5,13 +5,17 @@
 
 #include "Core/Logging/Log.h"
 
+#include "CoreApplication/Platform/PlatformDebugMisc.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
+
 CWindowsWindow::CWindowsWindow( CWindowsApplication* InApplication )
     : CPlatformWindow()
     , Application( InApplication )
     , Window( 0 )
+    , IsFullscreen( false )
+    , StoredPlacement()
     , Style( 0 )
     , StyleEx( 0 )
-    , IsFullscreen( false )
 {
 }
 
@@ -23,49 +27,69 @@ CWindowsWindow::~CWindowsWindow()
     }
 }
 
-bool CWindowsWindow::Init( const CString& InTitle, uint32 InWidth, uint32 InHeight, SWindowStyle InStyle )
+TSharedRef<CWindowsWindow> CWindowsWindow::Make( CWindowsApplication* InApplication )
+{
+    return dbg_new CWindowsWindow( InApplication );
+}
+
+bool CWindowsWindow::Initialize( const CString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle )
 {
     // Determine the window style for WinAPI
-    DWORD dwStyle = 0;
+    DWORD NewStyle = 0;
+    DWORD NewStyleEx = WS_EX_APPWINDOW;
     if ( InStyle.Style != 0 )
     {
-        dwStyle = WS_OVERLAPPED;
+        NewStyle = WS_OVERLAPPED;
         if ( InStyle.IsTitled() )
         {
-            dwStyle |= WS_CAPTION;
+            NewStyle |= WS_CAPTION;
         }
         if ( InStyle.IsClosable() )
         {
-            dwStyle |= WS_SYSMENU;
+            NewStyle |= WS_SYSMENU;
         }
         if ( InStyle.IsMinimizable() )
         {
-            dwStyle |= WS_SYSMENU | WS_MINIMIZEBOX;
+            NewStyle |= WS_SYSMENU | WS_MINIMIZEBOX;
         }
         if ( InStyle.IsMaximizable() )
         {
-            dwStyle |= WS_SYSMENU | WS_MAXIMIZEBOX;
+            NewStyle |= WS_SYSMENU | WS_MAXIMIZEBOX;
         }
         if ( InStyle.IsResizeable() )
         {
-            dwStyle |= WS_THICKFRAME;
+            NewStyle |= WS_THICKFRAME;
         }
     }
     else
     {
-        dwStyle = WS_POPUP;
+        NewStyle = WS_POPUP;
     }
 
     // Calculate real window size, since the width and height describe the client- area
-    RECT ClientRect = { 0, 0, static_cast<LONG>(InWidth), static_cast<LONG>(InHeight) };
-    AdjustWindowRect( &ClientRect, dwStyle, FALSE );
+    RECT ClientRect = 
+    { 
+        0, 
+        0, 
+        static_cast<LONG>(InWidth),
+        static_cast<LONG>(InHeight)
+    };
 
-    INT nWidth = ClientRect.right - ClientRect.left;
-    INT nHeight = ClientRect.bottom - ClientRect.top;
+#if PLATFORM_WINDOWS_10_ANNIVERSARY
+    AdjustWindowRectExForDpi( &ClientRect, NewStyle, false, NewStyleEx, USER_DEFAULT_SCREEN_DPI );
+#else
+    AdjustWindowRectEx( &ClientRect, NewStyle, false, NewStyleEx );
+#endif
+
+    int32 PositionX  = x;
+    int32 PositionY  = y;
+    int32 RealWidth  = ClientRect.right - ClientRect.left;
+    int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
     HINSTANCE Instance = Application->GetInstance();
     LPCSTR WindowClassName = CWindowsApplication::GetWindowClassName();
-    Window = CreateWindowEx( 0, WindowClassName, InTitle.CStr(), dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, nWidth, nHeight, NULL, NULL, Instance, NULL );
+
+    Window = CreateWindowEx( NewStyleEx, WindowClassName, InTitle.CStr(), NewStyle, PositionX, PositionY, RealWidth, RealHeight, NULL, NULL, Instance, NULL );
     if ( Window == 0 )
     {
         LOG_ERROR( "[CWindowsWindow]: FAILED to create window\n" );
@@ -74,7 +98,7 @@ bool CWindowsWindow::Init( const CString& InTitle, uint32 InWidth, uint32 InHeig
     else
     {
         // If the window has a sys-menu we check if the close-button should be active
-        if ( dwStyle & WS_SYSMENU )
+        if ( NewStyle & WS_SYSMENU )
         {
             if ( !(InStyle.IsClosable()) )
             {
@@ -83,13 +107,13 @@ bool CWindowsWindow::Init( const CString& InTitle, uint32 InWidth, uint32 InHeig
         }
 
         // Save style for later
-        Style = dwStyle;
         StyleParams = InStyle;
 
         // Set this to userdata
         SetLastError( 0 );
 
         LONG_PTR Result = SetWindowLongPtrA( Window, GWLP_USERDATA, (LONG_PTR)this );
+
         DWORD LastError = GetLastError();
         if ( Result == 0 && LastError != 0 )
         {
@@ -98,6 +122,10 @@ bool CWindowsWindow::Init( const CString& InTitle, uint32 InWidth, uint32 InHeig
         }
 
         UpdateWindow( Window );
+
+        SWindowShape NewWindowShape( RealWidth, RealHeight, PositionX, PositionY );
+        SetWindowShape( NewWindowShape, true );
+
         return true;
     }
 }
@@ -162,10 +190,10 @@ void CWindowsWindow::Restore()
 
     if ( IsValid() )
     {
-        bool result = ::IsIconic( Window );
-        if ( result )
+        bool Result = IsIconic( Window );
+        if ( Result )
         {
-            ::ShowWindow( Window, SW_RESTORE );
+            ShowWindow( Window, SW_RESTORE );
         }
     }
 }
@@ -180,26 +208,28 @@ void CWindowsWindow::ToggleFullscreen()
         {
             IsFullscreen = true;
 
-            ::GetWindowPlacement( Window, &StoredPlacement );
+            GetWindowPlacement( Window, &StoredPlacement );
+            
             if ( Style == 0 )
             {
-                Style = ::GetWindowLong( Window, GWL_STYLE );
+                Style = GetWindowLong( Window, GWL_STYLE );
             }
+
             if ( StyleEx == 0 )
             {
-                StyleEx = ::GetWindowLong( Window, GWL_EXSTYLE );
+                StyleEx = GetWindowLong( Window, GWL_EXSTYLE );
             }
 
-            LONG newStyle = Style;
-            newStyle &= ~WS_BORDER;
-            newStyle &= ~WS_DLGFRAME;
-            newStyle &= ~WS_THICKFRAME;
+            LONG NewStyle = Style;
+            NewStyle &= ~WS_BORDER;
+            NewStyle &= ~WS_DLGFRAME;
+            NewStyle &= ~WS_THICKFRAME;
 
-            LONG newStyleEx = StyleEx;
-            newStyleEx &= ~WS_EX_WINDOWEDGE;
+            LONG NewStyleEx = StyleEx;
+            NewStyleEx &= ~WS_EX_WINDOWEDGE;
 
-            SetWindowLong( Window, GWL_STYLE, newStyle | WS_POPUP );
-            SetWindowLong( Window, GWL_EXSTYLE, newStyleEx | WS_EX_TOPMOST );
+            SetWindowLong( Window, GWL_STYLE, NewStyle | WS_POPUP );
+            SetWindowLong( Window, GWL_EXSTYLE, NewStyleEx | WS_EX_TOPMOST );
             ShowWindow( Window, SW_SHOWMAXIMIZED );
         }
         else
@@ -249,6 +279,17 @@ void CWindowsWindow::GetTitle( CString& OutTitle )
     }
 }
 
+void CWindowsWindow::MoveTo( int32 x, int32 y )
+{
+    RECT BorderRect = { 0, 0, 0, 0 };
+    AdjustWindowRectEx( &BorderRect, Style, false, StyleEx );
+
+    x += BorderRect.left;
+    y += BorderRect.top;
+
+    SetWindowPos( Window, nullptr, x, y, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER );
+}
+
 void CWindowsWindow::SetWindowShape( const SWindowShape& Shape, bool Move )
 {
     Assert( Window != 0 );
@@ -261,7 +302,34 @@ void CWindowsWindow::SetWindowShape( const SWindowShape& Shape, bool Move )
             Flags |= SWP_NOMOVE;
         }
 
-        SetWindowPos( Window, NULL, Shape.Position.x, Shape.Position.y, Shape.Width, Shape.Height, Flags );
+        if ( IsFullscreen )
+        {
+            // Enables the window to be set to a higher window-size than what the resolution allows
+            Flags |= SWP_NOSENDCHANGING;
+        }
+
+        // Calculate real window size, since the width and height describe the client- area
+        RECT ClientRect =
+        {
+            0,
+            0,
+            static_cast<LONG>(Shape.Width),
+            static_cast<LONG>(Shape.Height)
+        };
+
+    #if PLATFORM_WINDOWS_10_ANNIVERSARY
+        UINT WindowDPI = GetDpiForWindow( Window );
+        AdjustWindowRectExForDpi( &ClientRect, Style, false, StyleEx, WindowDPI );
+    #else
+        AdjustWindowRectEx( &ClientRect, Style, false, StyleEx );
+    #endif
+        
+        int32 PositionX  = Shape.Position.x;
+        int32 PositionY  = Shape.Position.y;
+        int32 RealWidth  = ClientRect.right  - ClientRect.left;
+        int32 RealHeight = ClientRect.bottom - ClientRect.top;
+
+        SetWindowPos( Window, NULL, PositionX, PositionY, RealWidth, RealHeight, Flags );
     }
 }
 
@@ -271,16 +339,16 @@ void CWindowsWindow::GetWindowShape( SWindowShape& OutWindowShape ) const
 
     if ( IsValid() )
     {
-        int32 x = 0;
-        int32 y = 0;
+        int32  PositionX = 0;
+        int32  PositionY = 0;
         uint32 Width = 0;
         uint32 Height = 0;
 
         RECT Rect = { };
         if ( GetWindowRect( Window, &Rect ) != 0 )
         {
-            x = static_cast<int32>(Rect.left);
-            y = static_cast<int32>(Rect.top);
+            PositionX = static_cast<int32>(Rect.left);
+            PositionY = static_cast<int32>(Rect.top);
         }
 
         if ( GetClientRect( Window, &Rect ) != 0 )
@@ -289,7 +357,30 @@ void CWindowsWindow::GetWindowShape( SWindowShape& OutWindowShape ) const
             Height = static_cast<uint32>(Rect.bottom - Rect.top);
         }
 
-        OutWindowShape = SWindowShape( Width, Height, x, y );
+        OutWindowShape = SWindowShape( Width, Height, PositionX, PositionY );
+    }
+}
+
+void CWindowsWindow::GetFullscreenInfo( uint32& OutWidth, uint32& OutHeight ) const
+{
+    HMONITOR Monitor = MonitorFromWindow( Window, MONITOR_DEFAULTTOPRIMARY );
+
+    SetLastError( 0 );
+
+    MONITORINFO MonitorInfo;
+    MonitorInfo.cbSize = sizeof( MONITORINFO );
+
+    if (GetMonitorInfoA( Monitor, &MonitorInfo ))
+    {
+        OutWidth  = MonitorInfo.rcMonitor.right - MonitorInfo.rcMonitor.left;
+        OutHeight = MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top;
+    }
+    else
+    {
+        CString Error;
+        PlatformDebugMisc::GetLastErrorString( Error );
+
+        LOG_ERROR( "[CWindowsWindow]: Failed to retrive monitorinfo. Reason: " + Error );
     }
 }
 

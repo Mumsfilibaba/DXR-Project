@@ -5,6 +5,11 @@
 
 #include "Core/Containers/SharedRef.h"
 
+TSharedPtr<CWindowsCursor> CWindowsCursor::Make()
+{
+    return TSharedPtr<CWindowsCursor>( dbg_new CWindowsCursor() );
+}
+
 void CWindowsCursor::SetCursor( ECursor Cursor )
 {
     LPSTR CursorName = NULL;

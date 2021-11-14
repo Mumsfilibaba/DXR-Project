@@ -43,8 +43,11 @@ bool CEngine::Init()
 
     CInterfaceApplication& Application = CInterfaceApplication::Get();
 
+    const uint32 WindowWidth = 1920;
+    const uint32 WindowHeight = 1080;
+
     MainWindow = Application.MakeWindow();
-    if ( MainWindow && MainWindow->Init( "DXR Engine", 1920, 1080, Style ) )
+    if ( MainWindow && MainWindow->Initialize( "DXR Engine", WindowWidth, WindowHeight, 0, 0, Style ) )
     {
         MainWindow->Show( false );
 
@@ -59,7 +62,7 @@ bool CEngine::Init()
 
     Application.RegisterMainViewport( MainWindow );
 
-    ICursor* CursorDevice = Application.GetCursor();
+    TSharedPtr<ICursor> CursorDevice = Application.GetCursor();
     User = CInterfaceUser::Make( 0, CursorDevice );
     if ( !User )
     {

@@ -92,7 +92,7 @@ class CPlatformWindow : public CRefCounted
 public:
 
     /* Initializes the window */
-    virtual bool Init( const CString& Title, uint32 Width, uint32 Height, SWindowStyle Style ) { return true; }
+    virtual bool Initialize( const CString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style ) { return true; }
 
     /* Shows the window */
     virtual void Show( bool Maximized ) {}
@@ -124,11 +124,17 @@ public:
     /* Retrieve the window title */
     virtual void GetTitle( CString& OutTitle ) {}
 
+    /* Set the position of the window */
+    virtual void MoveTo( int32 x, int32 y ) {}
+
     /* Set the shape of the window */
     virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) {}
 
     /* Retrieve the shape of the window */
     virtual void GetWindowShape( SWindowShape& OutWindowShape ) const {}
+
+    /* Get the fullscreen information of the monitor that the window currently is on */
+    virtual void GetFullscreenInfo( uint32& OutWidth, uint32& OutHeight ) const {}
 
     /* Retrieve the width of the window */
     virtual uint32 GetWidth()  const { return 0; }
@@ -151,6 +157,7 @@ protected:
 
     ~CPlatformWindow() = default;
 
+    // Style of the window
     SWindowStyle StyleParams;
 };
 

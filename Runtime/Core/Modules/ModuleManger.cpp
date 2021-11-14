@@ -1,7 +1,6 @@
 #include "ModuleManger.h"
 
 #include "Core/Windows/Windows.h"
-#include "Core/Windows/Windows.inl"
 #include "Core/Templates/StringTraits.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

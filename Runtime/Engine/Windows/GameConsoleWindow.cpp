@@ -20,6 +20,7 @@ CGameConsoleWindow::CGameConsoleWindow()
     : IInterfaceWindow()
     , InputHandler( MakeShared<CConsoleInputHandler>() )
 {
+    TextBuffer.Fill(0);
 }
 
 void CGameConsoleWindow::Tick()

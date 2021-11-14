@@ -3,17 +3,20 @@
 #if PLATFORM_WINDOWS
 #include "Windows.h"
 
+#include "Core/Containers/SharedRef.h"
+
 #include "CoreApplication/CoreApplicationModule.h"
 #include "CoreApplication/Interface/PlatformWindow.h"
 
 class COREAPPLICATION_API CWindowsWindow final : public CPlatformWindow
 {
-    friend class CWindowsApplication;
-
 public:
 
+    /* Create a new window */
+    static TSharedRef<CWindowsWindow> Make( class CWindowsApplication* InApplication );
+
     /* Initializes the window */
-    virtual bool Init( const CString& Title, uint32 Width, uint32 Height, SWindowStyle Style ) override final;
+    virtual bool Initialize( const CString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style ) override final;
 
     /* Shows the window */
     virtual void Show( bool Maximized ) override final;
@@ -45,11 +48,17 @@ public:
     /* Retrieve the window title */
     virtual void GetTitle( CString& OutTitle ) override final;
 
+    /* Set the position of the window */
+    virtual void MoveTo( int32 x, int32 y ) override final;
+
     /* Set the shape of the window */
     virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) override final;
 
     /* Retrieve the shape of the window */
     virtual void GetWindowShape( SWindowShape& OutWindowShape ) const override final;
+
+    /* Get the fullscreen information of the monitor that the window currently is on */
+    virtual void GetFullscreenInfo( uint32& OutWidth, uint32& OutHeight ) const override final;
 
     /* Retrieve the width of the window */
     virtual uint32 GetWidth()  const override final;
@@ -73,6 +82,7 @@ private:
     CWindowsWindow( CWindowsApplication* InApplication );
     ~CWindowsWindow();
 
+    // Owning application
     CWindowsApplication* Application;
 
     HWND Window;

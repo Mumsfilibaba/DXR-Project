@@ -178,6 +178,7 @@ private:
 class CD3D12RHIComputePipelineState : public CRHIComputePipelineState, public CD3D12DeviceChild
 {
 public:
+    
     CD3D12RHIComputePipelineState( CD3D12Device* InDevice, const TSharedRef<CD3D12RHIComputeShader>& InShader );
     ~CD3D12RHIComputePipelineState() = default;
 
@@ -232,8 +233,10 @@ public:
 
     virtual void SetName( const CString& InName ) override
     {
+        // Set resource name 
         CRHIResource::SetName( InName );
 
+        // Set native debug name
         WString WideName = CharToWide( InName );
         StateObject->SetName( WideName.CStr() );
     }
@@ -290,5 +293,5 @@ private:
     TSharedRef<CD3D12RootSignature> MissLocalRootSignature;
     TSharedRef<CD3D12RootSignature> HitLocalRootSignature;
 
-    std::unordered_map<CString, SRayTracingShaderIdentifer, SStringHasher> ShaderIdentifers;
+    THashTable<CString, SRayTracingShaderIdentifer, SStringHasher> ShaderIdentifers;
 };

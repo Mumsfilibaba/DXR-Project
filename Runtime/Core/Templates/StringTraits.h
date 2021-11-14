@@ -28,7 +28,7 @@ public:
         return !!isspace( static_cast<int>(Char) );
     }
 
-    /* Is Nullterminator */
+    /* Is null-terminator */
     static FORCEINLINE bool IsTerminator( CharType Char ) noexcept
     {
         return (Char == Null);
@@ -77,7 +77,7 @@ public:
     }
 
     /* Format into buffer */
-    static FORCEINLINE int32 FormatBuffer( CharType* Buffer, int32 Len, const CharType* Format, ... ) noexcept
+    static int32 FormatBuffer( CharType* Buffer, int32 Len, const CharType* Format, ... ) noexcept
     {
         va_list Args;
         va_start( Args, Format );
@@ -159,7 +159,7 @@ public:
         return !!iswspace( static_cast<wint_t>(Char) );
     }
 
-    /* Is Nullterminator */
+    /* Is null-terminator */
     static FORCEINLINE bool IsTerminator( CharType Char ) noexcept
     {
         return (Char == Null);
@@ -208,7 +208,7 @@ public:
     }
 
     /* Format into buffer */
-    static FORCEINLINE int32 FormatBuffer( CharType* Buffer, int32 Len, const CharType* Format, ... ) noexcept
+    static int32 FormatBuffer( CharType* Buffer, int32 Len, const CharType* Format, ... ) noexcept
     {
         va_list Args;
         va_start( Args, Format );

@@ -45,7 +45,7 @@ public:
     virtual TSharedRef<CPlatformWindow> MakeWindow() override final;
 
     /* Initialized the application */
-    virtual bool Init() override final;
+    virtual bool Initialize() override final;
 
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick( float Delta ) override final;

@@ -198,7 +198,7 @@ private:
         const SClearValue& OptimalClearValue );
 
     template<typename TD3D12Buffer>
-    bool FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInBytes, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData );
+    bool CreateBuffer( TD3D12Buffer* Buffer, uint32 SizeInBytes, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData );
 
     // The Device Object
     CD3D12Device* Device = nullptr;

@@ -102,7 +102,7 @@ CD3D12RHICore::~CD3D12RHICore()
 
 bool CD3D12RHICore::Init( bool EnableDebug )
 {
-    // NOTE: GPUBasedValidation does not work with ray tracing since it causes Device Removed (2021-02-25)
+    // NOTE: GPUBasedValidation does not work with ray tracing since it is not supported
     bool GPUBasedValidationOn =
     #if ENABLE_API_GPU_DEBUGGING
         EnableDebug;
@@ -574,8 +574,10 @@ CRHISamplerState* CD3D12RHICore::CreateSamplerState( const SSamplerStateCreateIn
 }
 
 template<typename TD3D12Buffer>
-bool CD3D12RHICore::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInBytes, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
+bool CD3D12RHICore::CreateBuffer( TD3D12Buffer* Buffer, uint32 SizeInBytes, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
+    D3D12_ERROR( Buffer != nullptr, "Buffer cannot be nullptr" );
+
     D3D12_RESOURCE_DESC Desc;
     CMemory::Memzero( &Desc );
 
@@ -609,7 +611,7 @@ bool CD3D12RHICore::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInB
         Buffer->SetResource( Resource.ReleaseOwnership() );
     }
 
-    D3D12_ERROR( InitialData->GetSizeInBytes() <= SizeInBytes, "Size of InitialData is larger than the allocated memory" );
+    D3D12_ERROR( Buffer->GetSizeInBytes() <= SizeInBytes, "Size of InitialData is larger than the allocated memory" );
 
     if ( InitialData )
     {
@@ -638,7 +640,7 @@ bool CD3D12RHICore::FinalizeBufferResource( TD3D12Buffer* Buffer, uint32 SizeInB
             DirectCmdContext->TransitionBuffer( Buffer, EResourceState::Common, EResourceState::CopyDest );
             DirectCmdContext->UpdateBuffer( Buffer, 0, InitialData->GetSizeInBytes(), InitialData->GetData() );
 
-            // NOTE: Transfer to the initialstate
+            // NOTE: Transfer to the initial state
             DirectCmdContext->TransitionBuffer( Buffer, EResourceState::CopyDest, InitialState );
 
             DirectCmdContext->End();
@@ -662,9 +664,9 @@ CRHIVertexBuffer* CD3D12RHICore::CreateVertexBuffer( uint32 Stride, uint32 NumVe
     const uint32 SizeInBytes = NumVertices * Stride;
 
     TSharedRef<CD3D12RHIVertexBuffer> NewBuffer = dbg_new CD3D12RHIVertexBuffer( Device, NumVertices, Stride, Flags );
-    if ( !FinalizeBufferResource<CD3D12RHIVertexBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )
+    if ( !CreateBuffer<CD3D12RHIVertexBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )
     {
-        LOG_ERROR( "[D3D12RenderLayer]: Failed to create VertexBuffer" );
+        LOG_ERROR( "[CD3D12RHICore]: Failed to create VertexBuffer" );
         return nullptr;
     }
     else
@@ -679,9 +681,9 @@ CRHIIndexBuffer* CD3D12RHICore::CreateIndexBuffer( EIndexFormat Format, uint32 N
     const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>( SizeInBytes, sizeof( uint32 ) );
 
     TSharedRef<CD3D12RHIIndexBuffer> NewBuffer = dbg_new CD3D12RHIIndexBuffer( Device, Format, NumIndices, Flags );
-    if ( !FinalizeBufferResource<CD3D12RHIIndexBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )
+    if ( !CreateBuffer<CD3D12RHIIndexBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )
     {
-        LOG_ERROR( "[D3D12RenderLayer]: Failed to create IndexBuffer" );
+        LOG_ERROR( "[CD3D12RHICore]: Failed to create IndexBuffer" );
         return nullptr;
     }
     else
@@ -697,9 +699,9 @@ CRHIConstantBuffer* CD3D12RHICore::CreateConstantBuffer( uint32 Size, uint32 Fla
     const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>( Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT );
 
     TSharedRef<CD3D12RHIConstantBuffer> NewBuffer = dbg_new CD3D12RHIConstantBuffer( Device, ResourceOfflineDescriptorHeap, Size, Flags );
-    if ( !FinalizeBufferResource<CD3D12RHIConstantBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )
+    if ( !CreateBuffer<CD3D12RHIConstantBuffer>( NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData ) )
     {
-        LOG_ERROR( "[D3D12RenderLayer]: Failed to create ConstantBuffer" );
+        LOG_ERROR( "[CD3D12RHICore]: Failed to create ConstantBuffer" );
         return nullptr;
     }
     else
@@ -713,9 +715,9 @@ CRHIStructuredBuffer* CD3D12RHICore::CreateStructuredBuffer( uint32 Stride, uint
     const uint32 SizeInBytes = NumElements * Stride;
 
     TSharedRef<CD3D12RHIStructuredBuffer> NewBuffer = dbg_new CD3D12RHIStructuredBuffer( Device, NumElements, Stride, Flags );
-    if ( !FinalizeBufferResource<CD3D12RHIStructuredBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )
+    if ( !CreateBuffer<CD3D12RHIStructuredBuffer>( NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData ) )
     {
-        LOG_ERROR( "[D3D12RenderLayer]: Failed to create StructuredBuffer" );
+        LOG_ERROR( "[CD3D12RHICore]: Failed to create StructuredBuffer" );
         return nullptr;
     }
     else
@@ -1355,7 +1357,7 @@ CRHIRayGenShader* CD3D12RHICore::CreateRayGenShader( const TArray<uint8>& Shader
     TSharedRef<CD3D12RHIRayGenShader> Shader = dbg_new CD3D12RHIRayGenShader( Device, ShaderCode );
     if ( !CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
-        LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
+        LOG_ERROR( "[CD3D12RHICore]: Failed to retrive Shader Identifier" );
         return nullptr;
     }
     else
@@ -1369,7 +1371,7 @@ CRHIRayAnyHitShader* CD3D12RHICore::CreateRayAnyHitShader( const TArray<uint8>& 
     TSharedRef<CD3D12RHIRayAnyHitShader> Shader = dbg_new CD3D12RHIRayAnyHitShader( Device, ShaderCode );
     if ( !CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
-        LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
+        LOG_ERROR( "[CD3D12RHICore]: Failed to retrive Shader Identifier" );
         return nullptr;
     }
     else
@@ -1383,7 +1385,7 @@ CRHIRayClosestHitShader* CD3D12RHICore::CreateRayClosestHitShader( const TArray<
     TSharedRef<CD3D12RayClosestHitShader> Shader = dbg_new CD3D12RayClosestHitShader( Device, ShaderCode );
     if ( !CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
-        LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
+        LOG_ERROR( "[CD3D12RHICore]: Failed to retrive Shader Identifier" );
         return nullptr;
     }
     else
@@ -1397,7 +1399,7 @@ CRHIRayMissShader* CD3D12RHICore::CreateRayMissShader( const TArray<uint8>& Shad
     TSharedRef<CD3D12RHIRayMissShader> Shader = dbg_new CD3D12RHIRayMissShader( Device, ShaderCode );
     if ( !CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection( Shader.Get() ) )
     {
-        LOG_ERROR( "[D3D12RenderLayer]: Failed to retrive Shader Identifier" );
+        LOG_ERROR( "[CD3D12RHICore]: Failed to retrive Shader Identifier" );
         return nullptr;
     }
     else

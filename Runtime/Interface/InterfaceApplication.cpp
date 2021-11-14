@@ -17,7 +17,7 @@ bool CInterfaceApplication::Make()
 {
     /* Create the platform application */
     TSharedPtr<CPlatformApplication> Application = PlatformApplication::Make();
-    if ( Application && !Application->Init() )
+    if ( Application && !Application->Initialize() )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create PlatformApplication" );
         return false;
@@ -333,25 +333,25 @@ void CInterfaceApplication::Tick( CTimestamp DeltaTime )
 
 void CInterfaceApplication::SetCursor( ECursor InCursor )
 {
-    ICursor* Cursor = GetCursor();
+    TSharedPtr<ICursor> Cursor = GetCursor();
     Cursor->SetCursor( InCursor );
 }
 
 void CInterfaceApplication::SetCursorPos( const CIntVector2& Position )
 {
-    ICursor* Cursor = GetCursor();
+    TSharedPtr<ICursor> Cursor = GetCursor();
     Cursor->SetPosition( nullptr, Position.x, Position.y );
 }
 
 void CInterfaceApplication::SetCursorPos( const TSharedRef<CPlatformWindow>& RelativeWindow, const CIntVector2& Position )
 {
-    ICursor* Cursor = GetCursor();
+    TSharedPtr<ICursor> Cursor = GetCursor();
     Cursor->SetPosition( RelativeWindow.Get(), Position.x, Position.y );
 }
 
 CIntVector2 CInterfaceApplication::GetCursorPos() const
 {
-    ICursor* Cursor = GetCursor();
+    TSharedPtr<ICursor> Cursor = GetCursor();
 
     CIntVector2 CursorPosition;
     Cursor->GetPosition( nullptr, CursorPosition.x, CursorPosition.y );
@@ -361,7 +361,7 @@ CIntVector2 CInterfaceApplication::GetCursorPos() const
 
 CIntVector2 CInterfaceApplication::GetCursorPos( const TSharedRef<CPlatformWindow>& RelativeWindow ) const
 {
-    ICursor* Cursor = GetCursor();
+    TSharedPtr<ICursor> Cursor = GetCursor();
 
     CIntVector2 CursorPosition;
     Cursor->GetPosition( RelativeWindow.Get(), CursorPosition.x, CursorPosition.y );
@@ -371,13 +371,13 @@ CIntVector2 CInterfaceApplication::GetCursorPos( const TSharedRef<CPlatformWindo
 
 void CInterfaceApplication::ShowCursor( bool IsVisible )
 {
-    ICursor* Cursor = GetCursor();
+    TSharedPtr<ICursor> Cursor = GetCursor();
     Cursor->SetVisibility( IsVisible );
 }
 
 bool CInterfaceApplication::IsCursorVisibile() const
 {
-    ICursor* Cursor = GetCursor();
+    TSharedPtr<ICursor> Cursor = GetCursor();
     return Cursor->IsVisible();
 }
 

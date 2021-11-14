@@ -6,6 +6,10 @@
 
 #include "CoreApplication/ICursor.h"
 
+#ifdef GetMonitorInfo
+#undef GetMonitorInfo
+#endif
+
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
@@ -16,7 +20,22 @@
 
 #endif
 
-/* Generic application interface */
+struct SMonitorInfo
+{
+    SMonitorInfo() = default;
+
+    SMonitorInfo( uint32 InWidth, uint32 InHeight )
+        : Width(InWidth)
+        , Height(InHeight)
+    {
+    }
+
+    uint32 Width;
+    uint32 Height;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CPlatformApplication
 {
 public:
@@ -31,13 +50,11 @@ public:
     virtual TSharedRef<CPlatformWindow> MakeWindow() { return TSharedRef<CPlatformWindow>(); }
 
     /* Initialized the application */
-    virtual bool Init() { return true; }
+    virtual bool Initialize() { return true; }
 
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick( float Delta ) {}
 
-    /* Retrieve the cursor interface */
-    virtual ICursor* GetCursor() { return nullptr; }
 
     /* Sets the window that is currently active */
     virtual void SetActiveWindow( const TSharedRef<CPlatformWindow>& Window ) {}
@@ -54,6 +71,12 @@ public:
     /* Sets the message handler */
     virtual void SetMessageListener( const TSharedPtr<CPlatformApplicationMessageHandler>& InMessageHandler ) { MessageListener = InMessageHandler; }
 
+    /* Retrieve the cursor interface */
+    FORCEINLINE TSharedPtr<ICursor> GetCursor() const
+    { 
+        return Cursor;
+    }
+
     /* Retrieves the message handler */
     FORCEINLINE TSharedPtr<CPlatformApplicationMessageHandler> GetMessageListener() const
     { 
@@ -63,10 +86,14 @@ public:
 protected:
 
     /* Protected constructor, use Make */
-    CPlatformApplication()
-        : MessageListener( nullptr )
+    CPlatformApplication( const TSharedPtr<ICursor>& InCursor )
+        : Cursor( InCursor )
+        , MessageListener( nullptr )
     {
     }
+
+    /* The cursor interface for the application */
+    TSharedPtr<ICursor> Cursor;
 
     /* Handler for platform messages/events */
     TSharedPtr<CPlatformApplicationMessageHandler> MessageListener;

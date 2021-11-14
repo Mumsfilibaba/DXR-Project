@@ -1,9 +1,9 @@
 #include "InterfaceUser.h"
 #include "InterfaceApplication.h"
 
-CInterfaceUser::CInterfaceUser( uint32 InUserIndex, ICursor* InCursorDevice )
+CInterfaceUser::CInterfaceUser( uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor )
     : UserIndex( InUserIndex )
-    , Cursor( InCursorDevice )
+    , Cursor( InCursor )
     , KeyStates()
     , MouseButtonStates()
 {

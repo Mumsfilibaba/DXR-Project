@@ -44,10 +44,10 @@ struct SSizeMessage
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Global instance of the windows- application */
 CWindowsApplication* CWindowsApplication::InstancePtr = nullptr;
 
-/* Create the application and load icon */
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 TSharedPtr<CWindowsApplication> CWindowsApplication::Make()
 {
     HINSTANCE Instance = static_cast<HINSTANCE>(GetModuleHandleA( 0 ));
@@ -57,12 +57,11 @@ TSharedPtr<CWindowsApplication> CWindowsApplication::Make()
 }
 
 CWindowsApplication::CWindowsApplication( HINSTANCE InInstance )
-    : CPlatformApplication()
+    : CPlatformApplication( CWindowsCursor::Make() )
     , Windows()
     , Messages()
     , MessagesCriticalSection()
     , WindowsMessageListeners()
-    , Cursor()
     , IsTrackingMouse( false )
     , Instance( InInstance )
 {
@@ -100,17 +99,21 @@ bool CWindowsApplication::RegisterWindowClass()
 
 TSharedRef<CPlatformWindow> CWindowsApplication::MakeWindow()
 {
-    TSharedRef<CWindowsWindow> NewWindow = dbg_new CWindowsWindow( this );
+    TSharedRef<CWindowsWindow> NewWindow = CWindowsWindow::Make( this );
     Windows.Emplace( NewWindow );
     return NewWindow;
 }
 
-bool CWindowsApplication::Init()
+bool CWindowsApplication::Initialize()
 {
     if ( !RegisterWindowClass() )
     {
         return false;
     }
+
+#if PLATFORM_WINDOWS_VISTA && ENABLE_DPI_AWARENESS
+    SetProcessDPIAware();
+#endif
 
     CWindowsKeyMapping::Init();
 
@@ -135,11 +138,6 @@ void CWindowsApplication::Tick( float )
     {
         HandleStoredMessage( Message.Window, Message.Message, Message.wParam, Message.lParam );
     }
-}
-
-ICursor* CWindowsApplication::GetCursor()
-{
-    return &Cursor;
 }
 
 void CWindowsApplication::SetCapture( const TSharedRef<CPlatformWindow>& Window )

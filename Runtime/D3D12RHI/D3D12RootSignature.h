@@ -61,6 +61,7 @@ private:
 class CD3D12RootSignature : public CD3D12DeviceChild, public CRefCounted
 {
 public:
+
     CD3D12RootSignature( CD3D12Device* InDevice );
     ~CD3D12RootSignature() = default;
 

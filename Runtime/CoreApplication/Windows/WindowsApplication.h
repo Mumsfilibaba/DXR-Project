@@ -12,6 +12,12 @@
 
 #include "CoreApplication/Interface/PlatformApplication.h"
 
+#ifdef GetMonitorInfo
+#undef GetMonitorInfo
+#endif
+
+#define ENABLE_DPI_AWARENESS (0)
+
 /* Strict used to store messages between calls to PumpMessages and CWindowsApplication::Tick */
 struct SWindowsMessage
 {
@@ -37,9 +43,6 @@ class COREAPPLICATION_API CWindowsApplication final : public CPlatformApplicatio
     friend class CWindowsApplicationMisc;
 
 public:
-
-    /* Public destructor for TSharedPtr */
-    ~CWindowsApplication();
 
     /* Creates an instance of the WindowsApplication, also loads the icon */
     static TSharedPtr<CWindowsApplication> Make();
@@ -68,17 +71,17 @@ public:
         return (InstancePtr != nullptr);
     }
 
+    /* Public destructor for TSharedPtr */
+    ~CWindowsApplication();
+
     /* Creates a window */
     virtual TSharedRef<CPlatformWindow> MakeWindow() override final;
 
     /* Initialized the application */
-    virtual bool Init() override final;
+    virtual bool Initialize() override final;
 
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick( float Delta ) override final;
-
-    /* Retrieve the cursor interface */
-    virtual ICursor* GetCursor() override final;
 
     /* Sets the window that currently has the keyboard focus */
     virtual void SetCapture( const TSharedRef<CPlatformWindow>& Window ) override final;
@@ -140,9 +143,6 @@ private:
 
     /* buffered events, this is done since not all events are fired in the calls to PumpMessages */
     TArray<IWindowsMessageListener*> WindowsMessageListeners;
-
-    /* Cursor interface */
-    CWindowsCursor Cursor;
 
     /* Checks weather or not the mouse-cursor is tracked, this is for MouseEntered/MouseLeft events */
     bool IsTrackingMouse;

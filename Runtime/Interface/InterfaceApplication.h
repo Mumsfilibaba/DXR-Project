@@ -139,7 +139,7 @@ public:
         return MainViewport;
     }
 
-    FORCEINLINE ICursor* GetCursor() const
+    FORCEINLINE TSharedPtr<ICursor> GetCursor() const
     {
         return PlatformApplication->GetCursor();
     }

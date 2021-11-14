@@ -22,7 +22,7 @@ class CMacWindow final : public CPlatformWindow
 public:
 
     /* Initializes the window */
-    virtual bool Init( const CString& Title, uint32 Width, uint32 Height, SWindowStyle Style ) override final;
+    virtual bool Initialize( const CString& Title, uint32 Width, uint32 Height, SWindowStyle Style ) override final;
 
     /* Shows the window */
     virtual void Show( bool Maximized ) override final;
