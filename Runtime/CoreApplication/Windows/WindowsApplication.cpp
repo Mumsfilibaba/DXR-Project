@@ -15,9 +15,9 @@ enum EWindowsMasks : uint32
 };
 
 /* A small wrapper for moved message */
-struct SSizeMessage
+struct SPointMessage
 {
-    FORCEINLINE SSizeMessage( LPARAM InParam )
+    FORCEINLINE SPointMessage( LPARAM InParam )
         : Param( InParam )
     {
     }
@@ -81,11 +81,11 @@ bool CWindowsApplication::RegisterWindowClass()
     WNDCLASS WindowClass;
     CMemory::Memzero( &WindowClass );
 
-    WindowClass.hInstance = Instance;
+    WindowClass.hInstance     = Instance;
     WindowClass.lpszClassName = CWindowsApplication::GetWindowClassName();
     WindowClass.hbrBackground = static_cast<HBRUSH>(GetStockObject( BLACK_BRUSH ));
-    WindowClass.hCursor = LoadCursor( NULL, IDC_ARROW );
-    WindowClass.lpfnWndProc = CWindowsApplication::StaticMessageProc;
+    WindowClass.hCursor       = LoadCursor( NULL, IDC_ARROW );
+    WindowClass.lpfnWndProc   = CWindowsApplication::StaticMessageProc;
 
     ATOM ClassAtom = RegisterClass( &WindowClass );
     if ( ClassAtom == 0 )
@@ -95,6 +95,58 @@ bool CWindowsApplication::RegisterWindowClass()
     }
 
     return true;
+}
+
+bool CWindowsApplication::RegisterRawInputDevices( HWND Window )
+{
+    constexpr uint32 DeviceCount = 1;
+    
+    RAWINPUTDEVICE Devices[DeviceCount];
+    CMemory::Memzero( devices, sizeof(Devices) );
+
+    // Mouse
+    Devices[0].dwFlags	   = 0;
+    Devices[0].hwndTarget  = Window;
+    Devices[0].usUsage	   = 0x02;
+    Devices[0].usUsagePage = 0x01;
+
+    bool Result = !!::RegisterRawInputDevices( Devices, DeviceCount, sizeof(RAWINPUTDEVICE) );
+    if ( !Result )
+    {
+        LOG_ERROR("[CWindowsApplication] Failed to register Raw Input devices");
+        return false;
+    }
+    else
+    {
+        LOG_DEBUG("[CWindowsApplication] Registered Raw Input devices");
+        return true;
+    }
+}
+
+bool CWindowsApplication::UnregisterRawInputDevices()
+{
+    constexpr uint32 DeviceCount = 1;
+
+    RAWINPUTDEVICE Devices[DeviceCount];
+    CMemory::Memzero( Devices, sizeof(Devices) );
+
+    // Mouse
+    Devices[0].dwFlags	   = RIDEV_REMOVE;
+    Devices[0].hwndTarget  = 0;
+    Devices[0].usUsage	   = 0x02;
+    Devices[0].usUsagePage = 0x01;
+
+    bool Result = !!::RegisterRawInputDevices( Devices, DeviceCount, sizeof(RAWINPUTDEVICE) );
+    if ( !Result )
+    {
+        LOG_ERROR("[CWindowsApplication] Failed to unregister Raw Input devices");
+        return false;
+    }
+    else
+    {
+        LOG_DEBUG("[CWindowsApplication] Unregistered Raw Input devices");
+        return true;
+    }
 }
 
 TSharedRef<CPlatformWindow> CWindowsApplication::MakeWindow()
@@ -137,6 +189,24 @@ void CWindowsApplication::Tick( float )
     for ( const SWindowsMessage& Message : ProcessableMessages )
     {
         HandleStoredMessage( Message.Window, Message.Message, Message.wParam, Message.lParam );
+    }
+}
+
+bool CWindowsApplication::SupportsRawMouse() const
+{
+    return true;
+}
+
+bool CWindowsApplication::EnableRawMouse( const TSharedRef<CPlatformWindow>& Window )
+{
+    if ( Window )
+    {
+        TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>( Window );
+        return RegisterRawInputDevices( WindowsWindow->GetHandle() );
+    }
+    else
+    {
+        return false;
     }
 }
 
@@ -196,7 +266,7 @@ TSharedRef<CWindowsWindow> CWindowsApplication::GetWindowsWindowFromHWND( HWND I
     return nullptr;
 }
 
-void CWindowsApplication::AddWindowsMessageListener( IWindowsMessageListener* NewWindowsMessageListener )
+void CWindowsApplication::AddWindowsMessageListener( const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener )
 {
     // We do not want to add a listener if it already exists
     if ( !IsWindowsMessageListener( NewWindowsMessageListener ) )
@@ -209,28 +279,14 @@ void CWindowsApplication::AddWindowsMessageListener( IWindowsMessageListener* Ne
     }
 }
 
-void CWindowsApplication::RemoveWindowsMessageListener( IWindowsMessageListener* InWindowsMessageListener )
+void CWindowsApplication::RemoveWindowsMessageListener( const TSharedPtr<IWindowsMessageListener>& InWindowsMessageListener )
 {
-    for ( int32 Index = 0; Index < WindowsMessageListeners.Size(); Index++ )
-    {
-        if ( WindowsMessageListeners[Index] == InWindowsMessageListener )
-        {
-            WindowsMessageListeners.RemoveAt( Index );
-        }
-    }
+    WindowsMessageListeners.Remove( InWindowsMessageListener );
 }
 
-bool CWindowsApplication::IsWindowsMessageListener( IWindowsMessageListener* InWindowsMessageListener ) const
+bool CWindowsApplication::IsWindowsMessageListener( const TSharedPtr<IWindowsMessageListener>& InWindowsMessageListener ) const
 {
-    for ( IWindowsMessageListener* WindowsMessageListener : WindowsMessageListeners )
-    {
-        if ( WindowsMessageListener == InWindowsMessageListener )
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return WindowsMessageListeners.Contains( InWindowsMessageListener );
 }
 
 LRESULT CWindowsApplication::StaticMessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam )
@@ -288,7 +344,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
         {
             if ( MessageWindow )
             {
-                const SSizeMessage Size( lParam );
+                const SPointMessage Size( lParam );
                 MessageListener->HandleWindowResized( MessageWindow, Size.Width, Size.Height );
             }
 
@@ -299,7 +355,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
         {
             if ( MessageWindow )
             {
-                const SSizeMessage Size( lParam );
+                const SPointMessage Size( lParam );
                 MessageListener->HandleWindowMoved( MessageWindow, Size.x, Size.y );
             }
 
@@ -319,10 +375,10 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
         case WM_SYSKEYDOWN:
         case WM_KEYDOWN:
         {
-            const bool IsRepeat = !!(lParam & KeyRepeatMask);
             const uint32 ScanCode = static_cast<uint32>(HIWORD( lParam ) & ScanCodeMask);
             const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode( ScanCode );
 
+            const bool IsRepeat = !!(lParam & KeyRepeatMask);
             MessageListener->HandleKeyPressed( Key, IsRepeat, PlatformApplicationMisc::GetModifierKeyState() );
             break;
         }
@@ -458,7 +514,7 @@ LRESULT CWindowsApplication::MessageProc( HWND Window, UINT Message, WPARAM wPar
 {
     // Let the message listeners (a.k.a other modules) listen to native messages
     LRESULT ResultFromListeners = 0;
-    for ( IWindowsMessageListener* NativeMessageListener : WindowsMessageListeners )
+    for ( TSharedPtr<IWindowsMessageListener> NativeMessageListener : WindowsMessageListeners )
     {
         Assert( NativeMessageListener != nullptr );
 
@@ -473,6 +529,11 @@ LRESULT CWindowsApplication::MessageProc( HWND Window, UINT Message, WPARAM wPar
     // Store relevant messages 
     switch ( Message )
     {
+        case WM_INPUT:
+        {
+            return ProcessRawInput( Window, Message, wParam, lParam );
+        }
+
         case WM_CLOSE:
         case WM_MOVE:
         case WM_MOUSELEAVE:
@@ -513,6 +574,40 @@ void CWindowsApplication::StoreMessage( HWND Window, UINT Message, WPARAM wParam
 {
     TScopedLock<CCriticalSection> Lock( MessagesCriticalSection );
     Messages.Emplace( Window, Message, wParam, lParam );
+}
+
+LRESULT CWindowsApplication::ProcessRawInput( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam )
+{
+    UINT Size = 0;
+    GetRawInputData( (HRAWINPUT)lParam, RID_INPUT, NULL, &Size, sizeof(RAWINPUTHEADER) );
+    if ( Size > RawInputBuffer.Size() )
+    {
+        RawInputBuffer.Resize( Size );
+    }
+
+    if ( GetRawInputData( (HRAWINPUT)lParam, RID_INPUT, RawInputBuffer.Data(), &Size, sizeof(RAWINPUTHEADER) ) != Size )
+    {
+        LOG_ERROR( "[CWindowsApplication] GetRawInputData did not return correct size" );
+        return 0;
+    }
+
+    RAWINPUT* RawInput = reinterpret_cast<RAWINPUT*>(RawInputBuffer.Data());
+    if (RawInput->header.dwType == RIM_TYPEMOUSE)
+    {
+        int32 DeltaX = RawInput->data.mouse.lLastX;
+        int32 DeltaY = RawInput->data.mouse.lLastY;
+
+        if ( DeltaX != 0 && DeltaY != 0)
+        {
+            StoreMessage( Window, Message, wParam, lParam, DeltaX, DeltaY );
+        }
+
+        return 0;
+    }
+    else
+    {
+        return DefRawInputProc( &RawInput, 1, sizeof(RAWINPUTHEADER) );
+    }
 }
 
 #endif

@@ -20,20 +20,6 @@
 
 #endif
 
-struct SMonitorInfo
-{
-    SMonitorInfo() = default;
-
-    SMonitorInfo( uint32 InWidth, uint32 InHeight )
-        : Width(InWidth)
-        , Height(InHeight)
-    {
-    }
-
-    uint32 Width;
-    uint32 Height;
-};
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CPlatformApplication
@@ -55,6 +41,11 @@ public:
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick( float Delta ) {}
 
+    /* Returns true if the platform supports Raw mouse movement */
+    virtual bool SupportsRawMouse() const { return false; }
+
+    /* Enables Raw mouse movement for a certain window */
+    virtual bool EnableRawMouse( const TSharedRef<CPlatformWindow>& Window ) {}
 
     /* Sets the window that is currently active */
     virtual void SetActiveWindow( const TSharedRef<CPlatformWindow>& Window ) {}

@@ -18,7 +18,9 @@
 
 #define ENABLE_DPI_AWARENESS (0)
 
-/* Strict used to store messages between calls to PumpMessages and CWindowsApplication::Tick */
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Struct used to store messages between calls to PumpMessages and CWindowsApplication::Tick */
 struct SWindowsMessage
 {
     FORCEINLINE SWindowsMessage( HWND InWindow, uint32 InMessage, WPARAM InwParam, LPARAM InlParam )
@@ -29,10 +31,74 @@ struct SWindowsMessage
     {
     }
 
+    // Standard Window Message
     HWND   Window;
     uint32 Message;
     WPARAM wParam;
     LPARAM lParam;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+class CWindowsRawInputBuffer
+{
+public:
+    
+    CWindowsRawInputBuffer( CWindowsRawInputBuffer&& ) = default;
+    CWindowsRawInputBuffer( const CWindowsRawInputBuffer& ) = default;
+    CWindowsRawInputBuffer& operator=( CWindowsRawInputBuffer&& ) = default;
+    CWindowsRawInputBuffer& operator=( const CWindowsRawInputBuffer& ) = default;
+    ~CWindowsRawInputBuffer() = default;
+
+    FORCEINLINE CWindowsRawInputBuffer( uint32 InSize )
+        : Buffer( InSize )
+    {
+    }
+
+    FORCEINLINE RAWINPUT& GetRawInput()
+    {
+        Assert( !Buffer.Empty() );
+        return *reinterpret_cast<RAWINPUT*>( Buffer.Data() ); 
+    }
+
+    FORCEINLINE const RAWINPUT& GetRawInput() const 
+    {
+        Assert( !Buffer.Empty() );
+        return *reinterpret_cast<const RAWINPUT*>( Buffer.Data() ); 
+    }
+   
+    FORCEINLINE RAWINPUTHEADER& GetHeader()
+    {
+        Assert( !Buffer.Empty() );
+        return *(reinterpret_cast<RAWINPUT*>( Buffer.Data() )->header);
+    }
+
+    FORCEINLINE const RAWINPUTHEADER& GetHeader() const
+    {
+        Assert( !Buffer.Empty() );
+        return *(reinterpret_cast<const RAWINPUT*>( Buffer.Data() )->header);
+    }
+
+    FORCEINLINE bool IsMouse() const
+    {
+        Assert( !Buffer.Empty() );
+        return *(reinterpret_cast<const RAWINPUT*>( Buffer.Data() )->header.dwType == RIM_TYPEMOUSE);
+    }
+
+    FORCEINLINE bool IsKeyboard() const
+    {
+        Assert( !Buffer.Empty() );
+        return *(reinterpret_cast<const RAWINPUT*>( Buffer.Data() )->header.dwType == RIM_TYPEKEYBOARD);
+    }
+
+    FORCEINLINE bool IsHID() const
+    {
+        Assert( !Buffer.Empty() );
+        return *(reinterpret_cast<const RAWINPUT*>( Buffer.Data() )->header.dwType == RIM_TYPEHID);
+    }
+
+private:
+    TArray<Byte> Buffer;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,6 +149,12 @@ public:
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick( float Delta ) override final;
 
+    /* Returns true if the platform supports Raw mouse movement */
+    virtual bool SupportsRawMouse() const;
+
+    /* Enables Raw mouse movement for a certain window */
+    virtual bool EnableRawMouse( const TSharedRef<CPlatformWindow>& Window );
+
     /* Sets the window that currently has the keyboard focus */
     virtual void SetCapture( const TSharedRef<CPlatformWindow>& Window ) override final;
 
@@ -99,13 +171,13 @@ public:
     TSharedRef<CWindowsWindow> GetWindowsWindowFromHWND( HWND Window ) const;
 
     /* Add a native message listener */
-    void AddWindowsMessageListener( IWindowsMessageListener* NewWindowsMessageListener );
+    void AddWindowsMessageListener( const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener );
 
     /* Remove a native message listener */
-    void RemoveWindowsMessageListener( IWindowsMessageListener* WindowsMessageListener );
+    void RemoveWindowsMessageListener( const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener );
 
     /* Check if a native message listener is added */
-    bool IsWindowsMessageListener( IWindowsMessageListener* WindowsMessageListener ) const;
+    bool IsWindowsMessageListener( const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener ) const;
 
     /* Returns the HINSTANCE of the application */
     FORCEINLINE HINSTANCE GetInstance() const
@@ -119,6 +191,12 @@ private:
 
     /* Registers the window class used to create windows */
     bool RegisterWindowClass();
+
+    /* Registers raw input devices for a specific window */
+    bool RegisterRawInputDevices( HWND Window );   
+
+    /* Unregister all raw input devices TODO: Investigate how to do this for a specific window */
+    bool UnregisterRawInputDevices();
 
     /* Stores messages for handling in the future */
     void StoreMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
@@ -135,14 +213,17 @@ private:
     /* The windows that has been created by the application */
     TArray<TSharedRef<CWindowsWindow>> Windows;
 
-    /* buffered events, this is done since not all events are fired in the calls to PumpMessages */
+    /* Buffered events, this is done since not all events are fired in the calls to PumpMessages */
     TArray<SWindowsMessage> Messages;
+
+    /* Array storing buffers for RawInput events, stored in order and are pop-ed when the events are processed in Tick*/
+    TArray<CWindowsRawInputBuffer> RawInputStack;
 
     /* In case some message is fired from another thread */
     CCriticalSection MessagesCriticalSection;
 
     /* buffered events, this is done since not all events are fired in the calls to PumpMessages */
-    TArray<IWindowsMessageListener*> WindowsMessageListeners;
+    TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
 
     /* Checks weather or not the mouse-cursor is tracked, this is for MouseEntered/MouseLeft events */
     bool IsTrackingMouse;

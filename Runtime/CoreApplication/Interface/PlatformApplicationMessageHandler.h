@@ -36,6 +36,8 @@ public:
 
     virtual void HandleMouseScrolled( float HorizontalDelta, float VerticalDelta ) {}
 
+    virtual void HandleRawMouseInput( const TSharedRef<CPlatformWindow>& Window, int16 x, uint16 y ) {}
+
     virtual void HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint16 Width, uint16 Height ) {}
 
     virtual void HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int16 x, int16 y ) {}

@@ -195,13 +195,7 @@ public:
     }
 
     /* Dereference the pointer */
-    FORCEINLINE ElementType& operator*() noexcept
-    {
-        return Dereference();
-    }
-
-    /* Dereference the pointer */
-    FORCEINLINE const ElementType& operator*() const noexcept
+    FORCEINLINE ElementType& operator*() const noexcept
     {
         return Dereference();
     }
