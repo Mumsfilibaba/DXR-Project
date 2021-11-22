@@ -23,11 +23,13 @@
 /* Struct used to store messages between calls to PumpMessages and CWindowsApplication::Tick */
 struct SWindowsMessage
 {
-    FORCEINLINE SWindowsMessage( HWND InWindow, uint32 InMessage, WPARAM InwParam, LPARAM InlParam )
+    FORCEINLINE SWindowsMessage( HWND InWindow, uint32 InMessage, WPARAM InwParam, LPARAM InlParam, int32 InMouseDeltaX, int32 InMouseDeltaY)
         : Window( InWindow )
         , Message( InMessage )
         , wParam( InwParam )
         , lParam( InlParam )
+        , MouseDeltaX( InMouseDeltaX )
+        , MouseDeltaY( InMouseDeltaY )
     {
     }
 
@@ -36,69 +38,10 @@ struct SWindowsMessage
     uint32 Message;
     WPARAM wParam;
     LPARAM lParam;
-};
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-class CWindowsRawInputBuffer
-{
-public:
-    
-    CWindowsRawInputBuffer( CWindowsRawInputBuffer&& ) = default;
-    CWindowsRawInputBuffer( const CWindowsRawInputBuffer& ) = default;
-    CWindowsRawInputBuffer& operator=( CWindowsRawInputBuffer&& ) = default;
-    CWindowsRawInputBuffer& operator=( const CWindowsRawInputBuffer& ) = default;
-    ~CWindowsRawInputBuffer() = default;
-
-    FORCEINLINE CWindowsRawInputBuffer( uint32 InSize )
-        : Buffer( InSize )
-    {
-    }
-
-    FORCEINLINE RAWINPUT& GetRawInput()
-    {
-        Assert( !Buffer.Empty() );
-        return *reinterpret_cast<RAWINPUT*>( Buffer.Data() ); 
-    }
-
-    FORCEINLINE const RAWINPUT& GetRawInput() const 
-    {
-        Assert( !Buffer.Empty() );
-        return *reinterpret_cast<const RAWINPUT*>( Buffer.Data() ); 
-    }
-   
-    FORCEINLINE RAWINPUTHEADER& GetHeader()
-    {
-        Assert( !Buffer.Empty() );
-        return *(reinterpret_cast<RAWINPUT*>( Buffer.Data() )->header);
-    }
-
-    FORCEINLINE const RAWINPUTHEADER& GetHeader() const
-    {
-        Assert( !Buffer.Empty() );
-        return *(reinterpret_cast<const RAWINPUT*>( Buffer.Data() )->header);
-    }
-
-    FORCEINLINE bool IsMouse() const
-    {
-        Assert( !Buffer.Empty() );
-        return *(reinterpret_cast<const RAWINPUT*>( Buffer.Data() )->header.dwType == RIM_TYPEMOUSE);
-    }
-
-    FORCEINLINE bool IsKeyboard() const
-    {
-        Assert( !Buffer.Empty() );
-        return *(reinterpret_cast<const RAWINPUT*>( Buffer.Data() )->header.dwType == RIM_TYPEKEYBOARD);
-    }
-
-    FORCEINLINE bool IsHID() const
-    {
-        Assert( !Buffer.Empty() );
-        return *(reinterpret_cast<const RAWINPUT*>( Buffer.Data() )->header.dwType == RIM_TYPEHID);
-    }
-
-private:
-    TArray<Byte> Buffer;
+    // Used for Raw Mouse Input
+    int32 MouseDeltaX;
+    int32 MouseDeltaY;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,6 +110,9 @@ public:
     /* Retrieves the window that is currently active */
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
 
+    /* Retrieve the window that is currently under the cursor, if no window is under the cursor, the value is nullptr */
+    virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() {const override final;
+
     /* Searches all the created windows and return the one with the specified handle */
     TSharedRef<CWindowsWindow> GetWindowsWindowFromHWND( HWND Window ) const;
 
@@ -189,6 +135,9 @@ private:
 
     CWindowsApplication( HINSTANCE InInstance );
 
+    /* Static message-proc sent into registerwindowclass */
+    static LRESULT StaticMessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
+
     /* Registers the window class used to create windows */
     bool RegisterWindowClass();
 
@@ -199,13 +148,10 @@ private:
     bool UnregisterRawInputDevices();
 
     /* Stores messages for handling in the future */
-    void StoreMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
+    void StoreMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY );
 
     /* Message-proc which handles the messages for the instance */
     LRESULT MessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
-
-    /* Static message-proc sent into registerwindowclass */
-    static LRESULT StaticMessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
 
     /* Handles stored messages in Tick */
     void HandleStoredMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
@@ -215,9 +161,6 @@ private:
 
     /* Buffered events, this is done since not all events are fired in the calls to PumpMessages */
     TArray<SWindowsMessage> Messages;
-
-    /* Array storing buffers for RawInput events, stored in order and are pop-ed when the events are processed in Tick*/
-    TArray<CWindowsRawInputBuffer> RawInputStack;
 
     /* In case some message is fired from another thread */
     CCriticalSection MessagesCriticalSection;

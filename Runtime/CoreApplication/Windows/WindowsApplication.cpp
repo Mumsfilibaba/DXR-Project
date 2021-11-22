@@ -301,7 +301,7 @@ LRESULT CWindowsApplication::StaticMessageProc( HWND Window, UINT Message, WPARA
     }
 }
 
-void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam )
+void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY )
 {
     TSharedRef<CWindowsWindow> MessageWindow = GetWindowsWindowFromHWND( Window );
     switch ( Message )
@@ -412,6 +412,12 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             }
 
             MessageListener->HandleMouseMove( x, y );
+            break;
+        }
+
+        case WM_INPUT:
+        {
+            MessageListener->HandleRawMouseMove( MessageWindow, MouseDeltaX, MouseDeltaY );
             break;
         }
 
@@ -562,7 +568,7 @@ LRESULT CWindowsApplication::MessageProc( HWND Window, UINT Message, WPARAM wPar
         case WM_MOUSEWHEEL:
         case WM_MOUSEHWHEEL:
         {
-            StoreMessage( Window, Message, wParam, lParam );
+            StoreMessage( Window, Message, wParam, lParam, 0, 0 );
             return ResultFromListeners; // Either zero or something else 
         }
     }
@@ -570,34 +576,33 @@ LRESULT CWindowsApplication::MessageProc( HWND Window, UINT Message, WPARAM wPar
     return DefWindowProc( Window, Message, wParam, lParam );
 }
 
-void CWindowsApplication::StoreMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam )
+void CWindowsApplication::StoreMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY )
 {
     TScopedLock<CCriticalSection> Lock( MessagesCriticalSection );
-    Messages.Emplace( Window, Message, wParam, lParam );
+    Messages.Emplace( Window, Message, wParam, lParam, MouseDeltaX, MouseDeltaY );
 }
 
 LRESULT CWindowsApplication::ProcessRawInput( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam )
 {
     UINT Size = 0;
     GetRawInputData( (HRAWINPUT)lParam, RID_INPUT, NULL, &Size, sizeof(RAWINPUTHEADER) );
-    if ( Size > RawInputBuffer.Size() )
-    {
-        RawInputBuffer.Resize( Size );
-    }
+    
+    // TODO: Measure performance impact
+    TUniquePtr<Byte[]> Buffer = MakeUnique<Byte[]>( Size );
 
-    if ( GetRawInputData( (HRAWINPUT)lParam, RID_INPUT, RawInputBuffer.Data(), &Size, sizeof(RAWINPUTHEADER) ) != Size )
+    if ( GetRawInputData( (HRAWINPUT)lParam, RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER) ) != Size )
     {
         LOG_ERROR( "[CWindowsApplication] GetRawInputData did not return correct size" );
         return 0;
     }
 
-    RAWINPUT* RawInput = reinterpret_cast<RAWINPUT*>(RawInputBuffer.Data());
+    RAWINPUT* RawInput = reinterpret_cast<RAWINPUT*>(Buffer.Get());
     if (RawInput->header.dwType == RIM_TYPEMOUSE)
     {
         int32 DeltaX = RawInput->data.mouse.lLastX;
         int32 DeltaY = RawInput->data.mouse.lLastY;
 
-        if ( DeltaX != 0 && DeltaY != 0)
+        if ( DeltaX != 0 || DeltaY != 0 )
         {
             StoreMessage( Window, Message, wParam, lParam, DeltaX, DeltaY );
         }

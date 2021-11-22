@@ -59,6 +59,9 @@ public:
     /* Retrieves the window that currently has the keyboard focus, since macOS does not support keyboard focus, we return null as standard */
     virtual TSharedRef<CPlatformWindow> GetCapture() const { return TSharedRef<CPlatformWindow>(); }
 
+    /* Retrieve the window that is currently under the cursor, if no window is under the cursor, the value is nullptr */
+    virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const { return TSharedRef<CPlatformWindow>(); } 
+
     /* Sets the message handler */
     virtual void SetMessageListener( const TSharedPtr<CPlatformApplicationMessageHandler>& InMessageHandler ) { MessageListener = InMessageHandler; }
 
