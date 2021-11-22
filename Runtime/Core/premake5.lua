@@ -44,13 +44,9 @@ project "Core"
 	}
 
 	excludes 
-	{
-		"**/Main/**",
-	}
-
-	-- We do not want to compile HLSL files so exclude them from project
-	excludes 
 	{	
+		"**/Main/**",
+		-- We do not want to compile HLSL files so exclude them from project
 		"**.hlsl",
 		"**.hlsli",
 	}
@@ -65,19 +61,6 @@ project "Core"
 		"ImGui",
 	}
 
-	-- Remove non-macos and add macos-specific files
-	filter "system:macosx"
-		files 
-		{ 
-			"%{wks.location}/Runtime/%{prj.name}/**.mm",
-		}
-
-		excludes 
-		{
-			"**/D3D12/**",
-			"**/Windows/**",
-		}
-
 	-- In visual studio show natvis files
 	filter "action:vs*"
 		vpaths { ["Natvis"] = "**.natvis" }
@@ -86,8 +69,21 @@ project "Core"
 		{
 			"%{prj.name}/**.natvis",
 		}
-
+	filter {}
+	
 	filter "system:macosx"
+		
+		-- Remove non-macos and add macos-specific files
+		files 
+		{ 
+			"%{wks.location}/Runtime/%{prj.name}/**.mm",
+		}
+
+		removefiles
+		{
+			"%{wks.location}/**/Windows/**"
+		}
+
 		links
 		{
 			-- Native

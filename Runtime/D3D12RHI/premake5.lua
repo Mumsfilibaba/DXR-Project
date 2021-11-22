@@ -40,15 +40,11 @@ project "D3D12RHI"
 		"%{wks.location}/Runtime/%{prj.name}/**.hlsl",
 		"%{wks.location}/Runtime/%{prj.name}/**.hlsli",	
 	}
-
-	excludes 
-	{
-		"**/Main/**",
-	}
-
-	-- We do not want to compile HLSL files so exclude them from project
+	
 	excludes 
 	{	
+		"**/Main/**",
+		-- We do not want to compile HLSL files so exclude them from project
 		"**.hlsl",
 		"**.hlsli",
 	}
@@ -60,25 +56,20 @@ project "D3D12RHI"
 		"RHI",
 	}
 
-	-- Remove non-macos and add macos-specific files
-	filter "system:macosx"
-		files 
-		{ 
-			"%{wks.location}/Runtime/%{prj.name}/**.mm",
-		}
-
-		excludes 
-		{
-			"**/D3D12/**",
-			"**/Windows/**",
-		}
-
 	-- In visual studio show natvis files
-	filter "action:vs*"
+	filter { "system:windows", "action:vs*" }
 		vpaths { ["Natvis"] = "**.natvis" }
 		
 		files 
 		{
 			"%{prj.name}/**.natvis",
+		}
+	filter {}
+
+	filter "system:macosx"
+		removefiles
+		{
+			"%{wks.location}/**/D3D12/**",
+			"%{wks.location}/**/Windows/**"
 		}
 	filter {}

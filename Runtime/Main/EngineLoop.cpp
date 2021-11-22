@@ -31,7 +31,7 @@
 
 void CEngineLoop::InitializeCommandLine( int32 NumCommandLineArgs, const char** CommandLineArgs )
 {
-	CCommandLine::Initialize(const char *RawCommandLine);
+	CCommandLine::Initialize( NumCommandLineArgs, CommandLineArgs );
 }
 
 bool CEngineLoop::PreInitialize()

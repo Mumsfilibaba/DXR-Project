@@ -62,7 +62,7 @@ bool CMacApplication::Initialize()
     
 	PlatformKeyMapping::Init();
 
-    if (!InitAppMenu())
+    if (!InitializeAppMenu())
     {
         LOG_ERROR("[CMacApplication]: Failed to initialize the application menu");
         return false;
@@ -73,7 +73,7 @@ bool CMacApplication::Initialize()
     return true;
 }
 
-bool CMacApplication::InitAppMenu()
+bool CMacApplication::InitializeAppMenu()
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -147,6 +147,17 @@ TSharedRef<CPlatformWindow> CMacApplication::GetActiveWindow() const
 {
     NSWindow* KeyWindow = [NSApp keyWindow];
     return GetWindowFromNSWindow( KeyWindow );
+}
+
+TSharedRef<CPlatformWindow> CMacApplication::GetWindowUnderCursor() const
+{
+	SCOPED_AUTORELEASE_POOL();
+	
+	NSPoint   MousePosition = [NSEvent mouseLocation];
+	NSInteger WindowNumber  = [NSWindow windowNumberAtPoint:MousePosition belowWindowWithWindowNumber:0];
+	
+	NSWindow* Window = [NSApp windowWithWindowNumber:WindowNumber];
+	return GetWindowFromNSWindow( Window );
 }
 
 TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow( NSWindow* Window ) const

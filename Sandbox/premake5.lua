@@ -63,9 +63,15 @@ project ( projectname )
 		{
 			"%{wks.location}/%{prj.name}/**.natvis",
 		}
+	filter {}
 	
 	-- TODO: Check why this is necessary
 	filter "system:macosx"
+		removefiles
+		{
+			"%{wks.location}/**/Windows/**"
+		}
+
 		links
 		{
 			-- Native
@@ -123,11 +129,14 @@ project (projectname .. "Launcher")
 		{
 			"%{wks.location}/Runtime/Main/Windows/WindowsMain.cpp",	
 		}
+	filter {}
+	
 	filter "system:macosx"
 		files
 		{
 			"%{wks.location}/Runtime/Main/Mac/MacMain.cpp",	
 		}
+	filter {}
 	
 	-- In visual studio show natvis files
 	filter "action:vs*"
@@ -137,6 +146,7 @@ project (projectname .. "Launcher")
 		{
 			"%{wks.location}/%{prj.name}/**.natvis",
 		}
+	filter {}
 	
 	-- TODO: Check why this is necessary
 	filter "system:macosx"
@@ -147,6 +157,12 @@ project (projectname .. "Launcher")
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
+		
+		removefiles
+		{
+			"%{wks.location}/**/Windows/**"
+		}
+
 		-- TODO: See if there is a better way to handle dependencies
 		dependson
 		{

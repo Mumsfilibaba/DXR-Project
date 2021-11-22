@@ -42,15 +42,11 @@ project "CoreApplication"
 		"%{wks.location}/Runtime/%{prj.name}/**.hlsl",
 		"%{wks.location}/Runtime/%{prj.name}/**.hlsli",	
 	}
-
-	excludes 
-	{
-		"**/Main/**",
-	}
-
-	-- We do not want to compile HLSL files so exclude them from project
+	
 	excludes 
 	{	
+		"**/Main/**",
+		-- We do not want to compile HLSL files so exclude them from project
 		"**.hlsl",
 		"**.hlsli",
 	}
@@ -67,10 +63,9 @@ project "CoreApplication"
 			"%{wks.location}/Runtime/%{prj.name}/**.mm",
 		}
 
-		excludes 
+		removefiles
 		{
-			"**/D3D12/**",
-			"**/Windows/**",
+			"%{wks.location}/**/Windows/**"
 		}
 
 		links
@@ -80,7 +75,8 @@ project "CoreApplication"
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
-
+	filter {}
+	
 	-- In visual studio show natvis files
 	filter "action:vs*"
 		vpaths { ["Natvis"] = "**.natvis" }

@@ -53,6 +53,9 @@ public:
     /* Retrieves the window that is currently active */
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
 
+	/* Retrieve the window that is currently under the cursor, if no window is under the cursor, the value is nullptr */
+	virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const override final;
+	
     /* Retrieves a from a NSWindow */
     TSharedRef<CMacWindow> GetWindowFromNSWindow( NSWindow* Window ) const;
 
@@ -76,7 +79,7 @@ private:
     CMacApplication();
 
     /* Initializes the applications menu in the menubar */
-    bool InitAppMenu();
+    bool InitializeAppMenu();
 
     /* Delegate to talk with macOS */
     CCocoaAppDelegate* AppDelegate = nullptr;

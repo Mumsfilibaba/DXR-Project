@@ -32,6 +32,8 @@ workspace "DXR-Engine-Tests"
             "_DEBUG",
             "DEBUG_BUILD",
         }
+	filter {}
+
     filter "configurations:Release"
         symbols "on"
         runtime "Release"
@@ -51,19 +53,24 @@ workspace "DXR-Engine-Tests"
             "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING",
             "_CRT_SECURE_NO_WARNINGS",
         }
+	filter {}
+	
 	filter "action:xcode"
 		defines
 		{
             "IDE_XCODE",
 		}
-
-    -- OS
+	filter {}
+    
+	-- OS
     filter "system:windows"
         defines
         {
             "PLATFORM_WINDOWS",
         }
-	filter "System:macosx"
+	filter {}
+	
+	filter "system:macosx"
 		defines
 		{
 			"PLATFORM_MACOS",
@@ -116,7 +123,6 @@ workspace "DXR-Engine-Tests"
 		{
 			"../DXR-Engine/",
 		}
-		
     project "*"
 	
 	-- Math Tests

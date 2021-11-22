@@ -81,25 +81,15 @@ project ( projectname )
 		{
 			"%{wks.location}/Runtime/Main/Windows/WindowsMain.cpp",	
 		}
+	filter {}
+	
 	filter "system:macosx"
 		files
 		{
 			"%{wks.location}/Runtime/Main/Mac/MacMain.cpp",	
 		}
-
-	-- Remove non-macos and add macos-specific files
-	filter "system:macosx"
-		files 
-		{ 
-			"%{wks.location}/Runtime/%{prj.name}/**.mm",
-		}
-
-		excludes 
-		{
-			"**/D3D12/**",
-			"**/Windows/**",
-		}
-
+	filter {}
+	
 	-- In visual studio show natvis files
 	filter "action:vs*"
 		vpaths { ["Natvis"] = "**.natvis" }
@@ -107,9 +97,20 @@ project ( projectname )
 		files 
 		{
 			"%{prj.name}/**.natvis",
-		}        
-
+		}
+	filter {}
+	
 	filter "system:macosx"
+		files 
+		{ 
+			"%{wks.location}/Runtime/%{prj.name}/**.mm",
+		}
+
+		removefiles
+		{
+			"%{wks.location}/**/Windows/**"
+		}
+
 		links
 		{
 			-- Native
@@ -117,3 +118,4 @@ project ( projectname )
 			"AppKit.framework",
 			"MetalKit.framework",
 		}
+	filter {}

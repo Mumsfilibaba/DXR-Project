@@ -1,10 +1,10 @@
 
 #if PLATFORM_WINDOWS
 #include "WindowsWindow.h"
-#include "WindowsApplication.h"
 
 #include "Core/Logging/Log.h"
 
+#include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformDebugMisc.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -87,7 +87,7 @@ bool CWindowsWindow::Initialize( const CString& InTitle, uint32 InWidth, uint32 
     int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
     HINSTANCE Instance = Application->GetInstance();
-    LPCSTR WindowClassName = CWindowsApplication::GetWindowClassName();
+    LPCSTR WindowClassName = PlatformApplication::GetWindowClassName();
 
     Window = CreateWindowEx( NewStyleEx, WindowClassName, InTitle.CStr(), NewStyle, PositionX, PositionY, RealWidth, RealHeight, NULL, NULL, Instance, NULL );
     if ( Window == 0 )
