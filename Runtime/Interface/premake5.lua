@@ -41,6 +41,11 @@ project "Interface"
 		"%{wks.location}/Runtime/%{prj.name}/**.hlsli",	
 	}
 
+	-- On macOS compile all cpp files to objective-C++ to avoid pre-processor check
+	filter { "system:macosx", "files:**.cpp" }
+		compileas "Objective-C++"
+	filter {}
+
 	excludes 
 	{	
 		"**/Main/**",
@@ -75,6 +80,11 @@ project "Interface"
 		files 
 		{ 
 			"%{wks.location}/Runtime/%{prj.name}/**.mm",
+		}
+
+		removefiles
+		{
+			"%{wks.location}/**/Windows/**"
 		}
 
 		links

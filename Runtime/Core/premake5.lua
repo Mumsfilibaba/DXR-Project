@@ -31,6 +31,8 @@ project "Core"
 		"CORE_API_EXPORT=(1)"
 	}
 
+	compileas "Objective-C++"
+
 	-- Files to include
 	files 
 	{ 
@@ -42,6 +44,11 @@ project "Core"
 		"%{wks.location}/Runtime/%{prj.name}/**.hlsl",
 		"%{wks.location}/Runtime/%{prj.name}/**.hlsli",	
 	}
+
+	-- On macOS compile all cpp files to objective-C++ to avoid pre-processor check
+	filter { "system:macosx", "files:**.cpp" }
+		compileas "Objective-C++"
+	filter {}
 
 	excludes 
 	{	

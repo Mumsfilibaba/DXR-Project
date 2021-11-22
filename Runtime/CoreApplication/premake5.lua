@@ -43,6 +43,11 @@ project "CoreApplication"
 		"%{wks.location}/Runtime/%{prj.name}/**.hlsli",	
 	}
 	
+	-- On macOS compile all cpp files to objective-C++ to avoid pre-processor check
+	filter { "system:macosx", "files:**.cpp" }
+		compileas "Objective-C++"
+	filter {}
+
 	excludes 
 	{	
 		"**/Main/**",

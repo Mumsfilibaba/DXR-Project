@@ -37,7 +37,12 @@ project ( projectname )
 		"%{wks.location}/%{prj.name}/**.hlsl",
 		"%{wks.location}/%{prj.name}/**.hlsli",	
 	}
-		
+	
+	-- On macOS compile all cpp files to objective-C++ to avoid pre-processor check
+	filter { "system:macosx", "files:**.cpp" }
+		compileas "Objective-C++"
+	filter {}
+
 	-- We do not want to compile HLSL files so exclude them from project
 	excludes 
 	{	

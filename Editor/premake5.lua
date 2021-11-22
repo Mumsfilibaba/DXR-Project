@@ -50,6 +50,11 @@ project ( projectname )
 		"%{wks.location}/%{prj.name}/**.hlsli",	
 	}
 
+	-- On macOS compile all cpp files to objective-C++ to avoid pre-processor check
+	filter { "system:macosx", "files:**.cpp" }
+		compileas "Objective-C++"
+	filter {}
+
 	-- Include EngineLoop | TODO: Make lib?
 	files
 	{
