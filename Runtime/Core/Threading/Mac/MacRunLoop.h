@@ -5,41 +5,26 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 
-#ifdef __OBJC__
-#include <Foundation/Foundation.h>
-#else
-class NSString;
-#endif
+/* Create the MainThread's RunLoop */
+CORE_API bool RegisterMainRunLoop();
 
-class CMacRunLoopSource;
+/* Destroy the MainThread's RunLoop */
+CORE_API void UnregisterMainRunLoop();
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
+/* Perform a call on the MainThread */
+CORE_API void MakeMainThreadCall( dispatch_block_t Block, bool WaitUntilFinished );
 
-class CMacMainThread
+/* Perform a call on the MainThread and wait for a returnvalue */
+template<typename ReturnType>
+inline ReturnType MakeMainThreadCallWithReturn( ReturnType (^Block)(void) )
 {
-public:
-
-    static void Init();
-    static void Release();
-    
-    static FORCEINLINE bool IsInitialized()
-    {
-        return (MainThread != nullptr);
-    }
-
-    static void Tick();
-    
-    static void MakeCall( dispatch_block_t Block, bool WaitUntilFinished );
-    
-private:
-    static CMacRunLoopSource* MainThread;
-};
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-FORCEINLINE void MakeMainThreadCall( dispatch_block_t Block, bool WaitUntilFinished )
-{
-    CMacMainThread::MakeCall( Block, WaitUntilFinished );
+	__block ReturnType ReturnValue;
+	MakeMainThreadCall(^
+	{
+		ReturnValue = Block();
+	}, true);
+	
+	return ReturnValue;
 }
 
 #endif

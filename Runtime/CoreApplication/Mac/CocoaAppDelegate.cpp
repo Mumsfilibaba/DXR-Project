@@ -1,5 +1,4 @@
 #if PLATFORM_MACOS
-#include "Notification.h"
 #include "CocoaAppDelegate.h"
 
 #include "CoreApplication/Platform/PlatformApplication.h"
@@ -34,9 +33,7 @@
 
 - (void) applicationWillTerminate:(NSNotification* ) InNotification
 {
-    SNotification Notification;
-    Notification.Notification = InNotification;
-    Application->HandleNotification(Notification);
+    Application->DeferEvent( InNotification );
 }
 
 @end

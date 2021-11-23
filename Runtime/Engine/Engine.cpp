@@ -9,8 +9,8 @@
 
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/TextureFactory.h"
-#include "Engine/Windows/GameConsoleWindow.h"
-#include "Engine/Windows/FrameProfilerWindow.h"
+#include "Engine/InterfaceWindows/GameConsoleWindow.h"
+#include "Engine/InterfaceWindows/FrameProfilerWindow.h"
 #include "Engine/Project/ProjectManager.h"
 
 #include "RHI/RHICore.h"

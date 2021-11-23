@@ -67,7 +67,7 @@ public:
         }
     }
     
-    void RunInMode(CFRunLoopMode RunMode)
+    void RunInMode( CFRunLoopMode RunMode )
     {
         CFRunLoopRunInMode( RunMode, 0, true );
     }
@@ -99,31 +99,27 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-CMacRunLoopSource* CMacMainThread::MainThread = nullptr;
+CMacRunLoopSource* GMainThread = nullptr;
 
-void CMacMainThread::Init()
+bool RegisterMainRunLoop()
 {
     CFRunLoopRef MainLoop = CFRunLoopGetMain();
-    MainThread = new CMacRunLoopSource( MainLoop, NSDefaultRunLoopMode );
+	GMainThread = new CMacRunLoopSource( MainLoop, NSDefaultRunLoopMode );
+	
+	return true;
 }
 
-void CMacMainThread::Release()
+void UnregisterMainRunLoop()
 {
-    SafeDelete( MainThread );
+    SafeDelete( GMainThread );
 }
 
-void CMacMainThread::Tick()
-{
-    Assert( MainThread != nullptr );
-    MainThread->RunInMode( (CFRunLoopMode)NSDefaultRunLoopMode );
-}
-
-void CMacMainThread::MakeCall( dispatch_block_t Block, bool WaitUntilFinished )
+void MakeMainThreadCall( dispatch_block_t Block, bool WaitUntilFinished )
 {
     dispatch_block_t CopiedBlock = Block_copy( Block );
     
 	// Have to be careful here about when things are run, since this function may be called before the PlatformThreadMisc::Init is called
-    if ( [NSThread isMainThread] )
+    if ( PlatformThreadMisc::IsMainThread() )
     {
         // If already on mainthread, execute Block here
         CopiedBlock();
@@ -131,7 +127,7 @@ void CMacMainThread::MakeCall( dispatch_block_t Block, bool WaitUntilFinished )
     else
     {
         // Otherwise schedule Block on main thread
-        Assert( MainThread != nullptr );
+        Assert( GMainThread != nullptr );
 
         if ( WaitUntilFinished )
         {
@@ -143,16 +139,20 @@ void CMacMainThread::MakeCall( dispatch_block_t Block, bool WaitUntilFinished )
                 dispatch_semaphore_signal( WaitSemaphore );
             });
             
-            MainThread->ScheduleBlock( WaitableBlock );
-            MainThread->RunInMode( (CFStringRef)NSDefaultRunLoopMode );
+			GMainThread->ScheduleBlock( WaitableBlock );
             
-            dispatch_semaphore_wait( WaitSemaphore, DISPATCH_TIME_FOREVER );
+			do
+			{
+				GMainThread->WakeUp();
+				GMainThread->RunInMode( (CFStringRef)NSDefaultRunLoopMode );
+			} while ( dispatch_semaphore_wait( WaitSemaphore, dispatch_time(0, 100000ull) ) );
+			
             Block_release( WaitableBlock );
         }
         else
         {
-            MainThread->ScheduleBlock( CopiedBlock );
-            MainThread->WakeUp();
+			GMainThread->ScheduleBlock( CopiedBlock );
+			GMainThread->WakeUp();
         }
     }
     

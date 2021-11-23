@@ -56,67 +56,67 @@
 {
     // Interpret key Event and make sure we get a KeyTyped Event
     [self interpretKeyEvents:[NSArray arrayWithObject: Event]];
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) keyUp:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) mouseDown:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) mouseDragged:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) mouseUp:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) mouseMoved:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) rightMouseDown:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) rightMouseDragged:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) rightMouseUp:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) otherMouseDown:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) otherMouseDragged:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) otherMouseUp:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) scrollWheel:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 - (void) insertText:(id) String replacementRange:(NSRange) ReplacementRange
@@ -135,7 +135,7 @@
         Characters = (NSString*)String;
     }
     
-    Application->HandleKeyTypedEvent( Characters );
+    Application->DeferEvent( Characters );
 }
 
 /* Necessary methods for NSTextInputClient */
@@ -183,14 +183,14 @@
     [[self layer] setContentsScale:BackingScaleFactor];
 }
 
-- (void) mouseExited:(NSEvent* ) Event
+- (void) mouseExited:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
-- (void) mouseEntered:(NSEvent* )Event
+- (void) mouseEntered:(NSEvent*) Event
 {
-    Application->HandleEvent(Event);
+    Application->DeferEvent( Event );
 }
 
 @end

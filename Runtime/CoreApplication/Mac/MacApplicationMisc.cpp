@@ -20,11 +20,6 @@ void CMacApplicationMisc::MessageBox( const CString& Title, const CString& Messa
     CFRelease( TextRef );
 }
 
-void CMacApplicationMisc::RequestExit( int32 ExitCode )
-{
-    [NSApp terminate:nil];
-}
-
 void CMacApplicationMisc::PumpMessages( bool UntilEmpty )
 {
     SCOPED_AUTORELEASE_POOL();

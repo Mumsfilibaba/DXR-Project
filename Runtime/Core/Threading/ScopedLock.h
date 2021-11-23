@@ -5,6 +5,7 @@ template<typename LockType>
 class TScopedLock
 {
 public:
+	
     TScopedLock( TScopedLock&& ) = delete;
     TScopedLock( const TScopedLock& ) = delete;
 

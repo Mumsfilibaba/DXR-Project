@@ -70,7 +70,7 @@ bool CEngineLoop::PreInitialize()
     CConsoleManager::Init();
 
     // Init platform specific thread utilities
-    if ( !PlatformThreadMisc::Init() )
+    if ( !PlatformThreadMisc::Initialize() )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "Failed to init PlatformThreadMisc" );
         return false;

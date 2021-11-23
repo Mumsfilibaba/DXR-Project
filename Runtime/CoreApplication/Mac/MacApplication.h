@@ -2,16 +2,16 @@
 
 #if PLATFORM_MACOS
 #include "MacCursor.h"
+#include "ScopedAutoreleasePool.h"
 
 #include "Core/Containers/Array.h"
 #include "Core/Threading/Platform/CriticalSection.h"
 
 #include "CoreApplication/Interface/PlatformApplication.h"
 
-@class NSNotification;
-@class NSWindow;
-@class NSEvent;
-@class NSString;
+#include <AppKit/AppKit.h>
+#include <Foundation/Foundation.h>
+
 @class CCocoaAppDelegate;
 @class CCocoaWindow;
 
@@ -26,6 +26,9 @@ struct SMacApplicationEvent
         : NotificationName( nullptr )
         , Event( nullptr )
         , Window( nullptr )
+		, Size()
+		, Position()
+		, Character( uint32(-1) )
     {
     }
 
@@ -33,11 +36,16 @@ struct SMacApplicationEvent
         : NotificationName( Other.NotificationName ? [Other.NotificationName retain] : nullptr )
         , Event( Other.Event ? [Other.Event retain] : nullptr )
         , Window( Other.Window ? [Other.Window retain] : nullptr )
+		, Size( Other.Size )
+		, Position( Other.Position )
+		, Character( Other.Character )
     {
     }
 
     FORCEINLINE ~SMacApplicationEvent()
     {
+		SCOPED_AUTORELEASE_POOL();
+		
         if ( NotificationName )
         {
             [NotificationName release];
@@ -55,11 +63,19 @@ struct SMacApplicationEvent
     }
 
     // Name of notification, nullptr if not a notification
-    NSNotificationName* NotificationName;
+	NSNotificationName NotificationName;
     // Event object, nullptr if not an event
     NSEvent* Event;
+	
     // Window for the event, nullptr if no associated window exists
-    NSWindow* Window;
+	CCocoaWindow* Window;
+	// Size of the window
+	CGSize Size;
+	// Position of the window
+	CGPoint Position;
+	
+	// On Character typed event
+	uint32 Character;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,8 +113,8 @@ public:
     TSharedRef<CMacWindow> GetWindowFromNSWindow( NSWindow* Window ) const;
 
     /* Store event for handling later in the main loop */
-    void StoreEvent( NSObject* EventOrNotificationObject );
-
+    void DeferEvent( NSObject* EventOrNotificationObject );
+	
     /* Returs the native appdelegate */
     FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const
     {
@@ -113,20 +129,14 @@ private:
     bool InitializeAppMenu();
 
     /* Handles a notification */
-    void HandleNotification( NSNotification* Notification );
-
-    /* Handles an event */
-    void HandleEvent( NSEvent* Event );
-
-    /* Handle key typed event */
-    void HandleKeyTypedEvent( NSString* Text );
+    void HandleEvent( const SMacApplicationEvent& Notification );
 
     /* Delegate to talk with macOS */
     CCocoaAppDelegate* AppDelegate = nullptr;
 
     /* All the windows of the application */
     TArray<TSharedRef<CMacWindow>> Windows;
-    CCriticalSection               WindowsMutex;
+    mutable CCriticalSection       WindowsMutex;
 
     /* Deferred events, events are not processed directly */
     TArray<SMacApplicationEvent> DeferredEvents;

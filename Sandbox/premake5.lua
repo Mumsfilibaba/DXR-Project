@@ -142,6 +142,11 @@ project (projectname .. "Launcher")
 			"%{wks.location}/Runtime/Main/Mac/MacMain.cpp",	
 		}
 	filter {}
+
+	-- On macOS compile all cpp files to objective-C++ to avoid pre-processor check
+	filter { "system:macosx", "files:**.cpp" }
+		compileas "Objective-C++"
+	filter {}
 	
 	-- In visual studio show natvis files
 	filter "action:vs*"

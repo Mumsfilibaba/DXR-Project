@@ -8,6 +8,8 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
+#include <AppKit/AppKit.h>
+
 class CMacApplicationMisc final : public CPlatformApplicationMisc
 {
 public:

@@ -7,10 +7,7 @@
 
 #include <unistd.h>
 #include <pthread.h>
-
-#if defined(__OBJC__)
 #include <Foundation/Foundation.h>
-#endif
 
 class CMacThreadMisc : public CPlatformThreadMisc
 {
@@ -23,14 +20,13 @@ public:
         MainThreadHandle = GetThreadHandle();
 
         // Then init the mainthread runloop
-        CMacMainThread::Init();
-		return true;
+		return RegisterMainRunLoop();
     }
 
     /* Releases platform specific resources for threadhandling */
     static FORCEINLINE void Release() 
     {
-        CMacMainThread::Release();
+		UnregisterMainRunLoop();
     }
 
     /* Retreives the number of logical cores available on the system */
@@ -53,7 +49,7 @@ public:
 		// HACK: When the thread sleeps and we are on mainthread, run the mainloop
 		if ( IsMainThread() )
 		{
-			CMacMainThread::Tick();
+			//CMacMainThread::Tick();
 		}
 		
         float MicroSeconds = Time.AsMicroSeconds();

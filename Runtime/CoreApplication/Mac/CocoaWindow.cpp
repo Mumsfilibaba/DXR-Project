@@ -2,7 +2,6 @@
 #include "CocoaWindow.h"
 #include "MacApplication.h"
 #include "ScopedAutoreleasePool.h"
-#include "Notification.h"
 
 @implementation CCocoaWindow
 
@@ -49,101 +48,47 @@
 
 - (void) windowWillClose:(NSNotification*) InNotification
 {
-    SNotification Notification;
-    Notification.Notification = InNotification;
-    Notification.Window       = self;
-    
-    Application->HandleNotification( Notification );
+    Application->DeferEvent( InNotification );
 }
 
 - (void) windowDidResize:(NSNotification*) InNotification
 {
-    SNotification Notification;
-    Notification.Notification = InNotification;
-    Notification.Window       = self;
-    
-    const NSRect contentRect = [[self contentView] frame];
-    Notification.Size = contentRect.size;
-    
-    Application->HandleNotification( Notification );
+    Application->DeferEvent( InNotification );
 }
 
 - (void) windowDidMove:(NSNotification*) InNotification
 {
-    SNotification Notification;
-    Notification.Notification = InNotification;
-    Notification.Window       = self;
-    
-    const NSRect contentRect = [self contentRectForFrameRect:[self frame]];
-    Notification.Position = contentRect.origin;
-    
-    Application->HandleNotification( Notification );
+    Application->DeferEvent( InNotification );
 }
 
 - (void) windowDidMiniaturize:(NSNotification*) InNotification
 {
-    SNotification Notification;
-    Notification.Notification = InNotification;
-    Notification.Window       = self;
-    
-    const NSRect contentRect = [self contentRectForFrameRect:[self frame]];
-    Notification.Size = contentRect.size;
-    
-    Application->HandleNotification( Notification );
+    Application->DeferEvent( InNotification );
 }
 
 - (void) windowDidDeminiaturize:(NSNotification*) InNotification
 {
-    SNotification Notification;
-    Notification.Notification = InNotification;
-    Notification.Window       = self;
-    
-    const NSRect contentRect = [[self contentView] frame];
-    Notification.Size = contentRect.size;
-    
-    Application->HandleNotification( Notification );
+    Application->DeferEvent( InNotification );
 }
 
 - (void) windowDidEnterFullScreen:(NSNotification*) InNotification
 {
-    SNotification Notification;
-    Notification.Notification = InNotification;
-    Notification.Window       = self;
-    
-    const NSRect contentRect = [[self contentView] frame];
-    Notification.Size = contentRect.size;
-    
-    Application->HandleNotification( Notification );
+    Application->DeferEvent( InNotification );
 }
 
 - (void) windowDidExitFullScreen:(NSNotification*) InNotification
 {
-    SNotification Notification;
-    Notification.Notification = InNotification;
-    Notification.Window       = self;
-    
-    const NSRect contentRect = [[self contentView] frame];
-    Notification.Size = contentRect.size;
-    
-    Application->HandleNotification( Notification );
+    Application->DeferEvent( InNotification );
 }
 
 - (void) windowDidBecomeKey:(NSNotification*) InNotification
 {
-    SNotification Notification;
-    Notification.Notification = InNotification;
-    Notification.Window       = self;
-    
-    Application->HandleNotification( Notification );
+    Application->DeferEvent( InNotification );
 }
 
 - (void) windowDidResignKey:(NSNotification*) InNotification
 {
-    SNotification Notification;
-    Notification.Notification = InNotification;
-    Notification.Window       = self;
-    
-    Application->HandleNotification( Notification );
+    Application->DeferEvent( InNotification );
 }
 
 @end
