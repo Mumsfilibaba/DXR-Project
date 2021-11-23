@@ -1,6 +1,6 @@
 #pragma once 
 
-#if PLATFORM_MACOS && defined(__OBJC__)
+#if PLATFORM_MACOS
 #include "CoreApplication/Interface/PlatformConsoleWindow.h"
 
 #include <stdarg.h>
@@ -28,9 +28,5 @@
 +(NSString*)convertStringWithArgs:(const char*)Format Args : (va_list)Args;
 
 @end
-
-#else
-
-class CCocoaConsoleWindow;
 
 #endif

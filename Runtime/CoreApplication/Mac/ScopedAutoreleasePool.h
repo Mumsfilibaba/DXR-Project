@@ -1,6 +1,6 @@
 #pragma once
 
-#if PLATFORM_MACOS && defined(__OBJC__)
+#if PLATFORM_MACOS
 #include "CoreDefines.h"
 
 #include <Foundation/Foundation.h>
@@ -13,14 +13,13 @@ class CScopedAutoreleasePool
 public:
 
     FORCEINLINE CScopedAutoreleasePool()
-        : Pool( nullptr )
+        : Pool( [[NSAutoreleasePool alloc] init] )
     {
-        Pool = [[NSAutoreleasePool alloc]init];
     }
 
     FORCEINLINE ~CScopedAutoreleasePool()
     {
-        [Pool release] ;
+        [Pool release];
     }
 
 private:

@@ -16,7 +16,10 @@ public:
     static void MessageBox( const CString& Title, const CString& Message );
 
     /* Sends a Exit Message to the application with a certain exitcode */
-    static void RequestExit( int32 ExitCode );
+    static FORCEINLINE void RequestExit( int32 ExitCode )
+    {
+        [NSApp terminate:nil];
+    }
 
     /* Pumps the application's message queue */
     static void PumpMessages( bool UntilEmpty );

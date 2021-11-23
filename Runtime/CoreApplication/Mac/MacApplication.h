@@ -8,21 +8,12 @@
 
 #include "CoreApplication/Interface/PlatformApplication.h"
 
-#if defined(__OBJC__)
 @class NSNotification;
 @class NSWindow;
 @class NSEvent;
 @class NSString;
 @class CCocoaAppDelegate;
 @class CCocoaWindow;
-#else
-class NSNotification;
-class NSWindow;
-class NSEvent;
-class NSString;
-class CCocoaAppDelegate;
-class CCocoaWindow;
-#endif
 
 class CMacWindow;
 

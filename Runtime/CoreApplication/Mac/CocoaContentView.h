@@ -1,8 +1,6 @@
 #pragma once
 
-#if PLATFORM_MACOS 
-#if defined(__OBJC__)
-
+#if PLATFORM_MACOS
 #include <Appkit/Appkit.h>
 #include <MetalKit/MetalKit.h>
 
@@ -17,9 +15,4 @@ class CMacApplication;
 
 @end
 
-#else
-
-class CCocoaContentView;
-
-#endif
 #endif

@@ -3,11 +3,7 @@
 #if PLATFORM_MACOS
 #include "CoreApplication/Interface/PlatformConsoleWindow.h"
 
-#if defined(__OBJC__)
 @class CCocoaConsoleWindow;
-#else
-class CCocoaConsoleWindow;
-#endif
 
 class CMacConsoleWindow final : public CPlatformConsoleWindow
 {
