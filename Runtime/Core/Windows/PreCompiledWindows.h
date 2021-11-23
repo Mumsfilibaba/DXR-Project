@@ -11,5 +11,5 @@
 #include <wrl/client.h>
 
 #else
-#error Windows precompiled included on non-Windows platform
+    #error Windows precompiled included on non-Windows platform
 #endif

@@ -27,6 +27,24 @@ class CMacWindow;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+// TODO: Finish
+struct SMacApplicationEvent
+{
+    FORCEINLINE SMacApplicationEvent()
+    {
+    }
+
+    FORCEINLINE SMacApplicationEvent( const SMacApplicationEvent& Other )
+    {
+    }
+
+    FORCEINLINE ~SMacApplicationEvent()
+    {
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 /* Mac specific implementation of the application */
 class CMacApplication final : public CPlatformApplication
 {

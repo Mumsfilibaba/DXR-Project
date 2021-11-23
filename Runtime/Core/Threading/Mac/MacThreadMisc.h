@@ -17,7 +17,7 @@ class CMacThreadMisc : public CPlatformThreadMisc
 public:
 
     /* Performs platform specific initialization of threadhandling */
-    static FORCEINLINE bool Init() 
+    static FORCEINLINE bool Initialize() 
     { 
         // This must be executed on the mainthread
         MainThreadHandle = GetThreadHandle();
@@ -34,7 +34,11 @@ public:
     }
 
     /* Retreives the number of logical cores available on the system */
-    static uint32 GetNumProcessors();
+    static uint32 GetNumProcessors()
+    {
+        NSUInteger NumProcessors = [[NSProcessInfo processInfo] processorCount];
+        return static_cast<uint32>(NumProcessors);
+    }
 
     /* Retrieves the current thread's system ID */
     static FORCEINLINE PlatformThreadHandle GetThreadHandle()
@@ -59,11 +63,7 @@ public:
     /* Checks weather or not the current thread is the main thread */
     static FORCEINLINE bool IsMainThread() 
     {
-#if defined(__OBJC__)
 		return [NSThread isMainThread];
-#else
-		return (MainThreadHandle == GetThreadHandle());
-#endif
     }
 
 private:

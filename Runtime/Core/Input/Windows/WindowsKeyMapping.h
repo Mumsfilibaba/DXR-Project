@@ -9,9 +9,15 @@
 /* Class that maps key-code from scan-codes and the reverse */
 class CORE_API CWindowsKeyMapping : public CPlatformKeyMapping
 {
-    friend class CWindowsApplication;
+    enum 
+    {
+        NumKeys = 512
+    };
 
 public:
+
+    /* Init the key-tables */
+    static void Initialize();
 
     /* Retrieve the key-code from the scan-code */
     static FORCEINLINE EKey GetKeyCodeFromScanCode( uint32 ScanCode )
@@ -27,15 +33,11 @@ public:
 
 private:
 
-    /* Init the key-tables */
-    static void Init();
-
     /* Table to convert from ScanCode to KeyCode */
-    static TStaticArray<EKey, 512>   KeyCodeFromScanCodeTable;
+    static EKey KeyCodeFromScanCodeTable[NumKeys];
 
     /* Table to convert from KeyCode to ScanCode */
-    static TStaticArray<uint16, 512> ScanCodeFromKeyCodeTable;
-
+    static uint16 ScanCodeFromKeyCodeTable[NumKeys];
 };
 
 #endif

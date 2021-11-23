@@ -20,11 +20,6 @@ CMacThread::CMacThread( ThreadFunction InFunction, const CString& InName )
 {
 }
 
-CMacThread::~CMacThread()
-{
-    // Empty for now
-}
-
 bool CMacThread::Start()
 {
     int Result = pthread_create( &Thread, NULL, CMacThread::ThreadRoutine, reinterpret_cast<void*>(this) );

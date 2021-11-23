@@ -16,6 +16,8 @@
 
 #include <AppKit/AppKit.h>
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 TSharedPtr<CMacApplication> CMacApplication::Make()
 {
 	return TSharedPtr<CMacApplication>( dbg_new CMacApplication() );
@@ -46,8 +48,7 @@ bool CMacApplication::Initialize()
 {
     SCOPED_AUTORELEASE_POOL();
 
-    const bool IsMainThread = PlatformThreadMisc::IsMainThread();
-    Assert( IsMainThread ); 
+    Assert( PlatformThreadMisc::IsMainThread() ); 
 
     /* Init application singleton */
     [NSApplication sharedApplication];
@@ -60,7 +61,7 @@ bool CMacApplication::Initialize()
     AppDelegate = [[CCocoaAppDelegate alloc] init:this];
     [NSApp setDelegate:AppDelegate];
     
-	PlatformKeyMapping::Init();
+	PlatformKeyMapping::Initialize();
 
     if (!InitializeAppMenu())
     {
@@ -145,6 +146,8 @@ void CMacApplication::SetActiveWindow( const TSharedRef<CPlatformWindow>& Window
 
 TSharedRef<CPlatformWindow> CMacApplication::GetActiveWindow() const
 {
+	SCOPED_AUTORELEASE_POOL();
+
     NSWindow* KeyWindow = [NSApp keyWindow];
     return GetWindowFromNSWindow( KeyWindow );
 }
@@ -167,7 +170,6 @@ TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow( NSWindow* Window 
         CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window);
         for ( const TSharedRef<CMacWindow>& MacWindow : Windows )
         {
-            Assert( MacWindow != nullptr );
             if ( CocoaWindow == reinterpret_cast<CCocoaWindow*>(MacWindow->GetNativeHandle()) )
             {
                 return MacWindow;
@@ -333,7 +335,7 @@ void CMacApplication::HandleKeyTypedEvent( NSString* Text )
         const unichar Codepoint = [Text characterAtIndex:Index];
         if ((Codepoint & 0xff00) != 0xf700)
         {
-            MessageListener->HandleKeyTyped(uint32(Codepoint));
+            MessageListener->HandleKeyTyped( uint32(Codepoint) );
         }
     }
 }

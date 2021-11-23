@@ -1,8 +1,6 @@
 #pragma once
 
 #if PLATFORM_MACOS 
-#if defined(__OBJC__)
-
 #include <Appkit/Appkit.h>
 
 class CMacApplication;
@@ -16,9 +14,4 @@ class CMacApplication;
 
 @end
 
-#else
-
-class CCocoaAppDelegate;
-
-#endif
 #endif

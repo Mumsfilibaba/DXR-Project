@@ -18,7 +18,7 @@ class CPlatformThreadMisc
 public:
 
     /* Performs platform specific initialization of threadhandling */
-    static FORCEINLINE bool Init() { return true; } 
+    static FORCEINLINE bool Initialize() { return true; } 
 
     /* Releases platform specific resources for threadhandling */
     static FORCEINLINE void Release() {}

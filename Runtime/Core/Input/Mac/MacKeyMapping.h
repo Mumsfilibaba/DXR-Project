@@ -7,10 +7,16 @@
 
 class CMacKeyMapping : public CPlatformKeyMapping
 {
-    friend class CMacApplication;
+    enum
+    {
+        NumKeys = 256
+    };
 
 public:
 
+    /* Init the key-tables */
+    static void Initialize();
+    
     /* Retrieve the key-code from the scan-code */
     static FORCEINLINE EKey GetKeyCodeFromScanCode( uint32 ScanCode )
     {
@@ -37,19 +43,17 @@ public:
 
 private:
 
-    static void Init();
+    /* Lookup table for converting from scan-code to enum */
+    static EKey KeyCodeFromScanCodeTable[NumKeys];
 
     /* Lookup table for converting from scan-code to enum */
-    static TStaticArray<EKey, 256> KeyCodeFromScanCodeTable;
-
-    /* Lookup table for converting from scan-code to enum */
-    static TStaticArray<uint16, 256> ScanCodeFromKeyCodeTable;
+    static uint16 ScanCodeFromKeyCodeTable[NumKeys];
 
     /* Converts the button-index to mouse button */
-    static TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> ButtonFromButtonIndex;
+    static EMouseButton ButtonFromButtonIndex[EMouseButton::MouseButton_Count];
 
     /* Converts the button-index to mouse button */
-    static TStaticArray<uint8, EMouseButton::MouseButton_Count> ButtonIndexFromButton;
+    static uint8 ButtonIndexFromButton[EMouseButton::MouseButton_Count];
 };
 
 #endif

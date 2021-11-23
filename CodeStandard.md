@@ -244,7 +244,7 @@ private:
 ### Platform Specific Code
 * Platform specific code should be kept in seperate directories with the platform name. Generic should contain platform-independent code only
 ```
-Application/Generic/
+Application/Platform/
 Application/Mac/
 Application/Windows/
 ```
@@ -252,7 +252,7 @@ Application/Windows/
 
 * Prefer static classes
 ```
-class CGenericApplication
+class CPlatformApplication
 {
 public:
   static void Func()
@@ -260,7 +260,7 @@ public:
   }
 };
 
-class CMacApplication : public CGenericApplication
+class CMacApplication : public CPlatformApplication
 {
 public:
   static void Func()
@@ -268,9 +268,9 @@ public:
   }
 };
 
-typedef MacApplication PlatformApplication;
+typedef CMacApplication PlatformApplication;
 
-class CWindowsApplication : public CGenericApplication
+class CWindowsApplication : public CPlatformApplication
 {
 public:
   static void Func()

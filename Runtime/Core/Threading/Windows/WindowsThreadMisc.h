@@ -9,7 +9,7 @@ class CWindowsThreadMisc : public CPlatformThreadMisc
 public:
 
     /* Performs platform specific initialization of threadhandling */
-    static FORCEINLINE bool Init() 
+    static FORCEINLINE bool Initialize() 
     { 
         // This must be executed on the mainthread
         MainThreadHandle = GetThreadHandle();
@@ -29,7 +29,7 @@ public:
 
     static FORCEINLINE PlatformThreadHandle GetThreadHandle()
     {
-        DWORD CurrentHandle = ::GetCurrentThreadId();
+        DWORD CurrentHandle = GetCurrentThreadId();
         return static_cast<PlatformThreadHandle>(CurrentHandle);
     }
 

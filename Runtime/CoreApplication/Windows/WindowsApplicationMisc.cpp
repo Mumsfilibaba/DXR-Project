@@ -24,9 +24,10 @@ void CWindowsApplicationMisc::PumpMessages( bool UntilEmpty )
             CWindowsApplication* Application = CWindowsApplication::Get();
             if ( Application )
             {
-                Application->StoreMessage( Message.hwnd, Message.message, Message.wParam, Message.lParam );
+                Application->StoreMessage( Message.hwnd, Message.message, Message.wParam, Message.lParam, 0, 0 );
             }
         }
+        
     } while ( UntilEmpty );
 }
 

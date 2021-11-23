@@ -33,16 +33,20 @@ private:
 
     CMacThread( ThreadFunction InFunction );
     CMacThread( ThreadFunction InFunction, const CString& InName );
-    ~CMacThread();
+    ~CMacThread() = default;
 
     static void* ThreadRoutine( void* ThreadParameter );
 
+    /* Native thread handle */
     pthread_t Thread;
 
+    /* Function to run */
     ThreadFunction Function;
 
+    /* Name of the thread */
     CString Name;
 
+    /* Check if thread is running or not */
     bool IsRunning;
 };
 

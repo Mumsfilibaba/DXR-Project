@@ -49,8 +49,6 @@ struct SWindowsMessage
 /* Class representing an application on the windows- platform */
 class COREAPPLICATION_API CWindowsApplication final : public CPlatformApplication
 {
-    friend class CWindowsApplicationMisc;
-
 public:
 
     /* Creates an instance of the WindowsApplication, also loads the icon */
@@ -116,6 +114,9 @@ public:
     /* Searches all the created windows and return the one with the specified handle */
     TSharedRef<CWindowsWindow> GetWindowsWindowFromHWND( HWND Window ) const;
 
+    /* Stores messages for handling in the future */
+    void StoreMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY );
+    
     /* Add a native message listener */
     void AddWindowsMessageListener( const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener );
 
@@ -147,8 +148,6 @@ private:
     /* Unregister all raw input devices TODO: Investigate how to do this for a specific window */
     bool UnregisterRawInputDevices();
 
-    /* Stores messages for handling in the future */
-    void StoreMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY );
 
     /* Message-proc which handles the messages for the instance */
     LRESULT MessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );

@@ -2,18 +2,18 @@
 #include "MacKeyMapping.h"
 
 /* Keys */
-TStaticArray<EKey, 256>   CMacKeyMapping::KeyCodeFromScanCodeTable;
-TStaticArray<uint16, 256> CMacKeyMapping::ScanCodeFromKeyCodeTable;
+EKey   CMacKeyMapping::KeyCodeFromScanCodeTable[NumKeys];
+uint16 CMacKeyMapping::ScanCodeFromKeyCodeTable[NumKeys];
 
 /* Buttons */
-TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> CMacKeyMapping::ButtonFromButtonIndex;
-TStaticArray<uint8, EMouseButton::MouseButton_Count>        CMacKeyMapping::ButtonIndexFromButton;
+EMouseButton CMacKeyMapping::ButtonFromButtonIndex[EMouseButton::MouseButton_Count];
+uint8        CMacKeyMapping::ButtonIndexFromButton[EMouseButton::MouseButton_Count];
 
-void CMacKeyMapping::Init()
+void CMacKeyMapping::Initialize()
 {
     /* Keys */
-    CMemory::Memzero( KeyCodeFromScanCodeTable.Data(), KeyCodeFromScanCodeTable.SizeInBytes() );
-    CMemory::Memzero( ScanCodeFromKeyCodeTable.Data(), ScanCodeFromKeyCodeTable.SizeInBytes() );
+    CMemory::Memzero( KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable) );
+    CMemory::Memzero( ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable) );
 
     KeyCodeFromScanCodeTable[0x33] = EKey::Key_Backspace;
     KeyCodeFromScanCodeTable[0x30] = EKey::Key_Tab;
@@ -127,7 +127,7 @@ void CMacKeyMapping::Init()
     KeyCodeFromScanCodeTable[0x2C] = EKey::Key_Slash;
     KeyCodeFromScanCodeTable[0x0A] = EKey::Key_World1;
 
-    for ( uint16 Index = 0; Index < KeyCodeFromScanCodeTable.Size(); Index++ )
+    for ( uint16 Index = 0; Index < NumKeys; Index++ )
     {
         if ( KeyCodeFromScanCodeTable[Index] != EKey::Key_Unknown )
         {
@@ -136,8 +136,8 @@ void CMacKeyMapping::Init()
     }
 
     /* Mouse buttons */
-    CMemory::Memzero( ButtonFromButtonIndex.Data(), ButtonFromButtonIndex.SizeInBytes() );
-    CMemory::Memzero( ButtonIndexFromButton.Data(), ButtonIndexFromButton.SizeInBytes() );
+    CMemory::Memzero( ButtonFromButtonIndex, sizeof(ButtonFromButtonIndex) );
+    CMemory::Memzero( ButtonIndexFromButton, sizeof(ButtonIndexFromButton) );
 
     ButtonFromButtonIndex[0] = EMouseButton::MouseButton_Left;
     ButtonFromButtonIndex[1] = EMouseButton::MouseButton_Right;

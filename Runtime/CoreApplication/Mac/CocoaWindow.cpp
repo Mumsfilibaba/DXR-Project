@@ -47,7 +47,7 @@
     return YES;
 }
 
-- (void) windowWillClose:(NSNotification* ) InNotification
+- (void) windowWillClose:(NSNotification*) InNotification
 {
     SNotification Notification;
     Notification.Notification = InNotification;
@@ -56,7 +56,7 @@
     Application->HandleNotification( Notification );
 }
 
-- (void) windowDidResize:(NSNotification* ) InNotification
+- (void) windowDidResize:(NSNotification*) InNotification
 {
     SNotification Notification;
     Notification.Notification = InNotification;
@@ -68,7 +68,7 @@
     Application->HandleNotification( Notification );
 }
 
-- (void) windowDidMove:(NSNotification* ) InNotification
+- (void) windowDidMove:(NSNotification*) InNotification
 {
     SNotification Notification;
     Notification.Notification = InNotification;

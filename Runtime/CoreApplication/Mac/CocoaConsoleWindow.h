@@ -9,7 +9,7 @@
 
 @interface CCocoaConsoleWindow : NSWindow<NSWindowDelegate>
 {
-    NSTextView* TextView;
+    NSTextView*   TextView;
     NSScrollView* ScrollView;
     NSDictionary* ConsoleColor;
 }

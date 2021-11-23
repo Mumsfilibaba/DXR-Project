@@ -21,7 +21,7 @@
     return self;
 }
 
-- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *) Sender
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication* ) Sender
 {
     // TODO: Maybe check some state before returning yes, but for now just terminate
     return NSTerminateNow;

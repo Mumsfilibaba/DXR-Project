@@ -1,13 +1,15 @@
 #if PLATFORM_WINDOWS
 #include "WindowsKeyMapping.h"
 
-TStaticArray<EKey, 512>   CWindowsKeyMapping::KeyCodeFromScanCodeTable;
-TStaticArray<uint16, 512> CWindowsKeyMapping::ScanCodeFromKeyCodeTable;
+EKey   CWindowsKeyMapping::KeyCodeFromScanCodeTable[NumKeys];
+uint16 CWindowsKeyMapping::ScanCodeFromKeyCodeTable[NumKeys];
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CWindowsKeyMapping::Init()
 {
-    CMemory::Memzero( KeyCodeFromScanCodeTable.Data(), KeyCodeFromScanCodeTable.SizeInBytes() );
-    CMemory::Memzero( ScanCodeFromKeyCodeTable.Data(), ScanCodeFromKeyCodeTable.SizeInBytes() );
+    CMemory::Memzero( KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable) );
+    CMemory::Memzero( ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable) );
 
     KeyCodeFromScanCodeTable[0x00B] = EKey::Key_0;
     KeyCodeFromScanCodeTable[0x002] = EKey::Key_1;
