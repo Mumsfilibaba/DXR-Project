@@ -25,8 +25,11 @@ TSharedPtr<CMacApplication> CMacApplication::Make()
 
 CMacApplication::CMacApplication()
     : CPlatformApplication( CMacCursor::Make() )
-	, AppDelegate(nullptr)
+	, AppDelegate( nullptr )
     , Windows()
+    , WindowsMutex()
+    , DeferredEvents()
+    , DeferredEventsMutex()
 	, IsTerminating( false )
 {
 }
@@ -40,7 +43,12 @@ CMacApplication::~CMacApplication()
 TSharedRef<CPlatformWindow> CMacApplication::MakeWindow()
 {
     TSharedRef<CMacWindow> NewWindow = CMacWindow::Make( this );
-    Windows.Emplace(NewWindow);
+    
+    {
+        TScopedLock Lock( WindowsLock );
+        Windows.Emplace(NewWindow);
+    }
+
     return NewWindow;
 }
 
@@ -167,6 +175,8 @@ TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow( NSWindow* Window 
 {
     if (Window && [Window isKindOfClass:[CCocoaWindow class]])
     {
+        TScopedLock Lock( WindowsMutex );
+
         CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window);
         for ( const TSharedRef<CMacWindow>& MacWindow : Windows )
         {
@@ -180,45 +190,68 @@ TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow( NSWindow* Window 
     return nullptr;
 }
 
-void CMacApplication::HandleNotification( const SNotification& Notification )
+void CMacApplication::StoreEvent( NSObject* EventOrNotificationObject )
 {
-    if (Notification.IsValid())
+    if ( [EventOrNotificationObject isKindOfClass:[NSEvent class]] )
     {
-        TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(Notification.Window);
+        NSEvent* Event = reinterpret_cast<NSEvent*>(EventOrNotificationObject);
 
-        NSNotificationName NotificationName = [Notification.Notification name];
-        if (NotificationName == NSWindowWillCloseNotification)
-        {
-            MessageListener->HandleWindowClosed(Window);
-        }
-        else if (NotificationName == NSWindowDidMoveNotification)
-        {
-            MessageListener->HandleWindowMoved(Window, int16(Notification.Position.x), int16(Notification.Position.y));
-        }
-        else if (NotificationName == NSWindowDidResizeNotification)
-        {
-            MessageListener->HandleWindowResized(Window, uint16(Notification.Size.width), uint16(Notification.Size.height) );
-        }
-        else if (NotificationName == NSWindowDidMiniaturizeNotification)
-        {
-            MessageListener->HandleWindowResized(Window, uint16(Notification.Size.width), uint16(Notification.Size.height) );
-        }
-        else if (NotificationName == NSWindowDidDeminiaturizeNotification)
-        {
-            MessageListener->HandleWindowResized(Window, uint16(Notification.Size.width), uint16(Notification.Size.height) );
-        }
-        else if (NotificationName == NSWindowDidBecomeKeyNotification)
-        {
-            MessageListener->HandleWindowFocusChanged(Window, true);
-        }
-        else if (NotificationName == NSWindowDidResignKeyNotification)
-        {
-            MessageListener->HandleWindowFocusChanged(Window, false);
-        }
-        else if (NotificationName == NSApplicationWillTerminateNotification)
-        {
-            IsTerminating = true;
-        }
+        SMacApplicationEvent DeferredEvent;
+        DeferredEvent.Event  = [Event retain];
+        DeferredEvent.Window = [[Event window] retain];
+
+        TScopedLock Lock(DeferredEventLock);
+        DeferredEvent.Emplace( DeferredEvent ); 
+    }
+    else if ( [EventOrNotificationObject isKindOfClass:[NSNotification class]] )
+    {
+        NSNotification* Notification = reinterpret_cast<NSNotification*>(EventOrNotificationObject);
+        NSString*   NotificationName = [Notification name]; 
+
+        SMacApplicationEvent DeferredEvent;
+        DeferredEvent.NotificationName = [NotificationName retain];
+
+        TScopedLock Lock(DeferredEventLock);
+        DeferredEvent.Emplace( DeferredEvent ); 
+    }
+}
+
+void CMacApplication::HandleNotification( const SMacApplicationEvent& Notification )
+{
+    TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(Notification.Window);
+
+    NSNotificationName NotificationName = [Notification.Notification name];
+    if (NotificationName == NSWindowWillCloseNotification)
+    {
+        MessageListener->HandleWindowClosed(Window);
+    }
+    else if (NotificationName == NSWindowDidMoveNotification)
+    {
+        MessageListener->HandleWindowMoved(Window, int16(Notification.Position.x), int16(Notification.Position.y));
+    }
+    else if (NotificationName == NSWindowDidResizeNotification)
+    {
+        MessageListener->HandleWindowResized(Window, uint16(Notification.Size.width), uint16(Notification.Size.height) );
+    }
+    else if (NotificationName == NSWindowDidMiniaturizeNotification)
+    {
+        MessageListener->HandleWindowResized(Window, uint16(Notification.Size.width), uint16(Notification.Size.height) );
+    }
+    else if (NotificationName == NSWindowDidDeminiaturizeNotification)
+    {
+        MessageListener->HandleWindowResized(Window, uint16(Notification.Size.width), uint16(Notification.Size.height) );
+    }
+    else if (NotificationName == NSWindowDidBecomeKeyNotification)
+    {
+        MessageListener->HandleWindowFocusChanged(Window, true);
+    }
+    else if (NotificationName == NSWindowDidResignKeyNotification)
+    {
+        MessageListener->HandleWindowFocusChanged(Window, false);
+    }
+    else if (NotificationName == NSApplicationWillTerminateNotification)
+    {
+        IsTerminating = true;
     }
 }
 

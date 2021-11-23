@@ -4,6 +4,7 @@
 #include "MacCursor.h"
 
 #include "Core/Containers/Array.h"
+#include "Core/Threading/Platform/CriticalSection.h"
 
 #include "CoreApplication/Interface/PlatformApplication.h"
 
@@ -31,16 +32,43 @@ class CMacWindow;
 struct SMacApplicationEvent
 {
     FORCEINLINE SMacApplicationEvent()
+        : NotificationName( nullptr )
+        , Event( nullptr )
+        , Window( nullptr )
     {
     }
 
     FORCEINLINE SMacApplicationEvent( const SMacApplicationEvent& Other )
+        : NotificationName( Other.NotificationName ? [Other.NotificationName retain] : nullptr )
+        , Event( Other.Event ? [Other.Event retain] : nullptr )
+        , Window( Other.Window ? [Other.Window retain] : nullptr )
     {
     }
 
     FORCEINLINE ~SMacApplicationEvent()
     {
+        if ( NotificationName )
+        {
+            [NotificationName release];
+        }
+
+        if ( Event )
+        {
+            [Event release];
+        }
+
+        if ( Window )
+        {
+            [Window release];
+        }
     }
+
+    // Name of notification, nullptr if not a notification
+    NSNotificationName* NotificationName;
+    // Event object, nullptr if not an event
+    NSEvent* Event;
+    // Window for the event, nullptr if no associated window exists
+    NSWindow* Window;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,14 +105,8 @@ public:
     /* Retrieves a from a NSWindow */
     TSharedRef<CMacWindow> GetWindowFromNSWindow( NSWindow* Window ) const;
 
-    /* Handles a notification */
-    void HandleNotification( const struct SNotification& Notification );
-
-    /* Handles an event */
-    void HandleEvent( NSEvent* Event );
-
-    /* Handle key typed event */
-    void HandleKeyTypedEvent( NSString* Text );
+    /* Store event for handling later in the main loop */
+    void StoreEvent( NSObject* EventOrNotificationObject );
 
     /* Returs the native appdelegate */
     FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const
@@ -99,11 +121,25 @@ private:
     /* Initializes the applications menu in the menubar */
     bool InitializeAppMenu();
 
+    /* Handles a notification */
+    void HandleNotification( NSNotification* Notification );
+
+    /* Handles an event */
+    void HandleEvent( NSEvent* Event );
+
+    /* Handle key typed event */
+    void HandleKeyTypedEvent( NSString* Text );
+
     /* Delegate to talk with macOS */
     CCocoaAppDelegate* AppDelegate = nullptr;
 
     /* All the windows of the application */
     TArray<TSharedRef<CMacWindow>> Windows;
+    CCriticalSection               WindowsMutex;
+
+    /* Deferred events, events are not processed directly */
+    TArray<SMacApplicationEvent> DeferredEvents;
+    CCriticalSection             DeferredEventsMutex;
 
     /* If the application has been terminating or not */
     bool IsTerminating = false;
