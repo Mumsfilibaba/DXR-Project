@@ -1067,14 +1067,14 @@ public:
     }
 
     /* Appends a string to this string */
-    FORCEINLINE TString& operator+=( CharType Char ) const noexcept
+    FORCEINLINE TString& operator+=( CharType Char ) noexcept
     {
-        Append( Char );
+		Append( Char );
         return *this;
     }
 
     /* Appends a string to this string */
-    FORCEINLINE TString& operator+=( const CharType* InString ) const noexcept
+    FORCEINLINE TString& operator+=( const CharType* InString ) noexcept
     {
         Append( InString );
         return *this;
@@ -1082,7 +1082,7 @@ public:
 
     /* Appends a string to this string */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TString>::LValue>::Type operator+=( const StringType& InString ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TString>::LValue>::Type operator+=( const StringType& InString ) noexcept
     {
         Append<StringType>( InString );
         return *this;

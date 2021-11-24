@@ -125,7 +125,8 @@ project (projectname .. "Launcher")
 	-- Include EngineLoop | TODO: Make lib?
 	files
 	{
-		"%{wks.location}/Runtime/Main/EngineLoop.cpp",	
+		"%{wks.location}/Runtime/Main/EngineLoop.cpp",
+		"%{wks.location}/Runtime/Main/EngineMain.inl",	
 	}
 
 	-- Include EntryPoint

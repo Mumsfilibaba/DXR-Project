@@ -159,6 +159,48 @@ public:
         }
     }
 
+	/* Removes whitespace from the beginning of the string */
+	FORCEINLINE TStringView ShrinkLeft( int32 Num = 1 ) noexcept
+	{
+		TStringView NewStringView( *this );
+		NewStringView.ShrinkLeftInline( Num );
+		return NewStringView;
+	}
+
+	/* Removes whitespace from the beginning of the string */
+	FORCEINLINE void ShrinkLeftInline( int32 Num = 1 ) noexcept
+	{
+		if ( Length() <= Num )
+		{
+			ViewStart = ViewEnd;
+		}
+		else
+		{
+			ViewStart += Num;
+		}
+	}
+	
+	/* Removes whitespace from the beginning of the string */
+	FORCEINLINE TStringView ShrinkRight( int32 Num = 1 ) noexcept
+	{
+		TStringView NewStringView( *this );
+		NewStringView.ShrinkRightInline( Num );
+		return NewStringView;
+	}
+
+	/* Removes whitespace from the beginning of the string */
+	FORCEINLINE void ShrinkRightInline( int32 Num = 1 ) noexcept
+	{
+		if ( Length() <= Num )
+		{
+			ViewEnd = ViewStart;
+		}
+		else
+		{
+			ViewEnd -= Num;
+		}
+	}
+	
     /* Compares two strings and checks if they are equal */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type Compare( const StringType& InString ) const noexcept

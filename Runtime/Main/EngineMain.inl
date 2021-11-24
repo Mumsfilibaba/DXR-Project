@@ -11,6 +11,9 @@
 // Main function for all implementations
 int32 EngineMain( int32 NumCommandLineArgs, const char** CommandLineArgs )
 {
+	// Init the commandline arguments
+	CEngineLoop::InitializeCommandLine( NumCommandLineArgs, CommandLineArgs );
+	
     struct SEngineMainGuard
     {
         ~SEngineMainGuard()

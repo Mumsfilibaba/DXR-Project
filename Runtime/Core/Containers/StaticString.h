@@ -971,14 +971,14 @@ public:
     }
 
     /* Appends a string to this string */
-    FORCEINLINE TStaticString& operator+=( CharType Char ) const noexcept
+    FORCEINLINE TStaticString& operator+=( CharType Char ) noexcept
     {
         Append( Char );
         return *this;
     }
 
     /* Appends a string to this string */
-    FORCEINLINE TStaticString& operator+=( const CharType* InString ) const noexcept
+    FORCEINLINE TStaticString& operator+=( const CharType* InString ) noexcept
     {
         Append( InString );
         return *this;
@@ -986,7 +986,7 @@ public:
 
     /* Appends a string to this string */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator+=( const StringType& InString ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator+=( const StringType& InString ) noexcept
     {
         Append<StringType>( InString );
         return *this;

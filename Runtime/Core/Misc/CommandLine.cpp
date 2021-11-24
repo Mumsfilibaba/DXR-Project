@@ -5,27 +5,44 @@
 
 char CCommandLine::CommandLine[MAX_COMMANDLINE_LENGTH];
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 void CCommandLine::Initialize( int32 NumCommandLineArgs, const char** CommandLineArgs )
 {
     // Zero commandline
     CMemory::Memzero( CommandLine, sizeof(CommandLine) );
 
-    CString Result;
     // Skip the executeable path
+	CString Result;
     for ( int32 Index = 1; Index < NumCommandLineArgs; Index++ )
     {
         CStringView CurrentArg = CommandLineArgs[Index];
-        for ( int32 Character = 0; Character < CurrentArg.Length(); Character++ )
-        {
-        }
+		CurrentArg.TrimInline();
+		
+		for ( int32 Character = 0; Character < CurrentArg.Size(); )
+		{
+			if ( CurrentArg[Character] == '-' )
+			{
+				CurrentArg.ShrinkLeftInline();
+			}
+			else
+			{
+				Character++;
+			}
+		}
+		
+		Result += '-';
+		Result += CurrentArg;
 
+		// Add space between arguments
         if ( Index + 1 < NumCommandLineArgs )
         {
-            //Result;
+            Result += ' ';
         }
     }
 
     CStringTraits::Copy( CommandLine, Result.CStr(), Result.Length() );
+}
+
+void CCommandLine::GetValue( const CString& Name, CString& Value )
+{
+	
 }
