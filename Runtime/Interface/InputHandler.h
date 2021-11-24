@@ -15,6 +15,8 @@
 class CInputHandler
 {
 public:
+	
+	virtual ~CInputHandler() = default;
 
     /* Handle KeyEvent event, if the event-handler consumes the event, return true */
     virtual bool HandleKeyEvent( const SKeyEvent& KeyEvent )

@@ -28,7 +28,7 @@ void CGameConsoleWindow::Tick()
     TSharedRef<CPlatformWindow> MainWindow = CInterfaceApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainWindow->GetWidth();
-    const uint32 WindowHeight = MainWindow->GetHeight();
+	
     // HACK: Push window up above titlebar to remove the rounded corners
     const ImVec2 Offset( 20.0f, -20.0f );
 

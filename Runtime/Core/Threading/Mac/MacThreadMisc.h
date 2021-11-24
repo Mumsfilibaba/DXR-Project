@@ -48,6 +48,7 @@ public:
     {
 		// HACK: When the thread sleeps and we are on mainthread, run the mainloop
 		CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
+		CFRunLoopWakeUp( RunLoop );
 		CFRunLoopRunInMode( kCFRunLoopDefaultMode, 0, false );
 		
         float MicroSeconds = Time.AsMicroSeconds();

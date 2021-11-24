@@ -1456,14 +1456,15 @@ struct TStringHasher
         const TChar* Key = String.CStr();
         int32 Length = String.Length();
 
-        size_t Index = 0;
-        size_t Hash = 0;
+        int32  Index = 0;
+        uint64 Hash  = 0;
         while ( Index != Length )
         {
             Hash += Key[Index++];
             Hash += Hash << 10;
             Hash ^= Hash >> 6;
         }
+		
         Hash += Hash << 3;
         Hash ^= Hash >> 11;
         Hash += Hash << 15;

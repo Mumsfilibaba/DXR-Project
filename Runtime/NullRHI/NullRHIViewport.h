@@ -52,7 +52,7 @@ public:
         return BackBuffer.Get();
     }
 
-    virtual bool IsValid() const
+    virtual bool IsValid() const override final
     {
         return true;
     }

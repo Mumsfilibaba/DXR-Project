@@ -23,7 +23,7 @@ void CCommandLine::Initialize( int32 NumCommandLineArgs, const char** CommandLin
 
         if ( Index + 1 < NumCommandLineArgs )
         {
-            Result;
+            //Result;
         }
     }
 

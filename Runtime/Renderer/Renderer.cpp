@@ -34,7 +34,7 @@ TConsoleVariable<bool> GVSyncEnabled( false );
 TConsoleVariable<bool> GFrustumCullEnabled( true );
 TConsoleVariable<bool> GRayTracingEnabled( true );
 
-static const uint32 ShadowMapSampleCount = 2;
+//static const uint32 ShadowMapSampleCount = 2;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 

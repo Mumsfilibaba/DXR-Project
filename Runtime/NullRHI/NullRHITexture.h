@@ -92,17 +92,17 @@ public:
     {
     }
 
-    virtual void SetName( const CString& InName ) override
+    virtual void SetName( const CString& InName ) override final
     {
         CRHIResource::SetName( InName );
     }
 
-    virtual class CRHIShaderResourceView* GetShaderResourceView() const
+    virtual class CRHIShaderResourceView* GetShaderResourceView() const override final
     {
         return ShaderResourceView.Get();
     }
 
-    virtual bool IsValid() const override
+    virtual bool IsValid() const override final
     {
         return true;
     }

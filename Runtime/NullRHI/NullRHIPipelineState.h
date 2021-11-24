@@ -101,12 +101,12 @@ public:
     CNullRHIRayTracingPipelineState() = default;
     ~CNullRHIRayTracingPipelineState() = default;
 
-    virtual void SetName( const CString& InName ) override
+    virtual void SetName( const CString& InName ) override final
     {
         CRHIResource::SetName( InName );
     }
 
-    virtual bool IsValid() const
+    virtual bool IsValid() const override final
     {
         return true;
     }

@@ -45,17 +45,17 @@ public:
 
     ~CNullRHIRayTracingScene() = default;
 
-    virtual void SetName( const CString& InName ) override
+    virtual void SetName( const CString& InName ) override final
     {
         CRHIResource::SetName( InName );
     }
 
-    virtual bool IsValid() const override
+    virtual bool IsValid() const override final
     {
         return true;
     }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const
+    virtual CRHIShaderResourceView* GetShaderResourceView() const override final
     {
         return View.Get();
     }

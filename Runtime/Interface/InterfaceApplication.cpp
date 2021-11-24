@@ -55,11 +55,15 @@ void CInterfaceApplication::Release()
 CInterfaceApplication::CInterfaceApplication( const TSharedPtr<CPlatformApplication>& InPlatformApplication )
     : CPlatformApplicationMessageHandler()
     , PlatformApplication( InPlatformApplication )
+	, Renderer()
+	, MainViewport()
+	, UIWindows()
+	, DebugStrings()
     , InputHandlers()
     , WindowMessageHandlers()
     , RegisteredUsers()
     , Running( true )
-    , DebugStrings()
+	, Context( nullptr )
 {
 }
 
@@ -255,7 +259,7 @@ void CInterfaceApplication::Tick( CTimestamp DeltaTime )
     TSharedRef<CPlatformWindow> Window = MainViewport;
     if ( UIState.WantSetMousePos )
     {
-        CInterfaceApplication::Get().SetCursorPos( Window, CIntVector2( static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y) ) );
+        SetCursorPos( Window, CIntVector2( static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y) ) );
     }
 
     SWindowShape CurrentWindowShape;

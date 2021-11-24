@@ -38,6 +38,7 @@ static CMatrix4 ToFloat4x4( const ofbx::Matrix& Matrix )
     return Result;
 }
 
+#if 0
 static void GetMatrix( const ofbx::Object* Mesh, CMatrix4& OutMatrix )
 {
     if ( Mesh )
@@ -57,6 +58,7 @@ static void GetMatrix( const ofbx::Object* Mesh, CMatrix4& OutMatrix )
         OutMatrix = CMatrix4::Identity();
     }
 }
+#endif
 
 static TSharedPtr<SImage2D> LoadMaterialTexture( const CString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type )
 {
@@ -76,7 +78,7 @@ static TSharedPtr<SImage2D> LoadMaterialTexture( const CString& Path, const ofbx
         return Texture;
     }
     else
-    #else
+#else
     UNREFERENCED_VARIABLE( Path );
     UNREFERENCED_VARIABLE( Material );
     UNREFERENCED_VARIABLE( Type );

@@ -2,15 +2,15 @@
 
 namespace NEngineLoopDelegates
 {
-    CORE_API CPostInitRHIDelegate NEngineLoopDelegates::PostInitRHIDelegate;
+    CORE_API CPostInitRHIDelegate PostInitRHIDelegate;
 
-    CORE_API CPreInitFinishedDelegate NEngineLoopDelegates::PreInitFinishedDelegate;
+    CORE_API CPreInitFinishedDelegate PreInitFinishedDelegate;
 
-    CORE_API CPreEngineInitDelegate NEngineLoopDelegates::PreEngineInitDelegate;
+    CORE_API CPreEngineInitDelegate PreEngineInitDelegate;
 
-    CORE_API CPostEngineInitDelegate NEngineLoopDelegates::PostEngineInitDelegate;
+    CORE_API CPostEngineInitDelegate PostEngineInitDelegate;
 
-    CORE_API CPreApplicationLoadedDelegate NEngineLoopDelegates::PreApplicationLoadedDelegate;
+    CORE_API CPreApplicationLoadedDelegate PreApplicationLoadedDelegate;
 
-    CORE_API CPostApplicationLoadedDelegate NEngineLoopDelegates::PostApplicationLoadedDelegate;
+    CORE_API CPostApplicationLoadedDelegate PostApplicationLoadedDelegate;
 }

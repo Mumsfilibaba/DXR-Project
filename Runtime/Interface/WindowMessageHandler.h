@@ -16,6 +16,8 @@ class CWindowMessageHandler
 {
 public:
 
+	virtual ~CWindowMessageHandler() = default;
+	
     /* Handle Window Resized event, if the handler handles the event, return true */
     virtual bool OnWindowResized( const SWindowResizeEvent& ResizeEvent )
     {
