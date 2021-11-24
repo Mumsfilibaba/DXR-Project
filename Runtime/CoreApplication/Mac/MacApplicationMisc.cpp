@@ -25,7 +25,7 @@ void CMacApplicationMisc::PumpMessages( bool UntilEmpty )
     SCOPED_AUTORELEASE_POOL();
     
     Assert( NSApp != nullptr );
-    
+	
     NSEvent* Event = nullptr;
     do
     {

@@ -21,16 +21,15 @@ public:
         CFRunLoopSourceContext SourceContext;
 		CMemory::Memzero( &SourceContext );
 		
-        SourceContext.info    = reinterpret_cast<void*>(this);
-        SourceContext.version = 0;
-        SourceContext.perform = CMacRunLoopSource::Perform;
+        SourceContext.info     = reinterpret_cast<void*>(this);
+        SourceContext.version  = 0;
+        SourceContext.perform  = &CMacRunLoopSource::Perform;
+		SourceContext.schedule = &CMacRunLoopSource::Schedule;
+		SourceContext.cancel   = &CMacRunLoopSource::Cancel;
 		
-        Source = CFRunLoopSourceCreate( kCFAllocatorDefault, 0, &SourceContext );
-        Assert(Source != nullptr);
-        
+        Source = CFRunLoopSourceCreate( nullptr, 0, &SourceContext );
         CFStringRef RunLoopModeName = (CFStringRef)RunLoopMode;
         CFRunLoopAddSource( RunLoop, Source, RunLoopModeName );
-        CFRelease( Source );
     }
     
     ~CMacRunLoopSource() = default;
@@ -78,15 +77,27 @@ public:
     }
     
 private:
+
+	static void Schedule(void* Info, CFRunLoopRef RunLoop, CFStringRef Mode)
+	{
+		NSLog(@"Schedule");
+	}
 	
-    static void Perform(void* Info)
-    {
-        CMacRunLoopSource* RunLoopSource = reinterpret_cast<CMacRunLoopSource*>(Info);
-        if ( RunLoopSource )
-        {
-            RunLoopSource->Execute();
-        }
-    }
+	static void Cancel(void* Info, CFRunLoopRef RunLoop, CFStringRef Mode)
+	{
+		NSLog(@"Cancel");
+	}
+	
+	static void Perform( void* Info )
+	{
+		NSLog(@"Perform");
+		
+		CMacRunLoopSource* RunLoopSource = reinterpret_cast<CMacRunLoopSource*>(Info);
+		if ( RunLoopSource )
+		{
+			RunLoopSource->Execute();
+		}
+	}
     
     CFRunLoopRef       RunLoop     = nullptr;
     CFRunLoopSourceRef Source      = nullptr;
@@ -118,7 +129,6 @@ void MakeMainThreadCall( dispatch_block_t Block, bool WaitUntilFinished )
 {
     dispatch_block_t CopiedBlock = Block_copy( Block );
     
-	// Have to be careful here about when things are run, since this function may be called before the PlatformThreadMisc::Init is called
     if ( PlatformThreadMisc::IsMainThread() )
     {
         // If already on mainthread, execute Block here

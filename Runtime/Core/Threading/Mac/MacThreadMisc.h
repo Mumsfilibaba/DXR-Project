@@ -47,10 +47,8 @@ public:
     static FORCEINLINE void Sleep( CTimestamp Time )
     {
 		// HACK: When the thread sleeps and we are on mainthread, run the mainloop
-		if ( IsMainThread() )
-		{
-			//CMacMainThread::Tick();
-		}
+		CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
+		CFRunLoopRunInMode( kCFRunLoopDefaultMode, 0, false );
 		
         float MicroSeconds = Time.AsMicroSeconds();
         usleep( static_cast<useconds_t>(MicroSeconds) );
