@@ -24,15 +24,16 @@ public:
         SourceContext.info     = reinterpret_cast<void*>(this);
         SourceContext.version  = 0;
         SourceContext.perform  = &CMacRunLoopSource::Perform;
-		SourceContext.schedule = &CMacRunLoopSource::Schedule;
-		SourceContext.cancel   = &CMacRunLoopSource::Cancel;
 		
         Source = CFRunLoopSourceCreate( nullptr, 0, &SourceContext );
         CFStringRef RunLoopModeName = (CFStringRef)RunLoopMode;
         CFRunLoopAddSource( RunLoop, Source, RunLoopModeName );
     }
     
-    ~CMacRunLoopSource() = default;
+    ~CMacRunLoopSource()
+	{
+		CFRelease( Source );
+	}
     
     void ScheduleBlock( dispatch_block_t Block )
     {
@@ -77,21 +78,9 @@ public:
     }
     
 private:
-
-	static void Schedule(void* Info, CFRunLoopRef RunLoop, CFStringRef Mode)
-	{
-		NSLog(@"Schedule");
-	}
-	
-	static void Cancel(void* Info, CFRunLoopRef RunLoop, CFStringRef Mode)
-	{
-		NSLog(@"Cancel");
-	}
 	
 	static void Perform( void* Info )
 	{
-		NSLog(@"Perform");
-		
 		CMacRunLoopSource* RunLoopSource = reinterpret_cast<CMacRunLoopSource*>(Info);
 		if ( RunLoopSource )
 		{
@@ -108,8 +97,7 @@ private:
     TArray<dispatch_block_t> Blocks;
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
+// Main-thread runloop source
 CMacRunLoopSource* GMainThread = nullptr;
 
 bool RegisterMainRunLoop()
