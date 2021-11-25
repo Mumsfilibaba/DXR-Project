@@ -4,7 +4,7 @@
 // TODO: Finish this class
 
 /* Represents a 3-D plane */
-class ALIGN_16 CPlane
+class VECTOR_ALIGN CPlane
 {
 public:
 

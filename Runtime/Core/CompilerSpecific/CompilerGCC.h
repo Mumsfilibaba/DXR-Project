@@ -31,8 +31,8 @@
 #endif // ifndef FORCEINLINE
 
 /* Align */
-#ifndef ALIGN
-#define ALIGN(Alignment) __attribute__((aligned(Alignment)))
+#ifndef ALIGN_AS
+#define ALIGN_AS(Alignment) __attribute__((aligned(Alignment)))
 #endif
 
 /* No inlining at all */

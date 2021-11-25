@@ -7,22 +7,15 @@
 
 #include <AppKit/AppKit.h>
 
+class CMacConsoleWindow;
+
 @interface CCocoaConsoleWindow : NSWindow<NSWindowDelegate>
 {
-    NSTextView*   TextView;
-    NSScrollView* ScrollView;
-    NSDictionary* ConsoleColor;
+	CMacConsoleWindow* ConsoleWindow;
 }
 
 // Instance
-- (id)init:(CGFloat)Width Height : (CGFloat)Height;
-
--(void)appendStringAndScroll:(NSString*)String;
--(void)clearWindow;
-
--(void)setColor:(EConsoleColor)Color;
-
--(NSUInteger)getLineCount;
+- (id)init:(CMacConsoleWindow*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag;
 
 // Static
 +(NSString*)convertStringWithArgs:(const char*)Format Args : (va_list)Args;

@@ -6,7 +6,7 @@
 #include "Core/Templates/Move.h"
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/IsTStringType.h"
-#include "Core/Templates/StringTraits.h"
+#include "Core/Templates/StringUtils.h"
 
 /* Class containing a view of a string */
 template<typename CharType>
@@ -19,7 +19,7 @@ public:
     /* Types */
     using ElementType = CharType;
     using SizeType = int32;
-    using StringTraits = TStringTraits<CharType>;
+    using StringUtils = TStringUtils<CharType>;
 
     /* Constants */
     enum
@@ -41,7 +41,7 @@ public:
     /* Create a view from a pointer and count */
     FORCEINLINE TStringView( const CharType* InString ) noexcept
         : ViewStart( InString )
-        , ViewEnd( InString + StringTraits::Length( InString ) )
+        , ViewEnd( InString + StringUtils::Length( InString ) )
     {
     }
 
@@ -90,7 +90,7 @@ public:
         Assert( (Position < Length()) || (Position == 0) );
 
         SizeType CopySize = NMath::Min( BufferSize, Length() - Position );
-        StringTraits::Copy( Buffer, ViewStart + Position, CopySize );
+        StringUtils::Copy( Buffer, ViewStart + Position, CopySize );
     }
 
     /* Removes whitespace from the beginning and end of the string */
@@ -122,7 +122,7 @@ public:
         const CharType* ViewIterator = ViewStart;
         while ( ViewIterator != ViewEnd )
         {
-            if ( !StringTraits::IsWhiteSpace( *(ViewIterator++) ) )
+            if ( !StringUtils::IsWhiteSpace( *(ViewIterator++) ) )
             {
                 break;
             }
@@ -148,7 +148,7 @@ public:
         while ( ViewIterator != ViewStart )
         {
             ViewIterator--;
-            if ( !StringTraits::IsWhiteSpace( *ViewIterator ) )
+            if ( !StringUtils::IsWhiteSpace( *ViewIterator ) )
             {
                 break;
             }
@@ -211,7 +211,7 @@ public:
     /* Compares two strings and checks if they are equal */
     FORCEINLINE int32 Compare( const CharType* InString ) const noexcept
     {
-        return Compare( InString, StringTraits::Length( InString ) );
+        return Compare( InString, StringUtils::Length( InString ) );
     }
 
     /* Compares two strings and checks if they are equal */
@@ -254,7 +254,7 @@ public:
     /* Compares two strings and checks if they are equal, without taking casing into account */
     FORCEINLINE int32 CompareNoCase( const CharType* InString ) const noexcept
     {
-        return CompareNoCase( InString, StringTraits::Length( InString ) );
+        return CompareNoCase( InString, StringUtils::Length( InString ) );
     }
 
     /* Compares two strings and checks if they are equal, without taking casing into account */
@@ -275,8 +275,8 @@ public:
         const CharType* Start = ViewStart;
         while ( Start != ViewEnd )
         {
-            const CharType TempChar0 = StringTraits::ToLower( *Start );
-            const CharType TempChar1 = StringTraits::ToLower( *InString );
+            const CharType TempChar0 = StringUtils::ToLower( *Start );
+            const CharType TempChar1 = StringUtils::ToLower( *InString );
 
             if ( TempChar0 != TempChar1 )
             {
@@ -293,7 +293,7 @@ public:
     /* Returns the position of the first occurance of the start of the searchstring */
     FORCEINLINE SizeType Find( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return Find( InString, StringTraits::Length( InString ), Position );
+        return Find( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the first occurance of the start of the searchstring */
@@ -308,7 +308,7 @@ public:
     {
         Assert( (Position < Length()) || (Position == 0) );
 
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Length() == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (Length() == 0) )
         {
             return 0;
         }
@@ -325,7 +325,7 @@ public:
                 {
                     break;
                 }
-                else if ( StringTraits::IsTerminator( *SubstringIt ) )
+                else if ( StringUtils::IsTerminator( *SubstringIt ) )
                 {
                     // If terminator is reached we have found the full substring in out string
                     return static_cast<SizeType>(static_cast<intptr_t>(Start - ViewStart));
@@ -343,7 +343,7 @@ public:
     {
         Assert( (Position < Length()) || (Position == 0) );
 
-        if ( StringTraits::IsTerminator( Char ) || (Length() == 0) )
+        if ( StringUtils::IsTerminator( Char ) || (Length() == 0) )
         {
             return 0;
         }
@@ -366,7 +366,7 @@ public:
     /* Returns the position of the first occurance of the start of the searchstring */
     FORCEINLINE SizeType ReverseFind( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return ReverseFind( InString, StringTraits::Length( InString ), Position );
+        return ReverseFind( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the first occurance of the start of the searchstring */
@@ -382,7 +382,7 @@ public:
         Assert( (Position < Length()) || (Position == 0) );
 
         SizeType ThisLength = Length();
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (ThisLength == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (ThisLength == 0) )
         {
             return ThisLength;
         }
@@ -407,7 +407,7 @@ public:
                 {
                     break;
                 }
-                else if ( StringTraits::IsTerminator( *SubstringIt ) )
+                else if ( StringUtils::IsTerminator( *SubstringIt ) )
                 {
                     // If terminator is reached we have found the full substring in out string
                     return static_cast<SizeType>(static_cast<intptr_t>(End - ViewStart));
@@ -424,7 +424,7 @@ public:
         Assert( (Position < Length()) || (Position == 0) );
 
         SizeType ThisLength = Length();
-        if ( StringTraits::IsTerminator( Char ) || (ThisLength == 0) )
+        if ( StringUtils::IsTerminator( Char ) || (ThisLength == 0) )
         {
             return ThisLength;
         }
@@ -450,7 +450,7 @@ public:
     /* Returns the position of the the first found character in the searchstring */
     FORCEINLINE SizeType FindOneOf( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return FindOneOf( InString, StringTraits::Length( InString ), Position );
+        return FindOneOf( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the the first found character in the searchstring */
@@ -465,7 +465,7 @@ public:
     {
         Assert( (Position < Length()) || (Position == 0) );
 
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Length() == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (Length() == 0) )
         {
             return 0;
         }
@@ -494,7 +494,7 @@ public:
     /* Returns the position of the last occurance of one of the characters in the searchstring */
     FORCEINLINE SizeType ReverseFindOneOf( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return ReverseFindOneOf( InString, StringTraits::Length( InString ), Position );
+        return ReverseFindOneOf( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the last occurance of one of the characters in the searchstring */
@@ -510,7 +510,7 @@ public:
         Assert( (Position < Length()) || (Position == 0) );
 
         SizeType ThisLength = Length();
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (ThisLength == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (ThisLength == 0) )
         {
             return ThisLength;
         }
@@ -522,7 +522,7 @@ public:
         }
 
         // Store the length of the substring outside the loop
-        SizeType SubstringLength = StringTraits::Length( InString );
+        SizeType SubstringLength = StringUtils::Length( InString );
 
         const CharType* ViewIterator = ViewStart + ThisLength;
         while ( ViewIterator != ViewStart )
@@ -548,7 +548,7 @@ public:
     /* Returns the position of the the first character not a part of the searchstring */
     FORCEINLINE SizeType FindOneNotOf( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return FindOneNotOf( InString, StringTraits::Length( InString ), Position );
+        return FindOneNotOf( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the the first character not a part of the searchstring */
@@ -563,7 +563,7 @@ public:
     {
         Assert( (Position < Length()) || (Position == 0) );
 
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Length() == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (Length() == 0) )
         {
             return 0;
         }
@@ -581,7 +581,7 @@ public:
                 {
                     break;
                 }
-                else if ( StringTraits::IsTerminator( *SubstringStart ) )
+                else if ( StringUtils::IsTerminator( *SubstringStart ) )
                 {
                     // If terminator is reached we have found the full substring in out string
                     return static_cast<SizeType>(static_cast<intptr_t>(Start - ViewStart));
@@ -597,7 +597,7 @@ public:
     /* Returns the position of the last occurance of one of the characters in the searchstring */
     FORCEINLINE SizeType ReverseFindOneNotOf( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return ReverseFindOneNotOf( InString, StringTraits::Length( InString ), Position );
+        return ReverseFindOneNotOf( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the last occurance of one of the characters in the searchstring */
@@ -613,7 +613,7 @@ public:
         Assert( (Position < Length()) || (Position == 0) );
 
         SizeType ThisLength = Length();
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (ThisLength == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (ThisLength == 0) )
         {
             return ThisLength;
         }
@@ -625,7 +625,7 @@ public:
         }
 
         // Store the length of the substring outside the loop
-        SizeType SubstringLength = StringTraits::Length( InString );
+        SizeType SubstringLength = StringUtils::Length( InString );
 
         const CharType* ViewIterator = ViewStart + ThisLength;
         while ( ViewIterator != ViewStart )
@@ -642,7 +642,7 @@ public:
                 {
                     break;
                 }
-                else if ( StringTraits::IsTerminator( *SubstringStart ) )
+                else if ( StringUtils::IsTerminator( *SubstringStart ) )
                 {
                     return static_cast<SizeType>(static_cast<intptr_t>(ViewIterator - ViewStart));
                 }
@@ -764,7 +764,7 @@ public:
     /* Return a null terminated string */
     FORCEINLINE const CharType* CStr() const noexcept
     {
-        return (ViewStart == nullptr) ? StringTraits::Empty() : ViewStart;
+        return (ViewStart == nullptr) ? StringUtils::Empty() : ViewStart;
     }
 
     /* Create a sub-stringview */

@@ -371,7 +371,7 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
 
     constexpr uint32 BufferLength = sizeof("xxx_x_x"); 
     wchar_t TargetProfile[BufferLength];
-    WStringTraits::FormatBuffer( TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText );
+    WStringUtils::FormatBuffer( TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText );
 
     TComPtr<IDxcOperationResult> Result;
     HRESULT hResult = DxCompiler->Compile(

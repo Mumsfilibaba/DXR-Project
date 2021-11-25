@@ -4,7 +4,7 @@
 #include "Vector4.h"
 
 /* A 4x4 matrix with SIMD capabilities */
-class ALIGN_16 CMatrix4
+class VECTOR_ALIGN CMatrix4
 {
 public:
 

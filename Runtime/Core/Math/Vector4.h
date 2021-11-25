@@ -3,7 +3,7 @@
 #include "SIMD.h"
 
 /* A 4-D floating point vector (x, y, z, w) with SIMD capabilities */
-class ALIGN_16 CVector4
+class VECTOR_ALIGN CVector4
 {
 public:
     /* Default constructor (Initialize components to zero) */

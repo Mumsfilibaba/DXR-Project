@@ -58,6 +58,7 @@ bool CEngineLoop::PreInitialize()
     }
     else
     {
+		NErrorDevice::ConsoleWindow->Show( true );
 		NErrorDevice::ConsoleWindow->SetTitle( CString( CProjectManager::GetProjectName() ) + ": Error Console");
     }
 
@@ -67,7 +68,7 @@ bool CEngineLoop::PreInitialize()
 #endif
 
     /* Console */
-    CConsoleManager::Init();
+    CConsoleManager::Initialize();
 
     // Init platform specific thread utilities
     if ( !PlatformThreadMisc::Initialize() )

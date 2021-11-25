@@ -39,10 +39,9 @@ void CCommandLine::Initialize( int32 NumCommandLineArgs, const char** CommandLin
         }
     }
 
-    CStringTraits::Copy( CommandLine, Result.CStr(), Result.Length() );
+    CStringUtils::Copy( CommandLine, Result.CStr(), Result.Length() );
 }
 
 void CCommandLine::GetValue( const CString& Name, CString& Value )
 {
-	
 }

@@ -3,7 +3,7 @@
 #include "SIMD.h"
 
 /* A 2x2 matrix with SIMD capabilities */
-class ALIGN_16 CMatrix2
+class VECTOR_ALIGN CMatrix2
 {
 public:
     /* Default constructor (Initialize components to zero) */

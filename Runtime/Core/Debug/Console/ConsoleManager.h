@@ -29,12 +29,10 @@ class CORE_API CConsoleManager
 public:
 
     /* Init the console */
-    static void Init();
+    static void Initialize();
 
-    static FORCEINLINE CConsoleManager& Get()
-    {
-        return Instance;
-    }
+	/* Retreive the console manager */
+    static FORCEINLINE CConsoleManager& Get() { return Instance; }
 
     /* Register a console command */
     void RegisterCommand( const CString& Name, IConsoleCommand* Object );
@@ -61,15 +59,10 @@ public:
     void Execute( const CString& CmdString );
 
     /* Get all the messages printed to the console */
-    FORCEINLINE const TArray<TPair<CString, EConsoleSeverity>>& GetMessages() const
-    {
-        return ConsoleMessages;
-    }
+    FORCEINLINE const TArray<TPair<CString, EConsoleSeverity>>& GetMessages() const { return ConsoleMessages; }
 
-    FORCEINLINE const TArray<CString>& GetHistory() const
-    {
-        return History;
-    }
+	/* Get all the history that has been written to the console */
+    FORCEINLINE const TArray<CString>& GetHistory() const { return History; }
 
 private:
 

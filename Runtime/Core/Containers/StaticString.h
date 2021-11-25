@@ -16,7 +16,7 @@ public:
     /* Types */
     using ElementType = CharType;
     using SizeType = int32;
-    using StringTraits = TStringTraits<CharType>;
+    using StringUtils = TStringUtils<CharType>;
 
     /* Constants */
     enum
@@ -55,7 +55,7 @@ public:
         : Characters()
         , Len( 0 )
     {
-        Characters[Len] = StringTraits::Null;
+        Characters[Len] = StringUtils::Null;
     }
 
     /* Create a fixed string from a raw array. If the string is longer than
@@ -66,7 +66,7 @@ public:
     {
         if ( InString )
         {
-            CopyFrom( InString, StringTraits::Length( InString ) );
+            CopyFrom( InString, StringUtils::Length( InString ) );
         }
     }
 
@@ -112,7 +112,7 @@ public:
     FORCEINLINE void Clear() noexcept
     {
         Len = 0;
-        Characters[Len] = StringTraits::Null;
+        Characters[Len] = StringUtils::Null;
     }
 
     /* Appends a string to this string */
@@ -121,13 +121,13 @@ public:
         Assert( Len + 1 < Capacity() );
 
         Characters[Len] = Char;
-        Characters[++Len] = StringTraits::Null;
+        Characters[++Len] = StringUtils::Null;
     }
 
     /* Appends a string to this string */
     FORCEINLINE void Append( const CharType* InString ) noexcept
     {
-        Append( InString, StringTraits::Length( InString ) );
+        Append( InString, StringUtils::Length( InString ) );
     }
 
     /* Appends a string to this string */
@@ -143,10 +143,10 @@ public:
         Assert( InString != nullptr );
         Assert( Len + InLength < Capacity() );
 
-        StringTraits::Copy( Characters + Len, InString, InLength );
+        StringUtils::Copy( Characters + Len, InString, InLength );
 
         Len = Len + InLength;
-        Characters[Len] = StringTraits::Null;
+        Characters[Len] = StringUtils::Null;
     }
 
     /* Resize the string */
@@ -168,7 +168,7 @@ public:
         }
 
         Len = NewSize;
-        Characters[Len] = StringTraits::Null;
+        Characters[Len] = StringUtils::Null;
     }
 
     /* Copy this string into buffer */
@@ -178,7 +178,7 @@ public:
         Assert( (Position < Len) || (Position == 0) );
 
         SizeType CopySize = NMath::Min( BufferSize, Len - Position );
-        StringTraits::Copy( Buffer, Characters + Position, CopySize );
+        StringUtils::Copy( Buffer, Characters + Position, CopySize );
     }
 
     /* Format string (similar to snprintf) */
@@ -193,7 +193,7 @@ public:
     /* Format string with a va_list (similar to snprintf) */
     FORCEINLINE void FormatV( const CharType* Format, va_list ArgList ) noexcept
     {
-        SizeType WrittenChars = StringTraits::FormatBufferV( Characters, CharCount - 1, Format, ArgList );
+        SizeType WrittenChars = StringUtils::FormatBufferV( Characters, CharCount - 1, Format, ArgList );
         if ( WrittenChars < CharCount )
         {
             Len = WrittenChars;
@@ -203,7 +203,7 @@ public:
             Len = CharCount - 1;
         }
 
-        Characters[Len] = StringTraits::Null;
+        Characters[Len] = StringUtils::Null;
     }
 
     /* Same as Format, but appends the result to the current string */
@@ -218,7 +218,7 @@ public:
     /* Same as FormatV, but appends the result to the current string */
     FORCEINLINE void AppendFormatV( const CharType* Format, va_list ArgList ) noexcept
     {
-        const SizeType WrittenChars = StringTraits::FormatBufferV( Characters + Len, CharCount, Format, ArgList );
+        const SizeType WrittenChars = StringUtils::FormatBufferV( Characters + Len, CharCount, Format, ArgList );
         const SizeType NewLength = Len + WrittenChars;
         if ( NewLength < CharCount )
         {
@@ -229,7 +229,7 @@ public:
             Len = CharCount - 1;
         }
 
-        Characters[Len] = StringTraits::Null;
+        Characters[Len] = StringUtils::Null;
     }
 
     /* Returns this string in lowercase */
@@ -239,7 +239,7 @@ public:
         CharType* End = Characters + Len;
         while ( It != End )
         {
-            *It = StringTraits::ToLower( *It );
+            *It = StringUtils::ToLower( *It );
             It++;
         }
     }
@@ -259,7 +259,7 @@ public:
         CharType* End = Characters + Len;
         while ( It != End )
         {
-            *It = StringTraits::ToUpper( *It );
+            *It = StringUtils::ToUpper( *It );
             It++;
         }
     }
@@ -301,7 +301,7 @@ public:
         SizeType Index = 0;
         for ( ; Index < Len; Index++ )
         {
-            if ( !StringTraits::IsWhiteSpace( Characters[Index] ) )
+            if ( !StringUtils::IsWhiteSpace( Characters[Index] ) )
             {
                 break;
             }
@@ -327,7 +327,7 @@ public:
     {
         for ( SizeType Index = Len - 1; Index >= 0; Index-- )
         {
-            if ( StringTraits::IsWhiteSpace( Characters[Index] ) )
+            if ( StringUtils::IsWhiteSpace( Characters[Index] ) )
             {
                 Len--;
             }
@@ -337,7 +337,7 @@ public:
             }
         }
 
-        Characters[Len] = StringTraits::Null;
+        Characters[Len] = StringUtils::Null;
     }
 
     /* Removes whitespace from the end of the string */
@@ -371,13 +371,13 @@ public:
     /* Compares two strings and checks if they are equal */
     FORCEINLINE int32 Compare( const CharType* InString ) const noexcept
     {
-        return StringTraits::Compare( Characters, InString );
+        return StringUtils::Compare( Characters, InString );
     }
 
     /* Compares two strings and checks if they are equal */
     FORCEINLINE int32 Compare( const CharType* InString, SizeType InLength ) const noexcept
     {
-        return StringTraits::Compare( Characters, InString, InLength );
+        return StringUtils::Compare( Characters, InString, InLength );
     }
 
     /* Compares two strings and checks if they are equal, without taking casing into account */
@@ -390,7 +390,7 @@ public:
     /* Compares two strings and checks if they are equal, without taking casing into account */
     FORCEINLINE int32 CompareNoCase( const CharType* InString ) const noexcept
     {
-        return CompareNoCase( InString, StringTraits::Length( InString ) );
+        return CompareNoCase( InString, StringUtils::Length( InString ) );
     }
 
     /* Compares two strings and checks if they are equal, without taking casing into account */
@@ -403,8 +403,8 @@ public:
 
         for ( SizeType Index = 0; Index < Len; Index++ )
         {
-            const CharType TempChar0 = StringTraits::ToLower( Characters[Index] );
-            const CharType TempChar1 = StringTraits::ToLower( InString[Index] );
+            const CharType TempChar0 = StringUtils::ToLower( Characters[Index] );
+            const CharType TempChar1 = StringUtils::ToLower( InString[Index] );
 
             if ( TempChar0 != TempChar1 )
             {
@@ -418,7 +418,7 @@ public:
     /* Returns the position of the first occurance of the start of the searchstring */
     FORCEINLINE SizeType Find( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return Find( InString, StringTraits::Length( InString ), Position );
+        return Find( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the first occurance of the start of the searchstring */
@@ -433,13 +433,13 @@ public:
     {
         Assert( (Position < Len) || (Position == 0) );
 
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Len == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (Len == 0) )
         {
             return 0;
         }
 
         const CharType* Start = CStr() + Position;
-        const CharType* Result = StringTraits::Find( Start, InString );
+        const CharType* Result = StringUtils::Find( Start, InString );
         if ( !Result )
         {
             return NPos;
@@ -455,13 +455,13 @@ public:
     {
         Assert( (Position < Len) || (Position == 0) );
 
-        if ( StringTraits::IsTerminator( Char ) || (Len == 0) )
+        if ( StringUtils::IsTerminator( Char ) || (Len == 0) )
         {
             return 0;
         }
 
         const CharType* Start = CStr() + Position;
-        const CharType* Result = StringTraits::FindChar( Start, Char );
+        const CharType* Result = StringUtils::FindChar( Start, Char );
         if ( !Result )
         {
             return NPos;
@@ -475,7 +475,7 @@ public:
     /* Returns the position of the first occurance of the start of the searchstring */
     FORCEINLINE SizeType ReverseFind( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return ReverseFind( InString, StringTraits::Length( InString ), Position );
+        return ReverseFind( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the first occurance of the start of the searchstring */
@@ -490,7 +490,7 @@ public:
     {
         Assert( (Position < Len) || (Position == 0) );
 
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Len == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (Len == 0) )
         {
             return Len;
         }
@@ -513,7 +513,7 @@ public:
                 {
                     break;
                 }
-                else if ( StringTraits::IsTerminator( *SubstringIt ) )
+                else if ( StringUtils::IsTerminator( *SubstringIt ) )
                 {
                     // If terminator is reached we have found the full substring in out string
                     return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
@@ -529,7 +529,7 @@ public:
     {
         Assert( (Position < Len) || (Position == 0) );
 
-        if ( StringTraits::IsTerminator( Char ) || (Len == 0) )
+        if ( StringUtils::IsTerminator( Char ) || (Len == 0) )
         {
             return Len;
         }
@@ -538,16 +538,16 @@ public:
         const CharType* Start = CStr();
         if ( Position == 0 )
         {
-            Result = StringTraits::ReverseFindChar( Start, Char );
+            Result = StringUtils::ReverseFindChar( Start, Char );
         }
         else
         {
             // TODO: Get rid of const_cast
             CharType* TempCharacters = const_cast<CharType*>(Characters);
             CharType TempChar = TempCharacters[Position + 1];
-            TempCharacters[Position + 1] = StringTraits::Null;
+            TempCharacters[Position + 1] = StringUtils::Null;
 
-            Result = StringTraits::ReverseFindChar( TempCharacters, Char );
+            Result = StringUtils::ReverseFindChar( TempCharacters, Char );
 
             TempCharacters[Position + 1] = TempChar;
         }
@@ -565,7 +565,7 @@ public:
     /* Returns the position of the the first found character in the searchstring */
     FORCEINLINE SizeType FindOneOf( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return FindOneOf( InString, StringTraits::Length( InString ), Position );
+        return FindOneOf( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the the first found character in the searchstring */
@@ -580,13 +580,13 @@ public:
     {
         Assert( (Position < Len) || (Position == 0) );
 
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Len == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (Len == 0) )
         {
             return 0;
         }
 
         const CharType* Start = CStr() + Position;
-        const CharType* Result = StringTraits::FindOneOf( Start, InString );
+        const CharType* Result = StringUtils::FindOneOf( Start, InString );
         if ( !Result )
         {
             return NPos;
@@ -600,7 +600,7 @@ public:
     /* Returns the position of the last occurance of one of the characters in the searchstring */
     FORCEINLINE SizeType ReverseFindOneOf( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return ReverseFindOneOf( InString, StringTraits::Length( InString ), Position );
+        return ReverseFindOneOf( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the last occurance of one of the characters in the searchstring */
@@ -615,7 +615,7 @@ public:
     {
         Assert( (Position < Len) || (Position == 0) );
 
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Len == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (Len == 0) )
         {
             return Len;
         }
@@ -624,7 +624,7 @@ public:
         SizeType Length = (Position == 0) ? Len : NMath::Min( Position, Len );
 
         // Store the length of the substring outside the loop
-        SizeType SubstringLength = StringTraits::Length( InString );
+        SizeType SubstringLength = StringUtils::Length( InString );
 
         const CharType* Start = CStr();
         const CharType* End = Start + Length;
@@ -651,7 +651,7 @@ public:
     /* Returns the position of the the first character not a part of the searchstring */
     FORCEINLINE SizeType FindOneNotOf( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return FindOneNotOf( InString, StringTraits::Length( InString ), Position );
+        return FindOneNotOf( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the the first character not a part of the searchstring */
@@ -666,12 +666,12 @@ public:
     {
         Assert( (Position < Len) || (Position == 0) );
 
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Len == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (Len == 0) )
         {
             return 0;
         }
 
-        SizeType Pos = static_cast<SizeType>(StringTraits::Span( CStr() + Position, InString ));
+        SizeType Pos = static_cast<SizeType>(StringUtils::Span( CStr() + Position, InString ));
         SizeType Ret = Pos + Position;
         if ( Ret >= Len )
         {
@@ -686,7 +686,7 @@ public:
     /* Returns the position of the last occurance of one of the characters in the searchstring */
     FORCEINLINE SizeType ReverseFindOneNotOf( const CharType* InString, SizeType Position = 0 ) const noexcept
     {
-        return ReverseFindOneNotOf( InString, StringTraits::Length( InString ), Position );
+        return ReverseFindOneNotOf( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Returns the position of the last occurance of one of the characters in the searchstring */
@@ -701,7 +701,7 @@ public:
     {
         Assert( (Position < Len) || (Position == 0) );
 
-        if ( (InLength == 0) || StringTraits::IsTerminator( *InString ) || (Len == 0) )
+        if ( (InLength == 0) || StringUtils::IsTerminator( *InString ) || (Len == 0) )
         {
             return Len;
         }
@@ -710,7 +710,7 @@ public:
         SizeType Length = (Position == 0) ? Len : NMath::Min( Position, Len );
 
         // Store the length of the substring outside the loop
-        SizeType SubstringLength = StringTraits::Length( InString );
+        SizeType SubstringLength = StringUtils::Length( InString );
 
         const CharType* Start = CStr();
         const CharType* End = Start + Length;
@@ -728,7 +728,7 @@ public:
                 {
                     break;
                 }
-                else if ( StringTraits::IsTerminator( *SubstringStart ) )
+                else if ( StringUtils::IsTerminator( *SubstringStart ) )
                 {
                     // If terminator is reached we have found the full substring in out string
                     return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
@@ -798,7 +798,7 @@ public:
     /* Insert a string at position */
     FORCEINLINE void Insert( const CharType* InString, SizeType Position ) noexcept
     {
-        Insert( InString, StringTraits::Length( InString ), Position );
+        Insert( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Insert a string at position */
@@ -818,13 +818,13 @@ public:
         CharType* Dst = Src + InLength;
 
         const uint64 MoveSize = Len - Position;
-        StringTraits::Move( Dst, Src, MoveSize );
+        StringUtils::Move( Dst, Src, MoveSize );
 
         // Copy String
-        StringTraits::Copy( Src, InString, InLength );
+        StringUtils::Copy( Src, InString, InLength );
 
         Len += InLength;
-        Characters[Len] = StringTraits::Null;
+        Characters[Len] = StringUtils::Null;
     }
 
     /* Insert a character at position */
@@ -837,18 +837,18 @@ public:
         CharType* Dst = Src + 1;
 
         const uint64 MoveSize = Len - Position;
-        StringTraits::Move( Dst, Src, MoveSize );
+        StringUtils::Move( Dst, Src, MoveSize );
 
         // Copy String
         *Src = Char;
 
-        Characters[++Len] = StringTraits::Null;
+        Characters[++Len] = StringUtils::Null;
     }
 
     /* Replace a part of the string */
     FORCEINLINE void Replace( const CharType* InString, SizeType Position ) noexcept
     {
-        Replace( InString, StringTraits::Length( InString ), Position );
+        Replace( InString, StringUtils::Length( InString ), Position );
     }
 
     /* Replace a part of the string */
@@ -862,7 +862,7 @@ public:
     FORCEINLINE void Replace( const CharType* InString, SizeType InLength, SizeType Position ) noexcept
     {
         Assert( (Position < Len) && (Position + InLength < Len) );
-        StringTraits::Copy( Data() + Position, InString, InLength );
+        StringUtils::Copy( Data() + Position, InString, InLength );
     }
 
     /* Replace a character */
@@ -883,7 +883,7 @@ public:
     /* Pop a character from the end of the string */
     FORCEINLINE void Pop() noexcept
     {
-        Characters[--Len] = StringTraits::Null;
+        Characters[--Len] = StringUtils::Null;
     }
 
     /* Swaps two fixed strings with eachother */
@@ -1124,9 +1124,9 @@ private:
     {
         Assert( InLength < Capacity() );
 
-        StringTraits::Copy( Characters, InString, InLength );
+        StringUtils::Copy( Characters, InString, InLength );
         Len = InLength;
-        Characters[Len] = StringTraits::Null;
+        Characters[Len] = StringUtils::Null;
     }
 
     /* Initializing this string by moving from InString */
@@ -1136,7 +1136,7 @@ private:
         Other.Len = 0;
 
         CMemory::Memexchange( Characters, Other.Characters, SizeInBytes() );
-        Characters[Len] = StringTraits::Null;
+        Characters[Len] = StringUtils::Null;
     }
 
     /* Characters for characters */

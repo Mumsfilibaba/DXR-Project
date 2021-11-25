@@ -9,10 +9,10 @@
 
 /* Helpers for characters */
 template<typename CharType>
-class TStringTraits;
+class TStringUtils;
 
 template<>
-class TStringTraits<char>
+class TStringUtils<char>
 {
 public:
 
@@ -143,7 +143,7 @@ public:
 };
 
 template<>
-class TStringTraits<wchar_t>
+class TStringUtils<wchar_t>
 {
 public:
 
@@ -274,5 +274,5 @@ public:
 };
 
 /* Predefined types */
-using CStringTraits = TStringTraits<char>;
-using WStringTraits = TStringTraits<wchar_t>;
+using CStringUtils = TStringUtils<char>;
+using WStringUtils = TStringUtils<wchar_t>;

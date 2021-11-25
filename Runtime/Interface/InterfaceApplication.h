@@ -18,14 +18,6 @@
 /* Application class for the engine */
 class INTERFACE_API CInterfaceApplication : public CPlatformApplicationMessageHandler
 {
-    /* Delegate for when the application is about to exit */
-    DECLARE_EVENT( CExitEvent, CInterfaceApplication, int32 );
-    CExitEvent ExitEvent;
-
-    /* Delegate for when the application gets a new main-viewport */
-    DECLARE_EVENT( CMainViewportChange, CInterfaceApplication, const TSharedRef<CPlatformWindow>& );
-    CMainViewportChange MainViewportChange;
-
 public:
 
     /* Creates a standard main application */
@@ -38,16 +30,10 @@ public:
     static void Release();
 
     /* Retrieve the singleton application instance */
-    static FORCEINLINE CInterfaceApplication& Get()
-    {
-        return *Instance;
-    }
+    static FORCEINLINE CInterfaceApplication& Get() { return *Instance; }
 
     /* Returns true if the application has been initialized */
-    static FORCEINLINE bool IsInitialized()
-    {
-        return Instance.IsValid();
-    } 
+    static FORCEINLINE bool IsInitialized() { return Instance.IsValid(); }
 
     /* Public destructor for the TSharedPtr */
     virtual ~CInterfaceApplication();
@@ -78,6 +64,12 @@ public:
 
     /* Check the visibility for the cursor */
     bool IsCursorVisibile() const;
+	
+	/* Returns true if the platform supports Raw mouse movement */
+	bool SupportsRawMouse() const { return PlatformApplication->SupportsRawMouse(); }
+
+	/* Enables Raw mouse movement for a certain window */
+	bool EnableRawMouse( const TSharedRef<CPlatformWindow>& Window ) { return PlatformApplication->EnableRawMouse( Window ); }
 
     /* Sets the window that currently has the keyboard focus */
     void SetCapture( const TSharedRef<CPlatformWindow>& CaptureWindow );
@@ -86,11 +78,14 @@ public:
     void SetActiveWindow( const TSharedRef<CPlatformWindow>& ActiveWindow );
 
     /* Retrieves the window that currently has the keyboard focus, can return nullptr */
-    TSharedRef<CPlatformWindow> GetCapture() const;
+	TSharedRef<CPlatformWindow> GetCapture() const { return PlatformApplication->GetCapture(); }
 
     /* Retrieves the window that is currently active */
-    TSharedRef<CPlatformWindow> GetActiveWindow() const;
+	TSharedRef<CPlatformWindow> GetActiveWindow() const { return PlatformApplication->GetActiveWindow(); }
 
+	/* Retrieves the window under the cursor */
+	TSharedRef<CPlatformWindow> GetWindowUnderCursor() const { return PlatformApplication->GetActiveWindow(); }
+	
     /* Adds a InputHandler to the application, which gets processed before the game */
     void AddInputHandler( const TSharedPtr<CInputHandler>& NewInputHandler, uint32 Priority );
 
@@ -124,52 +119,34 @@ public:
     /* Removes a InputHandler to the application, which gets processed before the application module */
     void RemoveWindowMessageHandler( const TSharedPtr<CWindowMessageHandler>& WindowMessageHandler );
 
-    FORCEINLINE TSharedPtr<CPlatformApplication> GetPlatformApplication() const
-    {
-        return PlatformApplication;
-    }
+	/* Retrieve the native application */
+    TSharedPtr<CPlatformApplication> GetPlatformApplication() const { return PlatformApplication; }
 
-    FORCEINLINE TSharedRef<IInterfaceRenderer> GetRenderer() const
-    {
-        return Renderer;
-    }
+	/* Retrive the renderer for the Interface */
+    TSharedRef<IInterfaceRenderer> GetRenderer() const { return Renderer; }
 
-    FORCEINLINE TSharedRef<CPlatformWindow> GetMainViewport() const
-    {
-        return MainViewport;
-    }
+	/* Retrieve the window registered as the main viewport */
+    TSharedRef<CPlatformWindow> GetMainViewport() const { return MainViewport; }
 
-    FORCEINLINE TSharedPtr<ICursor> GetCursor() const
-    {
-        return PlatformApplication->GetCursor();
-    }
+	/* Retreieve the cursor interface */
+    TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->GetCursor(); }
 
-    FORCEINLINE bool IsRunning() const
-    {
-        return Running;
-    }
+	/* Check if the application is currently running */
+    bool IsRunning() const { return Running; }
 
-    FORCEINLINE CExitEvent GetExitEvent() const
-    {
-        return ExitEvent;
-    }
+	/* Delegate for when the application is about to exit */
+	DECLARE_EVENT( CExitEvent, CInterfaceApplication, int32 );
+    CExitEvent GetExitEvent() const { return ExitEvent; }
 
-    FORCEINLINE CMainViewportChange GetMainViewportChange() const
-    {
-        return MainViewportChange;
-    }
+	/* Delegate for when the application gets a new main-viewport */
+	DECLARE_EVENT( CMainViewportChange, CInterfaceApplication, const TSharedRef<CPlatformWindow>& );
+    CMainViewportChange GetMainViewportChange() const { return MainViewportChange; }
 
     /* Get the number of registered users */
-    FORCEINLINE uint32 GetNumUsers() const
-    {
-        return static_cast<uint32>(RegisteredUsers.Size());
-    }
+    FORCEINLINE uint32 GetNumUsers() const { return static_cast<uint32>(RegisteredUsers.Size()); }
 
     /* Register a new user to the application */
-    FORCEINLINE void RegisterUser( const TSharedPtr<CInterfaceUser>& NewUser )
-    {
-        RegisteredUsers.Push( NewUser );
-    }
+    FORCEINLINE void RegisterUser( const TSharedPtr<CInterfaceUser>& NewUser ) { RegisteredUsers.Push( NewUser ); }
 
     /* Retrieve the first user */
     FORCEINLINE TSharedPtr<CInterfaceUser> GetFirstUser() const
@@ -265,6 +242,12 @@ protected:
     /* All registered users */
     TArray<TSharedPtr<CInterfaceUser>> RegisteredUsers;
 
+	// Broadcasted when the application is about to exit
+	CExitEvent ExitEvent;
+	
+	// Broadcasted when a new mainviewport is registered
+	CMainViewportChange MainViewportChange;
+	
     // Is false when the platform application reports that the application should exit
     bool Running = true;
 

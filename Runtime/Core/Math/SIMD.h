@@ -4,19 +4,22 @@
 
 /* Windows Specific */
 #if PLATFORM_WINDOWS
-#include <xmmintrin.h>
-#include <immintrin.h>
+	#include <xmmintrin.h>
+	#include <immintrin.h>
 
 /* MacOS Specific */
 #elif PLATFORM_MACOS
-#include <immintrin.h>
+	#include <immintrin.h>
 
 /* No platform defined */
 #else
-#error No valid platform
+	#error No valid platform
 #endif
 
-#define ALIGN_16 ALIGN(16)
+// Alignment for vector instructions
+#ifndef VECTOR_ALIGN
+	#define VECTOR_ALIGN ALIGN_AS(16)
+#endif
 
 namespace NSIMD
 {

@@ -398,16 +398,6 @@ void CInterfaceApplication::SetActiveWindow( const TSharedRef<CPlatformWindow>& 
     PlatformApplication->SetActiveWindow( ActiveWindow );
 }
 
-TSharedRef<CPlatformWindow> CInterfaceApplication::GetCapture() const
-{
-    return PlatformApplication->GetCapture();
-}
-
-TSharedRef<CPlatformWindow> CInterfaceApplication::GetActiveWindow() const
-{
-    return PlatformApplication->GetActiveWindow();
-}
-
 template<typename MessageHandlerType>
 void CInterfaceApplication::InsertMessageHandler( TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray, const TSharedPtr<MessageHandlerType>& NewMessageHandler, uint32 NewPriority )
 {

@@ -2,7 +2,7 @@
 
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Interface/InterfaceApplication.h"
-#include "Core/Templates/StringTraits.h"
+#include "Core/Templates/StringUtils.h"
 
 #include <imgui.h>
 
@@ -109,7 +109,7 @@ void CGameConsoleWindow::Tick()
                 ImGui::PushID( i );
                 if ( ImGui::Selectable( Candidate.Second.CStr(), &IsActiveIndex ) )
                 {
-                    CStringTraits::Copy( TextBuffer.Data(), Candidate.Second.CStr() );
+                    CStringUtils::Copy( TextBuffer.Data(), Candidate.Second.CStr() );
                     PopupSelectedText = Candidate.Second;
 
                     Candidates.Clear();
@@ -248,7 +248,7 @@ void CGameConsoleWindow::Tick()
         {
             if ( CandidatesIndex != -1 )
             {
-                CStringTraits::Copy( TextBuffer.Data(), PopupSelectedText.CStr() );
+                CStringUtils::Copy( TextBuffer.Data(), PopupSelectedText.CStr() );
 
                 Candidates.Clear();
                 CandidatesIndex = -1;

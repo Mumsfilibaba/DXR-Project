@@ -17,7 +17,7 @@ TConsoleVariable<CString> GEcho;
 
 CConsoleManager CConsoleManager::Instance;
 
-void CConsoleManager::Init()
+void CConsoleManager::Initialize()
 {
     GClearHistory.GetExecutedDelgate().AddRaw( &Instance, &CConsoleManager::ClearHistory );
     INIT_CONSOLE_COMMAND( "ClearHistory", &GClearHistory );
