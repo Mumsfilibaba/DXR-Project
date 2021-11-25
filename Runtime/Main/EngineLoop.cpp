@@ -10,7 +10,7 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Modules/ModuleManger.h"
+#include "Core/Modules/ModuleManager.h"
 #include "Core/Modules/ApplicationModule.h"
 #include "Core/Threading/DispatchQueue.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"

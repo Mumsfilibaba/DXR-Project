@@ -2,7 +2,7 @@
 #include "InterfaceImage.h"
 #include "IInterfaceWindow.h"
 
-#include "Core/Modules/IEngineModule.h"
+#include "Core/Modules/ModuleManager.h"
 #include "Core/Containers/SharedRef.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

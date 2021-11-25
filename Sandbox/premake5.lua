@@ -6,9 +6,17 @@ project ( projectname )
 	language 		"C++"
 	cppdialect 		"C++17"
 	systemversion 	"latest"
-	kind 			"SharedLib"
 	location        ( "%{wks.location}/" .. projectname )
 	characterset 	"Ascii"
+
+	-- Build type 
+	filter "not options:monolithic"
+		kind "SharedLib"
+	filter {}
+
+	filter "options:monolithic"
+		kind "StaticLib"
+	filter {}
 
 	-- All targets except the dependencies
 	targetdir ( "%{wks.location}/Build/bin/"     .. outputdir )

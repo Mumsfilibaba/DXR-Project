@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/CoreModule.h"
 #include "Core/Time/Timestamp.h"
-#include "Core/Modules/IEngineModule.h"
+#include "Core/Modules/ModuleManager.h"
 #include "Core/Delegates/DelegateInstance.h"
 
 class CORE_API CApplicationModule : public IEngineModule

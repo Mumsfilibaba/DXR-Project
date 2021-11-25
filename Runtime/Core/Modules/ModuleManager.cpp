@@ -1,4 +1,4 @@
-#include "ModuleManger.h"
+#include "ModuleManager.h"
 
 #include "Core/Windows/Windows.h"
 #include "Core/Templates/StringUtils.h"
@@ -95,6 +95,11 @@ PlatformModule CModuleManager::LoadModule( const char* ModuleName )
     {
         return NULL;
     }
+}
+
+void CModuleManager::RegisterStaticModule( const char* ModuleName, CLoadStaticModuleDelegate InitDelegate )
+{
+	
 }
 
 bool CModuleManager::IsModuleLoaded( const char* ModuleName )

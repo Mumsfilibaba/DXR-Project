@@ -1,7 +1,5 @@
 #pragma once
-#include "Core.h"
-
-#include "Core/Modules/IEngineModule.h"
+#include "Core/Modules/ModuleManager.h"
 
 #if RHI_API_EXPORT
 #define RHI_API MODULE_EXPORT

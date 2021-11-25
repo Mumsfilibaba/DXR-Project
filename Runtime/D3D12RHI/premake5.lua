@@ -3,8 +3,16 @@ project "D3D12RHI"
 	cppdialect 		"C++17"
 	systemversion 	"latest"
 	location 		"%{wks.location}/Runtime/D3D12RHI"
-	kind 			"SharedLib"
 	characterset 	"Ascii"
+
+	-- Build type 
+	filter "not options:monolithic"
+		kind "SharedLib"
+	filter {}
+
+	filter "options:monolithic"
+		kind "StaticLib"
+	filter {}
 
 	-- TODO: Add Precompiled for D3D12
 

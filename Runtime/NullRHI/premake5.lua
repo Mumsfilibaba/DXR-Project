@@ -3,8 +3,16 @@ project "NullRHI"
 	cppdialect 		"C++17"
 	systemversion 	"latest"
 	location 		"%{wks.location}/Runtime/NullRHI"
-	kind 			"SharedLib"
 	characterset 	"Ascii"
+
+	-- Build type 
+	filter "not options:monolithic"
+		kind "SharedLib"
+	filter {}
+
+	filter "options:monolithic"
+		kind "StaticLib"
+	filter {}
 
 	--TODO: Pre-Compiled Headers
 

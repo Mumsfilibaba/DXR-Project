@@ -3,8 +3,6 @@
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
 
-#include "Core/Modules/ModuleManger.h"
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 RHI_API CRHICore* GRHICore = nullptr;

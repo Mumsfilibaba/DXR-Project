@@ -2,6 +2,13 @@ function findWorkspaceDir()
 	return os.getcwd()
 end
 
+-- Custom options 
+newoption 
+{
+	trigger     = "monolithic",
+	description = "Links all modules as static libraries instead of DLLs"
+}
+
 -- Solution
 workspace "DXR-Project"
     startproject      "SandboxLauncher"
@@ -41,6 +48,13 @@ workspace "DXR-Project"
 	{
 		"WORKSPACE_LOCATION=" .. "\"" .. findWorkspaceDir().. "\"",
 	}
+
+	filter "options:monolithic"
+		defines
+		{
+			"MONOLITHIC_BUILD=(1)"
+		}
+	filter {}
 
     filter "configurations:Debug"
         symbols "on"
