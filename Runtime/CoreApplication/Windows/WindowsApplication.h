@@ -55,10 +55,7 @@ public:
     static TSharedPtr<CWindowsApplication> Make();
 
     /* Retrieve the window-class name */
-    static FORCEINLINE LPCSTR GetWindowClassName()
-    {
-        return "WindowClass";
-    }
+    static FORCEINLINE LPCSTR GetWindowClassName() { return "WindowClass"; }
 
     /* Returns the HINSTANCE of the application or retrieves it in case the application is not initialized */
     static FORCEINLINE HINSTANCE GetStaticInstance()
@@ -67,16 +64,10 @@ public:
     }
 
     /* Returns the instance of the windows application */
-    static FORCEINLINE CWindowsApplication* Get()
-    {
-        return InstancePtr;
-    }
+    static FORCEINLINE CWindowsApplication* Get() { return InstancePtr; }
 
     /* Returns true if the WindowsApplication has been created */
-    static FORCEINLINE bool IsInitialized()
-    {
-        return (InstancePtr != nullptr);
-    }
+    static FORCEINLINE bool IsInitialized() { return (InstancePtr != nullptr); }
 
     /* Public destructor for TSharedPtr */
     ~CWindowsApplication();
@@ -147,7 +138,6 @@ private:
 
     /* Unregister all raw input devices TODO: Investigate how to do this for a specific window */
     bool UnregisterRawInputDevices();
-
 
     /* Message-proc which handles the messages for the instance */
     LRESULT MessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );

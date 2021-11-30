@@ -20,31 +20,55 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
         return ExistingModule;
     }
 
-    PlatformModule Module = PlatformLibrary::LoadDynamicLib( ModuleName );
-    if ( !Module )
-    {
-        LOG_ERROR( "Failed to find module '" + CString( ModuleName ) + "'" );
-        return nullptr;
-    }
+    // Storage for new module
+    IEngineModule* NewModule = nullptr;
 
-    // Requires that the module has a LoadEngineModule function exported
-    PFNLoadEngineModule LoadEngineModule = PlatformLibrary::LoadSymbolAddress<PFNLoadEngineModule>( "LoadEngineModule", Module );
-    if ( !LoadEngineModule )
+    // First check if we are trying to load a static module
+    CInitializeStaticModuleDelegate* ModuleInitializer = GetStaticModuleDelegate( ModuleName );
+    if ( ModuleInitializer )
     {
-        PlatformLibrary::FreeDynamicLib( Module );
-        return nullptr;
-    }
-
-    // The pointer is owned by the ModuleManager and should not be released anywhere else
-    IEngineModule* NewModule = LoadEngineModule();
-    if ( !NewModule || (NewModule && !NewModule->Load()) )
-    {
-        LOG_ERROR( "Failed to load module '" + CString( ModuleName ) + "', resulting interface was nullptr" );
-        PlatformLibrary::FreeDynamicLib( Module );
-
-        return nullptr;
+        if ( ModuleInitializer->IsBound() )
+        {
+            NewModule = ModuleInitializer->Execute();
+        }
+        else
+        {
+            LOG_ERROR( "No initializer bound when trying to load module '" + CString( ModuleName ) + "'" );
+            return nullptr;
+        }
     }
     else
+    {
+        // Load the module dynamically 
+        PlatformModule Module = PlatformLibrary::LoadDynamicLib( ModuleName );
+        if ( !Module )
+        {
+            LOG_ERROR( "Failed to find module '" + CString( ModuleName ) + "'" );
+            return nullptr;
+        }
+
+        // Requires that the module has a LoadEngineModule function exported
+        PFNLoadEngineModule LoadEngineModule = PlatformLibrary::LoadSymbolAddress<PFNLoadEngineModule>( "LoadEngineModule", Module );
+        if ( !LoadEngineModule )
+        {
+            PlatformLibrary::FreeDynamicLib( Module );
+            return nullptr;
+        }
+
+        // The pointer is owned by the ModuleManager and should not be released anywhere else
+        NewModule = LoadEngineModule();
+
+        // Load the new module
+        if ( !NewModule )
+        {
+            LOG_ERROR( "Failed to load module '" + CString( ModuleName ) + "', resulting interface was nullptr" );
+            PlatformLibrary::FreeDynamicLib( Module );
+
+            return nullptr;
+        }
+    }
+
+    if ( NewModule->Load() )
     {
         LOG_INFO( "Loaded module'" + CString( ModuleName ) + "'" );
 
@@ -56,6 +80,13 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
         Modules.Emplace( NewPair );
         ModuleNames.Emplace( ModuleName );
         return NewModule;
+    }
+    else
+    {
+        LOG_ERROR( "Failed to load module '" + CString( ModuleName ) + "'" );
+        SafeDelete(NewModule);
+        
+        return nullptr;
     }
 }
 
@@ -83,7 +114,7 @@ IEngineModule* CModuleManager::GetEngineModule( const char* ModuleName )
     }
 }
 
-PlatformModule CModuleManager::LoadModule( const char* ModuleName )
+PlatformModule CModuleManager::GetModule( const char* ModuleName )
 {
     int32 Index = GetModuleIndex( ModuleName );
     if ( Index >= 0 )
@@ -93,13 +124,21 @@ PlatformModule CModuleManager::LoadModule( const char* ModuleName )
     }
     else
     {
-        return NULL;
+        return nullptr;
     }
 }
 
-void CModuleManager::RegisterStaticModule( const char* ModuleName, CLoadStaticModuleDelegate InitDelegate )
+void CModuleManager::RegisterStaticModule( const char* ModuleName, CInitializeStaticModuleDelegate InitDelegate )
 {
-	
+    const bool bContains = StaticModuleDelegates.Contains( [=]( const TPair<CString, CInitializeStaticModuleDelegate>& Element )
+    {
+        return (Element.First == ModuleName);
+    });
+
+    if ( !bContains )
+    {
+        StaticModuleDelegates.Emplace( ModuleName, InitDelegate );
+    }
 }
 
 bool CModuleManager::IsModuleLoaded( const char* ModuleName )
@@ -155,14 +194,29 @@ void CModuleManager::ReleaseAllModules()
 
 int32 CModuleManager::GetModuleIndex( const char* ModuleName )
 {
-    for ( int32 Index = 0; Index < ModuleNames.Size(); Index++ )
+    const int32 Index = ModuleNames.Find( [=](const CString& Element )
     {
-        const CString& Name = ModuleNames[Index];
-        if ( Name == ModuleName )
-        {
-            return Index;
-        }
-    }
+        return (Element == ModuleName);
+    });
 
-    return -1;
+    // Return explicit -1 in case TArray changes in the future
+    return Index >= 0 ? Index : -1;
+}
+
+CModuleManager::CInitializeStaticModuleDelegate* CModuleManager::GetStaticModuleDelegate( const char* ModuleName )
+{
+    const int32 Index = StaticModuleDelegates.Find( [=]( const TPair<CString, CInitializeStaticModuleDelegate>& Element )
+    {
+        return (Element.First == ModuleName);
+    });
+
+    if ( Index >= 0)
+    {
+        CInitializeStaticModuleDelegate& ModuleInitializer = StaticModuleDelegates[Index].Second;
+        return &ModuleInitializer;
+    }
+    else
+    {
+        return nullptr;
+    }
 }

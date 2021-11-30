@@ -16,7 +16,6 @@
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
 #include "Core/Misc/EngineLoopDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
-#include "Core/Misc/CommandLine.h"
 
 #include "Interface/InterfaceApplication.h"
 
@@ -28,11 +27,6 @@
 
 #include "Renderer/Renderer.h"
 #include "Renderer/Debug/GPUProfiler.h"
-
-void CEngineLoop::InitializeCommandLine( int32 NumCommandLineArgs, const char** CommandLineArgs )
-{
-	CCommandLine::Initialize( NumCommandLineArgs, CommandLineArgs );
-}
 
 bool CEngineLoop::PreInitialize()
 {
@@ -50,16 +44,16 @@ bool CEngineLoop::PreInitialize()
     }
 
     /* Init output console */
-    NErrorDevice::ConsoleWindow = PlatformConsoleWindow::Make();
-    if ( !NErrorDevice::ConsoleWindow )
+    NErrorDevice::GConsoleWindow = PlatformConsoleWindow::Make();
+    if ( !NErrorDevice::GConsoleWindow )
     {
 		PlatformApplicationMisc::MessageBox( "ERROR", "Failed to initialize ConsoleWindow" );
         return false;
     }
     else
     {
-		NErrorDevice::ConsoleWindow->Show( true );
-		NErrorDevice::ConsoleWindow->SetTitle( CString( CProjectManager::GetProjectName() ) + ": Error Console");
+		NErrorDevice::GConsoleWindow->Show( true );
+		NErrorDevice::GConsoleWindow->SetTitle( CString( CProjectManager::GetProjectName() ) + ": Error Console");
     }
 
 #if !PRODUCTION_BUILD
@@ -248,7 +242,7 @@ bool CEngineLoop::Release()
 
     PlatformThreadMisc::Release();
 
-    SafeRelease( NErrorDevice::ConsoleWindow );
+    SafeRelease( NErrorDevice::GConsoleWindow );
 
     return true;
 }
