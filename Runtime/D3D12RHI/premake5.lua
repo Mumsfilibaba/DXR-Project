@@ -81,3 +81,11 @@ project "D3D12RHI"
 			"%{wks.location}/**/Windows/**"
 		}
 	filter {}
+
+	-- Remove non-windows files
+	filter "system:windows"
+		removefiles
+		{
+			"%{wks.location}/**/Mac/**"
+		}
+	filter {}

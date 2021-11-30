@@ -6,10 +6,6 @@
 
 #include "CoreApplication/ICursor.h"
 
-#ifdef GetMonitorInfo
-#undef GetMonitorInfo
-#endif
-
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
@@ -45,7 +41,7 @@ public:
     virtual bool SupportsRawMouse() const { return false; }
 
     /* Enables Raw mouse movement for a certain window */
-	virtual bool EnableRawMouse( const TSharedRef<CPlatformWindow>& Window ) { return true; }
+    virtual bool EnableRawMouse( const TSharedRef<CPlatformWindow>& Window ) { return true; }
 
     /* Sets the window that is currently active */
     virtual void SetActiveWindow( const TSharedRef<CPlatformWindow>& Window ) {}

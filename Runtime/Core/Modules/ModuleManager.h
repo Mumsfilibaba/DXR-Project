@@ -11,36 +11,36 @@
 
 // Macro for implementing a new engine module based on monolithic or dynamic build
 #if MONOLITHIC_BUILD
-	#define IMPLEMENT_ENGINE_MODULE( ModuleClassType )                                     \
-	static TStaticModuleInitializer<ModuleClassType> ModuleInitializer( #ModuleClassType );
+    #define IMPLEMENT_ENGINE_MODULE( ModuleClassType )                                     \
+    static TStaticModuleInitializer<ModuleClassType> ModuleInitializer( #ModuleClassType );
 #else
-	#define IMPLEMENT_ENGINE_MODULE( ModuleClassType )  \
-	extern "C"                                          \
-	{                                                   \
-		MODULE_EXPORT IEngineModule* LoadEngineModule() \
-		{                                               \
-			return dbg_new ModuleClassType();           \
-		}                                               \
-	}
+    #define IMPLEMENT_ENGINE_MODULE( ModuleClassType )  \
+    extern "C"                                          \
+    {                                                   \
+        MODULE_EXPORT IEngineModule* LoadEngineModule() \
+        {                                               \
+            return dbg_new ModuleClassType();           \
+        }                                               \
+    }
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-/* Interface that all engine modules must implement */
+// Interface that all engine modules must implement
 class IEngineModule
 {
 public:
 
-	virtual ~IEngineModule() = default;
+    virtual ~IEngineModule() = default;
 
-	/* Called when the module is first loaded into the application */
-	virtual bool Load() = 0;
+    // Called when the module is first loaded into the application
+    virtual bool Load() = 0;
 
-	/* Called before the module is unloaded by the application */
-	virtual bool Unload() = 0;
+    // Called before the module is unloaded by the application
+    virtual bool Unload() = 0;
 
-	/* The name of the module */
-	virtual const char* GetName() const = 0;
+    // The name of the module
+    virtual const char* GetName() const = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -49,58 +49,56 @@ typedef IEngineModule* (*PFNLoadEngineModule)();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-/* Default EngineModule that implements empty Load and Unload functions for modules that do not require these */
 class CDefaultEngineModule : public IEngineModule
 {
 public:
 
-	/* Called when the module is first loaded into the application */
-	virtual bool Load() override { return true; }
+    // Called when the module is first loaded into the application
+    virtual bool Load() override { return true; }
 
-	/* Called before the module is unloaded by the application */
-	virtual bool Unload() override { return true; }
+    // Called before the module is unloaded by the application
+    virtual bool Unload() override { return true; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-/* Handle for platform module-handle */
 typedef PlatformLibrary::PlatformHandle PlatformModule;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-/* ModuleManager that managers the modules used by the engine */
+// ModuleManager that managers the modules used by the engine
 class CORE_API CModuleManager
 {
 public:
-	
-	/* Delegate for when a new module is loaded into the engine, name and IEngineModule pointer is the arguments */
-	DECLARE_RETURN_DELEGATE( CInitializeStaticModuleDelegate, IEngineModule* );
+    
+    // Delegate for when a new module is loaded into the engine, name and IEngineModule pointer is the arguments
+    DECLARE_RETURN_DELEGATE( CInitializeStaticModuleDelegate, IEngineModule* );
 
-    /* Create the instance with make */
+    // Create the instance with make
     static FORCEINLINE CModuleManager& Get() { return Instance; }
 
-    /* Load a new module into the engine. ModuleName is without platform extension. */
+    // Load a new module into the engine. ModuleName is without platform extension.
     IEngineModule* LoadEngineModule( const char* ModuleName );
 
-    /* Retrieve a already loaded module interface. ModuleName is without platform extension. */
+    // Retrieve a already loaded module interface. ModuleName is without platform extension.
     IEngineModule* GetEngineModule( const char* ModuleName );
 
-    /* Load platform module */
+    // Load platform module
     PlatformModule GetModule( const char* ModuleName );
-	
-	/* Registers a static module */
-	void RegisterStaticModule( const char* ModuleName, CInitializeStaticModuleDelegate InitDelegate );
+    
+    // Registers a static module
+    void RegisterStaticModule( const char* ModuleName, CInitializeStaticModuleDelegate InitDelegate );
 
-    /* Check if a module is already loaded */
+    // Check if a module is already loaded
     bool IsModuleLoaded( const char* ModuleName );
 
-    /* Release a single module */
+    // Release a single module
     void UnloadModule( const char* ModuleName );
 
-    /* Releases all modules that are loaded */
+    // Releases all modules that are loaded
     void ReleaseAllModules();
-	
-    /* Delegate for when a new module is loaded into the engine, name and IEngineModule pointer is the arguments */
+    
+    // Delegate for when a new module is loaded into the engine, name and IEngineModule pointer is the arguments
     DECLARE_MULTICAST_DELEGATE( CModuleLoadedDelegate, const char*, IEngineModule* );
     CModuleLoadedDelegate GetModuleLoadedDelegate() { return ModuleLoadedDelegate; }
 
@@ -146,12 +144,7 @@ public:
 
 private:
 
-    CModuleManager()
-        : ModuleNames()
-        , Modules()
-    {
-    }
-
+    CModuleManager() = default;
     ~CModuleManager() = default;
 
     // Stores information about a loaded engine module
@@ -176,19 +169,19 @@ private:
         PlatformModule Handle;
     };
 
-    /* Returns the index of the specified module, if not found it returns -1 */
+    // Returns the index of the specified module, if not found it returns -1
     int32 GetModuleIndex( const char* ModuleName );
 
-    /* Returns a delegate to initiliaze a static module, if not found it returns nullptr */
+    // Returns a delegate to initialize a static module, if not found it returns nullptr
     CInitializeStaticModuleDelegate* GetStaticModuleDelegate( const char* ModuleName );
 
-    /* Delegate that is fired when a new module is loaded */ 
+    // Delegate that is fired when a new module is loaded
     CModuleLoadedDelegate ModuleLoadedDelegate;
 
-    /* Array of all the loaded modules, the string is the name used to load the module from disk */
-    TArray<CString> Modules;
-	
-	// Array of all modules that can be loaded statically
+    // Array of all the loaded modules, the string is the name used to load the module from disk
+    TArray<SModule> Modules;
+    
+    // Array of all modules that can be loaded statically
     TArray<TPair<CString, CInitializeStaticModuleDelegate>> StaticModuleDelegates;
 
     static CModuleManager Instance;
@@ -196,24 +189,24 @@ private:
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-/* Class that registers a static engine module */
+// Class that registers a static engine module */
 template<typename ModuleClass>
 class TStaticModuleInitializer
 {
+    using CInitializeDelegate = CModuleManager::CInitializeStaticModuleDelegate;
+
 public:
 
-	/* Constructor that registers the module to the modulemanager */
-	TStaticModuleInitializer( const char* ModuleName )
-	{
-		CModuleManager::CInitializeStaticModuleDelegate InitializeDelegate = CModuleManager::CInitializeStaticModuleDelegate::CreateRaw(
-				this, &TStaticModuleInitializer<ModuleClass>::MakeModuleInterface );
-
-		CModuleManager::Get().RegisterStaticModule( ModuleName, InitializeDelegate );
-	}
-	
-	/* Creates the ModuleInterface */
-	IEngineModule* MakeModuleInterface()
-	{
-		return new ModuleClass();
-	}
+    // Constructor that registers the module to the ModuleManager
+    TStaticModuleInitializer( const char* ModuleName )
+    {
+        CInitializeDelegate InitializeDelegate = CInitializeDelegate::CreateRaw(this, &TStaticModuleInitializer<ModuleClass>::MakeModuleInterface );
+        CModuleManager::Get().RegisterStaticModule( ModuleName, InitializeDelegate );
+    }
+    
+    // Creates the ModuleInterface
+    IEngineModule* MakeModuleInterface()
+    {
+        return new ModuleClass();
+    }
 };

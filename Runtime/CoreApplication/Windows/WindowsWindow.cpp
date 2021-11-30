@@ -86,7 +86,7 @@ bool CWindowsWindow::Initialize( const CString& InTitle, uint32 InWidth, uint32 
     int32 RealWidth  = ClientRect.right - ClientRect.left;
     int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
-    HINSTANCE Instance = Application->GetHINSTANCE();
+    HINSTANCE Instance = Application->GetInstance();
     LPCSTR WindowClassName = PlatformApplication::GetWindowClassName();
 
     Window = CreateWindowEx( NewStyleEx, WindowClassName, InTitle.CStr(), NewStyle, PositionX, PositionY, RealWidth, RealHeight, NULL, NULL, Instance, NULL );

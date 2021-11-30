@@ -64,12 +64,12 @@ public:
 
     /* Check the visibility for the cursor */
     bool IsCursorVisibile() const;
-	
-	/* Returns true if the platform supports Raw mouse movement */
-	bool SupportsRawMouse() const { return PlatformApplication->SupportsRawMouse(); }
+    
+    /* Returns true if the platform supports Raw mouse movement */
+    bool SupportsRawMouse() const { return PlatformApplication->SupportsRawMouse(); }
 
-	/* Enables Raw mouse movement for a certain window */
-	bool EnableRawMouse( const TSharedRef<CPlatformWindow>& Window ) { return PlatformApplication->EnableRawMouse( Window ); }
+    /* Enables Raw mouse movement for a certain window */
+    bool EnableRawMouse( const TSharedRef<CPlatformWindow>& Window ) { return PlatformApplication->EnableRawMouse( Window ); }
 
     /* Sets the window that currently has the keyboard focus */
     void SetCapture( const TSharedRef<CPlatformWindow>& CaptureWindow );
@@ -78,14 +78,14 @@ public:
     void SetActiveWindow( const TSharedRef<CPlatformWindow>& ActiveWindow );
 
     /* Retrieves the window that currently has the keyboard focus, can return nullptr */
-	TSharedRef<CPlatformWindow> GetCapture() const { return PlatformApplication->GetCapture(); }
+    TSharedRef<CPlatformWindow> GetCapture() const { return PlatformApplication->GetCapture(); }
 
     /* Retrieves the window that is currently active */
-	TSharedRef<CPlatformWindow> GetActiveWindow() const { return PlatformApplication->GetActiveWindow(); }
+    TSharedRef<CPlatformWindow> GetActiveWindow() const { return PlatformApplication->GetActiveWindow(); }
 
-	/* Retrieves the window under the cursor */
-	TSharedRef<CPlatformWindow> GetWindowUnderCursor() const { return PlatformApplication->GetActiveWindow(); }
-	
+    /* Retrieves the window under the cursor */
+    TSharedRef<CPlatformWindow> GetWindowUnderCursor() const { return PlatformApplication->GetActiveWindow(); }
+    
     /* Adds a InputHandler to the application, which gets processed before the game */
     void AddInputHandler( const TSharedPtr<CInputHandler>& NewInputHandler, uint32 Priority );
 
@@ -119,27 +119,27 @@ public:
     /* Removes a InputHandler to the application, which gets processed before the application module */
     void RemoveWindowMessageHandler( const TSharedPtr<CWindowMessageHandler>& WindowMessageHandler );
 
-	/* Retrieve the native application */
+    /* Retrieve the native application */
     TSharedPtr<CPlatformApplication> GetPlatformApplication() const { return PlatformApplication; }
 
-	/* Retrive the renderer for the Interface */
+    /* Retrieve the renderer for the Interface */
     TSharedRef<IInterfaceRenderer> GetRenderer() const { return Renderer; }
 
-	/* Retrieve the window registered as the main viewport */
+    /* Retrieve the window registered as the main viewport */
     TSharedRef<CPlatformWindow> GetMainViewport() const { return MainViewport; }
 
-	/* Retreieve the cursor interface */
+    /* Retrieve the cursor interface */
     TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->GetCursor(); }
 
-	/* Check if the application is currently running */
+    /* Check if the application is currently running */
     bool IsRunning() const { return Running; }
 
-	/* Delegate for when the application is about to exit */
-	DECLARE_EVENT( CExitEvent, CInterfaceApplication, int32 );
+    /* Delegate for when the application is about to exit */
+    DECLARE_EVENT( CExitEvent, CInterfaceApplication, int32 );
     CExitEvent GetExitEvent() const { return ExitEvent; }
 
-	/* Delegate for when the application gets a new main-viewport */
-	DECLARE_EVENT( CMainViewportChange, CInterfaceApplication, const TSharedRef<CPlatformWindow>& );
+    /* Delegate for when the application gets a new main-viewport */
+    DECLARE_EVENT( CMainViewportChange, CInterfaceApplication, const TSharedRef<CPlatformWindow>& );
     CMainViewportChange GetMainViewportChange() const { return MainViewportChange; }
 
     /* Get the number of registered users */
@@ -185,8 +185,8 @@ public:
     virtual void HandleMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState ) override;
     virtual void HandleMouseScrolled( float HorizontalDelta, float VerticalDelta ) override;
 
-    virtual void HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint16 Width, uint16 Height ) override;
-    virtual void HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int16 x, int16 y ) override;
+    virtual void HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint32 Width, uint32 Height ) override;
+    virtual void HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y ) override;
     virtual void HandleWindowFocusChanged( const TSharedRef<CPlatformWindow>& Window, bool HasFocus ) override;
     virtual void HandleWindowMouseLeft( const TSharedRef<CPlatformWindow>& Window ) override;
     virtual void HandleWindowMouseEntered( const TSharedRef<CPlatformWindow>& Window ) override;
@@ -242,12 +242,12 @@ protected:
     /* All registered users */
     TArray<TSharedPtr<CInterfaceUser>> RegisteredUsers;
 
-	// Broadcasted when the application is about to exit
-	CExitEvent ExitEvent;
-	
-	// Broadcasted when a new mainviewport is registered
-	CMainViewportChange MainViewportChange;
-	
+    // Broadcasted when the application is about to exit
+    CExitEvent ExitEvent;
+    
+    // Broadcasted when a new mainviewport is registered
+    CMainViewportChange MainViewportChange;
+    
     // Is false when the platform application reports that the application should exit
     bool Running = true;
 

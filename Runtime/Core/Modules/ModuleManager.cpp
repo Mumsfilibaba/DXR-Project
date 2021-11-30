@@ -20,8 +20,8 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
         return ExistingModule;
     }
 
-    // Storage for new module
-    IEngineModule* NewModule = nullptr;
+    // New module
+    SModule NewModule;
 
     // First check if we are trying to load a static module
     CInitializeStaticModuleDelegate* ModuleInitializer = GetStaticModuleDelegate( ModuleName );
@@ -29,7 +29,12 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
     {
         if ( ModuleInitializer->IsBound() )
         {
-            NewModule = ModuleInitializer->Execute();
+            NewModule.Interface = ModuleInitializer->Execute();
+            if ( NewModule.Interface )
+            {
+                LOG_ERROR( "Failed to load static module '" + CString( ModuleName ) + "'" );
+                return nullptr;
+            }
         }
         else
         {
@@ -56,35 +61,38 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
         }
 
         // The pointer is owned by the ModuleManager and should not be released anywhere else
-        NewModule = LoadEngineModule();
+        NewModule.Interface = LoadEngineModule();
 
         // Load the new module
-        if ( !NewModule )
+        if ( !NewModule.Interface )
         {
             LOG_ERROR( "Failed to load module '" + CString( ModuleName ) + "', resulting interface was nullptr" );
             PlatformLibrary::FreeDynamicLib( Module );
 
             return nullptr;
         }
+        else
+        {
+            NewModule.Handle = Module;
+        }
     }
 
-    if ( NewModule->Load() )
+    if ( NewModule.Interface->Load() )
     {
         LOG_INFO( "Loaded module'" + CString( ModuleName ) + "'" );
 
         // Broadcast to engine systems that a new module was loaded
-        ModuleLoadedDelegate.Broadcast( ModuleName, NewModule );
+        ModuleLoadedDelegate.Broadcast( ModuleName, NewModule.Interface );
 
         // Add module in the module list
-        TPair<IEngineModule*, PlatformModule> NewPair = MakePair<IEngineModule*, PlatformModule>( NewModule, Module );
-        Modules.Emplace( NewPair );
-        ModuleNames.Emplace( ModuleName );
-        return NewModule;
+        NewModule.Name = ModuleName;
+        Modules.Emplace( NewModule );
+        return NewModule.Interface;
     }
     else
     {
         LOG_ERROR( "Failed to load module '" + CString( ModuleName ) + "'" );
-        SafeDelete(NewModule);
+        SafeDelete(NewModule.Interface);
         
         return nullptr;
     }
@@ -92,12 +100,12 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
 
 IEngineModule* CModuleManager::GetEngineModule( const char* ModuleName )
 {
-    int32 Index = GetModuleIndex( ModuleName );
+    const int32 Index = GetModuleIndex( ModuleName );
     if ( Index >= 0 )
     {
-        const TPair<IEngineModule*, PlatformModule>& Pair = Modules[Index];
+        const SModule& Module = Modules[Index];
 
-        IEngineModule* EngineModule = Pair.First;
+        IEngineModule* EngineModule = Module.Interface;
         if ( EngineModule )
         {
             LOG_WARNING( "Module is loaded but does not contain an EngineModule interface" );
@@ -116,11 +124,11 @@ IEngineModule* CModuleManager::GetEngineModule( const char* ModuleName )
 
 PlatformModule CModuleManager::GetModule( const char* ModuleName )
 {
-    int32 Index = GetModuleIndex( ModuleName );
+    const int32 Index = GetModuleIndex( ModuleName );
     if ( Index >= 0 )
     {
-        const TPair<IEngineModule*, PlatformModule>& Pair = Modules[Index];
-        return Pair.Second;
+        const SModule& Module = Modules[Index];
+        return Module.Handle;
     }
     else
     {
@@ -143,39 +151,18 @@ void CModuleManager::RegisterStaticModule( const char* ModuleName, CInitializeSt
 
 bool CModuleManager::IsModuleLoaded( const char* ModuleName )
 {
-    int32 Index = GetModuleIndex( ModuleName );
+    const int32 Index = GetModuleIndex( ModuleName );
     return (Index >= 0);
 }
 
 void CModuleManager::UnloadModule( const char* ModuleName )
 {
-    int32 Index = GetModuleIndex( ModuleName );
+    const int32 Index = GetModuleIndex( ModuleName );
     if ( Index >= 0 )
     {
-        const TPair<IEngineModule*, PlatformModule>& Pair = Modules[Index];
+        SModule& Module = Modules[Index];
 
-        IEngineModule* EngineModule = Pair.First;
-        if ( EngineModule )
-        {
-            EngineModule->Unload();
-        }
-
-        PlatformModule Module = Pair.Second;
-        PlatformLibrary::FreeDynamicLib( Module );
-
-        Modules.RemoveAt( Index );
-        ModuleNames.RemoveAt( Index );
-    }
-}
-
-void CModuleManager::ReleaseAllModules()
-{
-    const int32 NumModules = Modules.Size();
-    for ( int32 Index = 0; Index < NumModules; Index++ )
-    {
-        const TPair<IEngineModule*, PlatformModule>& Pair = Modules[Index];
-
-        IEngineModule* EngineModule = Pair.First;
+        IEngineModule* EngineModule = Module.Interface;
         if ( EngineModule )
         {
             EngineModule->Unload();
@@ -184,23 +171,49 @@ void CModuleManager::ReleaseAllModules()
             SafeDelete( EngineModule );
         }
 
-        PlatformModule Module = Pair.Second;
-        PlatformLibrary::FreeDynamicLib( Module );
+        // Unload the dynamic library
+        PlatformModule Handle = Module.Handle;
+        PlatformLibrary::FreeDynamicLib( Handle );
+        Module.Handle = nullptr;
+
+        Modules.RemoveAt( Index );
+    }
+}
+
+void CModuleManager::ReleaseAllModules()
+{
+    const int32 NumModules = Modules.Size();
+    for ( int32 Index = 0; Index < NumModules; Index++ )
+    {
+        SModule& Module = Modules[Index];
+
+        IEngineModule* EngineModule = Module.Interface;
+        if ( EngineModule )
+        {
+            EngineModule->Unload();
+
+            // The pointer is owned by the ModuleManager and should not be released anywhere else
+            SafeDelete( EngineModule );
+        }
+
+        // Unload the dynamic library
+        PlatformModule Handle = Module.Handle;
+        PlatformLibrary::FreeDynamicLib( Handle );
+        Module.Handle = nullptr;
     }
 
     Modules.Clear();
-    ModuleNames.Clear();
 }
 
 int32 CModuleManager::GetModuleIndex( const char* ModuleName )
 {
-    const int32 Index = ModuleNames.Find( [=](const CString& Element )
+    const int32 Index = Modules.Find( [=]( const SModule& Element )
     {
-        return (Element == ModuleName);
+        return (Element.Name == ModuleName);
     });
 
     // Return explicit -1 in case TArray changes in the future
-    return Index >= 0 ? Index : -1;
+    return (Index >= 0) ? Index : -1;
 }
 
 CModuleManager::CInitializeStaticModuleDelegate* CModuleManager::GetStaticModuleDelegate( const char* ModuleName )

@@ -62,7 +62,7 @@ CWindowsApplication::CWindowsApplication( HINSTANCE InInstance )
     , Messages()
     , MessagesCriticalSection()
     , WindowsMessageListeners()
-    , IsTrackingMouse( false )
+    , bIsTrackingMouse( false )
     , Instance( InInstance )
 {
     // Always the last instance created 
@@ -102,7 +102,7 @@ bool CWindowsApplication::RegisterRawInputDevices( HWND Window )
     constexpr uint32 DeviceCount = 1;
     
     RAWINPUTDEVICE Devices[DeviceCount];
-    CMemory::Memzero( devices, sizeof(Devices) );
+    CMemory::Memzero( Devices, sizeof(Devices) );
 
     // Mouse
     Devices[0].dwFlags	   = 0;
@@ -118,7 +118,7 @@ bool CWindowsApplication::RegisterRawInputDevices( HWND Window )
     }
     else
     {
-        LOG_DEBUG("[CWindowsApplication] Registered Raw Input devices");
+        LOG_INFO("[CWindowsApplication] Registered Raw Input devices");
         return true;
     }
 }
@@ -144,7 +144,7 @@ bool CWindowsApplication::UnregisterRawInputDevices()
     }
     else
     {
-        LOG_DEBUG("[CWindowsApplication] Unregistered Raw Input devices");
+        LOG_INFO("[CWindowsApplication] Unregistered Raw Input devices");
         return true;
     }
 }
@@ -167,7 +167,7 @@ bool CWindowsApplication::Initialize()
     SetProcessDPIAware();
 #endif
 
-    CWindowsKeyMapping::Init();
+    CWindowsKeyMapping::Initialize();
 
     return true;
 }
@@ -188,7 +188,7 @@ void CWindowsApplication::Tick( float )
     // Handle all the messages 
     for ( const SWindowsMessage& Message : ProcessableMessages )
     {
-        HandleStoredMessage( Message.Window, Message.Message, Message.wParam, Message.lParam );
+        HandleStoredMessage( Message.Window, Message.Message, Message.wParam, Message.lParam, Message.MouseDeltaX, Message.MouseDeltaY );
     }
 }
 
@@ -253,13 +253,29 @@ TSharedRef<CPlatformWindow> CWindowsApplication::GetActiveWindow() const
     return GetWindowsWindowFromHWND( ActiveWindow );
 }
 
+TSharedRef<CPlatformWindow> CWindowsApplication::GetWindowUnderCursor() const
+{
+    POINT CursorPos;
+    if ( !GetCursorPos( &CursorPos ) )
+    {
+        LOG_ERROR( "Failed to retrieve the Cursor position" );
+        return nullptr;
+    }
+
+    HWND Handle = WindowFromPoint( CursorPos );
+    return GetWindowsWindowFromHWND( Handle );
+}
+
 TSharedRef<CWindowsWindow> CWindowsApplication::GetWindowsWindowFromHWND( HWND InWindow ) const
 {
-    for ( const TSharedRef<CWindowsWindow>& Window : Windows )
+    if ( InWindow )
     {
-        if ( Window->GetHandle() == InWindow )
+        for ( const TSharedRef<CWindowsWindow>& Window : Windows )
         {
-            return Window;
+            if ( Window->GetHandle() == InWindow )
+            {
+                return Window;
+            }
         }
     }
 
@@ -336,7 +352,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
                 MessageListener->HandleWindowMouseLeft( MessageWindow );
             }
 
-            IsTrackingMouse = false;
+            bIsTrackingMouse = false;
             break;
         }
 
@@ -396,7 +412,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             const int32 x = GET_X_LPARAM( lParam );
             const int32 y = GET_Y_LPARAM( lParam );
 
-            if ( !IsTrackingMouse )
+            if ( !bIsTrackingMouse )
             {
                 TRACKMOUSEEVENT TrackEvent;
                 CMemory::Memzero( &TrackEvent );
@@ -408,7 +424,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
 
                 MessageListener->HandleWindowMouseEntered( MessageWindow );
 
-                IsTrackingMouse = true;
+                bIsTrackingMouse = true;
             }
 
             MessageListener->HandleMouseMove( x, y );
@@ -417,7 +433,7 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
 
         case WM_INPUT:
         {
-            MessageListener->HandleRawMouseMove( MessageWindow, MouseDeltaX, MouseDeltaY );
+            MessageListener->HandleRawMouseInput( MessageWindow, MouseDeltaX, MouseDeltaY );
             break;
         }
 
@@ -569,7 +585,7 @@ LRESULT CWindowsApplication::MessageProc( HWND Window, UINT Message, WPARAM wPar
         case WM_MOUSEHWHEEL:
         {
             StoreMessage( Window, Message, wParam, lParam, 0, 0 );
-            return ResultFromListeners; // Either zero or something else 
+            return ResultFromListeners;
         }
     }
 

@@ -36,11 +36,11 @@ public:
 
     virtual void HandleMouseScrolled( float HorizontalDelta, float VerticalDelta ) {}
 
-    virtual void HandleRawMouseInput( const TSharedRef<CPlatformWindow>& Window, int16 x, uint16 y ) {}
+    virtual void HandleRawMouseInput( const TSharedRef<CPlatformWindow>& Window, int32 x, uint32 y ) {}
 
-    virtual void HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint16 Width, uint16 Height ) {}
+    virtual void HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint32 Width, uint32 Height ) {}
 
-    virtual void HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int16 x, int16 y ) {}
+    virtual void HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y ) {}
 
     virtual void HandleWindowFocusChanged( const TSharedRef<CPlatformWindow>& Window, bool HasFocus ) {}
 

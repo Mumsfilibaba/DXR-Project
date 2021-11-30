@@ -45,25 +45,25 @@ bool CInterfaceApplication::Make( const TSharedPtr<CInterfaceApplication>& InApp
 
 void CInterfaceApplication::Release()
 {
-	if ( Instance )
-	{
-		Instance->SetPlatformApplication( nullptr );
-		Instance.Reset();
-	}
+    if ( Instance )
+    {
+        Instance->SetPlatformApplication( nullptr );
+        Instance.Reset();
+    }
 }
 
 CInterfaceApplication::CInterfaceApplication( const TSharedPtr<CPlatformApplication>& InPlatformApplication )
     : CPlatformApplicationMessageHandler()
     , PlatformApplication( InPlatformApplication )
-	, Renderer()
-	, MainViewport()
-	, UIWindows()
-	, DebugStrings()
+    , Renderer()
+    , MainViewport()
+    , UIWindows()
+    , DebugStrings()
     , InputHandlers()
     , WindowMessageHandlers()
     , RegisteredUsers()
     , Running( true )
-	, Context( nullptr )
+    , Context( nullptr )
 {
 }
 
@@ -708,7 +708,7 @@ void CInterfaceApplication::HandleMouseScrolled( float HorizontalDelta, float Ve
     }
 }
 
-void CInterfaceApplication::HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint16 Width, uint16 Height )
+void CInterfaceApplication::HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint32 Width, uint32 Height )
 {
     SWindowResizeEvent WindowResizeEvent( Window, Width, Height );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
@@ -721,7 +721,7 @@ void CInterfaceApplication::HandleWindowResized( const TSharedRef<CPlatformWindo
     }
 }
 
-void CInterfaceApplication::HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int16 x, int16 y )
+void CInterfaceApplication::HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y )
 {
     SWindowMovedEvent WindowsMovedEvent( Window, x, y );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )

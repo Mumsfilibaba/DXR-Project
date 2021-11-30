@@ -103,7 +103,7 @@ struct SMouseScrolledEvent : public SEvent
 
 struct SWindowResizeEvent : public SEvent
 {
-    FORCEINLINE SWindowResizeEvent( const TSharedRef<CPlatformWindow>& InWindow, uint16 InWidth, uint16 InHeight )
+    FORCEINLINE SWindowResizeEvent( const TSharedRef<CPlatformWindow>& InWindow, uint32 InWidth, uint32 InHeight )
         : Window( InWindow )
         , Width( InWidth )
         , Height( InHeight )
@@ -111,15 +111,17 @@ struct SWindowResizeEvent : public SEvent
     }
 
     TSharedRef<CPlatformWindow> Window;
-    uint16 Width;
-    uint16 Height;
+
+    // Because of padding we can just use 32-bit integers
+    uint32 Width;
+    uint32 Height;
 };
 
 struct SWindowFocusChangedEvent : public SEvent
 {
-    FORCEINLINE SWindowFocusChangedEvent( const TSharedRef<CPlatformWindow>& InWindow, bool hasFocus )
+    FORCEINLINE SWindowFocusChangedEvent( const TSharedRef<CPlatformWindow>& InWindow, bool InHasFocus )
         : Window( InWindow )
-        , HasFocus( hasFocus )
+        , HasFocus( InHasFocus )
     {
     }
 
@@ -129,7 +131,7 @@ struct SWindowFocusChangedEvent : public SEvent
 
 struct SWindowMovedEvent : public SEvent
 {
-    FORCEINLINE SWindowMovedEvent( const TSharedRef<CPlatformWindow>& InWindow, int16 InX, int16 InY )
+    FORCEINLINE SWindowMovedEvent( const TSharedRef<CPlatformWindow>& InWindow, int32 InX, int32 InY )
         : Window( InWindow )
         , x( InX )
         , y( InY )
@@ -137,8 +139,10 @@ struct SWindowMovedEvent : public SEvent
     }
 
     TSharedRef<CPlatformWindow> Window;
-    int16 x;
-    int16 y;
+
+    // Because of padding we can just use 32-bit integers
+    int32 x;
+    int32 y;
 };
 
 struct SWindowFrameMouseEvent : public SEvent

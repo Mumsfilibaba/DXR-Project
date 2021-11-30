@@ -89,7 +89,15 @@ project "CoreApplication"
 			"MetalKit.framework",
 		}
 	filter {}
-	
+
+	-- Remove non-windows files
+	filter "system:windows"
+		removefiles
+		{
+			"%{wks.location}/**/Mac/**"
+		}
+	filter {}
+
 	-- In visual studio show natvis files
 	filter "action:vs*"
 		vpaths { ["Natvis"] = "**.natvis" }

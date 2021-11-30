@@ -100,7 +100,7 @@ public:
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
 
     /* Retrieve the window that is currently under the cursor, if no window is under the cursor, the value is nullptr */
-    virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() {const override final;
+    virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const override final;
 
     /* Searches all the created windows and return the one with the specified handle */
     TSharedRef<CWindowsWindow> GetWindowsWindowFromHWND( HWND Window ) const;
@@ -139,11 +139,14 @@ private:
     /* Unregister all raw input devices TODO: Investigate how to do this for a specific window */
     bool UnregisterRawInputDevices();
 
+    /* Processes raw input */
+    LRESULT ProcessRawInput( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
+
     /* Message-proc which handles the messages for the instance */
     LRESULT MessageProc( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
 
     /* Handles stored messages in Tick */
-    void HandleStoredMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam );
+    void HandleStoredMessage( HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY );
 
     /* The windows that has been created by the application */
     TArray<TSharedRef<CWindowsWindow>> Windows;
@@ -158,7 +161,7 @@ private:
     TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
 
     /* Checks weather or not the mouse-cursor is tracked, this is for MouseEntered/MouseLeft events */
-    bool IsTrackingMouse;
+    bool bIsTrackingMouse;
 
     /* Instance of the application */
     HINSTANCE Instance;
