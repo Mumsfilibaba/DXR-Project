@@ -1,27 +1,29 @@
 #pragma once
 #include "Core/CoreModule.h"
-
-#include "Platform/PlatformLibrary.h"
-
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
 #include "Core/Delegates/MulticastDelegate.h"
+#include "Core/Debug/Debug.h"
+
+#include "Platform/PlatformLibrary.h"
 
 // Macro for implementing a new engine module based on monolithic or dynamic build
 #if MONOLITHIC_BUILD
-    #define IMPLEMENT_ENGINE_MODULE( ModuleClassType )                                     \
-    static TStaticModuleInitializer<ModuleClassType> ModuleInitializer( #ModuleClassType );
+    #define IMPLEMENT_ENGINE_MODULE( ModuleClassType, ModuleName )                      \
+    static TStaticModuleInitializer<ModuleClassType> GModuleInitializer( #ModuleName ); \
+    extern "C" void LinkModule_##ModuleName() { }
 #else
-    #define IMPLEMENT_ENGINE_MODULE( ModuleClassType )  \
-    extern "C"                                          \
-    {                                                   \
-        MODULE_EXPORT IEngineModule* LoadEngineModule() \
-        {                                               \
-            return dbg_new ModuleClassType();           \
-        }                                               \
-    }
+    #define IMPLEMENT_ENGINE_MODULE( ModuleClassType, ModuleName ) \
+    extern "C"                                                     \
+    {                                                              \
+        MODULE_EXPORT IEngineModule* LoadEngineModule()            \
+        {                                                          \
+            return dbg_new ModuleClassType();                      \
+        }                                                          \
+    }                                                              \
+    extern "C" void LinkModule_##ModuleName() { }
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

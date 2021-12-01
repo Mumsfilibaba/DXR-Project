@@ -32,10 +32,12 @@ project "Interface"
 	}
 
 	-- Defines
-	defines
-	{
-		"INTERFACE_API_EXPORT=(1)"
-	}
+	filter "not options:monolithic"
+		defines
+		{
+			"INTERFACE_API_EXPORT=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -80,7 +82,7 @@ project "Interface"
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 	

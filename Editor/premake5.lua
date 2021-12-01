@@ -80,6 +80,32 @@ project ( projectname )
 		"Renderer",
 	}
 
+	filter "options:monolithic"
+		links
+		{
+			"NullRHI",
+			"InterfaceRenderer",
+			"Sandbox",
+		}
+	filter {}
+
+	-- Specific linking for windows
+	filter { "system:windows", "options:monolithic" }
+		links
+		{
+			"D3D12RHI",
+		}
+
+		-- Force references to module function in order to include it in the program
+		linkoptions 
+		{
+			"/INCLUDE:LinkModule_InterfaceRenderer",
+			"/INCLUDE:LinkModule_NullRHI",
+			"/INCLUDE:LinkModule_D3D12RHI",
+			"/INCLUDE:LinkModule_Sandbox",
+		}
+	filter {}
+
 	-- Include EntryPoint
 	filter "system:windows"
 		files
@@ -87,12 +113,12 @@ project ( projectname )
 			"%{wks.location}/Runtime/Main/Windows/WindowsMain.cpp",	
 		}
 	filter {}
-	
+
 	filter "system:macosx"
-		files
-		{
-			"%{wks.location}/Runtime/Main/Mac/MacMain.cpp",	
-		}
+	files
+	{
+		"%{wks.location}/Runtime/Main/Mac/MacMain.cpp",	
+	}
 	filter {}
 	
 	-- In visual studio show natvis files
@@ -101,7 +127,7 @@ project ( projectname )
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 	

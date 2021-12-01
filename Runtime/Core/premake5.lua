@@ -34,12 +34,12 @@ project "Core"
 	}
 
 	-- Defines
-	defines
-	{
-		"CORE_API_EXPORT=(1)"
-	}
-
-	compileas "Objective-C++"
+	filter "not options:monolithic"
+		defines
+		{
+			"CORE_API_EXPORT=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -82,7 +82,7 @@ project "Core"
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 	

@@ -90,10 +90,7 @@ public:
     /* Release the resources */
     static void Release();
 
-    static FORCEINLINE CGPUProfiler& Get()
-    {
-        return Instance;
-    }
+    static FORCEINLINE CGPUProfiler& Get() { return Instance; }
 
     /* Enables the collection of samples (Resume) */
     void Enable();

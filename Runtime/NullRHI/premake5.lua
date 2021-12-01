@@ -32,10 +32,12 @@ project "NullRHI"
 	}
 
 	-- Defines
-	defines
-	{
-		"NULLRHI_API_EXPORT=(1)"
-	}
+	filter "not options:monolithic"
+		defines
+		{
+			"NULLRHI_API_EXPORT=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -74,7 +76,7 @@ project "NullRHI"
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 	

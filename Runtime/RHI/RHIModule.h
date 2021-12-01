@@ -1,10 +1,14 @@
 #pragma once
 #include "Core/Modules/ModuleManager.h"
 
+#if MONOLITHIC_BUILD
+#define RHI_API
+#else
 #if RHI_API_EXPORT
 #define RHI_API MODULE_EXPORT
 #else
 #define RHI_API MODULE_IMPORT
+#endif
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

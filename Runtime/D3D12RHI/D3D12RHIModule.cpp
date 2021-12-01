@@ -2,7 +2,7 @@
 #include "D3D12RHICore.h"
 #include "D3D12RHIShaderCompiler.h"
 
-IMPLEMENT_ENGINE_MODULE( CD3D12RHIModule );
+IMPLEMENT_ENGINE_MODULE( CD3D12RHIModule, D3D12RHI );
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 

@@ -32,10 +32,12 @@ project "InterfaceRenderer"
 	}
 
 	-- Defines
-	defines
-	{
-		"INTERFACE_RENDERER_API_EXPORT=(1)"
-	}
+	filter "not options:monolithic"
+		defines
+		{
+			"INTERFACE_RENDERER_API_EXPORT=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -86,7 +88,7 @@ project "InterfaceRenderer"
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 	

@@ -32,10 +32,12 @@ project "D3D12RHI"
 	}
 
 	-- Defines
-	defines
-	{
-		"D3D12RHI_API_EXPORT=(1)"
-	}
+	filter "not options:monolithic"
+		defines
+		{
+			"D3D12RHI_API_EXPORT=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -70,7 +72,7 @@ project "D3D12RHI"
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 

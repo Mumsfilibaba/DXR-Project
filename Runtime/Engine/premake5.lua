@@ -32,10 +32,12 @@ project "Engine"
 	}
 
 	-- Defines
-	defines
-	{
-		"ENGINE_API_EXPORT=(1)"
-	}
+	filter "not options:monolithic"
+		defines
+		{
+			"ENGINE_API_EXPORT=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -87,7 +89,7 @@ project "Engine"
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 	

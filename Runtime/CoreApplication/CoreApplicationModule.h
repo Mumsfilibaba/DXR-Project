@@ -1,8 +1,12 @@
 #pragma once
 #include "Core.h"
 
+#if MONOLITHIC_BUILD
+#define COREAPPLICATION_API
+#else
 #if COREAPPLICATION_API_EXPORT
 #define COREAPPLICATION_API MODULE_EXPORT
 #else
 #define COREAPPLICATION_API MODULE_IMPORT
+#endif
 #endif

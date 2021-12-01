@@ -68,6 +68,22 @@ project ( projectname )
 		"Renderer",
 	}
 
+	filter "options:monolithic"
+		links
+		{
+			"NullRHI",
+			"InterfaceRenderer",
+		}
+	filter {}
+
+	-- Specific linking for windows
+	filter { "system:windows", "options:monolithic" }
+		links
+		{
+			"D3D12RHI",
+		}
+	filter {}
+
 	-- In visual studio show natvis files
 	filter "action:vs*"
 		vpaths { ["Natvis"] = "**.natvis" }
@@ -120,8 +136,7 @@ project (projectname .. "Launcher")
 	}
 	
 	links
-	{ 
-		"ImGui",
+	{
 		"Core",
 		"CoreApplication",
 		"Interface",
@@ -129,6 +144,32 @@ project (projectname .. "Launcher")
 		"Engine",
 		"Renderer",
 	}
+
+	filter "options:monolithic"
+		links
+		{
+			"NullRHI",
+			"InterfaceRenderer",
+			"Sandbox",
+		}
+	filter {}
+
+	-- Specific linking for windows
+	filter { "system:windows", "options:monolithic" }
+		links
+		{
+			"D3D12RHI",
+		}
+
+		-- Force references to module function in order to include it in the program
+		linkoptions 
+		{
+			"/INCLUDE:LinkModule_InterfaceRenderer",
+			"/INCLUDE:LinkModule_NullRHI",
+			"/INCLUDE:LinkModule_D3D12RHI",
+			"/INCLUDE:LinkModule_Sandbox",
+		}
+	filter {}
 
 	-- Include EngineLoop | TODO: Make lib?
 	files

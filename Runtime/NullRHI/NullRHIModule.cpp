@@ -2,14 +2,10 @@
 #include "NullRHICore.h"
 #include "NullRHIShaderCompiler.h"
 
-extern "C"
-{
-    // Function for loading the NullRHI into the application
-    NULLRHI_API IEngineModule* LoadEngineModule()
-    {
-        return dbg_new CNullRHIModule();
-    }
-}
+
+IMPLEMENT_ENGINE_MODULE( CNullRHIModule, NullRHI );
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 CRHICore* CNullRHIModule::CreateCore()
 {

@@ -26,7 +26,7 @@
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-IMPLEMENT_ENGINE_MODULE( CSandbox );
+IMPLEMENT_ENGINE_MODULE( CSandbox, Sandbox );
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
@@ -54,7 +54,7 @@ bool CSandbox::Init()
 
     CFBXLoader::LoadFile( ( WORKSPACE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx" ), SceneData );
 #endif
-	SceneData.AddToScene( CurrentScene.Get() );
+    SceneData.AddToScene( CurrentScene.Get() );
 
     // Create Spheres
     SMeshData SphereMeshData = CMeshFactory::CreateSphere( 3 );

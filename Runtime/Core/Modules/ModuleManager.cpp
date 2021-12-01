@@ -30,7 +30,7 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
         if ( ModuleInitializer->IsBound() )
         {
             NewModule.Interface = ModuleInitializer->Execute();
-            if ( NewModule.Interface )
+            if ( !NewModule.Interface )
             {
                 LOG_ERROR( "Failed to load static module '" + CString( ModuleName ) + "'" );
                 return nullptr;

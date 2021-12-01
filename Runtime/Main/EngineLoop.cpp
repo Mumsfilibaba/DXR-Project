@@ -36,7 +36,7 @@ bool CEngineLoop::PreInitialize()
     TRACE_FUNCTION_SCOPE();
 
     /* Init project information */
-	CString ProjectLocation = WORKSPACE_LOCATION;
+    CString ProjectLocation = WORKSPACE_LOCATION;
     if (!CProjectManager::Initialize( PROJECT_NAME, (ProjectLocation + "/" + PROJECT_NAME).CStr() ))
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "Failed to initialize Project" );
@@ -47,13 +47,13 @@ bool CEngineLoop::PreInitialize()
     NErrorDevice::GConsoleWindow = PlatformConsoleWindow::Make();
     if ( !NErrorDevice::GConsoleWindow )
     {
-		PlatformApplicationMisc::MessageBox( "ERROR", "Failed to initialize ConsoleWindow" );
+        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to initialize ConsoleWindow" );
         return false;
     }
     else
     {
-		NErrorDevice::GConsoleWindow->Show( true );
-		NErrorDevice::GConsoleWindow->SetTitle( CString( CProjectManager::GetProjectName() ) + ": Error Console");
+        NErrorDevice::GConsoleWindow->Show( true );
+        NErrorDevice::GConsoleWindow->SetTitle( CString( CProjectManager::GetProjectName() ) + ": Error Console");
     }
 
 #if !PRODUCTION_BUILD
@@ -216,10 +216,10 @@ bool CEngineLoop::Release()
 
     GRenderer.Release();
 
-	if ( CInterfaceApplication::IsInitialized() )
-	{
-		CInterfaceApplication::Get().SetRenderer( nullptr );
-	}
+    if ( CInterfaceApplication::IsInitialized() )
+    {
+        CInterfaceApplication::Get().SetRenderer( nullptr );
+    }
 
     // Release the engine. Protect against failed initialization where the global pointer was never initialized
     if ( GEngine )

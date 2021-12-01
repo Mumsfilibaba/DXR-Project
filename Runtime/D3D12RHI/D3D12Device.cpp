@@ -189,7 +189,7 @@ bool CD3D12Device::Init()
 {
     // Load DLLs
     DXGILib = LoadLibrary( "dxgi.dll" );
-    if ( DXGILib == NULL )
+    if ( !DXGILib )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to load dxgi.dll" );
         return false;
@@ -200,7 +200,7 @@ bool CD3D12Device::Init()
     }
 
     D3D12Lib = LoadLibrary( "d3d12.dll" );
-    if ( D3D12Lib == NULL )
+    if ( !D3D12Lib )
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "FAILED to load d3d12.dll" );
         return false;
