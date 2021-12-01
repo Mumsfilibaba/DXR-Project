@@ -1,9 +1,7 @@
-project "D3D12RHI"
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location 		"%{wks.location}/Runtime/D3D12RHI"
-	characterset 	"Ascii"
+modulename = "D3D12RHI"
+
+project ( modulename )
+	location ( "%{wks.location}/Runtime/" .. modulename )
 
 	-- Build type 
 	filter "not options:monolithic"
@@ -19,12 +17,6 @@ project "D3D12RHI"
 	-- All targets except the dependencies
 	targetdir 	("%{wks.location}/Build/bin/"     .. outputdir)
 	objdir 		("%{wks.location}/Build/bin-int/" .. outputdir)	
-
-	-- Includes
-	includedirs
-	{
-		"%{wks.location}/Runtime",
-	}
 
 	forceincludes  
 	{ 

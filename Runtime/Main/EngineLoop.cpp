@@ -5,7 +5,7 @@
 #include "Engine/Resources/TextureFactory.h"
 
 #if PROJECT_EDITOR
-#include "EditorEngine.h"
+    #include "EditorEngine.h"
 #endif
 
 #include "Core/Debug/Profiler/FrameProfiler.h"

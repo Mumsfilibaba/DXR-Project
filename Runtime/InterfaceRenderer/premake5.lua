@@ -1,9 +1,7 @@
-project "InterfaceRenderer"
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location 		"%{wks.location}/Runtime/InterfaceRenderer"
-	characterset 	"Ascii"
+modulename = "InterfaceRenderer"
+
+project ( modulename )
+	location ( "%{wks.location}/Runtime/" .. modulename )
 
 	-- Build type 
 	filter "not options:monolithic"
@@ -19,12 +17,6 @@ project "InterfaceRenderer"
 	-- All targets except the dependencies
 	targetdir 	("%{wks.location}/Build/bin/"     .. outputdir)
 	objdir 		("%{wks.location}/Build/bin-int/" .. outputdir)	
-
-	-- Includes
-	includedirs
-	{
-		"%{wks.location}/Runtime",
-	}
 
 	forceincludes  
 	{ 

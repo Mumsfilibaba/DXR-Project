@@ -1,24 +1,19 @@
 projectname = "Editor"
 
 project ( projectname )
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location 		( "%{wks.location}/" .. projectname )
-	kind 			"WindowedApp"
-	characterset 	"Ascii"
+	location ( "%{wks.location}/" .. projectname )
+	kind 	 "WindowedApp"
 
 	--TODO: Pre-Compiled Headers
 
 	-- All targets except the dependencies
 	targetdir 	( "%{wks.location}/Build/bin/"     .. outputdir )
 	objdir 		( "%{wks.location}/Build/bin-int/" .. outputdir )	
-	
+
 	-- Includes
 	includedirs
 	{
 		"%{wks.location}/" .. projectname,
-		"%{wks.location}/Runtime",
 	}
 
 	sysincludedirs
@@ -115,10 +110,10 @@ project ( projectname )
 	filter {}
 
 	filter "system:macosx"
-	files
-	{
-		"%{wks.location}/Runtime/Main/Mac/MacMain.cpp",	
-	}
+		files
+		{
+			"%{wks.location}/Runtime/Main/Mac/MacMain.cpp",	
+		}
 	filter {}
 	
 	-- In visual studio show natvis files
