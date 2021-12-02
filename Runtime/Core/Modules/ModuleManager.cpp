@@ -116,28 +116,20 @@ IEngineModule* CModuleManager::GetEngineModule( const char* ModuleName )
     }
 }
 
-TUniquePtr<CModuleManager>& CModuleManager::GetPointer()
-{
-    static TUniquePtr<CModuleManager> Instance = TUniquePtr<CModuleManager>( new CModuleManager() );
-    return Instance;
-}
-
 CModuleManager& CModuleManager::Get()
 {
-    return *GetPointer();
+    static CModuleManager Instance;
+    return Instance;
 }
 
 void CModuleManager::Release()
 {
-    GetPointer().Reset();
-}
+    CModuleManager& ModuleManager = CModuleManager::Get();
 
-CModuleManager::~CModuleManager()
-{
-    const int32 NumModules = Modules.Size();
+    const int32 NumModules = ModuleManager.Modules.Size();
     for ( int32 Index = 0; Index < NumModules; Index++ )
     {
-        SModule& Module = Modules[Index];
+        SModule& Module = ModuleManager.Modules[Index];
 
         IEngineModule* EngineModule = Module.Interface;
         if ( EngineModule )
@@ -154,7 +146,7 @@ CModuleManager::~CModuleManager()
         Module.Handle = nullptr;
     }
 
-    Modules.Clear();
+    ModuleManager.Modules.Clear();
 }
 
 PlatformModule CModuleManager::GetModule( const char* ModuleName )

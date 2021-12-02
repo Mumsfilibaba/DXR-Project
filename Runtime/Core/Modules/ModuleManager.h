@@ -82,9 +82,6 @@ public:
     // Releases all modules that are loaded
     static void Release();
 
-    // Public destructor for TUniquePtr
-    ~CModuleManager();
-
     // Load a new module into the engine. ModuleName is without platform extension.
     IEngineModule* LoadEngineModule( const char* ModuleName );
 
@@ -171,11 +168,9 @@ private:
         PlatformModule Handle;
     };
 
-    // Retrieve the singleton instance, this contains a static variable in order to control when the instance is created
-    static TUniquePtr<CModuleManager>& GetPointer();
-
-    // Private constructor
+    // Private constructor and destructor
     CModuleManager() = default;
+    ~CModuleManager() = default;
 
     // Returns the index of the specified module, if not found it returns -1
     int32 GetModuleIndex( const char* ModuleName );
