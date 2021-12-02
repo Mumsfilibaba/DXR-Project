@@ -24,7 +24,7 @@ public:
 
     virtual void HandleKeyReleased( EKey KeyCode, SModifierKeyState ModierKeyState ) {}
 
-    virtual void HandleKeyPressed( EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState ) {}
+    virtual void HandleKeyPressed( EKey KeyCode, bool bIsRepeat, SModifierKeyState ModierKeyState ) {}
 
     virtual void HandleKeyTyped( uint32 Character ) {}
 
@@ -42,7 +42,7 @@ public:
 
     virtual void HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y ) {}
 
-    virtual void HandleWindowFocusChanged( const TSharedRef<CPlatformWindow>& Window, bool HasFocus ) {}
+    virtual void HandleWindowFocusChanged( const TSharedRef<CPlatformWindow>& Window, bool bHasFocus ) {}
 
     virtual void HandleWindowMouseLeft( const TSharedRef<CPlatformWindow>& Window ) {}
 

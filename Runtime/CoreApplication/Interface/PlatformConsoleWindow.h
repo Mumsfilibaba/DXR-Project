@@ -21,6 +21,8 @@ enum class EConsoleColor : uint8
     White = 3
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
 class COREAPPLICATION_API CPlatformConsoleWindow
 {
 public:

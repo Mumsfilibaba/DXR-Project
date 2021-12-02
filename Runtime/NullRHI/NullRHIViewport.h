@@ -32,7 +32,7 @@ public:
         return true;
     }
 
-    virtual bool Present( bool VerticalSync ) override final
+    virtual bool Present( bool bVerticalSync ) override final
     {
         return true;
     }

@@ -17,7 +17,7 @@ void CFrameProfiler::Tick()
         Clock.Reset();
     }
 
-    if ( Enabled )
+    if ( bEnabled )
     {
         const double Delta = Clock.GetDeltaTime().AsMilliSeconds();
         CPUFrameTime.AddSample( float( Delta ) );
@@ -26,12 +26,12 @@ void CFrameProfiler::Tick()
 
 void CFrameProfiler::Enable()
 {
-    Instance.Enabled = true;
+    Instance.bEnabled = true;
 }
 
 void CFrameProfiler::Disable()
 {
-    Instance.Enabled = false;
+    Instance.bEnabled = false;
 }
 
 void CFrameProfiler::Reset()
@@ -49,7 +49,7 @@ void CFrameProfiler::Reset()
 
 void CFrameProfiler::BeginTraceScope( const char* Name )
 {
-    if ( Enabled )
+    if ( bEnabled )
     {
         TScopedLock Lock( CPUSamples );
 
@@ -70,7 +70,7 @@ void CFrameProfiler::BeginTraceScope( const char* Name )
 
 void CFrameProfiler::EndTraceScope( const char* Name )
 {
-    if ( Enabled )
+    if ( bEnabled )
     {
         const CString ScopeName = Name;
 

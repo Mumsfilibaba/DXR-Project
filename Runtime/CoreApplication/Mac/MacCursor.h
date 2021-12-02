@@ -24,7 +24,7 @@ public:
     virtual void GetPosition( CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY ) const override final;
 
     /* Show or hide the mouse */
-    virtual void SetVisibility( bool IsVisible ) override final;
+    virtual void SetVisibility( bool bVisible ) override final;
 
 private:
 

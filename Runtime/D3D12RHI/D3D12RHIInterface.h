@@ -29,7 +29,7 @@ public:
     static FORCEINLINE CRHIInterface* Make() { return dbg_new CD3D12RHIInterface(); }
 
     /* Init the RHI Core, create device etc. */
-    virtual bool Init( bool EnableDebug ) override final;
+    virtual bool Init( bool bEnableDebug ) override final;
 
     virtual CRHITexture2D* CreateTexture2D(
         EFormat Format,

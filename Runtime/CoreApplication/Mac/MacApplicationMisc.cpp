@@ -20,7 +20,7 @@ void CMacApplicationMisc::MessageBox( const CString& Title, const CString& Messa
     CFRelease( TextRef );
 }
 
-void CMacApplicationMisc::PumpMessages( bool UntilEmpty )
+void CMacApplicationMisc::PumpMessages( bool bUntilEmpty )
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -36,7 +36,7 @@ void CMacApplicationMisc::PumpMessages( bool UntilEmpty )
         }
         
         [NSApp sendEvent:Event];
-    } while ( UntilEmpty );
+    } while ( bUntilEmpty );
 }
 
 SModifierKeyState CMacApplicationMisc::GetModifierKeyState()

@@ -103,23 +103,23 @@ CD3D12RHIInterface::~CD3D12RHIInterface()
     GD3D12RHICore = nullptr;
 }
 
-bool CD3D12RHIInterface::Init( bool EnableDebug )
+bool CD3D12RHIInterface::Init( bool bEnableDebug )
 {
     // NOTE: GPUBasedValidation does not work with ray tracing since it is not supported
-    bool GPUBasedValidationOn =
-    #if ENABLE_API_GPU_DEBUGGING
-        EnableDebug;
+    bool bGPUBasedValidationOn =
+#if ENABLE_API_GPU_DEBUGGING
+        bEnableDebug;
 #else
         false;
 #endif
-    bool DREDOn =
-    #if ENABLE_API_GPU_BREADCRUMBS
-        EnableDebug;
+    bool bDREDOn =
+#if ENABLE_API_GPU_BREADCRUMBS
+        bEnableDebug;
 #else
         false;
 #endif
 
-    Device = dbg_new CD3D12Device( EnableDebug, GPUBasedValidationOn, DREDOn );
+    Device = dbg_new CD3D12Device( bEnableDebug, bGPUBasedValidationOn, bDREDOn );
     if ( !Device->Init() )
     {
         return false;
@@ -365,8 +365,8 @@ TD3D12Texture* CD3D12RHIInterface::CreateTexture(
     }
 
     // TODO: Fix for other resources that Texture2D?
-    const bool IsTexture2D = (Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D) && (SizeZ == 1);
-    if ( Flags & TextureFlag_RTV && !(Flags & TextureFlag_NoDefaultRTV) && IsTexture2D )
+    const bool bIsTexture2D = (Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D) && (SizeZ == 1);
+    if ( Flags & TextureFlag_RTV && !(Flags & TextureFlag_NoDefaultRTV) && bIsTexture2D )
     {
         CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
 
@@ -393,7 +393,7 @@ TD3D12Texture* CD3D12RHIInterface::CreateTexture(
         NewTexture2D->SetRenderTargetView( RTV.ReleaseOwnership() );
     }
 
-    if ( Flags & TextureFlag_DSV && !(Flags & TextureFlag_NoDefaultDSV) && IsTexture2D )
+    if ( Flags & TextureFlag_DSV && !(Flags & TextureFlag_NoDefaultDSV) && bIsTexture2D )
     {
         CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
 
@@ -419,7 +419,7 @@ TD3D12Texture* CD3D12RHIInterface::CreateTexture(
         NewTexture2D->SetDepthStencilView( DSV.ReleaseOwnership() );
     }
 
-    if ( Flags & TextureFlag_UAV && !(Flags & TextureFlag_NoDefaultUAV) && IsTexture2D )
+    if ( Flags & TextureFlag_UAV && !(Flags & TextureFlag_NoDefaultUAV) && bIsTexture2D )
     {
         CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
 

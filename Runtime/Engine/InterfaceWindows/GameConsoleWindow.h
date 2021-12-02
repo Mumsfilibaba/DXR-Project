@@ -26,10 +26,10 @@ public:
     virtual bool HandleKeyEvent( const SKeyEvent& KeyEvent ) override final
     {
         HandleKeyEventDelegate.Execute( KeyEvent );
-        return ConsoleToggled;
+        return bConsoleToggled;
     }
 
-    bool ConsoleToggled = false;
+    bool bConsoleToggled = false;
 };
 
 /* Panel that render the console window */
@@ -73,8 +73,8 @@ private:
 
     TStaticArray<char, 256> TextBuffer;
 
-    bool UpdateCursorPosition = false;
-    bool IsActive = false;
-    bool CandidateSelectionChanged = false;
-    bool ScrollDown = false;
+    bool bUpdateCursorPosition = false;
+    bool bIsActive = false;
+    bool bCandidateSelectionChanged = false;
+    bool bScrollDown = false;
 };

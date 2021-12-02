@@ -143,20 +143,20 @@ void RHID3D12DeviceRemovedHandler( CD3D12Device* Device )
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-CD3D12Device::CD3D12Device( bool InEnableDebugLayer, bool InEnableGPUValidation, bool InEnableDRED )
+CD3D12Device::CD3D12Device( bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED )
     : Factory( nullptr )
     , Adapter( nullptr )
     , Device( nullptr )
     , DXRDevice( nullptr )
-    , EnableDebugLayer( InEnableDebugLayer )
-    , EnableGPUValidation( InEnableGPUValidation )
-    , EnableDRED( InEnableDRED )
+    , bEnableDebugLayer( bInEnableDebugLayer )
+    , bEnableGPUValidation( bInEnableGPUValidation )
+    , bEnableDRED( bInEnableDRED )
 {
 }
 
 CD3D12Device::~CD3D12Device()
 {
-    if ( EnableDebugLayer )
+    if ( bEnableDebugLayer )
     {
         TComPtr<ID3D12DebugDevice> DebugDevice;
         if ( SUCCEEDED( Device.GetAs( &DebugDevice ) ) )
@@ -223,7 +223,7 @@ bool CD3D12Device::Init()
     ND3D12Functions::D3D12CreateVersionedRootSignatureDeserializer = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>( "D3D12CreateVersionedRootSignatureDeserializer", D3D12Lib );
 
     // Start creation of device
-    if ( EnableDebugLayer )
+    if ( bEnableDebugLayer )
     {
         PIXLib = LoadLibrary( "WinPixEventRuntime.dll" );
         if ( PIXLib != NULL )
@@ -244,10 +244,10 @@ bool CD3D12Device::Init()
         }
         else
         {
-            DebugInterface->EnableDebugLayer();
+            DebugInterface->bEnableDebugLayer();
         }
 
-        if ( EnableDRED )
+        if ( bEnableDRED )
         {
             TComPtr<ID3D12DeviceRemovedExtendedDataSettings> DredSettings;
             if ( SUCCEEDED( ND3D12Functions::D3D12GetDebugInterface( IID_PPV_ARGS( &DredSettings ) ) ) )
@@ -261,7 +261,7 @@ bool CD3D12Device::Init()
             }
         }
 
-        if ( EnableGPUValidation )
+        if ( bEnableGPUValidation )
         {
             TComPtr<ID3D12Debug1> DebugInterface1;
             if ( FAILED( DebugInterface.GetAs( &DebugInterface1 ) ) )
@@ -328,10 +328,10 @@ bool CD3D12Device::Init()
         }
         else
         {
-            HRESULT hResult = Factory5->CheckFeatureSupport( DXGI_FEATURE_PRESENT_ALLOW_TEARING, &AllowTearing, sizeof( AllowTearing ) );
+            HRESULT hResult = Factory5->CheckFeatureSupport( DXGI_FEATURE_PRESENT_ALLOW_TEARING, &bAllowTearing, sizeof( bAllowTearing ) );
             if ( SUCCEEDED( hResult ) )
             {
-                if ( AllowTearing )
+                if ( bAllowTearing )
                 {
                     LOG_INFO( "[CD3D12Device]: Tearing is supported" );
                 }
@@ -395,7 +395,7 @@ bool CD3D12Device::Init()
     }
 
     // Configure debug device (if active).
-    if ( EnableDebugLayer )
+    if ( bEnableDebugLayer )
     {
         TComPtr<ID3D12InfoQueue> InfoQueue;
         if ( SUCCEEDED( Device.GetAs( &InfoQueue ) ) )

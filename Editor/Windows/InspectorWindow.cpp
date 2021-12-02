@@ -71,14 +71,14 @@ void CInspectorWindow::DrawSceneInfo()
 
                     ImGui::SameLine();
 
-                    static bool Uniform = false;
-                    ImGui::Checkbox( "##Uniform", &Uniform );
+                    static bool bUniform = false;
+                    ImGui::Checkbox( "##Uniform", &bUniform );
                     if ( ImGui::IsItemHovered() )
                     {
                         ImGui::SetTooltip( "Enable Uniform Scaling" );
                     }
 
-                    if ( Uniform )
+                    if ( bUniform )
                     {
                         if ( Scale1.x != Scale0.x )
                         {

@@ -24,7 +24,7 @@ public:
     }
 
     /* Pumps the application's message queue */
-    static void PumpMessages( bool UntilEmpty );
+    static void PumpMessages( bool bUntilEmpty );
 
     /* Retrieves the state of modifer keys */
     static SModifierKeyState GetModifierKeyState();

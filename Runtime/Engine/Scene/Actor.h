@@ -141,12 +141,12 @@ public:
 
     FORCEINLINE bool IsStartable() const
     {
-        return Startable;
+        return bIsStartable;
     }
 
     FORCEINLINE bool IsTickable() const
     {
-        return Tickable;
+        return bIsTickable;
     }
 
 private:
@@ -163,9 +163,9 @@ private:
     /* The components of this actor */
     TArray<CComponent*> Components;
 
-    /* Flags for this component that decides if it should start or not */
-    bool Startable : 1;
+    /* Flags for this actor that decides if it should start or not */
+    bool bIsStartable : 1;
 
-    /* Flags for this component that decides if it should tick or not */
-    bool Tickable : 1;
+    /* Flags for this actor that decides if it should tick or not */
+    bool bIsTickable : 1;
 };

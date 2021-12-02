@@ -12,7 +12,7 @@ CWindowsWindow::CWindowsWindow( CWindowsApplication* InApplication )
     : CPlatformWindow()
     , Application( InApplication )
     , Window( 0 )
-    , IsFullscreen( false )
+    , bIsFullscreen( false )
     , StoredPlacement()
     , Style( 0 )
     , StyleEx( 0 )
@@ -130,13 +130,13 @@ bool CWindowsWindow::Initialize( const CString& InTitle, uint32 InWidth, uint32 
     }
 }
 
-void CWindowsWindow::Show( bool Maximized )
+void CWindowsWindow::Show( bool bMaximized )
 {
     Assert( Window != 0 );
 
     if ( IsValid() )
     {
-        if ( Maximized )
+        if ( bMaximized )
         {
             ShowWindow( Window, SW_SHOWMAXIMIZED );
         }
@@ -190,8 +190,8 @@ void CWindowsWindow::Restore()
 
     if ( IsValid() )
     {
-        bool Result = IsIconic( Window );
-        if ( Result )
+        bool bResult = IsIconic( Window );
+        if ( bResult )
         {
             ShowWindow( Window, SW_RESTORE );
         }
@@ -204,9 +204,9 @@ void CWindowsWindow::ToggleFullscreen()
 
     if ( IsValid() )
     {
-        if ( !IsFullscreen )
+        if ( !bIsFullscreen )
         {
-            IsFullscreen = true;
+            bIsFullscreen = true;
 
             GetWindowPlacement( Window, &StoredPlacement );
             
@@ -234,7 +234,7 @@ void CWindowsWindow::ToggleFullscreen()
         }
         else
         {
-            IsFullscreen = false;
+            bIsFullscreen = false;
 
             SetWindowLong( Window, GWL_STYLE, Style );
             SetWindowLong( Window, GWL_EXSTYLE, StyleEx );
@@ -290,19 +290,19 @@ void CWindowsWindow::MoveTo( int32 x, int32 y )
     SetWindowPos( Window, nullptr, x, y, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER );
 }
 
-void CWindowsWindow::SetWindowShape( const SWindowShape& Shape, bool Move )
+void CWindowsWindow::SetWindowShape( const SWindowShape& Shape, bool bMove )
 {
     Assert( Window != 0 );
 
     if ( IsValid() )
     {
         UINT Flags = SWP_NOZORDER | SWP_NOACTIVATE;
-        if ( !Move )
+        if ( !bMove )
         {
             Flags |= SWP_NOMOVE;
         }
 
-        if ( IsFullscreen )
+        if ( bIsFullscreen )
         {
             // Enables the window to be set to a higher window-size than what the resolution allows
             Flags |= SWP_NOSENDCHANGING;

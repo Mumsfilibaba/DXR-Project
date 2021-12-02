@@ -48,7 +48,7 @@ bool InitRHI( ERHIModule InRenderApi )
     // Init RHI objects
 
     // TODO: This should be in EngineConfig and/or CCommandLine
-    const bool EnableDebug =
+    const bool bEnableDebug =
     #if ENABLE_API_DEBUGGING
         true;
 #else
@@ -56,7 +56,7 @@ bool InitRHI( ERHIModule InRenderApi )
 #endif
 
     CRHIInterface* RHIInterface = RHIModule->CreateInterface();
-    if ( !(RHIInterface && RHIInterface->Init( EnableDebug )) )
+    if ( !(RHIInterface && RHIInterface->Init( bEnableDebug )) )
     {
         LOG_ERROR( "[InitRHI] Failed to init RHIInterface, the application has to terminate" );
         return false;

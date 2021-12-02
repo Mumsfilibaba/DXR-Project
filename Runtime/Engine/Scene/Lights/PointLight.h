@@ -17,15 +17,15 @@ public:
     void SetShadowNearPlane( float InShadowNearPlane );
     void SetShadowFarPlane( float InShadowFarPlane );
 
-    FORCEINLINE void SetShadowCaster( bool InShadowCaster )
+    FORCEINLINE void SetShadowCaster( bool bInShadowCaster )
     {
-        ShadowCaster = InShadowCaster;
+        bShadowCaster = bInShadowCaster;
         CalculateMatrices();
     }
 
     FORCEINLINE bool IsShadowCaster() const
     {
-        return ShadowCaster;
+        return bShadowCaster;
     }
 
     FORCEINLINE const CVector3& GetPosition() const
@@ -58,5 +58,5 @@ private:
     CMatrix4 ViewMatrices[6];
     CMatrix4 ProjMatrices[6];
     CVector3 Position;
-    bool     ShadowCaster = false;
+    bool     bShadowCaster = false;
 };

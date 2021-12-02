@@ -122,7 +122,7 @@ struct PSInput
     float2 TexCoord        : TEXCOORD0;
     float3 TangentViewPos  : TANGENTVIEWPOS0;
     float3 TangentPosition : TANGENTPOSITION0;
-    bool   IsFrontFace     : SV_IsFrontFace;
+    bool   bIsFrontFace    : SV_IsFrontFace;
 };
 
 static const float HEIGHT_SCALE = 0.03f;

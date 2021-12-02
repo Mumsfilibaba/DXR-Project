@@ -110,8 +110,8 @@ bool CWindowsApplication::RegisterRawInputDevices( HWND Window )
     Devices[0].usUsage	   = 0x02;
     Devices[0].usUsagePage = 0x01;
 
-    bool Result = !!::RegisterRawInputDevices( Devices, DeviceCount, sizeof(RAWINPUTDEVICE) );
-    if ( !Result )
+    bool bResult = !!::RegisterRawInputDevices( Devices, DeviceCount, sizeof(RAWINPUTDEVICE) );
+    if ( !bResult )
     {
         LOG_ERROR("[CWindowsApplication] Failed to register Raw Input devices");
         return false;
@@ -136,8 +136,8 @@ bool CWindowsApplication::UnregisterRawInputDevices()
     Devices[0].usUsage	   = 0x02;
     Devices[0].usUsagePage = 0x01;
 
-    bool Result = !!::RegisterRawInputDevices( Devices, DeviceCount, sizeof(RAWINPUTDEVICE) );
-    if ( !Result )
+    bool bResult = !!::RegisterRawInputDevices( Devices, DeviceCount, sizeof(RAWINPUTDEVICE) );
+    if ( !bResult )
     {
         LOG_ERROR("[CWindowsApplication] Failed to unregister Raw Input devices");
         return false;
@@ -338,8 +338,8 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
         {
             if ( MessageWindow )
             {
-                const bool HasFocus = (Message == WM_SETFOCUS);
-                MessageListener->HandleWindowFocusChanged( MessageWindow, HasFocus );
+                const bool bHasFocus = (Message == WM_SETFOCUS);
+                MessageListener->HandleWindowFocusChanged( MessageWindow, bHasFocus );
             }
 
             break;
@@ -394,8 +394,8 @@ void CWindowsApplication::HandleStoredMessage( HWND Window, UINT Message, WPARAM
             const uint32 ScanCode = static_cast<uint32>(HIWORD( lParam ) & ScanCodeMask);
             const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode( ScanCode );
 
-            const bool IsRepeat = !!(lParam & KeyRepeatMask);
-            MessageListener->HandleKeyPressed( Key, IsRepeat, PlatformApplicationMisc::GetModifierKeyState() );
+            const bool bIsRepeat = !!(lParam & KeyRepeatMask);
+            MessageListener->HandleKeyPressed( Key, bIsRepeat, PlatformApplicationMisc::GetModifierKeyState() );
             break;
         }
 

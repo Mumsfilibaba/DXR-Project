@@ -17,7 +17,7 @@ void RHID3D12DeviceRemovedHandler( class CD3D12Device* Device );
 class CD3D12Device
 {
 public:
-    CD3D12Device( bool InEnableDebugLayer, bool InEnableGPUValidation, bool InEnableDRED );
+    CD3D12Device( bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED );
     ~CD3D12Device();
 
     bool Init();
@@ -55,9 +55,9 @@ public:
         return Adapter.Get();
     }
 
-    FORCEINLINE bool IsTearingSupported() const
+    FORCEINLINE bool CanAllowTearing() const
     {
-        return AllowTearing;
+        return bAllowTearing;
     }
 
     FORCEINLINE D3D12_RAYTRACING_TIER GetRayTracingTier() const
@@ -175,8 +175,8 @@ private:
 
     uint32 AdapterID = 0;
 
-    bool AllowTearing = false;
-    bool EnableDebugLayer = false;
-    bool EnableGPUValidation = false;
-    bool EnableDRED = false;
+    bool bAllowTearing = false;
+    bool bEnableDebugLayer = false;
+    bool bEnableGPUValidation = false;
+    bool bEnableDRED = false;
 };

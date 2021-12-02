@@ -194,8 +194,8 @@ void CGPUProfilerWindow::DrawWindow()
         ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoSavedSettings;
 
-    bool TempDrawProfiler = GDrawGPUProfiler.GetBool();
-    if ( ImGui::Begin( "Profiler", &TempDrawProfiler, Flags ) )
+    bool bTempDrawProfiler = GDrawGPUProfiler.GetBool();
+    if ( ImGui::Begin( "Profiler", &bTempDrawProfiler, Flags ) )
     {
         if ( ImGui::Button( "Start Profile" ) )
         {
@@ -227,5 +227,5 @@ void CGPUProfilerWindow::DrawWindow()
 
     ImGui::End();
 
-    GDrawGPUProfiler.SetBool( TempDrawProfiler );
+    GDrawGPUProfiler.SetBool( bTempDrawProfiler );
 }

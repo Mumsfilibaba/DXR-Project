@@ -276,7 +276,7 @@ void CD3D12RHICommandContext::UpdateBuffer( CD3D12Resource* Resource, uint64 Off
 
 void CD3D12RHICommandContext::Begin()
 {
-    Assert( IsReady == false );
+    Assert( bIsReady == false );
 
     TRACE_FUNCTION_SCOPE();
 
@@ -304,12 +304,12 @@ void CD3D12RHICommandContext::Begin()
         return;
     }
 
-    IsReady = true;
+    bIsReady = true;
 }
 
 void CD3D12RHICommandContext::End()
 {
-    Assert( IsReady == true );
+    Assert( bIsReady == true );
 
     TRACE_FUNCTION_SCOPE();
 
@@ -340,7 +340,7 @@ void CD3D12RHICommandContext::End()
         return;
     }
 
-    IsReady = false;
+    bIsReady = false;
 }
 
 void CD3D12RHICommandContext::BeginTimeStamp( CRHITimestampQuery* TimestampQuery, uint32 Index )
@@ -870,7 +870,7 @@ void CD3D12RHICommandContext::DiscardResource( CRHIMemoryResource* Resource )
     }
 }
 
-void CD3D12RHICommandContext::BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool Update )
+void CD3D12RHICommandContext::BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate )
 {
     D3D12_ERROR( Geometry != nullptr, "Geometry cannot be nullptr" );
 
@@ -883,21 +883,21 @@ void CD3D12RHICommandContext::BuildRayTracingGeometry( CRHIRayTracingGeometry* G
     CD3D12RHIRayTracingGeometry* DxGeometry = static_cast<CD3D12RHIRayTracingGeometry*>(Geometry);
     DxGeometry->VertexBuffer = DxVertexBuffer;
     DxGeometry->IndexBuffer = DxIndexBuffer;
-    DxGeometry->Build( *this, Update );
+    DxGeometry->Build( *this, bUpdate );
 
     CmdBatch->AddInUseResource( Geometry );
     CmdBatch->AddInUseResource( VertexBuffer );
     CmdBatch->AddInUseResource( IndexBuffer );
 }
 
-void CD3D12RHICommandContext::BuildRayTracingScene( CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update )
+void CD3D12RHICommandContext::BuildRayTracingScene( CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate )
 {
     D3D12_ERROR( RayTracingScene != nullptr, "RayTracingScene cannot be nullptr" );
 
     FlushResourceBarriers();
 
     CD3D12RHIRayTracingScene* DxScene = static_cast<CD3D12RHIRayTracingScene*>(RayTracingScene);
-    DxScene->Build( *this, Instances, NumInstances, Update );
+    DxScene->Build( *this, Instances, NumInstances, bUpdate );
 
     CmdBatch->AddInUseResource( RayTracingScene );
 }
@@ -1030,14 +1030,14 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
     }
 
     // Check Type
-    const bool IsTextureCube = (Texture->AsTextureCube() != nullptr);
+    const bool bIsTextureCube = (Texture->AsTextureCube() != nullptr);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
     CMemory::Memzero( &SrvDesc );
 
     SrvDesc.Format = Desc.Format;
     SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    if ( IsTextureCube )
+    if ( bIsTextureCube )
     {
         SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
         SrvDesc.TextureCube.MipLevels = Desc.MipLevels;
@@ -1055,7 +1055,7 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
     CMemory::Memzero( &UavDesc );
 
     UavDesc.Format = Desc.Format;
-    if ( IsTextureCube )
+    if ( bIsTextureCube )
     {
         UavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
         UavDesc.Texture2DArray.ArraySize = 6;
@@ -1083,7 +1083,7 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
     const uint32 UavStartDescriptorHandleIndex = StartDescriptorHandleIndex + 1;
     for ( uint32 i = 0; i < Desc.MipLevels; i++ )
     {
-        if ( IsTextureCube )
+        if ( bIsTextureCube )
         {
             UavDesc.Texture2DArray.MipSlice = i;
         }
@@ -1098,7 +1098,7 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
 
     for ( uint32 i = Desc.MipLevels; i < UavDescriptorHandleCount; i++ )
     {
-        if ( IsTextureCube )
+        if ( bIsTextureCube )
         {
             UavDesc.Texture2DArray.MipSlice = 0;
         }
@@ -1122,7 +1122,7 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
     TransitionResource( StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS );
     FlushResourceBarriers();
 
-    if ( IsTextureCube )
+    if ( bIsTextureCube )
     {
         TSharedRef<CD3D12RHIComputePipelineState> PipelineState = GD3D12RHICore->GetGenerateMipsPipelineTexureCube();
         CmdList.SetPipelineState( PipelineState->GetPipeline() );
@@ -1151,7 +1151,7 @@ void CD3D12RHICommandContext::GenerateMips( CRHITexture* Texture )
     uint32 DstHeight = Desc.Height;
     ConstantData.SrcMipLevel = 0;
 
-    const uint32 ThreadsZ = IsTextureCube ? 6 : 1;
+    const uint32 ThreadsZ = bIsTextureCube ? 6 : 1;
 
     uint32 RemainingMiplevels = Desc.MipLevels;
     for ( uint32 i = 0; i < NumDispatches; i++ )
@@ -1368,20 +1368,20 @@ void CD3D12RHICommandContext::InsertMarker( const CString& Message )
 void CD3D12RHICommandContext::BeginExternalCapture()
 {
     IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetGraphicsAnalysisInterface();
-    if ( GraphicsAnalysis && !IsCapturing )
+    if ( GraphicsAnalysis && !bIsCapturing )
     {
         GraphicsAnalysis->BeginCapture();
-        IsCapturing = true;
+        bIsCapturing = true;
     }
 }
 
 void CD3D12RHICommandContext::EndExternalCapture()
 {
     IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetGraphicsAnalysisInterface();
-    if ( GraphicsAnalysis && IsCapturing )
+    if ( GraphicsAnalysis && bIsCapturing )
     {
         GraphicsAnalysis->EndCapture();
-        IsCapturing = false;
+        bIsCapturing = false;
     }
 }
 

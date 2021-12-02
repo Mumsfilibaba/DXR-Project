@@ -47,7 +47,7 @@ public:
 
     FORCEINLINE bool Reset( CD3D12CommandAllocator& Allocator )
     {
-        IsReady = true;
+        bIsReady = true;
 
         HRESULT Result = CmdList->Reset( Allocator.GetAllocator(), nullptr );
         if ( Result == DXGI_ERROR_DEVICE_REMOVED )
@@ -60,7 +60,7 @@ public:
 
     FORCEINLINE bool Close()
     {
-        IsReady = false;
+        bIsReady = false;
 
         HRESULT Result = CmdList->Close();
         if ( Result == DXGI_ERROR_DEVICE_REMOVED )
@@ -227,9 +227,9 @@ public:
         CmdList->OMSetBlendFactor( BlendFactor );
     }
 
-    FORCEINLINE void OMSetRenderTargets( const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors, uint32 NumRenderTargetDescriptors, bool RTsSingleHandleToDescriptorRange, const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor )
+    FORCEINLINE void OMSetRenderTargets( const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors, uint32 NumRenderTargetDescriptors, bool bRTsSingleHandleToDescriptorRange, const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor )
     {
-        CmdList->OMSetRenderTargets( NumRenderTargetDescriptors, RenderTargetDescriptors, RTsSingleHandleToDescriptorRange, DepthStencilDescriptor );
+        CmdList->OMSetRenderTargets( NumRenderTargetDescriptors, RenderTargetDescriptors, bRTsSingleHandleToDescriptorRange, DepthStencilDescriptor );
     }
 
     FORCEINLINE void ResourceBarrier( const D3D12_RESOURCE_BARRIER* Barriers, uint32 NumBarriers )
@@ -267,9 +267,9 @@ public:
         CmdList->ResourceBarrier( 1, &Barrier );
     }
 
-    FORCEINLINE bool IsRecordning() const
+    FORCEINLINE bool IsReady() const
     {
-        return IsReady;
+        return bIsReady;
     }
 
     FORCEINLINE void SetName( const CString& Name )
@@ -297,5 +297,5 @@ private:
     TComPtr<ID3D12GraphicsCommandList>  CmdList;
     TComPtr<ID3D12GraphicsCommandList5> CmdList5;
     
-    bool IsReady = false;
+    bool bIsReady = false;
 };

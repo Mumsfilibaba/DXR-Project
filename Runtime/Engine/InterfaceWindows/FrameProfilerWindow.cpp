@@ -235,8 +235,8 @@ void CFrameProfilerWindow::DrawWindow()
         ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoSavedSettings;
 
-    bool TempDrawProfiler = GDrawFrameProfiler.GetBool();
-    if ( ImGui::Begin( "Profiler", &TempDrawProfiler, Flags ) )
+    bool bTempDrawProfiler = GDrawFrameProfiler.GetBool();
+    if ( ImGui::Begin( "Profiler", &bTempDrawProfiler, Flags ) )
     {
         if ( ImGui::Button( "Start Profile" ) )
         {
@@ -268,5 +268,5 @@ void CFrameProfilerWindow::DrawWindow()
 
     ImGui::End();
 
-    GDrawFrameProfiler.SetBool( TempDrawProfiler );
+    GDrawFrameProfiler.SetBool( bTempDrawProfiler );
 }

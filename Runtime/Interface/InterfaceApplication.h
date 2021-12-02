@@ -60,7 +60,7 @@ public:
     CIntVector2 GetCursorPos( const TSharedRef<CPlatformWindow>& RelativeWindow ) const;
 
     /* Set the visibility of the cursor */
-    void ShowCursor( bool IsVisible );
+    void ShowCursor( bool bIsVisible );
 
     /* Check the visibility for the cursor */
     bool IsCursorVisibile() const;
@@ -132,7 +132,7 @@ public:
     TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->GetCursor(); }
 
     /* Check if the application is currently running */
-    bool IsRunning() const { return Running; }
+    bool IsRunning() const { return bIsRunning; }
 
     /* Delegate for when the application is about to exit */
     DECLARE_EVENT( CExitEvent, CInterfaceApplication, int32 );
@@ -249,7 +249,7 @@ protected:
     CMainViewportChange MainViewportChange;
     
     // Is false when the platform application reports that the application should exit
-    bool Running = true;
+    bool bIsRunning = true;
 
     /* Context for ImGui */
     struct ImGuiContext* Context = nullptr;

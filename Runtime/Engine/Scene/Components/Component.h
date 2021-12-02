@@ -42,8 +42,8 @@ protected:
     CActor* ActorOwner = nullptr;
 
     /* Flags for this component that decides if it should start or not */
-    bool Startable : 1;
+    bool bIsStartable : 1;
 
     /* Flags for this component that decides if it should tick or not */
-    bool Tickable : 1;
+    bool bIsTickable : 1;
 };

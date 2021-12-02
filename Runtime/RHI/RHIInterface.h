@@ -46,7 +46,7 @@ public:
 
     virtual ~CRHIInterface() = default;
 
-    virtual bool Init( bool EnableDebug ) = 0;
+    virtual bool Init( bool bEnableDebug ) = 0;
 
     virtual CRHITexture2D* CreateTexture2D(
         EFormat Format,

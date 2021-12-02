@@ -798,46 +798,46 @@ struct SRHIDiscardResourceRenderCommand : public SRHIRenderCommand
 // Build RayTracing Geometry RenderCommand
 struct SRHIBuildRayTracingGeometryRenderCommand : public SRHIRenderCommand
 {
-    SRHIBuildRayTracingGeometryRenderCommand( CRHIRayTracingGeometry* InRayTracingGeometry, CRHIVertexBuffer* InVertexBuffer, CRHIIndexBuffer* InIndexBuffer, bool InUpdate )
+    SRHIBuildRayTracingGeometryRenderCommand( CRHIRayTracingGeometry* InRayTracingGeometry, CRHIVertexBuffer* InVertexBuffer, CRHIIndexBuffer* InIndexBuffer, bool bInUpdate )
         : RayTracingGeometry( InRayTracingGeometry )
         , VertexBuffer( InVertexBuffer )
         , IndexBuffer( InIndexBuffer )
-        , Update( InUpdate )
+        , bUpdate( bInUpdate )
     {
     }
 
     virtual void Execute( IRHICommandContext& CmdContext ) override
     {
-        CmdContext.BuildRayTracingGeometry( RayTracingGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), Update );
+        CmdContext.BuildRayTracingGeometry( RayTracingGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), bUpdate );
     }
 
     TSharedRef<CRHIRayTracingGeometry> RayTracingGeometry;
     TSharedRef<CRHIVertexBuffer> VertexBuffer;
     TSharedRef<CRHIIndexBuffer>  IndexBuffer;
 
-    bool Update;
+    bool bUpdate;
 };
 
 // Build RayTracing Scene RenderCommand
 struct SRHIBuildRayTracingSceneRenderCommand : public SRHIRenderCommand
 {
-    SRHIBuildRayTracingSceneRenderCommand( CRHIRayTracingScene* InRayTracingScene, const SRayTracingGeometryInstance* InInstances, uint32 InNumInstances, bool InUpdate )
+    SRHIBuildRayTracingSceneRenderCommand( CRHIRayTracingScene* InRayTracingScene, const SRayTracingGeometryInstance* InInstances, uint32 InNumInstances, bool bInUpdate )
         : RayTracingScene( InRayTracingScene )
         , Instances( InInstances )
         , NumInstances( InNumInstances )
-        , Update( InUpdate )
+        , bUpdate( bInUpdate )
     {
     }
 
     virtual void Execute( IRHICommandContext& CmdContext ) override
     {
-        CmdContext.BuildRayTracingScene( RayTracingScene.Get(), Instances, NumInstances, Update );
+        CmdContext.BuildRayTracingScene( RayTracingScene.Get(), Instances, NumInstances, bUpdate );
     }
 
     TSharedRef<CRHIRayTracingScene> RayTracingScene;
     const SRayTracingGeometryInstance* Instances;
     uint32 NumInstances;
-    bool Update;
+    bool bUpdate;
 };
 
 // GenerateMips RenderCommand

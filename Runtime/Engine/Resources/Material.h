@@ -27,10 +27,7 @@ public:
 
     void BuildBuffer( class CRHICommandList& CmdList );
 
-    FORCEINLINE bool IsBufferDirty() const
-    {
-        return MaterialBufferIsDirty;
-    }
+    FORCEINLINE bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
 
     void SetAlbedo( const CVector3& Albedo );
     void SetAlbedo( float r, float g, float b );
@@ -100,10 +97,10 @@ private:
     CString DebugName;
 
     /* This indicates that the constantbuffer is dirty and needs updating */
-    bool MaterialBufferIsDirty = true;
+    bool bMaterialBufferIsDirty = true;
 
     /* True if the material should render in the forward pass (Transparent surfaces) */
-    bool RenderInForwardPass = false;
+    bool bRenderInForwardPass = false;
 
     SMaterialDesc        	       Properties;
     TSharedRef<CRHIConstantBuffer> MaterialBuffer;

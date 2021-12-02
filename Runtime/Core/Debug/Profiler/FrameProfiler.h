@@ -99,10 +99,7 @@ class CORE_API CFrameProfiler
 {
 public:
 
-    static FORCEINLINE CFrameProfiler& Get()
-    {
-        return Instance;
-    }
+    static FORCEINLINE CFrameProfiler& Get() { return Instance; }
 
     /* Enables the collection of samples (Resume) */
     static void Enable();
@@ -147,7 +144,7 @@ private:
     int32 CurrentFps = 0;
     int32 Fps = 0;
 
-    bool Enabled = true;
+    bool bEnabled = true;
 
     Lockable<ProfileSamplesTable> CPUSamples;
 

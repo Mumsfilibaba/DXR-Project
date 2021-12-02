@@ -27,7 +27,7 @@ public:
     virtual bool Initialize( const CString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style ) override final;
 
     /* Shows the window */
-    virtual void Show( bool Maximized ) override final;
+    virtual void Show( bool bMaximized ) override final;
 
     /* Minimizes the window */
     virtual void Minimize() override final;
@@ -57,7 +57,7 @@ public:
     virtual void GetTitle( CString& OutTitle ) override final;
 
     /* Set the shape of the window */
-    virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) override final;
+    virtual void SetWindowShape( const SWindowShape& Shape, bool bMove ) override final;
 
     /* Retrieve the shape of the window */
     virtual void GetWindowShape( SWindowShape& OutWindowShape ) const override final;

@@ -11,7 +11,7 @@ CGPUProfiler::CGPUProfiler()
     : Timequeries( nullptr )
     , FrameTime()
     , Samples()
-    , Enabled( false )
+    , bEnabled( false )
 {
 }
 
@@ -33,12 +33,12 @@ void CGPUProfiler::Release()
 
 void CGPUProfiler::Enable()
 {
-    Enabled = true;
+    bEnabled = true;
 }
 
 void CGPUProfiler::Disable()
 {
-    Enabled = false;
+    bEnabled = false;
 }
 
 void CGPUProfiler::Tick()
@@ -77,7 +77,7 @@ void CGPUProfiler::GetGPUSamples( GPUProfileSamplesTable& OutSamples )
 
 void CGPUProfiler::BeginGPUFrame( CRHICommandList& CmdList )
 {
-    if ( Timequeries && Enabled )
+    if ( Timequeries && bEnabled )
     {
         CmdList.BeginTimeStamp( Timequeries.Get(), FrameTime.TimeQueryIndex );
     }
@@ -85,7 +85,7 @@ void CGPUProfiler::BeginGPUFrame( CRHICommandList& CmdList )
 
 void CGPUProfiler::EndGPUFrame( CRHICommandList& CmdList )
 {
-    if ( Timequeries && Enabled )
+    if ( Timequeries && bEnabled )
     {
         CmdList.EndTimeStamp( Timequeries.Get(), FrameTime.TimeQueryIndex );
     }
@@ -93,7 +93,7 @@ void CGPUProfiler::EndGPUFrame( CRHICommandList& CmdList )
 
 void CGPUProfiler::BeginGPUTrace( CRHICommandList& CmdList, const char* Name )
 {
-    if ( Timequeries && Enabled )
+    if ( Timequeries && bEnabled )
     {
         const CString ScopeName = Name;
 
@@ -124,7 +124,7 @@ void CGPUProfiler::BeginGPUTrace( CRHICommandList& CmdList, const char* Name )
 
 void CGPUProfiler::EndGPUTrace( CRHICommandList& CmdList, const char* Name )
 {
-    if ( Timequeries && Enabled )
+    if ( Timequeries && bEnabled )
     {
         const CString ScopeName = Name;
 

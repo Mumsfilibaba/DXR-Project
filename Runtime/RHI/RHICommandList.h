@@ -339,16 +339,16 @@ public:
         InsertCommand<SRHIDiscardResourceRenderCommand>( AddRef( Resource ) );
     }
 
-    void BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool Update )
+    void BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate )
     {
-        Assert( (Geometry != nullptr) && (!Update || (Update && Geometry->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)) );
-        InsertCommand<SRHIBuildRayTracingGeometryRenderCommand>( AddRef( Geometry ), AddRef( VertexBuffer ), AddRef( IndexBuffer ), Update );
+        Assert( (Geometry != nullptr) && (!bUpdate || (bUpdate && Geometry->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)) );
+        InsertCommand<SRHIBuildRayTracingGeometryRenderCommand>( AddRef( Geometry ), AddRef( VertexBuffer ), AddRef( IndexBuffer ), bUpdate );
     }
 
-    void BuildRayTracingScene( CRHIRayTracingScene* Scene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update )
+    void BuildRayTracingScene( CRHIRayTracingScene* Scene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate )
     {
-        Assert( (Scene != nullptr) && (!Update || (Update && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)) );
-        InsertCommand<SRHIBuildRayTracingSceneRenderCommand>( AddRef( Scene ), Instances, NumInstances, Update );
+        Assert( (Scene != nullptr) && (!bUpdate || (bUpdate && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)) );
+        InsertCommand<SRHIBuildRayTracingSceneRenderCommand>( AddRef( Scene ), Instances, NumInstances, bUpdate );
     }
 
     void GenerateMips( CRHITexture* Texture )

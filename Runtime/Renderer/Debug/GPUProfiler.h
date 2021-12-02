@@ -140,7 +140,7 @@ private:
     /* Lockable table for GPU- samples */
     Lockable<GPUProfileSamplesTable> Samples;
 
-    bool Enabled;
+    bool bEnabled;
 
     static CGPUProfiler Instance;
 };

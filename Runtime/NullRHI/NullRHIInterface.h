@@ -34,7 +34,7 @@ public:
 
     ~CNullRHIInterface() = default;
 
-    virtual bool Init( bool EnableDebug ) override final
+    virtual bool Init( bool bEnableDebug ) override final
     {
         return true;
     }

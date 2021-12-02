@@ -376,10 +376,10 @@ CIntVector2 CInterfaceApplication::GetCursorPos( const TSharedRef<CPlatformWindo
     return CursorPosition;
 }
 
-void CInterfaceApplication::ShowCursor( bool IsVisible )
+void CInterfaceApplication::ShowCursor( bool bIsVisible )
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
-    Cursor->SetVisibility( IsVisible );
+    Cursor->SetVisibility( bIsVisible );
 }
 
 bool CInterfaceApplication::IsCursorVisibile() const
@@ -535,9 +535,9 @@ void CInterfaceApplication::HandleKeyReleased( EKey KeyCode, SModifierKeyState M
     HandleKeyEvent( KeyEvent );
 }
 
-void CInterfaceApplication::HandleKeyPressed( EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState )
+void CInterfaceApplication::HandleKeyPressed( EKey KeyCode, bool bIsRepeat, SModifierKeyState ModierKeyState )
 {
-    SKeyEvent KeyEvent( KeyCode, true, IsRepeat, ModierKeyState );
+    SKeyEvent KeyEvent( KeyCode, true, bIsRepeat, ModierKeyState );
     HandleKeyEvent( KeyEvent );
 }
 
@@ -734,9 +734,9 @@ void CInterfaceApplication::HandleWindowMoved( const TSharedRef<CPlatformWindow>
     }
 }
 
-void CInterfaceApplication::HandleWindowFocusChanged( const TSharedRef<CPlatformWindow>& Window, bool HasFocus )
+void CInterfaceApplication::HandleWindowFocusChanged( const TSharedRef<CPlatformWindow>& Window, bool bHasFocus )
 {
-    SWindowFocusChangedEvent WindowFocusChangedEvent( Window, HasFocus );
+    SWindowFocusChangedEvent WindowFocusChangedEvent( Window, bHasFocus );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];

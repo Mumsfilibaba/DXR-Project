@@ -66,8 +66,8 @@ public:
     bool ResizeResources( uint32 Width, uint32 Height, SLightSetup& LightSetup );
 
 private:
-    bool CreateShadowMask( uint32 Width, uint32 Height, SLightSetup& LightSetup );
 
+    bool CreateShadowMask( uint32 Width, uint32 Height, SLightSetup& LightSetup )
     bool CreateShadowMaps( SLightSetup& LightSetup, SFrameResources& FrameResources );
 
     TSharedRef<CRHIConstantBuffer>        PerShadowMapBuffer;
@@ -88,10 +88,10 @@ private:
     TSharedRef<CRHIComputePipelineState>  CascadeGen;
     TSharedRef<CRHIComputeShader>         CascadeGenShader;
 
-    bool UpdateDirLight = true;
-    bool UpdatePointLight = true;
+    bool bUpdateDirLight   = true;
+    bool bUpdatePointLight = true;
 
-    uint64 DirLightFrame = 0;
+    uint64 DirLightFrame   = 0;
     uint64 PointLightFrame = 0;
 
     //uint64 FrameIndex = 0;
