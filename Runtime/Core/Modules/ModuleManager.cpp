@@ -116,6 +116,12 @@ IEngineModule* CModuleManager::GetEngineModule( const char* ModuleName )
     }
 }
 
+TUniquePtr<CModuleManager>& CModuleManager::GetPointer()
+{
+    static TUniquePtr<CModuleManager> Instance = TUniquePtr<CModuleManager>( new CModuleManager() );
+    return Instance;
+}
+
 CModuleManager& CModuleManager::Get()
 {
     return *GetPointer();
@@ -207,12 +213,6 @@ void CModuleManager::UnloadModule( const char* ModuleName )
 
         Modules.RemoveAt( Index );
     }
-}
-
-TUniquePtr<CModuleManager>& CModuleManager::GetPointer()
-{
-    static TUniquePtr<CModuleManager> Instance = TUniquePtr<CModuleManager>( new CModuleManager() );
-    return Instance;
 }
 
 int32 CModuleManager::GetModuleIndex( const char* ModuleName )
