@@ -1,6 +1,6 @@
 #include "LightSetup.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"

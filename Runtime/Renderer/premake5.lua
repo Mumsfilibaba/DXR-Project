@@ -27,7 +27,7 @@ project ( modulename )
 	filter "not options:monolithic"
 		defines
 		{
-			"RENDERER_API_EXPORT=(1)"
+			"RENDERER_IMPL=(1)"
 		}
 	filter {}
 

@@ -13,7 +13,7 @@
 #include "Engine/InterfaceWindows/FrameProfilerWindow.h"
 #include "Engine/Project/ProjectManager.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 

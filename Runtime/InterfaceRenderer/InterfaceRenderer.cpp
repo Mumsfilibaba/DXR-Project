@@ -7,7 +7,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Resources/TextureFactory.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShaderCompiler.h"
 

@@ -27,7 +27,7 @@ project ( modulename )
 	filter "not options:monolithic"
 		defines
 		{
-			"RHI_API_EXPORT=(1)"
+			"RHI_IMPL=(1)"
 		}
 	filter {}
 

@@ -28,8 +28,48 @@
 #include "Renderer/Renderer.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
+bool CEngineLoop::LoadCoreModules()
+{
+    IEngineModule* CoreModule            = CModuleManager::Get().LoadModule( "Core" );
+    IEngineModule* CoreApplicationModule = CModuleManager::Get().LoadModule( "CoreApplication" );
+    if ( !CoreModule || !CoreApplicationModule )
+    {
+        return false;
+    }
+
+    IEngineModule* InterfaceModule = CModuleManager::Get().LoadModule( "Interface" );
+    if ( !InterfaceModule )
+    {
+        return false;
+    }
+    
+    IEngineModule* EngineModule = CModuleManager::Get().LoadModule( "Engine" );
+    if ( !EngineModule )
+    {
+        return false;
+    }
+
+    IEngineModule* RHIModule = CModuleManager::Get().LoadModule( "RHI" );
+    if ( !RHIModule )
+    {
+        return false;
+    }
+
+    IEngineModule* RendererModule = CModuleManager::Get().LoadModule( "Renderer" );
+    if ( !RendererModule )
+    {
+        return false;
+    }
+}
+
 bool CEngineLoop::PreInitialize()
 {
+    // Load all core modules, these tend to not be reloadable
+    if ( !LoadCoreModules() )
+    {
+        return false;
+    }
+
     /* Enable the profiler */
     CFrameProfiler::Enable();
 

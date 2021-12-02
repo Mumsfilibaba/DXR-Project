@@ -27,7 +27,7 @@ project ( modulename )
 	filter "not options:monolithic"
 		defines
 		{
-			"ENGINE_API_EXPORT=(1)"
+			"ENGINE_API_IMPL=(1)"
 		}
 	filter {}
 

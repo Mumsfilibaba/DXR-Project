@@ -40,11 +40,11 @@ struct SRayTracingSupport
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-class CRHICore
+class CRHIInterface
 {
 public:
 
-    virtual ~CRHICore() = default;
+    virtual ~CRHIInterface() = default;
 
     virtual bool Init( bool EnableDebug ) = 0;
 
@@ -170,7 +170,7 @@ public:
 
 protected:
 
-    FORCEINLINE CRHICore( ERHIModule InCurrentRHI )
+    FORCEINLINE CRHIInterface( ERHIModule InCurrentRHI )
         : CurrentRHI( InCurrentRHI )
     {
     }
@@ -192,7 +192,7 @@ FORCEINLINE CRHITexture2D* RHICreateTexture2D(
     const SResourceData* InitialData = nullptr,
     const SClearValue& OptimizedClearValue = SClearValue() )
 {
-    return GRHICore->CreateTexture2D( Format, Width, Height, NumMips, NumSamples, Flags, InitialState, InitialData, OptimizedClearValue );
+    return GRHIInterface->CreateTexture2D( Format, Width, Height, NumMips, NumSamples, Flags, InitialState, InitialData, OptimizedClearValue );
 }
 
 FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(
@@ -207,7 +207,7 @@ FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(
     const SResourceData* InitialData = nullptr,
     const SClearValue& OptimizedClearValue = SClearValue() )
 {
-    return GRHICore->CreateTexture2DArray( Format, Width, Height, NumMips, NumSamples, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue );
+    return GRHIInterface->CreateTexture2DArray( Format, Width, Height, NumMips, NumSamples, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue );
 }
 
 FORCEINLINE CRHITextureCube* RHICreateTextureCube(
@@ -219,7 +219,7 @@ FORCEINLINE CRHITextureCube* RHICreateTextureCube(
     const SResourceData* InitialData = nullptr,
     const SClearValue& OptimizedClearValue = SClearValue() )
 {
-    return GRHICore->CreateTextureCube( Format, Size, NumMips, Flags, InitialState, InitialData, OptimizedClearValue );
+    return GRHIInterface->CreateTextureCube( Format, Size, NumMips, Flags, InitialState, InitialData, OptimizedClearValue );
 }
 
 FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(
@@ -232,7 +232,7 @@ FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(
     const SResourceData* InitialData = nullptr,
     const SClearValue& OptimizedClearValue = SClearValue() )
 {
-    return GRHICore->CreateTextureCubeArray( Format, Size, NumMips, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue );
+    return GRHIInterface->CreateTextureCubeArray( Format, Size, NumMips, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue );
 }
 
 FORCEINLINE CRHITexture3D* RHICreateTexture3D(
@@ -246,17 +246,17 @@ FORCEINLINE CRHITexture3D* RHICreateTexture3D(
     const SResourceData* InitialData = nullptr,
     const SClearValue& OptimizedClearValue = SClearValue() )
 {
-    return GRHICore->CreateTexture3D( Format, Width, Height, Depth, NumMips, Flags, InitialState, InitialData, OptimizedClearValue );
+    return GRHIInterface->CreateTexture3D( Format, Width, Height, Depth, NumMips, Flags, InitialState, InitialData, OptimizedClearValue );
 }
 
 FORCEINLINE class CRHISamplerState* RHICreateSamplerState( const struct SSamplerStateCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateSamplerState( CreateInfo );
+    return GRHIInterface->CreateSamplerState( CreateInfo );
 }
 
 FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer( uint32 Stride, uint32 NumVertices, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
-    return GRHICore->CreateVertexBuffer( Stride, NumVertices, Flags, InitialState, InitialData );
+    return GRHIInterface->CreateVertexBuffer( Stride, NumVertices, Flags, InitialState, InitialData );
 }
 
 template<typename T>
@@ -268,12 +268,12 @@ FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer( uint32 NumVertices, uint32 
 
 FORCEINLINE CRHIIndexBuffer* RHICreateIndexBuffer( EIndexFormat Format, uint32 NumIndices, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
-    return GRHICore->CreateIndexBuffer( Format, NumIndices, Flags, InitialState, InitialData );
+    return GRHIInterface->CreateIndexBuffer( Format, NumIndices, Flags, InitialState, InitialData );
 }
 
 FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer( uint32 Size, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
-    return GRHICore->CreateConstantBuffer( Size, Flags, InitialState, InitialData );
+    return GRHIInterface->CreateConstantBuffer( Size, Flags, InitialState, InitialData );
 }
 
 template<typename TSize>
@@ -285,7 +285,7 @@ FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer( uint32 Flags, EResource
 
 FORCEINLINE CRHIStructuredBuffer* RHICreateStructuredBuffer( uint32 Stride, uint32 NumElements, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData )
 {
-    return GRHICore->CreateStructuredBuffer( Stride, NumElements, Flags, InitialState, InitialData );
+    return GRHIInterface->CreateStructuredBuffer( Stride, NumElements, Flags, InitialState, InitialData );
 }
 
 template<typename TStride>
@@ -297,17 +297,17 @@ FORCEINLINE CRHIStructuredBuffer* RHICreateStructuredBuffer( uint32 NumElements,
 
 FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene( uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances )
 {
-    return GRHICore->CreateRayTracingScene( Flags, Instances, NumInstances );
+    return GRHIInterface->CreateRayTracingScene( Flags, Instances, NumInstances );
 }
 
 FORCEINLINE CRHIRayTracingGeometry* RHICreateRayTracingGeometry( uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer )
 {
-    return GRHICore->CreateRayTracingGeometry( Flags, VertexBuffer, IndexBuffer );
+    return GRHIInterface->CreateRayTracingGeometry( Flags, VertexBuffer, IndexBuffer );
 }
 
 FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView( const SShaderResourceViewCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateShaderResourceView( CreateInfo );
+    return GRHIInterface->CreateShaderResourceView( CreateInfo );
 }
 
 FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView( CRHITexture2D* Texture, EFormat Format, uint32 Mip, uint32 NumMips, float MinMipBias )
@@ -400,7 +400,7 @@ FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView( CRHIStructuredB
 
 FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView( const SUnorderedAccessViewCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateUnorderedAccessView( CreateInfo );
+    return GRHIInterface->CreateUnorderedAccessView( CreateInfo );
 }
 
 FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView( CRHITexture2D* Texture, EFormat Format, uint32 Mip )
@@ -483,7 +483,7 @@ FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView( CRHIStructure
 
 FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView( const SRenderTargetViewCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateRenderTargetView( CreateInfo );
+    return GRHIInterface->CreateRenderTargetView( CreateInfo );
 }
 
 FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView( CRHITexture2D* Texture, EFormat Format, uint32 Mip )
@@ -540,7 +540,7 @@ FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView( CRHITexture3D* Text
 
 FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView( const SDepthStencilViewCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateDepthStencilView( CreateInfo );
+    return GRHIInterface->CreateDepthStencilView( CreateInfo );
 }
 
 FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView( CRHITexture2D* Texture, EFormat Format, uint32 Mip )
@@ -586,132 +586,132 @@ FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView( CRHITextureCubeArra
 
 FORCEINLINE CRHIComputeShader* RHICreateComputeShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreateComputeShader( ShaderCode );
+    return GRHIInterface->CreateComputeShader( ShaderCode );
 }
 
 FORCEINLINE CRHIVertexShader* RHICreateVertexShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreateVertexShader( ShaderCode );
+    return GRHIInterface->CreateVertexShader( ShaderCode );
 }
 
 FORCEINLINE CRHIHullShader* RHICreateHullShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreateHullShader( ShaderCode );
+    return GRHIInterface->CreateHullShader( ShaderCode );
 }
 
 FORCEINLINE CRHIDomainShader* RHICreateDomainShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreateDomainShader( ShaderCode );
+    return GRHIInterface->CreateDomainShader( ShaderCode );
 }
 
 FORCEINLINE CRHIGeometryShader* RHICreateGeometryShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreateGeometryShader( ShaderCode );
+    return GRHIInterface->CreateGeometryShader( ShaderCode );
 }
 
 FORCEINLINE CRHIMeshShader* RHICreateMeshShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreateMeshShader( ShaderCode );
+    return GRHIInterface->CreateMeshShader( ShaderCode );
 }
 
 FORCEINLINE CRHIAmplificationShader* RHICreateAmplificationShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreateAmplificationShader( ShaderCode );
+    return GRHIInterface->CreateAmplificationShader( ShaderCode );
 }
 
 FORCEINLINE CRHIPixelShader* RHICreatePixelShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreatePixelShader( ShaderCode );
+    return GRHIInterface->CreatePixelShader( ShaderCode );
 }
 
 FORCEINLINE CRHIRayGenShader* RHICreateRayGenShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreateRayGenShader( ShaderCode );
+    return GRHIInterface->CreateRayGenShader( ShaderCode );
 }
 
 FORCEINLINE CRHIRayAnyHitShader* RHICreateRayAnyHitShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreateRayAnyHitShader( ShaderCode );
+    return GRHIInterface->CreateRayAnyHitShader( ShaderCode );
 }
 
 FORCEINLINE CRHIRayClosestHitShader* RHICreateRayClosestHitShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreateRayClosestHitShader( ShaderCode );
+    return GRHIInterface->CreateRayClosestHitShader( ShaderCode );
 }
 
 FORCEINLINE CRHIRayMissShader* RHICreateRayMissShader( const TArray<uint8>& ShaderCode )
 {
-    return GRHICore->CreateRayMissShader( ShaderCode );
+    return GRHIInterface->CreateRayMissShader( ShaderCode );
 }
 
 FORCEINLINE CRHIInputLayoutState* RHICreateInputLayout( const SInputLayoutStateCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateInputLayout( CreateInfo );
+    return GRHIInterface->CreateInputLayout( CreateInfo );
 }
 
 FORCEINLINE CRHIDepthStencilState* RHICreateDepthStencilState( const SDepthStencilStateCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateDepthStencilState( CreateInfo );
+    return GRHIInterface->CreateDepthStencilState( CreateInfo );
 }
 
 FORCEINLINE CRHIRasterizerState* RHICreateRasterizerState( const SRasterizerStateCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateRasterizerState( CreateInfo );
+    return GRHIInterface->CreateRasterizerState( CreateInfo );
 }
 
 FORCEINLINE CRHIBlendState* RHICreateBlendState( const SBlendStateCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateBlendState( CreateInfo );
+    return GRHIInterface->CreateBlendState( CreateInfo );
 }
 
 FORCEINLINE CRHIComputePipelineState* RHICreateComputePipelineState( const SComputePipelineStateCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateComputePipelineState( CreateInfo );
+    return GRHIInterface->CreateComputePipelineState( CreateInfo );
 }
 
 FORCEINLINE CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState( const SGraphicsPipelineStateCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateGraphicsPipelineState( CreateInfo );
+    return GRHIInterface->CreateGraphicsPipelineState( CreateInfo );
 }
 
 FORCEINLINE CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState( const SRayTracingPipelineStateCreateInfo& CreateInfo )
 {
-    return GRHICore->CreateRayTracingPipelineState( CreateInfo );
+    return GRHIInterface->CreateRayTracingPipelineState( CreateInfo );
 }
 
 FORCEINLINE class CRHITimestampQuery* RHICreateTimestampQuery()
 {
-    return GRHICore->CreateTimestampQuery();
+    return GRHIInterface->CreateTimestampQuery();
 }
 
 FORCEINLINE class CRHIViewport* RHICreateViewport( CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat )
 {
-    return GRHICore->CreateViewport( Window, Width, Height, ColorFormat, DepthFormat );
+    return GRHIInterface->CreateViewport( Window, Width, Height, ColorFormat, DepthFormat );
 }
 
 FORCEINLINE bool RHIUAVSupportsFormat( EFormat Format )
 {
-    return GRHICore->UAVSupportsFormat( Format );
+    return GRHIInterface->UAVSupportsFormat( Format );
 }
 
 FORCEINLINE class IRHICommandContext* RHIGetDefaultCommandContext()
 {
-    return GRHICore->GetDefaultCommandContext();
+    return GRHIInterface->GetDefaultCommandContext();
 }
 
 FORCEINLINE CString RHIGetAdapterName()
 {
-    return GRHICore->GetAdapterName();
+    return GRHIInterface->GetAdapterName();
 }
 
 FORCEINLINE void RHICheckShadingRateSupport( SShadingRateSupport& OutSupport )
 {
-    GRHICore->CheckShadingRateSupport( OutSupport );
+    GRHIInterface->CheckShadingRateSupport( OutSupport );
 }
 
 FORCEINLINE void RHICheckRayTracingSupport( SRayTracingSupport& OutSupport )
 {
-    GRHICore->CheckRayTracingSupport( OutSupport );
+    GRHIInterface->CheckRayTracingSupport( OutSupport );
 }
 
 FORCEINLINE bool RHISupportsRayTracing()

@@ -5,7 +5,7 @@
 
 #include "Renderer/Debug/GPUProfiler.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/TextureFactory.h"

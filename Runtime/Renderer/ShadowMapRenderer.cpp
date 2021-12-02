@@ -1,7 +1,7 @@
 #include "ShadowMapRenderer.h"
 #include "MeshDrawCommand.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Mesh.h"

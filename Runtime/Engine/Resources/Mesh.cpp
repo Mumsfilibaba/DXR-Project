@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
 
 bool CMesh::Init( const SMeshData& Data )

@@ -27,7 +27,7 @@ project ( modulename )
 	filter "not options:monolithic"
 		defines
 		{
-			"INTERFACE_API_EXPORT=(1)"
+			"INTERFACE_IMPL=(1)"
 		}
 	filter {}
 

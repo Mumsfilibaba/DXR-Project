@@ -1,5 +1,5 @@
 #include "D3D12CommandQueue.h"
-#include "D3D12RHICore.h"
+#include "D3D12RHIInterface.h"
 #include "D3D12RHIViewport.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"

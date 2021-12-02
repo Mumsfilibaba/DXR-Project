@@ -2,7 +2,7 @@
 
 #include "Engine/Assets/SceneData.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIPipelineState.h"
 #include "RHI/RHIShaderCompiler.h"

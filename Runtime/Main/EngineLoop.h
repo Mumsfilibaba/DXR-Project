@@ -5,6 +5,9 @@ class CEngineLoop
 {
 public:
 
+    /* Loads all the core modules */
+    static bool LoadCoreModules();
+
     /* Creates the application and load modules */
     static bool PreInitialize();
 

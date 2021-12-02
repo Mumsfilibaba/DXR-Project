@@ -1,4 +1,4 @@
-workspace "DXR-Engine-Tests"
+workspace "EngineTests"
     startproject 	"Container-Tests"
     architecture 	"x64"
     warnings 		"extra"
@@ -6,7 +6,10 @@ workspace "DXR-Engine-Tests"
 	cppdialect 		"C++17"
 	systemversion 	"latest"
 	characterset 	"Ascii"
-	flags { "MultiProcessorCompile" }
+	flags 
+	{ 
+		"MultiProcessorCompile"
+	}
     
 	-- Set output dir
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
@@ -23,6 +26,12 @@ workspace "DXR-Engine-Tests"
         "Debug",
         "Release",
     }
+
+	-- System includes
+	sysincludedirs
+	{
+		"../Runtime/",
+	}
 
     filter "configurations:Debug"
         symbols "on"
@@ -117,12 +126,6 @@ workspace "DXR-Engine-Tests"
 		{
 			"%{prj.name}",
         }
-		
-		-- System includes
-		sysincludedirs
-		{
-			"../DXR-Engine/",
-		}
     project "*"
 	
 	-- Math Tests
@@ -158,14 +161,7 @@ workspace "DXR-Engine-Tests"
 		includedirs
 		{
 			"%{prj.name}",
-        }
-		
-		-- System includes
-		sysincludedirs
-		{
-			"../DXR-Engine/",
-		}
-		
+        }	
     project "*"
 	
 	-- Templates Tests
@@ -201,13 +197,6 @@ workspace "DXR-Engine-Tests"
 		includedirs
 		{
 			"%{prj.name}",
-        }
-		
-		-- System includes
-		sysincludedirs
-		{
-			"../DXR-Engine/",
-		}
-		
+        }	
     project "*"
 	

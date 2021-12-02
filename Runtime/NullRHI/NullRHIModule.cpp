@@ -1,5 +1,5 @@
 #include "NullRHIModule.h"
-#include "NullRHICore.h"
+#include "NullRHIInterface.h"
 #include "NullRHIShaderCompiler.h"
 
 
@@ -7,9 +7,9 @@ IMPLEMENT_ENGINE_MODULE( CNullRHIModule, NullRHI );
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-CRHICore* CNullRHIModule::CreateCore()
+CRHIInterface* CNullRHIModule::CreateInterface()
 {
-    return dbg_new CNullRHICore();
+    return dbg_new CNullRHIInterface();
 }
 
 IRHIShaderCompiler* CNullRHIModule::CreateCompiler()
