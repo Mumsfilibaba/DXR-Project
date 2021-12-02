@@ -30,40 +30,55 @@
 
 bool CEngineLoop::LoadCoreModules()
 {
-    IEngineModule* CoreModule            = CModuleManager::Get().LoadModule( "Core" );
-    IEngineModule* CoreApplicationModule = CModuleManager::Get().LoadModule( "CoreApplication" );
+    IEngineModule* CoreModule            = CModuleManager::Get().LoadEngineModule( "Core" );
+    IEngineModule* CoreApplicationModule = CModuleManager::Get().LoadEngineModule( "CoreApplication" );
     if ( !CoreModule || !CoreApplicationModule )
     {
         return false;
     }
 
-    IEngineModule* InterfaceModule = CModuleManager::Get().LoadModule( "Interface" );
+    IEngineModule* InterfaceModule = CModuleManager::Get().LoadEngineModule( "Interface" );
     if ( !InterfaceModule )
     {
         return false;
     }
     
-    IEngineModule* EngineModule = CModuleManager::Get().LoadModule( "Engine" );
+    IEngineModule* EngineModule = CModuleManager::Get().LoadEngineModule( "Engine" );
     if ( !EngineModule )
     {
         return false;
     }
 
-    IEngineModule* RHIModule = CModuleManager::Get().LoadModule( "RHI" );
+    IEngineModule* RHIModule = CModuleManager::Get().LoadEngineModule( "RHI" );
     if ( !RHIModule )
     {
         return false;
     }
 
-    IEngineModule* RendererModule = CModuleManager::Get().LoadModule( "Renderer" );
+    IEngineModule* RendererModule = CModuleManager::Get().LoadEngineModule( "Renderer" );
     if ( !RendererModule )
     {
         return false;
     }
+
+    return true;
 }
 
 bool CEngineLoop::PreInitialize()
 {
+    /* Init output console */
+    NErrorDevice::GConsoleWindow = PlatformConsoleWindow::Make();
+    if ( !NErrorDevice::GConsoleWindow )
+    {
+        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to initialize ConsoleWindow" );
+        return false;
+    }
+    else
+    {
+        NErrorDevice::GConsoleWindow->Show( true );
+        NErrorDevice::GConsoleWindow->SetTitle( CString( CProjectManager::GetProjectName() ) + ": Error Console" );
+    }
+
     // Load all core modules, these tend to not be reloadable
     if ( !LoadCoreModules() )
     {
@@ -81,19 +96,6 @@ bool CEngineLoop::PreInitialize()
     {
         PlatformApplicationMisc::MessageBox( "ERROR", "Failed to initialize Project" );
         return false;
-    }
-
-    /* Init output console */
-    NErrorDevice::GConsoleWindow = PlatformConsoleWindow::Make();
-    if ( !NErrorDevice::GConsoleWindow )
-    {
-        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to initialize ConsoleWindow" );
-        return false;
-    }
-    else
-    {
-        NErrorDevice::GConsoleWindow->Show( true );
-        NErrorDevice::GConsoleWindow->SetTitle( CString( CProjectManager::GetProjectName() ) + ": Error Console");
     }
 
 #if !PRODUCTION_BUILD
@@ -274,13 +276,14 @@ bool CEngineLoop::Release()
 
     ReleaseRHI();
 
-    CModuleManager::Get().ReleaseAllModules();
-
     CDispatchQueue::Get().Release();
 
     CInterfaceApplication::Release();
 
     PlatformThreadMisc::Release();
+    
+    // Release all modules at this point
+    CModuleManager::Release();
 
     SafeRelease( NErrorDevice::GConsoleWindow );
 

@@ -16,8 +16,3 @@ IRHIShaderCompiler* CNullRHIModule::CreateCompiler()
 {
     return dbg_new CNullRHIShaderCompiler();
 }
-
-const char* CNullRHIModule::GetName() const
-{
-    return "NullRHI";
-}

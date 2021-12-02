@@ -1416,10 +1416,10 @@ CRHIDepthStencilState* CD3D12RHIInterface::CreateDepthStencilState( const SDepth
     D3D12_DEPTH_STENCIL_DESC Desc;
     CMemory::Memzero( &Desc );
 
-    Desc.DepthEnable = CreateInfo.DepthEnable;
+    Desc.DepthEnable = CreateInfo.bDepthEnable;
     Desc.DepthFunc = ConvertComparisonFunc( CreateInfo.DepthFunc );
     Desc.DepthWriteMask = ConvertDepthWriteMask( CreateInfo.DepthWriteMask );
-    Desc.StencilEnable = CreateInfo.StencilEnable;
+    Desc.StencilEnable = CreateInfo.bStencilEnable;
     Desc.StencilReadMask = CreateInfo.StencilReadMask;
     Desc.StencilWriteMask = CreateInfo.StencilWriteMask;
     Desc.FrontFace = ConvertDepthStencilOp( CreateInfo.FrontFace );
@@ -1433,17 +1433,17 @@ CRHIRasterizerState* CD3D12RHIInterface::CreateRasterizerState( const SRasterize
     D3D12_RASTERIZER_DESC Desc;
     CMemory::Memzero( &Desc );
 
-    Desc.AntialiasedLineEnable = CreateInfo.AntialiasedLineEnable;
-    Desc.ConservativeRaster = (CreateInfo.EnableConservativeRaster) ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+    Desc.AntialiasedLineEnable = CreateInfo.bAntialiasedLineEnable;
+    Desc.ConservativeRaster = (CreateInfo.bEnableConservativeRaster) ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
     Desc.CullMode = ConvertCullMode( CreateInfo.CullMode );
     Desc.DepthBias = CreateInfo.DepthBias;
     Desc.DepthBiasClamp = CreateInfo.DepthBiasClamp;
-    Desc.DepthClipEnable = CreateInfo.DepthClipEnable;
+    Desc.DepthClipEnable = CreateInfo.bDepthClipEnable;
     Desc.SlopeScaledDepthBias = CreateInfo.SlopeScaledDepthBias;
     Desc.FillMode = ConvertFillMode( CreateInfo.FillMode );
     Desc.ForcedSampleCount = CreateInfo.ForcedSampleCount;
-    Desc.FrontCounterClockwise = CreateInfo.FrontCounterClockwise;
-    Desc.MultisampleEnable = CreateInfo.MultisampleEnable;
+    Desc.FrontCounterClockwise = CreateInfo.bFrontCounterClockwise;
+    Desc.MultisampleEnable = CreateInfo.bMultisampleEnable;
 
     return dbg_new CD3D12RHIRasterizerState( Device, Desc );
 }
@@ -1453,18 +1453,18 @@ CRHIBlendState* CD3D12RHIInterface::CreateBlendState( const SBlendStateCreateInf
     D3D12_BLEND_DESC Desc;
     CMemory::Memzero( &Desc );
 
-    Desc.AlphaToCoverageEnable = CreateInfo.AlphaToCoverageEnable;
-    Desc.IndependentBlendEnable = CreateInfo.IndependentBlendEnable;
+    Desc.AlphaToCoverageEnable = CreateInfo.bAlphaToCoverageEnable;
+    Desc.IndependentBlendEnable = CreateInfo.bIndependentBlendEnable;
     for ( uint32 i = 0; i < 8; i++ )
     {
-        Desc.RenderTarget[i].BlendEnable = CreateInfo.RenderTarget[i].BlendEnable;
+        Desc.RenderTarget[i].BlendEnable = CreateInfo.RenderTarget[i].bBlendEnable;
         Desc.RenderTarget[i].BlendOp = ConvertBlendOp( CreateInfo.RenderTarget[i].BlendOp );
         Desc.RenderTarget[i].BlendOpAlpha = ConvertBlendOp( CreateInfo.RenderTarget[i].BlendOpAlpha );
         Desc.RenderTarget[i].DestBlend = ConvertBlend( CreateInfo.RenderTarget[i].DestBlend );
         Desc.RenderTarget[i].DestBlendAlpha = ConvertBlend( CreateInfo.RenderTarget[i].DestBlendAlpha );
         Desc.RenderTarget[i].SrcBlend = ConvertBlend( CreateInfo.RenderTarget[i].SrcBlend );
         Desc.RenderTarget[i].SrcBlendAlpha = ConvertBlend( CreateInfo.RenderTarget[i].SrcBlendAlpha );
-        Desc.RenderTarget[i].LogicOpEnable = CreateInfo.RenderTarget[i].LogicOpEnable;
+        Desc.RenderTarget[i].LogicOpEnable = CreateInfo.RenderTarget[i].bLogicOpEnable;
         Desc.RenderTarget[i].LogicOp = ConvertLogicOp( CreateInfo.RenderTarget[i].LogicOp );
         Desc.RenderTarget[i].RenderTargetWriteMask = ConvertRenderTargetWriteState( CreateInfo.RenderTarget[i].RenderTargetWriteMask );
     }

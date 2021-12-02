@@ -9,8 +9,3 @@ IInterfaceRenderer* CInterfaceRendererModule::CreateRenderer()
 {
     return CInterfaceRenderer::Make();;
 }
-
-const char* CInterfaceRendererModule::GetName() const
-{
-    return "InterfaceRenderer";
-}

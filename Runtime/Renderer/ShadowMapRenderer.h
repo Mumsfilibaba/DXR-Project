@@ -67,7 +67,7 @@ public:
 
 private:
 
-    bool CreateShadowMask( uint32 Width, uint32 Height, SLightSetup& LightSetup )
+    bool CreateShadowMask( uint32 Width, uint32 Height, SLightSetup& LightSetup );
     bool CreateShadowMaps( SLightSetup& LightSetup, SFrameResources& FrameResources );
 
     TSharedRef<CRHIConstantBuffer>        PerShadowMapBuffer;

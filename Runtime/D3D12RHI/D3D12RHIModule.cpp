@@ -15,8 +15,3 @@ IRHIShaderCompiler* CD3D12RHIModule::CreateCompiler()
 {
     return GD3D12ShaderCompiler;
 }
-
-const char* CD3D12RHIModule::GetName() const
-{
-    return "D3D12RHI";
-}

@@ -28,7 +28,7 @@ void CGameConsoleWindow::Tick()
     TSharedRef<CPlatformWindow> MainWindow = CInterfaceApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainWindow->GetWidth();
-	
+    
     // HACK: Push window up above titlebar to remove the rounded corners
     const ImVec2 Offset( 20.0f, -20.0f );
 
@@ -462,14 +462,14 @@ void CGameConsoleWindow::HandleKeyPressedEvent( const SKeyEvent& Event )
 {
     Assert( InputHandler.IsValid() );
 
-    InputHandler->ConsoleToggled = false;
+    InputHandler->bConsoleToggled = false;
 
-    if ( Event.IsDown )
+    if ( Event.bIsDown )
     {
-        if ( !Event.IsRepeat && Event.KeyCode == EKey::Key_GraveAccent )
+        if ( !Event.bIsRepeat && Event.KeyCode == EKey::Key_GraveAccent )
         {
             bIsActive = !bIsActive;
-            InputHandler->ConsoleToggled = true;
+            InputHandler->bConsoleToggled = true;
         }
     }
 }

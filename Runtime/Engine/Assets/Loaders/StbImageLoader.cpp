@@ -140,11 +140,11 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
             LOG_INFO( ("[CStbImageLoader]: Loaded image '" + Filename + "'").CStr() );
         }
 
-        Image->Image = Move( Pixels );
-        Image->Format = Format;
-        Image->Width = (uint16)Width;
-        Image->Height = (uint16)Height;
-        Image->IsLoaded = true;
+        Image->Image     = Move( Pixels );
+        Image->Format    = Format;
+        Image->Width     = (uint16)Width;
+        Image->Height    = (uint16)Height;
+        Image->bIsLoaded = true;
     };
 
     SDispatch NewTask;

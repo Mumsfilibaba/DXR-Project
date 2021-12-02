@@ -76,7 +76,7 @@ bool CShadowMapRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameRe
 
         SDepthStencilStateCreateInfo DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-        DepthStencilStateInfo.DepthEnable = true;
+        DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
@@ -176,7 +176,7 @@ bool CShadowMapRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameRe
 
         SDepthStencilStateCreateInfo DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-        DepthStencilStateInfo.DepthEnable = true;
+        DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );

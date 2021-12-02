@@ -55,7 +55,7 @@ bool CForwardRenderer::Init( SFrameResources& FrameResources )
 
     SDepthStencilStateCreateInfo DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-    DepthStencilStateInfo.DepthEnable = true;
+    DepthStencilStateInfo.bDepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
@@ -84,8 +84,8 @@ bool CForwardRenderer::Init( SFrameResources& FrameResources )
     }
 
     SBlendStateCreateInfo BlendStateInfo;
-    BlendStateInfo.IndependentBlendEnable = false;
-    BlendStateInfo.RenderTarget[0].BlendEnable = true;
+    BlendStateInfo.bIndependentBlendEnable = false;
+    BlendStateInfo.RenderTarget[0].bBlendEnable = true;
 
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState( BlendStateInfo );
     if ( !BlendState )

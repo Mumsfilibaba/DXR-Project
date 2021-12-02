@@ -28,12 +28,12 @@ public:
 
     FORCEINLINE bool IsStartable() const
     {
-        return Startable;
+        return bIsStartable;
     }
 
     FORCEINLINE bool IsTickable() const
     {
-        return Tickable;
+        return bIsTickable;
     }
 
 protected:

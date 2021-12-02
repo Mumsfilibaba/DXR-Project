@@ -156,6 +156,12 @@ project (projectname .. "Launcher")
 		-- Force references to module function in order to include it in the program
 		linkoptions 
 		{
+			"/INCLUDE:LinkModule_Core",
+			"/INCLUDE:LinkModule_CoreApplication",
+			"/INCLUDE:LinkModule_Interface",
+			"/INCLUDE:LinkModule_RHI",
+			"/INCLUDE:LinkModule_Engine",
+			"/INCLUDE:LinkModule_Renderer",
 			"/INCLUDE:LinkModule_InterfaceRenderer",
 			"/INCLUDE:LinkModule_NullRHI",
 			"/INCLUDE:LinkModule_D3D12RHI",

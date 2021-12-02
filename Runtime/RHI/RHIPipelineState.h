@@ -64,8 +64,8 @@ struct SDepthStencilStateCreateInfo
     uint8           StencilReadMask = 0xff;
     uint8           StencilWriteMask = 0xff;
     bool            bStencilEnable = false;
-    SDepthStencilOp  FrontFace = SDepthStencilOp();
-    SDepthStencilOp  BackFace = SDepthStencilOp();
+    SDepthStencilOp FrontFace = SDepthStencilOp();
+    SDepthStencilOp BackFace = SDepthStencilOp();
 };
 
 class CRHIDepthStencilState : public CRHIResource

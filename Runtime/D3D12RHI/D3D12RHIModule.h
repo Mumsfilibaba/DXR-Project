@@ -16,7 +16,4 @@ public:
     /* Creates the RHI shader compiler */
     virtual class IRHIShaderCompiler* CreateCompiler() override final;
 
-    /* Retrieve the module's name */
-    virtual const char* GetName() const override final;
-
 };

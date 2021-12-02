@@ -3,12 +3,6 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Templates/StringUtils.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-CModuleManager CModuleManager::Instance;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
 IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
 {
     Assert( ModuleName != nullptr );
@@ -44,7 +38,7 @@ IEngineModule* CModuleManager::LoadEngineModule( const char* ModuleName )
     }
     else
     {
-        // Load the module dynamically 
+        // Load the module dynamically
         PlatformModule Module = PlatformLibrary::LoadDynamicLib( ModuleName );
         if ( !Module )
         {
@@ -122,6 +116,41 @@ IEngineModule* CModuleManager::GetEngineModule( const char* ModuleName )
     }
 }
 
+CModuleManager& CModuleManager::Get()
+{
+    return *GetPointer();
+}
+
+void CModuleManager::Release()
+{
+    GetPointer().Reset();
+}
+
+CModuleManager::~CModuleManager()
+{
+    const int32 NumModules = Modules.Size();
+    for ( int32 Index = 0; Index < NumModules; Index++ )
+    {
+        SModule& Module = Modules[Index];
+
+        IEngineModule* EngineModule = Module.Interface;
+        if ( EngineModule )
+        {
+            EngineModule->Unload();
+
+            // The pointer is owned by the ModuleManager and should not be released anywhere else
+            SafeDelete( EngineModule );
+        }
+
+        // Unload the dynamic library
+        PlatformModule Handle = Module.Handle;
+        PlatformLibrary::FreeDynamicLib( Handle );
+        Module.Handle = nullptr;
+    }
+
+    Modules.Clear();
+}
+
 PlatformModule CModuleManager::GetModule( const char* ModuleName )
 {
     const int32 Index = GetModuleIndex( ModuleName );
@@ -180,29 +209,10 @@ void CModuleManager::UnloadModule( const char* ModuleName )
     }
 }
 
-void CModuleManager::ReleaseAllModules()
+TUniquePtr<CModuleManager>& CModuleManager::GetPointer()
 {
-    const int32 NumModules = Modules.Size();
-    for ( int32 Index = 0; Index < NumModules; Index++ )
-    {
-        SModule& Module = Modules[Index];
-
-        IEngineModule* EngineModule = Module.Interface;
-        if ( EngineModule )
-        {
-            EngineModule->Unload();
-
-            // The pointer is owned by the ModuleManager and should not be released anywhere else
-            SafeDelete( EngineModule );
-        }
-
-        // Unload the dynamic library
-        PlatformModule Handle = Module.Handle;
-        PlatformLibrary::FreeDynamicLib( Handle );
-        Module.Handle = nullptr;
-    }
-
-    Modules.Clear();
+    static TUniquePtr<CModuleManager> Instance = TUniquePtr<CModuleManager>( new CModuleManager() );
+    return Instance;
 }
 
 int32 CModuleManager::GetModuleIndex( const char* ModuleName )

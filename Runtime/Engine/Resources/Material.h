@@ -36,10 +36,10 @@ public:
     void SetRoughness( float Roughness );
     void SetAmbientOcclusion( float AO );
 
-    void ForceForwardPass( bool ForceForwardRender );
+    void ForceForwardPass( bool bForceForwardRender );
 
-    void EnableHeightMap( bool InEnableHeightMap );
-    void EnableAlphaMask( bool InEnableAlphaMask );
+    void EnableHeightMap( bool bInEnableHeightMap );
+    void EnableAlphaMask( bool bInEnableAlphaMask );
 
     void SetDebugName( const CString& InDebugName );
 
@@ -59,12 +59,12 @@ public:
 
     FORCEINLINE bool ShouldRenderInPrePass()
     {
-        return !HasAlphaMask() && !HasHeightMap() && !RenderInForwardPass;
+        return !HasAlphaMask() && !HasHeightMap() && !bRenderInForwardPass;
     }
 
     FORCEINLINE bool ShouldRenderInForwardPass()
     {
-        return RenderInForwardPass;
+        return bRenderInForwardPass;
     }
 
     FORCEINLINE bool HasAlphaMask() const

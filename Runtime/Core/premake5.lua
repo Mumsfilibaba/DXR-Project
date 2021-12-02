@@ -16,6 +16,10 @@ project ( modulename )
 	pchheader "PreCompiled.h"
 	pchsource "PreCompiled.cpp"
 
+	-- All targets except the dependencies
+	targetdir 	("%{wks.location}/Build/bin/"     .. outputdir)
+	objdir 		("%{wks.location}/Build/bin-int/" .. outputdir)	
+
 	forceincludes  
 	{ 
 		"PreCompiled.h"

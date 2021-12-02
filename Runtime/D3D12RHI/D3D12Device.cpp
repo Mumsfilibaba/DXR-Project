@@ -244,7 +244,7 @@ bool CD3D12Device::Init()
         }
         else
         {
-            DebugInterface->bEnableDebugLayer();
+            DebugInterface->EnableDebugLayer();
         }
 
         if ( bEnableDRED )

@@ -43,9 +43,6 @@ public:
 
     // Called before the module is unloaded by the application
     virtual bool Unload() = 0;
-
-    // The name of the module
-    virtual const char* GetName() const = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -80,7 +77,13 @@ public:
     DECLARE_RETURN_DELEGATE( CInitializeStaticModuleDelegate, IEngineModule* );
 
     // Create the instance with make
-    static FORCEINLINE CModuleManager& Get() { return Instance; }
+    static CModuleManager& Get();
+
+    // Releases all modules that are loaded
+    static void Release();
+
+    // Public destructor for TUniquePtr
+    ~CModuleManager();
 
     // Load a new module into the engine. ModuleName is without platform extension.
     IEngineModule* LoadEngineModule( const char* ModuleName );
@@ -100,9 +103,6 @@ public:
     // Release a single module
     void UnloadModule( const char* ModuleName );
 
-    // Releases all modules that are loaded
-    void ReleaseAllModules();
-    
     // Delegate for when a new module is loaded into the engine, name and IEngineModule pointer is the arguments
     DECLARE_MULTICAST_DELEGATE( CModuleLoadedDelegate, const char*, IEngineModule* );
     CModuleLoadedDelegate GetModuleLoadedDelegate() { return ModuleLoadedDelegate; }
@@ -149,9 +149,6 @@ public:
 
 private:
 
-    CModuleManager() = default;
-    ~CModuleManager() = default;
-
     // Stores information about a loaded engine module
     struct SModule
     {
@@ -174,6 +171,12 @@ private:
         PlatformModule Handle;
     };
 
+    // Retrieve the singleton instance, this contains a static variable in order to control when the instance is created
+    static TUniquePtr<CModuleManager>& GetPointer();
+
+    // Private constructor
+    CModuleManager() = default;
+
     // Returns the index of the specified module, if not found it returns -1
     int32 GetModuleIndex( const char* ModuleName );
 
@@ -188,8 +191,6 @@ private:
     
     // Array of all modules that can be loaded statically
     TArray<TPair<CString, CInitializeStaticModuleDelegate>> StaticModuleDelegates;
-
-    static CModuleManager Instance;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -205,6 +206,8 @@ public:
     // Constructor that registers the module to the ModuleManager
     TStaticModuleInitializer( const char* ModuleName )
     {
+        CDebug::OutputDebugString(ModuleName + CString("\n"));
+
         CInitializeDelegate InitializeDelegate = CInitializeDelegate::CreateRaw(this, &TStaticModuleInitializer<ModuleClass>::MakeModuleInterface );
         CModuleManager::Get().RegisterStaticModule( ModuleName, InitializeDelegate );
     }

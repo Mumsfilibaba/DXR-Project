@@ -37,7 +37,7 @@ CD3D12RHIViewport::~CD3D12RHIViewport()
 bool CD3D12RHIViewport::Init()
 {
     // Save the flags
-    Flags = GetDevice()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+    Flags = GetDevice()->CanAllowTearing() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
     const uint32 NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
@@ -76,7 +76,7 @@ bool CD3D12RHIViewport::Init()
         Result = TempSwapChain.GetAs<IDXGISwapChain3>( &SwapChain );
         if ( FAILED( Result ) )
         {
-            LOG_ERROR( "[D3D12Viewport]: FAILED to retrive IDXGISwapChain3" );
+            LOG_ERROR( "[CD3D12Viewport]: FAILED to retrive IDXGISwapChain3" );
             return false;
         }
 
@@ -91,7 +91,7 @@ bool CD3D12RHIViewport::Init()
     }
     else
     {
-        LOG_ERROR( "[D3D12Viewport]: FAILED to create SwapChain" );
+        LOG_ERROR( "[CD3D12Viewport]: FAILED to create SwapChain" );
         return false;
     }
 
@@ -102,7 +102,7 @@ bool CD3D12RHIViewport::Init()
         return false;
     }
 
-    LOG_INFO( "[D3D12Viewport]: Created SwapChain" );
+    LOG_INFO( "[CD3D12Viewport]: Created SwapChain" );
     return true;
 }
 
@@ -125,7 +125,7 @@ bool CD3D12RHIViewport::Resize( uint32 InWidth, uint32 InHeight )
         }
         else
         {
-            LOG_WARNING( "[D3D12Viewport]: Resize FAILED" );
+            LOG_WARNING( "[CD3D12Viewport]: Resize FAILED" );
             return false;
         }
 
@@ -218,7 +218,7 @@ bool CD3D12RHIViewport::RetriveBackBuffers()
         HRESULT Result = SwapChain->GetBuffer( i, IID_PPV_ARGS( &BackBufferResource ) );
         if ( FAILED( Result ) )
         {
-            LOG_INFO( "[D3D12Viewport]: GetBuffer(" + ToString( i ) + ") Failed" );
+            LOG_INFO( "[CD3D12Viewport]: GetBuffer(" + ToString( i ) + ") Failed" );
             return false;
         }
 

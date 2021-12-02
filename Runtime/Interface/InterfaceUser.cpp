@@ -41,28 +41,28 @@ void CInterfaceUser::HandleKeyEvent( const SKeyEvent& KeyEvent )
     if ( Index >= 0 )
     {
         SKeyState& KeyState = KeyStates[Index];
-        if ( KeyEvent.IsDown )
+        if ( KeyEvent.bIsDown )
         {
             KeyState.PreviousState = KeyState.IsDown;
-            KeyState.IsDown = KeyEvent.IsDown;
+            KeyState.IsDown        = KeyEvent.bIsDown;
 
-            if ( KeyEvent.IsRepeat )
+            if ( KeyEvent.bIsRepeat )
             {
                 KeyState.RepeatCount++;
             }
         }
         else
         {
-            KeyState.IsDown = 0;
+            KeyState.IsDown        = 0;
             KeyState.PreviousState = 0;
-            KeyState.RepeatCount = 0;
-            KeyState.TimePressed = 0.0f;
+            KeyState.RepeatCount   = 0;
+            KeyState.TimePressed   = 0.0f;
         }
     }
     else
     {
         SKeyState NewKeyState( KeyEvent.KeyCode );
-        NewKeyState.IsDown = KeyEvent.IsDown;
+        NewKeyState.IsDown = KeyEvent.bIsDown;
         KeyStates.Push( NewKeyState );
     }
 }
@@ -76,7 +76,7 @@ void CInterfaceUser::HandleMouseButtonEvent( const SMouseButtonEvent& MouseButto
         if ( MouseButtonState.IsDown )
         {
             MouseButtonState.PreviousState = MouseButtonState.IsDown;
-            MouseButtonState.IsDown = MouseButtonEvent.IsDown;
+            MouseButtonState.IsDown = MouseButtonEvent.bIsDown;
         }
         else
         {
@@ -88,7 +88,7 @@ void CInterfaceUser::HandleMouseButtonEvent( const SMouseButtonEvent& MouseButto
     else
     {
         SMouseButtonState NewMouseButtonState( MouseButtonEvent.Button );
-        NewMouseButtonState.IsDown = MouseButtonEvent.IsDown;
+        NewMouseButtonState.IsDown = MouseButtonEvent.bIsDown;
         MouseButtonStates.Push( NewMouseButtonState );
     }
 }

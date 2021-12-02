@@ -185,7 +185,7 @@ float4 PSMain(PSInput Input) : SV_Target0
     const float3 WorldPosition = Input.WorldPosition;
     const float3 V             = normalize(CameraBuffer.Position - WorldPosition);
     float3 N = normalize(Input.Normal);
-    if (!Input.IsFrontFace)
+    if (!Input.bIsFrontFace)
     {
         N = -N;
     }
