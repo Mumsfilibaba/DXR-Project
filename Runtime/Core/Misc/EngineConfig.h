@@ -63,22 +63,21 @@ public:
 
     ~CConfigValue() = default;
 
-    /* Retrieves the type of this value */
-    uint32 GetType() const { return Type; }
+    /* Retrieves the current value that this variable holds */ 
+    FORCEINLINE const CString& GetValue() const { return CurrentValue; }
 
     /* Retrieves the value that currently exists in the file */
-    const CString& GetSavedValue() const { return SavedValue; }
+    FORCEINLINE const CString& GetSavedValue() const { return SavedValue; }
 
-    /* Retrieves the current value that this variable holds */ 
-    const CString& GetCurrentValue() const { return CurrentValue; }
-
-    CConfigValue& operator=( CConfigValue&& Other );
+    /* Move assignment operator */
+    CConfigValue& operator=( CConfigValue&& RHS );
     {
 
         return *this;
     }
 
-    CConfigValue& operator=( const CConfigValue& Other )
+    /* Copy assignment operator */
+    CConfigValue& operator=( const CConfigValue& RHS )
     {
 
         return *this;
@@ -90,8 +89,6 @@ private:
     CString SavedValue;
     /* Current value in the runtime, this will be saved when the file is flushed to disk */
     CString CurrentValue;
-    /* How the current value should be retrieved */
-    uint32 Type = ValueType_Unknown;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
