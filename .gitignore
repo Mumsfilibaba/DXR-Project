@@ -1,5 +1,5 @@
 # Settings Files
-*.ini
+imgui.ini
 
 # Ignore all Visual Studio project and solution files
 *.sln
