@@ -1,6 +1,5 @@
 #pragma once
-#include "CoreModule.h"
-
+#include "Core/CoreModule.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/HashTable.h"
@@ -11,21 +10,10 @@ class CConfigValue
 {
 public:
 
-    enum
-    {
-        ValueType_Unknown = 0,
-        ValueType_String  = 1,
-        ValueType_Int32   = 2,
-        ValueType_Int64   = 3,
-        ValueType_Float   = 4,
-        ValueType_Boolean = 5,
-    };
-
     /* Empty constructor */
     CConfigValue()
         : SavedValue()
         , CurrentValue()
-        , Type()
     {
     }
     
@@ -33,7 +21,6 @@ public:
     CConfigValue( CString&& InString )
         : SavedValue( InString )
         , CurrentValue( InString )
-        , Type()
     {
     }
     
@@ -41,7 +28,6 @@ public:
     CConfigValue( const CString& InString )
         : SavedValue( InString )
         , CurrentValue( InString )
-        , Type()
     {
     }
 
@@ -49,7 +35,6 @@ public:
     CConfigValue( CConfigValue&& Other )
         : SavedValue( Move( Other.SavedValue ) )
         , CurrentValue( Move( Other.CurrentValue ) )
-        , Type( Move( Other.Type ) )
     {
     }
     
@@ -57,7 +42,6 @@ public:
     CConfigValue( const CConfigValue& Other )
         : SavedValue( Other.SavedValue )
         , CurrentValue( Other.CurrentValue )
-        , Type( Other.Type )
     {
     }
 
@@ -70,16 +54,18 @@ public:
     FORCEINLINE const CString& GetSavedValue() const { return SavedValue; }
 
     /* Move assignment operator */
-    CConfigValue& operator=( CConfigValue&& RHS );
+    CConfigValue& operator=( CConfigValue&& RHS )
     {
-
+        SavedValue   = Move( RHS.SavedValue );
+        CurrentValue = Move( RHS.CurrentValue );
         return *this;
     }
 
     /* Copy assignment operator */
     CConfigValue& operator=( const CConfigValue& RHS )
     {
-
+        SavedValue   = RHS.SavedValue;
+        CurrentValue = RHS.CurrentValue;
         return *this;
     }
 
@@ -146,7 +132,7 @@ public:
     bool GetBoolean( const char* SectionName, const char* Name, bool& bOutValue );
 
 private:
-    THashTable<CString, CConfigSection, CStringHasher> Sections;
+    THashTable<CString, CConfigSection, SStringHasher> Sections;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -157,6 +143,7 @@ public:
 
     /* Registers a new Config file to the engine that will be searched when looking for a value */
     static void RegisterConfigFile( CConfigFile* ConfigFile );
+
     /* Unregister a new Config file from the engine */
     static void UnregisterConfigFile( CConfigFile* ConfigFile );
 
