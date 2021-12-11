@@ -173,10 +173,10 @@ public:
     {
     }
 
-    virtual void BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool Update ) override final
+    virtual void BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate ) override final
     {
     }
-    virtual void BuildRayTracingScene( CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update ) override final
+    virtual void BuildRayTracingScene( CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate ) override final
     {
     }
 

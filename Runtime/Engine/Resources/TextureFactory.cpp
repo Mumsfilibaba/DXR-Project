@@ -2,7 +2,7 @@
 
 #include "Engine/Assets/SceneData.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIPipelineState.h"
 #include "RHI/RHIShaderCompiler.h"
@@ -54,14 +54,14 @@ void CTextureFactory::Release()
 
 CRHITexture2D* CTextureFactory::LoadFromImage2D( SImage2D* InImage, uint32 CreateFlags )
 {
-    if ( !InImage || (InImage && !InImage->IsLoaded) )
+    if ( !InImage || (InImage && !InImage->bIsLoaded) )
     {
         return nullptr;
     }
 
     const uint8* Pixels = InImage->Image.Get();
-    uint32 Width = InImage->Width;
-    uint32 Height = InImage->Height;
+    uint32  Width  = InImage->Width;
+    uint32  Height = InImage->Height;
     EFormat Format = InImage->Format;
 
     CRHITexture2D* NewTexture = LoadFromMemory( Pixels, Width, Height, CreateFlags, Format );

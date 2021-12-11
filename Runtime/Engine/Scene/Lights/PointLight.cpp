@@ -47,7 +47,7 @@ void CPointLight::SetShadowFarPlane( float InShadowFarPlane )
 
 void CPointLight::CalculateMatrices()
 {
-    if ( !ShadowCaster )
+    if ( !bShadowCaster )
     {
         return;
     }

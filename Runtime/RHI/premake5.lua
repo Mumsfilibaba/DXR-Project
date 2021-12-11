@@ -1,9 +1,7 @@
-project "RHI"
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location 		"%{wks.location}/Runtime/RHI"
-	characterset 	"Ascii"
+modulename = "RHI"
+
+project ( modulename )
+	location ( "%{wks.location}/Runtime/" .. modulename )
 
 	-- Build type 
 	filter "not options:monolithic"
@@ -20,22 +18,18 @@ project "RHI"
 	targetdir 	("%{wks.location}/Build/bin/"     .. outputdir)
 	objdir 		("%{wks.location}/Build/bin-int/" .. outputdir)	
 
-	-- Includes
-	includedirs
-	{
-		"%{wks.location}/Runtime",
-	}
-
 	forceincludes  
 	{ 
 		-- TODO: "PreCompiled.h"
 	}
 
 	-- Defines
-	defines
-	{
-		"RHI_API_EXPORT=(1)"
-	}
+	filter "not options:monolithic"
+		defines
+		{
+			"RHI_IMPL=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -73,7 +67,7 @@ project "RHI"
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 	
@@ -94,5 +88,13 @@ project "RHI"
 			"Cocoa.framework",
 			"AppKit.framework",
 			"MetalKit.framework",
+		}
+	filter {}
+
+	-- Remove non-windows files
+	filter "system:windows"
+		removefiles
+		{
+			"%{wks.location}/**/Mac/**"
 		}
 	filter {}

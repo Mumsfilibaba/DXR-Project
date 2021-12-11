@@ -44,8 +44,8 @@ public:
 
         CWindowsCriticalSection::PlatformHandle CriticalSection = Lock.GetLock().GetPlatformHandle();
 
-        bool Result = !!SleepConditionVariableCS( &ConditionVariable, CriticalSection, INFINITE );
-        if ( !Result )
+        bool bResult = !!SleepConditionVariableCS( &ConditionVariable, CriticalSection, INFINITE );
+        if ( !bResult )
         {
             CString ErrorString;
             CWindowsDebugMisc::GetLastErrorString( ErrorString );

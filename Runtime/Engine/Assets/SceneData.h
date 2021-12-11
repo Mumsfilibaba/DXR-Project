@@ -83,7 +83,7 @@ struct SImage2D
     /* The format that the image was loaded as */
     EFormat Format = EFormat::Unknown;
 
-    bool IsLoaded = false;
+    bool bIsLoaded = false;
 };
 
 /* Contains loaded data from a material */

@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
 
 bool CMesh::Init( const SMeshData& Data )
@@ -21,7 +21,7 @@ bool CMesh::Init( const SMeshData& Data )
         VertexBuffer->SetName( "VertexBuffer" );
     }
 
-    const bool RTOn = RHISupportsRayTracing();
+    const bool bRTOn = RHISupportsRayTracing();
 
     InitialData = SResourceData( Data.Indices.Data(), Data.Indices.SizeInBytes() );
     IndexBuffer = RHICreateIndexBuffer( EIndexFormat::uint32, IndexCount, BufferFlags, EResourceState::IndexBuffer, &InitialData );
@@ -34,7 +34,7 @@ bool CMesh::Init( const SMeshData& Data )
         IndexBuffer->SetName( "IndexBuffer" );
     }
 
-    if ( RTOn )
+    if ( bRTOn )
     {
         RTGeometry = RHICreateRayTracingGeometry( RayTracingStructureBuildFlag_None, VertexBuffer.Get(), IndexBuffer.Get() );
         if ( !RTGeometry )

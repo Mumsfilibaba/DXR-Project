@@ -196,7 +196,7 @@ bool CD3D12BaseShader::GetShaderReflection( CD3D12BaseShader* Shader )
 
     if ( GD3D12ShaderCompiler->HasRootSignature( Shader ) )
     {
-        Shader->ContainsRootSignature = true;
+        Shader->bContainsRootSignature = true;
     }
 
     return true;
@@ -278,7 +278,7 @@ bool CD3D12RHIBaseComputeShader::Init()
 
     if ( GD3D12ShaderCompiler->HasRootSignature( this ) )
     {
-        ContainsRootSignature = true;
+        bContainsRootSignature = true;
     }
 
     UINT x;

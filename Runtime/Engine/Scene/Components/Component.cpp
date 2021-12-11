@@ -3,8 +3,8 @@
 CComponent::CComponent( CActor* InActorOwner )
     : CCoreObject()
     , ActorOwner( InActorOwner )
-    , Startable( true )
-    , Tickable( true )
+    , bIsStartable( true )
+    , bIsTickable( true )
 {
     Assert( InActorOwner != nullptr );
     CORE_OBJECT_INIT();

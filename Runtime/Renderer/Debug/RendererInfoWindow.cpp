@@ -2,7 +2,7 @@
 
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 
 #include "Renderer/Renderer.h"
 

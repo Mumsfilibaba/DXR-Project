@@ -1,9 +1,7 @@
-project "D3D12RHI"
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location 		"%{wks.location}/Runtime/D3D12RHI"
-	characterset 	"Ascii"
+modulename = "D3D12RHI"
+
+project ( modulename )
+	location ( "%{wks.location}/Runtime/" .. modulename )
 
 	-- Build type 
 	filter "not options:monolithic"
@@ -20,22 +18,18 @@ project "D3D12RHI"
 	targetdir 	("%{wks.location}/Build/bin/"     .. outputdir)
 	objdir 		("%{wks.location}/Build/bin-int/" .. outputdir)	
 
-	-- Includes
-	includedirs
-	{
-		"%{wks.location}/Runtime",
-	}
-
 	forceincludes  
 	{ 
 		-- TODO: "PreCompiled.h"
 	}
 
 	-- Defines
-	defines
-	{
-		"D3D12RHI_API_EXPORT=(1)"
-	}
+	filter "not options:monolithic"
+		defines
+		{
+			"D3D12RHI_API_EXPORT=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -70,7 +64,7 @@ project "D3D12RHI"
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 
@@ -79,5 +73,13 @@ project "D3D12RHI"
 		{
 			"%{wks.location}/**/D3D12/**",
 			"%{wks.location}/**/Windows/**"
+		}
+	filter {}
+
+	-- Remove non-windows files
+	filter "system:windows"
+		removefiles
+		{
+			"%{wks.location}/**/Mac/**"
 		}
 	filter {}

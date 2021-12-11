@@ -1,24 +1,19 @@
 projectname = "Editor"
 
 project ( projectname )
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location 		( "%{wks.location}/" .. projectname )
-	kind 			"WindowedApp"
-	characterset 	"Ascii"
+	location ( "%{wks.location}/" .. projectname )
+	kind 	 "WindowedApp"
 
 	--TODO: Pre-Compiled Headers
 
 	-- All targets except the dependencies
 	targetdir 	( "%{wks.location}/Build/bin/"     .. outputdir )
 	objdir 		( "%{wks.location}/Build/bin-int/" .. outputdir )	
-	
+
 	-- Includes
 	includedirs
 	{
 		"%{wks.location}/" .. projectname,
-		"%{wks.location}/Runtime",
 	}
 
 	sysincludedirs
@@ -80,6 +75,32 @@ project ( projectname )
 		"Renderer",
 	}
 
+	filter "options:monolithic"
+		links
+		{
+			"NullRHI",
+			"InterfaceRenderer",
+			"Sandbox",
+		}
+	filter {}
+
+	-- Specific linking for windows
+	filter { "system:windows", "options:monolithic" }
+		links
+		{
+			"D3D12RHI",
+		}
+
+		-- Force references to module function in order to include it in the program
+		linkoptions 
+		{
+			"/INCLUDE:LinkModule_InterfaceRenderer",
+			"/INCLUDE:LinkModule_NullRHI",
+			"/INCLUDE:LinkModule_D3D12RHI",
+			"/INCLUDE:LinkModule_Sandbox",
+		}
+	filter {}
+
 	-- Include EntryPoint
 	filter "system:windows"
 		files
@@ -87,7 +108,7 @@ project ( projectname )
 			"%{wks.location}/Runtime/Main/Windows/WindowsMain.cpp",	
 		}
 	filter {}
-	
+
 	filter "system:macosx"
 		files
 		{
@@ -101,7 +122,7 @@ project ( projectname )
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 	
@@ -122,5 +143,13 @@ project ( projectname )
 			"Cocoa.framework",
 			"AppKit.framework",
 			"MetalKit.framework",
+		}
+	filter {}
+
+	-- Remove non-windows files
+	filter "system:windows"
+		removefiles
+		{
+			"%{wks.location}/**/Mac/**"
 		}
 	filter {}

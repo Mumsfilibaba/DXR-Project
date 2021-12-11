@@ -11,7 +11,7 @@ class IConsoleVariable : public IConsoleObject
 public:
     virtual void SetInt( int32 InValue ) = 0;
     virtual void SetFloat( float InValue ) = 0;
-    virtual void SetBool( bool InValue ) = 0;
+    virtual void SetBool( bool bValue ) = 0;
     virtual void SetString( const CString& InValue ) = 0;
 
     virtual int32 GetInt() const = 0;

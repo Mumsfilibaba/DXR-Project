@@ -7,24 +7,24 @@
 
 #define LOG_ERROR(Message)                              \
     {                                                   \
-        Assert(NErrorDevice::ConsoleWindow != nullptr);              \
-        NErrorDevice::ConsoleWindow->SetColor(EConsoleColor::Red);   \
-        NErrorDevice::ConsoleWindow->Print(CString(Message) + "\n"); \
-        NErrorDevice::ConsoleWindow->SetColor(EConsoleColor::White); \
+        Assert(NErrorDevice::GConsoleWindow != nullptr);              \
+        NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Red);   \
+        NErrorDevice::GConsoleWindow->Print(CString(Message) + "\n"); \
+        NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White); \
     }
 
 #define LOG_WARNING(Message)                             \
     {                                                    \
-        Assert(NErrorDevice::ConsoleWindow != nullptr);               \
-        NErrorDevice::ConsoleWindow->SetColor(EConsoleColor::Yellow); \
-        NErrorDevice::ConsoleWindow->Print(CString(Message) + "\n");  \
-        NErrorDevice::ConsoleWindow->SetColor(EConsoleColor::White);  \
+        Assert(NErrorDevice::GConsoleWindow != nullptr);               \
+        NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Yellow); \
+        NErrorDevice::GConsoleWindow->Print(CString(Message) + "\n");  \
+        NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White);  \
     }
 
 #define LOG_INFO(Message)                               \
     {                                                   \
-        Assert(NErrorDevice::ConsoleWindow != nullptr);              \
-        NErrorDevice::ConsoleWindow->SetColor(EConsoleColor::Green); \
-        NErrorDevice::ConsoleWindow->Print(CString(Message) + "\n"); \
-        NErrorDevice::ConsoleWindow->SetColor(EConsoleColor::White); \
+        Assert(NErrorDevice::GConsoleWindow != nullptr);              \
+        NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Green); \
+        NErrorDevice::GConsoleWindow->Print(CString(Message) + "\n"); \
+        NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White); \
     }

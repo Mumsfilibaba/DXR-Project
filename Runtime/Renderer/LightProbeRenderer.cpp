@@ -1,6 +1,6 @@
 #include "LightProbeRenderer.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameResources )

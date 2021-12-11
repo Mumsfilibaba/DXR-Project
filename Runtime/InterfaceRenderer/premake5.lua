@@ -1,9 +1,7 @@
-project "InterfaceRenderer"
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location 		"%{wks.location}/Runtime/InterfaceRenderer"
-	characterset 	"Ascii"
+modulename = "InterfaceRenderer"
+
+project ( modulename )
+	location ( "%{wks.location}/Runtime/" .. modulename )
 
 	-- Build type 
 	filter "not options:monolithic"
@@ -20,22 +18,18 @@ project "InterfaceRenderer"
 	targetdir 	("%{wks.location}/Build/bin/"     .. outputdir)
 	objdir 		("%{wks.location}/Build/bin-int/" .. outputdir)	
 
-	-- Includes
-	includedirs
-	{
-		"%{wks.location}/Runtime",
-	}
-
 	forceincludes  
 	{ 
 		-- TODO: "PreCompiled.h"
 	}
 
 	-- Defines
-	defines
-	{
-		"INTERFACE_RENDERER_API_EXPORT=(1)"
-	}
+	filter "not options:monolithic"
+		defines
+		{
+			"INTERFACE_RENDERER_API_EXPORT=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -86,7 +80,7 @@ project "InterfaceRenderer"
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 	
@@ -107,5 +101,13 @@ project "InterfaceRenderer"
 			"Cocoa.framework",
 			"AppKit.framework",
 			"MetalKit.framework",
+		}
+	filter {}
+
+	-- Remove non-windows files
+	filter "system:windows"
+		removefiles
+		{
+			"%{wks.location}/**/Mac/**"
 		}
 	filter {}

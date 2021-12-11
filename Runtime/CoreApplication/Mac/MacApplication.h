@@ -143,7 +143,7 @@ private:
     CCriticalSection             DeferredEventsMutex;
 
     /* If the application has been terminating or not */
-    bool IsTerminating = false;
+    bool bIsTerminating = false;
 };
 
 #endif

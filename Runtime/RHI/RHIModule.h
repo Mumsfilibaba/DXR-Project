@@ -1,10 +1,14 @@
 #pragma once
 #include "Core/Modules/ModuleManager.h"
 
-#if RHI_API_EXPORT
+#if MONOLITHIC_BUILD
+#define RHI_API
+#else
+#if RHI_IMPL
 #define RHI_API MODULE_EXPORT
 #else
 #define RHI_API MODULE_IMPORT
+#endif
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -19,8 +23,8 @@
 enum class ERHIModule : uint32
 {
     Unknown = 0,
-    Null = 1,
-    D3D12 = 2,
+    Null    = 1,
+    D3D12   = 2,
 };
 
 inline const char* ToString( ERHIModule RenderLayerApi )
@@ -45,7 +49,7 @@ class RHI_API CRHIModule : public CDefaultEngineModule
 public:
 
     /* Creates the core RHI object */
-    virtual class CRHICore* CreateCore() = 0;
+    virtual class CRHIInterface* CreateInterface() = 0;
 
     /* Creates the RHI shader compiler */
     virtual class IRHIShaderCompiler* CreateCompiler() = 0;
@@ -58,5 +62,5 @@ protected:
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-extern RHI_API class CRHICore* GRHICore;
+extern RHI_API class CRHIInterface* GRHIInterface;
 extern RHI_API class IRHIShaderCompiler* GShaderCompiler;

@@ -58,7 +58,7 @@ private:
     AtomicInt32 DispatchAdded;
     AtomicInt32 DispatchCompleted;
 
-    volatile bool IsRunning;
+    volatile bool bIsRunning;
 
     static CDispatchQueue Instance;
 };

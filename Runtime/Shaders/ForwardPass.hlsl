@@ -122,7 +122,7 @@ struct PSInput
     float2 TexCoord        : TEXCOORD0;
     float3 TangentViewPos  : TANGENTVIEWPOS0;
     float3 TangentPosition : TANGENTPOSITION0;
-    bool   IsFrontFace     : SV_IsFrontFace;
+    bool   bIsFrontFace    : SV_IsFrontFace;
 };
 
 static const float HEIGHT_SCALE = 0.03f;
@@ -185,7 +185,7 @@ float4 PSMain(PSInput Input) : SV_Target0
     const float3 WorldPosition = Input.WorldPosition;
     const float3 V             = normalize(CameraBuffer.Position - WorldPosition);
     float3 N = normalize(Input.Normal);
-    if (!Input.IsFrontFace)
+    if (!Input.bIsFrontFace)
     {
         N = -N;
     }

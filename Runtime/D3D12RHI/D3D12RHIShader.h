@@ -138,7 +138,7 @@ public:
 
     FORCEINLINE bool HasRootSignature() const
     {
-        return ContainsRootSignature;
+        return bContainsRootSignature;
     }
 
     FORCEINLINE EShaderVisibility GetShaderVisibility() const
@@ -174,7 +174,7 @@ protected:
     SShaderResourceCount ResourceCount;
     SShaderResourceCount RTLocalResourceCount;
 
-    bool ContainsRootSignature = false;
+    bool bContainsRootSignature = false;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

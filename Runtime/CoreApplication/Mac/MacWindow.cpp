@@ -35,7 +35,7 @@ CMacWindow::~CMacWindow()
 
 bool CMacWindow::Initialize( const CString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle )
 {
-    __block bool Result = false;
+    __block bool bResult = false;
     MakeMainThreadCall(^
     {
         SCOPED_AUTORELEASE_POOL();
@@ -104,19 +104,19 @@ bool CMacWindow::Initialize( const CString& InTitle, uint32 InWidth, uint32 InHe
         // Set styleflags
         StyleParams = InStyle;
 
-        Result = true;
+        bResult = true;
     }, true);
 
-    return Result;
+    return bResult;
 }
 
-void CMacWindow::Show( bool Maximized )
+void CMacWindow::Show( bool bMaximized )
 {
 	MakeMainThreadCall(^
 	{
 		[Window makeKeyAndOrderFront:Window];
 
-		if ( Maximized )
+		if ( bMaximized )
 		{
 			[Window zoom:Window];
 		}
@@ -230,7 +230,7 @@ void CMacWindow::GetTitle( CString& OutTitle )
     }
 }
 
-void CMacWindow::SetWindowShape( const SWindowShape& Shape, bool Move )
+void CMacWindow::SetWindowShape( const SWindowShape& Shape, bool bMove )
 {
 	SCOPED_AUTORELEASE_POOL();
 	
@@ -244,7 +244,7 @@ void CMacWindow::SetWindowShape( const SWindowShape& Shape, bool Move )
 			[Window setFrame: Frame display: YES animate: YES];
 		}
 		
-		if (Move)
+		if ( bMove )
 		{
 			// TODO: Make sure this is correct
 			[Window setFrameOrigin:NSMakePoint(Shape.Position.x, Shape.Position.y - Frame.size.height + 1)];

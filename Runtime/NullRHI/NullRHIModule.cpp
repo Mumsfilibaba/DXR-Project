@@ -1,27 +1,18 @@
 #include "NullRHIModule.h"
-#include "NullRHICore.h"
+#include "NullRHIInterface.h"
 #include "NullRHIShaderCompiler.h"
 
-extern "C"
-{
-    // Function for loading the NullRHI into the application
-    NULLRHI_API IEngineModule* LoadEngineModule()
-    {
-        return dbg_new CNullRHIModule();
-    }
-}
 
-CRHICore* CNullRHIModule::CreateCore()
+IMPLEMENT_ENGINE_MODULE( CNullRHIModule, NullRHI );
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
+CRHIInterface* CNullRHIModule::CreateInterface()
 {
-    return dbg_new CNullRHICore();
+    return dbg_new CNullRHIInterface();
 }
 
 IRHIShaderCompiler* CNullRHIModule::CreateCompiler()
 {
     return dbg_new CNullRHIShaderCompiler();
-}
-
-const char* CNullRHIModule::GetName() const
-{
-    return "NullRHI";
 }

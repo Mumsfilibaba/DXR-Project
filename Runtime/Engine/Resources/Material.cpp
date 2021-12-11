@@ -1,6 +1,6 @@
 #include "Material.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHICommandList.h"
 
 #include "Engine/Engine.h"
@@ -36,52 +36,52 @@ void CMaterial::BuildBuffer( CRHICommandList& CmdList )
     CmdList.UpdateBuffer( MaterialBuffer.Get(), 0, sizeof( SMaterialDesc ), &Properties );
     CmdList.TransitionBuffer( MaterialBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer );
 
-    MaterialBufferIsDirty = false;
+    bMaterialBufferIsDirty = false;
 }
 
 void CMaterial::SetAlbedo( const CVector3& Albedo )
 {
     Properties.Albedo = Albedo;
-    MaterialBufferIsDirty = true;
+    bMaterialBufferIsDirty = true;
 }
 
 void CMaterial::SetAlbedo( float r, float g, float b )
 {
     Properties.Albedo = CVector3( r, g, b );
-    MaterialBufferIsDirty = true;
+    bMaterialBufferIsDirty = true;
 }
 
 void CMaterial::SetMetallic( float Metallic )
 {
     Properties.Metallic = Metallic;
-    MaterialBufferIsDirty = true;
+    bMaterialBufferIsDirty = true;
 }
 
 void CMaterial::SetRoughness( float Roughness )
 {
     Properties.Roughness = Roughness;
-    MaterialBufferIsDirty = true;
+    bMaterialBufferIsDirty = true;
 }
 
 void CMaterial::SetAmbientOcclusion( float AO )
 {
     Properties.AO = AO;
-    MaterialBufferIsDirty = true;
+    bMaterialBufferIsDirty = true;
 }
 
-void CMaterial::ForceForwardPass( bool ForceForwardRender )
+void CMaterial::ForceForwardPass( bool bForceForwardRender )
 {
-    RenderInForwardPass = ForceForwardRender;
+    bRenderInForwardPass = bForceForwardRender;
 }
 
-void CMaterial::EnableHeightMap( bool InEnableHeightMap )
+void CMaterial::EnableHeightMap( bool bInEnableHeightMap )
 {
-    Properties.EnableHeight = (int32)InEnableHeightMap;
+    Properties.EnableHeight = (int32)bInEnableHeightMap;
 }
 
-void CMaterial::EnableAlphaMask( bool InEnableAlphaMask )
+void CMaterial::EnableAlphaMask( bool bInEnableAlphaMask )
 {
-    Properties.EnableMask = (int32)InEnableAlphaMask;
+    Properties.EnableMask = (int32)bInEnableAlphaMask;
 }
 
 void CMaterial::SetDebugName( const CString& InDebugName )

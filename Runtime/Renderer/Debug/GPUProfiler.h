@@ -90,10 +90,7 @@ public:
     /* Release the resources */
     static void Release();
 
-    static FORCEINLINE CGPUProfiler& Get()
-    {
-        return Instance;
-    }
+    static FORCEINLINE CGPUProfiler& Get() { return Instance; }
 
     /* Enables the collection of samples (Resume) */
     void Enable();
@@ -143,7 +140,7 @@ private:
     /* Lockable table for GPU- samples */
     Lockable<GPUProfileSamplesTable> Samples;
 
-    bool Enabled;
+    bool bEnabled;
 
     static CGPUProfiler Instance;
 };

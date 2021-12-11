@@ -7,7 +7,7 @@ CMacThread::CMacThread( ThreadFunction InFunction )
     , Thread()
     , Function( InFunction )
     , Name()
-    , IsRunning( false )
+    , bIsRunning( false )
 {
 }
 
@@ -16,7 +16,7 @@ CMacThread::CMacThread( ThreadFunction InFunction, const CString& InName )
     , Thread()
     , Function( InFunction )
     , Name( InName )
-    , IsRunning( false )
+    , bIsRunning( false )
 {
 }
 
@@ -42,13 +42,13 @@ void CMacThread::WaitUntilFinished()
 void CMacThread::SetName( const CString& InName )
 {
     // The name can always be set from the current thread
-    const bool CurrentThreadIsMyself = GetPlatformHandle() == CMacThreadMisc::GetThreadHandle();
-    if ( CurrentThreadIsMyself )
+    const bool bCurrentThreadIsMyself = GetPlatformHandle() == CMacThreadMisc::GetThreadHandle();
+    if ( bCurrentThreadIsMyself )
     {
         Name = InName;
         pthread_setname_np( Name.CStr() );
     }
-    else if ( !IsRunning )
+    else if ( !bIsRunning )
     {
         Name = InName;
     }

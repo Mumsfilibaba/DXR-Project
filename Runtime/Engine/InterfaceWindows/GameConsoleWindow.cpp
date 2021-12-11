@@ -28,7 +28,7 @@ void CGameConsoleWindow::Tick()
     TSharedRef<CPlatformWindow> MainWindow = CInterfaceApplication::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainWindow->GetWidth();
-	
+    
     // HACK: Push window up above titlebar to remove the rounded corners
     const ImVec2 Offset( 20.0f, -20.0f );
 
@@ -71,7 +71,7 @@ void CGameConsoleWindow::Tick()
         ImGui::BeginChild( "##ChildWindow", ImVec2( TextWindowWidth, TextWindowHeight ), false, PopupFlags );
         if ( !Candidates.IsEmpty() )
         {
-            bool IsActiveIndex = false;
+            bool bIsActiveIndex = false;
 
             ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 4, 2 ) );
             ImGui::PushAllowKeyboardFocus( false );
@@ -103,11 +103,11 @@ void CGameConsoleWindow::Tick()
             for ( int32 i = 0; i < Candidates.Size(); i++ )
             {
                 const TPair<IConsoleObject*, CString>& Candidate = Candidates[i];
-                IsActiveIndex = (CandidatesIndex == i);
+                bIsActiveIndex = (CandidatesIndex == i);
 
                 // VariableName
                 ImGui::PushID( i );
-                if ( ImGui::Selectable( Candidate.Second.CStr(), &IsActiveIndex ) )
+                if ( ImGui::Selectable( Candidate.Second.CStr(), &bIsActiveIndex ) )
                 {
                     CStringUtils::Copy( TextBuffer.Data(), Candidate.Second.CStr() );
                     PopupSelectedText = Candidate.Second;
@@ -115,7 +115,7 @@ void CGameConsoleWindow::Tick()
                     Candidates.Clear();
                     CandidatesIndex = -1;
 
-                    UpdateCursorPosition = true;
+                    bUpdateCursorPosition = true;
 
                     ImGui::PopID();
                     break;
@@ -166,11 +166,11 @@ void CGameConsoleWindow::Tick()
 
                 ImGui::PopID();
 
-                if ( IsActiveIndex && CandidateSelectionChanged )
+                if ( bIsActiveIndex && bCandidateSelectionChanged )
                 {
                     ImGui::SetScrollHere();
                     PopupSelectedText = Candidate.Second;
-                    CandidateSelectionChanged = false;
+                    bCandidateSelectionChanged = false;
                 }
             }
 
@@ -202,10 +202,10 @@ void CGameConsoleWindow::Tick()
                 ImGui::TextColored( Color, "%s", Text.First.CStr() );
             }
 
-            if ( ScrollDown )
+            if ( bScrollDown )
             {
                 ImGui::SetScrollHereY();
-                ScrollDown = false;
+                bScrollDown = false;
             }
         }
 
@@ -243,8 +243,8 @@ void CGameConsoleWindow::Tick()
             return This->TextCallback( Data );
         };
 
-        const bool Result = ImGui::InputText( "###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(this) );
-        if ( Result && TextBuffer[0] != 0 )
+        const bool bResult = ImGui::InputText( "###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(this) );
+        if ( bResult && TextBuffer[0] != 0 )
         {
             if ( CandidatesIndex != -1 )
             {
@@ -253,7 +253,7 @@ void CGameConsoleWindow::Tick()
                 Candidates.Clear();
                 CandidatesIndex = -1;
 
-                UpdateCursorPosition = true;
+                bUpdateCursorPosition = true;
             }
             else
             {
@@ -261,7 +261,7 @@ void CGameConsoleWindow::Tick()
                 CConsoleManager::Get().Execute( Text );
 
                 TextBuffer[0] = 0;
-                ScrollDown = true;
+                bScrollDown = true;
 
                 ImGui::SetItemDefaultFocus();
                 ImGui::SetKeyboardFocusHere( -1 );
@@ -289,17 +289,17 @@ void CGameConsoleWindow::Tick()
 
 bool CGameConsoleWindow::IsTickable()
 {
-    return IsActive;
+    return bIsActive;
 }
 
 int32 CGameConsoleWindow::TextCallback( ImGuiInputTextCallbackData* Data )
 {
-    if ( UpdateCursorPosition )
+    if ( bUpdateCursorPosition )
     {
         Data->CursorPos = int32( PopupSelectedText.Length() );
         PopupSelectedText.Clear();
 
-        UpdateCursorPosition = false;
+        bUpdateCursorPosition = false;
     }
 
     switch ( Data->EventFlag )
@@ -320,7 +320,7 @@ int32 CGameConsoleWindow::TextCallback( ImGuiInputTextCallbackData* Data )
             }
 
             Candidates.Clear();
-            CandidateSelectionChanged = true;
+            bCandidateSelectionChanged = true;
             CandidatesIndex = -1;
 
             const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
@@ -362,7 +362,7 @@ int32 CGameConsoleWindow::TextCallback( ImGuiInputTextCallbackData* Data )
                     Data->InsertChars( Data->CursorPos, Candidates[0].Second.CStr() );
 
                     CandidatesIndex = -1;
-                    CandidateSelectionChanged = true;
+                    bCandidateSelectionChanged = true;
                     Candidates.Clear();
                 }
                 else if ( !Candidates.IsEmpty() && CandidatesIndex != -1 )
@@ -376,7 +376,7 @@ int32 CGameConsoleWindow::TextCallback( ImGuiInputTextCallbackData* Data )
 
                     Candidates.Clear();
                     CandidatesIndex = -1;
-                    CandidateSelectionChanged = true;
+                    bCandidateSelectionChanged = true;
                 }
             }
 
@@ -427,7 +427,7 @@ int32 CGameConsoleWindow::TextCallback( ImGuiInputTextCallbackData* Data )
             {
                 if ( Data->EventKey == ImGuiKey_UpArrow )
                 {
-                    CandidateSelectionChanged = true;
+                    bCandidateSelectionChanged = true;
                     if ( CandidatesIndex <= 0 )
                     {
                         CandidatesIndex = Candidates.Size() - 1;
@@ -439,7 +439,7 @@ int32 CGameConsoleWindow::TextCallback( ImGuiInputTextCallbackData* Data )
                 }
                 else if ( Data->EventKey == ImGuiKey_DownArrow )
                 {
-                    CandidateSelectionChanged = true;
+                    bCandidateSelectionChanged = true;
                     if ( CandidatesIndex >= int32( Candidates.Size() ) - 1 )
                     {
                         CandidatesIndex = 0;
@@ -462,14 +462,14 @@ void CGameConsoleWindow::HandleKeyPressedEvent( const SKeyEvent& Event )
 {
     Assert( InputHandler.IsValid() );
 
-    InputHandler->ConsoleToggled = false;
+    InputHandler->bConsoleToggled = false;
 
-    if ( Event.IsDown )
+    if ( Event.bIsDown )
     {
-        if ( !Event.IsRepeat && Event.KeyCode == EKey::Key_GraveAccent )
+        if ( !Event.bIsRepeat && Event.KeyCode == EKey::Key_GraveAccent )
         {
-            IsActive = !IsActive;
-            InputHandler->ConsoleToggled = true;
+            bIsActive = !bIsActive;
+            InputHandler->bConsoleToggled = true;
         }
     }
 }

@@ -17,6 +17,8 @@ enum class ECursor
 
 class CPlatformWindow;
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+
 class ICursor
 {
 public:
@@ -33,7 +35,7 @@ public:
     virtual void GetPosition( CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY ) const = 0;
 
     /* Show or hide the mouse */
-    virtual void SetVisibility( bool IsVisible ) = 0;
+    virtual void SetVisibility( bool bIsVisible ) = 0;
 
     /* Retrieve the mouse visibility */
     virtual bool IsVisible() const = 0;

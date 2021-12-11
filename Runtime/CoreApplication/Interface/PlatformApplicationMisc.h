@@ -31,7 +31,7 @@ public:
     static FORCEINLINE void RequestExit( int32 ExitCode ) {}
 
     /* Pumps the application's message queue, this way the application instance is not required to pump the messages */
-    static FORCEINLINE void PumpMessages( bool UntilEmpty ) {}
+    static FORCEINLINE void PumpMessages( bool bUntilEmpty ) {}
 
     /* Retrieves the state of modifier keys */
     static FORCEINLINE SModifierKeyState GetModifierKeyState() { return SModifierKeyState(); }

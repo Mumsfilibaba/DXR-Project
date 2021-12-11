@@ -7,7 +7,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Resources/TextureFactory.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShaderCompiler.h"
 
@@ -132,7 +132,7 @@ bool CInterfaceRenderer::InitContext( InterfaceContext Context )
     }
 
     SDepthStencilStateCreateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthEnable = false;
+    DepthStencilStateInfo.bDepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
@@ -161,8 +161,8 @@ bool CInterfaceRenderer::InitContext( InterfaceContext Context )
     }
 
     SBlendStateCreateInfo BlendStateInfo;
-    BlendStateInfo.IndependentBlendEnable = false;
-    BlendStateInfo.RenderTarget[0].BlendEnable = true;
+    BlendStateInfo.bIndependentBlendEnable = false;
+    BlendStateInfo.RenderTarget[0].bBlendEnable = true;
     BlendStateInfo.RenderTarget[0].SrcBlend = EBlend::SrcAlpha;
     BlendStateInfo.RenderTarget[0].SrcBlendAlpha = EBlend::InvSrcAlpha;
     BlendStateInfo.RenderTarget[0].DestBlend = EBlend::InvSrcAlpha;
@@ -181,7 +181,7 @@ bool CInterfaceRenderer::InitContext( InterfaceContext Context )
         BlendStateBlending->SetName( "ImGui BlendState" );
     }
 
-    BlendStateInfo.RenderTarget[0].BlendEnable = false;
+    BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
     TSharedRef<CRHIBlendState> BlendStateNoBlending = RHICreateBlendState( BlendStateInfo );
     if ( !BlendStateBlending )
@@ -349,7 +349,7 @@ void CInterfaceRenderer::Render( CRHICommandList& CmdList )
 
                 CmdList.SetShaderResourceView( PShader.Get(), Image->ImageView.Get(), 0 );
 
-                if ( !Image->AllowBlending )
+                if ( !Image->bAllowBlending )
                 {
                     CmdList.SetGraphicsPipelineState( PipelineStateNoBlending.Get() );
                 }

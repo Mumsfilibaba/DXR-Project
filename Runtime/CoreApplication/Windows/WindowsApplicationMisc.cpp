@@ -4,7 +4,7 @@
 
 #include "Core/Input/ModifierKeyState.h"
 
-void CWindowsApplicationMisc::PumpMessages( bool UntilEmpty )
+void CWindowsApplicationMisc::PumpMessages( bool bUntilEmpty )
 {
     MSG Message;
 
@@ -28,7 +28,7 @@ void CWindowsApplicationMisc::PumpMessages( bool UntilEmpty )
             }
         }
         
-    } while ( UntilEmpty );
+    } while ( bUntilEmpty );
 }
 
 SModifierKeyState CWindowsApplicationMisc::GetModifierKeyState()
@@ -38,22 +38,27 @@ SModifierKeyState CWindowsApplicationMisc::GetModifierKeyState()
     {
         ModifierMask |= EModifierFlag::ModifierFlag_Ctrl;
     }
+
     if ( GetKeyState( VK_MENU ) & 0x8000 )
     {
         ModifierMask |= EModifierFlag::ModifierFlag_Alt;
     }
+    
     if ( GetKeyState( VK_SHIFT ) & 0x8000 )
     {
         ModifierMask |= EModifierFlag::ModifierFlag_Shift;
     }
+    
     if ( GetKeyState( VK_CAPITAL ) & 1 )
     {
         ModifierMask |= EModifierFlag::ModifierFlag_CapsLock;
     }
+    
     if ( (GetKeyState( VK_LWIN ) | GetKeyState( VK_RWIN )) & 0x8000 )
     {
         ModifierMask |= EModifierFlag::ModifierFlag_Super;
     }
+    
     if ( GetKeyState( VK_NUMLOCK ) & 1 )
     {
         ModifierMask |= EModifierFlag::ModifierFlag_NumLock;

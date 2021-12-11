@@ -9,9 +9,11 @@ newoption
 	description = "Links all modules as static libraries instead of DLLs"
 }
 
+project_name = "Sandbox"
+
 -- Solution
 workspace "DXR-Project"
-    startproject      "SandboxLauncher"
+    startproject      ( project_name .. "Launcher" )
     architecture      "x64"
     warnings          "extra"
 	exceptionhandling "Off"
@@ -20,6 +22,10 @@ workspace "DXR-Project"
 	vectorextensions  "SSE2"
 	editandcontinue   "Off"
 	intrinsics        "On"
+	language 		  "C++"
+	cppdialect 		  "C++17"
+	systemversion 	  "latest"
+	characterset 	  "Ascii"
 
 	flags
 	{ 
@@ -47,6 +53,12 @@ workspace "DXR-Project"
 	defines
 	{
 		"WORKSPACE_LOCATION=" .. "\"" .. findWorkspaceDir().. "\"",
+	}
+	
+	-- Includes
+	includedirs
+	{
+		"%{wks.location}/Runtime",
 	}
 
 	filter "options:monolithic"
@@ -140,17 +152,13 @@ workspace "DXR-Project"
 		}
 	filter {}
 
-
 	-- Dependencies
 	group "Dependencies"
 
 		-- Imgui
 		project "ImGui"
-			kind 			"StaticLib"
-			language 		"C++"
-			cppdialect 		"C++17"
-			systemversion 	"latest"
-			location 		"Dependencies/projectfiles/ImGui"
+			kind 	 "StaticLib"
+			location "Dependencies/projectfiles/ImGui"
 
 			-- Locations
 			targetdir 	("Dependencies/Build/bin/"     .. outputdir)
@@ -187,11 +195,8 @@ workspace "DXR-Project"
 		
 		-- tinyobjloader Project
 		project "tinyobjloader"
-			kind 			"StaticLib"
-			language 		"C++"
-			cppdialect 		"C++17"
-			systemversion 	"latest"
-			location 		"Dependencies/projectfiles/tinyobjloader"
+			kind 	 "StaticLib"
+			location "Dependencies/projectfiles/tinyobjloader"
 
 			-- Locations
 			targetdir ("Dependencies/Build/bin/tinyobjloader/"     .. outputdir)
@@ -219,11 +224,8 @@ workspace "DXR-Project"
 		
 		-- OpenFBX Project
 		project "OpenFBX"
-			kind 			"StaticLib"
-			language 		"C++"
-			cppdialect 		"C++17"
-			systemversion 	"latest"
-			location 		"Dependencies/projectfiles/OpenFBX"
+			kind 	 "StaticLib"
+			location "Dependencies/projectfiles/OpenFBX"
 			
 			-- Locations
 			targetdir ("Dependencies/Build/bin/OpenFBX/"     .. outputdir)

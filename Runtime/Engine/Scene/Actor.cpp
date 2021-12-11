@@ -11,8 +11,8 @@ CActor::CActor( class CScene* InSceneOwner )
     , SceneOwner( InSceneOwner )
     , Transform()
     , Components()
-    , Startable( true )
-    , Tickable( true )
+    , bIsStartable( true )
+    , bIsTickable( true )
 {
     CORE_OBJECT_INIT();
 }

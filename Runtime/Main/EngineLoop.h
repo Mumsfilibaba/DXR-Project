@@ -5,9 +5,9 @@ class CEngineLoop
 {
 public:
 
-	// Initialize the commandline by parsing all the arguments 
-	static void InitializeCommandLine(  int32 NumCommandLineArgs, const char** CommandLineArgs );
-	
+    /* Loads all the core modules */
+    static bool LoadCoreModules();
+
     /* Creates the application and load modules */
     static bool PreInitialize();
 

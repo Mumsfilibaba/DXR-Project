@@ -60,12 +60,12 @@ struct SDepthStencilStateCreateInfo
 {
     EDepthWriteMask DepthWriteMask = EDepthWriteMask::All;
     EComparisonFunc DepthFunc = EComparisonFunc::Less;
-    bool            DepthEnable = true;
+    bool            bDepthEnable = true;
     uint8           StencilReadMask = 0xff;
     uint8           StencilWriteMask = 0xff;
-    bool            StencilEnable = false;
-    SDepthStencilOp  FrontFace = SDepthStencilOp();
-    SDepthStencilOp  BackFace = SDepthStencilOp();
+    bool            bStencilEnable = false;
+    SDepthStencilOp FrontFace = SDepthStencilOp();
+    SDepthStencilOp BackFace = SDepthStencilOp();
 };
 
 class CRHIDepthStencilState : public CRHIResource
@@ -114,15 +114,15 @@ struct SRasterizerStateCreateInfo
 {
     EFillMode FillMode = EFillMode::Solid;
     ECullMode CullMode = ECullMode::Back;
-    bool   FrontCounterClockwise = false;
+    bool   bFrontCounterClockwise = false;
     int32  DepthBias = 0;
     float  DepthBiasClamp = 0.0f;
     float  SlopeScaledDepthBias = 0.0f;
-    bool   DepthClipEnable = true;
-    bool   MultisampleEnable = false;
-    bool   AntialiasedLineEnable = false;
+    bool   bDepthClipEnable = true;
+    bool   bMultisampleEnable = false;
+    bool   bAntialiasedLineEnable = false;
     uint32 ForcedSampleCount = 0;
-    bool   EnableConservativeRaster = false;
+    bool   bEnableConservativeRaster = false;
 };
 
 class CRHIRasterizerState : public CRHIResource
@@ -307,16 +307,16 @@ struct SRenderTargetBlendState
     EBlendOp BlendOpAlpha = EBlendOp::Add;;
     ELogicOp LogicOp = ELogicOp::Noop;
 
-    bool BlendEnable = false;
-    bool LogicOpEnable = false;
+    bool bBlendEnable = false;
+    bool bLogicOpEnable = false;
 
     SRenderTargetWriteState RenderTargetWriteMask;
 };
 
 struct SBlendStateCreateInfo
 {
-    bool AlphaToCoverageEnable = false;
-    bool IndependentBlendEnable = false;
+    bool bAlphaToCoverageEnable = false;
+    bool bIndependentBlendEnable = false;
     SRenderTargetBlendState RenderTarget[8];
 };
 

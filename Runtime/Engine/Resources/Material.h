@@ -27,10 +27,7 @@ public:
 
     void BuildBuffer( class CRHICommandList& CmdList );
 
-    FORCEINLINE bool IsBufferDirty() const
-    {
-        return MaterialBufferIsDirty;
-    }
+    FORCEINLINE bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
 
     void SetAlbedo( const CVector3& Albedo );
     void SetAlbedo( float r, float g, float b );
@@ -39,10 +36,10 @@ public:
     void SetRoughness( float Roughness );
     void SetAmbientOcclusion( float AO );
 
-    void ForceForwardPass( bool ForceForwardRender );
+    void ForceForwardPass( bool bForceForwardRender );
 
-    void EnableHeightMap( bool InEnableHeightMap );
-    void EnableAlphaMask( bool InEnableAlphaMask );
+    void EnableHeightMap( bool bInEnableHeightMap );
+    void EnableAlphaMask( bool bInEnableAlphaMask );
 
     void SetDebugName( const CString& InDebugName );
 
@@ -62,12 +59,12 @@ public:
 
     FORCEINLINE bool ShouldRenderInPrePass()
     {
-        return !HasAlphaMask() && !HasHeightMap() && !RenderInForwardPass;
+        return !HasAlphaMask() && !HasHeightMap() && !bRenderInForwardPass;
     }
 
     FORCEINLINE bool ShouldRenderInForwardPass()
     {
-        return RenderInForwardPass;
+        return bRenderInForwardPass;
     }
 
     FORCEINLINE bool HasAlphaMask() const
@@ -100,10 +97,10 @@ private:
     CString DebugName;
 
     /* This indicates that the constantbuffer is dirty and needs updating */
-    bool MaterialBufferIsDirty = true;
+    bool bMaterialBufferIsDirty = true;
 
     /* True if the material should render in the forward pass (Transparent surfaces) */
-    bool RenderInForwardPass = false;
+    bool bRenderInForwardPass = false;
 
     SMaterialDesc        	       Properties;
     TSharedRef<CRHIConstantBuffer> MaterialBuffer;

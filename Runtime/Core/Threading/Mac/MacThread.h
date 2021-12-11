@@ -9,15 +9,9 @@ class CMacThread final : public CPlatformThread
 {
 public:
 
-    static TSharedRef<CMacThread> Make( ThreadFunction InFunction )
-    {
-        return new CMacThread( InFunction );
-    }
+    static TSharedRef<CMacThread> Make( ThreadFunction InFunction ) { return new CMacThread( InFunction ); }
 
-    static TSharedRef<CMacThread> Make( ThreadFunction InFunction, const CString& InName )
-    {
-        return new CMacThread( InFunction, InName );
-    }
+    static TSharedRef<CMacThread> Make( ThreadFunction InFunction, const CString& InName ) { return new CMacThread( InFunction, InName ); }
 
 	/* Starts the thread so that it can start perform work */
     virtual bool Start() override final;
@@ -47,7 +41,7 @@ private:
     CString Name;
 
     /* Check if thread is running or not */
-    bool IsRunning;
+    bool bIsRunning;
 };
 
 #endif

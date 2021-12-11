@@ -1,11 +1,7 @@
+modulename = "CoreApplication"
 
-
-project "CoreApplication"
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location 		"%{wks.location}/Runtime/CoreApplication"
-	characterset 	"Ascii"
+project ( modulename )
+	location ( "%{wks.location}/Runtime/" .. modulename )
 
 	-- Build type 
 	filter "not options:monolithic"
@@ -22,22 +18,18 @@ project "CoreApplication"
 	targetdir 	("%{wks.location}/Build/bin/"     .. outputdir)
 	objdir 		("%{wks.location}/Build/bin-int/" .. outputdir)	
 
-	-- Includes
-	includedirs
-	{
-		"%{wks.location}/Runtime",
-	}
-
 	forceincludes  
 	{ 
 		-- TODO: "PreCompiled.h"
 	}
 
 	-- Defines
-	defines
-	{
-		"COREAPPLICATION_API_EXPORT=(1)"
-	}
+	filter "not options:monolithic"
+		defines
+		{
+			"COREAPPLICATION_IMPL=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -89,13 +81,21 @@ project "CoreApplication"
 			"MetalKit.framework",
 		}
 	filter {}
-	
+
+	-- Remove non-windows files
+	filter "system:windows"
+		removefiles
+		{
+			"%{wks.location}/**/Mac/**"
+		}
+	filter {}
+
 	-- In visual studio show natvis files
 	filter "action:vs*"
 		vpaths { ["Natvis"] = "**.natvis" }
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}

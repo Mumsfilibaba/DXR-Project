@@ -4,7 +4,7 @@
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/TextureFactory.h"
@@ -778,18 +778,18 @@ void CRenderer::Release()
 
     FrameStatistics.Reset();
 
-	if ( CInterfaceApplication::IsInitialized() )
-	{
-		CInterfaceApplication& Application = CInterfaceApplication::Get();
-		Application.RemoveWindow( TextureDebugger );
-		TextureDebugger.Reset();
+    if ( CInterfaceApplication::IsInitialized() )
+    {
+        CInterfaceApplication& Application = CInterfaceApplication::Get();
+        Application.RemoveWindow( TextureDebugger );
+        TextureDebugger.Reset();
 
-		Application.RemoveWindow( InfoWindow );
-		InfoWindow.Reset();
+        Application.RemoveWindow( InfoWindow );
+        InfoWindow.Reset();
 
-		Application.RemoveWindow( GPUProfilerWindow );
-		GPUProfilerWindow.Reset();
-	}
+        Application.RemoveWindow( GPUProfilerWindow );
+        GPUProfilerWindow.Reset();
+    }
 }
 
 void CRenderer::OnWindowResize( const SWindowResizeEvent& Event )
@@ -877,7 +877,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
 
     SDepthStencilStateCreateInfo DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-    DepthStencilStateInfo.DepthEnable = false;
+    DepthStencilStateInfo.bDepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
@@ -1039,7 +1039,7 @@ bool CRenderer::InitAA()
 
     SDepthStencilStateCreateInfo DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc = EComparisonFunc::Always;
-    DepthStencilStateInfo.DepthEnable = false;
+    DepthStencilStateInfo.bDepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
@@ -1068,8 +1068,8 @@ bool CRenderer::InitAA()
     }
 
     SBlendStateCreateInfo BlendStateInfo;
-    BlendStateInfo.IndependentBlendEnable = false;
-    BlendStateInfo.RenderTarget[0].BlendEnable = false;
+    BlendStateInfo.bIndependentBlendEnable = false;
+    BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState( BlendStateInfo );
     if ( !BlendState )

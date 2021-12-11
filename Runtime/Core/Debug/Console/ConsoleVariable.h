@@ -70,9 +70,9 @@ public:
         OnChanged();
     }
 
-    virtual void SetBool( bool InValue ) override
+    virtual void SetBool( bool bValue ) override
     {
-        Value = static_cast<T>(InValue);
+        Value = static_cast<T>(bValue);
         OnChanged();
     }
 

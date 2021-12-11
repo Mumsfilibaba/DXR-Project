@@ -7,7 +7,7 @@ CDispatchQueue CDispatchQueue::Instance;
 
 CDispatchQueue::CDispatchQueue()
     : QueueMutex()
-    , IsRunning( false )
+    , bIsRunning( false )
 {
 }
 
@@ -35,7 +35,7 @@ bool CDispatchQueue::PopDispatch( SDispatch& OutTask )
 
 void CDispatchQueue::KillWorkers()
 {
-    IsRunning = false;
+    bIsRunning = false;
 
     WakeCondition.NotifyAll();
 }
@@ -44,7 +44,7 @@ void CDispatchQueue::WorkThread()
 {
     LOG_INFO( "Starting Work thread: " + ToString( PlatformThreadMisc::GetThreadHandle() ) );
 
-    while ( Instance.IsRunning )
+    while ( Instance.bIsRunning )
     {
         SDispatch CurrentTask;
 
@@ -78,7 +78,7 @@ bool CDispatchQueue::Init()
     LOG_INFO( "[CTaskManager]: Starting '" + ToString( ThreadCount ) + "' Workers" );
 
     // Start so that workers now that they should be running
-    IsRunning = true;
+    bIsRunning = true;
 
     for ( uint32 i = 0; i < ThreadCount; i++ )
     {

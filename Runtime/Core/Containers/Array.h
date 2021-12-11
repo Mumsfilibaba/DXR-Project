@@ -499,6 +499,36 @@ public:
 
         return false;
     }
+   
+    /* Returns true if the element exists in the array */
+    template<class ComparatorType>
+    FORCEINLINE bool Contains( ComparatorType Comparator ) const noexcept
+    {
+        for ( ConstIteratorType Iterator = StartIterator(); Iterator != EndIterator(); ++Iterator )
+        {
+            if ( Comparator( *Iterator ) )
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /* Returns true if the element exists in the array */
+    template<class ComparatorType>
+    FORCEINLINE bool Contains( const ElementType& Element, ComparatorType Comparator ) const noexcept
+    {
+        for ( ConstIteratorType Iterator = StartIterator(); Iterator != EndIterator(); ++Iterator )
+        {
+            if ( Comparator( Element, *Iterator ) )
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /* Returns the index of the element if found, otherwise -1 */
     FORCEINLINE SizeType Find( const ElementType& Element ) const noexcept
@@ -507,6 +537,22 @@ public:
         for ( SizeType Index = 0; Index < CurrentSize; ++Index )
         {
             if ( Element == At( Index ) )
+            {
+                return Index;
+            }
+        }
+
+        return SizeType( -1 );
+    }
+
+    /* Returns the index of the element if found, otherwise -1 */
+    template<class ComparatorType>
+    FORCEINLINE SizeType Find( ComparatorType Comparator ) const noexcept
+    {
+        const SizeType CurrentSize = Size();
+        for ( SizeType Index = 0; Index < CurrentSize; ++Index )
+        {
+            if ( Comparator( At( Index ) ) )
             {
                 return Index;
             }

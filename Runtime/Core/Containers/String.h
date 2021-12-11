@@ -1069,7 +1069,7 @@ public:
     /* Appends a string to this string */
     FORCEINLINE TString& operator+=( CharType Char ) noexcept
     {
-		Append( Char );
+        Append( Char );
         return *this;
     }
 
@@ -1464,7 +1464,7 @@ struct TStringHasher
             Hash += Hash << 10;
             Hash ^= Hash >> 6;
         }
-		
+        
         Hash += Hash << 3;
         Hash ^= Hash >> 11;
         Hash += Hash << 15;

@@ -3,11 +3,7 @@
 projectname = "Sandbox"
 
 project ( projectname )
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location        ( "%{wks.location}/" .. projectname )
-	characterset 	"Ascii"
+	location ( "%{wks.location}/" .. projectname )
 
 	-- Build type 
 	filter "not options:monolithic"
@@ -68,6 +64,22 @@ project ( projectname )
 		"Renderer",
 	}
 
+	filter "options:monolithic"
+		links
+		{
+			"NullRHI",
+			"InterfaceRenderer",
+		}
+	filter {}
+
+	-- Specific linking for windows
+	filter { "system:windows", "options:monolithic" }
+		links
+		{
+			"D3D12RHI",
+		}
+	filter {}
+
 	-- In visual studio show natvis files
 	filter "action:vs*"
 		vpaths { ["Natvis"] = "**.natvis" }
@@ -96,12 +108,8 @@ project ( projectname )
 	
 -- Sandbox Project
 project (projectname .. "Launcher")
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	kind 			"WindowedApp"
-	location        ( "%{wks.location}/" .. projectname )
-	characterset 	"Ascii"
+	kind 	 "WindowedApp"
+	location ( "%{wks.location}/" .. projectname )
 
 	-- All targets except the dependencies
 	targetdir ("%{wks.location}/Build/bin/"     .. outputdir)
@@ -120,8 +128,7 @@ project (projectname .. "Launcher")
 	}
 	
 	links
-	{ 
-		"ImGui",
+	{
 		"Core",
 		"CoreApplication",
 		"Interface",
@@ -129,6 +136,50 @@ project (projectname .. "Launcher")
 		"Engine",
 		"Renderer",
 	}
+
+	filter "options:monolithic"
+		links
+		{
+			"NullRHI",
+			"InterfaceRenderer",
+			"Sandbox",
+		}
+	filter {}
+
+	-- Specific linking for windows
+	filter { "system:windows", "options:monolithic" }
+		links
+		{
+			"D3D12RHI",
+		}
+
+		-- Force references to module function in order to include it in the program
+		linkoptions 
+		{
+			"/INCLUDE:LinkModule_Core",
+			"/INCLUDE:LinkModule_CoreApplication",
+			"/INCLUDE:LinkModule_Interface",
+			"/INCLUDE:LinkModule_RHI",
+			"/INCLUDE:LinkModule_Engine",
+			"/INCLUDE:LinkModule_Renderer",
+			"/INCLUDE:LinkModule_InterfaceRenderer",
+			"/INCLUDE:LinkModule_NullRHI",
+			"/INCLUDE:LinkModule_D3D12RHI",
+			"/INCLUDE:LinkModule_Sandbox",
+		}
+	filter {}
+
+	-- Specific linking for windows
+	filter { "system:macosx", "options:monolithic" }
+		-- Force references to module function in order to include it in the program
+		linkoptions 
+		{
+			"-force_load LinkModule_InterfaceRenderer",
+			"-force_load LinkModule_NullRHI",
+			"-force_load LinkModule_D3D12RHI",
+			"-force_load LinkModule_Sandbox",
+		}
+	filter {}
 
 	-- Include EngineLoop | TODO: Make lib?
 	files

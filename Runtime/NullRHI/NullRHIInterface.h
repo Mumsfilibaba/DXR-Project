@@ -1,5 +1,5 @@
 #pragma once
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 
 #include "NullRHIBuffer.h"
 #include "NullRHITexture.h"
@@ -22,19 +22,19 @@
 
 #endif
 
-class CNullRHICore final : public CRHICore
+class CNullRHIInterface final : public CRHIInterface
 {
 public:
 
-    CNullRHICore()
-        : CRHICore( ERHIModule::Null )
+    CNullRHIInterface()
+        : CRHIInterface( ERHIModule::Null )
         , CommandContext( CNullRHICommandContext::Make() )
     {
     }
 
-    ~CNullRHICore() = default;
+    ~CNullRHIInterface() = default;
 
-    virtual bool Init( bool EnableDebug ) override final
+    virtual bool Init( bool bEnableDebug ) override final
     {
         return true;
     }

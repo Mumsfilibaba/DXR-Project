@@ -26,7 +26,7 @@ public:
         , HostDescriptors()
         , DeviceDescriptors()
         , CopyDescriptors()
-        , Dirty()
+        , bDirty()
     {
     }
 
@@ -38,7 +38,7 @@ public:
         if ( DescriptorView != CurrentDescriptorView )
         {
             ResourceViews[Visibility][ShaderRegister] = DescriptorView;
-            Dirty[Visibility] = true;
+            bDirty[Visibility] = true;
         }
     }
 
@@ -51,7 +51,7 @@ public:
         for ( uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++ )
         {
             // Set each stage to be dirty
-            Dirty[Stage] = true;
+            bDirty[Stage] = true;
 
             // Set each descriptor to the default view
             for ( uint32 Index = 0; Index < kDescriptorTableSize; Index++ )
@@ -66,7 +66,7 @@ public:
         uint32 NumDescriptors = 0;
         for ( uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++ )
         {
-            if ( Dirty[Stage] )
+            if ( bDirty[Stage] )
             {
                 NumDescriptors += kDescriptorTableSize;
             }
@@ -79,7 +79,7 @@ public:
     {
         for ( uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++ )
         {
-            if ( Dirty[Stage] )
+            if ( bDirty[Stage] )
             {
                 for ( uint32 Index = 0; Index < kDescriptorTableSize; Index++ )
                 {
@@ -96,7 +96,7 @@ public:
     {
         for ( uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++ )
         {
-            if ( Dirty[Stage] )
+            if ( bDirty[Stage] )
             {
                 // We keep the host descriptors for when the descriptors are copied to the device
                 HostDescriptors[Stage] = HostStartHandle;
@@ -113,7 +113,7 @@ public:
         /* Invalidate all stage's descriptor table */
         for ( uint32 Index = 0; Index < D3D12_CACHED_DESCRIPTORS_NUM_STAGES; Index++ )
         {
-            Dirty[Index] = true;
+            bDirty[Index] = true;
         }
     }
 
@@ -127,7 +127,7 @@ public:
     D3D12_GPU_DESCRIPTOR_HANDLE DeviceDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
 
     /* Each bool informs the state of a stage's descriptor table */
-    bool Dirty[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
+    bool bDirty[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -146,10 +146,10 @@ public:
         : VertexBuffers()
         , VertexBufferViews()
         , NumVertexBuffers( 0 )
-        , VertexBuffersDirty( false )
+        , bVertexBuffersDirty( false )
         , IndexBuffer( nullptr )
         , IndexBufferView()
-        , IndexBufferDirty( false )
+        , bIndexBufferDirty( false )
     {
         Reset();
     }
@@ -163,7 +163,7 @@ public:
             VertexBuffers[Slot] = VertexBuffer;
             NumVertexBuffers = NMath::Max( NumVertexBuffers, Slot + 1 );
 
-            VertexBuffersDirty = true;
+            bVertexBuffersDirty = true;
         }
     }
 
@@ -172,14 +172,14 @@ public:
         if ( IndexBuffer != InIndexBuffer )
         {
             IndexBuffer = InIndexBuffer;
-            IndexBufferDirty = true;
+            bIndexBufferDirty = true;
         }
     }
 
     void CommitState( CD3D12CommandList& CmdList )
     {
         ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
-        if ( VertexBuffersDirty )
+        if ( bVertexBuffersDirty )
         {
             for ( uint32 i = 0; i < NumVertexBuffers; i++ )
             {
@@ -199,10 +199,10 @@ public:
             }
 
             DxCmdList->IASetVertexBuffers( 0, NumVertexBuffers, VertexBufferViews );
-            VertexBuffersDirty = false;
+            bVertexBuffersDirty = false;
         }
 
-        if ( IndexBufferDirty )
+        if ( bIndexBufferDirty )
         {
             if ( !IndexBuffer )
             {
@@ -216,7 +216,7 @@ public:
             }
 
             DxCmdList->IASetIndexBuffer( &IndexBufferView );
-            IndexBufferDirty = false;
+            bIndexBufferDirty = false;
         }
     }
 
@@ -225,21 +225,21 @@ public:
         CMemory::Memzero( VertexBuffers, sizeof( VertexBuffers ) );
 
         NumVertexBuffers = 0;
-        VertexBuffersDirty = true;
+        bVertexBuffersDirty = true;
 
         IndexBuffer = nullptr;
-        IndexBufferDirty = true;
+        bIndexBufferDirty = true;
     }
 
 private:
     CD3D12RHIVertexBuffer* VertexBuffers[D3D12_MAX_VERTEX_BUFFER_SLOTS];
     D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[D3D12_MAX_VERTEX_BUFFER_SLOTS];
     uint32 NumVertexBuffers;
-    bool   VertexBuffersDirty;
+    bool   bVertexBuffersDirty;
 
     CD3D12RHIIndexBuffer* IndexBuffer;
     D3D12_INDEX_BUFFER_VIEW IndexBufferView;
-    bool IndexBufferDirty;
+    bool bIndexBufferDirty;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -251,7 +251,7 @@ public:
         : RenderTargetViewHandles()
         , NumRenderTargets( 0 )
         , DepthStencilViewHandle( { 0 } )
-        , Dirty( false )
+        , bDirty( false )
     {
         Reset();
     }
@@ -270,7 +270,7 @@ public:
         }
 
         NumRenderTargets = NMath::Max( NumRenderTargets, Slot + 1 );
-        Dirty = true;
+        bDirty = true;
     }
 
     FORCEINLINE void SetDepthStencilView( CD3D12DepthStencilView* DepthStencilView )
@@ -284,7 +284,7 @@ public:
             DepthStencilViewHandle = { 0 };
         }
 
-        Dirty = true;
+        bDirty = true;
     }
 
     FORCEINLINE void Reset()
@@ -296,7 +296,7 @@ public:
 
     FORCEINLINE void CommitState( CD3D12CommandList& CmdList )
     {
-        if ( Dirty )
+        if ( bDirty )
         {
             ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
 
@@ -307,7 +307,7 @@ public:
             }
 
             DxCmdList->OMSetRenderTargets( NumRenderTargets, RenderTargetViewHandles, false, DepthStencil );
-            Dirty = false;
+            bDirty = false;
         }
     }
 
@@ -317,7 +317,7 @@ private:
 
     D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilViewHandle;
 
-    bool Dirty;
+    bool bDirty;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -408,7 +408,7 @@ private:
     void CopyAndBindComputeDescriptors( ID3D12Device* DxDevice, ID3D12GraphicsCommandList* DxCmdList, TResourveViewCache& ResourceViewCache, int32 ParameterIndex )
     {
         const EShaderVisibility ShaderVisibility = ShaderVisibility_All;
-        if ( ParameterIndex >= 0 && ResourceViewCache.Dirty[ShaderVisibility] )
+        if ( ParameterIndex >= 0 && ResourceViewCache.bDirty[ShaderVisibility] )
         {
             const UINT DestRangeSize = TResourveViewCache::GetDescriptorTableSize();
             const UINT NumSrcRanges = TResourveViewCache::GetDescriptorTableSize();
@@ -422,14 +422,14 @@ private:
             DxCmdList->SetComputeRootDescriptorTable( ParameterIndex, DeviceHandle );
 
             // When the descriptors are copied and bound, then the descriptors are not dirty anymore
-            ResourceViewCache.Dirty[ShaderVisibility] = false;
+            ResourceViewCache.bDirty[ShaderVisibility] = false;
         }
     }
 
     template<typename TResourveViewCache>
     void CopyAndBindGraphicsDescriptors( ID3D12Device* DxDevice, ID3D12GraphicsCommandList* DxCmdList, TResourveViewCache& ResourceViewCache, int32 ParameterIndex, EShaderVisibility ShaderVisibility )
     {
-        if ( ParameterIndex >= 0 && ResourceViewCache.Dirty[ShaderVisibility] )
+        if ( ParameterIndex >= 0 && ResourceViewCache.bDirty[ShaderVisibility] )
         {
             const UINT DestRangeSize = TResourveViewCache::GetDescriptorTableSize();
             const UINT NumSrcRanges = TResourveViewCache::GetDescriptorTableSize();
@@ -443,7 +443,7 @@ private:
             DxCmdList->SetGraphicsRootDescriptorTable( ParameterIndex, DeviceHandle );
 
             // When the descriptors are copied and bound, then the descriptors are not dirty anymore
-            ResourceViewCache.Dirty[ShaderVisibility] = false;
+            ResourceViewCache.bDirty[ShaderVisibility] = false;
         }
     }
 

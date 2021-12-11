@@ -10,20 +10,20 @@
 struct SEvent
 {
     FORCEINLINE SEvent()
-        : IsConsumed( false )
+        : bIsConsumed( false )
     {
     }
 
     /* If the key was down or nor */
-    bool IsConsumed;
+    bool bIsConsumed;
 };
 
 struct SKeyEvent : public SEvent
 {
-    FORCEINLINE SKeyEvent( EKey InKeyCode, bool InIsDown, bool InIsRepeat, SModifierKeyState InModiferKeyState )
+    FORCEINLINE SKeyEvent( EKey InKeyCode, bool bInIsDown, bool bInIsRepeat, SModifierKeyState InModiferKeyState )
         : KeyCode( InKeyCode )
-        , IsDown( InIsDown )
-        , IsRepeat( InIsRepeat )
+        , bIsDown( bInIsDown )
+        , bIsRepeat( bInIsRepeat )
         , ModiferKeyState( InModiferKeyState )
     {
     }
@@ -32,10 +32,10 @@ struct SKeyEvent : public SEvent
     EKey KeyCode;
 
     /* If the key was down or not */
-    bool IsDown : 1;
+    bool bIsDown : 1;
 
     /* Is a repeated key event */
-    bool IsRepeat : 1;
+    bool bIsRepeat : 1;
 
     /* The other modifier keys that where down at the same time as the event */
     SModifierKeyState ModiferKeyState;
@@ -72,9 +72,9 @@ struct SMouseMovedEvent : public SEvent
 
 struct SMouseButtonEvent : public SEvent
 {
-    FORCEINLINE SMouseButtonEvent( EMouseButton InButton, bool InIsDown, SModifierKeyState InModifiers )
+    FORCEINLINE SMouseButtonEvent( EMouseButton InButton, bool bInIsDown, SModifierKeyState InModifiers )
         : Button( InButton )
-        , IsDown( InIsDown )
+        , bIsDown( bInIsDown )
         , Modifiers( InModifiers )
     {
     }
@@ -83,7 +83,7 @@ struct SMouseButtonEvent : public SEvent
     EMouseButton Button;
 
     /* If the button where pressed or released */
-    bool IsDown;
+    bool bIsDown;
 
     /* The modifier keys that also where pressed */
     SModifierKeyState Modifiers;
@@ -103,7 +103,7 @@ struct SMouseScrolledEvent : public SEvent
 
 struct SWindowResizeEvent : public SEvent
 {
-    FORCEINLINE SWindowResizeEvent( const TSharedRef<CPlatformWindow>& InWindow, uint16 InWidth, uint16 InHeight )
+    FORCEINLINE SWindowResizeEvent( const TSharedRef<CPlatformWindow>& InWindow, uint32 InWidth, uint32 InHeight )
         : Window( InWindow )
         , Width( InWidth )
         , Height( InHeight )
@@ -111,25 +111,27 @@ struct SWindowResizeEvent : public SEvent
     }
 
     TSharedRef<CPlatformWindow> Window;
-    uint16 Width;
-    uint16 Height;
+
+    // Because of padding we can just use 32-bit integers
+    uint32 Width;
+    uint32 Height;
 };
 
 struct SWindowFocusChangedEvent : public SEvent
 {
-    FORCEINLINE SWindowFocusChangedEvent( const TSharedRef<CPlatformWindow>& InWindow, bool hasFocus )
+    FORCEINLINE SWindowFocusChangedEvent( const TSharedRef<CPlatformWindow>& InWindow, bool bInHasFocus )
         : Window( InWindow )
-        , HasFocus( hasFocus )
+        , bHasFocus( bInHasFocus )
     {
     }
 
     TSharedRef<CPlatformWindow> Window;
-    bool HasFocus;
+    bool bHasFocus;
 };
 
 struct SWindowMovedEvent : public SEvent
 {
-    FORCEINLINE SWindowMovedEvent( const TSharedRef<CPlatformWindow>& InWindow, int16 InX, int16 InY )
+    FORCEINLINE SWindowMovedEvent( const TSharedRef<CPlatformWindow>& InWindow, int32 InX, int32 InY )
         : Window( InWindow )
         , x( InX )
         , y( InY )
@@ -137,20 +139,22 @@ struct SWindowMovedEvent : public SEvent
     }
 
     TSharedRef<CPlatformWindow> Window;
-    int16 x;
-    int16 y;
+
+    // Because of padding we can just use 32-bit integers
+    int32 x;
+    int32 y;
 };
 
 struct SWindowFrameMouseEvent : public SEvent
 {
-    FORCEINLINE SWindowFrameMouseEvent( const TSharedRef<CPlatformWindow>& InWindow, bool InMouseEntered )
+    FORCEINLINE SWindowFrameMouseEvent( const TSharedRef<CPlatformWindow>& InWindow, bool bInMouseEntered )
         : Window( InWindow )
-        , MouseEntered( InMouseEntered )
+        , bMouseEntered( bInMouseEntered )
     {
     }
 
     TSharedRef<CPlatformWindow> Window;
-    bool MouseEntered;
+    bool bMouseEntered;
 };
 
 struct SWindowClosedEvent : public SEvent

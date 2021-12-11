@@ -1,9 +1,7 @@
-project "NullRHI"
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location 		"%{wks.location}/Runtime/NullRHI"
-	characterset 	"Ascii"
+modulename = "NullRHI"
+
+project ( modulename )
+	location ( "%{wks.location}/Runtime/" .. modulename )
 
 	-- Build type 
 	filter "not options:monolithic"
@@ -20,22 +18,18 @@ project "NullRHI"
 	targetdir 	("%{wks.location}/Build/bin/"     .. outputdir)
 	objdir 		("%{wks.location}/Build/bin-int/" .. outputdir)	
 
-	-- Includes
-	includedirs
-	{
-		"%{wks.location}/Runtime",
-	}
-
 	forceincludes  
 	{ 
 		-- TODO: "PreCompiled.h"
 	}
 
 	-- Defines
-	defines
-	{
-		"NULLRHI_API_EXPORT=(1)"
-	}
+	filter "not options:monolithic"
+		defines
+		{
+			"NULLRHI_API_EXPORT=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -74,7 +68,7 @@ project "NullRHI"
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 	
@@ -95,5 +89,13 @@ project "NullRHI"
 			"Cocoa.framework",
 			"AppKit.framework",
 			"MetalKit.framework",
+		}
+	filter {}
+
+	-- Remove non-windows files
+	filter "system:windows"
+		removefiles
+		{
+			"%{wks.location}/**/Mac/**"
 		}
 	filter {}

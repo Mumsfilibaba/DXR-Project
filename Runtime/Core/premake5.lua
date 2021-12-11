@@ -1,9 +1,7 @@
-project "Core"
-	language 		"C++"
-	cppdialect 		"C++17"
-	systemversion 	"latest"
-	location 		"%{wks.location}/Runtime/Core"
-	characterset 	"Ascii"
+modulename = "Core"
+
+project ( modulename )
+	location ( "%{wks.location}/Runtime/" .. modulename )
 
 	-- Build type 
 	filter "not options:monolithic"
@@ -22,24 +20,18 @@ project "Core"
 	targetdir 	("%{wks.location}/Build/bin/"     .. outputdir)
 	objdir 		("%{wks.location}/Build/bin-int/" .. outputdir)	
 
-	-- Includes
-	includedirs
-	{
-		"%{wks.location}/Runtime",
-	}
-
 	forceincludes  
 	{ 
 		"PreCompiled.h"
 	}
 
 	-- Defines
-	defines
-	{
-		"CORE_API_EXPORT=(1)"
-	}
-
-	compileas "Objective-C++"
+	filter "not options:monolithic"
+		defines
+		{
+			"CORE_IMPL=(1)"
+		}
+	filter {}
 
 	-- Files to include
 	files 
@@ -82,7 +74,7 @@ project "Core"
 		
 		files 
 		{
-			"%{prj.name}/**.natvis",
+			"%{wks.location}/Runtime/%{prj.name}/**.natvis",
 		}
 	filter {}
 	
@@ -105,5 +97,13 @@ project "Core"
 			"Cocoa.framework",
 			"AppKit.framework",
 			"MetalKit.framework",
+		}
+	filter {}
+	
+	-- Remove non-windows files
+	filter "system:windows"
+		removefiles
+		{
+			"%{wks.location}/**/Mac/**"
 		}
 	filter {}

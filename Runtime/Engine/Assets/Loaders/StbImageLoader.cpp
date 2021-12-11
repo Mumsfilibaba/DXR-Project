@@ -90,14 +90,14 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
         int32 ChannelCount = 0;
         stbi_info_from_file( File, &Width, &Height, &ChannelCount );
 
-        const bool IsFloat = stbi_is_hdr_from_file( File );
-        const bool IsExtented = stbi_is_16_bit_from_file( File );
+        const bool bIsFloat = stbi_is_hdr_from_file( File );
+        const bool bIsExtented = stbi_is_16_bit_from_file( File );
 
         EFormat Format = EFormat::Unknown;
 
         // Load based on format
         TUniquePtr<uint8[]> Pixels;
-        if ( IsExtented )
+        if ( bIsExtented )
         {
             if ( ChannelCount == 3 )
             {
@@ -110,7 +110,7 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
 
             Format = GetExtendedFormat( ChannelCount );
         }
-        else if ( IsFloat )
+        else if ( bIsFloat )
         {
             Pixels = TUniquePtr<uint8[]>( reinterpret_cast<uint8*>(stbi_loadf_from_file( File, &Width, &Height, &ChannelCount, 0 )) );
             Format = GetFloatFormat( ChannelCount );
@@ -140,11 +140,11 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile( const CString& Filename )
             LOG_INFO( ("[CStbImageLoader]: Loaded image '" + Filename + "'").CStr() );
         }
 
-        Image->Image = Move( Pixels );
-        Image->Format = Format;
-        Image->Width = (uint16)Width;
-        Image->Height = (uint16)Height;
-        Image->IsLoaded = true;
+        Image->Image     = Move( Pixels );
+        Image->Format    = Format;
+        Image->Width     = (uint16)Width;
+        Image->Height    = (uint16)Height;
+        Image->bIsLoaded = true;
     };
 
     SDispatch NewTask;

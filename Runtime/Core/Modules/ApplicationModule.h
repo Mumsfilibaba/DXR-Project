@@ -26,9 +26,6 @@ public:
     /* Called before the module is unloaded by the application */
     virtual bool Unload() override;
 
-    /* The name of the module */
-    virtual const char* GetName() const override;
-
 protected:
     CDelegateHandle TickHandle;
 };

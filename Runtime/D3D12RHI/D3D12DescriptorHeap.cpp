@@ -69,12 +69,12 @@ D3D12_CPU_DESCRIPTOR_HANDLE CD3D12OfflineDescriptorHeap::Allocate( uint32& OutHe
 {
     // Find a heap that is not empty
     uint32 HeapIndex = 0;
-    bool FoundHeap = false;
+    bool bFoundHeap = false;
     for ( SDescriptorHeap& Heap : Heaps )
     {
         if ( !Heap.FreeList.IsEmpty() )
         {
-            FoundHeap = true;
+            bFoundHeap = true;
             break;
         }
         else
@@ -83,7 +83,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE CD3D12OfflineDescriptorHeap::Allocate( uint32& OutHe
         }
     }
 
-    if ( !FoundHeap )
+    if ( !bFoundHeap )
     {
         if ( !AllocateHeap() )
         {
@@ -115,7 +115,7 @@ void CD3D12OfflineDescriptorHeap::Free( D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint
     SDescriptorHeap& Heap = Heaps[HeapIndex];
 
     // Find a suitable range
-    bool FoundRange = false;
+    bool bFoundRange = false;
     for ( SDescriptorRange& Range : Heap.FreeList )
     {
         Assert( Range.IsValid() );
@@ -123,20 +123,20 @@ void CD3D12OfflineDescriptorHeap::Free( D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint
         if ( Handle.ptr + DescriptorSize == Range.Begin.ptr )
         {
             Range.Begin = Handle;
-            FoundRange = true;
+            bFoundRange = true;
 
             break;
         }
         else if ( Handle.ptr == Range.End.ptr )
         {
             Range.End.ptr += DescriptorSize;
-            FoundRange = true;
+            bFoundRange = true;
 
             break;
         }
     }
 
-    if ( !FoundRange )
+    if ( !bFoundRange )
     {
         D3D12_CPU_DESCRIPTOR_HANDLE End = { Handle.ptr + DescriptorSize };
         Heap.FreeList.Emplace( Handle, End );

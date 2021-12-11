@@ -20,5 +20,5 @@ struct SInterfaceImage
     EResourceState BeforeState;
     EResourceState AfterState;
 
-    bool AllowBlending = false;
+    bool bAllowBlending = false;
 };

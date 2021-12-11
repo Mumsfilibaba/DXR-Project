@@ -99,7 +99,7 @@ public:
     virtual bool Initialize( const CString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style ) { return true; }
 
     /* Shows the window */
-    virtual void Show( bool Maximized ) {}
+    virtual void Show( bool bMaximized ) {}
 
     /* Minimizes the window */
     virtual void Minimize() {}
@@ -132,7 +132,7 @@ public:
     virtual void MoveTo( int32 x, int32 y ) {}
 
     /* Set the shape of the window */
-    virtual void SetWindowShape( const SWindowShape& Shape, bool Move ) {}
+    virtual void SetWindowShape( const SWindowShape& Shape, bool bMove ) {}
 
     /* Retrieve the shape of the window */
     virtual void GetWindowShape( SWindowShape& OutWindowShape ) const {}

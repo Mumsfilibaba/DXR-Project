@@ -96,21 +96,23 @@ void CWindowsCursor::GetPosition( CPlatformWindow* RelativeWindow, int32& OutX, 
     OutY = CursorPos.y;
 }
 
-void CWindowsCursor::SetVisibility( bool Visible )
+void CWindowsCursor::SetVisibility( bool bVisible )
 {
     // TODO: Investigate if we need to do more in order to keep track of the ShowCursor calls
-    if ( Visible )
+    if ( bVisible )
     {
-        if ( !IsCursorVisible )
+        if ( !bIsVisible )
         {
             ShowCursor( true );
+            bIsVisible = true;
         }
     }
     else
     {
-        if ( IsCursorVisible )
+        if ( bIsVisible )
         {
             ShowCursor( false );
+            bIsVisible = false;
         }
     }
 }

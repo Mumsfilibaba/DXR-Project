@@ -212,8 +212,6 @@ public:
         }
     }
 
-public:
-
     /* Start recording commands with this context */
     virtual void Begin() override final;
     /* Stop recording commands with this context */
@@ -308,9 +306,9 @@ public:
     virtual void DiscardResource( class CRHIMemoryResource* Resource ) override final;
 
     /* Builds the Bottom Level Acceleration Structure for ray tracing */
-    virtual void BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool Update ) override final; 
+    virtual void BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate ) override final; 
     /* Builds the Top Level Acceleration Structure for ray tracing */
-    virtual void BuildRayTracingScene( CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update ) override final;
+    virtual void BuildRayTracingScene( CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate ) override final;
 
     /* Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
     virtual void SetRayTracingBindings(
@@ -438,6 +436,6 @@ private:
     CD3D12DescriptorCache        DescriptorCache;
     CD3D12ResourceBarrierBatcher BarrierBatcher;
 
-    bool IsReady = false;
-    bool IsCapturing = false;
+    bool bIsReady = false;
+    bool bIsCapturing = false;
 };

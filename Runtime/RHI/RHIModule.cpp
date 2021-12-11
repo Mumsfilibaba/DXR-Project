@@ -1,11 +1,13 @@
 #include "RHIModule.h"
-#include "RHICore.h"
+#include "RHIInterface.h"
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
 
+IMPLEMENT_ENGINE_MODULE( CDefaultEngineModule, RHI );
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-RHI_API CRHICore* GRHICore = nullptr;
+RHI_API CRHIInterface*           GRHIInterface = nullptr;
 RHI_API IRHIShaderCompiler* GShaderCompiler = nullptr;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -46,21 +48,21 @@ bool InitRHI( ERHIModule InRenderApi )
     // Init RHI objects
 
     // TODO: This should be in EngineConfig and/or CCommandLine
-    const bool EnableDebug =
+    const bool bEnableDebug =
     #if ENABLE_API_DEBUGGING
         true;
 #else
         false;
 #endif
 
-    CRHICore* RHICore = RHIModule->CreateCore();
-    if ( !(RHICore && RHICore->Init( EnableDebug )) )
+    CRHIInterface* RHIInterface = RHIModule->CreateInterface();
+    if ( !(RHIInterface && RHIInterface->Init( bEnableDebug )) )
     {
-        LOG_ERROR( "[InitRHI] Failed to init RHICore, the application has to terminate" );
+        LOG_ERROR( "[InitRHI] Failed to init RHIInterface, the application has to terminate" );
         return false;
     }
 
-    GRHICore = RHICore;
+    GRHIInterface = RHIInterface;
 
     IRHIShaderCompiler* Compiler = RHIModule->CreateCompiler();
     if ( !Compiler )
@@ -72,7 +74,7 @@ bool InitRHI( ERHIModule InRenderApi )
     GShaderCompiler = Compiler;
 
     // Set the context to the command queue
-    IRHICommandContext* CmdContext = GRHICore->GetDefaultCommandContext();
+    IRHICommandContext* CmdContext = GRHIInterface->GetDefaultCommandContext();
     CRHICommandQueue::Get().SetContext( CmdContext );
 
     return true;
@@ -82,6 +84,6 @@ void ReleaseRHI()
 {
     CRHICommandQueue::Get().SetContext( nullptr );
 
-    SafeDelete( GRHICore );
+    SafeDelete( GRHIInterface );
     SafeDelete( GShaderCompiler );
 }

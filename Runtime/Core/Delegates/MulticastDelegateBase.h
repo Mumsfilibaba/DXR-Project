@@ -79,7 +79,7 @@ public:
     /* Remove a delegete if an object is bound to it */
     FORCEINLINE bool UnbindIfBound( const void* Object )
     {
-        bool Result = false;
+        bool bResult = false;
 
         if ( Object )
         {
@@ -101,12 +101,12 @@ public:
                         Delegates.Pop();
                     }
 
-                    Result = true;
+                    bResult = true;
                 }
             }
         }
 
-        return Result;
+        return bResult;
     }
 
     /* Checks if a valid delegate is bound */

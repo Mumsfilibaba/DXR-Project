@@ -1,7 +1,7 @@
 #include "ShadowMapRenderer.h"
 #include "MeshDrawCommand.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Mesh.h"
@@ -21,7 +21,7 @@ bool CShadowMapRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameRe
         return false;
     }
 
-    UNREFERENCED_VARIABLE( UpdateDirLight );
+    UNREFERENCED_VARIABLE( bUpdateDirLight );
     UNREFERENCED_VARIABLE( DirLightFrame );
     UNREFERENCED_VARIABLE( PointLightFrame );
 
@@ -76,7 +76,7 @@ bool CShadowMapRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameRe
 
         SDepthStencilStateCreateInfo DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-        DepthStencilStateInfo.DepthEnable = true;
+        DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
@@ -176,7 +176,7 @@ bool CShadowMapRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameRe
 
         SDepthStencilStateCreateInfo DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-        DepthStencilStateInfo.DepthEnable = true;
+        DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
@@ -399,7 +399,7 @@ void CShadowMapRenderer::RenderPointLightShadows( CRHICommandList& CmdList, cons
     //PointLightFrame++;
     //if (PointLightFrame > 6)
     //{
-    //    UpdatePointLight = true;
+    //    bUpdatePointLight = true;
     //    PointLightFrame = 0;
     //}
 
@@ -409,7 +409,7 @@ void CShadowMapRenderer::RenderPointLightShadows( CRHICommandList& CmdList, cons
 
     INSERT_DEBUG_CMDLIST_MARKER( CmdList, "Begin Render PointLight ShadowMaps" );
 
-    //if (UpdatePointLight)
+    //if (bUpdatePointLight)
     {
         GPU_TRACE_SCOPE( CmdList, "PointLight ShadowMaps" );
 
@@ -499,7 +499,7 @@ void CShadowMapRenderer::RenderPointLightShadows( CRHICommandList& CmdList, cons
             }
         }
 
-        UpdatePointLight = false;
+        bUpdatePointLight = false;
     }
 
     INSERT_DEBUG_CMDLIST_MARKER( CmdList, "End Render PointLight ShadowMaps" );

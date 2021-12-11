@@ -45,25 +45,25 @@ bool CInterfaceApplication::Make( const TSharedPtr<CInterfaceApplication>& InApp
 
 void CInterfaceApplication::Release()
 {
-	if ( Instance )
-	{
-		Instance->SetPlatformApplication( nullptr );
-		Instance.Reset();
-	}
+    if ( Instance )
+    {
+        Instance->SetPlatformApplication( nullptr );
+        Instance.Reset();
+    }
 }
 
 CInterfaceApplication::CInterfaceApplication( const TSharedPtr<CPlatformApplication>& InPlatformApplication )
     : CPlatformApplicationMessageHandler()
     , PlatformApplication( InPlatformApplication )
-	, Renderer()
-	, MainViewport()
-	, UIWindows()
-	, DebugStrings()
+    , Renderer()
+    , MainViewport()
+    , UIWindows()
+    , DebugStrings()
     , InputHandlers()
     , WindowMessageHandlers()
     , RegisteredUsers()
-    , Running( true )
-	, Context( nullptr )
+    , bIsRunning( true )
+    , Context( nullptr )
 {
 }
 
@@ -376,10 +376,10 @@ CIntVector2 CInterfaceApplication::GetCursorPos( const TSharedRef<CPlatformWindo
     return CursorPosition;
 }
 
-void CInterfaceApplication::ShowCursor( bool IsVisible )
+void CInterfaceApplication::ShowCursor( bool bIsVisible )
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
-    Cursor->SetVisibility( IsVisible );
+    Cursor->SetVisibility( bIsVisible );
 }
 
 bool CInterfaceApplication::IsCursorVisibile() const
@@ -535,9 +535,9 @@ void CInterfaceApplication::HandleKeyReleased( EKey KeyCode, SModifierKeyState M
     HandleKeyEvent( KeyEvent );
 }
 
-void CInterfaceApplication::HandleKeyPressed( EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState )
+void CInterfaceApplication::HandleKeyPressed( EKey KeyCode, bool bIsRepeat, SModifierKeyState ModierKeyState )
 {
-    SKeyEvent KeyEvent( KeyCode, true, IsRepeat, ModierKeyState );
+    SKeyEvent KeyEvent( KeyCode, true, bIsRepeat, ModierKeyState );
     HandleKeyEvent( KeyEvent );
 }
 
@@ -549,19 +549,19 @@ void CInterfaceApplication::HandleKeyEvent( const SKeyEvent& KeyEvent )
         const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
         if ( Handler.First->HandleKeyEvent( Event ) )
         {
-            Event.IsConsumed = true;
+            Event.bIsConsumed = true;
         }
     }
 
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.KeysDown[Event.KeyCode] = Event.IsDown;
+    UIState.KeysDown[Event.KeyCode] = Event.bIsDown;
 
     if ( UIState.WantCaptureKeyboard )
     {
-        Event.IsConsumed = true;
+        Event.bIsConsumed = true;
     }
 
-    if ( !Event.IsConsumed && !RegisteredUsers.IsEmpty() )
+    if ( !Event.bIsConsumed && !RegisteredUsers.IsEmpty() )
     {
         for ( const TSharedPtr<CInterfaceUser>& User : RegisteredUsers )
         {
@@ -580,7 +580,7 @@ void CInterfaceApplication::HandleKeyTyped( uint32 Character )
         const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
         if ( Handler.First->HandleKeyTyped( Event ) )
         {
-            Event.IsConsumed = true;
+            Event.bIsConsumed = true;
         }
     }
 
@@ -596,11 +596,11 @@ void CInterfaceApplication::HandleMouseMove( int32 x, int32 y )
         const TPair<TSharedPtr<CInputHandler>, uint32>& Handler= InputHandlers[Index];
         if ( Handler.First->HandleMouseMove( MouseMovedEvent ) )
         {
-            MouseMovedEvent.IsConsumed = true;
+            MouseMovedEvent.bIsConsumed = true;
         }
     }
 
-    if ( !MouseMovedEvent.IsConsumed && !RegisteredUsers.IsEmpty() )
+    if ( !MouseMovedEvent.bIsConsumed && !RegisteredUsers.IsEmpty() )
     {
         for ( const TSharedPtr<CInterfaceUser>& User : RegisteredUsers )
         {
@@ -655,21 +655,21 @@ void CInterfaceApplication::HandleMouseButtonEvent( const SMouseButtonEvent& Mou
         const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
         if ( Handler.First->HandleMouseButtonEvent( Event ) )
         {
-            Event.IsConsumed = true;
+            Event.bIsConsumed = true;
         }
     }
 
     ImGuiIO& UIState = ImGui::GetIO();
 
     const uint32 ButtonIndex = GetMouseButtonIndex( Event.Button );
-    UIState.MouseDown[ButtonIndex] = Event.IsDown;
+    UIState.MouseDown[ButtonIndex] = Event.bIsDown;
 
     if ( UIState.WantCaptureMouse )
     {
-        Event.IsConsumed = true;
+        Event.bIsConsumed = true;
     }
 
-    if ( !Event.IsConsumed && !RegisteredUsers.IsEmpty() )
+    if ( !Event.bIsConsumed && !RegisteredUsers.IsEmpty() )
     {
         for ( const TSharedPtr<CInterfaceUser>& User : RegisteredUsers )
         {
@@ -686,7 +686,7 @@ void CInterfaceApplication::HandleMouseScrolled( float HorizontalDelta, float Ve
         const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
         if ( Handler.First->HandleMouseScrolled( Event ) )
         {
-            Event.IsConsumed = true;
+            Event.bIsConsumed = true;
         }
     }
 
@@ -696,10 +696,10 @@ void CInterfaceApplication::HandleMouseScrolled( float HorizontalDelta, float Ve
 
     if ( UIState.WantCaptureMouse )
     {
-        Event.IsConsumed = true;
+        Event.bIsConsumed = true;
     }
 
-    if ( !Event.IsConsumed && !RegisteredUsers.IsEmpty() )
+    if ( !Event.bIsConsumed && !RegisteredUsers.IsEmpty() )
     {
         for ( const TSharedPtr<CInterfaceUser>& User : RegisteredUsers )
         {
@@ -708,7 +708,7 @@ void CInterfaceApplication::HandleMouseScrolled( float HorizontalDelta, float Ve
     }
 }
 
-void CInterfaceApplication::HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint16 Width, uint16 Height )
+void CInterfaceApplication::HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint32 Width, uint32 Height )
 {
     SWindowResizeEvent WindowResizeEvent( Window, Width, Height );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
@@ -716,12 +716,12 @@ void CInterfaceApplication::HandleWindowResized( const TSharedRef<CPlatformWindo
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if ( Handler.First->OnWindowResized( WindowResizeEvent ) )
         {
-            WindowResizeEvent.IsConsumed = true;
+            WindowResizeEvent.bIsConsumed = true;
         }
     }
 }
 
-void CInterfaceApplication::HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int16 x, int16 y )
+void CInterfaceApplication::HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y )
 {
     SWindowMovedEvent WindowsMovedEvent( Window, x, y );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
@@ -729,20 +729,20 @@ void CInterfaceApplication::HandleWindowMoved( const TSharedRef<CPlatformWindow>
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if ( Handler.First->OnWindowMoved( WindowsMovedEvent ) )
         {
-            WindowsMovedEvent.IsConsumed = true;
+            WindowsMovedEvent.bIsConsumed = true;
         }
     }
 }
 
-void CInterfaceApplication::HandleWindowFocusChanged( const TSharedRef<CPlatformWindow>& Window, bool HasFocus )
+void CInterfaceApplication::HandleWindowFocusChanged( const TSharedRef<CPlatformWindow>& Window, bool bHasFocus )
 {
-    SWindowFocusChangedEvent WindowFocusChangedEvent( Window, HasFocus );
+    SWindowFocusChangedEvent WindowFocusChangedEvent( Window, bHasFocus );
     for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
     {
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if ( Handler.First->OnWindowFocusChanged( WindowFocusChangedEvent ) )
         {
-            WindowFocusChangedEvent.IsConsumed = true;
+            WindowFocusChangedEvent.bIsConsumed = true;
         }
     }
 }
@@ -767,7 +767,7 @@ void CInterfaceApplication::HandleWindowFrameMouseEvent( const SWindowFrameMouse
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if ( Handler.First->OnWindowFrameMouseEvent( Event ) )
         {
-            Event.IsConsumed = true;
+            Event.bIsConsumed = true;
         }
     }
 }
@@ -812,7 +812,7 @@ void CInterfaceApplication::HandleWindowClosed( const TSharedRef<CPlatformWindow
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
         if ( Handler.First->OnWindowClosed( WindowClosedEvent ) )
         {
-            WindowClosedEvent.IsConsumed = true;
+            WindowClosedEvent.bIsConsumed = true;
         }
     }
 
@@ -822,6 +822,6 @@ void CInterfaceApplication::HandleWindowClosed( const TSharedRef<CPlatformWindow
 
 void CInterfaceApplication::HandleApplicationExit( int32 ExitCode )
 {
-    Running = false;
+    bIsRunning = false;
     ExitEvent.Broadcast( ExitCode );
 }

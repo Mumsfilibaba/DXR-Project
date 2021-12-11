@@ -117,22 +117,22 @@ void CMacCursor::GetPosition( CPlatformWindow* InRelativeWindow, int32& OutX, in
     OutY = CursorPosition.y;
 }
 
-void CMacCursor::SetVisibility( bool Visible )
+void CMacCursor::SetVisibility( bool bVisible )
 {
-    if (Visible)
+    if ( bVisible )
     {
-        if (!IsCursorVisible)
+        if (! bIsVisible )
         {
             [NSCursor unhide];
-            IsCursorVisible = true;
+            bIsVisible = true;
         }
     }
     else
     {
-        if (IsCursorVisible)
+        if ( bIsVisible )
         {
             [NSCursor hide];
-            IsCursorVisible = false;
+            bIsVisible = false;
         }
     }
 }

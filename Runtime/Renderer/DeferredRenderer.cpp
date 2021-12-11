@@ -1,7 +1,7 @@
 #include "DeferredRenderer.h"
 #include "MeshDrawCommand.h"
 
-#include "RHI/RHICore.h"
+#include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Mesh.h"
@@ -85,7 +85,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
 
         SDepthStencilStateCreateInfo DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-        DepthStencilStateInfo.DepthEnable = true;
+        DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<CRHIDepthStencilState> GeometryDepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
@@ -114,8 +114,8 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         }
 
         SBlendStateCreateInfo BlendStateInfo;
-        BlendStateInfo.IndependentBlendEnable = false;
-        BlendStateInfo.RenderTarget[0].BlendEnable = false;
+        BlendStateInfo.bIndependentBlendEnable = false;
+        BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState( BlendStateInfo );
         if ( !BlendState )
@@ -175,7 +175,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
 
         SDepthStencilStateCreateInfo DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = EComparisonFunc::Less;
-        DepthStencilStateInfo.DepthEnable = true;
+        DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState( DepthStencilStateInfo );
@@ -204,8 +204,8 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         }
 
         SBlendStateCreateInfo BlendStateInfo;
-        BlendStateInfo.IndependentBlendEnable = false;
-        BlendStateInfo.RenderTarget[0].BlendEnable = false;
+        BlendStateInfo.bIndependentBlendEnable = false;
+        BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState( BlendStateInfo );
         if ( !BlendState )
@@ -215,7 +215,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
         }
         else
         {
-            BlendState->SetName( "Pre-pass BlendState" );
+            BlendState->SetName( "Prepass BlendState" );
         }
 
         SGraphicsPipelineStateCreateInfo PipelineStateInfo;
@@ -242,7 +242,7 @@ bool CDeferredRenderer::Init( SFrameResources& FrameResources )
     constexpr EFormat LUTFormat = EFormat::R16G16_Float;
     if ( !RHIUAVSupportsFormat( LUTFormat ) )
     {
-        LOG_ERROR( "[Renderer]: R16G16_Float is not supported for UAVs" );
+        LOG_ERROR( "[CRenderer]: R16G16_Float is not supported for UAVs" );
 
         CDebug::DebugBreak();
         return false;
