@@ -1,6 +1,10 @@
 #pragma once
+#include "And.h"
+#include "IsSame.h"
 
-/* Determine if type is a integer point type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determine if type is a integer type
+
 template<typename T>
 struct TIsInteger
 {
@@ -169,5 +173,17 @@ struct TIsInteger<const volatile T>
     enum
     {
         Value = TIsInteger<T>::Value
+    };
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Check if the type is an integer but not a bool
+
+template<typename T>
+class TIsIntegerNotBool
+{
+    enum
+    {
+        Value = TAnd<TIsInteger<T>, TIsNotSame<T, bool>>::Value
     };
 };

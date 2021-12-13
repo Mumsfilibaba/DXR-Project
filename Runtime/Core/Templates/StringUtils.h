@@ -7,7 +7,8 @@
 #include <cwctype>
 #include <cstdarg>
 
-/* Helpers for characters */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helpers for characters */
 template<typename CharType>
 class TStringUtils;
 
@@ -276,3 +277,98 @@ public:
 /* Predefined types */
 using CStringUtils = TStringUtils<char>;
 using WStringUtils = TStringUtils<wchar_t>;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helpers for StringParsing */
+
+template<typename CharType>
+class TStringParse;
+
+template<>
+class TStringParse<char>
+{
+public:
+
+    using CharType = char;
+
+    static FORCEINLINE int8 ParseInt8( const CharType* String, CharType** End, int32 Base )
+    {
+        return static_cast<int8>(strtol( String, End, Base ));
+    }
+
+    static FORCEINLINE int16 ParseInt16( const CharType* String, CharType** End, int32 Base )
+    {
+        return static_cast<int16>(strtol( String, End, Base ));
+    }
+
+    static FORCEINLINE int32 ParseInt32( const CharType* String, CharType** End, int32 Base )
+    {
+        return static_cast<int32>(strtol( String, End, Base ));
+    }
+
+    static FORCEINLINE int64 ParseInt64( const CharType* String, CharType** End, int32 Base )
+    {
+        return static_cast<int64>(strtoll( String, End, Base ));
+    }
+
+    static FORCEINLINE int8 ParseUint8( const CharType* String, CharType** End, int32 Base )
+    {
+        return static_cast<int8>(strtoul( String, End, Base ));
+    }
+
+    static FORCEINLINE int16 ParseUint16( const CharType* String, CharType** End, int32 Base )
+    {
+        return static_cast<int16>(strtoul( String, End, Base ));
+    }
+
+    static FORCEINLINE int32 ParseUint32( const CharType* String, CharType** End, int32 Base )
+    {
+        return static_cast<int32>(strtoul( String, End, Base ));
+    }
+
+    static FORCEINLINE int64 ParseUint64( const CharType* String, CharType** End, int32 Base )
+    {
+        return static_cast<int64>(strtoull( String, End, Base ));
+    }
+
+    static FORCEINLINE float ParseFloat( const CharType* String, CharType** End )
+    {
+        return static_cast<float>(strtold( String, End ));
+    }
+
+    static FORCEINLINE double ParseDouble( const CharType* String, CharType** End )
+    {
+        return static_cast<double>(strtold( String, End ));
+    }
+
+    template<typename T>
+    static T ParseInt( const CharType* String, CharType** End, int32 Base );
+
+    template<>
+    static FORCEINLINE int8 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseInt8( String, End, Base ); }
+
+    template<>
+    static FORCEINLINE int16 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseInt16( String, End, Base ); }
+
+    template<>
+    static FORCEINLINE int32 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseInt32( String, End, Base ); }
+
+    template<>
+    static FORCEINLINE int64 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseInt64( String, End, Base ); }
+
+    template<>
+    static FORCEINLINE uint8 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseUint8( String, End, Base ); }
+
+    template<>
+    static FORCEINLINE uint16 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseUint16( String, End, Base ); }
+
+    template<>
+    static FORCEINLINE uint32 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseUint32( String, End, Base ); }
+
+    template<>
+    static FORCEINLINE uint64 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseUint64( String, End, Base ); }
+};
+
+/* Predefined types */
+using CStringParse = TStringParse<char>;
+using WStringParse = TStringParse<wchar_t>;

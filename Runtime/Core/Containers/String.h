@@ -1451,7 +1451,7 @@ struct TStringHasher
     // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
     FORCEINLINE size_t operator()( const TString<TChar>& String ) const
     {
-        // NOTE: How good is this for wide chars?
+        // TODO: Investigate how good is this for wide chars
 
         const TChar* Key = String.CStr();
         int32 Length = String.Length();
@@ -1472,10 +1472,12 @@ struct TStringHasher
     }
 };
 
-using SStringHasher = TStringHasher<char>;
+using SStringHasher     = TStringHasher<char>;
 using SWideStringHasher = TStringHasher<wchar_t>;
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper for converting to a string
+
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, CString>::Type ToString( T Element )
 {
@@ -1509,6 +1511,12 @@ inline CString ToString<uint64>( uint64 Element )
     return CString::MakeFormated( "%llu", Element );
 }
 
+template<>
+inline CString ToString<bool>( bool bElement )
+{
+    return CString( bElement ? "true" : "false" );
+}
+
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, WString>::Type ToWideString( T Element )
 {
@@ -1540,4 +1548,53 @@ template<>
 inline WString ToWideString<uint64>( uint64 Element )
 {
     return WString::MakeFormated( L"%llu", Element );
+}
+
+template<>
+inline WString ToWideString<bool>( bool bElement )
+{
+    return WString( bElement ? L"true" : L"false" );
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helper for converting from a string
+
+template<typename T>
+inline bool FromString( const CString& Value, T& OutElement );
+
+template<typename T>
+inline typename TEnableIf<TIsIntegerNotBool<T>::Value, bool>::Type FromString( const CString& Value, T& OutElement )
+{
+    // TODO: Improve with more than base 10
+    char* End;
+    OutElement = CStringParse::ParseInt<T>( Value.CStr(), &End, 10);
+    return ( *End != 0 );
+}
+
+template<>
+inline bool FromString<float>( const CString& Value, float& OutElement )
+{
+    char* End;
+    OutElement = CStringParse::ParseFloat( Value.CStr(), &End );
+    return ( *End != 0 );
+}
+
+template<>
+inline bool FromString<double>( const CString& Value, double& OutElement )
+{
+    char* End;
+    OutElement = CStringParse::ParseDouble( Value.CStr(), &End );
+    return ( *End != 0 );
+}
+
+template<>
+inline bool FromString<bool>( const CString& Value, bool& OutElement )
+{
+    char* End;
+    OutElement = static_cast<bool>( CStringParse::ParseInt32( Value.CStr(), &End, 10 ) );
+    if (*End)
+    {
+        return true;
+    }
+
 }

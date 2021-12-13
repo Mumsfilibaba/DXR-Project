@@ -10,66 +10,33 @@ class CConfigValue
 {
 public:
 
-    /* Empty constructor */
-    CConfigValue()
-        : SavedValue()
-        , CurrentValue()
-    {
-    }
-    
-    /* Create value from string */
-    CConfigValue( CString&& InString )
-        : SavedValue( InString )
-        , CurrentValue( InString )
-    {
-    }
-    
-    /* Create value from string */
-    CConfigValue( const CString& InString )
-        : SavedValue( InString )
-        , CurrentValue( InString )
-    {
-    }
-
-    /* Move constructor */
-    CConfigValue( CConfigValue&& Other )
-        : SavedValue( Move( Other.SavedValue ) )
-        , CurrentValue( Move( Other.CurrentValue ) )
-    {
-    }
-    
-    /* Copy constructor */
-    CConfigValue( const CConfigValue& Other )
-        : SavedValue( Other.SavedValue )
-        , CurrentValue( Other.CurrentValue )
-    {
-    }
-
+    CConfigValue() = default;
+    CConfigValue( CConfigValue&& Other ) = default;
+    CConfigValue( const CConfigValue& Other ) = default;
     ~CConfigValue() = default;
 
-    /* Retrieves the current value that this variable holds */ 
-    FORCEINLINE const CString& GetValue() const { return CurrentValue; }
-
-    /* Retrieves the value that currently exists in the file */
-    FORCEINLINE const CString& GetSavedValue() const { return SavedValue; }
-
-    /* Move assignment operator */
-    CConfigValue& operator=( CConfigValue&& RHS )
+    CConfigValue& operator=( CConfigValue&& RHS ) = default;
+    CConfigValue& operator=( const CConfigValue& RHS ) = default;
+    
+    /* Create value from string */
+    explicit CConfigValue( CString&& InString )
+        : SavedValue( InString )
+        , CurrentValue( Move( InString ) )
     {
-        SavedValue   = Move( RHS.SavedValue );
-        CurrentValue = Move( RHS.CurrentValue );
-        return *this;
+    }
+    
+    /* Create value from string */
+    explicit CConfigValue( const CString& InString )
+        : SavedValue( InString )
+        , CurrentValue( InString )
+    {
     }
 
-    /* Copy assignment operator */
-    CConfigValue& operator=( const CConfigValue& RHS )
-    {
-        SavedValue   = RHS.SavedValue;
-        CurrentValue = RHS.CurrentValue;
-        return *this;
-    }
+    /* Restores the value to the value currently in the save file */
+    FORCEINLINE void Restore() { CurrentValue = SavedValue; }
 
-private:
+    /* Makes the current value the saved value */
+    FORCEINLINE void MakeCurrentSaved() { SavedValue = CurrentValue; }
 
     /* Current value in the config file */    
     CString SavedValue;
@@ -81,15 +48,30 @@ private:
 
 class CORE_API CConfigSection
 {
+    friend class CConfigFile;
+
 public:
 
     CConfigSection( const char* Name );
     ~CConfigSection() = default;
 
+    /* Restores all values in the section */
+    void Restore();
 
+    /* Restores a specific value in the section */
+    bool Restore( const char* Name );
+
+    /* Set a specific value to a new string */
+    void SetValue( const char* Name, const CString& NewValue );
+
+    /* Retrieve a value */
+    CConfigValue* GetValue( const char* Name );
+
+    /* Retrieve a value */
+    const CConfigValue* GetValue( const char* Name ) const;
 
 private:
-    THashTable<CString, CConfigValue> ConfigValues;
+    THashTable<CString, CConfigValue, SStringHasher> ConfigValues;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -100,12 +82,6 @@ public:
 
     CConfigFile( const char* Filename );
     ~CConfigFile() = default;
-
-    /* Loads the file and parses its contents */
-    void ParseFile();
-
-    /* Saves the content to the file */
-    void SaveFile();
 
     /* Set a string from the Engine config */
     bool SetString( const char* SectionName, const char* Name, const CString& NewValue );
@@ -131,46 +107,48 @@ public:
     /* Retrieve a boolean from the Engine config */
     bool GetBoolean( const char* SectionName, const char* Name, bool& bOutValue );
 
+    /* Loads the file and parses its contents */
+    bool ParseFile();
+
+    /* Saves the content to the file */
+    bool SaveFile();
+
+    /* Appends all the sections into this config file */
+    void Append( const CConfigFile& OtherFile );
+
 private:
+
+    /* Retrieve a section with a certain name */
+    CConfigSection* GetSection( const char* SectionName );
+
+    /* Retrieve a variable just based on name */
+    CConfigValue* GetValue( const char* Name );
+
+    /* Retrieve a variable from a certain section, with a certain name */
+    CConfigValue* GetValue( const char* SectionName, const char* Name );
+
+    /* Templated version of get value */
+    template<typename T>
+    bool GetTypedValue( const char* SectionName, const char* Name, T& OutValue )
+    {
+        CString Value;
+        if ( GetString( SectionName, Name, Value ) )
+        {
+            return FromString<T>( Value, OutValue );
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    // The filename
+    CString Filename;
+
+    // All the sections
     THashTable<CString, CConfigSection, SStringHasher> Sections;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-class CORE_API CEngineConfig
-{
-public:
-
-    /* Registers a new Config file to the engine that will be searched when looking for a value */
-    static void RegisterConfigFile( CConfigFile* ConfigFile );
-
-    /* Unregister a new Config file from the engine */
-    static void UnregisterConfigFile( CConfigFile* ConfigFile );
-
-    /* Set a string from the Engine config */
-    static bool SetString( const char* SectionName, const char* Name, const CString& NewValue );
-
-    /* Set a int from the Engine config */
-    static bool SetInt( const char* SectionName, const char* Name, int32 NewValue );
-
-    /* Set a float from the Engine config */
-    static bool SetFloat( const char* SectionName, const char* Name, float NewValue );
-
-    /* Set a boolean from the Engine config */
-    static bool SetBoolean( const char* SectionName, const char* Name, bool bNewValue );
-
-    /* Retrieve a string from the Engine config */
-    static bool GetString( const char* SectionName, const char* Name, CString& OutValue );
-
-    /* Retrieve a int from the Engine config */
-    static bool GetInt( const char* SectionName, const char* Name, int32& OutValue );
-
-    /* Retrieve a float from the Engine config */
-    static bool GetFloat( const char* SectionName, const char* Name, float& OutValue );
-
-    /* Retrieve a boolean from the Engine config */
-    static bool GetBoolean( const char* SectionName, const char* Name, bool& bOutValue );
-
-private: 
-    static TArray<CConfigFile*> ConfigFiles; 
-};
+extern CORE_API CConfigFile GEngineConfig;
