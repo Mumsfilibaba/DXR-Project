@@ -1560,7 +1560,7 @@ inline WString ToWideString<bool>( bool bElement )
 // Helper for converting from a string
 
 template<typename T>
-inline bool FromString( const CString& Value, T& OutElement );
+inline typename TEnableIf<TNot<TIsIntegerNotBool<T>>::Value, bool>::Type FromString( const CString& Value, T& OutElement );
 
 template<typename T>
 inline typename TEnableIf<TIsIntegerNotBool<T>::Value, bool>::Type FromString( const CString& Value, T& OutElement )
@@ -1596,5 +1596,6 @@ inline bool FromString<bool>( const CString& Value, bool& OutElement )
     {
         return true;
     }
-
+	
+	return false;
 }

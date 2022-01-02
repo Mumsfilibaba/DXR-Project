@@ -1,5 +1,5 @@
 #pragma once
-#include "Core.h"
+#include "Core/Core.h"
 
 #if MONOLITHIC_BUILD
 #define INTERFACE_API

@@ -94,7 +94,7 @@ void CMacCursor::SetPosition( CPlatformWindow* InRelativeWindow, int32 x, int32 
     
     CGWarpMouseCursorPosition(CGPointMake(NewPosition.x, CGDisplayBounds(CGMainDisplayID()).size.height - NewPosition.y - 1));
     
-    if (IsCursorVisible)
+    if ( bIsVisible )
     {
         CGAssociateMouseAndMouseCursorPosition(true);
     }
@@ -124,7 +124,7 @@ void CMacCursor::SetVisibility( bool bVisible )
         if (! bIsVisible )
         {
             [NSCursor unhide];
-            bIsVisible = true;
+			bIsVisible = true;
         }
     }
     else
@@ -132,7 +132,7 @@ void CMacCursor::SetVisibility( bool bVisible )
         if ( bIsVisible )
         {
             [NSCursor hide];
-            bIsVisible = false;
+			bIsVisible = false;
         }
     }
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/String.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)

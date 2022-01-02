@@ -1,5 +1,5 @@
 #pragma once
-#include "Core.h"
+#include "Core/Core.h"
 
 /* Struct containing the state of modifierkeys */
 struct SModifierKeyState

@@ -1,6 +1,6 @@
 #pragma once
-#include "CoreTypes.h"
-#include "CoreDefines.h"
+#include "Core/CoreTypes.h"
+#include "Core/CoreDefines.h"
 
 #include "Core/Templates/IsSigned.h"
 #include "Core/Templates/AddressOf.h"

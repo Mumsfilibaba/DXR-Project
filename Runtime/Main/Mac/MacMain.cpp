@@ -2,9 +2,9 @@
 
 #if PLATFORM_MACOS
 
-int main( int NumArgs, const char** Args )
+int main()
 {
-    return EngineMain( NumArgs, Args );
+    return EngineMain();
 }
 
 #endif

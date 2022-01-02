@@ -28,7 +28,7 @@ CMacApplication::CMacApplication()
     , WindowsMutex()
     , DeferredEvents()
     , DeferredEventsMutex()
-	, IsTerminating( false )
+	, bIsTerminating( false )
 {
 }
 
@@ -286,7 +286,7 @@ void CMacApplication::HandleEvent( const SMacApplicationEvent& Event )
 		}
 		else if (NotificationName == NSApplicationWillTerminateNotification)
 		{
-			IsTerminating = true;
+			bIsTerminating = true;
 		}
 	}
 	else if (Event.Event)

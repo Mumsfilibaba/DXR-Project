@@ -9,13 +9,11 @@
 #include "Core/Windows/PreCompiledWindows.h"
 #endif
 
-#include <imgui.h>
-
 /* Debug */
 #include "Core/Debug/Debug.h"
 
 /* Core */
-#include "Core.h"
+#include "Core/Core.h"
 #include "Core/RefCounted.h"
 
 /* Containers */

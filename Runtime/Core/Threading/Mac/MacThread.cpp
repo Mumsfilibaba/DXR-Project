@@ -2,6 +2,8 @@
 #include "MacThread.h"
 #include "MacThreadMisc.h"
 
+#include "Core/Logging/Log.h"
+
 CMacThread::CMacThread( ThreadFunction InFunction )
     : CPlatformThread()
     , Thread()

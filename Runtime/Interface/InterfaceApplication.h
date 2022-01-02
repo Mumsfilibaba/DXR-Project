@@ -1,5 +1,5 @@
 #pragma once
-#include "Core.h"
+#include "Core/Core.h"
 #include "InputHandler.h"
 #include "WindowMessageHandler.h"
 #include "InterfaceUser.h"

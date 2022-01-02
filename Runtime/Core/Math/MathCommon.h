@@ -1,6 +1,6 @@
 #pragma once
-#include "CoreDefines.h"
-#include "CoreTypes.h"
+#include "Core/CoreDefines.h"
+#include "Core/CoreTypes.h"
 
 #include "Core/Templates/IsInteger.h"
 #include "Core/Templates/EnableIf.h"

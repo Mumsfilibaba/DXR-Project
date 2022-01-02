@@ -180,7 +180,7 @@ struct TIsInteger<const volatile T>
 // Check if the type is an integer but not a bool
 
 template<typename T>
-class TIsIntegerNotBool
+struct TIsIntegerNotBool
 {
     enum
     {

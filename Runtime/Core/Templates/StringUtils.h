@@ -340,34 +340,60 @@ public:
     {
         return static_cast<double>(strtold( String, End ));
     }
-
+	
+public:
+	
     template<typename T>
     static T ParseInt( const CharType* String, CharType** End, int32 Base );
-
-    template<>
-    static FORCEINLINE int8 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseInt8( String, End, Base ); }
-
-    template<>
-    static FORCEINLINE int16 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseInt16( String, End, Base ); }
-
-    template<>
-    static FORCEINLINE int32 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseInt32( String, End, Base ); }
-
-    template<>
-    static FORCEINLINE int64 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseInt64( String, End, Base ); }
-
-    template<>
-    static FORCEINLINE uint8 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseUint8( String, End, Base ); }
-
-    template<>
-    static FORCEINLINE uint16 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseUint16( String, End, Base ); }
-
-    template<>
-    static FORCEINLINE uint32 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseUint32( String, End, Base ); }
-
-    template<>
-    static FORCEINLINE uint64 ParseInt( const CharType* String, CharType** End, int32 Base ) { return ParseUint64( String, End, Base ); }
 };
+
+template<>
+FORCEINLINE int8 TStringParse<char>::ParseInt<int8>( const CharType* String, CharType** End, int32 Base )
+{
+	return ParseInt8( String, End, Base );
+}
+
+template<>
+FORCEINLINE int16 TStringParse<char>::ParseInt<int16>( const CharType* String, CharType** End, int32 Base )
+{
+	return ParseInt16( String, End, Base );
+}
+
+template<>
+FORCEINLINE int32 TStringParse<char>::ParseInt<int32>( const CharType* String, CharType** End, int32 Base )
+{
+	return ParseInt32( String, End, Base );
+}
+
+template<>
+FORCEINLINE int64 TStringParse<char>::ParseInt<int64>( const CharType* String, CharType** End, int32 Base )
+{
+	return ParseInt64( String, End, Base );
+}
+
+template<>
+FORCEINLINE uint8 TStringParse<char>::ParseInt<uint8>( const CharType* String, CharType** End, int32 Base )
+{
+	return ParseUint8( String, End, Base );
+}
+
+template<>
+FORCEINLINE uint16 TStringParse<char>::ParseInt<uint16>( const CharType* String, CharType** End, int32 Base )
+{
+	return ParseUint16( String, End, Base );
+}
+
+template<>
+FORCEINLINE uint32 TStringParse<char>::ParseInt<uint32>( const CharType* String, CharType** End, int32 Base )
+{
+	return ParseUint32( String, End, Base );
+}
+
+template<>
+FORCEINLINE uint64 TStringParse<char>::ParseInt<uint64>( const CharType* String, CharType** End, int32 Base )
+{
+	return ParseUint64( String, End, Base );
+}
 
 /* Predefined types */
 using CStringParse = TStringParse<char>;

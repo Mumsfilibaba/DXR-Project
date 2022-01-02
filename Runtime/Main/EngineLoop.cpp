@@ -30,32 +30,34 @@
 
 bool CEngineLoop::LoadCoreModules()
 {
-    IEngineModule* CoreModule            = CModuleManager::Get().LoadEngineModule( "Core" );
-    IEngineModule* CoreApplicationModule = CModuleManager::Get().LoadEngineModule( "CoreApplication" );
+	CModuleManager& ModuleManager = CModuleManager::Get();
+	
+    IEngineModule* CoreModule            = ModuleManager.LoadEngineModule( "Core" );
+    IEngineModule* CoreApplicationModule = ModuleManager.LoadEngineModule( "CoreApplication" );
     if ( !CoreModule || !CoreApplicationModule )
     {
         return false;
     }
 
-    IEngineModule* InterfaceModule = CModuleManager::Get().LoadEngineModule( "Interface" );
+    IEngineModule* InterfaceModule = ModuleManager.LoadEngineModule( "Interface" );
     if ( !InterfaceModule )
     {
         return false;
     }
     
-    IEngineModule* EngineModule = CModuleManager::Get().LoadEngineModule( "Engine" );
+    IEngineModule* EngineModule = ModuleManager.LoadEngineModule( "Engine" );
     if ( !EngineModule )
     {
         return false;
     }
 
-    IEngineModule* RHIModule = CModuleManager::Get().LoadEngineModule( "RHI" );
+    IEngineModule* RHIModule = ModuleManager.LoadEngineModule( "RHI" );
     if ( !RHIModule )
     {
         return false;
     }
 
-    IEngineModule* RendererModule = CModuleManager::Get().LoadEngineModule( "Renderer" );
+    IEngineModule* RendererModule = ModuleManager.LoadEngineModule( "Renderer" );
     if ( !RendererModule )
     {
         return false;
@@ -82,6 +84,7 @@ bool CEngineLoop::PreInitialize()
     // Load all core modules, these tend to not be reloadable
     if ( !LoadCoreModules() )
     {
+		PlatformApplicationMisc::MessageBox( "ERROR", "Failed to Load Core Modules" );
         return false;
     }
 

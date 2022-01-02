@@ -41,25 +41,25 @@ workspace "DXR-Project"
 	{
 		"x64",
     }
-	
+
     -- Configurations
     configurations
     {
-		"Debug",
+        "Debug",
         "Release",
         "Production",
     }
-	
-	defines
-	{
-		"WORKSPACE_LOCATION=" .. "\"" .. findWorkspaceDir().. "\"",
-	}
-	
-	-- Includes
-	includedirs
-	{
-		"%{wks.location}/Runtime",
-	}
+
+    defines
+    {
+        "WORKSPACE_LOCATION=" .. "\"" .. findWorkspaceDir().. "\"",
+    }
+
+    -- Includes
+    includedirs
+    {
+        "%{wks.location}/Runtime",
+    }
 
 	filter "options:monolithic"
 		defines

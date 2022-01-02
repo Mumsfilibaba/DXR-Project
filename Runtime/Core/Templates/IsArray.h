@@ -1,5 +1,5 @@
 #pragma once
-#include "CoreTypes.h"
+#include "Core/CoreTypes.h"
 
 /* Check if type is an array type */
 template<typename T>

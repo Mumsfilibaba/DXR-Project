@@ -1,6 +1,6 @@
 #pragma once
-#include "CoreDefines.h"
-#include "CoreTypes.h"
+#include "Core/CoreDefines.h"
+#include "Core/CoreTypes.h"
 
 /* Stores two variables of two template types */
 template<typename FirstType, typename SecondType>

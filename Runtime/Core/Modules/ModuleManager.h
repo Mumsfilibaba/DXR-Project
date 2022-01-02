@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/CoreModule.h"
+#include "Core/Logging/Log.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/String.h"
@@ -30,8 +31,8 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
 // Interface that all engine modules must implement
+
 class IEngineModule
 {
 public:
@@ -67,8 +68,8 @@ public:
 typedef PlatformLibrary::PlatformHandle PlatformModule;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ModuleManager that manages the modules used by the engine
 
-// ModuleManager that managers the modules used by the engine
 class CORE_API CModuleManager
 {
 public:
@@ -189,8 +190,8 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
 // Class that registers a static engine module */
+
 template<typename ModuleClass>
 class TStaticModuleInitializer
 {

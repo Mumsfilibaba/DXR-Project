@@ -127,21 +127,29 @@ project (projectname .. "Launcher")
 		"PROJECT_LOCATION=" .. "\"" .. findWorkspaceDir() .. "/" .. projectname .. "\"",
 	}
 	
-	links
-	{
-		"Core",
-		"CoreApplication",
-		"Interface",
-		"RHI",
-		"Engine",
-		"Renderer",
-	}
+	filter "not options:monolithic"
+		links
+		{
+			"Core",
+			"CoreApplication",
+			"Interface",
+			"RHI",
+			"Engine",
+			"Renderer",
+		}
+	filter{}
 
 	filter "options:monolithic"
 		links
 		{
-			"NullRHI",
+			"Core",
+			"CoreApplication",
+			"Interface",
+			"RHI",
+			"Engine",
+			"Renderer",
 			"InterfaceRenderer",
+			"NullRHI",
 			"Sandbox",
 		}
 	filter {}
@@ -174,10 +182,15 @@ project (projectname .. "Launcher")
 		-- Force references to module function in order to include it in the program
 		linkoptions 
 		{
-			"-force_load LinkModule_InterfaceRenderer",
-			"-force_load LinkModule_NullRHI",
-			"-force_load LinkModule_D3D12RHI",
-			"-force_load LinkModule_Sandbox",
+			"-Wl, -force-load, libCore.a",
+			"-Wl, -force-load, libCoreApplication.a",
+			"-Wl, -force-load, libInterface.a",
+			"-Wl, -force-load, libRHI.a",
+			"-Wl, -force-load, libEngine.a",
+			"-Wl, -force-load, libRenderer.a",
+			"-Wl, -force-load, libInterfaceRenderer.a",
+			"-Wl, -force-load, libNullRHI.a",
+			"-Wl, -force-load, libSandbox.a",
 		}
 	filter {}
 
@@ -232,8 +245,10 @@ project (projectname .. "Launcher")
 		{
 			"%{wks.location}/**/Windows/**"
 		}
+	filter {}
 
-		-- TODO: See if there is a better way to handle dependencies
+	-- TODO: See if there is a better way to handle dependencies
+	filter { "system:macosx", "not options:monolithic" }
 		dependson
 		{
 			( projectname ),

@@ -1,7 +1,7 @@
 #pragma once
 
 #if PLATFORM_MACOS
-#include "CoreDefines.h"
+#include "Core/CoreDefines.h"
 
 #include <Foundation/Foundation.h>
 

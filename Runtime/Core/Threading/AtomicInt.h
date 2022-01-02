@@ -1,5 +1,5 @@
 #pragma once
-#include "Core.h"
+#include "Core/Core.h"
 #include "Core/Templates/IsSigned.h"
 #include "Core/Threading/Platform/PlatformInterlocked.h"
 #include "Core/Threading/Platform/PlatformAtomic.h"

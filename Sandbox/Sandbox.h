@@ -1,4 +1,4 @@
-#include <Core.h>
+#include <Core/Core.h>
 #include <Core/Modules/ApplicationModule.h>
 
 #include <Engine/Scene/Camera.h>

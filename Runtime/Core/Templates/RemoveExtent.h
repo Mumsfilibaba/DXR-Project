@@ -1,5 +1,5 @@
 #pragma once
-#include "CoreTypes.h"
+#include "Core/CoreTypes.h"
 
 /* Removes array type */
 template<typename T>

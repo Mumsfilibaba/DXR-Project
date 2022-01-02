@@ -1,5 +1,5 @@
 #pragma once
-#include "Core.h"
+#include "Core/Core.h"
 
 #define D3D12_MAX_ROOT_PARAMETERS                  (64)
 #define D3D12_MAX_SHADER_PARAMETERS                (16)

@@ -1,5 +1,4 @@
 #pragma once
-#include "Core.h"
 #include "Move.h"
 #include "IsTrivial.h"
 #include "EnableIf.h"
@@ -9,6 +8,7 @@
 #include "IsCopyable.h"
 #include "IsReallocatable.h"
 
+#include "Core/Core.h"
 #include "Core/Memory/Memory.h"
 
 /* Construct the objects in the range by calling the default contructor */

@@ -1,5 +1,5 @@
 #pragma once
-#include "Core.h"
+#include "Core/Core.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)

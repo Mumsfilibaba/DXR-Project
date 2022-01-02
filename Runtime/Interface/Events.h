@@ -1,5 +1,5 @@
 #pragma once
-#include "Core.h"
+#include "Core/Core.h"
 
 #include "Core/Input/ModifierKeyState.h"
 #include "Core/Input/InputCodes.h"

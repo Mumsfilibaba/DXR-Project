@@ -1,6 +1,5 @@
 #pragma once
-#include "CoreDefines.h"
-
+#include "Core/CoreDefines.h"
 #include "Core/Templates/RemoveExtent.h"
 #include "Core/Templates/IsConvertible.h"
 #include "Core/Templates/EnableIf.h"
