@@ -397,4 +397,30 @@ end
 
 -- Create a new project
 function CreateProject( NewProjectName )
+
+    -- Project name must be valid
+    if NewProjectName == nil then
+        return nil
+    end
+
+    -- Create project
+    local NewProject = {}
+    NewProject.Name = NewProjectName
+
+    -- Project module
+    NewProject.Module = CreateModule( NewProjectName )
+
+    -- Generate project
+    function NewProject:Generate()
+
+        printf( 'Creating Project %s', self.Name )
+
+        -- Generate the project module
+        self.Module:Generate()
+
+        -- Generate workspace
+        
+    end
+
+    return NewProject
 end
