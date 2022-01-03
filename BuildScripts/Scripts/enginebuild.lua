@@ -33,6 +33,22 @@ local function PrintTableWithEndLine( Format, Table )
     end
 end
 
+-- Helper appending an element to a table
+local function TableAppend( Element, Table )
+    if Element ~= nil then
+        for Index = 1, #Table do
+            if Table[Index] == Element then
+                return
+            end
+        end
+
+        Table[#Table + 1] = Element
+    end
+end
+
+-- Global variable that stores all created modules
+GModules = {}
+
 -- Create a new Engine Module
 function CreateModule( NewModuleName )
 
@@ -41,10 +57,23 @@ function CreateModule( NewModuleName )
         return nil
     end
 
-    printf( 'Generating Module %s', NewModuleName )
-
     -- New module
     local NewModule = {}
+    
+    -- Ensure that module does not already exist
+    if GModules then
+        if GModules[NewModuleName] then
+            printf( 'Module is already created' )
+            return nil
+        end
+
+        GModules[NewModuleName] = NewModule;
+        printf( 'NumModules created %d\n', #GModules)
+    else
+        printf( 'Could not find GModules\n' )
+    end
+
+    printf( 'Creating Module %s', NewModuleName )
 
     -- Name. Must be the name of the folder as well or specify the location
     NewModule.Name     = NewModuleName;
@@ -104,10 +133,7 @@ function CreateModule( NewModuleName )
     }
 
     -- System includes example: #include <vector>
-    NewModule.SysIncludes = 
-    {
-        "%{wks.location}/Runtime",
-    }
+    NewModule.SysIncludes = {}
 
     -- Forceinclude these files
     NewModule.ForceIncludes = {}
@@ -148,33 +174,24 @@ function CreateModule( NewModuleName )
 
     -- Helper function for adding a define
     function NewModule:AddDefine( Define )
-        if Define ~= nil then
-            for Index = 1, #self.Defines do
-                if self.Defines[Index] == Define then
-                    return
-                end
-            end
-
-            self.Defines[#self.Defines + 1] = Define
-        end
+        TableAppend( Define, self.Defines )
     end
 
     -- Helper function for adding a forceinclude
     function NewModule:AddForceInclude( Include )
-        if Include ~= nil then
-            for Index = 1, #self.ForceIncludes do
-                if self.ForceIncludes[Index] == Include then
-                    return
-                end
-            end
+        TableAppend( Include, self.ForceIncludes )
+    end
 
-            self.ForceIncludes[#self.ForceIncludes + 1] = Include
-        end
+    -- Helper function for adding a system include directory
+    function NewModule:AddSysInclude( IncludeDir )
+        TableAppend( IncludeDir, self.SysIncludes )
     end
 
     -- Function that create premake project
     function NewModule:Generate()
-        printf('Generating Project %s', self.Name)
+        printf('Generating Module %s', self.Name)
+
+        self:AddSysInclude( "%{wks.location}/Runtime" )
 
         -- Is the build monolithic
         local bIsMonolithic = IsMonolithic()
@@ -314,6 +331,11 @@ function CreateModule( NewModuleName )
 
             forceincludes(self.ForceIncludes)
 
+            -- Add System Includes
+            PrintTableWithEndLine( '    Using System Include Dir %s', self.SysIncludes )
+
+            sysincludedirs(self.SysIncludes)
+
             -- Always add module name as a define
             self:AddDefine('MODULE_NAME=' .. '\"' .. self.Name .. '\"')
 
@@ -371,4 +393,8 @@ function CreateModule( NewModuleName )
     end
 
     return NewModule
+end
+
+-- Create a new project
+function CreateProject( NewProjectName )
 end

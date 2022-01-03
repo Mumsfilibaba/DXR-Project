@@ -6,6 +6,7 @@
 class VECTOR_ALIGN CVector4
 {
 public:
+	
     /* Default constructor (Initialize components to zero) */
     FORCEINLINE CVector4() noexcept;
 

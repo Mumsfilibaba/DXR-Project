@@ -3,7 +3,7 @@
 
 #include "RHI/RHIModule.h"
 
-#if NULLRHI_API_EXPORT
+#if NULLRHI_IMPL
 #define NULLRHI_API MODULE_EXPORT
 #else
 #define NULLRHI_API 

@@ -255,14 +255,14 @@ workspace "DXR-Project"
 	group ""
 
 	-- Engine Projects
-	include "Runtime/Core"
-	include "Runtime/CoreApplication"
-	include "Runtime/Interface"
-	include "Runtime/InterfaceRenderer"
-	include "Runtime/RHI"
-	include "Runtime/NullRHI"
-	include "Runtime/Engine"
-	include "Runtime/Renderer"
+	include "Runtime/Core/Module.lua"
+	include "Runtime/CoreApplication/Module.lua"
+	include "Runtime/Interface/Module.lua"
+	include "Runtime/InterfaceRenderer/Module.lua"
+	include "Runtime/RHI/Module.lua"
+	include "Runtime/NullRHI/Module.lua"
+	include "Runtime/Engine/Module.lua"
+	include "Runtime/Renderer/Module.lua"
 
 	-- The D3D12RHI is only available on Windows
 	if os.host() == "windows" then
