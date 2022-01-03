@@ -76,7 +76,7 @@ bool CConfigFile::GetBoolean( const char* SectionName, const char* Name, bool& b
 
 bool CConfigFile::ParseFile()
 {
-	return false;
+    return false;
 }
 
 bool CConfigFile::SaveFile()
@@ -105,7 +105,7 @@ bool CConfigFile::SaveFile()
 //    {
 //        return false;
 //    }
-	return false;
+    return false;
 }
 
 void CConfigFile::Append( const CConfigFile& OtherFile )
