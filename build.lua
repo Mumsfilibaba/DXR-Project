@@ -266,7 +266,7 @@ workspace "DXR-Project"
 
 	-- The D3D12RHI is only available on Windows
 	if os.host() == "windows" then
-		include "Runtime/D3D12RHI"
+		include "Runtime/D3D12RHI/Module.lua"
 	end
 
 	-- Editor

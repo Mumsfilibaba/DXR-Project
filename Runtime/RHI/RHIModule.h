@@ -56,11 +56,11 @@ public:
 
 protected:
 
-    CRHIModule() = default;
+    CRHIModule()  = default;
     ~CRHIModule() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-extern RHI_API class CRHIInterface* GRHIInterface;
+extern RHI_API class CRHIInterface*      GRHIInterface;
 extern RHI_API class IRHIShaderCompiler* GShaderCompiler;

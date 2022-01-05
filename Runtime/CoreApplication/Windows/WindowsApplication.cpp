@@ -9,8 +9,8 @@
 
 enum EWindowsMasks : uint32
 {
-    ScanCodeMask = 0x01ff,
-    KeyRepeatMask = 0x40000000,
+    ScanCodeMask   = 0x01ff,
+    KeyRepeatMask  = 0x40000000,
     BackButtonMask = 0x0001
 };
 
