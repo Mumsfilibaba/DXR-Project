@@ -1,3 +1,6 @@
+include 'BuildScripts/Scripts/enginebuild.lua'
+
+--[[
 function findWorkspaceDir()
 	return os.getcwd()
 end
@@ -271,6 +274,7 @@ workspace "DXR-Project"
 
 	-- Editor
 	include "Editor"
+	]]--
 
 	-- Project
 	include "Sandbox"

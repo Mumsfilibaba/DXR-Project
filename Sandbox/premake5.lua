@@ -1,5 +1,39 @@
---TODO: Auto-Generate this file when creating a new project (In editor)
+include '../BuildScripts/Scripts/enginebuild.lua'
 
+local SandboxProject = CreateProject( 'Sandbox' )
+SandboxProject:AddModuleDependencies
+{
+	'Core',
+	'CoreApplication',
+	'Interface',
+	'RHI',
+	'Engine',
+	'Renderer',
+}
+
+SandboxProject:AddDynamicModuleDependencies
+{
+	'InterfaceRenderer',
+	'NullRHI',
+}
+
+if BuildWithXcode() then
+	printf('BuildWithXcode')
+
+    SandboxProject:AddFrameWorks 
+    {
+        'Cocoa',
+        'AppKit',
+        'MetalKit'
+    }
+else
+	SandboxProject:AddDynamicModuleDependencies('D3D12RHI')
+end
+
+SandboxProject:Generate()
+
+--[[
+--TODO: Auto-Generate this file when creating a new project (In editor)
 projectname = "Sandbox"
 
 project ( projectname )
@@ -256,4 +290,5 @@ project (projectname .. "Launcher")
 			"NullRHI",
 		}
 	filter {}
-	
+
+]]--
