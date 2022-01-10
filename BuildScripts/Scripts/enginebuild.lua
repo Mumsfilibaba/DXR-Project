@@ -5,9 +5,22 @@ newoption
 	description = "Links all modules as static libraries instead of DLLs"
 }
 
--- Check if the module should be built monolithicly 
+-- Check if the module should be built monolithicly
 function IsMonolithic()
-    return _OPTIONS['monolithic'] ~= nil
+    if GbIsMonolithic == nil then
+        GbIsMonolithic = (_OPTIONS['monolithic'] ~= nil)
+    end
+    
+    return GbIsMonolithic
+end
+
+-- Sets the global state IsMonolithic, the project creation overrides this variable
+function SetIsMonlithic( bIsMonolithic )
+    -- Ensures that global variable is created
+    local bCurrent = IsMonolithic()
+    if bCurrent ~= bIsMonolithic then
+        GbIsMonolithic = bIsMonolithic
+    end
 end
 
 -- Check the action being used
@@ -88,6 +101,14 @@ end
 -- Global variable that stores all created modules
 GModules = {}
 
+function GetModule(ModuleName)
+    return GModules[ModuleName]
+end
+
+function IsModule(ModuleName)
+    return GetModule(ModuleName) ~= nil  
+end
+
 -- Output path for dependencies (ImGui etc.)
 GOutputPath = '%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}'
 printf('\nINFO:\nBuildPath=%s', GOutputPath)
@@ -138,7 +159,7 @@ function CreateModule(NewModuleName)
         printf('Could not find GModules\n')
     end
 
-    printf('Creating Module %s', NewModuleName)
+    printf('    Creating Module %s\n', NewModuleName)
 
     -- Name. Must be the name of the folder as well or specify the location
     NewModule.Name = NewModuleName;
@@ -308,7 +329,7 @@ function CreateModule(NewModuleName)
 
     -- Function that create premake project
     function NewModule:Generate()
-        printf('Generating Module %s', self.Name)
+        printf('    Generating Module %s\n', self.Name)
 
         local RuntimeFolderPath = GetRuntimeFolderPath()
         self:AddSystemIncludeDirs(RuntimeFolderPath)
@@ -372,6 +393,19 @@ function CreateModule(NewModuleName)
         
         printf('    Num of Files=%d', #self.Files)
         PrintTableWithEndLine('    Including File  %s', self.Files)
+   
+        printf('\n----Including Module Dependencies For Module %s---', self.Name)            
+        for Index = 1, #AllDependencies do
+            if IsModule(AllDependencies[Index]) then
+                printf('-Dependency %s is already included', AllDependencies[Index])
+            else
+                local DependecyPath = RuntimeFolderPath .. '/' .. AllDependencies[Index] .. '/Module.lua'
+                printf('-Including Dependency %s Path=%s\n', AllDependencies[Index], DependecyPath)
+
+                -- Only included once which is good
+                include(DependecyPath)
+            end
+        end
 
         -- Project
         project(self.Name)
@@ -526,8 +560,8 @@ function CreateProject(NewProjectName)
     -- Default path for solutions and project paths
     NewProject.Location = GetSolutionsFolderPath()
 
-    -- Override the option of monolithic build
-    NewProject.bIsMonolithic = false
+    -- Can override the option of monolithic build to always have a monolithic build
+    NewProject.bIsMonolithic = IsMonolithic()
 
     -- Console or windowed app
     NewProject.bIsConsoleApp = false
@@ -697,6 +731,20 @@ function CreateProject(NewProjectName)
     function NewProject:Generate()
         printf('Generate Project %s', self.Name)
                 
+        -- Check if this project should be monolithic or not and override the global setting if needed
+        local bIsMonolithic = self.bIsMonolithic
+        if bIsMonolithic then
+            printf('    Project is monolithic\n')
+            SetIsMonlithic(true)
+        else
+            printf('    Project is NOT monolithic\n')
+            SetIsMonlithic(false)
+        end
+
+        -- TODO: Move into check if the project should use a module at all, 
+        -- if true, then the module should handle all dependencies and there will a launcher
+        -- if false, then only a single project is built (no launcher) and the application code cannot be hot reloaded
+
         -- Add framework extension
         AddFrameWorkExtension(self.FrameWorks)
 
@@ -1038,13 +1086,18 @@ function CreateProject(NewProjectName)
                     filter {}
             group ""
 
-            -- Include all modules and generate the projects
-            printf('\nCreating Module Dependencies')            
+            -- Include all modules and generate the projects, every module performs this check in case not all module dependencies are specified in the application
+            printf('\n----Including Module Dependencies For Project %s---', self.Name)            
             for Index = 1, #AllDependencies do
-                local DependecyPath = RuntimeFolderPath .. '/' .. AllDependencies[Index] .. '/Module.lua'
-                printf('--Including Dependency %s', DependecyPath)
-
-                include(DependecyPath)
+                if IsModule(AllDependencies[Index]) then
+                    printf('-Dependency %s is already included', AllDependencies[Index])
+                else
+                    local DependecyPath = RuntimeFolderPath .. '/' .. AllDependencies[Index] .. '/Module.lua'
+                    printf('-Including Dependency %s Path=%s\n', AllDependencies[Index], DependecyPath)
+    
+                    -- Only included once which is good
+                    include(DependecyPath)
+                end
             end
 
             -- Executeble

@@ -27,7 +27,7 @@ if BuildWithXcode() then
         'MetalKit'
     }
 else
-	SandboxProject:AddDynamicModuleDependencies('D3D12RHI')
+	SandboxProject:AddDynamicModuleDependencies { 'D3D12RHI' }
 end
 
 SandboxProject:Generate()
