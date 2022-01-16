@@ -151,6 +151,11 @@ function CBuildRules(InName)
         TableAppendUniqueElementMultiple(InLibraries, self.LinkLibraries)
     end
 
+    -- Helper function for adding frameworks
+    function self.AddFrameWorks(InFrameWorks)
+        TableAppendUniqueElementMultiple(InFrameWorks, self.FrameWorks)
+    end
+
     -- Helper function for adding forceincludes
     function self.AddForceIncludes(InForceIncludes)
         TableAppendUniqueElementMultiple(InForceIncludes, self.ForceIncludes)
