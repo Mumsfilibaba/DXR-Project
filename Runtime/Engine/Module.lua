@@ -1,13 +1,13 @@
-include '../../BuildScripts/Scripts/enginebuild.lua'
+include '../../BuildScripts/Scripts/build_module.lua'
 
-local EngineModule = CreateModule( 'Engine' )
-EngineModule.SysIncludes = 
+local EngineModule = CModuleBuildRules('Engine')
+EngineModule.AddSystemIncludes( 
 {
-    '%{wks.location}/Dependencies/imgui',
-    '%{wks.location}/Dependencies/stb_image',
-    '%{wks.location}/Dependencies/tinyobjloader',
-    '%{wks.location}/Dependencies/OpenFBX/src',
-}
+    MakeExternalDependencyPath('imgui'),
+    MakeExternalDependencyPath('stb_image'),
+    MakeExternalDependencyPath('tinyobjloader'),
+    MakeExternalDependencyPath('OpenFBX/src'),
+})
 
 EngineModule.ModuleDependencies = 
 {
@@ -33,4 +33,4 @@ if BuildWithXcode() then
     }
 end
 
-EngineModule:Generate()
+EngineModule.Generate()

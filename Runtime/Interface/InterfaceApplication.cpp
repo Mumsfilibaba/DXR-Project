@@ -17,27 +17,27 @@ bool CInterfaceApplication::Make()
 {
     /* Create the platform application */
     TSharedPtr<CPlatformApplication> Application = PlatformApplication::Make();
-    if ( Application && !Application->Initialize() )
+    if (Application && !Application->Initialize())
     {
-        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create PlatformApplication" );
+        PlatformApplicationMisc::MessageBox("ERROR", "Failed to create PlatformApplication");
         return false;
     }
 
-    Instance = TSharedPtr<CInterfaceApplication>( dbg_new CInterfaceApplication( Application ) );
-    if ( !Instance->CreateContext() )
+    Instance = TSharedPtr<CInterfaceApplication>(dbg_new CInterfaceApplication(Application));
+    if (!Instance->CreateContext())
     {
-        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create UI Context" );
+        PlatformApplicationMisc::MessageBox("ERROR", "Failed to create UI Context");
         return false;
     }
 
     // Set the application to listen to messages from the platform application
-    Application->SetMessageListener( Instance );
+    Application->SetMessageListener(Instance);
 
     return true;
 }
 
 /* Init the singleton from an existing application - Used for classes inheriting from CInterfaceApplication */
-bool CInterfaceApplication::Make( const TSharedPtr<CInterfaceApplication>& InApplication )
+bool CInterfaceApplication::Make(const TSharedPtr<CInterfaceApplication>& InApplication)
 {
     Instance = InApplication;
     return (Instance != nullptr);
@@ -45,16 +45,16 @@ bool CInterfaceApplication::Make( const TSharedPtr<CInterfaceApplication>& InApp
 
 void CInterfaceApplication::Release()
 {
-    if ( Instance )
+    if (Instance)
     {
-        Instance->SetPlatformApplication( nullptr );
+        Instance->SetPlatformApplication(nullptr);
         Instance.Reset();
     }
 }
 
-CInterfaceApplication::CInterfaceApplication( const TSharedPtr<CPlatformApplication>& InPlatformApplication )
+CInterfaceApplication::CInterfaceApplication(const TSharedPtr<CPlatformApplication>& InPlatformApplication)
     : CPlatformApplicationMessageHandler()
-    , PlatformApplication( InPlatformApplication )
+    , PlatformApplication(InPlatformApplication)
     , Renderer()
     , MainViewport()
     , UIWindows()
@@ -62,8 +62,8 @@ CInterfaceApplication::CInterfaceApplication( const TSharedPtr<CPlatformApplicat
     , InputHandlers()
     , WindowMessageHandlers()
     , RegisteredUsers()
-    , bIsRunning( true )
-    , Context( nullptr )
+    , bIsRunning(true)
+    , Context(nullptr)
 {
 }
 
@@ -73,7 +73,7 @@ bool CInterfaceApplication::CreateContext()
     IMGUI_CHECKVERSION();
 
     Context = ImGui::CreateContext();
-    if ( !Context )
+    if (!Context)
     {
         return false;
     }
@@ -114,7 +114,7 @@ bool CInterfaceApplication::CreateContext()
 
     ImGuiStyle& Style = ImGui::GetStyle();
     // Padding
-    Style.FramePadding = ImVec2( 6.0f, 4.0f );
+    Style.FramePadding = ImVec2(6.0f, 4.0f);
     // Size
     Style.WindowBorderSize = 0.0f;
     Style.FrameBorderSize = 1.0f;
@@ -240,9 +240,9 @@ bool CInterfaceApplication::CreateContext()
 
 CInterfaceApplication::~CInterfaceApplication()
 {
-    if ( Context )
+    if (Context)
     {
-        ImGui::DestroyContext( Context );
+        ImGui::DestroyContext(Context);
     }
 }
 
@@ -251,73 +251,73 @@ TSharedRef<CPlatformWindow> CInterfaceApplication::MakeWindow()
     return PlatformApplication->MakeWindow();
 }
 
-void CInterfaceApplication::Tick( CTimestamp DeltaTime )
+void CInterfaceApplication::Tick(CTimestamp DeltaTime)
 {
     // Update UI
     ImGuiIO& UIState = ImGui::GetIO();
 
     TSharedRef<CPlatformWindow> Window = MainViewport;
-    if ( UIState.WantSetMousePos )
+    if (UIState.WantSetMousePos)
     {
-        SetCursorPos( Window, CIntVector2( static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y) ) );
+        SetCursorPos(Window, CIntVector2(static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y)));
     }
 
     SWindowShape CurrentWindowShape;
-    Window->GetWindowShape( CurrentWindowShape );
+    Window->GetWindowShape(CurrentWindowShape);
 
-    UIState.DeltaTime   = static_cast<float>(DeltaTime.AsSeconds());
-    UIState.DisplaySize = ImVec2( float( CurrentWindowShape.Width ), float( CurrentWindowShape.Height ) );
-    UIState.DisplayFramebufferScale = ImVec2( 1.0f, 1.0f );
+    UIState.DeltaTime = static_cast<float>(DeltaTime.AsSeconds());
+    UIState.DisplaySize = ImVec2(float(CurrentWindowShape.Width), float(CurrentWindowShape.Height));
+    UIState.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
-    CIntVector2 Position = CInterfaceApplication::Get().GetCursorPos( Window );
-    UIState.MousePos = ImVec2( static_cast<float>(Position.x), static_cast<float>(Position.y) );
+    CIntVector2 Position = CInterfaceApplication::Get().GetCursorPos(Window);
+    UIState.MousePos = ImVec2(static_cast<float>(Position.x), static_cast<float>(Position.y));
 
     SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
-    UIState.KeyCtrl  = KeyState.IsCtrlDown;
+    UIState.KeyCtrl = KeyState.IsCtrlDown;
     UIState.KeyShift = KeyState.IsShiftDown;
-    UIState.KeyAlt   = KeyState.IsAltDown;
+    UIState.KeyAlt = KeyState.IsAltDown;
     UIState.KeySuper = KeyState.IsSuperKeyDown;
 
-    if ( !(UIState.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) )
+    if (!(UIState.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange))
     {
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
-        if ( ImguiCursor == ImGuiMouseCursor_None || UIState.MouseDrawCursor )
+        if (ImguiCursor == ImGuiMouseCursor_None || UIState.MouseDrawCursor)
         {
-            SetCursor( ECursor::None );
+            SetCursor(ECursor::None);
         }
         else
         {
             ECursor Cursor = ECursor::Arrow;
-            switch ( ImguiCursor )
+            switch (ImguiCursor)
             {
-                case ImGuiMouseCursor_Arrow:      Cursor = ECursor::Arrow;      break;
-                case ImGuiMouseCursor_TextInput:  Cursor = ECursor::TextInput;  break;
-                case ImGuiMouseCursor_ResizeAll:  Cursor = ECursor::ResizeAll;  break;
-                case ImGuiMouseCursor_ResizeEW:   Cursor = ECursor::ResizeEW;   break;
-                case ImGuiMouseCursor_ResizeNS:   Cursor = ECursor::ResizeNS;   break;
-                case ImGuiMouseCursor_ResizeNESW: Cursor = ECursor::ResizeNESW; break;
-                case ImGuiMouseCursor_ResizeNWSE: Cursor = ECursor::ResizeNWSE; break;
-                case ImGuiMouseCursor_Hand:       Cursor = ECursor::Hand;       break;
-                case ImGuiMouseCursor_NotAllowed: Cursor = ECursor::NotAllowed; break;
+            case ImGuiMouseCursor_Arrow:      Cursor = ECursor::Arrow;      break;
+            case ImGuiMouseCursor_TextInput:  Cursor = ECursor::TextInput;  break;
+            case ImGuiMouseCursor_ResizeAll:  Cursor = ECursor::ResizeAll;  break;
+            case ImGuiMouseCursor_ResizeEW:   Cursor = ECursor::ResizeEW;   break;
+            case ImGuiMouseCursor_ResizeNS:   Cursor = ECursor::ResizeNS;   break;
+            case ImGuiMouseCursor_ResizeNESW: Cursor = ECursor::ResizeNESW; break;
+            case ImGuiMouseCursor_ResizeNWSE: Cursor = ECursor::ResizeNWSE; break;
+            case ImGuiMouseCursor_Hand:       Cursor = ECursor::Hand;       break;
+            case ImGuiMouseCursor_NotAllowed: Cursor = ECursor::NotAllowed; break;
             }
 
-            SetCursor( Cursor );
+            SetCursor(Cursor);
         }
     }
 
     // Update all the UI windows
-    if ( Renderer )
+    if (Renderer)
     {
         Renderer->BeginTick();
 
         // Update all windows
-        UIWindows.Foreach( []( TSharedRef<IInterfaceWindow>& Window )
+        UIWindows.Foreach([](TSharedRef<IInterfaceWindow>& Window)
         {
-            if ( Window->IsTickable() )
+            if (Window->IsTickable())
             {
                 Window->Tick();
             }
-        } );
+        });
 
         // Render all strings last
         RenderStrings();
@@ -327,33 +327,33 @@ void CInterfaceApplication::Tick( CTimestamp DeltaTime )
 
     // Update platform
     const float Delta = static_cast<float>(DeltaTime.AsMilliSeconds());
-    PlatformApplication->Tick( Delta );
+    PlatformApplication->Tick(Delta);
 
-    if ( !RegisteredUsers.IsEmpty() )
+    if (!RegisteredUsers.IsEmpty())
     {
-        for ( const TSharedPtr<CInterfaceUser>& User : RegisteredUsers )
+        for (const TSharedPtr<CInterfaceUser>& User : RegisteredUsers)
         {
-            User->Tick( DeltaTime );
+            User->Tick(DeltaTime);
         }
     }
 }
 
-void CInterfaceApplication::SetCursor( ECursor InCursor )
+void CInterfaceApplication::SetCursor(ECursor InCursor)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
-    Cursor->SetCursor( InCursor );
+    Cursor->SetCursor(InCursor);
 }
 
-void CInterfaceApplication::SetCursorPos( const CIntVector2& Position )
+void CInterfaceApplication::SetCursorPos(const CIntVector2& Position)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
-    Cursor->SetPosition( nullptr, Position.x, Position.y );
+    Cursor->SetPosition(nullptr, Position.x, Position.y);
 }
 
-void CInterfaceApplication::SetCursorPos( const TSharedRef<CPlatformWindow>& RelativeWindow, const CIntVector2& Position )
+void CInterfaceApplication::SetCursorPos(const TSharedRef<CPlatformWindow>& RelativeWindow, const CIntVector2& Position)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
-    Cursor->SetPosition( RelativeWindow.Get(), Position.x, Position.y );
+    Cursor->SetPosition(RelativeWindow.Get(), Position.x, Position.y);
 }
 
 CIntVector2 CInterfaceApplication::GetCursorPos() const
@@ -361,25 +361,25 @@ CIntVector2 CInterfaceApplication::GetCursorPos() const
     TSharedPtr<ICursor> Cursor = GetCursor();
 
     CIntVector2 CursorPosition;
-    Cursor->GetPosition( nullptr, CursorPosition.x, CursorPosition.y );
+    Cursor->GetPosition(nullptr, CursorPosition.x, CursorPosition.y);
 
     return CursorPosition;
 }
 
-CIntVector2 CInterfaceApplication::GetCursorPos( const TSharedRef<CPlatformWindow>& RelativeWindow ) const
+CIntVector2 CInterfaceApplication::GetCursorPos(const TSharedRef<CPlatformWindow>& RelativeWindow) const
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
 
     CIntVector2 CursorPosition;
-    Cursor->GetPosition( RelativeWindow.Get(), CursorPosition.x, CursorPosition.y );
+    Cursor->GetPosition(RelativeWindow.Get(), CursorPosition.x, CursorPosition.y);
 
     return CursorPosition;
 }
 
-void CInterfaceApplication::ShowCursor( bool bIsVisible )
+void CInterfaceApplication::ShowCursor(bool bIsVisible)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
-    Cursor->SetVisibility( bIsVisible );
+    Cursor->SetVisibility(bIsVisible);
 }
 
 bool CInterfaceApplication::IsCursorVisibile() const
@@ -388,69 +388,69 @@ bool CInterfaceApplication::IsCursorVisibile() const
     return Cursor->IsVisible();
 }
 
-void CInterfaceApplication::SetCapture( const TSharedRef<CPlatformWindow>& CaptureWindow )
+void CInterfaceApplication::SetCapture(const TSharedRef<CPlatformWindow>& CaptureWindow)
 {
-    PlatformApplication->SetCapture( CaptureWindow );
+    PlatformApplication->SetCapture(CaptureWindow);
 }
 
-void CInterfaceApplication::SetActiveWindow( const TSharedRef<CPlatformWindow>& ActiveWindow )
+void CInterfaceApplication::SetActiveWindow(const TSharedRef<CPlatformWindow>& ActiveWindow)
 {
-    PlatformApplication->SetActiveWindow( ActiveWindow );
+    PlatformApplication->SetActiveWindow(ActiveWindow);
 }
 
 template<typename MessageHandlerType>
-void CInterfaceApplication::InsertMessageHandler( TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray, const TSharedPtr<MessageHandlerType>& NewMessageHandler, uint32 NewPriority )
+void CInterfaceApplication::InsertMessageHandler(TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray, const TSharedPtr<MessageHandlerType>& NewMessageHandler, uint32 NewPriority)
 {
     TPair NewPair(NewMessageHandler, NewPriority);
-    if ( !OutMessageHandlerArray.Contains( NewPair ) )
+    if (!OutMessageHandlerArray.Contains(NewPair))
     {
-        for ( int32 Index = 0; Index < OutMessageHandlerArray.Size(); )
+        for (int32 Index = 0; Index < OutMessageHandlerArray.Size(); )
         {
             const TPair<TSharedPtr<MessageHandlerType>, uint32> Handler = OutMessageHandlerArray[Index];
-            if ( NewPriority <= Handler.Second )
+            if (NewPriority <= Handler.Second)
             {
                 Index++;
             }
             else
             {
-                OutMessageHandlerArray.Insert( Index, NewPair );
+                OutMessageHandlerArray.Insert(Index, NewPair);
                 return;
             }
         }
 
         // If all the handlers has been checked then push the new one to the back
-        OutMessageHandlerArray.Push( NewPair );
+        OutMessageHandlerArray.Push(NewPair);
     }
 }
 
-void CInterfaceApplication::AddInputHandler( const TSharedPtr<CInputHandler>& NewInputHandler, uint32 Priority )
+void CInterfaceApplication::AddInputHandler(const TSharedPtr<CInputHandler>& NewInputHandler, uint32 Priority)
 {
-    InsertMessageHandler( InputHandlers, NewInputHandler, Priority );
+    InsertMessageHandler(InputHandlers, NewInputHandler, Priority);
 }
 
-void CInterfaceApplication::RemoveInputHandler( const TSharedPtr<CInputHandler>& InputHandler )
+void CInterfaceApplication::RemoveInputHandler(const TSharedPtr<CInputHandler>& InputHandler)
 {
-    for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
+    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CInputHandler>, uint32> Handler = InputHandlers[Index];
-        if ( Handler.First == InputHandler )
+        if (Handler.First == InputHandler)
         {
-            InputHandlers.RemoveAt( Index );
+            InputHandlers.RemoveAt(Index);
             break;
         }
     }
 }
 
-void CInterfaceApplication::RegisterMainViewport( const TSharedRef<CPlatformWindow>& NewMainViewport )
+void CInterfaceApplication::RegisterMainViewport(const TSharedRef<CPlatformWindow>& NewMainViewport)
 {
     MainViewport = NewMainViewport;
-    if ( MainViewportChange.IsBound() )
+    if (MainViewportChange.IsBound())
     {
-        MainViewportChange.Broadcast( MainViewport );
+        MainViewportChange.Broadcast(MainViewport);
     }
 
-    ImGuiIO& UIState = ImGui::GetIO(); 
-    if ( MainViewport )
+    ImGuiIO& UIState = ImGui::GetIO();
+    if (MainViewport)
     {
         UIState.ImeWindowHandle = MainViewport->GetNativeHandle();
     }
@@ -460,94 +460,94 @@ void CInterfaceApplication::RegisterMainViewport( const TSharedRef<CPlatformWind
     }
 }
 
-void CInterfaceApplication::SetRenderer( const TSharedRef<IInterfaceRenderer>& NewRenderer )
+void CInterfaceApplication::SetRenderer(const TSharedRef<IInterfaceRenderer>& NewRenderer)
 {
     Renderer = NewRenderer;
-    if ( Renderer )  
+    if (Renderer)
     {
-        if ( !Renderer->InitContext( Context ) )
+        if (!Renderer->InitContext(Context))
         {
-            PlatformApplicationMisc::MessageBox( "ERROR", "Failed to init InterfaceRenderer " );
+            PlatformApplicationMisc::MessageBox("ERROR", "Failed to init InterfaceRenderer ");
         }
     }
 }
 
-void CInterfaceApplication::AddWindow( const TSharedRef<IInterfaceWindow>& NewWindow )
+void CInterfaceApplication::AddWindow(const TSharedRef<IInterfaceWindow>& NewWindow)
 {
-    if ( NewWindow && !UIWindows.Contains( NewWindow ) )
+    if (NewWindow && !UIWindows.Contains(NewWindow))
     {
-        TSharedRef<IInterfaceWindow>& Window = UIWindows.Emplace( NewWindow );
-        Window->InitContext( Context );
+        TSharedRef<IInterfaceWindow>& Window = UIWindows.Emplace(NewWindow);
+        Window->InitContext(Context);
     }
 }
 
-void CInterfaceApplication::RemoveWindow( const TSharedRef<IInterfaceWindow>& Window )
+void CInterfaceApplication::RemoveWindow(const TSharedRef<IInterfaceWindow>& Window)
 {
-    UIWindows.Remove( Window );
+    UIWindows.Remove(Window);
 }
 
-void CInterfaceApplication::DrawString( const CString& NewString )
+void CInterfaceApplication::DrawString(const CString& NewString)
 {
-    DebugStrings.Emplace( NewString );
+    DebugStrings.Emplace(NewString);
 }
 
-void CInterfaceApplication::DrawWindows( CRHICommandList& CommandList )
+void CInterfaceApplication::DrawWindows(CRHICommandList& CommandList)
 {
     // NOTE: Renderer is not forced to be valid 
-    if ( Renderer )
+    if (Renderer)
     {
-        Renderer->Render( CommandList );
+        Renderer->Render(CommandList);
     }
 }
 
-void CInterfaceApplication::AddWindowMessageHandler( const TSharedPtr<CWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority )
+void CInterfaceApplication::AddWindowMessageHandler(const TSharedPtr<CWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority)
 {
-    InsertMessageHandler( WindowMessageHandlers, NewWindowMessageHandler, Priority );
+    InsertMessageHandler(WindowMessageHandlers, NewWindowMessageHandler, Priority);
 }
 
-void CInterfaceApplication::RemoveWindowMessageHandler( const TSharedPtr<CWindowMessageHandler>& WindowMessageHandler )
+void CInterfaceApplication::RemoveWindowMessageHandler(const TSharedPtr<CWindowMessageHandler>& WindowMessageHandler)
 {
-    for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
+    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32> Handler = WindowMessageHandlers[Index];
-        if ( Handler.First == WindowMessageHandler )
+        if (Handler.First == WindowMessageHandler)
         {
-            WindowMessageHandlers.RemoveAt( Index );
+            WindowMessageHandlers.RemoveAt(Index);
             break;
         }
     }
 }
 
-void CInterfaceApplication::SetPlatformApplication( const TSharedPtr<CPlatformApplication>& InPlatformApplication )
+void CInterfaceApplication::SetPlatformApplication(const TSharedPtr<CPlatformApplication>& InPlatformApplication)
 {
-    if ( InPlatformApplication )
+    if (InPlatformApplication)
     {
-        Assert( this == Instance );
-        InPlatformApplication->SetMessageListener( Instance );
+        Assert(this == Instance);
+        InPlatformApplication->SetMessageListener(Instance);
     }
 
     PlatformApplication = InPlatformApplication;
 }
 
-void CInterfaceApplication::HandleKeyReleased( EKey KeyCode, SModifierKeyState ModierKeyState )
+void CInterfaceApplication::HandleKeyReleased(EKey KeyCode, SModifierKeyState ModierKeyState)
 {
-    SKeyEvent KeyEvent( KeyCode, false, false, ModierKeyState );
-    HandleKeyEvent( KeyEvent );
+    SKeyEvent KeyEvent(KeyCode, false, false, ModierKeyState);
+    HandleKeyEvent(KeyEvent);
 }
 
-void CInterfaceApplication::HandleKeyPressed( EKey KeyCode, bool bIsRepeat, SModifierKeyState ModierKeyState )
+void CInterfaceApplication::HandleKeyPressed(EKey KeyCode, bool bIsRepeat, SModifierKeyState ModierKeyState)
 {
-    SKeyEvent KeyEvent( KeyCode, true, bIsRepeat, ModierKeyState );
-    HandleKeyEvent( KeyEvent );
+    SKeyEvent KeyEvent(KeyCode, true, bIsRepeat, ModierKeyState);
+    HandleKeyEvent(KeyEvent);
 }
 
-void CInterfaceApplication::HandleKeyEvent( const SKeyEvent& KeyEvent )
+void CInterfaceApplication::HandleKeyEvent(const SKeyEvent& KeyEvent)
 {
     SKeyEvent Event = KeyEvent;
-    for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
+    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
-        if ( Handler.First->HandleKeyEvent( Event ) )
+        if (Handler.First->HandleKeyEvent(Event))
         {
             Event.bIsConsumed = true;
         }
@@ -556,104 +556,104 @@ void CInterfaceApplication::HandleKeyEvent( const SKeyEvent& KeyEvent )
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.KeysDown[Event.KeyCode] = Event.bIsDown;
 
-    if ( UIState.WantCaptureKeyboard )
+    if (UIState.WantCaptureKeyboard)
     {
         Event.bIsConsumed = true;
     }
 
-    if ( !Event.bIsConsumed && !RegisteredUsers.IsEmpty() )
+    if (!Event.bIsConsumed && !RegisteredUsers.IsEmpty())
     {
-        for ( const TSharedPtr<CInterfaceUser>& User : RegisteredUsers )
+        for (const TSharedPtr<CInterfaceUser>& User : RegisteredUsers)
         {
-            User->HandleKeyEvent( Event );
+            User->HandleKeyEvent(Event);
         }
     }
 
     // TODO: Update viewport
 }
 
-void CInterfaceApplication::HandleKeyTyped( uint32 Character )
+void CInterfaceApplication::HandleKeyTyped(uint32 Character)
 {
-    SKeyTypedEvent Event( Character );
-    for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
+    SKeyTypedEvent Event(Character);
+    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
-        if ( Handler.First->HandleKeyTyped( Event ) )
+        if (Handler.First->HandleKeyTyped(Event))
         {
             Event.bIsConsumed = true;
         }
     }
 
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddInputCharacter( Event.Character );
+    UIState.AddInputCharacter(Event.Character);
 }
 
-void CInterfaceApplication::HandleMouseMove( int32 x, int32 y )
+void CInterfaceApplication::HandleMouseMove(int32 x, int32 y)
 {
-    SMouseMovedEvent MouseMovedEvent( x, y );
-    for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
+    SMouseMovedEvent MouseMovedEvent(x, y);
+    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
     {
-        const TPair<TSharedPtr<CInputHandler>, uint32>& Handler= InputHandlers[Index];
-        if ( Handler.First->HandleMouseMove( MouseMovedEvent ) )
+        const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
+        if (Handler.First->HandleMouseMove(MouseMovedEvent))
         {
             MouseMovedEvent.bIsConsumed = true;
         }
     }
 
-    if ( !MouseMovedEvent.bIsConsumed && !RegisteredUsers.IsEmpty() )
+    if (!MouseMovedEvent.bIsConsumed && !RegisteredUsers.IsEmpty())
     {
-        for ( const TSharedPtr<CInterfaceUser>& User : RegisteredUsers )
+        for (const TSharedPtr<CInterfaceUser>& User : RegisteredUsers)
         {
-            User->HandleMouseMovedEvent( MouseMovedEvent );
+            User->HandleMouseMovedEvent(MouseMovedEvent);
         }
     }
 }
 
-void CInterfaceApplication::HandleMouseReleased( EMouseButton Button, SModifierKeyState ModierKeyState )
+void CInterfaceApplication::HandleMouseReleased(EMouseButton Button, SModifierKeyState ModierKeyState)
 {
     TSharedRef<CPlatformWindow> CaptureWindow = PlatformApplication->GetCapture();
-    if ( CaptureWindow )
+    if (CaptureWindow)
     {
-        PlatformApplication->SetCapture( nullptr );
+        PlatformApplication->SetCapture(nullptr);
     }
 
-    SMouseButtonEvent MouseButtonEvent( Button, false, ModierKeyState );
-    HandleMouseButtonEvent( MouseButtonEvent );
+    SMouseButtonEvent MouseButtonEvent(Button, false, ModierKeyState);
+    HandleMouseButtonEvent(MouseButtonEvent);
 }
 
-void CInterfaceApplication::HandleMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState )
+void CInterfaceApplication::HandleMousePressed(EMouseButton Button, SModifierKeyState ModierKeyState)
 {
     TSharedRef<CPlatformWindow> CaptureWindow = PlatformApplication->GetCapture();
-    if ( !CaptureWindow )
+    if (!CaptureWindow)
     {
         TSharedRef<CPlatformWindow> ActiveWindow = PlatformApplication->GetActiveWindow();
-        PlatformApplication->SetCapture( ActiveWindow );
+        PlatformApplication->SetCapture(ActiveWindow);
     }
 
-    SMouseButtonEvent MouseButtonEvent( Button, true, ModierKeyState );
-    HandleMouseButtonEvent( MouseButtonEvent );
+    SMouseButtonEvent MouseButtonEvent(Button, true, ModierKeyState);
+    HandleMouseButtonEvent(MouseButtonEvent);
 }
 
-static uint32 GetMouseButtonIndex( EMouseButton Button )
+static uint32 GetMouseButtonIndex(EMouseButton Button)
 {
-    switch ( Button )
+    switch (Button)
     {
-        case MouseButton_Left:    return 0;
-        case MouseButton_Right:   return 1;
-        case MouseButton_Middle:  return 2;
-        case MouseButton_Back:    return 3;
-        case MouseButton_Forward: return 4;
-        default:                  return static_cast<uint32>(-1);
+    case MouseButton_Left:    return 0;
+    case MouseButton_Right:   return 1;
+    case MouseButton_Middle:  return 2;
+    case MouseButton_Back:    return 3;
+    case MouseButton_Forward: return 4;
+    default:                  return static_cast<uint32>(-1);
     }
 }
 
-void CInterfaceApplication::HandleMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent )
+void CInterfaceApplication::HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEvent)
 {
     SMouseButtonEvent Event = MouseButtonEvent;
-    for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
+    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
-        if ( Handler.First->HandleMouseButtonEvent( Event ) )
+        if (Handler.First->HandleMouseButtonEvent(Event))
         {
             Event.bIsConsumed = true;
         }
@@ -661,111 +661,111 @@ void CInterfaceApplication::HandleMouseButtonEvent( const SMouseButtonEvent& Mou
 
     ImGuiIO& UIState = ImGui::GetIO();
 
-    const uint32 ButtonIndex = GetMouseButtonIndex( Event.Button );
+    const uint32 ButtonIndex = GetMouseButtonIndex(Event.Button);
     UIState.MouseDown[ButtonIndex] = Event.bIsDown;
 
-    if ( UIState.WantCaptureMouse )
+    if (UIState.WantCaptureMouse)
     {
         Event.bIsConsumed = true;
     }
 
-    if ( !Event.bIsConsumed && !RegisteredUsers.IsEmpty() )
+    if (!Event.bIsConsumed && !RegisteredUsers.IsEmpty())
     {
-        for ( const TSharedPtr<CInterfaceUser>& User : RegisteredUsers )
+        for (const TSharedPtr<CInterfaceUser>& User : RegisteredUsers)
         {
-            User->HandleMouseButtonEvent( Event );
+            User->HandleMouseButtonEvent(Event);
         }
     }
 }
 
-void CInterfaceApplication::HandleMouseScrolled( float HorizontalDelta, float VerticalDelta )
+void CInterfaceApplication::HandleMouseScrolled(float HorizontalDelta, float VerticalDelta)
 {
-    SMouseScrolledEvent Event( HorizontalDelta, VerticalDelta );
-    for ( int32 Index = 0; Index < InputHandlers.Size(); Index++ )
+    SMouseScrolledEvent Event(HorizontalDelta, VerticalDelta);
+    for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
-        if ( Handler.First->HandleMouseScrolled( Event ) )
+        if (Handler.First->HandleMouseScrolled(Event))
         {
             Event.bIsConsumed = true;
         }
     }
 
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.MouseWheel  += Event.VerticalDelta;
+    UIState.MouseWheel += Event.VerticalDelta;
     UIState.MouseWheelH += Event.HorizontalDelta;
 
-    if ( UIState.WantCaptureMouse )
+    if (UIState.WantCaptureMouse)
     {
         Event.bIsConsumed = true;
     }
 
-    if ( !Event.bIsConsumed && !RegisteredUsers.IsEmpty() )
+    if (!Event.bIsConsumed && !RegisteredUsers.IsEmpty())
     {
-        for ( const TSharedPtr<CInterfaceUser>& User : RegisteredUsers )
+        for (const TSharedPtr<CInterfaceUser>& User : RegisteredUsers)
         {
-            User->HandleMouseScrolledEvent( Event );
+            User->HandleMouseScrolledEvent(Event);
         }
     }
 }
 
-void CInterfaceApplication::HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint32 Width, uint32 Height )
+void CInterfaceApplication::HandleWindowResized(const TSharedRef<CPlatformWindow>& Window, uint32 Width, uint32 Height)
 {
-    SWindowResizeEvent WindowResizeEvent( Window, Width, Height );
-    for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
+    SWindowResizeEvent WindowResizeEvent(Window, Width, Height);
+    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
-        if ( Handler.First->OnWindowResized( WindowResizeEvent ) )
+        if (Handler.First->OnWindowResized(WindowResizeEvent))
         {
             WindowResizeEvent.bIsConsumed = true;
         }
     }
 }
 
-void CInterfaceApplication::HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y )
+void CInterfaceApplication::HandleWindowMoved(const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y)
 {
-    SWindowMovedEvent WindowsMovedEvent( Window, x, y );
-    for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
+    SWindowMovedEvent WindowsMovedEvent(Window, x, y);
+    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
-        if ( Handler.First->OnWindowMoved( WindowsMovedEvent ) )
+        if (Handler.First->OnWindowMoved(WindowsMovedEvent))
         {
             WindowsMovedEvent.bIsConsumed = true;
         }
     }
 }
 
-void CInterfaceApplication::HandleWindowFocusChanged( const TSharedRef<CPlatformWindow>& Window, bool bHasFocus )
+void CInterfaceApplication::HandleWindowFocusChanged(const TSharedRef<CPlatformWindow>& Window, bool bHasFocus)
 {
-    SWindowFocusChangedEvent WindowFocusChangedEvent( Window, bHasFocus );
-    for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
+    SWindowFocusChangedEvent WindowFocusChangedEvent(Window, bHasFocus);
+    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
-        if ( Handler.First->OnWindowFocusChanged( WindowFocusChangedEvent ) )
+        if (Handler.First->OnWindowFocusChanged(WindowFocusChangedEvent))
         {
             WindowFocusChangedEvent.bIsConsumed = true;
         }
     }
 }
 
-void CInterfaceApplication::HandleWindowMouseLeft( const TSharedRef<CPlatformWindow>& Window )
+void CInterfaceApplication::HandleWindowMouseLeft(const TSharedRef<CPlatformWindow>& Window)
 {
-    SWindowFrameMouseEvent WindowFrameMouseEvent( Window, false );
-    HandleWindowFrameMouseEvent( WindowFrameMouseEvent );
+    SWindowFrameMouseEvent WindowFrameMouseEvent(Window, false);
+    HandleWindowFrameMouseEvent(WindowFrameMouseEvent);
 }
 
-void CInterfaceApplication::HandleWindowMouseEntered( const TSharedRef<CPlatformWindow>& Window )
+void CInterfaceApplication::HandleWindowMouseEntered(const TSharedRef<CPlatformWindow>& Window)
 {
-    SWindowFrameMouseEvent WindowFrameMouseEvent( Window, true );
-    HandleWindowFrameMouseEvent( WindowFrameMouseEvent );
+    SWindowFrameMouseEvent WindowFrameMouseEvent(Window, true);
+    HandleWindowFrameMouseEvent(WindowFrameMouseEvent);
 }
 
-void CInterfaceApplication::HandleWindowFrameMouseEvent( const SWindowFrameMouseEvent& WindowFrameMouseEvent )
+void CInterfaceApplication::HandleWindowFrameMouseEvent(const SWindowFrameMouseEvent& WindowFrameMouseEvent)
 {
     SWindowFrameMouseEvent Event = WindowFrameMouseEvent;
-    for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
+    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
-        if ( Handler.First->OnWindowFrameMouseEvent( Event ) )
+        if (Handler.First->OnWindowFrameMouseEvent(Event))
         {
             Event.bIsConsumed = true;
         }
@@ -775,27 +775,27 @@ void CInterfaceApplication::HandleWindowFrameMouseEvent( const SWindowFrameMouse
 void CInterfaceApplication::RenderStrings()
 {
     // Draw DebugWindow with DebugStrings
-    if ( MainViewport && !DebugStrings.IsEmpty() )
+    if (MainViewport && !DebugStrings.IsEmpty())
     {
         SWindowShape CurrentWindowShape;
-        MainViewport->GetWindowShape( CurrentWindowShape );
+        MainViewport->GetWindowShape(CurrentWindowShape);
 
         constexpr float Width = 400.0f;
-        ImGui::SetNextWindowPos( ImVec2( static_cast<float>(CurrentWindowShape.Width - Width), 18.0f ) );
-        ImGui::SetNextWindowSize( ImVec2( Width, 0.0f ) );
+        ImGui::SetNextWindowPos(ImVec2(static_cast<float>(CurrentWindowShape.Width - Width), 18.0f));
+        ImGui::SetNextWindowSize(ImVec2(Width, 0.0f));
 
-        ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( 0.3f, 0.3f, 0.3f, 0.6f ) );
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
 
         const ImGuiWindowFlags WindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings;
 
-        ImGui::Begin( "DebugWindow", nullptr, WindowFlags );
-        ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
+        ImGui::Begin("DebugWindow", nullptr, WindowFlags);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-        for ( const CString& String : DebugStrings )
+        for (const CString& String : DebugStrings)
         {
-            ImGui::Text( "%s", String.CStr() );
+            ImGui::Text("%s", String.CStr());
         }
-        
+
         DebugStrings.Clear();
 
         ImGui::PopStyleColor();
@@ -804,24 +804,24 @@ void CInterfaceApplication::RenderStrings()
     }
 }
 
-void CInterfaceApplication::HandleWindowClosed( const TSharedRef<CPlatformWindow>& Window )
+void CInterfaceApplication::HandleWindowClosed(const TSharedRef<CPlatformWindow>& Window)
 {
-    SWindowClosedEvent WindowClosedEvent( Window );
-    for ( int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++ )
+    SWindowClosedEvent WindowClosedEvent(Window);
+    for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CWindowMessageHandler>, uint32>& Handler = WindowMessageHandlers[Index];
-        if ( Handler.First->OnWindowClosed( WindowClosedEvent ) )
+        if (Handler.First->OnWindowClosed(WindowClosedEvent))
         {
             WindowClosedEvent.bIsConsumed = true;
         }
     }
 
     // TODO: Register a main viewport and when that closes, request exit for now just exit
-    PlatformApplicationMisc::RequestExit( 0 );
+    PlatformApplicationMisc::RequestExit(0);
 }
 
-void CInterfaceApplication::HandleApplicationExit( int32 ExitCode )
+void CInterfaceApplication::HandleApplicationExit(int32 ExitCode)
 {
     bIsRunning = false;
-    ExitEvent.Broadcast( ExitCode );
+    ExitEvent.Broadcast(ExitCode);
 }

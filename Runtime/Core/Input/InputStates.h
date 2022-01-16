@@ -3,12 +3,12 @@
 
 struct SKeyState
 {
-    FORCEINLINE SKeyState( EKey InKeyCode )
-        : KeyCode( InKeyCode )
-        , IsDown( 0 )
-        , PreviousState( 0 )
-        , RepeatCount( 0 )
-        , TimePressed( 0.0f )
+    FORCEINLINE SKeyState(EKey InKeyCode)
+        : KeyCode(InKeyCode)
+        , IsDown(0)
+        , PreviousState(0)
+        , RepeatCount(0)
+        , TimePressed(0.0f)
     {
     }
 
@@ -30,11 +30,11 @@ struct SKeyState
 
 struct SMouseButtonState
 {
-    FORCEINLINE SMouseButtonState( EMouseButton InButton )
-        : Button( InButton )
-        , IsDown( 0 )
-        , PreviousState( 0 )
-        , TimePressed( 0.0f )
+    FORCEINLINE SMouseButtonState(EMouseButton InButton)
+        : Button(InButton)
+        , IsDown(0)
+        , PreviousState(0)
+        , TimePressed(0.0f)
     {
     }
 

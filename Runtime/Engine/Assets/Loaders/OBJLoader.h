@@ -7,5 +7,5 @@
 class ENGINE_API COBJLoader
 {
 public:
-    static bool LoadFile( const CString& Filename, SSceneData& OutScene, bool ReverseHandedness = false );
+    static bool LoadFile(const CString& Filename, SSceneData& OutScene, bool ReverseHandedness = false);
 };

@@ -17,8 +17,8 @@ public:
 
     FORCEINLINE void Reset()
     {
-        DeltaTime = CTimestamp( 0 );
-        TotalTime = CTimestamp( 0 );
+        DeltaTime = CTimestamp(0);
+        TotalTime = CTimestamp(0);
     }
 
     FORCEINLINE const CTimestamp& GetDeltaTime() const

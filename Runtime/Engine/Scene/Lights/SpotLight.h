@@ -3,13 +3,13 @@
 
 class ENGINE_API CSpotLight : public CLight
 {
-    CORE_OBJECT( CSpotLight, CLight );
+    CORE_OBJECT(CSpotLight, CLight);
 
 public:
     CSpotLight();
     ~CSpotLight();
 
-    void SetConeAngle( float InConeAngle );
+    void SetConeAngle(float InConeAngle);
 
     FORCEINLINE float GetConeAngle() const
     {

@@ -13,15 +13,15 @@ class CMaterial;
 class CD3D12RHIRayTracingGeometry : public CRHIRayTracingGeometry, public CD3D12DeviceChild
 {
 public:
-    CD3D12RHIRayTracingGeometry( CD3D12Device* InDevice, uint32 InFlags );
+    CD3D12RHIRayTracingGeometry(CD3D12Device* InDevice, uint32 InFlags);
     ~CD3D12RHIRayTracingGeometry() = default;
 
-    bool Build( class CD3D12RHICommandContext& CmdContext, bool Update );
+    bool Build(class CD3D12RHICommandContext& CmdContext, bool Update);
 
-    virtual void SetName( const CString& InName ) override
+    virtual void SetName(const CString& InName) override
     {
-        CRHIResource::SetName( InName );
-        ResultBuffer->SetName( InName );
+        CRHIResource::SetName(InName);
+        ResultBuffer->SetName(InName);
     }
 
     virtual bool IsValid() const override
@@ -31,7 +31,7 @@ public:
 
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
     {
-        Assert( ResultBuffer != nullptr );
+        Assert(ResultBuffer != nullptr);
         return ResultBuffer->GetGPUVirtualAddress();
     }
 
@@ -52,7 +52,7 @@ struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) SD3D12ShaderBinding
 class CD3D12ShaderBindingTableBuilder : public CD3D12DeviceChild
 {
 public:
-    CD3D12ShaderBindingTableBuilder( CD3D12Device* InDevice );
+    CD3D12ShaderBindingTableBuilder(CD3D12Device* InDevice);
     ~CD3D12ShaderBindingTableBuilder() = default;
 
     void PopulateEntry(
@@ -61,7 +61,7 @@ public:
         CD3D12OnlineDescriptorHeap* ResourceHeap,
         CD3D12OnlineDescriptorHeap* SamplerHeap,
         SD3D12ShaderBindingTableEntry& OutShaderBindingEntry,
-        const SRayTracingShaderResources& Resources );
+        const SRayTracingShaderResources& Resources);
 
     void CopyDescriptors();
 
@@ -90,10 +90,10 @@ private:
 class CD3D12RHIRayTracingScene : public CRHIRayTracingScene, public CD3D12DeviceChild
 {
 public:
-    CD3D12RHIRayTracingScene( CD3D12Device* InDevice, uint32 InFlags );
+    CD3D12RHIRayTracingScene(CD3D12Device* InDevice, uint32 InFlags);
     ~CD3D12RHIRayTracingScene() = default;
 
-    bool Build( class CD3D12RHICommandContext& CmdContext, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update );
+    bool Build(class CD3D12RHICommandContext& CmdContext, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update);
 
     bool BuildBindingTable(
         class CD3D12RHICommandContext& CmdContext,
@@ -103,9 +103,9 @@ public:
         const SRayTracingShaderResources* RayGenLocalResources,
         const SRayTracingShaderResources* MissLocalResources,
         const SRayTracingShaderResources* HitGroupResources,
-        uint32 NumHitGroupResources );
+        uint32 NumHitGroupResources);
 
-    virtual void SetName( const CString& InName ) override;
+    virtual void SetName(const CString& InName) override;
 
     virtual bool IsValid() const override
     {
@@ -123,7 +123,7 @@ public:
 
     FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
     {
-        Assert( ResultBuffer != nullptr );
+        Assert(ResultBuffer != nullptr);
         return ResultBuffer->GetGPUVirtualAddress();
     }
 

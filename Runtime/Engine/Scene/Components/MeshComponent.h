@@ -8,14 +8,14 @@
 
 class ENGINE_API CMeshComponent : public CComponent
 {
-    CORE_OBJECT( CMeshComponent, CComponent );
+    CORE_OBJECT(CMeshComponent, CComponent);
 
 public:
 
-    CMeshComponent( CActor* InOwningActor )
-        : CComponent( InOwningActor )
-        , Material( nullptr )
-        , Mesh( nullptr )
+    CMeshComponent(CActor* InOwningActor)
+        : CComponent(InOwningActor)
+        , Material(nullptr)
+        , Mesh(nullptr)
     {
         CORE_OBJECT_INIT();
     }

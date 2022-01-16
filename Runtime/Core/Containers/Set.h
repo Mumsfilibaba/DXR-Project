@@ -61,8 +61,8 @@ public:
 
     /* Default constructor */
     FORCEINLINE TSet()
-        : RootNode( nullptr )
-        , NullNode( nullptr )
+        : RootNode(nullptr)
+        , NullNode(nullptr)
     {
         ConstructUninitialized();
     }
@@ -70,7 +70,7 @@ public:
     /* Destruct nodes */
     FORCEINLINE ~TSet()
     {
-        Assert( NullNode != nullptr );
+        Assert(NullNode != nullptr);
 
         FreeRoot();
 
@@ -93,7 +93,7 @@ private:
     /* Creates an empty root-node */
     FORCEINLINE void InititalizeRoot()
     {
-        Assert( RootNode == nullptr );
+        Assert(RootNode == nullptr);
 
         RootNode = new STreeNode();
         RootNode->Parent = NullNode;
@@ -105,7 +105,7 @@ private:
     /* Releases the root node */
     FORCEINLINE void FreeRoot()
     {
-        if ( RootNode )
+        if (RootNode)
         {
             delete RootNode;
             RootNode = nullptr;
@@ -113,21 +113,21 @@ private:
     }
 
     /* Rotate tree left */
-    FORCEINLINE void RotateLeft( STreeNode* Node )
+    FORCEINLINE void RotateLeft(STreeNode* Node)
     {
-        Assert( Node != nullptr );
-        Assert( Node != NullNode );
+        Assert(Node != nullptr);
+        Assert(Node != NullNode);
 
         STreeNode* Right = Node->Right;
         Node->Right = Right->Left;
 
-        if ( Right->Left != NullNode )
+        if (Right->Left != NullNode)
         {
             Right->Left->Parent = Node;
         }
 
         Right->Parent = Node->Parent;
-        if ( Node == Node->Parent->Left )
+        if (Node == Node->Parent->Left)
         {
             Node->Parent->Left = Right;
         }
@@ -141,21 +141,21 @@ private:
     }
 
     /* Rotate tree-node right */
-    FORCEINLINE void RotateRight( STreeNode* Node )
+    FORCEINLINE void RotateRight(STreeNode* Node)
     {
-        Assert( Node != nullptr );
-        Assert( Node != NullNode );
+        Assert(Node != nullptr);
+        Assert(Node != NullNode);
 
         STreeNode* Left = Node->Left;
         Node->Left = Left->Right;
 
-        if ( Left->Right != GetNull() )
+        if (Left->Right != GetNull())
         {
             Left->Right->Parent = Node;
         }
 
         Left->Parent = Node->Parent;
-        if ( Node == Node->Parent->Left )
+        if (Node == Node->Parent->Left)
         {
             Node->Parent->Left = Left;
         }

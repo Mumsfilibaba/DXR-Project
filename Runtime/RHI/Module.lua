@@ -1,18 +1,18 @@
-include '../../BuildScripts/Scripts/enginebuild.lua'
+include '../../BuildScripts/Scripts/build_module.lua'
 
-local RHIModule = CreateModule( 'RHI' )
-RHIModule.ModuleDependencies = 
+local RHIModule = CModuleBuildRules('RHI')
+RHIModule.AddModuleDependencies( 
 {
     'Core',
-}
+})
 
 if BuildWithXcode() then
-    RHIModule.FrameWorks = 
+    RHIModule.AddFrameWorks( 
     {
         'Cocoa',
         'AppKit',
         'MetalKit'
-    }
+    })
 end
 
-RHIModule:Generate()
+RHIModule.Generate()

@@ -15,34 +15,35 @@ int32 EngineMain()
     {
         ~SEngineMainGuard()
         {
-            if ( !CEngineLoop::Release() )
+            if (!CEngineLoop::Release())
             {
-                PlatformApplicationMisc::MessageBox( "ERROR", "CEngineLoop::Release Failed" );
+                PlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::Release Failed");
             }
         }
     };
 
     // Make sure that the engine is released if the main function exits early
     SEngineMainGuard EngineMainGuard;
-    
+
+    // Initialization
+    if (!CEngineLoop::PreInitialize())
+    {
+        PlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::PreInit Failed");
+        return -1;
+    }
+
+    if (!CEngineLoop::Initialize())
+    {
+        PlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::Init Failed");
+        return -1;
+    }
+
     // Run loop
-    if ( !CEngineLoop::PreInitialize() )
-    {
-        PlatformApplicationMisc::MessageBox( "ERROR", "CEngineLoop::PreInit Failed" );
-        return -1;
-    }
-
-    if ( !CEngineLoop::Initialize() )
-    {
-        PlatformApplicationMisc::MessageBox( "ERROR", "CEngineLoop::Init Failed" );
-        return -1;
-    }
-
     CTimer Timer;
-    while ( CInterfaceApplication::Get().IsRunning() )
+    while (CInterfaceApplication::Get().IsRunning())
     {
         Timer.Tick();
-        CEngineLoop::Tick( Timer.GetDeltaTime() );
+        CEngineLoop::Tick(Timer.GetDeltaTime());
     }
 
     return 0;

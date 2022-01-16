@@ -8,18 +8,18 @@ class CActor;
 // CComponent BaseClass
 class ENGINE_API CComponent : public CCoreObject
 {
-    CORE_OBJECT( CComponent, CCoreObject );
+    CORE_OBJECT(CComponent, CCoreObject);
 
 public:
 
-    CComponent( CActor* InActorOwner );
+    CComponent(CActor* InActorOwner);
     virtual ~CComponent() = default;
 
     /* Start component, called in the beginning of the run, perform initialization here */
     virtual void Start();
 
     /* Tick component, should be called once every frame */
-    virtual void Tick( CTimestamp DeltaTime );
+    virtual void Tick(CTimestamp DeltaTime);
 
     FORCEINLINE CActor* GetActor() const
     {

@@ -3,7 +3,7 @@
 
 #include "Core/Math/MathCommon.h"
 
-SMeshData CMeshFactory::CreateCube( float Width, float Height, float Depth ) noexcept
+SMeshData CMeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
 {
     const float HalfWidth = Width * 0.5f;
     const float HalfHeight = Height * 0.5f;
@@ -13,40 +13,40 @@ SMeshData CMeshFactory::CreateCube( float Width, float Height, float Depth ) noe
     Cube.Vertices =
     {
         // FRONT FACE
-        { CVector3( -HalfWidth,  HalfHeight, -HalfDepth ), CVector3( 0.0f,  0.0f, -1.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 0.0f ) },
-        { CVector3( HalfWidth,  HalfHeight, -HalfDepth ), CVector3( 0.0f,  0.0f, -1.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 0.0f ) },
-        { CVector3( -HalfWidth, -HalfHeight, -HalfDepth ), CVector3( 0.0f,  0.0f, -1.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 1.0f ) },
-        { CVector3( HalfWidth, -HalfHeight, -HalfDepth ), CVector3( 0.0f,  0.0f, -1.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 1.0f ) },
+        { CVector3(-HalfWidth,  HalfHeight, -HalfDepth), CVector3(0.0f,  0.0f, -1.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(0.0f, 0.0f) },
+        { CVector3(HalfWidth,  HalfHeight, -HalfDepth), CVector3(0.0f,  0.0f, -1.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(1.0f, 0.0f) },
+        { CVector3(-HalfWidth, -HalfHeight, -HalfDepth), CVector3(0.0f,  0.0f, -1.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(0.0f, 1.0f) },
+        { CVector3(HalfWidth, -HalfHeight, -HalfDepth), CVector3(0.0f,  0.0f, -1.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(1.0f, 1.0f) },
 
         // BACK FACE
-        { CVector3( HalfWidth,  HalfHeight,  HalfDepth ), CVector3( 0.0f,  0.0f,  1.0f ), CVector3( -1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 0.0f ) },
-        { CVector3( -HalfWidth,  HalfHeight,  HalfDepth ), CVector3( 0.0f,  0.0f,  1.0f ), CVector3( -1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 0.0f ) },
-        { CVector3( HalfWidth, -HalfHeight,  HalfDepth ), CVector3( 0.0f,  0.0f,  1.0f ), CVector3( -1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 1.0f ) },
-        { CVector3( -HalfWidth, -HalfHeight,  HalfDepth ), CVector3( 0.0f,  0.0f,  1.0f ), CVector3( -1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 1.0f ) },
+        { CVector3(HalfWidth,  HalfHeight,  HalfDepth), CVector3(0.0f,  0.0f,  1.0f), CVector3(-1.0f,  0.0f, 0.0f), CVector2(0.0f, 0.0f) },
+        { CVector3(-HalfWidth,  HalfHeight,  HalfDepth), CVector3(0.0f,  0.0f,  1.0f), CVector3(-1.0f,  0.0f, 0.0f), CVector2(1.0f, 0.0f) },
+        { CVector3(HalfWidth, -HalfHeight,  HalfDepth), CVector3(0.0f,  0.0f,  1.0f), CVector3(-1.0f,  0.0f, 0.0f), CVector2(0.0f, 1.0f) },
+        { CVector3(-HalfWidth, -HalfHeight,  HalfDepth), CVector3(0.0f,  0.0f,  1.0f), CVector3(-1.0f,  0.0f, 0.0f), CVector2(1.0f, 1.0f) },
 
         // RIGHT FACE
-        { CVector3( HalfWidth,  HalfHeight, -HalfDepth ), CVector3( 1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 0.0f, 0.0f ) },
-        { CVector3( HalfWidth,  HalfHeight,  HalfDepth ), CVector3( 1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 1.0f, 0.0f ) },
-        { CVector3( HalfWidth, -HalfHeight, -HalfDepth ), CVector3( 1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 0.0f, 1.0f ) },
-        { CVector3( HalfWidth, -HalfHeight,  HalfDepth ), CVector3( 1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 1.0f, 1.0f ) },
+        { CVector3(HalfWidth,  HalfHeight, -HalfDepth), CVector3(1.0f,  0.0f,  0.0f), CVector3(0.0f,  0.0f, 1.0f), CVector2(0.0f, 0.0f) },
+        { CVector3(HalfWidth,  HalfHeight,  HalfDepth), CVector3(1.0f,  0.0f,  0.0f), CVector3(0.0f,  0.0f, 1.0f), CVector2(1.0f, 0.0f) },
+        { CVector3(HalfWidth, -HalfHeight, -HalfDepth), CVector3(1.0f,  0.0f,  0.0f), CVector3(0.0f,  0.0f, 1.0f), CVector2(0.0f, 1.0f) },
+        { CVector3(HalfWidth, -HalfHeight,  HalfDepth), CVector3(1.0f,  0.0f,  0.0f), CVector3(0.0f,  0.0f, 1.0f), CVector2(1.0f, 1.0f) },
 
         // LEFT FACE
-        { CVector3( -HalfWidth,  HalfHeight, -HalfDepth ), CVector3( -1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 0.0f, 1.0f ) },
-        { CVector3( -HalfWidth,  HalfHeight,  HalfDepth ), CVector3( -1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 1.0f, 1.0f ) },
-        { CVector3( -HalfWidth, -HalfHeight, -HalfDepth ), CVector3( -1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 0.0f, 0.0f ) },
-        { CVector3( -HalfWidth, -HalfHeight,  HalfDepth ), CVector3( -1.0f,  0.0f,  0.0f ), CVector3( 0.0f,  0.0f, 1.0f ), CVector2( 1.0f, 0.0f ) },
+        { CVector3(-HalfWidth,  HalfHeight, -HalfDepth), CVector3(-1.0f,  0.0f,  0.0f), CVector3(0.0f,  0.0f, 1.0f), CVector2(0.0f, 1.0f) },
+        { CVector3(-HalfWidth,  HalfHeight,  HalfDepth), CVector3(-1.0f,  0.0f,  0.0f), CVector3(0.0f,  0.0f, 1.0f), CVector2(1.0f, 1.0f) },
+        { CVector3(-HalfWidth, -HalfHeight, -HalfDepth), CVector3(-1.0f,  0.0f,  0.0f), CVector3(0.0f,  0.0f, 1.0f), CVector2(0.0f, 0.0f) },
+        { CVector3(-HalfWidth, -HalfHeight,  HalfDepth), CVector3(-1.0f,  0.0f,  0.0f), CVector3(0.0f,  0.0f, 1.0f), CVector2(1.0f, 0.0f) },
 
         // TOP FACE
-        { CVector3( -HalfWidth,  HalfHeight,  HalfDepth ), CVector3( 0.0f,  1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 0.0f ) },
-        { CVector3( HalfWidth,  HalfHeight,  HalfDepth ), CVector3( 0.0f,  1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 0.0f ) },
-        { CVector3( -HalfWidth,  HalfHeight, -HalfDepth ), CVector3( 0.0f,  1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 1.0f ) },
-        { CVector3( HalfWidth,  HalfHeight, -HalfDepth ), CVector3( 0.0f,  1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 1.0f ) },
+        { CVector3(-HalfWidth,  HalfHeight,  HalfDepth), CVector3(0.0f,  1.0f,  0.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(0.0f, 0.0f) },
+        { CVector3(HalfWidth,  HalfHeight,  HalfDepth), CVector3(0.0f,  1.0f,  0.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(1.0f, 0.0f) },
+        { CVector3(-HalfWidth,  HalfHeight, -HalfDepth), CVector3(0.0f,  1.0f,  0.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(0.0f, 1.0f) },
+        { CVector3(HalfWidth,  HalfHeight, -HalfDepth), CVector3(0.0f,  1.0f,  0.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(1.0f, 1.0f) },
 
         // BOTTOM FACE
-        { CVector3( -HalfWidth, -HalfHeight, -HalfDepth ), CVector3( 0.0f, -1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 0.0f ) },
-        { CVector3( HalfWidth, -HalfHeight, -HalfDepth ), CVector3( 0.0f, -1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 0.0f ) },
-        { CVector3( -HalfWidth, -HalfHeight,  HalfDepth ), CVector3( 0.0f, -1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 0.0f, 1.0f ) },
-        { CVector3( HalfWidth, -HalfHeight,  HalfDepth ), CVector3( 0.0f, -1.0f,  0.0f ), CVector3( 1.0f,  0.0f, 0.0f ), CVector2( 1.0f, 1.0f ) },
+        { CVector3(-HalfWidth, -HalfHeight, -HalfDepth), CVector3(0.0f, -1.0f,  0.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(0.0f, 0.0f) },
+        { CVector3(HalfWidth, -HalfHeight, -HalfDepth), CVector3(0.0f, -1.0f,  0.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(1.0f, 0.0f) },
+        { CVector3(-HalfWidth, -HalfHeight,  HalfDepth), CVector3(0.0f, -1.0f,  0.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(0.0f, 1.0f) },
+        { CVector3(HalfWidth, -HalfHeight,  HalfDepth), CVector3(0.0f, -1.0f,  0.0f), CVector3(1.0f,  0.0f, 0.0f), CVector2(1.0f, 1.0f) },
     };
 
     Cube.Indices =
@@ -79,41 +79,41 @@ SMeshData CMeshFactory::CreateCube( float Width, float Height, float Depth ) noe
     return Cube;
 }
 
-SMeshData CMeshFactory::CreatePlane( uint32 Width, uint32 Height ) noexcept
+SMeshData CMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
 {
     SMeshData Data;
-    if ( Width < 1 )
+    if (Width < 1)
     {
         Width = 1;
     }
-    if ( Height < 1 )
+    if (Height < 1)
     {
         Height = 1;
     }
 
-    Data.Vertices.Resize( (Width + 1) * (Height + 1) );
-    Data.Indices.Resize( (Width * Height) * 6 );
+    Data.Vertices.Resize((Width + 1) * (Height + 1));
+    Data.Indices.Resize((Width * Height) * 6);
 
     // Size of each quad, size of the plane will always be between -0.5 and 0.5
-    CVector2 QuadSize = CVector2( 1.0f / float( Width ), 1.0f / float( Height ) );
-    CVector2 UvQuadSize = CVector2( 1.0f / float( Width ), 1.0f / float( Height ) );
+    CVector2 QuadSize = CVector2(1.0f / float(Width), 1.0f / float(Height));
+    CVector2 UvQuadSize = CVector2(1.0f / float(Width), 1.0f / float(Height));
 
-    for ( uint32 x = 0; x <= Width; x++ )
+    for (uint32 x = 0; x <= Width; x++)
     {
-        for ( uint32 y = 0; y <= Height; y++ )
+        for (uint32 y = 0; y <= Height; y++)
         {
             int32 v = ((1 + Height) * x) + y;
-            Data.Vertices[v].Position = CVector3( 0.5f - (QuadSize.x * x), 0.5f - (QuadSize.y * y), 0.0f );
+            Data.Vertices[v].Position = CVector3(0.5f - (QuadSize.x * x), 0.5f - (QuadSize.y * y), 0.0f);
             // TODO: Fix vertices so normal is positive
-            Data.Vertices[v].Normal = CVector3( 0.0f, 0.0f, -1.0f );
-            Data.Vertices[v].Tangent = CVector3( 1.0f, 0.0f, 0.0f );
-            Data.Vertices[v].TexCoord = CVector2( 0.0f + (UvQuadSize.x * x), 0.0f + (UvQuadSize.y * y) );
+            Data.Vertices[v].Normal = CVector3(0.0f, 0.0f, -1.0f);
+            Data.Vertices[v].Tangent = CVector3(1.0f, 0.0f, 0.0f);
+            Data.Vertices[v].TexCoord = CVector2(0.0f + (UvQuadSize.x * x), 0.0f + (UvQuadSize.y * y));
         }
     }
 
-    for ( uint8 x = 0; x < Width; x++ )
+    for (uint8 x = 0; x < Width; x++)
     {
-        for ( uint8 y = 0; y < Height; y++ )
+        for (uint8 y = 0; y < Height; y++)
         {
             int32 quad = (Height * x) + y;
             Data.Indices[(quad * 6) + 0] = (x * (1 + Height)) + y + 1;
@@ -131,24 +131,24 @@ SMeshData CMeshFactory::CreatePlane( uint32 Width, uint32 Height ) noexcept
     return Data;
 }
 
-SMeshData CMeshFactory::CreateSphere( uint32 Subdivisions, float Radius ) noexcept
+SMeshData CMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
 {
     SMeshData Sphere;
-    Sphere.Vertices.Resize( 12 );
+    Sphere.Vertices.Resize(12);
 
-    const float t = (1.0f + NMath::Sqrt( 5.0f )) / 2.0f;
-    Sphere.Vertices[0].Position = CVector3( -1.0f, t, 0.0f );
-    Sphere.Vertices[1].Position = CVector3( 1.0f, t, 0.0f );
-    Sphere.Vertices[2].Position = CVector3( -1.0f, -t, 0.0f );
-    Sphere.Vertices[3].Position = CVector3( 1.0f, -t, 0.0f );
-    Sphere.Vertices[4].Position = CVector3( 0.0f, -1.0f, t );
-    Sphere.Vertices[5].Position = CVector3( 0.0f, 1.0f, t );
-    Sphere.Vertices[6].Position = CVector3( 0.0f, -1.0f, -t );
-    Sphere.Vertices[7].Position = CVector3( 0.0f, 1.0f, -t );
-    Sphere.Vertices[8].Position = CVector3( t, 0.0f, -1.0f );
-    Sphere.Vertices[9].Position = CVector3( t, 0.0f, 1.0f );
-    Sphere.Vertices[10].Position = CVector3( -t, 0.0f, -1.0f );
-    Sphere.Vertices[11].Position = CVector3( -t, 0.0f, 1.0f );
+    const float t = (1.0f + NMath::Sqrt(5.0f)) / 2.0f;
+    Sphere.Vertices[0].Position = CVector3(-1.0f, t, 0.0f);
+    Sphere.Vertices[1].Position = CVector3(1.0f, t, 0.0f);
+    Sphere.Vertices[2].Position = CVector3(-1.0f, -t, 0.0f);
+    Sphere.Vertices[3].Position = CVector3(1.0f, -t, 0.0f);
+    Sphere.Vertices[4].Position = CVector3(0.0f, -1.0f, t);
+    Sphere.Vertices[5].Position = CVector3(0.0f, 1.0f, t);
+    Sphere.Vertices[6].Position = CVector3(0.0f, -1.0f, -t);
+    Sphere.Vertices[7].Position = CVector3(0.0f, 1.0f, -t);
+    Sphere.Vertices[8].Position = CVector3(t, 0.0f, -1.0f);
+    Sphere.Vertices[9].Position = CVector3(t, 0.0f, 1.0f);
+    Sphere.Vertices[10].Position = CVector3(-t, 0.0f, -1.0f);
+    Sphere.Vertices[11].Position = CVector3(-t, 0.0f, 1.0f);
 
     Sphere.Indices =
     {
@@ -177,12 +177,12 @@ SMeshData CMeshFactory::CreateSphere( uint32 Subdivisions, float Radius ) noexce
         9, 8, 1,
     };
 
-    if ( Subdivisions > 0 )
+    if (Subdivisions > 0)
     {
-        CMeshUtilities::Subdivide( Sphere, Subdivisions );
+        CMeshUtilities::Subdivide(Sphere, Subdivisions);
     }
 
-    for ( uint32 i = 0; i < static_cast<uint32>(Sphere.Vertices.Size()); i++ )
+    for (uint32 i = 0; i < static_cast<uint32>(Sphere.Vertices.Size()); i++)
     {
         // Calculate the new position, normal and tangent
         CVector3 Position = Sphere.Vertices[i].Position;
@@ -192,24 +192,24 @@ SMeshData CMeshFactory::CreateSphere( uint32 Subdivisions, float Radius ) noexce
         Sphere.Vertices[i].Position = Position * Radius;
 
         // Calculate uvs
-        Sphere.Vertices[i].TexCoord.y = (NMath::Asin( Sphere.Vertices[i].Position.y ) / NMath::PI_F) + 0.5f;
-        Sphere.Vertices[i].TexCoord.x = (NMath::Atan2( Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x ) + NMath::PI_F) / (2.0f * NMath::PI_F);
+        Sphere.Vertices[i].TexCoord.y = (NMath::Asin(Sphere.Vertices[i].Position.y) / NMath::PI_F) + 0.5f;
+        Sphere.Vertices[i].TexCoord.x = (NMath::Atan2(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + NMath::PI_F) / (2.0f * NMath::PI_F);
     }
 
     Sphere.Indices.ShrinkToFit();
     Sphere.Vertices.ShrinkToFit();
 
-    CMeshUtilities::CalculateTangents( Sphere );
+    CMeshUtilities::CalculateTangents(Sphere);
 
     return Sphere;
 }
 
 // TODO: Finish
-SMeshData CMeshFactory::CreateCone( uint32 Sides, float Radius, float Height ) noexcept
+SMeshData CMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noexcept
 {
-    UNREFERENCED_VARIABLE( Sides );
-    UNREFERENCED_VARIABLE( Radius );
-    UNREFERENCED_VARIABLE( Height );
+    UNREFERENCED_VARIABLE(Sides);
+    UNREFERENCED_VARIABLE(Radius);
+    UNREFERENCED_VARIABLE(Height);
 
     /*
     SMeshData data;
@@ -376,11 +376,11 @@ SMeshData CMeshFactory::CreatePyramid() noexcept
 }
 
 // TODO: Finish
-SMeshData CMeshFactory::CreateCylinder( uint32 Sides, float Radius, float Height ) noexcept
+SMeshData CMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) noexcept
 {
-    UNREFERENCED_VARIABLE( Sides );
-    UNREFERENCED_VARIABLE( Radius );
-    UNREFERENCED_VARIABLE( Height );
+    UNREFERENCED_VARIABLE(Sides);
+    UNREFERENCED_VARIABLE(Radius);
+    UNREFERENCED_VARIABLE(Height);
 
     /*
     SMeshData data;

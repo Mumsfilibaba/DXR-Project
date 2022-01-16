@@ -7,12 +7,12 @@ struct TAddLValueReference
 {
 private:
     template <class U>
-    static TIdentity<U&> TryAdd( int );
+    static TIdentity<U&> TryAdd(int);
 
     template <class U>
-    static TIdentity<U> TryAdd( ... );
+    static TIdentity<U> TryAdd(...);
 
-    typedef decltype(TryAdd<T>( 0 )) IdentityType;
+    typedef decltype(TryAdd<T>(0)) IdentityType;
 
 public:
     typedef typename IdentityType::Type Type;
@@ -24,12 +24,12 @@ struct TAddRValueReference
 {
 private:
     template <class U>
-    static TIdentity<U&&> TryAdd( int );
+    static TIdentity<U&&> TryAdd(int);
 
     template <class U>
-    static TIdentity<U> TryAdd( ... );
+    static TIdentity<U> TryAdd(...);
 
-    typedef decltype(TryAdd<T>( 0 )) IdentityType;
+    typedef decltype(TryAdd<T>(0)) IdentityType;
 
 public:
     typedef typename IdentityType::Type Type;

@@ -16,34 +16,34 @@ class CWindowMessageHandler
 {
 public:
 
-	virtual ~CWindowMessageHandler() = default;
-	
+    virtual ~CWindowMessageHandler() = default;
+
     /* Handle Window Resized event, if the handler handles the event, return true */
-    virtual bool OnWindowResized( const SWindowResizeEvent& ResizeEvent )
+    virtual bool OnWindowResized(const SWindowResizeEvent& ResizeEvent)
     {
         return false;
     }
 
     /* Handle Window Moved  event, if the handler handles the event, return true */
-    virtual bool OnWindowMoved( const SWindowMovedEvent& WindowMovedEvent )
+    virtual bool OnWindowMoved(const SWindowMovedEvent& WindowMovedEvent)
     {
         return false;
     }
 
     /* Handle Window Focus changed event, if the handler handles the event, return true */
-    virtual bool OnWindowFocusChanged( const SWindowFocusChangedEvent& FocusEvent )
+    virtual bool OnWindowFocusChanged(const SWindowFocusChangedEvent& FocusEvent)
     {
         return false;
     }
 
     /* Handle Mouse entered or exited the window frame- event, if the handler handles the event, return true */
-    virtual bool OnWindowFrameMouseEvent( const SWindowFrameMouseEvent& MouseEnteredOrLeftEvent )
+    virtual bool OnWindowFrameMouseEvent(const SWindowFrameMouseEvent& MouseEnteredOrLeftEvent)
     {
         return false;
     }
 
     /* Handle Window closed event, if the handler handles the event, return true */
-    virtual bool OnWindowClosed( const SWindowClosedEvent& Window )
+    virtual bool OnWindowClosed(const SWindowClosedEvent& Window)
     {
         return false;
     }

@@ -23,23 +23,23 @@
 enum class ERHIModule : uint32
 {
     Unknown = 0,
-    Null    = 1,
-    D3D12   = 2,
+    Null = 1,
+    D3D12 = 2,
 };
 
-inline const char* ToString( ERHIModule RenderLayerApi )
+inline const char* ToString(ERHIModule RenderLayerApi)
 {
-    switch ( RenderLayerApi )
+    switch (RenderLayerApi)
     {
-        case ERHIModule::D3D12: return "D3D12";
-        case ERHIModule::Null:  return "Null";
-        default:                return "Unknown";
+    case ERHIModule::D3D12: return "D3D12";
+    case ERHIModule::Null:  return "Null";
+    default:                return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-RHI_API bool InitRHI( ERHIModule InRenderApi );
+RHI_API bool InitRHI(ERHIModule InRenderApi);
 RHI_API void ReleaseRHI();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -56,11 +56,11 @@ public:
 
 protected:
 
-    CRHIModule()  = default;
+    CRHIModule() = default;
     ~CRHIModule() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-extern RHI_API class CRHIInterface*      GRHIInterface;
+extern RHI_API class CRHIInterface* GRHIInterface;
 extern RHI_API class IRHIShaderCompiler* GShaderCompiler;

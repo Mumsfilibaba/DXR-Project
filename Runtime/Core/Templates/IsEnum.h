@@ -6,6 +6,6 @@ struct TIsEnum
 {
     enum
     {
-        Value = __is_enum( T )
+        Value = __is_enum(T)
     };
 };

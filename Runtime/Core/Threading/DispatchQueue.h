@@ -11,7 +11,7 @@ typedef int64 DispatchID;
 
 struct SDispatch
 {
-    DECLARE_DELEGATE( CTaskDelegate );
+    DECLARE_DELEGATE(CTaskDelegate);
     CTaskDelegate Delegate;
 };
 
@@ -25,10 +25,10 @@ public:
     bool Init();
 
     /* Queue a new dispatch for being executed */
-    DispatchID Dispatch( const SDispatch& NewTask );
+    DispatchID Dispatch(const SDispatch& NewTask);
 
     /* Wait for a specific task */
-    void WaitFor( DispatchID Task );
+    void WaitFor(DispatchID Task);
 
     /* Wait for all queued up dispatched */
     void WaitForAll();
@@ -41,7 +41,7 @@ private:
     CDispatchQueue();
     ~CDispatchQueue();
 
-    bool PopDispatch( SDispatch& OutTask );
+    bool PopDispatch(SDispatch& OutTask);
 
     void KillWorkers();
 

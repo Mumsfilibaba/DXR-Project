@@ -1,32 +1,32 @@
-include '../../BuildScripts/Scripts/enginebuild.lua'
+include '../../BuildScripts/Scripts/build_module.lua'
 
-local RendererModule = CreateModule( 'Renderer' )
-RendererModule.SysIncludes = 
+local RendererModule = CModuleBuildRules('Renderer')
+RendererModule.AddSystemIncludes( 
 {
-    '%{wks.location}/Dependencies/imgui',
-}
+    MakeExternalDependencyPath('imgui'),
+})
 
-RendererModule.ModuleDependencies = 
+RendererModule.AddModuleDependencies( 
 {
     'Core',
     'CoreApplication',
     'Interface',
     'RHI',
     'Engine',
-}
+})
 
-RendererModule.LinkLibraries = 
+RendererModule.AddLinkLibraries( 
 {
     'ImGui',
-}
+})
 
 if BuildWithXcode() then
-    RendererModule.FrameWorks = 
+    RendererModule.AddFrameWorks( 
     {
         'Cocoa',
         'AppKit',
         'MetalKit'
-    }
+    })
 end
 
-RendererModule:Generate()
+RendererModule.Generate()

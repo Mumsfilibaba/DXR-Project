@@ -7,27 +7,27 @@ class CD3D12RHITimestampQuery : public CRHITimestampQuery, public CD3D12DeviceCh
 {
 public:
 
-    CD3D12RHITimestampQuery( CD3D12Device* InDevice );
+    CD3D12RHITimestampQuery(CD3D12Device* InDevice);
     ~CD3D12RHITimestampQuery() = default;
 
-    virtual void GetTimestampFromIndex( SRHITimestamp& OutQuery, uint32 Index ) const override final;
+    virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const override final;
 
     virtual uint64 GetFrequency() const override final
     {
         return static_cast<uint64>(Frequency);
     }
 
-    void BeginQuery( ID3D12GraphicsCommandList* CmdList, uint32 Index );
-    void EndQuery( ID3D12GraphicsCommandList* CmdList, uint32 Index );
+    void BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
+    void EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
 
-    void ResolveQueries( class CD3D12RHICommandContext& CmdContext );
+    void ResolveQueries(class CD3D12RHICommandContext& CmdContext);
 
     FORCEINLINE ID3D12QueryHeap* GetQueryHeap() const
     {
         return QueryHeap.Get();
     }
 
-    static CD3D12RHITimestampQuery* Create( CD3D12Device* InDevice );
+    static CD3D12RHITimestampQuery* Create(CD3D12Device* InDevice);
 
 private:
 

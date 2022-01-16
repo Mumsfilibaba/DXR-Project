@@ -5,19 +5,19 @@
 
 class ENGINE_API CPointLight : public CLight
 {
-    CORE_OBJECT( CPointLight, CLight );
+    CORE_OBJECT(CPointLight, CLight);
 
 public:
     CPointLight();
     ~CPointLight() = default;
 
-    void SetPosition( const CVector3& InPosition );
-    void SetPosition( float x, float y, float z );
+    void SetPosition(const CVector3& InPosition);
+    void SetPosition(float x, float y, float z);
 
-    void SetShadowNearPlane( float InShadowNearPlane );
-    void SetShadowFarPlane( float InShadowFarPlane );
+    void SetShadowNearPlane(float InShadowNearPlane);
+    void SetShadowFarPlane(float InShadowFarPlane);
 
-    FORCEINLINE void SetShadowCaster( bool bInShadowCaster )
+    FORCEINLINE void SetShadowCaster(bool bInShadowCaster)
     {
         bShadowCaster = bInShadowCaster;
         CalculateMatrices();
@@ -33,21 +33,21 @@ public:
         return Position;
     }
 
-    FORCEINLINE const CMatrix4& GetMatrix( uint32 Index ) const
+    FORCEINLINE const CMatrix4& GetMatrix(uint32 Index) const
     {
-        Assert( Index < 6 );
+        Assert(Index < 6);
         return Matrices[Index];
     }
 
-    FORCEINLINE const CMatrix4& GetViewMatrix( uint32 Index ) const
+    FORCEINLINE const CMatrix4& GetViewMatrix(uint32 Index) const
     {
-        Assert( Index < 6 );
+        Assert(Index < 6);
         return ViewMatrices[Index];
     }
 
-    FORCEINLINE const CMatrix4& GetProjectionMatrix( uint32 Index ) const
+    FORCEINLINE const CMatrix4& GetProjectionMatrix(uint32 Index) const
     {
-        Assert( Index < 6 );
+        Assert(Index < 6);
         return ProjMatrices[Index];
     }
 

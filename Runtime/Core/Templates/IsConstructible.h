@@ -6,6 +6,6 @@ struct TIsConstructible
 {
     enum
     {
-        Value = __is_constructible( T, ArgTypes... )
+        Value = __is_constructible(T, ArgTypes...)
     };
 };

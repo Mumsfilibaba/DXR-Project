@@ -13,7 +13,7 @@ public:
 
     /* Default constructor */
     FORCEINLINE TDefaultArrayAllocator() noexcept
-        : Allocation( nullptr )
+        : Allocation(nullptr)
     {
     }
 
@@ -24,28 +24,28 @@ public:
     }
 
     /* Allocates memory if needed, uses Memory::Realloc */
-    FORCEINLINE ElementType* Realloc( SizeType CurrentCount, SizeType NewCount ) noexcept
+    FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) noexcept
     {
-        UNREFERENCED_VARIABLE( CurrentCount );
+        UNREFERENCED_VARIABLE(CurrentCount);
 
-        Allocation = CMemory::Realloc<ElementType>( Allocation, NewCount );
+        Allocation = CMemory::Realloc<ElementType>(Allocation, NewCount);
         return Allocation;
     }
 
     /* Frees this allocator's memory if necessary */
     FORCEINLINE void Free() noexcept
     {
-        if ( Allocation )
+        if (Allocation)
         {
-            CMemory::Free( Allocation );
+            CMemory::Free(Allocation);
             Allocation = nullptr;
         }
     }
 
     /* Populates this allocator from another */
-    FORCEINLINE void MoveFrom( TDefaultArrayAllocator&& Other )
+    FORCEINLINE void MoveFrom(TDefaultArrayAllocator&& Other)
     {
-        Assert( this != &Other );
+        Assert(this != &Other);
 
         Free();
 
@@ -78,9 +78,9 @@ public:
     }
 
     /* Calculates size for a certain number of elements */
-    static FORCEINLINE SizeType CalculateSize( SizeType NumElements ) noexcept
+    static FORCEINLINE SizeType CalculateSize(SizeType NumElements) noexcept
     {
-        return sizeof( ElementType ) * NumElements;
+        return sizeof(ElementType) * NumElements;
     }
 
 private:
@@ -118,7 +118,7 @@ private:
 
     enum
     {
-        InlineBytes = NumElements * sizeof( InlineType )
+        InlineBytes = NumElements * sizeof(InlineType)
     };
 
     int8 InlineAllocation[InlineBytes];
@@ -147,22 +147,22 @@ public:
     }
 
     /* Allocates memory if needed */
-    FORCEINLINE ElementType* Realloc( SizeType CurrentCount, SizeType NewElementCount ) noexcept
+    FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewElementCount) noexcept
     {
         // If allocation is larger than inline-storage, allocate on the heap
-        if ( NewElementCount > NumInlineElements )
+        if (NewElementCount > NumInlineElements)
         {
             // If we did not have a allocation then the inline storage was used, copy it into dynamic memory
-            if ( !DynamicAllocator.HasAllocation() )
+            if (!DynamicAllocator.HasAllocation())
             {
-                Assert( CurrentCount <= NumInlineElements );
+                Assert(CurrentCount <= NumInlineElements);
 
-                DynamicAllocator.Realloc( CurrentCount, NewElementCount );
-                RelocateRange<ElementType>( reinterpret_cast<void*>(DynamicAllocator.GetAllocation()), InlineAllocation.GetElements(), CurrentCount );
+                DynamicAllocator.Realloc(CurrentCount, NewElementCount);
+                RelocateRange<ElementType>(reinterpret_cast<void*>(DynamicAllocator.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
             }
             else
             {
-                DynamicAllocator.Realloc( CurrentCount, NewElementCount );
+                DynamicAllocator.Realloc(CurrentCount, NewElementCount);
             }
 
             return DynamicAllocator.GetAllocation();
@@ -170,12 +170,12 @@ public:
         else
         {
             // Copy the old allocation over to the inline allocation
-            if ( DynamicAllocator.HasAllocation() )
+            if (DynamicAllocator.HasAllocation())
             {
                 // Only copy as much as can fit into the inline allocation
                 CurrentCount = (CurrentCount <= NumInlineElements) ? CurrentCount : NumInlineElements;
 
-                RelocateRange<ElementType>( reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocator.GetAllocation(), CurrentCount );
+                RelocateRange<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocator.GetAllocation(), CurrentCount);
                 Free();
             }
 
@@ -190,17 +190,17 @@ public:
     }
 
     /* Move from one allocator to another */
-    FORCEINLINE void MoveFrom( TInlineArrayAllocator&& Other )
+    FORCEINLINE void MoveFrom(TInlineArrayAllocator&& Other)
     {
-        Assert( this != &Other );
+        Assert(this != &Other);
 
         // Relocate static storage if necessary
-        if ( !Other.DynamicAllocator.HasAllocation() )
+        if (!Other.DynamicAllocator.HasAllocation())
         {
-            RelocateRange<ElementType>( InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements );
+            RelocateRange<ElementType>(InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements);
         }
 
-        DynamicAllocator.MoveFrom( Move( Other.DynamicAllocator ) );
+        DynamicAllocator.MoveFrom(Move(Other.DynamicAllocator));
     }
 
     /* Checks weather there is a valid allocation or not */
@@ -216,9 +216,9 @@ public:
     }
 
     /* Calculates size for a certain number of elements */
-    static FORCEINLINE SizeType CalculateSize( SizeType NumElements ) noexcept
+    static FORCEINLINE SizeType CalculateSize(SizeType NumElements) noexcept
     {
-        return sizeof( ElementType ) * NumElements;
+        return sizeof(ElementType) * NumElements;
     }
 
     /* Retrieve the allocation */

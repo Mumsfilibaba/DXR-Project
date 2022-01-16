@@ -15,11 +15,11 @@ struct SMeshData
     // C++ Being retarded?
     SMeshData() = default;
 
-    SMeshData( SMeshData&& ) = default;
-    SMeshData( const SMeshData& ) = default;
+    SMeshData(SMeshData&&) = default;
+    SMeshData(const SMeshData&) = default;
 
-    SMeshData& operator=( SMeshData&& ) = default;
-    SMeshData& operator=( const SMeshData& ) = default;
+    SMeshData& operator=(SMeshData&&) = default;
+    SMeshData& operator=(const SMeshData&) = default;
 
     TArray<SVertex> Vertices;
     TArray<uint32> Indices;
@@ -40,11 +40,11 @@ struct SModelData
 {
     SModelData() = default;
 
-    SModelData( SModelData&& ) = default;
-    SModelData( const SModelData& ) = default;
+    SModelData(SModelData&&) = default;
+    SModelData(const SModelData&) = default;
 
-    SModelData& operator=( SModelData&& ) = default;
-    SModelData& operator=( const SModelData& ) = default;
+    SModelData& operator=(SModelData&&) = default;
+    SModelData& operator=(const SModelData&) = default;
 
     /* Name of the mesh specified in the model-file */
     CString Name;
@@ -61,12 +61,12 @@ struct SImage2D
 {
     SImage2D() = default;
 
-    SImage2D( const CString& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat )
-        : Path( InPath )
+    SImage2D(const CString& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat)
+        : Path(InPath)
         , Image()
-        , Width( InWidth )
-        , Height( InHeight )
-        , Format( InFormat )
+        , Width(InWidth)
+        , Height(InHeight)
+        , Format(InFormat)
     {
     }
 
@@ -134,7 +134,7 @@ struct ENGINE_API SSceneData
     /* A scale used to scale each actor when using add to scene */
     float Scale = 1.0f;
 
-    void AddToScene( class CScene* Scene );
+    void AddToScene(class CScene* Scene);
 
     FORCEINLINE bool HasData() const
     {

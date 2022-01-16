@@ -32,15 +32,15 @@ class CRendererWindowHandler final : public CWindowMessageHandler
 {
 public:
 
-    DECLARE_DELEGATE( CWindowResizedDelegate, const SWindowResizeEvent& ResizeEvent );
+    DECLARE_DELEGATE(CWindowResizedDelegate, const SWindowResizeEvent& ResizeEvent);
     CWindowResizedDelegate WindowResizedDelegate;
 
     CRendererWindowHandler() = default;
     ~CRendererWindowHandler() = default;
 
-    virtual bool OnWindowResized( const SWindowResizeEvent& ResizeEvent ) override final
+    virtual bool OnWindowResized(const SWindowResizeEvent& ResizeEvent) override final
     {
-        WindowResizedDelegate.Execute( ResizeEvent );
+        WindowResizedDelegate.Execute(ResizeEvent);
         return true;
     }
 };
@@ -72,15 +72,15 @@ public:
 
     bool Init();
 
-    void Tick( const CScene& Scene );
+    void Tick(const CScene& Scene);
 
     void Release();
 
-    void PerformFrustumCulling( const CScene& Scene );
-    void PerformFXAA( CRHICommandList& InCmdList );
-    void PerformBackBufferBlit( CRHICommandList& InCmdList );
+    void PerformFrustumCulling(const CScene& Scene);
+    void PerformFXAA(CRHICommandList& InCmdList);
+    void PerformBackBufferBlit(CRHICommandList& InCmdList);
 
-    void PerformAABBDebugPass( CRHICommandList& InCmdList );
+    void PerformAABBDebugPass(CRHICommandList& InCmdList);
 
     FORCEINLINE TSharedRef<CTextureDebugWindow> GetTextureDebugger() const
     {
@@ -94,7 +94,7 @@ public:
 
 private:
 
-    void OnWindowResize( const SWindowResizeEvent& Event );
+    void OnWindowResize(const SWindowResizeEvent& Event);
 
     bool InitBoundingBoxDebugPass();
     bool InitAA();
@@ -160,7 +160,7 @@ private:
 
 extern RENDERER_API CRenderer GRenderer;
 
-inline void AddDebugTexture( const TSharedRef<CRHIShaderResourceView>& ImageView, const TSharedRef<CRHITexture>& Image, EResourceState BeforeState, EResourceState AfterState )
+inline void AddDebugTexture(const TSharedRef<CRHIShaderResourceView>& ImageView, const TSharedRef<CRHITexture>& Image, EResourceState BeforeState, EResourceState AfterState)
 {
-    GRenderer.GetTextureDebugger()->AddTextureForDebugging( ImageView, Image, BeforeState, AfterState );
+    GRenderer.GetTextureDebugger()->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
 }

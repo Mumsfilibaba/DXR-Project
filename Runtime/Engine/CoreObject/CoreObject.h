@@ -40,8 +40,8 @@ public:
 
     static const CClassType* GetStaticClass()
     {
-        CLASS_DESCRIPTION( CCoreObject );
-        static CClassType ClassInfo( nullptr, ClassDescription );
+        CLASS_DESCRIPTION(CCoreObject);
+        static CClassType ClassInfo(nullptr, ClassDescription);
         return &ClassInfo;
     }
 
@@ -49,7 +49,7 @@ protected:
 
     CCoreObject() = default;
 
-    FORCEINLINE void SetClass( const CClassType* InClass )
+    FORCEINLINE void SetClass(const CClassType* InClass)
     {
         Class = InClass;
     }
@@ -60,21 +60,21 @@ private:
     const CClassType* Class = nullptr;
 };
 
-inline bool IsSubClassOf( CCoreObject* CoreObject, CClassType* ClassType )
+inline bool IsSubClassOf(CCoreObject* CoreObject, CClassType* ClassType)
 {
-    Assert( CoreObject != nullptr );
-    Assert( CoreObject->GetClass() != nullptr );
-    return CoreObject->GetClass()->IsSubClassOf( ClassType );
+    Assert(CoreObject != nullptr);
+    Assert(CoreObject->GetClass() != nullptr);
+    return CoreObject->GetClass()->IsSubClassOf(ClassType);
 }
 
 template<typename T>
-inline bool IsSubClassOf( CCoreObject* CoreObject )
+inline bool IsSubClassOf(CCoreObject* CoreObject)
 {
-    return IsSubClassOf( CoreObject, T::GetStaticClass() );
+    return IsSubClassOf(CoreObject, T::GetStaticClass());
 }
 
 template<typename T>
-inline T* Cast( CCoreObject* Object )
+inline T* Cast(CCoreObject* Object)
 {
-    return IsSubClassOf<T>( Object ) ? static_cast<T*>(Object) : nullptr;
+    return IsSubClassOf<T>(Object) ? static_cast<T*>(Object) : nullptr;
 }

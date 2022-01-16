@@ -1,18 +1,18 @@
-include '../../BuildScripts/Scripts/enginebuild.lua'
+include '../../BuildScripts/Scripts/build_module.lua'
 
-local CoreApplicationModule = CreateModule( 'CoreApplication' )
-CoreApplicationModule.ModuleDependencies = 
+local CoreApplicationModule = CModuleBuildRules('CoreApplication')
+CoreApplicationModule.AddModuleDependencies( 
 {
     'Core'
-}
+})
 
 if BuildWithXcode() then
-    CoreApplicationModule.FrameWorks = 
+    CoreApplicationModule.AddFrameWorks( 
     {
         'Cocoa',
         'AppKit',
         'MetalKit'
-    }
+    })
 end
 
-CoreApplicationModule:Generate()
+CoreApplicationModule.Generate()

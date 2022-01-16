@@ -16,14 +16,14 @@ public:
     CMesh() = default;
     ~CMesh() = default;
 
-    bool Init( const SMeshData& Data );
+    bool Init(const SMeshData& Data);
 
-    bool BuildAccelerationStructure( CRHICommandList& CmdList );
+    bool BuildAccelerationStructure(CRHICommandList& CmdList);
 
-    static TSharedPtr<CMesh> Make( const SMeshData& Data );
+    static TSharedPtr<CMesh> Make(const SMeshData& Data);
 
 public:
-    void CreateBoundingBox( const SMeshData& Data );
+    void CreateBoundingBox(const SMeshData& Data);
 
     TSharedRef<CRHIVertexBuffer>       VertexBuffer;
     TSharedRef<CRHIShaderResourceView> VertexBufferSRV;

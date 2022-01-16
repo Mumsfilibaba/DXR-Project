@@ -17,15 +17,15 @@ class CConsoleInputHandler final : public CInputHandler
 {
 public:
 
-    DECLARE_DELEGATE( CHandleKeyEventDelegate, const SKeyEvent& );
+    DECLARE_DELEGATE(CHandleKeyEventDelegate, const SKeyEvent&);
     CHandleKeyEventDelegate HandleKeyEventDelegate;
 
     CConsoleInputHandler() = default;
     ~CConsoleInputHandler() = default;
 
-    virtual bool HandleKeyEvent( const SKeyEvent& KeyEvent ) override final
+    virtual bool HandleKeyEvent(const SKeyEvent& KeyEvent) override final
     {
-        HandleKeyEventDelegate.Execute( KeyEvent );
+        HandleKeyEventDelegate.Execute(KeyEvent);
         return bConsoleToggled;
     }
 
@@ -54,10 +54,10 @@ private:
     ~CGameConsoleWindow() = default;
 
     /* Callback from the input */
-    int32 TextCallback( struct ImGuiInputTextCallbackData* Data );
+    int32 TextCallback(struct ImGuiInputTextCallbackData* Data);
 
     /* Called when a key is pressed */
-    void HandleKeyPressedEvent( const SKeyEvent& Event );
+    void HandleKeyPressedEvent(const SKeyEvent& Event);
 
     TSharedPtr<CConsoleInputHandler> InputHandler;
 

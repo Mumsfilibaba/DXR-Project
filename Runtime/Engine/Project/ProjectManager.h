@@ -10,7 +10,7 @@ class ENGINE_API CProjectManager
 public:
 
     /* Initialize the project's name */
-    static bool Initialize( const char* ProjectName, const char* ProjectPath );
+    static bool Initialize(const char* ProjectName, const char* ProjectPath);
 
     /* Retrieve the name of the project */
     static FORCEINLINE const char* GetProjectName()

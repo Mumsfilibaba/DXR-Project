@@ -24,15 +24,15 @@ class CPlatformThread : public CRefCounted
 public:
 
     // TODO: Enable member-functions and lambdas (Use TFunction to solve this)
-    static TSharedRef<CPlatformThread> Make( ThreadFunction InFunction ) { return dbg_new CPlatformThread(); }
+    static TSharedRef<CPlatformThread> Make(ThreadFunction InFunction) { return dbg_new CPlatformThread(); }
 
-    static TSharedRef<CPlatformThread> Make( ThreadFunction InFunction, const CString& InName ) { return dbg_new CPlatformThread(); }
+    static TSharedRef<CPlatformThread> Make(ThreadFunction InFunction, const CString& InName) { return dbg_new CPlatformThread(); }
 
     virtual bool Start() { return true; }
 
-    virtual void WaitUntilFinished() {}
+    virtual void WaitUntilFinished() { }
 
-    virtual void SetName( const CString& Name ) {}
+    virtual void SetName(const CString& Name) { }
 
     virtual PlatformThreadHandle GetPlatformHandle() { return static_cast<PlatformThreadHandle>(0); }
 

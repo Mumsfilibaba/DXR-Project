@@ -24,7 +24,7 @@ public:
         const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code ) override final
+        TArray<uint8>& Code) override final
     {
         return true;
     }
@@ -35,7 +35,7 @@ public:
         const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code ) override final
+        TArray<uint8>& Code) override final
     {
         return true;
     }

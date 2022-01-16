@@ -10,33 +10,33 @@ public:
 
     typedef CRITICAL_SECTION* PlatformHandle;
 
-    CWindowsCriticalSection( const CWindowsCriticalSection& ) = delete;
-    CWindowsCriticalSection& operator=( const CWindowsCriticalSection& ) = delete;
+    CWindowsCriticalSection(const CWindowsCriticalSection&) = delete;
+    CWindowsCriticalSection& operator=(const CWindowsCriticalSection&) = delete;
 
     FORCEINLINE CWindowsCriticalSection() noexcept
         : Section()
     {
-        InitializeCriticalSection( &Section );
+        InitializeCriticalSection(&Section);
     }
 
     FORCEINLINE ~CWindowsCriticalSection()
     {
-        DeleteCriticalSection( &Section );
+        DeleteCriticalSection(&Section);
     }
 
     FORCEINLINE void Lock() noexcept
     {
-        EnterCriticalSection( &Section );
+        EnterCriticalSection(&Section);
     }
 
     FORCEINLINE bool TryLock() noexcept
     {
-        return !!TryEnterCriticalSection( &Section );
+        return !!TryEnterCriticalSection(&Section);
     }
 
     FORCEINLINE void Unlock() noexcept
     {
-        LeaveCriticalSection( &Section );
+        LeaveCriticalSection(&Section);
     }
 
     FORCEINLINE PlatformHandle GetPlatformHandle() noexcept

@@ -8,8 +8,8 @@ public:
 
     SModifierKeyState() = default;
 
-    FORCEINLINE SModifierKeyState( uint8 InModifierMask )
-        : ModifierMask( InModifierMask )
+    FORCEINLINE SModifierKeyState(uint8 InModifierMask)
+        : ModifierMask(InModifierMask)
     {
     }
 

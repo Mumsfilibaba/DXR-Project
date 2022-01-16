@@ -10,25 +10,25 @@
 class CD3D12RHIInputLayoutState : public CRHIInputLayoutState, public CD3D12DeviceChild
 {
 public:
-    CD3D12RHIInputLayoutState( CD3D12Device* InDevice, const SInputLayoutStateCreateInfo& CreateInfo )
+    CD3D12RHIInputLayoutState(CD3D12Device* InDevice, const SInputLayoutStateCreateInfo& CreateInfo)
         : CRHIInputLayoutState()
-        , CD3D12DeviceChild( InDevice )
+        , CD3D12DeviceChild(InDevice)
         , SemanticNames()
         , ElementDesc()
         , Desc()
     {
-        SemanticNames.Reserve( CreateInfo.Elements.Size() );
-        for ( const SInputElement& Element : CreateInfo.Elements )
+        SemanticNames.Reserve(CreateInfo.Elements.Size());
+        for (const SInputElement& Element : CreateInfo.Elements)
         {
             D3D12_INPUT_ELEMENT_DESC DxElement;
-            DxElement.SemanticName = SemanticNames.Emplace( Element.Semantic ).CStr();
+            DxElement.SemanticName = SemanticNames.Emplace(Element.Semantic).CStr();
             DxElement.SemanticIndex = Element.SemanticIndex;
-            DxElement.Format = ConvertFormat( Element.Format );
+            DxElement.Format = ConvertFormat(Element.Format);
             DxElement.InputSlot = Element.InputSlot;
             DxElement.AlignedByteOffset = Element.ByteOffset;
-            DxElement.InputSlotClass = ConvertInputClassification( Element.InputClassification );
+            DxElement.InputSlotClass = ConvertInputClassification(Element.InputClassification);
             DxElement.InstanceDataStepRate = Element.InstanceStepRate;
-            ElementDesc.Emplace( DxElement );
+            ElementDesc.Emplace(DxElement);
         }
 
         Desc.NumElements = GetElementCount();
@@ -65,10 +65,10 @@ private:
 class CD3D12RHIDepthStencilState : public CRHIDepthStencilState, public CD3D12DeviceChild
 {
 public:
-    CD3D12RHIDepthStencilState( CD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc )
+    CD3D12RHIDepthStencilState(CD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
         : CRHIDepthStencilState()
-        , CD3D12DeviceChild( InDevice )
-        , Desc( InDesc )
+        , CD3D12DeviceChild(InDevice)
+        , Desc(InDesc)
     {
     }
 
@@ -89,10 +89,10 @@ private:
 class CD3D12RHIRasterizerState : public CRHIRasterizerState, public CD3D12DeviceChild
 {
 public:
-    CD3D12RHIRasterizerState( CD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc )
+    CD3D12RHIRasterizerState(CD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
         : CRHIRasterizerState()
-        , CD3D12DeviceChild( InDevice )
-        , Desc( InDesc )
+        , CD3D12DeviceChild(InDevice)
+        , Desc(InDesc)
     {
     }
 
@@ -113,10 +113,10 @@ private:
 class CD3D12RHIBlendState : public CRHIBlendState, public CD3D12DeviceChild
 {
 public:
-    CD3D12RHIBlendState( CD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc )
+    CD3D12RHIBlendState(CD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
         : CRHIBlendState()
-        , CD3D12DeviceChild( InDevice )
-        , Desc( InDesc )
+        , CD3D12DeviceChild(InDevice)
+        , Desc(InDesc)
     {
     }
 
@@ -137,17 +137,17 @@ private:
 class CD3D12RHIGraphicsPipelineState : public CRHIGraphicsPipelineState, public CD3D12DeviceChild
 {
 public:
-    CD3D12RHIGraphicsPipelineState( CD3D12Device* InDevice );
+    CD3D12RHIGraphicsPipelineState(CD3D12Device* InDevice);
     ~CD3D12RHIGraphicsPipelineState() = default;
 
-    bool Init( const SGraphicsPipelineStateCreateInfo& CreateInfo );
+    bool Init(const SGraphicsPipelineStateCreateInfo& CreateInfo);
 
-    virtual void SetName( const CString& InName ) override final
+    virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName( InName );
+        CRHIResource::SetName(InName);
 
-        WString WideName = CharToWide( InName );
-        PipelineState->SetName( WideName.CStr() );
+        WString WideName = CharToWide(InName);
+        PipelineState->SetName(WideName.CStr());
     }
 
     virtual void* GetNativeResource() const override final
@@ -178,18 +178,18 @@ private:
 class CD3D12RHIComputePipelineState : public CRHIComputePipelineState, public CD3D12DeviceChild
 {
 public:
-    
-    CD3D12RHIComputePipelineState( CD3D12Device* InDevice, const TSharedRef<CD3D12RHIComputeShader>& InShader );
+
+    CD3D12RHIComputePipelineState(CD3D12Device* InDevice, const TSharedRef<CD3D12RHIComputeShader>& InShader);
     ~CD3D12RHIComputePipelineState() = default;
 
     bool Init();
 
-    virtual void SetName( const CString& InName ) override final
+    virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName( InName );
+        CRHIResource::SetName(InName);
 
-        WString WideName = CharToWide( InName );
-        PipelineState->SetName( WideName.CStr() );
+        WString WideName = CharToWide(InName);
+        PipelineState->SetName(WideName.CStr());
     }
 
     virtual void* GetNativeResource() const override final
@@ -226,19 +226,19 @@ struct SRayTracingShaderIdentifer
 class CD3D12RHIRayTracingPipelineState : public CRHIRayTracingPipelineState, public CD3D12DeviceChild
 {
 public:
-    CD3D12RHIRayTracingPipelineState( CD3D12Device* InDevice );
+    CD3D12RHIRayTracingPipelineState(CD3D12Device* InDevice);
     ~CD3D12RHIRayTracingPipelineState() = default;
 
-    bool Init( const SRayTracingPipelineStateCreateInfo& CreateInfo );
+    bool Init(const SRayTracingPipelineStateCreateInfo& CreateInfo);
 
-    virtual void SetName( const CString& InName ) override
+    virtual void SetName(const CString& InName) override
     {
         // Set resource name 
-        CRHIResource::SetName( InName );
+        CRHIResource::SetName(InName);
 
         // Set native debug name
-        WString WideName = CharToWide( InName );
-        StateObject->SetName( WideName.CStr() );
+        WString WideName = CharToWide(InName);
+        StateObject->SetName(WideName.CStr());
     }
 
     virtual void* GetNativeResource() const override final
@@ -251,7 +251,7 @@ public:
         return StateObject != nullptr;
     }
 
-    void* GetShaderIdentifer( const CString& ExportName );
+    void* GetShaderIdentifer(const CString& ExportName);
 
     FORCEINLINE ID3D12StateObject* GetStateObject() const
     {

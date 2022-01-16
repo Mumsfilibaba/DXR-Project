@@ -30,7 +30,7 @@ public:
     {
     }
 
-    FORCEINLINE bool Wait( TScopedLock<CCriticalSection>& Lock ) noexcept
+    FORCEINLINE bool Wait(TScopedLock<CCriticalSection>& Lock) noexcept
     {
         return false;
     }

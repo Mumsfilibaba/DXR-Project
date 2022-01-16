@@ -12,18 +12,18 @@ class CD3D12RootSignature;
 #define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
 #define D3D12_ENABLE_PIX_MARKERS              (1)
 
-void RHID3D12DeviceRemovedHandler( class CD3D12Device* Device );
+void RHID3D12DeviceRemovedHandler(class CD3D12Device* Device);
 
 class CD3D12Device
 {
 public:
-    CD3D12Device( bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED );
+    CD3D12Device(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
     ~CD3D12Device();
 
     bool Init();
 
     /* Retrieve the multi sample quality for a certain format and sample count */
-    int32 GetMultisampleQuality( DXGI_FORMAT Format, uint32 SampleCount );
+    int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
     /* Retrieves the adapter name for the graphics card that is represented by this device */
     CString GetAdapterName() const;
@@ -87,69 +87,69 @@ public:
 
 public:
 
-    FORCEINLINE HRESULT CreateRootSignature( UINT NodeMask, const void* BlobWithRootSignature, SIZE_T BlobLengthInBytes, REFIID Riid, void** RootSignature )
+    FORCEINLINE HRESULT CreateRootSignature(UINT NodeMask, const void* BlobWithRootSignature, SIZE_T BlobLengthInBytes, REFIID Riid, void** RootSignature)
     {
-        return Device->CreateRootSignature( NodeMask, BlobWithRootSignature, BlobLengthInBytes, Riid, RootSignature );
+        return Device->CreateRootSignature(NodeMask, BlobWithRootSignature, BlobLengthInBytes, Riid, RootSignature);
     }
 
-    FORCEINLINE HRESULT CreateCommitedResource( const D3D12_HEAP_PROPERTIES* HeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* Desc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* OptimizedClearValue, REFIID RiidResource, void** Resource )
+    FORCEINLINE HRESULT CreateCommitedResource(const D3D12_HEAP_PROPERTIES* HeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* Desc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* OptimizedClearValue, REFIID RiidResource, void** Resource)
     {
-        return Device->CreateCommittedResource( HeapProperties, HeapFlags, Desc, InitialResourceState, OptimizedClearValue, RiidResource, Resource );
+        return Device->CreateCommittedResource(HeapProperties, HeapFlags, Desc, InitialResourceState, OptimizedClearValue, RiidResource, Resource);
     }
 
-    FORCEINLINE HRESULT CreatePipelineState( const D3D12_PIPELINE_STATE_STREAM_DESC* Desc, REFIID Riid, void** PipelineState )
+    FORCEINLINE HRESULT CreatePipelineState(const D3D12_PIPELINE_STATE_STREAM_DESC* Desc, REFIID Riid, void** PipelineState)
     {
-        return DXRDevice->CreatePipelineState( Desc, Riid, PipelineState );
+        return DXRDevice->CreatePipelineState(Desc, Riid, PipelineState);
     }
 
-    FORCEINLINE void CreateConstantBufferView( const D3D12_CONSTANT_BUFFER_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor )
+    FORCEINLINE void CreateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
-        Device->CreateConstantBufferView( Desc, DestDescriptor );
+        Device->CreateConstantBufferView(Desc, DestDescriptor);
     }
 
-    FORCEINLINE void CreateRenderTargetView( ID3D12Resource* Resource, const D3D12_RENDER_TARGET_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor )
+    FORCEINLINE void CreateRenderTargetView(ID3D12Resource* Resource, const D3D12_RENDER_TARGET_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
-        Device->CreateRenderTargetView( Resource, Desc, DestDescriptor );
+        Device->CreateRenderTargetView(Resource, Desc, DestDescriptor);
     }
 
-    FORCEINLINE void CreateDepthStencilView( ID3D12Resource* Resource, const D3D12_DEPTH_STENCIL_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor )
+    FORCEINLINE void CreateDepthStencilView(ID3D12Resource* Resource, const D3D12_DEPTH_STENCIL_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
-        Device->CreateDepthStencilView( Resource, Desc, DestDescriptor );
+        Device->CreateDepthStencilView(Resource, Desc, DestDescriptor);
     }
 
-    FORCEINLINE void CreateShaderResourceView( ID3D12Resource* Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor )
+    FORCEINLINE void CreateShaderResourceView(ID3D12Resource* Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
-        Device->CreateShaderResourceView( Resource, Desc, DestDescriptor );
+        Device->CreateShaderResourceView(Resource, Desc, DestDescriptor);
     }
 
-    FORCEINLINE void CreateUnorderedAccessView( ID3D12Resource* Resource, ID3D12Resource* CounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor )
+    FORCEINLINE void CreateUnorderedAccessView(ID3D12Resource* Resource, ID3D12Resource* CounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
-        Device->CreateUnorderedAccessView( Resource, CounterResource, Desc, DestDescriptor );
+        Device->CreateUnorderedAccessView(Resource, CounterResource, Desc, DestDescriptor);
     }
 
-    FORCEINLINE void CreateSampler( const D3D12_SAMPLER_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor )
+    FORCEINLINE void CreateSampler(const D3D12_SAMPLER_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
-        Device->CreateSampler( Desc, DestDescriptor );
+        Device->CreateSampler(Desc, DestDescriptor);
     }
 
-    FORCEINLINE void CopyDescriptors( uint32 NumDestDescriptorRanges, const D3D12_CPU_DESCRIPTOR_HANDLE* DestDescriptorRangeStarts, const uint32* DestDescriptorRangeSizes, uint32 NumSrcDescriptorRanges, const D3D12_CPU_DESCRIPTOR_HANDLE* SrcDescriptorRangeStarts, const uint32* SrcDescriptorRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType )
+    FORCEINLINE void CopyDescriptors(uint32 NumDestDescriptorRanges, const D3D12_CPU_DESCRIPTOR_HANDLE* DestDescriptorRangeStarts, const uint32* DestDescriptorRangeSizes, uint32 NumSrcDescriptorRanges, const D3D12_CPU_DESCRIPTOR_HANDLE* SrcDescriptorRangeStarts, const uint32* SrcDescriptorRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType)
     {
-        Device->CopyDescriptors( NumDestDescriptorRanges, DestDescriptorRangeStarts, DestDescriptorRangeSizes, NumSrcDescriptorRanges, SrcDescriptorRangeStarts, SrcDescriptorRangeSizes, DescriptorHeapsType );
+        Device->CopyDescriptors(NumDestDescriptorRanges, DestDescriptorRangeStarts, DestDescriptorRangeSizes, NumSrcDescriptorRanges, SrcDescriptorRangeStarts, SrcDescriptorRangeSizes, DescriptorHeapsType);
     }
 
-    FORCEINLINE void CopyDescriptorsSimple( uint32 NumDescriptors, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptorRangeStart, D3D12_CPU_DESCRIPTOR_HANDLE SrcDescriptorRangeStart, D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType )
+    FORCEINLINE void CopyDescriptorsSimple(uint32 NumDescriptors, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptorRangeStart, D3D12_CPU_DESCRIPTOR_HANDLE SrcDescriptorRangeStart, D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType)
     {
-        Device->CopyDescriptorsSimple( NumDescriptors, DestDescriptorRangeStart, SrcDescriptorRangeStart, DescriptorHeapsType );
+        Device->CopyDescriptorsSimple(NumDescriptors, DestDescriptorRangeStart, SrcDescriptorRangeStart, DescriptorHeapsType);
     }
 
-    FORCEINLINE void GetRaytracingAccelerationStructurePrebuildInfo( const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* Desc, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO* Info )
+    FORCEINLINE void GetRaytracingAccelerationStructurePrebuildInfo(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* Desc, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO* Info)
     {
-        DXRDevice->GetRaytracingAccelerationStructurePrebuildInfo( Desc, Info );
+        DXRDevice->GetRaytracingAccelerationStructurePrebuildInfo(Desc, Info);
     }
 
-    FORCEINLINE uint32 GetDescriptorHandleIncrementSize( D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType )
+    FORCEINLINE uint32 GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType)
     {
-        return Device->GetDescriptorHandleIncrementSize( DescriptorHeapType );
+        return Device->GetDescriptorHandleIncrementSize(DescriptorHeapType);
     }
 
 private:

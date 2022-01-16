@@ -6,6 +6,6 @@ struct TIsFinal
 {
     enum
     {
-        Value = __is_final( T )
+        Value = __is_final(T)
     };
 };

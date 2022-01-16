@@ -28,14 +28,14 @@ struct SD3D12UploadAllocation
 class CD3D12GPUResourceUploader : public CD3D12DeviceChild
 {
 public:
-    CD3D12GPUResourceUploader( CD3D12Device* InDevice );
+    CD3D12GPUResourceUploader(CD3D12Device* InDevice);
     ~CD3D12GPUResourceUploader() = default;
 
-    bool Reserve( uint32 InSizeInBytes );
+    bool Reserve(uint32 InSizeInBytes);
 
     void Reset();
 
-    SD3D12UploadAllocation LinearAllocate( uint32 SizeInBytes );
+    SD3D12UploadAllocation LinearAllocate(uint32 SizeInBytes);
 
     FORCEINLINE ID3D12Resource* GetGpuResource() const
     {
@@ -49,7 +49,7 @@ public:
 
 private:
     uint8* MappedMemory = nullptr;
-    
+
     uint32 SizeInBytes = 0;
     uint32 OffsetInBytes = 0;
 
@@ -63,14 +63,14 @@ private:
 class CD3D12CommandBatch
 {
 public:
-    CD3D12CommandBatch( CD3D12Device* InDevice );
+    CD3D12CommandBatch(CD3D12Device* InDevice);
     ~CD3D12CommandBatch() = default;
 
     bool Init();
 
     bool Reset()
     {
-        if ( CmdAllocator.Reset() )
+        if (CmdAllocator.Reset())
         {
             Resources.Clear();
             NativeResources.Clear();
@@ -89,27 +89,27 @@ public:
         }
     }
 
-    FORCEINLINE void AddInUseResource( CRHIResource* InResource )
+    FORCEINLINE void AddInUseResource(CRHIResource* InResource)
     {
-        if ( InResource )
+        if (InResource)
         {
-            Resources.Emplace( MakeSharedRef<CRHIResource>( InResource ) );
+            Resources.Emplace(MakeSharedRef<CRHIResource>(InResource));
         }
     }
 
-    FORCEINLINE void AddInUseResource( CD3D12Resource* InResource )
+    FORCEINLINE void AddInUseResource(CD3D12Resource* InResource)
     {
-        if ( InResource )
+        if (InResource)
         {
-            DxResources.Emplace( MakeSharedRef<CD3D12Resource>( InResource ) );
+            DxResources.Emplace(MakeSharedRef<CD3D12Resource>(InResource));
         }
     }
 
-    FORCEINLINE void AddInUseResource( const TComPtr<ID3D12Resource>& InResource )
+    FORCEINLINE void AddInUseResource(const TComPtr<ID3D12Resource>& InResource)
     {
-        if ( InResource )
+        if (InResource)
         {
-            NativeResources.Emplace( InResource );
+            NativeResources.Emplace(InResource);
         }
     }
 
@@ -154,26 +154,26 @@ public:
     CD3D12ResourceBarrierBatcher() = default;
     ~CD3D12ResourceBarrierBatcher() = default;
 
-    void AddTransitionBarrier( ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState );
+    void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
 
-    void AddUnorderedAccessBarrier( ID3D12Resource* Resource )
+    void AddUnorderedAccessBarrier(ID3D12Resource* Resource)
     {
-        Assert( Resource != nullptr );
+        Assert(Resource != nullptr);
 
         D3D12_RESOURCE_BARRIER Barrier;
-        CMemory::Memzero( &Barrier );
+        CMemory::Memzero(&Barrier);
 
         Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
         Barrier.UAV.pResource = Resource;
 
-        Barriers.Emplace( Barrier );
+        Barriers.Emplace(Barrier);
     }
 
-    void FlushBarriers( CD3D12CommandList& CmdList )
+    void FlushBarriers(CD3D12CommandList& CmdList)
     {
-        if ( !Barriers.IsEmpty() )
+        if (!Barriers.IsEmpty())
         {
-            CmdList.ResourceBarrier( Barriers.Data(), Barriers.Size() );
+            CmdList.ResourceBarrier(Barriers.Data(), Barriers.Size());
             Barriers.Clear();
         }
     }
@@ -199,10 +199,10 @@ class CD3D12RHICommandContext : public IRHICommandContext, public CD3D12DeviceCh
 public:
 
     /* Create and initialize a new CommandContext */
-    static FORCEINLINE CD3D12RHICommandContext* Make( CD3D12Device* InDevice )
+    static FORCEINLINE CD3D12RHICommandContext* Make(CD3D12Device* InDevice)
     {
-        TSharedRef<CD3D12RHICommandContext> NewContext = dbg_new CD3D12RHICommandContext( InDevice );
-        if ( NewContext && NewContext->Init() )
+        TSharedRef<CD3D12RHICommandContext> NewContext = dbg_new CD3D12RHICommandContext(InDevice);
+        if (NewContext && NewContext->Init())
         {
             return NewContext.ReleaseOwnership();
         }
@@ -218,97 +218,97 @@ public:
     virtual void End() override final;
 
     /* Begins the timestamp with the specifed index in the timestampquery */
-    virtual void BeginTimeStamp( CRHITimestampQuery* TimestampQuery, uint32 Index ) override final;
+    virtual void BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
     /* Ends the timestamp with the specifed index in the timestampquery */
-    virtual void EndTimeStamp( CRHITimestampQuery* TimestampQuery, uint32 Index ) override final;
+    virtual void EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
 
     /* Clears a RenderTargetView with a specific color */
-    virtual void ClearRenderTargetView( CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor ) override final;
+    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor) override final;
     /* Clears a DepthStencilView with a depth and stencil value */
-    virtual void ClearDepthStencilView( CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue ) override final;
+    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue) override final;
     /* Clears a UnorderedAccessView with a specific color */
-    virtual void ClearUnorderedAccessViewFloat( CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor ) override final;
+    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor) override final;
 
     /* Sets the shadingrate for the fullscreen */
-    virtual void SetShadingRate( EShadingRate ShadingRate ) override final;
+    virtual void SetShadingRate(EShadingRate ShadingRate) override final;
     /* Set the shadingrate image that should be used */
-    virtual void SetShadingRateImage( CRHITexture2D* ShadingImage ) override final;
+    virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) override final;
 
     // TODO: Implement renderpasses (For Vulkan)
     virtual void BeginRenderPass() override final;
     virtual void EndRenderPass() override final;
 
     /* Set the current viewport settings */
-    virtual void SetViewport( float Width, float Height, float MinDepth, float MaxDepth, float x, float y ) override final;    
+    virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final;
     /* Set the current scissor settings */
-    virtual void SetScissorRect( float Width, float Height, float x, float y ) override final;
+    virtual void SetScissorRect(float Width, float Height, float x, float y) override final;
 
     /* Set the blendfactor color */
-    virtual void SetBlendFactor( const SColorF& Color ) override final;
+    virtual void SetBlendFactor(const SColorF& Color) override final;
 
     /* Sets all the RenderTargetViews and the DepthStencilView that should be used, nullptr is valid if the view should not be set */
-    virtual void SetRenderTargets( CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView ) override final;
+    virtual void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView) override final;
 
     /* Set the VertexBuffers */
-    virtual void SetVertexBuffers( CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot ) override final;
+    virtual void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
     /* Set the indexbuffer */
-    virtual void SetIndexBuffer( CRHIIndexBuffer* IndexBuffer ) override final;
+    virtual void SetIndexBuffer(CRHIIndexBuffer* IndexBuffer) override final;
 
     /* Set the primitive topology */
-    virtual void SetPrimitiveTopology( EPrimitiveTopology PrimitveTopologyType ) override final;
+    virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
 
     /* Sets the current graphics pipelinestate */
-    virtual void SetGraphicsPipelineState( class CRHIGraphicsPipelineState* PipelineState ) override final;    
+    virtual void SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState) override final;
     /* Sets the current compute pipelinestate */
-    virtual void SetComputePipelineState( class CRHIComputePipelineState* PipelineState ) override final;
+    virtual void SetComputePipelineState(class CRHIComputePipelineState* PipelineState) override final;
 
     /* Set shader constants */
-    virtual void Set32BitShaderConstants( CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants ) override final;
+    virtual void Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final;
 
     /* Sets a single ShaderResourceView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object */
-    virtual void SetShaderResourceView( CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex ) override final;
+    virtual void SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) override final;
     /* Sets multiple ShaderResourceViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object */
-    virtual void SetShaderResourceViews( CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex ) override final;
+    virtual void SetShaderResourceViews(CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex) override final;
 
     /* Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object */
-    virtual void SetUnorderedAccessView( CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex ) override final;  
+    virtual void SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) override final;
     /* Sets multiple UnorderedAccessViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object */
-    virtual void SetUnorderedAccessViews( CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex ) override final;
+    virtual void SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex) override final;
 
     /* Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object */
-    virtual void SetConstantBuffer( CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex ) override final;   
+    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) override final;
     /* Sets multiple ConstantBuffers to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object */
-    virtual void SetConstantBuffers( CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex ) override final;
+    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) override final;
 
     /* Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object */
-    virtual void SetSamplerState( CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex ) override final;
+    virtual void SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex) override final;
     /* Sets multiple SamplerStates to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object */
-    virtual void SetSamplerStates( CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex ) override final;
+    virtual void SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) override final;
 
     /* Updates the contents of a Buffer */
-    virtual void UpdateBuffer( CRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData ) override final;   
+    virtual void UpdateBuffer(CRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) override final;
     /* Updates the contents of a Texture2D */
-    virtual void UpdateTexture2D( CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData ) override final;
+    virtual void UpdateTexture2D(CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) override final;
 
     /* Resolves a multisampled texture, must have the same sizes and compatable formats */
-    virtual void ResolveTexture( CRHITexture* Destination, CRHITexture* Source ) override final;
+    virtual void ResolveTexture(CRHITexture* Destination, CRHITexture* Source) override final;
 
     /* Copies the contents from one buffer to another */
-    virtual void CopyBuffer( CRHIBuffer* Destination, CRHIBuffer* Source, const SCopyBufferInfo& CopyInfo ) override final;   
+    virtual void CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SCopyBufferInfo& CopyInfo) override final;
     /* Copies the entire contents of one texture to another, which require the size and formats to be the same */
-    virtual void CopyTexture( CRHITexture* Destination, CRHITexture* Source ) override final;
+    virtual void CopyTexture(CRHITexture* Destination, CRHITexture* Source) override final;
     /* Copies the region of one texture to another */
-    virtual void CopyTextureRegion( CRHITexture* Destination, CRHITexture* Source, const SCopyTextureInfo& CopyTextureInfo ) override final;
+    virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SCopyTextureInfo& CopyTextureInfo) override final;
 
     /* Discards a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying commandlist is completed */
-    virtual void DestroyResource( class CRHIResource* Resource ) override final;
+    virtual void DestroyResource(class CRHIResource* Resource) override final;
     /* Signal the driver that the contents can be discarded */
-    virtual void DiscardResource( class CRHIMemoryResource* Resource ) override final;
+    virtual void DiscardResource(class CRHIMemoryResource* Resource) override final;
 
     /* Builds the Bottom Level Acceleration Structure for ray tracing */
-    virtual void BuildRayTracingGeometry( CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate ) override final; 
+    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final;
     /* Builds the Top Level Acceleration Structure for ray tracing */
-    virtual void BuildRayTracingScene( CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate ) override final;
+    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final;
 
     /* Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
     virtual void SetRayTracingBindings(
@@ -318,35 +318,35 @@ public:
         const SRayTracingShaderResources* RayGenLocalResources,
         const SRayTracingShaderResources* MissLocalResources,
         const SRayTracingShaderResources* HitGroupResources,
-        uint32 NumHitGroupResources ) override final;
+        uint32 NumHitGroupResources) override final;
 
     /* Generate miplevels for a texture. Works with Texture2D and TextureCubes */
-    virtual void GenerateMips( CRHITexture* Texture ) override final;
+    virtual void GenerateMips(CRHITexture* Texture) override final;
 
     /* Transition the resourcestate of a texture resource */
-    virtual void TransitionTexture( CRHITexture* Texture, EResourceState BeforeState, EResourceState AfterState ) override final;
+    virtual void TransitionTexture(CRHITexture* Texture, EResourceState BeforeState, EResourceState AfterState) override final;
     /* Transition the resourcestate of a buffer resource */
-    virtual void TransitionBuffer( CRHIBuffer* Buffer, EResourceState BeforeState, EResourceState AfterState ) override final;
+    virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceState BeforeState, EResourceState AfterState) override final;
 
-    /* Add a UnorderedAccessBarrier for a texture resource, which should be issued before reading of a resource in UnorderedAccessState */ 
-    virtual void UnorderedAccessTextureBarrier( CRHITexture* Texture ) override final;
+    /* Add a UnorderedAccessBarrier for a texture resource, which should be issued before reading of a resource in UnorderedAccessState */
+    virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) override final;
     /* Add a UnorderedAccessBarrier for a buffer resource, which should be issued before reading of a resource in UnorderedAccessState */
-    virtual void UnorderedAccessBufferBarrier( CRHIBuffer* Buffer ) override final;
+    virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer) override final;
 
     /* Issue a draw-call */
-    virtual void Draw( uint32 VertexCount, uint32 StartVertexLocation ) override final;
+    virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final;
     /* Issue a draw-call for drawing with an IndexBuffer */
-    virtual void DrawIndexed( uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation ) override final;
+    virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
     /* Issue a draw-call for drawing instanced */
-    virtual void DrawInstanced( uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation ) override final;
+    virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) override final;
     /* Issue a draw-call for drawing instanced with an IndexBuffer */
-    virtual void DrawIndexedInstanced( uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation ) override final;
+    virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) override final;
 
     /* Issues a compute dispatch */
-    virtual void Dispatch( uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ ) override final;
+    virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
 
     /* Issues a ray generation dispatch */
-    virtual void DispatchRays( CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth ) override final;
+    virtual void DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
 
     /* Clears the state of the context, clearing all bound references currently bound */
     virtual void ClearState() override final;
@@ -355,7 +355,7 @@ public:
     virtual void Flush() override final;
 
     /* Inserts a marker on the GPU timeline */
-    virtual void InsertMarker( const CString& Message ) override final;
+    virtual void InsertMarker(const CString& Message) override final;
 
     /* Begins a PIX capture event, currently only available on D3D12 */
     virtual void BeginExternalCapture() override final;
@@ -364,7 +364,7 @@ public:
 
 public:
 
-    void UpdateBuffer( CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData );
+    void UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
 
     FORCEINLINE CD3D12CommandQueue& GetQueue()
     {
@@ -378,35 +378,35 @@ public:
 
     FORCEINLINE uint32 GetCurrentEpochValue() const
     {
-        uint32 MaxValue = NMath::Max<int32>( (int32)CmdBatches.Size() - 1, 0 );
-        return NMath::Min<uint32>( NextCmdBatch - 1, MaxValue );
+        uint32 MaxValue = NMath::Max<int32>((int32)CmdBatches.Size() - 1, 0);
+        return NMath::Min<uint32>(NextCmdBatch - 1, MaxValue);
     }
 
-    FORCEINLINE void UnorderedAccessBarrier( CD3D12Resource* Resource )
+    FORCEINLINE void UnorderedAccessBarrier(CD3D12Resource* Resource)
     {
-        D3D12_ERROR( Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
-        BarrierBatcher.AddUnorderedAccessBarrier( Resource->GetResource() );
+        D3D12_ERROR(Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
+        BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetResource());
     }
 
-    FORCEINLINE void TransitionResource( CD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState )
+    FORCEINLINE void TransitionResource(CD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
     {
-        D3D12_ERROR( Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
-        BarrierBatcher.AddTransitionBarrier( Resource->GetResource(), BeforeState, AfterState );
+        D3D12_ERROR(Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
+        BarrierBatcher.AddTransitionBarrier(Resource->GetResource(), BeforeState, AfterState);
     }
 
     FORCEINLINE void FlushResourceBarriers()
     {
-        BarrierBatcher.FlushBarriers( CmdList );
+        BarrierBatcher.FlushBarriers(CmdList);
     }
 
-    FORCEINLINE void DestroyResource( CD3D12Resource* Resource )
+    FORCEINLINE void DestroyResource(CD3D12Resource* Resource)
     {
-        CmdBatch->AddInUseResource( Resource );
+        CmdBatch->AddInUseResource(Resource);
     }
 
 private:
 
-    CD3D12RHICommandContext( CD3D12Device* InDevice );
+    CD3D12RHICommandContext(CD3D12Device* InDevice);
     ~CD3D12RHICommandContext();
 
     bool Init();

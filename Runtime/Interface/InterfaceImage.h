@@ -6,11 +6,11 @@ struct SInterfaceImage
 {
     SInterfaceImage() = default;
 
-    SInterfaceImage( const TSharedRef<CRHIShaderResourceView>& InImageView, const TSharedRef<CRHITexture>& InImage, EResourceState InBefore, EResourceState InAfter )
-        : ImageView( InImageView )
-        , Image( InImage )
-        , BeforeState( InBefore )
-        , AfterState( InAfter )
+    SInterfaceImage(const TSharedRef<CRHIShaderResourceView>& InImageView, const TSharedRef<CRHITexture>& InImage, EResourceState InBefore, EResourceState InAfter)
+        : ImageView(InImageView)
+        , Image(InImage)
+        , BeforeState(InBefore)
+        , AfterState(InAfter)
     {
     }
 

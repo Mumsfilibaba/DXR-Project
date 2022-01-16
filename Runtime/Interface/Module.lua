@@ -1,29 +1,29 @@
-include '../../BuildScripts/Scripts/enginebuild.lua'
+include '../../BuildScripts/Scripts/build_module.lua'
 
-local InterfaceModule = CreateModule( 'Interface' )
-InterfaceModule.SysIncludes = 
+local InterfaceModule = CModuleBuildRules('Interface')
+InterfaceModule.AddSystemIncludes( 
 {
-    '%{wks.location}/Dependencies/imgui',
-}
+    MakeExternalDependencyPath('imgui'),
+})
 
-InterfaceModule.ModuleDependencies = 
+InterfaceModule.AddModuleDependencies( 
 {
     'Core',
     'CoreApplication',
-}
+})
 
-InterfaceModule.LinkLibraries = 
+InterfaceModule.AddLinkLibraries( 
 {
     'ImGui',
-}
+})
 
 if BuildWithXcode() then
-    InterfaceModule.FrameWorks = 
+    InterfaceModule.AddFrameWorks( 
     {
         'Cocoa',
         'AppKit',
         'MetalKit'
-    }
+    })
 end
 
-InterfaceModule:Generate()
+InterfaceModule.Generate()

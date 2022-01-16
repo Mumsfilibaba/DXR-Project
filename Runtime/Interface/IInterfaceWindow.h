@@ -32,7 +32,7 @@ public:
     virtual ~IInterfaceWindow() = default;
 
     /* Initializes the panel. The context handle should be set if the global context is not yet, this ensures that panels can be created from different DLLs*/
-    virtual void InitContext( InterfaceContext ContextHandle ) = 0;
+    virtual void InitContext(InterfaceContext ContextHandle) = 0;
 
     /* Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() = 0;

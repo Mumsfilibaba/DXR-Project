@@ -22,18 +22,18 @@ public:
     void Start();
 
     /* Ticks all actors in the scene, should be called once per frame */
-    void Tick( CTimestamp DeltaTime );
+    void Tick(CTimestamp DeltaTime);
 
     /* Adds a camera into the scene */
-    void AddCamera( CCamera* InCamera );
+    void AddCamera(CCamera* InCamera);
 
     /* Adds an actor into the scene */
-    void AddActor( CActor* InActor );
+    void AddActor(CActor* InActor);
 
     /* Adds a new light into the scene*/
-    void AddLight( CLight* InLight );
+    void AddLight(CLight* InLight);
 
-    void OnAddedComponent( CComponent* NewComponent );
+    void OnAddedComponent(CComponent* NewComponent);
 
     template<typename TComponent>
     FORCEINLINE const TArray<TComponent> GetAllComponentsOfType() const
@@ -41,16 +41,16 @@ public:
         // TODO: Cache this result
 
         TArray<TComponent> Components;
-        for ( CActor* Actor : Actors )
+        for (CActor* Actor : Actors)
         {
             TComponent* Component = Actor->GetComponentOfType<TComponent>();
-            if ( Component )
+            if (Component)
             {
-                Components.Emplace( *Component );
+                Components.Emplace(*Component);
             }
         }
 
-        return Move( Components );
+        return Move(Components);
     }
 
     FORCEINLINE const TArray<CActor*>& GetActors() const
@@ -74,7 +74,7 @@ public:
     }
 
 private:
-    void AddMeshComponent( class CMeshComponent* Component );
+    void AddMeshComponent(class CMeshComponent* Component);
 
     TArray<CActor*> Actors;
     TArray<CLight*> Lights;

@@ -27,40 +27,40 @@ class COREAPPLICATION_API CPlatformConsoleWindow
 {
 public:
 
-	/* Creates a new console */
-	static CPlatformConsoleWindow* Make() { return dbg_new CPlatformConsoleWindow(); }
-	
-	/* Show or hide the console window */
-	virtual void Show( bool bShow ) {}
+    /* Creates a new console */
+    static CPlatformConsoleWindow* Make() { return dbg_new CPlatformConsoleWindow(); }
 
-	/* Prints text to the console window, but does not start a new line */
-    virtual void Print( const CString& Message ) {}
-	
-	/* Prints a line to the console window */
-    virtual void PrintLine( const CString& Message ) {}
+    /* Show or hide the console window */
+    virtual void Show(bool bShow) { }
 
-	/* Clear the console window */
-    virtual void Clear() {}
+    /* Prints text to the console window, but does not start a new line */
+    virtual void Print(const CString& Message) { }
 
-	/* Set the title of the console window */
-    virtual void SetTitle( const CString& Title ) {}
-	
-	/* Set the text-color */
-    virtual void SetColor( EConsoleColor Color ) {}
+    /* Prints a line to the console window */
+    virtual void PrintLine(const CString& Message) { }
 
-	/* Releases the console window and destroys the object */
+    /* Clear the console window */
+    virtual void Clear() { }
+
+    /* Set the title of the console window */
+    virtual void SetTitle(const CString& Title) { }
+
+    /* Set the text-color */
+    virtual void SetColor(EConsoleColor Color) { }
+
+    /* Releases the console window and destroys the object */
     virtual void Release() { delete this; }
-	
-	/* Returns true if the console window is currently being displayed */
-	bool IsShowing() const { return bIsShowing; }
+
+    /* Returns true if the console window is currently being displayed */
+    bool IsShowing() const { return bIsShowing; }
 
 protected:
 
     CPlatformConsoleWindow() = default;
     virtual ~CPlatformConsoleWindow() = default;
-	
-	// True or false depending on if the console is visbile or not
-	bool bIsShowing = false;
+
+    // True or false depending on if the console is visbile or not
+    bool bIsShowing = false;
 };
 
 #if defined(COMPILER_MSVC)

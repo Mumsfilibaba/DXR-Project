@@ -14,11 +14,11 @@ struct SRHIRenderCommand
 {
     virtual ~SRHIRenderCommand() = default;
 
-    virtual void Execute( IRHICommandContext& ) = 0;
+    virtual void Execute(IRHICommandContext&) = 0;
 
-    FORCEINLINE void operator()( IRHICommandContext& CmdContext )
+    FORCEINLINE void operator()(IRHICommandContext& CmdContext)
     {
-        Execute( CmdContext );
+        Execute(CmdContext);
     }
 
     SRHIRenderCommand* NextCmd = nullptr;
@@ -27,15 +27,15 @@ struct SRHIRenderCommand
 // BeginTimeStamp RenderCommand
 struct SRHIBeginTimeStampRenderCommand : public SRHIRenderCommand
 {
-    SRHIBeginTimeStampRenderCommand( CRHITimestampQuery* InProfiler, uint32 InIndex )
-        : Profiler( InProfiler )
-        , Index( InIndex )
+    SRHIBeginTimeStampRenderCommand(CRHITimestampQuery* InProfiler, uint32 InIndex)
+        : Profiler(InProfiler)
+        , Index(InIndex)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.BeginTimeStamp( Profiler.Get(), Index );
+        CmdContext.BeginTimeStamp(Profiler.Get(), Index);
     }
 
     TSharedRef<CRHITimestampQuery> Profiler;
@@ -45,15 +45,15 @@ struct SRHIBeginTimeStampRenderCommand : public SRHIRenderCommand
 // EndTimeStamp RenderCommand
 struct SRHIEndTimeStampRenderCommand : public SRHIRenderCommand
 {
-    SRHIEndTimeStampRenderCommand( CRHITimestampQuery* InProfiler, uint32 InIndex )
-        : Profiler( InProfiler )
-        , Index( InIndex )
+    SRHIEndTimeStampRenderCommand(CRHITimestampQuery* InProfiler, uint32 InIndex)
+        : Profiler(InProfiler)
+        , Index(InIndex)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.EndTimeStamp( Profiler.Get(), Index );
+        CmdContext.EndTimeStamp(Profiler.Get(), Index);
     }
 
     TSharedRef<CRHITimestampQuery> Profiler;
@@ -63,15 +63,15 @@ struct SRHIEndTimeStampRenderCommand : public SRHIRenderCommand
 // Clear RenderTarget RenderCommand
 struct SRHIClearRenderTargetViewRenderCommand : public SRHIRenderCommand
 {
-    SRHIClearRenderTargetViewRenderCommand( CRHIRenderTargetView* InRenderTargetView, const SColorF& InClearColor )
-        : RenderTargetView( InRenderTargetView )
-        , ClearColor( InClearColor )
+    SRHIClearRenderTargetViewRenderCommand(CRHIRenderTargetView* InRenderTargetView, const SColorF& InClearColor)
+        : RenderTargetView(InRenderTargetView)
+        , ClearColor(InClearColor)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.ClearRenderTargetView( RenderTargetView.Get(), ClearColor );
+        CmdContext.ClearRenderTargetView(RenderTargetView.Get(), ClearColor);
     }
 
     TSharedRef<CRHIRenderTargetView> RenderTargetView;
@@ -81,15 +81,15 @@ struct SRHIClearRenderTargetViewRenderCommand : public SRHIRenderCommand
 // Clear DepthStencil RenderCommand
 struct SRHIClearDepthStencilViewRenderCommand : public SRHIRenderCommand
 {
-    SRHIClearDepthStencilViewRenderCommand( CRHIDepthStencilView* InDepthStencilView, const SDepthStencil& InClearValue )
-        : DepthStencilView( InDepthStencilView )
-        , ClearValue( InClearValue )
+    SRHIClearDepthStencilViewRenderCommand(CRHIDepthStencilView* InDepthStencilView, const SDepthStencil& InClearValue)
+        : DepthStencilView(InDepthStencilView)
+        , ClearValue(InClearValue)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.ClearDepthStencilView( DepthStencilView.Get(), ClearValue );
+        CmdContext.ClearDepthStencilView(DepthStencilView.Get(), ClearValue);
     }
 
     TSharedRef<CRHIDepthStencilView> DepthStencilView;
@@ -99,15 +99,15 @@ struct SRHIClearDepthStencilViewRenderCommand : public SRHIRenderCommand
 // Clear UnorderedAccessView RenderCommand
 struct SRHIClearUnorderedAccessViewFloatRenderCommand : public SRHIRenderCommand
 {
-    SRHIClearUnorderedAccessViewFloatRenderCommand( CRHIUnorderedAccessView* InUnorderedAccessView, const SColorF& InClearColor )
-        : UnorderedAccessView( InUnorderedAccessView )
-        , ClearColor( InClearColor )
+    SRHIClearUnorderedAccessViewFloatRenderCommand(CRHIUnorderedAccessView* InUnorderedAccessView, const SColorF& InClearColor)
+        : UnorderedAccessView(InUnorderedAccessView)
+        , ClearColor(InClearColor)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.ClearUnorderedAccessViewFloat( UnorderedAccessView.Get(), ClearColor );
+        CmdContext.ClearUnorderedAccessViewFloat(UnorderedAccessView.Get(), ClearColor);
     }
 
     TSharedRef<CRHIUnorderedAccessView> UnorderedAccessView;
@@ -117,14 +117,14 @@ struct SRHIClearUnorderedAccessViewFloatRenderCommand : public SRHIRenderCommand
 // SetShadingRate RenderCommand
 struct SRHISetShadingRateRenderCommand : public SRHIRenderCommand
 {
-    SRHISetShadingRateRenderCommand( EShadingRate ShadingRate )
-        : ShadingRate( ShadingRate )
+    SRHISetShadingRateRenderCommand(EShadingRate ShadingRate)
+        : ShadingRate(ShadingRate)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetShadingRate( ShadingRate );
+        CmdContext.SetShadingRate(ShadingRate);
     }
 
     EShadingRate ShadingRate;
@@ -133,14 +133,14 @@ struct SRHISetShadingRateRenderCommand : public SRHIRenderCommand
 // SetShadingRateImage RenderCommand
 struct SRHISetShadingRateImageRenderCommand : public SRHIRenderCommand
 {
-    SRHISetShadingRateImageRenderCommand( CRHITexture2D* InShadingImage )
-        : ShadingImage( InShadingImage )
+    SRHISetShadingRateImageRenderCommand(CRHITexture2D* InShadingImage)
+        : ShadingImage(InShadingImage)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetShadingRateImage( ShadingImage.Get() );
+        CmdContext.SetShadingRateImage(ShadingImage.Get());
     }
 
     TSharedRef<CRHITexture2D> ShadingImage;
@@ -149,19 +149,19 @@ struct SRHISetShadingRateImageRenderCommand : public SRHIRenderCommand
 // Set Viewport RenderCommand
 struct SRHISetViewportRenderCommand : public SRHIRenderCommand
 {
-    SRHISetViewportRenderCommand( float InWidth, float InHeight, float InMinDepth, float InMaxDepth, float InX, float InY )
-        : Width( InWidth )
-        , Height( InHeight )
-        , MinDepth( InMinDepth )
-        , MaxDepth( InMaxDepth )
-        , x( InX )
-        , y( InY )
+    SRHISetViewportRenderCommand(float InWidth, float InHeight, float InMinDepth, float InMaxDepth, float InX, float InY)
+        : Width(InWidth)
+        , Height(InHeight)
+        , MinDepth(InMinDepth)
+        , MaxDepth(InMaxDepth)
+        , x(InX)
+        , y(InY)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetViewport( Width, Height, MinDepth, MaxDepth, x, y );
+        CmdContext.SetViewport(Width, Height, MinDepth, MaxDepth, x, y);
     }
 
     float Width;
@@ -175,17 +175,17 @@ struct SRHISetViewportRenderCommand : public SRHIRenderCommand
 // Set ScissorRect RenderCommand
 struct SRHISetScissorRectRenderCommand : public SRHIRenderCommand
 {
-    SRHISetScissorRectRenderCommand( float InWidth, float InHeight, float InX, float InY )
-        : Width( InWidth )
-        , Height( InHeight )
-        , x( InX )
-        , y( InY )
+    SRHISetScissorRectRenderCommand(float InWidth, float InHeight, float InX, float InY)
+        : Width(InWidth)
+        , Height(InHeight)
+        , x(InX)
+        , y(InY)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetScissorRect( Width, Height, x, y );
+        CmdContext.SetScissorRect(Width, Height, x, y);
     }
 
     float Width;
@@ -197,14 +197,14 @@ struct SRHISetScissorRectRenderCommand : public SRHIRenderCommand
 // Set BlendFactor RenderCommand
 struct SRHISetBlendFactorRenderCommand : public SRHIRenderCommand
 {
-    SRHISetBlendFactorRenderCommand( const SColorF& InColor )
-        : Color( InColor )
+    SRHISetBlendFactorRenderCommand(const SColorF& InColor)
+        : Color(InColor)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetBlendFactor( Color );
+        CmdContext.SetBlendFactor(Color);
     }
 
     SColorF Color;
@@ -218,7 +218,7 @@ struct SRHIBeginRenderPassRenderCommand : public SRHIRenderCommand
         // Empty for now
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
         CmdContext.BeginRenderPass();
     }
@@ -232,7 +232,7 @@ struct SRHIEndRenderPassRenderCommand : public SRHIRenderCommand
         // Empty for now
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
         CmdContext.EndRenderPass();
     }
@@ -241,14 +241,14 @@ struct SRHIEndRenderPassRenderCommand : public SRHIRenderCommand
 // Bind PrimitiveTopology RenderCommand
 struct SRHISetPrimitiveTopologyRenderCommand : public SRHIRenderCommand
 {
-    SRHISetPrimitiveTopologyRenderCommand( EPrimitiveTopology InPrimitiveTopologyType )
-        : PrimitiveTopologyType( InPrimitiveTopologyType )
+    SRHISetPrimitiveTopologyRenderCommand(EPrimitiveTopology InPrimitiveTopologyType)
+        : PrimitiveTopologyType(InPrimitiveTopologyType)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetPrimitiveTopology( PrimitiveTopologyType );
+        CmdContext.SetPrimitiveTopology(PrimitiveTopologyType);
     }
 
     EPrimitiveTopology PrimitiveTopologyType;
@@ -257,26 +257,26 @@ struct SRHISetPrimitiveTopologyRenderCommand : public SRHIRenderCommand
 // Set VertexBuffers RenderCommand
 struct SRHISetVertexBuffersRenderCommand : public SRHIRenderCommand
 {
-    SRHISetVertexBuffersRenderCommand( CRHIVertexBuffer** InVertexBuffers, uint32 InVertexBufferCount, uint32 InStartSlot )
-        : VertexBuffers( InVertexBuffers )
-        , VertexBufferCount( InVertexBufferCount )
-        , StartSlot( InStartSlot )
+    SRHISetVertexBuffersRenderCommand(CRHIVertexBuffer** InVertexBuffers, uint32 InVertexBufferCount, uint32 InStartSlot)
+        : VertexBuffers(InVertexBuffers)
+        , VertexBufferCount(InVertexBufferCount)
+        , StartSlot(InStartSlot)
     {
     }
 
     ~SRHISetVertexBuffersRenderCommand()
     {
-        for ( uint32 i = 0; i < VertexBufferCount; i++ )
+        for (uint32 i = 0; i < VertexBufferCount; i++)
         {
-            SafeRelease( VertexBuffers[i] );
+            SafeRelease(VertexBuffers[i]);
         }
 
         VertexBuffers = nullptr;
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetVertexBuffers( VertexBuffers, VertexBufferCount, StartSlot );
+        CmdContext.SetVertexBuffers(VertexBuffers, VertexBufferCount, StartSlot);
     }
 
     CRHIVertexBuffer** VertexBuffers;
@@ -288,14 +288,14 @@ struct SRHISetVertexBuffersRenderCommand : public SRHIRenderCommand
 // Set IndexBuffer RenderCommand
 struct SRHISetIndexBufferRenderCommand : public SRHIRenderCommand
 {
-    SRHISetIndexBufferRenderCommand( const TSharedRef<CRHIIndexBuffer>& InIndexBuffer )
-        : IndexBuffer( InIndexBuffer )
+    SRHISetIndexBufferRenderCommand(const TSharedRef<CRHIIndexBuffer>& InIndexBuffer)
+        : IndexBuffer(InIndexBuffer)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetIndexBuffer( IndexBuffer.Get() );
+        CmdContext.SetIndexBuffer(IndexBuffer.Get());
     }
 
     TSharedRef<CRHIIndexBuffer> IndexBuffer;
@@ -304,26 +304,26 @@ struct SRHISetIndexBufferRenderCommand : public SRHIRenderCommand
 // Set RenderTargets RenderCommand
 struct SRHISetRenderTargetsRenderCommand : public SRHIRenderCommand
 {
-    SRHISetRenderTargetsRenderCommand( CRHIRenderTargetView** InRenderTargetViews, uint32 InRenderTargetViewCount, const TSharedRef<CRHIDepthStencilView>& InDepthStencilView )
-        : RenderTargetViews( InRenderTargetViews )
-        , RenderTargetViewCount( InRenderTargetViewCount )
-        , DepthStencilView( InDepthStencilView )
+    SRHISetRenderTargetsRenderCommand(CRHIRenderTargetView** InRenderTargetViews, uint32 InRenderTargetViewCount, const TSharedRef<CRHIDepthStencilView>& InDepthStencilView)
+        : RenderTargetViews(InRenderTargetViews)
+        , RenderTargetViewCount(InRenderTargetViewCount)
+        , DepthStencilView(InDepthStencilView)
     {
     }
 
     ~SRHISetRenderTargetsRenderCommand()
     {
-        for ( uint32 i = 0; i < RenderTargetViewCount; i++ )
+        for (uint32 i = 0; i < RenderTargetViewCount; i++)
         {
-            SafeRelease( RenderTargetViews[i] );
+            SafeRelease(RenderTargetViews[i]);
         }
 
         RenderTargetViews = nullptr;
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetRenderTargets( RenderTargetViews, RenderTargetViewCount, DepthStencilView.Get() );
+        CmdContext.SetRenderTargets(RenderTargetViews, RenderTargetViewCount, DepthStencilView.Get());
     }
 
     CRHIRenderTargetView** RenderTargetViews;
@@ -342,20 +342,20 @@ struct SRHISetRayTracingBindingsRenderCommand : public SRHIRenderCommand
         const SRayTracingShaderResources* InRayGenLocalResources,
         const SRayTracingShaderResources* InMissLocalResources,
         const SRayTracingShaderResources* InHitGroupResources,
-        uint32 InNumHitGroupResources )
-        : Scene( InRayTracingScene )
-        , PipelineState( InPipelineState )
-        , GlobalResources( InGlobalResources )
-        , RayGenLocalResources( InRayGenLocalResources )
-        , MissLocalResources( InMissLocalResources )
-        , HitGroupResources( InHitGroupResources )
-        , NumHitGroupResources( InNumHitGroupResources )
+        uint32 InNumHitGroupResources)
+        : Scene(InRayTracingScene)
+        , PipelineState(InPipelineState)
+        , GlobalResources(InGlobalResources)
+        , RayGenLocalResources(InRayGenLocalResources)
+        , MissLocalResources(InMissLocalResources)
+        , HitGroupResources(InHitGroupResources)
+        , NumHitGroupResources(InNumHitGroupResources)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetRayTracingBindings( Scene.Get(), PipelineState.Get(), GlobalResources, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources );
+        CmdContext.SetRayTracingBindings(Scene.Get(), PipelineState.Get(), GlobalResources, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
 
     TSharedRef<CRHIRayTracingScene>         Scene;
@@ -372,14 +372,14 @@ struct SRHISetRayTracingBindingsRenderCommand : public SRHIRenderCommand
 // Set GraphicsPipelineState RenderCommand
 struct SRHISetGraphicsPipelineStateRenderCommand : public SRHIRenderCommand
 {
-    SRHISetGraphicsPipelineStateRenderCommand( CRHIGraphicsPipelineState* InPipelineState )
-        : PipelineState( InPipelineState )
+    SRHISetGraphicsPipelineStateRenderCommand(CRHIGraphicsPipelineState* InPipelineState)
+        : PipelineState(InPipelineState)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetGraphicsPipelineState( PipelineState.Get() );
+        CmdContext.SetGraphicsPipelineState(PipelineState.Get());
     }
 
     TSharedRef<CRHIGraphicsPipelineState> PipelineState;
@@ -388,14 +388,14 @@ struct SRHISetGraphicsPipelineStateRenderCommand : public SRHIRenderCommand
 // Bind ComputePipelineState RenderCommand
 struct SRHISetComputePipelineStateRenderCommand : public SRHIRenderCommand
 {
-    SRHISetComputePipelineStateRenderCommand( CRHIComputePipelineState* InPipelineState )
-        : PipelineState( InPipelineState )
+    SRHISetComputePipelineStateRenderCommand(CRHIComputePipelineState* InPipelineState)
+        : PipelineState(InPipelineState)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetComputePipelineState( PipelineState.Get() );
+        CmdContext.SetComputePipelineState(PipelineState.Get());
     }
 
     TSharedRef<CRHIComputePipelineState> PipelineState;
@@ -404,16 +404,16 @@ struct SRHISetComputePipelineStateRenderCommand : public SRHIRenderCommand
 // Set UseShaderResourceViews RenderCommand
 struct SRHISet32BitShaderConstantsRenderCommand : public SRHIRenderCommand
 {
-    SRHISet32BitShaderConstantsRenderCommand( CRHIShader* InShader, const void* InShader32BitConstants, uint32 InNum32BitConstants )
-        : Shader( InShader )
-        , Shader32BitConstants( InShader32BitConstants )
-        , Num32BitConstants( InNum32BitConstants )
+    SRHISet32BitShaderConstantsRenderCommand(CRHIShader* InShader, const void* InShader32BitConstants, uint32 InNum32BitConstants)
+        : Shader(InShader)
+        , Shader32BitConstants(InShader32BitConstants)
+        , Num32BitConstants(InNum32BitConstants)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.Set32BitShaderConstants( Shader.Get(), Shader32BitConstants, Num32BitConstants );
+        CmdContext.Set32BitShaderConstants(Shader.Get(), Shader32BitConstants, Num32BitConstants);
     }
 
     TSharedRef<CRHIShader> Shader;
@@ -425,16 +425,16 @@ struct SRHISet32BitShaderConstantsRenderCommand : public SRHIRenderCommand
 // Set ShaderResourceViewRenderCommand
 struct SRHISetShaderResourceViewRenderCommand : public SRHIRenderCommand
 {
-    SRHISetShaderResourceViewRenderCommand( CRHIShader* InShader, CRHIShaderResourceView* InShaderResourceView, uint32 InParameterIndex )
-        : Shader( InShader )
-        , ShaderResourceView( InShaderResourceView )
-        , ParameterIndex( InParameterIndex )
+    SRHISetShaderResourceViewRenderCommand(CRHIShader* InShader, CRHIShaderResourceView* InShaderResourceView, uint32 InParameterIndex)
+        : Shader(InShader)
+        , ShaderResourceView(InShaderResourceView)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetShaderResourceView( Shader.Get(), ShaderResourceView.Get(), ParameterIndex );
+        CmdContext.SetShaderResourceView(Shader.Get(), ShaderResourceView.Get(), ParameterIndex);
     }
 
     TSharedRef<CRHIShader>             Shader;
@@ -446,27 +446,27 @@ struct SRHISetShaderResourceViewRenderCommand : public SRHIRenderCommand
 // Set ShaderResourceViewsRenderCommand
 struct SRHISetShaderResourceViewsRenderCommand : public SRHIRenderCommand
 {
-    SRHISetShaderResourceViewsRenderCommand( CRHIShader* InShader, CRHIShaderResourceView** InShaderResourceViews, uint32 InNumShaderResourceViews, uint32 InParameterIndex )
-        : Shader( InShader )
-        , ShaderResourceViews( InShaderResourceViews )
-        , NumShaderResourceViews( InNumShaderResourceViews )
-        , ParameterIndex( InParameterIndex )
+    SRHISetShaderResourceViewsRenderCommand(CRHIShader* InShader, CRHIShaderResourceView** InShaderResourceViews, uint32 InNumShaderResourceViews, uint32 InParameterIndex)
+        : Shader(InShader)
+        , ShaderResourceViews(InShaderResourceViews)
+        , NumShaderResourceViews(InNumShaderResourceViews)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
     ~SRHISetShaderResourceViewsRenderCommand()
     {
-        for ( uint32 i = 0; i < NumShaderResourceViews; i++ )
+        for (uint32 i = 0; i < NumShaderResourceViews; i++)
         {
-            SafeRelease( ShaderResourceViews[i] );
+            SafeRelease(ShaderResourceViews[i]);
         }
 
         ShaderResourceViews = nullptr;
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetShaderResourceViews( Shader.Get(), ShaderResourceViews, NumShaderResourceViews, ParameterIndex );
+        CmdContext.SetShaderResourceViews(Shader.Get(), ShaderResourceViews, NumShaderResourceViews, ParameterIndex);
     }
 
     TSharedRef<CRHIShader>   Shader;
@@ -479,16 +479,16 @@ struct SRHISetShaderResourceViewsRenderCommand : public SRHIRenderCommand
 // Set UnorderedAccessViewRenderCommand
 struct SRHISetUnorderedAccessViewRenderCommand : public SRHIRenderCommand
 {
-    SRHISetUnorderedAccessViewRenderCommand( CRHIShader* InShader, CRHIUnorderedAccessView* InUnorderedAccessView, uint32 InParameterIndex )
-        : Shader( InShader )
-        , UnorderedAccessView( InUnorderedAccessView )
-        , ParameterIndex( InParameterIndex )
+    SRHISetUnorderedAccessViewRenderCommand(CRHIShader* InShader, CRHIUnorderedAccessView* InUnorderedAccessView, uint32 InParameterIndex)
+        : Shader(InShader)
+        , UnorderedAccessView(InUnorderedAccessView)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetUnorderedAccessView( Shader.Get(), UnorderedAccessView.Get(), ParameterIndex );
+        CmdContext.SetUnorderedAccessView(Shader.Get(), UnorderedAccessView.Get(), ParameterIndex);
     }
 
     TSharedRef<CRHIShader>              Shader;
@@ -500,27 +500,27 @@ struct SRHISetUnorderedAccessViewRenderCommand : public SRHIRenderCommand
 // Set UnorderedAccessViewsRenderCommand
 struct SRHISetUnorderedAccessViewsRenderCommand : public SRHIRenderCommand
 {
-    SRHISetUnorderedAccessViewsRenderCommand( CRHIShader* InShader, CRHIUnorderedAccessView** InUnorderedAccessViews, uint32 InNumUnorderedAccessViews, uint32 InParameterIndex )
-        : Shader( InShader )
-        , UnorderedAccessViews( InUnorderedAccessViews )
-        , NumUnorderedAccessViews( InNumUnorderedAccessViews )
-        , ParameterIndex( InParameterIndex )
+    SRHISetUnorderedAccessViewsRenderCommand(CRHIShader* InShader, CRHIUnorderedAccessView** InUnorderedAccessViews, uint32 InNumUnorderedAccessViews, uint32 InParameterIndex)
+        : Shader(InShader)
+        , UnorderedAccessViews(InUnorderedAccessViews)
+        , NumUnorderedAccessViews(InNumUnorderedAccessViews)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
     ~SRHISetUnorderedAccessViewsRenderCommand()
     {
-        for ( uint32 i = 0; i < NumUnorderedAccessViews; i++ )
+        for (uint32 i = 0; i < NumUnorderedAccessViews; i++)
         {
-            SafeRelease( UnorderedAccessViews[i] );
+            SafeRelease(UnorderedAccessViews[i]);
         }
 
         UnorderedAccessViews = nullptr;
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetUnorderedAccessViews( Shader.Get(), UnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex );
+        CmdContext.SetUnorderedAccessViews(Shader.Get(), UnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
     }
 
     TSharedRef<CRHIShader>    Shader;
@@ -533,16 +533,16 @@ struct SRHISetUnorderedAccessViewsRenderCommand : public SRHIRenderCommand
 // Set ConstantBufferRenderCommand
 struct SRHISetConstantBufferRenderCommand : public SRHIRenderCommand
 {
-    SRHISetConstantBufferRenderCommand( CRHIShader* InShader, CRHIConstantBuffer* InConstantBuffer, uint32 InParameterIndex )
-        : Shader( InShader )
-        , ConstantBuffer( InConstantBuffer )
-        , ParameterIndex( InParameterIndex )
+    SRHISetConstantBufferRenderCommand(CRHIShader* InShader, CRHIConstantBuffer* InConstantBuffer, uint32 InParameterIndex)
+        : Shader(InShader)
+        , ConstantBuffer(InConstantBuffer)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetConstantBuffer( Shader.Get(), ConstantBuffer.Get(), ParameterIndex );
+        CmdContext.SetConstantBuffer(Shader.Get(), ConstantBuffer.Get(), ParameterIndex);
     }
 
     TSharedRef<CRHIShader>         Shader;
@@ -554,27 +554,27 @@ struct SRHISetConstantBufferRenderCommand : public SRHIRenderCommand
 // Set ConstantBuffersRenderCommand
 struct SRHISetConstantBuffersRenderCommand : public SRHIRenderCommand
 {
-    SRHISetConstantBuffersRenderCommand( CRHIShader* InShader, CRHIConstantBuffer** InConstantBuffers, uint32 InNumConstantBuffers, uint32 InParameterIndex )
-        : Shader( InShader )
-        , ConstantBuffers( InConstantBuffers )
-        , NumConstantBuffers( InNumConstantBuffers )
-        , ParameterIndex( InParameterIndex )
+    SRHISetConstantBuffersRenderCommand(CRHIShader* InShader, CRHIConstantBuffer** InConstantBuffers, uint32 InNumConstantBuffers, uint32 InParameterIndex)
+        : Shader(InShader)
+        , ConstantBuffers(InConstantBuffers)
+        , NumConstantBuffers(InNumConstantBuffers)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
     ~SRHISetConstantBuffersRenderCommand()
     {
-        for ( uint32 i = 0; i < NumConstantBuffers; i++ )
+        for (uint32 i = 0; i < NumConstantBuffers; i++)
         {
-            SafeRelease( ConstantBuffers[i] );
+            SafeRelease(ConstantBuffers[i]);
         }
 
         ConstantBuffers = nullptr;
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetConstantBuffers( Shader.Get(), ConstantBuffers, NumConstantBuffers, ParameterIndex );
+        CmdContext.SetConstantBuffers(Shader.Get(), ConstantBuffers, NumConstantBuffers, ParameterIndex);
     }
 
     TSharedRef<CRHIShader> Shader;
@@ -587,16 +587,16 @@ struct SRHISetConstantBuffersRenderCommand : public SRHIRenderCommand
 // Set SamplerStateRenderCommand
 struct SRHISetSamplerStateRenderCommand : public SRHIRenderCommand
 {
-    SRHISetSamplerStateRenderCommand( CRHIShader* InShader, CRHISamplerState* InSamplerState, uint32 InParameterIndex )
-        : Shader( InShader )
-        , SamplerState( InSamplerState )
-        , ParameterIndex( InParameterIndex )
+    SRHISetSamplerStateRenderCommand(CRHIShader* InShader, CRHISamplerState* InSamplerState, uint32 InParameterIndex)
+        : Shader(InShader)
+        , SamplerState(InSamplerState)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetSamplerState( Shader.Get(), SamplerState.Get(), ParameterIndex );
+        CmdContext.SetSamplerState(Shader.Get(), SamplerState.Get(), ParameterIndex);
     }
 
     TSharedRef<CRHIShader>       Shader;
@@ -608,27 +608,27 @@ struct SRHISetSamplerStateRenderCommand : public SRHIRenderCommand
 // Set SamplerStatesRenderCommand
 struct SRHISetSamplerStatesRenderCommand : public SRHIRenderCommand
 {
-    SRHISetSamplerStatesRenderCommand( CRHIShader* InShader, CRHISamplerState** InSamplerStates, uint32 InNumSamplerStates, uint32 InParameterIndex )
-        : Shader( InShader )
-        , SamplerStates( InSamplerStates )
-        , NumSamplerStates( InNumSamplerStates )
-        , ParameterIndex( InParameterIndex )
+    SRHISetSamplerStatesRenderCommand(CRHIShader* InShader, CRHISamplerState** InSamplerStates, uint32 InNumSamplerStates, uint32 InParameterIndex)
+        : Shader(InShader)
+        , SamplerStates(InSamplerStates)
+        , NumSamplerStates(InNumSamplerStates)
+        , ParameterIndex(InParameterIndex)
     {
     }
 
     ~SRHISetSamplerStatesRenderCommand()
     {
-        for ( uint32 i = 0; i < NumSamplerStates; i++ )
+        for (uint32 i = 0; i < NumSamplerStates; i++)
         {
-            SafeRelease( SamplerStates[i] );
+            SafeRelease(SamplerStates[i]);
         }
 
         SamplerStates = nullptr;
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.SetSamplerStates( Shader.Get(), SamplerStates, NumSamplerStates, ParameterIndex );
+        CmdContext.SetSamplerStates(Shader.Get(), SamplerStates, NumSamplerStates, ParameterIndex);
     }
 
     TSharedRef<CRHIShader> Shader;
@@ -641,15 +641,15 @@ struct SRHISetSamplerStatesRenderCommand : public SRHIRenderCommand
 // Resolve Texture RenderCommand
 struct SRHIResolveTextureRenderCommand : public SRHIRenderCommand
 {
-    SRHIResolveTextureRenderCommand( CRHITexture* InDestination, CRHITexture* InSource )
-        : Destination( InDestination )
-        , Source( InSource )
+    SRHIResolveTextureRenderCommand(CRHITexture* InDestination, CRHITexture* InSource)
+        : Destination(InDestination)
+        , Source(InSource)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.ResolveTexture( Destination.Get(), Source.Get() );
+        CmdContext.ResolveTexture(Destination.Get(), Source.Get());
     }
 
     TSharedRef<CRHITexture> Destination;
@@ -659,19 +659,19 @@ struct SRHIResolveTextureRenderCommand : public SRHIRenderCommand
 // Update Buffer RenderCommand
 struct SRHIUpdateBufferRenderCommand : public SRHIRenderCommand
 {
-    SRHIUpdateBufferRenderCommand( CRHIBuffer* InDestination, uint64 InDestinationOffsetInBytes, uint64 InSizeInBytes, const void* InSourceData )
-        : Destination( InDestination )
-        , DestinationOffsetInBytes( InDestinationOffsetInBytes )
-        , SizeInBytes( InSizeInBytes )
-        , SourceData( InSourceData )
+    SRHIUpdateBufferRenderCommand(CRHIBuffer* InDestination, uint64 InDestinationOffsetInBytes, uint64 InSizeInBytes, const void* InSourceData)
+        : Destination(InDestination)
+        , DestinationOffsetInBytes(InDestinationOffsetInBytes)
+        , SizeInBytes(InSizeInBytes)
+        , SourceData(InSourceData)
     {
-        Assert( InSourceData != nullptr );
-        Assert( InSizeInBytes != 0 );
+        Assert(InSourceData != nullptr);
+        Assert(InSizeInBytes != 0);
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.UpdateBuffer( Destination.Get(), DestinationOffsetInBytes, SizeInBytes, SourceData );
+        CmdContext.UpdateBuffer(Destination.Get(), DestinationOffsetInBytes, SizeInBytes, SourceData);
     }
 
     TSharedRef<CRHIBuffer> Destination;
@@ -683,19 +683,19 @@ struct SRHIUpdateBufferRenderCommand : public SRHIRenderCommand
 // Update Texture2D RenderCommand
 struct SRHIUpdateTexture2DRenderCommand : public SRHIRenderCommand
 {
-    SRHIUpdateTexture2DRenderCommand( CRHITexture2D* InDestination, uint32 InWidth, uint32 InHeight, uint32 InMipLevel, const void* InSourceData )
-        : Destination( InDestination )
-        , Width( InWidth )
-        , Height( InHeight )
-        , MipLevel( InMipLevel )
-        , SourceData( InSourceData )
+    SRHIUpdateTexture2DRenderCommand(CRHITexture2D* InDestination, uint32 InWidth, uint32 InHeight, uint32 InMipLevel, const void* InSourceData)
+        : Destination(InDestination)
+        , Width(InWidth)
+        , Height(InHeight)
+        , MipLevel(InMipLevel)
+        , SourceData(InSourceData)
     {
-        Assert( InSourceData != nullptr );
+        Assert(InSourceData != nullptr);
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.UpdateTexture2D( Destination.Get(), Width, Height, MipLevel, SourceData );
+        CmdContext.UpdateTexture2D(Destination.Get(), Width, Height, MipLevel, SourceData);
     }
 
     TSharedRef<CRHITexture2D> Destination;
@@ -708,16 +708,16 @@ struct SRHIUpdateTexture2DRenderCommand : public SRHIRenderCommand
 // Copy Buffer RenderCommand
 struct SRHICopyBufferRenderCommand : public SRHIRenderCommand
 {
-    SRHICopyBufferRenderCommand( CRHIBuffer* InDestination, CRHIBuffer* InSource, const SCopyBufferInfo& InCopyBufferInfo )
-        : Destination( InDestination )
-        , Source( InSource )
-        , CopyBufferInfo( InCopyBufferInfo )
+    SRHICopyBufferRenderCommand(CRHIBuffer* InDestination, CRHIBuffer* InSource, const SCopyBufferInfo& InCopyBufferInfo)
+        : Destination(InDestination)
+        , Source(InSource)
+        , CopyBufferInfo(InCopyBufferInfo)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.CopyBuffer( Destination.Get(), Source.Get(), CopyBufferInfo );
+        CmdContext.CopyBuffer(Destination.Get(), Source.Get(), CopyBufferInfo);
     }
 
     TSharedRef<CRHIBuffer> Destination;
@@ -728,15 +728,15 @@ struct SRHICopyBufferRenderCommand : public SRHIRenderCommand
 // Copy Texture RenderCommand
 struct SRHICopyTextureRenderCommand : public SRHIRenderCommand
 {
-    SRHICopyTextureRenderCommand( CRHITexture* InDestination, CRHITexture* InSource )
-        : Destination( InDestination )
-        , Source( InSource )
+    SRHICopyTextureRenderCommand(CRHITexture* InDestination, CRHITexture* InSource)
+        : Destination(InDestination)
+        , Source(InSource)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.CopyTexture( Destination.Get(), Source.Get() );
+        CmdContext.CopyTexture(Destination.Get(), Source.Get());
     }
 
     TSharedRef<CRHITexture> Destination;
@@ -746,16 +746,16 @@ struct SRHICopyTextureRenderCommand : public SRHIRenderCommand
 // Copy Texture RenderCommand
 struct SRHICopyTextureRegionRenderCommand : public SRHIRenderCommand
 {
-    SRHICopyTextureRegionRenderCommand( CRHITexture* InDestination, CRHITexture* InSource, const SCopyTextureInfo& InCopyTextureInfo )
-        : Destination( InDestination )
-        , Source( InSource )
-        , CopyTextureInfo( InCopyTextureInfo )
+    SRHICopyTextureRegionRenderCommand(CRHITexture* InDestination, CRHITexture* InSource, const SCopyTextureInfo& InCopyTextureInfo)
+        : Destination(InDestination)
+        , Source(InSource)
+        , CopyTextureInfo(InCopyTextureInfo)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.CopyTextureRegion( Destination.Get(), Source.Get(), CopyTextureInfo );
+        CmdContext.CopyTextureRegion(Destination.Get(), Source.Get(), CopyTextureInfo);
     }
 
     TSharedRef<CRHITexture> Destination;
@@ -766,14 +766,14 @@ struct SRHICopyTextureRegionRenderCommand : public SRHIRenderCommand
 // Destroy Resource RenderCommand
 struct SRHIDestroyResourceRenderCommand : public SRHIRenderCommand
 {
-    SRHIDestroyResourceRenderCommand( CRHIResource* InResource )
-        : Resource( InResource )
+    SRHIDestroyResourceRenderCommand(CRHIResource* InResource)
+        : Resource(InResource)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.DestroyResource( Resource.Get() );
+        CmdContext.DestroyResource(Resource.Get());
     }
 
     TSharedRef<CRHIResource> Resource;
@@ -782,14 +782,14 @@ struct SRHIDestroyResourceRenderCommand : public SRHIRenderCommand
 // Discard Resource RenderCommand
 struct SRHIDiscardResourceRenderCommand : public SRHIRenderCommand
 {
-    SRHIDiscardResourceRenderCommand( CRHIMemoryResource* InResource )
-        : Resource( InResource )
+    SRHIDiscardResourceRenderCommand(CRHIMemoryResource* InResource)
+        : Resource(InResource)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.DiscardResource( Resource.Get() );
+        CmdContext.DiscardResource(Resource.Get());
     }
 
     TSharedRef<CRHIMemoryResource> Resource;
@@ -798,17 +798,17 @@ struct SRHIDiscardResourceRenderCommand : public SRHIRenderCommand
 // Build RayTracing Geometry RenderCommand
 struct SRHIBuildRayTracingGeometryRenderCommand : public SRHIRenderCommand
 {
-    SRHIBuildRayTracingGeometryRenderCommand( CRHIRayTracingGeometry* InRayTracingGeometry, CRHIVertexBuffer* InVertexBuffer, CRHIIndexBuffer* InIndexBuffer, bool bInUpdate )
-        : RayTracingGeometry( InRayTracingGeometry )
-        , VertexBuffer( InVertexBuffer )
-        , IndexBuffer( InIndexBuffer )
-        , bUpdate( bInUpdate )
+    SRHIBuildRayTracingGeometryRenderCommand(CRHIRayTracingGeometry* InRayTracingGeometry, CRHIVertexBuffer* InVertexBuffer, CRHIIndexBuffer* InIndexBuffer, bool bInUpdate)
+        : RayTracingGeometry(InRayTracingGeometry)
+        , VertexBuffer(InVertexBuffer)
+        , IndexBuffer(InIndexBuffer)
+        , bUpdate(bInUpdate)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.BuildRayTracingGeometry( RayTracingGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), bUpdate );
+        CmdContext.BuildRayTracingGeometry(RayTracingGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), bUpdate);
     }
 
     TSharedRef<CRHIRayTracingGeometry> RayTracingGeometry;
@@ -821,17 +821,17 @@ struct SRHIBuildRayTracingGeometryRenderCommand : public SRHIRenderCommand
 // Build RayTracing Scene RenderCommand
 struct SRHIBuildRayTracingSceneRenderCommand : public SRHIRenderCommand
 {
-    SRHIBuildRayTracingSceneRenderCommand( CRHIRayTracingScene* InRayTracingScene, const SRayTracingGeometryInstance* InInstances, uint32 InNumInstances, bool bInUpdate )
-        : RayTracingScene( InRayTracingScene )
-        , Instances( InInstances )
-        , NumInstances( InNumInstances )
-        , bUpdate( bInUpdate )
+    SRHIBuildRayTracingSceneRenderCommand(CRHIRayTracingScene* InRayTracingScene, const SRayTracingGeometryInstance* InInstances, uint32 InNumInstances, bool bInUpdate)
+        : RayTracingScene(InRayTracingScene)
+        , Instances(InInstances)
+        , NumInstances(InNumInstances)
+        , bUpdate(bInUpdate)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.BuildRayTracingScene( RayTracingScene.Get(), Instances, NumInstances, bUpdate );
+        CmdContext.BuildRayTracingScene(RayTracingScene.Get(), Instances, NumInstances, bUpdate);
     }
 
     TSharedRef<CRHIRayTracingScene> RayTracingScene;
@@ -843,14 +843,14 @@ struct SRHIBuildRayTracingSceneRenderCommand : public SRHIRenderCommand
 // GenerateMips RenderCommand
 struct SRHIGenerateMipsRenderCommand : public SRHIRenderCommand
 {
-    SRHIGenerateMipsRenderCommand( CRHITexture* InTexture )
-        : Texture( InTexture )
+    SRHIGenerateMipsRenderCommand(CRHITexture* InTexture)
+        : Texture(InTexture)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.GenerateMips( Texture.Get() );
+        CmdContext.GenerateMips(Texture.Get());
     }
 
     TSharedRef<CRHITexture> Texture;
@@ -859,16 +859,16 @@ struct SRHIGenerateMipsRenderCommand : public SRHIRenderCommand
 // TransitionTexture RenderCommand
 struct SRHITransitionTextureRenderCommand : public SRHIRenderCommand
 {
-    SRHITransitionTextureRenderCommand( CRHITexture* InTexture, EResourceState InBeforeState, EResourceState InAfterState )
-        : Texture( InTexture )
-        , BeforeState( InBeforeState )
-        , AfterState( InAfterState )
+    SRHITransitionTextureRenderCommand(CRHITexture* InTexture, EResourceState InBeforeState, EResourceState InAfterState)
+        : Texture(InTexture)
+        , BeforeState(InBeforeState)
+        , AfterState(InAfterState)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.TransitionTexture( Texture.Get(), BeforeState, AfterState );
+        CmdContext.TransitionTexture(Texture.Get(), BeforeState, AfterState);
     }
 
     TSharedRef<CRHITexture> Texture;
@@ -879,16 +879,16 @@ struct SRHITransitionTextureRenderCommand : public SRHIRenderCommand
 // TransitionBuffer RenderCommand
 struct SRHITransitionBufferRenderCommand : public SRHIRenderCommand
 {
-    SRHITransitionBufferRenderCommand( CRHIBuffer* InBuffer, EResourceState InBeforeState, EResourceState InAfterState )
-        : Buffer( InBuffer )
-        , BeforeState( InBeforeState )
-        , AfterState( InAfterState )
+    SRHITransitionBufferRenderCommand(CRHIBuffer* InBuffer, EResourceState InBeforeState, EResourceState InAfterState)
+        : Buffer(InBuffer)
+        , BeforeState(InBeforeState)
+        , AfterState(InAfterState)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.TransitionBuffer( Buffer.Get(), BeforeState, AfterState );
+        CmdContext.TransitionBuffer(Buffer.Get(), BeforeState, AfterState);
     }
 
     TSharedRef<CRHIBuffer> Buffer;
@@ -899,14 +899,14 @@ struct SRHITransitionBufferRenderCommand : public SRHIRenderCommand
 // UnorderedAccessTextureBarrier RenderCommand
 struct SRHIUnorderedAccessTextureBarrierRenderCommand : public SRHIRenderCommand
 {
-    SRHIUnorderedAccessTextureBarrierRenderCommand( CRHITexture* InTexture )
-        : Texture( InTexture )
+    SRHIUnorderedAccessTextureBarrierRenderCommand(CRHITexture* InTexture)
+        : Texture(InTexture)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.UnorderedAccessTextureBarrier( Texture.Get() );
+        CmdContext.UnorderedAccessTextureBarrier(Texture.Get());
     }
 
     TSharedRef<CRHITexture> Texture;
@@ -915,14 +915,14 @@ struct SRHIUnorderedAccessTextureBarrierRenderCommand : public SRHIRenderCommand
 // UnorderedAccessBufferBarrier RenderCommand
 struct SRHIUnorderedAccessBufferBarrierRenderCommand : public SRHIRenderCommand
 {
-    SRHIUnorderedAccessBufferBarrierRenderCommand( CRHIBuffer* InBuffer )
-        : Buffer( InBuffer )
+    SRHIUnorderedAccessBufferBarrierRenderCommand(CRHIBuffer* InBuffer)
+        : Buffer(InBuffer)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.UnorderedAccessBufferBarrier( Buffer.Get() );
+        CmdContext.UnorderedAccessBufferBarrier(Buffer.Get());
     }
 
     TSharedRef<CRHIBuffer> Buffer;
@@ -931,15 +931,15 @@ struct SRHIUnorderedAccessBufferBarrierRenderCommand : public SRHIRenderCommand
 // Draw RenderCommand
 struct SRHIDrawRenderCommand : public SRHIRenderCommand
 {
-    SRHIDrawRenderCommand( uint32 InVertexCount, uint32 InStartVertexLocation )
-        : VertexCount( InVertexCount )
-        , StartVertexLocation( InStartVertexLocation )
+    SRHIDrawRenderCommand(uint32 InVertexCount, uint32 InStartVertexLocation)
+        : VertexCount(InVertexCount)
+        , StartVertexLocation(InStartVertexLocation)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.Draw( VertexCount, StartVertexLocation );
+        CmdContext.Draw(VertexCount, StartVertexLocation);
     }
 
     uint32 VertexCount;
@@ -949,16 +949,16 @@ struct SRHIDrawRenderCommand : public SRHIRenderCommand
 // DrawIndexed RenderCommand
 struct SRHIDrawIndexedRenderCommand : public SRHIRenderCommand
 {
-    SRHIDrawIndexedRenderCommand( uint32 InIndexCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation )
-        : IndexCount( InIndexCount )
-        , StartIndexLocation( InStartIndexLocation )
-        , BaseVertexLocation( InBaseVertexLocation )
+    SRHIDrawIndexedRenderCommand(uint32 InIndexCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation)
+        : IndexCount(InIndexCount)
+        , StartIndexLocation(InStartIndexLocation)
+        , BaseVertexLocation(InBaseVertexLocation)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.DrawIndexed( IndexCount, StartIndexLocation, BaseVertexLocation );
+        CmdContext.DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
     }
 
     uint32 IndexCount;
@@ -969,17 +969,17 @@ struct SRHIDrawIndexedRenderCommand : public SRHIRenderCommand
 // DrawInstanced RenderCommand
 struct SRHIDrawInstancedRenderCommand : public SRHIRenderCommand
 {
-    SRHIDrawInstancedRenderCommand( uint32 InVertexCountPerInstance, uint32 InInstanceCount, uint32 InStartVertexLocation, uint32 InStartInstanceLocation )
-        : VertexCountPerInstance( InVertexCountPerInstance )
-        , InstanceCount( InInstanceCount )
-        , StartVertexLocation( InStartVertexLocation )
-        , StartInstanceLocation( InStartInstanceLocation )
+    SRHIDrawInstancedRenderCommand(uint32 InVertexCountPerInstance, uint32 InInstanceCount, uint32 InStartVertexLocation, uint32 InStartInstanceLocation)
+        : VertexCountPerInstance(InVertexCountPerInstance)
+        , InstanceCount(InInstanceCount)
+        , StartVertexLocation(InStartVertexLocation)
+        , StartInstanceLocation(InStartInstanceLocation)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.DrawInstanced( VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation );
+        CmdContext.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
     }
 
     uint32 VertexCountPerInstance;
@@ -991,18 +991,18 @@ struct SRHIDrawInstancedRenderCommand : public SRHIRenderCommand
 // DrawIndexedInstanced RenderCommand
 struct SRHIDrawIndexedInstancedRenderCommand : public SRHIRenderCommand
 {
-    SRHIDrawIndexedInstancedRenderCommand( uint32 InIndexCountPerInstance, uint32 InInstanceCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation, uint32 InStartInstanceLocation )
-        : IndexCountPerInstance( InIndexCountPerInstance )
-        , InstanceCount( InInstanceCount )
-        , StartIndexLocation( InStartIndexLocation )
-        , BaseVertexLocation( InBaseVertexLocation )
-        , StartInstanceLocation( InStartInstanceLocation )
+    SRHIDrawIndexedInstancedRenderCommand(uint32 InIndexCountPerInstance, uint32 InInstanceCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation, uint32 InStartInstanceLocation)
+        : IndexCountPerInstance(InIndexCountPerInstance)
+        , InstanceCount(InInstanceCount)
+        , StartIndexLocation(InStartIndexLocation)
+        , BaseVertexLocation(InBaseVertexLocation)
+        , StartInstanceLocation(InStartInstanceLocation)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.DrawIndexedInstanced( IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation );
+        CmdContext.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
     }
 
     uint32 IndexCountPerInstance;
@@ -1015,16 +1015,16 @@ struct SRHIDrawIndexedInstancedRenderCommand : public SRHIRenderCommand
 // Dispatch Compute RenderCommand
 struct SRHIDispatchComputeRenderCommand : public SRHIRenderCommand
 {
-    SRHIDispatchComputeRenderCommand( uint32 InThreadGroupCountX, uint32 InThreadGroupCountY, uint32 InThreadGroupCountZ )
-        : ThreadGroupCountX( InThreadGroupCountX )
-        , ThreadGroupCountY( InThreadGroupCountY )
-        , ThreadGroupCountZ( InThreadGroupCountZ )
+    SRHIDispatchComputeRenderCommand(uint32 InThreadGroupCountX, uint32 InThreadGroupCountY, uint32 InThreadGroupCountZ)
+        : ThreadGroupCountX(InThreadGroupCountX)
+        , ThreadGroupCountY(InThreadGroupCountY)
+        , ThreadGroupCountZ(InThreadGroupCountZ)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.Dispatch( ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ );
+        CmdContext.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
     }
 
     uint32 ThreadGroupCountX;
@@ -1035,18 +1035,18 @@ struct SRHIDispatchComputeRenderCommand : public SRHIRenderCommand
 // Dispatch Rays RenderCommand
 struct SRHIDispatchRaysRenderCommand : public SRHIRenderCommand
 {
-    SRHIDispatchRaysRenderCommand( CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth )
-        : Scene( InScene )
-        , PipelineState( InPipelineState )
-        , Width( InWidth )
-        , Height( InHeight )
-        , Depth( InDepth )
+    SRHIDispatchRaysRenderCommand(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
+        : Scene(InScene)
+        , PipelineState(InPipelineState)
+        , Width(InWidth)
+        , Height(InHeight)
+        , Depth(InDepth)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.DispatchRays( Scene.Get(), PipelineState.Get(), Width, Height, Depth );
+        CmdContext.DispatchRays(Scene.Get(), PipelineState.Get(), Width, Height, Depth);
     }
 
     TSharedRef<CRHIRayTracingScene>         Scene;
@@ -1059,17 +1059,17 @@ struct SRHIDispatchRaysRenderCommand : public SRHIRenderCommand
 // InsertCommandListMarker RenderCommand
 struct SRHIInsertCommandListMarkerRenderCommand : public SRHIRenderCommand
 {
-    SRHIInsertCommandListMarkerRenderCommand( const CString& InMarker )
-        : Marker( InMarker )
+    SRHIInsertCommandListMarkerRenderCommand(const CString& InMarker)
+        : Marker(InMarker)
     {
     }
 
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CDebug::OutputDebugString( Marker + '\n' );
-        LOG_INFO( Marker );
+        CDebug::OutputDebugString(Marker + '\n');
+        LOG_INFO(Marker);
 
-        CmdContext.InsertMarker( Marker );
+        CmdContext.InsertMarker(Marker);
     }
 
     CString Marker;
@@ -1078,9 +1078,9 @@ struct SRHIInsertCommandListMarkerRenderCommand : public SRHIRenderCommand
 // DebugBreak RenderCommand
 struct SRHIDebugBreakRenderCommand : public SRHIRenderCommand
 {
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        UNREFERENCED_VARIABLE( CmdContext );
+        UNREFERENCED_VARIABLE(CmdContext);
         CDebug::DebugBreak();
     }
 };
@@ -1088,7 +1088,7 @@ struct SRHIDebugBreakRenderCommand : public SRHIRenderCommand
 // BeginExternalCapture RenderCommand
 struct SRHIBeginExternalCaptureRenderCommand : public SRHIRenderCommand
 {
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
         CmdContext.BeginExternalCapture();
     }
@@ -1097,7 +1097,7 @@ struct SRHIBeginExternalCaptureRenderCommand : public SRHIRenderCommand
 // EndExternalCapture RenderCommand
 struct SRHIEndExternalCaptureRenderCommand : public SRHIRenderCommand
 {
-    virtual void Execute( IRHICommandContext& CmdContext ) override
+    virtual void Execute(IRHICommandContext& CmdContext) override
     {
         CmdContext.EndExternalCapture();
     }

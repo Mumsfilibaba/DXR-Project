@@ -3,38 +3,38 @@
 
 #include "Core/Utilities/StringUtilities.h"
 
-CWindowsThread::CWindowsThread( ThreadFunction InFunction )
+CWindowsThread::CWindowsThread(ThreadFunction InFunction)
     : CPlatformThread()
-    , Thread( 0 )
-    , hThreadID( 0 )
+    , Thread(0)
+    , hThreadID(0)
     , Name()
-    , Function( InFunction )
+    , Function(InFunction)
 {
 }
 
-CWindowsThread::CWindowsThread( ThreadFunction InFunction, const CString& InName )
+CWindowsThread::CWindowsThread(ThreadFunction InFunction, const CString& InName)
     : CPlatformThread()
-    , Thread( 0 )
-    , hThreadID( 0 )
-    , Name( InName )
-    , Function( InFunction )
+    , Thread(0)
+    , hThreadID(0)
+    , Name(InName)
+    , Function(InFunction)
 {
 }
 
 CWindowsThread::~CWindowsThread()
 {
-    if ( Thread )
+    if (Thread)
     {
-        CloseHandle( Thread );
+        CloseHandle(Thread);
     }
 }
 
 bool CWindowsThread::Start()
 {
-    Thread = CreateThread( NULL, 0, CWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), 0, &hThreadID );
-    if ( !Thread )
+    Thread = CreateThread(NULL, 0, CWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), 0, &hThreadID);
+    if (!Thread)
     {
-        LOG_ERROR( "[CWindowsThread] Failed to create thread" );
+        LOG_ERROR("[CWindowsThread] Failed to create thread");
         return false;
     }
     else
@@ -45,13 +45,13 @@ bool CWindowsThread::Start()
 
 void CWindowsThread::WaitUntilFinished()
 {
-    WaitForSingleObject( Thread, INFINITE );
+    WaitForSingleObject(Thread, INFINITE);
 }
 
-void CWindowsThread::SetName( const CString& InName )
+void CWindowsThread::SetName(const CString& InName)
 {
-    WString WideName = CharToWide( InName );
-    SetThreadDescription( Thread, WideName.CStr() );
+    WString WideName = CharToWide(InName);
+    SetThreadDescription(Thread, WideName.CStr());
 
     Name = InName;
 }
@@ -61,18 +61,18 @@ PlatformThreadHandle CWindowsThread::GetPlatformHandle()
     return hThreadID;
 }
 
-DWORD WINAPI CWindowsThread::ThreadRoutine( LPVOID ThreadParameter )
+DWORD WINAPI CWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
 {
     CWindowsThread* CurrentThread = (CWindowsThread*)ThreadParameter;
-    if ( CurrentThread )
+    if (CurrentThread)
     {
-        if ( !CurrentThread->Name.IsEmpty() )
+        if (!CurrentThread->Name.IsEmpty())
         {
-            WString WideName = CharToWide( CurrentThread->Name );
-            SetThreadDescription( CurrentThread->Thread, WideName.CStr() );
+            WString WideName = CharToWide(CurrentThread->Name);
+            SetThreadDescription(CurrentThread->Thread, WideName.CStr());
         }
 
-        Assert( CurrentThread->Function != nullptr );
+        Assert(CurrentThread->Function != nullptr);
         CurrentThread->Function();
 
         return 0;

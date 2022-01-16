@@ -2,14 +2,14 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
-CCommandAllocator::CCommandAllocator( uint32 StartSize )
-    : CurrentMemory( nullptr )
-    , Size( StartSize )
-    , Offset( 0 )
+CCommandAllocator::CCommandAllocator(uint32 StartSize)
+    : CurrentMemory(nullptr)
+    , Size(StartSize)
+    , Offset(0)
     , DiscardedMemory()
 {
-    CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc( Size ));
-    Assert( CurrentMemory != nullptr );
+    CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc(Size));
+    Assert(CurrentMemory != nullptr);
 
     AverageMemoryUsage = Size;
 }
@@ -18,16 +18,16 @@ CCommandAllocator::~CCommandAllocator()
 {
     ReleaseDiscardedMemory();
 
-    SafeDelete( CurrentMemory );
+    SafeDelete(CurrentMemory);
 }
 
-void* CCommandAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
+void* CCommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
 {
-    Assert( CurrentMemory != nullptr );
+    Assert(CurrentMemory != nullptr);
 
-    const uint64 AlignedSize = NMath::AlignUp( SizeInBytes, Alignment );
+    const uint64 AlignedSize = NMath::AlignUp(SizeInBytes, Alignment);
     const uint64 NewOffset = Offset + AlignedSize;
-    if ( NewOffset <= Size )
+    if (NewOffset <= Size)
     {
         void* Result = CurrentMemory + Offset;
         Offset = NewOffset;
@@ -36,13 +36,13 @@ void* CCommandAllocator::Allocate( uint64 SizeInBytes, uint64 Alignment )
     else
     {
         // Discard the current pointer 
-        DiscardedMemory.Emplace( CurrentMemory );
+        DiscardedMemory.Emplace(CurrentMemory);
 
         // Allocate a new block of memory
-        const uint64 NewSize = NMath::Max( Size + Size, AlignedSize );
+        const uint64 NewSize = NMath::Max(Size + Size, AlignedSize);
 
-        CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc( NewSize ));
-        Assert( CurrentMemory != nullptr );
+        CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc(NewSize));
+        Assert(CurrentMemory != nullptr);
 
         Size = NewSize;
         AverageMemoryUsage = Size;
@@ -63,14 +63,14 @@ void CCommandAllocator::Reset()
 
     // Resize if to much memory is used 
     const uint64 SlackSize = Size - AverageMemoryUsage;
-    if ( NMemoryUtils::BytesToMegaBytes( SlackSize ) > 1 )
+    if (NMemoryUtils::BytesToMegaBytes(SlackSize) > 1)
     {
-        SafeDelete( CurrentMemory );
+        SafeDelete(CurrentMemory);
 
-        const uint64 NewSize = AverageMemoryUsage + NMemoryUtils::MegaBytesToBytes( 1 );
+        const uint64 NewSize = AverageMemoryUsage + NMemoryUtils::MegaBytesToBytes(1);
 
-        CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc( NewSize ));
-        Assert( CurrentMemory != nullptr );
+        CurrentMemory = reinterpret_cast<uint8*>(CMemory::Malloc(NewSize));
+        Assert(CurrentMemory != nullptr);
 
         Size = NewSize;
         AverageMemoryUsage = Size;
@@ -82,9 +82,9 @@ void CCommandAllocator::Reset()
 
 void CCommandAllocator::ReleaseDiscardedMemory()
 {
-    for ( uint8* Memory : DiscardedMemory )
+    for (uint8* Memory : DiscardedMemory)
     {
-        SafeDelete( Memory );
+        SafeDelete(Memory);
     }
 
     DiscardedMemory.Empty();
@@ -95,14 +95,14 @@ void CCommandAllocator::ReleaseDiscardedMemory()
 CRHICommandQueue CRHICommandQueue::Instance;
 
 CRHICommandQueue::CRHICommandQueue()
-    : CmdContext( nullptr )
-    , NumDrawCalls( 0 )
-    , NumDispatchCalls( 0 )
-    , NumCommands( 0 )
+    : CmdContext(nullptr)
+    , NumDrawCalls(0)
+    , NumDispatchCalls(0)
+    , NumCommands(0)
 {
 }
 
-void CRHICommandQueue::ExecuteCommandList( CRHICommandList& CmdList )
+void CRHICommandQueue::ExecuteCommandList(CRHICommandList& CmdList)
 {
     // Execute
     GetContext().Begin();
@@ -113,13 +113,13 @@ void CRHICommandQueue::ExecuteCommandList( CRHICommandList& CmdList )
         // The statistics are only valid for the last call to execute command-list 
         ResetStatistics();
 
-        InternalExecuteCommandList( CmdList );
+        InternalExecuteCommandList(CmdList);
     }
 
     GetContext().End();
 }
 
-void CRHICommandQueue::ExecuteCommandLists( CRHICommandList* const* CmdLists, uint32 NumCmdLists )
+void CRHICommandQueue::ExecuteCommandLists(CRHICommandList* const* CmdLists, uint32 NumCmdLists)
 {
     // Execute
     GetContext().Begin();
@@ -130,10 +130,10 @@ void CRHICommandQueue::ExecuteCommandLists( CRHICommandList* const* CmdLists, ui
         // The statistics are only valid for the last call to execute commandlist 
         ResetStatistics();
 
-        for ( uint32 i = 0; i < NumCmdLists; i++ )
+        for (uint32 i = 0; i < NumCmdLists; i++)
         {
             CRHICommandList* CurrentCmdList = CmdLists[i];
-            InternalExecuteCommandList( *CurrentCmdList );
+            InternalExecuteCommandList(*CurrentCmdList);
         }
     }
 
@@ -142,23 +142,23 @@ void CRHICommandQueue::ExecuteCommandLists( CRHICommandList* const* CmdLists, ui
 
 void CRHICommandQueue::WaitForGPU()
 {
-    if ( CmdContext )
+    if (CmdContext)
     {
         CmdContext->Flush();
     }
 }
 
-void CRHICommandQueue::InternalExecuteCommandList( CRHICommandList& CmdList )
+void CRHICommandQueue::InternalExecuteCommandList(CRHICommandList& CmdList)
 {
-    if ( CmdList.First )
+    if (CmdList.First)
     {
         SRHIRenderCommand* CurrentCmd = CmdList.First;
-        while ( CurrentCmd != nullptr )
+        while (CurrentCmd != nullptr)
         {
             SRHIRenderCommand* PreviousCmd = CurrentCmd;
             CurrentCmd = CurrentCmd->NextCmd;
 
-            PreviousCmd->Execute( GetContext() );
+            PreviousCmd->Execute(GetContext());
             PreviousCmd->~SRHIRenderCommand();
         }
 

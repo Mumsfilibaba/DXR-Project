@@ -47,13 +47,13 @@ public:
     virtual class CRHIRayClosestHitShader* AsRayClosestHitShader() { return nullptr; }
     virtual class CRHIRayMissShader* AsRayMissShader() { return nullptr; }
 
-    virtual void GetShaderParameterInfo( SShaderParameterInfo& OutShaderParameterInfo ) const = 0;
+    virtual void GetShaderParameterInfo(SShaderParameterInfo& OutShaderParameterInfo) const = 0;
 
     // Returns false if no parameter with the specified name exists
-    virtual bool GetConstantBufferIndexByName( const CString& InName, uint32& OutIndex ) const = 0;
-    virtual bool GetUnorderedAccessViewIndexByName( const CString& InName, uint32& OutIndex ) const = 0;
-    virtual bool GetShaderResourceViewIndexByName( const CString& InName, uint32& OutIndex ) const = 0;
-    virtual bool GetSamplerIndexByName( const CString& InName, uint32& OutIndex ) const = 0;
+    virtual bool GetConstantBufferIndexByName(const CString& InName, uint32& OutIndex) const = 0;
+    virtual bool GetUnorderedAccessViewIndexByName(const CString& InName, uint32& OutIndex) const = 0;
+    virtual bool GetShaderResourceViewIndexByName(const CString& InName, uint32& OutIndex) const = 0;
+    virtual bool GetSamplerIndexByName(const CString& InName, uint32& OutIndex) const = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -138,63 +138,63 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 // Helpers
-inline bool ShaderStageIsGraphics( EShaderStage ShaderStage )
+inline bool ShaderStageIsGraphics(EShaderStage ShaderStage)
 {
-    switch ( ShaderStage )
+    switch (ShaderStage)
     {
-        case EShaderStage::Vertex:
-        case EShaderStage::Hull:
-        case EShaderStage::Domain:
-        case EShaderStage::Geometry:
-        case EShaderStage::Pixel:
-        case EShaderStage::Mesh:
-        case EShaderStage::Amplification:
-        {
-            return true;
-        }
+    case EShaderStage::Vertex:
+    case EShaderStage::Hull:
+    case EShaderStage::Domain:
+    case EShaderStage::Geometry:
+    case EShaderStage::Pixel:
+    case EShaderStage::Mesh:
+    case EShaderStage::Amplification:
+    {
+        return true;
+    }
 
-        default:
-        {
-            return false;
-        }
+    default:
+    {
+        return false;
+    }
     }
 }
 
-inline bool ShaderStageIsCompute( EShaderStage ShaderStage )
+inline bool ShaderStageIsCompute(EShaderStage ShaderStage)
 {
-    switch ( ShaderStage )
+    switch (ShaderStage)
     {
-        case EShaderStage::Compute:
-        case EShaderStage::RayGen:
-        case EShaderStage::RayClosestHit:
-        case EShaderStage::RayAnyHit:
-        case EShaderStage::RayMiss:
-        {
-            return true;
-        }
+    case EShaderStage::Compute:
+    case EShaderStage::RayGen:
+    case EShaderStage::RayClosestHit:
+    case EShaderStage::RayAnyHit:
+    case EShaderStage::RayMiss:
+    {
+        return true;
+    }
 
-        default:
-        {
-            return false;
-        }
+    default:
+    {
+        return false;
+    }
     }
 }
 
-inline bool ShaderStageIsRayTracing( EShaderStage ShaderStage )
+inline bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
 {
-    switch ( ShaderStage )
+    switch (ShaderStage)
     {
-        case EShaderStage::RayGen:
-        case EShaderStage::RayClosestHit:
-        case EShaderStage::RayAnyHit:
-        case EShaderStage::RayMiss:
-        {
-            return true;
-        }
+    case EShaderStage::RayGen:
+    case EShaderStage::RayClosestHit:
+    case EShaderStage::RayAnyHit:
+    case EShaderStage::RayMiss:
+    {
+        return true;
+    }
 
-        default:
-        {
-            return false;
-        }
+    default:
+    {
+        return false;
+    }
     }
 }

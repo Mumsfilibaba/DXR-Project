@@ -7,5 +7,5 @@
 class ENGINE_API CStbImageLoader
 {
 public:
-    static TSharedPtr<SImage2D> LoadFile( const CString& Filename );
+    static TSharedPtr<SImage2D> LoadFile(const CString& Filename);
 };

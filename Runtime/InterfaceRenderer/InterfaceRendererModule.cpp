@@ -1,7 +1,7 @@
 #include "InterfaceRendererModule.h"
 #include "InterfaceRenderer.h"
 
-IMPLEMENT_ENGINE_MODULE( CInterfaceRendererModule, InterfaceRenderer );
+IMPLEMENT_ENGINE_MODULE(CInterfaceRendererModule, InterfaceRenderer);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 

@@ -15,19 +15,19 @@ public:
     CTransform();
     ~CTransform() = default;
 
-    void SetTranslation( float x, float y, float z );
-    void SetTranslation( const CVector3& InPosition );
+    void SetTranslation(float x, float y, float z);
+    void SetTranslation(const CVector3& InPosition);
 
-    void SetScale( float x, float y, float z );
-    void SetScale( const CVector3& InScale );
+    void SetScale(float x, float y, float z);
+    void SetScale(const CVector3& InScale);
 
-    FORCEINLINE void SetUniformScale( float InScale )
+    FORCEINLINE void SetUniformScale(float InScale)
     {
-        SetScale( InScale, InScale, InScale );
+        SetScale(InScale, InScale, InScale);
     }
 
-    void SetRotation( float x, float y, float z );
-    void SetRotation( const CVector3& InRotation );
+    void SetRotation(float x, float y, float z);
+    void SetRotation(const CVector3& InRotation);
 
     FORCEINLINE const CVector3& GetTranslation() const
     {
@@ -77,44 +77,44 @@ class CComponent;
 
 class ENGINE_API CActor : public CCoreObject
 {
-    CORE_OBJECT( CActor, CCoreObject );
+    CORE_OBJECT(CActor, CCoreObject);
 
 public:
 
-    CActor( class CScene* InSceneOwner );
+    CActor(class CScene* InSceneOwner);
     ~CActor();
 
     /* Start actor, called in the beginning of the run, perform initialization here */
     virtual void Start();
 
     /* Tick actor, should be called once every frame */
-    virtual void Tick( CTimestamp DeltaTime );
+    virtual void Tick(CTimestamp DeltaTime);
 
     /* Add a new component to the actor */
-    void AddComponent( CComponent* InComponent );
+    void AddComponent(CComponent* InComponent);
 
     /* Set name of the actor */
-    void SetName( const CString& InName );
+    void SetName(const CString& InName);
 
     /* Check if the actor has a component of the component-class */
-    bool HasComponentOfClass( class CClassType* ComponentClass ) const;
+    bool HasComponentOfClass(class CClassType* ComponentClass) const;
 
     template<typename TComponent>
     inline bool HasComponentOfType() const
     {
-        return HasComponentOfClass( TComponent::GetStaticClass() );
+        return HasComponentOfClass(TComponent::GetStaticClass());
     }
 
     /* Retrieve a component from the actor of the component-class */
-    CComponent* GetComponentOfClass( class CClassType* ComponentClass ) const;
+    CComponent* GetComponentOfClass(class CClassType* ComponentClass) const;
 
     template <typename TComponent>
     inline TComponent* GetComponentOfType() const
     {
-        return static_cast<TComponent*>(GetComponentOfClass( TComponent::GetStaticClass() ));
+        return static_cast<TComponent*>(GetComponentOfClass(TComponent::GetStaticClass()));
     }
 
-    FORCEINLINE void SetTransform( const CTransform& InTransform )
+    FORCEINLINE void SetTransform(const CTransform& InTransform)
     {
         Transform = InTransform;
     }

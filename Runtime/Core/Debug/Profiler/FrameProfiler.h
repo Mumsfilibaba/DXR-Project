@@ -30,22 +30,22 @@ struct SProfileSample
         Clock.Tick();
 
         float Delta = static_cast<float>(Clock.GetDeltaTime().AsNanoSeconds());
-        AddSample( Delta );
+        AddSample(Delta);
 
         TotalCalls++;
     }
 
-    FORCEINLINE void AddSample( float NewSample )
+    FORCEINLINE void AddSample(float NewSample)
     {
         Samples[CurrentSample] = NewSample;
 
-        Min = NMath::Min( NewSample, Min );
-        Max = NMath::Max( NewSample, Max );
+        Min = NMath::Min(NewSample, Min);
+        Max = NMath::Max(NewSample, Max);
 
-        SampleCount = NMath::Min<int32>( Samples.Size(), SampleCount + 1 );
+        SampleCount = NMath::Min<int32>(Samples.Size(), SampleCount + 1);
 
         CurrentSample++;
-        if ( CurrentSample >= int32( Samples.Size() ) )
+        if (CurrentSample >= int32(Samples.Size()))
         {
             CurrentSample = 0;
         }
@@ -53,23 +53,23 @@ struct SProfileSample
 
     FORCEINLINE float GetAverage() const
     {
-        if ( SampleCount < 1 )
+        if (SampleCount < 1)
         {
             return 0.0f;
         }
 
         float Average = 0.0f;
-        for ( int32 n = 0; n < SampleCount; n++ )
+        for (int32 n = 0; n < SampleCount; n++)
         {
             Average += Samples[n];
         }
 
-        return Average / float( SampleCount );
+        return Average / float(SampleCount);
     }
 
     FORCEINLINE void Reset()
     {
-        Samples.Fill( 0.0f );
+        Samples.Fill(0.0f);
 
         SampleCount = 0;
         CurrentSample = 0;
@@ -114,13 +114,13 @@ public:
     void Reset();
 
     /* Starts a scope for a function */
-    void BeginTraceScope( const char* Name );
+    void BeginTraceScope(const char* Name);
 
     /* Ends a scope for a function */
-    void EndTraceScope( const char* Name );
+    void EndTraceScope(const char* Name);
 
     /* CPU Profiler samples */
-    void GetCPUSamples( ProfileSamplesTable& OutCPUSamples );
+    void GetCPUSamples(ProfileSamplesTable& OutCPUSamples);
 
     FORCEINLINE int32 GetFramesPerSecond() const
     {
@@ -155,15 +155,15 @@ struct SScopedTrace
 {
 public:
 
-    FORCEINLINE SScopedTrace( const char* InName )
-        : Name( InName )
+    FORCEINLINE SScopedTrace(const char* InName)
+        : Name(InName)
     {
-        CFrameProfiler::Get().BeginTraceScope( Name );
+        CFrameProfiler::Get().BeginTraceScope(Name);
     }
 
     FORCEINLINE ~SScopedTrace()
     {
-        CFrameProfiler::Get().EndTraceScope( Name );
+        CFrameProfiler::Get().EndTraceScope(Name);
     }
 
 private:

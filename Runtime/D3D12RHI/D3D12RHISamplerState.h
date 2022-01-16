@@ -8,28 +8,28 @@ class CD3D12RHISamplerState : public CRHISamplerState, public CD3D12DeviceChild
 {
 public:
 
-    CD3D12RHISamplerState( CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap )
+    CD3D12RHISamplerState(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap)
         : CRHISamplerState()
-        , CD3D12DeviceChild( InDevice )
-        , OfflineHeap( InOfflineHeap )
-        , OfflineHandle( { 0 } )
+        , CD3D12DeviceChild(InDevice)
+        , OfflineHeap(InOfflineHeap)
+        , OfflineHandle({ 0 })
         , Desc()
     {
-        Assert( InOfflineHeap != nullptr );
+        Assert(InOfflineHeap != nullptr);
     }
 
     ~CD3D12RHISamplerState()
     {
-        OfflineHeap->Free( OfflineHandle, OfflineHeapIndex );
+        OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
     }
 
-    bool Init( const D3D12_SAMPLER_DESC& InDesc )
+    bool Init(const D3D12_SAMPLER_DESC& InDesc)
     {
-        OfflineHandle = OfflineHeap->Allocate( OfflineHeapIndex );
-        if ( OfflineHandle != 0 )
+        OfflineHandle = OfflineHeap->Allocate(OfflineHeapIndex);
+        if (OfflineHandle != 0)
         {
             Desc = InDesc;
-            GetDevice()->CreateSampler( &Desc, OfflineHandle );
+            GetDevice()->CreateSampler(&Desc, OfflineHandle);
             return true;
         }
         else

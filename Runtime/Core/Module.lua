@@ -1,6 +1,5 @@
-include '../../BuildScripts/Scripts/enginebuild.lua'
+include '../../BuildScripts/Scripts/build_module.lua'
 
-local CoreModule = CreateModule( 'Core' )
+local CoreModule = CModuleBuildRules('Core')
 CoreModule.bUsePrecompiledHeaders = true
-
-CoreModule:Generate()
+CoreModule.Generate()

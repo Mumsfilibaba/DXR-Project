@@ -16,11 +16,11 @@
 class CNullRHITexture2D : public CRHITexture2D
 {
 public:
-    CNullRHITexture2D( EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue )
-        : CRHITexture2D( InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue )
-        , RenderTargetView( dbg_new CNullRHIRenderTargetView() )
-        , DepthStencilView( dbg_new CNullRHIDepthStencilView() )
-        , UnorderedAccessView( dbg_new CNullRHIUnorderedAccessView() )
+    CNullRHITexture2D(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
+        : CRHITexture2D(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
+        , RenderTargetView(dbg_new CNullRHIRenderTargetView())
+        , DepthStencilView(dbg_new CNullRHIDepthStencilView())
+        , UnorderedAccessView(dbg_new CNullRHIUnorderedAccessView())
     {
     }
 
@@ -48,8 +48,8 @@ private:
 class CNullRHITexture2DArray : public CRHITexture2DArray
 {
 public:
-    CNullRHITexture2DArray( EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue )
-        : CRHITexture2DArray( InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InSizeZ, InFlags, InOptimalClearValue )
+    CNullRHITexture2DArray(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
+        : CRHITexture2DArray(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InSizeZ, InFlags, InOptimalClearValue)
     {
     }
 };
@@ -57,8 +57,8 @@ public:
 class CNullRHITextureCube : public CRHITextureCube
 {
 public:
-    CNullRHITextureCube( EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue )
-        : CRHITextureCube( InFormat, InSize, InNumMips, InFlags, InOptimalClearValue )
+    CNullRHITextureCube(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+        : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InOptimalClearValue)
     {
     }
 };
@@ -66,8 +66,8 @@ public:
 class CNullRHITextureCubeArray : public CRHITextureCubeArray
 {
 public:
-    CNullRHITextureCubeArray( EFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue )
-        : CRHITextureCubeArray( InFormat, InSizeX, InNumMips, InSizeZ, InFlags, InOptimalClearValue )
+    CNullRHITextureCubeArray(EFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+        : CRHITextureCubeArray(InFormat, InSizeX, InNumMips, InSizeZ, InFlags, InOptimalClearValue)
     {
     }
 };
@@ -75,8 +75,8 @@ public:
 class CNullRHITexture3D : public CRHITexture3D
 {
 public:
-    CNullRHITexture3D( EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue )
-        : CRHITexture3D( InFormat, InSizeX, InSizeY, InSizeZ, InNumMips, InFlags, InOptimalClearValue )
+    CNullRHITexture3D(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+        : CRHITexture3D(InFormat, InSizeX, InSizeY, InSizeZ, InNumMips, InFlags, InOptimalClearValue)
     {
     }
 };
@@ -86,15 +86,15 @@ class TNullRHITexture : public TBaseTexture
 {
 public:
     template<typename... ArgTypes>
-    TNullRHITexture( ArgTypes&&... Args )
-        : TBaseTexture( Forward<ArgTypes>( Args )... )
-        , ShaderResourceView( dbg_new CNullRHIShaderResourceView() )
+    TNullRHITexture(ArgTypes&&... Args)
+        : TBaseTexture(Forward<ArgTypes>(Args)...)
+        , ShaderResourceView(dbg_new CNullRHIShaderResourceView())
     {
     }
 
-    virtual void SetName( const CString& InName ) override final
+    virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName( InName );
+        CRHIResource::SetName(InName);
     }
 
     virtual class CRHIShaderResourceView* GetShaderResourceView() const override final

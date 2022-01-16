@@ -5,23 +5,23 @@
 
 /* Actor Implementation */
 
-CActor::CActor( class CScene* InSceneOwner )
+CActor::CActor(class CScene* InSceneOwner)
     : CCoreObject()
     , Name()
-    , SceneOwner( InSceneOwner )
+    , SceneOwner(InSceneOwner)
     , Transform()
     , Components()
-    , bIsStartable( true )
-    , bIsTickable( true )
+    , bIsStartable(true)
+    , bIsTickable(true)
 {
     CORE_OBJECT_INIT();
 }
 
 CActor::~CActor()
 {
-    for ( CComponent* CurrentComponent : Components )
+    for (CComponent* CurrentComponent : Components)
     {
-        SafeDelete( CurrentComponent );
+        SafeDelete(CurrentComponent);
     }
 
     Components.Clear();
@@ -29,47 +29,47 @@ CActor::~CActor()
 
 void CActor::Start()
 {
-    for ( CComponent* Component : Components )
+    for (CComponent* Component : Components)
     {
-        if ( Component->IsStartable() )
+        if (Component->IsStartable())
         {
             Component->Start();
         }
     }
 }
 
-void CActor::Tick( CTimestamp DeltaTime )
+void CActor::Tick(CTimestamp DeltaTime)
 {
-    for ( CComponent* Component : Components )
+    for (CComponent* Component : Components)
     {
-        if ( Component->IsTickable() )
+        if (Component->IsTickable())
         {
-            Component->Tick( DeltaTime );
+            Component->Tick(DeltaTime);
         }
     }
 }
 
-void CActor::AddComponent( CComponent* InComponent )
+void CActor::AddComponent(CComponent* InComponent)
 {
-    Assert( InComponent != nullptr );
-    Components.Emplace( InComponent );
+    Assert(InComponent != nullptr);
+    Components.Emplace(InComponent);
 
-    if ( SceneOwner )
+    if (SceneOwner)
     {
-        SceneOwner->OnAddedComponent( InComponent );
+        SceneOwner->OnAddedComponent(InComponent);
     }
 }
 
-void CActor::SetName( const CString& InName )
+void CActor::SetName(const CString& InName)
 {
     Name = InName;
 }
 
-bool CActor::HasComponentOfClass( class CClassType* ComponentClass ) const
+bool CActor::HasComponentOfClass(class CClassType* ComponentClass) const
 {
-    for ( CComponent* Component : Components )
+    for (CComponent* Component : Components)
     {
-        if ( IsSubClassOf( Component, ComponentClass ) )
+        if (IsSubClassOf(Component, ComponentClass))
         {
             return true;
         }
@@ -78,11 +78,11 @@ bool CActor::HasComponentOfClass( class CClassType* ComponentClass ) const
     return false;
 }
 
-CComponent* CActor::GetComponentOfClass( class CClassType* ComponentClass ) const
+CComponent* CActor::GetComponentOfClass(class CClassType* ComponentClass) const
 {
-    for ( CComponent* Component : Components )
+    for (CComponent* Component : Components)
     {
-        if ( IsSubClassOf( Component, ComponentClass ) )
+        if (IsSubClassOf(Component, ComponentClass))
         {
             return Component;
         }
@@ -95,41 +95,41 @@ CComponent* CActor::GetComponentOfClass( class CClassType* ComponentClass ) cons
 
 CTransform::CTransform()
     : Matrix()
-    , Translation( 0.0f, 0.0f, 0.0f )
-    , Scale( 1.0f, 1.0f, 1.0f )
-    , Rotation( 0.0f, 0.0f, 0.0f )
+    , Translation(0.0f, 0.0f, 0.0f)
+    , Scale(1.0f, 1.0f, 1.0f)
+    , Rotation(0.0f, 0.0f, 0.0f)
 {
     CalculateMatrix();
 }
 
-void CTransform::SetTranslation( float x, float y, float z )
+void CTransform::SetTranslation(float x, float y, float z)
 {
-    SetTranslation( CVector3( x, y, z ) );
+    SetTranslation(CVector3(x, y, z));
 }
 
-void CTransform::SetTranslation( const CVector3& InPosition )
+void CTransform::SetTranslation(const CVector3& InPosition)
 {
     Translation = InPosition;
     CalculateMatrix();
 }
 
-void CTransform::SetScale( float x, float y, float z )
+void CTransform::SetScale(float x, float y, float z)
 {
-    SetScale( CVector3( x, y, z ) );
+    SetScale(CVector3(x, y, z));
 }
 
-void CTransform::SetScale( const CVector3& InScale )
+void CTransform::SetScale(const CVector3& InScale)
 {
     Scale = InScale;
     CalculateMatrix();
 }
 
-void CTransform::SetRotation( float x, float y, float z )
+void CTransform::SetRotation(float x, float y, float z)
 {
-    SetRotation( CVector3( x, y, z ) );
+    SetRotation(CVector3(x, y, z));
 }
 
-void CTransform::SetRotation( const CVector3& InRotation )
+void CTransform::SetRotation(const CVector3& InRotation)
 {
     Rotation = InRotation;
     CalculateMatrix();
@@ -137,16 +137,16 @@ void CTransform::SetRotation( const CVector3& InRotation )
 
 void CTransform::CalculateMatrix()
 {
-    CMatrix4 ScaleMatrix = CMatrix4::Scale( Scale );
-    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw( Rotation );
-    CMatrix4 TranslationMatrix = CMatrix4::Translation( Translation );
+    CMatrix4 ScaleMatrix = CMatrix4::Scale(Scale);
+    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw(Rotation);
+    CMatrix4 TranslationMatrix = CMatrix4::Translation(Translation);
     Matrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
     Matrix = Matrix.Transpose();
 
     TinyMatrix = CMatrix3x4(
         Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03,
         Matrix.m10, Matrix.m11, Matrix.m12, Matrix.m13,
-        Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23 );
+        Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23);
 
     MatrixInv = Matrix.Invert();
     MatrixInv = MatrixInv.Transpose();

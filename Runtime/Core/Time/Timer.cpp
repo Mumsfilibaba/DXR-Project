@@ -15,7 +15,7 @@ void CTimer::Tick()
     uint64 Delta = Now - LastTime;
     uint64 Nanoseconds = (Delta * NANOSECONDS) / Frequency;
 
-    DeltaTime = CTimestamp( Nanoseconds );
+    DeltaTime = CTimestamp(Nanoseconds);
     LastTime = Now;
     TotalTime += DeltaTime;
 }

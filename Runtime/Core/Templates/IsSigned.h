@@ -11,7 +11,7 @@ private:
     {
         enum
         {
-            Value = U( -1 ) < U( 0 )
+            Value = U(-1) < U(0)
         };
     };
 
@@ -42,7 +42,7 @@ private:
     {
         enum
         {
-            Value = U( 0 ) < U( -1 )
+            Value = U(0) < U(-1)
         };
     };
 

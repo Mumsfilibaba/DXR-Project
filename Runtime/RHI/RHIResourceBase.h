@@ -9,7 +9,7 @@
 class CRHIResource : public CRefCounted
 {
 public:
- 
+
     CRHIResource() = default;
     ~CRHIResource() = default;
 
@@ -20,7 +20,7 @@ public:
     virtual void* GetNativeResource() const { return nullptr; }
 
     /* Sets a debug name on the resource */
-    virtual void SetName( const CString& InName ) { Name = InName; }
+    virtual void SetName(const CString& InName) { Name = InName; }
 
     FORCEINLINE const CString& GetName() const
     {

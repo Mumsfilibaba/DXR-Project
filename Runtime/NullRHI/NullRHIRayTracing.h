@@ -16,16 +16,16 @@
 class CNullRHIRayTracingGeometry : public CRHIRayTracingGeometry
 {
 public:
-    CNullRHIRayTracingGeometry( uint32 InFlags )
-        : CRHIRayTracingGeometry( InFlags )
+    CNullRHIRayTracingGeometry(uint32 InFlags)
+        : CRHIRayTracingGeometry(InFlags)
     {
     }
 
     ~CNullRHIRayTracingGeometry() = default;
 
-    virtual void SetName( const CString& InName ) override
+    virtual void SetName(const CString& InName) override
     {
-        CRHIResource::SetName( InName );
+        CRHIResource::SetName(InName);
     }
 
     virtual bool IsValid() const override
@@ -37,17 +37,17 @@ public:
 class CNullRHIRayTracingScene : public CRHIRayTracingScene
 {
 public:
-    CNullRHIRayTracingScene( uint32 InFlags )
-        : CRHIRayTracingScene( InFlags )
-        , View( dbg_new CNullRHIShaderResourceView() )
+    CNullRHIRayTracingScene(uint32 InFlags)
+        : CRHIRayTracingScene(InFlags)
+        , View(dbg_new CNullRHIShaderResourceView())
     {
     }
 
     ~CNullRHIRayTracingScene() = default;
 
-    virtual void SetName( const CString& InName ) override final
+    virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName( InName );
+        CRHIResource::SetName(InName);
     }
 
     virtual bool IsValid() const override final

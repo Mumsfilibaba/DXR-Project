@@ -27,9 +27,9 @@ public:
     }
 
     /* Outputs a debug string to the attached debugger */
-    static FORCEINLINE void OutputDebugString( const CString& Message )
+    static FORCEINLINE void OutputDebugString(const CString& Message)
     {
-        OutputDebugStringA( Message.CStr() );
+        OutputDebugStringA(Message.CStr());
     }
 
     /* Checks weather or not the application is running inside a debugger */
@@ -39,19 +39,19 @@ public:
     }
 
     /* Calls GetLastError and retrieves a string from it */
-    static FORCEINLINE void GetLastErrorString( CString& OutErrorString )
+    static FORCEINLINE void GetLastErrorString(CString& OutErrorString)
     {
         int LastError = ::GetLastError();
 
         const uint32 Flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
 
         LPSTR  MessageBuffer = nullptr;
-        uint32 MessageLength = FormatMessageA( Flags, NULL, LastError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ), (LPSTR)&MessageBuffer, 0, NULL );
+        uint32 MessageLength = FormatMessageA(Flags, NULL, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&MessageBuffer, 0, NULL);
 
         OutErrorString.Clear();
-        OutErrorString.Append( MessageBuffer, MessageLength );
+        OutErrorString.Append(MessageBuffer, MessageLength);
 
-        LocalFree( MessageBuffer );
+        LocalFree(MessageBuffer);
     }
 };
 

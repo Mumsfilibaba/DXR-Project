@@ -23,12 +23,12 @@ public:
 
     /* Empty constructor, makes it storable */
     FORCEINLINE CDelegateHandle()
-        : Handle( InvalidHandle )
+        : Handle(InvalidHandle)
     {
     }
 
-    FORCEINLINE explicit CDelegateHandle( EGenerateID )
-        : Handle( GenerateID() )
+    FORCEINLINE explicit CDelegateHandle(EGenerateID)
+        : Handle(GenerateID())
     {
     }
 
@@ -57,13 +57,13 @@ public:
     }
 
     /* Checks equality between two handles */
-    FORCEINLINE bool operator==( CDelegateHandle RHS ) const
+    FORCEINLINE bool operator==(CDelegateHandle RHS) const
     {
         return (Handle == RHS.Handle);
     }
 
     /* Checks equality between two handles */
-    FORCEINLINE bool operator!=( CDelegateHandle RHS ) const
+    FORCEINLINE bool operator!=(CDelegateHandle RHS) const
     {
         return !(*this == RHS);
     }
@@ -92,13 +92,13 @@ public:
     virtual const void* GetBoundObject() const = 0;
 
     /* Check if the object is the one that is bound to the delegate instance */
-    virtual bool IsObjectBound( const void* ) const = 0;
+    virtual bool IsObjectBound(const void*) const = 0;
 
     /* Retrieve the handle to the delegate */
     virtual CDelegateHandle GetHandle() const = 0;
 
     /* Clones the delegate and stores it in the specified memory */
-    virtual IDelegateInstance* Clone( void* Memory ) const = 0;
+    virtual IDelegateInstance* Clone(void* Memory) const = 0;
 };
 
 /* Types basetype for delegates */
@@ -108,7 +108,7 @@ class TDelegateInstance : public IDelegateInstance
 public:
 
     /* Executes the delegates and calls the stored function or functor */
-    virtual ReturnType Execute( ArgTypes... Args ) = 0;
+    virtual ReturnType Execute(ArgTypes... Args) = 0;
 
 public:
 
@@ -119,7 +119,7 @@ public:
     }
 
     /* Check if the object is the one that is bound to the delegate instance */
-    virtual bool IsObjectBound( const void* ) const override
+    virtual bool IsObjectBound(const void*) const override
     {
         return false;
     }
@@ -133,7 +133,7 @@ public:
 protected:
     FORCEINLINE TDelegateInstance()
         : IDelegateInstance()
-        , Handle( CDelegateHandle::EGenerateID::New )
+        , Handle(CDelegateHandle::EGenerateID::New)
     {
     }
 
@@ -145,33 +145,33 @@ template<typename FunctionType, typename... PayloadTypes>
 class TFunctionDelegateInstance;
 
 template<typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
-class TFunctionDelegateInstance<ReturnType( ArgTypes... ), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TFunctionDelegateInstance<ReturnType(ArgTypes...), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super = TDelegateInstance<ReturnType, ArgTypes...>;
-    using FunctionType = typename TFunctionType<ReturnType( ArgTypes..., PayloadTypes... )>::Type;
+    using FunctionType = typename TFunctionType<ReturnType(ArgTypes..., PayloadTypes...)>::Type;
 
 public:
 
-    TFunctionDelegateInstance( const TFunctionDelegateInstance& ) = default;
+    TFunctionDelegateInstance(const TFunctionDelegateInstance&) = default;
 
     /* Constructor taking a function */
-    FORCEINLINE TFunctionDelegateInstance( FunctionType InFunction, PayloadTypes&&... InPayload )
+    FORCEINLINE TFunctionDelegateInstance(FunctionType InFunction, PayloadTypes&&... InPayload)
         : Super()
-        , Function( InFunction )
-        , Payload( Forward<PayloadTypes>( InPayload )... )
+        , Function(InFunction)
+        , Payload(Forward<PayloadTypes>(InPayload)...)
     {
     }
 
     /* Execute the function */
-    virtual ReturnType Execute( ArgTypes... Args ) override final
+    virtual ReturnType Execute(ArgTypes... Args) override final
     {
-        return Payload.ApplyAfter( Function, Forward<ArgTypes>( Args )... );
+        return Payload.ApplyAfter(Function, Forward<ArgTypes>(Args)...);
     }
 
     /* Clone this instance and store in the memory */
-    virtual Super* Clone( void* Memory ) const override final
+    virtual Super* Clone(void* Memory) const override final
     {
-        return new(Memory) TFunctionDelegateInstance( *this );
+        return new(Memory) TFunctionDelegateInstance(*this);
     }
 
 private:
@@ -184,32 +184,32 @@ private:
 };
 
 template<typename ReturnType, typename... ArgTypes>
-class TFunctionDelegateInstance<ReturnType( ArgTypes... )> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TFunctionDelegateInstance<ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super = TDelegateInstance<ReturnType, ArgTypes...>;
-    using FunctionType = typename TFunctionType<ReturnType( ArgTypes... )>::Type;
+    using FunctionType = typename TFunctionType<ReturnType(ArgTypes...)>::Type;
 
 public:
 
-    TFunctionDelegateInstance( const TFunctionDelegateInstance& ) = default;
+    TFunctionDelegateInstance(const TFunctionDelegateInstance&) = default;
 
     /* Constructor taking a function */
-    FORCEINLINE TFunctionDelegateInstance( FunctionType InFunction )
+    FORCEINLINE TFunctionDelegateInstance(FunctionType InFunction)
         : Super()
-        , Function( InFunction )
+        , Function(InFunction)
     {
     }
 
     /* Execute the function */
-    virtual ReturnType Execute( ArgTypes... Args ) override final
+    virtual ReturnType Execute(ArgTypes... Args) override final
     {
-        return Function( Forward<ArgTypes>( Args )... );
+        return Function(Forward<ArgTypes>(Args)...);
     }
 
     /* Clone this instance and store in the memory */
-    virtual Super* Clone( void* Memory ) const override final
+    virtual Super* Clone(void* Memory) const override final
     {
-        return new(Memory) TFunctionDelegateInstance( *this );
+        return new(Memory) TFunctionDelegateInstance(*this);
     }
 
 private:
@@ -223,35 +223,35 @@ template<bool IsConst, typename InstanceType, typename ClassType, typename Funct
 class TMemberDelegateInstance;
 
 template<bool IsConst, typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
-class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType( ArgTypes... ), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super = TDelegateInstance<ReturnType, ArgTypes...>;
-    using FunctionType = typename TMemberFunctionType<IsConst, ClassType, ReturnType( ArgTypes..., PayloadTypes... )>::Type;
+    using FunctionType = typename TMemberFunctionType<IsConst, ClassType, ReturnType(ArgTypes..., PayloadTypes...)>::Type;
 
 public:
 
-    TMemberDelegateInstance( const TMemberDelegateInstance& ) = default;
+    TMemberDelegateInstance(const TMemberDelegateInstance&) = default;
 
     /* Constructor */
-    FORCEINLINE TMemberDelegateInstance( InstanceType* InThis, FunctionType InFunction, PayloadTypes&&... InPayload )
+    FORCEINLINE TMemberDelegateInstance(InstanceType* InThis, FunctionType InFunction, PayloadTypes&&... InPayload)
         : Super()
-        , This( InThis )
-        , Function( InFunction )
-        , Payload( Forward<PayloadTypes>( InPayload )... )
+        , This(InThis)
+        , Function(InFunction)
+        , Payload(Forward<PayloadTypes>(InPayload)...)
     {
-        Assert( This != nullptr );
+        Assert(This != nullptr);
     }
 
     /* Execute function */
-    virtual ReturnType Execute( ArgTypes... Args ) override final
+    virtual ReturnType Execute(ArgTypes... Args) override final
     {
-        return Payload.ApplyAfter( Function, This, Forward<ArgTypes>( Args )... );
+        return Payload.ApplyAfter(Function, This, Forward<ArgTypes>(Args)...);
     }
 
     /* Clone this instance and store in the memory */
-    virtual Super* Clone( void* Memory ) const override final
+    virtual Super* Clone(void* Memory) const override final
     {
-        return new(Memory) TMemberDelegateInstance( *this );
+        return new(Memory) TMemberDelegateInstance(*this);
     }
 
     /* Returns the stored instance */
@@ -261,7 +261,7 @@ public:
     }
 
     /* Checks if object is equal to the stored instance */
-    virtual bool IsObjectBound( const void* Object ) const override final
+    virtual bool IsObjectBound(const void* Object) const override final
     {
         return (GetBoundObject() == Object);
     }
@@ -279,34 +279,34 @@ private:
 };
 
 template<bool IsConst, typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
-class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType( ArgTypes... )> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super = TDelegateInstance<ReturnType, ArgTypes...>;
-    using FunctionType = typename TMemberFunctionType<IsConst, ClassType, ReturnType( ArgTypes... )>::Type;
+    using FunctionType = typename TMemberFunctionType<IsConst, ClassType, ReturnType(ArgTypes...)>::Type;
 
 public:
 
-    TMemberDelegateInstance( const TMemberDelegateInstance& ) = default;
+    TMemberDelegateInstance(const TMemberDelegateInstance&) = default;
 
     /* Constructor */
-    FORCEINLINE TMemberDelegateInstance( InstanceType* InThis, FunctionType InFunction )
+    FORCEINLINE TMemberDelegateInstance(InstanceType* InThis, FunctionType InFunction)
         : Super()
-        , This( InThis )
-        , Function( InFunction )
+        , This(InThis)
+        , Function(InFunction)
     {
-        Assert( This != nullptr );
+        Assert(This != nullptr);
     }
 
     /* Execute function */
-    virtual ReturnType Execute( ArgTypes... Args ) override final
+    virtual ReturnType Execute(ArgTypes... Args) override final
     {
-        return ((*This).*Function)(Forward<ArgTypes>( Args )...);
+        return ((*This).*Function)(Forward<ArgTypes>(Args)...);
     }
 
     /* Clone this instance and store in the memory */
-    virtual Super* Clone( void* Memory ) const override final
+    virtual Super* Clone(void* Memory) const override final
     {
-        return new(Memory) TMemberDelegateInstance( *this );
+        return new(Memory) TMemberDelegateInstance(*this);
     }
 
     /* Returns the stored instance */
@@ -316,7 +316,7 @@ public:
     }
 
     /* Checks if object is equal to the stored instance */
-    virtual bool IsObjectBound( const void* Object ) const override final
+    virtual bool IsObjectBound(const void* Object) const override final
     {
         return (GetBoundObject() == Object);
     }
@@ -335,32 +335,32 @@ template<typename FunctorType, typename FunctionType, typename... PayloadTypes>
 class TLambdaDelegateInstance;
 
 template<typename FunctorType, typename ReturnType, typename... ArgTypes, typename... PayloadTypes>
-class TLambdaDelegateInstance<FunctorType, ReturnType( ArgTypes... ), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...), PayloadTypes...> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super = TDelegateInstance<ReturnType, ArgTypes...>;
 
 public:
 
-    TLambdaDelegateInstance( const TLambdaDelegateInstance& ) = default;
+    TLambdaDelegateInstance(const TLambdaDelegateInstance&) = default;
 
     /* Constructor */
-    FORCEINLINE TLambdaDelegateInstance( FunctorType&& InFunctor, PayloadTypes&&... InPayload )
+    FORCEINLINE TLambdaDelegateInstance(FunctorType&& InFunctor, PayloadTypes&&... InPayload)
         : Super()
-        , Functor( InFunctor )
-        , Payload( Forward<PayloadTypes>( InPayload )... )
+        , Functor(InFunctor)
+        , Payload(Forward<PayloadTypes>(InPayload)...)
     {
     }
 
     /* Execute Functor */
-    virtual ReturnType Execute( ArgTypes... Args ) override
+    virtual ReturnType Execute(ArgTypes... Args) override
     {
-        return Payload.ApplyAfter( Functor, Forward<ArgTypes>( Args )... );
+        return Payload.ApplyAfter(Functor, Forward<ArgTypes>(Args)...);
     }
 
     /* Clone this instance and store in the memory */
-    virtual Super* Clone( void* Memory ) const override
+    virtual Super* Clone(void* Memory) const override
     {
-        return new(Memory) TLambdaDelegateInstance( *this );
+        return new(Memory) TLambdaDelegateInstance(*this);
     }
 
 private:
@@ -373,31 +373,31 @@ private:
 };
 
 template<typename FunctorType, typename ReturnType, typename... ArgTypes>
-class TLambdaDelegateInstance<FunctorType, ReturnType( ArgTypes... )> : public TDelegateInstance<ReturnType, ArgTypes...>
+class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
     using Super = TDelegateInstance<ReturnType, ArgTypes...>;
 
 public:
 
-    TLambdaDelegateInstance( const TLambdaDelegateInstance& ) = default;
+    TLambdaDelegateInstance(const TLambdaDelegateInstance&) = default;
 
     /* Constructor */
-    FORCEINLINE TLambdaDelegateInstance( FunctorType&& InFunctor )
+    FORCEINLINE TLambdaDelegateInstance(FunctorType&& InFunctor)
         : Super()
-        , Functor( InFunctor )
+        , Functor(InFunctor)
     {
     }
 
     /* Execute Functor */
-    virtual ReturnType Execute( ArgTypes... Args ) override
+    virtual ReturnType Execute(ArgTypes... Args) override
     {
-        return Functor( Forward<ArgTypes>( Args )... );
+        return Functor(Forward<ArgTypes>(Args)...);
     }
 
     /* Clone this instance and store in the memory */
-    virtual Super* Clone( void* Memory ) const override
+    virtual Super* Clone(void* Memory) const override
     {
-        return new(Memory) TLambdaDelegateInstance( *this );
+        return new(Memory) TLambdaDelegateInstance(*this);
     }
 
 private:

@@ -4,15 +4,15 @@
 #include "Core/Delegates/MulticastDelegate.h"
 #include "Core/Containers/String.h"
 
-DECLARE_MULTICAST_DELEGATE( CChangedDelegate, IConsoleVariable* );
+DECLARE_MULTICAST_DELEGATE(CChangedDelegate, IConsoleVariable*);
 
 class IConsoleVariable : public IConsoleObject
 {
 public:
-    virtual void SetInt( int32 InValue ) = 0;
-    virtual void SetFloat( float InValue ) = 0;
-    virtual void SetBool( bool bValue ) = 0;
-    virtual void SetString( const CString& InValue ) = 0;
+    virtual void SetInt(int32 InValue) = 0;
+    virtual void SetFloat(float InValue) = 0;
+    virtual void SetBool(bool bValue) = 0;
+    virtual void SetString(const CString& InValue) = 0;
 
     virtual int32 GetInt() const = 0;
     virtual float GetFloat() const = 0;

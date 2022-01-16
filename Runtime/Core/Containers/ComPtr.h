@@ -20,50 +20,50 @@ public:
 
     /* Default constructor that set the ptr to nullptr */
     FORCEINLINE TComPtr() noexcept
-        : Ptr( nullptr )
+        : Ptr(nullptr)
     {
     }
 
     /* Copy-constructor that copy another ptr */
-    FORCEINLINE TComPtr( const TComPtr& Other ) noexcept
-        : Ptr( Other.Ptr )
+    FORCEINLINE TComPtr(const TComPtr& Other) noexcept
+        : Ptr(Other.Ptr)
     {
         AddRef();
     }
 
     /* Copy-constructor that copy another ptr, by another convertible type */
     template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
-    FORCEINLINE TComPtr( const TComPtr<OtherType>& Other ) noexcept
-        : Ptr( Other.Ptr )
+    FORCEINLINE TComPtr(const TComPtr<OtherType>& Other) noexcept
+        : Ptr(Other.Ptr)
     {
         AddRef();
     }
 
     /* Move-constructor that move another ptr */
-    FORCEINLINE TComPtr( TComPtr&& Other ) noexcept
-        : Ptr( Other.Ptr )
+    FORCEINLINE TComPtr(TComPtr&& Other) noexcept
+        : Ptr(Other.Ptr)
     {
         Other.Ptr = nullptr;
     }
 
     /* Move-constructor that move another ptr, by another convertible type */
     template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
-    FORCEINLINE TComPtr( TComPtr<OtherType>&& Other ) noexcept
-        : Ptr( Other.Ptr )
+    FORCEINLINE TComPtr(TComPtr<OtherType>&& Other) noexcept
+        : Ptr(Other.Ptr)
     {
         Other.Ptr = nullptr;
     }
 
     /* Create a shared-ref from a raw pointer */
-    FORCEINLINE TComPtr( ElementType* InPtr ) noexcept
-        : Ptr( InPtr )
+    FORCEINLINE TComPtr(ElementType* InPtr) noexcept
+        : Ptr(InPtr)
     {
     }
 
     /* Create a shared-ref from a raw pointer of a convertible type */
     template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
-    FORCEINLINE TComPtr( OtherType* InPtr ) noexcept
-        : Ptr( InPtr )
+    FORCEINLINE TComPtr(OtherType* InPtr) noexcept
+        : Ptr(InPtr)
     {
     }
 
@@ -73,22 +73,22 @@ public:
     }
 
     /* Resets the container and sets to a potential new raw pointer */
-    FORCEINLINE void Reset( ElementType* NewPtr = nullptr ) noexcept
+    FORCEINLINE void Reset(ElementType* NewPtr = nullptr) noexcept
     {
-        TComPtr( NewPtr ).Swap( *this );
+        TComPtr(NewPtr).Swap(*this);
     }
 
     /* Resets the container and sets to a potential new raw pointer of another type */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset( OtherType* NewPtr ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset(OtherType* NewPtr) noexcept
     {
-        Reset( static_cast<ElementType*>(NewPtr) );
+        Reset(static_cast<ElementType*>(NewPtr));
     }
 
     /* Swaps the pointers in the two containers */
-    FORCEINLINE void Swap( TComPtr& Other )
+    FORCEINLINE void Swap(TComPtr& Other)
     {
-        ::Swap( Ptr, Other.Ptr );
+        ::Swap(Ptr, Other.Ptr);
     }
 
     /* Releases the ownership of the pointer and returns the pointer */
@@ -102,7 +102,7 @@ public:
     /* Adds a reference to the stored pointer */
     FORCEINLINE void AddRef() noexcept
     {
-        if ( Ptr )
+        if (Ptr)
         {
             Ptr->AddRef();
         }
@@ -117,7 +117,7 @@ public:
     /* Retrieve the current reference count of the object */
     FORCEINLINE uint64 GetRefCount() const noexcept
     {
-        Assert( IsValid() );
+        Assert(IsValid());
 
         // There are no function to retrieve the refcount for COM-Objects, add a ref and then release it
         Ptr->AddRef();
@@ -140,21 +140,21 @@ public:
 
     /* Retrieve the pointer as another type that is convertible */
     template<typename CastType>
-    FORCEINLINE HRESULT GetAs( CastType** NewPointer ) const noexcept
+    FORCEINLINE HRESULT GetAs(CastType** NewPointer) const noexcept
     {
-        return Ptr->QueryInterface( IID_PPV_ARGS( NewPointer ) );
+        return Ptr->QueryInterface(IID_PPV_ARGS(NewPointer));
     }
 
-    FORCEINLINE HRESULT GetAs( REFIID Riid, TComPtr<IUnknown>* ComObject ) const
+    FORCEINLINE HRESULT GetAs(REFIID Riid, TComPtr<IUnknown>* ComObject) const
     {
         TComPtr<IUnknown> NewPointer;
 
-        HRESULT Result = Ptr->QueryInterface( Riid, &NewPointer );
-        if ( SUCCEEDED( Result ) )
+        HRESULT Result = Ptr->QueryInterface(Riid, &NewPointer);
+        if (SUCCEEDED(Result))
         {
             *ComObject = NewPointer;
         }
-        
+
         return Result;
     }
 
@@ -165,7 +165,7 @@ public:
     }
 
     /* Get the address of the raw pointer */
-    FORCEINLINE ElementType* const * GetAddressOf() const noexcept
+    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return &Ptr;
     }
@@ -189,7 +189,7 @@ public:
     }
 
     /* Retrieve the address of the pointer */
-    FORCEINLINE ElementType* const * operator&() const noexcept
+    FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
@@ -207,54 +207,54 @@ public:
     }
 
     /* Copy another shared-ref into this */
-    FORCEINLINE TComPtr& operator=( const TComPtr& RHS ) noexcept
+    FORCEINLINE TComPtr& operator=(const TComPtr& RHS) noexcept
     {
-        TComPtr( RHS ).Swap( *this );
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /* Copy another shared-ref into this of another type */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=( const TComPtr<OtherType>& RHS ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(const TComPtr<OtherType>& RHS) noexcept
     {
-        TComPtr( RHS ).Swap( *this );
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /* Move another shared-ref into this */
-    FORCEINLINE TComPtr& operator=( TComPtr&& RHS ) noexcept
+    FORCEINLINE TComPtr& operator=(TComPtr&& RHS) noexcept
     {
-        TComPtr( RHS ).Swap( *this );
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /* Move another shared-ref into this of another type */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=( TComPtr<OtherType>&& RHS ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(TComPtr<OtherType>&& RHS) noexcept
     {
-        TComPtr( RHS ).Swap( *this );
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /* Assign from a raw pointer */
-    FORCEINLINE TComPtr& operator=( ElementType* RHS ) noexcept
+    FORCEINLINE TComPtr& operator=(ElementType* RHS) noexcept
     {
-        TComPtr( RHS ).Swap( *this );
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /* Assign from a pointer of another type */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=( OtherType* RHS ) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(OtherType* RHS) noexcept
     {
-        TComPtr( RHS ).Swap( *this );
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /* Set the pointer to nullptr */
-    FORCEINLINE TComPtr& operator=( NullptrType ) noexcept
+    FORCEINLINE TComPtr& operator=(NullptrType) noexcept
     {
-        TComPtr().Swap( *this );
+        TComPtr().Swap(*this);
         return *this;
     }
 
@@ -262,7 +262,7 @@ private:
 
     FORCEINLINE void Release() noexcept
     {
-        if ( Ptr )
+        if (Ptr)
         {
             Ptr->Release();
             Ptr = nullptr;
@@ -274,82 +274,82 @@ private:
 
 /* Check the equality between shared ref and a raw pointer */
 template<typename T, typename U>
-FORCEINLINE bool operator==( const TComPtr<T>& LHS, U* RHS ) noexcept
+FORCEINLINE bool operator==(const TComPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
 /* Check the equality between shared ref and a raw pointer */
 template<typename T, typename U>
-FORCEINLINE bool operator==( T* LHS, const TComPtr<U>& RHS ) noexcept
+FORCEINLINE bool operator==(T* LHS, const TComPtr<U>& RHS) noexcept
 {
     return (LHS == RHS.Get());
 }
 
 /* Check the inequality between shared ref and a raw pointer */
 template<typename T, typename U>
-FORCEINLINE bool operator!=( const TComPtr<T>& LHS, U* RHS ) noexcept
+FORCEINLINE bool operator!=(const TComPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
 /* Check the inequality between shared-ref and a raw pointer */
 template<typename T, typename U>
-FORCEINLINE bool operator!=( T* LHS, const TComPtr<U>& RHS ) noexcept
+FORCEINLINE bool operator!=(T* LHS, const TComPtr<U>& RHS) noexcept
 {
     return (LHS != RHS.Get());
 }
 
 /* Check the equality between shared-refs */
 template<typename T, typename U>
-FORCEINLINE bool operator==( const TComPtr<T>& LHS, const TComPtr<U>& RHS ) noexcept
+FORCEINLINE bool operator==(const TComPtr<T>& LHS, const TComPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
 /* Check the equality between shared-refs */
 template<typename T, typename U>
-FORCEINLINE bool operator!=( const TComPtr<T>& LHS, const TComPtr<U>& RHS ) noexcept
+FORCEINLINE bool operator!=(const TComPtr<T>& LHS, const TComPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
 /* Check the equality between shared-refs and nullptr */
 template<typename T>
-FORCEINLINE bool operator==( const TComPtr<T>& LHS, NullptrType ) noexcept
+FORCEINLINE bool operator==(const TComPtr<T>& LHS, NullptrType) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
 /* Check the equality between shared-ref and nullptr */
 template<typename T>
-FORCEINLINE bool operator==( NullptrType, const TComPtr<T>& RHS ) noexcept
+FORCEINLINE bool operator==(NullptrType, const TComPtr<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
 /* Check the inequality between shared-ref and nullptr */
 template<typename T>
-FORCEINLINE bool operator!=( const TComPtr<T>& LHS, NullptrType ) noexcept
+FORCEINLINE bool operator!=(const TComPtr<T>& LHS, NullptrType) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
 /* Check the inequality between shared-ref and nullptr */
 template<typename T>
-FORCEINLINE bool operator!=( NullptrType, const TComPtr<T>& RHS ) noexcept
+FORCEINLINE bool operator!=(NullptrType, const TComPtr<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }
 
 /* Converts a raw pointer into a TComPtr */
 template<typename T, typename U>
-FORCEINLINE TComPtr<T> MakeComPtr( U* InRefCountedObject )
+FORCEINLINE TComPtr<T> MakeComPtr(U* InRefCountedObject)
 {
-    if ( InRefCountedObject )
+    if (InRefCountedObject)
     {
         InRefCountedObject->AddRef();
-        return TComPtr<T>( static_cast<T*>(InRefCountedObject) );
+        return TComPtr<T>(static_cast<T*>(InRefCountedObject));
     }
 
     return nullptr;

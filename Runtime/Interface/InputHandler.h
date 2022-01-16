@@ -15,35 +15,35 @@
 class CInputHandler
 {
 public:
-	
-	virtual ~CInputHandler() = default;
+
+    virtual ~CInputHandler() = default;
 
     /* Handle KeyEvent event, if the event-handler consumes the event, return true */
-    virtual bool HandleKeyEvent( const SKeyEvent& KeyEvent )
+    virtual bool HandleKeyEvent(const SKeyEvent& KeyEvent)
     {
         return false;
     }
 
     /* Handle Key typed (String-Character), if the event-handler consumes the event, return true */
-    virtual bool HandleKeyTyped( SKeyTypedEvent KeyTypedEvent )
+    virtual bool HandleKeyTyped(SKeyTypedEvent KeyTypedEvent)
     {
         return false;
     }
 
     /* Handle mouse move event, if the event-handler consumes the event, return true */
-    virtual bool HandleMouseMove( const SMouseMovedEvent& MouseEvent )
+    virtual bool HandleMouseMove(const SMouseMovedEvent& MouseEvent)
     {
         return false;
     }
 
     /* Handle mouse button event, if the event-handler consumes the event, return true */
-    virtual bool HandleMouseButtonEvent( const SMouseButtonEvent& MouseEvent )
+    virtual bool HandleMouseButtonEvent(const SMouseButtonEvent& MouseEvent)
     {
         return false;
     }
 
     /* Handle mouse scrolled event, if the event-handler consumes the event, return true */
-    virtual bool HandleMouseScrolled( const SMouseScrolledEvent& MouseEvent )
+    virtual bool HandleMouseScrolled(const SMouseScrolledEvent& MouseEvent)
     {
         return false;
     }

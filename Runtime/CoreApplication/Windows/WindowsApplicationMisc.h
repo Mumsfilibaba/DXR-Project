@@ -16,19 +16,19 @@ class COREAPPLICATION_API CWindowsApplicationMisc final : public CPlatformApplic
 public:
 
     /* Shows a message box with desired title and message */
-    static FORCEINLINE void MessageBox( const CString& Title, const CString& Message )
+    static FORCEINLINE void MessageBox(const CString& Title, const CString& Message)
     {
-        MessageBoxA( 0, Message.CStr(), Title.CStr(), MB_ICONERROR | MB_OK );
+        MessageBoxA(0, Message.CStr(), Title.CStr(), MB_ICONERROR | MB_OK);
     }
 
     /* Sends a quit message which then is handled in the applications message loop */
-    static FORCEINLINE void RequestExit( int32 ExitCode )
+    static FORCEINLINE void RequestExit(int32 ExitCode)
     {
-        PostQuitMessage( ExitCode );
+        PostQuitMessage(ExitCode);
     }
 
     /* Pumps the application's message queue */
-    static void PumpMessages( bool bUntilEmpty );
+    static void PumpMessages(bool bUntilEmpty);
 
     /* Retrieves the current modifier key- state */
     static SModifierKeyState GetModifierKeyState();

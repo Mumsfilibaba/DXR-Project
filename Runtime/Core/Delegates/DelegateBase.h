@@ -15,19 +15,19 @@ class CDelegateBase
 public:
 
     /* Copy constructor */
-    FORCEINLINE CDelegateBase( const CDelegateBase& Other )
+    FORCEINLINE CDelegateBase(const CDelegateBase& Other)
         : Storage()
         , Size()
     {
-        CopyFrom( Other );
+        CopyFrom(Other);
     }
 
     /* Move constructor */
-    FORCEINLINE CDelegateBase( CDelegateBase&& Other )
+    FORCEINLINE CDelegateBase(CDelegateBase&& Other)
         : Storage()
-        , Size( Other.Size )
+        , Size(Other.Size)
     {
-        Storage.MoveFrom( Move( Other.Storage ) );
+        Storage.MoveFrom(Move(Other.Storage));
         Other.Size = 0;
     }
 
@@ -44,14 +44,14 @@ public:
     }
 
     /* Swaps two delegates */
-    FORCEINLINE void Swap( CDelegateBase& Other )
+    FORCEINLINE void Swap(CDelegateBase& Other)
     {
         AllocatorType TempStorage;
-        TempStorage.MoveFrom( Move( Storage ) );
-        Storage.MoveFrom( Move( Other.Storage ) );
-        Other.Storage.MoveFrom( Move( TempStorage ) );
+        TempStorage.MoveFrom(Move(Storage));
+        Storage.MoveFrom(Move(Other.Storage));
+        Other.Storage.MoveFrom(Move(TempStorage));
 
-        ::Swap<int32>( Size, Other.Size );
+        ::Swap<int32>(Size, Other.Size);
     }
 
     /* Cheacks weather or not there exist any delegate bound */
@@ -61,11 +61,11 @@ public:
     }
 
     /* Check if object is bound to this delegate */
-    FORCEINLINE bool IsObjectBound( const void* Object ) const
+    FORCEINLINE bool IsObjectBound(const void* Object) const
     {
-        if ( Object != nullptr && IsBound() )
+        if (Object != nullptr && IsBound())
         {
-            return GetDelegate()->IsObjectBound( Object );
+            return GetDelegate()->IsObjectBound(Object);
         }
         else
         {
@@ -74,9 +74,9 @@ public:
     }
 
     /* Check if object is bound to this delegate */
-    FORCEINLINE bool UnbindIfBound( const void* Object )
+    FORCEINLINE bool UnbindIfBound(const void* Object)
     {
-        if ( IsObjectBound( Object ) )
+        if (IsObjectBound(Object))
         {
             Unbind();
             return true;
@@ -90,7 +90,7 @@ public:
     /* Retrieve the bound object, returns nullptr for non-member delegates */
     FORCEINLINE const void* GetBoundObject() const
     {
-        if ( IsBound() )
+        if (IsBound())
         {
             return GetDelegate()->GetBoundObject();
         }
@@ -103,7 +103,7 @@ public:
     /* Retrieve the delegate handle for this object */
     FORCEINLINE CDelegateHandle GetHandle() const
     {
-        if ( IsBound() )
+        if (IsBound())
         {
             return GetDelegate()->GetHandle();
         }
@@ -114,16 +114,16 @@ public:
     }
 
     /* Move assignment */
-    FORCEINLINE CDelegateBase& operator=( CDelegateBase&& RHS )
+    FORCEINLINE CDelegateBase& operator=(CDelegateBase&& RHS)
     {
-        CDelegateBase( Move( RHS ) ).Swap( *this );
+        CDelegateBase(Move(RHS)).Swap(*this);
         return *this;
     }
 
     /* Copy assignment */
-    FORCEINLINE CDelegateBase& operator=( const CDelegateBase& RHS )
+    FORCEINLINE CDelegateBase& operator=(const CDelegateBase& RHS)
     {
-        CDelegateBase( RHS ).Swap( *this );
+        CDelegateBase(RHS).Swap(*this);
         return *this;
     }
 
@@ -135,27 +135,27 @@ protected:
     /* Constructor for a empty delegate */
     FORCEINLINE explicit CDelegateBase()
         : Storage()
-        , Size( 0 )
+        , Size(0)
     {
     }
 
     /* Release the delegate */
     FORCEINLINE void Release()
     {
-        if ( IsBound() )
+        if (IsBound())
         {
             GetDelegate()->~IDelegateInstance();
         }
     }
 
     /* Copy from another function */
-    FORCEINLINE void CopyFrom( const CDelegateBase& Other ) noexcept
+    FORCEINLINE void CopyFrom(const CDelegateBase& Other) noexcept
     {
-        if ( Other.IsBound() )
+        if (Other.IsBound())
         {
             int32 CurrentSize = Size;
-            Storage.Realloc( CurrentSize, Other.Size );
-            Other.GetDelegate()->Clone( Storage.GetAllocation() );
+            Storage.Realloc(CurrentSize, Other.Size);
+            Other.GetDelegate()->Clone(Storage.GetAllocation());
 
             Size = Other.Size;
         }
@@ -167,11 +167,11 @@ protected:
     }
 
     /* Allocate from storage, set size, and return the memory */
-    FORCEINLINE void* AllocateStorage( int32 NewSize )
+    FORCEINLINE void* AllocateStorage(int32 NewSize)
     {
         int32 PreviousSize = Size;
         Size = NewSize;
-        return Storage.Realloc( PreviousSize, Size );
+        return Storage.Realloc(PreviousSize, Size);
     }
 
     /* Internal function that is used to retrive the functor pointer */

@@ -9,10 +9,10 @@ class CD3D12DeviceChild
 {
 public:
 
-    CD3D12DeviceChild( CD3D12Device* InDevice )
-        : Device( InDevice )
+    CD3D12DeviceChild(CD3D12Device* InDevice)
+        : Device(InDevice)
     {
-        Assert( Device != nullptr );
+        Assert(Device != nullptr);
     }
 
     virtual ~CD3D12DeviceChild()

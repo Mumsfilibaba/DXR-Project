@@ -4,12 +4,12 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
-CD3D12RHIViewport::CD3D12RHIViewport( CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight )
-    : CD3D12DeviceChild( InDevice )
-    , CRHIViewport( InFormat, InWidth, InHeight )
-    , Hwnd( InHwnd )
-    , SwapChain( nullptr )
-    , CmdContext( InCmdContext )
+CD3D12RHIViewport::CD3D12RHIViewport(CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+    : CD3D12DeviceChild(InDevice)
+    , CRHIViewport(InFormat, InWidth, InHeight)
+    , Hwnd(InHwnd)
+    , SwapChain(nullptr)
+    , CmdContext(InCmdContext)
     , BackBuffers()
     , BackBufferViews()
 {
@@ -19,18 +19,18 @@ CD3D12RHIViewport::~CD3D12RHIViewport()
 {
     BOOL FullscreenState;
 
-    HRESULT Result = SwapChain->GetFullscreenState( &FullscreenState, nullptr );
-    if ( SUCCEEDED( Result ) )
+    HRESULT Result = SwapChain->GetFullscreenState(&FullscreenState, nullptr);
+    if (SUCCEEDED(Result))
     {
-        if ( FullscreenState )
+        if (FullscreenState)
         {
-            SwapChain->SetFullscreenState( FALSE, nullptr );
+            SwapChain->SetFullscreenState(FALSE, nullptr);
         }
     }
 
-    if ( SwapChainWaitableObject )
+    if (SwapChainWaitableObject)
     {
-        CloseHandle( SwapChainWaitableObject );
+        CloseHandle(SwapChainWaitableObject);
     }
 }
 
@@ -41,12 +41,12 @@ bool CD3D12RHIViewport::Init()
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
     const uint32 NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
-    const DXGI_FORMAT NativeFormat = ConvertFormat( Format );
+    const DXGI_FORMAT NativeFormat = ConvertFormat(Format);
 
-    Assert( Width > 0 && Height > 0 );
+    Assert(Width > 0 && Height > 0);
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
-    CMemory::Memzero( &SwapChainDesc );
+    CMemory::Memzero(&SwapChainDesc);
 
     SwapChainDesc.Width = Width;
     SwapChainDesc.Height = Height;
@@ -61,7 +61,7 @@ bool CD3D12RHIViewport::Init()
     SwapChainDesc.Flags = Flags;
 
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc;
-    CMemory::Memzero( &FullscreenDesc );
+    CMemory::Memzero(&FullscreenDesc);
 
     FullscreenDesc.RefreshRate.Numerator = 0;
     FullscreenDesc.RefreshRate.Denominator = 1;
@@ -70,66 +70,66 @@ bool CD3D12RHIViewport::Init()
     FullscreenDesc.Windowed = true;
 
     TComPtr<IDXGISwapChain1> TempSwapChain;
-    HRESULT Result = GetDevice()->GetFactory()->CreateSwapChainForHwnd( CmdContext->GetQueue().GetQueue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain );
-    if ( SUCCEEDED( Result ) )
+    HRESULT Result = GetDevice()->GetFactory()->CreateSwapChainForHwnd(CmdContext->GetQueue().GetQueue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
+    if (SUCCEEDED(Result))
     {
-        Result = TempSwapChain.GetAs<IDXGISwapChain3>( &SwapChain );
-        if ( FAILED( Result ) )
+        Result = TempSwapChain.GetAs<IDXGISwapChain3>(&SwapChain);
+        if (FAILED(Result))
         {
-            LOG_ERROR( "[CD3D12Viewport]: FAILED to retrive IDXGISwapChain3" );
+            LOG_ERROR("[CD3D12Viewport]: FAILED to retrive IDXGISwapChain3");
             return false;
         }
 
         NumBackBuffers = NumSwapChainBuffers;
 
-        if ( Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT )
+        if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         {
             SwapChainWaitableObject = SwapChain->GetFrameLatencyWaitableObject();
         }
 
-        SwapChain->SetMaximumFrameLatency( 5 );
+        SwapChain->SetMaximumFrameLatency(5);
     }
     else
     {
-        LOG_ERROR( "[CD3D12Viewport]: FAILED to create SwapChain" );
+        LOG_ERROR("[CD3D12Viewport]: FAILED to create SwapChain");
         return false;
     }
 
-    GetDevice()->GetFactory()->MakeWindowAssociation( Hwnd, DXGI_MWA_NO_ALT_ENTER );
+    GetDevice()->GetFactory()->MakeWindowAssociation(Hwnd, DXGI_MWA_NO_ALT_ENTER);
 
-    if ( !RetriveBackBuffers() )
+    if (!RetriveBackBuffers())
     {
         return false;
     }
 
-    LOG_INFO( "[CD3D12Viewport]: Created SwapChain" );
+    LOG_INFO("[CD3D12Viewport]: Created SwapChain");
     return true;
 }
 
-bool CD3D12RHIViewport::Resize( uint32 InWidth, uint32 InHeight )
+bool CD3D12RHIViewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     // TODO: Make sure that we release the old surfaces
 
-    if ( (InWidth != Width || InHeight != Height) && InWidth > 0 && InHeight > 0 )
+    if ((InWidth != Width || InHeight != Height) && InWidth > 0 && InHeight > 0)
     {
         CmdContext->ClearState();
 
         BackBuffers.Clear();
         BackBufferViews.Clear();
 
-        HRESULT Result = SwapChain->ResizeBuffers( 0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags );
-        if ( SUCCEEDED( Result ) )
+        HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
+        if (SUCCEEDED(Result))
         {
             Width = InWidth;
             Height = InHeight;
         }
         else
         {
-            LOG_WARNING( "[CD3D12Viewport]: Resize FAILED" );
+            LOG_WARNING("[CD3D12Viewport]: Resize FAILED");
             return false;
         }
 
-        if ( !RetriveBackBuffers() )
+        if (!RetriveBackBuffers())
         {
             return false;
         }
@@ -140,31 +140,31 @@ bool CD3D12RHIViewport::Resize( uint32 InWidth, uint32 InHeight )
     return true;
 }
 
-bool CD3D12RHIViewport::Present( bool VerticalSync )
+bool CD3D12RHIViewport::Present(bool VerticalSync)
 {
     TRACE_FUNCTION_SCOPE();
 
     const uint32 SyncInterval = !!VerticalSync;
 
     uint32 PresentFlags = 0;
-    if ( SyncInterval == 0 && Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING )
+    if (SyncInterval == 0 && Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
     {
         PresentFlags = DXGI_PRESENT_ALLOW_TEARING;
     }
 
-    HRESULT Result = SwapChain->Present( SyncInterval, PresentFlags );
-    if ( Result == DXGI_ERROR_DEVICE_REMOVED )
+    HRESULT Result = SwapChain->Present(SyncInterval, PresentFlags);
+    if (Result == DXGI_ERROR_DEVICE_REMOVED)
     {
-        RHID3D12DeviceRemovedHandler( GetDevice() );
+        RHID3D12DeviceRemovedHandler(GetDevice());
     }
 
-    if ( SUCCEEDED( Result ) )
+    if (SUCCEEDED(Result))
     {
         BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 
-        if ( Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT )
+        if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         {
-            WaitForSingleObjectEx( SwapChainWaitableObject, INFINITE, true );
+            WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, true);
         }
 
         return true;
@@ -175,36 +175,36 @@ bool CD3D12RHIViewport::Present( bool VerticalSync )
     }
 }
 
-void CD3D12RHIViewport::SetName( const CString& InName )
+void CD3D12RHIViewport::SetName(const CString& InName)
 {
-    SwapChain->SetPrivateData( WKPDID_D3DDebugObjectName, static_cast<UINT>(InName.Size()), InName.Data() );
+    SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(InName.Size()), InName.Data());
 
     uint32 Index = 0;
-    for ( TSharedRef<CD3D12RHITexture2D>& Buffer : BackBuffers )
+    for (TSharedRef<CD3D12RHITexture2D>& Buffer : BackBuffers)
     {
-        Buffer->SetName( InName + "Buffer [" + ToString( Index ) + "]" );
+        Buffer->SetName(InName + "Buffer [" + ToString(Index) + "]");
         Index++;
     }
 }
 
 bool CD3D12RHIViewport::RetriveBackBuffers()
 {
-    if ( BackBuffers.Size() < (int32)NumBackBuffers )
+    if (BackBuffers.Size() < (int32)NumBackBuffers)
     {
-        BackBuffers.Resize( NumBackBuffers );
+        BackBuffers.Resize(NumBackBuffers);
     }
 
-    if ( BackBufferViews.Size() < (int32)NumBackBuffers )
+    if (BackBufferViews.Size() < (int32)NumBackBuffers)
     {
         CD3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RHICore->GetRenderTargetOfflineDescriptorHeap();
-        BackBufferViews.Resize( NumBackBuffers );
+        BackBufferViews.Resize(NumBackBuffers);
 
-        for ( TSharedRef<CD3D12RenderTargetView>& View : BackBufferViews )
+        for (TSharedRef<CD3D12RenderTargetView>& View : BackBufferViews)
         {
-            if ( !View )
+            if (!View)
             {
-                View = dbg_new CD3D12RenderTargetView( GetDevice(), RenderTargetOfflineHeap );
-                if ( !View->AllocateHandle() )
+                View = dbg_new CD3D12RenderTargetView(GetDevice(), RenderTargetOfflineHeap);
+                if (!View->AllocateHandle())
                 {
                     return false;
                 }
@@ -212,34 +212,34 @@ bool CD3D12RHIViewport::RetriveBackBuffers()
         }
     }
 
-    for ( uint32 i = 0; i < NumBackBuffers; i++ )
+    for (uint32 i = 0; i < NumBackBuffers; i++)
     {
         TComPtr<ID3D12Resource> BackBufferResource;
-        HRESULT Result = SwapChain->GetBuffer( i, IID_PPV_ARGS( &BackBufferResource ) );
-        if ( FAILED( Result ) )
+        HRESULT Result = SwapChain->GetBuffer(i, IID_PPV_ARGS(&BackBufferResource));
+        if (FAILED(Result))
         {
-            LOG_INFO( "[CD3D12Viewport]: GetBuffer(" + ToString( i ) + ") Failed" );
+            LOG_INFO("[CD3D12Viewport]: GetBuffer(" + ToString(i) + ") Failed");
             return false;
         }
 
-        BackBuffers[i] = dbg_new CD3D12RHITexture2D( GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, SClearValue() );
-        BackBuffers[i]->SetResource( dbg_new CD3D12Resource( GetDevice(), BackBufferResource ) );
+        BackBuffers[i] = dbg_new CD3D12RHITexture2D(GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, SClearValue());
+        BackBuffers[i]->SetResource(dbg_new CD3D12Resource(GetDevice(), BackBufferResource));
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;
-        CMemory::Memzero( &Desc );
+        CMemory::Memzero(&Desc);
 
         Desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
         Desc.Format = BackBuffers[i]->GetNativeFormat();
         Desc.Texture2D.MipSlice = 0;
         Desc.Texture2D.PlaneSlice = 0;
 
-        if ( !BackBufferViews[i]->CreateView( BackBuffers[i]->GetResource(), Desc ) )
+        if (!BackBufferViews[i]->CreateView(BackBuffers[i]->GetResource(), Desc))
         {
             return false;
         }
 
         BackBufferViews[i].AddRef();
-        BackBuffers[i]->SetRenderTargetView( BackBufferViews[i].Get() );
+        BackBuffers[i]->SetRenderTargetView(BackBufferViews[i].Get());
     }
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();

@@ -28,7 +28,7 @@ private:
     void DrawWindow();
 
     /* Draw the GPU data */
-    void DrawGPUData( float Width );
+    void DrawGPUData(float Width);
 
     /* Stores tables here to avoid allocating memory every frame */
     GPUProfileSamplesTable Samples;

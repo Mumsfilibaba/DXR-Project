@@ -19,11 +19,11 @@
 enum EWindowStyleFlag : uint32
 {
     WindowStyleFlag_None = 0x0,
-    WindowStyleFlag_Titled = FLAG( 1 ),
-    WindowStyleFlag_Closable = FLAG( 2 ),
-    WindowStyleFlag_Minimizable = FLAG( 3 ),
-    WindowStyleFlag_Maximizable = FLAG( 4 ),
-    WindowStyleFlag_Resizeable = FLAG( 5 ),
+    WindowStyleFlag_Titled = FLAG(1),
+    WindowStyleFlag_Closable = FLAG(2),
+    WindowStyleFlag_Minimizable = FLAG(3),
+    WindowStyleFlag_Maximizable = FLAG(4),
+    WindowStyleFlag_Resizeable = FLAG(5),
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -32,8 +32,8 @@ struct SWindowStyle
 {
     SWindowStyle() = default;
 
-    FORCEINLINE SWindowStyle( uint32 InStyle )
-        : Style( InStyle )
+    FORCEINLINE SWindowStyle(uint32 InStyle)
+        : Style(InStyle)
     {
     }
 
@@ -71,10 +71,10 @@ struct SWindowShape
 {
     SWindowShape() = default;
 
-    FORCEINLINE SWindowShape( uint32 InWidth, uint32 InHeight, int32 x, int32 y )
-        : Width( InWidth )
-        , Height( InHeight )
-        , Position( { x, y } )
+    FORCEINLINE SWindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
+        : Width(InWidth)
+        , Height(InHeight)
+        , Position({ x, y })
     {
     }
 
@@ -96,25 +96,25 @@ class CPlatformWindow : public CRefCounted
 public:
 
     /* Initializes the window */
-    virtual bool Initialize( const CString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style ) { return true; }
+    virtual bool Initialize(const CString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) { return true; }
 
     /* Shows the window */
-    virtual void Show( bool bMaximized ) {}
+    virtual void Show(bool bMaximized) { }
 
     /* Minimizes the window */
-    virtual void Minimize() {}
+    virtual void Minimize() { }
 
     /* Maximizes the window */
-    virtual void Maximize() {}
+    virtual void Maximize() { }
 
     /* Closes the window */
-    virtual void Close() {}
+    virtual void Close() { }
 
     /* Restores the window after being minimized or maximized */
-    virtual void Restore() {}
+    virtual void Restore() { }
 
     /* Makes the window a borderless fullscreen window */
-    virtual void ToggleFullscreen() {}
+    virtual void ToggleFullscreen() { }
 
     /* Checks if the underlaying native handle of the window is valid */
     virtual bool IsValid() const { return false; }
@@ -123,22 +123,22 @@ public:
     virtual bool IsActiveWindow() const { return false; }
 
     /* Sets the title */
-    virtual void SetTitle( const CString& Title ) {}
+    virtual void SetTitle(const CString& Title) { }
 
     /* Retrieve the window title */
-    virtual void GetTitle( CString& OutTitle ) {}
+    virtual void GetTitle(CString& OutTitle) { }
 
     /* Set the position of the window */
-    virtual void MoveTo( int32 x, int32 y ) {}
+    virtual void MoveTo(int32 x, int32 y) { }
 
     /* Set the shape of the window */
-    virtual void SetWindowShape( const SWindowShape& Shape, bool bMove ) {}
+    virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) { }
 
     /* Retrieve the shape of the window */
-    virtual void GetWindowShape( SWindowShape& OutWindowShape ) const {}
+    virtual void GetWindowShape(SWindowShape& OutWindowShape) const { }
 
     /* Get the fullscreen information of the monitor that the window currently is on */
-    virtual void GetFullscreenInfo( uint32& OutWidth, uint32& OutHeight ) const {}
+    virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const { }
 
     /* Retrieve the width of the window */
     virtual uint32 GetWidth()  const { return 0; }

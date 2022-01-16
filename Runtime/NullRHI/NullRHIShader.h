@@ -21,7 +21,7 @@ public:
 
     virtual CIntVector3 GetThreadGroupXYZ() const override
     {
-        return CIntVector3( 1, 1, 1 );
+        return CIntVector3(1, 1, 1);
     }
 };
 
@@ -34,27 +34,27 @@ public:
     {
     }
 
-    virtual void GetShaderParameterInfo( SShaderParameterInfo& OutShaderParameterInfo ) const override
+    virtual void GetShaderParameterInfo(SShaderParameterInfo& OutShaderParameterInfo) const override
     {
         OutShaderParameterInfo = SShaderParameterInfo();
     }
 
-    virtual bool GetShaderResourceViewIndexByName( const CString& InName, uint32& OutIndex ) const override
+    virtual bool GetShaderResourceViewIndexByName(const CString& InName, uint32& OutIndex) const override
     {
         return true;
     }
 
-    virtual bool GetSamplerIndexByName( const CString& InName, uint32& OutIndex ) const override
+    virtual bool GetSamplerIndexByName(const CString& InName, uint32& OutIndex) const override
     {
         return true;
     }
 
-    virtual bool GetUnorderedAccessViewIndexByName( const CString& InName, uint32& OutIndex ) const override
+    virtual bool GetUnorderedAccessViewIndexByName(const CString& InName, uint32& OutIndex) const override
     {
         return true;
     }
 
-    virtual bool GetConstantBufferIndexByName( const CString& InName, uint32& OutIndex ) const override
+    virtual bool GetConstantBufferIndexByName(const CString& InName, uint32& OutIndex) const override
     {
         return true;
     }

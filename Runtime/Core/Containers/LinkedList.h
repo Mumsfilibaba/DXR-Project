@@ -5,15 +5,15 @@ template<typename T>
 struct TLinkedListNode
 {
     FORCEINLINE TLinkedListNode() noexcept
-        : Next( nullptr )
+        : Next(nullptr)
         , Item()
     {
     }
 
     template<typename... ArgTypes>
-    FORCEINLINE TLinkedListNode( ArgTypes&&... Args ) noexcept
-        : Next( nullptr )
-        , Item( Forward<ArgTypes>( Args )... )
+    FORCEINLINE TLinkedListNode(ArgTypes&&... Args) noexcept
+        : Next(nullptr)
+        , Item(Forward<ArgTypes>(Args)...)
     {
     }
 
@@ -25,16 +25,16 @@ template<typename T>
 struct TDoubleLinkedListNode
 {
     FORCEINLINE TDoubleLinkedListNode() noexcept
-        : Next( nullptr )
-        , Previous( nullptr )
+        : Next(nullptr)
+        , Previous(nullptr)
         , Item()
     {
     }
 
     template<typename... ArgTypes>
-    FORCEINLINE TDoubleLinkedListNode( ArgTypes&&... Args ) noexcept
-        : Next( nullptr )
-        , Item( Forward<ArgTypes>( Args )... )
+    FORCEINLINE TDoubleLinkedListNode(ArgTypes&&... Args) noexcept
+        : Next(nullptr)
+        , Item(Forward<ArgTypes>(Args)...)
     {
     }
 

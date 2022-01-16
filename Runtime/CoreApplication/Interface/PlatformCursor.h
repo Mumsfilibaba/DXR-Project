@@ -15,7 +15,7 @@ protected:
 
     FORCEINLINE CPlatformCursor()
         : ICursor()
-        , bIsVisible( true )
+        , bIsVisible(true)
     {
     }
 

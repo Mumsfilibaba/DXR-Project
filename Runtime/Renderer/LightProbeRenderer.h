@@ -10,14 +10,14 @@ public:
     CLightProbeRenderer() = default;
     ~CLightProbeRenderer() = default;
 
-    bool Init( SLightSetup& LightSetup, SFrameResources& FrameResources );
+    bool Init(SLightSetup& LightSetup, SFrameResources& FrameResources);
 
     void Release();
 
-    void RenderSkyLightProbe( CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& Resources );
+    void RenderSkyLightProbe(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& Resources);
 
 private:
-    bool CreateSkyLightResources( SLightSetup& LightSetup );
+    bool CreateSkyLightResources(SLightSetup& LightSetup);
 
     TSharedRef<CRHIComputePipelineState> IrradianceGenPSO;
     TSharedRef<CRHIComputeShader>        IrradianceGenShader;

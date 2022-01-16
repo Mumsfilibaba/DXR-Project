@@ -48,29 +48,29 @@ public:
     {
     }
 
-    TConsoleVariable( T StartValue )
+    TConsoleVariable(T StartValue)
         : CConsoleVariable()
-        , Value( StartValue )
+        , Value(StartValue)
     {
     }
 
-    virtual void SetString( const CString& InValue ) override;
+    virtual void SetString(const CString& InValue) override;
 
     virtual CString GetString() const override;
 
-    virtual void SetInt( int32 InValue ) override
+    virtual void SetInt(int32 InValue) override
     {
         Value = static_cast<T>(InValue);
         OnChanged();
     }
 
-    virtual void SetFloat( float InValue ) override
+    virtual void SetFloat(float InValue) override
     {
         Value = static_cast<T>(InValue);
         OnChanged();
     }
 
-    virtual void SetBool( bool bValue ) override
+    virtual void SetBool(bool bValue) override
     {
         Value = static_cast<T>(bValue);
         OnChanged();
@@ -114,9 +114,9 @@ public:
 private:
     FORCEINLINE void OnChanged()
     {
-        if ( ChangedDelegate.IsBound() )
+        if (ChangedDelegate.IsBound())
         {
-            ChangedDelegate.Broadcast( this );
+            ChangedDelegate.Broadcast(this);
         }
     }
 
@@ -125,9 +125,9 @@ private:
 
 // int32
 template<>
-inline void TConsoleVariable<int32>::SetString( const CString& InValue )
+inline void TConsoleVariable<int32>::SetString(const CString& InValue)
 {
-    Value = atoi( InValue.CStr() );
+    Value = atoi(InValue.CStr());
     OnChanged();
 }
 
@@ -141,15 +141,15 @@ template<>
 inline CString TConsoleVariable<int32>::GetString() const
 {
     CString String;
-    String.Format( "%d", Value );
+    String.Format("%d", Value);
     return String;
 }
 
 // float
 template<>
-inline void TConsoleVariable<float>::SetString( const CString& InValue )
+inline void TConsoleVariable<float>::SetString(const CString& InValue)
 {
-    Value = (float)atof( InValue.CStr() );
+    Value = (float)atof(InValue.CStr());
     OnChanged();
 }
 
@@ -163,21 +163,21 @@ template<>
 inline CString TConsoleVariable<float>::GetString() const
 {
     CString String;
-    String.Format( "%.4f", Value );
+    String.Format("%.4f", Value);
     return String;
 }
 
 // bool
 template<>
-inline void TConsoleVariable<bool>::SetString( const CString& InValue )
+inline void TConsoleVariable<bool>::SetString(const CString& InValue)
 {
     CString Lower = InValue.ToLower();
 
     int32 Number = 0;
-    std::istringstream Stream( Lower.CStr() );
+    std::istringstream Stream(Lower.CStr());
     Stream >> Number;
 
-    if ( Stream.fail() )
+    if (Stream.fail())
     {
         Stream.clear();
         Stream >> std::boolalpha >> Value;
@@ -187,7 +187,7 @@ inline void TConsoleVariable<bool>::SetString( const CString& InValue )
         Value = static_cast<bool>(Number);
     }
 
-    if ( !Stream.fail() )
+    if (!Stream.fail())
     {
         OnChanged();
     }
@@ -207,19 +207,19 @@ inline bool TConsoleVariable<bool>::IsBool() const
 
 // String
 template<>
-inline void TConsoleVariable<CString>::SetInt( int32 InValue )
+inline void TConsoleVariable<CString>::SetInt(int32 InValue)
 {
-    Value.Format( "%d", InValue );
+    Value.Format("%d", InValue);
 }
 
 template<>
-inline void TConsoleVariable<CString>::SetFloat( float InValue )
+inline void TConsoleVariable<CString>::SetFloat(float InValue)
 {
-    Value.Format( "%.4f", InValue );
+    Value.Format("%.4f", InValue);
 }
 
 template<>
-inline void TConsoleVariable<CString>::SetBool( bool InValue )
+inline void TConsoleVariable<CString>::SetBool(bool InValue)
 {
     std::stringstream Stream;
     Stream << std::boolalpha << InValue;
@@ -227,7 +227,7 @@ inline void TConsoleVariable<CString>::SetBool( bool InValue )
 }
 
 template<>
-inline void TConsoleVariable<CString>::SetString( const CString& InValue )
+inline void TConsoleVariable<CString>::SetString(const CString& InValue)
 {
     Value = InValue;
     OnChanged();

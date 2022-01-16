@@ -8,13 +8,13 @@ enum class EDepthWriteMask
     All = 1
 };
 
-inline const char* ToString( EDepthWriteMask DepthWriteMask )
+inline const char* ToString(EDepthWriteMask DepthWriteMask)
 {
-    switch ( DepthWriteMask )
+    switch (DepthWriteMask)
     {
-        case EDepthWriteMask::Zero: return "Zero";
-        case EDepthWriteMask::All:  return "All";
-        default: return "Unknown";
+    case EDepthWriteMask::Zero: return "Zero";
+    case EDepthWriteMask::All:  return "All";
+    default: return "Unknown";
     }
 }
 
@@ -30,19 +30,19 @@ enum class EStencilOp
     Decr = 8
 };
 
-inline const char* ToString( EStencilOp StencilOp )
+inline const char* ToString(EStencilOp StencilOp)
 {
-    switch ( StencilOp )
+    switch (StencilOp)
     {
-        case EStencilOp::Keep:    return "Keep";
-        case EStencilOp::Zero:    return "Zero";
-        case EStencilOp::Replace: return "Replace";
-        case EStencilOp::IncrSat: return "IncrSat";
-        case EStencilOp::DecrSat: return "DecrSat";
-        case EStencilOp::Invert:  return "Invert";
-        case EStencilOp::Incr:    return "Incr";
-        case EStencilOp::Decr:    return "Decr";
-        default: return "Unknown";
+    case EStencilOp::Keep:    return "Keep";
+    case EStencilOp::Zero:    return "Zero";
+    case EStencilOp::Replace: return "Replace";
+    case EStencilOp::IncrSat: return "IncrSat";
+    case EStencilOp::DecrSat: return "DecrSat";
+    case EStencilOp::Invert:  return "Invert";
+    case EStencilOp::Incr:    return "Incr";
+    case EStencilOp::Decr:    return "Decr";
+    default: return "Unknown";
     }
 }
 
@@ -81,14 +81,14 @@ enum class ECullMode
     Back = 3
 };
 
-inline const char* ToString( ECullMode CullMode )
+inline const char* ToString(ECullMode CullMode)
 {
-    switch ( CullMode )
+    switch (CullMode)
     {
-        case ECullMode::None:  return "None";
-        case ECullMode::Front: return "Front";
-        case ECullMode::Back:  return "Back";
-        default: return "Unknown";
+    case ECullMode::None:  return "None";
+    case ECullMode::Front: return "Front";
+    case ECullMode::Back:  return "Back";
+    default: return "Unknown";
     }
 }
 
@@ -98,13 +98,13 @@ enum class EFillMode
     Solid = 2
 };
 
-inline const char* ToString( EFillMode FillMode )
+inline const char* ToString(EFillMode FillMode)
 {
-    switch ( FillMode )
+    switch (FillMode)
     {
-        case EFillMode::WireFrame: return "WireFrame";
-        case EFillMode::Solid:     return "Solid";
-        default: return "Unknown";
+    case EFillMode::WireFrame: return "WireFrame";
+    case EFillMode::Solid:     return "Solid";
+    default: return "Unknown";
     }
 }
 
@@ -152,28 +152,28 @@ enum class EBlend
     InvSrc1Alpha = 17
 };
 
-inline const char* ToString( EBlend Blend )
+inline const char* ToString(EBlend Blend)
 {
-    switch ( Blend )
+    switch (Blend)
     {
-        case EBlend::Zero:           return "Zero";
-        case EBlend::One:            return "One";
-        case EBlend::SrcColor:       return "SrcColor";
-        case EBlend::InvSrcColor:    return "InvSrcColor";
-        case EBlend::SrcAlpha:       return "SrcAlpha";
-        case EBlend::InvSrcAlpha:    return "InvSrcAlpha";
-        case EBlend::DestAlpha:      return "DestAlpha";
-        case EBlend::InvDestAlpha:   return "InvDestAlpha";
-        case EBlend::DestColor:      return "DestColor";
-        case EBlend::InvDestColor:   return "InvDestColor";
-        case EBlend::SrcAlphaSat:    return "SrcAlphaSat";
-        case EBlend::BlendFactor:    return "BlendFactor";
-        case EBlend::InvBlendFactor: return "InvBlendFactor";
-        case EBlend::Src1Color:      return "Src1Color";
-        case EBlend::InvSrc1Color:   return "InvSrc1Color";
-        case EBlend::Src1Alpha:      return "Src1Alpha";
-        case EBlend::InvSrc1Alpha:   return "InvSrc1Alpha";
-        default: return "Unknown";
+    case EBlend::Zero:           return "Zero";
+    case EBlend::One:            return "One";
+    case EBlend::SrcColor:       return "SrcColor";
+    case EBlend::InvSrcColor:    return "InvSrcColor";
+    case EBlend::SrcAlpha:       return "SrcAlpha";
+    case EBlend::InvSrcAlpha:    return "InvSrcAlpha";
+    case EBlend::DestAlpha:      return "DestAlpha";
+    case EBlend::InvDestAlpha:   return "InvDestAlpha";
+    case EBlend::DestColor:      return "DestColor";
+    case EBlend::InvDestColor:   return "InvDestColor";
+    case EBlend::SrcAlphaSat:    return "SrcAlphaSat";
+    case EBlend::BlendFactor:    return "BlendFactor";
+    case EBlend::InvBlendFactor: return "InvBlendFactor";
+    case EBlend::Src1Color:      return "Src1Color";
+    case EBlend::InvSrc1Color:   return "InvSrc1Color";
+    case EBlend::Src1Alpha:      return "Src1Alpha";
+    case EBlend::InvSrc1Alpha:   return "InvSrc1Alpha";
+    default: return "Unknown";
     }
 }
 
@@ -186,16 +186,16 @@ enum class EBlendOp
     Max = 5
 };
 
-inline const char* ToString( EBlendOp BlendOp )
+inline const char* ToString(EBlendOp BlendOp)
 {
-    switch ( BlendOp )
+    switch (BlendOp)
     {
-        case EBlendOp::Add:         return "Add";
-        case EBlendOp::Subtract:    return "Subtract";
-        case EBlendOp::RevSubtract: return "RevSubtract";
-        case EBlendOp::Min:         return "Min";
-        case EBlendOp::Max:         return "Max";
-        default: return "Unknown";
+    case EBlendOp::Add:         return "Add";
+    case EBlendOp::Subtract:    return "Subtract";
+    case EBlendOp::RevSubtract: return "RevSubtract";
+    case EBlendOp::Min:         return "Min";
+    case EBlendOp::Max:         return "Max";
+    default: return "Unknown";
     }
 }
 
@@ -219,27 +219,27 @@ enum class ELogicOp
     OrInverted = 15
 };
 
-inline const char* ToString( ELogicOp LogicOp )
+inline const char* ToString(ELogicOp LogicOp)
 {
-    switch ( LogicOp )
+    switch (LogicOp)
     {
-        case ELogicOp::Clear:        return "Clear";
-        case ELogicOp::Set:          return "Set";
-        case ELogicOp::Copy:         return "Copy";
-        case ELogicOp::CopyInverted: return "CopyInverted";
-        case ELogicOp::Noop:         return "Noop";
-        case ELogicOp::Invert:       return "Invert";
-        case ELogicOp::And:          return "And";
-        case ELogicOp::Nand:         return "Nand";
-        case ELogicOp::Or:           return "Or";
-        case ELogicOp::Nor:          return "Nor";
-        case ELogicOp::Xor:          return "Xor";
-        case ELogicOp::Equiv:        return "Equiv";
-        case ELogicOp::AndReverse:   return "AndReverse";
-        case ELogicOp::AndInverted:  return "AndInverted";
-        case ELogicOp::OrReverse:    return "OrReverse";
-        case ELogicOp::OrInverted:   return "OrInverted";
-        default: return "Unknown";
+    case ELogicOp::Clear:        return "Clear";
+    case ELogicOp::Set:          return "Set";
+    case ELogicOp::Copy:         return "Copy";
+    case ELogicOp::CopyInverted: return "CopyInverted";
+    case ELogicOp::Noop:         return "Noop";
+    case ELogicOp::Invert:       return "Invert";
+    case ELogicOp::And:          return "And";
+    case ELogicOp::Nand:         return "Nand";
+    case ELogicOp::Or:           return "Or";
+    case ELogicOp::Nor:          return "Nor";
+    case ELogicOp::Xor:          return "Xor";
+    case ELogicOp::Equiv:        return "Equiv";
+    case ELogicOp::AndReverse:   return "AndReverse";
+    case ELogicOp::AndInverted:  return "AndInverted";
+    case ELogicOp::OrReverse:    return "OrReverse";
+    case ELogicOp::OrInverted:   return "OrInverted";
+    default: return "Unknown";
     }
 }
 
@@ -257,8 +257,8 @@ struct SRenderTargetWriteState
 {
     SRenderTargetWriteState() = default;
 
-    SRenderTargetWriteState( uint8 InMask )
-        : Mask( InMask )
+    SRenderTargetWriteState(uint8 InMask)
+        : Mask(InMask)
     {
     }
 
@@ -332,13 +332,13 @@ enum class EInputClassification
     Instance = 1,
 };
 
-inline const char* ToString( EInputClassification BlendOp )
+inline const char* ToString(EInputClassification BlendOp)
 {
-    switch ( BlendOp )
+    switch (BlendOp)
     {
-        case EInputClassification::Vertex:   return "Vertex";
-        case EInputClassification::Instance: return "Instance";
-        default: return "Unknown";
+    case EInputClassification::Vertex:   return "Vertex";
+    case EInputClassification::Instance: return "Instance";
+    default: return "Unknown";
     }
 }
 
@@ -357,13 +357,13 @@ struct SInputLayoutStateCreateInfo
 {
     SInputLayoutStateCreateInfo() = default;
 
-    SInputLayoutStateCreateInfo( const TArray<SInputElement>& InElements )
-        : Elements( InElements )
+    SInputLayoutStateCreateInfo(const TArray<SInputElement>& InElements)
+        : Elements(InElements)
     {
     }
 
-    SInputLayoutStateCreateInfo( std::initializer_list<SInputElement> InList )
-        : Elements( InList )
+    SInputLayoutStateCreateInfo(std::initializer_list<SInputElement> InList)
+        : Elements(InList)
     {
     }
 
@@ -383,14 +383,14 @@ enum class EIndexBufferStripCutValue
     _0xffffffff = 2
 };
 
-inline const char* ToString( EIndexBufferStripCutValue IndexBufferStripCutValue )
+inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 {
-    switch ( IndexBufferStripCutValue )
+    switch (IndexBufferStripCutValue)
     {
-        case EIndexBufferStripCutValue::Disabled:    return "Disabled";
-        case EIndexBufferStripCutValue::_0xffff:     return "0xffff";
-        case EIndexBufferStripCutValue::_0xffffffff: return "0xffffffff";
-        default: return "";
+    case EIndexBufferStripCutValue::Disabled:    return "Disabled";
+    case EIndexBufferStripCutValue::_0xffff:     return "0xffff";
+    case EIndexBufferStripCutValue::_0xffffffff: return "0xffffffff";
+    default: return "";
     }
 }
 
@@ -420,9 +420,9 @@ struct SGraphicsPipelineShaderState
 {
     SGraphicsPipelineShaderState() = default;
 
-    SGraphicsPipelineShaderState( CRHIVertexShader* InVertexShader, CRHIPixelShader* InPixelShader )
-        : VertexShader( InVertexShader )
-        , PixelShader( InPixelShader )
+    SGraphicsPipelineShaderState(CRHIVertexShader* InVertexShader, CRHIPixelShader* InPixelShader)
+        : VertexShader(InVertexShader)
+        , PixelShader(InPixelShader)
     {
     }
 
@@ -459,8 +459,8 @@ struct SComputePipelineStateCreateInfo
 {
     SComputePipelineStateCreateInfo() = default;
 
-    SComputePipelineStateCreateInfo( CRHIComputeShader* InShader )
-        : Shader( InShader )
+    SComputePipelineStateCreateInfo(CRHIComputeShader* InShader)
+        : Shader(InShader)
     {
     }
 
@@ -479,10 +479,10 @@ struct SRayTracingHitGroup
 {
     SRayTracingHitGroup() = default;
 
-    SRayTracingHitGroup( const CString& InName, CRHIRayAnyHitShader* InAnyHit, CRHIRayClosestHitShader* InClosestHit )
-        : Name( InName )
-        , AnyHit( InAnyHit )
-        , ClosestHit( InClosestHit )
+    SRayTracingHitGroup(const CString& InName, CRHIRayAnyHitShader* InAnyHit, CRHIRayClosestHitShader* InClosestHit)
+        : Name(InName)
+        , AnyHit(InAnyHit)
+        , ClosestHit(InClosestHit)
     {
     }
 

@@ -11,10 +11,10 @@ public:
     CRayTracer() = default;
     ~CRayTracer() = default;
 
-    bool Init( SFrameResources& Resources );
+    bool Init(SFrameResources& Resources);
     void Release();
 
-    void PreRender( CRHICommandList& CmdList, SFrameResources& Resources, const CScene& Scene );
+    void PreRender(CRHICommandList& CmdList, SFrameResources& Resources, const CScene& Scene);
 
 private:
     TSharedRef<CRHIRayTracingPipelineState> Pipeline;

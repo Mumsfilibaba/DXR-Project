@@ -1,12 +1,12 @@
 #include "Frustum.h"
 
-CFrustum::CFrustum( float FarPlane, const CMatrix4& View, const CMatrix4& Projection )
+CFrustum::CFrustum(float FarPlane, const CMatrix4& View, const CMatrix4& Projection)
     : Planes()
 {
-    Create( FarPlane, View, Projection );
+    Create(FarPlane, View, Projection);
 }
 
-void CFrustum::Create( float FarPlane, const CMatrix4& View, const CMatrix4& Projection )
+void CFrustum::Create(float FarPlane, const CMatrix4& View, const CMatrix4& Projection)
 {
     // Calculate the minimum Z distance in the frustum.
     CMatrix4 TempProjection = Projection;
@@ -62,7 +62,7 @@ void CFrustum::Create( float FarPlane, const CMatrix4& View, const CMatrix4& Pro
     Planes[5].Normalize();
 }
 
-bool CFrustum::CheckAABB( const SAABB& Box )
+bool CFrustum::CheckAABB(const SAABB& Box)
 {
     const CVector3 Center = Box.GetCenter();
     const float Width = Box.GetWidth() / 2.0f;
@@ -70,54 +70,54 @@ bool CFrustum::CheckAABB( const SAABB& Box )
     const float Depth = Box.GetDepth() / 2.0f;
 
     CVector3 Coords[8];
-    Coords[0] = CVector3( Center.x - Width, Center.y - Height, Center.z - Depth );
-    Coords[1] = CVector3( Center.x + Width, Center.y - Height, Center.z - Depth );
-    Coords[2] = CVector3( Center.x - Width, Center.y + Height, Center.z - Depth );
-    Coords[3] = CVector3( Center.x + Width, Center.y + Height, Center.z - Depth );
-    Coords[4] = CVector3( Center.x - Width, Center.y - Height, Center.z + Depth );
-    Coords[5] = CVector3( Center.x + Width, Center.y - Height, Center.z + Depth );
-    Coords[6] = CVector3( Center.x - Width, Center.y + Height, Center.z + Depth );
-    Coords[7] = CVector3( Center.x + Width, Center.y + Height, Center.z + Depth );
+    Coords[0] = CVector3(Center.x - Width, Center.y - Height, Center.z - Depth);
+    Coords[1] = CVector3(Center.x + Width, Center.y - Height, Center.z - Depth);
+    Coords[2] = CVector3(Center.x - Width, Center.y + Height, Center.z - Depth);
+    Coords[3] = CVector3(Center.x + Width, Center.y + Height, Center.z - Depth);
+    Coords[4] = CVector3(Center.x - Width, Center.y - Height, Center.z + Depth);
+    Coords[5] = CVector3(Center.x + Width, Center.y - Height, Center.z + Depth);
+    Coords[6] = CVector3(Center.x - Width, Center.y + Height, Center.z + Depth);
+    Coords[7] = CVector3(Center.x + Width, Center.y + Height, Center.z + Depth);
 
-    for ( int32 Index = 0; Index < 6; Index++ )
+    for (int32 Index = 0; Index < 6; Index++)
     {
         const CPlane& Plane = Planes[Index];
-        if ( Plane.PlaneDotCoord( Coords[0] ) >= 0.0f )
+        if (Plane.PlaneDotCoord(Coords[0]) >= 0.0f)
         {
             continue;
         }
 
-        if ( Plane.PlaneDotCoord( Coords[1] ) >= 0.0f )
+        if (Plane.PlaneDotCoord(Coords[1]) >= 0.0f)
         {
             continue;
         }
 
-        if ( Plane.PlaneDotCoord( Coords[2] ) >= 0.0f )
+        if (Plane.PlaneDotCoord(Coords[2]) >= 0.0f)
         {
             continue;
         }
 
-        if ( Plane.PlaneDotCoord( Coords[3] ) >= 0.0f )
+        if (Plane.PlaneDotCoord(Coords[3]) >= 0.0f)
         {
             continue;
         }
 
-        if ( Plane.PlaneDotCoord( Coords[4] ) >= 0.0f )
+        if (Plane.PlaneDotCoord(Coords[4]) >= 0.0f)
         {
             continue;
         }
 
-        if ( Plane.PlaneDotCoord( Coords[5] ) >= 0.0f )
+        if (Plane.PlaneDotCoord(Coords[5]) >= 0.0f)
         {
             continue;
         }
 
-        if ( Plane.PlaneDotCoord( Coords[6] ) >= 0.0f )
+        if (Plane.PlaneDotCoord(Coords[6]) >= 0.0f)
         {
             continue;
         }
 
-        if ( Plane.PlaneDotCoord( Coords[7] ) >= 0.0f )
+        if (Plane.PlaneDotCoord(Coords[7]) >= 0.0f)
         {
             continue;
         }

@@ -21,7 +21,7 @@ private:
     };
 
     template<typename Fn, typename... Args>
-    struct TIsInvokableHelper<Fn, typename TVoid<decltype(Internal::Invoke( DeclVal<Fn>(), DeclVal<Args>()... )) >::Type, Args...>
+    struct TIsInvokableHelper<Fn, typename TVoid<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...)) >::Type, Args...>
     {
         enum
         {
@@ -52,11 +52,11 @@ private:
     };
 
     template<typename Fn, typename Ret, typename... Args>
-    struct TIsInvokableRHelper<Fn, Ret, typename TVoid<decltype(Internal::Invoke( DeclVal<Fn>(), DeclVal<Args>()... ))>::Type, Args...>
+    struct TIsInvokableRHelper<Fn, Ret, typename TVoid<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...))>::Type, Args...>
     {
         enum
         {
-            Value = TIsConvertible<decltype(Internal::Invoke( DeclVal<Fn>(), DeclVal<Args>()... )), Ret>::Value
+            Value = TIsConvertible<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...)), Ret>::Value
         };
     };
 

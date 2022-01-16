@@ -6,6 +6,6 @@ struct TIsUnion
 {
     enum
     {
-        Value = __is_union( T )
+        Value = __is_union(T)
     };
 };

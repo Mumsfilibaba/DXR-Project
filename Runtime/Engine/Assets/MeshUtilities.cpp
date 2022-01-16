@@ -1,8 +1,8 @@
 #include "MeshUtilities.h"
 
-void CMeshUtilities::Subdivide( SMeshData& OutData, uint32 Subdivisions ) noexcept
+void CMeshUtilities::Subdivide(SMeshData& OutData, uint32 Subdivisions) noexcept
 {
-    if ( Subdivisions < 1 )
+    if (Subdivisions < 1)
     {
         return;
     }
@@ -12,17 +12,17 @@ void CMeshUtilities::Subdivide( SMeshData& OutData, uint32 Subdivisions ) noexce
     uint32 VertexCount = 0;
     uint32 OldVertexCount = 0;
 
-    OutData.Vertices.Reserve( (OutData.Vertices.Size() * static_cast<uint32>(pow( 2, Subdivisions ))) );
-    OutData.Indices.Reserve( (OutData.Indices.Size() * static_cast<uint32>(pow( 4, Subdivisions ))) );
+    OutData.Vertices.Reserve((OutData.Vertices.Size() * static_cast<uint32>(pow(2, Subdivisions))));
+    OutData.Indices.Reserve((OutData.Indices.Size() * static_cast<uint32>(pow(4, Subdivisions))));
 
-    for ( uint32 i = 0; i < Subdivisions; i++ )
+    for (uint32 i = 0; i < Subdivisions; i++)
     {
-        OldVertexCount = uint32( OutData.Vertices.Size() );
-        IndexCount = uint32( OutData.Indices.Size() );
+        OldVertexCount = uint32(OutData.Vertices.Size());
+        IndexCount = uint32(OutData.Indices.Size());
 
-        Assert( IndexCount % 3 == 0 );
+        Assert(IndexCount % 3 == 0);
 
-        for ( uint32 j = 0; j < IndexCount; j += 3 )
+        for (uint32 j = 0; j < IndexCount; j += 3)
         {
             // Calculate Position
             CVector3 Position0 = OutData.Vertices[OutData.Indices[j]].Position;
@@ -87,62 +87,62 @@ void CMeshUtilities::Subdivide( SMeshData& OutData, uint32 Subdivisions ) noexce
             TempVertices[2].Tangent = Tangent.GetNormalized();
 
             // Push the new Vertices
-            OutData.Vertices.Emplace( TempVertices[0] );
-            OutData.Vertices.Emplace( TempVertices[1] );
-            OutData.Vertices.Emplace( TempVertices[2] );
+            OutData.Vertices.Emplace(TempVertices[0]);
+            OutData.Vertices.Emplace(TempVertices[1]);
+            OutData.Vertices.Emplace(TempVertices[2]);
 
             // Push index of the new triangles
-            VertexCount = uint32( OutData.Vertices.Size() );
-            OutData.Indices.Emplace( VertexCount - 3 );
-            OutData.Indices.Emplace( VertexCount - 1 );
-            OutData.Indices.Emplace( VertexCount - 2 );
+            VertexCount = uint32(OutData.Vertices.Size());
+            OutData.Indices.Emplace(VertexCount - 3);
+            OutData.Indices.Emplace(VertexCount - 1);
+            OutData.Indices.Emplace(VertexCount - 2);
 
-            OutData.Indices.Emplace( VertexCount - 3 );
-            OutData.Indices.Emplace( OutData.Indices[j + 1] );
-            OutData.Indices.Emplace( VertexCount - 1 );
+            OutData.Indices.Emplace(VertexCount - 3);
+            OutData.Indices.Emplace(OutData.Indices[j + 1]);
+            OutData.Indices.Emplace(VertexCount - 1);
 
-            OutData.Indices.Emplace( VertexCount - 2 );
-            OutData.Indices.Emplace( VertexCount - 1 );
-            OutData.Indices.Emplace( OutData.Indices[j + 2] );
+            OutData.Indices.Emplace(VertexCount - 2);
+            OutData.Indices.Emplace(VertexCount - 1);
+            OutData.Indices.Emplace(OutData.Indices[j + 2]);
 
             // Reassign the old indexes
             OutData.Indices[j + 1] = VertexCount - 3;
             OutData.Indices[j + 2] = VertexCount - 2;
         }
 
-        Optimize( OutData, OldVertexCount );
+        Optimize(OutData, OldVertexCount);
     }
 
     OutData.Vertices.ShrinkToFit();
     OutData.Indices.ShrinkToFit();
 }
 
-void CMeshUtilities::Optimize( SMeshData& OutData, uint32 StartVertex ) noexcept
+void CMeshUtilities::Optimize(SMeshData& OutData, uint32 StartVertex) noexcept
 {
     uint32 VertexCount = static_cast<uint32>(OutData.Vertices.Size());
     uint32 IndexCount = static_cast<uint32>(OutData.Indices.Size());
 
     uint32 k = 0;
     uint32 j = 0;
-    for ( uint32 i = StartVertex; i < VertexCount; i++ )
+    for (uint32 i = StartVertex; i < VertexCount; i++)
     {
-        for ( j = 0; j < VertexCount; j++ )
+        for (j = 0; j < VertexCount; j++)
         {
-            if ( OutData.Vertices[i] == OutData.Vertices[j] )
+            if (OutData.Vertices[i] == OutData.Vertices[j])
             {
-                if ( i != j )
+                if (i != j)
                 {
-                    OutData.Vertices.RemoveAt( i );
+                    OutData.Vertices.RemoveAt(i);
                     VertexCount--;
                     j--;
 
-                    for ( k = 0; k < IndexCount; k++ )
+                    for (k = 0; k < IndexCount; k++)
                     {
-                        if ( OutData.Indices[k] == i )
+                        if (OutData.Indices[k] == i)
                         {
                             OutData.Indices[k] = j;
                         }
-                        else if ( OutData.Indices[k] > i )
+                        else if (OutData.Indices[k] > i)
                         {
                             OutData.Indices[k]--;
                         }
@@ -156,11 +156,11 @@ void CMeshUtilities::Optimize( SMeshData& OutData, uint32 StartVertex ) noexcept
     }
 }
 
-void CMeshUtilities::CalculateHardNormals( SMeshData& OutData ) noexcept
+void CMeshUtilities::CalculateHardNormals(SMeshData& OutData) noexcept
 {
-    Assert( OutData.Indices.Size() % 3 == 0 );
+    Assert(OutData.Indices.Size() % 3 == 0);
 
-    for ( int32 i = 0; i < OutData.Indices.Size(); i += 3 )
+    for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
         SVertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
         SVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
@@ -168,7 +168,7 @@ void CMeshUtilities::CalculateHardNormals( SMeshData& OutData ) noexcept
 
         CVector3 Edge0 = Vertex2.Position - Vertex0.Position;
         CVector3 Edge1 = Vertex1.Position - Vertex0.Position;
-        CVector3 Normal = Edge0.CrossProduct( Edge1 );
+        CVector3 Normal = Edge0.CrossProduct(Edge1);
         Normal.Normalize();
 
         Vertex0.Normal = Normal;
@@ -177,14 +177,14 @@ void CMeshUtilities::CalculateHardNormals( SMeshData& OutData ) noexcept
     }
 }
 
-void CMeshUtilities::CalculateSoftNormals( SMeshData& OutData ) noexcept
+void CMeshUtilities::CalculateSoftNormals(SMeshData& OutData) noexcept
 {
-    Assert( OutData.Indices.Size() % 3 == 0 );
+    Assert(OutData.Indices.Size() % 3 == 0);
 
     // TODO: Write better version. For now calculate the hard normals and then average all of them
-    CalculateHardNormals( OutData );
+    CalculateHardNormals(OutData);
 
-    for ( int32 i = 0; i < OutData.Indices.Size(); i += 3 )
+    for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
         SVertex& Vertex0 = OutData.Vertices[OutData.Indices[i + 0]];
         SVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 1]];
@@ -192,7 +192,7 @@ void CMeshUtilities::CalculateSoftNormals( SMeshData& OutData ) noexcept
 
         CVector3 Edge0 = Vertex2.Position - Vertex0.Position;
         CVector3 Edge1 = Vertex1.Position - Vertex0.Position;
-        CVector3 Normal = Edge0.CrossProduct( Edge1 );
+        CVector3 Normal = Edge0.CrossProduct(Edge1);
         Normal.Normalize();
 
         // Average current and new normal
@@ -205,11 +205,11 @@ void CMeshUtilities::CalculateSoftNormals( SMeshData& OutData ) noexcept
     }
 }
 
-void CMeshUtilities::CalculateTangents( SMeshData& OutData ) noexcept
+void CMeshUtilities::CalculateTangents(SMeshData& OutData) noexcept
 {
-    Assert( OutData.Indices.Size() % 3 == 0 );
+    Assert(OutData.Indices.Size() % 3 == 0);
 
-    auto CalculateTangentFromVectors = []( SVertex& Vertex1, const SVertex& Vertex2, const SVertex& Vertex3 )
+    auto CalculateTangentFromVectors = [](SVertex& Vertex1, const SVertex& Vertex2, const SVertex& Vertex3)
     {
         CVector3 Edge1 = Vertex2.Position - Vertex1.Position;
         CVector3 Edge2 = Vertex3.Position - Vertex1.Position;
@@ -225,30 +225,30 @@ void CMeshUtilities::CalculateTangents( SMeshData& OutData ) noexcept
         Vertex1.Tangent = Tangent;
     };
 
-    for ( int32 i = 0; i < OutData.Indices.Size(); i += 3 )
+    for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
         SVertex& Vertex1 = OutData.Vertices[OutData.Indices[i + 0]];
         SVertex& Vertex2 = OutData.Vertices[OutData.Indices[i + 1]];
         SVertex& Vertex3 = OutData.Vertices[OutData.Indices[i + 2]];
 
-        CalculateTangentFromVectors( Vertex1, Vertex2, Vertex3 );
-        CalculateTangentFromVectors( Vertex2, Vertex3, Vertex1 );
-        CalculateTangentFromVectors( Vertex3, Vertex1, Vertex2 );
+        CalculateTangentFromVectors(Vertex1, Vertex2, Vertex3);
+        CalculateTangentFromVectors(Vertex2, Vertex3, Vertex1);
+        CalculateTangentFromVectors(Vertex3, Vertex1, Vertex2);
     }
 }
 
-void CMeshUtilities::ReverseHandedness( SMeshData& OutData ) noexcept
+void CMeshUtilities::ReverseHandedness(SMeshData& OutData) noexcept
 {
-    Assert( OutData.Indices.Size() % 3 == 0 );
+    Assert(OutData.Indices.Size() % 3 == 0);
 
-    for ( int32 i = 0; i < OutData.Indices.Size(); i += 3 )
+    for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
         uint32 TempIndex = OutData.Indices[i + 1];
         OutData.Indices[i + 1] = OutData.Indices[i + 2];
         OutData.Indices[i + 2] = TempIndex;
     }
 
-    for ( int32 i = 0; i < OutData.Vertices.Size(); i++ )
+    for (int32 i = 0; i < OutData.Vertices.Size(); i++)
     {
         OutData.Vertices[i].Position.z = OutData.Vertices[i].Position.z * -1.0f;
         OutData.Vertices[i].Normal.z = OutData.Vertices[i].Normal.z * -1.0f;

@@ -20,17 +20,17 @@
 
 struct SGPUProfileSample
 {
-    void AddSample( float NewSample )
+    void AddSample(float NewSample)
     {
         Samples[CurrentSample] = NewSample;
 
-        Min = NMath::Min( NewSample, Min );
-        Max = NMath::Max( NewSample, Max );
+        Min = NMath::Min(NewSample, Min);
+        Max = NMath::Max(NewSample, Max);
 
-        SampleCount = NMath::Min<int32>( Samples.Size(), SampleCount + 1 );
+        SampleCount = NMath::Min<int32>(Samples.Size(), SampleCount + 1);
 
         CurrentSample++;
-        if ( CurrentSample >= int32( Samples.Size() ) )
+        if (CurrentSample >= int32(Samples.Size()))
         {
             CurrentSample = 0;
         }
@@ -38,23 +38,23 @@ struct SGPUProfileSample
 
     float GetAverage() const
     {
-        if ( SampleCount < 1 )
+        if (SampleCount < 1)
         {
             return 0.0f;
         }
 
         float Average = 0.0f;
-        for ( int32 n = 0; n < SampleCount; n++ )
+        for (int32 n = 0; n < SampleCount; n++)
         {
             Average += Samples[n];
         }
 
-        return Average / float( SampleCount );
+        return Average / float(SampleCount);
     }
 
     void Reset()
     {
-        Samples.Fill( 0.0f );
+        Samples.Fill(0.0f);
 
         SampleCount = 0;
         CurrentSample = 0;
@@ -105,19 +105,19 @@ public:
     void Reset();
 
     /* Retrieve a copy of the GPU Profiler samples */
-    void GetGPUSamples( GPUProfileSamplesTable& OutGPUSamples );
+    void GetGPUSamples(GPUProfileSamplesTable& OutGPUSamples);
 
     /* Start the GPU frame */
-    void BeginGPUFrame( CRHICommandList& CmdList );
+    void BeginGPUFrame(CRHICommandList& CmdList);
 
     /* End the GPU frame */
-    void EndGPUFrame( CRHICommandList& CmdList );
+    void EndGPUFrame(CRHICommandList& CmdList);
 
     /* Begin a GPU scope */
-    void BeginGPUTrace( CRHICommandList& CmdList, const char* Name );
+    void BeginGPUTrace(CRHICommandList& CmdList, const char* Name);
 
     /* End a GPU scope */
-    void EndGPUTrace( CRHICommandList& CmdList, const char* Name );
+    void EndGPUTrace(CRHICommandList& CmdList, const char* Name);
 
     FORCEINLINE const SGPUProfileSample& GetGPUFrameTime() const
     {
@@ -151,16 +151,16 @@ struct SGPUScopedTrace
 {
 public:
 
-    FORCEINLINE SGPUScopedTrace( CRHICommandList& InCmdList, const char* InName )
-        : CmdList( InCmdList )
-        , Name( InName )
+    FORCEINLINE SGPUScopedTrace(CRHICommandList& InCmdList, const char* InName)
+        : CmdList(InCmdList)
+        , Name(InName)
     {
-        CGPUProfiler::Get().BeginGPUTrace( CmdList, Name );
+        CGPUProfiler::Get().BeginGPUTrace(CmdList, Name);
     }
 
     FORCEINLINE ~SGPUScopedTrace()
     {
-        CGPUProfiler::Get().EndGPUTrace( CmdList, Name );
+        CGPUProfiler::Get().EndGPUTrace(CmdList, Name);
     }
 
 private:

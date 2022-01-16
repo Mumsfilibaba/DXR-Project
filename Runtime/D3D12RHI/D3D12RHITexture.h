@@ -16,18 +16,18 @@
 class CD3D12BaseTexture : public CD3D12DeviceChild
 {
 public:
-    CD3D12BaseTexture( CD3D12Device* InDevice )
-        : CD3D12DeviceChild( InDevice )
-        , Resource( nullptr )
+    CD3D12BaseTexture(CD3D12Device* InDevice)
+        : CD3D12DeviceChild(InDevice)
+        , Resource(nullptr)
     {
     }
 
-    FORCEINLINE void SetResource( CD3D12Resource* InResource )
+    FORCEINLINE void SetResource(CD3D12Resource* InResource)
     {
         Resource = InResource;
     }
 
-    FORCEINLINE void SetShaderResourceView( CD3D12RHIShaderResourceView* InShaderResourceView )
+    FORCEINLINE void SetShaderResourceView(CD3D12RHIShaderResourceView* InShaderResourceView)
     {
         ShaderResourceView = InShaderResourceView;
     }
@@ -63,12 +63,12 @@ public:
         uint32 InNumMips,
         uint32 InNumSamples,
         uint32 InFlags,
-        const SClearValue& InOptimalClearValue )
-        : CRHITexture2D( InFormat, SizeX, SizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue )
-        , CD3D12BaseTexture( InDevice )
-        , RenderTargetView( nullptr )
-        , DepthStencilView( nullptr )
-        , UnorderedAccessView( nullptr )
+        const SClearValue& InOptimalClearValue)
+        : CRHITexture2D(InFormat, SizeX, SizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
+        , CD3D12BaseTexture(InDevice)
+        , RenderTargetView(nullptr)
+        , DepthStencilView(nullptr)
+        , UnorderedAccessView(nullptr)
     {
     }
 
@@ -76,17 +76,17 @@ public:
     virtual CRHIDepthStencilView* GetDepthStencilView() const override { return DepthStencilView.Get(); }
     virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
 
-    FORCEINLINE void SetRenderTargetView( CD3D12RenderTargetView* InRenderTargetView )
+    FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* InRenderTargetView)
     {
         RenderTargetView = InRenderTargetView;
     }
 
-    FORCEINLINE void SetDepthStencilView( CD3D12DepthStencilView* InDepthStencilView )
+    FORCEINLINE void SetDepthStencilView(CD3D12DepthStencilView* InDepthStencilView)
     {
         DepthStencilView = InDepthStencilView;
     }
 
-    FORCEINLINE void SetUnorderedAccessView( CD3D12RHIUnorderedAccessView* InUnorderedAccessView )
+    FORCEINLINE void SetUnorderedAccessView(CD3D12RHIUnorderedAccessView* InUnorderedAccessView)
     {
         UnorderedAccessView = InUnorderedAccessView;
     }
@@ -96,9 +96,9 @@ public:
         return RenderTargetView.Get();
     }
 
-    FORCEINLINE void SetSize( uint32 InWidth, uint32 InHeight )
+    FORCEINLINE void SetSize(uint32 InWidth, uint32 InHeight)
     {
-        CRHITexture2D::SetSize( InWidth, InHeight );
+        CRHITexture2D::SetSize(InWidth, InHeight);
     }
 
 private:
@@ -123,9 +123,9 @@ public:
         uint32 InNumMips,
         uint32 InNumSamples,
         uint32 InFlags,
-        const SClearValue& InOptimalClearValue )
-        : CRHITexture2DArray( InFormat, SizeX, SizeY, InNumMips, InNumSamples, SizeZ, InFlags, InOptimalClearValue )
-        , CD3D12BaseTexture( InDevice )
+        const SClearValue& InOptimalClearValue)
+        : CRHITexture2DArray(InFormat, SizeX, SizeY, InNumMips, InNumSamples, SizeZ, InFlags, InOptimalClearValue)
+        , CD3D12BaseTexture(InDevice)
     {
     }
 };
@@ -142,9 +142,9 @@ public:
         uint32 InNumMips,
         uint32 InNumSamples,
         uint32 InFlags,
-        const SClearValue& InOptimalClearValue )
-        : CRHITextureCube( InFormat, SizeX, InNumMips, InFlags, InOptimalClearValue )
-        , CD3D12BaseTexture( InDevice )
+        const SClearValue& InOptimalClearValue)
+        : CRHITextureCube(InFormat, SizeX, InNumMips, InFlags, InOptimalClearValue)
+        , CD3D12BaseTexture(InDevice)
     {
     }
 };
@@ -161,9 +161,9 @@ public:
         uint32 InNumMips,
         uint32 InNumSamples,
         uint32 InFlags,
-        const SClearValue& InOptimalClearValue )
-        : CRHITextureCubeArray( InFormat, SizeX, InNumMips, SizeZ, InFlags, InOptimalClearValue )
-        , CD3D12BaseTexture( InDevice )
+        const SClearValue& InOptimalClearValue)
+        : CRHITextureCubeArray(InFormat, SizeX, InNumMips, SizeZ, InFlags, InOptimalClearValue)
+        , CD3D12BaseTexture(InDevice)
     {
     }
 };
@@ -180,9 +180,9 @@ public:
         uint32 InNumMips,
         uint32 InNumSamples,
         uint32 InFlags,
-        const SClearValue& InOptimalClearValue )
-        : CRHITexture3D( InFormat, SizeX, SizeY, SizeZ, InNumMips, InFlags, InOptimalClearValue )
-        , CD3D12BaseTexture( InDevice )
+        const SClearValue& InOptimalClearValue)
+        : CRHITexture3D(InFormat, SizeX, SizeY, SizeZ, InNumMips, InFlags, InOptimalClearValue)
+        , CD3D12BaseTexture(InDevice)
     {
     }
 };
@@ -200,18 +200,18 @@ public:
         uint32 InNumMips,
         uint32 InNumSamples,
         uint32 InFlags,
-        const SClearValue& InOptimalClearValue )
-        : BaseTextureType( InDevice, InFormat, SizeX, SizeY, SizeZ, InNumMips, InNumSamples, InFlags, InOptimalClearValue )
+        const SClearValue& InOptimalClearValue)
+        : BaseTextureType(InDevice, InFormat, SizeX, SizeY, SizeZ, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
     {
     }
 
-    virtual void SetName( const CString& InName ) override
+    virtual void SetName(const CString& InName) override
     {
         // Save the debug string for fast lookup
-        CRHIResource::SetName( InName );
+        CRHIResource::SetName(InName);
 
         // Set the native resource name
-        CD3D12BaseTexture::Resource->SetName( InName );
+        CD3D12BaseTexture::Resource->SetName(InName);
     }
 
     virtual void* GetNativeResource() const override
@@ -240,32 +240,32 @@ using CD3D12RHITexture3D = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture3D>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-inline CD3D12BaseTexture* D3D12TextureCast( CRHITexture* Texture )
+inline CD3D12BaseTexture* D3D12TextureCast(CRHITexture* Texture)
 {
-    if ( Texture )
+    if (Texture)
     {
-        if ( Texture->AsTexture2D() )
+        if (Texture->AsTexture2D())
         {
             return static_cast<CD3D12RHITexture2D*>(Texture);
         }
-        else if ( Texture->AsTexture2DArray() )
+        else if (Texture->AsTexture2DArray())
         {
             return static_cast<CD3D12RHITexture2DArray*>(Texture);
         }
-        else if ( Texture->AsTextureCube() )
+        else if (Texture->AsTextureCube())
         {
             return static_cast<CD3D12RHITextureCube*>(Texture);
         }
-        else if ( Texture->AsTextureCubeArray() )
+        else if (Texture->AsTextureCubeArray())
         {
             return static_cast<CD3D12RHITextureCubeArray*>(Texture);
         }
-        else if ( Texture->AsTexture3D() )
+        else if (Texture->AsTexture3D())
         {
             return static_cast<CD3D12RHITexture3D*>(Texture);
         }
     }
-    
+
     return nullptr;
 }
 

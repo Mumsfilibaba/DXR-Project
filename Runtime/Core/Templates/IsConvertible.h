@@ -6,7 +6,7 @@ struct TIsConvertible
 {
     enum
     {
-        Value = __is_convertible_to( FromType, ToType )
+        Value = __is_convertible_to(FromType, ToType)
     };
 };
 

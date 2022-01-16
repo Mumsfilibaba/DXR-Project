@@ -17,7 +17,7 @@ public:
     CNullRHITimestampQuery() = default;
     ~CNullRHITimestampQuery() = default;
 
-    virtual void GetTimestampFromIndex( SRHITimestamp& OutQuery, uint32 Index ) const override final
+    virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const override final
     {
         OutQuery = SRHITimestamp();
     }

@@ -12,7 +12,7 @@ public:
 
     virtual bool Init() override;
 
-    virtual void Tick( CTimestamp DeltaTime ) override;
+    virtual void Tick(CTimestamp DeltaTime) override;
 
 private:
     CCamera* CurrentCamera = nullptr;

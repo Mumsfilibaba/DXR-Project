@@ -9,18 +9,18 @@
 enum ERayTracingStructureBuildFlag
 {
     RayTracingStructureBuildFlag_None = 0x0,
-    RayTracingStructureBuildFlag_AllowUpdate = FLAG( 1 ),
-    RayTracingStructureBuildFlag_PreferFastTrace = FLAG( 2 ),
-    RayTracingStructureBuildFlag_PreferFastBuild = FLAG( 3 ),
+    RayTracingStructureBuildFlag_AllowUpdate = FLAG(1),
+    RayTracingStructureBuildFlag_PreferFastTrace = FLAG(2),
+    RayTracingStructureBuildFlag_PreferFastBuild = FLAG(3),
 };
 
 enum ERayTracingInstanceFlags
 {
     RayTracingInstanceFlags_None = 0,
-    RayTracingInstanceFlags_CullDisable = FLAG( 1 ),
-    RayTracingInstanceFlags_FrontCounterClockwise = FLAG( 2 ),
-    RayTracingInstanceFlags_ForceOpaque = FLAG( 3 ),
-    RayTracingInstanceFlags_ForceNonOpaque = FLAG( 4 ),
+    RayTracingInstanceFlags_CullDisable = FLAG(1),
+    RayTracingInstanceFlags_FrontCounterClockwise = FLAG(2),
+    RayTracingInstanceFlags_ForceOpaque = FLAG(3),
+    RayTracingInstanceFlags_ForceNonOpaque = FLAG(4),
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -29,8 +29,8 @@ enum ERayTracingInstanceFlags
 class CRHIRayTracingGeometry : public CRHIResource
 {
 public:
-    CRHIRayTracingGeometry( uint32 InFlags )
-        : Flags( InFlags )
+    CRHIRayTracingGeometry(uint32 InFlags)
+        : Flags(InFlags)
     {
     }
 
@@ -49,8 +49,8 @@ private:
 class CRHIRayTracingScene : public CRHIResource
 {
 public:
-    CRHIRayTracingScene( uint32 InFlags )
-        : Flags( InFlags )
+    CRHIRayTracingScene(uint32 InFlags)
+        : Flags(InFlags)
     {
     }
 
@@ -91,24 +91,24 @@ struct SRayIntersectionAttributes
 
 struct SRayTracingShaderResources
 {
-    void AddConstantBuffer( CRHIConstantBuffer* Buffer )
+    void AddConstantBuffer(CRHIConstantBuffer* Buffer)
     {
-        ConstantBuffers.Emplace( Buffer );
+        ConstantBuffers.Emplace(Buffer);
     }
 
-    void AddShaderResourceView( CRHIShaderResourceView* View )
+    void AddShaderResourceView(CRHIShaderResourceView* View)
     {
-        ShaderResourceViews.Emplace( View );
+        ShaderResourceViews.Emplace(View);
     }
 
-    void AddUnorderedAccessView( CRHIUnorderedAccessView* View )
+    void AddUnorderedAccessView(CRHIUnorderedAccessView* View)
     {
-        UnorderedAccessViews.Emplace( View );
+        UnorderedAccessViews.Emplace(View);
     }
 
-    void AddSamplerState( CRHISamplerState* State )
+    void AddSamplerState(CRHISamplerState* State)
     {
-        SamplerStates.Emplace( State );
+        SamplerStates.Emplace(State);
     }
 
     uint32 NumResources() const

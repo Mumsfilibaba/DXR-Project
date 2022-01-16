@@ -46,36 +46,36 @@ bool CEngine::Init()
 
     CInterfaceApplication& Application = CInterfaceApplication::Get();
 
-    const uint32 WindowWidth  = 1920;
+    const uint32 WindowWidth = 1920;
     const uint32 WindowHeight = 1080;
 
     MainWindow = Application.MakeWindow();
-    if ( MainWindow && MainWindow->Initialize( CProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style ) )
+    if (MainWindow && MainWindow->Initialize(CProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
     {
-        MainWindow->Show( false );
+        MainWindow->Show(false);
 
-        GToggleFullscreen.GetExecutedDelgate().AddRaw( MainWindow.Get(), &CPlatformWindow::ToggleFullscreen );
-        INIT_CONSOLE_COMMAND( "a.ToggleFullscreen", &GToggleFullscreen );
+        GToggleFullscreen.GetExecutedDelgate().AddRaw(MainWindow.Get(), &CPlatformWindow::ToggleFullscreen);
+        INIT_CONSOLE_COMMAND("a.ToggleFullscreen", &GToggleFullscreen);
     }
     else
     {
-        PlatformApplicationMisc::MessageBox( "ERROR", "Failed to create Engine" );
+        PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Engine");
         return false;
     }
 
-    Application.RegisterMainViewport( MainWindow );
+    Application.RegisterMainViewport(MainWindow);
 
     TSharedPtr<ICursor> CursorDevice = Application.GetCursor();
-    User = CInterfaceUser::Make( 0, CursorDevice );
-    if ( !User )
+    User = CInterfaceUser::Make(0, CursorDevice);
+    if (!User)
     {
         return false;
     }
 
-    Application.RegisterUser( User );
+    Application.RegisterUser(User);
 
-    GExit.GetExecutedDelgate().AddRaw( this, &CEngine::Exit );
-    INIT_CONSOLE_COMMAND( "a.Exit", &GExit );
+    GExit.GetExecutedDelgate().AddRaw(this, &CEngine::Exit);
+    INIT_CONSOLE_COMMAND("a.Exit", &GExit);
 
     // Create standard textures
     uint8 Pixels[] =
@@ -86,28 +86,28 @@ bool CEngine::Init()
         255
     };
 
-    BaseTexture = CTextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
-    if ( !BaseTexture )
+    BaseTexture = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    if (!BaseTexture)
     {
-        LOG_WARNING( "Failed to create BaseTexture" );
+        LOG_WARNING("Failed to create BaseTexture");
     }
     else
     {
-        BaseTexture->SetName( "BaseTexture" );
+        BaseTexture->SetName("BaseTexture");
     }
 
     Pixels[0] = 127;
     Pixels[1] = 127;
     Pixels[2] = 255;
 
-    BaseNormal = CTextureFactory::LoadFromMemory( Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm );
-    if ( !BaseNormal )
+    BaseNormal = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    if (!BaseNormal)
     {
-        LOG_WARNING( "Failed to create BaseNormal-Texture" );
+        LOG_WARNING("Failed to create BaseNormal-Texture");
     }
     else
     {
-        BaseNormal->SetName( "BaseNormal" );
+        BaseNormal->SetName("BaseNormal");
     }
 
     /* Create material sampler (Used for now by all materials) */
@@ -122,7 +122,7 @@ bool CEngine::Init()
     SamplerCreateInfo.MinLOD = -FLT_MAX;
     SamplerCreateInfo.MipLODBias = 0.0f;
 
-    BaseMaterialSampler = RHICreateSamplerState( SamplerCreateInfo );
+    BaseMaterialSampler = RHICreateSamplerState(SamplerCreateInfo);
 
     /* Base material */
     SMaterialDesc MaterialDesc;
@@ -130,9 +130,9 @@ bool CEngine::Init()
     MaterialDesc.Metallic = 0.0f;
     MaterialDesc.Roughness = 1.0f;
     MaterialDesc.EnableHeight = 0;
-    MaterialDesc.Albedo = CVector3( 1.0f );
+    MaterialDesc.Albedo = CVector3(1.0f);
 
-    BaseMaterial = MakeShared<CMaterial>( MaterialDesc );
+    BaseMaterial = MakeShared<CMaterial>(MaterialDesc);
     BaseMaterial->AlbedoMap = GEngine->BaseTexture;
     BaseMaterial->NormalMap = GEngine->BaseNormal;
     BaseMaterial->RoughnessMap = GEngine->BaseTexture;
@@ -145,10 +145,10 @@ bool CEngine::Init()
 
     /* Create windows */
     TSharedRef<CFrameProfilerWindow> ProfilerWindow = CFrameProfilerWindow::Make();
-    Application.AddWindow( ProfilerWindow );
+    Application.AddWindow(ProfilerWindow);
 
     TSharedRef<CGameConsoleWindow> ConsoleWindow = CGameConsoleWindow::Make();
-    Application.AddWindow( ConsoleWindow );
+    Application.AddWindow(ConsoleWindow);
 
     return true;
 }
@@ -159,13 +159,13 @@ bool CEngine::Start()
     return true;
 }
 
-void CEngine::Tick( CTimestamp DeltaTime )
+void CEngine::Tick(CTimestamp DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 
-    if ( Scene )
+    if (Scene)
     {
-        Scene->Tick( DeltaTime );
+        Scene->Tick(DeltaTime);
     }
 }
 
@@ -176,5 +176,5 @@ bool CEngine::Release()
 
 void CEngine::Exit()
 {
-    PlatformApplicationMisc::RequestExit( 0 );
+    PlatformApplicationMisc::RequestExit(0);
 }

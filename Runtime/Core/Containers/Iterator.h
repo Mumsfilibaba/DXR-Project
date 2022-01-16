@@ -14,27 +14,27 @@ public:
 
     using SizeType = typename ArrayType::SizeType;
 
-    TArrayIterator( const TArrayIterator& ) = default;
-    TArrayIterator( TArrayIterator&& ) = default;
+    TArrayIterator(const TArrayIterator&) = default;
+    TArrayIterator(TArrayIterator&&) = default;
     ~TArrayIterator() = default;
-    TArrayIterator& operator=( const TArrayIterator& ) = default;
-    TArrayIterator& operator=( TArrayIterator&& ) = default;
+    TArrayIterator& operator=(const TArrayIterator&) = default;
+    TArrayIterator& operator=(TArrayIterator&&) = default;
 
     static_assert(TIsSigned<SizeType>::Value, "TArrayIterator wants a signed SizeType");
     static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TArrayIterator require ArrayType and ElementType to have the same constness");
 
     /* Constructor creating a new iterator by taking in the array and pointer */
-    FORCEINLINE TArrayIterator( ArrayType& InArray, SizeType StartIndex ) noexcept
-        : Array( InArray )
-        , Index( StartIndex )
+    FORCEINLINE TArrayIterator(ArrayType& InArray, SizeType StartIndex) noexcept
+        : Array(InArray)
+        , Index(StartIndex)
     {
-        Assert( IsValid() );
+        Assert(IsValid());
     }
 
     /* Checks if the iterator comes from the specified array */
-    FORCEINLINE bool IsFrom( const ArrayType& FromArray ) const noexcept
+    FORCEINLINE bool IsFrom(const ArrayType& FromArray) const noexcept
     {
-        const ArrayType* FromPointer = AddressOf( FromArray );
+        const ArrayType* FromPointer = AddressOf(FromArray);
         return Array.AddressOf() == FromPointer;
     }
 
@@ -53,7 +53,7 @@ public:
     /* Retrieve the raw pointer */
     FORCEINLINE ElementType* Raw() const noexcept
     {
-        Assert( IsValid() );
+        Assert(IsValid());
         return Array.Get().Data() + GetIndex();
     }
 
@@ -80,17 +80,17 @@ public:
     {
         Index++;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return *this;
     }
 
     /* Post-increment the iterator */
-    FORCEINLINE TArrayIterator operator++( int ) noexcept
+    FORCEINLINE TArrayIterator operator++(int) noexcept
     {
-        TArrayIterator NewIterator( *this );
+        TArrayIterator NewIterator(*this);
         Index++;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return NewIterator;
     }
 
@@ -99,60 +99,60 @@ public:
     {
         Index--;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return *this;
     }
 
     /* Post-decrement the iterator */
-    FORCEINLINE TArrayIterator operator--( int ) noexcept
+    FORCEINLINE TArrayIterator operator--(int) noexcept
     {
-        TArrayIterator NewIterator( *this );
+        TArrayIterator NewIterator(*this);
         Index--;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return NewIterator;
     }
 
     /* Add offset to iterator and return a new */
-    FORCEINLINE TArrayIterator operator+( SizeType RHS ) const noexcept
+    FORCEINLINE TArrayIterator operator+(SizeType RHS) const noexcept
     {
-        TArrayIterator NewIterator( *this );
+        TArrayIterator NewIterator(*this);
         return NewIterator += RHS;
     }
 
     /* Subtract offset from iterator and return a new */
-    FORCEINLINE TArrayIterator operator-( SizeType RHS ) const noexcept
+    FORCEINLINE TArrayIterator operator-(SizeType RHS) const noexcept
     {
-        TArrayIterator NewIterator( *this );
+        TArrayIterator NewIterator(*this);
         return NewIterator -= RHS;
     }
 
     /* Add offset to iterator */
-    FORCEINLINE TArrayIterator& operator+=( SizeType RHS ) noexcept
+    FORCEINLINE TArrayIterator& operator+=(SizeType RHS) noexcept
     {
         Index += RHS;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return *this;
     }
 
     /* Subtract offset from iterator */
-    FORCEINLINE TArrayIterator& operator-=( SizeType RHS ) noexcept
+    FORCEINLINE TArrayIterator& operator-=(SizeType RHS) noexcept
     {
         Index -= RHS;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return *this;
     }
 
     /* Compare equality two iterators */
-    FORCEINLINE bool operator==( const TArrayIterator& RHS ) const noexcept
+    FORCEINLINE bool operator==(const TArrayIterator& RHS) const noexcept
     {
-        return (Index == RHS.Index) && RHS.IsFrom( Array );
+        return (Index == RHS.Index) && RHS.IsFrom(Array);
     }
 
     /* Compare equality two iterators */
-    FORCEINLINE bool operator!=( const TArrayIterator& RHS ) const noexcept
+    FORCEINLINE bool operator!=(const TArrayIterator& RHS) const noexcept
     {
         return !(*this == RHS);
     }
@@ -161,7 +161,7 @@ public:
     FORCEINLINE operator TArrayIterator<const ArrayType, const ElementType>() const noexcept
     {
         /* The array type must be const here in order to make the dereference work properly */
-        return TArrayIterator<const ArrayType, const ElementType>( Array, Index );
+        return TArrayIterator<const ArrayType, const ElementType>(Array, Index);
     }
 
 private:
@@ -171,9 +171,9 @@ private:
 
 /* Add offset to iterator and return a new */
 template<typename ArrayType, typename ElementType>
-FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+( typename TArrayIterator<ArrayType, ElementType>::SizeType LHS, const TArrayIterator<ArrayType, ElementType>& RHS ) noexcept
+FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIterator<ArrayType, ElementType>::SizeType LHS, const TArrayIterator<ArrayType, ElementType>& RHS) noexcept
 {
-    TArrayIterator NewIterator( RHS );
+    TArrayIterator NewIterator(RHS);
     return NewIterator += LHS;
 }
 
@@ -185,27 +185,27 @@ public:
 
     using SizeType = typename ArrayType::SizeType;
 
-    TReverseArrayIterator( const TReverseArrayIterator& ) = default;
-    TReverseArrayIterator( TReverseArrayIterator&& ) = default;
+    TReverseArrayIterator(const TReverseArrayIterator&) = default;
+    TReverseArrayIterator(TReverseArrayIterator&&) = default;
     ~TReverseArrayIterator() = default;
-    TReverseArrayIterator& operator=( const TReverseArrayIterator& ) = default;
-    TReverseArrayIterator& operator=( TReverseArrayIterator&& ) = default;
+    TReverseArrayIterator& operator=(const TReverseArrayIterator&) = default;
+    TReverseArrayIterator& operator=(TReverseArrayIterator&&) = default;
 
     static_assert(TIsSigned<SizeType>::Value, "TReverseArrayIterator wants a signed SizeType");
     static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TReverseArrayIterator require ArrayType and ElementType to have the same constness");
 
     /* Constructor creating a new iterator by taking in the array and pointer */
-    FORCEINLINE TReverseArrayIterator( ArrayType& InArray, SizeType StartIndex ) noexcept
-        : Array( InArray )
-        , Index( StartIndex )
+    FORCEINLINE TReverseArrayIterator(ArrayType& InArray, SizeType StartIndex) noexcept
+        : Array(InArray)
+        , Index(StartIndex)
     {
-        Assert( IsValid() );
+        Assert(IsValid());
     }
 
     /* Checks if the iterator comes from the specified array */
-    FORCEINLINE bool IsFrom( const ArrayType& FromArray ) const noexcept
+    FORCEINLINE bool IsFrom(const ArrayType& FromArray) const noexcept
     {
-        const ArrayType* FromPointer = AddressOf( FromArray );
+        const ArrayType* FromPointer = AddressOf(FromArray);
         return Array.AddressOf() == FromPointer;
     }
 
@@ -224,7 +224,7 @@ public:
     /* Retrieve the raw pointer */
     FORCEINLINE ElementType* Raw() const noexcept
     {
-        Assert( IsValid() );
+        Assert(IsValid());
         return Array.Get().Data() + GetIndex();
     }
 
@@ -251,17 +251,17 @@ public:
     {
         Index--;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return *this;
     }
 
     /* Post-increment the iterator  */
-    FORCEINLINE TReverseArrayIterator operator++( int ) noexcept
+    FORCEINLINE TReverseArrayIterator operator++(int) noexcept
     {
-        TReverseArrayIterator NewIterator( *this );
+        TReverseArrayIterator NewIterator(*this);
         Index--;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return NewIterator;
     }
 
@@ -270,60 +270,60 @@ public:
     {
         Index++;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return *this;
     }
 
     /* Post-decrement the iterator */
-    FORCEINLINE TReverseArrayIterator operator--( int ) noexcept
+    FORCEINLINE TReverseArrayIterator operator--(int) noexcept
     {
-        TReverseArrayIterator NewIterator( *this );
+        TReverseArrayIterator NewIterator(*this);
         NewIterator++;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return NewIterator;
     }
 
     /* Add offset to iterator and return a new */
-    FORCEINLINE TReverseArrayIterator operator+( SizeType RHS ) const noexcept
+    FORCEINLINE TReverseArrayIterator operator+(SizeType RHS) const noexcept
     {
-        TReverseArrayIterator NewIterator( *this );
+        TReverseArrayIterator NewIterator(*this);
         return NewIterator += RHS; // Uses operator, therefore +=
     }
 
     /* Subtract offset from iterator and return a new */
-    FORCEINLINE TReverseArrayIterator operator-( SizeType RHS ) const noexcept
+    FORCEINLINE TReverseArrayIterator operator-(SizeType RHS) const noexcept
     {
-        TReverseArrayIterator NewIterator( *this );
+        TReverseArrayIterator NewIterator(*this);
         return NewIterator -= RHS; // Uses operator, therefore -=
     }
 
     /* Add offset to iterator */
-    FORCEINLINE TReverseArrayIterator& operator+=( SizeType RHS ) noexcept
+    FORCEINLINE TReverseArrayIterator& operator+=(SizeType RHS) noexcept
     {
         Index -= RHS;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return *this;
     }
 
     /* Subtract offset from iterator */
-    FORCEINLINE TReverseArrayIterator& operator-=( SizeType RHS ) noexcept
+    FORCEINLINE TReverseArrayIterator& operator-=(SizeType RHS) noexcept
     {
         Index += RHS;
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return *this;
     }
 
     /* Compare equality two iterators */
-    FORCEINLINE bool operator==( const TReverseArrayIterator& RHS ) const noexcept
+    FORCEINLINE bool operator==(const TReverseArrayIterator& RHS) const noexcept
     {
-        return (Index == RHS.Index) && RHS.IsFrom( Array );
+        return (Index == RHS.Index) && RHS.IsFrom(Array);
     }
 
     /* Compare equality two iterators */
-    FORCEINLINE bool operator!=( const TReverseArrayIterator& RHS ) const noexcept
+    FORCEINLINE bool operator!=(const TReverseArrayIterator& RHS) const noexcept
     {
         return !(*this == RHS);
     }
@@ -332,7 +332,7 @@ public:
     FORCEINLINE operator TReverseArrayIterator<const ArrayType, const ElementType>() const noexcept
     {
         /* The array type must be const here in order to make the dereference work properly */
-        return TReverseArrayIterator<const ArrayType, const ElementType>( Array, Index );
+        return TReverseArrayIterator<const ArrayType, const ElementType>(Array, Index);
     }
 
 private:
@@ -342,9 +342,9 @@ private:
 
 /* Add offset to iterator and return a new */
 template<typename ArrayType, typename ElementType>
-FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+( typename TReverseArrayIterator<ArrayType, ElementType>::SizeType LHS, const TReverseArrayIterator<ArrayType, ElementType>& RHS ) noexcept
+FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TReverseArrayIterator<ArrayType, ElementType>::SizeType LHS, const TReverseArrayIterator<ArrayType, ElementType>& RHS) noexcept
 {
-    TReverseArrayIterator NewIterator( RHS );
+    TReverseArrayIterator NewIterator(RHS);
     return NewIterator += LHS;
 }
 
@@ -356,17 +356,17 @@ public:
 
     using SizeType = int32;
 
-    TTreeIterator( const TTreeIterator& ) = default;
-    TTreeIterator( TTreeIterator&& ) = default;
+    TTreeIterator(const TTreeIterator&) = default;
+    TTreeIterator(TTreeIterator&&) = default;
     ~TTreeIterator() = default;
-    TTreeIterator& operator=( const TTreeIterator& ) = default;
-    TTreeIterator& operator=( TTreeIterator&& ) = default;
+    TTreeIterator& operator=(const TTreeIterator&) = default;
+    TTreeIterator& operator=(TTreeIterator&&) = default;
 
     /* Constructor creating a new iterator by taking in the array and pointer */
-    FORCEINLINE TTreeIterator( NodeType* InNode ) noexcept
-        : Node( InNode )
+    FORCEINLINE TTreeIterator(NodeType* InNode) noexcept
+        : Node(InNode)
     {
-        Assert( IsValid() );
+        Assert(IsValid());
     }
 
     /* Ensure that the pointer is in the range of the array */
@@ -378,7 +378,7 @@ public:
     /* Retrieve the raw pointer */
     FORCEINLINE ElementType* Raw() const noexcept
     {
-        Assert( IsValid() );
+        Assert(IsValid());
         return Node->GetPointer();
     }
 
@@ -397,49 +397,49 @@ public:
     /* Pre-increment the iterator */
     FORCEINLINE TTreeIterator operator++() noexcept
     {
-        Assert( IsValid() );
+        Assert(IsValid());
 
         Node = Node->GetNext();
         return *this;
     }
 
     /* Post-increment the iterator */
-    FORCEINLINE TTreeIterator operator++( int ) noexcept
+    FORCEINLINE TTreeIterator operator++(int) noexcept
     {
-        TTreeIterator NewIterator( *this );
+        TTreeIterator NewIterator(*this);
         Node = Node->GetNext();
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return NewIterator;
     }
 
     /* Pre-decrement the iterator */
     FORCEINLINE TTreeIterator operator--() noexcept
     {
-        Assert( IsValid() );
+        Assert(IsValid());
 
         Node = Node->GetPrevious();
         return *this;
     }
 
     /* Post-decrement the iterator */
-    FORCEINLINE TTreeIterator operator--( int ) noexcept
+    FORCEINLINE TTreeIterator operator--(int) noexcept
     {
-        TTreeIterator NewIterator( *this );
+        TTreeIterator NewIterator(*this);
         Node = Node->GetPrevious();
 
-        Assert( IsValid() );
+        Assert(IsValid());
         return NewIterator;
     }
 
     /* Compare equality two iterators */
-    FORCEINLINE bool operator==( const TTreeIterator& RHS ) const noexcept
+    FORCEINLINE bool operator==(const TTreeIterator& RHS) const noexcept
     {
         return (Node == RHS.Node);
     }
 
     /* Compare equality two iterators */
-    FORCEINLINE bool operator!=( const TTreeIterator& RHS ) const noexcept
+    FORCEINLINE bool operator!=(const TTreeIterator& RHS) const noexcept
     {
         return !(*this == RHS);
     }
@@ -448,7 +448,7 @@ public:
     FORCEINLINE operator TTreeIterator<const NodeType, const ElementType>() const noexcept
     {
         /* The array type must be const here in order to make the dereference work properly */
-        return TTreeIterator<const NodeType, const ElementType>( Node );
+        return TTreeIterator<const NodeType, const ElementType>(Node);
     }
 
 private:
@@ -461,28 +461,28 @@ class TBitFieldIterator
 {
 public:
 
-    enum 
+    enum
     {
         Invalid = ~0
     };
 
-    TBitFieldIterator( const TBitFieldIterator& ) = default;
-    TBitFieldIterator( TBitFieldIterator&& ) = default;
+    TBitFieldIterator(const TBitFieldIterator&) = default;
+    TBitFieldIterator(TBitFieldIterator&&) = default;
     ~TBitFieldIterator() = default;
-    TBitFieldIterator& operator=( const TBitFieldIterator& ) = default;
-    TBitFieldIterator& operator=( TBitFieldIterator&& ) = default;
+    TBitFieldIterator& operator=(const TBitFieldIterator&) = default;
+    TBitFieldIterator& operator=(TBitFieldIterator&&) = default;
 
-    explicit TBitFieldIterator( const BitFieldType& InBitField, uint32 InIndex )
-        : Index( InIndex )
-        , BitField( InBitField )
+    explicit TBitFieldIterator(const BitFieldType& InBitField, uint32 InIndex)
+        : Index(InIndex)
+        , BitField(InBitField)
     {
     }
 
     FORCEINLINE void operator++()
     {
-        while ( ++Index < BitFieldType::Capacity() )
+        while (++Index < BitFieldType::Capacity())
         {
-            if ( BitField.Get().GetBit( Index ) )
+            if (BitField.Get().GetBit(Index))
             {
                 return;
             }
@@ -491,7 +491,7 @@ public:
         Index = Invalid;
     }
 
-    FORCEINLINE bool operator!=( const TBitFieldIterator& other )
+    FORCEINLINE bool operator!=(const TBitFieldIterator& other)
     {
         return (Index != other.Index);
     }

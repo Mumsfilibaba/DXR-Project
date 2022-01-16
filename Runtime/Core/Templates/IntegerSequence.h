@@ -34,9 +34,9 @@ namespace Internal
     struct TSequenceHelper;
 
     template<uint32 N, typename T, T... First, T... Second>
-    struct TSequenceHelper<N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> : TIntegerSequence<T, First..., (T( N + Second ))...>
+    struct TSequenceHelper<N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> : TIntegerSequence<T, First..., (T(N + Second))...>
     {
-        using Type = TIntegerSequence<T, First..., (T( N + Second ))...>;
+        using Type = TIntegerSequence<T, First..., (T(N + Second))...>;
     };
 
     template<uint32 N, typename FirstSequence, typename SecondSequence>
@@ -51,9 +51,9 @@ namespace Internal
 
     /* Create a integer sequence with zero */
     template<typename T>
-    struct TMakeIntegerSequenceImpl<T, 1> : TIntegerSequence<T, T( 0 )>
+    struct TMakeIntegerSequenceImpl<T, 1> : TIntegerSequence<T, T(0)>
     {
-        using Type = TIntegerSequence<T, T( 0 )>;
+        using Type = TIntegerSequence<T, T(0)>;
     };
 
     /* Create a empty integer sequence */

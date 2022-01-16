@@ -49,26 +49,26 @@ public:
     CShadowMapRenderer() = default;
     ~CShadowMapRenderer() = default;
 
-    bool Init( SLightSetup& LightSetup, SFrameResources& Resources );
+    bool Init(SLightSetup& LightSetup, SFrameResources& Resources);
 
     void Release();
 
     /* Render Point light shadows */
-    void RenderPointLightShadows( CRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene );
+    void RenderPointLightShadows(CRHICommandList& CmdList, const SLightSetup& LightSetup, const CScene& Scene);
 
     /* Render Directional light shadows */
-    void RenderDirectionalLightShadows( CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene );
+    void RenderDirectionalLightShadows(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources, const CScene& Scene);
 
     /* Render ShadowMasks */
-    void RenderShadowMasks( CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources );
+    void RenderShadowMasks(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources);
 
     /* Resize the resources that are dependent on the viewport */
-    bool ResizeResources( uint32 Width, uint32 Height, SLightSetup& LightSetup );
+    bool ResizeResources(uint32 Width, uint32 Height, SLightSetup& LightSetup);
 
 private:
 
-    bool CreateShadowMask( uint32 Width, uint32 Height, SLightSetup& LightSetup );
-    bool CreateShadowMaps( SLightSetup& LightSetup, SFrameResources& FrameResources );
+    bool CreateShadowMask(uint32 Width, uint32 Height, SLightSetup& LightSetup);
+    bool CreateShadowMaps(SLightSetup& LightSetup, SFrameResources& FrameResources);
 
     TSharedRef<CRHIConstantBuffer>        PerShadowMapBuffer;
 
@@ -88,10 +88,10 @@ private:
     TSharedRef<CRHIComputePipelineState>  CascadeGen;
     TSharedRef<CRHIComputeShader>         CascadeGenShader;
 
-    bool bUpdateDirLight   = true;
+    bool bUpdateDirLight = true;
     bool bUpdatePointLight = true;
 
-    uint64 DirLightFrame   = 0;
+    uint64 DirLightFrame = 0;
     uint64 PointLightFrame = 0;
 
     //uint64 FrameIndex = 0;

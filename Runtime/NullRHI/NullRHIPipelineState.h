@@ -67,9 +67,9 @@ public:
     CNullRHIGraphicsPipelineState() = default;
     ~CNullRHIGraphicsPipelineState() = default;
 
-    virtual void SetName( const CString& InName ) override final
+    virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName( InName );
+        CRHIResource::SetName(InName);
     }
 
     virtual bool IsValid() const override
@@ -84,9 +84,9 @@ public:
     CNullRHIComputePipelineState() = default;
     ~CNullRHIComputePipelineState() = default;
 
-    virtual void SetName( const CString& InName ) override final
+    virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName( InName );
+        CRHIResource::SetName(InName);
     }
 
     virtual bool IsValid() const override
@@ -101,9 +101,9 @@ public:
     CNullRHIRayTracingPipelineState() = default;
     ~CNullRHIRayTracingPipelineState() = default;
 
-    virtual void SetName( const CString& InName ) override final
+    virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName( InName );
+        CRHIResource::SetName(InName);
     }
 
     virtual bool IsValid() const override final

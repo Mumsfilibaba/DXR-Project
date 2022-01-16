@@ -12,13 +12,13 @@
 
 struct SPointLightData
 {
-    CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
+    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
     float Padding0;
 };
 
 struct SShadowCastingPointLightData
 {
-    CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
+    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
     float ShadowBias = 0.005f;
 
     float FarPlane = 10.0f;
@@ -39,13 +39,13 @@ struct SPointLightShadowMapGenerationData
 
 struct SDirectionalLightData
 {
-    CVector3 Color = CVector3( 1.0f, 1.0f, 1.0f );
+    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
     float ShadowBias = 0.005f;
 
-    CVector3 Direction = CVector3( 0.0f, -1.0f, 0.0f );
+    CVector3 Direction = CVector3(0.0f, -1.0f, 0.0f);
     float MaxShadowBias = 0.05f;
 
-    CVector3 Up = CVector3( 0.0f, 0.0f, -1.0f );
+    CVector3 Up = CVector3(0.0f, 0.0f, -1.0f);
     float LightSize;
 };
 
@@ -70,7 +70,7 @@ struct RENDERER_API SLightSetup
 
     bool Init();
 
-    void BeginFrame( CRHICommandList& CmdList, const CScene& Scene );
+    void BeginFrame(CRHICommandList& CmdList, const CScene& Scene);
     void Release();
 
     TArray<CVector4>        PointLightsPosRad;

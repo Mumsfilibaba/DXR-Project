@@ -4,9 +4,9 @@
 #include <dxgi1_6.h>
 #include <d3d12.h>
 
-typedef HRESULT( WINAPI* PFN_CREATE_DXGI_FACTORY_2 )(UINT Flags, REFIID riid, _COM_Outptr_ void** ppFactory);
-typedef HRESULT( WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1 )(UINT Flags, REFIID riid, _COM_Outptr_ void** pDebug);
-typedef HRESULT( WINAPI* PFN_SetMarkerOnCommandList )(ID3D12GraphicsCommandList* commandList, UINT64 color, _In_ PCSTR formatString);
+typedef HRESULT(WINAPI* PFN_CREATE_DXGI_FACTORY_2)(UINT Flags, REFIID riid, _COM_Outptr_ void** ppFactory);
+typedef HRESULT(WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1)(UINT Flags, REFIID riid, _COM_Outptr_ void** pDebug);
+typedef HRESULT(WINAPI* PFN_SetMarkerOnCommandList)(ID3D12GraphicsCommandList* commandList, UINT64 color, _In_ PCSTR formatString);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 

@@ -6,6 +6,6 @@ struct TIsEmpty
 {
     enum
     {
-        Value = __is_empty( T )
+        Value = __is_empty(T)
     };
 };

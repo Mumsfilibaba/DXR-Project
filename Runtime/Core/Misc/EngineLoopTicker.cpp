@@ -6,27 +6,27 @@ CEngineLoopTicker CEngineLoopTicker::Instance;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-void CEngineLoopTicker::Tick( CTimestamp Deltatime )
+void CEngineLoopTicker::Tick(CTimestamp Deltatime)
 {
-    for ( CTickDelegate TickDelegate : TickDelegates )
+    for (CTickDelegate TickDelegate : TickDelegates)
     {
-        TickDelegate.ExecuteIfBound( Deltatime );
+        TickDelegate.ExecuteIfBound(Deltatime);
     }
 }
 
-void CEngineLoopTicker::AddElement( const CTickDelegate& NewElement )
+void CEngineLoopTicker::AddElement(const CTickDelegate& NewElement)
 {
-    TickDelegates.Push( NewElement );
+    TickDelegates.Push(NewElement);
 }
 
-void CEngineLoopTicker::RemoveElement( CDelegateHandle RemoveHandle )
+void CEngineLoopTicker::RemoveElement(CDelegateHandle RemoveHandle)
 {
     uint32 NumElements = TickDelegates.Size();
     for (uint32 Index = 0; Index < NumElements; Index++)
     {
-        if ( TickDelegates[Index].GetHandle() == RemoveHandle )
+        if (TickDelegates[Index].GetHandle() == RemoveHandle)
         {
-            TickDelegates.RemoveAt( Index );
+            TickDelegates.RemoveAt(Index);
         }
     }
 }

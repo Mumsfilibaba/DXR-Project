@@ -14,19 +14,19 @@ public:
     static_assert(TIsSigned<T>::Value, "AtomicInt only supports signed types");
 
     FORCEINLINE TAtomicInt() noexcept
-        : Value( 0 )
+        : Value(0)
     {
     }
 
-    FORCEINLINE TAtomicInt( const TAtomicInt& Other )
-        : Value( 0 )
+    FORCEINLINE TAtomicInt(const TAtomicInt& Other)
+        : Value(0)
     {
         T TempInteger = Other.Load();
-        Store( TempInteger );
+        Store(TempInteger);
     }
 
-    FORCEINLINE TAtomicInt( T InValue ) noexcept
-        : Value( InValue )
+    FORCEINLINE TAtomicInt(T InValue) noexcept
+        : Value(InValue)
     {
     }
 
@@ -34,87 +34,87 @@ public:
 
     FORCEINLINE T Increment() noexcept
     {
-        return PlatformInterlocked::Increment( &Value );
+        return PlatformInterlocked::Increment(&Value);
     }
 
     FORCEINLINE T Decrement() noexcept
     {
-        return PlatformInterlocked::Decrement( &Value );
+        return PlatformInterlocked::Decrement(&Value);
     }
 
-    FORCEINLINE T Add( T RHS ) noexcept
+    FORCEINLINE T Add(T RHS) noexcept
     {
-        PlatformInterlocked::Add( &Value, RHS );
+        PlatformInterlocked::Add(&Value, RHS);
         return Value;
     }
 
-    FORCEINLINE T Subtract( T RHS ) noexcept
+    FORCEINLINE T Subtract(T RHS) noexcept
     {
-        PlatformInterlocked::Sub( &Value, RHS );
+        PlatformInterlocked::Sub(&Value, RHS);
         return Value;
     }
 
-    FORCEINLINE T And( T RHS ) noexcept
+    FORCEINLINE T And(T RHS) noexcept
     {
-        PlatformInterlocked::And( &Value, RHS );
+        PlatformInterlocked::And(&Value, RHS);
         return Value;
     }
 
-    FORCEINLINE T Or( T RHS ) noexcept
+    FORCEINLINE T Or(T RHS) noexcept
     {
-        PlatformInterlocked::Or( &Value, RHS );
+        PlatformInterlocked::Or(&Value, RHS);
         return Value;
     }
 
-    FORCEINLINE T Xor( T RHS ) noexcept
+    FORCEINLINE T Xor(T RHS) noexcept
     {
-        PlatformInterlocked::Xor( &Value, RHS );
+        PlatformInterlocked::Xor(&Value, RHS);
         return Value;
     }
 
     FORCEINLINE T Load() const noexcept
     {
         // Makes sure that all prior accesses has completed 
-        return PlatformAtomic::Read( &Value );
+        return PlatformAtomic::Read(&Value);
     }
 
     FORCEINLINE T RelaxedLoad() const noexcept
     {
-        return PlatformAtomic::RelaxedRead( &Value );
+        return PlatformAtomic::RelaxedRead(&Value);
     }
 
-    FORCEINLINE T Exchange( T InValue ) noexcept
+    FORCEINLINE T Exchange(T InValue) noexcept
     {
-        return PlatformInterlocked::Exchange( &Value, InValue );
+        return PlatformInterlocked::Exchange(&Value, InValue);
     }
 
-    FORCEINLINE void Store( T InValue ) noexcept
+    FORCEINLINE void Store(T InValue) noexcept
     {
-        PlatformAtomic::Store( &Value, InValue );
+        PlatformAtomic::Store(&Value, InValue);
     }
 
-    FORCEINLINE void RelaxedStore( T InValue ) noexcept
+    FORCEINLINE void RelaxedStore(T InValue) noexcept
     {
-        PlatformAtomic::RelaxedStore( &Value, InValue );
+        PlatformAtomic::RelaxedStore(&Value, InValue);
     }
 
 public:
 
     /* Operators */
 
-    FORCEINLINE TAtomicInt& operator=( const TAtomicInt& Other )
+    FORCEINLINE TAtomicInt& operator=(const TAtomicInt& Other)
     {
         T TempInteger = Other.Load();
-        Store( TempInteger );
+        Store(TempInteger);
         return *this;
     }
 
-    FORCEINLINE T operator=( T RHS ) noexcept
+    FORCEINLINE T operator=(T RHS) noexcept
     {
-        return Store( RHS );
+        return Store(RHS);
     }
 
-    FORCEINLINE T operator++( int32 ) noexcept
+    FORCEINLINE T operator++(int32) noexcept
     {
         T TempValue = Load();
         Increment();
@@ -126,7 +126,7 @@ public:
         return Increment();
     }
 
-    FORCEINLINE T operator--( int32 ) noexcept
+    FORCEINLINE T operator--(int32) noexcept
     {
         T TempValue = Load();
         Decrement();
@@ -138,29 +138,29 @@ public:
         return Decrement();
     }
 
-    FORCEINLINE T operator+=( T RHS ) noexcept
+    FORCEINLINE T operator+=(T RHS) noexcept
     {
-        return Add( RHS );
+        return Add(RHS);
     }
 
-    FORCEINLINE T operator-=( T RHS ) noexcept
+    FORCEINLINE T operator-=(T RHS) noexcept
     {
-        return Subtract( RHS );
+        return Subtract(RHS);
     }
 
-    FORCEINLINE T operator&=( T RHS ) noexcept
+    FORCEINLINE T operator&=(T RHS) noexcept
     {
-        return And( RHS );
+        return And(RHS);
     }
 
-    FORCEINLINE T operator|=( T RHS ) noexcept
+    FORCEINLINE T operator|=(T RHS) noexcept
     {
-        return Or( RHS );
+        return Or(RHS);
     }
 
-    FORCEINLINE T operator^=( T RHS ) noexcept
+    FORCEINLINE T operator^=(T RHS) noexcept
     {
-        return Xor( RHS );
+        return Xor(RHS);
     }
 
 private:

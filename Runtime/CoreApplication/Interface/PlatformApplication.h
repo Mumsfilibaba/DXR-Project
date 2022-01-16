@@ -35,50 +35,50 @@ public:
     virtual bool Initialize() { return true; }
 
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
-    virtual void Tick( float Delta ) {}
+    virtual void Tick(float Delta) { }
 
     /* Returns true if the platform supports Raw mouse movement */
     virtual bool SupportsRawMouse() const { return false; }
 
     /* Enables Raw mouse movement for a certain window */
-    virtual bool EnableRawMouse( const TSharedRef<CPlatformWindow>& Window ) { return true; }
+    virtual bool EnableRawMouse(const TSharedRef<CPlatformWindow>& Window) { return true; }
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( const TSharedRef<CPlatformWindow>& Window ) {}
+    virtual void SetActiveWindow(const TSharedRef<CPlatformWindow>& Window) { }
 
     /* Retrieves the window that is currently active */
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const { return TSharedRef<CPlatformWindow>(); }
 
     /* Sets the window that currently has the keyboard focus */
-    virtual void SetCapture( const TSharedRef<CPlatformWindow>& ) {}
+    virtual void SetCapture(const TSharedRef<CPlatformWindow>&) { }
 
     /* Retrieves the window that currently has the keyboard focus, since macOS does not support keyboard focus, we return null as standard */
     virtual TSharedRef<CPlatformWindow> GetCapture() const { return TSharedRef<CPlatformWindow>(); }
 
     /* Retrieve the window that is currently under the cursor, if no window is under the cursor, the value is nullptr */
-    virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const { return TSharedRef<CPlatformWindow>(); } 
+    virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const { return TSharedRef<CPlatformWindow>(); }
 
     /* Sets the message handler */
-    virtual void SetMessageListener( const TSharedPtr<CPlatformApplicationMessageHandler>& InMessageHandler ) { MessageListener = InMessageHandler; }
+    virtual void SetMessageListener(const TSharedPtr<CPlatformApplicationMessageHandler>& InMessageHandler) { MessageListener = InMessageHandler; }
 
     /* Retrieve the cursor interface */
     FORCEINLINE TSharedPtr<ICursor> GetCursor() const
-    { 
+    {
         return Cursor;
     }
 
     /* Retrieves the message handler */
     FORCEINLINE TSharedPtr<CPlatformApplicationMessageHandler> GetMessageListener() const
-    { 
+    {
         return MessageListener;
     }
 
 protected:
 
     /* Protected constructor, use Make */
-    CPlatformApplication( const TSharedPtr<ICursor>& InCursor )
-        : Cursor( InCursor )
-        , MessageListener( nullptr )
+    CPlatformApplication(const TSharedPtr<ICursor>& InCursor)
+        : Cursor(InCursor)
+        , MessageListener(nullptr)
     {
     }
 

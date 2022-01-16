@@ -6,6 +6,6 @@ struct TIsPolymorphic
 {
     enum
     {
-        Value = __is_polymorphic( T )
+        Value = __is_polymorphic(T)
     };
 };

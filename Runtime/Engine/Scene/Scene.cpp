@@ -16,88 +16,88 @@ CScene::CScene()
 
 CScene::~CScene()
 {
-    for ( CActor* CurrentActor : Actors )
+    for (CActor* CurrentActor : Actors)
     {
-        SafeDelete( CurrentActor );
+        SafeDelete(CurrentActor);
     }
     Actors.Clear();
 
-    for ( CLight* CurrentLight : Lights )
+    for (CLight* CurrentLight : Lights)
     {
-        SafeDelete( CurrentLight );
+        SafeDelete(CurrentLight);
     }
     Lights.Clear();
 
-    SafeDelete( CurrentCamera );
+    SafeDelete(CurrentCamera);
 }
 
 CActor* CScene::MakeActor()
 {
-    CActor* NewActor = dbg_new CActor( this );
-    AddActor( NewActor );
+    CActor* NewActor = dbg_new CActor(this);
+    AddActor(NewActor);
     return NewActor;
 }
 
 void CScene::Start()
 {
-    for ( CActor* Actor : Actors )
+    for (CActor* Actor : Actors)
     {
-        if ( Actor->IsStartable() )
+        if (Actor->IsStartable())
         {
             Actor->Start();
         }
     }
 }
 
-void CScene::Tick( CTimestamp DeltaTime )
+void CScene::Tick(CTimestamp DeltaTime)
 {
-    for ( CActor* Actor : Actors )
+    for (CActor* Actor : Actors)
     {
-        if ( Actor->IsTickable() )
+        if (Actor->IsTickable())
         {
-            Actor->Tick( DeltaTime );
+            Actor->Tick(DeltaTime);
         }
     }
 }
 
-void CScene::AddCamera( CCamera* InCamera )
+void CScene::AddCamera(CCamera* InCamera)
 {
-    if ( CurrentCamera )
+    if (CurrentCamera)
     {
-        SafeDelete( CurrentCamera );
+        SafeDelete(CurrentCamera);
     }
 
     CurrentCamera = InCamera;
 }
 
-void CScene::AddActor( CActor* InActor )
+void CScene::AddActor(CActor* InActor)
 {
-    Assert( InActor != nullptr );
-    Actors.Emplace( InActor );
+    Assert(InActor != nullptr);
+    Actors.Emplace(InActor);
 
     CMeshComponent* Component = InActor->GetComponentOfType<CMeshComponent>();
-    if ( Component )
+    if (Component)
     {
-        AddMeshComponent( Component );
+        AddMeshComponent(Component);
     }
 }
 
-void CScene::AddLight( CLight* InLight )
+void CScene::AddLight(CLight* InLight)
 {
-    Assert( InLight != nullptr );
-    Lights.Emplace( InLight );
+    Assert(InLight != nullptr);
+    Lights.Emplace(InLight);
 }
 
-void CScene::OnAddedComponent( CComponent* NewComponent )
+void CScene::OnAddedComponent(CComponent* NewComponent)
 {
-    CMeshComponent* Component = Cast<CMeshComponent>( NewComponent );
-    if ( Component && Component->Mesh )
+    CMeshComponent* Component = Cast<CMeshComponent>(NewComponent);
+    if (Component && Component->Mesh)
     {
-        AddMeshComponent( Component );
+        AddMeshComponent(Component);
     }
 }
 
-void CScene::AddMeshComponent( CMeshComponent* Component )
+void CScene::AddMeshComponent(CMeshComponent* Component)
 {
     SMeshDrawCommand Command;
     Command.CurrentActor = Component->GetActor();
@@ -106,5 +106,5 @@ void CScene::AddMeshComponent( CMeshComponent* Component )
     Command.IndexBuffer = Component->Mesh->IndexBuffer.Get();
     Command.Material = Component->Material.Get();
     Command.Mesh = Component->Mesh.Get();
-    MeshDrawCommands.Push( Command );
+    MeshDrawCommands.Push(Command);
 }

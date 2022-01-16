@@ -10,10 +10,10 @@ public:
     CForwardRenderer() = default;
     ~CForwardRenderer() = default;
 
-    bool Init( SFrameResources& FrameResources );
+    bool Init(SFrameResources& FrameResources);
     void Release();
 
-    void Render( CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup );
+    void Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
 
 private:
     TSharedRef<CRHIGraphicsPipelineState> PipelineState;

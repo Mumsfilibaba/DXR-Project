@@ -9,21 +9,21 @@ CORE_API CApplicationModule* GApplicationModule;
 bool CApplicationModule::Init()
 {
     // Bind the application module to the EngineLoopTicker
-    CTickDelegate TickDelegate = CTickDelegate::CreateRaw( this, &CApplicationModule::Tick );
+    CTickDelegate TickDelegate = CTickDelegate::CreateRaw(this, &CApplicationModule::Tick);
     TickHandle = TickDelegate.GetHandle();
-    
-    CEngineLoopTicker::Get().AddElement( TickDelegate );
+
+    CEngineLoopTicker::Get().AddElement(TickDelegate);
 
     return true;
 }
 
-void CApplicationModule::Tick( CTimestamp )
+void CApplicationModule::Tick(CTimestamp)
 {
 }
 
 bool CApplicationModule::Release()
 {
-    CEngineLoopTicker::Get().RemoveElement( TickHandle );   
+    CEngineLoopTicker::Get().RemoveElement(TickHandle);
     return true;
 }
 

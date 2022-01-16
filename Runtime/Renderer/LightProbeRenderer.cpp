@@ -3,68 +3,68 @@
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
-bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameResources )
+bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameResources)
 {
-    if ( !CreateSkyLightResources( LightSetup ) )
+    if (!CreateSkyLightResources(LightSetup))
     {
         return false;
     }
 
     TArray<uint8> Code;
-    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
-        LOG_ERROR( "Failed to compile IrradianceGen Shader" );
+        LOG_ERROR("Failed to compile IrradianceGen Shader");
         CDebug::DebugBreak();
     }
 
-    IrradianceGenShader = RHICreateComputeShader( Code );
-    if ( !IrradianceGenShader )
+    IrradianceGenShader = RHICreateComputeShader(Code);
+    if (!IrradianceGenShader)
     {
-        LOG_ERROR( "Failed to create IrradianceGen Shader" );
+        LOG_ERROR("Failed to create IrradianceGen Shader");
         CDebug::DebugBreak();
     }
     else
     {
-        IrradianceGenShader->SetName( "IrradianceGen Shader" );
+        IrradianceGenShader->SetName("IrradianceGen Shader");
     }
 
-    IrradianceGenPSO = RHICreateComputePipelineState( SComputePipelineStateCreateInfo( IrradianceGenShader.Get() ) );
-    if ( !IrradianceGenPSO )
+    IrradianceGenPSO = RHICreateComputePipelineState(SComputePipelineStateCreateInfo(IrradianceGenShader.Get()));
+    if (!IrradianceGenPSO)
     {
-        LOG_ERROR( "Failed to create IrradianceGen PipelineState" );
+        LOG_ERROR("Failed to create IrradianceGen PipelineState");
         CDebug::DebugBreak();
     }
     else
     {
-        IrradianceGenPSO->SetName( "IrradianceGen PSO" );
+        IrradianceGenPSO->SetName("IrradianceGen PSO");
     }
 
-    if ( !CRHIShaderCompiler::CompileFromFile( "../Runtime/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code ) )
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
-        LOG_ERROR( "Failed to compile SpecularIrradianceGen Shader" );
+        LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
         CDebug::DebugBreak();
     }
 
-    SpecularIrradianceGenShader = RHICreateComputeShader( Code );
-    if ( !SpecularIrradianceGenShader )
+    SpecularIrradianceGenShader = RHICreateComputeShader(Code);
+    if (!SpecularIrradianceGenShader)
     {
-        LOG_ERROR( "Failed to create Specular IrradianceGen Shader" );
-        CDebug::DebugBreak();
-    }
-    else
-    {
-        SpecularIrradianceGenShader->SetName( "Specular IrradianceGen Shader" );
-    }
-
-    SpecularIrradianceGenPSO = RHICreateComputePipelineState( SComputePipelineStateCreateInfo( SpecularIrradianceGenShader.Get() ) );
-    if ( !SpecularIrradianceGenPSO )
-    {
-        LOG_ERROR( "Failed to create Specular IrradianceGen PipelineState" );
+        LOG_ERROR("Failed to create Specular IrradianceGen Shader");
         CDebug::DebugBreak();
     }
     else
     {
-        SpecularIrradianceGenPSO->SetName( "Specular IrradianceGen PSO" );
+        SpecularIrradianceGenShader->SetName("Specular IrradianceGen Shader");
+    }
+
+    SpecularIrradianceGenPSO = RHICreateComputePipelineState(SComputePipelineStateCreateInfo(SpecularIrradianceGenShader.Get()));
+    if (!SpecularIrradianceGenPSO)
+    {
+        LOG_ERROR("Failed to create Specular IrradianceGen PipelineState");
+        CDebug::DebugBreak();
+    }
+    else
+    {
+        SpecularIrradianceGenPSO->SetName("Specular IrradianceGen PSO");
     }
 
     SSamplerStateCreateInfo CreateInfo;
@@ -73,8 +73,8 @@ bool CLightProbeRenderer::Init( SLightSetup& LightSetup, SFrameResources& FrameR
     CreateInfo.AddressW = ESamplerMode::Wrap;
     CreateInfo.Filter = ESamplerFilter::MinMagMipLinear;
 
-    FrameResources.IrradianceSampler = RHICreateSamplerState( CreateInfo );
-    if ( !FrameResources.IrradianceSampler )
+    FrameResources.IrradianceSampler = RHICreateSamplerState(CreateInfo);
+    if (!FrameResources.IrradianceSampler)
     {
         return false;
     }
@@ -90,108 +90,108 @@ void CLightProbeRenderer::Release()
     SpecularIrradianceGenShader.Reset();
 }
 
-void CLightProbeRenderer::RenderSkyLightProbe( CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources )
+void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources)
 {
     const uint32 IrradianceMapSize = static_cast<uint32>(LightSetup.IrradianceMap->GetSize());
 
-    CmdList.TransitionTexture( FrameResources.Skybox.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource );
-    CmdList.TransitionTexture( LightSetup.IrradianceMap.Get(), EResourceState::Common, EResourceState::UnorderedAccess );
+    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
-    CmdList.SetComputePipelineState( IrradianceGenPSO.Get() );
+    CmdList.SetComputePipelineState(IrradianceGenPSO.Get());
 
     CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
-    CmdList.SetShaderResourceView( IrradianceGenShader.Get(), SkyboxSRV, 0 );
-    CmdList.SetUnorderedAccessView( IrradianceGenShader.Get(), LightSetup.IrradianceMapUAV.Get(), 0 );
+    CmdList.SetShaderResourceView(IrradianceGenShader.Get(), SkyboxSRV, 0);
+    CmdList.SetUnorderedAccessView(IrradianceGenShader.Get(), LightSetup.IrradianceMapUAV.Get(), 0);
 
     {
         const CIntVector3 ThreadCount = IrradianceGenShader->GetThreadGroupXYZ();
-        const uint32 ThreadWidth = NMath::DivideByMultiple( IrradianceMapSize, ThreadCount.x );
-        const uint32 ThreadHeight = NMath::DivideByMultiple( IrradianceMapSize, ThreadCount.y );
-        CmdList.Dispatch( ThreadWidth, ThreadHeight, 6 );
+        const uint32 ThreadWidth = NMath::DivideByMultiple(IrradianceMapSize, ThreadCount.x);
+        const uint32 ThreadHeight = NMath::DivideByMultiple(IrradianceMapSize, ThreadCount.y);
+        CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
     }
 
-    CmdList.UnorderedAccessTextureBarrier( LightSetup.IrradianceMap.Get() );
+    CmdList.UnorderedAccessTextureBarrier(LightSetup.IrradianceMap.Get());
 
-    CmdList.TransitionTexture( LightSetup.IrradianceMap.Get(), EResourceState::UnorderedAccess, EResourceState::PixelShaderResource );
-    CmdList.TransitionTexture( LightSetup.SpecularIrradianceMap.Get(), EResourceState::Common, EResourceState::UnorderedAccess );
+    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::UnorderedAccess, EResourceState::PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::Common, EResourceState::UnorderedAccess);
 
-    CmdList.SetShaderResourceView( IrradianceGenShader.Get(), SkyboxSRV, 0 );
+    CmdList.SetShaderResourceView(IrradianceGenShader.Get(), SkyboxSRV, 0);
 
-    CmdList.SetComputePipelineState( SpecularIrradianceGenPSO.Get() );
+    CmdList.SetComputePipelineState(SpecularIrradianceGenPSO.Get());
 
     uint32 Width = LightSetup.SpecularIrradianceMap->GetSize();
     float  Roughness = 0.0f;
 
     const uint32 NumMiplevels = LightSetup.SpecularIrradianceMap->GetNumMips();
     const float  RoughnessDelta = 1.0f / (NumMiplevels - 1);
-    for ( uint32 Mip = 0; Mip < NumMiplevels; Mip++ )
+    for (uint32 Mip = 0; Mip < NumMiplevels; Mip++)
     {
-        CmdList.Set32BitShaderConstants( SpecularIrradianceGenShader.Get(), &Roughness, 1 );
-        CmdList.SetUnorderedAccessView( SpecularIrradianceGenShader.Get(), LightSetup.SpecularIrradianceMapUAVs[Mip].Get(), 0 );
+        CmdList.Set32BitShaderConstants(SpecularIrradianceGenShader.Get(), &Roughness, 1);
+        CmdList.SetUnorderedAccessView(SpecularIrradianceGenShader.Get(), LightSetup.SpecularIrradianceMapUAVs[Mip].Get(), 0);
 
         {
             const CIntVector3 ThreadCount = SpecularIrradianceGenShader->GetThreadGroupXYZ();
-            const uint32 ThreadWidth = NMath::DivideByMultiple( Width, ThreadCount.x );
-            const uint32 ThreadHeight = NMath::DivideByMultiple( Width, ThreadCount.y );
-            CmdList.Dispatch( ThreadWidth, ThreadHeight, 6 );
+            const uint32 ThreadWidth = NMath::DivideByMultiple(Width, ThreadCount.x);
+            const uint32 ThreadHeight = NMath::DivideByMultiple(Width, ThreadCount.y);
+            CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
         }
 
-        CmdList.UnorderedAccessTextureBarrier( LightSetup.SpecularIrradianceMap.Get() );
+        CmdList.UnorderedAccessTextureBarrier(LightSetup.SpecularIrradianceMap.Get());
 
-        Width = std::max<uint32>( Width / 2, 1U );
+        Width = std::max<uint32>(Width / 2, 1U);
         Roughness += RoughnessDelta;
     }
 
-    CmdList.TransitionTexture( FrameResources.Skybox.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource );
-    CmdList.TransitionTexture( LightSetup.SpecularIrradianceMap.Get(), EResourceState::UnorderedAccess, EResourceState::PixelShaderResource );
+    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::UnorderedAccess, EResourceState::PixelShaderResource);
 }
 
-bool CLightProbeRenderer::CreateSkyLightResources( SLightSetup& LightSetup )
+bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
 {
     // Generate global irradiance (From Skybox)
-    LightSetup.IrradianceMap = RHICreateTextureCube( LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, TextureFlags_RWTexture, EResourceState::Common, nullptr );
-    if ( !LightSetup.IrradianceMap )
+    LightSetup.IrradianceMap = RHICreateTextureCube(LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, TextureFlags_RWTexture, EResourceState::Common, nullptr);
+    if (!LightSetup.IrradianceMap)
     {
         CDebug::DebugBreak();
         return false;
     }
     else
     {
-        LightSetup.IrradianceMap->SetName( "Irradiance Map" );
+        LightSetup.IrradianceMap->SetName("Irradiance Map");
     }
 
-    LightSetup.IrradianceMapUAV = RHICreateUnorderedAccessView( LightSetup.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0 );
-    if ( !LightSetup.IrradianceMapUAV )
+    LightSetup.IrradianceMapUAV = RHICreateUnorderedAccessView(LightSetup.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0);
+    if (!LightSetup.IrradianceMapUAV)
     {
         CDebug::DebugBreak();
         return false;
     }
 
-    const uint16 SpecularIrradianceMiplevels = NMath::Max<uint16>( NMath::Log2( LightSetup.SpecularIrradianceSize ), 1u );
+    const uint16 SpecularIrradianceMiplevels = NMath::Max<uint16>(NMath::Log2(LightSetup.SpecularIrradianceSize), 1u);
     LightSetup.SpecularIrradianceMap = RHICreateTextureCube(
         LightSetup.LightProbeFormat,
         LightSetup.SpecularIrradianceSize,
         SpecularIrradianceMiplevels,
         TextureFlags_RWTexture,
         EResourceState::Common,
-        nullptr );
-    if ( !LightSetup.SpecularIrradianceMap )
+        nullptr);
+    if (!LightSetup.SpecularIrradianceMap)
     {
         CDebug::DebugBreak();
         return false;
     }
     else
     {
-        LightSetup.SpecularIrradianceMap->SetName( "Specular Irradiance Map" );
+        LightSetup.SpecularIrradianceMap->SetName("Specular Irradiance Map");
     }
 
-    for ( uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++ )
+    for (uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        TSharedRef<CRHIUnorderedAccessView> Uav = RHICreateUnorderedAccessView( LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel );
-        if ( Uav )
+        TSharedRef<CRHIUnorderedAccessView> Uav = RHICreateUnorderedAccessView(LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel);
+        if (Uav)
         {
-            LightSetup.SpecularIrradianceMapUAVs.Emplace( Uav );
-            LightSetup.WeakSpecularIrradianceMapUAVs.Emplace( Uav.Get() );
+            LightSetup.SpecularIrradianceMapUAVs.Emplace(Uav);
+            LightSetup.WeakSpecularIrradianceMapUAVs.Emplace(Uav.Get());
         }
         else
         {

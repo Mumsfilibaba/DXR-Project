@@ -5,15 +5,15 @@ template<typename LockType>
 class TScopedLock
 {
 public:
-	
-    TScopedLock( TScopedLock&& ) = delete;
-    TScopedLock( const TScopedLock& ) = delete;
 
-    TScopedLock& operator=( TScopedLock&& ) = delete;
-    TScopedLock& operator=( const TScopedLock& ) = delete;
+    TScopedLock(TScopedLock&&) = delete;
+    TScopedLock(const TScopedLock&) = delete;
 
-    FORCEINLINE TScopedLock( LockType& InLock )
-        : Lock( InLock )
+    TScopedLock& operator=(TScopedLock&&) = delete;
+    TScopedLock& operator=(const TScopedLock&) = delete;
+
+    FORCEINLINE TScopedLock(LockType& InLock)
+        : Lock(InLock)
     {
         Lock.Lock();
     }

@@ -11,20 +11,20 @@ class TReferenceWrapper
 public:
     typedef T Type;
 
-    TReferenceWrapper( const TReferenceWrapper& ) = default;
-    TReferenceWrapper( TReferenceWrapper&& ) = default;
-    TReferenceWrapper& operator=( const TReferenceWrapper& ) = default;
-    TReferenceWrapper& operator=( TReferenceWrapper&& ) = default;
+    TReferenceWrapper(const TReferenceWrapper&) = default;
+    TReferenceWrapper(TReferenceWrapper&&) = default;
+    TReferenceWrapper& operator=(const TReferenceWrapper&) = default;
+    TReferenceWrapper& operator=(TReferenceWrapper&&) = default;
 
     static_assert(TIsObject<T>::Value || TIsFunction<T>::Value, "TReferenceWrapper requires T to be of object or function type");
 
     /* Constructor */
-    FORCEINLINE TReferenceWrapper( Type& In )
-        : Pointer( ::AddressOf( In ) )
+    FORCEINLINE TReferenceWrapper(Type& In)
+        : Pointer(::AddressOf(In))
     {
     }
 
-    TReferenceWrapper( Type&& ) = delete;
+    TReferenceWrapper(Type&&) = delete;
 
     /* Retrieve reference */
     FORCEINLINE Type& Get() const noexcept
@@ -46,10 +46,10 @@ public:
 
     /* Invoke if type is invokable */
     template<typename... ArgTypes>
-    FORCEINLINE auto operator()( ArgTypes&&... Args ) const noexcept
-        -> decltype(Invoke( this->Get(), Forward<ArgTypes>( Args )... ))
+    FORCEINLINE auto operator()(ArgTypes&&... Args) const noexcept
+        -> decltype(Invoke(this->Get(), Forward<ArgTypes>(Args)...))
     {
-        return Invoke( this->Get(), Forward<ArgTypes>( Args )... );
+        return Invoke(this->Get(), Forward<ArgTypes>(Args)...);
     }
 
 private:

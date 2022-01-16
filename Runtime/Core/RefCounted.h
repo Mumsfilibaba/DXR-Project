@@ -23,9 +23,9 @@ private:
 };
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsBaseOf<CRefCounted, T>::Value, T*>::Type AddRef( T* InRefCounted )
+FORCEINLINE typename TEnableIf<TIsBaseOf<CRefCounted, T>::Value, T*>::Type AddRef(T* InRefCounted)
 {
-    if ( InRefCounted )
+    if (InRefCounted)
     {
         InRefCounted->AddRef();
     }

@@ -14,13 +14,13 @@ public:
 
     typedef CONDITION_VARIABLE* PlatformHandle;
 
-    CWindowsConditionVariable( const CWindowsConditionVariable& ) = delete;
-    CWindowsConditionVariable& operator=( const CWindowsConditionVariable& ) = delete;
+    CWindowsConditionVariable(const CWindowsConditionVariable&) = delete;
+    CWindowsConditionVariable& operator=(const CWindowsConditionVariable&) = delete;
 
     FORCEINLINE CWindowsConditionVariable()
         : ConditionVariable()
     {
-        InitializeConditionVariable( &ConditionVariable );
+        InitializeConditionVariable(&ConditionVariable);
     }
 
     FORCEINLINE ~CWindowsConditionVariable()
@@ -30,27 +30,27 @@ public:
 
     FORCEINLINE void NotifyOne() noexcept
     {
-        WakeConditionVariable( &ConditionVariable );
+        WakeConditionVariable(&ConditionVariable);
     }
 
     FORCEINLINE void NotifyAll() noexcept
     {
-        WakeAllConditionVariable( &ConditionVariable );
+        WakeAllConditionVariable(&ConditionVariable);
     }
 
-    FORCEINLINE bool Wait( TScopedLock<CCriticalSection>& Lock ) noexcept
+    FORCEINLINE bool Wait(TScopedLock<CCriticalSection>& Lock) noexcept
     {
-        SetLastError( 0 );
+        SetLastError(0);
 
         CWindowsCriticalSection::PlatformHandle CriticalSection = Lock.GetLock().GetPlatformHandle();
 
-        bool bResult = !!SleepConditionVariableCS( &ConditionVariable, CriticalSection, INFINITE );
-        if ( !bResult )
+        bool bResult = !!SleepConditionVariableCS(&ConditionVariable, CriticalSection, INFINITE);
+        if (!bResult)
         {
             CString ErrorString;
-            CWindowsDebugMisc::GetLastErrorString( ErrorString );
+            CWindowsDebugMisc::GetLastErrorString(ErrorString);
 
-            LOG_ERROR( ErrorString.CStr() );
+            LOG_ERROR(ErrorString.CStr());
 
             return false;
         }

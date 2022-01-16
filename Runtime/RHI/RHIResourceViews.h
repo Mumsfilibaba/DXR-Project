@@ -25,8 +25,8 @@ struct SShaderResourceViewCreateInfo
         StructuredBuffer = 8,
     };
 
-    FORCEINLINE SShaderResourceViewCreateInfo( EType InType )
-        : Type( InType )
+    FORCEINLINE SShaderResourceViewCreateInfo(EType InType)
+        : Type(InType)
     {
     }
 
@@ -116,8 +116,8 @@ struct SUnorderedAccessViewCreateInfo
         StructuredBuffer = 8,
     };
 
-    FORCEINLINE SUnorderedAccessViewCreateInfo( EType InType )
-        : Type( InType )
+    FORCEINLINE SUnorderedAccessViewCreateInfo(EType InType)
+        : Type(InType)
     {
     }
 
@@ -195,8 +195,8 @@ struct SRenderTargetViewCreateInfo
         Texture3D = 5,
     };
 
-    FORCEINLINE SRenderTargetViewCreateInfo( EType InType )
-        : Type( InType )
+    FORCEINLINE SRenderTargetViewCreateInfo(EType InType)
+        : Type(InType)
     {
     }
 
@@ -251,8 +251,8 @@ struct SDepthStencilViewCreateInfo
         TextureCubeArray = 4,
     };
 
-    FORCEINLINE SDepthStencilViewCreateInfo( EType InType )
-        : Type( InType )
+    FORCEINLINE SDepthStencilViewCreateInfo(EType InType)
+        : Type(InType)
     {
     }
 

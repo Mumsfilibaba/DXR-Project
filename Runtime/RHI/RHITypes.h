@@ -13,14 +13,14 @@ enum class ECubeFace
     NegZ = 5,
 };
 
-inline uint32 GetCubeFaceIndex( ECubeFace CubeFace )
+inline uint32 GetCubeFaceIndex(ECubeFace CubeFace)
 {
     return static_cast<uint32>(CubeFace);
 }
 
-inline ECubeFace GetCubeFaceFromIndex( uint32 Index )
+inline ECubeFace GetCubeFaceFromIndex(uint32 Index)
 {
-    if ( Index > GetCubeFaceIndex( ECubeFace::NegZ ) )
+    if (Index > GetCubeFaceIndex(ECubeFace::NegZ))
     {
         return static_cast<ECubeFace>(-1);
     }
@@ -44,19 +44,19 @@ enum class EComparisonFunc
     Always = 8
 };
 
-inline const char* ToString( EComparisonFunc ComparisonFunc )
+inline const char* ToString(EComparisonFunc ComparisonFunc)
 {
-    switch ( ComparisonFunc )
+    switch (ComparisonFunc)
     {
-        case EComparisonFunc::Never:        return "Never";
-        case EComparisonFunc::Less:         return "Less";
-        case EComparisonFunc::Equal:        return "Equal";
-        case EComparisonFunc::LessEqual:    return "LessEqual";
-        case EComparisonFunc::Greater:      return "Greater";
-        case EComparisonFunc::NotEqual:     return "NotEqual";
-        case EComparisonFunc::GreaterEqual: return "GreaterEqual";
-        case EComparisonFunc::Always:       return "Always";
-        default: return "Unknown";
+    case EComparisonFunc::Never:        return "Never";
+    case EComparisonFunc::Less:         return "Less";
+    case EComparisonFunc::Equal:        return "Equal";
+    case EComparisonFunc::LessEqual:    return "LessEqual";
+    case EComparisonFunc::Greater:      return "Greater";
+    case EComparisonFunc::NotEqual:     return "NotEqual";
+    case EComparisonFunc::GreaterEqual: return "GreaterEqual";
+    case EComparisonFunc::Always:       return "Always";
+    default: return "Unknown";
     }
 }
 
@@ -71,16 +71,16 @@ enum class EPrimitiveTopologyType
     Patch = 4
 };
 
-inline const char* ToString( EPrimitiveTopologyType PrimitveTopologyType )
+inline const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 {
-    switch ( PrimitveTopologyType )
+    switch (PrimitveTopologyType)
     {
-        case EPrimitiveTopologyType::Undefined: return "Undefined";
-        case EPrimitiveTopologyType::Point:     return "Point";
-        case EPrimitiveTopologyType::Line:      return "Line";
-        case EPrimitiveTopologyType::Triangle:  return "Triangle";
-        case EPrimitiveTopologyType::Patch:     return "Patch";
-        default: return "Unknown";
+    case EPrimitiveTopologyType::Undefined: return "Undefined";
+    case EPrimitiveTopologyType::Point:     return "Point";
+    case EPrimitiveTopologyType::Line:      return "Line";
+    case EPrimitiveTopologyType::Triangle:  return "Triangle";
+    case EPrimitiveTopologyType::Patch:     return "Patch";
+    default: return "Unknown";
     }
 }
 
@@ -107,27 +107,27 @@ enum class EResourceState
     GenericRead = 16,
 };
 
-inline const char* ToString( EResourceState ResourceState )
+inline const char* ToString(EResourceState ResourceState)
 {
-    switch ( ResourceState )
+    switch (ResourceState)
     {
-        case EResourceState::Common:                          return "Common";
-        case EResourceState::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
-        case EResourceState::IndexBuffer:                     return "IndexBuffer";
-        case EResourceState::RenderTarget:                    return "RenderTarget";
-        case EResourceState::UnorderedAccess:                 return "UnorderedAccess";
-        case EResourceState::DepthWrite:                      return "DepthWrite";
-        case EResourceState::DepthRead:                       return "DepthRead";
-        case EResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
-        case EResourceState::PixelShaderResource:             return "PixelShaderResource";
-        case EResourceState::CopyDest:                        return "CopyDest";
-        case EResourceState::CopySource:                      return "CopySource";
-        case EResourceState::ResolveDest:                     return "ResolveDest";
-        case EResourceState::ResolveSource:                   return "ResolveSource";
-        case EResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
-        case EResourceState::ShadingRateSource:               return "ShadingRateSource";
-        case EResourceState::Present:                         return "Present";
-        default: return "Unknown";
+    case EResourceState::Common:                          return "Common";
+    case EResourceState::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
+    case EResourceState::IndexBuffer:                     return "IndexBuffer";
+    case EResourceState::RenderTarget:                    return "RenderTarget";
+    case EResourceState::UnorderedAccess:                 return "UnorderedAccess";
+    case EResourceState::DepthWrite:                      return "DepthWrite";
+    case EResourceState::DepthRead:                       return "DepthRead";
+    case EResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
+    case EResourceState::PixelShaderResource:             return "PixelShaderResource";
+    case EResourceState::CopyDest:                        return "CopyDest";
+    case EResourceState::CopySource:                      return "CopySource";
+    case EResourceState::ResolveDest:                     return "ResolveDest";
+    case EResourceState::ResolveSource:                   return "ResolveSource";
+    case EResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
+    case EResourceState::ShadingRateSource:               return "ShadingRateSource";
+    case EResourceState::Present:                         return "Present";
+    default: return "Unknown";
     }
 }
 
@@ -143,17 +143,17 @@ enum class EPrimitiveTopology
     TriangleStrip = 5,
 };
 
-inline const char* ToString( EPrimitiveTopology ResourceState )
+inline const char* ToString(EPrimitiveTopology ResourceState)
 {
-    switch ( ResourceState )
+    switch (ResourceState)
     {
-        case EPrimitiveTopology::Undefined:     return "Undefined";
-        case EPrimitiveTopology::PointList:     return "PointList";
-        case EPrimitiveTopology::LineList:      return "LineList";
-        case EPrimitiveTopology::LineStrip:     return "LineStrip";
-        case EPrimitiveTopology::TriangleList:  return "TriangleList";
-        case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
-        default: return "Unknown";
+    case EPrimitiveTopology::Undefined:     return "Undefined";
+    case EPrimitiveTopology::PointList:     return "PointList";
+    case EPrimitiveTopology::LineList:      return "LineList";
+    case EPrimitiveTopology::LineStrip:     return "LineStrip";
+    case EPrimitiveTopology::TriangleList:  return "TriangleList";
+    case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
+    default: return "Unknown";
     }
 }
 
@@ -170,18 +170,18 @@ enum class EShadingRate
     VRS_4x4 = 0xa,
 };
 
-inline const char* ToString( EShadingRate ShadingRate )
+inline const char* ToString(EShadingRate ShadingRate)
 {
-    switch ( ShadingRate )
+    switch (ShadingRate)
     {
-        case EShadingRate::VRS_1x1: return "VRS_1x1";
-        case EShadingRate::VRS_1x2: return "VRS_1x2";
-        case EShadingRate::VRS_2x1: return "VRS_2x1";
-        case EShadingRate::VRS_2x2: return "VRS_2x2";
-        case EShadingRate::VRS_2x4: return "VRS_2x4";
-        case EShadingRate::VRS_4x2: return "VRS_4x2";
-        case EShadingRate::VRS_4x4: return "VRS_4x4";
-        default: return "Unknown";
+    case EShadingRate::VRS_1x1: return "VRS_1x1";
+    case EShadingRate::VRS_1x2: return "VRS_1x2";
+    case EShadingRate::VRS_2x1: return "VRS_2x1";
+    case EShadingRate::VRS_2x2: return "VRS_2x2";
+    case EShadingRate::VRS_2x4: return "VRS_2x4";
+    case EShadingRate::VRS_4x2: return "VRS_4x2";
+    case EShadingRate::VRS_4x4: return "VRS_4x4";
+    default: return "Unknown";
     }
 }
 
@@ -191,9 +191,9 @@ struct SDepthStencil
 {
     SDepthStencil() = default;
 
-    FORCEINLINE SDepthStencil( float InDepth, uint8 InStencil )
-        : Depth( InDepth )
-        , Stencil( InStencil )
+    FORCEINLINE SDepthStencil(float InDepth, uint8 InStencil)
+        : Depth(InDepth)
+        , Stencil(InStencil)
     {
     }
 
@@ -213,51 +213,51 @@ public:
 
     // NOTE: Default clear color is black
     FORCEINLINE SClearValue()
-        : Type( EType::Color )
-        , Format( EFormat::Unknown )
-        , Color( 0.0f, 0.0f, 0.0f, 1.0f )
+        : Type(EType::Color)
+        , Format(EFormat::Unknown)
+        , Color(0.0f, 0.0f, 0.0f, 1.0f)
     {
     }
 
-    FORCEINLINE SClearValue( EFormat InFormat, float Depth, uint8 Stencil )
-        : Type( EType::DepthStencil )
-        , Format( InFormat )
-        , DepthStencil( Depth, Stencil )
+    FORCEINLINE SClearValue(EFormat InFormat, float Depth, uint8 Stencil)
+        : Type(EType::DepthStencil)
+        , Format(InFormat)
+        , DepthStencil(Depth, Stencil)
     {
     }
 
-    FORCEINLINE SClearValue( EFormat InFormat, float r, float g, float b, float a )
-        : Type( EType::Color )
-        , Format( InFormat )
-        , Color( r, g, b, a )
+    FORCEINLINE SClearValue(EFormat InFormat, float r, float g, float b, float a)
+        : Type(EType::Color)
+        , Format(InFormat)
+        , Color(r, g, b, a)
     {
     }
 
-    FORCEINLINE SClearValue( const SClearValue& Other )
-        : Type( Other.Type )
-        , Format( Other.Format )
+    FORCEINLINE SClearValue(const SClearValue& Other)
+        : Type(Other.Type)
+        , Format(Other.Format)
         , Color()
     {
-        if ( Other.Type == EType::Color )
+        if (Other.Type == EType::Color)
         {
             Color = Other.Color;
         }
-        else if ( Other.Type == EType::DepthStencil )
+        else if (Other.Type == EType::DepthStencil)
         {
             DepthStencil = Other.DepthStencil;
         }
     }
 
-    FORCEINLINE SClearValue& operator=( const SClearValue& Other )
+    FORCEINLINE SClearValue& operator=(const SClearValue& Other)
     {
         Type = Other.Type;
         Format = Other.Format;
 
-        if ( Other.Type == EType::Color )
+        if (Other.Type == EType::Color)
         {
             Color = Other.Color;
         }
-        else if ( Other.Type == EType::DepthStencil )
+        else if (Other.Type == EType::DepthStencil)
         {
             DepthStencil = Other.DepthStencil;
         }
@@ -277,25 +277,25 @@ public:
 
     FORCEINLINE SColorF& AsColor()
     {
-        Assert( Type == EType::Color );
+        Assert(Type == EType::Color);
         return Color;
     }
 
     FORCEINLINE const SColorF& AsColor() const
     {
-        Assert( Type == EType::Color );
+        Assert(Type == EType::Color);
         return Color;
     }
 
     FORCEINLINE SDepthStencil& AsDepthStencil()
     {
-        Assert( Type == EType::DepthStencil );
+        Assert(Type == EType::DepthStencil);
         return DepthStencil;
     }
 
     FORCEINLINE const SDepthStencil& AsDepthStencil() const
     {
-        Assert( Type == EType::DepthStencil );
+        Assert(Type == EType::DepthStencil);
         return DepthStencil;
     }
 
@@ -314,48 +314,48 @@ private:
 struct SResourceData
 {
     FORCEINLINE SResourceData()
-        : Data( nullptr )
+        : Data(nullptr)
     {
     }
 
-    FORCEINLINE SResourceData( const void* InData, uint32 InSizeInBytes )
-        : Data( InData )
-        , SizeInBytes( InSizeInBytes )
+    FORCEINLINE SResourceData(const void* InData, uint32 InSizeInBytes)
+        : Data(InData)
+        , SizeInBytes(InSizeInBytes)
     {
     }
 
-    FORCEINLINE SResourceData( const void* InData, EFormat InFormat, uint32 InWidth )
-        : Data( InData )
-        , Format( InFormat )
-        , Width( InWidth )
-        , Height( 0 )
+    FORCEINLINE SResourceData(const void* InData, EFormat InFormat, uint32 InWidth)
+        : Data(InData)
+        , Format(InFormat)
+        , Width(InWidth)
+        , Height(0)
     {
     }
 
-    FORCEINLINE SResourceData( const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight )
-        : Data( InData )
-        , Format( InFormat )
-        , Width( InWidth )
-        , Height( InHeight )
+    FORCEINLINE SResourceData(const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+        : Data(InData)
+        , Format(InFormat)
+        , Width(InWidth)
+        , Height(InHeight)
     {
     }
 
-    FORCEINLINE void Set( const void* InData, uint32 InSizeInBytes )
+    FORCEINLINE void Set(const void* InData, uint32 InSizeInBytes)
     {
         Data = InData;
         SizeInBytes = InSizeInBytes;
     }
 
-    FORCEINLINE void Set( const void* InData, EFormat InFormat, uint32 InWidth )
+    FORCEINLINE void Set(const void* InData, EFormat InFormat, uint32 InWidth)
     {
         Data = InData;
         Format = InFormat;
         Width = InWidth;
     }
 
-    FORCEINLINE void Set( const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight )
+    FORCEINLINE void Set(const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight)
     {
-        Set( InData, InFormat, InWidth );
+        Set(InData, InFormat, InWidth);
         Height = InHeight;
     }
 
@@ -371,12 +371,12 @@ struct SResourceData
 
     FORCEINLINE uint32 GetPitch() const
     {
-        return GetByteStrideFromFormat( Format ) * Width;
+        return GetByteStrideFromFormat(Format) * Width;
     }
 
     FORCEINLINE uint32 GetSlicePitch() const
     {
-        return GetByteStrideFromFormat( Format ) * Width * Height;
+        return GetByteStrideFromFormat(Format) * Width * Height;
     }
 
 private:
@@ -402,10 +402,10 @@ struct SCopyBufferInfo
 {
     SCopyBufferInfo() = default;
 
-    FORCEINLINE SCopyBufferInfo( uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes )
-        : SourceOffset( InSourceOffset )
-        , DestinationOffset( InDestinationOffset )
-        , SizeInBytes( InSizeInBytes )
+    FORCEINLINE SCopyBufferInfo(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes)
+        : SourceOffset(InSourceOffset)
+        , DestinationOffset(InDestinationOffset)
+        , SizeInBytes(InSizeInBytes)
     {
     }
 
@@ -420,11 +420,11 @@ struct SCopyTextureSubresourceInfo
 {
     SCopyTextureSubresourceInfo() = default;
 
-    FORCEINLINE SCopyTextureSubresourceInfo( uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex )
-        : x( InX )
-        , y( InY )
-        , z( InZ )
-        , SubresourceIndex( InSubresourceIndex )
+    FORCEINLINE SCopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
+        : x(InX)
+        , y(InY)
+        , z(InZ)
+        , SubresourceIndex(InSubresourceIndex)
     {
     }
 

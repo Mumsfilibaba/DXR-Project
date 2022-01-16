@@ -14,16 +14,16 @@ class CD3D12RHIViewport : public CRHIViewport, public CD3D12DeviceChild
 {
 public:
 
-    CD3D12RHIViewport( CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight );
+    CD3D12RHIViewport(CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight);
     ~CD3D12RHIViewport();
 
     bool Init();
 
-    virtual bool Resize( uint32 Width, uint32 Height ) override final;
+    virtual bool Resize(uint32 Width, uint32 Height) override final;
 
-    virtual bool Present( bool VerticalSync ) override final;
+    virtual bool Present(bool VerticalSync) override final;
 
-    virtual void SetName( const CString& Name ) override final;
+    virtual void SetName(const CString& Name) override final;
 
     virtual CRHIRenderTargetView* GetRenderTargetView() const override final
     {

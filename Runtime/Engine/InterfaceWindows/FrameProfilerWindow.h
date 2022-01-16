@@ -30,7 +30,7 @@ private:
     void DrawWindow();
 
     /* Draw the CPU data */
-    void DrawCPUData( float Width );
+    void DrawCPUData(float Width);
 
     /* Stores tables here to avoid allocating memory every frame */
     ProfileSamplesTable Samples;

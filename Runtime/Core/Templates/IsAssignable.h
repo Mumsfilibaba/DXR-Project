@@ -6,6 +6,6 @@ struct TIsAssignable
 {
     enum
     {
-        Value = __is_assignable( T, FromType )
+        Value = __is_assignable(T, FromType)
     };
 };

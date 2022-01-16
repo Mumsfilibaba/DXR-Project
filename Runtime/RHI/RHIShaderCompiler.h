@@ -17,15 +17,15 @@ enum class EShaderModel
 
 struct SShaderDefine
 {
-    FORCEINLINE SShaderDefine( const CString& InDefine )
-        : Define( InDefine )
+    FORCEINLINE SShaderDefine(const CString& InDefine)
+        : Define(InDefine)
         , Value()
     {
     }
 
-    FORCEINLINE SShaderDefine( const CString& InDefine, const CString& InValue )
-        : Define( InDefine )
-        , Value( InValue )
+    FORCEINLINE SShaderDefine(const CString& InDefine, const CString& InValue)
+        : Define(InDefine)
+        , Value(InValue)
     {
     }
 
@@ -46,7 +46,7 @@ public:
         const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code ) = 0;
+        TArray<uint8>& Code) = 0;
 
     virtual bool CompileShader(
         const CString& ShaderSource,
@@ -54,7 +54,7 @@ public:
         const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code ) = 0;
+        TArray<uint8>& Code) = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -68,9 +68,9 @@ public:
         const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code )
+        TArray<uint8>& Code)
     {
-        return GShaderCompiler->CompileFromFile( FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code );
+        return GShaderCompiler->CompileFromFile(FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
 
     static FORCEINLINE bool CompileShader(
@@ -79,8 +79,8 @@ public:
         const TArray<SShaderDefine>* Defines,
         EShaderStage ShaderStage,
         EShaderModel ShaderModel,
-        TArray<uint8>& Code )
+        TArray<uint8>& Code)
     {
-        return GShaderCompiler->CompileShader( ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code );
+        return GShaderCompiler->CompileShader(ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
 };

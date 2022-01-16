@@ -3,7 +3,7 @@
 template<typename ReturnType, typename... ArgTypes>
 struct TCallableWrapper
 {
-    using Type = ReturnType( ArgTypes... );
+    using Type = ReturnType(ArgTypes...);
 };
 
 template<typename ReturnType>

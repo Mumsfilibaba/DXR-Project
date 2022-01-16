@@ -8,8 +8,8 @@
 enum EFBXFlags : uint8
 {
     FBXFlags_None = 0,
-    FBXFlags_ApplyScaleFactor = BIT( 1 ),
-    FBXFlags_EnsureLeftHanded = BIT( 2 ),
+    FBXFlags_ApplyScaleFactor = BIT(1),
+    FBXFlags_EnsureLeftHanded = BIT(2),
 
     FBXFlags_Default = FBXFlags_EnsureLeftHanded
 };
@@ -18,5 +18,5 @@ enum EFBXFlags : uint8
 class ENGINE_API CFBXLoader
 {
 public:
-    static bool LoadFile( const CString& Filename, SSceneData& OutScene, uint32 Flags = EFBXFlags::FBXFlags_Default ) noexcept;
+    static bool LoadFile(const CString& Filename, SSceneData& OutScene, uint32 Flags = EFBXFlags::FBXFlags_Default) noexcept;
 };

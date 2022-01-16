@@ -11,14 +11,14 @@ private:
 
     /* Has to be declared before usage */
     template<typename U>
-    static int8 Test( int U::* );
+    static int8 Test(int U::*);
 
     template<typename U>
-    static int16 Test( ... );
+    static int16 Test(...);
 
 public:
     enum
     {
-        Value = !TIsUnion<T>::Value && sizeof( Test<T>( 0 ) ) == 1
+        Value = !TIsUnion<T>::Value && sizeof(Test<T>(0)) == 1
     };
 };

@@ -6,6 +6,6 @@ struct TIsPlainOldData
 {
     enum
     {
-        Value = __is_pod( T )
+        Value = __is_pod(T)
     };
 };

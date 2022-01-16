@@ -11,10 +11,10 @@ public:
     ~CCamera() = default;
 
     /* Moves the camera in the forward direction */
-    void Move( float x, float y, float z );
+    void Move(float x, float y, float z);
 
     /* Rotates the camera based on current position and rotation */
-    void Rotate( float Pitch, float Yaw, float Roll );
+    void Rotate(float Pitch, float Yaw, float Roll);
 
     void UpdateMatrices();
 

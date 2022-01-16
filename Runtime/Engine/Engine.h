@@ -30,7 +30,7 @@ public:
     virtual bool Start();
 
     /* Tick should be called once per frame */
-    virtual void Tick( CTimestamp DeltaTime );
+    virtual void Tick(CTimestamp DeltaTime);
 
     /* Release engine resources */
     virtual bool Release();

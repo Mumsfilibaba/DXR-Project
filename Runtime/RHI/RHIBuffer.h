@@ -8,25 +8,25 @@ enum class EIndexFormat
     uint32 = 2,
 };
 
-inline const char* ToString( EIndexFormat IndexFormat )
+inline const char* ToString(EIndexFormat IndexFormat)
 {
-    switch ( IndexFormat )
+    switch (IndexFormat)
     {
-        case EIndexFormat::uint16: return "uint16";
-        case EIndexFormat::uint32: return "uint32";
-        default: return "Unknown";
+    case EIndexFormat::uint16: return "uint16";
+    case EIndexFormat::uint32: return "uint32";
+    default: return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-inline EIndexFormat GetIndexFormatFromStride( uint32 StrideInBytes )
+inline EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
 {
-    if ( StrideInBytes == 2 )
+    if (StrideInBytes == 2)
     {
         return EIndexFormat::uint16;
     }
-    else if ( StrideInBytes == 4 )
+    else if (StrideInBytes == 4)
     {
         return EIndexFormat::uint32;
     }
@@ -36,13 +36,13 @@ inline EIndexFormat GetIndexFormatFromStride( uint32 StrideInBytes )
     }
 }
 
-inline uint32 GetStrideFromIndexFormat( EIndexFormat IndexFormat )
+inline uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
 {
-    if ( IndexFormat == EIndexFormat::uint16 )
+    if (IndexFormat == EIndexFormat::uint16)
     {
         return 2;
     }
-    else if ( IndexFormat == EIndexFormat::uint32 )
+    else if (IndexFormat == EIndexFormat::uint32)
     {
         return 4;
     }
@@ -56,11 +56,11 @@ inline uint32 GetStrideFromIndexFormat( EIndexFormat IndexFormat )
 
 enum EBufferFlags : uint32
 {
-    BufferFlag_None    = 0,
-    BufferFlag_Default = FLAG( 1 ), // Default Device Memory
-    BufferFlag_Dynamic = FLAG( 2 ), // Dynamic Memory
-    BufferFlag_UAV     = FLAG( 3 ), // Can be used in UnorderedAccessViews
-    BufferFlag_SRV     = FLAG( 4 ), // Can be used in ShaderResourceViews
+    BufferFlag_None = 0,
+    BufferFlag_Default = FLAG(1), // Default Device Memory
+    BufferFlag_Dynamic = FLAG(2), // Dynamic Memory
+    BufferFlag_UAV = FLAG(3), // Can be used in UnorderedAccessViews
+    BufferFlag_SRV = FLAG(4), // Can be used in ShaderResourceViews
 
     BufferFlags_RWBuffer = BufferFlag_UAV | BufferFlag_SRV
 };
@@ -70,9 +70,9 @@ enum EBufferFlags : uint32
 class CRHIBuffer : public CRHIMemoryResource
 {
 public:
-    CRHIBuffer( uint32 InFlags )
+    CRHIBuffer(uint32 InFlags)
         : CRHIMemoryResource()
-        , Flags( InFlags )
+        , Flags(InFlags)
     {
     }
 
@@ -89,9 +89,9 @@ public:
     virtual class CRHIStructuredBuffer* AsStructuredBuffer() { return nullptr; }
 
     /* Map GPU buffer memory to the CPU */
-    virtual void* Map( uint32 Offset, uint32 Size ) = 0;
+    virtual void* Map(uint32 Offset, uint32 Size) = 0;
     /* Unmap GPU buffer memory from the CPU */
-    virtual void  Unmap( uint32 Offset, uint32 Size ) = 0;
+    virtual void  Unmap(uint32 Offset, uint32 Size) = 0;
 
     FORCEINLINE bool IsDynamic() const
     {
@@ -122,10 +122,10 @@ private:
 class CRHIVertexBuffer : public CRHIBuffer
 {
 public:
-    CRHIVertexBuffer( uint32 InNumVertices, uint32 InStride, uint32 InFlags )
-        : CRHIBuffer( InFlags )
-        , NumVertices( InNumVertices )
-        , Stride( InStride )
+    CRHIVertexBuffer(uint32 InNumVertices, uint32 InStride, uint32 InFlags)
+        : CRHIBuffer(InFlags)
+        , NumVertices(InNumVertices)
+        , Stride(InStride)
     {
     }
 
@@ -152,10 +152,10 @@ private:
 class CRHIIndexBuffer : public CRHIBuffer
 {
 public:
-    CRHIIndexBuffer( EIndexFormat InFormat, uint32 InNumIndicies, uint32 InFlags )
-        : CRHIBuffer( InFlags )
-        , Format( InFormat )
-        , NumIndicies( InNumIndicies )
+    CRHIIndexBuffer(EIndexFormat InFormat, uint32 InNumIndicies, uint32 InFlags)
+        : CRHIBuffer(InFlags)
+        , Format(InFormat)
+        , NumIndicies(InNumIndicies)
     {
     }
 
@@ -183,9 +183,9 @@ class CRHIConstantBuffer : public CRHIBuffer
 {
 public:
 
-    CRHIConstantBuffer( uint32 InSize, uint32 InFlags )
-        : CRHIBuffer( InFlags )
-        , Size( InSize )
+    CRHIConstantBuffer(uint32 InSize, uint32 InFlags)
+        : CRHIBuffer(InFlags)
+        , Size(InSize)
     {
     }
 
@@ -207,10 +207,10 @@ class CRHIStructuredBuffer : public CRHIBuffer
 {
 public:
 
-    CRHIStructuredBuffer( uint32 InNumElements, uint32 InStride, uint32 InFlags )
-        : CRHIBuffer( InFlags )
-        , Stride( InStride )
-        , NumElements( InNumElements )
+    CRHIStructuredBuffer(uint32 InNumElements, uint32 InStride, uint32 InFlags)
+        : CRHIBuffer(InFlags)
+        , Stride(InStride)
+        , NumElements(InNumElements)
     {
     }
 

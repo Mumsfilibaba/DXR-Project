@@ -7,16 +7,16 @@ class CSpinLock
     enum
     {
         State_Unlocked = 0,
-        State_Locked   = 1,
+        State_Locked = 1,
     };
 
 public:
 
-    CSpinLock( const CSpinLock& ) = delete;
-    CSpinLock& operator=( const CSpinLock& ) = delete;
+    CSpinLock(const CSpinLock&) = delete;
+    CSpinLock& operator=(const CSpinLock&) = delete;
 
     FORCEINLINE CSpinLock() noexcept
-        : State( State_Unlocked )
+        : State(State_Unlocked)
     {
     }
 
@@ -25,15 +25,15 @@ public:
     FORCEINLINE void Lock() noexcept
     {
         // Try locking until success
-        for ( ;; )
+        for (;; )
         {
             // When the previous value is unlocked => success
-            if ( State.Exchange( State_Locked ) == State_Unlocked )
+            if (State.Exchange(State_Locked) == State_Unlocked)
             {
                 break;
             }
 
-            while ( State.RelaxedLoad() == State_Locked )
+            while (State.RelaxedLoad() == State_Locked)
             {
                 PauseInstruction();
             }
@@ -43,12 +43,12 @@ public:
     FORCEINLINE bool TryLock() noexcept
     {
         // The first relaxed load is in order to prevent unnecessary cache misses when trying to lock in a loop: See Lock
-		return (State.RelaxedLoad() == State_Unlocked) && (State.Exchange( State_Locked ) == State_Unlocked);
+        return (State.RelaxedLoad() == State_Unlocked) && (State.Exchange(State_Locked) == State_Unlocked);
     }
 
     FORCEINLINE void Unlock() noexcept
     {
-		State.Store( State_Unlocked );
+        State.Store(State_Unlocked);
     }
 
 private:

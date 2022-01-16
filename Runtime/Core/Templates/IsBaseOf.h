@@ -6,6 +6,6 @@ struct TIsBaseOf
 {
     enum
     {
-        Value = __is_base_of( BaseType, DerivedType )
+        Value = __is_base_of(BaseType, DerivedType)
     };
 };

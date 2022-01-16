@@ -11,15 +11,15 @@ public:
     CScreenSpaceOcclusionRenderer() = default;
     ~CScreenSpaceOcclusionRenderer() = default;
 
-    bool Init( SFrameResources& FrameResources );
+    bool Init(SFrameResources& FrameResources);
     void Release();
 
-    void Render( CRHICommandList& CmdList, SFrameResources& FrameResources );
+    void Render(CRHICommandList& CmdList, SFrameResources& FrameResources);
 
-    bool ResizeResources( SFrameResources& FrameResources );
+    bool ResizeResources(SFrameResources& FrameResources);
 
 private:
-    bool CreateRenderTarget( SFrameResources& FrameResources );
+    bool CreateRenderTarget(SFrameResources& FrameResources);
 
     TSharedRef<CRHIComputePipelineState> PipelineState;
     TSharedRef<CRHIComputeShader>        SSAOShader;

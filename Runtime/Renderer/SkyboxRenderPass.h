@@ -12,9 +12,9 @@ public:
     CSkyboxRenderPass() = default;
     ~CSkyboxRenderPass() = default;
 
-    bool Init( SFrameResources& FrameResources );
+    bool Init(SFrameResources& FrameResources);
 
-    void Render( CRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene );
+    void Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene);
 
     void Release();
 

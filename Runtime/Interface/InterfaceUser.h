@@ -18,41 +18,41 @@ class INTERFACE_API CInterfaceUser
 public:
 
     /* Create a new application user */
-    static FORCEINLINE TSharedPtr<CInterfaceUser> Make( uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor )
+    static FORCEINLINE TSharedPtr<CInterfaceUser> Make(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
     {
-        return TSharedPtr<CInterfaceUser>( dbg_new CInterfaceUser( InUserIndex, InCursor ) );
+        return TSharedPtr<CInterfaceUser>(dbg_new CInterfaceUser(InUserIndex, InCursor));
     }
 
     virtual ~CInterfaceUser();
 
     /* Tick the user every frame */
-    virtual void Tick( CTimestamp DeltaTime );
+    virtual void Tick(CTimestamp DeltaTime);
 
     /* Called when user receives a key event */
-    virtual void HandleKeyEvent( const SKeyEvent& KeyEvent );
+    virtual void HandleKeyEvent(const SKeyEvent& KeyEvent);
 
     /* Called when the user receives a mouse button event */
-    virtual void HandleMouseButtonEvent( const SMouseButtonEvent& MouseButtonEvent );
+    virtual void HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEvent);
 
     /* Called when the mouse moved */
-    virtual void HandleMouseMovedEvent( const SMouseMovedEvent& MouseMovedEvent );
+    virtual void HandleMouseMovedEvent(const SMouseMovedEvent& MouseMovedEvent);
 
     /* Called when the mouse scrolled */
-    virtual void HandleMouseScrolledEvent( const SMouseScrolledEvent& MouseScolledEvent );
+    virtual void HandleMouseScrolledEvent(const SMouseScrolledEvent& MouseScolledEvent);
 
     /* Set the cursor position */
-    virtual void SetCursorPosition( const CIntVector2& Postion );
+    virtual void SetCursorPosition(const CIntVector2& Postion);
 
     /* Retrieve the cursor position */
     virtual CIntVector2 GetCursorPosition() const;
 
     /* Retrieve the current key state */
-    FORCEINLINE SKeyState GetKeyState( EKey KeyCode ) const
+    FORCEINLINE SKeyState GetKeyState(EKey KeyCode) const
     {
-        int32 Index = GetKeyStateIndexFromKeyCode( KeyCode );
-        if ( Index < 0 )
+        int32 Index = GetKeyStateIndexFromKeyCode(KeyCode);
+        if (Index < 0)
         {
-            return SKeyState( KeyCode );
+            return SKeyState(KeyCode);
         }
         else
         {
@@ -61,12 +61,12 @@ public:
     }
 
     /* Retrieve the current key state */
-    FORCEINLINE SMouseButtonState GetMouseButtonState( EMouseButton Button ) const
+    FORCEINLINE SMouseButtonState GetMouseButtonState(EMouseButton Button) const
     {
-        int32 Index = GetMouseButtonStateIndexFromMouseButton( Button );
-        if ( Index < 0 )
+        int32 Index = GetMouseButtonStateIndexFromMouseButton(Button);
+        if (Index < 0)
         {
-            return SMouseButtonState( Button );
+            return SMouseButtonState(Button);
         }
         else
         {
@@ -75,44 +75,44 @@ public:
     }
 
     /* Check if key is down */
-    FORCEINLINE bool IsKeyDown( EKey KeyCode ) const
+    FORCEINLINE bool IsKeyDown(EKey KeyCode) const
     {
-        SKeyState KeyState = GetKeyState( KeyCode );
+        SKeyState KeyState = GetKeyState(KeyCode);
         return !!KeyState.IsDown;
     }
 
     /* Check if key is up */
-    FORCEINLINE bool IsKeyUp( EKey KeyCode ) const
+    FORCEINLINE bool IsKeyUp(EKey KeyCode) const
     {
-        SKeyState KeyState = GetKeyState( KeyCode );
+        SKeyState KeyState = GetKeyState(KeyCode);
         return !KeyState.IsDown;
     }
 
     /* Check if key was pressed this frame */
-    FORCEINLINE bool IsKeyPressed( EKey KeyCode ) const
+    FORCEINLINE bool IsKeyPressed(EKey KeyCode) const
     {
-        SKeyState KeyState = GetKeyState( KeyCode );
+        SKeyState KeyState = GetKeyState(KeyCode);
         return KeyState.IsDown && !KeyState.PreviousState;
     }
 
     /* Check if button is down */
-    FORCEINLINE bool IsMouseButtonDown( EMouseButton Button ) const
+    FORCEINLINE bool IsMouseButtonDown(EMouseButton Button) const
     {
-        SMouseButtonState ButtonState = GetMouseButtonState( Button );
+        SMouseButtonState ButtonState = GetMouseButtonState(Button);
         return !!ButtonState.IsDown;
     }
 
     /* Check if key is up */
-    FORCEINLINE bool IsMouseButtonUp( EMouseButton Button ) const
+    FORCEINLINE bool IsMouseButtonUp(EMouseButton Button) const
     {
-        SMouseButtonState ButtonState = GetMouseButtonState( Button );
+        SMouseButtonState ButtonState = GetMouseButtonState(Button);
         return !ButtonState.IsDown;
     }
 
     /* Check if key was pressed this frame */
-    FORCEINLINE bool IsMouseButtonPressed( EMouseButton Button ) const
+    FORCEINLINE bool IsMouseButtonPressed(EMouseButton Button) const
     {
-        SMouseButtonState ButtonState = GetMouseButtonState( Button );
+        SMouseButtonState ButtonState = GetMouseButtonState(Button);
         return ButtonState.IsDown && !ButtonState.PreviousState;
     }
 
@@ -130,26 +130,26 @@ public:
 
 private:
 
-    CInterfaceUser( uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor );
+    CInterfaceUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
 
     /* Get the index in the key-state array */
-    FORCEINLINE int32 GetKeyStateIndexFromKeyCode( EKey KeyCode ) const
+    FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const
     {
-        SKeyState TempState( KeyCode );
-        return KeyStates.Find( TempState, []( const SKeyState& LHS, const SKeyState& RHS ) -> bool
+        SKeyState TempState(KeyCode);
+        return KeyStates.Find(TempState, [](const SKeyState& LHS, const SKeyState& RHS) -> bool
         {
             return (LHS.KeyCode == RHS.KeyCode);
-        } );
+        });
     }
 
     /* Get the index in the key-state array */
-    FORCEINLINE int32 GetMouseButtonStateIndexFromMouseButton( EMouseButton Button ) const
+    FORCEINLINE int32 GetMouseButtonStateIndexFromMouseButton(EMouseButton Button) const
     {
-        SMouseButtonState TempState( Button );
-        return MouseButtonStates.Find( TempState, []( const SMouseButtonState& LHS, const SMouseButtonState& RHS ) -> bool
+        SMouseButtonState TempState(Button);
+        return MouseButtonStates.Find(TempState, [](const SMouseButtonState& LHS, const SMouseButtonState& RHS) -> bool
         {
             return (LHS.Button == RHS.Button);
-        } );
+        });
     }
 
     /* The ID of this user */

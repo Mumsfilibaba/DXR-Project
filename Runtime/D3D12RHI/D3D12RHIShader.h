@@ -40,8 +40,8 @@ struct SShaderResourceRange
 
 struct SShaderResourceCount
 {
-    void Combine( const SShaderResourceCount& Other );
-    bool IsCompatible( const SShaderResourceCount& Other ) const;
+    void Combine(const SShaderResourceCount& Other);
+    bool IsCompatible(const SShaderResourceCount& Other) const;
 
     SShaderResourceRange Ranges;
     uint32              Num32BitConstants = 0;
@@ -53,12 +53,12 @@ struct SD3D12ShaderParameter
 {
     SD3D12ShaderParameter() = default;
 
-    FORCEINLINE SD3D12ShaderParameter( const CString& InName, uint32 InRegister, uint32 InSpace, uint32 InNumDescriptors, uint32 InSizeInBytes )
-        : Name( InName )
-        , Register( InRegister )
-        , Space( InSpace )
-        , NumDescriptors( InNumDescriptors )
-        , SizeInBytes( InSizeInBytes )
+    FORCEINLINE SD3D12ShaderParameter(const CString& InName, uint32 InRegister, uint32 InSpace, uint32 InNumDescriptors, uint32 InSizeInBytes)
+        : Name(InName)
+        , Register(InRegister)
+        , Space(InSpace)
+        , NumDescriptors(InNumDescriptors)
+        , SizeInBytes(InSizeInBytes)
     {
     }
 
@@ -74,7 +74,7 @@ struct SD3D12ShaderParameter
 class CD3D12BaseShader : public CD3D12DeviceChild
 {
 public:
-    CD3D12BaseShader( CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility ShaderVisibility );
+    CD3D12BaseShader(CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility ShaderVisibility);
     ~CD3D12BaseShader();
 
     FORCEINLINE D3D12_SHADER_BYTECODE GetByteCode() const
@@ -92,9 +92,9 @@ public:
         return static_cast<uint64>(ByteCode.BytecodeLength);
     }
 
-    FORCEINLINE SD3D12ShaderParameter GetConstantBufferParameter( uint32 ParameterIndex )
+    FORCEINLINE SD3D12ShaderParameter GetConstantBufferParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR( ParameterIndex < static_cast<uint32>(ConstantBufferParameters.Size()), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(ConstantBufferParameters.Size()) + " slots");
+        D3D12_ERROR(ParameterIndex < static_cast<uint32>(ConstantBufferParameters.Size()), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(ConstantBufferParameters.Size()) + " slots");
         return ConstantBufferParameters[ParameterIndex];
     }
 
@@ -103,9 +103,9 @@ public:
         return ConstantBufferParameters.Size();
     }
 
-    FORCEINLINE SD3D12ShaderParameter GetShaderResourceParameter( uint32 ParameterIndex )
+    FORCEINLINE SD3D12ShaderParameter GetShaderResourceParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR( ParameterIndex < static_cast<uint32>(ShaderResourceParameters.Size()), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(ShaderResourceParameters.Size()) + " slots");
+        D3D12_ERROR(ParameterIndex < static_cast<uint32>(ShaderResourceParameters.Size()), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(ShaderResourceParameters.Size()) + " slots");
         return ShaderResourceParameters[ParameterIndex];
     }
 
@@ -114,9 +114,9 @@ public:
         return ShaderResourceParameters.Size();
     }
 
-    FORCEINLINE SD3D12ShaderParameter GetUnorderedAccessParameter( uint32 ParameterIndex )
+    FORCEINLINE SD3D12ShaderParameter GetUnorderedAccessParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR( ParameterIndex < static_cast<uint32>(UnorderedAccessParameters.Size()), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(UnorderedAccessParameters.Size()) + " slots");
+        D3D12_ERROR(ParameterIndex < static_cast<uint32>(UnorderedAccessParameters.Size()), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(UnorderedAccessParameters.Size()) + " slots");
         return UnorderedAccessParameters[ParameterIndex];
     }
 
@@ -125,9 +125,9 @@ public:
         return UnorderedAccessParameters.Size();
     }
 
-    FORCEINLINE SD3D12ShaderParameter GetSamplerStateParameter( uint32 ParameterIndex )
+    FORCEINLINE SD3D12ShaderParameter GetSamplerStateParameter(uint32 ParameterIndex)
     {
-        D3D12_ERROR( ParameterIndex < static_cast<uint32>(SamplerParameters.Size()), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(SamplerParameters.Size()) + " slots");
+        D3D12_ERROR(ParameterIndex < static_cast<uint32>(SamplerParameters.Size()), "Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(SamplerParameters.Size()) + " slots");
         return SamplerParameters[ParameterIndex];
     }
 
@@ -156,12 +156,12 @@ public:
         return RTLocalResourceCount;
     }
 
-    static bool GetShaderReflection( class CD3D12BaseShader* Shader );
+    static bool GetShaderReflection(class CD3D12BaseShader* Shader);
 
 protected:
 
     template<typename TD3D12ReflectionInterface>
-    static bool GetShaderResourceBindings( TD3D12ReflectionInterface* Reflection, CD3D12BaseShader* Shader, uint32 NumBoundResources );
+    static bool GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, CD3D12BaseShader* Shader, uint32 NumBoundResources);
 
     D3D12_SHADER_BYTECODE ByteCode;
 
@@ -182,9 +182,9 @@ protected:
 class CD3D12RHIBaseVertexShader : public CRHIVertexShader, public CD3D12BaseShader
 {
 public:
-    CD3D12RHIBaseVertexShader( CD3D12Device* InDevice, const TArray<uint8>& InCode )
+    CD3D12RHIBaseVertexShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIVertexShader()
-        , CD3D12BaseShader( InDevice, InCode, ShaderVisibility_Vertex )
+        , CD3D12BaseShader(InDevice, InCode, ShaderVisibility_Vertex)
     {
     }
 };
@@ -194,9 +194,9 @@ public:
 class CD3D12RHIBasePixelShader : public CRHIPixelShader, public CD3D12BaseShader
 {
 public:
-    CD3D12RHIBasePixelShader( CD3D12Device* InDevice, const TArray<uint8>& InCode )
+    CD3D12RHIBasePixelShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIPixelShader()
-        , CD3D12BaseShader( InDevice, InCode, ShaderVisibility_Pixel )
+        , CD3D12BaseShader(InDevice, InCode, ShaderVisibility_Pixel)
     {
     }
 };
@@ -206,8 +206,8 @@ public:
 class CD3D12RHIBaseRayTracingShader : public CD3D12BaseShader
 {
 public:
-    CD3D12RHIBaseRayTracingShader( CD3D12Device* InDevice, const TArray<uint8>& InCode )
-        : CD3D12BaseShader( InDevice, InCode, ShaderVisibility_All )
+    CD3D12RHIBaseRayTracingShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+        : CD3D12BaseShader(InDevice, InCode, ShaderVisibility_All)
     {
     }
 
@@ -216,7 +216,7 @@ public:
         return Identifier;
     }
 
-    static bool GetRayTracingShaderReflection( class CD3D12RHIBaseRayTracingShader* Shader );
+    static bool GetRayTracingShaderReflection(class CD3D12RHIBaseRayTracingShader* Shader);
 
 protected:
     CString Identifier;
@@ -227,9 +227,9 @@ protected:
 class CD3D12RHIBaseRayGenShader : public CRHIRayGenShader, public CD3D12RHIBaseRayTracingShader
 {
 public:
-    CD3D12RHIBaseRayGenShader( CD3D12Device* InDevice, const TArray<uint8>& InCode )
+    CD3D12RHIBaseRayGenShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayGenShader()
-        , CD3D12RHIBaseRayTracingShader( InDevice, InCode )
+        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
     {
     }
 };
@@ -239,9 +239,9 @@ public:
 class CD3D12RHIBaseRayAnyhitShader : public CRHIRayAnyHitShader, public CD3D12RHIBaseRayTracingShader
 {
 public:
-    CD3D12RHIBaseRayAnyhitShader( CD3D12Device* InDevice, const TArray<uint8>& InCode )
+    CD3D12RHIBaseRayAnyhitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayAnyHitShader()
-        , CD3D12RHIBaseRayTracingShader( InDevice, InCode )
+        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
     {
     }
 };
@@ -251,9 +251,9 @@ public:
 class CD3D12RHIBaseRayClosestHitShader : public CRHIRayClosestHitShader, public CD3D12RHIBaseRayTracingShader
 {
 public:
-    CD3D12RHIBaseRayClosestHitShader( CD3D12Device* InDevice, const TArray<uint8>& InCode )
+    CD3D12RHIBaseRayClosestHitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayClosestHitShader()
-        , CD3D12RHIBaseRayTracingShader( InDevice, InCode )
+        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
     {
     }
 };
@@ -263,9 +263,9 @@ public:
 class CD3D12RHIBaseRayMissShader : public CRHIRayMissShader, public CD3D12RHIBaseRayTracingShader
 {
 public:
-    CD3D12RHIBaseRayMissShader( CD3D12Device* InDevice, const TArray<uint8>& InCode )
+    CD3D12RHIBaseRayMissShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayMissShader()
-        , CD3D12RHIBaseRayTracingShader( InDevice, InCode )
+        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
     {
     }
 };
@@ -275,10 +275,10 @@ public:
 class CD3D12RHIBaseComputeShader : public CRHIComputeShader, public CD3D12BaseShader
 {
 public:
-    CD3D12RHIBaseComputeShader( CD3D12Device* InDevice, const TArray<uint8>& InCode )
+    CD3D12RHIBaseComputeShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIComputeShader()
-        , CD3D12BaseShader( InDevice, InCode, ShaderVisibility_All )
-        , ThreadGroupXYZ( 0, 0, 0 )
+        , CD3D12BaseShader(InDevice, InCode, ShaderVisibility_All)
+        , ThreadGroupXYZ(0, 0, 0)
     {
     }
 
@@ -299,12 +299,12 @@ template<typename BaseShaderType>
 class TD3D12RHIShader : public BaseShaderType
 {
 public:
-    TD3D12RHIShader( CD3D12Device* InDevice, const TArray<uint8>& InCode )
-        : BaseShaderType( InDevice, InCode )
+    TD3D12RHIShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+        : BaseShaderType(InDevice, InCode)
     {
     }
 
-    virtual void GetShaderParameterInfo( SShaderParameterInfo& OutShaderParameterInfo ) const override
+    virtual void GetShaderParameterInfo(SShaderParameterInfo& OutShaderParameterInfo) const override
     {
         OutShaderParameterInfo.NumConstantBuffers = ConstantBufferParameters.Size();
         OutShaderParameterInfo.NumShaderResourceViews = ShaderResourceParameters.Size();
@@ -312,24 +312,24 @@ public:
         OutShaderParameterInfo.NumSamplerStates = SamplerParameters.Size();
     }
 
-    virtual bool GetShaderResourceViewIndexByName( const CString& InName, uint32& OutIndex ) const override
+    virtual bool GetShaderResourceViewIndexByName(const CString& InName, uint32& OutIndex) const override
     {
-        return FindParameterIndexByName( ShaderResourceParameters, InName, OutIndex );
+        return FindParameterIndexByName(ShaderResourceParameters, InName, OutIndex);
     }
 
-    virtual bool GetSamplerIndexByName( const CString& InName, uint32& OutIndex ) const override
+    virtual bool GetSamplerIndexByName(const CString& InName, uint32& OutIndex) const override
     {
-        return FindParameterIndexByName( SamplerParameters, InName, OutIndex );
+        return FindParameterIndexByName(SamplerParameters, InName, OutIndex);
     }
 
-    virtual bool GetUnorderedAccessViewIndexByName( const CString& InName, uint32& OutIndex ) const override
+    virtual bool GetUnorderedAccessViewIndexByName(const CString& InName, uint32& OutIndex) const override
     {
-        return FindParameterIndexByName( UnorderedAccessParameters, InName, OutIndex );
+        return FindParameterIndexByName(UnorderedAccessParameters, InName, OutIndex);
     }
 
-    virtual bool GetConstantBufferIndexByName( const CString& InName, uint32& OutIndex ) const override
+    virtual bool GetConstantBufferIndexByName(const CString& InName, uint32& OutIndex) const override
     {
-        return FindParameterIndexByName( ConstantBufferParameters, InName, OutIndex );
+        return FindParameterIndexByName(ConstantBufferParameters, InName, OutIndex);
     }
 
     virtual bool IsValid() const override
@@ -338,11 +338,11 @@ public:
     }
 
 private:
-    bool FindParameterIndexByName( const TArray<SD3D12ShaderParameter>& Parameters, const CString& InName, uint32& OutIndex ) const
+    bool FindParameterIndexByName(const TArray<SD3D12ShaderParameter>& Parameters, const CString& InName, uint32& OutIndex) const
     {
-        for ( int32 i = 0; i < Parameters.Size(); i++ )
+        for (int32 i = 0; i < Parameters.Size(); i++)
         {
-            if ( Parameters[i].Name == InName )
+            if (Parameters[i].Name == InName)
             {
                 OutIndex = i;
                 return true;
@@ -367,33 +367,33 @@ using CD3D12RHIRayMissShader = TD3D12RHIShader<CD3D12RHIBaseRayMissShader>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-inline CD3D12BaseShader* D3D12ShaderCast( CRHIShader* Shader )
+inline CD3D12BaseShader* D3D12ShaderCast(CRHIShader* Shader)
 {
-    if ( Shader->AsVertexShader() )
+    if (Shader->AsVertexShader())
     {
         return static_cast<CD3D12RHIVertexShader*>(Shader);
     }
-    else if ( Shader->AsPixelShader() )
+    else if (Shader->AsPixelShader())
     {
         return static_cast<CD3D12RHIPixelShader*>(Shader);
     }
-    else if ( Shader->AsComputeShader() )
+    else if (Shader->AsComputeShader())
     {
         return static_cast<CD3D12RHIComputeShader*>(Shader);
     }
-    else if ( Shader->AsRayGenShader() )
+    else if (Shader->AsRayGenShader())
     {
         return static_cast<CD3D12RHIRayGenShader*>(Shader);
     }
-    else if ( Shader->AsRayAnyHitShader() )
+    else if (Shader->AsRayAnyHitShader())
     {
         return static_cast<CD3D12RHIRayAnyHitShader*>(Shader);
     }
-    else if ( Shader->AsRayClosestHitShader() )
+    else if (Shader->AsRayClosestHitShader())
     {
         return static_cast<CD3D12RayClosestHitShader*>(Shader);
     }
-    else if ( Shader->AsRayMissShader() )
+    else if (Shader->AsRayMissShader())
     {
         return static_cast<CD3D12RHIRayMissShader*>(Shader);
     }

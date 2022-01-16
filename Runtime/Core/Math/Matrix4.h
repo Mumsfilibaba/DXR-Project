@@ -16,7 +16,7 @@ public:
      *
      * @param Diagonal: Value to set on the diagonal
      */
-    FORCEINLINE explicit CMatrix4( float Diagonal ) noexcept;
+    FORCEINLINE explicit CMatrix4(float Diagonal) noexcept;
 
     /**
      * Constructor initializing all values with vectors specifying each row
@@ -26,7 +26,7 @@ public:
      * @param Row2: Vector to set the third row to
      * @param Row3: Vector to set the fourth row to
      */
-    FORCEINLINE explicit CMatrix4( const CVector4& Row0, const CVector4& Row1, const CVector4& Row2, const CVector4& Row3 ) noexcept;
+    FORCEINLINE explicit CMatrix4(const CVector4& Row0, const CVector4& Row1, const CVector4& Row2, const CVector4& Row3) noexcept;
 
     /**
      * Constructor initializing all values with corresponding value
@@ -52,14 +52,14 @@ public:
         float In00, float In01, float In02, float In03,
         float In10, float In11, float In12, float In13,
         float In20, float In21, float In22, float In23,
-        float In30, float In31, float In32, float In33 ) noexcept;
+        float In30, float In31, float In32, float In33) noexcept;
 
     /**
      * Constructor initializing all components with an array
      *
      * @param Arr: Array with at least 16 elements
      */
-    FORCEINLINE explicit CMatrix4( const float* Arr ) noexcept;
+    FORCEINLINE explicit CMatrix4(const float* Arr) noexcept;
 
     /**
      * Transform a 3-D vector as position, fourth component to one
@@ -67,7 +67,7 @@ public:
      * @param Position: Vector to transform
      * @return Transformed vector
      */
-    FORCEINLINE CVector3 TransformPosition( const CVector3& Position ) noexcept;
+    FORCEINLINE CVector3 TransformPosition(const CVector3& Position) noexcept;
 
     /**
      * Transform a 3-D vector as direction, fourth component to zero
@@ -75,7 +75,7 @@ public:
      * @param Direction: Vector to transform
      * @return Transformed vector
      */
-    FORCEINLINE CVector3 TransformDirection( const CVector3& Direction ) noexcept;
+    FORCEINLINE CVector3 TransformDirection(const CVector3& Direction) noexcept;
 
     /**
      * Returns the transposed version of this matrix
@@ -132,7 +132,7 @@ public:
      * @param Other: matrix to compare against
      * @return True if equal, false if not
      */
-    inline bool IsEqual( const CMatrix4& Other, float Epsilon = NMath::IS_EQUAL_EPISILON ) const noexcept;
+    inline bool IsEqual(const CMatrix4& Other, float Epsilon = NMath::IS_EQUAL_EPISILON) const noexcept;
 
     /* Sets this matrix to an identity matrix */
     FORCEINLINE void SetIdentity() noexcept;
@@ -142,14 +142,14 @@ public:
      *
      * @param RotationAndScale: 3x3 to set the upper quadrant to
      */
-    FORCEINLINE void SetRotationAndScale( const CMatrix3& RotationAndScale ) noexcept;
+    FORCEINLINE void SetRotationAndScale(const CMatrix3& RotationAndScale) noexcept;
 
     /**
      * Sets the translation part of a matrix
      *
      * @param Translation: The translation part
      */
-    FORCEINLINE void SetTranslation( const CVector3& Translation ) noexcept;
+    FORCEINLINE void SetTranslation(const CVector3& Translation) noexcept;
 
     /**
      * Returns a row of this matrix
@@ -157,7 +157,7 @@ public:
      * @param Row: The row to retrive
      * @return A vector containing the specified row
      */
-    FORCEINLINE CVector4 GetRow( int Row ) const noexcept;
+    FORCEINLINE CVector4 GetRow(int Row) const noexcept;
 
     /**
      * Returns a column of this matrix
@@ -165,7 +165,7 @@ public:
      * @param Column: The column to retrive
      * @return A vector containing the specified column
      */
-    FORCEINLINE CVector4 GetColumn( int Column ) const noexcept;
+    FORCEINLINE CVector4 GetColumn(int Column) const noexcept;
 
     /**
      * Returns the translation part of this matrix, that is
@@ -203,7 +203,7 @@ public:
      * @param RHS: The vector to transform
      * @return A vector containing the transformation
      */
-    FORCEINLINE CVector4 operator*( const CVector4& RHS ) const noexcept;
+    FORCEINLINE CVector4 operator*(const CVector4& RHS) const noexcept;
 
     /**
      * Multiplies a matrix with another matrix
@@ -211,7 +211,7 @@ public:
      * @param RHS: The other matrix
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix4 operator*( const CMatrix4& RHS ) const noexcept;
+    FORCEINLINE CMatrix4 operator*(const CMatrix4& RHS) const noexcept;
 
     /**
      * Multiplies this matrix with another matrix
@@ -219,7 +219,7 @@ public:
      * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator*=( const CMatrix4& RHS ) noexcept;
+    FORCEINLINE CMatrix4& operator*=(const CMatrix4& RHS) noexcept;
 
     /**
      * Multiplies a matrix component-wise with a scalar
@@ -227,7 +227,7 @@ public:
      * @param RHS: The scalar
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix4 operator*( float RHS ) const noexcept;
+    FORCEINLINE CMatrix4 operator*(float RHS) const noexcept;
 
     /**
      * Multiplies this matrix component-wise with a scalar
@@ -235,7 +235,7 @@ public:
      * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator*=( float RHS ) noexcept;
+    FORCEINLINE CMatrix4& operator*=(float RHS) noexcept;
 
     /**
      * Adds a matrix component-wise with another matrix
@@ -243,7 +243,7 @@ public:
      * @param RHS: The other matrix
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix4 operator+( const CMatrix4& RHS ) const noexcept;
+    FORCEINLINE CMatrix4 operator+(const CMatrix4& RHS) const noexcept;
 
     /**
      * Adds this matrix component-wise with another matrix
@@ -251,7 +251,7 @@ public:
      * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator+=( const CMatrix4& RHS ) noexcept;
+    FORCEINLINE CMatrix4& operator+=(const CMatrix4& RHS) noexcept;
 
     /**
      * Adds a matrix component-wise with a scalar
@@ -259,7 +259,7 @@ public:
      * @param RHS: The scalar
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix4 operator+( float RHS ) const noexcept;
+    FORCEINLINE CMatrix4 operator+(float RHS) const noexcept;
 
     /**
      * Adds this matrix component-wise with a scalar
@@ -267,7 +267,7 @@ public:
      * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator+=( float RHS ) noexcept;
+    FORCEINLINE CMatrix4& operator+=(float RHS) noexcept;
 
     /**
      * Subtracts a matrix component-wise with another matrix
@@ -275,7 +275,7 @@ public:
      * @param RHS: The other matrix
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix4 operator-( const CMatrix4& RHS ) const noexcept;
+    FORCEINLINE CMatrix4 operator-(const CMatrix4& RHS) const noexcept;
 
     /**
      * Subtracts this matrix component-wise with another matrix
@@ -283,7 +283,7 @@ public:
      * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator-=( const CMatrix4& RHS ) noexcept;
+    FORCEINLINE CMatrix4& operator-=(const CMatrix4& RHS) noexcept;
 
     /**
      * Subtracts a matrix component-wise with a scalar
@@ -291,7 +291,7 @@ public:
      * @param RHS: The scalar
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix4 operator-( float RHS ) const noexcept;
+    FORCEINLINE CMatrix4 operator-(float RHS) const noexcept;
 
     /**
      * Subtracts this matrix component-wise with a scalar
@@ -299,7 +299,7 @@ public:
      * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator-=( float RHS ) noexcept;
+    FORCEINLINE CMatrix4& operator-=(float RHS) noexcept;
 
     /**
      * Divides a matrix component-wise with a scalar
@@ -307,7 +307,7 @@ public:
      * @param RHS: The scalar
      * @return A matrix containing the result of the division
      */
-    FORCEINLINE CMatrix4 operator/( float RHS ) const noexcept;
+    FORCEINLINE CMatrix4 operator/(float RHS) const noexcept;
 
     /**
      * Divides this matrix component-wise with a scalar
@@ -315,7 +315,7 @@ public:
      * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator/=( float RHS ) noexcept;
+    FORCEINLINE CMatrix4& operator/=(float RHS) noexcept;
 
     /**
      * Returns the result after comparing this and another matrix
@@ -323,7 +323,7 @@ public:
      * @param Other: The matrix to compare with
      * @return True if equal, false if not
      */
-    FORCEINLINE bool operator==( const CMatrix4& Other ) const noexcept;
+    FORCEINLINE bool operator==(const CMatrix4& Other) const noexcept;
 
     /**
      * Returns the negated result after comparing this and another matrix
@@ -331,7 +331,7 @@ public:
      * @param Other: The matrix to compare with
      * @return False if equal, true if not
      */
-    FORCEINLINE bool operator!=( const CMatrix4& Other ) const noexcept;
+    FORCEINLINE bool operator!=(const CMatrix4& Other) const noexcept;
 
 public:
     /**
@@ -347,7 +347,7 @@ public:
      * @param Scale: Uniform scale that represents this matrix
      * @return A scale matrix
      */
-    inline static CMatrix4 Scale( float Scale ) noexcept;
+    inline static CMatrix4 Scale(float Scale) noexcept;
 
     /**
      * Creates and returns a scale matrix for each axis
@@ -357,7 +357,7 @@ public:
      * @param z: Scale for the z-axis
      * @return A scale matrix
      */
-    inline static CMatrix4 Scale( float x, float y, float z ) noexcept;
+    inline static CMatrix4 Scale(float x, float y, float z) noexcept;
 
     /**
      * Creates and returns a scale matrix for each axis
@@ -365,7 +365,7 @@ public:
      * @param VectorWithScale: A vector containing the scale for each axis in the x-, y-, z-components
      * @return A scale matrix
      */
-    inline static CMatrix4 Scale( const CVector3& VectorWithScale ) noexcept;
+    inline static CMatrix4 Scale(const CVector3& VectorWithScale) noexcept;
 
     /**
      * Creates and returns a translation matrix
@@ -375,7 +375,7 @@ public:
      * @param z: Translation for the z-axis
      * @return A translation matrix
      */
-    inline static CMatrix4 Translation( float x, float y, float z ) noexcept;
+    inline static CMatrix4 Translation(float x, float y, float z) noexcept;
 
     /**
      * Creates and returns a translation matrix
@@ -383,7 +383,7 @@ public:
      * @param Translation: A vector containing the translation
      * @return A translation matrix
      */
-    inline static CMatrix4 Translation( const CVector3& Translation ) noexcept;
+    inline static CMatrix4 Translation(const CVector3& Translation) noexcept;
 
     /**
      * Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
@@ -393,7 +393,7 @@ public:
      * @param Roll: Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    inline static CMatrix4 RotationRollPitchYaw( float Pitch, float Yaw, float Roll ) noexcept;
+    inline static CMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept;
 
     /**
      * Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
@@ -401,7 +401,7 @@ public:
      * @param PitchYawRoll: A vector containing the PitchYawRoll (x = Pitch, y = Yaw, z = Roll)
      * @return A rotation matrix
      */
-    inline static CMatrix4 RotationRollPitchYaw( const CVector3& PitchYawRoll ) noexcept;
+    inline static CMatrix4 RotationRollPitchYaw(const CVector3& PitchYawRoll) noexcept;
 
     /**
      * Creates and returns a rotation matrix around the x-axis
@@ -409,7 +409,7 @@ public:
      * @param x: Rotation around the x-axis in radians
      * @return A rotation matrix
      */
-    inline static CMatrix4 RotationX( float x ) noexcept;
+    inline static CMatrix4 RotationX(float x) noexcept;
 
     /**
      * Creates and returns a rotation matrix around the y-axis
@@ -417,7 +417,7 @@ public:
      * @param y: Rotation around the y-axis in radians
      * @return A rotation matrix
      */
-    inline static CMatrix4 RotationY( float y ) noexcept;
+    inline static CMatrix4 RotationY(float y) noexcept;
 
     /**
      * Creates and returns a rotation matrix around the z-axis
@@ -425,7 +425,7 @@ public:
      * @param z: Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    inline static CMatrix4 RotationZ( float z ) noexcept;
+    inline static CMatrix4 RotationZ(float z) noexcept;
 
     /**
      * Creates a ortographic-projection matrix (Left-handed)
@@ -436,7 +436,7 @@ public:
      * @param FarZ: The distance to the far plane in world-units
      * @return A ortographic-projection matrix
      */
-    inline static CMatrix4 OrtographicProjection( float Width, float Height, float NearZ, float FarZ ) noexcept;
+    inline static CMatrix4 OrtographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept;
 
     /**
      * Creates a ortographic-projection matrix (Left-handed)
@@ -449,7 +449,7 @@ public:
      * @param FarZ: The distance to the far plane in world-units
      * @return A ortographic-projection matrix
      */
-    inline static CMatrix4 OrtographicProjection( float Left, float Right, float Bottom, float Top, float NearZ, float FarZ ) noexcept;
+    inline static CMatrix4 OrtographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept;
 
     /**
      * Creates a perspective-projection matrix (Left-handed)
@@ -460,7 +460,7 @@ public:
      * @param FarZ: The distance to the far plane in world-units
      * @return A perspective-projection matrix
      */
-    inline static CMatrix4 PerspectiveProjection( float Fov, float AspectRatio, float NearZ, float FarZ ) noexcept;
+    inline static CMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept;
 
     /**
      * Creates a perspective-projection matrix (Left-handed)
@@ -472,7 +472,7 @@ public:
      * @param FarZ: The distance to the far plane in world-units
      * @return A perspective-projection matrix
      */
-    inline static CMatrix4 PerspectiveProjection( float Fov, float Width, float Height, float NearZ, float FarZ ) noexcept;
+    inline static CMatrix4 PerspectiveProjection(float Fov, float Width, float Height, float NearZ, float FarZ) noexcept;
 
     // Create a lookat matrix (Left-handed)
 
@@ -484,7 +484,7 @@ public:
      * @param Up: The up-axis of the new coordinate system in the current world-space
      * @return A look-at matrix
      */
-    inline static CMatrix4 LookAt( const CVector3& Eye, const CVector3& At, const CVector3& Up ) noexcept;
+    inline static CMatrix4 LookAt(const CVector3& Eye, const CVector3& At, const CVector3& Up) noexcept;
 
     /**
      * Creates a look-to matrix (Left-handed)
@@ -494,7 +494,7 @@ public:
      * @param Up: The up-axis of the new coordinate system in the current world-space
      * @return A look-to matrix
      */
-    inline static CMatrix4 LookTo( const CVector3& Eye, const CVector3& Direction, const CVector3& Up ) noexcept;
+    inline static CMatrix4 LookTo(const CVector3& Eye, const CVector3& Direction, const CVector3& Up) noexcept;
 
 public:
     union
@@ -514,26 +514,26 @@ public:
 };
 
 FORCEINLINE CMatrix4::CMatrix4() noexcept
-    : m00( 0.0f ), m01( 0.0f ), m02( 0.0f ), m03( 0.0f )
-    , m10( 0.0f ), m11( 0.0f ), m12( 0.0f ), m13( 0.0f )
-    , m20( 0.0f ), m21( 0.0f ), m22( 0.0f ), m23( 0.0f )
-    , m30( 0.0f ), m31( 0.0f ), m32( 0.0f ), m33( 0.0f )
+    : m00(0.0f), m01(0.0f), m02(0.0f), m03(0.0f)
+    , m10(0.0f), m11(0.0f), m12(0.0f), m13(0.0f)
+    , m20(0.0f), m21(0.0f), m22(0.0f), m23(0.0f)
+    , m30(0.0f), m31(0.0f), m32(0.0f), m33(0.0f)
 {
 }
 
-FORCEINLINE CMatrix4::CMatrix4( float Diagonal ) noexcept
-    : m00( Diagonal ), m01( 0.0f ), m02( 0.0f ), m03( 0.0f )
-    , m10( 0.0f ), m11( Diagonal ), m12( 0.0f ), m13( 0.0f )
-    , m20( 0.0f ), m21( 0.0f ), m22( Diagonal ), m23( 0.0f )
-    , m30( 0.0f ), m31( 0.0f ), m32( 0.0f ), m33( Diagonal )
+FORCEINLINE CMatrix4::CMatrix4(float Diagonal) noexcept
+    : m00(Diagonal), m01(0.0f), m02(0.0f), m03(0.0f)
+    , m10(0.0f), m11(Diagonal), m12(0.0f), m13(0.0f)
+    , m20(0.0f), m21(0.0f), m22(Diagonal), m23(0.0f)
+    , m30(0.0f), m31(0.0f), m32(0.0f), m33(Diagonal)
 {
 }
 
-FORCEINLINE CMatrix4::CMatrix4( const CVector4& Row0, const CVector4& Row1, const CVector4& Row2, const CVector4& Row3 ) noexcept
-    : m00( Row0.x ), m01( Row0.y ), m02( Row0.z ), m03( Row0.w )
-    , m10( Row1.x ), m11( Row1.y ), m12( Row1.z ), m13( Row1.w )
-    , m20( Row2.x ), m21( Row2.y ), m22( Row2.z ), m23( Row2.w )
-    , m30( Row3.x ), m31( Row3.y ), m32( Row3.z ), m33( Row3.w )
+FORCEINLINE CMatrix4::CMatrix4(const CVector4& Row0, const CVector4& Row1, const CVector4& Row2, const CVector4& Row3) noexcept
+    : m00(Row0.x), m01(Row0.y), m02(Row0.z), m03(Row0.w)
+    , m10(Row1.x), m11(Row1.y), m12(Row1.z), m13(Row1.w)
+    , m20(Row2.x), m21(Row2.y), m22(Row2.z), m23(Row2.w)
+    , m30(Row3.x), m31(Row3.y), m32(Row3.z), m33(Row3.w)
 {
 }
 
@@ -541,23 +541,23 @@ FORCEINLINE CMatrix4::CMatrix4(
     float m00, float m01, float m02, float m03,
     float m10, float m11, float m12, float m13,
     float m20, float m21, float m22, float m23,
-    float m30, float m31, float m32, float m33 ) noexcept
-    : m00( m00 ), m01( m01 ), m02( m02 ), m03( m03 )
-    , m10( m10 ), m11( m11 ), m12( m12 ), m13( m13 )
-    , m20( m20 ), m21( m21 ), m22( m22 ), m23( m23 )
-    , m30( m30 ), m31( m31 ), m32( m32 ), m33( m33 )
+    float m30, float m31, float m32, float m33) noexcept
+    : m00(m00), m01(m01), m02(m02), m03(m03)
+    , m10(m10), m11(m11), m12(m12), m13(m13)
+    , m20(m20), m21(m21), m22(m22), m23(m23)
+    , m30(m30), m31(m31), m32(m32), m33(m33)
 {
 }
 
-FORCEINLINE CMatrix4::CMatrix4( const float* Arr ) noexcept
-    : m00( Arr[0] ), m01( Arr[1] ), m02( Arr[2] ), m03( Arr[3] )
-    , m10( Arr[4] ), m11( Arr[5] ), m12( Arr[6] ), m13( Arr[7] )
-    , m20( Arr[8] ), m21( Arr[9] ), m22( Arr[10] ), m23( Arr[11] )
-    , m30( Arr[12] ), m31( Arr[13] ), m32( Arr[14] ), m33( Arr[15] )
+FORCEINLINE CMatrix4::CMatrix4(const float* Arr) noexcept
+    : m00(Arr[0]), m01(Arr[1]), m02(Arr[2]), m03(Arr[3])
+    , m10(Arr[4]), m11(Arr[5]), m12(Arr[6]), m13(Arr[7])
+    , m20(Arr[8]), m21(Arr[9]), m22(Arr[10]), m23(Arr[11])
+    , m30(Arr[12]), m31(Arr[13]), m32(Arr[14]), m33(Arr[15])
 {
 }
 
-FORCEINLINE CVector3 CMatrix4::TransformPosition( const CVector3& Position ) noexcept
+FORCEINLINE CVector3 CMatrix4::TransformPosition(const CVector3& Position) noexcept
 {
 #if defined(DISABLE_SIMD)
 
@@ -569,14 +569,14 @@ FORCEINLINE CVector3 CMatrix4::TransformPosition( const CVector3& Position ) noe
 
 #else
 
-    NSIMD::Float128 NewPosition = NSIMD::Load( Position.x, Position.y, Position.z, 1.0f );
-    NewPosition = NSIMD::Transform( this, NewPosition );
-    return CVector3( NSIMD::GetX( NewPosition ), NSIMD::GetY( NewPosition ), NSIMD::GetZ( NewPosition ) );
+    NSIMD::Float128 NewPosition = NSIMD::Load(Position.x, Position.y, Position.z, 1.0f);
+    NewPosition = NSIMD::Transform(this, NewPosition);
+    return CVector3(NSIMD::GetX(NewPosition), NSIMD::GetY(NewPosition), NSIMD::GetZ(NewPosition));
 
 #endif
 }
 
-FORCEINLINE CVector3 CMatrix4::TransformDirection( const CVector3& Direction ) noexcept
+FORCEINLINE CVector3 CMatrix4::TransformDirection(const CVector3& Direction) noexcept
 {
 #if defined(DISABLE_SIMD)
 
@@ -588,9 +588,9 @@ FORCEINLINE CVector3 CMatrix4::TransformDirection( const CVector3& Direction ) n
 
 #else
 
-    NSIMD::Float128 NewDirection = NSIMD::Load( Direction.x, Direction.y, Direction.z, 0.0f );
-    NewDirection = NSIMD::Transform( this, NewDirection );
-    return CVector3( NSIMD::GetX( NewDirection ), NSIMD::GetY( NewDirection ), NSIMD::GetZ( NewDirection ) );
+    NSIMD::Float128 NewDirection = NSIMD::Load(Direction.x, Direction.y, Direction.z, 0.0f);
+    NewDirection = NSIMD::Transform(this, NewDirection);
+    return CVector3(NSIMD::GetX(NewDirection), NSIMD::GetY(NewDirection), NSIMD::GetZ(NewDirection));
 
 #endif
 }
@@ -624,7 +624,7 @@ FORCEINLINE CMatrix4 CMatrix4::Transpose() const noexcept
 #else
 
     CMatrix4 Transpose;
-    NSIMD::Transpose( this, &Transpose );
+    NSIMD::Transpose(this, &Transpose);
     return Transpose;
 
 #endif
@@ -708,66 +708,66 @@ inline CMatrix4 CMatrix4::Invert() const noexcept
 
 #else
 
-    NSIMD::Float128 Temp0 = NSIMD::LoadAligned( f[0] );
-    NSIMD::Float128 Temp1 = NSIMD::LoadAligned( f[1] );
-    NSIMD::Float128 Temp2 = NSIMD::LoadAligned( f[2] );
-    NSIMD::Float128 Temp3 = NSIMD::LoadAligned( f[3] );
+    NSIMD::Float128 Temp0 = NSIMD::LoadAligned(f[0]);
+    NSIMD::Float128 Temp1 = NSIMD::LoadAligned(f[1]);
+    NSIMD::Float128 Temp2 = NSIMD::LoadAligned(f[2]);
+    NSIMD::Float128 Temp3 = NSIMD::LoadAligned(f[3]);
 
-    NSIMD::Float128 _0 = NSIMD::Shuffle0011<0, 1, 0, 1>( Temp0, Temp1 );
-    NSIMD::Float128 _1 = NSIMD::Shuffle0011<2, 3, 2, 3>( Temp0, Temp1 );
-    NSIMD::Float128 _2 = NSIMD::Shuffle0011<0, 1, 0, 1>( Temp2, Temp3 );
-    NSIMD::Float128 _3 = NSIMD::Shuffle0011<2, 3, 2, 3>( Temp2, Temp3 );
-    NSIMD::Float128 _4 = NSIMD::Shuffle0011<0, 2, 0, 2>( Temp0, Temp2 );
-    NSIMD::Float128 _5 = NSIMD::Shuffle0011<1, 3, 1, 3>( Temp1, Temp3 );
-    NSIMD::Float128 _6 = NSIMD::Shuffle0011<1, 3, 1, 3>( Temp0, Temp2 );
-    NSIMD::Float128 _7 = NSIMD::Shuffle0011<0, 2, 0, 2>( Temp1, Temp3 );
+    NSIMD::Float128 _0 = NSIMD::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
+    NSIMD::Float128 _1 = NSIMD::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
+    NSIMD::Float128 _2 = NSIMD::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
+    NSIMD::Float128 _3 = NSIMD::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
+    NSIMD::Float128 _4 = NSIMD::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
+    NSIMD::Float128 _5 = NSIMD::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
+    NSIMD::Float128 _6 = NSIMD::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
+    NSIMD::Float128 _7 = NSIMD::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
 
-    NSIMD::Float128 Mul0 = NSIMD::Mul( _4, _5 );
-    NSIMD::Float128 Mul1 = NSIMD::Mul( _6, _7 );
-    NSIMD::Float128 DetSub = NSIMD::Sub( Mul0, Mul1 );
+    NSIMD::Float128 Mul0 = NSIMD::Mul(_4, _5);
+    NSIMD::Float128 Mul1 = NSIMD::Mul(_6, _7);
+    NSIMD::Float128 DetSub = NSIMD::Sub(Mul0, Mul1);
 
-    NSIMD::Float128 DetA = NSIMD::Broadcast<0>( DetSub );
-    NSIMD::Float128 DetB = NSIMD::Broadcast<1>( DetSub );
-    NSIMD::Float128 DetC = NSIMD::Broadcast<2>( DetSub );
-    NSIMD::Float128 DetD = NSIMD::Broadcast<3>( DetSub );
+    NSIMD::Float128 DetA = NSIMD::Broadcast<0>(DetSub);
+    NSIMD::Float128 DetB = NSIMD::Broadcast<1>(DetSub);
+    NSIMD::Float128 DetC = NSIMD::Broadcast<2>(DetSub);
+    NSIMD::Float128 DetD = NSIMD::Broadcast<3>(DetSub);
 
-    NSIMD::Float128 dc = NSIMD::Mat2AdjointMul( _3, _2 );
-    NSIMD::Float128 ab = NSIMD::Mat2AdjointMul( _0, _1 );
+    NSIMD::Float128 dc = NSIMD::Mat2AdjointMul(_3, _2);
+    NSIMD::Float128 ab = NSIMD::Mat2AdjointMul(_0, _1);
 
-    NSIMD::Float128 x = NSIMD::Sub( NSIMD::Mul( DetD, _0 ), NSIMD::Mat2Mul( _1, dc ) );
-    NSIMD::Float128 w = NSIMD::Sub( NSIMD::Mul( DetA, _3 ), NSIMD::Mat2Mul( _2, ab ) );
+    NSIMD::Float128 x = NSIMD::Sub(NSIMD::Mul(DetD, _0), NSIMD::Mat2Mul(_1, dc));
+    NSIMD::Float128 w = NSIMD::Sub(NSIMD::Mul(DetA, _3), NSIMD::Mat2Mul(_2, ab));
 
-    NSIMD::Float128 DetM = NSIMD::Mul( DetA, DetD );
+    NSIMD::Float128 DetM = NSIMD::Mul(DetA, DetD);
 
-    NSIMD::Float128 y = NSIMD::Sub( NSIMD::Mul( DetB, _2 ), NSIMD::Mat2MulAdjoint( _3, ab ) );
-    NSIMD::Float128 z = NSIMD::Sub( NSIMD::Mul( DetC, _1 ), NSIMD::Mat2MulAdjoint( _0, dc ) );
+    NSIMD::Float128 y = NSIMD::Sub(NSIMD::Mul(DetB, _2), NSIMD::Mat2MulAdjoint(_3, ab));
+    NSIMD::Float128 z = NSIMD::Sub(NSIMD::Mul(DetC, _1), NSIMD::Mat2MulAdjoint(_0, dc));
 
-    DetM = NSIMD::Add( DetM, NSIMD::Mul( DetB, DetC ) );
+    DetM = NSIMD::Add(DetM, NSIMD::Mul(DetB, DetC));
 
-    NSIMD::Float128 Trace = NSIMD::Mul( ab, NSIMD::Shuffle<0, 2, 1, 3>( dc ) );
-    Trace = NSIMD::HorizontalAdd( Trace );
-    Trace = NSIMD::HorizontalAdd( Trace );
+    NSIMD::Float128 Trace = NSIMD::Mul(ab, NSIMD::Shuffle<0, 2, 1, 3>(dc));
+    Trace = NSIMD::HorizontalAdd(Trace);
+    Trace = NSIMD::HorizontalAdd(Trace);
 
-    DetM = NSIMD::Sub( DetM, Trace );
+    DetM = NSIMD::Sub(DetM, Trace);
 
-    const NSIMD::Float128 AdjSignMask = NSIMD::Load( 1.0f, -1.0f, -1.0f, 1.0f );
-    DetM = NSIMD::Div( AdjSignMask, DetM );
+    const NSIMD::Float128 AdjSignMask = NSIMD::Load(1.0f, -1.0f, -1.0f, 1.0f);
+    DetM = NSIMD::Div(AdjSignMask, DetM);
 
-    x = NSIMD::Mul( x, DetM );
-    y = NSIMD::Mul( y, DetM );
-    z = NSIMD::Mul( z, DetM );
-    w = NSIMD::Mul( w, DetM );
+    x = NSIMD::Mul(x, DetM);
+    y = NSIMD::Mul(y, DetM);
+    z = NSIMD::Mul(z, DetM);
+    w = NSIMD::Mul(w, DetM);
 
-    Temp0 = NSIMD::Shuffle0011<3, 1, 3, 1>( x, y );
-    Temp1 = NSIMD::Shuffle0011<2, 0, 2, 0>( x, y );
-    Temp2 = NSIMD::Shuffle0011<3, 1, 3, 1>( z, w );
-    Temp3 = NSIMD::Shuffle0011<2, 0, 2, 0>( z, w );
+    Temp0 = NSIMD::Shuffle0011<3, 1, 3, 1>(x, y);
+    Temp1 = NSIMD::Shuffle0011<2, 0, 2, 0>(x, y);
+    Temp2 = NSIMD::Shuffle0011<3, 1, 3, 1>(z, w);
+    Temp3 = NSIMD::Shuffle0011<2, 0, 2, 0>(z, w);
 
     CMatrix4 Inverse;
-    NSIMD::StoreAligned( Temp0, Inverse.f[0] );
-    NSIMD::StoreAligned( Temp1, Inverse.f[1] );
-    NSIMD::StoreAligned( Temp2, Inverse.f[2] );
-    NSIMD::StoreAligned( Temp3, Inverse.f[3] );
+    NSIMD::StoreAligned(Temp0, Inverse.f[0]);
+    NSIMD::StoreAligned(Temp1, Inverse.f[1]);
+    NSIMD::StoreAligned(Temp2, Inverse.f[2]);
+    NSIMD::StoreAligned(Temp3, Inverse.f[3]);
     return Inverse;
 
 #endif
@@ -839,54 +839,54 @@ inline CMatrix4 CMatrix4::Adjoint() const noexcept
 
 #else
 
-    NSIMD::Float128 Temp0 = NSIMD::LoadAligned( f[0] );
-    NSIMD::Float128 Temp1 = NSIMD::LoadAligned( f[1] );
-    NSIMD::Float128 Temp2 = NSIMD::LoadAligned( f[2] );
-    NSIMD::Float128 Temp3 = NSIMD::LoadAligned( f[3] );
+    NSIMD::Float128 Temp0 = NSIMD::LoadAligned(f[0]);
+    NSIMD::Float128 Temp1 = NSIMD::LoadAligned(f[1]);
+    NSIMD::Float128 Temp2 = NSIMD::LoadAligned(f[2]);
+    NSIMD::Float128 Temp3 = NSIMD::LoadAligned(f[3]);
 
-    NSIMD::Float128 _0 = NSIMD::Shuffle0011<0, 1, 0, 1>( Temp0, Temp1 );
-    NSIMD::Float128 _1 = NSIMD::Shuffle0011<2, 3, 2, 3>( Temp0, Temp1 );
-    NSIMD::Float128 _2 = NSIMD::Shuffle0011<0, 1, 0, 1>( Temp2, Temp3 );
-    NSIMD::Float128 _3 = NSIMD::Shuffle0011<2, 3, 2, 3>( Temp2, Temp3 );
-    NSIMD::Float128 _4 = NSIMD::Shuffle0011<0, 2, 0, 2>( Temp0, Temp2 );
-    NSIMD::Float128 _5 = NSIMD::Shuffle0011<1, 3, 1, 3>( Temp1, Temp3 );
-    NSIMD::Float128 _6 = NSIMD::Shuffle0011<1, 3, 1, 3>( Temp0, Temp2 );
-    NSIMD::Float128 _7 = NSIMD::Shuffle0011<0, 2, 0, 2>( Temp1, Temp3 );
+    NSIMD::Float128 _0 = NSIMD::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
+    NSIMD::Float128 _1 = NSIMD::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
+    NSIMD::Float128 _2 = NSIMD::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
+    NSIMD::Float128 _3 = NSIMD::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
+    NSIMD::Float128 _4 = NSIMD::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
+    NSIMD::Float128 _5 = NSIMD::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
+    NSIMD::Float128 _6 = NSIMD::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
+    NSIMD::Float128 _7 = NSIMD::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
 
-    NSIMD::Float128 Mul0 = NSIMD::Mul( _4, _5 );
-    NSIMD::Float128 Mul1 = NSIMD::Mul( _6, _7 );
-    NSIMD::Float128 DetSub = NSIMD::Sub( Mul0, Mul1 );
+    NSIMD::Float128 Mul0 = NSIMD::Mul(_4, _5);
+    NSIMD::Float128 Mul1 = NSIMD::Mul(_6, _7);
+    NSIMD::Float128 DetSub = NSIMD::Sub(Mul0, Mul1);
 
-    NSIMD::Float128 DetA = NSIMD::Broadcast<0>( DetSub );
-    NSIMD::Float128 DetB = NSIMD::Broadcast<1>( DetSub );
-    NSIMD::Float128 DetC = NSIMD::Broadcast<2>( DetSub );
-    NSIMD::Float128 DetD = NSIMD::Broadcast<3>( DetSub );
+    NSIMD::Float128 DetA = NSIMD::Broadcast<0>(DetSub);
+    NSIMD::Float128 DetB = NSIMD::Broadcast<1>(DetSub);
+    NSIMD::Float128 DetC = NSIMD::Broadcast<2>(DetSub);
+    NSIMD::Float128 DetD = NSIMD::Broadcast<3>(DetSub);
 
-    NSIMD::Float128 dc = NSIMD::Mat2AdjointMul( _3, _2 );
-    NSIMD::Float128 ab = NSIMD::Mat2AdjointMul( _0, _1 );
+    NSIMD::Float128 dc = NSIMD::Mat2AdjointMul(_3, _2);
+    NSIMD::Float128 ab = NSIMD::Mat2AdjointMul(_0, _1);
 
-    NSIMD::Float128 x = NSIMD::Sub( NSIMD::Mul( DetD, _0 ), NSIMD::Mat2Mul( _1, dc ) );
-    NSIMD::Float128 w = NSIMD::Sub( NSIMD::Mul( DetA, _3 ), NSIMD::Mat2Mul( _2, ab ) );
+    NSIMD::Float128 x = NSIMD::Sub(NSIMD::Mul(DetD, _0), NSIMD::Mat2Mul(_1, dc));
+    NSIMD::Float128 w = NSIMD::Sub(NSIMD::Mul(DetA, _3), NSIMD::Mat2Mul(_2, ab));
 
-    NSIMD::Float128 y = NSIMD::Sub( NSIMD::Mul( DetB, _2 ), NSIMD::Mat2MulAdjoint( _3, ab ) );
-    NSIMD::Float128 z = NSIMD::Sub( NSIMD::Mul( DetC, _1 ), NSIMD::Mat2MulAdjoint( _0, dc ) );
+    NSIMD::Float128 y = NSIMD::Sub(NSIMD::Mul(DetB, _2), NSIMD::Mat2MulAdjoint(_3, ab));
+    NSIMD::Float128 z = NSIMD::Sub(NSIMD::Mul(DetC, _1), NSIMD::Mat2MulAdjoint(_0, dc));
 
-    const NSIMD::Float128 Mask = NSIMD::Load( 1.0f, -1.0f, -1.0f, 1.0f );
-    x = NSIMD::Mul( x, Mask );
-    y = NSIMD::Mul( y, Mask );
-    z = NSIMD::Mul( z, Mask );
-    w = NSIMD::Mul( w, Mask );
+    const NSIMD::Float128 Mask = NSIMD::Load(1.0f, -1.0f, -1.0f, 1.0f);
+    x = NSIMD::Mul(x, Mask);
+    y = NSIMD::Mul(y, Mask);
+    z = NSIMD::Mul(z, Mask);
+    w = NSIMD::Mul(w, Mask);
 
-    Temp0 = NSIMD::Shuffle0011<3, 1, 3, 1>( x, y );
-    Temp1 = NSIMD::Shuffle0011<2, 0, 2, 0>( x, y );
-    Temp2 = NSIMD::Shuffle0011<3, 1, 3, 1>( z, w );
-    Temp3 = NSIMD::Shuffle0011<2, 0, 2, 0>( z, w );
+    Temp0 = NSIMD::Shuffle0011<3, 1, 3, 1>(x, y);
+    Temp1 = NSIMD::Shuffle0011<2, 0, 2, 0>(x, y);
+    Temp2 = NSIMD::Shuffle0011<3, 1, 3, 1>(z, w);
+    Temp3 = NSIMD::Shuffle0011<2, 0, 2, 0>(z, w);
 
     CMatrix4 Inverse;
-    NSIMD::StoreAligned( Temp0, Inverse.f[0] );
-    NSIMD::StoreAligned( Temp1, Inverse.f[1] );
-    NSIMD::StoreAligned( Temp2, Inverse.f[2] );
-    NSIMD::StoreAligned( Temp3, Inverse.f[3] );
+    NSIMD::StoreAligned(Temp0, Inverse.f[0]);
+    NSIMD::StoreAligned(Temp1, Inverse.f[1]);
+    NSIMD::StoreAligned(Temp2, Inverse.f[2]);
+    NSIMD::StoreAligned(Temp3, Inverse.f[3]);
     return Inverse;
 
 #endif
@@ -915,49 +915,49 @@ inline float CMatrix4::Determinant() const noexcept
 
 #else
 
-    NSIMD::Float128 Temp0 = NSIMD::LoadAligned( f[0] );
-    NSIMD::Float128 Temp1 = NSIMD::LoadAligned( f[1] );
-    NSIMD::Float128 Temp2 = NSIMD::LoadAligned( f[2] );
-    NSIMD::Float128 Temp3 = NSIMD::LoadAligned( f[3] );
+    NSIMD::Float128 Temp0 = NSIMD::LoadAligned(f[0]);
+    NSIMD::Float128 Temp1 = NSIMD::LoadAligned(f[1]);
+    NSIMD::Float128 Temp2 = NSIMD::LoadAligned(f[2]);
+    NSIMD::Float128 Temp3 = NSIMD::LoadAligned(f[3]);
 
-    NSIMD::Float128 _0 = NSIMD::Shuffle0011<0, 1, 0, 1>( Temp0, Temp1 );
-    NSIMD::Float128 _1 = NSIMD::Shuffle0011<2, 3, 2, 3>( Temp0, Temp1 );
-    NSIMD::Float128 _2 = NSIMD::Shuffle0011<0, 1, 0, 1>( Temp2, Temp3 );
-    NSIMD::Float128 _3 = NSIMD::Shuffle0011<2, 3, 2, 3>( Temp2, Temp3 );
-    NSIMD::Float128 _4 = NSIMD::Shuffle0011<0, 2, 0, 2>( Temp0, Temp2 );
-    NSIMD::Float128 _5 = NSIMD::Shuffle0011<1, 3, 1, 3>( Temp1, Temp3 );
-    NSIMD::Float128 _6 = NSIMD::Shuffle0011<1, 3, 1, 3>( Temp0, Temp2 );
-    NSIMD::Float128 _7 = NSIMD::Shuffle0011<0, 2, 0, 2>( Temp1, Temp3 );
+    NSIMD::Float128 _0 = NSIMD::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
+    NSIMD::Float128 _1 = NSIMD::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
+    NSIMD::Float128 _2 = NSIMD::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
+    NSIMD::Float128 _3 = NSIMD::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
+    NSIMD::Float128 _4 = NSIMD::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
+    NSIMD::Float128 _5 = NSIMD::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
+    NSIMD::Float128 _6 = NSIMD::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
+    NSIMD::Float128 _7 = NSIMD::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
 
-    NSIMD::Float128 Mul0 = NSIMD::Mul( _4, _5 );
-    NSIMD::Float128 Mul1 = NSIMD::Mul( _6, _7 );
-    NSIMD::Float128 DetSub = NSIMD::Sub( Mul0, Mul1 );
+    NSIMD::Float128 Mul0 = NSIMD::Mul(_4, _5);
+    NSIMD::Float128 Mul1 = NSIMD::Mul(_6, _7);
+    NSIMD::Float128 DetSub = NSIMD::Sub(Mul0, Mul1);
 
-    NSIMD::Float128 DetA = NSIMD::Broadcast<0>( DetSub );
-    NSIMD::Float128 DetB = NSIMD::Broadcast<1>( DetSub );
-    NSIMD::Float128 DetC = NSIMD::Broadcast<2>( DetSub );
-    NSIMD::Float128 DetD = NSIMD::Broadcast<3>( DetSub );
+    NSIMD::Float128 DetA = NSIMD::Broadcast<0>(DetSub);
+    NSIMD::Float128 DetB = NSIMD::Broadcast<1>(DetSub);
+    NSIMD::Float128 DetC = NSIMD::Broadcast<2>(DetSub);
+    NSIMD::Float128 DetD = NSIMD::Broadcast<3>(DetSub);
 
-    NSIMD::Float128 dc = NSIMD::Mat2AdjointMul( _3, _2 );
-    NSIMD::Float128 ab = NSIMD::Mat2AdjointMul( _0, _1 );
+    NSIMD::Float128 dc = NSIMD::Mat2AdjointMul(_3, _2);
+    NSIMD::Float128 ab = NSIMD::Mat2AdjointMul(_0, _1);
 
-    NSIMD::Float128 DetM = NSIMD::Mul( DetA, DetD );
-    Mul0 = NSIMD::Mul( DetB, DetC );
-    DetM = NSIMD::Add( DetM, Mul0 );
-    Mul0 = NSIMD::Mul( ab, NSIMD::Shuffle<0, 2, 1, 3>( dc ) );
+    NSIMD::Float128 DetM = NSIMD::Mul(DetA, DetD);
+    Mul0 = NSIMD::Mul(DetB, DetC);
+    DetM = NSIMD::Add(DetM, Mul0);
+    Mul0 = NSIMD::Mul(ab, NSIMD::Shuffle<0, 2, 1, 3>(dc));
 
-    NSIMD::Float128 Sum = NSIMD::HorizontalSum( Mul0 );
-    DetM = NSIMD::Sub( DetM, Sum );
-    return NSIMD::GetX( DetM );
+    NSIMD::Float128 Sum = NSIMD::HorizontalSum(Mul0);
+    DetM = NSIMD::Sub(DetM, Sum);
+    return NSIMD::GetX(DetM);
 
 #endif
 }
 
 inline bool CMatrix4::HasNan() const noexcept
 {
-    for ( int i = 0; i < 16; i++ )
+    for (int i = 0; i < 16; i++)
     {
-        if ( NMath::IsNan( reinterpret_cast<const float*>(this)[i] ) )
+        if (NMath::IsNan(reinterpret_cast<const float*>(this)[i]))
         {
             return true;
         }
@@ -968,9 +968,9 @@ inline bool CMatrix4::HasNan() const noexcept
 
 inline bool CMatrix4::HasInfinity() const noexcept
 {
-    for ( int i = 0; i < 16; i++ )
+    for (int i = 0; i < 16; i++)
     {
-        if ( NMath::IsInf( reinterpret_cast<const float*>(this)[i] ) )
+        if (NMath::IsInf(reinterpret_cast<const float*>(this)[i]))
         {
             return true;
         }
@@ -984,16 +984,16 @@ FORCEINLINE bool CMatrix4::IsValid() const noexcept
     return !HasNan() && !HasInfinity();
 }
 
-inline bool CMatrix4::IsEqual( const CMatrix4& Other, float Epsilon ) const noexcept
+inline bool CMatrix4::IsEqual(const CMatrix4& Other, float Epsilon) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    Epsilon = NMath::Abs( Epsilon );
+    Epsilon = NMath::Abs(Epsilon);
 
-    for ( int i = 0; i < 16; i++ )
+    for (int i = 0; i < 16; i++)
     {
         float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
-        if ( NMath::Abs( Diff ) > Epsilon )
+        if (NMath::Abs(Diff) > Epsilon)
         {
             return false;
         }
@@ -1003,15 +1003,15 @@ inline bool CMatrix4::IsEqual( const CMatrix4& Other, float Epsilon ) const noex
 
 #else
 
-    NSIMD::Float128 Espilon128 = NSIMD::Load( Epsilon );
-    Espilon128 = NSIMD::Abs( Espilon128 );
+    NSIMD::Float128 Espilon128 = NSIMD::Load(Epsilon);
+    Espilon128 = NSIMD::Abs(Espilon128);
 
-    for ( int i = 0; i < 4; i++ )
+    for (int i = 0; i < 4; i++)
     {
-        NSIMD::Float128 Diff = NSIMD::Sub( f[i], Other.f[i] );
-        Diff = NSIMD::Abs( Diff );
+        NSIMD::Float128 Diff = NSIMD::Sub(f[i], Other.f[i]);
+        Diff = NSIMD::Abs(Diff);
 
-        if ( NSIMD::GreaterThan( Diff, Espilon128 ) )
+        if (NSIMD::GreaterThan(Diff, Espilon128))
         {
             return false;
         }
@@ -1048,15 +1048,15 @@ FORCEINLINE void CMatrix4::SetIdentity() noexcept
 
 #else
 
-    NSIMD::StoreAligned( NSIMD::Load( 1.0f, 0.0f, 0.0f, 0.0f ), f[0] );
-    NSIMD::StoreAligned( NSIMD::Load( 0.0f, 1.0f, 0.0f, 0.0f ), f[1] );
-    NSIMD::StoreAligned( NSIMD::Load( 0.0f, 0.0f, 1.0f, 0.0f ), f[2] );
-    NSIMD::StoreAligned( NSIMD::Load( 0.0f, 0.0f, 0.0f, 1.0f ), f[3] );
+    NSIMD::StoreAligned(NSIMD::Load(1.0f, 0.0f, 0.0f, 0.0f), f[0]);
+    NSIMD::StoreAligned(NSIMD::Load(0.0f, 1.0f, 0.0f, 0.0f), f[1]);
+    NSIMD::StoreAligned(NSIMD::Load(0.0f, 0.0f, 1.0f, 0.0f), f[2]);
+    NSIMD::StoreAligned(NSIMD::Load(0.0f, 0.0f, 0.0f, 1.0f), f[3]);
 
 #endif
 }
 
-FORCEINLINE void CMatrix4::SetRotationAndScale( const CMatrix3& RotationAndScale ) noexcept
+FORCEINLINE void CMatrix4::SetRotationAndScale(const CMatrix3& RotationAndScale) noexcept
 {
     m00 = RotationAndScale.m00;
     m01 = RotationAndScale.m01;
@@ -1071,33 +1071,33 @@ FORCEINLINE void CMatrix4::SetRotationAndScale( const CMatrix3& RotationAndScale
     m22 = RotationAndScale.m22;
 }
 
-FORCEINLINE void CMatrix4::SetTranslation( const CVector3& Translation ) noexcept
+FORCEINLINE void CMatrix4::SetTranslation(const CVector3& Translation) noexcept
 {
     m30 = Translation.x;
     m31 = Translation.y;
     m32 = Translation.z;
 }
 
-FORCEINLINE CVector4 CMatrix4::GetRow( int Row ) const noexcept
+FORCEINLINE CVector4 CMatrix4::GetRow(int Row) const noexcept
 {
-    Assert( Row < 4 );
-    return CVector4( f[Row] );
+    Assert(Row < 4);
+    return CVector4(f[Row]);
 }
 
-FORCEINLINE CVector4 CMatrix4::GetColumn( int Column ) const noexcept
+FORCEINLINE CVector4 CMatrix4::GetColumn(int Column) const noexcept
 {
-    Assert( Column < 4 );
-    return CVector4( f[0][Column], f[1][Column], f[2][Column], f[3][Column] );
+    Assert(Column < 4);
+    return CVector4(f[0][Column], f[1][Column], f[2][Column], f[3][Column]);
 }
 
 FORCEINLINE CVector3 CMatrix4::GetTranslation() const noexcept
 {
-    return CVector3( m30, m31, m32 );
+    return CVector3(m30, m31, m32);
 }
 
 FORCEINLINE CMatrix3 CMatrix4::GetRotationAndScale() const noexcept
 {
-    return CMatrix3( m00, m01, m02, m10, m11, m12, m20, m21, m22 );
+    return CMatrix3(m00, m01, m02, m10, m11, m12, m20, m21, m22);
 }
 
 FORCEINLINE float* CMatrix4::GetData() noexcept
@@ -1110,17 +1110,17 @@ FORCEINLINE const float* CMatrix4::GetData() const noexcept
     return reinterpret_cast<const float*>(this);
 }
 
-FORCEINLINE bool CMatrix4::operator==( const CMatrix4& Other ) const noexcept
+FORCEINLINE bool CMatrix4::operator==(const CMatrix4& Other) const noexcept
 {
-    return IsEqual( Other );
+    return IsEqual(Other);
 }
 
-FORCEINLINE bool CMatrix4::operator!=( const CMatrix4& Other ) const noexcept
+FORCEINLINE bool CMatrix4::operator!=(const CMatrix4& Other) const noexcept
 {
-    return !IsEqual( Other );
+    return !IsEqual(Other);
 }
 
-FORCEINLINE CVector4 CMatrix4::operator*( const CVector4& RHS ) const noexcept
+FORCEINLINE CVector4 CMatrix4::operator*(const CVector4& RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
@@ -1133,17 +1133,17 @@ FORCEINLINE CVector4 CMatrix4::operator*( const CVector4& RHS ) const noexcept
 
 #else
 
-    NSIMD::Float128 Temp = NSIMD::LoadAligned( &RHS );
-    Temp = NSIMD::Transform( this, Temp );
+    NSIMD::Float128 Temp = NSIMD::LoadAligned(&RHS);
+    Temp = NSIMD::Transform(this, Temp);
 
     CVector4 Result;
-    NSIMD::StoreAligned( Temp, &Result );
+    NSIMD::StoreAligned(Temp, &Result);
     return Result;
 
 #endif
 }
 
-NOINLINE CMatrix4 CMatrix4::operator*( const CMatrix4& RHS ) const noexcept
+NOINLINE CMatrix4 CMatrix4::operator*(const CMatrix4& RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
@@ -1171,34 +1171,34 @@ NOINLINE CMatrix4 CMatrix4::operator*( const CMatrix4& RHS ) const noexcept
 
 #else
 
-    NSIMD::Float128 Row0 = NSIMD::LoadAligned( f[0] );
-    Row0 = NSIMD::Transform( &RHS, Row0 );
+    NSIMD::Float128 Row0 = NSIMD::LoadAligned(f[0]);
+    Row0 = NSIMD::Transform(&RHS, Row0);
 
-    NSIMD::Float128 Row1 = NSIMD::LoadAligned( f[1] );
-    Row1 = NSIMD::Transform( &RHS, Row1 );
+    NSIMD::Float128 Row1 = NSIMD::LoadAligned(f[1]);
+    Row1 = NSIMD::Transform(&RHS, Row1);
 
-    NSIMD::Float128 Row2 = NSIMD::LoadAligned( f[2] );
-    Row2 = NSIMD::Transform( &RHS, Row2 );
+    NSIMD::Float128 Row2 = NSIMD::LoadAligned(f[2]);
+    Row2 = NSIMD::Transform(&RHS, Row2);
 
-    NSIMD::Float128 Row3 = NSIMD::LoadAligned( f[3] );
-    Row3 = NSIMD::Transform( &RHS, Row3 );
+    NSIMD::Float128 Row3 = NSIMD::LoadAligned(f[3]);
+    Row3 = NSIMD::Transform(&RHS, Row3);
 
     CMatrix4 Result;
-    NSIMD::StoreAligned( Row0, Result.f[0] );
-    NSIMD::StoreAligned( Row1, Result.f[1] );
-    NSIMD::StoreAligned( Row2, Result.f[2] );
-    NSIMD::StoreAligned( Row3, Result.f[3] );
+    NSIMD::StoreAligned(Row0, Result.f[0]);
+    NSIMD::StoreAligned(Row1, Result.f[1]);
+    NSIMD::StoreAligned(Row2, Result.f[2]);
+    NSIMD::StoreAligned(Row3, Result.f[3]);
     return Result;
 
 #endif
 }
 
-NOINLINE CMatrix4& CMatrix4::operator*=( const CMatrix4& RHS ) noexcept
+NOINLINE CMatrix4& CMatrix4::operator*=(const CMatrix4& RHS) noexcept
 {
     return *this = *this * RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator*( float RHS ) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator*(float RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
@@ -1226,28 +1226,28 @@ FORCEINLINE CMatrix4 CMatrix4::operator*( float RHS ) const noexcept
 
 #else
 
-    NSIMD::Float128 Scalars = NSIMD::Load( RHS );
-    NSIMD::Float128 Row0 = NSIMD::Mul( f[0], Scalars );
-    NSIMD::Float128 Row1 = NSIMD::Mul( f[1], Scalars );
-    NSIMD::Float128 Row2 = NSIMD::Mul( f[2], Scalars );
-    NSIMD::Float128 Row3 = NSIMD::Mul( f[3], Scalars );
+    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
+    NSIMD::Float128 Row0 = NSIMD::Mul(f[0], Scalars);
+    NSIMD::Float128 Row1 = NSIMD::Mul(f[1], Scalars);
+    NSIMD::Float128 Row2 = NSIMD::Mul(f[2], Scalars);
+    NSIMD::Float128 Row3 = NSIMD::Mul(f[3], Scalars);
 
     CMatrix4 Result;
-    NSIMD::StoreAligned( Row0, Result.f[0] );
-    NSIMD::StoreAligned( Row1, Result.f[1] );
-    NSIMD::StoreAligned( Row2, Result.f[2] );
-    NSIMD::StoreAligned( Row3, Result.f[3] );
+    NSIMD::StoreAligned(Row0, Result.f[0]);
+    NSIMD::StoreAligned(Row1, Result.f[1]);
+    NSIMD::StoreAligned(Row2, Result.f[2]);
+    NSIMD::StoreAligned(Row3, Result.f[3]);
     return Result;
 
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator*=( float RHS ) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator*=(float RHS) noexcept
 {
     return *this = *this * RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator+( const CMatrix4& RHS ) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator+(const CMatrix4& RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
@@ -1275,27 +1275,27 @@ FORCEINLINE CMatrix4 CMatrix4::operator+( const CMatrix4& RHS ) const noexcept
 
 #else
 
-    NSIMD::Float128 Row0 = NSIMD::Add( f[0], RHS.f[0] );
-    NSIMD::Float128 Row1 = NSIMD::Add( f[1], RHS.f[1] );
-    NSIMD::Float128 Row2 = NSIMD::Add( f[2], RHS.f[2] );
-    NSIMD::Float128 Row3 = NSIMD::Add( f[3], RHS.f[3] );
+    NSIMD::Float128 Row0 = NSIMD::Add(f[0], RHS.f[0]);
+    NSIMD::Float128 Row1 = NSIMD::Add(f[1], RHS.f[1]);
+    NSIMD::Float128 Row2 = NSIMD::Add(f[2], RHS.f[2]);
+    NSIMD::Float128 Row3 = NSIMD::Add(f[3], RHS.f[3]);
 
     CMatrix4 Result;
-    NSIMD::StoreAligned( Row0, Result.f[0] );
-    NSIMD::StoreAligned( Row1, Result.f[1] );
-    NSIMD::StoreAligned( Row2, Result.f[2] );
-    NSIMD::StoreAligned( Row3, Result.f[3] );
+    NSIMD::StoreAligned(Row0, Result.f[0]);
+    NSIMD::StoreAligned(Row1, Result.f[1]);
+    NSIMD::StoreAligned(Row2, Result.f[2]);
+    NSIMD::StoreAligned(Row3, Result.f[3]);
     return Result;
 
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator+=( const CMatrix4& RHS ) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator+=(const CMatrix4& RHS) noexcept
 {
     return *this = *this + RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator+( float RHS ) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator+(float RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
@@ -1323,28 +1323,28 @@ FORCEINLINE CMatrix4 CMatrix4::operator+( float RHS ) const noexcept
 
 #else
 
-    NSIMD::Float128 Scalars = NSIMD::Load( RHS );
-    NSIMD::Float128 Row0 = NSIMD::Add( f[0], Scalars );
-    NSIMD::Float128 Row1 = NSIMD::Add( f[1], Scalars );
-    NSIMD::Float128 Row2 = NSIMD::Add( f[2], Scalars );
-    NSIMD::Float128 Row3 = NSIMD::Add( f[3], Scalars );
+    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
+    NSIMD::Float128 Row0 = NSIMD::Add(f[0], Scalars);
+    NSIMD::Float128 Row1 = NSIMD::Add(f[1], Scalars);
+    NSIMD::Float128 Row2 = NSIMD::Add(f[2], Scalars);
+    NSIMD::Float128 Row3 = NSIMD::Add(f[3], Scalars);
 
     CMatrix4 Result;
-    NSIMD::StoreAligned( Row0, Result.f[0] );
-    NSIMD::StoreAligned( Row1, Result.f[1] );
-    NSIMD::StoreAligned( Row2, Result.f[2] );
-    NSIMD::StoreAligned( Row3, Result.f[3] );
+    NSIMD::StoreAligned(Row0, Result.f[0]);
+    NSIMD::StoreAligned(Row1, Result.f[1]);
+    NSIMD::StoreAligned(Row2, Result.f[2]);
+    NSIMD::StoreAligned(Row3, Result.f[3]);
     return Result;
 
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator+=( float RHS ) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator+=(float RHS) noexcept
 {
     return *this = *this + RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator-( const CMatrix4& RHS ) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator-(const CMatrix4& RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
@@ -1372,27 +1372,27 @@ FORCEINLINE CMatrix4 CMatrix4::operator-( const CMatrix4& RHS ) const noexcept
 
 #else
 
-    NSIMD::Float128 Row0 = NSIMD::Sub( f[0], RHS.f[0] );
-    NSIMD::Float128 Row1 = NSIMD::Sub( f[1], RHS.f[1] );
-    NSIMD::Float128 Row2 = NSIMD::Sub( f[2], RHS.f[2] );
-    NSIMD::Float128 Row3 = NSIMD::Sub( f[3], RHS.f[3] );
+    NSIMD::Float128 Row0 = NSIMD::Sub(f[0], RHS.f[0]);
+    NSIMD::Float128 Row1 = NSIMD::Sub(f[1], RHS.f[1]);
+    NSIMD::Float128 Row2 = NSIMD::Sub(f[2], RHS.f[2]);
+    NSIMD::Float128 Row3 = NSIMD::Sub(f[3], RHS.f[3]);
 
     CMatrix4 Result;
-    NSIMD::StoreAligned( Row0, Result.f[0] );
-    NSIMD::StoreAligned( Row1, Result.f[1] );
-    NSIMD::StoreAligned( Row2, Result.f[2] );
-    NSIMD::StoreAligned( Row3, Result.f[3] );
+    NSIMD::StoreAligned(Row0, Result.f[0]);
+    NSIMD::StoreAligned(Row1, Result.f[1]);
+    NSIMD::StoreAligned(Row2, Result.f[2]);
+    NSIMD::StoreAligned(Row3, Result.f[3]);
     return Result;
 
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator-=( const CMatrix4& RHS ) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator-=(const CMatrix4& RHS) noexcept
 {
     return *this = *this - RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator-( float RHS ) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator-(float RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
@@ -1420,28 +1420,28 @@ FORCEINLINE CMatrix4 CMatrix4::operator-( float RHS ) const noexcept
 
 #else
 
-    NSIMD::Float128 Scalars = NSIMD::Load( RHS );
-    NSIMD::Float128 Row0 = NSIMD::Sub( f[0], Scalars );
-    NSIMD::Float128 Row1 = NSIMD::Sub( f[1], Scalars );
-    NSIMD::Float128 Row2 = NSIMD::Sub( f[2], Scalars );
-    NSIMD::Float128 Row3 = NSIMD::Sub( f[3], Scalars );
+    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
+    NSIMD::Float128 Row0 = NSIMD::Sub(f[0], Scalars);
+    NSIMD::Float128 Row1 = NSIMD::Sub(f[1], Scalars);
+    NSIMD::Float128 Row2 = NSIMD::Sub(f[2], Scalars);
+    NSIMD::Float128 Row3 = NSIMD::Sub(f[3], Scalars);
 
     CMatrix4 Result;
-    NSIMD::StoreAligned( Row0, Result.f[0] );
-    NSIMD::StoreAligned( Row1, Result.f[1] );
-    NSIMD::StoreAligned( Row2, Result.f[2] );
-    NSIMD::StoreAligned( Row3, Result.f[3] );
+    NSIMD::StoreAligned(Row0, Result.f[0]);
+    NSIMD::StoreAligned(Row1, Result.f[1]);
+    NSIMD::StoreAligned(Row2, Result.f[2]);
+    NSIMD::StoreAligned(Row3, Result.f[3]);
     return Result;
 
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator-=( float RHS ) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator-=(float RHS) noexcept
 {
     return *this = *this - RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator/( float RHS ) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator/(float RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
@@ -1471,77 +1471,77 @@ FORCEINLINE CMatrix4 CMatrix4::operator/( float RHS ) const noexcept
 
 #else
 
-    NSIMD::Float128 RecipScalars = NSIMD::Load( 1.0f / RHS );
-    NSIMD::Float128 Row0 = NSIMD::Mul( f[0], RecipScalars );
-    NSIMD::Float128 Row1 = NSIMD::Mul( f[1], RecipScalars );
-    NSIMD::Float128 Row2 = NSIMD::Mul( f[2], RecipScalars );
-    NSIMD::Float128 Row3 = NSIMD::Mul( f[3], RecipScalars );
+    NSIMD::Float128 RecipScalars = NSIMD::Load(1.0f / RHS);
+    NSIMD::Float128 Row0 = NSIMD::Mul(f[0], RecipScalars);
+    NSIMD::Float128 Row1 = NSIMD::Mul(f[1], RecipScalars);
+    NSIMD::Float128 Row2 = NSIMD::Mul(f[2], RecipScalars);
+    NSIMD::Float128 Row3 = NSIMD::Mul(f[3], RecipScalars);
 
     CMatrix4 Result;
-    NSIMD::StoreAligned( Row0, Result.f[0] );
-    NSIMD::StoreAligned( Row1, Result.f[1] );
-    NSIMD::StoreAligned( Row2, Result.f[2] );
-    NSIMD::StoreAligned( Row3, Result.f[3] );
+    NSIMD::StoreAligned(Row0, Result.f[0]);
+    NSIMD::StoreAligned(Row1, Result.f[1]);
+    NSIMD::StoreAligned(Row2, Result.f[2]);
+    NSIMD::StoreAligned(Row3, Result.f[3]);
     return Result;
 
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator/=( float RHS ) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator/=(float RHS) noexcept
 {
     return *this = *this / RHS;
 }
 
 inline CMatrix4 CMatrix4::Identity() noexcept
 {
-    return CMatrix4( 1.0f );
+    return CMatrix4(1.0f);
 }
 
-inline CMatrix4 CMatrix4::Scale( float Scale ) noexcept
+inline CMatrix4 CMatrix4::Scale(float Scale) noexcept
 {
     return CMatrix4(
         Scale, 0.0f, 0.0f, 0.0f,
         0.0f, Scale, 0.0f, 0.0f,
         0.0f, 0.0f, Scale, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f );
+        0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-inline CMatrix4 CMatrix4::Scale( float x, float y, float z ) noexcept
+inline CMatrix4 CMatrix4::Scale(float x, float y, float z) noexcept
 {
     return CMatrix4(
         x, 0.0f, 0.0f, 0.0f,
         0.0f, y, 0.0f, 0.0f,
         0.0f, 0.0f, z, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f );
+        0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-inline CMatrix4 CMatrix4::Scale( const CVector3& VectorWithScale ) noexcept
+inline CMatrix4 CMatrix4::Scale(const CVector3& VectorWithScale) noexcept
 {
-    return Scale( VectorWithScale.x, VectorWithScale.y, VectorWithScale.z );
+    return Scale(VectorWithScale.x, VectorWithScale.y, VectorWithScale.z);
 }
 
-inline CMatrix4 CMatrix4::Translation( float x, float y, float z ) noexcept
+inline CMatrix4 CMatrix4::Translation(float x, float y, float z) noexcept
 {
     return CMatrix4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        x, y, z, 1.0f );
+        x, y, z, 1.0f);
 }
 
-inline CMatrix4 CMatrix4::Translation( const CVector3& InTranslation ) noexcept
+inline CMatrix4 CMatrix4::Translation(const CVector3& InTranslation) noexcept
 {
-    return Translation( InTranslation.x, InTranslation.y, InTranslation.z );
+    return Translation(InTranslation.x, InTranslation.y, InTranslation.z);
 }
 
-inline CMatrix4 CMatrix4::RotationRollPitchYaw( float Pitch, float Yaw, float Roll ) noexcept
+inline CMatrix4 CMatrix4::RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
 {
-    const float SinP = sinf( Pitch );
-    const float SinY = sinf( Yaw );
-    const float SinR = sinf( Roll );
-    const float CosP = cosf( Pitch );
-    const float CosY = cosf( Yaw );
-    const float CosR = cosf( Roll );
+    const float SinP = sinf(Pitch);
+    const float SinY = sinf(Yaw);
+    const float SinR = sinf(Roll);
+    const float CosP = cosf(Pitch);
+    const float CosY = cosf(Yaw);
+    const float CosR = cosf(Roll);
 
     const float SinRSinP = SinR * SinP;
     const float CosRSinP = CosR * SinP;
@@ -1550,60 +1550,60 @@ inline CMatrix4 CMatrix4::RotationRollPitchYaw( float Pitch, float Yaw, float Ro
         (CosR * CosY) + (SinRSinP * SinY), (SinR * CosP), (SinRSinP * CosY) - (CosR * SinY), 0.0f,
         (CosRSinP * SinY) - (SinR * CosY), (CosR * CosP), (SinR * SinY) + (CosRSinP * CosY), 0.0f,
         (CosP * SinY), -SinP, (CosP * CosY), 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f );
+        0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-inline CMatrix4 CMatrix4::RotationRollPitchYaw( const CVector3& PitchYawRoll ) noexcept
+inline CMatrix4 CMatrix4::RotationRollPitchYaw(const CVector3& PitchYawRoll) noexcept
 {
-    return RotationRollPitchYaw( PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z );
+    return RotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
 }
 
-inline CMatrix4 CMatrix4::RotationX( float x ) noexcept
+inline CMatrix4 CMatrix4::RotationX(float x) noexcept
 {
-    const float SinX = sinf( x );
-    const float CosX = cosf( x );
+    const float SinX = sinf(x);
+    const float CosX = cosf(x);
 
     return CMatrix4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, CosX, SinX, 0.0f,
         0.0f, -SinX, CosX, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f );
+        0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-inline CMatrix4 CMatrix4::RotationY( float y ) noexcept
+inline CMatrix4 CMatrix4::RotationY(float y) noexcept
 {
-    const float SinY = sinf( y );
-    const float CosY = cosf( y );
+    const float SinY = sinf(y);
+    const float CosY = cosf(y);
 
     return CMatrix4(
         CosY, 0.0f, -SinY, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         SinY, 0.0f, CosY, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f );
+        0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-inline CMatrix4 CMatrix4::RotationZ( float z ) noexcept
+inline CMatrix4 CMatrix4::RotationZ(float z) noexcept
 {
-    const float SinZ = sinf( z );
-    const float CosZ = cosf( z );
+    const float SinZ = sinf(z);
+    const float CosZ = cosf(z);
 
     return CMatrix4(
         CosZ, SinZ, 0.0f, 0.0f,
         -SinZ, CosZ, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f );
+        0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-inline CMatrix4 CMatrix4::OrtographicProjection( float Width, float Height, float NearZ, float FarZ ) noexcept
+inline CMatrix4 CMatrix4::OrtographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
 {
     return CMatrix4(
         2.0f / Width, 0.0f, 0.0f, 0.0f,
         0.0f, 2.0f / Height, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f / (FarZ - NearZ), 0.0f,
-        0.0f, 0.0f, -NearZ / (FarZ - NearZ), 1.0f );
+        0.0f, 0.0f, -NearZ / (FarZ - NearZ), 1.0f);
 }
 
-inline CMatrix4 CMatrix4::OrtographicProjection( float Left, float Right, float Bottom, float Top, float NearZ, float FarZ ) noexcept
+inline CMatrix4 CMatrix4::OrtographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept
 {
     const float InvWidth = 1.0f / (Right - Left);
     const float InvHeight = 1.0f / (Top - Bottom);
@@ -1613,17 +1613,17 @@ inline CMatrix4 CMatrix4::OrtographicProjection( float Left, float Right, float 
         InvWidth + InvWidth, 0.0f, 0.0f, 0.0f,
         0.0f, InvHeight + InvHeight, 0.0f, 0.0f,
         0.0f, 0.0f, Range, 0.0f,
-        -(Left + Right) * InvWidth, -(Top + Bottom) * InvHeight, -Range * NearZ, 1.0f );
+        -(Left + Right) * InvWidth, -(Top + Bottom) * InvHeight, -Range * NearZ, 1.0f);
 }
 
-inline CMatrix4 CMatrix4::PerspectiveProjection( float Fov, float AspectRatio, float NearZ, float FarZ ) noexcept
+inline CMatrix4 CMatrix4::PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
 {
-    if ( Fov < NMath::ONE_DEGREE_F || Fov >( NMath::PI_F - NMath::ONE_DEGREE_F ) )
+    if (Fov < NMath::ONE_DEGREE_F || Fov >(NMath::PI_F - NMath::ONE_DEGREE_F))
     {
         return CMatrix4();
     }
 
-    const float ScaleY = 1.0f / tanf( Fov * 0.5f );
+    const float ScaleY = 1.0f / tanf(Fov * 0.5f);
     const float ScaleX = ScaleY / AspectRatio;
     const float Range = FarZ / (FarZ - NearZ);
 
@@ -1631,37 +1631,37 @@ inline CMatrix4 CMatrix4::PerspectiveProjection( float Fov, float AspectRatio, f
         ScaleX, 0.0f, 0.0f, 0.0f,
         0.0f, ScaleY, 0.0f, 0.0f,
         0.0f, 0.0f, Range, 1.0f,
-        0.0f, 0.0f, -Range * NearZ, 0.0f );
+        0.0f, 0.0f, -Range * NearZ, 0.0f);
 }
 
-inline CMatrix4 CMatrix4::PerspectiveProjection( float Fov, float Width, float Height, float NearZ, float FarZ ) noexcept
+inline CMatrix4 CMatrix4::PerspectiveProjection(float Fov, float Width, float Height, float NearZ, float FarZ) noexcept
 {
     const float AspectRatio = Width / Height;
-    return PerspectiveProjection( Fov, AspectRatio, NearZ, FarZ );
+    return PerspectiveProjection(Fov, AspectRatio, NearZ, FarZ);
 }
 
-inline CMatrix4 CMatrix4::LookAt( const CVector3& Eye, const CVector3& At, const CVector3& Up ) noexcept
+inline CMatrix4 CMatrix4::LookAt(const CVector3& Eye, const CVector3& At, const CVector3& Up) noexcept
 {
     const CVector3 Direction = At - Eye;
-    return LookTo( Eye, Direction, Up );
+    return LookTo(Eye, Direction, Up);
 }
 
-inline CMatrix4 CMatrix4::LookTo( const CVector3& Eye, const CVector3& Direction, const CVector3& Up ) noexcept
+inline CMatrix4 CMatrix4::LookTo(const CVector3& Eye, const CVector3& Direction, const CVector3& Up) noexcept
 {
     CVector3 e2 = Direction.GetNormalized();
-    CVector3 e0 = Up.CrossProduct( e2 ).GetNormalized();
-    CVector3 e1 = e2.CrossProduct( e0 ).GetNormalized();
+    CVector3 e0 = Up.CrossProduct(e2).GetNormalized();
+    CVector3 e1 = e2.CrossProduct(e0).GetNormalized();
 
     CVector3 NegEye = -Eye;
 
-    const float m30 = NegEye.DotProduct( e0 );
-    const float m31 = NegEye.DotProduct( e1 );
-    const float m32 = NegEye.DotProduct( e2 );
+    const float m30 = NegEye.DotProduct(e0);
+    const float m31 = NegEye.DotProduct(e1);
+    const float m32 = NegEye.DotProduct(e2);
 
     CMatrix4 Result(
-        CVector4( e0, m30 ),
-        CVector4( e1, m31 ),
-        CVector4( e2, m32 ),
-        CVector4( 0.0f, 0.0f, 0.0f, 1.0f ) );
+        CVector4(e0, m30),
+        CVector4(e1, m31),
+        CVector4(e2, m32),
+        CVector4(0.0f, 0.0f, 0.0f, 1.0f));
     return Result.Transpose();
 }

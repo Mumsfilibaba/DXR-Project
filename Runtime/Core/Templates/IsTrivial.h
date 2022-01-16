@@ -10,7 +10,7 @@ struct TIsTriviallyCopyable
 {
     enum
     {
-        Value = __is_trivially_copyable( T )
+        Value = __is_trivially_copyable(T)
     };
 };
 
@@ -23,7 +23,7 @@ struct TIsTriviallyConstructable
 {
     enum
     {
-        Value = __is_trivially_constructible( T, ArgTypes... )
+        Value = __is_trivially_constructible(T, ArgTypes...)
     };
 };
 
@@ -36,7 +36,7 @@ struct TIsTriviallyDestructable
 {
     enum
     {
-        Value = __is_trivially_destructible( T )
+        Value = __is_trivially_destructible(T)
     };
 };
 

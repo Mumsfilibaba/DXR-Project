@@ -21,45 +21,45 @@ public:
 
     /* Default construct an empty view */
     FORCEINLINE TArrayView() noexcept
-        : View( nullptr )
-        , ViewSize( 0 )
+        : View(nullptr)
+        , ViewSize(0)
     {
     }
 
     /* Create a view from a templated array type */
     template<typename ArrayType, typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
-    FORCEINLINE explicit TArrayView( ArrayType& InArray ) noexcept
-        : View( InArray.Data() )
-        , ViewSize( InArray.Size() )
+    FORCEINLINE explicit TArrayView(ArrayType& InArray) noexcept
+        : View(InArray.Data())
+        , ViewSize(InArray.Size())
     {
     }
 
     /* Create a view from a bounded array */
     template<SizeType N>
-    FORCEINLINE explicit TArrayView( ElementType( &InArray )[N] ) noexcept
-        : View( InArray )
-        , ViewSize( N )
+    FORCEINLINE explicit TArrayView(ElementType(&InArray)[N]) noexcept
+        : View(InArray)
+        , ViewSize(N)
     {
     }
 
     /* Create a view from a pointer and count */
-    FORCEINLINE explicit TArrayView( ElementType* InArray, SizeType Count ) noexcept
-        : View( InArray )
-        , ViewSize( Count )
+    FORCEINLINE explicit TArrayView(ElementType* InArray, SizeType Count) noexcept
+        : View(InArray)
+        , ViewSize(Count)
     {
     }
 
     /* Create a view from another view */
-    FORCEINLINE TArrayView( const TArrayView& Other ) noexcept
-        : View( Other.View )
-        , ViewSize( Other.ViewSize )
+    FORCEINLINE TArrayView(const TArrayView& Other) noexcept
+        : View(Other.View)
+        , ViewSize(Other.ViewSize)
     {
     }
 
     /* Move anther view into this one */
-    FORCEINLINE TArrayView( TArrayView&& Other ) noexcept
-        : View( Other.View )
-        , ViewSize( Other.ViewSize )
+    FORCEINLINE TArrayView(TArrayView&& Other) noexcept
+        : View(Other.View)
+        , ViewSize(Other.ViewSize)
     {
         Other.View = nullptr;
         Other.ViewSize = 0;
@@ -74,57 +74,57 @@ public:
     /* Retrieve the first element */
     FORCEINLINE ElementType& FirstElement() noexcept
     {
-        Assert( IsEmpty() );
+        Assert(IsEmpty());
         return Data()[0];
     }
 
     /* Retrieve the first element */
     FORCEINLINE const ElementType& FirstElement() const noexcept
     {
-        Assert( IsEmpty() );
+        Assert(IsEmpty());
         return Data()[0];
     }
 
     /* Retrieve the last element */
     FORCEINLINE ElementType& LastElement() noexcept
     {
-        Assert( IsEmpty() );
+        Assert(IsEmpty());
         return Data()[ViewSize - 1];
     }
 
     /* Retrieve the last element */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
-        Assert( IsEmpty() );
+        Assert(IsEmpty());
         return Data()[ViewSize - 1];
     }
 
     /* Retrieve an element at a certain position */
-    FORCEINLINE ElementType& At( SizeType Index ) noexcept
+    FORCEINLINE ElementType& At(SizeType Index) noexcept
     {
-        Assert( Index < ViewSize );
+        Assert(Index < ViewSize);
         return Data()[Index];
     }
 
     /* Retrieve an element at a certain position */
-    FORCEINLINE const ElementType& At( SizeType Index ) const noexcept
+    FORCEINLINE const ElementType& At(SizeType Index) const noexcept
     {
-        Assert( Index < ViewSize );
+        Assert(Index < ViewSize);
         return Data()[Index];
     }
 
     /* Swap two views */
-    FORCEINLINE void Swap( TArrayView& Other ) noexcept
+    FORCEINLINE void Swap(TArrayView& Other) noexcept
     {
-        TArrayView Temp( Move( *this ) );
-        *this = Move( Other );
-        Other = Move( Temp );
+        TArrayView Temp(Move(*this));
+        *this = Move(Other);
+        Other = Move(Temp);
     }
 
     /* Fills the container with the specified value */
-    FORCEINLINE void Fill( const ElementType& InputElement ) noexcept
+    FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        for ( ElementType& Element : *this )
+        for (ElementType& Element : *this)
         {
             Element = InputElement;
         }
@@ -145,7 +145,7 @@ public:
     /* Retrieve the size of the view in bytes */
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
-        return Size() * sizeof( ElementType );
+        return Size() * sizeof(ElementType);
     }
 
     /* Retrieve the data of the view */
@@ -161,45 +161,45 @@ public:
     }
 
     /* Create a subview */
-    FORCEINLINE TArrayView SubView( SizeType Offset, SizeType Count ) const noexcept
+    FORCEINLINE TArrayView SubView(SizeType Offset, SizeType Count) const noexcept
     {
-        Assert( (Count < ViewSize) && (Offset + Count < ViewSize) );
-        return TArrayView( View + Offset, Count );
+        Assert((Count < ViewSize) && (Offset + Count < ViewSize));
+        return TArrayView(View + Offset, Count);
     }
 
     /* Compares two containers by comparing each element, returns true if all is equal */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==( const ArrayType& Other ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& Other) const noexcept
     {
-        if ( Size() != Other.Size() )
+        if (Size() != Other.Size())
         {
             return false;
         }
 
-        return CompareRange<ElementType>( Data(), Other.Data(), Size() );
+        return CompareRange<ElementType>(Data(), Other.Data(), Size());
     }
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=( const ArrayType& Other ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& Other) const noexcept
     {
         return !(*this == Other);
     }
 
     /* Retrieve an element at a certain position */
-    FORCEINLINE ElementType& operator[]( SizeType Index ) noexcept
+    FORCEINLINE ElementType& operator[](SizeType Index) noexcept
     {
-        return At( Index );
+        return At(Index);
     }
 
     /* Retrieve an element at a certain position */
-    FORCEINLINE const ElementType& operator[]( SizeType Index ) const noexcept
+    FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
     {
-        return At( Index );
+        return At(Index);
     }
 
     /* Assign from another view */
-    FORCEINLINE TArrayView& operator=( const TArrayView& Other ) noexcept
+    FORCEINLINE TArrayView& operator=(const TArrayView& Other) noexcept
     {
         View = Other.View;
         ViewSize = Other.ViewSize;
@@ -207,9 +207,9 @@ public:
     }
 
     /* Move-assign from another view */
-    FORCEINLINE TArrayView& operator=( TArrayView&& Other ) noexcept
+    FORCEINLINE TArrayView& operator=(TArrayView&& Other) noexcept
     {
-        if ( this != &Other )
+        if (this != &Other)
         {
             View = Other.View;
             ViewSize = Other.ViewSize;
@@ -225,49 +225,49 @@ public:
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
-        return IteratorType( *this, 0 );
+        return IteratorType(*this, 0);
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType( *this, Size() );
+        return IteratorType(*this, Size());
     }
 
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
-        return ConstIteratorType( *this, 0 );
+        return ConstIteratorType(*this, 0);
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType( *this, Size() );
+        return ConstIteratorType(*this, Size());
     }
 
     /* Returns an reverse iterator to the end of the container */
     FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType( *this, Size() );
+        return ReverseIteratorType(*this, Size());
     }
 
     /* Returns an reverse iterator to the beginning of the container */
     FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
-        return ReverseIteratorType( *this, 0 );
+        return ReverseIteratorType(*this, 0);
     }
 
     /* Returns an reverse iterator to the end of the container */
     FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType( *this, Size() );
+        return ReverseConstIteratorType(*this, Size());
     }
 
     /* Returns an reverse iterator to the beginning of the container */
     FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
-        return ReverseConstIteratorType( *this, 0 );
+        return ReverseConstIteratorType(*this, 0);
     }
 
 public:

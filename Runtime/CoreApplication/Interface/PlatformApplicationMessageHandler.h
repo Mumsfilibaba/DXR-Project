@@ -22,35 +22,35 @@ public:
 
     virtual ~CPlatformApplicationMessageHandler() = default;
 
-    virtual void HandleKeyReleased( EKey KeyCode, SModifierKeyState ModierKeyState ) {}
+    virtual void HandleKeyReleased(EKey KeyCode, SModifierKeyState ModierKeyState) { }
 
-    virtual void HandleKeyPressed( EKey KeyCode, bool bIsRepeat, SModifierKeyState ModierKeyState ) {}
+    virtual void HandleKeyPressed(EKey KeyCode, bool bIsRepeat, SModifierKeyState ModierKeyState) { }
 
-    virtual void HandleKeyTyped( uint32 Character ) {}
+    virtual void HandleKeyTyped(uint32 Character) { }
 
-    virtual void HandleMouseMove( int32 x, int32 y ) {}
+    virtual void HandleMouseMove(int32 x, int32 y) { }
 
-    virtual void HandleMouseReleased( EMouseButton Button, SModifierKeyState ModierKeyState ) {}
+    virtual void HandleMouseReleased(EMouseButton Button, SModifierKeyState ModierKeyState) { }
 
-    virtual void HandleMousePressed( EMouseButton Button, SModifierKeyState ModierKeyState ) {}
+    virtual void HandleMousePressed(EMouseButton Button, SModifierKeyState ModierKeyState) { }
 
-    virtual void HandleMouseScrolled( float HorizontalDelta, float VerticalDelta ) {}
+    virtual void HandleMouseScrolled(float HorizontalDelta, float VerticalDelta) { }
 
-    virtual void HandleRawMouseInput( const TSharedRef<CPlatformWindow>& Window, int32 x, uint32 y ) {}
+    virtual void HandleRawMouseInput(const TSharedRef<CPlatformWindow>& Window, int32 x, uint32 y) { }
 
-    virtual void HandleWindowResized( const TSharedRef<CPlatformWindow>& Window, uint32 Width, uint32 Height ) {}
+    virtual void HandleWindowResized(const TSharedRef<CPlatformWindow>& Window, uint32 Width, uint32 Height) { }
 
-    virtual void HandleWindowMoved( const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y ) {}
+    virtual void HandleWindowMoved(const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y) { }
 
-    virtual void HandleWindowFocusChanged( const TSharedRef<CPlatformWindow>& Window, bool bHasFocus ) {}
+    virtual void HandleWindowFocusChanged(const TSharedRef<CPlatformWindow>& Window, bool bHasFocus) { }
 
-    virtual void HandleWindowMouseLeft( const TSharedRef<CPlatformWindow>& Window ) {}
+    virtual void HandleWindowMouseLeft(const TSharedRef<CPlatformWindow>& Window) { }
 
-    virtual void HandleWindowMouseEntered( const TSharedRef<CPlatformWindow>& Window ) {}
+    virtual void HandleWindowMouseEntered(const TSharedRef<CPlatformWindow>& Window) { }
 
-    virtual void HandleWindowClosed( const TSharedRef<CPlatformWindow>& Window ) {}
+    virtual void HandleWindowClosed(const TSharedRef<CPlatformWindow>& Window) { }
 
-    virtual void HandleApplicationExit( int32 ExitCode ) {}
+    virtual void HandleApplicationExit(int32 ExitCode) { }
 };
 
 #if defined(COMPILER_MSVC)

@@ -31,37 +31,37 @@ public:
     /* Init the console */
     static void Initialize();
 
-	/* Retreive the console manager */
+    /* Retreive the console manager */
     static FORCEINLINE CConsoleManager& Get() { return Instance; }
 
     /* Register a console command */
-    void RegisterCommand( const CString& Name, IConsoleCommand* Object );
+    void RegisterCommand(const CString& Name, IConsoleCommand* Object);
 
     /* Register a console variable */
-    void RegisterVariable( const CString& Name, IConsoleVariable* Variable );
+    void RegisterVariable(const CString& Name, IConsoleVariable* Variable);
 
     /* Finds a console-command, returns nullptr otherwise, including if the object is a variable */
-    IConsoleCommand* FindCommand( const CString& Name );
+    IConsoleCommand* FindCommand(const CString& Name);
 
     /* Finds a console-variable, returns nullptr otherwise, including if the object is a command */
-    IConsoleVariable* FindVariable( const CString& Name );
+    IConsoleVariable* FindVariable(const CString& Name);
 
     /* Retrieve all ConsoleObjects that fits the name of the specified string */
-    void FindCandidates( const CStringView& CandidateName, TArray<TPair<IConsoleObject*, CString>>& OutCandidates );
+    void FindCandidates(const CStringView& CandidateName, TArray<TPair<IConsoleObject*, CString>>& OutCandidates);
 
     /* Print messages with different severity */
-    void PrintMessage( const CString& Message, EConsoleSeverity Severity );
+    void PrintMessage(const CString& Message, EConsoleSeverity Severity);
 
     /* Clears the console history */
     void ClearHistory();
 
     /* Execute a string from the console */
-    void Execute( const CString& CmdString );
+    void Execute(const CString& CmdString);
 
     /* Get all the messages printed to the console */
     FORCEINLINE const TArray<TPair<CString, EConsoleSeverity>>& GetMessages() const { return ConsoleMessages; }
 
-	/* Get all the history that has been written to the console */
+    /* Get all the history that has been written to the console */
     FORCEINLINE const TArray<CString>& GetHistory() const { return History; }
 
 private:
@@ -70,10 +70,10 @@ private:
     ~CConsoleManager() = default;
 
     /* Registers a new console object */
-    bool RegisterObject( const CString& Name, IConsoleObject* Variable );
+    bool RegisterObject(const CString& Name, IConsoleObject* Variable);
 
     /* Returns a console object if the it exists, otherwise it returns nullptr */
-    IConsoleObject* FindConsoleObject( const CString& Name );
+    IConsoleObject* FindConsoleObject(const CString& Name);
 
     /* All console objects */
     THashTable<CString, IConsoleObject*, SStringHasher> ConsoleObjects;

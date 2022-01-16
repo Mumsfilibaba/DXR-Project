@@ -3,7 +3,7 @@
 
 #include "Core/Delegates/MulticastDelegate.h"
 
-DECLARE_MULTICAST_DELEGATE( CExecutedDelegate );
+DECLARE_MULTICAST_DELEGATE(CExecutedDelegate);
 
 class IConsoleCommand : public IConsoleObject
 {

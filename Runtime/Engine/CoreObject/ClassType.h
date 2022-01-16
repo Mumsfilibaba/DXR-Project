@@ -18,15 +18,15 @@ class ENGINE_API CClassType
 {
 public:
 
-    CClassType( const CClassType* InSuperClass, const SClassDescription& ClassDescription );
+    CClassType(const CClassType* InSuperClass, const SClassDescription& ClassDescription);
     ~CClassType() = default;
 
-    bool IsSubClassOf( const CClassType* Class ) const;
+    bool IsSubClassOf(const CClassType* Class) const;
 
     template<typename T>
     FORCEINLINE bool IsSubClassOf() const
     {
-        return IsSubClassOf( T::GetStaticClass() );
+        return IsSubClassOf(T::GetStaticClass());
     }
 
     FORCEINLINE const char* GetName() const

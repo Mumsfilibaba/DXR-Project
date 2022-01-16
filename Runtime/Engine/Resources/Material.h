@@ -8,7 +8,7 @@
 
 struct SMaterialDesc
 {
-    CVector3 Albedo = CVector3( 1.0f );
+    CVector3 Albedo = CVector3(1.0f);
     float Roughness = 0.0f;
 
     float Metallic = 0.0f;
@@ -20,28 +20,28 @@ struct SMaterialDesc
 class ENGINE_API CMaterial
 {
 public:
-    CMaterial( const SMaterialDesc& InProperties );
+    CMaterial(const SMaterialDesc& InProperties);
     ~CMaterial() = default;
 
     void Init();
 
-    void BuildBuffer( class CRHICommandList& CmdList );
+    void BuildBuffer(class CRHICommandList& CmdList);
 
     FORCEINLINE bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
 
-    void SetAlbedo( const CVector3& Albedo );
-    void SetAlbedo( float r, float g, float b );
+    void SetAlbedo(const CVector3& Albedo);
+    void SetAlbedo(float r, float g, float b);
 
-    void SetMetallic( float Metallic );
-    void SetRoughness( float Roughness );
-    void SetAmbientOcclusion( float AO );
+    void SetMetallic(float Metallic);
+    void SetRoughness(float Roughness);
+    void SetAmbientOcclusion(float AO);
 
-    void ForceForwardPass( bool bForceForwardRender );
+    void ForceForwardPass(bool bForceForwardRender);
 
-    void EnableHeightMap( bool bInEnableHeightMap );
-    void EnableAlphaMask( bool bInEnableAlphaMask );
+    void EnableHeightMap(bool bInEnableHeightMap);
+    void EnableAlphaMask(bool bInEnableAlphaMask);
 
-    void SetDebugName( const CString& InDebugName );
+    void SetDebugName(const CString& InDebugName);
 
     // ShaderResourceView are sorted in the way that the deferred rendering pass wants them
     // This means that one can call BindShaderResourceViews directly with this function

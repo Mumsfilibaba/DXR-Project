@@ -28,7 +28,7 @@ public:
     FORCEINLINE explicit CMatrix3x4(
         float In00, float In01, float In02, float In03,
         float In10, float In11, float In12, float In13,
-        float In20, float In21, float In22, float In23 ) noexcept;
+        float In20, float In21, float In22, float In23) noexcept;
 
 public:
     union
@@ -47,18 +47,18 @@ public:
 };
 
 FORCEINLINE CMatrix3x4::CMatrix3x4() noexcept
-    : m00( 0.0f ), m01( 0.0f ), m02( 0.0f ), m03( 0.0f )
-    , m10( 0.0f ), m11( 0.0f ), m12( 0.0f ), m13( 0.0f )
-    , m20( 0.0f ), m21( 0.0f ), m22( 0.0f ), m23( 0.0f )
+    : m00(0.0f), m01(0.0f), m02(0.0f), m03(0.0f)
+    , m10(0.0f), m11(0.0f), m12(0.0f), m13(0.0f)
+    , m20(0.0f), m21(0.0f), m22(0.0f), m23(0.0f)
 {
 }
 
 FORCEINLINE CMatrix3x4::CMatrix3x4(
     float m00, float m01, float m02, float m03,
     float m10, float m11, float m12, float m13,
-    float m20, float m21, float m22, float m23 ) noexcept
-    : m00( m00 ), m01( m01 ), m02( m02 ), m03( m03 )
-    , m10( m10 ), m11( m11 ), m12( m12 ), m13( m13 )
-    , m20( m20 ), m21( m21 ), m22( m22 ), m23( m23 )
+    float m20, float m21, float m22, float m23) noexcept
+    : m00(m00), m01(m01), m02(m02), m03(m03)
+    , m10(m10), m11(m11), m12(m12), m13(m13)
+    , m20(m20), m21(m21), m22(m22), m23(m23)
 {
 }

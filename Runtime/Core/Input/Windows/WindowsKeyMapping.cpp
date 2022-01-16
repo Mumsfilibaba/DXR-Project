@@ -8,8 +8,8 @@ uint16 CWindowsKeyMapping::ScanCodeFromKeyCodeTable[NumKeys];
 
 void CWindowsKeyMapping::Initialize()
 {
-    CMemory::Memzero( KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable) );
-    CMemory::Memzero( ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable) );
+    CMemory::Memzero(KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable));
+    CMemory::Memzero(ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable));
 
     KeyCodeFromScanCodeTable[0x00B] = EKey::Key_0;
     KeyCodeFromScanCodeTable[0x002] = EKey::Key_1;
@@ -134,9 +134,9 @@ void CWindowsKeyMapping::Initialize()
     KeyCodeFromScanCodeTable[0x137] = EKey::Key_PrintScreen;
     KeyCodeFromScanCodeTable[0x146] = EKey::Key_Pause;
 
-    for ( uint16 Index = 0; Index < NumKeys; Index++ )
+    for (uint16 Index = 0; Index < NumKeys; Index++)
     {
-        if ( KeyCodeFromScanCodeTable[Index] != EKey::Key_Unknown )
+        if (KeyCodeFromScanCodeTable[Index] != EKey::Key_Unknown)
         {
             ScanCodeFromKeyCodeTable[KeyCodeFromScanCodeTable[Index]] = Index;
         }

@@ -3,7 +3,7 @@
 #include "NullRHIShaderCompiler.h"
 
 
-IMPLEMENT_ENGINE_MODULE( CNullRHIModule, NullRHI );
+IMPLEMENT_ENGINE_MODULE(CNullRHIModule, NullRHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 

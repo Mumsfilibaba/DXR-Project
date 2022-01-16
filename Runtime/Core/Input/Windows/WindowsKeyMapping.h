@@ -9,7 +9,7 @@
 /* Class that maps key-code from scan-codes and the reverse */
 class CORE_API CWindowsKeyMapping : public CPlatformKeyMapping
 {
-    enum 
+    enum
     {
         NumKeys = 512
     };
@@ -20,13 +20,13 @@ public:
     static void Initialize();
 
     /* Retrieve the key-code from the scan-code */
-    static FORCEINLINE EKey GetKeyCodeFromScanCode( uint32 ScanCode )
+    static FORCEINLINE EKey GetKeyCodeFromScanCode(uint32 ScanCode)
     {
         return KeyCodeFromScanCodeTable[ScanCode];
     }
 
     /* Retrieve the scan-code from the key-code */
-    static FORCEINLINE uint32 GetScanCodeFromKeyCode( EKey KeyCode )
+    static FORCEINLINE uint32 GetScanCodeFromKeyCode(EKey KeyCode)
     {
         return static_cast<uint32>(ScanCodeFromKeyCodeTable[KeyCode]);
     }

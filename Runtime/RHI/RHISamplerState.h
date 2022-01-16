@@ -13,16 +13,16 @@ enum class ESamplerMode : uint8
     MirrorOnce = 5,
 };
 
-inline const char* ToString( ESamplerMode SamplerMode )
+inline const char* ToString(ESamplerMode SamplerMode)
 {
-    switch ( SamplerMode )
+    switch (SamplerMode)
     {
-        case ESamplerMode::Wrap:       return "Wrap";
-        case ESamplerMode::Mirror:     return "Mirror";
-        case ESamplerMode::Clamp:      return "Clamp";
-        case ESamplerMode::Border:     return "Border";
-        case ESamplerMode::MirrorOnce: return "MirrorOnce";
-        default: return "Unknown";
+    case ESamplerMode::Wrap:       return "Wrap";
+    case ESamplerMode::Mirror:     return "Mirror";
+    case ESamplerMode::Clamp:      return "Clamp";
+    case ESamplerMode::Border:     return "Border";
+    case ESamplerMode::MirrorOnce: return "MirrorOnce";
+    default: return "Unknown";
     }
 }
 
@@ -49,29 +49,29 @@ enum class ESamplerFilter : uint8
     Comparison_Anistrotopic = 18,
 };
 
-inline const char* ToString( ESamplerFilter SamplerFilter )
+inline const char* ToString(ESamplerFilter SamplerFilter)
 {
-    switch ( SamplerFilter )
+    switch (SamplerFilter)
     {
-        case ESamplerFilter::MinMagMipPoint:                          return "MinMagMipPoint";
-        case ESamplerFilter::MinMagPoint_MipLinear:                   return "MinMagPoint_MipLinear";
-        case ESamplerFilter::MinPoint_MagLinear_MipPoint:             return "MinPoint_MagLinear_MipPoint";
-        case ESamplerFilter::MinPoint_MagMipLinear:                   return "MinPoint_MagMipLinear";
-        case ESamplerFilter::MinLinear_MagMipPoint:                   return "MinLinear_MagMipPoint";
-        case ESamplerFilter::MinLinear_MagPoint_MipLinear:            return "MinLinear_MagPoint_MipLinear";
-        case ESamplerFilter::MinMagLinear_MipPoint:                   return "MinMagLinear_MipPoint";
-        case ESamplerFilter::MinMagMipLinear:                         return "MinMagMipLinear";
-        case ESamplerFilter::Anistrotopic:                            return "Anistrotopic";
-        case ESamplerFilter::Comparison_MinMagMipPoint:               return "Comparison_MinMagMipPoint";
-        case ESamplerFilter::Comparison_MinMagPoint_MipLinear:        return "Comparison_MinMagPoint_MipLinear";
-        case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:  return "Comparison_MinPoint_MagLinear_MipPoint";
-        case ESamplerFilter::Comparison_MinPoint_MagMipLinear:        return "Comparison_MinPoint_MagMipLinear";
-        case ESamplerFilter::Comparison_MinLinear_MagMipPoint:        return "Comparison_MinLinear_MagMipPoint";
-        case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear: return "Comparison_MinLinear_MagPoint_MipLinear";
-        case ESamplerFilter::Comparison_MinMagLinear_MipPoint:        return "Comparison_MinMagLinear_MipPoint";
-        case ESamplerFilter::Comparison_MinMagMipLinear:              return "Comparison_MinMagMipLinear";
-        case ESamplerFilter::Comparison_Anistrotopic:                 return "Comparison_Anistrotopic";
-        default: return "Unknown";
+    case ESamplerFilter::MinMagMipPoint:                          return "MinMagMipPoint";
+    case ESamplerFilter::MinMagPoint_MipLinear:                   return "MinMagPoint_MipLinear";
+    case ESamplerFilter::MinPoint_MagLinear_MipPoint:             return "MinPoint_MagLinear_MipPoint";
+    case ESamplerFilter::MinPoint_MagMipLinear:                   return "MinPoint_MagMipLinear";
+    case ESamplerFilter::MinLinear_MagMipPoint:                   return "MinLinear_MagMipPoint";
+    case ESamplerFilter::MinLinear_MagPoint_MipLinear:            return "MinLinear_MagPoint_MipLinear";
+    case ESamplerFilter::MinMagLinear_MipPoint:                   return "MinMagLinear_MipPoint";
+    case ESamplerFilter::MinMagMipLinear:                         return "MinMagMipLinear";
+    case ESamplerFilter::Anistrotopic:                            return "Anistrotopic";
+    case ESamplerFilter::Comparison_MinMagMipPoint:               return "Comparison_MinMagMipPoint";
+    case ESamplerFilter::Comparison_MinMagPoint_MipLinear:        return "Comparison_MinMagPoint_MipLinear";
+    case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:  return "Comparison_MinPoint_MagLinear_MipPoint";
+    case ESamplerFilter::Comparison_MinPoint_MagMipLinear:        return "Comparison_MinPoint_MagMipLinear";
+    case ESamplerFilter::Comparison_MinLinear_MagMipPoint:        return "Comparison_MinLinear_MagMipPoint";
+    case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear: return "Comparison_MinLinear_MagPoint_MipLinear";
+    case ESamplerFilter::Comparison_MinMagLinear_MipPoint:        return "Comparison_MinMagLinear_MipPoint";
+    case ESamplerFilter::Comparison_MinMagMipLinear:              return "Comparison_MinMagMipLinear";
+    case ESamplerFilter::Comparison_Anistrotopic:                 return "Comparison_Anistrotopic";
+    default: return "Unknown";
     }
 }
 

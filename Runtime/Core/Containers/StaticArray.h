@@ -51,34 +51,34 @@ public:
     }
 
     /* Retrieve the element at a certain position */
-    FORCEINLINE ElementType& At( SizeType Index ) noexcept
+    FORCEINLINE ElementType& At(SizeType Index) noexcept
     {
-        Assert( Index < NumElements );
+        Assert(Index < NumElements);
         return Elements[Index];
     }
 
     /* Retrieve the element at a certain position */
-    FORCEINLINE const ElementType& At( SizeType Index ) const noexcept
+    FORCEINLINE const ElementType& At(SizeType Index) const noexcept
     {
-        Assert( Index < NumElements );
+        Assert(Index < NumElements);
         return Elements[Index];
     }
 
     /* Fills the container with the specified value */
-    FORCEINLINE void Fill( const ElementType& InputElement ) noexcept
+    FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        for ( ElementType& Element : *this )
+        for (ElementType& Element : *this)
         {
             Element = InputElement;
         }
     }
 
     /* Swaps this array with another */
-    FORCEINLINE void Swap( TStaticArray& Other ) noexcept
+    FORCEINLINE void Swap(TStaticArray& Other) noexcept
     {
-        TStaticArray TempArray( Move( *this ) );
-        *this = Move( Other );
-        Other = Move( TempArray );
+        TStaticArray TempArray(Move(*this));
+        *this = Move(Other);
+        Other = Move(TempArray);
     }
 
     /* Retrieve the data of the array */
@@ -94,32 +94,32 @@ public:
     }
 
     /* Retrieve the element at a certain position */
-    FORCEINLINE ElementType& operator[]( SizeType Index ) noexcept
+    FORCEINLINE ElementType& operator[](SizeType Index) noexcept
     {
-        return At( Index );
+        return At(Index);
     }
 
     /* Retrieve the element at a certain position */
-    FORCEINLINE const ElementType& operator[]( SizeType Index ) const noexcept
+    FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
     {
-        return At( Index );
+        return At(Index);
     }
 
     /* Compares two containers by comparing each element, returns true if all is equal */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==( const ArrayType& Other ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& Other) const noexcept
     {
-        if ( Size() != Other.Size() )
+        if (Size() != Other.Size())
         {
             return false;
         }
 
-        return CompareRange<ElementType>( Data(), Other.Data(), Size() );
+        return CompareRange<ElementType>(Data(), Other.Data(), Size());
     }
 
     /* Compares two containers by comparing each element, returns false if all elements are equal */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=( const ArrayType& Other ) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& Other) const noexcept
     {
         return !(*this == Other);
     }
@@ -141,7 +141,7 @@ public:
     /* Retrieve the size of the array in bytes */
     constexpr SizeType SizeInBytes() const noexcept
     {
-        return Size() * sizeof( ElementType );
+        return Size() * sizeof(ElementType);
     }
 
     /* Returns the capacity of the container */
@@ -153,7 +153,7 @@ public:
     /* Returns the capacity of the container in bytes */
     constexpr SizeType CapacityInBytes() const noexcept
     {
-        return Capacity() * sizeof( ElementType );
+        return Capacity() * sizeof(ElementType);
     }
 
 public:
@@ -161,49 +161,49 @@ public:
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
-        return IteratorType( *this, 0 );
+        return IteratorType(*this, 0);
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
-        return IteratorType( *this, Size() );
+        return IteratorType(*this, Size());
     }
 
     /* Returns an iterator to the beginning of the container */
     FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
-        return ConstIteratorType( *this, 0 );
+        return ConstIteratorType(*this, 0);
     }
 
     /* Returns an iterator to the end of the container */
     FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
-        return ConstIteratorType( *this, Size() );
+        return ConstIteratorType(*this, Size());
     }
 
     /* Returns an reverse iterator to the end of the container */
     FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
-        return ReverseIteratorType( *this, Size() );
+        return ReverseIteratorType(*this, Size());
     }
 
     /* Returns an reverse iterator to the beginning of the container */
     FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
-        return ReverseIteratorType( *this, 0 );
+        return ReverseIteratorType(*this, 0);
     }
 
     /* Returns an reverse iterator to the end of the container */
     FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
-        return ReverseConstIteratorType( *this, Size() );
+        return ReverseConstIteratorType(*this, Size());
     }
 
     /* Returns an reverse iterator to the beginning of the container */
     FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
-        return ReverseConstIteratorType( *this, 0 );
+        return ReverseConstIteratorType(*this, 0);
     }
 
 public:

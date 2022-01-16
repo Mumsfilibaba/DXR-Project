@@ -9,16 +9,16 @@ class CMulticastDelegateBase
 public:
 
     /* Copy constructor */
-    FORCEINLINE CMulticastDelegateBase( const CMulticastDelegateBase& Other )
-        : Delegates( Other.Delegates )
-        , LockVariable( Other.LockVariable )
+    FORCEINLINE CMulticastDelegateBase(const CMulticastDelegateBase& Other)
+        : Delegates(Other.Delegates)
+        , LockVariable(Other.LockVariable)
     {
     }
 
     /* Move constructor */
-    FORCEINLINE CMulticastDelegateBase( CMulticastDelegateBase&& Other )
-        : Delegates( Move( Other.Delegates ) )
-        , LockVariable( Other.LockVariable )
+    FORCEINLINE CMulticastDelegateBase(CMulticastDelegateBase&& Other)
+        : Delegates(Move(Other.Delegates))
+        , LockVariable(Other.LockVariable)
     {
     }
 
@@ -31,9 +31,9 @@ public:
     /* Unbind all bound delegates */
     FORCEINLINE void UnbindAll()
     {
-        if ( IsLocked() )
+        if (IsLocked())
         {
-            for ( CDelegateBase& Delegate : Delegates )
+            for (CDelegateBase& Delegate : Delegates)
             {
                 Delegate.Unbind();
             }
@@ -45,27 +45,27 @@ public:
     }
 
     /* Swap */
-    FORCEINLINE void Swap( CMulticastDelegateBase& Other )
+    FORCEINLINE void Swap(CMulticastDelegateBase& Other)
     {
-        Delegates.Swap( Other.Delegates );
+        Delegates.Swap(Other.Delegates);
     }
 
     /* Unbind a handle */
-    FORCEINLINE bool Unbind( CDelegateHandle Handle )
+    FORCEINLINE bool Unbind(CDelegateHandle Handle)
     {
-        if ( Handle.IsValid() )
+        if (Handle.IsValid())
         {
-            for ( auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++ )
+            for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
             {
-                if ( Handle == It->GetHandle() )
+                if (Handle == It->GetHandle())
                 {
-                    if ( IsLocked() )
+                    if (IsLocked())
                     {
                         It->Unbind();
                     }
                     else
                     {
-                        Delegates.RemoveAt( It );
+                        Delegates.RemoveAt(It);
                     }
 
                     return true;
@@ -77,27 +77,27 @@ public:
     }
 
     /* Remove a delegete if an object is bound to it */
-    FORCEINLINE bool UnbindIfBound( const void* Object )
+    FORCEINLINE bool UnbindIfBound(const void* Object)
     {
         bool bResult = false;
 
-        if ( Object )
+        if (Object)
         {
-            for ( int32 Index = 0; Index < Delegates.Size(); Index++ )
+            for (int32 Index = 0; Index < Delegates.Size(); Index++)
             {
                 CDelegateBase& Delegate = Delegates[Index];
 
                 const void* BoundObject = Delegate.GetBoundObject();
-                if ( BoundObject != nullptr && BoundObject == Object )
+                if (BoundObject != nullptr && BoundObject == Object)
                 {
-                    if ( IsLocked() )
+                    if (IsLocked())
                     {
                         Delegate.Unbind();
                     }
                     else
                     {
                         int32 LastIndex = Delegates.LastElementIndex();
-                        ::Swap( Delegate, Delegates[LastIndex] );
+                        ::Swap(Delegate, Delegates[LastIndex]);
                         Delegates.Pop();
                     }
 
@@ -112,10 +112,10 @@ public:
     /* Checks if a valid delegate is bound */
     FORCEINLINE bool IsBound() const
     {
-        for ( const CDelegateBase& Delegate : Delegates )
+        for (const CDelegateBase& Delegate : Delegates)
         {
             CDelegateHandle Handle = Delegate.GetHandle();
-            if ( Handle.IsValid() )
+            if (Handle.IsValid())
             {
                 return true;
             }
@@ -125,14 +125,14 @@ public:
     }
 
     /* Checks if an object is bound to any delegate */
-    FORCEINLINE bool IsObjectBound( const void* Object ) const
+    FORCEINLINE bool IsObjectBound(const void* Object) const
     {
-        if ( Object )
+        if (Object)
         {
-            for ( auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++ )
+            for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
             {
                 const void* BoundObject = It->GetBoundObject();
-                if ( BoundObject != nullptr && BoundObject != Object )
+                if (BoundObject != nullptr && BoundObject != Object)
                 {
                     return true;
                 }
@@ -149,16 +149,16 @@ public:
     }
 
     /* Copy constructor */
-    FORCEINLINE CMulticastDelegateBase& operator=( const CMulticastDelegateBase& Other )
+    FORCEINLINE CMulticastDelegateBase& operator=(const CMulticastDelegateBase& Other)
     {
-        CopyFrom( Other );
+        CopyFrom(Other);
         return *this;
     }
 
     /* Move constructor */
-    FORCEINLINE CMulticastDelegateBase& operator=( CMulticastDelegateBase&& Other )
+    FORCEINLINE CMulticastDelegateBase& operator=(CMulticastDelegateBase&& Other)
     {
-        MoveFrom( Forward<CMulticastDelegateBase>( Other ) );
+        MoveFrom(Forward<CMulticastDelegateBase>(Other));
         return *this;
     }
 
@@ -167,34 +167,34 @@ protected:
     /* Empty constructor */
     FORCEINLINE explicit CMulticastDelegateBase()
         : Delegates()
-        , LockVariable( 0 )
+        , LockVariable(0)
     {
     }
 
     /* Add a new delegate to the multicast delegate */
-    FORCEINLINE CDelegateHandle AddDelegate( const CDelegateBase& NewDelegate )
+    FORCEINLINE CDelegateHandle AddDelegate(const CDelegateBase& NewDelegate)
     {
         CDelegateHandle NewHandle = NewDelegate.GetHandle();
-        if ( !NewHandle.IsValid() )
+        if (!NewHandle.IsValid())
         {
             return NewHandle;
         }
 
         // Make sure this delegate is not bound already
-        for ( auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++ )
+        for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
         {
             CDelegateHandle Handle = It->GetHandle();
-            if ( NewHandle == Handle )
+            if (NewHandle == Handle)
             {
                 return Handle;
             }
         }
 
         /* Check if there is an opening */
-        for ( auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++ )
+        for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
         {
             CDelegateHandle Handle = It->GetHandle();
-            if ( !NewHandle.IsValid() )
+            if (!NewHandle.IsValid())
             {
                 *It = NewDelegate;
                 return Handle;
@@ -205,21 +205,21 @@ protected:
         CompactArray();
 
         /* If not pushback */
-        Delegates.Push( NewDelegate );
+        Delegates.Push(NewDelegate);
         return NewHandle;
     }
 
     /* Copy from function */
-    FORCEINLINE void CopyFrom( const CMulticastDelegateBase& Other )
+    FORCEINLINE void CopyFrom(const CMulticastDelegateBase& Other)
     {
         Delegates = Other.Delegates;
         LockVariable = Other.LockVariable;
     }
 
     /* Move from function */
-    FORCEINLINE void MoveFrom( CMulticastDelegateBase&& Other )
+    FORCEINLINE void MoveFrom(CMulticastDelegateBase&& Other)
     {
-        Delegates = Move( Other.Delegates );
+        Delegates = Move(Other.Delegates);
         LockVariable = Other.LockVariable;
         Other.LockVariable = 0;
     }
@@ -227,26 +227,26 @@ protected:
     /* Compact the array */
     FORCEINLINE void CompactArray()
     {
-        if ( !IsLocked() && !Delegates.IsEmpty() )
+        if (!IsLocked() && !Delegates.IsEmpty())
         {
             int32 Next = Delegates.LastElementIndex();
-            for ( int32 Index = Next; Index >= 0; Index-- )
+            for (int32 Index = Next; Index >= 0; Index--)
             {
                 CDelegateBase& Delegate = Delegates[Index];
 
                 CDelegateHandle DelegateHandle = Delegate.GetHandle();
-                if ( !DelegateHandle.IsValid() )
+                if (!DelegateHandle.IsValid())
                 {
                     // NOTE: It can be that we swap the same element when Index = Next
-                    ::Swap( Delegate, Delegates[Next] );
+                    ::Swap(Delegate, Delegates[Next]);
                     Next--;
                 }
             }
 
             int32 NumEmptyElements = Delegates.LastElementIndex() - Next;
-            if ( NumEmptyElements > 0 )
+            if (NumEmptyElements > 0)
             {
-                Delegates.PopRange( NumEmptyElements );
+                Delegates.PopRange(NumEmptyElements);
             }
         }
     }
@@ -260,7 +260,7 @@ protected:
     /* Unlocks the delegates */
     FORCEINLINE void Unlock() const
     {
-        Assert( LockVariable > 0 );
+        Assert(LockVariable > 0);
         LockVariable--;
     }
 

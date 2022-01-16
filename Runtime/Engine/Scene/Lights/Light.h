@@ -5,23 +5,23 @@
 
 class ENGINE_API CLight : public CCoreObject
 {
-    CORE_OBJECT( CLight, CCoreObject );
+    CORE_OBJECT(CLight, CCoreObject);
 
 public:
     CLight();
     virtual ~CLight() = default;
 
-    void SetColor( const CVector3& InColor );
-    void SetColor( float r, float g, float b );
+    void SetColor(const CVector3& InColor);
+    void SetColor(float r, float g, float b);
 
-    void SetIntensity( float InIntensity );
+    void SetIntensity(float InIntensity);
 
-    FORCEINLINE void SetShadowBias( float InShadowBias )
+    FORCEINLINE void SetShadowBias(float InShadowBias)
     {
         ShadowBias = InShadowBias;
     }
 
-    FORCEINLINE void SetMaxShadowBias( float InShadowBias )
+    FORCEINLINE void SetMaxShadowBias(float InShadowBias)
     {
         MaxShadowBias = InShadowBias;
     }

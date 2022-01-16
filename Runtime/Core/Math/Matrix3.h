@@ -13,7 +13,7 @@ public:
      *
      * @param Diagonal: Value to set on the diagonal
      */
-    FORCEINLINE explicit CMatrix3( float Diagonal ) noexcept;
+    FORCEINLINE explicit CMatrix3(float Diagonal) noexcept;
 
     /**
      * Constructor initializing all values with vectors specifying each row
@@ -22,7 +22,7 @@ public:
      * @param Row1: Vector to set the second row to
      * @param Row2: Vector to set the third row to
      */
-    FORCEINLINE explicit CMatrix3( const CVector3& Row0, const CVector3& Row1, const CVector3& Row2 ) noexcept;
+    FORCEINLINE explicit CMatrix3(const CVector3& Row0, const CVector3& Row1, const CVector3& Row2) noexcept;
 
     /**
      * Constructor initializing all values with corresponding value
@@ -40,14 +40,14 @@ public:
     FORCEINLINE explicit CMatrix3(
         float In00, float In01, float In02,
         float In10, float In11, float In12,
-        float In20, float In21, float In22 ) noexcept;
+        float In20, float In21, float In22) noexcept;
 
     /**
      * Constructor initializing all components with an array
      *
      * @param Arr: Array with at least 9 elements
      */
-    FORCEINLINE explicit CMatrix3( const float* Arr ) noexcept;
+    FORCEINLINE explicit CMatrix3(const float* Arr) noexcept;
 
     /**
      * Returns the transposed version of this matrix
@@ -104,7 +104,7 @@ public:
      * @param Other: matrix to compare against
      * @return True if equal, false if not
      */
-    inline bool IsEqual( const CMatrix3& Other, float Epsilon = NMath::IS_EQUAL_EPISILON ) const noexcept;
+    inline bool IsEqual(const CMatrix3& Other, float Epsilon = NMath::IS_EQUAL_EPISILON) const noexcept;
 
     /* Sets this matrix to an identity matrix */
     FORCEINLINE void SetIdentity() noexcept;
@@ -115,7 +115,7 @@ public:
      * @param Row: The row to retrive
      * @return A vector containing the specified row
      */
-    FORCEINLINE CVector3 GetRow( int Row ) const noexcept;
+    FORCEINLINE CVector3 GetRow(int Row) const noexcept;
 
     /**
      * Returns a column of this matrix
@@ -123,7 +123,7 @@ public:
      * @param Column: The column to retrive
      * @return A vector containing the specified column
      */
-    FORCEINLINE CVector3 GetColumn( int Column ) const noexcept;
+    FORCEINLINE CVector3 GetColumn(int Column) const noexcept;
 
     /**
      * Returns the data of this matrix as a pointer
@@ -146,7 +146,7 @@ public:
      * @param RHS: The vector to transform
      * @return A vector containing the transformation
      */
-    FORCEINLINE CVector3 operator*( const CVector3& RHS ) const noexcept;
+    FORCEINLINE CVector3 operator*(const CVector3& RHS) const noexcept;
 
     /**
      * Multiplies a matrix with another matrix
@@ -154,7 +154,7 @@ public:
      * @param RHS: The other matrix
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix3 operator*( const CMatrix3& RHS ) const noexcept;
+    FORCEINLINE CMatrix3 operator*(const CMatrix3& RHS) const noexcept;
 
     /**
      * Multiplies this matrix with another matrix
@@ -162,7 +162,7 @@ public:
      * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator*=( const CMatrix3& RHS ) noexcept;
+    FORCEINLINE CMatrix3& operator*=(const CMatrix3& RHS) noexcept;
 
     /**
      * Multiplies a matrix component-wise with a scalar
@@ -170,7 +170,7 @@ public:
      * @param RHS: The scalar
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix3 operator*( float RHS ) const noexcept;
+    FORCEINLINE CMatrix3 operator*(float RHS) const noexcept;
 
     /**
      * Multiplies this matrix component-wise with a scalar
@@ -178,7 +178,7 @@ public:
      * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator*=( float RHS ) noexcept;
+    FORCEINLINE CMatrix3& operator*=(float RHS) noexcept;
 
     /**
      * Adds a matrix component-wise with another matrix
@@ -186,7 +186,7 @@ public:
      * @param RHS: The other matrix
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix3 operator+( const CMatrix3& RHS ) const noexcept;
+    FORCEINLINE CMatrix3 operator+(const CMatrix3& RHS) const noexcept;
 
     /**
      * Adds this matrix component-wise with another matrix
@@ -194,7 +194,7 @@ public:
      * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator+=( const CMatrix3& RHS ) noexcept;
+    FORCEINLINE CMatrix3& operator+=(const CMatrix3& RHS) noexcept;
 
     /**
      * Adds a matrix component-wise with a scalar
@@ -202,7 +202,7 @@ public:
      * @param RHS: The scalar
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix3 operator+( float RHS ) const noexcept;
+    FORCEINLINE CMatrix3 operator+(float RHS) const noexcept;
 
     /**
      * Adds this matrix component-wise with a scalar
@@ -210,7 +210,7 @@ public:
      * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator+=( float RHS ) noexcept;
+    FORCEINLINE CMatrix3& operator+=(float RHS) noexcept;
 
     /**
      * Subtracts a matrix component-wise with another matrix
@@ -218,7 +218,7 @@ public:
      * @param RHS: The other matrix
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix3 operator-( const CMatrix3& RHS ) const noexcept;
+    FORCEINLINE CMatrix3 operator-(const CMatrix3& RHS) const noexcept;
 
     /**
      * Subtracts this matrix component-wise with another matrix
@@ -226,7 +226,7 @@ public:
      * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator-=( const CMatrix3& RHS ) noexcept;
+    FORCEINLINE CMatrix3& operator-=(const CMatrix3& RHS) noexcept;
 
     /**
      * Subtracts a matrix component-wise with a scalar
@@ -234,7 +234,7 @@ public:
      * @param RHS: The scalar
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix3 operator-( float RHS ) const noexcept;
+    FORCEINLINE CMatrix3 operator-(float RHS) const noexcept;
 
     /**
      * Subtracts this matrix component-wise with a scalar
@@ -242,7 +242,7 @@ public:
      * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator-=( float RHS ) noexcept;
+    FORCEINLINE CMatrix3& operator-=(float RHS) noexcept;
 
     /**
      * Divides a matrix component-wise with a scalar
@@ -250,7 +250,7 @@ public:
      * @param RHS: The scalar
      * @return A matrix containing the result of the division
      */
-    FORCEINLINE CMatrix3 operator/( float RHS ) const noexcept;
+    FORCEINLINE CMatrix3 operator/(float RHS) const noexcept;
 
     /**
      * Divides this matrix component-wise with a scalar
@@ -258,7 +258,7 @@ public:
      * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator/=( float RHS ) noexcept;
+    FORCEINLINE CMatrix3& operator/=(float RHS) noexcept;
 
     /**
      * Returns the result after comparing this and another matrix
@@ -266,7 +266,7 @@ public:
      * @param Other: The matrix to compare with
      * @return True if equal, false if not
      */
-    FORCEINLINE bool operator==( const CMatrix3& Other ) const noexcept;
+    FORCEINLINE bool operator==(const CMatrix3& Other) const noexcept;
 
     /**
      * Returns the negated result after comparing this and another matrix
@@ -274,7 +274,7 @@ public:
      * @param Other: The matrix to compare with
      * @return False if equal, true if not
      */
-    FORCEINLINE bool operator!=( const CMatrix3& Other ) const noexcept;
+    FORCEINLINE bool operator!=(const CMatrix3& Other) const noexcept;
 
 public:
     /**
@@ -290,7 +290,7 @@ public:
      * @param Scale: Uniform scale that represents this matrix
      * @return A scale matrix
      */
-    inline static CMatrix3 Scale( float Scale ) noexcept;
+    inline static CMatrix3 Scale(float Scale) noexcept;
 
     /**
      * Creates and returns a scale matrix for each axis
@@ -300,7 +300,7 @@ public:
      * @param z: Scale for the z-axis
      * @return A scale matrix
      */
-    inline static CMatrix3 Scale( float x, float y, float z ) noexcept;
+    inline static CMatrix3 Scale(float x, float y, float z) noexcept;
 
     /**
      * Creates and returns a scale matrix for each axis
@@ -308,7 +308,7 @@ public:
      * @param VectorWithScale: A vector containing the scale for each axis in the x-, y-, z-components
      * @return A scale matrix
      */
-    inline static CMatrix3 Scale( const CVector3& VectorWithScale ) noexcept;
+    inline static CMatrix3 Scale(const CVector3& VectorWithScale) noexcept;
 
     /**
      * Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
@@ -318,7 +318,7 @@ public:
      * @param Roll: Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    inline static CMatrix3 RotationRollPitchYaw( float Pitch, float Yaw, float Roll ) noexcept;
+    inline static CMatrix3 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept;
 
     /**
      * Creates and returns a rotation matrix around the x-axis
@@ -326,7 +326,7 @@ public:
      * @param x: Rotation around the x-axis in radians
      * @return A rotation matrix
      */
-    inline static CMatrix3 RotationX( float x ) noexcept;
+    inline static CMatrix3 RotationX(float x) noexcept;
 
     /**
      * Creates and returns a rotation matrix around the y-axis
@@ -334,7 +334,7 @@ public:
      * @param y: Rotation around the y-axis in radians
      * @return A rotation matrix
      */
-    inline static CMatrix3 RotationY( float y ) noexcept;
+    inline static CMatrix3 RotationY(float y) noexcept;
 
     /**
      * Creates and returns a rotation matrix around the z-axis
@@ -342,7 +342,7 @@ public:
      * @param z: Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    inline static CMatrix3 RotationZ( float z ) noexcept;
+    inline static CMatrix3 RotationZ(float z) noexcept;
 
 public:
     union
@@ -361,40 +361,40 @@ public:
 };
 
 FORCEINLINE CMatrix3::CMatrix3() noexcept
-    : m00( 0.0f ), m01( 0.0f ), m02( 0.0f )
-    , m10( 0.0f ), m11( 0.0f ), m12( 0.0f )
-    , m20( 0.0f ), m21( 0.0f ), m22( 0.0f )
+    : m00(0.0f), m01(0.0f), m02(0.0f)
+    , m10(0.0f), m11(0.0f), m12(0.0f)
+    , m20(0.0f), m21(0.0f), m22(0.0f)
 {
 }
 
-FORCEINLINE CMatrix3::CMatrix3( float Diagonal ) noexcept
-    : m00( Diagonal ), m01( 0.0f ), m02( 0.0f )
-    , m10( 0.0f ), m11( Diagonal ), m12( 0.0f )
-    , m20( 0.0f ), m21( 0.0f ), m22( Diagonal )
+FORCEINLINE CMatrix3::CMatrix3(float Diagonal) noexcept
+    : m00(Diagonal), m01(0.0f), m02(0.0f)
+    , m10(0.0f), m11(Diagonal), m12(0.0f)
+    , m20(0.0f), m21(0.0f), m22(Diagonal)
 {
 }
 
-FORCEINLINE CMatrix3::CMatrix3( const CVector3& Row0, const CVector3& Row1, const CVector3& Row2 ) noexcept
-    : m00( Row0.x ), m01( Row0.y ), m02( Row0.z )
-    , m10( Row1.x ), m11( Row1.y ), m12( Row1.z )
-    , m20( Row2.x ), m21( Row2.y ), m22( Row2.z )
+FORCEINLINE CMatrix3::CMatrix3(const CVector3& Row0, const CVector3& Row1, const CVector3& Row2) noexcept
+    : m00(Row0.x), m01(Row0.y), m02(Row0.z)
+    , m10(Row1.x), m11(Row1.y), m12(Row1.z)
+    , m20(Row2.x), m21(Row2.y), m22(Row2.z)
 {
 }
 
 FORCEINLINE CMatrix3::CMatrix3(
     float In00, float In01, float In02,
     float In10, float In11, float In12,
-    float In20, float In21, float In22 ) noexcept
-    : m00( In00 ), m01( In01 ), m02( In02 )
-    , m10( In10 ), m11( In11 ), m12( In12 )
-    , m20( In20 ), m21( In21 ), m22( In22 )
+    float In20, float In21, float In22) noexcept
+    : m00(In00), m01(In01), m02(In02)
+    , m10(In10), m11(In11), m12(In12)
+    , m20(In20), m21(In21), m22(In22)
 {
 }
 
-FORCEINLINE CMatrix3::CMatrix3( const float* Arr ) noexcept
-    : m00( Arr[0] ), m01( Arr[1] ), m02( Arr[2] )
-    , m10( Arr[3] ), m11( Arr[4] ), m12( Arr[5] )
-    , m20( Arr[6] ), m21( Arr[7] ), m22( Arr[8] )
+FORCEINLINE CMatrix3::CMatrix3(const float* Arr) noexcept
+    : m00(Arr[0]), m01(Arr[1]), m02(Arr[2])
+    , m10(Arr[3]), m11(Arr[4]), m12(Arr[5])
+    , m20(Arr[6]), m21(Arr[7]), m22(Arr[8])
 {
 }
 
@@ -486,9 +486,9 @@ inline float CMatrix3::Determinant() const noexcept
 
 inline bool CMatrix3::HasNan() const noexcept
 {
-    for ( int i = 0; i < 9; i++ )
+    for (int i = 0; i < 9; i++)
     {
-        if ( NMath::IsNan( reinterpret_cast<const float*>(this)[i] ) )
+        if (NMath::IsNan(reinterpret_cast<const float*>(this)[i]))
         {
             return true;
         }
@@ -499,9 +499,9 @@ inline bool CMatrix3::HasNan() const noexcept
 
 inline bool CMatrix3::HasInfinity() const noexcept
 {
-    for ( int i = 0; i < 9; i++ )
+    for (int i = 0; i < 9; i++)
     {
-        if ( NMath::IsInf( reinterpret_cast<const float*>(this)[i] ) )
+        if (NMath::IsInf(reinterpret_cast<const float*>(this)[i]))
         {
             return true;
         }
@@ -515,14 +515,14 @@ FORCEINLINE bool CMatrix3::IsValid() const noexcept
     return !HasNan() && !HasInfinity();
 }
 
-inline bool CMatrix3::IsEqual( const CMatrix3& Other, float Epsilon ) const noexcept
+inline bool CMatrix3::IsEqual(const CMatrix3& Other, float Epsilon) const noexcept
 {
-    Epsilon = NMath::Abs( Epsilon );
+    Epsilon = NMath::Abs(Epsilon);
 
-    for ( int i = 0; i < 9; i++ )
+    for (int i = 0; i < 9; i++)
     {
         float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
-        if ( NMath::Abs( Diff ) > Epsilon )
+        if (NMath::Abs(Diff) > Epsilon)
         {
             return false;
         }
@@ -546,16 +546,16 @@ FORCEINLINE void CMatrix3::SetIdentity() noexcept
     m22 = 1.0f;
 }
 
-FORCEINLINE CVector3 CMatrix3::GetRow( int Row ) const noexcept
+FORCEINLINE CVector3 CMatrix3::GetRow(int Row) const noexcept
 {
-    Assert( Row < 3 );
-    return CVector3( f[Row] );
+    Assert(Row < 3);
+    return CVector3(f[Row]);
 }
 
-FORCEINLINE CVector3 CMatrix3::GetColumn( int Column ) const noexcept
+FORCEINLINE CVector3 CMatrix3::GetColumn(int Column) const noexcept
 {
-    Assert( Column < 3 );
-    return CVector3( f[0][Column], f[1][Column], f[2][Column] );
+    Assert(Column < 3);
+    return CVector3(f[0][Column], f[1][Column], f[2][Column]);
 }
 
 FORCEINLINE float* CMatrix3::GetData() noexcept
@@ -568,17 +568,17 @@ FORCEINLINE const float* CMatrix3::GetData() const noexcept
     return reinterpret_cast<const float*>(this);
 }
 
-FORCEINLINE bool CMatrix3::operator==( const CMatrix3& Other ) const noexcept
+FORCEINLINE bool CMatrix3::operator==(const CMatrix3& Other) const noexcept
 {
-    return IsEqual( Other );
+    return IsEqual(Other);
 }
 
-FORCEINLINE bool CMatrix3::operator!=( const CMatrix3& Other ) const noexcept
+FORCEINLINE bool CMatrix3::operator!=(const CMatrix3& Other) const noexcept
 {
-    return !IsEqual( Other );
+    return !IsEqual(Other);
 }
 
-FORCEINLINE CVector3 CMatrix3::operator*( const CVector3& RHS ) const noexcept
+FORCEINLINE CVector3 CMatrix3::operator*(const CVector3& RHS) const noexcept
 {
     CVector3 Result;
     Result.x = (RHS[0] * m00) + (RHS[1] * m10) + (RHS[2] * m20);
@@ -587,7 +587,7 @@ FORCEINLINE CVector3 CMatrix3::operator*( const CVector3& RHS ) const noexcept
     return Result;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator*( const CMatrix3& RHS ) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator*(const CMatrix3& RHS) const noexcept
 {
     CMatrix3 Result;
     Result.m00 = (m00 * RHS.m00) + (m01 * RHS.m10) + (m02 * RHS.m20);
@@ -604,12 +604,12 @@ FORCEINLINE CMatrix3 CMatrix3::operator*( const CMatrix3& RHS ) const noexcept
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator*=( const CMatrix3& RHS ) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator*=(const CMatrix3& RHS) noexcept
 {
     return *this = *this * RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator*( float RHS ) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator*(float RHS) const noexcept
 {
     CMatrix3 Result;
     Result.m00 = m00 * RHS;
@@ -626,12 +626,12 @@ FORCEINLINE CMatrix3 CMatrix3::operator*( float RHS ) const noexcept
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator*=( float RHS ) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator*=(float RHS) noexcept
 {
     return *this = *this * RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator+( const CMatrix3& RHS ) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator+(const CMatrix3& RHS) const noexcept
 {
     CMatrix3 Result;
     Result.m00 = m00 + RHS.m00;
@@ -648,12 +648,12 @@ FORCEINLINE CMatrix3 CMatrix3::operator+( const CMatrix3& RHS ) const noexcept
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator+=( const CMatrix3& RHS ) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator+=(const CMatrix3& RHS) noexcept
 {
     return *this = *this + RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator+( float RHS ) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator+(float RHS) const noexcept
 {
     CMatrix3 Result;
     Result.m00 = m00 + RHS;
@@ -670,12 +670,12 @@ FORCEINLINE CMatrix3 CMatrix3::operator+( float RHS ) const noexcept
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator+=( float RHS ) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator+=(float RHS) noexcept
 {
     return *this = *this + RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator-( const CMatrix3& RHS ) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator-(const CMatrix3& RHS) const noexcept
 {
     CMatrix3 Result;
     Result.m00 = m00 - RHS.m00;
@@ -692,12 +692,12 @@ FORCEINLINE CMatrix3 CMatrix3::operator-( const CMatrix3& RHS ) const noexcept
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator-=( const CMatrix3& RHS ) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator-=(const CMatrix3& RHS) noexcept
 {
     return *this = *this - RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator-( float RHS ) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator-(float RHS) const noexcept
 {
     CMatrix3 Result;
     Result.m00 = m00 - RHS;
@@ -714,12 +714,12 @@ FORCEINLINE CMatrix3 CMatrix3::operator-( float RHS ) const noexcept
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator-=( float RHS ) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator-=(float RHS) noexcept
 {
     return *this = *this - RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator/( float RHS ) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator/(float RHS) const noexcept
 {
     const float Recip = 1.0f / RHS;
 
@@ -738,42 +738,42 @@ FORCEINLINE CMatrix3 CMatrix3::operator/( float RHS ) const noexcept
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator/=( float RHS ) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator/=(float RHS) noexcept
 {
     return *this = *this / RHS;
 }
 
 inline CMatrix3 CMatrix3::Identity() noexcept
 {
-    return CMatrix3( 1.0f );
+    return CMatrix3(1.0f);
 }
 
-inline CMatrix3 CMatrix3::Scale( float Scale ) noexcept
+inline CMatrix3 CMatrix3::Scale(float Scale) noexcept
 {
-    return CMatrix3( Scale );
+    return CMatrix3(Scale);
 }
 
-inline CMatrix3 CMatrix3::Scale( float x, float y, float z ) noexcept
+inline CMatrix3 CMatrix3::Scale(float x, float y, float z) noexcept
 {
     return CMatrix3(
         x, 0.0f, 0.0f,
         0.0f, y, 0.0f,
-        0.0f, 0.0f, z );
+        0.0f, 0.0f, z);
 }
 
-inline CMatrix3 CMatrix3::Scale( const CVector3& VectorWithScale ) noexcept
+inline CMatrix3 CMatrix3::Scale(const CVector3& VectorWithScale) noexcept
 {
-    return Scale( VectorWithScale.x, VectorWithScale.y, VectorWithScale.z );
+    return Scale(VectorWithScale.x, VectorWithScale.y, VectorWithScale.z);
 }
 
-inline CMatrix3 CMatrix3::RotationRollPitchYaw( float Pitch, float Yaw, float Roll ) noexcept
+inline CMatrix3 CMatrix3::RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
 {
-    const float SinP = sinf( Pitch );
-    const float SinY = sinf( Yaw );
-    const float SinR = sinf( Roll );
-    const float CosP = cosf( Pitch );
-    const float CosY = cosf( Yaw );
-    const float CosR = cosf( Roll );
+    const float SinP = sinf(Pitch);
+    const float SinY = sinf(Yaw);
+    const float SinR = sinf(Roll);
+    const float CosP = cosf(Pitch);
+    const float CosY = cosf(Yaw);
+    const float CosR = cosf(Roll);
 
     const float SinRSinP = SinR * SinP;
     const float CosRSinP = CosR * SinP;
@@ -781,38 +781,38 @@ inline CMatrix3 CMatrix3::RotationRollPitchYaw( float Pitch, float Yaw, float Ro
     return CMatrix3(
         (CosR * CosY) + (SinRSinP * SinY), (SinR * CosP), (SinRSinP * CosY) - (CosR * SinY),
         (CosRSinP * SinY) - (SinR * CosY), (CosR * CosP), (SinR * SinY) + (CosRSinP * CosY),
-        (CosP * SinY), -SinP, (CosP * CosY) );
+        (CosP * SinY), -SinP, (CosP * CosY));
 }
 
-inline CMatrix3 CMatrix3::RotationX( float x ) noexcept
+inline CMatrix3 CMatrix3::RotationX(float x) noexcept
 {
-    const float SinX = sinf( x );
-    const float CosX = cosf( x );
+    const float SinX = sinf(x);
+    const float CosX = cosf(x);
 
     return CMatrix3(
         1.0f, 0.0f, 0.0f,
         0.0f, CosX, SinX,
-        0.0f, -SinX, CosX );
+        0.0f, -SinX, CosX);
 }
 
-inline CMatrix3 CMatrix3::RotationY( float y ) noexcept
+inline CMatrix3 CMatrix3::RotationY(float y) noexcept
 {
-    const float SinY = sinf( y );
-    const float CosY = cosf( y );
+    const float SinY = sinf(y);
+    const float CosY = cosf(y);
 
     return CMatrix3(
         CosY, 0.0f, -SinY,
         0.0f, 1.0f, 0.0f,
-        SinY, 0.0f, CosY );
+        SinY, 0.0f, CosY);
 }
 
-inline CMatrix3 CMatrix3::RotationZ( float z ) noexcept
+inline CMatrix3 CMatrix3::RotationZ(float z) noexcept
 {
-    const float SinZ = sinf( z );
-    const float CosZ = cosf( z );
+    const float SinZ = sinf(z);
+    const float CosZ = cosf(z);
 
     return CMatrix3(
         CosZ, SinZ, 0.0f,
         -SinZ, CosZ, 0.0f,
-        0.0f, 0.0f, 1.0f );
+        0.0f, 0.0f, 1.0f);
 }

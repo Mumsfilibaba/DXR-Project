@@ -15,7 +15,7 @@ public:
     virtual bool Init();
 
     /* Tick the application module */
-    virtual void Tick( CTimestamp Deltatime );
+    virtual void Tick(CTimestamp Deltatime);
 
     /* Release the application module */
     virtual bool Release();

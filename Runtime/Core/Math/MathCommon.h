@@ -40,24 +40,24 @@ namespace NMath
     constexpr const float IS_EQUAL_EPISILON = 0.0005f;
 
     // TODO: Move all math functions and constants to one location
-    FORCEINLINE float VECTORCALL Sqrt( float v )
+    FORCEINLINE float VECTORCALL Sqrt(float v)
     {
-    #if ARCHITECTURE_X86_X64
-        return _mm_cvtss_f32( _mm_sqrt_ss( _mm_load_ss( &v ) ) );
-    #else
-        return sqrtf( v );
-    #endif
+#if ARCHITECTURE_X86_X64
+        return _mm_cvtss_f32(_mm_sqrt_ss(_mm_load_ss(&v)));
+#else
+        return sqrtf(v);
+#endif
     }
 
     template <typename T>
-    FORCEINLINE T DivideByMultiple( T v, uint32 Alignment )
+    FORCEINLINE T DivideByMultiple(T v, uint32 Alignment)
     {
         static_assert(TIsInteger<T>::Value);
         return static_cast<T>((v + Alignment - 1) / Alignment);
     }
 
     template <typename T>
-    FORCEINLINE T AlignUp( T v, T Alignment )
+    FORCEINLINE T AlignUp(T v, T Alignment)
     {
         static_assert(TIsInteger<T>::Value);
 
@@ -66,7 +66,7 @@ namespace NMath
     }
 
     template <typename T>
-    FORCEINLINE T AlignDown( T v, T Alignment )
+    FORCEINLINE T AlignDown(T v, T Alignment)
     {
         static_assert(TIsInteger<T>::Value);
 
@@ -74,73 +74,73 @@ namespace NMath
         return ((v) & (~Mask));
     }
 
-    FORCEINLINE float Lerp( float a, float b, float f )
+    FORCEINLINE float Lerp(float a, float b, float f)
     {
         return (-f * b) + ((a * f) + b);
     }
 
     template <typename T>
-    FORCEINLINE T Min( T a, T b )
+    FORCEINLINE T Min(T a, T b)
     {
         return (a <= b) ? a : b;
     }
 
     template <typename T>
-    FORCEINLINE T Max( T a, T b )
+    FORCEINLINE T Max(T a, T b)
     {
         return (a >= b) ? a : b;
     }
 
     template <typename T>
-    FORCEINLINE T Abs( T a )
+    FORCEINLINE T Abs(T a)
     {
-        return ::abs( a );
+        return ::abs(a);
         // return (a > T( 0 )) ? ((a * a) / a) : T( 0 ); // TODO: Causes crash?
     }
 
     template <typename T>
-    FORCEINLINE T ToRadians( T Degrees )
+    FORCEINLINE T ToRadians(T Degrees)
     {
         return static_cast<T>(static_cast<float>(Degrees) * (PI_F / 180.0f));
     }
 
     template <typename T>
-    FORCEINLINE T ToDegrees( T Radians )
+    FORCEINLINE T ToDegrees(T Radians)
     {
         return static_cast<T>(static_cast<float>(Radians) * (180.0f / PI_F));
     }
 
     template <typename T>
-    FORCEINLINE T Log2( T x )
+    FORCEINLINE T Log2(T x)
     {
-        return static_cast<T>(std::log2( (double)x ));
+        return static_cast<T>(std::log2((double)x));
     }
 
     template <typename T>
-    FORCEINLINE T Asin( T v )
+    FORCEINLINE T Asin(T v)
     {
-        return static_cast<T>(std::asinf( static_cast<float>(v) ));
+        return static_cast<T>(std::asinf(static_cast<float>(v)));
     }
 
     template <typename T>
-    FORCEINLINE T Atan2( T y, T x )
+    FORCEINLINE T Atan2(T y, T x)
     {
-        return static_cast<T>(std::atan2f( static_cast<float>(y), static_cast<float>(x) ));
+        return static_cast<T>(std::atan2f(static_cast<float>(y), static_cast<float>(x)));
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsNan( T Float )
+    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsNan(T Float)
     {
-        return isnan( Float );
+        return isnan(Float);
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsInf( T Float )
+    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsInf(T Float)
     {
-        return isinf( Float );
+        return isinf(Float);
     }
 
-    FORCEINLINE uint32 BytesToNum32BitConstants( uint32 Bytes )
+    FORCEINLINE uint32 BytesToNum32BitConstants(uint32 Bytes)
     {
         return Bytes / 4;
     }

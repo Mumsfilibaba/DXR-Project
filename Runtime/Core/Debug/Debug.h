@@ -13,9 +13,9 @@ public:
         PlatformDebugMisc::DebugBreak();
     }
 
-    static FORCEINLINE void OutputDebugString( const CString& Message )
+    static FORCEINLINE void OutputDebugString(const CString& Message)
     {
-        PlatformDebugMisc::OutputDebugString( Message );
+        PlatformDebugMisc::OutputDebugString(Message);
     }
 
     static FORCEINLINE bool IsDebuggerPresent()

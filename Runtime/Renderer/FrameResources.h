@@ -20,19 +20,19 @@ template<typename TResource>
 class TResourceCache
 {
 public:
-    int32 Add( TResource* Resource )
+    int32 Add(TResource* Resource)
     {
-        if ( Resource == nullptr )
+        if (Resource == nullptr)
         {
             return -1;
         }
 
-        auto TextureIndexPair = ResourceIndices.find( Resource );
-        if ( TextureIndexPair == ResourceIndices.end() )
+        auto TextureIndexPair = ResourceIndices.find(Resource);
+        if (TextureIndexPair == ResourceIndices.end())
         {
             int32 NewIndex = Resources.Size();
             ResourceIndices[Resource] = NewIndex;
-            Resources.Emplace( Resource );
+            Resources.Emplace(Resource);
 
             return NewIndex;
         }
@@ -42,7 +42,7 @@ public:
         }
     }
 
-    TResource* Get( uint32 Index ) const
+    TResource* Get(uint32 Index) const
     {
         return Resources[Index];
     }

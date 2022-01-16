@@ -12,18 +12,18 @@ public:
     CDeferredRenderer() = default;
     ~CDeferredRenderer() = default;
 
-    bool Init( SFrameResources& FrameResources );
+    bool Init(SFrameResources& FrameResources);
 
     void Release();
 
-    void RenderPrePass( CRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene );
-    void RenderBasePass( CRHICommandList& CmdList, const SFrameResources& FrameResources );
-    void RenderDeferredTiledLightPass( CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup );
+    void RenderPrePass(CRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene);
+    void RenderBasePass(CRHICommandList& CmdList, const SFrameResources& FrameResources);
+    void RenderDeferredTiledLightPass(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
 
-    bool ResizeResources( SFrameResources& FrameResources );
+    bool ResizeResources(SFrameResources& FrameResources);
 
 private:
-    bool CreateGBuffer( SFrameResources& FrameResources );
+    bool CreateGBuffer(SFrameResources& FrameResources);
 
     TSharedRef<CRHIGraphicsPipelineState> PipelineState;
     TSharedRef<CRHIVertexShader>          BaseVertexShader;
