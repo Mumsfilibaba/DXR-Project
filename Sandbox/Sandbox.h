@@ -7,7 +7,7 @@ class CSandbox : public CApplicationModule
 {
 public:
 
-    CSandbox() = default;
+    CSandbox()  = default;
     ~CSandbox() = default;
 
     virtual bool Init() override;

@@ -151,7 +151,25 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
         project 'ImGui'
             printf('    Generating dependecy ImGui')
 
-            kind 'StaticLib'
+            kind('StaticLib')
+            warnings('Off')
+            intrinsics('On')
+            editandcontinue('Off')
+            language('C++')
+            cppdialect('C++17')
+            systemversion('latest')
+            architecture('x64')
+            exceptionhandling('Off')
+            rtti('Off')
+            floatingpoint('Fast')
+            vectorextensions('SSE2')
+            characterset('Ascii')
+            flags(
+            { 
+                'MultiProcessorCompile',
+                'NoIncrementalLink',
+            })
+
             location(SolutionsFolderPath .. '/Dependencies/ImGui')
 
             -- Locations
@@ -191,7 +209,25 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
         project 'tinyobjloader'
             printf('    Generating dependecy tinyobjloader')
 
-            kind 'StaticLib'
+            kind('StaticLib')
+            warnings('Off')
+            intrinsics('On')
+            editandcontinue('Off')
+            language('C++')
+            cppdialect('C++17')
+            systemversion('latest')
+            architecture('x64')
+            exceptionhandling('Off')
+            rtti('Off')
+            floatingpoint('Fast')
+            vectorextensions('SSE2')
+            characterset('Ascii')
+            flags(
+            { 
+                'MultiProcessorCompile',
+                'NoIncrementalLink',
+            })
+
             location (SolutionsFolderPath .. '/Dependencies/tinyobjloader')
 
             -- Locations
@@ -222,7 +258,25 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
         project 'OpenFBX'
             printf('    Generating dependecy OpenFBX')
 
-            kind 'StaticLib'
+            kind('StaticLib')
+            warnings('Off')
+            intrinsics('On')
+            editandcontinue('Off')
+            language('C++')
+            cppdialect('C++17')
+            systemversion('latest')
+            architecture('x64')
+            exceptionhandling('Off')
+            rtti('Off')
+            floatingpoint('Fast')
+            vectorextensions('SSE2')
+            characterset('Ascii')
+            flags(
+            { 
+                'MultiProcessorCompile',
+                'NoIncrementalLink',
+            })
+            
             location (SolutionsFolderPath .. '/Dependencies/OpenFBX')
         
             -- Locations

@@ -224,8 +224,12 @@ function CBuildRules(InName)
 
             -- Pre-Compiled Headers
             if self.bUsePrecompiledHeaders then
-                pchheader 'PreCompiled.h'
-                pchsource 'PreCompiled.cpp'
+                filter "action:vs*"
+                    pchheader 'PreCompiled.h'
+                    pchsource 'PreCompiled.cpp'
+                filter "action:not vs*"
+                    pchheader(self.GetPath() .. '/PreCompiled.h')
+                filter{}
 
                 printf('    Project is using PreCompiled Headers\n')
 
@@ -383,8 +387,10 @@ function CBuildRules(InName)
         end
 
         -- Add link options
-        for Index = 1, #LinkModules do
-            LinkOptions[#LinkOptions + 1] = '/INCLUDE:LinkModule_' .. LinkModules[Index]
+        if not BuildWithXcode() then
+            for Index = 1, #LinkModules do
+                LinkOptions[#LinkOptions + 1] = '/INCLUDE:LinkModule_' .. LinkModules[Index]
+            end
         end
 
         -- Make files relative before printing

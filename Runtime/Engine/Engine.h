@@ -21,7 +21,7 @@ public:
     static CEngine* Make();
 
     /* Public destructor for the TSharedPtr */
-    ~CEngine() = default;
+    virtual ~CEngine() = default;
 
     /* Init engine */
     virtual bool Init();

@@ -4,6 +4,8 @@
 #include "IsConst.h"
 #include "Not.h"
 
+#include "Core/CoreDefines.h"
+
 /* Move an object by converting it into a rvalue */
 template<typename T>
 constexpr typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept

@@ -1,5 +1,10 @@
 #pragma once
+#include "Core/Templates/Move.h"
+
 #include "Platform/CriticalSection.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Class encapsulating an object and a lock for less repetion when protecting a single object with a lock
 
 template<typename T, typename LockType = CCriticalSection>
 class Lockable
