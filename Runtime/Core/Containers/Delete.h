@@ -5,7 +5,9 @@
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/Move.h"
 
-/* TDefaultDelete for scalar types */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TDefaultDelete for scalar types
+
 template<typename T>
 struct TDefaultDelete
 {
@@ -46,7 +48,9 @@ struct TDefaultDelete
     }
 };
 
-/* TDefaultDelete for array types */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TDefaultDelete for array types
+
 template<typename T>
 struct TDefaultDelete<T[]>
 {

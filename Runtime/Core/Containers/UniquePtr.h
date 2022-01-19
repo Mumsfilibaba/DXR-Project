@@ -9,7 +9,9 @@
 #include "Core/Templates/IsConvertible.h"
 #include "Core/Templates/AddressOf.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* TUniquePtr - Scalar values. Similar to std::unique_ptr */
+
 template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TUniquePtr : private DeleterType // Using inheritance instead of composition to avoid extra memory usage
 {
@@ -186,7 +188,9 @@ private:
     ElementType* Ptr;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* TUniquePtr - Array values. Similar to std::unique_ptr */
+
 template<typename T, typename DeleterType>
 class TUniquePtr<T[], DeleterType> : private DeleterType
 {
@@ -357,6 +361,9 @@ private:
     ElementType* Ptr;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Operators
+
 /* Check the equality between uniqueptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, U* RHS) noexcept
@@ -427,7 +434,9 @@ FORCEINLINE bool operator!=(NullptrType, const TUniquePtr<T>& RHS) noexcept
     return (nullptr != RHS.Get());
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* MakeUnique - Creates a new object together with a UniquePtr */
+
 template<typename T, typename... ArgTypes>
 FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TUniquePtr<T>>::Type MakeUnique(ArgTypes&&... Args) noexcept
 {

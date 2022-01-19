@@ -12,7 +12,9 @@
 
 #include <initializer_list>
 
-/* Dynamic Array similar to std::vector */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Dynamic Array similar to std::vector
+
 template<typename T, typename AllocatorType = TDefaultArrayAllocator<T>>
 class TArray
 {
@@ -1068,7 +1070,9 @@ private:
     SizeType      ArrayCapacity;
 };
 
-/* Enable TArrayType */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Enable TArrayType
+
 template<typename T, typename AllocatorType>
 struct TIsTArrayType<TArray<T, AllocatorType>>
 {
@@ -1078,7 +1082,9 @@ struct TIsTArrayType<TArray<T, AllocatorType>>
     };
 };
 
-/* Allocate and copy the contents into a uniqueptr */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Allocate and copy the contents into a uniqueptr
+
 template<typename T, typename AllocatorType>
 inline TUniquePtr<T[]> MakeUniquePtr(const TArray<T, AllocatorType>& Array) noexcept
 {

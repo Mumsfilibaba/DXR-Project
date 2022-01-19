@@ -8,7 +8,9 @@
 #include "Core/Templates/IsTStringType.h"
 #include "Core/Templates/StringUtils.h"
 
-/* Class containing a view of a string */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TStringView - Class for viewing a string similar to std::string_view
+
 template<typename CharType>
 class TStringView
 {
@@ -838,9 +840,14 @@ private:
     const CharType* ViewEnd = nullptr;
 };
 
-/* Predefined types */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Predefined types
+
 using CStringView = TStringView<char>;
 using WStringView = TStringView<wchar_t>;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Operators
 
 /* Compares with a raw string */
 template<typename CharType>
@@ -967,7 +974,9 @@ inline bool operator>=(const TStringView<CharType>& LHS, const TStringView<CharT
     return (LHS.Compare(RHS) >= 0);
 }
 
-/* Add TStringView to be a string-type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Add TStringView to be a string-type
+
 template<typename CharType>
 struct TIsTStringType<TStringView<CharType>>
 {

@@ -7,7 +7,9 @@
 
 #include <Unknwn.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* TComPtr - Helper class when using ref-counted com-objects  */
+
 template<typename T>
 class TComPtr
 {
@@ -271,6 +273,9 @@ private:
 
     ElementType* Ptr;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TComPtr operators
 
 /* Check the equality between shared ref and a raw pointer */
 template<typename T, typename U>

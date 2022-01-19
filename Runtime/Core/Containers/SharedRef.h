@@ -5,7 +5,9 @@
 #include "Core/Templates/IsNullptr.h"
 #include "Core/Templates/Move.h"
 
-/* TSharedRef - Helper class when using objects with CRefCounted as a base */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TSharedRef - Helper class when using objects with CRefCounted as a base
+
 template<typename T>
 class TSharedRef
 {
@@ -259,6 +261,9 @@ private:
     ElementType* Ptr;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TSharedRef operators
+
 /* Check the equality between shared ref and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TSharedRef<T>& LHS, U* RHS) noexcept
@@ -329,6 +334,9 @@ FORCEINLINE bool operator!=(NullptrType, const TSharedRef<T>& RHS) noexcept
     return (nullptr != RHS.Get());
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TSharedRef casting functions
+
 /* static_cast */
 template<typename T, typename U>
 FORCEINLINE TSharedRef<T> StaticCast(const TSharedRef<U>& Pointer)
@@ -377,7 +385,9 @@ FORCEINLINE TSharedRef<T> ReinterpretCast(TSharedRef<U>&& Pointer)
     return TSharedRef<T>(RawPointer);
 }
 
-/* Converts a raw pointer into a TSharedRef */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Converts a raw pointer into a TSharedRef
+
 template<typename T, typename U>
 FORCEINLINE TSharedRef<T> MakeSharedRef(U* InRefCountedObject)
 {

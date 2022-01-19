@@ -7,21 +7,21 @@
 
 #if COMPILER_MSVC
 
-/* Architecture */
+// Architecture
 #if defined(_M_IX86) || defined(_M_X64)
 #ifndef ARCHITECTURE_X86_X64
 #define ARCHITECTURE_X86_X64 (1)
 #endif
 #endif // ARCHITECTURE_X86_X64
 
-/* Use SSE intrinsics if we can*/
+// Use SSE intrinsics if we can
 #if ARCHITECTURE_X86_X64
 #ifndef ENABLE_SEE_INTRIN
 #define ENABLE_SEE_INTRIN (1)
 #endif
 #endif
 
-/* Forceinline */
+// Forceinline
 #ifndef FORCEINLINE
 #ifndef DEBUG_BUILD
 #define FORCEINLINE __forceinline
@@ -30,32 +30,32 @@
 #endif // ifdef DEBUG_BUILD
 #endif // ifndef FORCEINLINE
 
-/* Align */
+// Align
 #ifndef ALIGN_AS
 #define ALIGN_AS(Alignment) __declspec(align((Alignment)))
 #endif
 
-/* No inlining at all */
+// No inlining at all
 #ifndef NOINLINE
 #define NOINLINE __declspec(noinline)
 #endif
 
-/* Vector call */
+// Vector call
 #ifndef VECTORCALL
 #define VECTORCALL __vectorcall
 #endif
 
-/* Restrict - Is already a keyword in MSVC, however fro consistency we make a define */
+// Restrict
 #ifndef restrict_ptr
 #define restrict_ptr __restrict
 #endif
 
-/* Function signature as a const char* string */
+// Function signature as a const char* string
 #ifndef FUNCTION_SIGNATURE
 #define FUNCTION_SIGNATURE __FUNCTION__
 #endif
 
-/* Dynamic Lib Export and import */
+// Dynamic Lib Export and import
 #ifndef MODULE_EXPORT
 #define MODULE_EXPORT __declspec(dllexport)
 #endif
@@ -64,7 +64,7 @@
 #define MODULE_IMPORT __declspec(dllimport)
 #endif
 
-/* Pause the thread */
+// Pause the thread
 #ifndef PauseInstruction
 #include <immintrin.h>
 #define PauseInstruction _mm_pause
@@ -73,7 +73,9 @@
 // Define the rest of the defines to a default value
 #include "CompilerDefault.h"
 
-/* Disable some warnings */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Disable some warnings
+
 #pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
 #pragma warning(disable : 4324) // structure was padded due to alignment specifier
 // TODO: Investigate if this can be removed

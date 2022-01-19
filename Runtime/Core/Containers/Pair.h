@@ -2,7 +2,9 @@
 #include "Core/CoreDefines.h"
 #include "Core/CoreTypes.h"
 
-/* Stores two variables of two template types */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Stores two variables of two template types
+
 template<typename FirstType, typename SecondType>
 struct TPair
 {
@@ -85,7 +87,9 @@ struct TPair
     SecondType Second;
 };
 
-/* Operators */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Operators for TPair
+
 template<typename FirstType, typename SecondType>
 inline bool operator==(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
@@ -122,14 +126,15 @@ inline bool operator>(const TPair<FirstType, SecondType>& LHS, const TPair<First
     return (LHS.First > RHS.First) && (LHS.Second > RHS.Second);
 }
 
-/* Create a pair */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Create helpers
+
 template<typename FirstType, typename SecondType>
 inline TPair<FirstType, SecondType> MakePair(const FirstType& First, const SecondType& Second) noexcept
 {
     return TPair<FirstType, SecondType>(First, Second);
 }
 
-/* Create a pair */
 template<typename FirstType, typename SecondType>
 inline TPair<FirstType, SecondType> MakePair(FirstType&& First, SecondType&& Second) noexcept
 {

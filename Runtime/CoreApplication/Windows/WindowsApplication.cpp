@@ -289,7 +289,7 @@ void CWindowsApplication::AddWindowsMessageListener(const TSharedPtr<IWindowsMes
     }
     else
     {
-        LOG_WARNING("Tried to add an listener that already exists");
+        LOG_WARNING("Tried to add a listener that already exists");
     }
 }
 

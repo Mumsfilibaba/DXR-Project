@@ -3,7 +3,9 @@
 #include "Core/Memory/Memory.h"
 #include "Core/Templates/ObjectHandling.h"
 
-/* Default allocator that allocates from malloc */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Default allocator that allocates from malloc */
+
 template<typename T>
 class TDefaultArrayAllocator
 {
@@ -87,7 +89,9 @@ private:
     ElementType* Allocation;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* Wrapper class for inline allocated bytes */
+
 template<typename InlineType, int32 NumElements>
 class TInlineAllocation
 {
@@ -124,7 +128,9 @@ private:
     int8 InlineAllocation[InlineBytes];
 };
 
-/* InlineAllocator allocator that has a small fixed size memory, then allocates from TDefaultArrayAllocator */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// InlineAllocator allocator that has a small fixed size memory, then allocates from TDefaultArrayAllocator
+
 template<typename T, int32 NumInlineElements>
 class TInlineArrayAllocator
 {

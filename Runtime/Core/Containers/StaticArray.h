@@ -9,7 +9,9 @@
 #include "Core/Templates/Not.h"
 #include "Core/Templates/IsTArrayType.h"
 
-/* A fixed size array similar to std::array */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// A fixed size array similar to std::array
+
 template<typename T, int32 NumElements>
 struct TStaticArray
 {
@@ -234,7 +236,9 @@ public:
     ElementType Elements[NumElements];
 };
 
-/* Enable TArrayType */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Enable TArrayType
+
 template<typename T, int32 NumElements>
 struct TIsTArrayType<TStaticArray<T, NumElements>>
 {

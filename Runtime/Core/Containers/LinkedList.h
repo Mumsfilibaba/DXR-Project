@@ -1,6 +1,9 @@
 #pragma once
 #include "Core/Templates/Move.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Linked list which can go in forward
+
 template<typename T>
 struct TLinkedListNode
 {
@@ -20,6 +23,9 @@ struct TLinkedListNode
     TLinkedListNode* Next;
     T Item;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Double-Linked list which can go in forward and backwards
 
 template<typename T>
 struct TDoubleLinkedListNode

@@ -1,6 +1,9 @@
 #pragma once
 #include "Iterator.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TSet - Contains unique elements which are stored in a tree structure
+
 template<typename T, typename CompareType>
 class TSet
 {

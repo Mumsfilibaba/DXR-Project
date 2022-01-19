@@ -4,7 +4,9 @@
 #include "Core/Templates/Move.h"
 #include "Core/Templates/IsTArrayType.h"
 
-/* TArrayView - View of an array similar to std::span */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TArrayView - View of an array similar to std::span
+
 template<typename T>
 class TArrayView
 {
@@ -298,7 +300,9 @@ private:
     SizeType ViewSize;
 };
 
-/* Enable TArrayType */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Enable TArrayType
+
 template<typename T>
 struct TIsTArrayType<TArrayView<T>>
 {

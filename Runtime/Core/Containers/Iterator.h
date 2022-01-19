@@ -6,7 +6,9 @@
 #include "Core/Templates/AddressOf.h"
 #include "Core/Templates/ReferenceWrapper.h"
 
-/* Iterator for array types */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Iterator for array types
+
 template<typename ArrayType, typename ElementType>
 class TArrayIterator
 {
@@ -169,7 +171,9 @@ private:
     SizeType Index;
 };
 
-/* Add offset to iterator and return a new */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Add offset to iterator and return a new
+
 template<typename ArrayType, typename ElementType>
 FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIterator<ArrayType, ElementType>::SizeType LHS, const TArrayIterator<ArrayType, ElementType>& RHS) noexcept
 {
@@ -177,7 +181,9 @@ FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIter
     return NewIterator += LHS;
 }
 
-/* Reverse array iterator */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Reverse array iterator
+
 template<typename ArrayType, typename ElementType>
 class TReverseArrayIterator
 {
@@ -340,7 +346,8 @@ private:
     SizeType Index;
 };
 
-/* Add offset to iterator and return a new */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Add offset to iterator and return a new
 template<typename ArrayType, typename ElementType>
 FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TReverseArrayIterator<ArrayType, ElementType>::SizeType LHS, const TReverseArrayIterator<ArrayType, ElementType>& RHS) noexcept
 {
@@ -348,7 +355,9 @@ FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TRe
     return NewIterator += LHS;
 }
 
-/* Iterator for tree-structures such as TSet */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Iterator for tree-structures such as TSet
+
 template<typename NodeType, typename ElementType>
 class TTreeIterator
 {
@@ -455,9 +464,11 @@ private:
     NodeType* Node;
 };
 
-/* Iterator for Bit fields */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Iterator for BitArrays
+
 template<typename BitFieldType>
-class TBitFieldIterator
+class TBitArrayIterator
 {
 public:
 
@@ -466,13 +477,13 @@ public:
         Invalid = ~0
     };
 
-    TBitFieldIterator(const TBitFieldIterator&) = default;
-    TBitFieldIterator(TBitFieldIterator&&) = default;
-    ~TBitFieldIterator() = default;
-    TBitFieldIterator& operator=(const TBitFieldIterator&) = default;
-    TBitFieldIterator& operator=(TBitFieldIterator&&) = default;
+    TBitArrayIterator(const TBitArrayIterator&) = default;
+    TBitArrayIterator(TBitArrayIterator&&) = default;
+    ~TBitArrayIterator() = default;
+    TBitArrayIterator& operator=(const TBitArrayIterator&) = default;
+    TBitArrayIterator& operator=(TBitArrayIterator&&) = default;
 
-    explicit TBitFieldIterator(const BitFieldType& InBitField, uint32 InIndex)
+    explicit TBitArrayIterator(const BitFieldType& InBitField, uint32 InIndex)
         : Index(InIndex)
         , BitField(InBitField)
     {
@@ -491,7 +502,7 @@ public:
         Index = Invalid;
     }
 
-    FORCEINLINE bool operator!=(const TBitFieldIterator& other)
+    FORCEINLINE bool operator!=(const TBitArrayIterator& other)
     {
         return (Index != other.Index);
     }

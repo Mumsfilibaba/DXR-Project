@@ -4,7 +4,9 @@
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/AddReference.h"
 
-/* Characters class with a fixed allocated number of characters */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Characters class with a fixed allocated number of characters
+
 template<typename CharType, int32 CharCount>
 class TStaticString
 {
@@ -1144,14 +1146,18 @@ private:
     SizeType Len;
 };
 
-/* Predefined types */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Predefined types
+
 template<uint32 CharCount>
 using CStaticString = TStaticString<char, CharCount>;
 
 template<uint32 CharCount>
 using WStaticString = TStaticString<wchar_t, CharCount>;
 
-/* Operators */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TStaticString operators
+
 template<typename CharType, int32 CharCount>
 inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
@@ -1192,6 +1198,9 @@ inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType
     NewString.Append(RHS);
     return NewString;
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TStaticString comparisson operators
 
 /* Compares with a raw string */
 template<typename CharType, int32 CharCount>
@@ -1318,7 +1327,9 @@ inline bool operator>=(const TStaticString<CharType, CharCount>& LHS, const TSta
     return (LHS.Compare(RHS) >= 0);
 }
 
-/* Add TStaticString to be a string-type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Add TStaticString to be a string-type
+
 template<typename CharType, int32 CharCount>
 struct TIsTStringType<TStaticString<CharType, CharCount>>
 {
@@ -1328,7 +1339,9 @@ struct TIsTStringType<TStaticString<CharType, CharCount>>
     };
 };
 
-/* Convert between char and wide */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Convert between char and wide
+
 template<int32 CharCount>
 inline WStaticString<CharCount> CharToWide(const CStaticString<CharCount>& CharString) noexcept
 {

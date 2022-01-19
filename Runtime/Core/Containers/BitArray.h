@@ -5,10 +5,13 @@
 #include "Core/Templates/IsInteger.h"
 #include "Core/Memory/Memory.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helper functions for BitArray
+
 namespace NBitUtils
 {
     template<typename T>
-    bool LeastSignificantBit(T Mask, uint32& OutIndex)
+    inline bool LeastSignificantBit(T Mask, uint32& OutIndex)
     {
         OutIndex = ~0u;
 
@@ -27,7 +30,7 @@ namespace NBitUtils
     }
 
     template<typename T>
-    bool MostSignificantBit(T Mask, uint32& OutIndex)
+    inline bool MostSignificantBit(T Mask, uint32& OutIndex)
     {
         if (Mask == 0)
         {
@@ -45,24 +48,25 @@ namespace NBitUtils
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Packed bits
 
 template<uint32 NumBits, typename StorageType>
-class TBitField
+class TBitArray
 {
-    typedef TBitField<NumBits, StorageType> ThisType;
+    typedef TBitArray<NumBits, StorageType> ThisType;
 
 public:
 
     template<uint32, typename>
-    friend class TBitField;
+    friend class TBitArray;
 
-    FORCEINLINE TBitField()
+    FORCEINLINE TBitArray()
         : Data()
     {
         ZeroAllBits();
     }
 
-    explicit TBitField(bool InitAllBits)
+    explicit TBitArray(bool InitAllBits)
     {
         if (InitAllBits)
         {
@@ -75,7 +79,7 @@ public:
     }
 
     template<typename T>
-    explicit TBitField(T Value)
+    explicit TBitArray(T Value)
     {
         static_assert(TIsInteger<T>::Value, "Value must be an integral type");
 
@@ -86,7 +90,7 @@ public:
     }
 
     template<uint32 OtherNumBits, typename OtherStorageType>
-    TBitField(const TBitField<OtherNumBits, OtherStorageType>& Other)
+    TBitArray(const TBitArray<OtherNumBits, OtherStorageType>& Other)
     {
         static_assert(NumBits <= OtherNumBits, "Cannot copy from a bitfield with more bits");
 
@@ -161,7 +165,7 @@ public:
         }
     }
 
-    void SetBitAndUp(uint32 BitIndex, uint32 Count = ~0)
+    FORCEINLINE void SetBitAndUp(uint32 BitIndex, uint32 Count = ~0)
     {
         Assert(BitIndex < Size());
 
@@ -169,7 +173,7 @@ public:
         SetRange(BitIndex, BitIndex + Count);
     }
 
-    void SetBitAndDown(uint32 BitIndex, uint32 Count = ~0)
+    FORCEINLINE void SetBitAndDown(uint32 BitIndex, uint32 Count = ~0)
     {
         Assert(BitIndex < Size());
 
@@ -177,12 +181,12 @@ public:
         SetRange(BitIndex - Count, BitIndex);
     }
 
-    FORCEINLINE TBitFieldIterator<ThisType> StartIterator() const
+    FORCEINLINE TBitArrayIterator<ThisType> StartIterator() const
     {
-        return TBitFieldIterator<ThisType>(*this, 0);
+        return TBitArrayIterator<ThisType>(*this, 0);
     }
 
-    bool HasAnyBitSet() const
+    inline bool HasAnyBitSet() const
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
@@ -195,7 +199,7 @@ public:
         return false;
     }
 
-    bool HasNoBitSet() const
+    inline bool HasNoBitSet() const
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
@@ -208,7 +212,7 @@ public:
         return true;
     }
 
-    bool MostSignificantBit(uint32& OutIndex) const
+    inline bool MostSignificantBit(uint32& OutIndex) const
     {
         for (int32 Index = static_cast<int32>(Elements()) - 1; Index >= 0; --Index)
         {
@@ -222,7 +226,7 @@ public:
         return false;
     }
 
-    bool LeastSignificantBit(uint32* OutIndex) const
+    inline bool LeastSignificantBit(uint32* OutIndex) const
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
@@ -236,16 +240,16 @@ public:
         return false;
     }
 
-    bool operator[](uint32 BitIndex) const
+    FORCEINLINE bool operator[](uint32 BitIndex) const
     {
         return GetBit(BitIndex);
     }
 
-    bool operator==(const TBitField& other) const
+    FORCEINLINE bool operator==(const TBitArray& Other) const
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
-            if (Data[Index] != other.Data[Index])
+            if (Data[Index] != Other.Data[Index])
             {
                 return false;
             }
@@ -253,11 +257,11 @@ public:
         return true;
     }
 
-    bool operator!=(const TBitField& other) const
+    FORCEINLINE bool operator!=(const TBitArray& Other) const
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
-            if (Data[Index] != other.Data[Index])
+            if (Data[Index] != Other.Data[Index])
             {
                 return true;
             }
@@ -266,17 +270,17 @@ public:
         return false;
     }
 
-    TBitField& operator&=(const TBitField& other)
+    FORCEINLINE TBitArray& operator&=(const TBitArray& Other)
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
-            Data[Index] &= other.Data[Index];
+            Data[Index] &= Other.Data[Index];
         }
 
         return *this;
     }
 
-    TBitField& operator|=(const TBitField& Other)
+    FORCEINLINE TBitArray& operator|=(const TBitArray& Other)
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
@@ -286,7 +290,7 @@ public:
         return *this;
     }
 
-    TBitField& operator^=(const TBitField& Other)
+    FORCEINLINE TBitArray& operator^=(const TBitArray& Other)
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
@@ -296,48 +300,48 @@ public:
         return *this;
     }
 
-    TBitField operator&(const TBitField& other) const
+    FORCEINLINE TBitArray operator&(const TBitArray& Other) const
     {
-        TBitField NewBitfield;
+        TBitArray NewArray;
         for (uint32 i = 0; i < Elements(); ++i)
         {
-            NewBitfield.Data[i] = Data[i] & other.Data[i];
+            NewArray.Data[i] = Data[i] & Other.Data[i];
         }
 
-        return NewBitfield;
+        return NewArray;
     }
 
-    TBitField operator|(const TBitField& other) const
+    FORCEINLINE TBitArray operator|(const TBitArray& Other) const
     {
-        TBitField NewBitfield;
+        TBitArray NewArray;
         for (uint32 i = 0; i < Elements(); ++i)
         {
-            NewBitfield.Data[i] = Data[i] | other.Data[i];
+            NewArray.Data[i] = Data[i] | Other.Data[i];
         }
 
-        return NewBitfield;
+        return NewArray;
     }
 
-    TBitField operator^(const TBitField& other) const
+    FORCEINLINE TBitArray operator^(const TBitArray& Other) const
     {
-        TBitField NewBitfield;
+        TBitArray NewArray;
         for (uint32 i = 0; i < Elements(); ++i)
         {
-            NewBitfield.Data[i] = Data[i] ^ other.Data[i];
+            NewArray.Data[i] = Data[i] ^ Other.Data[i];
         }
 
-        return NewBitfield;
+        return NewArray;
     }
 
-    TBitField operator~() const
+    FORCEINLINE TBitArray operator~() const
     {
-        TBitField NewBitfield;
+        TBitArray NewArray;
         for (uint32 i = 0; i < Elements(); ++i)
         {
-            NewBitfield.Data[i] = ~Data[i];
+            NewArray.Data[i] = ~Data[i];
         }
 
-        return NewBitfield;
+        return NewArray;
     }
 
     static constexpr uint32 Size()
@@ -352,17 +356,17 @@ public:
 
 public:
 
-    FORCEINLINE TBitFieldIterator<ThisType> begin() const
+    FORCEINLINE TBitArrayIterator<ThisType> begin() const
     {
-        return TBitFieldIterator<ThisType>(*this, 0);
+        return TBitArrayIterator<ThisType>(*this, 0);
     }
 
-    FORCEINLINE TBitFieldIterator<ThisType> end() const
+    FORCEINLINE TBitArrayIterator<ThisType> end() const
     {
         uint32 Index;
         LeastSignificantBit(&Index);
 
-        return TBitFieldIterator<ThisType>(*this, Index);
+        return TBitArrayIterator<ThisType>(*this, Index);
     }
 
 private:
@@ -384,7 +388,7 @@ private:
 
     static constexpr StorageType MakeBitmaskForStorage(uint32 BitIndex)
     {
-        return (StorageType)1 << IndexOfBitInStorage(BitIndex);
+        return StorageType(1) << IndexOfBitInStorage(BitIndex);
     }
 
     static constexpr uint32 Elements()
@@ -395,9 +399,12 @@ private:
     StorageType Data[Elements()];
 };
 
-template<uint32 NumBits, typename StorageType = uint32>
-class TBitField;
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Pre-defined types
 
-using BitField16 = TBitField<16, uint16>;
-using BitField32 = TBitField<32, uint32>;
-using BitField64 = TBitField<64, uint32>;
+template<uint32 NumBits, typename StorageType = uint32>
+class TBitArray;
+
+using BitField16 = TBitArray<16, uint16>;
+using BitField32 = TBitArray<32, uint32>;
+using BitField64 = TBitArray<64, uint32>;

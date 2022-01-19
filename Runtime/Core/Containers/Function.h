@@ -11,7 +11,9 @@
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/Decay.h"
 
-/* A payloaded function */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Stores the payload resulted from a call to bind
+
 template<typename FunctionType, typename... PayloadTypes>
 class TBindPayload
 {
@@ -47,7 +49,9 @@ private:
     FunctionType Func;
 };
 
-/* Empty payloaded function */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Empty payload in order to not waste space due to an empty TTuple
+
 template<typename FunctionType>
 class TBindPayload<FunctionType>
 {
@@ -79,14 +83,18 @@ private:
     FunctionType Func;
 };
 
-/* Bind a function with payload */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Creates a callable which can be stored in a TFunction 
+
 template<typename FunctionType, typename... ArgTypes>
 FORCEINLINE auto Bind(FunctionType Function, ArgTypes&&... Args)
 {
     return TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
 }
 
-/* TFunction - Encapsulates callables similar to std::function */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TFunction - Encapsulates callables similar to std::function
+
 template<typename InvokableType>
 class TFunction;
 

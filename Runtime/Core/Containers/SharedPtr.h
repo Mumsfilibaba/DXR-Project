@@ -9,7 +9,9 @@
 #include "Core/Templates/And.h"
 #include "Core/Threading/AtomicInt.h"
 
-/* CPointerReferenceCounter - Counting references in TWeak- and TSharedPtr */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CPointerReferenceCounter - Counting references in TWeak- and TSharedPtr
+
 class CPointerReferenceCounter
 {
 public:
@@ -64,7 +66,9 @@ private:
     AtomicInt32 NumStrongRefs;
 };
 
-/* Helper object for shared ref counter */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helper object for shared ref counter
+
 template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TPointerReferencedStorage : private DeleterType
 {
@@ -285,11 +289,15 @@ private:
     CPointerReferenceCounter* Counter;
 };
 
-/* Forward declaration of TWeakPtr */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Forward declaration of TWeakPtr
+
 template<typename T, typename DeleterType>
 class TWeakPtr;
 
-/* TSharedPtr - RefCounted pointer, similar to std::shared_ptr */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TSharedPtr - RefCounted pointer, similar to std::shared_ptr
+
 template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TSharedPtr
 {
@@ -556,6 +564,9 @@ private:
     PointerStorage Storage;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TSharedPtr operators
+
 /* Check the equality between sharedptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, U* RHS) noexcept
@@ -654,7 +665,9 @@ FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) 
     return (LHS.Get() != RHS.Get());
 }
 
-/* TWeakPtr - Weak Pointer for scalar types, similar to std::weak_ptr */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TWeakPtr - Weak Pointer for scalar types, similar to std::weak_ptr
+
 template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TWeakPtr
 {
@@ -893,6 +906,9 @@ private:
     PointerStorage Storage;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TWeakPtr operators
+
 /* Check the equality between weakptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, U* RHS) noexcept
@@ -1019,6 +1035,9 @@ FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) no
     return (LHS.Get() != RHS.Get());
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Creation helpers
+
 /* MakeShared - Creates a new object together with a SharedPtr */
 template<typename T, typename... ArgTypes>
 FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShared(ArgTypes&&... Args) noexcept
@@ -1038,7 +1057,8 @@ FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShar
     return TSharedPtr<T>(RefCountedPtr);
 }
 
-/* Casting functions */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Casting functions
 
 /* static_cast*/
 template<typename ToType, typename FromType>

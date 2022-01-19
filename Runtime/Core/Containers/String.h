@@ -5,11 +5,17 @@
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/AddReference.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Config
+
 #define STRING_USE_INLINE_ALLOCATOR (1)
 #define STRING_FORMAT_BUFFER_SIZE   (128)
 
 #if STRING_USE_INLINE_ALLOCATOR 
 #define STRING_ALLOCATOR_INLINE_ELEMENTS (16)
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Allocator type
 
 // Use a small static buffer for small strings
 template<typename CharType>
@@ -21,7 +27,9 @@ template<typename CharType>
 using TStringAllocator = TDefaultArrayAllocator<CharType>;
 #endif
 
-/* Characters class with a fixed allocated number of characters */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TString - String class with a dynamic length
+
 template<typename CharType>
 class TString
 {
@@ -1222,11 +1230,15 @@ private:
     StorageType Characters;
 };
 
-/* Predefined types */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Predefined types
+
 using CString = TString<char>;
 using WString = TString<wchar_t>;
 
-/* Operators */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TString Operators
+
 template<typename CharType>
 inline TString<CharType> operator+(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
 {
@@ -1286,6 +1298,9 @@ inline TString<CharType> operator+(const TString<CharType>& LHS, CharType RHS) n
     NewString.Append(RHS);
     return NewString;
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TString comparison operators
 
 /* Compares with a raw string */
 template<typename CharType>
@@ -1412,7 +1427,9 @@ inline bool operator>=(const TString<CharType>& LHS, const TString<CharType>& RH
     return (LHS.Compare(RHS) >= 0);
 }
 
-/* Add TString to be a string-type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Add TString to be a string-type
+
 template<typename CharType>
 struct TIsTStringType<TString<CharType>>
 {
@@ -1421,6 +1438,9 @@ struct TIsTStringType<TString<CharType>>
         Value = true
     };
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// char and wide conversion functions
 
 /* Convert between char to wide */
 inline WString CharToWide(const CString& CharString) noexcept
@@ -1444,7 +1464,9 @@ inline CString WideToChar(const WString& WideString) noexcept
     return NewString;
 }
 
-/* Hashing for strings */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Hashing for strings
+
 template<typename TChar>
 struct TStringHasher
 {
@@ -1471,6 +1493,9 @@ struct TStringHasher
         return Hash;
     }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Predefined hashing types
 
 using SStringHasher = TStringHasher<char>;
 using SWideStringHasher = TStringHasher<wchar_t>;

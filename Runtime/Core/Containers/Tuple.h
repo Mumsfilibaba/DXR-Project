@@ -11,17 +11,23 @@
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/And.h"
 
-/* Tuple implementation */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helpers for TTuple implementation
+
 namespace Internal
 {
-    /* Forward declarations */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Forward declarations
+
     template <uint32 SearchForIndex, typename... Types>
     struct TTupleGetByIndex;
 
     template <typename WantedType, typename... Types>
     struct TTupleGetByElement;
 
-    /* Leaf of a tuple */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Leaf of a tuple
+    
     template<uint32 Index, typename ValueType>
     struct TTupleLeaf
     {
@@ -62,7 +68,9 @@ namespace Internal
         ValueType Value;
     };
 
-    /* Reference specialization */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Reference TTupleLeaf-specialization
+    
     template<uint32 Index, typename ValueType>
     struct TTupleLeaf<Index, ValueType&>
     {
@@ -101,7 +109,9 @@ namespace Internal
         ValueType Value;
     };
 
-    /* Tuple Get By Index Implementation */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Tuple GetByIndex Implementation
+    
     template <uint32 Iteration, uint32 Index, typename... Types>
     struct TTupleGetByIndexHelper;
 
@@ -141,7 +151,9 @@ namespace Internal
     {
     };
 
-    /* Tuple Get By Element Implementation */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Tuple GetByElement Implementation
+
     template <uint32 Iteration, typename WantedType, typename... Types>
     struct TTupleGetByElementHelper;
 
@@ -181,7 +193,8 @@ namespace Internal
     {
     };
 
-    /* Implementation of tuple */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Implementation of tuple
     template <typename Indices, typename... Types>
     class TTupleStorage;
 
@@ -261,7 +274,9 @@ namespace Internal
         }
     };
 
-    /* Specialization of a TTuple with only two elements making it similar to TPair */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Specialization of a TTuple with only two elements making it similar to TPair
+
     template<typename FirstType, typename SecondType>
     class TTupleStorage<TIntegerSequence<uint32, 0, 1>, FirstType, SecondType>
     {
@@ -416,7 +431,8 @@ namespace Internal
         SecondType Second;
     };
 
-    /* Equality / LessThan / LessThanOrEqual - Helpers */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Equality / LessThan / LessThanOrEqual - Helpers
 
     template <uint32 Index>
     struct TTupleEquallityHelper
@@ -466,7 +482,9 @@ namespace Internal
     };
 }
 
-/* Tuple implementation */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TTuple implementation - similar to std::tuple
+
 template<typename... Types>
 class TTuple : public Internal::TTupleStorage<TMakeIntegerSequence<uint32, sizeof...(Types)>, Types...>
 {
@@ -509,7 +527,8 @@ public:
     }
 };
 
-/* Operators */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Operators
 
 template<typename... FirstTypes, typename... SecondTypes>
 inline bool operator==(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
@@ -547,7 +566,8 @@ inline bool operator>=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondType
     return (Internal::TTupleEquallityHelper<sizeof...(FirstTypes)>::IsLessThan(LHS, RHS) == false);
 }
 
-/* Helpers */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helper functions
 
 template<uint32 SearchForIndex, typename... Types>
 inline auto& TupleGetByIndex(const TTuple<Types...>& Tuple) noexcept

@@ -7,21 +7,21 @@
 
 #if COMPILER_GCC
 
-/* Architecture */
+// Architecture
 #if defined(__x86_64__) || defined(__i386__)
 #ifndef ARCHITECTURE_X86_X64
 #define ARCHITECTURE_X86_X64 (1)
 #endif
 #endif // ARCHITECTURE_X86_X64
 
-/* Use SSE intrinsics if we can*/
+// Use SSE intrinsics if we can
 #if ARCHITECTURE_X86_X64
 #ifndef ENABLE_SEE_INTRIN
 #define ENABLE_SEE_INTRIN (1)
 #endif
 #endif
 
-/* Forceinline */
+// Forceinline
 #ifndef FORCEINLINE
 #ifndef DEBUG_BUILD
 #define FORCEINLINE __attribute__((always_inline)) inline
@@ -30,32 +30,32 @@
 #endif // ifdef DEBUG_BUILD
 #endif // ifndef FORCEINLINE
 
-/* Align */
+// Align
 #ifndef ALIGN_AS
 #define ALIGN_AS(Alignment) __attribute__((aligned(Alignment)))
 #endif
 
-/* No inlining at all */
+// No inlining at all
 #ifndef NOINLINE
 #define NOINLINE __attribute__ ((noinline))
 #endif
 
-/* Vectorcall */
+// Vectorcall
 #ifndef VECTORCALL
 #define VECTORCALL // Does not seem to be supported
 #endif
 
-/* Restric */
+// Restrict
 #ifndef restrict_ptr
 #define restrict_ptr __restrict
 #endif
 
-/* Function signature as a const char* string */
+// Function signature as a const char* string
 #ifndef FUNCTION_SIGNATURE
 #define FUNCTION_SIGNATURE __PRETTY_FUNCTION__
 #endif
 
-/* Dynamic Lib Export and import */
+// Dynamic Lib Export and import
 #ifndef MODULE_EXPORT
 #define MODULE_EXPORT
 #endif
@@ -64,7 +64,7 @@
 #define MODULE_IMPORT
 #endif
 
-/* Pause the thread */
+// Pause the thread
 #ifndef PauseInstruction
 #define PauseInstruction __builtin_ia32_pause
 #endif
