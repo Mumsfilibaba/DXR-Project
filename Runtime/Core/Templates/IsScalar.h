@@ -6,7 +6,9 @@
 #include "IsNullptr.h"
 #include "Or.h"
 
-/* Check if a type is a scalar */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Check if a type is a scalar
+
 template<typename T>
 struct TIsScalar
 {

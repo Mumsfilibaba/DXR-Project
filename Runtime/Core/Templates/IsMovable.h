@@ -3,7 +3,9 @@
 #include "IsConstructible.h"
 #include "IsAssignable.h"
 
-/* Checks weather the type can be constructed with a move constructor */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Checks weather the type can be constructed with a move constructor
+
 template<typename T>
 struct TIsMoveConstructable
 {
@@ -13,7 +15,9 @@ struct TIsMoveConstructable
     };
 };
 
-/* Checks weather the type can be constructed with a move assignment operator */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Checks weather the type can be constructed with a move assignment operator
+
 template<typename T>
 struct TIsMoveAssignable
 {

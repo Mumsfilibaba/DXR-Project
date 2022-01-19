@@ -4,6 +4,9 @@
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Delegates/DelegateInstance.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Application-Module interface
+
 class CORE_API CApplicationModule : public IEngineModule
 {
 public:

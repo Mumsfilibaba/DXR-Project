@@ -11,32 +11,39 @@
 
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Platform interface for atomic operations
+
 class CPlatformAtomic
 {
 public:
 
-    // Read: Perform a atomic read. All loads and stores are synched.
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Read: Perform a atomic read. All loads and stores are synced.
 
     static FORCEINLINE int8  Read(volatile const int8* Source) { return 0; }
     static FORCEINLINE int16 Read(volatile const int16* Source) { return 0; }
     static FORCEINLINE int32 Read(volatile const int32* Source) { return 0; }
     static FORCEINLINE int64 Read(volatile const int64* Source) { return 0; }
 
-    // RelaxedRead: Performs a releaxed atomic read. No barriers or synchronization takes place. Only guaranteed to be atomic.
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // RelaxedRead: Performs a relaxed atomic read. No barriers or synchronization takes place. Only guaranteed to be atomic.
 
     static FORCEINLINE int8  RelaxedRead(volatile const int8* Source) { return 0; }
     static FORCEINLINE int16 RelaxedRead(volatile const int16* Source) { return 0; }
     static FORCEINLINE int32 RelaxedRead(volatile const int32* Source) { return 0; }
     static FORCEINLINE int64 RelaxedRead(volatile const int64* Source) { return 0; }
 
-    // Store: Perform a store. All loads and stores are synched.
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Store: Perform a store. All loads and stores are synced.
 
     static FORCEINLINE void Store(volatile const int8* Dest, int8  Value) { }
     static FORCEINLINE void Store(volatile const int16* Dest, int16 Value) { }
     static FORCEINLINE void Store(volatile const int32* Dest, int32 Value) { }
     static FORCEINLINE void Store(volatile const int64* Dest, int64 Value) { }
 
-    // RelaxedStore: Performs a releaxed atomic store. No barriers or synchronization takes place. Only guaranteed to be atomic.
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // RelaxedStore: Performs a relaxed atomic store. No barriers or synchronization takes place. Only guaranteed to be atomic.
 
     static FORCEINLINE void RelaxedStore(volatile const int8* Dest, int8  Value) { }
     static FORCEINLINE void RelaxedStore(volatile const int16* Dest, int16 Value) { }

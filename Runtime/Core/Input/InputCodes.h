@@ -1,6 +1,9 @@
 #pragma once
 #include "Core/Core.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Engine key-codes
+
 enum EKey : uint8
 {
     Key_Unknown = 0,
@@ -141,6 +144,9 @@ enum EKey : uint8
     Key_Count = Key_Last + 1
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Engine Mouse-Button codes
+
 enum EMouseButton : uint8
 {
     MouseButton_Unknown = 0,
@@ -154,6 +160,9 @@ enum EMouseButton : uint8
     MouseButton_Count = MouseButton_Last + 1
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Modifier-flags
+
 enum EModifierFlag
 {
     ModifierFlag_None = 0,
@@ -164,6 +173,9 @@ enum EModifierFlag
     ModifierFlag_Super = FLAG(5),
     ModifierFlag_NumLock = FLAG(6),
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Codes to string helpers
 
 inline const char* ToString(EMouseButton Button)
 {

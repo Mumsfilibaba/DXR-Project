@@ -2,6 +2,10 @@
 #include "MathCommon.h"
 
 // TODO: Fill this out properly with functions etc
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// A 3x4 matrix
+
 class CMatrix3x4
 {
 public:
@@ -45,6 +49,9 @@ public:
         float Elements[3][4];
     };
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Implementation
 
 FORCEINLINE CMatrix3x4::CMatrix3x4() noexcept
     : m00(0.0f), m01(0.0f), m02(0.0f), m03(0.0f)

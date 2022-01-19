@@ -1,9 +1,10 @@
 #pragma once
 #include "MulticastDelegate.h"
 
-/* Macros for delcaring event types */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Macros for declaring event types
 
-#define DECLARE_EVENT( NewEvent, OwnerType, ... )       \
+#define DECLARE_EVENT(NewEvent, OwnerType, ...)         \
     class NewEvent : public TEvent<__VA_ARGS__>         \
     {                                                   \
         friend class OwnerType;                         \
@@ -18,7 +19,9 @@
         NewEvent() = default;                           \
     };
 
-/* Event */
+/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+// Event is a multi-cast delegate that publicly can bind functions and only a friend class can broadcast
+
 template<typename... ArgTypes>
 class TEvent : public TMulticastDelegate<ArgTypes...>
 {

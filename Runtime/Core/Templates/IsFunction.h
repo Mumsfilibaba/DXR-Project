@@ -8,7 +8,9 @@
 #pragma warning( disable : 4180 )
 #endif
 
-/* Determine if the type is a function */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determine if the type is a function
+
 template<typename T>
 struct TIsFunction
 {

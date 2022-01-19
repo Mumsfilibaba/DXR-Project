@@ -24,21 +24,25 @@ public:
         DeleteCriticalSection(&Section);
     }
 
+    /* Lock CriticalSection for other threads */
     FORCEINLINE void Lock() noexcept
     {
         EnterCriticalSection(&Section);
     }
 
+    /* Try to lock CriticalSection for other threads */
     FORCEINLINE bool TryLock() noexcept
     {
         return !!TryEnterCriticalSection(&Section);
     }
 
+    /* Unlock CriticalSection for other threads */
     FORCEINLINE void Unlock() noexcept
     {
         LeaveCriticalSection(&Section);
     }
 
+    /* Retrieve platform specific handle */
     FORCEINLINE PlatformHandle GetPlatformHandle() noexcept
     {
         return &Section;

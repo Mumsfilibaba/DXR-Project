@@ -1,10 +1,13 @@
 #pragma once
 #include "Vector3.h"
 
-/* A 3x3 matrix */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// A 3x3 matrix
+
 class CMatrix3
 {
 public:
+
     /* Default constructor (Initialize components to zero) */
     FORCEINLINE CMatrix3() noexcept;
 
@@ -140,6 +143,7 @@ public:
     FORCEINLINE const float* GetData() const noexcept;
 
 public:
+
     /**
      * Transforms a 3-D vector
      *
@@ -277,6 +281,7 @@ public:
     FORCEINLINE bool operator!=(const CMatrix3& Other) const noexcept;
 
 public:
+
     /**
      * Creates and returns a identity matrix
      *
@@ -359,6 +364,9 @@ public:
         float f[3][3];
     };
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Implementation
 
 FORCEINLINE CMatrix3::CMatrix3() noexcept
     : m00(0.0f), m01(0.0f), m02(0.0f)

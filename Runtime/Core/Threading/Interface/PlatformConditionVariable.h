@@ -12,7 +12,9 @@
 
 #endif
 
-/* Generic ConditionVariable*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Platform interface for condition variables
+
 class CPlatformConditionVariable
 {
 public:
@@ -22,23 +24,17 @@ public:
     CPlatformConditionVariable() = default;
     ~CPlatformConditionVariable() = default;
 
-    FORCEINLINE void NotifyOne() noexcept
-    {
-    }
+    /* Notifies a single CriticalSection */
+    FORCEINLINE void NotifyOne() noexcept { }
 
-    FORCEINLINE void NotifyAll() noexcept
-    {
-    }
+    /* Notifies a all CriticalSections */
+    FORCEINLINE void NotifyAll() noexcept { }
 
-    FORCEINLINE bool Wait(TScopedLock<CCriticalSection>& Lock) noexcept
-    {
-        return false;
-    }
+    /* Make a CriticalSections wait until notified */
+    FORCEINLINE bool Wait(TScopedLock<CCriticalSection>& Lock) noexcept { return false; }
 
-    FORCEINLINE PlatformHandle GetPlatformHandle()
-    {
-        return nullptr;
-    }
+    /* Retrieve platform specific handle */
+    FORCEINLINE PlatformHandle GetPlatformHandle() { return nullptr; }
 };
 
 #if defined(COMPILER_MSVC)

@@ -3,7 +3,9 @@
 #include "RemoveCV.h"
 #include "Or.h"
 
-/* Determine if type is a floating point type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determine if type is a floating point type
+
 template<typename T>
 struct TIsFloatingPoint
 {

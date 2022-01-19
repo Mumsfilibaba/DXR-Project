@@ -1,6 +1,8 @@
 #pragma once
 
-/* Enables return value if condition is met */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Enables return value if condition is met
+
 template<bool Condition, typename T = void>
 struct TEnableIf
 {

@@ -6,21 +6,27 @@
 
 #include "Core/CoreDefines.h"
 
-/* Move an object by converting it into a rvalue */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Move an object by converting it into a r-value
+
 template<typename T>
 constexpr typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
 {
     return static_cast<typename TRemoveReference<T>::Type&&>(Value);
 }
 
-/* Forward an object by converting it into a rvalue from an lvalue */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Forward an object by converting it into a rvalue from an l-value
+
 template<typename T>
 constexpr T&& Forward(typename TRemoveReference<T>::Type& Value) noexcept
 {
     return static_cast<T&&>(Value);
 }
 
-/* Forward an object by converting it into a rvalue from an rvalue */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Forward an object by converting it into a r-value from an r-value
+
 template<typename T>
 constexpr T&& Forward(typename TRemoveReference<T>::Type&& Value) noexcept
 {
@@ -35,7 +41,9 @@ FORCEINLINE typename TEnableIf<TNot<TIsConst<T>>::Value>::Type Swap(T& LHS, T& R
     RHS = Move(TempElement);
 }
 
-/* Helps expand variadic packs */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helps expand variadic packs
+
 template<typename... Packs>
 inline void ExpandPacks(Packs&&...)
 {

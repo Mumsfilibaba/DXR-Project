@@ -1,6 +1,8 @@
 #pragma once
 
-/* Value returns the or-ed value of all types value */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Value returns the or-ed value of all types value
+
 template<typename... ArgsType>
 struct TOr;
 

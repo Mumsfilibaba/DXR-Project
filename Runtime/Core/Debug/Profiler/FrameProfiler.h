@@ -7,8 +7,14 @@
 #include "Core/Threading/Lockable.h"
 #include "Core/Containers/HashTable.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FrameProfiler config
+
 #define ENABLE_PROFILER      (1)
 #define NUM_PROFILER_SAMPLES (200)
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Scoped profiling macros
 
 #if ENABLE_PROFILER
 #define TRACE_SCOPE(Name)      SScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
@@ -17,6 +23,9 @@
 #define TRACE_SCOPE(Name)
 #define TRACE_FUNCTION_SCOPE()
 #endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Struct to hold samples for the frame-profiler
 
 struct SProfileSample
 {
@@ -93,6 +102,9 @@ struct SProfileSample
     int32 TotalCalls = 0;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FrameProfiler - Manages samples that gets updated each frame
+
 using ProfileSamplesTable = THashTable<CString, SProfileSample, SStringHasher>;
 
 class CORE_API CFrameProfiler
@@ -150,6 +162,9 @@ private:
 
     static CFrameProfiler Instance;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Struct for profiling a scope
 
 struct SScopedTrace
 {

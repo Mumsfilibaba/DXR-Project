@@ -1,7 +1,9 @@
 #pragma once
 #include "IsArithmetic.h"
 
-/* Checks if the type is signed */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Checks if the type is signed 
+
 template<typename T>
 struct TIsSigned
 {
@@ -32,7 +34,9 @@ public:
     };
 };
 
-/* Checks if the type is unsigned */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Checks if the type is unsigned
+
 template<typename T>
 struct TIsUnsigned
 {

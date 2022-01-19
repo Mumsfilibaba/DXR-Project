@@ -1,6 +1,9 @@
 #pragma once
 #include "Core/Core.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Class for floating-point color-data 
+
 struct SColorF
 {
     FORCEINLINE SColorF()

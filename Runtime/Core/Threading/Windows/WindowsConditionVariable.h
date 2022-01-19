@@ -5,8 +5,12 @@
 
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Interface/PlatformConditionVariable.h"
-#include "CoreApplication/Windows/WindowsDebugMisc.h"
 #include "Core/Logging/Log.h"
+
+#include "CoreApplication/Platform/PlatformDebugMisc.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Platform interface for condition variables
 
 class CWindowsConditionVariable final : public CPlatformConditionVariable
 {
@@ -28,16 +32,19 @@ public:
         NotifyAll();
     }
 
+    /* Notifies a single CriticalSection */
     FORCEINLINE void NotifyOne() noexcept
     {
         WakeConditionVariable(&ConditionVariable);
     }
 
+    /* Notifies a all CriticalSections */
     FORCEINLINE void NotifyAll() noexcept
     {
         WakeAllConditionVariable(&ConditionVariable);
     }
 
+    /* Make a CriticalSections wait until notified */
     FORCEINLINE bool Wait(TScopedLock<CCriticalSection>& Lock) noexcept
     {
         SetLastError(0);
@@ -48,7 +55,7 @@ public:
         if (!bResult)
         {
             CString ErrorString;
-            CWindowsDebugMisc::GetLastErrorString(ErrorString);
+            PlatformDebugMisc::GetLastErrorString(ErrorString);
 
             LOG_ERROR(ErrorString.CStr());
 
@@ -60,7 +67,8 @@ public:
         }
     }
 
-    FORCEINLINE PlatformHandle GetSection() noexcept
+    /* Retrieve platform specific handle */
+    FORCEINLINE PlatformHandle GetPlatformHandle() noexcept
     {
         return &ConditionVariable;
     }

@@ -11,11 +11,14 @@
 
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Interface for mapping platform scan-code to engine key-code
+
 class CPlatformKeyMapping
 {
 public:
 
-    /* Initialize keytables */
+    /* Initialize key-tables */
     static FORCEINLINE void Initialize() { }
 
     /* Retrieve the key-code from the scan-code */

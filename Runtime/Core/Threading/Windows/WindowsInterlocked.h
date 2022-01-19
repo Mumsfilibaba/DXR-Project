@@ -7,7 +7,9 @@
 
 #include <intrin.h>
 
-/* Atomic operations on the windows platform */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Windows-specific interface for interlocked mathematical operations
+
 class CWindowsInterlocked : public CPlatformInterlocked
 {
 public:
@@ -17,7 +19,8 @@ public:
 
     static_assert(sizeof(int32) == sizeof(long) && alignof(int32) == alignof(long), "int32 must have the same size and alignment as long");
 
-    /* Add: Adds value and return original value of Dest */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Add: Adds value and return original value of Dest
 
     static FORCEINLINE int8 Add(volatile int8* Dest, int8 Value)
     {
@@ -39,7 +42,8 @@ public:
         return static_cast<int64>(::_InterlockedExchangeAdd64(static_cast<volatile long long*>(Dest), static_cast<long long>(Value)));
     }
 
-    /* Sub: Subtracts value and return original value of Dest */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Sub: Subtracts value and return original value of Dest
 
     static FORCEINLINE int8 Sub(volatile int8* Dest, int8 Value)
     {
@@ -61,7 +65,8 @@ public:
         return static_cast<int64>(::_InterlockedExchangeAdd64(static_cast<volatile long long*>(Dest), -static_cast<long long>(Value)));
     }
 
-    /* And: ANDs the Dest with Value and returns the original value */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // And: ANDs the Dest with Value and returns the original value
 
     static FORCEINLINE int8 And(volatile int8* Dest, int8 Value)
     {
@@ -83,7 +88,8 @@ public:
         return static_cast<int64>(::_InterlockedAnd64(static_cast<volatile long long*>(Dest), static_cast<long long>(Value)));
     }
 
-    /* Or: ORs the Dest with Value and returns the original value */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Or: ORs the Dest with Value and returns the original value
 
     static FORCEINLINE int8 Or(volatile int8* Dest, int8 Value)
     {
@@ -105,7 +111,8 @@ public:
         return static_cast<int64>(::_InterlockedOr64(static_cast<volatile long long*>(Dest), static_cast<long long>(Value)));
     }
 
-    /* Xor: XORs the Dest with Value and returns the original value */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Xor: XORs the Dest with Value and returns the original value
 
     static FORCEINLINE int8 Xor(volatile int8* Dest, int8 Value)
     {
@@ -127,7 +134,8 @@ public:
         return static_cast<int64>(::_InterlockedXor64(static_cast<volatile long long*>(Dest), static_cast<long long>(Value)));
     }
 
-    /* Increment: Increments destination and returns the new value */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Increment: Increments destination and returns the new value
 
     static FORCEINLINE int8 Increment(volatile int8* Dest)
     {
@@ -149,7 +157,8 @@ public:
         return static_cast<int64>(::_InterlockedIncrement64(static_cast<volatile long long*>(Dest)));
     }
 
-    /* Decrement: Decrements destination and returns the new value */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Decrement: Decrements destination and returns the new value
 
     static FORCEINLINE int8 Decrement(volatile int8* Dest)
     {
@@ -171,7 +180,8 @@ public:
         return static_cast<int64>(::_InterlockedDecrement64(static_cast<volatile long long*>(Dest)));
     }
 
-    /* CompareExchange: Compares Dest with Comparand, if equal Exchange gets stored in Dest. Returns the original value. */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CompareExchange: Compares Dest with Comparand, if equal Exchange gets stored in Dest. Returns the original value
 
     static FORCEINLINE int8 CompareExchange(volatile int8* Dest, int8 Exchange, int8 Comparand)
     {
@@ -193,7 +203,8 @@ public:
         return static_cast<int64>(::_InterlockedCompareExchange64(static_cast<volatile long long*>(Dest), static_cast<long>(Exchange), static_cast<long>(Comparand)));
     }
 
-    /* Exchange: Stores Value in Dest, and returns original value */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Exchange: Stores Value in Dest, and returns original value
 
     static FORCEINLINE int8 Exchange(volatile int8* Dest, int8 Value)
     {

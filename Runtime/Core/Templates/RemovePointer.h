@@ -1,6 +1,8 @@
 #pragma once
 
-/* Removes the pointer of the type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Removes the pointer of the type
+
 template<typename T>
 struct TRemovePointer
 {

@@ -1,6 +1,8 @@
 #pragma once
 
-/* Determines if the type is a union type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determines if the type is a union type
+
 template<typename T>
 struct TIsUnion
 {

@@ -13,14 +13,17 @@
 
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Platform interface for miscellaneous functions for thread-handling 
+
 class CPlatformThreadMisc
 {
 public:
 
-    /* Performs platform specific initialization of threadhandling */
+    /* Performs platform specific initialization of thread handling */
     static FORCEINLINE bool Initialize() { return true; }
 
-    /* Releases platform specific resources for threadhandling */
+    /* Releases platform specific resources for thread handling */
     static FORCEINLINE void Release() { }
 
     /* Returns the number of logical processors on the system */

@@ -3,7 +3,9 @@
 #include "IsArithmetic.h"
 #include "IsNullptr.h"
 
-/* Determines if the type is fundamental or not */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determines if the type is fundamental or not
+
 template<typename T>
 struct TIsFundamental
 {
@@ -13,7 +15,9 @@ struct TIsFundamental
     };
 };
 
-/* Determines if the type is compound or not */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determines if the type is compound or not
+
 template<typename T>
 struct TIsCompound
 {

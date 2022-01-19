@@ -4,6 +4,9 @@
 #include "Core/Threading/Platform/PlatformInterlocked.h"
 #include "Core/Threading/Platform/PlatformAtomic.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Templated integer that support atomic operations
+
 template<typename T>
 class TAtomicInt
 {
@@ -100,7 +103,8 @@ public:
 
 public:
 
-    /* Operators */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Operators
 
     FORCEINLINE TAtomicInt& operator=(const TAtomicInt& Other)
     {
@@ -167,7 +171,9 @@ private:
     mutable volatile T Value;
 };
 
-/* Predefined types*/
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Predefined types
+
 typedef TAtomicInt<int8>  AtomicInt8;
 typedef TAtomicInt<int16> AtomicInt16;
 typedef TAtomicInt<int32> AtomicInt32;

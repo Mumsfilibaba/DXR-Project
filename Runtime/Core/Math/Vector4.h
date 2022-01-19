@@ -2,7 +2,9 @@
 #include "Vector3.h"
 #include "SIMD.h"
 
-/* A 4-D floating point vector (x, y, z, w) with SIMD capabilities */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// A 4-D floating point vector (x, y, z, w) with SIMD capabilities
+
 class VECTOR_ALIGN CVector4
 {
 public:
@@ -157,6 +159,7 @@ public:
     FORCEINLINE const float* GetData() const noexcept;
 
 public:
+
     /**
      * Returns a vector with the smallest of each component of two vectors
      *
@@ -204,6 +207,7 @@ public:
     friend FORCEINLINE CVector4 Saturate(const CVector4& Value) noexcept;
 
 public:
+
     /**
      * Return a vector with component-wise negation of this vector
      *
@@ -292,7 +296,7 @@ public:
     FORCEINLINE CVector4& operator*=(const CVector4& RHS) noexcept;
 
     /**
-     * Returns the result of multipling each component of this vector with a scalar
+     * Returns the result of multiplying each component of this vector with a scalar
      *
      * @param RHS: The scalar to multiply with
      * @return A vector with the result of the multiplication
@@ -300,7 +304,7 @@ public:
     FORCEINLINE CVector4 operator*(float RHS) const noexcept;
 
     /**
-     * Returns the result of multipling each component of a vector with a scalar
+     * Returns the result of multiplying each component of a vector with a scalar
      *
      * @param LHS: The scalar to multiply with
      * @param RHS: The vector to multiply with
@@ -309,7 +313,7 @@ public:
     friend FORCEINLINE CVector4 operator*(float LHS, const CVector4& RHS) noexcept;
 
     /**
-     * Returns this vector after multipling each component of this vector with a scalar
+     * Returns this vector after multiplying each component of this vector with a scalar
      *
      * @param RHS: The scalar to multiply with
      * @return A reference to this vector
@@ -365,7 +369,7 @@ public:
     FORCEINLINE bool operator!=(const CVector4& Other) const noexcept;
 
     /**
-     * Returns the component specifed
+     * Returns the component specified
      *
      * @param Index: The component index
      * @return The component
@@ -373,7 +377,7 @@ public:
     FORCEINLINE float& operator[](int Index) noexcept;
 
     /**
-     * Returns the component specifed
+     * Returns the component specified
      *
      * @param Index: The component index
      * @return The component
@@ -381,18 +385,19 @@ public:
     FORCEINLINE float operator[](int Index) const noexcept;
 
 public:
+
     /* The x-coordinate */
     float x;
-
     /* The y-coordinate */
     float y;
-
     /* The z-coordinate */
     float z;
-
     /* The w-coordinate */
     float w;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Implementation
 
 FORCEINLINE CVector4::CVector4() noexcept
     : x(0.0f)

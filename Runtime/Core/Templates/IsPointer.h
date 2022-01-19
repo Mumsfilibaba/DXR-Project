@@ -1,6 +1,8 @@
 #pragma once
 
-/* Check if type is pointer type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Check if type is pointer type
+
 template<typename T>
 struct TIsPointer
 {

@@ -1,7 +1,9 @@
 #pragma once
 #include "Core/CoreTypes.h"
 
-/* Check if type is an array type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Check if type is an array type
+
 template<typename T>
 struct TIsArray
 {
@@ -48,7 +50,9 @@ struct TIsBoundedArray<T[N]>
     };
 };
 
-/* Check if the array is unbounded */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Check if the array is unbounded
+
 template<typename T>
 struct TIsUnboundedArray
 {

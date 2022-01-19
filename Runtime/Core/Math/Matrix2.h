@@ -2,10 +2,13 @@
 #include "Vector2.h"
 #include "SIMD.h"
 
-/* A 2x2 matrix with SIMD capabilities */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// A 2x2 matrix with SIMD capabilities
+
 class VECTOR_ALIGN CMatrix2
 {
 public:
+
     /* Default constructor (Initialize components to zero) */
     FORCEINLINE CMatrix2() noexcept;
 
@@ -56,7 +59,7 @@ public:
     inline CMatrix2 Invert() const noexcept;
 
     /**
-     * Returns the adjuagte of this matrix
+     * Returns the adjugate of this matrix
      *
      * @return Adjugate matrix
      */
@@ -104,7 +107,7 @@ public:
     /**
      * Returns a row of this matrix
      *
-     * @param Row: The row to retrive
+     * @param Row: The row to retrieve
      * @return A vector containing the specified row
      */
     FORCEINLINE CVector2 GetRow(int Row) const noexcept;
@@ -112,7 +115,7 @@ public:
     /**
      * Returns a column of this matrix
      *
-     * @param Column: The column to retrive
+     * @param Column: The column to retrieve
      * @return A vector containing the specified column
      */
     FORCEINLINE CVector2 GetColumn(int Column) const noexcept;
@@ -132,6 +135,7 @@ public:
     FORCEINLINE const float* GetData() const noexcept;
 
 public:
+
     /**
      * Transforms a 2-D vector
      *
@@ -269,6 +273,7 @@ public:
     FORCEINLINE bool operator!=(const CMatrix2& Other) const noexcept;
 
 public:
+
     /**
      * Creates and returns a identity matrix
      *
@@ -323,6 +328,9 @@ public:
         float f[2][2];
     };
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Implementation
 
 FORCEINLINE CMatrix2::CMatrix2() noexcept
     : m00(0.0f), m01(0.0f)

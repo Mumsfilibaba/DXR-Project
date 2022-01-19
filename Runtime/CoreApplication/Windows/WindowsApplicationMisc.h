@@ -11,6 +11,9 @@
 #undef MessageBox
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Windows-specific interface for miscellaneous functions for application utilities
+
 class COREAPPLICATION_API CWindowsApplicationMisc final : public CPlatformApplicationMisc
 {
 public:

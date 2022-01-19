@@ -1,10 +1,13 @@
 #pragma once
 #include "MathCommon.h"
 
-/* A 2-D floating point vector (x, y) */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// A 2-D floating point vector (x, y)
+
 class CVector2
 {
 public:
+
     /* Default constructor (Initialize components to zero) */
     FORCEINLINE CVector2() noexcept;
 
@@ -121,6 +124,7 @@ public:
     FORCEINLINE const float* GetData() const noexcept;
 
 public:
+
     /**
      * Returns a vector with the smallest of each component of two vectors
      *
@@ -168,6 +172,7 @@ public:
     friend FORCEINLINE CVector2 Saturate(const CVector2& Value) noexcept;
 
 public:
+
     /**
      * Return a vector with component-wise negation of this vector
      *
@@ -256,7 +261,7 @@ public:
     FORCEINLINE CVector2& operator*=(const CVector2& RHS) noexcept;
 
     /**
-     * Returns the result of multipling each component of this vector with a scalar
+     * Returns the result of multiplying each component of this vector with a scalar
      *
      * @param RHS: The scalar to multiply with
      * @return A vector with the result of the multiplication
@@ -264,7 +269,7 @@ public:
     FORCEINLINE CVector2 operator*(float RHS) const noexcept;
 
     /**
-     * Returns the result of multipling each component of a vector with a scalar
+     * Returns the result of multiplying each component of a vector with a scalar
      *
      * @param LHS: The scalar to multiply with
      * @param RHS: The vector to multiply with
@@ -273,7 +278,7 @@ public:
     friend FORCEINLINE CVector2 operator*(float LHS, const CVector2& RHS) noexcept;
 
     /**
-     * Returns this vector after multipling each component of this vector with a scalar
+     * Returns this vector after multiplying each component of this vector with a scalar
      *
      * @param RHS: The scalar to multiply with
      * @return A reference to this vector
@@ -345,12 +350,15 @@ public:
     FORCEINLINE float operator[](int Index) const noexcept;
 
 public:
+
     /* The x-coordinate */
     float x;
-
     /* The y-coordinate */
     float y;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Implementation
 
 FORCEINLINE CVector2::CVector2() noexcept
     : x(0.0f)
@@ -624,6 +632,9 @@ FORCEINLINE bool CVector2::operator!=(const CVector2& Other) const noexcept
 {
     return !IsEqual(Other);
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Radians and degree conversion
 
 namespace NMath
 {

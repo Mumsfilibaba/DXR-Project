@@ -3,7 +3,9 @@
 #include "IsConstructible.h"
 #include "IsAssignable.h"
 
-/* Checks weather the type can be constructed with a copy constructor */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Checks weather the type can be constructed with a copy constructor
+
 template<typename T>
 struct TIsCopyConstructable
 {
@@ -13,7 +15,9 @@ struct TIsCopyConstructable
     };
 };
 
-/* Checks weather the type can be constructed with a copy assignment operator */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Checks weather the type can be constructed with a copy assignment operator
+
 template<typename T>
 struct TIsCopyAssignable
 {

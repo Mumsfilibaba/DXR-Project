@@ -1,10 +1,13 @@
 #pragma once
 #include "MathCommon.h"
 
-/* A 2-D vector (x, y) using integers */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// A 2-D vector (x, y) using integers
+
 class CIntVector2
 {
 public:
+
     /* Default constructor (Initialize components to zero) */
     FORCEINLINE CIntVector2() noexcept;
 
@@ -146,7 +149,7 @@ public:
     FORCEINLINE CIntVector2& operator*=(const CIntVector2& RHS) noexcept;
 
     /**
-     * Returns the result of multipling each component of this vector with a scalar
+     * Returns the result of multiplying each component of this vector with a scalar
      *
      * @param RHS: The scalar to multiply with
      * @return A vector with the result of the multiplication
@@ -154,7 +157,7 @@ public:
     FORCEINLINE CIntVector2 operator*(int RHS) const noexcept;
 
     /**
-     * Returns this vector after multipling each component of this vector with a scalar
+     * Returns this vector after multiplying each component of this vector with a scalar
      *
      * @param RHS: The scalar to multiply with
      * @return A reference to this vector
@@ -226,12 +229,15 @@ public:
     FORCEINLINE int operator[](int Index) const noexcept;
 
 public:
+    
     /* The x-coordinate */
     int x;
-
     /* The y-coordinate */
     int y;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Implementation
 
 FORCEINLINE CIntVector2::CIntVector2() noexcept
     : x(0)

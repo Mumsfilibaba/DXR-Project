@@ -7,13 +7,19 @@
 
 #include "Core/Delegates/Delegate.h"
 
-typedef int64 DispatchID;
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Information for a single dispatch
 
 struct SDispatch
 {
     DECLARE_DELEGATE(CTaskDelegate);
     CTaskDelegate Delegate;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// DispatchQueue - Handles small tasks that are executed on another thread
+
+typedef int64 DispatchID;
 
 class CORE_API CDispatchQueue
 {

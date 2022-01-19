@@ -2,14 +2,17 @@
 #include "Delegate.h"
 #include "MulticastDelegateBase.h"
 
-/* Macros for delcaring delegate types */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+/* Macros for declaring multi-cast delegate types */
 
-#define DECLARE_MULTICAST_DELEGATE( DelegateName, ... )         \
+#define DECLARE_MULTICAST_DELEGATE(DelegateName, ...)           \
     class DelegateName : public TMulticastDelegate<__VA_ARGS__> \
     {                                                           \
     };
 
-/* Multicast delegate */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Multicast delegate
+
 template<typename... ArgTypes>
 class TMulticastDelegate : public CMulticastDelegateBase
 {
@@ -107,7 +110,7 @@ public:
 
         for (int32 Index = 0; Index < Delegates.Size(); Index++)
         {
-            DelegateType& Delegate = (DelegateType&)Delegates[Index];
+            DelegateType& Delegate = static_cast<DelegateType&>(Delegates[Index]);
 
             CDelegateHandle Handle = Delegate.GetHandle();
             if (Handle.IsValid())

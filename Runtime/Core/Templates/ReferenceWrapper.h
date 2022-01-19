@@ -4,7 +4,9 @@
 #include "Invoke.h"
 #include "AddressOf.h"
 
-/* Wrapper for a reference making them copyable */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Wrapper for a reference making them copyable
+
 template<typename T>
 class TReferenceWrapper
 {

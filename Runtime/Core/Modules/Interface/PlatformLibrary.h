@@ -11,6 +11,9 @@
 
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Base dynamic library interface
+
 class CPlatformLibrary
 {
 public:
@@ -29,7 +32,7 @@ public:
     /* Loads a function or variable with specified name from the specified library */
     static FORCEINLINE void* LoadSymbolAddress(const char* SymbolName, PlatformHandle LibraryHandle) { return nullptr; }
 
-    /* Retrive the extension that dynamic libraries use on the platform */
+    /* Retrieve the extension that dynamic libraries use on the platform */
     static FORCEINLINE const char* GetDynamicLibExtension() { return ""; }
 
     /* Retrieve the real name for the library including prefixes and extension */

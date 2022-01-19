@@ -3,7 +3,9 @@
 #include "EnableIf.h"
 #include "IsObject.h"
 
-/* Returns the address of an object */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Returns the address of an object
+
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsObject<T>::Value, T*>::Type AddressOf(T& Object) noexcept
 {

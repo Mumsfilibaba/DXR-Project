@@ -6,6 +6,9 @@
 #include "CoreApplication/CoreApplicationModule.h"
 #include "CoreApplication/Interface/PlatformCursor.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Windows-specific interface for cursor
+
 class COREAPPLICATION_API CWindowsCursor final : public CPlatformCursor
 {
 public:

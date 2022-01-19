@@ -1,6 +1,9 @@
 #pragma once
 #include "Timestamp.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Simple timer to count time between ticks
+
 class CORE_API CTimer
 {
 public:
@@ -8,13 +11,10 @@ public:
     CTimer();
     ~CTimer() = default;
 
-    /*
-    * Measures the deltatime between this and the latest call to CTimer::Tick. It also updates the totalTime that the clock
-    * has been active. This is the time between the last call to CTimer::Reset and this call to Clock::Tick
-    */
-
+    /* Measure time between this and last call to tick */
     void Tick();
 
+    /* Rests the time to zero */
     FORCEINLINE void Reset()
     {
         DeltaTime = CTimestamp(0);

@@ -1,6 +1,9 @@
 #pragma once
 #include "CoreApplication/ICursor.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Base Platform interface for cursor
+
 class CPlatformCursor : public ICursor
 {
 public:

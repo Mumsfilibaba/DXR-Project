@@ -14,8 +14,14 @@
 #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helper defines for creating consoleobjects
+
 #define INIT_CONSOLE_VARIABLE(Name, Variable) CConsoleManager::Get().RegisterVariable(Name, Variable)
 #define INIT_CONSOLE_COMMAND(Name, Command)   CConsoleManager::Get().RegisterCommand(Name, Command)
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Severity of the console-message
 
 enum class EConsoleSeverity
 {
@@ -24,25 +30,26 @@ enum class EConsoleSeverity
     Error = 2
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ConsoleManager - Manages ConsoleObjects
+
 class CORE_API CConsoleManager
 {
 public:
 
-    /* Init the console */
+    /* Initialize the console */
     static void Initialize();
 
-    /* Retreive the console manager */
+    /* Retrieve the console manager */
     static FORCEINLINE CConsoleManager& Get() { return Instance; }
 
     /* Register a console command */
     void RegisterCommand(const CString& Name, IConsoleCommand* Object);
-
     /* Register a console variable */
     void RegisterVariable(const CString& Name, IConsoleVariable* Variable);
 
     /* Finds a console-command, returns nullptr otherwise, including if the object is a variable */
     IConsoleCommand* FindCommand(const CString& Name);
-
     /* Finds a console-variable, returns nullptr otherwise, including if the object is a command */
     IConsoleVariable* FindVariable(const CString& Name);
 

@@ -2,7 +2,9 @@
 #include "IsSame.h"
 #include "RemoveCV.h"
 
-/* Determine if the type is void */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determine if the type is void
+
 template<typename T>
 struct TIsVoid
 {

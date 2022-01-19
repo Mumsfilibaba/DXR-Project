@@ -8,7 +8,9 @@
 #pragma warning(disable : 4556) // Disable "value of intrinsic immediate argument '8' is out of range '0 - 7'"
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Constant masks
+
 #define FP32_HIDDEN_BIT   (0x800000U)
 #define FP32_MAX_EXPONENT (0xff)
 #define FP16_MAX_EXPONENT (0x1f)
@@ -17,6 +19,7 @@
 #define MIN_EXPONENT      (DENORM_EXPONENT - 10)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// 64-bit floating point data
 
 struct SFloat64
 {
@@ -71,6 +74,7 @@ struct SFloat64
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// 32-bit floating point data
 
 struct SFloat32
 {
@@ -125,6 +129,7 @@ struct SFloat32
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// 16-bit floating point data
 
 struct SFloat16
 {
@@ -146,6 +151,7 @@ struct SFloat16
 
     FORCEINLINE void SetFloat(float Float32)
     {
+        // TODO: Ensure that the fast-path also works on macOS
 #if ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
         __m128  Reg0 = _mm_set_ss(Float32);
         __m128i Reg1 = _mm_cvtps_ph(Reg0, _MM_FROUND_NO_EXC);
@@ -191,7 +197,7 @@ struct SFloat16
             const int32 NewExponent = int32(In.Exponent) - 127 + 15; // Unbias and bias the exponents
             Exponent = uint16(NewExponent);
 
-            const int32 NewMantissa = int32(In.Mantissa) >> 13; // Bit-Shift diff in number of mantissa bits
+            const int32 NewMantissa = int32(In.Mantissa) >> 13; // Bit-Shift difference in number of mantissa bits
             Mantissa = uint16(NewMantissa);
         }
 #endif
@@ -199,6 +205,7 @@ struct SFloat16
 
     FORCEINLINE void SetFloatFast(float Float32)
     {
+        // TODO: Ensure that the fast-path also works on macOS
 #if ARCHITECTURE_X86_X64
         __m128  Reg0 = _mm_set_ss(Float32);
         __m128i Reg1 = _mm_cvtps_ph(Reg0, _MM_FROUND_NO_EXC);
@@ -206,13 +213,14 @@ struct SFloat16
 #else
         SFloat32 In(Float32);
         Exponent = uint16(int32(In.Exponent) - 127 + 15); // Unbias and bias the exponents
-        Mantissa = uint16(In.Mantissa >> 13);               // Bit-Shift diff in number of mantissa bits
+        Mantissa = uint16(In.Mantissa >> 13);               // Bit-Shift difference in number of mantissa bits
         Sign = In.Sign;
 #endif
     }
 
     FORCEINLINE float GetFloat() const
     {
+        // TODO: Ensure that the fast-path also works on macOS
 #if ARCHITECTURE_X86_X64
         __m128i Reg0 = _mm_cvtsi32_si128(static_cast<uint32_t>(Encoded));
         __m128  Reg1 = _mm_cvtph_ps(Reg0);

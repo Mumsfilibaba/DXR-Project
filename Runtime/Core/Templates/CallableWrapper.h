@@ -1,13 +1,16 @@
 #pragma once
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Wrapper for a callable
+
 template<typename ReturnType, typename... ArgTypes>
 struct TCallableWrapper
 {
-    using Type = ReturnType(ArgTypes...);
+    typedef ReturnType(*Type)(ArgTypes...);
 };
 
 template<typename ReturnType>
 struct TCallableWrapper<ReturnType, void>
 {
-    using Type = ReturnType();
+    typedef ReturnType(*Type)(void);
 };

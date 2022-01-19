@@ -3,7 +3,9 @@
 
 // TODO: Finish this class
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* Represents a 3-D plane */
+
 class VECTOR_ALIGN CPlane
 {
 public:
@@ -53,18 +55,19 @@ public:
     FORCEINLINE bool operator!=(const CPlane& Other) const noexcept;
 
 public:
+
     /* The normals x-coordinate */
     float x;
-
     /* The normals y-coordinate */
     float y;
-
     /* The normals z-coordinate */
     float z;
-
     /* The w-coordinate */
     float w;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Implementation
 
 FORCEINLINE CPlane::CPlane() noexcept
     : x(0.0f)

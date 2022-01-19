@@ -98,6 +98,9 @@ bool CRayTracer::Init(SFrameResources& Resources)
 void CRayTracer::Release()
 {
     Pipeline.Reset();
+    RayGenShader.Reset();
+    RayMissShader.Reset();
+    RayClosestHitShader.Reset();
 }
 
 void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources, const CScene& Scene)

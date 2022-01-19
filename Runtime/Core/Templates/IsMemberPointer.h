@@ -1,6 +1,8 @@
 #pragma once
 
-/* Checks if type is a member pointer */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Checks if type is a member pointer
+
 template <typename T>
 struct TIsMemberPointer
 {

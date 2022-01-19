@@ -7,6 +7,9 @@
 #include <cstdlib>
 #include <sstream>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ConsoleVariable - BaseClass for a console-variable that contains a delegate for when the variable changes
+
 class CConsoleVariable : public IConsoleVariable
 {
 public:
@@ -19,15 +22,10 @@ public:
 
     virtual ~CConsoleVariable() = default;
 
-    virtual IConsoleCommand* AsCommand() override
-    {
-        return nullptr;
-    }
-
-    virtual IConsoleVariable* AsVariable() override
-    {
-        return this;
-    }
+    /* Cast to console-command */
+    virtual IConsoleCommand* AsCommand() override { return nullptr; }
+    /* Cast to console-variable */
+    virtual IConsoleVariable* AsVariable() override { return this; }
 
     virtual CChangedDelegate& GetChangedDelegate() override
     {
@@ -37,6 +35,9 @@ public:
 protected:
     CChangedDelegate ChangedDelegate;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Templated console-variable for storing a specific type of variable
 
 template<typename T>
 class TConsoleVariable : public CConsoleVariable
@@ -54,64 +55,61 @@ public:
     {
     }
 
-    virtual void SetString(const CString& InValue) override;
+    /* By default is not an int */
+    virtual bool IsInt() const override final { return false; }
+    /* By default is not an float */
+    virtual bool IsFloat() const override final { return false; }
+    /* By default is not an bool */
+    virtual bool IsBool() const override final { return false; }
+    /* By default is not a string */
+    virtual bool IsString() const override final { return false; }
 
+    /* Sets variable with a string value */
+    virtual void SetString(const CString& InValue) override;
+    /* Retrieve value as a string */
     virtual CString GetString() const override;
 
-    virtual void SetInt(int32 InValue) override
+    /* Set as int */
+    virtual void SetInt(int32 InValue) override final
     {
         Value = static_cast<T>(InValue);
         OnChanged();
     }
 
-    virtual void SetFloat(float InValue) override
+    /* Set as float */
+    virtual void SetFloat(float InValue) override final
     {
         Value = static_cast<T>(InValue);
         OnChanged();
     }
 
-    virtual void SetBool(bool bValue) override
+    /* Set as bool */
+    virtual void SetBool(bool bValue) override final
     {
         Value = static_cast<T>(bValue);
         OnChanged();
     }
 
-    virtual int32 GetInt() const override
+    /* Retrieve as int */
+    virtual int32 GetInt() const override final
     {
         return static_cast<int32>(Value);
     }
 
-    virtual float GetFloat() const override
+    /* Retrieve as float */
+    virtual float GetFloat() const override final
     {
         return static_cast<float>(Value);
     }
 
-    virtual bool GetBool() const override
+    /* Retrieve as bool */
+    virtual bool GetBool() const override final
     {
         return static_cast<bool>(Value);
     }
 
-    virtual bool IsInt() const override
-    {
-        return false;
-    }
-
-    virtual bool IsFloat() const override
-    {
-        return false;
-    }
-
-    virtual bool IsBool() const override
-    {
-        return false;
-    }
-
-    virtual bool IsString() const override
-    {
-        return false;
-    }
-
 private:
+    
     FORCEINLINE void OnChanged()
     {
         if (ChangedDelegate.IsBound())
@@ -123,7 +121,9 @@ private:
     T Value;
 };
 
-// int32
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// int32 - Specialization
+
 template<>
 inline void TConsoleVariable<int32>::SetString(const CString& InValue)
 {
@@ -145,7 +145,9 @@ inline CString TConsoleVariable<int32>::GetString() const
     return String;
 }
 
-// float
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// float - Specialization
+
 template<>
 inline void TConsoleVariable<float>::SetString(const CString& InValue)
 {
@@ -167,7 +169,9 @@ inline CString TConsoleVariable<float>::GetString() const
     return String;
 }
 
-// bool
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// bool - Specialization
+
 template<>
 inline void TConsoleVariable<bool>::SetString(const CString& InValue)
 {
@@ -205,7 +209,9 @@ inline bool TConsoleVariable<bool>::IsBool() const
     return true;
 }
 
-// String
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// String - Specialization
+
 template<>
 inline void TConsoleVariable<CString>::SetInt(int32 InValue)
 {
@@ -221,6 +227,8 @@ inline void TConsoleVariable<CString>::SetFloat(float InValue)
 template<>
 inline void TConsoleVariable<CString>::SetBool(bool InValue)
 {
+    // TODO: Change to the ToString
+
     std::stringstream Stream;
     Stream << std::boolalpha << InValue;
     Value = Stream.str().c_str();

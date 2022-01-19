@@ -1,6 +1,9 @@
 #pragma once
 #include "Identity.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Retrieve the underlying type
+
 template<typename T>
 struct TUnderlyingType
 {

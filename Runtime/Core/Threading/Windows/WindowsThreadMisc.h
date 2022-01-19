@@ -4,14 +4,17 @@
 #include "Core/CoreModule.h"
 #include "Core/Threading/Interface/PlatformThreadMisc.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Platform interface for miscellaneous functions for thread-handling 
+
 class CWindowsThreadMisc : public CPlatformThreadMisc
 {
 public:
 
-    /* Performs platform specific initialization of threadhandling */
+    /* Performs platform specific initialization of thread handling */
     static FORCEINLINE bool Initialize()
     {
-        // This must be executed on the mainthread
+        // This must be executed on the main-thread
         MainThreadHandle = GetThreadHandle();
         return true;
     }
@@ -27,6 +30,7 @@ public:
         return static_cast<uint32>(SystemInfo.dwNumberOfProcessors);
     }
 
+    /* Retrieves the current thread's system ID */
     static FORCEINLINE PlatformThreadHandle GetThreadHandle()
     {
         DWORD CurrentHandle = GetCurrentThreadId();

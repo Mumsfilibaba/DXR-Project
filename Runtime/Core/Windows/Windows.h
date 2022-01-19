@@ -13,6 +13,9 @@
 #include <windowsx.h>
 #include <sdkddkver.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Remove Windows.h defines
+
 #ifdef CreateWindow
 #undef CreateWindow
 #endif
@@ -20,6 +23,9 @@
 #ifdef OutputDebugString
 #undef OutputDebugString
 #endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Windows-version helper defines
 
 #ifdef NTDDI_VISTA
 #define PLATFORM_WINDOWS_VISTA (1)

@@ -9,6 +9,7 @@
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helpers for characters */
+
 template<typename CharType>
 class TStringUtils;
 
@@ -143,6 +144,9 @@ public:
     }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Specialization for wide-chars
+
 template<>
 class TStringUtils<wchar_t>
 {
@@ -274,12 +278,14 @@ public:
     }
 };
 
-/* Predefined types */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Predefined types
+
 using CStringUtils = TStringUtils<char>;
 using WStringUtils = TStringUtils<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helpers for StringParsing */
+// Helpers for StringParsing
 
 template<typename CharType>
 class TStringParse;
@@ -347,6 +353,9 @@ public:
     static T ParseInt(const CharType* String, CharType** End, int32 Base);
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Define templated integers
+
 template<>
 FORCEINLINE int8 TStringParse<char>::ParseInt<int8>(const CharType* String, CharType** End, int32 Base)
 {
@@ -395,6 +404,8 @@ FORCEINLINE uint64 TStringParse<char>::ParseInt<uint64>(const CharType* String, 
     return ParseUint64(String, End, Base);
 }
 
-/* Predefined types */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Predefined types
+
 using CStringParse = TStringParse<char>;
 using WStringParse = TStringParse<wchar_t>;

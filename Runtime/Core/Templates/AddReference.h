@@ -1,7 +1,9 @@
 #pragma once
 #include "Identity.h"
 
-/* Adds a lvalue reference to the type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Adds a l-value reference to the type
+
 template<typename T>
 struct TAddLValueReference
 {
@@ -18,7 +20,9 @@ public:
     typedef typename IdentityType::Type Type;
 };
 
-/* Adds a rvalue reference to the type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Adds a rvalue reference to the type
+
 template<typename T>
 struct TAddRValueReference
 {
@@ -35,7 +39,9 @@ public:
     typedef typename IdentityType::Type Type;
 };
 
-/* Adds a reference of choice */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Adds a reference of choice
+
 template<typename T>
 struct TAddReference
 {

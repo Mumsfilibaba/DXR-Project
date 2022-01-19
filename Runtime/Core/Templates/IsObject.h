@@ -5,7 +5,9 @@
 #include "IsClass.h"
 #include "Or.h"
 
-/* Determine if the type is an object */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determine if the type is an object
+
 template<typename T>
 struct TIsObject
 {

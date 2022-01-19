@@ -1,7 +1,9 @@
 #pragma once
 #include "Core/Core.h"
 
-/* Generic CriticalSection */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Platform interface for Critical Sections
+
 class CPlatformCriticalSection
 {
 public:
@@ -11,21 +13,15 @@ public:
     CPlatformCriticalSection() = default;
     ~CPlatformCriticalSection() = default;
 
-    FORCEINLINE void Lock() noexcept
-    {
-    }
+    /* Lock CriticalSection for other threads */
+    FORCEINLINE void Lock() noexcept { }
 
-    FORCEINLINE bool TryLock() noexcept
-    {
-        return false;
-    }
+    /* Try to lock CriticalSection for other threads */
+    FORCEINLINE bool TryLock() noexcept { return false; }
 
-    FORCEINLINE void Unlock() noexcept
-    {
-    }
+    /* Unlock CriticalSection for other threads */
+    FORCEINLINE void Unlock() noexcept { }
 
-    FORCEINLINE PlatformHandle GetPlatformHandle()
-    {
-        return nullptr;
-    }
+    /* Retrieve platform specific handle */
+    FORCEINLINE PlatformHandle GetPlatformHandle() { return nullptr; }
 };

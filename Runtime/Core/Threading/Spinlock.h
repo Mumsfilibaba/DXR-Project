@@ -2,6 +2,9 @@
 #include "Core/Core.h"
 #include "AtomicInt.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// A simple lock that does not use OS functions to lock a thread. Good for short locking periods in high contingency areas
+
 class CSpinLock
 {
     enum

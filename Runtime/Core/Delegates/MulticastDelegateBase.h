@@ -3,7 +3,9 @@
 
 #include "Core/Containers/Array.h"
 
-/* Baseclass for multicastdelegates */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Base-class for multi-cast delegates
+
 class CMulticastDelegateBase
 {
 public:
@@ -76,7 +78,7 @@ public:
         return false;
     }
 
-    /* Remove a delegete if an object is bound to it */
+    /* Remove a delegate if an object is bound to it */
     FORCEINLINE bool UnbindIfBound(const void* Object)
     {
         bool bResult = false;
@@ -204,7 +206,7 @@ protected:
         /* Remove empty slots */
         CompactArray();
 
-        /* If not pushback */
+        /* If not push back */
         Delegates.Push(NewDelegate);
         return NewHandle;
     }

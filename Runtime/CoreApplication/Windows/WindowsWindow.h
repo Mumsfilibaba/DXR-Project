@@ -8,6 +8,9 @@
 #include "CoreApplication/CoreApplicationModule.h"
 #include "CoreApplication/Interface/PlatformWindow.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Windows-specific interface for a window
+
 class COREAPPLICATION_API CWindowsWindow final : public CPlatformWindow
 {
 public:

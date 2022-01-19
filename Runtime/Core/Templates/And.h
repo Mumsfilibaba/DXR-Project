@@ -1,6 +1,8 @@
 #pragma once
 
-/* Value returns the and-ed value of all types value */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Value returns the and-ed value of all types value
+
 template<typename... ArgsType>
 struct TAnd;
 

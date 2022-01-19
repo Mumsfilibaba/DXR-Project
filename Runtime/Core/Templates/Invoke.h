@@ -5,6 +5,9 @@
 #include "IsMemberPointer.h"
 #include "IsBaseOf.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Internal details for invoke
+
 namespace Internal
 {
     template<typename FuncType, typename... ArgTypes>
@@ -43,10 +46,13 @@ namespace Internal
     }
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Invoke a callable object
+
 template <typename FuncType, typename... ArgTypes>
 inline decltype(auto) Invoke(FuncType&& Func, ArgTypes&&... Args)
 {
     return Internal::Invoke(Forward<FuncType>(Func), Forward<ArgTypes>(Args)...);
 }
 
-// TODO: InvokeR?
+// TODO: InvokeR

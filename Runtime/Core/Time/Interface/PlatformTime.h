@@ -1,6 +1,9 @@
 #pragma once
 #include "Core/Core.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Platform interface for high performance counters
+
 class CPlatformTime
 {
 public:

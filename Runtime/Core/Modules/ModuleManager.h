@@ -148,7 +148,9 @@ public:
 
 private:
 
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Stores information about a loaded engine module
+
     struct SModule
     {
         SModule() = default;
@@ -170,7 +172,6 @@ private:
         PlatformModule Handle;
     };
 
-    // Private constructor and destructor
     CModuleManager() = default;
     ~CModuleManager() = default;
 

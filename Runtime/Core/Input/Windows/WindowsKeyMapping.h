@@ -6,7 +6,9 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Input/Interface/PlatformKeyMapping.h"
 
-/* Class that maps key-code from scan-codes and the reverse */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Class that maps key-code from scan-codes and the reverse
+
 class CORE_API CWindowsKeyMapping : public CPlatformKeyMapping
 {
     enum
@@ -35,7 +37,6 @@ private:
 
     /* Table to convert from ScanCode to KeyCode */
     static EKey KeyCodeFromScanCodeTable[NumKeys];
-
     /* Table to convert from KeyCode to ScanCode */
     static uint16 ScanCodeFromKeyCodeTable[NumKeys];
 };

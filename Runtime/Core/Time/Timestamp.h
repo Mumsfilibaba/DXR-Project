@@ -6,52 +6,38 @@
 #pragma warning(disable : 4251)
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Time conversion utilities
+
 namespace NTime
 {
     /* Returns the number of microseconds from nanoseconds */
     template<typename T>
-    inline constexpr T ToMicroseconds(T Nanoseconds)
-    {
-        return Nanoseconds / T(1000);
-    }
+    inline constexpr T ToMicroseconds(T Nanoseconds) { return Nanoseconds / T(1000); }
 
     /* Returns the number of milliseconds from nanoseconds */
     template<typename T>
-    inline constexpr T ToMilliseconds(T Nanoseconds)
-    {
-        return Nanoseconds / T(1000 * 1000);
-    }
+    inline constexpr T ToMilliseconds(T Nanoseconds) { return Nanoseconds / T(1000 * 1000); }
 
     /* Returns the number of seconds from nanoseconds */
     template<typename T>
-    inline constexpr T ToSeconds(T Nanoseconds)
-    {
-        return Nanoseconds / T(1000 * 1000 * 1000);
-    }
+    inline constexpr T ToSeconds(T Nanoseconds) { return Nanoseconds / T(1000 * 1000 * 1000); }
 
     /* Returns the number of nanoseconds from microseconds */
     template<typename T>
-    inline constexpr T FromMicroseconds(T Microseconds)
-    {
-        return Microseconds * T(1000);
-    }
+    inline constexpr T FromMicroseconds(T Microseconds) { return Microseconds * T(1000); }
 
     /* Returns the number of nanoseconds from milliseconds */
     template<typename T>
-    inline constexpr T FromMilliseconds(T Milliseconds)
-    {
-        return Milliseconds * T(1000 * 1000);
-    }
+    inline constexpr T FromMilliseconds(T Milliseconds) { return Milliseconds * T(1000 * 1000); }
 
     /* Returns the number of nanoseconds from seconds */
     template<typename T>
-    inline constexpr T FromSeconds(T Seconds)
-    {
-        return Seconds * T(1000 * 1000 * 1000);
-    }
+    inline constexpr T FromSeconds(T Seconds) { return Seconds * T(1000 * 1000 * 1000); }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Holds a time-value and functions to make it easier to convert between units of time
 
 class CTimestamp
 {
@@ -137,6 +123,9 @@ public:
     }
 
 public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Operators
 
     FORCEINLINE friend CTimestamp operator+(const CTimestamp& Left, const CTimestamp& Right)
     {

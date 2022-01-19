@@ -1,6 +1,8 @@
 #pragma once
 
-/* Detect compiler */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Detect compiler
+
 #ifdef _MSC_VER
 #ifndef COMPILER_MSVC
 #define COMPILER_MSVC (1)
@@ -19,21 +21,27 @@
 #endif
 #endif
 
-/* Undefined compiler */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Undefined compiler
+
 #if (!COMPILER_MSVC) || (!COMPILER_CLANG) || (!COMPILER_GCC)
 #ifndef COMPILER_UNDEFINED
 #define COMPILER_UNDEFINED
 #endif
 #endif
 
-/* Check that a platform is defined */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Check that a platform is defined
+
 #if (!PLATFORM_WINDOWS) && (!PLATFORM_MACOS)
 #error No platform defined
 #endif
 
 // TODO: Move asserts to separate module/header
 
-/* Asserts */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Asserts
+
 #ifdef DEBUG_BUILD
 #ifndef ENABLE_ASSERTS 
 #define ENABLE_ASSERTS 1
@@ -50,7 +58,8 @@
 #endif
 #endif
 
-/* Macro for deleting objects safely */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Macro for deleting objects safely
 
 #ifndef SafeDelete
 #define SafeDelete(OutObject)      \
@@ -87,24 +96,27 @@
     } while (false);
 #endif
 
-/* Helper Macros */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helper Macros
 
 #ifndef ArrayCount
 #define ArrayCount(Array) (sizeof(Array) / sizeof(Array[0]))
 #endif
 
-/* Bit-Mask helpers */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Bit-Mask helpers
 
 #define BIT(Bit)  (1 << Bit)
 #define FLAG(Bit) BIT(Bit)
 
-/* Unused params */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Unused params
 
 #ifndef UNREFERENCED_VARIABLE
 #define UNREFERENCED_VARIABLE(Variable) (void)(Variable)
 #endif
 
-/*
+/*///////////////////////////////////////////////////////////////////////////////////////////////
 * String preprocessor handling. There are two versions of PREPROCESS_CONCAT, this is so that
 * you can use __LINE__, __FILE__ etc. within the macro, therefore always use PREPROCESS_CONCAT
 */
@@ -117,12 +129,16 @@
 #define PREPROCESS_CONCAT(x, y) _PREPROCESS_CONCAT(x, y)
 #endif
 
-/* Makes multiline strings */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Makes multiline strings
+
 #ifndef MULTILINE_STRING
 #define MULTILINE_STRING(...) #__VA_ARGS__
 #endif
 
-/* Compiler Specific */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Compiler Specific
+
 #if COMPILER_MSVC
 #include "Core/CompilerSpecific/CompilerMSVC.h"
 #elif COMPILER_CLANG

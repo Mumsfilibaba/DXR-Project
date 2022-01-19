@@ -1,6 +1,8 @@
 #pragma once
 
-/* Determines if the type is volatile or not */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determines if the type is volatile or not
+
 template<typename T>
 struct TIsVolatile
 {

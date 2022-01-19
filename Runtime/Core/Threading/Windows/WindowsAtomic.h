@@ -4,10 +4,14 @@
 #include "Core/Threading/Interface/PlatformAtomic.h"
 #include "Core/Threading/Platform/PlatformInterlocked.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Windows-specific interface for atomic operations
+
 class CWindowsAtomic final : public CPlatformAtomic
 {
 public:
 
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Read: Perform a atomic read. All loads and stores are synced
 
     static FORCEINLINE int8 Read(volatile const int8* Source)
@@ -30,6 +34,7 @@ public:
         return PlatformInterlocked::CompareExchange((int64*)Source, 0, 0);
     }
 
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // RelaxedRead: Performs a relaxed atomic read. No barriers or synchronization takes place. Only guaranteed to be atomic.
 
     static FORCEINLINE int8 RelaxedRead(volatile const int8* Source)
@@ -52,6 +57,7 @@ public:
         return *Source;
     }
 
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Store: Perform a atomic Store. All loads and stores are synced.
 
     static FORCEINLINE void Store(volatile int8* Dest, int8 Value)
@@ -74,6 +80,7 @@ public:
         PlatformInterlocked::Exchange((int64*)Dest, Value);
     }
 
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // RelaxedStore: Perform a relaxed atomic Store. No barriers or synchronization takes place. Only guaranteed to be atomic.
 
     static FORCEINLINE void RelaxedStore(volatile int8* Dest, int8 Value)

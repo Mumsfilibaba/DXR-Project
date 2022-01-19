@@ -4,6 +4,9 @@
 #include "Core/Time/Interface/PlatformTime.h"
 #include "Core/Windows/Windows.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Windows specific interface for high performance counters
+
 class CWindowsTime : public CPlatformTime
 {
 public:

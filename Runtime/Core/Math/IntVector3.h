@@ -1,11 +1,14 @@
 #pragma once
 #include "MathCommon.h"
 
-/* A 3-D vector (x, y, z) using integers */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// A 3-D vector (x, y, z) using integers
+
 class CIntVector3
 {
 public:
-    /* Default constructor (Initialize components to zero) */
+
+    /* Default constructor (Initial1ze components to zero) */
     FORCEINLINE CIntVector3() noexcept;
 
     /**
@@ -155,7 +158,7 @@ public:
     FORCEINLINE CIntVector3 operator*(int RHS) const noexcept;
 
     /**
-     * Returns this vector after multipling each component of this vector with a scalar
+     * Returns this vector after multiplying each component of this vector with a scalar
      *
      * @param RHS: The scalar to multiply with
      * @return A reference to this vector
@@ -211,7 +214,7 @@ public:
     FORCEINLINE bool operator!=(const CIntVector3& Other) const noexcept;
 
     /**
-     * Returns the component specifed
+     * Returns the component specified
      *
      * @param Index: The component index
      * @return The component
@@ -219,7 +222,7 @@ public:
     FORCEINLINE int& operator[](int Index) noexcept;
 
     /**
-     * Returns the component specifed
+     * Returns the component specified
      *
      * @param Index: The component index
      * @return The component
@@ -227,15 +230,17 @@ public:
     FORCEINLINE int operator[](int Index) const noexcept;
 
 public:
+
     /* The x-coordinate */
     int x;
-
     /* The y-coordinate */
     int y;
-
     /* The z-coordinate */
     int z;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Implementation
 
 FORCEINLINE CIntVector3::CIntVector3() noexcept
     : x(0)

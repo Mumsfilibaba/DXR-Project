@@ -1,6 +1,8 @@
 #pragma once
 
-/* Check weather the type is the base of another type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Check weather the type is the base of another type
+
 template<typename BaseType, typename DerivedType>
 struct TIsBaseOf
 {

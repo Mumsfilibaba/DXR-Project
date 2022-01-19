@@ -16,23 +16,29 @@
 #error No valid platform
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Alignment for vector instructions
+
 #ifndef VECTOR_ALIGN
 #define VECTOR_ALIGN ALIGN_AS(16)
 #endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SIMD Helper library
 
 namespace NSIMD
 {
     /* TODO: Add fallback when we have no SSE intrinsics */
 
 #if ENABLE_SEE_INTRIN
-
-    /* Type */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Types
 
     typedef __m128  Float128;
     typedef __m128i Int128;
 
-    /* Float "Constructors" */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Float "Constructors"
 
     FORCEINLINE Float128 VECTORCALL LoadAligned(const float* Array) noexcept
     {
@@ -64,7 +70,8 @@ namespace NSIMD
         return _mm_setzero_ps();
     }
 
-    /* Int "Constructors" */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Int "Constructors"
 
     FORCEINLINE Int128 VECTORCALL LoadAligned(const int* Array) noexcept
     {
@@ -81,7 +88,8 @@ namespace NSIMD
         return _mm_set1_epi32(Scalar);
     }
 
-    /* Cast */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Casting
 
     FORCEINLINE Float128 VECTORCALL CastIntToFloat(Int128 A) noexcept
     {
@@ -93,16 +101,17 @@ namespace NSIMD
         return _mm_castps_si128(A);
     }
 
-    /* Store */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Store
 
     FORCEINLINE void VECTORCALL StoreAligned(Float128 Register, float* Array) noexcept
     {
         return _mm_store_ps(Array, Register);
     }
 
-    /*
-    * Returns (A[x], A[y], A[z], A[w])
-    */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Returns (A[x], A[y], A[z], A[w])
+
     template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle(Float128 A) noexcept
     {
@@ -133,9 +142,9 @@ namespace NSIMD
         return _mm_unpackhi_ps(A, A);
     }
 
-    /*
-    * Returns (A[x], A[y], B[z], B[w])
-    */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Returns (A[x], A[y], B[z], B[w])
+    
     template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle0011(Float128 A, Float128 B) noexcept
     {
@@ -154,9 +163,9 @@ namespace NSIMD
         return _mm_movehl_ps(B, A);
     }
 
-    /*
-    * Returns (A[x], B[y], A[z], B[w])
-    */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Returns (A[x], B[y], A[z], B[w])
+    
     template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle0101(Float128 A, Float128 B) noexcept
     {
@@ -176,14 +185,16 @@ namespace NSIMD
         return _mm_unpackhi_ps(A, B);
     }
 
-    /* Get */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Get component
 
     FORCEINLINE float VECTORCALL GetX(Float128 Register) noexcept
     {
         return _mm_cvtss_f32(Register);
     }
 
-    /* NMath operations */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Mathematical operations
 
     FORCEINLINE Float128 VECTORCALL Mul(Float128 A, Float128 B) noexcept
     {
@@ -231,7 +242,8 @@ namespace NSIMD
         return _mm_rcp_ps(A);
     }
 
-    /* Bit operations */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Bit operations
 
     FORCEINLINE Float128 VECTORCALL And(Float128 A, Float128 B) noexcept
     {
@@ -243,7 +255,8 @@ namespace NSIMD
         return _mm_or_ps(A, B);
     }
 
-    /* Comparison */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Comparison operations
 
     FORCEINLINE bool VECTORCALL Equal(Float128 A, Float128 B) noexcept
     {
@@ -275,7 +288,8 @@ namespace NSIMD
         return 0xf == (Mask & 0xf);
     }
 
-    /* Min/Max */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Min/Max
 
     FORCEINLINE Float128 VECTORCALL Min(Float128 A, Float128 B) noexcept
     {
@@ -289,7 +303,8 @@ namespace NSIMD
 
 #endif
 
-    /* Abstracted Load */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Abstracted Load
 
     template<typename T>
     FORCEINLINE Float128 VECTORCALL LoadAligned(const T* Object) noexcept
@@ -297,7 +312,8 @@ namespace NSIMD
         return LoadAligned(reinterpret_cast<const float*>(Object));
     }
 
-    /* Abstracted Store */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Abstracted Store
 
     template<typename T>
     FORCEINLINE void VECTORCALL StoreAligned(Float128 Register, T* Object) noexcept
@@ -305,16 +321,17 @@ namespace NSIMD
         StoreAligned(Register, reinterpret_cast<float*>(Object));
     }
 
-    /*
-    * Sets all the components of a register to the value of index 'i' taken from the register A
-    */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Sets all the components of a register to the value of index 'i' taken from the register A
+    
     template<uint8 i>
     FORCEINLINE Float128 VECTORCALL Broadcast(Float128 Register) noexcept
     {
         return Shuffle<i, i, i, i>(Register);
     }
 
-    /* Mul - Direct memory */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Mul - Direct memory
 
     FORCEINLINE Float128 VECTORCALL Mul(const float* A, Float128 B) noexcept
     {
@@ -353,7 +370,8 @@ namespace NSIMD
         return Mul(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
 
-    /* Div - Direct memory */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Div - Direct memory
 
     FORCEINLINE Float128 VECTORCALL Div(const float* A, Float128 B) noexcept
     {
@@ -392,7 +410,8 @@ namespace NSIMD
         return Div(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
 
-    /* Add - Direct memory */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Add - Direct memory
 
     FORCEINLINE Float128 VECTORCALL Add(const float* A, Float128 B) noexcept
     {
@@ -431,7 +450,8 @@ namespace NSIMD
         return Add(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
 
-    /* Sub - Direct memory */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Sub - Direct memory
 
     FORCEINLINE Float128 VECTORCALL Sub(const float* A, Float128 B) noexcept
     {
@@ -470,7 +490,8 @@ namespace NSIMD
         return Sub(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
 
-    /* Abstracted Get */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Abstracted Get
 
     FORCEINLINE float VECTORCALL GetY(Float128 Register) noexcept
     {
@@ -490,7 +511,8 @@ namespace NSIMD
         return GetX(Temp);
     }
 
-    /* Abstracted NMath operations */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Abstracted mathematical operations
 
     FORCEINLINE Float128 VECTORCALL Abs(Float128 A) noexcept
     {
@@ -586,7 +608,9 @@ namespace NSIMD
         return Broadcast<0>(Sum);
     }
 
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     /* Multiply two 2x2 matrices */
+
     FORCEINLINE Float128 VECTORCALL Mat2Mul(Float128 A, Float128 B)
     {
         NSIMD::Float128 Temp0 = NSIMD::Shuffle<0, 3, 0, 3>(B);
@@ -598,7 +622,6 @@ namespace NSIMD
         return NSIMD::Add(Temp1, Temp3);
     }
 
-    /*  */
     FORCEINLINE Float128 VECTORCALL Mat2AdjointMul(Float128 A, Float128 B)
     {
         Float128 Temp0 = Shuffle<1, 1, 2, 2>(A);
@@ -609,7 +632,6 @@ namespace NSIMD
         return Sub(Temp1, Temp2);
     }
 
-    /*  */
     FORCEINLINE Float128 VECTORCALL Mat2MulAdjoint(Float128 A, Float128 B)
     {
         Float128 Temp0 = Shuffle<1, 0, 3, 2>(A);

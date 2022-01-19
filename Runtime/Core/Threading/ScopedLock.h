@@ -1,6 +1,9 @@
 #pragma once
 #include "Core/Core.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helper class that locks a lock in constructor and releases it in the destructor
+
 template<typename LockType>
 class TScopedLock
 {

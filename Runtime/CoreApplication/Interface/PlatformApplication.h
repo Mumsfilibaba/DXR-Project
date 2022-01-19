@@ -17,6 +17,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Platform interface for applicacation
 
 class CPlatformApplication
 {
@@ -75,7 +76,6 @@ public:
 
 protected:
 
-    /* Protected constructor, use Make */
     CPlatformApplication(const TSharedPtr<ICursor>& InCursor)
         : Cursor(InCursor)
         , MessageListener(nullptr)
@@ -84,7 +84,6 @@ protected:
 
     /* The cursor interface for the application */
     TSharedPtr<ICursor> Cursor;
-
     /* Handler for platform messages/events */
     TSharedPtr<CPlatformApplicationMessageHandler> MessageListener;
 };

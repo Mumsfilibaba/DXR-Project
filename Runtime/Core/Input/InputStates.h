@@ -1,6 +1,9 @@
 #pragma once
 #include "InputCodes.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Holds information about how a key has been pressed
+
 struct SKeyState
 {
     FORCEINLINE SKeyState(EKey InKeyCode)
@@ -27,6 +30,9 @@ struct SKeyState
     /* Time pressed */
     float TimePressed = 0.0f;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Holds information about how a mouse-button has been pressed
 
 struct SMouseButtonState
 {

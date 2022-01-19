@@ -4,19 +4,28 @@
 #include <algorithm>
 #include <random>
 
-/* Windows Specific */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Windows Specific
+
 #if PLATFORM_WINDOWS
 #include "Core/Windows/PreCompiledWindows.h"
 #endif
 
-/* Debug */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Debug
+
 #include "Core/Debug/Debug.h"
 
-/* Core */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Core
+
 #include "Core/Core.h"
 #include "Core/RefCounted.h"
 
-/* Containers */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Containers
+
+#include "Core/Containers/BitArray.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
@@ -28,20 +37,28 @@
 #include "Core/Containers/StaticString.h"
 #include "Core/Containers/StringView.h"
 
-/* Templates */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Templates
+
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Move.h"
 #include "Core/Templates/AddressOf.h"
 #include "Core/Templates/ObjectHandling.h"
 
-/* Application */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Application
+
 #include "Core/Logging/Log.h"
 
-/* Utilities */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Utilities
+
 #include "Core/Utilities/HashUtilities.h"
 #include "Core/Utilities/StringUtilities.h"
 
-/* Math */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Math
+
 #include "Core/Math/Math.h"
 #include "Core/Math/AABB.h"
 #include "Core/Math/Frustum.h"
@@ -59,6 +76,8 @@
 #include "Core/Math/Plane.h"
 #include "Core/Math/SIMD.h"
 
-/* Memory */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Memory 
+
 #include "Core/Memory/New.h"
 #include "Core/Memory/Memory.h"

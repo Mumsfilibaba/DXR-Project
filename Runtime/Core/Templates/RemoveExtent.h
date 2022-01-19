@@ -1,7 +1,9 @@
 #pragma once
 #include "Core/CoreTypes.h"
 
-/* Removes array type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Removes array type
+
 template<typename T>
 struct TRemoveExtent
 {

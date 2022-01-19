@@ -265,18 +265,18 @@ void CInterfaceApplication::Tick(CTimestamp DeltaTime)
     SWindowShape CurrentWindowShape;
     Window->GetWindowShape(CurrentWindowShape);
 
-    UIState.DeltaTime = static_cast<float>(DeltaTime.AsSeconds());
-    UIState.DisplaySize = ImVec2(float(CurrentWindowShape.Width), float(CurrentWindowShape.Height));
+    UIState.DeltaTime               = static_cast<float>(DeltaTime.AsSeconds());
+    UIState.DisplaySize             = ImVec2(float(CurrentWindowShape.Width), float(CurrentWindowShape.Height));
     UIState.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
     CIntVector2 Position = CInterfaceApplication::Get().GetCursorPos(Window);
     UIState.MousePos = ImVec2(static_cast<float>(Position.x), static_cast<float>(Position.y));
 
     SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
-    UIState.KeyCtrl = KeyState.IsCtrlDown;
-    UIState.KeyShift = KeyState.IsShiftDown;
-    UIState.KeyAlt = KeyState.IsAltDown;
-    UIState.KeySuper = KeyState.IsSuperKeyDown;
+    UIState.KeyCtrl  = KeyState.bIsCtrlDown;
+    UIState.KeyShift = KeyState.bIsShiftDown;
+    UIState.KeyAlt   = KeyState.bIsAltDown;
+    UIState.KeySuper = KeyState.bIsSuperKeyDown;
 
     if (!(UIState.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange))
     {

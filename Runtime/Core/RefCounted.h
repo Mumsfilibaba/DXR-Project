@@ -5,7 +5,9 @@
 #include "Core/Templates/IsBaseOf.h"
 #include "Core/Templates/EnableIf.h"
 
-/* Base-class for intrusive ref-counted object */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Base-class for intrusive ref-counted object
+
 class CORE_API CRefCounted
 {
 public:
@@ -21,6 +23,9 @@ public:
 private:
     mutable AtomicInt32 StrongReferences;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Add a reference to a RefCounted object safely
 
 template<typename T>
 FORCEINLINE typename TEnableIf<TIsBaseOf<CRefCounted, T>::Value, T*>::Type AddRef(T* InRefCounted)

@@ -4,10 +4,11 @@
 #include "Core/Templates/FunctionType.h"
 #include "Core/Containers/Tuple.h"
 
-/* Handle type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// A handle for a delegate
+
 typedef int64 DelegateHandle;
 
-/* A handle for a multicast-delegate */
 class CDelegateHandle
 {
     enum
@@ -16,12 +17,13 @@ class CDelegateHandle
     };
 
 public:
+
     enum class EGenerateID
     {
         New
     };
 
-    /* Empty constructor, makes it storable */
+    /* Empty constructor, makes it store-able */
     FORCEINLINE CDelegateHandle()
         : Handle(InvalidHandle)
     {
@@ -81,7 +83,7 @@ private:
     static CORE_API DelegateHandle NextID;
 };
 
-/* Basetype for delegates */
+/* Base-type for delegates */
 class IDelegateInstance
 {
 public:
@@ -101,7 +103,9 @@ public:
     virtual IDelegateInstance* Clone(void* Memory) const = 0;
 };
 
-/* Types basetype for delegates */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Delegates base */
+
 template<typename ReturnType, typename... ArgTypes>
 class TDelegateInstance : public IDelegateInstance
 {
@@ -140,7 +144,9 @@ protected:
     CDelegateHandle Handle;
 };
 
-/* Class for storing a "normal" function in a delegate */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Class for storing a "normal" function in a delegate
+
 template<typename FunctionType, typename... PayloadTypes>
 class TFunctionDelegateInstance;
 
@@ -183,6 +189,9 @@ private:
     FunctionType Function;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Class for storing a "normal" function in a delegate when no arguments are bound
+
 template<typename ReturnType, typename... ArgTypes>
 class TFunctionDelegateInstance<ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
@@ -218,7 +227,9 @@ private:
     FunctionType Function;
 };
 
-/* Stores a memberfunction as a delegate */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Stores a member-function as a delegate
+
 template<bool IsConst, typename InstanceType, typename ClassType, typename FunctionType, typename... PayloadTypes>
 class TMemberDelegateInstance;
 
@@ -278,6 +289,9 @@ private:
     FunctionType Function;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Stores a member-function as a delegate, when not arguments are bound
+
 template<bool IsConst, typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
 class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
 {
@@ -330,7 +344,9 @@ private:
     FunctionType Function;
 };
 
-/* Stores a lambda delegate */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Stores a lambda delegate
+
 template<typename FunctorType, typename FunctionType, typename... PayloadTypes>
 class TLambdaDelegateInstance;
 
@@ -371,6 +387,9 @@ private:
     /* Functor */
     FunctorType Functor;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Stores a lambda delegate when no arguments are bound
 
 template<typename FunctorType, typename ReturnType, typename... ArgTypes>
 class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>

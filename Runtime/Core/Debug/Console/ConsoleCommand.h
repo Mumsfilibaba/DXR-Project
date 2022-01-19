@@ -22,6 +22,7 @@ public:
     /* Cast to a console variable */
     virtual IConsoleVariable* AsVariable() override { return nullptr; }
 
+    // TODO: Add parameters to console commands
     virtual void Execute() override
     {
         ExecuteDelegate.Broadcast();

@@ -1,6 +1,9 @@
 #pragma once
 #include "Vector3.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Axis-Aligned Bounding Box
+
 struct SAABB
 {
     FORCEINLINE CVector3 GetCenter() const

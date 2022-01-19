@@ -5,6 +5,9 @@
 
 // TODO: Use print line instead of print
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Logging macros
+
 #define LOG_ERROR(Message)                              \
     {                                                   \
         Assert(NErrorDevice::GConsoleWindow != nullptr);              \

@@ -14,6 +14,9 @@
 #pragma warning(disable : 4251) // Class '...' needs to have DLL-interface to be used by clients of class '...'
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Windows-specific interface for ConsoleWindow
+
 class COREAPPLICATION_API CWindowsConsoleWindow final : public CPlatformConsoleWindow
 {
 public:

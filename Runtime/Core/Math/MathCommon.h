@@ -23,8 +23,14 @@
 #error No platform defined
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Math namespace
+
 namespace NMath
 {
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Constants
+
     constexpr const double PI = 3.1415926535898;
     constexpr const double E = 2.7182818284590;
     constexpr const double HALF_PI = PI / 2.0f;
@@ -38,6 +44,9 @@ namespace NMath
     constexpr const float ONE_DEGREE_F = PI_F / 180.0f;
 
     constexpr const float IS_EQUAL_EPISILON = 0.0005f;
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Functions
 
     // TODO: Move all math functions and constants to one location
     FORCEINLINE float VECTORCALL Sqrt(float v)

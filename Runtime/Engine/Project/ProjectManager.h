@@ -4,7 +4,9 @@
 #define MAX_PROJECT_NAME_LENGTH (256)
 #define MAX_PROJECT_PATH_LENGTH (512)
 
-/* Class responsible for holding information about the project */
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// Class responsible for holding information about the project
+
 class ENGINE_API CProjectManager
 {
 public:
@@ -15,6 +17,13 @@ public:
     /* Retrieve the name of the project */
     static FORCEINLINE const char* GetProjectName()
     {
+        return ProjectName;
+    }
+
+    /* Retrieve the name of the project's module */
+    static FORCEINLINE const char* GetProjectModuleName()
+    {
+        // For now this is the same as the project's name
         return ProjectName;
     }
 

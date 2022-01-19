@@ -1,6 +1,8 @@
 #pragma once
 
-/* Determine is two types are convertible */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determine is two types are convertible
+
 template<typename FromType, typename ToType>
 struct TIsConvertible
 {
@@ -10,7 +12,9 @@ struct TIsConvertible
     };
 };
 
-/* Determine if two pointers can be converted */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determine if two pointers can be converted
+
 template<typename FromType, typename ToType>
 struct TIsPointerConvertible
 {

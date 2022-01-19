@@ -2,6 +2,9 @@
 #include <utility>
 #include <functional>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Create and combine hash values
+
 template<typename T, typename THashType = size_t>
 inline void HashCombine(THashType& OutHash, const T& Value)
 {

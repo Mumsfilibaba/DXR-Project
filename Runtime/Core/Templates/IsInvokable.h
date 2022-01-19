@@ -6,7 +6,9 @@
 
 // TODO: This may need another check
 
-/* Determines if the type is invokable or not */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determines if the type is invokable or not
+
 template<typename FuncType, typename... ArgTypes>
 struct TIsInvokable
 {
@@ -37,7 +39,9 @@ public:
     };
 };
 
-/* Determines if the type is invokable or not, with returntype */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determines if the type is invokable or not, with return-type
+
 template<typename FuncType, typename ReturnType, typename... ArgTypes>
 struct TIsInvokableR
 {

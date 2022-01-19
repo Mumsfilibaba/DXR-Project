@@ -1,6 +1,8 @@
 #pragma once
 
-/* Remove const and/or volatile from type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Remove const and/or volatile from type
+
 template<typename T>
 struct TRemoveCV
 {
@@ -25,7 +27,9 @@ struct TRemoveCV<const volatile T>
     typedef T Type;
 };
 
-/* Remove const from type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Remove const from type
+
 template<typename T>
 struct TRemoveConst
 {
@@ -38,7 +42,9 @@ struct TRemoveConst<const T>
     typedef T Type;
 };
 
-/* Remove volatile from type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Remove volatile from type
+
 template<typename T>
 struct TRemoveVolatile
 {

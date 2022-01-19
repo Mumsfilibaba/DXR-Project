@@ -1,7 +1,9 @@
 #pragma once
 #include "Core/Core.h"
 
-/* Struct containing the state of modifierkeys */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// State of which modifier keys are pressed
+
 struct SModifierKeyState
 {
 public:
@@ -18,12 +20,12 @@ public:
         /* Flags */
         struct
         {
-            uint8 IsCtrlDown : 1;
-            uint8 IsAltDown : 1;
-            uint8 IsShiftDown : 1;
-            uint8 IsCapsLockDown : 1;
-            uint8 IsSuperKeyDown : 1;
-            uint8 IsNumPadDown : 1;
+            uint8 bIsCtrlDown : 1;
+            uint8 bIsAltDown : 1;
+            uint8 bIsShiftDown : 1;
+            uint8 bIsCapsLockDown : 1;
+            uint8 bIsSuperKeyDown : 1;
+            uint8 bIsNumPadDown : 1;
         };
 
         /* Mask */

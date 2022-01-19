@@ -16,6 +16,9 @@
 #undef OutputDebugString
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Windows-specific interface for debug functions
+
 class CWindowsDebugMisc final : public CPlatformDebugMisc
 {
 public:

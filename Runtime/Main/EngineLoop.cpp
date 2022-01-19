@@ -78,7 +78,7 @@ bool CEngineLoop::PreInitialize()
     else
     {
         NErrorDevice::GConsoleWindow->Show(true);
-        NErrorDevice::GConsoleWindow->SetTitle(CString(CProjectManager::GetProjectName()) + ": Error Console");
+        NErrorDevice::GConsoleWindow->SetTitle(CString(PROJECT_NAME) + ": Error Console");
     }
 
     // Load all core modules, these tend to not be reloadable
@@ -88,14 +88,13 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    /* Enable the profiler */
+    // Enable the profiler
     CFrameProfiler::Enable();
 
     TRACE_FUNCTION_SCOPE();
 
-    /* Init project information */
-    CString ProjectLocation = ENGINE_LOCATION;
-    if (!CProjectManager::Initialize(PROJECT_NAME, (ProjectLocation + "/" + PROJECT_NAME).CStr()))
+    // Init project information
+    if (!CProjectManager::Initialize(PROJECT_NAME, PREPROCESS_CONCAT(ENGINE_LOCATION"/", PROJECT_NAME)))
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
         return false;
@@ -106,7 +105,7 @@ bool CEngineLoop::PreInitialize()
     LOG_INFO("ProjectPath=" + CString(CProjectManager::GetProjectPath()));
 #endif
 
-    /* Console */
+    // Console
     CConsoleManager::Initialize();
 
     // Init platform specific thread utilities
@@ -190,8 +189,8 @@ bool CEngineLoop::Initialize()
     // Notify systems that the Application is going to be loaded
     NEngineLoopDelegates::PreApplicationLoadedDelegate.Broadcast();
 
-    // Init Application Module // TODO: Do not have the name hardcoded
-    GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>("Sandbox");
+    // Init Application Module
+    GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>(CProjectManager::GetProjectModuleName());
     if (!GApplicationModule)
     {
         LOG_WARNING("Application Init failed, may not behave as intended");

@@ -2,6 +2,9 @@
 #include "Core/CoreModule.h"
 #include "Core/Delegates/MulticastDelegate.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Delegates for different stages of the engine-loop
+
 namespace NEngineLoopDelegates
 {
     /* Delegate that gets called after the RHI is initialized */

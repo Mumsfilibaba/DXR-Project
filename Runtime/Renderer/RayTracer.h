@@ -18,6 +18,7 @@ public:
 
 private:
     TSharedRef<CRHIRayTracingPipelineState> Pipeline;
+
     TSharedRef<CRHIRayGenShader>        RayGenShader;
     TSharedRef<CRHIRayMissShader>       RayMissShader;
     TSharedRef<CRHIRayClosestHitShader> RayClosestHitShader;

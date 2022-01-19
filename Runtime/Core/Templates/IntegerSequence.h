@@ -2,7 +2,9 @@
 #include "Core/CoreTypes.h"
 #include "IsInteger.h"
 
-/* Implements integer sequence */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Implements integer sequence
+
 template <typename T, T... Sequence>
 struct TIntegerSequence
 {
@@ -16,20 +18,26 @@ struct TIntegerSequence
     };
 };
 
-/* Forward-declare helper */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Forward-declare helper
+
 namespace Internal
 {
     template <typename T, unsigned N>
     struct TMakeIntegerSequenceImpl;
 }
 
-/* Create a integer sequence */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Create a integer sequence
+
 template<typename T, T N>
 using TMakeIntegerSequence = typename Internal::TMakeIntegerSequenceImpl<T, N>::Type;
 
 namespace Internal
 {
-    /* Helper to create a integer sequence */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Helper to create a integer sequence
+
     template<uint32 N, typename FirstSequence, typename SecondSequence>
     struct TSequenceHelper;
 
@@ -42,21 +50,27 @@ namespace Internal
     template<uint32 N, typename FirstSequence, typename SecondSequence>
     using TSequenceHelperType = typename TSequenceHelper<N, FirstSequence, SecondSequence>::Type;
 
-    /* Create a integer sequence */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Create a integer sequence
+
     template<typename T, uint32 N>
     struct TMakeIntegerSequenceImpl : TSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>
     {
         using Type = TSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>;
     };
 
-    /* Create a integer sequence with zero */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Create a integer sequence with zero
+
     template<typename T>
     struct TMakeIntegerSequenceImpl<T, 1> : TIntegerSequence<T, T(0)>
     {
         using Type = TIntegerSequence<T, T(0)>;
     };
 
-    /* Create a empty integer sequence */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Create a empty integer sequence
+
     template<typename T>
     struct TMakeIntegerSequenceImpl<T, 0> : TIntegerSequence<T>
     {

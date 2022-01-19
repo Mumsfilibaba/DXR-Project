@@ -2,10 +2,14 @@
 #include "IsSame.h"
 #include "RemoveCV.h"
 
-/* Declare custom nullptr type */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Custom nullptr type
+
 typedef decltype(nullptr) NullptrType;
 
-/* Determines weather type is nullptr or not */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Determines weather type is nullptr or not
+
 template<typename T>
 struct TIsNullptr
 {

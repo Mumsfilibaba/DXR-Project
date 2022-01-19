@@ -3,7 +3,9 @@
 
 #include "Core/Containers/Allocators.h"
 
-/* Base class containing variables that does not require templates */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Base class containing variables that does not require templates
+
 class CDelegateBase
 {
     enum
@@ -23,7 +25,7 @@ public:
     }
 
     /* Move constructor */
-    FORCEINLINE CDelegateBase(CDelegateBase&& Other)
+    FORCEINLINE CDelegateBase(CDelegateBase&& Other) noexcept
         : Storage()
         , Size(Other.Size)
     {
@@ -54,7 +56,7 @@ public:
         ::Swap<int32>(Size, Other.Size);
     }
 
-    /* Cheacks weather or not there exist any delegate bound */
+    /* Checks weather or not there exist any delegate bound */
     FORCEINLINE bool IsBound() const
     {
         return (Size > 0);
@@ -114,7 +116,7 @@ public:
     }
 
     /* Move assignment */
-    FORCEINLINE CDelegateBase& operator=(CDelegateBase&& RHS)
+    FORCEINLINE CDelegateBase& operator=(CDelegateBase&& RHS) noexcept
     {
         CDelegateBase(Move(RHS)).Swap(*this);
         return *this;
@@ -174,13 +176,13 @@ protected:
         return Storage.Realloc(PreviousSize, Size);
     }
 
-    /* Internal function that is used to retrive the functor pointer */
+    /* Internal function that is used to retrieve the functor pointer */
     FORCEINLINE IDelegateInstance* GetDelegate() noexcept
     {
         return reinterpret_cast<IDelegateInstance*>(Storage.GetAllocation());
     }
 
-    /* Internal function that is used to retrive the functor pointer */
+    /* Internal function that is used to retrieve the functor pointer */
     FORCEINLINE const IDelegateInstance* GetDelegate() const noexcept
     {
         return reinterpret_cast<const IDelegateInstance*>(Storage.GetAllocation());
