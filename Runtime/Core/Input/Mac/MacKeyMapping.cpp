@@ -1,19 +1,26 @@
 #if PLATFORM_MACOS
 #include "MacKeyMapping.h"
 
-/* Keys */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Keys
+
 EKey   CMacKeyMapping::KeyCodeFromScanCodeTable[NumKeys];
 uint16 CMacKeyMapping::ScanCodeFromKeyCodeTable[NumKeys];
 
-/* Buttons */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Buttons
+
 EMouseButton CMacKeyMapping::ButtonFromButtonIndex[EMouseButton::MouseButton_Count];
 uint8        CMacKeyMapping::ButtonIndexFromButton[EMouseButton::MouseButton_Count];
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// MacKeyMapping
 
 void CMacKeyMapping::Initialize()
 {
     /* Keys */
-    CMemory::Memzero( KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable) );
-    CMemory::Memzero( ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable) );
+    CMemory::Memzero(KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable));
+    CMemory::Memzero(ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable));
 
     KeyCodeFromScanCodeTable[0x33] = EKey::Key_Backspace;
     KeyCodeFromScanCodeTable[0x30] = EKey::Key_Tab;
@@ -127,25 +134,25 @@ void CMacKeyMapping::Initialize()
     KeyCodeFromScanCodeTable[0x2C] = EKey::Key_Slash;
     KeyCodeFromScanCodeTable[0x0A] = EKey::Key_World1;
 
-    for ( uint16 Index = 0; Index < NumKeys; Index++ )
+    for (uint16 Index = 0; Index < NumKeys; Index++)
     {
-        if ( KeyCodeFromScanCodeTable[Index] != EKey::Key_Unknown )
+        if (KeyCodeFromScanCodeTable[Index] != EKey::Key_Unknown)
         {
             ScanCodeFromKeyCodeTable[KeyCodeFromScanCodeTable[Index]] = Index;
         }
     }
 
     /* Mouse buttons */
-    CMemory::Memzero( ButtonFromButtonIndex, sizeof(ButtonFromButtonIndex) );
-    CMemory::Memzero( ButtonIndexFromButton, sizeof(ButtonIndexFromButton) );
+    CMemory::Memzero(ButtonFromButtonIndex, sizeof(ButtonFromButtonIndex));
+    CMemory::Memzero(ButtonIndexFromButton, sizeof(ButtonIndexFromButton));
 
     ButtonFromButtonIndex[0] = EMouseButton::MouseButton_Left;
     ButtonFromButtonIndex[1] = EMouseButton::MouseButton_Right;
     ButtonFromButtonIndex[2] = EMouseButton::MouseButton_Middle;
 
-    for ( uint8 Index = 0; Index < EMouseButton::MouseButton_Count; Index++ )
+    for (uint8 Index = 0; Index < EMouseButton::MouseButton_Count; Index++)
     {
-        if ( ButtonFromButtonIndex[Index] != EMouseButton::MouseButton_Unknown )
+        if (ButtonFromButtonIndex[Index] != EMouseButton::MouseButton_Unknown)
         {
             ButtonIndexFromButton[ButtonFromButtonIndex[Index]] = Index;
         }

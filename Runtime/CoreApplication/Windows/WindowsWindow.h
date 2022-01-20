@@ -5,7 +5,7 @@
 
 #include "Core/Containers/SharedRef.h"
 
-#include "CoreApplication/CoreApplicationModule.h"
+#include "CoreApplication/CoreApplication.h"
 #include "CoreApplication/Interface/PlatformWindow.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -69,16 +69,16 @@ public:
     /* Retrieve the height of the window */
     virtual uint32 GetHeight() const override final;
 
+    /* Set the native window handle */
+    virtual void SetPlatformhandle(PlatformWindowHandle InPlatformHandle) override final;
+
     /* Retrieve the native handle */
-    virtual PlatformWindowHandle GetNativeHandle() const
+    virtual PlatformWindowHandle GetPlatformHandle() const override final
     {
         return reinterpret_cast<PlatformWindowHandle>(Window);
     }
 
-    FORCEINLINE HWND GetHandle() const
-    {
-        return Window;
-    }
+    FORCEINLINE HWND GetHandle() const { return Window; }
 
 private:
 

@@ -9,7 +9,7 @@
 
 - (id) init:(CMacApplication*) InApplication
 {
-    Assert( InApplication != nullptr );
+    Assert(InApplication != nullptr);
     
     self = [super init];
     if (self)
@@ -20,20 +20,20 @@
     return self;
 }
 
-- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication* ) Sender
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*) Sender
 {
     // TODO: Maybe check some state before returning yes, but for now just terminate
     return NSTerminateNow;
 }
 
-- (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication* ) Sender
+- (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication*) Sender
 {
     return YES;
 }
 
-- (void) applicationWillTerminate:(NSNotification* ) InNotification
+- (void) applicationWillTerminate:(NSNotification*) InNotification
 {
-    Application->DeferEvent( InNotification );
+    Application->DeferEvent(InNotification);
 }
 
 @end

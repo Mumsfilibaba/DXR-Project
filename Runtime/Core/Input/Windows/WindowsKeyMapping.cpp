@@ -1,10 +1,14 @@
 #if PLATFORM_WINDOWS
 #include "WindowsKeyMapping.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Key tables
+
 EKey   CWindowsKeyMapping::KeyCodeFromScanCodeTable[NumKeys];
 uint16 CWindowsKeyMapping::ScanCodeFromKeyCodeTable[NumKeys];
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Windows KeyMapping
 
 void CWindowsKeyMapping::Initialize()
 {

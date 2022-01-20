@@ -3,6 +3,9 @@
 #include "D3D12Fence.h"
 #include "D3D12CommandList.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12CommandQueue
+
 class CD3D12CommandQueue : public CD3D12DeviceChild
 {
 public:

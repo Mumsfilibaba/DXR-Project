@@ -1,7 +1,7 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-#include "Core/CoreModule.h"
+#include "Core/Core.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Input/InputCodes.h"
 #include "Core/Input/Interface/PlatformKeyMapping.h"

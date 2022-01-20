@@ -7,7 +7,6 @@
 #include "Core/Logging/Log.h"
 #include "Core/Containers/ComPtr.h"
 
-#include <d3d12.h>
 #include <dxcapi.h>
 
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
@@ -15,29 +14,30 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 #if !PRODUCTION_BUILD
-#define D3D12_ERROR( Condition, ErrorMessage ) \
-    do                                         \
-    {                                          \
-        if (!(Condition))                      \
-        {                                      \
-            LOG_ERROR( ErrorMessage );         \
-            CDebug::DebugBreak();              \
-        }                                      \
-    } while ( 0 )
+#define D3D12_ERROR(Condition, ErrorMessage) \
+    do                                       \
+    {                                        \
+        if (!(Condition))                    \
+        {                                    \
+            LOG_ERROR(ErrorMessage);         \
+            CDebug::DebugBreak();            \
+        }                                    \
+    } while (0)
 
-#define D3D12_ERROR_ALWAYS( ErrorMessage ) \
-    do                                     \
-    {                                      \
-            LOG_ERROR( ErrorMessage );     \
-            CDebug::DebugBreak();          \
-    } while ( 0 )
+#define D3D12_ERROR_ALWAYS(ErrorMessage) \
+    do                                   \
+    {                                    \
+            LOG_ERROR(ErrorMessage);     \
+            CDebug::DebugBreak();        \
+    } while (0)
 
 #else
-#define D3D12_ERROR( Condtion, ErrorString ) do {} while( 0 )
-#define D3D12_ERROR_ALWAYS( ErrorString )    do {} while( 0 )
+#define D3D12_ERROR(Condtion, ErrorString) do {} while(0)
+#define D3D12_ERROR_ALWAYS(ErrorString)    do {} while(0)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Heap helpers
 
 // Returns upload heap properties
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
@@ -70,6 +70,7 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// RHI conversion functions 
 
 // Converts EBufferFlag- flags to D3D12_RESOURCE_FLAGS
 inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(uint32 Flag)
@@ -530,31 +531,8 @@ inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(uint32 InF
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-// Operators for D3D12_GPU_DESCRIPTOR_HANDLE
-inline bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
-{
-    return DescriptorHandle.ptr == Value;
-}
-
-inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
-{
-    return !(DescriptorHandle == Value);
-}
-
-inline bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
-{
-    return Left.ptr == Right.ptr;
-}
-
-inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
-{
-    return !(Left == Right);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
 // Operators for D3D12_CPU_DESCRIPTOR_HANDLE
+
 inline bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
 {
     return DescriptorHandle.ptr == Value;
@@ -576,6 +554,63 @@ inline bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HA
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Operators for D3D12_GPU_DESCRIPTOR_HANDLE
+
+inline bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
+{
+    return DescriptorHandle.ptr == Value;
+}
+
+inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
+{
+    return !(DescriptorHandle == Value);
+}
+
+inline bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
+{
+    return Left.ptr == Right.ptr;
+}
+
+inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
+{
+    return !(Left == Right);
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TD3D12DescriptorHandle
+
+template<typename DescriptorHandleType>
+class TD3D12DescriptorHandle
+{
+public:
+    FORCEINLINE TD3D12DescriptorHandle()
+        : Handle({ 0 })
+    {
+    }
+
+    FORCEINLINE TD3D12DescriptorHandle(DescriptorHandleType InHandle)
+        : Handle(InHandle)
+    {
+    }
+
+    FORCEINLINE bool operator==(const TD3D12DescriptorHandle& RHS) const
+    {
+        return Handle == RHS.Handle;
+    }
+
+    FORCEINLINE operator DescriptorHandleType() const
+    {
+        return Handle;
+    }
+
+private:
+};
+
+typedef TD3D12DescriptorHandle<D3D12_CPU_DESCRIPTOR_HANDLE> CD3D12CpuDescriptorHandle;
+typedef TD3D12DescriptorHandle<D3D12_GPU_DESCRIPTOR_HANDLE> CD3D12GpuDescriptorHandle;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Format helpers
 
 inline uint32 GetFormatStride(DXGI_FORMAT Format)
 {

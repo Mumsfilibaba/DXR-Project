@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CoreModule.h"
+#include "Core/Core.h"
 #include "Core/Logging/Log.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"

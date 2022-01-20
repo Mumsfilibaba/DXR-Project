@@ -18,17 +18,17 @@
 
 TSharedPtr<CMacApplication> CMacApplication::Make()
 {
-	return TSharedPtr<CMacApplication>( dbg_new CMacApplication() );
+	return TSharedPtr<CMacApplication>(dbg_new CMacApplication());
 }
 
 CMacApplication::CMacApplication()
-    : CPlatformApplication( CMacCursor::Make() )
-	, AppDelegate( nullptr )
+    : CPlatformApplication(CMacCursor::Make())
+	, AppDelegate(nullptr)
     , Windows()
     , WindowsMutex()
     , DeferredEvents()
     , DeferredEventsMutex()
-	, bIsTerminating( false )
+	, bIsTerminating(false)
 {
 }
 
@@ -40,11 +40,11 @@ CMacApplication::~CMacApplication()
 
 TSharedRef<CPlatformWindow> CMacApplication::MakeWindow()
 {
-    TSharedRef<CMacWindow> NewWindow = CMacWindow::Make( this );
+    TSharedRef<CMacWindow> NewWindow = CMacWindow::Make(this);
     
     {
-        TScopedLock Lock( WindowsMutex );
-        Windows.Emplace( NewWindow );
+        TScopedLock Lock(WindowsMutex);
+        Windows.Emplace(NewWindow);
     }
 
     return NewWindow;
@@ -54,7 +54,7 @@ bool CMacApplication::Initialize()
 {
     SCOPED_AUTORELEASE_POOL();
 
-    Assert( PlatformThreadMisc::IsMainThread() ); 
+    Assert(PlatformThreadMisc::IsMainThread()); 
 
     /* Init application singleton */
     [NSApplication sharedApplication];
@@ -85,7 +85,7 @@ bool CMacApplication::InitializeAppMenu()
     SCOPED_AUTORELEASE_POOL();
 
     // This should only be init from the main thread, but assert just to be sure.
-    Assert( PlatformThreadMisc::IsMainThread() );
+    Assert(PlatformThreadMisc::IsMainThread());
 
     // Init the default macOS menu
     NSMenu*     MenuBar     = [[NSMenu alloc] init];
@@ -130,24 +130,24 @@ bool CMacApplication::InitializeAppMenu()
     return true;
 }
 
-void CMacApplication::Tick( float )
+void CMacApplication::Tick(float)
 {
-    PlatformApplicationMisc::PumpMessages( true );
+    PlatformApplicationMisc::PumpMessages(true);
 	
 	TArray<SMacApplicationEvent> ProcessableEvents;
 	{
-		TScopedLock Lock( DeferredEventsMutex );
-		ProcessableEvents.Swap( DeferredEvents );
+		TScopedLock Lock(DeferredEventsMutex);
+		ProcessableEvents.Swap(DeferredEvents);
 		DeferredEvents.Empty();
 	}
 	
-	for ( const SMacApplicationEvent& CurrentEvent : ProcessableEvents )
+	for (const SMacApplicationEvent& CurrentEvent : ProcessableEvents)
 	{
-		HandleEvent( CurrentEvent );
+		HandleEvent(CurrentEvent);
 	}
 }
 
-void CMacApplication::SetActiveWindow( const TSharedRef<CPlatformWindow>& Window )
+void CMacApplication::SetActiveWindow(const TSharedRef<CPlatformWindow>& Window)
 {
     MakeMainThreadCall(^
     {
@@ -161,7 +161,7 @@ TSharedRef<CPlatformWindow> CMacApplication::GetActiveWindow() const
 	SCOPED_AUTORELEASE_POOL();
 
     NSWindow* KeyWindow = [NSApp keyWindow];
-    return GetWindowFromNSWindow( KeyWindow );
+    return GetWindowFromNSWindow(KeyWindow);
 }
 
 TSharedRef<CPlatformWindow> CMacApplication::GetWindowUnderCursor() const
@@ -172,19 +172,19 @@ TSharedRef<CPlatformWindow> CMacApplication::GetWindowUnderCursor() const
 	NSInteger WindowNumber  = [NSWindow windowNumberAtPoint:MousePosition belowWindowWithWindowNumber:0];
 	
 	NSWindow* Window = [NSApp windowWithWindowNumber:WindowNumber];
-	return GetWindowFromNSWindow( Window );
+	return GetWindowFromNSWindow(Window);
 }
 
-TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow( NSWindow* Window ) const
+TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow(NSWindow* Window) const
 {
     if (Window && [Window isKindOfClass:[CCocoaWindow class]])
     {
-        TScopedLock Lock( WindowsMutex );
+        TScopedLock Lock(WindowsMutex);
 
         CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window);
-        for ( const TSharedRef<CMacWindow>& MacWindow : Windows )
+        for (const TSharedRef<CMacWindow>& MacWindow : Windows)
         {
-            if ( CocoaWindow == reinterpret_cast<CCocoaWindow*>(MacWindow->GetNativeHandle()) )
+            if (CocoaWindow == reinterpret_cast<CCocoaWindow*>(MacWindow->GetNativeHandle()))
             {
                 return MacWindow;
             }
@@ -194,31 +194,31 @@ TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow( NSWindow* Window 
     return nullptr;
 }
 
-void CMacApplication::DeferEvent( NSObject* EventOrNotificationObject )
+void CMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 {
-	if ( EventOrNotificationObject )
+	if (EventOrNotificationObject)
 	{
 		SMacApplicationEvent NewDeferredEvent;
 		
-		if ( [EventOrNotificationObject isKindOfClass:[NSEvent class]] )
+		if ([EventOrNotificationObject isKindOfClass:[NSEvent class]])
 		{
 			NSEvent* Event = reinterpret_cast<NSEvent*>(EventOrNotificationObject);
 			NewDeferredEvent.Event  = [Event retain];
 			
 			NSWindow* Window = [Event window];
-			if ( [Window isKindOfClass: [CCocoaWindow class]])
+			if ([Window isKindOfClass: [CCocoaWindow class]])
 			{
 				CCocoaWindow* EventWindow = reinterpret_cast<CCocoaWindow*>(Window);
 				NewDeferredEvent.Window   = [EventWindow retain];
 			}
 		}
-		else if ( [EventOrNotificationObject isKindOfClass:[NSNotification class]] )
+		else if ([EventOrNotificationObject isKindOfClass:[NSNotification class]])
 		{
 			NSNotification* Notification = reinterpret_cast<NSNotification*>(EventOrNotificationObject);
 			NewDeferredEvent.NotificationName = [[Notification name] retain];
 			
 			NSObject* NotificationObject = [Notification object];
-			if ( [NotificationObject isKindOfClass: [CCocoaWindow class]])
+			if ([NotificationObject isKindOfClass: [CCocoaWindow class]])
 			{
 				CCocoaWindow* EventWindow = reinterpret_cast<CCocoaWindow*>(NotificationObject);
 				NewDeferredEvent.Window   = [EventWindow retain];
@@ -228,7 +228,7 @@ void CMacApplication::DeferEvent( NSObject* EventOrNotificationObject )
 				NewDeferredEvent.Position = ContentRect.origin;
 			}
 		}
-		else if ( [EventOrNotificationObject isKindOfClass:[NSString class]] )
+		else if ([EventOrNotificationObject isKindOfClass:[NSString class]])
 		{
 			NSString* Characters = reinterpret_cast<NSString*>(EventOrNotificationObject);
 			
@@ -238,21 +238,21 @@ void CMacApplication::DeferEvent( NSObject* EventOrNotificationObject )
 				const unichar Codepoint = [Characters characterAtIndex:Index];
 				if ((Codepoint & 0xff00) != 0xf700)
 				{
-					MessageListener->HandleKeyTyped( uint32(Codepoint) );
+					MessageListener->HandleKeyTyped(uint32(Codepoint));
 				}
 			}
 		}
 		
-		TScopedLock Lock( DeferredEventsMutex );
-		DeferredEvents.Emplace( NewDeferredEvent );
+		TScopedLock Lock(DeferredEventsMutex);
+		DeferredEvents.Emplace(NewDeferredEvent);
 	}
 }
 
-void CMacApplication::HandleEvent( const SMacApplicationEvent& Event )
+void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 {
-    TSharedRef<CMacWindow> Window = GetWindowFromNSWindow( Event.Window );
+    TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(Event.Window);
 	
-	if ( Event.NotificationName )
+	if (Event.NotificationName)
 	{
 		NSNotificationName NotificationName = Event.NotificationName;
 		
@@ -266,15 +266,15 @@ void CMacApplication::HandleEvent( const SMacApplicationEvent& Event )
 		}
 		else if (NotificationName == NSWindowDidResizeNotification)
 		{
-			MessageListener->HandleWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height) );
+			MessageListener->HandleWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height));
 		}
 		else if (NotificationName == NSWindowDidMiniaturizeNotification)
 		{
-			MessageListener->HandleWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height) );
+			MessageListener->HandleWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height));
 		}
 		else if (NotificationName == NSWindowDidDeminiaturizeNotification)
 		{
-			MessageListener->HandleWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height) );
+			MessageListener->HandleWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height));
 		}
 		else if (NotificationName == NSWindowDidBecomeKeyNotification)
 		{
@@ -299,16 +299,16 @@ void CMacApplication::HandleEvent( const SMacApplicationEvent& Event )
 			case NSEventTypeKeyUp:
 			{
 				const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
-				const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode( [CurrentEvent keyCode] );
-				MessageListener->HandleKeyReleased( Key, ModiferKeyState );
+				const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode([CurrentEvent keyCode]);
+				MessageListener->HandleKeyReleased(Key, ModiferKeyState);
 				break;
 			}
 			   
 			case NSEventTypeKeyDown:
 			{
 				const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
-				const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode( [CurrentEvent keyCode] );
-				MessageListener->HandleKeyPressed( Key, [CurrentEvent isARepeat], ModiferKeyState );
+				const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode([CurrentEvent keyCode]);
+				MessageListener->HandleKeyPressed(Key, [CurrentEvent isARepeat], ModiferKeyState);
 				break;
 			}
 
@@ -316,9 +316,9 @@ void CMacApplication::HandleEvent( const SMacApplicationEvent& Event )
 			case NSEventTypeRightMouseUp:
 			case NSEventTypeOtherMouseUp:
 			{
-				const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex( static_cast<int32>([CurrentEvent buttonNumber]) );
+				const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex(static_cast<int32>([CurrentEvent buttonNumber]));
 				const SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
-				MessageListener->HandleMouseReleased( Button, KeyState );
+				MessageListener->HandleMouseReleased(Button, KeyState);
 				break;
 			}
 
@@ -326,9 +326,9 @@ void CMacApplication::HandleEvent( const SMacApplicationEvent& Event )
 			case NSEventTypeRightMouseDown:
 			case NSEventTypeOtherMouseDown:
 			{
-				const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex( static_cast<int32>([CurrentEvent buttonNumber]) );
+				const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex(static_cast<int32>([CurrentEvent buttonNumber]));
 				const SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
-				MessageListener->HandleMousePressed( Button, KeyState );
+				MessageListener->HandleMousePressed(Button, KeyState);
 				break;
 			}
 
@@ -346,7 +346,7 @@ void CMacApplication::HandleEvent( const SMacApplicationEvent& Event )
 					const int32 x = int32(MousePosition.x);
 					const int32 y = int32(ContentRect.size.height - MousePosition.y);
 					
-					MessageListener->HandleMouseMove( x, y );
+					MessageListener->HandleMouseMove(x, y);
 					break;
 				}
 			}
@@ -397,9 +397,9 @@ void CMacApplication::HandleEvent( const SMacApplicationEvent& Event )
 			}
 		}
 	}
-	else if ( Event.Character != uint32(-1) )
+	else if (Event.Character != uint32(-1))
 	{
-		MessageListener->HandleKeyTyped( Event.Character );
+		MessageListener->HandleKeyTyped(Event.Character);
 	}
 }
 

@@ -10,21 +10,24 @@
 
 #include <AppKit/AppKit.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Mac specific implementation for miscellaneous application utility functions
+
 class CMacApplicationMisc final : public CPlatformApplicationMisc
 {
 public:
 
     /* Takes the title of the messagebox and the message to be displayed */
-    static void MessageBox( const CString& Title, const CString& Message );
+    static void MessageBox(const CString& Title, const CString& Message);
 
     /* Sends a Exit Message to the application with a certain exitcode */
-    static FORCEINLINE void RequestExit( int32 ExitCode )
+    static FORCEINLINE void RequestExit(int32 ExitCode)
     {
         [NSApp terminate:nil];
     }
 
     /* Pumps the application's message queue */
-    static void PumpMessages( bool bUntilEmpty );
+    static void PumpMessages(bool bUntilEmpty);
 
     /* Retrieves the state of modifer keys */
     static SModifierKeyState GetModifierKeyState();

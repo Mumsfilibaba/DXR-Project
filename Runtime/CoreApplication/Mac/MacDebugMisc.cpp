@@ -3,9 +3,9 @@
 
 #include <Foundation/Foundation.h>
 
-void CMacDebugMisc::OutputDebugString( const CString& Message )
+void CMacDebugMisc::OutputDebugString(const CString& Message)
 { 
-    NSLog( @"%s\n", Message.CStr() );
+    NSLog(@"%s\n", Message.CStr());
 }
 
 #endif

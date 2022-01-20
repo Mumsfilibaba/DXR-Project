@@ -1,6 +1,11 @@
 #pragma once
 #include "Core/Core.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12 compile-time configurable constants
+
+#include <d3d12.h>
+
 #define D3D12_MAX_ROOT_PARAMETERS                  (64)
 #define D3D12_MAX_SHADER_PARAMETERS                (16)
 #define D3D12_MAX_HIT_GROUPS                       (512)

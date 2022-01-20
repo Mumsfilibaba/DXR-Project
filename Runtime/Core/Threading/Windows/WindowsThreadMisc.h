@@ -1,11 +1,11 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-#include "Core/CoreModule.h"
+#include "Core/Core.h"
 #include "Core/Threading/Interface/PlatformThreadMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for miscellaneous functions for thread-handling 
+// Platform interface for miscellaneous thread utility functions
 
 class CWindowsThreadMisc : public CPlatformThreadMisc
 {

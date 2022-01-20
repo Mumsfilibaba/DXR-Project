@@ -4,19 +4,20 @@
 #include "CocoaWindow.h"
 #include "CocoaContentView.h"
 
+#include "Core/Mac/Mac.h"
 #include "Core/Logging/Log.h"
 #include "Core/Threading/Mac/MacRunLoop.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-TSharedRef<CMacWindow> CMacWindow::Make( CMacApplication* InApplication )
+TSharedRef<CMacWindow> CMacWindow::Make(CMacApplication* InApplication)
 {
-	return dbg_new CMacWindow( InApplication );
+	return dbg_new CMacWindow(InApplication);
 }
 
-CMacWindow::CMacWindow( CMacApplication* InApplication )
+CMacWindow::CMacWindow(CMacApplication* InApplication)
     : CPlatformWindow()
-    , Application( InApplication )
+    , Application(InApplication)
     , Window(nullptr)
     , View(nullptr)
 {
@@ -33,7 +34,7 @@ CMacWindow::~CMacWindow()
 	}, true);
 }
 
-bool CMacWindow::Initialize( const CString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle )
+bool CMacWindow::Initialize(const CString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
 {
     __block bool bResult = false;
     MakeMainThreadCall(^
@@ -62,7 +63,7 @@ bool CMacWindow::Initialize( const CString& InTitle, uint32 InWidth, uint32 InHe
             WindowStyle = NSWindowStyleMaskBorderless;
         }
         
-        const NSRect WindowRect = NSMakeRect( CGFloat(x), CGFloat(y), CGFloat(InWidth), CGFloat(InHeight) );
+        const NSRect WindowRect = NSMakeRect(CGFloat(x), CGFloat(y), CGFloat(InWidth), CGFloat(InHeight));
         Window = [[CCocoaWindow alloc] init:Application ContentRect:WindowRect StyleMask:WindowStyle Backing:NSBackingStoreBuffered Defer:NO];
         if (!Window)
         {
@@ -110,18 +111,18 @@ bool CMacWindow::Initialize( const CString& InTitle, uint32 InWidth, uint32 InHe
     return bResult;
 }
 
-void CMacWindow::Show( bool bMaximized )
+void CMacWindow::Show(bool bMaximized)
 {
 	MakeMainThreadCall(^
 	{
 		[Window makeKeyAndOrderFront:Window];
 
-		if ( bMaximized )
+		if (bMaximized)
 		{
 			[Window zoom:Window];
 		}
 
-		PlatformApplicationMisc::PumpMessages( true );
+		PlatformApplicationMisc::PumpMessages(true);
 	}, true);
 }
 
@@ -132,7 +133,7 @@ void CMacWindow::Close()
 		MakeMainThreadCall(^
 		{
 			[Window performClose:Window];
-			PlatformApplicationMisc::PumpMessages( true );
+			PlatformApplicationMisc::PumpMessages(true);
 		}, true);
 	}
 }
@@ -144,7 +145,7 @@ void CMacWindow::Minimize()
 		MakeMainThreadCall(^
 		{
 			[Window miniaturize:Window];
-			PlatformApplicationMisc::PumpMessages( true );
+			PlatformApplicationMisc::PumpMessages(true);
 		}, true);
 	}
 }
@@ -162,7 +163,7 @@ void CMacWindow::Maximize()
 
 			[Window zoom:Window];
 
-			PlatformApplicationMisc::PumpMessages( true );
+			PlatformApplicationMisc::PumpMessages(true);
 		}, true);
 	}
 }
@@ -187,7 +188,7 @@ void CMacWindow::Restore()
             [Window zoom:Window];
         }
     
-        PlatformApplicationMisc::PumpMessages( true );
+        PlatformApplicationMisc::PumpMessages(true);
     }, true);
 }
 
@@ -202,7 +203,7 @@ void CMacWindow::ToggleFullscreen()
 	}
 }
 
-void CMacWindow::SetTitle( const CString& InTitle )
+void CMacWindow::SetTitle(const CString& InTitle)
 {
 	SCOPED_AUTORELEASE_POOL();
 
@@ -217,44 +218,44 @@ void CMacWindow::SetTitle( const CString& InTitle )
 	}
 }
 
-void CMacWindow::GetTitle( CString& OutTitle )
+void CMacWindow::GetTitle(CString& OutTitle)
 {
     if (StyleParams.IsTitled())
     {
         NSString* Title  = [Window title];
         NSInteger Length = [Title length];
-        OutTitle.Resize( static_cast<int32>(Length) );
+        OutTitle.Resize(static_cast<int32>(Length));
         
         const char* UTF8Title = [Title UTF8String];
 		CMemory::Memcpy(OutTitle.Data(), UTF8Title, sizeof(char) * Length);
     }
 }
 
-void CMacWindow::SetWindowShape( const SWindowShape& Shape, bool bMove )
+void CMacWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
 {
 	SCOPED_AUTORELEASE_POOL();
 	
 	MakeMainThreadCall(^
 	{
 		NSRect Frame = [Window frame];
-		if ( StyleParams.IsResizeable() )
+		if (StyleParams.IsResizeable())
 		{
 			Frame.size.width  = Shape.Width;
 			Frame.size.height = Shape.Height;
 			[Window setFrame: Frame display: YES animate: YES];
 		}
 		
-		if ( bMove )
+		if (bMove)
 		{
 			// TODO: Make sure this is correct
 			[Window setFrameOrigin:NSMakePoint(Shape.Position.x, Shape.Position.y - Frame.size.height + 1)];
 		}
 		
-		PlatformApplicationMisc::PumpMessages( true );
+		PlatformApplicationMisc::PumpMessages(true);
 	}, true);
 }
 
-void CMacWindow::GetWindowShape( SWindowShape& OutWindowShape ) const
+void CMacWindow::GetWindowShape(SWindowShape& OutWindowShape) const
 {
 	SCOPED_AUTORELEASE_POOL();
 
@@ -296,6 +297,22 @@ uint32 CMacWindow::GetHeight() const
 	}, true);
 
 	return uint32(ContentRect.size.height);
+}
+
+void CMacWindow::SetPlatformHandle(PlatformWindowHandle InPlatformHandle)
+{
+	if (InPlatformHandle)
+	{
+		NSObject* Object = reinterpret_cast<NSObject*>(InPlatformHandle);
+
+		// Make sure that the handle sent in is of correct type
+		CCocoaWindow* NewWindow = NSObjectCast<CCocoaWindow>(Object);
+		if (NewWindowHandle)
+		{
+			Window = NewWindow;
+			View   = [Window contentView];
+		}
+	}
 }
 
 #endif

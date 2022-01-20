@@ -14,7 +14,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for miscellaneous functions for thread-handling 
+// Platform interface for miscellaneous thread utility functions
 
 class CPlatformThreadMisc
 {

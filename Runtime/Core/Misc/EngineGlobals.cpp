@@ -1,5 +1,8 @@
 #include "EngineGlobals.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EngineGlobals
+
 namespace NErrorDevice
 {
     CORE_API CPlatformConsoleWindow* GConsoleWindow = nullptr;

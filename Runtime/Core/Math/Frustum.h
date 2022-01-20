@@ -3,7 +3,7 @@
 #include "Matrix4.h"
 #include "Plane.h"
 
-#include "Core/CoreModule.h"
+#include "Core/Core.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Class for creating a frustum

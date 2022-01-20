@@ -1,5 +1,8 @@
 #include "Frustum.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Frustum
+
 CFrustum::CFrustum(float FarPlane, const CMatrix4& View, const CMatrix4& Projection)
     : Planes()
 {

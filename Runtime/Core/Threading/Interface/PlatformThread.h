@@ -30,7 +30,6 @@ public:
 
     /* Create a new thread */
     static TSharedRef<CPlatformThread> Make(ThreadFunction InFunction) { return dbg_new CPlatformThread(); }
-
     /* Create a new thread with a name */
     static TSharedRef<CPlatformThread> Make(ThreadFunction InFunction, const CString& InName) { return dbg_new CPlatformThread(); }
 

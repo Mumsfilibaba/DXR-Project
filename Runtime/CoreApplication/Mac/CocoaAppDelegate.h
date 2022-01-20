@@ -5,6 +5,9 @@
 
 class CMacApplication;
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Delegate for NSApplication
+
 @interface CCocoaAppDelegate : NSObject<NSApplicationDelegate>
 {
     CMacApplication* Application;

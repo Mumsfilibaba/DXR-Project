@@ -3,7 +3,7 @@
 #if PLATFORM_WINDOWS
 #include "Core/Containers/SharedPtr.h"
 
-#include "CoreApplication/CoreApplicationModule.h"
+#include "CoreApplication/CoreApplication.h"
 #include "CoreApplication/Interface/PlatformCursor.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

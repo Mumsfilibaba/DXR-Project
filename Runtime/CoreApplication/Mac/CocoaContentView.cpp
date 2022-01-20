@@ -36,7 +36,7 @@
     return YES;
 }
 
-- (BOOL) acceptsFirstMouse:(NSEvent* ) Event
+- (BOOL) acceptsFirstMouse:(NSEvent*) Event
 {
     return YES;
 }
@@ -56,67 +56,67 @@
 {
     // Interpret key Event and make sure we get a KeyTyped Event
     [self interpretKeyEvents:[NSArray arrayWithObject: Event]];
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) keyUp:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) mouseDown:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) mouseDragged:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) mouseUp:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) mouseMoved:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) rightMouseDown:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) rightMouseDragged:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) rightMouseUp:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) otherMouseDown:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) otherMouseDragged:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) otherMouseUp:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) scrollWheel:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) insertText:(id) String replacementRange:(NSRange) ReplacementRange
@@ -135,7 +135,7 @@
         Characters = (NSString*)String;
     }
     
-    Application->DeferEvent( Characters );
+    Application->DeferEvent(Characters);
 }
 
 /* Necessary methods for NSTextInputClient */
@@ -185,12 +185,12 @@
 
 - (void) mouseExited:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 - (void) mouseEntered:(NSEvent*) Event
 {
-    Application->DeferEvent( Event );
+    Application->DeferEvent(Event);
 }
 
 @end

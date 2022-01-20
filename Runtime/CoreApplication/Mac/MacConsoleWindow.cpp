@@ -13,10 +13,10 @@ CMacConsoleWindow* CMacConsoleWindow::Make()
 }
 
 CMacConsoleWindow::CMacConsoleWindow()
-    : Window( nullptr )
-	, TextView( nullptr )
-	, ScrollView( nullptr )
-	, ConsoleColor( nullptr )
+    : Window(nullptr)
+	, TextView(nullptr)
+	, ScrollView(nullptr)
+	, ConsoleColor(nullptr)
 {
 }
 
@@ -37,10 +37,10 @@ void CMacConsoleWindow::CreateConsole()
 		const CGFloat Width  = 640.0f;
 		const CGFloat Height = 360.0f;
 		
-		NSRect ContentRect = NSMakeRect( 0.0f, 0.0f, Width, Height );
+		NSRect ContentRect = NSMakeRect(0.0f, 0.0f, Width, Height);
 		
 		Window = [[CCocoaConsoleWindow alloc] init:this ContentRect:ContentRect StyleMask:StyleMask Backing:NSBackingStoreBuffered Defer:NO];
-		SetColor( EConsoleColor::White );
+		SetColor(EConsoleColor::White);
 		
 		NSRect ContentFrame = [[Window contentView] frame];
 		ScrollView = [[NSScrollView alloc] initWithFrame:ContentFrame];
@@ -58,7 +58,7 @@ void CMacConsoleWindow::CreateConsole()
 		[TextView setAutoresizingMask:NSViewWidthSizable];
 		
 		NSTextContainer* Container = [TextView textContainer];
-		[Container setContainerSize:NSMakeSize( Width, FLT_MAX )];
+		[Container setContainerSize:NSMakeSize(Width, FLT_MAX)];
 		[Container setWidthTracksTextView:YES];
 		
 		[ScrollView setDocumentView:TextView];
@@ -69,27 +69,27 @@ void CMacConsoleWindow::CreateConsole()
 		[Window setOpaque:YES];
 		[Window makeKeyAndOrderFront:Window];
 
-		PlatformApplicationMisc::PumpMessages( true );
+		PlatformApplicationMisc::PumpMessages(true);
 	}, true);
 }
 
 void CMacConsoleWindow::DestroyConsole()
 {
-	if ( IsShowing() )
+	if (IsShowing())
 	{
 		MakeMainThreadCall(^
 		{
 			SCOPED_AUTORELEASE_POOL();
 		
-			PlatformApplicationMisc::PumpMessages( true );
+			PlatformApplicationMisc::PumpMessages(true);
 			
-			if ( Window )
+			if (Window)
 			{
 				[Window release];
 				Window = nullptr;
 			}
 			
-			if ( ConsoleColor )
+			if (ConsoleColor)
 			{
 				[ConsoleColor release];
 				ConsoleColor = nullptr;
@@ -104,24 +104,24 @@ void CMacConsoleWindow::DestroyResources()
 {
 	SCOPED_AUTORELEASE_POOL();
 	
-	if ( TextView )
+	if (TextView)
 	{
 		[TextView release];
 		TextView = nullptr;
 	}
 	
-	if ( ScrollView )
+	if (ScrollView)
 	{
 		[ScrollView release];
 		ScrollView = nullptr;
 	}
 }
 
-void CMacConsoleWindow::Show( bool bShow )
+void CMacConsoleWindow::Show(bool bShow)
 {
-	if ( bIsShowing != bShow )
+	if (bIsShowing != bShow)
 	{
-		if ( bShow )
+		if (bShow)
 		{
 			CreateConsole();
 		}
@@ -132,7 +132,7 @@ void CMacConsoleWindow::Show( bool bShow )
 	}
 }
 
-void CMacConsoleWindow::Print( const CString& Message )
+void CMacConsoleWindow::Print(const CString& Message)
 {  
     if (Window)
     {
@@ -141,14 +141,14 @@ void CMacConsoleWindow::Print( const CString& Message )
             SCOPED_AUTORELEASE_POOL();
 
             NSString* String = [NSString stringWithUTF8String:Message.CStr()];
-			AppendStringAndScroll( String );
+			AppendStringAndScroll(String);
 			
-            PlatformApplicationMisc::PumpMessages( true );
+            PlatformApplicationMisc::PumpMessages(true);
         }, true);
     }
 }
 
-void CMacConsoleWindow::PrintLine( const CString& Message )
+void CMacConsoleWindow::PrintLine(const CString& Message)
 {
     if (Window)
     {
@@ -159,9 +159,9 @@ void CMacConsoleWindow::PrintLine( const CString& Message )
             NSString* String      = [NSString stringWithUTF8String:Message.CStr()];
             NSString* FinalString = [String stringByAppendingString:@"\n"];
         
-            AppendStringAndScroll( FinalString );
+            AppendStringAndScroll(FinalString);
         
-            PlatformApplicationMisc::PumpMessages( true );
+            PlatformApplicationMisc::PumpMessages(true);
         }, true);
     }
 }
@@ -251,11 +251,11 @@ int32 CMacConsoleWindow::GetLineCount() const
 			NSUInteger StringLength = [String length];
 			for (NSUInteger LineIndex = 0; LineIndex < StringLength; NumberOfLines++)
 			{
-				LineIndex = NSMaxRange([String lineRangeForRange:NSMakeRange( LineIndex, 0 )]);
+				LineIndex = NSMaxRange([String lineRangeForRange:NSMakeRange(LineIndex, 0)]);
 			}
 		}, true);
 		
-		return static_cast<int32>( NumberOfLines );
+		return static_cast<int32>(NumberOfLines);
 	}
 	else
 	{
@@ -269,7 +269,7 @@ void CMacConsoleWindow::OnWindowDidClose()
 	bIsShowing = false;
 }
 
-void CMacConsoleWindow::AppendStringAndScroll( NSString* String )
+void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
 {
 	if (Window)
 	{

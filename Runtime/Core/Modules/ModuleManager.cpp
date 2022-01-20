@@ -3,6 +3,9 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Templates/StringUtils.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ModuleManager
+
 IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
 {
     Assert(ModuleName != nullptr);

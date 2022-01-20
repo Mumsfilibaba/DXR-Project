@@ -45,6 +45,8 @@ struct SPointMessage
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// WindowsApplication
+
 CWindowsApplication* CWindowsApplication::Instance = nullptr;
 
 TSharedPtr<CWindowsApplication> CWindowsApplication::Make()

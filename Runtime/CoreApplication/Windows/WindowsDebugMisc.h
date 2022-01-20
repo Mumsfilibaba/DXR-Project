@@ -3,7 +3,7 @@
 #if PLATFORM_WINDOWS
 #include "Windows.h"
 
-#include "Core/CoreModule.h"
+#include "Core/Core.h"
 #include "Core/Containers/String.h"
 
 #include "CoreApplication/Interface/PlatformDebugMisc.h"

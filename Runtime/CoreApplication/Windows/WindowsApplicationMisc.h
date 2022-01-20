@@ -3,7 +3,7 @@
 #if PLATFORM_WINDOWS
 #include "Windows.h"
 
-#include "Core/CoreModule.h"
+#include "Core/Core.h"
 
 #include "CoreApplication/Interface/PlatformApplicationMisc.h"
 
@@ -12,7 +12,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows-specific interface for miscellaneous functions for application utilities
+// Windows-specific interface for miscellaneous application utility functions
 
 class COREAPPLICATION_API CWindowsApplicationMisc final : public CPlatformApplicationMisc
 {

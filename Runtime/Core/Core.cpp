@@ -1,0 +1,8 @@
+#include "Core.h"
+
+#include "Modules/ModuleManager.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CoreModule
+
+IMPLEMENT_ENGINE_MODULE(CDefaultEngineModule, Core);

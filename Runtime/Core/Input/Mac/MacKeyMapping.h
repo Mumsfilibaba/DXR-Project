@@ -5,6 +5,9 @@
 #include "Core/Containers/StaticArray.h"
 #include "Core/Input/Interface/PlatformKeyMapping.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Class that maps key-code from scan-codes and the reverse
+
 class CMacKeyMapping : public CPlatformKeyMapping
 {
     enum
@@ -18,25 +21,25 @@ public:
     static void Initialize();
     
     /* Retrieve the key-code from the scan-code */
-    static FORCEINLINE EKey GetKeyCodeFromScanCode( uint32 ScanCode )
+    static FORCEINLINE EKey GetKeyCodeFromScanCode(uint32 ScanCode)
     {
         return KeyCodeFromScanCodeTable[ScanCode];
     }
 
     /* Retrieve the scan-code from the key-code */
-    static FORCEINLINE uint32 GetScanCodeFromKeyCode( EKey KeyCode )
+    static FORCEINLINE uint32 GetScanCodeFromKeyCode(EKey KeyCode)
     {
         return static_cast<uint32>(ScanCodeFromKeyCodeTable[KeyCode]);
     }
 
     /* Retrieve the mouse-button from the mouse-button index */
-    static FORCEINLINE EMouseButton GetButtonFromIndex( uint32 ButtonIndex )
+    static FORCEINLINE EMouseButton GetButtonFromIndex(uint32 ButtonIndex)
     {
         return ButtonFromButtonIndex[ButtonIndex];
     }
 
     /* Retrieve the mouse-button-index from the mouse-button */
-    static FORCEINLINE uint32 GetButtonFromIndex( EMouseButton Button )
+    static FORCEINLINE uint32 GetButtonFromIndex(EMouseButton Button)
     {
         return static_cast<uint32>(ButtonIndexFromButton[Button]);
     }
