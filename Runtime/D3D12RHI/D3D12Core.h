@@ -39,7 +39,6 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Heap helpers
 
-// Returns upload heap properties
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
@@ -54,7 +53,6 @@ inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
     return HeapProperties;
 }
 
-// Returns default heap properties
 inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
@@ -72,7 +70,6 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RHI conversion functions 
 
-// Converts EBufferFlag- flags to D3D12_RESOURCE_FLAGS
 inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(uint32 Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
@@ -84,7 +81,6 @@ inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(uint32 Flag)
     return Result;
 }
 
-// Converts ETextureFlag- flags to D3D12_RESOURCE_FLAGS
 inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(uint32 Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
@@ -108,7 +104,6 @@ inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(uint32 Flag)
     return Result;
 }
 
-// Converts EFormat to DXGI_FORMAT
 inline DXGI_FORMAT ConvertFormat(EFormat Format)
 {
     switch (Format)
@@ -177,7 +172,6 @@ inline DXGI_FORMAT ConvertFormat(EFormat Format)
     }
 }
 
-// Converts EInputClassification to D3D12_INPUT_CLASSIFICATION
 inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification(EInputClassification InputClassification)
 {
     switch (InputClassification)
@@ -189,7 +183,6 @@ inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification(EInputClassificatio
     return D3D12_INPUT_CLASSIFICATION();
 }
 
-// Converts EDepthWriteMask to DXGI_FORMAT
 inline D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMask)
 {
     switch (DepthWriteMask)
@@ -201,7 +194,6 @@ inline D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMa
     return D3D12_DEPTH_WRITE_MASK();
 }
 
-// Converts EComparisonFunc to D3D12_COMPARISON_FUNC
 inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
@@ -219,7 +211,6 @@ inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFun
     return D3D12_COMPARISON_FUNC();
 }
 
-// Converts EStencilOp to D3D12_STENCIL_OP
 inline D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
 {
     switch (StencilOp)
@@ -237,7 +228,6 @@ inline D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
     return D3D12_STENCIL_OP();
 }
 
-// Converts DepthStencilOp to D3D12_DEPTH_STENCILOP_DESC
 inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilOp& DepthStencilOp)
 {
     return
@@ -249,7 +239,6 @@ inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilOp& D
     };
 }
 
-// Converts ECullMode to D3D12_CULL_MODE
 inline D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
 {
     switch (CullMode)
@@ -260,7 +249,6 @@ inline D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
     }
 }
 
-// Converts EFillMode to D3D12_FILL_MODE
 inline D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
 {
     switch (FillMode)
@@ -272,7 +260,6 @@ inline D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
     return D3D12_FILL_MODE();
 }
 
-// Converts EBlendOp to D3D12_FILL_MODE
 inline D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
 {
     switch (BlendOp)
@@ -287,7 +274,6 @@ inline D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
     return D3D12_BLEND_OP();
 }
 
-// Converts EBlend to D3D12_BLEND
 inline D3D12_BLEND ConvertBlend(EBlend Blend)
 {
     switch (Blend)
@@ -314,7 +300,6 @@ inline D3D12_BLEND ConvertBlend(EBlend Blend)
     return D3D12_BLEND();
 }
 
-// Converts ELogicOp to D3D12_LOGIC_OP
 inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
 {
     switch (LogicOp)
@@ -340,7 +325,6 @@ inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
     return D3D12_LOGIC_OP();
 }
 
-// Converts RenderTargetWriteState to D3D12 RenderTargetWriteMask
 inline uint8 ConvertRenderTargetWriteState(const SRenderTargetWriteState& RenderTargetWriteState)
 {
     uint8 RenderTargetWriteMask = 0;
