@@ -452,7 +452,7 @@ void CInterfaceApplication::RegisterMainViewport(const TSharedRef<CPlatformWindo
     ImGuiIO& UIState = ImGui::GetIO();
     if (MainViewport)
     {
-        UIState.ImeWindowHandle = MainViewport->GetNativeHandle();
+        UIState.ImeWindowHandle = MainViewport->GetPlatformHandle();
     }
     else
     {

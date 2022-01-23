@@ -8,15 +8,16 @@
 
 #include <imgui.h>
 
-TConsoleVariable<bool> GDrawGPUProfiler(false);
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-variable
+
+TAutoConsoleVariable<bool> GDrawGPUProfiler("renderer.DrawGPUProfiler", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// GPUProfilerWindow
 
 TSharedRef<CGPUProfilerWindow> CGPUProfilerWindow::Make()
 {
-    // Console Variables
-    INIT_CONSOLE_VARIABLE("r.DrawGPUProfiler", &GDrawGPUProfiler);
-
     return dbg_new CGPUProfilerWindow();
 }
 

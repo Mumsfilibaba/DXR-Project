@@ -3,12 +3,14 @@
 #include "Matrix3.h"
 #include "Vector4.h"
 
-/* A 4x4 matrix with SIMD capabilities */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// A 4x4 matrix with SIMD capabilities
+
 class VECTOR_ALIGN CMatrix4
 {
 public:
 
-    /* Default constructor (Initialize components to zero) */
+    /** Default constructor (Initialize components to zero) */
     FORCEINLINE CMatrix4() noexcept;
 
     /**

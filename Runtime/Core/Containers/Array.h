@@ -29,7 +29,9 @@ public:
     typedef TReverseArrayIterator<TArray, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TArray, const ElementType> ReverseConstIteratorType;
 
-    /* Empty default constructor */
+    /** 
+     * Default constructor
+     */
     FORCEINLINE TArray() noexcept
         : Allocator()
         , ArraySize(0)
@@ -37,7 +39,11 @@ public:
     {
     }
 
-    /* Default creates a certain number of elements */
+    /** 
+     * Constructor that default creates a certain number of elements 
+     *
+     * @param InSize: Number of elements to construct
+     */
     FORCEINLINE explicit TArray(SizeType InSize) noexcept
         : Allocator()
         , ArraySize(0)
@@ -46,7 +52,12 @@ public:
         EmptyConstruct(InSize);
     }
 
-    /* Allocates the specified amount of elements, and initializes them to the same value */
+    /**
+     * Constructor that Allocates the specified amount of elements, and initializes them to the same value 
+     * 
+     * @param InSize: Number of elements to construct
+     * @param Element: Element to copy into all positions of the array
+     */
     FORCEINLINE explicit TArray(SizeType InSize, const ElementType& Element) noexcept
         : Allocator()
         , ArraySize(0)
@@ -55,16 +66,25 @@ public:
         EmptyConstructFrom(InSize, Element);
     }
 
-    /* Creates an array from a raw pointer array */
-    FORCEINLINE explicit TArray(const ElementType* InputArray, SizeType Count) noexcept
+    /**
+     * Constructor that creates an array from a raw pointer array 
+     * 
+     * @param InputArray: Pointer to the start of the array to copy from
+     * @param NumElements: Number of elements in 'InputArray', which also is the resulting size of the constructed array
+     */
+    FORCEINLINE explicit TArray(const ElementType* InputArray, SizeType NumElements) noexcept
         : Allocator()
         , ArraySize(0)
         , ArrayCapacity(0)
     {
-        CopyConstructFrom(InputArray, Count);
+        CopyConstructFrom(InputArray, NumElements);
     }
 
-    /* Creates an array from an std::initializer_list */
+    /** 
+     * Constructor that creates an array from an std::initializer_list
+     * 
+     * @param InitList: Initializer list containing all elements to construct the array from
+     */
     FORCEINLINE TArray(std::initializer_list<ElementType> InitList) noexcept
         : Allocator()
         , ArraySize(0)
@@ -73,7 +93,11 @@ public:
         CopyConstructFrom(InitList.begin(), static_cast<SizeType>(InitList.size()));
     }
 
-    /* Copy-constructs an array from another array */
+    /** 
+     * Copy-constructor 
+     * 
+     * @param Other: Array to copy from
+     */
     FORCEINLINE TArray(const TArray& Other) noexcept
         : Allocator()
         , ArraySize(0)
@@ -82,7 +106,11 @@ public:
         CopyConstructFrom(Other.Data(), Other.Size());
     }
 
-    /* Copy-constructs an array from another array */
+    /**
+     * Copy-constructor from another type of array
+     *
+     * @param Other: Array to copy from
+     */
     template<typename ArrayType, typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
     FORCEINLINE explicit TArray(const ArrayType& Other) noexcept
         : Allocator()
@@ -92,7 +120,11 @@ public:
         CopyConstructFrom(Other.Data(), Other.Size());
     }
 
-    /* Move-constructs an array from another array */
+    /** 
+     * Move-constructor 
+     * 
+     * @param Other: Array to move elements from
+     */
     FORCEINLINE TArray(TArray&& Other) noexcept
         : Allocator()
         , ArraySize(0)
@@ -101,13 +133,17 @@ public:
         MoveFrom(Forward<TArray>(Other));
     }
 
-    /* Destructor deleting the array */
+    /** 
+     * Destructor deleting the array 
+     */
     FORCEINLINE ~TArray()
     {
         Empty();
     }
 
-    /* Empties the array and deallocates the memory */
+    /**
+     * Destruct all elements of the array and deallocates the memory 
+     */
     FORCEINLINE void Empty() noexcept
     {
         if (ArraySize)
@@ -120,14 +156,21 @@ public:
         ArrayCapacity = 0;
     }
 
-    /* Clears the container, but does not deallocate the memory */
+    /** 
+     * Clear all elements of the container, but does not deallocate the memory
+     */
     FORCEINLINE void Clear() noexcept
     {
         DestructRange<ElementType>(Data(), ArraySize);
         ArraySize = 0;
     }
 
-    /* Resets the container, but does not deallocate the memory */
+    /**
+     * Resets the container, but does not deallocate the memory. Takes an optional parameter to 
+     * default construct a new amount of elements.
+     * 
+     * @param NewSize: Number of elements to construct
+     */
     FORCEINLINE void Reset(SizeType NewSize = 0) noexcept
     {
         DestructRange<ElementType>(Data(), ArraySize);
@@ -142,7 +185,13 @@ public:
         }
     }
 
-    /* Resets the container, but does not deallocate the memory */
+    /** 
+     * Resets the container, but does not deallocate the memory. Takes an optional parameter to
+     * default construct a new amount of elements from a single element. 
+     * 
+     * @param NewSize: Number of elements to construct
+     * @param Element: Element to copy-construct from
+     */
     FORCEINLINE void Reset(SizeType NewSize, const ElementType& Element) noexcept
     {
         DestructRange<ElementType>(Data(), ArraySize);
@@ -157,18 +206,23 @@ public:
         }
     }
 
-    /* Resets the container, but does not deallocate the memory */
-    FORCEINLINE void Reset(const ElementType* InputArray, SizeType Count) noexcept
+    /** 
+     * Resets the container, but does not deallocate the memory. Takes in pointer to copy-construct elements from.
+     * 
+     * @param InputArray: Array to copy-construct from
+     * @param NumElements: Number of elements from
+     */
+    FORCEINLINE void Reset(const ElementType* InputArray, SizeType NumElements) noexcept
     {
-        Assert((InputArray != nullptr) && (Count > 0));
+        Assert((InputArray != nullptr) && (NumElements > 0));
 
         if (InputArray != Data())
         {
             DestructRange<ElementType>(Data(), ArraySize);
 
-            if (Count)
+            if (NumElements)
             {
-                CopyConstructFrom(InputArray, Count);
+                CopyConstructFrom(InputArray, NumElements);
             }
             else
             {
@@ -177,26 +231,43 @@ public:
         }
     }
 
-    /* Resets the container, but does not deallocate the memory */
+    /** 
+     * Resets the container, but does not deallocate the memory. Creates a new array from
+     * another array which can be of another type of array.
+     * 
+     * @param InputArray: Array to copy-construct from
+     */
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Reset(const ArrayType& InputArray) noexcept
     {
         Reset(InputArray.Data(), InputArray.Size());
     }
 
-    /* Resets the container, but does not deallocate the memory */
+    /**
+     * Resets the container by moving elements from another array to this one.
+     * 
+     * @param InputArray: Array to copy-construct elements from
+     */
     FORCEINLINE void Reset(TArray&& InputArray) noexcept
     {
         MoveFrom(Forward<TArray>(InputArray));
     }
 
-    /* Resets the container, but does not deallocate the memory */
+    /** 
+     * Resets the container and copy-construct a new array from an initializer-list
+     *
+     * @param InitList: Initializer-list to copy-construct elements from
+     */
     FORCEINLINE void Reset(std::initializer_list<ElementType> InitList) noexcept
     {
         Reset(InitList.begin(), static_cast<SizeType>(InitList.size()));
     }
 
-    /* Fills the container with the specified value */
+    /** 
+     * Fill the container with the specified value 
+     *
+     * @param InputElement: Element to copy into all elements in the array
+     */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
         for (ElementType& Element : *this)
@@ -205,7 +276,11 @@ public:
         }
     }
 
-    /* Resizes the container with a new size, and default constructs them*/
+    /**
+     * Resizes the container with a new size, and default constructs them
+     * 
+     * @param NewSize: The new size of the array
+     */
     inline void Resize(SizeType NewSize) noexcept
     {
         if (NewSize > ArraySize)
@@ -215,7 +290,7 @@ public:
                 ReserveStorage(NewSize);
             }
 
-            // NewSize is always larger than arraysize...
+            // NewSize is always larger than array-size...
             SizeType NumElementsToConstruct = NewSize - ArraySize;
             ElementType* LastElementPtr = Data() + ArraySize;
 
@@ -234,7 +309,12 @@ public:
         }
     }
 
-    /* Resizes the container with a new size, and constructs them with value */
+    /**
+     * Resizes the container with a new size, and constructs them with value 
+     * 
+     * @param NewSize: The new size of the array
+     * @param Elements: Element to copy into all positions of the array
+     */
     inline void Resize(SizeType NewSize, const ElementType& Element) noexcept
     {
         if (NewSize > ArraySize)
@@ -263,7 +343,11 @@ public:
         }
     }
 
-    /* Resizes the allocation */
+    /**
+     * Reallocate the array to a new capacity
+     * 
+     * @param NewCapacity: The new capacity of the allocated array
+     */
     inline void Reserve(SizeType NewCapacity) noexcept
     {
         if (NewCapacity != ArrayCapacity)
@@ -278,7 +362,12 @@ public:
         }
     }
 
-    /* Constructs a new element at the end */
+    /** 
+     * Constructs a new element at the end of the array 
+     *
+     * @param Args: Arguments for the constructor of the element
+     * @return: Returns a reference to the newly created element
+     */
     template<typename... ArgTypes>
     inline ElementType& Emplace(ArgTypes&&... Args) noexcept
     {
@@ -288,88 +377,199 @@ public:
         return LastElement();
     }
 
-    /* Inserts a new element at the end */
+    /**
+     * Inserts a new element at the end of the array
+     * 
+     * @param Element: Element to insert into the array by copy
+     * @return: Returns a reference to the newly created element
+     */
     FORCEINLINE ElementType& Push(const ElementType& Element) noexcept
     {
         return Emplace(Element);
     }
 
-    /* Inserts a new element at the end */
+    /**
+     * Inserts a new element at the end of the array
+     * 
+     * @param Element: Element to insert into the array by move
+     * @return: Returns a reference to the newly created element
+     */
     FORCEINLINE ElementType& Push(ElementType&& Element) noexcept
     {
         return Emplace(Forward<ElementType>(Element));
     }
 
-    /* Constructs a new element at specified position */
+    /**
+     * Constructs a new element at a specific position in the array
+     *
+     * @param Position: Position of the new element
+     * @param Args: Arguments for the constructor of the element
+     */
     template<typename... ArgTypes>
     inline void EmplaceAt(SizeType Position, ArgTypes&&... Args) noexcept
     {
         Assert(Position <= ArraySize);
 
-        /* Simple path if position is last */
         if (Position == ArraySize)
         {
             Emplace(Forward<ArgTypes>(Args)...);
         }
         else
         {
-            /* Make room within array and allocate if necessary */
             ReserveForInsertion(Position, 1);
             new(Data() + Position) ElementType(Forward<ArgTypes>(Args)...);
 
-            /* Update size */
             ArraySize++;
         }
     }
 
-    /* Inserts an element at the specified position */
+    /**
+     * Constructs a new element at a specific position in the array
+     *
+     * @param Position: Iterator pointing to the position of the new element
+     * @param Args: Arguments for the constructor of the element
+     */
+    template<typename... ArgTypes>
+    FORCEINLINE void EmplaceAt(ConstIteratorType Position, ArgTypes&&... Args) noexcept
+    {
+        EmplaceAt(Position.GetIndex(), Forward<ArgTypes>(Args)...);
+    }
+
+    /**
+     * Insert a new element at a specific position in the array
+     *
+     * @param Position: Position of the new element
+     * @param Element: Element to copy into the position
+     */
     FORCEINLINE void Insert(SizeType Position, const ElementType& Element) noexcept
     {
         EmplaceAt(Position, Element);
     }
 
-    /* Inserts an element at the specified position */
+    /**
+     * Insert a new element at a specific position in the array
+     *
+     * @param Position: Iterator pointing to the position of the new element
+     * @param Element: Element to copy into the position
+     */
+    FORCEINLINE void Insert(ConstIteratorType Position, const ElementType& Element) noexcept
+    {
+        EmplaceAt(Position.GetIndex(), Element);
+    }
+
+    /**
+     * Insert a new element at the a specific position in the array by moving
+     *
+     * @param Position: Position of the new element
+     * @param Element: Element to move into the position
+     */
     FORCEINLINE void Insert(SizeType Position, ElementType&& Element) noexcept
     {
         EmplaceAt(Position, Forward<ElementType>(Element));
     }
 
-    /* Insert an array into the container at the position */
-    inline void Insert(SizeType Position, const ElementType* InputArray, SizeType Count) noexcept
+    /**
+     * Insert a new element at the a specific position in the array by moving
+     *
+     * @param Position: Iterator pointing to the position of the new element
+     * @param Element: Element to move into the position
+     */
+    FORCEINLINE void Insert(ConstIteratorType Position, ElementType&& Element) noexcept
+    {
+        EmplaceAt(Position.GetIndex(), Forward<ElementType>(Element));
+    }
+
+    /**
+     * Insert an array at a specific position in the array
+     *
+     * @param Position: Position of the new element
+     * @param InputArray: Array to copy into the array
+     * @param NumElements: Number of elements in the input-array
+     */
+    inline void Insert(SizeType Position, const ElementType* InputArray, SizeType NumElements) noexcept
     {
         Assert(Position <= ArraySize);
         Assert(InputArray != nullptr);
 
-        /* Special case if at the end */
         if (Position == ArraySize)
         {
-            Append(InputArray, Count);
+            Append(InputArray, NumElements);
         }
         else
         {
-            /* Make room within array and allocate if necessary */
-            ReserveForInsertion(Position, Count);
-            CopyConstructRange<ElementType>(Data() + Position, InputArray, Count);
+            ReserveForInsertion(Position, NumElements);
+            CopyConstructRange<ElementType>(Data() + Position, InputArray, NumElements);
 
-            /* Update size */
-            ArraySize += Count;
+            ArraySize += NumElements;
         }
     }
 
-    /* Insert an std::initializer_list into the container at the position */
+    /**
+     * Insert an array at a specific position in the array
+     *
+     * @param Position: Iterator pointing to the position of the new element
+     * @param InputArray: Array to copy into the array
+     * @param NumElements: Number of elements in the input-array
+     */
+    FORCEINLINE void Insert(ConstIteratorType Position, const ElementType* InputArray, SizeType NumElements) noexcept
+    {
+        Insert(Position.GetIndex(), InputArray, NumElements);
+    }
+
+    /**
+     * Insert elements from a initializer list at a specific position in the array
+     *
+     * @param Position: Position of the new element
+     * @param InitList: Initializer list to insert into the array
+     */
     FORCEINLINE void Insert(SizeType Position, std::initializer_list<ElementType> InitList) noexcept
     {
         Insert(Position, InitList.begin(), static_cast<SizeType>(InitList.size()));
     }
 
-    /* Insert an array into the container at the position */
+    /**
+     * Insert elements from a initializer list at a specific position in the array
+     *
+     * @param Position: Iterator pointing to the position of the new element
+     * @param InitList: Initializer list to insert into the array
+     */
+    FORCEINLINE void Insert(ConstIteratorType Position, std::initializer_list<ElementType> InitList) noexcept
+    {
+        Insert(Position.GetIndex(), InitList.begin(), static_cast<SizeType>(InitList.size()));
+    }
+
+    /**
+      * Insert elements from another array at a specific position in the array, which
+      * can be of another array-type.
+      *
+      * @param Position: Position of the new element
+      * @param InArray: Array to copy elements from
+      */
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Insert(SizeType Position, const ArrayType& InArray) noexcept
     {
         Insert(Position, InArray.Data(), InArray.Size());
     }
 
-    /* Inserts an array at the end */
+    /**
+      * Insert elements from another array at a specific position in the array, which
+      * can be of another array-type.
+      *
+      * @param Position: Iterator pointing to the position of the new element
+      * @param InArray: Array to copy elements from
+      */
+    template<typename ArrayType>
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Insert(ConstIteratorType Position, const ArrayType& InArray) noexcept
+    {
+        Insert(Position.GetIndex(), InArray.Data(), InArray.Size());
+    }
+
+    /**
+     * Insert an array from a raw-pointer at the end of the array
+     * 
+     * @param InputArray: Array to copy elements from
+     * @param NumElements: Number of elements in the input-array
+     */
     inline void Append(const ElementType* InputArray, SizeType NumElements) noexcept
     {
         Assert(InputArray != nullptr);
@@ -381,81 +581,124 @@ public:
         ArraySize = NewSize;
     }
 
-    /* Inserts an array at the end */
+    /**
+     * Insert another array at the end of the array, which can be of another array-type
+     *
+     * @param Other: Array to copy elements from
+     */
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Append(const ArrayType& Other) noexcept
     {
         Append(Other.Data(), Other.Size());
     }
 
-    /* Inserts an array at the end */
+    /**
+     * Insert an initializer-list at the end of the array, which can be of another array-type
+     *
+     * @param InitList: Initializer-list to copy elements from
+     */
     FORCEINLINE void Append(std::initializer_list<ElementType> InitList) noexcept
     {
         Append(InitList.begin(), static_cast<SizeType>(InitList.size()));
     }
 
-    /* Append unintialized, this modifies the size of the array and does not call any constructor */
-    FORCEINLINE void AppendUninitialized(SizeType NewSize) noexcept
+    /**
+     * Create a number of uninitialized elements at the end of the array
+     * 
+     * @param NewSize: Number of elements to append
+     */
+    FORCEINLINE void AppendUninitialized(SizeType NumElements) noexcept
     {
-        GrowIfNeeded(NewSize);
-        ArraySize = NewSize;
+        GrowIfNeeded(NumElements);
+        ArraySize += NumElements;
     }
 
-    /* Removes a number of elments from the back */
-    FORCEINLINE void PopRange(SizeType Count) noexcept
+    /**
+     * Remove and destroy a number of elements from the back
+     *
+     * @param NumElements: Number of elements destroy from the end
+     */
+    FORCEINLINE void PopRange(SizeType NumElements) noexcept
     {
         if (!IsEmpty())
         {
-            InternalPopRange(Count);
+            InternalPopRange(NumElements);
         }
     }
 
-    /* Removes the last element */
+    /** 
+     * Remove the last element 
+     */
     FORCEINLINE void Pop() noexcept
     {
         PopRange(1);
     }
 
-    /* Remove a range starting at position and containg count number of elements */
-    inline void RemoveRangeAt(SizeType Position, SizeType Count) noexcept
+    /**
+     * Remove a range of elements starting at position
+     * 
+     * @param Position: Position of the array to start remove elements from
+     * @param NumElements: Number of elements to remove
+     */
+    inline void RemoveRangeAt(SizeType Position, SizeType NumElements) noexcept
     {
-        Assert(Position + Count <= ArraySize);
+        Assert(Position + NumElements <= ArraySize);
 
-        if (Position + Count == ArraySize)
+        if (Position + NumElements == ArraySize)
         {
-            InternalPopRange(Count);
+            InternalPopRange(NumElements);
         }
         else
         {
-            DestructRange<ElementType>(Data() + Position, Count);
-            RelocateRange<ElementType>(Data() + Position, Data() + Position + Count, ArraySize - (Position + Count));
-            ArraySize -= Count;
+            DestructRange<ElementType>(Data() + Position, NumElements);
+            RelocateRange<ElementType>(Data() + Position, Data() + Position + NumElements, ArraySize - (Position + NumElements));
+            ArraySize -= NumElements;
         }
     }
 
-    /* Removes the element at the position */
+    /**
+     * Removes the element at the position 
+     * 
+     * @param Position: Position of element to remove
+     */
     FORCEINLINE void RemoveAt(SizeType Position) noexcept
     {
         RemoveRangeAt(Position, 1);
     }
 
-    /* Removes the element pointed to by a iterator at the position */
+    /**
+     * Removes the element at the position
+     *
+     * @param Position: Iterator pointing to the position of element to remove
+     * @return: Returns the iterator to the element that follows the removed element
+     */
     FORCEINLINE IteratorType RemoveAt(IteratorType Iterator) noexcept
     {
         Assert(Iterator.IsFrom(*this));
+
         RemoveAt(Iterator.GetIndex());
         return Iterator;
     }
 
-    /* Removes the element pointed to by a iterator at the position */
+    /**
+     * Removes the element at the position
+     *
+     * @param Position: Iterator pointing to the position of element to remove
+     * @return: Returns the iterator to the element that follow the removed element
+     */
     FORCEINLINE ConstIteratorType RemoveAt(ConstIteratorType Iterator) noexcept
     {
         Assert(Iterator.IsFrom(*this));
+
         RemoveAt(Iterator.GetIndex());
         return Iterator;
     }
 
-    /* Compares the elements in the array and removes the element if found */
+    /**
+     * Search the array and remove the first instance of the element from the array if it is found. 
+     * 
+     * @param Element: Element to remove
+     */
     FORCEINLINE void Remove(const ElementType& Element) noexcept
     {
         for (IteratorType Iterator = StartIterator(); Iterator != EndIterator(); )
@@ -472,7 +715,11 @@ public:
         }
     }
 
-    /* Compares all the elements in the array and removes all instance of the element if found */
+    /**
+     * Search the array and remove the all instances of the element from the array if it is found.
+     *
+     * @param Element: Element to remove
+     */
     FORCEINLINE void RemoveAllOf(const ElementType& Element) noexcept
     {
         for (IteratorType Iterator = StartIterator(); Iterator != EndIterator(); )
@@ -488,7 +735,12 @@ public:
         }
     }
 
-    /* Returns true if the element exists in the array */
+    /**
+     * Check if an element exists in the array
+     * 
+     * @param Element: Element to check for
+     * @return: Returns true if the element is found in the array and false if not
+     */
     FORCEINLINE bool Contains(const ElementType& Element) const noexcept
     {
         for (ConstIteratorType Iterator = StartIterator(); Iterator != EndIterator(); ++Iterator)
@@ -502,7 +754,12 @@ public:
         return false;
     }
 
-    /* Returns true if the element exists in the array */
+    /**
+     * Check if an element that satisfies the conditions of a comparator exists in the array
+     * 
+     * @param Comparator: Callable that compares an element in the array against some condition
+     * @return: Returns true if the comparator returned true for one element
+     */
     template<class ComparatorType>
     FORCEINLINE bool Contains(ComparatorType Comparator) const noexcept
     {
@@ -517,9 +774,15 @@ public:
         return false;
     }
 
-    /* Returns true if the element exists in the array */
+    /**
+     * Check if an element that satisfies the conditions of a comparator
+     *
+     * @param Element: Element to compare with
+     * @param Comparator: Callable that compares an element in the array against some condition
+     * @return: Returns true if there is an element that satisfies the conditions of a comparator
+     */
     template<class ComparatorType>
-    FORCEINLINE bool Contains(const ElementType& Element, ComparatorType Comparator) const noexcept
+    FORCEINLINE SizeType Contains(const ElementType& Element, ComparatorType Comparator) const noexcept
     {
         for (ConstIteratorType Iterator = StartIterator(); Iterator != EndIterator(); ++Iterator)
         {
@@ -532,65 +795,85 @@ public:
         return false;
     }
 
-    /* Returns the index of the element if found, otherwise -1 */
+    /**
+     * Returns the index of an element if it is present in the array, or -1 if it is not found
+     * 
+     * @param Element: Element to search for
+     * @return: The index of the element if found or -1 if not
+     */
     FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
     {
-        const SizeType CurrentSize = Size();
-        for (SizeType Index = 0; Index < CurrentSize; ++Index)
+        for (ConstIteratorType Iterator = StartIterator(); Iterator != EndIterator(); ++Iterator)
         {
-            if (Element == At(Index))
+            if (Element == *Iterator)
             {
-                return Index;
+                return Iterator.GetIndex();
             }
         }
 
         return SizeType(-1);
     }
 
-    /* Returns the index of the element if found, otherwise -1 */
+    /**
+     * Returns the index of the element that satisfy the conditions of a comparator 
+     *
+     * @param Comparator: Callable that compares an element in the array against some condition
+     * @return: The index of the element if found or -1 if not
+     */
     template<class ComparatorType>
     FORCEINLINE SizeType Find(ComparatorType Comparator) const noexcept
     {
-        const SizeType CurrentSize = Size();
-        for (SizeType Index = 0; Index < CurrentSize; ++Index)
+        for (ConstIteratorType Iterator = StartIterator(); Iterator != EndIterator(); ++Iterator)
         {
-            if (Comparator(At(Index)))
+            if (Comparator(*Iterator))
             {
-                return Index;
+                return Iterator.GetIndex();
             }
         }
 
         return SizeType(-1);
     }
 
-    /* Returns the index of the element if found, otherwise -1 */
+    /**
+     * Returns the index of the element that satisfy the conditions of a comparator
+     *
+     * @param Element: Element to compare with
+     * @param Comparator: Callable that compares an element in the array against some condition
+     * @return: The index of the element if found or -1 if not
+     */
     template<class ComparatorType>
     FORCEINLINE SizeType Find(const ElementType& Element, ComparatorType Comparator) const noexcept
     {
-        const SizeType CurrentSize = Size();
-        for (SizeType Index = 0; Index < CurrentSize; ++Index)
+        for (ConstIteratorType Iterator = StartIterator(); Iterator != EndIterator(); ++Iterator)
         {
-            if (Comparator(Element, At(Index)))
+            if (Comparator(Element, *Iterator))
             {
-                return Index;
+                return Iterator.GetIndex();
             }
         }
 
         return SizeType(-1);
     }
 
-    /* For each element the functor or function is called */
+    /**
+     * Perform some function on each element in the array
+     * 
+     * @param Functor: Callable that takes one element and perform some operation on it
+     */
     template<class FunctorType>
     FORCEINLINE void Foreach(FunctorType Functor)
     {
-        const SizeType CurrentSize = Size();
-        for (SizeType Index = 0; Index < CurrentSize; ++Index)
+        for (IteratorType Iterator = StartIterator(); Iterator != EndIterator(); ++Iterator)
         {
-            Functor(At(Index));
+            Functor(*Iterator);
         }
     }
 
-    /* Swaps container with another */
+    /**
+     * Swap the contents of this array with another
+     * 
+     * @param Other: The other array to swap with
+     */
     FORCEINLINE void Swap(TArray& Other) noexcept
     {
         TArray TempArray(Move(*this));
@@ -598,110 +881,178 @@ public:
         Other.MoveFrom(Move(TempArray));
     }
 
-    /* Shrinks the allocation to be the same as the size */
+    /**
+     * Shrink the allocation to perfectly fit with the size of the array
+     */
     FORCEINLINE void ShrinkToFit() noexcept
     {
         Reserve(ArraySize);
     }
 
-    /* Checks if there are any elements */
+    /**
+     * Check if the container contains any elements
+     * 
+     * @return: Returns true if the array is empty or false if it contains elements
+     */
     FORCEINLINE bool IsEmpty() const noexcept
     {
         return (ArraySize == 0);
     }
 
-    /* Returns the first element of the container */
+    /**
+     * Retrieve the first element of the array
+     * 
+     * @return: Returns a reference to the first element of the array
+     */
     FORCEINLINE ElementType& FirstElement() noexcept
     {
         Assert(!IsEmpty());
         return Data()[0];
     }
 
-    /* Returns the first element of the container */
+    /**
+     * Retrieve the first element of the array
+     *
+     * @return: Returns a reference to the first element of the array
+     */
     FORCEINLINE const ElementType& FirstElement() const noexcept
     {
         Assert(!IsEmpty());
         return Data()[0];
     }
 
-    /* Returns the last element of the container */
+    /**
+     * Retrieve the last element of the array
+     *
+     * @return: Returns a reference to the last element of the array
+     */
     FORCEINLINE ElementType& LastElement() noexcept
     {
         Assert(!IsEmpty());
         return Data()[ArraySize - 1];
     }
 
-    /* Returns the last element of the container */
+    /**
+     * Retrieve the last element of the array
+     *
+     * @return: Returns a reference to the last element of the array
+     */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
         Assert(!IsEmpty());
         return Data()[ArraySize - 1];
     }
 
-    /* Returns the data of the container */
+    /**
+     * Retrieve the data of the array
+     *
+     * @return: Returns a pointer to the data of the array
+     */
     FORCEINLINE ElementType* Data() noexcept
     {
         return Allocator.GetAllocation();
     }
 
-    /* Returns the data of the container */
+    /**
+     * Retrieve the data of the array
+     *
+     * @return: Returns a pointer to the data of the array
+     */
     FORCEINLINE const ElementType* Data() const noexcept
     {
         return Allocator.GetAllocation();
     }
 
-    /* Returns the last valid index the container */
+    /**
+     * Retrieve the last index that can be used to retrieve an element from the array
+     *
+     * @return: Returns a the index to the last element of the array
+     */
     FORCEINLINE SizeType LastElementIndex() const noexcept
     {
         return (ArraySize > 0) ? (ArraySize - 1) : 0;
     }
 
-    /* Returns the size of the container */
+    /**
+     * Returns the size of the container
+     * 
+     * @return: The current size of the container
+     */
     FORCEINLINE SizeType Size() const noexcept
     {
         return ArraySize;
     }
 
-    /* Returns the size of the container in bytes */
+    /**
+     * Returns the size of the container in bytes
+     *
+     * @return: The current size of the container in bytes
+     */
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
         return Size() * sizeof(ElementType);
     }
 
-    /* Returns the capacity of the container */
+    /**
+     * Returns the capacity of the container
+     *
+     * @return: The current capacity of the container
+     */
     FORCEINLINE SizeType Capacity() const noexcept
     {
         return ArrayCapacity;
     }
 
-    /* Returns the capacity of the container in bytes */
+    /**
+     * Returns the capacity of the container in bytes
+     *
+     * @return: The current capacity of the container in bytes
+     */
     FORCEINLINE SizeType CapacityInBytes() const noexcept
     {
         return Capacity() * sizeof(ElementType);
     }
 
-    /* Returns the element at a certain index */
+    /**
+     * Retrieve a element at a certain index of the array
+     * 
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE ElementType& At(SizeType Index) noexcept
     {
         Assert(Index < ArraySize);
         return Data()[Index];
     }
 
-    /* Returns the element at a certain index */
+    /**
+     * Retrieve a element at a certain index of the array
+     *
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE const ElementType& At(SizeType Index) const noexcept
     {
         Assert(Index < ArraySize);
         return Data()[Index];
     }
 
-    /* Create a view of array */
-    FORCEINLINE TArrayView<ElementType> CreateView(SizeType Offset, SizeType Count) const noexcept
+    /**
+     * Create an array-view of the array
+     * 
+     * @param Offset: Offset into the array
+     * @param NumElements: Number of elements to include in the view
+     * @return: A new array-view pointing to the specified elements
+     */
+    FORCEINLINE TArrayView<ElementType> CreateView(SizeType Offset, SizeType NumElements) const noexcept
     {
-        Assert((Count < ArraySize) && (Offset + Count < ArraySize));
-        return TArrayView<ElementType>(Data() + Offset, Count);
+        Assert((NumElements < ArraySize) && (Offset + NumElements < ArraySize));
+        return TArrayView<ElementType>(Data() + Offset, NumElements);
     }
 
-    /* Create a heap of the array */
+    /**
+     * Create a heap of the array 
+     */
     inline void Heapify() noexcept
     {
         const SizeType StartIndex = (ArraySize / 2) - 1;
@@ -711,47 +1062,71 @@ public:
         }
     }
 
-    /* Get the top of the heap */
+    /**
+     * Retrieve the top of the heap. The same as the first element.
+     * 
+     * @return: A reference to the element at the top of the heap
+     */
     FORCEINLINE ElementType& HeapTop() noexcept
     {
         return Data()[0];
     }
 
-    /* Get the top of the heap */
+    /**
+     * Retrieve the top of the heap. The same as the first element.
+     *
+     * @return: A reference to the element at the top of the heap
+     */
     FORCEINLINE const ElementType& HeapTop() const noexcept
     {
         return Data()[0];
     }
 
-    /* Inserts a new element at the top of the heap */
+    /**
+     * Inserts a new element at the top of the heap
+     * 
+     * @param Element: Element to copy to the top of the heap
+     */
     FORCEINLINE void HeapPush(const ElementType& Element) noexcept
     {
         Insert(0, Element);
         Heapify(ArraySize, 0);
     }
 
-    /* Inserts a new element at the top of the heap */
+    /**
+     * Inserts a new element at the top of the heap
+     *
+     * @param Element: Element to move to the top of the heap
+     */
     FORCEINLINE void HeapPush(ElementType&& Element) noexcept
     {
         Insert(0, Forward<ElementType>(Element));
         Heapify(ArraySize, 0);
     }
 
-    /* Removes the top of the heap */
+    /**
+     * Remove the top of the heap and retrieve the element on top
+     * 
+     * @param OutElement: Reference that the top element will be copied to
+     */
     FORCEINLINE void HeapPop(ElementType& OutElement) noexcept
     {
         OutElement = HeapTop();
         HeapPop();
     }
 
-    /* Removes the top of the heap */
+    /**
+     * Remove the top of the heap
+     */
     FORCEINLINE void HeapPop() noexcept
     {
         RemoveAt(0);
         Heapify();
     }
 
-    /* Performs heap sort on the array ( assuming > operator )*/
+    /**
+     * Performs heap sort on the array (assuming the operator> exists for the elements)
+     */
     FORCEINLINE void HeapSort()
     {
         Heapify();
@@ -763,28 +1138,48 @@ public:
         }
     }
 
-    /* Sets the container to another array by copying it */
-    FORCEINLINE TArray& operator=(const TArray& Other) noexcept
+    /**
+     * Copy-assignment operator
+     * 
+     * @param RHS: Array to copy
+     * @return: A reference to this container
+     */
+    FORCEINLINE TArray& operator=(const TArray& RHS) noexcept
     {
-        Reset(Other);
+        Reset(RHS);
         return *this;
     }
 
-    /* Sets the container to another array by moving it */
-    FORCEINLINE TArray& operator=(TArray&& Other) noexcept
+    /**
+     * Move-assignment operator
+     *
+     * @param RHS: Array to move
+     * @return: A reference to this container
+     */
+    FORCEINLINE TArray& operator=(TArray&& RHS) noexcept
     {
-        MoveFrom(Forward<TArray>(Other));
+        MoveFrom(Forward<TArray>(RHS));
         return *this;
     }
 
-    /* Sets the container to a std::initializer_list */
-    FORCEINLINE TArray& operator=(std::initializer_list<ElementType> InitList) noexcept
+    /**
+     * Assignment-operator that takes a initializer-list
+     * 
+     * @param RHS: A initializer list to replace the current contents with
+     * @return: A reference to this container
+     */
+    FORCEINLINE TArray& operator=(std::initializer_list<ElementType> RHS) noexcept
     {
-        Reset(InitList);
+        Reset(RHS);
         return *this;
     }
 
-    /* Compares two containers by comparing each element, returns true if all is equal */
+    /**
+     * Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
+     * 
+     * @param RHS: Array to compare with
+     * @return: Returns true if all elements are equal to each other
+     */
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
     {
@@ -796,20 +1191,35 @@ public:
         return CompareRange<ElementType>(Data(), RHS.Data(), Size());
     }
 
-    /* Compares two containers by comparing each element, returns false if all elements are equal */
+    /**
+     * Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
+     *
+     * @param RHS: Array to compare with
+     * @return: Returns true if all elements are NOT equal to each other
+     */
     template<typename ArrayType>
     FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
     {
         return !(*this == RHS);
     }
 
-    /* Returns the elment at a certain index */
+    /**
+     * Bracket-operator to retrieve an element at a certain index
+     * 
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE ElementType& operator[](SizeType Index) noexcept
     {
         return At(Index);
     }
 
-    /* Returns the elment at a certain index */
+    /**
+     * Bracket-operator to retrieve an element at a certain index
+     *
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
     {
         return At(Index);
@@ -817,49 +1227,81 @@ public:
 
 public:
 
-    /* Returns an iterator to the beginning of the container */
+    /**
+     * Retrieve an iterator to the beginning of the array
+     * 
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
         return IteratorType(*this, 0);
     }
 
-    /* Returns an iterator to the end of the container */
+    /**
+     * Retrieve an iterator to the end of the array
+     *
+     * @return: A iterator that points to the element past the end
+     */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
         return IteratorType(*this, Size());
     }
 
-    /* Returns an iterator to the beginning of the container */
+    /**
+     * Retrieve an iterator to the beginning of the array
+     *
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
         return ConstIteratorType(*this, 0);
     }
 
-    /* Returns an iterator to the end of the container */
+    /**
+     * Retrieve an iterator to the end of the array
+     *
+     * @return: A iterator that points to the element past the end
+     */
     FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
         return ConstIteratorType(*this, Size());
     }
 
-    /* Returns an reverse iterator to the end of the container */
+    /**
+     * Retrieve an reverse-iterator to the end of the array
+     *
+     * @return: A reverse-iterator that points to the last element
+     */
     FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
         return ReverseIteratorType(*this, Size());
     }
 
-    /* Returns an reverse iterator to the beginning of the container */
+    /**
+     * Retrieve an reverse-iterator to the start of the array
+     *
+     * @return: A reverse-iterator that points to the element before the first element
+     */
     FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
         return ReverseIteratorType(*this, 0);
     }
 
-    /* Returns an reverse iterator to the end of the container */
+    /**
+     * Retrieve an reverse-iterator to the end of the array
+     *
+     * @return: A reverse-iterator that points to the last element
+     */
     FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, Size());
     }
 
-    /* Returns an reverse iterator to the beginning of the container */
+    /**
+     * Retrieve an reverse-iterator to the start of the array
+     *
+     * @return: A reverse-iterator that points to the element before the first element
+     */
     FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, 0);
@@ -867,23 +1309,41 @@ public:
 
 public:
 
-    /* STL iterator functions - Enables Range-based for-loops */
-
+    /**
+     * STL start iterator, same as TArray::StartIterator
+     * 
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE IteratorType begin() noexcept
     {
         return StartIterator();
     }
 
+    /**
+     * STL end iterator, same as TArray::EndIterator
+     *
+     * @return: A iterator that points past the last element
+     */
     FORCEINLINE IteratorType end() noexcept
     {
         return EndIterator();
     }
 
+    /**
+     * STL start iterator, same as TArray::StartIterator
+     *
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE ConstIteratorType begin() const noexcept
     {
         return StartIterator();
     }
 
+    /**
+     * STL end iterator, same as TArray::EndIterator
+     *
+     * @return: A iterator that points past the last element
+     */
     FORCEINLINE ConstIteratorType end() const noexcept
     {
         return EndIterator();
@@ -891,47 +1351,43 @@ public:
 
 private:
 
-    /* Internal functions */
+    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+    // Internal functions
 
-    /* Adds uninitialized elements */
-    FORCEINLINE void InitUnitialized(SizeType Count)
+    FORCEINLINE void InitUnitialized(SizeType NumElements)
     {
-        if (ArrayCapacity < Count)
+        if (ArrayCapacity < NumElements)
         {
-            Allocator.Realloc(ArrayCapacity, Count);
-            ArrayCapacity = Count;
+            Allocator.Realloc(ArrayCapacity, NumElements);
+            ArrayCapacity = NumElements;
         }
 
-        ArraySize = Count;
+        ArraySize = NumElements;
     }
 
-    /* Default-construct array, assumes that the container is currently empty */
-    FORCEINLINE void EmptyConstruct(SizeType Count)
+    FORCEINLINE void EmptyConstruct(SizeType NumElements)
     {
-        InitUnitialized(Count);
-        DefaultConstructRange<ElementType>(Data(), Count);
+        InitUnitialized(NumElements);
+        DefaultConstructRange<ElementType>(Data(), NumElements);
     }
 
-    /* Construct array from Element, assumes that the container is currently empty */
-    FORCEINLINE void EmptyConstructFrom(SizeType Count, const ElementType& Element)
+    FORCEINLINE void EmptyConstructFrom(SizeType NumElements, const ElementType& Element)
     {
-        InitUnitialized(Count);
-        ConstructRangeFrom<ElementType>(Data(), Count, Element);
+        InitUnitialized(NumElements);
+        ConstructRangeFrom<ElementType>(Data(), NumElements, Element);
     }
 
-    /* Copy from array, assumes that the container is currently empty */
-    FORCEINLINE void CopyConstructFrom(const ElementType* From, SizeType Count)
+    FORCEINLINE void CopyConstructFrom(const ElementType* From, SizeType NumElements)
     {
-        InitUnitialized(Count);
-        CopyConstructRange<ElementType>(Data(), From, Count);
+        InitUnitialized(NumElements);
+        CopyConstructRange<ElementType>(Data(), From, NumElements);
     }
 
-    /* Moves from one array to another */
     FORCEINLINE void MoveFrom(TArray&& FromArray)
     {
         if (FromArray.Data() != Data())
         {
-            /* Since the memory remains the same we should not need to use move-assignment or constructor. However, still need to call our destructors */
+            // Since the memory remains the same we should not need to use move-assignment or constructor. However, still need to call destructors
             DestructRange<ElementType>(Data(), Size());
             Allocator.MoveFrom(Move(FromArray.Allocator));
 
@@ -942,65 +1398,54 @@ private:
         }
     }
 
-    /* Reserves storage */
     template<typename U = T>
     FORCEINLINE typename TEnableIf<TIsReallocatable<U>::Value>::Type ReserveStorage(const SizeType NewCapacity) noexcept
     {
-        /* Simple Memory::Realloc for trivial elements */
         Allocator.Realloc(ArrayCapacity, NewCapacity);
         ArrayCapacity = NewCapacity;
     }
 
-    /* Reserves storage */
     template<typename U = T>
     FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<U>>::Value>::Type ReserveStorage(const SizeType NewCapacity) noexcept
     {
         if (ArrayCapacity)
         {
-            /* For non-trivial objects a new allocator is necessary in order to correctly relocate objects. This in case
-                objects has references to themselves or childobjects that references these objects. */
+            /* For non-trivial objects a new allocator is necessary in order to correctly reallocate objects. This in case
+               objects has references to themselves or "child-objects" that references these objects. */
             AllocatorType NewAllocator;
             NewAllocator.Realloc(ArrayCapacity, NewCapacity);
 
-            /* Relocate existing elements */
             RelocateRange<ElementType>(NewAllocator.GetAllocation(), Data(), ArraySize);
 
-            /* Move allocator */
             Allocator.MoveFrom(Move(NewAllocator));
         }
         else
         {
-            /* Allocate new memory */
             Allocator.Realloc(ArrayCapacity, NewCapacity);
         }
 
         ArrayCapacity = NewCapacity;
     }
 
-    /* Reserves room and not necessarily new memory */
-    FORCEINLINE void ReserveForInsertion(const SizeType Position, const SizeType ElementCount) noexcept
+    FORCEINLINE void ReserveForInsertion(const SizeType Position, const SizeType ElementNumElements) noexcept
     {
-        const SizeType NewSize = ArraySize + ElementCount;
+        const SizeType NewSize = ArraySize + ElementNumElements;
         GrowIfNeeded(NewSize);
 
-        /* Elements after new area */
-        RelocateRange<ElementType>(Data() + Position + ElementCount, Data() + Position, ArraySize - Position);
+        RelocateRange<ElementType>(Data() + Position + ElementNumElements, Data() + Position, ArraySize - Position);
     }
 
-    /* Pop range internally, avoids branches when not needed */
-    FORCEINLINE void InternalPopRange(SizeType Count) noexcept
+    FORCEINLINE void InternalPopRange(SizeType NumElements) noexcept
     {
-        ArraySize = ArraySize - Count;
-        DestructRange<ElementType>(Data() + ArraySize, Count);
+        ArraySize = ArraySize - NumElements;
+        DestructRange<ElementType>(Data() + ArraySize, NumElements);
     }
 
-    /* Grows the array if the size is too small */
     FORCEINLINE void GrowIfNeeded() noexcept
     {
         GrowIfNeeded(ArraySize + 1);
     }
 
-    /* Grows the array if the requested size is too small */
     FORCEINLINE void GrowIfNeeded(SizeType NewSize) noexcept
     {
         if (NewSize > ArrayCapacity)
@@ -1010,21 +1455,17 @@ private:
         }
     }
 
-    // Get index of left child of node at index
     static FORCEINLINE SizeType LeftIndex(SizeType Index)
     {
         return (2 * Index + 1);
     }
 
-    // Get index of right child of node at index
     static FORCEINLINE SizeType RightIndex(SizeType Index)
     {
         return (2 * Index + 2);
     }
 
     // TODO: Better to have top in back? Better to do recursive?
-
-    /* Internal create a max-heap of the array */
     FORCEINLINE void Heapify(SizeType Size, SizeType Index) noexcept
     {
         SizeType StartIndex = Index;
@@ -1057,17 +1498,17 @@ private:
         }
     }
 
-    /* Calculate how much the array should grow, will always be at least one */
+    // Calculate how much the array should grow, will always be at least one
     static FORCEINLINE SizeType GetGrowCapacity(SizeType NewSize, SizeType CurrentCapacity) noexcept
     {
         SizeType NewCapacity = NewSize + SizeType(float(CurrentCapacity) * 0.5f);
         return (NewCapacity >= 0) ? NewCapacity : 1;
     }
 
-    /* Allocator contains the pointer */
     AllocatorType Allocator;
-    SizeType      ArraySize;
-    SizeType      ArrayCapacity;
+
+    SizeType ArraySize;
+    SizeType ArrayCapacity;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1083,7 +1524,7 @@ struct TIsTArrayType<TArray<T, AllocatorType>>
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Allocate and copy the contents into a uniqueptr
+// Allocate and copy the contents into a unique-ptr
 
 template<typename T, typename AllocatorType>
 inline TUniquePtr<T[]> MakeUniquePtr(const TArray<T, AllocatorType>& Array) noexcept

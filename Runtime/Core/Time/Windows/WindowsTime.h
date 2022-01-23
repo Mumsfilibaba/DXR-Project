@@ -1,13 +1,13 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-#include "Core/Time/Interface/PlatformTime.h"
 #include "Core/Windows/Windows.h"
+#include "Core/Time/Native/NativeTime.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Windows specific interface for high performance counters
 
-class CWindowsTime : public CPlatformTime
+class CWindowsTime : public CNativeTime
 {
 public:
 

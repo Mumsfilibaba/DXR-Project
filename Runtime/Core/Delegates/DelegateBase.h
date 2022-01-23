@@ -4,7 +4,7 @@
 #include "Core/Containers/Allocators.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Base class containing variables that does not require templates
+// DelegateBase - Base class containing variables that does not require templates
 
 class CDelegateBase
 {
@@ -16,7 +16,11 @@ class CDelegateBase
 
 public:
 
-    /* Copy constructor */
+    /**
+     * Copy constructor 
+     * 
+     * @param Other: Delegate to copy from
+     */
     FORCEINLINE CDelegateBase(const CDelegateBase& Other)
         : Storage()
         , Size()
@@ -24,7 +28,11 @@ public:
         CopyFrom(Other);
     }
 
-    /* Move constructor */
+    /**
+     * Move constructor
+     *
+     * @param Other: Delegate to move from
+     */
     FORCEINLINE CDelegateBase(CDelegateBase&& Other) noexcept
         : Storage()
         , Size(Other.Size)
@@ -33,19 +41,27 @@ public:
         Other.Size = 0;
     }
 
-    /* Destructor unbinding the delegate */
+    /**
+     * Destructor 
+     */
     FORCEINLINE ~CDelegateBase()
     {
         Unbind();
     }
 
-    /* Unbinds the delegate */
+    /**
+     * Unbinds any bound delegate 
+     */
     FORCEINLINE void Unbind()
     {
         Release();
     }
 
-    /* Swaps two delegates */
+    /**
+     * Swaps two delegates 
+     * 
+     * @param Other: Delegate to swap with
+     */
     FORCEINLINE void Swap(CDelegateBase& Other)
     {
         AllocatorType TempStorage;
@@ -56,13 +72,22 @@ public:
         ::Swap<int32>(Size, Other.Size);
     }
 
-    /* Checks weather or not there exist any delegate bound */
+    /**
+     * Checks weather or not there exist any delegate bound 
+     * 
+     * @return: Returns true if there is a delegate bound
+     */
     FORCEINLINE bool IsBound() const
     {
         return (Size > 0);
     }
 
-    /* Check if object is bound to this delegate */
+    /**
+     * Check if an object is bound to this delegate
+     * 
+     * @param Object: Pointer to object to check for
+     * @return: Returns true if this Object is bound to the delegate
+     */
     FORCEINLINE bool IsObjectBound(const void* Object) const
     {
         if (Object != nullptr && IsBound())
@@ -75,7 +100,12 @@ public:
         }
     }
 
-    /* Check if object is bound to this delegate */
+    /**
+     * Check if object is bound to this delegate
+     *
+     * @param Object: Pointer to object to check for
+     * @return: Returns true if the Object was unbound from the delegate
+     */
     FORCEINLINE bool UnbindIfBound(const void* Object)
     {
         if (IsObjectBound(Object))
@@ -89,7 +119,11 @@ public:
         }
     }
 
-    /* Retrieve the bound object, returns nullptr for non-member delegates */
+    /**
+     * Retrieve the bound object, returns nullptr for non-member delegates 
+     * 
+     * @return: Returns the pointer to the object bound to the delegate
+     */
     FORCEINLINE const void* GetBoundObject() const
     {
         if (IsBound())
@@ -102,7 +136,11 @@ public:
         }
     }
 
-    /* Retrieve the delegate handle for this object */
+    /**
+     * Retrieve the delegate handle for this delegate
+     * 
+     * @return: Returns the delegate handle to this delegate
+     */
     FORCEINLINE CDelegateHandle GetHandle() const
     {
         if (IsBound())
@@ -115,14 +153,24 @@ public:
         }
     }
 
-    /* Move assignment */
+    /**
+     * Move-assignment operator
+     * 
+     * @param RHS: Instance to move from
+     * @return: A reference to this instance
+     */
     FORCEINLINE CDelegateBase& operator=(CDelegateBase&& RHS) noexcept
     {
         CDelegateBase(Move(RHS)).Swap(*this);
         return *this;
     }
 
-    /* Copy assignment */
+    /**
+     * Copy-assignment operator
+     *
+     * @param RHS: Instance to copy from
+     * @return: A reference to this instance
+     */
     FORCEINLINE CDelegateBase& operator=(const CDelegateBase& RHS)
     {
         CDelegateBase(RHS).Swap(*this);
@@ -134,14 +182,12 @@ protected:
     // TODO: Should allocator use the element type at all? 
     using AllocatorType = TInlineArrayAllocator<int8, InlineBytes>;
 
-    /* Constructor for a empty delegate */
     FORCEINLINE explicit CDelegateBase()
         : Storage()
         , Size(0)
     {
     }
 
-    /* Release the delegate */
     FORCEINLINE void Release()
     {
         if (IsBound())
@@ -150,7 +196,6 @@ protected:
         }
     }
 
-    /* Copy from another function */
     FORCEINLINE void CopyFrom(const CDelegateBase& Other) noexcept
     {
         if (Other.IsBound())
@@ -168,7 +213,6 @@ protected:
         }
     }
 
-    /* Allocate from storage, set size, and return the memory */
     FORCEINLINE void* AllocateStorage(int32 NewSize)
     {
         int32 PreviousSize = Size;
@@ -176,31 +220,26 @@ protected:
         return Storage.Realloc(PreviousSize, Size);
     }
 
-    /* Internal function that is used to retrieve the functor pointer */
     FORCEINLINE IDelegateInstance* GetDelegate() noexcept
     {
         return reinterpret_cast<IDelegateInstance*>(Storage.GetAllocation());
     }
 
-    /* Internal function that is used to retrieve the functor pointer */
     FORCEINLINE const IDelegateInstance* GetDelegate() const noexcept
     {
         return reinterpret_cast<const IDelegateInstance*>(Storage.GetAllocation());
     }
 
-    /* Retrieve the storage */
     FORCEINLINE AllocatorType& GetStorage()
     {
         return Storage;
     }
 
-    /* Retrieve the storage */
     FORCEINLINE const AllocatorType& GetStorage() const
     {
         return Storage;
     }
 
-    /* Storage for the delegate instance */
     AllocatorType Storage;
     int32 Size;
 };

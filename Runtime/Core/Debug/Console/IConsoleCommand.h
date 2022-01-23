@@ -15,9 +15,17 @@ class IConsoleCommand : public IConsoleObject
 {
 public:
 
-    // TODO: Add parameter-list
+    // TODO: Add parameters to console commands
+
+    /**
+     * Execute the ConsoleCommand
+     */
     virtual void Execute() = 0;
 
-    /* Retrieve the delegate that gets broadcasted when the console executes the command */
+    /**
+     * Retrieve the delegate that gets broadcasted when the console executes the command 
+     * 
+     * @return: Returns the execute delegate
+     */
     virtual CExecutedDelegate& GetExecutedDelgate() = 0;
 };

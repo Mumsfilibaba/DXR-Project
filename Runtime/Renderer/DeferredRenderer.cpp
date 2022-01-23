@@ -13,15 +13,15 @@
 #include "Renderer/Debug/GPUProfiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-variable
 
-TConsoleVariable<bool> GDrawTileDebug(false);
+TAutoConsoleVariable<bool> GDrawTileDebug("renderer.DrawTileDebug", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// DeferredRenderer
 
 bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 {
-    INIT_CONSOLE_VARIABLE("r.DrawTileDebug", &GDrawTileDebug);
-
     if (!CreateGBuffer(FrameResources))
     {
         return false;

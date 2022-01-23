@@ -8,7 +8,7 @@ class CVector2
 {
 public:
 
-    /* Default constructor (Initialize components to zero) */
+    /** Default constructor (Initialize components to zero) */
     FORCEINLINE CVector2() noexcept;
 
     /**

@@ -11,15 +11,15 @@
 #include <imgui.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-variable 
 
-TConsoleVariable<bool> GDrawRendererInfo(false);
+TAutoConsoleVariable<bool> GDrawRendererInfo("renderer.DrawRendererInfo", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// RendererInfoWindow
 
 TSharedRef<CRendererInfoWindow> CRendererInfoWindow::Make()
 {
-    INIT_CONSOLE_VARIABLE("r.DrawRendererInfo", &GDrawRendererInfo);
-
     return dbg_new CRendererInfoWindow();
 }
 

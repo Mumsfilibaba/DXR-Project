@@ -7,16 +7,15 @@
 #include <imgui.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-variable
 
-TConsoleVariable<bool> GDrawTextureDebugger(false);
+TAutoConsoleVariable<bool> GDrawTextureDebugger("renderer.DrawTextureDebugger", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TextureDebugWindow
 
 TSharedRef<CTextureDebugWindow> CTextureDebugWindow::Make()
 {
-    // Console Variables
-    INIT_CONSOLE_VARIABLE("r.DrawTextureDebugger", &GDrawTextureDebugger);
-
     return dbg_new CTextureDebugWindow();
 }
 

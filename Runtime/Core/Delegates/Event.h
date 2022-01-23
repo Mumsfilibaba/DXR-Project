@@ -20,7 +20,7 @@
     };
 
 /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-// Event is a multi-cast delegate that publicly can bind functions and only a friend class can broadcast
+// Event - A multi-cast delegate that publicly can bind functions and only a friend class can broadcast
 
 template<typename... ArgTypes>
 class TEvent : public TMulticastDelegate<ArgTypes...>

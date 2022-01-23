@@ -5,7 +5,7 @@
 #include "Core/Containers/Tuple.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A handle for a delegate
+// DelegateHandle - A handle for a delegate
 
 typedef int64 DelegateHandle;
 
@@ -23,48 +23,75 @@ public:
         New
     };
 
-    /* Empty constructor, makes it store-able */
+    /**
+     * Default constructor
+     */
     FORCEINLINE CDelegateHandle()
         : Handle(InvalidHandle)
     {
     }
 
+    /**
+     * Construct a new delegate handle which generates a new ID
+     */
     FORCEINLINE explicit CDelegateHandle(EGenerateID)
         : Handle(GenerateID())
     {
     }
 
-    /* Checks if the handle is equal to nullptr */
+    /**
+     * Checks if the handle is equal to nullptr
+     * 
+     * @return: Returns true if the handle is not equal to InvalidHandle
+     */
     FORCEINLINE bool IsValid() const
     {
         return (Handle != InvalidHandle);
     }
 
-    /* Sets the internal handle to an invalid one*/
+    /** Sets the internal handle to an invalid one */
     FORCEINLINE void Reset()
     {
         Handle = InvalidHandle;
     }
 
-    /* Retrieve the ID */
+    /**
+     * Retrieve the ID 
+     * 
+     * @return: Returns the delegate-handle
+     */
     FORCEINLINE DelegateHandle GetNative() const
     {
         return Handle;
     }
 
-    /* Checks if the handle is equal to nullptr */
+    /**
+     * Checks if the handle is equal to nullptr
+     *
+     * @return: Returns true if the handle is not equal to InvalidHandle
+     */
     FORCEINLINE operator bool() const
     {
         return IsValid();
     }
 
-    /* Checks equality between two handles */
+    /**
+     * Checks equality between two handles 
+     * 
+     * @param RHS: Other delegate-handle to compare with
+     * @return: Returns true if the delegate-handles are equal to each other
+     */
     FORCEINLINE bool operator==(CDelegateHandle RHS) const
     {
         return (Handle == RHS.Handle);
     }
 
-    /* Checks equality between two handles */
+    /**
+     * Checks equality between two handles
+     *
+     * @param RHS: Other delegate-handle to compare with
+     * @return: Returns false if the delegate-handles are equal to each other
+     */
     FORCEINLINE bool operator!=(CDelegateHandle RHS) const
     {
         return !(*this == RHS);
@@ -72,7 +99,6 @@ public:
 
 private:
 
-    /* Generates a new ID */
     static FORCEINLINE DelegateHandle GenerateID()
     {
         return ++NextID;
@@ -83,58 +109,81 @@ private:
     static CORE_API DelegateHandle NextID;
 };
 
-/* Base-type for delegates */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// IDelegateInstance - Base-type for delegates
+
 class IDelegateInstance
 {
 public:
-    IDelegateInstance() = default;
+
     virtual ~IDelegateInstance() noexcept = default;
 
-    /* Retrieve the object of the function, returns nullptr for non-member delegates */
+    /**
+     * Retrieve the object of the function, returns nullptr for non-member delegates 
+     * 
+     * @return: Returns the bound object of the delegate
+     */
     virtual const void* GetBoundObject() const = 0;
 
-    /* Check if the object is the one that is bound to the delegate instance */
-    virtual bool IsObjectBound(const void*) const = 0;
+    /**
+     * Check if the object is the one that is bound to the delegate instance 
+     * 
+     * @param Object: Object to check
+     * @return: Returns true if the object is bound to the delegate
+     */
+    virtual bool IsObjectBound(const void* Object) const = 0;
 
-    /* Retrieve the handle to the delegate */
+    /**
+     * Retrieve the handle to the delegate 
+     * 
+     * @return: Returns the delegate-handle of this delegate-instance
+     */
     virtual CDelegateHandle GetHandle() const = 0;
 
-    /* Clones the delegate and stores it in the specified memory */
+    /**
+     * Clones the delegate and stores it in the specified memory 
+     * 
+     * @param Memory: Memory to store the cloned instance into
+     * @return: Returns a clone of the instance 
+     */
     virtual IDelegateInstance* Clone(void* Memory) const = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Delegates base */
+// DelegateInstance - Base-class for delegates*/
 
 template<typename ReturnType, typename... ArgTypes>
 class TDelegateInstance : public IDelegateInstance
 {
 public:
 
-    /* Executes the delegates and calls the stored function or functor */
+    /**
+     * Executes the stored function or functor 
+     * 
+     * @param Args: Arguments to the function-call
+     * @return: The result of the function-call
+     */
     virtual ReturnType Execute(ArgTypes... Args) = 0;
 
 public:
 
-    /* Retrieve the object of the function, returns nullptr for non-member delegates */
     virtual const void* GetBoundObject() const override
     {
         return nullptr;
     }
 
-    /* Check if the object is the one that is bound to the delegate instance */
     virtual bool IsObjectBound(const void*) const override
     {
         return false;
     }
 
-    /* Retrieve the handle to the delegate */
     virtual CDelegateHandle GetHandle() const override final
     {
         return Handle;
     }
 
 protected:
+
     FORCEINLINE TDelegateInstance()
         : IDelegateInstance()
         , Handle(CDelegateHandle::EGenerateID::New)
@@ -160,7 +209,6 @@ public:
 
     TFunctionDelegateInstance(const TFunctionDelegateInstance&) = default;
 
-    /* Constructor taking a function */
     FORCEINLINE TFunctionDelegateInstance(FunctionType InFunction, PayloadTypes&&... InPayload)
         : Super()
         , Function(InFunction)
@@ -168,13 +216,11 @@ public:
     {
     }
 
-    /* Execute the function */
     virtual ReturnType Execute(ArgTypes... Args) override final
     {
         return Payload.ApplyAfter(Function, Forward<ArgTypes>(Args)...);
     }
 
-    /* Clone this instance and store in the memory */
     virtual Super* Clone(void* Memory) const override final
     {
         return new(Memory) TFunctionDelegateInstance(*this);
@@ -182,10 +228,8 @@ public:
 
 private:
 
-    /* Payload sent into the function when executed*/
     TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
 
-    /* Standard function pointer */
     FunctionType Function;
 };
 
@@ -202,28 +246,23 @@ public:
 
     TFunctionDelegateInstance(const TFunctionDelegateInstance&) = default;
 
-    /* Constructor taking a function */
     FORCEINLINE TFunctionDelegateInstance(FunctionType InFunction)
         : Super()
         , Function(InFunction)
     {
     }
 
-    /* Execute the function */
     virtual ReturnType Execute(ArgTypes... Args) override final
     {
         return Function(Forward<ArgTypes>(Args)...);
     }
 
-    /* Clone this instance and store in the memory */
     virtual Super* Clone(void* Memory) const override final
     {
         return new(Memory) TFunctionDelegateInstance(*this);
     }
 
 private:
-
-    /* Standard function pointer */
     FunctionType Function;
 };
 
@@ -243,7 +282,6 @@ public:
 
     TMemberDelegateInstance(const TMemberDelegateInstance&) = default;
 
-    /* Constructor */
     FORCEINLINE TMemberDelegateInstance(InstanceType* InThis, FunctionType InFunction, PayloadTypes&&... InPayload)
         : Super()
         , This(InThis)
@@ -253,25 +291,21 @@ public:
         Assert(This != nullptr);
     }
 
-    /* Execute function */
     virtual ReturnType Execute(ArgTypes... Args) override final
     {
         return Payload.ApplyAfter(Function, This, Forward<ArgTypes>(Args)...);
     }
 
-    /* Clone this instance and store in the memory */
     virtual Super* Clone(void* Memory) const override final
     {
         return new(Memory) TMemberDelegateInstance(*this);
     }
 
-    /* Returns the stored instance */
     virtual const void* GetBoundObject() const override final
     {
         return reinterpret_cast<const void*>(This);
     }
 
-    /* Checks if object is equal to the stored instance */
     virtual bool IsObjectBound(const void* Object) const override final
     {
         return (GetBoundObject() == Object);
@@ -279,14 +313,10 @@ public:
 
 private:
 
-    /* Payload sent into the function when executed*/
     TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
 
-    /* Instance pointer */
     InstanceType* This = nullptr;
-
-    /* Function pointer */
-    FunctionType Function;
+    FunctionType  Function;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -302,7 +332,6 @@ public:
 
     TMemberDelegateInstance(const TMemberDelegateInstance&) = default;
 
-    /* Constructor */
     FORCEINLINE TMemberDelegateInstance(InstanceType* InThis, FunctionType InFunction)
         : Super()
         , This(InThis)
@@ -311,37 +340,29 @@ public:
         Assert(This != nullptr);
     }
 
-    /* Execute function */
     virtual ReturnType Execute(ArgTypes... Args) override final
     {
         return ((*This).*Function)(Forward<ArgTypes>(Args)...);
     }
 
-    /* Clone this instance and store in the memory */
     virtual Super* Clone(void* Memory) const override final
     {
         return new(Memory) TMemberDelegateInstance(*this);
     }
 
-    /* Returns the stored instance */
     virtual const void* GetBoundObject() const override final
     {
         return reinterpret_cast<const void*>(This);
     }
 
-    /* Checks if object is equal to the stored instance */
     virtual bool IsObjectBound(const void* Object) const override final
     {
         return (GetBoundObject() == Object);
     }
 
 private:
-
-    /* Instance pointer */
     InstanceType* This = nullptr;
-
-    /* Function pointer */
-    FunctionType Function;
+    FunctionType  Function;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -359,7 +380,6 @@ public:
 
     TLambdaDelegateInstance(const TLambdaDelegateInstance&) = default;
 
-    /* Constructor */
     FORCEINLINE TLambdaDelegateInstance(FunctorType&& InFunctor, PayloadTypes&&... InPayload)
         : Super()
         , Functor(InFunctor)
@@ -367,13 +387,11 @@ public:
     {
     }
 
-    /* Execute Functor */
     virtual ReturnType Execute(ArgTypes... Args) override
     {
         return Payload.ApplyAfter(Functor, Forward<ArgTypes>(Args)...);
     }
 
-    /* Clone this instance and store in the memory */
     virtual Super* Clone(void* Memory) const override
     {
         return new(Memory) TLambdaDelegateInstance(*this);
@@ -381,10 +399,8 @@ public:
 
 private:
 
-    /* Payload sent into the function when executed*/
     TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
 
-    /* Functor */
     FunctorType Functor;
 };
 
@@ -400,27 +416,22 @@ public:
 
     TLambdaDelegateInstance(const TLambdaDelegateInstance&) = default;
 
-    /* Constructor */
     FORCEINLINE TLambdaDelegateInstance(FunctorType&& InFunctor)
         : Super()
         , Functor(InFunctor)
     {
     }
 
-    /* Execute Functor */
     virtual ReturnType Execute(ArgTypes... Args) override
     {
         return Functor(Forward<ArgTypes>(Args)...);
     }
 
-    /* Clone this instance and store in the memory */
     virtual Super* Clone(void* Memory) const override
     {
         return new(Memory) TLambdaDelegateInstance(*this);
     }
 
 private:
-
-    /* Functor */
     FunctorType Functor;
 };

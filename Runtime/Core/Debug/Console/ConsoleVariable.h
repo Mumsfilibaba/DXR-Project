@@ -20,11 +20,16 @@ public:
     {
     }
 
+    CConsoleVariable(const CConsoleVariableChangedDelegateType& VariableChangedDelegate)
+        : IConsoleVariable()
+        , ChangedDelegate()
+    {
+        ChangedDelegate.Add(VariableChangedDelegate);
+    }
+
     virtual ~CConsoleVariable() = default;
 
-    /* Cast to console-command */
     virtual IConsoleCommand* AsCommand() override { return nullptr; }
-    /* Cast to console-variable */
     virtual IConsoleVariable* AsVariable() override { return this; }
 
     virtual CConsoleVariableChangedDelegate& GetChangedDelegate() override
@@ -55,54 +60,48 @@ public:
     {
     }
 
-    /* By default is not an int */
+    TConsoleVariable(T StartValue, const CConsoleVariableChangedDelegateType& VariableChangedDelegate)
+        : CConsoleVariable(VariableChangedDelegate)
+        , Value(StartValue)
+    {
+    }
+
     virtual bool IsInt() const override final { return false; }
-    /* By default is not an float */
     virtual bool IsFloat() const override final { return false; }
-    /* By default is not an bool */
     virtual bool IsBool() const override final { return false; }
-    /* By default is not a string */
     virtual bool IsString() const override final { return false; }
 
-    /* Sets variable with a string value */
     virtual void SetString(const CString& InValue) override;
-    /* Retrieve value as a string */
     virtual CString GetString() const override;
 
-    /* Set as int */
     virtual void SetInt(int32 InValue) override final
     {
         Value = static_cast<T>(InValue);
         OnChanged();
     }
 
-    /* Set as float */
     virtual void SetFloat(float InValue) override final
     {
         Value = static_cast<T>(InValue);
         OnChanged();
     }
 
-    /* Set as bool */
     virtual void SetBool(bool bValue) override final
     {
         Value = static_cast<T>(bValue);
         OnChanged();
     }
 
-    /* Retrieve as int */
     virtual int32 GetInt() const override final
     {
         return static_cast<int32>(Value);
     }
 
-    /* Retrieve as float */
     virtual float GetFloat() const override final
     {
         return static_cast<float>(Value);
     }
 
-    /* Retrieve as bool */
     virtual bool GetBool() const override final
     {
         return static_cast<bool>(Value);

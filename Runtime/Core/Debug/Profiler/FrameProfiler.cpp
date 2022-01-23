@@ -5,7 +5,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FrameProfiler
 
-CFrameProfiler CFrameProfiler::Instance;
+CFrameProfiler& CFrameProfiler::Get()
+{
+    static CFrameProfiler Instance;
+    return Instance;
+}
 
 void CFrameProfiler::Tick()
 {

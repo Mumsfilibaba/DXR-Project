@@ -13,14 +13,24 @@ struct TPair
     TPair(const TPair&) = default;
     TPair(TPair&&) = default;
 
-    /* Init types */
+    /**
+     * Create a new instance of a pair
+     * 
+     * @param InFirst: Instance of the first type to copy
+     * @param InSecond: Instance of the second type to copy
+     */
     FORCEINLINE explicit TPair(const FirstType& InFirst, const SecondType& InSecond)
         : First(InFirst)
         , Second(InSecond)
     {
     }
 
-    /* Init with rvalue types, with other types */
+    /**
+     * Create a new instance of a pair
+     *
+     * @param InFirst: Instance of the first type to move
+     * @param InSecond: Instance of the second type to move
+     */
     template<typename OtherFirstType = FirstType, typename OtherSecondType = SecondType>
     FORCEINLINE explicit TPair(OtherFirstType&& InFirst, OtherSecondType&& InSecond)
         : First(Forward<OtherFirstType>(InFirst))
@@ -28,7 +38,11 @@ struct TPair
     {
     }
 
-    /* Copy constructor */
+    /**
+     * Copy constructor
+     * 
+     * @param Other: Pair to copy
+     */
     template<typename OtherFirstType, typename OtherSecondType>
     FORCEINLINE explicit TPair(const TPair<OtherFirstType, OtherSecondType>& Other)
         : First(Other.First)
@@ -36,7 +50,11 @@ struct TPair
     {
     }
 
-    /* Move constructor */
+    /**
+     * Move constructor
+     *
+     * @param Other: Pair to move
+     */
     template<typename OtherFirstType, typename OtherSecondType>
     FORCEINLINE explicit TPair(TPair<OtherFirstType, OtherSecondType>&& Other)
         : First(Move(Other.First))
@@ -44,42 +62,66 @@ struct TPair
     {
     }
 
-    /* Swap two pairs */
+    /**
+     * Swap this pair with another
+     * 
+     * @param Other: Pair to swap with 
+     */
     FORCEINLINE void Swap(TPair& Other) noexcept
     {
         ::Swap<FirstType>(First, Other.First);
         ::Swap<SecondType>(Second, Other.Second);
     }
 
-    /* Copy assignment */
-    FORCEINLINE TPair& operator=(const TPair& Other) noexcept
+    /**
+     * Copy-assignment operator
+     * 
+     * @param RHS: Pair to copy
+     * @return: A reference to this instance
+     */
+    FORCEINLINE TPair& operator=(const TPair& RHS) noexcept
     {
-        TPair(Other).Swap(*this);
+        TPair(RHS).Swap(*this);
         return *this;
     }
 
-    /* Copy assignment */
+    /**
+     * Copy-assignment operator
+     *
+     * @param RHS: Pair to copy
+     * @return: A reference to this instance
+     */
     template<typename OtherFirstType, typename OtherSecondType>
-    FORCEINLINE TPair& operator=(const TPair<OtherFirstType, OtherSecondType>& Other) noexcept
+    FORCEINLINE TPair& operator=(const TPair<OtherFirstType, OtherSecondType>& RHS) noexcept
     {
-        First = Other.First;
-        Second = Other.Second;
+        First = RHS.First;
+        Second = RHS.Second;
         return *this;
     }
 
-    /* Move assignment */
-    FORCEINLINE TPair& operator=(TPair&& Other) noexcept
+    /**
+     * Move-assignment operator
+     *
+     * @param RHS: Pair to move
+     * @return: A reference to this instance
+     */
+    FORCEINLINE TPair& operator=(TPair&& RHS) noexcept
     {
-        TPair(Move(Other)).Swap(*this);
+        TPair(Move(RHS)).Swap(*this);
         return *this;
     }
 
-    /* Copy assignment */
+    /**
+     * Move-assignment operator
+     *
+     * @param RHS: Pair to move
+     * @return: A reference to this instance
+     */
     template<typename OtherFirstType, typename OtherSecondType>
-    FORCEINLINE TPair& operator=(TPair<OtherFirstType, OtherSecondType>&& Other) noexcept
+    FORCEINLINE TPair& operator=(TPair<OtherFirstType, OtherSecondType>&& RHS) noexcept
     {
-        First = Move(Other.First);
-        Second = Move(Other.Second);
+        First = Move(RHS.First);
+        Second = Move(RHS.Second);
         return *this;
     }
 

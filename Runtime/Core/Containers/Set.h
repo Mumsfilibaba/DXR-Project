@@ -17,8 +17,6 @@ class TSet
     {
     public:
 
-        /* TTreeIterator interface */
-
         FORCEINLINE STreeNode* GetNext() const noexcept
         {
             return Next;
@@ -44,14 +42,13 @@ class TSet
         /* Color (Red-Black Tree) */
         EColor Color = EColor::Red;
 
-        /* Pointers to neighbouring elements */
+        /* Pointers to neighboring elements */
         STreeNode* Right = nullptr;
         STreeNode* Left = nullptr;
         STreeNode* Parent = nullptr;
         STreeNode* Next = nullptr;
         STreeNode* Previous = nullptr;
 
-        /* Value for for this element */
         T Value;
     };
 
@@ -62,7 +59,9 @@ public:
     using IteratorType = TTreeIterator<STreeNode, ElementType>;
     using ConstIteratorType = TTreeIterator<const STreeNode, const ElementType>;
 
-    /* Default constructor */
+    /**
+     * Default constructor
+     */
     FORCEINLINE TSet()
         : RootNode(nullptr)
         , NullNode(nullptr)
@@ -70,7 +69,9 @@ public:
         ConstructUninitialized();
     }
 
-    /* Destruct nodes */
+    /**
+     * Destructor 
+     */
     FORCEINLINE ~TSet()
     {
         Assert(NullNode != nullptr);
@@ -83,7 +84,6 @@ public:
 
 private:
 
-    /* Initializes an empty node */
     FORCEINLINE void ConstructUninitialized()
     {
         NullNode = new STreeNode();
@@ -93,7 +93,6 @@ private:
         NullNode->Color = EColor::Black;
     }
 
-    /* Creates an empty root-node */
     FORCEINLINE void InititalizeRoot()
     {
         Assert(RootNode == nullptr);
@@ -105,7 +104,6 @@ private:
         RootNode->Color = EColor::Black;
     }
 
-    /* Releases the root node */
     FORCEINLINE void FreeRoot()
     {
         if (RootNode)
@@ -115,7 +113,6 @@ private:
         }
     }
 
-    /* Rotate tree left */
     FORCEINLINE void RotateLeft(STreeNode* Node)
     {
         Assert(Node != nullptr);
@@ -143,7 +140,6 @@ private:
         Node->Parent = Right;
     }
 
-    /* Rotate tree-node right */
     FORCEINLINE void RotateRight(STreeNode* Node)
     {
         Assert(Node != nullptr);
@@ -171,7 +167,6 @@ private:
         Node->Parent = Left;
     }
 
-    /* Retrieve the nullnode as constant */
     FORCEINLINE const STreeNode* GetNull() const noexcept
     {
         return NullNode;

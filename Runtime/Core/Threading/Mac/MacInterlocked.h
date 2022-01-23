@@ -13,22 +13,22 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Add: Adds value and return original value of Dest
 
-    static FORCEINLINE int8 Add(volatile int8* Dest, int8 Value)
+    static FORCEINLINE int8 InterlockedAdd(volatile int8* Dest, int8 Value)
     {
         return static_cast<int8>(__sync_fetch_and_add(Dest, Value));
     }
 
-    static FORCEINLINE int16 Add(volatile int16* Dest, int16 Value)
+    static FORCEINLINE int16 InterlockedAdd(volatile int16* Dest, int16 Value)
     {
         return static_cast<int16>(__sync_fetch_and_add(Dest, Value));
     }
 
-    static FORCEINLINE int32 Add(volatile int32* Dest, int32 Value)
+    static FORCEINLINE int32 InterlockedAdd(volatile int32* Dest, int32 Value)
     {
         return static_cast<int32>(__sync_fetch_and_add(Dest, Value));
     }
 
-    static FORCEINLINE int64 Add(volatile int64* Dest, int64 Value)
+    static FORCEINLINE int64 InterlockedAdd(volatile int64* Dest, int64 Value)
     {
         return static_cast<int64>(__sync_fetch_and_add(Dest, Value));
     }
@@ -36,22 +36,22 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Sub: Subtracts value and return original value of Dest
 
-    static FORCEINLINE int8 Sub(volatile int8* Dest, int8 Value)
+    static FORCEINLINE int8 InterlockedSub(volatile int8* Dest, int8 Value)
     {
         return static_cast<int8>(__sync_fetch_and_sub(Dest, Value));
     }
 
-    static FORCEINLINE int16 Sub(volatile int16* Dest, int16 Value)
+    static FORCEINLINE int16 InterlockedSub(volatile int16* Dest, int16 Value)
     {
         return static_cast<int16>(__sync_fetch_and_sub(Dest, Value));
     }
 
-    static FORCEINLINE int32 Sub(volatile int32* Dest, int32 Value)
+    static FORCEINLINE int32 InterlockedSub(volatile int32* Dest, int32 Value)
     {
         return static_cast<int32>(__sync_fetch_and_sub(Dest, Value));
     }
 
-    static FORCEINLINE int64 Sub(volatile int64* Dest, int64 Value)
+    static FORCEINLINE int64 InterlockedSub(volatile int64* Dest, int64 Value)
     {
         return static_cast<int64>(__sync_fetch_and_sub(Dest, Value));
     }
@@ -59,22 +59,22 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // And: ANDs the Dest with Value and returns the original value
 
-    static FORCEINLINE int8 And(volatile int8* Dest, int8 Value)
+    static FORCEINLINE int8 InterlockedAnd(volatile int8* Dest, int8 Value)
     {
         return static_cast<int8>(__sync_fetch_and_and(Dest, Value));
     }
 
-    static FORCEINLINE int16 And(volatile int16* Dest, int16 Value)
+    static FORCEINLINE int16 InterlockedAnd(volatile int16* Dest, int16 Value)
     {
         return static_cast<int16>(__sync_fetch_and_and(Dest, Value));
     }
 
-    static FORCEINLINE int32 And(volatile int32* Dest, int32 Value)
+    static FORCEINLINE int32 InterlockedAnd(volatile int32* Dest, int32 Value)
     {
         return static_cast<int32>(__sync_fetch_and_and(Dest, Value));
     }
 
-    static FORCEINLINE int64 And(volatile int64* Dest, int64 Value)
+    static FORCEINLINE int64 InterlockedAnd(volatile int64* Dest, int64 Value)
     {
         return static_cast<int64>(__sync_fetch_and_and(Dest, Value));
     }
@@ -82,22 +82,22 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Or: ORs the Dest with Value and returns the original value
 
-    static FORCEINLINE int8 Or(volatile int8* Dest, int8 Value)
+    static FORCEINLINE int8 InterlockedOr(volatile int8* Dest, int8 Value)
     {
         return static_cast<int8>(__sync_fetch_and_or(Dest, Value));
     }
 
-    static FORCEINLINE int16 Or(volatile int16* Dest, int16 Value)
+    static FORCEINLINE int16 InterlockedOr(volatile int16* Dest, int16 Value)
     {
         return static_cast<int16>(__sync_fetch_and_or(Dest, Value));
     }
 
-    static FORCEINLINE int32 Or(volatile int32* Dest, int32 Value)
+    static FORCEINLINE int32 InterlockedOr(volatile int32* Dest, int32 Value)
     {
         return static_cast<int32>(__sync_fetch_and_or(Dest, Value));
     }
 
-    static FORCEINLINE int64 Or(volatile int64* Dest, int64 Value)
+    static FORCEINLINE int64 InterlockedOr(volatile int64* Dest, int64 Value)
     {
         return static_cast<int64>(__sync_fetch_and_or(Dest, Value));
     }
@@ -105,22 +105,22 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Xor: XORs the Dest with Value and returns the original value
 
-    static FORCEINLINE int8 Xor(volatile int8* Dest, int8 Value)
+    static FORCEINLINE int8 InterlockedXor(volatile int8* Dest, int8 Value)
     {
         return static_cast<int8>(__sync_fetch_and_xor(Dest, Value));
     }
 
-    static FORCEINLINE int16 Xor(volatile int16* Dest, int16 Value)
+    static FORCEINLINE int16 InterlockedXor(volatile int16* Dest, int16 Value)
     {
         return static_cast<int16>(__sync_fetch_and_xor(Dest, Value));
     }
 
-    static FORCEINLINE int32 Xor(volatile int32* Dest, int32 Value)
+    static FORCEINLINE int32 InterlockedXor(volatile int32* Dest, int32 Value)
     {
         return static_cast<int32>(__sync_fetch_and_xor(Dest, Value));
     }
 
-    static FORCEINLINE int64 Xor(volatile int64* Dest, int64 Value)
+    static FORCEINLINE int64 InterlockedXor(volatile int64* Dest, int64 Value)
     {
         return static_cast<int64>(__sync_fetch_and_xor(Dest, Value));
     }
@@ -128,25 +128,25 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Increment: Increments destination and returns the new value
 
-    static FORCEINLINE int8 Increment(volatile int8* Dest)
+    static FORCEINLINE int8 InterlockedIncrement(volatile int8* Dest)
     {
         // No built in increment, add one and then add one to the return value sin the original value is returned
         return static_cast<int8>(__sync_fetch_and_add(Dest, 1)) + 1;
     }
 
-    static FORCEINLINE int16 Increment(volatile int16* Dest)
+    static FORCEINLINE int16 InterlockedIncrement(volatile int16* Dest)
     {
         // No built in increment, add one and then add one to the return value sin the original value is returned
         return static_cast<int16>(__sync_fetch_and_add(Dest, 1)) + 1;
     }
 
-    static FORCEINLINE int32 Increment(volatile int32* Dest)
+    static FORCEINLINE int32 InterlockedIncrement(volatile int32* Dest)
     {
         // No built in increment, add one and then add one to the return value sin the original value is returned
         return static_cast<int32>(__sync_fetch_and_add(Dest, 1)) + 1;
     }
 
-    static FORCEINLINE int64 Increment(volatile int64* Dest)
+    static FORCEINLINE int64 InterlockedIncrement(volatile int64* Dest)
     {
         // No built in increment, add one and then add one to the return value sin the original value is returned
         return static_cast<int64>(__sync_fetch_and_add(Dest, 1)) + 1;
@@ -155,25 +155,25 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Decrement: Decrements destination and returns the new value
 
-    static FORCEINLINE int8 Decrement(volatile int8* Dest)
+    static FORCEINLINE int8 InterlockedDecrement(volatile int8* Dest)
     {
         // No built in decrement, subtract one and then subtract one to the return value sin the original value is returned
         return static_cast<int8>(__sync_fetch_and_sub(Dest, 1)) - 1;
     }
 
-    static FORCEINLINE int16 Decrement(volatile int16* Dest)
+    static FORCEINLINE int16 InterlockedDecrement(volatile int16* Dest)
     {
         // No built in decrement, subtract one and then subtract one to the return value sin the original value is returned
         return static_cast<int16>(__sync_fetch_and_sub(Dest, 1)) - 1;
     }
 
-    static FORCEINLINE int32 Decrement(volatile int32* Dest)
+    static FORCEINLINE int32 InterlockedDecrement(volatile int32* Dest)
     {
         // No built in decrement, subtract one and then subtract one to the return value sin the original value is returned
         return static_cast<int32>(__sync_fetch_and_sub(Dest, 1)) - 1;
     }
 
-    static FORCEINLINE int64 Decrement(volatile int64* Dest)
+    static FORCEINLINE int64 InterlockedDecrement(volatile int64* Dest)
     {
         // No built in decrement, subtract one and then subtract one to the return value sin the original value is returned
         return static_cast<int64>(__sync_fetch_and_sub(Dest, 1)) - 1;
@@ -182,22 +182,22 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CompareExchange: Compares Dest with Comparand, if equal Exchange gets stored in Dest. Returns the orignal value.
 
-    static FORCEINLINE int8 CompareExchange(volatile int8* Dest, int8 Exchange, int8 Comparand)
+    static FORCEINLINE int8 InterlockedCompareExchange(volatile int8* Dest, int8 Exchange, int8 Comparand)
     {
         return __sync_val_compare_and_swap(Dest, Comparand, Exchange);
     }
 
-    static FORCEINLINE int16 CompareExchange(volatile int16* Dest, int16 Exchange, int16 Comparand)
+    static FORCEINLINE int16 InterlockedCompareExchange(volatile int16* Dest, int16 Exchange, int16 Comparand)
     {
         return __sync_val_compare_and_swap(Dest, Comparand, Exchange);
     }
 
-    static FORCEINLINE int32 CompareExchange(volatile int32* Dest, int32 Exchange, int32 Comparand)
+    static FORCEINLINE int32 InterlockedCompareExchange(volatile int32* Dest, int32 Exchange, int32 Comparand)
     {
         return __sync_val_compare_and_swap(Dest, Comparand, Exchange);
     }
 
-    static FORCEINLINE int64 CompareExchange(volatile int64* Dest, int64 Exchange, int64 Comparand)
+    static FORCEINLINE int64 InterlockedCompareExchange(volatile int64* Dest, int64 Exchange, int64 Comparand)
     {
         return __sync_val_compare_and_swap(Dest, Comparand, Exchange);
     }
@@ -205,22 +205,22 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Exchange: Stores Value in Dest, and returns original value
 
-    static FORCEINLINE int8 Exchange(volatile int8* Dest, int8 Exchange)
+    static FORCEINLINE int8 InterlockedExchange(volatile int8* Dest, int8 Exchange)
     {
         return __sync_lock_test_and_set(Dest, Exchange);
     }
 
-    static FORCEINLINE int16 Exchange(volatile int16* Dest, int16 Exchange)
+    static FORCEINLINE int16 InterlockedExchange(volatile int16* Dest, int16 Exchange)
     {
         return __sync_lock_test_and_set(Dest, Exchange);
     }
 
-    static FORCEINLINE int32 Exchange(volatile int32* Dest, int32 Exchange)
+    static FORCEINLINE int32 InterlockedExchange(volatile int32* Dest, int32 Exchange)
     {
         return __sync_lock_test_and_set(Dest, Exchange);
     }
 
-    static FORCEINLINE int64 Exchange(volatile int64* Dest, int64 Exchange)
+    static FORCEINLINE int64 InterlockedExchange(volatile int64* Dest, int64 Exchange)
     {
         return __sync_lock_test_and_set(Dest, Exchange);
     }

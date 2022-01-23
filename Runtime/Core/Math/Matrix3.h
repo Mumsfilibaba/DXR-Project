@@ -8,7 +8,7 @@ class CMatrix3
 {
 public:
 
-    /* Default constructor (Initialize components to zero) */
+    /** Default constructor (Initialize components to zero) */
     FORCEINLINE CMatrix3() noexcept;
 
     /**

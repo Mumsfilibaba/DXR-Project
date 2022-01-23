@@ -13,19 +13,17 @@
 #include <random>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-variable
 
-TConsoleVariable<float> GSSAORadius(0.4f);
-TConsoleVariable<float> GSSAOBias(0.025f);
-TConsoleVariable<int32> GSSAOKernelSize(32);
+TAutoConsoleVariable<float> GSSAORadius("renderer.SSAORadius", 0.4f);
+TAutoConsoleVariable<float> GSSAOBias("renderer.SSAOBias", 0.025f);
+TAutoConsoleVariable<int32> GSSAOKernelSize("renderer.SSAOKernelSize", 32);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ScreenSpaceOcclusionRenderer
 
 bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 {
-    INIT_CONSOLE_VARIABLE("r.SSAOKernelSize", &GSSAOKernelSize);
-    INIT_CONSOLE_VARIABLE("r.SSAOBias", &GSSAOBias);
-    INIT_CONSOLE_VARIABLE("r.SSAORadius", &GSSAORadius);
-
     if (!CreateRenderTarget(FrameResources))
     {
         return false;

@@ -10,12 +10,34 @@ class VECTOR_ALIGN CPlane
 {
 public:
 
+    /**
+     * Default constructor
+     */
     FORCEINLINE CPlane() noexcept;
 
+    /**
+     * Constructor that creates a plane from a Vector4
+     * 
+     * @param Plane: Vector4 representing a plane
+     */
     FORCEINLINE explicit CPlane(const CVector4& Plane) noexcept;
 
+    /**
+     * Constructor that creates a plane from a normal and offset
+     *
+     * @param Normal: Normal of a plane
+     * @param InW: Offset from origin in direction of the normal
+     */
     FORCEINLINE explicit CPlane(const CVector3& Normal, float InW) noexcept;
-
+    
+    /**
+     * Constructor that creates a plane from components of a Vector4
+     *
+     * @param InX: x-component of a Vector4
+     * @param InY: y-component of a Vector4
+     * @param InZ: z-component of a Vector4
+     * @param InW: w-component of a Vector4
+     */
     FORCEINLINE explicit CPlane(float InX, float InY, float InZ, float InW) noexcept;
 
     /**
@@ -26,14 +48,38 @@ public:
      */
     inline bool IsEqual(const CPlane& Other, float Epsilon = NMath::IS_EQUAL_EPISILON) const noexcept;
 
+    /**
+     * Normalized the plane
+     */
     FORCEINLINE void Normalize() noexcept;
 
+    /*
+     * Performs dot-product between a plane and a point
+     * 
+     * @param Point: Point to perform dot-product with
+     * @return: Returns the dot-product
+     */
     FORCEINLINE float PlaneDotCoord(const CVector3& Point) const noexcept;
 
+    /**
+     * Retrieve the normal of the plane
+     * 
+     * @return: Returns the normal of the plane
+     */
     FORCEINLINE CVector3 GetNormal() const noexcept;
 
+    /**
+     * Retrieve the data as an array
+     * 
+     * @return: A pointer to the data representing the plane
+     */
     FORCEINLINE float* GetData() noexcept;
 
+    /**
+     * Retrieve the data as an array
+     *
+     * @return: A pointer to the data representing the plane
+     */
     FORCEINLINE const float* GetData() const noexcept;
 
 public:

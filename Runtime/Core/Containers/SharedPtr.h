@@ -18,44 +18,37 @@ public:
 
     using CounterType = AtomicInt32::Type;
 
-    /* Default constructor setting both counters to zero */
     FORCEINLINE CPointerReferenceCounter() noexcept
         : NumWeakRefs(0)
         , NumStrongRefs(0)
     {
     }
 
-    /* Increase the weak reference count */
     FORCEINLINE CounterType AddWeakRef() noexcept
     {
         return NumWeakRefs++;
     }
 
-    /* Increase the strong reference count */
     FORCEINLINE CounterType AddStrongRef() noexcept
     {
         return NumStrongRefs++;
     }
 
-    /* Decrease the weak reference count */
     FORCEINLINE CounterType ReleaseWeakRef() noexcept
     {
         return NumWeakRefs--;
     }
 
-    /* Increase the strong reference count */
     FORCEINLINE CounterType ReleaseStrongRef() noexcept
     {
         return NumStrongRefs--;
     }
 
-    /* Retrieve the weak reference count */
     FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
         return NumWeakRefs.Load();
     }
 
-    /* Retrieve the strong reference count */
     FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
         return NumStrongRefs.Load();
@@ -78,14 +71,12 @@ public:
     using ElementType = typename TRemoveExtent<T>::Type;
     using CounterType = CPointerReferenceCounter::CounterType;
 
-    /* Cannot copy the storage */
     TPointerReferencedStorage(const TPointerReferencedStorage&) = delete;
     TPointerReferencedStorage& operator=(const TPointerReferencedStorage&) = delete;
 
     template<typename OtherType, typename OtherDeleterType>
     friend class TPointerReferencedStorage;
 
-    /* Default constructor that init both counter and pointer to nullptr */
     FORCEINLINE TPointerReferencedStorage() noexcept
         : DeleterType()
         , Ptr(nullptr)
@@ -93,7 +84,6 @@ public:
     {
     }
 
-    /* Move constructor */
     FORCEINLINE TPointerReferencedStorage(TPointerReferencedStorage&& Other) noexcept
         : DeleterType(Move(Other))
         , Ptr(nullptr)
@@ -105,7 +95,6 @@ public:
         Other.Counter = nullptr;
     }
 
-    /* Move constructor */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TPointerReferencedStorage(TPointerReferencedStorage<OtherType, OtherDeleterType>&& Other) noexcept
         : DeleterType(Move(Other))
@@ -118,10 +107,8 @@ public:
         Other.Counter = nullptr;
     }
 
-    /* Default constructor, the destruction of resources should be handled by the user of the class*/
     ~TPointerReferencedStorage() = default;
 
-    /* Initialized a new counter if needed and adds a strong reference */
     FORCEINLINE void InitStrong(ElementType* NewPtr, CPointerReferenceCounter* NewCounter) noexcept
     {
         // If the pointer is nullptr, we do not care about the counter
@@ -146,14 +133,13 @@ public:
         }
     }
 
-    /* Adds a weak ref */
     FORCEINLINE void InitWeak(ElementType* NewPtr, CPointerReferenceCounter* NewCounter) noexcept
     {
         // If the pointer is nullptr, we do not care about the counter...
         Ptr = NewPtr;
         if (Ptr)
         {
-            // ...however, if we init a weak reference then there has to be a counter aswell, since weakrefs require a strong
+            // ...however, if we init a weak reference then there has to be a counter as well, since weak-refs require a strong
             Counter = NewCounter;
             Assert(Counter != nullptr);
             Counter->AddWeakRef();
@@ -164,7 +150,6 @@ public:
         }
     }
 
-    /* Initialize the storage by a "move", does not add or remove any weak or strong references */
     FORCEINLINE void InitMove(ElementType* NewPtr, CPointerReferenceCounter* NewCounter) noexcept
     {
         // If the pointer is nullptr, we do not care about the counter...
@@ -181,7 +166,9 @@ public:
         }
     }
 
-    /* Releases a strong ref and deletes the pointer if the strong refcount is zero, if the weak refcount is also zero the counter is deleted */
+    /**
+     * Releases a strong ref and deletes the pointer if the strong refcount is zero, if the weak refcount is also zero the counter is deleted
+     */
     FORCEINLINE void ReleaseStrong() noexcept
     {
         Assert(Counter != nullptr);
@@ -201,7 +188,9 @@ public:
         }
     }
 
-    /* Relases a weak reference and if all references are gone, then delete the counter */
+    /**
+     * Releases a weak reference and if all references are gone, then delete the counter
+     */
     FORCEINLINE void ReleaseWeak() noexcept
     {
         Assert(Counter != nullptr);
@@ -216,14 +205,12 @@ public:
         }
     }
 
-    /* Resets to an empty storage without deleting the pointers. Used for Move pointers of other type. */
     FORCEINLINE void Reset() noexcept
     {
         Ptr = nullptr;
         Counter = nullptr;
     }
 
-    /* Swaps to storages */
     FORCEINLINE void Swap(TPointerReferencedStorage& Other) noexcept
     {
         ElementType* TempPtr = Ptr;
@@ -236,46 +223,39 @@ public:
         Other.Counter = TempCounter;
     }
 
-    /* Returns the pointer */
     FORCEINLINE ElementType* GetPointer() const noexcept
     {
         return Ptr;
     }
 
-    /* Returns the address of the raw pointer */
     FORCEINLINE ElementType* const* GetAddressOfPointer() const noexcept
     {
         return &Ptr;
     }
 
-    /* Returns the counter */
     FORCEINLINE CPointerReferenceCounter* GetCounter() const noexcept
     {
         return Counter;
     }
 
-    /* Retrieve the weak reference count */
     FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
         Assert(Counter != nullptr);
         return Counter->GetWeakRefCount();
     }
 
-    /* Retrieve the strong reference count */
     FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
         Assert(Counter != nullptr);
         return Counter->GetStrongRefCount();
     }
 
-    /* Assign another to this */
     FORCEINLINE TPointerReferencedStorage& operator=(TPointerReferencedStorage&& RHS) noexcept
     {
         TPointerReferencedStorage(Move(RHS)).Swap(*this);
         return *this;
     }
 
-    /* Assign another to this */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value, TPointerReferencedStorage&>::Type
         operator=(TPointerReferencedStorage<OtherType, OtherDeleterType>&& RHS) noexcept
@@ -302,53 +282,73 @@ template<typename T, typename DeleterType = TDefaultDelete<T>>
 class TSharedPtr
 {
 public:
+
     using ElementType = typename TRemoveExtent<T>::Type;
     using PointerStorage = TPointerReferencedStorage<ElementType, DeleterType>;
     using CounterType = typename PointerStorage::CounterType;
     using SizeType = int32;
 
-    /* Enables conversion betweem the two classes */
     template<typename OtherType, typename OtherDeleterType>
     friend class TWeakPtr;
 
     template<typename OtherType, typename OtherDeleterType>
     friend class TSharedPtr;
 
-    /* Default constructor setting both counter and pointer to nullptr */
+    /**
+     * Default constructor 
+     */
     FORCEINLINE TSharedPtr() noexcept
         : Storage()
     {
     }
 
-    /* Constructor setting both counter and pointer to nullptr */
+    /**
+     * Constructor setting both counter and pointer to nullptr 
+     */
     FORCEINLINE TSharedPtr(NullptrType) noexcept
         : Storage()
     {
     }
 
-    /* Constructor creating from a raw pointer, and the container takes ownership at this point */
-    FORCEINLINE explicit TSharedPtr(ElementType* InPtr) noexcept
+    /**
+     * Constructor that initializes a new SharedPtr from a raw-pointer
+     * 
+     * @param InPointer: Raw pointer to store
+     */
+    FORCEINLINE explicit TSharedPtr(ElementType* InPointer) noexcept
         : Storage()
     {
-        Storage.InitStrong(InPtr, nullptr);
+        Storage.InitStrong(InPointer, nullptr);
     }
 
-    /* Constructor creating from a raw pointer from a convertible type, and the container takes ownership at this point */
+    /**
+     * Constructor that initializes a new SharedPtr from a raw-pointer of a convertible type
+     *
+     * @param InPointer: Raw pointer to store
+     */
     template<typename OtherType, typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
-    FORCEINLINE explicit TSharedPtr(typename TRemoveExtent<OtherType>::Type* InPtr) noexcept
+    FORCEINLINE explicit TSharedPtr(typename TRemoveExtent<OtherType>::Type* InPointer) noexcept
         : Storage()
     {
-        Storage.InitStrong(static_cast<ElementType*>(InPtr), nullptr);
+        Storage.InitStrong(static_cast<ElementType*>(InPointer), nullptr);
     }
 
-    /* Copy-constructor */
+    /**
+     * Copy-constructor 
+     * 
+     * @param Other: SharedPtr to copy
+     */
     FORCEINLINE TSharedPtr(const TSharedPtr& Other) noexcept
         : Storage()
     {
         Storage.InitStrong(Other.Get(), Other.GetCounter());
     }
 
-    /* Constructor copy from another type */
+    /**
+     * Copy-constructor that copies from a convertible type
+     *
+     * @param Other: SharedPtr to copy
+     */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedPtr(const TSharedPtr<OtherType, OtherDeleterType>& Other) noexcept
         : Storage()
@@ -356,37 +356,59 @@ public:
         Storage.InitStrong(static_cast<ElementType*>(Other.Get()), Other.GetCounter());
     }
 
-    /* Move constructor */
+    /**
+     * Move-constructor
+     *
+     * @param Other: SharedPtr to move
+     */
     FORCEINLINE TSharedPtr(TSharedPtr&& Other) noexcept
         : Storage(Move(Other.Storage))
     {
     }
 
-    /* Move constructor from with another type */
+    /**
+     * Move-constructor that copies from a convertible type
+     *
+     * @param Other: SharedPtr to move
+     */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedPtr(TSharedPtr<OtherType, OtherDeleterType>&& Other) noexcept
         : Storage(Move(Other.Storage))
     {
     }
 
-    /* Copy constructor, were the counter is copied, but the pointer is taken from the raw-pointer, this enables casting */
+    /**
+     * Copy constructor that copy the counter, but the pointer is taken from the raw-pointer to enable casting 
+     * 
+     * @param Other: Container to take the counter from
+     * @param InPointer: Raw pointer to store
+     */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE explicit TSharedPtr(const TSharedPtr<OtherType, OtherDeleterType>& Other, ElementType* InPtr) noexcept
+    FORCEINLINE explicit TSharedPtr(const TSharedPtr<OtherType, OtherDeleterType>& Other, ElementType* InPointer) noexcept
         : Storage()
     {
-        Storage.InitStrong(InPtr, Other.GetCounter());
+        Storage.InitStrong(InPointer, Other.GetCounter());
     }
 
-    /* Move constructor, were the counter is copied, but the pointer is taken from the raw-pointer, this enables casting */
+    /**
+     * Move constructor that move the counter, but the pointer is taken from the raw-pointer to enable casting
+     *
+     * @param Other: Container to take the counter from
+     * @param InPointer: Raw pointer to store
+     */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE explicit TSharedPtr(TSharedPtr<OtherType, OtherDeleterType>&& Other, ElementType* InPtr) noexcept
+    FORCEINLINE explicit TSharedPtr(TSharedPtr<OtherType, OtherDeleterType>&& Other, ElementType* InPointer) noexcept
         : Storage()
     {
-        Storage.InitMove(InPtr, Other.GetCounter());
+        Storage.InitMove(InPointer, Other.GetCounter());
         Other.Storage.Reset();
     }
 
-    /* Constructor that creates a sharedptr from a weakptr */
+    /**
+     * Constructor that creates a SharedPtr from a WeakPtr 
+     * 
+     * @param Other: WeakPtr to take counter and pointer from
+     */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
     FORCEINLINE explicit TSharedPtr(const TWeakPtr<OtherType, OtherDeleterType>& Other) noexcept
         : Storage()
@@ -394,7 +416,11 @@ public:
         Storage.InitStrong(static_cast<ElementType*>(Other.Get()), Other.GetCounter());
     }
 
-    /* Constructor that creates a sharedptr from a uniqueptr */
+    /**
+     * Constructor that creates a SharedPtr from a UniquePtr
+     *
+     * @param Other: UniquePtr to take counter and pointer from
+     */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedPtr(TUniquePtr<OtherType, OtherDeleterType>&& Other) noexcept
         : Storage()
@@ -402,30 +428,45 @@ public:
         Storage.InitStrong(static_cast<ElementType*>(Other.Release()), nullptr);
     }
 
+    /**
+     * Destructor
+     */
     FORCEINLINE ~TSharedPtr() noexcept
     {
         Reset();
     }
 
-    /* Reset the pointer and set it to a optional new pointer */
-    FORCEINLINE void Reset(ElementType* NewPtr = nullptr) noexcept
+    /**
+     * Reset the pointer and set it to a optional new pointer 
+     * 
+     * @param NewPointer: New pointer to store
+     */
+    FORCEINLINE void Reset(ElementType* NewPointer = nullptr) noexcept
     {
-        if (Get() != NewPtr)
+        if (Get() != NewPointer)
         {
             Storage.ReleaseStrong();
-            Storage.InitStrong(NewPtr, nullptr);
+            Storage.InitStrong(NewPointer, nullptr);
         }
     }
 
-    /* Reset the pointer and set it to a optional new pointer */
+    /**
+     * Reset the pointer and set it to a optional new pointer of convertible type
+     *
+     * @param NewPointer: New pointer to store
+     */
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type
-        Reset(typename TRemoveExtent<OtherType>::Type* NewPtr = nullptr) noexcept
+        Reset(typename TRemoveExtent<OtherType>::Type* NewPointer = nullptr) noexcept
     {
-        Reset(static_cast<ElementType*>(NewPtr));
+        Reset(static_cast<ElementType*>(NewPointer));
     }
 
-    /* Swaps the contents of this and another container */
+    /**
+     * Swaps the contents of this and another container 
+     * 
+     * @param Other: SharedPtr to swap with 
+     */
     FORCEINLINE void Swap(TSharedPtr& Other) noexcept
     {
         PointerStorage Temp = Move(Storage);
@@ -433,62 +474,101 @@ public:
         Other.Storage = Move(Temp);
     }
 
-    /* Checks weather the strong reference count is one */
+    /**
+     * Check weather the strong reference count is one
+     * 
+     * @return: Returns true if the strong reference count is equal to one
+     */
     FORCEINLINE bool IsUnique() const noexcept
     {
         return (Storage.GetStrongRefCount() == 1);
     }
 
-    /* Cheacks weater the pointer is nullptr or not */
+    /**
+     * Check weather the pointer is nullptr or not
+     *
+     * @return: Returns true if the pointer is not nullptr
+     */
     FORCEINLINE bool IsValid() const noexcept
     {
         return (Get() != nullptr);
     }
 
-    /* Return the raw pointer */
+    /**
+     * Return the raw pointer 
+     * 
+     * @return: Returns the stored pointer
+     */
     FORCEINLINE ElementType* Get() const noexcept
     {
         return Storage.GetPointer();
     }
 
-    /* Returns the address of the raw pointer */
+    /**
+     * Return the address of the raw pointer
+     *
+     * @return: Returns the address of the stored pointer
+     */
     FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return Storage.GetAddressOfPointer();
     }
 
-    /* Returns the number of strong references */
+    /**
+     * Returns the number of strong references 
+     * 
+     * @return: The number of strong references
+     */
     FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
         return Storage.GetStrongRefCount();
     }
 
-    /* Return the number of weak references */
+    /**
+     * Returns the number of weak references
+     *
+     * @return: The number of weak references
+     */
     FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
         return Storage.GetWeakRefCount();
     }
 
-    /* Return the dereferenced pointer */
+    /**
+     * Dereference the pointer
+     * 
+     * @return: A reference to the object pointer to by the stored pointer
+     */
     FORCEINLINE ElementType& Dereference() const noexcept
     {
         Assert(IsValid());
         return *Get();
     }
 
-    /* Return the raw pointer */
+    /**
+     * Return the raw pointer
+     *
+     * @return: Returns the stored pointer
+     */
     FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
-
-    /* Dereference the pointer */
+    /**
+     * Dereference the pointer
+     *
+     * @return: A reference to the object pointer to by the stored pointer
+     */
     FORCEINLINE ElementType& operator*() const noexcept
     {
         return Dereference();
     }
 
-    /* Get the address of the pointer */
+    /**
+     * Return the address of the raw pointer
+     *
+     * @return: Returns the address of the stored pointer
+     */
     FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
@@ -503,27 +583,46 @@ public:
         return Get()[Index];
     }
 
-    /* Cheack weather the pointer is nullptr or not */
+    /**
+     * Check weather the pointer is nullptr or not
+     *
+     * @return: Returns true if the pointer is not nullptr
+     */
     FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
 
-    /* Copy assignment */
+    /**
+     * Copy-assignment operator
+     * 
+     * @param RHS: SharedPtr to copy
+     * @return: A reference to this instance
+     */
     FORCEINLINE TSharedPtr& operator=(const TSharedPtr& RHS) noexcept
     {
         TSharedPtr(RHS).Swap(*this);
         return *this;
     }
 
-    /* Move assignment */
+    /**
+     * Move-assignment operator
+     *
+     * @param RHS: SharedPtr to move
+     * @return: A reference to this instance
+     */
     FORCEINLINE TSharedPtr& operator=(TSharedPtr&& RHS) noexcept
     {
         TSharedPtr(Move(RHS)).Swap(*this);
         return *this;
     }
 
-    /* Copy assignment */
+    /**
+     * Copy-assignment operator with a convertible type
+     *
+     * @param RHS: SharedPtr to copy
+     * @return: A reference to this instance
+     */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value, typename TAddReference<TSharedPtr>::LValue>::Type
         operator=(const TSharedPtr<OtherType, OtherDeleterType>& RHS) noexcept
@@ -532,7 +631,12 @@ public:
         return *this;
     }
 
-    /* Move assignment */
+    /**
+     * Move-assignment operator with a convertible type
+     *
+     * @param RHS: SharedPtr to move
+     * @return: A reference to this instance
+     */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value, typename TAddReference<TSharedPtr>::LValue>::Type
         operator=(TSharedPtr<OtherType, OtherDeleterType>&& RHS) noexcept
@@ -541,14 +645,23 @@ public:
         return *this;
     }
 
-    /* Assignment from raw */
+    /**
+     * Assignment operator that takes a raw-pointer
+     * 
+     * @param RHS: Raw-pointer to store
+     * @return: A reference to this instance
+     */
     FORCEINLINE TSharedPtr& operator=(ElementType* RHS) noexcept
     {
         TSharedPtr(RHS).Swap(*this);
         return *this;
     }
 
-    /* Assignment from nullptr */
+    /**
+     * Assignment operator that takes a nullptr
+     * 
+     * @return: A reference to this instance
+     */
     FORCEINLINE TSharedPtr& operator=(NullptrType) noexcept
     {
         TSharedPtr().Swap(*this);
@@ -567,98 +680,84 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TSharedPtr operators
 
-/* Check the equality between sharedptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-/* Check the equality between sharedptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==(T* LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-/* Check the inequality between sharedptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-/* Check the inequality between sharedptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(T* LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-/* Check the equality between sharedptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the inequality between sharedptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the equality between sharedptr and a nullptr */
 template<typename T>
 FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, NullptrType) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
-/* Check the equality between sharedptr and a nullptr */
 template<typename T>
 FORCEINLINE bool operator==(NullptrType, const TSharedPtr<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
-/* Check the equality between sharedptr and a nullptr */
 template<typename T>
 FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, NullptrType) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
-/* Check the equality between sharedptr and a nullptr */
 template<typename T>
 FORCEINLINE bool operator!=(NullptrType, const TSharedPtr<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }
 
-/* Check the equality between sharedptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the equality between sharedptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the inequality between sharedptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the inequality between sharedptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
@@ -677,33 +776,46 @@ public:
     using CounterType = typename PointerStorage::CounterType;
     using SizeType = int32;
 
-    /* Enables conversion betweem the two classes */
     template<typename OtherType, typename OtherDeleterType>
     friend class TSharedPtr;
 
     template<typename OtherType, typename OtherDeleterType>
     friend class TWeakPtr;
 
-    /* Default constructor */
+    /**
+     * Default constructor 
+     */
     FORCEINLINE TWeakPtr() noexcept
         : Storage()
     {
     }
 
-    /* Copy constructor */
+    /**
+     * Copy-constructor
+     *
+     * @param Other: WeakPtr to copy
+     */
     FORCEINLINE TWeakPtr(const TWeakPtr& Other) noexcept
         : Storage()
     {
         Storage.InitWeak(Other.Get(), Other.GetCounter());
     }
 
-    /* Move constructor */
+    /**
+     * Move-constructor
+     *
+     * @param Other: WeakPtr to move
+     */
     FORCEINLINE TWeakPtr(TWeakPtr&& Other) noexcept
         : Storage(Move(Other.Storage))
     {
     }
 
-    /* Copy construct from convertible type */
+    /**
+     * Copy-constructor that copies from a convertible type
+     *
+     * @param Other: WeakPtr to copy
+     */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TWeakPtr(const TWeakPtr<OtherType, OtherDeleterType>& Other) noexcept
         : Storage()
@@ -711,21 +823,33 @@ public:
         Storage.InitWeak(static_cast<ElementType*>(Other.Get()), Other.GetCounter());
     }
 
-    /* Move construct from convertible type */
+    /**
+     * Move-constructor that moves from a convertible type
+     *
+     * @param Other: WeakPtr to move
+     */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TWeakPtr(TWeakPtr<OtherType, OtherDeleterType>&& Other) noexcept
         : Storage(Move(Other.Storage))
     {
     }
 
-    /* Construct from shared */
+    /**
+     * Constructor that constructs a WeakPtr from a SharedPtr
+     * 
+     * @param Other: SharedPtr to take pointer and counter from
+     */
     FORCEINLINE TWeakPtr(const TSharedPtr<T, DeleterType>& Other) noexcept
         : Storage()
     {
         Storage.InitWeak(Other.Get(), Other.GetCounter());
     }
 
-    /* Construct from shared */
+    /**
+     * Constructor that constructs a WeakPtr from a SharedPtr of convertible type
+     *
+     * @param Other: SharedPtr to take pointer and counter from
+     */
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TWeakPtr(const TSharedPtr<OtherType, OtherDeleterType>& Other) noexcept
         : Storage()
@@ -733,29 +857,44 @@ public:
         Storage.InitWeak(static_cast<ElementType*>(Other.Get()), Other.GetCounter());
     }
 
+    /**
+     * Destructor
+     */
     FORCEINLINE ~TWeakPtr()
     {
         Reset();
     }
 
-    /* Reset the pointer and set it to a optional new pointer */
-    FORCEINLINE void Reset(ElementType* NewPtr = nullptr) noexcept
+    /**
+     * Reset the pointer and set it to a optional new pointer
+     * 
+     * @param NewPointer: New pointer to store
+     */
+    FORCEINLINE void Reset(ElementType* NewPointer = nullptr) noexcept
     {
-        if (Get() != NewPtr)
+        if (Get() != NewPointer)
         {
             Storage.ReleaseWeak();
-            Storage.InitWeak(NewPtr, nullptr);
+            Storage.InitWeak(NewPointer, nullptr);
         }
     }
 
-    /* Reset the pointer and set it to a optional new pointer */
+    /**
+     * Reset the pointer and set it to a optional new pointer of a convertible type
+     *
+     * @param NewPointer: New pointer to store
+     */
     template<typename OtherType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset(OtherType* NewPtr = nullptr) noexcept
     {
         Reset(static_cast<ElementType*>(NewPtr));
     }
 
-    /* Swaps the contents of this and another container */
+    /**
+     * Swaps the contents of this and another container 
+     * 
+     * @param Other: Instance to swap with
+     */
     FORCEINLINE void Swap(TWeakPtr& Other) noexcept
     {
         PointerStorage Temp = Move(Storage);
@@ -763,80 +902,133 @@ public:
         Other.Storage = Move(Temp);
     }
 
-    /* Checks weather there are any strong references left */
+    /**
+     * Checks weather there are any strong references left
+     * 
+     * @return: Returns true if the strong reference count is less than one
+     */
     FORCEINLINE bool IsExpired() const noexcept
     {
         return (GetStrongRefCount() < 1);
     }
 
-    /* Creates a shared pointer from this weakptr */
+    /**
+     * Creates a shared pointer from this WeakPtr
+     * 
+     * @return: A new SharedPtr that holds the same pointer as this WeakPtr
+     */
     FORCEINLINE TSharedPtr<T> MakeShared() noexcept
     {
         return TSharedPtr<T>(*this);
     }
 
-    /* Checks weather the strong reference count is one */
+    /**
+     * Checks weather the strong reference count is one 
+     * 
+     * @return: Returns true if the strong reference count is one
+     */
     FORCEINLINE bool IsUnique() const noexcept
     {
         return (Storage.GetStrongRefCount() == 1);
     }
 
-    /* Cheacks weater the pointer is nullptr or not */
+    /**
+     * Checks weather the pointer is nullptr or not and the pointer is not expired
+     * 
+     * @return: Returns true if the pointer is not nullptr and the strong reference count is more than zero
+     */
     FORCEINLINE bool IsValid() const noexcept
     {
         return (Get() != nullptr) && !IsExpired();
     }
 
-    /* Return the raw pointer */
+    /**
+     * Retrieve the stored pointer
+     * 
+     * @return: Returns the stored pointer
+     */
     FORCEINLINE ElementType* Get() const noexcept
     {
         return Storage.GetPointer();
     }
 
-    /* Returns the address of the raw pointer */
+    /**
+     * Retrieve the address of the stored pointer
+     *
+     * @return: Returns the address of the stored pointer
+     */
     FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
         return Storage.GetAddressOfPointer();
     }
 
-    /* Returns the number of strong references */
+    /**
+     * Retrieve the number of strong references
+     *
+     * @return: Returns the number of strong references
+     */
     FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
         return Storage.GetStrongRefCount();
     }
 
-    /* Return the number of weak references */
+    /**
+     * Retrieve the number of weak references
+     *
+     * @return: Returns the number of weak references
+     */
     FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
         return Storage.GetWeakRefCount();
     }
 
-    /* Return the dereferenced pointer */
+    /**
+     * Dereference the pointer
+     *
+     * @return: A reference to the object pointer to by the stored pointer
+     */
     FORCEINLINE ElementType& Dereference() const noexcept
     {
         Assert(IsValid());
         return *Get();
     }
 
-    /* Return the raw pointer */
+    /**
+     * Retrieve the stored pointer
+     *
+     * @return: Returns the stored pointer
+     */
     FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
 
-    /* Dereference the pointer */
+    /**
+     * Dereference the pointer
+     *
+     * @return: A reference to the object pointer to by the stored pointer
+     */
     FORCEINLINE ElementType& operator*() const noexcept
     {
         return Dereference();
     }
 
-    /* Get the address of the pointer */
+    /**
+     * Retrieve the address of the stored pointer
+     *
+     * @return: Returns the address of the stored pointer
+     */
     FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
 
-    /* Retrieve element at a certain index */
+    /**
+     * Retrieve an element at a certain index 
+     * 
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the retrieved element
+     */
     template<typename U = T>
     FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[](SizeType Index) const noexcept
@@ -845,27 +1037,46 @@ public:
         return Get()[Index];
     }
 
-    /* Cheack weather the pointer is nullptr or not */
+    /**
+     * Checks weather the pointer is nullptr or not and the pointer is not expired
+     *
+     * @return: Returns true if the pointer is not nullptr and the strong reference count is more than zero
+     */
     FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
 
-    /* Copy assignment */
+    /**
+     * Copy-assignment operator
+     * 
+     * @param RHS: WeakPtr to copy from
+     * @return: Return the reference to this instance
+     */
     FORCEINLINE TWeakPtr& operator=(const TWeakPtr& RHS) noexcept
     {
         TWeakPtr(RHS).Swap(*this);
         return *this;
     }
 
-    /* Move assignment */
+    /**
+     * Move-assignment operator
+     *
+     * @param RHS: WeakPtr to move from
+     * @return: Return the reference to this instance
+     */
     FORCEINLINE TWeakPtr& operator=(TWeakPtr&& RHS) noexcept
     {
         TWeakPtr(Move(RHS)).Swap(*this);
         return *this;
     }
 
-    /* Copy assignment */
+    /**
+     * Copy-assignment operator that takes a convertible type
+     *
+     * @param RHS: WeakPtr to copy from
+     * @return: Return the reference to this instance
+     */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddReference<TWeakPtr>::LValue>::Type
         operator=(const TWeakPtr<OtherType, OtherDeleterType>& RHS) noexcept
@@ -874,7 +1085,12 @@ public:
         return *this;
     }
 
-    /* Move assignment */
+    /**
+     * Move-assignment operator that takes a convertible type
+     *
+     * @param RHS: WeakPtr to move from
+     * @return: Return the reference to this instance
+     */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddReference<TWeakPtr>::LValue>::Type
         operator=(TWeakPtr<OtherType, OtherDeleterType>&& RHS) noexcept
@@ -883,14 +1099,23 @@ public:
         return *this;
     }
 
-    /* Assign from pointer */
+    /**
+     * Assignment operator that takes a raw-pointer
+     * 
+     * @param RHS: Pointer to store
+     * @return: Return the reference to this instance
+     */
     FORCEINLINE TWeakPtr& operator=(ElementType* RHS) noexcept
     {
         TWeakPtr(RHS).Swap(*this);
         return *this;
     }
 
-    /* Assign from nullptr */
+    /**
+     * Assignment operator from a nullptr
+     *
+     * @return: Return the reference to this instance
+     */
     FORCEINLINE TWeakPtr& operator=(NullptrType) noexcept
     {
         TWeakPtr().Swap(*this);
@@ -909,126 +1134,108 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TWeakPtr operators
 
-/* Check the equality between weakptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-/* Check the equality between weakptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator==(T* LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-/* Check the inequality between weakptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-/* Check the inequality between weakptr and a raw pointer */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(T* LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-/* Check the equality between weakptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the inequality between weakptrs */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the equality between weakptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, NullptrType) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
-/* Check the equality between weakptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator==(NullptrType, const TWeakPtr<T>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
-/* Check the inequality between weakptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, NullptrType) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
-/* Check the inequality between weakptr and nullptr */
 template<typename T>
 FORCEINLINE bool operator!=(NullptrType, const TWeakPtr<T>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }
 
-/* Check the equality between weakptr and sharedptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the equality between weakptr and sharedptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the inequality between weakptr and sharedptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the inequality between weakptr and sharedptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the equality between weakptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the equality between weakptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-/* Check the inequality between weakptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-/* Check the inequality between weakptr and uniqueptr */
 template<typename T, typename U>
 FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
@@ -1038,7 +1245,6 @@ FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) no
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Creation helpers
 
-/* MakeShared - Creates a new object together with a SharedPtr */
 template<typename T, typename... ArgTypes>
 FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShared(ArgTypes&&... Args) noexcept
 {
@@ -1060,7 +1266,6 @@ FORCEINLINE typename TEnableIf<TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShar
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Casting functions
 
-/* static_cast*/
 template<typename ToType, typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type StaticCast(const TSharedPtr<FromType>& Pointer) noexcept
 {
@@ -1079,7 +1284,6 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     return TSharedPtr<ToType>(Move(Pointer), RawPointer);
 }
 
-/* const_cast */
 template<typename ToType, typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ConstCast(const TSharedPtr<FromType>& Pointer) noexcept
 {
@@ -1098,7 +1302,6 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     return TSharedPtr<ToType>(Move(Pointer), RawPointer);
 }
 
-/* reinterpret_cast */
 template<typename ToType, typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type ReinterpretCast(const TSharedPtr<FromType>& Pointer) noexcept
 {
@@ -1117,7 +1320,6 @@ FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Va
     return TSharedPtr<ToType>(Move(Pointer), RawPointer);
 }
 
-/* dynamic_cast */
 template<typename ToType, typename FromType>
 FORCEINLINE typename TEnableIf<TIsArray<ToType>::Value == TIsArray<FromType>::Value, TSharedPtr<ToType>>::Type DynamicCast(const TSharedPtr<FromType>& Pointer) noexcept
 {

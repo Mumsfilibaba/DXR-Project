@@ -21,14 +21,20 @@ public:
     typedef TReverseArrayIterator<TArrayView, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TArrayView, const ElementType> ReverseConstIteratorType;
 
-    /* Default construct an empty view */
+    /**
+     * Default construct an empty view 
+     */
     FORCEINLINE TArrayView() noexcept
         : View(nullptr)
         , ViewSize(0)
     {
     }
 
-    /* Create a view from a templated array type */
+    /**
+     * Construct a view from an array of ArrayType
+     * 
+     * @param InArray: Array to create view from
+     */
     template<typename ArrayType, typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
     FORCEINLINE explicit TArrayView(ArrayType& InArray) noexcept
         : View(InArray.Data())
@@ -36,7 +42,11 @@ public:
     {
     }
 
-    /* Create a view from a bounded array */
+    /**
+     * Construct a view from a bounded array
+     *
+     * @param InArray: Array to create view from
+     */
     template<SizeType N>
     FORCEINLINE explicit TArrayView(ElementType(&InArray)[N]) noexcept
         : View(InArray)
@@ -44,21 +54,34 @@ public:
     {
     }
 
-    /* Create a view from a pointer and count */
-    FORCEINLINE explicit TArrayView(ElementType* InArray, SizeType Count) noexcept
+    /**
+     * Construct a view from a raw-array
+     *
+     * @param InArray: Array to create view from
+     * @param NumElements: Number of elements in the array
+     */
+    FORCEINLINE explicit TArrayView(ElementType* InArray, SizeType NumElements) noexcept
         : View(InArray)
-        , ViewSize(Count)
+        , ViewSize(NumElements)
     {
     }
 
-    /* Create a view from another view */
+    /**
+     * Copy-constructor
+     * 
+     * @param Other: Array to copy from
+     */
     FORCEINLINE TArrayView(const TArrayView& Other) noexcept
         : View(Other.View)
         , ViewSize(Other.ViewSize)
     {
     }
 
-    /* Move anther view into this one */
+    /**
+     * Move-constructor
+     *
+     * @param Other: Array to move from
+     */
     FORCEINLINE TArrayView(TArrayView&& Other) noexcept
         : View(Other.View)
         , ViewSize(Other.ViewSize)
@@ -67,55 +90,89 @@ public:
         Other.ViewSize = 0;
     }
 
-    /* Check if the size is zero or not */
+    /**
+     * Check if the view contains elements or not
+     * 
+     * @return: Returns true if the view is empty
+     */
     FORCEINLINE bool IsEmpty() const noexcept
     {
         return (ViewSize == 0);
     }
 
-    /* Retrieve the first element */
+    /**
+     * Retrieve the first element of the view
+     *
+     * @return: Returns a reference to the first element of the view
+     */
     FORCEINLINE ElementType& FirstElement() noexcept
     {
         Assert(IsEmpty());
         return Data()[0];
     }
 
-    /* Retrieve the first element */
+    /**
+     * Retrieve the first element of the view
+     *
+     * @return: Returns a reference to the first element of the view
+     */
     FORCEINLINE const ElementType& FirstElement() const noexcept
     {
         Assert(IsEmpty());
         return Data()[0];
     }
 
-    /* Retrieve the last element */
+    /**
+     * Retrieve the last element of the array
+     *
+     * @return: Returns a reference to the last element of the view
+     */
     FORCEINLINE ElementType& LastElement() noexcept
     {
         Assert(IsEmpty());
         return Data()[ViewSize - 1];
     }
 
-    /* Retrieve the last element */
+    /**
+     * Retrieve the last element of the array
+     *
+     * @return: Returns a reference to the last element of the view
+     */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
         Assert(IsEmpty());
         return Data()[ViewSize - 1];
     }
 
-    /* Retrieve an element at a certain position */
+    /**
+     * Retrieve a element at a certain index of the view
+     *
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE ElementType& At(SizeType Index) noexcept
     {
         Assert(Index < ViewSize);
         return Data()[Index];
     }
 
-    /* Retrieve an element at a certain position */
+    /**
+     * Retrieve a element at a certain index of the view
+     *
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE const ElementType& At(SizeType Index) const noexcept
     {
         Assert(Index < ViewSize);
         return Data()[Index];
     }
 
-    /* Swap two views */
+    /**
+     * Swap the contents of this view with another
+     *
+     * @param Other: The other view to swap with
+     */
     FORCEINLINE void Swap(TArrayView& Other) noexcept
     {
         TArrayView Temp(Move(*this));
@@ -123,7 +180,11 @@ public:
         Other = Move(Temp);
     }
 
-    /* Fills the container with the specified value */
+    /**
+     * Fill the container with the specified value
+     *
+     * @param InputElement: Element to copy into all elements in the view
+     */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
         for (ElementType& Element : *this)
@@ -132,91 +193,147 @@ public:
         }
     }
 
-    /* Retrieve the last valid index for the view */
+    /**
+     * Retrieve the last index that can be used to retrieve an element from the view
+     *
+     * @return: Returns a the index to the last element of the view
+     */
     FORCEINLINE SizeType LastElementIndex() const noexcept
     {
         return ViewSize > 0 ? ViewSize - 1 : 0;
     }
 
-    /* Retrieve the size of the view */
+    /**
+     * Returns the size of the container
+     *
+     * @return: The current size of the container
+     */
     FORCEINLINE SizeType Size() const noexcept
     {
         return ViewSize;
     }
 
-    /* Retrieve the size of the view in bytes */
+    /**
+     * Returns the size of the container in bytes
+     *
+     * @return: The current size of the container in bytes
+     */
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
         return Size() * sizeof(ElementType);
     }
 
-    /* Retrieve the data of the view */
+    /**
+     * Retrieve the data of the view
+     *
+     * @return: Returns a pointer to the data of the view
+     */
     FORCEINLINE ElementType* Data() noexcept
     {
         return View;
     }
 
-    /* Retrieve the data of the view */
+    /**
+     * Retrieve the data of the view
+     *
+     * @return: Returns a pointer to the data of the view
+     */
     FORCEINLINE const ElementType* Data() const noexcept
     {
         return View;
     }
 
-    /* Create a subview */
-    FORCEINLINE TArrayView SubView(SizeType Offset, SizeType Count) const noexcept
+    /**
+     * Create a sub-view
+     * 
+     * @param Offset: Offset into the view
+     * @param NumElements: Number of elements to include in the view
+     * @return: A new array-view pointing to the specified elements
+     */
+    FORCEINLINE TArrayView SubView(SizeType Offset, SizeType NumElements) const noexcept
     {
-        Assert((Count < ViewSize) && (Offset + Count < ViewSize));
-        return TArrayView(View + Offset, Count);
+        Assert((NumElements < ViewSize) && (Offset + NumElements < ViewSize));
+        return TArrayView(View + Offset, NumElements);
     }
 
-    /* Compares two containers by comparing each element, returns true if all is equal */
+    /**
+     * Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
+     *
+     * @param RHS: Array to compare with
+     * @return: Returns true if all elements are equal to each other
+     */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& Other) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
     {
-        if (Size() != Other.Size())
+        if (Size() != RHS.Size())
         {
             return false;
         }
 
-        return CompareRange<ElementType>(Data(), Other.Data(), Size());
+        return CompareRange<ElementType>(Data(), RHS.Data(), Size());
     }
 
-    /* Compares two containers by comparing each element, returns false if all elements are equal */
+    /**
+     * Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
+     *
+     * @param RHS: Array to compare with
+     * @return: Returns true if all elements are NOT equal to each other
+     */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& Other) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
     {
-        return !(*this == Other);
+        return !(*this == RHS);
     }
 
-    /* Retrieve an element at a certain position */
+    /**
+     * Bracket-operator to retrieve an element at a certain index
+     *
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE ElementType& operator[](SizeType Index) noexcept
     {
         return At(Index);
     }
 
-    /* Retrieve an element at a certain position */
+    /**
+     * Bracket-operator to retrieve an element at a certain index
+     *
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
     {
         return At(Index);
     }
 
-    /* Assign from another view */
-    FORCEINLINE TArrayView& operator=(const TArrayView& Other) noexcept
+    /**
+     * Copy-assignment operator
+     *
+     * @param RHS: View to copy
+     * @return: A reference to this container
+     */
+    FORCEINLINE TArrayView& operator=(const TArrayView& RHS) noexcept
     {
-        View = Other.View;
-        ViewSize = Other.ViewSize;
+        View = RHS.View;
+        ViewSize = RHS.ViewSize;
         return *this;
     }
 
-    /* Move-assign from another view */
-    FORCEINLINE TArrayView& operator=(TArrayView&& Other) noexcept
+    /**
+     * Move-assignment operator
+     *
+     * @param RHS: View to move
+     * @return: A reference to this container
+     */
+    FORCEINLINE TArrayView& operator=(TArrayView&& RHS) noexcept
     {
-        if (this != &Other)
+        if (this != &RHS)
         {
-            View = Other.View;
-            ViewSize = Other.ViewSize;
-            Other.View = nullptr;
-            Other.ViewSize = 0;
+            View = RHS.View;
+            ViewSize = RHS.ViewSize;
+            RHS.View = nullptr;
+            RHS.ViewSize = 0;
         }
 
         return *this;
@@ -224,49 +341,81 @@ public:
 
 public:
 
-    /* Returns an iterator to the beginning of the container */
+    /**
+     * Retrieve an iterator to the beginning of the view
+     *
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
         return IteratorType(*this, 0);
     }
 
-    /* Returns an iterator to the end of the container */
+    /**
+     * Retrieve an iterator to the end of the view
+     *
+     * @return: A iterator that points to the element past the end
+     */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
         return IteratorType(*this, Size());
     }
 
-    /* Returns an iterator to the beginning of the container */
+    /**
+     * Retrieve an iterator to the beginning of the view
+     *
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
         return ConstIteratorType(*this, 0);
     }
 
-    /* Returns an iterator to the end of the container */
+    /**
+     * Retrieve an iterator to the end of the view
+     *
+     * @return: A iterator that points to the element past the end
+     */
     FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
         return ConstIteratorType(*this, Size());
     }
 
-    /* Returns an reverse iterator to the end of the container */
+    /**
+     * Retrieve an reverse-iterator to the end of the view
+     *
+     * @return: A reverse-iterator that points to the last element
+     */
     FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
         return ReverseIteratorType(*this, Size());
     }
 
-    /* Returns an reverse iterator to the beginning of the container */
+    /**
+     * Retrieve an reverse-iterator to the start of the view
+     *
+     * @return: A reverse-iterator that points to the element before the first element
+     */
     FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
         return ReverseIteratorType(*this, 0);
     }
 
-    /* Returns an reverse iterator to the end of the container */
+    /**
+     * Retrieve an reverse-iterator to the end of the view
+     *
+     * @return: A reverse-iterator that points to the last element
+     */
     FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, Size());
     }
 
-    /* Returns an reverse iterator to the beginning of the container */
+    /**
+     * Retrieve an reverse-iterator to the start of the view
+     *
+     * @return: A reverse-iterator that points to the element before the first element
+     */
     FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, 0);
@@ -274,22 +423,41 @@ public:
 
 public:
 
-    /* STL iterator functions - Enables Range-based for-loops */
+    /**
+     * STL start iterator, same as TArrayView::StartIterator
+     *
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE IteratorType begin() noexcept
     {
         return StartIterator();
     }
 
+    /**
+     * STL end iterator, same as TArrayView::EndIterator
+     *
+     * @return: A iterator that points past the last element
+     */
     FORCEINLINE IteratorType end() noexcept
     {
         return EndIterator();
     }
 
+    /**
+     * STL start iterator, same as TArrayView::StartIterator
+     *
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE ConstIteratorType begin() const noexcept
     {
         return StartIterator();
     }
 
+    /**
+     * STL end iterator, same as TArrayView::EndIterator
+     *
+     * @return: A iterator that points past the last element
+     */
     FORCEINLINE ConstIteratorType end() const noexcept
     {
         return EndIterator();

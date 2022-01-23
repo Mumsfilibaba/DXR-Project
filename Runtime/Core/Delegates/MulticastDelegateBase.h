@@ -4,33 +4,45 @@
 #include "Core/Containers/Array.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Base-class for multi-cast delegates
+// MulticastDelegateBase - Base-class for multi-cast delegates
 
 class CMulticastDelegateBase
 {
 public:
 
-    /* Copy constructor */
+    /**
+     * Copy-constructor 
+     * 
+     * @param Other: Other delegate to copy
+     */
     FORCEINLINE CMulticastDelegateBase(const CMulticastDelegateBase& Other)
         : Delegates(Other.Delegates)
         , LockVariable(Other.LockVariable)
     {
     }
 
-    /* Move constructor */
+    /**
+     * Move-constructor
+     *
+     * @param Other: Other delegate to move
+     */
     FORCEINLINE CMulticastDelegateBase(CMulticastDelegateBase&& Other)
         : Delegates(Move(Other.Delegates))
         , LockVariable(Other.LockVariable)
     {
     }
 
-    /* Destructor Unbind all delegates */
+    /**
+     * Destructor 
+     */
     FORCEINLINE ~CMulticastDelegateBase()
     {
         UnbindAll();
     }
 
-    /* Unbind all bound delegates */
+    /**
+     *  Unbind all bound delegates 
+     */
     FORCEINLINE void UnbindAll()
     {
         if (IsLocked())
@@ -46,13 +58,22 @@ public:
         }
     }
 
-    /* Swap */
+    /**
+     * Swap this instance with another delegate
+     * 
+     * @param Other: Delegate to swap with
+     */
     FORCEINLINE void Swap(CMulticastDelegateBase& Other)
     {
         Delegates.Swap(Other.Delegates);
     }
 
-    /* Unbind a handle */
+    /**
+     * Unbind a handle 
+     * 
+     * @param Handle: Handle to remove
+     * @return: Returns true if the handle was found and unbound
+     */
     FORCEINLINE bool Unbind(CDelegateHandle Handle)
     {
         if (Handle.IsValid())
@@ -78,7 +99,12 @@ public:
         return false;
     }
 
-    /* Remove a delegate if an object is bound to it */
+    /**
+     * Remove a delegate if an object is bound to it
+     * 
+     * @param Object: Object to check for
+     * @return: Returns true if the object was unbound from any delegate
+     */
     FORCEINLINE bool UnbindIfBound(const void* Object)
     {
         bool bResult = false;
@@ -111,7 +137,11 @@ public:
         return bResult;
     }
 
-    /* Checks if a valid delegate is bound */
+    /**
+     * Checks if a valid delegate is bound 
+     * 
+     * @return: Returns true if there is any delegate bound
+     */
     FORCEINLINE bool IsBound() const
     {
         for (const CDelegateBase& Delegate : Delegates)
@@ -126,7 +156,12 @@ public:
         return false;
     }
 
-    /* Checks if an object is bound to any delegate */
+    /**
+     * Checks if an object is bound to any delegate
+     * 
+     * @param Object: Object to check for
+     * @return: Returns true if any of the delegates has the object bound
+     */
     FORCEINLINE bool IsObjectBound(const void* Object) const
     {
         if (Object)
@@ -144,36 +179,48 @@ public:
         return false;
     }
 
-    /* Returns the number of delegates */
+    /**
+     * Retrieve the number of delegates 
+     * 
+     * @return: Returns the number of delegates bound
+     */
     FORCEINLINE uint32 GetCount() const
     {
         return static_cast<uint32>(Delegates.Size());
     }
 
-    /* Copy constructor */
-    FORCEINLINE CMulticastDelegateBase& operator=(const CMulticastDelegateBase& Other)
+    /**
+     * Copy-assignment operator
+     * 
+     * @param RHS: Delegate to copy from
+     * @return: Returns a reference to this instance
+     */
+    FORCEINLINE CMulticastDelegateBase& operator=(const CMulticastDelegateBase& RHS)
     {
-        CopyFrom(Other);
+        CopyFrom(RHS);
         return *this;
     }
 
-    /* Move constructor */
-    FORCEINLINE CMulticastDelegateBase& operator=(CMulticastDelegateBase&& Other)
+    /**
+     * Move-assignment operator
+     *
+     * @param RHS: Delegate to move from
+     * @return: Returns a reference to this instance
+     */
+    FORCEINLINE CMulticastDelegateBase& operator=(CMulticastDelegateBase&& RHS)
     {
-        MoveFrom(Forward<CMulticastDelegateBase>(Other));
+        MoveFrom(Forward<CMulticastDelegateBase>(RHS));
         return *this;
     }
 
 protected:
 
-    /* Empty constructor */
     FORCEINLINE explicit CMulticastDelegateBase()
         : Delegates()
         , LockVariable(0)
     {
     }
 
-    /* Add a new delegate to the multicast delegate */
     FORCEINLINE CDelegateHandle AddDelegate(const CDelegateBase& NewDelegate)
     {
         CDelegateHandle NewHandle = NewDelegate.GetHandle();
@@ -182,7 +229,6 @@ protected:
             return NewHandle;
         }
 
-        // Make sure this delegate is not bound already
         for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
         {
             CDelegateHandle Handle = It->GetHandle();
@@ -192,7 +238,6 @@ protected:
             }
         }
 
-        /* Check if there is an opening */
         for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
         {
             CDelegateHandle Handle = It->GetHandle();
@@ -203,22 +248,18 @@ protected:
             }
         }
 
-        /* Remove empty slots */
         CompactArray();
 
-        /* If not push back */
         Delegates.Push(NewDelegate);
         return NewHandle;
     }
 
-    /* Copy from function */
     FORCEINLINE void CopyFrom(const CMulticastDelegateBase& Other)
     {
         Delegates = Other.Delegates;
         LockVariable = Other.LockVariable;
     }
 
-    /* Move from function */
     FORCEINLINE void MoveFrom(CMulticastDelegateBase&& Other)
     {
         Delegates = Move(Other.Delegates);
@@ -226,7 +267,6 @@ protected:
         Other.LockVariable = 0;
     }
 
-    /* Compact the array */
     FORCEINLINE void CompactArray()
     {
         if (!IsLocked() && !Delegates.IsEmpty())
@@ -253,26 +293,22 @@ protected:
         }
     }
 
-    /* Locks the delegates */
     FORCEINLINE void Lock() const
     {
         LockVariable++;
     }
 
-    /* Unlocks the delegates */
     FORCEINLINE void Unlock() const
     {
         Assert(LockVariable > 0);
         LockVariable--;
     }
 
-    /* Check if the delegates are locked */
     FORCEINLINE bool IsLocked() const
     {
         return (LockVariable > 0);
     }
 
-    /* All bound delegates */
     TArray<CDelegateBase> Delegates;
 
     /* Lock protecting the delegate when removing during broadcasting */

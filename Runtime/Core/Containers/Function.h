@@ -11,77 +11,71 @@
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/Decay.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Stores the payload resulted from a call to bind
-
-template<typename FunctionType, typename... PayloadTypes>
-class TBindPayload
+namespace NBindInternal
 {
-public:
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // BindPayload - Stores the payload resulted from a call to bind
 
-    /* Constructor */
-    FORCEINLINE TBindPayload(FunctionType InFunc, PayloadTypes&&... PayloadArgs) noexcept
-        : Payload(Forward<PayloadTypes>(PayloadArgs)...)
-        , Func(Move(InFunc))
+    template<typename FunctionType, typename... PayloadTypes>
+    class TBindPayload
     {
-    }
+    public:
 
-    /* Invoke function */
-    template<typename... ArgTypes>
-    FORCEINLINE auto Execute(ArgTypes&&... Args) noexcept
+        FORCEINLINE TBindPayload(FunctionType InFunc, PayloadTypes&&... PayloadArgs) noexcept
+            : Payload(Forward<PayloadTypes>(PayloadArgs)...)
+            , Func(Move(InFunc))
+        {
+        }
+
+        template<typename... ArgTypes>
+        FORCEINLINE auto Execute(ArgTypes&&... Args) noexcept
+        {
+            return Payload.ApplyBefore(Func, Forward<ArgTypes>(Args)...);
+        }
+
+        template<typename... ArgTypes>
+        FORCEINLINE auto operator()(ArgTypes&&... Args) noexcept
+        {
+            return Execute(Forward<ArgTypes>(Args)...);
+        }
+
+    private:
+
+        /* Arguments stored when calling bind and then applied to the function when invoked */
+        TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
+
+        FunctionType Func;
+    };
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // BindPayload - Empty payload in order to not waste space due to an empty TTuple
+
+    template<typename FunctionType>
+    class TBindPayload<FunctionType>
     {
-        return Payload.ApplyBefore(Func, Forward<ArgTypes>(Args)...);
-    }
+    public:
 
-    /* Operator for invoking function */
-    template<typename... ArgTypes>
-    FORCEINLINE auto operator()(ArgTypes&&... Args) noexcept
-    {
-        return Execute(Forward<ArgTypes>(Args)...);
-    }
+        FORCEINLINE TBindPayload(FunctionType InFunc) noexcept
+            : Func(Move(InFunc))
+        {
+        }
 
-private:
+        template<typename... ArgTypes>
+        FORCEINLINE auto Execute(ArgTypes&&... Args) noexcept
+        {
+            return Invoke(Func, Forward<ArgTypes>(Args)...);
+        }
 
-    /* Arguments stored when calling bind and then applied to the function when invoked */
-    TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
+        template<typename... ArgTypes>
+        FORCEINLINE auto operator()(ArgTypes&&... Args) noexcept
+        {
+            return Execute(Forward<ArgTypes>(Args)...);
+        }
 
-    /* Function pointer */
-    FunctionType Func;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Empty payload in order to not waste space due to an empty TTuple
-
-template<typename FunctionType>
-class TBindPayload<FunctionType>
-{
-public:
-
-    /* Constructor */
-    FORCEINLINE TBindPayload(FunctionType InFunc) noexcept
-        : Func(Move(InFunc))
-    {
-    }
-
-    /* Invoke function */
-    template<typename... ArgTypes>
-    FORCEINLINE auto Execute(ArgTypes&&... Args) noexcept
-    {
-        return Invoke(Func, Forward<ArgTypes>(Args)...);
-    }
-
-    /* Operator for invoking function */
-    template<typename... ArgTypes>
-    FORCEINLINE auto operator()(ArgTypes&&... Args) noexcept
-    {
-        return Execute(Forward<ArgTypes>(Args)...);
-    }
-
-private:
-
-    /* Function pointer */
-    FunctionType Func;
-};
+    private:
+        FunctionType Func;
+    };
+}
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Creates a callable which can be stored in a TFunction 
@@ -89,7 +83,7 @@ private:
 template<typename FunctionType, typename... ArgTypes>
 FORCEINLINE auto Bind(FunctionType Function, ArgTypes&&... Args)
 {
-    return TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
+    return NBindInternal::TBindPayload<FunctionType, ArgTypes...>(Function, Forward<ArgTypes>(Args)...);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -107,10 +101,11 @@ class TFunction<ReturnType(ArgTypes...)>
         InlineBytes = 24
     };
 
-    // TODO: Should allocator use the element type at all? 
     using AllocatorType = TInlineArrayAllocator<int8, InlineBytes>;
 
-    /* Generic functor interface */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Generic functor interface
+    
     class IFunctor
     {
     public:
@@ -120,27 +115,26 @@ class TFunction<ReturnType(ArgTypes...)>
         virtual IFunctor* Clone(void* Memory) const noexcept = 0;
     };
 
-    /* Generic functor implementation */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Generic functor implementation
+
     template<typename FunctorType>
     class TGenericFunctor : public IFunctor
     {
     public:
 
-        /* Constructor */
         FORCEINLINE TGenericFunctor(const FunctorType& InFunctor) noexcept
             : IFunctor()
             , Functor(InFunctor)
         {
         }
 
-        /* Copy constructor */
         FORCEINLINE TGenericFunctor(const TGenericFunctor& Other) noexcept
             : IFunctor()
             , Functor(Other.Functor)
         {
         }
 
-        /* Move constructor */
         FORCEINLINE TGenericFunctor(TGenericFunctor&& Other) noexcept
             : IFunctor()
             , Functor(Move(Other.Functor))
@@ -148,13 +142,11 @@ class TFunction<ReturnType(ArgTypes...)>
             CMemory::Memzero<TGenericFunctor>(&Other);
         }
 
-        /* Invoke the functor */
         virtual ReturnType Invoke(ArgTypes&&... Args) noexcept override final
         {
             return Functor(Forward<ArgTypes>(Args)...);
         }
 
-        /* Copy construct a clone with memory provided to the function */
         virtual IFunctor* Clone(void* Memory) const noexcept override final
         {
             return new(Memory) TGenericFunctor(*this);
@@ -166,21 +158,29 @@ class TFunction<ReturnType(ArgTypes...)>
 
 public:
 
-    /* Default constructor */
+    /**
+     *  Default constructor
+     */
     FORCEINLINE TFunction() noexcept
         : Storage()
         , Size(0)
     {
     }
 
-    /* Create from nullptr */
+    /**
+     * Create from nullptr. Same as default constructor.
+     */
     FORCEINLINE TFunction(NullptrType) noexcept
         : Storage()
         , Size(0)
     {
     }
 
-    /* Create from functor */
+    /**
+     * Construct a function from a functor
+     *
+     * @param Functor: Functor to store
+     */
     template<typename FunctorType>
     FORCEINLINE TFunction(FunctorType Functor) noexcept
         : Storage()
@@ -189,7 +189,11 @@ public:
         ConstructFrom<FunctorType>(Forward<FunctorType>(Functor));
     }
 
-    /* Copy constructor */
+    /**
+     * Copy-constructor
+     *
+     * @param Other: Function to copy from
+     */
     FORCEINLINE TFunction(const TFunction& Other) noexcept
         : Storage()
         , Size(0)
@@ -197,7 +201,11 @@ public:
         CopyFrom(Other);
     }
 
-    /* Move constructor */
+    /**
+     * Move-constructor
+     *
+     * @param Other: Function to move from
+     */
     FORCEINLINE TFunction(TFunction&& Other) noexcept
         : Storage()
         , Size(0)
@@ -205,18 +213,29 @@ public:
         MoveFrom(Move(Other));
     }
 
+    /**
+     * Destructor
+     */
     FORCEINLINE ~TFunction()
     {
         Release();
     }
 
-    /* Cheacks weather the function is valid or not */
+    /**
+     * Checks weather the pointer is valid or not
+     *
+     * @return: True if the pointer is not nullptr otherwise false
+     */
     FORCEINLINE bool IsValid() const noexcept
     {
         return (Size > 0);
     }
 
-    /* Swap this and another function */
+    /**
+     * Swap functor with another instance
+     *
+     * @param Other: Function to swap with
+     */
     FORCEINLINE void Swap(TFunction& Other) noexcept
     {
         TFunction TempFunction;
@@ -225,7 +244,11 @@ public:
         Other.MoveFrom(Move(TempFunction));
     }
 
-    /* Assign a new functor */
+    /**
+     * Assign a new functor
+     * 
+     * @param Functor: New functor to store
+     */
     template<typename FunctorType >
     FORCEINLINE typename TEnableIf<TIsInvokable<FunctorType, ArgTypes...>::Value>::Type Assign(FunctorType&& Functor) noexcept
     {
@@ -233,40 +256,68 @@ public:
         ConstructFrom<FunctorType>(Forward<FunctorType>(Functor));
     }
 
-    /* Invoke the function */
+    /**
+     * Invoke the stored function
+     *
+     * @param Args: Arguments to forward to the function-call
+     * @return: The return value from the function-call
+     */
     FORCEINLINE ReturnType Invoke(ArgTypes&&... Args) noexcept
     {
         Assert(IsValid());
         return GetFunctor()->Invoke(Forward<ArgTypes>(Args)...);
     }
 
-    /* Invoke the function */
+    /**
+     * Invoke the stored function
+     * 
+     * @param Args: Arguments to forward to the function-call
+     * @return: The return value from the function-call
+     */
     FORCEINLINE ReturnType operator()(ArgTypes&&... Args) noexcept
     {
         return Invoke(Forward<ArgTypes>(Args)...);
     }
 
-    /* Cheak weather the function is valid or not */
+    /**
+     * Checks weather the pointer is valid or not
+     *
+     * @return: True if the pointer is not nullptr otherwise false
+     */
     FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
 
-    /* Copy assignment */
-    FORCEINLINE TFunction& operator=(const TFunction& Other) noexcept
+    /**
+     * Copy-assignment operator
+     *
+     * @param RHS: Instance to copy from
+     * @return: A reference to this object
+     */
+    FORCEINLINE TFunction& operator=(const TFunction& RHS) noexcept
     {
-        TFunction(Other).Swap(*this);
+        TFunction(RHS).Swap(*this);
         return *this;
     }
 
-    /* Move assignment */
-    FORCEINLINE TFunction& operator=(TFunction&& Other) noexcept
+    /**
+     * Move-assignment operator
+     *
+     * @param RHS: Instance to move from
+     * @return: A reference to this object
+     */
+    FORCEINLINE TFunction& operator=(TFunction&& RHS) noexcept
     {
-        TFunction(Move(Other)).Swap(*this);
+        TFunction(Move(RHS)).Swap(*this);
         return *this;
     }
 
-    /* Nullptr assignment */
+    /**
+     * Set the pointer to nullptr
+     *
+     * @return: A reference to this object
+     */
     FORCEINLINE TFunction& operator=(NullptrType) noexcept
     {
         Release();
@@ -275,7 +326,6 @@ public:
 
 private:
 
-    /* Release the function */
     FORCEINLINE void Release() noexcept
     {
         if (IsValid())
@@ -284,7 +334,6 @@ private:
         }
     }
 
-    /* Construct a new functor */
     template<typename FunctorType>
     FORCEINLINE typename TEnableIf<TIsInvokable<FunctorType, ArgTypes...>::Value>::Type ConstructFrom(FunctorType&& Functor) noexcept
     {
@@ -297,7 +346,6 @@ private:
         new(Memory) TGenericFunctor<FunctorType>(Forward<FunctorType>(Functor));
     }
 
-    /* Copy from another function */
     FORCEINLINE void CopyFrom(const TFunction& Other) noexcept
     {
         if (Other.IsValid())
@@ -323,13 +371,11 @@ private:
         Other.Size = 0;
     }
 
-    /* Internal function that is used to retrive the functor pointer */
     FORCEINLINE IFunctor* GetFunctor() noexcept
     {
         return reinterpret_cast<IFunctor*>(Storage.GetAllocation());
     }
 
-    /* Internal function that is used to retrive the functor pointer */
     FORCEINLINE const IFunctor* GetFunctor() const noexcept
     {
         return reinterpret_cast<const IFunctor*>(Storage.GetAllocation());

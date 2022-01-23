@@ -15,23 +15,26 @@ public:
     static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
     static_assert(CharCount > 0, "The number of chars has to be more than zero");
 
-    /* Types */
     using ElementType = CharType;
     using SizeType = int32;
     using StringUtils = TStringUtils<CharType>;
 
-    /* Constants */
     enum
     {
         NPos = SizeType(-1)
     };
 
-    /* Iterators */
     typedef TArrayIterator<TStaticString, CharType>                    IteratorType;
     typedef TArrayIterator<const TStaticString, const CharType>        ConstIteratorType;
     typedef TReverseArrayIterator<TStaticString, CharType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TStaticString, const CharType> ReverseConstIteratorType;
 
+    /**
+     * Create a static string from a formatted string
+     * 
+     * @param Format: Formatted string
+     * @return: Returns the formatted string based on the format string
+     */
     static NOINLINE TStaticString MakeFormated(const CharType* Format, ...) noexcept
     {
         TStaticString NewString;
@@ -44,7 +47,13 @@ public:
         return NewString;
     }
 
-    /* Format string with a va_list (similar to snprintf) */
+    /**
+     * Create a static string from a formatted string and an argument-list
+     *
+     * @param Format: Formatted string
+     * @param ArgsList: Argument-list to be formatted based on the format-string
+     * @return: Returns the formatted string based on the format string
+     */
     static FORCEINLINE void MakeFormatedV(const CharType* Format, va_list ArgsList) noexcept
     {
         TStaticString NewString;
@@ -52,7 +61,9 @@ public:
         return NewString;
     }
 
-    /* Empty constructor */
+    /**
+     * Default constructor
+     */
     FORCEINLINE TStaticString() noexcept
         : Characters()
         , Len(0)
@@ -60,8 +71,12 @@ public:
         Characters[Len] = StringUtils::Null;
     }
 
-    /* Create a fixed string from a raw array. If the string is longer than
-       the allocators the string will be shortened to fit. */
+    /**
+     * Create a fixed string from a raw string. If the string is longer than the fixed length
+     * the string will be shortened to fit.
+     * 
+     * @param InString: String to copy
+     */
     FORCEINLINE TStaticString(const CharType* InString) noexcept
         : Characters()
         , Len(0)
@@ -72,8 +87,13 @@ public:
         }
     }
 
-    /* Create a fixed string from a raw array and the length. If the string is
-       longer than the allocators the string will be shortened to fit. */
+    /**
+     * Create a fixed string from a specified length raw array. If the string is longer than the 
+     * fixed length the string will be shortened to fit.
+     *
+     * @param InString: String to copy
+     * @param InLength: Length of the string to copy
+     */
     FORCEINLINE explicit TStaticString(const CharType* InString, uint32 InLength) noexcept
         : Characters()
         , Len(0)
@@ -84,8 +104,12 @@ public:
         }
     }
 
-    /* Create a new string from another string type with similar interface. If the
-       string is longer than the allocators the string will be shortened to fit. */
+    /**
+     * Create a static string from another string-type. If the string is longer than the
+     * fixed length the string will be shortened to fit.
+     * 
+     * @param InString: String to copy from
+     */
     template<typename StringType, typename = typename TEnableIf<TIsTStringType<StringType>::Value>::Type>
     FORCEINLINE explicit TStaticString(const StringType& InString) noexcept
         : Characters()
@@ -94,7 +118,11 @@ public:
         CopyFrom(InString.CStr(), InString.Length());
     }
 
-    /* Copy Constructor */
+    /**
+     * Copy Constructor
+     * 
+     * @param Other: Other string to copy from
+     */
     FORCEINLINE TStaticString(const TStaticString& Other) noexcept
         : Characters()
         , Len(0)
@@ -102,7 +130,11 @@ public:
         CopyFrom(Other.CStr(), Other.Length());
     }
 
-    /* Move Constructor */
+    /**
+     * Move Constructor
+     *
+     * @param Other: Other string to move from
+     */
     FORCEINLINE TStaticString(TStaticString&& Other) noexcept
         : Characters()
         , Len(0)
@@ -110,14 +142,20 @@ public:
         MoveFrom(Forward<TStaticString>(Other));
     }
 
-    /* Clears the string */
+    /**
+     * Clears the string
+     */
     FORCEINLINE void Clear() noexcept
     {
         Len = 0;
         Characters[Len] = StringUtils::Null;
     }
 
-    /* Appends a string to this string */
+    /**
+     * Appends a character to this string 
+     * 
+     * @param Char: Character to append
+     */
     FORCEINLINE void Append(CharType Char) noexcept
     {
         Assert(Len + 1 < Capacity());
@@ -126,20 +164,33 @@ public:
         Characters[++Len] = StringUtils::Null;
     }
 
-    /* Appends a string to this string */
+    /**
+     * Appends a raw-string to this string
+     *
+     * @param InString: String to append
+     */
     FORCEINLINE void Append(const CharType* InString) noexcept
     {
         Append(InString, StringUtils::Length(InString));
     }
 
-    /* Appends a string to this string */
+    /**
+     * Appends a string of another string-type to this string
+     *
+     * @param InString: String to append
+     */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Append(const StringType& InString) noexcept
     {
         Append(InString.CStr(), InString.Length());
     }
 
-    /* Appends a string to this string */
+    /**
+     * Appends a raw-string to this string with a fixed length
+     *
+     * @param InString: String to append
+     * @param InLength: Length of the string
+     */
     FORCEINLINE void Append(const CharType* InString, SizeType InLength) noexcept
     {
         Assert(InString != nullptr);
@@ -151,29 +202,44 @@ public:
         Characters[Len] = StringUtils::Null;
     }
 
-    /* Resize the string */
-    FORCEINLINE void Resize(SizeType NewSize) noexcept
+    /**
+     * Resize the string
+     * 
+     * @param NewLength: New length of the string 
+     */
+    FORCEINLINE void Resize(SizeType NewLength) noexcept
     {
-        Resize(NewSize, CharType());
+        Resize(NewLength, CharType());
     }
 
-    /* Resize the string and fill with Char */
-    FORCEINLINE void Resize(SizeType NewSize, CharType FillElement) noexcept
+    /**
+     * Resize the string and fill the new elements with a specified character
+     *
+     * @param NewLength: New length of the string
+     * @param FillElement: Element to fill the string with
+     */
+    FORCEINLINE void Resize(SizeType NewLength, CharType FillElement) noexcept
     {
-        Assert(NewSize < CharCount);
+        Assert(NewLength < CharCount);
 
         CharType* It = Characters + Len;
-        CharType* End = Characters + NewSize;
+        CharType* End = Characters + NewLength;
         while (It != End)
         {
             *(It++) = FillElement;
         }
 
-        Len = NewSize;
+        Len = NewLength;
         Characters[Len] = StringUtils::Null;
     }
 
-    /* Copy this string into buffer */
+    /**
+     * Copy this string into buffer 
+     * 
+     * @param Buffer: Buffer to fill
+     * @param BufferSize: Size of the buffer to fill
+     * @param Position: Offset to start copy from
+     */
     FORCEINLINE void Copy(CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const noexcept
     {
         Assert(Buffer != nullptr);
@@ -183,7 +249,11 @@ public:
         StringUtils::Copy(Buffer, Characters + Position, CopySize);
     }
 
-    /* Format string (similar to snprintf) */
+    /**
+     * Replace the string with a formatted string (similar to snprintf)
+     * 
+     * @param Format: Formatted string to replace the string with
+     */
     NOINLINE void Format(const CharType* Format, ...) noexcept
     {
         va_list ArgList;
@@ -192,7 +262,12 @@ public:
         va_end(ArgList);
     }
 
-    /* Format string with a va_list (similar to snprintf) */
+    /**
+     * Replace the string with a formatted string (similar to snprintf)
+     *
+     * @param Format: Formatted string to replace the string with
+     * @param ArgList: Argument list filled with arguments for the formatted string
+     */
     FORCEINLINE void FormatV(const CharType* Format, va_list ArgList) noexcept
     {
         SizeType WrittenChars = StringUtils::FormatBufferV(Characters, CharCount - 1, Format, ArgList);
@@ -208,7 +283,11 @@ public:
         Characters[Len] = StringUtils::Null;
     }
 
-    /* Same as Format, but appends the result to the current string */
+    /**
+     * Appends a formatted string to the string
+     * 
+     * @param Format: Formatted string to append
+     */
     NOINLINE void AppendFormat(const CharType* Format, ...) noexcept
     {
         va_list ArgList;
@@ -217,7 +296,12 @@ public:
         va_end(ArgList);
     }
 
-    /* Same as FormatV, but appends the result to the current string */
+    /**
+     * Appends a formatted string to the string
+     *
+     * @param Format: Formatted string to append
+     * @param ArgList: Argument-list for the formatted string
+     */
     FORCEINLINE void AppendFormatV(const CharType* Format, va_list ArgList) noexcept
     {
         const SizeType WrittenChars = StringUtils::FormatBufferV(Characters + Len, CharCount, Format, ArgList);
@@ -234,7 +318,9 @@ public:
         Characters[Len] = StringUtils::Null;
     }
 
-    /* Returns this string in lowercase */
+    /**
+     * Convert this string to a lower-case string
+     */ 
     FORCEINLINE void ToLowerInline() noexcept
     {
         CharType* It = Characters;
@@ -246,7 +332,11 @@ public:
         }
     }
 
-    /* Returns this string in lowercase */
+    /**
+     * Convert this string to a lower-case string and returns a copy
+     * 
+     * @return: Returns a copy of this string, with all characters in lower-case
+     */
     FORCEINLINE TStaticString ToLower() const noexcept
     {
         TStaticString NewString(*this);
@@ -254,7 +344,9 @@ public:
         return NewString;
     }
 
-    /* Converts this string in uppercase */
+    /**
+     * Convert this string to a upper-case string
+     */
     FORCEINLINE void ToUpperInline() noexcept
     {
         CharType* It = Characters;
@@ -266,7 +358,11 @@ public:
         }
     }
 
-    /* Returns this string in uppercase */
+    /**
+     * Convert this string to a upper-case string and returns a copy
+     *
+     * @return: Returns a copy of this string, with all characters in upper-case
+     */
     FORCEINLINE TStaticString ToUpper() const noexcept
     {
         TStaticString NewString(*this);
@@ -274,7 +370,20 @@ public:
         return NewString;
     }
 
-    /* Removes whitespace from the beginning and end of the string */
+    /**
+     * Removes whitespace from the beginning and end of the string 
+     */
+    FORCEINLINE void TrimInline() noexcept
+    {
+        TrimStartInline();
+        TrimEndInline();
+    }
+
+    /**
+     * Removes whitespace from the beginning and end of the string and returns a copy
+     * 
+     * @return: Returns a copy of this string with the whitespace removed in the end and beginning
+     */
     FORCEINLINE TStaticString Trim() noexcept
     {
         TStaticString NewString(*this);
@@ -282,22 +391,9 @@ public:
         return NewString;
     }
 
-    /* Removes whitespace from the beginning and end of the string */
-    FORCEINLINE void TrimInline() noexcept
-    {
-        TrimStartInline();
-        TrimEndInline();
-    }
-
-    /* Removes whitespace from the beginning of the string */
-    FORCEINLINE TStaticString TrimStart() noexcept
-    {
-        TStaticString NewString(*this);
-        NewString.TrimStartInline();
-        return NewString;
-    }
-
-    /* Removes whitespace from the beginning of the string */
+    /**
+     * Removes whitespace from the beginning of the string 
+     */
     FORCEINLINE void TrimStartInline() noexcept
     {
         SizeType Index = 0;
@@ -316,15 +412,21 @@ public:
         }
     }
 
-    /* Removes whitespace from the end of the string */
-    FORCEINLINE TStaticString TrimEnd() noexcept
+    /**
+     * Removes whitespace from the beginning of the string and returns a copy
+     * 
+     * @return: Returns a copy of this string with all the whitespace removed from the beginning
+     */
+    FORCEINLINE TStaticString TrimStart() noexcept
     {
         TStaticString NewString(*this);
-        NewString.TrimEndInline();
+        NewString.TrimStartInline();
         return NewString;
     }
 
-    /* Removes whitespace from the end of the string */
+    /**
+     * Removes whitespace from the end of the string
+     */
     FORCEINLINE void TrimEndInline() noexcept
     {
         for (SizeType Index = Len - 1; Index >= 0; Index--)
@@ -342,15 +444,21 @@ public:
         Characters[Len] = StringUtils::Null;
     }
 
-    /* Removes whitespace from the end of the string */
-    FORCEINLINE TStaticString Reverse() noexcept
+    /**
+     * Removes whitespace from the end of the string and returns a copy
+     *
+     * @return: Returns a copy of this string with all the whitespace removed from the end
+     */
+    FORCEINLINE TStaticString TrimEnd() noexcept
     {
         TStaticString NewString(*this);
-        NewString.ReverseInline();
+        NewString.TrimEndInline();
         return NewString;
     }
 
-    /* Removes whitespace from the end of the string */
+    /**
+     * Reverses the order of all the characters in the string
+     */
     FORCEINLINE void ReverseInline() noexcept
     {
         CharType* Start = Characters;
@@ -363,39 +471,83 @@ public:
         }
     }
 
-    /* Compares two strings and checks if they are equal */
+    /**
+     * Reverses the order of all the characters in the string and returns a copy
+     * 
+     * @return: Returns a string with all the characters reversed
+     */
+    FORCEINLINE TStaticString Reverse() noexcept
+    {
+        TStaticString NewString(*this);
+        NewString.ReverseInline();
+        return NewString;
+    }
+
+    /**
+     * Compares this string to another string-type
+     * 
+     * @param InString: String to compare with
+     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type Compare(const StringType& InString) const noexcept
     {
         return Compare(InString.CStr());
     }
 
-    /* Compares two strings and checks if they are equal */
+    /**
+     * Compares this string with a raw-string
+     *
+     * @param InString: String to compare with
+     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     */
     FORCEINLINE int32 Compare(const CharType* InString) const noexcept
     {
         return StringUtils::Compare(Characters, InString);
     }
 
-    /* Compares two strings and checks if they are equal */
+    /**
+     * Compares this string with a raw-string of a fixed length
+     *
+     * @param InString: String to compare with
+     * @param InLength: Length of the string to compare
+     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     */
     FORCEINLINE int32 Compare(const CharType* InString, SizeType InLength) const noexcept
     {
         return StringUtils::Compare(Characters, InString, InLength);
     }
 
-    /* Compares two strings and checks if they are equal, without taking casing into account */
+    /**
+     * Compares this string to another string-type without taking casing into account.
+     *
+     * @param InString: String to compare with
+     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, int32>::Type CompareNoCase(const StringType& InString) const noexcept
     {
         return CompareNoCase(InString.CStr(), InString.Length());
     }
 
-    /* Compares two strings and checks if they are equal, without taking casing into account */
+    /**
+     * Compares this string with a raw-string without taking casing into account.
+     *
+     * @param InString: String to compare with
+     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     */
     FORCEINLINE int32 CompareNoCase(const CharType* InString) const noexcept
     {
         return CompareNoCase(InString, StringUtils::Length(InString));
     }
 
-    /* Compares two strings and checks if they are equal, without taking casing into account */
+    /**
+     * Compares this string with a raw-string without taking casing into account.
+     *
+     * @param InString: String to compare with
+     * @param InLength: Length of the string to compare
+     * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
+     */
     FORCEINLINE int32 CompareNoCase(const CharType* InString, SizeType InLength) const noexcept
     {
         if (Len != InLength)
@@ -417,20 +569,39 @@ public:
         return 0;
     }
 
-    /* Returns the position of the first occurance of the start of the searchstring */
+    /**
+     * Find the position of the first occurrence of the start of the search-string 
+     * 
+     * @param InString: String to search
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string
+     */
     FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return Find(InString, StringUtils::Length(InString), Position);
     }
 
-    /* Returns the position of the first occurance of the start of the searchstring */
+    /**
+     * Find the position of the first occurrence of the start of the search-string
+     *
+     * @param InString: String to search
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string
+     */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type Find(const StringType& InString, SizeType Position = 0) const noexcept
     {
         return Find(InString, InString.Length(), Position);
     }
 
-    /* Returns the position of the first occurance of the start of the searchstring */
+    /**
+     * Find the position of the first occurrence of the start of the search-string
+     *
+     * @param InString: String to search
+     * @param InString: Length of the search-string
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string
+     */
     FORCEINLINE SizeType Find(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Assert((Position < Len) || (Position == 0));
@@ -452,7 +623,13 @@ public:
         }
     }
 
-    /* Returns the position of the first occurance of char */
+    /**
+     * Returns the position of the first occurrence of char
+     * 
+     * @param Char: Character to search for
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first occurrence of the char
+     */
     FORCEINLINE SizeType Find(CharType Char, SizeType Position = 0) const noexcept
     {
         Assert((Position < Len) || (Position == 0));
@@ -474,20 +651,40 @@ public:
         }
     }
 
-    /* Returns the position of the first occurance of the start of the searchstring */
+    /**
+     * Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     *
+     * @param InString: String to search
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string
+     */
     FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return ReverseFind(InString, StringUtils::Length(InString), Position);
     }
 
-    /* Returns the position of the first occurance of the start of the searchstring */
+    /**
+     * Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     *
+     * @param InString: String to search
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string
+     */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFind(const StringType& InString, SizeType Position = 0) const noexcept
     {
         return ReverseFind(InString, InString.Length(), Position);
     }
 
-    /* Returns the position of the first occurance of the start of the searchstring by searching in reverse. Offset is the end, instead of the start as with normal Find*/
+    /**
+     * Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * Position is the end, instead of the start as with normal Find.
+     * 
+     * @param InString: String to search
+     * @param InString: Length of the search-string
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string
+     */
     FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Assert((Position < Len) || (Position == 0));
@@ -497,7 +694,6 @@ public:
             return Len;
         }
 
-        // Calculate the offset to the end
         SizeType Length = (Position == 0) ? Len : NMath::Min(Position, Len);
 
         const CharType* Start = CStr();
@@ -506,18 +702,15 @@ public:
         {
             End--;
 
-            // Loop each character in substring
             const CharType* SubstringIt = InString;
             for (const CharType* EndIt = End; ; )
             {
-                // If not found we end loop and start over
                 if (*(EndIt++) != *(SubstringIt++))
                 {
                     break;
                 }
                 else if (StringUtils::IsTerminator(*SubstringIt))
                 {
-                    // If terminator is reached we have found the full substring in out string
                     return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
                 }
             }
@@ -526,7 +719,13 @@ public:
         return NPos;
     }
 
-    /* Returns the position of the first occurance of char by searching from the end */
+    /**
+     * Returns the position of the first occurrence of char. Searches the string in reverse.
+     *
+     * @param Char: Character to search for
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first occurrence of the char
+     */
     FORCEINLINE SizeType ReverseFind(CharType Char, SizeType Position = 0) const noexcept
     {
         Assert((Position < Len) || (Position == 0));
@@ -564,20 +763,39 @@ public:
         }
     }
 
-    /* Returns the position of the the first found character in the searchstring */
+    /**
+     * Returns the position of the first occurrence of a character in the search-string that is found
+     * 
+     * @param InString: String of characters to search
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string that is found
+     */
     FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return FindOneOf(InString, StringUtils::Length(InString), Position);
     }
 
-    /* Returns the position of the the first found character in the searchstring */
+    /**
+     * Returns the position of the first occurrence of a character in the search-string that is found. The search string is of string-type.
+     *
+     * @param InString: String of characters to search
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string that is found
+     */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneOf(const StringType& InString, SizeType Position = 0) const noexcept
     {
         return FindOneOf(InString.CStr(), InString.Length(), Position);
     }
 
-    /* Returns the position of the the first found character in the searchstring */
+    /**
+     * Returns the position of the first occurrence of a character in the search-string that is found
+     *
+     * @param InString: String of characters to search
+     * @param InLength: Length of the search-string
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string that is found
+     */
     FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Assert((Position < Len) || (Position == 0));
@@ -599,20 +817,39 @@ public:
         }
     }
 
-    /* Returns the position of the last occurance of one of the characters in the searchstring */
+    /**
+     * Returns the position of the last occurrence of a character in the search-string that is found
+     *
+     * @param InString: String of characters to search
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string that is found
+     */
     FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return ReverseFindOneOf(InString, StringUtils::Length(InString), Position);
     }
 
-    /* Returns the position of the last occurance of one of the characters in the searchstring */
+    /**
+     * Returns the position of the last occurrence of a character in the search-string that is found. The search string is of string-type.
+     *
+     * @param InString: String of characters to search
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string that is found
+     */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneOf(const StringType& InString, SizeType Position = 0) const noexcept
     {
         return ReverseFindOneOf(InString, InString.Length(), Position);
     }
 
-    /* Returns the position of the last occurance of one of the characters in the searchstring */
+    /**
+     * Returns the position of the last occurrence of a character in the search-string that is found
+     *
+     * @param InString: String of characters to search
+     * @param InLength: Length of the search-string
+     * @param Position: Position to start search at
+     * @return: Returns the position of the first character in the search-string that is found
+     */
     FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Assert((Position < Len) || (Position == 0));
@@ -622,10 +859,7 @@ public:
             return Len;
         }
 
-        // Calculate the offset to the end
         SizeType Length = (Position == 0) ? Len : NMath::Min(Position, Len);
-
-        // Store the length of the substring outside the loop
         SizeType SubstringLength = StringUtils::Length(InString);
 
         const CharType* Start = CStr();
@@ -634,12 +868,10 @@ public:
         {
             End--;
 
-            // Loop each character in substring
             const CharType* SubstringStart = InString;
             const CharType* SubstringEnd = SubstringStart + SubstringLength;
             while (SubstringStart != SubstringEnd)
             {
-                // If character is found then return the position
                 if (*End == *(SubstringStart++))
                 {
                     return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
@@ -650,20 +882,39 @@ public:
         return NPos;
     }
 
-    /* Returns the position of the the first character not a part of the searchstring */
+    /**
+     * Returns the position of the first occurrence of a character not a part of the search-string
+     * 
+     * @param InString: String of characters that should be a part of the string
+     * @param Position: Position to start the search at
+     * @return: Return position the first character not a part of the search-string
+     */
     FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return FindOneNotOf(InString, StringUtils::Length(InString), Position);
     }
 
-    /* Returns the position of the the first character not a part of the searchstring */
+    /**
+     * Returns the position of the first character not a part of the search-string. The string is of a string-type.
+     *
+     * @param InString: String of characters that should be a part of the string
+     * @param Position: Position to start the search at
+     * @return: Return position the first character not a part of the search-string
+     */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type FindOneNotOf(const StringType& InString, SizeType Position = 0) const noexcept
     {
         return FindOneNotOf(InString.CStr(), InString.Length(), Position);
     }
 
-    /* Returns the position of the the first character not a part of the searchstring */
+    /**
+     * Returns the position of the first occurrence of a character not a part of the search-string
+     *
+     * @param InString: String of characters that should be a part of the string
+     * @param InLength: Length of the search-string
+     * @param Position: Position to start the search at
+     * @return: Return position the first character not a part of the search-string
+     */
     FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Assert((Position < Len) || (Position == 0));
@@ -685,20 +936,39 @@ public:
         }
     }
 
-    /* Returns the position of the last occurance of one of the characters in the searchstring */
+    /**
+     * Returns the position of the last occurrence of a character not a part of the search-string
+     *
+     * @param InString: String of characters that should be a part of the string
+     * @param Position: Position to start the search at
+     * @return: Return position the first character not a part of the search-string
+     */
     FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
         return ReverseFindOneNotOf(InString, StringUtils::Length(InString), Position);
     }
 
-    /* Returns the position of the last occurance of one of the characters in the searchstring */
+    /**
+     * Returns the position of the last occurrence of a character not a part of the search-string. The string is of a string-type.
+     *
+     * @param InString: String of characters that should be a part of the string
+     * @param Position: Position to start the search at
+     * @return: Return position the first character not a part of the search-string
+     */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, SizeType>::Type ReverseFindOneNotOf(const StringType& InString, SizeType Position = 0) const noexcept
     {
         return ReverseFindOneNotOf(InString, InString.Length(), Position);
     }
 
-    /* Returns the position of the last occurance of one of the characters in the searchstring */
+    /**
+     * Returns the position of the last occurrence of a character not a part of the search-string
+     *
+     * @param InString: String of characters that should be a part of the string
+     * @param InLength: Length of the search-string
+     * @param Position: Position to start the search at
+     * @return: Return position the first character not a part of the search-string
+     */
     FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
         Assert((Position < Len) || (Position == 0));
@@ -708,10 +978,7 @@ public:
             return Len;
         }
 
-        // Calculate the offset to the end
         SizeType Length = (Position == 0) ? Len : NMath::Min(Position, Len);
-
-        // Store the length of the substring outside the loop
         SizeType SubstringLength = StringUtils::Length(InString);
 
         const CharType* Start = CStr();
@@ -720,19 +987,16 @@ public:
         {
             End--;
 
-            // Loop each character in substring
             const CharType* SubstringStart = InString;
             const CharType* SubstringEnd = SubstringStart + SubstringLength;
             while (SubstringStart != SubstringEnd)
             {
-                // If character is found then return the position
                 if (*End == *(SubstringStart++))
                 {
                     break;
                 }
                 else if (StringUtils::IsTerminator(*SubstringStart))
                 {
-                    // If terminator is reached we have found the full substring in out string
                     return static_cast<SizeType>(static_cast<intptr_t>(End - Start));
                 }
             }
@@ -741,95 +1005,162 @@ public:
         return NPos;
     }
 
-    /* Returns true if the searchstring exists withing the string */
-    FORCEINLINE bool Contains(const CharType* InString, SizeType InOffset = 0) const noexcept
+    /**
+     * Check if the search-string exists within the string 
+     * 
+     * @param InString: String to search for
+     * @param Position: Position to start to search at
+     * @return: Returns true if the string is found
+     */
+    FORCEINLINE bool Contains(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return (Find(InString, InOffset) != NPos);
+        return (Find(InString, Position) != NPos);
     }
 
-    /* Returns true if the searchstring exists withing the string */
+    /**
+     * Check if the search-string exists within the string. The string is of a string-type.
+     *
+     * @param InString: String to search for
+     * @param Position: Position to start to search at
+     * @return: Returns true if the string is found
+     */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Contains(const StringType& InString, SizeType InOffset = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type Contains(const StringType& InString, SizeType Position = 0) const noexcept
     {
-        return (Find(InString, InOffset) != NPos);
+        return (Find(InString, Position) != NPos);
     }
 
-    /* Returns true if the searchstring exists withing the string */
-    FORCEINLINE bool Contains(const CharType* InString, SizeType InLength, SizeType InOffset = 0) const noexcept
+    /**
+     * Check if the search-string exists within the string
+     *
+     * @param InString: String to search for
+     * @param Position: Position to start to search at
+     * @return: Returns true if the string is found
+     */
+    FORCEINLINE bool Contains(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        return (Find(InString, InLength, InOffset) != NPos);
+        return (Find(InString, InLength, Position) != NPos);
     }
 
-    /* Returns true if the searchstring exists withing the string */
-    FORCEINLINE bool Contains(CharType Char, SizeType InOffset = 0) const noexcept
+    /**
+     * Check if the character exists within the string
+     *
+     * @param InString: String to search for
+     * @param Position: Position to start to search at
+     * @return: Returns true if the string is found
+     */
+    FORCEINLINE bool Contains(CharType Char, SizeType Position = 0) const noexcept
     {
-        return (Find(Char, InOffset) != NPos);
+        return (Find(Char, Position) != NPos);
     }
 
-    /* Returns the position of the the first found character in the searchstring */
-    FORCEINLINE bool ContainsOneOf(const CharType* InString, SizeType InOffset = 0) const noexcept
+    /**
+     * Check if the one of the characters exists within the string
+     *
+     * @param InString: String of characters to search for
+     * @param Position: Position to start to search at
+     * @return: Returns true if the string is found
+     */
+    FORCEINLINE bool ContainsOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return (FindOneOf(InString, InOffset) != NPos);
+        return (FindOneOf(InString, Position) != NPos);
     }
 
-    /* Returns true if the searchstring exists withing the string */
+    /**
+     * Check if the one of the characters exists within the string. The string is of a string-type.
+     *
+     * @param InString: String of characters to search for
+     * @param Position: Position to start to search at
+     * @return: Returns true if the string is found
+     */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type ContainsOneOf(const StringType& InString, SizeType InLength, SizeType InOffset = 0) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, bool>::Type ContainsOneOf(const StringType& InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        return (FindOneOf<StringType>(InString, InLength, InOffset) != NPos);
+        return (FindOneOf<StringType>(InString, InLength, Position) != NPos);
     }
 
-    /* Returns true if the searchstring exists withing the string */
-    FORCEINLINE bool ContainsOneOf(const CharType* InString, SizeType InLength, SizeType InOffset = 0) const noexcept
+    /**
+     * Check if the one of the characters exists within the string
+     *
+     * @param InString: String of characters to search for
+     * @param InLength: Length of the string with characters to search for
+     * @param Position: Position to start to search at
+     * @return: Returns true if the string is found
+     */
+    FORCEINLINE bool ContainsOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        return (FindOneOf(InString, InLength, InOffset) != NPos);
+        return (FindOneOf(InString, InLength, Position) != NPos);
     }
 
-    /* Removes count characters from position and forward */
-    FORCEINLINE void Remove(SizeType Position, SizeType Count) noexcept
+    /**
+     * Removes count characters from position and forward
+     * 
+     * @param Position: Position to start remove at
+     * @param NumCharacters: Number of characters to remove
+     */
+    FORCEINLINE void Remove(SizeType Position, SizeType NumCharacters) noexcept
     {
-        Assert((Position < Len) && (Position + Count < Len));
+        Assert((Position < Len) && (Position + NumCharacters < Len));
 
         CharType* Dst = Data() + Position;
-        CharType* Src = Dst + Count;
+        CharType* Src = Dst + NumCharacters;
 
-        SizeType Num = Len - (Position + Count);
+        SizeType Num = Len - (Position + NumCharacters);
         CMemory::Memmove(Dst, Src, Num * sizeof(CharType));
     }
 
-    /* Insert a string at position */
+    /**
+     * Insert a string at a specified position
+     * 
+     * @param InString: String to insert
+     * @param Position: Position to start the insertion at
+     */
     FORCEINLINE void Insert(const CharType* InString, SizeType Position) noexcept
     {
         Insert(InString, StringUtils::Length(InString), Position);
     }
 
-    /* Insert a string at position */
+    /**
+     * Insert a string at a specified position. The string is of string-type.
+     *
+     * @param InString: String to insert
+     * @param Position: Position to start the insertion at
+     */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Insert(const StringType& InString, SizeType Position) noexcept
     {
         Insert(InString.CStr(), InString.Length(), Position);
     }
 
-    /* Insert a string at position */
+    /**
+     * Insert a string at a specified position
+     *
+     * @param InString: String to insert
+     * @param InLength: Length of the string to insert
+     * @param Position: Position to start the insertion at
+     */
     FORCEINLINE void Insert(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
         Assert((Position < Len) && (Len + InLength < CharCount));
 
-        // Make room for string
         CharType* Src = Data() + Position;
         CharType* Dst = Src + InLength;
 
         const uint64 MoveSize = Len - Position;
         StringUtils::Move(Dst, Src, MoveSize);
 
-        // Copy String
         StringUtils::Copy(Src, InString, InLength);
 
         Len += InLength;
         Characters[Len] = StringUtils::Null;
     }
 
-    /* Insert a character at position */
+    /**
+     * Insert a character at specified position 
+     * 
+     * @param Char: Character to insert
+     * @param Position: Position to insert character at
+     */
     FORCEINLINE void Insert(CharType Char, SizeType Position) noexcept
     {
         Assert((Position < Len) && (Len + 1 < CharCount));
@@ -847,27 +1178,48 @@ public:
         Characters[++Len] = StringUtils::Null;
     }
 
-    /* Replace a part of the string */
+    /**
+     * Replace a part of the string
+     * 
+     * @param InString: String to replace
+     * @param Position: Position to start the replacing at
+     */
     FORCEINLINE void Replace(const CharType* InString, SizeType Position) noexcept
     {
         Replace(InString, StringUtils::Length(InString), Position);
     }
 
-    /* Replace a part of the string */
+    /**
+     * Replace a part of the string. String is of string-type.
+     *
+     * @param InString: String to replace
+     * @param Position: Position to start the replacing at
+     */
     template<typename StringType>
     FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value>::Type Replace(const StringType& InString, SizeType Position) noexcept
     {
         Replace(InString.CStr(), InString.Length(), Position);
     }
 
-    /* Replace a part of the string */
+    /**
+     * Replace a part of the string
+     *
+     * @param InString: String to replace
+     * @param InLenght: Length of the string to replace
+     * @param Position: Position to start the replacing at
+     */
     FORCEINLINE void Replace(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
         Assert((Position < Len) && (Position + InLength < Len));
         StringUtils::Copy(Data() + Position, InString, InLength);
     }
 
-    /* Replace a character */
+    /**
+     * Replace a character in the string
+     * 
+     * @param Char: Character to replace
+     * @param Position: Position of the character to replace 
+     */
     FORCEINLINE void Replace(CharType Char, SizeType Position) noexcept
     {
         Assert((Position < Len));
@@ -876,19 +1228,29 @@ public:
         *Dest = Char;
     }
 
-    /* Replace push a character to the end of the string */
+    /**
+     * Insert a new character at the end
+     * 
+     * @param Char: Character to insert at the end
+     */
     FORCEINLINE void Push(CharType Char) noexcept
     {
         Append(Char);
     }
 
-    /* Pop a character from the end of the string */
+    /**
+     * Remove the character at the end
+     */
     FORCEINLINE void Pop() noexcept
     {
         Characters[--Len] = StringUtils::Null;
     }
 
-    /* Swaps two fixed strings with eachother */
+    /**
+     * Swap this string with another
+     * 
+     * @param Other: String to swap with
+     */
     FORCEINLINE void Swap(TStaticString& Other)
     {
         TStaticString TempString(Move(*this));
@@ -896,151 +1258,305 @@ public:
         Other.MoveFrom(Move(TempString));
     }
 
-    /* Returns a sub-string of this string */
-    FORCEINLINE TStaticString SubString(SizeType Offset, SizeType Count) const noexcept
+    /**
+     * Create a sub-string of this string
+     * 
+     * @param Position: Position to start the sub-string at
+     * @param NumCharacters: Number of characters in the sub-string
+     * @return: Returns a sub-string
+     */
+    FORCEINLINE TStaticString SubString(SizeType Position, SizeType NumCharacters) const noexcept
     {
-        Assert((Offset < Len) && (Offset + Count < Len));
-        return TStaticString(Characters + Offset, Count);
+        Assert((Position < Len) && (Position + NumCharacters < Len));
+        return TStaticString(Characters + Position, NumCharacters);
     }
 
-    /* Returns a sub-stringview of this string */
-    FORCEINLINE TStringView<CharType> SubStringView(SizeType Offset, SizeType Count) const noexcept
+    /**
+     * Create a sub-string view of this string
+     *
+     * @param Position: Position to start the sub-string at
+     * @param NumCharacters: Number of characters in the sub-string
+     * @return: Returns a sub-string view
+     */
+    FORCEINLINE TStringView<CharType> SubStringView(SizeType Position, SizeType NumCharacters) const noexcept
     {
-        Assert((Offset < Len) && (Offset + Count < Len));
-        return TStringView<CharType>(Characters + Offset, Count);
+        Assert((Position < Len) && (Position + NumCharacters < Len));
+        return TStringView<CharType>(Characters + Position, NumCharacters);
     }
 
-    /* Retrieve the character at Index */
+    /**
+     * Retrieve a element at a certain index of the string
+     *
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE CharType& At(SizeType Index) noexcept
     {
         Assert(Index < Length());
         return Data()[Index];
     }
 
-    /* Retrieve the character at Index */
+    /**
+     * Retrieve a element at a certain index of the string
+     *
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE const CharType& At(SizeType Index) const noexcept
     {
         Assert(Index < Length());
         return Data()[Index];
     }
 
-    /* Return a null terminated string */
+    /**
+     * Retrieve the data of the array
+     *
+     * @return: Returns a pointer to the data of the array
+     */
     FORCEINLINE CharType* Data() noexcept
     {
         return Characters;
     }
 
-    /* Return a null terminated string */
+    /**
+     * Retrieve the data of the array
+     *
+     * @return: Returns a pointer to the data of the array
+     */
     FORCEINLINE const CharType* Data() const noexcept
     {
         return Characters;
     }
 
-    /* Return a null terminated string */
+    /**
+     * Retrieve the string as a c-array
+     *
+     * @return: Returns a pointer to the data of the array
+     */
     FORCEINLINE const CharType* CStr() const noexcept
     {
         return Characters;
     }
 
-    /* Return the length of the string */
+    /**
+     * Returns the size of the container
+     *
+     * @return: The current size of the container
+     */
     FORCEINLINE SizeType Size() const noexcept
     {
         return Len;
     }
 
-    /* Return the last usable index of the string */
+    /**
+     * Retrieve the last index that can be used to retrieve an element from the array
+     *
+     * @return: Returns a the index to the last element of the array
+     */
     FORCEINLINE SizeType LastElementIndex() const noexcept
     {
         return (Len > 0) ? (Len - 1) : 0;
     }
 
-    /* Return the length of the string */
+    /**
+     * Returns the length of the string
+     *
+     * @return: The current length of the string
+     */
     FORCEINLINE SizeType Length() const noexcept
     {
         return Len;
     }
 
-    /* Retrieve the size of the string in bytes */
+    /**
+     * Returns the size of the container in bytes
+     *
+     * @return: The current size of the container in bytes
+     */
     FORCEINLINE SizeType SizeInBytes() const noexcept
     {
         return Len * sizeof(CharType);
     }
 
-    /* Checks if the string is empty */
+    /**
+     * Check if the container contains any elements
+     *
+     * @return: Returns true if the array is empty or false if it contains elements
+     */
     FORCEINLINE bool IsEmpty() const noexcept
     {
         return (Len == 0);
     }
 
-    /* Appends a string to this string */
-    FORCEINLINE TStaticString& operator+=(CharType Char) noexcept
+    /**
+     * Retrieve the first element of the array
+     *
+     * @return: Returns a reference to the first element of the array
+     */
+    FORCEINLINE ElementType& FirstElement() noexcept
     {
-        Append(Char);
+        Assert(!IsEmpty());
+        return Data()[0];
+    }
+
+    /**
+     * Retrieve the first element of the array
+     *
+     * @return: Returns a reference to the first element of the array
+     */
+    FORCEINLINE const ElementType& FirstElement() const noexcept
+    {
+        Assert(!IsEmpty());
+        return Data()[0];
+    }
+
+    /**
+     * Retrieve the last element of the array
+     *
+     * @return: Returns a reference to the last element of the array
+     */
+    FORCEINLINE ElementType& LastElement() noexcept
+    {
+        Assert(!IsEmpty());
+        return Data()[ArraySize - 1];
+    }
+
+    /**
+     * Retrieve the last element of the array
+     *
+     * @return: Returns a reference to the last element of the array
+     */
+    FORCEINLINE const ElementType& LastElement() const noexcept
+    {
+        Assert(!IsEmpty());
+        return Data()[ArraySize - 1];
+    }
+
+    /**
+     * Appends a character to this string
+     * 
+     * @param RHS: Character to append
+     * @return: Returns a reference to this instance
+     */
+    FORCEINLINE TStaticString& operator+=(CharType RHS) noexcept
+    {
+        Append(RHS);
         return *this;
     }
 
-    /* Appends a string to this string */
-    FORCEINLINE TStaticString& operator+=(const CharType* InString) noexcept
+    /**
+     * Appends a string to this string
+     *
+     * @param RHS: String to append
+     * @return: Returns a reference to this instance
+     */
+    FORCEINLINE TStaticString& operator+=(const CharType* RHS) noexcept
     {
-        Append(InString);
+        Append(RHS);
         return *this;
     }
 
-    /* Appends a string to this string */
+    /**
+     * Appends a string of a string-type to this string
+     *
+     * @param RHS: String to append
+     * @return: Returns a reference to this instance
+     */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator+=(const StringType& InString) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator+=(const StringType& RHS) noexcept
     {
-        Append<StringType>(InString);
+        Append<StringType>(RHS);
         return *this;
     }
 
-    /* Retrieve an element at a certain position */
+    /**
+     * Bracket-operator to retrieve an element at a certain index
+     *
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE CharType& operator[](SizeType Index) noexcept
     {
         return At(Index);
     }
 
-    /* Retrieve an element at a certain position */
+    /**
+     * Bracket-operator to retrieve an element at a certain index
+     *
+     * @param Index: Index of the element to retrieve
+     * @return: A reference to the element at the index
+     */
     FORCEINLINE const CharType& operator[](SizeType Index) const noexcept
     {
         return At(Index);
     }
 
-    /* Assign from another view */
-    FORCEINLINE TStaticString& operator=(const CharType* InString) noexcept
+    /**
+     * Assignment operator that takes a raw string
+     * 
+     * @param RHS: String to copy
+     * @return: Return a reference to this instance
+     */
+    FORCEINLINE TStaticString& operator=(const CharType* RHS) noexcept
     {
-        TStaticString(InString).Swap(*this);
+        TStaticString(RHS).Swap(*this);
         return *this;
     }
 
-    /* Assign from another view */
-    FORCEINLINE TStaticString& operator=(const TStaticString& Other) noexcept
+    /**
+     * Copy-assignment operator 
+     * 
+     * @param RHS: String to copy
+     * @return: Return a reference to this instance
+     */
+    FORCEINLINE TStaticString& operator=(const TStaticString& RHS) noexcept
     {
-        TStaticString(Other).Swap(*this);
+        TStaticString(RHS).Swap(*this);
         return *this;
     }
 
-    /* Assign from another view */
+    /**
+     * Assignment operator that takes another string-type
+     *
+     * @param RHS: String to copy
+     * @return: Return a reference to this instance
+     */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator=(const StringType& Other) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator=(const StringType& RHS) noexcept
     {
-        TStaticString<StringType, CharCount>(Other).Swap(*this);
+        TStaticString<StringType, CharCount>(RHS).Swap(*this);
         return *this;
     }
 
-    /* Move-assign from another view */
-    FORCEINLINE TStaticString& operator=(TStaticString&& Other) noexcept
+    /**
+     * Move-assignment operator
+     *
+     * @param RHS: String to move
+     * @return: Return a reference to this instance
+     */
+    FORCEINLINE TStaticString& operator=(TStaticString&& RHS) noexcept
     {
-        TStaticString(Move(Other)).Swap(*this);
+        TStaticString(Move(RHS)).Swap(*this);
         return *this;
     }
 
 public:
+
+    /**
+     * Retrieve the capacity of the container
+     *
+     * @return: The capacity of the container
+     */
     constexpr SizeType Capacity() const noexcept
     {
         return CharCount;
     }
 
+    /**
+     * Retrieve the capacity of the container in bytes
+     *
+     * @return: The capacity of the container in bytes
+     */
     constexpr SizeType CapacityInBytes() const noexcept
     {
         return CharCount * sizeof(CharType);
@@ -1048,49 +1564,81 @@ public:
 
 public:
 
-    /* Returns an iterator to the beginning of the container */
+    /**
+     * Retrieve an iterator to the beginning of the array
+     *
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
         return IteratorType(*this, 0);
     }
 
-    /* Returns an iterator to the end of the container */
+    /**
+     * Retrieve an iterator to the end of the array
+     *
+     * @return: A iterator that points to the element past the end
+     */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
         return IteratorType(*this, Size());
     }
 
-    /* Returns an iterator to the beginning of the container */
+    /**
+     * Retrieve an iterator to the beginning of the array
+     *
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
         return ConstIteratorType(*this, 0);
     }
 
-    /* Returns an iterator to the end of the container */
+    /**
+     * Retrieve an iterator to the end of the array
+     *
+     * @return: A iterator that points to the element past the end
+     */
     FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
         return ConstIteratorType(*this, Size());
     }
 
-    /* Returns an reverse iterator to the end of the container */
+    /**
+     * Retrieve an reverse-iterator to the end of the array
+     *
+     * @return: A reverse-iterator that points to the last element
+     */
     FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
         return ReverseIteratorType(*this, Size());
     }
 
-    /* Returns an reverse iterator to the beginning of the container */
+    /**
+     * Retrieve an reverse-iterator to the start of the array
+     *
+     * @return: A reverse-iterator that points to the element before the first element
+     */
     FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
         return ReverseIteratorType(*this, 0);
     }
 
-    /* Returns an reverse iterator to the end of the container */
+    /**
+     * Retrieve an reverse-iterator to the end of the array
+     *
+     * @return: A reverse-iterator that points to the last element
+     */
     FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, Size());
     }
 
-    /* Returns an reverse iterator to the beginning of the container */
+    /**
+     * Retrieve an reverse-iterator to the start of the array
+     *
+     * @return: A reverse-iterator that points to the element before the first element
+     */
     FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, 0);
@@ -1098,22 +1646,41 @@ public:
 
 public:
 
-    /* STL iterator functions - Enables Range-based for-loops */
+    /**
+     * STL start iterator, same as TArray::StartIterator
+     *
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE IteratorType begin() noexcept
     {
         return StartIterator();
     }
 
+    /**
+     * STL end iterator, same as TArray::EndIterator
+     *
+     * @return: A iterator that points past the last element
+     */
     FORCEINLINE IteratorType end() noexcept
     {
         return EndIterator();
     }
 
+    /**
+     * STL start iterator, same as TArray::StartIterator
+     *
+     * @return: A iterator that points to the first element
+     */
     FORCEINLINE ConstIteratorType begin() const noexcept
     {
         return StartIterator();
     }
 
+    /**
+     * STL end iterator, same as TArray::EndIterator
+     *
+     * @return: A iterator that points past the last element
+     */
     FORCEINLINE ConstIteratorType end() const noexcept
     {
         return EndIterator();
@@ -1121,7 +1688,6 @@ public:
 
 private:
 
-    /* Initializing this string by copying from InString */
     FORCEINLINE void CopyFrom(const CharType* InString, SizeType InLength) noexcept
     {
         Assert(InLength < Capacity());
@@ -1131,7 +1697,6 @@ private:
         Characters[Len] = StringUtils::Null;
     }
 
-    /* Initializing this string by moving from InString */
     FORCEINLINE void MoveFrom(TStaticString&& Other) noexcept
     {
         Len = Other.Len;
@@ -1141,7 +1706,6 @@ private:
         Characters[Len] = StringUtils::Null;
     }
 
-    /* Characters for characters */
     CharType Characters[CharCount];
     SizeType Len;
 };
@@ -1200,65 +1764,56 @@ inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TStaticString comparisson operators
+// TStaticString comparison operators
 
-/* Compares with a raw string */
 template<typename CharType, int32 CharCount>
 inline bool operator==(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) == 0);
 }
 
-/* Compares with a raw string */
 template<typename CharType, int32 CharCount>
 inline bool operator==(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     return (RHS.Compare(LHS) == 0);
 }
 
-/* Compares two containers by comparing each element, returns true if all is equal */
 template<typename CharType, int32 CharCount>
 inline bool operator==(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     return (LHS.Compare(RHS) == 0);
 }
 
-/* Compares with a raw string */
 template<typename CharType, int32 CharCount>
 inline bool operator!=(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
-/* Compares with a raw string */
 template<typename CharType, int32 CharCount>
 inline bool operator!=(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
-/* Compares two containers by comparing each element, returns true if all is equal */
 template<typename CharType, int32 CharCount>
 inline bool operator!=(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     return !(LHS == RHS);
 }
 
-/* Compares with a raw string */
 template<typename CharType, int32 CharCount>
 inline bool operator<(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) < 0);
 }
 
-/* Compares with a raw string */
 template<typename CharType, int32 CharCount>
 inline bool operator<(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     return (RHS.Compare(LHS) < 0);
 }
 
-/* Compares two containers by comparing each element, returns true if all is equal */
 template<typename CharType, int32 CharCount>
 inline bool operator<(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
@@ -1271,56 +1826,48 @@ inline bool operator<=(const TStaticString<CharType, CharCount>& LHS, const Char
     return (LHS.Compare(RHS) <= 0);
 }
 
-/* Compares with a raw string */
 template<typename CharType, int32 CharCount>
 inline bool operator<=(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     return (RHS.Compare(LHS) <= 0);
 }
 
-/* Compares two containers by comparing each element, returns true if all is equal */
 template<typename CharType, int32 CharCount>
 inline bool operator<=(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     return (LHS.Compare(RHS) <= 0);
 }
 
-/* Compares with a raw string */
 template<typename CharType, int32 CharCount>
 inline bool operator>(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) > 0);
 }
 
-/* Compares with a raw string */
 template<typename CharType, int32 CharCount>
 inline bool operator>(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     return (RHS.Compare(LHS) > 0);
 }
 
-/* Compares two containers by comparing each element, returns true if all is equal */
 template<typename CharType, int32 CharCount>
 inline bool operator>(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     return (LHS.Compare(RHS) > 0);
 }
 
-/* Compares with a raw string */
 template<typename CharType, int32 CharCount>
 inline bool operator>=(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
     return (LHS.Compare(RHS) >= 0);
 }
 
-/* Compares with a raw string */
 template<typename CharType, int32 CharCount>
 inline bool operator>=(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     return (RHS.Compare(LHS) >= 0);
 }
 
-/* Compares two containers by comparing each element, returns true if all is equal */
 template<typename CharType, int32 CharCount>
 inline bool operator>=(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {

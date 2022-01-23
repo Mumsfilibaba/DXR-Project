@@ -17,14 +17,16 @@
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-CConsoleCommand GToggleFullscreen;
-CConsoleCommand GExit;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
 ENGINE_API CEngine* GEngine;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ConsoleCommands
+
+CAutoConsoleCommand GToggleFullscreen("viewport.ToggleFullscreen");
+CAutoConsoleCommand GExit("engine.Exit", CExecutedDelegateType::CreateRaw(GEngine, &CEngine::Exit));
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Engine
 
 CEngine* CEngine::Make()
 {
@@ -55,7 +57,6 @@ bool CEngine::Init()
         MainWindow->Show(false);
 
         GToggleFullscreen.GetExecutedDelgate().AddRaw(MainWindow.Get(), &CPlatformWindow::ToggleFullscreen);
-        INIT_CONSOLE_COMMAND("a.ToggleFullscreen", &GToggleFullscreen);
     }
     else
     {
@@ -73,9 +74,6 @@ bool CEngine::Init()
     }
 
     Application.RegisterUser(User);
-
-    GExit.GetExecutedDelgate().AddRaw(this, &CEngine::Exit);
-    INIT_CONSOLE_COMMAND("a.Exit", &GExit);
 
     // Create standard textures
     uint8 Pixels[] =

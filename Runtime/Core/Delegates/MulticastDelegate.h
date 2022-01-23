@@ -5,9 +5,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 /* Macros for declaring multi-cast delegate types */
 
-#define DECLARE_MULTICAST_DELEGATE(DelegateName, ...)           \
-    class DelegateName : public TMulticastDelegate<__VA_ARGS__> \
-    {                                                           \
+#define DECLARE_MULTICAST_DELEGATE(DelegateName, ...)                          \
+    /* The type pf delegates that will be executed by the multicast-delegate*/ \
+    typedef TDelegate<void(__VA_ARGS__)> DelegateName##Type;                   \
+    /* Multicast-delegate type */                                              \
+    class DelegateName : public TMulticastDelegate<__VA_ARGS__>                \
+    {                                                                          \
     };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -23,11 +26,11 @@ class TMulticastDelegate : public CMulticastDelegateBase
     template<typename... PayloadTypes>
     using FunctionType = typename TFunctionType<void(ArgTypes..., PayloadTypes...)>::Type;
 
-    template<typename ClassType>
-    using MemberFunctionType = typename TMemberFunctionType<false, ClassType, void(ArgTypes...)>::Type;
+    template<typename ClassType, typename... PayloadTypes>
+    using MemberFunctionType = typename TMemberFunctionType<false, ClassType, void(ArgTypes..., PayloadTypes...)>::Type;
 
-    template<typename ClassType>
-    using ConstMemberFunctionType = typename TMemberFunctionType<true, ClassType, void(ArgTypes...)>::Type;
+    template<typename ClassType, typename... PayloadTypes>
+    using ConstMemberFunctionType = typename TMemberFunctionType<true, ClassType, void(ArgTypes..., PayloadTypes...)>::Type;
 
 public:
     using Super::UnbindAll;
@@ -49,61 +52,106 @@ private:
 
 public:
 
-    /* Empty constructor */
+    /**
+     * Default constructor
+     */
     FORCEINLINE TMulticastDelegate()
         : Super()
     {
     }
 
-    /* Bind "normal" function */
+    /**
+     * Add a function to the delegate
+     *
+     * @param Function: Function to bind to the delegate
+     * @param Payload: Arguments to bind to the delegate
+     */
     template<typename... PayloadTypes>
     FORCEINLINE CDelegateHandle AddStatic(FunctionType<PayloadTypes...> Function, PayloadTypes... Payload)
     {
         return Super::AddDelegate(DelegateType::template CreateStatic<PayloadTypes...>(Function, Forward<PayloadTypes>(Payload)...));
     }
 
-    /* Bind member function */
+    /**
+     * Add a member-function to the delegate
+     *
+     * @param This: Pointer to an instance to bind to the delegate
+     * @param Function: MemberFunction to bind to the delegate
+     * @param Payload: Arguments to bind to the delegate
+     */
     template<typename InstanceType, typename... PayloadTypes>
-    FORCEINLINE CDelegateHandle AddRaw(InstanceType* This, MemberFunctionType<InstanceType> Function, PayloadTypes... Payload)
+    FORCEINLINE CDelegateHandle AddRaw(InstanceType* This, MemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
     {
         return Super::AddDelegate(DelegateType::template CreateRaw<InstanceType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
     }
 
-    /* Bind member function */
+    /**
+     * Add a member-function to the delegate
+     *
+     * @param This: Pointer to an instance to bind to the delegate
+     * @param Function: MemberFunction to bind to the delegate
+     * @param Payload: Arguments to bind to the delegate
+     */
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
-    FORCEINLINE CDelegateHandle AddRaw(InstanceType* This, MemberFunctionType<ClassType> Function, PayloadTypes... Payload)
+    FORCEINLINE CDelegateHandle AddRaw(InstanceType* This, MemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
     {
         return Super::AddDelegate(DelegateType::template CreateRaw<InstanceType, ClassType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
     }
 
-    /* Bind const member function */
+    /**
+     * Add a const member-function to the delegate
+     *
+     * @param This: Pointer to an instance to bind to the delegate
+     * @param Function: MemberFunction to bind to the delegate
+     * @param Payload: Arguments to bind to the delegate
+     */
     template<typename InstanceType, typename... PayloadTypes>
-    FORCEINLINE CDelegateHandle AddRaw(InstanceType* This, ConstMemberFunctionType<InstanceType> Function, PayloadTypes... Payload)
+    FORCEINLINE CDelegateHandle AddRaw(InstanceType* This, ConstMemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
     {
         return Super::AddDelegate(DelegateType::template CreateRaw<InstanceType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
     }
 
-    /* Bind const member function */
+    /**
+     * Add a const member-function to the delegate
+     *
+     * @param This: Pointer to an instance to bind to the delegate
+     * @param Function: MemberFunction to bind to the delegate
+     * @param Payload: Arguments to bind to the delegate
+     */
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
-    FORCEINLINE CDelegateHandle AddRaw(InstanceType* This, ConstMemberFunctionType<ClassType> Function, PayloadTypes... Payload)
+    FORCEINLINE CDelegateHandle AddRaw(InstanceType* This, ConstMemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
     {
         return Super::AddDelegate(DelegateType::template CreateRaw<InstanceType, ClassType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
     }
 
-    /* Bind Lambda or other functor */
+    /**
+     * Bind a lambda to the delegate
+     *
+     * @param Functor: Functor to bind to the delegate
+     * @param Payload: Arguments to bind to the delegate
+     */
     template<typename FunctorType, typename... PayloadTypes>
     FORCEINLINE CDelegateHandle AddLambda(FunctorType Functor, PayloadTypes... Payload)
     {
         return Super::AddDelegate(DelegateType::template CreateLambda<FunctorType, PayloadTypes...>(Functor, Forward<PayloadTypes>(Payload)...));
     }
 
-    /* Add a "standard" delegate to the multicast delegate */
+    /**
+     * Add any delegate
+     * 
+     * @param Delegate: Delegate to add
+     * @return: Returns the delegate-handle of the added delegate
+     */
     FORCEINLINE CDelegateHandle Add(const DelegateType& Delegate)
     {
         return Super::AddDelegate(Delegate);
     }
 
-    /* Broadcast to all bound delegates */
+    /**
+     * Execute all bound delegates
+     * 
+     * @param Args: Arguments for the function-calls
+     */
     FORCEINLINE void Broadcast(ArgTypes... Args)
     {
         Super::Lock();

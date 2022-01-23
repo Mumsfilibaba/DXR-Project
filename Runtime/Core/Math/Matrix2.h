@@ -9,7 +9,7 @@ class VECTOR_ALIGN CMatrix2
 {
 public:
 
-    /* Default constructor (Initialize components to zero) */
+    /** Default constructor (Initialize components to zero) */
     FORCEINLINE CMatrix2() noexcept;
 
     /**

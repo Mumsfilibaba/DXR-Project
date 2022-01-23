@@ -10,29 +10,24 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console commands for the console
 
-CConsoleCommand GClearHistory;
+CAutoConsoleCommand GClearHistory("ClearHistory", CExecutedDelegateType::CreateRaw(&CConsoleManager::Get(), &CConsoleManager::ClearHistory));
 
-TConsoleVariable<CString> GEcho;
+TAutoConsoleVariable<CString> GEcho("Echo", "", CConsoleVariableChangedDelegateType::CreateLambda([](IConsoleVariable* InVariable) -> void
+{
+    if (InVariable->IsString())
+    {
+        CConsoleManager& ConsoleManager = CConsoleManager::Get();
+        ConsoleManager.PrintMessage(InVariable->GetString(), EConsoleSeverity::Info);
+    }
+}));
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ConsoleManager
 
-CConsoleManager CConsoleManager::Instance;
-
-void CConsoleManager::Initialize()
+CConsoleManager& CConsoleManager::Get()
 {
-    GClearHistory.GetExecutedDelgate().AddRaw(&Instance, &CConsoleManager::ClearHistory);
-    INIT_CONSOLE_COMMAND("ClearHistory", &GClearHistory);
-
-    GEcho.GetChangedDelegate().AddLambda([](IConsoleVariable* InVariable) -> void
-    {
-        if (InVariable->IsString())
-        {
-            Instance.PrintMessage(InVariable->GetString(), EConsoleSeverity::Info);
-        }
-    });
-
-    INIT_CONSOLE_VARIABLE("Echo", &GEcho);
+    static CConsoleManager Instance;
+    return Instance;
 }
 
 void CConsoleManager::RegisterCommand(const CString& Name, IConsoleCommand* Command)
@@ -49,6 +44,21 @@ void CConsoleManager::RegisterVariable(const CString& Name, IConsoleVariable* Va
     {
         LOG_WARNING("ConsoleVariable '" + Name + "' is already registered");
     }
+}
+
+void CConsoleManager::UnregisterObject(const CString& Name)
+{
+    auto ExistingObject = ConsoleObjects.find(Name);
+    if (ExistingObject == ConsoleObjects.end())
+    {
+        ConsoleObjects.erase(ExistingObject);
+    }
+}
+
+bool CConsoleManager::IsConsoleObject(const CString& Name) const
+{
+    auto ExistingObject = ConsoleObjects.find(Name);
+    return ExistingObject != ConsoleObjects.end();
 }
 
 IConsoleCommand* CConsoleManager::FindCommand(const CString& Name)
@@ -101,6 +111,7 @@ void CConsoleManager::PrintMessage(const CString& Message, EConsoleSeverity Seve
 void CConsoleManager::ClearHistory()
 {
     History.Clear();
+    ConsoleMessages.Clear();
 }
 
 void CConsoleManager::FindCandidates(const CStringView& CandidateName, TArray<TPair<IConsoleObject*, CString>>& OutCandidates)
@@ -132,61 +143,61 @@ void CConsoleManager::FindCandidates(const CStringView& CandidateName, TArray<TP
     }
 }
 
-void CConsoleManager::Execute(const CString& CmdString)
+void CConsoleManager::Execute(const CString& Command)
 {
-    PrintMessage(CmdString, EConsoleSeverity::Info);
+    PrintMessage(Command, EConsoleSeverity::Info);
 
     // Erase history
-    History.Emplace(CmdString);
+    History.Emplace(Command);
     if (History.Size() > HistoryLength)
     {
         History.RemoveAt(History.StartIterator());
     }
 
-    int32 Pos = CmdString.FindOneOf(" ");
+    int32 Pos = Command.FindOneOf(" ");
     if (Pos == CString::NPos)
     {
-        IConsoleCommand* Command = FindCommand(CmdString);
-        if (!Command)
+        IConsoleCommand* CommandObject = FindCommand(Command);
+        if (!CommandObject)
         {
-            PrintMessage("'" + CmdString + "' is not a registered command", EConsoleSeverity::Error);
+            PrintMessage("'" + Command + "' is not a registered command", EConsoleSeverity::Error);
         }
         else
         {
-            Command->Execute();
+            CommandObject->Execute();
         }
     }
     else
     {
-        CString VariableName(CmdString.CStr(), Pos);
+        CString VariableName(Command.CStr(), Pos);
 
-        IConsoleVariable* Variable = FindVariable(VariableName);
-        if (!Variable)
+        IConsoleVariable* VariableObject = FindVariable(VariableName);
+        if (!VariableObject)
         {
-            PrintMessage("'" + CmdString + "' is not a registered variable", EConsoleSeverity::Error);
+            PrintMessage("'" + Command + "' is not a registered variable", EConsoleSeverity::Error);
             return;
         }
 
         Pos++;
 
-        CString Value(CmdString.CStr() + Pos, CmdString.Length() - Pos);
+        CString Value(Command.CStr() + Pos, Command.Length() - Pos);
         if (std::regex_match(Value.CStr(), std::regex("[-]?[0-9]+")))
         {
-            Variable->SetString(Value);
+            VariableObject->SetString(Value);
         }
-        else if (std::regex_match(Value.CStr(), std::regex("[-]?[0-9]*[.][0-9]+")) && Variable->IsFloat())
+        else if (std::regex_match(Value.CStr(), std::regex("[-]?[0-9]*[.][0-9]+")) && VariableObject->IsFloat())
         {
-            Variable->SetString(Value);
+            VariableObject->SetString(Value);
         }
-        else if (std::regex_match(Value.CStr(), std::regex("(false)|(true)")) && Variable->IsBool())
+        else if (std::regex_match(Value.CStr(), std::regex("(false)|(true)")) && VariableObject->IsBool())
         {
-            Variable->SetString(Value);
+            VariableObject->SetString(Value);
         }
         else
         {
-            if (Variable->IsString())
+            if (VariableObject->IsString())
             {
-                Variable->SetString(Value);
+                VariableObject->SetString(Value);
             }
             else
             {

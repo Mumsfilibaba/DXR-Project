@@ -8,17 +8,17 @@
 
 #include <imgui.h>
 
-TConsoleVariable<bool> GDrawFrameProfiler(false);
-TConsoleVariable<bool> GDrawFps(false);
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-variables
+
+TAutoConsoleVariable<bool> GDrawFps("renderer.DrawFps", false);
+TAutoConsoleVariable<bool> GDrawFrameProfiler("renderer.DrawFrameProfiler", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FrameProfilerWindow
 
 TSharedRef<CFrameProfilerWindow> CFrameProfilerWindow::Make()
 {
-    // Console Variables
-    INIT_CONSOLE_VARIABLE("r.DrawFps", &GDrawFps);
-    INIT_CONSOLE_VARIABLE("r.DrawFrameProfiler", &GDrawFrameProfiler);
-
     return dbg_new CFrameProfilerWindow();
 }
 

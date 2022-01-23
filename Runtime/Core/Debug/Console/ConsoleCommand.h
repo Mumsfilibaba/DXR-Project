@@ -15,11 +15,15 @@ public:
     {
     }
 
+    CConsoleCommand(const CExecutedDelegateType& Delegate)
+        : ExecuteDelegate()
+    {
+        ExecuteDelegate.Add(Delegate);
+    }
+
     virtual ~CConsoleCommand() = default;
 
-    /* Cast to a console command */
     virtual IConsoleCommand*  AsCommand() override { return this; }
-    /* Cast to a console variable */
     virtual IConsoleVariable* AsVariable() override { return nullptr; }
 
     // TODO: Add parameters to console commands

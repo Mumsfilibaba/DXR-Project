@@ -12,7 +12,22 @@
 #include "Engine/Scene/Scene.h"
 #include "Engine/Resources/Material.h"
 
-/* Class representing the engine */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Engine API
+
+#if MONOLITHIC_BUILD
+#define ENGINE_API
+#else
+#if ENGINE_IMPL
+#define ENGINE_API MODULE_EXPORT
+#else
+#define ENGINE_API MODULE_IMPORT
+#endif
+#endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Class representing the engine
+
 class ENGINE_API CEngine
 {
 public:

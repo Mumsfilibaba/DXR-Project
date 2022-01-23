@@ -111,27 +111,40 @@ class CORE_API CFrameProfiler
 {
 public:
 
-    static FORCEINLINE CFrameProfiler& Get() { return Instance; }
+    /**
+     * Retrieve the Frame-Profiler instance
+     * 
+     * @return: Returns a reference to the Frame-Profiler instance
+     */
+    static CFrameProfiler& Get();
 
-    /* Enables the collection of samples (Resume) */
+    /** Enables the collection of samples (Resume) */
     static void Enable();
 
-    /* Disables the collection of samples (Pause) */
+    /** Disables the collection of samples (Pause) */
     static void Disable();
 
-    /* Updates the profiler, should be called once per frame */
+    /** Updates the profiler, should be called once per frame */
     void Tick();
 
-    /* Resets all the samples */
+    /** Resets all the samples */
     void Reset();
 
-    /* Starts a scope for a function */
+    /**
+     * Starts a scope for a function 
+     * 
+     * @param Name: Name of the scope
+     */ 
     void BeginTraceScope(const char* Name);
 
-    /* Ends a scope for a function */
+    /**
+     * Ends a scope for a function
+     *
+     * @param Name: Name of the scope
+     */
     void EndTraceScope(const char* Name);
 
-    /* CPU Profiler samples */
+    /** CPU Profiler samples */
     void GetCPUSamples(ProfileSamplesTable& OutCPUSamples);
 
     FORCEINLINE int32 GetFramesPerSecond() const
@@ -146,9 +159,6 @@ public:
 
 private:
 
-    CFrameProfiler() = default;
-    ~CFrameProfiler() = default;
-
     SProfileSample CPUFrameTime;
 
     CTimer Clock;
@@ -159,8 +169,6 @@ private:
     bool bEnabled = true;
 
     Lockable<ProfileSamplesTable> CPUSamples;
-
-    static CFrameProfiler Instance;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

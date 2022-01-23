@@ -6,7 +6,10 @@
 
 #include "Engine/Scene/Camera.h"
 
-TConsoleVariable<float> GSunSize(0.5f);
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-variable
+
+TAutoConsoleVariable<float> GSunSize("scene.SunSize", 0.5f);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // DirectionalLight
@@ -22,7 +25,6 @@ CDirectionalLight::CDirectionalLight()
     CORE_OBJECT_INIT();
 
     // TODO: Probably move to scene
-    INIT_CONSOLE_VARIABLE("scene.SunSize", &GSunSize);
     GSunSize.GetChangedDelegate().AddLambda([this](IConsoleVariable* SunLight)
     {
         if (SunLight && SunLight->IsFloat())

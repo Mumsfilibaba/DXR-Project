@@ -11,10 +11,10 @@ public:
     CTimer();
     ~CTimer() = default;
 
-    /* Measure time between this and last call to tick */
+    /** Measure time between this and last call to tick */
     void Tick();
 
-    /* Rests the time to zero */
+    /** Resets the time to zero */
     FORCEINLINE void Reset()
     {
         DeltaTime = CTimestamp(0);

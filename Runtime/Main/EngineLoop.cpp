@@ -105,9 +105,6 @@ bool CEngineLoop::PreInitialize()
     LOG_INFO("ProjectPath=" + CString(CProjectManager::GetProjectPath()));
 #endif
 
-    // Console
-    CConsoleManager::Initialize();
-
     // Init platform specific thread utilities
     if (!PlatformThreadMisc::Initialize())
     {

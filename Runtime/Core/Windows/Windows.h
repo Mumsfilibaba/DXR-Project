@@ -24,6 +24,43 @@
 #undef OutputDebugString
 #endif
 
+#if defined(InterlockedAdd)
+#undef InterlockedAdd
+#endif
+
+#if defined(InterlockedSub)
+#undef InterlockedSub
+#endif
+
+#if defined(InterlockedAnd)
+#undef InterlockedAnd
+#endif
+
+#if defined(InterlockedOr)
+#undef InterlockedOr
+#endif
+
+#if defined(InterlockedXor)
+#undef InterlockedXor
+#endif
+
+#if defined(InterlockedIncrement)
+#undef InterlockedIncrement
+#endif
+
+#if defined(InterlockedDecrement)
+#undef InterlockedDecrement
+#endif
+
+#if defined(InterlockedCompareExchange)
+#undef InterlockedCompareExchange
+#endif
+
+#if defined(InterlockedExchange)
+#undef InterlockedExchange
+#endif
+
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Windows-version helper defines
 

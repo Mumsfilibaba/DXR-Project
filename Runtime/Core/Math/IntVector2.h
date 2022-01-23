@@ -8,7 +8,7 @@ class CIntVector2
 {
 public:
 
-    /* Default constructor (Initialize components to zero) */
+    /** Default constructor (Initialize components to zero) */
     FORCEINLINE CIntVector2() noexcept;
 
     /**

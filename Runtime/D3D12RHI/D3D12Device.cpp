@@ -190,7 +190,6 @@ CD3D12Device::~CD3D12Device()
 
 bool CD3D12Device::Init()
 {
-    // Load DLLs
     DXGILib = LoadLibrary("dxgi.dll");
     if (!DXGILib)
     {
@@ -225,7 +224,6 @@ bool CD3D12Device::Init()
     ND3D12Functions::D3D12CreateRootSignatureDeserializer = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>("D3D12CreateRootSignatureDeserializer", D3D12Lib);
     ND3D12Functions::D3D12CreateVersionedRootSignatureDeserializer = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>("D3D12CreateVersionedRootSignatureDeserializer", D3D12Lib);
 
-    // Start creation of device
     if (bEnableDebugLayer)
     {
         PIXLib = LoadLibrary("WinPixEventRuntime.dll");
@@ -242,7 +240,7 @@ bool CD3D12Device::Init()
         TComPtr<ID3D12Debug> DebugInterface;
         if (FAILED(ND3D12Functions::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
         {
-            D3D12_ERROR("[CD3D12Device]: FAILED to enable DebugLayer");
+            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to enable DebugLayer");
             return false;
         }
         else
@@ -260,7 +258,7 @@ bool CD3D12Device::Init()
             }
             else
             {
-                D3D12_ERROR("[CD3D12Device]: FAILED to enable DRED");
+                D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to enable DRED");
             }
         }
 
@@ -269,7 +267,7 @@ bool CD3D12Device::Init()
             TComPtr<ID3D12Debug1> DebugInterface1;
             if (FAILED(DebugInterface.GetAs(&DebugInterface1)))
             {
-                D3D12_ERROR("[CD3D12Device]: FAILED to enable GPU- Validation");
+                D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to enable GPU- Validation");
                 return false;
             }
             else
@@ -278,12 +276,13 @@ bool CD3D12Device::Init()
             }
         }
 
-#if 0 // Only for certain SDKs
+        // TODO: Check for windows SDK version
+#if 0
         {
             TComPtr<ID3D12Debug5> DebugInterface5;
             if (FAILED(DebugInterface.GetAs(&DebugInterface5)))
             {
-                LOG_ERROR("[CD3D12Device]: FAILED to enable auto-naming of objects");
+                D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to enable auto-naming of objects");
             }
             else
             {
@@ -300,7 +299,7 @@ bool CD3D12Device::Init()
         }
         else
         {
-            D3D12_ERROR("[CD3D12Device]: FAILED to retrive InfoQueue");
+            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrieve InfoQueue");
         }
 
         TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysisInterface;
@@ -317,16 +316,15 @@ bool CD3D12Device::Init()
     // Create factory
     if (FAILED(NDXGIFunctions::CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
     {
-        D3D12_ERROR("[CD3D12Device]: FAILED to create factory");
+        D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to create factory");
         return false;
     }
     else
     {
-        // Retrieve newer factory interface
         TComPtr<IDXGIFactory5> Factory5;
         if (FAILED(Factory.GetAs(&Factory5)))
         {
-            LOG_ERROR("[CD3D12Device]: FAILED to retrive IDXGIFactory5");
+            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrive IDXGIFactory5");
             return false;
         }
         else
@@ -348,22 +346,20 @@ bool CD3D12Device::Init()
 
     // Choose adapter
     TComPtr<IDXGIAdapter1> TempAdapter;
-    for (UINT ID = 0; DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters1(ID, &TempAdapter); ID++)
+    for (uint32 ID = 0; DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters1(ID, &TempAdapter); ID++)
     {
         DXGI_ADAPTER_DESC1 Desc;
         if (FAILED(TempAdapter->GetDesc1(&Desc)))
         {
-            LOG_ERROR("[CD3D12Device]: FAILED to retrive DXGI_ADAPTER_DESC1");
+            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrive DXGI_ADAPTER_DESC1");
             return false;
         }
 
-        // Don't select the Basic Render Driver adapter.
         if (Desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
         {
             continue;
         }
 
-        // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
         if (SUCCEEDED(ND3D12Functions::D3D12CreateDevice(TempAdapter.Get(), MinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
         {
             AdapterID = ID;
@@ -378,7 +374,7 @@ bool CD3D12Device::Init()
 
     if (!TempAdapter)
     {
-        LOG_ERROR("[CD3D12Device]: FAILED to retrive adapter");
+        D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrive adapter");
         return false;
     }
     else
@@ -421,15 +417,13 @@ bool CD3D12Device::Init()
         }
     }
 
-    // Get DXR Interfaces
     if (FAILED(Device.GetAs<ID3D12Device5>(&DXRDevice)))
     {
-        LOG_ERROR("[CD3D12Device]: Failed to retrive DXR-Device");
+        D3D12_ERROR_ALWAYS("[CD3D12Device]: Failed to retrive DXR-Device");
         return false;
     }
 
-    // Determine maximum supported feature level for this device
-    static const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
+    const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
     {
         D3D_FEATURE_LEVEL_12_1,
         D3D_FEATURE_LEVEL_12_0,

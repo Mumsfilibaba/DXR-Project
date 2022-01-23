@@ -20,23 +20,25 @@
 #include "Renderer/Debug/GPUProfiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console-variables
 
-TConsoleVariable<bool> GEnableSSAO(true);
+TAutoConsoleVariable<bool> GEnableSSAO("renderer.EnableSSAO", true);
 
-TConsoleVariable<bool> GEnableFXAA(true);
-TConsoleVariable<bool> GFXAADebug(false);
+TAutoConsoleVariable<bool> GEnableFXAA("renderer.EnableFXAA", true);
+TAutoConsoleVariable<bool> GFXAADebug("renderer.FXAADebug", false);
 
-TConsoleVariable<bool> GEnableVariableRateShading(false);
+TAutoConsoleVariable<bool> GEnableVariableRateShading("renderer.EnableVariableRateShading", false);
 
-TConsoleVariable<bool> GPrePassEnabled(true);
-TConsoleVariable<bool> GDrawAABBs(false);
-TConsoleVariable<bool> GVSyncEnabled(false);
-TConsoleVariable<bool> GFrustumCullEnabled(true);
-TConsoleVariable<bool> GRayTracingEnabled(true);
+TAutoConsoleVariable<bool> GPrePassEnabled("renderer.EnablePrePass", true);
+TAutoConsoleVariable<bool> GDrawAABBs("renderer.EnableDrawAABBs", false);
+TAutoConsoleVariable<bool> GVSyncEnabled("renderer.EnableVerticalSync", false);
+TAutoConsoleVariable<bool> GFrustumCullEnabled("renderer.EnableFrustumCulling", true);
+TAutoConsoleVariable<bool> GRayTracingEnabled("renderer.EnableRayTracing", true);
 
 //static const uint32 ShadowMapSampleCount = 2;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CameraBufferDesc
 
 struct SCameraBufferDesc
 {
@@ -58,10 +60,9 @@ struct SCameraBufferDesc
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRenderer
 
 RENDERER_API CRenderer GRenderer;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 CRenderer::CRenderer()
     : WindowHandler(MakeShared<CRendererWindowHandler>())
@@ -70,16 +71,6 @@ CRenderer::CRenderer()
 
 bool CRenderer::Init()
 {
-    INIT_CONSOLE_VARIABLE("r.EnableSSAO", &GEnableSSAO);
-    INIT_CONSOLE_VARIABLE("r.EnableFXAA", &GEnableFXAA);
-    INIT_CONSOLE_VARIABLE("r.EnableVariableRateShading", &GEnableVariableRateShading);
-    INIT_CONSOLE_VARIABLE("r.EnablePrePass", &GPrePassEnabled);
-    INIT_CONSOLE_VARIABLE("r.EnableDrawAABBs", &GDrawAABBs);
-    INIT_CONSOLE_VARIABLE("r.EnableVerticalSync", &GVSyncEnabled);
-    INIT_CONSOLE_VARIABLE("r.EnableFrustumCulling", &GFrustumCullEnabled);
-    INIT_CONSOLE_VARIABLE("r.EnableRayTracing", &GRayTracingEnabled);
-    INIT_CONSOLE_VARIABLE("r.FXAADebug", &GFXAADebug);
-
     Resources.MainWindowViewport = RHICreateViewport(GEngine->MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
     if (!Resources.MainWindowViewport)
     {
