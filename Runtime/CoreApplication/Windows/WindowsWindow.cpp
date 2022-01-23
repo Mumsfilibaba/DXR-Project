@@ -8,6 +8,9 @@
 #include "CoreApplication/Platform/PlatformDebugMisc.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// WindowsWindow
+
 CWindowsWindow::CWindowsWindow(CWindowsApplication* InApplication)
     : CPlatformWindow()
     , Application(InApplication)
@@ -296,7 +299,7 @@ void CWindowsWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
 
     if (IsValid())
     {
-        UINT Flags = SWP_NOZORDER | SWP_NOACTIVATE;
+        uint32 Flags = SWP_NOZORDER | SWP_NOACTIVATE;
         if (!bMove)
         {
             Flags |= SWP_NOMOVE;
@@ -318,7 +321,7 @@ void CWindowsWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
         };
 
 #if PLATFORM_WINDOWS_10_ANNIVERSARY
-        UINT WindowDPI = GetDpiForWindow(Window);
+        uint32 WindowDPI = GetDpiForWindow(Window);
         AdjustWindowRectExForDpi(&ClientRect, Style, false, StyleEx, WindowDPI);
 #else
         AdjustWindowRectEx(&ClientRect, Style, false, StyleEx);
@@ -372,7 +375,7 @@ void CWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) cons
 
     if (GetMonitorInfoA(Monitor, &MonitorInfo))
     {
-        OutWidth = MonitorInfo.rcMonitor.right - MonitorInfo.rcMonitor.left;
+        OutWidth  = MonitorInfo.rcMonitor.right  - MonitorInfo.rcMonitor.left;
         OutHeight = MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top;
     }
     else
@@ -412,6 +415,36 @@ uint32 CWindowsWindow::GetHeight() const
     }
 
     return 0;
+}
+
+void CWindowsWindow::SetPlatformhandle(PlatformWindowHandle InPlatformHandle)
+{
+    if (IsWindow(InPlatformHandle))
+    {
+        Window = InPlatformHandle;
+
+        Style   = GetWindowLong(Window, GWL_STYLE);
+        StyleEx = GetWindowLong(Window, GWL_EXSTYLE);
+
+        // Check if the window with high probability is in fullscreen mode
+        uint32 FullscreenWidth;
+        uint32 FullscreenHeight;
+        GetFullscreenInfo(FullscreenWidth, FullscreenHeight);
+
+        SWindowShape WindowShape;
+        GetWindowShape(WindowShape);
+
+        const LONG BorderlessStyleMask   = (~WS_BORDER | ~WS_DLGFRAME | ~WS_THICKFRAME);
+        const LONG BorderlessStyleExMask = ~WS_EX_WINDOWEDGE;
+
+        const bool bHasFullscreenSize  = (FullscreenWidth == WindowShape.Width) && (FullscreenHeight == WindowShape.Height);
+        const bool bHasFullscreenStyle = ((Style & BorderlessStyleMask) == 0) && ((Style & BorderlessStyleExMask) == 0); 
+        bIsFullscreen = bHasFullscreenSize && bHasFullscreenStyle; 
+    }
+    else
+    {
+        LOG_ERROR("[CWindowsWindow]: Tried to set an invalid WindowHandle")
+    }
 }
 
 #endif

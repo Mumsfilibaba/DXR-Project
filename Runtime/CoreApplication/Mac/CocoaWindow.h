@@ -5,6 +5,9 @@
 
 class CMacApplication;
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Cocoa window which is an NSWindow and NSWindowDelegate
+
 @interface CCocoaWindow : NSWindow<NSWindowDelegate>
 {
     CMacApplication* Application;

@@ -2,7 +2,7 @@
 #include "Core/RefCounted.h"
 #include "Core/Containers/String.h"
 
-#include "CoreApplication/CoreApplicationModule.h"
+#include "CoreApplication/CoreApplication.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
@@ -150,8 +150,11 @@ public:
     /* Retrieve the height of the window */
     virtual uint32 GetHeight() const { return 0; }
 
+    /* Set the native window handle */
+    virtual void SetPlatformhandle(PlatformWindowHandle InPlatformHandle) {}
+
     /* Retrieve the native handle */
-    virtual PlatformWindowHandle GetNativeHandle() const { return nullptr; }
+    virtual PlatformWindowHandle GetPlatformHandle() const { return nullptr; }
 
     /* Retrieve the style of the window */
     FORCEINLINE SWindowStyle GetStyle() const { return StyleParams; }

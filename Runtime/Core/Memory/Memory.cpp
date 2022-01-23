@@ -7,6 +7,9 @@
 #include <crtdbg.h>
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Memory
+
 void* CMemory::Malloc(uint64 Size) noexcept
 {
     // Since malloc is not guaranteed to return nullptr, we check for it here

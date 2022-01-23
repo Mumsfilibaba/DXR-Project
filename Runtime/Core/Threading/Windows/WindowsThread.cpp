@@ -3,6 +3,19 @@
 
 #include "Core/Utilities/StringUtilities.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// WindowsThread
+
+TSharedRef<CWindowsThread> CWindowsThread::Make(ThreadFunction InFunction)
+{
+    return dbg_new CWindowsThread(InFunction);
+}
+
+TSharedRef<CWindowsThread> CWindowsThread::Make(ThreadFunction InFunction, const CString & InName)
+{
+    return dbg_new CWindowsThread(InFunction, InName);
+}
+
 CWindowsThread::CWindowsThread(ThreadFunction InFunction)
     : CPlatformThread()
     , Thread(0)

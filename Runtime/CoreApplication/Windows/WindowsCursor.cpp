@@ -5,6 +5,9 @@
 
 #include "Core/Containers/SharedRef.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// WindowsCursor
+
 TSharedPtr<CWindowsCursor> CWindowsCursor::Make()
 {
     return TSharedPtr<CWindowsCursor>(dbg_new CWindowsCursor());

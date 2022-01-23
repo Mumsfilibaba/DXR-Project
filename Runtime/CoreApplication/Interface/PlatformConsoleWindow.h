@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/String.h"
 
-#include "CoreApplication/CoreApplicationModule.h"
+#include "CoreApplication/CoreApplication.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)

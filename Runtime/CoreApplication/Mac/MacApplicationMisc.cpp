@@ -7,24 +7,24 @@
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
 
-void CMacApplicationMisc::MessageBox( const CString& Title, const CString& Message )
+void CMacApplicationMisc::MessageBox(const CString& Title, const CString& Message)
 {
-    CFStringRef CaptionRef = CFStringCreateWithCString( 0, Title.CStr(),   static_cast<CFStringEncoding>(Title.Length()) );
-    CFStringRef TextRef    = CFStringCreateWithCString( 0, Message.CStr(), static_cast<CFStringEncoding>(Message.Length()) );
+    CFStringRef CaptionRef = CFStringCreateWithCString(0, Title.CStr(),   static_cast<CFStringEncoding>(Title.Length()));
+    CFStringRef TextRef    = CFStringCreateWithCString(0, Message.CStr(), static_cast<CFStringEncoding>(Message.Length()));
         
     CFOptionFlags Result = 0;
     CFOptionFlags Flags  = kCFUserNotificationStopAlertLevel;
-    CFUserNotificationDisplayAlert( 0, Flags, 0, 0, 0, CaptionRef, TextRef, 0, 0, 0, &Result );
+    CFUserNotificationDisplayAlert(0, Flags, 0, 0, 0, CaptionRef, TextRef, 0, 0, 0, &Result);
     
-    CFRelease( CaptionRef );
-    CFRelease( TextRef );
+    CFRelease(CaptionRef);
+    CFRelease(TextRef);
 }
 
-void CMacApplicationMisc::PumpMessages( bool bUntilEmpty )
+void CMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
     SCOPED_AUTORELEASE_POOL();
     
-    Assert( NSApp != nullptr );
+    Assert(NSApp != nullptr);
 	
     NSEvent* Event = nullptr;
     do
@@ -36,7 +36,7 @@ void CMacApplicationMisc::PumpMessages( bool bUntilEmpty )
         }
         
         [NSApp sendEvent:Event];
-    } while ( bUntilEmpty );
+    } while (bUntilEmpty);
 }
 
 SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
@@ -69,7 +69,7 @@ SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
         Mask |= EModifierFlag::ModifierFlag_CapsLock;
     }
         
-    return SModifierKeyState( Mask );
+    return SModifierKeyState(Mask);
 }
 
 #endif

@@ -1,5 +1,5 @@
 #pragma once
-#include "CoreModule.h"
+#include "Core.h"
 
 #include "Core/Threading/AtomicInt.h"
 #include "Core/Templates/IsBaseOf.h"

@@ -5,6 +5,9 @@
 
 #include <mach/mach_time.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Mac specific interface for high performance counters
+
 class CMacTime : public CPlatformTime
 {
 public:
@@ -19,11 +22,11 @@ public:
     static FORCEINLINE uint64 QueryPerformanceFrequency()
     {
         mach_timebase_info_data_t TimeBaseInfo = {};
-        mach_timebase_info( &TimeBaseInfo );
+        mach_timebase_info(&TimeBaseInfo);
 
         // Ensure that the frequency returns nanoseconds
         constexpr uint64 NANOSECONDS = 1000 * 1000 * 1000;
-        return ((NANOSECONDS * uint64( TimeBaseInfo.numer )) / uint64( TimeBaseInfo.denom ));
+        return ((NANOSECONDS * uint64(TimeBaseInfo.numer)) / uint64(TimeBaseInfo.denom));
     }
 };
 

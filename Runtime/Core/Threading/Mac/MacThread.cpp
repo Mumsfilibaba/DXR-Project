@@ -4,30 +4,30 @@
 
 #include "Core/Logging/Log.h"
 
-CMacThread::CMacThread( ThreadFunction InFunction )
+CMacThread::CMacThread(ThreadFunction InFunction)
     : CPlatformThread()
     , Thread()
-    , Function( InFunction )
+    , Function(InFunction)
     , Name()
-    , bIsRunning( false )
+    , bIsRunning(false)
 {
 }
 
-CMacThread::CMacThread( ThreadFunction InFunction, const CString& InName )
+CMacThread::CMacThread(ThreadFunction InFunction, const CString& InName)
     : CPlatformThread()
     , Thread()
-    , Function( InFunction )
-    , Name( InName )
-    , bIsRunning( false )
+    , Function(InFunction)
+    , Name(InName)
+    , bIsRunning(false)
 {
 }
 
 bool CMacThread::Start()
 {
-    int Result = pthread_create( &Thread, NULL, CMacThread::ThreadRoutine, reinterpret_cast<void*>(this) );
-    if ( Result )
+    int Result = pthread_create(&Thread, NULL, CMacThread::ThreadRoutine, reinterpret_cast<void*>(this));
+    if (Result)
     {
-        LOG_ERROR( "[CMacThread] Failed to create thread" );
+        LOG_ERROR("[CMacThread] Failed to create thread");
         return false;
     }
     else
@@ -38,19 +38,19 @@ bool CMacThread::Start()
 
 void CMacThread::WaitUntilFinished()
 {
-    pthread_join( Thread, NULL );
+    pthread_join(Thread, NULL);
 }
 
-void CMacThread::SetName( const CString& InName )
+void CMacThread::SetName(const CString& InName)
 {
     // The name can always be set from the current thread
     const bool bCurrentThreadIsMyself = GetPlatformHandle() == CMacThreadMisc::GetThreadHandle();
-    if ( bCurrentThreadIsMyself )
+    if (bCurrentThreadIsMyself)
     {
         Name = InName;
-        pthread_setname_np( Name.CStr() );
+        pthread_setname_np(Name.CStr());
     }
-    else if ( !bIsRunning )
+    else if (!bIsRunning)
     {
         Name = InName;
     }
@@ -61,22 +61,22 @@ PlatformThreadHandle CMacThread::GetPlatformHandle()
     return reinterpret_cast<PlatformThreadHandle>(Thread);
 }
 
-void* CMacThread::ThreadRoutine( void* ThreadParameter )
+void* CMacThread::ThreadRoutine(void* ThreadParameter)
 {
     CMacThread* CurrentThread = reinterpret_cast<CMacThread*>(ThreadParameter);
-    if ( CurrentThread )
+    if (CurrentThread)
     {
         // Can only set the current thread's name
-        if ( !CurrentThread->Name.IsEmpty() )
+        if (!CurrentThread->Name.IsEmpty())
         {
-            pthread_setname_np( CurrentThread->Name.CStr() );
+            pthread_setname_np(CurrentThread->Name.CStr());
         }
 
-        Assert( CurrentThread->Function != nullptr );
+        Assert(CurrentThread->Function != nullptr);
         CurrentThread->Function();
     }
 
-    pthread_exit( NULL );
+    pthread_exit(NULL);
     return nullptr;
 }
 #endif

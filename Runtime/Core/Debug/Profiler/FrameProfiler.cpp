@@ -2,6 +2,9 @@
 
 #include "Core/Threading/ScopedLock.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FrameProfiler
+
 CFrameProfiler CFrameProfiler::Instance;
 
 void CFrameProfiler::Tick()

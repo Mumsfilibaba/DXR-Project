@@ -2,7 +2,7 @@
 #include "Core/Input/ModifierKeyState.h"
 #include "Core/Containers/String.h"
 
-#include "CoreApplication/CoreApplicationModule.h"
+#include "CoreApplication/CoreApplication.h"
 
 #ifdef MessageBox
 #undef MessageBox
@@ -21,7 +21,7 @@
 // TODO: Enable other types of Modal windows for supported platforms
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for miscellaneous functions for application utilities
+// Platform interface for miscellaneous application utility functions
 
 class CPlatformApplicationMisc
 {

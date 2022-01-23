@@ -18,27 +18,28 @@
 class CMacWindow;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Holds information about an event or notification that occurs when calling PumpMessages and CMacApplication::Tick
 
 // TODO: Finish
 struct SMacApplicationEvent
 {
     FORCEINLINE SMacApplicationEvent()
-        : NotificationName( nullptr )
-        , Event( nullptr )
-        , Window( nullptr )
+        : NotificationName(nullptr)
+        , Event(nullptr)
+        , Window(nullptr)
 		, Size()
 		, Position()
-		, Character( uint32(-1) )
+		, Character(uint32(-1))
     {
     }
 
-    FORCEINLINE SMacApplicationEvent( const SMacApplicationEvent& Other )
-        : NotificationName( Other.NotificationName ? [Other.NotificationName retain] : nullptr )
-        , Event( Other.Event ? [Other.Event retain] : nullptr )
-        , Window( Other.Window ? [Other.Window retain] : nullptr )
-		, Size( Other.Size )
-		, Position( Other.Position )
-		, Character( Other.Character )
+    FORCEINLINE SMacApplicationEvent(const SMacApplicationEvent& Other)
+        : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nullptr)
+        , Event(Other.Event ? [Other.Event retain] : nullptr)
+        , Window(Other.Window ? [Other.Window retain] : nullptr)
+		, Size(Other.Size)
+		, Position(Other.Position)
+		, Character(Other.Character)
     {
     }
 
@@ -46,17 +47,17 @@ struct SMacApplicationEvent
     {
 		SCOPED_AUTORELEASE_POOL();
 		
-        if ( NotificationName )
+        if (NotificationName)
         {
             [NotificationName release];
         }
 
-        if ( Event )
+        if (Event)
         {
             [Event release];
         }
 
-        if ( Window )
+        if (Window)
         {
             [Window release];
         }
@@ -79,8 +80,8 @@ struct SMacApplicationEvent
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Mac specific implementation of the application interface
 
-/* Mac specific implementation of the application */
 class CMacApplication final : public CPlatformApplication
 {
 public:
@@ -98,10 +99,10 @@ public:
     virtual bool Initialize() override final;
 
     /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
-    virtual void Tick( float Delta ) override final;
+    virtual void Tick(float Delta) override final;
 
     /* Sets the window that is currently active */
-    virtual void SetActiveWindow( const TSharedRef<CPlatformWindow>& Window ) override final;
+    virtual void SetActiveWindow(const TSharedRef<CPlatformWindow>& Window) override final;
 
     /* Retrieves the window that is currently active */
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
@@ -110,16 +111,13 @@ public:
 	virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const override final;
 	
     /* Retrieves a from a NSWindow */
-    TSharedRef<CMacWindow> GetWindowFromNSWindow( NSWindow* Window ) const;
+    TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
 
     /* Store event for handling later in the main loop */
-    void DeferEvent( NSObject* EventOrNotificationObject );
+    void DeferEvent(NSObject* EventOrNotificationObject);
 	
-    /* Returs the native appdelegate */
-    FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const
-    {
-        return AppDelegate;
-    }
+    /* Returns the native appdelegate */
+    FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const { return AppDelegate; }
 
 private:
 
@@ -129,7 +127,7 @@ private:
     bool InitializeAppMenu();
 
     /* Handles a notification */
-    void HandleEvent( const SMacApplicationEvent& Notification );
+    void HandleEvent(const SMacApplicationEvent& Notification);
 
     /* Delegate to talk with macOS */
     CCocoaAppDelegate* AppDelegate = nullptr;

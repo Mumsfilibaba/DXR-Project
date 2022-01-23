@@ -48,47 +48,47 @@
 
 - (void) windowWillClose:(NSNotification*) InNotification
 {
-    Application->DeferEvent( InNotification );
+    Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidResize:(NSNotification*) InNotification
 {
-    Application->DeferEvent( InNotification );
+    Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidMove:(NSNotification*) InNotification
 {
-    Application->DeferEvent( InNotification );
+    Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidMiniaturize:(NSNotification*) InNotification
 {
-    Application->DeferEvent( InNotification );
+    Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidDeminiaturize:(NSNotification*) InNotification
 {
-    Application->DeferEvent( InNotification );
+    Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidEnterFullScreen:(NSNotification*) InNotification
 {
-    Application->DeferEvent( InNotification );
+    Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidExitFullScreen:(NSNotification*) InNotification
 {
-    Application->DeferEvent( InNotification );
+    Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidBecomeKey:(NSNotification*) InNotification
 {
-    Application->DeferEvent( InNotification );
+    Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidResignKey:(NSNotification*) InNotification
 {
-    Application->DeferEvent( InNotification );
+    Application->DeferEvent(InNotification);
 }
 
 @end

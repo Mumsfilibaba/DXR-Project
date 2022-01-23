@@ -3,6 +3,9 @@
 
 #include "Core/Threading/ScopedLock.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// WindowsConsoleWindow
+
 CWindowsConsoleWindow::CWindowsConsoleWindow()
     : ConsoleHandle(0)
 {

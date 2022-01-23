@@ -2,6 +2,9 @@
 
 #include "Platform/PlatformTime.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Timer
+
 CTimer::CTimer()
 {
     Frequency = PlatformTime::QueryPerformanceFrequency();

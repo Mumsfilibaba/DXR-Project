@@ -10,19 +10,10 @@ class CORE_API CWindowsThread final : public CPlatformThread
 {
 public:
 
-    // TODO: Move to Cpp
-
     /* Create a new thread */
-    static TSharedRef<CWindowsThread> Make(ThreadFunction InFunction)
-    {
-        return dbg_new CWindowsThread(InFunction);
-    }
-
+    static TSharedRef<CWindowsThread> Make(ThreadFunction InFunction);
     /* Create a new thread with a name */
-    static TSharedRef<CWindowsThread> Make(ThreadFunction InFunction, const CString & InName)
-    {
-        return dbg_new CWindowsThread(InFunction, InName);
-    }
+    static TSharedRef<CWindowsThread> Make(ThreadFunction InFunction, const CString & InName);
 
     /* Start thread-execution */
     virtual bool Start() override final;

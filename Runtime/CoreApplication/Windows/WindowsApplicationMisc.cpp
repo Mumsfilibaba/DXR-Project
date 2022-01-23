@@ -4,6 +4,9 @@
 
 #include "Core/Input/ModifierKeyState.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// WindowsApplicationMisc
+
 void CWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
     MSG Message;

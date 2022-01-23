@@ -22,10 +22,10 @@ See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
 
 TSharedPtr<CMacCursor> CMacCursor::Make()
 {
-	return TSharedPtr<CMacCursor>( dbg_new CMacCursor() );
+	return TSharedPtr<CMacCursor>(dbg_new CMacCursor());
 }
 
-void CMacCursor::SetCursor( ECursor Cursor )
+void CMacCursor::SetCursor(ECursor Cursor)
 {
     NSCursor* SelectedCursor = nullptr;
     switch(Cursor)
@@ -76,7 +76,7 @@ void CMacCursor::SetCursor( ECursor Cursor )
     [SelectedCursor set];
 }
 
-void CMacCursor::SetPosition( CPlatformWindow* InRelativeWindow, int32 x, int32 y ) const
+void CMacCursor::SetPosition(CPlatformWindow* InRelativeWindow, int32 x, int32 y) const
 {
     CGPoint NewPosition;
     if (InRelativeWindow)
@@ -94,13 +94,13 @@ void CMacCursor::SetPosition( CPlatformWindow* InRelativeWindow, int32 x, int32 
     
     CGWarpMouseCursorPosition(CGPointMake(NewPosition.x, CGDisplayBounds(CGMainDisplayID()).size.height - NewPosition.y - 1));
     
-    if ( bIsVisible )
+    if (bIsVisible)
     {
         CGAssociateMouseAndMouseCursorPosition(true);
     }
 }
 
-void CMacCursor::GetPosition( CPlatformWindow* InRelativeWindow, int32& OutX, int32& OutY ) const
+void CMacCursor::GetPosition(CPlatformWindow* InRelativeWindow, int32& OutX, int32& OutY) const
 {
     NSPoint CursorPosition;
     if (InRelativeWindow)
@@ -117,11 +117,11 @@ void CMacCursor::GetPosition( CPlatformWindow* InRelativeWindow, int32& OutX, in
     OutY = CursorPosition.y;
 }
 
-void CMacCursor::SetVisibility( bool bVisible )
+void CMacCursor::SetVisibility(bool bVisible)
 {
-    if ( bVisible )
+    if (bVisible)
     {
-        if (! bIsVisible )
+        if (! bIsVisible)
         {
             [NSCursor unhide];
 			bIsVisible = true;
@@ -129,7 +129,7 @@ void CMacCursor::SetVisibility( bool bVisible )
     }
     else
     {
-        if ( bIsVisible )
+        if (bIsVisible)
         {
             [NSCursor hide];
 			bIsVisible = false;

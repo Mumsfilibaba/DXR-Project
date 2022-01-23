@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CoreModule.h"
+#include "Core/Core.h"
 
 #include "CoreApplication/Interface/PlatformConsoleWindow.h"
 

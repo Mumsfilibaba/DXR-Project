@@ -8,6 +8,9 @@
 
 class CD3D12RHIComputePipelineState;
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12CommandList
+
 class CD3D12CommandList : public CD3D12DeviceChild
 {
 public:
@@ -283,20 +286,11 @@ public:
         CmdList->SetName(WideName.CStr());
     }
 
-    FORCEINLINE ID3D12CommandList* GetCommandList() const
-    {
-        return CmdList.Get();
-    }
+    FORCEINLINE ID3D12CommandList* GetCommandList() const { return CmdList.Get(); }
 
-    FORCEINLINE ID3D12GraphicsCommandList* GetGraphicsCommandList() const
-    {
-        return CmdList.Get();
-    }
+    FORCEINLINE ID3D12GraphicsCommandList* GetGraphicsCommandList() const { return CmdList.Get(); }
 
-    FORCEINLINE ID3D12GraphicsCommandList4* GetDXRCommandList() const
-    {
-        return CmdList5.Get();
-    }
+    FORCEINLINE ID3D12GraphicsCommandList4* GetDXRCommandList() const { return CmdList5.Get(); }
 
 private:
     TComPtr<ID3D12GraphicsCommandList>  CmdList;

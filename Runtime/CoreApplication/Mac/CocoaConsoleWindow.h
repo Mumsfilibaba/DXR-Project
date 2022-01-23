@@ -9,6 +9,9 @@
 
 class CMacConsoleWindow;
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Specific cocoa console window
+
 @interface CCocoaConsoleWindow : NSWindow<NSWindowDelegate>
 {
 	CMacConsoleWindow* ConsoleWindow;

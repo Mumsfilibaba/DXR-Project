@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CoreModule.h"
+#include "Core/Core.h"
 #include "Core/Time/Timestamp.h"
 #include "Core/Containers/Array.h"
 #include "Core/Delegates/Delegate.h"

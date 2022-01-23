@@ -9,6 +9,9 @@
 #include <pthread.h>
 #include <Foundation/Foundation.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Mac specific interface for miscellaneous thread utility functions 
+
 class CMacThreadMisc : public CPlatformThreadMisc
 {
 public:
@@ -44,15 +47,15 @@ public:
     }
 
     /* Make the current thread sleep for a specified amount of time */
-    static FORCEINLINE void Sleep( CTimestamp Time )
+    static FORCEINLINE void Sleep(CTimestamp Time)
     {
 		// HACK: When the thread sleeps and we are on mainthread, run the mainloop
 		CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
-		CFRunLoopWakeUp( RunLoop );
-		CFRunLoopRunInMode( kCFRunLoopDefaultMode, 0, false );
+		CFRunLoopWakeUp(RunLoop);
+		CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, false);
 		
         float MicroSeconds = Time.AsMicroSeconds();
-        usleep( static_cast<useconds_t>(MicroSeconds) );
+        usleep(static_cast<useconds_t>(MicroSeconds));
     }
 
     /* Checks weather or not the current thread is the main thread */
