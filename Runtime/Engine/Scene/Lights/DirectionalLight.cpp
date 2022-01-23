@@ -1,8 +1,15 @@
 #include "DirectionalLight.h"
 
 #include "Core/Math/Math.h"
+#include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Debug/Console/ConsoleVariable.h"
 
 #include "Engine/Scene/Camera.h"
+
+TConsoleVariable<float> GSunSize(0.5f);
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// DirectionalLight
 
 CDirectionalLight::CDirectionalLight()
     : CLight()
@@ -13,6 +20,17 @@ CDirectionalLight::CDirectionalLight()
     , Matrices()
 {
     CORE_OBJECT_INIT();
+
+    // TODO: Probably move to scene
+    INIT_CONSOLE_VARIABLE("scene.SunSize", &GSunSize);
+    GSunSize.GetChangedDelegate().AddLambda([this](IConsoleVariable* SunLight)
+    {
+        if (SunLight && SunLight->IsFloat())
+        {
+            const float NewSize = NMath::Clamp(0.0f, 1.0f, SunLight->GetFloat());
+            this->SetSize(NewSize);
+        }
+    });
 
     for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
     {

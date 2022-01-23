@@ -58,14 +58,14 @@ namespace NMath
 #endif
     }
 
-    template <typename T>
+    template<typename T>
     FORCEINLINE T DivideByMultiple(T v, uint32 Alignment)
     {
         static_assert(TIsInteger<T>::Value);
         return static_cast<T>((v + Alignment - 1) / Alignment);
     }
 
-    template <typename T>
+    template<typename T>
     FORCEINLINE T AlignUp(T v, T Alignment)
     {
         static_assert(TIsInteger<T>::Value);
@@ -74,7 +74,7 @@ namespace NMath
         return ((v + Mask) & (~Mask));
     }
 
-    template <typename T>
+    template<typename T>
     FORCEINLINE T AlignDown(T v, T Alignment)
     {
         static_assert(TIsInteger<T>::Value);
@@ -88,50 +88,56 @@ namespace NMath
         return (-f * b) + ((a * f) + b);
     }
 
-    template <typename T>
+    template<typename T>
     FORCEINLINE T Min(T a, T b)
     {
         return (a <= b) ? a : b;
     }
 
-    template <typename T>
+    template<typename T>
     FORCEINLINE T Max(T a, T b)
     {
         return (a >= b) ? a : b;
     }
 
-    template <typename T>
+    template<typename T>
+    FORCEINLINE T Clamp(T InMin, T InMax, T x)
+    {
+        return Min(InMax, Max(InMin, x));
+    }
+
+    template<typename T>
     FORCEINLINE T Abs(T a)
     {
         return ::abs(a);
         // return (a > T( 0 )) ? ((a * a) / a) : T( 0 ); // TODO: Causes crash?
     }
 
-    template <typename T>
+    template<typename T>
     FORCEINLINE T ToRadians(T Degrees)
     {
         return static_cast<T>(static_cast<float>(Degrees) * (PI_F / 180.0f));
     }
 
-    template <typename T>
+    template<typename T>
     FORCEINLINE T ToDegrees(T Radians)
     {
         return static_cast<T>(static_cast<float>(Radians) * (180.0f / PI_F));
     }
 
-    template <typename T>
+    template<typename T>
     FORCEINLINE T Log2(T x)
     {
         return static_cast<T>(std::log2((double)x));
     }
 
-    template <typename T>
+    template<typename T>
     FORCEINLINE T Asin(T v)
     {
         return static_cast<T>(std::asinf(static_cast<float>(v)));
     }
 
-    template <typename T>
+    template<typename T>
     FORCEINLINE T Atan2(T y, T x)
     {
         return static_cast<T>(std::atan2f(static_cast<float>(y), static_cast<float>(x)));

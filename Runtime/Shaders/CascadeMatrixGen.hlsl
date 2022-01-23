@@ -53,12 +53,12 @@ void Main(ComputeShaderInput Input)
     float3 FrustumCorners[8] =
     {
         float3(-1.0f,  1.0f, 0.0f),
-        float3( 1.0f,  1.0f, 0.0f),
-        float3( 1.0f, -1.0f, 0.0f),
+        float3(1.0f,  1.0f, 0.0f),
+        float3(1.0f, -1.0f, 0.0f),
         float3(-1.0f, -1.0f, 0.0f),
         float3(-1.0f,  1.0f, 1.0f),
-        float3( 1.0f,  1.0f, 1.0f),
-        float3( 1.0f, -1.0f, 1.0f),
+        float3(1.0f,  1.0f, 1.0f),
+        float3(1.0f, -1.0f, 1.0f),
         float3(-1.0f, -1.0f, 1.0f),
     };
 

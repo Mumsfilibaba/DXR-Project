@@ -87,7 +87,7 @@ public:
 
 public:
 
-    FORCEINLINE HRESULT CreateRootSignature(UINT NodeMask, const void* BlobWithRootSignature, SIZE_T BlobLengthInBytes, REFIID Riid, void** RootSignature)
+    FORCEINLINE HRESULT CreateRootSignature(uint32 NodeMask, const void* BlobWithRootSignature, SIZE_T BlobLengthInBytes, REFIID Riid, void** RootSignature)
     {
         return Device->CreateRootSignature(NodeMask, BlobWithRootSignature, BlobLengthInBytes, Riid, RootSignature);
     }

@@ -27,13 +27,13 @@ public:
     /* Cast to console-variable */
     virtual IConsoleVariable* AsVariable() override { return this; }
 
-    virtual CChangedDelegate& GetChangedDelegate() override
+    virtual CConsoleVariableChangedDelegate& GetChangedDelegate() override
     {
         return ChangedDelegate;
     }
 
 protected:
-    CChangedDelegate ChangedDelegate;
+    CConsoleVariableChangedDelegate ChangedDelegate;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

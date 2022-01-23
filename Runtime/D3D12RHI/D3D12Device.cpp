@@ -16,6 +16,7 @@
 #pragma comment(lib, "dxguid.lib")
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helpers
 
 static const char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
@@ -71,6 +72,7 @@ static const char* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 static const char* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// DeviceRemovedHandler
 
 void RHID3D12DeviceRemovedHandler(CD3D12Device* Device)
 {
@@ -142,6 +144,7 @@ void RHID3D12DeviceRemovedHandler(CD3D12Device* Device)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12Device
 
 CD3D12Device::CD3D12Device(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED)
     : Factory(nullptr)
@@ -239,7 +242,7 @@ bool CD3D12Device::Init()
         TComPtr<ID3D12Debug> DebugInterface;
         if (FAILED(ND3D12Functions::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
         {
-            LOG_ERROR("[CD3D12Device]: FAILED to enable DebugLayer");
+            D3D12_ERROR("[CD3D12Device]: FAILED to enable DebugLayer");
             return false;
         }
         else
@@ -257,7 +260,7 @@ bool CD3D12Device::Init()
             }
             else
             {
-                LOG_ERROR("[CD3D12Device]: FAILED to enable DRED");
+                D3D12_ERROR("[CD3D12Device]: FAILED to enable DRED");
             }
         }
 
@@ -266,7 +269,7 @@ bool CD3D12Device::Init()
             TComPtr<ID3D12Debug1> DebugInterface1;
             if (FAILED(DebugInterface.GetAs(&DebugInterface1)))
             {
-                LOG_ERROR("[CD3D12Device]: FAILED to enable GPU- Validation");
+                D3D12_ERROR("[CD3D12Device]: FAILED to enable GPU- Validation");
                 return false;
             }
             else
@@ -297,7 +300,7 @@ bool CD3D12Device::Init()
         }
         else
         {
-            LOG_ERROR("[CD3D12Device]: FAILED to retrive InfoQueue");
+            D3D12_ERROR("[CD3D12Device]: FAILED to retrive InfoQueue");
         }
 
         TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysisInterface;
@@ -314,7 +317,7 @@ bool CD3D12Device::Init()
     // Create factory
     if (FAILED(NDXGIFunctions::CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
     {
-        LOG_ERROR("[CD3D12Device]: FAILED to create factory");
+        D3D12_ERROR("[CD3D12Device]: FAILED to create factory");
         return false;
     }
     else

@@ -30,29 +30,29 @@ static const float2 INV_ATAN = float2(0.1591f, 0.3183f);
 static const float3x3 ROTATE_UV[6] = 
 {
     // +X
-    float3x3(  0,  0,  1,
+    float3x3( 0,  0,  1,
                0, -1,  0,
-              -1,  0,  0 ),
+              -1,  0,  0),
     // -X
-    float3x3(  0,  0, -1,
+    float3x3( 0,  0, -1,
                0, -1,  0,
-               1,  0,  0 ),
+               1,  0,  0),
     // +Y
-    float3x3(  1,  0,  0,
+    float3x3( 1,  0,  0,
                0,  0,  1,
-               0,  1,  0 ),
+               0,  1,  0),
     // -Y
-    float3x3(  1,  0,  0,
+    float3x3( 1,  0,  0,
                0,  0, -1,
-               0, -1,  0 ),
+               0, -1,  0),
     // +Z
-    float3x3(  1,  0,  0,
+    float3x3( 1,  0,  0,
                0, -1,  0,
-               0,  0,  1 ),
+               0,  0,  1),
     // -Z
-    float3x3( -1,  0,  0,
+    float3x3(-1,  0,  0,
                0, -1,  0,
-               0,  0, -1 )
+               0,  0, -1)
 };
 
 [RootSignature(RootSig)]

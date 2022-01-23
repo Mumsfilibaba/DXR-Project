@@ -64,10 +64,10 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
     return ToFloat4(M.a);
 #endif
     
-    float4 N = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2( 0,-1));
-    float4 S = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2( 0, 1));
+    float4 N = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2(0,-1));
+    float4 S = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2(0, 1));
     float4 W = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2(-1, 0));
-    float4 E = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2( 1, 0));
+    float4 E = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2(1, 0));
     float LumaN = N.a;
     float LumaS = S.a;
     float LumaW = W.a;
@@ -104,8 +104,8 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
     
     float4 NW = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2(-1, -1));
     float4 SW = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2(-1,  1));
-    float4 NE = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2( 1, -1));
-    float4 SE = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2( 1,  1));
+    float4 NE = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2(1, -1));
+    float4 SE = FXAASampleOffset(FinalImage, Sampler, TexCoord, int2(1,  1));
     float LumaNW = NW.a;
     float LumaNE = NE.a;
     float LumaSW = SW.a;
