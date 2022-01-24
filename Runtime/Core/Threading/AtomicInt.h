@@ -37,41 +37,41 @@ public:
 
     FORCEINLINE T Increment() noexcept
     {
-        return PlatformInterlocked::Increment(&Value);
+        return PlatformInterlocked::InterlockedIncrement(&Value);
     }
 
     FORCEINLINE T Decrement() noexcept
     {
-        return PlatformInterlocked::Decrement(&Value);
+        return PlatformInterlocked::InterlockedDecrement(&Value);
     }
 
     FORCEINLINE T Add(T RHS) noexcept
     {
-        PlatformInterlocked::Add(&Value, RHS);
+        PlatformInterlocked::InterlockedAdd(&Value, RHS);
         return Value;
     }
 
     FORCEINLINE T Subtract(T RHS) noexcept
     {
-        PlatformInterlocked::Sub(&Value, RHS);
+        PlatformInterlocked::InterlockedSub(&Value, RHS);
         return Value;
     }
 
     FORCEINLINE T And(T RHS) noexcept
     {
-        PlatformInterlocked::And(&Value, RHS);
+        PlatformInterlocked::InterlockedAnd(&Value, RHS);
         return Value;
     }
 
     FORCEINLINE T Or(T RHS) noexcept
     {
-        PlatformInterlocked::Or(&Value, RHS);
+        PlatformInterlocked::InterlockedOr(&Value, RHS);
         return Value;
     }
 
     FORCEINLINE T Xor(T RHS) noexcept
     {
-        PlatformInterlocked::Xor(&Value, RHS);
+        PlatformInterlocked::InterlockedXor(&Value, RHS);
         return Value;
     }
 
@@ -88,7 +88,7 @@ public:
 
     FORCEINLINE T Exchange(T InValue) noexcept
     {
-        return PlatformInterlocked::Exchange(&Value, InValue);
+        return PlatformInterlocked::InterlockedExchange(&Value, InValue);
     }
 
     FORCEINLINE void Store(T InValue) noexcept

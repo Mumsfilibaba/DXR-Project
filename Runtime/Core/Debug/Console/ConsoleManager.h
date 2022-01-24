@@ -188,14 +188,14 @@ class TAutoConsoleVariable : public TConsoleVariable<T>
 {
 public:
     TAutoConsoleVariable(const CString& InName, T StartValue)
-        : TConsoleVariable(StartValue)
+        : TConsoleVariable<T>(StartValue)
         , Name(InName)
     {
         CConsoleManager::Get().RegisterVariable(InName, this);
     }
 
     TAutoConsoleVariable(const CString& InName, T StartValue, const CConsoleVariableChangedDelegateType& VariableChangedDelegate)
-        : TConsoleVariable(StartValue, VariableChangedDelegate)
+        : TConsoleVariable<T>(StartValue, VariableChangedDelegate)
         , Name(InName)
     {
         CConsoleManager::Get().RegisterVariable(InName, this);

@@ -151,7 +151,7 @@ void CMacApplication::SetActiveWindow(const TSharedRef<CPlatformWindow>& Window)
 {
     MakeMainThreadCall(^
     {
-        CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window->GetNativeHandle());
+		CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window->GetPlatformHandle());
         [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
     }, true);
 }
@@ -184,7 +184,7 @@ TSharedRef<CMacWindow> CMacApplication::GetWindowFromNSWindow(NSWindow* Window) 
         CCocoaWindow* CocoaWindow = reinterpret_cast<CCocoaWindow*>(Window);
         for (const TSharedRef<CMacWindow>& MacWindow : Windows)
         {
-            if (CocoaWindow == reinterpret_cast<CCocoaWindow*>(MacWindow->GetNativeHandle()))
+			if (CocoaWindow == reinterpret_cast<CCocoaWindow*>(MacWindow->GetPlatformHandle()))
             {
                 return MacWindow;
             }
