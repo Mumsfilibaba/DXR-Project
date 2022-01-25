@@ -5,7 +5,7 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12DescriptorHeap
+// D3D12DescriptorHeap
 
 CD3D12DescriptorHeap::CD3D12DescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
     : CD3D12DeviceChild(InDevice)
@@ -31,9 +31,7 @@ bool CD3D12DescriptorHeap::Init()
     HRESULT Result = GetDevice()->GetDevice()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12DescriptorHeap]: FAILED to Create DescriptorHeap");
-        CDebug::DebugBreak();
-
+        D3D12_ERROR("[D3D12DescriptorHeap]: FAILED to Create DescriptorHeap");
         return false;
     }
     else
@@ -49,7 +47,7 @@ bool CD3D12DescriptorHeap::Init()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12OfflineDescriptorHeap
+// D3D12OfflineDescriptorHeap
 
 CD3D12OfflineDescriptorHeap::CD3D12OfflineDescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType)
     : CD3D12DeviceChild(InDevice)
@@ -67,7 +65,6 @@ bool CD3D12OfflineDescriptorHeap::Init()
 
 D3D12_CPU_DESCRIPTOR_HANDLE CD3D12OfflineDescriptorHeap::Allocate(uint32& OutHeapIndex)
 {
-    // Find a heap that is not empty
     uint32 HeapIndex = 0;
     bool bFoundHeap = false;
     for (SDescriptorHeap& Heap : Heaps)
@@ -93,7 +90,6 @@ D3D12_CPU_DESCRIPTOR_HANDLE CD3D12OfflineDescriptorHeap::Allocate(uint32& OutHea
         HeapIndex = static_cast<uint32>(Heaps.Size()) - 1;
     }
 
-    // Get the heap and the first free range
     SDescriptorHeap& Heap = Heaps[HeapIndex];
     SDescriptorRange& Range = Heap.FreeList.FirstElement();
 
@@ -112,9 +108,9 @@ D3D12_CPU_DESCRIPTOR_HANDLE CD3D12OfflineDescriptorHeap::Allocate(uint32& OutHea
 void CD3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex)
 {
     Assert(HeapIndex < (uint32)Heaps.Size());
+
     SDescriptorHeap& Heap = Heaps[HeapIndex];
 
-    // Find a suitable range
     bool bFoundRange = false;
     for (SDescriptorRange& Range : Heap.FreeList)
     {
@@ -178,7 +174,7 @@ bool CD3D12OfflineDescriptorHeap::AllocateHeap()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12OnlineDescriptorHeap 
+// D3D12OnlineDescriptorHeap 
 
 CD3D12OnlineDescriptorHeap::CD3D12OnlineDescriptorHeap(CD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType)
     : CD3D12DeviceChild(InDevice)
@@ -270,7 +266,6 @@ void CD3D12OnlineDescriptorHeap::Reset()
 
 void CD3D12OnlineDescriptorHeap::SetNumPooledHeaps(uint32 NumHeaps)
 {
-    // Will only shrink the size of the pool, and not grow it 
     if (NumHeaps > static_cast<uint32>(HeapPool.Size()))
     {
         HeapPool.Resize(NumHeaps);

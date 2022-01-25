@@ -9,6 +9,7 @@ typedef HRESULT(WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1)(UINT Flags, REFIID riid,
 typedef HRESULT(WINAPI* PFN_SetMarkerOnCommandList)(ID3D12GraphicsCommandList* commandList, UINT64 color, _In_ PCSTR formatString);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// NDXGIFunctions
 
 namespace NDXGIFunctions
 {
@@ -17,6 +18,7 @@ namespace NDXGIFunctions
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ND3D12Functions
 
 namespace ND3D12Functions
 {

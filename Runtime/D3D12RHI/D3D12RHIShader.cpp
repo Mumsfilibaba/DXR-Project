@@ -2,6 +2,9 @@
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12RootSignature.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12BaseShader
+
 CD3D12BaseShader::CD3D12BaseShader(CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility)
     : CD3D12DeviceChild(InDevice)
     , ByteCode()
@@ -202,6 +205,9 @@ bool CD3D12BaseShader::GetShaderReflection(CD3D12BaseShader* Shader)
     return true;
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseRayTracingShader
+
 bool CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection(CD3D12RHIBaseRayTracingShader* Shader)
 {
     Assert(Shader != nullptr);
@@ -256,6 +262,9 @@ bool CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection(CD3D12RHIBaseR
     return true;
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseComputeShader
+
 bool CD3D12RHIBaseComputeShader::Init()
 {
     TComPtr<ID3D12ShaderReflection> Reflection;
@@ -291,6 +300,9 @@ bool CD3D12RHIBaseComputeShader::Init()
     ThreadGroupXYZ.z = z;
     return true;
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ShaderResourceCount
 
 void SShaderResourceCount::Combine(const SShaderResourceCount& Other)
 {

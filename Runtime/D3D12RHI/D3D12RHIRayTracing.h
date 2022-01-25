@@ -9,6 +9,7 @@ class CD3D12CommandList;
 class CMaterial;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIRayTracingGeometry
 
 class CD3D12RHIRayTracingGeometry : public CRHIRayTracingGeometry, public CD3D12DeviceChild
 {
@@ -37,9 +38,13 @@ public:
 
     TSharedRef<CD3D12RHIVertexBuffer> VertexBuffer;
     TSharedRef<CD3D12RHIIndexBuffer>  IndexBuffer;
-    TSharedRef<CD3D12Resource>     ResultBuffer;
-    TSharedRef<CD3D12Resource>     ScratchBuffer;
+
+    TSharedRef<CD3D12Resource> ResultBuffer;
+    TSharedRef<CD3D12Resource> ScratchBuffer;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12ShaderBindingTableEntry
 
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) SD3D12ShaderBindingTableEntry
 {
@@ -48,6 +53,7 @@ struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) SD3D12ShaderBinding
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12ShaderBindingTableBuilder
 
 class CD3D12ShaderBindingTableBuilder : public CD3D12DeviceChild
 {
@@ -86,6 +92,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIRayTracingScene
 
 class CD3D12RHIRayTracingScene : public CRHIRayTracingScene, public CD3D12DeviceChild
 {
@@ -143,8 +150,8 @@ public:
     }
 
 private:
-    TArray<SRayTracingGeometryInstance> Instances;
-    TSharedRef<CD3D12RHIShaderResourceView>      View;
+    TArray<SRayTracingGeometryInstance>     Instances;
+    TSharedRef<CD3D12RHIShaderResourceView> View;
 
     TSharedRef<CD3D12Resource> ResultBuffer;
     TSharedRef<CD3D12Resource> ScratchBuffer;

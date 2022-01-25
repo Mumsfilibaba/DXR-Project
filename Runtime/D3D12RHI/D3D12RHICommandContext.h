@@ -24,6 +24,7 @@ struct SD3D12UploadAllocation
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12GPUResourceUploader
 
 class CD3D12GPUResourceUploader : public CD3D12DeviceChild
 {
@@ -59,6 +60,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12CommandBatch
 
 class CD3D12CommandBatch
 {
@@ -147,6 +149,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12ResourceBarrierBatcher
 
 class CD3D12ResourceBarrierBatcher
 {
@@ -193,6 +196,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHICommandContext
 
 class CD3D12RHICommandContext : public IRHICommandContext, public CD3D12DeviceChild
 {
@@ -363,7 +367,6 @@ public:
     virtual void EndExternalCapture() override final;
 
 public:
-
     void UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
 
     FORCEINLINE CD3D12CommandQueue& GetQueue()

@@ -5,6 +5,9 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12DescriptorCache
+
 CD3D12DescriptorCache::CD3D12DescriptorCache(CD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
     , NullCBV(nullptr)
@@ -205,7 +208,6 @@ void CD3D12DescriptorCache::Reset()
 
 void CD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommandList* CmdList, CD3D12OnlineDescriptorHeap* ResourceHeap, CD3D12OnlineDescriptorHeap* SamplerHeap)
 {
-    // Resource Descriptors
     uint32 NumConstantBuffersViews = ConstantBufferViewCache.CountNeededDescriptors();
     uint32 NumShaderResourceViews = ShaderResourceViewCache.CountNeededDescriptors();
     uint32 NumUnorderedAccessViews = UnorderedAccessViewCache.CountNeededDescriptors();
@@ -219,7 +221,6 @@ void CD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommand
 
         ResourceHeap->AllocateFreshHeap();
 
-        // We need to recount since a new heap requires all descriptors to be copied 
         NumConstantBuffersViews = ConstantBufferViewCache.CountNeededDescriptors();
         NumShaderResourceViews = ShaderResourceViewCache.CountNeededDescriptors();
         NumUnorderedAccessViews = UnorderedAccessViewCache.CountNeededDescriptors();
@@ -230,27 +231,23 @@ void CD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommand
     ShaderResourceViewCache.PrepareForCopy();
     UnorderedAccessViewCache.PrepareForCopy();
 
-    // Sampler Descriptors
     uint32 NumSamplerDescriptors = SamplerStateCache.CountNeededDescriptors();
     if (!SamplerHeap->HasSpace(NumSamplerDescriptors))
     {
         SamplerStateCache.InvalidateAll();
         SamplerHeap->AllocateFreshHeap();
 
-        // We need to recount since a new heap requires all descriptors to be copied 
         NumSamplerDescriptors = SamplerStateCache.CountNeededDescriptors();
     }
 
     SamplerStateCache.PrepareForCopy();
 
-    // Check validity
     D3D12_ERROR(NumResourceDescriptors <= D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, "[D3D12]: Trying to bind more Resource Descriptors (NumDescriptors=" + ToString(NumResourceDescriptors) + ") than the maximum (MaxResourceDescriptors=" + ToString(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT) + ") ");
     uint32 ResourceDescriptorHandle = ResourceHeap->AllocateHandles(NumResourceDescriptors);
 
     D3D12_ERROR(NumSamplerDescriptors <= D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, "[D3D12]: Trying to bind more Sampler Descriptors (NumDescriptors=" + ToString(NumSamplerDescriptors) + ") than the maximum (MaxSamplerDescriptors=" + ToString(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT) + ") ");
     uint32 SamplerDescriptorHandle = SamplerHeap->AllocateHandles(NumSamplerDescriptors);
 
-    // Bind DescriptorHeaps
     ID3D12DescriptorHeap* DescriptorHeaps[] =
     {
         ResourceHeap->GetNativeHeap(),
@@ -265,7 +262,6 @@ void CD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommand
         PreviousDescriptorHeaps[1] = DescriptorHeaps[1];
     }
 
-    // Set the descriptor handles to the Caches
     if (NumConstantBuffersViews > 0)
     {
         D3D12_CPU_DESCRIPTOR_HANDLE HostHandle = ResourceHeap->GetCPUDescriptorHandleAt(ResourceDescriptorHandle);

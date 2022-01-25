@@ -3,6 +3,7 @@
 #include "D3D12RHIBuffer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12ResourceCast
 
 inline CD3D12Resource* D3D12ResourceCast(CRHIMemoryResource* Resource)
 {

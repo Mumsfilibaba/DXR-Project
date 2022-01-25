@@ -81,8 +81,8 @@ static LPCWSTR GetShaderModelText(EShaderModel Model)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ExistingBlob - Custom blob for existing data
 
-/* Custom blob for existing data */
 class CExistingBlob : public IDxcBlob
 {
 public:
@@ -147,18 +147,14 @@ public:
     }
 
 private:
-
-    // Data
     LPVOID Data;
-
-    // Size of the data
     SIZE_T SizeInBytes;
 
-    // Reference counting
     ULONG References;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIShaderCompiler
 
 CD3D12RHIShaderCompiler* GD3D12ShaderCompiler = nullptr;
 

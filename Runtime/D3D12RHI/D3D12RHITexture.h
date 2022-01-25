@@ -12,6 +12,7 @@
 #define TEXTURE_CUBE_FACE_COUNT (6)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12BaseTexture
 
 class CD3D12BaseTexture : public CD3D12DeviceChild
 {
@@ -52,6 +53,7 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseTexture2D
 
 class CD3D12RHIBaseTexture2D : public CRHITexture2D, public CD3D12BaseTexture
 {
@@ -76,12 +78,12 @@ public:
     virtual CRHIDepthStencilView* GetDepthStencilView() const override { return DepthStencilView.Get(); }
     virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
 
-    FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* InRenderTargetView)
+    FORCEINLINE void SetRenderTargetView(CD3D12RHIRenderTargetView* InRenderTargetView)
     {
         RenderTargetView = InRenderTargetView;
     }
 
-    FORCEINLINE void SetDepthStencilView(CD3D12DepthStencilView* InDepthStencilView)
+    FORCEINLINE void SetDepthStencilView(CD3D12RHIDepthStencilView* InDepthStencilView)
     {
         DepthStencilView = InDepthStencilView;
     }
@@ -91,7 +93,7 @@ public:
         UnorderedAccessView = InUnorderedAccessView;
     }
 
-    FORCEINLINE CD3D12RenderTargetView* GetD3D12RenderTargetView() const
+    FORCEINLINE CD3D12RHIRenderTargetView* GetD3D12RenderTargetView() const
     {
         return RenderTargetView.Get();
     }
@@ -102,16 +104,16 @@ public:
     }
 
 private:
-
-    // Default RenderTargetView created at creation 
-    TSharedRef<CD3D12RenderTargetView> RenderTargetView;
-    // Default DepthStencilView created at creation 
-    TSharedRef<CD3D12DepthStencilView> DepthStencilView;
-    // Default UnorderedAccessView created at creation 
+    /** Default RenderTargetView created at creation */ 
+    TSharedRef<CD3D12RHIRenderTargetView> RenderTargetView;
+    /** Default DepthStencilView created at creation */ 
+    TSharedRef<CD3D12RHIDepthStencilView> DepthStencilView;
+    /** Default UnorderedAccessView created at creation */
     TSharedRef<CD3D12RHIUnorderedAccessView> UnorderedAccessView;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseTexture2DArray
 
 class CD3D12RHIBaseTexture2DArray : public CRHITexture2DArray, public CD3D12BaseTexture
 {
@@ -131,6 +133,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseTextureCubeArray
 
 class CD3D12RHIBaseTextureCube : public CRHITextureCube, public CD3D12BaseTexture
 {
@@ -150,6 +153,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseTextureCubeArray
 
 class CD3D12RHIBaseTextureCubeArray : public CRHITextureCubeArray, public CD3D12BaseTexture
 {
@@ -169,6 +173,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseTexture3D
 
 class CD3D12RHIBaseTexture3D : public CRHITexture3D, public CD3D12BaseTexture
 {
@@ -188,6 +193,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseTexture
 
 template<typename BaseTextureType>
 class TD3D12RHIBaseTexture : public BaseTextureType
@@ -231,6 +237,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12 Texture types
 
 using CD3D12RHITexture2D = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2D>;
 using CD3D12RHITexture2DArray = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2DArray>;
@@ -239,6 +246,7 @@ using CD3D12RHITextureCubeArray = TD3D12RHIBaseTexture<CD3D12RHIBaseTextureCubeA
 using CD3D12RHITexture3D = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture3D>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12TextureCast
 
 inline CD3D12BaseTexture* D3D12TextureCast(CRHITexture* Texture)
 {

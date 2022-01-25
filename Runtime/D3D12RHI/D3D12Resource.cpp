@@ -1,6 +1,9 @@
 #include "D3D12Resource.h"
 #include "D3D12Device.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12Resource
+
 CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource)
     : CRefCounted()
     , CD3D12DeviceChild(InDevice)

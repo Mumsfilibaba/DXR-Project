@@ -10,6 +10,9 @@
 #include "D3D12RHIViews.h"
 #include "D3D12RHICommandContext.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIViewport
+
 class CD3D12RHIViewport : public CRHIViewport, public CD3D12DeviceChild
 {
 public:
@@ -61,5 +64,5 @@ private:
     HANDLE SwapChainWaitableObject = 0;
 
     TArray<TSharedRef<CD3D12RHITexture2D>>        BackBuffers;
-    TArray<TSharedRef<CD3D12RenderTargetView>> BackBufferViews;
+    TArray<TSharedRef<CD3D12RHIRenderTargetView>> BackBufferViews;
 };

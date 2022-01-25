@@ -11,6 +11,7 @@
 class CD3D12RootSignature;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERootSignatureType
 
 enum class ERootSignatureType
 {
@@ -20,6 +21,9 @@ enum class ERootSignatureType
     RayTracingGlobal = 3,
     RayTracingLocal = 4,
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RootSignatureResourceCount
 
 struct SD3D12RootSignatureResourceCount
 {
@@ -31,6 +35,7 @@ struct SD3D12RootSignatureResourceCount
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RootSignatureDescHelper
 
 class CD3D12RootSignatureDescHelper
 {
@@ -57,6 +62,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RootSignature
 
 class CD3D12RootSignature : public CD3D12DeviceChild, public CRefCounted
 {
@@ -109,6 +115,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RootSignatureCache
 
 class CD3D12RootSignatureCache : public CD3D12DeviceChild
 {

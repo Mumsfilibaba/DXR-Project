@@ -4,6 +4,9 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Device.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHISamplerState
+
 class CD3D12RHISamplerState : public CRHISamplerState, public CD3D12DeviceChild
 {
 public:

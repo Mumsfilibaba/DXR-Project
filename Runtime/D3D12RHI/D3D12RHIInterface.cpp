@@ -19,6 +19,7 @@
 #include "D3D12RHITimestampQuery.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12 Helpers
 
 template<>
 inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12RHITexture2D>()
@@ -50,8 +51,6 @@ inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12RHITextur
     return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
 template<typename TD3D12Texture>
 inline bool IsTextureCube()
 {
@@ -71,10 +70,9 @@ inline bool IsTextureCube<CD3D12RHITextureCubeArray>()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIInterface
 
 CD3D12RHIInterface* GD3D12RHICore = nullptr;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 CD3D12RHIInterface::CD3D12RHIInterface()
     : CRHIInterface(ERHIModule::D3D12)
@@ -379,7 +377,7 @@ TD3D12Texture* CD3D12RHIInterface::CreateTexture(
         ViewDesc.Texture2D.MipSlice = 0;
         ViewDesc.Texture2D.PlaneSlice = 0;
 
-        TSharedRef<CD3D12RenderTargetView> RTV = dbg_new CD3D12RenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
+        TSharedRef<CD3D12RHIRenderTargetView> RTV = dbg_new CD3D12RHIRenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
         if (!RTV->AllocateHandle())
         {
             return nullptr;
@@ -405,7 +403,7 @@ TD3D12Texture* CD3D12RHIInterface::CreateTexture(
         ViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
         ViewDesc.Texture2D.MipSlice = 0;
 
-        TSharedRef<CD3D12DepthStencilView> DSV = dbg_new CD3D12DepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
+        TSharedRef<CD3D12RHIDepthStencilView> DSV = dbg_new CD3D12RHIDepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
         if (!DSV->AllocateHandle())
         {
             return nullptr;
@@ -1176,7 +1174,7 @@ CRHIRenderTargetView* CD3D12RHIInterface::CreateRenderTargetView(const SRenderTa
         Desc.Texture3D.WSize = CreateInfo.Texture3D.NumDepthSlices;
     }
 
-    TSharedRef<CD3D12RenderTargetView> DxView = dbg_new CD3D12RenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
+    TSharedRef<CD3D12RHIRenderTargetView> DxView = dbg_new CD3D12RHIRenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
     if (!DxView->AllocateHandle())
     {
         return nullptr;
@@ -1271,7 +1269,7 @@ CRHIDepthStencilView* CD3D12RHIInterface::CreateDepthStencilView(const SDepthSte
         Desc.Texture2DArray.FirstArraySlice = CreateInfo.TextureCubeArray.ArraySlice * TEXTURE_CUBE_FACE_COUNT + GetCubeFaceIndex(CreateInfo.TextureCube.CubeFace);
     }
 
-    TSharedRef<CD3D12DepthStencilView> DxView = dbg_new CD3D12DepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
+    TSharedRef<CD3D12RHIDepthStencilView> DxView = dbg_new CD3D12RHIDepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
     if (!DxView->AllocateHandle())
     {
         return nullptr;

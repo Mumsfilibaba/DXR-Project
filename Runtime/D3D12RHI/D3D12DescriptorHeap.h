@@ -7,6 +7,9 @@
 #include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12DescriptorHeap
+
 class CD3D12DescriptorHeap : public CD3D12DeviceChild, public CRefCounted
 {
 public:
@@ -53,15 +56,11 @@ public:
     }
 
 private:
-
-    // The actual heap
     TComPtr<ID3D12DescriptorHeap> Heap;
 
-    // Cached handles for the start of the heap, avoiding virtual calls
     D3D12_CPU_DESCRIPTOR_HANDLE CPUStart;
     D3D12_GPU_DESCRIPTOR_HANDLE GPUStart;
 
-    // Descriptor heap info
     D3D12_DESCRIPTOR_HEAP_TYPE  Type;
     D3D12_DESCRIPTOR_HEAP_FLAGS Flags;
 
@@ -70,9 +69,13 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12OfflineDescriptorHeap
 
 class CD3D12OfflineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
 {
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // SDescriptorRange
+
     struct SDescriptorRange
     {
         FORCEINLINE SDescriptorRange()
@@ -95,6 +98,9 @@ class CD3D12OfflineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
         D3D12_CPU_DESCRIPTOR_HANDLE Begin = { 0 };
         D3D12_CPU_DESCRIPTOR_HANDLE End = { 0 };
     };
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // SDescriptorHeap
 
     struct SDescriptorHeap
     {
@@ -119,10 +125,8 @@ public:
 
     bool Init();
 
-    /* Allocates new offline handles and returns the Host handle. OutHeapIndex is the Index to the heap the handle belongs to */
     D3D12_CPU_DESCRIPTOR_HANDLE Allocate(uint32& OutHeapIndex);
 
-    /* Frees a offline handle */
     void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex);
 
     void SetName(const CString& InName);
@@ -138,22 +142,18 @@ public:
     }
 
 private:
-
-    // Allocates a new heap and inserts it into the heap-pool 
     bool AllocateHeap();
 
-    // Debug-name
     CString Name;
 
-    // All allocated heaps together with the ranges of available descriptors
     TArray<SDescriptorHeap> Heaps;
 
-    // Heap info
     D3D12_DESCRIPTOR_HEAP_TYPE Type;
     uint32 DescriptorSize = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12OnlineDescriptorHeap
 
 class CD3D12OnlineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
 {
@@ -163,19 +163,13 @@ public:
 
     bool Init();
 
-    /* Allocates a number of descriptors and returns the first handle to the allocated range */
     uint32 AllocateHandles(uint32 NumHandles);
-
-    /* Allocates a new heap, this means that the heap that is currently bound needs to rebound */
     bool AllocateFreshHeap();
 
-    /* Returns true if the current heap can allocate the required number of descriptors. If false then a fresh heap has to be allocated */
     bool HasSpace(uint32 NumHandles) const;
 
-    /* Resets the current handle so that new handles will be allocated from the start, and overwrite the current handles */
     void Reset();
 
-    /* Resizes the amount of pooled heaps and deallocates the heaps if the current number is larger than NumHeaps */
     void SetNumPooledHeaps(uint32 NumHeaps);
 
     FORCEINLINE void SetName(const CString& Name)
@@ -209,15 +203,12 @@ public:
     }
 
 private:
-
-    // The current in use heap 
     TSharedRef<CD3D12DescriptorHeap> Heap;
-    // Heaps available to use
+    uint32 CurrentHandle   = 0;
+    uint32 DescriptorCount = 0;
+    
     TArray<TSharedRef<CD3D12DescriptorHeap>> HeapPool;
-    // Heaps currently in use
     TArray<TSharedRef<CD3D12DescriptorHeap>> DiscardedHeaps;
 
     D3D12_DESCRIPTOR_HEAP_TYPE Type;
-    uint32 CurrentHandle = 0;
-    uint32 DescriptorCount = 0;
 };

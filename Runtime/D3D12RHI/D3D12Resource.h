@@ -4,6 +4,9 @@
 #include "Core/RefCounted.h"
 #include "Core/Utilities/StringUtilities.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12Resource
+
 class CD3D12Resource : public CD3D12DeviceChild, public CRefCounted
 {
 public:
@@ -14,10 +17,8 @@ public:
 
     bool Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue);
 
-    /* Maps the resource to the host */
     void* Map(uint32 SubResource, const D3D12_RANGE* Range);
 
-    /* Unmaps the resource from the host */
     void Unmap(uint32 SubResource, const D3D12_RANGE* Range);
 
     FORCEINLINE void SetName(const CString& Name)

@@ -3,6 +3,7 @@
 #include "D3D12RHIViews.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12View
 
 CD3D12View::CD3D12View(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
     : CD3D12DeviceChild(InDevice)
@@ -33,6 +34,7 @@ void CD3D12View::InvalidateAndFreeHandle()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIConstantBufferView
 
 CD3D12RHIConstantBufferView::CD3D12RHIConstantBufferView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
     : CD3D12View(InDevice, InHeap)
@@ -52,6 +54,7 @@ bool CD3D12RHIConstantBufferView::CreateView(CD3D12Resource* InResource, const D
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseShaderResourceView
 
 CD3D12RHIBaseShaderResourceView::CD3D12RHIBaseShaderResourceView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
     : CD3D12View(InDevice, InHeap)
@@ -77,6 +80,7 @@ bool CD3D12RHIBaseShaderResourceView::CreateView(CD3D12Resource* InResource, con
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseUnorderedAccessView
 
 CD3D12RHIBaseUnorderedAccessView::CD3D12RHIBaseUnorderedAccessView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
     : CD3D12View(InDevice, InHeap)
@@ -110,6 +114,7 @@ bool CD3D12RHIBaseUnorderedAccessView::CreateView(CD3D12Resource* InCounterResou
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseRenderTargetView
 
 CD3D12RHIBaseRenderTargetView::CD3D12RHIBaseRenderTargetView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
     : CD3D12View(InDevice, InHeap)
@@ -131,6 +136,7 @@ bool CD3D12RHIBaseRenderTargetView::CreateView(CD3D12Resource* InResource, const
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseDepthStencilView
 
 CD3D12RHIBaseDepthStencilView::CD3D12RHIBaseDepthStencilView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
     : CD3D12View(InDevice, InHeap)
