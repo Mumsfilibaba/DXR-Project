@@ -7,6 +7,9 @@
 #include "D3D12Core.h"
 #include "D3D12RootSignature.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIInputLayoutState
+
 class CD3D12RHIInputLayoutState : public CRHIInputLayoutState, public CD3D12DeviceChild
 {
 public:
@@ -62,6 +65,9 @@ private:
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIDepthStencilState
+
 class CD3D12RHIDepthStencilState : public CRHIDepthStencilState, public CD3D12DeviceChild
 {
 public:
@@ -85,6 +91,9 @@ public:
 private:
     D3D12_DEPTH_STENCIL_DESC Desc;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIRasterizerState
 
 class CD3D12RHIRasterizerState : public CRHIRasterizerState, public CD3D12DeviceChild
 {
@@ -110,6 +119,9 @@ private:
     D3D12_RASTERIZER_DESC Desc;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBlendState
+
 class CD3D12RHIBlendState : public CRHIBlendState, public CD3D12DeviceChild
 {
 public:
@@ -133,6 +145,9 @@ public:
 private:
     D3D12_BLEND_DESC Desc;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIGraphicsPipelineState
 
 class CD3D12RHIGraphicsPipelineState : public CRHIGraphicsPipelineState, public CD3D12DeviceChild
 {
@@ -174,6 +189,9 @@ private:
     TComPtr<ID3D12PipelineState>    PipelineState;
     TSharedRef<CD3D12RootSignature> RootSignature;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIComputePipelineState
 
 class CD3D12RHIComputePipelineState : public CRHIComputePipelineState, public CD3D12DeviceChild
 {
@@ -218,10 +236,16 @@ private:
     TSharedRef<CD3D12RootSignature>    RootSignature;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// RayTracingShaderIdentifer
+
 struct SRayTracingShaderIdentifer
 {
     char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIRayTracingPipelineState
 
 class CD3D12RHIRayTracingPipelineState : public CRHIRayTracingPipelineState, public CD3D12DeviceChild
 {
@@ -233,10 +257,8 @@ public:
 
     virtual void SetName(const CString& InName) override
     {
-        // Set resource name 
         CRHIResource::SetName(InName);
 
-        // Set native debug name
         WString WideName = CharToWide(InName);
         StateObject->SetName(WideName.CStr());
     }

@@ -3,6 +3,9 @@
 
 #include "D3D12Resource.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHITimestampQuery
+
 class CD3D12RHITimestampQuery : public CRHITimestampQuery, public CD3D12DeviceChild
 {
 public:

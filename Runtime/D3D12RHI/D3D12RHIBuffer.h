@@ -5,6 +5,7 @@
 #include "RHI/RHIResources.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12BaseBuffer
 
 class CD3D12BaseBuffer : public CD3D12DeviceChild
 {
@@ -33,6 +34,7 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseVertexBuffer
 
 class CD3D12RHIBaseVertexBuffer : public CRHIVertexBuffer, public CD3D12BaseBuffer
 {
@@ -65,6 +67,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseIndexBuffer
 
 class CD3D12RHIBaseIndexBuffer : public CRHIIndexBuffer, public CD3D12BaseBuffer
 {
@@ -102,6 +105,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseConstantBuffer
 
 class CD3D12RHIBaseConstantBuffer : public CRHIConstantBuffer, public CD3D12BaseBuffer
 {
@@ -113,7 +117,6 @@ public:
     {
     }
 
-    // Set the resource and construct the view
     virtual void SetResource(CD3D12Resource* InResource) override final
     {
         CD3D12BaseBuffer::SetResource(InResource);
@@ -150,6 +153,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseStructuredBuffer
 
 class CD3D12RHIBaseStructuredBuffer : public CRHIStructuredBuffer, public CD3D12BaseBuffer
 {
@@ -162,6 +166,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseBuffer
 
 template<typename BaseBufferType>
 class TD3D12RHIBaseBuffer : public BaseBufferType
@@ -174,7 +179,6 @@ public:
     {
     }
 
-    // Map the buffer
     virtual void* Map(uint32 Offset, uint32 InSize) override
     {
         D3D12_ERROR(IsDynamic(), "Map is only supported on dynamic buffers");
@@ -196,7 +200,6 @@ public:
         return nullptr;
     }
 
-    // Unmap the buffer
     virtual void Unmap(uint32 Offset, uint32 InSize) override
     {
         D3D12_ERROR(IsDynamic(), "Unmap is only supported on dynamic buffers");
@@ -216,13 +219,10 @@ public:
         }
     }
 
-    // Set the name of the resource
     virtual void SetName(const CString& InName) override final
     {
-        // Set the resource name
         CRHIResource::SetName(InName);
 
-        // Name the native resource
         CD3D12Resource* DxResource = CD3D12BaseBuffer::Resource.Get();
         if (DxResource)
         {
@@ -230,14 +230,12 @@ public:
         }
     }
 
-    // Retrieve the ID3D12Resource, make sure to check if the resource exits since nullptr is valid
     virtual void* GetNativeResource() const override final
     {
         CD3D12Resource* DxResource = CD3D12BaseBuffer::Resource.Get();
         return DxResource ? reinterpret_cast<void*>(DxResource->GetResource()) : nullptr;
     }
 
-    // Check the validity of the resource
     virtual bool IsValid() const override
     {
         CD3D12Resource* DxResource = CD3D12BaseBuffer::Resource.Get();
@@ -246,6 +244,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIVertexBuffer
 
 class CD3D12RHIVertexBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseVertexBuffer>
 {
@@ -257,6 +256,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIIndexBuffer
 
 class CD3D12RHIIndexBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseIndexBuffer>
 {
@@ -268,6 +268,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIConstantBuffer
 
 class CD3D12RHIConstantBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseConstantBuffer>
 {
@@ -279,6 +280,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIStructuredBuffer
 
 class CD3D12RHIStructuredBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseStructuredBuffer>
 {
@@ -290,6 +292,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12BufferCast
 
 inline CD3D12BaseBuffer* D3D12BufferCast(CRHIBuffer* Buffer)
 {

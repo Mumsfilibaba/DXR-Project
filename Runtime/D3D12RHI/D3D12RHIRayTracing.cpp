@@ -8,6 +8,9 @@
 
 #include "Engine/Assets/MeshFactory.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIRayTracingGeometry
+
 CD3D12RHIRayTracingGeometry::CD3D12RHIRayTracingGeometry(CD3D12Device* InDevice, uint32 InFlags)
     : CRHIRayTracingGeometry(InFlags)
     , CD3D12DeviceChild(InDevice)
@@ -136,6 +139,9 @@ bool CD3D12RHIRayTracingGeometry::Build(CD3D12RHICommandContext& CmdContext, boo
 
     return true;
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIRayTracingScene
 
 CD3D12RHIRayTracingScene::CD3D12RHIRayTracingScene(CD3D12Device* InDevice, uint32 InFlags)
     : CRHIRayTracingScene(InFlags)
@@ -481,6 +487,9 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE CD3D12RHIRayTracingScene::GetMissShad
     uint64 AddressOffset = BindingTableStride;
     return { BindingTableAdress + AddressOffset, BindingTableStride, BindingTableStride };
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12ShaderBindingTableBuilder 
 
 CD3D12ShaderBindingTableBuilder::CD3D12ShaderBindingTableBuilder(CD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)

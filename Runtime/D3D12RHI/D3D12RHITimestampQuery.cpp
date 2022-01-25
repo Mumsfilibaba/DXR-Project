@@ -2,6 +2,9 @@
 #include "D3D12RHICommandContext.h"
 #include "D3D12RHITimestampQuery.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHITimestampQuery
+
 CD3D12RHITimestampQuery::CD3D12RHITimestampQuery(CD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
     , CRHITimestampQuery()

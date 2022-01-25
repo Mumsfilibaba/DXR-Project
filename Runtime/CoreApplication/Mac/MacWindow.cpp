@@ -306,8 +306,8 @@ void CMacWindow::SetPlatformHandle(PlatformWindowHandle InPlatformHandle)
 		NSObject* Object = reinterpret_cast<NSObject*>(InPlatformHandle);
 
 		// Make sure that the handle sent in is of correct type
-		CCocoaWindow* NewWindow = NSObjectCast<CCocoaWindow>(Object);
-		if (NewWindowHandle)
+		CCocoaWindow* NewWindow = NSClassCast<CCocoaWindow>(Object);
+		if (NewWindow)
 		{
 			Window = NewWindow;
 			View   = [Window contentView];

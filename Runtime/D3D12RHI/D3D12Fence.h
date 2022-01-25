@@ -2,6 +2,9 @@
 #include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12Fence
+
 class CD3D12Fence : public CD3D12DeviceChild
 {
 public:

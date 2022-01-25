@@ -6,6 +6,9 @@
 #include "D3D12RHIViews.h"
 #include "D3D12RHISamplerState.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12ViewCache
+
 template <typename ViewType, D3D12_DESCRIPTOR_HEAP_TYPE HeapType, uint32 kDescriptorTableSize>
 class TD3D12ViewCache
 {
@@ -50,14 +53,12 @@ public:
 
         for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
         {
-            // Set each stage to be dirty
-            bDirty[Stage] = true;
-
-            // Set each descriptor to the default view
             for (uint32 Index = 0; Index < kDescriptorTableSize; Index++)
             {
                 ResourceViews[Stage][Index] = DefaultView;
             }
+
+            bDirty[Stage] = true;
         }
     }
 
@@ -98,7 +99,6 @@ public:
         {
             if (bDirty[Stage])
             {
-                // We keep the host descriptors for when the descriptors are copied to the device
                 HostDescriptors[Stage] = HostStartHandle;
                 HostStartHandle.ptr += (uint64)(kDescriptorTableSize * IncreamentDescriptorSize);
 
@@ -110,7 +110,6 @@ public:
 
     FORCEINLINE void InvalidateAll()
     {
-        /* Invalidate all stage's descriptor table */
         for (uint32 Index = 0; Index < D3D12_CACHED_DESCRIPTORS_NUM_STAGES; Index++)
         {
             bDirty[Index] = true;
@@ -119,14 +118,10 @@ public:
 
     ViewType* ResourceViews[D3D12_CACHED_DESCRIPTORS_NUM_STAGES][kDescriptorTableSize];
 
-    /* Offline handles to the currently bound ResourceViews */
     D3D12_CPU_DESCRIPTOR_HANDLE CopyDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES][kDescriptorTableSize];
 
-    /* The beginning of each stage's descriptor table */
     D3D12_CPU_DESCRIPTOR_HANDLE HostDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
     D3D12_GPU_DESCRIPTOR_HANDLE DeviceDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
-
-    /* Each bool informs the state of a stage's descriptor table */
     bool bDirty[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
 };
 
@@ -138,6 +133,7 @@ using CD3D12UnorderedAccessViewCache = TD3D12ViewCache<CD3D12RHIUnorderedAccessV
 using CD3D12SamplerStateCache = TD3D12ViewCache<CD3D12RHISamplerState, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DEFAULT_SAMPLER_STATE_COUNT>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12VertexBufferCache
 
 class CD3D12VertexBufferCache
 {
@@ -243,6 +239,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RenderTargetState
 
 class CD3D12RenderTargetState
 {
@@ -256,7 +253,7 @@ public:
         Reset();
     }
 
-    FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* RenderTargetView, uint32 Slot)
+    FORCEINLINE void SetRenderTargetView(CD3D12RHIRenderTargetView* RenderTargetView, uint32 Slot)
     {
         D3D12_ERROR(Slot <= D3D12_MAX_RENDER_TARGET_COUNT, "[D3D12]: Trying to bind a RenderTarget to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxRenderTargetCount=" + ToString(D3D12_MAX_RENDER_TARGET_COUNT) + ") ");
 
@@ -273,7 +270,7 @@ public:
         bDirty = true;
     }
 
-    FORCEINLINE void SetDepthStencilView(CD3D12DepthStencilView* DepthStencilView)
+    FORCEINLINE void SetDepthStencilView(CD3D12RHIDepthStencilView* DepthStencilView)
     {
         if (DepthStencilView)
         {
@@ -321,6 +318,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12DescriptorCache
 
 class CD3D12DescriptorCache : public CD3D12DeviceChild
 {
@@ -330,13 +328,9 @@ public:
 
     bool Init();
 
-    /* Binds all descriptors that is necessary for the graphics pipeline */
     void CommitGraphicsDescriptors(CD3D12CommandList& CmdList, class CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature);
-
-    /* Binds all descriptors that is necessary for the compute pipeline */
     void CommitComputeDescriptors(CD3D12CommandList& CmdList, class CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature);
 
-    /* Resets the descriptor-cache to use the null views and removes references to bound buffers and render-targets */
     void Reset();
 
     FORCEINLINE void SetVertexBuffer(CD3D12RHIVertexBuffer* VertexBuffer, uint32 Slot)
@@ -349,12 +343,12 @@ public:
         VertexBufferCache.SetIndexBuffer(IndexBuffer);
     }
 
-    FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* RenderTargetView, uint32 Slot)
+    FORCEINLINE void SetRenderTargetView(CD3D12RHIRenderTargetView* RenderTargetView, uint32 Slot)
     {
         RenderTargetCache.SetRenderTargetView(RenderTargetView, Slot);
     }
 
-    FORCEINLINE void SetDepthStencilView(CD3D12DepthStencilView* DepthStencilView)
+    FORCEINLINE void SetDepthStencilView(CD3D12RHIDepthStencilView* DepthStencilView)
     {
         RenderTargetCache.SetDepthStencilView(DepthStencilView);
     }
@@ -400,8 +394,6 @@ public:
     }
 
 private:
-
-    /* Allocates necessary descriptors, binds them to the caches, and then binds the current descriptor heaps*/
     void AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommandList* CmdList, CD3D12OnlineDescriptorHeap* ResourceHeap, CD3D12OnlineDescriptorHeap* SamplerHeap);
 
     template<typename TResourveViewCache>
@@ -465,6 +457,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12ShaderConstantsCache
 
 class CD3D12ShaderConstantsCache
 {

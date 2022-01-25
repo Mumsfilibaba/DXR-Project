@@ -8,6 +8,9 @@
 
 #include <d3d12shader.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIShaderCompiler
+
 class CD3D12RHIShaderCompiler : public IRHIShaderCompiler
 {
 public:

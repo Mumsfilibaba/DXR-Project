@@ -1,6 +1,4 @@
 #pragma once
-
-#if PLATFORM_MAC
 #include <Foundation/Foundation.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -18,5 +16,3 @@ inline CastType* NSClassCast(NSObject* Object)
         return nullptr;
     }
 }
-
-#endif

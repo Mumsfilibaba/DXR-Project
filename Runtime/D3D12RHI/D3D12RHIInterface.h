@@ -12,6 +12,7 @@
 class CD3D12RHICommandContext;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12 Texture Helpers
 
 template<typename TD3D12Texture>
 D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
@@ -20,6 +21,7 @@ template<typename TD3D12Texture>
 bool IsTextureCube();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIInterface
 
 class CD3D12RHIInterface : public CRHIInterface
 {
@@ -191,25 +193,20 @@ private:
     template<typename TD3D12Buffer>
     bool CreateBuffer(TD3D12Buffer* Buffer, uint32 SizeInBytes, uint32 Flags, EResourceState InitialState, const SResourceData* InitialData);
 
-    // The Device Object
     CD3D12Device* Device = nullptr;
     // Default Command Context
     TSharedRef<CD3D12RHICommandContext> DirectCmdContext;
-    // RootSignature cache
+    
     CD3D12RootSignatureCache* RootSignatureCache = nullptr;
 
-    // Resource Offline-Heap
+    // Offline-heaps
     CD3D12OfflineDescriptorHeap* ResourceOfflineDescriptorHeap = nullptr;
-    // RenderTarget Offline-Heap
     CD3D12OfflineDescriptorHeap* RenderTargetOfflineDescriptorHeap = nullptr;
-    // DepthStencil Offline-Heap
     CD3D12OfflineDescriptorHeap* DepthStencilOfflineDescriptorHeap = nullptr;
-    // Sampler Offline-Heap
     CD3D12OfflineDescriptorHeap* SamplerOfflineDescriptorHeap = nullptr;
 
-    // PipelineSate for GenerateMips (Texture2D)
+    // PipelineSate for GenerateMips
     TSharedRef<CD3D12RHIComputePipelineState> GenerateMipsTex2D_PSO;
-    // PipelineSate for GenerateMips (TextureCube)
     TSharedRef<CD3D12RHIComputePipelineState> GenerateMipsTexCube_PSO;
 };
 

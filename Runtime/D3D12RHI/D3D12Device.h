@@ -12,7 +12,13 @@ class CD3D12RootSignature;
 #define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
 #define D3D12_ENABLE_PIX_MARKERS              (1)
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// RHID3D12DeviceRemovedHandler
+
 void RHID3D12DeviceRemovedHandler(class CD3D12Device* Device);
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12Device
 
 class CD3D12Device
 {
@@ -22,10 +28,8 @@ public:
 
     bool Init();
 
-    /* Retrieve the multi sample quality for a certain format and sample count */
     int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
-    /* Retrieves the adapter name for the graphics card that is represented by this device */
     CString GetAdapterName() const;
 
 public:

@@ -23,7 +23,7 @@ ENGINE_API CEngine* GEngine;
 // ConsoleCommands
 
 CAutoConsoleCommand GToggleFullscreen("viewport.ToggleFullscreen");
-CAutoConsoleCommand GExit("engine.Exit", CExecutedDelegateType::CreateRaw(GEngine, &CEngine::Exit));
+CAutoConsoleCommand GExit("engine.Exit");
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Engine
@@ -35,6 +35,7 @@ CEngine* CEngine::Make()
 
 CEngine::CEngine()
 {
+	GExit.GetExecutedDelgate().AddRaw(this, &CEngine::Exit);
 }
 
 bool CEngine::Init()

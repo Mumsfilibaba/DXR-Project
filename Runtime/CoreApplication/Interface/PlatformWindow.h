@@ -151,7 +151,7 @@ public:
     virtual uint32 GetHeight() const { return 0; }
 
     /* Set the native window handle */
-    virtual void SetPlatformhandle(PlatformWindowHandle InPlatformHandle) {}
+    virtual void SetPlatformHandle(PlatformWindowHandle InPlatformHandle) { }
 
     /* Retrieve the native handle */
     virtual PlatformWindowHandle GetPlatformHandle() const { return nullptr; }

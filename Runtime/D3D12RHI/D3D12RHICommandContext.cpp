@@ -20,6 +20,7 @@
 #include <pix.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12ResourceBarrierBatcher
 
 void CD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
 {
@@ -63,6 +64,7 @@ void CD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12GPUResourceUploader
 
 CD3D12GPUResourceUploader::CD3D12GPUResourceUploader(CD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
@@ -159,6 +161,7 @@ SD3D12UploadAllocation CD3D12GPUResourceUploader::LinearAllocate(uint32 InSizeIn
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12CommandBatch
 
 CD3D12CommandBatch::CD3D12CommandBatch(CD3D12Device* InDevice)
     : Device(InDevice)
@@ -195,6 +198,20 @@ bool CD3D12CommandBatch::Init()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHICommandContext
+
+CD3D12RHICommandContext* CD3D12RHICommandContext::Make(CD3D12Device* InDevice)
+{
+    TSharedRef<CD3D12RHICommandContext> NewContext = dbg_new CD3D12RHICommandContext(InDevice);
+    if (NewContext && NewContext->Init())
+    {
+        return NewContext.ReleaseOwnership();
+    }
+    else
+    {
+        return nullptr;
+    }
+}
 
 CD3D12RHICommandContext::CD3D12RHICommandContext(CD3D12Device* InDevice)
     : IRHICommandContext()
@@ -369,7 +386,7 @@ void CD3D12RHICommandContext::ClearRenderTargetView(CRHIRenderTargetView* Render
 
     FlushResourceBarriers();
 
-    CD3D12RenderTargetView* DxRenderTargetView = static_cast<CD3D12RenderTargetView*>(RenderTargetView);
+    CD3D12RHIRenderTargetView* DxRenderTargetView = static_cast<CD3D12RHIRenderTargetView*>(RenderTargetView);
     CmdBatch->AddInUseResource(DxRenderTargetView);
 
     CmdList.ClearRenderTargetView(DxRenderTargetView->GetOfflineHandle(), ClearColor.Elements, 0, nullptr);
@@ -381,7 +398,7 @@ void CD3D12RHICommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthS
 
     FlushResourceBarriers();
 
-    CD3D12DepthStencilView* DxDepthStencilView = static_cast<CD3D12DepthStencilView*>(DepthStencilView);
+    CD3D12RHIDepthStencilView* DxDepthStencilView = static_cast<CD3D12RHIDepthStencilView*>(DepthStencilView);
     CmdBatch->AddInUseResource(DxDepthStencilView);
 
     CmdList.ClearDepthStencilView(DxDepthStencilView->GetOfflineHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, ClearValue.Depth, ClearValue.Stencil);
@@ -514,14 +531,14 @@ void CD3D12RHICommandContext::SetRenderTargets(CRHIRenderTargetView* const* Rend
 {
     for (uint32 Slot = 0; Slot < RenderTargetCount; Slot++)
     {
-        CD3D12RenderTargetView* DxRenderTargetView = static_cast<CD3D12RenderTargetView*>(RenderTargetViews[Slot]);
+        CD3D12RHIRenderTargetView* DxRenderTargetView = static_cast<CD3D12RHIRenderTargetView*>(RenderTargetViews[Slot]);
         DescriptorCache.SetRenderTargetView(DxRenderTargetView, Slot);
 
         // TODO: Maybe this should be handled by the descriptor cache
         CmdBatch->AddInUseResource(DxRenderTargetView);
     }
 
-    CD3D12DepthStencilView* DxDepthStencilView = static_cast<CD3D12DepthStencilView*>(DepthStencilView);
+    CD3D12RHIDepthStencilView* DxDepthStencilView = static_cast<CD3D12RHIDepthStencilView*>(DepthStencilView);
     DescriptorCache.SetDepthStencilView(DxDepthStencilView);
 
     CmdBatch->AddInUseResource(DxDepthStencilView);

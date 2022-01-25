@@ -94,7 +94,8 @@ bool CEngineLoop::PreInitialize()
     TRACE_FUNCTION_SCOPE();
 
     // Init project information
-    if (!CProjectManager::Initialize(PROJECT_NAME, PREPROCESS_CONCAT(ENGINE_LOCATION"/", PROJECT_NAME)))
+	const CString ProjectLocation = CString(ENGINE_LOCATION) + CString("/") + CString(PROJECT_NAME);
+    if (!CProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr()))
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
         return false;

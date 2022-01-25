@@ -1,6 +1,9 @@
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12RHIPipelineState.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIGraphicsPipelineState 
+
 CD3D12RHIGraphicsPipelineState::CD3D12RHIGraphicsPipelineState(CD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
     , PipelineState(nullptr)
@@ -230,6 +233,9 @@ bool CD3D12RHIGraphicsPipelineState::Init(const SGraphicsPipelineStateCreateInfo
     return true;
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIComputePipelineState
+
 CD3D12RHIComputePipelineState::CD3D12RHIComputePipelineState(CD3D12Device* InDevice, const TSharedRef<CD3D12RHIComputeShader>& InShader)
     : CRHIComputePipelineState()
     , CD3D12DeviceChild(InDevice)
@@ -303,6 +309,9 @@ bool CD3D12RHIComputePipelineState::Init()
     return true;
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RootSignatureAssociation
+
 struct SD3D12RootSignatureAssociation
 {
     SD3D12RootSignatureAssociation(ID3D12RootSignature* InRootSignature, const TArray<WString>& InShaderExportNames)
@@ -324,6 +333,9 @@ struct SD3D12RootSignatureAssociation
     TArray<WString> ShaderExportNames;
     TArray<LPCWSTR> ShaderExportNamesRef;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12HitGroup
 
 struct SD3D12HitGroup
 {
@@ -359,6 +371,9 @@ struct SD3D12HitGroup
     WString Intersection;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12Library
+
 struct SD3D12Library
 {
     SD3D12Library(D3D12_SHADER_BYTECODE ByteCode, const TArray<WString>& InExportNames)
@@ -383,6 +398,9 @@ struct SD3D12Library
     TArray<D3D12_EXPORT_DESC> ExportDescs;
     D3D12_DXIL_LIBRARY_DESC   Desc;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RayTracingPipelineStateStream
 
 struct SD3D12RayTracingPipelineStateStream
 {
@@ -477,6 +495,9 @@ struct SD3D12RayTracingPipelineStateStream
     ID3D12RootSignature* GlobalRootSignature;
     TArray<D3D12_STATE_SUBOBJECT> SubObjects;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIRayTracingPipelineState
 
 CD3D12RHIRayTracingPipelineState::CD3D12RHIRayTracingPipelineState(CD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)

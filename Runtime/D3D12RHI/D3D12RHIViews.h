@@ -8,6 +8,7 @@ class CD3D12Device;
 class CD3D12OfflineDescriptorHeap;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12View
 
 class CD3D12View : public CD3D12DeviceChild
 {
@@ -15,10 +16,8 @@ public:
     CD3D12View(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
     virtual ~CD3D12View();
 
-    /* Allocates a descriptor-handle from the offline heap */
     bool AllocateHandle();
 
-    /* Sets the handle to zero and frees the current handle back to the heap */
     void InvalidateAndFreeHandle();
 
     FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
@@ -32,21 +31,15 @@ public:
     }
 
 protected:
-
-    // The resource that the view is belonging to 
     TSharedRef<CD3D12Resource> Resource;
-
-    // Heap that this view belongs to 
+ 
     CD3D12OfflineDescriptorHeap* Heap = nullptr;
-
-    // Offline handle, allocated from the heap
     D3D12_CPU_DESCRIPTOR_HANDLE  OfflineHandle;
-
-    // Index to the offline handle in the offline heap
     uint32 OfflineHeapIndex = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIConstantBufferView
 
 class CD3D12RHIConstantBufferView : public CD3D12View
 {
@@ -67,6 +60,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseShaderResourceView
 
 class CD3D12RHIBaseShaderResourceView : public CRHIShaderResourceView, public CD3D12View
 {
@@ -87,6 +81,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseUnorderedAccessView
 
 class CD3D12RHIBaseUnorderedAccessView : public CRHIUnorderedAccessView, public CD3D12View
 {
@@ -113,6 +108,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseRenderTargetView
 
 class CD3D12RHIBaseRenderTargetView : public CRHIRenderTargetView, public CD3D12View
 {
@@ -133,6 +129,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseDepthStencilView
 
 class CD3D12RHIBaseDepthStencilView : public CRHIDepthStencilView, public CD3D12View
 {
@@ -153,6 +150,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIBaseView
 
 template<typename BaseViewType>
 class TD3D12RHIBaseView : public BaseViewType
@@ -173,8 +171,9 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12 Views
 
-using CD3D12RenderTargetView = TD3D12RHIBaseView<CD3D12RHIBaseRenderTargetView>;
-using CD3D12DepthStencilView = TD3D12RHIBaseView<CD3D12RHIBaseDepthStencilView>;
+using CD3D12RHIRenderTargetView    = TD3D12RHIBaseView<CD3D12RHIBaseRenderTargetView>;
+using CD3D12RHIDepthStencilView    = TD3D12RHIBaseView<CD3D12RHIBaseDepthStencilView>;
 using CD3D12RHIUnorderedAccessView = TD3D12RHIBaseView<CD3D12RHIBaseUnorderedAccessView>;
-using CD3D12RHIShaderResourceView = TD3D12RHIBaseView<CD3D12RHIBaseShaderResourceView>;
+using CD3D12RHIShaderResourceView  = TD3D12RHIBaseView<CD3D12RHIBaseShaderResourceView>;

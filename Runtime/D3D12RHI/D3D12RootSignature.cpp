@@ -5,6 +5,7 @@
 #include "D3D12FunctionPointers.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12_SHADER_VISIBILITY
 
 static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[ShaderVisibility_Count] =
 {
@@ -23,6 +24,7 @@ static D3D12_SHADER_VISIBILITY GetD3D12ShaderVisibility(uint32 Visbility)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ShaderVisibility
 
 static EShaderVisibility GShaderVisibility[ShaderVisibility_Count] =
 {
@@ -41,6 +43,7 @@ static EShaderVisibility GetShaderVisibility(uint32 Visbility)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// GetResourceType
 
 static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
 {
@@ -57,6 +60,7 @@ static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RootSignatureResourceCount
 
 bool SD3D12RootSignatureResourceCount::IsCompatible(const SD3D12RootSignatureResourceCount& Other) const
 {
@@ -77,6 +81,7 @@ bool SD3D12RootSignatureResourceCount::IsCompatible(const SD3D12RootSignatureRes
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RootSignatureDescHelper
 
 CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSignatureResourceCount& RootSignatureInfo)
     : Desc()
@@ -215,6 +220,7 @@ void CD3D12RootSignatureDescHelper::Init32BitConstantRange(D3D12_ROOT_PARAMETER&
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RootSignature
 
 CD3D12RootSignature::CD3D12RootSignature(CD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
@@ -343,6 +349,7 @@ bool CD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12RootSignatureCache
 
 CD3D12RootSignatureCache* CD3D12RootSignatureCache::Instance = nullptr;
 

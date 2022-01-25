@@ -4,6 +4,9 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12RHIViewport
+
 CD3D12RHIViewport::CD3D12RHIViewport(CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight)
     : CD3D12DeviceChild(InDevice)
     , CRHIViewport(InFormat, InWidth, InHeight)
@@ -199,11 +202,11 @@ bool CD3D12RHIViewport::RetriveBackBuffers()
         CD3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RHICore->GetRenderTargetOfflineDescriptorHeap();
         BackBufferViews.Resize(NumBackBuffers);
 
-        for (TSharedRef<CD3D12RenderTargetView>& View : BackBufferViews)
+        for (TSharedRef<CD3D12RHIRenderTargetView>& View : BackBufferViews)
         {
             if (!View)
             {
-                View = dbg_new CD3D12RenderTargetView(GetDevice(), RenderTargetOfflineHeap);
+                View = dbg_new CD3D12RHIRenderTargetView(GetDevice(), RenderTargetOfflineHeap);
                 if (!View->AllocateHandle())
                 {
                     return false;

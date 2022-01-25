@@ -1418,7 +1418,7 @@ public:
     FORCEINLINE ElementType& LastElement() noexcept
     {
         Assert(!IsEmpty());
-        return Data()[ArraySize - 1];
+        return Data()[LastElementIndex()];
     }
 
     /**
@@ -1429,7 +1429,7 @@ public:
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
         Assert(!IsEmpty());
-        return Data()[ArraySize - 1];
+        return Data()[LastElementIndex()];
     }
 
     /**

@@ -48,6 +48,7 @@ template<typename T>
 class TConsoleVariable : public CConsoleVariable
 {
 public:
+	
     TConsoleVariable()
         : CConsoleVariable()
         , Value()
@@ -121,7 +122,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// int32 - Specialization
+// Int32 - Specialization
 
 template<>
 inline void TConsoleVariable<int32>::SetString(const CString& InValue)
@@ -145,7 +146,7 @@ inline CString TConsoleVariable<int32>::GetString() const
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// float - Specialization
+// Float - Specialization
 
 template<>
 inline void TConsoleVariable<float>::SetString(const CString& InValue)
@@ -169,7 +170,7 @@ inline CString TConsoleVariable<float>::GetString() const
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// bool - Specialization
+// Bool - Specialization
 
 template<>
 inline void TConsoleVariable<bool>::SetString(const CString& InValue)
