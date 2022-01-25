@@ -1,14 +1,14 @@
 #pragma once
 
 #if PLATFORM_MACOS
-#include "Core/Time/Interface/PlatformTime.h"
+#include "Core/Time/Interface/PlatformTimeInterface.h"
 
 #include <mach/mach_time.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Mac specific interface for high performance counters
 
-class CMacTime : public CPlatformTime
+class CMacTime : public CPlatformTimeInterface
 {
 public:
 

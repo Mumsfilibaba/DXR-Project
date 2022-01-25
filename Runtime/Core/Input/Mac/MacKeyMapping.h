@@ -3,12 +3,12 @@
 #if PLATFORM_MACOS
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/StaticArray.h"
-#include "Core/Input/Interface/PlatformKeyMapping.h"
+#include "Core/Input/Interface/PlatformKeyMappingInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Class that maps key-code from scan-codes and the reverse
 
-class CMacKeyMapping : public CPlatformKeyMapping
+class CMacKeyMapping : public CPlatformKeyMappingInterface
 {
     enum
     {

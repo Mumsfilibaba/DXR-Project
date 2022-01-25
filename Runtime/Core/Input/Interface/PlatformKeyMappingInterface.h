@@ -14,7 +14,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Interface for mapping platform scan-code to engine key-code
 
-class CPlatformKeyMapping
+class CPlatformKeyMappingInterface
 {
 public:
 

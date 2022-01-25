@@ -14,7 +14,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // PlatformLibrary - Base dynamic library interface
 
-class CPlatformLibrary
+class CPlatformLibraryInterface
 {
 public:
 

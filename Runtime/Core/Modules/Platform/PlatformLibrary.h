@@ -9,7 +9,7 @@ typedef CWindowsLibrary PlatformLibrary;
 typedef CMacLibrary PlatformLibrary;
 
 #else
-#include "Core/Modules/Interface/PlatformLibrary.h"
-typedef CPlatformLibrary PlatformLibrary;
+#include "Core/Modules/Interface/PlatformLibraryInterface.h"
+typedef CPlatformLibraryInterface PlatformLibrary;
 
 #endif

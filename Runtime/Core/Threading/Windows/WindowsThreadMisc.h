@@ -38,21 +38,33 @@ public:
         return static_cast<uint32>(SystemInfo.dwNumberOfProcessors);
     }
 
-    /* Retrieves the current thread's system ID */
+    /**
+     * Retrieves the current thread's system ID
+     *
+     * @return: Returns a platform handle for the calling thread, return a invalid handle on failure
+     */
     static FORCEINLINE PlatformThreadHandle GetThreadHandle()
     {
         DWORD CurrentHandle = GetCurrentThreadId();
         return static_cast<PlatformThreadHandle>(CurrentHandle);
     }
 
-    /* Make the current thread sleep for a specified amount of time */
+    /**
+     * Makes the calling thread sleep for a specified amount of time
+     *
+     * @param Time: Time to sleep
+     */
     static FORCEINLINE void Sleep(CTimestamp Time)
     {
         DWORD Milliseconds = static_cast<DWORD>(Time.AsMilliSeconds());
         ::Sleep(Milliseconds);
     }
 
-    /* Checks weather or not the current thread is the main thread */
+    /**
+     * Checks weather or not the calling thread is the main thread
+     *
+     * @return: Returns true if the calling thread is the main-thread
+     */
     static FORCEINLINE bool IsMainThread()
     {
         return (MainThreadHandle == GetThreadHandle());

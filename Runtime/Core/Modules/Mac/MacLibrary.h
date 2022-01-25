@@ -2,7 +2,7 @@
 
 #if PLATFORM_MACOS
 #include "Core/Containers/String.h"
-#include "Core/Modules/Interface/PlatformLibrary.h"
+#include "Core/Modules/Interface/PlatformLibraryInterface.h"
 
 #include <dlfcn.h>
 

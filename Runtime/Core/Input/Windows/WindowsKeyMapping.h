@@ -4,12 +4,12 @@
 #include "Core/Core.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Input/InputCodes.h"
-#include "Core/Input/Interface/PlatformKeyMapping.h"
+#include "Core/Input/Interface/PlatformInterfaceKeyMapping.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Class that maps key-code from scan-codes and the reverse
 
-class CORE_API CWindowsKeyMapping : public CPlatformKeyMapping
+class CORE_API CWindowsKeyMapping : public CPlatformKeyMappingInterface
 {
     enum
     {

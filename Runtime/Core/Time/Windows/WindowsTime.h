@@ -2,12 +2,12 @@
 
 #if PLATFORM_WINDOWS
 #include "Core/Windows/Windows.h"
-#include "Core/Time/Native/NativeTime.h"
+#include "Core/Time/Interface/PlatformTimeInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Windows specific interface for high performance counters
 
-class CWindowsTime : public CNativeTime
+class CWindowsTime : public CPlatformTimeInterface
 {
 public:
 

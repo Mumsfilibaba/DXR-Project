@@ -2,13 +2,13 @@
 
 #if PLATFORM_WINDOWS
 #include "Core/Containers/String.h"
-#include "Core/Modules/Interface/PlatformLibrary.h"
 #include "Core/Windows/Windows.h"
+#include "Core/Modules/Interface/PlatformLibraryInterface.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Windows implementation for loading a dynamic library
 
-class CWindowsLibrary final : public CPlatformLibrary
+class CWindowsLibrary final : public CPlatformLibraryInterface
 {
 public:
 

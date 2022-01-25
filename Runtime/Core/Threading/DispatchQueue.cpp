@@ -63,7 +63,7 @@ void CDispatchQueue::WorkThread()
     LOG_INFO("End Work thread: " + ToString(PlatformThreadMisc::GetThreadHandle()));
 }
 
-bool CDispatchQueue::Init()
+bool CDispatchQueue::Initialize()
 {
     uint32 ThreadCount = NMath::Max<int32>(PlatformThreadMisc::GetNumProcessors() - 1, 1);
     WorkerThreads.Resize(ThreadCount);

@@ -9,7 +9,7 @@ typedef CWindowsTime PlatformTime;
 typedef CMacTime PlatformTime;
 
 #else
-#include "Core/Time/Generic/GenericTime.h"
-typedef CPlatformTime PlatformTime;
+#include "Core/Time/Interface/PlatformTimeInterface.h"
+typedef CPlatformTimeInterface PlatformTime;
 
 #endif
