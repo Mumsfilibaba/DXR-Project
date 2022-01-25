@@ -13,36 +13,50 @@ public:
     CWindowsCriticalSection(const CWindowsCriticalSection&) = delete;
     CWindowsCriticalSection& operator=(const CWindowsCriticalSection&) = delete;
 
+    /**
+     * Default constructor 
+     */
     FORCEINLINE CWindowsCriticalSection() noexcept
         : Section()
     {
         InitializeCriticalSection(&Section);
     }
 
+    /**
+     * Destructor 
+     */
     FORCEINLINE ~CWindowsCriticalSection()
     {
         DeleteCriticalSection(&Section);
     }
 
-    /* Lock CriticalSection for other threads */
+    /** Lock CriticalSection for other threads */
     FORCEINLINE void Lock() noexcept
     {
         EnterCriticalSection(&Section);
     }
 
-    /* Try to lock CriticalSection for other threads */
+    /**
+     * Try to lock CriticalSection for other threads
+     * 
+     * @return; Returns true if the lock is successful
+     */
     FORCEINLINE bool TryLock() noexcept
     {
         return !!TryEnterCriticalSection(&Section);
     }
 
-    /* Unlock CriticalSection for other threads */
+    /** Unlock CriticalSection for other threads */
     FORCEINLINE void Unlock() noexcept
     {
         LeaveCriticalSection(&Section);
     }
 
-    /* Retrieve platform specific handle */
+    /**
+     * Retrieve platform specific handle
+     *
+     * @return: Returns a platform specific handle or nullptr if no platform handle is defined
+     */
     FORCEINLINE PlatformHandle GetPlatformHandle() noexcept
     {
         return &Section;

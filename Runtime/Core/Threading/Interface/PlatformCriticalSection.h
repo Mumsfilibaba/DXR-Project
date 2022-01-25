@@ -13,15 +13,23 @@ public:
     CPlatformCriticalSection() = default;
     ~CPlatformCriticalSection() = default;
 
-    /* Lock CriticalSection for other threads */
+    /** Lock CriticalSection for other threads */
     FORCEINLINE void Lock() noexcept { }
 
-    /* Try to lock CriticalSection for other threads */
+    /**
+     * Try to lock CriticalSection for other threads
+     * 
+     * @return; Returns true if the lock is successful
+     */
     FORCEINLINE bool TryLock() noexcept { return false; }
 
-    /* Unlock CriticalSection for other threads */
+    /** Unlock CriticalSection for other threads */
     FORCEINLINE void Unlock() noexcept { }
 
-    /* Retrieve platform specific handle */
+    /**
+     * Retrieve platform specific handle
+     *
+     * @return: Returns a platform specific handle or nullptr if no platform handle is defined
+     */
     FORCEINLINE PlatformHandle GetPlatformHandle() { return nullptr; }
 };

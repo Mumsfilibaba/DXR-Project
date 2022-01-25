@@ -10,16 +10,16 @@
 *  main-thread from other threads
 */
 
-/* Create the MainThread's RunLoop */
+/** Create the MainThread's RunLoop */
 CORE_API bool RegisterMainRunLoop();
 
-/* Destroy the MainThread's RunLoop */
+/** Destroy the MainThread's RunLoop */
 CORE_API void UnregisterMainRunLoop();
 
-/* Perform a call on the MainThread */
+/** Perform a call on the MainThread */
 CORE_API void MakeMainThreadCall(dispatch_block_t Block, bool WaitUntilFinished);
 
-/* Perform a call on the MainThread and wait for a returnvalue */
+/** Perform a call on the MainThread and wait for a returnvalue */
 template<typename ReturnType>
 inline ReturnType MakeMainThreadCallWithReturn(ReturnType (^Block)(void))
 {

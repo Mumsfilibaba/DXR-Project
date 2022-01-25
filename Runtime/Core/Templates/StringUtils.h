@@ -24,120 +24,243 @@ public:
 
     static constexpr CharType Null = '\0';
 
-    /* Is space */
+    /**
+     * Is the character a space
+     * 
+     * @param Char: Character to compare
+     * @return: Returns true or false weather if the character is a space or not
+     */
     static FORCEINLINE bool IsSpace(CharType Char) noexcept
     {
         return !!isspace(static_cast<int>(Char));
     }
 
-    /* Is null-terminator */
+    /**
+     * Is the character a null-terminator
+     *
+     * @param Char: Character to compare
+     * @return: Returns true or false weather if the character is a null-terminator or not
+     */
     static FORCEINLINE bool IsTerminator(CharType Char) noexcept
     {
         return (Char == Null);
     }
 
-    /* Is space or null terminator */
+    /**
+     * Is the character a whitespace or null-terminator
+     *
+     * @param Char: Character to compare
+     * @return: Returns true or false weather if the character is a null-terminator, whitespace or neither
+     */
     static FORCEINLINE bool IsWhiteSpace(CharType Char) noexcept
     {
         return IsSpace(Char) || IsTerminator(Char);
     }
 
-    /* Finds substring */
+    /**
+     * Search for a sub-string within a string
+     * 
+     * @param String: String to search
+     * @param Substring: Sub-string to search for
+     * @return: Returns the pointer to the first character in sub-string in the string, or nullptr if not found
+     */
     static FORCEINLINE const CharType* Find(const CharType* String, const CharType* Substring) noexcept
     {
         return strstr(String, Substring);
     }
 
-    /* Finds the first occurance of one of the characters in the Set*/
+    /**
+     * Finds the first occurrence of one of the characters in the set
+     * 
+     * @param String: String to search 
+     * @param Set: Set of characters to search for
+     * @return: Returns the pointer to the first character in string that is a part of the set, or nullptr if not found
+     */
     static FORCEINLINE const CharType* FindOneOf(const CharType* String, const CharType* Set) noexcept
     {
         return strpbrk(String, Set);
     }
 
-    /* Finds the length of the span of characters only from the set */
-    static FORCEINLINE int32 Span(const CharType* String, const CharType* Set) noexcept
+    /**
+     * Finds the length of the range of characters only from the set
+     * 
+     * @param String: String to search
+     * @param Set: Set of characters to search for
+     * @return: Returns the length of the first range of characters in string that is only a part of the set
+     */
+    static FORCEINLINE int32 RangeLength(const CharType* String, const CharType* Set) noexcept
     {
         return static_cast<int32>(strspn(String, Set));
     }
 
-    /* Finds character in string */
-    static FORCEINLINE const CharType* FindChar(const CharType* InString, CharType InChar) noexcept
+    /**
+     * Finds character in string
+     * 
+     * @param String: String to search
+     * @param Char: Character to search for
+     * @return: Returns the pointer to the first occurrence of char in the string, or nullptr if not found
+     */
+    static FORCEINLINE const CharType* FindChar(const CharType* String, CharType Char) noexcept
     {
-        return strchr(InString, InChar);
+        return strchr(String, Char);
     }
 
-    /* Finds character in string by searching backwards */
-    static FORCEINLINE const CharType* ReverseFindChar(const CharType* InString, CharType InChar) noexcept
+    /**
+     * Finds character in string by searching backwards
+     * 
+     * @param String: String to search
+     * @param Char: Character to search for 
+     * @return: Returns the pointer to the first occurrence of char in the string, or nullptr if not found
+     */
+    static FORCEINLINE const CharType* ReverseFindChar(const CharType* String, CharType Char) noexcept
     {
-        return strrchr(InString, InChar);
+        return strrchr(String, Char);
     }
 
-    /* Length of string */
-    static FORCEINLINE int32 Length(const CharType* Str) noexcept
+    /**
+     * Retrieve the length of a string
+     * 
+     * @param String: String to retrieve length of
+     * @return: Returns the length of the string, not including null-terminator
+     */
+    static FORCEINLINE int32 Length(const CharType* String) noexcept
     {
-        return (Str != nullptr) ? static_cast<int32>(strlen(Str)) : 0;
+        return (String != nullptr) ? static_cast<int32>(strlen(String)) : 0;
     }
 
-    /* Format into buffer */
-    static int32 FormatBuffer(CharType* Buffer, int32 Len, const CharType* Format, ...) noexcept
+    /**
+     * Format string-buffer
+     * 
+     * @param Buffer: Buffer to store formatted string in
+     * @param BufferLength: Length of the buffer 
+     * @param Format: Formatted string to print into the buffer
+     * @return: Returns the number of characters that were printed into the buffer
+     */
+    static int32 FormatBuffer(CharType* Buffer, int32 BufferLength, const CharType* Format, ...) noexcept
     {
         va_list Args;
         va_start(Args, Format);
-        int32 Result = FormatBufferV(Buffer, Len, Format, Args);
+        int32 Result = FormatBufferV(Buffer, BufferLength, Format, Args);
         va_end(Args);
 
         return Result;
     }
 
-    /* Format into buffer */
+    /**
+     * Format string-buffer with argument-list
+     *
+     * @param Buffer: Buffer to store formatted string in
+     * @param BufferLength: Length of the buffer
+     * @param Format: Formatted string to print into the buffer
+     * @return: Returns the number of characters that were printed into the buffer
+     */
     static FORCEINLINE int32 FormatBufferV(CharType* Buffer, int32 Len, const CharType* Format, va_list Args) noexcept
     {
         return vsnprintf(Buffer, Len, Format, Args);
     }
 
-    /* Convert to lower-case */
-    static FORCEINLINE CharType ToLower(char Char) noexcept
+    /**
+     * Convert character to lower-case
+     * 
+     * @param Char: Character to convert
+     * @return: Returns the character in lower case
+     */
+    static FORCEINLINE CharType ToLower(CharType Char) noexcept
     {
         return static_cast<CharType>(tolower(static_cast<int>(Char)));
     }
 
-    /* Convert to lower-case */
-    static FORCEINLINE CharType ToUpper(char Char) noexcept
+    /**
+     * Convert character to upper-case
+     *
+     * @param Char: Character to convert
+     * @return: Returns the character in upper case
+     */
+    static FORCEINLINE CharType ToUpper(CharType Char) noexcept
     {
         return static_cast<CharType>(toupper(static_cast<int>(Char)));
     }
 
-    /* Copy two strings */
-    static FORCEINLINE CharType* Copy(CharType* Destination, const CharType* Source) noexcept
+    /**
+     * Copy two strings
+     * 
+     * @param Dest: String to copy to
+     * @param Source: String to copy from
+     * @return: Returns the pointer to the destination string
+     */
+    static FORCEINLINE CharType* Copy(CharType* Dest, const CharType* Source) noexcept
     {
-        return Copy(Destination, Source, Length(Source));
+        return Copy(Dest, Source, Length(Source));
     }
 
-    /* Copy two strings */
-    static FORCEINLINE CharType* Copy(CharType* Destination, const CharType* Source, uint64 Length) noexcept
+    /**
+     * Copy two strings
+     *
+     * @param Dest: String to copy to
+     * @param Source: String to copy from
+     * @param InLength: Number of characters to copy
+     * @return: Returns the pointer to the destination string
+     */
+    static FORCEINLINE CharType* Copy(CharType* Dest, const CharType* Source, uint64 InLength) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memcpy(Destination, Source, Length * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(CMemory::Memcpy(Dest, Source, InLength * sizeof(CharType)));
     }
 
-    /* Move two strings */
-    static FORCEINLINE CharType* Move(CharType* Destination, const CharType* Source, uint64 Length) noexcept
+    /**
+     * Move characters from one string to another
+     *
+     * @param Dest: String to move to
+     * @param Source: String to move from
+     * @return: Returns the destination string
+     */
+    static FORCEINLINE CharType* Move(CharType* Dest, const CharType* Source) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memmove(Destination, Source, Length * sizeof(CharType)));
+        return Move(Dest, Source, Length(Source));
     }
 
-    /* Compare two strings */
+    /**
+     * Move characters from one string to another
+     * 
+     * @param Dest: String to move to
+     * @param Source: String to move from
+     * @param InLength: Number of characters to move
+     * @return: Returns the destination string
+     */
+    static FORCEINLINE CharType* Move(CharType* Dest, const CharType* Source, uint64 InLength) noexcept
+    {
+        return reinterpret_cast<CharType*>(CMemory::Memmove(Dest, Source, InLength * sizeof(CharType)));
+    }
+
+    /**
+     * Compare two strings 
+     * 
+     * @param LHS: Left-hand side to compare
+     * @param RHS: Right-hand side to compare
+     * @return: Returns zero if equal, otherwise the position of the character that is not equal
+     */
     static FORCEINLINE int32 Compare(const CharType* LHS, const CharType* RHS) noexcept
     {
         return static_cast<int32>(strcmp(LHS, RHS));
     }
 
-    /* Compare two strings */
+    /**
+     * Compare two strings
+     *
+     * @param LHS: Left-hand side to compare
+     * @param RHS: Right-hand side to compare
+     * @param InLength: Length of the strings to compare
+     * @return: Returns zero if equal, otherwise the position of the character that is not equal
+     */
     static FORCEINLINE int32 Compare(const CharType* LHS, const CharType* RHS, uint64 InLength) noexcept
     {
         return static_cast<int32>(strncmp(LHS, RHS, InLength));
     }
 
-    /* Returns the empty string */
+    /**
+     * Retrieve the empty string 
+     * 
+     * @return: Returns an empty string
+     */
     static FORCEINLINE const CharType* Empty() noexcept
     {
         return "";
@@ -158,120 +281,243 @@ public:
 
     static constexpr CharType Null = L'\0';
 
-    /* Is space */
+    /**
+     * Is the character a space
+     *
+     * @param Char: Character to compare
+     * @return: Returns true or false weather if the character is a space or not
+     */
     static FORCEINLINE bool IsSpace(CharType Char) noexcept
     {
         return !!iswspace(static_cast<wint_t>(Char));
     }
 
-    /* Is null-terminator */
+    /**
+     * Is the character a null-terminator
+     *
+     * @param Char: Character to compare
+     * @return: Returns true or false weather if the character is a null-terminator or not
+     */
     static FORCEINLINE bool IsTerminator(CharType Char) noexcept
     {
         return (Char == Null);
     }
 
-    /* Is space or null terminator */
+    /**
+     * Is the character a whitespace or null-terminator
+     *
+     * @param Char: Character to compare
+     * @return: Returns true or false weather if the character is a null-terminator, whitespace or neither
+     */
     static FORCEINLINE bool IsWhiteSpace(CharType Char) noexcept
     {
         return IsSpace(Char) || IsTerminator(Char);
     }
 
-    /* Finds substring */
+    /**
+     * Search for a sub-string within a string
+     *
+     * @param String: String to search
+     * @param Substring: Sub-string to search for
+     * @return: Returns the pointer to the first character in sub-string in the string, or nullptr if not found
+     */
     static FORCEINLINE const CharType* Find(const CharType* String, const CharType* Substring) noexcept
     {
         return wcsstr(String, Substring);
     }
 
-    /* Finds the first occurance of one of the characters */
+    /**
+     * Finds the first occurrence of one of the characters in the set
+     *
+     * @param String: String to search
+     * @param Set: Set of characters to search for
+     * @return: Returns the pointer to the first character in string that is a part of the set, or nullptr if not found
+     */
     static FORCEINLINE const CharType* FindOneOf(const CharType* String, const CharType* Set) noexcept
     {
         return wcspbrk(String, Set);
     }
 
-    /* Finds character in string */
+    /**
+     * Finds the length of the range of characters only from the set
+     *
+     * @param String: String to search
+     * @param Set: Set of characters to search for
+     * @return: Returns the length of the first range of characters in string that is only a part of the set
+     */
     static FORCEINLINE const CharType* FindChar(const CharType* String, CharType Char) noexcept
     {
         return wcschr(String, Char);
     }
 
-    /* Finds character in string by searching backwards */
+    /**
+     * Finds character in string
+     *
+     * @param String: String to search
+     * @param Char: Character to search for
+     * @return: Returns the pointer to the first occurrence of char in the string, or nullptr if not found
+     */
     static FORCEINLINE const CharType* ReverseFindChar(const CharType* String, CharType Char) noexcept
     {
         return wcsrchr(String, Char);
     }
 
-    /* Finds the length of the span of characters only from the set */
-    static FORCEINLINE int32 Span(const CharType* String, const CharType* Set) noexcept
+    /**
+     * Finds character in string by searching backwards
+     *
+     * @param String: String to search
+     * @param Char: Character to search for
+     * @return: Returns the pointer to the first occurrence of char in the string, or nullptr if not found
+     */
+    static FORCEINLINE int32 RangeLength(const CharType* String, const CharType* Set) noexcept
     {
         return static_cast<int32>(wcsspn(String, Set));
     }
 
-    /* Length of string */
-    static FORCEINLINE int32 Length(const CharType* Str) noexcept
+    /**
+     * Retrieve the length of a string
+     *
+     * @param String: String to retrieve length of
+     * @return: Returns the length of the string, not including null-terminator
+     */
+    static FORCEINLINE int32 Length(const CharType* String) noexcept
     {
-        return (Str != nullptr) ? static_cast<int32>(wcslen(Str)) : 0;
+        return (String != nullptr) ? static_cast<int32>(wcslen(String)) : 0;
     }
 
-    /* Format into buffer */
-    static int32 FormatBuffer(CharType* Buffer, int32 Len, const CharType* Format, ...) noexcept
+    /**
+     * Format string-buffer
+     *
+     * @param Buffer: Buffer to store formatted string in
+     * @param BufferLength: Length of the buffer
+     * @param Format: Formatted string to print into the buffer
+     * @return: Returns the number of characters that were printed into the buffer
+     */
+    static int32 FormatBuffer(CharType* Buffer, int32 BufferLength, const CharType* Format, ...) noexcept
     {
         va_list Args;
         va_start(Args, Format);
-        int32 Result = FormatBufferV(Buffer, Len, Format, Args);
+        int32 Result = FormatBufferV(Buffer, BufferLength, Format, Args);
         va_end(Args);
 
         return Result;
     }
 
-    /* Format into buffer */
+    /**
+     * Format string-buffer with argument-list
+     *
+     * @param Buffer: Buffer to store formatted string in
+     * @param BufferLength: Length of the buffer
+     * @param Format: Formatted string to print into the buffer
+     * @return: Returns the number of characters that were printed into the buffer
+     */
     static FORCEINLINE int32 FormatBufferV(CharType* Data, int32 Len, const CharType* Format, va_list Args) noexcept
     {
         return vswprintf(Data, Len, Format, Args);
     }
 
-    /* Convert to lower-case */
+     /**
+      * Convert character to lower-case
+      *
+      * @param Char: Character to convert
+      * @return: Returns the character in lower case
+      */
     static FORCEINLINE CharType ToLower(CharType Char) noexcept
     {
         return static_cast<CharType>(towlower(static_cast<wint_t>(Char)));
     }
 
-    /* Convert to upper-case */
+    /**
+     * Convert character to upper-case
+     *
+     * @param Char: Character to convert
+     * @return: Returns the character in upper case
+     */
     static FORCEINLINE CharType ToUpper(CharType Char) noexcept
     {
         return static_cast<CharType>(towupper(static_cast<wint_t>(Char)));
     }
 
-    /* Copy two strings */
-    static FORCEINLINE CharType* Copy(CharType* Destination, const CharType* Source) noexcept
+    /**
+     * Copy two strings
+     *
+     * @param Dest: String to copy to
+     * @param Source: String to copy from
+     * @return: Returns the pointer to the destination string
+     */
+    static FORCEINLINE CharType* Copy(CharType* Dest, const CharType* Source) noexcept
     {
-        return Copy(Destination, Source, Length(Source));
+        return Copy(Dest, Source, Length(Source));
     }
 
-    /* Copy two strings */
-    static FORCEINLINE CharType* Copy(CharType* Destination, const CharType* Source, uint64 Length) noexcept
+    /**
+     * Copy two strings
+     *
+     * @param Dest: String to copy to
+     * @param Source: String to copy from
+     * @param InLength: Number of characters to copy
+     * @return: Returns the pointer to the destination string
+     */
+    static FORCEINLINE CharType* Copy(CharType* Dest, const CharType* Source, uint64 Length) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memcpy(Destination, Source, Length * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(CMemory::Memcpy(Dest, Source, Length * sizeof(CharType)));
     }
 
-    /* Move two strings */
-    static FORCEINLINE CharType* Move(CharType* Destination, const CharType* Source, uint64 Length) noexcept
+    /**
+     * Move characters from one string to another
+     *
+     * @param Dest: String to move to
+     * @param Source: String to move from
+     * @return: Returns the destination string
+     */
+    static FORCEINLINE CharType* Move(CharType* Dest, const CharType* Source) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memmove(Destination, Source, Length * sizeof(CharType)));
+        return Move(Dest, Source, Length(Source));
     }
 
-    /* Compare two strings */
+    /**
+     * Move characters from one string to another
+     *
+     * @param Dest: String to move to
+     * @param Source: String to move from
+     * @param InLength: Number of characters to move
+     * @return: Returns the destination string
+     */
+    static FORCEINLINE CharType* Move(CharType* Dest, const CharType* Source, uint64 Length) noexcept
+    {
+        return reinterpret_cast<CharType*>(CMemory::Memmove(Dest, Source, Length * sizeof(CharType)));
+    }
+
+    /**
+     * Compare two strings
+     *
+     * @param LHS: Left-hand side to compare
+     * @param RHS: Right-hand side to compare
+     * @return: Returns zero if equal, otherwise the position of the character that is not equal
+     */
     static FORCEINLINE int32 Compare(const CharType* LHS, const CharType* RHS) noexcept
     {
         return static_cast<int32>(wcscmp(LHS, RHS));
     }
 
-    /* Compare two strings */
-    static FORCEINLINE int32 Compare(const CharType* LHS, const CharType* RHS, uint64 InLength) noexcept
+    /**
+     * Compare two strings
+     *
+     * @param LHS: Left-hand side to compare
+     * @param RHS: Right-hand side to compare
+     * @param InLength: Length of the strings to compare
+     * @return: Returns zero if equal, otherwise the position of the character that is not equal
+     */
+    static FORCEINLINE int32 Compare(const CharType* LHS, const CharType* RHS, uint64 Length) noexcept
     {
-        return static_cast<int32>(wcsncmp(LHS, RHS, InLength));
+        return static_cast<int32>(wcsncmp(LHS, RHS, Length));
     }
 
-    /* Returns the empty string */
+    /**
+     * Retrieve the empty string
+     *
+     * @return: Returns an empty string
+     */
     static FORCEINLINE const CharType* Empty() noexcept
     {
         return L"";
@@ -297,64 +543,140 @@ public:
 
     using CharType = char;
 
+    template<typename T>
+    static typename TEnableIf<TIsIntegerNotBool<T>::Value, T>::Type ParseInt(const CharType* String, CharType** End, int32 Base);
+
+    /**
+     * Parse a int8
+     * 
+     * @param String: String to parse from
+     * @param End: Pointer that gets set to the character after the parsed value in the string
+     * @param Base: Base of the value to parse, set to zero if the base should be determined
+     * @return: Returns the parsed value on success, zero otherwise
+     */
     static FORCEINLINE int8 ParseInt8(const CharType* String, CharType** End, int32 Base)
     {
         return static_cast<int8>(strtol(String, End, Base));
     }
 
+    /**
+     * Parse a int16
+     *
+     * @param String: String to parse from
+     * @param End: Pointer that gets set to the character after the parsed value in the string
+     * @param Base: Base of the value to parse, set to zero if the base should be determined
+     * @return: Returns the parsed value on success, zero otherwise
+     */
     static FORCEINLINE int16 ParseInt16(const CharType* String, CharType** End, int32 Base)
     {
         return static_cast<int16>(strtol(String, End, Base));
     }
 
+    /**
+     * Parse a int32
+     *
+     * @param String: String to parse from
+     * @param End: Pointer that gets set to the character after the parsed value in the string
+     * @param Base: Base of the value to parse, set to zero if the base should be determined
+     * @return: Returns the parsed value on success, zero otherwise
+     */
     static FORCEINLINE int32 ParseInt32(const CharType* String, CharType** End, int32 Base)
     {
         return static_cast<int32>(strtol(String, End, Base));
     }
 
+    /**
+     * Parse a int64
+     *
+     * @param String: String to parse from
+     * @param End: Pointer that gets set to the character after the parsed value in the string
+     * @param Base: Base of the value to parse, set to zero if the base should be determined
+     * @return: Returns the parsed value on success, zero otherwise
+     */
     static FORCEINLINE int64 ParseInt64(const CharType* String, CharType** End, int32 Base)
     {
         return static_cast<int64>(strtoll(String, End, Base));
     }
 
-    static FORCEINLINE int8 ParseUint8(const CharType* String, CharType** End, int32 Base)
+    /**
+     * Parse a uint8
+     *
+     * @param String: String to parse from
+     * @param End: Pointer that gets set to the character after the parsed value in the string
+     * @param Base: Base of the value to parse, set to zero if the base should be determined
+     * @return: Returns the parsed value on success, zero otherwise
+     */
+    static FORCEINLINE uint8 ParseUint8(const CharType* String, CharType** End, int32 Base)
     {
-        return static_cast<int8>(strtoul(String, End, Base));
+        return static_cast<uint8>(strtoul(String, End, Base));
     }
 
-    static FORCEINLINE int16 ParseUint16(const CharType* String, CharType** End, int32 Base)
+    /**
+     * Parse a uint16
+     *
+     * @param String: String to parse from
+     * @param End: Pointer that gets set to the character after the parsed value in the string
+     * @param Base: Base of the value to parse, set to zero if the base should be determined
+     * @return: Returns the parsed value on success, zero otherwise
+     */
+    static FORCEINLINE uint16 ParseUint16(const CharType* String, CharType** End, int32 Base)
     {
-        return static_cast<int16>(strtoul(String, End, Base));
+        return static_cast<uint16>(strtoul(String, End, Base));
     }
 
-    static FORCEINLINE int32 ParseUint32(const CharType* String, CharType** End, int32 Base)
+    /**
+     * Parse a uint32
+     *
+     * @param String: String to parse from
+     * @param End: Pointer that gets set to the character after the parsed value in the string
+     * @param Base: Base of the value to parse, set to zero if the base should be determined
+     * @return: Returns the parsed value on success, zero otherwise
+     */
+    static FORCEINLINE uint32 ParseUint32(const CharType* String, CharType** End, int32 Base)
     {
-        return static_cast<int32>(strtoul(String, End, Base));
+        return static_cast<uint32>(strtoul(String, End, Base));
     }
 
-    static FORCEINLINE int64 ParseUint64(const CharType* String, CharType** End, int32 Base)
+    /**
+     * Parse a uint64
+     *
+     * @param String: String to parse from
+     * @param End: Pointer that gets set to the character after the parsed value in the string
+     * @param Base: Base of the value to parse, set to zero if the base should be determined
+     * @return: Returns the parsed value on success, zero otherwise
+     */
+    static FORCEINLINE uint64 ParseUint64(const CharType* String, CharType** End, int32 Base)
     {
-        return static_cast<int64>(strtoull(String, End, Base));
+        return static_cast<uint64>(strtoull(String, End, Base));
     }
 
+    /**
+     * Parse a float
+     *
+     * @param String: String to parse from
+     * @param End: Pointer that gets set to the character after the parsed value in the string
+     * @return: Returns the parsed value on success, zero otherwise
+     */
     static FORCEINLINE float ParseFloat(const CharType* String, CharType** End)
     {
         return static_cast<float>(strtold(String, End));
     }
 
+    /**
+     * Parse a double
+     *
+     * @param String: String to parse from
+     * @param End: Pointer that gets set to the character after the parsed value in the string
+     * @return: Returns the parsed value on success, zero otherwise
+     */
     static FORCEINLINE double ParseDouble(const CharType* String, CharType** End)
     {
         return static_cast<double>(strtold(String, End));
     }
-
-public:
-
-    template<typename T>
-    static T ParseInt(const CharType* String, CharType** End, int32 Base);
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Define templated integers
+// Implementation
 
 template<>
 FORCEINLINE int8 TStringParse<char>::ParseInt<int8>(const CharType* String, CharType** End, int32 Base)

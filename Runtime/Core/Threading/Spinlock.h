@@ -18,13 +18,17 @@ public:
     CSpinLock(const CSpinLock&) = delete;
     CSpinLock& operator=(const CSpinLock&) = delete;
 
+    ~CSpinLock() = default;
+
+    /**
+     * Default constructor
+     */
     FORCEINLINE CSpinLock() noexcept
         : State(State_Unlocked)
     {
     }
 
-    ~CSpinLock() = default;
-
+    /** Lock SpinLock for other threads */
     FORCEINLINE void Lock() noexcept
     {
         // Try locking until success
@@ -43,12 +47,18 @@ public:
         }
     }
 
+    /**
+     * Try to lock CriticalSection for other threads
+     *
+     * @return; Returns true if the lock is successful
+     */
     FORCEINLINE bool TryLock() noexcept
     {
         // The first relaxed load is in order to prevent unnecessary cache misses when trying to lock in a loop: See Lock
         return (State.RelaxedLoad() == State_Unlocked) && (State.Exchange(State_Locked) == State_Unlocked);
     }
 
+    /** Unlock CriticalSection for other threads */
     FORCEINLINE void Unlock() noexcept
     {
         State.Store(State_Unlocked);

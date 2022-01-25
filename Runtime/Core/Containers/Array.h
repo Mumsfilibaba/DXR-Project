@@ -134,7 +134,7 @@ public:
     }
 
     /** 
-     * Destructor deleting the array 
+     * Destructor
      */
     FORCEINLINE ~TArray()
     {

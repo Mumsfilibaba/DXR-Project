@@ -166,9 +166,7 @@ public:
         }
     }
 
-    /**
-     * Releases a strong ref and deletes the pointer if the strong refcount is zero, if the weak refcount is also zero the counter is deleted
-     */
+    /** Releases a strong ref and deletes the pointer if the strong refcount is zero, if the weak refcount is also zero the counter is deleted */
     FORCEINLINE void ReleaseStrong() noexcept
     {
         Assert(Counter != nullptr);
@@ -188,9 +186,7 @@ public:
         }
     }
 
-    /**
-     * Releases a weak reference and if all references are gone, then delete the counter
-     */
+    /** Releases a weak reference and if all references are gone, then delete the counter */
     FORCEINLINE void ReleaseWeak() noexcept
     {
         Assert(Counter != nullptr);

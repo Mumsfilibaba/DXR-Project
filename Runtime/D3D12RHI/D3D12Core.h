@@ -12,6 +12,7 @@
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12 Error
 
 #if !PRODUCTION_BUILD
 #define D3D12_ERROR(Condition, ErrorMessage) \
@@ -355,7 +356,6 @@ inline uint8 ConvertRenderTargetWriteState(const SRenderTargetWriteState& Render
     return RenderTargetWriteMask;
 }
 
-// Converts EPrimitiveTopologyType to D3D12_PRIMITIVE_TOPOLOGY_TYPE
 inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopologyType PrimitiveTopologyType)
 {
     switch (PrimitiveTopologyType)
@@ -370,7 +370,6 @@ inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopo
     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 }
 
-// Converts EPrimitiveTopology to D3D12_PRIMITIVE_TOPOLOGY
 inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
 {
     switch (PrimitiveTopology)
@@ -386,7 +385,6 @@ inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology Prim
     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 }
 
-// Converts EResourceState to D3D12_RESOURCE_STATES
 inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState ResourceState)
 {
     switch (ResourceState)
@@ -412,7 +410,6 @@ inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState ResourceState)
     return D3D12_RESOURCE_STATES();
 }
 
-// Converts ESamplerMode to D3D12_TEXTURE_ADDRESS_MODE
 inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
@@ -427,7 +424,6 @@ inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
     return D3D12_TEXTURE_ADDRESS_MODE();
 }
 
-// Converts ESamplerFilter to D3D12_FILTER
 inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
@@ -455,7 +451,6 @@ inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
     return D3D12_FILTER();
 }
 
-// Converts EShadingRate to D3D12_SHADING_RATE
 inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
 {
     switch (ShadingRate)

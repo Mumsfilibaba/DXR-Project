@@ -5,13 +5,21 @@
 
 #include "Core/Containers/ArrayView.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// IRHICommandContext 
+
 class IRHICommandContext : public CRefCounted
 {
 public:
 
-    /* Start recording commands with this command context */
+    /**
+     * Start recording commands with this command context 
+     */
     virtual void Begin() = 0;
-    /* Stop recording commands with this command context */
+    
+    /**
+     * Stop recording commands with this command context
+     */
     virtual void End() = 0;
 
     /* Begins the timestamp with the specified index in the TimestampQuery */

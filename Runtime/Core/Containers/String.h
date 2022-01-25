@@ -1016,7 +1016,7 @@ public:
             return 0;
         }
 
-        SizeType Pos = static_cast<SizeType>(StringUtils::Span(CStr() + Position, InString));
+        SizeType Pos = static_cast<SizeType>(StringUtils::RangeLength(CStr() + Position, InString));
         SizeType Ret = Pos + Position;
         if (Ret >= Len)
         {

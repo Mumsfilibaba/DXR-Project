@@ -25,6 +25,12 @@ public:
     static_assert(TIsSigned<SizeType>::Value, "TArrayIterator wants a signed SizeType");
     static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TArrayIterator require ArrayType and ElementType to have the same constness");
 
+    /**
+     * Create a new iterator
+     * 
+     * @param InArray: Array to iterate
+     * @param StartIndex: Index in the array to start
+     */
     FORCEINLINE TArrayIterator(ArrayType& InArray, SizeType StartIndex) noexcept
         : Array(InArray)
         , Index(StartIndex)
@@ -32,43 +38,84 @@ public:
         Assert(IsValid());
     }
 
+    /**
+     * Check if the iterator belongs to a certain array
+     * 
+     * @param FromArray: Array to check
+     * @return: Returns true if the iterator is from the array, otherwise false 
+     */
     FORCEINLINE bool IsFrom(const ArrayType& FromArray) const noexcept
     {
         const ArrayType* FromPointer = AddressOf(FromArray);
         return Array.AddressOf() == FromPointer;
     }
 
+    /**
+     * Check if the iterator is valid
+     * 
+     * @return: Returns true if the iterator is valid
+     */
     FORCEINLINE bool IsValid() const noexcept
     {
         return (Index >= 0) && (Index <= Array.Get().Size());
     }
 
+    /**
+     * Check if the iterator is equal to the end iterator
+     * 
+     * @return: Returns true if the iterator is the end-iterator
+     */
     FORCEINLINE bool IsEnd() const noexcept
     {
         return (Index == Array.Get().Size());
     }
 
+    /**
+     * Retrieve a raw pointer to the data
+     * 
+     * @return: Returns a raw pointer to the data 
+     */
     FORCEINLINE ElementType* Raw() const noexcept
     {
         Assert(IsValid());
         return Array.Get().Data() + GetIndex();
     }
 
+    /**
+     * Retrieve the index to for the iterator in the array
+     * 
+     * @return: Returns the index to the element that the iterator represent within the array   
+     */
     FORCEINLINE SizeType GetIndex() const noexcept
     {
         return Index;
     }
 
+    /**
+     * Retrieve a raw pointer to the data
+     * 
+     * @return: Returns a raw pointer to the data 
+     */
     FORCEINLINE ElementType* operator->() const noexcept
     {
         return Raw();
     }
 
+    /**
+     * Retrieve the data
+     * 
+     * @return: Returns a reference to the data 
+     */
     FORCEINLINE ElementType& operator*() const noexcept
     {
         return *Raw();
     }
 
+    /**
+     * Increment the index for the iterator  
+     * 
+     * @return: Returns a new iterator with the new value
+     */
     FORCEINLINE TArrayIterator operator++() noexcept
     {
         Index++;
@@ -77,6 +124,11 @@ public:
         return *this;
     }
 
+    /**
+     * Increment the index for the iterator  
+     * 
+     * @return: Returns a new iterator with the previous value
+     */
     FORCEINLINE TArrayIterator operator++(int) noexcept
     {
         TArrayIterator NewIterator(*this);
@@ -86,6 +138,11 @@ public:
         return NewIterator;
     }
 
+    /**
+     * Decrement the index for the iterator  
+     * 
+     * @return: Returns a new iterator with the new value
+     */
     FORCEINLINE TArrayIterator operator--() noexcept
     {
         Index--;
@@ -94,6 +151,11 @@ public:
         return *this;
     }
 
+    /**
+     * Decrement the index for the iterator  
+     * 
+     * @return: Returns a new iterator with the previous value
+     */
     FORCEINLINE TArrayIterator operator--(int) noexcept
     {
         TArrayIterator NewIterator(*this);
@@ -103,18 +165,36 @@ public:
         return NewIterator;
     }
 
+    /**
+     * Add a new value to the iterator
+     * 
+     * @param RHS: Value to add
+     * @return: Returns a new iterator with the result from adding RHS to this value 
+     */
     FORCEINLINE TArrayIterator operator+(SizeType RHS) const noexcept
     {
         TArrayIterator NewIterator(*this);
         return NewIterator += RHS;
     }
 
+    /**
+     * Subtract a new value to the iterator
+     * 
+     * @param RHS: Value to subtract
+     * @return: Returns a new iterator with the result from subtracting RHS to this value 
+     */
     FORCEINLINE TArrayIterator operator-(SizeType RHS) const noexcept
     {
         TArrayIterator NewIterator(*this);
         return NewIterator -= RHS;
     }
 
+    /**
+     * Add a value to the iterator and store it in this instance
+     * 
+     * @param RHS: Value to add
+     * @return: Returns a reference to this instance
+     */
     FORCEINLINE TArrayIterator& operator+=(SizeType RHS) noexcept
     {
         Index += RHS;
@@ -123,6 +203,12 @@ public:
         return *this;
     }
 
+    /**
+     * Subtract a value to the iterator and store it in this instance
+     * 
+     * @param RHS: Value to subtract
+     * @return: Returns a reference to this instance
+     */
     FORCEINLINE TArrayIterator& operator-=(SizeType RHS) noexcept
     {
         Index -= RHS;
@@ -131,16 +217,33 @@ public:
         return *this;
     }
 
+    /**
+     * Compare this and another instance
+     * 
+     * @param RHS: Value to compare with
+     * @return: Returns true if the iterators are equal
+     */
     FORCEINLINE bool operator==(const TArrayIterator& RHS) const noexcept
     {
         return (Index == RHS.Index) && RHS.IsFrom(Array);
     }
 
+    /**
+     * Compare this and another instance
+     * 
+     * @param RHS: Value to compare with
+     * @return: Returns false if the iterators are equal
+     */
     FORCEINLINE bool operator!=(const TArrayIterator& RHS) const noexcept
     {
         return !(*this == RHS);
     }
 
+    /**
+     * Create a constant iterator from this
+     * 
+     * @return: Returns a new iterator based on the index from this instance
+     */
     FORCEINLINE operator TArrayIterator<const ArrayType, const ElementType>() const noexcept
     {
         // The array type must be const here in order to make the dereference work properly
@@ -181,6 +284,12 @@ public:
     static_assert(TIsSigned<SizeType>::Value, "TReverseArrayIterator wants a signed SizeType");
     static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TReverseArrayIterator require ArrayType and ElementType to have the same constness");
 
+    /**
+     * Create a new iterator
+     *
+     * @param InArray: Array to iterate
+     * @param StartIndex: Index in the array to start
+     */
     FORCEINLINE TReverseArrayIterator(ArrayType& InArray, SizeType StartIndex) noexcept
         : Array(InArray)
         , Index(StartIndex)
@@ -188,43 +297,84 @@ public:
         Assert(IsValid());
     }
 
+    /**
+     * Check if the iterator belongs to a certain array
+     *
+     * @param FromArray: Array to check
+     * @return: Returns true if the iterator is from the array, otherwise false
+     */
     FORCEINLINE bool IsFrom(const ArrayType& FromArray) const noexcept
     {
         const ArrayType* FromPointer = AddressOf(FromArray);
         return Array.AddressOf() == FromPointer;
     }
 
+    /**
+     * Check if the iterator is valid
+     *
+     * @return: Returns true if the iterator is valid
+     */
     FORCEINLINE bool IsValid() const noexcept
     {
         return (Index >= 0) && (Index <= Array.Get().Size());
     }
 
+    /**
+     * Check if the iterator is equal to the end iterator
+     *
+     * @return: Returns true if the iterator is the end-iterator
+     */
     FORCEINLINE bool IsEnd() const noexcept
     {
         return (Index == 0);
     }
 
+    /**
+     * Retrieve a raw pointer to the data
+     *
+     * @return: Returns a raw pointer to the data
+     */
     FORCEINLINE ElementType* Raw() const noexcept
     {
         Assert(IsValid());
         return Array.Get().Data() + GetIndex();
     }
 
+    /**
+     * Retrieve the index to for the iterator in the array
+     *
+     * @return: Returns the index to the element that the iterator represent within the array
+     */
     FORCEINLINE SizeType GetIndex() const noexcept
     {
         return Index - 1;
     }
 
+    /**
+     * Retrieve a raw pointer to the data
+     *
+     * @return: Returns a raw pointer to the data
+     */
     FORCEINLINE ElementType* operator->() const noexcept
     {
         return Raw();
     }
 
+    /**
+     * Retrieve the data
+     *
+     * @return: Returns a reference to the data
+     */
     FORCEINLINE ElementType& operator*() const noexcept
     {
         return *Raw();
     }
 
+    /**
+     * Increment the index for the iterator
+     *
+     * @return: Returns a new iterator with the new value
+     */
     FORCEINLINE TReverseArrayIterator operator++() noexcept
     {
         Index--;
@@ -233,6 +383,11 @@ public:
         return *this;
     }
 
+    /**
+     * Increment the index for the iterator
+     *
+     * @return: Returns a new iterator with the previous value
+     */
     FORCEINLINE TReverseArrayIterator operator++(int) noexcept
     {
         TReverseArrayIterator NewIterator(*this);
@@ -242,6 +397,11 @@ public:
         return NewIterator;
     }
 
+    /**
+     * Decrement the index for the iterator
+     *
+     * @return: Returns a new iterator with the new value
+     */
     FORCEINLINE TReverseArrayIterator operator--() noexcept
     {
         Index++;
@@ -250,6 +410,11 @@ public:
         return *this;
     }
 
+    /**
+     * Decrement the index for the iterator
+     *
+     * @return: Returns a new iterator with the previous value
+     */
     FORCEINLINE TReverseArrayIterator operator--(int) noexcept
     {
         TReverseArrayIterator NewIterator(*this);
@@ -259,18 +424,36 @@ public:
         return NewIterator;
     }
 
+    /**
+     * Add a new value to the iterator
+     *
+     * @param RHS: Value to add
+     * @return: Returns a new iterator with the result from adding RHS to this value
+     */
     FORCEINLINE TReverseArrayIterator operator+(SizeType RHS) const noexcept
     {
         TReverseArrayIterator NewIterator(*this);
         return NewIterator += RHS; // Uses operator, therefore +=
     }
 
+    /**
+     * Subtract a new value to the iterator
+     *
+     * @param RHS: Value to subtract
+     * @return: Returns a new iterator with the result from subtracting RHS to this value
+     */
     FORCEINLINE TReverseArrayIterator operator-(SizeType RHS) const noexcept
     {
         TReverseArrayIterator NewIterator(*this);
         return NewIterator -= RHS; // Uses operator, therefore -=
     }
 
+    /**
+     * Add a value to the iterator and store it in this instance
+     *
+     * @param RHS: Value to add
+     * @return: Returns a reference to this instance
+     */
     FORCEINLINE TReverseArrayIterator& operator+=(SizeType RHS) noexcept
     {
         Index -= RHS;
@@ -279,6 +462,12 @@ public:
         return *this;
     }
 
+    /**
+     * Subtract a value to the iterator and store it in this instance
+     *
+     * @param RHS: Value to subtract
+     * @return: Returns a reference to this instance
+     */
     FORCEINLINE TReverseArrayIterator& operator-=(SizeType RHS) noexcept
     {
         Index += RHS;
@@ -287,16 +476,33 @@ public:
         return *this;
     }
 
+    /**
+     * Compare this and another instance
+     *
+     * @param RHS: Value to compare with
+     * @return: Returns true if the iterators are equal
+     */
     FORCEINLINE bool operator==(const TReverseArrayIterator& RHS) const noexcept
     {
         return (Index == RHS.Index) && RHS.IsFrom(Array);
     }
 
+    /**
+     * Compare this and another instance
+     *
+     * @param RHS: Value to compare with
+     * @return: Returns false if the iterators are equal
+     */
     FORCEINLINE bool operator!=(const TReverseArrayIterator& RHS) const noexcept
     {
         return !(*this == RHS);
     }
 
+    /**
+     * Create a constant iterator from this
+     *
+     * @return: Returns a new iterator based on the index from this instance
+     */
     FORCEINLINE operator TReverseArrayIterator<const ArrayType, const ElementType>() const noexcept
     {
         // The array type must be const here in order to make the dereference work properly

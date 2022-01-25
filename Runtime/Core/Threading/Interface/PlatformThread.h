@@ -28,21 +28,45 @@ public:
 
     // TODO: Enable member-functions and lambdas (Use TFunction to solve this)
 
-    /* Create a new thread */
+    /**
+     * Create a new thread 
+     * 
+     * @param InFunction: Entry-point for the new thread
+     * @return: An newly created thread interface
+     */
     static TSharedRef<CPlatformThread> Make(ThreadFunction InFunction) { return dbg_new CPlatformThread(); }
-    /* Create a new thread with a name */
+   
+    /**
+      * Create a new thread with a name
+      *
+      * @param InFunction: Entry-point for the new thread
+      * @param InName: Name of the new thread
+      * @return: An newly created thread interface
+      */
     static TSharedRef<CPlatformThread> Make(ThreadFunction InFunction, const CString& InName) { return dbg_new CPlatformThread(); }
 
-    /* Start thread-execution */
+    /**
+     * Start thread-execution 
+     * 
+     * @return: Returns true if the thread started successfully
+     */
     virtual bool Start() { return true; }
 
-    /* Wait until function has finished running */
+    /** Wait until thread has finished running */
     virtual void WaitUntilFinished() { }
 
-    /* Set name of thread. Needs to be called before start on some platforms for the changes to take effect */
+    /**
+     * Set name of thread. Needs to be called before start on some platforms for the changes to take effect 
+     * 
+     * @param InName: New name of the thread
+     */
     virtual void SetName(const CString& InName) { }
 
-    /* Retrieve the platform specific handle for the thread */
+    /**
+     * Retrieve platform specific handle
+     *
+     * @return: Returns a platform specific handle or zero if no platform handle is defined
+     */
     virtual PlatformThreadHandle GetPlatformHandle() { return static_cast<PlatformThreadHandle>(0); }
 
 protected:

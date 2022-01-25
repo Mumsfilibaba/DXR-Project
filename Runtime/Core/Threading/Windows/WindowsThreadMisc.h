@@ -11,7 +11,11 @@ class CWindowsThreadMisc : public CPlatformThreadMisc
 {
 public:
 
-    /* Performs platform specific initialization of thread handling */
+    /**
+     * Performs platform specific initialization of thread handling
+     *
+     * @return: Returns true if the initialization was successful, otherwise false
+     */
     static FORCEINLINE bool Initialize()
     {
         // This must be executed on the main-thread
@@ -19,7 +23,11 @@ public:
         return true;
     }
 
-    /* Retrieves the number of logical cores available on the system */
+    /**
+     * Retrieve the number of logical processors on the system
+     *
+     * @return: Returns the number of logical processors on the system
+     */
     static FORCEINLINE uint32 GetNumProcessors()
     {
         SYSTEM_INFO SystemInfo;

@@ -17,7 +17,9 @@ public:
     CMacCriticalSection(const CMacCriticalSection&) = delete;
     CMacCriticalSection& operator=(const CMacCriticalSection&) = delete;
 
-    /* Constructing a critical section */
+    /**
+     * Default constructor 
+     */
     FORCEINLINE CMacCriticalSection()
         : Mutex()
     {
@@ -30,26 +32,41 @@ public:
         pthread_mutexattr_destroy(&MutexAttributes);
     }
 
+    /**
+     * Destructor 
+     */
     FORCEINLINE ~CMacCriticalSection()
     {
         pthread_mutex_destroy(&Mutex);
     }
 
+    /** Lock CriticalSection for other threads */
     FORCEINLINE void Lock() noexcept
     {
         pthread_mutex_lock(&Mutex);
     }
 
+    /**
+     * Try to lock CriticalSection for other threads
+     * 
+     * @return; Returns true if the lock is successful
+     */
     FORCEINLINE bool TryLock() noexcept
     {
         return (pthread_mutex_trylock(&Mutex) == 0);
     }
 
+    /** Unlock CriticalSection for other threads */
     FORCEINLINE void Unlock() noexcept
     {
         pthread_mutex_unlock(&Mutex);
     }
 
+    /**
+     * Retrieve platform specific handle
+     *
+     * @return: Returns a platform specific handle or nullptr if no platform handle is defined
+     */
     FORCEINLINE PlatformHandle GetPlatformHandle()
     {
         return &Mutex;

@@ -114,8 +114,7 @@ public:
     /**
      * Retrieve all the messages printed to the console
      * 
-     * @return: An array containing pairs of the console-messages and console-severity
-     *          that has been printed to the console.
+     * @return: An array containing pairs of the console-messages and console-severity that has been printed to the console.
      */
     FORCEINLINE const TArray<TPair<CString, EConsoleSeverity>>& GetMessages() const 
     { 

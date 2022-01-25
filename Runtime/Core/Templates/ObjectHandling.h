@@ -58,7 +58,7 @@ FORCEINLINE void ConstructRangeFrom(void* restrict_ptr StartAddress, uint32 Coun
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* Construct range and initialize all values to a certain r-value
+// Construct range and initialize all values to a certain r-value
 
 template<typename T>
 FORCEINLINE void ConstructRangeFrom(void* restrict_ptr StartAddress, uint32 Count, T&& Element) noexcept

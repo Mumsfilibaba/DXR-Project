@@ -193,12 +193,22 @@ namespace Internal
         TTupleStorage& operator=(TTupleStorage&&) = default;
         TTupleStorage& operator=(const TTupleStorage&) = default;
 
+        /**
+         * Create a new tuple
+         * 
+         * @param Args: Arguments for the element
+         */
         template<typename... ArgTypes>
         FORCEINLINE explicit TTupleStorage(ArgTypes&&... Args) noexcept
             : TTupleLeaf<Indices, Types>(Forward<ArgTypes>(Args))...
         {
         }
 
+        /**
+         * Swap this tuple with another
+         * 
+         * @param Other: Tuple to swap with  
+         */
         FORCEINLINE void Swap(TTupleStorage& Other) noexcept
         {
             ExpandPacks(TTupleLeaf<Indices, Types>::Swap(static_cast<TTupleLeaf<Indices, Types>&>(Other))...);
@@ -206,6 +216,11 @@ namespace Internal
 
     public:
 
+        /**
+         * Retrieve a certain element based on type
+         * 
+         * @return: Returns a reference to the data of the specified type
+         */
         template<typename ElementType>
         FORCEINLINE ElementType& Get() noexcept
         {
@@ -213,6 +228,11 @@ namespace Internal
             return Type::Get(*this);
         }
 
+        /**
+          * Retrieve a certain element based on type
+          *
+          * @return: Returns a reference to the data of the specified type
+          */
         template<typename ElementType>
         FORCEINLINE const ElementType& Get() const noexcept
         {
@@ -220,6 +240,11 @@ namespace Internal
             return Type::Get(*this);
         }
 
+        /**
+          * Retrieve a certain element with the specified index
+          *
+          * @return: Returns a reference with the specified index
+          */
         template<uint32 Index>
         FORCEINLINE auto& GetByIndex() noexcept
         {
@@ -227,6 +252,11 @@ namespace Internal
             return IndexType::Get(*this);
         }
 
+        /**
+          * Retrieve a certain element with the specified index
+          *
+          * @return: Returns a reference with the specified index
+          */
         template<uint32 Index>
         FORCEINLINE const auto& GetByIndex() const noexcept
         {
@@ -236,12 +266,26 @@ namespace Internal
 
     public:
 
+        /**
+         * Apply the elements as arguments to a function after the arguments
+         * 
+         * @param Func: Function to call
+         * @param Args: Arguments to before after the tuple
+         * @return: Return the value from the function-call
+         */
         template <typename FuncType, typename... ArgTypes>
         FORCEINLINE decltype(auto) ApplyAfter(FuncType&& Func, ArgTypes&&... Args)
         {
             return ::Invoke(Func, Forward<ArgTypes>(Args)..., this->template GetByIndex<Indices>()...);
         }
 
+        /**
+         * Apply the elements as arguments to a function before the arguments
+         *
+         * @param Func: Function to call
+         * @param Args: Arguments to apply after the tuple
+         * @return: Return the value from the function-call
+         */
         template <typename FuncType, typename... ArgTypes>
         FORCEINLINE decltype(auto) ApplyBefore(FuncType&& Func, ArgTypes&&... Args)
         {
@@ -342,12 +386,24 @@ namespace Internal
         TTupleStorage& operator=(TTupleStorage&&) = default;
         TTupleStorage& operator=(const TTupleStorage&) = default;
 
+        /**
+         * Constructor
+         * 
+         * @param InFirst: Element of the first type to copy
+         * @param InSecond: Element of the second type to copy
+         */
         FORCEINLINE explicit TTupleStorage(const FirstType& InFirst, const SecondType& InSecond)
             : First(InFirst)
             , Second(InSecond)
         {
         }
 
+        /**
+         * Constructor with templated types
+         *
+         * @param InFirst: Element of the first type to copy
+         * @param InSecond: Element of the second type to copy
+         */
         template<typename OtherFirstType, typename OtherSecondType>
         FORCEINLINE explicit TTupleStorage(OtherFirstType&& InFirst, OtherSecondType&& InSecond)
             : First(Forward<OtherFirstType>(InFirst))
@@ -355,42 +411,81 @@ namespace Internal
         {
         }
 
+        /**
+         * Swap this tuple with another
+         *
+         * @param Other: Tuple to swap with
+         */
         FORCEINLINE void Swap(TTupleStorage& Other) noexcept
         {
             ::Swap<FirstType>(First, Other.First);
             ::Swap<SecondType>(Second, Other.Second);
         }
 
+        /**
+         * Retrieve a certain element based on type
+         *
+         * @return: Returns a reference to the data of the specified type
+         */
         template<typename ElementType>
         FORCEINLINE typename TGetByElementHelper<ElementType>::Type& Get() noexcept
         {
             return TGetByElementHelper<ElementType>::Get(*this);
         }
 
+        /**
+         * Retrieve a certain element based on type
+         *
+         * @return: Returns a reference to the data of the specified type
+         */
         template<typename ElementType>
         FORCEINLINE const typename TGetByElementHelper<ElementType>::Type& Get() const noexcept
         {
             return TGetByElementHelper<ElementType>::Get(*this);
         }
 
+        /**
+          * Retrieve a certain element with the specified index
+          *
+          * @return: Returns a reference with the specified index
+          */
         template<uint32 Index>
         FORCEINLINE typename TGetByIndexHelper<Index>::Type& GetByIndex() noexcept
         {
             return TGetByIndexHelper<Index>::Get(*this);
         }
 
+        /**
+          * Retrieve a certain element with the specified index
+          *
+          * @return: Returns a reference with the specified index
+          */
         template<uint32 Index>
         FORCEINLINE const typename TGetByIndexHelper<Index>::Type& GetByIndex() const noexcept
         {
             return TGetByIndexHelper<Index>::Get(*this);
         }
 
+        /**
+         * Apply the elements as arguments to a function after the arguments
+         *
+         * @param Func: Function to call
+         * @param Args: Arguments to before after the tuple
+         * @return: Return the value from the function-call
+         */
         template <typename FuncType, typename... ArgTypes>
         FORCEINLINE decltype(auto) ApplyAfter(FuncType&& Func, ArgTypes&&... Args)
         {
             return ::Invoke(Func, Forward<ArgTypes>(Args)..., First, Second);
         }
 
+        /**
+         * Apply the elements as arguments to a function before the arguments
+         *
+         * @param Func: Function to call
+         * @param Args: Arguments to apply after the tuple
+         * @return: Return the value from the function-call
+         */
         template <typename FuncType, typename... ArgTypes>
         FORCEINLINE decltype(auto) ApplyBefore(FuncType&& Func, ArgTypes&&... Args)
         {
@@ -480,6 +575,11 @@ public:
     TTuple& operator=(TTuple&&) = default;
     TTuple& operator=(const TTuple&) = default;
 
+    /**
+     * Constructor
+     * 
+     * @param Args: Arguments for each type
+     */
     template<typename... ArgTypes, typename = typename TEnableIf<(NumElements > 0)>::Type>
     FORCEINLINE explicit TTuple(ArgTypes&&... Args)
         : Super(Forward<ArgTypes>(Args)...)
@@ -488,6 +588,11 @@ public:
 
 public:
 
+    /**
+     * Retrieve the number of elements 
+     * 
+     * @return: Returns the number of elements for the tuples
+     */
     constexpr uint32 Size() const
     {
         return NumElements;

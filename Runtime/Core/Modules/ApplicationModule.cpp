@@ -9,7 +9,6 @@ CORE_API CApplicationModule* GApplicationModule;
 
 bool CApplicationModule::Init()
 {
-    // Bind the application module to the EngineLoopTicker
     CTickDelegate TickDelegate = CTickDelegate::CreateRaw(this, &CApplicationModule::Tick);
     TickHandle = TickDelegate.GetHandle();
 

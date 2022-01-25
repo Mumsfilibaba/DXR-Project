@@ -25,21 +25,39 @@ class CORE_API CDispatchQueue
 {
 public:
 
+    /**
+     * Retrieve the DispatchQueue instance
+     * 
+     * @return: Returns the DispatchQueue instance
+     */
     static CDispatchQueue& Get();
 
-    /* Init DispatchQueue by starting worker threads */
-    bool Init();
+    /**
+     * Initialize DispatchQueue by starting worker threads 
+     * 
+     * @return: Returns true if the initialization was successful
+     */
+    bool Initialize();
 
-    /* Queue a new dispatch for being executed */
+    /**
+     * Queue a new dispatch for being executed 
+     * 
+     * @param NewTask: A new task to dispatch when a worker thread is available
+     * @return: Returns a dispatch ID that can be waited for
+     */
     DispatchID Dispatch(const SDispatch& NewTask);
 
-    /* Wait for a specific task */
+    /**
+     * Wait for a specific task 
+     * 
+     * @param Task: A taskID to wait for
+     */
     void WaitFor(DispatchID Task);
 
-    /* Wait for all queued up dispatched */
+    /** Wait for all queued up tasks to be dispatched and finish */
     void WaitForAll();
 
-    /* Release the DispatchQueue */
+    /** Release the DispatchQueue */
     void Release();
 
 private:

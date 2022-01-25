@@ -2,7 +2,7 @@
 #include "InputCodes.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Holds information about how a key has been pressed
+// Key-state - Holds information about how a key has been pressed
 
 struct SKeyState
 {
@@ -28,7 +28,7 @@ struct SKeyState
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Holds information about how a mouse-button has been pressed
+// MouseButtonState - Holds information about how a mouse-button has been pressed
 
 struct SMouseButtonState
 {

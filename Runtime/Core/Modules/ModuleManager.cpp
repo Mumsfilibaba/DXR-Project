@@ -17,10 +17,8 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
         return ExistingModule;
     }
 
-    // New module
     SModule NewModule;
 
-    // First check if we are trying to load a static module
     CInitializeStaticModuleDelegate* ModuleInitializer = GetStaticModuleDelegate(ModuleName);
     if (ModuleInitializer)
     {
@@ -41,7 +39,6 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
     }
     else
     {
-        // Load the module dynamically
         PlatformModule Module = PlatformLibrary::LoadDynamicLib(ModuleName);
         if (!Module)
         {
@@ -49,7 +46,6 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
             return nullptr;
         }
 
-        // Requires that the module has a LoadEngineModule function exported
         PFNLoadEngineModule LoadEngineModule = PlatformLibrary::LoadSymbolAddress<PFNLoadEngineModule>("LoadEngineModule", Module);
         if (!LoadEngineModule)
         {
@@ -57,10 +53,7 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
             return nullptr;
         }
 
-        // The pointer is owned by the ModuleManager and should not be released anywhere else
         NewModule.Interface = LoadEngineModule();
-
-        // Load the new module
         if (!NewModule.Interface)
         {
             LOG_ERROR("Failed to load module '" + CString(ModuleName) + "', resulting interface was nullptr");
@@ -78,10 +71,8 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
     {
         LOG_INFO("Loaded module'" + CString(ModuleName) + "'");
 
-        // Broadcast to engine systems that a new module was loaded
         ModuleLoadedDelegate.Broadcast(ModuleName, NewModule.Interface);
 
-        // Add module in the module list
         NewModule.Name = ModuleName;
         Modules.Emplace(NewModule);
         return NewModule.Interface;
@@ -138,12 +129,9 @@ void CModuleManager::Release()
         if (EngineModule)
         {
             EngineModule->Unload();
-
-            // The pointer is owned by the ModuleManager and should not be released anywhere else
             SafeDelete(EngineModule);
         }
 
-        // Unload the dynamic library
         PlatformModule Handle = Module.Handle;
         PlatformLibrary::FreeDynamicLib(Handle);
         Module.Handle = nullptr;
@@ -152,7 +140,7 @@ void CModuleManager::Release()
     ModuleManager.Modules.Clear();
 }
 
-PlatformModule CModuleManager::GetModule(const char* ModuleName)
+PlatformModule CModuleManager::GetModuleHandle(const char* ModuleName)
 {
     const int32 Index = GetModuleIndex(ModuleName);
     if (Index >= 0)
@@ -196,12 +184,9 @@ void CModuleManager::UnloadModule(const char* ModuleName)
         if (EngineModule)
         {
             EngineModule->Unload();
-
-            // The pointer is owned by the ModuleManager and should not be released anywhere else
             SafeDelete(EngineModule);
         }
 
-        // Unload the dynamic library
         PlatformModule Handle = Module.Handle;
         PlatformLibrary::FreeDynamicLib(Handle);
         Module.Handle = nullptr;
