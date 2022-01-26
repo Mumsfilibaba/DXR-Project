@@ -17,52 +17,105 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for applicacation
+// Platform interface for application
 
 class CPlatformApplication
 {
 public:
 
-    /* Creates the application */
+    /**
+     * Create a new PlatformApplication
+     * 
+     * @return: Returns the newly created PlatformApplication 
+     */
     static TSharedPtr<CPlatformApplication> Make() { return TSharedPtr<CPlatformApplication>(); }
 
-    /* Public destructor for TSharedPtr */
+    /** Public destructor for TSharedPtr */
     virtual ~CPlatformApplication() = default;
 
-    /* Create a window */
+    /**
+     * Create a new PlatformWindow
+     * 
+     * @return: Returns the newly created PlatformWindow
+     */
     virtual TSharedRef<CPlatformWindow> MakeWindow() { return TSharedRef<CPlatformWindow>(); }
 
-    /* Initialized the application */
+    /**
+     * Initialize the PlatformApplication
+     * 
+     * @return: Returns true if the initalization is successful
+     */
     virtual bool Initialize() { return true; }
 
-    /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
+    /**
+     * Tick and update the PlatformApplication 
+     * 
+     * @param Delta: Time in milliseconds since the last tick   
+     */
     virtual void Tick(float Delta) { }
 
-    /* Returns true if the platform supports Raw mouse movement */
-    virtual bool SupportsRawMouse() const { return false; }
+    /**
+     * Check if the PlatformApplication support high-precision mouse-movement
+     * 
+     * @return: Returns true if the PlatformApplication supports high precision mouse-movement 
+     */
+    virtual bool SupportsHighPrecisionMouse() const { return false; }
 
-    /* Enables Raw mouse movement for a certain window */
-    virtual bool EnableRawMouse(const TSharedRef<CPlatformWindow>& Window) { return true; }
+    /**
+     * Enable high-precision mouse input for the specified window
+     * 
+     * @param Window: PlatformWindow to enable high-precision for
+     * @return: Returns true if high-precision mouse input was successfully enabled
+     */
+    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<CPlatformWindow>& Window) { return true; }
 
-    /* Sets the window that is currently active */
+    /**
+     * Set the Active PlatformWindow
+     * 
+     * @param Window: PlatformWindow that should become the active window
+     */
     virtual void SetActiveWindow(const TSharedRef<CPlatformWindow>& Window) { }
 
-    /* Retrieves the window that is currently active */
+    /**
+     * @brief Retrieve the Active PlatformWindow
+     * 
+     * @return: Returns the currently active PlatformWindow
+     */
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const { return TSharedRef<CPlatformWindow>(); }
 
-    /* Sets the window that currently has the keyboard focus */
-    virtual void SetCapture(const TSharedRef<CPlatformWindow>&) { }
+    /**
+     * @brief Sets the PlatformWindow that should recive keyboard focus
+     * 
+     * @param Window: PlatformWindow that should recive keyboard focus
+     */
+    virtual void SetCapture(const TSharedRef<CPlatformWindow>& Window) { }
 
-    /* Retrieves the window that currently has the keyboard focus, since macOS does not support keyboard focus, we return null as standard */
+    /**
+     * @brief Retrieve the current PlatformWindow that has keyboard focus
+     * 
+     * @return: Returns the currently active PlatformWindow
+     */
     virtual TSharedRef<CPlatformWindow> GetCapture() const { return TSharedRef<CPlatformWindow>(); }
 
-    /* Retrieve the window that is currently under the cursor, if no window is under the cursor, the value is nullptr */
+    /**
+     * @brief Retrieve the current PlatformWindow that is under the mousecursor
+     * 
+     * @return: Returns the urrent PlatformWindow that is under the mousecursor or nullptr if no application-window is under the cursor
+     */
     virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const { return TSharedRef<CPlatformWindow>(); }
 
-    /* Sets the message handler */
+    /**
+     * @brief Set message-listener interface
+     * 
+     * @param InMessageHandler: New message listener
+     */
     virtual void SetMessageListener(const TSharedPtr<CPlatformApplicationMessageHandler>& InMessageHandler) { MessageListener = InMessageHandler; }
 
-    /* Retrieve the cursor interface */
+    /**
+     * @brief Retrieve the mouse-cursor interface 
+     * 
+     * @return: Returns the mouse-cursor interface 
+     */
     FORCEINLINE TSharedPtr<ICursor> GetCursor() const
     {
         return Cursor;
@@ -82,9 +135,9 @@ protected:
     {
     }
 
-    /* The cursor interface for the application */
     TSharedPtr<ICursor> Cursor;
-    /* Handler for platform messages/events */
+    
+    /** Handler for platform messages/events */
     TSharedPtr<CPlatformApplicationMessageHandler> MessageListener;
 };
 
