@@ -14,9 +14,10 @@ CTimer::CTimer()
 void CTimer::Tick()
 {
     const uint64 Now = PlatformTime::QueryPerformanceCounter();
-    constexpr uint64 NANOSECONDS = 1000 * 1000 * 1000;
-    uint64 Delta = Now - LastTime;
-    uint64 Nanoseconds = (Delta * NANOSECONDS) / Frequency;
+    
+    // TODO: Does this make sense? 
+    uint64 Delta       = Now - LastTime;
+    uint64 Nanoseconds = NTime::FromSeconds(Delta) / Frequency;
 
     DeltaTime = CTimestamp(Nanoseconds);
     LastTime = Now;

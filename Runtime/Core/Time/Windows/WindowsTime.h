@@ -2,16 +2,20 @@
 
 #if PLATFORM_WINDOWS
 #include "Core/Windows/Windows.h"
-#include "Core/Time/Interface/PlatformTimeInterface.h"
+#include "Core/Time/Interface/PlatformTime.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Windows specific interface for high performance counters
 
-class CWindowsTime : public CPlatformTimeInterface
+class CWindowsTime : public CPlatformTime
 {
 public:
 
-    /* Query the current state of the performance counter */
+    /**
+     * Query the current state of the performance counter
+     *
+     * @return: Returns the current value of the performance counter
+     */
     static FORCEINLINE uint64 QueryPerformanceCounter()
     {
         LARGE_INTEGER Counter;
@@ -19,7 +23,11 @@ public:
         return Counter.QuadPart;
     }
 
-    /* Query the frequency of the performance counter */
+    /**
+     * Query the frequency of the performance counter
+     *
+     * @return: Returns the frequency of the performance counter
+     */
     static FORCEINLINE uint64 QueryPerformanceFrequency()
     {
         LARGE_INTEGER Counter;
