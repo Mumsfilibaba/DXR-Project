@@ -3,7 +3,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EngineLoopTicker
 
-CEngineLoopTicker CEngineLoopTicker::Instance;
+CEngineLoopTicker& CEngineLoopTicker::Get()
+{
+    static CEngineLoopTicker Instance;
+    return Instance;
+}
 
 void CEngineLoopTicker::Tick(CTimestamp Deltatime)
 {

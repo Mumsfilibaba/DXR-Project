@@ -2,6 +2,7 @@
 
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Modules/ModuleManager.h"
 
 #include "Interface/InterfaceApplication.h"
 

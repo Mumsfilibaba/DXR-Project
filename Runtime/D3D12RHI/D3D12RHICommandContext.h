@@ -203,27 +203,16 @@ class CD3D12RHICommandContext : public IRHICommandContext, public CD3D12DeviceCh
 public:
 
     /* Create and initialize a new CommandContext */
-    static FORCEINLINE CD3D12RHICommandContext* Make(CD3D12Device* InDevice)
-    {
-        TSharedRef<CD3D12RHICommandContext> NewContext = dbg_new CD3D12RHICommandContext(InDevice);
-        if (NewContext && NewContext->Init())
-        {
-            return NewContext.ReleaseOwnership();
-        }
-        else
-        {
-            return nullptr;
-        }
-    }
+    static CD3D12RHICommandContext* Make(CD3D12Device* InDevice);
 
     /* Start recording commands with this context */
     virtual void Begin() override final;
     /* Stop recording commands with this context */
     virtual void End() override final;
 
-    /* Begins the timestamp with the specifed index in the timestampquery */
+    /* Begins the timestamp with the specified index in the timestamp-query */
     virtual void BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
-    /* Ends the timestamp with the specifed index in the timestampquery */
+    /* Ends the timestamp with the specified index in the timestamp-query */
     virtual void EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
 
     /* Clears a RenderTargetView with a specific color */
@@ -233,12 +222,12 @@ public:
     /* Clears a UnorderedAccessView with a specific color */
     virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor) override final;
 
-    /* Sets the shadingrate for the fullscreen */
+    /* Sets the ShadingRate for the fullscreen */
     virtual void SetShadingRate(EShadingRate ShadingRate) override final;
-    /* Set the shadingrate image that should be used */
+    /* Set the ShadingRate image that should be used */
     virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) override final;
 
-    // TODO: Implement renderpasses (For Vulkan)
+    // TODO: Implement RenderPasses (For Vulkan)
     virtual void BeginRenderPass() override final;
     virtual void EndRenderPass() override final;
 
@@ -247,7 +236,7 @@ public:
     /* Set the current scissor settings */
     virtual void SetScissorRect(float Width, float Height, float x, float y) override final;
 
-    /* Set the blendfactor color */
+    /* Set the BlendFactor color */
     virtual void SetBlendFactor(const SColorF& Color) override final;
 
     /* Sets all the RenderTargetViews and the DepthStencilView that should be used, nullptr is valid if the view should not be set */
@@ -255,15 +244,15 @@ public:
 
     /* Set the VertexBuffers */
     virtual void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
-    /* Set the indexbuffer */
+    /* Set the IndexBuffer */
     virtual void SetIndexBuffer(CRHIIndexBuffer* IndexBuffer) override final;
 
     /* Set the primitive topology */
     virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
 
-    /* Sets the current graphics pipelinestate */
+    /* Sets the current graphics PipelineState */
     virtual void SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState) override final;
-    /* Sets the current compute pipelinestate */
+    /* Sets the current compute PipelineState */
     virtual void SetComputePipelineState(class CRHIComputePipelineState* PipelineState) override final;
 
     /* Set shader constants */
@@ -294,7 +283,7 @@ public:
     /* Updates the contents of a Texture2D */
     virtual void UpdateTexture2D(CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) override final;
 
-    /* Resolves a multisampled texture, must have the same sizes and compatable formats */
+    /* Resolves a multi-sampled texture, must have the same sizes and compatible formats */
     virtual void ResolveTexture(CRHITexture* Destination, CRHITexture* Source) override final;
 
     /* Copies the contents from one buffer to another */
@@ -304,7 +293,7 @@ public:
     /* Copies the region of one texture to another */
     virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SCopyTextureInfo& CopyTextureInfo) override final;
 
-    /* Discards a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying commandlist is completed */
+    /* Discards a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command list is completed */
     virtual void DestroyResource(class CRHIResource* Resource) override final;
     /* Signal the driver that the contents can be discarded */
     virtual void DiscardResource(class CRHIMemoryResource* Resource) override final;
@@ -324,12 +313,12 @@ public:
         const SRayTracingShaderResources* HitGroupResources,
         uint32 NumHitGroupResources) override final;
 
-    /* Generate miplevels for a texture. Works with Texture2D and TextureCubes */
+    /* Generate mip-levels for a texture. Works with Texture2D and TextureCubes */
     virtual void GenerateMips(CRHITexture* Texture) override final;
 
-    /* Transition the resourcestate of a texture resource */
+    /* Transition the ResourceState of a texture resource */
     virtual void TransitionTexture(CRHITexture* Texture, EResourceState BeforeState, EResourceState AfterState) override final;
-    /* Transition the resourcestate of a buffer resource */
+    /* Transition the ResourceState of a buffer resource */
     virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceState BeforeState, EResourceState AfterState) override final;
 
     /* Add a UnorderedAccessBarrier for a texture resource, which should be issued before reading of a resource in UnorderedAccessState */

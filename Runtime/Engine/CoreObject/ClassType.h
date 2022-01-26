@@ -1,19 +1,22 @@
 #pragma once
 #include "Engine/EngineModule.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ClassDescription
+
 struct SClassDescription
 {
-    /* Name of the class */
+    /** Name of the class */
     const char* Name = nullptr;
-
-    /* Size of the class in bytes */
+    /** Size of the class in bytes */
     uint32 SizeInBytes = 0;
-
-    /* Alignment of the class in bytes */
+    /** Alignment of the class in bytes */
     uint32 Alignment = 0;
 };
 
-// ClassType stores info about a class, for now inheritance
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ClassType - Stores info about a class, for now inheritance
+
 class ENGINE_API CClassType
 {
 public:
@@ -46,15 +49,12 @@ public:
 
 private:
 
-    /* Name of the class */
+    /** Name of the class */
     const char* Name;
-
-    /* Class that this class inherits from */
+    /** Class that this class inherits from */
     const CClassType* SuperClass;
-
-    /* The size of the class in bytes */
+    /** The size of the class in bytes */
     uint32 SizeInBytes;
-
-    /* Alignment of the class in bytes */
+    /** Alignment of the class in bytes */
     uint32 Alignment;
 };

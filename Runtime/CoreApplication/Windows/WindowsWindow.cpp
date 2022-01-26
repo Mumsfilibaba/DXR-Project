@@ -417,7 +417,7 @@ uint32 CWindowsWindow::GetHeight() const
     return 0;
 }
 
-void CWindowsWindow::SetPlatformhandle(PlatformWindowHandle InPlatformHandle)
+void CWindowsWindow::SetPlatformHandle(PlatformWindowHandle InPlatformHandle)
 {
     HWND InWindowHandle = reinterpret_cast<HWND>(InPlatformHandle);
     if (IsWindow(InWindowHandle))

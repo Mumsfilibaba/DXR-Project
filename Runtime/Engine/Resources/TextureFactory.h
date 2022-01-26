@@ -1,7 +1,7 @@
 #pragma once
 #include "RHI/RHITypes.h"
 
-#include "Engine/EngineModule.h"
+#include "Engine/Engine.h"
 
 #include "Core/Utilities/StringUtilities.h"
 

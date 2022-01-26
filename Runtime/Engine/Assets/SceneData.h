@@ -10,6 +10,9 @@
 
 #include "RHI/TextureFormat.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// MeshData
+
 struct SMeshData
 {
     // C++ Being retarded?
@@ -21,9 +24,6 @@ struct SMeshData
     SMeshData& operator=(SMeshData&&) = default;
     SMeshData& operator=(const SMeshData&) = default;
 
-    TArray<SVertex> Vertices;
-    TArray<uint32> Indices;
-
     inline void Clear()
     {
         Vertices.Clear();
@@ -34,7 +34,13 @@ struct SMeshData
     {
         return !Vertices.IsEmpty();
     }
+
+    TArray<SVertex> Vertices;
+    TArray<uint32> Indices;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ModelData
 
 struct SModelData
 {
@@ -56,7 +62,9 @@ struct SModelData
     int32 MaterialIndex = -1;
 };
 
-/* 2-D image for when loading materials */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// 2-D image for when loading materials
+
 struct SImage2D
 {
     SImage2D() = default;
@@ -86,7 +94,9 @@ struct SImage2D
     bool bIsLoaded = false;
 };
 
-/* Contains loaded data from a material */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// MaterialData
+
 struct SMaterialData
 {
     /* Diffuse texture */
@@ -125,6 +135,9 @@ struct SMaterialData
     /* Metallic Parameter */
     float Metallic = 1.0f;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SceneData
 
 struct ENGINE_API SSceneData
 {

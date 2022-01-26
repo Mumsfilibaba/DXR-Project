@@ -48,6 +48,4 @@ private:
 
     // TODO: These should be stored in some priority, also there should be the possibility to add a delay for systems that does not need to be called every frame
     TArray<CTickDelegate> TickDelegates;
-
-    static CEngineLoopTicker Instance;
 };

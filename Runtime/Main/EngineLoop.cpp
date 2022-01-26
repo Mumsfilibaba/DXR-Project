@@ -121,7 +121,7 @@ bool CEngineLoop::PreInitialize()
     }
 
     // Init dispatch queue
-    if (!CDispatchQueue::Get().Init())
+    if (!CDispatchQueue::Get().Initialize())
     {
         return false;
     }

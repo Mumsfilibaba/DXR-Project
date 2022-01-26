@@ -9,7 +9,7 @@ typedef CWindowsKeyMapping PlatformKeyMapping;
 typedef CMacKeyMapping PlatformKeyMapping;
 
 #else
-#include "Core/Input/Interface/PlatformKeyMappingInterface.h"
-typedef CPlatformKeyMappingInterface PlatformKeyMapping;
+#include "Core/Input/Interface/PlatformKeyMapping.h"
+typedef CPlatformKeyMapping PlatformKeyMapping;
 
 #endif

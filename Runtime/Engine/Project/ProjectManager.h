@@ -1,5 +1,5 @@
 #pragma once
-#include "Engine/EngineModule.h"
+#include "Engine/Engine.h"
 
 #define MAX_PROJECT_NAME_LENGTH (256)
 #define MAX_PROJECT_PATH_LENGTH (512)

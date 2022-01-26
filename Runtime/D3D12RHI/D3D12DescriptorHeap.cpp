@@ -31,7 +31,7 @@ bool CD3D12DescriptorHeap::Init()
     HRESULT Result = GetDevice()->GetDevice()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[D3D12DescriptorHeap]: FAILED to Create DescriptorHeap");
+        D3D12_ERROR_ALWAYS("[D3D12DescriptorHeap]: FAILED to Create DescriptorHeap");
         return false;
     }
     else
