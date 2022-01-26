@@ -13,7 +13,7 @@
 #include "Engine/Resources/Material.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Class representing the engine
+// Engine - Class representing the engine
 
 class ENGINE_API CEngine
 {
