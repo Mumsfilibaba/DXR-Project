@@ -766,7 +766,7 @@ struct SRHICopyTextureRegionRenderCommand : public SRHIRenderCommand
 // Destroy Resource RenderCommand
 struct SRHIDestroyResourceRenderCommand : public SRHIRenderCommand
 {
-    SRHIDestroyResourceRenderCommand(CRHIResource* InResource)
+    SRHIDestroyResourceRenderCommand(CRHIObject* InResource)
         : Resource(InResource)
     {
     }
@@ -776,7 +776,7 @@ struct SRHIDestroyResourceRenderCommand : public SRHIRenderCommand
         CmdContext.DestroyResource(Resource.Get());
     }
 
-    TSharedRef<CRHIResource> Resource;
+    TSharedRef<CRHIObject> Resource;
 };
 
 // Discard Resource RenderCommand

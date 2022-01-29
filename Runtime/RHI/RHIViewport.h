@@ -2,12 +2,12 @@
 #include "RHIResources.h"
 #include "RHIResourceViews.h"
 
-class CRHIViewport : public CRHIResource
+class CRHIViewport : public CRHIObject
 {
 public:
 
     CRHIViewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
-        : CRHIResource()
+        : CRHIObject()
         , Width(InWidth)
         , Height(InHeight)
         , Format(InFormat)

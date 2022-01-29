@@ -403,7 +403,7 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
     case WM_CHAR:
     {
         const uint32 Character = static_cast<uint32>(wParam);
-        MessageListener->HandleKeyTyped(Character);
+        MessageListener->HandleKeyChar(Character);
         break;
     }
 
@@ -433,7 +433,7 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
     case WM_INPUT:
     {
-        MessageListener->HandleRawMouseInput(MessageWindow, MouseDeltaX, MouseDeltaY);
+        MessageListener->HandleHighPrecisionMouseInput(MessageWindow, MouseDeltaX, MouseDeltaY);
         break;
     }
 

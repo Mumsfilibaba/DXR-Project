@@ -329,7 +329,7 @@ public:
         InsertCommand<SRHICopyTextureRegionRenderCommand>(AddRef(Destination), AddRef(Source), CopyTextureInfo);
     }
 
-    void DestroyResource(CRHIResource* Resource)
+    void DestroyResource(CRHIObject* Resource)
     {
         InsertCommand<SRHIDestroyResourceRenderCommand>(AddRef(Resource));
     }

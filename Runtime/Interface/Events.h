@@ -7,6 +7,9 @@
 
 #include "CoreApplication/Interface/PlatformWindow.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SEvent - Base class for events
+
 struct SEvent
 {
     FORCEINLINE SEvent()
@@ -14,9 +17,12 @@ struct SEvent
     {
     }
 
-    /* If the key was down or nor */
+    /** If the key was down or nor */
     bool bIsConsumed;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SKeyEvent
 
 struct SKeyEvent : public SEvent
 {
@@ -28,23 +34,22 @@ struct SKeyEvent : public SEvent
     {
     }
 
-    /* The KeyCode for this event */
+    /** The KeyCode for this event */
     EKey KeyCode;
-
-    /* If the key was down or not */
+    /** If the key was down or not */
     bool bIsDown : 1;
-
-    /* Is a repeated key event */
+    /** Is a repeated key event */
     bool bIsRepeat : 1;
-
-    /* The other modifier keys that where down at the same time as the event */
+    /** The other modifier keys that where down at the same time as the event */
     SModifierKeyState ModiferKeyState;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SKeyCharEvent
 
-struct SKeyTypedEvent : public SEvent
+struct SKeyCharEvent : public SEvent
 {
-    FORCEINLINE SKeyTypedEvent(uint32 InCharacter)
+    FORCEINLINE SKeyCharEvent(uint32 InCharacter)
         : Character(InCharacter)
     {
     }
@@ -54,9 +59,12 @@ struct SKeyTypedEvent : public SEvent
         return static_cast<char>(Character);
     }
 
-    /* The character that where pressed, this is a ascii character in most cases */
+    /** The character that where pressed, this is a ascii character in most cases */
     uint32 Character;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SMouseMovedEvent
 
 struct SMouseMovedEvent : public SEvent
 {
@@ -70,6 +78,26 @@ struct SMouseMovedEvent : public SEvent
     int32 y;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SHighPrecisionMouseEvent
+
+struct SHighPrecisionMouseEvent : public SEvent
+{
+    FORCEINLINE SHighPrecisionMouseEvent(const TSharedRef<CPlatformWindow>& InWindow, int32 InX, int32 InY)
+        : Window(InWindow)
+        , x(InX)
+        , y(InY)
+    {
+    }
+
+    TSharedRef<CPlatformWindow> Window;
+    int32 x;
+    int32 y;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SMouseButtonEvent
+
 struct SMouseButtonEvent : public SEvent
 {
     FORCEINLINE SMouseButtonEvent(EMouseButton InButton, bool bInIsDown, SModifierKeyState InModifiers)
@@ -79,15 +107,16 @@ struct SMouseButtonEvent : public SEvent
     {
     }
 
-    /* The mouse button that for the event */
+    /** The mouse button that for the event */
     EMouseButton Button;
-
-    /* If the button where pressed or released */
+    /** If the button where pressed or released */
     bool bIsDown;
-
-    /* The modifier keys that also where pressed */
+    /** The modifier keys that also where pressed */
     SModifierKeyState Modifiers;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SMouseScrolledEvent
 
 struct SMouseScrolledEvent : public SEvent
 {
@@ -101,6 +130,9 @@ struct SMouseScrolledEvent : public SEvent
     float VerticalDelta;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SWindowResizeEvent
+
 struct SWindowResizeEvent : public SEvent
 {
     FORCEINLINE SWindowResizeEvent(const TSharedRef<CPlatformWindow>& InWindow, uint32 InWidth, uint32 InHeight)
@@ -112,10 +144,12 @@ struct SWindowResizeEvent : public SEvent
 
     TSharedRef<CPlatformWindow> Window;
 
-    // Because of padding we can just use 32-bit integers
     uint32 Width;
     uint32 Height;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SWindowFocusChangedEvent
 
 struct SWindowFocusChangedEvent : public SEvent
 {
@@ -129,6 +163,9 @@ struct SWindowFocusChangedEvent : public SEvent
     bool bHasFocus;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SWindowMovedEvent
+
 struct SWindowMovedEvent : public SEvent
 {
     FORCEINLINE SWindowMovedEvent(const TSharedRef<CPlatformWindow>& InWindow, int32 InX, int32 InY)
@@ -140,10 +177,12 @@ struct SWindowMovedEvent : public SEvent
 
     TSharedRef<CPlatformWindow> Window;
 
-    // Because of padding we can just use 32-bit integers
     int32 x;
     int32 y;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SWindowFrameMouseEvent
 
 struct SWindowFrameMouseEvent : public SEvent
 {
@@ -156,6 +195,9 @@ struct SWindowFrameMouseEvent : public SEvent
     TSharedRef<CPlatformWindow> Window;
     bool bMouseEntered;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SWindowClosedEvent
 
 struct SWindowClosedEvent : public SEvent
 {

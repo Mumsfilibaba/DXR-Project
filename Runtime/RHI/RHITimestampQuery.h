@@ -9,7 +9,7 @@ struct SRHITimestamp
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-class CRHITimestampQuery : public CRHIResource
+class CRHITimestampQuery : public CRHIObject
 {
 public:
 

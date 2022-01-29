@@ -1,4 +1,4 @@
-#include "InterfaceModule.h"
+#include "Interface.h"
 
 #include "Core/Modules/ModuleManager.h"
 

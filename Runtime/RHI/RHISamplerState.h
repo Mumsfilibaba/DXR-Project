@@ -91,6 +91,6 @@ struct SSamplerStateCreateInfo
     float           MaxLOD = FLT_MAX;
 };
 
-class CRHISamplerState : public CRHIResource
+class CRHISamplerState : public CRHIObject
 {
 };

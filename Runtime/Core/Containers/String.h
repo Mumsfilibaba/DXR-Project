@@ -9,7 +9,7 @@
 // Config
 
 #define STRING_USE_INLINE_ALLOCATOR (1)
-#define STRING_FORMAT_BUFFER_SIZE   (128)
+#define STRING_FORMAT_BUFFER_SIZE   (256)
 
 #if STRING_USE_INLINE_ALLOCATOR 
 #define STRING_ALLOCATOR_INLINE_ELEMENTS (16)
@@ -2032,7 +2032,7 @@ struct TStringHasher
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Predefined hashing types
 
-using SStringHasher = TStringHasher<char>;
+using SStringHasher     = TStringHasher<char>;
 using SWideStringHasher = TStringHasher<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

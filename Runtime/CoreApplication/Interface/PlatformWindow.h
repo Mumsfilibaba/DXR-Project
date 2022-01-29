@@ -15,20 +15,20 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Window style flags
+// EWindowStyleFlag - Window style flags
 
 enum EWindowStyleFlag : uint32
 {
-    WindowStyleFlag_None = 0x0,
-    WindowStyleFlag_Titled = FLAG(1),
-    WindowStyleFlag_Closable = FLAG(2),
+    WindowStyleFlag_None        = 0x0,
+    WindowStyleFlag_Titled      = FLAG(1),
+    WindowStyleFlag_Closable    = FLAG(2),
     WindowStyleFlag_Minimizable = FLAG(3),
     WindowStyleFlag_Maximizable = FLAG(4),
-    WindowStyleFlag_Resizeable = FLAG(5),
+    WindowStyleFlag_Resizeable  = FLAG(5),
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Struct for checking window style
+// WindowStyle - Struct for checking window style
 
 struct SWindowStyle
 {
@@ -68,7 +68,7 @@ struct SWindowStyle
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Struct defining the shape of a window
+// WindowShape - Struct defining the shape of a window
 
 struct SWindowShape
 {
@@ -99,16 +99,34 @@ class CPlatformWindow : public CRefCounted
 {
 public:
 
-    /* Initializes the window */
+    /**
+     * Initializes the window
+     * 
+     * @param Title: Title of the window
+     * @param InWidth: Width of the window
+     * @param InHeight: Height of the window
+     * @param x: x-coordinate of the window
+     * @param y: y-coordinate of the window
+     * @param Style: Style of the window
+     * @return: Returns true if the initialization is successful, otherwise false
+     */
     virtual bool Initialize(const CString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) { return true; }
 
-    /* Shows the window */
+    /**
+     * Shows the window 
+     * 
+     * @param bMaximized: True if the window should be shown maximized
+     */
     virtual void Show(bool bMaximized) { }
 
-    /* Minimizes the window */
+    /**
+     * Minimizes the window 
+     */
     virtual void Minimize() { }
 
-    /* Maximizes the window */
+    /**
+     *  Maximizes the window
+     */
     virtual void Maximize() { }
 
     /* Closes the window */
@@ -161,11 +179,7 @@ public:
 
 protected:
 
-    CPlatformWindow()
-        : StyleParams()
-    {
-    }
-
+    CPlatformWindow() = default;
     ~CPlatformWindow() = default;
 
     // Style of the window

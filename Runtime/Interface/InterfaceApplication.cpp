@@ -11,11 +11,8 @@
 
 TSharedPtr<CInterfaceApplication> CInterfaceApplication::Instance;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
 bool CInterfaceApplication::Make()
 {
-    /* Create the platform application */
     TSharedPtr<CPlatformApplication> Application = PlatformApplication::Make();
     if (Application && !Application->Initialize())
     {
@@ -30,13 +27,11 @@ bool CInterfaceApplication::Make()
         return false;
     }
 
-    // Set the application to listen to messages from the platform application
     Application->SetMessageListener(Instance);
 
     return true;
 }
 
-/* Init the singleton from an existing application - Used for classes inheriting from CInterfaceApplication */
 bool CInterfaceApplication::Make(const TSharedPtr<CInterfaceApplication>& InApplication)
 {
     Instance = InApplication;
@@ -57,7 +52,7 @@ CInterfaceApplication::CInterfaceApplication(const TSharedPtr<CPlatformApplicati
     , PlatformApplication(InPlatformApplication)
     , Renderer()
     , MainViewport()
-    , UIWindows()
+    , InterfaceWindows()
     , DebugStrings()
     , InputHandlers()
     , WindowMessageHandlers()
@@ -69,7 +64,6 @@ CInterfaceApplication::CInterfaceApplication(const TSharedPtr<CPlatformApplicati
 
 bool CInterfaceApplication::CreateContext()
 {
-    // Create context
     IMGUI_CHECKVERSION();
 
     Context = ImGui::CreateContext();
@@ -109,12 +103,13 @@ bool CInterfaceApplication::CreateContext()
     UIState.KeyMap[ImGuiKey_Y] = EKey::Key_Y;
     UIState.KeyMap[ImGuiKey_Z] = EKey::Key_Z;
 
-    // Setup style
     ImGui::StyleColorsDark();
 
     ImGuiStyle& Style = ImGui::GetStyle();
+
     // Padding
     Style.FramePadding = ImVec2(6.0f, 4.0f);
+
     // Size
     Style.WindowBorderSize = 0.0f;
     Style.FrameBorderSize = 1.0f;
@@ -122,6 +117,7 @@ bool CInterfaceApplication::CreateContext()
     Style.PopupBorderSize = 1.0f;
     Style.ScrollbarSize = 14.0f;
     Style.GrabMinSize = 20.0f;
+
     // Rounding
     Style.WindowRounding = 4.0f;
     Style.FrameRounding = 4.0f;
@@ -310,8 +306,7 @@ void CInterfaceApplication::Tick(CTimestamp DeltaTime)
     {
         Renderer->BeginTick();
 
-        // Update all windows
-        UIWindows.Foreach([](TSharedRef<IInterfaceWindow>& Window)
+        InterfaceWindows.Foreach([](TSharedRef<IInterfaceWindow>& Window)
         {
             if (Window->IsTickable())
             {
@@ -319,7 +314,6 @@ void CInterfaceApplication::Tick(CTimestamp DeltaTime)
             }
         });
 
-        // Render all strings last
         RenderStrings();
 
         Renderer->EndTick();
@@ -418,7 +412,6 @@ void CInterfaceApplication::InsertMessageHandler(TArray<TPair<TSharedPtr<Message
             }
         }
 
-        // If all the handlers has been checked then push the new one to the back
         OutMessageHandlerArray.Push(NewPair);
     }
 }
@@ -449,14 +442,14 @@ void CInterfaceApplication::RegisterMainViewport(const TSharedRef<CPlatformWindo
         MainViewportChange.Broadcast(MainViewport);
     }
 
-    ImGuiIO& UIState = ImGui::GetIO();
+    ImGuiIO& InterfaceState = ImGui::GetIO();
     if (MainViewport)
     {
-        UIState.ImeWindowHandle = MainViewport->GetPlatformHandle();
+        InterfaceState.ImeWindowHandle = MainViewport->GetPlatformHandle();
     }
     else
     {
-        UIState.ImeWindowHandle = nullptr;
+        InterfaceState.ImeWindowHandle = nullptr;
     }
 }
 
@@ -474,16 +467,16 @@ void CInterfaceApplication::SetRenderer(const TSharedRef<IInterfaceRenderer>& Ne
 
 void CInterfaceApplication::AddWindow(const TSharedRef<IInterfaceWindow>& NewWindow)
 {
-    if (NewWindow && !UIWindows.Contains(NewWindow))
+    if (NewWindow && !InterfaceWindows.Contains(NewWindow))
     {
-        TSharedRef<IInterfaceWindow>& Window = UIWindows.Emplace(NewWindow);
+        TSharedRef<IInterfaceWindow>& Window = InterfaceWindows.Emplace(NewWindow);
         Window->InitContext(Context);
     }
 }
 
 void CInterfaceApplication::RemoveWindow(const TSharedRef<IInterfaceWindow>& Window)
 {
-    UIWindows.Remove(Window);
+    InterfaceWindows.Remove(Window);
 }
 
 void CInterfaceApplication::DrawString(const CString& NewString)
@@ -574,7 +567,7 @@ void CInterfaceApplication::HandleKeyEvent(const SKeyEvent& KeyEvent)
 
 void CInterfaceApplication::HandleKeyTyped(uint32 Character)
 {
-    SKeyTypedEvent Event(Character);
+    SKeyCharEvent Event(Character);
     for (int32 Index = 0; Index < InputHandlers.Size(); Index++)
     {
         const TPair<TSharedPtr<CInputHandler>, uint32>& Handler = InputHandlers[Index];
@@ -774,7 +767,6 @@ void CInterfaceApplication::HandleWindowFrameMouseEvent(const SWindowFrameMouseE
 
 void CInterfaceApplication::RenderStrings()
 {
-    // Draw DebugWindow with DebugStrings
     if (MainViewport && !DebugStrings.IsEmpty())
     {
         SWindowShape CurrentWindowShape;
@@ -823,5 +815,6 @@ void CInterfaceApplication::HandleWindowClosed(const TSharedRef<CPlatformWindow>
 void CInterfaceApplication::HandleApplicationExit(int32 ExitCode)
 {
     bIsRunning = false;
+
     ExitEvent.Broadcast(ExitCode);
 }

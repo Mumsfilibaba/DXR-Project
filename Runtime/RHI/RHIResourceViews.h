@@ -291,18 +291,18 @@ struct SDepthStencilViewCreateInfo
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-class CRHIShaderResourceView : public CRHIResource
+class CRHIShaderResourceView : public CRHIObject
 {
 };
 
-class CRHIUnorderedAccessView : public CRHIResource
+class CRHIUnorderedAccessView : public CRHIObject
 {
 };
 
-class CRHIDepthStencilView : public CRHIResource
+class CRHIDepthStencilView : public CRHIObject
 {
 };
 
-class CRHIRenderTargetView : public CRHIResource
+class CRHIRenderTargetView : public CRHIObject
 {
 };

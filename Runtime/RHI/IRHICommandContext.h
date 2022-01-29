@@ -108,7 +108,7 @@ public:
     virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SCopyTextureInfo& CopyTextureInfo) = 0;
 
     /* Destroys a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command-list is completed */
-    virtual void DestroyResource(class CRHIResource* Resource) = 0;
+    virtual void DestroyResource(class CRHIObject* Resource) = 0;
     /* Signal the driver that the contents can be discarded */
     virtual void DiscardResource(class CRHIMemoryResource* Resource) = 0;
 

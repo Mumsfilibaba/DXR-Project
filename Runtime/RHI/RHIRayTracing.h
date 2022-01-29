@@ -26,7 +26,7 @@ enum ERayTracingInstanceFlags
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 /* RayTracing Geometry (Bottom Level Acceleration Structure) */
-class CRHIRayTracingGeometry : public CRHIResource
+class CRHIRayTracingGeometry : public CRHIObject
 {
 public:
     CRHIRayTracingGeometry(uint32 InFlags)
@@ -46,7 +46,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 /* RayTracing Scene (Top Level Acceleration Structure) */
-class CRHIRayTracingScene : public CRHIResource
+class CRHIRayTracingScene : public CRHIObject
 {
 public:
     CRHIRayTracingScene(uint32 InFlags)

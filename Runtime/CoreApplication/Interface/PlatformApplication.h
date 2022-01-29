@@ -30,7 +30,9 @@ public:
      */
     static TSharedPtr<CPlatformApplication> Make() { return TSharedPtr<CPlatformApplication>(); }
 
-    /** Public destructor for TSharedPtr */
+    /**
+     * Public destructor for TSharedPtr 
+     */
     virtual ~CPlatformApplication() = default;
 
     /**
@@ -43,7 +45,7 @@ public:
     /**
      * Initialize the PlatformApplication
      * 
-     * @return: Returns true if the initalization is successful
+     * @return: Returns true if the initialization is successful
      */
     virtual bool Initialize() { return true; }
 
@@ -77,42 +79,42 @@ public:
     virtual void SetActiveWindow(const TSharedRef<CPlatformWindow>& Window) { }
 
     /**
-     * @brief Retrieve the Active PlatformWindow
+     * Retrieve the Active PlatformWindow
      * 
      * @return: Returns the currently active PlatformWindow
      */
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const { return TSharedRef<CPlatformWindow>(); }
 
     /**
-     * @brief Sets the PlatformWindow that should recive keyboard focus
+     * Sets the PlatformWindow that should recive keyboard focus
      * 
      * @param Window: PlatformWindow that should recive keyboard focus
      */
     virtual void SetCapture(const TSharedRef<CPlatformWindow>& Window) { }
 
     /**
-     * @brief Retrieve the current PlatformWindow that has keyboard focus
+     * Retrieve the current PlatformWindow that has keyboard focus
      * 
      * @return: Returns the currently active PlatformWindow
      */
     virtual TSharedRef<CPlatformWindow> GetCapture() const { return TSharedRef<CPlatformWindow>(); }
 
     /**
-     * @brief Retrieve the current PlatformWindow that is under the mousecursor
+     * Retrieve the current PlatformWindow that is under the mouse-cursor
      * 
-     * @return: Returns the urrent PlatformWindow that is under the mousecursor or nullptr if no application-window is under the cursor
+     * @return: Returns the current PlatformWindow that is under the mouse-cursor or nullptr if no application-window is under the cursor
      */
     virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const { return TSharedRef<CPlatformWindow>(); }
 
     /**
-     * @brief Set message-listener interface
+     * Set message-listener interface
      * 
      * @param InMessageHandler: New message listener
      */
     virtual void SetMessageListener(const TSharedPtr<CPlatformApplicationMessageHandler>& InMessageHandler) { MessageListener = InMessageHandler; }
 
     /**
-     * @brief Retrieve the mouse-cursor interface 
+     * Retrieve the mouse-cursor interface 
      * 
      * @return: Returns the mouse-cursor interface 
      */
@@ -121,7 +123,11 @@ public:
         return Cursor;
     }
 
-    /* Retrieves the message handler */
+    /**
+     * Retrieves the message handler
+     * 
+     * @return: Returns the current message handler
+     */
     FORCEINLINE TSharedPtr<CPlatformApplicationMessageHandler> GetMessageListener() const
     {
         return MessageListener;

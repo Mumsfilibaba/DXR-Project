@@ -68,7 +68,7 @@ struct SDepthStencilStateCreateInfo
     SDepthStencilOp BackFace = SDepthStencilOp();
 };
 
-class CRHIDepthStencilState : public CRHIResource
+class CRHIDepthStencilState : public CRHIObject
 {
 };
 
@@ -125,7 +125,7 @@ struct SRasterizerStateCreateInfo
     bool   bEnableConservativeRaster = false;
 };
 
-class CRHIRasterizerState : public CRHIResource
+class CRHIRasterizerState : public CRHIObject
 {
 };
 
@@ -320,7 +320,7 @@ struct SBlendStateCreateInfo
     SRenderTargetBlendState RenderTarget[8];
 };
 
-class CRHIBlendState : public CRHIResource
+class CRHIBlendState : public CRHIObject
 {
 };
 
@@ -370,7 +370,7 @@ struct SInputLayoutStateCreateInfo
     TArray<SInputElement> Elements;
 };
 
-class CRHIInputLayoutState : public CRHIResource
+class CRHIInputLayoutState : public CRHIObject
 {
 };
 
@@ -405,7 +405,7 @@ struct SPipelineRenderTargetFormats
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-class CRHIPipelineState : public CRHIResource
+class CRHIPipelineState : public CRHIObject
 {
 public:
 

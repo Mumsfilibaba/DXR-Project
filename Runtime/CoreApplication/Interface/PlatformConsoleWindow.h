@@ -14,14 +14,14 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Color of the console text
+// EConsoleColor - Color of the console text
 
 enum class EConsoleColor : uint8
 {
-    Red = 0,
-    Green = 1,
+    Red    = 0,
+    Green  = 1,
     Yellow = 2,
-    White = 3
+    White  = 3
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -31,31 +31,63 @@ class COREAPPLICATION_API CPlatformConsoleWindow
 {
 public:
 
-    /* Creates a new console */
+    /**
+     * Creates a new console-window
+     * 
+     * @return: Returns a newly created console-window, returns nullptr on failure
+     */
     static CPlatformConsoleWindow* Make() { return dbg_new CPlatformConsoleWindow(); }
 
-    /* Show or hide the console window */
+    /**
+     * Show or hide the console-window 
+     * 
+     * @param bShow: True if the console-window should be visible, false otherwise
+     */
     virtual void Show(bool bShow) { }
 
-    /* Prints text to the console window, but does not start a new line */
+    /**
+     * Prints text to the console-window, but does not start a new line 
+     * 
+     * @param Message: Message to print to the console-window
+     */
     virtual void Print(const CString& Message) { }
 
-    /* Prints a line to the console window */
+    /**
+     * Prints text to the console-window and starts a new line
+     *
+     * @param Message: Message to print to the console
+     */
     virtual void PrintLine(const CString& Message) { }
 
-    /* Clear the console window */
+    /**
+     * Clear the console window 
+     */
     virtual void Clear() { }
 
-    /* Set the title of the console window */
+    /**
+     *  Set the title of the console window
+     * 
+     * @param Title: New title for the console-window
+     */
     virtual void SetTitle(const CString& Title) { }
 
-    /* Set the text-color */
+    /**
+     * Set the text-color
+     * 
+     * @param Color: The new color for the text in the console-window
+     */
     virtual void SetColor(EConsoleColor Color) { }
 
-    /* Releases the console window and destroys the object */
+    /**
+     * Releases the console-window and destroys the object 
+     */
     virtual void Release() { delete this; }
 
-    /* Returns true if the console window is currently being displayed */
+    /**
+     * Returns true if the console-window is currently being displayed 
+     * 
+     * @return: Return true if the console-window is visible
+     */
     bool IsShowing() const { return bIsShowing; }
 
 protected:
@@ -63,7 +95,7 @@ protected:
     CPlatformConsoleWindow() = default;
     virtual ~CPlatformConsoleWindow() = default;
 
-    // True or false depending on if the console is visbile or not
+    // True or false depending on if the console is visible or not
     bool bIsShowing = false;
 };
 

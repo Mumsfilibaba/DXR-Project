@@ -8,7 +8,11 @@ class CPlatformCursor : public ICursor
 {
 public:
 
-    /* Retrieve the mouse visibility */
+    /**
+     * Retrieve the mouse visibility
+     * 
+     * @return: Returns true if the cursor is visible
+     */
     virtual bool IsVisible() const override final
     {
         return bIsVisible;
@@ -16,14 +20,8 @@ public:
 
 protected:
 
-    FORCEINLINE CPlatformCursor()
-        : ICursor()
-        , bIsVisible(true)
-    {
-    }
-
+    CPlatformCursor() = default;
     ~CPlatformCursor() = default;
 
-    /* Checks if the mouse is visible or not */
-    bool bIsVisible;
+    bool bIsVisible = true;
 };

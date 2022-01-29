@@ -5,13 +5,14 @@
 #include "Core/Containers/String.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// RHIObject
 
-class CRHIResource : public CRefCounted
+class CRHIObject : public CRefCounted
 {
 public:
 
-    CRHIResource() = default;
-    ~CRHIResource() = default;
+    CRHIObject() = default;
+    ~CRHIObject() = default;
 
     /* Returns true if the native resource is valid to use */
     virtual bool IsValid() const { return false; }
@@ -32,13 +33,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// RHIResource
 
-class CRHIMemoryResource : public CRHIResource
+class CRHIResource : public CRHIObject
 {
 public:
 
-    CRHIMemoryResource() = default;
-    ~CRHIMemoryResource() = default;
+    CRHIResource() = default;
+    ~CRHIResource() = default;
 
     /* Cast to a buffer */
     virtual class CRHIBuffer* AsBuffer() { return nullptr; }

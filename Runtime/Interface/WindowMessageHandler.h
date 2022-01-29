@@ -11,38 +11,37 @@
 
 #endif
 
-/* Handles events regarding windows, and can process them before it gets to the viewport */
+// TODO: Will be moved to the viewport in the future
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// WindowMessageHandler
+
 class CWindowMessageHandler
 {
 public:
 
     virtual ~CWindowMessageHandler() = default;
 
-    /* Handle Window Resized event, if the handler handles the event, return true */
     virtual bool OnWindowResized(const SWindowResizeEvent& ResizeEvent)
     {
         return false;
     }
 
-    /* Handle Window Moved  event, if the handler handles the event, return true */
     virtual bool OnWindowMoved(const SWindowMovedEvent& WindowMovedEvent)
     {
         return false;
     }
 
-    /* Handle Window Focus changed event, if the handler handles the event, return true */
     virtual bool OnWindowFocusChanged(const SWindowFocusChangedEvent& FocusEvent)
     {
         return false;
     }
 
-    /* Handle Mouse entered or exited the window frame- event, if the handler handles the event, return true */
     virtual bool OnWindowFrameMouseEvent(const SWindowFrameMouseEvent& MouseEnteredOrLeftEvent)
     {
         return false;
     }
 
-    /* Handle Window closed event, if the handler handles the event, return true */
     virtual bool OnWindowClosed(const SWindowClosedEvent& Window)
     {
         return false;

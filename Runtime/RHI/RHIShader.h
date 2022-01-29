@@ -30,7 +30,7 @@ struct SShaderParameterInfo
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-class CRHIShader : public CRHIResource
+class CRHIShader : public CRHIObject
 {
 public:
 

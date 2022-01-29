@@ -27,16 +27,33 @@ class CPlatformApplicationMisc
 {
 public:
 
-    /* Takes the title of the MessageBox and the message to be displayed */
+    /**
+     * Takes the title of the MessageBox and the message to be displayed
+     * 
+     * @param Title: Title of the message-box
+     * @param Message: Message of the message-box
+     */
     static FORCEINLINE void MessageBox(const CString& Title, const CString& Message) { }
 
-    /* Sends a Exit Message to the application with a certain ExitCode, this way the application instance is not required to pump the messages */
+    /**
+     * Sends a Exit Message to the application with a certain ExitCode, this way the application instance is not required to pump the messages 
+     * 
+     * @param ExitCode: Exit code for the exit-event
+     */
     static FORCEINLINE void RequestExit(int32 ExitCode) { }
 
-    /* Pumps the application's message queue, this way the application instance is not required to pump the messages */
+    /**
+     * Pumps the application's message queue, this way the application instance is not required to pump the messages 
+     * 
+     * @param bUntilEmpty: Pump messages until there are no longer any messages in the queue
+     */
     static FORCEINLINE void PumpMessages(bool bUntilEmpty) { }
 
-    /* Retrieves the state of modifier keys */
+    /**
+     * Retrieves the state of modifier keys
+     * 
+     * @return: Returns the current modifier-key state 
+     */
     static FORCEINLINE SModifierKeyState GetModifierKeyState() { return SModifierKeyState(); }
 };
 
