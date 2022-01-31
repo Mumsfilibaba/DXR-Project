@@ -67,11 +67,11 @@ enum EBufferFlags : uint32
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-class CRHIBuffer : public CRHIMemoryResource
+class CRHIBuffer : public CRHIResource
 {
 public:
     CRHIBuffer(uint32 InFlags)
-        : CRHIMemoryResource()
+        : CRHIResource()
         , Flags(InFlags)
     {
     }

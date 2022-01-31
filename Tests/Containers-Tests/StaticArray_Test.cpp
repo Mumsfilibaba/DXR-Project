@@ -1,4 +1,4 @@
-#include "FixedArray_Test.h"
+#include "StaticArray_Test.h"
 
 #if RUN_TFIXEDARRAY_TEST
 #include <Core/Containers/StaticArray.h>
@@ -6,7 +6,7 @@
 #include <iostream>
 #include <array>
 
-void TFixedArray_Test()
+void TStaticArray_Test()
 {
     std::cout << std::endl << "----------TStaticArray----------" << std::endl << std::endl;
 

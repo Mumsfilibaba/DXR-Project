@@ -33,6 +33,11 @@ workspace "EngineTests"
 		"../Runtime/",
 	}
 
+	defines
+	{
+		"MONOLITHIC_BUILD=(1)"	
+	}
+
     filter "configurations:Debug"
         symbols "on"
         runtime "Debug"
@@ -104,9 +109,9 @@ workspace "EngineTests"
 			"%{prj.name}/**.c",
 			"%{prj.name}/**.cpp",
 			
-			"../DXR-Engine/Core/Memory/Memory.cpp",
-			"../DXR-Engine/Core/Memory/New.cpp",
-			"../DXR-Engine/Core/Delegates/DelegateInstance.cpp",
+			"../Runtime/Core/Memory/Memory.cpp",
+			"../Runtime/Core/Memory/New.cpp",
+			"../Runtime/Core/Delegates/DelegateInstance.cpp",
         }
 			
 		-- In visual studio show natvis files
@@ -116,8 +121,8 @@ workspace "EngineTests"
 			files 
 			{
 				"%{prj.name}/**.natvis",
-				"../DXR-Engine/Core/Containers/**.natvis",
-				"../DXR-Engine/Core/Templates/**.natvis",
+				"../Runtime/Core/Containers/**.natvis",
+				"../Runtime/Core/Templates/**.natvis",
 			}
 		filter {}
 

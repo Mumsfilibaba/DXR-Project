@@ -1074,17 +1074,6 @@ public:
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
      */
-    FORCEINLINE CharType& operator[](SizeType Index) noexcept
-    {
-        return At(Index);
-    }
-
-    /**
-     * Bracket-operator to retrieve an element at a certain index
-     *
-     * @param Index: Index of the element to retrieve
-     * @return: A reference to the element at the index
-     */
     FORCEINLINE const CharType& operator[](SizeType Index) const noexcept
     {
         return At(Index);

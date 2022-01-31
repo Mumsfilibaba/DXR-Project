@@ -1,13 +1,14 @@
-#include <CoreTypes.h>
-#include <CoreDefines.h>
+#include <Core/CoreTypes.h>
+#include <Core/CoreDefines.h>
 
 #include "Array_Test.h"
 #include "SharedPtr_Test.h"
 #include "Function_Test.h"
-#include "FixedArray_Test.h"
+#include "StaticArray_Test.h"
 #include "ArrayView_Test.h"
 #include "Delegate_Test.h"
 #include "String_Test.h"
+#include "Optional_Test.h"
 
 /* Check for memory leaks */
 #ifdef PLATFORM_WINDOWS
@@ -47,7 +48,7 @@ void Tests( int32 Argc, const char* Argv[] )
 #endif
 
 #if RUN_TFIXEDARRAY_TEST
-    TFixedArray_Test();
+    TStaticArray_Test();
 #endif
 
 #if RUN_TARRAYVIEW_TEST
@@ -59,7 +60,11 @@ void Tests( int32 Argc, const char* Argv[] )
 #endif
 
 #if RUN_TSTRING_TEST
-    TString_Test( Argv[0] );
+    TString_Test(Argv[0]);
+#endif
+
+#if RUN_TOPIONAL_TEST
+    TOptional_Test();
 #endif
 }
 

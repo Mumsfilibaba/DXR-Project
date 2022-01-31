@@ -279,6 +279,8 @@ public:
         return Invoke(Forward<ArgTypes>(Args)...);
     }
 
+public:
+
     /**
      * Checks weather the pointer is valid or not
      *

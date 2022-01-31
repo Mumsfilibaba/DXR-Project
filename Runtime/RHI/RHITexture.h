@@ -19,12 +19,12 @@ enum ETextureFlags
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-class CRHITexture : public CRHIMemoryResource
+class CRHITexture : public CRHIResource
 {
 public:
 
     CRHITexture(EFormat InFormat, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
-        : CRHIMemoryResource()
+        : CRHIResource()
         , Format(InFormat)
         , NumMips(InNumMips)
         , Flags(InFlags)

@@ -2,7 +2,7 @@
 #include "Config.h"
 
 #if RUN_TARRAY_TEST || RUN_TARRAY_BENCHMARKS
-#include <CoreTypes.h>
+#include <Core/CoreTypes.h>
 
 void TArray_Benchmark();
 void TArray_Test( int32 Argc, const char** Argv );

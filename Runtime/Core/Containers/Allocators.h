@@ -2,6 +2,7 @@
 #include "Core/CoreTypes.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Templates/ObjectHandling.h"
+#include "Core/Templates/AlignedStorage.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Allocator interface 
@@ -163,17 +164,11 @@ public:
 public:
     constexpr SizeType GetSize() const noexcept
     {
-        return InlineBytes;
+        return sizeof(InlineAllocation);
     }
 
 private:
-
-    enum
-    {
-        InlineBytes = NumElements * sizeof(InlineType)
-    };
-
-    int8 InlineAllocation[InlineBytes];
+    TAlignedStorage<sizeof(InlineType), AlignmentOf<InlineType>> InlineAllocation[NumElements];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
