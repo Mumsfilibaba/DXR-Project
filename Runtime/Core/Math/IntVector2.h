@@ -45,20 +45,20 @@ public:
     /**
      * Returns a vector with the smallest of each component of two vectors
      *
-     * @param LHS: First vector to compare with
-     * @param RHS: Second vector to compare with
-     * @return A vector with the smallest components of LHS and RHS
+     * @param Lhs: First vector to compare with
+     * @param Rhs: Second vector to compare with
+     * @return A vector with the smallest components of Lhs and Rhs
      */
-    friend FORCEINLINE CIntVector2 Min(const CIntVector2& LHS, const CIntVector2& RHS) noexcept;
+    friend FORCEINLINE CIntVector2 Min(const CIntVector2& Lhs, const CIntVector2& Rhs) noexcept;
 
     /**
      * Returns a vector with the largest of each component of two vectors
      *
-     * @param LHS: First vector to compare with
-     * @param RHS: Second vector to compare with
-     * @return A vector with the largest components of LHS and RHS
+     * @param Lhs: First vector to compare with
+     * @param Rhs: Second vector to compare with
+     * @return A vector with the largest components of Lhs and Rhs
      */
-    friend FORCEINLINE CIntVector2 Max(const CIntVector2& LHS, const CIntVector2& RHS) noexcept;
+    friend FORCEINLINE CIntVector2 Max(const CIntVector2& Lhs, const CIntVector2& Rhs) noexcept;
 
 public:
     /**
@@ -71,130 +71,130 @@ public:
     /**
      * Returns the result of component-wise adding this and another vector
      *
-     * @param RHS: The vector to add
+     * @param Rhs: The vector to add
      * @return A vector with the result of addition
      */
-    FORCEINLINE CIntVector2 operator+(const CIntVector2& RHS) const noexcept;
+    FORCEINLINE CIntVector2 operator+(const CIntVector2& Rhs) const noexcept;
 
     /**
      * Returns this vector after component-wise adding this with another vector
      *
-     * @param RHS: The vector to add
+     * @param Rhs: The vector to add
      * @return A reference to this vector
      */
-    FORCEINLINE CIntVector2& operator+=(const CIntVector2& RHS) noexcept;
+    FORCEINLINE CIntVector2& operator+=(const CIntVector2& Rhs) noexcept;
 
     /**
      * Returns the result of adding a scalar to each component of this vector
      *
-     * @param RHS: The scalar to add
+     * @param Rhs: The scalar to add
      * @return A vector with the result of addition
      */
-    FORCEINLINE CIntVector2 operator+(int RHS) const noexcept;
+    FORCEINLINE CIntVector2 operator+(int Rhs) const noexcept;
 
     /**
      * Returns this vector after adding a scalar to each component of this vector
      *
-     * @param RHS: The scalar to add
+     * @param Rhs: The scalar to add
      * @return A reference to this vector
      */
-    FORCEINLINE CIntVector2& operator+=(int RHS) noexcept;
+    FORCEINLINE CIntVector2& operator+=(int Rhs) noexcept;
 
     /**
      * Returns the result of component-wise subtraction between this and another vector
      *
-     * @param RHS: The vector to subtract
+     * @param Rhs: The vector to subtract
      * @return A vector with the result of subtraction
      */
-    FORCEINLINE CIntVector2 operator-(const CIntVector2& RHS) const noexcept;
+    FORCEINLINE CIntVector2 operator-(const CIntVector2& Rhs) const noexcept;
 
     /**
      * Returns this vector after component-wise subtraction between this and another vector
      *
-     * @param RHS: The vector to subtract
+     * @param Rhs: The vector to subtract
      * @return A reference to this vector
      */
-    FORCEINLINE CIntVector2& operator-=(const CIntVector2& RHS) noexcept;
+    FORCEINLINE CIntVector2& operator-=(const CIntVector2& Rhs) noexcept;
 
     /**
      * Returns the result of subtracting each component of this vector with a scalar
      *
-     * @param RHS: The scalar to subtract
+     * @param Rhs: The scalar to subtract
      * @return A vector with the result of the subtraction
      */
-    FORCEINLINE CIntVector2 operator-(int RHS) const noexcept;
+    FORCEINLINE CIntVector2 operator-(int Rhs) const noexcept;
 
     /**
      * Returns this vector after subtracting each component of this vector with a scalar
      *
-     * @param RHS: The scalar to subtract
+     * @param Rhs: The scalar to subtract
      * @return A reference to this vector
      */
-    FORCEINLINE CIntVector2& operator-=(int RHS) noexcept;
+    FORCEINLINE CIntVector2& operator-=(int Rhs) noexcept;
 
     /**
      * Returns the result of component-wise multiplication with this and another vector
      *
-     * @param RHS: The vector to multiply with
+     * @param Rhs: The vector to multiply with
      * @return A vector with the result of the multiplication
      */
-    FORCEINLINE CIntVector2 operator*(const CIntVector2& RHS) const noexcept;
+    FORCEINLINE CIntVector2 operator*(const CIntVector2& Rhs) const noexcept;
 
     /**
      * Returns this vector after component-wise multiplication with this and another vector
      *
-     * @param RHS: The vector to multiply with
+     * @param Rhs: The vector to multiply with
      * @return A reference to this vector
      */
-    FORCEINLINE CIntVector2& operator*=(const CIntVector2& RHS) noexcept;
+    FORCEINLINE CIntVector2& operator*=(const CIntVector2& Rhs) noexcept;
 
     /**
      * Returns the result of multiplying each component of this vector with a scalar
      *
-     * @param RHS: The scalar to multiply with
+     * @param Rhs: The scalar to multiply with
      * @return A vector with the result of the multiplication
      */
-    FORCEINLINE CIntVector2 operator*(int RHS) const noexcept;
+    FORCEINLINE CIntVector2 operator*(int Rhs) const noexcept;
 
     /**
      * Returns this vector after multiplying each component of this vector with a scalar
      *
-     * @param RHS: The scalar to multiply with
+     * @param Rhs: The scalar to multiply with
      * @return A reference to this vector
      */
-    FORCEINLINE CIntVector2& operator*=(int RHS) noexcept;
+    FORCEINLINE CIntVector2& operator*=(int Rhs) noexcept;
 
     /**
      * Returns the result of component-wise division with this and another vector
      *
-     * @param RHS: The vector to divide with
+     * @param Rhs: The vector to divide with
      * @return A vector with the result of the division
      */
-    FORCEINLINE CIntVector2 operator/(const CIntVector2& RHS) const noexcept;
+    FORCEINLINE CIntVector2 operator/(const CIntVector2& Rhs) const noexcept;
 
     /**
      * Returns this vector after component-wise division with this and another vector
      *
-     * @param RHS: The vector to divide with
+     * @param Rhs: The vector to divide with
      * @return A reference to this vector
      */
-    FORCEINLINE CIntVector2& operator/=(const CIntVector2& RHS) noexcept;
+    FORCEINLINE CIntVector2& operator/=(const CIntVector2& Rhs) noexcept;
 
     /**
      * Returns the result of dividing each component of this vector and a scalar
      *
-     * @param RHS: The scalar to divide with
+     * @param Rhs: The scalar to divide with
      * @return A vector with the result of the division
      */
-    FORCEINLINE CIntVector2 operator/(int RHS) const noexcept;
+    FORCEINLINE CIntVector2 operator/(int Rhs) const noexcept;
 
     /**
      * Returns this vector after dividing each component of this vector and a scalar
      *
-     * @param RHS: The scalar to divide with
+     * @param Rhs: The scalar to divide with
      * @return A reference to this vector
      */
-    FORCEINLINE CIntVector2& operator/=(int RHS) noexcept;
+    FORCEINLINE CIntVector2& operator/=(int Rhs) noexcept;
 
     /**
      * Returns the result after comparing this and another vector
@@ -273,84 +273,84 @@ FORCEINLINE CIntVector2 CIntVector2::operator-() const noexcept
     return CIntVector2(-x, -y);
 }
 
-FORCEINLINE CIntVector2 CIntVector2::operator+(const CIntVector2& RHS) const noexcept
+FORCEINLINE CIntVector2 CIntVector2::operator+(const CIntVector2& Rhs) const noexcept
 {
-    return CIntVector2(x + RHS.x, y + RHS.y);
+    return CIntVector2(x + Rhs.x, y + Rhs.y);
 }
 
-FORCEINLINE CIntVector2& CIntVector2::operator+=(const CIntVector2& RHS) noexcept
+FORCEINLINE CIntVector2& CIntVector2::operator+=(const CIntVector2& Rhs) noexcept
 {
-    return *this = *this + RHS;
+    return *this = *this + Rhs;
 }
 
-FORCEINLINE CIntVector2 CIntVector2::operator+(int RHS) const noexcept
+FORCEINLINE CIntVector2 CIntVector2::operator+(int Rhs) const noexcept
 {
-    return CIntVector2(x + RHS, y + RHS);
+    return CIntVector2(x + Rhs, y + Rhs);
 }
 
-FORCEINLINE CIntVector2& CIntVector2::operator+=(int RHS) noexcept
+FORCEINLINE CIntVector2& CIntVector2::operator+=(int Rhs) noexcept
 {
-    return *this = *this + RHS;
+    return *this = *this + Rhs;
 }
 
-FORCEINLINE CIntVector2 CIntVector2::operator-(const CIntVector2& RHS) const noexcept
+FORCEINLINE CIntVector2 CIntVector2::operator-(const CIntVector2& Rhs) const noexcept
 {
-    return CIntVector2(x - RHS.x, y - RHS.y);
+    return CIntVector2(x - Rhs.x, y - Rhs.y);
 }
 
-FORCEINLINE CIntVector2& CIntVector2::operator-=(const CIntVector2& RHS) noexcept
+FORCEINLINE CIntVector2& CIntVector2::operator-=(const CIntVector2& Rhs) noexcept
 {
-    return *this = *this - RHS;
+    return *this = *this - Rhs;
 }
 
-FORCEINLINE CIntVector2 CIntVector2::operator-(int RHS) const noexcept
+FORCEINLINE CIntVector2 CIntVector2::operator-(int Rhs) const noexcept
 {
-    return CIntVector2(x - RHS, y - RHS);
+    return CIntVector2(x - Rhs, y - Rhs);
 }
 
-FORCEINLINE CIntVector2& CIntVector2::operator-=(int RHS) noexcept
+FORCEINLINE CIntVector2& CIntVector2::operator-=(int Rhs) noexcept
 {
-    return *this = *this - RHS;
+    return *this = *this - Rhs;
 }
 
-FORCEINLINE CIntVector2 CIntVector2::operator*(const CIntVector2& RHS) const noexcept
+FORCEINLINE CIntVector2 CIntVector2::operator*(const CIntVector2& Rhs) const noexcept
 {
-    return CIntVector2(x * RHS.x, y * RHS.y);
+    return CIntVector2(x * Rhs.x, y * Rhs.y);
 }
 
-FORCEINLINE CIntVector2& CIntVector2::operator*=(const CIntVector2& RHS) noexcept
+FORCEINLINE CIntVector2& CIntVector2::operator*=(const CIntVector2& Rhs) noexcept
 {
-    return *this = *this * RHS;
+    return *this = *this * Rhs;
 }
 
-FORCEINLINE CIntVector2 CIntVector2::operator*(int RHS) const noexcept
+FORCEINLINE CIntVector2 CIntVector2::operator*(int Rhs) const noexcept
 {
-    return CIntVector2(x * RHS, y * RHS);
+    return CIntVector2(x * Rhs, y * Rhs);
 }
 
-FORCEINLINE CIntVector2& CIntVector2::operator*=(int RHS) noexcept
+FORCEINLINE CIntVector2& CIntVector2::operator*=(int Rhs) noexcept
 {
-    return *this = *this * RHS;
+    return *this = *this * Rhs;
 }
 
-FORCEINLINE CIntVector2 CIntVector2::operator/(const CIntVector2& RHS) const noexcept
+FORCEINLINE CIntVector2 CIntVector2::operator/(const CIntVector2& Rhs) const noexcept
 {
-    return CIntVector2(x / RHS.x, y / RHS.y);
+    return CIntVector2(x / Rhs.x, y / Rhs.y);
 }
 
-FORCEINLINE CIntVector2& CIntVector2::operator/=(const CIntVector2& RHS) noexcept
+FORCEINLINE CIntVector2& CIntVector2::operator/=(const CIntVector2& Rhs) noexcept
 {
-    return *this = *this / RHS;
+    return *this = *this / Rhs;
 }
 
-FORCEINLINE CIntVector2 CIntVector2::operator/(int RHS) const noexcept
+FORCEINLINE CIntVector2 CIntVector2::operator/(int Rhs) const noexcept
 {
-    return CIntVector2(x / RHS, y / RHS);
+    return CIntVector2(x / Rhs, y / Rhs);
 }
 
-FORCEINLINE CIntVector2& CIntVector2::operator/=(int RHS) noexcept
+FORCEINLINE CIntVector2& CIntVector2::operator/=(int Rhs) noexcept
 {
-    return *this = *this / RHS;
+    return *this = *this / Rhs;
 }
 
 FORCEINLINE bool CIntVector2::operator==(const CIntVector2& Other) const noexcept
@@ -375,12 +375,12 @@ FORCEINLINE int CIntVector2::operator[](int Index) const noexcept
     return reinterpret_cast<const int*>(this)[Index];
 }
 
-FORCEINLINE CIntVector2 Min(const CIntVector2& LHS, const CIntVector2& RHS) noexcept
+FORCEINLINE CIntVector2 Min(const CIntVector2& Lhs, const CIntVector2& Rhs) noexcept
 {
-    return CIntVector2(NMath::Min(LHS.x, RHS.x), NMath::Min(LHS.y, RHS.y));
+    return CIntVector2(NMath::Min(Lhs.x, Rhs.x), NMath::Min(Lhs.y, Rhs.y));
 }
 
-FORCEINLINE CIntVector2 Max(const CIntVector2& LHS, const CIntVector2& RHS) noexcept
+FORCEINLINE CIntVector2 Max(const CIntVector2& Lhs, const CIntVector2& Rhs) noexcept
 {
-    return CIntVector2(NMath::Max(LHS.x, RHS.x), NMath::Max(LHS.y, RHS.y));
+    return CIntVector2(NMath::Max(Lhs.x, Rhs.x), NMath::Max(Lhs.y, Rhs.y));
 }

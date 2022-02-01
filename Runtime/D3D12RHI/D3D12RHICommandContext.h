@@ -91,11 +91,11 @@ public:
         }
     }
 
-    FORCEINLINE void AddInUseResource(CRHIResource* InResource)
+    FORCEINLINE void AddInUseResource(CRHIObject* InResource)
     {
         if (InResource)
         {
-            Resources.Emplace(MakeSharedRef<CRHIResource>(InResource));
+            Resources.Emplace(MakeSharedRef<CRHIObject>(InResource));
         }
     }
 
@@ -144,8 +144,9 @@ public:
     TSharedRef<CD3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
 
     TArray<TSharedRef<CD3D12Resource>> DxResources;
-    TArray<TSharedRef<CRHIResource>>  Resources;
-    TArray<TComPtr<ID3D12Resource>>   NativeResources;
+    TArray<TSharedRef<CRHIObject>>     Resources;
+
+    TArray<TComPtr<ID3D12Resource>> NativeResources;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -294,9 +295,9 @@ public:
     virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SCopyTextureInfo& CopyTextureInfo) override final;
 
     /* Discards a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command list is completed */
-    virtual void DestroyResource(class CRHIResource* Resource) override final;
+    virtual void DestroyResource(class CRHIObject* Resource) override final;
     /* Signal the driver that the contents can be discarded */
-    virtual void DiscardResource(class CRHIMemoryResource* Resource) override final;
+    virtual void DiscardResource(class CRHIResource* Resource) override final;
 
     /* Builds the Bottom Level Acceleration Structure for ray tracing */
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final;

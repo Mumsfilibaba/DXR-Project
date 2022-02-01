@@ -62,190 +62,190 @@ public:
     /**
      * Adds two integers atomically and return original value
      * 
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int8 InterlockedAdd(volatile int8* LHS, int8  RHS) { return 0; }
+    static FORCEINLINE int8 InterlockedAdd(volatile int8* Lhs, int8  Rhs) { return 0; }
 
     /**
      * Adds two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int16 InterlockedAdd(volatile int16* LHS, int16 RHS) { return 0; }
+    static FORCEINLINE int16 InterlockedAdd(volatile int16* Lhs, int16 Rhs) { return 0; }
     
     /**
      * Adds two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int32 InterlockedAdd(volatile int32* LHS, int32 RHS) { return 0; }
+    static FORCEINLINE int32 InterlockedAdd(volatile int32* Lhs, int32 Rhs) { return 0; }
     
     /**
      * Adds two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int64 InterlockedAdd(volatile int64* LHS, int64 RHS) { return 0; }
+    static FORCEINLINE int64 InterlockedAdd(volatile int64* Lhs, int64 Rhs) { return 0; }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
      * Subtract two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int8 InterlockedSub(volatile int8* LHS, int8  RHS) { return 0; }
+    static FORCEINLINE int8 InterlockedSub(volatile int8* Lhs, int8  Rhs) { return 0; }
     
     /**
      * Subtract two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int16 InterlockedSub(volatile int16* LHS, int16 RHS) { return 0; }
+    static FORCEINLINE int16 InterlockedSub(volatile int16* Lhs, int16 Rhs) { return 0; }
     
     /**
      * Subtract two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int32 InterlockedSub(volatile int32* LHS, int32 RHS) { return 0; }
+    static FORCEINLINE int32 InterlockedSub(volatile int32* Lhs, int32 Rhs) { return 0; }
     
     /**
      * Subtract two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int64 InterlockedSub(volatile int64* LHS, int64 RHS) { return 0; }
+    static FORCEINLINE int64 InterlockedSub(volatile int64* Lhs, int64 Rhs) { return 0; }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
      * Bitwise AND two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int8  InterlockedAnd(volatile int8* LHS, int8 RHS) { return 0; }
+    static FORCEINLINE int8  InterlockedAnd(volatile int8* Lhs, int8 Rhs) { return 0; }
     
     /**
      * Bitwise AND two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int16 InterlockedAnd(volatile int16* LHS, int16 RHS) { return 0; }
+    static FORCEINLINE int16 InterlockedAnd(volatile int16* Lhs, int16 Rhs) { return 0; }
     
     /**
      * Bitwise AND two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int32 InterlockedAnd(volatile int32* LHS, int32 RHS) { return 0; }
+    static FORCEINLINE int32 InterlockedAnd(volatile int32* Lhs, int32 Rhs) { return 0; }
     
     /**
      * Bitwise AND two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int64 InterlockedAnd(volatile int64* LHS, int64 RHS) { return 0; }
+    static FORCEINLINE int64 InterlockedAnd(volatile int64* Lhs, int64 Rhs) { return 0; }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
      * Bitwise OR two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int8  InterlockedOr(volatile int8* LHS, int8 RHS) { return 0; }
+    static FORCEINLINE int8  InterlockedOr(volatile int8* Lhs, int8 Rhs) { return 0; }
     
     /**
      * Bitwise OR two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int16 InterlockedOr(volatile int16* LHS, int16 RHS) { return 0; }
+    static FORCEINLINE int16 InterlockedOr(volatile int16* Lhs, int16 Rhs) { return 0; }
     
     /**
      * Bitwise OR two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int32 InterlockedOr(volatile int32* LHS, int32 RHS) { return 0; }
+    static FORCEINLINE int32 InterlockedOr(volatile int32* Lhs, int32 Rhs) { return 0; }
     
     /**
      * Bitwise OR two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int64 InterlockedOr(volatile int64* LHS, int64 RHS) { return 0; }
+    static FORCEINLINE int64 InterlockedOr(volatile int64* Lhs, int64 Rhs) { return 0; }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
      * Bitwise XOR two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int8 InterlockedXor(volatile int8* LHS, int8 RHS) { return 0; }
+    static FORCEINLINE int8 InterlockedXor(volatile int8* Lhs, int8 Rhs) { return 0; }
     
     /**
      * Bitwise XOR two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int16 InterlockedXor(volatile int16* LHS, int16 RHS) { return 0; }
+    static FORCEINLINE int16 InterlockedXor(volatile int16* Lhs, int16 Rhs) { return 0; }
     
     /**
      * Bitwise XOR two integers atomically and return original value
      *
-     * @param LHS: Pointer to first, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int32 InterlockedXor(volatile int32* LHS, int32 RHS) { return 0; }
+    static FORCEINLINE int32 InterlockedXor(volatile int32* Lhs, int32 Rhs) { return 0; }
     
     /**
      * Bitwise XOR two integers atomically and return original value
      *
-     * @param LHS: Pointer to first operand, which is also used to store the result
-     * @param RHS: Second operand
-     * @return: Returns the original value of LHS
+     * @param Lhs: Pointer to first operand, which is also used to store the result
+     * @param Rhs: Second operand
+     * @return: Returns the original value of Lhs
      */
-    static FORCEINLINE int64 InterlockedXor(volatile int64* LHS, int64 RHS) { return 0; }
+    static FORCEINLINE int64 InterlockedXor(volatile int64* Lhs, int64 Rhs) { return 0; }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     

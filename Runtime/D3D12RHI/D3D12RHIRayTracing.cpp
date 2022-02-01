@@ -442,8 +442,9 @@ bool CD3D12RHIRayTracingScene::BuildBindingTable(
 
 void CD3D12RHIRayTracingScene::SetName(const CString& InName)
 {
-    CRHIResource::SetName(InName);
+    CRHIObject::SetName(InName);
     ResultBuffer->SetName(InName);
+
     if (ScratchBuffer)
     {
         ScratchBuffer->SetName(InName + " Scratch");

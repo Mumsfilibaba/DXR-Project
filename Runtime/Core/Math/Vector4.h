@@ -218,139 +218,139 @@ public:
     /**
      * Returns the result of component-wise adding this and another vector
      *
-     * @param RHS: The vector to add
+     * @param Rhs: The vector to add
      * @return A vector with the result of addition
      */
-    FORCEINLINE CVector4 operator+(const CVector4& RHS) const noexcept;
+    FORCEINLINE CVector4 operator+(const CVector4& Rhs) const noexcept;
 
     /**
      * Returns this vector after component-wise adding this with another vector
      *
-     * @param RHS: The vector to add
+     * @param Rhs: The vector to add
      * @return A reference to this vector
      */
-    FORCEINLINE CVector4& operator+=(const CVector4& RHS) noexcept;
+    FORCEINLINE CVector4& operator+=(const CVector4& Rhs) noexcept;
 
     /**
      * Returns the result of adding a scalar to each component of this vector
      *
-     * @param RHS: The scalar to add
+     * @param Rhs: The scalar to add
      * @return A vector with the result of addition
      */
-    FORCEINLINE CVector4 operator+(float RHS) const noexcept;
+    FORCEINLINE CVector4 operator+(float Rhs) const noexcept;
 
     /**
      * Returns this vector after adding a scalar to each component of this vector
      *
-     * @param RHS: The scalar to add
+     * @param Rhs: The scalar to add
      * @return A reference to this vector
      */
-    FORCEINLINE CVector4& operator+=(float RHS) noexcept;
+    FORCEINLINE CVector4& operator+=(float Rhs) noexcept;
 
     /**
      * Returns the result of component-wise subtraction between this and another vector
      *
-     * @param RHS: The vector to subtract
+     * @param Rhs: The vector to subtract
      * @return A vector with the result of subtraction
      */
-    FORCEINLINE CVector4 operator-(const CVector4& RHS) const noexcept;
+    FORCEINLINE CVector4 operator-(const CVector4& Rhs) const noexcept;
 
     /**
      * Returns this vector after component-wise subtraction between this and another vector
      *
-     * @param RHS: The vector to subtract
+     * @param Rhs: The vector to subtract
      * @return A reference to this vector
      */
-    FORCEINLINE CVector4& operator-=(const CVector4& RHS) noexcept;
+    FORCEINLINE CVector4& operator-=(const CVector4& Rhs) noexcept;
 
     /**
      * Returns the result of subtracting each component of this vector with a scalar
      *
-     * @param RHS: The scalar to subtract
+     * @param Rhs: The scalar to subtract
      * @return A vector with the result of the subtraction
      */
-    FORCEINLINE CVector4 operator-(float RHS) const noexcept;
+    FORCEINLINE CVector4 operator-(float Rhs) const noexcept;
 
     /**
      * Returns this vector after subtracting each component of this vector with a scalar
      *
-     * @param RHS: The scalar to subtract
+     * @param Rhs: The scalar to subtract
      * @return A reference to this vector
      */
-    FORCEINLINE CVector4& operator-=(float RHS) noexcept;
+    FORCEINLINE CVector4& operator-=(float Rhs) noexcept;
 
     /**
      * Returns the result of component-wise multiplication with this and another vector
      *
-     * @param RHS: The vector to multiply with
+     * @param Rhs: The vector to multiply with
      * @return A vector with the result of the multiplication
      */
-    FORCEINLINE CVector4 operator*(const CVector4& RHS) const noexcept;
+    FORCEINLINE CVector4 operator*(const CVector4& Rhs) const noexcept;
 
     /**
      * Returns this vector after component-wise multiplication with this and another vector
      *
-     * @param RHS: The vector to multiply with
+     * @param Rhs: The vector to multiply with
      * @return A reference to this vector
      */
-    FORCEINLINE CVector4& operator*=(const CVector4& RHS) noexcept;
+    FORCEINLINE CVector4& operator*=(const CVector4& Rhs) noexcept;
 
     /**
      * Returns the result of multiplying each component of this vector with a scalar
      *
-     * @param RHS: The scalar to multiply with
+     * @param Rhs: The scalar to multiply with
      * @return A vector with the result of the multiplication
      */
-    FORCEINLINE CVector4 operator*(float RHS) const noexcept;
+    FORCEINLINE CVector4 operator*(float Rhs) const noexcept;
 
     /**
      * Returns the result of multiplying each component of a vector with a scalar
      *
-     * @param LHS: The scalar to multiply with
-     * @param RHS: The vector to multiply with
+     * @param Lhs: The scalar to multiply with
+     * @param Rhs: The vector to multiply with
      * @return A vector with the result of the multiplication
      */
-    friend FORCEINLINE CVector4 operator*(float LHS, const CVector4& RHS) noexcept;
+    friend FORCEINLINE CVector4 operator*(float Lhs, const CVector4& Rhs) noexcept;
 
     /**
      * Returns this vector after multiplying each component of this vector with a scalar
      *
-     * @param RHS: The scalar to multiply with
+     * @param Rhs: The scalar to multiply with
      * @return A reference to this vector
      */
-    FORCEINLINE CVector4 operator*=(float RHS) noexcept;
+    FORCEINLINE CVector4 operator*=(float Rhs) noexcept;
 
     /**
      * Returns the result of component-wise division with this and another vector
      *
-     * @param RHS: The vector to divide with
+     * @param Rhs: The vector to divide with
      * @return A vector with the result of the division
      */
-    FORCEINLINE CVector4 operator/(const CVector4& RHS) const noexcept;
+    FORCEINLINE CVector4 operator/(const CVector4& Rhs) const noexcept;
 
     /**
      * Returns this vector after component-wise division with this and another vector
      *
-     * @param RHS: The vector to divide with
+     * @param Rhs: The vector to divide with
      * @return A reference to this vector
      */
-    FORCEINLINE CVector4& operator/=(const CVector4& RHS) noexcept;
+    FORCEINLINE CVector4& operator/=(const CVector4& Rhs) noexcept;
 
     /**
      * Returns the result of dividing each component of this vector and a scalar
      *
-     * @param RHS: The scalar to divide with
+     * @param Rhs: The scalar to divide with
      * @return A vector with the result of the division
      */
-    FORCEINLINE CVector4 operator/(float RHS) const noexcept;
+    FORCEINLINE CVector4 operator/(float Rhs) const noexcept;
 
     /**
      * Returns this vector after dividing each component of this vector and a scalar
      *
-     * @param RHS: The scalar to divide with
+     * @param Rhs: The scalar to divide with
      * @return A reference to this vector
      */
-    FORCEINLINE CVector4& operator/=(float RHS) noexcept;
+    FORCEINLINE CVector4& operator/=(float Rhs) noexcept;
 
     /**
      * Returns the result after comparing this and another vector
@@ -678,18 +678,18 @@ FORCEINLINE const float* CVector4::GetData() const noexcept
     return reinterpret_cast<const float*>(this);
 }
 
-FORCEINLINE CVector4 Min(const CVector4& LHS, const CVector4& RHS) noexcept
+FORCEINLINE CVector4 Min(const CVector4& Lhs, const CVector4& Rhs) noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return CVector4(NMath::Min(LHS.x, RHS.x), NMath::Min(LHS.y, RHS.y), NMath::Min(LHS.z, RHS.z), NMath::Min(LHS.w, RHS.w));
+    return CVector4(NMath::Min(Lhs.x, Rhs.x), NMath::Min(Lhs.y, Rhs.y), NMath::Min(Lhs.z, Rhs.z), NMath::Min(Lhs.w, Rhs.w));
 
 #else
 
     CVector4 MinVector;
 
-    NSIMD::Float128 Reg0 = NSIMD::LoadAligned(reinterpret_cast<const float*>(&LHS));
-    NSIMD::Float128 Reg1 = NSIMD::LoadAligned(&RHS);
+    NSIMD::Float128 Reg0 = NSIMD::LoadAligned(reinterpret_cast<const float*>(&Lhs));
+    NSIMD::Float128 Reg1 = NSIMD::LoadAligned(&Rhs);
     Reg0 = NSIMD::Min(Reg0, Reg1);
 
     NSIMD::StoreAligned(Reg0, &MinVector);
@@ -698,18 +698,18 @@ FORCEINLINE CVector4 Min(const CVector4& LHS, const CVector4& RHS) noexcept
 #endif
 }
 
-FORCEINLINE CVector4 Max(const CVector4& LHS, const CVector4& RHS) noexcept
+FORCEINLINE CVector4 Max(const CVector4& Lhs, const CVector4& Rhs) noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return CVector4(NMath::Max(LHS.x, RHS.x), NMath::Max(LHS.y, RHS.y), NMath::Max(LHS.z, RHS.z), NMath::Max(LHS.w, RHS.w));
+    return CVector4(NMath::Max(Lhs.x, Rhs.x), NMath::Max(Lhs.y, Rhs.y), NMath::Max(Lhs.z, Rhs.z), NMath::Max(Lhs.w, Rhs.w));
 
 #else
 
     CVector4 MaxVector;
 
-    NSIMD::Float128 Reg0 = NSIMD::LoadAligned(reinterpret_cast<const float*>(&LHS));
-    NSIMD::Float128 Reg1 = NSIMD::LoadAligned(&RHS);
+    NSIMD::Float128 Reg0 = NSIMD::LoadAligned(reinterpret_cast<const float*>(&Lhs));
+    NSIMD::Float128 Reg1 = NSIMD::LoadAligned(&Rhs);
     Reg0 = NSIMD::Max(Reg0, Reg1);
 
     NSIMD::StoreAligned(Reg0, &MaxVector);
@@ -819,18 +819,18 @@ FORCEINLINE CVector4 CVector4::operator-() const noexcept
 #endif
 }
 
-FORCEINLINE CVector4 CVector4::operator+(const CVector4& RHS) const noexcept
+FORCEINLINE CVector4 CVector4::operator+(const CVector4& Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return CVector4(x + RHS.x, y + RHS.y, z + RHS.z, w + RHS.w);
+    return CVector4(x + Rhs.x, y + Rhs.y, z + Rhs.z, w + Rhs.w);
 
 #else
 
     CVector4 Result;
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Other = NSIMD::LoadAligned(&RHS);
+    NSIMD::Float128 Other = NSIMD::LoadAligned(&Rhs);
     This = NSIMD::Add(This, Other);
 
     NSIMD::StoreAligned(This, &Result);
@@ -839,16 +839,16 @@ FORCEINLINE CVector4 CVector4::operator+(const CVector4& RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CVector4& CVector4::operator+=(const CVector4& RHS) noexcept
+FORCEINLINE CVector4& CVector4::operator+=(const CVector4& Rhs) noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return *this = *this + RHS;
+    return *this = *this + Rhs;
 
 #else
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Other = NSIMD::LoadAligned(&RHS);
+    NSIMD::Float128 Other = NSIMD::LoadAligned(&Rhs);
     This = NSIMD::Add(This, Other);
 
     NSIMD::StoreAligned(This, this);
@@ -857,18 +857,18 @@ FORCEINLINE CVector4& CVector4::operator+=(const CVector4& RHS) noexcept
 #endif
 }
 
-FORCEINLINE CVector4 CVector4::operator+(float RHS) const noexcept
+FORCEINLINE CVector4 CVector4::operator+(float Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return CVector4(x + RHS, y + RHS, z + RHS, w + RHS);
+    return CVector4(x + Rhs, y + Rhs, z + Rhs, w + Rhs);
 
 #else
 
     CVector4 Result;
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
+    NSIMD::Float128 Scalars = NSIMD::Load(Rhs);
     This = NSIMD::Add(This, Scalars);
 
     NSIMD::StoreAligned(This, &Result);
@@ -877,16 +877,16 @@ FORCEINLINE CVector4 CVector4::operator+(float RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CVector4& CVector4::operator+=(float RHS) noexcept
+FORCEINLINE CVector4& CVector4::operator+=(float Rhs) noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return *this = *this + RHS;
+    return *this = *this + Rhs;
 
 #else
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
+    NSIMD::Float128 Scalars = NSIMD::Load(Rhs);
     This = NSIMD::Add(This, Scalars);
 
     NSIMD::StoreAligned(This, this);
@@ -895,18 +895,18 @@ FORCEINLINE CVector4& CVector4::operator+=(float RHS) noexcept
 #endif
 }
 
-FORCEINLINE CVector4 CVector4::operator-(const CVector4& RHS) const noexcept
+FORCEINLINE CVector4 CVector4::operator-(const CVector4& Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return CVector4(x - RHS.x, y - RHS.y, z - RHS.z, w - RHS.w);
+    return CVector4(x - Rhs.x, y - Rhs.y, z - Rhs.z, w - Rhs.w);
 
 #else
 
     CVector4 Result;
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Other = NSIMD::LoadAligned(&RHS);
+    NSIMD::Float128 Other = NSIMD::LoadAligned(&Rhs);
     This = NSIMD::Sub(This, Other);
 
     NSIMD::StoreAligned(This, &Result);
@@ -915,16 +915,16 @@ FORCEINLINE CVector4 CVector4::operator-(const CVector4& RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CVector4& CVector4::operator-=(const CVector4& RHS) noexcept
+FORCEINLINE CVector4& CVector4::operator-=(const CVector4& Rhs) noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return *this = *this - RHS;
+    return *this = *this - Rhs;
 
 #else
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Other = NSIMD::LoadAligned(&RHS);
+    NSIMD::Float128 Other = NSIMD::LoadAligned(&Rhs);
     This = NSIMD::Sub(This, Other);
 
     NSIMD::StoreAligned(This, this);
@@ -933,18 +933,18 @@ FORCEINLINE CVector4& CVector4::operator-=(const CVector4& RHS) noexcept
 #endif
 }
 
-FORCEINLINE CVector4 CVector4::operator-(float RHS) const noexcept
+FORCEINLINE CVector4 CVector4::operator-(float Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return CVector4(x - RHS, y - RHS, z - RHS, w - RHS);
+    return CVector4(x - Rhs, y - Rhs, z - Rhs, w - Rhs);
 
 #else
 
     CVector4 Result;
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
+    NSIMD::Float128 Scalars = NSIMD::Load(Rhs);
     This = NSIMD::Sub(This, Scalars);
 
     NSIMD::StoreAligned(This, &Result);
@@ -953,16 +953,16 @@ FORCEINLINE CVector4 CVector4::operator-(float RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CVector4& CVector4::operator-=(float RHS) noexcept
+FORCEINLINE CVector4& CVector4::operator-=(float Rhs) noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return *this = *this - RHS;
+    return *this = *this - Rhs;
 
 #else
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
+    NSIMD::Float128 Scalars = NSIMD::Load(Rhs);
     This = NSIMD::Sub(This, Scalars);
 
     NSIMD::StoreAligned(This, this);
@@ -971,18 +971,18 @@ FORCEINLINE CVector4& CVector4::operator-=(float RHS) noexcept
 #endif
 }
 
-FORCEINLINE CVector4 CVector4::operator*(const CVector4& RHS) const noexcept
+FORCEINLINE CVector4 CVector4::operator*(const CVector4& Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return CVector4(x * RHS.x, y * RHS.y, z * RHS.z, w * RHS.w);
+    return CVector4(x * Rhs.x, y * Rhs.y, z * Rhs.z, w * Rhs.w);
 
 #else
 
     CVector4 Result;
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Other = NSIMD::LoadAligned(&RHS);
+    NSIMD::Float128 Other = NSIMD::LoadAligned(&Rhs);
     This = NSIMD::Mul(This, Other);
 
     NSIMD::StoreAligned(This, &Result);
@@ -991,16 +991,16 @@ FORCEINLINE CVector4 CVector4::operator*(const CVector4& RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CVector4& CVector4::operator*=(const CVector4& RHS) noexcept
+FORCEINLINE CVector4& CVector4::operator*=(const CVector4& Rhs) noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return *this = *this * RHS;
+    return *this = *this * Rhs;
 
 #else
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Other = NSIMD::LoadAligned(&RHS);
+    NSIMD::Float128 Other = NSIMD::LoadAligned(&Rhs);
     This = NSIMD::Mul(This, Other);
 
     NSIMD::StoreAligned(This, this);
@@ -1009,18 +1009,18 @@ FORCEINLINE CVector4& CVector4::operator*=(const CVector4& RHS) noexcept
 #endif
 }
 
-FORCEINLINE CVector4 CVector4::operator*(float RHS) const noexcept
+FORCEINLINE CVector4 CVector4::operator*(float Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return CVector4(x * RHS, y * RHS, z * RHS, w * RHS);
+    return CVector4(x * Rhs, y * Rhs, z * Rhs, w * Rhs);
 
 #else
 
     CVector4 Result;
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
+    NSIMD::Float128 Scalars = NSIMD::Load(Rhs);
     This = NSIMD::Mul(This, Scalars);
 
     NSIMD::StoreAligned(This, &Result);
@@ -1029,21 +1029,21 @@ FORCEINLINE CVector4 CVector4::operator*(float RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CVector4 operator*(float LHS, const CVector4& RHS) noexcept
+FORCEINLINE CVector4 operator*(float Lhs, const CVector4& Rhs) noexcept
 {
-    return RHS * LHS;
+    return Rhs * Lhs;
 }
 
-FORCEINLINE CVector4 CVector4::operator*=(float RHS) noexcept
+FORCEINLINE CVector4 CVector4::operator*=(float Rhs) noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return *this = *this * RHS;
+    return *this = *this * Rhs;
 
 #else
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
+    NSIMD::Float128 Scalars = NSIMD::Load(Rhs);
     This = NSIMD::Mul(This, Scalars);
 
     NSIMD::StoreAligned(This, this);
@@ -1052,18 +1052,18 @@ FORCEINLINE CVector4 CVector4::operator*=(float RHS) noexcept
 #endif
 }
 
-FORCEINLINE CVector4 CVector4::operator/(const CVector4& RHS) const noexcept
+FORCEINLINE CVector4 CVector4::operator/(const CVector4& Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return CVector4(x / RHS.x, y / RHS.y, z / RHS.z, w / RHS.w);
+    return CVector4(x / Rhs.x, y / Rhs.y, z / Rhs.z, w / Rhs.w);
 
 #else
 
     CVector4 Result;
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Other = NSIMD::LoadAligned(&RHS);
+    NSIMD::Float128 Other = NSIMD::LoadAligned(&Rhs);
     This = NSIMD::Div(This, Other);
 
     NSIMD::StoreAligned(This, &Result);
@@ -1072,16 +1072,16 @@ FORCEINLINE CVector4 CVector4::operator/(const CVector4& RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CVector4& CVector4::operator/=(const CVector4& RHS) noexcept
+FORCEINLINE CVector4& CVector4::operator/=(const CVector4& Rhs) noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return *this = *this / RHS;
+    return *this = *this / Rhs;
 
 #else
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Other = NSIMD::LoadAligned(&RHS);
+    NSIMD::Float128 Other = NSIMD::LoadAligned(&Rhs);
     This = NSIMD::Div(This, Other);
 
     NSIMD::StoreAligned(This, this);
@@ -1090,18 +1090,18 @@ FORCEINLINE CVector4& CVector4::operator/=(const CVector4& RHS) noexcept
 #endif
 }
 
-FORCEINLINE CVector4 CVector4::operator/(float RHS) const noexcept
+FORCEINLINE CVector4 CVector4::operator/(float Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return CVector4(x / RHS, y / RHS, z / RHS, w / RHS);
+    return CVector4(x / Rhs, y / Rhs, z / Rhs, w / Rhs);
 
 #else
 
     CVector4 Result;
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
+    NSIMD::Float128 Scalars = NSIMD::Load(Rhs);
     This = NSIMD::Div(This, Scalars);
 
     NSIMD::StoreAligned(This, &Result);
@@ -1110,16 +1110,16 @@ FORCEINLINE CVector4 CVector4::operator/(float RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CVector4& CVector4::operator/=(float RHS) noexcept
+FORCEINLINE CVector4& CVector4::operator/=(float Rhs) noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    return *this = *this / RHS;
+    return *this = *this / Rhs;
 
 #else
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
+    NSIMD::Float128 Scalars = NSIMD::Load(Rhs);
     This = NSIMD::Div(This, Scalars);
 
     NSIMD::StoreAligned(This, this);

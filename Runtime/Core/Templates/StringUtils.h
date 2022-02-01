@@ -234,26 +234,26 @@ public:
     /**
      * Compare two strings 
      * 
-     * @param LHS: Left-hand side to compare
-     * @param RHS: Right-hand side to compare
+     * @param Lhs: Left-hand side to compare
+     * @param Rhs: Right-hand side to compare
      * @return: Returns zero if equal, otherwise the position of the character that is not equal
      */
-    static FORCEINLINE int32 Compare(const CharType* LHS, const CharType* RHS) noexcept
+    static FORCEINLINE int32 Compare(const CharType* Lhs, const CharType* Rhs) noexcept
     {
-        return static_cast<int32>(strcmp(LHS, RHS));
+        return static_cast<int32>(strcmp(Lhs, Rhs));
     }
 
     /**
      * Compare two strings
      *
-     * @param LHS: Left-hand side to compare
-     * @param RHS: Right-hand side to compare
+     * @param Lhs: Left-hand side to compare
+     * @param Rhs: Right-hand side to compare
      * @param InLength: Length of the strings to compare
      * @return: Returns zero if equal, otherwise the position of the character that is not equal
      */
-    static FORCEINLINE int32 Compare(const CharType* LHS, const CharType* RHS, uint64 InLength) noexcept
+    static FORCEINLINE int32 Compare(const CharType* Lhs, const CharType* Rhs, uint64 InLength) noexcept
     {
-        return static_cast<int32>(strncmp(LHS, RHS, InLength));
+        return static_cast<int32>(strncmp(Lhs, Rhs, InLength));
     }
 
     /**
@@ -491,26 +491,26 @@ public:
     /**
      * Compare two strings
      *
-     * @param LHS: Left-hand side to compare
-     * @param RHS: Right-hand side to compare
+     * @param Lhs: Left-hand side to compare
+     * @param Rhs: Right-hand side to compare
      * @return: Returns zero if equal, otherwise the position of the character that is not equal
      */
-    static FORCEINLINE int32 Compare(const CharType* LHS, const CharType* RHS) noexcept
+    static FORCEINLINE int32 Compare(const CharType* Lhs, const CharType* Rhs) noexcept
     {
-        return static_cast<int32>(wcscmp(LHS, RHS));
+        return static_cast<int32>(wcscmp(Lhs, Rhs));
     }
 
     /**
      * Compare two strings
      *
-     * @param LHS: Left-hand side to compare
-     * @param RHS: Right-hand side to compare
+     * @param Lhs: Left-hand side to compare
+     * @param Rhs: Right-hand side to compare
      * @param InLength: Length of the strings to compare
      * @return: Returns zero if equal, otherwise the position of the character that is not equal
      */
-    static FORCEINLINE int32 Compare(const CharType* LHS, const CharType* RHS, uint64 Length) noexcept
+    static FORCEINLINE int32 Compare(const CharType* Lhs, const CharType* Rhs, uint64 Length) noexcept
     {
-        return static_cast<int32>(wcsncmp(LHS, RHS, Length));
+        return static_cast<int32>(wcsncmp(Lhs, Rhs, Length));
     }
 
     /**

@@ -9,6 +9,7 @@
 #include "Delegate_Test.h"
 #include "String_Test.h"
 #include "Optional_Test.h"
+#include "Variant_Test.h"
 
 /* Check for memory leaks */
 #ifdef PLATFORM_WINDOWS
@@ -65,6 +66,10 @@ void Tests( int32 Argc, const char* Argv[] )
 
 #if RUN_TOPIONAL_TEST
     TOptional_Test();
+#endif
+
+#if RUN_TVARIANT_TEST
+    TVariant_Test();
 #endif
 }
 

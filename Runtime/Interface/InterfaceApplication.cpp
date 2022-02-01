@@ -565,7 +565,7 @@ void CInterfaceApplication::HandleKeyEvent(const SKeyEvent& KeyEvent)
     // TODO: Update viewport
 }
 
-void CInterfaceApplication::HandleKeyTyped(uint32 Character)
+void CInterfaceApplication::HandleKeyChar(uint32 Character)
 {
     SKeyCharEvent Event(Character);
     for (int32 Index = 0; Index < InputHandlers.Size(); Index++)

@@ -39,7 +39,7 @@ public:
 
     virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName(InName);
+        CRHIObject::SetName(InName);
     }
 
     virtual CRHIRenderTargetView* GetRenderTargetView() const override final

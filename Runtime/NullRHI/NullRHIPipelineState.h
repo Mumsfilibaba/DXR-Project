@@ -69,7 +69,7 @@ public:
 
     virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName(InName);
+        CRHIObject::SetName(InName);
     }
 
     virtual bool IsValid() const override
@@ -86,7 +86,7 @@ public:
 
     virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName(InName);
+        CRHIObject::SetName(InName);
     }
 
     virtual bool IsValid() const override
@@ -103,7 +103,7 @@ public:
 
     virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName(InName);
+        CRHIObject::SetName(InName);
     }
 
     virtual bool IsValid() const override final

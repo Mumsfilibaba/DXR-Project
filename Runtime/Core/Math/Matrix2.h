@@ -139,122 +139,122 @@ public:
     /**
      * Transforms a 2-D vector
      *
-     * @param RHS: The vector to transform
+     * @param Rhs: The vector to transform
      * @return A vector containing the transformation
      */
-    FORCEINLINE CVector2 operator*(const CVector2& RHS) const noexcept;
+    FORCEINLINE CVector2 operator*(const CVector2& Rhs) const noexcept;
 
     /**
      * Multiplies a matrix with another matrix
      *
-     * @param RHS: The other matrix
+     * @param Rhs: The other matrix
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix2 operator*(const CMatrix2& RHS) const noexcept;
+    FORCEINLINE CMatrix2 operator*(const CMatrix2& Rhs) const noexcept;
 
     /**
      * Multiplies this matrix with another matrix
      *
-     * @param RHS: The other matrix
+     * @param Rhs: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator*=(const CMatrix2& RHS) noexcept;
+    FORCEINLINE CMatrix2& operator*=(const CMatrix2& Rhs) noexcept;
 
     /**
      * Multiplies a matrix component-wise with a scalar
      *
-     * @param RHS: The scalar
+     * @param Rhs: The scalar
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix2 operator*(float RHS) const noexcept;
+    FORCEINLINE CMatrix2 operator*(float Rhs) const noexcept;
 
     /**
      * Multiplies this matrix component-wise with a scalar
      *
-     * @param RHS: The scalar
+     * @param Rhs: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator*=(float RHS) noexcept;
+    FORCEINLINE CMatrix2& operator*=(float Rhs) noexcept;
 
     /**
      * Adds a matrix component-wise with another matrix
      *
-     * @param RHS: The other matrix
+     * @param Rhs: The other matrix
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix2 operator+(const CMatrix2& RHS) const noexcept;
+    FORCEINLINE CMatrix2 operator+(const CMatrix2& Rhs) const noexcept;
 
     /**
      * Adds this matrix component-wise with another matrix
      *
-     * @param RHS: The other matrix
+     * @param Rhs: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator+=(const CMatrix2& RHS) noexcept;
+    FORCEINLINE CMatrix2& operator+=(const CMatrix2& Rhs) noexcept;
 
     /**
      * Adds a matrix component-wise with a scalar
      *
-     * @param RHS: The scalar
+     * @param Rhs: The scalar
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix2 operator+(float RHS) const noexcept;
+    FORCEINLINE CMatrix2 operator+(float Rhs) const noexcept;
 
     /**
      * Adds this matrix component-wise with a scalar
      *
-     * @param RHS: The scalar
+     * @param Rhs: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator+=(float RHS) noexcept;
+    FORCEINLINE CMatrix2& operator+=(float Rhs) noexcept;
 
     /**
      * Subtracts a matrix component-wise with another matrix
      *
-     * @param RHS: The other matrix
+     * @param Rhs: The other matrix
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix2 operator-(const CMatrix2& RHS) const noexcept;
+    FORCEINLINE CMatrix2 operator-(const CMatrix2& Rhs) const noexcept;
 
     /**
      * Subtracts this matrix component-wise with another matrix
      *
-     * @param RHS: The other matrix
+     * @param Rhs: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator-=(const CMatrix2& RHS) noexcept;
+    FORCEINLINE CMatrix2& operator-=(const CMatrix2& Rhs) noexcept;
 
     /**
      * Subtracts a matrix component-wise with a scalar
      *
-     * @param RHS: The scalar
+     * @param Rhs: The scalar
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix2 operator-(float RHS) const noexcept;
+    FORCEINLINE CMatrix2 operator-(float Rhs) const noexcept;
 
     /**
      * Subtracts this matrix component-wise with a scalar
      *
-     * @param RHS: The scalar
+     * @param Rhs: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator-=(float RHS) noexcept;
+    FORCEINLINE CMatrix2& operator-=(float Rhs) noexcept;
 
     /**
      * Divides a matrix component-wise with a scalar
      *
-     * @param RHS: The scalar
+     * @param Rhs: The scalar
      * @return A matrix containing the result of the division
      */
-    FORCEINLINE CMatrix2 operator/(float RHS) const noexcept;
+    FORCEINLINE CMatrix2 operator/(float Rhs) const noexcept;
 
     /**
      * Divides this matrix component-wise with a scalar
      *
-     * @param RHS: The scalar
+     * @param Rhs: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator/=(float RHS) noexcept;
+    FORCEINLINE CMatrix2& operator/=(float Rhs) noexcept;
 
     /**
      * Returns the result after comparing this and another matrix
@@ -569,21 +569,21 @@ FORCEINLINE bool CMatrix2::operator!=(const CMatrix2& Other) const noexcept
     return !IsEqual(Other);
 }
 
-FORCEINLINE CVector2 CMatrix2::operator*(const CVector2& RHS) const noexcept
+FORCEINLINE CVector2 CMatrix2::operator*(const CVector2& Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CVector2 Result;
-    Result.x = (RHS[0] * m00) + (RHS[1] * m10);
-    Result.y = (RHS[0] * m01) + (RHS[1] * m11);
+    Result.x = (Rhs[0] * m00) + (Rhs[1] * m10);
+    Result.y = (Rhs[0] * m01) + (Rhs[1] * m11);
     return Result;
 
 #else
 
     CVector2 Result;
 
-    NSIMD::Float128 X128 = NSIMD::LoadSingle(RHS.x);
-    NSIMD::Float128 Y128 = NSIMD::LoadSingle(RHS.y);
+    NSIMD::Float128 X128 = NSIMD::LoadSingle(Rhs.x);
+    NSIMD::Float128 Y128 = NSIMD::LoadSingle(Rhs.y);
     NSIMD::Float128 Temp0 = NSIMD::Shuffle0011<0, 0, 0, 0>(X128, Y128);
     NSIMD::Float128 Temp1 = NSIMD::Mul(this, Temp0);
     Temp0 = NSIMD::Shuffle<2, 3, 2, 3>(Temp1);
@@ -596,16 +596,16 @@ FORCEINLINE CVector2 CMatrix2::operator*(const CVector2& RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix2 CMatrix2::operator*(const CMatrix2& RHS) const noexcept
+FORCEINLINE CMatrix2 CMatrix2::operator*(const CMatrix2& Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix2 Result;
-    Result.m00 = (m00 * RHS.m00) + (m01 * RHS.m10);
-    Result.m01 = (m01 * RHS.m11) + (m00 * RHS.m01);
+    Result.m00 = (m00 * Rhs.m00) + (m01 * Rhs.m10);
+    Result.m01 = (m01 * Rhs.m11) + (m00 * Rhs.m01);
 
-    Result.m10 = (m10 * RHS.m00) + (m11 * RHS.m10);
-    Result.m11 = (m11 * RHS.m11) + (m10 * RHS.m01);
+    Result.m10 = (m10 * Rhs.m00) + (m11 * Rhs.m10);
+    Result.m11 = (m11 * Rhs.m11) + (m10 * Rhs.m01);
     return Result;
 
 #else
@@ -613,7 +613,7 @@ FORCEINLINE CMatrix2 CMatrix2::operator*(const CMatrix2& RHS) const noexcept
     CMatrix2 Result;
 
     NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    NSIMD::Float128 Temp = NSIMD::LoadAligned(&RHS);
+    NSIMD::Float128 Temp = NSIMD::LoadAligned(&Rhs);
     Temp = NSIMD::Mat2Mul(This, Temp);
 
     NSIMD::StoreAligned(Temp, &Result);
@@ -622,28 +622,28 @@ FORCEINLINE CMatrix2 CMatrix2::operator*(const CMatrix2& RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix2& CMatrix2::operator*=(const CMatrix2& RHS) noexcept
+FORCEINLINE CMatrix2& CMatrix2::operator*=(const CMatrix2& Rhs) noexcept
 {
-    return *this = *this * RHS;
+    return *this = *this * Rhs;
 }
 
-FORCEINLINE CMatrix2 CMatrix2::operator*(float RHS) const noexcept
+FORCEINLINE CMatrix2 CMatrix2::operator*(float Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix2 Result;
-    Result.m00 = m00 * RHS;
-    Result.m01 = m01 * RHS;
+    Result.m00 = m00 * Rhs;
+    Result.m01 = m01 * Rhs;
 
-    Result.m10 = m10 * RHS;
-    Result.m11 = m11 * RHS;
+    Result.m10 = m10 * Rhs;
+    Result.m11 = m11 * Rhs;
     return Result;
 
 #else
 
     CMatrix2 Result;
 
-    NSIMD::Float128 Temp = NSIMD::Load(RHS);
+    NSIMD::Float128 Temp = NSIMD::Load(Rhs);
     Temp = NSIMD::Mul(this, Temp);
 
     NSIMD::StoreAligned(Temp, &Result);
@@ -652,55 +652,55 @@ FORCEINLINE CMatrix2 CMatrix2::operator*(float RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix2& CMatrix2::operator*=(float RHS) noexcept
+FORCEINLINE CMatrix2& CMatrix2::operator*=(float Rhs) noexcept
 {
-    return *this = *this * RHS;
+    return *this = *this * Rhs;
 }
 
-FORCEINLINE CMatrix2 CMatrix2::operator+(const CMatrix2& RHS) const noexcept
+FORCEINLINE CMatrix2 CMatrix2::operator+(const CMatrix2& Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix2 Result;
-    Result.m00 = m00 + RHS.m00;
-    Result.m01 = m01 + RHS.m01;
+    Result.m00 = m00 + Rhs.m00;
+    Result.m01 = m01 + Rhs.m01;
 
-    Result.m10 = m10 + RHS.m10;
-    Result.m11 = m11 + RHS.m11;
+    Result.m10 = m10 + Rhs.m10;
+    Result.m11 = m11 + Rhs.m11;
     return Result;
 
 #else
 
     CMatrix2 Result;
-    NSIMD::Float128 Temp = NSIMD::Add(this, &RHS);
+    NSIMD::Float128 Temp = NSIMD::Add(this, &Rhs);
     NSIMD::StoreAligned(Temp, &Result);
     return Result;
 
 #endif
 }
 
-FORCEINLINE CMatrix2& CMatrix2::operator+=(const CMatrix2& RHS) noexcept
+FORCEINLINE CMatrix2& CMatrix2::operator+=(const CMatrix2& Rhs) noexcept
 {
-    return *this = *this + RHS;
+    return *this = *this + Rhs;
 }
 
-FORCEINLINE CMatrix2 CMatrix2::operator+(float RHS) const noexcept
+FORCEINLINE CMatrix2 CMatrix2::operator+(float Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix2 Result;
-    Result.m00 = m00 + RHS;
-    Result.m01 = m01 + RHS;
+    Result.m00 = m00 + Rhs;
+    Result.m01 = m01 + Rhs;
 
-    Result.m10 = m10 + RHS;
-    Result.m11 = m11 + RHS;
+    Result.m10 = m10 + Rhs;
+    Result.m11 = m11 + Rhs;
     return Result;
 
 #else
 
     CMatrix2 Result;
 
-    NSIMD::Float128 Temp = NSIMD::Load(RHS);
+    NSIMD::Float128 Temp = NSIMD::Load(Rhs);
     Temp = NSIMD::Add(this, Temp);
 
     NSIMD::StoreAligned(Temp, &Result);
@@ -709,55 +709,55 @@ FORCEINLINE CMatrix2 CMatrix2::operator+(float RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix2& CMatrix2::operator+=(float RHS) noexcept
+FORCEINLINE CMatrix2& CMatrix2::operator+=(float Rhs) noexcept
 {
-    return *this = *this + RHS;
+    return *this = *this + Rhs;
 }
 
-FORCEINLINE CMatrix2 CMatrix2::operator-(const CMatrix2& RHS) const noexcept
+FORCEINLINE CMatrix2 CMatrix2::operator-(const CMatrix2& Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix2 Result;
-    Result.m00 = m00 - RHS.m00;
-    Result.m01 = m01 - RHS.m01;
+    Result.m00 = m00 - Rhs.m00;
+    Result.m01 = m01 - Rhs.m01;
 
-    Result.m10 = m10 - RHS.m10;
-    Result.m11 = m11 - RHS.m11;
+    Result.m10 = m10 - Rhs.m10;
+    Result.m11 = m11 - Rhs.m11;
     return Result;
 
 #else
 
     CMatrix2 Result;
-    NSIMD::Float128 Temp = NSIMD::Sub(this, &RHS);
+    NSIMD::Float128 Temp = NSIMD::Sub(this, &Rhs);
     NSIMD::StoreAligned(Temp, &Result);
     return Result;
 
 #endif
 }
 
-FORCEINLINE CMatrix2& CMatrix2::operator-=(const CMatrix2& RHS) noexcept
+FORCEINLINE CMatrix2& CMatrix2::operator-=(const CMatrix2& Rhs) noexcept
 {
-    return *this = *this - RHS;
+    return *this = *this - Rhs;
 }
 
-FORCEINLINE CMatrix2 CMatrix2::operator-(float RHS) const noexcept
+FORCEINLINE CMatrix2 CMatrix2::operator-(float Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix2 Result;
-    Result.m00 = m00 - RHS;
-    Result.m01 = m01 - RHS;
+    Result.m00 = m00 - Rhs;
+    Result.m01 = m01 - Rhs;
 
-    Result.m10 = m10 - RHS;
-    Result.m11 = m11 - RHS;
+    Result.m10 = m10 - Rhs;
+    Result.m11 = m11 - Rhs;
     return Result;
 
 #else
 
     CMatrix2 Result;
 
-    NSIMD::Float128 Temp = NSIMD::Load(RHS);
+    NSIMD::Float128 Temp = NSIMD::Load(Rhs);
     Temp = NSIMD::Sub(this, Temp);
 
     NSIMD::StoreAligned(Temp, &Result);
@@ -766,16 +766,16 @@ FORCEINLINE CMatrix2 CMatrix2::operator-(float RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix2& CMatrix2::operator-=(float RHS) noexcept
+FORCEINLINE CMatrix2& CMatrix2::operator-=(float Rhs) noexcept
 {
-    return *this = *this - RHS;
+    return *this = *this - Rhs;
 }
 
-FORCEINLINE CMatrix2 CMatrix2::operator/(float RHS) const noexcept
+FORCEINLINE CMatrix2 CMatrix2::operator/(float Rhs) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    float Recip = 1.0f / RHS;
+    float Recip = 1.0f / Rhs;
 
     CMatrix2 Result;
     Result.m00 = m00 * Recip;
@@ -789,7 +789,7 @@ FORCEINLINE CMatrix2 CMatrix2::operator/(float RHS) const noexcept
 
     CMatrix2 Result;
 
-    NSIMD::Float128 Temp = NSIMD::Load(RHS);
+    NSIMD::Float128 Temp = NSIMD::Load(Rhs);
     Temp = NSIMD::Div(this, Temp);
 
     NSIMD::StoreAligned(Temp, &Result);
@@ -798,9 +798,9 @@ FORCEINLINE CMatrix2 CMatrix2::operator/(float RHS) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix2& CMatrix2::operator/=(float RHS) noexcept
+FORCEINLINE CMatrix2& CMatrix2::operator/=(float Rhs) noexcept
 {
-    return *this = *this / RHS;
+    return *this = *this / Rhs;
 }
 
 inline CMatrix2 CMatrix2::Identity() noexcept

@@ -73,9 +73,9 @@ public:
      *
      * @return: Returns the new value
      */
-    FORCEINLINE T Add(T RHS) noexcept
+    FORCEINLINE T Add(T Rhs) noexcept
     {
-        PlatformInterlocked::InterlockedAdd(&Value, RHS);
+        PlatformInterlocked::InterlockedAdd(&Value, Rhs);
         return Value;
     }
 
@@ -84,9 +84,9 @@ public:
      *
      * @return: Returns the new value
      */
-    FORCEINLINE T Subtract(T RHS) noexcept
+    FORCEINLINE T Subtract(T Rhs) noexcept
     {
-        PlatformInterlocked::InterlockedSub(&Value, RHS);
+        PlatformInterlocked::InterlockedSub(&Value, Rhs);
         return Value;
     }
 
@@ -95,9 +95,9 @@ public:
      *
      * @return: Returns the new value
      */
-    FORCEINLINE T And(T RHS) noexcept
+    FORCEINLINE T And(T Rhs) noexcept
     {
-        PlatformInterlocked::InterlockedAnd(&Value, RHS);
+        PlatformInterlocked::InterlockedAnd(&Value, Rhs);
         return Value;
     }
 
@@ -106,9 +106,9 @@ public:
      *
      * @return: Returns the new value
      */
-    FORCEINLINE T Or(T RHS) noexcept
+    FORCEINLINE T Or(T Rhs) noexcept
     {
-        PlatformInterlocked::InterlockedOr(&Value, RHS);
+        PlatformInterlocked::InterlockedOr(&Value, Rhs);
         return Value;
     }
 
@@ -117,9 +117,9 @@ public:
      *
      * @return: Returns the new value
      */
-    FORCEINLINE T Xor(T RHS) noexcept
+    FORCEINLINE T Xor(T Rhs) noexcept
     {
-        PlatformInterlocked::InterlockedXor(&Value, RHS);
+        PlatformInterlocked::InterlockedXor(&Value, Rhs);
         return Value;
     }
 
@@ -182,12 +182,12 @@ public:
     /**
      * Copy-assignment operator
      * 
-     * @param RHS: Value to copy
+     * @param Rhs: Value to copy
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TAtomicInt& operator=(const TAtomicInt& RHS)
+    FORCEINLINE TAtomicInt& operator=(const TAtomicInt& Rhs)
     {
-        T TempInteger = RHS.Load();
+        T TempInteger = Rhs.Load();
         Store(TempInteger);
         return *this;
     }
@@ -195,12 +195,12 @@ public:
     /**
      * Assign a new value
      *
-     * @param RHS: Value to assign
+     * @param Rhs: Value to assign
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE T operator=(T RHS) noexcept
+    FORCEINLINE T operator=(T Rhs) noexcept
     {
-        return Store(RHS);
+        return Store(Rhs);
     }
 
     /**
@@ -250,56 +250,56 @@ public:
     /**
      * Add a value
      * 
-     * @param RHS: Value to add to the integer
+     * @param Rhs: Value to add to the integer
      * @return: Returns a the new value
      */
-    FORCEINLINE T operator+=(T RHS) noexcept
+    FORCEINLINE T operator+=(T Rhs) noexcept
     {
-        return Add(RHS);
+        return Add(Rhs);
     }
 
     /**
      * Subtract a value
      *
-     * @param RHS: Value to subtract to the integer
+     * @param Rhs: Value to subtract to the integer
      * @return: Returns a the new value
      */
-    FORCEINLINE T operator-=(T RHS) noexcept
+    FORCEINLINE T operator-=(T Rhs) noexcept
     {
-        return Subtract(RHS);
+        return Subtract(Rhs);
     }
 
     /**
      * Bitwise AND with a value
      *
-     * @param RHS: Value to AND with the integer
+     * @param Rhs: Value to AND with the integer
      * @return: Returns a the new value
      */
-    FORCEINLINE T operator&=(T RHS) noexcept
+    FORCEINLINE T operator&=(T Rhs) noexcept
     {
-        return And(RHS);
+        return And(Rhs);
     }
 
     /**
      * Bitwise OR with a value
      *
-     * @param RHS: Value to OR with the integer
+     * @param Rhs: Value to OR with the integer
      * @return: Returns a the new value
      */
-    FORCEINLINE T operator|=(T RHS) noexcept
+    FORCEINLINE T operator|=(T Rhs) noexcept
     {
-        return Or(RHS);
+        return Or(Rhs);
     }
 
     /**
      * Bitwise XOR with a value
      *
-     * @param RHS: Value to XOR with the integer
+     * @param Rhs: Value to XOR with the integer
      * @return: Returns a the new value
      */
-    FORCEINLINE T operator^=(T RHS) noexcept
+    FORCEINLINE T operator^=(T Rhs) noexcept
     {
-        return Xor(RHS);
+        return Xor(Rhs);
     }
 
 private:

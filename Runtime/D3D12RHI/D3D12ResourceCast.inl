@@ -5,7 +5,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12ResourceCast
 
-inline CD3D12Resource* D3D12ResourceCast(CRHIMemoryResource* Resource)
+inline CD3D12Resource* D3D12ResourceCast(CRHIResource* Resource)
 {
     if (Resource)
     {

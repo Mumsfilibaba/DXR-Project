@@ -159,7 +159,7 @@ public:
 
     virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName(InName);
+        CRHIObject::SetName(InName);
 
         WString WideName = CharToWide(InName);
         PipelineState->SetName(WideName.CStr());
@@ -204,7 +204,7 @@ public:
 
     virtual void SetName(const CString& InName) override final
     {
-        CRHIResource::SetName(InName);
+        CRHIObject::SetName(InName);
 
         WString WideName = CharToWide(InName);
         PipelineState->SetName(WideName.CStr());
@@ -257,7 +257,7 @@ public:
 
     virtual void SetName(const CString& InName) override
     {
-        CRHIResource::SetName(InName);
+        CRHIObject::SetName(InName);
 
         WString WideName = CharToWide(InName);
         StateObject->SetName(WideName.CStr());

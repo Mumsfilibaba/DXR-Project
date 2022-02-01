@@ -54,18 +54,18 @@ void* CMemory::Memmove(void* Destination, const void* Source, uint64 Size) noexc
     return memmove(Destination, Source, Size);
 }
 
-bool CMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
+bool CMemory::Memcmp(const void* Lhs, const void* Rhs, uint64 Size)  noexcept
 {
-    return (memcmp(LHS, RHS, Size) == 0);
+    return (memcmp(Lhs, Rhs, Size) == 0);
 }
 
-void CMemory::Memswap(void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size) noexcept
+void CMemory::Memswap(void* restrict_ptr Lhs, void* restrict_ptr Rhs, uint64 Size) noexcept
 {
-    Assert(LHS != nullptr && RHS != nullptr);
+    Assert(Lhs != nullptr && Rhs != nullptr);
 
     // Move 8 bytes at a time 
-    uint64* Left = reinterpret_cast<uint64*>(LHS);
-    uint64* Right = reinterpret_cast<uint64*>(RHS);
+    uint64* Left = reinterpret_cast<uint64*>(Lhs);
+    uint64* Right = reinterpret_cast<uint64*>(Rhs);
 
     while (Size >= 8)
     {
@@ -80,8 +80,8 @@ void CMemory::Memswap(void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Siz
     }
 
     // Move remaining bytes
-    uint8* LeftBytes = reinterpret_cast<uint8*>(LHS);
-    uint8* RightBytes = reinterpret_cast<uint8*>(RHS);
+    uint8* LeftBytes = reinterpret_cast<uint8*>(Lhs);
+    uint8* RightBytes = reinterpret_cast<uint8*>(Rhs);
 
     while (Size)
     {

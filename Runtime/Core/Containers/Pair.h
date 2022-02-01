@@ -76,52 +76,52 @@ struct TPair
     /**
      * Copy-assignment operator
      * 
-     * @param RHS: Pair to copy
+     * @param Rhs: Pair to copy
      * @return: A reference to this instance
      */
-    FORCEINLINE TPair& operator=(const TPair& RHS) noexcept
+    FORCEINLINE TPair& operator=(const TPair& Rhs) noexcept
     {
-        TPair(RHS).Swap(*this);
+        TPair(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Copy-assignment operator
      *
-     * @param RHS: Pair to copy
+     * @param Rhs: Pair to copy
      * @return: A reference to this instance
      */
     template<typename OtherFirstType, typename OtherSecondType>
-    FORCEINLINE TPair& operator=(const TPair<OtherFirstType, OtherSecondType>& RHS) noexcept
+    FORCEINLINE TPair& operator=(const TPair<OtherFirstType, OtherSecondType>& Rhs) noexcept
     {
-        First = RHS.First;
-        Second = RHS.Second;
+        First = Rhs.First;
+        Second = Rhs.Second;
         return *this;
     }
 
     /**
      * Move-assignment operator
      *
-     * @param RHS: Pair to move
+     * @param Rhs: Pair to move
      * @return: A reference to this instance
      */
-    FORCEINLINE TPair& operator=(TPair&& RHS) noexcept
+    FORCEINLINE TPair& operator=(TPair&& Rhs) noexcept
     {
-        TPair(Move(RHS)).Swap(*this);
+        TPair(Move(Rhs)).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator
      *
-     * @param RHS: Pair to move
+     * @param Rhs: Pair to move
      * @return: A reference to this instance
      */
     template<typename OtherFirstType, typename OtherSecondType>
-    FORCEINLINE TPair& operator=(TPair<OtherFirstType, OtherSecondType>&& RHS) noexcept
+    FORCEINLINE TPair& operator=(TPair<OtherFirstType, OtherSecondType>&& Rhs) noexcept
     {
-        First = Move(RHS.First);
-        Second = Move(RHS.Second);
+        First = Move(Rhs.First);
+        Second = Move(Rhs.Second);
         return *this;
     }
 
@@ -133,39 +133,39 @@ struct TPair
 // Operators for TPair
 
 template<typename FirstType, typename SecondType>
-inline bool operator==(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
+inline bool operator==(const TPair<FirstType, SecondType>& Lhs, const TPair<FirstType, SecondType>& Rhs) noexcept
 {
-    return (LHS.First == RHS.First) && (LHS.Second == RHS.Second);
+    return (Lhs.First == Rhs.First) && (Lhs.Second == Rhs.Second);
 }
 
 template<typename FirstType, typename SecondType>
-inline bool operator!=(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
+inline bool operator!=(const TPair<FirstType, SecondType>& Lhs, const TPair<FirstType, SecondType>& Rhs) noexcept
 {
-    return !(LHS == RHS);
+    return !(Lhs == Rhs);
 }
 
 template<typename FirstType, typename SecondType>
-inline bool operator<=(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
+inline bool operator<=(const TPair<FirstType, SecondType>& Lhs, const TPair<FirstType, SecondType>& Rhs) noexcept
 {
-    return (LHS.First <= RHS.First) && (LHS.Second <= RHS.Second);
+    return (Lhs.First <= Rhs.First) && (Lhs.Second <= Rhs.Second);
 }
 
 template<typename FirstType, typename SecondType>
-inline bool operator<(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
+inline bool operator<(const TPair<FirstType, SecondType>& Lhs, const TPair<FirstType, SecondType>& Rhs) noexcept
 {
-    return (LHS.First < RHS.First) && (LHS.Second < RHS.Second);
+    return (Lhs.First < Rhs.First) && (Lhs.Second < Rhs.Second);
 }
 
 template<typename FirstType, typename SecondType>
-inline bool operator>=(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
+inline bool operator>=(const TPair<FirstType, SecondType>& Lhs, const TPair<FirstType, SecondType>& Rhs) noexcept
 {
-    return (LHS.First >= RHS.First) && (LHS.Second >= RHS.Second);
+    return (Lhs.First >= Rhs.First) && (Lhs.Second >= Rhs.Second);
 }
 
 template<typename FirstType, typename SecondType>
-inline bool operator>(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
+inline bool operator>(const TPair<FirstType, SecondType>& Lhs, const TPair<FirstType, SecondType>& Rhs) noexcept
 {
-    return (LHS.First > RHS.First) && (LHS.Second > RHS.Second);
+    return (Lhs.First > Rhs.First) && (Lhs.Second > Rhs.Second);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

@@ -205,37 +205,37 @@ public:
     /**
      * Assignment operator that takes a raw pointer 
      * 
-     * @param RHS: Pointer to store
+     * @param Rhs: Pointer to store
      * @return: A reference to this instance
      */
-    FORCEINLINE TUniquePtr& operator=(ElementType* RHS) noexcept
+    FORCEINLINE TUniquePtr& operator=(ElementType* Rhs) noexcept
     {
-        TUniquePtr(RHS).Swap(*this);
+        TUniquePtr(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator
      * 
-     * @param RHS: UniquePtr to move from
+     * @param Rhs: UniquePtr to move from
      * @return: A reference to this instance
      */
-    FORCEINLINE TUniquePtr& operator=(TUniquePtr&& RHS) noexcept
+    FORCEINLINE TUniquePtr& operator=(TUniquePtr&& Rhs) noexcept
     {
-        TUniquePtr(Move(RHS)).Swap(*this);
+        TUniquePtr(Move(Rhs)).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator that takes a convertible type
      *
-     * @param RHS: UniquePtr to move from
+     * @param Rhs: UniquePtr to move from
      * @return: A reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type operator=(TUniquePtr<OtherType, OtherDeleterType>&& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type operator=(TUniquePtr<OtherType, OtherDeleterType>&& Rhs) noexcept
     {
-        TUniquePtr(Move(RHS)).Swap(*this);
+        TUniquePtr(Move(Rhs)).Swap(*this);
         return *this;
     }
 
@@ -461,37 +461,37 @@ public:
     /**
      * Assignment operator that takes a raw pointer
      *
-     * @param RHS: Pointer to store
+     * @param Rhs: Pointer to store
      * @return: A reference to this instance
      */
-    FORCEINLINE TUniquePtr& operator=(ElementType* RHS) noexcept
+    FORCEINLINE TUniquePtr& operator=(ElementType* Rhs) noexcept
     {
-        TUniquePtr(RHS).Swap(*this);
+        TUniquePtr(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator
      *
-     * @param RHS: UniquePtr to move from
+     * @param Rhs: UniquePtr to move from
      * @return: A reference to this instance
      */
-    FORCEINLINE TUniquePtr& operator=(TUniquePtr&& RHS) noexcept
+    FORCEINLINE TUniquePtr& operator=(TUniquePtr&& Rhs) noexcept
     {
-        TUniquePtr(Move(RHS)).Swap(*this);
+        TUniquePtr(Move(Rhs)).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator that takes a convertible type
      *
-     * @param RHS: UniquePtr to move from
+     * @param Rhs: UniquePtr to move from
      * @return: A reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type operator=(TUniquePtr<OtherType[], OtherDeleterType>&& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TUniquePtr&>::Type operator=(TUniquePtr<OtherType[], OtherDeleterType>&& Rhs) noexcept
     {
-        TUniquePtr(Move(RHS)).Swap(*this);
+        TUniquePtr(Move(Rhs)).Swap(*this);
         return *this;
     }
 
@@ -534,63 +534,63 @@ private:
 // Operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, U* RHS) noexcept
+FORCEINLINE bool operator==(const TUniquePtr<T>& Lhs, U* Rhs) noexcept
 {
-    return (LHS.Get() == RHS);
+    return (Lhs.Get() == Rhs);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* LHS, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(T* Lhs, const TUniquePtr<U>& Rhs) noexcept
 {
-    return (LHS == RHS.Get());
+    return (Lhs == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, U* RHS) noexcept
+FORCEINLINE bool operator!=(const TUniquePtr<T>& Lhs, U* Rhs) noexcept
 {
-    return (LHS.Get() != RHS);
+    return (Lhs.Get() != Rhs);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* LHS, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(T* Lhs, const TUniquePtr<U>& Rhs) noexcept
 {
-    return (LHS != RHS.Get());
+    return (Lhs != Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TUniquePtr<T>& Lhs, const TUniquePtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return (Lhs.Get() == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TUniquePtr<T>& Lhs, const TUniquePtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return (Lhs.Get() != Rhs.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator==(const TUniquePtr<T>& Lhs, NullptrType) noexcept
 {
-    return (LHS.Get() == nullptr);
+    return (Lhs.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TUniquePtr<T>& RHS) noexcept
+FORCEINLINE bool operator==(NullptrType, const TUniquePtr<T>& Rhs) noexcept
 {
-    return (nullptr == RHS.Get());
+    return (nullptr == Rhs.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TUniquePtr<T>& Lhs, NullptrType) noexcept
 {
-    return (LHS.Get() != nullptr);
+    return (Lhs.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TUniquePtr<T>& RHS) noexcept
+FORCEINLINE bool operator!=(NullptrType, const TUniquePtr<T>& Rhs) noexcept
 {
-    return (nullptr != RHS.Get());
+    return (nullptr != Rhs.Get());
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

@@ -50,7 +50,7 @@ struct STest
         Pointer = nullptr;
     }
 
-    STest& operator=(const STest& RHS)
+    STest& operator=(const STest& Rhs)
     {
         if (Pointer)
         {
@@ -58,25 +58,25 @@ struct STest
         }
 
         Pointer = CMemory::Malloc(SizeInBytes);
-        CMemory::Memcpy(Pointer, RHS.Pointer, SizeInBytes);
+        CMemory::Memcpy(Pointer, Rhs.Pointer, SizeInBytes);
         return *this;
     }
 
-    STest& operator=(STest&& RHS)
+    STest& operator=(STest&& Rhs)
     {
         if (Pointer)
         {
             CMemory::Free(Pointer);
         }
 
-        Pointer = RHS.Pointer;
-        RHS.Pointer = nullptr;
+        Pointer = Rhs.Pointer;
+        Rhs.Pointer = nullptr;
         return *this;
     }
 
-    bool operator==(const STest& RHS) const
+    bool operator==(const STest& Rhs) const
     {
-        return CMemory::Memcmp(Pointer, RHS.Pointer, SizeInBytes);
+        return CMemory::Memcmp(Pointer, Rhs.Pointer, SizeInBytes);
     }
 
     void* Pointer = nullptr;

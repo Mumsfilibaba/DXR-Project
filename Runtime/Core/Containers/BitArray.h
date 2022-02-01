@@ -247,11 +247,11 @@ public:
         return GetBit(BitIndex);
     }
 
-    FORCEINLINE bool operator==(const TBitArray& RHS) const
+    FORCEINLINE bool operator==(const TBitArray& Rhs) const
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
-            if (Data[Index] != RHS.Data[Index])
+            if (Data[Index] != Rhs.Data[Index])
             {
                 return false;
             }
@@ -259,11 +259,11 @@ public:
         return true;
     }
 
-    FORCEINLINE bool operator!=(const TBitArray& RHS) const
+    FORCEINLINE bool operator!=(const TBitArray& Rhs) const
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
-            if (Data[Index] != RHS.Data[Index])
+            if (Data[Index] != Rhs.Data[Index])
             {
                 return true;
             }
@@ -272,64 +272,64 @@ public:
         return false;
     }
 
-    FORCEINLINE TBitArray& operator&=(const TBitArray& RHS)
+    FORCEINLINE TBitArray& operator&=(const TBitArray& Rhs)
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
-            Data[Index] &= RHS.Data[Index];
+            Data[Index] &= Rhs.Data[Index];
         }
 
         return *this;
     }
 
-    FORCEINLINE TBitArray& operator|=(const TBitArray& RHS)
+    FORCEINLINE TBitArray& operator|=(const TBitArray& Rhs)
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
-            Data[Index] |= RHS.Data[Index];
+            Data[Index] |= Rhs.Data[Index];
         }
 
         return *this;
     }
 
-    FORCEINLINE TBitArray& operator^=(const TBitArray& RHS)
+    FORCEINLINE TBitArray& operator^=(const TBitArray& Rhs)
     {
         for (uint32 Index = 0; Index < Elements(); ++Index)
         {
-            Data[Index] ^= RHS.Data[Index];
+            Data[Index] ^= Rhs.Data[Index];
         }
 
         return *this;
     }
 
-    FORCEINLINE TBitArray operator&(const TBitArray& RHS) const
+    FORCEINLINE TBitArray operator&(const TBitArray& Rhs) const
     {
         TBitArray NewArray;
         for (uint32 i = 0; i < Elements(); ++i)
         {
-            NewArray.Data[i] = Data[i] & RHS.Data[i];
+            NewArray.Data[i] = Data[i] & Rhs.Data[i];
         }
 
         return NewArray;
     }
 
-    FORCEINLINE TBitArray operator|(const TBitArray& RHS) const
+    FORCEINLINE TBitArray operator|(const TBitArray& Rhs) const
     {
         TBitArray NewArray;
         for (uint32 i = 0; i < Elements(); ++i)
         {
-            NewArray.Data[i] = Data[i] | RHS.Data[i];
+            NewArray.Data[i] = Data[i] | Rhs.Data[i];
         }
 
         return NewArray;
     }
 
-    FORCEINLINE TBitArray operator^(const TBitArray& RHS) const
+    FORCEINLINE TBitArray operator^(const TBitArray& Rhs) const
     {
         TBitArray NewArray;
         for (uint32 i = 0; i < Elements(); ++i)
         {
-            NewArray.Data[i] = Data[i] ^ RHS.Data[i];
+            NewArray.Data[i] = Data[i] ^ Rhs.Data[i];
         }
 
         return NewArray;

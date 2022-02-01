@@ -294,24 +294,24 @@ public:
     /**
      * Copy-assignment operator
      *
-     * @param RHS: Instance to copy from
+     * @param Rhs: Instance to copy from
      * @return: A reference to this object
      */
-    FORCEINLINE TFunction& operator=(const TFunction& RHS) noexcept
+    FORCEINLINE TFunction& operator=(const TFunction& Rhs) noexcept
     {
-        TFunction(RHS).Swap(*this);
+        TFunction(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator
      *
-     * @param RHS: Instance to move from
+     * @param Rhs: Instance to move from
      * @return: A reference to this object
      */
-    FORCEINLINE TFunction& operator=(TFunction&& RHS) noexcept
+    FORCEINLINE TFunction& operator=(TFunction&& Rhs) noexcept
     {
-        TFunction(Move(RHS)).Swap(*this);
+        TFunction(Move(Rhs)).Swap(*this);
         return *this;
     }
 

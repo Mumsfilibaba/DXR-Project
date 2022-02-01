@@ -164,7 +164,7 @@ public:
 
         bHasValue = true;
 
-        return GetValue();
+        return *Value.GetStorage();
     }
 
     /**
@@ -259,63 +259,63 @@ public:
     /**
      * Copy-assignment operator
      *
-     * @param RHS: Optional to copy from
+     * @param Rhs: Optional to copy from
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(const TOptional& RHS) noexcept
+    FORCEINLINE TOptional& operator=(const TOptional& Rhs) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Copy-assignment operator that takes another type
      *
-     * @param RHS: Optional to copy from
+     * @param Rhs: Optional to copy from
      * @return: Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& Rhs) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator
      *
-     * @param RHS: Optional to move from
+     * @param Rhs: Optional to move from
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(TOptional&& RHS) noexcept
+    FORCEINLINE TOptional& operator=(TOptional&& Rhs) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator that takes another type
      *
-     * @param RHS: Optional to move from
+     * @param Rhs: Optional to move from
      * @return: Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& Rhs) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Assignment operator that can take a r-value reference
      *
-     * @param RHS: Instance to move-construct value from
+     * @param Rhs: Instance to move-construct value from
      * @return: Returns a reference to this instance
      */
     template<typename OtherType = T>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& Rhs) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Rhs).Swap(*this);
         return *this;
     }
 
@@ -332,12 +332,12 @@ public:
     /**
      * Comparison operator
      *
-     * @param RHS: Optional to compare with
+     * @param Rhs: Optional to compare with
      * @return: Returns true if the values are equal
      */
-    FORCEINLINE bool operator==(const TOptional& RHS) const noexcept
+    FORCEINLINE bool operator==(const TOptional& Rhs) const noexcept
     {
-        if (!bHasValue && !RHS.bHasValue)
+        if (!bHasValue && !Rhs.bHasValue)
         {
             return true;
         }
@@ -347,18 +347,18 @@ public:
             return false;
         }
 
-        return (GetValue() == RHS.GetValue());
+        return (GetValue() == Rhs.GetValue());
     }
 
     /**
      * Comparison operator
      *
-     * @param RHS: Optional to compare with
+     * @param Rhs: Optional to compare with
      * @return: Returns false if the values are equal
      */
-    FORCEINLINE bool operator!=(const TOptional& RHS) const noexcept
+    FORCEINLINE bool operator!=(const TOptional& Rhs) const noexcept
     {
-        return !(*this != RHS);
+        return !(*this != Rhs);
     }
 
     /**

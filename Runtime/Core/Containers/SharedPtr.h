@@ -246,17 +246,17 @@ public:
         return Counter->GetStrongRefCount();
     }
 
-    FORCEINLINE TPointerReferencedStorage& operator=(TPointerReferencedStorage&& RHS) noexcept
+    FORCEINLINE TPointerReferencedStorage& operator=(TPointerReferencedStorage&& Rhs) noexcept
     {
-        TPointerReferencedStorage(Move(RHS)).Swap(*this);
+        TPointerReferencedStorage(Move(Rhs)).Swap(*this);
         return *this;
     }
 
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value, TPointerReferencedStorage&>::Type
-        operator=(TPointerReferencedStorage<OtherType, OtherDeleterType>&& RHS) noexcept
+        operator=(TPointerReferencedStorage<OtherType, OtherDeleterType>&& Rhs) noexcept
     {
-        TPointerReferencedStorage(Move(RHS)).Swap(*this);
+        TPointerReferencedStorage(Move(Rhs)).Swap(*this);
         return *this;
     }
 
@@ -592,64 +592,64 @@ public:
     /**
      * Copy-assignment operator
      * 
-     * @param RHS: SharedPtr to copy
+     * @param Rhs: SharedPtr to copy
      * @return: A reference to this instance
      */
-    FORCEINLINE TSharedPtr& operator=(const TSharedPtr& RHS) noexcept
+    FORCEINLINE TSharedPtr& operator=(const TSharedPtr& Rhs) noexcept
     {
-        TSharedPtr(RHS).Swap(*this);
+        TSharedPtr(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator
      *
-     * @param RHS: SharedPtr to move
+     * @param Rhs: SharedPtr to move
      * @return: A reference to this instance
      */
-    FORCEINLINE TSharedPtr& operator=(TSharedPtr&& RHS) noexcept
+    FORCEINLINE TSharedPtr& operator=(TSharedPtr&& Rhs) noexcept
     {
-        TSharedPtr(Move(RHS)).Swap(*this);
+        TSharedPtr(Move(Rhs)).Swap(*this);
         return *this;
     }
 
     /**
      * Copy-assignment operator with a convertible type
      *
-     * @param RHS: SharedPtr to copy
+     * @param Rhs: SharedPtr to copy
      * @return: A reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value, typename TAddReference<TSharedPtr>::LValue>::Type
-        operator=(const TSharedPtr<OtherType, OtherDeleterType>& RHS) noexcept
+        operator=(const TSharedPtr<OtherType, OtherDeleterType>& Rhs) noexcept
     {
-        TSharedPtr(RHS).Swap(*this);
+        TSharedPtr(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator with a convertible type
      *
-     * @param RHS: SharedPtr to move
+     * @param Rhs: SharedPtr to move
      * @return: A reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value, typename TAddReference<TSharedPtr>::LValue>::Type
-        operator=(TSharedPtr<OtherType, OtherDeleterType>&& RHS) noexcept
+        operator=(TSharedPtr<OtherType, OtherDeleterType>&& Rhs) noexcept
     {
-        TSharedPtr(Move(RHS)).Swap(*this);
+        TSharedPtr(Move(Rhs)).Swap(*this);
         return *this;
     }
 
     /**
      * Assignment operator that takes a raw-pointer
      * 
-     * @param RHS: Raw-pointer to store
+     * @param Rhs: Raw-pointer to store
      * @return: A reference to this instance
      */
-    FORCEINLINE TSharedPtr& operator=(ElementType* RHS) noexcept
+    FORCEINLINE TSharedPtr& operator=(ElementType* Rhs) noexcept
     {
-        TSharedPtr(RHS).Swap(*this);
+        TSharedPtr(Rhs).Swap(*this);
         return *this;
     }
 
@@ -677,87 +677,87 @@ private:
 // TSharedPtr operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, U* RHS) noexcept
+FORCEINLINE bool operator==(const TSharedPtr<T>& Lhs, U* Rhs) noexcept
 {
-    return (LHS.Get() == RHS);
+    return (Lhs.Get() == Rhs);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* LHS, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(T* Lhs, const TSharedPtr<U>& Rhs) noexcept
 {
-    return (LHS == RHS.Get());
+    return (Lhs == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, U* RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedPtr<T>& Lhs, U* Rhs) noexcept
 {
-    return (LHS.Get() != RHS);
+    return (Lhs.Get() != Rhs);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* LHS, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(T* Lhs, const TSharedPtr<U>& Rhs) noexcept
 {
-    return (LHS != RHS.Get());
+    return (Lhs != Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TSharedPtr<T>& Lhs, const TSharedPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return (Lhs.Get() == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedPtr<T>& Lhs, const TSharedPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return (Lhs.Get() != Rhs.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator==(const TSharedPtr<T>& Lhs, NullptrType) noexcept
 {
-    return (LHS.Get() == nullptr);
+    return (Lhs.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TSharedPtr<T>& RHS) noexcept
+FORCEINLINE bool operator==(NullptrType, const TSharedPtr<T>& Rhs) noexcept
 {
-    return (nullptr == RHS.Get());
+    return (nullptr == Rhs.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TSharedPtr<T>& Lhs, NullptrType) noexcept
 {
-    return (LHS.Get() != nullptr);
+    return (Lhs.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TSharedPtr<T>& RHS) noexcept
+FORCEINLINE bool operator!=(NullptrType, const TSharedPtr<T>& Rhs) noexcept
 {
-    return (nullptr != RHS.Get());
+    return (nullptr != Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TSharedPtr<T>& Lhs, const TUniquePtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return (Lhs.Get() == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TUniquePtr<T>& Lhs, const TSharedPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return (Lhs.Get() == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedPtr<T>& Lhs, const TUniquePtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return (Lhs.Get() != Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TUniquePtr<T>& Lhs, const TSharedPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return (Lhs.Get() != Rhs.Get());
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1046,64 +1046,64 @@ public:
     /**
      * Copy-assignment operator
      * 
-     * @param RHS: WeakPtr to copy from
+     * @param Rhs: WeakPtr to copy from
      * @return: Return the reference to this instance
      */
-    FORCEINLINE TWeakPtr& operator=(const TWeakPtr& RHS) noexcept
+    FORCEINLINE TWeakPtr& operator=(const TWeakPtr& Rhs) noexcept
     {
-        TWeakPtr(RHS).Swap(*this);
+        TWeakPtr(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator
      *
-     * @param RHS: WeakPtr to move from
+     * @param Rhs: WeakPtr to move from
      * @return: Return the reference to this instance
      */
-    FORCEINLINE TWeakPtr& operator=(TWeakPtr&& RHS) noexcept
+    FORCEINLINE TWeakPtr& operator=(TWeakPtr&& Rhs) noexcept
     {
-        TWeakPtr(Move(RHS)).Swap(*this);
+        TWeakPtr(Move(Rhs)).Swap(*this);
         return *this;
     }
 
     /**
      * Copy-assignment operator that takes a convertible type
      *
-     * @param RHS: WeakPtr to copy from
+     * @param Rhs: WeakPtr to copy from
      * @return: Return the reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddReference<TWeakPtr>::LValue>::Type
-        operator=(const TWeakPtr<OtherType, OtherDeleterType>& RHS) noexcept
+        operator=(const TWeakPtr<OtherType, OtherDeleterType>& Rhs) noexcept
     {
-        TWeakPtr(RHS).Swap(*this);
+        TWeakPtr(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator that takes a convertible type
      *
-     * @param RHS: WeakPtr to move from
+     * @param Rhs: WeakPtr to move from
      * @return: Return the reference to this instance
      */
     template<typename OtherType, typename OtherDeleterType>
     FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, typename TAddReference<TWeakPtr>::LValue>::Type
-        operator=(TWeakPtr<OtherType, OtherDeleterType>&& RHS) noexcept
+        operator=(TWeakPtr<OtherType, OtherDeleterType>&& Rhs) noexcept
     {
-        TWeakPtr(Move(RHS)).Swap(*this);
+        TWeakPtr(Move(Rhs)).Swap(*this);
         return *this;
     }
 
     /**
      * Assignment operator that takes a raw-pointer
      * 
-     * @param RHS: Pointer to store
+     * @param Rhs: Pointer to store
      * @return: Return the reference to this instance
      */
-    FORCEINLINE TWeakPtr& operator=(ElementType* RHS) noexcept
+    FORCEINLINE TWeakPtr& operator=(ElementType* Rhs) noexcept
     {
-        TWeakPtr(RHS).Swap(*this);
+        TWeakPtr(Rhs).Swap(*this);
         return *this;
     }
 
@@ -1131,111 +1131,111 @@ private:
 // TWeakPtr operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, U* RHS) noexcept
+FORCEINLINE bool operator==(const TWeakPtr<T>& Lhs, U* Rhs) noexcept
 {
-    return (LHS.Get() == RHS);
+    return (Lhs.Get() == Rhs);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* LHS, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(T* Lhs, const TWeakPtr<U>& Rhs) noexcept
 {
-    return (LHS == RHS.Get());
+    return (Lhs == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, U* RHS) noexcept
+FORCEINLINE bool operator!=(const TWeakPtr<T>& Lhs, U* Rhs) noexcept
 {
-    return (LHS.Get() != RHS);
+    return (Lhs.Get() != Rhs);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* LHS, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(T* Lhs, const TWeakPtr<U>& Rhs) noexcept
 {
-    return (LHS != RHS.Get());
+    return (Lhs != Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TWeakPtr<T>& Lhs, const TWeakPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return (Lhs.Get() == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TWeakPtr<T>& Lhs, const TWeakPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return (Lhs.Get() != Rhs.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator==(const TWeakPtr<T>& Lhs, NullptrType) noexcept
 {
-    return (LHS.Get() == nullptr);
+    return (Lhs.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TWeakPtr<T>& RHS) noexcept
+FORCEINLINE bool operator==(NullptrType, const TWeakPtr<T>& Rhs) noexcept
 {
-    return (nullptr == RHS.Get());
+    return (nullptr == Rhs.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TWeakPtr<T>& Lhs, NullptrType) noexcept
 {
-    return (LHS.Get() != nullptr);
+    return (Lhs.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TWeakPtr<T>& RHS) noexcept
+FORCEINLINE bool operator!=(NullptrType, const TWeakPtr<T>& Rhs) noexcept
 {
-    return (nullptr != RHS.Get());
+    return (nullptr != Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TWeakPtr<T>& Lhs, const TSharedPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return (Lhs.Get() == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TSharedPtr<T>& Lhs, const TWeakPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return (Lhs.Get() == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TWeakPtr<T>& Lhs, const TSharedPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return (Lhs.Get() != Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedPtr<T>& Lhs, const TWeakPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return (Lhs.Get() != Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TWeakPtr<T>& Lhs, const TUniquePtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return (Lhs.Get() == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TUniquePtr<T>& Lhs, const TWeakPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return (Lhs.Get() == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TWeakPtr<T>& Lhs, const TUniquePtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return (Lhs.Get() != Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TUniquePtr<T>& Lhs, const TWeakPtr<U>& Rhs) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return (Lhs.Get() != Rhs.Get());
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

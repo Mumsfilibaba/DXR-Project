@@ -301,75 +301,75 @@ public:
     /**
      * Copy-assignment operator
      * 
-     * @param RHS: SharedRef to copy from
+     * @param Rhs: SharedRef to copy from
      * @return: A reference to this instance
      */
-    FORCEINLINE TSharedRef& operator=(const TSharedRef& RHS) noexcept
+    FORCEINLINE TSharedRef& operator=(const TSharedRef& Rhs) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Copy-assignment operator that takes a convertible type
      *
-     * @param RHS: SharedRef to copy from
+     * @param Rhs: SharedRef to copy from
      * @return: A reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(const TSharedRef<OtherType>& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(const TSharedRef<OtherType>& Rhs) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator
      *
-     * @param RHS: SharedRef to move from
+     * @param Rhs: SharedRef to move from
      * @return: A reference to this instance
      */
-    FORCEINLINE TSharedRef& operator=(TSharedRef&& RHS) noexcept
+    FORCEINLINE TSharedRef& operator=(TSharedRef&& Rhs) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator that takes a convertible type
      *
-     * @param RHS: SharedRef to move from
+     * @param Rhs: SharedRef to move from
      * @return: A reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(TSharedRef<OtherType>&& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(TSharedRef<OtherType>&& Rhs) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Assignment operator that takes a raw pointer
      *
-     * @param RHS: Pointer to store
+     * @param Rhs: Pointer to store
      * @return: A reference to this object
      */
-    FORCEINLINE TSharedRef& operator=(ElementType* RHS) noexcept
+    FORCEINLINE TSharedRef& operator=(ElementType* Rhs) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Assignment operator that takes a raw pointer of a convertible type
      *
-     * @param RHS: Pointer to store
+     * @param Rhs: Pointer to store
      * @return: A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(OtherType* RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(OtherType* Rhs) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(Rhs).Swap(*this);
         return *this;
     }
 
@@ -402,63 +402,63 @@ private:
 // TSharedRef operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedRef<T>& LHS, U* RHS) noexcept
+FORCEINLINE bool operator==(const TSharedRef<T>& Lhs, U* Rhs) noexcept
 {
-    return (LHS.Get() == RHS);
+    return (Lhs.Get() == Rhs);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* LHS, const TSharedRef<U>& RHS) noexcept
+FORCEINLINE bool operator==(T* Lhs, const TSharedRef<U>& Rhs) noexcept
 {
-    return (LHS == RHS.Get());
+    return (Lhs == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, U* RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedRef<T>& Lhs, U* Rhs) noexcept
 {
-    return (LHS.Get() != RHS);
+    return (Lhs.Get() != Rhs);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* LHS, const TSharedRef<U>& RHS) noexcept
+FORCEINLINE bool operator!=(T* Lhs, const TSharedRef<U>& Rhs) noexcept
 {
-    return (LHS != RHS.Get());
+    return (Lhs != Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TSharedRef<T>& Lhs, const TSharedRef<U>& Rhs) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return (Lhs.Get() == Rhs.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedRef<T>& Lhs, const TSharedRef<U>& Rhs) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return (Lhs.Get() != Rhs.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TSharedRef<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator==(const TSharedRef<T>& Lhs, NullptrType) noexcept
 {
-    return (LHS.Get() == nullptr);
+    return (Lhs.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TSharedRef<T>& RHS) noexcept
+FORCEINLINE bool operator==(NullptrType, const TSharedRef<T>& Rhs) noexcept
 {
-    return (nullptr == RHS.Get());
+    return (nullptr == Rhs.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TSharedRef<T>& Lhs, NullptrType) noexcept
 {
-    return (LHS.Get() != nullptr);
+    return (Lhs.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TSharedRef<T>& RHS) noexcept
+FORCEINLINE bool operator!=(NullptrType, const TSharedRef<T>& Rhs) noexcept
 {
-    return (nullptr != RHS.Get());
+    return (nullptr != Rhs.Get());
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

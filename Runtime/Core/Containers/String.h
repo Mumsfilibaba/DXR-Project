@@ -1538,37 +1538,37 @@ public:
     /**
      * Appends a character to this string
      *
-     * @param RHS: Character to append
+     * @param Rhs: Character to append
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TString& operator+=(CharType RHS) noexcept
+    FORCEINLINE TString& operator+=(CharType Rhs) noexcept
     {
-        Append(RHS);
+        Append(Rhs);
         return *this;
     }
 
     /**
      * Appends a raw-string to this string
      *
-     * @param RHS: String to append
+     * @param Rhs: String to append
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TString& operator+=(const CharType* RHS) noexcept
+    FORCEINLINE TString& operator+=(const CharType* Rhs) noexcept
     {
-        Append(RHS);
+        Append(Rhs);
         return *this;
     }
 
     /**
      * Appends a string of a string-type to this string
      *
-     * @param RHS: String to append
+     * @param Rhs: String to append
      * @return: Returns a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TString>::LValue>::Type operator+=(const StringType& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TString>::LValue>::Type operator+=(const StringType& Rhs) noexcept
     {
-        Append<StringType>(RHS);
+        Append<StringType>(Rhs);
         return *this;
     }
 
@@ -1600,46 +1600,46 @@ public:
      * @param InString: String to copy
      * @return: Return a reference to this instance
      */
-    FORCEINLINE TString& operator=(const CharType* RHS) noexcept
+    FORCEINLINE TString& operator=(const CharType* Rhs) noexcept
     {
-        TString(RHS).Swap(*this);
+        TString(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Copy-assignment operator
      *
-     * @param RHS: String to copy
+     * @param Rhs: String to copy
      * @return: Return a reference to this instance
      */
-    FORCEINLINE TString& operator=(const TString& RHS) noexcept
+    FORCEINLINE TString& operator=(const TString& Rhs) noexcept
     {
-        TString(RHS).Swap(*this);
+        TString(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Copy-assignment operator that takes another string-type
      *
-     * @param RHS: String to copy
+     * @param Rhs: String to copy
      * @return: Return a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TString>::LValue>::Type operator=(const StringType& RHS) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TString>::LValue>::Type operator=(const StringType& Rhs) noexcept
     {
-        TString<StringType>(RHS).Swap(*this);
+        TString<StringType>(Rhs).Swap(*this);
         return *this;
     }
 
     /**
      * Move-assignment operator
      *
-     * @param RHS: String to move
+     * @param Rhs: String to move
      * @return: Return a reference to this instance
      */
-    FORCEINLINE TString& operator=(TString&& RHS) noexcept
+    FORCEINLINE TString& operator=(TString&& Rhs) noexcept
     {
-        TString(Move(RHS)).Swap(*this);
+        TString(Move(Rhs)).Swap(*this);
         return *this;
     }
 
@@ -1794,62 +1794,62 @@ using WString = TString<wchar_t>;
 // TString Operators
 
 template<typename CharType>
-inline TString<CharType> operator+(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
+inline TString<CharType> operator+(const TString<CharType>& Lhs, const TString<CharType>& Rhs) noexcept
 {
-    const typename TString<CharType>::SizeType CombinedSize = LHS.Length() + RHS.Length();
+    const typename TString<CharType>::SizeType CombinedSize = Lhs.Length() + Rhs.Length();
 
     TString<CharType> NewString;
     NewString.Reserve(CombinedSize);
-    NewString.Append(LHS);
-    NewString.Append(RHS);
+    NewString.Append(Lhs);
+    NewString.Append(Rhs);
     return NewString;
 }
 
 template<typename CharType>
-inline TString<CharType> operator+(const CharType* LHS, const TString<CharType>& RHS) noexcept
+inline TString<CharType> operator+(const CharType* Lhs, const TString<CharType>& Rhs) noexcept
 {
-    const typename TString<CharType>::SizeType CombinedSize = TStringUtils<CharType>::Length(LHS) + RHS.Length();
+    const typename TString<CharType>::SizeType CombinedSize = TStringUtils<CharType>::Length(Lhs) + Rhs.Length();
 
     TString<CharType> NewString;
     NewString.Reserve(CombinedSize);
-    NewString.Append(LHS);
-    NewString.Append(RHS);
+    NewString.Append(Lhs);
+    NewString.Append(Rhs);
     return NewString;
 }
 
 template<typename CharType>
-inline TString<CharType> operator+(const TString<CharType>& LHS, const CharType* RHS) noexcept
+inline TString<CharType> operator+(const TString<CharType>& Lhs, const CharType* Rhs) noexcept
 {
-    const typename TString<CharType>::SizeType CombinedSize = LHS.Length() + TStringUtils<CharType>::Length(RHS);
+    const typename TString<CharType>::SizeType CombinedSize = Lhs.Length() + TStringUtils<CharType>::Length(Rhs);
 
     TString<CharType> NewString;
     NewString.Reserve(CombinedSize);
-    NewString.Append(LHS);
-    NewString.Append(RHS);
+    NewString.Append(Lhs);
+    NewString.Append(Rhs);
     return NewString;
 }
 
 template<typename CharType>
-inline TString<CharType> operator+(CharType LHS, const TString<CharType>& RHS) noexcept
+inline TString<CharType> operator+(CharType Lhs, const TString<CharType>& Rhs) noexcept
 {
-    const typename TString<CharType>::SizeType CombinedSize = RHS.Length() + 1;
+    const typename TString<CharType>::SizeType CombinedSize = Rhs.Length() + 1;
 
     TString<CharType> NewString;
     NewString.Reserve(CombinedSize);
-    NewString.Append(LHS);
-    NewString.Append(RHS);
+    NewString.Append(Lhs);
+    NewString.Append(Rhs);
     return NewString;
 }
 
 template<typename CharType>
-inline TString<CharType> operator+(const TString<CharType>& LHS, CharType RHS) noexcept
+inline TString<CharType> operator+(const TString<CharType>& Lhs, CharType Rhs) noexcept
 {
-    const typename TString<CharType>::SizeType CombinedSize = LHS.Length() + 1;
+    const typename TString<CharType>::SizeType CombinedSize = Lhs.Length() + 1;
 
     TString<CharType> NewString;
     NewString.Reserve(CombinedSize);
-    NewString.Append(LHS);
-    NewString.Append(RHS);
+    NewString.Append(Lhs);
+    NewString.Append(Rhs);
     return NewString;
 }
 
@@ -1857,111 +1857,111 @@ inline TString<CharType> operator+(const TString<CharType>& LHS, CharType RHS) n
 // TString comparison operators
 
 template<typename CharType>
-inline bool operator==(const TString<CharType>& LHS, const CharType* RHS) noexcept
+inline bool operator==(const TString<CharType>& Lhs, const CharType* Rhs) noexcept
 {
-    return (LHS.Compare(RHS) == 0);
+    return (Lhs.Compare(Rhs) == 0);
 }
 
 template<typename CharType>
-inline bool operator==(const CharType* LHS, const TString<CharType>& RHS) noexcept
+inline bool operator==(const CharType* Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return (RHS.Compare(LHS) == 0);
+    return (Rhs.Compare(Lhs) == 0);
 }
 
 template<typename CharType>
-inline bool operator==(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
+inline bool operator==(const TString<CharType>& Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return (LHS.Compare(RHS) == 0);
+    return (Lhs.Compare(Rhs) == 0);
 }
 
 template<typename CharType>
-inline bool operator!=(const TString<CharType>& LHS, const CharType* RHS) noexcept
+inline bool operator!=(const TString<CharType>& Lhs, const CharType* Rhs) noexcept
 {
-    return !(LHS == RHS);
+    return !(Lhs == Rhs);
 }
 
 template<typename CharType>
-inline bool operator!=(const CharType* LHS, const TString<CharType>& RHS) noexcept
+inline bool operator!=(const CharType* Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return !(LHS == RHS);
+    return !(Lhs == Rhs);
 }
 
 template<typename CharType>
-inline bool operator!=(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
+inline bool operator!=(const TString<CharType>& Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return !(LHS == RHS);
+    return !(Lhs == Rhs);
 }
 
 template<typename CharType>
-inline bool operator<(const TString<CharType>& LHS, const CharType* RHS) noexcept
+inline bool operator<(const TString<CharType>& Lhs, const CharType* Rhs) noexcept
 {
-    return (LHS.Compare(RHS) < 0);
+    return (Lhs.Compare(Rhs) < 0);
 }
 
 template<typename CharType>
-inline bool operator<(const CharType* LHS, const TString<CharType>& RHS) noexcept
+inline bool operator<(const CharType* Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return (RHS.Compare(LHS) < 0);
+    return (Rhs.Compare(Lhs) < 0);
 }
 
 template<typename CharType>
-inline bool operator<(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
+inline bool operator<(const TString<CharType>& Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return (LHS.Compare(RHS) < 0);
+    return (Lhs.Compare(Rhs) < 0);
 }
 
 template<typename CharType>
-inline bool operator<=(const TString<CharType>& LHS, const CharType* RHS) noexcept
+inline bool operator<=(const TString<CharType>& Lhs, const CharType* Rhs) noexcept
 {
-    return (LHS.Compare(RHS) <= 0);
+    return (Lhs.Compare(Rhs) <= 0);
 }
 
 template<typename CharType>
-inline bool operator<=(const CharType* LHS, const TString<CharType>& RHS) noexcept
+inline bool operator<=(const CharType* Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return (RHS.Compare(LHS) <= 0);
+    return (Rhs.Compare(Lhs) <= 0);
 }
 
 template<typename CharType>
-inline bool operator<=(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
+inline bool operator<=(const TString<CharType>& Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return (LHS.Compare(RHS) <= 0);
+    return (Lhs.Compare(Rhs) <= 0);
 }
 
 template<typename CharType>
-inline bool operator>(const TString<CharType>& LHS, const CharType* RHS) noexcept
+inline bool operator>(const TString<CharType>& Lhs, const CharType* Rhs) noexcept
 {
-    return (LHS.Compare(RHS) > 0);
+    return (Lhs.Compare(Rhs) > 0);
 }
 
 template<typename CharType>
-inline bool operator>(const CharType* LHS, const TString<CharType>& RHS) noexcept
+inline bool operator>(const CharType* Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return (RHS.Compare(LHS) > 0);
+    return (Rhs.Compare(Lhs) > 0);
 }
 
 template<typename CharType>
-inline bool operator>(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
+inline bool operator>(const TString<CharType>& Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return (LHS.Compare(RHS) > 0);
+    return (Lhs.Compare(Rhs) > 0);
 }
 
 template<typename CharType>
-inline bool operator>=(const TString<CharType>& LHS, const CharType* RHS) noexcept
+inline bool operator>=(const TString<CharType>& Lhs, const CharType* Rhs) noexcept
 {
-    return (LHS.Compare(RHS) >= 0);
+    return (Lhs.Compare(Rhs) >= 0);
 }
 
 template<typename CharType>
-inline bool operator>=(const CharType* LHS, const TString<CharType>& RHS) noexcept
+inline bool operator>=(const CharType* Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return (RHS.Compare(LHS) >= 0);
+    return (Rhs.Compare(Lhs) >= 0);
 }
 
 template<typename CharType>
-inline bool operator>=(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
+inline bool operator>=(const TString<CharType>& Lhs, const TString<CharType>& Rhs) noexcept
 {
-    return (LHS.Compare(RHS) >= 0);
+    return (Lhs.Compare(Rhs) >= 0);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

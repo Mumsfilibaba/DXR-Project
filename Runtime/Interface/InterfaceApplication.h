@@ -373,7 +373,7 @@ public:
 
     virtual void HandleKeyReleased(EKey KeyCode, SModifierKeyState ModierKeyState) override;
     virtual void HandleKeyPressed(EKey KeyCode, bool IsRepeat, SModifierKeyState ModierKeyState) override;
-    virtual void HandleKeyTyped(uint32 Character) override;
+    virtual void HandleKeyChar(uint32 Character) override;
 
     virtual void HandleMouseMove(int32 x, int32 y) override;
     virtual void HandleMouseReleased(EMouseButton Button, SModifierKeyState ModierKeyState) override;

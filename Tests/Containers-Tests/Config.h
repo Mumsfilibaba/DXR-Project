@@ -12,7 +12,8 @@
 #define RUN_TFIXEDARRAY_TEST (0)
 #define RUN_TARRAYVIEW_TEST  (0)
 #define RUN_TSTRING_TEST     (0)
-#define RUN_TOPIONAL_TEST    (1)
+#define RUN_TOPIONAL_TEST    (0)
+#define RUN_TVARIANT_TEST    (1)
 
 /* Benchmark Specific defines */
 #define RUN_TARRAY_BENCHMARKS (1)

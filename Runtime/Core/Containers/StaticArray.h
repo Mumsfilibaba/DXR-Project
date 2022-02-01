@@ -161,30 +161,30 @@ public:
     /**
      * Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
      *
-     * @param RHS: Array to compare with
+     * @param Rhs: Array to compare with
      * @return: Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& Rhs) const noexcept
     {
-        if (Size() != RHS.Size())
+        if (Size() != Rhs.Size())
         {
             return false;
         }
 
-        return CompareRange<ElementType>(Data(), RHS.Data(), Size());
+        return CompareRange<ElementType>(Data(), Rhs.Data(), Size());
     }
 
     /**
      * Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
      *
-     * @param RHS: Array to compare with
+     * @param Rhs: Array to compare with
      * @return: Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& Rhs) const noexcept
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
 public:

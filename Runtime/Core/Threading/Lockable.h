@@ -63,14 +63,14 @@ public:
 
 public:
 
-    FORCEINLINE bool operator==(const ElementType& RHS) const noexcept
+    FORCEINLINE bool operator==(const ElementType& Rhs) const noexcept
     {
-        return (LockableItem == RHS);
+        return (LockableItem == Rhs);
     }
 
-    FORCEINLINE bool operator!=(const ElementType& RHS) const noexcept
+    FORCEINLINE bool operator!=(const ElementType& Rhs) const noexcept
     {
-        return (LockableItem != RHS);
+        return (LockableItem != Rhs);
     }
 
     FORCEINLINE T* operator&() noexcept

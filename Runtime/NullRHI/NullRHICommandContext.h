@@ -29,7 +29,7 @@ public:
     }
 
     /* End recording of commands on this context */
-    virtual void End()   override final
+    virtual void End() override final
     {
     }
 
@@ -165,17 +165,18 @@ public:
     {
     }
 
-    virtual void DestroyResource(class CRHIResource* Resource) override final
+    virtual void DestroyResource(class CRHIObject* Resource) override final
     {
     }
 
-    virtual void DiscardResource(class CRHIMemoryResource* Resource) override final
+    virtual void DiscardResource(class CRHIResource* Resource) override final
     {
     }
 
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final
     {
     }
+
     virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final
     {
     }

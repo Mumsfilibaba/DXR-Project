@@ -592,43 +592,43 @@ struct SD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
         return *this;
     }
     
-    FORCEINLINE bool operator==(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) const noexcept
+    FORCEINLINE bool operator==(const D3D12_CPU_DESCRIPTOR_HANDLE& Rhs) const noexcept
     {
-        return (ptr == RHS.ptr);
+        return (ptr == Rhs.ptr);
     }
     
-    FORCEINLINE bool operator!=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) const noexcept
+    FORCEINLINE bool operator!=(const D3D12_CPU_DESCRIPTOR_HANDLE& Rhs) const noexcept
     {
-        return (ptr != RHS.ptr);
+        return (ptr != Rhs.ptr);
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator-=(int64 RHS) noexcept
+    FORCEINLINE SD3D12CpuDescriptorHandle& operator-=(int64 Rhs) noexcept
     {
-        ptr -= RHS;
+        ptr -= Rhs;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator-=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE SD3D12CpuDescriptorHandle& operator-=(const D3D12_CPU_DESCRIPTOR_HANDLE& Rhs) noexcept
     {
-        ptr -= RHS.ptr;
+        ptr -= Rhs.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator+=(int64 RHS) noexcept
+    FORCEINLINE SD3D12CpuDescriptorHandle& operator+=(int64 Rhs) noexcept
     {
-        ptr += RHS;
+        ptr += Rhs;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator+=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE SD3D12CpuDescriptorHandle& operator+=(const D3D12_CPU_DESCRIPTOR_HANDLE& Rhs) noexcept
     {
-        ptr += RHS.ptr;
+        ptr += Rhs.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE SD3D12CpuDescriptorHandle& operator=(const D3D12_CPU_DESCRIPTOR_HANDLE& Rhs) noexcept
     {
-        ptr = RHS.ptr;
+        ptr = Rhs.ptr;
         return *this;
     }
 };
@@ -670,43 +670,43 @@ struct SD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
         return *this;
     }
     
-    FORCEINLINE bool operator==(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) const noexcept
+    FORCEINLINE bool operator==(const D3D12_GPU_DESCRIPTOR_HANDLE& Rhs) const noexcept
     {
-        return (ptr == RHS.ptr);
+        return (ptr == Rhs.ptr);
     }
     
-    FORCEINLINE bool operator!=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) const noexcept
+    FORCEINLINE bool operator!=(const D3D12_GPU_DESCRIPTOR_HANDLE& Rhs) const noexcept
     {
-        return (ptr != RHS.ptr);
+        return (ptr != Rhs.ptr);
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator-=(int64 RHS) noexcept
+    FORCEINLINE SD3D12GpuDescriptorHandle& operator-=(int64 Rhs) noexcept
     {
-        ptr -= RHS;
+        ptr -= Rhs;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator-=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE SD3D12GpuDescriptorHandle& operator-=(const D3D12_GPU_DESCRIPTOR_HANDLE& Rhs) noexcept
     {
-        ptr -= RHS.ptr;
+        ptr -= Rhs.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator+=(int64 RHS) noexcept
+    FORCEINLINE SD3D12GpuDescriptorHandle& operator+=(int64 Rhs) noexcept
     {
-        ptr += RHS;
+        ptr += Rhs;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator+=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE SD3D12GpuDescriptorHandle& operator+=(const D3D12_GPU_DESCRIPTOR_HANDLE& Rhs) noexcept
     {
-        ptr += RHS.ptr;
+        ptr += Rhs.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE SD3D12GpuDescriptorHandle& operator=(const D3D12_GPU_DESCRIPTOR_HANDLE& Rhs) noexcept
     {
-        ptr = RHS.ptr;
+        ptr = Rhs.ptr;
         return *this;
     }
 };

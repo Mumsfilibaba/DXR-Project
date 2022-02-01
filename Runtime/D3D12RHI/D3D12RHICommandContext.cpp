@@ -870,12 +870,12 @@ void CD3D12RHICommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITe
     CmdBatch->AddInUseResource(Source);
 }
 
-void CD3D12RHICommandContext::DestroyResource(CRHIResource* Resource)
+void CD3D12RHICommandContext::DestroyResource(CRHIObject* Resource)
 {
     CmdBatch->AddInUseResource(Resource);
 }
 
-void CD3D12RHICommandContext::DiscardResource(CRHIMemoryResource* Resource)
+void CD3D12RHICommandContext::DiscardResource(CRHIResource* Resource)
 {
     // TODO: Enable regions to be discarded
 
