@@ -12,7 +12,7 @@ class TArrayAllocatorInterface
 {
 public:
     using ElementType = T;
-    using SizeType = int32;
+    using SizeType    = int32;
 
     TArrayAllocatorInterface() noexcept = default;
     ~TArrayAllocatorInterface() = default;
@@ -67,7 +67,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Default allocator that allocates from malloc
+// TDefaultArrayAllocator - Default allocator that allocates from malloc
 
 template<typename T>
 class TDefaultArrayAllocator
@@ -139,7 +139,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Wrapper class for inline allocated bytes
+// TInlineAllocation - Wrapper class for inline allocated bytes
 
 template<typename InlineType, int32 NumElements>
 class TInlineAllocation
@@ -172,7 +172,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// InlineAllocator allocator that has a small fixed size memory, then allocates from TDefaultArrayAllocator
+// TInlineArrayAllocator - InlineAllocator allocator that has a small fixed size memory, then allocates from TDefaultArrayAllocator
 
 template<typename T, int32 NumInlineElements>
 class TInlineArrayAllocator
@@ -184,7 +184,7 @@ public:
 
     FORCEINLINE TInlineArrayAllocator() noexcept
         : InlineAllocation()
-        , DynamicAllocator()
+        , DynamicAllocation()
     {
     }
 
@@ -197,27 +197,27 @@ public:
     {
         if (NewElementCount > NumInlineElements)
         {
-            if (!DynamicAllocator.HasAllocation())
+            if (!DynamicAllocation.HasAllocation())
             {
                 Assert(CurrentCount <= NumInlineElements);
 
-                DynamicAllocator.Realloc(CurrentCount, NewElementCount);
-                RelocateRange<ElementType>(reinterpret_cast<void*>(DynamicAllocator.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
+                DynamicAllocation.Realloc(CurrentCount, NewElementCount);
+                RelocateRange<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
             }
             else
             {
-                DynamicAllocator.Realloc(CurrentCount, NewElementCount);
+                DynamicAllocation.Realloc(CurrentCount, NewElementCount);
             }
 
-            return DynamicAllocator.GetAllocation();
+            return DynamicAllocation.GetAllocation();
         }
         else
         {
-            if (DynamicAllocator.HasAllocation())
+            if (DynamicAllocation.HasAllocation())
             {
                 CurrentCount = (CurrentCount <= NumInlineElements) ? CurrentCount : NumInlineElements;
 
-                RelocateRange<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocator.GetAllocation(), CurrentCount);
+                RelocateRange<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.GetAllocation(), CurrentCount);
                 Free();
             }
 
@@ -227,47 +227,42 @@ public:
 
     FORCEINLINE void Free() noexcept
     {
-        DynamicAllocator.Free();
+        DynamicAllocation.Free();
     }
 
     FORCEINLINE void MoveFrom(TInlineArrayAllocator&& Other)
     {
         Assert(this != &Other);
 
-        if (!Other.DynamicAllocator.HasAllocation())
+        if (!Other.DynamicAllocation.HasAllocation())
         {
             RelocateRange<ElementType>(InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements);
         }
 
-        DynamicAllocator.MoveFrom(Move(Other.DynamicAllocator));
+        DynamicAllocation.MoveFrom(Move(Other.DynamicAllocation));
     }
 
     FORCEINLINE ElementType* GetAllocation() noexcept
     {
-        return IsHeapAllocated() ? DynamicAllocator.GetAllocation() : InlineAllocation.GetElements();
+        return IsHeapAllocated() ? DynamicAllocation.GetAllocation() : InlineAllocation.GetElements();
     }
 
     FORCEINLINE const ElementType* GetAllocation() const noexcept
     {
-        return IsHeapAllocated() ? DynamicAllocator.GetAllocation() : InlineAllocation.GetElements();
+        return IsHeapAllocated() ? DynamicAllocation.GetAllocation() : InlineAllocation.GetElements();
     }
 
     FORCEINLINE bool HasAllocation() const noexcept
     {
-        return DynamicAllocator.HasAllocation();
+        return DynamicAllocation.HasAllocation();
     }
 
     FORCEINLINE bool IsHeapAllocated() const noexcept
     {
-        return DynamicAllocator.HasAllocation();
+        return DynamicAllocation.HasAllocation();
     }
 
 private:
-
-    // TODO: Pack memory more efficiently?
-
-    /* Inline bytes */
     TInlineAllocation<ElementType, NumInlineElements> InlineAllocation;
-    /* Dynamic allocation */
-    TDefaultArrayAllocator<ElementType> DynamicAllocator;
+    TDefaultArrayAllocator<ElementType>               DynamicAllocation;
 };

@@ -11,14 +11,16 @@
 #include "Optional_Test.h"
 #include "Variant_Test.h"
 
-/* Check for memory leaks */
+/**
+ *  Check for memory leaks 
+ */
 #ifdef PLATFORM_WINDOWS
 #include <crtdbg.h>
 #endif
 
-/*
-* Benchmarks
-*/
+/**
+ * Benchmarks
+ */
 
 void BenchMarks()
 {
@@ -27,9 +29,9 @@ void BenchMarks()
 #endif
 }
 
-/*
-* Tests
-*/
+/**
+ * Tests
+ */
 
 void Tests( int32 Argc, const char* Argv[] )
 {
@@ -73,9 +75,9 @@ void Tests( int32 Argc, const char* Argv[] )
 #endif
 }
 
-/*
-* Main
-*/
+/**
+ * Main
+ */
 
 int main( int Argc, const char* Argv[] )
 {

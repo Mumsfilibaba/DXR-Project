@@ -4,6 +4,7 @@
 #include "Core/Templates/Move.h"
 #include "Core/Templates/IsConstructible.h"
 #include "Core/Templates/RemoveReference.h"
+#include "Core/Templates/InPlace.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TOptional - Similar to std::optional
@@ -111,24 +112,11 @@ public:
      * @param Args: Arguments for the element to create
      */
     template<typename... ArgTypes>
-    FORCEINLINE explicit TOptional(ArgTypes&&... Args) noexcept
+    FORCEINLINE explicit TOptional(EInPlace, ArgTypes&&... Args) noexcept
         : Value()
         , bHasValue(true)
     {
         Construct(Forward<ArgTypes>(Args)...);
-    }
-
-    /**
-     * Constructor constructing from a ElementType or a convertible type
-     *
-     * @param InValue: Value to move into this optional
-     */
-    template<typename OtherType = T, typename = typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value>::Type>
-    FORCEINLINE TOptional(OtherType&& InValue) noexcept
-        : Value()
-        , bHasValue(true)
-    {
-        Construct(Forward<OtherType>(InValue));
     }
 
     /**
@@ -229,6 +217,26 @@ public:
     {
         Assert(HasValue());
         return *Value.GetStorage();
+    }
+
+    /**
+     * Try and retrieve the optional value, if no value is stored, it returns nullptr
+     *
+     * @return: Returns a pointer to the stored value, or nullptr if no value is held
+     */
+    FORCEINLINE ElementType* TryGetValue() noexcept
+    {
+        return HasValue() ? Value.GetStorage() : nullptr;
+    }
+
+    /**
+     * Try and retrieve the optional value, if no value is stored, it returns nullptr
+     *
+     * @return: Returns a pointer to the stored value, or nullptr if no value is held
+     */
+    FORCEINLINE const ElementType* TryGetValue() const noexcept
+    {
+        return HasValue() ? Value.GetStorage() : nullptr;
     }
 
     /**

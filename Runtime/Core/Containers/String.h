@@ -11,11 +11,11 @@
 #define STRING_USE_INLINE_ALLOCATOR (1)
 #define STRING_FORMAT_BUFFER_SIZE   (256)
 
-#if STRING_USE_INLINE_ALLOCATOR 
-#define STRING_ALLOCATOR_INLINE_ELEMENTS (16)
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Allocator type
+
+#if STRING_USE_INLINE_ALLOCATOR 
+#define STRING_ALLOCATOR_INLINE_ELEMENTS (16)
 
 // Use a small static buffer for small strings
 template<typename CharType>
@@ -1979,7 +1979,7 @@ struct TIsTStringType<TString<CharType>>
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // char and wide conversion functions
 
-inline WString CharToWide(const CString& CharString) noexcept
+inline WString CharToWide(const String& CharString) noexcept
 {
     WString NewString;
     NewString.Resize(CharString.Length());

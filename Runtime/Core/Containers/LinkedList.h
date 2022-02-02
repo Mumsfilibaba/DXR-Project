@@ -1,4 +1,16 @@
 #pragma once
+
+#if 1
+#include <list>
+#include <forward_list>
+
+template<typename T>
+using TLinkedList = std::forward_list<T>;
+
+template<typename T>
+using TDoubleLinkedList = std::list<T>;
+
+#else
 #include "Core/Templates/Move.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -48,3 +60,5 @@ struct TDoubleLinkedListNode
     TDoubleLinkedListNode* Previous;
     T Item;
 };
+
+#endif

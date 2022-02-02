@@ -2,26 +2,21 @@
 #include "Core/CoreTypes.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CInPlace
+// EInPlace
 
-struct CInPlace
+enum EInPlace
 {
-    explicit CInPlace() = default;
+    InPlace = 0
 };
-
-inline constexpr CInPlace InPlace = CInPlace();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TInPlace
+// TInPlaceType
 
 template<typename T>
-struct TInPlace
+struct TInPlaceType
 {
-    explicit TInPlace() = default;
+    explicit TInPlaceType() = default;
 };
-
-template<typename T>
-inline constexpr TInPlace<T> InPlaceType = TInPlace<T>();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TInPlaceIndex
@@ -29,8 +24,5 @@ inline constexpr TInPlace<T> InPlaceType = TInPlace<T>();
 template<int32 Index>
 struct TInPlaceIndex
 {
-    explicit TInPlace() = default;
+    explicit TInPlaceIndex() = default;
 };
-
-template<int32 Index>
-inline constexpr TInPlaceIndex<Index> InPlaceIndex = TInPlaceIndex<Index>();

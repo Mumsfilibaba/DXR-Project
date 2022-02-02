@@ -1,4 +1,8 @@
 #pragma once
+
+#if 1
+
+#else
 #include "Iterator.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -175,3 +179,5 @@ private:
     STreeNode* RootNode;
     STreeNode* NullNode;
 };
+
+#endif
