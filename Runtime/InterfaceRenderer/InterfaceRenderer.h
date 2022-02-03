@@ -6,8 +6,8 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHIResourceViews.h"
 
-#include "Interface/InputHandler.h"
-#include "Interface/IInterfaceRenderer.h"
+#include "Application/InputHandler.h"
+#include "Application/IInterfaceRenderer.h"
 
 class CInterfaceRenderer final : public IInterfaceRenderer
 {

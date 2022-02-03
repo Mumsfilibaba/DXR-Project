@@ -10,6 +10,8 @@
 
 #include "Engine/Resources/TextureFactory.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CShadowMapRenderer
 
 bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
 {

@@ -73,6 +73,8 @@ struct TPair
         ::Swap<SecondType>(Second, Other.Second);
     }
 
+public:
+
     /**
      * Copy-assignment operator
      * 

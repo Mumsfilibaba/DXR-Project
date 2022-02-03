@@ -256,6 +256,8 @@ public:
         return TArrayView(View + Offset, NumElements);
     }
 
+public:
+
     /**
      * Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
      *

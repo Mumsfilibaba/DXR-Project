@@ -25,8 +25,11 @@
 #include "Debug/RendererInfoWindow.h"
 #include "Debug/GPUProfilerWindow.h"
 
-#include "Interface/WindowMessageHandler.h"
+#include "Application/WindowMessageHandler.h"
 #include "InterfaceRenderer/InterfaceRenderer.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRendererWindowHandler
 
 class CRendererWindowHandler final : public CWindowMessageHandler
 {
@@ -46,6 +49,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRendererStatistics
 
 struct SRendererStatistics
 {
@@ -62,6 +66,7 @@ struct SRendererStatistics
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRenderer
 
 class RENDERER_API CRenderer
 {

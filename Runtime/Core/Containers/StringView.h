@@ -1068,6 +1068,8 @@ public:
         return TStringView(Data() + Offset, Count);
     }
 
+public:
+
     /**
      * Bracket-operator to retrieve an element at a certain index
      *

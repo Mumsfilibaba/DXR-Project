@@ -10,11 +10,17 @@
 
 #include "Core/Math/Vector4.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SPointLightData
+
 struct SPointLightData
 {
     CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
     float Padding0;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SShadowCastingPointLightData
 
 struct SShadowCastingPointLightData
 {
@@ -27,6 +33,9 @@ struct SShadowCastingPointLightData
     float Padding1;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SPointLightShadowMapGenerationData
+
 struct SPointLightShadowMapGenerationData
 {
     TStaticArray<CMatrix4, 6> Matrix;
@@ -36,6 +45,9 @@ struct SPointLightShadowMapGenerationData
     float    FarPlane;
     CVector3 Position;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SDirectionalLightData
 
 struct SDirectionalLightData
 {
@@ -48,6 +60,9 @@ struct SDirectionalLightData
     CVector3 Up = CVector3(0.0f, 0.0f, -1.0f);
     float LightSize;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SLightSetup
 
 struct RENDERER_API SLightSetup
 {

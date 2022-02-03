@@ -1432,6 +1432,8 @@ public:
         return Data()[LastElementIndex()];
     }
 
+public:
+
     /**
      * Appends a character to this string
      * 

@@ -1,5 +1,5 @@
 #pragma once
-#include "Interface/IInterfaceRenderer.h"
+#include "Application/IInterfaceRenderer.h"
 
 class CInterfaceRendererModule : public IInterfaceRendererModule
 {

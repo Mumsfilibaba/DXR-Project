@@ -1,7 +1,10 @@
-#include "InterfaceUser.h"
-#include "InterfaceApplication.h"
+#include "ApplicationUser.h"
+#include "ApplicationInstance.h"
 
-CInterfaceUser::CInterfaceUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ApplicationUser
+
+CApplicationUser::CApplicationUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
     : UserIndex(InUserIndex)
     , Cursor(InCursor)
     , KeyStates()
@@ -9,12 +12,7 @@ CInterfaceUser::CInterfaceUser(uint32 InUserIndex, const TSharedPtr<ICursor>& In
 {
 }
 
-CInterfaceUser::~CInterfaceUser()
-{
-    // Empty for now
-}
-
-void CInterfaceUser::Tick(CTimestamp DeltaTime)
+void CApplicationUser::Tick(CTimestamp DeltaTime)
 {
     // Update all key-states 
     for (SKeyState& KeyState : KeyStates)
@@ -35,7 +33,7 @@ void CInterfaceUser::Tick(CTimestamp DeltaTime)
     }
 }
 
-void CInterfaceUser::HandleKeyEvent(const SKeyEvent& KeyEvent)
+void CApplicationUser::HandleKeyEvent(const SKeyEvent& KeyEvent)
 {
     int32 Index = GetKeyStateIndexFromKeyCode(KeyEvent.KeyCode);
     if (Index >= 0)
@@ -67,7 +65,7 @@ void CInterfaceUser::HandleKeyEvent(const SKeyEvent& KeyEvent)
     }
 }
 
-void CInterfaceUser::HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEvent)
+void CApplicationUser::HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEvent)
 {
     int32 Index = GetMouseButtonStateIndexFromMouseButton(MouseButtonEvent.Button);
     if (Index >= 0)
@@ -93,19 +91,19 @@ void CInterfaceUser::HandleMouseButtonEvent(const SMouseButtonEvent& MouseButton
     }
 }
 
-void CInterfaceUser::HandleMouseMovedEvent(const SMouseMovedEvent& MouseMovedEvent)
+void CApplicationUser::HandleMouseMovedEvent(const SMouseMovedEvent& MouseMovedEvent)
 {
     UNREFERENCED_VARIABLE(MouseMovedEvent);
     // TODO: Call all attached player controllers 
 }
 
-void CInterfaceUser::HandleMouseScrolledEvent(const SMouseScrolledEvent& MouseScolledEvent)
+void CApplicationUser::HandleMouseScrolledEvent(const SMouseScrolledEvent& MouseScolledEvent)
 {
     UNREFERENCED_VARIABLE(MouseScolledEvent);
     // TODO: Call all attached player controllers
 }
 
-void CInterfaceUser::SetCursorPosition(const CIntVector2& Postion)
+void CApplicationUser::SetCursorPosition(const CIntVector2& Postion)
 {
     if (Cursor)
     {
@@ -114,7 +112,7 @@ void CInterfaceUser::SetCursorPosition(const CIntVector2& Postion)
     }
 }
 
-CIntVector2 CInterfaceUser::GetCursorPosition() const
+CIntVector2 CApplicationUser::GetCursorPosition() const
 {
     if (Cursor)
     {

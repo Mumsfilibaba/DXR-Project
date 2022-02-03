@@ -338,38 +338,6 @@ public:
     }
 
     /**
-     * Comparison operator
-     *
-     * @param Rhs: Optional to compare with
-     * @return: Returns true if the values are equal
-     */
-    FORCEINLINE bool operator==(const TOptional& Rhs) const noexcept
-    {
-        if (!bHasValue && !Rhs.bHasValue)
-        {
-            return true;
-        }
-
-        if (!bHasValue)
-        {
-            return false;
-        }
-
-        return (GetValue() == Rhs.GetValue());
-    }
-
-    /**
-     * Comparison operator
-     *
-     * @param Rhs: Optional to compare with
-     * @return: Returns false if the values are equal
-     */
-    FORCEINLINE bool operator!=(const TOptional& Rhs) const noexcept
-    {
-        return !(*this != Rhs);
-    }
-
-    /**
      * Retrieve a pointer to the stored value
      *
      * @return: Returns a pointer to the stored value
@@ -413,18 +381,132 @@ public:
         return *Value.GetStorage();
     }
 
+public:
+
+    /**
+     * Comparison operator
+     *
+     * @param Lhs: Left side to compare with
+     * @param Rhs: Right side to compare with
+     * @return: Returns true if the values are equal
+     */
+    friend FORCEINLINE bool operator==(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    {
+        if (!bHasValue && !Rhs.bHasValue)
+        {
+            return true;
+        }
+
+        if (!bHasValue)
+        {
+            return false;
+        }
+
+        return Lhs.IsEqual(Rhs);
+    }
+
+    /**
+     * Comparison operator
+     *
+     * @param Lhs: Left side to compare with
+     * @param Rhs: Right side to compare with
+     * @return: Returns false if the values are equal
+     */
+    friend FORCEINLINE bool operator!=(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    {
+        return !(Lhs != Rhs);
+    }
+
+    /**
+     * Less than comparison operator
+     *
+     * @param Lhs: Left side to compare with
+     * @param Rhs: Right side to compare with
+     * @return: Returns true if the Lhs is less than Rhs
+     */
+    friend FORCEINLINE bool operator<(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    {
+        if (!bHasValue && !Rhs.bHasValue)
+        {
+            return true;
+        }
+
+        if (!bHasValue)
+        {
+            return false;
+        }
+
+        return Lhs.IsLessThan(Rhs);
+    }
+
+    /**
+     * Less than or equal comparison operator
+     *
+     * @param Lhs: Left side to compare with
+     * @param Rhs: Right side to compare with
+     * @return: Returns true if the Lhs is less than or equal to Rhs
+     */
+    friend FORCEINLINE bool operator<=(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    {
+        if (!bHasValue && !Rhs.bHasValue)
+        {
+            return true;
+        }
+
+        if (!bHasValue)
+        {
+            return false;
+        }
+
+        return Lhs.IsLessThan(Rhs) || Lhs.IsEqual(Rhs);
+    }
+
+    /**
+     * Great than comparison operator
+     *
+     * @param Lhs: Left side to compare with
+     * @param Rhs: Right side to compare with
+     * @return: Returns true if Lhs is greater than Rhs
+     */
+    friend FORCEINLINE bool operator>(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    {
+        return !(Lhs <= Rhs);
+    }
+
+    /**
+     * Greater than or equal comparison operator
+     *
+     * @param Lhs: Left side to compare with
+     * @param Rhs: Right side to compare with
+     * @return: Returns true if the Lhs is greater than or equal to Rhs
+     */
+    friend FORCEINLINE bool operator>=(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    {
+        return !(Lhs < Rhs);
+    }
+
 private:
 
     template<typename... ArgTypes>
-    FORCEINLINE void Construct(ArgTypes&&... Args)
+    FORCEINLINE void Construct(ArgTypes&&... Args) noexcept
     {
         new(reinterpret_cast<void*>(Value.GetStorage())) ElementType(Forward<ArgTypes>(Args)...);
     }
 
-    FORCEINLINE void Destruct()
+    FORCEINLINE void Destruct() noexcept
     {
         typedef ElementType ElementDestructType;
         Value.GetStorage()->ElementDestructType::~ElementDestructType();
+    }
+
+    FORCEINLINE bool IsEqual(const TOptional& Rhs) const noexcept
+    {
+        return (*Value.GetStorage()) == (*Rhs.Value.GetStorage());
+    }
+
+    FORCEINLINE bool IsLessThan(const TOptional& Rhs) const noexcept
+    {
+        return (*Value.GetStorage()) < (*Rhs.Value.GetStorage());
     }
 
     /** Bytes to store the value in */

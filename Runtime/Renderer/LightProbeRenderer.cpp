@@ -3,6 +3,9 @@
 #include "RHI/RHIInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CLightProbeRenderer
+
 bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameResources)
 {
     if (!CreateSkyLightResources(LightSetup))

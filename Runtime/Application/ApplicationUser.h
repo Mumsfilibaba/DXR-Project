@@ -1,6 +1,6 @@
 #pragma once
 #include "Events.h"
-#include "Interface.h"
+#include "Application.h"
 
 #include "Core/Input/InputStates.h"
 #include "Core/Containers/Array.h"
@@ -11,20 +11,20 @@
 #include "CoreApplication/ICursor.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// InterfaceUser
+// ApplicationUser
 
-class INTERFACE_API CInterfaceUser
+class APPLICATION_API CApplicationUser
 {
-    friend class CInterfaceApplication;
+    friend class CApplicationInstance;
 
 public:
 
-    static FORCEINLINE TSharedPtr<CInterfaceUser> Make(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
+    static FORCEINLINE TSharedPtr<CApplicationUser> Make(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
     {
-        return TSharedPtr<CInterfaceUser>(dbg_new CInterfaceUser(InUserIndex, InCursor));
+        return TSharedPtr<CApplicationUser>(dbg_new CApplicationUser(InUserIndex, InCursor));
     }
 
-    virtual ~CInterfaceUser();
+    virtual ~CApplicationUser() = default;
 
     virtual void Tick(CTimestamp DeltaTime);
 
@@ -114,7 +114,7 @@ public:
 
 private:
 
-    CInterfaceUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
+    CApplicationUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
 
     /* Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const

@@ -1535,6 +1535,8 @@ public:
         return Data()[LastElementIndex()];
     }
 
+public:
+
     /**
      * Appends a character to this string
      *
@@ -1979,7 +1981,7 @@ struct TIsTStringType<TString<CharType>>
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // char and wide conversion functions
 
-inline WString CharToWide(const String& CharString) noexcept
+inline WString CharToWide(const CString& CharString) noexcept
 {
     WString NewString;
     NewString.Resize(CharString.Length());

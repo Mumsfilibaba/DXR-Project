@@ -3,8 +3,8 @@
 #include "Core/Time/Timer.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Interface/InterfaceUtilities.h"
-#include "Interface/InterfaceApplication.h"
+#include "Application/InterfaceUtilities.h"
+#include "Application/ApplicationInstance.h"
 
 #include <imgui.h>
 
@@ -174,7 +174,7 @@ void CGPUProfilerWindow::DrawGPUData(float Width)
 void CGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    TSharedRef<CPlatformWindow> MainViewport = CInterfaceApplication::Get().GetMainViewport();
+    TSharedRef<CPlatformWindow> MainViewport = CApplicationInstance::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

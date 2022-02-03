@@ -541,6 +541,8 @@ public:
         return *Get();
     }
 
+public:
+
     /**
      * Return the raw pointer
      *
@@ -988,6 +990,8 @@ public:
         Assert(IsValid());
         return *Get();
     }
+
+public:
 
     /**
      * Retrieve the stored pointer

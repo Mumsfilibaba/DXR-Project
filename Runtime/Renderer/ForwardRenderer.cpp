@@ -10,6 +10,9 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CForwardRenderer
+
 bool CForwardRenderer::Init(SFrameResources& FrameResources)
 {
     TArray<SShaderDefine> Defines =

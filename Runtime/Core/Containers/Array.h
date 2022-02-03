@@ -1138,6 +1138,8 @@ public:
         }
     }
 
+public:
+
     /**
      * Copy-assignment operator
      * 

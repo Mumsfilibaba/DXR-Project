@@ -1,11 +1,11 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
 
-#include "Interface/IInterfaceWindow.h"
+#include "Application/IWindow.h"
 
 #include <imgui.h>
 
-class CRendererInfoWindow : public IInterfaceWindow
+class CRendererInfoWindow : public IWindow
 {
     INTERFACE_GENERATE_BODY();
 

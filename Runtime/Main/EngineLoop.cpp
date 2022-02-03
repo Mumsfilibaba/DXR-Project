@@ -17,7 +17,7 @@
 #include "Core/Misc/EngineLoopDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
 
-#include "Interface/InterfaceApplication.h"
+#include "Application/ApplicationInstance.h"
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
@@ -27,6 +27,9 @@
 
 #include "Renderer/Renderer.h"
 #include "Renderer/Debug/GPUProfiler.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// LoadCoreModules
 
 bool CEngineLoop::LoadCoreModules()
 {
@@ -39,7 +42,7 @@ bool CEngineLoop::LoadCoreModules()
         return false;
     }
 
-    IEngineModule* InterfaceModule = ModuleManager.LoadEngineModule("Interface");
+    IEngineModule* InterfaceModule = ModuleManager.LoadEngineModule("Application");
     if (!InterfaceModule)
     {
         return false;
@@ -66,9 +69,11 @@ bool CEngineLoop::LoadCoreModules()
     return true;
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// PreInitialize
+
 bool CEngineLoop::PreInitialize()
 {
-    /* Init output console */
     NErrorDevice::GConsoleWindow = PlatformConsoleWindow::Make();
     if (!NErrorDevice::GConsoleWindow)
     {
@@ -81,19 +86,16 @@ bool CEngineLoop::PreInitialize()
         NErrorDevice::GConsoleWindow->SetTitle(CString(PROJECT_NAME) + ": Error Console");
     }
 
-    // Load all core modules, these tend to not be reloadable
     if (!LoadCoreModules())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to Load Core-Modules");
         return false;
     }
 
-    // Enable the profiler
+    // TODO: Use a seperate profiler for booting the engine
     CFrameProfiler::Enable();
-
     TRACE_FUNCTION_SCOPE();
 
-    // Init project information
 	const CString ProjectLocation = CString(ENGINE_LOCATION) + CString("/") + CString(PROJECT_NAME);
     if (!CProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr()))
     {
@@ -106,27 +108,24 @@ bool CEngineLoop::PreInitialize()
     LOG_INFO("ProjectPath=" + CString(CProjectManager::GetProjectPath()));
 #endif
 
-    // Init platform specific thread utilities
     if (!PlatformThreadMisc::Initialize())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to init PlatformThreadMisc");
         return false;
     }
 
-    // Create the application interface
-    if (!CInterfaceApplication::Make())
+    if (!CApplicationInstance::Make())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return false;
     }
 
-    // Init dispatch queue
     if (!CDispatchQueue::Get().Initialize())
     {
         return false;
     }
 
-    // RenderAPI // TODO: Decide this via command line
+    // TODO: Decide this via command line
     ERHIModule RenderApi =
 #if PLATFORM_MACOS
         ERHIModule::Null;
@@ -138,10 +137,8 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    // Notify systems that the RHI is loaded
     NEngineLoopDelegates::PostInitRHIDelegate.Broadcast();
 
-    // Init GPU Profiler
     if (!CGPUProfiler::Init())
     {
         LOG_ERROR("CGPUProfiler failed to be initialized");
@@ -152,42 +149,39 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    // Notify systems that the PreInit phase is over
     NEngineLoopDelegates::PreInitFinishedDelegate.Broadcast();
 
     return true;
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Initialize
+
 bool CEngineLoop::Initialize()
 {
-    // Notify systems that the Engine is about to be created
     NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
 
-    // Create the engine
 #if PROJECT_EDITOR
     GEngine = CEditorEngine::Make();
 #else
     GEngine = CEngine::Make();
 #endif
-    if (!GEngine->Init())
+    if (!GEngine->Initialize())
     {
+        LOG_ERROR("Failed to initialize engine");
         return false;
     }
 
-    // Notify systems that the Engine is was initialized
     NEngineLoopDelegates::PreEngineInitDelegate.Broadcast();
 
-    // Init Renderer
     if (!GRenderer.Init())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
         return false;
     }
 
-    // Notify systems that the Application is going to be loaded
     NEngineLoopDelegates::PreApplicationLoadedDelegate.Broadcast();
 
-    // Init Application Module
     GApplicationModule = CModuleManager::Get().LoadEngineModule<CApplicationModule>(CProjectManager::GetProjectModuleName());
     if (!GApplicationModule)
     {
@@ -195,11 +189,9 @@ bool CEngineLoop::Initialize()
     }
     else
     {
-        // Notify systems that the Application is was loaded successfully
         NEngineLoopDelegates::PostApplicationLoadedDelegate.Broadcast();
     }
 
-    // Init the interface renderer
     IInterfaceRendererModule* InterfaceRendererModule = CModuleManager::Get().LoadEngineModule<IInterfaceRendererModule>("InterfaceRenderer");
     if (!InterfaceRendererModule)
     {
@@ -214,9 +206,9 @@ bool CEngineLoop::Initialize()
         return false;
     }
 
-    CInterfaceApplication::Get().SetRenderer(InterfaceRenderer);
+    CApplicationInstance::Get().SetRenderer(InterfaceRenderer);
 
-    // Start the engine
+    // Final thing is to startup the engine
     if (!GEngine->Start())
     {
         return false;
@@ -225,28 +217,28 @@ bool CEngineLoop::Initialize()
     return true;
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Tick
+
 void CEngineLoop::Tick(CTimestamp Deltatime)
 {
     TRACE_FUNCTION_SCOPE();
 
-    // Application and event-handling
-    CInterfaceApplication::Get().Tick(Deltatime);
+    CApplicationInstance::Get().Tick(Deltatime);
 
-    // Tick all the registered systems
     CEngineLoopTicker::Get().Tick(Deltatime);
 
-    // Run the engine, which means that all scene data etc. is updated
     GEngine->Tick(Deltatime);
 
-    // Update the profiler
     CFrameProfiler::Get().Tick();
 
-    // Update the GPUProfiler
     CGPUProfiler::Get().Tick();
 
-    // Finally render
     GRenderer.Tick(*GEngine->Scene);
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Release
 
 bool CEngineLoop::Release()
 {
@@ -258,9 +250,9 @@ bool CEngineLoop::Release()
 
     GRenderer.Release();
 
-    if (CInterfaceApplication::IsInitialized())
+    if (CApplicationInstance::IsInitialized())
     {
-        CInterfaceApplication::Get().SetRenderer(nullptr);
+        CApplicationInstance::Get().SetRenderer(nullptr);
     }
 
     // Release the engine. Protect against failed initialization where the global pointer was never initialized
@@ -268,7 +260,7 @@ bool CEngineLoop::Release()
     {
         GEngine->Release();
 
-        delete GEngine;
+        GEngine->Destroy();
         GEngine = nullptr;
     }
 
@@ -278,14 +270,15 @@ bool CEngineLoop::Release()
 
     CDispatchQueue::Get().Release();
 
-    CInterfaceApplication::Release();
+    CApplicationInstance::Release();
 
     PlatformThreadMisc::Release();
 
-    // Release all modules at this point
-    CModuleManager::Release();
+    CModuleManager::ReleaseAllLoadedModules();
 
     SafeRelease(NErrorDevice::GConsoleWindow);
+
+    CModuleManager::Destroy();
 
     return true;
 }

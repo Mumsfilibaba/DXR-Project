@@ -5,6 +5,9 @@
 
 #include "Engine/Scene/Scene.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CScreenSpaceOcclusionRenderer
+
 class RENDERER_API CScreenSpaceOcclusionRenderer
 {
 public:

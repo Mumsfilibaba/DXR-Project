@@ -16,6 +16,9 @@
 #define GBUFFER_DEPTH_INDEX       3
 #define GBUFFER_VIEW_NORMAL_INDEX 4
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TResourceCache
+
 template<typename TResource>
 class TResourceCache
 {
@@ -56,6 +59,9 @@ private:
     TArray<TResource*>            Resources;
     THashTable<TResource*, int32> ResourceIndices;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SFrameResources
 
 struct RENDERER_API SFrameResources
 {

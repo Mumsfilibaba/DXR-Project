@@ -6,7 +6,7 @@
 
 #include "Renderer/Renderer.h"
 
-#include "Interface/InterfaceApplication.h"
+#include "Application/ApplicationInstance.h"
 
 #include <imgui.h>
 
@@ -25,7 +25,7 @@ TSharedRef<CRendererInfoWindow> CRendererInfoWindow::Make()
 
 void CRendererInfoWindow::Tick()
 {
-    TSharedRef<CPlatformWindow> MainViewport = CInterfaceApplication::Get().GetMainViewport();
+    TSharedRef<CPlatformWindow> MainViewport = CApplicationInstance::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

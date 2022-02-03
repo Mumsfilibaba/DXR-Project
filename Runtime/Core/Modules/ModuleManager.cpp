@@ -112,18 +112,28 @@ IEngineModule* CModuleManager::GetEngineModule(const char* ModuleName)
 
 CModuleManager& CModuleManager::Get()
 {
-    static CModuleManager Instance;
-    return Instance;
+    TOptional<CModuleManager>& ModuleManager = GetModuleManagerInstance();
+    return ModuleManager.GetValue();
 }
 
-void CModuleManager::Release()
+void CModuleManager::ReleaseAllLoadedModules()
 {
-    CModuleManager& ModuleManager = CModuleManager::Get();
+    TOptional<CModuleManager>& ModuleManager = GetModuleManagerInstance();
+    ModuleManager->ReleaseAllModules();
+}
 
-    const int32 NumModules = ModuleManager.Modules.Size();
+void CModuleManager::Destroy()
+{
+    TOptional<CModuleManager>& ModuleManager = GetModuleManagerInstance();
+    ModuleManager.Reset();
+}
+
+void  CModuleManager::ReleaseAllModules()
+{
+    const int32 NumModules = Modules.Size();
     for (int32 Index = 0; Index < NumModules; Index++)
     {
-        SModule& Module = ModuleManager.Modules[Index];
+        SModule& Module = Modules[Index];
 
         IEngineModule* EngineModule = Module.Interface;
         if (EngineModule)
@@ -137,7 +147,7 @@ void CModuleManager::Release()
         Module.Handle = nullptr;
     }
 
-    ModuleManager.Modules.Clear();
+    Modules.Clear();
 }
 
 PlatformModule CModuleManager::GetModuleHandle(const char* ModuleName)
@@ -193,6 +203,17 @@ void CModuleManager::UnloadModule(const char* ModuleName)
 
         Modules.RemoveAt(Index);
     }
+}
+
+uint32 CModuleManager::GetLoadedModuleCount()
+{
+    return static_cast<uint32>(Modules.Size());
+}
+
+TOptional<CModuleManager>& CModuleManager::GetModuleManagerInstance()
+{
+    static TOptional<CModuleManager> Instance(InPlace);
+    return Instance;
 }
 
 int32 CModuleManager::GetModuleIndex(const char* ModuleName)

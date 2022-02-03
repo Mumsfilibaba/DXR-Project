@@ -1,6 +1,6 @@
 #include "Renderer.h"
 
-#include "Interface/InterfaceApplication.h"
+#include "Application/ApplicationInstance.h"
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
@@ -215,7 +215,7 @@ bool CRenderer::Init()
 
     CRHICommandQueue::Get().ExecuteCommandList(MainCmdList);
 
-    CInterfaceApplication& Application = CInterfaceApplication::Get();
+    CApplicationInstance& Application = CApplicationInstance::Get();
 
     // Register EventFunc
     WindowHandler->WindowResizedDelegate.BindRaw(this, &CRenderer::OnWindowResize);
@@ -677,7 +677,7 @@ void CRenderer::Tick(const CScene& Scene)
             MainCmdList.SetShadingRateImage(nullptr);
         }
 
-        CInterfaceApplication::Get().DrawWindows(MainCmdList);
+        CApplicationInstance::Get().DrawWindows(MainCmdList);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "End UI Render");
@@ -769,9 +769,9 @@ void CRenderer::Release()
 
     FrameStatistics.Reset();
 
-    if (CInterfaceApplication::IsInitialized())
+    if (CApplicationInstance::IsInitialized())
     {
-        CInterfaceApplication& Application = CInterfaceApplication::Get();
+        CApplicationInstance& Application = CApplicationInstance::Get();
         Application.RemoveWindow(TextureDebugger);
         TextureDebugger.Reset();
 

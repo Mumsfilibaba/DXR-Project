@@ -14,6 +14,9 @@
 
 #include "Renderer/Debug/GPUProfiler.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CShadowMapRenderer
+
 bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameResources)
 {
     if (!CreateShadowMaps(LightSetup, FrameResources))

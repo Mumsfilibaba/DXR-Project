@@ -9,6 +9,9 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRayTracer
+
 bool CRayTracer::Init(SFrameResources& Resources)
 {
     TArray<uint8> Code;

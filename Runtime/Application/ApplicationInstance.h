@@ -1,7 +1,7 @@
 #pragma once
 #include "InputHandler.h"
 #include "WindowMessageHandler.h"
-#include "InterfaceUser.h"
+#include "ApplicationUser.h"
 #include "IInterfaceRenderer.h"
 
 #include "Core/Core.h"
@@ -16,9 +16,9 @@
 #include "CoreApplication/Interface/PlatformApplication.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// InterfaceApplication - Application class for the engine
+// CApplicationInstance - Application class for the engine
 
-class INTERFACE_API CInterfaceApplication : public CPlatformApplicationMessageHandler
+class APPLICATION_API CApplicationInstance : public CPlatformApplicationMessageHandler
 {
 public:
 
@@ -30,12 +30,12 @@ public:
     static bool Make();
 
     /**
-     * Initializes the singleton from an existing application - Used for classes inheriting from CInterfaceApplication
+     * Initializes the singleton from an existing application - Used for classes inheriting from CApplicationInstance
      * 
      * @param InApplication: Existing application
      * @return: Returns true if the initialization was successful
      */
-    static bool Make(const TSharedPtr<CInterfaceApplication>& InApplication);
+    static bool Make(const TSharedPtr<CApplicationInstance>& InApplication);
 
     /**
      * Releases the global application instance
@@ -47,7 +47,7 @@ public:
      * 
      * @return: Returns a reference to the InterfaceApplication instance
      */
-    static FORCEINLINE CInterfaceApplication& Get() 
+    static FORCEINLINE CApplicationInstance& Get() 
     { 
         return *Instance;
     }
@@ -63,17 +63,12 @@ public:
     }
 
     /** Delegate for when the application is about to exit */
-    DECLARE_EVENT(CExitEvent, CInterfaceApplication, int32);
+    DECLARE_EVENT(CExitEvent, CApplicationInstance, int32);
     CExitEvent GetExitEvent() const { return ExitEvent; }
 
     /** Delegate for when the application gets a new main-viewport */
-    DECLARE_EVENT(CMainViewportChange, CInterfaceApplication, const TSharedRef<CPlatformWindow>&);
+    DECLARE_EVENT(CMainViewportChange, CApplicationInstance, const TSharedRef<CPlatformWindow>&);
     CMainViewportChange GetMainViewportChange() const { return MainViewportChange; }
-
-    /**
-     * Public destructor for the TSharedPtr
-     */
-    virtual ~CInterfaceApplication();
 
     /**
      * Creates a new window 
@@ -239,14 +234,14 @@ public:
      * 
      * @param NewWindow: Window to add that should be drawn the next frame
      */
-    void AddWindow(const TSharedRef<IInterfaceWindow>& NewWindow);
+    void AddWindow(const TSharedRef<IWindow>& NewWindow);
 
     /**
      * Removes a interface window
      *
      * @param NewWindow: Window to remove
      */
-    void RemoveWindow(const TSharedRef<IInterfaceWindow>& Window);
+    void RemoveWindow(const TSharedRef<IWindow>& Window);
 
     /**
      * Draws a string in the viewport during the current frame, the strings are reset every frame 
@@ -295,7 +290,7 @@ public:
     }
 
     /**
-     * Retrieve the renderer for the Interface 
+     * Retrieve the renderer for the Application 
      * 
      * @return: Returns the renderer
      */
@@ -338,10 +333,10 @@ public:
     FORCEINLINE uint32 GetNumUsers() const { return static_cast<uint32>(RegisteredUsers.Size()); }
 
     /* Register a new user to the application */
-    FORCEINLINE void RegisterUser(const TSharedPtr<CInterfaceUser>& NewUser) { RegisteredUsers.Push(NewUser); }
+    FORCEINLINE void RegisterUser(const TSharedPtr<CApplicationUser>& NewUser) { RegisteredUsers.Push(NewUser); }
 
     /* Retrieve the first user */
-    FORCEINLINE TSharedPtr<CInterfaceUser> GetFirstUser() const
+    FORCEINLINE TSharedPtr<CApplicationUser> GetFirstUser() const
     {
         if (!RegisteredUsers.IsEmpty())
         {
@@ -354,7 +349,7 @@ public:
     }
 
     /* Retrieve a user from user index */
-    FORCEINLINE TSharedPtr<CInterfaceUser> GetUserFromIndex(uint32 UserIndex) const
+    FORCEINLINE TSharedPtr<CApplicationUser> GetUserFromIndex(uint32 UserIndex) const
     {
         if (UserIndex < (uint32)RegisteredUsers.Size())
         {
@@ -391,7 +386,10 @@ public:
 
 protected:
 
-    CInterfaceApplication(const TSharedPtr<CPlatformApplication>& InPlatformApplication);
+    friend struct TDefaultDelete<CApplicationInstance>;
+
+    CApplicationInstance(const TSharedPtr<CPlatformApplication>& InPlatformApplication);
+    virtual ~CApplicationInstance();
 
     bool CreateContext();
 
@@ -411,12 +409,12 @@ protected:
     TSharedRef<IInterfaceRenderer> Renderer;
 
     TArray<CString>                      DebugStrings;
-    TArray<TSharedRef<IInterfaceWindow>> InterfaceWindows;
+    TArray<TSharedRef<IWindow>> InterfaceWindows;
 
     TArray<TPair<TSharedPtr<CInputHandler>, uint32>>         InputHandlers;
     TArray<TPair<TSharedPtr<CWindowMessageHandler>, uint32>> WindowMessageHandlers;
 
-    TArray<TSharedPtr<CInterfaceUser>> RegisteredUsers;
+    TArray<TSharedPtr<CApplicationUser>> RegisteredUsers;
 
     CExitEvent          ExitEvent;
     CMainViewportChange MainViewportChange;
@@ -426,6 +424,6 @@ protected:
 
     struct ImGuiContext* Context = nullptr;
 
-    static TSharedPtr<CInterfaceApplication> Instance;
+    static TSharedPtr<CApplicationInstance> Instance;
 };
 

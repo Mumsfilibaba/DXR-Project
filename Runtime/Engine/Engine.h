@@ -3,9 +3,9 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Delegates/Event.h"
 
-#include "Interface/Events.h"
-#include "Interface/InterfaceUser.h"
-#include "Interface/WindowMessageHandler.h"
+#include "Application/Events.h"
+#include "Application/ApplicationUser.h"
+#include "Application/WindowMessageHandler.h"
 
 #include "RHI/RHIViewport.h"
 
@@ -19,56 +19,76 @@ class ENGINE_API CEngine
 {
 public:
 
-    /* Create a new engine instance */
+    /**
+     * Create a new engine instance 
+     * 
+     * @return: Returns a new engine instance
+     */
     static CEngine* Make();
 
-    /* Public destructor for the TSharedPtr */
-    virtual ~CEngine() = default;
+    /**
+     * Initialize the engine 
+     * 
+     * @return: Returns true if the initialization was successful
+     */
+    virtual bool Initialize();
 
-    /* Init engine */
-    virtual bool Init();
-
-    /* Start the engine */
+    /**
+     * Start the engine
+     * 
+     * @return: Returns true if the startup was successful
+     */
     virtual bool Start();
 
-    /* Tick should be called once per frame */
+    /**
+     * Tick should be called once per frame 
+     * 
+     * @param DeltaTime: Time since the last tick
+     */
     virtual void Tick(CTimestamp DeltaTime);
 
-    /* Release engine resources */
+    /** 
+     * Release engine resources
+     * 
+     * @return: Returns true if the release was successful
+     */
     virtual bool Release();
 
-    /* Request exit from the engine */
+    /** Request exit from the engine */
     void Exit();
 
-    /* The main window of the app */
+    /** Destroy the engine */
+    void Destroy();
+
+    /** The main window of the app */
     TSharedRef<CPlatformWindow> MainWindow;
 
-    /* The main viewport */
+    /** The main viewport */
     TSharedRef<CRHIViewport> MainViewport;
 
-    // TODO: Remove
-    TSharedPtr<CInterfaceUser> User;
+    /** User */
+    TSharedPtr<CApplicationUser> User;
 
-    /* The current scene */
+    /** The current scene */
     TSharedPtr<CScene> Scene;
 
-    /* A completely white texture */
+    /** A completely white texture */
     TSharedRef<CRHITexture2D> BaseTexture;
 
-    /* A completely flat normal map*/
+    /** A completely flat normal map*/
     TSharedRef<CRHITexture2D> BaseNormal;
 
-    /* Base sampler used by all materials */
+    /** Base sampler used by all materials */
     TSharedRef<CRHISamplerState> BaseMaterialSampler;
 
-    /* A completely white material */
+    /** Base material */
     TSharedPtr<CMaterial> BaseMaterial;
 
 protected:
 
-    /* Engine should be constructed with the Make function */
     CEngine();
+    virtual ~CEngine() = default;
 };
 
-/* Global Engine Pointer */
+/** Global Engine Pointer */
 extern ENGINE_API CEngine* GEngine;

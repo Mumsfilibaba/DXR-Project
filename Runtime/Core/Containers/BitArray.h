@@ -242,6 +242,8 @@ public:
         return false;
     }
 
+public:
+
     FORCEINLINE bool operator[](uint32 BitIndex) const
     {
         return GetBit(BitIndex);
@@ -346,6 +348,8 @@ public:
         return NewArray;
     }
 
+public:
+
     static constexpr uint32 Size()
     {
         return NumBits;
@@ -407,6 +411,10 @@ private:
 template<uint32 NumBits, typename StorageType = uint32>
 class TBitArray;
 
-using BitField16 = TBitArray<16, uint16>;
-using BitField32 = TBitArray<32, uint32>;
-using BitField64 = TBitArray<64, uint32>;
+using BitArray16 = TBitArray<16, uint16>;
+using BitArray32 = TBitArray<32, uint32>;
+using BitArray64 = TBitArray<64, uint64>;
+
+using BitArray128 = TBitArray<128, uint64>;
+using BitArray256 = TBitArray<256, uint64>;
+using BitArray512 = TBitArray<512, uint64>;

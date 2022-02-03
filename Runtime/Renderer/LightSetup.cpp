@@ -7,6 +7,9 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SLightSetup
+
 bool SLightSetup::Init()
 {
     DirectionalLightsBuffer = RHICreateConstantBuffer(sizeof(DirectionalLightData), BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);

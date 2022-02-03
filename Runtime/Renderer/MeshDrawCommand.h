@@ -1,6 +1,9 @@
 #pragma once
 #include "Core/Core.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SMeshDrawCommand
+
 struct SMeshDrawCommand
 {
     class CMaterial* Material = nullptr;

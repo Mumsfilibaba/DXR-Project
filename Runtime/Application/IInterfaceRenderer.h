@@ -1,6 +1,6 @@
 #pragma once
 #include "InterfaceImage.h"
-#include "IInterfaceWindow.h"
+#include "IWindow.h"
 
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Containers/SharedRef.h"

@@ -3,12 +3,12 @@
 
 #include "RHI/RHIResourceViews.h"
 
-#include "Interface/InterfaceImage.h"
-#include "Interface/IInterfaceWindow.h"
+#include "Application/InterfaceImage.h"
+#include "Application/IWindow.h"
 
 #include <imgui.h>
 
-class CTextureDebugWindow : public IInterfaceWindow
+class CTextureDebugWindow : public IWindow
 {
     INTERFACE_GENERATE_BODY();
 

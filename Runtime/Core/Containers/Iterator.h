@@ -91,6 +91,8 @@ public:
         return Index;
     }
 
+public:
+
     /**
      * Retrieve a raw pointer to the data
      * 
@@ -349,6 +351,8 @@ public:
     {
         return Index - 1;
     }
+
+public:
 
     /**
      * Retrieve a raw pointer to the data

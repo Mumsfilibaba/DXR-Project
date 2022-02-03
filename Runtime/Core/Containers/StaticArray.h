@@ -136,6 +136,8 @@ public:
         return Elements;
     }
 
+public:
+
     /**
      * Bracket-operator to retrieve an element at a certain index
      *

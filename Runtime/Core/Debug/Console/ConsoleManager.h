@@ -2,8 +2,8 @@
 #include "ConsoleVariable.h"
 #include "ConsoleCommand.h"
 
-#include "Interface/Events.h"
-#include "Interface/InputHandler.h"
+#include "Application/Events.h"
+#include "Application/InputHandler.h"
 
 #include "Core/Containers/HashTable.h"
 #include "Core/Containers/Pair.h"

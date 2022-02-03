@@ -4,6 +4,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/Optional.h"
 #include "Core/Delegates/Delegate.h"
 #include "Core/Delegates/MulticastDelegate.h"
 #include "Core/Debug/Debug.h"
@@ -104,7 +105,12 @@ public:
     /**
      * Releases all modules that are loaded
      */
-    static void Release();
+    static void ReleaseAllLoadedModules();
+
+    /**
+     * Destroy the module manager, after this no more modules can be loaded
+     */
+    static void Destroy();
 
     /**
      * Load a new module into the engine
@@ -152,6 +158,13 @@ public:
      * @param ModuleName: Name of the module to load without platform extension or prefix
      */
     void UnloadModule(const char* ModuleName);
+
+    /**
+     * Retrieve the number of loaded modules
+     * 
+     * @return: Returns the number of loaded modules
+     */
+    uint32 GetLoadedModuleCount();
 
     /** Delegate for when a new module is loaded into the engine, name and IEngineModule pointer is the arguments */
     DECLARE_MULTICAST_DELEGATE(CModuleLoadedDelegate, const char*, IEngineModule*);
@@ -235,6 +248,7 @@ public:
 
 private:
 
+
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Stores information about a loaded engine module
 
@@ -257,6 +271,11 @@ private:
         PlatformModule Handle;
     };
 
+    friend class TOptional<CModuleManager>;
+
+    /** Retrieve the static instance */
+    static TOptional<CModuleManager>& GetModuleManagerInstance();
+
     CModuleManager() = default;
     ~CModuleManager() = default;
 
@@ -266,11 +285,12 @@ private:
     /** Returns a delegate to initialize a static module, if not found it returns nullptr */ 
     CInitializeStaticModuleDelegate* GetStaticModuleDelegate(const char* ModuleName);
 
+    /** Release all modules that are loaded */
+    void ReleaseAllModules();
+
     CModuleLoadedDelegate ModuleLoadedDelegate;
 
     TArray<SModule> Modules;
-
-    /** Array of all modules that can be loaded statically */
     TArray<TPair<CString, CInitializeStaticModuleDelegate>> StaticModuleDelegates;
 };
 

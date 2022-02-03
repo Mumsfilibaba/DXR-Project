@@ -6,6 +6,9 @@
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Scene/Scene.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CShadowMapRenderer
+
 class RENDERER_API CSkyboxRenderPass final
 {
 public:

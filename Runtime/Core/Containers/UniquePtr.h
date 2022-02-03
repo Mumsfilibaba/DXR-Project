@@ -172,6 +172,8 @@ public:
         return (Ptr != nullptr);
     }
 
+public:
+
     /**
      * Retrieve the stored pointer
      *
@@ -436,6 +438,8 @@ public:
         Assert(IsValid());
         return Get()[Index];
     }
+
+public:
 
     /**
      * Bracket-operator to retrieve an element at a certain index

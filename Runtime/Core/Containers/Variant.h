@@ -98,7 +98,7 @@ class TVariant
 
     struct TVariantDestructorTable
     {
-        static void Destruct(TypeIndexType Index, void* Memory)
+        static void Destruct(TypeIndexType Index, void* Memory) noexcept
         {
             static constexpr void(*Table[])(void*) = { &TVariantDestructor<Types>::Destruct... };
 
@@ -115,14 +115,13 @@ class TVariant
     {
         static void Copy(void* Memory, const void* Value) noexcept
         {
-            typedef T TypeConstructor;
-            reinterpret_cast<TypeConstructor*>(Memory)->TypeConstructor::TypeConstructor(*reinterpret_cast<T*>(Value));
+            new(Memory) T(*reinterpret_cast<const T*>(Value));
         }
     };
 
     struct TVariantCopyConstructorTable
     {
-        static void Copy(TypeIndexType Index, void* Memory, const void* Value)
+        static void Copy(TypeIndexType Index, void* Memory, const void* Value) noexcept
         {
             static constexpr void(*Table[])(void*, void*) = { &TVariantCopyConstructor<Types>::Copy... };
 
@@ -139,19 +138,54 @@ class TVariant
     {
         static void Move(void* Memory, void* Value) noexcept
         {
-            typedef T TypeConstructor;
-            reinterpret_cast<TypeConstructor*>(Memory)->TypeConstructor::TypeConstructor(::Move(*reinterpret_cast<T*>(Value)));
+            new(Memory) T(::Move(*reinterpret_cast<T*>(Value)));
         }
     };
 
     struct TVariantMoveConstructorTable
     {
-        static void Move(TypeIndexType Index, void* Memory, void* Value)
+        static void Move(TypeIndexType Index, void* Memory, void* Value) noexcept
         {
             static constexpr void(*Table[])(void*, void*) = { &TVariantMoveConstructor<Types>::Move... };
 
             Assert(Index < ArrayCount(Table));
             Table[Index](Memory, Value);
+        }
+    };
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // TVariantCompareTable
+
+    template<typename T>
+    struct TVariantComparators
+    {
+        static bool IsEqual(const void* Lhs, const void* Rhs) noexcept
+        {
+            return (*reinterpret_cast<const T*>(Lhs)) == (*reinterpret_cast<const T*>(Rhs));
+        }
+
+        static bool IsLessThan(const void* Lhs, const void* Rhs) noexcept
+        {
+            return (*reinterpret_cast<const T*>(Lhs)) < (*reinterpret_cast<const T*>(Rhs));
+        }
+    };
+
+    struct TVariantComparatorsTable
+    {
+        static bool IsEqual(TypeIndexType Index, const void* Lhs, const void* Rhs) noexcept
+        {
+            static constexpr bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsEqual... };
+
+            Assert(Index < ArrayCount(Table));
+            return Table[Index](Lhs, Rhs);
+        }
+
+        static bool IsLessThan(TypeIndexType Index, const void* Lhs, const void* Rhs) noexcept
+        {
+            static constexpr bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsLessThan... };
+
+            Assert(Index < ArrayCount(Table));
+            return Table[Index](Lhs, Rhs);
         }
     };
 
@@ -271,7 +305,7 @@ public:
     {
         Reset();
 
-        new(Value.GetStorage()) T(Forward<ArgTypes>(Args)...);
+        Construct<T>(Forward<ArgTypes>(Args)...);
 
         TypeIndex = TVariantIndex<T>::Value;
 
@@ -434,58 +468,140 @@ public:
 
     /**
      * Comparison operator
-     * 
-     * @param Rhs: Variant to compare with
+     *
+     * @param Lhs: Left side to compare with
+     * @param Rhs: Right side to compare with
      * @return: Returns true if the variants are equal
      */
-    FORCEINLINE bool operator==(const TVariant& Rhs) const noexcept
+    friend FORCEINLINE bool operator==(const TVariant& Lhs, const TVariant& Rhs) noexcept
     {
-        if (!IsValid() && !Rhs.IsValid())
-        {
-            return true;
-        }
-
-        if (!IsValid())
+        if (Lhs.TypeIndex != Rhs.TypeIndex)
         {
             return false;
         }
 
-        // TODO: Fix
-        return GetValue() == Rhs.GetValue();
+        // Both indices are equal at this point
+        if (!Lhs.IsValid())
+        {
+            return true;
+        }
+
+        return Lhs.IsEqual(Rhs);
     }
 
     /**
      * Comparison operator
      *
-     * @param Rhs: Variant to compare with
-     * @return: Returns true if the variants are equal
+     * @param Lhs: Left side to compare with 
+     * @param Rhs: Right side to compare with
+     * @return: Returns false if the variants are equal
      */
-    FORCEINLINE bool operator!=(const TVariant& Rhs) const noexcept
+    friend FORCEINLINE bool operator!=(const TVariant& Lhs, const TVariant& Rhs) noexcept
     {
-        return !(*this == Rhs);
+        return !(Lhs == Rhs);
+    }
+
+    /**
+     * Less than comparison operator
+     *
+     * @param Lhs: Left side to compare with
+     * @param Rhs: Right side to compare with
+     * @return: Returns true if Lhs is less than Rhs
+     */
+    friend FORCEINLINE bool operator<(const TVariant& Lhs, const TVariant& Rhs) noexcept
+    {
+        if (Lhs.TypeIndex != Rhs.TypeIndex)
+        {
+            return false;
+        }
+
+        // Both indices are equal at this point
+        if (!Lhs.IsValid())
+        {
+            return true;
+        }
+
+        return Lhs.IsLessThan(Rhs);
+    }
+
+    /**
+     * Less than or equal comparison operator
+     *
+     * @param Lhs: Left side to compare with
+     * @param Rhs: Right side to compare with
+     * @return: Returns true if Lhs is less than or equal to Rhs
+     */
+    friend FORCEINLINE bool operator<=(const TVariant& Lhs, const TVariant& Rhs) noexcept
+    {
+        if (Lhs.TypeIndex != Rhs.TypeIndex)
+        {
+            return false;
+        }
+
+        // Both indices are equal at this point
+        if (!Lhs.IsValid())
+        {
+            return true;
+        }
+
+        return Lhs.IsLessThan(Rhs) || Lhs.IsEqual(Rhs);
+    }
+
+    /**
+     * Greater than comparison operator
+     *
+     * @param Lhs: Left side to compare with
+     * @param Rhs: Right side to compare with
+     * @return: Returns true if Lhs is greater than Rhs
+     */
+    friend FORCEINLINE bool operator>(const TVariant& Lhs, const TVariant& Rhs) noexcept
+    {
+        return !(Lhs <= Rhs);
+    }
+
+    /**
+     * Greater than or equal comparison operator
+     *
+     * @param Lhs: Left side to compare with
+     * @param Rhs: Right side to compare with
+     * @return: Returns true if Lhs is greater than or equal to Rhs
+     */
+    friend FORCEINLINE bool operator>=(const TVariant& Lhs, const TVariant& Rhs) noexcept
+    {
+        return !(Lhs < Rhs);
     }
 
 private:
 
     template<typename T, typename... ArgTypes>
-    FORCEINLINE void Construct(ArgTypes&&... Args)
+    FORCEINLINE void Construct(ArgTypes&&... Args) noexcept
     {
         new(Value.GetStorage()) T(Forward<ArgTypes>(Args)...);
     }
 
-    FORCEINLINE void MoveFrom(TVariant& Other)
+    FORCEINLINE void MoveFrom(TVariant& Other) noexcept
     {
         TVariantMoveConstructorTable::Move(Other.TypeIndex, Value.GetStorage(), Other.Value.GetStorage());
     }
 
-    FORCEINLINE void CopyFrom(const TVariant& Other)
+    FORCEINLINE void CopyFrom(const TVariant& Other) noexcept
     {
         TVariantCopyConstructorTable::Copy(Other.TypeIndex, Value.GetStorage(), Other.Value.GetStorage());
     }
 
-    FORCEINLINE void Destruct()
+    FORCEINLINE void Destruct() noexcept
     {
         TVariantDestructorTable::Destruct(TypeIndex, Value.GetStorage());
+    }
+
+    FORCEINLINE bool IsEqual(const TVariant& Rhs) const noexcept
+    {
+        return TVariantComparatorsTable::IsEqual(TypeIndex, Value.GetStorage(), Rhs.Value.GetStorage());
+    }
+
+    FORCEINLINE bool IsLessThan(const TVariant& Rhs) const noexcept
+    {
+        return TVariantComparatorsTable::IsLessThan(TypeIndex, Value.GetStorage(), Rhs.Value.GetStorage());
     }
 
     /** Storage that fit the largest element */

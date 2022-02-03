@@ -2,7 +2,7 @@
 
 #include "Core/Logging/Log.h"
 
-#include "Interface/InterfaceApplication.h"
+#include "Application/ApplicationInstance.h"
 
 // TODO: Remove (Make own? Slow?)
 #include <regex>

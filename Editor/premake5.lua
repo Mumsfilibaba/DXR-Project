@@ -69,7 +69,7 @@ project ( projectname )
 		"ImGui",
 		"Core",
 		"CoreApplication",
-		"Interface",
+		"Application",
 		"RHI",
 		"Engine",
 		"Renderer",

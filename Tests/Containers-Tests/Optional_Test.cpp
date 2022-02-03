@@ -122,101 +122,122 @@ void TOptional_Test()
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Constructors copy/move etc
 
-    TOptional<STest> Optional0;
-    if (!Optional0)
     {
-        std::cout << "Optional0 does NOT have a value" << '\n';
+        TOptional<STest> Optional0;
+        TOptional<STest> Optional1(InPlace, 65);
+
+        if (!Optional0)
+        {
+            std::cout << "Optional0 does NOT have a value" << '\n';
+        }
+
+        if (Optional1)
+        {
+            std::cout << "Optional1 does has a value" << '\n';
+        }
+
+        Optional1.Reset();
+
+        if (!Optional1)
+        {
+            std::cout << "Optional1 does has NOT a value" << '\n';
+        }
     }
 
-    TOptional<STest> Optional1(InPlace, 65);
-    if (Optional1)
     {
-        std::cout << "Optional1 does has a value" << '\n';
+        TOptional<SMoveable> Optional0;
+        Optional0.Emplace();
+
+        TOptional<SMoveable> Optional¨1(Move(Optional0));
     }
 
-    Optional1.Reset();
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Emplace
 
-    if (!Optional1)
     {
-        std::cout << "Optional1 does has NOT a value" << '\n';
+        TOptional<STest> Optional0(InPlace, 70);
+        Optional0.Emplace(245);
+        Optional0.Emplace(235);
+        Optional0.Emplace(225);
+        Optional0.Emplace(215);
+        Optional0.Emplace(205);
+
+        TOptional<int32> Optional1;
+        std::cout << "Optional1.Emplace(10)" << Optional1.Emplace(10) << '\n';
+        std::cout << "Optional1.Emplace(20)" << Optional1.Emplace(20) << '\n';
+        std::cout << "Optional1.Emplace(30)" << Optional1.Emplace(30) << '\n';
+        std::cout << "Optional1.Emplace(40)" << Optional1.Emplace(40) << '\n';
+        std::cout << "Optional1.Emplace(50)" << Optional1.Emplace(50) << '\n';
+        std::cout << "Optional1.Emplace(60)" << Optional1.Emplace(60) << '\n';
     }
-
-    TOptional<SMoveable> Optional2;
-    Optional2.Emplace();
-
-    TOptional<SMoveable> Optional3(Move(Optional2));
-
-    TOptional<STest> Optional4(InPlace, 70);
-    if (Optional4)
-    {
-        std::cout << "Optional4 does has a value" << '\n';
-    }
-
-    Optional4.Emplace(255);
-    Optional4.Emplace(245);
-    Optional4.Emplace(235);
-    Optional4.Emplace(225);
-    Optional4.Emplace(215);
-    Optional4.Emplace(205);
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Swap basic
 
-    TOptional<int64> Optional5;
+    {
+        TOptional<int64> Optional0;
+        TOptional<int64> Optional1(InPlace, 100);
 
-    std::cout << "Optional5.HasValue()=" << std::boolalpha << Optional5.HasValue() << '\n';
+        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
 
-    Optional5.Emplace(255);
+        Optional0.Emplace(255);
 
-    TOptional<int64> Optional6(InPlace, 100);
+        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
 
-    std::cout << "Optional6.HasValue()=" << std::boolalpha << Optional6.HasValue() << '\n';
+        Optional0.Swap(Optional1);
 
-    Optional5.Swap(Optional6);
+        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
+        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
 
-    std::cout << "Optional5.HasValue()=" << std::boolalpha << Optional5.HasValue() << '\n';
-    std::cout << "Optional6.HasValue()=" << std::boolalpha << Optional6.HasValue() << '\n';
+        Optional0.Reset();
 
-    Optional5.Reset();
+        std::cout << "Optional0.GetValueOrDefault()=" << Optional0.GetValueOrDefault(50) << '\n';
+    }
 
-    std::cout << "Optional5.GetValueOrDefault()=" << Optional5.GetValueOrDefault(50) << '\n';
-
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Swap complex
 
-    TOptional<STest> Optional7;
+    {
+        TOptional<STest> Optional0;
+        TOptional<STest> Optional1(InPlace, 100);
 
-    std::cout << "Optional7.HasValue()=" << std::boolalpha << Optional7.HasValue() << '\n';
+        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
 
-    Optional7.Emplace(255);
+        Optional0.Emplace(255);
 
-    std::cout << "Optional7.HasValue()=" << std::boolalpha << Optional7.HasValue() << '\n';
+        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
 
-    TOptional<STest> Optional8(InPlace, 100);
 
-    std::cout << "Optional8.HasValue()=" << std::boolalpha << Optional8.HasValue() << '\n';
+        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
 
-    Optional7.Swap(Optional8);
+        Optional0.Swap(Optional1);
 
-    std::cout << "Optional7.HasValue()=" << std::boolalpha << Optional7.HasValue() << '\n';
-    std::cout << "Optional8.HasValue()=" << std::boolalpha << Optional8.HasValue() << '\n';
+        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
+        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
 
-    Optional7.Swap(Optional8);
+        Optional0.Swap(Optional1);
 
-    std::cout << "Optional7.HasValue()=" << std::boolalpha << Optional7.HasValue() << '\n';
-    std::cout << "Optional8.HasValue()=" << std::boolalpha << Optional8.HasValue() << '\n';
+        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
+        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
 
-    Optional7.Swap(Optional8);
+        Optional0.Swap(Optional1);
 
-    std::cout << "Optional7.HasValue()=" << std::boolalpha << Optional7.HasValue() << '\n';
-    std::cout << "Optional8.HasValue()=" << std::boolalpha << Optional8.HasValue() << '\n';
+        std::cout << "Optional0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
+        std::cout << "Optional1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
+    }
     
-    TOptional<int32> OptionalInt0;
-    TOptional<int32> OptionalInt1(InPlace);
-    std::cout << "OptionalInt0.HasValue()=" << std::boolalpha << OptionalInt0.HasValue() << '\n';
-    std::cout << "OptionalInt1.HasValue()=" << std::boolalpha << OptionalInt1.HasValue() << '\n';
+    {
+        TOptional<int32> Optional0;
+        TOptional<int32> Optional1(InPlace);
+        std::cout << "OptionalInt0.HasValue()=" << std::boolalpha << Optional0.HasValue() << '\n';
+        std::cout << "OptionalInt1.HasValue()=" << std::boolalpha << Optional1.HasValue() << '\n';
 
-    std::cout << "OptionalInt0.TryGetValue()=" << OptionalInt0.TryGetValue() << '\n';
-    std::cout << "OptionalInt1.TryGetValue()=" << OptionalInt1.TryGetValue() << '\n';
+        std::cout << "OptionalInt0.TryGetValue()=" << Optional0.TryGetValue() << '\n';
+        std::cout << "OptionalInt1.TryGetValue()=" << Optional1.TryGetValue() << '\n';
+    }
+
+
+
     return;
 }
 

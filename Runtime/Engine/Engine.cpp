@@ -4,7 +4,7 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
 
-#include "Interface/InterfaceApplication.h"
+#include "Application/ApplicationInstance.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -23,8 +23,8 @@ ENGINE_API CEngine* GEngine;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ConsoleCommands
 
-CAutoConsoleCommand GToggleFullscreen("viewport.ToggleFullscreen");
 CAutoConsoleCommand GExit("engine.Exit");
+CAutoConsoleCommand GToggleFullscreen("viewport.ToggleFullscreen");
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Engine
@@ -39,7 +39,7 @@ CEngine::CEngine()
 	GExit.GetExecutedDelgate().AddRaw(this, &CEngine::Exit);
 }
 
-bool CEngine::Init()
+bool CEngine::Initialize()
 {
     const uint32 Style =
         WindowStyleFlag_Titled |
@@ -48,9 +48,9 @@ bool CEngine::Init()
         WindowStyleFlag_Maximizable |
         WindowStyleFlag_Resizeable;
 
-    CInterfaceApplication& Application = CInterfaceApplication::Get();
+    CApplicationInstance& Application = CApplicationInstance::Get();
 
-    const uint32 WindowWidth = 1920;
+    const uint32 WindowWidth  = 1920;
     const uint32 WindowHeight = 1080;
 
     MainWindow = Application.MakeWindow();
@@ -62,14 +62,14 @@ bool CEngine::Init()
     }
     else
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Engine");
+        PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Main Window");
         return false;
     }
 
     Application.RegisterMainViewport(MainWindow);
 
     TSharedPtr<ICursor> CursorDevice = Application.GetCursor();
-    User = CInterfaceUser::Make(0, CursorDevice);
+    User = CApplicationUser::Make(0, CursorDevice);
     if (!User)
     {
         return false;
@@ -78,13 +78,7 @@ bool CEngine::Init()
     Application.RegisterUser(User);
 
     // Create standard textures
-    uint8 Pixels[] =
-    {
-        255,
-        255,
-        255,
-        255
-    };
+    uint8 Pixels[] = { 255, 255, 255, 255 };
 
     BaseTexture = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
     if (!BaseTexture)
@@ -177,4 +171,9 @@ bool CEngine::Release()
 void CEngine::Exit()
 {
     PlatformApplicationMisc::RequestExit(0);
+}
+
+void CEngine::Destroy()
+{
+    delete this;
 }

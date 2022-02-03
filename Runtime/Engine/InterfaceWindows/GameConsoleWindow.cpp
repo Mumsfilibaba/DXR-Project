@@ -1,7 +1,7 @@
 #include "GameConsoleWindow.h"
 
 #include "Core/Debug/Console/ConsoleManager.h"
-#include "Interface/InterfaceApplication.h"
+#include "Application/ApplicationInstance.h"
 #include "Core/Templates/StringUtils.h"
 
 #include <imgui.h>
@@ -11,13 +11,13 @@ TSharedRef<CGameConsoleWindow> CGameConsoleWindow::Make()
     TSharedRef<CGameConsoleWindow> NewWindow = dbg_new CGameConsoleWindow();
 
     NewWindow->InputHandler->HandleKeyEventDelegate.BindRaw(NewWindow.Get(), &CGameConsoleWindow::HandleKeyPressedEvent);
-    CInterfaceApplication::Get().AddInputHandler(NewWindow->InputHandler, uint32(-1));
+    CApplicationInstance::Get().AddInputHandler(NewWindow->InputHandler, uint32(-1));
 
     return NewWindow;
 }
 
 CGameConsoleWindow::CGameConsoleWindow()
-    : IInterfaceWindow()
+    : IWindow()
     , InputHandler(MakeShared<CConsoleInputHandler>())
 {
     TextBuffer.Fill(0);
@@ -25,7 +25,7 @@ CGameConsoleWindow::CGameConsoleWindow()
 
 void CGameConsoleWindow::Tick()
 {
-    TSharedRef<CPlatformWindow> MainWindow = CInterfaceApplication::Get().GetMainViewport();
+    TSharedRef<CPlatformWindow> MainWindow = CApplicationInstance::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainWindow->GetWidth();
 

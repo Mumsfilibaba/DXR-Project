@@ -2,14 +2,14 @@
 #include "Core/Core.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// Interface API
+// Application API
 
 #if MONOLITHIC_BUILD
-#define INTERFACE_API
+#define APPLICATION_API
 #else
-#if INTERFACE_IMPL
-#define INTERFACE_API MODULE_EXPORT
+#if APPLICATION_IMPL
+#define APPLICATION_API MODULE_EXPORT
 #else
-#define INTERFACE_API MODULE_IMPORT
+#define APPLICATION_API MODULE_IMPORT
 #endif
 #endif

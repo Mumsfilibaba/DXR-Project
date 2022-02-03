@@ -789,7 +789,7 @@ struct SRHIDiscardResourceRenderCommand : public SRHIRenderCommand
 
     virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CmdContext.DiscardResource(Resource.Get());
+        CmdContext.DiscardContents(Resource.Get());
     }
 
     TSharedRef<CRHIResource> Resource;

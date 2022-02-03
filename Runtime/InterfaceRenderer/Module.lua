@@ -12,7 +12,7 @@ InterfaceRendererModule.AddModuleDependencies(
 {
     'Core',
     'CoreApplication',
-    'Interface',
+    'Application',
     'Engine',
     'RHI',
 })

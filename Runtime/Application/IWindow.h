@@ -29,13 +29,13 @@ public:                                                                     \
 private:
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// IInterfaceWindow
+// IWindow
 
-class IInterfaceWindow : public CRefCounted
+class IWindow : public CRefCounted
 {
 public:
 
-    virtual ~IInterfaceWindow() = default;
+    virtual ~IWindow() = default;
 
     /**
      * Initializes the window's context

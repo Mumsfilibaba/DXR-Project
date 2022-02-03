@@ -14,34 +14,111 @@
 
 void TVariant_Test()
 {
-    TVariant<std::string, int32> Variant0;
-    std::cout << "Variant0.IsType<int32>()="       << std::boolalpha << Variant0.IsType<int32>()       << std::endl;
-    std::cout << "Variant0.IsType<std::string>()=" << std::boolalpha << Variant0.IsType<std::string>() << std::endl;
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Basic
 
-    TVariant<std::string, int32> Variant1(TInPlaceType<std::string>(), "Test");
-    std::cout << "Variant1.IsType<int32>()="       << std::boolalpha << Variant1.IsType<int32>()       << std::endl;
-    std::cout << "Variant1.IsType<std::string>()=" << std::boolalpha << Variant1.IsType<std::string>() << std::endl;
+    {
+        TVariant<std::string, int32> Variant;
+        std::cout << "Variant.IsType<int32>()="       << std::boolalpha << Variant.IsType<int32>()       << '\n';
+        std::cout << "Variant.IsType<std::string>()=" << std::boolalpha << Variant.IsType<std::string>() << '\n';
+    }
+    
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // TInPlaceType
+    
+    {
+        TVariant<std::string, int32> Variant(TInPlaceType<std::string>(), "Test");
+        std::cout << "Variant.IsType<int32>()="       << std::boolalpha << Variant.IsType<int32>()       << '\n';
+        std::cout << "Variant.IsType<std::string>()=" << std::boolalpha << Variant.IsType<std::string>() << '\n';
 
-    std::cout << "Variant1.GetValue<std::string>()=" << Variant1.GetValue<std::string>() << std::endl;
+        std::cout << "Variant.GetValue<std::string>()=" << Variant.GetValue<std::string>() << '\n';
 
-    std::cout << "Variant1.TryGetValue<int32>()="       << Variant1.TryGetValue<int32>()       << std::endl;
-    std::cout << "Variant1.TryGetValue<std::string>()=" << Variant1.TryGetValue<std::string>() << std::endl;
+        std::cout << "Variant.TryGetValue<int32>()="       << Variant.TryGetValue<int32>()       << '\n';
+        std::cout << "Variant.TryGetValue<std::string>()=" << Variant.TryGetValue<std::string>() << '\n';
+    }
 
-    TVariant<std::string, int32> Variant2{TInPlaceIndex<0>()};
-    TVariant<std::string, int32> Variant3{TInPlaceIndex<1>()};
-    std::cout << "Variant2.IsType<int32>()="       << std::boolalpha << Variant2.IsType<int32>()       << std::endl;
-    std::cout << "Variant2.IsType<std::string>()=" << std::boolalpha << Variant2.IsType<std::string>() << std::endl;
-    std::cout << "Variant3.IsType<int32>()="       << std::boolalpha << Variant3.IsType<int32>()       << std::endl;
-    std::cout << "Variant3.IsType<std::string>()=" << std::boolalpha << Variant3.IsType<std::string>() << std::endl;
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // TInPlaceIndex
 
-    std::cout << "Variant2.GetValue<std::string>()=" << Variant2.GetValue<std::string>() << std::endl;
-    std::cout << "Variant3.GetValue<int32>()="       << Variant3.GetValue<int32>()       << std::endl;
+    {
+        TVariant<std::string, int32> Variant0{TInPlaceIndex<0>()};
+        TVariant<std::string, int32> Variant1{TInPlaceIndex<1>()};
+        std::cout << "Variant0.IsType<int32>()="       << std::boolalpha << Variant0.IsType<int32>()       << '\n';
+        std::cout << "Variant0.IsType<std::string>()=" << std::boolalpha << Variant0.IsType<std::string>() << '\n';
+        std::cout << "Variant1.IsType<int32>()="       << std::boolalpha << Variant1.IsType<int32>()       << '\n';
+        std::cout << "Variant1.IsType<std::string>()=" << std::boolalpha << Variant1.IsType<std::string>() << '\n';
 
-    std::cout << "Variant2.TryGetValue<int32>()="       << Variant2.TryGetValue<int32>()       << std::endl;
-    std::cout << "Variant2.TryGetValue<std::string>()=" << Variant2.TryGetValue<std::string>() << std::endl;
+        std::cout << "Variant0.GetValue<std::string>()=" << Variant0.GetValue<std::string>() << '\n';
+        std::cout << "Variant1.GetValue<int32>()="       << Variant1.GetValue<int32>()       << '\n';
 
-    std::cout << "Variant3.TryGetValue<int32>()="       << Variant3.TryGetValue<int32>()       << std::endl;
-    std::cout << "Variant3.TryGetValue<std::string>()=" << Variant3.TryGetValue<std::string>() << std::endl;
+        std::cout << "Variant0.TryGetValue<int32>()="       << Variant0.TryGetValue<int32>()       << '\n';
+        std::cout << "Variant0.TryGetValue<std::string>()=" << Variant0.TryGetValue<std::string>() << '\n';
+
+        std::cout << "Variant1.TryGetValue<int32>()="       << Variant1.TryGetValue<int32>()       << '\n';
+        std::cout << "Variant1.TryGetValue<std::string>()=" << Variant1.TryGetValue<std::string>() << '\n';
+    }
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Swap
+
+    {
+        TVariant<std::string, int32> Variant0(TInPlaceType<std::string>(), "String Number One which equals 11111111111111111111111111111111111111111111111111111111");
+        TVariant<std::string, int32> Variant1(TInPlaceType<std::string>(), "String Number Two which equals 22222222222222222222222222222222222222222222222222222222");
+
+        std::cout << "Variant0.GetValue<std::string>()=" << Variant0.GetValue<std::string>() << '\n';
+        std::cout << "Variant1.GetValue<std::string>()=" << Variant1.GetValue<std::string>() << '\n';
+
+        Variant0.Swap(Variant1);
+
+        std::cout << "Variant0.GetValue<std::string>()=" << Variant0.GetValue<std::string>() << '\n';
+        std::cout << "Variant1.GetValue<std::string>()=" << Variant1.GetValue<std::string>() << '\n';
+
+        Variant0.Swap(Variant1);
+
+        std::cout << "Variant0.GetValue<std::string>()=" << Variant0.GetValue<std::string>() << '\n';
+        std::cout << "Variant1.GetValue<std::string>()=" << Variant1.GetValue<std::string>() << '\n';
+
+        Variant0.Swap(Variant1);
+
+        std::cout << "Variant0.GetValue<std::string>()=" << Variant0.GetValue<std::string>() << '\n';
+        std::cout << "Variant1.GetValue<std::string>()=" << Variant1.GetValue<std::string>() << '\n';
+    }
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Emplace
+
+    {
+        TVariant<std::string, int32> Variant;
+        Variant.Emplace<std::string>("Long string long string long string long string long string long string");
+        Variant.Emplace<std::string>("Long string long string long string long string long string long string");
+        Variant.Emplace<std::string>("Long string long string long string long string long string long string");
+        Variant.Emplace<std::string>("Long string long string long string long string long string long string");
+        Variant.Emplace<std::string>("Long string long string long string long string long string long string");
+        Variant.Emplace<std::string>("Long string long string long string long string long string long string");
+        Variant.Emplace<std::string>("Long string long string long string long string long string long string");
+        Variant.Emplace<std::string>("Long string long string long string long string long string long string");
+        Variant.Emplace<std::string>("Long string long string long string long string long string long string");
+
+        std::cout << "Variant.GetValue<std::string>()=" << Variant.GetValue<std::string>() << '\n';
+    }
+    
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Comparison
+    
+    {
+        TVariant<std::string, int32> Variant0(TInPlaceType<int32>(), 10);
+        TVariant<std::string, int32> Variant1(TInPlaceType<int32>(), 20);
+
+        std::cout << "Variant0 == Variant1 -> " << std::boolalpha << (Variant0 == Variant1) << '\n';
+        std::cout << "Variant0 != Variant1 -> " << std::boolalpha << (Variant0 != Variant1) << '\n';
+
+        std::cout << "Variant0  < Variant1 -> " << std::boolalpha << (Variant0  < Variant1) << '\n';
+        std::cout << "Variant0 <= Variant1 -> " << std::boolalpha << (Variant0 <= Variant1) << '\n';
+
+        std::cout << "Variant0 >  Variant1 -> " << std::boolalpha << (Variant0 >  Variant1) << '\n';
+        std::cout << "Variant0 >= Variant1 -> " << std::boolalpha << (Variant0 >= Variant1) << '\n';
+    }
+
     return;
 }
 

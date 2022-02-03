@@ -248,6 +248,8 @@ public:
         return (Ptr != nullptr);
     }
 
+public:
+
     /**
      * Retrieve the raw pointer
      *

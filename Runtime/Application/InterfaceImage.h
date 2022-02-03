@@ -1,7 +1,10 @@
 #pragma once
 #include "RHI/RHIResourceViews.h"
 
-// Used when rendering images with ImGui
+
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// SInterfaceImage - Used when rendering images with ImGui
+
 struct SInterfaceImage
 {
     SInterfaceImage() = default;
