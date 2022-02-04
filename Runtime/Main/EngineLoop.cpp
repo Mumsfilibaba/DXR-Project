@@ -126,13 +126,13 @@ bool CEngineLoop::PreInitialize()
     }
 
     // TODO: Decide this via command line
-    ERHIModule RenderApi =
+    ERHIInstanceApi RenderApi =
 #if PLATFORM_MACOS
-        ERHIModule::Null;
+        ERHIInstanceApi::Null;
 #else
-        ERHIModule::D3D12;
+        ERHIInstanceApi::D3D12;
 #endif
-    if (!InitRHI(RenderApi))
+    if (!RHIInitialize(RenderApi))
     {
         return false;
     }
@@ -266,7 +266,7 @@ bool CEngineLoop::Release()
 
     CTextureFactory::Release();
 
-    ReleaseRHI();
+    RHIRelease();
 
     CDispatchQueue::Get().Release();
 

@@ -74,7 +74,7 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(uint32 Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if (Flag & EBufferFlags::BufferFlag_UAV)
+    if (Flag & ERHIBufferFlags::BufferFlag_UAV)
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
@@ -85,18 +85,18 @@ inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(uint32 Flag)
 inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(uint32 Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if (Flag & ETextureFlags::TextureFlag_UAV)
+    if (Flag & ERHITextureFlags::TextureFlag_UAV)
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
-    if (Flag & ETextureFlags::TextureFlag_RTV)
+    if (Flag & ERHITextureFlags::TextureFlag_RTV)
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     }
-    if (Flag & ETextureFlags::TextureFlag_DSV)
+    if (Flag & ERHITextureFlags::TextureFlag_DSV)
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-        if (!(Flag & ETextureFlags::TextureFlag_SRV))
+        if (!(Flag & ERHITextureFlags::TextureFlag_SRV))
         {
             Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
         }
@@ -385,26 +385,26 @@ inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology Prim
     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 }
 
-inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState ResourceState)
+inline D3D12_RESOURCE_STATES ConvertResourceState(ERHIResourceState ResourceState)
 {
     switch (ResourceState)
     {
-    case EResourceState::Common:                  return D3D12_RESOURCE_STATE_COMMON;
-    case EResourceState::CopyDest:                return D3D12_RESOURCE_STATE_COPY_DEST;
-    case EResourceState::CopySource:              return D3D12_RESOURCE_STATE_COPY_SOURCE;
-    case EResourceState::DepthRead:               return D3D12_RESOURCE_STATE_DEPTH_READ;
-    case EResourceState::DepthWrite:              return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-    case EResourceState::IndexBuffer:             return D3D12_RESOURCE_STATE_INDEX_BUFFER;
-    case EResourceState::NonPixelShaderResource:  return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-    case EResourceState::PixelShaderResource:     return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-    case EResourceState::Present:                 return D3D12_RESOURCE_STATE_PRESENT;
-    case EResourceState::RenderTarget:            return D3D12_RESOURCE_STATE_RENDER_TARGET;
-    case EResourceState::ResolveDest:             return D3D12_RESOURCE_STATE_RESOLVE_DEST;
-    case EResourceState::ResolveSource:           return D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
-    case EResourceState::ShadingRateSource:       return D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
-    case EResourceState::UnorderedAccess:         return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-    case EResourceState::VertexAndConstantBuffer: return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-    case EResourceState::GenericRead:             return D3D12_RESOURCE_STATE_GENERIC_READ;
+    case ERHIResourceState::Common:                  return D3D12_RESOURCE_STATE_COMMON;
+    case ERHIResourceState::CopyDest:                return D3D12_RESOURCE_STATE_COPY_DEST;
+    case ERHIResourceState::CopySource:              return D3D12_RESOURCE_STATE_COPY_SOURCE;
+    case ERHIResourceState::DepthRead:               return D3D12_RESOURCE_STATE_DEPTH_READ;
+    case ERHIResourceState::DepthWrite:              return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+    case ERHIResourceState::IndexBuffer:             return D3D12_RESOURCE_STATE_INDEX_BUFFER;
+    case ERHIResourceState::NonPixelShaderResource:  return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+    case ERHIResourceState::PixelShaderResource:     return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+    case ERHIResourceState::Present:                 return D3D12_RESOURCE_STATE_PRESENT;
+    case ERHIResourceState::RenderTarget:            return D3D12_RESOURCE_STATE_RENDER_TARGET;
+    case ERHIResourceState::ResolveDest:             return D3D12_RESOURCE_STATE_RESOLVE_DEST;
+    case ERHIResourceState::ResolveSource:           return D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
+    case ERHIResourceState::ShadingRateSource:       return D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
+    case ERHIResourceState::UnorderedAccess:         return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+    case ERHIResourceState::VertexAndConstantBuffer: return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+    case ERHIResourceState::GenericRead:             return D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
     return D3D12_RESOURCE_STATES();

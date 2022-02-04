@@ -286,7 +286,6 @@ public:
      * @param Src: Source buffer to copy from
      * @param CopyInfo: Information about the copy operation
      */
-    
     virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SCopyBufferInfo& CopyInfo) = 0;
     
     /**
@@ -350,45 +349,127 @@ public:
         const SRayTracingShaderResources* HitGroupResources,
         uint32 NumHitGroupResources) = 0;
 
-    /* Generate mip-levels for a texture. Works with Texture2D and TextureCubes */
+    /**
+     * Generate MipLevels for a texture. Works with Texture2D and TextureCubes.
+     * 
+     * @param Texture: Texture to generate MipLevels for
+     */
     virtual void GenerateMips(CRHITexture* Texture) = 0;
 
-    /* Transition the ResourceState of a texture resource */
-    virtual void TransitionTexture(CRHITexture* Texture, EResourceState BeforeState, EResourceState AfterState) = 0;
-    /* Transition the ResourceState of a buffer resource */
-    virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceState BeforeState, EResourceState AfterState) = 0;
+    /**
+     * Transition the ResourceState of a Texture resource 
+     * 
+     * @param Texture: Texture to transition ResourceState for
+     * @param BeforeState: State that the Texture had before the transition
+     * @param AfterState: State that the Texture have after the transition
+     */
+    virtual void TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState) = 0;
+    
+    /**
+     * Transition the ResourceState of a Buffer resource
+     *
+     * @param Buffer: Buffer to transition ResourceState for
+     * @param BeforeState: State that the Buffer had before the transition
+     * @param AfterState: State that the Buffer have after the transition
+     */
+    virtual void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState) = 0;
 
-    /* Add a UnorderedAccessBarrier for a texture resource, which should be issued before reading of a resource in UnorderedAccessState */
+    /**
+     * Add a UnorderedAccessBarrier for a Texture resource, which should be issued before reading of a resource in UnorderedAccessState 
+     * 
+     * @param Texture: Texture to issue barrier for
+     */
     virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) = 0;
-    /* Add a UnorderedAccessBarrier for a buffer resource, which should be issued before reading of a resource in UnorderedAccessState */
+    
+    /**
+     * Add a UnorderedAccessBarrier for a Buffer resource, which should be issued before reading of a resource in UnorderedAccessState
+     *
+     * @param Buffer: Buffer to issue barrier for
+     */
     virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer) = 0;
 
-    /* Issue a draw-call */
+    /**
+     * Issue a draw-call
+     * 
+     * @param VertexCount: Number of vertices
+     * @param StartVertexLocation: Offset of the vertices
+     */
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) = 0;
-    /* Issue a draw-call for drawing with an IndexBuffer */
+
+    /**
+     * Issue a draw-call for drawing with an IndexBuffer
+     *
+     * @param IndexCount: Number of indices
+     * @param StartIndexLocation: Offset in the index-buffer
+     * @param BaseVertexLocation: Index of the vertex that should be considered as index zero
+     */
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
-    /* Issue a draw-call for drawing instanced */
+
+    /**
+     * Issue a draw-call for drawing instanced
+     *
+     * @param VertexCountPerInstance: Number of vertices per instance
+     * @param InstanceCount: Number of instances
+     * @param StartVertexLocation: Offset of the vertices
+     * @param StartInstanceLocation: Offset of the instances
+     */
     virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) = 0;
-    /* Issue a draw-call for drawing instanced with an IndexBuffer */
+    
+    /**
+     * Issue a draw-call for drawing instanced with an IndexBuffer
+     *
+     * @param IndexCountPerInstance: Number of indices per instance
+     * @param InstanceCount: Number of instances
+     * @param StartIndexLocation: Offset of the index to start with
+     * @param BaseVertexLocation: Offset of the vertices
+     * @param StartInstanceLocation: Offset of the instances
+     */
     virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) = 0;
 
-    /* Issues a compute dispatch */
+    /**
+     * Issues a compute dispatch 
+     * 
+     * @param WorkGroupX: Number of work-groups in x-direction
+     * @param WorkGroupY: Number of work-groups in y-direction
+     * @param WorkGroupZ: Number of work-groups in z-direction
+     */
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
 
-    /* Issues a ray generation dispatch */
-    virtual void DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) = 0;
+    /**
+     * Issues a ray generation dispatch 
+     * 
+     * @param Scene: Scene to trace rays in
+     * @param PipelineState: PipelineState to use when tracing
+     * @param Width: Number of rays in x-direction
+     * @param Height: Number of rays in y-direction
+     * @param Depth: Number of rays in z-direction
+     */ 
+    virtual void DispatchRays(CRHIRayTracingScene* Scene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
 
-    /* Clears the state of the context, clearing all bound references currently bound */
+    /**
+     * Clears the state of the context, clearing all bound references currently bound
+     */
     virtual void ClearState() = 0;
 
-    /* Waits for all current execution on the GPU to finish */
+    /**
+     * Waits for all current execution on the GPU to finish 
+     */
     virtual void Flush() = 0;
 
-    /* Inserts a marker on the GPU timeline */
+    /**
+     * Inserts a marker on the GPU timeline 
+     * 
+     * @param Message: Message for the marker
+     */
     virtual void InsertMarker(const CString& Message) = 0;
 
-    /* Begins a PIX capture event, currently only available on D3D12 */
+    /**
+     *  Begins a PIX capture event, currently only available on D3D12 
+     */
     virtual void BeginExternalCapture() = 0;
-    /* Ends a PIX capture event, currently only available on D3D12 */
+    
+    /**
+     * Ends a PIX capture event, currently only available on D3D12 
+     */
     virtual void EndExternalCapture() = 0;
 };

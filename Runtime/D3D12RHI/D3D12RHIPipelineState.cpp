@@ -11,7 +11,7 @@ CD3D12RHIGraphicsPipelineState::CD3D12RHIGraphicsPipelineState(CD3D12Device* InD
 {
 }
 
-bool CD3D12RHIGraphicsPipelineState::Init(const SGraphicsPipelineStateCreateInfo& CreateInfo)
+bool CD3D12RHIGraphicsPipelineState::Init(const SRHIGraphicsPipelineStateInfo& CreateInfo)
 {
     struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) SGraphicsPipelineStream
     {
@@ -505,7 +505,7 @@ CD3D12RHIRayTracingPipelineState::CD3D12RHIRayTracingPipelineState(CD3D12Device*
 {
 }
 
-bool CD3D12RHIRayTracingPipelineState::Init(const SRayTracingPipelineStateCreateInfo& CreateInfo)
+bool CD3D12RHIRayTracingPipelineState::Init(const SRHIRayTracingPipelineStateInfo& CreateInfo)
 {
     SD3D12RayTracingPipelineStateStream PipelineStream;
 

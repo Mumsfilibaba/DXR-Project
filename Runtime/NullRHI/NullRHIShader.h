@@ -11,6 +11,9 @@
 
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIComputeShader
+
 class CNullRHIComputeShader : public CRHIComputeShader
 {
 public:
@@ -25,18 +28,21 @@ public:
     }
 };
 
-template<typename TBaseShader>
-class TNullRHIShader : public TBaseShader
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TNullRHIShader
+
+template<typename BaseShaderType>
+class TNullRHIShader : public BaseShaderType
 {
 public:
     TNullRHIShader()
-        : TBaseShader()
+        : BaseShaderType()
     {
     }
 
-    virtual void GetShaderParameterInfo(SShaderParameterInfo& OutShaderParameterInfo) const override
+    virtual void GetShaderParameterInfo(SRHIShaderParameterInfo& OutShaderParameterInfo) const override
     {
-        OutShaderParameterInfo = SShaderParameterInfo();
+        OutShaderParameterInfo = SRHIShaderParameterInfo();
     }
 
     virtual bool GetShaderResourceViewIndexByName(const CString& InName, uint32& OutIndex) const override

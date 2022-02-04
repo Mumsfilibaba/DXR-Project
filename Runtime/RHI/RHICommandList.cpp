@@ -2,6 +2,9 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CCommandAllocator
+
 CCommandAllocator::CCommandAllocator(uint32 StartSize)
     : CurrentMemory(nullptr)
     , Size(StartSize)
@@ -90,9 +93,15 @@ void CCommandAllocator::ReleaseDiscardedMemory()
     DiscardedMemory.Empty();
 }
 
-/* CommandQueue */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandQueue
 
 CRHICommandQueue CRHICommandQueue::Instance;
+
+CRHICommandQueue& CRHICommandQueue::Get()
+{
+    return Instance;
+}
 
 CRHICommandQueue::CRHICommandQueue()
     : CmdContext(nullptr)
@@ -110,7 +119,6 @@ void CRHICommandQueue::ExecuteCommandList(CRHICommandList& CmdList)
     {
         TRACE_FUNCTION_SCOPE();
 
-        // The statistics are only valid for the last call to execute command-list 
         ResetStatistics();
 
         InternalExecuteCommandList(CmdList);
@@ -127,7 +135,6 @@ void CRHICommandQueue::ExecuteCommandLists(CRHICommandList* const* CmdLists, uin
     {
         TRACE_FUNCTION_SCOPE();
 
-        // The statistics are only valid for the last call to execute commandlist 
         ResetStatistics();
 
         for (uint32 i = 0; i < NumCmdLists; i++)

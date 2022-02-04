@@ -72,7 +72,7 @@ private:
 class CD3D12RHIBaseIndexBuffer : public CRHIIndexBuffer, public CD3D12BaseBuffer
 {
 public:
-    CD3D12RHIBaseIndexBuffer(CD3D12Device* InDevice, EIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
+    CD3D12RHIBaseIndexBuffer(CD3D12Device* InDevice, ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
         : CRHIIndexBuffer(InIndexFormat, InNumIndices, InFlags)
         , CD3D12BaseBuffer(InDevice)
         , View()
@@ -86,10 +86,10 @@ public:
 
         CMemory::Memzero(&View);
 
-        EIndexFormat IndexFormat = GetFormat();
-        if (IndexFormat != EIndexFormat::Unknown)
+        ERHIIndexFormat IndexFormat = GetFormat();
+        if (IndexFormat != ERHIIndexFormat::Unknown)
         {
-            View.Format = IndexFormat == EIndexFormat::uint16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+            View.Format = IndexFormat == ERHIIndexFormat::uint16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
             View.SizeInBytes = GetNumIndicies() * GetStrideFromIndexFormat(IndexFormat);
             View.BufferLocation = CD3D12BaseBuffer::Resource->GetGPUVirtualAddress();
         }
@@ -261,7 +261,7 @@ public:
 class CD3D12RHIIndexBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseIndexBuffer>
 {
 public:
-    CD3D12RHIIndexBuffer(CD3D12Device* InDevice, EIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
+    CD3D12RHIIndexBuffer(CD3D12Device* InDevice, ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
         : TD3D12RHIBaseBuffer<CD3D12RHIBaseIndexBuffer>(InDevice, InIndexFormat, InNumIndices, InFlags)
     {
     }

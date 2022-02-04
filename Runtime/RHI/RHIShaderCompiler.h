@@ -2,6 +2,9 @@
 #include "RHIModule.h"
 #include "RHIShader.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EShaderModel
+
 enum class EShaderModel
 {
     Unknown = 0,
@@ -14,6 +17,9 @@ enum class EShaderModel
     SM_6_4 = 7,
     SM_6_5 = 8,
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SShaderDefine
 
 struct SShaderDefine
 {
@@ -34,52 +40,29 @@ struct SShaderDefine
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// IRHIShaderCompiler
 
 class IRHIShaderCompiler
 {
 public:
     virtual ~IRHIShaderCompiler() = default;
 
-    virtual bool CompileFromFile(
-        const CString& FilePath,
-        const CString& EntryPoint,
-        const TArray<SShaderDefine>* Defines,
-        EShaderStage ShaderStage,
-        EShaderModel ShaderModel,
-        TArray<uint8>& Code) = 0;
-
-    virtual bool CompileShader(
-        const CString& ShaderSource,
-        const CString& EntryPoint,
-        const TArray<SShaderDefine>* Defines,
-        EShaderStage ShaderStage,
-        EShaderModel ShaderModel,
-        TArray<uint8>& Code) = 0;
+    virtual bool CompileFromFile(const CString& FilePath, const CString& EntryPoint, const TArray<SShaderDefine>* Defines, ERHIShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) = 0;
+    virtual bool CompileShader(const CString& ShaderSource, const CString& EntryPoint, const TArray<SShaderDefine>* Defines, ERHIShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIShaderCompiler
 
 class CRHIShaderCompiler
 {
 public:
-    static FORCEINLINE bool CompileFromFile(
-        const CString& FilePath,
-        const CString& EntryPoint,
-        const TArray<SShaderDefine>* Defines,
-        EShaderStage ShaderStage,
-        EShaderModel ShaderModel,
-        TArray<uint8>& Code)
+    static FORCEINLINE bool CompileFromFile(const CString& FilePath, const CString& EntryPoint, const TArray<SShaderDefine>* Defines, ERHIShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
     {
         return GShaderCompiler->CompileFromFile(FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
 
-    static FORCEINLINE bool CompileShader(
-        const CString& ShaderSource,
-        const CString& EntryPoint,
-        const TArray<SShaderDefine>* Defines,
-        EShaderStage ShaderStage,
-        EShaderModel ShaderModel,
-        TArray<uint8>& Code)
+    static FORCEINLINE bool CompileShader(const CString& ShaderSource, const CString& EntryPoint, const TArray<SShaderDefine>* Defines, ERHIShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
     {
         return GShaderCompiler->CompileShader(ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }

@@ -13,7 +13,7 @@
 class CD3D12RHIInputLayoutState : public CRHIInputLayoutState, public CD3D12DeviceChild
 {
 public:
-    CD3D12RHIInputLayoutState(CD3D12Device* InDevice, const SInputLayoutStateCreateInfo& CreateInfo)
+    CD3D12RHIInputLayoutState(CD3D12Device* InDevice, const SRHIInputLayoutStateInfo& CreateInfo)
         : CRHIInputLayoutState()
         , CD3D12DeviceChild(InDevice)
         , SemanticNames()
@@ -155,7 +155,7 @@ public:
     CD3D12RHIGraphicsPipelineState(CD3D12Device* InDevice);
     ~CD3D12RHIGraphicsPipelineState() = default;
 
-    bool Init(const SGraphicsPipelineStateCreateInfo& CreateInfo);
+    bool Init(const SRHIGraphicsPipelineStateInfo& CreateInfo);
 
     virtual void SetName(const CString& InName) override final
     {
@@ -253,7 +253,7 @@ public:
     CD3D12RHIRayTracingPipelineState(CD3D12Device* InDevice);
     ~CD3D12RHIRayTracingPipelineState() = default;
 
-    bool Init(const SRayTracingPipelineStateCreateInfo& CreateInfo);
+    bool Init(const SRHIRayTracingPipelineStateInfo& CreateInfo);
 
     virtual void SetName(const CString& InName) override
     {

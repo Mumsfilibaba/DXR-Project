@@ -1,7 +1,7 @@
 #include "ScreenSpaceOcclusionRenderer.h"
 #include "Renderer.h"
 
-#include "RHI/RHIInterface.h"
+#include "RHI/RHIInstance.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Core/Math/Vector2.h"
@@ -30,7 +30,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     }
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/SSAO.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/SSAO.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -47,7 +47,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAOShader->SetName("SSAO Shader");
     }
 
-    SComputePipelineStateCreateInfo PipelineStateInfo;
+    SRHIComputePipelineStateInfo PipelineStateInfo;
     PipelineStateInfo.Shader = SSAOShader.Get();
 
     PipelineState = RHICreateComputePipelineState(PipelineStateInfo);
@@ -100,7 +100,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAONoise.Emplace(0.0f);
     }
 
-    SSAONoiseTex = RHICreateTexture2D(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, EResourceState::NonPixelShaderResource, nullptr);
+    SSAONoiseTex = RHICreateTexture2D(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, ERHIResourceState::NonPixelShaderResource, nullptr);
     if (!SSAONoiseTex)
     {
         CDebug::DebugBreak();
@@ -113,18 +113,18 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     CRHICommandList CmdList;
 
-    CmdList.TransitionTexture(FrameResources.SSAOBuffer.Get(), EResourceState::Common, EResourceState::NonPixelShaderResource);
-    CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceState::NonPixelShaderResource, EResourceState::CopyDest);
+    CmdList.TransitionTexture(FrameResources.SSAOBuffer.Get(), ERHIResourceState::Common, ERHIResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(SSAONoiseTex.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::CopyDest);
 
     CmdList.UpdateTexture2D(SSAONoiseTex.Get(), 4, 4, 0, SSAONoise.Data());
 
-    CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceState::CopyDest, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(SSAONoiseTex.Get(), ERHIResourceState::CopyDest, ERHIResourceState::NonPixelShaderResource);
 
     CRHICommandQueue::Get().ExecuteCommandList(CmdList);
 
     const uint32 Stride = sizeof(CVector3);
-    SResourceData SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
-    SSAOSamples = RHICreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, EResourceState::Common, &SSAOSampleData);
+    SRHIResourceData SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
+    SSAOSamples = RHICreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, ERHIResourceState::Common, &SSAOSampleData);
     if (!SSAOSamples)
     {
         CDebug::DebugBreak();
@@ -150,7 +150,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     Defines.Emplace("HORIZONTAL_PASS", "1");
 
     // Load shader
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Blur.hlsl", "Main", &Defines, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -167,7 +167,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         BlurHorizontalShader->SetName("SSAO Horizontal Blur Shader");
     }
 
-    SComputePipelineStateCreateInfo PSOProperties;
+    SRHIComputePipelineStateInfo PSOProperties;
     PSOProperties.Shader = BlurHorizontalShader.Get();
 
     BlurHorizontalPSO = RHICreateComputePipelineState(PSOProperties);
@@ -184,7 +184,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     Defines.Clear();
     Defines.Emplace("VERTICAL_PASS", "1");
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Blur.hlsl", "Main", &Defines, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -265,8 +265,8 @@ void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResou
     AddDebugTexture(
         MakeSharedRef<CRHIShaderResourceView>(SSAONoiseTex->GetShaderResourceView()),
         SSAONoiseTex,
-        EResourceState::NonPixelShaderResource,
-        EResourceState::NonPixelShaderResource);
+        ERHIResourceState::NonPixelShaderResource,
+        ERHIResourceState::NonPixelShaderResource);
 
     CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 1);
@@ -311,7 +311,7 @@ bool CScreenSpaceOcclusionRenderer::CreateRenderTarget(SFrameResources& FrameRes
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
     const uint32 Flags = TextureFlags_RWTexture;
 
-    FrameResources.SSAOBuffer = RHICreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceState::Common, nullptr);
+    FrameResources.SSAOBuffer = RHICreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, ERHIResourceState::Common, nullptr);
     if (!FrameResources.SSAOBuffer)
     {
         CDebug::DebugBreak();

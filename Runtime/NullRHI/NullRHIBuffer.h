@@ -11,6 +11,9 @@
 
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIVertexBuffer
+
 class CNullRHIVertexBuffer : public CRHIVertexBuffer
 {
 public:
@@ -20,14 +23,20 @@ public:
     }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIIndexBuffer
+
 class CNullRHIIndexBuffer : public CRHIIndexBuffer
 {
 public:
-    CNullRHIIndexBuffer(EIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
+    CNullRHIIndexBuffer(ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
         : CRHIIndexBuffer(InIndexFormat, InNumIndices, InFlags)
     {
     }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIConstantBuffer
 
 class CNullRHIConstantBuffer : public CRHIConstantBuffer
 {
@@ -38,6 +47,9 @@ public:
     }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIStructuredBuffer
+
 class CNullRHIStructuredBuffer : public CRHIStructuredBuffer
 {
 public:
@@ -47,14 +59,17 @@ public:
     }
 };
 
-template<typename TBaseBuffer>
-class TNullRHIBuffer : public TBaseBuffer
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TNullRHIBuffer
+
+template<typename BaseBufferType>
+class TNullRHIBuffer : public BaseBufferType
 {
 public:
 
     template<typename... ArgTypes>
     TNullRHIBuffer(ArgTypes&&... Args)
-        : TBaseBuffer(Forward<ArgTypes>(Args)...)
+        : BaseBufferType(Forward<ArgTypes>(Args)...)
     {
     }
 

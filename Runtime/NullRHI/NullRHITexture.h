@@ -13,6 +13,9 @@
 
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHITexture2D
+
 class CNullRHITexture2D : public CRHITexture2D
 {
 public:
@@ -45,6 +48,9 @@ private:
     TSharedRef<CNullRHIUnorderedAccessView> UnorderedAccessView;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHITexture2DArray
+
 class CNullRHITexture2DArray : public CRHITexture2DArray
 {
 public:
@@ -53,6 +59,9 @@ public:
     {
     }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHITextureCube
 
 class CNullRHITextureCube : public CRHITextureCube
 {
@@ -63,6 +72,9 @@ public:
     }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHITextureCubeArray
+
 class CNullRHITextureCubeArray : public CRHITextureCubeArray
 {
 public:
@@ -71,6 +83,9 @@ public:
     {
     }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHITexture3D
 
 class CNullRHITexture3D : public CRHITexture3D
 {
@@ -81,13 +96,16 @@ public:
     }
 };
 
-template<typename TBaseTexture>
-class TNullRHITexture : public TBaseTexture
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TNullRHITexture
+
+template<typename BaseTextureType>
+class TNullRHITexture : public BaseTextureType
 {
 public:
     template<typename... ArgTypes>
     TNullRHITexture(ArgTypes&&... Args)
-        : TBaseTexture(Forward<ArgTypes>(Args)...)
+        : BaseTextureType(Forward<ArgTypes>(Args)...)
         , ShaderResourceView(dbg_new CNullRHIShaderResourceView())
     {
     }

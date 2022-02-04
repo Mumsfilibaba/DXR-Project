@@ -7,7 +7,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Resources/TextureFactory.h"
 
-#include "RHI/RHIInterface.h"
+#include "RHI/RHIInstance.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShaderCompiler.h"
 
@@ -69,7 +69,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         })*";
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileShader(VSSource, "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileShader(VSSource, "Main", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -100,7 +100,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
             return OutColor;
         })*";
 
-    if (!CRHIShaderCompiler::CompileShader(PSSource, "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileShader(PSSource, "Main", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -113,7 +113,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    SInputLayoutStateCreateInfo InputLayoutInfo =
+    SRHIInputLayoutStateInfo InputLayoutInfo =
     {
         { "POSITION", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EInputClassification::Vertex, 0 },
         { "TEXCOORD", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EInputClassification::Vertex, 0 },
@@ -131,7 +131,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         InputLayout->SetName("ImGui InputLayoutState");
     }
 
-    SDepthStencilStateCreateInfo DepthStencilStateInfo;
+    SRHIDepthStencilStateInfo DepthStencilStateInfo;
     DepthStencilStateInfo.bDepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
@@ -146,7 +146,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         DepthStencilState->SetName("ImGui DepthStencilState");
     }
 
-    SRasterizerStateCreateInfo RasterizerStateInfo;
+    SRHIRasterizerStateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -160,7 +160,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         RasterizerState->SetName("ImGui RasterizerState");
     }
 
-    SBlendStateCreateInfo BlendStateInfo;
+    SRHIBlendStateInfo BlendStateInfo;
     BlendStateInfo.bIndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].bBlendEnable = true;
     BlendStateInfo.RenderTarget[0].SrcBlend = EBlend::SrcAlpha;
@@ -194,7 +194,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         BlendStateBlending->SetName("ImGui BlendState No Blending");
     }
 
-    SGraphicsPipelineStateCreateInfo PSOProperties;
+    SRHIGraphicsPipelineStateInfo PSOProperties;
     PSOProperties.ShaderState.VertexShader = VShader.Get();
     PSOProperties.ShaderState.PixelShader = PShader.Get();
     PSOProperties.InputLayoutState = InputLayout.Get();
@@ -221,7 +221,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    VertexBuffer = RHICreateVertexBuffer<ImDrawVert>(1024 * 1024, BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+    VertexBuffer = RHICreateVertexBuffer<ImDrawVert>(1024 * 1024, BufferFlag_Default, ERHIResourceState::VertexAndConstantBuffer, nullptr);
     if (!VertexBuffer)
     {
         return false;
@@ -231,8 +231,8 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         VertexBuffer->SetName("ImGui VertexBuffer");
     }
 
-    const EIndexFormat IndexFormat = (sizeof(ImDrawIdx) == 2) ? EIndexFormat::uint16 : EIndexFormat::uint32;
-    IndexBuffer = RHICreateIndexBuffer(IndexFormat, 1024 * 1024, BufferFlag_Default, EResourceState::Common, nullptr);
+    const ERHIIndexFormat IndexFormat = (sizeof(ImDrawIdx) == 2) ? ERHIIndexFormat::uint16 : ERHIIndexFormat::uint32;
+    IndexBuffer = RHICreateIndexBuffer(IndexFormat, 1024 * 1024, BufferFlag_Default, ERHIResourceState::Common, nullptr);
     if (!IndexBuffer)
     {
         return false;
@@ -242,7 +242,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         IndexBuffer->SetName("ImGui IndexBuffer");
     }
 
-    SSamplerStateCreateInfo CreateInfo;
+    SRHISamplerStateInfo CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;
@@ -299,8 +299,8 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
     CmdList.SetBlendFactor(SColorF(0.0f, 0.0f, 0.0f, 0.0f));
 
     // TODO: Do not change to GenericRead, change to vertex/constantbuffer
-    CmdList.TransitionBuffer(VertexBuffer.Get(), EResourceState::GenericRead, EResourceState::CopyDest);
-    CmdList.TransitionBuffer(IndexBuffer.Get(), EResourceState::GenericRead, EResourceState::CopyDest);
+    CmdList.TransitionBuffer(VertexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest);
+    CmdList.TransitionBuffer(IndexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest);
 
     uint32 VertexOffset = 0;
     uint32 IndexOffset = 0;
@@ -318,8 +318,8 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
         IndexOffset += IndexSize;
     }
 
-    CmdList.TransitionBuffer(VertexBuffer.Get(), EResourceState::CopyDest, EResourceState::GenericRead);
-    CmdList.TransitionBuffer(IndexBuffer.Get(), EResourceState::CopyDest, EResourceState::GenericRead);
+    CmdList.TransitionBuffer(VertexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead);
+    CmdList.TransitionBuffer(IndexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead);
 
     CmdList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
 
@@ -339,12 +339,12 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
                 SInterfaceImage* Image = reinterpret_cast<SInterfaceImage*>(Cmd->TextureId);
                 RenderedImages.Emplace(Image);
 
-                if (Image->BeforeState != EResourceState::PixelShaderResource)
+                if (Image->BeforeState != ERHIResourceState::PixelShaderResource)
                 {
-                    CmdList.TransitionTexture(Image->Image.Get(), Image->BeforeState, EResourceState::PixelShaderResource);
+                    CmdList.TransitionTexture(Image->Image.Get(), Image->BeforeState, ERHIResourceState::PixelShaderResource);
 
                     // TODO: Another way to do this? May break somewhere?
-                    Image->BeforeState = EResourceState::PixelShaderResource;
+                    Image->BeforeState = ERHIResourceState::PixelShaderResource;
                 }
 
                 CmdList.SetShaderResourceView(PShader.Get(), Image->ImageView.Get(), 0);
@@ -373,9 +373,9 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
     {
         Assert(Image != nullptr);
 
-        if (Image->AfterState != EResourceState::PixelShaderResource)
+        if (Image->AfterState != ERHIResourceState::PixelShaderResource)
         {
-            CmdList.TransitionTexture(Image->Image.Get(), EResourceState::PixelShaderResource, Image->AfterState);
+            CmdList.TransitionTexture(Image->Image.Get(), ERHIResourceState::PixelShaderResource, Image->AfterState);
         }
     }
 

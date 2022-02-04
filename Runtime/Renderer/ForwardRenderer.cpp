@@ -1,7 +1,7 @@
 #include "ForwardRenderer.h"
 #include "MeshDrawCommand.h"
 
-#include "RHI/RHIInterface.h"
+#include "RHI/RHIInstance.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Mesh.h"
@@ -22,7 +22,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     };
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "VSMain", &Defines, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -39,7 +39,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         VShader->SetName("ForwardPass VertexShader");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "PSMain", &Defines, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -56,7 +56,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         PShader->SetName("ForwardPass PixelShader");
     }
 
-    SDepthStencilStateCreateInfo DepthStencilStateInfo;
+    SRHIDepthStencilStateInfo DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -72,7 +72,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         DepthStencilState->SetName("ForwardPass DepthStencilState");
     }
 
-    SRasterizerStateCreateInfo RasterizerStateInfo;
+    SRHIRasterizerStateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -86,7 +86,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         RasterizerState->SetName("ForwardPass RasterizerState");
     }
 
-    SBlendStateCreateInfo BlendStateInfo;
+    SRHIBlendStateInfo BlendStateInfo;
     BlendStateInfo.bIndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].bBlendEnable = true;
 
@@ -101,7 +101,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         BlendState->SetName("ForwardPass BlendState");
     }
 
-    SGraphicsPipelineStateCreateInfo PSOProperties;
+    SRHIGraphicsPipelineStateInfo PSOProperties;
     PSOProperties.ShaderState.VertexShader = VShader.Get();
     PSOProperties.ShaderState.PixelShader = PShader.Get();
     PSOProperties.InputLayoutState = FrameResources.StdInputLayout.Get();
@@ -141,7 +141,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
 
     TRACE_SCOPE("ForwardPass");
 
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource);
 
     const float RenderWidth = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
@@ -214,7 +214,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
         CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
     }
 
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End ForwardPass");
 }

@@ -3,6 +3,9 @@
 
 #include "Core/Math/Float.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ESamplerMode
+
 enum class ESamplerMode : uint8
 {
     Unknown = 0,
@@ -25,6 +28,9 @@ inline const char* ToString(ESamplerMode SamplerMode)
     default: return "Unknown";
     }
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ESamplerFilter
 
 enum class ESamplerFilter : uint8
 {
@@ -76,8 +82,9 @@ inline const char* ToString(ESamplerFilter SamplerFilter)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHISamplerStateInfo
 
-struct SSamplerStateCreateInfo
+struct SRHISamplerStateInfo
 {
     ESamplerMode    AddressU = ESamplerMode::Clamp;
     ESamplerMode    AddressV = ESamplerMode::Clamp;
@@ -90,6 +97,10 @@ struct SSamplerStateCreateInfo
     float           MinLOD = -FLT_MAX;
     float           MaxLOD = FLT_MAX;
 };
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHISamplerState
 
 class CRHISamplerState : public CRHIObject
 {

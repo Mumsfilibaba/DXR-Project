@@ -6,12 +6,9 @@
 #include "Core/Containers/StaticArray.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIShaderResourceViewInfo
 
-using DepthStencilViewCube = TStaticArray<TSharedRef<CRHIDepthStencilView>, 6>;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-struct SShaderResourceViewCreateInfo
+struct SRHIShaderResourceViewInfo
 {
     enum class EType
     {
@@ -25,7 +22,7 @@ struct SShaderResourceViewCreateInfo
         StructuredBuffer = 8,
     };
 
-    FORCEINLINE SShaderResourceViewCreateInfo(EType InType)
+    FORCEINLINE SRHIShaderResourceViewInfo(EType InType)
         : Type(InType)
     {
     }
@@ -101,8 +98,9 @@ struct SShaderResourceViewCreateInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIUnorderedAccessViewInfo
 
-struct SUnorderedAccessViewCreateInfo
+struct SRHIUnorderedAccessViewInfo
 {
     enum class EType
     {
@@ -116,7 +114,7 @@ struct SUnorderedAccessViewCreateInfo
         StructuredBuffer = 8,
     };
 
-    FORCEINLINE SUnorderedAccessViewCreateInfo(EType InType)
+    FORCEINLINE SRHIUnorderedAccessViewInfo(EType InType)
         : Type(InType)
     {
     }
@@ -182,8 +180,9 @@ struct SUnorderedAccessViewCreateInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIRenderTargetViewInfo
 
-struct SRenderTargetViewCreateInfo
+struct SRHIRenderTargetViewInfo
 {
     // TODO: Add support for texel buffers?
     enum class EType
@@ -195,7 +194,7 @@ struct SRenderTargetViewCreateInfo
         Texture3D = 5,
     };
 
-    FORCEINLINE SRenderTargetViewCreateInfo(EType InType)
+    FORCEINLINE SRHIRenderTargetViewInfo(EType InType)
         : Type(InType)
     {
     }
@@ -240,8 +239,9 @@ struct SRenderTargetViewCreateInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIDepthStencilViewInfo
 
-struct SDepthStencilViewCreateInfo
+struct SRHIDepthStencilViewInfo
 {
     enum class EType
     {
@@ -251,7 +251,7 @@ struct SDepthStencilViewCreateInfo
         TextureCubeArray = 4,
     };
 
-    FORCEINLINE SDepthStencilViewCreateInfo(EType InType)
+    FORCEINLINE SRHIDepthStencilViewInfo(EType InType)
         : Type(InType)
     {
     }
@@ -289,19 +289,32 @@ struct SDepthStencilViewCreateInfo
     };
 };
 
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIShaderResourceView
 
 class CRHIShaderResourceView : public CRHIObject
 {
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIUnorderedAccessView
+
 class CRHIUnorderedAccessView : public CRHIObject
 {
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIDepthStencilView
+
+using DepthStencilViewCube = TStaticArray<TSharedRef<CRHIDepthStencilView>, 6>;
+
 class CRHIDepthStencilView : public CRHIObject
 {
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRenderTargetView
 
 class CRHIRenderTargetView : public CRHIObject
 {

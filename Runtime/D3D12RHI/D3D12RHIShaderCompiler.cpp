@@ -34,29 +34,29 @@ enum DxilFourCC
 
 #undef MAKEFOURCC
 
-static LPCWSTR GetShaderStageText(EShaderStage Stage)
+static LPCWSTR GetShaderStageText(ERHIShaderStage Stage)
 {
     switch (Stage)
     {
         // Compute
-    case EShaderStage::Compute:       return L"cs";
+    case ERHIShaderStage::Compute:       return L"cs";
 
         // Graphics
-    case EShaderStage::Vertex:        return L"vs";
-    case EShaderStage::Hull:          return L"hs";
-    case EShaderStage::Domain:        return L"ds";
-    case EShaderStage::Geometry:      return L"gs";
-    case EShaderStage::Pixel:         return L"ps";
+    case ERHIShaderStage::Vertex:        return L"vs";
+    case ERHIShaderStage::Hull:          return L"hs";
+    case ERHIShaderStage::Domain:        return L"ds";
+    case ERHIShaderStage::Geometry:      return L"gs";
+    case ERHIShaderStage::Pixel:         return L"ps";
 
         // New Graphics Pipeline
-    case EShaderStage::Mesh:          return L"ms";
-    case EShaderStage::Amplification: return L"as";
+    case ERHIShaderStage::Mesh:          return L"ms";
+    case ERHIShaderStage::Amplification: return L"as";
 
         // Ray tracing
-    case EShaderStage::RayGen:
-    case EShaderStage::RayAnyHit:
-    case EShaderStage::RayClosestHit:
-    case EShaderStage::RayMiss:       return L"lib";
+    case ERHIShaderStage::RayGen:
+    case ERHIShaderStage::RayAnyHit:
+    case ERHIShaderStage::RayClosestHit:
+    case ERHIShaderStage::RayMiss:       return L"lib";
     }
 
     return L"xxx";
@@ -186,7 +186,7 @@ bool CD3D12RHIShaderCompiler::CompileFromFile(
     const CString& FilePath,
     const CString& EntryPoint,
     const TArray<SShaderDefine>* Defines,
-    EShaderStage ShaderStage,
+    ERHIShaderStage ShaderStage,
     EShaderModel ShaderModel,
     TArray<uint8>& Code)
 {
@@ -212,7 +212,7 @@ bool CD3D12RHIShaderCompiler::CompileShader(
     const CString& ShaderSource,
     const CString& EntryPoint,
     const TArray<SShaderDefine>* Defines,
-    EShaderStage ShaderStage,
+    ERHIShaderStage ShaderStage,
     EShaderModel ShaderModel,
     TArray<uint8>& Code)
 {
@@ -329,7 +329,7 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
     IDxcBlob* SourceBlob,
     LPCWSTR FilePath,
     LPCWSTR Entrypoint,
-    EShaderStage ShaderStage,
+    ERHIShaderStage ShaderStage,
     EShaderModel ShaderModel,
     const TArray<SShaderDefine>* Defines,
     TArray<uint8>& Code)

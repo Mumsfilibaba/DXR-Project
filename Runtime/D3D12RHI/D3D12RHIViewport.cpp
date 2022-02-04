@@ -1,5 +1,5 @@
 #include "D3D12CommandQueue.h"
-#include "D3D12RHIInterface.h"
+#include "D3D12RHIInstance.h"
 #include "D3D12RHIViewport.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
@@ -199,7 +199,7 @@ bool CD3D12RHIViewport::RetriveBackBuffers()
 
     if (BackBufferViews.Size() < (int32)NumBackBuffers)
     {
-        CD3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RHICore->GetRenderTargetOfflineDescriptorHeap();
+        CD3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RHIInstance->GetRenderTargetOfflineDescriptorHeap();
         BackBufferViews.Resize(NumBackBuffers);
 
         for (TSharedRef<CD3D12RHIRenderTargetView>& View : BackBufferViews)

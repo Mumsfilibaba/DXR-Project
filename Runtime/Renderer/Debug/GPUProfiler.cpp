@@ -3,7 +3,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Time/Timestamp.h"
 
-#include "RHI/RHIInterface.h"
+#include "RHI/RHIInstance.h"
 
 CGPUProfiler CGPUProfiler::Instance;
 

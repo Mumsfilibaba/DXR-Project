@@ -325,7 +325,7 @@ public:
     {
     }
 
-    virtual void GetShaderParameterInfo(SShaderParameterInfo& OutShaderParameterInfo) const override
+    virtual void GetShaderParameterInfo(SRHIShaderParameterInfo& OutShaderParameterInfo) const override
     {
         OutShaderParameterInfo.NumConstantBuffers = ConstantBufferParameters.Size();
         OutShaderParameterInfo.NumShaderResourceViews = ShaderResourceParameters.Size();

@@ -86,7 +86,7 @@ inline const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-enum class EResourceState
+enum class ERHIResourceState
 {
     Common = 0,
     VertexAndConstantBuffer = 1,
@@ -107,26 +107,26 @@ enum class EResourceState
     GenericRead = 16,
 };
 
-inline const char* ToString(EResourceState ResourceState)
+inline const char* ToString(ERHIResourceState ResourceState)
 {
     switch (ResourceState)
     {
-    case EResourceState::Common:                          return "Common";
-    case EResourceState::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
-    case EResourceState::IndexBuffer:                     return "IndexBuffer";
-    case EResourceState::RenderTarget:                    return "RenderTarget";
-    case EResourceState::UnorderedAccess:                 return "UnorderedAccess";
-    case EResourceState::DepthWrite:                      return "DepthWrite";
-    case EResourceState::DepthRead:                       return "DepthRead";
-    case EResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
-    case EResourceState::PixelShaderResource:             return "PixelShaderResource";
-    case EResourceState::CopyDest:                        return "CopyDest";
-    case EResourceState::CopySource:                      return "CopySource";
-    case EResourceState::ResolveDest:                     return "ResolveDest";
-    case EResourceState::ResolveSource:                   return "ResolveSource";
-    case EResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
-    case EResourceState::ShadingRateSource:               return "ShadingRateSource";
-    case EResourceState::Present:                         return "Present";
+    case ERHIResourceState::Common:                          return "Common";
+    case ERHIResourceState::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
+    case ERHIResourceState::IndexBuffer:                     return "IndexBuffer";
+    case ERHIResourceState::RenderTarget:                    return "RenderTarget";
+    case ERHIResourceState::UnorderedAccess:                 return "UnorderedAccess";
+    case ERHIResourceState::DepthWrite:                      return "DepthWrite";
+    case ERHIResourceState::DepthRead:                       return "DepthRead";
+    case ERHIResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
+    case ERHIResourceState::PixelShaderResource:             return "PixelShaderResource";
+    case ERHIResourceState::CopyDest:                        return "CopyDest";
+    case ERHIResourceState::CopySource:                      return "CopySource";
+    case ERHIResourceState::ResolveDest:                     return "ResolveDest";
+    case ERHIResourceState::ResolveSource:                   return "ResolveSource";
+    case ERHIResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
+    case ERHIResourceState::ShadingRateSource:               return "ShadingRateSource";
+    case ERHIResourceState::Present:                         return "Present";
     default: return "Unknown";
     }
 }
@@ -300,31 +300,31 @@ public:
     }
 
 private:
-    EType Type;
+    EType   Type;
     EFormat Format;
     union
     {
-        SColorF        Color;
+        SColorF       Color;
         SDepthStencil DepthStencil;
     };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-struct SResourceData
+struct SRHIResourceData
 {
-    FORCEINLINE SResourceData()
+    FORCEINLINE SRHIResourceData()
         : Data(nullptr)
     {
     }
 
-    FORCEINLINE SResourceData(const void* InData, uint32 InSizeInBytes)
+    FORCEINLINE SRHIResourceData(const void* InData, uint32 InSizeInBytes)
         : Data(InData)
         , SizeInBytes(InSizeInBytes)
     {
     }
 
-    FORCEINLINE SResourceData(const void* InData, EFormat InFormat, uint32 InWidth)
+    FORCEINLINE SRHIResourceData(const void* InData, EFormat InFormat, uint32 InWidth)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
@@ -332,7 +332,7 @@ struct SResourceData
     {
     }
 
-    FORCEINLINE SResourceData(const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+    FORCEINLINE SRHIResourceData(const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)

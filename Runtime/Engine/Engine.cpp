@@ -14,7 +14,7 @@
 #include "Engine/InterfaceWindows/FrameProfilerWindow.h"
 #include "Engine/Project/ProjectManager.h"
 
-#include "RHI/RHIInterface.h"
+#include "RHI/RHIInstance.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
@@ -105,7 +105,7 @@ bool CEngine::Initialize()
     }
 
     /* Create material sampler (Used for now by all materials) */
-    SSamplerStateCreateInfo SamplerCreateInfo;
+    SRHISamplerStateInfo SamplerCreateInfo;
     SamplerCreateInfo.AddressU = ESamplerMode::Wrap;
     SamplerCreateInfo.AddressV = ESamplerMode::Wrap;
     SamplerCreateInfo.AddressW = ESamplerMode::Wrap;

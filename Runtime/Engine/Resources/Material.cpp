@@ -1,6 +1,6 @@
 #include "Material.h"
 
-#include "RHI/RHIInterface.h"
+#include "RHI/RHIInstance.h"
 #include "RHI/RHICommandList.h"
 
 #include "Engine/Engine.h"
@@ -21,7 +21,7 @@ CMaterial::CMaterial(const SMaterialDesc& InProperties)
 
 void CMaterial::Init()
 {
-    MaterialBuffer = RHICreateConstantBuffer<SMaterialDesc>(BufferFlag_Default, EResourceState::VertexAndConstantBuffer, nullptr);
+    MaterialBuffer = RHICreateConstantBuffer<SMaterialDesc>(BufferFlag_Default, ERHIResourceState::VertexAndConstantBuffer, nullptr);
     if (MaterialBuffer)
     {
         MaterialBuffer->SetName("MaterialBuffer");
@@ -32,9 +32,9 @@ void CMaterial::Init()
 
 void CMaterial::BuildBuffer(CRHICommandList& CmdList)
 {
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
+    CmdList.TransitionBuffer(MaterialBuffer.Get(), ERHIResourceState::VertexAndConstantBuffer, ERHIResourceState::CopyDest);
     CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(SMaterialDesc), &Properties);
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(MaterialBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::VertexAndConstantBuffer);
 
     bMaterialBufferIsDirty = false;
 }

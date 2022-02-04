@@ -6,6 +6,9 @@
 #include "Core/Math/Matrix3x4.h"
 #include "Core/Containers/SharedRef.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERayTracingStructureBuildFlag
+
 enum ERayTracingStructureBuildFlag
 {
     RayTracingStructureBuildFlag_None = 0x0,
@@ -13,6 +16,9 @@ enum ERayTracingStructureBuildFlag
     RayTracingStructureBuildFlag_PreferFastTrace = FLAG(2),
     RayTracingStructureBuildFlag_PreferFastBuild = FLAG(3),
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERayTracingInstanceFlags
 
 enum ERayTracingInstanceFlags
 {
@@ -24,16 +30,27 @@ enum ERayTracingInstanceFlags
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingGeometry  - (Bottom-Level Acceleration-Structure)
 
-/* RayTracing Geometry (Bottom Level Acceleration Structure) */
 class CRHIRayTracingGeometry : public CRHIObject
 {
 public:
+
+    /**
+     * Constructor taking parameters for the RayTracingGeometry
+     * 
+     * @param InFlags: Flags for the RayTracingGeometry
+     */
     CRHIRayTracingGeometry(uint32 InFlags)
         : Flags(InFlags)
     {
     }
 
+    /**
+     * Retrieve the flags for the RayTracingGeometry
+     * 
+     * @return: Returns the flag for the RayTracingGeometry
+     */
     FORCEINLINE uint32 GetFlags() const
     {
         return Flags;
@@ -44,18 +61,34 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingScene  - (Top-Level Acceleration-Structure)
 
-/* RayTracing Scene (Top Level Acceleration Structure) */
 class CRHIRayTracingScene : public CRHIObject
 {
 public:
+
+    /**
+     * Constructor taking parameters for the RayTracingGeometry
+     *
+     * @param InFlags: Flags for the RayTracingGeometry
+     */
     CRHIRayTracingScene(uint32 InFlags)
         : Flags(InFlags)
     {
     }
 
+    /**
+     * Retrieve the ShaderResourceView for the RayTracingScene
+     * 
+     * @return: Returns the ShaderResourceView for the RayTracingScene
+     */
     virtual CRHIShaderResourceView* GetShaderResourceView() const = 0;
 
+    /**
+     * Retrieve the flags for the RayTracingGeometry
+     *
+     * @return: Returns the flag for the RayTracingGeometry
+     */
     FORCEINLINE uint32 GetFlags() const
     {
         return Flags;
@@ -66,6 +99,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRayTracingGeometryInstance
 
 struct SRayTracingGeometryInstance
 {
@@ -77,17 +111,26 @@ struct SRayTracingGeometryInstance
     CMatrix3x4 Transform;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRayPayload
+
 struct SRayPayload
 {
     CVector3 Color;
     uint32   CurrentDepth;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRayIntersectionAttributes
+
 struct SRayIntersectionAttributes
 {
     float Attrib0;
     float Attrib1;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRayTracingShaderResources
 
 struct SRayTracingShaderResources
 {

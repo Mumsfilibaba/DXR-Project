@@ -2,6 +2,9 @@
 #include "RHIShader.h"
 #include "RHIResourceBase.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EDepthWriteMask
+
 enum class EDepthWriteMask
 {
     Zero = 0,
@@ -17,6 +20,9 @@ inline const char* ToString(EDepthWriteMask DepthWriteMask)
     default: return "Unknown";
     }
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EStencilOp
 
 enum class EStencilOp
 {
@@ -47,6 +53,7 @@ inline const char* ToString(EStencilOp StencilOp)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SDepthStencilOp
 
 struct SDepthStencilOp
 {
@@ -56,7 +63,10 @@ struct SDepthStencilOp
     EComparisonFunc StencilFunc = EComparisonFunc::Always;
 };
 
-struct SDepthStencilStateCreateInfo
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIDepthStencilStateInfo
+
+struct SRHIDepthStencilStateInfo
 {
     EDepthWriteMask DepthWriteMask = EDepthWriteMask::All;
     EComparisonFunc DepthFunc = EComparisonFunc::Less;
@@ -68,11 +78,15 @@ struct SDepthStencilStateCreateInfo
     SDepthStencilOp BackFace = SDepthStencilOp();
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIDepthStencilState
+
 class CRHIDepthStencilState : public CRHIObject
 {
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ECullMode
 
 enum class ECullMode
 {
@@ -92,6 +106,9 @@ inline const char* ToString(ECullMode CullMode)
     }
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EFillMode
+
 enum class EFillMode
 {
     WireFrame = 1,
@@ -109,8 +126,9 @@ inline const char* ToString(EFillMode FillMode)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIRasterizerStateInfo
 
-struct SRasterizerStateCreateInfo
+struct SRHIRasterizerStateInfo
 {
     EFillMode FillMode = EFillMode::Solid;
     ECullMode CullMode = ECullMode::Back;
@@ -125,11 +143,15 @@ struct SRasterizerStateCreateInfo
     bool   bEnableConservativeRaster = false;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRasterizerState
+
 class CRHIRasterizerState : public CRHIObject
 {
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EBlend
 
 enum class EBlend
 {
@@ -177,6 +199,9 @@ inline const char* ToString(EBlend Blend)
     }
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EBlendOp
+
 enum class EBlendOp
 {
     Add = 1,
@@ -198,6 +223,9 @@ inline const char* ToString(EBlendOp BlendOp)
     default: return "Unknown";
     }
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ELogicOp
 
 enum class ELogicOp
 {
@@ -243,6 +271,9 @@ inline const char* ToString(ELogicOp LogicOp)
     }
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EColorWriteFlag
+
 enum EColorWriteFlag : uint8
 {
     ColorWriteFlag_None = 0,
@@ -252,6 +283,9 @@ enum EColorWriteFlag : uint8
     ColorWriteFlag_Alpha = 8,
     ColorWriteFlag_All = (((ColorWriteFlag_Red | ColorWriteFlag_Green) | ColorWriteFlag_Blue) | ColorWriteFlag_Alpha)
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRenderTargetWriteState
 
 struct SRenderTargetWriteState
 {
@@ -296,6 +330,7 @@ struct SRenderTargetWriteState
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRenderTargetBlendState
 
 struct SRenderTargetBlendState
 {
@@ -313,18 +348,25 @@ struct SRenderTargetBlendState
     SRenderTargetWriteState RenderTargetWriteMask;
 };
 
-struct SBlendStateCreateInfo
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIBlendStateInfo
+
+struct SRHIBlendStateInfo
 {
     bool bAlphaToCoverageEnable = false;
     bool bIndependentBlendEnable = false;
     SRenderTargetBlendState RenderTarget[8];
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIBlendState
+
 class CRHIBlendState : public CRHIObject
 {
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EInputClassification
 
 enum class EInputClassification
 {
@@ -342,6 +384,9 @@ inline const char* ToString(EInputClassification BlendOp)
     }
 }
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SInputElement
+
 struct SInputElement
 {
     CString              Semantic = "";
@@ -353,16 +398,19 @@ struct SInputElement
     uint32               InstanceStepRate = 0;
 };
 
-struct SInputLayoutStateCreateInfo
-{
-    SInputLayoutStateCreateInfo() = default;
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIInputLayoutStateInfo
 
-    SInputLayoutStateCreateInfo(const TArray<SInputElement>& InElements)
+struct SRHIInputLayoutStateInfo
+{
+    SRHIInputLayoutStateInfo() = default;
+
+    SRHIInputLayoutStateInfo(const TArray<SInputElement>& InElements)
         : Elements(InElements)
     {
     }
 
-    SInputLayoutStateCreateInfo(std::initializer_list<SInputElement> InList)
+    SRHIInputLayoutStateInfo(std::initializer_list<SInputElement> InList)
         : Elements(InList)
     {
     }
@@ -370,11 +418,15 @@ struct SInputLayoutStateCreateInfo
     TArray<SInputElement> Elements;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIInputLayoutState
+
 class CRHIInputLayoutState : public CRHIObject
 {
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EIndexBufferStripCutValue
 
 enum class EIndexBufferStripCutValue
 {
@@ -395,6 +447,7 @@ inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SPipelineRenderTargetFormats
 
 struct SPipelineRenderTargetFormats
 {
@@ -404,17 +457,36 @@ struct SPipelineRenderTargetFormats
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIPipelineState
 
 class CRHIPipelineState : public CRHIObject
 {
 public:
 
+    /**
+     * Cast the PipelineState to a Graphics PipelineState
+     *
+     * @return: Returns a pointer to a Graphics PipelineState if the object implements it
+     */
     virtual class CRHIGraphicsPipelineState* AsGraphics() { return nullptr; }
+    
+    /**
+     * Cast the PipelineState to a Compute PipelineState
+     *
+     * @return: Returns a pointer to a Compute PipelineState if the object implements it
+     */
     virtual class CRHIComputePipelineState* AsCompute() { return nullptr; }
+
+    /**
+     * Cast the PipelineState to a Ray tracing PipelineState
+     *
+     * @return: Returns a pointer to a Ray tracing PipelineState if the object implements it
+     */
     virtual class CRHIRayTracingPipelineState* AsRayTracing() { return nullptr; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SGraphicsPipelineShaderState
 
 struct SGraphicsPipelineShaderState
 {
@@ -430,7 +502,10 @@ struct SGraphicsPipelineShaderState
     CRHIPixelShader* PixelShader = nullptr;
 };
 
-struct SGraphicsPipelineStateCreateInfo
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIGraphicsPipelineStateInfo
+
+struct SRHIGraphicsPipelineStateInfo
 {
     CRHIInputLayoutState* InputLayoutState = nullptr;
     CRHIDepthStencilState* DepthStencilState = nullptr;
@@ -447,19 +522,29 @@ struct SGraphicsPipelineStateCreateInfo
     SPipelineRenderTargetFormats PipelineFormats;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIGraphicsPipelineState
+
 class CRHIGraphicsPipelineState : public CRHIPipelineState
 {
 public:
+
+    /**
+     * Cast the PipelineState to a Graphics PipelineState
+     *
+     * @return: Returns a pointer to a Graphics PipelineState if the object implements it
+     */
     virtual CRHIGraphicsPipelineState* AsGraphics() override { return this; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIComputePipelineStateInfo
 
-struct SComputePipelineStateCreateInfo
+struct SRHIComputePipelineStateInfo
 {
-    SComputePipelineStateCreateInfo() = default;
+    SRHIComputePipelineStateInfo() = default;
 
-    SComputePipelineStateCreateInfo(CRHIComputeShader* InShader)
+    SRHIComputePipelineStateInfo(CRHIComputeShader* InShader)
         : Shader(InShader)
     {
     }
@@ -467,13 +552,23 @@ struct SComputePipelineStateCreateInfo
     CRHIComputeShader* Shader = nullptr;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIComputePipelineState
+
 class CRHIComputePipelineState : public CRHIPipelineState
 {
 public:
+
+    /**
+     * Cast the PipelineState to a Compute PipelineState
+     *
+     * @return: Returns a pointer to a Compute PipelineState if the object implements it
+     */
     virtual CRHIComputePipelineState* AsCompute() override { return this; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRayTracingHitGroup
 
 struct SRayTracingHitGroup
 {
@@ -491,22 +586,34 @@ struct SRayTracingHitGroup
     CRHIRayClosestHitShader* ClosestHit;
 };
 
-struct SRayTracingPipelineStateCreateInfo
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIRayTracingPipelineStateInfo
+
+struct SRHIRayTracingPipelineStateInfo
 {
     CRHIRayGenShader* RayGen = nullptr;
 
     TArray<CRHIRayAnyHitShader*>     AnyHitShaders;
     TArray<CRHIRayClosestHitShader*> ClosestHitShaders;
     TArray<CRHIRayMissShader*>       MissShaders;
-    TArray<SRayTracingHitGroup>  HitGroups;
+    TArray<SRayTracingHitGroup>      HitGroups;
 
     uint32 MaxAttributeSizeInBytes = 0;
     uint32 MaxPayloadSizeInBytes = 0;
     uint32 MaxRecursionDepth = 1;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingPipelineState
+
 class CRHIRayTracingPipelineState : public CRHIPipelineState
 {
 public:
+
+    /**
+     * Cast the PipelineState to a Ray tracing PipelineState
+     * 
+     * @return: Returns a pointer to a Ray tracing PipelineState if the object implements it
+     */
     virtual CRHIRayTracingPipelineState* AsRayTracing() override { return this; }
 };

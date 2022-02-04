@@ -11,6 +11,9 @@
 
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIShaderResourceView
+
 class CNullRHIShaderResourceView : public CRHIShaderResourceView
 {
 public:
@@ -22,6 +25,9 @@ public:
         return true;
     }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIUnorderedAccessView
 
 class CNullRHIUnorderedAccessView : public CRHIUnorderedAccessView
 {
@@ -35,6 +41,9 @@ public:
     }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIRenderTargetView
+
 class CNullRHIRenderTargetView : public CRHIRenderTargetView
 {
 public:
@@ -46,6 +55,9 @@ public:
         return true;
     }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIDepthStencilView
 
 class CNullRHIDepthStencilView : public CRHIDepthStencilView
 {

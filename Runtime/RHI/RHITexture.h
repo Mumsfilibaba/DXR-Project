@@ -1,7 +1,10 @@
 #pragma once
 #include "RHIResourceBase.h"
 
-enum ETextureFlags
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERHITextureFlags
+
+enum ERHITextureFlags
 {
     TextureFlag_None = 0,
     TextureFlag_RTV = FLAG(1), // RenderTargetView
@@ -18,6 +21,7 @@ enum ETextureFlags
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITexture
 
 class CRHITexture : public CRHIResource
 {

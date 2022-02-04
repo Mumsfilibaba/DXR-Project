@@ -4,7 +4,7 @@
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
-#include "RHI/RHIInterface.h"
+#include "RHI/RHIInstance.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/TextureFactory.h"
@@ -82,7 +82,7 @@ bool CRenderer::Init()
         Resources.MainWindowViewport->SetName("Main Window Viewport");
     }
 
-    Resources.CameraBuffer = RHICreateConstantBuffer<SCameraBufferDesc>(BufferFlag_Default, EResourceState::Common, nullptr);
+    Resources.CameraBuffer = RHICreateConstantBuffer<SCameraBufferDesc>(BufferFlag_Default, ERHIResourceState::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create CameraBuffer");
@@ -94,7 +94,7 @@ bool CRenderer::Init()
     }
 
     // Init standard input layout
-    SInputLayoutStateCreateInfo InputLayout =
+    SRHIInputLayoutStateInfo InputLayout =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0,  EInputClassification::Vertex, 0 },
         { "NORMAL",   0, EFormat::R32G32B32_Float, 0, 12, EInputClassification::Vertex, 0 },
@@ -114,7 +114,7 @@ bool CRenderer::Init()
     }
 
     {
-        SSamplerStateCreateInfo CreateInfo;
+        SRHISamplerStateInfo CreateInfo;
         CreateInfo.AddressU = ESamplerMode::Border;
         CreateInfo.AddressV = ESamplerMode::Border;
         CreateInfo.AddressW = ESamplerMode::Border;
@@ -134,7 +134,7 @@ bool CRenderer::Init()
     }
 
     {
-        SSamplerStateCreateInfo CreateInfo;
+        SRHISamplerStateInfo CreateInfo;
         CreateInfo.AddressU = ESamplerMode::Wrap;
         CreateInfo.AddressV = ESamplerMode::Wrap;
         CreateInfo.AddressW = ESamplerMode::Wrap;
@@ -442,17 +442,17 @@ void CRenderer::Tick(const CScene& Scene)
     CamBuff.FarPlane = Scene.GetCamera()->GetFarPlane();
     CamBuff.AspectRatio = Scene.GetCamera()->GetAspectRatio();
 
-    PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceState::VertexAndConstantBuffer, EResourceState::CopyDest);
+    PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), ERHIResourceState::VertexAndConstantBuffer, ERHIResourceState::CopyDest);
 
     PrepareGBufferCmdList.UpdateBuffer(Resources.CameraBuffer.Get(), 0, sizeof(SCameraBufferDesc), &CamBuff);
 
-    PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceState::CopyDest, EResourceState::VertexAndConstantBuffer);
+    PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::VertexAndConstantBuffer);
 
-    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
-    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
-    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
-    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::RenderTarget);
-    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::PixelShaderResource, EResourceState::DepthWrite);
+    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget);
+    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget);
+    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget);
+    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget);
+    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::DepthWrite);
 
     SColorF BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     PrepareGBufferCmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(), BlackClearColor);
@@ -477,7 +477,7 @@ void CRenderer::Tick(const CScene& Scene)
         INSERT_DEBUG_CMDLIST_MARKER(ShadingRateCmdList, "Begin VRS Image");
         ShadingRateCmdList.SetShadingRate(EShadingRate::VRS_1x1);
 
-        ShadingRateCmdList.TransitionTexture(ShadingImage.Get(), EResourceState::ShadingRateSource, EResourceState::UnorderedAccess);
+        ShadingRateCmdList.TransitionTexture(ShadingImage.Get(), ERHIResourceState::ShadingRateSource, ERHIResourceState::UnorderedAccess);
 
         ShadingRateCmdList.SetComputePipelineState(ShadingRatePipeline.Get());
 
@@ -486,7 +486,7 @@ void CRenderer::Tick(const CScene& Scene)
 
         ShadingRateCmdList.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
 
-        ShadingRateCmdList.TransitionTexture(ShadingImage.Get(), EResourceState::UnorderedAccess, EResourceState::ShadingRateSource);
+        ShadingRateCmdList.TransitionTexture(ShadingImage.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::ShadingRateSource);
 
         ShadingRateCmdList.SetShadingRateImage(ShadingImage.Get());
 
@@ -519,40 +519,40 @@ void CRenderer::Tick(const CScene& Scene)
         CDispatchQueue::Get().Dispatch(BasePassTask);
     }
 
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
+    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_ALBEDO_INDEX],
-        EResourceState::NonPixelShaderResource,
-        EResourceState::NonPixelShaderResource);
+        ERHIResourceState::NonPixelShaderResource,
+        ERHIResourceState::NonPixelShaderResource);
 
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
+    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_NORMAL_INDEX],
-        EResourceState::NonPixelShaderResource,
-        EResourceState::NonPixelShaderResource);
+        ERHIResourceState::NonPixelShaderResource,
+        ERHIResourceState::NonPixelShaderResource);
 
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
+    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX],
-        EResourceState::NonPixelShaderResource,
-        EResourceState::NonPixelShaderResource);
+        ERHIResourceState::NonPixelShaderResource,
+        ERHIResourceState::NonPixelShaderResource);
 
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceState::RenderTarget, EResourceState::NonPixelShaderResource);
+    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_MATERIAL_INDEX],
-        EResourceState::NonPixelShaderResource,
-        EResourceState::NonPixelShaderResource);
+        ERHIResourceState::NonPixelShaderResource,
+        ERHIResourceState::NonPixelShaderResource);
 
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::NonPixelShaderResource);
-    MainCmdList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceState::NonPixelShaderResource, EResourceState::UnorderedAccess);
+    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), ERHIResourceState::DepthWrite, ERHIResourceState::NonPixelShaderResource);
+    MainCmdList.TransitionTexture(Resources.SSAOBuffer.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess);
 
     const SColorF WhiteColor = { 1.0f, 1.0f, 1.0f, 1.0f };
     MainCmdList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), WhiteColor);
@@ -563,72 +563,72 @@ void CRenderer::Tick(const CScene& Scene)
         SSAORenderer.Render(MainCmdList, Resources);
     }
 
-    MainCmdList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceState::UnorderedAccess, EResourceState::NonPixelShaderResource);
+    MainCmdList.TransitionTexture(Resources.SSAOBuffer.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(Resources.SSAOBuffer->GetShaderResourceView()),
         Resources.SSAOBuffer,
-        EResourceState::NonPixelShaderResource,
-        EResourceState::NonPixelShaderResource);
+        ERHIResourceState::NonPixelShaderResource,
+        ERHIResourceState::NonPixelShaderResource);
 
     {
-        MainCmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::PixelShaderResource, EResourceState::UnorderedAccess);
-        MainCmdList.TransitionTexture(Resources.BackBuffer, EResourceState::Present, EResourceState::RenderTarget);
-        MainCmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
-        MainCmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
-        MainCmdList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceState::PixelShaderResource, EResourceState::NonPixelShaderResource);
+        MainCmdList.TransitionTexture(Resources.FinalTarget.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::UnorderedAccess);
+        MainCmdList.TransitionTexture(Resources.BackBuffer, ERHIResourceState::Present, ERHIResourceState::RenderTarget);
+        MainCmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+        MainCmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+        MainCmdList.TransitionTexture(Resources.IntegrationLUT.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource);
 
         ShadowMapRenderer.RenderShadowMasks(MainCmdList, LightSetup, Resources);
 
         DeferredRenderer.RenderDeferredTiledLightPass(MainCmdList, Resources, LightSetup);
     }
 
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::NonPixelShaderResource, EResourceState::DepthWrite);
-    MainCmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::UnorderedAccess, EResourceState::RenderTarget);
+    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::DepthWrite);
+    MainCmdList.TransitionTexture(Resources.FinalTarget.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::RenderTarget);
 
     SkyboxRenderPass.Render(MainCmdList, Resources, Scene);
 
-    MainCmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
+    MainCmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(LightSetup.DirectionalShadowMask->GetShaderResourceView()),
         LightSetup.DirectionalShadowMask,
-        EResourceState::NonPixelShaderResource,
-        EResourceState::NonPixelShaderResource);
+        ERHIResourceState::NonPixelShaderResource,
+        ERHIResourceState::NonPixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[0]->GetShaderResourceView()),
         LightSetup.ShadowMapCascades[0],
-        EResourceState::NonPixelShaderResource,
-        EResourceState::NonPixelShaderResource);
+        ERHIResourceState::NonPixelShaderResource,
+        ERHIResourceState::NonPixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[1]->GetShaderResourceView()),
         LightSetup.ShadowMapCascades[1],
-        EResourceState::NonPixelShaderResource,
-        EResourceState::NonPixelShaderResource);
+        ERHIResourceState::NonPixelShaderResource,
+        ERHIResourceState::NonPixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[2]->GetShaderResourceView()),
         LightSetup.ShadowMapCascades[2],
-        EResourceState::NonPixelShaderResource,
-        EResourceState::NonPixelShaderResource);
+        ERHIResourceState::NonPixelShaderResource,
+        ERHIResourceState::NonPixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[3]->GetShaderResourceView()),
         LightSetup.ShadowMapCascades[3],
-        EResourceState::NonPixelShaderResource,
-        EResourceState::NonPixelShaderResource);
+        ERHIResourceState::NonPixelShaderResource,
+        ERHIResourceState::NonPixelShaderResource);
 
-    MainCmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
-    MainCmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
-    MainCmdList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceState::NonPixelShaderResource, EResourceState::PixelShaderResource);
+    MainCmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource);
+    MainCmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource);
+    MainCmdList.TransitionTexture(Resources.IntegrationLUT.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(Resources.IntegrationLUT->GetShaderResourceView()),
         Resources.IntegrationLUT,
-        EResourceState::PixelShaderResource,
-        EResourceState::PixelShaderResource);
+        ERHIResourceState::PixelShaderResource,
+        ERHIResourceState::PixelShaderResource);
 
     if (!Resources.ForwardVisibleCommands.IsEmpty())
     {
@@ -636,21 +636,21 @@ void CRenderer::Tick(const CScene& Scene)
         ForwardRenderer.Render(MainCmdList, Resources, LightSetup);
     }
 
-    MainCmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceState::RenderTarget, EResourceState::PixelShaderResource);
+    MainCmdList.TransitionTexture(Resources.FinalTarget.Get(), ERHIResourceState::RenderTarget, ERHIResourceState::PixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()),
         Resources.FinalTarget,
-        EResourceState::PixelShaderResource,
-        EResourceState::PixelShaderResource);
+        ERHIResourceState::PixelShaderResource,
+        ERHIResourceState::PixelShaderResource);
 
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceState::DepthWrite, EResourceState::PixelShaderResource);
+    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), ERHIResourceState::DepthWrite, ERHIResourceState::PixelShaderResource);
 
     TextureDebugger->AddTextureForDebugging(
         MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView()),
         Resources.GBuffer[GBUFFER_DEPTH_INDEX],
-        EResourceState::PixelShaderResource,
-        EResourceState::PixelShaderResource);
+        ERHIResourceState::PixelShaderResource,
+        ERHIResourceState::PixelShaderResource);
 
     if (GEnableFXAA.GetBool())
     {
@@ -682,7 +682,7 @@ void CRenderer::Tick(const CScene& Scene)
 
     INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "End UI Render");
 
-    MainCmdList.TransitionTexture(Resources.BackBuffer, EResourceState::RenderTarget, EResourceState::Present);
+    MainCmdList.TransitionTexture(Resources.BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present);
 
     INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "--END FRAME--");
 
@@ -816,7 +816,7 @@ void CRenderer::OnWindowResize(const SWindowResizeEvent& Event)
 bool CRenderer::InitBoundingBoxDebugPass()
 {
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "VSMain", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -833,7 +833,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         AABBVertexShader->SetName("Debug VertexShader");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "PSMain", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -850,7 +850,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         AABBPixelShader->SetName("Debug PixelShader");
     }
 
-    SInputLayoutStateCreateInfo InputLayout =
+    SRHIInputLayoutStateInfo InputLayout =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0, EInputClassification::Vertex, 0 },
     };
@@ -866,7 +866,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         InputLayoutState->SetName("Debug InputLayoutState");
     }
 
-    SDepthStencilStateCreateInfo DepthStencilStateInfo;
+    SRHIDepthStencilStateInfo DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
@@ -882,7 +882,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         DepthStencilState->SetName("Debug DepthStencilState");
     }
 
-    SRasterizerStateCreateInfo RasterizerStateInfo;
+    SRHIRasterizerStateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -896,7 +896,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         RasterizerState->SetName("Debug RasterizerState");
     }
 
-    SBlendStateCreateInfo BlendStateInfo;
+    SRHIBlendStateInfo BlendStateInfo;
 
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
@@ -909,7 +909,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         BlendState->SetName("Debug BlendState");
     }
 
-    SGraphicsPipelineStateCreateInfo PSOProperties;
+    SRHIGraphicsPipelineStateInfo PSOProperties;
     PSOProperties.BlendState = BlendState.Get();
     PSOProperties.DepthStencilState = DepthStencilState.Get();
     PSOProperties.InputLayoutState = InputLayoutState.Get();
@@ -945,9 +945,9 @@ bool CRenderer::InitBoundingBoxDebugPass()
         CVector3(-0.5f,  0.5f, -0.5f)
     };
 
-    SResourceData VertexData(Vertices.Data(), Vertices.SizeInBytes());
+    SRHIResourceData VertexData(Vertices.Data(), Vertices.SizeInBytes());
 
-    AABBVertexBuffer = RHICreateVertexBuffer<CVector3>(Vertices.Size(), BufferFlag_Default, EResourceState::Common, &VertexData);
+    AABBVertexBuffer = RHICreateVertexBuffer<CVector3>(Vertices.Size(), BufferFlag_Default, ERHIResourceState::Common, &VertexData);
     if (!AABBVertexBuffer)
     {
         CDebug::DebugBreak();
@@ -975,9 +975,9 @@ bool CRenderer::InitBoundingBoxDebugPass()
         2, 7,
     };
 
-    SResourceData IndexData(Indices.Data(), Indices.SizeInBytes());
+    SRHIResourceData IndexData(Indices.Data(), Indices.SizeInBytes());
 
-    AABBIndexBuffer = RHICreateIndexBuffer(EIndexFormat::uint16, Indices.Size(), BufferFlag_Default, EResourceState::Common, &IndexData);
+    AABBIndexBuffer = RHICreateIndexBuffer(ERHIIndexFormat::uint16, Indices.Size(), BufferFlag_Default, ERHIResourceState::Common, &IndexData);
     if (!AABBIndexBuffer)
     {
         CDebug::DebugBreak();
@@ -994,7 +994,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
 bool CRenderer::InitAA()
 {
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FullscreenVS.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FullscreenVS.hlsl", "Main", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -1011,7 +1011,7 @@ bool CRenderer::InitAA()
         VShader->SetName("Fullscreen VertexShader");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/PostProcessPS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/PostProcessPS.hlsl", "Main", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -1028,7 +1028,7 @@ bool CRenderer::InitAA()
         PostShader->SetName("PostProcess PixelShader");
     }
 
-    SDepthStencilStateCreateInfo DepthStencilStateInfo;
+    SRHIDepthStencilStateInfo DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc = EComparisonFunc::Always;
     DepthStencilStateInfo.bDepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
@@ -1044,7 +1044,7 @@ bool CRenderer::InitAA()
         DepthStencilState->SetName("PostProcess DepthStencilState");
     }
 
-    SRasterizerStateCreateInfo RasterizerStateInfo;
+    SRHIRasterizerStateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -1058,7 +1058,7 @@ bool CRenderer::InitAA()
         RasterizerState->SetName("PostProcess RasterizerState");
     }
 
-    SBlendStateCreateInfo BlendStateInfo;
+    SRHIBlendStateInfo BlendStateInfo;
     BlendStateInfo.bIndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
@@ -1073,7 +1073,7 @@ bool CRenderer::InitAA()
         BlendState->SetName("PostProcess BlendState");
     }
 
-    SGraphicsPipelineStateCreateInfo PSOProperties;
+    SRHIGraphicsPipelineStateInfo PSOProperties;
     PSOProperties.InputLayoutState = nullptr;
     PSOProperties.BlendState = BlendState.Get();
     PSOProperties.DepthStencilState = DepthStencilState.Get();
@@ -1097,7 +1097,7 @@ bool CRenderer::InitAA()
     }
 
     // FXAA
-    SSamplerStateCreateInfo CreateInfo;
+    SRHISamplerStateInfo CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;
@@ -1109,7 +1109,7 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -1144,7 +1144,7 @@ bool CRenderer::InitAA()
         SShaderDefine("ENABLE_DEBUG", "1")
     };
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", &Defines, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -1179,17 +1179,17 @@ bool CRenderer::InitAA()
 
 bool CRenderer::InitShadingImage()
 {
-    SShadingRateSupport Support;
+    SRHIShadingRateSupport Support;
     RHICheckShadingRateSupport(Support);
 
-    if (Support.Tier != EShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)
+    if (Support.Tier != ERHIShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)
     {
         return true;
     }
 
     uint32 Width = Resources.MainWindowViewport->GetWidth() / Support.ShadingRateImageTileSize;
     uint32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
-    ShadingImage = RHICreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceState::ShadingRateSource, nullptr);
+    ShadingImage = RHICreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, ERHIResourceState::ShadingRateSource, nullptr);
     if (!ShadingImage)
     {
         CDebug::DebugBreak();
@@ -1201,7 +1201,7 @@ bool CRenderer::InitShadingImage()
     }
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ShadingImage.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ShadingImage.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -1218,7 +1218,7 @@ bool CRenderer::InitShadingImage()
         ShadingRateShader->SetName("ShadingRate Image Shader");
     }
 
-    SComputePipelineStateCreateInfo CreateInfo(ShadingRateShader.Get());
+    SRHIComputePipelineStateInfo CreateInfo(ShadingRateShader.Get());
     ShadingRatePipeline = RHICreateComputePipelineState(CreateInfo);
     if (!ShadingRatePipeline)
     {

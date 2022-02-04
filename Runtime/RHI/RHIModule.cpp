@@ -1,38 +1,37 @@
 #include "RHIModule.h"
-#include "RHIInterface.h"
+#include "RHIInstance.h"
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
 
 IMPLEMENT_ENGINE_MODULE(CDefaultEngineModule, RHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Globals
 
-RHI_API CRHIInterface* GRHIInterface = nullptr;
+RHI_API CRHIInstance*       GRHIInstance = nullptr;
 RHI_API IRHIShaderCompiler* GShaderCompiler = nullptr;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// RHI Functions
 
 static CRHIModule* LoadNullRHI()
 {
     return CModuleManager::Get().LoadEngineModule<CRHIModule>("NullRHI");
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-bool InitRHI(ERHIModule InRenderApi)
+bool RHIInitialize(ERHIInstanceApi InRenderApi)
 {
     // Load Selected RHI
     CRHIModule* RHIModule = nullptr;
-    if (InRenderApi == ERHIModule::D3D12)
+    if (InRenderApi == ERHIInstanceApi::D3D12)
     {
         RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>("D3D12RHI");
     }
-    else if (InRenderApi == ERHIModule::Null)
+    else if (InRenderApi == ERHIInstanceApi::Null)
     {
         RHIModule = LoadNullRHI();
     }
 
-    // If the selected RHI failed, try load the NullRHI
     if (!RHIModule)
     {
         LOG_WARNING("[InitRHI] Failed to load RHI, trying to load NullRHI");
@@ -45,8 +44,6 @@ bool InitRHI(ERHIModule InRenderApi)
         }
     }
 
-    // Init RHI objects
-
     // TODO: This should be in EngineConfig and/or CCommandLine
     const bool bEnableDebug =
 #if ENABLE_API_DEBUGGING
@@ -55,14 +52,14 @@ bool InitRHI(ERHIModule InRenderApi)
         false;
 #endif
 
-    CRHIInterface* RHIInterface = RHIModule->CreateInterface();
-    if (!(RHIInterface && RHIInterface->Init(bEnableDebug)))
+    CRHIInstance* RHIInterface = RHIModule->CreateInterface();
+    if (!(RHIInterface && RHIInterface->Initialize(bEnableDebug)))
     {
         LOG_ERROR("[InitRHI] Failed to init RHIInterface, the application has to terminate");
         return false;
     }
 
-    GRHIInterface = RHIInterface;
+    GRHIInstance = RHIInterface;
 
     IRHIShaderCompiler* Compiler = RHIModule->CreateCompiler();
     if (!Compiler)
@@ -74,16 +71,21 @@ bool InitRHI(ERHIModule InRenderApi)
     GShaderCompiler = Compiler;
 
     // Set the context to the command queue
-    IRHICommandContext* CmdContext = GRHIInterface->GetDefaultCommandContext();
+    IRHICommandContext* CmdContext = GRHIInstance->GetDefaultCommandContext();
     CRHICommandQueue::Get().SetContext(CmdContext);
 
     return true;
 }
 
-void ReleaseRHI()
+void RHIRelease()
 {
     CRHICommandQueue::Get().SetContext(nullptr);
 
-    SafeDelete(GRHIInterface);
+    if (GRHIInstance)
+    {
+        GRHIInstance->Destroy();
+        GRHIInstance = nullptr;
+    }
+
     SafeDelete(GShaderCompiler);
 }

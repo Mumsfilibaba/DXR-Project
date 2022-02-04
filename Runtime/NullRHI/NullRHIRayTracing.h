@@ -13,6 +13,9 @@
 
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIRayTracingGeometry
+
 class CNullRHIRayTracingGeometry : public CRHIRayTracingGeometry
 {
 public:
@@ -33,6 +36,9 @@ public:
         return true;
     }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIRayTracingScene
 
 class CNullRHIRayTracingScene : public CRHIRayTracingScene
 {

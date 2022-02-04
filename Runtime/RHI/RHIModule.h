@@ -12,6 +12,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Config
 
 // TODO: Should be in a config file
 #define ENABLE_API_DEBUGGING       (0)
@@ -19,37 +20,40 @@
 #define ENABLE_API_GPU_BREADCRUMBS (0)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERHIInstanceApi
 
-enum class ERHIModule : uint32
+enum class ERHIInstanceApi : uint32
 {
     Unknown = 0,
     Null = 1,
     D3D12 = 2,
 };
 
-inline const char* ToString(ERHIModule RenderLayerApi)
+inline const char* ToString(ERHIInstanceApi RenderLayerApi)
 {
     switch (RenderLayerApi)
     {
-    case ERHIModule::D3D12: return "D3D12";
-    case ERHIModule::Null:  return "Null";
+    case ERHIInstanceApi::D3D12: return "D3D12";
+    case ERHIInstanceApi::Null:  return "Null";
     default:                return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// RHI Functions
 
-RHI_API bool InitRHI(ERHIModule InRenderApi);
-RHI_API void ReleaseRHI();
+RHI_API bool RHIInitialize(ERHIInstanceApi InRenderApi);
+RHI_API void RHIRelease();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIModule
 
 class RHI_API CRHIModule : public CDefaultEngineModule
 {
 public:
 
     /* Creates the core RHI object */
-    virtual class CRHIInterface* CreateInterface() = 0;
+    virtual class CRHIInstance* CreateInterface() = 0;
 
     /* Creates the RHI shader compiler */
     virtual class IRHIShaderCompiler* CreateCompiler() = 0;
@@ -61,6 +65,7 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Global variables
 
-extern RHI_API class CRHIInterface* GRHIInterface;
+extern RHI_API class CRHIInstance*       GRHIInstance;
 extern RHI_API class IRHIShaderCompiler* GShaderCompiler;

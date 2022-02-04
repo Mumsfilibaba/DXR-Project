@@ -9,6 +9,9 @@
 #include "Core/Logging/Log.h"
 #include "Core/Containers/ArrayView.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// RenderCommands
+
 // Base render command
 struct SRHIRenderCommand
 {
@@ -780,9 +783,9 @@ struct SRHIDestroyResourceRenderCommand : public SRHIRenderCommand
 };
 
 // Discard Resource RenderCommand
-struct SRHIDiscardResourceRenderCommand : public SRHIRenderCommand
+struct SRHIDiscardContentsRenderCommand : public SRHIRenderCommand
 {
-    SRHIDiscardResourceRenderCommand(CRHIResource* InResource)
+    SRHIDiscardContentsRenderCommand(CRHIResource* InResource)
         : Resource(InResource)
     {
     }
@@ -859,7 +862,7 @@ struct SRHIGenerateMipsRenderCommand : public SRHIRenderCommand
 // TransitionTexture RenderCommand
 struct SRHITransitionTextureRenderCommand : public SRHIRenderCommand
 {
-    SRHITransitionTextureRenderCommand(CRHITexture* InTexture, EResourceState InBeforeState, EResourceState InAfterState)
+    SRHITransitionTextureRenderCommand(CRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState)
         : Texture(InTexture)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
@@ -872,14 +875,14 @@ struct SRHITransitionTextureRenderCommand : public SRHIRenderCommand
     }
 
     TSharedRef<CRHITexture> Texture;
-    EResourceState BeforeState;
-    EResourceState AfterState;
+    ERHIResourceState BeforeState;
+    ERHIResourceState AfterState;
 };
 
 // TransitionBuffer RenderCommand
 struct SRHITransitionBufferRenderCommand : public SRHIRenderCommand
 {
-    SRHITransitionBufferRenderCommand(CRHIBuffer* InBuffer, EResourceState InBeforeState, EResourceState InAfterState)
+    SRHITransitionBufferRenderCommand(CRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState)
         : Buffer(InBuffer)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
@@ -892,8 +895,8 @@ struct SRHITransitionBufferRenderCommand : public SRHIRenderCommand
     }
 
     TSharedRef<CRHIBuffer> Buffer;
-    EResourceState BeforeState;
-    EResourceState AfterState;
+    ERHIResourceState BeforeState;
+    ERHIResourceState AfterState;
 };
 
 // UnorderedAccessTextureBarrier RenderCommand

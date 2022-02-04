@@ -1,6 +1,6 @@
 #include "D3D12DescriptorCache.h"
 #include "D3D12DescriptorHeap.h"
-#include "D3D12RHIInterface.h"
+#include "D3D12RHIInstance.h"
 #include "D3D12RHICommandContext.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
@@ -38,7 +38,7 @@ bool CD3D12DescriptorCache::Init()
     CBVDesc.BufferLocation = 0;
     CBVDesc.SizeInBytes = 0;
 
-    NullCBV = dbg_new CD3D12RHIConstantBufferView(GetDevice(), GD3D12RHICore->GetResourceOfflineDescriptorHeap());
+    NullCBV = dbg_new CD3D12RHIConstantBufferView(GetDevice(), GD3D12RHIInstance->GetResourceOfflineDescriptorHeap());
     if (!NullCBV->AllocateHandle())
     {
         return false;
@@ -57,7 +57,7 @@ bool CD3D12DescriptorCache::Init()
     UAVDesc.Texture2D.MipSlice = 0;
     UAVDesc.Texture2D.PlaneSlice = 0;
 
-    NullUAV = dbg_new CD3D12RHIUnorderedAccessView(GetDevice(), GD3D12RHICore->GetResourceOfflineDescriptorHeap());
+    NullUAV = dbg_new CD3D12RHIUnorderedAccessView(GetDevice(), GD3D12RHIInstance->GetResourceOfflineDescriptorHeap());
     if (!NullUAV->AllocateHandle())
     {
         return false;
@@ -79,7 +79,7 @@ bool CD3D12DescriptorCache::Init()
     SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     SRVDesc.Texture2D.PlaneSlice = 0;
 
-    NullSRV = dbg_new CD3D12RHIShaderResourceView(GetDevice(), GD3D12RHICore->GetResourceOfflineDescriptorHeap());
+    NullSRV = dbg_new CD3D12RHIShaderResourceView(GetDevice(), GD3D12RHIInstance->GetResourceOfflineDescriptorHeap());
     if (!NullSRV->AllocateHandle())
     {
         return false;
@@ -107,7 +107,7 @@ bool CD3D12DescriptorCache::Init()
     SamplerDesc.MinLOD = -FLT_MAX;
     SamplerDesc.MipLODBias = 0.0f;
 
-    NullSampler = dbg_new CD3D12RHISamplerState(GetDevice(), GD3D12RHICore->GetSamplerOfflineDescriptorHeap());
+    NullSampler = dbg_new CD3D12RHISamplerState(GetDevice(), GD3D12RHIInstance->GetSamplerOfflineDescriptorHeap());
     if (!NullSampler->Init(SamplerDesc))
     {
         return false;

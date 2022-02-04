@@ -13,6 +13,9 @@
 
 #endif
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIInputLayoutState
+
 class CNullRHIInputLayoutState : public CRHIInputLayoutState
 {
 public:
@@ -24,6 +27,9 @@ public:
         return true;
     }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIDepthStencilState
 
 class CNullRHIDepthStencilState : public CRHIDepthStencilState
 {
@@ -37,6 +43,9 @@ public:
     }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIRasterizerState
+
 class CNullRHIRasterizerState : public CRHIRasterizerState
 {
 public:
@@ -49,6 +58,9 @@ public:
     }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIBlendState
+
 class CNullRHIBlendState : public CRHIBlendState
 {
 public:
@@ -60,6 +72,9 @@ public:
         return true;
     }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIGraphicsPipelineState
 
 class CNullRHIGraphicsPipelineState : public CRHIGraphicsPipelineState
 {
@@ -78,6 +93,9 @@ public:
     }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIComputePipelineState
+
 class CNullRHIComputePipelineState : public CRHIComputePipelineState
 {
 public:
@@ -94,6 +112,9 @@ public:
         return true;
     }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CNullRHIRayTracingPipelineState
 
 class CNullRHIRayTracingPipelineState : public CRHIRayTracingPipelineState
 {

@@ -3,7 +3,7 @@
 #include "D3D12CommandList.h"
 #include "D3D12Core.h"
 #include "D3D12Shader.h"
-#include "D3D12RHIInterface.h"
+#include "D3D12RHIInstance.h"
 #include "D3D12RHIBuffer.h"
 #include "D3D12RHITexture.h"
 #include "D3D12RHIPipelineState.h"
@@ -875,7 +875,7 @@ void CD3D12RHICommandContext::DestroyResource(CRHIObject* Resource)
     CmdBatch->AddInUseResource(Resource);
 }
 
-void CD3D12RHICommandContext::DiscardResource(CRHIResource* Resource)
+void CD3D12RHICommandContext::DiscardContents(CRHIResource* Resource)
 {
     // TODO: Enable regions to be discarded
 
@@ -1141,13 +1141,13 @@ void CD3D12RHICommandContext::GenerateMips(CRHITexture* Texture)
 
     if (bIsTextureCube)
     {
-        TSharedRef<CD3D12RHIComputePipelineState> PipelineState = GD3D12RHICore->GetGenerateMipsPipelineTexureCube();
+        TSharedRef<CD3D12RHIComputePipelineState> PipelineState = GD3D12RHIInstance->GetGenerateMipsPipelineTexureCube();
         CmdList.SetPipelineState(PipelineState->GetPipeline());
         CmdList.SetComputeRootSignature(PipelineState->GetRootSignature());
     }
     else
     {
-        TSharedRef<CD3D12RHIComputePipelineState> PipelineState = GD3D12RHICore->GetGenerateMipsPipelineTexure2D();
+        TSharedRef<CD3D12RHIComputePipelineState> PipelineState = GD3D12RHIInstance->GetGenerateMipsPipelineTexure2D();
         CmdList.SetPipelineState(PipelineState->GetPipeline());
         CmdList.SetComputeRootSignature(PipelineState->GetRootSignature());
     }
@@ -1217,7 +1217,7 @@ void CD3D12RHICommandContext::GenerateMips(CRHITexture* Texture)
     CmdBatch->AddInUseResource(StagingTexture.Get());
 }
 
-void CD3D12RHICommandContext::TransitionTexture(CRHITexture* Texture, EResourceState BeforeState, EResourceState AfterState)
+void CD3D12RHICommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState)
 {
     const D3D12_RESOURCE_STATES DxBeforeState = ConvertResourceState(BeforeState);
     const D3D12_RESOURCE_STATES DxAfterState = ConvertResourceState(AfterState);
@@ -1228,7 +1228,7 @@ void CD3D12RHICommandContext::TransitionTexture(CRHITexture* Texture, EResourceS
     CmdBatch->AddInUseResource(Texture);
 }
 
-void CD3D12RHICommandContext::TransitionBuffer(CRHIBuffer* Buffer, EResourceState BeforeState, EResourceState AfterState)
+void CD3D12RHICommandContext::TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState)
 {
     const D3D12_RESOURCE_STATES DxBeforeState = ConvertResourceState(BeforeState);
     const D3D12_RESOURCE_STATES DxAfterState = ConvertResourceState(AfterState);

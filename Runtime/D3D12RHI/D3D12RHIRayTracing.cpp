@@ -1,7 +1,7 @@
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
 #include "D3D12DescriptorHeap.h"
-#include "D3D12RHIInterface.h"
+#include "D3D12RHIInstance.h"
 #include "D3D12RHIRayTracing.h"
 
 #include "RHI/RHIModule.h"
@@ -37,8 +37,8 @@ bool CD3D12RHIRayTracingGeometry::Build(CD3D12RHICommandContext& CmdContext, boo
 
     if (IndexBuffer)
     {
-        EIndexFormat IndexFormat = IndexBuffer->GetFormat();
-        GeometryDesc.Triangles.IndexFormat = IndexFormat == EIndexFormat::uint32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+        ERHIIndexFormat IndexFormat = IndexBuffer->GetFormat();
+        GeometryDesc.Triangles.IndexFormat = IndexFormat == ERHIIndexFormat::uint32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
         GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetResource()->GetGPUVirtualAddress();
         GeometryDesc.Triangles.IndexCount = IndexBuffer->GetNumIndicies();
     }
@@ -215,7 +215,7 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
         SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
 
-        View = dbg_new CD3D12RHIShaderResourceView(GetDevice(), GD3D12RHICore->GetResourceOfflineDescriptorHeap());
+        View = dbg_new CD3D12RHIShaderResourceView(GetDevice(), GD3D12RHIInstance->GetResourceOfflineDescriptorHeap());
         if (!View->AllocateHandle())
         {
             return false;
