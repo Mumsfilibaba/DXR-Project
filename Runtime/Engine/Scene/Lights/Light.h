@@ -3,6 +3,9 @@
 
 #include "Engine/CoreObject/CoreObject.h"
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// CLight
+
 class ENGINE_API CLight : public CCoreObject
 {
     CORE_OBJECT(CLight, CCoreObject);

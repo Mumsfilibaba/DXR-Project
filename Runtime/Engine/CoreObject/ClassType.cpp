@@ -1,5 +1,8 @@
 #include "ClassType.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CClassType
+
 CClassType::CClassType(const CClassType* InSuperClass, const SClassDescription& ClassDescription)
     : Name(nullptr)
     , SuperClass(InSuperClass)

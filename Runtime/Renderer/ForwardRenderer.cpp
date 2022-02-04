@@ -111,7 +111,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
     PSOProperties.PipelineFormats.NumRenderTargets = 1;
     PSOProperties.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
-    PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+    PSOProperties.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)

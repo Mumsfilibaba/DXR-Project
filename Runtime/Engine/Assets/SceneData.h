@@ -63,7 +63,7 @@ struct SModelData
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// 2-D image for when loading materials
+// SImage2D - Image for when loading materials
 
 struct SImage2D
 {
@@ -141,11 +141,6 @@ struct SMaterialData
 
 struct ENGINE_API SSceneData
 {
-    TArray<SModelData> Models;
-    TArray<SMaterialData> Materials;
-
-    /* A scale used to scale each actor when using add to scene */
-    float Scale = 1.0f;
 
     void AddToScene(class CScene* Scene);
 
@@ -163,4 +158,10 @@ struct ENGINE_API SSceneData
     {
         return !Materials.IsEmpty();
     }
+
+    TArray<SModelData>    Models;
+    TArray<SMaterialData> Materials;
+
+    /* A scale used to scale each actor when using add to scene */
+    float Scale = 1.0f;
 };

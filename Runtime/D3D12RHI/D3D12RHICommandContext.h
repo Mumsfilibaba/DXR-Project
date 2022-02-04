@@ -218,7 +218,7 @@ public:
     virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue) override final;
     virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor) override final;
 
-    virtual void SetShadingRate(EShadingRate ShadingRate) override final;
+    virtual void SetShadingRate(ERHIShadingRate ShadingRate) override final;
     virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) override final;
 
     // TODO: Implement RenderPasses (For Vulkan)
@@ -259,9 +259,9 @@ public:
 
     virtual void ResolveTexture(CRHITexture* Destination, CRHITexture* Source) override final;
 
-    virtual void CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SCopyBufferInfo& CopyInfo) override final;
+    virtual void CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo) override final;
     virtual void CopyTexture(CRHITexture* Destination, CRHITexture* Source) override final;
-    virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SCopyTextureInfo& CopyTextureInfo) override final;
+    virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo) override final;
 
     virtual void DestroyResource(class CRHIObject* Resource) override final;
     virtual void DiscardContents(class CRHIResource* Resource) override final;

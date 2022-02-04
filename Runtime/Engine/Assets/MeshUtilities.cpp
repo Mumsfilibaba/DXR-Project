@@ -1,5 +1,8 @@
 #include "MeshUtilities.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMeshUtilities
+
 void CMeshUtilities::Subdivide(SMeshData& OutData, uint32 Subdivisions) noexcept
 {
     if (Subdivisions < 1)

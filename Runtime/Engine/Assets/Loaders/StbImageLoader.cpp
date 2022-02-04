@@ -6,6 +6,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CStbImageLoader
+
 static EFormat GetByteFormat(int32 Channels)
 {
     if (Channels == 4)

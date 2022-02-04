@@ -424,7 +424,7 @@ void CD3D12RHICommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessV
     CmdList.ClearUnorderedAccessViewFloat(OnlineHandle_GPU, DxUnorderedAccessView, ClearColor.Elements);
 }
 
-void CD3D12RHICommandContext::SetShadingRate(EShadingRate ShadingRate)
+void CD3D12RHICommandContext::SetShadingRate(ERHIShadingRate ShadingRate)
 {
     D3D12_SHADING_RATE DxShadingRate = ConvertShadingRate(ShadingRate);
 
@@ -803,7 +803,7 @@ void CD3D12RHICommandContext::UpdateTexture2D(CRHITexture2D* Destination, uint32
     }
 }
 
-void CD3D12RHICommandContext::CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SCopyBufferInfo& CopyInfo)
+void CD3D12RHICommandContext::CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo)
 {
     D3D12_ERROR(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 
@@ -831,7 +831,7 @@ void CD3D12RHICommandContext::CopyTexture(CRHITexture* Destination, CRHITexture*
     CmdBatch->AddInUseResource(Source);
 }
 
-void CD3D12RHICommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SCopyTextureInfo& CopyInfo)
+void CD3D12RHICommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyInfo)
 {
     D3D12_ERROR(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 

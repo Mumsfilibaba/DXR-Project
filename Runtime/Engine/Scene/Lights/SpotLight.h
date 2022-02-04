@@ -1,6 +1,9 @@
 #pragma once
 #include "Light.h"
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// CSpotLight
+
 class ENGINE_API CSpotLight : public CLight
 {
     CORE_OBJECT(CSpotLight, CLight);

@@ -3,6 +3,9 @@
 
 #include "Core/Math/Matrix4.h"
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// CPointLight
+
 class ENGINE_API CPointLight : public CLight
 {
     CORE_OBJECT(CPointLight, CLight);

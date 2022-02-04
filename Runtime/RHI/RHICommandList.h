@@ -269,7 +269,7 @@ public:
      *
      * @param ShadingRate: New shading-rate for the upcoming draw-calls
      */
-    void SetShadingRate(EShadingRate ShadingRate)
+    void SetShadingRate(ERHIShadingRate ShadingRate)
     {
         InsertCommand<SRHISetShadingRateRenderCommand>(ShadingRate);
     }
@@ -612,7 +612,7 @@ public:
      * @param Src: Source buffer to copy from
      * @param CopyInfo: Information about the copy operation
      */
-    void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SCopyBufferInfo& CopyInfo)
+    void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo)
     {
         InsertCommand<SRHICopyBufferRenderCommand>(AddRef(Dst), AddRef(Src), CopyInfo);
     }
@@ -635,7 +635,7 @@ public:
      * @param Src: Source texture
      * @param CopyTextureInfo: Information about the copy operation
      */
-    void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SCopyTextureInfo& CopyTextureInfo)
+    void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo)
     {
         InsertCommand<SRHICopyTextureRegionRenderCommand>(AddRef(Dst), AddRef(Src), CopyTextureInfo);
     }

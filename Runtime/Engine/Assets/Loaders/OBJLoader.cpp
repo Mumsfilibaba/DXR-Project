@@ -11,6 +11,9 @@
 
 #include <tiny_obj_loader.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// COBJLoader
+
 static TSharedPtr<SImage2D> LoadMaterialTexture(const CString& Path, const CString& Filename)
 {
     // If filename is empty there is no texture to load

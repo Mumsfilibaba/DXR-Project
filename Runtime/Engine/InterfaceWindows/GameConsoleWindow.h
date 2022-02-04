@@ -13,6 +13,9 @@
 
 #include <imgui.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CConsoleInputHandler
+
 class CConsoleInputHandler final : public CInputHandler
 {
 public:
@@ -32,20 +35,19 @@ public:
     bool bConsoleToggled = false;
 };
 
-/* Panel that render the console window */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CGameConsoleWindow
+
 class CGameConsoleWindow final : public IWindow
 {
     INTERFACE_GENERATE_BODY();
 
 public:
 
-    /* Create and initialize the console window */
     static TSharedRef<CGameConsoleWindow> Make();
 
-    /* Update and render the console */
     virtual void Tick() override final;
 
-    /* Returns true if the panel should be updated this frame */
     virtual bool IsTickable() override final;
 
 private:
@@ -53,22 +55,22 @@ private:
     CGameConsoleWindow();
     ~CGameConsoleWindow() = default;
 
-    /* Callback from the input */
+    /** Callback from the input */
     int32 TextCallback(struct ImGuiInputTextCallbackData* Data);
 
-    /* Called when a key is pressed */
+    /** Called when a key is pressed */
     void HandleKeyPressedEvent(const SKeyEvent& Event);
 
     TSharedPtr<CConsoleInputHandler> InputHandler;
 
-    /* Text to display in the input box when browsing through the history */
+    // Text to display in the input box when browsing through the history
     CString PopupSelectedText;
 
-    /* The current candidates of registered console-objects */
+    // The current candidates of registered console-objects
     TArray<TPair<IConsoleObject*, CString>> Candidates;
     int32 CandidatesIndex = -1;
 
-    /* Index in the history */
+    // Index in the history
     int32 HistoryIndex = -1;
 
     TStaticArray<char, 256> TextBuffer;

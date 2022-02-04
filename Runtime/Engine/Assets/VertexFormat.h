@@ -3,13 +3,11 @@
 
 #include "Core/Math/MathHash.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SVertex
+
 struct SVertex
 {
-    CVector3 Position;
-    CVector3 Normal;
-    CVector3 Tangent;
-    CVector2 TexCoord;
-
     FORCEINLINE bool operator==(const SVertex& Other) const
     {
         return (Position == Other.Position) && (Normal == Other.Normal) && (Tangent == Other.Tangent) && (TexCoord == Other.TexCoord);
@@ -19,7 +17,15 @@ struct SVertex
     {
         return !(*this == Other);
     }
+
+    CVector3 Position;
+    CVector3 Normal;
+    CVector3 Tangent;
+    CVector2 TexCoord;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SVertexHasher
 
 struct SVertexHasher
 {

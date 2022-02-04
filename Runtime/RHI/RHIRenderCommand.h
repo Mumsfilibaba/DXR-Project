@@ -120,7 +120,7 @@ struct SRHIClearUnorderedAccessViewFloatRenderCommand : public SRHIRenderCommand
 // SetShadingRate RenderCommand
 struct SRHISetShadingRateRenderCommand : public SRHIRenderCommand
 {
-    SRHISetShadingRateRenderCommand(EShadingRate ShadingRate)
+    SRHISetShadingRateRenderCommand(ERHIShadingRate ShadingRate)
         : ShadingRate(ShadingRate)
     {
     }
@@ -130,7 +130,7 @@ struct SRHISetShadingRateRenderCommand : public SRHIRenderCommand
         CmdContext.SetShadingRate(ShadingRate);
     }
 
-    EShadingRate ShadingRate;
+    ERHIShadingRate ShadingRate;
 };
 
 // SetShadingRateImage RenderCommand
@@ -711,7 +711,7 @@ struct SRHIUpdateTexture2DRenderCommand : public SRHIRenderCommand
 // Copy Buffer RenderCommand
 struct SRHICopyBufferRenderCommand : public SRHIRenderCommand
 {
-    SRHICopyBufferRenderCommand(CRHIBuffer* InDestination, CRHIBuffer* InSource, const SCopyBufferInfo& InCopyBufferInfo)
+    SRHICopyBufferRenderCommand(CRHIBuffer* InDestination, CRHIBuffer* InSource, const SRHICopyBufferInfo& InCopyBufferInfo)
         : Destination(InDestination)
         , Source(InSource)
         , CopyBufferInfo(InCopyBufferInfo)
@@ -725,7 +725,7 @@ struct SRHICopyBufferRenderCommand : public SRHIRenderCommand
 
     TSharedRef<CRHIBuffer> Destination;
     TSharedRef<CRHIBuffer> Source;
-    SCopyBufferInfo CopyBufferInfo;
+    SRHICopyBufferInfo CopyBufferInfo;
 };
 
 // Copy Texture RenderCommand
@@ -749,7 +749,7 @@ struct SRHICopyTextureRenderCommand : public SRHIRenderCommand
 // Copy Texture RenderCommand
 struct SRHICopyTextureRegionRenderCommand : public SRHIRenderCommand
 {
-    SRHICopyTextureRegionRenderCommand(CRHITexture* InDestination, CRHITexture* InSource, const SCopyTextureInfo& InCopyTextureInfo)
+    SRHICopyTextureRegionRenderCommand(CRHITexture* InDestination, CRHITexture* InSource, const SRHICopyTextureInfo& InCopyTextureInfo)
         : Destination(InDestination)
         , Source(InSource)
         , CopyTextureInfo(InCopyTextureInfo)
@@ -763,7 +763,7 @@ struct SRHICopyTextureRegionRenderCommand : public SRHIRenderCommand
 
     TSharedRef<CRHITexture> Destination;
     TSharedRef<CRHITexture> Source;
-    SCopyTextureInfo CopyTextureInfo;
+    SRHICopyTextureInfo CopyTextureInfo;
 };
 
 // Destroy Resource RenderCommand

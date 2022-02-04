@@ -356,15 +356,15 @@ inline uint8 ConvertRenderTargetWriteState(const SRenderTargetWriteState& Render
     return RenderTargetWriteMask;
 }
 
-inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopologyType PrimitiveTopologyType)
+inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(ERHIPrimitiveTopologyType PrimitiveTopologyType)
 {
     switch (PrimitiveTopologyType)
     {
-    case EPrimitiveTopologyType::Line:      return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-    case EPrimitiveTopologyType::Patch:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
-    case EPrimitiveTopologyType::Point:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-    case EPrimitiveTopologyType::Triangle:  return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    case EPrimitiveTopologyType::Undefined: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+    case ERHIPrimitiveTopologyType::Line:      return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+    case ERHIPrimitiveTopologyType::Patch:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+    case ERHIPrimitiveTopologyType::Point:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+    case ERHIPrimitiveTopologyType::Triangle:  return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    case ERHIPrimitiveTopologyType::Undefined: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
     }
 
     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
@@ -451,17 +451,17 @@ inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
     return D3D12_FILTER();
 }
 
-inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
+inline D3D12_SHADING_RATE ConvertShadingRate(ERHIShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
-    case EShadingRate::VRS_1x1: return D3D12_SHADING_RATE_1X1;
-    case EShadingRate::VRS_1x2: return D3D12_SHADING_RATE_1X2;
-    case EShadingRate::VRS_2x1: return D3D12_SHADING_RATE_2X1;
-    case EShadingRate::VRS_2x2: return D3D12_SHADING_RATE_2X2;
-    case EShadingRate::VRS_2x4: return D3D12_SHADING_RATE_2X4;
-    case EShadingRate::VRS_4x2: return D3D12_SHADING_RATE_4X2;
-    case EShadingRate::VRS_4x4: return D3D12_SHADING_RATE_4X4;
+    case ERHIShadingRate::VRS_1x1: return D3D12_SHADING_RATE_1X1;
+    case ERHIShadingRate::VRS_1x2: return D3D12_SHADING_RATE_1X2;
+    case ERHIShadingRate::VRS_2x1: return D3D12_SHADING_RATE_2X1;
+    case ERHIShadingRate::VRS_2x2: return D3D12_SHADING_RATE_2X2;
+    case ERHIShadingRate::VRS_2x4: return D3D12_SHADING_RATE_2X4;
+    case ERHIShadingRate::VRS_4x2: return D3D12_SHADING_RATE_4X2;
+    case ERHIShadingRate::VRS_4x4: return D3D12_SHADING_RATE_4X4;
     }
 
     return D3D12_SHADING_RATE();

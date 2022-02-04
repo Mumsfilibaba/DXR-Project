@@ -1,6 +1,9 @@
 #pragma once
 #include "ClassType.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Defines for creating CoreObjects
+
 #define CLASS_DESCRIPTION( TCoreObject )        \
     static SClassDescription ClassDescription = \
     {                                           \
@@ -26,6 +29,9 @@ private:
 
 #define CORE_OBJECT_INIT()                 \
     this->SetClass(This::GetStaticClass())
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CCoreObject
 
 class ENGINE_API CCoreObject
 {
@@ -59,6 +65,9 @@ private:
     /* Object representing the class */
     const CClassType* Class = nullptr;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helpers
 
 inline bool IsSubClassOf(CCoreObject* CoreObject, CClassType* ClassType)
 {

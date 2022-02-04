@@ -1,6 +1,9 @@
 #pragma once
 #include "Application/IInterfaceRenderer.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CInterfaceRendererModule
+
 class CInterfaceRendererModule : public IInterfaceRendererModule
 {
 public:

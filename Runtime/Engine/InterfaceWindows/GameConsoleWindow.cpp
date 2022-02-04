@@ -6,6 +6,9 @@
 
 #include <imgui.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CGameConsoleWindow
+
 TSharedRef<CGameConsoleWindow> CGameConsoleWindow::Make()
 {
     TSharedRef<CGameConsoleWindow> NewWindow = dbg_new CGameConsoleWindow();

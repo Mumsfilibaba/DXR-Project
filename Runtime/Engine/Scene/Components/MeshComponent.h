@@ -6,6 +6,9 @@
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMeshComponent
+
 class ENGINE_API CMeshComponent : public CComponent
 {
     CORE_OBJECT(CMeshComponent, CComponent);

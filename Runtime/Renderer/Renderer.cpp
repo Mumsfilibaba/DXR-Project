@@ -475,7 +475,7 @@ void CRenderer::Tick(const CScene& Scene)
     if (ShadingImage && GEnableVariableRateShading.GetBool())
     {
         INSERT_DEBUG_CMDLIST_MARKER(ShadingRateCmdList, "Begin VRS Image");
-        ShadingRateCmdList.SetShadingRate(EShadingRate::VRS_1x1);
+        ShadingRateCmdList.SetShadingRate(ERHIShadingRate::VRS_1x1);
 
         ShadingRateCmdList.TransitionTexture(ShadingImage.Get(), ERHIResourceState::ShadingRateSource, ERHIResourceState::UnorderedAccess);
 
@@ -494,7 +494,7 @@ void CRenderer::Tick(const CScene& Scene)
     }
     else if (RHISupportsVariableRateShading())
     {
-        ShadingRateCmdList.SetShadingRate(EShadingRate::VRS_1x1);
+        ShadingRateCmdList.SetShadingRate(ERHIShadingRate::VRS_1x1);
     }
 
     if ( /* DISABLES CODE */ (false) /*IsRayTracingSupported())*/)
@@ -673,7 +673,7 @@ void CRenderer::Tick(const CScene& Scene)
 
         if (RHISupportsVariableRateShading())
         {
-            MainCmdList.SetShadingRate(EShadingRate::VRS_1x1);
+            MainCmdList.SetShadingRate(ERHIShadingRate::VRS_1x1);
             MainCmdList.SetShadingRateImage(nullptr);
         }
 
@@ -916,7 +916,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     PSOProperties.RasterizerState = RasterizerState.Get();
     PSOProperties.ShaderState.VertexShader = AABBVertexShader.Get();
     PSOProperties.ShaderState.PixelShader = AABBPixelShader.Get();
-    PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::Line;
+    PSOProperties.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Line;
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = Resources.RenderTargetFormat;
     PSOProperties.PipelineFormats.NumRenderTargets = 1;
     PSOProperties.PipelineFormats.DepthStencilFormat = Resources.DepthBufferFormat;
@@ -1080,7 +1080,7 @@ bool CRenderer::InitAA()
     PSOProperties.RasterizerState = RasterizerState.Get();
     PSOProperties.ShaderState.VertexShader = VShader.Get();
     PSOProperties.ShaderState.PixelShader = PostShader.Get();
-    PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+    PSOProperties.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
     PSOProperties.PipelineFormats.NumRenderTargets = 1;
     PSOProperties.PipelineFormats.DepthStencilFormat = EFormat::Unknown;

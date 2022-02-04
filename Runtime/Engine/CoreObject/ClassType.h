@@ -48,13 +48,10 @@ public:
     }
 
 private:
-
-    /** Name of the class */
     const char* Name;
-    /** Class that this class inherits from */
+
     const CClassType* SuperClass;
-    /** The size of the class in bytes */
+    
     uint32 SizeInBytes;
-    /** Alignment of the class in bytes */
     uint32 Alignment;
 };

@@ -9,6 +9,9 @@
 #include "Application/InputHandler.h"
 #include "Application/IInterfaceRenderer.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CInterfaceRenderer
+
 class CInterfaceRenderer final : public IInterfaceRenderer
 {
 public:

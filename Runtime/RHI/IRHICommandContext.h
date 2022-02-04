@@ -67,7 +67,7 @@ public:
      * 
      * @param ShadingRate: New shading-rate for the upcoming draw-calls
      */
-    virtual void SetShadingRate(EShadingRate ShadingRate) = 0;
+    virtual void SetShadingRate(ERHIShadingRate ShadingRate) = 0;
 
     /**
      * Set the Shading-Rate image that should be used 
@@ -286,7 +286,7 @@ public:
      * @param Src: Source buffer to copy from
      * @param CopyInfo: Information about the copy operation
      */
-    virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SCopyBufferInfo& CopyInfo) = 0;
+    virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo) = 0;
     
     /**
      * Copies the entire contents of one texture to another, which require the size and formats to be the same 
@@ -303,7 +303,7 @@ public:
      * @param Src: Source texture
      * @param CopyTextureInfo: Information about the copy operation
      */
-    virtual void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SCopyTextureInfo& CopyTextureInfo) = 0;
+    virtual void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo) = 0;
 
     /**
      * Destroys a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command-list is completed

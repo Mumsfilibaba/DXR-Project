@@ -6,6 +6,9 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Containers/StaticArray.h"
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// SMaterialDesc
+
 struct SMaterialDesc
 {
     CVector3 Albedo = CVector3(1.0f);
@@ -16,6 +19,9 @@ struct SMaterialDesc
     int32 EnableHeight = 0;
     int32 EnableMask = 0;
 };
+
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMaterial
 
 class ENGINE_API CMaterial
 {

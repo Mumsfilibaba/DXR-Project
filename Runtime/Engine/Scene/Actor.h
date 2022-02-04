@@ -90,88 +90,147 @@ public:
     CActor(class CScene* InSceneOwner);
     ~CActor();
 
-    /* Start actor, called in the beginning of the run, perform initialization here */
+    /** Start actor, called in the beginning of the run, perform initialization here */
     virtual void Start();
 
-    /* Tick actor, should be called once every frame */
+    /**
+     * Tick component, should be called once every frame
+     *
+     * @param DeltaTime: Time since the last call to tick
+     */
     virtual void Tick(CTimestamp DeltaTime);
 
-    /* Add a new component to the actor */
+    /**
+     * Add a new component to the actor 
+     * 
+     * @param InComponent: Component to add to the Actor
+     */
     void AddComponent(CComponent* InComponent);
 
-    /* Set name of the actor */
+    /**
+     * Set name of the actor 
+     * 
+     * @param InName: Name of the actor
+     */
     void SetName(const CString& InName);
 
-    /* Check if the actor has a component of the component-class */
+    /**
+     * Check if the actor has a component of the component-class 
+     * 
+     * @param ComponentClass: ClassObject to of the component to retrieve 
+     * @return: Returns true if the actor contains a component of a certain type
+     */
     bool HasComponentOfClass(class CClassType* ComponentClass) const;
 
-    template<typename TComponent>
+    /**
+     * Check if the actor has a component of the component-class
+     *
+     * @return: Returns true if the actor contains a component of a certain type
+     */
+    template<typename ComponentType>
     inline bool HasComponentOfType() const
     {
-        return HasComponentOfClass(TComponent::GetStaticClass());
+        return HasComponentOfClass(ComponentType::GetStaticClass());
     }
 
-    /* Retrieve a component from the actor of the component-class */
+    /**
+     * Retrieve a component from the actor of the component-class 
+     * 
+     * @param ComponentClass: ClassObject to of the component to retrieve
+     * @return: Returns a pointer to the requested component, or nullptr if no component of the type exist
+     */
     CComponent* GetComponentOfClass(class CClassType* ComponentClass) const;
 
-    template <typename TComponent>
-    inline TComponent* GetComponentOfType() const
+    /**
+     * Retrieve a component from the actor of the component-class
+     *
+     * @return: Returns a pointer to the requested component, or nullptr if no component of the type exist
+     */
+    template <typename ComponentType>
+    inline ComponentType* GetComponentOfType() const
     {
-        return static_cast<TComponent*>(GetComponentOfClass(TComponent::GetStaticClass()));
+        return static_cast<ComponentType*>(GetComponentOfClass(ComponentType::GetStaticClass()));
     }
 
+    /**
+     * Set the transform of the actor
+     * 
+     * @param InTransform: New transform of the actor
+     */
     FORCEINLINE void SetTransform(const CTransform& InTransform)
     {
         Transform = InTransform;
     }
 
+    /**
+     * Retrieve the name of the actor
+     * 
+     * @return: Returns the name of the actor
+     */
     FORCEINLINE const CString& GetName() const
     {
         return Name;
     }
 
+    /**
+     * Retrieve the Scene that owns the actor
+     *
+     * @return: Returns the Scene that owns the actor
+     */
     FORCEINLINE CScene* GetScene() const
     {
         return SceneOwner;
     }
 
+    /**
+     * Retrieve the transform of the actor
+     *
+     * @return: Returns the transform of the actor
+     */
     FORCEINLINE CTransform& GetTransform()
     {
         return Transform;
     }
 
+    /**
+     * Retrieve the transform of the actor
+     *
+     * @return: Returns the transform of the actor
+     */
     FORCEINLINE const CTransform& GetTransform() const
     {
         return Transform;
     }
 
+    /**
+     * Check if Start should be called on the component
+     *
+     * @return: Returns true if the component's Start-method should be called
+     */
     FORCEINLINE bool IsStartable() const
     {
         return bIsStartable;
     }
 
+    /**
+     * Check if Tick should be called on the component
+     *
+     * @return: Returns true if the component's Tick-method should be called
+     */
     FORCEINLINE bool IsTickable() const
     {
         return bIsTickable;
     }
 
 private:
-
-    /* The name of this actor */
     CString Name;
 
-    /* The scene that this actor belongs to */
     CScene* SceneOwner = nullptr;
 
-    /* The transform of this actor */
     CTransform Transform;
 
-    /* The components of this actor */
     TArray<CComponent*> Components;
 
-    /* Flags for this actor that decides if it should start or not */
     bool bIsStartable : 1;
-
-    /* Flags for this actor that decides if it should tick or not */
     bool bIsTickable : 1;
 };

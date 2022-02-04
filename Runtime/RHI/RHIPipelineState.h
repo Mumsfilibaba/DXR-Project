@@ -517,7 +517,7 @@ struct SRHIGraphicsPipelineStateInfo
     uint32 SampleMask = 0xffffffff;
 
     EIndexBufferStripCutValue   IBStripCutValue = EIndexBufferStripCutValue::Disabled;
-    EPrimitiveTopologyType      PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+    ERHIPrimitiveTopologyType      PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
     SGraphicsPipelineShaderState ShaderState;
     SPipelineRenderTargetFormats PipelineFormats;
 };

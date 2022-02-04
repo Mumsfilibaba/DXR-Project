@@ -10,6 +10,9 @@
 
 #include <ofbx.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CFBXLoader
+
 static CString ExtractPath(const CString& FullFilePath)
 {
     auto Pos = FullFilePath.ReverseFind('/');

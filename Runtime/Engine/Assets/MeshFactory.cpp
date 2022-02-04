@@ -3,6 +3,9 @@
 
 #include "Core/Math/MathCommon.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMeshFactory
+
 SMeshData CMeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
 {
     const float HalfWidth = Width * 0.5f;

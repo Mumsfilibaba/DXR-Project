@@ -7,6 +7,9 @@
 
 #define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetShaderResourceView() : nullptr
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMaterial
+
 CMaterial::CMaterial(const SMaterialDesc& InProperties)
     : AlbedoMap()
     , NormalMap()

@@ -3,6 +3,9 @@
 
 #include "Core/Math/Color.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ECubeFace
+
 enum class ECubeFace
 {
     PosX = 0,
@@ -31,6 +34,7 @@ inline ECubeFace GetCubeFaceFromIndex(uint32 Index)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EComparisonFunc
 
 enum class EComparisonFunc
 {
@@ -61,8 +65,9 @@ inline const char* ToString(EComparisonFunc ComparisonFunc)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERHIPrimitiveTopologyType
 
-enum class EPrimitiveTopologyType
+enum class ERHIPrimitiveTopologyType
 {
     Undefined = 0,
     Point = 1,
@@ -71,20 +76,21 @@ enum class EPrimitiveTopologyType
     Patch = 4
 };
 
-inline const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
+inline const char* ToString(ERHIPrimitiveTopologyType PrimitveTopologyType)
 {
     switch (PrimitveTopologyType)
     {
-    case EPrimitiveTopologyType::Undefined: return "Undefined";
-    case EPrimitiveTopologyType::Point:     return "Point";
-    case EPrimitiveTopologyType::Line:      return "Line";
-    case EPrimitiveTopologyType::Triangle:  return "Triangle";
-    case EPrimitiveTopologyType::Patch:     return "Patch";
+    case ERHIPrimitiveTopologyType::Undefined: return "Undefined";
+    case ERHIPrimitiveTopologyType::Point:     return "Point";
+    case ERHIPrimitiveTopologyType::Line:      return "Line";
+    case ERHIPrimitiveTopologyType::Triangle:  return "Triangle";
+    case ERHIPrimitiveTopologyType::Patch:     return "Patch";
     default: return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERHIResourceState
 
 enum class ERHIResourceState
 {
@@ -132,6 +138,7 @@ inline const char* ToString(ERHIResourceState ResourceState)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EPrimitiveTopology
 
 enum class EPrimitiveTopology
 {
@@ -158,8 +165,9 @@ inline const char* ToString(EPrimitiveTopology ResourceState)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERHIShadingRate
 
-enum class EShadingRate
+enum class ERHIShadingRate
 {
     VRS_1x1 = 0x0,
     VRS_1x2 = 0x1,
@@ -170,22 +178,23 @@ enum class EShadingRate
     VRS_4x4 = 0xa,
 };
 
-inline const char* ToString(EShadingRate ShadingRate)
+inline const char* ToString(ERHIShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
-    case EShadingRate::VRS_1x1: return "VRS_1x1";
-    case EShadingRate::VRS_1x2: return "VRS_1x2";
-    case EShadingRate::VRS_2x1: return "VRS_2x1";
-    case EShadingRate::VRS_2x2: return "VRS_2x2";
-    case EShadingRate::VRS_2x4: return "VRS_2x4";
-    case EShadingRate::VRS_4x2: return "VRS_4x2";
-    case EShadingRate::VRS_4x4: return "VRS_4x4";
+    case ERHIShadingRate::VRS_1x1: return "VRS_1x1";
+    case ERHIShadingRate::VRS_1x2: return "VRS_1x2";
+    case ERHIShadingRate::VRS_2x1: return "VRS_2x1";
+    case ERHIShadingRate::VRS_2x2: return "VRS_2x2";
+    case ERHIShadingRate::VRS_2x4: return "VRS_2x4";
+    case ERHIShadingRate::VRS_4x2: return "VRS_4x2";
+    case ERHIShadingRate::VRS_4x4: return "VRS_4x4";
     default: return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SDepthStencil
 
 struct SDepthStencil
 {
@@ -200,6 +209,9 @@ struct SDepthStencil
     float Depth = 1.0f;
     uint8 Stencil = 0;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SClearValue
 
 struct SClearValue
 {
@@ -310,6 +322,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIResourceData
 
 struct SRHIResourceData
 {
@@ -397,12 +410,13 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHICopyBufferInfo
 
-struct SCopyBufferInfo
+struct SRHICopyBufferInfo
 {
-    SCopyBufferInfo() = default;
+    SRHICopyBufferInfo() = default;
 
-    FORCEINLINE SCopyBufferInfo(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes)
+    FORCEINLINE SRHICopyBufferInfo(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes)
         : SourceOffset(InSourceOffset)
         , DestinationOffset(InDestinationOffset)
         , SizeInBytes(InSizeInBytes)
@@ -415,12 +429,13 @@ struct SCopyBufferInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHICopyTextureSubresourceInfo
 
-struct SCopyTextureSubresourceInfo
+struct SRHICopyTextureSubresourceInfo
 {
-    SCopyTextureSubresourceInfo() = default;
+    SRHICopyTextureSubresourceInfo() = default;
 
-    FORCEINLINE SCopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
+    FORCEINLINE SRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
         : x(InX)
         , y(InY)
         , z(InZ)
@@ -434,10 +449,13 @@ struct SCopyTextureSubresourceInfo
     uint32 SubresourceIndex = 0;
 };
 
-struct SCopyTextureInfo
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHICopyTextureInfo
+
+struct SRHICopyTextureInfo
 {
-    SCopyTextureSubresourceInfo Source;
-    SCopyTextureSubresourceInfo Destination;
+    SRHICopyTextureSubresourceInfo Source;
+    SRHICopyTextureSubresourceInfo Destination;
     uint32 Width = 0;
     uint32 Height = 0;
     uint32 Depth = 0;

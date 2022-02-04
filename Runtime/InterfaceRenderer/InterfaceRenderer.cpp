@@ -15,6 +15,9 @@
 
 #include <imgui.h>
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CInterfaceRenderer
+
 CInterfaceRenderer* CInterfaceRenderer::Make()
 {
     return dbg_new CInterfaceRenderer();;
@@ -203,7 +206,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     PSOProperties.RasterizerState = RasterizerState.Get();
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
     PSOProperties.PipelineFormats.NumRenderTargets = 1;
-    PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+    PSOProperties.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)

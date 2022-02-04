@@ -9,12 +9,18 @@
 
 #include <stb_image.h>
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// TextureFactoryData
+
 struct TextureFactoryData
 {
     TSharedRef<CRHIComputePipelineState> PanoramaPSO;
     TSharedRef<CRHIComputeShader>        ComputeShader;
     CRHICommandList CmdList;
 };
+
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// CTextureFactory
 
 static TextureFactoryData GlobalFactoryData;
 

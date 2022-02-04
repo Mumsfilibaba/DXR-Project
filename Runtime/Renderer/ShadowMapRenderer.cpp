@@ -125,7 +125,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
         PipelineStateInfo.IBStripCutValue = EIndexBufferStripCutValue::Disabled;
         PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+        PipelineStateInfo.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
         PipelineStateInfo.RasterizerState = RasterizerState.Get();
         PipelineStateInfo.SampleCount = 1;
         PipelineStateInfo.SampleQuality = 0;
@@ -224,7 +224,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
         PipelineStateInfo.IBStripCutValue = EIndexBufferStripCutValue::Disabled;
         PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+        PipelineStateInfo.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
         PipelineStateInfo.RasterizerState = RasterizerState.Get();
         PipelineStateInfo.SampleCount = 1;
         PipelineStateInfo.SampleQuality = 0;

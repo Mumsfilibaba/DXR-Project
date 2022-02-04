@@ -1,5 +1,8 @@
 #include "Component.h"
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// CComponent
+
 CComponent::CComponent(CActor* InActorOwner)
     : CCoreObject()
     , ActorOwner(InActorOwner)

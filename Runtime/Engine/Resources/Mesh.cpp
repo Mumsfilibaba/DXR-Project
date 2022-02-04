@@ -3,6 +3,9 @@
 #include "RHI/RHIInstance.h"
 #include "RHI/RHICommandList.h"
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMesh
+
 bool CMesh::Init(const SMeshData& Data)
 {
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
