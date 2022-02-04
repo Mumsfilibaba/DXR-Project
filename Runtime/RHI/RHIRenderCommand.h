@@ -1062,7 +1062,7 @@ struct SRHIDispatchRaysRenderCommand : public SRHIRenderCommand
 // InsertCommandListMarker RenderCommand
 struct SRHIInsertCommandListMarkerRenderCommand : public SRHIRenderCommand
 {
-    SRHIInsertCommandListMarkerRenderCommand(const CString& InMarker)
+    SRHIInsertCommandListMarkerRenderCommand(const String& InMarker)
         : Marker(InMarker)
     {
     }
@@ -1075,7 +1075,7 @@ struct SRHIInsertCommandListMarkerRenderCommand : public SRHIRenderCommand
         CmdContext.InsertMarker(Marker);
     }
 
-    CString Marker;
+    String Marker;
 };
 
 // DebugBreak RenderCommand

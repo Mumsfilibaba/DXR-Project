@@ -80,7 +80,7 @@ CRHITexture2D* CTextureFactory::LoadFromImage2D(SImage2D* InImage, uint32 Create
     return NewTexture;
 }
 
-CRHITexture2D* CTextureFactory::LoadFromFile(const CString& Filepath, uint32 CreateFlags, EFormat Format)
+CRHITexture2D* CTextureFactory::LoadFromFile(const String& Filepath, uint32 CreateFlags, EFormat Format)
 {
     int32 Width = 0;
     int32 Height = 0;

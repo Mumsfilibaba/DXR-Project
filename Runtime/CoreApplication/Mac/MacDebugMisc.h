@@ -17,7 +17,7 @@ public:
     }
 
     /* Outputs a debug string to the attached debugger */
-    static void OutputDebugString(const CString& Message);
+    static void OutputDebugString(const String& Message);
 
     /* Checks weather or not the application is running inside a debugger */
     static FORCEINLINE bool IsDebuggerPresent()

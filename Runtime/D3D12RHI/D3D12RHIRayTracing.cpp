@@ -440,7 +440,7 @@ bool CD3D12RHIRayTracingScene::BuildBindingTable(
     return true;
 }
 
-void CD3D12RHIRayTracingScene::SetName(const CString& InName)
+void CD3D12RHIRayTracingScene::SetName(const String& InName)
 {
     CRHIObject::SetName(InName);
     ResultBuffer->SetName(InName);

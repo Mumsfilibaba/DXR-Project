@@ -1374,7 +1374,7 @@ void CD3D12RHICommandContext::Flush()
     }
 }
 
-void CD3D12RHICommandContext::InsertMarker(const CString& Message)
+void CD3D12RHICommandContext::InsertMarker(const String& Message)
 {
     if (ND3D12Functions::SetMarkerOnCommandList)
     {

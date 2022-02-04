@@ -389,7 +389,7 @@ inline const char* ToString(EInputClassification BlendOp)
 
 struct SInputElement
 {
-    CString              Semantic = "";
+    String              Semantic = "";
     uint32               SemanticIndex = 0;
     EFormat              Format = EFormat::Unknown;
     uint32               InputSlot = 0;
@@ -574,14 +574,14 @@ struct SRayTracingHitGroup
 {
     SRayTracingHitGroup() = default;
 
-    SRayTracingHitGroup(const CString& InName, CRHIRayAnyHitShader* InAnyHit, CRHIRayClosestHitShader* InClosestHit)
+    SRayTracingHitGroup(const String& InName, CRHIRayAnyHitShader* InAnyHit, CRHIRayClosestHitShader* InClosestHit)
         : Name(InName)
         , AnyHit(InAnyHit)
         , ClosestHit(InClosestHit)
     {
     }
 
-    CString              Name;
+    String              Name;
     CRHIRayAnyHitShader* AnyHit;
     CRHIRayClosestHitShader* ClosestHit;
 };

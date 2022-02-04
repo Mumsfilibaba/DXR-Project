@@ -30,7 +30,7 @@ CWindowsConsoleWindow* CWindowsConsoleWindow::Make()
     return dbg_new CWindowsConsoleWindow();
 }
 
-void CWindowsConsoleWindow::Print(const CString& Message)
+void CWindowsConsoleWindow::Print(const String& Message)
 {
     if (ConsoleHandle)
     {
@@ -39,7 +39,7 @@ void CWindowsConsoleWindow::Print(const CString& Message)
     }
 }
 
-void CWindowsConsoleWindow::PrintLine(const CString& Message)
+void CWindowsConsoleWindow::PrintLine(const String& Message)
 {
     UNREFERENCED_VARIABLE(Message);
 }
@@ -65,7 +65,7 @@ void CWindowsConsoleWindow::Clear()
     }
 }
 
-void CWindowsConsoleWindow::SetTitle(const CString& Title)
+void CWindowsConsoleWindow::SetTitle(const String& Title)
 {
     if (ConsoleHandle)
     {

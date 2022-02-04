@@ -73,7 +73,7 @@ static EFormat GetFloatFormat(int32 Channels)
     }
 }
 
-TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const CString& Filename)
+TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const String& Filename)
 {
     TSharedPtr<SImage2D> Image = MakeShared<SImage2D>(Filename, uint16(0), uint16(0), EFormat::Unknown);
 

@@ -25,7 +25,7 @@ public:
 	static TSharedRef<CMacWindow> Make(CMacApplication* InApplication);
 	
     /* Initializes the window */
-    virtual bool Initialize(const CString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
+    virtual bool Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
 
     /* Shows the window */
     virtual void Show(bool bMaximized) override final;
@@ -52,10 +52,10 @@ public:
     virtual bool IsActiveWindow() const override final;
 
     /* Sets the title */
-    virtual void SetTitle(const CString& Title) override final;
+    virtual void SetTitle(const String& Title) override final;
 
     /* Retrieve the window title */
-    virtual void GetTitle(CString& OutTitle) override final;
+    virtual void GetTitle(String& OutTitle) override final;
 
     /* Set the shape of the window */
     virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) override final;

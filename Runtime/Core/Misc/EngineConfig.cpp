@@ -16,7 +16,7 @@ CConfigFile::CConfigFile(const char* InFilename)
 {
 }
 
-bool CConfigFile::SetString(const char* SectionName, const char* Name, const CString& NewValue)
+bool CConfigFile::SetString(const char* SectionName, const char* Name, const String& NewValue)
 {
     CConfigValue* Value = GetValue(SectionName, Name);
     if (Value)
@@ -26,7 +26,7 @@ bool CConfigFile::SetString(const char* SectionName, const char* Name, const CSt
     }
     else
     {
-        LOG_ERROR("Failed to set config value '" + CString(Name) + "' in section '" + CString(SectionName) + "'");
+        LOG_ERROR("Failed to set config value '" + String(Name) + "' in section '" + String(SectionName) + "'");
         return false;
     }
 }
@@ -46,7 +46,7 @@ bool CConfigFile::SetBoolean(const char* SectionName, const char* Name, bool bNe
     return SetString(SectionName, Name, ToString(bNewValue));
 }
 
-bool CConfigFile::GetString(const char* SectionName, const char* Name, CString& OutValue)
+bool CConfigFile::GetString(const char* SectionName, const char* Name, String& OutValue)
 {
     CConfigValue* Value = GetValue(SectionName, Name);
     if (Value)

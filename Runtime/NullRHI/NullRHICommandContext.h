@@ -111,7 +111,7 @@ public:
 
     virtual void Flush() override final { }
 
-    virtual void InsertMarker(const CString& Message) override final { }
+    virtual void InsertMarker(const String& Message) override final { }
 
     virtual void BeginExternalCapture() override final { }
     virtual void EndExternalCapture() override final { }

@@ -668,7 +668,7 @@ bool CD3D12RHIRayTracingPipelineState::Init(const SRHIRayTracingPipelineStateInf
     return true;
 }
 
-void* CD3D12RHIRayTracingPipelineState::GetShaderIdentifer(const CString& ExportName)
+void* CD3D12RHIRayTracingPipelineState::GetShaderIdentifer(const String& ExportName)
 {
     auto MapItem = ShaderIdentifers.find(ExportName);
     if (MapItem == ShaderIdentifers.end())

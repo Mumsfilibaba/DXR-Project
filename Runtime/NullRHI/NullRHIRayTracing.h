@@ -26,7 +26,7 @@ public:
 
     ~CNullRHIRayTracingGeometry() = default;
 
-    virtual void SetName(const CString& InName) override
+    virtual void SetName(const String& InName) override
     {
         CRHIObject::SetName(InName);
     }
@@ -51,7 +51,7 @@ public:
 
     ~CNullRHIRayTracingScene() = default;
 
-    virtual void SetName(const CString& InName) override final
+    virtual void SetName(const String& InName) override final
     {
         CRHIObject::SetName(InName);
     }

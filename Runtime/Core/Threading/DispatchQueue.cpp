@@ -82,7 +82,7 @@ bool CDispatchQueue::Initialize()
 
     for (uint32 i = 0; i < ThreadCount; i++)
     {
-        CString ThreadName;
+        String ThreadName;
         ThreadName.Format("WorkerThread[%d]", i);
 
         TSharedRef<CPlatformThread> NewThread = PlatformThread::Make(CDispatchQueue::WorkThread, ThreadName);

@@ -12,7 +12,7 @@
     {                                                   \
         Assert(NErrorDevice::GConsoleWindow != nullptr);              \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Red);   \
-        NErrorDevice::GConsoleWindow->Print(CString(Message) + "\n"); \
+        NErrorDevice::GConsoleWindow->Print(String(Message) + "\n"); \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White); \
     }
 
@@ -20,7 +20,7 @@
     {                                                    \
         Assert(NErrorDevice::GConsoleWindow != nullptr);               \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Yellow); \
-        NErrorDevice::GConsoleWindow->Print(CString(Message) + "\n");  \
+        NErrorDevice::GConsoleWindow->Print(String(Message) + "\n");  \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White);  \
     }
 
@@ -28,6 +28,6 @@
     {                                                   \
         Assert(NErrorDevice::GConsoleWindow != nullptr);              \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Green); \
-        NErrorDevice::GConsoleWindow->Print(CString(Message) + "\n"); \
+        NErrorDevice::GConsoleWindow->Print(String(Message) + "\n"); \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White); \
     }

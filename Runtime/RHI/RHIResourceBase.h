@@ -33,20 +33,20 @@ public:
      * 
      * @param InName: Debug name for the resource
      */
-    virtual void SetName(const CString& InName) { Name = InName; }
+    virtual void SetName(const String& InName) { Name = InName; }
 
     /**
      * Retrieve the debug-name
      * 
      * @return: Returns the debug-name
      */
-    FORCEINLINE const CString& GetName() const
+    FORCEINLINE const String& GetName() const
     {
         return Name;
     }
 
 private:
-    CString Name;
+    String Name;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

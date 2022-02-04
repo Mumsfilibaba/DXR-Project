@@ -21,7 +21,7 @@ public:
 
     void Unmap(uint32 SubResource, const D3D12_RANGE* Range);
 
-    FORCEINLINE void SetName(const CString& Name)
+    FORCEINLINE void SetName(const String& Name)
     {
         WString WideName = CharToWide(Name);
         DxResource->SetName(WideName.CStr());

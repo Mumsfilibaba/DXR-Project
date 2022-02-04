@@ -23,5 +23,5 @@ enum EFBXFlags : uint8
 class ENGINE_API CFBXLoader
 {
 public:
-    static bool LoadFile(const CString& Filename, SSceneData& OutScene, uint32 Flags = EFBXFlags::FBXFlags_Default) noexcept;
+    static bool LoadFile(const String& Filename, SSceneData& OutScene, uint32 Flags = EFBXFlags::FBXFlags_Default) noexcept;
 };

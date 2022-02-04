@@ -19,7 +19,7 @@ public:
 
     bool Init();
 
-    FORCEINLINE void SetName(const CString& Name)
+    FORCEINLINE void SetName(const String& Name)
     {
         WString WideName = CharToWide(Name);
         Heap->SetName(WideName.CStr());
@@ -129,7 +129,7 @@ public:
 
     void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex);
 
-    void SetName(const CString& InName);
+    void SetName(const String& InName);
 
     FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
     {
@@ -144,7 +144,7 @@ public:
 private:
     bool AllocateHeap();
 
-    CString Name;
+    String Name;
 
     TArray<SDescriptorHeap> Heaps;
 
@@ -172,7 +172,7 @@ public:
 
     void SetNumPooledHeaps(uint32 NumHeaps);
 
-    FORCEINLINE void SetName(const CString& Name)
+    FORCEINLINE void SetName(const String& Name)
     {
         Heap->SetName(Name);
     }

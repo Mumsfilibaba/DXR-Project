@@ -60,7 +60,7 @@ void CFrameProfilerWindow::DrawFPS()
 
     ImGui::Begin("FPS Window", nullptr, Flags);
 
-    const CString FpsString = ToString(CFrameProfiler::Get().GetFramesPerSecond());
+    const String FpsString = ToString(CFrameProfiler::Get().GetFramesPerSecond());
     ImGui::Text("%s", FpsString.CStr());
 
     ImGui::End();

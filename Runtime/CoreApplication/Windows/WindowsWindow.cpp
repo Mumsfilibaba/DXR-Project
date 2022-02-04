@@ -35,7 +35,7 @@ TSharedRef<CWindowsWindow> CWindowsWindow::Make(CWindowsApplication* InApplicati
     return dbg_new CWindowsWindow(InApplication);
 }
 
-bool CWindowsWindow::Initialize(const CString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
+bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
 {
     // Determine the window style for WinAPI
     DWORD NewStyle = 0;
@@ -258,7 +258,7 @@ bool CWindowsWindow::IsActiveWindow() const
     return (hActive == Window);
 }
 
-void CWindowsWindow::SetTitle(const CString& Title)
+void CWindowsWindow::SetTitle(const String& Title)
 {
     Assert(Window != 0);
 
@@ -271,7 +271,7 @@ void CWindowsWindow::SetTitle(const CString& Title)
     }
 }
 
-void CWindowsWindow::GetTitle(CString& OutTitle)
+void CWindowsWindow::GetTitle(String& OutTitle)
 {
     if (IsValid())
     {
@@ -380,7 +380,7 @@ void CWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) cons
     }
     else
     {
-        CString Error;
+        String Error;
         PlatformDebugMisc::GetLastErrorString(Error);
 
         LOG_ERROR("[CWindowsWindow]: Failed to retrive monitorinfo. Reason: " + Error);

@@ -30,7 +30,7 @@ public:
     }
 
     /* Outputs a debug string to the attached debugger */
-    static FORCEINLINE void OutputDebugString(const CString& Message)
+    static FORCEINLINE void OutputDebugString(const String& Message)
     {
         OutputDebugStringA(Message.CStr());
     }
@@ -42,7 +42,7 @@ public:
     }
 
     /* Calls GetLastError and retrieves a string from it */
-    static FORCEINLINE void GetLastErrorString(CString& OutErrorString)
+    static FORCEINLINE void GetLastErrorString(String& OutErrorString)
     {
         int LastError = ::GetLastError();
 

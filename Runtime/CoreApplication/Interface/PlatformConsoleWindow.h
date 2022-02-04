@@ -50,14 +50,14 @@ public:
      * 
      * @param Message: Message to print to the console-window
      */
-    virtual void Print(const CString& Message) { }
+    virtual void Print(const String& Message) { }
 
     /**
      * Prints text to the console-window and starts a new line
      *
      * @param Message: Message to print to the console
      */
-    virtual void PrintLine(const CString& Message) { }
+    virtual void PrintLine(const String& Message) { }
 
     /**
      * Clear the console window 
@@ -69,7 +69,7 @@ public:
      * 
      * @param Title: New title for the console-window
      */
-    virtual void SetTitle(const CString& Title) { }
+    virtual void SetTitle(const String& Title) { }
 
     /**
      * Set the text-color

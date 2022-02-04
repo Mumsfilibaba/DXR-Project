@@ -83,7 +83,7 @@ bool CEngineLoop::PreInitialize()
     else
     {
         NErrorDevice::GConsoleWindow->Show(true);
-        NErrorDevice::GConsoleWindow->SetTitle(CString(PROJECT_NAME) + ": Error Console");
+        NErrorDevice::GConsoleWindow->SetTitle(String(PROJECT_NAME) + ": Error Console");
     }
 
     if (!LoadCoreModules())
@@ -96,7 +96,7 @@ bool CEngineLoop::PreInitialize()
     CFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
 
-	const CString ProjectLocation = CString(ENGINE_LOCATION) + CString("/") + CString(PROJECT_NAME);
+	const String ProjectLocation = String(ENGINE_LOCATION) + String("/") + String(PROJECT_NAME);
     if (!CProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr()))
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
@@ -104,8 +104,8 @@ bool CEngineLoop::PreInitialize()
     }
 
 #if !PRODUCTION_BUILD
-    LOG_INFO("ProjectName=" + CString(CProjectManager::GetProjectName()));
-    LOG_INFO("ProjectPath=" + CString(CProjectManager::GetProjectPath()));
+    LOG_INFO("ProjectName=" + String(CProjectManager::GetProjectName()));
+    LOG_INFO("ProjectPath=" + String(CProjectManager::GetProjectPath()));
 #endif
 
     if (!PlatformThreadMisc::Initialize())

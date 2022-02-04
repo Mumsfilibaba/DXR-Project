@@ -25,7 +25,7 @@ public:
       * @param InName: Name of the new thread
       * @return: An newly created thread interface
       */
-    static TSharedRef<CWindowsThread> Make(ThreadFunction InFunction, const CString & InName);
+    static TSharedRef<CWindowsThread> Make(ThreadFunction InFunction, const String & InName);
 
     /**
      * Start thread-execution
@@ -42,7 +42,7 @@ public:
      *
      * @param InName: New name of the thread
      */
-    virtual void SetName(const CString& InName) override final;
+    virtual void SetName(const String& InName) override final;
 
     /**
      * Retrieve platform specific handle
@@ -54,7 +54,7 @@ public:
 private:
 
     CWindowsThread(ThreadFunction InFunction);
-    CWindowsThread(ThreadFunction InFunction, const CString& InName);
+    CWindowsThread(ThreadFunction InFunction, const String& InName);
     ~CWindowsThread();
 
     static DWORD WINAPI ThreadRoutine(LPVOID ThreadParameter);
@@ -62,7 +62,7 @@ private:
     HANDLE Thread;
     DWORD  hThreadID;
 
-    CString Name;
+    String Name;
 
     ThreadFunction Function;
 };

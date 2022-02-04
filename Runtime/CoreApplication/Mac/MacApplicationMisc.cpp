@@ -7,7 +7,7 @@
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
 
-void CMacApplicationMisc::MessageBox(const CString& Title, const CString& Message)
+void CMacApplicationMisc::MessageBox(const String& Title, const String& Message)
 {
     CFStringRef CaptionRef = CFStringCreateWithCString(0, Title.CStr(),   static_cast<CFStringEncoding>(Title.Length()));
     CFStringRef TextRef    = CFStringCreateWithCString(0, Message.CStr(), static_cast<CFStringEncoding>(Message.Length()));

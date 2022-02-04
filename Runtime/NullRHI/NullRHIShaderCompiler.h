@@ -21,12 +21,12 @@ public:
     CNullRHIShaderCompiler() = default;
     ~CNullRHIShaderCompiler() = default;
 
-    virtual bool CompileFromFile(const CString& FilePath, const CString& EntryPoint, const TArray<SShaderDefine>* Defines, ERHIShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) override final
+    virtual bool CompileFromFile(const String& FilePath, const String& EntryPoint, const TArray<SShaderDefine>* Defines, ERHIShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) override final
     {
         return true;
     }
 
-    virtual bool CompileShader(const CString& ShaderSource, const CString& EntryPoint, const TArray<SShaderDefine>* Defines, ERHIShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) override final
+    virtual bool CompileShader(const String& ShaderSource, const String& EntryPoint, const TArray<SShaderDefine>* Defines, ERHIShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) override final
     {
         return true;
     }

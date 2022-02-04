@@ -78,7 +78,7 @@ void RHID3D12DeviceRemovedHandler(CD3D12Device* Device)
 {
     Assert(Device != nullptr);
 
-    CString Message = "[D3D12] Device Removed";
+    String Message = "[D3D12] Device Removed";
     LOG_ERROR(Message);
 
     ID3D12Device* DxDevice = Device->GetDevice();
@@ -122,7 +122,7 @@ void RHID3D12DeviceRemovedHandler(CD3D12Device* Device)
         LOG_ERROR(Message);
         for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
-            Message = "    " + CString(ToString(CurrentNode->pCommandHistory[i]));
+            Message = "    " + String(ToString(CurrentNode->pCommandHistory[i]));
             LOG_ERROR(Message);
             if (File)
             {
@@ -506,7 +506,7 @@ int32 CD3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount
     return static_cast<uint32>(Data.NumQualityLevels - 1);
 }
 
-CString CD3D12Device::GetAdapterName() const
+String CD3D12Device::GetAdapterName() const
 {
     DXGI_ADAPTER_DESC Desc;
     Adapter->GetDesc(&Desc);

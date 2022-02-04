@@ -34,7 +34,7 @@ CMacWindow::~CMacWindow()
 	}, true);
 }
 
-bool CMacWindow::Initialize(const CString& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
+bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
 {
     __block bool bResult = false;
     MakeMainThreadCall(^
@@ -203,7 +203,7 @@ void CMacWindow::ToggleFullscreen()
 	}
 }
 
-void CMacWindow::SetTitle(const CString& InTitle)
+void CMacWindow::SetTitle(const String& InTitle)
 {
 	SCOPED_AUTORELEASE_POOL();
 
@@ -218,7 +218,7 @@ void CMacWindow::SetTitle(const CString& InTitle)
 	}
 }
 
-void CMacWindow::GetTitle(CString& OutTitle)
+void CMacWindow::GetTitle(String& OutTitle)
 {
     if (StyleParams.IsTitled())
     {

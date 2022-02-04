@@ -65,7 +65,7 @@ public:
         const bool bResult = !!SleepConditionVariableCS(&ConditionVariable, CriticalSection, INFINITE);
         if (!bResult)
         {
-            CString ErrorString;
+            String ErrorString;
             PlatformDebugMisc::GetLastErrorString(ErrorString);
 
             LOG_ERROR(ErrorString);

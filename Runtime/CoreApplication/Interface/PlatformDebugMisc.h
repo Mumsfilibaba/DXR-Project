@@ -38,7 +38,7 @@ public:
      * 
      * @param Message: Message to print to the attached debugger
      */
-    static FORCEINLINE void OutputDebugString(const CString& Message) { }
+    static FORCEINLINE void OutputDebugString(const String& Message) { }
 
     /**
      * Checks weather or not the application is running inside a debugger 

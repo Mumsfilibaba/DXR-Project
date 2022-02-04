@@ -860,7 +860,7 @@ public:
      *
      * @param Message: Message for the marker
      */
-    void InsertCommandListMarker(const CString& Marker)
+    void InsertCommandListMarker(const String& Marker)
     {
         InsertCommand<SRHIInsertCommandListMarkerRenderCommand>(Marker);
     }

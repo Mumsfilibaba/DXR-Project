@@ -229,9 +229,9 @@ public:
         return CommandContext.Get();
     }
 
-    virtual CString GetAdapterName() const override final
+    virtual String GetAdapterName() const override final
     {
-        return CString();
+        return String();
     }
 
     virtual void CheckRayTracingSupport(SRHIRayTracingSupport& OutSupport) const override final

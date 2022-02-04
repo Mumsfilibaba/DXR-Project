@@ -139,14 +139,14 @@ void CD3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint3
     }
 }
 
-void CD3D12OfflineDescriptorHeap::SetName(const CString& InName)
+void CD3D12OfflineDescriptorHeap::SetName(const String& InName)
 {
     Name = InName;
 
     uint32 HeapIndex = 0;
     for (SDescriptorHeap& Heap : Heaps)
     {
-        CString DbgName = Name + "[" + ToString(HeapIndex) + "]";
+        String DbgName = Name + "[" + ToString(HeapIndex) + "]";
         Heap.Heap->SetName(DbgName.CStr());
     }
 }
@@ -160,7 +160,7 @@ bool CD3D12OfflineDescriptorHeap::AllocateHeap()
     {
         if (!Name.IsEmpty())
         {
-            CString DbgName = Name + ToString(Heaps.Size());
+            String DbgName = Name + ToString(Heaps.Size());
             Heap->SetName(DbgName.CStr());
         }
 

@@ -125,7 +125,7 @@ public:
      * @param OutIndex: Index of the variable
      * @return: Returns false if not variable with the specified name exists
      */
-    virtual bool GetConstantBufferIndexByName(const CString& InName, uint32& OutIndex) const = 0;
+    virtual bool GetConstantBufferIndexByName(const String& InName, uint32& OutIndex) const = 0;
 
     /**
      * Retrieve a UnorderedAccessView index by the name
@@ -134,7 +134,7 @@ public:
      * @param OutIndex: Index of the variable
      * @return: Returns false if not variable with the specified name exists
      */
-    virtual bool GetUnorderedAccessViewIndexByName(const CString& InName, uint32& OutIndex) const = 0;
+    virtual bool GetUnorderedAccessViewIndexByName(const String& InName, uint32& OutIndex) const = 0;
 
     /**
      * Retrieve a ShaderResourceView index by the name
@@ -143,7 +143,7 @@ public:
      * @param OutIndex: Index of the variable
      * @return: Returns false if not variable with the specified name exists
      */
-    virtual bool GetShaderResourceViewIndexByName(const CString& InName, uint32& OutIndex) const = 0;
+    virtual bool GetShaderResourceViewIndexByName(const String& InName, uint32& OutIndex) const = 0;
 
     /**
      * Retrieve a Sampler index by the name
@@ -152,7 +152,7 @@ public:
      * @param OutIndex: Index of the variable
      * @return: Returns false if not variable with the specified name exists
      */
-    virtual bool GetSamplerIndexByName(const CString& InName, uint32& OutIndex) const = 0;
+    virtual bool GetSamplerIndexByName(const String& InName, uint32& OutIndex) const = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

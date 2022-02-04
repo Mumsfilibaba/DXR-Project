@@ -47,7 +47,7 @@ public:
     void EnableHeightMap(bool bInEnableHeightMap);
     void EnableAlphaMask(bool bInEnableAlphaMask);
 
-    void SetDebugName(const CString& InDebugName);
+    void SetDebugName(const String& InDebugName);
 
     // ShaderResourceView are sorted in the way that the deferred rendering pass wants them
     // This means that one can call BindShaderResourceViews directly with this function
@@ -100,7 +100,7 @@ public:
 private:
 
     /* Name for the material mostly used for debug purposes */
-    CString DebugName;
+    String DebugName;
 
     /* This indicates that the constantbuffer is dirty and needs updating */
     bool bMaterialBufferIsDirty = true;

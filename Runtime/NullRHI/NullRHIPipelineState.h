@@ -82,7 +82,7 @@ public:
     CNullRHIGraphicsPipelineState() = default;
     ~CNullRHIGraphicsPipelineState() = default;
 
-    virtual void SetName(const CString& InName) override final
+    virtual void SetName(const String& InName) override final
     {
         CRHIObject::SetName(InName);
     }
@@ -102,7 +102,7 @@ public:
     CNullRHIComputePipelineState() = default;
     ~CNullRHIComputePipelineState() = default;
 
-    virtual void SetName(const CString& InName) override final
+    virtual void SetName(const String& InName) override final
     {
         CRHIObject::SetName(InName);
     }
@@ -122,7 +122,7 @@ public:
     CNullRHIRayTracingPipelineState() = default;
     ~CNullRHIRayTracingPipelineState() = default;
 
-    virtual void SetName(const CString& InName) override final
+    virtual void SetName(const String& InName) override final
     {
         CRHIObject::SetName(InName);
     }

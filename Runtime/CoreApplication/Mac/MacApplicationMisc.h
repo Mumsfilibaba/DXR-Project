@@ -18,7 +18,7 @@ class CMacApplicationMisc final : public CPlatformApplicationMisc
 public:
 
     /* Takes the title of the messagebox and the message to be displayed */
-    static void MessageBox(const CString& Title, const CString& Message);
+    static void MessageBox(const String& Title, const String& Message);
 
     /* Sends a Exit Message to the application with a certain exitcode */
     static FORCEINLINE void RequestExit(int32 ExitCode)

@@ -87,7 +87,7 @@ public:
 
     virtual class IRHICommandContext* GetDefaultCommandContext() override final { return DirectCmdContext.Get(); }
 
-    virtual CString GetAdapterName() const override final { return Device->GetAdapterName(); }
+    virtual String GetAdapterName() const override final { return Device->GetAdapterName(); }
 
     virtual void CheckRayTracingSupport(SRHIRayTracingSupport& OutSupport) const override final;
     virtual void CheckShadingRateSupport(SRHIShadingRateSupport& OutSupport) const override final;

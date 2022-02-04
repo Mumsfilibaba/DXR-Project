@@ -13,7 +13,7 @@ CMacThread::CMacThread(ThreadFunction InFunction)
 {
 }
 
-CMacThread::CMacThread(ThreadFunction InFunction, const CString& InName)
+CMacThread::CMacThread(ThreadFunction InFunction, const String& InName)
     : CPlatformThread()
     , Thread()
     , Function(InFunction)
@@ -41,7 +41,7 @@ void CMacThread::WaitUntilFinished()
     pthread_join(Thread, NULL);
 }
 
-void CMacThread::SetName(const CString& InName)
+void CMacThread::SetName(const String& InName)
 {
     // The name can always be set from the current thread
     const bool bCurrentThreadIsMyself = GetPlatformHandle() == CMacThreadMisc::GetThreadHandle();

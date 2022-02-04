@@ -434,9 +434,9 @@ public:
      * 
      * @return: Returns a string with the Adapter name
      */
-    virtual CString GetAdapterName() const
+    virtual String GetAdapterName() const
     {
-        return CString();
+        return String();
     }
 
     /**
@@ -965,7 +965,7 @@ FORCEINLINE class IRHICommandContext* RHIGetDefaultCommandContext()
     return GRHIInstance->GetDefaultCommandContext();
 }
 
-FORCEINLINE CString RHIGetAdapterName()
+FORCEINLINE String RHIGetAdapterName()
 {
     return GRHIInstance->GetAdapterName();
 }

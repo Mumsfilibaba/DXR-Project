@@ -62,7 +62,7 @@ public:
         return SUCCEEDED(Result);
     }
 
-    FORCEINLINE void SetName(const CString& Name)
+    FORCEINLINE void SetName(const String& Name)
     {
         WString WideName = CharToWide(Name);
         Fence->SetName(WideName.CStr());

@@ -27,7 +27,7 @@ public:
       * @param InName: Name of the new thread
       * @return: An newly created thread interface
       */
-    static TSharedRef<CMacThread> Make(ThreadFunction InFunction, const CString& InName) { return new CMacThread(InFunction, InName); }
+    static TSharedRef<CMacThread> Make(ThreadFunction InFunction, const String& InName) { return new CMacThread(InFunction, InName); }
 
     /**
      * Start thread-execution 
@@ -44,7 +44,7 @@ public:
      * 
      * @param InName: New name of the thread
      */
-    virtual void SetName(const CString& InName) override final;
+    virtual void SetName(const String& InName) override final;
 
     /**
      * Retrieve platform specific handle
@@ -56,7 +56,7 @@ public:
 private:
 
     CMacThread(ThreadFunction InFunction);
-    CMacThread(ThreadFunction InFunction, const CString& InName);
+    CMacThread(ThreadFunction InFunction, const String& InName);
     ~CMacThread() = default;
 
     static void* ThreadRoutine(void* ThreadParameter);
@@ -68,7 +68,7 @@ private:
     ThreadFunction Function;
 
     /* Name of the thread */
-    CString Name;
+    String Name;
 
     /* Check if thread is running or not */
     bool bIsRunning;

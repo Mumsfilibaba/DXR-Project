@@ -43,7 +43,7 @@ public:
       * @param InName: Name of the new thread
       * @return: An newly created thread interface
       */
-    static TSharedRef<CPlatformThread> Make(ThreadFunction InFunction, const CString& InName) { return dbg_new CPlatformThread(); }
+    static TSharedRef<CPlatformThread> Make(ThreadFunction InFunction, const String& InName) { return dbg_new CPlatformThread(); }
 
     /**
      * Start thread-execution 
@@ -60,7 +60,7 @@ public:
      * 
      * @param InName: New name of the thread
      */
-    virtual void SetName(const CString& InName) { }
+    virtual void SetName(const String& InName) { }
 
     /**
      * Retrieve platform specific handle

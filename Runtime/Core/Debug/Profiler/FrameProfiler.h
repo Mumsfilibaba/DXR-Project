@@ -105,7 +105,7 @@ struct SProfileSample
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FrameProfiler - Manages samples that gets updated each frame
 
-using ProfileSamplesTable = THashTable<CString, SProfileSample, SStringHasher>;
+using ProfileSamplesTable = THashTable<String, SProfileSample, SStringHasher>;
 
 class CORE_API CFrameProfiler
 {

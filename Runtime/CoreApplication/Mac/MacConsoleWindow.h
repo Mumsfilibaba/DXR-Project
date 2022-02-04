@@ -19,16 +19,16 @@ public:
 	virtual void Show(bool bShow) override final;
 
 	/* Prints text to the console window, but does not start a new line */
-	virtual void Print(const CString& Message) override final;
+	virtual void Print(const String& Message) override final;
 	
 	/* Prints a line to the console window */
-	virtual void PrintLine(const CString& Message) override final;
+	virtual void PrintLine(const String& Message) override final;
 
 	/* Clear the console window */
 	virtual void Clear() override final;
 
 	/* Set the title of the console window */
-	virtual void SetTitle(const CString& Title) override final;
+	virtual void SetTitle(const String& Title) override final;
 	
 	/* Set the text-color */
 	virtual void SetColor(EConsoleColor Color) override final;

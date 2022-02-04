@@ -1789,7 +1789,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Predefined types
 
-using CString = TString<char>;
+using String = TString<char>;
 using WString = TString<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1981,7 +1981,7 @@ struct TIsTStringType<TString<CharType>>
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // char and wide conversion functions
 
-inline WString CharToWide(const CString& CharString) noexcept
+inline WString CharToWide(const String& CharString) noexcept
 {
     WString NewString;
     NewString.Resize(CharString.Length());
@@ -1991,9 +1991,9 @@ inline WString CharToWide(const CString& CharString) noexcept
     return NewString;
 }
 
-inline CString WideToChar(const WString& WideString) noexcept
+inline String WideToChar(const WString& WideString) noexcept
 {
-    CString NewString;
+    String NewString;
     NewString.Resize(WideString.Length());
 
     wcstombs(NewString.Data(), WideString.CStr(), WideString.Length());
@@ -2041,42 +2041,42 @@ using SWideStringHasher = TStringHasher<wchar_t>;
 // Helper for converting to a string
 
 template<typename T>
-typename TEnableIf<TIsFloatingPoint<T>::Value, CString>::Type ToString(T Element)
+typename TEnableIf<TIsFloatingPoint<T>::Value, String>::Type ToString(T Element)
 {
-    return CString::MakeFormated("%f", Element);
+    return String::MakeFormated("%f", Element);
 }
 
 template<typename T>
-typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, CString>::Type ToString(T Element);
+typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, String>::Type ToString(T Element);
 
 template<>
-inline CString ToString<int32>(int32 Element)
+inline String ToString<int32>(int32 Element)
 {
-    return CString::MakeFormated("%d", Element);
+    return String::MakeFormated("%d", Element);
 }
 
 template<>
-inline CString ToString<int64>(int64 Element)
+inline String ToString<int64>(int64 Element)
 {
-    return CString::MakeFormated("%lld", Element);
+    return String::MakeFormated("%lld", Element);
 }
 
 template<>
-inline CString ToString<uint32>(uint32 Element)
+inline String ToString<uint32>(uint32 Element)
 {
-    return CString::MakeFormated("%u", Element);
+    return String::MakeFormated("%u", Element);
 }
 
 template<>
-inline CString ToString<uint64>(uint64 Element)
+inline String ToString<uint64>(uint64 Element)
 {
-    return CString::MakeFormated("%llu", Element);
+    return String::MakeFormated("%llu", Element);
 }
 
 template<>
-inline CString ToString<bool>(bool bElement)
+inline String ToString<bool>(bool bElement)
 {
-    return CString(bElement ? "true" : "false");
+    return String(bElement ? "true" : "false");
 }
 
 template<typename T>
@@ -2122,10 +2122,10 @@ inline WString ToWideString<bool>(bool bElement)
 // Helper for converting from a string
 
 template<typename T>
-inline typename TEnableIf<TNot<TIsIntegerNotBool<T>>::Value, bool>::Type FromString(const CString& Value, T& OutElement);
+inline typename TEnableIf<TNot<TIsIntegerNotBool<T>>::Value, bool>::Type FromString(const String& Value, T& OutElement);
 
 template<typename T>
-inline typename TEnableIf<TIsIntegerNotBool<T>::Value, bool>::Type FromString(const CString& Value, T& OutElement)
+inline typename TEnableIf<TIsIntegerNotBool<T>::Value, bool>::Type FromString(const String& Value, T& OutElement)
 {
     // TODO: Improve with more than base 10
     char* End;
@@ -2134,7 +2134,7 @@ inline typename TEnableIf<TIsIntegerNotBool<T>::Value, bool>::Type FromString(co
 }
 
 template<>
-inline bool FromString<float>(const CString& Value, float& OutElement)
+inline bool FromString<float>(const String& Value, float& OutElement)
 {
     char* End;
     OutElement = CStringParse::ParseFloat(Value.CStr(), &End);
@@ -2142,7 +2142,7 @@ inline bool FromString<float>(const CString& Value, float& OutElement)
 }
 
 template<>
-inline bool FromString<double>(const CString& Value, double& OutElement)
+inline bool FromString<double>(const String& Value, double& OutElement)
 {
     char* End;
     OutElement = CStringParse::ParseDouble(Value.CStr(), &End);
@@ -2150,7 +2150,7 @@ inline bool FromString<double>(const CString& Value, double& OutElement)
 }
 
 template<>
-inline bool FromString<bool>(const CString& Value, bool& OutElement)
+inline bool FromString<bool>(const String& Value, bool& OutElement)
 {
     char* End;
     OutElement = static_cast<bool>(CStringParse::ParseInt32(Value.CStr(), &End, 10));

@@ -11,7 +11,7 @@ TSharedRef<CWindowsThread> CWindowsThread::Make(ThreadFunction InFunction)
     return dbg_new CWindowsThread(InFunction);
 }
 
-TSharedRef<CWindowsThread> CWindowsThread::Make(ThreadFunction InFunction, const CString & InName)
+TSharedRef<CWindowsThread> CWindowsThread::Make(ThreadFunction InFunction, const String & InName)
 {
     return dbg_new CWindowsThread(InFunction, InName);
 }
@@ -25,7 +25,7 @@ CWindowsThread::CWindowsThread(ThreadFunction InFunction)
 {
 }
 
-CWindowsThread::CWindowsThread(ThreadFunction InFunction, const CString& InName)
+CWindowsThread::CWindowsThread(ThreadFunction InFunction, const String& InName)
     : CPlatformThread()
     , Thread(0)
     , hThreadID(0)
@@ -61,7 +61,7 @@ void CWindowsThread::WaitUntilFinished()
     WaitForSingleObject(Thread, INFINITE);
 }
 
-void CWindowsThread::SetName(const CString& InName)
+void CWindowsThread::SetName(const String& InName)
 {
     WString WideName = CharToWide(InName);
     SetThreadDescription(Thread, WideName.CStr());

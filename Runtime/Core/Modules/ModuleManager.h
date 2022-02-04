@@ -256,7 +256,7 @@ private:
     {
         SModule() = default;
 
-        SModule(const CString& InName, IEngineModule* InInterface)
+        SModule(const String& InName, IEngineModule* InInterface)
             : Name(InName)
             , Interface(InInterface)
             , Handle(0)
@@ -264,7 +264,7 @@ private:
         }
 
         /** Name of the module */
-        CString Name;
+        String Name;
         /** The actual interface */
         IEngineModule* Interface;
         /** Platform Handle, this is zero if the module is loaded statically and is the only time it should be zero */
@@ -291,7 +291,7 @@ private:
     CModuleLoadedDelegate ModuleLoadedDelegate;
 
     TArray<SModule> Modules;
-    TArray<TPair<CString, CInitializeStaticModuleDelegate>> StaticModuleDelegates;
+    TArray<TPair<String, CInitializeStaticModuleDelegate>> StaticModuleDelegates;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

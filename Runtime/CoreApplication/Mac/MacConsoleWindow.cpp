@@ -132,7 +132,7 @@ void CMacConsoleWindow::Show(bool bShow)
 	}
 }
 
-void CMacConsoleWindow::Print(const CString& Message)
+void CMacConsoleWindow::Print(const String& Message)
 {  
     if (Window)
     {
@@ -148,7 +148,7 @@ void CMacConsoleWindow::Print(const CString& Message)
     }
 }
 
-void CMacConsoleWindow::PrintLine(const CString& Message)
+void CMacConsoleWindow::PrintLine(const String& Message)
 {
     if (Window)
     {
@@ -178,7 +178,7 @@ void CMacConsoleWindow::Clear()
     }
 }
 
-void CMacConsoleWindow::SetTitle(const CString& InTitle)
+void CMacConsoleWindow::SetTitle(const String& InTitle)
 {
     if (Window)
     {

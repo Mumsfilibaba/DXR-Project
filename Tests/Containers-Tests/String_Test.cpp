@@ -34,21 +34,21 @@
 void TString_Test( const char* Args )
 {
     {
-        std::cout << std::endl << "----Testing CStaticString----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing StaticString----" << std::endl << std::endl;
 
-        CStringView StringView( "Hello StringView" );
+        StringView StringView( "Hello StringView" );
 
-        CStaticString<64> StaticString0;
+        StaticString<64> StaticString0;
         PrintString( StaticString0 );
-        CStaticString<64> StaticString1 = "Hello String";
+        StaticString<64> StaticString1 = "Hello String";
         PrintString( StaticString1 );
-        CStaticString<64> StaticString2 = CStaticString<64>( Args, 7 );
+        StaticString<64> StaticString2 = StaticString<64>( Args, 7 );
         PrintString( StaticString2 );
-        CStaticString<64> StaticString3 = CStaticString<64>( StringView );
+        StaticString<64> StaticString3 = StaticString<64>( StringView );
         PrintString( StaticString3 );
-        CStaticString<64> StaticString4 = StaticString1;
+        StaticString<64> StaticString4 = StaticString1;
         PrintString( StaticString4 );
-        CStaticString<64> StaticString5 = Move( StaticString2 );
+        StaticString<64> StaticString5 = Move( StaticString2 );
         PrintString( StaticString5 );
 
         StaticString0.Append( "Appended String" );
@@ -58,7 +58,7 @@ void TString_Test( const char* Args )
         StaticString5.Append( StaticString0 );
         PrintString( StaticString5 );
 
-        CStaticString<64> StaticString6;
+        StaticString<64> StaticString6;
         StaticString6.Format( "Formatted String=%.4f", 0.004f );
         PrintString( StaticString6 );
 
@@ -68,10 +68,10 @@ void TString_Test( const char* Args )
         StaticString6.AppendFormat( "Formatted String=%.4f", 0.0077f );
         PrintString( StaticString6 );
 
-        CStaticString<64> LowerStaticString6 = StaticString6.ToLower();
+        StaticString<64> LowerStaticString6 = StaticString6.ToLower();
         PrintString( LowerStaticString6 );
 
-        CStaticString<64> UpperStaticString6 = StaticString6.ToUpper();
+        StaticString<64> UpperStaticString6 = StaticString6.ToUpper();
         PrintString( UpperStaticString6 );
 
         StaticString6.Clear();
@@ -80,7 +80,7 @@ void TString_Test( const char* Args )
         StaticString6.Append( "    Trimmable String    " );
         PrintString( StaticString6 );
 
-        CStaticString<64> TrimmedStaticString6 = StaticString6.Trim();
+        StaticString<64> TrimmedStaticString6 = StaticString6.Trim();
         TrimmedStaticString6.Append( '*' );
         PrintString( TrimmedStaticString6 );
 
@@ -90,10 +90,10 @@ void TString_Test( const char* Args )
         StaticString6.Append( "123456789" );
         PrintString( StaticString6 );
 
-        CStaticString<64> ReversedStaticString6 = StaticString6.Reverse();
+        StaticString<64> ReversedStaticString6 = StaticString6.Reverse();
         PrintString( ReversedStaticString6 );
 
-        CStaticString<64> SearchString = "0123MeSearch89Me89";
+        StaticString<64> SearchString = "0123MeSearch89Me89";
         PrintString( SearchString );
 
         std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;
@@ -111,10 +111,10 @@ void TString_Test( const char* Args )
 
         std::cout << "Position=" << SearchString.ReverseFindOneNotOf( "0123456789" ) << std::endl;
 
-        CStaticString<64> CompareString0 = "COMPARE";
+        StaticString<64> CompareString0 = "COMPARE";
         PrintString( CompareString0 );
 
-        CStaticString<64> CompareString1 = "compare";
+        StaticString<64> CompareString1 = "compare";
         PrintString( CompareString1 );
 
         std::cout << "Compare=" << CompareString0.Compare( CompareString1 ) << std::endl;
@@ -137,7 +137,7 @@ void TString_Test( const char* Args )
         CompareString0.Replace( 'X', 0 );
         PrintString( CompareString0 );
 
-        CStaticString<64> CombinedString = CompareString0 + '5';
+        StaticString<64> CombinedString = CompareString0 + '5';
         PrintString( CombinedString );
 
         CombinedString = '5' + CombinedString;
@@ -152,7 +152,7 @@ void TString_Test( const char* Args )
         CombinedString = CombinedString + CombinedString;
         PrintString( CombinedString );
 
-        CStaticString<64> TestString = "Test";
+        StaticString<64> TestString = "Test";
         PrintString( TestString );
 
         std::cout << "operator== : " << std::boolalpha << ("Test" == TestString) << std::endl;
@@ -351,26 +351,26 @@ void TString_Test( const char* Args )
             std::wcout << Index << L'=' << TestString[Index] << std::endl;
         }
 
-        CStaticString<64> CharCompareString = WideToChar<64>( CompareString0 );
+        StaticString<64> CharCompareString = WideToChar<64>( CompareString0 );
         PrintString( CharCompareString );
     }
 
     {
-        std::cout << std::endl << "----Testing CString----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing String----" << std::endl << std::endl;
 
-        CStringView StringView( "Hello StringView" );
+        StringView StringView( "Hello StringView" );
 
-        CString String0;
+        String String0;
         PrintString( String0 );
-        CString String1 = "Hello String";
+        String String1 = "Hello String";
         PrintString( String1 );
-        CString String2 = CString( Args, 7 );
+        String String2 = String( Args, 7 );
         PrintString( String2 );
-        CString String3 = CString( StringView );
+        String String3 = String( StringView );
         PrintString( String3 );
-        CString String4 = String1;
+        String String4 = String1;
         PrintString( String4 );
-        CString String5 = Move( String2 );
+        String String5 = Move( String2 );
         PrintString( String5 );
 
         String0.Append( "Appended String" );
@@ -380,7 +380,7 @@ void TString_Test( const char* Args )
         String5.Append( String0 );
         PrintString( String5 );
 
-        CString String6;
+        String String6;
         String6.Format( "Formatted String=%.4f", 0.004f );
         PrintString( String6 );
 
@@ -390,10 +390,10 @@ void TString_Test( const char* Args )
         String6.AppendFormat( "Formatted String=%.4f", 0.0077f );
         PrintString( String6 );
 
-        CString LowerString6 = String6.ToLower();
+        String LowerString6 = String6.ToLower();
         PrintString( LowerString6 );
 
-        CString UpperString6 = String6.ToUpper();
+        String UpperString6 = String6.ToUpper();
         PrintString( UpperString6 );
 
         String6.Clear();
@@ -402,7 +402,7 @@ void TString_Test( const char* Args )
         String6.Append( "    Trimmable String    " );
         PrintString( String6 );
 
-        CString TrimmedString6 = String6.Trim();
+        String TrimmedString6 = String6.Trim();
         TrimmedString6.Append( '*' );
         PrintString( TrimmedString6 );
 
@@ -412,10 +412,10 @@ void TString_Test( const char* Args )
         String6.Append( "123456789" );
         PrintString( String6 );
 
-        CString ReversedString6 = String6.Reverse();
+        String ReversedString6 = String6.Reverse();
         PrintString( ReversedString6 );
 
-        CString SearchString = "0123MeSearch89Me89";
+        String SearchString = "0123MeSearch89Me89";
         PrintString( SearchString );
 
         std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;
@@ -433,10 +433,10 @@ void TString_Test( const char* Args )
 
         std::cout << "Position=" << SearchString.ReverseFindOneNotOf( "0123456789" ) << std::endl;
 
-        CString CompareString0 = "COMPARE";
+        String CompareString0 = "COMPARE";
         PrintString( CompareString0 );
 
-        CString CompareString1 = "compare";
+        String CompareString1 = "compare";
         PrintString( CompareString1 );
 
         std::cout << "Compare=" << CompareString0.Compare( CompareString1 ) << std::endl;
@@ -459,7 +459,7 @@ void TString_Test( const char* Args )
         CompareString0.Replace( 'X', 0 );
         PrintString( CompareString0 );
 
-        CString CombinedString = CompareString0 + '5';
+        String CombinedString = CompareString0 + '5';
         PrintString( CombinedString );
 
         CombinedString = '5' + CombinedString;
@@ -474,7 +474,7 @@ void TString_Test( const char* Args )
         CombinedString = CombinedString + CombinedString;
         PrintString( CombinedString );
 
-        CString TestString = "Test";
+        String TestString = "Test";
         PrintString( TestString );
 
         std::cout << "operator== : " << std::boolalpha << ("Test" == TestString) << std::endl;
@@ -673,20 +673,20 @@ void TString_Test( const char* Args )
             std::wcout << Index << L'=' << TestString[Index] << std::endl;
         }
 
-        CString CharCompareString = WideToChar( CompareString0 );
+        String CharCompareString = WideToChar( CompareString0 );
         PrintString( CharCompareString );
     }
 
     {
-        std::cout << std::endl << "----Testing CStringView----" << std::endl << std::endl;
+        std::cout << std::endl << "----Testing StringView----" << std::endl << std::endl;
 
         const char* LongString = "This is a long string";
 
-        CStringView StringView0;
+        StringView StringView0;
         PrintStringView( StringView0 );
-        CStringView StringView1 = LongString;
+        StringView StringView1 = LongString;
         PrintStringView( StringView1 );
-        CStringView StringView2 = CStringView( LongString + 5, 4 );
+        StringView StringView2 = StringView( LongString + 5, 4 );
         PrintStringView( StringView2 );
 
         char Buffer[6] = { };
@@ -694,16 +694,16 @@ void TString_Test( const char* Args )
         StringView1.Copy( Buffer, 5, 4 );
         std::cout << "Buffer=" << Buffer << std::endl;
 
-        CStringView StringView3 = "    Trimmable String    ";
+        StringView StringView3 = "    Trimmable String    ";
         PrintStringView( StringView3 );
 
-        CStringView StringView4 = StringView3.Trim();
+        StringView StringView4 = StringView3.Trim();
         PrintStringView( StringView4 );
 
-        CStringView StringView5 = CStringView( "COMPAREPostfix", 7 );
+        StringView StringView5 = StringView( "COMPAREPostfix", 7 );
         PrintStringView( StringView5 );
 
-        CStringView StringView6 = CStringView( "comparePostfix", 7 );
+        StringView StringView6 = StringView( "comparePostfix", 7 );
         PrintStringView( StringView6 );
 
         std::cout << "Compare=" << StringView5.Compare( StringView6 ) << std::endl;
@@ -712,7 +712,7 @@ void TString_Test( const char* Args )
         StringView6.Clear();
         PrintStringView( StringView6 );
 
-        CStringView SearchString = "0123MeSearch89Me89";
+        StringView SearchString = "0123MeSearch89Me89";
         PrintStringView( SearchString );
 
         std::cout << "Position=" << SearchString.Find( "Me" ) << std::endl;
@@ -729,7 +729,7 @@ void TString_Test( const char* Args )
         std::cout << "Position=" << SearchString.ReverseFindOneOf( "hMc" ) << std::endl;
         std::cout << "Position=" << SearchString.ReverseFindOneNotOf( "0123456789" ) << std::endl;
 
-        CStringView TestString = "Test";
+        StringView TestString = "Test";
         PrintStringView( TestString );
 
         std::cout << "operator== : " << std::boolalpha << ("Test" == TestString) << std::endl;

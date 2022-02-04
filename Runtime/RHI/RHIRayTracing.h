@@ -172,7 +172,7 @@ struct SRayTracingShaderResources
         SamplerStates.Clear();
     }
 
-    CString Identifier;
+    String Identifier;
 
     TArray<CRHIConstantBuffer*>      ConstantBuffers;
     TArray<CRHIShaderResourceView*>  ShaderResourceViews;

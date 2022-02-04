@@ -68,7 +68,7 @@ public:
         Queue->ExecuteCommandLists(1, CommandLists);
     }
 
-    FORCEINLINE void SetName(const CString& Name)
+    FORCEINLINE void SetName(const String& Name)
     {
         WString WideDebugName = CharToWide(Name);
         Queue->SetName(WideDebugName.CStr());

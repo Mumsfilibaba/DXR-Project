@@ -79,7 +79,7 @@ bool CD3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Refl
 
         if (!IsLegalRegisterSpace(ShaderBindDesc))
         {
-            LOG_ERROR("Shader Parameter '" + CString(ShaderBindDesc.Name) + "' has register space '" + ToString(ShaderBindDesc.Space) + "' specified, which is invalid.");
+            LOG_ERROR("Shader Parameter '" + String(ShaderBindDesc.Name) + "' has register space '" + ToString(ShaderBindDesc.Space) + "' specified, which is invalid.");
             return false;
         }
 
@@ -248,10 +248,10 @@ bool CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection(CD3D12RHIBaseR
     }
 
     // NOTE: Since the Nvidia driver can't handle these names, we have to change the names :(
-    CString Identifier = FuncDesc.Name;
+    String Identifier = FuncDesc.Name;
 
     auto NameStart = Identifier.ReverseFindOneOf("\x1?");
-    if (NameStart != CString::NPos)
+    if (NameStart != String::NPos)
     {
         NameStart++;
     }

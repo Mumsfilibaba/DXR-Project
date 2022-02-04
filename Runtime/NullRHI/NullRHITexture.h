@@ -110,7 +110,7 @@ public:
     {
     }
 
-    virtual void SetName(const CString& InName) override final
+    virtual void SetName(const String& InName) override final
     {
         CRHIResource::SetName(InName);
     }

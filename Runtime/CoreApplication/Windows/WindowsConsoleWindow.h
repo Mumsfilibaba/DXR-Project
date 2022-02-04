@@ -24,12 +24,12 @@ public:
     /* Creates a new console, can only be called once */
     static CWindowsConsoleWindow* Make();
 
-    virtual void Print(const CString& Message) override final;
-    virtual void PrintLine(const CString& Message) override final;
+    virtual void Print(const String& Message) override final;
+    virtual void PrintLine(const String& Message) override final;
 
     virtual void Clear() override final;
 
-    virtual void SetTitle(const CString& Title) override final;
+    virtual void SetTitle(const String& Title) override final;
     virtual void SetColor(EConsoleColor Color)  override final;
 
 private:

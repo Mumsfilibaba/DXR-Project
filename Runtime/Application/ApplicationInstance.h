@@ -248,7 +248,7 @@ public:
      * 
      * @param NewString: String to start drawing
      */
-    void DrawString(const CString& NewString);
+    void DrawString(const String& NewString);
 
     /**
      * Draw all InterfaceWindows
@@ -408,7 +408,7 @@ protected:
     TSharedRef<CPlatformWindow>    MainViewport;
     TSharedRef<IInterfaceRenderer> Renderer;
 
-    TArray<CString>                      DebugStrings;
+    TArray<String>             DebugStrings;
     TArray<TSharedRef<IWindow>> InterfaceWindows;
 
     TArray<TPair<TSharedPtr<CInputHandler>, uint32>>         InputHandlers;

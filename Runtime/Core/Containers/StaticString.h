@@ -1716,7 +1716,7 @@ private:
 // Predefined types
 
 template<uint32 CharCount>
-using CStaticString = TStaticString<char, CharCount>;
+using StaticString = TStaticString<char, CharCount>;
 
 template<uint32 CharCount>
 using WStaticString = TStaticString<wchar_t, CharCount>;
@@ -1892,7 +1892,7 @@ struct TIsTStringType<TStaticString<CharType, CharCount>>
 // Convert between char and wide
 
 template<int32 CharCount>
-inline WStaticString<CharCount> CharToWide(const CStaticString<CharCount>& CharString) noexcept
+inline WStaticString<CharCount> CharToWide(const StaticString<CharCount>& CharString) noexcept
 {
     WStaticString<CharCount> NewString;
     NewString.Resize(CharString.Length());
@@ -1903,9 +1903,9 @@ inline WStaticString<CharCount> CharToWide(const CStaticString<CharCount>& CharS
 }
 
 template<int32 CharCount>
-inline CStaticString<CharCount> WideToChar(const WStaticString<CharCount>& WideString) noexcept
+inline StaticString<CharCount> WideToChar(const WStaticString<CharCount>& WideString) noexcept
 {
-    CStaticString<CharCount> NewString;
+    StaticString<CharCount> NewString;
     NewString.Resize(WideString.Length());
 
     wcstombs(NewString.Data(), WideString.CStr(), WideString.Length());

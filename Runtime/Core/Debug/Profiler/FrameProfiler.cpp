@@ -62,7 +62,7 @@ void CFrameProfiler::BeginTraceScope(const char* Name)
     {
         TScopedLock Lock(CPUSamples);
 
-        const CString ScopeName = Name;
+        const String ScopeName = Name;
 
         auto Entry = CPUSamples.Get().find(ScopeName);
         if (Entry == CPUSamples.Get().end())
@@ -81,7 +81,7 @@ void CFrameProfiler::EndTraceScope(const char* Name)
 {
     if (bEnabled)
     {
-        const CString ScopeName = Name;
+        const String ScopeName = Name;
 
         TScopedLock Lock(CPUSamples);
 

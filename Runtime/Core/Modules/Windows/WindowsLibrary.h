@@ -22,7 +22,7 @@ public:
      */
     static FORCEINLINE PlatformHandle LoadDynamicLib(const char* LibraryName)
     {
-        CString RealName = GetRealName(LibraryName);
+        String RealName = GetRealName(LibraryName);
         return LoadLibraryA(RealName.CStr());
     }
 
@@ -34,7 +34,7 @@ public:
      */
     static FORCEINLINE PlatformHandle GetLoadedHandle(const char* LibraryName)
     {
-        CString RealName = GetRealName(LibraryName);
+        String RealName = GetRealName(LibraryName);
         return GetModuleHandleA(RealName.CStr());
     }
 
@@ -75,9 +75,9 @@ public:
      *
      * @param LibraryName: Name of the library without extension or prefixes
      */
-    static FORCEINLINE CString GetRealName(const char* LibraryName)
+    static FORCEINLINE String GetRealName(const char* LibraryName)
     {
-        return CString(LibraryName) + GetDynamicLibExtension();
+        return String(LibraryName) + GetDynamicLibExtension();
     }
 
     /**

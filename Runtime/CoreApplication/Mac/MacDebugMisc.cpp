@@ -3,7 +3,7 @@
 
 #include <Foundation/Foundation.h>
 
-void CMacDebugMisc::OutputDebugString(const CString& Message)
+void CMacDebugMisc::OutputDebugString(const String& Message)
 { 
     NSLog(@"%s\n", Message.CStr());
 }

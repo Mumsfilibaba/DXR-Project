@@ -61,7 +61,7 @@ public:
 private:
     D3D12_INPUT_LAYOUT_DESC Desc;
 
-    TArray<CString> SemanticNames;
+    TArray<String> SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
 };
 
@@ -157,7 +157,7 @@ public:
 
     bool Init(const SRHIGraphicsPipelineStateInfo& CreateInfo);
 
-    virtual void SetName(const CString& InName) override final
+    virtual void SetName(const String& InName) override final
     {
         CRHIObject::SetName(InName);
 
@@ -202,7 +202,7 @@ public:
 
     bool Init();
 
-    virtual void SetName(const CString& InName) override final
+    virtual void SetName(const String& InName) override final
     {
         CRHIObject::SetName(InName);
 
@@ -255,7 +255,7 @@ public:
 
     bool Init(const SRHIRayTracingPipelineStateInfo& CreateInfo);
 
-    virtual void SetName(const CString& InName) override
+    virtual void SetName(const String& InName) override
     {
         CRHIObject::SetName(InName);
 
@@ -273,7 +273,7 @@ public:
         return StateObject != nullptr;
     }
 
-    void* GetShaderIdentifer(const CString& ExportName);
+    void* GetShaderIdentifer(const String& ExportName);
 
     FORCEINLINE ID3D12StateObject* GetStateObject() const
     {
@@ -315,5 +315,5 @@ private:
     TSharedRef<CD3D12RootSignature> MissLocalRootSignature;
     TSharedRef<CD3D12RootSignature> HitLocalRootSignature;
 
-    THashTable<CString, SRayTracingShaderIdentifer, SStringHasher> ShaderIdentifers;
+    THashTable<String, SRayTracingShaderIdentifer, SStringHasher> ShaderIdentifers;
 };

@@ -110,7 +110,7 @@ public:
      * @param Style: Style of the window
      * @return: Returns true if the initialization is successful, otherwise false
      */
-    virtual bool Initialize(const CString& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) { return true; }
+    virtual bool Initialize(const String& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) { return true; }
 
     /**
      * Shows the window 
@@ -145,10 +145,10 @@ public:
     virtual bool IsActiveWindow() const { return false; }
 
     /* Sets the title */
-    virtual void SetTitle(const CString& Title) { }
+    virtual void SetTitle(const String& Title) { }
 
     /* Retrieve the window title */
-    virtual void GetTitle(CString& OutTitle) { }
+    virtual void GetTitle(String& OutTitle) { }
 
     /* Set the position of the window */
     virtual void MoveTo(int32 x, int32 y) { }

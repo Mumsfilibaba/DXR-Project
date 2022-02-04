@@ -64,7 +64,7 @@ public:
      * 
      * @param LibraryName: Name of the library without extension or prefixes
      */
-    static FORCEINLINE CString GetRealName(const char* LibraryName) { return ""; }
+    static FORCEINLINE String GetRealName(const char* LibraryName) { return ""; }
 
     /**
      * Check if the dynamic library is already loaded into the application 

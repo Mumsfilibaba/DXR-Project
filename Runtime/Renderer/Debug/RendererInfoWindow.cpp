@@ -49,7 +49,7 @@ void CRendererInfoWindow::Tick()
     ImGui::Columns(2, nullptr, false);
     ImGui::SetColumnWidth(0, 100.0f);
 
-    const CString AdapterName = RHIGetAdapterName();
+    const String AdapterName = RHIGetAdapterName();
     ImGui::Text("Adapter: ");
     ImGui::NextColumn();
 

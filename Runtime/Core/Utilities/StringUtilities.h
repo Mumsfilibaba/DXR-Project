@@ -4,10 +4,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Convert from back-slashes to forward-slashes
 
-inline void ConvertBackslashes(CString& OutString)
+inline void ConvertBackslashes(String& OutString)
 {
     auto Position = OutString.Find('\\');
-    while (Position != CString::NPos)
+    while (Position != String::NPos)
     {
         OutString.Replace('/', Position);
         Position = OutString.Find('\\', Position + 1);

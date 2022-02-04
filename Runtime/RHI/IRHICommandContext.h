@@ -461,7 +461,7 @@ public:
      * 
      * @param Message: Message for the marker
      */
-    virtual void InsertMarker(const CString& Message) = 0;
+    virtual void InsertMarker(const String& Message) = 0;
 
     /**
      *  Begins a PIX capture event, currently only available on D3D12 

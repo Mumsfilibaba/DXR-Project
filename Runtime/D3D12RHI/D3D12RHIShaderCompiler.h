@@ -20,16 +20,16 @@ public:
     bool Init();
 
     virtual bool CompileFromFile(
-        const CString& FilePath,
-        const CString& EntryPoint,
+        const String& FilePath,
+        const String& EntryPoint,
         const TArray<SShaderDefine>* Defines,
         ERHIShaderStage ShaderStage,
         EShaderModel ShaderModel,
         TArray<uint8>& Code) override final;
 
     virtual bool CompileShader(
-        const CString& ShaderSource,
-        const CString& EntryPoint,
+        const String& ShaderSource,
+        const String& EntryPoint,
         const TArray<SShaderDefine>* Defines,
         ERHIShaderStage ShaderStage,
         EShaderModel ShaderModel,

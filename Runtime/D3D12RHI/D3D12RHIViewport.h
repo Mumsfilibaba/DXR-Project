@@ -26,7 +26,7 @@ public:
 
     virtual bool Present(bool VerticalSync) override final;
 
-    virtual void SetName(const CString& Name) override final;
+    virtual void SetName(const String& Name) override final;
 
     virtual CRHIRenderTargetView* GetRenderTargetView() const override final
     {

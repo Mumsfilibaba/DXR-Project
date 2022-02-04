@@ -480,7 +480,7 @@ void CApplicationInstance::RemoveWindow(const TSharedRef<IWindow>& Window)
     InterfaceWindows.Remove(Window);
 }
 
-void CApplicationInstance::DrawString(const CString& NewString)
+void CApplicationInstance::DrawString(const String& NewString)
 {
     DebugStrings.Emplace(NewString);
 }
@@ -784,7 +784,7 @@ void CApplicationInstance::RenderStrings()
         ImGui::Begin("DebugWindow", nullptr, WindowFlags);
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-        for (const CString& String : DebugStrings)
+        for (const String& String : DebugStrings)
         {
             ImGui::Text("%s", String.CStr());
         }

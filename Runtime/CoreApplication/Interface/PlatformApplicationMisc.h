@@ -33,7 +33,7 @@ public:
      * @param Title: Title of the message-box
      * @param Message: Message of the message-box
      */
-    static FORCEINLINE void MessageBox(const CString& Title, const CString& Message) { }
+    static FORCEINLINE void MessageBox(const String& Title, const String& Message) { }
 
     /**
      * Sends a Exit Message to the application with a certain ExitCode, this way the application instance is not required to pump the messages 

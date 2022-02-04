@@ -123,7 +123,7 @@ void CActor::AddComponent(CComponent* InComponent)
     }
 }
 
-void CActor::SetName(const CString& InName)
+void CActor::SetName(const String& InName)
 {
     Name = InName;
 }

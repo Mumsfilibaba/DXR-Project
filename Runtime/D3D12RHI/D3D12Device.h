@@ -30,7 +30,7 @@ public:
 
     int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
-    CString GetAdapterName() const;
+    String GetAdapterName() const;
 
 public:
 

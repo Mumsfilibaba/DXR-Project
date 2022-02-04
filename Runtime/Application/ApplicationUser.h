@@ -136,12 +136,10 @@ private:
         });
     }
 
-    /* The ID of this user */
     const uint32 UserIndex;
-    /* The cursor that is controlled by this user */
+    
     TSharedPtr<ICursor> Cursor;
-    /* The key-state of this user */
+
     TArray<SKeyState> KeyStates; // TODO: Use a map instead? 
-    /* The mouse button state  of this user */
-    TArray<SMouseButtonState> MouseButtonStates; // TODO: Probably better to have this static since there is only a few buttons
+    TArray<SMouseButtonState> MouseButtonStates;
 };

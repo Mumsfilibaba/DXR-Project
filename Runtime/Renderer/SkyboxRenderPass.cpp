@@ -40,7 +40,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     }
 
     // Create Texture Cube
-    const CString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
+    const String PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
     TSharedRef<CRHITexture2D> Panorama = CTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
     if (!Panorama)
     {

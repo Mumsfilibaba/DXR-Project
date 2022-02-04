@@ -19,7 +19,7 @@ public:
 
     bool Build(class CD3D12RHICommandContext& CmdContext, bool Update);
 
-    virtual void SetName(const CString& InName) override
+    virtual void SetName(const String& InName) override
     {
         CRHIObject::SetName(InName);
         ResultBuffer->SetName(InName);
@@ -112,7 +112,7 @@ public:
         const SRayTracingShaderResources* HitGroupResources,
         uint32 NumHitGroupResources);
 
-    virtual void SetName(const CString& InName) override;
+    virtual void SetName(const String& InName) override;
 
     virtual bool IsValid() const override
     {

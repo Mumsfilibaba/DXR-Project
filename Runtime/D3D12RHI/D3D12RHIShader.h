@@ -64,7 +64,7 @@ struct SD3D12ShaderParameter
 {
     SD3D12ShaderParameter() = default;
 
-    FORCEINLINE SD3D12ShaderParameter(const CString& InName, uint32 InRegister, uint32 InSpace, uint32 InNumDescriptors, uint32 InSizeInBytes)
+    FORCEINLINE SD3D12ShaderParameter(const String& InName, uint32 InRegister, uint32 InSpace, uint32 InNumDescriptors, uint32 InSizeInBytes)
         : Name(InName)
         , Register(InRegister)
         , Space(InSpace)
@@ -73,7 +73,7 @@ struct SD3D12ShaderParameter
     {
     }
 
-    CString Name;
+    String Name;
     uint32 Register = 0;
     uint32 Space = 0;
     uint32 NumDescriptors = 0;
@@ -226,7 +226,7 @@ public:
     {
     }
 
-    FORCEINLINE const CString& GetIdentifier() const
+    FORCEINLINE const String& GetIdentifier() const
     {
         return Identifier;
     }
@@ -234,7 +234,7 @@ public:
     static bool GetRayTracingShaderReflection(class CD3D12RHIBaseRayTracingShader* Shader);
 
 protected:
-    CString Identifier;
+    String Identifier;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -333,22 +333,22 @@ public:
         OutShaderParameterInfo.NumSamplerStates = SamplerParameters.Size();
     }
 
-    virtual bool GetShaderResourceViewIndexByName(const CString& InName, uint32& OutIndex) const override
+    virtual bool GetShaderResourceViewIndexByName(const String& InName, uint32& OutIndex) const override
     {
         return FindParameterIndexByName(ShaderResourceParameters, InName, OutIndex);
     }
 
-    virtual bool GetSamplerIndexByName(const CString& InName, uint32& OutIndex) const override
+    virtual bool GetSamplerIndexByName(const String& InName, uint32& OutIndex) const override
     {
         return FindParameterIndexByName(SamplerParameters, InName, OutIndex);
     }
 
-    virtual bool GetUnorderedAccessViewIndexByName(const CString& InName, uint32& OutIndex) const override
+    virtual bool GetUnorderedAccessViewIndexByName(const String& InName, uint32& OutIndex) const override
     {
         return FindParameterIndexByName(UnorderedAccessParameters, InName, OutIndex);
     }
 
-    virtual bool GetConstantBufferIndexByName(const CString& InName, uint32& OutIndex) const override
+    virtual bool GetConstantBufferIndexByName(const String& InName, uint32& OutIndex) const override
     {
         return FindParameterIndexByName(ConstantBufferParameters, InName, OutIndex);
     }
@@ -359,7 +359,7 @@ public:
     }
 
 private:
-    bool FindParameterIndexByName(const TArray<SD3D12ShaderParameter>& Parameters, const CString& InName, uint32& OutIndex) const
+    bool FindParameterIndexByName(const TArray<SD3D12ShaderParameter>& Parameters, const String& InName, uint32& OutIndex) const
     {
         for (int32 i = 0; i < Parameters.Size(); i++)
         {

@@ -178,7 +178,7 @@ bool CD3D12RHIViewport::Present(bool VerticalSync)
     }
 }
 
-void CD3D12RHIViewport::SetName(const CString& InName)
+void CD3D12RHIViewport::SetName(const String& InName)
 {
     SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(InName.Size()), InName.Data());
 

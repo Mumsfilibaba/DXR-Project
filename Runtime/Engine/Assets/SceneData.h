@@ -53,7 +53,7 @@ struct SModelData
     SModelData& operator=(const SModelData&) = default;
 
     /* Name of the mesh specified in the model-file */
-    CString Name;
+    String Name;
 
     /* Model mesh data */
     SMeshData Mesh;
@@ -69,7 +69,7 @@ struct SImage2D
 {
     SImage2D() = default;
 
-    SImage2D(const CString& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat)
+    SImage2D(const String& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat)
         : Path(InPath)
         , Image()
         , Width(InWidth)
@@ -79,7 +79,7 @@ struct SImage2D
     }
 
     /* Relative path to the image specified in the model-file */
-    CString Path;
+    String Path;
 
     /* Pointer to image data */
     TUniquePtr<uint8[]> Image;

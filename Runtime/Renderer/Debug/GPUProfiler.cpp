@@ -95,7 +95,7 @@ void CGPUProfiler::BeginGPUTrace(CRHICommandList& CmdList, const char* Name)
 {
     if (Timequeries && bEnabled)
     {
-        const CString ScopeName = Name;
+        const String ScopeName = Name;
 
         int32 TimeQueryIndex = -1;
 
@@ -126,7 +126,7 @@ void CGPUProfiler::EndGPUTrace(CRHICommandList& CmdList, const char* Name)
 {
     if (Timequeries && bEnabled)
     {
-        const CString ScopeName = Name;
+        const String ScopeName = Name;
 
         int32 TimeQueryIndex = -1;
 

@@ -183,8 +183,8 @@ CD3D12RHIShaderCompiler::~CD3D12RHIShaderCompiler()
 }
 
 bool CD3D12RHIShaderCompiler::CompileFromFile(
-    const CString& FilePath,
-    const CString& EntryPoint,
+    const String& FilePath,
+    const String& EntryPoint,
     const TArray<SShaderDefine>* Defines,
     ERHIShaderStage ShaderStage,
     EShaderModel ShaderModel,
@@ -209,8 +209,8 @@ bool CD3D12RHIShaderCompiler::CompileFromFile(
 }
 
 bool CD3D12RHIShaderCompiler::CompileShader(
-    const CString& ShaderSource,
-    const CString& EntryPoint,
+    const String& ShaderSource,
+    const String& EntryPoint,
     const TArray<SShaderDefine>* Defines,
     ERHIShaderStage ShaderStage,
     EShaderModel ShaderModel,
@@ -414,11 +414,11 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
         return false;
     }
 
-    CString AsciiFilePath = (FilePath != nullptr) ? WideToChar(WString(FilePath)) : "";
+    String AsciiFilePath = (FilePath != nullptr) ? WideToChar(WString(FilePath)) : "";
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
         LOG_INFO("[CD3D12RHIShaderCompiler]: Successfully compiled shader '" + AsciiFilePath + "' with the following output:");
-        LOG_INFO(CString(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize())));
+        LOG_INFO(String(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize())));
     }
     else
     {
@@ -515,11 +515,11 @@ bool CD3D12RHIShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& 
     size_t ConvertedChars;
     wcstombs_s(&ConvertedChars, Buffer, 256, Entrypoint, _TRUNCATE);
 
-    CString FuncName(FuncDesc.Name);
+    String FuncName(FuncDesc.Name);
     auto result = FuncName.Find(Buffer);
-    if (result == CString::NPos)
+    if (result == String::NPos)
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: First exported function does not have correct entrypoint '" + CString(Buffer) + "'. Name=" + FuncName);
+        LOG_ERROR("[CD3D12RHIShaderCompiler]: First exported function does not have correct entrypoint '" + String(Buffer) + "'. Name=" + FuncName);
         return false;
     }
 

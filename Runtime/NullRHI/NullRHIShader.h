@@ -45,22 +45,22 @@ public:
         OutShaderParameterInfo = SRHIShaderParameterInfo();
     }
 
-    virtual bool GetShaderResourceViewIndexByName(const CString& InName, uint32& OutIndex) const override
+    virtual bool GetShaderResourceViewIndexByName(const String& InName, uint32& OutIndex) const override
     {
         return true;
     }
 
-    virtual bool GetSamplerIndexByName(const CString& InName, uint32& OutIndex) const override
+    virtual bool GetSamplerIndexByName(const String& InName, uint32& OutIndex) const override
     {
         return true;
     }
 
-    virtual bool GetUnorderedAccessViewIndexByName(const CString& InName, uint32& OutIndex) const override
+    virtual bool GetUnorderedAccessViewIndexByName(const String& InName, uint32& OutIndex) const override
     {
         return true;
     }
 
-    virtual bool GetConstantBufferIndexByName(const CString& InName, uint32& OutIndex) const override
+    virtual bool GetConstantBufferIndexByName(const String& InName, uint32& OutIndex) const override
     {
         return true;
     }

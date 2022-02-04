@@ -19,7 +19,7 @@ class COREAPPLICATION_API CWindowsApplicationMisc final : public CPlatformApplic
 public:
 
     /* Shows a message box with desired title and message */
-    static FORCEINLINE void MessageBox(const CString& Title, const CString& Message)
+    static FORCEINLINE void MessageBox(const String& Title, const String& Message)
     {
         MessageBoxA(0, Message.CStr(), Title.CStr(), MB_ICONERROR | MB_OK);
     }

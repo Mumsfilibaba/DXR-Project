@@ -211,7 +211,7 @@ public:
     {
     }
 
-    virtual void SetName(const CString& InName) override
+    virtual void SetName(const String& InName) override
     {
         // Save the debug string for fast lookup
         CRHIResource::SetName(InName);

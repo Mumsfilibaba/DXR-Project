@@ -13,10 +13,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CFBXLoader
 
-static CString ExtractPath(const CString& FullFilePath)
+static String ExtractPath(const String& FullFilePath)
 {
     auto Pos = FullFilePath.ReverseFind('/');
-    if (Pos != CString::NPos)
+    if (Pos != String::NPos)
     {
         return FullFilePath.SubString(0, Pos);
     }
@@ -63,7 +63,7 @@ static void GetMatrix(const ofbx::Object* Mesh, CMatrix4& OutMatrix)
 }
 #endif
 
-static TSharedPtr<SImage2D> LoadMaterialTexture(const CString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
+static TSharedPtr<SImage2D> LoadMaterialTexture(const String& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
 {
 #if 0
     const ofbx::Texture* MaterialTexture = Material->getTexture(Type);
@@ -74,7 +74,7 @@ static TSharedPtr<SImage2D> LoadMaterialTexture(const CString& Path, const ofbx:
         MaterialTexture->getRelativeFileName().toString(StringBuffer);
 
         // Make sure that correct slashes are used
-        CString Filename = StringBuffer;
+        String Filename = StringBuffer;
         ConvertBackslashes(Filename);
 
         TSharedPtr<SImage2D> Texture = MakeShared<SImage2D>();
@@ -91,7 +91,7 @@ static TSharedPtr<SImage2D> LoadMaterialTexture(const CString& Path, const ofbx:
     }
 }
 
-bool CFBXLoader::LoadFile(const CString& Filename, SSceneData& OutScene, uint32 Flags) noexcept
+bool CFBXLoader::LoadFile(const String& Filename, SSceneData& OutScene, uint32 Flags) noexcept
 {
     OutScene.Models.Clear();
     OutScene.Materials.Clear();
@@ -144,7 +144,7 @@ bool CFBXLoader::LoadFile(const CString& Filename, SSceneData& OutScene, uint32 
     THashTable<SVertex, uint32, SVertexHasher>  UniqueVertices;
     THashTable<const ofbx::Material*, uint32> UniqueMaterials;
 
-    CString Path = ExtractPath(Filename);
+    String Path = ExtractPath(Filename);
 
     SModelData Data;
 

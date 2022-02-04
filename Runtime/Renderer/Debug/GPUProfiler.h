@@ -78,7 +78,7 @@ struct SGPUProfileSample
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
-using GPUProfileSamplesTable = THashTable<CString, SGPUProfileSample, SStringHasher>;
+using GPUProfileSamplesTable = THashTable<String, SGPUProfileSample, SStringHasher>;
 
 class RENDERER_API CGPUProfiler
 {
