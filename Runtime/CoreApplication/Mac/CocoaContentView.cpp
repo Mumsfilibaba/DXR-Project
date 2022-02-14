@@ -3,6 +3,9 @@
 #include "MacApplication.h"
 #include "ScopedAutoreleasePool.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CCocoaContentView
+
 @implementation CCocoaContentView
 
 - (id) init:(CMacApplication*) InApplication

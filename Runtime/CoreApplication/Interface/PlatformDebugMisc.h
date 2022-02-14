@@ -22,7 +22,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for debug functions
+// CPlatformDebugMisc - Platform interface for debug functions
 
 class CPlatformDebugMisc
 {

@@ -7,7 +7,7 @@
 class CMacApplication;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Content view with a backing Metal-view attached to it
+// CCocoaContentView
 
 @interface CCocoaContentView : MTKView<NSTextInputClient>
 {

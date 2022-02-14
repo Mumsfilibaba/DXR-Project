@@ -17,7 +17,7 @@ public:
     using ElementType = T;
 
     template<typename OtherType>
-    class TOptional;
+    friend class TOptional;
 
     /**
      * Default constructor
@@ -392,12 +392,12 @@ public:
      */
     friend FORCEINLINE bool operator==(const TOptional& Lhs, const TOptional& Rhs) noexcept
     {
-        if (!bHasValue && !Rhs.bHasValue)
+        if (!Lhs.bHasValue && !Rhs.bHasValue)
         {
             return true;
         }
 
-        if (!bHasValue)
+        if (!Lhs.bHasValue)
         {
             return false;
         }
@@ -426,12 +426,12 @@ public:
      */
     friend FORCEINLINE bool operator<(const TOptional& Lhs, const TOptional& Rhs) noexcept
     {
-        if (!bHasValue && !Rhs.bHasValue)
+        if (!Lhs.bHasValue && !Rhs.bHasValue)
         {
             return true;
         }
 
-        if (!bHasValue)
+        if (!Lhs.bHasValue)
         {
             return false;
         }
@@ -448,12 +448,12 @@ public:
      */
     friend FORCEINLINE bool operator<=(const TOptional& Lhs, const TOptional& Rhs) noexcept
     {
-        if (!bHasValue && !Rhs.bHasValue)
+        if (!Lhs.bHasValue && !Rhs.bHasValue)
         {
             return true;
         }
 
-        if (!bHasValue)
+        if (!Lhs.bHasValue)
         {
             return false;
         }

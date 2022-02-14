@@ -3,6 +3,9 @@
 #include "MacConsoleWindow.h"
 #include "ScopedAutoreleasePool.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CCocoaConsoleWindow
+
 @implementation CCocoaConsoleWindow
 
 - (id) init:(CMacConsoleWindow*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag

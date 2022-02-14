@@ -14,7 +14,7 @@ TSharedPtr<CApplicationInstance> CApplicationInstance::Instance;
 
 bool CApplicationInstance::Make()
 {
-    TSharedPtr<CPlatformApplication> Application = PlatformApplication::Make();
+    TSharedPtr<CPlatformApplication> Application = PlatformApplication::CreateApplication();
     if (Application && !Application->Initialize())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to create PlatformApplication");

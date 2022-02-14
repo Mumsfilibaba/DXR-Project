@@ -28,7 +28,7 @@ enum EWindowStyleFlag : uint32
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowStyle - Struct for checking window style
+// SWindowStyle - Struct for checking window style
 
 struct SWindowStyle
 {
@@ -68,7 +68,7 @@ struct SWindowStyle
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowShape - Struct defining the shape of a window
+// SWindowShape - Struct defining the shape of a window
 
 struct SWindowShape
 {
@@ -91,7 +91,7 @@ struct SWindowShape
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for a window
+// CPlatformWindow - Platform interface for a window
 
 typedef void* PlatformWindowHandle;
 
@@ -182,7 +182,6 @@ protected:
     CPlatformWindow() = default;
     ~CPlatformWindow() = default;
 
-    // Style of the window
     SWindowStyle StyleParams;
 };
 

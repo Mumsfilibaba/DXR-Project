@@ -2,7 +2,7 @@
 #include "Core/Input/InputCodes.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Cursor 
+// ECursor
 
 enum class ECursor
 {
@@ -21,7 +21,7 @@ enum class ECursor
 class CPlatformWindow;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for cursor
+// ICursor - Platform interface for cursor
 
 class ICursor
 {
@@ -29,18 +29,42 @@ public:
 
     virtual ~ICursor() = default;
 
-    /* Sets the type of cursor that is being used */
+	/**
+	 * Set the cursor image
+	 *
+	 * @param Cursor: The new cursor icon
+	 */
     virtual void SetCursor(ECursor Cursor) = 0;
 
-    /* Sets the position of the cursor */
+	/**
+	 * Sets the position of the cursor
+	 *
+	 * @param RelativeWindow: Window that the new position is relative to
+	 * @param x: The new x-coordinate
+	 * @param y: The new y-coordinate
+	 */
     virtual void SetPosition(CPlatformWindow* RelativeWindow, int32 x, int32 y) const = 0;
 
-    /* Retrieve the cursor position of a window */
+	/**
+	 * Sets the position of the cursor
+	 *
+	 * @param RelativeWindow: Window that the new position is relative to
+	 * @param OutX: Variable to store the x-coordinate in
+	 * @param OutY: Variable to store the y-coordinate in
+	 */
     virtual void GetPosition(CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY) const = 0;
 
-    /* Show or hide the mouse */
+	/**
+	 * Set the visibility of the cursor
+	 *
+	 * @param bIsVisible: True if the cursor should be visible, otherwise false
+	 */
     virtual void SetVisibility(bool bIsVisible) = 0;
 
-    /* Retrieve the mouse visibility */
+	/**
+	 * Retrieve the mouse visibility
+	 *
+	 * @return: Returns true if the mouse-cursor is visibile, otherwise false
+	 */
     virtual bool IsVisible() const = 0;
 };

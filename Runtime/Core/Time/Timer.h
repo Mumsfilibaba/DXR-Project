@@ -2,7 +2,7 @@
 #include "Timestamp.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Simple timer to count time between ticks
+// CTimer - Simple timer to count time between ticks
 
 class CORE_API CTimer
 {

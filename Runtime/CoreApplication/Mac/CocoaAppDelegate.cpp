@@ -5,6 +5,9 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Platform/PlatformDebugMisc.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CCocoaAppDelegate
+
 @implementation CCocoaAppDelegate
 
 - (id) init:(CMacApplication*) InApplication

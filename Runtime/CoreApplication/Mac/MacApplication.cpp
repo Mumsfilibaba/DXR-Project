@@ -15,14 +15,15 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMacApplication
 
-TSharedPtr<CMacApplication> CMacApplication::Make()
+TSharedPtr<CMacApplication> CMacApplication::CreateApplication()
 {
 	return TSharedPtr<CMacApplication>(dbg_new CMacApplication());
 }
 
 CMacApplication::CMacApplication()
-    : CPlatformApplication(CMacCursor::Make())
+    : CPlatformApplication(CMacCursor::CreateCursor())
 	, AppDelegate(nullptr)
     , Windows()
     , WindowsMutex()
@@ -40,7 +41,7 @@ CMacApplication::~CMacApplication()
 
 TSharedRef<CPlatformWindow> CMacApplication::MakeWindow()
 {
-    TSharedRef<CMacWindow> NewWindow = CMacWindow::Make(this);
+    TSharedRef<CMacWindow> NewWindow = CMacWindow::CreateWindow(this);
     
     {
         TScopedLock Lock(WindowsMutex);
@@ -56,7 +57,6 @@ bool CMacApplication::Initialize()
 
     Assert(PlatformThreadMisc::IsMainThread()); 
 
-    /* Init application singleton */
     [NSApplication sharedApplication];
     Assert(NSApp != nullptr);
     
@@ -87,7 +87,6 @@ bool CMacApplication::InitializeAppMenu()
     // This should only be init from the main thread, but assert just to be sure.
     Assert(PlatformThreadMisc::IsMainThread());
 
-    // Init the default macOS menu
     NSMenu*     MenuBar     = [[NSMenu alloc] init];
     NSMenuItem* AppMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
     NSMenu*     AppMenu     = [[NSMenu alloc] init];
@@ -96,7 +95,6 @@ bool CMacApplication::InitializeAppMenu()
     [AppMenu addItemWithTitle:@"DXR-Engine" action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
     [AppMenu addItem: [NSMenuItem separatorItem]];
     
-    // Engine menu item
     NSMenu* ServiceMenu = [[NSMenu alloc] init];
     [[AppMenu addItemWithTitle:@"Services" action:nil keyEquivalent:@""] setSubmenu:ServiceMenu];
     [AppMenu addItem:[NSMenuItem separatorItem]];
@@ -106,7 +104,6 @@ bool CMacApplication::InitializeAppMenu()
     [AppMenu addItem:[NSMenuItem separatorItem]];
     [AppMenu addItemWithTitle:@"Quit DXR-Engine" action:@selector(terminate:) keyEquivalent:@"q"];
     
-    // Window menu
     NSMenuItem* WindowMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
     NSMenu*     WindowMenu     = [[NSMenu alloc] initWithTitle:@"Window"];
     [WindowMenuItem setSubmenu:WindowMenu];
@@ -238,7 +235,7 @@ void CMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 				const unichar Codepoint = [Characters characterAtIndex:Index];
 				if ((Codepoint & 0xff00) != 0xf700)
 				{
-					MessageListener->HandleKeyTyped(uint32(Codepoint));
+					MessageListener->HandleKeyChar(uint32(Codepoint));
 				}
 			}
 		}
@@ -399,7 +396,7 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 	}
 	else if (Event.Character != uint32(-1))
 	{
-		MessageListener->HandleKeyTyped(Event.Character);
+		MessageListener->HandleKeyChar(Event.Character);
 	}
 }
 

@@ -8,7 +8,7 @@
 #define SCOPED_AUTORELEASE_POOL() CScopedAutoreleasePool PREPROCESS_CONCAT(AutoReleasePool_, __LINE__)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Creates a autorelease pool and releases it when destroyed
+// CScopedAutoreleasePool - Creates a autorelease pool and releases it when destroyed
 
 class CScopedAutoreleasePool
 {

@@ -18,7 +18,7 @@ ApplicationModule.AddModuleDependencies(
 ApplicationModule.AddLinkLibraries( 
 {
     'ImGui',
-}
+})
 
 if BuildWithXcode() then
     ApplicationModule.AddFrameWorks( 

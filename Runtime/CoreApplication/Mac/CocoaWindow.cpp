@@ -3,6 +3,9 @@
 #include "MacApplication.h"
 #include "ScopedAutoreleasePool.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CCocoaWindow
+
 @implementation CCocoaWindow
 
 - (id) init:(CMacApplication*) InApplication ContentRect:(NSRect)ContentRect StyleMask:(NSWindowStyleMask)StyleMask Backing:(NSBackingStoreType)BackingStoreType Defer:(BOOL)Flag

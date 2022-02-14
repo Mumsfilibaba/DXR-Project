@@ -7,7 +7,10 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-CMacConsoleWindow* CMacConsoleWindow::Make()
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMacConsoleWindow
+
+CMacConsoleWindow* CMacConsoleWindow::CreateWindow()
 {
 	return dbg_new CMacConsoleWindow();
 }

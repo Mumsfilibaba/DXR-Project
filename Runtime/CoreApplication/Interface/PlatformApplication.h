@@ -28,12 +28,7 @@ public:
      * 
      * @return: Returns the newly created PlatformApplication 
      */
-    static TSharedPtr<CPlatformApplication> Make() { return TSharedPtr<CPlatformApplication>(); }
-
-    /**
-     * Public destructor for TSharedPtr 
-     */
-    virtual ~CPlatformApplication() = default;
+    static TSharedPtr<CPlatformApplication> CreateApplication() { return TSharedPtr<CPlatformApplication>(); }
 
     /**
      * Create a new PlatformWindow
@@ -135,15 +130,17 @@ public:
 
 protected:
 
+	friend struct TDefaultDelete<CPlatformApplication>;
+	
     CPlatformApplication(const TSharedPtr<ICursor>& InCursor)
         : Cursor(InCursor)
         , MessageListener(nullptr)
     {
     }
+	
+	virtual ~CPlatformApplication() = default;
 
     TSharedPtr<ICursor> Cursor;
-    
-    /** Handler for platform messages/events */
     TSharedPtr<CPlatformApplicationMessageHandler> MessageListener;
 };
 

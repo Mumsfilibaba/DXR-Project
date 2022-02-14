@@ -10,7 +10,10 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-TSharedRef<CMacWindow> CMacWindow::Make(CMacApplication* InApplication)
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMacWindow
+
+TSharedRef<CMacWindow> CMacWindow::CreateWindow(CMacApplication* InApplication)
 {
 	return dbg_new CMacWindow(InApplication);
 }

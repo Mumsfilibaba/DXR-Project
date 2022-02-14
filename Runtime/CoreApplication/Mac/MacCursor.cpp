@@ -19,8 +19,9 @@ See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
 @end
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMacCursor
 
-TSharedPtr<CMacCursor> CMacCursor::Make()
+TSharedPtr<CMacCursor> CMacCursor::CreateCursor()
 {
 	return TSharedPtr<CMacCursor>(dbg_new CMacCursor());
 }
