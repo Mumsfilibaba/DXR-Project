@@ -69,6 +69,9 @@ function CBuildRules(InName)
         -- Forceinclude these files
         ForceIncludes = {},
 
+        -- Paths to search library files in
+        LibraryPaths = {},
+
         -- Files to build compile into the module
         Files =
         { 
@@ -141,7 +144,7 @@ function CBuildRules(InName)
         TableAppendUniqueElementMultiple(InDefines, self.Defines)
     end
 
-    -- Helper function for adding a Libraries
+    -- Helper function for adding a module dependency
     function self.AddModuleDependencies(InModuleDependencies)
         TableAppendUniqueElementMultiple(InModuleDependencies, self.ModuleDependencies)
     end
@@ -159,6 +162,11 @@ function CBuildRules(InName)
     -- Helper function for adding forceincludes
     function self.AddForceIncludes(InForceIncludes)
         TableAppendUniqueElementMultiple(InForceIncludes, self.ForceIncludes)
+    end
+
+    -- Helper function for adding LibraryPaths
+    function self.AddLibraryPaths(InLibraryPaths)
+        TableAppendUniqueElementMultiple(InLibraryPaths, self.LibraryPaths)
     end
 
     -- Helper for adding the .framework extention to a table
@@ -271,6 +279,26 @@ function CBuildRules(InName)
             end
             
             defines(self.Defines)
+
+            -- Add System Includes
+            printf('    Num SystemIncludes=%d', #self.SystemIncludes)
+            if #self.SystemIncludes > 0 then
+                PrintTableWithEndLine('    Using SystemInclude \'%s\'', self.SystemIncludes)
+            else
+                printf('')
+            end
+
+            sysincludedirs(self.SystemIncludes)
+
+            -- Add Library Paths
+            printf('    Num LibraryPaths=%d', #self.LibraryPaths)
+            if #self.LibraryPaths > 0 then
+                PrintTableWithEndLine('    Using LibraryPaths \'%s\'', self.LibraryPaths)
+            else
+                printf('')
+            end
+
+            libdirs(self.LibraryPaths)
 
             -- Add Module Files
             files(self.Files)

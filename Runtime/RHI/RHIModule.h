@@ -25,17 +25,19 @@
 enum class ERHIInstanceApi : uint32
 {
     Unknown = 0,
-    Null = 1,
-    D3D12 = 2,
+    Null    = 1,
+    D3D12   = 2,
+    Vulkan  = 3,
 };
 
 inline const char* ToString(ERHIInstanceApi RenderLayerApi)
 {
     switch (RenderLayerApi)
     {
-    case ERHIInstanceApi::D3D12: return "D3D12";
-    case ERHIInstanceApi::Null:  return "Null";
-    default:                return "Unknown";
+    case ERHIInstanceApi::D3D12:  return "D3D12";
+    case ERHIInstanceApi::Vulkan: return "Vulkan";
+    case ERHIInstanceApi::Null:   return "Null";
+    default:                      return "Unknown";
     }
 }
 
@@ -52,15 +54,23 @@ class RHI_API CRHIModule : public CDefaultEngineModule
 {
 public:
 
-    /* Creates the core RHI object */
+    /**
+     * Creates the RHI Instance
+     * 
+     * @return: Returns the newly created RHIInstance
+     */
     virtual class CRHIInstance* CreateInterface() = 0;
 
-    /* Creates the RHI shader compiler */
+    /**
+     * Creates the RHI shader compiler 
+     * 
+     * @return: Returns the shader compiler for this RHI Module
+     */
     virtual class IRHIShaderCompiler* CreateCompiler() = 0;
 
 protected:
 
-    CRHIModule() = default;
+    CRHIModule()  = default;
     ~CRHIModule() = default;
 };
 

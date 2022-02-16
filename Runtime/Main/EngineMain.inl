@@ -28,13 +28,13 @@ int32 EngineMain()
     // Initialization
     if (!CEngineLoop::PreInitialize())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::PreInit Failed");
+        PlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::PreInitialize Failed");
         return -1;
     }
 
     if (!CEngineLoop::Initialize())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::Init Failed");
+        PlatformApplicationMisc::MessageBox("ERROR", "CEngineLoop::Initialize Failed");
         return -1;
     }
 

@@ -74,7 +74,7 @@ inline bool IsTextureCube<CD3D12RHITextureCubeArray>()
 
 CD3D12RHIInstance* GD3D12RHIInstance = nullptr;
 
-CRHIInstance* CD3D12RHIInstance::Make() 
+CRHIInstance* CD3D12RHIInstance::CreateInstance() 
 { 
     return dbg_new CD3D12RHIInstance(); 
 }

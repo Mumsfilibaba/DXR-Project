@@ -27,6 +27,10 @@ bool RHIInitialize(ERHIInstanceApi InRenderApi)
     {
         RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>("D3D12RHI");
     }
+    else if (InRenderApi == ERHIInstanceApi::Vulkan)
+    {
+        RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>("VulkanRHI");
+    }
     else if (InRenderApi == ERHIInstanceApi::Null)
     {
         RHIModule = LoadNullRHI();

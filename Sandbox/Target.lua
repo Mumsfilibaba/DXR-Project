@@ -11,6 +11,7 @@ SandboxProject.AddModuleDependencies(
 	'Renderer',
 	'InterfaceRenderer',
 	'NullRHI',
+	'VulkanRHI'
 })
 
 if BuildWithXcode() then
