@@ -10,12 +10,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIInputLayoutState
 
-class CD3D12RHIInputLayoutState : public CRHIInputLayoutState, public CD3D12DeviceChild
+class CD3D12RHIInputLayoutState : public CRHIInputLayoutState, public CD3D12DeviceObject
 {
 public:
     CD3D12RHIInputLayoutState(CD3D12Device* InDevice, const SRHIInputLayoutStateInfo& CreateInfo)
         : CRHIInputLayoutState()
-        , CD3D12DeviceChild(InDevice)
+        , CD3D12DeviceObject(InDevice)
         , SemanticNames()
         , ElementDesc()
         , Desc()
@@ -68,12 +68,12 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIDepthStencilState
 
-class CD3D12RHIDepthStencilState : public CRHIDepthStencilState, public CD3D12DeviceChild
+class CD3D12RHIDepthStencilState : public CRHIDepthStencilState, public CD3D12DeviceObject
 {
 public:
     CD3D12RHIDepthStencilState(CD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
         : CRHIDepthStencilState()
-        , CD3D12DeviceChild(InDevice)
+        , CD3D12DeviceObject(InDevice)
         , Desc(InDesc)
     {
     }
@@ -95,12 +95,12 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIRasterizerState
 
-class CD3D12RHIRasterizerState : public CRHIRasterizerState, public CD3D12DeviceChild
+class CD3D12RHIRasterizerState : public CRHIRasterizerState, public CD3D12DeviceObject
 {
 public:
     CD3D12RHIRasterizerState(CD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
         : CRHIRasterizerState()
-        , CD3D12DeviceChild(InDevice)
+        , CD3D12DeviceObject(InDevice)
         , Desc(InDesc)
     {
     }
@@ -122,12 +122,12 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIBlendState
 
-class CD3D12RHIBlendState : public CRHIBlendState, public CD3D12DeviceChild
+class CD3D12RHIBlendState : public CRHIBlendState, public CD3D12DeviceObject
 {
 public:
     CD3D12RHIBlendState(CD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
         : CRHIBlendState()
-        , CD3D12DeviceChild(InDevice)
+        , CD3D12DeviceObject(InDevice)
         , Desc(InDesc)
     {
     }
@@ -149,7 +149,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIGraphicsPipelineState
 
-class CD3D12RHIGraphicsPipelineState : public CRHIGraphicsPipelineState, public CD3D12DeviceChild
+class CD3D12RHIGraphicsPipelineState : public CRHIGraphicsPipelineState, public CD3D12DeviceObject
 {
 public:
     CD3D12RHIGraphicsPipelineState(CD3D12Device* InDevice);
@@ -193,7 +193,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIComputePipelineState
 
-class CD3D12RHIComputePipelineState : public CRHIComputePipelineState, public CD3D12DeviceChild
+class CD3D12RHIComputePipelineState : public CRHIComputePipelineState, public CD3D12DeviceObject
 {
 public:
 
@@ -247,7 +247,7 @@ struct SRayTracingShaderIdentifer
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIRayTracingPipelineState
 
-class CD3D12RHIRayTracingPipelineState : public CRHIRayTracingPipelineState, public CD3D12DeviceChild
+class CD3D12RHIRayTracingPipelineState : public CRHIRayTracingPipelineState, public CD3D12DeviceObject
 {
 public:
     CD3D12RHIRayTracingPipelineState(CD3D12Device* InDevice);

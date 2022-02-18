@@ -7,7 +7,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12Resource
 
-class CD3D12Resource : public CD3D12DeviceChild, public CRefCounted
+class CD3D12Resource : public CD3D12DeviceObject, public CRefCounted
 {
 public:
 

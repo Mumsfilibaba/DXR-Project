@@ -6,7 +6,7 @@
 // D3D12RHITimestampQuery
 
 CD3D12RHITimestampQuery::CD3D12RHITimestampQuery(CD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+    : CD3D12DeviceObject(InDevice)
     , CRHITimestampQuery()
     , QueryHeap(nullptr)
     , WriteResource(nullptr)

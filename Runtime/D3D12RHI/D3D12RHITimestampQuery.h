@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHITimestampQuery
 
-class CD3D12RHITimestampQuery : public CRHITimestampQuery, public CD3D12DeviceChild
+class CD3D12RHITimestampQuery : public CRHITimestampQuery, public CD3D12DeviceObject
 {
 public:
 

@@ -28,8 +28,8 @@ typedef PFN_vkVoidFunction VulkanVoidFunction;
 #define VULKAN_ERROR_ALWAYS(ErrorMessage) \
     do                                    \
     {                                     \
-            LOG_ERROR(ErrorMessage);      \
-            CDebug::DebugBreak();         \
+        LOG_ERROR(ErrorMessage);          \
+        CDebug::DebugBreak();             \
     } while (0)
 
 #else
@@ -43,4 +43,17 @@ typedef PFN_vkVoidFunction VulkanVoidFunction;
 
 #ifndef VK_FAILED
 	#define VK_FAILED(Result) (Result != VK_SUCCESS)
+#endif
+
+#ifndef VULKAN_CHECK
+    #define VULKAN_CHECK(Result, ErrorMessage) \
+        if (VK_FAILED(Result))                 \
+        {                                      \
+            VULKAN_ERROR_ALWAYS(ErrorMessage); \
+            return false;                      \
+        }
+#endif
+
+#ifndef VULKAN_CHECK_HANDLE
+	#define VULKAN_CHECK_HANDLE(Handle) (Handle != VK_NULL_HANDLE)
 #endif

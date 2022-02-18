@@ -1,6 +1,14 @@
 #include "VulkanDriverInstance.h"
 #include "VulkanFunctions.h"
 
+#define VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(FunctionName)                                           \
+    NVulkan::FunctionName = reinterpret_cast<PFN_vk##FunctionName>(LoadFunction("vk"#FunctionName)); \
+    if (!NVulkan::FunctionName)                                                                      \
+    {                                                                                                \
+        VULKAN_ERROR_ALWAYS("Failed to load vk"#FunctionName);                                       \
+        return false;                                                                                \
+    }
+
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanDriverInstance
 
@@ -30,6 +38,11 @@ CVulkanDriverInstance::~CVulkanDriverInstance()
     {
         PlatformLibrary::FreeDynamicLib(DriverHandle);
     }
+	
+	if (VULKAN_CHECK_HANDLE(Instance))
+	{
+		NVulkan::DestroyInstance(Instance, nullptr);
+	}
 }
 
 bool CVulkanDriverInstance::Load()
@@ -47,13 +60,10 @@ bool CVulkanDriverInstance::Load()
 		VULKAN_ERROR_ALWAYS("Failed to load vkGetInstanceProcAddr");
 		return false;
 	}
-	
-	NVulkan::CreateInstance = reinterpret_cast<PFN_vkCreateInstance>(LoadFunction("vkCreateInstance"));
-	if (!NVulkan::CreateInstance)
-	{
-		VULKAN_ERROR_ALWAYS("Failed to load vkCreateInstance");
-		return false;
-	}
+		
+	VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(CreateInstance);
+	VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(EnumerateInstanceLayerProperties);
+	VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(EnumerateInstanceExtensionProperties);
 		
     return true;
 }

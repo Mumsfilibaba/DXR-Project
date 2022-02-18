@@ -6,17 +6,17 @@ class CD3D12Device;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12DeviceChild
 
-class CD3D12DeviceChild
+class CD3D12DeviceObject
 {
 public:
 
-    CD3D12DeviceChild(CD3D12Device* InDevice)
+    CD3D12DeviceObject(CD3D12Device* InDevice)
         : Device(InDevice)
     {
         Assert(Device != nullptr);
     }
 
-    virtual ~CD3D12DeviceChild()
+    virtual ~CD3D12DeviceObject()
     {
         Device = nullptr;
     }

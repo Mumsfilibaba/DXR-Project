@@ -1,4 +1,8 @@
 #include "VulkanInstance.h"
+#include "VulkanFunctions.h"
+
+#define VULKAN_PRINT_AVAILABLE_LAYERS     (1)
+#define VULKAN_PRINT_AVAILABLE_EXTENSIONS (1)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanInstance
@@ -16,6 +20,8 @@ CVulkanInstance::CVulkanInstance()
 
 bool CVulkanInstance::Initialize(bool bEnableDebug)
 {
+	UNREFERENCED_VARIABLE(bEnableDebug);
+	
     Instance = CVulkanDriverInstance::CreateInstance();
     if (!Instance)
     {
@@ -23,13 +29,63 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
         return false;
     }
 
+    VkResult Result = VK_SUCCESS;
+
+	// Instance Layers
 	TArray<const char*> InstanceLayerNames;
+	{
+		uint32 LayerPropertiesCount = 0;
+		Result = NVulkan::EnumerateInstanceLayerProperties(&LayerPropertiesCount, nullptr);
+		VULKAN_CHECK(Result, "Failed to retrive Instance LayerProperties Count");
+		
+		TArray<VkLayerProperties> LayerProperties(LayerPropertiesCount);
+		Result = NVulkan::EnumerateInstanceLayerProperties(&LayerPropertiesCount, LayerProperties.Data());
+		VULKAN_CHECK(Result, "Failed to retrive Instance LayerProperties");
+
+#if VULKAN_PRINT_AVAILABLE_LAYERS
+		LOG_INFO("[VulkanRHI] Available Instance Layers:");
+		for (const VkLayerProperties& LayerProperty : LayerProperties)
+		{
+			String LayerName(LayerProperty.layerName);
+			LOG_INFO(LayerName + ": " + LayerProperty.description);
+		}
+#endif
+	}
+
+	// Instance Extensions
 	TArray<const char*> InstanceExtensionNames;
+	{
+		uint32 ExtensionPropertiesCount = 0;
+		Result = NVulkan::EnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, nullptr);
+		VULKAN_CHECK(Result, "Failed to retrive Instance ExtensionProperties Count");
+		
+		TArray<VkExtensionProperties> ExtensionProperties(ExtensionPropertiesCount);
+		Result = NVulkan::EnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, ExtensionProperties.Data());
+		VULKAN_CHECK(Result, "Failed to retrive Instance ExtensionProperties");
+
+#if VULKAN_PRINT_AVAILABLE_EXTENSIONS
+		LOG_INFO("[VulkanRHI] Available Instance Extensions:");
+		for (const VkExtensionProperties& ExtensionProperty : ExtensionProperties)
+		{
+			LOG_INFO(ExtensionProperty.extensionName);
+		}
+#endif
+	}
 	
 	if (!Instance->Initialize(InstanceExtensionNames, InstanceLayerNames))
 	{
 		return false;
 	}
+	
+	// Load Functions
+	if (!NVulkan::LoadInstanceFunctions(Instance.Get()))
+	{
+		return false;
+	}
+
+    TArray<const char*> DeviceLayerNames;
+    TArray<const char*> DeviceExtensionNames;
+    
 	
     return true;
 }

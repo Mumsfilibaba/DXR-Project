@@ -12,13 +12,13 @@
 #define TEXTURE_CUBE_FACE_COUNT (6)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12BaseTexture
+// CD3D12BaseTexture
 
-class CD3D12BaseTexture : public CD3D12DeviceChild
+class CD3D12BaseTexture : public CD3D12DeviceObject
 {
 public:
     CD3D12BaseTexture(CD3D12Device* InDevice)
-        : CD3D12DeviceChild(InDevice)
+        : CD3D12DeviceObject(InDevice)
         , Resource(nullptr)
     {
     }
@@ -28,7 +28,7 @@ public:
         Resource = InResource;
     }
 
-    FORCEINLINE void SetShaderResourceView(CD3D12RHIShaderResourceView* InShaderResourceView)
+    FORCEINLINE void SetShaderResourceView(CD3D12ShaderResourceView* InShaderResourceView)
     {
         ShaderResourceView = InShaderResourceView;
     }
@@ -44,21 +44,19 @@ public:
     }
 
 protected:
-
     // Native resource storing the texture
     TSharedRef<CD3D12Resource> Resource;
-
     // Default ShaderResourceView created at creation 
-    TSharedRef<CD3D12RHIShaderResourceView> ShaderResourceView;
+    TSharedRef<CD3D12ShaderResourceView> ShaderResourceView;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseTexture2D
+// CD3D12BaseTexture2D
 
-class CD3D12RHIBaseTexture2D : public CRHITexture2D, public CD3D12BaseTexture
+class CD3D12BaseTexture2D : public CRHITexture2D, public CD3D12BaseTexture
 {
 public:
-    CD3D12RHIBaseTexture2D(
+    CD3D12BaseTexture2D(
         CD3D12Device* InDevice,
         EFormat InFormat,
         uint32 SizeX, uint32 SizeY, uint32 SizeZ,
@@ -78,22 +76,22 @@ public:
     virtual CRHIDepthStencilView* GetDepthStencilView() const override { return DepthStencilView.Get(); }
     virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
 
-    FORCEINLINE void SetRenderTargetView(CD3D12RHIRenderTargetView* InRenderTargetView)
+    FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* InRenderTargetView)
     {
         RenderTargetView = InRenderTargetView;
     }
 
-    FORCEINLINE void SetDepthStencilView(CD3D12RHIDepthStencilView* InDepthStencilView)
+    FORCEINLINE void SetDepthStencilView(CD3D12DepthStencilView* InDepthStencilView)
     {
         DepthStencilView = InDepthStencilView;
     }
 
-    FORCEINLINE void SetUnorderedAccessView(CD3D12RHIUnorderedAccessView* InUnorderedAccessView)
+    FORCEINLINE void SetUnorderedAccessView(CD3D12UnorderedAccessView* InUnorderedAccessView)
     {
         UnorderedAccessView = InUnorderedAccessView;
     }
 
-    FORCEINLINE CD3D12RHIRenderTargetView* GetD3D12RenderTargetView() const
+    FORCEINLINE CD3D12RenderTargetView* GetD3D12RenderTargetView() const
     {
         return RenderTargetView.Get();
     }
@@ -105,20 +103,20 @@ public:
 
 private:
     /** Default RenderTargetView created at creation */ 
-    TSharedRef<CD3D12RHIRenderTargetView> RenderTargetView;
+    TSharedRef<CD3D12RenderTargetView> RenderTargetView;
     /** Default DepthStencilView created at creation */ 
-    TSharedRef<CD3D12RHIDepthStencilView> DepthStencilView;
+    TSharedRef<CD3D12DepthStencilView> DepthStencilView;
     /** Default UnorderedAccessView created at creation */
-    TSharedRef<CD3D12RHIUnorderedAccessView> UnorderedAccessView;
+    TSharedRef<CD3D12UnorderedAccessView> UnorderedAccessView;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseTexture2DArray
+// CD3D12BaseTexture2DArray
 
-class CD3D12RHIBaseTexture2DArray : public CRHITexture2DArray, public CD3D12BaseTexture
+class CD3D12BaseTexture2DArray : public CRHITexture2DArray, public CD3D12BaseTexture
 {
 public:
-    CD3D12RHIBaseTexture2DArray(
+    CD3D12BaseTexture2DArray(
         CD3D12Device* InDevice,
         EFormat InFormat,
         uint32 SizeX, uint32 SizeY, uint32 SizeZ,
@@ -133,12 +131,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseTextureCubeArray
+// CD3D12BaseTextureCube
 
-class CD3D12RHIBaseTextureCube : public CRHITextureCube, public CD3D12BaseTexture
+class CD3D12BaseTextureCube : public CRHITextureCube, public CD3D12BaseTexture
 {
 public:
-    CD3D12RHIBaseTextureCube(
+    CD3D12BaseTextureCube(
         CD3D12Device* InDevice,
         EFormat InFormat,
         uint32 SizeX, uint32 SizeY, uint32 SizeZ,
@@ -153,12 +151,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseTextureCubeArray
+// CD3D12BaseTextureCubeArray
 
-class CD3D12RHIBaseTextureCubeArray : public CRHITextureCubeArray, public CD3D12BaseTexture
+class CD3D12BaseTextureCubeArray : public CRHITextureCubeArray, public CD3D12BaseTexture
 {
 public:
-    CD3D12RHIBaseTextureCubeArray(
+    CD3D12BaseTextureCubeArray(
         CD3D12Device* InDevice,
         EFormat InFormat,
         uint32 SizeX, uint32 SizeY, uint32 SizeZ,
@@ -173,12 +171,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseTexture3D
+// CD3D12BaseTexture3D
 
-class CD3D12RHIBaseTexture3D : public CRHITexture3D, public CD3D12BaseTexture
+class CD3D12BaseTexture3D : public CRHITexture3D, public CD3D12BaseTexture
 {
 public:
-    CD3D12RHIBaseTexture3D(
+    CD3D12BaseTexture3D(
         CD3D12Device* InDevice,
         EFormat InFormat,
         uint32 SizeX, uint32 SizeY, uint32 SizeZ,
@@ -193,13 +191,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseTexture
+// TD3D12BaseTexture
 
 template<typename BaseTextureType>
-class TD3D12RHIBaseTexture : public BaseTextureType
+class TD3D12BaseTexture : public BaseTextureType
 {
 public:
-    TD3D12RHIBaseTexture(
+    TD3D12BaseTexture(
         CD3D12Device* InDevice,
         EFormat InFormat,
         uint32 SizeX, uint32 SizeY, uint32 SizeZ,
@@ -239,11 +237,11 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12 Texture types
 
-using CD3D12RHITexture2D = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2D>;
-using CD3D12RHITexture2DArray = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2DArray>;
-using CD3D12RHITextureCube = TD3D12RHIBaseTexture<CD3D12RHIBaseTextureCube>;
-using CD3D12RHITextureCubeArray = TD3D12RHIBaseTexture<CD3D12RHIBaseTextureCubeArray>;
-using CD3D12RHITexture3D = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture3D>;
+using CD3D12Texture2D        = TD3D12BaseTexture<CD3D12BaseTexture2D>;
+using CD3D12Texture2DArray   = TD3D12BaseTexture<CD3D12BaseTexture2DArray>;
+using CD3D12TextureCube      = TD3D12BaseTexture<CD3D12BaseTextureCube>;
+using CD3D12TextureCubeArray = TD3D12BaseTexture<CD3D12BaseTextureCubeArray>;
+using CD3D12Texture3D        = TD3D12BaseTexture<CD3D12BaseTexture3D>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12TextureCast
@@ -254,23 +252,23 @@ inline CD3D12BaseTexture* D3D12TextureCast(CRHITexture* Texture)
     {
         if (Texture->AsTexture2D())
         {
-            return static_cast<CD3D12RHITexture2D*>(Texture);
+            return static_cast<CD3D12Texture2D*>(Texture);
         }
         else if (Texture->AsTexture2DArray())
         {
-            return static_cast<CD3D12RHITexture2DArray*>(Texture);
+            return static_cast<CD3D12Texture2DArray*>(Texture);
         }
         else if (Texture->AsTextureCube())
         {
-            return static_cast<CD3D12RHITextureCube*>(Texture);
+            return static_cast<CD3D12TextureCube*>(Texture);
         }
         else if (Texture->AsTextureCubeArray())
         {
-            return static_cast<CD3D12RHITextureCubeArray*>(Texture);
+            return static_cast<CD3D12TextureCubeArray*>(Texture);
         }
         else if (Texture->AsTexture3D())
         {
-            return static_cast<CD3D12RHITexture3D*>(Texture);
+            return static_cast<CD3D12Texture3D*>(Texture);
         }
     }
 

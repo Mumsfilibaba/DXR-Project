@@ -11,6 +11,8 @@
 class CVulkanDriverInstance : public CRefCounted
 {
 public:
+
+    /* Create a new DriverInstance (i.e VkInstance) */
     static TSharedRef<CVulkanDriverInstance> CreateInstance() noexcept;
 
 	bool Initialize(const TArray<const char*>& InstanceExtensionNames, const TArray<const char*>& InstanceLayerNames);
@@ -19,6 +21,12 @@ public:
 	{
 		VULKAN_ERROR(GetInstanceProcAddrFunc != nullptr, "Vulkan Driver Instance is not initialized properly");
 		return reinterpret_cast<VulkanVoidFunction>(GetInstanceProcAddrFunc(Instance, Name));
+	}
+
+    template<typename FunctionType>
+    FORCEINLINE FunctionType LoadFunction(const char* Name) const noexcept
+	{
+		return reinterpret_cast<FunctionType>(LoadFunction(Name));
 	}
 	
     FORCEINLINE VkInstance GetInstance() const noexcept

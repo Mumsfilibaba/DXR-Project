@@ -10,7 +10,7 @@ class CD3D12OfflineDescriptorHeap;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12View
 
-class CD3D12View : public CD3D12DeviceChild
+class CD3D12View : public CD3D12DeviceObject
 {
 public:
     CD3D12View(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
@@ -39,14 +39,14 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIConstantBufferView
+// CD3D12ConstantBufferView
 
-class CD3D12RHIConstantBufferView : public CD3D12View
+class CD3D12ConstantBufferView : public CD3D12View
 {
 public:
 
-    CD3D12RHIConstantBufferView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
-    ~CD3D12RHIConstantBufferView() = default;
+    CD3D12ConstantBufferView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    ~CD3D12ConstantBufferView() = default;
 
     bool CreateView(CD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 
@@ -60,14 +60,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseShaderResourceView
+// CD3D12BaseShaderResourceView
 
-class CD3D12RHIBaseShaderResourceView : public CRHIShaderResourceView, public CD3D12View
+class CD3D12BaseShaderResourceView : public CRHIShaderResourceView, public CD3D12View
 {
 public:
 
-    CD3D12RHIBaseShaderResourceView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
-    ~CD3D12RHIBaseShaderResourceView() = default;
+    CD3D12BaseShaderResourceView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    ~CD3D12BaseShaderResourceView() = default;
 
     bool CreateView(CD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
@@ -81,14 +81,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseUnorderedAccessView
+// CD3D12BaseUnorderedAccessView
 
-class CD3D12RHIBaseUnorderedAccessView : public CRHIUnorderedAccessView, public CD3D12View
+class CD3D12BaseUnorderedAccessView : public CRHIUnorderedAccessView, public CD3D12View
 {
 public:
 
-    CD3D12RHIBaseUnorderedAccessView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
-    ~CD3D12RHIBaseUnorderedAccessView() = default;
+    CD3D12BaseUnorderedAccessView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    ~CD3D12BaseUnorderedAccessView() = default;
 
     bool CreateView(CD3D12Resource* InCounterResource, CD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
@@ -129,14 +129,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseDepthStencilView
+// CD3D12DepthStencilView
 
-class CD3D12RHIBaseDepthStencilView : public CRHIDepthStencilView, public CD3D12View
+class CD3D12DepthStencilView : public CRHIDepthStencilView, public CD3D12View
 {
 public:
 
-    CD3D12RHIBaseDepthStencilView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
-    ~CD3D12RHIBaseDepthStencilView() = default;
+    CD3D12DepthStencilView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    ~CD3D12DepthStencilView() = default;
 
     bool CreateView(CD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 
@@ -150,19 +150,19 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseView
+// TD3D12BaseView
 
 template<typename BaseViewType>
-class TD3D12RHIBaseView : public BaseViewType
+class TD3D12BaseView : public BaseViewType
 {
 public:
 
-    TD3D12RHIBaseView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
+    TD3D12BaseView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
         : BaseViewType(InDevice, InHeap)
     {
     }
 
-    ~TD3D12RHIBaseView() = default;
+    ~TD3D12BaseView() = default;
 
     virtual bool IsValid() const override
     {
@@ -173,7 +173,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12 Views
 
-using CD3D12RHIRenderTargetView    = TD3D12RHIBaseView<CD3D12RHIBaseRenderTargetView>;
-using CD3D12RHIDepthStencilView    = TD3D12RHIBaseView<CD3D12RHIBaseDepthStencilView>;
-using CD3D12RHIUnorderedAccessView = TD3D12RHIBaseView<CD3D12RHIBaseUnorderedAccessView>;
-using CD3D12RHIShaderResourceView  = TD3D12RHIBaseView<CD3D12RHIBaseShaderResourceView>;
+using CD3D12RenderTargetView    = TD3D12BaseView<CD3D12RHIBaseRenderTargetView>;
+using CD3D12DepthStencilView    = TD3D12BaseView<CD3D12DepthStencilView>;
+using CD3D12UnorderedAccessView = TD3D12BaseView<CD3D12BaseUnorderedAccessView>;
+using CD3D12ShaderResourceView  = TD3D12BaseView<CD3D12BaseShaderResourceView>;

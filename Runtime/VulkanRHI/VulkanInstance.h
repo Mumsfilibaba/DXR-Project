@@ -1,5 +1,6 @@
 #pragma once
 #include "VulkanDriverInstance.h"
+#include "VulkanDevice.h"
 
 #include "RHI/RHIInstance.h"
 
@@ -17,6 +18,11 @@ public:
 	FORCEINLINE CVulkanDriverInstance* GetInstance() const
 	{
 		return Instance.Get();
+	}
+
+    FORCEINLINE CVulkanDevice* GetDevice() const
+	{
+		return Device.Get();
 	}
 	
 public:
@@ -91,4 +97,5 @@ private:
 	~CVulkanInstance() = default;
 	
 	TSharedRef<CVulkanDriverInstance> Instance;
+    TSharedRef<CVulkanDevice>         Device;
 };

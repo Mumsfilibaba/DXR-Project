@@ -83,7 +83,7 @@ struct SD3D12ShaderParameter
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12BaseShader
 
-class CD3D12BaseShader : public CD3D12DeviceChild
+class CD3D12BaseShader : public CD3D12DeviceObject
 {
 public:
     CD3D12BaseShader(CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility ShaderVisibility);

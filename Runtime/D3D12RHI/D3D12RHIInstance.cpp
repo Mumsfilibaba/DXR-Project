@@ -22,31 +22,31 @@
 // D3D12 Helpers
 
 template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12RHITexture2D>()
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12Texture2D>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12RHITexture2DArray>()
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12Texture2DArray>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12RHITextureCube>()
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12TextureCube>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12RHITextureCubeArray>()
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12TextureCubeArray>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12RHITexture3D>()
+inline D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<CD3D12Texture3D>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
 }
@@ -58,13 +58,13 @@ inline bool IsTextureCube()
 }
 
 template<>
-inline bool IsTextureCube<CD3D12RHITextureCube>()
+inline bool IsTextureCube<CD3D12TextureCube>()
 {
     return true;
 }
 
 template<>
-inline bool IsTextureCube<CD3D12RHITextureCubeArray>()
+inline bool IsTextureCube<CD3D12TextureCubeArray>()
 {
     return true;
 }
@@ -345,7 +345,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
             return nullptr;
         }
 
-        TSharedRef<CD3D12RHIShaderResourceView> SRV = dbg_new CD3D12RHIShaderResourceView(Device, ResourceOfflineDescriptorHeap);
+        TSharedRef<CD3D12ShaderResourceView> SRV = dbg_new CD3D12ShaderResourceView(Device, ResourceOfflineDescriptorHeap);
         if (!SRV->AllocateHandle())
         {
             return nullptr;
@@ -363,7 +363,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
     const bool bIsTexture2D = (Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D) && (SizeZ == 1);
     if (Flags & TextureFlag_RTV && !(Flags & TextureFlag_NoDefaultRTV) && bIsTexture2D)
     {
-        CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
+        CD3D12Texture2D* NewTexture2D = static_cast<CD3D12Texture2D*>(NewTexture->AsTexture2D());
 
         D3D12_RENDER_TARGET_VIEW_DESC ViewDesc;
         CMemory::Memzero(&ViewDesc);
@@ -374,7 +374,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
         ViewDesc.Texture2D.MipSlice = 0;
         ViewDesc.Texture2D.PlaneSlice = 0;
 
-        TSharedRef<CD3D12RHIRenderTargetView> RTV = dbg_new CD3D12RHIRenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
+        TSharedRef<CD3D12RenderTargetView> RTV = dbg_new CD3D12RenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
         if (!RTV->AllocateHandle())
         {
             return nullptr;
@@ -390,7 +390,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
 
     if (Flags & TextureFlag_DSV && !(Flags & TextureFlag_NoDefaultDSV) && bIsTexture2D)
     {
-        CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
+        CD3D12Texture2D* NewTexture2D = static_cast<CD3D12Texture2D*>(NewTexture->AsTexture2D());
 
         D3D12_DEPTH_STENCIL_VIEW_DESC ViewDesc;
         CMemory::Memzero(&ViewDesc);
@@ -400,7 +400,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
         ViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
         ViewDesc.Texture2D.MipSlice = 0;
 
-        TSharedRef<CD3D12RHIDepthStencilView> DSV = dbg_new CD3D12RHIDepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
+        TSharedRef<CD3D12DepthStencilView> DSV = dbg_new CD3D12DepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
         if (!DSV->AllocateHandle())
         {
             return nullptr;
@@ -416,7 +416,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
 
     if (Flags & TextureFlag_UAV && !(Flags & TextureFlag_NoDefaultUAV) && bIsTexture2D)
     {
-        CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
+        CD3D12Texture2D* NewTexture2D = static_cast<CD3D12Texture2D*>(NewTexture->AsTexture2D());
 
         D3D12_UNORDERED_ACCESS_VIEW_DESC ViewDesc;
         CMemory::Memzero(&ViewDesc);
@@ -427,7 +427,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
         ViewDesc.Texture2D.MipSlice = 0;
         ViewDesc.Texture2D.PlaneSlice = 0;
 
-        TSharedRef<CD3D12RHIUnorderedAccessView> UAV = dbg_new CD3D12RHIUnorderedAccessView(Device, ResourceOfflineDescriptorHeap);
+        TSharedRef<CD3D12UnorderedAccessView> UAV = dbg_new CD3D12UnorderedAccessView(Device, ResourceOfflineDescriptorHeap);
         if (!UAV->AllocateHandle())
         {
             return nullptr;
@@ -476,28 +476,28 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
 
 CRHITexture2D* CD3D12RHIInstance::CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
-    return CreateTexture<CD3D12RHITexture2D>(Format, Width, Height, 1, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue);
+    return CreateTexture<CD3D12Texture2D>(Format, Width, Height, 1, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
 CRHITexture2DArray* CD3D12RHIInstance::CreateTexture2DArray(EFormat Format,uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
-    return CreateTexture<CD3D12RHITexture2DArray>(Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue);
+    return CreateTexture<CD3D12Texture2DArray>(Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
 CRHITextureCube* CD3D12RHIInstance::CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
-    return CreateTexture<CD3D12RHITextureCube>(Format, Size, Size, TEXTURE_CUBE_FACE_COUNT, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
+    return CreateTexture<CD3D12TextureCube>(Format, Size, Size, TEXTURE_CUBE_FACE_COUNT, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
 CRHITextureCubeArray* CD3D12RHIInstance::CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     const uint32 ArraySlices = NumArraySlices * TEXTURE_CUBE_FACE_COUNT;
-    return CreateTexture<CD3D12RHITextureCubeArray>(Format, Size, Size, ArraySlices, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
+    return CreateTexture<CD3D12TextureCubeArray>(Format, Size, Size, ArraySlices, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
 CRHITexture3D* CD3D12RHIInstance::CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
-    return CreateTexture<CD3D12RHITexture3D>(Format, Width, Height, Depth, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
+    return CreateTexture<CD3D12Texture3D>(Format, Width, Height, Depth, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
 CRHISamplerState* CD3D12RHIInstance::CreateSamplerState(const SRHISamplerStateInfo& CreateInfo)
@@ -871,7 +871,7 @@ CRHIShaderResourceView* CD3D12RHIInstance::CreateShaderResourceView(const SRHISh
 
     Assert(Resource != nullptr);
 
-    TSharedRef<CD3D12RHIShaderResourceView> DxView = dbg_new CD3D12RHIShaderResourceView(Device, ResourceOfflineDescriptorHeap);
+    TSharedRef<CD3D12ShaderResourceView> DxView = dbg_new CD3D12ShaderResourceView(Device, ResourceOfflineDescriptorHeap);
     if (!DxView->AllocateHandle())
     {
         return nullptr;
@@ -1015,7 +1015,7 @@ CRHIUnorderedAccessView* CD3D12RHIInstance::CreateUnorderedAccessView(const SRHI
         Desc.Buffer.StructureByteStride = Buffer->GetStride();
     }
 
-    TSharedRef<CD3D12RHIUnorderedAccessView> DxView = dbg_new CD3D12RHIUnorderedAccessView(Device, ResourceOfflineDescriptorHeap);
+    TSharedRef<CD3D12UnorderedAccessView> DxView = dbg_new CD3D12UnorderedAccessView(Device, ResourceOfflineDescriptorHeap);
     if (!DxView->AllocateHandle())
     {
         return nullptr;
@@ -1128,7 +1128,7 @@ CRHIRenderTargetView* CD3D12RHIInstance::CreateRenderTargetView(const SRHIRender
         Desc.Texture3D.WSize = CreateInfo.Texture3D.NumDepthSlices;
     }
 
-    TSharedRef<CD3D12RHIRenderTargetView> DxView = dbg_new CD3D12RHIRenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
+    TSharedRef<CD3D12RenderTargetView> DxView = dbg_new CD3D12RenderTargetView(Device, RenderTargetOfflineDescriptorHeap);
     if (!DxView->AllocateHandle())
     {
         return nullptr;
@@ -1223,7 +1223,7 @@ CRHIDepthStencilView* CD3D12RHIInstance::CreateDepthStencilView(const SRHIDepthS
         Desc.Texture2DArray.FirstArraySlice = CreateInfo.TextureCubeArray.ArraySlice * TEXTURE_CUBE_FACE_COUNT + GetCubeFaceIndex(CreateInfo.TextureCube.CubeFace);
     }
 
-    TSharedRef<CD3D12RHIDepthStencilView> DxView = dbg_new CD3D12RHIDepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
+    TSharedRef<CD3D12DepthStencilView> DxView = dbg_new CD3D12DepthStencilView(Device, DepthStencilOfflineDescriptorHeap);
     if (!DxView->AllocateHandle())
     {
         return nullptr;
@@ -1489,7 +1489,7 @@ CRHIViewport* CD3D12RHIInstance::CreateViewport(CPlatformWindow* Window, uint32 
         Height = WinWindow->GetHeight();
     }
 
-    TSharedRef<CD3D12RHIViewport> Viewport = dbg_new CD3D12RHIViewport(Device, DirectCmdContext.Get(), WinWindow->GetHandle(), ColorFormat, Width, Height);
+    TSharedRef<CD3D12Viewport> Viewport = dbg_new CD3D12Viewport(Device, DirectCmdContext.Get(), WinWindow->GetHandle(), ColorFormat, Width, Height);
     if (Viewport->Init())
     {
         return Viewport.ReleaseOwnership();

@@ -8,7 +8,7 @@
 // D3D12DescriptorHeap
 
 CD3D12DescriptorHeap::CD3D12DescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
-    : CD3D12DeviceChild(InDevice)
+    : CD3D12DeviceObject(InDevice)
     , Heap(nullptr)
     , CPUStart({ 0 })
     , GPUStart({ 0 })
@@ -50,7 +50,7 @@ bool CD3D12DescriptorHeap::Init()
 // D3D12OfflineDescriptorHeap
 
 CD3D12OfflineDescriptorHeap::CD3D12OfflineDescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType)
-    : CD3D12DeviceChild(InDevice)
+    : CD3D12DeviceObject(InDevice)
     , Heaps()
     , Name()
     , Type(InType)
@@ -177,7 +177,7 @@ bool CD3D12OfflineDescriptorHeap::AllocateHeap()
 // D3D12OnlineDescriptorHeap 
 
 CD3D12OnlineDescriptorHeap::CD3D12OnlineDescriptorHeap(CD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType)
-    : CD3D12DeviceChild(InDevice)
+    : CD3D12DeviceObject(InDevice)
     , Heap(nullptr)
     , DescriptorCount(InDescriptorCount)
     , Type(InType)

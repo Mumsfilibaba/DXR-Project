@@ -5,11 +5,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12Fence
 
-class CD3D12Fence : public CD3D12DeviceChild
+class CD3D12Fence : public CD3D12DeviceObject
 {
 public:
     FORCEINLINE CD3D12Fence(CD3D12Device* InDevice)
-        : CD3D12DeviceChild(InDevice)
+        : CD3D12DeviceObject(InDevice)
         , Fence(nullptr)
         , Event(0)
     {

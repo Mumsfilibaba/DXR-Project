@@ -5,7 +5,7 @@
 // D3D12RHIGraphicsPipelineState 
 
 CD3D12RHIGraphicsPipelineState::CD3D12RHIGraphicsPipelineState(CD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+    : CD3D12DeviceObject(InDevice)
     , PipelineState(nullptr)
     , RootSignature(nullptr)
 {
@@ -238,7 +238,7 @@ bool CD3D12RHIGraphicsPipelineState::Init(const SRHIGraphicsPipelineStateInfo& C
 
 CD3D12RHIComputePipelineState::CD3D12RHIComputePipelineState(CD3D12Device* InDevice, const TSharedRef<CD3D12RHIComputeShader>& InShader)
     : CRHIComputePipelineState()
-    , CD3D12DeviceChild(InDevice)
+    , CD3D12DeviceObject(InDevice)
     , PipelineState(nullptr)
     , Shader(InShader)
     , RootSignature(nullptr)
@@ -500,7 +500,7 @@ struct SD3D12RayTracingPipelineStateStream
 // D3D12RHIRayTracingPipelineState
 
 CD3D12RHIRayTracingPipelineState::CD3D12RHIRayTracingPipelineState(CD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+    : CD3D12DeviceObject(InDevice)
     , StateObject(nullptr)
 {
 }

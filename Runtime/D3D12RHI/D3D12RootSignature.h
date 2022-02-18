@@ -64,7 +64,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RootSignature
 
-class CD3D12RootSignature : public CD3D12DeviceChild, public CRefCounted
+class CD3D12RootSignature : public CD3D12DeviceObject, public CRefCounted
 {
 public:
 
@@ -117,7 +117,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RootSignatureCache
 
-class CD3D12RootSignatureCache : public CD3D12DeviceChild
+class CD3D12RootSignatureCache : public CD3D12DeviceObject
 {
 public:
     CD3D12RootSignatureCache(CD3D12Device* Device);

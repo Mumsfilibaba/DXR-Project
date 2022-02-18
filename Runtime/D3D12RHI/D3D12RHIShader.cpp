@@ -6,7 +6,7 @@
 // D3D12BaseShader
 
 CD3D12BaseShader::CD3D12BaseShader(CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility)
-    : CD3D12DeviceChild(InDevice)
+    : CD3D12DeviceObject(InDevice)
     , ByteCode()
     , Visibility(InVisibility)
 {

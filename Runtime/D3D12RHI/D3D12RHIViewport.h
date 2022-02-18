@@ -11,14 +11,14 @@
 #include "D3D12RHICommandContext.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIViewport
+// CD3D12Viewport
 
-class CD3D12RHIViewport : public CRHIViewport, public CD3D12DeviceChild
+class CD3D12Viewport : public CRHIViewport, public CD3D12DeviceObject
 {
 public:
 
-    CD3D12RHIViewport(CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight);
-    ~CD3D12RHIViewport();
+    CD3D12Viewport(CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+    ~CD3D12Viewport();
 
     bool Init();
 
@@ -63,6 +63,6 @@ private:
 
     HANDLE SwapChainWaitableObject = 0;
 
-    TArray<TSharedRef<CD3D12RHITexture2D>>        BackBuffers;
-    TArray<TSharedRef<CD3D12RHIRenderTargetView>> BackBufferViews;
+    TArray<TSharedRef<CD3D12Texture2D>>        BackBuffers;
+    TArray<TSharedRef<CD3D12RenderTargetView>> BackBufferViews;
 };

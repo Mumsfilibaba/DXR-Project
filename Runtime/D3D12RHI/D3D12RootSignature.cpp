@@ -223,7 +223,7 @@ void CD3D12RootSignatureDescHelper::Init32BitConstantRange(D3D12_ROOT_PARAMETER&
 // D3D12RootSignature
 
 CD3D12RootSignature::CD3D12RootSignature(CD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+    : CD3D12DeviceObject(InDevice)
     , RootSignature(nullptr)
     , RootParameterMap()
     , ConstantRootParameterIndex(-1)
@@ -354,7 +354,7 @@ bool CD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 CD3D12RootSignatureCache* CD3D12RootSignatureCache::Instance = nullptr;
 
 CD3D12RootSignatureCache::CD3D12RootSignatureCache(CD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+    : CD3D12DeviceObject(InDevice)
     , RootSignatures()
     , ResourceCounts()
 {

@@ -7,8 +7,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIViewport
 
-CD3D12RHIViewport::CD3D12RHIViewport(CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight)
-    : CD3D12DeviceChild(InDevice)
+CD3D12Viewport::CD3D12Viewport(CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+    : CD3D12DeviceObject(InDevice)
     , CRHIViewport(InFormat, InWidth, InHeight)
     , Hwnd(InHwnd)
     , SwapChain(nullptr)
@@ -18,7 +18,7 @@ CD3D12RHIViewport::CD3D12RHIViewport(CD3D12Device* InDevice, CD3D12RHICommandCon
 {
 }
 
-CD3D12RHIViewport::~CD3D12RHIViewport()
+CD3D12Viewport::~CD3D12Viewport()
 {
     BOOL FullscreenState;
 
@@ -37,7 +37,7 @@ CD3D12RHIViewport::~CD3D12RHIViewport()
     }
 }
 
-bool CD3D12RHIViewport::Init()
+bool CD3D12Viewport::Init()
 {
     // Save the flags
     Flags = GetDevice()->CanAllowTearing() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
@@ -109,7 +109,7 @@ bool CD3D12RHIViewport::Init()
     return true;
 }
 
-bool CD3D12RHIViewport::Resize(uint32 InWidth, uint32 InHeight)
+bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     // TODO: Make sure that we release the old surfaces
 
@@ -143,7 +143,7 @@ bool CD3D12RHIViewport::Resize(uint32 InWidth, uint32 InHeight)
     return true;
 }
 
-bool CD3D12RHIViewport::Present(bool VerticalSync)
+bool CD3D12Viewport::Present(bool VerticalSync)
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -178,19 +178,19 @@ bool CD3D12RHIViewport::Present(bool VerticalSync)
     }
 }
 
-void CD3D12RHIViewport::SetName(const String& InName)
+void CD3D12Viewport::SetName(const String& InName)
 {
     SwapChain->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(InName.Size()), InName.Data());
 
     uint32 Index = 0;
-    for (TSharedRef<CD3D12RHITexture2D>& Buffer : BackBuffers)
+    for (TSharedRef<CD3D12Texture2D>& Buffer : BackBuffers)
     {
         Buffer->SetName(InName + "Buffer [" + ToString(Index) + "]");
         Index++;
     }
 }
 
-bool CD3D12RHIViewport::RetriveBackBuffers()
+bool CD3D12Viewport::RetriveBackBuffers()
 {
     if (BackBuffers.Size() < (int32)NumBackBuffers)
     {
@@ -202,11 +202,11 @@ bool CD3D12RHIViewport::RetriveBackBuffers()
         CD3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12RHIInstance->GetRenderTargetOfflineDescriptorHeap();
         BackBufferViews.Resize(NumBackBuffers);
 
-        for (TSharedRef<CD3D12RHIRenderTargetView>& View : BackBufferViews)
+        for (TSharedRef<CD3D12RenderTargetView>& View : BackBufferViews)
         {
             if (!View)
             {
-                View = dbg_new CD3D12RHIRenderTargetView(GetDevice(), RenderTargetOfflineHeap);
+                View = dbg_new CD3D12RenderTargetView(GetDevice(), RenderTargetOfflineHeap);
                 if (!View->AllocateHandle())
                 {
                     return false;
@@ -225,7 +225,7 @@ bool CD3D12RHIViewport::RetriveBackBuffers()
             return false;
         }
 
-        BackBuffers[i] = dbg_new CD3D12RHITexture2D(GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, SClearValue());
+        BackBuffers[i] = dbg_new CD3D12Texture2D(GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, SClearValue());
         BackBuffers[i]->SetResource(dbg_new CD3D12Resource(GetDevice(), BackBufferResource));
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;

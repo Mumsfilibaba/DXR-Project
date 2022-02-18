@@ -29,7 +29,7 @@ struct SD3D12UploadAllocation
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12GPUResourceUploader
 
-class CD3D12GPUResourceUploader : public CD3D12DeviceChild
+class CD3D12GPUResourceUploader : public CD3D12DeviceObject
 {
 public:
     CD3D12GPUResourceUploader(CD3D12Device* InDevice);
@@ -202,7 +202,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHICommandContext
 
-class CD3D12RHICommandContext : public IRHICommandContext, public CD3D12DeviceChild
+class CD3D12RHICommandContext : public IRHICommandContext, public CD3D12DeviceObject
 {
 public:
 

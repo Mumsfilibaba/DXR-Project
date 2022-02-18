@@ -7,11 +7,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12BaseBuffer
 
-class CD3D12BaseBuffer : public CD3D12DeviceChild
+class CD3D12BaseBuffer : public CD3D12DeviceObject
 {
 public:
     CD3D12BaseBuffer(CD3D12Device* InDevice)
-        : CD3D12DeviceChild(InDevice)
+        : CD3D12DeviceObject(InDevice)
         , Resource(nullptr)
     {
     }
@@ -138,18 +138,18 @@ public:
         View.CreateView(CD3D12BaseBuffer::Resource.Get(), ViewDesc);
     }
 
-    FORCEINLINE CD3D12RHIConstantBufferView& GetView()
+    FORCEINLINE CD3D12ConstantBufferView& GetView()
     {
         return View;
     }
 
-    FORCEINLINE const CD3D12RHIConstantBufferView& GetView() const
+    FORCEINLINE const CD3D12ConstantBufferView& GetView() const
     {
         return View;
     }
 
 private:
-    CD3D12RHIConstantBufferView View;
+    CD3D12ConstantBufferView View;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

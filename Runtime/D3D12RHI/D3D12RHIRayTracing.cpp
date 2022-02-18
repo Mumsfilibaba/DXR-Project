@@ -13,7 +13,7 @@
 
 CD3D12RHIRayTracingGeometry::CD3D12RHIRayTracingGeometry(CD3D12Device* InDevice, uint32 InFlags)
     : CRHIRayTracingGeometry(InFlags)
-    , CD3D12DeviceChild(InDevice)
+    , CD3D12DeviceObject(InDevice)
     , VertexBuffer(nullptr)
     , IndexBuffer(nullptr)
     , ResultBuffer(nullptr)
@@ -145,7 +145,7 @@ bool CD3D12RHIRayTracingGeometry::Build(CD3D12RHICommandContext& CmdContext, boo
 
 CD3D12RHIRayTracingScene::CD3D12RHIRayTracingScene(CD3D12Device* InDevice, uint32 InFlags)
     : CRHIRayTracingScene(InFlags)
-    , CD3D12DeviceChild(InDevice)
+    , CD3D12DeviceObject(InDevice)
     , ResultBuffer(nullptr)
     , ScratchBuffer(nullptr)
     , InstanceBuffer(nullptr)
@@ -215,7 +215,7 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
         SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
 
-        View = dbg_new CD3D12RHIShaderResourceView(GetDevice(), GD3D12RHIInstance->GetResourceOfflineDescriptorHeap());
+        View = dbg_new CD3D12ShaderResourceView(GetDevice(), GD3D12RHIInstance->GetResourceOfflineDescriptorHeap());
         if (!View->AllocateHandle())
         {
             return false;
@@ -493,7 +493,7 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE CD3D12RHIRayTracingScene::GetMissShad
 // D3D12ShaderBindingTableBuilder 
 
 CD3D12ShaderBindingTableBuilder::CD3D12ShaderBindingTableBuilder(CD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+    : CD3D12DeviceObject(InDevice)
 {
     Reset();
 }
@@ -545,7 +545,7 @@ void CD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         for (CRHIShaderResourceView* ShaderResourceView : Resources.ShaderResourceViews)
         {
-            CD3D12RHIShaderResourceView* DxShaderResourceView = static_cast<CD3D12RHIShaderResourceView*>(ShaderResourceView);
+            CD3D12ShaderResourceView* DxShaderResourceView = static_cast<CD3D12ShaderResourceView*>(ShaderResourceView);
             ResourceHandles[CPUResourceIndex++] = DxShaderResourceView->GetOfflineHandle();
         }
     }
@@ -563,7 +563,7 @@ void CD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         for (CRHIUnorderedAccessView* UnorderedAccessView : Resources.UnorderedAccessViews)
         {
-            CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(UnorderedAccessView);
+            CD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12UnorderedAccessView*>(UnorderedAccessView);
             ResourceHandles[CPUResourceIndex++] = DxUnorderedAccessView->GetOfflineHandle();
         }
     }

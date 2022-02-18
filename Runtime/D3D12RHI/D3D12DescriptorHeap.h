@@ -10,7 +10,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12DescriptorHeap
 
-class CD3D12DescriptorHeap : public CD3D12DeviceChild, public CRefCounted
+class CD3D12DescriptorHeap : public CD3D12DeviceObject, public CRefCounted
 {
 public:
 
@@ -71,7 +71,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12OfflineDescriptorHeap
 
-class CD3D12OfflineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
+class CD3D12OfflineDescriptorHeap : public CD3D12DeviceObject, public CRefCounted
 {
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // SDescriptorRange
@@ -155,7 +155,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12OnlineDescriptorHeap
 
-class CD3D12OnlineDescriptorHeap : public CD3D12DeviceChild, public CRefCounted
+class CD3D12OnlineDescriptorHeap : public CD3D12DeviceObject, public CRefCounted
 {
 public:
     CD3D12OnlineDescriptorHeap(CD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);

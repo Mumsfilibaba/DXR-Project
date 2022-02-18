@@ -6,7 +6,7 @@
 
 CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource)
     : CRefCounted()
-    , CD3D12DeviceChild(InDevice)
+    , CD3D12DeviceObject(InDevice)
     , DxResource(InNativeResource)
     , HeapType(D3D12_HEAP_TYPE_DEFAULT)
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
@@ -17,7 +17,7 @@ CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resou
 
 CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
     : CRefCounted()
-    , CD3D12DeviceChild(InDevice)
+    , CD3D12DeviceObject(InDevice)
     , DxResource(nullptr)
     , HeapType(InHeapType)
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)

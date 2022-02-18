@@ -67,7 +67,7 @@ void CD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource
 // D3D12GPUResourceUploader
 
 CD3D12GPUResourceUploader::CD3D12GPUResourceUploader(CD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
+    : CD3D12DeviceObject(InDevice)
     , MappedMemory(nullptr)
     , SizeInBytes(0)
     , OffsetInBytes(0)
@@ -215,7 +215,7 @@ CD3D12RHICommandContext* CD3D12RHICommandContext::Make(CD3D12Device* InDevice)
 
 CD3D12RHICommandContext::CD3D12RHICommandContext(CD3D12Device* InDevice)
     : IRHICommandContext()
-    , CD3D12DeviceChild(InDevice)
+    , CD3D12DeviceObject(InDevice)
     , CmdQueue(InDevice)
     , CmdList(InDevice)
     , Fence(InDevice)
@@ -386,7 +386,7 @@ void CD3D12RHICommandContext::ClearRenderTargetView(CRHIRenderTargetView* Render
 
     FlushResourceBarriers();
 
-    CD3D12RHIRenderTargetView* DxRenderTargetView = static_cast<CD3D12RHIRenderTargetView*>(RenderTargetView);
+    CD3D12RenderTargetView* DxRenderTargetView = static_cast<CD3D12RenderTargetView*>(RenderTargetView);
     CmdBatch->AddInUseResource(DxRenderTargetView);
 
     CmdList.ClearRenderTargetView(DxRenderTargetView->GetOfflineHandle(), ClearColor.Elements, 0, nullptr);
@@ -398,7 +398,7 @@ void CD3D12RHICommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthS
 
     FlushResourceBarriers();
 
-    CD3D12RHIDepthStencilView* DxDepthStencilView = static_cast<CD3D12RHIDepthStencilView*>(DepthStencilView);
+    CD3D12DepthStencilView* DxDepthStencilView = static_cast<CD3D12DepthStencilView*>(DepthStencilView);
     CmdBatch->AddInUseResource(DxDepthStencilView);
 
     CmdList.ClearDepthStencilView(DxDepthStencilView->GetOfflineHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, ClearValue.Depth, ClearValue.Stencil);
@@ -410,7 +410,7 @@ void CD3D12RHICommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessV
 
     FlushResourceBarriers();
 
-    CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(UnorderedAccessView);
+    CD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12UnorderedAccessView*>(UnorderedAccessView);
     CmdBatch->AddInUseResource(DxUnorderedAccessView);
 
     CD3D12OnlineDescriptorHeap* OnlineDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
@@ -531,14 +531,14 @@ void CD3D12RHICommandContext::SetRenderTargets(CRHIRenderTargetView* const* Rend
 {
     for (uint32 Slot = 0; Slot < RenderTargetCount; Slot++)
     {
-        CD3D12RHIRenderTargetView* DxRenderTargetView = static_cast<CD3D12RHIRenderTargetView*>(RenderTargetViews[Slot]);
+        CD3D12RenderTargetView* DxRenderTargetView = static_cast<CD3D12RenderTargetView*>(RenderTargetViews[Slot]);
         DescriptorCache.SetRenderTargetView(DxRenderTargetView, Slot);
 
         // TODO: Maybe this should be handled by the descriptor cache
         CmdBatch->AddInUseResource(DxRenderTargetView);
     }
 
-    CD3D12RHIDepthStencilView* DxDepthStencilView = static_cast<CD3D12RHIDepthStencilView*>(DepthStencilView);
+    CD3D12DepthStencilView* DxDepthStencilView = static_cast<CD3D12DepthStencilView*>(DepthStencilView);
     DescriptorCache.SetDepthStencilView(DxDepthStencilView);
 
     CmdBatch->AddInUseResource(DxDepthStencilView);
@@ -599,7 +599,7 @@ void CD3D12RHICommandContext::SetShaderResourceView(CRHIShader* Shader, CRHIShad
     D3D12_ERROR(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace = 0");
     D3D12_ERROR(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString(ParameterIndex));
 
-    CD3D12RHIShaderResourceView* DxShaderResourceView = static_cast<CD3D12RHIShaderResourceView*>(ShaderResourceView);
+    CD3D12ShaderResourceView* DxShaderResourceView = static_cast<CD3D12ShaderResourceView*>(ShaderResourceView);
     DescriptorCache.SetShaderResourceView(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
 }
 
@@ -614,7 +614,7 @@ void CD3D12RHICommandContext::SetShaderResourceViews(CRHIShader* Shader, CRHISha
 
     for (uint32 i = 0; i < NumShaderResourceViews; i++)
     {
-        CD3D12RHIShaderResourceView* DxShaderResourceView = static_cast<CD3D12RHIShaderResourceView*>(ShaderResourceView[i]);
+        CD3D12ShaderResourceView* DxShaderResourceView = static_cast<CD3D12ShaderResourceView*>(ShaderResourceView[i]);
         DescriptorCache.SetShaderResourceView(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
     }
 }
@@ -628,7 +628,7 @@ void CD3D12RHICommandContext::SetUnorderedAccessView(CRHIShader* Shader, CRHIUno
     D3D12_ERROR(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace = 0");
     D3D12_ERROR(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString(ParameterIndex));
 
-    CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(UnorderedAccessView);
+    CD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12UnorderedAccessView*>(UnorderedAccessView);
     DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
 }
 
@@ -643,7 +643,7 @@ void CD3D12RHICommandContext::SetUnorderedAccessViews(CRHIShader* Shader, CRHIUn
 
     for (uint32 i = 0; i < NumUnorderedAccessViews; i++)
     {
-        CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(UnorderedAccessViews[i]);
+        CD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12UnorderedAccessView*>(UnorderedAccessViews[i]);
         DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register + i);
     }
 }
@@ -659,7 +659,7 @@ void CD3D12RHICommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstant
 
     if (ConstantBuffer)
     {
-        CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffer)->GetView();
+        CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffer)->GetView();
         DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
     }
     else
@@ -681,7 +681,7 @@ void CD3D12RHICommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstan
     {
         if (ConstantBuffers[i])
         {
-            CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffers[i])->GetView();
+            CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffers[i])->GetView();
             DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
         }
         else
@@ -984,7 +984,7 @@ void CD3D12RHICommandContext::SetRayTracingBindings(
         {
             for (int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
             {
-                CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
+                CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
                 DescriptorCache.SetConstantBufferView(&DxConstantBufferView, ShaderVisibility_All, i);
             }
         }
@@ -992,7 +992,7 @@ void CD3D12RHICommandContext::SetRayTracingBindings(
         {
             for (int32 i = 0; i < GlobalResource->ShaderResourceViews.Size(); i++)
             {
-                CD3D12RHIShaderResourceView* DxShaderResourceView = static_cast<CD3D12RHIShaderResourceView*>(GlobalResource->ShaderResourceViews[i]);
+                CD3D12ShaderResourceView* DxShaderResourceView = static_cast<CD3D12ShaderResourceView*>(GlobalResource->ShaderResourceViews[i]);
                 DescriptorCache.SetShaderResourceView(DxShaderResourceView, ShaderVisibility_All, i);
             }
         }
@@ -1000,7 +1000,7 @@ void CD3D12RHICommandContext::SetRayTracingBindings(
         {
             for (int32 i = 0; i < GlobalResource->UnorderedAccessViews.Size(); i++)
             {
-                CD3D12RHIUnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12RHIUnorderedAccessView*>(GlobalResource->UnorderedAccessViews[i]);
+                CD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12UnorderedAccessView*>(GlobalResource->UnorderedAccessViews[i]);
                 DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, ShaderVisibility_All, i);
             }
         }

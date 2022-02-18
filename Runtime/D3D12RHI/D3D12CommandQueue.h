@@ -6,12 +6,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12CommandQueue
 
-class CD3D12CommandQueue : public CD3D12DeviceChild
+class CD3D12CommandQueue : public CD3D12DeviceObject
 {
 public:
 
     FORCEINLINE CD3D12CommandQueue(CD3D12Device* InDevice)
-        : CD3D12DeviceChild(InDevice)
+        : CD3D12DeviceObject(InDevice)
         , Queue(nullptr)
         , Desc()
     {

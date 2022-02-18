@@ -1,7 +1,7 @@
 #include "RefCounted.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RefCounted
+// CRefCounted
 
 CRefCounted::CRefCounted()
     : StrongReferences(0)
@@ -30,7 +30,7 @@ int32 CRefCounted::Release()
     return NewRefCount;
 }
 
-int32 CRefCounted::GetRefCount() const
+int32 CRefCounted::GetNumReferences() const
 {
     return StrongReferences.Load();
 }

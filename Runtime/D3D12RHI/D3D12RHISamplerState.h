@@ -7,13 +7,13 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHISamplerState
 
-class CD3D12RHISamplerState : public CRHISamplerState, public CD3D12DeviceChild
+class CD3D12RHISamplerState : public CRHISamplerState, public CD3D12DeviceObject
 {
 public:
 
     CD3D12RHISamplerState(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap)
         : CRHISamplerState()
-        , CD3D12DeviceChild(InDevice)
+        , CD3D12DeviceObject(InDevice)
         , OfflineHeap(InOfflineHeap)
         , OfflineHandle({ 0 })
         , Desc()

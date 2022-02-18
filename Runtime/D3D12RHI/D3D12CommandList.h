@@ -11,12 +11,12 @@ class CD3D12RHIComputePipelineState;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12CommandList
 
-class CD3D12CommandList : public CD3D12DeviceChild
+class CD3D12CommandList : public CD3D12DeviceObject
 {
 public:
 
     FORCEINLINE CD3D12CommandList(CD3D12Device* InDevice)
-        : CD3D12DeviceChild(InDevice)
+        : CD3D12DeviceObject(InDevice)
         , CmdList(nullptr)
         , CmdList5(nullptr)
     {
@@ -84,7 +84,7 @@ public:
         CmdList->ClearDepthStencilView(DepthStencilView, Flags, Depth, Stencil, 0, nullptr);
     }
 
-    FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const CD3D12RHIUnorderedAccessView* View, const float ClearColor[4])
+    FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const CD3D12UnorderedAccessView* View, const float ClearColor[4])
     {
         const CD3D12Resource* Resource = View->GetResource();
         CmdList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), Resource->GetResource(), ClearColor, 0, nullptr);

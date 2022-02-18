@@ -6,11 +6,17 @@
 #include "Core/Templates/EnableIf.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RefCounted - Base-class for intrusive ref-counted object
+// CRefCounted - Base-class for intrusive ref-counted object
 
 class CORE_API CRefCounted
 {
 public:
+
+    // CRefCounted is not copy- or moveable
+    CRefCounted(const CRefCounted&) = delete;
+    CRefCounted(CRefCounted&&) = delete;
+    CRefCounted& operator=(const CRefCounted&) = delete;
+    CRefCounted& operator=(CRefCounted&&) = delete;
 
     CRefCounted();
     virtual ~CRefCounted();
@@ -34,7 +40,7 @@ public:
      *
      * @return: Returns the current reference count
      */
-    int32 GetRefCount() const;
+    int32 GetNumReferences() const;
 
 private:
     mutable AtomicInt32 StrongReferences;
