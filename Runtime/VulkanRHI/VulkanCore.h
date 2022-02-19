@@ -4,6 +4,14 @@
 #include "Core/Logging/Log.h"
 
 #define VK_NO_PROTOTYPES (1)
+
+#if PLATFORM_MACOS
+    #define VK_USE_PLATFORM_MACOS_MVK
+    #define VK_USE_PLATFORM_METAL_EXT
+#elif PLATFORM_WINDOWS
+    #define VK_USE_PLATFORM_WIN32_KHR
+#endif
+
 #include <vulkan/vulkan.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -45,12 +53,12 @@ typedef PFN_vkVoidFunction VulkanVoidFunction;
 	#define VK_FAILED(Result) (Result != VK_SUCCESS)
 #endif
 
-#ifndef VULKAN_CHECK
-    #define VULKAN_CHECK(Result, ErrorMessage) \
-        if (VK_FAILED(Result))                 \
-        {                                      \
-            VULKAN_ERROR_ALWAYS(ErrorMessage); \
-            return false;                      \
+#ifndef VULKAN_CHECK_RESULT
+    #define VULKAN_CHECK_RESULT(Result, ErrorMessage) \
+        if (VK_FAILED(Result))                        \
+        {                                             \
+            VULKAN_ERROR_ALWAYS(ErrorMessage);        \
+            return false;                             \
         }
 #endif
 

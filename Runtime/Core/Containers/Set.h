@@ -1,6 +1,10 @@
 #pragma once
 
 #if 1
+#include <set>
+
+template<typename ElementType, typename CompareType = std::less<ElementType>>
+using TSet = std::set<ElementType, CompareType>;
 
 #else
 #include "Iterator.h"

@@ -1,8 +1,7 @@
 #include "VulkanInstance.h"
 #include "VulkanFunctions.h"
 
-#define VULKAN_PRINT_AVAILABLE_LAYERS     (1)
-#define VULKAN_PRINT_AVAILABLE_EXTENSIONS (1)
+#include "Platform/PlatformVulkanExtensions.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanInstance
@@ -20,73 +19,51 @@ CVulkanInstance::CVulkanInstance()
 
 bool CVulkanInstance::Initialize(bool bEnableDebug)
 {
-	UNREFERENCED_VARIABLE(bEnableDebug);
-	
-    Instance = CVulkanDriverInstance::CreateInstance();
-    if (!Instance)
+    SVulkanDriverInstanceDesc InstanceDesc;
+    InstanceDesc.RequiredExtensionNames = PlatformVulkanExtensions::GetRequiredInstanceExtensions();
+    InstanceDesc.RequiredLayerNames     = PlatformVulkanExtensions::GetRequiredInstanceLayers();
+    InstanceDesc.bEnableValidationLayer = bEnableDebug;
+
+    if (bEnableDebug)
     {
-        VULKAN_ERROR_ALWAYS("Failed to initialize VkInstance");
-        return false;
+		InstanceDesc.RequiredLayerNames.Push("VK_LAYER_KHRONOS_validation");
+        InstanceDesc.RequiredExtensionNames.Push(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
-    VkResult Result = VK_SUCCESS;
-
-	// Instance Layers
-	TArray<const char*> InstanceLayerNames;
-	{
-		uint32 LayerPropertiesCount = 0;
-		Result = NVulkan::EnumerateInstanceLayerProperties(&LayerPropertiesCount, nullptr);
-		VULKAN_CHECK(Result, "Failed to retrive Instance LayerProperties Count");
-		
-		TArray<VkLayerProperties> LayerProperties(LayerPropertiesCount);
-		Result = NVulkan::EnumerateInstanceLayerProperties(&LayerPropertiesCount, LayerProperties.Data());
-		VULKAN_CHECK(Result, "Failed to retrive Instance LayerProperties");
-
-#if VULKAN_PRINT_AVAILABLE_LAYERS
-		LOG_INFO("[VulkanRHI] Available Instance Layers:");
-		for (const VkLayerProperties& LayerProperty : LayerProperties)
-		{
-			String LayerName(LayerProperty.layerName);
-			LOG_INFO(LayerName + ": " + LayerProperty.description);
-		}
-#endif
-	}
-
-	// Instance Extensions
-	TArray<const char*> InstanceExtensionNames;
-	{
-		uint32 ExtensionPropertiesCount = 0;
-		Result = NVulkan::EnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, nullptr);
-		VULKAN_CHECK(Result, "Failed to retrive Instance ExtensionProperties Count");
-		
-		TArray<VkExtensionProperties> ExtensionProperties(ExtensionPropertiesCount);
-		Result = NVulkan::EnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, ExtensionProperties.Data());
-		VULKAN_CHECK(Result, "Failed to retrive Instance ExtensionProperties");
-
-#if VULKAN_PRINT_AVAILABLE_EXTENSIONS
-		LOG_INFO("[VulkanRHI] Available Instance Extensions:");
-		for (const VkExtensionProperties& ExtensionProperty : ExtensionProperties)
-		{
-			LOG_INFO(ExtensionProperty.extensionName);
-		}
-#endif
-	}
+    Instance = CVulkanDriverInstance::CreateInstance(InstanceDesc);
+    if (!Instance)
+    {
+        VULKAN_ERROR_ALWAYS("Failed to initialize VulkanDriverInstance");
+        return false;
+    }
 	
-	if (!Instance->Initialize(InstanceExtensionNames, InstanceLayerNames))
-	{
-		return false;
-	}
-	
-	// Load Functions
+    // Load functions that requires an instance here (Order is important)
 	if (!NVulkan::LoadInstanceFunctions(Instance.Get()))
 	{
 		return false;
 	}
 
-    TArray<const char*> DeviceLayerNames;
-    TArray<const char*> DeviceExtensionNames;
-    
-	
+    SVulkanPhysicalDeviceDesc AdapterDesc;
+	AdapterDesc.RequiredDeviceLayerNames     = PlatformVulkanExtensions::GetRequiredDeviceLayers();
+	AdapterDesc.RequiredDeviceExtensionNames = PlatformVulkanExtensions::GetRequiredDeviceExtensions();
+
+	Adapter = CVulkanPhysicalDevice::QueryAdapter(GetInstance(), AdapterDesc);
+    if (!Adapter)
+    {
+        VULKAN_ERROR_ALWAYS("Failed to initialize VulkanPhyscicalDevice");
+        return false;
+    }
+
+    SVulkanDeviceDesc DeviceDesc;
+    DeviceDesc.bEnableValidationLayer = bEnableDebug;
+
+    Device = CVulkanDevice::CreateDevice(GetInstance(), GetAdapter(), DeviceDesc);
+    if (!Device)
+    {
+        VULKAN_ERROR_ALWAYS("Failed to initialize VulkanPhyscicalDevice");
+        return false;
+    }
+
     return true;
 }
 

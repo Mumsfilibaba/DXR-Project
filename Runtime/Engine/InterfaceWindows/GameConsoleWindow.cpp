@@ -112,7 +112,7 @@ void CGameConsoleWindow::Tick()
                 ImGui::PushID(i);
                 if (ImGui::Selectable(Candidate.Second.CStr(), &bIsActiveIndex))
                 {
-                    CStringUtils::Copy(TextBuffer.Data(), Candidate.Second.CStr());
+                    StringUtils::Copy(TextBuffer.Data(), Candidate.Second.CStr());
                     PopupSelectedText = Candidate.Second;
 
                     Candidates.Clear();
@@ -251,7 +251,7 @@ void CGameConsoleWindow::Tick()
         {
             if (CandidatesIndex != -1)
             {
-                CStringUtils::Copy(TextBuffer.Data(), PopupSelectedText.CStr());
+                StringUtils::Copy(TextBuffer.Data(), PopupSelectedText.CStr());
 
                 Candidates.Clear();
                 CandidatesIndex = -1;

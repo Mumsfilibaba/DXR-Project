@@ -1,15 +1,17 @@
 #include "VulkanDevice.h"
+#include "VulkanPhysicalDevice.h"
 #include "VulkanFunctions.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanDevice
 
-TSharedPtr<CVulkanDevice> CVulkanDevice::CreateDevice(CVulkanDriverInstance* InInstance, const TArray<const char*>& DeviceLayerNames, const TArray<const char*>& DeviceExtensionNames)
+TSharedRef<CVulkanDevice> CVulkanDevice::CreateDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc)
 {
     VULKAN_ERROR(InInstance != nullptr, "Instance cannot be nullptr");
+    VULKAN_ERROR(InAdapter  != nullptr, "Adapter cannot be nullptr");
 
-    TSharedPtr<CVulkanDevice> NewDevice = MakeSharedPtr<CVulkanDevice>(InInstance);
-    if (NewDevice && NewDevice->Initialize(DeviceLayerNames, DeviceExtensionNames))
+	TSharedRef<CVulkanDevice> NewDevice = dbg_new CVulkanDevice(InInstance, InAdapter);
+    if (NewDevice && NewDevice->Initialize(DeviceDesc))
     {
         return NewDevice;
     }
@@ -19,10 +21,10 @@ TSharedPtr<CVulkanDevice> CVulkanDevice::CreateDevice(CVulkanDriverInstance* InI
     }
 }
 
-CVulkanDevice::CVulkanDevice(CVulkanDriverInstance* InInstance)
+CVulkanDevice::CVulkanDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter)
     : Instance(InInstance)
+    , Adapter(InAdapter)
     , Device(VK_NULL_HANDLE)
-    , PhysicalDevice(VK_NULL_HANDLE)
 {
 }
 
@@ -34,22 +36,22 @@ CVulkanDevice::~CVulkanDevice()
     }
 }
 
-bool CVulkanDevice::Initialize(const TArray<const char*>& DeviceLayerNames, const TArray<const char*>& DeviceExtensionNames)
+bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
 {
     VkDeviceCreateInfo DeviceCreateInfo;
     DeviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     DeviceCreateInfo.pNext                   = nullptr;
     DeviceCreateInfo.flags                   = 0;
-    DeviceCreateInfo.enabledLayerCount       = DeviceLayerNames.Size();
-    DeviceCreateInfo.ppEnabledLayerNames     = DeviceLayerNames.Data();
-    DeviceCreateInfo.enabledExtensionCount   = DeviceExtensionNames.Size();
-    DeviceCreateInfo.ppEnabledExtensionNames = DeviceExtensionNames.Data();
+    DeviceCreateInfo.enabledLayerCount       = DeviceDesc.DeviceLayerNames.Size();
+    DeviceCreateInfo.ppEnabledLayerNames     = DeviceDesc.DeviceLayerNames.Data();
+    DeviceCreateInfo.enabledExtensionCount   = DeviceDesc.DeviceExtensionNames.Size();
+    DeviceCreateInfo.ppEnabledExtensionNames = DeviceDesc.DeviceExtensionNames.Data();
     DeviceCreateInfo.queueCreateInfoCount    = 0;
     DeviceCreateInfo.pQueueCreateInfos       = nullptr;
     DeviceCreateInfo.pEnabledFeatures        = nullptr;
 
-    VkResult Result = NVulkan::CreateDevice(PhysicalDevice, &DeviceCreateInfo, nullptr, &Device);
-    VULKAN_CHECK(Result, "Failed to create Device");
+    VkResult Result = NVulkan::CreateDevice(Adapter->GetPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);
+    VULKAN_CHECK_RESULT(Result, "Failed to create Device");
     
     return true;
 }

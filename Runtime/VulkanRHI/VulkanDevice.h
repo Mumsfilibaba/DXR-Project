@@ -3,8 +3,21 @@
 
 #include "Core/RefCounted.h"
 #include "Core/Containers/Array.h"
+#include "Core/Containers/SharedRef.h"
 
 class CVulkanDriverInstance;
+class CVulkanPhysicalDevice;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SVulkanDeviceDesc
+
+struct SVulkanDeviceDesc
+{
+    TArray<const char*> DeviceLayerNames;
+    TArray<const char*> DeviceExtensionNames;
+	
+	bool bEnableValidationLayer = false;
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanDevice
@@ -13,32 +26,31 @@ class CVulkanDevice : public CRefCounted
 {
 public:
 
-    static TSharedRef<CVulkanDevice> CreateDevice(CVulkanDriverInstance* InInstance, const TArray<const char*>& DeviceLayerNames, const TArray<const char*>& DeviceExtensionNames);
+    static TSharedRef<CVulkanDevice> CreateDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc);
 
     FORCEINLINE CVulkanDriverInstance* GetInstance() const
     {
         return Instance;
     }
+	
+	FORCEINLINE CVulkanPhysicalDevice* GetPhysicalDevice() const
+	{
+		return Adapter;
+	}
 
     FORCEINLINE VkDevice GetDevice() const
     {
         return Device;
     }
 
-    FORCEINLINE VkPhysicalDevice GetPhysicalDevice() const
-    {
-        return PhysicalDevice;
-    }
-
 private:
 
-    CVulkanDevice(CVulkanDriverInstance* InInstance);
+    CVulkanDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter);
     ~CVulkanDevice();
 
-    bool Initialize(const TArray<const char*>& DeviceLayerNames, const TArray<const char*>& DeviceExtensionNames);
+    bool Initialize(const SVulkanDeviceDesc& DeviceDesc);
 
     CVulkanDriverInstance* Instance;
-
-    VkDevice         Device;
-    VkPhysicalDevice PhysicalDevice;
+	CVulkanPhysicalDevice* Adapter;
+    VkDevice               Device;
 };

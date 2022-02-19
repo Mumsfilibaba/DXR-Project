@@ -53,9 +53,12 @@ namespace NVulkan
         VULKAN_LOAD_FUNCTION(Instance, DestroyInstance);
         VULKAN_LOAD_FUNCTION(Instance, DestroyDevice);
 
-        VULKAN_LOAD_FUNCTION(Instance, SetDebugUtilsObjectNameEXT);
-        VULKAN_LOAD_FUNCTION(Instance, CreateDebugUtilsMessengerEXT);
-        VULKAN_LOAD_FUNCTION(Instance, DestroyDebugUtilsMessengerEXT);
+		if (Instance->IsExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+		{
+			VULKAN_LOAD_FUNCTION(Instance, SetDebugUtilsObjectNameEXT);
+			VULKAN_LOAD_FUNCTION(Instance, CreateDebugUtilsMessengerEXT);
+			VULKAN_LOAD_FUNCTION(Instance, DestroyDebugUtilsMessengerEXT);
+		}
 
         return true;
     }

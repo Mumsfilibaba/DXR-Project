@@ -3,7 +3,21 @@
 
 #include "Core/RefCounted.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/Set.h"
 #include "Core/Modules/Platform/PlatformLibrary.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////*/
+// SVulkanDriverInstanceDesc
+
+struct SVulkanDriverInstanceDesc
+{
+    TArray<const char*> RequiredExtensionNames;
+    TArray<const char*> RequiredLayerNames;
+    TArray<const char*> OptionalExtensionNames;
+    TArray<const char*> OptionalLayerNames;
+
+    bool bEnableValidationLayer = false;
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanDriverInstance
@@ -13,10 +27,18 @@ class CVulkanDriverInstance : public CRefCounted
 public:
 
     /* Create a new DriverInstance (i.e VkInstance) */
-    static TSharedRef<CVulkanDriverInstance> CreateInstance() noexcept;
+    static TSharedRef<CVulkanDriverInstance> CreateInstance(const SVulkanDriverInstanceDesc& InstanceDesc) noexcept;
 
-	bool Initialize(const TArray<const char*>& InstanceExtensionNames, const TArray<const char*>& InstanceLayerNames);
-	
+    FORCEINLINE bool IsLayerEnabled(const String& LayerName)
+    {
+        return LayerNames.find(LayerName) != LayerNames.end();
+    }
+
+    FORCEINLINE bool IsExtensionEnabled(const String& ExtensionName)
+    {
+        return ExtensionNames.find(ExtensionName) != ExtensionNames.end();
+    }
+
 	FORCEINLINE VulkanVoidFunction LoadFunction(const char* Name) const noexcept
 	{
 		VULKAN_ERROR(GetInstanceProcAddrFunc != nullptr, "Vulkan Driver Instance is not initialized properly");
@@ -38,10 +60,13 @@ private:
     CVulkanDriverInstance();
     ~CVulkanDriverInstance();
 
-    bool Load();
+	bool Initialize(const SVulkanDriverInstanceDesc& InstanceDesc);
 
     PlatformLibrary::PlatformHandle DriverHandle;
 	PFN_vkGetInstanceProcAddr       GetInstanceProcAddrFunc;
     
     VkInstance Instance;
+
+    TSet<String> ExtensionNames;
+    TSet<String> LayerNames;
 };
