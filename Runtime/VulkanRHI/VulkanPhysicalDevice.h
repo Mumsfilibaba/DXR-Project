@@ -80,12 +80,12 @@ private:
     VkPhysicalDevice       PhysicalDevice;
 	
 	VkPhysicalDeviceProperties        DeviceProperties;
-	VkPhysicalDeviceProperties2       DeviceProperties2;
 	VkPhysicalDeviceFeatures          DeviceFeatures;
+	VkPhysicalDeviceMemoryProperties  DeviceMemoryProperties;
 	
 #if VK_KHR_get_physical_device_properties2
+	VkPhysicalDeviceProperties2       DeviceProperties2;
 	VkPhysicalDeviceFeatures2         DeviceFeatures2;
-	VkPhysicalDeviceMemoryProperties  DeviceMemoryProperties;
 	VkPhysicalDeviceMemoryProperties2 DeviceMemoryProperties2;
 #endif
 };

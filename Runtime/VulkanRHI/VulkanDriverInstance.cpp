@@ -56,6 +56,13 @@ CVulkanDriverInstance::~CVulkanDriverInstance()
 	{
 		vkDestroyInstance(Instance, nullptr);
 	}
+
+#if VK_EXT_debug_utils
+	if (VULKAN_CHECK_HANDLE(DebugMessenger))
+	{
+		vkDestroyDebugUtilsMessengerEXT(Instance, DebugMessenger, nullptr);
+	}
+#endif
 }
 
 bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& InstanceDesc)
@@ -203,18 +210,75 @@ bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& Instance
 	
 	InstanceCreateInfo.sType                    = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	InstanceCreateInfo.flags                    = 0;
-	InstanceCreateInfo.pNext                    = nullptr;
 	InstanceCreateInfo.pApplicationInfo         = &ApplicationInfo;
 	InstanceCreateInfo.enabledExtensionCount    = EnabledExtensionNames.Size();
 	InstanceCreateInfo.ppEnabledExtensionNames  = EnabledExtensionNames.Data();
 	InstanceCreateInfo.enabledLayerCount        = EnabledLayerNames.Size();
 	InstanceCreateInfo.ppEnabledLayerNames      = EnabledLayerNames.Data();
 
+#if VK_EXT_debug_utils
+	VkDebugUtilsMessengerCreateInfoEXT DebugMessengerCreateInfo;
+	CMemory::Memzero(&DebugMessengerCreateInfo);
+
+	if (InstanceDesc.bEnableValidationLayer)
+	{
+		DebugMessengerCreateInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+		DebugMessengerCreateInfo.flags           = 0;
+		DebugMessengerCreateInfo.pNext           = nullptr;
+		DebugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+		DebugMessengerCreateInfo.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+		DebugMessengerCreateInfo.pfnUserCallback = DebugLayerCallback;
+		DebugMessengerCreateInfo.pUserData       = nullptr;
+
+		InstanceCreateInfo.pNext = reinterpret_cast<const void*>(&DebugMessengerCreateInfo);
+	}
+	else
+#endif
+	{
+		InstanceCreateInfo.pNext = nullptr;
+	}
+
 	Result = vkCreateInstance(&InstanceCreateInfo, nullptr, &Instance);
 	VULKAN_CHECK_RESULT(Result, "Failed to create Instance");
 
-	// Load DestroyInstance here for consistency
+	/*///////////////////////////////////////////////////////////////////////////////////////////*/
+	// Load functions that require the instance to be created
+
 	VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(DestroyInstance);
 	
+#if VK_EXT_debug_utils
+	if (IsExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+	{
+		VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(SetDebugUtilsObjectNameEXT);
+		VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(CreateDebugUtilsMessengerEXT);
+		VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(DestroyDebugUtilsMessengerEXT);
+	}
+
+	if (InstanceDesc.bEnableValidationLayer)
+	{
+		Result = vkCreateDebugUtilsMessengerEXT(Instance, &DebugMessengerCreateInfo, nullptr, &DebugMessenger);
+		VULKAN_CHECK_RESULT(Result, "Failed to create DebugMessenger");
+	}
+#endif
+
 	return true;
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL CVulkanDriverInstance::DebugLayerCallback(
+	VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,
+	VkDebugUtilsMessageTypeFlagsEXT MessageType, 
+	const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, 
+	void* UserData)
+{
+
+	if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	{
+		LOG_ERROR(String("[Vulkan Validation layer] ") + CallbackData->pMessage);
+	}
+	else if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+	{
+		LOG_WARNING(String("[Vulkan Validation layer] ") + CallbackData->pMessage);
+	}
+
+	return VK_FALSE;
 }

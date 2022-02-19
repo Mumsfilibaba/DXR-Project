@@ -57,8 +57,15 @@ public:
     }
 
 private:
+
     CVulkanDriverInstance();
     ~CVulkanDriverInstance();
+
+    static VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,
+	    VkDebugUtilsMessageTypeFlagsEXT MessageType, 
+        const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, 
+        void* UserData);
 
 	bool Initialize(const SVulkanDriverInstanceDesc& InstanceDesc);
 
@@ -66,6 +73,10 @@ private:
 	PFN_vkGetInstanceProcAddr       GetInstanceProcAddrFunc;
     
     VkInstance Instance;
+
+#if VK_EXT_debug_utils
+    VkDebugUtilsMessengerEXT DebugMessenger;
+#endif
 
     TSet<String> ExtensionNames;
     TSet<String> LayerNames;

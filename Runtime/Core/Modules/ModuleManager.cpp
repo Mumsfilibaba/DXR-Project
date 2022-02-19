@@ -69,7 +69,7 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
 
     if (NewModule.Interface->Load())
     {
-        LOG_INFO("Loaded module'" + String(ModuleName) + "'");
+        LOG_INFO("Loaded module '" + String(ModuleName) + "'");
 
         ModuleLoadedDelegate.Broadcast(ModuleName, NewModule.Interface);
 

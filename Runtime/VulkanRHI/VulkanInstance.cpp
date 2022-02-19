@@ -57,44 +57,37 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 #if VK_KHR_get_memory_requirements2
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 #endif
-
 #if VK_KHR_maintenance3
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
 #endif
-
 #if VK_EXT_descriptor_indexing
 	AdapterDesc.OptionalExtensionNames.Push(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 #endif
-
 #if VK_KHR_buffer_device_address
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 #endif
-
 #if VK_KHR_deferred_host_operations
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
 #endif
-
 #if VK_KHR_pipeline_library
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
 #endif
-
 #if VK_KHR_timeline_semaphore
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
 #endif
-
 #if VK_KHR_shader_draw_parameters
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME);
 #endif
-
 #if VK_NV_mesh_shader
 	AdapterDesc.OptionalExtensionNames.Push(VK_NV_MESH_SHADER_EXTENSION_NAME);
 #endif
-
 #if VK_EXT_memory_budget
 	AdapterDesc.OptionalExtensionNames.Push(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
 #endif
-
 #if VK_KHR_push_descriptor
+	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
+#endif
+#if VK_KHR_portability_subset
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
 #endif
 	
@@ -108,7 +101,6 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
     SVulkanDeviceDesc DeviceDesc;
 	DeviceDesc.RequiredExtensionNames = AdapterDesc.RequiredExtensionNames;
 	DeviceDesc.OptionalExtensionNames = AdapterDesc.OptionalExtensionNames;
-    DeviceDesc.bEnableValidationLayer = bEnableDebug;
 
     Device = CVulkanDevice::CreateDevice(GetInstance(), GetAdapter(), DeviceDesc);
     if (!Device)

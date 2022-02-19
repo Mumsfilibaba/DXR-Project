@@ -14,6 +14,12 @@ VULKAN_FUNCTION_DECLARATION(DestroyInstance);
 VULKAN_FUNCTION_DECLARATION(EnumerateInstanceExtensionProperties);
 VULKAN_FUNCTION_DECLARATION(EnumerateInstanceLayerProperties);
 
+#if VK_EXT_debug_utils
+	VULKAN_FUNCTION_DECLARATION(SetDebugUtilsObjectNameEXT);
+	VULKAN_FUNCTION_DECLARATION(CreateDebugUtilsMessengerEXT);
+	VULKAN_FUNCTION_DECLARATION(DestroyDebugUtilsMessengerEXT);
+#endif
+
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
 // Instance Functions
 
@@ -32,11 +38,5 @@ VULKAN_FUNCTION_DECLARATION(CreateDevice);
 VULKAN_FUNCTION_DECLARATION(DestroyDevice);
 
 VULKAN_FUNCTION_DECLARATION(GetDeviceProcAddr);
-
-#if VK_EXT_debug_utils
-	VULKAN_FUNCTION_DECLARATION(SetDebugUtilsObjectNameEXT);
-	VULKAN_FUNCTION_DECLARATION(CreateDebugUtilsMessengerEXT);
-	VULKAN_FUNCTION_DECLARATION(DestroyDebugUtilsMessengerEXT);
-#endif
 
 bool LoadInstanceFunctions(CVulkanDriverInstance* Instance);

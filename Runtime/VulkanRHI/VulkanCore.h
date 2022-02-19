@@ -2,6 +2,7 @@
 #include "Core/Core.h"
 #include "Core/Debug/Debug.h"
 #include "Core/Logging/Log.h"
+#include "Core/Containers/String.h"
 
 #define VK_NO_PROTOTYPES (1)
 
@@ -77,3 +78,15 @@ typedef PFN_vkVoidFunction VulkanVoidFunction;
 #ifndef VULKAN_CHECK_HANDLE
 	#define VULKAN_CHECK_HANDLE(Handle) (Handle != VK_NULL_HANDLE)
 #endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Vulkan Helper functions
+
+inline String GetVersionAsString(uint32 VersionNumber)
+{
+	return
+		ToString(VK_API_VERSION_MAJOR(VersionNumber)) + '.' +
+		ToString(VK_API_VERSION_MINOR(VersionNumber)) + '.' +
+		ToString(VK_API_VERSION_PATCH(VersionNumber)) + '.' +
+		ToString(VK_API_VERSION_VARIANT(VersionNumber));
+}

@@ -23,6 +23,12 @@ VULKAN_FUNCTION_DEFINITION(DestroyInstance);
 VULKAN_FUNCTION_DEFINITION(EnumerateInstanceExtensionProperties);
 VULKAN_FUNCTION_DEFINITION(EnumerateInstanceLayerProperties);
 
+#if VK_EXT_debug_utils
+	VULKAN_FUNCTION_DEFINITION(SetDebugUtilsObjectNameEXT);
+	VULKAN_FUNCTION_DEFINITION(CreateDebugUtilsMessengerEXT);
+	VULKAN_FUNCTION_DEFINITION(DestroyDebugUtilsMessengerEXT);
+#endif
+
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
 // Instance Functions
 
@@ -42,11 +48,6 @@ VULKAN_FUNCTION_DEFINITION(DestroyDevice);
 
 VULKAN_FUNCTION_DEFINITION(GetDeviceProcAddr);
 
-#if VK_EXT_debug_utils
-	VULKAN_FUNCTION_DEFINITION(SetDebugUtilsObjectNameEXT);
-	VULKAN_FUNCTION_DEFINITION(CreateDebugUtilsMessengerEXT);
-	VULKAN_FUNCTION_DEFINITION(DestroyDebugUtilsMessengerEXT);
-#endif
 
 bool LoadInstanceFunctions(CVulkanDriverInstance* Instance)
 {
@@ -67,15 +68,6 @@ bool LoadInstanceFunctions(CVulkanDriverInstance* Instance)
 	VULKAN_LOAD_FUNCTION(Instance, DestroyDevice);
 
 	VULKAN_LOAD_FUNCTION(Instance, GetDeviceProcAddr);
-
-#if VK_EXT_debug_utils
-	if (Instance->IsExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
-	{
-		VULKAN_LOAD_FUNCTION(Instance, SetDebugUtilsObjectNameEXT);
-		VULKAN_LOAD_FUNCTION(Instance, CreateDebugUtilsMessengerEXT);
-		VULKAN_LOAD_FUNCTION(Instance, DestroyDebugUtilsMessengerEXT);
-	}
-#endif
-
+	
 	return true;
 }

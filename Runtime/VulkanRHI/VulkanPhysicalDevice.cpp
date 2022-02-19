@@ -61,7 +61,8 @@ bool CVulkanPhysicalDevice::Initialize(const SVulkanPhysicalDeviceDesc& AdapterD
 		{
 			VkPhysicalDeviceProperties AdapterProperties;
 			vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
-			LOG_INFO(String("    ") + AdapterProperties.deviceName);
+			
+			LOG_INFO(String("    ") + AdapterProperties.deviceName + " Supports Vulkan " + GetVersionAsString(AdapterProperties.apiVersion));
 		}
 	}
 
@@ -82,13 +83,23 @@ bool CVulkanPhysicalDevice::Initialize(const SVulkanPhysicalDeviceDesc& AdapterD
 
 		const VkBool32* RequiredFeatures  = reinterpret_cast<const VkBool32*>(&AdapterDesc.RequiredFeatures);
 		const VkBool32* AvailableFeatures = reinterpret_cast<const VkBool32*>(&AdapterFeatures);
+		
+		bool bHasAllFeatures = true;
 		for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures; ++FeatureIndex)
 		{
-			if ((RequiredFeatures[FeatureIndex] == VK_TRUE) && (AvailableFeatures[FeatureIndex]))
+			const bool bRequiresFeature = (RequiredFeatures[FeatureIndex]  == VK_TRUE);
+			const bool bHasFeature      = (AvailableFeatures[FeatureIndex] == VK_TRUE);
+			if (bRequiresFeature && !bHasFeature)
 			{
-				VULKAN_WARNING(String("Adapter '") + AdapterProperties.deviceName + "' does not have all required device-features");
-				continue;
+				VULKAN_WARNING(String("Adapter '") + AdapterProperties.deviceName + "' does not have all required device-features. See PhyscicalDeviceFeature[" + ToString(FeatureIndex) + "]");
+				bHasAllFeatures = false;
+				break;
 			}
+		}
+		
+		if (!bHasAllFeatures)
+		{
+			continue;
 		}
 
 		// Find indices for queuefamilies
@@ -187,7 +198,7 @@ bool CVulkanPhysicalDevice::Initialize(const SVulkanPhysicalDeviceDesc& AdapterD
 	}
 #endif
 	
-	VULKAN_INFO(String("Using adapter '") + DeviceProperties.deviceName + "'");
+	VULKAN_INFO(String("Using adapter '") + DeviceProperties.deviceName + "' Which supports Vulkan " + GetVersionAsString(DeviceProperties.apiVersion));
 	
 	return true;
 }

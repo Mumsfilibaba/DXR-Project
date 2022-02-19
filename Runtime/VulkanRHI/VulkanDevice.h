@@ -17,8 +17,6 @@ struct SVulkanDeviceDesc
 {
 	TArray<const char*> RequiredExtensionNames;
 	TArray<const char*> OptionalExtensionNames;
-	
-	bool bEnableValidationLayer = false;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
