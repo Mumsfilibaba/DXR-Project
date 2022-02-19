@@ -23,39 +23,51 @@ typedef PFN_vkVoidFunction VulkanVoidFunction;
 // Vulkan Error
 
 #if !PRODUCTION_BUILD
-#define VULKAN_ERROR(Condition, ErrorMessage) \
-    do                                        \
-    {                                         \
-        if (!(Condition))                     \
-        {                                     \
-            LOG_ERROR(ErrorMessage);          \
-            CDebug::DebugBreak();             \
-        }                                     \
+#define VULKAN_ERROR_ALWAYS(ErrorMessage)                         \
+    do                                                            \
+    {                                                             \
+        LOG_ERROR(String("[VulkanRHI] ") + String(ErrorMessage)); \
+        CDebug::DebugBreak();                                     \
     } while (0)
 
-#define VULKAN_ERROR_ALWAYS(ErrorMessage) \
-    do                                    \
-    {                                     \
-        LOG_ERROR(ErrorMessage);          \
-        CDebug::DebugBreak();             \
+#define VULKAN_ERROR(Condition, ErrorMessage)  \
+    do                                         \
+    {                                          \
+        if (!(Condition))                      \
+        {                                      \
+            VULKAN_ERROR_ALWAYS(ErrorMessage); \
+        }                                      \
+    } while (0)
+
+#define VULKAN_WARNING(Message)                                \
+    do                                                         \
+    {                                                          \
+        LOG_WARNING(String("[VulkanRHI] ") + String(Message)); \
+    } while (0)
+
+#define VULKAN_INFO(Message)                                \
+    do                                                      \
+    {                                                       \
+        LOG_INFO(String("[VulkanRHI] ") + String(Message)); \
     } while (0)
 
 #else
-#define VULKAN_ERROR(Condtion, ErrorString) do {} while(0)
 #define VULKAN_ERROR_ALWAYS(ErrorString)    do {} while(0)
+#define VULKAN_ERROR(Condtion, ErrorString) do {} while(0)
+#define VULKAN_WARNING(Message)             do {} while(0)
 #endif
 
-#ifndef VK_SUCCEEDED
-	#define VK_SUCCEEDED(Result) (Result == VK_SUCCESS)
+#ifndef VULKAN_SUCCEEDED
+	#define VULKAN_SUCCEEDED(Result) (Result == VK_SUCCESS)
 #endif
 
-#ifndef VK_FAILED
-	#define VK_FAILED(Result) (Result != VK_SUCCESS)
+#ifndef VULKAN_FAILED
+	#define VULKAN_FAILED(Result) (Result != VK_SUCCESS)
 #endif
 
 #ifndef VULKAN_CHECK_RESULT
     #define VULKAN_CHECK_RESULT(Result, ErrorMessage) \
-        if (VK_FAILED(Result))                        \
+        if (VULKAN_FAILED(Result))                        \
         {                                             \
             VULKAN_ERROR_ALWAYS(ErrorMessage);        \
             return false;                             \

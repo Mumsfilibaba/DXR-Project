@@ -3,6 +3,7 @@
 #include "ScopedAutoreleasePool.h"
 
 #include "Core/Input/InputCodes.h"
+#include "Core/Threading/Platform/PlatformThreadMisc.h"
 
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
@@ -12,8 +13,11 @@
 
 void CMacApplicationMisc::MessageBox(const String& Title, const String& Message)
 {
-    CFStringRef CaptionRef = CFStringCreateWithCString(0, Title.CStr(),   static_cast<CFStringEncoding>(Title.Length()));
-    CFStringRef TextRef    = CFStringCreateWithCString(0, Message.CStr(), static_cast<CFStringEncoding>(Message.Length()));
+	const char* RawTitle   = Title.CStr();
+	const char* RawMessage = Message.CStr();
+	
+    CFStringRef CaptionRef = CFStringCreateWithCString(0, RawTitle  , static_cast<CFStringEncoding>(Title.Length()));
+    CFStringRef TextRef    = CFStringCreateWithCString(0, RawMessage, static_cast<CFStringEncoding>(Message.Length()));
         
     CFOptionFlags Result = 0;
     CFOptionFlags Flags  = kCFUserNotificationStopAlertLevel;
@@ -40,6 +44,9 @@ void CMacApplicationMisc::PumpMessages(bool bUntilEmpty)
         
         [NSApp sendEvent:Event];
     } while (bUntilEmpty);
+	
+	// HACK: Look into a better solution in the future
+	PlatformThreadMisc::RunMainLoop();
 }
 
 SModifierKeyState CMacApplicationMisc::GetModifierKeyState()

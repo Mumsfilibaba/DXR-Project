@@ -83,7 +83,7 @@ bool CEngineLoop::PreInitialize()
     else
     {
         NErrorDevice::GConsoleWindow->Show(true);
-        NErrorDevice::GConsoleWindow->SetTitle(String(PROJECT_NAME) + ": Error Console");
+        NErrorDevice::GConsoleWindow->SetTitle(String(PROJECT_NAME) + ": Output Console");
     }
 
     if (!LoadCoreModules())

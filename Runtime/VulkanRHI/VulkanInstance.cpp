@@ -22,12 +22,19 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
     SVulkanDriverInstanceDesc InstanceDesc;
     InstanceDesc.RequiredExtensionNames = PlatformVulkanExtensions::GetRequiredInstanceExtensions();
     InstanceDesc.RequiredLayerNames     = PlatformVulkanExtensions::GetRequiredInstanceLayers();
-    InstanceDesc.bEnableValidationLayer = bEnableDebug;
-
+	InstanceDesc.bEnableValidationLayer = bEnableDebug;
+	
+#if VK_KHR_get_physical_device_properties2
+    InstanceDesc.OptionalExtensionNames.Push(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+#endif
+	
     if (bEnableDebug)
     {
 		InstanceDesc.RequiredLayerNames.Push("VK_LAYER_KHRONOS_validation");
+		
+#if VK_EXT_debug_utils
         InstanceDesc.RequiredExtensionNames.Push(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+#endif
     }
 
     Instance = CVulkanDriverInstance::CreateInstance(InstanceDesc);
@@ -38,15 +45,59 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
     }
 	
     // Load functions that requires an instance here (Order is important)
-	if (!NVulkan::LoadInstanceFunctions(Instance.Get()))
+	if (!LoadInstanceFunctions(Instance.Get()))
 	{
 		return false;
 	}
 
     SVulkanPhysicalDeviceDesc AdapterDesc;
-	AdapterDesc.RequiredDeviceLayerNames     = PlatformVulkanExtensions::GetRequiredDeviceLayers();
-	AdapterDesc.RequiredDeviceExtensionNames = PlatformVulkanExtensions::GetRequiredDeviceExtensions();
+	AdapterDesc.RequiredExtensionNames = PlatformVulkanExtensions::GetRequiredDeviceExtensions();
+    AdapterDesc.RequiredFeatures.samplerAnisotropy = VK_TRUE;
+	
+#if VK_KHR_get_memory_requirements2
+	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+#endif
 
+#if VK_KHR_maintenance3
+	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
+#endif
+
+#if VK_EXT_descriptor_indexing
+	AdapterDesc.OptionalExtensionNames.Push(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+#endif
+
+#if VK_KHR_buffer_device_address
+	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+#endif
+
+#if VK_KHR_deferred_host_operations
+	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+#endif
+
+#if VK_KHR_pipeline_library
+	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
+#endif
+
+#if VK_KHR_timeline_semaphore
+	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
+#endif
+
+#if VK_KHR_shader_draw_parameters
+	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME);
+#endif
+
+#if VK_NV_mesh_shader
+	AdapterDesc.OptionalExtensionNames.Push(VK_NV_MESH_SHADER_EXTENSION_NAME);
+#endif
+
+#if VK_EXT_memory_budget
+	AdapterDesc.OptionalExtensionNames.Push(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
+#endif
+
+#if VK_KHR_push_descriptor
+	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
+#endif
+	
 	Adapter = CVulkanPhysicalDevice::QueryAdapter(GetInstance(), AdapterDesc);
     if (!Adapter)
     {
@@ -55,6 +106,8 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
     }
 
     SVulkanDeviceDesc DeviceDesc;
+	DeviceDesc.RequiredExtensionNames = AdapterDesc.RequiredExtensionNames;
+	DeviceDesc.OptionalExtensionNames = AdapterDesc.OptionalExtensionNames;
     DeviceDesc.bEnableValidationLayer = bEnableDebug;
 
     Device = CVulkanDevice::CreateDevice(GetInstance(), GetAdapter(), DeviceDesc);

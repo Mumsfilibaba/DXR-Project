@@ -5,8 +5,8 @@
 #include "Core/Debug/Console/ConsoleManager.h"
 
 #define VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(FunctionName)                                           \
-    NVulkan::FunctionName = reinterpret_cast<PFN_vk##FunctionName>(LoadFunction("vk"#FunctionName)); \
-    if (!NVulkan::FunctionName)                                                                      \
+	vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(LoadFunction("vk"#FunctionName)); \
+	if (!vk##FunctionName)                                                                      \
     {                                                                                                \
         VULKAN_ERROR_ALWAYS("Failed to load vk"#FunctionName);                                       \
         return false;                                                                                \
@@ -20,7 +20,7 @@ static const auto RawStringComparator = [](const char* Lhs, const char* Rhs) -> 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 // Console Variables
 
-TAutoConsoleVariable<bool> GVerboseVulkan("vulkan.VerboseVulkan", true);
+TAutoConsoleVariable<bool> GVulkanVerboseLogging("vulkan.VerboseLogging", true);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanDriverInstance
@@ -54,7 +54,7 @@ CVulkanDriverInstance::~CVulkanDriverInstance()
 	
 	if (VULKAN_CHECK_HANDLE(Instance))
 	{
-		NVulkan::DestroyInstance(Instance, nullptr);
+		vkDestroyInstance(Instance, nullptr);
 	}
 }
 
@@ -82,37 +82,37 @@ bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& Instance
 	
 	// Instance Layers
 	uint32 LayerPropertiesCount = 0;
-	Result = NVulkan::EnumerateInstanceLayerProperties(&LayerPropertiesCount, nullptr);
+	Result = vkEnumerateInstanceLayerProperties(&LayerPropertiesCount, nullptr);
 	VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance LayerProperties Count");
 	
 	TArray<VkLayerProperties> LayerProperties(LayerPropertiesCount);
-	Result = NVulkan::EnumerateInstanceLayerProperties(&LayerPropertiesCount, LayerProperties.Data());
+	Result = vkEnumerateInstanceLayerProperties(&LayerPropertiesCount, LayerProperties.Data());
 	VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance LayerProperties");
 
 	// Instance Extensions
 	uint32 ExtensionPropertiesCount = 0;
-	Result = NVulkan::EnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, nullptr);
+	Result = vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, nullptr);
 	VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance ExtensionProperties Count");
 	
 	TArray<VkExtensionProperties> ExtensionProperties(ExtensionPropertiesCount);
-	Result = NVulkan::EnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, ExtensionProperties.Data());
+	Result = vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, ExtensionProperties.Data());
 	VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance ExtensionProperties");
 
-	if (GVerboseVulkan.GetBool())
+	const bool bVerboseLogging = GVulkanVerboseLogging.GetBool();
+	if (bVerboseLogging)
 	{
-		LOG_INFO("[VulkanRHI] Available Instance Extensions:");
+		VULKAN_INFO("Available Instance Extensions:");
 		
 		for (const VkExtensionProperties& ExtensionProperty : ExtensionProperties)
 		{
-			LOG_INFO(ExtensionProperty.extensionName);
+			LOG_INFO(String("    ") + ExtensionProperty.extensionName);
 		}
 		
-		LOG_INFO("[VulkanRHI] Available Instance Layers:");
+		VULKAN_INFO("Available Instance Layers:");
 
 		for (const VkLayerProperties& LayerProperty : LayerProperties)
 		{
-			String LayerName(LayerProperty.layerName);
-			LOG_INFO(LayerName + ": " + LayerProperty.description);
+			LOG_INFO(String("    ") + LayerProperty.layerName + ": " + LayerProperty.description);
 		}
 	}
 
@@ -131,8 +131,12 @@ bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& Instance
 	{
 		if (!EnabledLayerNames.Contains(LayerName, RawStringComparator))
 		{
-			LOG_ERROR(String("Instance layer '") + LayerName + "' could not be enabled");
+			VULKAN_ERROR_ALWAYS(String("Instance layer '") + LayerName + "' could not be enabled");
 			return false;
+		}
+		else
+		{
+			LayerNames.insert(String(LayerName));
 		}
 	}
 
@@ -151,30 +155,34 @@ bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& Instance
 	{
 		if (!EnabledExtensionNames.Contains(ExtensionName, RawStringComparator))
 		{
-			LOG_ERROR(String("Instance layer '") + ExtensionName + "' could not be enabled");
+			VULKAN_ERROR_ALWAYS(String("Instance layer '") + ExtensionName + "' could not be enabled");
 			return false;
+		}
+		else
+		{
+			ExtensionNames.insert(String(ExtensionName));
 		}
 	}
 	
-	if (GVerboseVulkan.GetBool())
+	if (bVerboseLogging)
 	{
 		if (!EnabledLayerNames.IsEmpty())
 		{
-			LOG_INFO("[VulkanRHI] Enabled Instance Layers:");
+			VULKAN_INFO("Enabled Instance Layers:");
 
 			for (const char* LayerName : EnabledLayerNames)
 			{
-				LOG_INFO(LayerName);
+				LOG_INFO(String("    ") + LayerName);
 			}
 		}
 		
 		if (!EnabledExtensionNames.IsEmpty())
 		{
-			LOG_INFO("[VulkanRHI] Enabled Instance Extensions:");
+			VULKAN_INFO("Enabled Instance Extensions:");
 			
 			for (const char* ExtensionName : EnabledExtensionNames)
 			{
-				LOG_INFO(ExtensionName);
+				LOG_INFO(String("    ") + ExtensionName);
 			}
 		}
 	}
@@ -201,9 +209,12 @@ bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& Instance
 	InstanceCreateInfo.ppEnabledExtensionNames  = EnabledExtensionNames.Data();
 	InstanceCreateInfo.enabledLayerCount        = EnabledLayerNames.Size();
 	InstanceCreateInfo.ppEnabledLayerNames      = EnabledLayerNames.Data();
-	
-	Result = NVulkan::CreateInstance(&InstanceCreateInfo, nullptr, &Instance);
+
+	Result = vkCreateInstance(&InstanceCreateInfo, nullptr, &Instance);
 	VULKAN_CHECK_RESULT(Result, "Failed to create Instance");
 
+	// Load DestroyInstance here for consistency
+	VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(DestroyInstance);
+	
 	return true;
 }

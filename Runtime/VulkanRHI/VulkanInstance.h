@@ -13,7 +13,9 @@
 
 class CVulkanInstance : public CRHIInstance
 {
-public: 
+public:
+	
+	/* Create a new VulkanInstance */
     static CRHIInstance* CreateInstance();
 
 	FORCEINLINE CVulkanDriverInstance* GetInstance() const

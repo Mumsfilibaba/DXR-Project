@@ -27,7 +27,10 @@ public:
 
     static FORCEINLINE TArray<const char*> GetRequiredDeviceExtensions() 
     { 
-        return TArray<const char*>(); 
+        return
+		{
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		};
     }
 
     static FORCEINLINE TArray<const char*> GetRequiredDeviceLayers()

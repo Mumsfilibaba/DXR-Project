@@ -2,6 +2,13 @@
 #include "VulkanPhysicalDevice.h"
 #include "VulkanFunctions.h"
 
+#include "Core/Debug/Console/ConsoleManager.h"
+
+static const auto RawStringComparator = [](const char* Lhs, const char* Rhs) -> bool
+{
+	return StringUtils::Compare(Lhs, Rhs) == 0;
+};
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanDevice
 
@@ -32,25 +39,92 @@ CVulkanDevice::~CVulkanDevice()
 {
     if (VULKAN_CHECK_HANDLE(Device))
     {
-        NVulkan::DestroyDevice(Device, nullptr);
+        vkDestroyDevice(Device, nullptr);
     }
 }
 
 bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
 {
+	VULKAN_ERROR(Adapter != nullptr, "Adapter is not initalized correctly");
+
+	VkPhysicalDevice VulkanAdapter = Adapter->GetPhysicalDevice();
+	VkResult Result = VK_SUCCESS;
+	
+	// Verify Layers
+	TArray<const char*> EnabledLayerNames;
+	
+	// Verify Extensions
+    uint32 DeviceExtensionCount = 0;
+    Result = vkEnumerateDeviceExtensionProperties(VulkanAdapter, nullptr, &DeviceExtensionCount, nullptr);
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve the device extension count");
+
+    TArray<VkExtensionProperties> AvailableDeviceExtensions(DeviceExtensionCount);
+    Result = vkEnumerateDeviceExtensionProperties(VulkanAdapter, nullptr, &DeviceExtensionCount, AvailableDeviceExtensions.Data());
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve the device extensions");
+
+	TArray<const char*> EnabledExtensionNames;
+	for (const VkExtensionProperties& ExtensionProperty : AvailableDeviceExtensions)
+	{
+		const char* ExtensionName = ExtensionProperty.extensionName;
+		if (DeviceDesc.RequiredExtensionNames.Contains(ExtensionName, RawStringComparator) || DeviceDesc.OptionalExtensionNames.Contains(ExtensionName, RawStringComparator))
+		{
+			EnabledExtensionNames.Push(ExtensionName);
+		}
+	}
+
+	for (const char* ExtensionName : DeviceDesc.RequiredExtensionNames)
+	{
+		if (!EnabledExtensionNames.Contains(ExtensionName, RawStringComparator))
+		{
+			VULKAN_ERROR_ALWAYS(String("Instance layer '") + ExtensionName + "' could not be enabled");
+			return false;
+		}
+		else
+		{
+			ExtensionNames.insert(String(ExtensionName));
+		}
+	}
+
+    // Log enabled extensions and layers
+	IConsoleVariable* VerboseVulkan = CConsoleManager::Get().FindVariable("vulkan.VerboseLogging");
+
+	const bool bVerboseLogging = VerboseVulkan && VerboseVulkan->GetBool();
+    if (bVerboseLogging)
+	{
+		if (!EnabledLayerNames.IsEmpty())
+		{
+			VULKAN_INFO("Enabled Device Layers:");
+
+			for (const char* LayerName : EnabledLayerNames)
+			{
+				LOG_INFO(String("    ") + LayerName);
+			}
+		}
+		
+		if (!EnabledExtensionNames.IsEmpty())
+		{
+			VULKAN_INFO("Enabled Device Extensions:");
+			
+			for (const char* ExtensionName : EnabledExtensionNames)
+			{
+				LOG_INFO(String("    ") + ExtensionName);
+			}
+		}
+	}
+	
     VkDeviceCreateInfo DeviceCreateInfo;
     DeviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     DeviceCreateInfo.pNext                   = nullptr;
     DeviceCreateInfo.flags                   = 0;
-    DeviceCreateInfo.enabledLayerCount       = DeviceDesc.DeviceLayerNames.Size();
-    DeviceCreateInfo.ppEnabledLayerNames     = DeviceDesc.DeviceLayerNames.Data();
-    DeviceCreateInfo.enabledExtensionCount   = DeviceDesc.DeviceExtensionNames.Size();
-    DeviceCreateInfo.ppEnabledExtensionNames = DeviceDesc.DeviceExtensionNames.Data();
+    DeviceCreateInfo.enabledLayerCount       = EnabledLayerNames.Size();
+    DeviceCreateInfo.ppEnabledLayerNames     = EnabledLayerNames.Data();
+    DeviceCreateInfo.enabledExtensionCount   = EnabledExtensionNames.Size();
+    DeviceCreateInfo.ppEnabledExtensionNames = EnabledExtensionNames.Data();
     DeviceCreateInfo.queueCreateInfoCount    = 0;
     DeviceCreateInfo.pQueueCreateInfos       = nullptr;
     DeviceCreateInfo.pEnabledFeatures        = nullptr;
 
-    VkResult Result = NVulkan::CreateDevice(Adapter->GetPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);
+    Result = vkCreateDevice(VulkanAdapter, &DeviceCreateInfo, nullptr, &Device);
     VULKAN_CHECK_RESULT(Result, "Failed to create Device");
     
     return true;

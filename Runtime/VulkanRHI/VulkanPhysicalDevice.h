@@ -5,18 +5,46 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Set.h"
+#include "Core/Containers/Optional.h"
 
 class CVulkanDriverInstance;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CVulkanPhysicalDevice
+// SVulkanPhysicalDeviceDesc
 
 struct SVulkanPhysicalDeviceDesc
 {
-    TArray<const char*> RequiredDeviceExtensionNames;
-    TArray<const char*> RequiredDeviceLayerNames;
-    TArray<const char*> OptionalDeviceExtensionNames;
-    TArray<const char*> OptionalDeviceLayerNames;
+    SVulkanPhysicalDeviceDesc()
+        : RequiredExtensionNames()
+        , OptionalExtensionNames()
+        , RequiredFeatures()
+    {
+        CMemory::Memzero(&RequiredFeatures);
+    }
+
+    TArray<const char*> RequiredExtensionNames;
+    TArray<const char*> OptionalExtensionNames; // Used to select most optimal adapter
+
+    VkPhysicalDeviceFeatures RequiredFeatures;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SVulkanQueueFamilyIndices
+
+struct SVulkanQueueFamilyIndices
+{
+    SVulkanQueueFamilyIndices() = default;
+
+    SVulkanQueueFamilyIndices(uint32 InGraphicsQueueIndex, uint32 InCopyQueueIndex, uint32 InComputeQueueIndex)
+        : GraphicsQueueIndex(InGraphicsQueueIndex)
+        , CopyQueueIndex(InCopyQueueIndex)
+        , ComputeQueueIndex(InComputeQueueIndex)
+    {
+    }
+
+    uint32 GraphicsQueueIndex = (~0);
+    uint32 CopyQueueIndex     = (~0);
+    uint32 ComputeQueueIndex  = (~0);
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -26,10 +54,10 @@ class CVulkanPhysicalDevice : public CRefCounted
 {
 public:
 
+    /* Creates a new VkPhyscialDevice */
     static TSharedRef<CVulkanPhysicalDevice> QueryAdapter(CVulkanDriverInstance* InInstance, const SVulkanPhysicalDeviceDesc& AdapterDesc);
 
-    bool IsLayerEnabled(const String& LayerName);
-    bool IsExtensionEnabled(const String& ExtensionName);
+    static TOptional<SVulkanQueueFamilyIndices> GetQueueFamilyIndices(VkPhysicalDevice physicalDevice);
 
     FORCEINLINE CVulkanDriverInstance* GetInstance() const
     {
@@ -50,7 +78,14 @@ private:
 
     CVulkanDriverInstance* Instance;
     VkPhysicalDevice       PhysicalDevice;
-
-    TSet<String> ExtensionNames;
-    TSet<String> LayerNames;
+	
+	VkPhysicalDeviceProperties        DeviceProperties;
+	VkPhysicalDeviceProperties2       DeviceProperties2;
+	VkPhysicalDeviceFeatures          DeviceFeatures;
+	
+#if VK_KHR_get_physical_device_properties2
+	VkPhysicalDeviceFeatures2         DeviceFeatures2;
+	VkPhysicalDeviceMemoryProperties  DeviceMemoryProperties;
+	VkPhysicalDeviceMemoryProperties2 DeviceMemoryProperties2;
+#endif
 };

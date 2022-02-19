@@ -27,13 +27,13 @@ public:
         MainThreadHandle = GetThreadHandle();
 
         // Then init the mainthread runloop
-		    return RegisterMainRunLoop();
+		return RegisterMainRunLoop();
     }
 
     /** Releases platform specific resources for thread handling */
     static FORCEINLINE void Release() 
     {
-		    UnregisterMainRunLoop();
+		UnregisterMainRunLoop();
     }
 
     /**
@@ -65,14 +65,22 @@ public:
      */
     static FORCEINLINE void Sleep(CTimestamp Time)
     {
-		    // HACK: When the thread sleeps and we are on mainthread, run the mainloop
-		    CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
-		    CFRunLoopWakeUp(RunLoop);
-		    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, false);
+		// HACK: When the thread sleeps and we are on mainthread, run the mainloop
+		RunMainLoop();
 		
         float MicroSeconds = Time.AsMicroSeconds();
         usleep(static_cast<useconds_t>(MicroSeconds));
     }
+	
+	/**
+	 * Runs the main runloop, used to make sure that all logging etc. shows up properly
+	 */
+	static FORCEINLINE void RunMainLoop()
+	{
+		CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
+		CFRunLoopWakeUp(RunLoop);
+		CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, false);
+	}
 
     /**
      * Checks weather or not the calling thread is the main thread 
