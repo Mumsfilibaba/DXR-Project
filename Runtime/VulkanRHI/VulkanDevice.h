@@ -1,11 +1,13 @@
 #pragma once
 #include "VulkanCore.h"
 #include "VulkanFunctions.h"
+#include "VulkanPhysicalDevice.h"
 
 #include "Core/RefCounted.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Set.h"
+#include "Core/Containers/Optional.h"
 
 class CVulkanDriverInstance;
 class CVulkanPhysicalDevice;
@@ -42,7 +44,6 @@ public:
     FORCEINLINE VulkanVoidFunction LoadFunction(const char* Name) const
 	{
 		VULKAN_ERROR(vkGetDeviceProcAddr != nullptr, "Vulkan Driver Instance is not initialized properly");
-        VULKAN_ERROR(Device != VK_NULL_HANDLE      , "Vulkan Device is not initialized properly");
 		return reinterpret_cast<VulkanVoidFunction>(vkGetDeviceProcAddr(Device, Name));
 	}
 
@@ -67,6 +68,11 @@ public:
         return Device;
     }
 
+    FORCEINLINE TOptional<SVulkanQueueFamilyIndices> GetQueueIndicies() const
+    {
+        return QueueIndicies;
+    }
+
 private:
 
     CVulkanDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter);
@@ -77,6 +83,8 @@ private:
     CVulkanDriverInstance* Instance;
 	CVulkanPhysicalDevice* Adapter;
     VkDevice               Device;
+
+    TOptional<SVulkanQueueFamilyIndices> QueueIndicies;
 
     TSet<String> ExtensionNames;
     TSet<String> LayerNames;

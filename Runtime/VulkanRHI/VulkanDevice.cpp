@@ -50,8 +50,7 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
 	VkPhysicalDevice VulkanAdapter = Adapter->GetPhysicalDevice();
 	VkResult Result = VK_SUCCESS;
 	
-	// Verify Layers
-	TArray<const char*> EnabledLayerNames;
+	// TODO: Device layers
 	
 	// Verify Extensions
     uint32 DeviceExtensionCount = 0;
@@ -90,17 +89,7 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
 
 	const bool bVerboseLogging = VerboseVulkan && VerboseVulkan->GetBool();
     if (bVerboseLogging)
-	{
-		if (!EnabledLayerNames.IsEmpty())
-		{
-			VULKAN_INFO("Enabled Device Layers:");
-
-			for (const char* LayerName : EnabledLayerNames)
-			{
-				LOG_INFO(String("    ") + LayerName);
-			}
-		}
-		
+	{		
 		if (!EnabledExtensionNames.IsEmpty())
 		{
 			VULKAN_INFO("Enabled Device Extensions:");
@@ -111,17 +100,47 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
 			}
 		}
 	}
+
+	QueueIndicies = CVulkanPhysicalDevice::GetQueueFamilyIndices(VulkanAdapter);
+	if (!QueueIndicies)
+	{
+		VULKAN_ERROR_ALWAYS("Failed to query queue indices");
+		return false;
+	}
+
+	TArray<VkDeviceQueueCreateInfo> QueueCreateInfos;
+
+	const TSet<uint32> UniqueQueueFamilies =
+	{
+		QueueIndicies->GraphicsQueueIndex,
+		QueueIndicies->CopyQueueIndex,
+		QueueIndicies->ComputeQueueIndex
+	};
+
+	const float DefaultQueuePriority = 0.0f;
+	for (uint32 QueueFamiliy : UniqueQueueFamilies)
+	{
+		VkDeviceQueueCreateInfo QueueCreateInfo = {};
+		QueueCreateInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		QueueCreateInfo.pNext            = nullptr;
+		QueueCreateInfo.flags            = 0;
+		QueueCreateInfo.pQueuePriorities = &DefaultQueuePriority;
+		QueueCreateInfo.queueFamilyIndex = QueueFamiliy;
+		QueueCreateInfo.queueCount       = 1;
+
+		QueueCreateInfos.Push(QueueCreateInfo);
+	}
 	
     VkDeviceCreateInfo DeviceCreateInfo;
     DeviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     DeviceCreateInfo.pNext                   = nullptr;
     DeviceCreateInfo.flags                   = 0;
-    DeviceCreateInfo.enabledLayerCount       = EnabledLayerNames.Size();
-    DeviceCreateInfo.ppEnabledLayerNames     = EnabledLayerNames.Data();
+    DeviceCreateInfo.enabledLayerCount       = 0;
+    DeviceCreateInfo.ppEnabledLayerNames     = nullptr;
     DeviceCreateInfo.enabledExtensionCount   = EnabledExtensionNames.Size();
     DeviceCreateInfo.ppEnabledExtensionNames = EnabledExtensionNames.Data();
-    DeviceCreateInfo.queueCreateInfoCount    = 0;
-    DeviceCreateInfo.pQueueCreateInfos       = nullptr;
+    DeviceCreateInfo.queueCreateInfoCount    = QueueCreateInfos.Size();
+    DeviceCreateInfo.pQueueCreateInfos       = QueueCreateInfos.Data();
     DeviceCreateInfo.pEnabledFeatures        = nullptr;
 
     Result = vkCreateDevice(VulkanAdapter, &DeviceCreateInfo, nullptr, &Device);

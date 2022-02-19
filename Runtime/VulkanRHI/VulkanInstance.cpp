@@ -87,10 +87,10 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 #if VK_KHR_push_descriptor
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
 #endif
-#if VK_KHR_portability_subset
-	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
-#endif
-	
+
+	// This extension must be enabled on platforms that has it available
+	AdapterDesc.OptionalExtensionNames.Push("VK_KHR_portability_subset");
+
 	Adapter = CVulkanPhysicalDevice::QueryAdapter(GetInstance(), AdapterDesc);
     if (!Adapter)
     {
