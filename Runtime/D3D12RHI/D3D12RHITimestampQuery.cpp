@@ -51,7 +51,7 @@ void CD3D12RHITimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint3
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2) + 1);
 }
 
-void CD3D12RHITimestampQuery::ResolveQueries(class CD3D12RHICommandContext& CmdContext)
+void CD3D12RHITimestampQuery::ResolveQueries(class CD3D12CommandContext& CmdContext)
 {
     CD3D12CommandList CmdList = CmdContext.GetCommandList();
     ID3D12CommandQueue* CmdQueue = CmdContext.GetQueue().GetQueue();

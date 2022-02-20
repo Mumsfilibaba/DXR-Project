@@ -99,7 +99,7 @@ bool CD3D12RHIGraphicsPipelineState::Init(const SRHIGraphicsPipelineStateInfo& C
     TArray<CD3D12BaseShader*> BaseShaders;
 
     // VertexShader
-    CD3D12RHIVertexShader* DxVertexShader = static_cast<CD3D12RHIVertexShader*>(CreateInfo.ShaderState.VertexShader);
+    CD3D12VertexShader* DxVertexShader = static_cast<CD3D12VertexShader*>(CreateInfo.ShaderState.VertexShader);
     Assert(DxVertexShader != nullptr);
 
     if (DxVertexShader->HasRootSignature())
@@ -112,7 +112,7 @@ bool CD3D12RHIGraphicsPipelineState::Init(const SRHIGraphicsPipelineStateInfo& C
     BaseShaders.Emplace(DxVertexShader);
 
     // PixelShader
-    CD3D12RHIPixelShader* DxPixelShader = static_cast<CD3D12RHIPixelShader*>(CreateInfo.ShaderState.PixelShader);
+    CD3D12PixelShader* DxPixelShader = static_cast<CD3D12PixelShader*>(CreateInfo.ShaderState.PixelShader);
 
     D3D12_SHADER_BYTECODE& PixelShader = PipelineStream.PixelShader;
     if (DxPixelShader)
@@ -236,7 +236,7 @@ bool CD3D12RHIGraphicsPipelineState::Init(const SRHIGraphicsPipelineStateInfo& C
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIComputePipelineState
 
-CD3D12RHIComputePipelineState::CD3D12RHIComputePipelineState(CD3D12Device* InDevice, const TSharedRef<CD3D12RHIComputeShader>& InShader)
+CD3D12RHIComputePipelineState::CD3D12RHIComputePipelineState(CD3D12Device* InDevice, const TSharedRef<CD3D12ComputeShader>& InShader)
     : CRHIComputePipelineState()
     , CD3D12DeviceObject(InDevice)
     , PipelineState(nullptr)
@@ -510,7 +510,7 @@ bool CD3D12RHIRayTracingPipelineState::Init(const SRHIRayTracingPipelineStateInf
     SD3D12RayTracingPipelineStateStream PipelineStream;
 
     TArray<CD3D12BaseShader*> Shaders;
-    CD3D12RHIRayGenShader* RayGen = static_cast<CD3D12RHIRayGenShader*>(CreateInfo.RayGen);
+    CD3D12RayGenShader* RayGen = static_cast<CD3D12RayGenShader*>(CreateInfo.RayGen);
     Shaders.Emplace(RayGen);
 
     SD3D12RootSignatureResourceCount RayGenLocalResourceCounts;
@@ -535,7 +535,7 @@ bool CD3D12RHIRayTracingPipelineState::Init(const SRHIRayTracingPipelineStateInf
 
     for (const SRayTracingHitGroup& HitGroup : CreateInfo.HitGroups)
     {
-        CD3D12RHIRayAnyHitShader* DxAnyHit = static_cast<CD3D12RHIRayAnyHitShader*>(HitGroup.AnyHit);
+        CD3D12RayAnyHitShader* DxAnyHit = static_cast<CD3D12RayAnyHitShader*>(HitGroup.AnyHit);
         CD3D12RayClosestHitShader* DxClosestHit = static_cast<CD3D12RayClosestHitShader*>(HitGroup.ClosestHit);
 
         Assert(DxClosestHit != nullptr);
@@ -549,7 +549,7 @@ bool CD3D12RHIRayTracingPipelineState::Init(const SRHIRayTracingPipelineStateInf
 
     for (CRHIRayAnyHitShader* AnyHit : CreateInfo.AnyHitShaders)
     {
-        CD3D12RHIRayAnyHitShader* DxAnyHit = static_cast<CD3D12RHIRayAnyHitShader*>(AnyHit);
+        CD3D12RayAnyHitShader* DxAnyHit = static_cast<CD3D12RayAnyHitShader*>(AnyHit);
         Shaders.Emplace(DxAnyHit);
 
         SD3D12RootSignatureResourceCount AnyHitLocalResourceCounts;
@@ -593,7 +593,7 @@ bool CD3D12RHIRayTracingPipelineState::Init(const SRHIRayTracingPipelineStateInf
 
     for (CRHIRayMissShader* Miss : CreateInfo.MissShaders)
     {
-        CD3D12RHIRayMissShader* DxMiss = static_cast<CD3D12RHIRayMissShader*>(Miss);
+        CD3D12RayMissShader* DxMiss = static_cast<CD3D12RayMissShader*>(Miss);
         Shaders.Emplace(DxMiss);
 
         SD3D12RootSignatureResourceCount MissLocalResourceCounts;

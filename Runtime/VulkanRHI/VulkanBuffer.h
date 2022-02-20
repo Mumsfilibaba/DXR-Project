@@ -1,74 +1,64 @@
 #pragma once
 #include "RHI/RHIResources.h"
 
-#if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
-#elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
-#endif
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIVertexBuffer
+// CVulkanVertexBuffer
 
-class CNullRHIVertexBuffer : public CRHIVertexBuffer
+class CVulkanVertexBuffer : public CRHIVertexBuffer
 {
 public:
-    CNullRHIVertexBuffer(uint32 InNumVertices, uint32 InStride, uint32 InFlags)
+    CVulkanVertexBuffer(uint32 InNumVertices, uint32 InStride, uint32 InFlags)
         : CRHIVertexBuffer(InNumVertices, InStride, InFlags)
     {
     }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIIndexBuffer
+// CVulkanIndexBuffer
 
-class CNullRHIIndexBuffer : public CRHIIndexBuffer
+class CVulkanIndexBuffer : public CRHIIndexBuffer
 {
 public:
-    CNullRHIIndexBuffer(ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
+    CVulkanIndexBuffer(ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
         : CRHIIndexBuffer(InIndexFormat, InNumIndices, InFlags)
     {
     }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIConstantBuffer
+// CVulkanConstantBuffer
 
-class CNullRHIConstantBuffer : public CRHIConstantBuffer
+class CVulkanConstantBuffer : public CRHIConstantBuffer
 {
 public:
-    CNullRHIConstantBuffer(uint32 InSizeInBytes, uint32 InFlags)
+    CVulkanConstantBuffer(uint32 InSizeInBytes, uint32 InFlags)
         : CRHIConstantBuffer(InSizeInBytes, InFlags)
     {
     }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIStructuredBuffer
+// CVulkanStructuredBuffer
 
-class CNullRHIStructuredBuffer : public CRHIStructuredBuffer
+class CVulkanStructuredBuffer : public CRHIStructuredBuffer
 {
 public:
-    CNullRHIStructuredBuffer(uint32 InNumElements, uint32 InStride, uint32 InFlags)
+    CVulkanStructuredBuffer(uint32 InNumElements, uint32 InStride, uint32 InFlags)
         : CRHIStructuredBuffer(InNumElements, InStride, InFlags)
     {
     }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TNullRHIBuffer
+// TVulkanBuffer
 
 template<typename BaseBufferType>
-class TNullRHIBuffer : public BaseBufferType
+class TVulkanBuffer : public BaseBufferType
 {
 public:
 
     template<typename... ArgTypes>
-    TNullRHIBuffer(ArgTypes&&... Args)
+    TVulkanBuffer(ArgTypes&&... Args)
         : BaseBufferType(Forward<ArgTypes>(Args)...)
     {
     }
@@ -92,10 +82,3 @@ public:
         return true;
     }
 };
-
-#if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
-#elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
-#endif

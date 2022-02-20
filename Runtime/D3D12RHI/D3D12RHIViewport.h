@@ -17,7 +17,7 @@ class CD3D12Viewport : public CRHIViewport, public CD3D12DeviceObject
 {
 public:
 
-    CD3D12Viewport(CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+    CD3D12Viewport(CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight);
     ~CD3D12Viewport();
 
     bool Init();
@@ -53,7 +53,7 @@ private:
 
     TComPtr<IDXGISwapChain3> SwapChain;
 
-    CD3D12RHICommandContext* CmdContext;
+    CD3D12CommandContext* CmdContext;
 
     HWND Hwnd = 0;
 

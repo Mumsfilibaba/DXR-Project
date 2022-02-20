@@ -17,7 +17,7 @@ public:
     CD3D12RHIRayTracingGeometry(CD3D12Device* InDevice, uint32 InFlags);
     ~CD3D12RHIRayTracingGeometry() = default;
 
-    bool Build(class CD3D12RHICommandContext& CmdContext, bool Update);
+    bool Build(class CD3D12CommandContext& CmdContext, bool Update);
 
     virtual void SetName(const String& InName) override
     {
@@ -100,10 +100,10 @@ public:
     CD3D12RHIRayTracingScene(CD3D12Device* InDevice, uint32 InFlags);
     ~CD3D12RHIRayTracingScene() = default;
 
-    bool Build(class CD3D12RHICommandContext& CmdContext, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update);
+    bool Build(class CD3D12CommandContext& CmdContext, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update);
 
     bool BuildBindingTable(
-        class CD3D12RHICommandContext& CmdContext,
+        class CD3D12CommandContext& CmdContext,
         CD3D12RHIRayTracingPipelineState* PipelineState,
         CD3D12OnlineDescriptorHeap* ResourceHeap,
         CD3D12OnlineDescriptorHeap* SamplerHeap,

@@ -115,10 +115,10 @@ bool CRenderer::Init()
 
     {
         SRHISamplerStateInfo CreateInfo;
-        CreateInfo.AddressU = ESamplerMode::Border;
-        CreateInfo.AddressV = ESamplerMode::Border;
-        CreateInfo.AddressW = ESamplerMode::Border;
-        CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
+        CreateInfo.AddressU    = ESamplerMode::Border;
+        CreateInfo.AddressV    = ESamplerMode::Border;
+        CreateInfo.AddressW    = ESamplerMode::Border;
+        CreateInfo.Filter      = ESamplerFilter::MinMagMipPoint;
         CreateInfo.BorderColor = SColorF(1.0f, 1.0f, 1.0f, 1.0f);
 
         Resources.DirectionalLightShadowSampler = RHICreateSamplerState(CreateInfo);
@@ -135,10 +135,10 @@ bool CRenderer::Init()
 
     {
         SRHISamplerStateInfo CreateInfo;
-        CreateInfo.AddressU = ESamplerMode::Wrap;
-        CreateInfo.AddressV = ESamplerMode::Wrap;
-        CreateInfo.AddressW = ESamplerMode::Wrap;
-        CreateInfo.Filter = ESamplerFilter::Comparison_MinMagMipLinear;
+        CreateInfo.AddressU       = ESamplerMode::Wrap;
+        CreateInfo.AddressV       = ESamplerMode::Wrap;
+        CreateInfo.AddressW       = ESamplerMode::Wrap;
+        CreateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
         CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
 
         Resources.PointLightShadowSampler = RHICreateSamplerState(CreateInfo);
@@ -867,8 +867,8 @@ bool CRenderer::InitBoundingBoxDebugPass()
     }
 
     SRHIDepthStencilStateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-    DepthStencilStateInfo.bDepthEnable = false;
+    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
+    DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
@@ -910,16 +910,16 @@ bool CRenderer::InitBoundingBoxDebugPass()
     }
 
     SRHIGraphicsPipelineStateInfo PSOProperties;
-    PSOProperties.BlendState = BlendState.Get();
-    PSOProperties.DepthStencilState = DepthStencilState.Get();
-    PSOProperties.InputLayoutState = InputLayoutState.Get();
-    PSOProperties.RasterizerState = RasterizerState.Get();
-    PSOProperties.ShaderState.VertexShader = AABBVertexShader.Get();
-    PSOProperties.ShaderState.PixelShader = AABBPixelShader.Get();
-    PSOProperties.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Line;
+    PSOProperties.BlendState                             = BlendState.Get();
+    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
+    PSOProperties.InputLayoutState                       = InputLayoutState.Get();
+    PSOProperties.RasterizerState                        = RasterizerState.Get();
+    PSOProperties.ShaderState.VertexShader               = AABBVertexShader.Get();
+    PSOProperties.ShaderState.PixelShader                = AABBPixelShader.Get();
+    PSOProperties.PrimitiveTopologyType                  = ERHIPrimitiveTopologyType::Line;
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = Resources.RenderTargetFormat;
-    PSOProperties.PipelineFormats.NumRenderTargets = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat = Resources.DepthBufferFormat;
+    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
+    PSOProperties.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
 
     AABBDebugPipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!AABBDebugPipelineState)
@@ -1101,7 +1101,7 @@ bool CRenderer::InitAA()
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;
-    CreateInfo.Filter = ESamplerFilter::MinMagMipLinear;
+    CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
 
     Resources.FXAASampler = RHICreateSamplerState(CreateInfo);
     if (!Resources.FXAASampler)

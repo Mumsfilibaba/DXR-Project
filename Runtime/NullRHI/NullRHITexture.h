@@ -1,7 +1,7 @@
 #pragma once
 #include "RHI/RHIResources.h"
 
-#include "NullRHIViews.h"
+#include "NullRHIResourceView.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)

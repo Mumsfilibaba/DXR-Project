@@ -1,5 +1,6 @@
 #include "VulkanRHI.h"
 #include "VulkanInstance.h"
+#include "VulkanShaderCompiler.h"
 
 IMPLEMENT_ENGINE_MODULE(CVulkanRHI, VulkanRHI);
 
@@ -13,5 +14,5 @@ CRHIInstance* CVulkanRHI::CreateInterface()
 
 IRHIShaderCompiler* CVulkanRHI::CreateCompiler()
 {
-    return nullptr;
+    return dbg_new CVulkanShaderCompiler();
 }

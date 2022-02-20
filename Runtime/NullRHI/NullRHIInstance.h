@@ -3,7 +3,7 @@
 
 #include "NullRHIBuffer.h"
 #include "NullRHITexture.h"
-#include "NullRHIViews.h"
+#include "NullRHIResourceView.h"
 #include "NullRHISamplerState.h"
 #include "NullRHIViewport.h"
 #include "NullRHIShader.h"

@@ -21,7 +21,7 @@ CD3D12RHIRayTracingGeometry::CD3D12RHIRayTracingGeometry(CD3D12Device* InDevice,
 {
 }
 
-bool CD3D12RHIRayTracingGeometry::Build(CD3D12RHICommandContext& CmdContext, bool Update)
+bool CD3D12RHIRayTracingGeometry::Build(CD3D12CommandContext& CmdContext, bool Update)
 {
     Assert(VertexBuffer != nullptr);
 
@@ -158,7 +158,7 @@ CD3D12RHIRayTracingScene::CD3D12RHIRayTracingScene(CD3D12Device* InDevice, uint3
 {
 }
 
-bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const SRayTracingGeometryInstance* InInstances, uint32 NumInstances, bool Update)
+bool CD3D12RHIRayTracingScene::Build(CD3D12CommandContext& CmdContext, const SRayTracingGeometryInstance* InInstances, uint32 NumInstances, bool Update)
 {
     Assert(InInstances != nullptr && NumInstances != 0);
 
@@ -335,7 +335,7 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
 }
 
 bool CD3D12RHIRayTracingScene::BuildBindingTable(
-    CD3D12RHICommandContext& CmdContext,
+    CD3D12CommandContext& CmdContext,
     CD3D12RHIRayTracingPipelineState* PipelineState,
     CD3D12OnlineDescriptorHeap* ResourceHeap,
     CD3D12OnlineDescriptorHeap* SamplerHeap,

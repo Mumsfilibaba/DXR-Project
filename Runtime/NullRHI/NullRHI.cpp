@@ -1,5 +1,5 @@
-#include "NullRHIModule.h"
-#include "NullRHIInterface.h"
+#include "NullRHI.h"
+#include "NullRHIInstance.h"
 #include "NullRHIShaderCompiler.h"
 
 

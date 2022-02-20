@@ -9,7 +9,7 @@
 
 #include "CoreApplication/Windows/WindowsWindow.h"
 
-class CD3D12RHICommandContext;
+class CD3D12CommandContext;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12 Texture Helpers
@@ -148,7 +148,7 @@ private:
 
     CD3D12Device* Device = nullptr;
     
-    TSharedRef<CD3D12RHICommandContext> DirectCmdContext;
+    TSharedRef<CD3D12CommandContext> DirectCmdContext;
     
     CD3D12RootSignatureCache* RootSignatureCache = nullptr;
 

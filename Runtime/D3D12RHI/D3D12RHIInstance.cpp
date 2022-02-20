@@ -177,7 +177,7 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
         return false;
     }
 
-    TSharedRef<CD3D12RHIComputeShader> Shader = dbg_new CD3D12RHIComputeShader(GetDevice(), Code);
+    TSharedRef<CD3D12ComputeShader> Shader = dbg_new CD3D12ComputeShader(GetDevice(), Code);
     if (!Shader->Init())
     {
         CDebug::DebugBreak();
@@ -201,7 +201,7 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
         CDebug::DebugBreak();
     }
 
-    Shader = dbg_new CD3D12RHIComputeShader(GetDevice(), Code);
+    Shader = dbg_new CD3D12ComputeShader(GetDevice(), Code);
     if (!Shader->Init())
     {
         CDebug::DebugBreak();
@@ -220,7 +220,7 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
     }
 
     // Init context
-    DirectCmdContext = CD3D12RHICommandContext::Make(Device);
+    DirectCmdContext = CD3D12CommandContext::Make(Device);
     if (!DirectCmdContext)
     {
         return false;
@@ -1241,7 +1241,7 @@ CRHIDepthStencilView* CD3D12RHIInstance::CreateDepthStencilView(const SRHIDepthS
 
 CRHIComputeShader* CD3D12RHIInstance::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<CD3D12RHIComputeShader> Shader = dbg_new CD3D12RHIComputeShader(Device, ShaderCode);
+    TSharedRef<CD3D12ComputeShader> Shader = dbg_new CD3D12ComputeShader(Device, ShaderCode);
     if (!Shader->Init())
     {
         return nullptr;
@@ -1252,7 +1252,7 @@ CRHIComputeShader* CD3D12RHIInstance::CreateComputeShader(const TArray<uint8>& S
 
 CRHIVertexShader* CD3D12RHIInstance::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<CD3D12RHIVertexShader> Shader = dbg_new CD3D12RHIVertexShader(Device, ShaderCode);
+    TSharedRef<CD3D12VertexShader> Shader = dbg_new CD3D12VertexShader(Device, ShaderCode);
     if (!CD3D12BaseShader::GetShaderReflection(Shader.Get()))
     {
         return nullptr;
@@ -1298,7 +1298,7 @@ CRHIAmplificationShader* CD3D12RHIInstance::CreateAmplificationShader(const TArr
 
 CRHIPixelShader* CD3D12RHIInstance::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<CD3D12RHIPixelShader> Shader = dbg_new CD3D12RHIPixelShader(Device, ShaderCode);
+    TSharedRef<CD3D12PixelShader> Shader = dbg_new CD3D12PixelShader(Device, ShaderCode);
     if (!CD3D12BaseShader::GetShaderReflection(Shader.Get()))
     {
         return nullptr;
@@ -1309,8 +1309,8 @@ CRHIPixelShader* CD3D12RHIInstance::CreatePixelShader(const TArray<uint8>& Shade
 
 CRHIRayGenShader* CD3D12RHIInstance::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<CD3D12RHIRayGenShader> Shader = dbg_new CD3D12RHIRayGenShader(Device, ShaderCode);
-    if (!CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
+    TSharedRef<CD3D12RayGenShader> Shader = dbg_new CD3D12RayGenShader(Device, ShaderCode);
+    if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
         LOG_ERROR("[CD3D12RHIInterface]: Failed to retrive Shader Identifier");
         return nullptr;
@@ -1323,8 +1323,8 @@ CRHIRayGenShader* CD3D12RHIInstance::CreateRayGenShader(const TArray<uint8>& Sha
 
 CRHIRayAnyHitShader* CD3D12RHIInstance::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<CD3D12RHIRayAnyHitShader> Shader = dbg_new CD3D12RHIRayAnyHitShader(Device, ShaderCode);
-    if (!CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
+    TSharedRef<CD3D12RayAnyHitShader> Shader = dbg_new CD3D12RayAnyHitShader(Device, ShaderCode);
+    if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
         LOG_ERROR("[CD3D12RHIInterface]: Failed to retrive Shader Identifier");
         return nullptr;
@@ -1338,7 +1338,7 @@ CRHIRayAnyHitShader* CD3D12RHIInstance::CreateRayAnyHitShader(const TArray<uint8
 CRHIRayClosestHitShader* CD3D12RHIInstance::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<CD3D12RayClosestHitShader> Shader = dbg_new CD3D12RayClosestHitShader(Device, ShaderCode);
-    if (!CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
+    if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
         LOG_ERROR("[CD3D12RHIInterface]: Failed to retrive Shader Identifier");
         return nullptr;
@@ -1351,8 +1351,8 @@ CRHIRayClosestHitShader* CD3D12RHIInstance::CreateRayClosestHitShader(const TArr
 
 CRHIRayMissShader* CD3D12RHIInstance::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<CD3D12RHIRayMissShader> Shader = dbg_new CD3D12RHIRayMissShader(Device, ShaderCode);
-    if (!CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
+    TSharedRef<CD3D12RayMissShader> Shader = dbg_new CD3D12RayMissShader(Device, ShaderCode);
+    if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
         LOG_ERROR("[CD3D12RHIInterface]: Failed to retrive Shader Identifier");
         return nullptr;
@@ -1444,7 +1444,7 @@ CRHIComputePipelineState* CD3D12RHIInstance::CreateComputePipelineState(const SR
 {
     Assert(Info.Shader != nullptr);
 
-    TSharedRef<CD3D12RHIComputeShader> Shader = MakeSharedRef<CD3D12RHIComputeShader>(Info.Shader);
+    TSharedRef<CD3D12ComputeShader> Shader = MakeSharedRef<CD3D12ComputeShader>(Info.Shader);
     TSharedRef<CD3D12RHIComputePipelineState> NewPipelineState = dbg_new CD3D12RHIComputePipelineState(Device, Shader);
     if (!NewPipelineState->Init())
     {

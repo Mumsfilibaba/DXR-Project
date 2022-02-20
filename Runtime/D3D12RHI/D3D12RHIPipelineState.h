@@ -197,7 +197,7 @@ class CD3D12RHIComputePipelineState : public CRHIComputePipelineState, public CD
 {
 public:
 
-    CD3D12RHIComputePipelineState(CD3D12Device* InDevice, const TSharedRef<CD3D12RHIComputeShader>& InShader);
+    CD3D12RHIComputePipelineState(CD3D12Device* InDevice, const TSharedRef<CD3D12ComputeShader>& InShader);
     ~CD3D12RHIComputePipelineState() = default;
 
     bool Init();
@@ -232,7 +232,7 @@ public:
 
 private:
     TComPtr<ID3D12PipelineState>       PipelineState;
-    TSharedRef<CD3D12RHIComputeShader> Shader;
+    TSharedRef<CD3D12ComputeShader> Shader;
     TSharedRef<CD3D12RootSignature>    RootSignature;
 };
 

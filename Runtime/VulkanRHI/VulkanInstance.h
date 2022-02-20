@@ -2,6 +2,7 @@
 #include "VulkanDriverInstance.h"
 #include "VulkanDevice.h"
 #include "VulkanPhysicalDevice.h"
+#include "VulkanCommandContext.h"
 
 #include "RHI/RHIInstance.h"
 
@@ -89,9 +90,9 @@ public:
 
     virtual CRHIViewport*                CreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) override final;
 
-    virtual class IRHICommandContext* GetDefaultCommandContext() override final { return nullptr; }
+    virtual class IRHICommandContext* GetDefaultCommandContext() override final { return DirectCommandContext.Get(); }
 
-    virtual String GetAdapterName() const override final { return ""; }
+    virtual String GetAdapterName() const override final;
 
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
     virtual bool UAVSupportsFormat(EFormat Format) const override final;
@@ -107,4 +108,6 @@ private:
 	TSharedRef<CVulkanDriverInstance> Instance;
 	TSharedRef<CVulkanPhysicalDevice> Adapter;
     TSharedRef<CVulkanDevice>         Device;
+
+    TSharedRef<CVulkanCommandContext> DirectCommandContext;
 };

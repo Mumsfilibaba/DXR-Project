@@ -8,7 +8,7 @@
 #include <d3d12shader.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ShaderVisibility
+// EShaderVisibility
 
 enum EShaderVisibility
 {
@@ -22,7 +22,7 @@ enum EShaderVisibility
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ResourceType
+// EResourceType
 
 enum EResourceType
 {
@@ -35,7 +35,7 @@ enum EResourceType
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ShaderResourceRange
+// SShaderResourceRange
 
 struct SShaderResourceRange
 {
@@ -46,7 +46,7 @@ struct SShaderResourceRange
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ShaderResourceCount
+// SShaderResourceCount
 
 struct SShaderResourceCount
 {
@@ -58,7 +58,7 @@ struct SShaderResourceCount
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12ShaderParameter
+// SD3D12ShaderParameter
 
 struct SD3D12ShaderParameter
 {
@@ -81,7 +81,7 @@ struct SD3D12ShaderParameter
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12BaseShader
+// CD3D12BaseShader
 
 class CD3D12BaseShader : public CD3D12DeviceObject
 {
@@ -190,12 +190,12 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseVertexShader
+// CD3D12BaseVertexShader
 
-class CD3D12RHIBaseVertexShader : public CRHIVertexShader, public CD3D12BaseShader
+class CD3D12BaseVertexShader : public CRHIVertexShader, public CD3D12BaseShader
 {
 public:
-    CD3D12RHIBaseVertexShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseVertexShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIVertexShader()
         , CD3D12BaseShader(InDevice, InCode, ShaderVisibility_Vertex)
     {
@@ -203,12 +203,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBasePixelShader
+// CD3D12BasePixelShader
 
-class CD3D12RHIBasePixelShader : public CRHIPixelShader, public CD3D12BaseShader
+class CD3D12BasePixelShader : public CRHIPixelShader, public CD3D12BaseShader
 {
 public:
-    CD3D12RHIBasePixelShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BasePixelShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIPixelShader()
         , CD3D12BaseShader(InDevice, InCode, ShaderVisibility_Pixel)
     {
@@ -216,12 +216,12 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRayTracingShader
+// CD3D12BaseRayTracingShader
 
-class CD3D12RHIBaseRayTracingShader : public CD3D12BaseShader
+class CD3D12BaseRayTracingShader : public CD3D12BaseShader
 {
 public:
-    CD3D12RHIBaseRayTracingShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseRayTracingShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CD3D12BaseShader(InDevice, InCode, ShaderVisibility_All)
     {
     }
@@ -231,71 +231,71 @@ public:
         return Identifier;
     }
 
-    static bool GetRayTracingShaderReflection(class CD3D12RHIBaseRayTracingShader* Shader);
+    static bool GetRayTracingShaderReflection(class CD3D12BaseRayTracingShader* Shader);
 
 protected:
     String Identifier;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRayGenShader
+// CD3D12BaseRayGenShader
 
-class CD3D12RHIBaseRayGenShader : public CRHIRayGenShader, public CD3D12RHIBaseRayTracingShader
+class CD3D12BaseRayGenShader : public CRHIRayGenShader, public CD3D12BaseRayTracingShader
 {
 public:
-    CD3D12RHIBaseRayGenShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseRayGenShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayGenShader()
-        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
+        , CD3D12BaseRayTracingShader(InDevice, InCode)
     {
     }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRayAnyhitShader
+// CD3D12BaseRayAnyhitShader
 
-class CD3D12RHIBaseRayAnyhitShader : public CRHIRayAnyHitShader, public CD3D12RHIBaseRayTracingShader
+class CD3D12BaseRayAnyhitShader : public CRHIRayAnyHitShader, public CD3D12BaseRayTracingShader
 {
 public:
-    CD3D12RHIBaseRayAnyhitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseRayAnyhitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayAnyHitShader()
-        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
+        , CD3D12BaseRayTracingShader(InDevice, InCode)
     {
     }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRayClosestHitShader
+// CD3D12BaseRayClosestHitShader
 
-class CD3D12RHIBaseRayClosestHitShader : public CRHIRayClosestHitShader, public CD3D12RHIBaseRayTracingShader
+class CD3D12BaseRayClosestHitShader : public CRHIRayClosestHitShader, public CD3D12BaseRayTracingShader
 {
 public:
-    CD3D12RHIBaseRayClosestHitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseRayClosestHitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayClosestHitShader()
-        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
+        , CD3D12BaseRayTracingShader(InDevice, InCode)
     {
     }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRayMissShader
+// CD3D12BaseRayMissShader
 
-class CD3D12RHIBaseRayMissShader : public CRHIRayMissShader, public CD3D12RHIBaseRayTracingShader
+class CD3D12BaseRayMissShader : public CRHIRayMissShader, public CD3D12BaseRayTracingShader
 {
 public:
-    CD3D12RHIBaseRayMissShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseRayMissShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayMissShader()
-        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
+        , CD3D12BaseRayTracingShader(InDevice, InCode)
     {
     }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseComputeShader
+// CD3D12BaseComputeShader
 
-class CD3D12RHIBaseComputeShader : public CRHIComputeShader, public CD3D12BaseShader
+class CD3D12BaseComputeShader : public CRHIComputeShader, public CD3D12BaseShader
 {
 public:
-    CD3D12RHIBaseComputeShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseComputeShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIComputeShader()
         , CD3D12BaseShader(InDevice, InCode, ShaderVisibility_All)
         , ThreadGroupXYZ(0, 0, 0)
@@ -314,7 +314,7 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIShader
+// TD3D12RHIShader
 
 template<typename BaseShaderType>
 class TD3D12RHIShader : public BaseShaderType
@@ -377,15 +377,15 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12 Shaders
 
-using CD3D12RHIVertexShader = TD3D12RHIShader<CD3D12RHIBaseVertexShader>;
-using CD3D12RHIPixelShader = TD3D12RHIShader<CD3D12RHIBasePixelShader>;
+using CD3D12VertexShader        = TD3D12RHIShader<CD3D12BaseVertexShader>;
+using CD3D12PixelShader         = TD3D12RHIShader<CD3D12BasePixelShader>;
 
-using CD3D12RHIComputeShader = TD3D12RHIShader<CD3D12RHIBaseComputeShader>;
+using CD3D12ComputeShader       = TD3D12RHIShader<CD3D12BaseComputeShader>;
 
-using CD3D12RHIRayGenShader = TD3D12RHIShader<CD3D12RHIBaseRayGenShader>;
-using CD3D12RHIRayAnyHitShader = TD3D12RHIShader<CD3D12RHIBaseRayAnyhitShader>;
-using CD3D12RayClosestHitShader = TD3D12RHIShader<CD3D12RHIBaseRayClosestHitShader>;
-using CD3D12RHIRayMissShader = TD3D12RHIShader<CD3D12RHIBaseRayMissShader>;
+using CD3D12RayGenShader        = TD3D12RHIShader<CD3D12BaseRayGenShader>;
+using CD3D12RayAnyHitShader     = TD3D12RHIShader<CD3D12BaseRayAnyhitShader>;
+using CD3D12RayClosestHitShader = TD3D12RHIShader<CD3D12BaseRayClosestHitShader>;
+using CD3D12RayMissShader       = TD3D12RHIShader<CD3D12BaseRayMissShader>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12ShaderCast
@@ -394,23 +394,23 @@ inline CD3D12BaseShader* D3D12ShaderCast(CRHIShader* Shader)
 {
     if (Shader->AsVertexShader())
     {
-        return static_cast<CD3D12RHIVertexShader*>(Shader);
+        return static_cast<CD3D12VertexShader*>(Shader);
     }
     else if (Shader->AsPixelShader())
     {
-        return static_cast<CD3D12RHIPixelShader*>(Shader);
+        return static_cast<CD3D12PixelShader*>(Shader);
     }
     else if (Shader->AsComputeShader())
     {
-        return static_cast<CD3D12RHIComputeShader*>(Shader);
+        return static_cast<CD3D12ComputeShader*>(Shader);
     }
     else if (Shader->AsRayGenShader())
     {
-        return static_cast<CD3D12RHIRayGenShader*>(Shader);
+        return static_cast<CD3D12RayGenShader*>(Shader);
     }
     else if (Shader->AsRayAnyHitShader())
     {
-        return static_cast<CD3D12RHIRayAnyHitShader*>(Shader);
+        return static_cast<CD3D12RayAnyHitShader*>(Shader);
     }
     else if (Shader->AsRayClosestHitShader())
     {
@@ -418,7 +418,7 @@ inline CD3D12BaseShader* D3D12ShaderCast(CRHIShader* Shader)
     }
     else if (Shader->AsRayMissShader())
     {
-        return static_cast<CD3D12RHIRayMissShader*>(Shader);
+        return static_cast<CD3D12RayMissShader*>(Shader);
     }
     else
     {

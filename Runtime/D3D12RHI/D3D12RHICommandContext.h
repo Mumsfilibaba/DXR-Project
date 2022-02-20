@@ -200,13 +200,13 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHICommandContext
+// CD3D12CommandContext
 
-class CD3D12RHICommandContext : public IRHICommandContext, public CD3D12DeviceObject
+class CD3D12CommandContext : public IRHICommandContext, public CD3D12DeviceObject
 {
 public:
 
-    static CD3D12RHICommandContext* Make(CD3D12Device* InDevice);
+    static CD3D12CommandContext* Make(CD3D12Device* InDevice);
 
     virtual void Begin() override final;
     virtual void End() override final;
@@ -348,8 +348,8 @@ public:
 
 private:
 
-    CD3D12RHICommandContext(CD3D12Device* InDevice);
-    ~CD3D12RHICommandContext();
+    CD3D12CommandContext(CD3D12Device* InDevice);
+    ~CD3D12CommandContext();
 
     bool Init();
 

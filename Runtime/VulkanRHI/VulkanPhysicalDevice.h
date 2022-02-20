@@ -69,6 +69,39 @@ public:
         return PhysicalDevice;
     }
 
+    FORCEINLINE const VkPhysicalDeviceProperties& GetDeviceProperties() const
+    {
+        return DeviceProperties;
+    }
+
+	FORCEINLINE const VkPhysicalDeviceFeatures& GetDeviceFeatures() const
+    {
+        return DeviceFeatures;
+    }
+
+	FORCEINLINE const VkPhysicalDeviceMemoryProperties& GetDeviceMemoryProperties() const
+    {
+        return DeviceMemoryProperties;
+    }
+	
+#if VK_KHR_get_physical_device_properties2
+	FORCEINLINE const VkPhysicalDeviceProperties2& GetDeviceProperties2() const
+    {
+        return DeviceProperties2;
+    }
+
+	FORCEINLINE const VkPhysicalDeviceFeatures2& GetDeviceFeatures2() const
+    {
+        return DeviceFeatures2;
+    }
+
+	FORCEINLINE const VkPhysicalDeviceMemoryProperties2& GetDeviceMemoryProperties2() const
+    {
+        return DeviceMemoryProperties2;
+    }
+
+#endif
+
 private:
 
 	CVulkanPhysicalDevice(CVulkanDriverInstance* InInstance);
