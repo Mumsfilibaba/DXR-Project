@@ -1,6 +1,6 @@
 #include "D3D12CommandQueue.h"
-#include "D3D12RHIInstance.h"
-#include "D3D12RHIViewport.h"
+#include "D3D12Instance.h"
+#include "D3D12Viewport.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
@@ -158,7 +158,7 @@ bool CD3D12Viewport::Present(bool VerticalSync)
     HRESULT Result = SwapChain->Present(SyncInterval, PresentFlags);
     if (Result == DXGI_ERROR_DEVICE_REMOVED)
     {
-        RHID3D12DeviceRemovedHandler(GetDevice());
+        D3D12RHIDeviceRemovedHandler(GetDevice());
     }
 
     if (SUCCEEDED(Result))

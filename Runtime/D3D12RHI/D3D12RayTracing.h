@@ -2,8 +2,8 @@
 #include "RHI/RHIRayTracing.h"
 
 #include "D3D12DeviceChild.h"
-#include "D3D12RHIBuffer.h"
-#include "D3D12RHIViews.h"
+#include "D3D12Buffer.h"
+#include "D3D12Views.h"
 
 class CD3D12CommandList;
 class CMaterial;
@@ -62,7 +62,7 @@ public:
     ~CD3D12ShaderBindingTableBuilder() = default;
 
     void PopulateEntry(
-        CD3D12RHIRayTracingPipelineState* PipelineState,
+        CD3D12RayTracingPipelineState* PipelineState,
         CD3D12RootSignature* RootSignature,
         CD3D12OnlineDescriptorHeap* ResourceHeap,
         CD3D12OnlineDescriptorHeap* SamplerHeap,
@@ -104,7 +104,7 @@ public:
 
     bool BuildBindingTable(
         class CD3D12CommandContext& CmdContext,
-        CD3D12RHIRayTracingPipelineState* PipelineState,
+        CD3D12RayTracingPipelineState* PipelineState,
         CD3D12OnlineDescriptorHeap* ResourceHeap,
         CD3D12OnlineDescriptorHeap* SamplerHeap,
         const SRayTracingShaderResources* RayGenLocalResources,

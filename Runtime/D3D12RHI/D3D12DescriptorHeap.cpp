@@ -1,6 +1,6 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Device.h"
-#include "D3D12RHIViews.h"
+#include "D3D12Views.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
@@ -19,7 +19,7 @@ CD3D12DescriptorHeap::CD3D12DescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIP
 {
 }
 
-bool CD3D12DescriptorHeap::Init()
+bool CD3D12DescriptorHeap::Initialize()
 {
     D3D12_DESCRIPTOR_HEAP_DESC Desc;
     CMemory::Memzero(&Desc);

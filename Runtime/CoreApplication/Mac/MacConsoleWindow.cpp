@@ -4,8 +4,16 @@
 #include "ScopedAutoreleasePool.h"
 
 #include "Core/Threading/Mac/MacRunLoop.h"
+#include "Core/Debug/Console/ConsoleManager.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Console Variables
+
+TAutoConsoleVariable<int32> GConsoleWidth("output.ConsoleWidth" , 1280);
+TAutoConsoleVariable<int32> GConsoleHeight("output.ConsoleHeight", 720);
+TAutoConsoleVariable<int32> GConsoleLineLimit("output.LineLimit", 256);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMacConsoleWindow
@@ -36,9 +44,8 @@ void CMacConsoleWindow::CreateConsole()
 		
 		const NSUInteger StyleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskMiniaturizable;
 		
-		// TODO: Control with console vars?
-		const CGFloat Width  = 640.0f;
-		const CGFloat Height = 360.0f;
+		const CGFloat Width  = static_cast<CGFloat>(GConsoleWidth.GetInt());
+		const CGFloat Height = static_cast<CGFloat>(GConsoleHeight.GetInt());
 		
 		NSRect ContentRect = NSMakeRect(0.0f, 0.0f, Width, Height);
 		
@@ -252,7 +259,7 @@ int32 CMacConsoleWindow::GetLineCount() const
 			NSString* String = [TextView string];
 			
 			NSUInteger StringLength = [String length];
-			for (NSUInteger LineIndex = 0; LineIndex < StringLength; NumberOfLines++)
+			for (NSUInteger LineIndex = 0; LineIndex < StringLength; ++NumberOfLines)
 			{
 				LineIndex = NSMaxRange([String lineRangeForRange:NSMakeRange(LineIndex, 0)]);
 			}
@@ -281,7 +288,7 @@ void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
 			SCOPED_AUTORELEASE_POOL();
 			
 			// TODO: CVar
-			const NSUInteger MaxLineCount = 196;
+			const NSUInteger MaxLineCount = static_cast<NSUInteger>(GConsoleLineLimit.GetInt());
 			
 			NSAttributedString* AttributedString = [[NSAttributedString alloc] initWithString:String attributes:ConsoleColor];
 				
@@ -296,7 +303,7 @@ void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
 				NSUInteger LineIndex;
 				NSUInteger NumberOfLines = 0;
 				NSUInteger StringLength  = [TextString length];
-				for (LineIndex = 0; LineIndex < StringLength; NumberOfLines++)
+				for (LineIndex = 0; LineIndex < StringLength; ++NumberOfLines)
 				{
 					LineIndex = NSMaxRange([TextString lineRangeForRange:NSMakeRange(LineIndex, 0)]);
 					if (NumberOfLines >= 1)

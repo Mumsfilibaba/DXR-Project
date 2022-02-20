@@ -1,6 +1,6 @@
 #pragma once
-#include "D3D12RHITexture.h"
-#include "D3D12RHIBuffer.h"
+#include "D3D12Texture.h"
+#include "D3D12Buffer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12ResourceCast

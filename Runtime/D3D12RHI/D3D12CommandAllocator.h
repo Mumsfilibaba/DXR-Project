@@ -14,7 +14,7 @@ public:
     {
     }
 
-    FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type)
+    FORCEINLINE bool Initialize(D3D12_COMMAND_LIST_TYPE Type)
     {
         HRESULT Result = GetDevice()->GetDevice()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
         if (SUCCEEDED(Result))
@@ -34,7 +34,7 @@ public:
         HRESULT Result = Allocator->Reset();
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
         {
-            RHID3D12DeviceRemovedHandler(GetDevice());
+            D3D12RHIDeviceRemovedHandler(GetDevice());
         }
 
         return SUCCEEDED(Result);

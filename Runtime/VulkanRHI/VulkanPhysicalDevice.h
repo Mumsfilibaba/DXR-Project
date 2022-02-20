@@ -64,7 +64,7 @@ public:
         return Instance;
     }
 
-    FORCEINLINE VkPhysicalDevice GetPhysicalDevice() const
+    FORCEINLINE VkPhysicalDevice GetVkPhysicalDevice() const
     {
         return PhysicalDevice;
     }

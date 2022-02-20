@@ -1,10 +1,10 @@
 #include "D3D12Device.h"
-#include "D3D12RHIShaderCompiler.h"
+#include "D3D12ShaderCompiler.h"
 #include "D3D12DescriptorHeap.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12CommandQueue.h"
-#include "D3D12RHIPipelineState.h"
+#include "D3D12PipelineState.h"
 #include "D3D12FunctionPointers.h"
 
 #include "Core/Windows/Windows.h"
@@ -74,7 +74,7 @@ static const char* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // DeviceRemovedHandler
 
-void RHID3D12DeviceRemovedHandler(CD3D12Device* Device)
+void D3D12RHIDeviceRemovedHandler(CD3D12Device* Device)
 {
     Assert(Device != nullptr);
 
@@ -145,6 +145,17 @@ void RHID3D12DeviceRemovedHandler(CD3D12Device* Device)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12Device
+
+TSharedRef<CD3D12Device> CD3D12Device::CreateDevice(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED)
+{
+    TSharedRef<CD3D12Device> NewDevice = dbg_new CD3D12Device(bInEnableDebugLayer, bInEnableGPUValidation, bInEnableDRED);
+    if (NewDevice && NewDevice->Initialize())
+    {
+        return NewDevice;
+    }
+
+    return nullptr;
+}
 
 CD3D12Device::CD3D12Device(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED)
     : Factory(nullptr)

@@ -1,7 +1,7 @@
 #include "D3D12Device.h"
 #include "D3D12RootSignature.h"
 #include "D3D12Core.h"
-#include "D3D12RHIShader.h"
+#include "D3D12Shader.h"
 #include "D3D12FunctionPointers.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

@@ -1535,3 +1535,9 @@ inline TUniquePtr<T[]> MakeUniquePtr(const TArray<T, AllocatorType>& Array) noex
     CopyConstructRange<T>(Memory, Array.Data(), Array.Size());
     return TUniquePtr<T[]>(Memory);
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TInlineArray Helper
+
+template<typename ElementType, uint32 NumElements>
+using TInlineArray = TArray<ElementType, TInlineArrayAllocator<ElementType, NumElements>>;

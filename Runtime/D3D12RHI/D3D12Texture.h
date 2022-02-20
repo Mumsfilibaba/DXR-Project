@@ -2,7 +2,7 @@
 #include "RHI/RHIResources.h"
 
 #include "D3D12Resource.h"
-#include "D3D12RHIViews.h"
+#include "D3D12Views.h"
 
 #ifdef COMPILER_MSVC
 #pragma warning(push)
@@ -72,8 +72,8 @@ public:
     {
     }
 
-    virtual CRHIRenderTargetView* GetRenderTargetView() const override { return RenderTargetView.Get(); }
-    virtual CRHIDepthStencilView* GetDepthStencilView() const override { return DepthStencilView.Get(); }
+    virtual CRHIRenderTargetView*    GetRenderTargetView() const override { return RenderTargetView.Get(); }
+    virtual CRHIDepthStencilView*    GetDepthStencilView() const override { return DepthStencilView.Get(); }
     virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
 
     FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* InRenderTargetView)

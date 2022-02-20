@@ -17,7 +17,7 @@ public:
     {
     }
 
-    FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type)
+    FORCEINLINE bool Initialize(D3D12_COMMAND_LIST_TYPE Type)
     {
         D3D12_COMMAND_QUEUE_DESC QueueDesc;
         CMemory::Memzero(&QueueDesc);
@@ -45,7 +45,7 @@ public:
         HRESULT Result = Queue->Signal(Fence.GetFence(), FenceValue);
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
         {
-            RHID3D12DeviceRemovedHandler(GetDevice());
+            D3D12RHIDeviceRemovedHandler(GetDevice());
         }
 
         return SUCCEEDED(Result);
@@ -56,7 +56,7 @@ public:
         HRESULT Result = Queue->Wait(Fence.GetFence(), FenceValue);
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
         {
-            RHID3D12DeviceRemovedHandler(GetDevice());
+            D3D12RHIDeviceRemovedHandler(GetDevice());
         }
 
         return SUCCEEDED(Result);

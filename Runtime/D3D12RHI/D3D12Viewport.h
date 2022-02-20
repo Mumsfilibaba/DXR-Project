@@ -6,9 +6,9 @@
 #include "Core/Windows/Windows.h"
 
 #include "D3D12Core.h"
-#include "D3D12RHITexture.h"
-#include "D3D12RHIViews.h"
-#include "D3D12RHICommandContext.h"
+#include "D3D12Texture.h"
+#include "D3D12Views.h"
+#include "D3D12CommandContext.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12Viewport

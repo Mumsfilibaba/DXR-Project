@@ -15,26 +15,31 @@
 // D3D12 Error
 
 #if !PRODUCTION_BUILD
-#define D3D12_ERROR(Condition, ErrorMessage) \
-    do                                       \
-    {                                        \
-        if (!(Condition))                    \
-        {                                    \
-            LOG_ERROR(ErrorMessage);         \
-            CDebug::DebugBreak();            \
-        }                                    \
+#define D3D12_ERROR_ALWAYS(ErrorMessage)      \
+    do                                        \
+    {                                         \
+        LOG_ERROR("[D3D12RHI] "ErrorMessage); \
+        CDebug::DebugBreak();                 \
     } while (0)
 
-#define D3D12_ERROR_ALWAYS(ErrorMessage) \
-    do                                   \
-    {                                    \
-            LOG_ERROR(ErrorMessage);     \
-            CDebug::DebugBreak();        \
+#define D3D12_WARNING(Message)             \
+    do                                     \
+    {                                      \
+        LOG_WARNING("[D3D12RHI] "Message); \
+    } while (0)
+
+#define D3D12_ERROR(Condition, ErrorMessage)  \
+    do                                        \
+    {                                         \
+        if (!(Condition))                     \
+        {                                     \
+            D3D12_ERROR_ALWAYS(ErrorMessage); \
+        }                                     \
     } while (0)
 
 #else
-#define D3D12_ERROR(Condtion, ErrorString) do {} while(0)
 #define D3D12_ERROR_ALWAYS(ErrorString)    do {} while(0)
+#define D3D12_ERROR(Condtion, ErrorString) do {} while(0)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

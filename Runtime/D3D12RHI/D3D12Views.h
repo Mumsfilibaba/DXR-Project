@@ -8,7 +8,7 @@ class CD3D12Device;
 class CD3D12OfflineDescriptorHeap;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12View
+// CD3D12View
 
 class CD3D12View : public CD3D12DeviceObject
 {

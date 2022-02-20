@@ -2,8 +2,8 @@
 #include "D3D12RHIModule.h"
 #include "D3D12Device.h"
 #include "D3D12RootSignature.h"
-#include "D3D12RHICommandContext.h"
-#include "D3D12RHITexture.h"
+#include "D3D12CommandContext.h"
+#include "D3D12Texture.h"
 
 #include "RHI/RHIInstance.h"
 
@@ -21,9 +21,9 @@ template<typename D3D12TextureType>
 bool IsTextureCube();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RHIInstance
+// CD3D12Instance
 
-class CD3D12RHIInstance : public CRHIInstance
+class CD3D12Instance : public CRHIInstance
 {
 public:
 
@@ -59,12 +59,12 @@ public:
         return SamplerOfflineDescriptorHeap;
     }
 
-    FORCEINLINE TSharedRef<CD3D12RHIComputePipelineState> GetGenerateMipsPipelineTexure2D() const
+    FORCEINLINE TSharedRef<CD3D12ComputePipelineState> GetGenerateMipsPipelineTexure2D() const
     {
         return GenerateMipsTex2D_PSO;
     }
 
-    FORCEINLINE TSharedRef<CD3D12RHIComputePipelineState> GetGenerateMipsPipelineTexureCube() const
+    FORCEINLINE TSharedRef<CD3D12ComputePipelineState> GetGenerateMipsPipelineTexureCube() const
     {
         return GenerateMipsTexCube_PSO;
     }
@@ -128,7 +128,7 @@ public:
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
     virtual bool UAVSupportsFormat(EFormat Format) const override final;
 
-    virtual class IRHICommandContext* GetDefaultCommandContext() override final { return DirectCmdContext.Get(); }
+    virtual class IRHICommandContext* GetDefaultCommandContext() override final { return DirectCommandContext.Get(); }
 
     virtual String GetAdapterName() const override final { return Device->GetAdapterName(); }
 
@@ -137,8 +137,8 @@ public:
 
 private:
 
-    CD3D12RHIInstance();
-    ~CD3D12RHIInstance();
+    CD3D12Instance();
+    ~CD3D12Instance();
 
     template<typename D3D12TextureType>
     D3D12TextureType* CreateTexture(EFormat Format, uint32 SizeX, uint32 SizeY, uint32 SizeZ, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue);
@@ -146,19 +146,18 @@ private:
     template<typename D3D12BufferType>
     bool CreateBuffer(D3D12BufferType* Buffer, uint32 SizeInBytes, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData);
 
-    CD3D12Device* Device = nullptr;
-    
-    TSharedRef<CD3D12CommandContext> DirectCmdContext;
+    TSharedRef<CD3D12Device>         Device;
+    TSharedRef<CD3D12CommandContext> DirectCommandContext;
     
     CD3D12RootSignatureCache* RootSignatureCache = nullptr;
 
-    CD3D12OfflineDescriptorHeap* ResourceOfflineDescriptorHeap = nullptr;
+    CD3D12OfflineDescriptorHeap* ResourceOfflineDescriptorHeap     = nullptr;
     CD3D12OfflineDescriptorHeap* RenderTargetOfflineDescriptorHeap = nullptr;
     CD3D12OfflineDescriptorHeap* DepthStencilOfflineDescriptorHeap = nullptr;
-    CD3D12OfflineDescriptorHeap* SamplerOfflineDescriptorHeap = nullptr;
+    CD3D12OfflineDescriptorHeap* SamplerOfflineDescriptorHeap      = nullptr;
 
-    TSharedRef<CD3D12RHIComputePipelineState> GenerateMipsTex2D_PSO;
-    TSharedRef<CD3D12RHIComputePipelineState> GenerateMipsTexCube_PSO;
+    TSharedRef<CD3D12ComputePipelineState> GenerateMipsTex2D_PSO;
+    TSharedRef<CD3D12ComputePipelineState> GenerateMipsTexCube_PSO;
 };
 
-extern CD3D12RHIInstance* GD3D12RHIInstance;
+extern CD3D12Instance* GD3D12RHIInstance;

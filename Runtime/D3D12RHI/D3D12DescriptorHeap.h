@@ -17,7 +17,7 @@ public:
     CD3D12DescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE Type, uint32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
     ~CD3D12DescriptorHeap() = default;
 
-    bool Init();
+    bool Initialize();
 
     FORCEINLINE void SetName(const String& Name)
     {
@@ -123,7 +123,7 @@ public:
     CD3D12OfflineDescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
     ~CD3D12OfflineDescriptorHeap() = default;
 
-    bool Init();
+    bool Initialize();
 
     D3D12_CPU_DESCRIPTOR_HANDLE Allocate(uint32& OutHeapIndex);
 
@@ -161,7 +161,7 @@ public:
     CD3D12OnlineDescriptorHeap(CD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
     ~CD3D12OnlineDescriptorHeap() = default;
 
-    bool Init();
+    bool Initialize();
 
     uint32 AllocateHandles(uint32 NumHandles);
     bool AllocateFreshHeap();
@@ -204,6 +204,7 @@ public:
 
 private:
     TSharedRef<CD3D12DescriptorHeap> Heap;
+    
     uint32 CurrentHandle   = 0;
     uint32 DescriptorCount = 0;
     

@@ -1,7 +1,7 @@
 #include "D3D12DescriptorCache.h"
 #include "D3D12DescriptorHeap.h"
-#include "D3D12RHIInstance.h"
-#include "D3D12RHICommandContext.h"
+#include "D3D12Instance.h"
+#include "D3D12CommandContext.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
@@ -30,7 +30,7 @@ CD3D12DescriptorCache::~CD3D12DescriptorCache()
     SafeRelease(NullSampler);
 }
 
-bool CD3D12DescriptorCache::Init()
+bool CD3D12DescriptorCache::Initialize()
 {
     D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
     CMemory::Memzero(&CBVDesc);
@@ -107,7 +107,7 @@ bool CD3D12DescriptorCache::Init()
     SamplerDesc.MinLOD = -FLT_MAX;
     SamplerDesc.MipLODBias = 0.0f;
 
-    NullSampler = dbg_new CD3D12RHISamplerState(GetDevice(), GD3D12RHIInstance->GetSamplerOfflineDescriptorHeap());
+    NullSampler = dbg_new CD3D12SamplerState(GetDevice(), GD3D12RHIInstance->GetSamplerOfflineDescriptorHeap());
     if (!NullSampler->Init(SamplerDesc))
     {
         return false;

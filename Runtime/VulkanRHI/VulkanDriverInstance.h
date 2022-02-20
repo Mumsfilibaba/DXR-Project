@@ -51,7 +51,7 @@ public:
 		return reinterpret_cast<FunctionType>(LoadFunction(Name));
 	}
 	
-    FORCEINLINE VkInstance GetInstance() const noexcept
+    FORCEINLINE VkInstance GetVkInstance() const noexcept
     {
         return Instance;
     }

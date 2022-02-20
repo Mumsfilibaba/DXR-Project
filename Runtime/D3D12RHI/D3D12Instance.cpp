@@ -7,16 +7,16 @@
 #include "D3D12Fence.h"
 #include "D3D12RootSignature.h"
 #include "D3D12Core.h"
-#include "D3D12RHIInstance.h"
-#include "D3D12RHIViews.h"
-#include "D3D12RHIRayTracing.h"
-#include "D3D12RHIPipelineState.h"
-#include "D3D12RHITexture.h"
-#include "D3D12RHIBuffer.h"
-#include "D3D12RHISamplerState.h"
-#include "D3D12RHIViewport.h"
-#include "D3D12RHIShaderCompiler.h"
-#include "D3D12RHITimestampQuery.h"
+#include "D3D12Instance.h"
+#include "D3D12Views.h"
+#include "D3D12RayTracing.h"
+#include "D3D12PipelineState.h"
+#include "D3D12Texture.h"
+#include "D3D12Buffer.h"
+#include "D3D12SamplerState.h"
+#include "D3D12Viewport.h"
+#include "D3D12ShaderCompiler.h"
+#include "D3D12TimestampQuery.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12 Helpers
@@ -70,26 +70,26 @@ inline bool IsTextureCube<CD3D12TextureCubeArray>()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RHIInstance
+// CD3D12Instance
 
-CD3D12RHIInstance* GD3D12RHIInstance = nullptr;
+CD3D12Instance* GD3D12RHIInstance = nullptr;
 
-CRHIInstance* CD3D12RHIInstance::CreateInstance() 
+CRHIInstance* CD3D12Instance::CreateInstance() 
 { 
-    return dbg_new CD3D12RHIInstance(); 
+    return dbg_new CD3D12Instance(); 
 }
 
-CD3D12RHIInstance::CD3D12RHIInstance()
+CD3D12Instance::CD3D12Instance()
     : CRHIInstance(ERHIInstanceApi::D3D12)
     , Device(nullptr)
-    , DirectCmdContext(nullptr)
+    , DirectCommandContext(nullptr)
 {
     GD3D12RHIInstance = this;
 }
 
-CD3D12RHIInstance::~CD3D12RHIInstance()
+CD3D12Instance::~CD3D12Instance()
 {
-    DirectCmdContext.Reset();
+    DirectCommandContext.Reset();
 
     GenerateMipsTex2D_PSO.Reset();
     GenerateMipsTexCube_PSO.Reset();
@@ -101,12 +101,12 @@ CD3D12RHIInstance::~CD3D12RHIInstance()
     SafeRelease(DepthStencilOfflineDescriptorHeap);
     SafeRelease(SamplerOfflineDescriptorHeap);
 
-    SafeDelete(Device);
+    Device.Reset();
 
     GD3D12RHIInstance = nullptr;
 }
 
-bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
+bool CD3D12Instance::Initialize(bool bEnableDebug)
 {
     // NOTE: GPUBasedValidation does not work with ray tracing since it is not supported
     bool bGPUBasedValidationOn =
@@ -122,9 +122,10 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
         false;
 #endif
 
-    Device = dbg_new CD3D12Device(bEnableDebug, bGPUBasedValidationOn, bDREDOn);
-    if (!Device->Init())
+    Device = CD3D12Device::CreateDevice(bEnableDebug, bGPUBasedValidationOn, bDREDOn);
+    if (!Device)
     {
+        D3D12_ERROR_ALWAYS("Failed to create device");
         return false;
     }
 
@@ -137,32 +138,32 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
 
     // Init Offline Descriptor heaps
     ResourceOfflineDescriptorHeap = dbg_new CD3D12OfflineDescriptorHeap(Device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    if (!ResourceOfflineDescriptorHeap->Init())
+    if (!ResourceOfflineDescriptorHeap->Initialize())
     {
         return false;
     }
 
     RenderTargetOfflineDescriptorHeap = dbg_new CD3D12OfflineDescriptorHeap(Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    if (!RenderTargetOfflineDescriptorHeap->Init())
+    if (!RenderTargetOfflineDescriptorHeap->Initialize())
     {
         return false;
     }
 
     DepthStencilOfflineDescriptorHeap = dbg_new CD3D12OfflineDescriptorHeap(Device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    if (!DepthStencilOfflineDescriptorHeap->Init())
+    if (!DepthStencilOfflineDescriptorHeap->Initialize())
     {
         return false;
     }
 
     SamplerOfflineDescriptorHeap = dbg_new CD3D12OfflineDescriptorHeap(Device, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-    if (!SamplerOfflineDescriptorHeap->Init())
+    if (!SamplerOfflineDescriptorHeap->Initialize())
     {
         return false;
     }
 
     // Init shader compiler
-    GD3D12ShaderCompiler = dbg_new CD3D12RHIShaderCompiler();
-    if (!GD3D12ShaderCompiler->Init())
+    GD3D12ShaderCompiler = dbg_new CD3D12ShaderCompiler();
+    if (!GD3D12ShaderCompiler->Initialize())
     {
         return false;
     }
@@ -171,9 +172,7 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
     TArray<uint8> Code;
     if (!GD3D12ShaderCompiler->CompileFromFile("../Runtime/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
-        LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
-
-        CDebug::DebugBreak();
+        D3D12_ERROR_ALWAYS("Failed to compile GenerateMipsTex2D Shader");
         return false;
     }
 
@@ -184,10 +183,10 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
         return false;
     }
 
-    GenerateMipsTex2D_PSO = dbg_new CD3D12RHIComputePipelineState(GetDevice(), Shader);
+    GenerateMipsTex2D_PSO = dbg_new CD3D12ComputePipelineState(GetDevice(), Shader);
     if (!GenerateMipsTex2D_PSO->Init())
     {
-        LOG_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTex2D PipelineState");
+        D3D12_ERROR_ALWAYS("Failed to create GenerateMipsTex2D PipelineState");
         return false;
     }
     else
@@ -197,8 +196,8 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
 
     if (!GD3D12ShaderCompiler->CompileFromFile("../Runtime/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
-        LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
-        CDebug::DebugBreak();
+        D3D12_ERROR_ALWAYS("Failed to compile GenerateMipsTexCube Shader");
+        return false;
     }
 
     Shader = dbg_new CD3D12ComputeShader(GetDevice(), Code);
@@ -208,10 +207,10 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
         return false;
     }
 
-    GenerateMipsTexCube_PSO = dbg_new CD3D12RHIComputePipelineState(GetDevice(), Shader);
+    GenerateMipsTexCube_PSO = dbg_new CD3D12ComputePipelineState(GetDevice(), Shader);
     if (!GenerateMipsTexCube_PSO->Init())
     {
-        LOG_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTexCube PipelineState");
+        D3D12_ERROR_ALWAYS("Failed to create GenerateMipsTexCube PipelineState");
         return false;
     }
     else
@@ -220,8 +219,8 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
     }
 
     // Init context
-    DirectCmdContext = CD3D12CommandContext::Make(Device);
-    if (!DirectCmdContext)
+    DirectCommandContext = CD3D12CommandContext::CreateContext(Device);
+    if (!DirectCommandContext)
     {
         return false;
     }
@@ -230,7 +229,7 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
 }
 
 template<typename D3D12TextureType>
-D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX, uint32 SizeY, uint32 SizeZ, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+D3D12TextureType* CD3D12Instance::CreateTexture(EFormat Format, uint32 SizeX, uint32 SizeY, uint32 SizeZ, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     TSharedRef<D3D12TextureType> NewTexture = dbg_new D3D12TextureType(Device, Format, SizeX, SizeY, SizeZ, NumMips, NumSamples, Flags, OptimalClearValue);
 
@@ -451,56 +450,56 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
             return nullptr;
         }
 
-        DirectCmdContext->Begin();
+        DirectCommandContext->Begin();
 
-        DirectCmdContext->TransitionTexture(Texture2D, ERHIResourceState::Common, ERHIResourceState::CopyDest);
-        DirectCmdContext->UpdateTexture2D(Texture2D, SizeX, SizeY, 0, InitialData->GetData());
+        DirectCommandContext->TransitionTexture(Texture2D, ERHIResourceState::Common, ERHIResourceState::CopyDest);
+        DirectCommandContext->UpdateTexture2D(Texture2D, SizeX, SizeY, 0, InitialData->GetData());
 
         // NOTE: Transition into InitialState
-        DirectCmdContext->TransitionTexture(Texture2D, ERHIResourceState::CopyDest, InitialState);
+        DirectCommandContext->TransitionTexture(Texture2D, ERHIResourceState::CopyDest, InitialState);
 
-        DirectCmdContext->End();
+        DirectCommandContext->End();
     }
     else
     {
         if (InitialState != ERHIResourceState::Common)
         {
-            DirectCmdContext->Begin();
-            DirectCmdContext->TransitionTexture(NewTexture.Get(), ERHIResourceState::Common, InitialState);
-            DirectCmdContext->End();
+            DirectCommandContext->Begin();
+            DirectCommandContext->TransitionTexture(NewTexture.Get(), ERHIResourceState::Common, InitialState);
+            DirectCommandContext->End();
         }
     }
 
     return NewTexture.ReleaseOwnership();
 }
 
-CRHITexture2D* CD3D12RHIInstance::CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITexture2D* CD3D12Instance::CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     return CreateTexture<CD3D12Texture2D>(Format, Width, Height, 1, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHITexture2DArray* CD3D12RHIInstance::CreateTexture2DArray(EFormat Format,uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITexture2DArray* CD3D12Instance::CreateTexture2DArray(EFormat Format,uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     return CreateTexture<CD3D12Texture2DArray>(Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHITextureCube* CD3D12RHIInstance::CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITextureCube* CD3D12Instance::CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     return CreateTexture<CD3D12TextureCube>(Format, Size, Size, TEXTURE_CUBE_FACE_COUNT, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHITextureCubeArray* CD3D12RHIInstance::CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITextureCubeArray* CD3D12Instance::CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     const uint32 ArraySlices = NumArraySlices * TEXTURE_CUBE_FACE_COUNT;
     return CreateTexture<CD3D12TextureCubeArray>(Format, Size, Size, ArraySlices, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHITexture3D* CD3D12RHIInstance::CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITexture3D* CD3D12Instance::CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     return CreateTexture<CD3D12Texture3D>(Format, Width, Height, Depth, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHISamplerState* CD3D12RHIInstance::CreateSamplerState(const SRHISamplerStateInfo& CreateInfo)
+CRHISamplerState* CD3D12Instance::CreateSamplerState(const SRHISamplerStateInfo& CreateInfo)
 {
     D3D12_SAMPLER_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -517,7 +516,7 @@ CRHISamplerState* CD3D12RHIInstance::CreateSamplerState(const SRHISamplerStateIn
 
     CMemory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor.Elements, sizeof(Desc.BorderColor));
 
-    TSharedRef<CD3D12RHISamplerState> Sampler = dbg_new CD3D12RHISamplerState(Device, SamplerOfflineDescriptorHeap);
+    TSharedRef<CD3D12SamplerState> Sampler = dbg_new CD3D12SamplerState(Device, SamplerOfflineDescriptorHeap);
     if (!Sampler->Init(Desc))
     {
         return nullptr;
@@ -529,7 +528,7 @@ CRHISamplerState* CD3D12RHIInstance::CreateSamplerState(const SRHISamplerStateIn
 }
 
 template<typename D3D12BufferType>
-bool CD3D12RHIInstance::CreateBuffer(D3D12BufferType* Buffer, uint32 SizeInBytes, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+bool CD3D12Instance::CreateBuffer(D3D12BufferType* Buffer, uint32 SizeInBytes, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
     D3D12_ERROR(Buffer != nullptr, "Buffer cannot be nullptr");
 
@@ -590,31 +589,31 @@ bool CD3D12RHIInstance::CreateBuffer(D3D12BufferType* Buffer, uint32 SizeInBytes
         }
         else
         {
-            DirectCmdContext->Begin();
+            DirectCommandContext->Begin();
 
-            DirectCmdContext->TransitionBuffer(Buffer, ERHIResourceState::Common, ERHIResourceState::CopyDest);
-            DirectCmdContext->UpdateBuffer(Buffer, 0, InitialData->GetSizeInBytes(), InitialData->GetData());
+            DirectCommandContext->TransitionBuffer(Buffer, ERHIResourceState::Common, ERHIResourceState::CopyDest);
+            DirectCommandContext->UpdateBuffer(Buffer, 0, InitialData->GetSizeInBytes(), InitialData->GetData());
 
             // NOTE: Transfer to the initial state
-            DirectCmdContext->TransitionBuffer(Buffer, ERHIResourceState::CopyDest, InitialState);
+            DirectCommandContext->TransitionBuffer(Buffer, ERHIResourceState::CopyDest, InitialState);
 
-            DirectCmdContext->End();
+            DirectCommandContext->End();
         }
     }
     else
     {
         if (InitialState != ERHIResourceState::Common && !Buffer->IsDynamic())
         {
-            DirectCmdContext->Begin();
-            DirectCmdContext->TransitionBuffer(Buffer, ERHIResourceState::Common, InitialState);
-            DirectCmdContext->End();
+            DirectCommandContext->Begin();
+            DirectCommandContext->TransitionBuffer(Buffer, ERHIResourceState::Common, InitialState);
+            DirectCommandContext->End();
         }
     }
 
     return true;
 }
 
-CRHIVertexBuffer* CD3D12RHIInstance::CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+CRHIVertexBuffer* CD3D12Instance::CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
     const uint32 SizeInBytes = NumVertices * Stride;
 
@@ -630,7 +629,7 @@ CRHIVertexBuffer* CD3D12RHIInstance::CreateVertexBuffer(uint32 Stride, uint32 Nu
     }
 }
 
-CRHIIndexBuffer* CD3D12RHIInstance::CreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+CRHIIndexBuffer* CD3D12Instance::CreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
     const uint32 SizeInBytes = NumIndices * GetStrideFromIndexFormat(Format);
     const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>(SizeInBytes, sizeof(uint32));
@@ -647,7 +646,7 @@ CRHIIndexBuffer* CD3D12RHIInstance::CreateIndexBuffer(ERHIIndexFormat Format, ui
     }
 }
 
-CRHIConstantBuffer* CD3D12RHIInstance::CreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+CRHIConstantBuffer* CD3D12Instance::CreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
     Assert(!(Flags & BufferFlag_UAV) && !(Flags & BufferFlag_SRV));
 
@@ -665,7 +664,7 @@ CRHIConstantBuffer* CD3D12RHIInstance::CreateConstantBuffer(uint32 Size, uint32 
     }
 }
 
-CRHIStructuredBuffer* CD3D12RHIInstance::CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+CRHIStructuredBuffer* CD3D12Instance::CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
     const uint32 SizeInBytes = NumElements * Stride;
 
@@ -681,7 +680,7 @@ CRHIStructuredBuffer* CD3D12RHIInstance::CreateStructuredBuffer(uint32 Stride, u
     }
 }
 
-CRHIRayTracingGeometry* CD3D12RHIInstance::CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer)
+CRHIRayTracingGeometry* CD3D12Instance::CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer)
 {
     CD3D12RHIVertexBuffer* DxVertexBuffer = static_cast<CD3D12RHIVertexBuffer*>(VertexBuffer);
     CD3D12RHIIndexBuffer* DxIndexBuffer = static_cast<CD3D12RHIIndexBuffer*>(IndexBuffer);
@@ -690,37 +689,37 @@ CRHIRayTracingGeometry* CD3D12RHIInstance::CreateRayTracingGeometry(uint32 Flags
     Geometry->VertexBuffer = MakeSharedRef<CD3D12RHIVertexBuffer>(DxVertexBuffer);
     Geometry->IndexBuffer = MakeSharedRef<CD3D12RHIIndexBuffer>(DxIndexBuffer);
 
-    DirectCmdContext->Begin();
+    DirectCommandContext->Begin();
 
-    if (!Geometry->Build(*DirectCmdContext, false))
+    if (!Geometry->Build(*DirectCommandContext, false))
     {
         CDebug::DebugBreak();
         Geometry.Reset();
     }
 
-    DirectCmdContext->End();
+    DirectCommandContext->End();
 
     return Geometry.ReleaseOwnership();
 }
 
-CRHIRayTracingScene* CD3D12RHIInstance::CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)
+CRHIRayTracingScene* CD3D12Instance::CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)
 {
     TSharedRef<CD3D12RHIRayTracingScene> Scene = dbg_new CD3D12RHIRayTracingScene(Device, Flags);
 
-    DirectCmdContext->Begin();
+    DirectCommandContext->Begin();
 
-    if (!Scene->Build(*DirectCmdContext, Instances, NumInstances, false))
+    if (!Scene->Build(*DirectCommandContext, Instances, NumInstances, false))
     {
         CDebug::DebugBreak();
         Scene.Reset();
     }
 
-    DirectCmdContext->End();
+    DirectCommandContext->End();
 
     return Scene.ReleaseOwnership();
 }
 
-CRHIShaderResourceView* CD3D12RHIInstance::CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo)
+CRHIShaderResourceView* CD3D12Instance::CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -887,7 +886,7 @@ CRHIShaderResourceView* CD3D12RHIInstance::CreateShaderResourceView(const SRHISh
     }
 }
 
-CRHIUnorderedAccessView* CD3D12RHIInstance::CreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo)
+CRHIUnorderedAccessView* CD3D12Instance::CreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo)
 {
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -1034,7 +1033,7 @@ CRHIUnorderedAccessView* CD3D12RHIInstance::CreateUnorderedAccessView(const SRHI
     }
 }
 
-CRHIRenderTargetView* CD3D12RHIInstance::CreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo)
+CRHIRenderTargetView* CD3D12Instance::CreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo)
 {
     D3D12_RENDER_TARGET_VIEW_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -1146,7 +1145,7 @@ CRHIRenderTargetView* CD3D12RHIInstance::CreateRenderTargetView(const SRHIRender
     }
 }
 
-CRHIDepthStencilView* CD3D12RHIInstance::CreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo)
+CRHIDepthStencilView* CD3D12Instance::CreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo)
 {
     D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -1239,7 +1238,7 @@ CRHIDepthStencilView* CD3D12RHIInstance::CreateDepthStencilView(const SRHIDepthS
     }
 }
 
-CRHIComputeShader* CD3D12RHIInstance::CreateComputeShader(const TArray<uint8>& ShaderCode)
+CRHIComputeShader* CD3D12Instance::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<CD3D12ComputeShader> Shader = dbg_new CD3D12ComputeShader(Device, ShaderCode);
     if (!Shader->Init())
@@ -1250,7 +1249,7 @@ CRHIComputeShader* CD3D12RHIInstance::CreateComputeShader(const TArray<uint8>& S
     return Shader.ReleaseOwnership();
 }
 
-CRHIVertexShader* CD3D12RHIInstance::CreateVertexShader(const TArray<uint8>& ShaderCode)
+CRHIVertexShader* CD3D12Instance::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<CD3D12VertexShader> Shader = dbg_new CD3D12VertexShader(Device, ShaderCode);
     if (!CD3D12BaseShader::GetShaderReflection(Shader.Get()))
@@ -1261,42 +1260,42 @@ CRHIVertexShader* CD3D12RHIInstance::CreateVertexShader(const TArray<uint8>& Sha
     return Shader.ReleaseOwnership();
 }
 
-CRHIHullShader* CD3D12RHIInstance::CreateHullShader(const TArray<uint8>& ShaderCode)
+CRHIHullShader* CD3D12Instance::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-CRHIDomainShader* CD3D12RHIInstance::CreateDomainShader(const TArray<uint8>& ShaderCode)
+CRHIDomainShader* CD3D12Instance::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-CRHIGeometryShader* CD3D12RHIInstance::CreateGeometryShader(const TArray<uint8>& ShaderCode)
+CRHIGeometryShader* CD3D12Instance::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-CRHIMeshShader* CD3D12RHIInstance::CreateMeshShader(const TArray<uint8>& ShaderCode)
+CRHIMeshShader* CD3D12Instance::CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-CRHIAmplificationShader* CD3D12RHIInstance::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
+CRHIAmplificationShader* CD3D12Instance::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-CRHIPixelShader* CD3D12RHIInstance::CreatePixelShader(const TArray<uint8>& ShaderCode)
+CRHIPixelShader* CD3D12Instance::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<CD3D12PixelShader> Shader = dbg_new CD3D12PixelShader(Device, ShaderCode);
     if (!CD3D12BaseShader::GetShaderReflection(Shader.Get()))
@@ -1307,7 +1306,7 @@ CRHIPixelShader* CD3D12RHIInstance::CreatePixelShader(const TArray<uint8>& Shade
     return Shader.ReleaseOwnership();
 }
 
-CRHIRayGenShader* CD3D12RHIInstance::CreateRayGenShader(const TArray<uint8>& ShaderCode)
+CRHIRayGenShader* CD3D12Instance::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<CD3D12RayGenShader> Shader = dbg_new CD3D12RayGenShader(Device, ShaderCode);
     if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
@@ -1321,7 +1320,7 @@ CRHIRayGenShader* CD3D12RHIInstance::CreateRayGenShader(const TArray<uint8>& Sha
     }
 }
 
-CRHIRayAnyHitShader* CD3D12RHIInstance::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
+CRHIRayAnyHitShader* CD3D12Instance::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<CD3D12RayAnyHitShader> Shader = dbg_new CD3D12RayAnyHitShader(Device, ShaderCode);
     if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
@@ -1335,7 +1334,7 @@ CRHIRayAnyHitShader* CD3D12RHIInstance::CreateRayAnyHitShader(const TArray<uint8
     }
 }
 
-CRHIRayClosestHitShader* CD3D12RHIInstance::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
+CRHIRayClosestHitShader* CD3D12Instance::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<CD3D12RayClosestHitShader> Shader = dbg_new CD3D12RayClosestHitShader(Device, ShaderCode);
     if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
@@ -1349,7 +1348,7 @@ CRHIRayClosestHitShader* CD3D12RHIInstance::CreateRayClosestHitShader(const TArr
     }
 }
 
-CRHIRayMissShader* CD3D12RHIInstance::CreateRayMissShader(const TArray<uint8>& ShaderCode)
+CRHIRayMissShader* CD3D12Instance::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<CD3D12RayMissShader> Shader = dbg_new CD3D12RayMissShader(Device, ShaderCode);
     if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
@@ -1363,7 +1362,7 @@ CRHIRayMissShader* CD3D12RHIInstance::CreateRayMissShader(const TArray<uint8>& S
     }
 }
 
-CRHIDepthStencilState* CD3D12RHIInstance::CreateDepthStencilState(const SRHIDepthStencilStateInfo& CreateInfo)
+CRHIDepthStencilState* CD3D12Instance::CreateDepthStencilState(const SRHIDepthStencilStateInfo& CreateInfo)
 {
     D3D12_DEPTH_STENCIL_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -1377,10 +1376,10 @@ CRHIDepthStencilState* CD3D12RHIInstance::CreateDepthStencilState(const SRHIDept
     Desc.FrontFace = ConvertDepthStencilOp(CreateInfo.FrontFace);
     Desc.BackFace = ConvertDepthStencilOp(CreateInfo.BackFace);
 
-    return dbg_new CD3D12RHIDepthStencilState(Device, Desc);
+    return dbg_new CD3D12DepthStencilState(Device, Desc);
 }
 
-CRHIRasterizerState* CD3D12RHIInstance::CreateRasterizerState(const SRHIRasterizerStateInfo& CreateInfo)
+CRHIRasterizerState* CD3D12Instance::CreateRasterizerState(const SRHIRasterizerStateInfo& CreateInfo)
 {
     D3D12_RASTERIZER_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -1397,10 +1396,10 @@ CRHIRasterizerState* CD3D12RHIInstance::CreateRasterizerState(const SRHIRasteriz
     Desc.FrontCounterClockwise = CreateInfo.bFrontCounterClockwise;
     Desc.MultisampleEnable = CreateInfo.bMultisampleEnable;
 
-    return dbg_new CD3D12RHIRasterizerState(Device, Desc);
+    return dbg_new CD3D12RasterizerState(Device, Desc);
 }
 
-CRHIBlendState* CD3D12RHIInstance::CreateBlendState(const SRHIBlendStateInfo& CreateInfo)
+CRHIBlendState* CD3D12Instance::CreateBlendState(const SRHIBlendStateInfo& CreateInfo)
 {
     D3D12_BLEND_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -1421,17 +1420,17 @@ CRHIBlendState* CD3D12RHIInstance::CreateBlendState(const SRHIBlendStateInfo& Cr
         Desc.RenderTarget[i].RenderTargetWriteMask = ConvertRenderTargetWriteState(CreateInfo.RenderTarget[i].RenderTargetWriteMask);
     }
 
-    return dbg_new CD3D12RHIBlendState(Device, Desc);
+    return dbg_new CD3D12BlendState(Device, Desc);
 }
 
-CRHIInputLayoutState* CD3D12RHIInstance::CreateInputLayout(const SRHIInputLayoutStateInfo& CreateInfo)
+CRHIInputLayoutState* CD3D12Instance::CreateInputLayout(const SRHIInputLayoutStateInfo& CreateInfo)
 {
-    return dbg_new CD3D12RHIInputLayoutState(Device, CreateInfo);
+    return dbg_new CD3D12InputLayoutState(Device, CreateInfo);
 }
 
-CRHIGraphicsPipelineState* CD3D12RHIInstance::CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateInfo& CreateInfo)
+CRHIGraphicsPipelineState* CD3D12Instance::CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateInfo& CreateInfo)
 {
-    TSharedRef<CD3D12RHIGraphicsPipelineState> NewPipelineState = dbg_new CD3D12RHIGraphicsPipelineState(Device);
+    TSharedRef<CD3D12GraphicsPipelineState> NewPipelineState = dbg_new CD3D12GraphicsPipelineState(Device);
     if (!NewPipelineState->Init(CreateInfo))
     {
         return nullptr;
@@ -1440,12 +1439,12 @@ CRHIGraphicsPipelineState* CD3D12RHIInstance::CreateGraphicsPipelineState(const 
     return NewPipelineState.ReleaseOwnership();
 }
 
-CRHIComputePipelineState* CD3D12RHIInstance::CreateComputePipelineState(const SRHIComputePipelineStateInfo& Info)
+CRHIComputePipelineState* CD3D12Instance::CreateComputePipelineState(const SRHIComputePipelineStateInfo& Info)
 {
     Assert(Info.Shader != nullptr);
 
     TSharedRef<CD3D12ComputeShader> Shader = MakeSharedRef<CD3D12ComputeShader>(Info.Shader);
-    TSharedRef<CD3D12RHIComputePipelineState> NewPipelineState = dbg_new CD3D12RHIComputePipelineState(Device, Shader);
+    TSharedRef<CD3D12ComputePipelineState> NewPipelineState = dbg_new CD3D12ComputePipelineState(Device, Shader);
     if (!NewPipelineState->Init())
     {
         return nullptr;
@@ -1454,9 +1453,9 @@ CRHIComputePipelineState* CD3D12RHIInstance::CreateComputePipelineState(const SR
     return NewPipelineState.ReleaseOwnership();
 }
 
-CRHIRayTracingPipelineState* CD3D12RHIInstance::CreateRayTracingPipelineState(const SRHIRayTracingPipelineStateInfo& CreateInfo)
+CRHIRayTracingPipelineState* CD3D12Instance::CreateRayTracingPipelineState(const SRHIRayTracingPipelineStateInfo& CreateInfo)
 {
-    TSharedRef<CD3D12RHIRayTracingPipelineState> NewPipelineState = dbg_new CD3D12RHIRayTracingPipelineState(Device);
+    TSharedRef<CD3D12RayTracingPipelineState> NewPipelineState = dbg_new CD3D12RayTracingPipelineState(Device);
     if (NewPipelineState->Init(CreateInfo))
     {
         return NewPipelineState.ReleaseOwnership();
@@ -1467,12 +1466,12 @@ CRHIRayTracingPipelineState* CD3D12RHIInstance::CreateRayTracingPipelineState(co
     }
 }
 
-CRHITimestampQuery* CD3D12RHIInstance::CreateTimestampQuery()
+CRHITimestampQuery* CD3D12Instance::CreateTimestampQuery()
 {
-    return CD3D12RHITimestampQuery::Create(Device);
+    return CD3D12TimestampQuery::Create(Device);
 }
 
-CRHIViewport* CD3D12RHIInstance::CreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
+CRHIViewport* CD3D12Instance::CreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
 {
     UNREFERENCED_VARIABLE(DepthFormat);
 
@@ -1489,7 +1488,7 @@ CRHIViewport* CD3D12RHIInstance::CreateViewport(CPlatformWindow* Window, uint32 
         Height = WinWindow->GetHeight();
     }
 
-    TSharedRef<CD3D12Viewport> Viewport = dbg_new CD3D12Viewport(Device, DirectCmdContext.Get(), WinWindow->GetHandle(), ColorFormat, Width, Height);
+    TSharedRef<CD3D12Viewport> Viewport = dbg_new CD3D12Viewport(Device, DirectCommandContext.Get(), WinWindow->GetHandle(), ColorFormat, Width, Height);
     if (Viewport->Init())
     {
         return Viewport.ReleaseOwnership();
@@ -1500,7 +1499,7 @@ CRHIViewport* CD3D12RHIInstance::CreateViewport(CPlatformWindow* Window, uint32 
     }
 }
 
-bool CD3D12RHIInstance::UAVSupportsFormat(EFormat Format) const
+bool CD3D12Instance::UAVSupportsFormat(EFormat Format) const
 {
     D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
     CMemory::Memzero(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
@@ -1528,7 +1527,7 @@ bool CD3D12RHIInstance::UAVSupportsFormat(EFormat Format) const
     return true;
 }
 
-void CD3D12RHIInstance::CheckRayTracingSupport(SRHIRayTracingSupport& OutSupport) const
+void CD3D12Instance::CheckRayTracingSupport(SRHIRayTracingSupport& OutSupport) const
 {
     D3D12_RAYTRACING_TIER Tier = Device->GetRayTracingTier();
     if (Tier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
@@ -1550,7 +1549,7 @@ void CD3D12RHIInstance::CheckRayTracingSupport(SRHIRayTracingSupport& OutSupport
     }
 }
 
-void CD3D12RHIInstance::CheckShadingRateSupport(SRHIShadingRateSupport& OutSupport) const
+void CD3D12Instance::CheckShadingRateSupport(SRHIShadingRateSupport& OutSupport) const
 {
     D3D12_VARIABLE_SHADING_RATE_TIER Tier = Device->GetVariableRateShadingTier();
     if (Tier == D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED)

@@ -47,18 +47,17 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
 {
 	VULKAN_ERROR(Adapter != nullptr, "Adapter is not initalized correctly");
 
-	VkPhysicalDevice VulkanAdapter = Adapter->GetPhysicalDevice();
 	VkResult Result = VK_SUCCESS;
 	
 	// TODO: Device layers
 	
 	// Verify Extensions
     uint32 DeviceExtensionCount = 0;
-    Result = vkEnumerateDeviceExtensionProperties(VulkanAdapter, nullptr, &DeviceExtensionCount, nullptr);
+    Result = vkEnumerateDeviceExtensionProperties(Adapter->GetVkPhysicalDevice(), nullptr, &DeviceExtensionCount, nullptr);
     VULKAN_CHECK_RESULT(Result, "Failed to retrieve the device extension count");
 
     TArray<VkExtensionProperties> AvailableDeviceExtensions(DeviceExtensionCount);
-    Result = vkEnumerateDeviceExtensionProperties(VulkanAdapter, nullptr, &DeviceExtensionCount, AvailableDeviceExtensions.Data());
+    Result = vkEnumerateDeviceExtensionProperties(Adapter->GetVkPhysicalDevice(), nullptr, &DeviceExtensionCount, AvailableDeviceExtensions.Data());
     VULKAN_CHECK_RESULT(Result, "Failed to retrieve the device extensions");
 
 	TArray<const char*> EnabledExtensionNames;
@@ -89,7 +88,7 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
 
 	const bool bVerboseLogging = VerboseVulkan && VerboseVulkan->GetBool();
     if (bVerboseLogging)
-	{		
+	{
 		if (!EnabledExtensionNames.IsEmpty())
 		{
 			VULKAN_INFO("Enabled Device Extensions:");
@@ -101,7 +100,7 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
 		}
 	}
 
-	QueueIndicies = CVulkanPhysicalDevice::GetQueueFamilyIndices(VulkanAdapter);
+	QueueIndicies = CVulkanPhysicalDevice::GetQueueFamilyIndices(Adapter->GetVkPhysicalDevice());
 	if (!QueueIndicies)
 	{
 		VULKAN_ERROR_ALWAYS("Failed to query queue indices");
@@ -143,8 +142,29 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
     DeviceCreateInfo.pQueueCreateInfos       = QueueCreateInfos.Data();
     DeviceCreateInfo.pEnabledFeatures        = nullptr;
 
-    Result = vkCreateDevice(VulkanAdapter, &DeviceCreateInfo, nullptr, &Device);
+    Result = vkCreateDevice(Adapter->GetVkPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);
     VULKAN_CHECK_RESULT(Result, "Failed to create Device");
     
     return true;
+}
+
+uint32 CVulkanDevice::GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const
+{
+    if (Type == EVulkanCommandQueueType::Graphics)
+    {
+		return QueueIndicies->GraphicsQueueIndex;
+    }
+    else if (Type == EVulkanCommandQueueType::Compute)
+    {
+		return QueueIndicies->ComputeQueueIndex;
+    }
+    else if (Type == EVulkanCommandQueueType::Copy)
+    {
+		return QueueIndicies->CopyQueueIndex;
+    }
+    else
+    {
+        VULKAN_ERROR_ALWAYS("Invalid CommandQueueType");
+        return (~0U);
+    }
 }

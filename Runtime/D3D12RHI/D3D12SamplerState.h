@@ -5,13 +5,13 @@
 #include "D3D12Device.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHISamplerState
+// CD3D12SamplerState
 
-class CD3D12RHISamplerState : public CRHISamplerState, public CD3D12DeviceObject
+class CD3D12SamplerState : public CRHISamplerState, public CD3D12DeviceObject
 {
 public:
 
-    CD3D12RHISamplerState(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap)
+    CD3D12SamplerState(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap)
         : CRHISamplerState()
         , CD3D12DeviceObject(InDevice)
         , OfflineHeap(InOfflineHeap)
@@ -21,7 +21,7 @@ public:
         Assert(InOfflineHeap != nullptr);
     }
 
-    ~CD3D12RHISamplerState()
+    ~CD3D12SamplerState()
     {
         OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
     }

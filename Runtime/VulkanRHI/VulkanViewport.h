@@ -12,6 +12,7 @@
 class CVulkanViewport : public CRHIViewport
 {
 public:
+	
     CVulkanViewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
         : CRHIViewport(InFormat, InWidth, InHeight)
         , BackBuffer(dbg_new TVulkanTexture<CVulkanTexture2D>(InFormat, Width, Height, 1, 1, 0, SClearValue()))

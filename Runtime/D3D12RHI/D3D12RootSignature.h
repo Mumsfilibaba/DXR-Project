@@ -1,7 +1,7 @@
 #pragma once
 #include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
-#include "D3D12RHIShader.h"
+#include "D3D12Shader.h"
 
 #include "Core/RefCounted.h"
 #include "Core/Utilities/StringUtilities.h"

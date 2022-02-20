@@ -1,6 +1,6 @@
 #pragma once
 #include "D3D12Resource.h"
-#include "D3D12RHIViews.h"
+#include "D3D12Views.h"
 
 #include "RHI/RHIResources.h"
 

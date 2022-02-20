@@ -37,11 +37,11 @@ bool CVulkanPhysicalDevice::Initialize(const SVulkanPhysicalDeviceDesc& AdapterD
 	VkResult Result = VK_SUCCESS;
 
 	uint32 AdapterCount = 0;
-	Result = vkEnumeratePhysicalDevices(Instance->GetInstance(), &AdapterCount, nullptr);
+	Result = vkEnumeratePhysicalDevices(Instance->GetVkInstance(), &AdapterCount, nullptr);
 	VULKAN_CHECK_RESULT(Result, "Failed to retrive AdapterCount");
 
 	TArray<VkPhysicalDevice> Adapters(AdapterCount);
-	Result = vkEnumeratePhysicalDevices(Instance->GetInstance(), &AdapterCount, Adapters.Data());
+	Result = vkEnumeratePhysicalDevices(Instance->GetVkInstance(), &AdapterCount, Adapters.Data());
 	VULKAN_CHECK_RESULT(Result, "Failed to retrive available Adapters");
 
 	if (AdapterCount < 1)

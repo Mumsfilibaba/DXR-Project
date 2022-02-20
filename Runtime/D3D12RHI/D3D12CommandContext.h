@@ -11,11 +11,11 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Fence.h"
 #include "D3D12DescriptorCache.h"
-#include "D3D12RHIBuffer.h"
-#include "D3D12RHIViews.h"
-#include "D3D12RHISamplerState.h"
-#include "D3D12RHIPipelineState.h"
-#include "D3D12RHITimestampQuery.h"
+#include "D3D12Buffer.h"
+#include "D3D12Views.h"
+#include "D3D12SamplerState.h"
+#include "D3D12PipelineState.h"
+#include "D3D12TimestampQuery.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SD3D12UploadAllocation
@@ -71,7 +71,7 @@ public:
     CD3D12CommandBatch(CD3D12Device* InDevice);
     ~CD3D12CommandBatch() = default;
 
-    bool Init();
+    bool Initialize();
 
     bool Reset()
     {
@@ -206,7 +206,7 @@ class CD3D12CommandContext : public IRHICommandContext, public CD3D12DeviceObjec
 {
 public:
 
-    static CD3D12CommandContext* Make(CD3D12Device* InDevice);
+    static CD3D12CommandContext* CreateContext(CD3D12Device* InDevice);
 
     virtual void Begin() override final;
     virtual void End() override final;
@@ -351,13 +351,13 @@ private:
     CD3D12CommandContext(CD3D12Device* InDevice);
     ~CD3D12CommandContext();
 
-    bool Init();
+    bool Initialize();
 
     void InternalClearState();
 
-    CD3D12CommandList  CmdList;
+    CD3D12CommandList  CommandList;
     CD3D12Fence        Fence;
-    CD3D12CommandQueue CmdQueue;
+    CD3D12CommandQueue CommandQueue;
 
     uint64 FenceValue = 0;
     uint32 NextCmdBatch = 0;
@@ -365,10 +365,10 @@ private:
     TArray<CD3D12CommandBatch> CmdBatches;
     CD3D12CommandBatch* CmdBatch = nullptr;
 
-    TArray<TSharedRef<CD3D12RHITimestampQuery>> ResolveProfilers;
+    TArray<TSharedRef<CD3D12TimestampQuery>> ResolveProfilers;
 
-    TSharedRef<CD3D12RHIGraphicsPipelineState> CurrentGraphicsPipelineState;
-    TSharedRef<CD3D12RHIComputePipelineState>  CurrentComputePipelineState;
+    TSharedRef<CD3D12GraphicsPipelineState> CurrentGraphicsPipelineState;
+    TSharedRef<CD3D12ComputePipelineState>  CurrentComputePipelineState;
 
     TSharedRef<CD3D12RootSignature> CurrentRootSignature;
 

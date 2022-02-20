@@ -5,6 +5,7 @@
 #define VULKAN_FUNCTION_DEFINITION(FunctionName)  PFN_vk##FunctionName vk##FunctionName = nullptr
 
 class CVulkanDriverInstance;
+class CVulkanDevice;
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
 // Pre-Instance Created Functions
@@ -40,3 +41,19 @@ VULKAN_FUNCTION_DECLARATION(DestroyDevice);
 VULKAN_FUNCTION_DECLARATION(GetDeviceProcAddr);
 
 bool LoadInstanceFunctions(CVulkanDriverInstance* Instance);
+
+/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// Device Functions
+
+VULKAN_FUNCTION_DECLARATION(DeviceWaitIdle);
+
+VULKAN_FUNCTION_DECLARATION(CreateCommandPool);
+VULKAN_FUNCTION_DECLARATION(DestroyCommandPool);
+
+VULKAN_FUNCTION_DECLARATION(AllocateCommandBuffers);
+VULKAN_FUNCTION_DECLARATION(FreeCommandBuffers);
+
+VULKAN_FUNCTION_DECLARATION(GetDeviceQueue);
+VULKAN_FUNCTION_DECLARATION(QueueSubmit);
+
+bool LoadDeviceFunctions(CVulkanDevice* Device);

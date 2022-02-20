@@ -6,27 +6,27 @@
 
 class CD3D12OfflineDescriptorHeap;
 class CD3D12OnlineDescriptorHeap;
-class CD3D12RHIComputePipelineState;
+class CD3D12ComputePipelineState;
 class CD3D12RootSignature;
 
 #define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
 #define D3D12_ENABLE_PIX_MARKERS              (1)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RHID3D12DeviceRemovedHandler
+// D3D12RHIDeviceRemovedHandler
 
-void RHID3D12DeviceRemovedHandler(class CD3D12Device* Device);
+void D3D12RHIDeviceRemovedHandler(class CD3D12Device* Device);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12Device
+// CD3D12Device
 
-class CD3D12Device
+class CD3D12Device : public CRefCounted
 {
 public:
-    CD3D12Device(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
-    ~CD3D12Device();
 
-    bool Init();
+    static TSharedRef<CD3D12Device> CreateDevice(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
+
+    bool Initialize();
 
     int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
@@ -157,6 +157,10 @@ public:
     }
 
 private:
+
+    CD3D12Device(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
+    ~CD3D12Device();
+
     TComPtr<IDXGIFactory2> Factory;
     TComPtr<IDXGIAdapter1> Adapter;
     TComPtr<ID3D12Device>  Device;
@@ -164,23 +168,23 @@ private:
 
     TComPtr<IDXGraphicsAnalysis> GraphicsAnalysisInterface;
 
-    D3D_FEATURE_LEVEL MinFeatureLevel = D3D_FEATURE_LEVEL_12_0;
+    D3D_FEATURE_LEVEL MinFeatureLevel    = D3D_FEATURE_LEVEL_12_0;
     D3D_FEATURE_LEVEL ActiveFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
-    D3D12_RAYTRACING_TIER            RayTracingTier = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
-    D3D12_SAMPLER_FEEDBACK_TIER      SamplerFeedBackTier = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
-    D3D12_MESH_SHADER_TIER           MeshShaderTier = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+    D3D12_RAYTRACING_TIER            RayTracingTier          = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+    D3D12_SAMPLER_FEEDBACK_TIER      SamplerFeedBackTier     = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
+    D3D12_MESH_SHADER_TIER           MeshShaderTier          = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
     D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
     uint32 VariableShadingRateTileSize = 0;
 
-    HMODULE DXGILib = 0;
+    HMODULE DXGILib  = 0;
     HMODULE D3D12Lib = 0;
-    HMODULE PIXLib = 0;
+    HMODULE PIXLib   = 0;
 
     uint32 AdapterID = 0;
 
-    bool bAllowTearing = false;
-    bool bEnableDebugLayer = false;
+    bool bAllowTearing        = false;
+    bool bEnableDebugLayer    = false;
     bool bEnableGPUValidation = false;
-    bool bEnableDRED = false;
+    bool bEnableDRED          = false;
 };

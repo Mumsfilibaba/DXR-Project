@@ -116,8 +116,14 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
         VULKAN_ERROR_ALWAYS("Failed to initialize VulkanPhysicalDevice");
         return false;
     }
+	
+	// Load functions that requires an device here (Order is important)
+	if (!LoadDeviceFunctions(Device.Get()))
+	{
+		return false;
+	}
 
-    DirectCommandContext = CVulkanCommandContext::CreateCommandContext(Device.Get());
+    DirectCommandContext = CVulkanCommandContext::CreateCommandContext(Device.Get(), EVulkanCommandQueueType::Graphics);
     if (!DirectCommandContext)
     {
         VULKAN_ERROR_ALWAYS("Failed to initialize VulkanCommandContext");

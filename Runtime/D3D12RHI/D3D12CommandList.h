@@ -4,9 +4,9 @@
 #include "D3D12RootSignature.h"
 #include "D3D12DescriptorHeap.h"
 #include "D3D12CommandAllocator.h"
-#include "D3D12RHIViews.h"
+#include "D3D12Views.h"
 
-class CD3D12RHIComputePipelineState;
+class CD3D12ComputePipelineState;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12CommandList
@@ -22,7 +22,7 @@ public:
     {
     }
 
-    FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type, CD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline)
+    FORCEINLINE bool Initialize(D3D12_COMMAND_LIST_TYPE Type, CD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline)
     {
         HRESULT Result = GetDevice()->GetDevice()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
         if (SUCCEEDED(Result))
@@ -55,7 +55,7 @@ public:
         HRESULT Result = CmdList->Reset(Allocator.GetAllocator(), nullptr);
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
         {
-            RHID3D12DeviceRemovedHandler(GetDevice());
+            D3D12RHIDeviceRemovedHandler(GetDevice());
         }
 
         return SUCCEEDED(Result);
@@ -68,7 +68,7 @@ public:
         HRESULT Result = CmdList->Close();
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
         {
-            RHID3D12DeviceRemovedHandler(GetDevice());
+            D3D12RHIDeviceRemovedHandler(GetDevice());
         }
 
         return SUCCEEDED(Result);

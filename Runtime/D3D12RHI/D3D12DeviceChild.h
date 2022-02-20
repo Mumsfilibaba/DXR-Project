@@ -13,7 +13,7 @@ public:
     CD3D12DeviceObject(CD3D12Device* InDevice)
         : Device(InDevice)
     {
-        Assert(Device != nullptr);
+        D3D12_ERROR(Device != nullptr, "Device cannot be nullptr");
     }
 
     virtual ~CD3D12DeviceObject()

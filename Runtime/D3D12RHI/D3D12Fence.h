@@ -23,7 +23,7 @@ public:
         }
     }
 
-    bool Init(uint64 InitalValue)
+    bool Initialize(uint64 InitalValue)
     {
         HRESULT Result = GetDevice()->GetDevice()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
         if (FAILED(Result))

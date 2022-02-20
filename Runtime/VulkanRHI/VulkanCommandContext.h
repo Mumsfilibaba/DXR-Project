@@ -1,5 +1,8 @@
 #pragma once
 #include "VulkanDeviceObject.h"
+#include "VulkanCommandPool.h"
+#include "VulkanCommandQueue.h"
+#include "VulkanCommandBuffer.h"
 
 #include "RHI/IRHICommandContext.h"
 
@@ -14,7 +17,7 @@ class CVulkanCommandContext : public IRHICommandContext, public CVulkanDeviceObj
 {
 public:
 
-    static TSharedRef<CVulkanCommandContext> CreateCommandContext(CVulkanDevice* InDevice);
+    static TSharedRef<CVulkanCommandContext> CreateCommandContext(CVulkanDevice* InDevice, EVulkanCommandQueueType InType);
 
     virtual void Begin() override final;
     virtual void End()   override final;
@@ -115,8 +118,12 @@ public:
 
 private:
 
-    CVulkanCommandContext(CVulkanDevice* InDevice);
+    CVulkanCommandContext(CVulkanDevice* InDevice, EVulkanCommandQueueType InType);
     ~CVulkanCommandContext();
 
     bool Initialize();
+
+    CVulkanCommandQueue  CommandQueue;
+    CVulkanCommandPool   CommandPool;
+    CVulkanCommandBuffer CommandBuffer;
 };

@@ -1,5 +1,6 @@
 #include "VulkanFunctions.h"
 #include "VulkanDriverInstance.h"
+#include "VulkanDevice.h"
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
 // Load Functions Helper macro
@@ -48,7 +49,6 @@ VULKAN_FUNCTION_DEFINITION(DestroyDevice);
 
 VULKAN_FUNCTION_DEFINITION(GetDeviceProcAddr);
 
-
 bool LoadInstanceFunctions(CVulkanDriverInstance* Instance)
 {
 	VULKAN_ERROR(Instance, "Instance cannot be nullptr");
@@ -69,5 +69,35 @@ bool LoadInstanceFunctions(CVulkanDriverInstance* Instance)
 
 	VULKAN_LOAD_FUNCTION(Instance, GetDeviceProcAddr);
 	
+	return true;
+}
+
+/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// Device Functions
+
+VULKAN_FUNCTION_DEFINITION(DeviceWaitIdle);
+
+VULKAN_FUNCTION_DEFINITION(CreateCommandPool);
+VULKAN_FUNCTION_DEFINITION(DestroyCommandPool);
+
+VULKAN_FUNCTION_DEFINITION(AllocateCommandBuffers);
+VULKAN_FUNCTION_DEFINITION(FreeCommandBuffers);
+
+VULKAN_FUNCTION_DEFINITION(GetDeviceQueue);
+VULKAN_FUNCTION_DEFINITION(QueueSubmit);
+
+bool LoadDeviceFunctions(CVulkanDevice* Device)
+{
+	VULKAN_LOAD_FUNCTION(Device, DeviceWaitIdle);
+
+	VULKAN_LOAD_FUNCTION(Device, CreateCommandPool);
+	VULKAN_LOAD_FUNCTION(Device, DestroyCommandPool);
+
+	VULKAN_LOAD_FUNCTION(Device, AllocateCommandBuffers);
+	VULKAN_LOAD_FUNCTION(Device, FreeCommandBuffers);
+
+	VULKAN_LOAD_FUNCTION(Device, GetDeviceQueue);
+	VULKAN_LOAD_FUNCTION(Device, QueueSubmit);
+
 	return true;
 }

@@ -1,8 +1,8 @@
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
 #include "D3D12DescriptorHeap.h"
-#include "D3D12RHIInstance.h"
-#include "D3D12RHIRayTracing.h"
+#include "D3D12Instance.h"
+#include "D3D12RayTracing.h"
 
 #include "RHI/RHIModule.h"
 
@@ -336,7 +336,7 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12CommandContext& CmdContext, const SRa
 
 bool CD3D12RHIRayTracingScene::BuildBindingTable(
     CD3D12CommandContext& CmdContext,
-    CD3D12RHIRayTracingPipelineState* PipelineState,
+    CD3D12RayTracingPipelineState* PipelineState,
     CD3D12OnlineDescriptorHeap* ResourceHeap,
     CD3D12OnlineDescriptorHeap* SamplerHeap,
     const SRayTracingShaderResources* RayGenLocalResources,
@@ -499,7 +499,7 @@ CD3D12ShaderBindingTableBuilder::CD3D12ShaderBindingTableBuilder(CD3D12Device* I
 }
 
 void CD3D12ShaderBindingTableBuilder::PopulateEntry(
-    CD3D12RHIRayTracingPipelineState* PipelineState,
+    CD3D12RayTracingPipelineState* PipelineState,
     CD3D12RootSignature* RootSignature,
     CD3D12OnlineDescriptorHeap* ResourceHeap,
     CD3D12OnlineDescriptorHeap* SamplerHeap,
@@ -581,7 +581,7 @@ void CD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         for (CRHISamplerState* Sampler : Resources.SamplerStates)
         {
-            CD3D12RHISamplerState* DxSampler = static_cast<CD3D12RHISamplerState*>(Sampler);
+            CD3D12SamplerState* DxSampler = static_cast<CD3D12SamplerState*>(Sampler);
             SamplerHandles[CPUSamplerIndex++] = DxSampler->GetOfflineHandle();
         }
     }

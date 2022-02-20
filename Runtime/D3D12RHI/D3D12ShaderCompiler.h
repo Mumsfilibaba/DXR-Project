@@ -2,22 +2,22 @@
 #include "RHI/RHIShaderCompiler.h"
 
 #include "D3D12Core.h"
-#include "D3D12RHIShader.h"
+#include "D3D12Shader.h"
 
 #include <string>
 
 #include <d3d12shader.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIShaderCompiler
+// CD3D12ShaderCompiler
 
-class CD3D12RHIShaderCompiler : public IRHIShaderCompiler
+class CD3D12ShaderCompiler : public IRHIShaderCompiler
 {
 public:
-    CD3D12RHIShaderCompiler();
-    ~CD3D12RHIShaderCompiler();
+    CD3D12ShaderCompiler();
+    ~CD3D12ShaderCompiler();
 
-    bool Init();
+    bool Initialize();
 
     virtual bool CompileFromFile(
         const String& FilePath,
@@ -64,5 +64,5 @@ private:
     HMODULE DxCompilerDLL;
 };
 
-extern CD3D12RHIShaderCompiler* GD3D12ShaderCompiler;
+extern CD3D12ShaderCompiler* GD3D12ShaderCompiler;
 extern DxcCreateInstanceProc DxcCreateInstanceFunc;

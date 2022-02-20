@@ -1,6 +1,6 @@
 #include "D3D12RHIModule.h"
-#include "D3D12RHIInstance.h"
-#include "D3D12RHIShaderCompiler.h"
+#include "D3D12Instance.h"
+#include "D3D12ShaderCompiler.h"
 
 IMPLEMENT_ENGINE_MODULE(CD3D12RHIModule, D3D12RHI);
 
@@ -9,7 +9,7 @@ IMPLEMENT_ENGINE_MODULE(CD3D12RHIModule, D3D12RHI);
 
 CRHIInstance* CD3D12RHIModule::CreateInterface()
 {
-    return CD3D12RHIInstance::CreateInstance();
+    return CD3D12Instance::CreateInstance();
 }
 
 IRHIShaderCompiler* CD3D12RHIModule::CreateCompiler()

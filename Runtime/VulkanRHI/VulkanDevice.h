@@ -13,6 +13,17 @@ class CVulkanDriverInstance;
 class CVulkanPhysicalDevice;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EVulkanCommandQueueType
+
+enum class EVulkanCommandQueueType
+{
+    Unknown  = 0, 
+    Graphics = 1, 
+    Copy     = 2, 
+    Compute  = 3, 
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SVulkanDeviceDesc
 
 struct SVulkanDeviceDesc
@@ -30,6 +41,8 @@ public:
 
     /* Creates a new wrapper for VkDevice */
     static TSharedRef<CVulkanDevice> CreateDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc);
+
+    uint32 GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
     FORCEINLINE bool IsLayerEnabled(const String& LayerName)
     {
@@ -63,7 +76,7 @@ public:
 		return Adapter;
 	}
 
-    FORCEINLINE VkDevice GetDevice() const
+    FORCEINLINE VkDevice GetVkDevice() const
     {
         return Device;
     }

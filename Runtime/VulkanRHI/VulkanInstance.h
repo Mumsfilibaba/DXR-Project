@@ -3,6 +3,7 @@
 #include "VulkanDevice.h"
 #include "VulkanPhysicalDevice.h"
 #include "VulkanCommandContext.h"
+#include "VulkanCommandQueue.h"
 
 #include "RHI/RHIInstance.h"
 
