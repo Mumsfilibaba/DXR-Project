@@ -3,9 +3,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanCommandContext
 
-TSharedRef<CVulkanCommandContext> CVulkanCommandContext::CreateCommandContext(CVulkanDevice* InDevice, EVulkanCommandQueueType InType)
+TSharedRef<CVulkanCommandContext> CVulkanCommandContext::CreateCommandContext(CVulkanDevice* InDevice, CVulkanCommandQueue* InCommandQueue)
 {
-    TSharedRef<CVulkanCommandContext> NewCommandContext = dbg_new CVulkanCommandContext(InDevice, InType);
+    TSharedRef<CVulkanCommandContext> NewCommandContext = dbg_new CVulkanCommandContext(InDevice, InCommandQueue);
     if (NewCommandContext && NewCommandContext->Initialize())
     {
         return NewCommandContext;
@@ -14,11 +14,10 @@ TSharedRef<CVulkanCommandContext> CVulkanCommandContext::CreateCommandContext(CV
     return nullptr;
 }
 
-CVulkanCommandContext::CVulkanCommandContext(CVulkanDevice* InDevice, EVulkanCommandQueueType InType)
+CVulkanCommandContext::CVulkanCommandContext(CVulkanDevice* InDevice, CVulkanCommandQueue* InCommandQueue)
     : CVulkanDeviceObject(InDevice)
-    , CommandQueue(InDevice, InType)
-    , CommandPool(InDevice, InType)
-    , CommandBuffer(InDevice)
+	, CommandQueue(::AddRef(InCommandQueue))
+    , CommandBuffer(InDevice, InCommandQueue->GetType())
 {
 }
 
@@ -28,17 +27,7 @@ CVulkanCommandContext::~CVulkanCommandContext()
 
 bool CVulkanCommandContext::Initialize()
 {
-    if (!CommandQueue.Initialize())
-    {
-        return false;
-    }
-
-    if (!CommandPool.Initialize())
-    {
-        return false;
-    }
-
-    if (!CommandBuffer.Initialize(&CommandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY))
+    if (!CommandBuffer.Initialize(VK_COMMAND_BUFFER_LEVEL_PRIMARY))
     {
         return false;
     }
@@ -48,10 +37,15 @@ bool CVulkanCommandContext::Initialize()
 
 void CVulkanCommandContext::Begin()
 {
+    VULKAN_ERROR(CommandBuffer.Begin(), "Failed to Begin CommandBuffer");
 }
 
 void CVulkanCommandContext::End()  
 {
+    VULKAN_ERROR(CommandBuffer.End(), "Failed to End CommandBuffer");
+
+	CVulkanCommandBuffer* SubmitCommandBuffer = &CommandBuffer;
+	CommandQueue->ExecuteCommandBuffer(&SubmitCommandBuffer, 1, CommandBuffer.GetFence());
 }
 
 void CVulkanCommandContext::BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)

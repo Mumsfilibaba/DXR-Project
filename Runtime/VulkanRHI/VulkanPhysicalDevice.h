@@ -48,6 +48,33 @@ struct SVulkanQueueFamilyIndices
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helper
+
+inline String GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properties)
+{
+	String PropertyString = "QueueCount=" + ToString(Properties.queueCount) + ", QueueBits=(";
+	if (Properties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+	{
+		PropertyString += "GRAPHICS | ";
+	}
+	if (Properties.queueFlags & VK_QUEUE_COMPUTE_BIT)
+	{
+		PropertyString += "COMPUTE | ";
+	}
+	if (Properties.queueFlags & VK_QUEUE_TRANSFER_BIT)
+	{
+		PropertyString += "COPY | ";
+	}
+	
+	PropertyString.Pop();
+	PropertyString.Pop();
+	PropertyString.Pop();
+	PropertyString += ')';
+	
+	return PropertyString;
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanPhysicalDevice
 
 class CVulkanPhysicalDevice : public CRefCounted

@@ -12,7 +12,7 @@ function GetVulkanIncludePath()
 
     -- Since premake or lua is retarded we have to hardcode this for now on mac 
     if os.host() == "macosx" then
-        return '/Users/dahlle/VulkanSDK/1.2.198.1/macOS'
+        return '/Users/dahlle/VulkanSDK/1.3.204.0/macOS'
     end
 
     for _, EnvironmentVar in ipairs(VulkanEnvironmentVars) do
@@ -53,6 +53,13 @@ VulkanRHI.AddModuleDependencies(
     'CoreApplication',
     'RHI',
 })
+
+if BuildWithXcode() then
+    VulkanRHI.AddFrameWorks( 
+    {
+        'QuartzCore'
+    })
+end
 
 VulkanRHI.AddSystemIncludes(
 {

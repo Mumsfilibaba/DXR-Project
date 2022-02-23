@@ -1,5 +1,5 @@
 #include "VulkanInstance.h"
-#include "VulkanFunctions.h"
+#include "VulkanLoader.h"
 #include "VulkanTimestampQuery.h"
 #include "VulkanShader.h"
 #include "VulkanPipelineState.h"
@@ -9,7 +9,7 @@
 #include "VulkanSamplerState.h"
 #include "VulkanViewport.h"
 
-#include "Platform/PlatformVulkanExtensions.h"
+#include "Platform/PlatformVulkanMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanInstance
@@ -28,8 +28,8 @@ CVulkanInstance::CVulkanInstance()
 bool CVulkanInstance::Initialize(bool bEnableDebug)
 {
     SVulkanDriverInstanceDesc InstanceDesc;
-    InstanceDesc.RequiredExtensionNames = PlatformVulkanExtensions::GetRequiredInstanceExtensions();
-    InstanceDesc.RequiredLayerNames     = PlatformVulkanExtensions::GetRequiredInstanceLayers();
+    InstanceDesc.RequiredExtensionNames = PlatformVulkanMisc::GetRequiredInstanceExtensions();
+    InstanceDesc.RequiredLayerNames     = PlatformVulkanMisc::GetRequiredInstanceLayers();
 	InstanceDesc.bEnableValidationLayer = bEnableDebug;
 	
 #if VK_KHR_get_physical_device_properties2
@@ -59,7 +59,7 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 	}
 
     SVulkanPhysicalDeviceDesc AdapterDesc;
-	AdapterDesc.RequiredExtensionNames = PlatformVulkanExtensions::GetRequiredDeviceExtensions();
+	AdapterDesc.RequiredExtensionNames = PlatformVulkanMisc::GetRequiredDeviceExtensions();
     AdapterDesc.RequiredFeatures.samplerAnisotropy = VK_TRUE;
 	
 #if VK_KHR_get_memory_requirements2
@@ -123,7 +123,14 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 		return false;
 	}
 
-    DirectCommandContext = CVulkanCommandContext::CreateCommandContext(Device.Get(), EVulkanCommandQueueType::Graphics);
+    DirectCommandQueue = CVulkanCommandQueue::CreateQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
+    if (!DirectCommandQueue)
+    {
+        VULKAN_ERROR_ALWAYS("Failed to initialize VulkanCommandQueue");
+        return false;
+    }
+
+    DirectCommandContext = CVulkanCommandContext::CreateCommandContext(Device.Get(), DirectCommandQueue.Get());
     if (!DirectCommandContext)
     {
         VULKAN_ERROR_ALWAYS("Failed to initialize VulkanCommandContext");
@@ -316,7 +323,8 @@ CRHITimestampQuery* CVulkanInstance::CreateTimestampQuery()
 
 CRHIViewport* CVulkanInstance::CreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
 {
-    return dbg_new CVulkanViewport(ColorFormat, Width, Height);
+	TSharedRef<CVulkanViewport> NewViewport = CVulkanViewport::CreateViewport(Device.Get(), DirectCommandQueue.Get(), Window, ColorFormat, Width, Height);
+	return NewViewport.ReleaseOwnership();
 }
 
 String CVulkanInstance::GetAdapterName() const

@@ -8,16 +8,13 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanCommandQueue
 
-class CVulkanCommandQueue : public CVulkanDeviceObject
+class CVulkanCommandQueue : public CVulkanDeviceObject, public CRefCounted
 {
 public:
 
-    CVulkanCommandQueue(CVulkanDevice* InDevice, EVulkanCommandQueueType InType);
-    ~CVulkanCommandQueue();
+    static TSharedRef<CVulkanCommandQueue> CreateQueue(CVulkanDevice* InDevice, EVulkanCommandQueueType InType);
 
-    bool Initialize();
-
-    bool ExecuteCommandBuffer(class CVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers);
+    bool ExecuteCommandBuffer(class CVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, class CVulkanFence* Fence);
 
     /**
      * Adds a Semaphore to the queue which will be waited on during next call to execute commandbuffer
@@ -39,7 +36,18 @@ public:
 		return CommandQueue;
 	}
 
+    FORCEINLINE EVulkanCommandQueueType GetType() const
+    {
+        return Type;
+    }
+
 private:
+
+    CVulkanCommandQueue(CVulkanDevice* InDevice, EVulkanCommandQueueType InType);
+    ~CVulkanCommandQueue();
+
+    bool Initialize();
+
 	EVulkanCommandQueueType Type;
     VkQueue                 CommandQueue;
 

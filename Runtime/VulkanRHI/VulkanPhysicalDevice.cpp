@@ -1,5 +1,5 @@
 #include "VulkanPhysicalDevice.h"
-#include "VulkanFunctions.h"
+#include "VulkanLoader.h"
 #include "VulkanDriverInstance.h"
 
 #include "Core/Containers/Array.h"
@@ -211,10 +211,14 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
 		{
 			for (uint32 QueueIndex = 0; QueueIndex < uint32(QueueFamilies.Size()); ++QueueIndex)
 			{
-				const uint32 CurrentQueueFlags = QueueFamilies[QueueIndex].queueFlags;
-				if ((CurrentQueueFlags & QueueFlag) && ((CurrentQueueFlags & VK_QUEUE_GRAPHICS_BIT) == 0))
+				const VkQueueFamilyProperties& Properties = QueueFamilies[QueueIndex];
+				if (Properties.queueCount > 0)
 				{
-					return QueueIndex;
+					const uint32 CurrentQueueFlags = Properties.queueFlags;
+					if ((CurrentQueueFlags & QueueFlag) && ((CurrentQueueFlags & VK_QUEUE_GRAPHICS_BIT) == 0))
+					{
+						return QueueIndex;
+					}
 				}
 			}
 		}
@@ -223,19 +227,27 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
 		{
 			for (uint32 QueueIndex = 0; QueueIndex < uint32(QueueFamilies.Size()); ++QueueIndex)
 			{
-				const uint32 CurrentQueueFlags = QueueFamilies[QueueIndex].queueFlags;
-				if ((CurrentQueueFlags & QueueFlag) && ((CurrentQueueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) == 0))
+				const VkQueueFamilyProperties& Properties = QueueFamilies[QueueIndex];
+				if (Properties.queueCount > 0)
 				{
-					return QueueIndex;
+					const uint32 CurrentQueueFlags = Properties.queueFlags;
+					if ((CurrentQueueFlags & QueueFlag) && ((CurrentQueueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) == 0))
+					{
+						return QueueIndex;
+					}
 				}
 			}
 		}
 
 		for (uint32 QueueIndex = 0; QueueIndex < uint32(QueueFamilies.Size()); ++QueueIndex)
 		{
-			if (QueueFamilies[QueueIndex].queueFlags & QueueFlag)
+			const VkQueueFamilyProperties& Properties = QueueFamilies[QueueIndex];
+			if (Properties.queueCount > 0)
 			{
-				return QueueIndex;
+				if (Properties.queueFlags & QueueFlag)
+				{
+					return QueueIndex;
+				}
 			}
 		}
 
@@ -250,7 +262,22 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
 
 	TArray<VkQueueFamilyProperties> QueueFamilies(QueueFamilyCount);
 	vkGetPhysicalDeviceQueueFamilyProperties(PhysicalDevice, &QueueFamilyCount, QueueFamilies.Data());
+	
+	IConsoleVariable* VerboseVulkan = CConsoleManager::Get().FindVariable("vulkan.VerboseLogging");
 
+	const bool bVerboseLogging = VerboseVulkan && VerboseVulkan->GetBool();
+	if (bVerboseLogging)
+	{
+		uint32 Index = 0;
+		for (const VkQueueFamilyProperties& Properties : QueueFamilies)
+		{
+			String PropertyString = GetQueuePropertiesAsString(Properties);
+			VULKAN_INFO("Queue[" + ToString(Index) + "]: " + PropertyString);
+			
+			Index++;
+		}
+	}
+	
 	const uint32 GraphicsIndex = GetQueueFamilyIndex(VK_QUEUE_GRAPHICS_BIT, QueueFamilies);
 	if (GraphicsIndex == (~0U))
 	{
@@ -258,19 +285,25 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
 		return QueueIndicies;
 	}
 
+	QueueFamilies[GraphicsIndex].queueCount--;
+	
 	const uint32 CopyIndex = GetQueueFamilyIndex(VK_QUEUE_TRANSFER_BIT, QueueFamilies);
 		if (CopyIndex == (~0U))
 	{
 		VULKAN_ERROR_ALWAYS("Failed to retrieve CopyQueue-Index");
 		return QueueIndicies;
 	}
-
+	
+	QueueFamilies[CopyIndex].queueCount--;
+	
 	const uint32 ComputeIndex = GetQueueFamilyIndex(VK_QUEUE_COMPUTE_BIT , QueueFamilies);
 	if (ComputeIndex == (~0U))
 	{
 		VULKAN_ERROR_ALWAYS("Failed to retrieve ComputeQueue-Index");
 		return QueueIndicies;
 	}
+	
+	QueueFamilies[ComputeIndex].queueCount--;
 
 	QueueIndicies.Emplace(GraphicsIndex, CopyIndex, ComputeIndex);
 	return QueueIndicies;

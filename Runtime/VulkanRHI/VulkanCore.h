@@ -4,15 +4,14 @@
 #include "Core/Logging/Log.h"
 #include "Core/Containers/String.h"
 
-#define VK_NO_PROTOTYPES (1)
-
 #if PLATFORM_MACOS
     #define VK_USE_PLATFORM_MACOS_MVK
-    #define VK_USE_PLATFORM_METAL_EXT
+    // #define VK_USE_PLATFORM_METAL_EXT
 #elif PLATFORM_WINDOWS
     #define VK_USE_PLATFORM_WIN32_KHR
 #endif
 
+#define VK_NO_PROTOTYPES (1)
 #include <vulkan/vulkan.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

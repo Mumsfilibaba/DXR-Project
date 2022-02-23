@@ -1,17 +1,12 @@
 #pragma once
 
 #if PLATFORM_MACOS
+#include "CocoaContentView.h"
+#include "CocoaWindow.h"
+
 #include "Core/Containers/SharedRef.h"
 
 #include "CoreApplication/Interface/PlatformWindow.h"
-
-#if defined(__OBJC__)
-@class CCocoaWindow;
-@class CCocoaContentView;
-#else
-class CCocoaWindow;
-class CCocoaContentView;
-#endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMacWindow - Mac specific implementation for window interface
@@ -45,11 +40,21 @@ public:
 	 *
 	 * @return: Returns the native content view object
 	 */
-	FORCEINLINE CCocoaWindow* GetCocoaContentView() const
+	FORCEINLINE CCocoaContentView* GetCocoaContentView() const
 	{
-		return Window;
+		return View;
 	}
-	
+
+	/**
+	 * Retrieve the CAMetalLayer
+	 *
+	 * @return: Returns the CAMetalLayer
+	 */
+	FORCEINLINE CAMetalLayer* GetCAMetalLayer() const
+	{
+		return [View isKindOfClass:[CAMetalLayer class]] ? reinterpret_cast<CAMetalLayer*>([View layer]) : nullptr;
+	}
+
 public:
 	
 	/*///////////////////////////////////////////////////////////////////////////////////////////////*/

@@ -1,13 +1,15 @@
 #include "VulkanCommandBuffer.h"
-#include "VulkanFunctions.h"
+#include "VulkanLoader.h"
 #include "VulkanCommandPool.h"
 #include "VulkanDevice.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanCommandBuffer
 
-CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanDevice* InDevice)
+CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanDevice* InDevice, EVulkanCommandQueueType InType)
     : CVulkanDeviceObject(InDevice)
+    , Fence(InDevice)
+    , CommandPool(InDevice, InType)
     , CommandBuffer(VK_NULL_HANDLE)
 {
 }
@@ -16,22 +18,29 @@ CVulkanCommandBuffer::~CVulkanCommandBuffer()
 {
 }
 
-bool CVulkanCommandBuffer::Initialize(CVulkanCommandPool* InCommandPool, VkCommandBufferLevel InLevel)
+bool CVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
 {
-    VULKAN_ERROR(InCommandPool != nullptr, "CommandPool cannot be nullptr");
+    if (!CommandPool.Initialize())
+    {
+        return false;
+    }
 
 	VkCommandBufferAllocateInfo CommandBufferAllocateInfo;
     CMemory::Memzero(&CommandBufferAllocateInfo);
 
 	CommandBufferAllocateInfo.sType		         = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	CommandBufferAllocateInfo.pNext		         = nullptr;
-	CommandBufferAllocateInfo.commandPool        = InCommandPool->GetVkCommandPool();
+	CommandBufferAllocateInfo.commandPool        = CommandPool.GetVkCommandPool();
 	CommandBufferAllocateInfo.level		         = Level = InLevel;
 	CommandBufferAllocateInfo.commandBufferCount = 1;
 
     VkResult Result = vkAllocateCommandBuffers(GetDevice()->GetVkDevice(), &CommandBufferAllocateInfo, &CommandBuffer);
     VULKAN_CHECK_RESULT(Result, "Failed to allocate CommandBuffer");
 
-    CommandPool = InCommandPool;
+    if (!Fence.Initialize())
+    {
+        return false;
+    }
+
     return true;
 }

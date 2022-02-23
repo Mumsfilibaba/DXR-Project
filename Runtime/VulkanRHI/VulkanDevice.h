@@ -1,6 +1,6 @@
 #pragma once
 #include "VulkanCore.h"
-#include "VulkanFunctions.h"
+#include "VulkanLoader.h"
 #include "VulkanPhysicalDevice.h"
 
 #include "Core/RefCounted.h"

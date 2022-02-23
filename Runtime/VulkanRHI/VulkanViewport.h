@@ -1,61 +1,51 @@
 #pragma once
 #include "VulkanTexture.h"
+#include "VulkanCommandQueue.h"
+#include "VulkanSemaphore.h"
+#include "VulkanSurface.h"
 
 #include "RHI/RHIViewport.h"
 
 #include "Core/Containers/ArrayView.h"
 #include "Core/Containers/SharedRef.h"
 
+#include "CoreApplication/Interface/PlatformWindow.h"
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanViewport
 
-class CVulkanViewport : public CRHIViewport
+class CVulkanViewport : public CRHIViewport, public CVulkanDeviceObject
 {
 public:
-	
-    CVulkanViewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
-        : CRHIViewport(InFormat, InWidth, InHeight)
-        , BackBuffer(dbg_new TVulkanTexture<CVulkanTexture2D>(InFormat, Width, Height, 1, 1, 0, SClearValue()))
-        , BackBufferView(dbg_new CVulkanRenderTargetView())
-    {
-    }
 
-    ~CVulkanViewport() = default;
+    static TSharedRef<CVulkanViewport> CreateViewport(CVulkanDevice* InDevice, CVulkanCommandQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight);
 
-    virtual bool Resize(uint32 InWidth, uint32 InHeight) override final
-    {
-        Width = InWidth;
-        Height = InHeight;
-        return true;
-    }
+    virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
 
-    virtual bool Present(bool bVerticalSync) override final
-    {
-        return true;
-    }
+    virtual bool Present(bool bVerticalSync) override final;
 
-    virtual void SetName(const String& InName) override final
-    {
-        CRHIObject::SetName(InName);
-    }
+    virtual void SetName(const String& InName) override final;
 
-    virtual CRHIRenderTargetView* GetRenderTargetView() const override final
-    {
-        return BackBufferView.Get();
-    }
+    virtual CRHIRenderTargetView* GetRenderTargetView() const override final;
 
-    virtual CRHITexture2D* GetBackBuffer() const override final
-    {
-        return BackBuffer.Get();
-    }
+    virtual CRHITexture2D* GetBackBuffer() const override final;
 
-    virtual bool IsValid() const override final
-    {
-        return true;
-    }
+    virtual bool IsValid() const override final;
 
 private:
-    TSharedRef<CVulkanTexture2D>        BackBuffer;
-    TSharedRef<CVulkanRenderTargetView> BackBufferView;
+
+    CVulkanViewport(CVulkanDevice* InDevice, CVulkanCommandQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+	~CVulkanViewport();
+
+    bool Initialize();
+
+    TSharedRef<CPlatformWindow>     Window;
+	TSharedRef<CVulkanSurface>      Surface;
+    TSharedRef<CVulkanCommandQueue> Queue;
+
+    TArray<TSharedRef<CVulkanTexture2D>>        BackBuffers;
+    TArray<TSharedRef<CVulkanRenderTargetView>> BackBufferViews;
+    TArray<CVulkanSemaphore>                    ImageSemaphores;
+    TArray<CVulkanSemaphore>                    RenderSemaphores;
 };
 

@@ -1,5 +1,5 @@
 #include "VulkanDriverInstance.h"
-#include "VulkanFunctions.h"
+#include "VulkanLoader.h"
 
 #include "Core/Templates/StringUtils.h"
 #include "Core/Debug/Console/ConsoleManager.h"
@@ -108,18 +108,32 @@ bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& Instance
 	const bool bVerboseLogging = GVulkanVerboseLogging.GetBool();
 	if (bVerboseLogging)
 	{
-		VULKAN_INFO("Available Instance Extensions:");
-		
-		for (const VkExtensionProperties& ExtensionProperty : ExtensionProperties)
+		if (!ExtensionProperties.IsEmpty())
 		{
-			LOG_INFO(String("    ") + ExtensionProperty.extensionName);
+			VULKAN_INFO("Available Instance Extensions:");
+			
+			for (const VkExtensionProperties& ExtensionProperty : ExtensionProperties)
+			{
+				LOG_INFO(String("    ") + ExtensionProperty.extensionName);
+			}
 		}
-		
-		VULKAN_INFO("Available Instance Layers:");
-
-		for (const VkLayerProperties& LayerProperty : LayerProperties)
+		else
 		{
-			LOG_INFO(String("    ") + LayerProperty.layerName + ": " + LayerProperty.description);
+			VULKAN_INFO("No available Instance Extensions");
+		}
+
+		if (!LayerProperties.IsEmpty())
+		{
+			VULKAN_INFO("Available Instance Layers:");
+
+			for (const VkLayerProperties& LayerProperty : LayerProperties)
+			{
+				LOG_INFO(String("    ") + LayerProperty.layerName + ": " + LayerProperty.description);
+			}
+		}
+		else
+		{
+			VULKAN_INFO("No available Instance Layers");
 		}
 	}
 

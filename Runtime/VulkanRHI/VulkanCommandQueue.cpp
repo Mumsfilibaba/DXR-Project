@@ -1,10 +1,22 @@
 #include "VulkanCommandQueue.h"
 #include "VulkanDevice.h"
-#include "VulkanFunctions.h"
+#include "VulkanLoader.h"
 #include "VulkanCommandBuffer.h"
+#include "VulkanFence.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanCommandQueue
+
+TSharedRef<CVulkanCommandQueue> CVulkanCommandQueue::CreateQueue(CVulkanDevice* InDevice, EVulkanCommandQueueType InType)
+{
+    TSharedRef<CVulkanCommandQueue> NewQueue = dbg_new CVulkanCommandQueue(InDevice, InType);
+    if (NewQueue && NewQueue->Initialize())
+    {
+        return NewQueue;
+    }
+
+    return nullptr;
+}
 
 CVulkanCommandQueue::CVulkanCommandQueue(CVulkanDevice* InDevice, EVulkanCommandQueueType InType)
     : CVulkanDeviceObject(InDevice)
@@ -28,7 +40,7 @@ bool CVulkanCommandQueue::Initialize()
     return true;
 }
 
-bool CVulkanCommandQueue::ExecuteCommandBuffer(class CVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers)
+bool CVulkanCommandQueue::ExecuteCommandBuffer(CVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, CVulkanFence* Fence)
 {
 	VkSubmitInfo SubmitInfo;
     CMemory::Memzero(&SubmitInfo);
@@ -36,7 +48,7 @@ bool CVulkanCommandQueue::ExecuteCommandBuffer(class CVulkanCommandBuffer* const
 	SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	SubmitInfo.pNext = nullptr;
 
-    VULKAN_ERROR(WaitSemaphores.Size() != WaitStages.Size(), "The size of WaitSemaphores and WaitStages must be the same");
+    VULKAN_ERROR(WaitSemaphores.Size() == WaitStages.Size(), "The size of WaitSemaphores and WaitStages must be the same");
 
     if (!WaitSemaphores.IsEmpty())
     {
@@ -84,10 +96,9 @@ bool CVulkanCommandQueue::ExecuteCommandBuffer(class CVulkanCommandBuffer* const
 		SubmitInfo.pCommandBuffers    = nullptr;
     }
 
-	// TODO: Fix fences
-	VkFence Fence = VK_NULL_HANDLE;
-	
-	VkResult Result = vkQueueSubmit(CommandQueue, 1, &SubmitInfo, Fence);
+	VkFence SignalFence = Fence ? Fence->GetVkFence() : VK_NULL_HANDLE;
+
+	VkResult Result = vkQueueSubmit(CommandQueue, 1, &SubmitInfo, SignalFence);
     VULKAN_CHECK_RESULT(Result, "vkQueueSubmit failed");
 	
 	WaitSemaphores.Clear();

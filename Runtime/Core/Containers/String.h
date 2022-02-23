@@ -1323,8 +1323,8 @@ public:
     FORCEINLINE void Pop() noexcept
     {
         SizeType Len = Length();
-        Characters.Pop();
         Characters[Len] = StringUtils::Null;
+		Characters.Pop();
     }
 
     /**

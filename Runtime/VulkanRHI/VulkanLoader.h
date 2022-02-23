@@ -40,6 +40,22 @@ VULKAN_FUNCTION_DECLARATION(DestroyDevice);
 
 VULKAN_FUNCTION_DECLARATION(GetDeviceProcAddr);
 
+#if VK_EXT_metal_surface
+	VULKAN_FUNCTION_DECLARATION(CreateMetalSurfaceEXT);
+#endif
+
+#if VK_MVK_macos_surface
+	VULKAN_FUNCTION_DECLARATION(CreateMacOSSurfaceMVK);
+#endif
+
+#if VK_KHR_surface
+	VULKAN_FUNCTION_DECLARATION(DestroySurfaceKHR);
+	VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceCapabilitiesKHR);
+	VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceFormatsKHR);
+	VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfacePresentModesKHR);
+	VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceSupportKHR);
+#endif
+
 bool LoadInstanceFunctions(CVulkanDriverInstance* Instance);
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -48,10 +64,22 @@ bool LoadInstanceFunctions(CVulkanDriverInstance* Instance);
 VULKAN_FUNCTION_DECLARATION(DeviceWaitIdle);
 
 VULKAN_FUNCTION_DECLARATION(CreateCommandPool);
+VULKAN_FUNCTION_DECLARATION(ResetCommandPool);
 VULKAN_FUNCTION_DECLARATION(DestroyCommandPool);
+
+VULKAN_FUNCTION_DECLARATION(CreateFence);
+VULKAN_FUNCTION_DECLARATION(WaitForFences);
+VULKAN_FUNCTION_DECLARATION(ResetFences);
+VULKAN_FUNCTION_DECLARATION(DestroyFence);
+
+VULKAN_FUNCTION_DECLARATION(CreateSemaphore);
+VULKAN_FUNCTION_DECLARATION(DestroySemaphore);
 
 VULKAN_FUNCTION_DECLARATION(AllocateCommandBuffers);
 VULKAN_FUNCTION_DECLARATION(FreeCommandBuffers);
+
+VULKAN_FUNCTION_DECLARATION(BeginCommandBuffer);
+VULKAN_FUNCTION_DECLARATION(EndCommandBuffer);
 
 VULKAN_FUNCTION_DECLARATION(GetDeviceQueue);
 VULKAN_FUNCTION_DECLARATION(QueueSubmit);

@@ -87,11 +87,11 @@ bool CSandbox::Init()
             NewComponent->Mesh = SphereMesh;
             NewComponent->Material = MakeShared<CMaterial>(MatProperties);
 
-            NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
-            NewComponent->Material->NormalMap = GEngine->BaseNormal;
+            NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+            NewComponent->Material->NormalMap    = GEngine->BaseNormal;
             NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-            NewComponent->Material->AOMap = GEngine->BaseTexture;
-            NewComponent->Material->MetallicMap = GEngine->BaseTexture;
+            NewComponent->Material->AOMap        = GEngine->BaseTexture;
+            NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
             NewComponent->Material->Init();
 
             NewActor->AddComponent(NewComponent);
@@ -266,13 +266,13 @@ bool CSandbox::Init()
         NewActor->GetTransform().SetTranslation(-15.0f + ((float)i * 1.75f), 0.0f, 60.0f);
 
         NewComponent = dbg_new CMeshComponent(NewActor);
-        NewComponent->Mesh = Pillar;
-        NewComponent->Material = PillarMat;
-        NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
-        NewComponent->Material->NormalMap = GEngine->BaseNormal;
+        NewComponent->Mesh                   = Pillar;
+        NewComponent->Material               = PillarMat;
+        NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+        NewComponent->Material->NormalMap    = GEngine->BaseNormal;
         NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-        NewComponent->Material->AOMap = GEngine->BaseTexture;
-        NewComponent->Material->MetallicMap = MetallicMap;
+        NewComponent->Material->AOMap        = GEngine->BaseTexture;
+        NewComponent->Material->MetallicMap  = MetallicMap;
         NewComponent->Material->Init();
         NewActor->AddComponent(NewComponent);
     }
@@ -360,7 +360,7 @@ void CSandbox::Tick(CTimestamp DeltaTime)
 {
     CApplicationModule::Tick(DeltaTime);
 
-    // LOG_INFO("Tick: " + ToString(DeltaTime.AsMilliSeconds()));
+    //LOG_INFO("Tick: " + ToString(DeltaTime.AsMilliSeconds()));
 
     const float Delta = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;

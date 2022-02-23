@@ -1,6 +1,6 @@
 #include "VulkanDevice.h"
 #include "VulkanPhysicalDevice.h"
-#include "VulkanFunctions.h"
+#include "VulkanLoader.h"
 
 #include "Core/Debug/Console/ConsoleManager.h"
 
@@ -106,6 +106,8 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
 		VULKAN_ERROR_ALWAYS("Failed to query queue indices");
 		return false;
 	}
+	
+	VULKAN_INFO("QueueIndicies: Graphics=" + ToString(QueueIndicies->GraphicsQueueIndex) + ", Compute=" + ToString(QueueIndicies->ComputeQueueIndex) + ", Copy=" + ToString(QueueIndicies->CopyQueueIndex));
 
 	TArray<VkDeviceQueueCreateInfo> QueueCreateInfos;
 

@@ -1,7 +1,6 @@
 #pragma once
-#include "VulkanDeviceObject.h"
-
-class CVulkanCommandPool;
+#include "VulkanCommandPool.h"
+#include "VulkanFence.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanCommandBuffer
@@ -10,13 +9,58 @@ class CVulkanCommandBuffer : public CVulkanDeviceObject
 {
 public:
 
-    CVulkanCommandBuffer(CVulkanDevice* InDevice);
+    CVulkanCommandBuffer(CVulkanDevice* InDevice, EVulkanCommandQueueType InType);
     ~CVulkanCommandBuffer();
 
-    bool Initialize(CVulkanCommandPool* InCommandPool, VkCommandBufferLevel InLevel);
+    bool Initialize(VkCommandBufferLevel InLevel);
 
-    inline void Begin()
+    FORCEINLINE bool Begin(VkCommandBufferUsageFlags Flags = 0)
     {
+        // Wait for GPU to finish with this commandbuffer and then reset it
+        if (!Fence.Wait(UINT64_MAX))
+        {
+            return false;
+        }
+
+        if (!Fence.Reset())
+        {
+            return false;
+        }
+
+		// Avoid using the VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT since we can reuse the memory
+        if (!CommandPool.Reset())
+        {
+            return false;
+        }
+
+        VkCommandBufferBeginInfo BeginInfo;
+        CMemory::Memzero(&BeginInfo);
+
+		BeginInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		BeginInfo.pNext            = nullptr;
+		BeginInfo.flags            = Flags;
+		BeginInfo.pInheritanceInfo = nullptr;
+
+		VkResult Result = vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
+        VULKAN_CHECK_RESULT(Result, "vkBeginCommandBuffer Failed");
+
+        return true;
+    }
+
+    FORCEINLINE bool End()
+    {
+        VULKAN_CHECK_RESULT(vkEndCommandBuffer(CommandBuffer), "vkEndCommandBuffer Failed");
+        return true;
+    }
+
+    FORCEINLINE CVulkanCommandPool* GetCommandPool()
+    {
+        return &CommandPool;
+    }
+
+    FORCEINLINE CVulkanFence* GetFence()
+    {
+        return &Fence;
     }
 
 	FORCEINLINE VkCommandBuffer GetVkCommandBuffer() const
@@ -25,8 +69,9 @@ public:
 	}
 	
 private:
-    CVulkanCommandPool* CommandPool;
-    VkCommandBuffer     CommandBuffer;
+    CVulkanCommandPool   CommandPool;
+    CVulkanFence         Fence;
 
     VkCommandBufferLevel Level;
+    VkCommandBuffer      CommandBuffer;
 };

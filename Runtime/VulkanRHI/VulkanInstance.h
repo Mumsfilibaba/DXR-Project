@@ -110,5 +110,6 @@ private:
 	TSharedRef<CVulkanPhysicalDevice> Adapter;
     TSharedRef<CVulkanDevice>         Device;
 
+	TSharedRef<CVulkanCommandQueue>   DirectCommandQueue;
     TSharedRef<CVulkanCommandContext> DirectCommandContext;
 };

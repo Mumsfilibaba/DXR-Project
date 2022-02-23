@@ -1,4 +1,4 @@
-#include "VulkanFunctions.h"
+#include "VulkanLoader.h"
 #include "VulkanDriverInstance.h"
 #include "VulkanDevice.h"
 
@@ -49,6 +49,22 @@ VULKAN_FUNCTION_DEFINITION(DestroyDevice);
 
 VULKAN_FUNCTION_DEFINITION(GetDeviceProcAddr);
 
+#if VK_EXT_metal_surface
+	VULKAN_FUNCTION_DEFINITION(CreateMetalSurfaceEXT);
+#endif
+
+#if VK_MVK_macos_surface
+	VULKAN_FUNCTION_DEFINITION(CreateMacOSSurfaceMVK);
+#endif
+
+#if VK_KHR_surface
+	VULKAN_FUNCTION_DEFINITION(DestroySurfaceKHR);
+	VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfaceCapabilitiesKHR);
+	VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfaceFormatsKHR);
+	VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfacePresentModesKHR);
+	VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfaceSupportKHR);
+#endif
+
 bool LoadInstanceFunctions(CVulkanDriverInstance* Instance)
 {
 	VULKAN_ERROR(Instance, "Instance cannot be nullptr");
@@ -68,6 +84,22 @@ bool LoadInstanceFunctions(CVulkanDriverInstance* Instance)
 	VULKAN_LOAD_FUNCTION(Instance, DestroyDevice);
 
 	VULKAN_LOAD_FUNCTION(Instance, GetDeviceProcAddr);
+
+#if VK_EXT_metal_surface
+	VULKAN_LOAD_FUNCTION(Instance, CreateMetalSurfaceEXT);
+#endif
+	
+#if VK_MVK_macos_surface
+	VULKAN_LOAD_FUNCTION(Instance, CreateMacOSSurfaceMVK);
+#endif
+
+#if VK_KHR_surface
+	VULKAN_LOAD_FUNCTION(Instance, DestroySurfaceKHR);
+	VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfaceCapabilitiesKHR);
+	VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfaceFormatsKHR);
+	VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfacePresentModesKHR);
+	VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfaceSupportKHR);
+#endif
 	
 	return true;
 }
@@ -78,10 +110,22 @@ bool LoadInstanceFunctions(CVulkanDriverInstance* Instance)
 VULKAN_FUNCTION_DEFINITION(DeviceWaitIdle);
 
 VULKAN_FUNCTION_DEFINITION(CreateCommandPool);
+VULKAN_FUNCTION_DEFINITION(ResetCommandPool);
 VULKAN_FUNCTION_DEFINITION(DestroyCommandPool);
+
+VULKAN_FUNCTION_DEFINITION(CreateFence);
+VULKAN_FUNCTION_DEFINITION(WaitForFences);
+VULKAN_FUNCTION_DEFINITION(ResetFences);
+VULKAN_FUNCTION_DEFINITION(DestroyFence);
+
+VULKAN_FUNCTION_DEFINITION(CreateSemaphore);
+VULKAN_FUNCTION_DEFINITION(DestroySemaphore);
 
 VULKAN_FUNCTION_DEFINITION(AllocateCommandBuffers);
 VULKAN_FUNCTION_DEFINITION(FreeCommandBuffers);
+
+VULKAN_FUNCTION_DEFINITION(BeginCommandBuffer);
+VULKAN_FUNCTION_DEFINITION(EndCommandBuffer);
 
 VULKAN_FUNCTION_DEFINITION(GetDeviceQueue);
 VULKAN_FUNCTION_DEFINITION(QueueSubmit);
@@ -91,13 +135,25 @@ bool LoadDeviceFunctions(CVulkanDevice* Device)
 	VULKAN_LOAD_FUNCTION(Device, DeviceWaitIdle);
 
 	VULKAN_LOAD_FUNCTION(Device, CreateCommandPool);
+	VULKAN_LOAD_FUNCTION(Device, ResetCommandPool);
 	VULKAN_LOAD_FUNCTION(Device, DestroyCommandPool);
+
+	VULKAN_LOAD_FUNCTION(Device, CreateFence);
+	VULKAN_LOAD_FUNCTION(Device, WaitForFences);
+	VULKAN_LOAD_FUNCTION(Device, ResetFences);
+	VULKAN_LOAD_FUNCTION(Device, DestroyFence);
+
+	VULKAN_LOAD_FUNCTION(Device, CreateSemaphore);
+	VULKAN_LOAD_FUNCTION(Device, DestroySemaphore);	
 
 	VULKAN_LOAD_FUNCTION(Device, AllocateCommandBuffers);
 	VULKAN_LOAD_FUNCTION(Device, FreeCommandBuffers);
 
+	VULKAN_LOAD_FUNCTION(Device, BeginCommandBuffer);
+	VULKAN_LOAD_FUNCTION(Device, EndCommandBuffer);
+	
 	VULKAN_LOAD_FUNCTION(Device, GetDeviceQueue);
 	VULKAN_LOAD_FUNCTION(Device, QueueSubmit);
-
+	
 	return true;
 }

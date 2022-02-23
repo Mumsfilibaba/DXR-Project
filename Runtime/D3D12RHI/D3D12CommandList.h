@@ -29,7 +29,7 @@ public:
         {
             CmdList->Close();
 
-            LOG_INFO("[CD3D12CommandList]: Created CommandList");
+            D3D12_INFO("[CD3D12CommandList]: Created CommandList");
 
             if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList5>(&CmdList5)))
             {
