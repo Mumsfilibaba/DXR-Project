@@ -168,7 +168,7 @@ public:
         Assert(Resource != nullptr);
 
         D3D12_RESOURCE_BARRIER Barrier;
-        CMemory::Memzero(&Barrier);
+        Memory::Memzero(&Barrier);
 
         Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
         Barrier.UAV.pResource = Resource;

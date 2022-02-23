@@ -1,6 +1,6 @@
 #include "StaticArray_Test.h"
 
-#if RUN_TFIXEDARRAY_TEST
+#if RUN_TSTATICARRAY_TEST
 #include <Core/Containers/StaticArray.h>
 
 #include <iostream>

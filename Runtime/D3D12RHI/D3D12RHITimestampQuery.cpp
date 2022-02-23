@@ -65,7 +65,7 @@ void CD3D12RHITimestampQuery::ResolveQueries(class CD3D12RHICommandContext& CmdC
     {
         if (!AllocateReadResource())
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return;
         }
     }
@@ -77,7 +77,7 @@ void CD3D12RHITimestampQuery::ResolveQueries(class CD3D12RHICommandContext& CmdC
     {
         const uint32 SizeInBytes = TimeQueries.SizeInBytes();
 
-        CMemory::Memcpy(TimeQueries.Data(), Data, SizeInBytes);
+        Memory::Memcpy(TimeQueries.Data(), Data, SizeInBytes);
         CurrentReadResource->Unmap(0, nullptr);
     }
 
@@ -102,7 +102,7 @@ CD3D12RHITimestampQuery* CD3D12RHITimestampQuery::Create(CD3D12Device* InDevice)
     ID3D12Device* DxDevice = InDevice->GetDevice();
 
     D3D12_QUERY_HEAP_DESC QueryHeap;
-    CMemory::Memzero(&QueryHeap);
+    Memory::Memzero(&QueryHeap);
 
     QueryHeap.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
     QueryHeap.Count = D3D12_DEFAULT_QUERY_COUNT * 2;
@@ -117,7 +117,7 @@ CD3D12RHITimestampQuery* CD3D12RHITimestampQuery::Create(CD3D12Device* InDevice)
     }
 
     D3D12_RESOURCE_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
     Desc.Flags = D3D12_RESOURCE_FLAG_NONE;
@@ -158,7 +158,7 @@ CD3D12RHITimestampQuery* CD3D12RHITimestampQuery::Create(CD3D12Device* InDevice)
 bool CD3D12RHITimestampQuery::AllocateReadResource()
 {
     D3D12_RESOURCE_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
     Desc.Flags = D3D12_RESOURCE_FLAG_NONE;

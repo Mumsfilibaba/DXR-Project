@@ -16,7 +16,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Interface for a listener to platform messages
+// CPlatformApplicationMessageHandler - Interface for a listener to platform messages
 
 class CPlatformApplicationMessageHandler
 {

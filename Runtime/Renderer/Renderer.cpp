@@ -74,7 +74,7 @@ bool CRenderer::Init()
     Resources.MainWindowViewport = RHICreateViewport(GEngine->MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
     if (!Resources.MainWindowViewport)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -105,7 +105,7 @@ bool CRenderer::Init()
     Resources.StdInputLayout = RHICreateInputLayout(InputLayout);
     if (!Resources.StdInputLayout)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -124,7 +124,7 @@ bool CRenderer::Init()
         Resources.DirectionalLightShadowSampler = RHICreateSamplerState(CreateInfo);
         if (!Resources.DirectionalLightShadowSampler)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -144,7 +144,7 @@ bool CRenderer::Init()
         Resources.PointLightShadowSampler = RHICreateSamplerState(CreateInfo);
         if (!Resources.PointLightShadowSampler)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -790,25 +790,25 @@ void CRenderer::OnWindowResize(const SWindowResizeEvent& Event)
 
     if (!Resources.MainWindowViewport->Resize(Width, Height))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return;
     }
 
     if (!DeferredRenderer.ResizeResources(Resources))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return;
     }
 
     if (!SSAORenderer.ResizeResources(Resources))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return;
     }
 
     if (!ShadowMapRenderer.ResizeResources(Width, Height, LightSetup))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return;
     }
 }
@@ -818,14 +818,14 @@ bool CRenderer::InitBoundingBoxDebugPass()
     TArray<uint8> ShaderCode;
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "VSMain", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     AABBVertexShader = RHICreateVertexShader(ShaderCode);
     if (!AABBVertexShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -835,14 +835,14 @@ bool CRenderer::InitBoundingBoxDebugPass()
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "PSMain", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     AABBPixelShader = RHICreatePixelShader(ShaderCode);
     if (!AABBPixelShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -858,7 +858,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     TSharedRef<CRHIInputLayoutState> InputLayoutState = RHICreateInputLayout(InputLayout);
     if (!InputLayoutState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -874,7 +874,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -888,7 +888,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -901,7 +901,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -924,7 +924,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     AABBDebugPipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!AABBDebugPipelineState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -950,7 +950,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     AABBVertexBuffer = RHICreateVertexBuffer<CVector3>(Vertices.Size(), BufferFlag_Default, ERHIResourceState::Common, &VertexData);
     if (!AABBVertexBuffer)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -980,7 +980,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     AABBIndexBuffer = RHICreateIndexBuffer(ERHIIndexFormat::uint16, Indices.Size(), BufferFlag_Default, ERHIResourceState::Common, &IndexData);
     if (!AABBIndexBuffer)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -996,14 +996,14 @@ bool CRenderer::InitAA()
     TArray<uint8> ShaderCode;
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FullscreenVS.hlsl", "Main", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     TSharedRef<CRHIVertexShader> VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1013,14 +1013,14 @@ bool CRenderer::InitAA()
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/PostProcessPS.hlsl", "Main", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     PostShader = RHICreatePixelShader(ShaderCode);
     if (!PostShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1036,7 +1036,7 @@ bool CRenderer::InitAA()
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1050,7 +1050,7 @@ bool CRenderer::InitAA()
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1065,7 +1065,7 @@ bool CRenderer::InitAA()
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1088,7 +1088,7 @@ bool CRenderer::InitAA()
     PostPSO = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PostPSO)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1111,14 +1111,14 @@ bool CRenderer::InitAA()
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     FXAAShader = RHICreatePixelShader(ShaderCode);
     if (!FXAAShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1131,7 +1131,7 @@ bool CRenderer::InitAA()
     FXAAPSO = RHICreateGraphicsPipelineState(PSOProperties);
     if (!FXAAPSO)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1146,14 +1146,14 @@ bool CRenderer::InitAA()
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", &Defines, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     FXAADebugShader = RHICreatePixelShader(ShaderCode);
     if (!FXAADebugShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1166,7 +1166,7 @@ bool CRenderer::InitAA()
     FXAADebugPSO = RHICreateGraphicsPipelineState(PSOProperties);
     if (!FXAADebugPSO)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1192,7 +1192,7 @@ bool CRenderer::InitShadingImage()
     ShadingImage = RHICreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, ERHIResourceState::ShadingRateSource, nullptr);
     if (!ShadingImage)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1203,14 +1203,14 @@ bool CRenderer::InitShadingImage()
     TArray<uint8> ShaderCode;
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ShadingImage.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     ShadingRateShader = RHICreateComputeShader(ShaderCode);
     if (!ShadingRateShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -1222,7 +1222,7 @@ bool CRenderer::InitShadingImage()
     ShadingRatePipeline = RHICreateComputePipelineState(CreateInfo);
     if (!ShadingRatePipeline)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else

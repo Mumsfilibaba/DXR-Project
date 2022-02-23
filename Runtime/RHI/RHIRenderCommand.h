@@ -1069,7 +1069,7 @@ struct SRHIInsertCommandListMarkerRenderCommand : public SRHIRenderCommand
 
     virtual void Execute(IRHICommandContext& CmdContext) override
     {
-        CDebug::OutputDebugString(Marker + '\n');
+        Debug::OutputDebugString(Marker + '\n');
         LOG_INFO(Marker);
 
         CmdContext.InsertMarker(Marker);
@@ -1084,7 +1084,7 @@ struct SRHIDebugBreakRenderCommand : public SRHIRenderCommand
     virtual void Execute(IRHICommandContext& CmdContext) override
     {
         UNREFERENCED_VARIABLE(CmdContext);
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
     }
 };
 

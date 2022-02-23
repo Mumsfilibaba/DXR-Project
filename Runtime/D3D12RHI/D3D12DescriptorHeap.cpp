@@ -22,7 +22,7 @@ CD3D12DescriptorHeap::CD3D12DescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIP
 bool CD3D12DescriptorHeap::Init()
 {
     D3D12_DESCRIPTOR_HEAP_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.Type = Type;
     Desc.Flags = Flags;
@@ -225,7 +225,7 @@ bool CD3D12OnlineDescriptorHeap::AllocateFreshHeap()
         Heap = dbg_new CD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
         if (!Heap->Init())
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
     }

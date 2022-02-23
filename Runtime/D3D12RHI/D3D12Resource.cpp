@@ -29,7 +29,7 @@ CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const D3D12_RESOURCE_DESC
 bool CD3D12Resource::Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue)
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    CMemory::Memzero(&HeapProperties);
+    Memory::Memzero(&HeapProperties);
 
     HeapProperties.Type = HeapType;
     HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;

@@ -19,8 +19,8 @@ uint8        CMacKeyMapping::ButtonIndexFromButton[EMouseButton::MouseButton_Cou
 void CMacKeyMapping::Initialize()
 {
     /* Keys */
-    CMemory::Memzero(KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable));
-    CMemory::Memzero(ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable));
+    Memory::Memzero(KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable));
+    Memory::Memzero(ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable));
 
     KeyCodeFromScanCodeTable[0x33] = EKey::Key_Backspace;
     KeyCodeFromScanCodeTable[0x30] = EKey::Key_Tab;
@@ -143,8 +143,8 @@ void CMacKeyMapping::Initialize()
     }
 
     /* Mouse buttons */
-    CMemory::Memzero(ButtonFromButtonIndex, sizeof(ButtonFromButtonIndex));
-    CMemory::Memzero(ButtonIndexFromButton, sizeof(ButtonIndexFromButton));
+    Memory::Memzero(ButtonFromButtonIndex, sizeof(ButtonFromButtonIndex));
+    Memory::Memzero(ButtonIndexFromButton, sizeof(ButtonIndexFromButton));
 
     ButtonFromButtonIndex[0] = EMouseButton::MouseButton_Left;
     ButtonFromButtonIndex[1] = EMouseButton::MouseButton_Right;

@@ -11,14 +11,14 @@ CD3D12BaseShader::CD3D12BaseShader(CD3D12Device* InDevice, const TArray<uint8>& 
     , Visibility(InVisibility)
 {
     ByteCode.BytecodeLength = InCode.SizeInBytes();
-    ByteCode.pShaderBytecode = CMemory::Malloc(ByteCode.BytecodeLength);
+    ByteCode.pShaderBytecode = Memory::Malloc(ByteCode.BytecodeLength);
 
-    CMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
+    Memory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
 }
 
 CD3D12BaseShader::~CD3D12BaseShader()
 {
-    CMemory::Free((void*)ByteCode.pShaderBytecode);
+    Memory::Free((void*)ByteCode.pShaderBytecode);
 
     ByteCode.pShaderBytecode = nullptr;
     ByteCode.BytecodeLength = 0;
@@ -70,7 +70,7 @@ bool CD3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Refl
     D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc;
     for (uint32 i = 0; i < NumBoundResources; i++)
     {
-        CMemory::Memzero(&ShaderBindDesc);
+        Memory::Memzero(&ShaderBindDesc);
 
         if (FAILED(Reflection->GetResourceBindingDesc(i, &ShaderBindDesc)))
         {
@@ -219,7 +219,7 @@ bool CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection(CD3D12RHIBaseR
     }
 
     D3D12_LIBRARY_DESC LibDesc;
-    CMemory::Memzero(&LibDesc);
+    Memory::Memzero(&LibDesc);
 
     HRESULT Result = Reflection->GetDesc(&LibDesc);
     if (FAILED(Result))
@@ -233,7 +233,7 @@ bool CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection(CD3D12RHIBaseR
     ID3D12FunctionReflection* Function = Reflection->GetFunctionByIndex(0);
 
     D3D12_FUNCTION_DESC FuncDesc;
-    CMemory::Memzero(&FuncDesc);
+    Memory::Memzero(&FuncDesc);
 
     Function->GetDesc(&FuncDesc);
     if (FAILED(Result))

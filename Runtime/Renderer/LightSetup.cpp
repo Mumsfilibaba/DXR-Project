@@ -15,7 +15,7 @@ bool SLightSetup::Init()
     DirectionalLightsBuffer = RHICreateConstantBuffer(sizeof(DirectionalLightData), BufferFlag_Default, ERHIResourceState::VertexAndConstantBuffer, nullptr);
     if (!DirectionalLightsBuffer)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -27,7 +27,7 @@ bool SLightSetup::Init()
     PointLightsBuffer = RHICreateConstantBuffer(PointLightsData.CapacityInBytes(), BufferFlag_Default, ERHIResourceState::VertexAndConstantBuffer, nullptr);
     if (!PointLightsBuffer)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -39,7 +39,7 @@ bool SLightSetup::Init()
     PointLightsPosRadBuffer = RHICreateConstantBuffer(PointLightsPosRad.CapacityInBytes(), BufferFlag_Default, ERHIResourceState::VertexAndConstantBuffer, nullptr);
     if (!PointLightsPosRadBuffer)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -55,7 +55,7 @@ bool SLightSetup::Init()
         nullptr);
     if (!ShadowCastingPointLightsBuffer)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -71,7 +71,7 @@ bool SLightSetup::Init()
         nullptr);
     if (!ShadowCastingPointLightsPosRadBuffer)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -183,7 +183,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
         PointLightsBuffer = RHICreateConstantBuffer(PointLightsData.CapacityInBytes(), BufferFlag_Default, ERHIResourceState::VertexAndConstantBuffer, nullptr);
         if (!PointLightsBuffer)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
         }
     }
 
@@ -194,7 +194,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
         PointLightsPosRadBuffer = RHICreateConstantBuffer(PointLightsPosRad.CapacityInBytes(), BufferFlag_Default, ERHIResourceState::VertexAndConstantBuffer, nullptr);
         if (!PointLightsPosRadBuffer)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
         }
     }
 
@@ -209,7 +209,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
             nullptr);
         if (!ShadowCastingPointLightsBuffer)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
         }
     }
 
@@ -224,7 +224,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
             nullptr);
         if (!ShadowCastingPointLightsPosRadBuffer)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
         }
     }
 

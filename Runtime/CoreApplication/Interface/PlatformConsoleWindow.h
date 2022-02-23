@@ -3,6 +3,10 @@
 
 #include "CoreApplication/CoreApplication.h"
 
+#ifdef CreateWindow
+#undef CreateWindow
+#endif
+
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
@@ -25,7 +29,7 @@ enum class EConsoleColor : uint8
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for ConsoleWindow
+// CPlatformConsoleWindow - Platform interface for ConsoleWindow
 
 class COREAPPLICATION_API CPlatformConsoleWindow
 {
@@ -36,7 +40,7 @@ public:
      * 
      * @return: Returns a newly created console-window, returns nullptr on failure
      */
-    static CPlatformConsoleWindow* Make() { return dbg_new CPlatformConsoleWindow(); }
+    static CPlatformConsoleWindow* CreateWindow() { return dbg_new CPlatformConsoleWindow(); }
 
     /**
      * Show or hide the console-window 
@@ -105,4 +109,3 @@ protected:
 #elif defined(COMPILER_CLANG)
 #pragma clang diagnostic pop
 #endif
-

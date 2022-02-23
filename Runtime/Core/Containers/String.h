@@ -59,7 +59,7 @@ public:
      * @param Format: Formatted string
      * @return: Returns the formatted string based on the format string
      */
-    static NOINLINE TString MakeFormated(const CharType* Format, ...) noexcept
+    static NOINLINE TString CreateFormated(const CharType* Format, ...) noexcept
     {
         TString NewString;
 
@@ -78,7 +78,7 @@ public:
      * @param ArgsList: Argument-list to be formatted based on the format-string
      * @return: Returns the formatted string based on the format string
      */
-    static FORCEINLINE TString MakeFormatedV(const CharType* Format, va_list ArgsList) noexcept
+    static FORCEINLINE TString CreateFormatedV(const CharType* Format, va_list ArgsList) noexcept
     {
         TString NewString;
         NewString.FormatV(Format, ArgsList);
@@ -319,7 +319,7 @@ public:
         {
             BufferSize += BufferSize;
 
-            DynamicBuffer = reinterpret_cast<CharType*>(CMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
+            DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
 
             WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, ArgsList);
@@ -330,7 +330,7 @@ public:
 
         if (DynamicBuffer)
         {
-            CMemory::Free(DynamicBuffer);
+            Memory::Free(DynamicBuffer);
         }
 
         Characters.Emplace(StringUtils::Null);
@@ -368,7 +368,7 @@ public:
         {
             BufferSize += BufferSize;
 
-            DynamicBuffer = reinterpret_cast<CharType*>(CMemory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
+            DynamicBuffer = reinterpret_cast<CharType*>(Memory::Realloc(DynamicBuffer, BufferSize * sizeof(CharType)));
             WrittenString = DynamicBuffer;
 
             WrittenChars = StringUtils::FormatBufferV(WrittenString, BufferSize, Format, ArgsList);
@@ -379,7 +379,7 @@ public:
 
         if (DynamicBuffer)
         {
-            CMemory::Free(DynamicBuffer);
+            Memory::Free(DynamicBuffer);
         }
 
         Characters.Emplace(StringUtils::Null);
@@ -1789,7 +1789,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Predefined types
 
-using String = TString<char>;
+using String  = TString<char>;
 using WString = TString<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -2043,7 +2043,7 @@ using SWideStringHasher = TStringHasher<wchar_t>;
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, String>::Type ToString(T Element)
 {
-    return String::MakeFormated("%f", Element);
+    return String::CreateFormated("%f", Element);
 }
 
 template<typename T>
@@ -2052,25 +2052,25 @@ typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, String>::Type ToString(T El
 template<>
 inline String ToString<int32>(int32 Element)
 {
-    return String::MakeFormated("%d", Element);
+    return String::CreateFormated("%d", Element);
 }
 
 template<>
 inline String ToString<int64>(int64 Element)
 {
-    return String::MakeFormated("%lld", Element);
+    return String::CreateFormated("%lld", Element);
 }
 
 template<>
 inline String ToString<uint32>(uint32 Element)
 {
-    return String::MakeFormated("%u", Element);
+    return String::CreateFormated("%u", Element);
 }
 
 template<>
 inline String ToString<uint64>(uint64 Element)
 {
-    return String::MakeFormated("%llu", Element);
+    return String::CreateFormated("%llu", Element);
 }
 
 template<>
@@ -2082,7 +2082,7 @@ inline String ToString<bool>(bool bElement)
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, WString>::Type ToWideString(T Element)
 {
-    return WString::MakeFormated(L"%f", Element);
+    return WString::CreateFormated(L"%f", Element);
 }
 
 template<typename T>
@@ -2091,25 +2091,25 @@ typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, WString>::Type ToWideString
 template<>
 inline WString ToWideString<int32>(int32 Element)
 {
-    return WString::MakeFormated(L"%d", Element);
+    return WString::CreateFormated(L"%d", Element);
 }
 
 template<>
 inline WString ToWideString<int64>(int64 Element)
 {
-    return WString::MakeFormated(L"%lld", Element);
+    return WString::CreateFormated(L"%lld", Element);
 }
 
 template<>
 inline WString ToWideString<uint32>(uint32 Element)
 {
-    return WString::MakeFormated(L"%u", Element);
+    return WString::CreateFormated(L"%u", Element);
 }
 
 template<>
 inline WString ToWideString<uint64>(uint64 Element)
 {
-    return WString::MakeFormated(L"%llu", Element);
+    return WString::CreateFormated(L"%llu", Element);
 }
 
 template<>

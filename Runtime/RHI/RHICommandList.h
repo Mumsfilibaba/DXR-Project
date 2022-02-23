@@ -426,7 +426,7 @@ public:
         const uint32 Num32BitConstantsInBytes = Num32BitConstants * 4;
 
         void* Shader32BitConstantsMemory = CmdAllocator.Allocate(Num32BitConstantsInBytes, 1);
-        CMemory::Memcpy(Shader32BitConstantsMemory, Shader32BitConstants, Num32BitConstantsInBytes);
+        Memory::Memcpy(Shader32BitConstantsMemory, Shader32BitConstants, Num32BitConstantsInBytes);
 
         InsertCommand<SRHISet32BitShaderConstantsRenderCommand>(AddRef(Shader), Shader32BitConstantsMemory, Num32BitConstants);
     }
@@ -570,7 +570,7 @@ public:
     void UpdateBuffer(CRHIBuffer* Dst, uint64 DestinationOffsetInBytes, uint64 SizeInBytes, const void* SourceData)
     {
         void* TempSourceData = CmdAllocator.Allocate(static_cast<uint32>(SizeInBytes), 1);
-        CMemory::Memcpy(TempSourceData, SourceData, SizeInBytes);
+        Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
         InsertCommand<SRHIUpdateBufferRenderCommand>(AddRef(Dst), DestinationOffsetInBytes, SizeInBytes, TempSourceData);
     }
@@ -589,7 +589,7 @@ public:
         const uint32 SizeInBytes = Width * Height * GetByteStrideFromFormat(Dst->GetFormat());
 
         void* TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
-        CMemory::Memcpy(TempSourceData, SourceData, SizeInBytes);
+        Memory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
         InsertCommand<SRHIUpdateTexture2DRenderCommand>(AddRef(Dst), Width, Height, MipLevel, TempSourceData);
     }

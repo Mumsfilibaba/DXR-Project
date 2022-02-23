@@ -9,7 +9,7 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowsWindow
+// CWindowsWindow
 
 CWindowsWindow::CWindowsWindow(CWindowsApplication* InApplication)
     : CPlatformWindow()
@@ -30,7 +30,7 @@ CWindowsWindow::~CWindowsWindow()
     }
 }
 
-TSharedRef<CWindowsWindow> CWindowsWindow::Make(CWindowsApplication* InApplication)
+TSharedRef<CWindowsWindow> CWindowsWindow::CreateWindow(CWindowsApplication* InApplication)
 {
     return dbg_new CWindowsWindow(InApplication);
 }
@@ -109,13 +109,11 @@ bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 In
             }
         }
 
-        // Save style for later
         StyleParams = InStyle;
 
-        // Set this to userdata
         SetLastError(0);
 
-        LONG_PTR Result = SetWindowLongPtrA(Window, GWLP_USERDATA, (LONG_PTR)this);
+        LONG_PTR Result = SetWindowLongPtrA(Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 
         DWORD LastError = GetLastError();
         if (Result == 0 && LastError != 0)
@@ -344,8 +342,8 @@ void CWindowsWindow::GetWindowShape(SWindowShape& OutWindowShape) const
     {
         int32  PositionX = 0;
         int32  PositionY = 0;
-        uint32 Width = 0;
-        uint32 Height = 0;
+        uint32 Width     = 0;
+        uint32 Height    = 0;
 
         RECT Rect = { };
         if (GetWindowRect(Window, &Rect) != 0)
@@ -440,7 +438,7 @@ void CWindowsWindow::SetPlatformHandle(PlatformWindowHandle InPlatformHandle)
 
         const bool bHasFullscreenSize  = (FullscreenWidth == WindowShape.Width) && (FullscreenHeight == WindowShape.Height);
         const bool bHasFullscreenStyle = ((Style & BorderlessStyleMask) == 0) && ((Style & BorderlessStyleExMask) == 0); 
-        bIsFullscreen = bHasFullscreenSize && bHasFullscreenStyle; 
+        bIsFullscreen = (bHasFullscreenSize && bHasFullscreenStyle); 
     }
     else
     {

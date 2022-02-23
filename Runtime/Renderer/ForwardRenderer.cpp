@@ -24,14 +24,14 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     TArray<uint8> ShaderCode;
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "VSMain", &Defines, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -41,14 +41,14 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "PSMain", &Defines, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     PShader = RHICreatePixelShader(ShaderCode);
     if (!PShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -64,7 +64,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -78,7 +78,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -93,7 +93,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -116,7 +116,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else

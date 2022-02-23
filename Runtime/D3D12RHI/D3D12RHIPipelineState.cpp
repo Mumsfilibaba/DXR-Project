@@ -216,7 +216,7 @@ bool CD3D12RHIGraphicsPipelineState::Init(const SRHIGraphicsPipelineStateInfo& C
     PipelineStream.RootSignature = RootSignature->GetRootSignature();
 
     D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
-    CMemory::Memzero(&PipelineStreamDesc);
+    Memory::Memzero(&PipelineStreamDesc);
 
     PipelineStreamDesc.pPipelineStateSubobjectStream = &PipelineStream;
     PipelineStreamDesc.SizeInBytes = sizeof(SGraphicsPipelineStream);
@@ -294,7 +294,7 @@ bool CD3D12RHIComputePipelineState::Init()
 
     // Create PipelineState
     D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
-    CMemory::Memzero(&PipelineStreamDesc, sizeof(D3D12_PIPELINE_STATE_STREAM_DESC));
+    Memory::Memzero(&PipelineStreamDesc, sizeof(D3D12_PIPELINE_STATE_STREAM_DESC));
 
     PipelineStreamDesc.pPipelineStateSubobjectStream = &PipelineStream;
     PipelineStreamDesc.SizeInBytes = sizeof(SComputePipelineStream);
@@ -346,7 +346,7 @@ struct SD3D12HitGroup
         , AnyHit(InAnyHit)
         , Intersection(InIntersection)
     {
-        CMemory::Memzero(&Desc);
+        Memory::Memzero(&Desc);
 
         Desc.Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
         Desc.HitGroupExport = HitGroupName.CStr();
@@ -640,7 +640,7 @@ bool CD3D12RHIRayTracingPipelineState::Init(const SRHIRayTracingPipelineStateInf
     PipelineStream.Generate();
 
     D3D12_STATE_OBJECT_DESC RayTracingPipeline;
-    CMemory::Memzero(&RayTracingPipeline);
+    Memory::Memzero(&RayTracingPipeline);
 
     RayTracingPipeline.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
     RayTracingPipeline.pSubobjects = PipelineStream.SubObjects.Data();
@@ -650,7 +650,7 @@ bool CD3D12RHIRayTracingPipelineState::Init(const SRHIRayTracingPipelineStateInf
     HRESULT Result = GetDevice()->GetDXRDevice()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
     if (FAILED(Result))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -682,7 +682,7 @@ void* CD3D12RHIRayTracingPipelineState::GetShaderIdentifer(const String& ExportN
         }
 
         SRayTracingShaderIdentifer Identifier;
-        CMemory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        Memory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
         auto NewIdentifier = ShaderIdentifers.insert(std::make_pair(ExportName, Identifier));
         return NewIdentifier.first->second.ShaderIdentifier;

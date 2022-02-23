@@ -2,9 +2,10 @@
 
 #include "Core/Windows/Windows.h"
 #include "Core/Templates/StringUtils.h"
+#include "Core/Threading/ScopedLock.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ModuleManager
+// CModuleManager
 
 IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
 {
@@ -74,21 +75,28 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
         ModuleLoadedDelegate.Broadcast(ModuleName, NewModule.Interface);
 
         NewModule.Name = ModuleName;
-        Modules.Emplace(NewModule);
+
+        {
+            TScopedLock Lock(ModulesCriticalSection);
+            Modules.Emplace(NewModule);
+        }
+
         return NewModule.Interface;
     }
     else
     {
         LOG_ERROR("Failed to load module '" + String(ModuleName) + "'");
-        SafeDelete(NewModule.Interface);
 
+        SafeDelete(NewModule.Interface);
         return nullptr;
     }
 }
 
 IEngineModule* CModuleManager::GetEngineModule(const char* ModuleName)
 {
-    const int32 Index = GetModuleIndex(ModuleName);
+    TScopedLock Lock(ModulesCriticalSection);
+
+    const int32 Index = GetModuleIndex_Internal(ModuleName);
     if (Index >= 0)
     {
         const SModule& Module = Modules[Index];
@@ -128,13 +136,12 @@ void CModuleManager::Destroy()
     ModuleManager.Reset();
 }
 
-void  CModuleManager::ReleaseAllModules()
+void CModuleManager::ReleaseAllModules()
 {
-    const int32 NumModules = Modules.Size();
-    for (int32 Index = 0; Index < NumModules; Index++)
-    {
-        SModule& Module = Modules[Index];
+    TScopedLock Lock(ModulesCriticalSection);
 
+    for (SModule& Module : Modules)
+    {
         IEngineModule* EngineModule = Module.Interface;
         if (EngineModule)
         {
@@ -142,8 +149,7 @@ void  CModuleManager::ReleaseAllModules()
             SafeDelete(EngineModule);
         }
 
-        PlatformModule Handle = Module.Handle;
-        PlatformLibrary::FreeDynamicLib(Handle);
+        PlatformLibrary::FreeDynamicLib(Module.Handle);
         Module.Handle = nullptr;
     }
 
@@ -152,7 +158,9 @@ void  CModuleManager::ReleaseAllModules()
 
 PlatformModule CModuleManager::GetModuleHandle(const char* ModuleName)
 {
-    const int32 Index = GetModuleIndex(ModuleName);
+    TScopedLock Lock(ModulesCriticalSection);
+
+    const int32 Index = GetModuleIndex_Internal(ModuleName);
     if (Index >= 0)
     {
         const SModule& Module = Modules[Index];
@@ -166,6 +174,8 @@ PlatformModule CModuleManager::GetModuleHandle(const char* ModuleName)
 
 void CModuleManager::RegisterStaticModule(const char* ModuleName, CInitializeStaticModuleDelegate InitDelegate)
 {
+    TScopedLock Lock(StaticModuleDelegatesCriticalSection);
+
     const bool bContains = StaticModuleDelegates.Contains([=](const TPair<String, CInitializeStaticModuleDelegate>& Element)
     {
         return (Element.First == ModuleName);
@@ -179,13 +189,17 @@ void CModuleManager::RegisterStaticModule(const char* ModuleName, CInitializeSta
 
 bool CModuleManager::IsModuleLoaded(const char* ModuleName)
 {
-    const int32 Index = GetModuleIndex(ModuleName);
+    TScopedLock Lock(ModulesCriticalSection);
+
+    const int32 Index = GetModuleIndex_Internal(ModuleName);
     return (Index >= 0);
 }
 
 void CModuleManager::UnloadModule(const char* ModuleName)
 {
-    const int32 Index = GetModuleIndex(ModuleName);
+    TScopedLock Lock(ModulesCriticalSection);
+
+    const int32 Index = GetModuleIndex_Internal(ModuleName);
     if (Index >= 0)
     {
         SModule& Module = Modules[Index];
@@ -197,8 +211,7 @@ void CModuleManager::UnloadModule(const char* ModuleName)
             SafeDelete(EngineModule);
         }
 
-        PlatformModule Handle = Module.Handle;
-        PlatformLibrary::FreeDynamicLib(Handle);
+        PlatformLibrary::FreeDynamicLib(Module.Handle);
         Module.Handle = nullptr;
 
         Modules.RemoveAt(Index);
@@ -216,7 +229,7 @@ TOptional<CModuleManager>& CModuleManager::GetModuleManagerInstance()
     return Instance;
 }
 
-int32 CModuleManager::GetModuleIndex(const char* ModuleName)
+int32 CModuleManager::GetModuleIndex_Internal(const char* ModuleName)
 {
     const int32 Index = Modules.Find([=](const SModule& Element)
     {
@@ -229,6 +242,8 @@ int32 CModuleManager::GetModuleIndex(const char* ModuleName)
 
 CModuleManager::CInitializeStaticModuleDelegate* CModuleManager::GetStaticModuleDelegate(const char* ModuleName)
 {
+    TScopedLock Lock(StaticModuleDelegatesCriticalSection);
+
     const int32 Index = StaticModuleDelegates.Find([=](const TPair<String, CInitializeStaticModuleDelegate>& Element)
     {
         return (Element.First == ModuleName);

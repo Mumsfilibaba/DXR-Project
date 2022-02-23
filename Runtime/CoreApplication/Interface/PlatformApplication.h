@@ -17,7 +17,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for application
+// CPlatformApplication - Platform interface for application
 
 class CPlatformApplication
 {
@@ -28,7 +28,7 @@ public:
      * 
      * @return: Returns the newly created PlatformApplication 
      */
-    static TSharedPtr<CPlatformApplication> Make() { return TSharedPtr<CPlatformApplication>(); }
+    static TSharedPtr<CPlatformApplication> CreateApplication() { return TSharedPtr<CPlatformApplication>(); }
 
     /**
      * Public destructor for TSharedPtr 
@@ -40,7 +40,7 @@ public:
      * 
      * @return: Returns the newly created PlatformWindow
      */
-    virtual TSharedRef<CPlatformWindow> MakeWindow() { return TSharedRef<CPlatformWindow>(); }
+    virtual TSharedRef<CPlatformWindow> CreateWindow() { return TSharedRef<CPlatformWindow>(); }
 
     /**
      * Initialize the PlatformApplication
@@ -86,9 +86,9 @@ public:
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const { return TSharedRef<CPlatformWindow>(); }
 
     /**
-     * Sets the PlatformWindow that should recive keyboard focus
+     * Sets the PlatformWindow that should receive keyboard focus
      * 
-     * @param Window: PlatformWindow that should recive keyboard focus
+     * @param Window: PlatformWindow that should receive keyboard focus
      */
     virtual void SetCapture(const TSharedRef<CPlatformWindow>& Window) { }
 
@@ -142,8 +142,6 @@ protected:
     }
 
     TSharedPtr<ICursor> Cursor;
-    
-    /** Handler for platform messages/events */
     TSharedPtr<CPlatformApplicationMessageHandler> MessageListener;
 };
 

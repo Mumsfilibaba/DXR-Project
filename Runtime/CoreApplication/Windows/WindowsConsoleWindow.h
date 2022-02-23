@@ -15,14 +15,13 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows-specific interface for ConsoleWindow
+// CWindowsConsoleWindow - Windows-specific interface for ConsoleWindow
 
 class COREAPPLICATION_API CWindowsConsoleWindow final : public CPlatformConsoleWindow
 {
 public:
 
-    /* Creates a new console, can only be called once */
-    static CWindowsConsoleWindow* Make();
+    static CWindowsConsoleWindow* CreateWindow();
 
     virtual void Print(const String& Message) override final;
     virtual void PrintLine(const String& Message) override final;
@@ -37,10 +36,7 @@ private:
     CWindowsConsoleWindow();
     ~CWindowsConsoleWindow();
 
-    /* Handle to the console window */
-    HANDLE ConsoleHandle;
-
-    /* Mutex protecting for errors when printing from multiple threads */
+    HANDLE           ConsoleHandle;
     CCriticalSection ConsoleMutex;
 };
 

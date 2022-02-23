@@ -49,7 +49,7 @@ bool CD3D12RHIViewport::Init()
     Assert(Width > 0 && Height > 0);
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
-    CMemory::Memzero(&SwapChainDesc);
+    Memory::Memzero(&SwapChainDesc);
 
     SwapChainDesc.Width = Width;
     SwapChainDesc.Height = Height;
@@ -64,7 +64,7 @@ bool CD3D12RHIViewport::Init()
     SwapChainDesc.Flags = Flags;
 
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc;
-    CMemory::Memzero(&FullscreenDesc);
+    Memory::Memzero(&FullscreenDesc);
 
     FullscreenDesc.RefreshRate.Numerator = 0;
     FullscreenDesc.RefreshRate.Denominator = 1;
@@ -229,7 +229,7 @@ bool CD3D12RHIViewport::RetriveBackBuffers()
         BackBuffers[i]->SetResource(dbg_new CD3D12Resource(GetDevice(), BackBufferResource));
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;
-        CMemory::Memzero(&Desc);
+        Memory::Memzero(&Desc);
 
         Desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
         Desc.Format = BackBuffers[i]->GetNativeFormat();

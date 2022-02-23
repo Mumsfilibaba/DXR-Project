@@ -44,7 +44,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     TSharedRef<CRHITexture2D> Panorama = CTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
     if (!Panorama)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -79,14 +79,14 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     TArray<uint8> ShaderCode;
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Skybox.hlsl", "VSMain", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     SkyboxVertexShader = RHICreateVertexShader(ShaderCode);
     if (!SkyboxVertexShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -96,14 +96,14 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Skybox.hlsl", "PSMain", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     SkyboxPixelShader = RHICreatePixelShader(ShaderCode);
     if (!SkyboxPixelShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -117,7 +117,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -132,7 +132,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -148,7 +148,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -170,7 +170,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     PipelineState = RHICreateGraphicsPipelineState(PipelineStateInfo);
     if (!PipelineState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else

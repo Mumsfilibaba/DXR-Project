@@ -27,9 +27,9 @@ CAutoConsoleCommand GExit("engine.Exit");
 CAutoConsoleCommand GToggleFullscreen("viewport.ToggleFullscreen");
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Engine
+// CEngine
 
-CEngine* CEngine::Make()
+CEngine* CEngine::CreateEngine()
 {
     return dbg_new CEngine();
 }
@@ -53,7 +53,7 @@ bool CEngine::Initialize()
     const uint32 WindowWidth  = 1920;
     const uint32 WindowHeight = 1080;
 
-    MainWindow = Application.MakeWindow();
+    MainWindow = Application.CreateWindow();
     if (MainWindow && MainWindow->Initialize(CProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
     {
         MainWindow->Show(false);
@@ -69,7 +69,7 @@ bool CEngine::Initialize()
     Application.RegisterMainViewport(MainWindow);
 
     TSharedPtr<ICursor> CursorDevice = Application.GetCursor();
-    User = CApplicationUser::Make(0, CursorDevice);
+    User = CApplicationUser::CreateUser(0, CursorDevice);
     if (!User)
     {
         return false;
@@ -106,15 +106,15 @@ bool CEngine::Initialize()
 
     /* Create material sampler (Used for now by all materials) */
     SRHISamplerStateInfo SamplerCreateInfo;
-    SamplerCreateInfo.AddressU = ESamplerMode::Wrap;
-    SamplerCreateInfo.AddressV = ESamplerMode::Wrap;
-    SamplerCreateInfo.AddressW = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressU       = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressV       = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressW       = ESamplerMode::Wrap;
     SamplerCreateInfo.ComparisonFunc = EComparisonFunc::Never;
-    SamplerCreateInfo.Filter = ESamplerFilter::Anistrotopic;
-    SamplerCreateInfo.MaxAnisotropy = 16;
-    SamplerCreateInfo.MaxLOD = FLT_MAX;
-    SamplerCreateInfo.MinLOD = -FLT_MAX;
-    SamplerCreateInfo.MipLODBias = 0.0f;
+    SamplerCreateInfo.Filter         = ESamplerFilter::Anistrotopic;
+    SamplerCreateInfo.MaxAnisotropy  = 16;
+    SamplerCreateInfo.MaxLOD         = FLT_MAX;
+    SamplerCreateInfo.MinLOD         = -FLT_MAX;
+    SamplerCreateInfo.MipLODBias     = 0.0f;
 
     BaseMaterialSampler = RHICreateSamplerState(SamplerCreateInfo);
 

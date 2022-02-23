@@ -51,14 +51,14 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
         if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/GeometryPass.hlsl", "VSMain", &Defines, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
 
         BaseVertexShader = RHICreateVertexShader(ShaderCode);
         if (!BaseVertexShader)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -68,14 +68,14 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
         if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/GeometryPass.hlsl", "PSMain", &Defines, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
 
         BasePixelShader = RHICreatePixelShader(ShaderCode);
         if (!BasePixelShader)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -91,7 +91,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         TSharedRef<CRHIDepthStencilState> GeometryDepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
         if (!GeometryDepthStencilState)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -105,7 +105,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         TSharedRef<CRHIRasterizerState> GeometryRasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
         if (!GeometryRasterizerState)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -120,7 +120,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -145,7 +145,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         PipelineState = RHICreateGraphicsPipelineState(PipelineStateInfo);
         if (!PipelineState)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -158,14 +158,14 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     {
         if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/PrePass.hlsl", "Main", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
 
         PrePassVertexShader = RHICreateVertexShader(ShaderCode);
         if (!PrePassVertexShader)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -181,7 +181,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
         if (!DepthStencilState)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -195,7 +195,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -210,7 +210,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -229,7 +229,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         PrePassPipelineState = RHICreateGraphicsPipelineState(PipelineStateInfo);
         if (!PrePassPipelineState)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -244,14 +244,14 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     {
         LOG_ERROR("[CRenderer]: R16G16_Float is not supported for UAVs");
 
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     TSharedRef<CRHITexture2D> StagingTexture = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, ERHIResourceState::Common, nullptr);
     if (!StagingTexture)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -262,7 +262,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     FrameResources.IntegrationLUT = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_SRV, ERHIResourceState::Common, nullptr);
     if (!FrameResources.IntegrationLUT)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -279,7 +279,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     FrameResources.IntegrationLUTSampler = RHICreateSamplerState(CreateInfo);
     if (!FrameResources.IntegrationLUTSampler)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -289,14 +289,14 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/BRDFIntegationGen.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     TSharedRef<CRHIComputeShader> CShader = RHICreateComputeShader(ShaderCode);
     if (!CShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -311,7 +311,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         TSharedRef<CRHIComputePipelineState> BRDF_PipelineState = RHICreateComputePipelineState(PipelineStateInfo);
         if (!BRDF_PipelineState)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -348,14 +348,14 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     {
         if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DeferredLightPass.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
 
         TiledLightShader = RHICreateComputeShader(ShaderCode);
         if (!TiledLightShader)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -369,7 +369,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         TiledLightPassPSO = RHICreateComputePipelineState(DeferredLightPassCreateInfo);
         if (!TiledLightPassPSO)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -386,14 +386,14 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
         if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DeferredLightPass.hlsl", "Main", &Defines, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
 
         TiledLightDebugShader = RHICreateComputeShader(ShaderCode);
         if (!TiledLightDebugShader)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -407,7 +407,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         TiledLightPassPSODebug = RHICreateComputePipelineState(DeferredLightPassCreateInfo);
         if (!TiledLightPassPSODebug)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -419,14 +419,14 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     {
         if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DepthReduction.hlsl", "ReductionMainInital", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
 
         ReduceDepthInitalShader = RHICreateComputeShader(ShaderCode);
         if (!ReduceDepthInitalShader)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -440,7 +440,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         ReduceDepthInitalPSO = RHICreateComputePipelineState(PipelineStateInfo);
         if (!ReduceDepthInitalPSO)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -452,14 +452,14 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     {
         if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DepthReduction.hlsl", "ReductionMain", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
 
         ReduceDepthShader = RHICreateComputeShader(ShaderCode);
         if (!ReduceDepthShader)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else
@@ -473,7 +473,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         ReduceDepthPSO = RHICreateComputePipelineState(PipelineStateInfo);
         if (!ReduceDepthPSO)
         {
-            CDebug::DebugBreak();
+            Debug::DebugBreak();
             return false;
         }
         else

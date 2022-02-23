@@ -203,7 +203,7 @@ public:
      */
     static FORCEINLINE CharType* Copy(CharType* Dest, const CharType* Source, uint64 InLength) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memcpy(Dest, Source, InLength * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(Memory::Memcpy(Dest, Source, InLength * sizeof(CharType)));
     }
 
     /**
@@ -228,7 +228,7 @@ public:
      */
     static FORCEINLINE CharType* Move(CharType* Dest, const CharType* Source, uint64 InLength) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memmove(Dest, Source, InLength * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(Memory::Memmove(Dest, Source, InLength * sizeof(CharType)));
     }
 
     /**
@@ -460,7 +460,7 @@ public:
      */
     static FORCEINLINE CharType* Copy(CharType* Dest, const CharType* Source, uint64 Length) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memcpy(Dest, Source, Length * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(Memory::Memcpy(Dest, Source, Length * sizeof(CharType)));
     }
 
     /**
@@ -485,7 +485,7 @@ public:
      */
     static FORCEINLINE CharType* Move(CharType* Dest, const CharType* Source, uint64 Length) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memmove(Dest, Source, Length * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(Memory::Memmove(Dest, Source, Length * sizeof(CharType)));
     }
 
     /**

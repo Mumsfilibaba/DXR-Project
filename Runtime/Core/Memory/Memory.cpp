@@ -10,7 +10,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Memory
 
-void* CMemory::Malloc(uint64 Size) noexcept
+void* Memory::Malloc(uint64 Size) noexcept
 {
     // Since malloc is not guaranteed to return nullptr, we check for it here
     // Source: https://www.cplusplus.com/reference/cstdlib/malloc/
@@ -24,42 +24,49 @@ void* CMemory::Malloc(uint64 Size) noexcept
     }
 }
 
-void* CMemory::Realloc(void* Pointer, uint64 Size) noexcept
+void* Memory::Realloc(void* Pointer, uint64 Size) noexcept
 {
     return realloc(Pointer, Size);
 }
 
-void CMemory::Free(void* Ptr) noexcept
+void Memory::Free(void* Pointer) noexcept
 {
-    free(Ptr);
+    free(Pointer);
 }
 
-void* CMemory::Memset(void* Destination, uint8 Value, uint64 Size) noexcept
+void* Memory::Memset(void* Destination, uint8 Value, uint64 Size) noexcept
 {
     return memset(Destination, static_cast<int>(Value), Size);
 }
 
-void* CMemory::Memzero(void* Destination, uint64 Size) noexcept
+void* Memory::Memzero(void* Destination, uint64 Size) noexcept
 {
     return memset(Destination, 0, Size);
 }
 
-void* CMemory::Memcpy(void* restrict_ptr Destination, const void* restrict_ptr Source, uint64 Size) noexcept
+void* Memory::Memcpy(void* restrict_ptr Destination, const void* restrict_ptr Source, uint64 Size) noexcept
 {
     return memcpy(Destination, Source, Size);
 }
 
-void* CMemory::Memmove(void* Destination, const void* Source, uint64 Size) noexcept
+void* Memory::Memmove(void* Destination, const void* Source, uint64 Size) noexcept
 {
-    return memmove(Destination, Source, Size);
+    if (Destination == Source)
+    {
+        return Destination;
+    }
+    else
+    {
+        return memmove(Destination, Source, Size);
+    }
 }
 
-bool CMemory::Memcmp(const void* Lhs, const void* Rhs, uint64 Size)  noexcept
+bool Memory::Memcmp(const void* Lhs, const void* Rhs, uint64 Size)  noexcept
 {
     return (memcmp(Lhs, Rhs, Size) == 0);
 }
 
-void CMemory::Memswap(void* restrict_ptr Lhs, void* restrict_ptr Rhs, uint64 Size) noexcept
+void Memory::Memswap(void* restrict_ptr Lhs, void* restrict_ptr Rhs, uint64 Size) noexcept
 {
     Assert(Lhs != nullptr && Rhs != nullptr);
 

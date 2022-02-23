@@ -25,7 +25,7 @@ CWindowsConsoleWindow::~CWindowsConsoleWindow()
     }
 }
 
-CWindowsConsoleWindow* CWindowsConsoleWindow::Make()
+CWindowsConsoleWindow* CWindowsConsoleWindow::CreateWindow()
 {
     return dbg_new CWindowsConsoleWindow();
 }
@@ -51,7 +51,7 @@ void CWindowsConsoleWindow::Clear()
         TScopedLock<CCriticalSection> Lock(ConsoleMutex);
 
         CONSOLE_SCREEN_BUFFER_INFO CSBI;
-        CMemory::Memzero(&CSBI);
+        Memory::Memzero(&CSBI);
 
         if (GetConsoleScreenBufferInfo(ConsoleHandle, &CSBI))
         {

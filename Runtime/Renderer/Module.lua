@@ -3,7 +3,7 @@ include '../../BuildScripts/Scripts/build_module.lua'
 local RendererModule = CModuleBuildRules('Renderer')
 RendererModule.AddSystemIncludes( 
 {
-    MakeExternalDependencyPath('imgui'),
+    CreateExternalDependencyPath('imgui'),
 })
 
 RendererModule.AddModuleDependencies( 

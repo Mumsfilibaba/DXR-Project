@@ -1,3 +1,5 @@
+#include "MathTest.h"
+
 #include <Core/Math/Matrix4.h>
 
 #include <cstdio>
@@ -10,34 +12,34 @@ bool TestMatrix4()
 {
     // Identity
     CMatrix4 Identity = CMatrix4::Identity();
-    if ( Identity != CMatrix4(
+    if (Identity != CMatrix4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f ) )
+        0.0f, 0.0f, 0.0f, 1.0f))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Constructors
-    CMatrix4 Test = CMatrix4( 5.0f );
-    if ( Test != CMatrix4(
+    CMatrix4 Test = CMatrix4(5.0f);
+    if (Test != CMatrix4(
         5.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 5.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 5.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 5.0f ) )
+        0.0f, 0.0f, 0.0f, 5.0f))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     Test = CMatrix4(
-        CVector4( 1.0f, 0.0f, 0.0f, 0.0f ),
-        CVector4( 0.0f, 1.0f, 0.0f, 0.0f ),
-        CVector4( 0.0f, 0.0f, 1.0f, 0.0f ),
-        CVector4( 0.0f, 0.0f, 0.0f, 1.0f ) );
-    if ( Identity != Test )
+        CVector4(1.0f, 0.0f, 0.0f, 0.0f),
+        CVector4(0.0f, 1.0f, 0.0f, 0.0f),
+        CVector4(0.0f, 0.0f, 1.0f, 0.0f),
+        CVector4(0.0f, 0.0f, 0.0f, 1.0f));
+    if (Identity != Test)
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     float Arr[16] =
@@ -48,77 +50,77 @@ bool TestMatrix4()
         13.0f, 14.0f, 15.0f, 16.0f
     };
 
-    Test = CMatrix4( Arr );
-    if ( Test != CMatrix4(
+    Test = CMatrix4(Arr);
+    if (Test != CMatrix4(
         1.0f, 2.0f, 3.0f, 4.0f,
         5.0f, 6.0f, 7.0f, 8.0f,
         9.0f, 10.0f, 11.0f, 12.0f,
-        13.0f, 14.0f, 15.0f, 16.0f ) )
+        13.0f, 14.0f, 15.0f, 16.0f))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Translation
-    CMatrix4 Translation = CMatrix4::Translation( 5.0f, 1.0f, -2.0f );
-    if ( Translation != CMatrix4(
+    CMatrix4 Translation = CMatrix4::Translation(5.0f, 1.0f, -2.0f);
+    if (Translation != CMatrix4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        5.0f, 1.0f, -2.0f, 1.0f ) )
+        5.0f, 1.0f, -2.0f, 1.0f))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Transformation
-    CVector3 Vec0 = CVector3( 1.0f, 1.0f, 1.0f );
-    CVector3 Vec1 = Translation.TransformPosition( Vec0 );
-    if ( Vec1 != CVector3( 6.0f, 2.0f, -1.0f ) )
+    CVector3 Vec0 = CVector3(1.0f, 1.0f, 1.0f);
+    CVector3 Vec1 = Translation.TransformPosition(Vec0);
+    if (Vec1 != CVector3(6.0f, 2.0f, -1.0f))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
-    Vec1 = Translation.TransformDirection( Vec0 );
-    if ( Vec1 != CVector3( 1.0f, 1.0f, 1.0f ) )
+    Vec1 = Translation.TransformDirection(Vec0);
+    if (Vec1 != CVector3(1.0f, 1.0f, 1.0f))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Transpose
     Test = Test.Transpose();
-    if ( Test != CMatrix4(
+    if (Test != CMatrix4(
         1.0f, 5.0f, 9.0f, 13.0f,
         2.0f, 6.0f, 10.0f, 14.0f,
         3.0f, 7.0f, 11.0f, 15.0f,
-        4.0f, 8.0f, 12.0f, 16.0f ) )
+        4.0f, 8.0f, 12.0f, 16.0f))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Determinant
-    CMatrix4 Scale = CMatrix4::Scale( 6.0f );
+    CMatrix4 Scale = CMatrix4::Scale(6.0f);
     float fDeterminant0 = Scale.Determinant();
 
-    XMMATRIX XmScale = XMMatrixScaling( 6.0f, 6.0f, 6.0f );
-    float fDeterminant1 = XMVectorGetX( XMMatrixDeterminant( XmScale ) );
+    XMMATRIX XmScale = XMMatrixScaling(6.0f, 6.0f, 6.0f);
+    float fDeterminant1 = XMVectorGetX(XMMatrixDeterminant(XmScale));
 
-    if ( fDeterminant0 != fDeterminant1 )
+    if (fDeterminant0 != fDeterminant1)
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // LookAt / Look To
-    CMatrix4 LookAt = CMatrix4::LookAt( CVector3( 0.0f, 0.0f, 1.0f ), CVector3( 0.0f ), CVector3( 0.0f, 1.0f, 0.0f ) );
+    CMatrix4 LookAt = CMatrix4::LookAt(CVector3(0.0f, 0.0f, 1.0f), CVector3(0.0f), CVector3(0.0f, 1.0f, 0.0f));
     XMMATRIX XmLookAt = XMMatrixLookAtLH(
-        XMVectorSet( 0.0f, 0.0f, 1.0f, 0.0f ),
-        XMVectorSet( 0.0f, 0.0f, 0.0f, 0.0f ),
-        XMVectorSet( 0.0f, 1.0f, 0.0f, 0.0f ) );
+        XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
+        XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f),
+        XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
 
     XMFLOAT4X4 Float4x4Matrix;
-    XMStoreFloat4x4( &Float4x4Matrix, XmLookAt );
+    XMStoreFloat4x4(&Float4x4Matrix, XmLookAt);
 
-    if ( LookAt != CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
+    if (LookAt != CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Perspective Projection
@@ -127,49 +129,49 @@ bool TestMatrix4()
     float FOV = NMath::PI_F / 2.0f;
     float Near = 0.01f;
     float Far = 100.0f;
-    CMatrix4 Projection = CMatrix4::PerspectiveProjection( FOV, Width, Height, Near, Far );
-    XMMATRIX XmProjection = XMMatrixPerspectiveFovLH( FOV, Width / Height, Near, Far );
+    CMatrix4 Projection = CMatrix4::PerspectiveProjection(FOV, Width, Height, Near, Far);
+    XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(FOV, Width / Height, Near, Far);
 
     Float4x4Matrix;
-    XMStoreFloat4x4( &Float4x4Matrix, XmProjection );
+    XMStoreFloat4x4(&Float4x4Matrix, XmProjection);
 
-    if ( Projection != CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
+    if (Projection != CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Multiplication
     CMatrix4 Mult = LookAt * Projection;
-    XMMATRIX XmMult = XMMatrixMultiply( XmLookAt, XmProjection );
+    XMMATRIX XmMult = XMMatrixMultiply(XmLookAt, XmProjection);
 
     Float4x4Matrix;
-    XMStoreFloat4x4( &Float4x4Matrix, XmMult );
+    XMStoreFloat4x4(&Float4x4Matrix, XmMult);
 
-    if ( Mult != CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
+    if (Mult != CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
-    CMatrix4 _Mul0( 2.0 );
-    _Mul0 *= CMatrix4( 2.0 );
+    CMatrix4 _Mul0(2.0);
+    _Mul0 *= CMatrix4(2.0);
 
     XMFLOAT4X4 _Mul1(
         2.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 2.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 2.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 2.0f );
+        0.0f, 0.0f, 0.0f, 2.0f);
     XMFLOAT4X4 _Mul2 = _Mul1;
 
-    XMMATRIX XmMult0 = XMLoadFloat4x4( &_Mul1 );
-    XMMATRIX XmMult1 = XMLoadFloat4x4( &_Mul2 );
-    XmMult0 = XMMatrixMultiply( XmMult0, XmMult1 );
+    XMMATRIX XmMult0 = XMLoadFloat4x4(&_Mul1);
+    XMMATRIX XmMult1 = XMLoadFloat4x4(&_Mul2);
+    XmMult0 = XMMatrixMultiply(XmMult0, XmMult1);
 
     Float4x4Matrix;
-    XMStoreFloat4x4( &Float4x4Matrix, XmMult0 );
+    XMStoreFloat4x4(&Float4x4Matrix, XmMult0);
 
-    if ( _Mul0 != CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
+    if (_Mul0 != CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Inverse
@@ -177,37 +179,37 @@ bool TestMatrix4()
     fDeterminant0 = Mult.Determinant();
 
     XMVECTOR XmDeterminant;
-    XMMATRIX XmInverse = XMMatrixInverse( &XmDeterminant, XmMult );
-    fDeterminant1 = XMVectorGetX( XmDeterminant );
+    XMMATRIX XmInverse = XMMatrixInverse(&XmDeterminant, XmMult);
+    fDeterminant1 = XMVectorGetX(XmDeterminant);
 
     Float4x4Matrix;
-    XMStoreFloat4x4( &Float4x4Matrix, XmInverse );
+    XMStoreFloat4x4(&Float4x4Matrix, XmInverse);
 
-    if ( Inverse != CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
+    if (Inverse != CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Adjoint
     CMatrix4 Adjoint = Mult.Adjoint();
     CMatrix4 Inverse2 = Adjoint * (1.0f / fDeterminant0);
 
-    if ( Inverse != Inverse2 )
+    if (Inverse != Inverse2)
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     CMatrix4 InvInverse = Inverse * fDeterminant0;
-    CMatrix4 XmInvInverse = CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) * fDeterminant1;
+    CMatrix4 XmInvInverse = CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)) * fDeterminant1;
 
-    if ( InvInverse != XmInvInverse )
+    if (InvInverse != XmInvInverse)
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
-    if ( Adjoint != XmInvInverse )
+    if (Adjoint != XmInvInverse)
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // NaN
@@ -215,10 +217,10 @@ bool TestMatrix4()
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, NAN );
-    if ( NaN.HasNan() != true )
+        0.0f, 0.0f, 0.0f, NAN);
+    if (NaN.HasNan() != true)
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Infinity
@@ -226,137 +228,137 @@ bool TestMatrix4()
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, INFINITY );
-    if ( Infinity.HasInfinity() != true )
+        0.0f, 0.0f, 0.0f, INFINITY);
+    if (Infinity.HasInfinity() != true)
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Valid
-    if ( NaN.IsValid() || Infinity.IsValid() )
+    if (NaN.IsValid() || Infinity.IsValid())
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Get Row
-    CVector4 Row = Infinity.GetRow( 0 );
-    if ( Row != CVector4( 1.0f, 0.0f, 0.0f, 0.0f ) )
+    CVector4 Row = Infinity.GetRow(0);
+    if (Row != CVector4(1.0f, 0.0f, 0.0f, 0.0f))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Column
-    CVector4 Column = Infinity.GetColumn( 0 );
-    if ( Column != CVector4( 1.0f, 0.0f, 0.0f, 0.0f ) )
+    CVector4 Column = Infinity.GetColumn(0);
+    if (Column != CVector4(1.0f, 0.0f, 0.0f, 0.0f))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // SetIdentity
     Infinity.SetIdentity();
     CMatrix4 TempIdentity = CMatrix4::Identity();
-    if ( Infinity != CMatrix4::Identity() )
+    if (Infinity != CMatrix4::Identity())
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // GetTranslation
     CVector3 Position = Infinity.GetTranslation();
-    if ( Position != CVector3( 0.0f ) )
+    if (Position != CVector3(0.0f))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // GetRotationAndScale
     CMatrix3 RotationAndScale = Infinity.GetRotationAndScale();
-    if ( RotationAndScale != CMatrix3::Identity() )
+    if (RotationAndScale != CMatrix3::Identity())
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // GetData
     CMatrix4 Matrix0 = CMatrix4::Identity();
-    CMatrix4 Matrix1 = CMatrix4( Matrix0.GetData() );
+    CMatrix4 Matrix1 = CMatrix4(Matrix0.GetData());
 
-    if ( Matrix0 != Matrix1 )
+    if (Matrix0 != Matrix1)
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Multiply a vector
-    Translation = CMatrix4::Translation( 5.0f, 5.0f, 5.0f );
-    CVector4 TranslatedVector = Translation * CVector4( 0.0f, 0.0f, 0.0f, 1.0f );
+    Translation = CMatrix4::Translation(5.0f, 5.0f, 5.0f);
+    CVector4 TranslatedVector = Translation * CVector4(0.0f, 0.0f, 0.0f, 1.0f);
 
-    if ( TranslatedVector != CVector4( 5.0f, 5.0f, 5.0f, 1.0f ) )
+    if (TranslatedVector != CVector4(5.0f, 5.0f, 5.0f, 1.0f))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     // Roll Pitch Yaw
-    for ( double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE )
+    for (double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE)
     {
-        CMatrix4 RollPitchYaw = CMatrix4::RotationRollPitchYaw( (float)Angle, (float)Angle, (float)Angle );
-        XMMATRIX XmRollPitchYaw = XMMatrixRotationRollPitchYaw( (float)Angle, (float)Angle, (float)Angle );
+        CMatrix4 RollPitchYaw = CMatrix4::RotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
+        XMMATRIX XmRollPitchYaw = XMMatrixRotationRollPitchYaw((float)Angle, (float)Angle, (float)Angle);
 
-        XMStoreFloat4x4( &Float4x4Matrix, XmRollPitchYaw );
+        XMStoreFloat4x4(&Float4x4Matrix, XmRollPitchYaw);
 
-        if ( RollPitchYaw != CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
+        if (RollPitchYaw != CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
         {
-            assert( false ); return false;
+            TEST_FAILED();
         }
     }
 
     // RotationX
-    for ( double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE )
+    for (double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE)
     {
-        CMatrix4 Rotation = CMatrix4::RotationX( (float)Angle );
-        XMMATRIX XmRotation = XMMatrixRotationX( (float)Angle );
+        CMatrix4 Rotation = CMatrix4::RotationX((float)Angle);
+        XMMATRIX XmRotation = XMMatrixRotationX((float)Angle);
 
-        XMStoreFloat4x4( &Float4x4Matrix, XmRotation );
+        XMStoreFloat4x4(&Float4x4Matrix, XmRotation);
 
-        if ( Rotation != CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
+        if (Rotation != CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
         {
-            assert( false ); return false;
+            TEST_FAILED();
         }
     }
 
     // RotationY
-    for ( double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE )
+    for (double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE)
     {
-        CMatrix4 Rotation = CMatrix4::RotationY( (float)Angle );
-        XMMATRIX XmRotation = XMMatrixRotationY( (float)Angle );
+        CMatrix4 Rotation = CMatrix4::RotationY((float)Angle);
+        XMMATRIX XmRotation = XMMatrixRotationY((float)Angle);
 
-        XMStoreFloat4x4( &Float4x4Matrix, XmRotation );
+        XMStoreFloat4x4(&Float4x4Matrix, XmRotation);
 
-        if ( Rotation != CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
+        if (Rotation != CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
         {
-            assert( false ); return false;
+            TEST_FAILED();
         }
     }
 
     // RotationZ
-    for ( double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE )
+    for (double Angle = -NMath::TWO_PI; Angle < NMath::TWO_PI; Angle += NMath::ONE_DEGREE)
     {
-        CMatrix4 Rotation = CMatrix4::RotationZ( (float)Angle );
-        XMMATRIX XmRotation = XMMatrixRotationZ( (float)Angle );
+        CMatrix4 Rotation = CMatrix4::RotationZ((float)Angle);
+        XMMATRIX XmRotation = XMMatrixRotationZ((float)Angle);
 
-        XMStoreFloat4x4( &Float4x4Matrix, XmRotation );
+        XMStoreFloat4x4(&Float4x4Matrix, XmRotation);
 
-        if ( Rotation != CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
+        if (Rotation != CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
         {
-            assert( false ); return false;
+            TEST_FAILED();
         }
     }
 
     // Ortographic projection
-    CMatrix4 Ortographic = CMatrix4::OrtographicProjection( Width, Height, Near, Far );
-    XMMATRIX XmOrtographic = XMMatrixOrthographicLH( Width, Height, Near, Far );
+    CMatrix4 Ortographic = CMatrix4::OrtographicProjection(Width, Height, Near, Far);
+    XMMATRIX XmOrtographic = XMMatrixOrthographicLH(Width, Height, Near, Far);
 
-    XMStoreFloat4x4( &Float4x4Matrix, XmOrtographic );
+    XMStoreFloat4x4(&Float4x4Matrix, XmOrtographic);
 
-    if ( Ortographic != CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
+    if (Ortographic != CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     float Left = -10.0f;
@@ -364,14 +366,14 @@ bool TestMatrix4()
     float Bottom = -10.0f;
     float Top = 10.0f;
 
-    Ortographic = CMatrix4::OrtographicProjection( Left, Right, Bottom, Top, Near, Far );
-    XmOrtographic = XMMatrixOrthographicOffCenterLH( Left, Right, Bottom, Top, Near, Far );
+    Ortographic = CMatrix4::OrtographicProjection(Left, Right, Bottom, Top, Near, Far);
+    XmOrtographic = XMMatrixOrthographicOffCenterLH(Left, Right, Bottom, Top, Near, Far);
 
-    XMStoreFloat4x4( &Float4x4Matrix, XmOrtographic );
+    XMStoreFloat4x4(&Float4x4Matrix, XmOrtographic);
 
-    if ( Ortographic != CMatrix4( reinterpret_cast<float*>(&Float4x4Matrix) ) )
+    if (Ortographic != CMatrix4(reinterpret_cast<float*>(&Float4x4Matrix)))
     {
-        assert( false ); return false;
+        TEST_FAILED();
     }
 
     return true;

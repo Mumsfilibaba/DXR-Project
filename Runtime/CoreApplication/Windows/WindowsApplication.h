@@ -15,7 +15,7 @@
 #define ENABLE_DPI_AWARENESS (0)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* Struct used to store messages between calls to PumpMessages and CWindowsApplication::Tick */
+// SWindowsMessage
 
 struct SWindowsMessage
 {
@@ -41,122 +41,134 @@ struct SWindowsMessage
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* Class representing an application on the windows- platform */
+// CWindowsApplication - Class representing an application on the windows- platform
 
 class COREAPPLICATION_API CWindowsApplication final : public CPlatformApplication
 {
 public:
 
-    /* Creates an instance of the WindowsApplication, also loads the icon */
-    static TSharedPtr<CWindowsApplication> Make();
-
-    /* Retrieve the window-class name */
+    /**
+     * Retrieve the window-class name 
+     * 
+     * @return: Returns a string with the window-class name
+     */
     static FORCEINLINE const char* GetWindowClassName() { return "WindowClass"; }
 
-    /* Returns the HINSTANCE of the application or retrieves it in case the application is not initialized */
-    static FORCEINLINE HINSTANCE GetStaticInstance()
+    /**
+     * Retrieve the WindowsApplication Instance
+     * 
+     * @return: Returns a reference to the WindowsApplication
+     */
+    static FORCEINLINE CWindowsApplication& Get() 
     {
-        return Instance ? Instance->GetInstance() : static_cast<HINSTANCE>(GetModuleHandle(0));
+        Assert(IsInitialized());
+        return *Instance; 
     }
 
-    /* Returns the instance of the windows application */
-    static FORCEINLINE CWindowsApplication* Get() { return Instance; }
+    /**
+     * Check if the WindowsApplication is initialized or not
+     * 
+     * @return: Returns true if the WindowsApplication is initialized
+     */
+    static FORCEINLINE bool IsInitialized() 
+    { 
+        return (Instance != nullptr);
+    }
 
-    /* Returns true if the WindowsApplication has been created */
-    static FORCEINLINE bool IsInitialized() { return (Instance != nullptr); }
-
-    /* Public destructor for TSharedPtr */
-    ~CWindowsApplication();
-
-    /* Creates a window */
-    virtual TSharedRef<CPlatformWindow> MakeWindow() override final;
-
-    /* Initialized the application */
-    virtual bool Initialize() override final;
-
-    /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
-    virtual void Tick(float Delta) override final;
-
-    /* Returns true if the platform supports Raw mouse movement */
-    virtual bool SupportsRawMouse() const;
-
-    /* Enables Raw mouse movement for a certain window */
-    virtual bool EnableRawMouse(const TSharedRef<CPlatformWindow>& Window);
-
-    /* Sets the window that currently has the keyboard focus */
-    virtual void SetCapture(const TSharedRef<CPlatformWindow>& Window) override final;
-
-    /* Sets the window that is currently active */
-    virtual void SetActiveWindow(const TSharedRef<CPlatformWindow>& Window) override final;
-
-    /* Retrieves the window that currently has the keyboard focus */
-    virtual TSharedRef<CPlatformWindow> GetCapture() const override final;
-
-    /* Retrieves the window that is currently active */
-    virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
-
-    /* Retrieve the window that is currently under the cursor, if no window is under the cursor, the value is nullptr */
-    virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const override final;
-
-    /* Searches all the created windows and return the one with the specified handle */
+    /**
+     * Searches all the created windows and return the one with the specified handle 
+     * 
+     * @param Window: Window-handle to search for
+     * @return: Returns the window with the specified handle
+     */
     TSharedRef<CWindowsWindow> GetWindowsWindowFromHWND(HWND Window) const;
 
-    /* Stores messages for handling in the future */
-    void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
-
-    /* Add a native message listener */
+    /**
+     * Add a native message listener 
+     * 
+     * @param NewWindowsMessageListener: Message listener to add
+     */
     void AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener);
 
-    /* Remove a native message listener */
+
+    /**
+     * Remove a native message listener
+     *
+     * @param WindowsMessageListener: Message listener to remove
+     */
     void RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener);
 
-    /* Check if a native message listener is added */
+    /**
+     * Check if a native message listener is added 
+     *
+     * @param WindowsMessageListener: Message listener to check for
+     */
     bool IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener) const;
 
-    /* Returns the HINSTANCE of the application */
-    FORCEINLINE HINSTANCE GetInstance() const { return InstanceHandle; }
+    /**
+     * Retrieve the HINSTANCE of the application 
+     * 
+     * @return: Returns the HINSTANCE of the application 
+     */
+    FORCEINLINE HINSTANCE GetInstance() const 
+    { 
+        return InstanceHandle;
+    }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CPlatformApplication - Interface
+    
+    static TSharedPtr<CWindowsApplication> CreateApplication();
+
+    virtual TSharedRef<CPlatformWindow> CreateWindow() override final;
+
+    virtual bool Initialize() override final;
+
+    virtual void Tick(float Delta) override final;
+
+    virtual bool SupportsHighPrecisionMouse() const override final;
+    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<CPlatformWindow>& Window) override final;
+
+    virtual void SetCapture(const TSharedRef<CPlatformWindow>& Window) override final;
+    virtual void SetActiveWindow(const TSharedRef<CPlatformWindow>& Window) override final;
+
+    virtual TSharedRef<CPlatformWindow> GetCapture() const override final;
+    virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
+    virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const override final;
 
 private:
 
-    CWindowsApplication(HINSTANCE InInstance);
+    friend struct TDefaultDelete<CWindowsApplication>;
+    friend class CWindowsApplicationMisc;
 
-    /* Static message-proc sent into RegisterWindowClass */
+    CWindowsApplication(HINSTANCE InInstance);
+    ~CWindowsApplication();
+
     static LRESULT StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
-    /* Registers the window class used to create windows */
     bool RegisterWindowClass();
-
-    /* Registers raw input devices for a specific window */
     bool RegisterRawInputDevices(HWND Window);
-
-    /* Unregister all raw input devices TODO: Investigate how to do this for a specific window */
     bool UnregisterRawInputDevices();
 
-    /* Processes raw input */
     LRESULT ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
-
-    /* Message-proc which handles the messages for the instance */
     LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
-    /* Handles stored messages in Tick */
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
+    void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
-    /* The windows that has been created by the application */
+private:
     TArray<TSharedRef<CWindowsWindow>> Windows;
-
-    /* Buffered events, this is done since not all events are fired in the calls to PumpMessages */
+    
+    // Messages that are waiting to be processed
     TArray<SWindowsMessage> Messages;
+    CCriticalSection        MessagesCriticalSection;
 
-    /* In case some message is fired from another thread */
-    CCriticalSection MessagesCriticalSection;
-
-    /* buffered events, this is done since not all events are fired in the calls to PumpMessages */
     TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
 
-    /* Checks weather or not the mouse-cursor is tracked, this is for MouseEntered/MouseLeft events */
     bool bIsTrackingMouse;
 
-    /* Instance of the application */
     HINSTANCE InstanceHandle;
 
     static CWindowsApplication* Instance;

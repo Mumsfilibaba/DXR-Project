@@ -3,10 +3,10 @@ include '../../BuildScripts/Scripts/build_module.lua'
 local EngineModule = CModuleBuildRules('Engine')
 EngineModule.AddSystemIncludes( 
 {
-    MakeExternalDependencyPath('imgui'),
-    MakeExternalDependencyPath('stb_image'),
-    MakeExternalDependencyPath('tinyobjloader'),
-    MakeExternalDependencyPath('OpenFBX/src'),
+    CreateExternalDependencyPath('imgui'),
+    CreateExternalDependencyPath('stb_image'),
+    CreateExternalDependencyPath('tinyobjloader'),
+    CreateExternalDependencyPath('OpenFBX/src'),
 })
 
 EngineModule.ModuleDependencies = 

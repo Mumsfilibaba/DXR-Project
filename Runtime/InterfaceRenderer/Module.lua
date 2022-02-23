@@ -5,7 +5,7 @@ InterfaceRendererModule.bRuntimeLinking = false
 
 InterfaceRendererModule.AddSystemIncludes( 
 {
-    MakeExternalDependencyPath('imgui'),
+    CreateExternalDependencyPath('imgui'),
 })
 
 InterfaceRendererModule.AddModuleDependencies( 

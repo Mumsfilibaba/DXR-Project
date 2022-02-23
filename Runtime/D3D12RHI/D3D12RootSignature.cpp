@@ -265,7 +265,7 @@ bool CD3D12RootSignature::Init(const void* BlobWithRootSignature, uint64 BlobLen
     {
         LOG_ERROR("[D3D12RootSignature]: FAILED to Retrieve Root Signature Desc");
 
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -286,7 +286,7 @@ bool CD3D12RootSignature::Init(const void* BlobWithRootSignature, uint64 BlobLen
     {
         LOG_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
 
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -324,7 +324,7 @@ bool CD3D12RootSignature::InternalInit(const void* BlobWithRootSignature, uint64
     {
         LOG_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
 
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -341,7 +341,7 @@ bool CD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
         LOG_ERROR("[D3D12RootSignature]: FAILED to Serialize RootSignature");
         LOG_ERROR(reinterpret_cast<const char*>(ErrorBlob->GetBufferPointer()));
 
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -386,7 +386,7 @@ bool CD3D12RootSignatureCache::Init()
     CD3D12RootSignature* GraphicsRootSignature = CreateRootSignature(GraphicsKey);
     if (!GraphicsRootSignature)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -406,7 +406,7 @@ bool CD3D12RootSignatureCache::Init()
     CD3D12RootSignature* ComputeRootSignature = CreateRootSignature(ComputeKey);
     if (!ComputeRootSignature)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -431,7 +431,7 @@ bool CD3D12RootSignatureCache::Init()
     CD3D12RootSignature* RTGlobalRootSignature = CreateRootSignature(RTGlobalKey);
     if (!RTGlobalRootSignature)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -450,7 +450,7 @@ bool CD3D12RootSignatureCache::Init()
     CD3D12RootSignature* RTLocalRootSignature = CreateRootSignature(RTLocalKey);
     if (!RTLocalRootSignature)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else

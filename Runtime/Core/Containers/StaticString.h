@@ -35,7 +35,7 @@ public:
      * @param Format: Formatted string
      * @return: Returns the formatted string based on the format string
      */
-    static NOINLINE TStaticString MakeFormated(const CharType* Format, ...) noexcept
+    static NOINLINE TStaticString CreateFormated(const CharType* Format, ...) noexcept
     {
         TStaticString NewString;
 
@@ -54,7 +54,7 @@ public:
      * @param ArgsList: Argument-list to be formatted based on the format-string
      * @return: Returns the formatted string based on the format string
      */
-    static FORCEINLINE void MakeFormatedV(const CharType* Format, va_list ArgsList) noexcept
+    static FORCEINLINE void CreateFormatedV(const CharType* Format, va_list ArgsList) noexcept
     {
         TStaticString NewString;
         NewString.FormatV(Format, ArgsList);
@@ -408,7 +408,7 @@ public:
         if (Index > 0)
         {
             Len -= Index;
-            CMemory::Memmove(Characters, Characters + Index, SizeInBytes());
+            Memory::Memmove(Characters, Characters + Index, SizeInBytes());
         }
     }
 
@@ -1106,7 +1106,7 @@ public:
         CharType* Src = Dst + NumCharacters;
 
         SizeType Num = Len - (Position + NumCharacters);
-        CMemory::Memmove(Dst, Src, Num * sizeof(CharType));
+        Memory::Memmove(Dst, Src, Num * sizeof(CharType));
     }
 
     /**
@@ -1704,7 +1704,7 @@ private:
         Len = Other.Len;
         Other.Len = 0;
 
-        CMemory::Memexchange(Characters, Other.Characters, SizeInBytes());
+        Memory::Memexchange(Characters, Other.Characters, SizeInBytes());
         Characters[Len] = StringUtils::Null;
     }
 

@@ -28,7 +28,7 @@ enum EWindowStyleFlag : uint32
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowStyle - Struct for checking window style
+// SWindowStyle - Struct for checking window style
 
 struct SWindowStyle
 {
@@ -68,7 +68,7 @@ struct SWindowStyle
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowShape - Struct defining the shape of a window
+// SWindowShape - Struct defining the shape of a window
 
 struct SWindowShape
 {
@@ -91,7 +91,7 @@ struct SWindowShape
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for a window
+// CPlatformWindow - Platform interface for a window
 
 typedef void* PlatformWindowHandle;
 
@@ -129,52 +129,113 @@ public:
      */
     virtual void Maximize() { }
 
-    /* Closes the window */
+    /**
+     * Closes the window 
+     */
     virtual void Close() { }
 
-    /* Restores the window after being minimized or maximized */
+    /**
+     * Restores the window after being minimized or maximized 
+     */
     virtual void Restore() { }
 
-    /* Makes the window a borderless fullscreen window */
+    /**
+     * Makes the window a borderless fullscreen window 
+     */
     virtual void ToggleFullscreen() { }
 
-    /* Checks if the underlaying native handle of the window is valid */
+    /**
+     * Checks if the underlaying native handle of the window is valid 
+     * 
+     * @return: Returns true if the window is valid
+     */
     virtual bool IsValid() const { return false; }
 
-    /* Checks if this window is the currently active window */
+    /**
+     * Checks if this window is the currently active window 
+     * 
+     * @return: Returns true if this window currently is the active Window
+     */
     virtual bool IsActiveWindow() const { return false; }
 
-    /* Sets the title */
+    /**
+     * Sets the title 
+     * 
+     * @param Title: The new title of the window
+     */
     virtual void SetTitle(const String& Title) { }
 
-    /* Retrieve the window title */
+    /**
+     * Retrieve the window title 
+     * 
+     * @param OutTitle: String to store the current window-title in
+     */
     virtual void GetTitle(String& OutTitle) { }
 
-    /* Set the position of the window */
+    /**
+     * Set the position of the window 
+     * 
+     * @param x: The new x-coordinate of the window
+     * @param y: The new y-coordinate of the window
+     */
     virtual void MoveTo(int32 x, int32 y) { }
 
-    /* Set the shape of the window */
+    /**
+     * Set the shape of the window 
+     * 
+     * @param Shape: The new shape of the window
+     * @param bMove: True if the window should be able to move when reshaping
+     */
     virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) { }
 
-    /* Retrieve the shape of the window */
+    /**
+     * Retrieve the shape of the window 
+     * 
+     * @param OutWindowShape: Struct to store the current window-shape in
+     */
     virtual void GetWindowShape(SWindowShape& OutWindowShape) const { }
 
-    /* Get the fullscreen information of the monitor that the window currently is on */
+    /**
+     * Get the fullscreen information of the monitor that the window currently is on 
+     * 
+     * @param OutWidth: Variable to store the current width of the Window in
+     * @param OutHeight: Variable to store the current height of the Window in
+     */
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const { }
 
-    /* Retrieve the width of the window */
+    /**
+     * Retrieve the width of the window 
+     * 
+     * @return: Returns the current width of the window
+     */
     virtual uint32 GetWidth()  const { return 0; }
 
-    /* Retrieve the height of the window */
+    /**
+     * Retrieve the height of the window
+     *
+     * @return: Returns the current height of the window
+     */
     virtual uint32 GetHeight() const { return 0; }
 
-    /* Set the native window handle */
+    /**
+     * Set the native window handle 
+     * 
+     * @param InPlatformHandle: The new native window platform-handle
+     */
     virtual void SetPlatformHandle(PlatformWindowHandle InPlatformHandle) { }
 
-    /* Retrieve the native handle */
+    /**
+     * Retrieve the native handle
+     * 
+     * @return: Returns the platform-handle
+     */
     virtual PlatformWindowHandle GetPlatformHandle() const { return nullptr; }
 
-    /* Retrieve the style of the window */
+    /**
+     * Retrieve the style of the window 
+     * 
+     * @return: Returns the window-style of the window
+     */
     FORCEINLINE SWindowStyle GetStyle() const { return StyleParams; }
 
 protected:
@@ -182,7 +243,6 @@ protected:
     CPlatformWindow() = default;
     ~CPlatformWindow() = default;
 
-    // Style of the window
     SWindowStyle StyleParams;
 };
 

@@ -173,14 +173,14 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
     {
         LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
 
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     TSharedRef<CD3D12RHIComputeShader> Shader = dbg_new CD3D12RHIComputeShader(GetDevice(), Code);
     if (!Shader->Init())
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -198,13 +198,13 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
     if (!GD3D12ShaderCompiler->CompileFromFile("../Runtime/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
     }
 
     Shader = dbg_new CD3D12RHIComputeShader(GetDevice(), Code);
     if (!Shader->Init())
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -235,7 +235,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
     TSharedRef<D3D12TextureType> NewTexture = dbg_new D3D12TextureType(Device, Format, SizeX, SizeY, SizeZ, NumMips, NumSamples, Flags, OptimalClearValue);
 
     D3D12_RESOURCE_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.Dimension = GetD3D12TextureResourceDimension<D3D12TextureType>();
     Desc.Flags = ConvertTextureFlags(Flags);
@@ -271,7 +271,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
         }
         else if (OptimalClearValue.GetType() == SClearValue::EType::Color)
         {
-            CMemory::Memcpy(ClearValue.Color, OptimalClearValue.AsColor().Elements, sizeof(float[4]));
+            Memory::Memcpy(ClearValue.Color, OptimalClearValue.AsColor().Elements, sizeof(float[4]));
             ClearValuePtr = &ClearValue;
         }
     }
@@ -289,7 +289,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
     if ((Flags & TextureFlag_SRV) && !(Flags & TextureFlag_NoDefaultSRV))
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc;
-        CMemory::Memzero(&ViewDesc);
+        Memory::Memzero(&ViewDesc);
 
         // TODO: Handle typeless
         ViewDesc.Format = CastShaderResourceFormat(Desc.Format);
@@ -366,7 +366,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
         CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
 
         D3D12_RENDER_TARGET_VIEW_DESC ViewDesc;
-        CMemory::Memzero(&ViewDesc);
+        Memory::Memzero(&ViewDesc);
 
         // TODO: Handle typeless
         ViewDesc.Format = Desc.Format;
@@ -393,7 +393,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
         CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
 
         D3D12_DEPTH_STENCIL_VIEW_DESC ViewDesc;
-        CMemory::Memzero(&ViewDesc);
+        Memory::Memzero(&ViewDesc);
 
         // TODO: Handle typeless
         ViewDesc.Format = Desc.Format;
@@ -419,7 +419,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
         CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
 
         D3D12_UNORDERED_ACCESS_VIEW_DESC ViewDesc;
-        CMemory::Memzero(&ViewDesc);
+        Memory::Memzero(&ViewDesc);
 
         // TODO: Handle typeless
         ViewDesc.Format = Desc.Format;
@@ -503,7 +503,7 @@ CRHITexture3D* CD3D12RHIInstance::CreateTexture3D(EFormat Format, uint32 Width, 
 CRHISamplerState* CD3D12RHIInstance::CreateSamplerState(const SRHISamplerStateInfo& CreateInfo)
 {
     D3D12_SAMPLER_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.AddressU = ConvertSamplerMode(CreateInfo.AddressU);
     Desc.AddressV = ConvertSamplerMode(CreateInfo.AddressV);
@@ -515,7 +515,7 @@ CRHISamplerState* CD3D12RHIInstance::CreateSamplerState(const SRHISamplerStateIn
     Desc.MinLOD = CreateInfo.MinLOD;
     Desc.MipLODBias = CreateInfo.MipLODBias;
 
-    CMemory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor.Elements, sizeof(Desc.BorderColor));
+    Memory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor.Elements, sizeof(Desc.BorderColor));
 
     TSharedRef<CD3D12RHISamplerState> Sampler = dbg_new CD3D12RHISamplerState(Device, SamplerOfflineDescriptorHeap);
     if (!Sampler->Init(Desc))
@@ -534,7 +534,7 @@ bool CD3D12RHIInstance::CreateBuffer(D3D12BufferType* Buffer, uint32 SizeInBytes
     D3D12_ERROR(Buffer != nullptr, "Buffer cannot be nullptr");
 
     D3D12_RESOURCE_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
     Desc.Flags = ConvertBufferFlags(Flags);
@@ -582,9 +582,9 @@ bool CD3D12RHIInstance::CreateBuffer(D3D12BufferType* Buffer, uint32 SizeInBytes
 
             // Copy over relevant data
             const uint32 InitialDataSize = InitialData->GetSizeInBytes();
-            CMemory::Memcpy(HostData, InitialData->GetData(), InitialDataSize);
+            Memory::Memcpy(HostData, InitialData->GetData(), InitialDataSize);
             // Set the remaining, unused memory to zero
-            CMemory::Memzero(reinterpret_cast<uint8*>(HostData) + InitialDataSize, SizeInBytes - InitialDataSize);
+            Memory::Memzero(reinterpret_cast<uint8*>(HostData) + InitialDataSize, SizeInBytes - InitialDataSize);
 
             Buffer->Unmap(0, 0);
         }
@@ -694,7 +694,7 @@ CRHIRayTracingGeometry* CD3D12RHIInstance::CreateRayTracingGeometry(uint32 Flags
 
     if (!Geometry->Build(*DirectCmdContext, false))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         Geometry.Reset();
     }
 
@@ -711,7 +711,7 @@ CRHIRayTracingScene* CD3D12RHIInstance::CreateRayTracingScene(uint32 Flags, SRay
 
     if (!Scene->Build(*DirectCmdContext, Instances, NumInstances, false))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         Scene.Reset();
     }
 
@@ -723,7 +723,7 @@ CRHIRayTracingScene* CD3D12RHIInstance::CreateRayTracingScene(uint32 Flags, SRay
 CRHIShaderResourceView* CD3D12RHIInstance::CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     // TODO: Expose in ShaderResourceViewCreateInfo
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -890,7 +890,7 @@ CRHIShaderResourceView* CD3D12RHIInstance::CreateShaderResourceView(const SRHISh
 CRHIUnorderedAccessView* CD3D12RHIInstance::CreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo)
 {
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     CD3D12Resource* Resource = nullptr;
     if (CreateInfo.Type == SRHIUnorderedAccessViewInfo::EType::Texture2D)
@@ -1037,7 +1037,7 @@ CRHIUnorderedAccessView* CD3D12RHIInstance::CreateUnorderedAccessView(const SRHI
 CRHIRenderTargetView* CD3D12RHIInstance::CreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo)
 {
     D3D12_RENDER_TARGET_VIEW_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     CD3D12Resource* Resource = nullptr;
 
@@ -1149,7 +1149,7 @@ CRHIRenderTargetView* CD3D12RHIInstance::CreateRenderTargetView(const SRHIRender
 CRHIDepthStencilView* CD3D12RHIInstance::CreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo)
 {
     D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     CD3D12Resource* Resource = nullptr;
 
@@ -1366,7 +1366,7 @@ CRHIRayMissShader* CD3D12RHIInstance::CreateRayMissShader(const TArray<uint8>& S
 CRHIDepthStencilState* CD3D12RHIInstance::CreateDepthStencilState(const SRHIDepthStencilStateInfo& CreateInfo)
 {
     D3D12_DEPTH_STENCIL_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.DepthEnable = CreateInfo.bDepthEnable;
     Desc.DepthFunc = ConvertComparisonFunc(CreateInfo.DepthFunc);
@@ -1383,7 +1383,7 @@ CRHIDepthStencilState* CD3D12RHIInstance::CreateDepthStencilState(const SRHIDept
 CRHIRasterizerState* CD3D12RHIInstance::CreateRasterizerState(const SRHIRasterizerStateInfo& CreateInfo)
 {
     D3D12_RASTERIZER_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.AntialiasedLineEnable = CreateInfo.bAntialiasedLineEnable;
     Desc.ConservativeRaster = (CreateInfo.bEnableConservativeRaster) ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
@@ -1403,7 +1403,7 @@ CRHIRasterizerState* CD3D12RHIInstance::CreateRasterizerState(const SRHIRasteriz
 CRHIBlendState* CD3D12RHIInstance::CreateBlendState(const SRHIBlendStateInfo& CreateInfo)
 {
     D3D12_BLEND_DESC Desc;
-    CMemory::Memzero(&Desc);
+    Memory::Memzero(&Desc);
 
     Desc.AlphaToCoverageEnable = CreateInfo.bAlphaToCoverageEnable;
     Desc.IndependentBlendEnable = CreateInfo.bIndependentBlendEnable;
@@ -1503,7 +1503,7 @@ CRHIViewport* CD3D12RHIInstance::CreateViewport(CPlatformWindow* Window, uint32 
 bool CD3D12RHIInstance::UAVSupportsFormat(EFormat Format) const
 {
     D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
-    CMemory::Memzero(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
+    Memory::Memzero(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
 
     HRESULT Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
     if (SUCCEEDED(Result))

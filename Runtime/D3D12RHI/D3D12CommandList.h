@@ -253,7 +253,7 @@ public:
     FORCEINLINE void TransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, UINT Subresource)
     {
         D3D12_RESOURCE_BARRIER Barrier;
-        CMemory::Memzero(&Barrier);
+        Memory::Memzero(&Barrier);
 
         Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
         Barrier.Transition.pResource = Resource;
@@ -267,7 +267,7 @@ public:
     FORCEINLINE void UnorderedAccessBarrier(ID3D12Resource* Resource)
     {
         D3D12_RESOURCE_BARRIER Barrier;
-        CMemory::Memzero(&Barrier);
+        Memory::Memzero(&Barrier);
 
         Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
         Barrier.UAV.pResource = Resource;

@@ -464,55 +464,7 @@ FORCEINLINE bool operator!=(NullptrType, const TSharedRef<T>& Rhs) noexcept
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TSharedRef casting functions
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> StaticCast(const TSharedRef<U>& Pointer)
-{
-    T* RawPointer = static_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> StaticCast(TSharedRef<U>&& Pointer)
-{
-    T* RawPointer = static_cast<T*>(Pointer.Get());
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ConstCast(const TSharedRef<U>& Pointer)
-{
-    T* RawPointer = const_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ConstCast(TSharedRef<U>&& Pointer)
-{
-    T* RawPointer = const_cast<T*>(Pointer.Get());
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ReinterpretCast(const TSharedRef<U>& Pointer)
-{
-    T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ReinterpretCast(TSharedRef<U>&& Pointer)
-{
-    T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
-    return TSharedRef<T>(RawPointer);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Converts a raw pointer into a TSharedRef
+// MakeSharedRef - Converts a raw pointer into a TSharedRef
 
 template<typename T, typename U>
 FORCEINLINE TSharedRef<T> MakeSharedRef(U* InRefCountedObject)
@@ -525,3 +477,49 @@ FORCEINLINE TSharedRef<T> MakeSharedRef(U* InRefCountedObject)
 
     return nullptr;
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TSharedRef casting functions
+
+template<typename T, typename U>
+FORCEINLINE TSharedRef<T> StaticCast(const TSharedRef<U>& Pointer)
+{
+    T* RawPointer = static_cast<T*>(Pointer.Get());
+    return MakeSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+FORCEINLINE TSharedRef<T> StaticCast(TSharedRef<U>&& Pointer)
+{
+    T* RawPointer = static_cast<T*>(Pointer.ReleaseOwnership());
+    return TSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+FORCEINLINE TSharedRef<T> ConstCast(const TSharedRef<U>& Pointer)
+{
+    T* RawPointer = const_cast<T*>(Pointer.Get());
+    return MakeSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+FORCEINLINE TSharedRef<T> ConstCast(TSharedRef<U>&& Pointer)
+{
+    T* RawPointer = const_cast<T*>(Pointer.ReleaseOwnership());
+    return TSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+FORCEINLINE TSharedRef<T> ReinterpretCast(const TSharedRef<U>& Pointer)
+{
+    T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
+    return MakeSharedRef<T>(RawPointer);
+}
+
+template<typename T, typename U>
+FORCEINLINE TSharedRef<T> ReinterpretCast(TSharedRef<U>&& Pointer)
+{
+    T* RawPointer = reinterpret_cast<T*>(Pointer.ReleaseOwnership());
+    return TSharedRef<T>(RawPointer);
+}
+

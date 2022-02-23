@@ -19,7 +19,7 @@ class APPLICATION_API CApplicationUser
 
 public:
 
-    static FORCEINLINE TSharedPtr<CApplicationUser> Make(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
+    static FORCEINLINE TSharedPtr<CApplicationUser> CreateUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
     {
         return TSharedPtr<CApplicationUser>(dbg_new CApplicationUser(InUserIndex, InCursor));
     }

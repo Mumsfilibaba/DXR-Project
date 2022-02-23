@@ -21,7 +21,7 @@
 // TODO: Enable other types of Modal windows for supported platforms
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for miscellaneous application utility functions
+// CPlatformApplicationMisc - Platform interface for miscellaneous application utility functions
 
 class CPlatformApplicationMisc
 {

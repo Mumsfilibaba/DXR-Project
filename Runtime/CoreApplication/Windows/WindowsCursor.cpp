@@ -8,7 +8,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // WindowsCursor
 
-TSharedPtr<CWindowsCursor> CWindowsCursor::Make()
+TSharedPtr<CWindowsCursor> CWindowsCursor::CreateCursor()
 {
     return TSharedPtr<CWindowsCursor>(dbg_new CWindowsCursor());
 }

@@ -74,7 +74,7 @@ bool CEngineLoop::LoadCoreModules()
 
 bool CEngineLoop::PreInitialize()
 {
-    NErrorDevice::GConsoleWindow = PlatformConsoleWindow::Make();
+    NErrorDevice::GConsoleWindow = PlatformConsoleWindow::CreateWindow();
     if (!NErrorDevice::GConsoleWindow)
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize ConsoleWindow");
@@ -92,7 +92,7 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    // TODO: Use a seperate profiler for booting the engine
+    // TODO: Use a separate profiler for booting the engine
     CFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
 
@@ -114,7 +114,7 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    if (!CApplicationInstance::Make())
+    if (!CApplicationInstance::CreateApplicationInstance())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return false;
@@ -164,7 +164,7 @@ bool CEngineLoop::Initialize()
 #if PROJECT_EDITOR
     GEngine = CEditorEngine::Make();
 #else
-    GEngine = CEngine::Make();
+    GEngine = CEngine::CreateEngine();
 #endif
     if (!GEngine->Initialize())
     {

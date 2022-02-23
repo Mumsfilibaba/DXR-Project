@@ -227,7 +227,7 @@ void CMacWindow::GetTitle(String& OutTitle)
         OutTitle.Resize(static_cast<int32>(Length));
         
         const char* UTF8Title = [Title UTF8String];
-		CMemory::Memcpy(OutTitle.Data(), UTF8Title, sizeof(char) * Length);
+		Memory::Memcpy(OutTitle.Data(), UTF8Title, sizeof(char) * Length);
     }
 }
 

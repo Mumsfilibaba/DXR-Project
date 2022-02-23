@@ -20,7 +20,7 @@ public:
     FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type)
     {
         D3D12_COMMAND_QUEUE_DESC QueueDesc;
-        CMemory::Memzero(&QueueDesc);
+        Memory::Memzero(&QueueDesc);
 
         QueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
         QueueDesc.NodeMask = 1;

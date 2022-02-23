@@ -6,7 +6,7 @@ include '../../BuildScripts/Scripts/build_module.lua'
 local ApplicationModule = CModuleBuildRules('Application')
 ApplicationModule.AddSystemIncludes( 
 {
-    MakeExternalDependencyPath('imgui'),
+    CreateExternalDependencyPath('imgui'),
 })
 
 ApplicationModule.AddModuleDependencies( 
@@ -18,7 +18,7 @@ ApplicationModule.AddModuleDependencies(
 ApplicationModule.AddLinkLibraries( 
 {
     'ImGui',
-}
+})
 
 if BuildWithXcode() then
     ApplicationModule.AddFrameWorks( 

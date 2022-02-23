@@ -12,8 +12,8 @@ uint16 CWindowsKeyMapping::ScanCodeFromKeyCodeTable[NumKeys];
 
 void CWindowsKeyMapping::Initialize()
 {
-    CMemory::Memzero(KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable));
-    CMemory::Memzero(ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable));
+    Memory::Memzero(KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable));
+    Memory::Memzero(ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable));
 
     KeyCodeFromScanCodeTable[0x00B] = EKey::Key_0;
     KeyCodeFromScanCodeTable[0x002] = EKey::Key_1;

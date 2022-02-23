@@ -51,7 +51,7 @@ public:
     {
         CD3D12BaseBuffer::SetResource(InResource);
 
-        CMemory::Memzero(&View);
+        Memory::Memzero(&View);
         View.StrideInBytes = GetStride();
         View.SizeInBytes = GetNumVertices() * View.StrideInBytes;
         View.BufferLocation = CD3D12BaseBuffer::Resource->GetGPUVirtualAddress();
@@ -84,7 +84,7 @@ public:
     {
         CD3D12BaseBuffer::SetResource(InResource);
 
-        CMemory::Memzero(&View);
+        Memory::Memzero(&View);
 
         ERHIIndexFormat IndexFormat = GetFormat();
         if (IndexFormat != ERHIIndexFormat::Unknown)
@@ -122,7 +122,7 @@ public:
         CD3D12BaseBuffer::SetResource(InResource);
 
         D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
-        CMemory::Memzero(&ViewDesc);
+        Memory::Memzero(&ViewDesc);
 
         ViewDesc.BufferLocation = CD3D12BaseBuffer::Resource->GetGPUVirtualAddress();
         ViewDesc.SizeInBytes = (uint32)CD3D12BaseBuffer::GetSizeInBytes();

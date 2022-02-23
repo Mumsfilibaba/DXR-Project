@@ -32,14 +32,14 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     TArray<uint8> ShaderCode;
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/SSAO.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     SSAOShader = RHICreateComputeShader(ShaderCode);
     if (!SSAOShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -53,7 +53,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     PipelineState = RHICreateComputePipelineState(PipelineStateInfo);
     if (!PipelineState)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -103,7 +103,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     SSAONoiseTex = RHICreateTexture2D(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, ERHIResourceState::NonPixelShaderResource, nullptr);
     if (!SSAONoiseTex)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -127,7 +127,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     SSAOSamples = RHICreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, ERHIResourceState::Common, &SSAOSampleData);
     if (!SSAOSamples)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -138,7 +138,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     SSAOSamplesSRV = RHICreateShaderResourceView(SSAOSamples.Get(), 0, SSAOKernel.Size());
     if (!SSAOSamplesSRV)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -152,14 +152,14 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     // Load shader
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Blur.hlsl", "Main", &Defines, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     BlurHorizontalShader = RHICreateComputeShader(ShaderCode);
     if (!BlurHorizontalShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -173,7 +173,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     BlurHorizontalPSO = RHICreateComputePipelineState(PSOProperties);
     if (!BlurHorizontalPSO)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -186,14 +186,14 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Blur.hlsl", "Main", &Defines, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     BlurVerticalShader = RHICreateComputeShader(ShaderCode);
     if (!BlurVerticalShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -206,7 +206,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     BlurVerticalPSO = RHICreateComputePipelineState(PSOProperties);
     if (!BlurVerticalPSO)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -314,7 +314,7 @@ bool CScreenSpaceOcclusionRenderer::CreateRenderTarget(SFrameResources& FrameRes
     FrameResources.SSAOBuffer = RHICreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, ERHIResourceState::Common, nullptr);
     if (!FrameResources.SSAOBuffer)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else

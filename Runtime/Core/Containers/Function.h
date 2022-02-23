@@ -139,7 +139,7 @@ class TFunction<ReturnType(ArgTypes...)>
             : IFunctor()
             , Functor(Move(Other.Functor))
         {
-            CMemory::Memzero<TGenericFunctor>(&Other);
+            Memory::Memzero<TGenericFunctor>(&Other);
         }
 
         virtual ReturnType Invoke(ArgTypes&&... Args) noexcept override final

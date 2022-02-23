@@ -17,14 +17,14 @@ bool CRayTracer::Init(SFrameResources& Resources)
     TArray<uint8> Code;
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/RayGen.hlsl", "RayGen", nullptr, ERHIShaderStage::RayGen, EShaderModel::SM_6_3, Code))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     RayGenShader = RHICreateRayGenShader(Code);
     if (!RayGenShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -34,14 +34,14 @@ bool CRayTracer::Init(SFrameResources& Resources)
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, ERHIShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     RayClosestHitShader = RHICreateRayClosestHitShader(Code);
     if (!RayClosestHitShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -51,14 +51,14 @@ bool CRayTracer::Init(SFrameResources& Resources)
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Miss.hlsl", "Miss", nullptr, ERHIShaderStage::RayMiss, EShaderModel::SM_6_3, Code))
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
     RayMissShader = RHICreateRayMissShader(Code);
     if (!RayMissShader)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else
@@ -78,7 +78,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
     Pipeline = RHICreateRayTracingPipelineState(CreateInfo);
     if (!Pipeline)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -87,7 +87,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
     Resources.RTOutput = RHICreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, ERHIResourceState::UnorderedAccess, nullptr);
     if (!Resources.RTOutput)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
     else

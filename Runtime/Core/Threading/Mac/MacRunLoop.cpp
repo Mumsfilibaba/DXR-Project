@@ -20,7 +20,7 @@ public:
         , Blocks()
     {
         CFRunLoopSourceContext SourceContext;
-        CMemory::Memzero(&SourceContext);
+        Memory::Memzero(&SourceContext);
         
         SourceContext.info     = reinterpret_cast<void*>(this);
         SourceContext.version  = 0;

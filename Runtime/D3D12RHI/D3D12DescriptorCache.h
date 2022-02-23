@@ -47,9 +47,9 @@ public:
 
     void Reset(ViewType* DefaultView)
     {
-        CMemory::Memzero(HostDescriptors, sizeof(HostDescriptors));
-        CMemory::Memzero(DeviceDescriptors, sizeof(DeviceDescriptors));
-        CMemory::Memzero(CopyDescriptors, sizeof(CopyDescriptors));
+        Memory::Memzero(HostDescriptors, sizeof(HostDescriptors));
+        Memory::Memzero(DeviceDescriptors, sizeof(DeviceDescriptors));
+        Memory::Memzero(CopyDescriptors, sizeof(CopyDescriptors));
 
         for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
         {
@@ -218,7 +218,7 @@ public:
 
     FORCEINLINE void Reset()
     {
-        CMemory::Memzero(VertexBuffers, sizeof(VertexBuffers));
+        Memory::Memzero(VertexBuffers, sizeof(VertexBuffers));
 
         NumVertexBuffers = 0;
         bVertexBuffersDirty = true;
@@ -286,7 +286,7 @@ public:
 
     FORCEINLINE void Reset()
     {
-        CMemory::Memzero(RenderTargetViewHandles, sizeof(RenderTargetViewHandles));
+        Memory::Memzero(RenderTargetViewHandles, sizeof(RenderTargetViewHandles));
         DepthStencilViewHandle = { 0 };
         NumRenderTargets = 0;
     }
@@ -474,7 +474,7 @@ public:
     {
         D3D12_ERROR(InNumConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT, "[D3D12]: Trying to set a number of shader-constants (NumConstants=" + ToString(InNumConstants) + ") higher than the maximum (MaxShaderConstants=" + ToString(D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT) + ") ");
 
-        CMemory::Memcpy(Constants, InConstants, sizeof(uint32) * InNumConstants);
+        Memory::Memcpy(Constants, InConstants, sizeof(uint32) * InNumConstants);
         NumConstants = InNumConstants;
     }
 
@@ -502,7 +502,7 @@ public:
 
     FORCEINLINE void Reset()
     {
-        CMemory::Memzero(Constants, sizeof(Constants));
+        Memory::Memzero(Constants, sizeof(Constants));
         NumConstants = 0;
     }
 

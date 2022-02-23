@@ -21,7 +21,7 @@
         if (!(Condition))                    \
         {                                    \
             LOG_ERROR(ErrorMessage);         \
-            CDebug::DebugBreak();            \
+            Debug::DebugBreak();            \
         }                                    \
     } while (0)
 
@@ -29,7 +29,7 @@
     do                                   \
     {                                    \
             LOG_ERROR(ErrorMessage);     \
-            CDebug::DebugBreak();        \
+            Debug::DebugBreak();        \
     } while (0)
 
 #else
@@ -43,7 +43,7 @@
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    CMemory::Memzero(&HeapProperties);
+    Memory::Memzero(&HeapProperties);
 
     HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
     HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -57,7 +57,7 @@ inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    CMemory::Memzero(&HeapProperties);
+    Memory::Memzero(&HeapProperties);
 
     HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
     HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;

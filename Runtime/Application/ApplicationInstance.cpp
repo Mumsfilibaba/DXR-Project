@@ -12,9 +12,9 @@
 
 TSharedPtr<CApplicationInstance> CApplicationInstance::Instance;
 
-bool CApplicationInstance::Make()
+bool CApplicationInstance::CreateApplicationInstance()
 {
-    TSharedPtr<CPlatformApplication> Application = PlatformApplication::Make();
+    TSharedPtr<CPlatformApplication> Application = PlatformApplication::CreateApplication();
     if (Application && !Application->Initialize())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to create PlatformApplication");
@@ -33,7 +33,7 @@ bool CApplicationInstance::Make()
     return true;
 }
 
-bool CApplicationInstance::Make(const TSharedPtr<CApplicationInstance>& InApplication)
+bool CApplicationInstance::CreateApplicationInstanceFromExisting(const TSharedPtr<CApplicationInstance>& InApplication)
 {
     Instance = InApplication;
     return (Instance != nullptr);
@@ -243,9 +243,9 @@ CApplicationInstance::~CApplicationInstance()
     }
 }
 
-TSharedRef<CPlatformWindow> CApplicationInstance::MakeWindow()
+TSharedRef<CPlatformWindow> CApplicationInstance::CreateWindow()
 {
-    return PlatformApplication->MakeWindow();
+    return PlatformApplication->CreateWindow();
 }
 
 void CApplicationInstance::Tick(CTimestamp DeltaTime)

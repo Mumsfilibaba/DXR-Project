@@ -27,7 +27,7 @@ public:
      * 
      * @return: Returns true if the creation was successful
      */
-    static bool Make();
+    static bool CreateApplicationInstance();
 
     /**
      * Initializes the singleton from an existing application - Used for classes inheriting from CApplicationInstance
@@ -35,7 +35,7 @@ public:
      * @param InApplication: Existing application
      * @return: Returns true if the initialization was successful
      */
-    static bool Make(const TSharedPtr<CApplicationInstance>& InApplication);
+    static bool CreateApplicationInstanceFromExisting(const TSharedPtr<CApplicationInstance>& InApplication);
 
     /**
      * Releases the global application instance
@@ -62,11 +62,15 @@ public:
         return Instance.IsValid(); 
     }
 
-    /** Delegate for when the application is about to exit */
+    /**
+     * Delegate for when the application is about to exit
+     */
     DECLARE_EVENT(CExitEvent, CApplicationInstance, int32);
     CExitEvent GetExitEvent() const { return ExitEvent; }
 
-    /** Delegate for when the application gets a new main-viewport */
+    /**
+     * Delegate for when the application gets a new main-viewport 
+     */
     DECLARE_EVENT(CMainViewportChange, CApplicationInstance, const TSharedRef<CPlatformWindow>&);
     CMainViewportChange GetMainViewportChange() const { return MainViewportChange; }
 
@@ -75,7 +79,7 @@ public:
      * 
      * @return: Returns the newly created window
      */
-    TSharedRef<CPlatformWindow> MakeWindow();
+    TSharedRef<CPlatformWindow> CreateWindow();
 
     /**
      * Tick and update the InterfaceApplication

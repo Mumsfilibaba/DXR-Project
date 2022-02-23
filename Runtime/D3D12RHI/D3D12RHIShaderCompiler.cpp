@@ -91,13 +91,13 @@ public:
         , SizeInBytes(InSizeInBytes)
         , References(1)
     {
-        Data = CMemory::Malloc(SizeInBytes);
-        CMemory::Memcpy(Data, InData, SizeInBytes);
+        Data = Memory::Malloc(SizeInBytes);
+        Memory::Memcpy(Data, InData, SizeInBytes);
     }
 
     ~CExistingBlob()
     {
-        CMemory::Free(Data);
+        Memory::Free(Data);
     }
 
     virtual LPVOID GetBufferPointer(void) override
@@ -201,7 +201,7 @@ bool CD3D12RHIShaderCompiler::CompileFromFile(
     {
         LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create Source Data");
 
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -224,7 +224,7 @@ bool CD3D12RHIShaderCompiler::CompileShader(
     {
         LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create Source Data");
 
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -380,7 +380,7 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
     {
         LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to Compile");
 
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -388,7 +388,7 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
     {
         LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
 
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return false;
     }
 
@@ -437,7 +437,7 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
 
     LOG_INFO("[CD3D12RHIShaderCompiler]: Compiled Size: " + ToString(BlobSize) + " Bytes");
 
-    CMemory::Memcpy(Code.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
+    Memory::Memcpy(Code.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 
     if (ShaderStageIsRayTracing(ShaderStage))
     {
@@ -485,7 +485,7 @@ bool CD3D12RHIShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& 
     }
 
     D3D12_LIBRARY_DESC LibDesc;
-    CMemory::Memzero(&LibDesc);
+    Memory::Memzero(&LibDesc);
 
     HRESULT Result = LibaryReflection->GetDesc(&LibDesc);
     if (FAILED(Result))
@@ -500,7 +500,7 @@ bool CD3D12RHIShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& 
     ID3D12FunctionReflection* Function = LibaryReflection->GetFunctionByIndex(0);
 
     D3D12_FUNCTION_DESC FuncDesc;
-    CMemory::Memzero(&FuncDesc);
+    Memory::Memzero(&FuncDesc);
 
     Result = Function->GetDesc(&FuncDesc);
     if (FAILED(Result))
@@ -510,7 +510,7 @@ bool CD3D12RHIShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& 
     }
 
     char Buffer[256];
-    CMemory::Memzero(Buffer, sizeof(Buffer));
+    Memory::Memzero(Buffer, sizeof(Buffer));
 
     size_t ConvertedChars;
     wcstombs_s(&ConvertedChars, Buffer, 256, Entrypoint, _TRUNCATE);

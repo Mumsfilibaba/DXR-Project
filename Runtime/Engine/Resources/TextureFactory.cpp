@@ -144,7 +144,7 @@ CRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
     TSharedRef<CRHITexture2D> Texture = RHICreateTexture2D(Format, Width, Height, NumMips, 1, TextureFlag_SRV, ERHIResourceState::PixelShaderResource, &InitalData);
     if (!Texture)
     {
-        CDebug::DebugBreak();
+        Debug::DebugBreak();
         return nullptr;
     }
 

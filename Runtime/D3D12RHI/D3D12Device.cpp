@@ -409,7 +409,7 @@ bool CD3D12Device::Init()
             };
 
             D3D12_INFO_QUEUE_FILTER Filter;
-            CMemory::Memzero(&Filter);
+            Memory::Memzero(&Filter);
 
             Filter.DenyList.NumIDs = ArrayCount(Hide);
             Filter.DenyList.pIDList = Hide;
@@ -449,7 +449,7 @@ bool CD3D12Device::Init()
     // Check for Ray-Tracing support
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
-        CMemory::Memzero(&Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+        Memory::Memzero(&Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
 
         Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
         if (SUCCEEDED(Result))
@@ -461,7 +461,7 @@ bool CD3D12Device::Init()
     // Checking for Variable Shading Rate support
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
-        CMemory::Memzero(&Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
+        Memory::Memzero(&Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
 
         Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
         if (SUCCEEDED(Result))
@@ -474,7 +474,7 @@ bool CD3D12Device::Init()
     // Check for Mesh-Shaders, and SamplerFeedback support
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
-        CMemory::Memzero(&Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
+        Memory::Memzero(&Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
 
         Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
         if (SUCCEEDED(Result))
@@ -490,7 +490,7 @@ bool CD3D12Device::Init()
 int32 CD3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
 {
     D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data;
-    CMemory::Memzero(&Data);
+    Memory::Memzero(&Data);
 
     Data.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
     Data.Format = Format;

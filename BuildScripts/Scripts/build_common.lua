@@ -181,7 +181,7 @@ function GetExternalDependenciesFolderPath()
 end
 
 -- Make path relative to dependency folder
-function MakeExternalDependencyPath(Path)
+function CreateExternalDependencyPath(Path)
     return GetExternalDependenciesFolderPath() .. '/' .. Path
 end
 

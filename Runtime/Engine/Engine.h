@@ -13,7 +13,7 @@
 #include "Engine/Resources/Material.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Engine - Class representing the engine
+// CEngine - Class representing the engine
 
 class ENGINE_API CEngine
 {
@@ -24,7 +24,7 @@ public:
      * 
      * @return: Returns a new engine instance
      */
-    static CEngine* Make();
+    static CEngine* CreateEngine();
 
     /**
      * Initialize the engine 
@@ -54,10 +54,14 @@ public:
      */
     virtual bool Release();
 
-    /** Request exit from the engine */
+    /**
+     * Request exit from the engine 
+     */
     void Exit();
 
-    /** Destroy the engine */
+    /**
+     * Destroy the engine 
+     */
     void Destroy();
 
     /** The main window of the app */

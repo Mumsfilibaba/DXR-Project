@@ -75,7 +75,7 @@ class TDefaultArrayAllocator
 public:
 
     using ElementType = T;
-    using SizeType = int32;
+    using SizeType    = int32;
 
     FORCEINLINE TDefaultArrayAllocator() noexcept
         : Allocation(nullptr)
@@ -91,7 +91,7 @@ public:
     {
         UNREFERENCED_VARIABLE(CurrentCount);
 
-        Allocation = CMemory::Realloc<ElementType>(Allocation, NewCount);
+        Allocation = Memory::Realloc<ElementType>(Allocation, NewCount);
         return Allocation;
     }
 
@@ -99,7 +99,7 @@ public:
     {
         if (Allocation)
         {
-            CMemory::Free(Allocation);
+            Memory::Free(Allocation);
             Allocation = nullptr;
         }
     }

@@ -24,10 +24,9 @@ void CWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 
         if (Message.message == WM_QUIT)
         {
-            CWindowsApplication* Application = CWindowsApplication::Get();
-            if (Application)
+            if (CWindowsApplication::IsInitialized())
             {
-                Application->StoreMessage(Message.hwnd, Message.message, Message.wParam, Message.lParam, 0, 0);
+                CWindowsApplication::Get().StoreMessage(Message.hwnd, Message.message, Message.wParam, Message.lParam, 0, 0);
             }
         }
 
