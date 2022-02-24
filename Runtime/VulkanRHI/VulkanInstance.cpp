@@ -65,8 +65,17 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 #if VK_KHR_get_memory_requirements2
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 #endif
+#if VK_KHR_maintenance1
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
+#endif
+#if VK_KHR_maintenance2
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
+#endif
 #if VK_KHR_maintenance3
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
+#endif
+#if VK_KHR_maintenance4
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE_4_EXTENSION_NAME);
 #endif
 #if VK_EXT_descriptor_indexing
 	AdapterDesc.OptionalExtensionNames.Push(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
@@ -94,6 +103,15 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 #endif
 #if VK_KHR_push_descriptor
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
+#endif
+#if VK_KHR_ray_query
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+#endif
+#if VK_KHR_ray_tracing_pipeline
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+#endif
+#if VK_KHR_acceleration_structure
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 #endif
 
 	// This extension must be enabled on platforms that has it available

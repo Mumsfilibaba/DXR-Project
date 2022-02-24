@@ -1,5 +1,5 @@
 #pragma once
-#include "D3D12RHIModule.h"
+#include "D3D12RHI.h"
 #include "D3D12Device.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandContext.h"
@@ -36,7 +36,7 @@ public:
 
     FORCEINLINE CD3D12Device* GetDevice() const
     {
-        return Device;
+        return Device.Get();
     }
 
     FORCEINLINE CD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap() const

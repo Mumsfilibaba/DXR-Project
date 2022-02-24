@@ -69,8 +69,8 @@ private:
 
 	bool Initialize(const SVulkanDriverInstanceDesc& InstanceDesc);
 
-    PlatformLibrary::PlatformHandle DriverHandle;
-	PFN_vkGetInstanceProcAddr       GetInstanceProcAddrFunc;
+    DynamicLibraryHandle      DriverHandle;
+	PFN_vkGetInstanceProcAddr GetInstanceProcAddrFunc;
     
     VkInstance Instance;
 

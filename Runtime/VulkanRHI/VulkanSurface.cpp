@@ -56,7 +56,7 @@ bool CVulkanSurface::Initialize()
 
     // TODO: Don't assume that we are using the graphics queue
     VkBool32 PresentSupport = false;
-    Result = vkGetPhysicalDeviceSurfaceSupportKHR(Adapter->GetVkPhysicalDevice(), QueueFamilyIndices->CopyQueueIndex, Surface, &PresentSupport);
+    Result = vkGetPhysicalDeviceSurfaceSupportKHR(Adapter->GetVkPhysicalDevice(), QueueFamilyIndices->GraphicsQueueIndex, Surface, &PresentSupport);
 	VULKAN_CHECK_RESULT(Result, "Failed to retrieve presentation support for surface");
 	
     if (!PresentSupport)

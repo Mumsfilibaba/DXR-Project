@@ -15,6 +15,13 @@ public:
     {
     }
 
+    inline CVulkanSemaphore(CVulkanSemaphore&& Other)
+        : CVulkanDeviceObject(Other.GetDevice())
+        , Semaphore(Other.Semaphore)
+    {
+        Other.Semaphore = VK_NULL_HANDLE;
+    }
+
     inline ~CVulkanSemaphore()
     {
         if (VULKAN_CHECK_HANDLE(Semaphore))

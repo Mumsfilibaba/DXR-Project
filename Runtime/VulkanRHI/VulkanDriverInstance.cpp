@@ -4,6 +4,8 @@
 #include "Core/Templates/StringUtils.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
+#include "Platform/PlatformVulkanMisc.h"
+
 #define VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(FunctionName)                                           \
 	vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(LoadFunction("vk"#FunctionName)); \
 	if (!vk##FunctionName)                                                                      \
@@ -67,7 +69,7 @@ CVulkanDriverInstance::~CVulkanDriverInstance()
 
 bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& InstanceDesc)
 {
-	DriverHandle = PlatformLibrary::LoadDynamicLib("vulkan");
+	DriverHandle = PlatformVulkanMisc::LoadVulkanLibrary();
     if (!DriverHandle)
     {
 		VULKAN_ERROR_ALWAYS("Failed to load Vulkan library");
@@ -137,7 +139,7 @@ bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& Instance
 		}
 	}
 
-	// Varify Layers
+	// Verify Layers
 	TArray<const char*> EnabledLayerNames;
 	for (const VkLayerProperties& LayerProperty : LayerProperties)
 	{
@@ -161,7 +163,7 @@ bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& Instance
 		}
 	}
 
-	// Varify Extensions
+	// Verify Extensions
 	TArray<const char*> EnabledExtensionNames;
 	for (const VkExtensionProperties& ExtensionProperty : ExtensionProperties)
 	{

@@ -527,7 +527,7 @@ void CD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         for (CRHIConstantBuffer* CBuffer : Resources.ConstantBuffers)
         {
-            CD3D12RHIConstantBuffer* DxConstantBuffer = static_cast<CD3D12RHIConstantBuffer*>(CBuffer);
+            CD3D12ConstantBuffer* DxConstantBuffer = static_cast<CD3D12ConstantBuffer*>(CBuffer);
             ResourceHandles[CPUResourceIndex++] = DxConstantBuffer->GetView().GetOfflineHandle();
         }
     }

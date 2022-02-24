@@ -22,7 +22,7 @@ class COREAPPLICATION_API CWindowsConsoleWindow final : public CPlatformConsoleW
 public:
 
     /* Creates a new console, can only be called once */
-    static CWindowsConsoleWindow* Make();
+    static CWindowsConsoleWindow* CreateWindow();
 
     virtual void Print(const String& Message) override final;
     virtual void PrintLine(const String& Message) override final;

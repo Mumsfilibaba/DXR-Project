@@ -102,7 +102,7 @@ bool CVulkanPhysicalDevice::Initialize(const SVulkanPhysicalDeviceDesc& AdapterD
 			continue;
 		}
 
-		// Find indices for queuefamilies
+		// Find indices for queue-families
 		TOptional<SVulkanQueueFamilyIndices> QueueIndices = GetQueueFamilyIndices(CurrentAdapter);
 		if (!QueueIndices)
 		{
@@ -137,7 +137,7 @@ bool CVulkanPhysicalDevice::Initialize(const SVulkanPhysicalDeviceDesc& AdapterD
 			}
 		}
         
-		// Varify the required extensions
+		// Verify the required extensions
 		bool bIsAllExtensionsSupported = true;
 		for (const char* RequiredExtension : AdapterDesc.RequiredExtensionNames)
 		{
@@ -177,14 +177,14 @@ bool CVulkanPhysicalDevice::Initialize(const SVulkanPhysicalDeviceDesc& AdapterD
 		PhysicalDevice = AcceptedAdapers[0];
 	}
 	
-	// If there still is no physicaldevice, then we failed
+	// If there still is no physical-device, then we failed
 	if (!VULKAN_CHECK_HANDLE(PhysicalDevice))
 	{
 		VULKAN_ERROR_ALWAYS("Failed to find a suitable Adapter");
 		return false;
 	}
 	
-	// Retreive and cache information about the physicaldevice
+	// Retrieve and cache information about the physical-device
 	vkGetPhysicalDeviceProperties(PhysicalDevice, &DeviceProperties);
 	vkGetPhysicalDeviceFeatures(PhysicalDevice, &DeviceFeatures);
 	vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &DeviceMemoryProperties);
@@ -254,7 +254,7 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
 		return (~0U);
 	};
 
-	// Retrieve the queue indicies for the adapter
+	// Retrieve the queue indices for the adapter
 	TOptional<SVulkanQueueFamilyIndices> QueueIndicies;
 
 	uint32 QueueFamilyCount = 0;
@@ -281,16 +281,14 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
 	const uint32 GraphicsIndex = GetQueueFamilyIndex(VK_QUEUE_GRAPHICS_BIT, QueueFamilies);
 	if (GraphicsIndex == (~0U))
 	{
-		VULKAN_ERROR_ALWAYS("Failed to retrieve GraphicsQueue-Index");
 		return QueueIndicies;
 	}
 
 	QueueFamilies[GraphicsIndex].queueCount--;
 	
 	const uint32 CopyIndex = GetQueueFamilyIndex(VK_QUEUE_TRANSFER_BIT, QueueFamilies);
-		if (CopyIndex == (~0U))
+	if (CopyIndex == (~0U))
 	{
-		VULKAN_ERROR_ALWAYS("Failed to retrieve CopyQueue-Index");
 		return QueueIndicies;
 	}
 	
@@ -299,7 +297,6 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
 	const uint32 ComputeIndex = GetQueueFamilyIndex(VK_QUEUE_COMPUTE_BIT , QueueFamilies);
 	if (ComputeIndex == (~0U))
 	{
-		VULKAN_ERROR_ALWAYS("Failed to retrieve ComputeQueue-Index");
 		return QueueIndicies;
 	}
 	

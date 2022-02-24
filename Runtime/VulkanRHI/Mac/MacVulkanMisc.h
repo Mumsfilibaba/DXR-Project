@@ -51,6 +51,11 @@ public:
         return TArray<const char*>(); 
     }
 
+    static FORCEINLINE DynamicLibraryHandle LoadVulkanLibrary()
+    {
+        return PlatformLibrary::LoadDynamicLib("vulkan");
+    }
+
 #if VK_KHR_surface
     static FORCEINLINE VkResult CreateSurface(VkInstance Instance, class CPlatformWindow* InWindow, VkSurfaceKHR* OutSurface)
     {

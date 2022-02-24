@@ -48,7 +48,7 @@ class COREAPPLICATION_API CWindowsApplication final : public CPlatformApplicatio
 public:
 
     /* Creates an instance of the WindowsApplication, also loads the icon */
-    static TSharedPtr<CWindowsApplication> Make();
+    static TSharedPtr<CWindowsApplication> CreateApplication();
 
     /* Retrieve the window-class name */
     static FORCEINLINE const char* GetWindowClassName() { return "WindowClass"; }

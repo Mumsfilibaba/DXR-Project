@@ -57,6 +57,10 @@ VULKAN_FUNCTION_DEFINITION(GetDeviceProcAddr);
 	VULKAN_FUNCTION_DEFINITION(CreateMacOSSurfaceMVK);
 #endif
 
+#if VK_KHR_win32_surface
+	VULKAN_FUNCTION_DEFINITION(CreateWin32SurfaceKHR);
+#endif
+
 #if VK_KHR_surface
 	VULKAN_FUNCTION_DEFINITION(DestroySurfaceKHR);
 	VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfaceCapabilitiesKHR);
@@ -86,19 +90,35 @@ bool LoadInstanceFunctions(CVulkanDriverInstance* Instance)
 	VULKAN_LOAD_FUNCTION(Instance, GetDeviceProcAddr);
 
 #if VK_EXT_metal_surface
-	VULKAN_LOAD_FUNCTION(Instance, CreateMetalSurfaceEXT);
+	if (Instance->IsExtensionEnabled(VK_EXT_METAL_SURFACE_EXTENSION_NAME))
+	{
+		VULKAN_LOAD_FUNCTION(Instance, CreateMetalSurfaceEXT);
+	}
 #endif
 	
 #if VK_MVK_macos_surface
-	VULKAN_LOAD_FUNCTION(Instance, CreateMacOSSurfaceMVK);
+    if (Instance->IsExtensionEnabled(VK_MVK_MACOS_SURFACE_EXTENSION_NAME))
+    {
+		VULKAN_LOAD_FUNCTION(Instance, CreateMacOSSurfaceMVK);
+	}
+#endif
+
+#if VK_KHR_win32_surface
+	if (Instance->IsExtensionEnabled(VK_KHR_WIN32_SURFACE_EXTENSION_NAME))
+	{
+		VULKAN_LOAD_FUNCTION(Instance, CreateWin32SurfaceKHR);
+	}
 #endif
 
 #if VK_KHR_surface
-	VULKAN_LOAD_FUNCTION(Instance, DestroySurfaceKHR);
-	VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfaceCapabilitiesKHR);
-	VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfaceFormatsKHR);
-	VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfacePresentModesKHR);
-	VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfaceSupportKHR);
+    if (Instance->IsExtensionEnabled(VK_KHR_SURFACE_EXTENSION_NAME))
+    {
+		VULKAN_LOAD_FUNCTION(Instance, DestroySurfaceKHR);
+		VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfaceCapabilitiesKHR);
+		VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfaceFormatsKHR);
+		VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfacePresentModesKHR);
+		VULKAN_LOAD_FUNCTION(Instance, GetPhysicalDeviceSurfaceSupportKHR);
+	}
 #endif
 	
 	return true;

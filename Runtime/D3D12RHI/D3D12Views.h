@@ -108,14 +108,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRenderTargetView
+// CD3D12BaseRenderTargetView
 
-class CD3D12RHIBaseRenderTargetView : public CRHIRenderTargetView, public CD3D12View
+class CD3D12BaseRenderTargetView : public CRHIRenderTargetView, public CD3D12View
 {
 public:
 
-    CD3D12RHIBaseRenderTargetView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
-    ~CD3D12RHIBaseRenderTargetView() = default;
+    CD3D12BaseRenderTargetView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    ~CD3D12BaseRenderTargetView() = default;
 
     bool CreateView(CD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
@@ -129,14 +129,14 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12DepthStencilView
+// CD3D12BaseDepthStencilView
 
-class CD3D12DepthStencilView : public CRHIDepthStencilView, public CD3D12View
+class CD3D12BaseDepthStencilView : public CRHIDepthStencilView, public CD3D12View
 {
 public:
 
-    CD3D12DepthStencilView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
-    ~CD3D12DepthStencilView() = default;
+    CD3D12BaseDepthStencilView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    ~CD3D12BaseDepthStencilView() = default;
 
     bool CreateView(CD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 
@@ -173,7 +173,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12 Views
 
-using CD3D12RenderTargetView    = TD3D12BaseView<CD3D12RHIBaseRenderTargetView>;
-using CD3D12DepthStencilView    = TD3D12BaseView<CD3D12DepthStencilView>;
+using CD3D12RenderTargetView    = TD3D12BaseView<CD3D12BaseRenderTargetView>;
+using CD3D12DepthStencilView    = TD3D12BaseView<CD3D12BaseDepthStencilView>;
 using CD3D12UnorderedAccessView = TD3D12BaseView<CD3D12BaseUnorderedAccessView>;
 using CD3D12ShaderResourceView  = TD3D12BaseView<CD3D12BaseShaderResourceView>;

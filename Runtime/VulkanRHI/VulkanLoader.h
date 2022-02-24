@@ -48,6 +48,10 @@ VULKAN_FUNCTION_DECLARATION(GetDeviceProcAddr);
 	VULKAN_FUNCTION_DECLARATION(CreateMacOSSurfaceMVK);
 #endif
 
+#if VK_KHR_win32_surface
+    VULKAN_FUNCTION_DECLARATION(CreateWin32SurfaceKHR);
+#endif
+
 #if VK_KHR_surface
 	VULKAN_FUNCTION_DECLARATION(DestroySurfaceKHR);
 	VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceCapabilitiesKHR);

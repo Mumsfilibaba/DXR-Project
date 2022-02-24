@@ -310,12 +310,12 @@ public:
 
     FORCEINLINE CD3D12CommandQueue& GetQueue()
     {
-        return CmdQueue;
+        return CommandQueue;
     }
 
     FORCEINLINE CD3D12CommandList& GetCommandList()
     {
-        return CmdList;
+        return CommandList;
     }
 
     FORCEINLINE uint32 GetCurrentEpochValue() const
@@ -338,7 +338,7 @@ public:
 
     FORCEINLINE void FlushResourceBarriers()
     {
-        BarrierBatcher.FlushBarriers(CmdList);
+        BarrierBatcher.FlushBarriers(CommandList);
     }
 
     FORCEINLINE void DestroyResource(CD3D12Resource* Resource)
@@ -359,7 +359,7 @@ private:
     CD3D12Fence        Fence;
     CD3D12CommandQueue CommandQueue;
 
-    uint64 FenceValue = 0;
+    uint64 FenceValue   = 0;
     uint32 NextCmdBatch = 0;
 
     TArray<CD3D12CommandBatch> CmdBatches;
@@ -367,10 +367,9 @@ private:
 
     TArray<TSharedRef<CD3D12TimestampQuery>> ResolveProfilers;
 
+    TSharedRef<CD3D12RootSignature>         CurrentRootSignature;
     TSharedRef<CD3D12GraphicsPipelineState> CurrentGraphicsPipelineState;
     TSharedRef<CD3D12ComputePipelineState>  CurrentComputePipelineState;
-
-    TSharedRef<CD3D12RootSignature> CurrentRootSignature;
 
     D3D12_PRIMITIVE_TOPOLOGY CurrentPrimitiveTolpology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 

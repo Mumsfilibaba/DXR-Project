@@ -36,8 +36,8 @@ public:
         return ResultBuffer->GetGPUVirtualAddress();
     }
 
-    TSharedRef<CD3D12RHIVertexBuffer> VertexBuffer;
-    TSharedRef<CD3D12RHIIndexBuffer>  IndexBuffer;
+    TSharedRef<CD3D12VertexBuffer> VertexBuffer;
+    TSharedRef<CD3D12IndexBuffer>  IndexBuffer;
 
     TSharedRef<CD3D12Resource> ResultBuffer;
     TSharedRef<CD3D12Resource> ScratchBuffer;

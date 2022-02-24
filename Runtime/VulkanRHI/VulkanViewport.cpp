@@ -50,7 +50,6 @@ bool CVulkanViewport::Initialize()
     }
 
     const uint32 NumBackBuffers = GBackbufferCount.GetInt();
-
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
     {
         CVulkanSemaphore& ImageSemaphore = ImageSemaphores.Emplace(GetDevice());

@@ -25,7 +25,7 @@ CWindowsConsoleWindow::~CWindowsConsoleWindow()
     }
 }
 
-CWindowsConsoleWindow* CWindowsConsoleWindow::Make()
+CWindowsConsoleWindow* CWindowsConsoleWindow::CreateWindow()
 {
     return dbg_new CWindowsConsoleWindow();
 }
