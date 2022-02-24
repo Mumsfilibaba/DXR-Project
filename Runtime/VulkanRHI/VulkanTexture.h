@@ -17,24 +17,13 @@ public:
     {
     }
 
-    virtual CRHIRenderTargetView* GetRenderTargetView() const override
-    {
-        return RenderTargetView.Get();
-    }
-
-    virtual CRHIDepthStencilView* GetDepthStencilView() const override
-    {
-        return DepthStencilView.Get();
-    }
-
-    virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override
-    {
-        return UnorderedAccessView.Get();
-    }
+    virtual CRHIRenderTargetView*    GetRenderTargetView()    const override { return RenderTargetView.Get(); }
+    virtual CRHIDepthStencilView*    GetDepthStencilView()    const override { return DepthStencilView.Get(); }
+    virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
 
 private:
-    TSharedRef<CVulkanRenderTargetView> RenderTargetView;
-    TSharedRef<CVulkanDepthStencilView> DepthStencilView;
+    TSharedRef<CVulkanRenderTargetView>    RenderTargetView;
+    TSharedRef<CVulkanDepthStencilView>    DepthStencilView;
     TSharedRef<CVulkanUnorderedAccessView> UnorderedAccessView;
 };
 

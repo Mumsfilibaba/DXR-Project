@@ -15,6 +15,13 @@ public:
     {
     }
 
+    inline CVulkanFence(CVulkanFence&& Other)
+        : CVulkanDeviceObject(Other.GetDevice())
+        , Fence(Other.Fence)
+    {
+        Other.Fence = VK_NULL_HANDLE;
+    }
+
     inline ~CVulkanFence()
     {
         if (VULKAN_CHECK_HANDLE(Fence))

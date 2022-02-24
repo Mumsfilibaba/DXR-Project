@@ -17,7 +17,7 @@ public:
     bool ExecuteCommandBuffer(class CVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, class CVulkanFence* Fence);
 
     /**
-     * Adds a Semaphore to the queue which will be waited on during next call to execute commandbuffer
+     * Adds a Semaphore to the queue which will be waited on during next call to execute CommandBuffer
      * 
      * @param Semaphore: Semaphore to wait for
      * @param WaitStage: Pipeline-stage at which the CommandQueue should wait for the semaphore
@@ -25,7 +25,7 @@ public:
     void AddWaitSemaphore(VkSemaphore Semaphore, VkPipelineStageFlags WaitStage);
 
     /**
-     * Adds a Semaphore to the queue which will be signaled when the next call to execute commandbuffer finishes
+     * Adds a Semaphore to the queue which will be signaled when the next call to execute CommandBuffer finishes
      * 
      * @param Semaphore: Semaphore to signal
      */

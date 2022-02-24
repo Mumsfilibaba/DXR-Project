@@ -126,7 +126,6 @@ public:
     {
         return DeviceMemoryProperties2;
     }
-
 #endif
 
 private:

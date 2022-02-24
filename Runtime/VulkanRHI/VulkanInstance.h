@@ -91,7 +91,7 @@ public:
 
     virtual CRHIViewport*                CreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) override final;
 
-    virtual class IRHICommandContext* GetDefaultCommandContext() override final { return DirectCommandContext.Get(); }
+    virtual class IRHICommandContext*    GetDefaultCommandContext() override final { return DirectCommandContext.Get(); }
 
     virtual String GetAdapterName() const override final;
 

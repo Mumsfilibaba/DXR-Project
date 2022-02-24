@@ -14,8 +14,18 @@ CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanDevice* InDevice, EVulkanComma
 {
 }
 
+CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanCommandBuffer&& Other)
+    : CVulkanDeviceObject(GetDevice())
+    , Fence(Move(Other.Fence))
+    , CommandPool(Move(Other.CommandPool))
+    , CommandBuffer(Other.CommandBuffer)
+{
+    Other.CommandBuffer = VK_NULL_HANDLE;
+}
+
 CVulkanCommandBuffer::~CVulkanCommandBuffer()
 {
+    VULKAN_ERROR(Fence.Wait(UINT64_MAX), "Failed to wait for fence");
 }
 
 bool CVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)

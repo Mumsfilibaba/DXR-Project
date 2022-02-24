@@ -59,9 +59,12 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 	}
 
     SVulkanPhysicalDeviceDesc AdapterDesc;
-	AdapterDesc.RequiredExtensionNames = PlatformVulkanMisc::GetRequiredDeviceExtensions();
+	AdapterDesc.RequiredExtensionNames             = PlatformVulkanMisc::GetRequiredDeviceExtensions();
     AdapterDesc.RequiredFeatures.samplerAnisotropy = VK_TRUE;
-	
+    
+    // This extension must be enabled on platforms that has it available
+    AdapterDesc.OptionalExtensionNames.Push("VK_KHR_portability_subset");
+
 #if VK_KHR_get_memory_requirements2
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 #endif
@@ -113,9 +116,6 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 #if VK_KHR_acceleration_structure
     AdapterDesc.OptionalExtensionNames.Push(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 #endif
-
-	// This extension must be enabled on platforms that has it available
-	AdapterDesc.OptionalExtensionNames.Push("VK_KHR_portability_subset");
 
 	Adapter = CVulkanPhysicalDevice::QueryAdapter(GetInstance(), AdapterDesc);
     if (!Adapter)

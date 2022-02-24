@@ -17,6 +17,15 @@ public:
     {
     }
 
+    inline CVulkanCommandPool(CVulkanCommandPool&& Other)
+        : CVulkanDeviceObject(Other.GetDevice())
+        , Type(Other.Type)
+        , CommandPool(Other.CommandPool)
+    {
+        Other.CommandPool = VK_NULL_HANDLE;
+        Other.Type        = EVulkanCommandQueueType::Unknown;
+    }
+
     inline ~CVulkanCommandPool()
     {
         if (VULKAN_CHECK_HANDLE(CommandPool))

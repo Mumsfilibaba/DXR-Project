@@ -8,15 +8,15 @@
 class CVulkanCommandBuffer : public CVulkanDeviceObject
 {
 public:
-
     CVulkanCommandBuffer(CVulkanDevice* InDevice, EVulkanCommandQueueType InType);
+    CVulkanCommandBuffer(CVulkanCommandBuffer&& Other);
     ~CVulkanCommandBuffer();
 
     bool Initialize(VkCommandBufferLevel InLevel);
 
     FORCEINLINE bool Begin(VkCommandBufferUsageFlags Flags = 0)
     {
-        // Wait for GPU to finish with this commandbuffer and then reset it
+        // Wait for GPU to finish with this CommandBuffer and then reset it
         if (!Fence.Wait(UINT64_MAX))
         {
             return false;

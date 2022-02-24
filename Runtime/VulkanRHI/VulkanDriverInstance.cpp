@@ -49,22 +49,22 @@ CVulkanDriverInstance::CVulkanDriverInstance()
 
 CVulkanDriverInstance::~CVulkanDriverInstance()
 {
-    if (DriverHandle)
-    {
-        PlatformLibrary::FreeDynamicLib(DriverHandle);
-    }
-	
-	if (VULKAN_CHECK_HANDLE(Instance))
-	{
-		vkDestroyInstance(Instance, nullptr);
-	}
-
 #if VK_EXT_debug_utils
 	if (VULKAN_CHECK_HANDLE(DebugMessenger))
 	{
 		vkDestroyDebugUtilsMessengerEXT(Instance, DebugMessenger, nullptr);
 	}
 #endif
+
+	if (VULKAN_CHECK_HANDLE(Instance))
+	{
+		vkDestroyInstance(Instance, nullptr);
+	}
+
+    if (DriverHandle)
+    {
+        PlatformLibrary::FreeDynamicLib(DriverHandle);
+    }
 }
 
 bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& InstanceDesc)
