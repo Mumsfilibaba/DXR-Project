@@ -123,7 +123,7 @@ bool CVulkanViewport::Present(bool bVerticalSync)
     {
 
 
-        SwapChain = CVulkanSwapChain::CreateSwapChain(GetDevice(), GetQueue(), GetSurface(), )
+        // SwapChain = CVulkanSwapChain::CreateSwapChain(GetDevice(), GetQueue(), GetSurface(), )
     }
 
     VULKAN_CHECK_RESULT(Result, "Presentation Failed. Result=" + String(ToString(Result)) + '.');

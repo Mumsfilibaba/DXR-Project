@@ -57,30 +57,35 @@ public:
     }
 
 #if VK_KHR_surface
-    static FORCEINLINE VkResult CreateSurface(VkInstance Instance, class CPlatformWindow* InWindow, VkSurfaceKHR* OutSurface)
+    static FORCEINLINE VkResult CreateSurface(VkInstance Instance, void* WindowHandle, VkSurfaceKHR* OutSurface)
     {
 #if VK_EXT_metal_surface 
-        CMacWindow* MacWindow = reinterpret_cast<CMacWindow*>(InWindow);
+		CCocoaWindow*      CocoaWindow = reinterpret_cast<CCocoaWindow*>(WindowHandle);
+		CCocoaContentView* ContentView = [CocoaWindow contentView];
+		CAMetalLayer*      MetalLayer  = [ContentView isKindOfClass:[CAMetalLayer class]] ? reinterpret_cast<CAMetalLayer*>([ContentView layer]) : nullptr;
 
+		Assert(MetalLayer != nullptr);
+		
         VkMetalSurfaceCreateInfoEXT MetalSurfaceCreateInfo;
         CMemory::Memzero(&MetalSurfaceCreateInfo);
 
         MetalSurfaceCreateInfo.sType  = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
         MetalSurfaceCreateInfo.pNext  = nullptr;
         MetalSurfaceCreateInfo.flags  = 0;
-        MetalSurfaceCreateInfo.pLayer = MacWindow->GetCAMetalLayer();
+        MetalSurfaceCreateInfo.pLayer = MetalLayer;
 
         return vkCreateMetalSurfaceEXT(Instance, &MetalSurfaceCreateInfo, nullptr, OutSurface);
 #elif VK_MVK_macos_surface
-		CMacWindow* MacWindow = reinterpret_cast<CMacWindow*>(InWindow);
-
+		CCocoaWindow*      CocoaWindow = reinterpret_cast<CCocoaWindow*>(WindowHandle);
+		CCocoaContentView* ContentView = [CocoaWindow contentView];
+		
 		VkMacOSSurfaceCreateInfoMVK MacOSSurfaceCreateInfo;
 		CMemory::Memzero(&MacOSSurfaceCreateInfo);
 
 		MacOSSurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
 		MacOSSurfaceCreateInfo.pNext = nullptr;
 		MacOSSurfaceCreateInfo.flags = 0;
-		MacOSSurfaceCreateInfo.pView = reinterpret_cast<const void*>(MacWindow->GetCocoaContentView());
+		MacOSSurfaceCreateInfo.pView = ContentView;
 
 		return vkCreateMacOSSurfaceMVK(Instance, &MacOSSurfaceCreateInfo, nullptr, OutSurface);
 #else
