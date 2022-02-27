@@ -12,12 +12,12 @@ static const auto RawStringComparator = [](const char* Lhs, const char* Rhs) -> 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanDevice
 
-TSharedRef<CVulkanDevice> CVulkanDevice::CreateDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc)
+CVulkanDeviceRef CVulkanDevice::CreateDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc)
 {
     VULKAN_ERROR(InInstance != nullptr, "Instance cannot be nullptr");
     VULKAN_ERROR(InAdapter  != nullptr, "Adapter cannot be nullptr");
 
-	TSharedRef<CVulkanDevice> NewDevice = dbg_new CVulkanDevice(InInstance, InAdapter);
+	CVulkanDeviceRef NewDevice = dbg_new CVulkanDevice(InInstance, InAdapter);
     if (NewDevice && NewDevice->Initialize(DeviceDesc))
     {
         return NewDevice;

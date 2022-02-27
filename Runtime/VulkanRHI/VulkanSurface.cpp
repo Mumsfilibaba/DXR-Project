@@ -2,14 +2,14 @@
 #include "VulkanDevice.h"
 #include "VulkanDriverInstance.h"
 
-#include "Platform/PlatformVulkanMisc.h"
+#include "Platform/PlatformVulkan.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanSurface
 
-TSharedRef<CVulkanSurface> CVulkanSurface::CreateSurface(CVulkanDevice* InDevice, CPlatformWindow* InWindow)
+CVulkanSurfaceRef CVulkanSurface::CreateSurface(CVulkanDevice* InDevice, CVulkanQueue* InQueue, void* InWindowHandle)
 {
-    TSharedRef<CVulkanSurface> NewSurface = dbg_new CVulkanSurface(InDevice, InWindow);
+    CVulkanSurfaceRef NewSurface = dbg_new CVulkanSurface(InDevice, InQueue, InWindowHandle);
 	if (NewSurface && NewSurface->Initialize())
 	{
 		return NewSurface;
@@ -18,12 +18,11 @@ TSharedRef<CVulkanSurface> CVulkanSurface::CreateSurface(CVulkanDevice* InDevice
 	return nullptr;
 }
 	
-CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice, CPlatformWindow* InWindow)
+CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice, CVulkanQueue* InQueue, void* InWindowHandle)
     : CVulkanDeviceObject(InDevice)
-	, Window(::AddRef(InWindow))
+    , Queue(::AddRef(InQueue))
+	, WindowHandle(InWindowHandle)
     , Surface(VK_NULL_HANDLE)
-	, SupportedFormats()
-	, PresentModes()
 {
 }
 
@@ -41,105 +40,62 @@ bool CVulkanSurface::Initialize()
 {
 	CVulkanDriverInstance* Instance = GetDevice()->GetInstance();
 	
-	// Create platform specific surface
-    VkResult Result = PlatformVulkanMisc::CreateSurface(Instance->GetVkInstance(), Window.Get(), &Surface);
+    VkResult Result = PlatformVulkan::CreateSurface(Instance->GetVkInstance(), WindowHandle, &Surface);
     VULKAN_CHECK_RESULT(Result, "Failed to create Platform Surface");
-
-    TOptional<SVulkanQueueFamilyIndices> QueueFamilyIndices = GetDevice()->GetQueueIndicies();
-    if (!QueueFamilyIndices)
-    {
-        VULKAN_ERROR_ALWAYS("Queue familiy indices are not initialized properly");
-        return false;
-    }
 
     CVulkanPhysicalDevice* Adapter = GetDevice()->GetPhysicalDevice();
 
-    // TODO: Don't assume that we are using the graphics queue
     VkBool32 PresentSupport = false;
-    Result = vkGetPhysicalDeviceSurfaceSupportKHR(Adapter->GetVkPhysicalDevice(), QueueFamilyIndices->GraphicsQueueIndex, Surface, &PresentSupport);
+    Result = vkGetPhysicalDeviceSurfaceSupportKHR(Adapter->GetVkPhysicalDevice(), Queue->GetQueueFamilyIndex(), Surface, &PresentSupport);
 	VULKAN_CHECK_RESULT(Result, "Failed to retrieve presentation support for surface");
 	
     if (!PresentSupport)
     {
-        VULKAN_ERROR_ALWAYS("GraphicsQueue does not support presentation");
+        VULKAN_ERROR_ALWAYS("Queue does not support presentation");
         return false;
     }
 
-    // Get supported surface formats
+    return true;
+}
+
+bool CVulkanSurface::GetSupportedFormats(TArray<VkSurfaceFormatKHR>& OutSupportedFormats) const
+{
+    CVulkanPhysicalDevice* Adapter = GetDevice()->GetPhysicalDevice();
+
     uint32 FormatCount = 0;
-    Result = vkGetPhysicalDeviceSurfaceFormatsKHR(Adapter->GetVkPhysicalDevice(), Surface, &FormatCount, nullptr);
+    VkResult Result = vkGetPhysicalDeviceSurfaceFormatsKHR(Adapter->GetVkPhysicalDevice(), Surface, &FormatCount, nullptr);
     VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface formats");
 
-    SupportedFormats.Resize(FormatCount);
+    OutSupportedFormats.Resize(FormatCount);
 
-    Result = vkGetPhysicalDeviceSurfaceFormatsKHR(Adapter->GetVkPhysicalDevice(), Surface, &FormatCount, SupportedFormats.Data());
+    Result = vkGetPhysicalDeviceSurfaceFormatsKHR(Adapter->GetVkPhysicalDevice(), Surface, &FormatCount, OutSupportedFormats.Data());
     VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface formats");
-	
-    // Find the swapchain format we want
-    /*VkFormat DesiredFormat = ConvertFormat(m_Desc.Format);
-    m_VkFormat = { VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
-    for (const VkSurfaceFormatKHR& availableFormat : formats)
-    {
-        if (availableFormat.format == lookingFor && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-        {
-            m_VkFormat = availableFormat;
-            break;
-        }
-    }
 
-    if (m_VkFormat.format != VK_FORMAT_UNDEFINED)
-    {
-        D_LOG_MESSAGE("[SwapChainVK]: Chosen SwapChain format '%s'", VkFormatToString(m_VkFormat.format));
-    }
-    else
-    {
-        LOG_ERROR("Vulkan: Format %s is not supported on. The following formats are supported for Creating a SwapChain", VkFormatToString(lookingFor));
-        for (const VkSurfaceFormatKHR& availableFormat : formats)
-        {
-            LOG_ERROR("    %s", VkFormatToString(availableFormat.format));
-        }
+    return true;
+}
 
-        return false;
-    }*/
+bool CVulkanSurface::GetPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) const
+{
+    CVulkanPhysicalDevice* Adapter = GetDevice()->GetPhysicalDevice();
 
-    // Get presentation modes
     uint32 PresentModeCount = 0;
-    Result = vkGetPhysicalDeviceSurfacePresentModesKHR(Adapter->GetVkPhysicalDevice(), Surface, &PresentModeCount, nullptr);
+    VkResult Result = vkGetPhysicalDeviceSurfacePresentModesKHR(Adapter->GetVkPhysicalDevice(), Surface, &PresentModeCount, nullptr);
     VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface presentation modes");
 
-    PresentModes.Resize(PresentModeCount);
+    OutPresentModes.Resize(PresentModeCount);
 
-    Result = vkGetPhysicalDeviceSurfacePresentModesKHR(Adapter->GetVkPhysicalDevice(), Surface, &PresentModeCount, PresentModes.Data());
+    Result = vkGetPhysicalDeviceSurfacePresentModesKHR(Adapter->GetVkPhysicalDevice(), Surface, &PresentModeCount, OutPresentModes.Data());
     VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface presentation modes");
 
-    /*m_PresentationMode = VK_PRESENT_MODE_FIFO_KHR;
-    if (!m_Desc.VerticalSync)
-    {
-        // Search for the mailbox mode
-        for (const VkPresentModeKHR& availablePresentMode : presentModes)
-        {
-            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-            {
-                m_PresentationMode = availablePresentMode;
-                break;
-            }
-        }
+    return true;
+}
 
-        // If mailbox is not available we choose immediete
-        if (m_PresentationMode == VK_PRESENT_MODE_FIFO_KHR)
-        {
-            for (const VkPresentModeKHR& availablePresentMode : presentModes)
-            {
-                if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
-                {
-                    m_PresentationMode = availablePresentMode;
-                    break;
-                }
-            }
-        }
-    }
+bool CVulkanSurface::GetCapabilities(VkSurfaceCapabilitiesKHR& OutCapabilities) const
+{
+    CVulkanPhysicalDevice* Adapter = GetDevice()->GetPhysicalDevice();
 
-    D_LOG_MESSAGE("[SwapChainVK]: Chosen SwapChain PresentationMode '%s'", VkPresentatModeToString(m_PresentationMode));*/
+    VkResult Result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Adapter->GetVkPhysicalDevice(), Surface, &OutCapabilities);
+    VULKAN_CHECK_RESULT(Result, "Failed to get surface capabilities");
 
     return true;
 }

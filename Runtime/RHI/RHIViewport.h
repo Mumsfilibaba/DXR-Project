@@ -37,7 +37,7 @@ public:
     virtual bool Resize(uint32 Width, uint32 Height) = 0;
 
     /**
-     * Swap the backbuffers of the viewport
+     * Swap the BackBuffers of the viewport
      * 
      * @param bVerticalSync: True if the swap should have VerticalSync enabled
      */

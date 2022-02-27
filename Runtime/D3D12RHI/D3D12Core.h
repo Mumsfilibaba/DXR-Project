@@ -183,7 +183,7 @@ inline DXGI_FORMAT ConvertFormat(EFormat Format)
     case EFormat::R8_Uint:               return DXGI_FORMAT_R8_UINT;
     case EFormat::R8_Snorm:              return DXGI_FORMAT_R8_SNORM;
     case EFormat::R8_Sint:               return DXGI_FORMAT_R8_SINT;
-    default: return DXGI_FORMAT_UNKNOWN;
+    default:                             return DXGI_FORMAT_UNKNOWN;
     }
 }
 

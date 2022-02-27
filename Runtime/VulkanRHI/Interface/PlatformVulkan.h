@@ -5,9 +5,9 @@
 #include "Core/Modules/Platform/PlatformLibrary.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CPlatformVulkanMisc
+// CPlatformVulkan
 
-class CPlatformVulkanMisc
+class CPlatformVulkan
 {
 public:
 
@@ -20,6 +20,6 @@ public:
     static FORCEINLINE DynamicLibraryHandle LoadVulkanLibrary() { return 0; }
 
 #if VK_KHR_surface
-    static FORCEINLINE VkResult CreateSurface(VkInstance Instance, class CPlatformWindow* InWindow, VkSurfaceKHR* OutSurface) { return VK_ERROR_UNKNOWN; }
+    static FORCEINLINE VkResult CreateSurface(VkInstance Instance, void* InWindowHandle, VkSurfaceKHR* OutSurface) { return VK_ERROR_UNKNOWN; }
 #endif
 };

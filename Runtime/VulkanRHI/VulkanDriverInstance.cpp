@@ -4,20 +4,29 @@
 #include "Core/Templates/StringUtils.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Platform/PlatformVulkanMisc.h"
-
-#define VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(FunctionName)                                           \
-	vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(LoadFunction("vk"#FunctionName)); \
-	if (!vk##FunctionName)                                                                      \
-    {                                                                                                \
-        VULKAN_ERROR_ALWAYS("Failed to load vk"#FunctionName);                                       \
-        return false;                                                                                \
-    }
+#include "Platform/PlatformVulkan.h"
 
 static const auto RawStringComparator = [](const char* Lhs, const char* Rhs) -> bool
 {
-	return StringUtils::Compare(Lhs, Rhs) == 0;
+    return StringUtils::Compare(Lhs, Rhs) == 0;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////*/
+// DebugLayerCallback
+
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity, VkDebugUtilsMessageTypeFlagsEXT MessageType, const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
+{
+    if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+    {
+        LOG_ERROR(String("[Vulkan Validation layer] ") + CallbackData->pMessage);
+    }
+    else if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+    {
+        LOG_WARNING(String("[Vulkan Validation layer] ") + CallbackData->pMessage);
+    }
+
+    return VK_FALSE;
+}
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 // Console Variables
@@ -42,7 +51,6 @@ TSharedRef<CVulkanDriverInstance> CVulkanDriverInstance::CreateInstance(const SV
 
 CVulkanDriverInstance::CVulkanDriverInstance()
     : DriverHandle(nullptr)
-    , GetInstanceProcAddrFunc(nullptr)
     , Instance(VK_NULL_HANDLE)
 {
 }
@@ -69,23 +77,23 @@ CVulkanDriverInstance::~CVulkanDriverInstance()
 
 bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& InstanceDesc)
 {
-	DriverHandle = PlatformVulkanMisc::LoadVulkanLibrary();
+	DriverHandle = PlatformVulkan::LoadVulkanLibrary();
     if (!DriverHandle)
     {
 		VULKAN_ERROR_ALWAYS("Failed to load Vulkan library");
         return false;
     }
 
-	GetInstanceProcAddrFunc = PlatformLibrary::LoadSymbolAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr", DriverHandle);
-	if (!GetInstanceProcAddrFunc)
+	vkGetInstanceProcAddr = PlatformLibrary::LoadSymbolAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr", DriverHandle);
+	if (!vkGetInstanceProcAddr)
 	{
 		VULKAN_ERROR_ALWAYS("Failed to load vkGetInstanceProcAddr");
 		return false;
 	}
 		
-	VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(CreateInstance);
-	VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(EnumerateInstanceLayerProperties);
-	VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(EnumerateInstanceExtensionProperties);
+	VULKAN_LOAD_INSTANCE_FUNCTION(Instance, CreateInstance);
+	VULKAN_LOAD_INSTANCE_FUNCTION(Instance, EnumerateInstanceLayerProperties);
+	VULKAN_LOAD_INSTANCE_FUNCTION(Instance, EnumerateInstanceExtensionProperties);
 
 	VkResult Result = VK_SUCCESS;
 	
@@ -260,14 +268,14 @@ bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& Instance
 	/*///////////////////////////////////////////////////////////////////////////////////////////*/
 	// Load functions that require the instance to be created
 
-	VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(DestroyInstance);
+	VULKAN_LOAD_INSTANCE_FUNCTION(Instance, DestroyInstance);
 	
 #if VK_EXT_debug_utils
 	if (IsExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 	{
-		VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(SetDebugUtilsObjectNameEXT);
-		VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(CreateDebugUtilsMessengerEXT);
-		VULKAN_LOAD_DRIVER_INSTANCE_FUNCTION(DestroyDebugUtilsMessengerEXT);
+		VULKAN_LOAD_INSTANCE_FUNCTION(Instance, SetDebugUtilsObjectNameEXT);
+		VULKAN_LOAD_INSTANCE_FUNCTION(Instance, CreateDebugUtilsMessengerEXT);
+		VULKAN_LOAD_INSTANCE_FUNCTION(Instance, DestroyDebugUtilsMessengerEXT);
 	}
 
 	if (InstanceDesc.bEnableValidationLayer)
@@ -278,23 +286,4 @@ bool CVulkanDriverInstance::Initialize(const SVulkanDriverInstanceDesc& Instance
 #endif
 
 	return true;
-}
-
-VKAPI_ATTR VkBool32 VKAPI_CALL CVulkanDriverInstance::DebugLayerCallback(
-	VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,
-	VkDebugUtilsMessageTypeFlagsEXT MessageType, 
-	const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, 
-	void* UserData)
-{
-
-	if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-	{
-		LOG_ERROR(String("[Vulkan Validation layer] ") + CallbackData->pMessage);
-	}
-	else if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-	{
-		LOG_WARNING(String("[Vulkan Validation layer] ") + CallbackData->pMessage);
-	}
-
-	return VK_FALSE;
 }

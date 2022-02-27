@@ -1,7 +1,25 @@
 #pragma once
 #include "VulkanResourceView.h"
+#include "VulkanDeviceObject.h"
 
 #include "RHI/RHIResources.h"
+
+class CVulkanTexture : public CVulkanDeviceObject
+{
+public:
+    CVulkanTexture(CVulkanDevice* InDevice)
+        : CVulkanDeviceObject(InDevice)
+    {
+    }
+
+    FORCEINLINE VkImage GetVkImage() const
+    {
+        return Image;
+    }
+
+private:
+    VkImage Image;
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanTexture2D

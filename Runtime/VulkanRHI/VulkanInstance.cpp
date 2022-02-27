@@ -9,7 +9,7 @@
 #include "VulkanSamplerState.h"
 #include "VulkanViewport.h"
 
-#include "Platform/PlatformVulkanMisc.h"
+#include "Platform/PlatformVulkan.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanInstance
@@ -28,8 +28,8 @@ CVulkanInstance::CVulkanInstance()
 bool CVulkanInstance::Initialize(bool bEnableDebug)
 {
     SVulkanDriverInstanceDesc InstanceDesc;
-    InstanceDesc.RequiredExtensionNames = PlatformVulkanMisc::GetRequiredInstanceExtensions();
-    InstanceDesc.RequiredLayerNames     = PlatformVulkanMisc::GetRequiredInstanceLayers();
+    InstanceDesc.RequiredExtensionNames = PlatformVulkan::GetRequiredInstanceExtensions();
+    InstanceDesc.RequiredLayerNames     = PlatformVulkan::GetRequiredInstanceLayers();
 	InstanceDesc.bEnableValidationLayer = bEnableDebug;
 	
 #if VK_KHR_get_physical_device_properties2
@@ -59,7 +59,7 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 	}
 
     SVulkanPhysicalDeviceDesc AdapterDesc;
-	AdapterDesc.RequiredExtensionNames             = PlatformVulkanMisc::GetRequiredDeviceExtensions();
+	AdapterDesc.RequiredExtensionNames             = PlatformVulkan::GetRequiredDeviceExtensions();
     AdapterDesc.RequiredFeatures.samplerAnisotropy = VK_TRUE;
     
     // This extension must be enabled on platforms that has it available
@@ -141,7 +141,7 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 		return false;
 	}
 
-    DirectCommandQueue = CVulkanCommandQueue::CreateQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
+    DirectCommandQueue = CVulkanQueue::CreateQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
     if (!DirectCommandQueue)
     {
         VULKAN_ERROR_ALWAYS("Failed to initialize VulkanCommandQueue");

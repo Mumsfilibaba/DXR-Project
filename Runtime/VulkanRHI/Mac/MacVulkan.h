@@ -3,12 +3,12 @@
 #if PLATFORM_MACOS
 #include "CoreApplication/Mac/MacWindow.h"
 
-#include "VulkanRHI/Interface/PlatformVulkanMisc.h"
+#include "VulkanRHI/Interface/PlatformVulkan.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacVulkanMisc
+// CMacVulkan
 
-class CMacVulkanMisc : public CPlatformVulkanMisc
+class CMacVulkan : public CPlatformVulkan
 {
 public:
 

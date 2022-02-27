@@ -1,8 +1,9 @@
 #pragma once
 #include "VulkanTexture.h"
-#include "VulkanCommandQueue.h"
+#include "VulkanQueue.h"
 #include "VulkanSemaphore.h"
 #include "VulkanSurface.h"
+#include "VulkanSwapChain.h"
 
 #include "RHI/RHIViewport.h"
 
@@ -14,11 +15,31 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanViewport
 
-class CVulkanViewport : public CRHIViewport, public CVulkanDeviceObject
+class CVulkanViewport final : public CRHIViewport, public CVulkanDeviceObject
 {
 public:
 
-    static TSharedRef<CVulkanViewport> CreateViewport(CVulkanDevice* InDevice, CVulkanCommandQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+    static TSharedRef<CVulkanViewport> CreateViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+
+    FORCEINLINE CVulkanSwapChain* GetSwapChain() const
+    {
+        return SwapChain.Get();
+    }
+
+    FORCEINLINE CVulkanQueue* GetQueue() const
+    {
+        return Queue.Get();
+    }
+
+    FORCEINLINE CVulkanSurface* GetSurface() const
+    {
+        return Surface.Get();
+    }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIViewport Interface
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
 
@@ -34,18 +55,20 @@ public:
 
 private:
 
-    CVulkanViewport(CVulkanDevice* InDevice, CVulkanCommandQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+    CVulkanViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight);
 	~CVulkanViewport();
 
     bool Initialize();
 
-    TSharedRef<CPlatformWindow>     Window;
-	TSharedRef<CVulkanSurface>      Surface;
-    TSharedRef<CVulkanCommandQueue> Queue;
+    TSharedRef<CPlatformWindow> Window;
 
-    TArray<TSharedRef<CVulkanTexture2D>>        BackBuffers;
-    TArray<TSharedRef<CVulkanRenderTargetView>> BackBufferViews;
-    TArray<CVulkanSemaphore>                    ImageSemaphores;
-    TArray<CVulkanSemaphore>                    RenderSemaphores;
+    CVulkanSurfaceRef   Surface;
+    CVulkanSwapChainRef SwapChain;
+    CVulkanQueueRef     Queue;
+
+    TSharedRef<CVulkanTexture2D>        BackBuffer;
+    TSharedRef<CVulkanRenderTargetView> BackBufferView;
+
+    TInlineArray<CVulkanSemaphore, NUM_BACK_BUFFERS> RenderSemaphores;
 };
 

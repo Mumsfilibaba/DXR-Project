@@ -2,15 +2,15 @@
 #include "VulkanCore.h"
 
 #if PLATFORM_WINDOWS
-#include "VulkanRHI/Interface/PlatformVulkanMisc.h"
+#include "VulkanRHI/Interface/PlatformVulkan.h"
 
 #include "CoreApplication/Windows/WindowsWindow.h"
 #include "CoreApplication/Windows/WindowsApplication.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsVulkanMisc
+// CWindowsVulkan
 
-class CWindowsVulkanMisc : public CPlatformVulkanMisc
+class CWindowsVulkan : public CPlatformVulkan
 {
 public:
 
@@ -55,18 +55,16 @@ public:
         return PlatformLibrary::LoadDynamicLib("vulkan-1");
     }
 
-    static FORCEINLINE VkResult CreateSurface(VkInstance Instance, class CPlatformWindow* InWindow, VkSurfaceKHR* OutSurface)
+    static FORCEINLINE VkResult CreateSurface(VkInstance Instance, void* InWindowHandle, VkSurfaceKHR* OutSurface)
     {
 #if VK_KHR_win32_surface
-        CWindowsWindow* WindowsWindow = reinterpret_cast<CWindowsWindow*>(InWindow);
-
         VkWin32SurfaceCreateInfoKHR Win32SurfaceCreateInfo;
         CMemory::Memzero(&Win32SurfaceCreateInfo);
 
         Win32SurfaceCreateInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
         Win32SurfaceCreateInfo.pNext     = nullptr;
         Win32SurfaceCreateInfo.flags     = 0;
-        Win32SurfaceCreateInfo.hwnd      = WindowsWindow->GetHandle();
+        Win32SurfaceCreateInfo.hwnd      = reinterpret_cast<HWND>(InWindowHandle);
         Win32SurfaceCreateInfo.hinstance = CWindowsApplication::Get()->GetInstance();
 
         return vkCreateWin32SurfaceKHR(Instance, &Win32SurfaceCreateInfo, nullptr, OutSurface);

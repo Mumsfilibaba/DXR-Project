@@ -38,18 +38,6 @@ public:
     {
         return ExtensionNames.find(ExtensionName) != ExtensionNames.end();
     }
-
-	FORCEINLINE VulkanVoidFunction LoadFunction(const char* Name) const noexcept
-	{
-		VULKAN_ERROR(GetInstanceProcAddrFunc != nullptr, "Vulkan Driver Instance is not initialized properly");
-		return reinterpret_cast<VulkanVoidFunction>(GetInstanceProcAddrFunc(Instance, Name));
-	}
-
-    template<typename FunctionType>
-    FORCEINLINE FunctionType LoadFunction(const char* Name) const noexcept
-	{
-		return reinterpret_cast<FunctionType>(LoadFunction(Name));
-	}
 	
     FORCEINLINE VkInstance GetVkInstance() const noexcept
     {
@@ -57,22 +45,14 @@ public:
     }
 
 private:
-
+     
     CVulkanDriverInstance();
     ~CVulkanDriverInstance();
 
-    static VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(
-        VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,
-	    VkDebugUtilsMessageTypeFlagsEXT MessageType, 
-        const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, 
-        void* UserData);
-
 	bool Initialize(const SVulkanDriverInstanceDesc& InstanceDesc);
 
-    DynamicLibraryHandle      DriverHandle;
-	PFN_vkGetInstanceProcAddr GetInstanceProcAddrFunc;
-    
-    VkInstance Instance;
+    DynamicLibraryHandle DriverHandle;  
+    VkInstance           Instance;
 
 #if VK_EXT_debug_utils
     VkDebugUtilsMessengerEXT DebugMessenger;

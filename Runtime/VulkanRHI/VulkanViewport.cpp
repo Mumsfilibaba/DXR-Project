@@ -1,5 +1,6 @@
 #include "VulkanViewport.h"
 
+#include "CoreApplication/Interface/PlatformWindow.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -10,7 +11,7 @@ TAutoConsoleVariable<int32> GBackbufferCount("vulkan.BackbufferCount", 3);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanViewport
 
-TSharedRef<CVulkanViewport> CVulkanViewport::CreateViewport(CVulkanDevice* InDevice, CVulkanCommandQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+TSharedRef<CVulkanViewport> CVulkanViewport::CreateViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight)
 {
     TSharedRef<CVulkanViewport> NewViewport = dbg_new CVulkanViewport(InDevice, InQueue, InWindow, InFormat, InWidth, InHeight);
     if (NewViewport && NewViewport->Initialize())
@@ -21,53 +22,60 @@ TSharedRef<CVulkanViewport> CVulkanViewport::CreateViewport(CVulkanDevice* InDev
     return nullptr;
 }
 
-CVulkanViewport::CVulkanViewport(CVulkanDevice* InDevice, CVulkanCommandQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+CVulkanViewport::CVulkanViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight)
     : CRHIViewport(InFormat, InWidth, InHeight)
     , CVulkanDeviceObject(InDevice)
     , Window(::AddRef(InWindow))
     , Surface(nullptr)
+    , SwapChain(nullptr)
     , Queue(::AddRef(InQueue))
-    , BackBuffers()
-    , BackBufferViews()
-    , ImageSemaphores()
+    , BackBuffer(nullptr)
+    , BackBufferView(nullptr)
     , RenderSemaphores()
 {
 }
 
 CVulkanViewport::~CVulkanViewport()
 {
-    ImageSemaphores.Clear();
     RenderSemaphores.Clear();
 }
 
 bool CVulkanViewport::Initialize()
 {
-    Surface = CVulkanSurface::CreateSurface(GetDevice(), Window.Get());
+    Surface = CVulkanSurface::CreateSurface(GetDevice(), GetQueue(), Window->GetPlatformHandle());
     if (!Surface)
     {
         VULKAN_ERROR_ALWAYS("Failed to create surface");
         return false;
     }
 
-    const uint32 NumBackBuffers = GBackbufferCount.GetInt();
-    for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
-    {
-        CVulkanSemaphore& ImageSemaphore = ImageSemaphores.Emplace(GetDevice());
-        if (!ImageSemaphore.Initialize())
-        {
-            return false;
-        }
+    SVulkanSwapChainCreateInfo SwapChainCreateInfo;
+    SwapChainCreateInfo.BufferCount   = GBackbufferCount.GetInt();
+    SwapChainCreateInfo.Extent.width  = Window->GetWidth();
+    SwapChainCreateInfo.Extent.width  = Window->GetHeight();
+    SwapChainCreateInfo.ColorSpace    = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    SwapChainCreateInfo.Format        = GetColorFormat();
+    SwapChainCreateInfo.bVerticalSync = false;
 
+    SwapChain = CVulkanSwapChain::CreateSwapChain(GetDevice(), GetQueue(), GetSurface(), SwapChainCreateInfo);
+    if (!SwapChain)
+    {
+        VULKAN_ERROR_ALWAYS("Failed to create SwapChain");
+        return false;
+    }
+
+    BackBuffer     = dbg_new TVulkanTexture<CVulkanTexture2D>(Format, Width, Height, 1, 1, 0, SClearValue());
+    BackBufferView = dbg_new CVulkanRenderTargetView();
+
+    for (uint32 Index = 0; Index < SwapChainCreateInfo.BufferCount; ++Index)
+    {
         CVulkanSemaphore& RenderSemaphore = RenderSemaphores.Emplace(GetDevice());
         if (!RenderSemaphore.Initialize())
         {
             return false;
         }
-		
-		BackBuffers.Emplace(dbg_new TVulkanTexture<CVulkanTexture2D>(Format, Width, Height, 1, 1, 0, SClearValue()));
-		BackBufferViews.Emplace(dbg_new CVulkanRenderTargetView());
     }
-    
+
     return true;
 }
 
@@ -91,12 +99,12 @@ void CVulkanViewport::SetName(const String& InName)
 
 CRHIRenderTargetView* CVulkanViewport::GetRenderTargetView() const
 {
-    return BackBufferViews.LastElement().Get();
+    return BackBufferView.Get();
 }
 
 CRHITexture2D* CVulkanViewport::GetBackBuffer() const
 {
-    return BackBuffers.LastElement().Get();
+    return BackBuffer.Get();
 }
 
 bool CVulkanViewport::IsValid() const

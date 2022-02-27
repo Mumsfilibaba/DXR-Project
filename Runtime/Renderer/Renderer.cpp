@@ -71,7 +71,7 @@ CRenderer::CRenderer()
 
 bool CRenderer::Init()
 {
-    Resources.MainWindowViewport = RHICreateViewport(GEngine->MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
+    Resources.MainWindowViewport = RHICreateViewport(GEngine->MainWindow.Get(), 0, 0, EFormat::B8G8R8A8_Unorm, EFormat::Unknown);
     if (!Resources.MainWindowViewport)
     {
         CDebug::DebugBreak();

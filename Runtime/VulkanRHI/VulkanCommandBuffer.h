@@ -3,6 +3,14 @@
 #include "VulkanFence.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SVulkanPiplineBarrier
+
+struct SVulkanPiplineBarrier
+{
+
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanCommandBuffer
 
 class CVulkanCommandBuffer : public CVulkanDeviceObject
@@ -51,6 +59,40 @@ public:
     {
         VULKAN_CHECK_RESULT(vkEndCommandBuffer(CommandBuffer), "vkEndCommandBuffer Failed");
         return true;
+    }
+
+    FORCEINLINE void ClearColorImage(VkImage Image, VkImageLayout ImageLayout, VkClearColorValue* ClearColor, uint32 RangeCount, VkImageSubresourceRange* Ranges)
+    {
+        vkCmdClearColorImage(CommandBuffer, Image, ImageLayout, ClearColor, RangeCount, Ranges);
+    }
+
+    FORCEINLINE void ClearDepthStencilImage(VkImage Image, VkImageLayout ImageLayout, const VkClearDepthStencilValue* DepthStencil, uint32 RangeCount, VkImageSubresourceRange* Ranges)
+    {
+        vkCmdClearDepthStencilImage(CommandBuffer, Image, ImageLayout, DepthStencil, RangeCount, Ranges);
+    }
+
+    FORCEINLINE void BeginRenderPass(const VkRenderPassBeginInfo* RenderPassBegin, VkSubpassContents SubpassContents)
+    {
+        vkCmdBeginRenderPass(CommandBuffer, RenderPassBegin, SubpassContents);
+    }
+
+    FORCEINLINE void EndRenderPass()
+    {
+        vkCmdEndRenderPass(CommandBuffer);
+    }
+
+    FORCEINLINE void PipelineBarrier(
+        VkPipelineStageFlags SrcStageMask, 
+        VkPipelineStageFlags DstStageMask, 
+        VkDependencyFlags DependencyFlags,
+        uint32 MemoryBarrierCount, 
+        const VkMemoryBarrier* MemoryBarriers, 
+        uint32 BufferMemoryBarrierCount, 
+        const VkBufferMemoryBarrier* BufferMemoryBarriers,
+        uint32 ImageMemoryBarrierCount, 
+        const VkImageMemoryBarrier* ImageMemoryBarriers)
+    {
+        vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, MemoryBarrierCount, MemoryBarriers, BufferMemoryBarrierCount, BufferMemoryBarriers, ImageMemoryBarrierCount, ImageMemoryBarriers);
     }
 
     FORCEINLINE CVulkanCommandPool* GetCommandPool()
