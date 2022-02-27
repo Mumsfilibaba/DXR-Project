@@ -9,7 +9,7 @@
 #include "VulkanSamplerState.h"
 #include "VulkanViewport.h"
 
-#include "Platform/PlatformVulkanMisc.h"
+#include "Platform/PlatformVulkan.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanInstance
@@ -28,8 +28,8 @@ CVulkanInstance::CVulkanInstance()
 bool CVulkanInstance::Initialize(bool bEnableDebug)
 {
     SVulkanDriverInstanceDesc InstanceDesc;
-    InstanceDesc.RequiredExtensionNames = PlatformVulkanMisc::GetRequiredInstanceExtensions();
-    InstanceDesc.RequiredLayerNames     = PlatformVulkanMisc::GetRequiredInstanceLayers();
+    InstanceDesc.RequiredExtensionNames = PlatformVulkan::GetRequiredInstanceExtensions();
+    InstanceDesc.RequiredLayerNames     = PlatformVulkan::GetRequiredInstanceLayers();
 	InstanceDesc.bEnableValidationLayer = bEnableDebug;
 	
 #if VK_KHR_get_physical_device_properties2
@@ -59,14 +59,26 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 	}
 
     SVulkanPhysicalDeviceDesc AdapterDesc;
-	AdapterDesc.RequiredExtensionNames = PlatformVulkanMisc::GetRequiredDeviceExtensions();
+	AdapterDesc.RequiredExtensionNames             = PlatformVulkan::GetRequiredDeviceExtensions();
     AdapterDesc.RequiredFeatures.samplerAnisotropy = VK_TRUE;
-	
+    
+    // This extension must be enabled on platforms that has it available
+    AdapterDesc.OptionalExtensionNames.Push("VK_KHR_portability_subset");
+
 #if VK_KHR_get_memory_requirements2
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 #endif
+#if VK_KHR_maintenance1
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
+#endif
+#if VK_KHR_maintenance2
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
+#endif
 #if VK_KHR_maintenance3
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
+#endif
+#if VK_KHR_maintenance4
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE_4_EXTENSION_NAME);
 #endif
 #if VK_EXT_descriptor_indexing
 	AdapterDesc.OptionalExtensionNames.Push(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
@@ -95,9 +107,15 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 #if VK_KHR_push_descriptor
 	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
 #endif
-
-	// This extension must be enabled on platforms that has it available
-	AdapterDesc.OptionalExtensionNames.Push("VK_KHR_portability_subset");
+#if VK_KHR_ray_query
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+#endif
+#if VK_KHR_ray_tracing_pipeline
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+#endif
+#if VK_KHR_acceleration_structure
+    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+#endif
 
 	Adapter = CVulkanPhysicalDevice::QueryAdapter(GetInstance(), AdapterDesc);
     if (!Adapter)
@@ -123,7 +141,7 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 		return false;
 	}
 
-    DirectCommandQueue = CVulkanCommandQueue::CreateQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
+    DirectCommandQueue = CVulkanQueue::CreateQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
     if (!DirectCommandQueue)
     {
         VULKAN_ERROR_ALWAYS("Failed to initialize VulkanCommandQueue");

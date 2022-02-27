@@ -5,7 +5,7 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12DescriptorHeap
+// CD3D12DescriptorHeap
 
 CD3D12DescriptorHeap::CD3D12DescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
     : CD3D12DeviceObject(InDevice)
@@ -19,7 +19,7 @@ CD3D12DescriptorHeap::CD3D12DescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIP
 {
 }
 
-bool CD3D12DescriptorHeap::Initialize()
+bool CD3D12DescriptorHeap::Init()
 {
     D3D12_DESCRIPTOR_HEAP_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -47,7 +47,7 @@ bool CD3D12DescriptorHeap::Initialize()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12OfflineDescriptorHeap
+// CD3D12OfflineDescriptorHeap
 
 CD3D12OfflineDescriptorHeap::CD3D12OfflineDescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType)
     : CD3D12DeviceObject(InDevice)

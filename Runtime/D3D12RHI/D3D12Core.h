@@ -15,17 +15,11 @@
 // D3D12 Error
 
 #if !PRODUCTION_BUILD
-#define D3D12_ERROR_ALWAYS(ErrorMessage)      \
-    do                                        \
-    {                                         \
-        LOG_ERROR("[D3D12RHI] "ErrorMessage); \
-        CDebug::DebugBreak();                 \
-    } while (0)
-
-#define D3D12_WARNING(Message)             \
-    do                                     \
-    {                                      \
-        LOG_WARNING("[D3D12RHI] "Message); \
+#define D3D12_ERROR_ALWAYS(ErrorMessage)                 \
+    do                                                   \
+    {                                                    \
+        LOG_ERROR(String("[D3D12RHI] ") + ErrorMessage); \
+        CDebug::DebugBreak();                            \
     } while (0)
 
 #define D3D12_ERROR(Condition, ErrorMessage)  \
@@ -37,9 +31,24 @@
         }                                     \
     } while (0)
 
+#define D3D12_WARNING(Message)                        \
+    do                                                \
+    {                                                 \
+        LOG_WARNING(String("[D3D12RHI] ") + Message); \
+    } while (0)
+
+#define D3D12_INFO(Message)                        \
+    do                                             \
+    {                                              \
+        LOG_INFO(String("[D3D12RHI] ") + Message); \
+    } while (0)
+
+
 #else
-#define D3D12_ERROR_ALWAYS(ErrorString)    do {} while(0)
-#define D3D12_ERROR(Condtion, ErrorString) do {} while(0)
+    #define D3D12_ERROR_ALWAYS(ErrorMessage)     do {} while(0)
+    #define D3D12_ERROR(Condition, ErrorMessage) do {} while(0)
+    #define D3D12_WARNING(Message)               do {} while(0)
+    #define D3D12_INFO(Message)                  do {} while(0)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -50,11 +59,11 @@ inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
     D3D12_HEAP_PROPERTIES HeapProperties;
     CMemory::Memzero(&HeapProperties);
 
-    HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
+    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    HeapProperties.VisibleNodeMask = 1;
-    HeapProperties.CreationNodeMask = 1;
+    HeapProperties.VisibleNodeMask      = 1;
+    HeapProperties.CreationNodeMask     = 1;
 
     return HeapProperties;
 }
@@ -64,11 +73,11 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
     D3D12_HEAP_PROPERTIES HeapProperties;
     CMemory::Memzero(&HeapProperties);
 
-    HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.Type                 = D3D12_HEAP_TYPE_DEFAULT;
+    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    HeapProperties.VisibleNodeMask = 1;
-    HeapProperties.CreationNodeMask = 1;
+    HeapProperties.VisibleNodeMask      = 1;
+    HeapProperties.CreationNodeMask     = 1;
 
     return HeapProperties;
 }
@@ -174,7 +183,7 @@ inline DXGI_FORMAT ConvertFormat(EFormat Format)
     case EFormat::R8_Uint:               return DXGI_FORMAT_R8_UINT;
     case EFormat::R8_Snorm:              return DXGI_FORMAT_R8_SNORM;
     case EFormat::R8_Sint:               return DXGI_FORMAT_R8_SINT;
-    default: return DXGI_FORMAT_UNKNOWN;
+    default:                             return DXGI_FORMAT_UNKNOWN;
     }
 }
 

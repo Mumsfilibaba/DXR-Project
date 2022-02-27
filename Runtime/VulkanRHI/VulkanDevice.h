@@ -12,6 +12,8 @@
 class CVulkanDriverInstance;
 class CVulkanPhysicalDevice;
 
+typedef TSharedRef<CVulkanDevice> CVulkanDeviceRef;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EVulkanCommandQueueType
 
@@ -40,7 +42,7 @@ class CVulkanDevice : public CRefCounted
 public:
 
     /* Creates a new wrapper for VkDevice */
-    static TSharedRef<CVulkanDevice> CreateDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc);
+    static CVulkanDeviceRef CreateDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc);
 
     uint32 GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
@@ -53,18 +55,6 @@ public:
     {
         return ExtensionNames.find(ExtensionName) != ExtensionNames.end();
     }
-
-    FORCEINLINE VulkanVoidFunction LoadFunction(const char* Name) const
-	{
-		VULKAN_ERROR(vkGetDeviceProcAddr != nullptr, "Vulkan Driver Instance is not initialized properly");
-		return reinterpret_cast<VulkanVoidFunction>(vkGetDeviceProcAddr(Device, Name));
-	}
-
-    template<typename FunctionType>
-    FORCEINLINE FunctionType LoadFunction(const char* Name) const
-	{
-		return reinterpret_cast<FunctionType>(LoadFunction(Name));
-	}
 
     FORCEINLINE CVulkanDriverInstance* GetInstance() const
     {

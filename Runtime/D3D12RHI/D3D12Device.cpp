@@ -199,7 +199,7 @@ CD3D12Device::~CD3D12Device()
     D3D12Lib = 0;
 }
 
-bool CD3D12Device::Init()
+bool CD3D12Device::Initialize()
 {
     DXGILib = LoadLibrary("dxgi.dll");
     if (!DXGILib)

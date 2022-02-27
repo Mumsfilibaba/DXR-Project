@@ -182,13 +182,13 @@ bool CD3D12CommandBatch::Initialize()
     }
 
     OnlineResourceDescriptorHeap = dbg_new CD3D12OnlineDescriptorHeap(Device, D3D12_DEFAULT_ONLINE_RESOURCE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    if (!OnlineResourceDescriptorHeap->Initialize())
+    if (!OnlineResourceDescriptorHeap->Init())
     {
         return false;
     }
 
     OnlineSamplerDescriptorHeap = dbg_new CD3D12OnlineDescriptorHeap(Device, D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-    if (!OnlineSamplerDescriptorHeap->Initialize())
+    if (!OnlineSamplerDescriptorHeap->Init())
     {
         return false;
     }
@@ -230,14 +230,14 @@ CD3D12CommandContext::~CD3D12CommandContext()
     Flush();
 }
 
-bool CD3D12CommandContext::Initialze()
+bool CD3D12CommandContext::Initialize()
 {
     if (!CommandQueue.Initialize(D3D12_COMMAND_LIST_TYPE_DIRECT))
     {
         return false;
     }
 
-    // TODO: Have support for more than 6 commandbatches?
+    // TODO: Have support for more than 6 CommandBatches?
     for (uint32 i = 0; i < D3D12_NUM_BACK_BUFFERS; i++)
     {
         CD3D12CommandBatch& Batch = CmdBatches.Emplace(GetDevice());
@@ -510,7 +510,7 @@ void CD3D12CommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffe
     for (uint32 i = 0; i < BufferCount; i++)
     {
         uint32 Slot = BufferSlot + i;
-        CD3D12RHIVertexBuffer* DxVertexBuffer = static_cast<CD3D12RHIVertexBuffer*>(VertexBuffers[i]);
+        CD3D12VertexBuffer* DxVertexBuffer = static_cast<CD3D12VertexBuffer*>(VertexBuffers[i]);
         DescriptorCache.SetVertexBuffer(DxVertexBuffer, Slot);
 
         // TODO: The DescriptorCache maybe should have this responsibility?
@@ -520,7 +520,7 @@ void CD3D12CommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffe
 
 void CD3D12CommandContext::SetIndexBuffer(CRHIIndexBuffer* IndexBuffer)
 {
-    CD3D12RHIIndexBuffer* DxIndexBuffer = static_cast<CD3D12RHIIndexBuffer*>(IndexBuffer);
+    CD3D12IndexBuffer* DxIndexBuffer = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
     DescriptorCache.SetIndexBuffer(DxIndexBuffer);
 
     // TODO: Maybe this should be done by the descriptor cache
@@ -659,7 +659,7 @@ void CD3D12CommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuf
 
     if (ConstantBuffer)
     {
-        CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffer)->GetView();
+        CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12ConstantBuffer*>(ConstantBuffer)->GetView();
         DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
     }
     else
@@ -681,7 +681,7 @@ void CD3D12CommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstantBu
     {
         if (ConstantBuffers[i])
         {
-            CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffers[i])->GetView();
+            CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12ConstantBuffer*>(ConstantBuffers[i])->GetView();
             DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
         }
         else
@@ -893,8 +893,8 @@ void CD3D12CommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geome
 
     FlushResourceBarriers();
 
-    CD3D12RHIVertexBuffer* DxVertexBuffer = static_cast<CD3D12RHIVertexBuffer*>(VertexBuffer);
-    CD3D12RHIIndexBuffer* DxIndexBuffer = static_cast<CD3D12RHIIndexBuffer*>(IndexBuffer);
+    CD3D12VertexBuffer* DxVertexBuffer = static_cast<CD3D12VertexBuffer*>(VertexBuffer);
+    CD3D12IndexBuffer* DxIndexBuffer = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
     D3D12_ERROR(DxVertexBuffer != nullptr, "VertexBuffer cannot be nullptr");
 
     CD3D12RHIRayTracingGeometry* DxGeometry = static_cast<CD3D12RHIRayTracingGeometry*>(Geometry);
@@ -984,7 +984,7 @@ void CD3D12CommandContext::SetRayTracingBindings(
         {
             for (int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
             {
-                CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
+                CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12ConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
                 DescriptorCache.SetConstantBufferView(&DxConstantBufferView, ShaderVisibility_All, i);
             }
         }
@@ -1036,9 +1036,9 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
 
     // TODO: Create this placed from a Heap? See what performance is 
     TSharedRef<CD3D12Resource> StagingTexture = dbg_new CD3D12Resource(GetDevice(), Desc, DxTexture->GetResource()->GetHeapType());
-    if (!StagingTexture->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
+    if (!StagingTexture->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
     {
-        LOG_ERROR("[D3D12CommandContext] Failed to create StagingTexture for GenerateMips");
+        D3D12_ERROR_ALWAYS("[D3D12CommandContext] Failed to create StagingTexture for GenerateMips");
         return;
     }
     else

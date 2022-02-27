@@ -71,7 +71,7 @@ CRenderer::CRenderer()
 
 bool CRenderer::Init()
 {
-    Resources.MainWindowViewport = RHICreateViewport(GEngine->MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
+    Resources.MainWindowViewport = RHICreateViewport(GEngine->MainWindow.Get(), 0, 0, EFormat::B8G8R8A8_Unorm, EFormat::Unknown);
     if (!Resources.MainWindowViewport)
     {
         CDebug::DebugBreak();
@@ -275,7 +275,7 @@ void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
 
     GPU_TRACE_SCOPE(InCmdList, "FXAA");
 
-    struct FXAASettings
+    struct SFXAASettings
     {
         float Width;
         float Height;
@@ -429,18 +429,18 @@ void CRenderer::Tick(const CScene& Scene)
 
     // Update camera-buffer
     SCameraBufferDesc CamBuff;
-    CamBuff.ViewProjection = Scene.GetCamera()->GetViewProjectionMatrix();
-    CamBuff.View = Scene.GetCamera()->GetViewMatrix();
-    CamBuff.ViewInv = Scene.GetCamera()->GetViewInverseMatrix();
-    CamBuff.Projection = Scene.GetCamera()->GetProjectionMatrix();
-    CamBuff.ProjectionInv = Scene.GetCamera()->GetProjectionInverseMatrix();
+    CamBuff.ViewProjection    = Scene.GetCamera()->GetViewProjectionMatrix();
+    CamBuff.View              = Scene.GetCamera()->GetViewMatrix();
+    CamBuff.ViewInv           = Scene.GetCamera()->GetViewInverseMatrix();
+    CamBuff.Projection        = Scene.GetCamera()->GetProjectionMatrix();
+    CamBuff.ProjectionInv     = Scene.GetCamera()->GetProjectionInverseMatrix();
     CamBuff.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
-    CamBuff.Position = Scene.GetCamera()->GetPosition();
-    CamBuff.Forward = Scene.GetCamera()->GetForward();
-    CamBuff.Right = Scene.GetCamera()->GetRight();
-    CamBuff.NearPlane = Scene.GetCamera()->GetNearPlane();
-    CamBuff.FarPlane = Scene.GetCamera()->GetFarPlane();
-    CamBuff.AspectRatio = Scene.GetCamera()->GetAspectRatio();
+    CamBuff.Position          = Scene.GetCamera()->GetPosition();
+    CamBuff.Forward           = Scene.GetCamera()->GetForward();
+    CamBuff.Right             = Scene.GetCamera()->GetRight();
+    CamBuff.NearPlane         = Scene.GetCamera()->GetNearPlane();
+    CamBuff.FarPlane          = Scene.GetCamera()->GetFarPlane();
+    CamBuff.AspectRatio       = Scene.GetCamera()->GetAspectRatio();
 
     PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), ERHIResourceState::VertexAndConstantBuffer, ERHIResourceState::CopyDest);
 
@@ -712,8 +712,8 @@ void CRenderer::Tick(const CScene& Scene)
 
         CRHICommandQueue::Get().ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
 
-        FrameStatistics.NumDrawCalls = CRHICommandQueue::Get().GetNumDrawCalls();
-        FrameStatistics.NumDispatchCalls = CRHICommandQueue::Get().GetNumDispatchCalls();
+        FrameStatistics.NumDrawCalls      = CRHICommandQueue::Get().GetNumDrawCalls();
+        FrameStatistics.NumDispatchCalls  = CRHICommandQueue::Get().GetNumDispatchCalls();
         FrameStatistics.NumRenderCommands = CRHICommandQueue::Get().GetNumCommands();
     }
 

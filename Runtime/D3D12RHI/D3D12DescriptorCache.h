@@ -150,7 +150,7 @@ public:
         Reset();
     }
 
-    FORCEINLINE void SetVertexBuffer(CD3D12RHIVertexBuffer* VertexBuffer, uint32 Slot)
+    FORCEINLINE void SetVertexBuffer(CD3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
         D3D12_ERROR(Slot <= D3D12_MAX_VERTEX_BUFFER_SLOTS, "[D3D12]: Trying to bind a VertexBuffer to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxVertexBufferCount=" + ToString(D3D12_MAX_VERTEX_BUFFER_SLOTS) + ") ");
 
@@ -163,7 +163,7 @@ public:
         }
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12RHIIndexBuffer* InIndexBuffer)
+    FORCEINLINE void SetIndexBuffer(CD3D12IndexBuffer* InIndexBuffer)
     {
         if (IndexBuffer != InIndexBuffer)
         {
@@ -179,7 +179,7 @@ public:
         {
             for (uint32 i = 0; i < NumVertexBuffers; i++)
             {
-                CD3D12RHIVertexBuffer* VertexBuffer = VertexBuffers[i];
+                CD3D12VertexBuffer* VertexBuffer = VertexBuffers[i];
                 if (!VertexBuffer)
                 {
                     VertexBufferViews[i].BufferLocation = 0;
@@ -228,12 +228,12 @@ public:
     }
 
 private:
-    CD3D12RHIVertexBuffer* VertexBuffers[D3D12_MAX_VERTEX_BUFFER_SLOTS];
+    CD3D12VertexBuffer* VertexBuffers[D3D12_MAX_VERTEX_BUFFER_SLOTS];
     D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[D3D12_MAX_VERTEX_BUFFER_SLOTS];
     uint32 NumVertexBuffers;
     bool   bVertexBuffersDirty;
 
-    CD3D12RHIIndexBuffer* IndexBuffer;
+    CD3D12IndexBuffer* IndexBuffer;
     D3D12_INDEX_BUFFER_VIEW IndexBufferView;
     bool bIndexBufferDirty;
 };
@@ -333,12 +333,12 @@ public:
 
     void Reset();
 
-    FORCEINLINE void SetVertexBuffer(CD3D12RHIVertexBuffer* VertexBuffer, uint32 Slot)
+    FORCEINLINE void SetVertexBuffer(CD3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
         VertexBufferCache.SetVertexBuffer(VertexBuffer, Slot);
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12RHIIndexBuffer* IndexBuffer)
+    FORCEINLINE void SetIndexBuffer(CD3D12IndexBuffer* IndexBuffer)
     {
         VertexBufferCache.SetIndexBuffer(IndexBuffer);
     }

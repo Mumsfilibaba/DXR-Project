@@ -92,7 +92,7 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    // TODO: Use a seperate profiler for booting the engine
+    // TODO: Use a separate profiler for booting the engine
     CFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
 
@@ -130,7 +130,7 @@ bool CEngineLoop::PreInitialize()
 #if PLATFORM_MACOS
         ERHIInstanceApi::Vulkan;
 #else
-        ERHIInstanceApi::D3D12;
+        ERHIInstanceApi::Vulkan;
 #endif
     if (!RHIInitialize(RenderApi))
     {

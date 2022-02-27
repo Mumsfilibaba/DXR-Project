@@ -13,3 +13,5 @@ typedef CMacLibrary PlatformLibrary;
 typedef CPlatformLibrary PlatformLibrary;
 
 #endif
+
+typedef PlatformLibrary::PlatformHandle DynamicLibraryHandle;

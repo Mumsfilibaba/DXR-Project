@@ -1,7 +1,25 @@
 #pragma once
 #include "VulkanResourceView.h"
+#include "VulkanDeviceObject.h"
 
 #include "RHI/RHIResources.h"
+
+class CVulkanTexture : public CVulkanDeviceObject
+{
+public:
+    CVulkanTexture(CVulkanDevice* InDevice)
+        : CVulkanDeviceObject(InDevice)
+    {
+    }
+
+    FORCEINLINE VkImage GetVkImage() const
+    {
+        return Image;
+    }
+
+private:
+    VkImage Image;
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanTexture2D
@@ -17,24 +35,13 @@ public:
     {
     }
 
-    virtual CRHIRenderTargetView* GetRenderTargetView() const override
-    {
-        return RenderTargetView.Get();
-    }
-
-    virtual CRHIDepthStencilView* GetDepthStencilView() const override
-    {
-        return DepthStencilView.Get();
-    }
-
-    virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override
-    {
-        return UnorderedAccessView.Get();
-    }
+    virtual CRHIRenderTargetView*    GetRenderTargetView()    const override { return RenderTargetView.Get(); }
+    virtual CRHIDepthStencilView*    GetDepthStencilView()    const override { return DepthStencilView.Get(); }
+    virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
 
 private:
-    TSharedRef<CVulkanRenderTargetView> RenderTargetView;
-    TSharedRef<CVulkanDepthStencilView> DepthStencilView;
+    TSharedRef<CVulkanRenderTargetView>    RenderTargetView;
+    TSharedRef<CVulkanDepthStencilView>    DepthStencilView;
     TSharedRef<CVulkanUnorderedAccessView> UnorderedAccessView;
 };
 

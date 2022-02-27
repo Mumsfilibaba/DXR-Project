@@ -3,9 +3,9 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanCommandContext
 
-TSharedRef<CVulkanCommandContext> CVulkanCommandContext::CreateCommandContext(CVulkanDevice* InDevice, CVulkanCommandQueue* InCommandQueue)
+CVulkanCommandContextRef CVulkanCommandContext::CreateCommandContext(CVulkanDevice* InDevice, CVulkanQueue* InCommandQueue)
 {
-    TSharedRef<CVulkanCommandContext> NewCommandContext = dbg_new CVulkanCommandContext(InDevice, InCommandQueue);
+    CVulkanCommandContextRef NewCommandContext = dbg_new CVulkanCommandContext(InDevice, InCommandQueue);
     if (NewCommandContext && NewCommandContext->Initialize())
     {
         return NewCommandContext;
@@ -14,7 +14,7 @@ TSharedRef<CVulkanCommandContext> CVulkanCommandContext::CreateCommandContext(CV
     return nullptr;
 }
 
-CVulkanCommandContext::CVulkanCommandContext(CVulkanDevice* InDevice, CVulkanCommandQueue* InCommandQueue)
+CVulkanCommandContext::CVulkanCommandContext(CVulkanDevice* InDevice, CVulkanQueue* InCommandQueue)
     : CVulkanDeviceObject(InDevice)
 	, CommandQueue(::AddRef(InCommandQueue))
     , CommandBuffer(InDevice, InCommandQueue->GetType())
@@ -56,12 +56,14 @@ void CVulkanCommandContext::EndTimeStamp(CRHITimestampQuery* TimestampQuery, uin
 {
 }
 
-void CVulkanCommandContext::ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor)              
+void CVulkanCommandContext::ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor)
 {
+    //CommandBuffer.ClearColorImage()
 }
 
-void CVulkanCommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue)        
+void CVulkanCommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue)
 {
+    //CommandBuffer.ClearDepthImage();
 }
 
 void CVulkanCommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor)
@@ -78,10 +80,12 @@ void CVulkanCommandContext::SetShadingRateImage(CRHITexture2D* ShadingImage)
 
 void CVulkanCommandContext::BeginRenderPass()
 {
+    //CommandBuffer.BeginRenderPass();
 }
 
 void CVulkanCommandContext::EndRenderPass()  
 {
+    //CommandBuffer.EndRenderPass();
 }
 
 void CVulkanCommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)

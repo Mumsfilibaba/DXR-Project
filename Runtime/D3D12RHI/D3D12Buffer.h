@@ -5,7 +5,7 @@
 #include "RHI/RHIResources.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12BaseBuffer
+// CD3D12BaseBuffer
 
 class CD3D12BaseBuffer : public CD3D12DeviceObject
 {
@@ -34,12 +34,12 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseVertexBuffer
+// CD3D12BaseVertexBuffer
 
-class CD3D12RHIBaseVertexBuffer : public CRHIVertexBuffer, public CD3D12BaseBuffer
+class CD3D12BaseVertexBuffer : public CRHIVertexBuffer, public CD3D12BaseBuffer
 {
 public:
-    CD3D12RHIBaseVertexBuffer(CD3D12Device* InDevice, uint32 InNumVertices, uint32 InStride, uint32 InFlags)
+    CD3D12BaseVertexBuffer(CD3D12Device* InDevice, uint32 InNumVertices, uint32 InStride, uint32 InFlags)
         : CRHIVertexBuffer(InNumVertices, InStride, InFlags)
         , CD3D12BaseBuffer(InDevice)
         , View()
@@ -67,12 +67,12 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseIndexBuffer
+// CD3D12BaseIndexBuffer
 
-class CD3D12RHIBaseIndexBuffer : public CRHIIndexBuffer, public CD3D12BaseBuffer
+class CD3D12BaseIndexBuffer : public CRHIIndexBuffer, public CD3D12BaseBuffer
 {
 public:
-    CD3D12RHIBaseIndexBuffer(CD3D12Device* InDevice, ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
+    CD3D12BaseIndexBuffer(CD3D12Device* InDevice, ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
         : CRHIIndexBuffer(InIndexFormat, InNumIndices, InFlags)
         , CD3D12BaseBuffer(InDevice)
         , View()
@@ -105,12 +105,12 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseConstantBuffer
+// CD3D12BaseConstantBuffer
 
-class CD3D12RHIBaseConstantBuffer : public CRHIConstantBuffer, public CD3D12BaseBuffer
+class CD3D12BaseConstantBuffer : public CRHIConstantBuffer, public CD3D12BaseBuffer
 {
 public:
-    CD3D12RHIBaseConstantBuffer(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, uint32 InSizeInBytes, uint32 InFlags)
+    CD3D12BaseConstantBuffer(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, uint32 InSizeInBytes, uint32 InFlags)
         : CRHIConstantBuffer(InSizeInBytes, InFlags)
         , CD3D12BaseBuffer(InDevice)
         , View(InDevice, InHeap)
@@ -153,12 +153,12 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseStructuredBuffer
+// CD3D12BaseStructuredBuffer
 
-class CD3D12RHIBaseStructuredBuffer : public CRHIStructuredBuffer, public CD3D12BaseBuffer
+class CD3D12BaseStructuredBuffer : public CRHIStructuredBuffer, public CD3D12BaseBuffer
 {
 public:
-    CD3D12RHIBaseStructuredBuffer(CD3D12Device* InDevice, uint32 InSizeInBytes, uint32 InStride, uint32 InFlags)
+    CD3D12BaseStructuredBuffer(CD3D12Device* InDevice, uint32 InSizeInBytes, uint32 InStride, uint32 InFlags)
         : CRHIStructuredBuffer(InSizeInBytes, InStride, InFlags)
         , CD3D12BaseBuffer(InDevice)
     {
@@ -166,15 +166,15 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseBuffer
+// TD3D12BaseBuffer
 
 template<typename BaseBufferType>
-class TD3D12RHIBaseBuffer : public BaseBufferType
+class TD3D12BaseBuffer : public BaseBufferType
 {
 public:
 
     template<typename... TBufferArgs>
-    TD3D12RHIBaseBuffer(CD3D12Device* InDevice, TBufferArgs&&... BufferArgs)
+    TD3D12BaseBuffer(CD3D12Device* InDevice, TBufferArgs&&... BufferArgs)
         : BaseBufferType(InDevice, Forward<TBufferArgs>(BufferArgs)...)
     {
     }
@@ -244,49 +244,49 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIVertexBuffer
+// CD3D12VertexBuffer
 
-class CD3D12RHIVertexBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseVertexBuffer>
+class CD3D12VertexBuffer : public TD3D12BaseBuffer<CD3D12BaseVertexBuffer>
 {
 public:
-    CD3D12RHIVertexBuffer(CD3D12Device* InDevice, uint32 InNumVertices, uint32 InStride, uint32 InFlags)
-        : TD3D12RHIBaseBuffer<CD3D12RHIBaseVertexBuffer>(InDevice, InNumVertices, InStride, InFlags)
+    CD3D12VertexBuffer(CD3D12Device* InDevice, uint32 InNumVertices, uint32 InStride, uint32 InFlags)
+        : TD3D12BaseBuffer<CD3D12BaseVertexBuffer>(InDevice, InNumVertices, InStride, InFlags)
     {
     }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIIndexBuffer
+// CD3D12IndexBuffer
 
-class CD3D12RHIIndexBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseIndexBuffer>
+class CD3D12IndexBuffer : public TD3D12BaseBuffer<CD3D12BaseIndexBuffer>
 {
 public:
-    CD3D12RHIIndexBuffer(CD3D12Device* InDevice, ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
-        : TD3D12RHIBaseBuffer<CD3D12RHIBaseIndexBuffer>(InDevice, InIndexFormat, InNumIndices, InFlags)
+    CD3D12IndexBuffer(CD3D12Device* InDevice, ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
+        : TD3D12BaseBuffer<CD3D12BaseIndexBuffer>(InDevice, InIndexFormat, InNumIndices, InFlags)
     {
     }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIConstantBuffer
+// CD3D12ConstantBuffer
 
-class CD3D12RHIConstantBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseConstantBuffer>
+class CD3D12ConstantBuffer : public TD3D12BaseBuffer<CD3D12BaseConstantBuffer>
 {
 public:
-    CD3D12RHIConstantBuffer(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, uint32 InSizeInBytes, uint32 InFlags)
-        : TD3D12RHIBaseBuffer<CD3D12RHIBaseConstantBuffer>(InDevice, InHeap, InSizeInBytes, InFlags)
+    CD3D12ConstantBuffer(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, uint32 InSizeInBytes, uint32 InFlags)
+        : TD3D12BaseBuffer<CD3D12BaseConstantBuffer>(InDevice, InHeap, InSizeInBytes, InFlags)
     {
     }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIStructuredBuffer
+// CD3D12StructuredBuffer
 
-class CD3D12RHIStructuredBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseStructuredBuffer>
+class CD3D12StructuredBuffer : public TD3D12BaseBuffer<CD3D12BaseStructuredBuffer>
 {
 public:
-    CD3D12RHIStructuredBuffer(CD3D12Device* InDevice, uint32 InNumElements, uint32 InStride, uint32 InFlags)
-        : TD3D12RHIBaseBuffer<CD3D12RHIBaseStructuredBuffer>(InDevice, InNumElements, InStride, InFlags)
+    CD3D12StructuredBuffer(CD3D12Device* InDevice, uint32 InNumElements, uint32 InStride, uint32 InFlags)
+        : TD3D12BaseBuffer<CD3D12BaseStructuredBuffer>(InDevice, InNumElements, InStride, InFlags)
     {
     }
 };
@@ -300,19 +300,19 @@ inline CD3D12BaseBuffer* D3D12BufferCast(CRHIBuffer* Buffer)
     {
         if (Buffer->AsVertexBuffer())
         {
-            return static_cast<CD3D12RHIVertexBuffer*>(Buffer);
+            return static_cast<CD3D12VertexBuffer*>(Buffer);
         }
         else if (Buffer->AsIndexBuffer())
         {
-            return static_cast<CD3D12RHIIndexBuffer*>(Buffer);
+            return static_cast<CD3D12IndexBuffer*>(Buffer);
         }
         else if (Buffer->AsConstantBuffer())
         {
-            return static_cast<CD3D12RHIConstantBuffer*>(Buffer);
+            return static_cast<CD3D12ConstantBuffer*>(Buffer);
         }
         else if (Buffer->AsStructuredBuffer())
         {
-            return static_cast<CD3D12RHIStructuredBuffer*>(Buffer);
+            return static_cast<CD3D12StructuredBuffer*>(Buffer);
         }
     }
 

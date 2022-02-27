@@ -45,11 +45,11 @@ struct SPointMessage
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowsApplication
+// CWindowsApplication
 
 CWindowsApplication* CWindowsApplication::Instance = nullptr;
 
-TSharedPtr<CWindowsApplication> CWindowsApplication::Make()
+TSharedPtr<CWindowsApplication> CWindowsApplication::CreateApplication()
 {
     HINSTANCE TempInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0));
 

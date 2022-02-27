@@ -1,8 +1,33 @@
 #pragma once
 #include "VulkanCore.h"
 
+/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// Loader macros
+
 #define VULKAN_FUNCTION_DECLARATION(FunctionName) extern PFN_vk##FunctionName vk##FunctionName
 #define VULKAN_FUNCTION_DEFINITION(FunctionName)  PFN_vk##FunctionName vk##FunctionName = nullptr
+
+#define VULKAN_LOAD_DEVICE_FUNCTION(Device, FunctionName)                                                          \
+    do                                                                                                             \
+    {                                                                                                              \
+        vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetDeviceProcAddr(Device, "vk"#FunctionName)); \
+        if (!vk##FunctionName)                                                                                     \
+        {                                                                                                          \
+            VULKAN_ERROR_ALWAYS("Failed to load vk"#FunctionName);                                                 \
+            return false;                                                                                          \
+        }                                                                                                          \
+    } while(false)
+
+#define VULKAN_LOAD_INSTANCE_FUNCTION(Instance, FunctionName)                                                          \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetInstanceProcAddr(Instance, "vk"#FunctionName)); \
+        if (!vk##FunctionName)                                                                                         \
+        {                                                                                                              \
+            VULKAN_ERROR_ALWAYS("Failed to load vk"#FunctionName);                                                     \
+            return false;                                                                                              \
+        }                                                                                                              \
+    } while(false)
 
 class CVulkanDriverInstance;
 class CVulkanDevice;
@@ -10,15 +35,17 @@ class CVulkanDevice;
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
 // Pre-Instance Created Functions
 
+VULKAN_FUNCTION_DECLARATION(GetInstanceProcAddr);
+
 VULKAN_FUNCTION_DECLARATION(CreateInstance);
 VULKAN_FUNCTION_DECLARATION(DestroyInstance);
 VULKAN_FUNCTION_DECLARATION(EnumerateInstanceExtensionProperties);
 VULKAN_FUNCTION_DECLARATION(EnumerateInstanceLayerProperties);
 
 #if VK_EXT_debug_utils
-	VULKAN_FUNCTION_DECLARATION(SetDebugUtilsObjectNameEXT);
-	VULKAN_FUNCTION_DECLARATION(CreateDebugUtilsMessengerEXT);
-	VULKAN_FUNCTION_DECLARATION(DestroyDebugUtilsMessengerEXT);
+    VULKAN_FUNCTION_DECLARATION(SetDebugUtilsObjectNameEXT);
+    VULKAN_FUNCTION_DECLARATION(CreateDebugUtilsMessengerEXT);
+    VULKAN_FUNCTION_DECLARATION(DestroyDebugUtilsMessengerEXT);
 #endif
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -41,19 +68,24 @@ VULKAN_FUNCTION_DECLARATION(DestroyDevice);
 VULKAN_FUNCTION_DECLARATION(GetDeviceProcAddr);
 
 #if VK_EXT_metal_surface
-	VULKAN_FUNCTION_DECLARATION(CreateMetalSurfaceEXT);
+    VULKAN_FUNCTION_DECLARATION(CreateMetalSurfaceEXT);
 #endif
 
 #if VK_MVK_macos_surface
-	VULKAN_FUNCTION_DECLARATION(CreateMacOSSurfaceMVK);
+    VULKAN_FUNCTION_DECLARATION(CreateMacOSSurfaceMVK);
+#endif
+
+#if VK_KHR_win32_surface
+    VULKAN_FUNCTION_DECLARATION(CreateWin32SurfaceKHR);
 #endif
 
 #if VK_KHR_surface
-	VULKAN_FUNCTION_DECLARATION(DestroySurfaceKHR);
-	VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceCapabilitiesKHR);
-	VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceFormatsKHR);
-	VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfacePresentModesKHR);
-	VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceSupportKHR);
+    VULKAN_FUNCTION_DECLARATION(DestroySurfaceKHR);
+
+    VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceCapabilitiesKHR);
+    VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceFormatsKHR);
+    VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfacePresentModesKHR);
+    VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceSupportKHR);
 #endif
 
 bool LoadInstanceFunctions(CVulkanDriverInstance* Instance);
@@ -62,6 +94,7 @@ bool LoadInstanceFunctions(CVulkanDriverInstance* Instance);
 // Device Functions
 
 VULKAN_FUNCTION_DECLARATION(DeviceWaitIdle);
+VULKAN_FUNCTION_DECLARATION(QueueWaitIdle);
 
 VULKAN_FUNCTION_DECLARATION(CreateCommandPool);
 VULKAN_FUNCTION_DECLARATION(ResetCommandPool);
@@ -83,5 +116,21 @@ VULKAN_FUNCTION_DECLARATION(EndCommandBuffer);
 
 VULKAN_FUNCTION_DECLARATION(GetDeviceQueue);
 VULKAN_FUNCTION_DECLARATION(QueueSubmit);
+
+#if VK_KHR_swapchain
+    VULKAN_FUNCTION_DECLARATION(CreateSwapchainKHR);
+    VULKAN_FUNCTION_DECLARATION(DestroySwapchainKHR);
+
+    VULKAN_FUNCTION_DECLARATION(AcquireNextImageKHR);
+    VULKAN_FUNCTION_DECLARATION(QueuePresentKHR);
+
+    VULKAN_FUNCTION_DECLARATION(GetSwapchainImagesKHR);
+#endif
+
+VULKAN_FUNCTION_DECLARATION(CmdClearColorImage);
+VULKAN_FUNCTION_DECLARATION(CmdClearDepthStencilImage);
+VULKAN_FUNCTION_DECLARATION(CmdBeginRenderPass);
+VULKAN_FUNCTION_DECLARATION(CmdEndRenderPass);
+VULKAN_FUNCTION_DECLARATION(CmdPipelineBarrier);
 
 bool LoadDeviceFunctions(CVulkanDevice* Device);

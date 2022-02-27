@@ -1,12 +1,14 @@
 #pragma once
 #include "VulkanCore.h"
 
+#include "Core/Templates/ClassUtilities.h"
+
 class CVulkanDevice;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
-// CVulkanInstance
+// CVulkanDeviceObject
 
-class CVulkanDeviceObject
+class CVulkanDeviceObject : public CNonCopyable
 {
 public:
     CVulkanDeviceObject(CVulkanDevice* InDevice)

@@ -12,7 +12,7 @@ class CORE_API CRefCounted
 {
 public:
 
-    // CRefCounted is not copy- or moveable
+    // CRefCounted is not copy- or movable
     CRefCounted(const CRefCounted&) = delete;
     CRefCounted(CRefCounted&&) = delete;
     CRefCounted& operator=(const CRefCounted&) = delete;

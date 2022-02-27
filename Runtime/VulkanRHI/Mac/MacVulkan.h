@@ -3,12 +3,12 @@
 #if PLATFORM_MACOS
 #include "CoreApplication/Mac/MacWindow.h"
 
-#include "VulkanRHI/Interface/PlatformVulkanMisc.h"
+#include "VulkanRHI/Interface/PlatformVulkan.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacVulkanMisc
+// CMacVulkan
 
-class CMacVulkanMisc : public CPlatformVulkanMisc
+class CMacVulkan : public CPlatformVulkan
 {
 public:
 
@@ -49,6 +49,11 @@ public:
     static FORCEINLINE TArray<const char*> GetRequiredDeviceLayers()
     { 
         return TArray<const char*>(); 
+    }
+
+    static FORCEINLINE DynamicLibraryHandle LoadVulkanLibrary()
+    {
+        return PlatformLibrary::LoadDynamicLib("vulkan");
     }
 
 #if VK_KHR_surface
