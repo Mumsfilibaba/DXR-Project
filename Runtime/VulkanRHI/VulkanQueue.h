@@ -24,6 +24,8 @@ public:
     bool IsWaitingForSemaphore(VkSemaphore Semaphore) const { return WaitSemaphores.Contains(Semaphore); }
     bool IsSignalingSemaphore(VkSemaphore Semaphore) const { return SignalSemaphores.Contains(Semaphore); }
 
+    void WaitForCompletion();
+
 	FORCEINLINE VkQueue GetVkQueue() const
 	{
 		return CommandQueue;
@@ -47,8 +49,9 @@ private:
     bool Initialize();
 
 	EVulkanCommandQueueType Type;
-    VkQueue                 CommandQueue;
-    uint32                  QueueFamilyIndex;
+    
+    VkQueue CommandQueue;
+    uint32  QueueFamilyIndex;
 
     TArray<VkSemaphore>          WaitSemaphores;
     TArray<VkPipelineStageFlags> WaitStages;

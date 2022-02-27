@@ -32,32 +32,21 @@ public:
 
     static CVulkanSwapChainRef CreateSwapChain(CVulkanDevice* InDevice, CVulkanQueue* InQueue, CVulkanSurface* InSurface, const SVulkanSwapChainCreateInfo& CreateInfo);
 
-    VkResult Present(CVulkanSemaphore** WaitSemaphores, uint32 NumWaitSemaphores, uint32 ImageIndex);
+    void GetSwapChainImages(TArray<VkImage>& OutImages);
 
-    FORCEINLINE VkResult GetPresentResult() const
-    {
-        return PresentResult;
-    }
+    VkResult Present();
 
-    FORCEINLINE VkImage GetImage(uint32 ImageIndex) const
-    {
-        return Images[ImageIndex];
-    }
+    FORCEINLINE VkImage GetImage(uint32 ImageIndex) const { return Images[ImageIndex]; }
 
-    FORCEINLINE uint32 GetImageCount() const
-    {
-        return Images.Size();
-    }
+    FORCEINLINE uint32 GetImageCount() const { return Images.Size(); }
 
-    FORCEINLINE CVulkanSurface* GetSurface() const
-    {
-        return Surface.Get();
-    }
+    FORCEINLINE uint32 GetBufferIndex()    const { return BufferIndex; }
+    FORCEINLINE uint32 GetSemaphoreIndex() const { return SemaphoreIndex; }
 
-    FORCEINLINE VkSwapchainKHR GetVkSwapChain() const
-    {
-        return SwapChain;
-    }
+    FORCEINLINE CVulkanSurface* GetSurface() const { return Surface.Get(); }
+
+    FORCEINLINE VkResult       GetPresentResult() const { return PresentResult; }
+    FORCEINLINE VkSwapchainKHR GetVkSwapChain()   const { return SwapChain; }
 
 private:
     CVulkanSwapChain(CVulkanDevice* InDevice, CVulkanQueue* InQueue, CVulkanSurface* InSurface);
@@ -69,7 +58,7 @@ private:
     
     VkResult AquireNextImage();
 
-    FORCEINLINE void AquireNextBufferIndex()
+    FORCEINLINE void AquireNextSemaphoreIndex()
     {
         SemaphoreIndex = (SemaphoreIndex + 1) % Images.Size();
     }
@@ -85,4 +74,5 @@ private:
 
     TInlineArray<VkImage         , NUM_BACK_BUFFERS> Images;
     TInlineArray<CVulkanSemaphore, NUM_BACK_BUFFERS> ImageSemaphores;
+    TInlineArray<CVulkanSemaphore, NUM_BACK_BUFFERS> RenderSemaphores;
 };

@@ -169,50 +169,67 @@ bool CVulkanSwapChain::Initialize(const SVulkanSwapChainCreateInfo& CreateInfo)
         {
             return false;
         }
+
+        ImageSemaphore.SetName("SwapChain ImageSemaphore[" + ToString(Index) + "]");
+
+        CVulkanSemaphore& RenderSemaphore = RenderSemaphores.Emplace(GetDevice());
+        if (!RenderSemaphore.Initialize())
+        {
+            return false;
+        }
+
+        RenderSemaphore.SetName("SwapChain RenderSemaphore[" + ToString(Index) + "]");
     }
 
-    if (RetrieveSwapChainImages())
-    {
-        return true;
-    }
-    else
+    if (!RetrieveSwapChainImages())
     {
         return false;
     }
+
+    Result = AquireNextImage();
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve the next swapchain image");
+        
+    return true;
 }
 
-VkResult CVulkanSwapChain::Present(CVulkanSemaphore** WaitSemaphores, uint32 NumWaitSemaphores, uint32 ImageIndex)
+void CVulkanSwapChain::GetSwapChainImages(TArray<VkImage>& OutImages)
+{
+    OutImages.Clear();
+    OutImages.Append(Images.Data(), Images.Size());
+}
+
+VkResult CVulkanSwapChain::Present()
 {
     Assert(Queue != nullptr);
 
-    TInlineArray<VkSemaphore, NUM_STATIC_WAIT_SEMAPHORES> WaitSemaphoreHandles;
-    if (NumWaitSemaphores)
-    {
-        WaitSemaphoreHandles.Reserve(NumWaitSemaphores);
-
-        for (uint32 Index = 0; Index < NumWaitSemaphores; ++Index)
-        {
-            Assert(WaitSemaphores[Index] != nullptr);
-            WaitSemaphoreHandles.Push(WaitSemaphores[Index]->GetVkSemaphore()); 
-        }
-    }
+    VkSemaphore WaitSemaphores[] = { RenderSemaphores[SemaphoreIndex].GetVkSemaphore() };
 
     VkPresentInfoKHR PresentInfo;
     CMemory::Memzero(&PresentInfo);
 
-    PresentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    PresentInfo.pNext              = nullptr;
-    PresentInfo.swapchainCount     = 1;
-    PresentInfo.pSwapchains        = &SwapChain;
-    PresentInfo.waitSemaphoreCount = WaitSemaphoreHandles.Size();
-    PresentInfo.pWaitSemaphores    = WaitSemaphoreHandles.Data();
-    PresentInfo.pResults           = &PresentResult;
-    PresentInfo.pImageIndices      = &ImageIndex;
+    PresentInfo.sType          = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    PresentInfo.pNext          = nullptr;
+    PresentInfo.swapchainCount = 1;
+    PresentInfo.pSwapchains    = &SwapChain;
+    PresentInfo.pResults       = &PresentResult;
+    PresentInfo.pImageIndices  = &BufferIndex;
+
+    // If there is a signal semaphore then the queue has not yet been submitted since we retrieved the image and we should not wait for this semaphore
+    if (Queue->IsSignalingSemaphore(WaitSemaphores[0]))
+    {
+        PresentInfo.waitSemaphoreCount = 0;
+        PresentInfo.pWaitSemaphores    = nullptr;
+    }
+    else
+    {
+        PresentInfo.waitSemaphoreCount = 1;
+        PresentInfo.pWaitSemaphores    = WaitSemaphores;
+    }
 
     VkResult Result = vkQueuePresentKHR(Queue->GetVkQueue(), &PresentInfo);
     if (Result == VK_SUCCESS)
     {
-        AquireNextBufferIndex();
+        AquireNextSemaphoreIndex();
         Result = AquireNextImage();
     }
     
@@ -224,13 +241,16 @@ VkResult CVulkanSwapChain::AquireNextImage()
     VkSemaphore CurrentImageSemaphore = ImageSemaphores[SemaphoreIndex].GetVkSemaphore();
 
     VkResult Result = vkAcquireNextImageKHR(GetDevice()->GetVkDevice(), SwapChain, UINT64_MAX, CurrentImageSemaphore, VK_NULL_HANDLE, &BufferIndex);
-    if (Result != VK_SUCCESS)
+    if (Result == VK_SUCCESS)
     {
-        VULKAN_ERROR_ALWAYS("vkAcquireNextImageKHR failed");
+        Queue->AddWaitSemaphore(CurrentImageSemaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        
+        VkSemaphore CurrentRenderSemaphore = RenderSemaphores[SemaphoreIndex].GetVkSemaphore();
+        Queue->AddSignalSemaphore(CurrentRenderSemaphore);
     }
     else
     {
-        Queue->AddWaitSemaphore(CurrentImageSemaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        VULKAN_ERROR_ALWAYS("vkAcquireNextImageKHR failed");
     }
 
     return Result;
@@ -241,12 +261,12 @@ bool CVulkanSwapChain::RetrieveSwapChainImages()
     uint32 ImageCount = 0;
 
     VkResult Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &ImageCount, nullptr);
-    VULKAN_CHECK_RESULT(Result, "Failed to retrive the number of images in SwapChain")
+    VULKAN_CHECK_RESULT(Result, "Failed to retrive the number of images in SwapChain");
 
     Images.Resize(ImageCount);
 
     Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &ImageCount, Images.Data());
-    VULKAN_CHECK_RESULT(Result, "Failed to retrive the images of the SwapChain")
+    VULKAN_CHECK_RESULT(Result, "Failed to retrive the images of the SwapChain");
 
     return true;
 }

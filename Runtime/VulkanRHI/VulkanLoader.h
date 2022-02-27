@@ -94,6 +94,7 @@ bool LoadInstanceFunctions(CVulkanDriverInstance* Instance);
 // Device Functions
 
 VULKAN_FUNCTION_DECLARATION(DeviceWaitIdle);
+VULKAN_FUNCTION_DECLARATION(QueueWaitIdle);
 
 VULKAN_FUNCTION_DECLARATION(CreateCommandPool);
 VULKAN_FUNCTION_DECLARATION(ResetCommandPool);

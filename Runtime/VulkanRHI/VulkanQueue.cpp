@@ -121,3 +121,8 @@ void CVulkanQueue::AddSignalSemaphore(VkSemaphore Semaphore)
 {
     SignalSemaphores.Push(Semaphore);
 }
+
+void CVulkanQueue::WaitForCompletion()
+{
+    vkQueueWaitIdle(CommandQueue);
+}

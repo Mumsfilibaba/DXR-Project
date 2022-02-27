@@ -3,11 +3,19 @@
 #include "VulkanFence.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SVulkanPiplineBarrier
+// SVulkanImageTransitionBarrier
 
-struct SVulkanPiplineBarrier
+struct SVulkanImageTransitionBarrier
 {
-
+    VkImage                 Image;
+    VkImageLayout           PreviousLayout;
+    VkImageLayout           NewLayout;
+    VkPipelineStageFlags    SrcStageMask;
+    VkPipelineStageFlags    DstStageMask;
+    VkAccessFlagBits        SrcAccessMask;
+    VkAccessFlagBits        DstAccessMask;
+    VkDependencyFlags       DependencyFlags;
+    VkImageSubresourceRange SubresourceRange;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -25,7 +33,7 @@ public:
     FORCEINLINE bool Begin(VkCommandBufferUsageFlags Flags = 0)
     {
         // Wait for GPU to finish with this CommandBuffer and then reset it
-        if (!Fence.Wait(UINT64_MAX))
+        if (!WaitForFence())
         {
             return false;
         }
@@ -81,18 +89,33 @@ public:
         vkCmdEndRenderPass(CommandBuffer);
     }
 
-    FORCEINLINE void PipelineBarrier(
-        VkPipelineStageFlags SrcStageMask, 
-        VkPipelineStageFlags DstStageMask, 
-        VkDependencyFlags DependencyFlags,
-        uint32 MemoryBarrierCount, 
-        const VkMemoryBarrier* MemoryBarriers, 
-        uint32 BufferMemoryBarrierCount, 
-        const VkBufferMemoryBarrier* BufferMemoryBarriers,
-        uint32 ImageMemoryBarrierCount, 
-        const VkImageMemoryBarrier* ImageMemoryBarriers)
+    FORCEINLINE void ImageLayoutTransitionBarrier(const SVulkanImageTransitionBarrier& TransitionBarrier)
     {
-        vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, MemoryBarrierCount, MemoryBarriers, BufferMemoryBarrierCount, BufferMemoryBarriers, ImageMemoryBarrierCount, ImageMemoryBarriers);
+        VkImageMemoryBarrier ImageMemoryBarrier;
+        CMemory::Memzero(&ImageMemoryBarrier);
+
+        ImageMemoryBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        ImageMemoryBarrier.pNext               = nullptr;
+        ImageMemoryBarrier.srcAccessMask       = TransitionBarrier.SrcAccessMask;
+        ImageMemoryBarrier.dstAccessMask       = TransitionBarrier.DstAccessMask;
+        ImageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        ImageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        ImageMemoryBarrier.subresourceRange    = TransitionBarrier.SubresourceRange;
+        ImageMemoryBarrier.image               = TransitionBarrier.Image;
+        ImageMemoryBarrier.newLayout           = TransitionBarrier.NewLayout;
+        ImageMemoryBarrier.oldLayout           = TransitionBarrier.PreviousLayout;
+
+        ImageMemoryPipelineBarrier(TransitionBarrier.SrcStageMask, TransitionBarrier.DstStageMask, TransitionBarrier.DependencyFlags, 1, &ImageMemoryBarrier);
+    }
+
+    FORCEINLINE void ImageMemoryPipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, uint32 ImageMemoryBarrierCount, const VkImageMemoryBarrier* ImageMemoryBarriers)
+    {
+        vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, nullptr, 0, nullptr, ImageMemoryBarrierCount, ImageMemoryBarriers);
+    }
+
+    FORCEINLINE bool WaitForFence(uint64 TimeOut = UINT64_MAX)
+    {
+        return Fence.Wait(TimeOut);
     }
 
     FORCEINLINE CVulkanCommandPool* GetCommandPool()

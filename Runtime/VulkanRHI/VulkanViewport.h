@@ -68,7 +68,5 @@ private:
 
     TSharedRef<CVulkanTexture2D>        BackBuffer;
     TSharedRef<CVulkanRenderTargetView> BackBufferView;
-
-    TInlineArray<CVulkanSemaphore, NUM_BACK_BUFFERS> RenderSemaphores;
 };
 

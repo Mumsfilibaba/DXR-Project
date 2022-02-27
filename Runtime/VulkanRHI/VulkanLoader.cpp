@@ -119,6 +119,7 @@ bool LoadInstanceFunctions(CVulkanDriverInstance* Instance)
 // Device Functions
 
 VULKAN_FUNCTION_DEFINITION(DeviceWaitIdle);
+VULKAN_FUNCTION_DEFINITION(QueueWaitIdle);
 
 VULKAN_FUNCTION_DEFINITION(CreateCommandPool);
 VULKAN_FUNCTION_DEFINITION(ResetCommandPool);
@@ -163,6 +164,7 @@ bool LoadDeviceFunctions(CVulkanDevice* Device)
 
 	VkDevice DeviceHandle = Device->GetVkDevice();
 	VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DeviceWaitIdle);
+	VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, QueueWaitIdle);
 
 	VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateCommandPool);
 	VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, ResetCommandPool);
