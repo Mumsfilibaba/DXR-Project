@@ -159,14 +159,14 @@ void CRHICommandQueue::InternalExecuteCommandList(CRHICommandList& CmdList)
 {
     if (CmdList.First)
     {
-        SRHIRenderCommand* CurrentCmd = CmdList.First;
+        CRHICommand* CurrentCmd = CmdList.First;
         while (CurrentCmd != nullptr)
         {
-            SRHIRenderCommand* PreviousCmd = CurrentCmd;
+			CRHICommand* PreviousCmd = CurrentCmd;
             CurrentCmd = CurrentCmd->NextCmd;
 
             PreviousCmd->Execute(GetContext());
-            PreviousCmd->~SRHIRenderCommand();
+            PreviousCmd->~CRHICommand();
         }
 
         NumDrawCalls += CmdList.GetNumDrawCalls();

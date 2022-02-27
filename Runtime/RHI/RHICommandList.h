@@ -1,7 +1,7 @@
 #pragma once
 #include "RHIModule.h"
 #include "RHIResources.h"
-#include "RHIRenderCommand.h"
+#include "RHICommand.h"
 #include "RHITimestampQuery.h"
 
 class CRHIRenderTargetView;
@@ -214,7 +214,7 @@ public:
      */
     void BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
     {
-        InsertCommand<SRHIBeginTimeStampRenderCommand>(AddRef(TimestampQuery), Index);
+        InsertCommand<CRHIBeginTimeStampCommand>(AddRef(TimestampQuery), Index);
     }
 
     /**
@@ -225,7 +225,7 @@ public:
      */
     void EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
     {
-        InsertCommand<SRHIEndTimeStampRenderCommand>(AddRef(TimestampQuery), Index);
+        InsertCommand<CRHIEndTimeStampCommand>(AddRef(TimestampQuery), Index);
     }
 
     /**
@@ -237,7 +237,7 @@ public:
     void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor)
     {
         Assert(RenderTargetView != nullptr);
-        InsertCommand<SRHIClearRenderTargetViewRenderCommand>(AddRef(RenderTargetView), ClearColor);
+        InsertCommand<CRHIClearRenderTargetViewCommand>(AddRef(RenderTargetView), ClearColor);
     }
 
     /**
@@ -249,7 +249,7 @@ public:
     void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue)
     {
         Assert(DepthStencilView != nullptr);
-        InsertCommand<SRHIClearDepthStencilViewRenderCommand>(AddRef(DepthStencilView), ClearValue);
+        InsertCommand<CRHIClearDepthStencilViewCommand>(AddRef(DepthStencilView), ClearValue);
     }
 
     /**
@@ -261,7 +261,7 @@ public:
     void ClearUnorderedAccessView(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor)
     {
         Assert(UnorderedAccessView != nullptr);
-        InsertCommand<SRHIClearUnorderedAccessViewFloatRenderCommand>(AddRef(UnorderedAccessView), ClearColor);
+        InsertCommand<CRHIClearUnorderedAccessViewFloatCommand>(AddRef(UnorderedAccessView), ClearColor);
     }
 
     /**
@@ -271,7 +271,7 @@ public:
      */
     void SetShadingRate(ERHIShadingRate ShadingRate)
     {
-        InsertCommand<SRHISetShadingRateRenderCommand>(ShadingRate);
+        InsertCommand<CRHISetShadingRateCommand>(ShadingRate);
     }
 
     /**
@@ -281,7 +281,7 @@ public:
      */
     void SetShadingRateImage(CRHITexture2D* ShadingRateImage)
     {
-        InsertCommand<SRHISetShadingRateImageRenderCommand>(AddRef(ShadingRateImage));
+        InsertCommand<CRHISetShadingRateImageCommand>(AddRef(ShadingRateImage));
     }
 
     /**
@@ -289,7 +289,7 @@ public:
      */
     void BeginRenderPass()
     {
-        InsertCommand<SRHIBeginRenderPassRenderCommand>();
+        InsertCommand<CRHIBeginRenderPassCommand>();
     }
 
     /**
@@ -297,7 +297,7 @@ public:
      */
     void EndRenderPass()
     {
-        InsertCommand<SRHIEndRenderPassRenderCommand>();
+        InsertCommand<CRHIEndRenderPassCommand>();
     }
 
     /**
@@ -312,7 +312,7 @@ public:
      */
     void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
     {
-        InsertCommand<SRHISetViewportRenderCommand>(Width, Height, MinDepth, MaxDepth, x, y);
+        InsertCommand<CRHISetViewportCommand>(Width, Height, MinDepth, MaxDepth, x, y);
     }
 
     /**
@@ -325,7 +325,7 @@ public:
      */
     void SetScissorRect(float Width, float Height, float x, float y)
     {
-        InsertCommand<SRHISetScissorRectRenderCommand>(Width, Height, x, y);
+        InsertCommand<CRHISetScissorRectCommand>(Width, Height, x, y);
     }
 
     /**
@@ -335,7 +335,7 @@ public:
      */
     void SetBlendFactor(const SColorF& Color)
     {
-        InsertCommand<SRHISetBlendFactorRenderCommand>(Color);
+        InsertCommand<CRHISetBlendFactorCommand>(Color);
     }
 
     /**
@@ -353,7 +353,7 @@ public:
             RenderTargets[i] = AddRef<CRHIRenderTargetView>(RenderTargetViews[i]);
         }
 
-        InsertCommand<SRHISetRenderTargetsRenderCommand>(RenderTargets, RenderTargetCount, MakeSharedRef<CRHIDepthStencilView>(DepthStencilView));
+        InsertCommand<CRHISetRenderTargetsCommand>(RenderTargets, RenderTargetCount, MakeSharedRef<CRHIDepthStencilView>(DepthStencilView));
     }
 
     /**
@@ -371,7 +371,7 @@ public:
             Buffers[i] = AddRef<CRHIVertexBuffer>(VertexBuffers[i]);
         }
 
-        InsertCommand<SRHISetVertexBuffersRenderCommand>(Buffers, VertexBufferCount, BufferSlot);
+        InsertCommand<CRHISetVertexBuffersCommand>(Buffers, VertexBufferCount, BufferSlot);
     }
 
     /**
@@ -381,7 +381,7 @@ public:
      */
     void SetIndexBuffer(CRHIIndexBuffer* IndexBuffer)
     {
-        InsertCommand<SRHISetIndexBufferRenderCommand>(MakeSharedRef<CRHIIndexBuffer>(IndexBuffer));
+        InsertCommand<CRHISetIndexBufferCommand>(MakeSharedRef<CRHIIndexBuffer>(IndexBuffer));
     }
 
     /**
@@ -391,7 +391,7 @@ public:
      */
     void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
     {
-        InsertCommand<SRHISetPrimitiveTopologyRenderCommand>(PrimitveTopologyType);
+        InsertCommand<CRHISetPrimitiveTopologyCommand>(PrimitveTopologyType);
     }
 
     /**
@@ -401,7 +401,7 @@ public:
      */
     void SetGraphicsPipelineState(CRHIGraphicsPipelineState* PipelineState)
     {
-        InsertCommand<SRHISetGraphicsPipelineStateRenderCommand>(AddRef(PipelineState));
+        InsertCommand<CRHISetGraphicsPipelineStateCommand>(AddRef(PipelineState));
     }
 
     /**
@@ -411,7 +411,7 @@ public:
      */
     void SetComputePipelineState(CRHIComputePipelineState* PipelineState)
     {
-        InsertCommand<SRHISetComputePipelineStateRenderCommand>(AddRef(PipelineState));
+        InsertCommand<CRHISetComputePipelineStateCommand>(AddRef(PipelineState));
     }
 
     /**
@@ -428,7 +428,7 @@ public:
         void* Shader32BitConstantsMemory = CmdAllocator.Allocate(Num32BitConstantsInBytes, 1);
         CMemory::Memcpy(Shader32BitConstantsMemory, Shader32BitConstants, Num32BitConstantsInBytes);
 
-        InsertCommand<SRHISet32BitShaderConstantsRenderCommand>(AddRef(Shader), Shader32BitConstantsMemory, Num32BitConstants);
+        InsertCommand<CRHISet32BitShaderConstantsCommand>(AddRef(Shader), Shader32BitConstantsMemory, Num32BitConstants);
     }
 
     /**
@@ -440,7 +440,7 @@ public:
      */
     void SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
     {
-        InsertCommand<SRHISetShaderResourceViewRenderCommand>(AddRef(Shader), AddRef(ShaderResourceView), ParameterIndex);
+        InsertCommand<CRHISetShaderResourceViewCommand>(AddRef(Shader), AddRef(ShaderResourceView), ParameterIndex);
     }
 
     /**
@@ -460,7 +460,7 @@ public:
             TempShaderResourceViews[i] = AddRef(ShaderResourceViews[i]);
         }
 
-        InsertCommand<SRHISetShaderResourceViewsRenderCommand>(AddRef(Shader), TempShaderResourceViews, NumShaderResourceViews, ParameterIndex);
+        InsertCommand<CRHISetShaderResourceViewsCommand>(AddRef(Shader), TempShaderResourceViews, NumShaderResourceViews, ParameterIndex);
     }
 
     /**
@@ -472,7 +472,7 @@ public:
      */
     void SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
     {
-        InsertCommand<SRHISetUnorderedAccessViewRenderCommand>(AddRef(Shader), AddRef(UnorderedAccessView), ParameterIndex);
+        InsertCommand<CRHISetUnorderedAccessViewCommand>(AddRef(Shader), AddRef(UnorderedAccessView), ParameterIndex);
     }
 
     /**
@@ -492,7 +492,7 @@ public:
             TempUnorderedAccessViews[i] = AddRef(UnorderedAccessViews[i]);
         }
 
-        InsertCommand<SRHISetUnorderedAccessViewsRenderCommand>(AddRef(Shader), TempUnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
+        InsertCommand<CRHISetUnorderedAccessViewsCommand>(AddRef(Shader), TempUnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
     }
 
     /**
@@ -504,7 +504,7 @@ public:
      */
     void SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
     {
-        InsertCommand<SRHISetConstantBufferRenderCommand>(AddRef(Shader), AddRef(ConstantBuffer), ParameterIndex);
+        InsertCommand<CRHISetConstantBufferCommand>(AddRef(Shader), AddRef(ConstantBuffer), ParameterIndex);
     }
 
     /**
@@ -524,7 +524,7 @@ public:
             TempConstantBuffers[i] = AddRef(ConstantBuffers[i]);
         }
 
-        InsertCommand<SRHISetConstantBuffersRenderCommand>(AddRef(Shader), TempConstantBuffers, NumConstantBuffers, ParameterIndex);
+        InsertCommand<CRHISetConstantBuffersCommand>(AddRef(Shader), TempConstantBuffers, NumConstantBuffers, ParameterIndex);
     }
 
     /**
@@ -536,7 +536,7 @@ public:
      */
     void SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex)
     {
-        InsertCommand<SRHISetSamplerStateRenderCommand>(AddRef(Shader), AddRef(SamplerState), ParameterIndex);
+        InsertCommand<CRHISetSamplerStateCommand>(AddRef(Shader), AddRef(SamplerState), ParameterIndex);
     }
 
     /**
@@ -556,7 +556,7 @@ public:
             TempSamplerStates[i] = AddRef(SamplerStates[i]);
         }
 
-        InsertCommand<SRHISetSamplerStatesRenderCommand>(AddRef(Shader), TempSamplerStates, NumSamplerStates, ParameterIndex);
+        InsertCommand<CRHISetSamplerStatesCommand>(AddRef(Shader), TempSamplerStates, NumSamplerStates, ParameterIndex);
     }
 
     /**
@@ -572,7 +572,7 @@ public:
         void* TempSourceData = CmdAllocator.Allocate(static_cast<uint32>(SizeInBytes), 1);
         CMemory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
-        InsertCommand<SRHIUpdateBufferRenderCommand>(AddRef(Dst), DestinationOffsetInBytes, SizeInBytes, TempSourceData);
+        InsertCommand<CRHIUpdateBufferCommand>(AddRef(Dst), DestinationOffsetInBytes, SizeInBytes, TempSourceData);
     }
 
     /**
@@ -591,7 +591,7 @@ public:
         void* TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
         CMemory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
-        InsertCommand<SRHIUpdateTexture2DRenderCommand>(AddRef(Dst), Width, Height, MipLevel, TempSourceData);
+        InsertCommand<CRHIUpdateTexture2DCommand>(AddRef(Dst), Width, Height, MipLevel, TempSourceData);
     }
 
     /**
@@ -602,7 +602,7 @@ public:
      */
     void ResolveTexture(CRHITexture* Dst, CRHITexture* Src)
     {
-        InsertCommand<SRHIResolveTextureRenderCommand>(AddRef(Dst), AddRef(Src));
+        InsertCommand<CRHIResolveTextureCommand>(AddRef(Dst), AddRef(Src));
     }
 
     /**
@@ -614,7 +614,7 @@ public:
      */
     void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo)
     {
-        InsertCommand<SRHICopyBufferRenderCommand>(AddRef(Dst), AddRef(Src), CopyInfo);
+        InsertCommand<CRHICopyBufferCommand>(AddRef(Dst), AddRef(Src), CopyInfo);
     }
 
     /**
@@ -625,7 +625,7 @@ public:
      */
     void CopyTexture(CRHITexture* Dst, CRHITexture* Src)
     {
-        InsertCommand<SRHICopyTextureRenderCommand>(AddRef(Dst), AddRef(Src));
+        InsertCommand<CRHICopyTextureCommand>(AddRef(Dst), AddRef(Src));
     }
 
     /**
@@ -637,7 +637,7 @@ public:
      */
     void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo)
     {
-        InsertCommand<SRHICopyTextureRegionRenderCommand>(AddRef(Dst), AddRef(Src), CopyTextureInfo);
+        InsertCommand<CRHICopyTextureRegionCommand>(AddRef(Dst), AddRef(Src), CopyTextureInfo);
     }
 
     /**
@@ -647,7 +647,7 @@ public:
      */
     void DestroyResource(CRHIObject* Resource)
     {
-        InsertCommand<SRHIDestroyResourceRenderCommand>(AddRef(Resource));
+        InsertCommand<CRHIDestroyResourceCommand>(AddRef(Resource));
     }
 
     /**
@@ -657,7 +657,7 @@ public:
      */
     void DiscardContents(CRHIResource* Resource)
     {
-        InsertCommand<SRHIDiscardContentsRenderCommand>(AddRef(Resource));
+        InsertCommand<CRHIDiscardContentsCommand>(AddRef(Resource));
     }
 
     /**
@@ -671,7 +671,7 @@ public:
     void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
     {
         Assert((Geometry != nullptr) && (!bUpdate || (bUpdate && Geometry->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)));
-        InsertCommand<SRHIBuildRayTracingGeometryRenderCommand>(AddRef(Geometry), AddRef(VertexBuffer), AddRef(IndexBuffer), bUpdate);
+        InsertCommand<CRHIBuildRayTracingGeometryCommand>(AddRef(Geometry), AddRef(VertexBuffer), AddRef(IndexBuffer), bUpdate);
     }
 
     /**
@@ -685,7 +685,7 @@ public:
     void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
     {
         Assert((Scene != nullptr) && (!bUpdate || (bUpdate && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)));
-        InsertCommand<SRHIBuildRayTracingSceneRenderCommand>(AddRef(Scene), Instances, NumInstances, bUpdate);
+        InsertCommand<CRHIBuildRayTracingSceneCommand>(AddRef(Scene), Instances, NumInstances, bUpdate);
     }
 
     // TODO: Refactor
@@ -698,7 +698,7 @@ public:
         const SRayTracingShaderResources* HitGroupResources,
         uint32 NumHitGroupResources)
     {
-        InsertCommand<SRHISetRayTracingBindingsRenderCommand>(AddRef(RayTracingScene), AddRef(PipelineState), GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
+        InsertCommand<CRHISetRayTracingBindingsCommand>(AddRef(RayTracingScene), AddRef(PipelineState), GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
 
     /**
@@ -709,7 +709,7 @@ public:
     void GenerateMips(CRHITexture* Texture)
     {
         Assert(Texture != nullptr);
-        InsertCommand<SRHIGenerateMipsRenderCommand>(AddRef(Texture));
+        InsertCommand<CRHIGenerateMipsCommand>(AddRef(Texture));
     }
 
     /**
@@ -723,7 +723,7 @@ public:
     {
         if (BeforeState != AfterState)
         {
-            InsertCommand<SRHITransitionTextureRenderCommand>(AddRef(Texture), BeforeState, AfterState);
+            InsertCommand<CRHITransitionTextureCommand>(AddRef(Texture), BeforeState, AfterState);
         }
         else
         {
@@ -744,7 +744,7 @@ public:
 
         if (BeforeState != AfterState)
         {
-            InsertCommand<SRHITransitionBufferRenderCommand>(AddRef(Buffer), BeforeState, AfterState);
+            InsertCommand<CRHITransitionBufferCommand>(AddRef(Buffer), BeforeState, AfterState);
         }
         else
         {
@@ -760,7 +760,7 @@ public:
     void UnorderedAccessTextureBarrier(CRHITexture* Texture)
     {
         Assert(Texture != nullptr);
-        InsertCommand<SRHIUnorderedAccessTextureBarrierRenderCommand>(AddRef(Texture));
+        InsertCommand<CRHIUnorderedAccessTextureBarrierCommand>(AddRef(Texture));
     }
 
     /**
@@ -771,7 +771,7 @@ public:
     void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)
     {
         Assert(Buffer != nullptr);
-        InsertCommand<SRHIUnorderedAccessBufferBarrierRenderCommand>(Buffer);
+        InsertCommand<CRHIUnorderedAccessBufferBarrierCommand>(Buffer);
     }
 
     /**
@@ -782,7 +782,7 @@ public:
      */
     void Draw(uint32 VertexCount, uint32 StartVertexLocation)
     {
-        InsertCommand<SRHIDrawRenderCommand>(VertexCount, StartVertexLocation);
+        InsertCommand<CRHIDrawCommand>(VertexCount, StartVertexLocation);
         NumDrawCalls++;
     }
 
@@ -795,7 +795,7 @@ public:
      */
     void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
     {
-        InsertCommand<SRHIDrawIndexedRenderCommand>(IndexCount, StartIndexLocation, BaseVertexLocation);
+        InsertCommand<CRHIDrawIndexedCommand>(IndexCount, StartIndexLocation, BaseVertexLocation);
         NumDrawCalls++;
     }
 
@@ -809,7 +809,7 @@ public:
      */
     void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
     {
-        InsertCommand<SRHIDrawInstancedRenderCommand>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+        InsertCommand<CRHIDrawInstancedCommand>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
         NumDrawCalls++;
     }
 
@@ -824,7 +824,7 @@ public:
      */
     void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
     {
-        InsertCommand<SRHIDrawIndexedInstancedRenderCommand>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+        InsertCommand<CRHIDrawIndexedInstancedCommand>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
         NumDrawCalls++;
     }
 
@@ -837,7 +837,7 @@ public:
      */
     void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
     {
-        InsertCommand<SRHIDispatchComputeRenderCommand>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+        InsertCommand<CRHIDispatchComputeCommand>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
         NumDispatchCalls++;
     }
 
@@ -852,7 +852,7 @@ public:
      */
     void DispatchRays(CRHIRayTracingScene* Scene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
     {
-        InsertCommand<SRHIDispatchRaysRenderCommand>(AddRef(Scene), AddRef(PipelineState), Width, Height, Depth);
+        InsertCommand<CRHIDispatchRaysCommand>(AddRef(Scene), AddRef(PipelineState), Width, Height, Depth);
     }
 
     /**
@@ -862,7 +862,7 @@ public:
      */
     void InsertCommandListMarker(const String& Marker)
     {
-        InsertCommand<SRHIInsertCommandListMarkerRenderCommand>(Marker);
+        InsertCommand<CRHIInsertCommandListMarkerCommand>(Marker);
     }
     
     /**
@@ -870,7 +870,7 @@ public:
      */
     void DebugBreak()
     {
-        InsertCommand<SRHIDebugBreakRenderCommand>();
+        InsertCommand<CRHIDebugBreakCommand>();
     }
 
     /**
@@ -878,7 +878,7 @@ public:
      */
     void BeginExternalCapture()
     {
-        InsertCommand<SRHIBeginExternalCaptureRenderCommand>();
+        InsertCommand<CRHIBeginExternalCaptureCommand>();
     }
 
     /**
@@ -886,7 +886,7 @@ public:
      */
     void EndExternalCapture()
     {
-        InsertCommand<SRHIEndExternalCaptureRenderCommand>();
+        InsertCommand<CRHIEndExternalCaptureCommand>();
     }
 
     /**
@@ -896,12 +896,12 @@ public:
     {
         if (First != nullptr)
         {
-            SRHIRenderCommand* Cmd = First;
+            CRHICommand* Cmd = First;
             while (Cmd != nullptr)
             {
-                SRHIRenderCommand* Old = Cmd;
+                CRHICommand* Old = Cmd;
                 Cmd = Cmd->NextCmd;
-                Old->~SRHIRenderCommand();
+                Old->~CRHICommand();
             }
 
             First = nullptr;
@@ -967,8 +967,8 @@ private:
 
     CCommandAllocator CmdAllocator;
 
-    SRHIRenderCommand* First;
-    SRHIRenderCommand* Last;
+    CRHICommand* First;
+    CRHICommand* Last;
 
     uint32 NumDrawCalls = 0;
     uint32 NumDispatchCalls = 0;
