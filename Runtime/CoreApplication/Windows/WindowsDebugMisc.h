@@ -9,11 +9,11 @@
 #include "CoreApplication/Interface/PlatformDebugMisc.h"
 
 #ifdef MessageBox
-#undef MessageBox
+    #undef MessageBox
 #endif
 
 #ifdef OutputDebugString
-#undef OutputDebugString
+    #undef OutputDebugString
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -44,12 +44,12 @@ public:
     /* Calls GetLastError and retrieves a string from it */
     static FORCEINLINE void GetLastErrorString(String& OutErrorString)
     {
-        int LastError = ::GetLastError();
+        DWORD LastError = ::GetLastError();
 
         const uint32 Flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
 
         LPSTR  MessageBuffer = nullptr;
-        uint32 MessageLength = FormatMessageA(Flags, NULL, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&MessageBuffer, 0, NULL);
+        uint32 MessageLength = FormatMessageA(Flags, nullptr, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&MessageBuffer, 0, nullptr);
 
         OutErrorString.Clear();
         OutErrorString.Append(MessageBuffer, MessageLength);
