@@ -4,6 +4,9 @@
 
 #include "RHI/RHIResources.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CVulkanTexture2D
+
 class CVulkanTexture : public CVulkanDeviceObject
 {
 public:
@@ -17,7 +20,7 @@ public:
         return Image;
     }
 
-private:
+protected:
     VkImage Image;
 };
 
@@ -43,6 +46,18 @@ private:
     TSharedRef<CVulkanRenderTargetView>    RenderTargetView;
     TSharedRef<CVulkanDepthStencilView>    DepthStencilView;
     TSharedRef<CVulkanUnorderedAccessView> UnorderedAccessView;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CVulkanBackBuffer
+
+class CVulkanBackBuffer : public CVulkanTexture2D
+{
+public:
+    CVulkanBackBuffer(class CVulkanViewport* InViewport);
+
+private:
+
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
