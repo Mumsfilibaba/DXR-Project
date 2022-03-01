@@ -7,7 +7,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanSurface
 
-CVulkanSurfaceRef CVulkanSurface::CreateSurface(CVulkanDevice* InDevice, CVulkanQueue* InQueue, void* InWindowHandle)
+CVulkanSurfaceRef CVulkanSurface::CreateSurface(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle)
 {
     CVulkanSurfaceRef NewSurface = dbg_new CVulkanSurface(InDevice, InQueue, InWindowHandle);
 	if (NewSurface && NewSurface->Initialize())
@@ -18,7 +18,7 @@ CVulkanSurfaceRef CVulkanSurface::CreateSurface(CVulkanDevice* InDevice, CVulkan
 	return nullptr;
 }
 	
-CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice, CVulkanQueue* InQueue, void* InWindowHandle)
+CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle)
     : CVulkanDeviceObject(InDevice)
     , Queue(::AddRef(InQueue))
 	, WindowHandle(InWindowHandle)

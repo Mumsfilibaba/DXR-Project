@@ -108,6 +108,9 @@ VULKAN_FUNCTION_DECLARATION(DestroyFence);
 VULKAN_FUNCTION_DECLARATION(CreateSemaphore);
 VULKAN_FUNCTION_DECLARATION(DestroySemaphore);
 
+VULKAN_FUNCTION_DECLARATION(CreateImageView);
+VULKAN_FUNCTION_DECLARATION(DestroyImageView);
+
 VULKAN_FUNCTION_DECLARATION(AllocateCommandBuffers);
 VULKAN_FUNCTION_DECLARATION(FreeCommandBuffers);
 
@@ -134,3 +137,32 @@ VULKAN_FUNCTION_DECLARATION(CmdEndRenderPass);
 VULKAN_FUNCTION_DECLARATION(CmdPipelineBarrier);
 
 bool LoadDeviceFunctions(CVulkanDevice* Device);
+
+/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// CVulkanDebugUtilsEXT
+
+class CVulkanDebugUtilsEXT
+{
+public:
+    template<typename HandleType>
+    static FORCEINLINE VkResult SetObjectName(VkDevice Device, const char* Name, HandleType ObjectHandle, VkObjectType ObjectType)
+    {
+        return SetObjectName(Device, Name, reinterpret_cast<uint64>(ObjectHandle), ObjectType);
+    }
+
+    static FORCEINLINE VkResult SetObjectName(VkDevice Device, const char* Name, uint64 ObjectHandle, VkObjectType ObjectType)
+    {
+#if VK_EXT_debug_utils
+        VkDebugUtilsObjectNameInfoEXT DebugUtilsObjectNameInfo;
+        CMemory::Memzero(&DebugUtilsObjectNameInfo);
+
+        DebugUtilsObjectNameInfo.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+        DebugUtilsObjectNameInfo.pNext        = nullptr;
+        DebugUtilsObjectNameInfo.pObjectName  = Name;
+        DebugUtilsObjectNameInfo.objectHandle = ObjectHandle;
+        DebugUtilsObjectNameInfo.objectType   = ObjectType;
+
+        return vkSetDebugUtilsObjectNameEXT(Device, &DebugUtilsObjectNameInfo);
+#endif
+    }
+};

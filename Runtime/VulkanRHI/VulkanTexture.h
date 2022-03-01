@@ -4,6 +4,17 @@
 
 #include "RHI/RHIResources.h"
 
+#include "Core/Containers/SharedRef.h"
+
+class CVulkanViewport;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedefs
+
+typedef TSharedRef<CVulkanViewport>         CVulkanViewportRef;
+typedef TSharedRef<class CVulkanTexture2D>  CVulkanTexture2DRef;
+typedef TSharedRef<class CVulkanBackBuffer> CVulkanBackBufferRef;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanTexture2D
 
@@ -27,11 +38,12 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanTexture2D
 
-class CVulkanTexture2D : public CRHITexture2D
+class CVulkanTexture2D : public CRHITexture2D, public CVulkanTexture
 {
 public:
-    CVulkanTexture2D(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
-        : CRHITexture2D(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
+    CVulkanTexture2D(CVulkanDevice* InDevice, EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
+        : CVulkanTexture(InDevice)
+        , CRHITexture2D(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
         , RenderTargetView(dbg_new CVulkanRenderTargetView())
         , DepthStencilView(dbg_new CVulkanDepthStencilView())
         , UnorderedAccessView(dbg_new CVulkanUnorderedAccessView())
@@ -54,10 +66,19 @@ private:
 class CVulkanBackBuffer : public CVulkanTexture2D
 {
 public:
-    CVulkanBackBuffer(class CVulkanViewport* InViewport);
+
+    /* Create a new BackBuffer interface for a certain viewport */
+    static CVulkanBackBufferRef CreateBackBuffer(CVulkanDevice* InDevice, CVulkanViewport* InViewport, EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumSamples);
+
+    FORCEINLINE CVulkanViewport* GetViewport() const
+    {
+        return Viewport.Get();
+    }
 
 private:
+    CVulkanBackBuffer(CVulkanViewport* InViewport);
 
+    CVulkanViewportRef Viewport;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

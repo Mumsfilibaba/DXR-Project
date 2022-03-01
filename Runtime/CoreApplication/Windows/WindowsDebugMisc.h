@@ -23,25 +23,28 @@ class CWindowsDebugMisc final : public CPlatformDebugMisc
 {
 public:
 
-    /* If the debugger is attached, a breakpoint will be set at this point of the code */
     static FORCEINLINE void DebugBreak()
     {
         __debugbreak();
     }
 
-    /* Outputs a debug string to the attached debugger */
     static FORCEINLINE void OutputDebugString(const String& Message)
     {
         OutputDebugStringA(Message.CStr());
     }
 
-    /* Checks weather or not the application is running inside a debugger */
     static FORCEINLINE bool IsDebuggerPresent()
     {
         return ::IsDebuggerPresent();
     }
 
-    /* Calls GetLastError and retrieves a string from it */
+public:
+
+    /**
+     * Calls GetLastError and retrieves a string from it 
+     * 
+     * @param OutErrorString: String that will hold the error string
+     */
     static FORCEINLINE void GetLastErrorString(String& OutErrorString)
     {
         DWORD LastError = ::GetLastError();

@@ -16,11 +16,13 @@ typedef TSharedRef<class CVulkanSwapChain> CVulkanSwapChainRef;
 
 struct SVulkanSwapChainCreateInfo
 {
-    VkExtent2D       Extent;
-    EFormat          Format;
-    VkColorSpaceKHR  ColorSpace;
-    uint32           BufferCount;
-    bool             bVerticalSync;
+    CVulkanSwapChain* PreviousSwapChain = nullptr;
+    CVulkanSurface*   Surface           = nullptr;
+    VkExtent2D        Extent            = { 0, 0 };
+    EFormat           Format            = EFormat::B8G8R8A8_Unorm;
+    VkColorSpaceKHR   ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    uint32            BufferCount       = 2;
+    bool              bVerticalSync     = true;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -30,49 +32,49 @@ class CVulkanSwapChain : public CVulkanDeviceObject, public CRefCounted
 {
 public:
 
-    static CVulkanSwapChainRef CreateSwapChain(CVulkanDevice* InDevice, CVulkanQueue* InQueue, CVulkanSurface* InSurface, const SVulkanSwapChainCreateInfo& CreateInfo);
+    static CVulkanSwapChainRef CreateSwapChain(CVulkanDevice* InDevice, const SVulkanSwapChainCreateInfo& CreateInfo);
 
-    void GetSwapChainImages(TArray<VkImage>& OutImages);
+    VkResult Present(CVulkanQueue* Queue, CVulkanSemaphore* WaitSemaphore);
 
-    VkResult Present();
+    VkResult AquireNextImage(CVulkanSemaphore* AquireSemaphore);
+    
+    bool GetSwapChainImages(VkImage* OutImages);
 
-    FORCEINLINE VkImage GetImage(uint32 ImageIndex) const { return Images[ImageIndex]; }
+    FORCEINLINE CVulkanSurface* GetSurface() const 
+    { 
+        return Surface.Get();
+    }
+    
+    FORCEINLINE VkResult GetPresentResult() const 
+    { 
+        return PresentResult; 
+    }
 
-    FORCEINLINE uint32 GetImageCount() const { return Images.Size(); }
+    FORCEINLINE VkSwapchainKHR GetVkSwapChain() const 
+    { 
+        return SwapChain; 
+    }
+    
+    FORCEINLINE uint32 GetBufferCount() const 
+    { 
+        return BufferCount; 
+    }
 
-    FORCEINLINE uint32 GetBufferIndex()    const { return BufferIndex; }
-    FORCEINLINE uint32 GetSemaphoreIndex() const { return SemaphoreIndex; }
-
-    FORCEINLINE CVulkanSurface* GetSurface() const { return Surface.Get(); }
-
-    FORCEINLINE VkResult       GetPresentResult() const { return PresentResult; }
-    FORCEINLINE VkSwapchainKHR GetVkSwapChain()   const { return SwapChain; }
+    FORCEINLINE uint32 GetBufferIndex() const 
+    { 
+        return BufferIndex; 
+    }
 
 private:
-    CVulkanSwapChain(CVulkanDevice* InDevice, CVulkanQueue* InQueue, CVulkanSurface* InSurface);
+    CVulkanSwapChain(CVulkanDevice* InDevice);
     ~CVulkanSwapChain();
 
     bool Initialize(const SVulkanSwapChainCreateInfo& CreateInfo);
-    
-    bool RetrieveSwapChainImages();
-    
-    VkResult AquireNextImage();
-
-    FORCEINLINE void AquireNextSemaphoreIndex()
-    {
-        SemaphoreIndex = (SemaphoreIndex + 1) % Images.Size();
-    }
-
-    VkResult          PresentResult;
-    VkSwapchainKHR    SwapChain;
 
     CVulkanSurfaceRef Surface;
-    CVulkanQueueRef   Queue;
 
-    uint32            BufferIndex;
-    uint32            SemaphoreIndex;
-
-    TInlineArray<VkImage         , NUM_BACK_BUFFERS> Images;
-    TInlineArray<CVulkanSemaphore, NUM_BACK_BUFFERS> ImageSemaphores;
-    TInlineArray<CVulkanSemaphore, NUM_BACK_BUFFERS> RenderSemaphores;
+    VkResult       PresentResult;
+    VkSwapchainKHR SwapChain;
+    uint32         BufferIndex;
+    uint32         BufferCount;
 };

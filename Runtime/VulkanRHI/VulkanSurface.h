@@ -14,7 +14,7 @@ class CVulkanSurface : public CVulkanDeviceObject, public CRefCounted
 {
 public:
 
-    static CVulkanSurfaceRef CreateSurface(CVulkanDevice* InDevice, CVulkanQueue* Queue, void* InWindowHandle);
+    static CVulkanSurfaceRef CreateSurface(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle);
 
     bool GetSupportedFormats(TArray<VkSurfaceFormatKHR>& OutSupportedFormats) const;
     bool GetPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) const;
@@ -32,12 +32,12 @@ public:
 	
 private:
 
-    CVulkanSurface(CVulkanDevice* InDevice, CVulkanQueue* Queue, void* InWindowHandle);
+    CVulkanSurface(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle);
     ~CVulkanSurface();
 
     bool Initialize();
 
-    TSharedRef<CVulkanQueue> Queue;
-	void*                    WindowHandle;
-    VkSurfaceKHR             Surface;
+    CVulkanQueueRef      Queue;
+    VkSurfaceKHR         Surface;
+    PlatformWindowHandle WindowHandle;
 };

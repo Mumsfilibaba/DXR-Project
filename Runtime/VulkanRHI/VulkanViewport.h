@@ -19,21 +19,31 @@ class CVulkanViewport final : public CRHIViewport, public CVulkanDeviceObject
 {
 public:
 
-    static TSharedRef<CVulkanViewport> CreateViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+    static TSharedRef<CVulkanViewport> CreateViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle, EFormat InFormat, uint32 InWidth, uint32 InHeight);
 
-    FORCEINLINE CVulkanSwapChain* GetSwapChain() const
-    {
+    FORCEINLINE CVulkanSwapChain* GetSwapChain() const 
+    { 
         return SwapChain.Get();
     }
 
-    FORCEINLINE CVulkanQueue* GetQueue() const
-    {
+    FORCEINLINE CVulkanQueue* GetQueue() const 
+    { 
         return Queue.Get();
     }
 
-    FORCEINLINE CVulkanSurface* GetSurface() const
-    {
+    FORCEINLINE CVulkanSurface* GetSurface() const 
+    { 
         return Surface.Get();
+    }
+
+    FORCEINLINE VkImage GetImage(uint32 Index) const
+    {
+        return Images[Index];
+    }
+
+    FORCEINLINE CVulkanImageView* GetImageView(uint32 Index)
+    {
+        return &ImageViews[Index];
     }
 
 public:
@@ -47,26 +57,32 @@ public:
 
     virtual void SetName(const String& InName) override final;
 
-    virtual CRHIRenderTargetView* GetRenderTargetView() const override final;
-
-    virtual CRHITexture2D* GetBackBuffer() const override final;
-
     virtual bool IsValid() const override final;
+
+    virtual CRHIRenderTargetView* GetRenderTargetView() const override final;
+    virtual CRHITexture2D*        GetBackBuffer()       const override final;
 
 private:
 
-    CVulkanViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, CPlatformWindow* InWindow, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+    CVulkanViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle, EFormat InFormat, uint32 InWidth, uint32 InHeight);
 	~CVulkanViewport();
 
     bool Initialize();
 
-    TSharedRef<CPlatformWindow> Window;
+    bool CreateSwapChain();
+    void DestroySwapChain();
 
-    CVulkanSurfaceRef   Surface;
-    CVulkanSwapChainRef SwapChain;
-    CVulkanQueueRef     Queue;
+    PlatformWindowHandle WindowHandle;
 
-    TSharedRef<CVulkanTexture2D>        BackBuffer;
-    TSharedRef<CVulkanRenderTargetView> BackBufferView;
+    CVulkanSurfaceRef    Surface;
+    CVulkanSwapChainRef  SwapChain;
+    CVulkanQueueRef      Queue;
+    CVulkanBackBufferRef BackBuffer;
+
+    TInlineArray<VkImage         , NUM_BACK_BUFFERS> Images;
+    TInlineArray<CVulkanImageView, NUM_BACK_BUFFERS> ImageViews;
+
+    TInlineArray<CVulkanSemaphoreRef, NUM_BACK_BUFFERS> ImageSemaphores;
+    TInlineArray<CVulkanSemaphoreRef, NUM_BACK_BUFFERS> RenderSemaphores;
 };
 
