@@ -18,15 +18,12 @@ CVulkanSwapChain::CVulkanSwapChain(CVulkanDevice* InDevice)
     : CVulkanDeviceObject(InDevice)
     , PresentResult(VK_SUCCESS)
     , SwapChain(VK_NULL_HANDLE)
-    , Surface(nullptr)
     , BufferIndex(0)
 {
 }
 
 CVulkanSwapChain::~CVulkanSwapChain()
 {
-    Surface.Reset();
-
     if (VULKAN_CHECK_HANDLE(SwapChain))
     {
         vkDestroySwapchainKHR(GetDevice()->GetVkDevice(), SwapChain, nullptr);
@@ -36,6 +33,9 @@ CVulkanSwapChain::~CVulkanSwapChain()
 
 bool CVulkanSwapChain::Initialize(const SVulkanSwapChainCreateInfo& CreateInfo)
 {
+	CVulkanSurface* Surface = CreateInfo.Surface;
+	Assert(Surface != nullptr);
+ 
     TArray<VkSurfaceFormatKHR> SupportedFormats;
     if (!Surface->GetSupportedFormats(SupportedFormats))
     {
@@ -194,15 +194,15 @@ VkResult CVulkanSwapChain::Present(CVulkanQueue* Queue, CVulkanSemaphore* WaitSe
     VkSemaphore WaitSemaphoreHandle = VK_NULL_HANDLE;
     if (WaitSemaphore)
     {
-        PresentInfo.waitSemaphoreCount = 0;
-        PresentInfo.pWaitSemaphores    = nullptr;
+		WaitSemaphoreHandle = WaitSemaphore->GetVkSemaphore();
+
+		PresentInfo.waitSemaphoreCount = 1;
+		PresentInfo.pWaitSemaphores    = &WaitSemaphoreHandle;
     }
     else
     {
-        WaitSemaphoreHandle = WaitSemaphore->GetVkSemaphore();
-
-        PresentInfo.waitSemaphoreCount = 1;
-        PresentInfo.pWaitSemaphores    = &WaitSemaphoreHandle;
+		PresentInfo.waitSemaphoreCount = 0;
+		PresentInfo.pWaitSemaphores    = nullptr;
     }
 
     return vkQueuePresentKHR(Queue->GetVkQueue(), &PresentInfo);

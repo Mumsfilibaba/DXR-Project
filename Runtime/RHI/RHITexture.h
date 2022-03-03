@@ -6,18 +6,18 @@
 
 enum ERHITextureFlags
 {
-    TextureFlag_None = 0,
-    TextureFlag_RTV = FLAG(1), // RenderTargetView
-    TextureFlag_DSV = FLAG(2), // DepthStencilView
-    TextureFlag_UAV = FLAG(3), // UnorderedAccessView
-    TextureFlag_SRV = FLAG(4), // ShaderResourceView
-    TextureFlag_NoDefaultRTV = FLAG(5), // Do not create default RenderTargetView
-    TextureFlag_NoDefaultDSV = FLAG(6), // Do not create default DepthStencilView
-    TextureFlag_NoDefaultUAV = FLAG(7), // Do not create default UnorderedAccessView
-    TextureFlag_NoDefaultSRV = FLAG(8), // Do not create default ShaderResourceView
-    TextureFlags_RWTexture = TextureFlag_UAV | TextureFlag_SRV,
+    TextureFlag_None          = 0,
+    TextureFlag_RTV           = FLAG(1), // RenderTargetView
+    TextureFlag_DSV           = FLAG(2), // DepthStencilView
+    TextureFlag_UAV           = FLAG(3), // UnorderedAccessView
+    TextureFlag_SRV           = FLAG(4), // ShaderResourceView
+    TextureFlag_NoDefaultRTV  = FLAG(5), // Do not create default RenderTargetView
+    TextureFlag_NoDefaultDSV  = FLAG(6), // Do not create default DepthStencilView
+    TextureFlag_NoDefaultUAV  = FLAG(7), // Do not create default UnorderedAccessView
+    TextureFlag_NoDefaultSRV  = FLAG(8), // Do not create default ShaderResourceView
+    TextureFlags_RWTexture    = TextureFlag_UAV | TextureFlag_SRV,
     TextureFlags_RenderTarget = TextureFlag_RTV | TextureFlag_SRV,
-    TextureFlags_ShadowMap = TextureFlag_DSV | TextureFlag_SRV,
+    TextureFlags_ShadowMap    = TextureFlag_DSV | TextureFlag_SRV,
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -33,7 +33,7 @@ public:
      * @param InFormat: Format of the texture
      * @param InNumMips: Number of MipLevels of the texture
      * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
+     * @param InOptimalClearValue: Optimized clear value for the texture
      */
     CRHITexture(EFormat InFormat, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHIResource()
@@ -196,7 +196,7 @@ public:
      * @param InNumMips: Number of MipLevels of the texture
      * @param InNumSamples: Number of samples of the texture
      * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
+     * @param InOptimalClearValue: Optimized clear value for the texture
      */
     CRHITexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITexture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
@@ -206,11 +206,6 @@ public:
     {
     }
 
-    /**
-     * Cast to Texture2D
-     *
-     * @return: Returns a pointer to a Texture2D if the texture if of correct type
-     */
     virtual CRHITexture2D* AsTexture2D() override { return this; }
 
     /**
@@ -304,7 +299,7 @@ public:
      * @param InNumSamples: Number of samples of the texture
      * @param InNumArraySlices: Number of array-slices of the texture
      * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
+     * @param InOptimalClearValue: Optimized clear value for the texture
      */
     CRHITexture2DArray(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InNumArraySlices, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITexture2D(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InFlags, InOptimizedClearValue)
@@ -312,18 +307,7 @@ public:
     {
     }
 
-    /**
-     * Cast to Texture2D
-     *
-     * @return: Returns a pointer to a Texture2D if the texture if of correct type
-     */
-    virtual CRHITexture2D* AsTexture2D() override { return nullptr; }
-    
-    /**
-     * Cast to Texture2DArray
-     *
-     * @return: Returns a pointer to a Texture2DArray if the texture if of correct type
-     */
+    virtual CRHITexture2D*      AsTexture2D()      override { return nullptr; }
     virtual CRHITexture2DArray* AsTexture2DArray() override { return this; }
 
     /**
@@ -354,7 +338,7 @@ public:
      * @param InSize: Width and height of the texture faces
      * @param InNumMips: Number of MipLevels of the texture
      * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
+     * @param InOptimalClearValue: Optimized clear value for the texture
      */
     CRHITextureCube(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITexture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
@@ -362,7 +346,6 @@ public:
     {
     }
 
-    /* Cast to TextureCube */
     virtual CRHITextureCube* AsTextureCube() override { return this; }
 
     FORCEINLINE uint32 GetSize() const
@@ -389,7 +372,7 @@ public:
      * @param InNumMips: Number of MipLevels of the texture
      * @param InNumArraySlices: Number of array-slices of the texture
      * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
+     * @param InOptimalClearValue: Optimized clear value for the texture
      */
     CRHITextureCubeArray(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InNumArraySlices, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InOptimizedClearValue)
@@ -397,18 +380,7 @@ public:
     {
     }
 
-    /**
-     * Cast to TextureCube
-     *
-     * @return: Returns a pointer to a TextureCube if the texture if of correct type
-     */
-    virtual CRHITextureCube* AsTextureCube() override { return nullptr; }
-    
-    /**
-     * Cast to TextureCubeArray
-     *
-     * @return: Returns a pointer to a TextureCubeArray if the texture if of correct type
-     */
+    virtual CRHITextureCube*      AsTextureCube()      override { return nullptr; }
     virtual CRHITextureCubeArray* AsTextureCubeArray() override { return this; }
 
     /**
@@ -440,7 +412,7 @@ public:
      * @param InDepth: Depth of the texture
      * @param InNumMips: Number of MipLevels of the texture
      * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
+     * @param InOptimalClearValue: Optimized clear value for the texture
      */
     CRHITexture3D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITexture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
@@ -450,11 +422,6 @@ public:
     {
     }
 
-    /**
-     * Cast to Texture3D
-     *
-     * @return: Returns a pointer to a Texture3D if the texture if of correct type
-     */
     virtual CRHITexture3D* AsTexture3D() override { return this; }
     
     /**

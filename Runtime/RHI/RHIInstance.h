@@ -420,7 +420,7 @@ public:
      * @param DepthFormat: Format for the depth
      * @return: Returns the newly created viewport
      */
-    virtual class CRHIViewport* CreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
+    virtual class CRHIViewport* CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
 
     /**
      * Retrieve the default CommandContext
@@ -950,9 +950,9 @@ FORCEINLINE class CRHITimestampQuery* RHICreateTimestampQuery()
     return GRHIInstance->CreateTimestampQuery();
 }
 
-FORCEINLINE class CRHIViewport* RHICreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
+FORCEINLINE class CRHIViewport* RHICreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
 {
-    return GRHIInstance->CreateViewport(Window, Width, Height, ColorFormat, DepthFormat);
+    return GRHIInstance->CreateViewport(WindowHandle, Width, Height, ColorFormat, DepthFormat);
 }
 
 FORCEINLINE bool RHIUAVSupportsFormat(EFormat Format)

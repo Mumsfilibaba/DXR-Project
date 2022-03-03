@@ -93,6 +93,11 @@ bool CVulkanViewport::Initialize()
             return false;
         }
     }
+	
+	if (!AquireNextImage())
+	{
+		return false;
+	}
     
     return true;
 }
@@ -115,7 +120,8 @@ bool CVulkanViewport::CreateSwapChain()
         VULKAN_ERROR_ALWAYS("Failed to create SwapChain");
         return false;
     }
-
+	
+	// Retrieve the images
     TArray<VkImage> SwapChainImages(SwapChain->GetBufferCount());
     SwapChain->GetSwapChainImages(SwapChainImages.Data());
 
@@ -152,6 +158,9 @@ bool CVulkanViewport::CreateSwapChain()
     Queue->ExecuteCommandBuffer(CommandBuffer.GetAddressOf(), 1, CommandBuffer->GetFence());
 
     CommandBuffer->WaitForFence();
+	
+	// Create RenderTargetViews
+	
 
     return true;
 }
@@ -171,8 +180,9 @@ bool CVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
 
 bool CVulkanViewport::Present(bool bVerticalSync)
 {
-    CVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[0];
-    CVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[0];
+	UNREFERENCED_VARIABLE(bVerticalSync);
+	
+    CVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
 
     VkResult Result = SwapChain->Present(Queue.Get(), RenderSemaphore.Get());
     if (Result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -184,10 +194,14 @@ bool CVulkanViewport::Present(bool bVerticalSync)
             return false;
         }
     }
-    
-    Result = SwapChain->AquireNextImage(ImageSemaphore.Get());
+	
+	AdvanceSemaphoreIndex();
+	
+	if (!AquireNextImage())
+	{
+		return false;
+	}
 
-    VULKAN_CHECK_RESULT(Result, "Presentation Failed. Result=" + String(ToString(Result)));
     return true;
 }
 
@@ -209,4 +223,19 @@ CRHITexture2D* CVulkanViewport::GetBackBuffer() const
 bool CVulkanViewport::IsValid() const
 {
     return true;
+}
+
+bool CVulkanViewport::AquireNextImage()
+{
+	CVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
+	CVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
+	
+	VkResult Result = SwapChain->AquireNextImage(ImageSemaphore.Get());
+	VULKAN_CHECK_RESULT(Result, "Failed to aquire image");
+	
+	// TOOD: Maybe change this, if maybe is not always desireable to have a wait/signal
+	Queue->AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	Queue->AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
+	
+	return true;
 }

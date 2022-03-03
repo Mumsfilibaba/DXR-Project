@@ -39,11 +39,6 @@ public:
     VkResult AquireNextImage(CVulkanSemaphore* AquireSemaphore);
     
     bool GetSwapChainImages(VkImage* OutImages);
-
-    FORCEINLINE CVulkanSurface* GetSurface() const 
-    { 
-        return Surface.Get();
-    }
     
     FORCEINLINE VkResult GetPresentResult() const 
     { 
@@ -70,9 +65,7 @@ private:
     ~CVulkanSwapChain();
 
     bool Initialize(const SVulkanSwapChainCreateInfo& CreateInfo);
-
-    CVulkanSurfaceRef Surface;
-
+	
     VkResult       PresentResult;
     VkSwapchainKHR SwapChain;
     uint32         BufferIndex;

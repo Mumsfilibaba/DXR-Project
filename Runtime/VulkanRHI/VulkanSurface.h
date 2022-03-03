@@ -5,6 +5,8 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 
+#include "CoreApplication/Interface/PlatformWindow.h"
+
 typedef TSharedRef<class CVulkanSurface> CVulkanSurfaceRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

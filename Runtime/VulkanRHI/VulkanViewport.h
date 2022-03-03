@@ -71,7 +71,14 @@ private:
 
     bool CreateSwapChain();
     void DestroySwapChain();
+	
+	bool AquireNextImage();
 
+	void AdvanceSemaphoreIndex()
+	{
+		SemaphoreIndex = (SemaphoreIndex + 1) % ImageSemaphores.Size();
+	}
+	
     PlatformWindowHandle WindowHandle;
 
     CVulkanSurfaceRef    Surface;
@@ -79,9 +86,11 @@ private:
     CVulkanQueueRef      Queue;
     CVulkanBackBufferRef BackBuffer;
 
-    TInlineArray<VkImage         , NUM_BACK_BUFFERS> Images;
+    TInlineArray<VkImage, NUM_BACK_BUFFERS>          Images;
     TInlineArray<CVulkanImageView, NUM_BACK_BUFFERS> ImageViews;
 
+	uint32 SemaphoreIndex = 0;
+	
     TInlineArray<CVulkanSemaphoreRef, NUM_BACK_BUFFERS> ImageSemaphores;
     TInlineArray<CVulkanSemaphoreRef, NUM_BACK_BUFFERS> RenderSemaphores;
 };

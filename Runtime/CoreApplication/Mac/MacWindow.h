@@ -34,26 +34,6 @@ public:
 	{
 		return Window;
 	}
-	
-	/**
-	 * Retrieve the native content view object
-	 *
-	 * @return: Returns the native content view object
-	 */
-	FORCEINLINE CCocoaContentView* GetCocoaContentView() const
-	{
-		return View;
-	}
-
-	/**
-	 * Retrieve the CAMetalLayer
-	 *
-	 * @return: Returns the CAMetalLayer
-	 */
-	FORCEINLINE CAMetalLayer* GetCAMetalLayer() const
-	{
-		return [View isKindOfClass:[CAMetalLayer class]] ? reinterpret_cast<CAMetalLayer*>([View layer]) : nullptr;
-	}
 
 public:
 	

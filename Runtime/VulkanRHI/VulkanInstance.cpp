@@ -160,7 +160,7 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 
 CRHITexture2D* CVulkanInstance::CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
 {
-    return dbg_new CVulkanTexture2D(Format, Width, Height, NumMipLevels, NumSamples, Flags, OptimizedClearValue);
+    return dbg_new CVulkanTexture2D(GetDevice(), Format, Width, Height, NumMipLevels, NumSamples, Flags, OptimizedClearValue);
 }
 
 CRHITexture2DArray* CVulkanInstance::CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
@@ -339,9 +339,9 @@ CRHITimestampQuery* CVulkanInstance::CreateTimestampQuery()
 	return NewQuery.ReleaseOwnership();
 }
 
-CRHIViewport* CVulkanInstance::CreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
+CRHIViewport* CVulkanInstance::CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
 {
-	TSharedRef<CVulkanViewport> NewViewport = CVulkanViewport::CreateViewport(Device.Get(), DirectCommandQueue.Get(), Window, ColorFormat, Width, Height);
+	TSharedRef<CVulkanViewport> NewViewport = CVulkanViewport::CreateViewport(Device.Get(), DirectCommandQueue.Get(), WindowHandle, ColorFormat, Width, Height);
 	return NewViewport.ReleaseOwnership();
 }
 
