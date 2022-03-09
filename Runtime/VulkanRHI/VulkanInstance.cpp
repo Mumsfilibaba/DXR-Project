@@ -116,6 +116,9 @@ bool CVulkanInstance::Initialize(bool bEnableDebug)
 #if VK_KHR_acceleration_structure
     AdapterDesc.OptionalExtensionNames.Push(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 #endif
+#if VK_KHR_dedicated_allocation
+	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+#endif
 
 	Adapter = CVulkanPhysicalDevice::QueryAdapter(GetInstance(), AdapterDesc);
     if (!Adapter)
