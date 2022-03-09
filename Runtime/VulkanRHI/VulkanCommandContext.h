@@ -43,10 +43,10 @@ public:
 
     virtual void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView) override final;
 
-    virtual void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
-    virtual void SetIndexBuffer(CRHIIndexBuffer* IndexBuffer) override final;
+    virtual void SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
+    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer) override final;
 
-    virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
+    virtual void SetPrimitiveTopology(ERHIPrimitiveTopology PrimitveTopologyType) override final;
 
     virtual void SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState) override final;
     virtual void SetComputePipelineState(class CRHIComputePipelineState* PipelineState)   override final;
@@ -59,8 +59,8 @@ public:
     virtual void SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) override final;
     virtual void SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex) override final;
 
-    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) override final;
-    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) override final;
+    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIBuffer* ConstantBuffer, uint32 ParameterIndex) override final;
+    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) override final;
 
     virtual void SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex) override final;
     virtual void SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) override final;
@@ -77,7 +77,7 @@ public:
     virtual void DestroyResource(class CRHIObject* Resource)   override final;
     virtual void DiscardContents(class CRHIResource* Resource) override final;
 
-    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)       override final;
+    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer, bool bUpdate)       override final;
     virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final;
 
     /* Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */

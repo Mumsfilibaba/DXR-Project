@@ -68,7 +68,8 @@ bool CVulkanViewport::Initialize()
     const uint32 BufferCount = SwapChain->GetBufferCount();
     ImageSemaphores.Reserve(BufferCount);
     RenderSemaphores.Reserve(BufferCount);
-
+	ImageViews.Reserve(BufferCount);
+	
     for (uint32 Index = 0; Index < BufferCount; ++Index)
     {
         CVulkanSemaphoreRef NewImageSemaphore = CVulkanSemaphore::CreateSemaphore(GetDevice());
@@ -92,7 +93,22 @@ bool CVulkanViewport::Initialize()
         {
             return false;
         }
+		
+		CVulkanImageViewRef NewImageView = dbg_new CVulkanImageView(GetDevice());
+		if (NewImageView)
+		{
+			ImageViews.Push(NewImageView);
+		}
+		else
+		{
+			return false;
+		}
     }
+	
+	if (!CreateRenderTargets())
+	{
+		return false;
+	}
 	
 	if (!AquireNextImage())
 	{
@@ -133,6 +149,9 @@ bool CVulkanViewport::CreateSwapChain()
 
     CommandBuffer->Begin();
 
+	Images.Reserve(SwapChainImages.Size());
+	Images.Clear();
+	
     for (VkImage Image : SwapChainImages)
     {
         SVulkanImageTransitionBarrier TransitionBarrier;
@@ -151,6 +170,8 @@ bool CVulkanViewport::CreateSwapChain()
         TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
         CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
+		
+		Images.Push(Image);
     }
 
     CommandBuffer->End();
@@ -159,10 +180,35 @@ bool CVulkanViewport::CreateSwapChain()
 
     CommandBuffer->WaitForFence();
 	
-	// Create RenderTargetViews
-	
-
     return true;
+}
+
+bool CVulkanViewport::CreateRenderTargets()
+{
+	for (int32 Index = 0; Index < Images.Size(); ++Index)
+	{
+		CVulkanImageViewRef ImageView = ImageViews[Index];
+		if (ImageView->IsValid())
+		{
+			ImageView->DestroyView();
+		}
+		
+		VkSurfaceFormatKHR Format = SwapChain->GetVkSurfaceFormat();
+		
+		VkImageSubresourceRange SubresourceRange;
+		SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+		SubresourceRange.baseArrayLayer = 0;
+		SubresourceRange.layerCount     = 1;
+		SubresourceRange.levelCount     = 1;
+		SubresourceRange.baseMipLevel   = 0;
+		
+		if (!ImageView->CreateView(Images[Index], VK_IMAGE_VIEW_TYPE_2D, Format.format, 0, SubresourceRange))
+		{
+			return false;
+		}
+	}
+	
+	return true;
 }
 
 void CVulkanViewport::DestroySwapChain()
@@ -208,6 +254,15 @@ bool CVulkanViewport::Present(bool bVerticalSync)
 void CVulkanViewport::SetName(const String& InName)
 {
     CRHIObject::SetName(InName);
+	
+	String ImageName;
+	
+	uint32 Index = 0;
+	for (VkImage Image : Images)
+	{
+		ImageName = InName + "BackBuffer Image[" + ToString(Index) + "]";
+		CVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), ImageName.CStr(), Image, VK_OBJECT_TYPE_IMAGE);
+	}
 }
 
 CRHIRenderTargetView* CVulkanViewport::GetRenderTargetView() const
@@ -222,7 +277,7 @@ CRHITexture2D* CVulkanViewport::GetBackBuffer() const
 
 bool CVulkanViewport::IsValid() const
 {
-    return true;
+    return (SwapChain != nullptr);
 }
 
 bool CVulkanViewport::AquireNextImage()
@@ -237,5 +292,6 @@ bool CVulkanViewport::AquireNextImage()
 	Queue->AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 	Queue->AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
 	
+	BackBuffer->AquireNextImage();
 	return true;
 }

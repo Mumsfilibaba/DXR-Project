@@ -57,7 +57,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     }
 
     SRHIDepthStencilStateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
+    DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
@@ -146,7 +146,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     const float RenderWidth = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
 
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
 
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
@@ -191,7 +191,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
             Command.Material->BuildBuffer(CmdList);
         }
 
-        CRHIConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
+        CRHIBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
         CmdList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 4);
 
         CRHIShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
@@ -211,7 +211,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
 
         CmdList.Set32BitShaderConstants(VShader.Get(), &TransformPerObject, 32);
 
-        CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+        CmdList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
     }
 
     CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource);

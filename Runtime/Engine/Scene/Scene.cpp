@@ -104,10 +104,11 @@ void CScene::AddMeshComponent(CMeshComponent* Component)
 {
     SMeshDrawCommand Command;
     Command.CurrentActor = Component->GetActor();
-    Command.Geometry = Component->Mesh->RTGeometry.Get();
+    Command.Geometry     = Component->Mesh->RTGeometry.Get();
     Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();
-    Command.IndexBuffer = Component->Mesh->IndexBuffer.Get();
-    Command.Material = Component->Material.Get();
-    Command.Mesh = Component->Mesh.Get();
+    Command.IndexBuffer  = Component->Mesh->IndexBuffer.Get();
+    Command.Material     = Component->Material.Get();
+    Command.Mesh         = Component->Mesh.Get();
+    Command.NumIndices   = Component->Mesh->IndexCount;
     MeshDrawCommands.Push(Command);
 }

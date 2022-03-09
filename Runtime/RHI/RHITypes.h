@@ -4,9 +4,9 @@
 #include "Core/Math/Color.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ECubeFace
+// ERHICubeFace
 
-enum class ECubeFace
+enum class ERHICubeFace
 {
     PosX = 0,
     NegX = 1,
@@ -16,51 +16,51 @@ enum class ECubeFace
     NegZ = 5,
 };
 
-inline uint32 GetCubeFaceIndex(ECubeFace CubeFace)
+inline uint32 GetCubeFaceIndex(ERHICubeFace CubeFace)
 {
     return static_cast<uint32>(CubeFace);
 }
 
-inline ECubeFace GetCubeFaceFromIndex(uint32 Index)
+inline ERHICubeFace GetCubeFaceFromIndex(uint32 Index)
 {
-    if (Index > GetCubeFaceIndex(ECubeFace::NegZ))
+    if (Index > GetCubeFaceIndex(ERHICubeFace::NegZ))
     {
-        return static_cast<ECubeFace>(-1);
+        return static_cast<ERHICubeFace>(-1);
     }
     else
     {
-        return static_cast<ECubeFace>(Index);
+        return static_cast<ERHICubeFace>(Index);
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EComparisonFunc
+// ERHIComparisonFunc
 
-enum class EComparisonFunc
+enum class ERHIComparisonFunc
 {
-    Never = 1,
-    Less = 2,
-    Equal = 3,
-    LessEqual = 4,
-    Greater = 5,
-    NotEqual = 6,
+    Never        = 1,
+    Less         = 2,
+    Equal        = 3,
+    LessEqual    = 4,
+    Greater      = 5,
+    NotEqual     = 6,
     GreaterEqual = 7,
-    Always = 8
+    Always       = 8
 };
 
-inline const char* ToString(EComparisonFunc ComparisonFunc)
+inline const char* ToString(ERHIComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
-    case EComparisonFunc::Never:        return "Never";
-    case EComparisonFunc::Less:         return "Less";
-    case EComparisonFunc::Equal:        return "Equal";
-    case EComparisonFunc::LessEqual:    return "LessEqual";
-    case EComparisonFunc::Greater:      return "Greater";
-    case EComparisonFunc::NotEqual:     return "NotEqual";
-    case EComparisonFunc::GreaterEqual: return "GreaterEqual";
-    case EComparisonFunc::Always:       return "Always";
-    default: return "Unknown";
+    case ERHIComparisonFunc::Never:        return "Never";
+    case ERHIComparisonFunc::Less:         return "Less";
+    case ERHIComparisonFunc::Equal:        return "Equal";
+    case ERHIComparisonFunc::LessEqual:    return "LessEqual";
+    case ERHIComparisonFunc::Greater:      return "Greater";
+    case ERHIComparisonFunc::NotEqual:     return "NotEqual";
+    case ERHIComparisonFunc::GreaterEqual: return "GreaterEqual";
+    case ERHIComparisonFunc::Always:       return "Always";
+    default:                               return "Unknown";
     }
 }
 
@@ -70,10 +70,10 @@ inline const char* ToString(EComparisonFunc ComparisonFunc)
 enum class ERHIPrimitiveTopologyType
 {
     Undefined = 0,
-    Point = 1,
-    Line = 2,
-    Triangle = 3,
-    Patch = 4
+    Point     = 1,
+    Line      = 2,
+    Triangle  = 3,
+    Patch     = 4
 };
 
 inline const char* ToString(ERHIPrimitiveTopologyType PrimitveTopologyType)
@@ -85,7 +85,7 @@ inline const char* ToString(ERHIPrimitiveTopologyType PrimitveTopologyType)
     case ERHIPrimitiveTopologyType::Line:      return "Line";
     case ERHIPrimitiveTopologyType::Triangle:  return "Triangle";
     case ERHIPrimitiveTopologyType::Patch:     return "Patch";
-    default: return "Unknown";
+    default:                                   return "Unknown";
     }
 }
 
@@ -94,23 +94,25 @@ inline const char* ToString(ERHIPrimitiveTopologyType PrimitveTopologyType)
 
 enum class ERHIResourceState
 {
-    Common = 0,
-    VertexAndConstantBuffer = 1,
-    IndexBuffer = 2,
-    RenderTarget = 3,
-    UnorderedAccess = 4,
-    DepthWrite = 5,
-    DepthRead = 6,
-    NonPixelShaderResource = 7,
-    PixelShaderResource = 8,
-    CopyDest = 9,
-    CopySource = 10,
-    ResolveDest = 11,
-    ResolveSource = 12,
-    RayTracingAccelerationStructure = 13,
-    ShadingRateSource = 14,
-    Present = 15,
-    GenericRead = 16,
+    Common                          = 0,
+    VertexAndConstantBuffer         = 1,
+    IndexBuffer                     = 2,
+    RenderTarget                    = 3,
+	RenderTargetClear               = 4,
+    UnorderedAccess                 = 5,
+	DepthClear                      = 6,
+    DepthWrite                      = 7,
+    DepthRead                       = 8,
+    NonPixelShaderResource          = 9,
+    PixelShaderResource             = 10,
+    CopyDest                        = 11,
+    CopySource                      = 12,
+    ResolveDest                     = 13,
+    ResolveSource                   = 14,
+    RayTracingAccelerationStructure = 15,
+    ShadingRateSource               = 16,
+    Present                         = 17,
+    GenericRead                     = 18,
 };
 
 inline const char* ToString(ERHIResourceState ResourceState)
@@ -121,7 +123,9 @@ inline const char* ToString(ERHIResourceState ResourceState)
     case ERHIResourceState::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
     case ERHIResourceState::IndexBuffer:                     return "IndexBuffer";
     case ERHIResourceState::RenderTarget:                    return "RenderTarget";
+	case ERHIResourceState::RenderTargetClear:               return "RenderTargetClear";
     case ERHIResourceState::UnorderedAccess:                 return "UnorderedAccess";
+	case ERHIResourceState::DepthClear:                      return "DepthClear";
     case ERHIResourceState::DepthWrite:                      return "DepthWrite";
     case ERHIResourceState::DepthRead:                       return "DepthRead";
     case ERHIResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
@@ -133,34 +137,34 @@ inline const char* ToString(ERHIResourceState ResourceState)
     case ERHIResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
     case ERHIResourceState::ShadingRateSource:               return "ShadingRateSource";
     case ERHIResourceState::Present:                         return "Present";
-    default: return "Unknown";
+    default: 												 return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EPrimitiveTopology
+// ERHIPrimitiveTopology
 
-enum class EPrimitiveTopology
+enum class ERHIPrimitiveTopology
 {
-    Undefined = 0,
-    PointList = 1,
-    LineList = 2,
-    LineStrip = 3,
-    TriangleList = 4,
+    Undefined     = 0,
+    PointList     = 1,
+    LineList      = 2,
+    LineStrip     = 3,
+    TriangleList  = 4,
     TriangleStrip = 5,
 };
 
-inline const char* ToString(EPrimitiveTopology ResourceState)
+inline const char* ToString(ERHIPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
-    case EPrimitiveTopology::Undefined:     return "Undefined";
-    case EPrimitiveTopology::PointList:     return "PointList";
-    case EPrimitiveTopology::LineList:      return "LineList";
-    case EPrimitiveTopology::LineStrip:     return "LineStrip";
-    case EPrimitiveTopology::TriangleList:  return "TriangleList";
-    case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
-    default: return "Unknown";
+    case ERHIPrimitiveTopology::Undefined:     return "Undefined";
+    case ERHIPrimitiveTopology::PointList:     return "PointList";
+    case ERHIPrimitiveTopology::LineList:      return "LineList";
+    case ERHIPrimitiveTopology::LineStrip:     return "LineStrip";
+    case ERHIPrimitiveTopology::TriangleList:  return "TriangleList";
+    case ERHIPrimitiveTopology::TriangleStrip: return "TriangleStrip";
+    default:                                   return "Unknown";
     }
 }
 
@@ -189,7 +193,7 @@ inline const char* ToString(ERHIShadingRate ShadingRate)
     case ERHIShadingRate::VRS_2x4: return "VRS_2x4";
     case ERHIShadingRate::VRS_4x2: return "VRS_4x2";
     case ERHIShadingRate::VRS_4x4: return "VRS_4x4";
-    default: return "Unknown";
+    default:                       return "Unknown";
     }
 }
 
@@ -206,7 +210,7 @@ struct SDepthStencil
     {
     }
 
-    float Depth = 1.0f;
+    float Depth   = 1.0f;
     uint8 Stencil = 0;
 };
 
@@ -219,7 +223,7 @@ public:
 
     enum class EType
     {
-        Color = 1,
+        Color        = 1,
         DepthStencil = 2
     };
 
@@ -314,6 +318,7 @@ public:
 private:
     EType   Type;
     EFormat Format;
+	
     union
     {
         SColorF       Color;
@@ -394,12 +399,14 @@ struct SRHIResourceData
 
 private:
     const void* Data;
+	
     union
     {
         struct
         {
             uint32 SizeInBytes;
         };
+		
         struct
         {
             EFormat Format;
@@ -423,9 +430,9 @@ struct SRHICopyBufferInfo
     {
     }
 
-    uint64 SourceOffset = 0;
+    uint64 SourceOffset      = 0;
     uint32 DestinationOffset = 0;
-    uint32 SizeInBytes = 0;
+    uint32 SizeInBytes       = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -436,17 +443,17 @@ struct SRHICopyTextureSubresourceInfo
     SRHICopyTextureSubresourceInfo() = default;
 
     FORCEINLINE SRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
-        : x(InX)
+        : SubresourceIndex(InSubresourceIndex)
+		, x(InX)
         , y(InY)
         , z(InZ)
-        , SubresourceIndex(InSubresourceIndex)
     {
     }
 
-    uint32 x = 0;
-    uint32 y = 0;
-    uint32 z = 0;
-    uint32 SubresourceIndex = 0;
+	uint32 SubresourceIndex = 0;
+    uint32 x                = 0;
+    uint32 y                = 0;
+    uint32 z                = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -456,7 +463,8 @@ struct SRHICopyTextureInfo
 {
     SRHICopyTextureSubresourceInfo Source;
     SRHICopyTextureSubresourceInfo Destination;
-    uint32 Width = 0;
+	
+    uint32 Width  = 0;
     uint32 Height = 0;
-    uint32 Depth = 0;
+    uint32 Depth  = 0;
 };

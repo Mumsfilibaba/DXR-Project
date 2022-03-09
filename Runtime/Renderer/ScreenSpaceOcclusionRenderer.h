@@ -30,7 +30,7 @@ private:
     TSharedRef<CRHIComputeShader>        BlurHorizontalShader;
     TSharedRef<CRHIComputePipelineState> BlurVerticalPSO;
     TSharedRef<CRHIComputeShader>        BlurVerticalShader;
-    TSharedRef<CRHIStructuredBuffer>     SSAOSamples;
+    TSharedRef<CRHIBuffer>     SSAOSamples;
     TSharedRef<CRHIShaderResourceView>   SSAOSamplesSRV;
     TSharedRef<CRHITexture2D>            SSAONoiseTex;
 };

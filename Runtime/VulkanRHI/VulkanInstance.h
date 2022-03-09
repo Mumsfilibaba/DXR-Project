@@ -48,15 +48,12 @@ public:
     virtual CRHITextureCubeArray*        CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
     virtual CRHITexture3D*               CreateTexture3D(EFormat Format,uint32 Width,uint32 Height, uint32 Depth, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
 
-    virtual CRHISamplerState*            CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo) override final;
+    virtual CRHISamplerStateRef          CreateSamplerState(const struct CRHISamplerStateDesc& CreateInfo) override final;
 
-    virtual CRHIVertexBuffer*            CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final;
-    virtual CRHIIndexBuffer*             CreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final;
-    virtual CRHIConstantBuffer*          CreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final;
-    virtual CRHIStructuredBuffer*        CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final;
-
+    virtual CRHIBufferRef                CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final;
+	
     virtual CRHIRayTracingScene*         CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) override final;
-    virtual CRHIRayTracingGeometry*      CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer) override final;
+    virtual CRHIRayTracingGeometry*      CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer) override final;
 
     virtual CRHIShaderResourceView*      CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo) override final;
     virtual CRHIUnorderedAccessView*     CreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo) override final;

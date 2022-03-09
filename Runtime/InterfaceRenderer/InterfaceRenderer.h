@@ -41,7 +41,7 @@ private:
     TSharedRef<CRHIGraphicsPipelineState> PipelineState;
     TSharedRef<CRHIGraphicsPipelineState> PipelineStateNoBlending;
     TSharedRef<CRHIPixelShader>           PShader;
-    TSharedRef<CRHIVertexBuffer>          VertexBuffer;
-    TSharedRef<CRHIIndexBuffer>           IndexBuffer;
+    TSharedRef<CRHIBuffer>          VertexBuffer;
+    TSharedRef<CRHIBuffer>           IndexBuffer;
     TSharedRef<CRHISamplerState>          PointSampler;
 };

@@ -28,11 +28,11 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        SRHISamplerStateInfo CreateInfo;
-        CreateInfo.AddressU = ESamplerMode::Clamp;
-        CreateInfo.AddressV = ESamplerMode::Clamp;
-        CreateInfo.AddressW = ESamplerMode::Clamp;
-        CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
+        CRHISamplerStateDesc CreateInfo;
+        CreateInfo.AddressU = ERHISamplerMode::Clamp;
+        CreateInfo.AddressV = ERHISamplerMode::Clamp;
+        CreateInfo.AddressW = ERHISamplerMode::Clamp;
+        CreateInfo.Filter = ERHISamplerFilter::MinMagMipPoint;
 
         FrameResources.GBufferSampler = RHICreateSamplerState(CreateInfo);
         if (!FrameResources.GBufferSampler)
@@ -84,7 +84,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         }
 
         SRHIDepthStencilStateInfo DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
+        DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::LessEqual;
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
@@ -174,7 +174,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         }
 
         SRHIDepthStencilStateInfo DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc = EComparisonFunc::Less;
+        DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::Less;
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
@@ -270,11 +270,11 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         FrameResources.IntegrationLUT->SetName("IntegrationLUT");
     }
 
-    SRHISamplerStateInfo CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::Clamp;
-    CreateInfo.AddressV = ESamplerMode::Clamp;
-    CreateInfo.AddressW = ESamplerMode::Clamp;
-    CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
+    CRHISamplerStateDesc CreateInfo;
+    CreateInfo.AddressU = ERHISamplerMode::Clamp;
+    CreateInfo.AddressV = ERHISamplerMode::Clamp;
+    CreateInfo.AddressW = ERHISamplerMode::Clamp;
+    CreateInfo.Filter = ERHISamplerFilter::MinMagMipPoint;
 
     FrameResources.IntegrationLUTSampler = RHICreateSamplerState(CreateInfo);
     if (!FrameResources.IntegrationLUTSampler)
@@ -518,7 +518,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
 
         GPU_TRACE_SCOPE(CmdList, "Pre Pass");
 
-        CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+        CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
 
         CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
         CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
@@ -545,7 +545,8 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
 
                 CmdList.Set32BitShaderConstants(PrePassVertexShader.Get(), &PerObjectBuffer, 16);
 
-                CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+				const uint32 NumIndicies = Command.IndexBuffer->GetSize() / Command.IndexBuffer->GetStride();
+                CmdList.DrawIndexedInstanced(NumIndicies, 1, 0, 0, 0);
             }
         }
     }
@@ -626,7 +627,7 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
     const float RenderWidth = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
 
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
 
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
@@ -661,7 +662,7 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
 
         CmdList.SetConstantBuffer(BaseVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-        CRHIConstantBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
+        CRHIBuffer* MaterialBuffer = Command.Material->GetMaterialBuffer();
         CmdList.SetConstantBuffer(BasePixelShader.Get(), MaterialBuffer, 0);
 
         TransformPerObject.Transform = Command.CurrentActor->GetTransform().GetMatrix();
@@ -681,7 +682,7 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
 
         CmdList.Set32BitShaderConstants(BaseVertexShader.Get(), &TransformPerObject, 32);
 
-        CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+        CmdList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");

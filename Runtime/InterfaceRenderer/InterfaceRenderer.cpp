@@ -245,11 +245,11 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         IndexBuffer->SetName("ImGui IndexBuffer");
     }
 
-    SRHISamplerStateInfo CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::Clamp;
-    CreateInfo.AddressV = ESamplerMode::Clamp;
-    CreateInfo.AddressW = ESamplerMode::Clamp;
-    CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
+    CRHISamplerStateDesc CreateInfo;
+    CreateInfo.AddressU = ERHISamplerMode::Clamp;
+    CreateInfo.AddressV = ERHISamplerMode::Clamp;
+    CreateInfo.AddressW = ERHISamplerMode::Clamp;
+    CreateInfo.Filter = ERHISamplerFilter::MinMagMipPoint;
 
     PointSampler = RHICreateSamplerState(CreateInfo);
     if (!PointSampler)
@@ -298,7 +298,7 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
 
     CmdList.SetVertexBuffers(&VertexBuffer, 1, 0);
     CmdList.SetIndexBuffer(IndexBuffer.Get());
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
     CmdList.SetBlendFactor(SColorF(0.0f, 0.0f, 0.0f, 0.0f));
 
     // TODO: Do not change to GenericRead, change to vertex/constantbuffer

@@ -10,6 +10,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
+typedef TSharedRef<class CVulkanImageView>           CVulkanImageViewRef;
 typedef TSharedRef<class CVulkanShaderResourceView>  CVulkanShaderResourceViewRef;
 typedef TSharedRef<class CVulkanDepthStencilView>    CVulkanDepthStencilViewRef;
 typedef TSharedRef<class CVulkanRenderTargetView>    CVulkanRenderTargetViewRef;
@@ -18,14 +19,31 @@ typedef TSharedRef<class CVulkanUnorderedAccessView> CVulkanUnorderedAccessViewR
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanImageView
 
-class CVulkanImageView
+class CVulkanImageView : public CVulkanDeviceObject, public CRefCounted
 {
 public:
-    CVulkanImageView() = default;
+	CVulkanImageView(CVulkanDevice* InDevice);
+	~CVulkanImageView();
 
-    bool CreateView(CVulkanDevice* InDevice, VkImage InImage, VkImageViewType ViewType, VkFormat Format, VkImageViewCreateFlags Flags, const VkImageSubresourceRange& SubresoureRange);
-    void DestroyView(CVulkanDevice* InDevice);
+    bool CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat Format, VkImageViewCreateFlags Flags, const VkImageSubresourceRange& SubresoureRange);
+    void DestroyView();
 
+	FORCEINLINE bool IsValid() const
+	{
+		return ImageView != VK_NULL_HANDLE;
+	}
+
+	FORCEINLINE VkImage GetVkImage() const
+	{
+		return Image;
+	}
+	
+	FORCEINLINE VkImageView GetVkImageView() const
+	{
+		return ImageView;
+	}
+	
+private:
     VkImage     Image;
     VkImageView ImageView;
 };
@@ -69,10 +87,23 @@ public:
     CVulkanRenderTargetView() = default;
     ~CVulkanRenderTargetView() = default;
 
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
+	virtual bool IsValid() const override
+	{
+		return (ImageView != nullptr);
+	}
+	
+	void SetImageView(const CVulkanImageViewRef& NewImageView)
+	{
+		ImageView = NewImageView;
+	}
+	
+	FORCEINLINE CVulkanImageView* GetImageView() const
+	{
+		return ImageView.Get();
+	}
+	
+private:
+	CVulkanImageViewRef ImageView;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

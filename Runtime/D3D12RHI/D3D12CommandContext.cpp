@@ -493,7 +493,7 @@ void CD3D12CommandContext::SetBlendFactor(const SColorF& Color)
     CommandList.OMSetBlendFactor(Color.Elements);
 }
 
-void CD3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTopology)
+void CD3D12CommandContext::SetPrimitiveTopology(ERHIPrimitiveTopology InPrimitveTopology)
 {
     const D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = ConvertPrimitiveTopology(InPrimitveTopology);
     if (CurrentPrimitiveTolpology != PrimitiveTopology)
@@ -503,7 +503,7 @@ void CD3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTop
     }
 }
 
-void CD3D12CommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
+void CD3D12CommandContext::SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
 {
     D3D12_ERROR(BufferSlot + BufferCount < D3D12_MAX_VERTEX_BUFFER_SLOTS, "Trying to set a VertexBuffer to an invalid slot");
 
@@ -518,7 +518,7 @@ void CD3D12CommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffe
     }
 }
 
-void CD3D12CommandContext::SetIndexBuffer(CRHIIndexBuffer* IndexBuffer)
+void CD3D12CommandContext::SetIndexBuffer(CRHIBuffer* IndexBuffer)
 {
     CD3D12IndexBuffer* DxIndexBuffer = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
     DescriptorCache.SetIndexBuffer(DxIndexBuffer);
@@ -648,7 +648,7 @@ void CD3D12CommandContext::SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnord
     }
 }
 
-void CD3D12CommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
+void CD3D12CommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIBuffer* ConstantBuffer, uint32 ParameterIndex)
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
@@ -668,7 +668,7 @@ void CD3D12CommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuf
     }
 }
 
-void CD3D12CommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
+void CD3D12CommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
@@ -887,7 +887,7 @@ void CD3D12CommandContext::DiscardContents(CRHIResource* Resource)
     }
 }
 
-void CD3D12CommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
+void CD3D12CommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer, bool bUpdate)
 {
     D3D12_ERROR(Geometry != nullptr, "Geometry cannot be nullptr");
 

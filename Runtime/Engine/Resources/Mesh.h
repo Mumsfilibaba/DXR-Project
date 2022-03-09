@@ -28,9 +28,9 @@ public:
 public:
     void CreateBoundingBox(const SMeshData& Data);
 
-    TSharedRef<CRHIVertexBuffer>       VertexBuffer;
+    TSharedRef<CRHIBuffer>       VertexBuffer;
     TSharedRef<CRHIShaderResourceView> VertexBufferSRV;
-    TSharedRef<CRHIIndexBuffer>        IndexBuffer;
+    TSharedRef<CRHIBuffer>        IndexBuffer;
     TSharedRef<CRHIShaderResourceView> IndexBufferSRV;
     TSharedRef<CRHIRayTracingGeometry> RTGeometry;
 

@@ -88,7 +88,7 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(uint32 Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if (Flag & ERHIBufferFlags::BufferFlag_UAV)
+    if (Flag & ERHIBufferFlags::BufferFlag_UnorderedAccess)
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
@@ -209,18 +209,18 @@ inline D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMa
     return D3D12_DEPTH_WRITE_MASK();
 }
 
-inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
+inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(ERHIComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
-    case EComparisonFunc::Never:        return D3D12_COMPARISON_FUNC_NEVER;
-    case EComparisonFunc::Less:         return D3D12_COMPARISON_FUNC_LESS;
-    case EComparisonFunc::Equal:        return D3D12_COMPARISON_FUNC_EQUAL;
-    case EComparisonFunc::LessEqual:    return D3D12_COMPARISON_FUNC_LESS_EQUAL;
-    case EComparisonFunc::Greater:      return D3D12_COMPARISON_FUNC_GREATER;
-    case EComparisonFunc::NotEqual:     return D3D12_COMPARISON_FUNC_NOT_EQUAL;
-    case EComparisonFunc::GreaterEqual: return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
-    case EComparisonFunc::Always:       return D3D12_COMPARISON_FUNC_ALWAYS;
+    case ERHIComparisonFunc::Never:        return D3D12_COMPARISON_FUNC_NEVER;
+    case ERHIComparisonFunc::Less:         return D3D12_COMPARISON_FUNC_LESS;
+    case ERHIComparisonFunc::Equal:        return D3D12_COMPARISON_FUNC_EQUAL;
+    case ERHIComparisonFunc::LessEqual:    return D3D12_COMPARISON_FUNC_LESS_EQUAL;
+    case ERHIComparisonFunc::Greater:      return D3D12_COMPARISON_FUNC_GREATER;
+    case ERHIComparisonFunc::NotEqual:     return D3D12_COMPARISON_FUNC_NOT_EQUAL;
+    case ERHIComparisonFunc::GreaterEqual: return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+    case ERHIComparisonFunc::Always:       return D3D12_COMPARISON_FUNC_ALWAYS;
     }
 
     return D3D12_COMPARISON_FUNC();
@@ -384,16 +384,16 @@ inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(ERHIPrimitiveT
     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 }
 
-inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
+inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(ERHIPrimitiveTopology PrimitiveTopology)
 {
     switch (PrimitiveTopology)
     {
-    case EPrimitiveTopology::LineList:      return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
-    case EPrimitiveTopology::LineStrip:     return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
-    case EPrimitiveTopology::PointList:     return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
-    case EPrimitiveTopology::TriangleList:  return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-    case EPrimitiveTopology::TriangleStrip: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
-    case EPrimitiveTopology::Undefined:     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+    case ERHIPrimitiveTopology::LineList:      return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+    case ERHIPrimitiveTopology::LineStrip:     return D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+    case ERHIPrimitiveTopology::PointList:     return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+    case ERHIPrimitiveTopology::TriangleList:  return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    case ERHIPrimitiveTopology::TriangleStrip: return D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+    case ERHIPrimitiveTopology::Undefined:     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
     }
 
     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
@@ -421,48 +421,48 @@ inline D3D12_RESOURCE_STATES ConvertResourceState(ERHIResourceState ResourceStat
     case ERHIResourceState::GenericRead:             return D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
-    return D3D12_RESOURCE_STATES();
+    return D3D12_RESOURCE_STATES(-1);
 }
 
-inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
+inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ERHISamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
-    case ESamplerMode::Wrap:       return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    case ESamplerMode::Clamp:      return D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    case ESamplerMode::Mirror:     return D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-    case ESamplerMode::Border:     return D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-    case ESamplerMode::MirrorOnce: return D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE;
+    case ERHISamplerMode::Wrap:       return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    case ERHISamplerMode::Clamp:      return D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    case ERHISamplerMode::Mirror:     return D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+    case ERHISamplerMode::Border:     return D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    case ERHISamplerMode::MirrorOnce: return D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE;
     }
 
-    return D3D12_TEXTURE_ADDRESS_MODE();
+    return D3D12_TEXTURE_ADDRESS_MODE(-1);
 }
 
-inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
+inline D3D12_FILTER ConvertSamplerFilter(ERHISamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
-    case ESamplerFilter::MinMagMipPoint:                          return D3D12_FILTER_MIN_MAG_MIP_POINT;
-    case ESamplerFilter::MinMagPoint_MipLinear:                   return D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
-    case ESamplerFilter::MinPoint_MagLinear_MipPoint:             return D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
-    case ESamplerFilter::MinPoint_MagMipLinear:                   return D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR;
-    case ESamplerFilter::MinLinear_MagMipPoint:                   return D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT;
-    case ESamplerFilter::MinLinear_MagPoint_MipLinear:            return D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
-    case ESamplerFilter::MinMagLinear_MipPoint:                   return D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-    case ESamplerFilter::MinMagMipLinear:                         return D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-    case ESamplerFilter::Anistrotopic:                            return D3D12_FILTER_ANISOTROPIC;
-    case ESamplerFilter::Comparison_MinMagMipPoint:               return D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
-    case ESamplerFilter::Comparison_MinMagPoint_MipLinear:        return D3D12_FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR;
-    case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:  return D3D12_FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT;
-    case ESamplerFilter::Comparison_MinPoint_MagMipLinear:        return D3D12_FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR;
-    case ESamplerFilter::Comparison_MinLinear_MagMipPoint:        return D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT;
-    case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear: return D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
-    case ESamplerFilter::Comparison_MinMagLinear_MipPoint:        return D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
-    case ESamplerFilter::Comparison_MinMagMipLinear:              return D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
-    case ESamplerFilter::Comparison_Anistrotopic:                 return D3D12_FILTER_COMPARISON_ANISOTROPIC;
+    case ERHISamplerFilter::MinMagMipPoint:                          return D3D12_FILTER_MIN_MAG_MIP_POINT;
+    case ERHISamplerFilter::MinMagPoint_MipLinear:                   return D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+    case ERHISamplerFilter::MinPoint_MagLinear_MipPoint:             return D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+    case ERHISamplerFilter::MinPoint_MagMipLinear:                   return D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+    case ERHISamplerFilter::MinLinear_MagMipPoint:                   return D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+    case ERHISamplerFilter::MinLinear_MagPoint_MipLinear:            return D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+    case ERHISamplerFilter::MinMagLinear_MipPoint:                   return D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+    case ERHISamplerFilter::MinMagMipLinear:                         return D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    case ERHISamplerFilter::Anistrotopic:                            return D3D12_FILTER_ANISOTROPIC;
+    case ERHISamplerFilter::Comparison_MinMagMipPoint:               return D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
+    case ERHISamplerFilter::Comparison_MinMagPoint_MipLinear:        return D3D12_FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR;
+    case ERHISamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:  return D3D12_FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT;
+    case ERHISamplerFilter::Comparison_MinPoint_MagMipLinear:        return D3D12_FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR;
+    case ERHISamplerFilter::Comparison_MinLinear_MagMipPoint:        return D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT;
+    case ERHISamplerFilter::Comparison_MinLinear_MagPoint_MipLinear: return D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+    case ERHISamplerFilter::Comparison_MinMagLinear_MipPoint:        return D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+    case ERHISamplerFilter::Comparison_MinMagMipLinear:              return D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+    case ERHISamplerFilter::Comparison_Anistrotopic:                 return D3D12_FILTER_COMPARISON_ANISOTROPIC;
     }
 
-    return D3D12_FILTER();
+    return D3D12_FILTER(-1);
 }
 
 inline D3D12_SHADING_RATE ConvertShadingRate(ERHIShadingRate ShadingRate)
@@ -478,7 +478,7 @@ inline D3D12_SHADING_RATE ConvertShadingRate(ERHIShadingRate ShadingRate)
     case ERHIShadingRate::VRS_4x4: return D3D12_SHADING_RATE_4X4;
     }
 
-    return D3D12_SHADING_RATE();
+    return D3D12_SHADING_RATE(-1);
 }
 
 inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(uint32 InFlags)
@@ -837,18 +837,18 @@ inline DXGI_FORMAT CastShaderResourceFormat(DXGI_FORMAT Format)
     case DXGI_FORMAT_R32G32B32_TYPELESS:    return DXGI_FORMAT_R32G32B32_FLOAT;
     case DXGI_FORMAT_R16G16B16A16_TYPELESS: return DXGI_FORMAT_R16G16B16A16_FLOAT;
     case DXGI_FORMAT_R32G32_TYPELESS:       return DXGI_FORMAT_R32G32_FLOAT;
-    case DXGI_FORMAT_R32G8X24_TYPELESS:
+    case DXGI_FORMAT_R32G8X24_TYPELESS:     return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
     case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:  return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
     case DXGI_FORMAT_R10G10B10A2_TYPELESS:  return DXGI_FORMAT_R10G10B10A2_UNORM;
     case DXGI_FORMAT_R8G8B8A8_TYPELESS:     return DXGI_FORMAT_R8G8B8A8_UNORM;
     case DXGI_FORMAT_R16G16_TYPELESS:       return DXGI_FORMAT_R16G16_FLOAT;
-    case DXGI_FORMAT_R32_TYPELESS:
+    case DXGI_FORMAT_R32_TYPELESS:          return DXGI_FORMAT_R32_FLOAT;
     case DXGI_FORMAT_D32_FLOAT:             return DXGI_FORMAT_R32_FLOAT;
     case DXGI_FORMAT_R24G8_TYPELESS:        return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
     case DXGI_FORMAT_R8G8_TYPELESS:         return DXGI_FORMAT_R8G8_UNORM;
     case DXGI_FORMAT_R16_TYPELESS:          return DXGI_FORMAT_R16_FLOAT;
     case DXGI_FORMAT_D16_UNORM:             return DXGI_FORMAT_R16_UNORM;
     case DXGI_FORMAT_R8_TYPELESS:           return DXGI_FORMAT_R8_UNORM;
-    default: return Format;
+    default:                                return Format;
     }
 }

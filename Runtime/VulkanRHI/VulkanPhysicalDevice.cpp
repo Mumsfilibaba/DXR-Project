@@ -3,7 +3,7 @@
 #include "VulkanDriverInstance.h"
 
 #include "Core/Containers/Array.h"
-#include "Core/Templates/StringUtils.h"
+#include "Core/Templates/StringMisc.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -144,7 +144,7 @@ bool CVulkanPhysicalDevice::Initialize(const SVulkanPhysicalDeviceDesc& AdapterD
 			bool bIsSupported = false;
 			for (const VkExtensionProperties& Extension : AvailableDeviceExtensions)
 			{
-				if (StringUtils::Compare(Extension.extensionName, RequiredExtension) == 0)
+				if (StringMisc::Compare(Extension.extensionName, RequiredExtension) == 0)
 				{
 					bIsSupported = true;
 					break;
@@ -304,4 +304,20 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
 
 	QueueIndicies.Emplace(GraphicsIndex, CopyIndex, ComputeIndex);
 	return QueueIndicies;
+}
+
+uint32 CVulkanPhysicalDevice::FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties)
+{
+    VkPhysicalDeviceMemoryProperties MemoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &MemoryProperties);
+
+    for (uint32 MemoryIndex = 0; MemoryIndex < MemoryProperties.memoryTypeCount; ++MemoryIndex)
+    {
+        if ((TypeFilter & (1 << MemoryIndex)) && (MemoryProperties.memoryTypes[MemoryIndex].propertyFlags & Properties) == Properties)
+        {
+            return MemoryIndex;
+        }
+    }
+
+    return UINT32_MAX;
 }

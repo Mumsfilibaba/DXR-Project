@@ -142,8 +142,8 @@ private:
     TSharedRef<CRHIComputePipelineState> ShadingRatePipeline;
     TSharedRef<CRHIComputeShader>        ShadingRateShader;
 
-    TSharedRef<CRHIVertexBuffer>          AABBVertexBuffer;
-    TSharedRef<CRHIIndexBuffer>           AABBIndexBuffer;
+    TSharedRef<CRHIBuffer>          AABBVertexBuffer;
+    TSharedRef<CRHIBuffer>           AABBIndexBuffer;
     TSharedRef<CRHIGraphicsPipelineState> AABBDebugPipelineState;
     TSharedRef<CRHIVertexShader>          AABBVertexShader;
     TSharedRef<CRHIPixelShader>           AABBPixelShader;

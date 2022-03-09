@@ -363,12 +363,12 @@ public:
      * @param VertexBufferCount: Number of VertexBuffers in the array
      * @param BufferSlot: Slot to start bind the array to
      */
-    void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot)
+    void SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot)
     {
-        CRHIVertexBuffer** Buffers = CmdAllocator.Allocate<CRHIVertexBuffer*>(VertexBufferCount);
+        CRHIBuffer** Buffers = CmdAllocator.Allocate<CRHIBuffer*>(VertexBufferCount);
         for (uint32 i = 0; i < VertexBufferCount; i++)
         {
-            Buffers[i] = AddRef<CRHIVertexBuffer>(VertexBuffers[i]);
+            Buffers[i] = AddRef<CRHIBuffer>(VertexBuffers[i]);
         }
 
         InsertCommand<CRHISetVertexBuffersCommand>(Buffers, VertexBufferCount, BufferSlot);
@@ -379,9 +379,9 @@ public:
      *
      * @param IndexBuffer: IndexBuffer to use
      */
-    void SetIndexBuffer(CRHIIndexBuffer* IndexBuffer)
+    void SetIndexBuffer(CRHIBuffer* IndexBuffer)
     {
-        InsertCommand<CRHISetIndexBufferCommand>(MakeSharedRef<CRHIIndexBuffer>(IndexBuffer));
+        InsertCommand<CRHISetIndexBufferCommand>(MakeSharedRef<CRHIBuffer>(IndexBuffer));
     }
 
     /**
@@ -389,7 +389,7 @@ public:
      *
      * @param PrimitveTopologyType: New primitive topology to use
      */
-    void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
+    void SetPrimitiveTopology(ERHIPrimitiveTopology PrimitveTopologyType)
     {
         InsertCommand<CRHISetPrimitiveTopologyCommand>(PrimitveTopologyType);
     }
@@ -502,7 +502,7 @@ public:
      * @param ConstantBuffer: ConstantBuffer to bind
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    void SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
+    void SetConstantBuffer(CRHIShader* Shader, CRHIBuffer* ConstantBuffer, uint32 ParameterIndex)
     {
         InsertCommand<CRHISetConstantBufferCommand>(AddRef(Shader), AddRef(ConstantBuffer), ParameterIndex);
     }
@@ -516,9 +516,9 @@ public:
      * @param NumConstantBuffers: Number of ConstantBuffers in the array
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    void SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
+    void SetConstantBuffers(CRHIShader* Shader, CRHIBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
     {
-        CRHIConstantBuffer** TempConstantBuffers = CmdAllocator.Allocate<CRHIConstantBuffer*>(NumConstantBuffers);
+        CRHIBuffer** TempConstantBuffers = CmdAllocator.Allocate<CRHIBuffer*>(NumConstantBuffers);
         for (uint32 i = 0; i < NumConstantBuffers; i++)
         {
             TempConstantBuffers[i] = AddRef(ConstantBuffers[i]);
@@ -668,7 +668,7 @@ public:
      * @param IndexBuffer: IndexBuffer to build Geometry of
      * @param bUpdate: True if the build should be an update, false if it should build from the ground up
      */
-    void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
+    void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer, bool bUpdate)
     {
         Assert((Geometry != nullptr) && (!bUpdate || (bUpdate && Geometry->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)));
         InsertCommand<CRHIBuildRayTracingGeometryCommand>(AddRef(Geometry), AddRef(VertexBuffer), AddRef(IndexBuffer), bUpdate);

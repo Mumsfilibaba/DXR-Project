@@ -136,6 +136,18 @@ VULKAN_FUNCTION_DEFINITION(DestroySemaphore);
 VULKAN_FUNCTION_DEFINITION(CreateImageView);
 VULKAN_FUNCTION_DEFINITION(DestroyImageView);
 
+VULKAN_FUNCTION_DEFINITION(AllocateMemory);
+VULKAN_FUNCTION_DEFINITION(FreeMemory);
+
+VULKAN_FUNCTION_DEFINITION(CreateBuffer);
+VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements);
+VULKAN_FUNCTION_DEFINITION(BindBufferMemory);
+VULKAN_FUNCTION_DEFINITION(DestroyBuffer);
+
+#if VK_KHR_buffer_device_address
+    VULKAN_FUNCTION_DEFINITION(GetBufferDeviceAddressKHR);
+#endif
+
 VULKAN_FUNCTION_DEFINITION(AllocateCommandBuffers);
 VULKAN_FUNCTION_DEFINITION(FreeCommandBuffers);
 
@@ -181,6 +193,21 @@ bool LoadDeviceFunctions(CVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateSemaphore);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroySemaphore);
 
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, AllocateMemory);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, FreeMemory);
+
+	VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateBuffer);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, BindBufferMemory);
+	VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyBuffer);
+
+#if VK_KHR_buffer_device_address
+	if (Device->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
+	{
+		VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferDeviceAddressKHR);
+	}
+#endif
+	
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateImageView);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyImageView);
 

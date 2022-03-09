@@ -86,6 +86,8 @@ public:
 
     static TOptional<SVulkanQueueFamilyIndices> GetQueueFamilyIndices(VkPhysicalDevice physicalDevice);
 
+    uint32 FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties);
+
     FORCEINLINE CVulkanDriverInstance* GetInstance() const
     {
         return Instance;

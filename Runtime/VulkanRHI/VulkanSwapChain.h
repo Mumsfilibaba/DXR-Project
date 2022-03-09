@@ -49,6 +49,11 @@ public:
     { 
         return SwapChain; 
     }
+	
+	FORCEINLINE VkSurfaceFormatKHR GetVkSurfaceFormat() const
+	{
+		return Format;
+	}
     
     FORCEINLINE uint32 GetBufferCount() const 
     { 
@@ -66,8 +71,9 @@ private:
 
     bool Initialize(const SVulkanSwapChainCreateInfo& CreateInfo);
 	
-    VkResult       PresentResult;
-    VkSwapchainKHR SwapChain;
-    uint32         BufferIndex;
-    uint32         BufferCount;
+    VkResult           PresentResult;
+    VkSwapchainKHR     SwapChain;
+    uint32             BufferIndex;
+    uint32             BufferCount;
+	VkSurfaceFormatKHR Format;
 };

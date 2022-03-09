@@ -30,7 +30,7 @@ class CNullRHIInstance final : public CRHIInstance
 public:
 
     CNullRHIInstance()
-        : CRHIInstance(ERHIInstanceApi::Null)
+        : CRHIInstance(ERHIType::Null)
         , CommandContext(CNullRHICommandContext::Make())
     {
     }
@@ -64,29 +64,14 @@ public:
         return dbg_new TNullRHITexture<CNullRHITexture3D>(Format, Width, Height, Depth, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual class CRHISamplerState* CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo) override final
+    virtual CRHISamplerStateRef CreateSamplerState(const class CRHISamplerStateDesc& SamplerDesc) override final
     {
         return dbg_new CNullRHISamplerState();
     }
 
-    virtual CRHIVertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIBufferRef CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIVertexBuffer>(NumVertices, Stride, Flags);
-    }
-
-    virtual CRHIIndexBuffer* CreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final
-    {
-        return dbg_new TNullRHIBuffer<CNullRHIIndexBuffer>(Format, NumIndices, Flags);
-    }
-
-    virtual CRHIConstantBuffer* CreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final
-    {
-        return dbg_new TNullRHIBuffer<CNullRHIConstantBuffer>(Size, Flags);
-    }
-
-    virtual CRHIStructuredBuffer* CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final
-    {
-        return dbg_new TNullRHIBuffer<CNullRHIStructuredBuffer>(Stride * NumElements, Stride, Flags);
+        return dbg_new CNullRHIBuffer(BufferDesc);
     }
 
     virtual CRHIRayTracingScene* CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) override final
@@ -94,7 +79,7 @@ public:
         return dbg_new CNullRHIRayTracingScene(Flags);
     }
 
-    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer) override final
+    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer) override final
     {
         return dbg_new CNullRHIRayTracingGeometry(Flags);
     }

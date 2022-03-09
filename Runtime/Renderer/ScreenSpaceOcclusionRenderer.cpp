@@ -124,7 +124,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     const uint32 Stride = sizeof(CVector3);
     SRHIResourceData SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
-    SSAOSamples = RHICreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, ERHIResourceState::Common, &SSAOSampleData);
+    SSAOSamples = RHICreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_ShaderResource | BufferFlag_Default, ERHIResourceState::Common, &SSAOSampleData);
     if (!SSAOSamples)
     {
         CDebug::DebugBreak();

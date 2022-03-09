@@ -126,11 +126,11 @@ bool CEngineLoop::PreInitialize()
     }
 
     // TODO: Decide this via command line
-    ERHIInstanceApi RenderApi =
+    ERHIType RenderApi =
 #if PLATFORM_MACOS
-        ERHIInstanceApi::Vulkan;
+        ERHIType::Vulkan;
 #else
-        ERHIInstanceApi::Vulkan;
+        ERHIType::Vulkan;
 #endif
     if (!RHIInitialize(RenderApi))
     {

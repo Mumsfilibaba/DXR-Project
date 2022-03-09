@@ -20,9 +20,9 @@
 #define ENABLE_API_GPU_BREADCRUMBS (0) // D3D12
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIInstanceApi
+// ERHIType
 
-enum class ERHIInstanceApi : uint32
+enum class ERHIType : uint32
 {
     Unknown = 0,
     Null    = 1,
@@ -30,13 +30,13 @@ enum class ERHIInstanceApi : uint32
     Vulkan  = 3,
 };
 
-inline const char* ToString(ERHIInstanceApi RenderLayerApi)
+inline const char* ToString(ERHIType RenderLayerApi)
 {
     switch (RenderLayerApi)
     {
-    case ERHIInstanceApi::D3D12:  return "D3D12";
-    case ERHIInstanceApi::Vulkan: return "Vulkan";
-    case ERHIInstanceApi::Null:   return "Null";
+    case ERHIType::D3D12:  return "D3D12";
+    case ERHIType::Vulkan: return "Vulkan";
+    case ERHIType::Null:   return "Null";
     default:                      return "Unknown";
     }
 }
@@ -44,7 +44,7 @@ inline const char* ToString(ERHIInstanceApi RenderLayerApi)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RHI Functions
 
-RHI_API bool RHIInitialize(ERHIInstanceApi InRenderApi);
+RHI_API bool RHIInitialize(ERHIType InRenderApi);
 RHI_API void RHIRelease();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

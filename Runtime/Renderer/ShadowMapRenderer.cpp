@@ -78,7 +78,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         }
 
         SRHIDepthStencilStateInfo DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
+        DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::LessEqual;
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
@@ -178,7 +178,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         }
 
         SRHIDepthStencilStateInfo DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
+        DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::LessEqual;
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
@@ -406,7 +406,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
     //    PointLightFrame = 0;
     //}
 
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
 
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::DepthWrite);
 
@@ -481,7 +481,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
 
                             CmdList.Set32BitShaderConstants(PointLightVertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
-                            CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+                            CmdList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
                         }
                     }
                 }
@@ -496,7 +496,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
 
                         CmdList.Set32BitShaderConstants(PointLightVertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
-                        CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+                        CmdList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
                     }
                 }
             }
@@ -558,7 +558,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
         CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::DepthWrite);
         CmdList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::DepthWrite);
 
-        CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+        CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
         CmdList.SetGraphicsPipelineState(DirectionalLightPSO.Get());
 
         // PerObject Structs
@@ -601,7 +601,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
 
                 CmdList.Set32BitShaderConstants(DirectionalLightShader.Get(), &ShadowPerObjectBuffer, 16);
 
-                CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+                CmdList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
             }
         }
 

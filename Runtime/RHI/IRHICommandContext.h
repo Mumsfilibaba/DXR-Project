@@ -131,21 +131,21 @@ public:
      * @param VertexBufferCount: Number of VertexBuffers in the array
      * @param BufferSlot: Slot to start bind the array to
      */
-    virtual void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot) = 0;
+    virtual void SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot) = 0;
     
     /**
      * Set the current IndexBuffer 
      * 
      * @param IndexBuffer: IndexBuffer to use
      */
-    virtual void SetIndexBuffer(CRHIIndexBuffer* IndexBuffer) = 0;
+    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer) = 0;
 
     /**
      * Set the primitive topology 
      * 
      * @param PrimitveTopologyType: New primitive topology to use
      */
-    virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) = 0;
+    virtual void SetPrimitiveTopology(ERHIPrimitiveTopology PrimitveTopologyType) = 0;
 
     /**
      * Sets the current graphics PipelineState 
@@ -217,7 +217,7 @@ public:
      * @param ConstantBuffer: ConstantBuffer to bind
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIBuffer* ConstantBuffer, uint32 ParameterIndex) = 0;
     
     /**
      * Sets a multiple ConstantBuffers to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
@@ -228,7 +228,7 @@ public:
      * @param NumConstantBuffers: Number of ConstantBuffers in the array
      * @param ParameterIndex: ConstantBuffer-index to bind to
      */
-    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) = 0;
 
     /**
      * Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
@@ -327,7 +327,7 @@ public:
      * @param IndexBuffer: IndexBuffer to build Geometry of
      * @param bUpdate: True if the build should be an update, false if it should build from the ground up
      */ 
-    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) = 0;
+    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer, bool bUpdate) = 0;
     
     /**
      * Builds the Top-Level Acceleration-Structure for ray tracing

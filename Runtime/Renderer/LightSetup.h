@@ -91,16 +91,16 @@ struct RENDERER_API SLightSetup
     TArray<CVector4>        PointLightsPosRad;
     TArray<SPointLightData> PointLightsData;
 
-    TSharedRef<CRHIConstantBuffer> PointLightsBuffer;
-    TSharedRef<CRHIConstantBuffer> PointLightsPosRadBuffer;
+    TSharedRef<CRHIBuffer> PointLightsBuffer;
+    TSharedRef<CRHIBuffer> PointLightsPosRadBuffer;
 
     TArray<SPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
 
     TArray<CVector4>                     ShadowCastingPointLightsPosRad;
     TArray<SShadowCastingPointLightData> ShadowCastingPointLightsData;
 
-    TSharedRef<CRHIConstantBuffer> ShadowCastingPointLightsBuffer;
-    TSharedRef<CRHIConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
+    TSharedRef<CRHIBuffer> ShadowCastingPointLightsBuffer;
+    TSharedRef<CRHIBuffer> ShadowCastingPointLightsPosRadBuffer;
 
     TSharedRef<CRHITextureCubeArray> PointLightShadowMaps;
     TArray<DepthStencilViewCube>     PointLightShadowMapDSVs;
@@ -111,16 +111,16 @@ struct RENDERER_API SLightSetup
 
     float CascadeSplitLambda;
 
-    TSharedRef<CRHIConstantBuffer> DirectionalLightsBuffer;
+    TSharedRef<CRHIBuffer> DirectionalLightsBuffer;
 
     TSharedRef<CRHITexture2D> ShadowMapCascades[4];
     TSharedRef<CRHITexture2D> DirectionalShadowMask;
 
-    TSharedRef<CRHIStructuredBuffer>    CascadeMatrixBuffer;
+    TSharedRef<CRHIBuffer>    CascadeMatrixBuffer;
     TSharedRef<CRHIShaderResourceView>  CascadeMatrixBufferSRV;
     TSharedRef<CRHIUnorderedAccessView> CascadeMatrixBufferUAV;
 
-    TSharedRef<CRHIStructuredBuffer>    CascadeSplitsBuffer;
+    TSharedRef<CRHIBuffer>    CascadeSplitsBuffer;
     TSharedRef<CRHIShaderResourceView>  CascadeSplitsBufferSRV;
     TSharedRef<CRHIUnorderedAccessView> CascadeSplitsBufferUAV;
 

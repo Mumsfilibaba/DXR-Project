@@ -114,11 +114,11 @@ bool CRenderer::Init()
     }
 
     {
-        SRHISamplerStateInfo CreateInfo;
-        CreateInfo.AddressU    = ESamplerMode::Border;
-        CreateInfo.AddressV    = ESamplerMode::Border;
-        CreateInfo.AddressW    = ESamplerMode::Border;
-        CreateInfo.Filter      = ESamplerFilter::MinMagMipPoint;
+        CRHISamplerStateDesc CreateInfo;
+        CreateInfo.AddressU    = ERHISamplerMode::Border;
+        CreateInfo.AddressV    = ERHISamplerMode::Border;
+        CreateInfo.AddressW    = ERHISamplerMode::Border;
+        CreateInfo.Filter      = ERHISamplerFilter::MinMagMipPoint;
         CreateInfo.BorderColor = SColorF(1.0f, 1.0f, 1.0f, 1.0f);
 
         Resources.DirectionalLightShadowSampler = RHICreateSamplerState(CreateInfo);
@@ -134,12 +134,12 @@ bool CRenderer::Init()
     }
 
     {
-        SRHISamplerStateInfo CreateInfo;
-        CreateInfo.AddressU       = ESamplerMode::Wrap;
-        CreateInfo.AddressV       = ESamplerMode::Wrap;
-        CreateInfo.AddressW       = ESamplerMode::Wrap;
-        CreateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
-        CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
+        CRHISamplerStateDesc CreateInfo;
+        CreateInfo.AddressU       = ERHISamplerMode::Wrap;
+        CreateInfo.AddressV       = ERHISamplerMode::Wrap;
+        CreateInfo.AddressW       = ERHISamplerMode::Wrap;
+        CreateInfo.Filter         = ERHISamplerFilter::Comparison_MinMagMipLinear;
+        CreateInfo.ComparisonFunc = ERHIComparisonFunc::LessEqual;
 
         Resources.PointLightShadowSampler = RHICreateSamplerState(CreateInfo);
         if (!Resources.PointLightShadowSampler)
@@ -281,7 +281,7 @@ void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
         float Height;
     } Settings;
 
-    Settings.Width = static_cast<float>(Resources.BackBuffer->GetWidth());
+    Settings.Width  = static_cast<float>(Resources.BackBuffer->GetWidth());
     Settings.Height = static_cast<float>(Resources.BackBuffer->GetHeight());
 
     CRHIRenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
@@ -335,7 +335,7 @@ void CRenderer::PerformAABBDebugPass(CRHICommandList& InCmdList)
 
     InCmdList.SetGraphicsPipelineState(AABBDebugPipelineState.Get());
 
-    InCmdList.SetPrimitiveTopology(EPrimitiveTopology::LineList);
+    InCmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::LineList);
 
     InCmdList.SetConstantBuffer(AABBVertexShader.Get(), Resources.CameraBuffer.Get(), 0);
 
@@ -681,8 +681,13 @@ void CRenderer::Tick(const CScene& Scene)
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "End UI Render");
-
-    MainCmdList.TransitionTexture(Resources.BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present);
+	
+	MainCmdList.TransitionTexture(Resources.BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::RenderTargetClear);
+	
+	SColorF BackBufferColor(1.0f, 0.0f, 0.0f, 0.0f);
+	MainCmdList.ClearRenderTargetView(Resources.BackBuffer->GetRenderTargetView(), BackBufferColor);
+	
+    MainCmdList.TransitionTexture(Resources.BackBuffer, ERHIResourceState::RenderTargetClear, ERHIResourceState::Present);
 
     INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "--END FRAME--");
 
@@ -867,7 +872,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
     }
 
     SRHIDepthStencilStateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
+    DepthStencilStateInfo.DepthFunc      = ERHIComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
@@ -1029,7 +1034,7 @@ bool CRenderer::InitAA()
     }
 
     SRHIDepthStencilStateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc = EComparisonFunc::Always;
+    DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::Always;
     DepthStencilStateInfo.bDepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
@@ -1097,11 +1102,11 @@ bool CRenderer::InitAA()
     }
 
     // FXAA
-    SRHISamplerStateInfo CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::Clamp;
-    CreateInfo.AddressV = ESamplerMode::Clamp;
-    CreateInfo.AddressW = ESamplerMode::Clamp;
-    CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
+    CRHISamplerStateDesc CreateInfo;
+    CreateInfo.AddressU = ERHISamplerMode::Clamp;
+    CreateInfo.AddressV = ERHISamplerMode::Clamp;
+    CreateInfo.AddressW = ERHISamplerMode::Clamp;
+    CreateInfo.Filter   = ERHISamplerFilter::MinMagMipLinear;
 
     Resources.FXAASampler = RHICreateSamplerState(CreateInfo);
     if (!Resources.FXAASampler)

@@ -4,6 +4,7 @@
 #include "Core/Logging/Log.h"
 #include "Core/Containers/String.h"
 
+#include "RHI/RHITypes.h"
 #include "RHI/TextureFormat.h"
 
 #if PLATFORM_MACOS
@@ -502,4 +503,27 @@ inline const char* GetVkErrorString(VkResult result)
     case VK_ERROR_UNKNOWN:
     default:                                                    return "An unknown error has occurred; either the application has provided invalid input, or an implementation failure has occurred.";
     }
+}
+
+inline VkImageLayout ConvertResourceStateToImageLayout(ERHIResourceState ResourceState)
+{
+	switch (ResourceState)
+	{
+		case ERHIResourceState::Common:					return VK_IMAGE_LAYOUT_GENERAL;
+		case ERHIResourceState::RenderTarget:			return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		case ERHIResourceState::RenderTargetClear:		return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		case ERHIResourceState::UnorderedAccess:		return VK_IMAGE_LAYOUT_GENERAL;
+		case ERHIResourceState::DepthClear:				return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		case ERHIResourceState::DepthWrite:				return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		case ERHIResourceState::DepthRead:				return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+		case ERHIResourceState::PixelShaderResource:    return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		case ERHIResourceState::NonPixelShaderResource: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		case ERHIResourceState::CopyDest:				return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		case ERHIResourceState::CopySource:				return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		case ERHIResourceState::ResolveDest:			return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		case ERHIResourceState::ResolveSource:			return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		case ERHIResourceState::Present:				return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		case ERHIResourceState::ShadingRateSource:		return VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV;
+		default:										return VK_IMAGE_LAYOUT_UNDEFINED;
+	}
 }

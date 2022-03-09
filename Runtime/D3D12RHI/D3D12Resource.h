@@ -5,7 +5,12 @@
 #include "Core/Utilities/StringUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12Resource
+// Typedef
+
+typedef TSharedRef<class CD3D12Resource> CD3D12ResourceRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12Resource
 
 class CD3D12Resource : public CD3D12DeviceObject, public CRefCounted
 {
@@ -17,19 +22,17 @@ public:
 
     bool Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue);
 
-    void* Map(uint32 SubResource, const D3D12_RANGE* Range);
-
+    bool Map(uint32 SubResource, const D3D12_RANGE* Range, void** OutMappedData)
     void Unmap(uint32 SubResource, const D3D12_RANGE* Range);
 
     FORCEINLINE void SetName(const String& Name)
     {
-        WString WideName = CharToWide(Name);
-        DxResource->SetName(WideName.CStr());
+        Resource->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.CStr());
     }
 
-    FORCEINLINE ID3D12Resource* GetResource() const
+    FORCEINLINE ID3D12Resource* GetD3D12Resource() const
     {
-        return DxResource.Get();
+        return Resource.Get();
     }
 
     FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
@@ -63,17 +66,10 @@ public:
     }
 
 private:
+    TComPtr<ID3D12Resource>   Resource;
 
-    // Native resource
-    TComPtr<ID3D12Resource> DxResource;
-
-    // Initial resource-state 
-    D3D12_RESOURCE_STATES ResourceState;
-
-    // Cached heap-type
-    D3D12_HEAP_TYPE HeapType;
-    // Cached description
-    D3D12_RESOURCE_DESC Desc;
-    // Cached GPU address
+    D3D12_RESOURCE_STATES     ResourceState;
+    D3D12_HEAP_TYPE           HeapType;
+    D3D12_RESOURCE_DESC       Desc;
     D3D12_GPU_VIRTUAL_ADDRESS Address = 0;
 };

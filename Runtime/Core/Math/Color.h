@@ -49,18 +49,28 @@ struct SColorF
         a = InA;
     }
 
+    bool operator==(const SColorF& RHS) const
+    {
+        return (r == RHS.r) && (g == RHS.g) && (b == RHS.b) && (a == RHS.a);
+    }
+
+    bool operator!=(const SColorF& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
     union
     {
         float Elements[4];
         struct
         {
-            /* Red channel */
+            /** Red channel */
             float r;
-            /* Green channel */
+            /** Green channel */
             float g;
-            /* Blue channel */
+            /** Blue channel */
             float b;
-            /* Alpha channel */
+            /** Alpha channel */
             float a;
         };
     };

@@ -6,7 +6,7 @@
 
 static const auto RawStringComparator = [](const char* Lhs, const char* Rhs) -> bool
 {
-	return StringUtils::Compare(Lhs, Rhs) == 0;
+	return StringMisc::Compare(Lhs, Rhs) == 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

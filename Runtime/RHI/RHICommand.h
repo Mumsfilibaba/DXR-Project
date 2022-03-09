@@ -12,7 +12,6 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHICommand
 
-// Base render command
 class CRHICommand
 {
 public:
@@ -258,7 +257,7 @@ public:
 class CRHISetPrimitiveTopologyCommand : public CRHICommand
 {
 public:
-    CRHISetPrimitiveTopologyCommand(EPrimitiveTopology InPrimitiveTopologyType)
+    CRHISetPrimitiveTopologyCommand(ERHIPrimitiveTopology InPrimitiveTopologyType)
         : PrimitiveTopologyType(InPrimitiveTopologyType)
     {
     }
@@ -268,14 +267,14 @@ public:
         CmdContext.SetPrimitiveTopology(PrimitiveTopologyType);
     }
 
-    EPrimitiveTopology PrimitiveTopologyType;
+    ERHIPrimitiveTopology PrimitiveTopologyType;
 };
 
 // Set VertexBuffers RHICommand
 class CRHISetVertexBuffersCommand : public CRHICommand
 {
 public:
-    CRHISetVertexBuffersCommand(CRHIVertexBuffer** InVertexBuffers, uint32 InVertexBufferCount, uint32 InStartSlot)
+    CRHISetVertexBuffersCommand(CRHIBuffer** InVertexBuffers, uint32 InVertexBufferCount, uint32 InStartSlot)
         : VertexBuffers(InVertexBuffers)
         , VertexBufferCount(InVertexBufferCount)
         , StartSlot(InStartSlot)
@@ -297,7 +296,7 @@ public:
         CmdContext.SetVertexBuffers(VertexBuffers, VertexBufferCount, StartSlot);
     }
 
-    CRHIVertexBuffer** VertexBuffers;
+	CRHIBuffer** VertexBuffers;
 
     uint32 VertexBufferCount;
     uint32 StartSlot;
@@ -307,7 +306,7 @@ public:
 class CRHISetIndexBufferCommand : public CRHICommand
 {
 public:
-    CRHISetIndexBufferCommand(const TSharedRef<CRHIIndexBuffer>& InIndexBuffer)
+    CRHISetIndexBufferCommand(const CRHIBufferRef InIndexBuffer)
         : IndexBuffer(InIndexBuffer)
     {
     }
@@ -317,7 +316,7 @@ public:
         CmdContext.SetIndexBuffer(IndexBuffer.Get());
     }
 
-    TSharedRef<CRHIIndexBuffer> IndexBuffer;
+	CRHIBufferRef IndexBuffer;
 };
 
 // Set RenderTargets RHICommand
@@ -562,7 +561,7 @@ public:
 class CRHISetConstantBufferCommand : public CRHICommand
 {
 public:
-    CRHISetConstantBufferCommand(CRHIShader* InShader, CRHIConstantBuffer* InConstantBuffer, uint32 InParameterIndex)
+    CRHISetConstantBufferCommand(CRHIShader* InShader, CRHIBuffer* InConstantBuffer, uint32 InParameterIndex)
         : Shader(InShader)
         , ConstantBuffer(InConstantBuffer)
         , ParameterIndex(InParameterIndex)
@@ -575,7 +574,7 @@ public:
     }
 
     TSharedRef<CRHIShader>         Shader;
-    TSharedRef<CRHIConstantBuffer> ConstantBuffer;
+    TSharedRef<CRHIBuffer> ConstantBuffer;
 
     uint32 ParameterIndex;
 };
@@ -584,7 +583,7 @@ public:
 class CRHISetConstantBuffersCommand : public CRHICommand
 {
 public:
-    CRHISetConstantBuffersCommand(CRHIShader* InShader, CRHIConstantBuffer** InConstantBuffers, uint32 InNumConstantBuffers, uint32 InParameterIndex)
+    CRHISetConstantBuffersCommand(CRHIShader* InShader, CRHIBuffer** InConstantBuffers, uint32 InNumConstantBuffers, uint32 InParameterIndex)
         : Shader(InShader)
         , ConstantBuffers(InConstantBuffers)
         , NumConstantBuffers(InNumConstantBuffers)
@@ -608,7 +607,7 @@ public:
     }
 
     TSharedRef<CRHIShader> Shader;
-    CRHIConstantBuffer** ConstantBuffers;
+    CRHIBuffer** ConstantBuffers;
 
     uint32 NumConstantBuffers;
     uint32 ParameterIndex;
@@ -708,9 +707,10 @@ public:
         CmdContext.UpdateBuffer(Destination.Get(), DestinationOffsetInBytes, SizeInBytes, SourceData);
     }
 
-    TSharedRef<CRHIBuffer> Destination;
+    CRHIBufferRef Destination;
     uint64 DestinationOffsetInBytes;
     uint64 SizeInBytes;
+	
     const void* SourceData;
 };
 
@@ -756,8 +756,9 @@ public:
         CmdContext.CopyBuffer(Destination.Get(), Source.Get(), CopyBufferInfo);
     }
 
-    TSharedRef<CRHIBuffer> Destination;
-    TSharedRef<CRHIBuffer> Source;
+    CRHIBufferRef Destination;
+    CRHIBufferRef Source;
+	
     SRHICopyBufferInfo CopyBufferInfo;
 };
 
@@ -798,6 +799,7 @@ public:
 
     TSharedRef<CRHITexture> Destination;
     TSharedRef<CRHITexture> Source;
+	
     SRHICopyTextureInfo CopyTextureInfo;
 };
 
@@ -839,7 +841,7 @@ public:
 class CRHIBuildRayTracingGeometryCommand : public CRHICommand
 {
 public:
-    CRHIBuildRayTracingGeometryCommand(CRHIRayTracingGeometry* InRayTracingGeometry, CRHIVertexBuffer* InVertexBuffer, CRHIIndexBuffer* InIndexBuffer, bool bInUpdate)
+    CRHIBuildRayTracingGeometryCommand(CRHIRayTracingGeometry* InRayTracingGeometry, CRHIBuffer* InVertexBuffer, CRHIBuffer* InIndexBuffer, bool bInUpdate)
         : RayTracingGeometry(InRayTracingGeometry)
         , VertexBuffer(InVertexBuffer)
         , IndexBuffer(InIndexBuffer)
@@ -853,8 +855,8 @@ public:
     }
 
     TSharedRef<CRHIRayTracingGeometry> RayTracingGeometry;
-    TSharedRef<CRHIVertexBuffer> VertexBuffer;
-    TSharedRef<CRHIIndexBuffer>  IndexBuffer;
+    TSharedRef<CRHIBuffer> VertexBuffer;
+    TSharedRef<CRHIBuffer>  IndexBuffer;
 
     bool bUpdate;
 };
@@ -936,7 +938,7 @@ public:
         CmdContext.TransitionBuffer(Buffer.Get(), BeforeState, AfterState);
     }
 
-    TSharedRef<CRHIBuffer> Buffer;
+    CRHIBufferRef Buffer;
     ERHIResourceState BeforeState;
     ERHIResourceState AfterState;
 };
@@ -972,7 +974,7 @@ public:
         CmdContext.UnorderedAccessBufferBarrier(Buffer.Get());
     }
 
-    TSharedRef<CRHIBuffer> Buffer;
+    CRHIBufferRef Buffer;
 };
 
 // Draw RHICommand

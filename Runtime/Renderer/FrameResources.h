@@ -70,20 +70,20 @@ struct RENDERER_API SFrameResources
 
     void Release();
 
-    const EFormat DepthBufferFormat = EFormat::D32_Float;
-    const EFormat SSAOBufferFormat = EFormat::R8_Unorm;
-    const EFormat FinalTargetFormat = EFormat::R16G16B16A16_Float;
-    const EFormat RTOutputFormat = EFormat::R16G16B16A16_Float;
+    const EFormat DepthBufferFormat  = EFormat::D32_Float;
+    const EFormat SSAOBufferFormat   = EFormat::R8_Unorm;
+    const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
+    const EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
     const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
-    const EFormat AlbedoFormat = EFormat::R8G8B8A8_Unorm;
-    const EFormat MaterialFormat = EFormat::R8G8B8A8_Unorm;
-    const EFormat NormalFormat = EFormat::R10G10B10A2_Unorm;
-    const EFormat ViewNormalFormat = EFormat::R10G10B10A2_Unorm;
+    const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
+    const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
+    const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
+    const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
 
     CRHITexture2D* BackBuffer = nullptr;
 
-    TSharedRef<CRHIConstantBuffer> CameraBuffer;
-    TSharedRef<CRHIConstantBuffer> TransformBuffer;
+    TSharedRef<CRHIBuffer> CameraBuffer;
+    TSharedRef<CRHIBuffer> TransformBuffer;
 
     TSharedRef<CRHISamplerState> PointLightShadowSampler;
     TSharedRef<CRHISamplerState> DirectionalLightShadowSampler;

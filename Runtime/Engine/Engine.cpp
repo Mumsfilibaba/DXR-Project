@@ -105,12 +105,12 @@ bool CEngine::Initialize()
     }
 
     /* Create material sampler (Used for now by all materials) */
-    SRHISamplerStateInfo SamplerCreateInfo;
-    SamplerCreateInfo.AddressU       = ESamplerMode::Wrap;
-    SamplerCreateInfo.AddressV       = ESamplerMode::Wrap;
-    SamplerCreateInfo.AddressW       = ESamplerMode::Wrap;
-    SamplerCreateInfo.ComparisonFunc = EComparisonFunc::Never;
-    SamplerCreateInfo.Filter         = ESamplerFilter::Anistrotopic;
+    CRHISamplerStateDesc SamplerCreateInfo;
+    SamplerCreateInfo.AddressU       = ERHISamplerMode::Wrap;
+    SamplerCreateInfo.AddressV       = ERHISamplerMode::Wrap;
+    SamplerCreateInfo.AddressW       = ERHISamplerMode::Wrap;
+    SamplerCreateInfo.ComparisonFunc = ERHIComparisonFunc::Never;
+    SamplerCreateInfo.Filter         = ERHISamplerFilter::Anistrotopic;
     SamplerCreateInfo.MaxAnisotropy  = 16;
     SamplerCreateInfo.MaxLOD         = FLT_MAX;
     SamplerCreateInfo.MinLOD         = -FLT_MAX;

@@ -43,7 +43,7 @@ public:
 
     FORCEINLINE CVulkanImageView* GetImageView(uint32 Index)
     {
-        return &ImageViews[Index];
+        return ImageViews[Index].Get();
     }
 
 public:
@@ -70,7 +70,9 @@ private:
     bool Initialize();
 
     bool CreateSwapChain();
-    void DestroySwapChain();
+	bool CreateRenderTargets();
+	
+	void DestroySwapChain();
 	
 	bool AquireNextImage();
 
@@ -86,12 +88,11 @@ private:
     CVulkanQueueRef      Queue;
     CVulkanBackBufferRef BackBuffer;
 
-    TInlineArray<VkImage, NUM_BACK_BUFFERS>          Images;
-    TInlineArray<CVulkanImageView, NUM_BACK_BUFFERS> ImageViews;
-
-	uint32 SemaphoreIndex = 0;
+    TInlineArray<VkImage, NUM_BACK_BUFFERS>             Images;
+    TInlineArray<CVulkanImageViewRef, NUM_BACK_BUFFERS> ImageViews;
 	
     TInlineArray<CVulkanSemaphoreRef, NUM_BACK_BUFFERS> ImageSemaphores;
     TInlineArray<CVulkanSemaphoreRef, NUM_BACK_BUFFERS> RenderSemaphores;
+	uint32 SemaphoreIndex = 0;
 };
 

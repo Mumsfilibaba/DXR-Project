@@ -11,15 +11,15 @@
 // Helpers for characters */
 
 template<typename CharType>
-class TStringUtils;
+class TStringMisc;
 
 template<>
-class TStringUtils<char>
+class TStringMisc<char>
 {
 public:
 
-    using CharType = char;
-    using Pointer = CharType*;
+    using CharType     = char;
+    using Pointer      = CharType*;
     using ConstPointer = const Pointer;
 
     static constexpr CharType Null = '\0';
@@ -271,7 +271,7 @@ public:
 // Specialization for wide-chars
 
 template<>
-class TStringUtils<wchar_t>
+class TStringMisc<wchar_t>
 {
 public:
 
@@ -527,8 +527,8 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Predefined types
 
-using StringUtils  = TStringUtils<char>;
-using WStringUtils = TStringUtils<wchar_t>;
+using StringMisc  = TStringMisc<char>;
+using WStringMisc = TStringMisc<wchar_t>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helpers for StringParsing

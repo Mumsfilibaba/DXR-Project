@@ -1,14 +1,14 @@
 #include "VulkanDriverInstance.h"
 #include "VulkanLoader.h"
 
-#include "Core/Templates/StringUtils.h"
+#include "Core/Templates/StringMisc.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
 #include "Platform/PlatformVulkan.h"
 
 static const auto RawStringComparator = [](const char* Lhs, const char* Rhs) -> bool
 {
-    return StringUtils::Compare(Lhs, Rhs) == 0;
+    return StringMisc::Compare(Lhs, Rhs) == 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/

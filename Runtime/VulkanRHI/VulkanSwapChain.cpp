@@ -144,7 +144,7 @@ bool CVulkanSwapChain::Initialize(const SVulkanSwapChainCreateInfo& CreateInfo)
     SwapChainCreateInfo.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
     SwapChainCreateInfo.queueFamilyIndexCount = 0;
     SwapChainCreateInfo.pQueueFamilyIndices   = nullptr;
-    SwapChainCreateInfo.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+    SwapChainCreateInfo.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     SwapChainCreateInfo.preTransform          = Capabilities.currentTransform;
     SwapChainCreateInfo.compositeAlpha        = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     SwapChainCreateInfo.presentMode           = SelectedPresentMode;
@@ -165,6 +165,7 @@ bool CVulkanSwapChain::Initialize(const SVulkanSwapChainCreateInfo& CreateInfo)
     Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &BufferCount, nullptr);
     VULKAN_CHECK_RESULT(Result, "Failed to retrive the number of images in SwapChain");
 
+	Format = SelectedFormat;
     return true;
 }
 

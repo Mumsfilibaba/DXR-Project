@@ -11,7 +11,7 @@ bool CMesh::Init(const SMeshData& Data)
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
     IndexCount = static_cast<uint32>(Data.Indices.Size());
 
-    const uint32 BufferFlags = RHISupportsRayTracing() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
+    const uint32 BufferFlags = RHISupportsRayTracing() ? BufferFlag_ShaderResource | BufferFlag_Default : BufferFlag_Default;
 
     SRHIResourceData InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
     VertexBuffer = RHICreateVertexBuffer<SVertex>(VertexCount, BufferFlags, ERHIResourceState::VertexAndConstantBuffer, &InitialData);

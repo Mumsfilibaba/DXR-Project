@@ -25,8 +25,8 @@ private:
     TSharedRef<CRHIGraphicsPipelineState> PipelineState;
     TSharedRef<CRHIVertexShader> SkyboxVertexShader;
     TSharedRef<CRHIPixelShader>  SkyboxPixelShader;
-    TSharedRef<CRHIVertexBuffer> SkyboxVertexBuffer;
-    TSharedRef<CRHIIndexBuffer>  SkyboxIndexBuffer;
+    TSharedRef<CRHIBuffer> SkyboxVertexBuffer;
+    TSharedRef<CRHIBuffer>  SkyboxIndexBuffer;
     TSharedRef<CRHISamplerState> SkyboxSampler;
 
     SMeshData SkyboxMesh;

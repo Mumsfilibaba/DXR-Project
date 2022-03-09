@@ -525,7 +525,7 @@ void CD3D12ShaderBindingTableBuilder::PopulateEntry(
         GPUResourceHandles[GPUResourceIndex] = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
         GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
 
-        for (CRHIConstantBuffer* CBuffer : Resources.ConstantBuffers)
+        for (CRHIBuffer* CBuffer : Resources.ConstantBuffers)
         {
             CD3D12ConstantBuffer* DxConstantBuffer = static_cast<CD3D12ConstantBuffer*>(CBuffer);
             ResourceHandles[CPUResourceIndex++] = DxConstantBuffer->GetView().GetOfflineHandle();

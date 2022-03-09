@@ -5,19 +5,28 @@
 #include "RHI/RHIResources.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12BaseBuffer
+// Typedef
 
-class CD3D12BaseBuffer : public CD3D12DeviceObject
+typedef TSharedRef<class CD3D12Buffer> CD3D12BufferRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12Buffer
+
+class CD3D12Buffer : public CRHIBuffer, public CD3D12DeviceObject
 {
 public:
-    CD3D12BaseBuffer(CD3D12Device* InDevice)
-        : CD3D12DeviceObject(InDevice)
-        , Resource(nullptr)
-    {
-    }
+    CD3D12Buffer(CD3D12Device* InDevice, const CRHIBufferDesc& InBufferDesc);
+    ~CD3D12Buffer() = default;
 
-    // Set the native resource, this function takes ownership of the current reference, call AddRef to use it in more places
-    virtual void SetResource(CD3D12Resource* InResource) { Resource = InResource; }
+    bool Initialize(class CD3D12CommandContext* CommandContext, ERHIResourceState InitalState, const SRHIResourceData* InitialData);
+
+    virtual void SetName(const String& InName) override final;
+
+    virtual void* GetNativeResource() const override final;
+
+    virtual bool IsValid() const override final;
+
+    void SetResource(const CD3D12ResourceRef& InResource);
 
     FORCEINLINE uint64 GetSizeInBytes() const
     {
@@ -30,17 +39,17 @@ public:
     }
 
 protected:
-    TSharedRef<CD3D12Resource> Resource;
+    CD3D12ResourceRef Resource;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12BaseVertexBuffer
 
-class CD3D12BaseVertexBuffer : public CRHIVertexBuffer, public CD3D12BaseBuffer
+class CD3D12BaseVertexBuffer : public CRHIBuffer, public CD3D12BaseBuffer
 {
 public:
     CD3D12BaseVertexBuffer(CD3D12Device* InDevice, uint32 InNumVertices, uint32 InStride, uint32 InFlags)
-        : CRHIVertexBuffer(InNumVertices, InStride, InFlags)
+        : CRHIBuffer(InNumVertices, InStride, InFlags)
         , CD3D12BaseBuffer(InDevice)
         , View()
     {
@@ -69,11 +78,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12BaseIndexBuffer
 
-class CD3D12BaseIndexBuffer : public CRHIIndexBuffer, public CD3D12BaseBuffer
+class CD3D12BaseIndexBuffer : public CRHIBuffer, public CD3D12BaseBuffer
 {
 public:
     CD3D12BaseIndexBuffer(CD3D12Device* InDevice, ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
-        : CRHIIndexBuffer(InIndexFormat, InNumIndices, InFlags)
+        : CRHIBuffer(InIndexFormat, InNumIndices, InFlags)
         , CD3D12BaseBuffer(InDevice)
         , View()
     {
@@ -107,17 +116,17 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12BaseConstantBuffer
 
-class CD3D12BaseConstantBuffer : public CRHIConstantBuffer, public CD3D12BaseBuffer
+class CD3D12BaseConstantBuffer : public CRHIBuffer, public CD3D12BaseBuffer
 {
 public:
     CD3D12BaseConstantBuffer(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, uint32 InSizeInBytes, uint32 InFlags)
-        : CRHIConstantBuffer(InSizeInBytes, InFlags)
+        : CRHIBuffer(InSizeInBytes, InFlags)
         , CD3D12BaseBuffer(InDevice)
         , View(InDevice, InHeap)
     {
     }
 
-    virtual void SetResource(CD3D12Resource* InResource) override final
+    virtual void SetResource(CD3D12Resource* InResource, ERHIResourceState InitalState, const SRHIResourceData* InitialData) override final
     {
         CD3D12BaseBuffer::SetResource(InResource);
 
@@ -155,11 +164,11 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12BaseStructuredBuffer
 
-class CD3D12BaseStructuredBuffer : public CRHIStructuredBuffer, public CD3D12BaseBuffer
+class CD3D12BaseStructuredBuffer : public CRHIBuffer, public CD3D12BaseBuffer
 {
 public:
     CD3D12BaseStructuredBuffer(CD3D12Device* InDevice, uint32 InSizeInBytes, uint32 InStride, uint32 InFlags)
-        : CRHIStructuredBuffer(InSizeInBytes, InStride, InFlags)
+        : CRHIBuffer(InSizeInBytes, InStride, InFlags)
         , CD3D12BaseBuffer(InDevice)
     {
     }
@@ -219,28 +228,7 @@ public:
         }
     }
 
-    virtual void SetName(const String& InName) override final
-    {
-        CRHIResource::SetName(InName);
 
-        CD3D12Resource* DxResource = CD3D12BaseBuffer::Resource.Get();
-        if (DxResource)
-        {
-            DxResource->SetName(InName);
-        }
-    }
-
-    virtual void* GetNativeResource() const override final
-    {
-        CD3D12Resource* DxResource = CD3D12BaseBuffer::Resource.Get();
-        return DxResource ? reinterpret_cast<void*>(DxResource->GetResource()) : nullptr;
-    }
-
-    virtual bool IsValid() const override
-    {
-        CD3D12Resource* DxResource = CD3D12BaseBuffer::Resource.Get();
-        return DxResource ? (CD3D12BaseBuffer::Resource->GetResource() != nullptr) : false;
-    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

@@ -1,4 +1,6 @@
 #include "VulkanCommandContext.h"
+#include "VulkanResourceView.h"
+#include "VulkanTexture.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanCommandContext
@@ -58,7 +60,24 @@ void CVulkanCommandContext::EndTimeStamp(CRHITimestampQuery* TimestampQuery, uin
 
 void CVulkanCommandContext::ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor)
 {
-    //CommandBuffer.ClearColorImage()
+	CVulkanRenderTargetView* VulkanRTV = reinterpret_cast<CVulkanRenderTargetView*>(RenderTargetView);
+	Assert(VulkanRTV != nullptr);
+	
+	VkClearColorValue VulkanClearColor;
+	CMemory::Memcpy(VulkanClearColor.float32, ClearColor.Elements, sizeof(ClearColor.Elements));
+	
+	VkImageSubresourceRange SubresourceRange;
+	SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	SubresourceRange.baseMipLevel   = 0;
+	SubresourceRange.levelCount     = 1;
+	SubresourceRange.baseArrayLayer = 0;
+	SubresourceRange.layerCount     = 1;
+	
+	CVulkanImageView* ImageView = VulkanRTV->GetImageView();
+	if (ImageView)
+	{
+		CommandBuffer.ClearColorImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1,  &SubresourceRange);
+	}
 }
 
 void CVulkanCommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue)
@@ -104,15 +123,15 @@ void CVulkanCommandContext::SetRenderTargets(CRHIRenderTargetView* const* Render
 {
 }
 
-void CVulkanCommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
+void CVulkanCommandContext::SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
 {
 }
 
-void CVulkanCommandContext::SetIndexBuffer(CRHIIndexBuffer* IndexBuffer)
+void CVulkanCommandContext::SetIndexBuffer(CRHIBuffer* IndexBuffer)
 {
 }
 
-void CVulkanCommandContext::SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
+void CVulkanCommandContext::SetPrimitiveTopology(ERHIPrimitiveTopology PrimitveTopologyType)
 {
 }
 
@@ -144,11 +163,11 @@ void CVulkanCommandContext::SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnor
 {
 }
 
-void CVulkanCommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
+void CVulkanCommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIBuffer* ConstantBuffer, uint32 ParameterIndex)
 {
 }
 
-void CVulkanCommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
+void CVulkanCommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
 {
 }
 
@@ -192,7 +211,7 @@ void CVulkanCommandContext::DiscardContents(class CRHIResource* Resource)
 {
 }
 
-void CVulkanCommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)      
+void CVulkanCommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer, bool bUpdate)      
 {
 }
 
@@ -217,6 +236,28 @@ void CVulkanCommandContext::GenerateMips(CRHITexture* Texture)
 
 void CVulkanCommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState)
 {
+	CVulkanTexture* VulkanTexture = CastTexture(Texture);
+	if (VulkanTexture->GetVkImage() == VK_NULL_HANDLE)
+	{
+		return;
+	}
+	
+	SVulkanImageTransitionBarrier TransitionBarrier;
+	TransitionBarrier.Image                           = VulkanTexture->GetVkImage();
+	TransitionBarrier.PreviousLayout                  = ConvertResourceStateToImageLayout(BeforeState);
+	TransitionBarrier.NewLayout                       = ConvertResourceStateToImageLayout(AfterState);
+	TransitionBarrier.DependencyFlags                 = 0;
+	TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
+	TransitionBarrier.DstAccessMask                   = VK_ACCESS_NONE;
+	TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	TransitionBarrier.SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+	TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
+	TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+	TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+	
+	CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
 }
 
 void CVulkanCommandContext::TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState)   

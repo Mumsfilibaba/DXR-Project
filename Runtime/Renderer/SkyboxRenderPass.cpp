@@ -62,11 +62,11 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         FrameResources.Skybox->SetName("Skybox");
     }
 
-    SRHISamplerStateInfo CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::Wrap;
-    CreateInfo.AddressV = ESamplerMode::Wrap;
-    CreateInfo.AddressW = ESamplerMode::Wrap;
-    CreateInfo.Filter = ESamplerFilter::MinMagMipLinear;
+    CRHISamplerStateDesc CreateInfo;
+    CreateInfo.AddressU = ERHISamplerMode::Wrap;
+    CreateInfo.AddressV = ERHISamplerMode::Wrap;
+    CreateInfo.AddressW = ERHISamplerMode::Wrap;
+    CreateInfo.Filter = ERHISamplerFilter::MinMagMipLinear;
     CreateInfo.MinLOD = 0.0f;
     CreateInfo.MaxLOD = 0.0f;
 
@@ -141,7 +141,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     }
 
     SRHIDepthStencilStateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
+    DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
@@ -198,7 +198,7 @@ void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& 
     CRHIRenderTargetView* RenderTarget[] = { FrameResources.FinalTarget->GetRenderTargetView() };
     CmdList.SetRenderTargets(RenderTarget, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
     CmdList.SetVertexBuffers(&SkyboxVertexBuffer, 1, 0);
     CmdList.SetIndexBuffer(SkyboxIndexBuffer.Get());
     CmdList.SetGraphicsPipelineState(PipelineState.Get());

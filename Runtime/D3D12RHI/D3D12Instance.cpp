@@ -80,7 +80,7 @@ CRHIInstance* CD3D12Instance::CreateInstance()
 }
 
 CD3D12Instance::CD3D12Instance()
-    : CRHIInstance(ERHIInstanceApi::D3D12)
+    : CRHIInstance(ERHIType::D3D12)
     , Device(nullptr)
     , DirectCommandContext(nullptr)
 {
@@ -499,7 +499,21 @@ CRHITexture3D* CD3D12Instance::CreateTexture3D(EFormat Format, uint32 Width, uin
     return CreateTexture<CD3D12Texture3D>(Format, Width, Height, Depth, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHISamplerState* CD3D12Instance::CreateSamplerState(const SRHISamplerStateInfo& CreateInfo)
+CRHIBufferRef CD3D12Instance::CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData)
+{
+    CD3D12BufferRef NewBuffer = dbg_new CD3D12BufferRef(GetDevice(), BufferDesc);
+    if (!(NewBuffer && NewBuffer->Initialize(DirectCommandContext.Get(), InitialState, InitalData)))
+    {
+        D3D12_ERROR_ALWAYS("Failed to create Buffer");
+        return nullptr;
+    }
+    else
+    {
+        return NewBuffer;
+    }
+}
+
+CRHISamplerStateRef CD3D12Instance::CreateSamplerState(const CRHISamplerStateDesc& CreateInfo)
 {
     D3D12_SAMPLER_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -516,171 +530,19 @@ CRHISamplerState* CD3D12Instance::CreateSamplerState(const SRHISamplerStateInfo&
 
     CMemory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor.Elements, sizeof(Desc.BorderColor));
 
-    TSharedRef<CD3D12SamplerState> Sampler = dbg_new CD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap);
-    if (!Sampler->Init(Desc))
+    CD3D12SamplerStateRef NewSampler = dbg_new CD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap);
+    if (!(NewSampler && NewSampler->Init(Desc)))
     {
         return nullptr;
     }
     else
     {
-        return Sampler.ReleaseOwnership();
+        return Sampler;
     }
 }
 
-template<typename D3D12BufferType>
-bool CD3D12Instance::CreateBuffer(D3D12BufferType* Buffer, uint32 SizeInBytes, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
-{
-    D3D12_ERROR(Buffer != nullptr, "Buffer cannot be nullptr");
 
-    D3D12_RESOURCE_DESC Desc;
-    CMemory::Memzero(&Desc);
-
-    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags              = ConvertBufferFlags(Flags);
-    Desc.Format             = DXGI_FORMAT_UNKNOWN;
-    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = SizeInBytes;
-    Desc.Height             = 1;
-    Desc.DepthOrArraySize   = 1;
-    Desc.MipLevels          = 1;
-    Desc.Alignment          = 0;
-    Desc.SampleDesc.Count   = 1;
-    Desc.SampleDesc.Quality = 0;
-
-    D3D12_HEAP_TYPE       DxHeapType     = D3D12_HEAP_TYPE_DEFAULT;
-    D3D12_RESOURCE_STATES DxInitialState = D3D12_RESOURCE_STATE_COMMON;
-    if (Flags & BufferFlag_Dynamic)
-    {
-        DxHeapType     = D3D12_HEAP_TYPE_UPLOAD;
-        DxInitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
-    }
-
-    TSharedRef<CD3D12Resource> Resource = dbg_new CD3D12Resource(GetDevice(), Desc, DxHeapType);
-    if (!Resource->Init(DxInitialState, nullptr))
-    {
-        return false;
-    }
-    else
-    {
-        Buffer->SetResource(Resource.ReleaseOwnership());
-    }
-
-    D3D12_ERROR(Buffer->GetSizeInBytes() <= SizeInBytes, "Size of InitialData is larger than the allocated memory");
-
-    if (InitialData)
-    {
-        D3D12_ERROR(InitialData->GetSizeInBytes() <= SizeInBytes, "Size of InitialData is larger than the allocated memory");
-
-        if (Buffer->IsDynamic())
-        {
-            void* HostData = Buffer->Map(0, 0);
-            if (!HostData)
-            {
-                return false;
-            }
-
-            // Copy over relevant data
-            const uint32 InitialDataSize = InitialData->GetSizeInBytes();
-            CMemory::Memcpy(HostData, InitialData->GetData(), InitialDataSize);
-            // Set the remaining, unused memory to zero
-            CMemory::Memzero(reinterpret_cast<uint8*>(HostData) + InitialDataSize, SizeInBytes - InitialDataSize);
-
-            Buffer->Unmap(0, 0);
-        }
-        else
-        {
-            DirectCommandContext->Begin();
-
-            DirectCommandContext->TransitionBuffer(Buffer, ERHIResourceState::Common, ERHIResourceState::CopyDest);
-            DirectCommandContext->UpdateBuffer(Buffer, 0, InitialData->GetSizeInBytes(), InitialData->GetData());
-
-            // NOTE: Transfer to the initial state
-            DirectCommandContext->TransitionBuffer(Buffer, ERHIResourceState::CopyDest, InitialState);
-
-            DirectCommandContext->End();
-        }
-    }
-    else
-    {
-        if (InitialState != ERHIResourceState::Common && !Buffer->IsDynamic())
-        {
-            DirectCommandContext->Begin();
-            DirectCommandContext->TransitionBuffer(Buffer, ERHIResourceState::Common, InitialState);
-            DirectCommandContext->End();
-        }
-    }
-
-    return true;
-}
-
-CRHIVertexBuffer* CD3D12Instance::CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
-{
-    const uint32 SizeInBytes = NumVertices * Stride;
-
-    TSharedRef<CD3D12VertexBuffer> NewBuffer = dbg_new CD3D12VertexBuffer(GetDevice(), NumVertices, Stride, Flags);
-    if (!CreateBuffer<CD3D12VertexBuffer>(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
-    {
-        LOG_ERROR("[CD3D12RHIInterface]: Failed to create VertexBuffer");
-        return nullptr;
-    }
-    else
-    {
-        return NewBuffer.ReleaseOwnership();
-    }
-}
-
-CRHIIndexBuffer* CD3D12Instance::CreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
-{
-    const uint32 SizeInBytes = NumIndices * GetStrideFromIndexFormat(Format);
-    const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>(SizeInBytes, sizeof(uint32));
-
-    TSharedRef<CD3D12IndexBuffer> NewBuffer = dbg_new CD3D12IndexBuffer(GetDevice(), Format, NumIndices, Flags);
-    if (!CreateBuffer<CD3D12IndexBuffer>(NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData))
-    {
-        LOG_ERROR("[CD3D12RHIInterface]: Failed to create IndexBuffer");
-        return nullptr;
-    }
-    else
-    {
-        return NewBuffer.ReleaseOwnership();
-    }
-}
-
-CRHIConstantBuffer* CD3D12Instance::CreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
-{
-    Assert(!(Flags & BufferFlag_UAV) && !(Flags & BufferFlag_SRV));
-
-    const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
-
-    TSharedRef<CD3D12ConstantBuffer> NewBuffer = dbg_new CD3D12ConstantBuffer(GetDevice(), ResourceOfflineDescriptorHeap, Size, Flags);
-    if (!CreateBuffer<CD3D12ConstantBuffer>(NewBuffer.Get(), AlignedSizeInBytes, Flags, InitialState, InitialData))
-    {
-        LOG_ERROR("[CD3D12RHIInterface]: Failed to create ConstantBuffer");
-        return nullptr;
-    }
-    else
-    {
-        return NewBuffer.ReleaseOwnership();
-    }
-}
-
-CRHIStructuredBuffer* CD3D12Instance::CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
-{
-    const uint32 SizeInBytes = NumElements * Stride;
-
-    TSharedRef<CD3D12StructuredBuffer> NewBuffer = dbg_new CD3D12StructuredBuffer(GetDevice(), NumElements, Stride, Flags);
-    if (!CreateBuffer<CD3D12StructuredBuffer>(NewBuffer.Get(), SizeInBytes, Flags, InitialState, InitialData))
-    {
-        LOG_ERROR("[CD3D12RHIInterface]: Failed to create StructuredBuffer");
-        return nullptr;
-    }
-    else
-    {
-        return NewBuffer.ReleaseOwnership();
-    }
-}
-
-CRHIRayTracingGeometry* CD3D12Instance::CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer)
+CRHIRayTracingGeometry* CD3D12Instance::CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer)
 {
     CD3D12VertexBuffer* DxVertexBuffer = static_cast<CD3D12VertexBuffer*>(VertexBuffer);
     CD3D12IndexBuffer* DxIndexBuffer = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
@@ -822,7 +684,7 @@ CRHIShaderResourceView* CD3D12Instance::CreateShaderResourceView(const SRHIShade
     }
     else if (CreateInfo.Type == SRHIShaderResourceViewInfo::EType::VertexBuffer)
     {
-        CRHIVertexBuffer* Buffer   = CreateInfo.VertexBuffer.Buffer;
+        CRHIBuffer* Buffer   = CreateInfo.VertexBuffer.Buffer;
         CD3D12BaseBuffer* DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
@@ -837,7 +699,7 @@ CRHIShaderResourceView* CD3D12Instance::CreateShaderResourceView(const SRHIShade
     }
     else if (CreateInfo.Type == SRHIShaderResourceViewInfo::EType::IndexBuffer)
     {
-        CRHIIndexBuffer*  Buffer   = CreateInfo.IndexBuffer.Buffer;
+        CRHIBuffer*  Buffer   = CreateInfo.IndexBuffer.Buffer;
         CD3D12BaseBuffer* DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
@@ -853,7 +715,7 @@ CRHIShaderResourceView* CD3D12Instance::CreateShaderResourceView(const SRHIShade
     }
     else if (CreateInfo.Type == SRHIShaderResourceViewInfo::EType::StructuredBuffer)
     {
-        CRHIStructuredBuffer* Buffer   = CreateInfo.StructuredBuffer.Buffer;
+        CRHIBuffer* Buffer   = CreateInfo.StructuredBuffer.Buffer;
         CD3D12BaseBuffer*     DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
@@ -965,7 +827,7 @@ CRHIUnorderedAccessView* CD3D12Instance::CreateUnorderedAccessView(const SRHIUno
     }
     else if (CreateInfo.Type == SRHIUnorderedAccessViewInfo::EType::VertexBuffer)
     {
-        CRHIVertexBuffer* Buffer   = CreateInfo.VertexBuffer.Buffer;
+        CRHIBuffer* Buffer   = CreateInfo.VertexBuffer.Buffer;
         CD3D12BaseBuffer* DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
@@ -980,7 +842,7 @@ CRHIUnorderedAccessView* CD3D12Instance::CreateUnorderedAccessView(const SRHIUno
     }
     else if (CreateInfo.Type == SRHIUnorderedAccessViewInfo::EType::IndexBuffer)
     {
-        CRHIIndexBuffer*  Buffer   = CreateInfo.IndexBuffer.Buffer;
+        CRHIBuffer*  Buffer   = CreateInfo.IndexBuffer.Buffer;
         CD3D12BaseBuffer* DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
@@ -999,7 +861,7 @@ CRHIUnorderedAccessView* CD3D12Instance::CreateUnorderedAccessView(const SRHIUno
     }
     else if (CreateInfo.Type == SRHIUnorderedAccessViewInfo::EType::StructuredBuffer)
     {
-        CRHIStructuredBuffer* Buffer   = CreateInfo.StructuredBuffer.Buffer;
+        CRHIBuffer* Buffer   = CreateInfo.StructuredBuffer.Buffer;
         CD3D12BaseBuffer*     DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 

@@ -60,7 +60,7 @@ struct SDepthStencilOp
     EStencilOp      StencilFailOp = EStencilOp::Keep;
     EStencilOp      StencilDepthFailOp = EStencilOp::Keep;
     EStencilOp      StencilPassOp = EStencilOp::Keep;
-    EComparisonFunc StencilFunc = EComparisonFunc::Always;
+    ERHIComparisonFunc StencilFunc = ERHIComparisonFunc::Always;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -69,7 +69,7 @@ struct SDepthStencilOp
 struct SRHIDepthStencilStateInfo
 {
     EDepthWriteMask DepthWriteMask = EDepthWriteMask::All;
-    EComparisonFunc DepthFunc = EComparisonFunc::Less;
+    ERHIComparisonFunc DepthFunc = ERHIComparisonFunc::Less;
     bool            bDepthEnable = true;
     uint8           StencilReadMask = 0xff;
     uint8           StencilWriteMask = 0xff;

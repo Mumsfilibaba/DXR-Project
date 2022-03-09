@@ -6,7 +6,7 @@
 #include "Core/Templates/Move.h"
 #include "Core/Templates/EnableIf.h"
 #include "Core/Templates/IsTStringType.h"
-#include "Core/Templates/StringUtils.h"
+#include "Core/Templates/StringMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TStringView - Class for viewing a string similar to std::string_view
@@ -20,7 +20,7 @@ public:
 
     using ElementType = CharType;
     using SizeType = int32;
-    using StringUtils = TStringUtils<CharType>;
+    using StringMisc = TStringMisc<CharType>;
 
     enum
     {
@@ -46,7 +46,7 @@ public:
      */
     FORCEINLINE TStringView(const CharType* InString) noexcept
         : ViewStart(InString)
-        , ViewEnd(InString + StringUtils::Length(InString))
+        , ViewEnd(InString + StringMisc::Length(InString))
     {
     }
 
@@ -120,7 +120,7 @@ public:
         Assert((Position < Length()) || (Position == 0));
 
         SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
-        StringUtils::Copy(Buffer, ViewStart + Position, CopySize);
+        StringMisc::Copy(Buffer, ViewStart + Position, CopySize);
     }
 
     /**
@@ -164,7 +164,7 @@ public:
         const CharType* ViewIterator = ViewStart;
         while (ViewIterator != ViewEnd)
         {
-            if (!StringUtils::IsWhiteSpace(*(ViewIterator++)))
+            if (!StringMisc::IsWhiteSpace(*(ViewIterator++)))
             {
                 break;
             }
@@ -196,7 +196,7 @@ public:
         while (ViewIterator != ViewStart)
         {
             ViewIterator--;
-            if (!StringUtils::IsWhiteSpace(*ViewIterator))
+            if (!StringMisc::IsWhiteSpace(*ViewIterator))
             {
                 break;
             }
@@ -287,7 +287,7 @@ public:
      */
     FORCEINLINE int32 Compare(const CharType* InString) const noexcept
     {
-        return Compare(InString, StringUtils::Length(InString));
+        return Compare(InString, StringMisc::Length(InString));
     }
 
     /**
@@ -344,7 +344,7 @@ public:
      */
     FORCEINLINE int32 CompareNoCase(const CharType* InString) const noexcept
     {
-        return CompareNoCase(InString, StringUtils::Length(InString));
+        return CompareNoCase(InString, StringMisc::Length(InString));
     }
 
     /**
@@ -369,8 +369,8 @@ public:
         const CharType* Start = ViewStart;
         while (Start != ViewEnd)
         {
-            const CharType TempChar0 = StringUtils::ToLower(*Start);
-            const CharType TempChar1 = StringUtils::ToLower(*InString);
+            const CharType TempChar0 = StringMisc::ToLower(*Start);
+            const CharType TempChar1 = StringMisc::ToLower(*InString);
 
             if (TempChar0 != TempChar1)
             {
@@ -393,7 +393,7 @@ public:
      */
     FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return Find(InString, StringUtils::Length(InString), Position);
+        return Find(InString, StringMisc::Length(InString), Position);
     }
 
     /**
@@ -421,7 +421,7 @@ public:
     {
         Assert((Position < Length()) || (Position == 0));
 
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Length() == 0))
+        if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (Length() == 0))
         {
             return 0;
         }
@@ -436,7 +436,7 @@ public:
                 {
                     break;
                 }
-                else if (StringUtils::IsTerminator(*SubstringIt))
+                else if (StringMisc::IsTerminator(*SubstringIt))
                 {
                     return static_cast<SizeType>(static_cast<intptr_t>(Start - ViewStart));
                 }
@@ -459,7 +459,7 @@ public:
     {
         Assert((Position < Length()) || (Position == 0));
 
-        if (StringUtils::IsTerminator(Char) || (Length() == 0))
+        if (StringMisc::IsTerminator(Char) || (Length() == 0))
         {
             return 0;
         }
@@ -488,7 +488,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFind(InString, StringUtils::Length(InString), Position);
+        return ReverseFind(InString, StringMisc::Length(InString), Position);
     }
 
     /**
@@ -518,7 +518,7 @@ public:
         Assert((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (ThisLength == 0))
+        if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (ThisLength == 0))
         {
             return ThisLength;
         }
@@ -540,7 +540,7 @@ public:
                 {
                     break;
                 }
-                else if (StringUtils::IsTerminator(*SubstringIt))
+                else if (StringMisc::IsTerminator(*SubstringIt))
                 {
                     return static_cast<SizeType>(static_cast<intptr_t>(End - ViewStart));
                 }
@@ -562,7 +562,7 @@ public:
         Assert((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
-        if (StringUtils::IsTerminator(Char) || (ThisLength == 0))
+        if (StringMisc::IsTerminator(Char) || (ThisLength == 0))
         {
             return ThisLength;
         }
@@ -593,7 +593,7 @@ public:
      */
     FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneOf(InString, StringUtils::Length(InString), Position);
+        return FindOneOf(InString, StringMisc::Length(InString), Position);
     }
 
     /**
@@ -621,7 +621,7 @@ public:
     {
         Assert((Position < Length()) || (Position == 0));
 
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Length() == 0))
+        if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (Length() == 0))
         {
             return 0;
         }
@@ -654,7 +654,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneOf(InString, StringUtils::Length(InString), Position);
+        return ReverseFindOneOf(InString, StringMisc::Length(InString), Position);
     }
 
     /**
@@ -683,7 +683,7 @@ public:
         Assert((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (ThisLength == 0))
+        if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (ThisLength == 0))
         {
             return ThisLength;
         }
@@ -693,7 +693,7 @@ public:
             ThisLength = NMath::Min(Position, ThisLength);
         }
 
-        SizeType SubstringLength = StringUtils::Length(InString);
+        SizeType SubstringLength = StringMisc::Length(InString);
 
         const CharType* ViewIterator = ViewStart + ThisLength;
         while (ViewIterator != ViewStart)
@@ -723,7 +723,7 @@ public:
      */
     FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return FindOneNotOf(InString, StringUtils::Length(InString), Position);
+        return FindOneNotOf(InString, StringMisc::Length(InString), Position);
     }
 
     /**
@@ -751,7 +751,7 @@ public:
     {
         Assert((Position < Length()) || (Position == 0));
 
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Length() == 0))
+        if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (Length() == 0))
         {
             return 0;
         }
@@ -767,7 +767,7 @@ public:
                 {
                     break;
                 }
-                else if (StringUtils::IsTerminator(*SubstringStart))
+                else if (StringMisc::IsTerminator(*SubstringStart))
                 {
                     return static_cast<SizeType>(static_cast<intptr_t>(Start - ViewStart));
                 }
@@ -788,7 +788,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType Position = 0) const noexcept
     {
-        return ReverseFindOneNotOf(InString, StringUtils::Length(InString), Position);
+        return ReverseFindOneNotOf(InString, StringMisc::Length(InString), Position);
     }
 
     /**
@@ -817,7 +817,7 @@ public:
         Assert((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (ThisLength == 0))
+        if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (ThisLength == 0))
         {
             return ThisLength;
         }
@@ -827,7 +827,7 @@ public:
             ThisLength = NMath::Min(Position, ThisLength);
         }
 
-        SizeType SubstringLength = StringUtils::Length(InString);
+        SizeType SubstringLength = StringMisc::Length(InString);
 
         const CharType* ViewIterator = ViewStart + ThisLength;
         while (ViewIterator != ViewStart)
@@ -842,7 +842,7 @@ public:
                 {
                     break;
                 }
-                else if (StringUtils::IsTerminator(*SubstringStart))
+                else if (StringMisc::IsTerminator(*SubstringStart))
                 {
                     return static_cast<SizeType>(static_cast<intptr_t>(ViewIterator - ViewStart));
                 }
@@ -1052,7 +1052,7 @@ public:
      */
     FORCEINLINE const CharType* CStr() const noexcept
     {
-        return (ViewStart == nullptr) ? StringUtils::Empty() : ViewStart;
+        return (ViewStart == nullptr) ? StringMisc::Empty() : ViewStart;
     }
 
     /**

@@ -4,6 +4,7 @@
 #include "RHIResourceViews.h"
 #include "RHICommandList.h"
 #include "RHIModule.h"
+#include "RHISamplerState.h"
 
 #include "CoreApplication/Interface/PlatformWindow.h"
 
@@ -18,8 +19,8 @@ class CRHIRayTracingScene;
 enum class ERHIShadingRateTier
 {
     NotSupported = 0,
-    Tier1 = 1,
-    Tier2 = 2,
+    Tier1        = 1,
+    Tier2        = 2,
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -37,8 +38,8 @@ struct SRHIShadingRateSupport
 enum class ERHIRayTracingTier
 {
     NotSupported = 0,
-    Tier1 = 1,
-    Tier1_1 = 2,
+    Tier1        = 1,
+    Tier1_1      = 2,
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -149,54 +150,17 @@ public:
      * @param CreateInfo: Structure with information about the SamplerState
      * @return: Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
      */
-    virtual class CRHISamplerState* CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo) = 0;
+    virtual CRHISamplerStateRef CreateSamplerState(const struct CRHISamplerStateDesc& CreateInfo) = 0;
 
     /**
-     * Creates a new VertexBuffer
+     * Creates a new Buffer
      * 
-     * @param Stride: Stride of each vertex in the VertexBuffer
-     * @param NumVertices: Number of vertices in the VertexBuffer
-     * @param Flags: Buffer flags
+     * @param BufferDesc: Buffer description
      * @param InitialState: Initial ResurceState of the Buffer
      * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created VertexBuffer
+     * @return: Returns the newly created Buffer
      */
-    virtual CRHIVertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
-    
-    /**
-     * Creates a new IndexBuffer
-     *
-     * @param Format: Format of each index in the IndexBuffer
-     * @param NumIndices: Number of indices in the IndexBuffer
-     * @param Flags: Buffer flags
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created IndexBuffer
-     */
-    virtual CRHIIndexBuffer* CreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
-    
-    /**
-     * Creates a new ConstantBuffer
-     *
-     * @param Size: Size of  the ConstantBuffer
-     * @param Flags: Buffer flags
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created ConstantBuffer
-     */
-    virtual CRHIConstantBuffer* CreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
-    
-    /**
-     * Creates a new StructuredBuffer
-     *
-     * @param Stride: Stride of each element in the StructuredBuffer
-     * @param NumElements: Number of elements in the StructuredBuffer
-     * @param Flags: Buffer flags
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created StructuredBuffer
-     */
-    virtual CRHIStructuredBuffer* CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIBufferRef CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
 
     /**
      * Create a new Ray tracing scene
@@ -216,7 +180,7 @@ public:
      * @param IndexBuffer: IndexBuffer the acceleration structure with
      * @return: Returns the newly created Ray tracing Geometry
      */
-    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer) = 0;
+    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer) = 0;
 
     /**
      * Create a new ShaderResourceView
@@ -470,21 +434,21 @@ public:
      * 
      * @return: Returns the current RHI's API
      */
-    FORCEINLINE ERHIInstanceApi GetApi() const
+    FORCEINLINE ERHIType GetApi() const
     {
         return CurrentRHI;
     }
 
 protected:
 
-    CRHIInstance(ERHIInstanceApi InCurrentRHI)
+    CRHIInstance(ERHIType InCurrentRHI)
         : CurrentRHI(InCurrentRHI)
     {
     }
 
     virtual ~CRHIInstance() = default;
 
-    ERHIInstanceApi CurrentRHI;
+    ERHIType CurrentRHI;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -515,50 +479,52 @@ FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint
     return GRHIInstance->CreateTexture3D(Format, Width, Height, Depth, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE class CRHISamplerState* RHICreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo)
+FORCEINLINE CRHISamplerStateRef RHICreateSamplerState(const class CRHISamplerStateDesc& CreateInfo)
 {
     return GRHIInstance->CreateSamplerState(CreateInfo);
 }
 
-FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
-    return GRHIInstance->CreateVertexBuffer(Stride, NumVertices, Flags, InitialState, InitialData);
+	return GRHIInstance->CreateBuffer(BufferDesc, InitialState, InitialData);
+}
+
+FORCEINLINE CRHIBufferRef RHICreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+{
+    return RHICreateBuffer(CRHIBufferDesc::CreateVertexBuffer(NumVertices, Stride, Flags), InitialState, InitialData);
 }
 
 template<typename T>
-FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateVertexBuffer(uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
-    constexpr uint32 STRIDE = sizeof(T);
-    return RHICreateVertexBuffer(STRIDE, NumVertices, Flags, InitialState, InitialData);
+    return RHICreateVertexBuffer(sizeof(T), NumVertices, Flags, InitialState, InitialData);
 }
 
-FORCEINLINE CRHIIndexBuffer* RHICreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
-    return GRHIInstance->CreateIndexBuffer(Format, NumIndices, Flags, InitialState, InitialData);
+    return RHICreateBuffer(CRHIBufferDesc::CreateIndexBuffer(NumIndices, Format, Flags), InitialState, InitialData);
 }
 
-FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
-    return GRHIInstance->CreateConstantBuffer(Size, Flags, InitialState, InitialData);
+    return RHICreateBuffer(CRHIBufferDesc::CreateConstantBuffer(Size, Flags), InitialState, InitialData);
 }
 
-template<typename TSize>
-FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+template<typename StructureType>
+FORCEINLINE CRHIBufferRef RHICreateConstantBuffer(uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
-    constexpr uint32 SIZE_IN_BYTES = sizeof(TSize);
-    return RHICreateConstantBuffer(SIZE_IN_BYTES, Flags, InitialState, InitialData);
+    return RHICreateConstantBuffer(sizeof(StructureType), Flags, InitialState, InitialData);
 }
 
-FORCEINLINE CRHIStructuredBuffer* RHICreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
-    return GRHIInstance->CreateStructuredBuffer(Stride, NumElements, Flags, InitialState, InitialData);
+    return RHICreateBuffer(CRHIBufferDesc::CreateStructuredBuffer(NumElements, Stride, Flags), InitialState, InitialData);
 }
 
-template<typename TStride>
-FORCEINLINE CRHIStructuredBuffer* RHICreateStructuredBuffer(uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+template<typename StructureType>
+FORCEINLINE CRHIBufferRef RHICreateStructuredBuffer(uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
-    constexpr uint32 STRIDE_IN_BYTES = sizeof(TStride);
-    return RHICreateStructuredBuffer(STRIDE_IN_BYTES, NumElements, Flags, InitialState, InitialData);
+    return RHICreateStructuredBuffer(sizeof(StructureType), NumElements, Flags, InitialState, InitialData);
 }
 
 FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)
@@ -566,7 +532,7 @@ FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene(uint32 Flags, SRayTrac
     return GRHIInstance->CreateRayTracingScene(Flags, Instances, NumInstances);
 }
 
-FORCEINLINE CRHIRayTracingGeometry* RHICreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer)
+FORCEINLINE CRHIRayTracingGeometry* RHICreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer)
 {
     return GRHIInstance->CreateRayTracingGeometry(Flags, VertexBuffer, IndexBuffer);
 }
@@ -637,30 +603,12 @@ FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITexture3D* T
     return RHICreateShaderResourceView(CreateInfo);
 }
 
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHIVertexBuffer* Buffer, uint32 FirstVertex, uint32 NumVertices)
+FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHIBuffer* Buffer, uint32 FirstVertex, uint32 NumVertices)
 {
     SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::VertexBuffer);
     CreateInfo.VertexBuffer.Buffer = Buffer;
     CreateInfo.VertexBuffer.FirstVertex = FirstVertex;
     CreateInfo.VertexBuffer.NumVertices = NumVertices;
-    return RHICreateShaderResourceView(CreateInfo);
-}
-
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHIIndexBuffer* Buffer, uint32 FirstIndex, uint32 NumIndices)
-{
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::IndexBuffer);
-    CreateInfo.IndexBuffer.Buffer = Buffer;
-    CreateInfo.IndexBuffer.FirstIndex = FirstIndex;
-    CreateInfo.IndexBuffer.NumIndices = NumIndices;
-    return RHICreateShaderResourceView(CreateInfo);
-}
-
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHIStructuredBuffer* Buffer, uint32 FirstElement, uint32 NumElements)
-{
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::StructuredBuffer);
-    CreateInfo.StructuredBuffer.Buffer = Buffer;
-    CreateInfo.StructuredBuffer.FirstElement = FirstElement;
-    CreateInfo.StructuredBuffer.NumElements = NumElements;
     return RHICreateShaderResourceView(CreateInfo);
 }
 
@@ -720,30 +668,12 @@ FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHITexture3D*
     return RHICreateUnorderedAccessView(CreateInfo);
 }
 
-FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHIVertexBuffer* Buffer, uint32 FirstVertex, uint32 NumVertices)
+FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHIBuffer* Buffer, uint32 FirstVertex, uint32 NumVertices)
 {
     SRHIUnorderedAccessViewInfo CreateInfo(SRHIUnorderedAccessViewInfo::EType::VertexBuffer);
     CreateInfo.VertexBuffer.Buffer = Buffer;
     CreateInfo.VertexBuffer.FirstVertex = FirstVertex;
     CreateInfo.VertexBuffer.NumVertices = NumVertices;
-    return RHICreateUnorderedAccessView(CreateInfo);
-}
-
-FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHIIndexBuffer* Buffer, uint32 FirstIndex, uint32 NumIndices)
-{
-    SRHIUnorderedAccessViewInfo CreateInfo(SRHIUnorderedAccessViewInfo::EType::IndexBuffer);
-    CreateInfo.IndexBuffer.Buffer = Buffer;
-    CreateInfo.IndexBuffer.FirstIndex = FirstIndex;
-    CreateInfo.IndexBuffer.NumIndices = NumIndices;
-    return RHICreateUnorderedAccessView(CreateInfo);
-}
-
-FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHIStructuredBuffer* Buffer, uint32 FirstElement, uint32 NumElements)
-{
-    SRHIUnorderedAccessViewInfo CreateInfo(SRHIUnorderedAccessViewInfo::EType::StructuredBuffer);
-    CreateInfo.StructuredBuffer.Buffer = Buffer;
-    CreateInfo.StructuredBuffer.FirstElement = FirstElement;
-    CreateInfo.StructuredBuffer.NumElements = NumElements;
     return RHICreateUnorderedAccessView(CreateInfo);
 }
 
@@ -772,7 +702,7 @@ FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITexture2DArray* 
     return RHICreateRenderTargetView(CreateInfo);
 }
 
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITextureCube* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip)
+FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITextureCube* Texture, EFormat Format, ERHICubeFace CubeFace, uint32 Mip)
 {
     SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::TextureCube);
     CreateInfo.Format = Format;
@@ -782,7 +712,7 @@ FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITextureCube* Tex
     return RHICreateRenderTargetView(CreateInfo);
 }
 
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITextureCubeArray* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
+FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITextureCubeArray* Texture, EFormat Format, ERHICubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
 {
     SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::TextureCubeArray);
     CreateInfo.Format = Format;
@@ -829,7 +759,7 @@ FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITexture2DArray* 
     return RHICreateDepthStencilView(CreateInfo);
 }
 
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCube* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip)
+FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCube* Texture, EFormat Format, ERHICubeFace CubeFace, uint32 Mip)
 {
     SRHIDepthStencilViewInfo CreateInfo(SRHIDepthStencilViewInfo::EType::TextureCube);
     CreateInfo.Format = Format;
@@ -839,7 +769,7 @@ FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCube* Tex
     return RHICreateDepthStencilView(CreateInfo);
 }
 
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCubeArray* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
+FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCubeArray* Texture, EFormat Format, ERHICubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
 {
     SRHIDepthStencilViewInfo CreateInfo(SRHIDepthStencilViewInfo::EType::TextureCubeArray);
     CreateInfo.Format = Format;

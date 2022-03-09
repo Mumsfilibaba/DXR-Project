@@ -58,7 +58,7 @@ public:
         return Sampler.Get();
     }
 
-    FORCEINLINE CRHIConstantBuffer* GetMaterialBuffer() const
+    FORCEINLINE CRHIBuffer* GetMaterialBuffer() const
     {
         return MaterialBuffer.Get();
     }
@@ -109,7 +109,7 @@ private:
     bool bRenderInForwardPass = false;
 
     SMaterialDesc        	       Properties;
-    TSharedRef<CRHIConstantBuffer> MaterialBuffer;
+    TSharedRef<CRHIBuffer> MaterialBuffer;
     TSharedRef<CRHISamplerState>   Sampler;
 
     mutable TStaticArray<CRHIShaderResourceView*, 7> ShaderResourceViews;

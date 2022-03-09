@@ -134,7 +134,7 @@ struct SRayIntersectionAttributes
 
 struct SRayTracingShaderResources
 {
-    void AddConstantBuffer(CRHIConstantBuffer* Buffer)
+    void AddConstantBuffer(CRHIBuffer* Buffer)
     {
         ConstantBuffers.Emplace(Buffer);
     }
@@ -174,7 +174,7 @@ struct SRayTracingShaderResources
 
     String Identifier;
 
-    TArray<CRHIConstantBuffer*>      ConstantBuffers;
+    TArray<CRHIBuffer*>      ConstantBuffers;
     TArray<CRHIShaderResourceView*>  ShaderResourceViews;
     TArray<CRHIUnorderedAccessView*> UnorderedAccessViews;
     TArray<CRHISamplerState*>        SamplerStates;

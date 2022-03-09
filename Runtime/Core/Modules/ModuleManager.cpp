@@ -1,7 +1,7 @@
 #include "ModuleManager.h"
 
 #include "Core/Windows/Windows.h"
-#include "Core/Templates/StringUtils.h"
+#include "Core/Templates/StringMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ModuleManager

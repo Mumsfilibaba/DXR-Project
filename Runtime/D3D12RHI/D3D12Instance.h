@@ -81,16 +81,12 @@ public:
     virtual CRHITextureCube*                   CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
     virtual CRHITextureCubeArray*              CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
     virtual CRHITexture3D*                     CreateTexture3D(EFormat Format,uint32 Width,uint32 Height, uint32 Depth, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
+    virtual CRHIBufferRef                      CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final;
 
-    virtual class CRHISamplerState*            CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo) override final;
-
-    virtual CRHIVertexBuffer*                  CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final;
-    virtual CRHIIndexBuffer*                   CreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final;
-    virtual CRHIConstantBuffer*                CreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final;
-    virtual CRHIStructuredBuffer*              CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final;
+    virtual CRHISamplerStateRef                CreateSamplerState(const class CRHISamplerStateDesc& CreateInfo) override final;
 
     virtual class CRHIRayTracingScene*         CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) override final;
-    virtual class CRHIRayTracingGeometry*      CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer) override final;
+    virtual class CRHIRayTracingGeometry*      CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer) override final;
 
     virtual CRHIShaderResourceView*            CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo) override final;
     virtual CRHIUnorderedAccessView*           CreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo) override final;
@@ -143,10 +139,7 @@ private:
     template<typename D3D12TextureType>
     D3D12TextureType* CreateTexture(EFormat Format, uint32 SizeX, uint32 SizeY, uint32 SizeZ, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue);
 
-    template<typename D3D12BufferType>
-    bool CreateBuffer(D3D12BufferType* Buffer, uint32 SizeInBytes, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData);
-
-    TSharedRef<CD3D12Device>         Device;
+    CD3D12DeviceRef        Device;
     TSharedRef<CD3D12CommandContext> DirectCommandContext;
     
     CD3D12RootSignatureCache* RootSignatureCache = nullptr;

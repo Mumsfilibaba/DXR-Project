@@ -88,7 +88,7 @@ private:
     bool CreateShadowMask(uint32 Width, uint32 Height, SLightSetup& LightSetup);
     bool CreateShadowMaps(SLightSetup& LightSetup, SFrameResources& FrameResources);
 
-    TSharedRef<CRHIConstantBuffer>        PerShadowMapBuffer;
+    TSharedRef<CRHIBuffer>        PerShadowMapBuffer;
 
     TSharedRef<CRHIGraphicsPipelineState> DirectionalLightPSO;
     TSharedRef<CRHIVertexShader>          DirectionalLightShader;
@@ -100,8 +100,8 @@ private:
     TSharedRef<CRHIVertexShader>          PointLightVertexShader;
     TSharedRef<CRHIPixelShader>           PointLightPixelShader;
 
-    TSharedRef<CRHIConstantBuffer>        PerCascadeBuffer;
-    TSharedRef<CRHIConstantBuffer>        CascadeGenerationData;
+    TSharedRef<CRHIBuffer>        PerCascadeBuffer;
+    TSharedRef<CRHIBuffer>        CascadeGenerationData;
 
     TSharedRef<CRHIComputePipelineState>  CascadeGen;
     TSharedRef<CRHIComputeShader>         CascadeGenShader;

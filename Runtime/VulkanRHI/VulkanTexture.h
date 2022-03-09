@@ -16,13 +16,14 @@ typedef TSharedRef<class CVulkanTexture2D>  CVulkanTexture2DRef;
 typedef TSharedRef<class CVulkanBackBuffer> CVulkanBackBufferRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CVulkanTexture2D
+// CVulkanTexture
 
 class CVulkanTexture : public CVulkanDeviceObject
 {
 public:
     CVulkanTexture(CVulkanDevice* InDevice)
         : CVulkanDeviceObject(InDevice)
+		, Image(VK_NULL_HANDLE)
     {
     }
 
@@ -84,6 +85,8 @@ public:
     /* Create a new BackBuffer interface for a certain viewport */
     static CVulkanBackBufferRef CreateBackBuffer(CVulkanDevice* InDevice, CVulkanViewport* InViewport, EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumSamples);
 
+	void AquireNextImage();
+	
     FORCEINLINE CVulkanViewport* GetViewport() const
     {
         return Viewport.Get();
@@ -99,11 +102,12 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanTexture2DArray
 
-class CVulkanTexture2DArray : public CRHITexture2DArray
+class CVulkanTexture2DArray : public CRHITexture2DArray, public CVulkanTexture
 {
 public:
-    CVulkanTexture2DArray(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CVulkanTexture2DArray(CVulkanDevice* InDevice, EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITexture2DArray(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InSizeZ, InFlags, InOptimalClearValue)
+		, CVulkanTexture(InDevice)
     {
     }
 };
@@ -111,11 +115,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanTextureCube
 
-class CVulkanTextureCube : public CRHITextureCube
+class CVulkanTextureCube : public CRHITextureCube, public CVulkanTexture
 {
 public:
-    CVulkanTextureCube(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CVulkanTextureCube(CVulkanDevice* InDevice, EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InOptimalClearValue)
+		, CVulkanTexture(InDevice)
     {
     }
 };
@@ -123,11 +128,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanTextureCubeArray
 
-class CVulkanTextureCubeArray : public CRHITextureCubeArray
+class CVulkanTextureCubeArray : public CRHITextureCubeArray, public CVulkanTexture
 {
 public:
-    CVulkanTextureCubeArray(EFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CVulkanTextureCubeArray(CVulkanDevice* InDevice, EFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITextureCubeArray(InFormat, InSizeX, InNumMips, InSizeZ, InFlags, InOptimalClearValue)
+		, CVulkanTexture(InDevice)
     {
     }
 };
@@ -135,11 +141,12 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanTexture3D
 
-class CVulkanTexture3D : public CRHITexture3D
+class CVulkanTexture3D : public CRHITexture3D, public CVulkanTexture
 {
 public:
-    CVulkanTexture3D(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CVulkanTexture3D(CVulkanDevice* InDevice, EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITexture3D(InFormat, InSizeX, InSizeY, InSizeZ, InNumMips, InFlags, InOptimalClearValue)
+		, CVulkanTexture(InDevice)
     {
     }
 };
@@ -176,3 +183,35 @@ public:
 private:
     TSharedRef<CVulkanShaderResourceView> ShaderResourceView;
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// VulkanTextureCast
+
+inline CVulkanTexture* CastTexture(CRHITexture* Texture)
+{
+	if (Texture)
+	{
+		if (CRHITexture2D* Texture2D = Texture->AsTexture2D())
+		{
+			return reinterpret_cast<CVulkanTexture2D*>(Texture2D);
+		}
+		else if (CRHITexture2DArray* Texture2DArray = Texture->AsTexture2DArray())
+		{
+			return reinterpret_cast<CVulkanTexture2DArray*>(Texture2DArray);
+		}
+		else if (CRHITextureCube* TextureCube = Texture->AsTextureCube())
+		{
+			return reinterpret_cast<CVulkanTextureCube*>(TextureCube);
+		}
+		else if (CRHITextureCubeArray* TextureCubeArray = Texture->AsTextureCubeArray())
+		{
+			return reinterpret_cast<CVulkanTextureCubeArray*>(TextureCubeArray);
+		}
+		else if (CRHITexture3D* Texture3D = Texture->AsTexture3D())
+		{
+			return reinterpret_cast<CVulkanTexture3D*>(Texture3D);
+		}
+	}
+	
+	return nullptr;
+}

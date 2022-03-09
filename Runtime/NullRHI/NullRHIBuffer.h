@@ -12,73 +12,13 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIVertexBuffer
+// CNullRHIBuffer
 
-class CNullRHIVertexBuffer : public CRHIVertexBuffer
+class CNullRHIBuffer : public CRHIBuffer
 {
 public:
-    CNullRHIVertexBuffer(uint32 InNumVertices, uint32 InStride, uint32 InFlags)
-        : CRHIVertexBuffer(InNumVertices, InStride, InFlags)
-    {
-    }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIIndexBuffer
-
-class CNullRHIIndexBuffer : public CRHIIndexBuffer
-{
-public:
-    CNullRHIIndexBuffer(ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
-        : CRHIIndexBuffer(InIndexFormat, InNumIndices, InFlags)
-    {
-    }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIConstantBuffer
-
-class CNullRHIConstantBuffer : public CRHIConstantBuffer
-{
-public:
-    CNullRHIConstantBuffer(uint32 InSizeInBytes, uint32 InFlags)
-        : CRHIConstantBuffer(InSizeInBytes, InFlags)
-    {
-    }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIStructuredBuffer
-
-class CNullRHIStructuredBuffer : public CRHIStructuredBuffer
-{
-public:
-    CNullRHIStructuredBuffer(uint32 InNumElements, uint32 InStride, uint32 InFlags)
-        : CRHIStructuredBuffer(InNumElements, InStride, InFlags)
-    {
-    }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TNullRHIBuffer
-
-template<typename BaseBufferType>
-class TNullRHIBuffer : public BaseBufferType
-{
-public:
-
-    template<typename... ArgTypes>
-    TNullRHIBuffer(ArgTypes&&... Args)
-        : BaseBufferType(Forward<ArgTypes>(Args)...)
-    {
-    }
-
-    virtual void* Map(uint32 Offset, uint32 InSize) override
-    {
-        return nullptr;
-    }
-
-    virtual void Unmap(uint32 Offset, uint32 InSize) override final
+    CNullRHIBuffer(const CRHIBufferDesc& InBufferDesc)
+        : CRHIBuffer(InBufferDesc)
     {
     }
 

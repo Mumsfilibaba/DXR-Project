@@ -78,19 +78,19 @@ struct SRHIShaderResourceViewInfo
         } Texture3D;
         struct
         {
-            CRHIVertexBuffer* Buffer = nullptr;
+            CRHIBuffer* Buffer = nullptr;
             uint32 FirstVertex = 0;
             uint32 NumVertices = 0;
         } VertexBuffer;
         struct
         {
-            CRHIIndexBuffer* Buffer = nullptr;
+            CRHIBuffer* Buffer = nullptr;
             uint32 FirstIndex = 0;
             uint32 NumIndices = 0;
         } IndexBuffer;
         struct
         {
-            CRHIStructuredBuffer* Buffer = nullptr;
+            CRHIBuffer* Buffer = nullptr;
             uint32 FirstElement = 0;
             uint32 NumElements = 0;
         } StructuredBuffer;
@@ -160,19 +160,19 @@ struct SRHIUnorderedAccessViewInfo
         } Texture3D;
         struct
         {
-            CRHIVertexBuffer* Buffer = nullptr;
+            CRHIBuffer* Buffer = nullptr;
             uint32 FirstVertex = 0;
             uint32 NumVertices = 0;
         } VertexBuffer;
         struct
         {
-            CRHIIndexBuffer* Buffer = nullptr;
+            CRHIBuffer* Buffer = nullptr;
             uint32 FirstIndex = 0;
             uint32 NumIndices = 0;
         } IndexBuffer;
         struct
         {
-            CRHIStructuredBuffer* Buffer = nullptr;
+            CRHIBuffer* Buffer = nullptr;
             uint32 FirstElement = 0;
             uint32 NumElements = 0;
         } StructuredBuffer;
@@ -218,13 +218,13 @@ struct SRHIRenderTargetViewInfo
         struct
         {
             CRHITextureCube* Texture = nullptr;
-            ECubeFace CubeFace = ECubeFace::PosX;
+            ERHICubeFace CubeFace = ERHICubeFace::PosX;
             uint32    Mip = 0;
         } TextureCube;
         struct
         {
             CRHITextureCubeArray* Texture = nullptr;
-            ECubeFace CubeFace = ECubeFace::PosX;
+            ERHICubeFace CubeFace = ERHICubeFace::PosX;
             uint32    Mip = 0;
             uint32    ArraySlice = 0;
         } TextureCubeArray;
@@ -275,14 +275,14 @@ struct SRHIDepthStencilViewInfo
         struct
         {
             CRHITextureCube* Texture = nullptr;
-            ECubeFace CubeFace = ECubeFace::PosX;
+            ERHICubeFace CubeFace = ERHICubeFace::PosX;
             uint32    Mip = 0;
         } TextureCube;
 
         struct
         {
             CRHITextureCubeArray* Texture = nullptr;
-            ECubeFace CubeFace = ECubeFace::PosX;
+            ERHICubeFace CubeFace = ERHICubeFace::PosX;
             uint32    Mip = 0;
             uint32    ArraySlice = 0;
         } TextureCubeArray;

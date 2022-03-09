@@ -20,3 +20,17 @@ CVulkanBackBuffer::CVulkanBackBuffer(CVulkanDevice* InDevice, CVulkanViewport* I
 	, Viewport(MakeSharedRef<CVulkanViewport>(InViewport))
 {
 }
+
+void CVulkanBackBuffer::AquireNextImage()
+{
+	CVulkanSwapChain* SwapChain = Viewport->GetSwapChain();
+	
+	Image = Viewport->GetImage(SwapChain->GetBufferIndex());
+	Assert(Image != VK_NULL_HANDLE);
+	
+	CVulkanImageView* ImageView = Viewport->GetImageView(SwapChain->GetBufferIndex());
+	Assert(ImageView != nullptr);
+	
+	Assert(RenderTargetView != nullptr);
+	RenderTargetView->SetImageView(MakeSharedRef<CVulkanImageView>(ImageView));
+}

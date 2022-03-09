@@ -20,7 +20,7 @@ CRHIInstance* CVulkanInstance::CreateInstance()
 }
 
 CVulkanInstance::CVulkanInstance()
-    : CRHIInstance(ERHIInstanceApi::Vulkan)
+    : CRHIInstance(ERHIType::Vulkan)
     , Instance(nullptr)
 {
 }
@@ -165,47 +165,38 @@ CRHITexture2D* CVulkanInstance::CreateTexture2D(EFormat Format, uint32 Width, ui
 
 CRHITexture2DArray* CVulkanInstance::CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
 {
-    return dbg_new CVulkanTexture2DArray(Format, Width, Height, NumMipLevels, NumSamples, NumArraySlices, Flags, OptimizedClearValue);
+    return dbg_new CVulkanTexture2DArray(GetDevice(), Format, Width, Height, NumMipLevels, NumSamples, NumArraySlices, Flags, OptimizedClearValue);
 }
 
 CRHITextureCube* CVulkanInstance::CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
 {
-    return dbg_new CVulkanTextureCube(Format, Size, NumMipLevels, Flags, OptimizedClearValue);
+    return dbg_new CVulkanTextureCube(GetDevice(), Format, Size, NumMipLevels, Flags, OptimizedClearValue);
 }
 
 CRHITextureCubeArray* CVulkanInstance::CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
 {
-    return dbg_new CVulkanTextureCubeArray(Format, Size, NumMipLevels, NumArraySlices, Flags, OptimizedClearValue);
+    return dbg_new CVulkanTextureCubeArray(GetDevice(), Format, Size, NumMipLevels, NumArraySlices, Flags, OptimizedClearValue);
 }
 
 CRHITexture3D* CVulkanInstance::CreateTexture3D(EFormat Format, uint32 Width,uint32 Height, uint32 Depth, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
 {
-    return dbg_new CVulkanTexture3D(Format, Width, Height, Depth, NumMipLevels, Flags, OptimizedClearValue);
+    return dbg_new CVulkanTexture3D(GetDevice(), Format, Width, Height, Depth, NumMipLevels, Flags, OptimizedClearValue);
 }
 
-CRHISamplerState* CVulkanInstance::CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo)
+CRHISamplerStateRef CVulkanInstance::CreateSamplerState(const struct CRHISamplerStateDesc& CreateInfo)
 {
     return dbg_new CVulkanSamplerState();
 }
 
-CRHIVertexBuffer* CVulkanInstance::CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData)
+CRHIBufferRef CVulkanInstance::CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData)
 {
-    return dbg_new TVulkanBuffer<CVulkanVertexBuffer>(NumVertices, Stride, Flags);
-}
-
-CRHIIndexBuffer* CVulkanInstance::CreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData)
-{
-    return dbg_new TVulkanBuffer<CVulkanIndexBuffer>(Format, NumIndices, Flags);
-}
-
-CRHIConstantBuffer* CVulkanInstance::CreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData)
-{
-    return dbg_new TVulkanBuffer<CVulkanConstantBuffer>(Size, Flags);
-}
-
-CRHIStructuredBuffer* CVulkanInstance::CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData)
-{
-    return dbg_new TVulkanBuffer<CVulkanStructuredBuffer>(NumElements, Stride, Flags);
+	CVulkanBufferRef NewBuffer = dbg_new CVulkanBuffer(GetDevice(), BufferDesc);
+	if (NewBuffer && NewBuffer->Initialize())
+	{
+		return NewBuffer;
+	}
+	
+	return nullptr;
 }
 
 CRHIRayTracingScene* CVulkanInstance::CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)
@@ -213,7 +204,7 @@ CRHIRayTracingScene* CVulkanInstance::CreateRayTracingScene(uint32 Flags, SRayTr
     return nullptr;
 }
 
-CRHIRayTracingGeometry* CVulkanInstance::CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer)
+CRHIRayTracingGeometry* CVulkanInstance::CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer)
 {
     return nullptr;
 }
@@ -364,6 +355,7 @@ void CVulkanInstance::CheckRayTracingSupport(SRHIRayTracingSupport& OutSupport) 
     SRHIRayTracingSupport RayTracingSupport;
     RayTracingSupport.MaxRecursionDepth = 0;
     RayTracingSupport.Tier              = ERHIRayTracingTier::NotSupported;
+
     OutSupport = RayTracingSupport;
 }
 
@@ -372,6 +364,7 @@ void CVulkanInstance::CheckShadingRateSupport(SRHIShadingRateSupport& OutSupport
     SRHIShadingRateSupport ShadingRateSupport;
     ShadingRateSupport.ShadingRateImageTileSize = 0;
     ShadingRateSupport.Tier                     = ERHIShadingRateTier::NotSupported;
+    
     OutSupport = ShadingRateSupport;
 }
 
