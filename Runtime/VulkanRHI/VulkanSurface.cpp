@@ -1,6 +1,6 @@
 #include "VulkanSurface.h"
 #include "VulkanDevice.h"
-#include "VulkanDriverInstance.h"
+#include "VulkanInstance.h"
 
 #include "Platform/PlatformVulkan.h"
 
@@ -30,7 +30,7 @@ CVulkanSurface::~CVulkanSurface()
 {
     if (VULKAN_CHECK_HANDLE(Surface))
     {
-		CVulkanDriverInstance* Instance = GetDevice()->GetInstance();
+		CVulkanInstance* Instance = GetDevice()->GetInstance();
         vkDestroySurfaceKHR(Instance->GetVkInstance(), Surface, nullptr);
         Surface = VK_NULL_HANDLE;
     }
@@ -38,7 +38,7 @@ CVulkanSurface::~CVulkanSurface()
 
 bool CVulkanSurface::Initialize()
 {
-	CVulkanDriverInstance* Instance = GetDevice()->GetInstance();
+	CVulkanInstance* Instance = GetDevice()->GetInstance();
 	
     VkResult Result = PlatformVulkan::CreateSurface(Instance->GetVkInstance(), WindowHandle, &Surface);
     VULKAN_CHECK_RESULT(Result, "Failed to create Platform Surface");

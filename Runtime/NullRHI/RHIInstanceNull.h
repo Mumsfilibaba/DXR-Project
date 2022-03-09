@@ -23,19 +23,19 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIInstance
+// CRHIInstanceNull
 
-class CNullRHIInstance final : public CRHIInstance
+class CRHIInstanceNull final : public CRHIInstance
 {
 public:
 
-    CNullRHIInstance()
+    CRHIInstanceNull()
         : CRHIInstance(ERHIType::Null)
         , CommandContext(CNullRHICommandContext::Make())
     {
     }
 
-    ~CNullRHIInstance() = default;
+    ~CRHIInstanceNull() = default;
 
     virtual bool Initialize(bool bEnableDebug) override final { return true; }
 

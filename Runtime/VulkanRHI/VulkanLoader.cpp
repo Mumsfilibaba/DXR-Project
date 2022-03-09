@@ -1,5 +1,5 @@
 #include "VulkanLoader.h"
-#include "VulkanDriverInstance.h"
+#include "VulkanInstance.h"
 #include "VulkanDevice.h"
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -58,7 +58,7 @@ VULKAN_FUNCTION_DEFINITION(GetDeviceProcAddr);
     VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfaceSupportKHR);
 #endif
 
-bool LoadInstanceFunctions(CVulkanDriverInstance* Instance)
+bool LoadInstanceFunctions(CVulkanInstance* Instance)
 {
     VULKAN_ERROR(Instance, "Instance cannot be nullptr");
 

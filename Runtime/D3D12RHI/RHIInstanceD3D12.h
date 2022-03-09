@@ -21,9 +21,9 @@ template<typename D3D12TextureType>
 bool IsTextureCube();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Instance
+// CRHIInstanceD3D12
 
-class CD3D12Instance : public CRHIInstance
+class CRHIInstanceD3D12 : public CRHIInstance
 {
 public:
 
@@ -133,8 +133,8 @@ public:
 
 private:
 
-    CD3D12Instance();
-    ~CD3D12Instance();
+    CRHIInstanceD3D12();
+    ~CRHIInstanceD3D12();
 
     template<typename D3D12TextureType>
     D3D12TextureType* CreateTexture(EFormat Format, uint32 SizeX, uint32 SizeY, uint32 SizeZ, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue);
@@ -153,4 +153,4 @@ private:
     TSharedRef<CD3D12ComputePipelineState> GenerateMipsTexCube_PSO;
 };
 
-extern CD3D12Instance* GD3D12RHIInstance;
+extern CRHIInstanceD3D12* GD3D12RHIInstance;

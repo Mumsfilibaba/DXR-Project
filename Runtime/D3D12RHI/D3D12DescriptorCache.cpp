@@ -1,6 +1,6 @@
 #include "D3D12DescriptorCache.h"
 #include "D3D12DescriptorHeap.h"
-#include "D3D12Instance.h"
+#include "RHIInstanceD3D12.h"
 #include "D3D12CommandContext.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"

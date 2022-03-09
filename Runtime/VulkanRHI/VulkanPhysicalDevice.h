@@ -7,7 +7,7 @@
 #include "Core/Containers/Set.h"
 #include "Core/Containers/Optional.h"
 
-class CVulkanDriverInstance;
+class CVulkanInstance;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SVulkanPhysicalDeviceDesc
@@ -82,13 +82,13 @@ class CVulkanPhysicalDevice : public CRefCounted
 public:
 
     /* Creates a new VkPhyscialDevice */
-    static TSharedRef<CVulkanPhysicalDevice> QueryAdapter(CVulkanDriverInstance* InInstance, const SVulkanPhysicalDeviceDesc& AdapterDesc);
+    static TSharedRef<CVulkanPhysicalDevice> QueryAdapter(CVulkanInstance* InInstance, const SVulkanPhysicalDeviceDesc& AdapterDesc);
 
     static TOptional<SVulkanQueueFamilyIndices> GetQueueFamilyIndices(VkPhysicalDevice physicalDevice);
 
     uint32 FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties);
 
-    FORCEINLINE CVulkanDriverInstance* GetInstance() const
+    FORCEINLINE CVulkanInstance* GetInstance() const
     {
         return Instance;
     }
@@ -132,12 +132,12 @@ public:
 
 private:
 
-	CVulkanPhysicalDevice(CVulkanDriverInstance* InInstance);
+	CVulkanPhysicalDevice(CVulkanInstance* InInstance);
     ~CVulkanPhysicalDevice();
 
     bool Initialize(const SVulkanPhysicalDeviceDesc& AdapterDesc);
 
-    CVulkanDriverInstance* Instance;
+    CVulkanInstance* Instance;
     VkPhysicalDevice       PhysicalDevice;
 	
 	VkPhysicalDeviceProperties        DeviceProperties;

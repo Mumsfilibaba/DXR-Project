@@ -1,6 +1,6 @@
 #include "VulkanPhysicalDevice.h"
 #include "VulkanLoader.h"
-#include "VulkanDriverInstance.h"
+#include "VulkanInstance.h"
 
 #include "Core/Containers/Array.h"
 #include "Core/Templates/StringMisc.h"
@@ -9,7 +9,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanPhysicalDevice
 
-TSharedRef<CVulkanPhysicalDevice> CVulkanPhysicalDevice::QueryAdapter(CVulkanDriverInstance* InInstance, const SVulkanPhysicalDeviceDesc& AdapterDesc)
+TSharedRef<CVulkanPhysicalDevice> CVulkanPhysicalDevice::QueryAdapter(CVulkanInstance* InInstance, const SVulkanPhysicalDeviceDesc& AdapterDesc)
 {
 	TSharedRef<CVulkanPhysicalDevice> NewPhyscialDevice = dbg_new CVulkanPhysicalDevice(InInstance);
 	if (NewPhyscialDevice && NewPhyscialDevice->Initialize(AdapterDesc))
@@ -22,7 +22,7 @@ TSharedRef<CVulkanPhysicalDevice> CVulkanPhysicalDevice::QueryAdapter(CVulkanDri
 	}
 }
 
-CVulkanPhysicalDevice::CVulkanPhysicalDevice(CVulkanDriverInstance* InInstance)
+CVulkanPhysicalDevice::CVulkanPhysicalDevice(CVulkanInstance* InInstance)
 	: Instance(InInstance)
 	, PhysicalDevice(VK_NULL_HANDLE)
 {

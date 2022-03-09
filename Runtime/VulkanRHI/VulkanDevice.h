@@ -9,7 +9,7 @@
 #include "Core/Containers/Set.h"
 #include "Core/Containers/Optional.h"
 
-class CVulkanDriverInstance;
+class CVulkanInstance;
 class CVulkanPhysicalDevice;
 
 typedef TSharedRef<CVulkanDevice> CVulkanDeviceRef;
@@ -42,7 +42,7 @@ class CVulkanDevice : public CRefCounted
 public:
 
     /* Creates a new wrapper for VkDevice */
-    static CVulkanDeviceRef CreateDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc);
+    static CVulkanDeviceRef CreateDevice(CVulkanInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc);
 
     uint32 GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
@@ -56,7 +56,7 @@ public:
         return ExtensionNames.find(ExtensionName) != ExtensionNames.end();
     }
 
-    FORCEINLINE CVulkanDriverInstance* GetInstance() const
+    FORCEINLINE CVulkanInstance* GetInstance() const
     {
         return Instance;
     }
@@ -78,12 +78,12 @@ public:
 
 private:
 
-    CVulkanDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter);
+    CVulkanDevice(CVulkanInstance* InInstance, CVulkanPhysicalDevice* InAdapter);
     ~CVulkanDevice();
 
     bool Initialize(const SVulkanDeviceDesc& DeviceDesc);
 
-    CVulkanDriverInstance* Instance;
+    CVulkanInstance* Instance;
 	CVulkanPhysicalDevice* Adapter;
     VkDevice               Device;
 

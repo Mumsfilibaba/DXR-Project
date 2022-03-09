@@ -12,7 +12,7 @@ static const auto RawStringComparator = [](const char* Lhs, const char* Rhs) -> 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanDevice
 
-CVulkanDeviceRef CVulkanDevice::CreateDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc)
+CVulkanDeviceRef CVulkanDevice::CreateDevice(CVulkanInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc)
 {
     VULKAN_ERROR(InInstance != nullptr, "Instance cannot be nullptr");
     VULKAN_ERROR(InAdapter  != nullptr, "Adapter cannot be nullptr");
@@ -28,7 +28,7 @@ CVulkanDeviceRef CVulkanDevice::CreateDevice(CVulkanDriverInstance* InInstance, 
     }
 }
 
-CVulkanDevice::CVulkanDevice(CVulkanDriverInstance* InInstance, CVulkanPhysicalDevice* InAdapter)
+CVulkanDevice::CVulkanDevice(CVulkanInstance* InInstance, CVulkanPhysicalDevice* InAdapter)
     : Instance(InInstance)
     , Adapter(InAdapter)
     , Device(VK_NULL_HANDLE)

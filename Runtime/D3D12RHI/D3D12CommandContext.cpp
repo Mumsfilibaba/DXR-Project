@@ -3,7 +3,7 @@
 #include "D3D12CommandList.h"
 #include "D3D12Core.h"
 #include "D3D12Shader.h"
-#include "D3D12Instance.h"
+#include "RHIInstanceD3D12.h"
 #include "D3D12Buffer.h"
 #include "D3D12Texture.h"
 #include "D3D12PipelineState.h"

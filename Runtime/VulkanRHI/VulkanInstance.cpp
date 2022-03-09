@@ -1,373 +1,289 @@
 #include "VulkanInstance.h"
 #include "VulkanLoader.h"
-#include "VulkanTimestampQuery.h"
-#include "VulkanShader.h"
-#include "VulkanPipelineState.h"
-#include "VulkanBuffer.h"
-#include "VulkanTexture.h"
-#include "VulkanResourceView.h"
-#include "VulkanSamplerState.h"
-#include "VulkanViewport.h"
+
+#include "Core/Templates/StringMisc.h"
+#include "Core/Debug/Console/ConsoleManager.h"
 
 #include "Platform/PlatformVulkan.h"
+
+static const auto RawStringComparator = [](const char* Lhs, const char* Rhs) -> bool
+{
+    return StringMisc::Compare(Lhs, Rhs) == 0;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////*/
+// DebugLayerCallback
+
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity, VkDebugUtilsMessageTypeFlagsEXT MessageType, const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
+{
+    if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+    {
+        LOG_ERROR(String("[Vulkan Validation layer] ") + CallbackData->pMessage);
+    }
+    else if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+    {
+        LOG_WARNING(String("[Vulkan Validation layer] ") + CallbackData->pMessage);
+    }
+
+    return VK_FALSE;
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////*/
+// Console Variables
+
+TAutoConsoleVariable<bool> GVulkanVerboseLogging("vulkan.VerboseLogging", true);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanInstance
 
-CRHIInstance* CVulkanInstance::CreateInstance()
+TSharedRef<CVulkanInstance> CVulkanInstance::CreateInstance(const SVulkanInstanceDesc& InstanceDesc) noexcept
 {
-    return dbg_new CVulkanInstance();
-}
+    TSharedRef<CVulkanInstance> NewInstance = dbg_new CVulkanInstance();
+    if (NewInstance && NewInstance->Initialize(InstanceDesc))
+    {
+        return NewInstance;
+    }
+    else
+    {
+        return nullptr;
+    }
+} 
 
 CVulkanInstance::CVulkanInstance()
-    : CRHIInstance(ERHIType::Vulkan)
-    , Instance(nullptr)
+    : DriverHandle(nullptr)
+    , Instance(VK_NULL_HANDLE)
 {
 }
 
-bool CVulkanInstance::Initialize(bool bEnableDebug)
+CVulkanInstance::~CVulkanInstance()
 {
-    SVulkanDriverInstanceDesc InstanceDesc;
-    InstanceDesc.RequiredExtensionNames = PlatformVulkan::GetRequiredInstanceExtensions();
-    InstanceDesc.RequiredLayerNames     = PlatformVulkan::GetRequiredInstanceLayers();
-	InstanceDesc.bEnableValidationLayer = bEnableDebug;
-	
-#if VK_KHR_get_physical_device_properties2
-    InstanceDesc.OptionalExtensionNames.Push(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-#endif
-	
-    if (bEnableDebug)
-    {
-		InstanceDesc.RequiredLayerNames.Push("VK_LAYER_KHRONOS_validation");
-		
 #if VK_EXT_debug_utils
-        InstanceDesc.RequiredExtensionNames.Push(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	if (VULKAN_CHECK_HANDLE(DebugMessenger))
+	{
+		vkDestroyDebugUtilsMessengerEXT(Instance, DebugMessenger, nullptr);
+	}
 #endif
-    }
 
-    Instance = CVulkanDriverInstance::CreateInstance(InstanceDesc);
-    if (!Instance)
+	if (VULKAN_CHECK_HANDLE(Instance))
+	{
+		vkDestroyInstance(Instance, nullptr);
+	}
+
+    if (DriverHandle)
     {
-        VULKAN_ERROR_ALWAYS("Failed to initialize VulkanDriverInstance");
+        PlatformLibrary::FreeDynamicLib(DriverHandle);
+    }
+}
+
+bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
+{
+	DriverHandle = PlatformVulkan::LoadVulkanLibrary();
+    if (!DriverHandle)
+    {
+		VULKAN_ERROR_ALWAYS("Failed to load Vulkan library");
         return false;
     }
-	
-    // Load functions that requires an instance here (Order is important)
-	if (!LoadInstanceFunctions(Instance.Get()))
+
+	vkGetInstanceProcAddr = PlatformLibrary::LoadSymbolAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr", DriverHandle);
+	if (!vkGetInstanceProcAddr)
 	{
+		VULKAN_ERROR_ALWAYS("Failed to load vkGetInstanceProcAddr");
 		return false;
 	}
+		
+	VULKAN_LOAD_INSTANCE_FUNCTION(Instance, CreateInstance);
+	VULKAN_LOAD_INSTANCE_FUNCTION(Instance, EnumerateInstanceLayerProperties);
+	VULKAN_LOAD_INSTANCE_FUNCTION(Instance, EnumerateInstanceExtensionProperties);
 
-    SVulkanPhysicalDeviceDesc AdapterDesc;
-	AdapterDesc.RequiredExtensionNames             = PlatformVulkan::GetRequiredDeviceExtensions();
-    AdapterDesc.RequiredFeatures.samplerAnisotropy = VK_TRUE;
-    
-    // This extension must be enabled on platforms that has it available
-    AdapterDesc.OptionalExtensionNames.Push("VK_KHR_portability_subset");
-
-#if VK_KHR_get_memory_requirements2
-	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-#endif
-#if VK_KHR_maintenance1
-    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
-#endif
-#if VK_KHR_maintenance2
-    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
-#endif
-#if VK_KHR_maintenance3
-	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
-#endif
-#if VK_KHR_maintenance4
-    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_MAINTENANCE_4_EXTENSION_NAME);
-#endif
-#if VK_EXT_descriptor_indexing
-	AdapterDesc.OptionalExtensionNames.Push(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-#endif
-#if VK_KHR_buffer_device_address
-	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-#endif
-#if VK_KHR_deferred_host_operations
-	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
-#endif
-#if VK_KHR_pipeline_library
-	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
-#endif
-#if VK_KHR_timeline_semaphore
-	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
-#endif
-#if VK_KHR_shader_draw_parameters
-	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME);
-#endif
-#if VK_NV_mesh_shader
-	AdapterDesc.OptionalExtensionNames.Push(VK_NV_MESH_SHADER_EXTENSION_NAME);
-#endif
-#if VK_EXT_memory_budget
-	AdapterDesc.OptionalExtensionNames.Push(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
-#endif
-#if VK_KHR_push_descriptor
-	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
-#endif
-#if VK_KHR_ray_query
-    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_RAY_QUERY_EXTENSION_NAME);
-#endif
-#if VK_KHR_ray_tracing_pipeline
-    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
-#endif
-#if VK_KHR_acceleration_structure
-    AdapterDesc.OptionalExtensionNames.Push(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
-#endif
-#if VK_KHR_dedicated_allocation
-	AdapterDesc.OptionalExtensionNames.Push(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
-#endif
-
-	Adapter = CVulkanPhysicalDevice::QueryAdapter(GetInstance(), AdapterDesc);
-    if (!Adapter)
-    {
-        VULKAN_ERROR_ALWAYS("Failed to initialize VulkanPhyscicalDevice");
-        return false;
-    }
-
-    SVulkanDeviceDesc DeviceDesc;
-	DeviceDesc.RequiredExtensionNames = AdapterDesc.RequiredExtensionNames;
-	DeviceDesc.OptionalExtensionNames = AdapterDesc.OptionalExtensionNames;
-
-    Device = CVulkanDevice::CreateDevice(GetInstance(), GetAdapter(), DeviceDesc);
-    if (!Device)
-    {
-        VULKAN_ERROR_ALWAYS("Failed to initialize VulkanPhysicalDevice");
-        return false;
-    }
+	VkResult Result = VK_SUCCESS;
 	
-	// Load functions that requires an device here (Order is important)
-	if (!LoadDeviceFunctions(Device.Get()))
+	// Instance Layers
+	uint32 LayerPropertiesCount = 0;
+	Result = vkEnumerateInstanceLayerProperties(&LayerPropertiesCount, nullptr);
+	VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance LayerProperties Count");
+	
+	TArray<VkLayerProperties> LayerProperties(LayerPropertiesCount);
+	Result = vkEnumerateInstanceLayerProperties(&LayerPropertiesCount, LayerProperties.Data());
+	VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance LayerProperties");
+
+	// Instance Extensions
+	uint32 ExtensionPropertiesCount = 0;
+	Result = vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, nullptr);
+	VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance ExtensionProperties Count");
+	
+	TArray<VkExtensionProperties> ExtensionProperties(ExtensionPropertiesCount);
+	Result = vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, ExtensionProperties.Data());
+	VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance ExtensionProperties");
+
+	const bool bVerboseLogging = GVulkanVerboseLogging.GetBool();
+	if (bVerboseLogging)
 	{
-		return false;
+		if (!ExtensionProperties.IsEmpty())
+		{
+			VULKAN_INFO("Available Instance Extensions:");
+			
+			for (const VkExtensionProperties& ExtensionProperty : ExtensionProperties)
+			{
+				LOG_INFO(String("    ") + ExtensionProperty.extensionName);
+			}
+		}
+		else
+		{
+			VULKAN_INFO("No available Instance Extensions");
+		}
+
+		if (!LayerProperties.IsEmpty())
+		{
+			VULKAN_INFO("Available Instance Layers:");
+
+			for (const VkLayerProperties& LayerProperty : LayerProperties)
+			{
+				LOG_INFO(String("    ") + LayerProperty.layerName + ": " + LayerProperty.description);
+			}
+		}
+		else
+		{
+			VULKAN_INFO("No available Instance Layers");
+		}
 	}
 
-    DirectCommandQueue = CVulkanQueue::CreateQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
-    if (!DirectCommandQueue)
-    {
-        VULKAN_ERROR_ALWAYS("Failed to initialize VulkanCommandQueue");
-        return false;
-    }
-
-    DirectCommandContext = CVulkanCommandContext::CreateCommandContext(Device.Get(), DirectCommandQueue.Get());
-    if (!DirectCommandContext)
-    {
-        VULKAN_ERROR_ALWAYS("Failed to initialize VulkanCommandContext");
-        return false;
-    }
-
-    return true;
-}
-
-CRHITexture2D* CVulkanInstance::CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
-{
-    return dbg_new CVulkanTexture2D(GetDevice(), Format, Width, Height, NumMipLevels, NumSamples, Flags, OptimizedClearValue);
-}
-
-CRHITexture2DArray* CVulkanInstance::CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
-{
-    return dbg_new CVulkanTexture2DArray(GetDevice(), Format, Width, Height, NumMipLevels, NumSamples, NumArraySlices, Flags, OptimizedClearValue);
-}
-
-CRHITextureCube* CVulkanInstance::CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
-{
-    return dbg_new CVulkanTextureCube(GetDevice(), Format, Size, NumMipLevels, Flags, OptimizedClearValue);
-}
-
-CRHITextureCubeArray* CVulkanInstance::CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
-{
-    return dbg_new CVulkanTextureCubeArray(GetDevice(), Format, Size, NumMipLevels, NumArraySlices, Flags, OptimizedClearValue);
-}
-
-CRHITexture3D* CVulkanInstance::CreateTexture3D(EFormat Format, uint32 Width,uint32 Height, uint32 Depth, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
-{
-    return dbg_new CVulkanTexture3D(GetDevice(), Format, Width, Height, Depth, NumMipLevels, Flags, OptimizedClearValue);
-}
-
-CRHISamplerStateRef CVulkanInstance::CreateSamplerState(const struct CRHISamplerStateDesc& CreateInfo)
-{
-    return dbg_new CVulkanSamplerState();
-}
-
-CRHIBufferRef CVulkanInstance::CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData)
-{
-	CVulkanBufferRef NewBuffer = dbg_new CVulkanBuffer(GetDevice(), BufferDesc);
-	if (NewBuffer && NewBuffer->Initialize())
+	// Verify Layers
+	TArray<const char*> EnabledLayerNames;
+	for (const VkLayerProperties& LayerProperty : LayerProperties)
 	{
-		return NewBuffer;
+		const char* LayerName = LayerProperty.layerName;
+		if (InstanceDesc.RequiredLayerNames.Contains(LayerName, RawStringComparator) || InstanceDesc.OptionalLayerNames.Contains(LayerName, RawStringComparator))
+		{
+			EnabledLayerNames.Push(LayerName);
+		}
+	}
+
+	for (const char* LayerName : InstanceDesc.RequiredLayerNames)
+	{
+		if (!EnabledLayerNames.Contains(LayerName, RawStringComparator))
+		{
+			VULKAN_ERROR_ALWAYS(String("Instance layer '") + LayerName + "' could not be enabled");
+			return false;
+		}
+		else
+		{
+			LayerNames.insert(String(LayerName));
+		}
+	}
+
+	// Verify Extensions
+	TArray<const char*> EnabledExtensionNames;
+	for (const VkExtensionProperties& ExtensionProperty : ExtensionProperties)
+	{
+		const char* ExtensionName = ExtensionProperty.extensionName;
+		if (InstanceDesc.RequiredExtensionNames.Contains(ExtensionName, RawStringComparator) || InstanceDesc.OptionalExtensionNames.Contains(ExtensionName, RawStringComparator))
+		{
+			EnabledExtensionNames.Push(ExtensionName);
+		}
+	}
+
+	for (const char* ExtensionName : InstanceDesc.RequiredExtensionNames)
+	{
+		if (!EnabledExtensionNames.Contains(ExtensionName, RawStringComparator))
+		{
+			VULKAN_ERROR_ALWAYS(String("Instance layer '") + ExtensionName + "' could not be enabled");
+			return false;
+		}
+		else
+		{
+			ExtensionNames.insert(String(ExtensionName));
+		}
 	}
 	
-	return nullptr;
+	if (bVerboseLogging)
+	{
+		if (!EnabledLayerNames.IsEmpty())
+		{
+			VULKAN_INFO("Enabled Instance Layers:");
+
+			for (const char* LayerName : EnabledLayerNames)
+			{
+				LOG_INFO(String("    ") + LayerName);
+			}
+		}
+		
+		if (!EnabledExtensionNames.IsEmpty())
+		{
+			VULKAN_INFO("Enabled Instance Extensions:");
+			
+			for (const char* ExtensionName : EnabledExtensionNames)
+			{
+				LOG_INFO(String("    ") + ExtensionName);
+			}
+		}
+	}
+
+	VkApplicationInfo ApplicationInfo;
+	CMemory::Memzero(&ApplicationInfo);
+	
+	ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	ApplicationInfo.pNext              = nullptr;
+	ApplicationInfo.apiVersion         = VK_API_VERSION_1_2;
+	ApplicationInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
+	ApplicationInfo.pApplicationName   = "DXR-Project";
+	ApplicationInfo.pEngineName        = "DXR-Engine";
+	ApplicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+	
+	VkInstanceCreateInfo InstanceCreateInfo{};
+	CMemory::Memzero(&InstanceCreateInfo);
+	
+	InstanceCreateInfo.sType                    = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	InstanceCreateInfo.flags                    = 0;
+	InstanceCreateInfo.pApplicationInfo         = &ApplicationInfo;
+	InstanceCreateInfo.enabledExtensionCount    = EnabledExtensionNames.Size();
+	InstanceCreateInfo.ppEnabledExtensionNames  = EnabledExtensionNames.Data();
+	InstanceCreateInfo.enabledLayerCount        = EnabledLayerNames.Size();
+	InstanceCreateInfo.ppEnabledLayerNames      = EnabledLayerNames.Data();
+
+#if VK_EXT_debug_utils
+	VkDebugUtilsMessengerCreateInfoEXT DebugMessengerCreateInfo;
+	CMemory::Memzero(&DebugMessengerCreateInfo);
+
+	if (InstanceDesc.bEnableValidationLayer)
+	{
+		DebugMessengerCreateInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+		DebugMessengerCreateInfo.flags           = 0;
+		DebugMessengerCreateInfo.pNext           = nullptr;
+		DebugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+		DebugMessengerCreateInfo.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+		DebugMessengerCreateInfo.pfnUserCallback = DebugLayerCallback;
+		DebugMessengerCreateInfo.pUserData       = nullptr;
+
+		InstanceCreateInfo.pNext = reinterpret_cast<const void*>(&DebugMessengerCreateInfo);
+	}
+	else
+#endif
+	{
+		InstanceCreateInfo.pNext = nullptr;
+	}
+
+	Result = vkCreateInstance(&InstanceCreateInfo, nullptr, &Instance);
+	VULKAN_CHECK_RESULT(Result, "Failed to create Instance");
+
+	/*///////////////////////////////////////////////////////////////////////////////////////////*/
+	// Load functions that require the instance to be created
+
+	VULKAN_LOAD_INSTANCE_FUNCTION(Instance, DestroyInstance);
+	
+#if VK_EXT_debug_utils
+	if (IsExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+	{
+		VULKAN_LOAD_INSTANCE_FUNCTION(Instance, SetDebugUtilsObjectNameEXT);
+		VULKAN_LOAD_INSTANCE_FUNCTION(Instance, CreateDebugUtilsMessengerEXT);
+		VULKAN_LOAD_INSTANCE_FUNCTION(Instance, DestroyDebugUtilsMessengerEXT);
+	}
+
+	if (InstanceDesc.bEnableValidationLayer)
+	{
+		Result = vkCreateDebugUtilsMessengerEXT(Instance, &DebugMessengerCreateInfo, nullptr, &DebugMessenger);
+		VULKAN_CHECK_RESULT(Result, "Failed to create DebugMessenger");
+	}
+#endif
+
+	return true;
 }
-
-CRHIRayTracingScene* CVulkanInstance::CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)
-{
-    return nullptr;
-}
-
-CRHIRayTracingGeometry* CVulkanInstance::CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer)
-{
-    return nullptr;
-}
-
-CRHIShaderResourceView* CVulkanInstance::CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo)
-{
-    return dbg_new CVulkanShaderResourceView();
-}
-
-CRHIUnorderedAccessView* CVulkanInstance::CreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo)
-{
-    return dbg_new CVulkanUnorderedAccessView();
-}
-
-CRHIRenderTargetView* CVulkanInstance::CreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo)
-{
-    return dbg_new CVulkanRenderTargetView();
-}
-
-CRHIDepthStencilView* CVulkanInstance::CreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo)
-{
-    return dbg_new CVulkanDepthStencilView();
-}
-
-CRHIComputeShader* CVulkanInstance::CreateComputeShader(const TArray<uint8>& ShaderCode)
-{
-	return dbg_new TVulkanShader<CVulkanComputeShader>();
-}
-
-CRHIVertexShader* CVulkanInstance::CreateVertexShader(const TArray<uint8>& ShaderCode)
-{
-    return dbg_new TVulkanShader<CRHIVertexShader>();
-}
-
-CRHIHullShader* CVulkanInstance::CreateHullShader(const TArray<uint8>& ShaderCode)
-{
-    return nullptr;
-}
-
-CRHIDomainShader* CVulkanInstance::CreateDomainShader(const TArray<uint8>& ShaderCode)
-{
-    return nullptr;
-}
-
-CRHIGeometryShader* CVulkanInstance::CreateGeometryShader(const TArray<uint8>& ShaderCode)
-{
-    return nullptr;
-}
-
-CRHIMeshShader* CVulkanInstance::CreateMeshShader(const TArray<uint8>& ShaderCode)
-{
-    return nullptr;
-}
-
-CRHIAmplificationShader* CVulkanInstance::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
-{
-    return nullptr;
-}
-
-CRHIPixelShader* CVulkanInstance::CreatePixelShader(const TArray<uint8>& ShaderCode)
-{
-    return dbg_new TVulkanShader<CRHIPixelShader>();
-}
-
-CRHIRayGenShader* CVulkanInstance::CreateRayGenShader(const TArray<uint8>& ShaderCode)
-{
-    return dbg_new TVulkanShader<CRHIRayGenShader>();
-}
-
-CRHIRayAnyHitShader* CVulkanInstance::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
-{
-    return dbg_new TVulkanShader<CRHIRayAnyHitShader>();
-}
-
-CRHIRayClosestHitShader* CVulkanInstance::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
-{
-    return dbg_new TVulkanShader<CRHIRayClosestHitShader>();
-}
-
-CRHIRayMissShader* CVulkanInstance::CreateRayMissShader(const TArray<uint8>& ShaderCode)
-{
-    return dbg_new TVulkanShader<CRHIRayMissShader>();
-}
-
-CRHIDepthStencilState* CVulkanInstance::CreateDepthStencilState(const SRHIDepthStencilStateInfo& CreateInfo)
-{
-    return dbg_new CVulkanDepthStencilState();
-}
-
-CRHIRasterizerState* CVulkanInstance::CreateRasterizerState(const SRHIRasterizerStateInfo& CreateInfo)
-{
-    return dbg_new CVulkanRasterizerState();
-}
-
-CRHIBlendState* CVulkanInstance::CreateBlendState(const SRHIBlendStateInfo& CreateInfo)
-{
-    return dbg_new CVulkanBlendState();
-}
-
-CRHIInputLayoutState* CVulkanInstance::CreateInputLayout(const SRHIInputLayoutStateInfo& CreateInfo)
-{
-    return dbg_new CVulkanInputLayoutState();
-}
-
-CRHIGraphicsPipelineState* CVulkanInstance::CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateInfo& CreateInfo)
-{
-    return dbg_new CVulkanGraphicsPipelineState();
-}
-
-CRHIComputePipelineState* CVulkanInstance::CreateComputePipelineState(const SRHIComputePipelineStateInfo& CreateInfo)
-{
-    return dbg_new CVulkanComputePipelineState();
-}
-
-CRHIRayTracingPipelineState* CVulkanInstance::CreateRayTracingPipelineState(const SRHIRayTracingPipelineStateInfo& CreateInfo)
-{
-    return dbg_new CVulkanRayTracingPipelineState();
-}
-
-CRHITimestampQuery* CVulkanInstance::CreateTimestampQuery()
-{
-	TSharedRef<CRHITimestampQuery> NewQuery = CVulkanTimestampQuery::CreateQuery(Device.Get());
-	return NewQuery.ReleaseOwnership();
-}
-
-CRHIViewport* CVulkanInstance::CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
-{
-	TSharedRef<CVulkanViewport> NewViewport = CVulkanViewport::CreateViewport(Device.Get(), DirectCommandQueue.Get(), WindowHandle, ColorFormat, Width, Height);
-	return NewViewport.ReleaseOwnership();
-}
-
-String CVulkanInstance::GetAdapterName() const
-{
-    VULKAN_ERROR(Adapter != nullptr, "Adapter is not initialized properly");
-
-    VkPhysicalDeviceProperties DeviceProperties = Adapter->GetDeviceProperties();
-    return String(DeviceProperties.deviceName);
-}
-
-// TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
-bool CVulkanInstance::UAVSupportsFormat(EFormat Format) const
-{
-    return true;
-}
-
-void CVulkanInstance::CheckRayTracingSupport(SRHIRayTracingSupport& OutSupport) const
-{
-    SRHIRayTracingSupport RayTracingSupport;
-    RayTracingSupport.MaxRecursionDepth = 0;
-    RayTracingSupport.Tier              = ERHIRayTracingTier::NotSupported;
-
-    OutSupport = RayTracingSupport;
-}
-
-void CVulkanInstance::CheckShadingRateSupport(SRHIShadingRateSupport& OutSupport) const
-{
-    SRHIShadingRateSupport ShadingRateSupport;
-    ShadingRateSupport.ShadingRateImageTileSize = 0;
-    ShadingRateSupport.Tier                     = ERHIShadingRateTier::NotSupported;
-    
-    OutSupport = ShadingRateSupport;
-}
-

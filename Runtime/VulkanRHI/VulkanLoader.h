@@ -29,7 +29,7 @@
         }                                                                                                              \
     } while(false)
 
-class CVulkanDriverInstance;
+class CVulkanInstance;
 class CVulkanDevice;
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -88,7 +88,7 @@ VULKAN_FUNCTION_DECLARATION(GetDeviceProcAddr);
     VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceSupportKHR);
 #endif
 
-bool LoadInstanceFunctions(CVulkanDriverInstance* Instance);
+bool LoadInstanceFunctions(CVulkanInstance* Instance);
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
 // Device Functions
