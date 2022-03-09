@@ -43,7 +43,6 @@ bool CVulkanBuffer::Initialize()
     BufferCreateInfo.pQueueFamilyIndices    = nullptr;
     BufferCreateInfo.queueFamilyIndexCount  = 0;
     BufferCreateInfo.sharingMode            = VK_SHARING_MODE_EXCLUSIVE;
-    BufferCreateInfo.size                   = BufferDesc.SizeInBytes;
 
     const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetDeviceProperties();;
     const VkPhysicalDeviceLimits&     DeviceLimits     = DeviceProperties.limits;
@@ -83,6 +82,8 @@ bool CVulkanBuffer::Initialize()
 		BufferCreateInfo.usage |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
         RequiredAlignment = NMath::Max<uint32>(RequiredAlignment, 1LLU);
     }*/
+	
+	BufferCreateInfo.size = NMath::AlignUp<uint64>(BufferDesc.SizeInBytes, RequiredAlignment);
     
     VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &Buffer);
     VULKAN_CHECK_RESULT(Result, "Failed to create Buffer");
@@ -107,7 +108,7 @@ bool CVulkanBuffer::Initialize()
 
     AllocateInfo.sType              = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     AllocateInfo.memoryTypeIndex    = MemoryTypeIndex;
-    AllocateInfo.allocationSize     = BufferDesc.SizeInBytes;
+    AllocateInfo.allocationSize     = BufferDesc.SizeInBytes = BufferCreateInfo.size;
 
 #if VK_KHR_buffer_device_address
     VkMemoryAllocateFlagsInfo AllocateFlagsInfo;

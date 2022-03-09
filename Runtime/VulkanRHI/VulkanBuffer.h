@@ -37,7 +37,6 @@ public:
 	}
 	
 protected:
-	
 	VkBuffer        Buffer;
 	VkDeviceMemory  DeviceMemory;
 	VkDeviceAddress DeviceAddress;
