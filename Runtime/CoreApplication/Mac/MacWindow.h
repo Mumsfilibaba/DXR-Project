@@ -17,29 +17,29 @@ class CMacWindow final : public CPlatformWindow
 {
 public:
 
-	/**
-	 * Create new MacWindow object
-	 *
-	 * @param InApplication: The application that created the window
-	 * @return: Returns the newly created window object
-	 */
-	static TSharedRef<CMacWindow> CreateWindow(CMacApplication* InApplication);
-	
-	/**
-	 * Retrieve the native window object
-	 *
-	 * @return: Returns the native window object
-	 */
-	FORCEINLINE CCocoaWindow* GetCocoaWindow() const
-	{
-		return Window;
-	}
+    /**
+     * Create new MacWindow object
+     *
+     * @param InApplication: The application that created the window
+     * @return: Returns the newly created window object
+     */
+    static TSharedRef<CMacWindow> CreateWindow(CMacApplication* InApplication);
+    
+    /**
+     * Retrieve the native window object
+     *
+     * @return: Returns the native window object
+     */
+    FORCEINLINE CCocoaWindow* GetCocoaWindow() const
+    {
+        return Window;
+    }
 
 public:
-	
-	/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-	// CPlatformWindow Interface
-	
+    
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CPlatformWindow Interface
+    
     virtual bool Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
 
     virtual void Show(bool bMaximized) override final;

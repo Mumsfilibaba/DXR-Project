@@ -16,14 +16,11 @@ class CD3D12Resource : public CD3D12DeviceObject, public CRefCounted
 {
 public:
 
-    CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource);
-    CD3D12Resource(CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType);
-    ~CD3D12Resource() = default;
+    static CD3D12ResourceRef CreateResource(CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource);
+    static CD3D12ResourceRef CreateResource(CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue);
 
-    bool Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue);
-
-    bool Map(uint32 SubResource, const D3D12_RANGE* Range, void** OutMappedData)
-    void Unmap(uint32 SubResource, const D3D12_RANGE* Range);
+    bool MapResource(uint32 Subresource, const D3D12_RANGE* Range, void** OutMappedData);
+    void UnmapResource(uint32 Subresource, const D3D12_RANGE* Range);
 
     FORCEINLINE void SetName(const String& Name)
     {
@@ -65,7 +62,35 @@ public:
         return Desc.Width;
     }
 
+    FORCEINLINE uint64 GetHeight() const
+    {
+        return Desc.Height;
+    }
+
+    FORCEINLINE uint64 GetDepth() const
+    {
+        return Desc.DepthOrArraySize;
+    }
+
+    FORCEINLINE uint64 GetArraySize() const
+    {
+        return Desc.DepthOrArraySize;
+    }
+
+    FORCEINLINE uint64 GetSizeInBytes() const
+    {
+        return Desc.Width;
+    }
+
 private:
+
+    CD3D12Resource(CD3D12Device* InDevice);
+    CD3D12Resource(CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType);
+    ~CD3D12Resource() = default;
+    
+    bool Initialize(const TComPtr<ID3D12Resource>& InNativeResource);
+    bool Initialize(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue);
+
     TComPtr<ID3D12Resource>   Resource;
 
     D3D12_RESOURCE_STATES     ResourceState;

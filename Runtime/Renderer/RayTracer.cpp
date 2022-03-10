@@ -66,7 +66,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
         RayMissShader->SetName("RayMissShader");
     }
 
-    SRHIRayTracingPipelineStateInfo CreateInfo;
+    SRHIRayTracingPipelineStateDesc CreateInfo;
     CreateInfo.RayGen = RayGenShader.Get();
     CreateInfo.ClosestHitShaders = { RayClosestHitShader.Get() };
     CreateInfo.MissShaders = { RayMissShader.Get() };
@@ -157,7 +157,7 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
             HitGroupIndex = HitGroupIndexPair->second;
         }
 
-        SRayTracingGeometryInstance Instance;
+        SRHIRayTracingGeometryInstance Instance;
         Instance.Instance = MakeSharedRef<CRHIRayTracingGeometry>(Cmd.Geometry);
         Instance.Flags = RayTracingInstanceFlags_None;
         Instance.HitGroupIndex = HitGroupIndex;

@@ -16,15 +16,15 @@ public:
 
     FORCEINLINE bool Initialize(D3D12_COMMAND_LIST_TYPE Type)
     {
-        HRESULT Result = GetDevice()->GetDevice()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
+        HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
         if (SUCCEEDED(Result))
         {
-            LOG_INFO("[CD3D12CommandAllocator]: Created CommandAllocator");
+            D3D12_INFO("Created CommandAllocator");
             return true;
         }
         else
         {
-            LOG_ERROR("[CD3D12CommandAllocator]: FAILED to create CommandAllocator");
+            D3D12_ERROR_ALWAYS("FAILED to create CommandAllocator");
             return false;
         }
     }
@@ -42,8 +42,7 @@ public:
 
     FORCEINLINE void SetName(const String& Name)
     {
-        WString WideName = CharToWide(Name);
-        Allocator->SetName(WideName.CStr());
+        Allocator->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.CStr());
     }
 
     FORCEINLINE ID3D12CommandAllocator* GetAllocator() const

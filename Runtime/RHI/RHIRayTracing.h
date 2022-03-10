@@ -99,9 +99,9 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRayTracingGeometryInstance
+// SRHIRayTracingGeometryInstance
 
-struct SRayTracingGeometryInstance
+struct SRHIRayTracingGeometryInstance
 {
     TSharedRef<CRHIRayTracingGeometry> Instance;
     uint32 InstanceIndex = 0;

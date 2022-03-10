@@ -66,9 +66,9 @@ struct SDirectionalLightData
 
 struct RENDERER_API SLightSetup
 {
-    const EFormat ShadowMaskFormat = EFormat::R8_Unorm;
-    const EFormat ShadowMapFormat = EFormat::D32_Float;
-    const EFormat LightProbeFormat = EFormat::R11G11B10_Float;
+    const ERHIFormat ShadowMaskFormat = ERHIFormat::R8_Unorm;
+    const ERHIFormat ShadowMapFormat = ERHIFormat::D32_Float;
+    const ERHIFormat LightProbeFormat = ERHIFormat::R11G11B10_Float;
 
     const uint32 MaxPointLights = 256;
     const uint32 MaxDirectionalLights = 256;

@@ -196,18 +196,18 @@ bool LoadDeviceFunctions(CVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, AllocateMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, FreeMemory);
 
-	VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateBuffer);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, BindBufferMemory);
-	VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyBuffer);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyBuffer);
 
 #if VK_KHR_buffer_device_address
-	if (Device->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
-	{
-		VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferDeviceAddressKHR);
-	}
+    if (Device->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
+    {
+        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferDeviceAddressKHR);
+    }
 #endif
-	
+    
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateImageView);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyImageView);
 

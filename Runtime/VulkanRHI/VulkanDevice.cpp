@@ -6,7 +6,7 @@
 
 static const auto RawStringComparator = [](const char* Lhs, const char* Rhs) -> bool
 {
-	return StringMisc::Compare(Lhs, Rhs) == 0;
+    return StringMisc::Compare(Lhs, Rhs) == 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -17,7 +17,7 @@ CVulkanDeviceRef CVulkanDevice::CreateDevice(CVulkanInstance* InInstance, CVulka
     VULKAN_ERROR(InInstance != nullptr, "Instance cannot be nullptr");
     VULKAN_ERROR(InAdapter  != nullptr, "Adapter cannot be nullptr");
 
-	CVulkanDeviceRef NewDevice = dbg_new CVulkanDevice(InInstance, InAdapter);
+    CVulkanDeviceRef NewDevice = dbg_new CVulkanDevice(InInstance, InAdapter);
     if (NewDevice && NewDevice->Initialize(DeviceDesc))
     {
         return NewDevice;
@@ -45,13 +45,13 @@ CVulkanDevice::~CVulkanDevice()
 
 bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
 {
-	VULKAN_ERROR(Adapter != nullptr, "Adapter is not initalized correctly");
+    VULKAN_ERROR(Adapter != nullptr, "Adapter is not initalized correctly");
 
-	VkResult Result = VK_SUCCESS;
-	
-	// TODO: Device layers
-	
-	// Verify Extensions
+    VkResult Result = VK_SUCCESS;
+    
+    // TODO: Device layers
+    
+    // Verify Extensions
     uint32 DeviceExtensionCount = 0;
     Result = vkEnumerateDeviceExtensionProperties(Adapter->GetVkPhysicalDevice(), nullptr, &DeviceExtensionCount, nullptr);
     VULKAN_CHECK_RESULT(Result, "Failed to retrieve the device extension count");
@@ -60,78 +60,78 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
     Result = vkEnumerateDeviceExtensionProperties(Adapter->GetVkPhysicalDevice(), nullptr, &DeviceExtensionCount, AvailableDeviceExtensions.Data());
     VULKAN_CHECK_RESULT(Result, "Failed to retrieve the device extensions");
 
-	TArray<const char*> EnabledExtensionNames;
-	for (const VkExtensionProperties& ExtensionProperty : AvailableDeviceExtensions)
-	{
-		const char* ExtensionName = ExtensionProperty.extensionName;
-		if (DeviceDesc.RequiredExtensionNames.Contains(ExtensionName, RawStringComparator) || DeviceDesc.OptionalExtensionNames.Contains(ExtensionName, RawStringComparator))
-		{
-			EnabledExtensionNames.Push(ExtensionName);
-		}
-	}
+    TArray<const char*> EnabledExtensionNames;
+    for (const VkExtensionProperties& ExtensionProperty : AvailableDeviceExtensions)
+    {
+        const char* ExtensionName = ExtensionProperty.extensionName;
+        if (DeviceDesc.RequiredExtensionNames.Contains(ExtensionName, RawStringComparator) || DeviceDesc.OptionalExtensionNames.Contains(ExtensionName, RawStringComparator))
+        {
+            EnabledExtensionNames.Push(ExtensionName);
+        }
+    }
 
-	for (const char* ExtensionName : DeviceDesc.RequiredExtensionNames)
-	{
-		if (!EnabledExtensionNames.Contains(ExtensionName, RawStringComparator))
-		{
-			VULKAN_ERROR_ALWAYS(String("Instance layer '") + ExtensionName + "' could not be enabled");
-			return false;
-		}
-		else
-		{
-			ExtensionNames.insert(String(ExtensionName));
-		}
-	}
+    for (const char* ExtensionName : DeviceDesc.RequiredExtensionNames)
+    {
+        if (!EnabledExtensionNames.Contains(ExtensionName, RawStringComparator))
+        {
+            VULKAN_ERROR_ALWAYS(String("Instance layer '") + ExtensionName + "' could not be enabled");
+            return false;
+        }
+        else
+        {
+            ExtensionNames.insert(String(ExtensionName));
+        }
+    }
 
     // Log enabled extensions and layers
-	IConsoleVariable* VerboseVulkan = CConsoleManager::Get().FindVariable("vulkan.VerboseLogging");
+    IConsoleVariable* VerboseVulkan = CConsoleManager::Get().FindVariable("vulkan.VerboseLogging");
 
-	const bool bVerboseLogging = VerboseVulkan && VerboseVulkan->GetBool();
+    const bool bVerboseLogging = VerboseVulkan && VerboseVulkan->GetBool();
     if (bVerboseLogging)
-	{
-		if (!EnabledExtensionNames.IsEmpty())
-		{
-			VULKAN_INFO("Enabled Device Extensions:");
-			
-			for (const char* ExtensionName : EnabledExtensionNames)
-			{
-				LOG_INFO(String("    ") + ExtensionName);
-			}
-		}
-	}
+    {
+        if (!EnabledExtensionNames.IsEmpty())
+        {
+            VULKAN_INFO("Enabled Device Extensions:");
+            
+            for (const char* ExtensionName : EnabledExtensionNames)
+            {
+                LOG_INFO(String("    ") + ExtensionName);
+            }
+        }
+    }
 
-	QueueIndicies = CVulkanPhysicalDevice::GetQueueFamilyIndices(Adapter->GetVkPhysicalDevice());
-	if (!QueueIndicies)
-	{
-		VULKAN_ERROR_ALWAYS("Failed to query queue indices");
-		return false;
-	}
-	
-	VULKAN_INFO("QueueIndicies: Graphics=" + ToString(QueueIndicies->GraphicsQueueIndex) + ", Compute=" + ToString(QueueIndicies->ComputeQueueIndex) + ", Copy=" + ToString(QueueIndicies->CopyQueueIndex));
+    QueueIndicies = CVulkanPhysicalDevice::GetQueueFamilyIndices(Adapter->GetVkPhysicalDevice());
+    if (!QueueIndicies)
+    {
+        VULKAN_ERROR_ALWAYS("Failed to query queue indices");
+        return false;
+    }
+    
+    VULKAN_INFO("QueueIndicies: Graphics=" + ToString(QueueIndicies->GraphicsQueueIndex) + ", Compute=" + ToString(QueueIndicies->ComputeQueueIndex) + ", Copy=" + ToString(QueueIndicies->CopyQueueIndex));
 
-	TArray<VkDeviceQueueCreateInfo> QueueCreateInfos;
+    TArray<VkDeviceQueueCreateInfo> QueueCreateInfos;
 
-	const TSet<uint32> UniqueQueueFamilies =
-	{
-		QueueIndicies->GraphicsQueueIndex,
-		QueueIndicies->CopyQueueIndex,
-		QueueIndicies->ComputeQueueIndex
-	};
+    const TSet<uint32> UniqueQueueFamilies =
+    {
+        QueueIndicies->GraphicsQueueIndex,
+        QueueIndicies->CopyQueueIndex,
+        QueueIndicies->ComputeQueueIndex
+    };
 
-	const float DefaultQueuePriority = 0.0f;
-	for (uint32 QueueFamiliy : UniqueQueueFamilies)
-	{
-		VkDeviceQueueCreateInfo QueueCreateInfo = {};
-		QueueCreateInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		QueueCreateInfo.pNext            = nullptr;
-		QueueCreateInfo.flags            = 0;
-		QueueCreateInfo.pQueuePriorities = &DefaultQueuePriority;
-		QueueCreateInfo.queueFamilyIndex = QueueFamiliy;
-		QueueCreateInfo.queueCount       = 1;
+    const float DefaultQueuePriority = 0.0f;
+    for (uint32 QueueFamiliy : UniqueQueueFamilies)
+    {
+        VkDeviceQueueCreateInfo QueueCreateInfo = {};
+        QueueCreateInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        QueueCreateInfo.pNext            = nullptr;
+        QueueCreateInfo.flags            = 0;
+        QueueCreateInfo.pQueuePriorities = &DefaultQueuePriority;
+        QueueCreateInfo.queueFamilyIndex = QueueFamiliy;
+        QueueCreateInfo.queueCount       = 1;
 
-		QueueCreateInfos.Push(QueueCreateInfo);
-	}
-	
+        QueueCreateInfos.Push(QueueCreateInfo);
+    }
+    
     VkDeviceCreateInfo DeviceCreateInfo;
     DeviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     DeviceCreateInfo.pNext                   = nullptr;
@@ -154,15 +154,15 @@ uint32 CVulkanDevice::GetCommandQueueIndexFromType(EVulkanCommandQueueType Type)
 {
     if (Type == EVulkanCommandQueueType::Graphics)
     {
-		return QueueIndicies->GraphicsQueueIndex;
+        return QueueIndicies->GraphicsQueueIndex;
     }
     else if (Type == EVulkanCommandQueueType::Compute)
     {
-		return QueueIndicies->ComputeQueueIndex;
+        return QueueIndicies->ComputeQueueIndex;
     }
     else if (Type == EVulkanCommandQueueType::Copy)
     {
-		return QueueIndicies->CopyQueueIndex;
+        return QueueIndicies->CopyQueueIndex;
     }
     else
     {

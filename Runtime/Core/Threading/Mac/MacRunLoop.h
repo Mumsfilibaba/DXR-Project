@@ -23,13 +23,13 @@ CORE_API void MakeMainThreadCall(dispatch_block_t Block, bool WaitUntilFinished)
 template<typename ReturnType>
 inline ReturnType MakeMainThreadCallWithReturn(ReturnType (^Block)(void))
 {
-	__block ReturnType ReturnValue;
-	MakeMainThreadCall(^
-	{
-		ReturnValue = Block();
-	}, true);
-	
-	return ReturnValue;
+    __block ReturnType ReturnValue;
+    MakeMainThreadCall(^
+    {
+        ReturnValue = Block();
+    }, true);
+    
+    return ReturnValue;
 }
 
 #endif

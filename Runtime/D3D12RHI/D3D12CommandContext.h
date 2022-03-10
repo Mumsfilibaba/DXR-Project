@@ -175,7 +175,7 @@ public:
         D3D12_RESOURCE_BARRIER Barrier;
         CMemory::Memzero(&Barrier);
 
-        Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
         Barrier.UAV.pResource = Resource;
 
         Barriers.Emplace(Barrier);
@@ -272,7 +272,7 @@ public:
     virtual void DiscardContents(class CRHIResource* Resource) override final;
 
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer, bool bUpdate) override final;
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final;
+    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final;
 
     /* Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
     virtual void SetRayTracingBindings(
@@ -332,13 +332,15 @@ public:
     FORCEINLINE void UnorderedAccessBarrier(CD3D12Resource* Resource)
     {
         D3D12_ERROR(Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
-        BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetResource());
+        BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetD3D12Resource());
     }
 
     FORCEINLINE void TransitionResource(CD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
     {
-        D3D12_ERROR(Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
-        BarrierBatcher.AddTransitionBarrier(Resource->GetResource(), BeforeState, AfterState);
+        D3D12_ERROR(Resource != nullptr                              , "TransitionResource cannot be called with a nullptr resource");
+        D3D12_ERROR(Resource->GetHeapType() != D3D12_HEAP_TYPE_UPLOAD, "Resources from Upload-heap cannot be transitioned");
+
+        BarrierBatcher.AddTransitionBarrier(Resource->GetD3D12Resource(), BeforeState, AfterState);
     }
 
     FORCEINLINE void FlushResourceBarriers()

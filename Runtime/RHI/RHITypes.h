@@ -98,9 +98,9 @@ enum class ERHIResourceState
     VertexAndConstantBuffer         = 1,
     IndexBuffer                     = 2,
     RenderTarget                    = 3,
-	RenderTargetClear               = 4,
+    RenderTargetClear               = 4,
     UnorderedAccess                 = 5,
-	DepthClear                      = 6,
+    DepthClear                      = 6,
     DepthWrite                      = 7,
     DepthRead                       = 8,
     NonPixelShaderResource          = 9,
@@ -123,9 +123,9 @@ inline const char* ToString(ERHIResourceState ResourceState)
     case ERHIResourceState::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
     case ERHIResourceState::IndexBuffer:                     return "IndexBuffer";
     case ERHIResourceState::RenderTarget:                    return "RenderTarget";
-	case ERHIResourceState::RenderTargetClear:               return "RenderTargetClear";
+    case ERHIResourceState::RenderTargetClear:               return "RenderTargetClear";
     case ERHIResourceState::UnorderedAccess:                 return "UnorderedAccess";
-	case ERHIResourceState::DepthClear:                      return "DepthClear";
+    case ERHIResourceState::DepthClear:                      return "DepthClear";
     case ERHIResourceState::DepthWrite:                      return "DepthWrite";
     case ERHIResourceState::DepthRead:                       return "DepthRead";
     case ERHIResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
@@ -137,7 +137,7 @@ inline const char* ToString(ERHIResourceState ResourceState)
     case ERHIResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
     case ERHIResourceState::ShadingRateSource:               return "ShadingRateSource";
     case ERHIResourceState::Present:                         return "Present";
-    default: 												 return "Unknown";
+    default:                                                  return "Unknown";
     }
 }
 
@@ -230,19 +230,19 @@ public:
     // NOTE: Default clear color is black
     FORCEINLINE SClearValue()
         : Type(EType::Color)
-        , Format(EFormat::Unknown)
+        , Format(ERHIFormat::Unknown)
         , Color(0.0f, 0.0f, 0.0f, 1.0f)
     {
     }
 
-    FORCEINLINE SClearValue(EFormat InFormat, float Depth, uint8 Stencil)
+    FORCEINLINE SClearValue(ERHIFormat InFormat, float Depth, uint8 Stencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencil(Depth, Stencil)
     {
     }
 
-    FORCEINLINE SClearValue(EFormat InFormat, float r, float g, float b, float a)
+    FORCEINLINE SClearValue(ERHIFormat InFormat, float r, float g, float b, float a)
         : Type(EType::Color)
         , Format(InFormat)
         , Color(r, g, b, a)
@@ -286,7 +286,7 @@ public:
         return Type;
     }
 
-    FORCEINLINE EFormat GetFormat() const
+    FORCEINLINE ERHIFormat GetFormat() const
     {
         return Format;
     }
@@ -317,8 +317,8 @@ public:
 
 private:
     EType   Type;
-    EFormat Format;
-	
+    ERHIFormat Format;
+    
     union
     {
         SColorF       Color;
@@ -342,7 +342,7 @@ struct SRHIResourceData
     {
     }
 
-    FORCEINLINE SRHIResourceData(const void* InData, EFormat InFormat, uint32 InWidth)
+    FORCEINLINE SRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
@@ -350,7 +350,7 @@ struct SRHIResourceData
     {
     }
 
-    FORCEINLINE SRHIResourceData(const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+    FORCEINLINE SRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
@@ -364,14 +364,14 @@ struct SRHIResourceData
         SizeInBytes = InSizeInBytes;
     }
 
-    FORCEINLINE void Set(const void* InData, EFormat InFormat, uint32 InWidth)
+    FORCEINLINE void Set(const void* InData, ERHIFormat InFormat, uint32 InWidth)
     {
         Data = InData;
         Format = InFormat;
         Width = InWidth;
     }
 
-    FORCEINLINE void Set(const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+    FORCEINLINE void Set(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
     {
         Set(InData, InFormat, InWidth);
         Height = InHeight;
@@ -399,17 +399,17 @@ struct SRHIResourceData
 
 private:
     const void* Data;
-	
+    
     union
     {
         struct
         {
             uint32 SizeInBytes;
         };
-		
+        
         struct
         {
-            EFormat Format;
+            ERHIFormat Format;
             uint32  Width;
             uint32  Height;
         };
@@ -444,13 +444,13 @@ struct SRHICopyTextureSubresourceInfo
 
     FORCEINLINE SRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
         : SubresourceIndex(InSubresourceIndex)
-		, x(InX)
+        , x(InX)
         , y(InY)
         , z(InZ)
     {
     }
 
-	uint32 SubresourceIndex = 0;
+    uint32 SubresourceIndex = 0;
     uint32 x                = 0;
     uint32 y                = 0;
     uint32 z                = 0;
@@ -463,7 +463,7 @@ struct SRHICopyTextureInfo
 {
     SRHICopyTextureSubresourceInfo Source;
     SRHICopyTextureSubresourceInfo Destination;
-	
+    
     uint32 Width  = 0;
     uint32 Height = 0;
     uint32 Depth  = 0;

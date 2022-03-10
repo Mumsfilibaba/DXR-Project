@@ -27,11 +27,11 @@ public:
         return WindowHandle;
     }
 
-	FORCEINLINE VkSurfaceKHR GetVkSurface() const
-	{
-		return Surface;
-	}
-	
+    FORCEINLINE VkSurfaceKHR GetVkSurface() const
+    {
+        return Surface;
+    }
+    
 private:
 
     CVulkanSurface(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle);

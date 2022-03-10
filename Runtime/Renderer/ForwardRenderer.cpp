@@ -56,7 +56,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         PShader->SetName("ForwardPass PixelShader");
     }
 
-    SRHIDepthStencilStateInfo DepthStencilStateInfo;
+    SRHIDepthStencilStateDesc DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -72,7 +72,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         DepthStencilState->SetName("ForwardPass DepthStencilState");
     }
 
-    SRHIRasterizerStateInfo RasterizerStateInfo;
+    SRHIRasterizerStateDesc RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -86,7 +86,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         RasterizerState->SetName("ForwardPass RasterizerState");
     }
 
-    SRHIBlendStateInfo BlendStateInfo;
+    SRHIBlendStateDesc BlendStateInfo;
     BlendStateInfo.bIndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].bBlendEnable = true;
 
@@ -101,17 +101,17 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         BlendState->SetName("ForwardPass BlendState");
     }
 
-    SRHIGraphicsPipelineStateInfo PSOProperties;
-    PSOProperties.ShaderState.VertexShader = VShader.Get();
-    PSOProperties.ShaderState.PixelShader = PShader.Get();
-    PSOProperties.InputLayoutState = FrameResources.StdInputLayout.Get();
-    PSOProperties.DepthStencilState = DepthStencilState.Get();
-    PSOProperties.BlendState = BlendState.Get();
-    PSOProperties.RasterizerState = RasterizerState.Get();
+    SRHIGraphicsPipelineStateDesc PSOProperties;
+    PSOProperties.ShaderState.VertexShader               = VShader.Get();
+    PSOProperties.ShaderState.PixelShader                = PShader.Get();
+    PSOProperties.InputLayoutState                       = FrameResources.StdInputLayout.Get();
+    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
+    PSOProperties.BlendState                             = BlendState.Get();
+    PSOProperties.RasterizerState                        = RasterizerState.Get();
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
-    PSOProperties.PipelineFormats.NumRenderTargets = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
-    PSOProperties.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
+    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
+    PSOProperties.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+    PSOProperties.PrimitiveTopologyType                  = ERHIPrimitiveTopologyType::Triangle;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)

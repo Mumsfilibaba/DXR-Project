@@ -33,8 +33,8 @@ CVulkanSwapChain::~CVulkanSwapChain()
 
 bool CVulkanSwapChain::Initialize(const SVulkanSwapChainCreateInfo& CreateInfo)
 {
-	CVulkanSurface* Surface = CreateInfo.Surface;
-	Assert(Surface != nullptr);
+    CVulkanSurface* Surface = CreateInfo.Surface;
+    Assert(Surface != nullptr);
  
     TArray<VkSurfaceFormatKHR> SupportedFormats;
     if (!Surface->GetSupportedFormats(SupportedFormats))
@@ -165,7 +165,7 @@ bool CVulkanSwapChain::Initialize(const SVulkanSwapChainCreateInfo& CreateInfo)
     Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &BufferCount, nullptr);
     VULKAN_CHECK_RESULT(Result, "Failed to retrive the number of images in SwapChain");
 
-	Format = SelectedFormat;
+    Format = SelectedFormat;
     return true;
 }
 
@@ -195,15 +195,15 @@ VkResult CVulkanSwapChain::Present(CVulkanQueue* Queue, CVulkanSemaphore* WaitSe
     VkSemaphore WaitSemaphoreHandle = VK_NULL_HANDLE;
     if (WaitSemaphore)
     {
-		WaitSemaphoreHandle = WaitSemaphore->GetVkSemaphore();
+        WaitSemaphoreHandle = WaitSemaphore->GetVkSemaphore();
 
-		PresentInfo.waitSemaphoreCount = 1;
-		PresentInfo.pWaitSemaphores    = &WaitSemaphoreHandle;
+        PresentInfo.waitSemaphoreCount = 1;
+        PresentInfo.pWaitSemaphores    = &WaitSemaphoreHandle;
     }
     else
     {
-		PresentInfo.waitSemaphoreCount = 0;
-		PresentInfo.pWaitSemaphores    = nullptr;
+        PresentInfo.waitSemaphoreCount = 0;
+        PresentInfo.pWaitSemaphores    = nullptr;
     }
 
     return vkQueuePresentKHR(Queue->GetVkQueue(), &PresentInfo);

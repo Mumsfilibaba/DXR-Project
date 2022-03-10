@@ -17,7 +17,7 @@ public:
      * @param InHeight: Height of the viewport
      */
     
-    CRHIViewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
+    CRHIViewport(ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
         : CRHIObject()
         , Width(InWidth)
         , Height(InHeight)
@@ -82,13 +82,13 @@ public:
      *
      * @return: Returns the color-format of the width
      */
-    FORCEINLINE EFormat GetColorFormat() const
+    FORCEINLINE ERHIFormat GetColorFormat() const
     {
         return Format;
     }
 
 protected:
-    uint32  Width;
-    uint32  Height;
-    EFormat Format;
+    uint32     Width;
+    uint32     Height;
+    ERHIFormat Format;
 };

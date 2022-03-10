@@ -20,16 +20,16 @@ public:
 
     void AddWaitSemaphore(VkSemaphore Semaphore, VkPipelineStageFlags WaitStage);
     void AddSignalSemaphore(VkSemaphore Semaphore);
-	
+    
     bool IsWaitingForSemaphore(VkSemaphore Semaphore) const { return WaitSemaphores.Contains(Semaphore); }
     bool IsSignalingSemaphore(VkSemaphore Semaphore) const { return SignalSemaphores.Contains(Semaphore); }
 
     void WaitForCompletion();
 
-	FORCEINLINE VkQueue GetVkQueue() const
-	{
-		return CommandQueue;
-	}
+    FORCEINLINE VkQueue GetVkQueue() const
+    {
+        return CommandQueue;
+    }
 
     FORCEINLINE EVulkanCommandQueueType GetType() const
     {
@@ -48,7 +48,7 @@ private:
 
     bool Initialize();
 
-	EVulkanCommandQueueType Type;
+    EVulkanCommandQueueType Type;
     
     VkQueue CommandQueue;
     uint32  QueueFamilyIndex;

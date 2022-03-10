@@ -10,18 +10,18 @@
 CVulkanSurfaceRef CVulkanSurface::CreateSurface(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle)
 {
     CVulkanSurfaceRef NewSurface = dbg_new CVulkanSurface(InDevice, InQueue, InWindowHandle);
-	if (NewSurface && NewSurface->Initialize())
-	{
-		return NewSurface;
-	}
-	
-	return nullptr;
+    if (NewSurface && NewSurface->Initialize())
+    {
+        return NewSurface;
+    }
+    
+    return nullptr;
 }
-	
+    
 CVulkanSurface::CVulkanSurface(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle)
     : CVulkanDeviceObject(InDevice)
     , Queue(::AddRef(InQueue))
-	, WindowHandle(InWindowHandle)
+    , WindowHandle(InWindowHandle)
     , Surface(VK_NULL_HANDLE)
 {
 }
@@ -30,7 +30,7 @@ CVulkanSurface::~CVulkanSurface()
 {
     if (VULKAN_CHECK_HANDLE(Surface))
     {
-		CVulkanInstance* Instance = GetDevice()->GetInstance();
+        CVulkanInstance* Instance = GetDevice()->GetInstance();
         vkDestroySurfaceKHR(Instance->GetVkInstance(), Surface, nullptr);
         Surface = VK_NULL_HANDLE;
     }
@@ -38,8 +38,8 @@ CVulkanSurface::~CVulkanSurface()
 
 bool CVulkanSurface::Initialize()
 {
-	CVulkanInstance* Instance = GetDevice()->GetInstance();
-	
+    CVulkanInstance* Instance = GetDevice()->GetInstance();
+    
     VkResult Result = PlatformVulkan::CreateSurface(Instance->GetVkInstance(), WindowHandle, &Surface);
     VULKAN_CHECK_RESULT(Result, "Failed to create Platform Surface");
 
@@ -47,8 +47,8 @@ bool CVulkanSurface::Initialize()
 
     VkBool32 PresentSupport = false;
     Result = vkGetPhysicalDeviceSurfaceSupportKHR(Adapter->GetVkPhysicalDevice(), Queue->GetQueueFamilyIndex(), Surface, &PresentSupport);
-	VULKAN_CHECK_RESULT(Result, "Failed to retrieve presentation support for surface");
-	
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve presentation support for surface");
+    
     if (!PresentSupport)
     {
         VULKAN_ERROR_ALWAYS("Queue does not support presentation");

@@ -64,9 +64,9 @@ struct SDepthStencilOp
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIDepthStencilStateInfo
+// SRHIDepthStencilStateDesc
 
-struct SRHIDepthStencilStateInfo
+struct SRHIDepthStencilStateDesc
 {
     EDepthWriteMask DepthWriteMask = EDepthWriteMask::All;
     ERHIComparisonFunc DepthFunc = ERHIComparisonFunc::Less;
@@ -126,9 +126,9 @@ inline const char* ToString(EFillMode FillMode)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRasterizerStateInfo
+// SRHIRasterizerStateDesc
 
-struct SRHIRasterizerStateInfo
+struct SRHIRasterizerStateDesc
 {
     EFillMode FillMode = EFillMode::Solid;
     ECullMode CullMode = ECullMode::Back;
@@ -349,9 +349,9 @@ struct SRenderTargetBlendState
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIBlendStateInfo
+// SRHIBlendStateDesc
 
-struct SRHIBlendStateInfo
+struct SRHIBlendStateDesc
 {
     bool bAlphaToCoverageEnable = false;
     bool bIndependentBlendEnable = false;
@@ -391,7 +391,7 @@ struct SInputElement
 {
     String              Semantic = "";
     uint32               SemanticIndex = 0;
-    EFormat              Format = EFormat::Unknown;
+    ERHIFormat              Format = ERHIFormat::Unknown;
     uint32               InputSlot = 0;
     uint32               ByteOffset = 0;
     EInputClassification InputClassification = EInputClassification::Vertex;
@@ -399,18 +399,18 @@ struct SInputElement
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIInputLayoutStateInfo
+// SRHIInputLayoutStateDesc
 
-struct SRHIInputLayoutStateInfo
+struct SRHIInputLayoutStateDesc
 {
-    SRHIInputLayoutStateInfo() = default;
+    SRHIInputLayoutStateDesc() = default;
 
-    SRHIInputLayoutStateInfo(const TArray<SInputElement>& InElements)
+    SRHIInputLayoutStateDesc(const TArray<SInputElement>& InElements)
         : Elements(InElements)
     {
     }
 
-    SRHIInputLayoutStateInfo(std::initializer_list<SInputElement> InList)
+    SRHIInputLayoutStateDesc(std::initializer_list<SInputElement> InList)
         : Elements(InList)
     {
     }
@@ -451,9 +451,9 @@ inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 
 struct SPipelineRenderTargetFormats
 {
-    EFormat RenderTargetFormats[8];
+    ERHIFormat RenderTargetFormats[8];
     uint32  NumRenderTargets = 0;
-    EFormat DepthStencilFormat = EFormat::Unknown;
+    ERHIFormat DepthStencilFormat = ERHIFormat::Unknown;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -503,9 +503,9 @@ struct SGraphicsPipelineShaderState
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIGraphicsPipelineStateInfo
+// SRHIGraphicsPipelineStateDesc
 
-struct SRHIGraphicsPipelineStateInfo
+struct SRHIGraphicsPipelineStateDesc
 {
     CRHIInputLayoutState* InputLayoutState = nullptr;
     CRHIDepthStencilState* DepthStencilState = nullptr;
@@ -538,13 +538,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIComputePipelineStateInfo
+// SRHIComputePipelineStateDesc
 
-struct SRHIComputePipelineStateInfo
+struct SRHIComputePipelineStateDesc
 {
-    SRHIComputePipelineStateInfo() = default;
+    SRHIComputePipelineStateDesc() = default;
 
-    SRHIComputePipelineStateInfo(CRHIComputeShader* InShader)
+    SRHIComputePipelineStateDesc(CRHIComputeShader* InShader)
         : Shader(InShader)
     {
     }
@@ -587,9 +587,9 @@ struct SRayTracingHitGroup
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRayTracingPipelineStateInfo
+// SRHIRayTracingPipelineStateDesc
 
-struct SRHIRayTracingPipelineStateInfo
+struct SRHIRayTracingPipelineStateDesc
 {
     CRHIRayGenShader* RayGen = nullptr;
 

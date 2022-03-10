@@ -115,16 +115,16 @@ public:
         return !(*this == RHS);
     }
 
-    ERHISamplerMode   AddressU       = ERHISamplerMode::Clamp;
-    ERHISamplerMode   AddressV       = ERHISamplerMode::Clamp;
-    ERHISamplerMode   AddressW       = ERHISamplerMode::Clamp;
-    ERHISamplerFilter Filter         = ERHISamplerFilter::MinMagMipLinear;
-    ERHIComparisonFunc   ComparisonFunc = ERHIComparisonFunc::Never;
-    float             MipLODBias     = 0.0f;
-    uint32            MaxAnisotropy  = 1;
-    float             MinLOD         = -FLT_MAX;
-    float             MaxLOD         = FLT_MAX;
-    SColorF           BorderColor;
+    ERHISamplerMode    AddressU       = ERHISamplerMode::Clamp;
+    ERHISamplerMode    AddressV       = ERHISamplerMode::Clamp;
+    ERHISamplerMode    AddressW       = ERHISamplerMode::Clamp;
+    ERHISamplerFilter  Filter         = ERHISamplerFilter::MinMagMipLinear;
+    ERHIComparisonFunc ComparisonFunc = ERHIComparisonFunc::Never;
+    float              MipLODBias     = 0.0f;
+    uint32             MaxAnisotropy  = 1;
+    float              MinLOD         = -FLT_MAX;
+    float              MaxLOD         = FLT_MAX;
+    SColorF            BorderColor;
 };
 
 

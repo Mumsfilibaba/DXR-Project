@@ -117,10 +117,10 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
             if (CurrentLight->IsShadowCaster())
             {
                 SShadowCastingPointLightData Data;
-                Data.Color = Color;
-                Data.FarPlane = CurrentLight->GetShadowFarPlane();
+                Data.Color         = Color;
+                Data.FarPlane      = CurrentLight->GetShadowFarPlane();
                 Data.MaxShadowBias = CurrentLight->GetMaxShadowBias();
-                Data.ShadowBias = CurrentLight->GetShadowBias();
+                Data.ShadowBias    = CurrentLight->GetShadowBias();
 
                 ShadowCastingPointLightsData.Emplace(Data);
                 ShadowCastingPointLightsPosRad.Emplace(PosRad);

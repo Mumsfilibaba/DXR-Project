@@ -96,7 +96,7 @@ bool CEngineLoop::PreInitialize()
     CFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
 
-	const String ProjectLocation = String(ENGINE_LOCATION) + String("/") + String(PROJECT_NAME);
+    const String ProjectLocation = String(ENGINE_LOCATION) + String("/") + String(PROJECT_NAME);
     if (!CProjectManager::Initialize(PROJECT_NAME, ProjectLocation.CStr()))
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
@@ -130,7 +130,7 @@ bool CEngineLoop::PreInitialize()
 #if PLATFORM_MACOS
         ERHIType::Vulkan;
 #else
-        ERHIType::Vulkan;
+        ERHIType::D3D12;
 #endif
     if (!RHIInitialize(RenderApi))
     {

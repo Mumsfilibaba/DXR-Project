@@ -23,7 +23,7 @@ See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
 
 TSharedPtr<CMacCursor> CMacCursor::CreateCursor()
 {
-	return TSharedPtr<CMacCursor>(dbg_new CMacCursor());
+    return TSharedPtr<CMacCursor>(dbg_new CMacCursor());
 }
 
 void CMacCursor::SetCursor(ECursor Cursor)
@@ -82,7 +82,7 @@ void CMacCursor::SetPosition(CPlatformWindow* InRelativeWindow, int32 x, int32 y
     CGPoint NewPosition;
     if (InRelativeWindow)
     {
-		CCocoaWindow* RelativeWindow = reinterpret_cast<CCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
+        CCocoaWindow* RelativeWindow = reinterpret_cast<CCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
         const NSRect ContentRect = [RelativeWindow frame];
         const NSRect LocalRect   = NSMakeRect(x, ContentRect.size.height - y - 1, 0, 0);
         const NSRect GlobalRect  = [RelativeWindow convertRectToScreen:LocalRect];
@@ -125,7 +125,7 @@ void CMacCursor::SetVisibility(bool bVisible)
         if (! bIsVisible)
         {
             [NSCursor unhide];
-			bIsVisible = true;
+            bIsVisible = true;
         }
     }
     else
@@ -133,7 +133,7 @@ void CMacCursor::SetVisibility(bool bVisible)
         if (bIsVisible)
         {
             [NSCursor hide];
-			bIsVisible = false;
+            bIsVisible = false;
         }
     }
 }

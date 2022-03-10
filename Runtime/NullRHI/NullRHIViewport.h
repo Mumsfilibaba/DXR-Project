@@ -19,7 +19,7 @@
 class CNullRHIViewport : public CRHIViewport
 {
 public:
-    CNullRHIViewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
+    CNullRHIViewport(ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
         : CRHIViewport(InFormat, InWidth, InHeight)
         , BackBuffer(dbg_new TNullRHITexture<CNullRHITexture2D>(InFormat, Width, Height, 1, 1, 0, SClearValue()))
         , BackBufferView(dbg_new CNullRHIRenderTargetView())

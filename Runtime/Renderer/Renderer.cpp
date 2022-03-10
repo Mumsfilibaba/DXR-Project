@@ -71,7 +71,7 @@ CRenderer::CRenderer()
 
 bool CRenderer::Init()
 {
-    Resources.MainWindowViewport = RHICreateViewport(GEngine->MainWindow->GetPlatformHandle(), 0, 0, EFormat::B8G8R8A8_Unorm, EFormat::Unknown);
+    Resources.MainWindowViewport = RHICreateViewport(GEngine->MainWindow->GetPlatformHandle(), 0, 0, Resources.BackBufferFormat, ERHIFormat::Unknown);
     if (!Resources.MainWindowViewport)
     {
         CDebug::DebugBreak();
@@ -94,12 +94,12 @@ bool CRenderer::Init()
     }
 
     // Init standard input layout
-    SRHIInputLayoutStateInfo InputLayout =
+    SRHIInputLayoutStateDesc InputLayout =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0,  EInputClassification::Vertex, 0 },
-        { "NORMAL",   0, EFormat::R32G32B32_Float, 0, 12, EInputClassification::Vertex, 0 },
-        { "TANGENT",  0, EFormat::R32G32B32_Float, 0, 24, EInputClassification::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,    0, 36, EInputClassification::Vertex, 0 },
+        { "POSITION", 0, ERHIFormat::R32G32B32_Float, 0, 0,  EInputClassification::Vertex, 0 },
+        { "NORMAL",   0, ERHIFormat::R32G32B32_Float, 0, 12, EInputClassification::Vertex, 0 },
+        { "TANGENT",  0, ERHIFormat::R32G32B32_Float, 0, 24, EInputClassification::Vertex, 0 },
+        { "TEXCOORD", 0, ERHIFormat::R32G32_Float,    0, 36, EInputClassification::Vertex, 0 },
     };
 
     Resources.StdInputLayout = RHICreateInputLayout(InputLayout);
@@ -681,12 +681,12 @@ void CRenderer::Tick(const CScene& Scene)
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "End UI Render");
-	
-	MainCmdList.TransitionTexture(Resources.BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::RenderTargetClear);
-	
-	SColorF BackBufferColor(1.0f, 0.0f, 0.0f, 0.0f);
-	MainCmdList.ClearRenderTargetView(Resources.BackBuffer->GetRenderTargetView(), BackBufferColor);
-	
+    
+    MainCmdList.TransitionTexture(Resources.BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::RenderTargetClear);
+    
+    //SColorF BackBufferColor(1.0f, 0.0f, 0.0f, 0.0f);
+    //MainCmdList.ClearRenderTargetView(Resources.BackBuffer->GetRenderTargetView(), BackBufferColor);
+    
     MainCmdList.TransitionTexture(Resources.BackBuffer, ERHIResourceState::RenderTargetClear, ERHIResourceState::Present);
 
     INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "--END FRAME--");
@@ -855,9 +855,9 @@ bool CRenderer::InitBoundingBoxDebugPass()
         AABBPixelShader->SetName("Debug PixelShader");
     }
 
-    SRHIInputLayoutStateInfo InputLayout =
+    SRHIInputLayoutStateDesc InputLayout =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0, EInputClassification::Vertex, 0 },
+        { "POSITION", 0, ERHIFormat::R32G32B32_Float, 0, 0, EInputClassification::Vertex, 0 },
     };
 
     TSharedRef<CRHIInputLayoutState> InputLayoutState = RHICreateInputLayout(InputLayout);
@@ -871,7 +871,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         InputLayoutState->SetName("Debug InputLayoutState");
     }
 
-    SRHIDepthStencilStateInfo DepthStencilStateInfo;
+    SRHIDepthStencilStateDesc DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc      = ERHIComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
@@ -887,7 +887,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         DepthStencilState->SetName("Debug DepthStencilState");
     }
 
-    SRHIRasterizerStateInfo RasterizerStateInfo;
+    SRHIRasterizerStateDesc RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -901,7 +901,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         RasterizerState->SetName("Debug RasterizerState");
     }
 
-    SRHIBlendStateInfo BlendStateInfo;
+    SRHIBlendStateDesc BlendStateInfo;
 
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
@@ -914,7 +914,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         BlendState->SetName("Debug BlendState");
     }
 
-    SRHIGraphicsPipelineStateInfo PSOProperties;
+    SRHIGraphicsPipelineStateDesc PSOProperties;
     PSOProperties.BlendState                             = BlendState.Get();
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
     PSOProperties.InputLayoutState                       = InputLayoutState.Get();
@@ -1033,9 +1033,9 @@ bool CRenderer::InitAA()
         PostShader->SetName("PostProcess PixelShader");
     }
 
-    SRHIDepthStencilStateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::Always;
-    DepthStencilStateInfo.bDepthEnable = false;
+    SRHIDepthStencilStateDesc DepthStencilStateInfo;
+    DepthStencilStateInfo.DepthFunc      = ERHIComparisonFunc::Always;
+    DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
@@ -1049,7 +1049,7 @@ bool CRenderer::InitAA()
         DepthStencilState->SetName("PostProcess DepthStencilState");
     }
 
-    SRHIRasterizerStateInfo RasterizerStateInfo;
+    SRHIRasterizerStateDesc RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -1063,8 +1063,8 @@ bool CRenderer::InitAA()
         RasterizerState->SetName("PostProcess RasterizerState");
     }
 
-    SRHIBlendStateInfo BlendStateInfo;
-    BlendStateInfo.bIndependentBlendEnable = false;
+    SRHIBlendStateDesc BlendStateInfo;
+    BlendStateInfo.bIndependentBlendEnable      = false;
     BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
@@ -1078,17 +1078,17 @@ bool CRenderer::InitAA()
         BlendState->SetName("PostProcess BlendState");
     }
 
-    SRHIGraphicsPipelineStateInfo PSOProperties;
-    PSOProperties.InputLayoutState = nullptr;
-    PSOProperties.BlendState = BlendState.Get();
-    PSOProperties.DepthStencilState = DepthStencilState.Get();
-    PSOProperties.RasterizerState = RasterizerState.Get();
-    PSOProperties.ShaderState.VertexShader = VShader.Get();
-    PSOProperties.ShaderState.PixelShader = PostShader.Get();
-    PSOProperties.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
-    PSOProperties.PipelineFormats.NumRenderTargets = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat = EFormat::Unknown;
+    SRHIGraphicsPipelineStateDesc PSOProperties;
+    PSOProperties.InputLayoutState                       = nullptr;
+    PSOProperties.BlendState                             = BlendState.Get();
+    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
+    PSOProperties.RasterizerState                        = RasterizerState.Get();
+    PSOProperties.ShaderState.VertexShader               = VShader.Get();
+    PSOProperties.ShaderState.PixelShader                = PostShader.Get();
+    PSOProperties.PrimitiveTopologyType                  = ERHIPrimitiveTopologyType::Triangle;
+    PSOProperties.PipelineFormats.RenderTargetFormats[0] = Resources.BackBufferFormat;
+    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
+    PSOProperties.PipelineFormats.DepthStencilFormat     = ERHIFormat::Unknown;
 
     PostPSO = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PostPSO)
@@ -1192,9 +1192,9 @@ bool CRenderer::InitShadingImage()
         return true;
     }
 
-    uint32 Width = Resources.MainWindowViewport->GetWidth() / Support.ShadingRateImageTileSize;
+    uint32 Width  = Resources.MainWindowViewport->GetWidth() / Support.ShadingRateImageTileSize;
     uint32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
-    ShadingImage = RHICreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, ERHIResourceState::ShadingRateSource, nullptr);
+    ShadingImage = RHICreateTexture2D(ERHIFormat::R8_Uint, Width, Height, 1, 1, TextureFlags_RWTexture, ERHIResourceState::ShadingRateSource, nullptr);
     if (!ShadingImage)
     {
         CDebug::DebugBreak();
@@ -1223,7 +1223,7 @@ bool CRenderer::InitShadingImage()
         ShadingRateShader->SetName("ShadingRate Image Shader");
     }
 
-    SRHIComputePipelineStateInfo CreateInfo(ShadingRateShader.Get());
+    SRHIComputePipelineStateDesc CreateInfo(ShadingRateShader.Get());
     ShadingRatePipeline = RHICreateComputePipelineState(CreateInfo);
     if (!ShadingRatePipeline)
     {

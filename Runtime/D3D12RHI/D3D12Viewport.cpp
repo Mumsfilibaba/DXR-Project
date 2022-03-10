@@ -4,15 +4,17 @@
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIViewport
+#include "CoreApplication/Platform/PlatformDebugMisc.h"
 
-CD3D12Viewport::CD3D12Viewport(CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12Viewport
+
+CD3D12Viewport::CD3D12Viewport(CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, HWND InHwnd, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
     : CD3D12DeviceObject(InDevice)
     , CRHIViewport(InFormat, InWidth, InHeight)
     , Hwnd(InHwnd)
     , SwapChain(nullptr)
-    , CmdContext(InCmdContext)
+    , CommandContext(InCmdContext)
     , BackBuffers()
     , BackBufferViews()
 {
@@ -37,49 +39,62 @@ CD3D12Viewport::~CD3D12Viewport()
     }
 }
 
-bool CD3D12Viewport::Init()
+bool CD3D12Viewport::Initialize()
 {
     // Save the flags
     Flags = GetDevice()->CanAllowTearing() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
-    const uint32 NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
-    const DXGI_FORMAT NativeFormat = ConvertFormat(Format);
+    const uint32      NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
+    const DXGI_FORMAT NativeFormat        = ConvertFormat(Format);
 
-    Assert(Width > 0 && Height > 0);
+    D3D12_ERROR(IsWindow(Hwnd), "WindowHandle does not belong to a valid window");
+
+    RECT ClientRect;
+    GetClientRect(Hwnd, &ClientRect);
+
+    if (Width == 0)
+    {
+        Width = ClientRect.right - ClientRect.left;
+    }
+
+    if (Height == 0)
+    {
+        Height = ClientRect.bottom - ClientRect.top;
+    }
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
     CMemory::Memzero(&SwapChainDesc);
 
-    SwapChainDesc.Width = Width;
-    SwapChainDesc.Height = Height;
-    SwapChainDesc.Format = NativeFormat;
-    SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    SwapChainDesc.BufferCount = NumSwapChainBuffers;
-    SwapChainDesc.SampleDesc.Count = 1;
+    SwapChainDesc.Width              = Width;
+    SwapChainDesc.Height             = Height;
+    SwapChainDesc.Format             = NativeFormat;
+    SwapChainDesc.BufferUsage        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    SwapChainDesc.BufferCount        = NumSwapChainBuffers;
+    SwapChainDesc.SampleDesc.Count   = 1;
     SwapChainDesc.SampleDesc.Quality = 0;
-    SwapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-    SwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-    SwapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-    SwapChainDesc.Flags = Flags;
+    SwapChainDesc.Scaling            = DXGI_SCALING_STRETCH;
+    SwapChainDesc.SwapEffect         = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+    SwapChainDesc.AlphaMode          = DXGI_ALPHA_MODE_IGNORE;
+    SwapChainDesc.Flags              = Flags;
 
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc;
     CMemory::Memzero(&FullscreenDesc);
 
-    FullscreenDesc.RefreshRate.Numerator = 0;
+    FullscreenDesc.RefreshRate.Numerator   = 0;
     FullscreenDesc.RefreshRate.Denominator = 1;
-    FullscreenDesc.Scaling = DXGI_MODE_SCALING_STRETCHED;
-    FullscreenDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-    FullscreenDesc.Windowed = true;
+    FullscreenDesc.Scaling                 = DXGI_MODE_SCALING_STRETCHED;
+    FullscreenDesc.ScanlineOrdering        = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    FullscreenDesc.Windowed                = true;
 
     TComPtr<IDXGISwapChain1> TempSwapChain;
-    HRESULT Result = GetDevice()->GetFactory()->CreateSwapChainForHwnd(CmdContext->GetQueue().GetQueue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
+    HRESULT Result = GetDevice()->GetDXGIFactory()->CreateSwapChainForHwnd(CommandContext->GetQueue().GetD3D12Queue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
     if (SUCCEEDED(Result))
     {
         Result = TempSwapChain.GetAs<IDXGISwapChain3>(&SwapChain);
         if (FAILED(Result))
         {
-            LOG_ERROR("[CD3D12Viewport]: FAILED to retrive IDXGISwapChain3");
+            D3D12_ERROR_ALWAYS("FAILED to retrive IDXGISwapChain3");
             return false;
         }
 
@@ -94,18 +109,18 @@ bool CD3D12Viewport::Init()
     }
     else
     {
-        LOG_ERROR("[CD3D12Viewport]: FAILED to create SwapChain");
+        D3D12_ERROR_ALWAYS("FAILED to create SwapChain");
         return false;
     }
 
-    GetDevice()->GetFactory()->MakeWindowAssociation(Hwnd, DXGI_MWA_NO_ALT_ENTER);
+    GetDevice()->GetDXGIFactory()->MakeWindowAssociation(Hwnd, DXGI_MWA_NO_ALT_ENTER);
 
     if (!RetriveBackBuffers())
     {
         return false;
     }
 
-    LOG_INFO("[CD3D12Viewport]: Created SwapChain");
+    D3D12_INFO("Created SwapChain");
     return true;
 }
 
@@ -115,7 +130,7 @@ bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 
     if ((InWidth != Width || InHeight != Height) && InWidth > 0 && InHeight > 0)
     {
-        CmdContext->ClearState();
+        CommandContext->ClearState();
 
         BackBuffers.Clear();
         BackBufferViews.Clear();
@@ -128,7 +143,7 @@ bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
         }
         else
         {
-            LOG_WARNING("[CD3D12Viewport]: Resize FAILED");
+            D3D12_WARNING("Resize FAILED");
             return false;
         }
 
@@ -218,22 +233,23 @@ bool CD3D12Viewport::RetriveBackBuffers()
     for (uint32 i = 0; i < NumBackBuffers; i++)
     {
         TComPtr<ID3D12Resource> BackBufferResource;
+
         HRESULT Result = SwapChain->GetBuffer(i, IID_PPV_ARGS(&BackBufferResource));
         if (FAILED(Result))
         {
-            LOG_INFO("[CD3D12Viewport]: GetBuffer(" + ToString(i) + ") Failed");
+            D3D12_INFO("GetBuffer(" + ToString(i) + ") Failed");
             return false;
         }
 
         BackBuffers[i] = dbg_new CD3D12Texture2D(GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, TextureFlag_RTV, SClearValue());
-        BackBuffers[i]->SetResource(dbg_new CD3D12Resource(GetDevice(), BackBufferResource));
+        BackBuffers[i]->SetResource(CD3D12Resource::CreateResource(GetDevice(), BackBufferResource).ReleaseOwnership());
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;
         CMemory::Memzero(&Desc);
 
-        Desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-        Desc.Format = BackBuffers[i]->GetNativeFormat();
-        Desc.Texture2D.MipSlice = 0;
+        Desc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
+        Desc.Format               = BackBuffers[i]->GetNativeFormat();
+        Desc.Texture2D.MipSlice   = 0;
         Desc.Texture2D.PlaneSlice = 0;
 
         if (!BackBufferViews[i]->CreateView(BackBuffers[i]->GetResource(), Desc))

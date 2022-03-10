@@ -14,7 +14,7 @@ class CMacConsoleWindow;
 
 @interface CCocoaConsoleWindow : NSWindow<NSWindowDelegate>
 {
-	CMacConsoleWindow* ConsoleWindow;
+    CMacConsoleWindow* ConsoleWindow;
 }
 
 // Instance

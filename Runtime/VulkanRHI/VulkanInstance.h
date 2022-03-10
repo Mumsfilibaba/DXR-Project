@@ -38,7 +38,7 @@ public:
     {
         return ExtensionNames.find(ExtensionName) != ExtensionNames.end();
     }
-	
+    
     FORCEINLINE VkInstance GetVkInstance() const noexcept
     {
         return Instance;
@@ -49,7 +49,7 @@ private:
     CVulkanInstance();
     ~CVulkanInstance();
 
-	bool Initialize(const SVulkanInstanceDesc& InstanceDesc);
+    bool Initialize(const SVulkanInstanceDesc& InstanceDesc);
 
     DynamicLibraryHandle DriverHandle;  
     VkInstance           Instance;

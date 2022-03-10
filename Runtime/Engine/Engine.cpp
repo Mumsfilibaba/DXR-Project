@@ -36,7 +36,7 @@ CEngine* CEngine::Make()
 
 CEngine::CEngine()
 {
-	GExit.GetExecutedDelgate().AddRaw(this, &CEngine::Exit);
+    GExit.GetExecutedDelgate().AddRaw(this, &CEngine::Exit);
 }
 
 bool CEngine::Initialize()
@@ -80,7 +80,7 @@ bool CEngine::Initialize()
     // Create standard textures
     uint8 Pixels[] = { 255, 255, 255, 255 };
 
-    BaseTexture = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    BaseTexture = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, ERHIFormat::R8G8B8A8_Unorm);
     if (!BaseTexture)
     {
         LOG_WARNING("Failed to create BaseTexture");
@@ -94,7 +94,7 @@ bool CEngine::Initialize()
     Pixels[1] = 127;
     Pixels[2] = 255;
 
-    BaseNormal = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    BaseNormal = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, ERHIFormat::R8G8B8A8_Unorm);
     if (!BaseNormal)
     {
         LOG_WARNING("Failed to create BaseNormal-Texture");

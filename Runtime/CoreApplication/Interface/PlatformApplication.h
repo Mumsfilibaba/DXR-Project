@@ -130,15 +130,15 @@ public:
 
 protected:
 
-	friend struct TDefaultDelete<CPlatformApplication>;
-	
+    friend struct TDefaultDelete<CPlatformApplication>;
+    
     CPlatformApplication(const TSharedPtr<ICursor>& InCursor)
         : Cursor(InCursor)
         , MessageListener(nullptr)
     {
     }
-	
-	virtual ~CPlatformApplication() = default;
+    
+    virtual ~CPlatformApplication() = default;
 
     TSharedPtr<ICursor> Cursor;
     TSharedPtr<CPlatformApplicationMessageHandler> MessageListener;

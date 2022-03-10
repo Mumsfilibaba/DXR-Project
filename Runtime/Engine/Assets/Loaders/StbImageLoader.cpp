@@ -9,73 +9,73 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CStbImageLoader
 
-static EFormat GetByteFormat(int32 Channels)
+static ERHIFormat GetByteFormat(int32 Channels)
 {
     if (Channels == 4)
     {
-        return EFormat::R8G8B8A8_Unorm;
+        return ERHIFormat::R8G8B8A8_Unorm;
     }
     else if (Channels == 2)
     {
-        return EFormat::R8G8_Unorm;
+        return ERHIFormat::R8G8_Unorm;
     }
     else if (Channels == 1)
     {
-        return EFormat::R8_Unorm;
+        return ERHIFormat::R8_Unorm;
     }
     else
     {
-        return EFormat::Unknown;
+        return ERHIFormat::Unknown;
     }
 }
 
-static EFormat GetExtendedFormat(int32 Channels)
+static ERHIFormat GetExtendedFormat(int32 Channels)
 {
     if (Channels == 4)
     {
-        return EFormat::R16G16B16A16_Unorm;
+        return ERHIFormat::R16G16B16A16_Unorm;
     }
     else if (Channels == 2)
     {
-        return EFormat::R16G16_Unorm;
+        return ERHIFormat::R16G16_Unorm;
     }
     else if (Channels == 1)
     {
-        return EFormat::R16_Unorm;
+        return ERHIFormat::R16_Unorm;
     }
     else
     {
-        return EFormat::Unknown;
+        return ERHIFormat::Unknown;
     }
 }
 
-static EFormat GetFloatFormat(int32 Channels)
+static ERHIFormat GetFloatFormat(int32 Channels)
 {
     if (Channels == 4)
     {
-        return EFormat::R32G32B32A32_Float;
+        return ERHIFormat::R32G32B32A32_Float;
     }
     else if (Channels == 3)
     {
-        return EFormat::R32G32B32_Float;
+        return ERHIFormat::R32G32B32_Float;
     }
     else if (Channels == 2)
     {
-        return EFormat::R32G32_Float;
+        return ERHIFormat::R32G32_Float;
     }
     else if (Channels == 1)
     {
-        return EFormat::R32_Float;
+        return ERHIFormat::R32_Float;
     }
     else
     {
-        return EFormat::Unknown;
+        return ERHIFormat::Unknown;
     }
 }
 
 TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const String& Filename)
 {
-    TSharedPtr<SImage2D> Image = MakeShared<SImage2D>(Filename, uint16(0), uint16(0), EFormat::Unknown);
+    TSharedPtr<SImage2D> Image = MakeShared<SImage2D>(Filename, uint16(0), uint16(0), ERHIFormat::Unknown);
 
     // Async lambda
     const auto LoadImageAsync = [Image, Filename]()
@@ -96,7 +96,7 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const String& Filename)
         const bool bIsFloat = stbi_is_hdr_from_file(File);
         const bool bIsExtented = stbi_is_16_bit_from_file(File);
 
-        EFormat Format = EFormat::Unknown;
+        ERHIFormat Format = ERHIFormat::Unknown;
 
         // Load based on format
         TUniquePtr<uint8[]> Pixels;

@@ -13,7 +13,7 @@ TAutoConsoleVariable<int32> GBackbufferCount("vulkan.BackbufferCount", NUM_BACK_
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanViewport
 
-TSharedRef<CVulkanViewport> CVulkanViewport::CreateViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+TSharedRef<CVulkanViewport> CVulkanViewport::CreateViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
 {
     TSharedRef<CVulkanViewport> NewViewport = dbg_new CVulkanViewport(InDevice, InQueue, InWindowHandle, InFormat, InWidth, InHeight);
     if (NewViewport && NewViewport->Initialize())
@@ -24,7 +24,7 @@ TSharedRef<CVulkanViewport> CVulkanViewport::CreateViewport(CVulkanDevice* InDev
     return nullptr;
 }
 
-CVulkanViewport::CVulkanViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+CVulkanViewport::CVulkanViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
     : CRHIViewport(InFormat, InWidth, InHeight)
     , CVulkanDeviceObject(InDevice)
     , WindowHandle(InWindowHandle)
@@ -68,8 +68,8 @@ bool CVulkanViewport::Initialize()
     const uint32 BufferCount = SwapChain->GetBufferCount();
     ImageSemaphores.Reserve(BufferCount);
     RenderSemaphores.Reserve(BufferCount);
-	ImageViews.Reserve(BufferCount);
-	
+    ImageViews.Reserve(BufferCount);
+    
     for (uint32 Index = 0; Index < BufferCount; ++Index)
     {
         CVulkanSemaphoreRef NewImageSemaphore = CVulkanSemaphore::CreateSemaphore(GetDevice());
@@ -93,27 +93,27 @@ bool CVulkanViewport::Initialize()
         {
             return false;
         }
-		
-		CVulkanImageViewRef NewImageView = dbg_new CVulkanImageView(GetDevice());
-		if (NewImageView)
-		{
-			ImageViews.Push(NewImageView);
-		}
-		else
-		{
-			return false;
-		}
+        
+        CVulkanImageViewRef NewImageView = dbg_new CVulkanImageView(GetDevice());
+        if (NewImageView)
+        {
+            ImageViews.Push(NewImageView);
+        }
+        else
+        {
+            return false;
+        }
     }
-	
-	if (!CreateRenderTargets())
-	{
-		return false;
-	}
-	
-	if (!AquireNextImage())
-	{
-		return false;
-	}
+    
+    if (!CreateRenderTargets())
+    {
+        return false;
+    }
+    
+    if (!AquireNextImage())
+    {
+        return false;
+    }
     
     return true;
 }
@@ -136,8 +136,8 @@ bool CVulkanViewport::CreateSwapChain()
         VULKAN_ERROR_ALWAYS("Failed to create SwapChain");
         return false;
     }
-	
-	// Retrieve the images
+    
+    // Retrieve the images
     TArray<VkImage> SwapChainImages(SwapChain->GetBufferCount());
     SwapChain->GetSwapChainImages(SwapChainImages.Data());
 
@@ -149,9 +149,9 @@ bool CVulkanViewport::CreateSwapChain()
 
     CommandBuffer->Begin();
 
-	Images.Reserve(SwapChainImages.Size());
-	Images.Clear();
-	
+    Images.Reserve(SwapChainImages.Size());
+    Images.Clear();
+    
     for (VkImage Image : SwapChainImages)
     {
         SVulkanImageTransitionBarrier TransitionBarrier;
@@ -170,8 +170,8 @@ bool CVulkanViewport::CreateSwapChain()
         TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
         CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
-		
-		Images.Push(Image);
+        
+        Images.Push(Image);
     }
 
     CommandBuffer->End();
@@ -179,36 +179,36 @@ bool CVulkanViewport::CreateSwapChain()
     Queue->ExecuteCommandBuffer(CommandBuffer.GetAddressOf(), 1, CommandBuffer->GetFence());
 
     CommandBuffer->WaitForFence();
-	
+    
     return true;
 }
 
 bool CVulkanViewport::CreateRenderTargets()
 {
-	for (int32 Index = 0; Index < Images.Size(); ++Index)
-	{
-		CVulkanImageViewRef ImageView = ImageViews[Index];
-		if (ImageView->IsValid())
-		{
-			ImageView->DestroyView();
-		}
-		
-		VkSurfaceFormatKHR Format = SwapChain->GetVkSurfaceFormat();
-		
-		VkImageSubresourceRange SubresourceRange;
-		SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		SubresourceRange.baseArrayLayer = 0;
-		SubresourceRange.layerCount     = 1;
-		SubresourceRange.levelCount     = 1;
-		SubresourceRange.baseMipLevel   = 0;
-		
-		if (!ImageView->CreateView(Images[Index], VK_IMAGE_VIEW_TYPE_2D, Format.format, 0, SubresourceRange))
-		{
-			return false;
-		}
-	}
-	
-	return true;
+    for (int32 Index = 0; Index < Images.Size(); ++Index)
+    {
+        CVulkanImageViewRef ImageView = ImageViews[Index];
+        if (ImageView->IsValid())
+        {
+            ImageView->DestroyView();
+        }
+        
+        VkSurfaceFormatKHR SurfaceFormat = SwapChain->GetVkSurfaceFormat();
+        
+        VkImageSubresourceRange SubresourceRange;
+        SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        SubresourceRange.baseArrayLayer = 0;
+        SubresourceRange.layerCount     = 1;
+        SubresourceRange.levelCount     = 1;
+        SubresourceRange.baseMipLevel   = 0;
+        
+        if (!ImageView->CreateView(Images[Index], VK_IMAGE_VIEW_TYPE_2D, SurfaceFormat.format, 0, SubresourceRange))
+        {
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 void CVulkanViewport::DestroySwapChain()
@@ -226,8 +226,8 @@ bool CVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
 
 bool CVulkanViewport::Present(bool bVerticalSync)
 {
-	UNREFERENCED_VARIABLE(bVerticalSync);
-	
+    UNREFERENCED_VARIABLE(bVerticalSync);
+    
     CVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
 
     VkResult Result = SwapChain->Present(Queue.Get(), RenderSemaphore.Get());
@@ -240,13 +240,13 @@ bool CVulkanViewport::Present(bool bVerticalSync)
             return false;
         }
     }
-	
-	AdvanceSemaphoreIndex();
-	
-	if (!AquireNextImage())
-	{
-		return false;
-	}
+    
+    AdvanceSemaphoreIndex();
+    
+    if (!AquireNextImage())
+    {
+        return false;
+    }
 
     return true;
 }
@@ -254,15 +254,15 @@ bool CVulkanViewport::Present(bool bVerticalSync)
 void CVulkanViewport::SetName(const String& InName)
 {
     CRHIObject::SetName(InName);
-	
-	String ImageName;
-	
-	uint32 Index = 0;
-	for (VkImage Image : Images)
-	{
-		ImageName = InName + "BackBuffer Image[" + ToString(Index) + "]";
-		CVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), ImageName.CStr(), Image, VK_OBJECT_TYPE_IMAGE);
-	}
+    
+    String ImageName;
+    
+    uint32 Index = 0;
+    for (VkImage Image : Images)
+    {
+        ImageName = InName + "BackBuffer Image[" + ToString(Index) + "]";
+        CVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), ImageName.CStr(), Image, VK_OBJECT_TYPE_IMAGE);
+    }
 }
 
 CRHIRenderTargetView* CVulkanViewport::GetRenderTargetView() const
@@ -282,16 +282,16 @@ bool CVulkanViewport::IsValid() const
 
 bool CVulkanViewport::AquireNextImage()
 {
-	CVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
-	CVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
-	
-	VkResult Result = SwapChain->AquireNextImage(ImageSemaphore.Get());
-	VULKAN_CHECK_RESULT(Result, "Failed to aquire image");
-	
-	// TOOD: Maybe change this, if maybe is not always desireable to have a wait/signal
-	Queue->AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-	Queue->AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
-	
-	BackBuffer->AquireNextImage();
-	return true;
+    CVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
+    CVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
+    
+    VkResult Result = SwapChain->AquireNextImage(ImageSemaphore.Get());
+    VULKAN_CHECK_RESULT(Result, "Failed to aquire image");
+    
+    // TOOD: Maybe change this, if maybe is not always desireable to have a wait/signal
+    Queue->AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    Queue->AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
+    
+    BackBuffer->AquireNextImage();
+    return true;
 }

@@ -34,7 +34,7 @@ struct VSOutput
     float3 ViewNormal      : NORMAL1;
     float3 Tangent         : TANGENT0;
     float3 Bitangent       : BITANGENT0;
-    float2 TexCoord	       : TEXCOORD0;
+    float2 TexCoord           : TEXCOORD0;
     float3 TangentViewPos  : TANGENTVIEWPOS0;
     float3 TangentPosition : TANGENTPOSITION0;
     float4 Position        : SV_Position;
@@ -111,7 +111,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float2 CurrentTexCoords     = TexCoords;
     float  CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
     
-    float CurrentLayerDepth	= 0.0f;
+    float CurrentLayerDepth    = 0.0f;
     while (CurrentLayerDepth < CurrentDepthMapValue)
     {
         CurrentTexCoords     -= DeltaTexCoords;

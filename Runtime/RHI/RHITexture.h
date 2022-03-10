@@ -35,7 +35,7 @@ public:
      * @param InFlags: Flags of the texture
      * @param InOptimalClearValue: Optimized clear value for the texture
      */
-    CRHITexture(EFormat InFormat, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CRHITexture(ERHIFormat InFormat, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHIResource()
         , Format(InFormat)
         , NumMips(InNumMips)
@@ -98,7 +98,7 @@ public:
      * 
      * @return: Returns the format of the texture
      */
-    FORCEINLINE EFormat GetFormat() const
+    FORCEINLINE ERHIFormat GetFormat() const
     {
         return Format;
     }
@@ -174,7 +174,7 @@ public:
     }
 
 private:
-    EFormat Format;
+    ERHIFormat Format;
     uint32  NumMips;
     uint32  Flags;
     SClearValue OptimalClearValue;
@@ -198,7 +198,7 @@ public:
      * @param InFlags: Flags of the texture
      * @param InOptimalClearValue: Optimized clear value for the texture
      */
-    CRHITexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimizedClearValue)
+    CRHITexture2D(ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITexture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
         , Width(InWidth)
         , Height(InHeight)
@@ -301,7 +301,7 @@ public:
      * @param InFlags: Flags of the texture
      * @param InOptimalClearValue: Optimized clear value for the texture
      */
-    CRHITexture2DArray(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InNumArraySlices, uint32 InFlags, const SClearValue& InOptimizedClearValue)
+    CRHITexture2DArray(ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InNumArraySlices, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITexture2D(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InFlags, InOptimizedClearValue)
         , NumArraySlices(InNumArraySlices)
     {
@@ -340,7 +340,7 @@ public:
      * @param InFlags: Flags of the texture
      * @param InOptimalClearValue: Optimized clear value for the texture
      */
-    CRHITextureCube(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimizedClearValue)
+    CRHITextureCube(ERHIFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITexture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
         , Size(InSize)
     {
@@ -374,7 +374,7 @@ public:
      * @param InFlags: Flags of the texture
      * @param InOptimalClearValue: Optimized clear value for the texture
      */
-    CRHITextureCubeArray(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InNumArraySlices, uint32 InFlags, const SClearValue& InOptimizedClearValue)
+    CRHITextureCubeArray(ERHIFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InNumArraySlices, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InOptimizedClearValue)
         , NumArraySlices(InNumArraySlices)
     {
@@ -414,7 +414,7 @@ public:
      * @param InFlags: Flags of the texture
      * @param InOptimalClearValue: Optimized clear value for the texture
      */
-    CRHITexture3D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimizedClearValue)
+    CRHITexture3D(ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITexture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
         , Width(InWidth)
         , Height(InHeight)

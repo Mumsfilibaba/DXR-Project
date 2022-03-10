@@ -201,7 +201,7 @@ float4 PSMain(PSInput Input) : SV_Target0
     const float SampledAO        = AOTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.AO;
     const float SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Metallic;
     const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Roughness;
-    const float	SampledAlpha     = AlphaTex.Sample(MaterialSampler, TexCoords);
+    const float    SampledAlpha     = AlphaTex.Sample(MaterialSampler, TexCoords);
     const float Roughness        = SampledRoughness;
     if (SampledAlpha < 0.5f)
     {

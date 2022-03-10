@@ -41,7 +41,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
 
     // Create Texture Cube
     const String PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
-    TSharedRef<CRHITexture2D> Panorama = CTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
+    TSharedRef<CRHITexture2D> Panorama = CTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, ERHIFormat::R32G32B32A32_Float);
     if (!Panorama)
     {
         CDebug::DebugBreak();
@@ -52,7 +52,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         Panorama->SetName(PanoramaSourceFilename);
     }
 
-    FrameResources.Skybox = CTextureFactory::CreateTextureCubeFromPanorma(Panorama.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
+    FrameResources.Skybox = CTextureFactory::CreateTextureCubeFromPanorma(Panorama.Get(), 1024, TextureFactoryFlag_GenerateMips, ERHIFormat::R16G16B16A16_Float);
     if (!FrameResources.Skybox)
     {
         return false;
@@ -111,7 +111,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         SkyboxPixelShader->SetName("Skybox PixelShader");
     }
 
-    SRHIRasterizerStateInfo RasterizerStateInfo;
+    SRHIRasterizerStateDesc RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -125,7 +125,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         RasterizerState->SetName("Skybox RasterizerState");
     }
 
-    SRHIBlendStateInfo BlendStateInfo;
+    SRHIBlendStateDesc BlendStateInfo;
     BlendStateInfo.bIndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
@@ -140,7 +140,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         BlendState->SetName("Skybox BlendState");
     }
 
-    SRHIDepthStencilStateInfo DepthStencilStateInfo;
+    SRHIDepthStencilStateDesc DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -156,7 +156,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         DepthStencilState->SetName("Skybox DepthStencilState");
     }
 
-    SRHIGraphicsPipelineStateInfo PipelineStateInfo;
+    SRHIGraphicsPipelineStateDesc PipelineStateInfo;
     PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
     PipelineStateInfo.BlendState = BlendState.Get();
     PipelineStateInfo.DepthStencilState = DepthStencilState.Get();

@@ -5,20 +5,20 @@
 // CVulkanImageView
 
 CVulkanImageView::CVulkanImageView(CVulkanDevice* InDevice)
-	: CVulkanDeviceObject(InDevice)
-	, Image(VK_NULL_HANDLE)
-	, ImageView(VK_NULL_HANDLE)
+    : CVulkanDeviceObject(InDevice)
+    , Image(VK_NULL_HANDLE)
+    , ImageView(VK_NULL_HANDLE)
 {
 }
 
 CVulkanImageView::~CVulkanImageView()
 {
-	DestroyView();
+    DestroyView();
 }
 
 bool CVulkanImageView::CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat Format, VkImageViewCreateFlags Flags, const VkImageSubresourceRange& SubresoureRange)
 {
-	VkImageViewCreateInfo ImageViewCreateInfo;
+    VkImageViewCreateInfo ImageViewCreateInfo;
     CMemory::Memzero(&ImageViewCreateInfo);
 
     ImageViewCreateInfo.sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -45,8 +45,8 @@ void CVulkanImageView::DestroyView()
     if (VULKAN_CHECK_HANDLE(ImageView))
     {
         vkDestroyImageView(GetDevice()->GetVkDevice(), ImageView, nullptr);
-		
-		Image     = VK_NULL_HANDLE;
+        
+        Image     = VK_NULL_HANDLE;
         ImageView = VK_NULL_HANDLE;
     }
 }

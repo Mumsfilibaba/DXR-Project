@@ -27,9 +27,9 @@ struct SMacApplicationEvent
         : NotificationName(nullptr)
         , Event(nullptr)
         , Window(nullptr)
-		, Size()
-		, Position()
-		, Character(uint32(-1))
+        , Size()
+        , Position()
+        , Character(uint32(-1))
     {
     }
 
@@ -37,16 +37,16 @@ struct SMacApplicationEvent
         : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nullptr)
         , Event(Other.Event ? [Other.Event retain] : nullptr)
         , Window(Other.Window ? [Other.Window retain] : nullptr)
-		, Size(Other.Size)
-		, Position(Other.Position)
-		, Character(Other.Character)
+        , Size(Other.Size)
+        , Position(Other.Position)
+        , Character(Other.Character)
     {
     }
 
     FORCEINLINE ~SMacApplicationEvent()
     {
-		SCOPED_AUTORELEASE_POOL();
-		
+        SCOPED_AUTORELEASE_POOL();
+        
         if (NotificationName)
         {
             [NotificationName release];
@@ -64,19 +64,19 @@ struct SMacApplicationEvent
     }
 
     // Name of notification, nullptr if not a notification
-	NSNotificationName NotificationName;
+    NSNotificationName NotificationName;
     // Event object, nullptr if not an event
     NSEvent* Event;
-	
+    
     // Window for the event, nullptr if no associated window exists
-	CCocoaWindow* Window;
-	// Size of the window
-	CGSize Size;
-	// Position of the window
-	CGPoint Position;
-	
-	// On Character typed event
-	uint32 Character;
+    CCocoaWindow* Window;
+    // Size of the window
+    CGSize Size;
+    // Position of the window
+    CGPoint Position;
+    
+    // On Character typed event
+    uint32 Character;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -85,11 +85,11 @@ struct SMacApplicationEvent
 class CMacApplication final : public CPlatformApplication
 {
 public:
-	
-	/*//////////////////////////////////////////////////////////////////////////////////////////////*/
-	// CPlatformApplication Interface
-	
-	static TSharedPtr<CMacApplication> CreateApplication();
+    
+    /*//////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CPlatformApplication Interface
+    
+    static TSharedPtr<CMacApplication> CreateApplication();
 
     virtual TSharedRef<CPlatformWindow> MakeWindow() override final;
 
@@ -98,44 +98,44 @@ public:
     virtual void Tick(float Delta) override final;
 
     virtual void SetActiveWindow(const TSharedRef<CPlatformWindow>& Window) override final;
-	
+    
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
-	virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const override final;
-	
+    virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const override final;
+    
 public:
-	
-	/**
-	 * Retrieve window object from a NSWindow object
-	 *
-	 * @param Window: Native window object to search for
-	 * @return: Returns the MacWindow accociated with the NSWindow object
-	 */
+    
+    /**
+     * Retrieve window object from a NSWindow object
+     *
+     * @param Window: Native window object to search for
+     * @return: Returns the MacWindow accociated with the NSWindow object
+     */
     TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
 
-	/**
-	 * Store event for handling later in the main loop
-	 *
-	 * @param EventOrNotificationObject: Native window object to search for
-	 */
+    /**
+     * Store event for handling later in the main loop
+     *
+     * @param EventOrNotificationObject: Native window object to search for
+     */
     void DeferEvent(NSObject* EventOrNotificationObject);
-	
-	/**
-	 * Returns the native appdelegate
-	 *
-	 * @return: Returns the application delegate
-	 */
+    
+    /**
+     * Returns the native appdelegate
+     *
+     * @return: Returns the application delegate
+     */
     FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const
-	{
-		return AppDelegate;
-	}
+    {
+        return AppDelegate;
+    }
 
 private:
-	
-	friend struct TDefaultDelete<CMacApplication>;
+    
+    friend struct TDefaultDelete<CMacApplication>;
 
     CMacApplication();
-	~CMacApplication();
-	
+    ~CMacApplication();
+    
     bool InitializeAppMenu();
 
     void HandleEvent(const SMacApplicationEvent& Notification);

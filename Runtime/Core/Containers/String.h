@@ -1324,7 +1324,7 @@ public:
     {
         SizeType Len = Length();
         Characters[Len] = StringMisc::Null;
-		Characters.Pop();
+        Characters.Pop();
     }
 
     /**

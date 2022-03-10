@@ -25,17 +25,17 @@ public:
 
     bool Initialize(uint64 InitalValue)
     {
-        HRESULT Result = GetDevice()->GetDevice()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
+        HRESULT Result = GetDevice()->GetD3D12Device()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
         if (FAILED(Result))
         {
-            LOG_INFO("[D3D12FenceHandle]: FAILED to create Fence");
+            D3D12_INFO("FAILED to create Fence");
             return false;
         }
 
         Event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
         if (Event == NULL)
         {
-            LOG_ERROR("[D3D12FenceHandle]: FAILED to create Event for Fence");
+            D3D12_ERROR_ALWAYS("FAILED to create Event for Fence");
             return false;
         }
 
@@ -64,8 +64,7 @@ public:
 
     FORCEINLINE void SetName(const String& Name)
     {
-        WString WideName = CharToWide(Name);
-        Fence->SetName(WideName.CStr());
+        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.CStr());
     }
 
     FORCEINLINE ID3D12Fence* GetFence() const
@@ -75,5 +74,5 @@ public:
 
 private:
     TComPtr<ID3D12Fence> Fence;
-    HANDLE Event = 0;
+    HANDLE               Event = 0;
 };

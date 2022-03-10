@@ -108,7 +108,7 @@ private:
     /* True if the material should render in the forward pass (Transparent surfaces) */
     bool bRenderInForwardPass = false;
 
-    SMaterialDesc        	       Properties;
+    SMaterialDesc                   Properties;
     TSharedRef<CRHIBuffer> MaterialBuffer;
     TSharedRef<CRHISamplerState>   Sampler;
 

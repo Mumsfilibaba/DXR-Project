@@ -70,15 +70,16 @@ struct RENDERER_API SFrameResources
 
     void Release();
 
-    const EFormat DepthBufferFormat  = EFormat::D32_Float;
-    const EFormat SSAOBufferFormat   = EFormat::R8_Unorm;
-    const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
-    const EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
-    const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
-    const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
-    const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
-    const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
-    const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
+    const ERHIFormat DepthBufferFormat  = ERHIFormat::D32_Float;
+    const ERHIFormat SSAOBufferFormat   = ERHIFormat::R8_Unorm;
+    const ERHIFormat FinalTargetFormat  = ERHIFormat::R16G16B16A16_Float;
+    const ERHIFormat RTOutputFormat     = ERHIFormat::R16G16B16A16_Float;
+    const ERHIFormat BackBufferFormat   = ERHIFormat::B8G8R8A8_Unorm;
+    const ERHIFormat RenderTargetFormat = ERHIFormat::R8G8B8A8_Unorm;
+    const ERHIFormat AlbedoFormat       = ERHIFormat::R8G8B8A8_Unorm;
+    const ERHIFormat MaterialFormat     = ERHIFormat::R8G8B8A8_Unorm;
+    const ERHIFormat NormalFormat       = ERHIFormat::R10G10B10A2_Unorm;
+    const ERHIFormat ViewNormalFormat   = ERHIFormat::R10G10B10A2_Unorm;
 
     CRHITexture2D* BackBuffer = nullptr;
 
@@ -112,7 +113,7 @@ struct RENDERER_API SFrameResources
     SRayTracingShaderResources GlobalResources;
     SRayTracingShaderResources RayGenLocalResources;
     SRayTracingShaderResources MissLocalResources;
-    TArray<SRayTracingGeometryInstance> RTGeometryInstances;
+    TArray<SRHIRayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<SRayTracingShaderResources>     RTHitGroupResources;
     THashTable<class CMesh*, uint32>       RTMeshToHitGroupIndex;

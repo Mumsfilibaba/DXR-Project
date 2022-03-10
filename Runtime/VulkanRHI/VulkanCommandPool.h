@@ -53,15 +53,15 @@ public:
 
     FORCEINLINE bool Reset(VkCommandPoolResetFlags Flags = 0)
     {
-		VULKAN_CHECK_RESULT(vkResetCommandPool(GetDevice()->GetVkDevice(), CommandPool, Flags), "vkResetCommandPool Failed");
+        VULKAN_CHECK_RESULT(vkResetCommandPool(GetDevice()->GetVkDevice(), CommandPool, Flags), "vkResetCommandPool Failed");
         return true;
     }
 
-	FORCEINLINE VkCommandPool GetVkCommandPool() const
-	{
-		return CommandPool;
-	}
-	
+    FORCEINLINE VkCommandPool GetVkCommandPool() const
+    {
+        return CommandPool;
+    }
+    
 private:
     EVulkanCommandQueueType Type;
     VkCommandPool           CommandPool;

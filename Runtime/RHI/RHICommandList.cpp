@@ -162,7 +162,7 @@ void CRHICommandQueue::InternalExecuteCommandList(CRHICommandList& CmdList)
         CRHICommand* CurrentCmd = CmdList.First;
         while (CurrentCmd != nullptr)
         {
-			CRHICommand* PreviousCmd = CurrentCmd;
+            CRHICommand* PreviousCmd = CurrentCmd;
             CurrentCmd = CurrentCmd->NextCmd;
 
             PreviousCmd->Execute(GetContext());

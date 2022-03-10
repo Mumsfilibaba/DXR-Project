@@ -28,9 +28,9 @@ class CRHIInstanceD3D12 : public CRHIInstance
 public:
 
     /**
-     * Create a new D3D12RHIInstance 
+     * Create a new CRHIInstanceD3D12 
      * 
-     * @return: Returns the newly created D3D12RHIInstance
+     * @return: Returns the newly created CRHIInstanceD3D12
      */
     static CRHIInstance* CreateInstance();
 
@@ -76,22 +76,22 @@ public:
 
     virtual bool Initialize(bool bEnableDebug) override final;
 
-    virtual CRHITexture2D*                     CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
-    virtual CRHITexture2DArray*                CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
-    virtual CRHITextureCube*                   CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
-    virtual CRHITextureCubeArray*              CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
-    virtual CRHITexture3D*                     CreateTexture3D(EFormat Format,uint32 Width,uint32 Height, uint32 Depth, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
+    virtual CRHITexture2D*                     CreateTexture2D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
+    virtual CRHITexture2DArray*                CreateTexture2DArray(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
+    virtual CRHITextureCube*                   CreateTextureCube(ERHIFormat Format, uint32 Size, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
+    virtual CRHITextureCubeArray*              CreateTextureCubeArray(ERHIFormat Format, uint32 Size, uint32 NumMipLevels, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
+    virtual CRHITexture3D*                     CreateTexture3D(ERHIFormat Format,uint32 Width,uint32 Height, uint32 Depth, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
     virtual CRHIBufferRef                      CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final;
 
     virtual CRHISamplerStateRef                CreateSamplerState(const class CRHISamplerStateDesc& CreateInfo) override final;
 
-    virtual class CRHIRayTracingScene*         CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) override final;
-    virtual class CRHIRayTracingGeometry*      CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer) override final;
+    virtual class CRHIRayTracingScene*         CreateRayTracingScene(uint32 Flags, SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances) override final;
+    virtual class CRHIRayTracingGeometry*      CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, ERHIIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices) override final;
 
-    virtual CRHIShaderResourceView*            CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo) override final;
-    virtual CRHIUnorderedAccessView*           CreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo) override final;
-    virtual CRHIRenderTargetView*              CreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo) override final;
-    virtual CRHIDepthStencilView*              CreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo) override final;
+    virtual CRHIShaderResourceView*            CreateShaderResourceView(const SRHIShaderResourceViewDesc& CreateInfo) override final;
+    virtual CRHIUnorderedAccessView*           CreateUnorderedAccessView(const SRHIUnorderedAccessViewDesc& CreateInfo) override final;
+    virtual CRHIRenderTargetView*              CreateRenderTargetView(const SRHIRenderTargetViewDesc& CreateInfo) override final;
+    virtual CRHIDepthStencilView*              CreateDepthStencilView(const SRHIDepthStencilViewDesc& CreateInfo) override final;
 
     virtual class CRHIComputeShader*           CreateComputeShader(const TArray<uint8>& ShaderCode) override final;
 
@@ -108,21 +108,21 @@ public:
     virtual class CRHIRayClosestHitShader*     CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
     virtual class CRHIRayMissShader*           CreateRayMissShader(const TArray<uint8>& ShaderCode) override final;
 
-    virtual class CRHIDepthStencilState*       CreateDepthStencilState(const SRHIDepthStencilStateInfo& CreateInfo) override final;
-    virtual class CRHIRasterizerState*         CreateRasterizerState(const SRHIRasterizerStateInfo& CreateInfo) override final;
-    virtual class CRHIBlendState*              CreateBlendState(const SRHIBlendStateInfo& CreateInfo) override final;
-    virtual class CRHIInputLayoutState*        CreateInputLayout(const SRHIInputLayoutStateInfo& CreateInfo) override final;
+    virtual class CRHIDepthStencilState*       CreateDepthStencilState(const SRHIDepthStencilStateDesc& CreateInfo) override final;
+    virtual class CRHIRasterizerState*         CreateRasterizerState(const SRHIRasterizerStateDesc& CreateInfo) override final;
+    virtual class CRHIBlendState*              CreateBlendState(const SRHIBlendStateDesc& CreateInfo) override final;
+    virtual class CRHIInputLayoutState*        CreateInputLayout(const SRHIInputLayoutStateDesc& CreateInfo) override final;
 
-    virtual class CRHIGraphicsPipelineState*   CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateInfo& CreateInfo) override final;
-    virtual class CRHIComputePipelineState*    CreateComputePipelineState(const SRHIComputePipelineStateInfo& CreateInfo) override final;
-    virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState(const SRHIRayTracingPipelineStateInfo& CreateInfo) override final;
+    virtual class CRHIGraphicsPipelineState*   CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateDesc& CreateInfo) override final;
+    virtual class CRHIComputePipelineState*    CreateComputePipelineState(const SRHIComputePipelineStateDesc& CreateInfo) override final;
+    virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState(const SRHIRayTracingPipelineStateDesc& CreateInfo) override final;
 
     virtual class CRHITimestampQuery*          CreateTimestampQuery() override final;
 
-    virtual class CRHIViewport*                CreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) override final;
+    virtual class CRHIViewport*                CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, ERHIFormat ColorFormat, ERHIFormat DepthFormat) override final;
 
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
-    virtual bool UAVSupportsFormat(EFormat Format) const override final;
+    virtual bool UAVSupportsFormat(ERHIFormat Format) const override final;
 
     virtual class IRHICommandContext* GetDefaultCommandContext() override final { return DirectCommandContext.Get(); }
 
@@ -137,10 +137,10 @@ private:
     ~CRHIInstanceD3D12();
 
     template<typename D3D12TextureType>
-    D3D12TextureType* CreateTexture(EFormat Format, uint32 SizeX, uint32 SizeY, uint32 SizeZ, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue);
+    D3D12TextureType* CreateTexture(ERHIFormat Format, uint32 SizeX, uint32 SizeY, uint32 SizeZ, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue);
 
-    CD3D12DeviceRef        Device;
-    TSharedRef<CD3D12CommandContext> DirectCommandContext;
+    CD3D12DeviceRef         Device;
+    CD3D12CommandContextRef DirectCommandContext;
     
     CD3D12RootSignatureCache* RootSignatureCache = nullptr;
 

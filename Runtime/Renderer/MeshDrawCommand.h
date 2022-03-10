@@ -11,7 +11,7 @@ struct SMeshDrawCommand
     class CActor*     CurrentActor  = nullptr;
     class CRHIBuffer* VertexBuffer  = nullptr;
     class CRHIBuffer* IndexBuffer   = nullptr;
-	uint32            NumIndices    = 0;
+    uint32            NumIndices    = 0;
 
     class CRHIRayTracingGeometry* Geometry = nullptr;
 };

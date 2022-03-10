@@ -13,7 +13,7 @@
 class CD3D12InputLayoutState : public CRHIInputLayoutState, public CD3D12DeviceObject
 {
 public:
-    CD3D12InputLayoutState(CD3D12Device* InDevice, const SRHIInputLayoutStateInfo& CreateInfo)
+    CD3D12InputLayoutState(CD3D12Device* InDevice, const SRHIInputLayoutStateDesc& CreateInfo)
         : CRHIInputLayoutState()
         , CD3D12DeviceObject(InDevice)
         , SemanticNames()
@@ -62,7 +62,7 @@ public:
 private:
     D3D12_INPUT_LAYOUT_DESC Desc;
 
-    TArray<String> SemanticNames;
+    TArray<String>                   SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
 };
 
@@ -156,14 +156,12 @@ public:
     CD3D12GraphicsPipelineState(CD3D12Device* InDevice);
     ~CD3D12GraphicsPipelineState() = default;
 
-    bool Init(const SRHIGraphicsPipelineStateInfo& CreateInfo);
+    bool Initialize(const SRHIGraphicsPipelineStateDesc& CreateInfo);
 
     virtual void SetName(const String& InName) override final
     {
         CRHIObject::SetName(InName);
-
-        WString WideName = CharToWide(InName);
-        PipelineState->SetName(WideName.CStr());
+        PipelineState->SetPrivateData(WKPDID_D3DDebugObjectName, InName.Length(), InName.CStr());
     }
 
     virtual void* GetNativeResource() const override final
@@ -201,14 +199,12 @@ public:
     CD3D12ComputePipelineState(CD3D12Device* InDevice, const TSharedRef<CD3D12ComputeShader>& InShader);
     ~CD3D12ComputePipelineState() = default;
 
-    bool Init();
+    bool Initialize();
 
     virtual void SetName(const String& InName) override final
     {
         CRHIObject::SetName(InName);
-
-        WString WideName = CharToWide(InName);
-        PipelineState->SetName(WideName.CStr());
+        PipelineState->SetPrivateData(WKPDID_D3DDebugObjectName, InName.Length(), InName.CStr());
     }
 
     virtual void* GetNativeResource() const override final
@@ -232,15 +228,15 @@ public:
     }
 
 private:
-    TComPtr<ID3D12PipelineState>       PipelineState;
+    TComPtr<ID3D12PipelineState>    PipelineState;
     TSharedRef<CD3D12ComputeShader> Shader;
-    TSharedRef<CD3D12RootSignature>    RootSignature;
+    TSharedRef<CD3D12RootSignature> RootSignature;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RayTracingShaderIdentifer
 
-struct SRayTracingShaderIdentifer
+struct SD3D12RayTracingShaderIdentifer
 {
     char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
 };
@@ -254,14 +250,12 @@ public:
     CD3D12RayTracingPipelineState(CD3D12Device* InDevice);
     ~CD3D12RayTracingPipelineState() = default;
 
-    bool Init(const SRHIRayTracingPipelineStateInfo& CreateInfo);
+    bool Initialize(const SRHIRayTracingPipelineStateDesc& CreateInfo);
 
     virtual void SetName(const String& InName) override
     {
         CRHIObject::SetName(InName);
-
-        WString WideName = CharToWide(InName);
-        StateObject->SetName(WideName.CStr());
+        StateObject->SetPrivateData(WKPDID_D3DDebugObjectName, InName.Length(), InName.CStr());
     }
 
     virtual void* GetNativeResource() const override final
@@ -316,5 +310,5 @@ private:
     TSharedRef<CD3D12RootSignature> MissLocalRootSignature;
     TSharedRef<CD3D12RootSignature> HitLocalRootSignature;
 
-    THashTable<String, SRayTracingShaderIdentifer, SStringHasher> ShaderIdentifers;
+    THashTable<String, SD3D12RayTracingShaderIdentifer, SStringHasher> ShaderIdentifers;
 };

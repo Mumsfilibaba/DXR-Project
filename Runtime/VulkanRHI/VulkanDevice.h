@@ -30,8 +30,8 @@ enum class EVulkanCommandQueueType
 
 struct SVulkanDeviceDesc
 {
-	TArray<const char*> RequiredExtensionNames;
-	TArray<const char*> OptionalExtensionNames;
+    TArray<const char*> RequiredExtensionNames;
+    TArray<const char*> OptionalExtensionNames;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -60,11 +60,11 @@ public:
     {
         return Instance;
     }
-	
-	FORCEINLINE CVulkanPhysicalDevice* GetPhysicalDevice() const
-	{
-		return Adapter;
-	}
+    
+    FORCEINLINE CVulkanPhysicalDevice* GetPhysicalDevice() const
+    {
+        return Adapter;
+    }
 
     FORCEINLINE VkDevice GetVkDevice() const
     {
@@ -84,7 +84,7 @@ private:
     bool Initialize(const SVulkanDeviceDesc& DeviceDesc);
 
     CVulkanInstance* Instance;
-	CVulkanPhysicalDevice* Adapter;
+    CVulkanPhysicalDevice* Adapter;
     VkDevice               Device;
 
     TOptional<SVulkanQueueFamilyIndices> QueueIndicies;

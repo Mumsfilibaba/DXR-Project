@@ -68,7 +68,7 @@ public:
 
 private:
     CD3D12OfflineDescriptorHeap* OfflineHeap = nullptr;
-    uint32                      OfflineHeapIndex = 0;
-    D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle;
-    D3D12_SAMPLER_DESC          Desc;
+    uint32                       OfflineHeapIndex = 0;
+    D3D12_CPU_DESCRIPTOR_HANDLE  OfflineHandle;
+    D3D12_SAMPLER_DESC           Desc;
 };

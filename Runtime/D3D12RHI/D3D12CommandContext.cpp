@@ -24,7 +24,9 @@
 
 void CD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
 {
-    Assert(Resource != nullptr);
+    D3D12_ERROR(Resource    != nullptr                  , "Resource cannot be nullptr");
+    D3D12_ERROR(BeforeState != D3D12_RESOURCE_STATES(-1), "BeforeState is unknown");
+    D3D12_ERROR(AfterState  != D3D12_RESOURCE_STATES(-1), "AfterState is unknown");
 
     if (BeforeState != AfterState)
     {
@@ -53,9 +55,9 @@ void CD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource
         D3D12_RESOURCE_BARRIER Barrier;
         CMemory::Memzero(&Barrier);
 
-        Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        Barrier.Transition.pResource = Resource;
-        Barrier.Transition.StateAfter = AfterState;
+        Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        Barrier.Transition.pResource   = Resource;
+        Barrier.Transition.StateAfter  = AfterState;
         Barrier.Transition.StateBefore = BeforeState;
         Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
@@ -93,22 +95,22 @@ bool CD3D12GPUResourceUploader::Reserve(uint32 InSizeInBytes)
     D3D12_HEAP_PROPERTIES HeapProperties;
     CMemory::Memzero(&HeapProperties);
 
-    HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
+    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
     D3D12_RESOURCE_DESC Desc;
     CMemory::Memzero(&Desc);
 
-    Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-    Desc.Format = DXGI_FORMAT_UNKNOWN;
-    Desc.Width = InSizeInBytes;
-    Desc.Height = 1;
-    Desc.DepthOrArraySize = 1;
-    Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.MipLevels = 1;
-    Desc.SampleDesc.Count = 1;
+    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    Desc.Flags              = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+    Desc.Format             = DXGI_FORMAT_UNKNOWN;
+    Desc.Width              = InSizeInBytes;
+    Desc.Height             = 1;
+    Desc.DepthOrArraySize   = 1;
+    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    Desc.MipLevels          = 1;
+    Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
     HRESULT Result = GetDevice()->CreateCommitedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&Resource));
@@ -154,8 +156,9 @@ SD3D12UploadAllocation CD3D12GPUResourceUploader::LinearAllocate(uint32 InSizeIn
     }
 
     SD3D12UploadAllocation Allocation;
-    Allocation.MappedPtr = MappedMemory + OffsetInBytes;
+    Allocation.MappedPtr      = MappedMemory + OffsetInBytes;
     Allocation.ResourceOffset = OffsetInBytes;
+
     OffsetInBytes += InSizeInBytes;
     return Allocation;
 }
@@ -285,7 +288,7 @@ void CD3D12CommandContext::UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetI
         SD3D12UploadAllocation Allocation = GpuResourceUploader.LinearAllocate((uint32)SizeInBytes);
         CMemory::Memcpy(Allocation.MappedPtr, SourceData, SizeInBytes);
 
-        CommandList.CopyBufferRegion(Resource->GetResource(), OffsetInBytes, GpuResourceUploader.GetGpuResource(), Allocation.ResourceOffset, SizeInBytes);
+        CommandList.CopyBufferRegion(Resource->GetD3D12Resource(), OffsetInBytes, GpuResourceUploader.GetGpuResource(), Allocation.ResourceOffset, SizeInBytes);
 
         CmdBatch->AddInUseResource(Resource);
     }
@@ -297,7 +300,7 @@ void CD3D12CommandContext::Begin()
 
     TRACE_FUNCTION_SCOPE();
 
-    CmdBatch = &CmdBatches[NextCmdBatch];
+    CmdBatch     = &CmdBatches[NextCmdBatch];
     NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
 
     // TODO: Investigate better ways of doing this 
@@ -413,15 +416,9 @@ void CD3D12CommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView
     CD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<CD3D12UnorderedAccessView*>(UnorderedAccessView);
     CmdBatch->AddInUseResource(DxUnorderedAccessView);
 
-    CD3D12OnlineDescriptorHeap* OnlineDescriptorHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
-    const uint32 OnlineDescriptorHandleIndex = OnlineDescriptorHeap->AllocateHandles(1);
-
     const D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle = DxUnorderedAccessView->GetOfflineHandle();
-    const D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle_CPU = OnlineDescriptorHeap->GetCPUDescriptorHandleAt(OnlineDescriptorHandleIndex);
-    GetDevice()->CopyDescriptorsSimple(1, OnlineHandle_CPU, OfflineHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-    const D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandle_GPU = OnlineDescriptorHeap->GetGPUDescriptorHandleAt(OnlineDescriptorHandleIndex);
-    CommandList.ClearUnorderedAccessViewFloat(OnlineHandle_GPU, DxUnorderedAccessView, ClearColor.Elements);
+    const D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandle  = DxUnorderedAccessView->GetOnlineHandle();
+    CommandList.ClearUnorderedAccessViewFloat(OnlineHandle, DxUnorderedAccessView, ClearColor.Elements);
 }
 
 void CD3D12CommandContext::SetShadingRate(ERHIShadingRate ShadingRate)
@@ -443,8 +440,8 @@ void CD3D12CommandContext::SetShadingRateImage(CRHITexture2D* ShadingImage)
 
     if (ShadingImage)
     {
-        CD3D12BaseTexture* DxTexture = D3D12TextureCast(ShadingImage);
-        CommandList.RSSetShadingRateImage(DxTexture->GetResource()->GetResource());
+        CD3D12Texture* DxTexture = D3D12TextureCast(ShadingImage);
+        CommandList.RSSetShadingRateImage(DxTexture->GetResource()->GetD3D12Resource());
 
         CmdBatch->AddInUseResource(ShadingImage);
     }
@@ -467,8 +464,8 @@ void CD3D12CommandContext::EndRenderPass()
 void CD3D12CommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
 {
     D3D12_VIEWPORT Viewport;
-    Viewport.Width = Width;
-    Viewport.Height = Height;
+    Viewport.Width    = Width;
+    Viewport.Height   = Height;
     Viewport.MaxDepth = MaxDepth;
     Viewport.MinDepth = MinDepth;
     Viewport.TopLeftX = x;
@@ -480,10 +477,10 @@ void CD3D12CommandContext::SetViewport(float Width, float Height, float MinDepth
 void CD3D12CommandContext::SetScissorRect(float Width, float Height, float x, float y)
 {
     D3D12_RECT ScissorRect;
-    ScissorRect.top = LONG(y);
+    ScissorRect.top    = LONG(y);
     ScissorRect.bottom = LONG(Height);
-    ScissorRect.left = LONG(x);
-    ScissorRect.right = LONG(Width);
+    ScissorRect.left   = LONG(x);
+    ScissorRect.right  = LONG(Width);
 
     CommandList.RSSetScissorRects(&ScissorRect, 1);
 }
@@ -509,8 +506,9 @@ void CD3D12CommandContext::SetVertexBuffers(CRHIBuffer* const* VertexBuffers, ui
 
     for (uint32 i = 0; i < BufferCount; i++)
     {
-        uint32 Slot = BufferSlot + i;
-        CD3D12VertexBuffer* DxVertexBuffer = static_cast<CD3D12VertexBuffer*>(VertexBuffers[i]);
+        const uint32 Slot = BufferSlot + i;
+
+        CD3D12Buffer* DxVertexBuffer = static_cast<CD3D12Buffer*>(VertexBuffers[i]);
         DescriptorCache.SetVertexBuffer(DxVertexBuffer, Slot);
 
         // TODO: The DescriptorCache maybe should have this responsibility?
@@ -520,7 +518,7 @@ void CD3D12CommandContext::SetVertexBuffers(CRHIBuffer* const* VertexBuffers, ui
 
 void CD3D12CommandContext::SetIndexBuffer(CRHIBuffer* IndexBuffer)
 {
-    CD3D12IndexBuffer* DxIndexBuffer = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
+    CD3D12Buffer* DxIndexBuffer = static_cast<CD3D12Buffer*>(IndexBuffer);
     DescriptorCache.SetIndexBuffer(DxIndexBuffer);
 
     // TODO: Maybe this should be done by the descriptor cache
@@ -659,8 +657,10 @@ void CD3D12CommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIBuffer* Con
 
     if (ConstantBuffer)
     {
-        CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12ConstantBuffer*>(ConstantBuffer)->GetView();
-        DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
+        D3D12_ERROR(ConstantBuffer->GetFlags() & BufferFlag_ConstantBuffer, "Buffer is not a ConstantBuffer");
+
+        CD3D12ConstantBufferView* ConstantBufferView = static_cast<CD3D12Buffer*>(ConstantBuffer)->GetConstantBufferView();
+        DescriptorCache.SetConstantBufferView(ConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
     }
     else
     {
@@ -681,8 +681,10 @@ void CD3D12CommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIBuffer* co
     {
         if (ConstantBuffers[i])
         {
-            CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12ConstantBuffer*>(ConstantBuffers[i])->GetView();
-            DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
+            D3D12_ERROR(ConstantBuffers[i]->GetFlags() & BufferFlag_ConstantBuffer, "Buffer is not a ConstantBuffer");
+
+            CD3D12ConstantBufferView* ConstantBufferView = static_cast<CD3D12Buffer*>(ConstantBuffers[i])->GetConstantBufferView();
+            DescriptorCache.SetConstantBufferView(ConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
         }
         else
         {
@@ -726,8 +728,9 @@ void CD3D12CommandContext::ResolveTexture(CRHITexture* Destination, CRHITexture*
 
     FlushResourceBarriers();
 
-    CD3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
-    CD3D12BaseTexture* DxSource = D3D12TextureCast(Source);
+    CD3D12Texture* DxDestination = D3D12TextureCast(Destination);
+    CD3D12Texture* DxSource      = D3D12TextureCast(Source);
+
     const DXGI_FORMAT DstFormat = DxDestination->GetNativeFormat();
     const DXGI_FORMAT SrcFormat = DxSource->GetNativeFormat();
 
@@ -744,7 +747,7 @@ void CD3D12CommandContext::UpdateBuffer(CRHIBuffer* Destination, uint64 OffsetIn
 {
     if (SizeInBytes > 0)
     {
-        CD3D12BaseBuffer* DxDestination = D3D12BufferCast(Destination);
+        CD3D12Buffer* DxDestination = static_cast<CD3D12Buffer*>(Destination);
         UpdateBuffer(DxDestination->GetResource(), OffsetInBytes, SizeInBytes, SourceData);
 
         CmdBatch->AddInUseResource(Destination);
@@ -761,11 +764,12 @@ void CD3D12CommandContext::UpdateTexture2D(CRHITexture2D* Destination, uint32 Wi
 
         FlushResourceBarriers();
 
-        CD3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
+        CD3D12Texture* DxDestination = D3D12TextureCast(Destination);
+        
         const DXGI_FORMAT NativeFormat = DxDestination->GetNativeFormat();
-        const uint32 Stride = GetFormatStride(NativeFormat);
-        const uint32 RowPitch = ((Width * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
-        const uint32 SizeInBytes = Height * RowPitch;
+        const uint32 Stride            = GetFormatStride(NativeFormat);
+        const uint32 RowPitch          = ((Width * Stride) + (D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u)) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
+        const uint32 SizeInBytes       = Height * RowPitch;
 
         CD3D12GPUResourceUploader& GpuResourceUploader = CmdBatch->GetGpuResourceUploader();
         SD3D12UploadAllocation Allocation = GpuResourceUploader.LinearAllocate(SizeInBytes);
@@ -780,21 +784,21 @@ void CD3D12CommandContext::UpdateTexture2D(CRHITexture2D* Destination, uint32 Wi
         D3D12_TEXTURE_COPY_LOCATION SourceLocation;
         CMemory::Memzero(&SourceLocation);
 
-        SourceLocation.pResource = GpuResourceUploader.GetGpuResource();
-        SourceLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-        SourceLocation.PlacedFootprint.Footprint.Format = NativeFormat;
-        SourceLocation.PlacedFootprint.Footprint.Width = Width;
-        SourceLocation.PlacedFootprint.Footprint.Height = Height;
-        SourceLocation.PlacedFootprint.Footprint.Depth = 1;
+        SourceLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+        SourceLocation.pResource                          = GpuResourceUploader.GetGpuResource();
+        SourceLocation.PlacedFootprint.Footprint.Format   = NativeFormat;
+        SourceLocation.PlacedFootprint.Footprint.Width    = Width;
+        SourceLocation.PlacedFootprint.Footprint.Height   = Height;
+        SourceLocation.PlacedFootprint.Footprint.Depth    = 1;
         SourceLocation.PlacedFootprint.Footprint.RowPitch = RowPitch;
-        SourceLocation.PlacedFootprint.Offset = Allocation.ResourceOffset;
+        SourceLocation.PlacedFootprint.Offset             = Allocation.ResourceOffset;
 
         // TODO: Miplevel may not be the correct subresource
         D3D12_TEXTURE_COPY_LOCATION DestLocation;
         CMemory::Memzero(&DestLocation);
 
-        DestLocation.pResource = DxDestination->GetResource()->GetResource();
-        DestLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+        DestLocation.pResource        = DxDestination->GetResource()->GetD3D12Resource();
+        DestLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
         DestLocation.SubresourceIndex = MipLevel;
 
         CommandList.CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
@@ -809,8 +813,8 @@ void CD3D12CommandContext::CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Sourc
 
     FlushResourceBarriers();
 
-    CD3D12BaseBuffer* DxDestination = D3D12BufferCast(Destination);
-    CD3D12BaseBuffer* DxSource = D3D12BufferCast(Source);
+    CD3D12Buffer* DxDestination = static_cast<CD3D12Buffer*>(Destination);
+    CD3D12Buffer* DxSource      = static_cast<CD3D12Buffer*>(Source);
     CommandList.CopyBufferRegion(DxDestination->GetResource(), CopyInfo.DestinationOffset, DxSource->GetResource(), CopyInfo.SourceOffset, CopyInfo.SizeInBytes);
 
     CmdBatch->AddInUseResource(Destination);
@@ -823,8 +827,8 @@ void CD3D12CommandContext::CopyTexture(CRHITexture* Destination, CRHITexture* So
 
     FlushResourceBarriers();
 
-    CD3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
-    CD3D12BaseTexture* DxSource = D3D12TextureCast(Source);
+    CD3D12Texture* DxDestination = D3D12TextureCast(Destination);
+    CD3D12Texture* DxSource      = D3D12TextureCast(Source);
     CommandList.CopyResource(DxDestination->GetResource(), DxSource->GetResource());
 
     CmdBatch->AddInUseResource(Destination);
@@ -835,31 +839,31 @@ void CD3D12CommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITextu
 {
     D3D12_ERROR(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 
-    CD3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
-    CD3D12BaseTexture* DxSource = D3D12TextureCast(Source);
+    CD3D12Texture* DxDestination = D3D12TextureCast(Destination);
+    CD3D12Texture* DxSource      = D3D12TextureCast(Source);
 
     // Source
     D3D12_TEXTURE_COPY_LOCATION SourceLocation;
     CMemory::Memzero(&SourceLocation);
 
-    SourceLocation.pResource = DxSource->GetResource()->GetResource();
-    SourceLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    SourceLocation.pResource        = DxSource->GetResource()->GetD3D12Resource();
+    SourceLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     SourceLocation.SubresourceIndex = CopyInfo.Source.SubresourceIndex;
 
     D3D12_BOX SourceBox;
-    SourceBox.left = CopyInfo.Source.x;
-    SourceBox.right = CopyInfo.Source.x + CopyInfo.Width;
+    SourceBox.left   = CopyInfo.Source.x;
+    SourceBox.right  = CopyInfo.Source.x + CopyInfo.Width;
     SourceBox.bottom = CopyInfo.Source.y;
-    SourceBox.top = CopyInfo.Source.y + CopyInfo.Height;
-    SourceBox.front = CopyInfo.Source.z;
-    SourceBox.back = CopyInfo.Source.z + CopyInfo.Depth;
+    SourceBox.top    = CopyInfo.Source.y + CopyInfo.Height;
+    SourceBox.front  = CopyInfo.Source.z;
+    SourceBox.back   = CopyInfo.Source.z + CopyInfo.Depth;
 
     // Destination
     D3D12_TEXTURE_COPY_LOCATION DestinationLocation;
     CMemory::Memzero(&DestinationLocation);
 
-    DestinationLocation.pResource = DxDestination->GetResource()->GetResource();
-    DestinationLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    DestinationLocation.pResource        = DxDestination->GetResource()->GetD3D12Resource();
+    DestinationLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     DestinationLocation.SubresourceIndex = CopyInfo.Destination.SubresourceIndex;
 
     FlushResourceBarriers();
@@ -882,7 +886,7 @@ void CD3D12CommandContext::DiscardContents(CRHIResource* Resource)
     CD3D12Resource* DxResource = D3D12ResourceCast(Resource);
     if (DxResource)
     {
-        CommandList.DiscardResource(DxResource->GetResource(), nullptr);
+        CommandList.DiscardResource(DxResource->GetD3D12Resource(), nullptr);
         CmdBatch->AddInUseResource(Resource);
     }
 }
@@ -893,13 +897,14 @@ void CD3D12CommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geome
 
     FlushResourceBarriers();
 
-    CD3D12VertexBuffer* DxVertexBuffer = static_cast<CD3D12VertexBuffer*>(VertexBuffer);
-    CD3D12IndexBuffer* DxIndexBuffer = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
+    CD3D12Buffer* DxVertexBuffer = static_cast<CD3D12Buffer*>(VertexBuffer);
+    CD3D12Buffer* DxIndexBuffer  = static_cast<CD3D12Buffer*>(IndexBuffer);
     D3D12_ERROR(DxVertexBuffer != nullptr, "VertexBuffer cannot be nullptr");
 
-    CD3D12RHIRayTracingGeometry* DxGeometry = static_cast<CD3D12RHIRayTracingGeometry*>(Geometry);
+    CD3D12RayTracingGeometry* DxGeometry = static_cast<CD3D12RayTracingGeometry*>(Geometry);
     DxGeometry->VertexBuffer = DxVertexBuffer;
-    DxGeometry->IndexBuffer = DxIndexBuffer;
+    DxGeometry->IndexBuffer  = DxIndexBuffer;
+
     DxGeometry->Build(*this, bUpdate);
 
     CmdBatch->AddInUseResource(Geometry);
@@ -907,13 +912,13 @@ void CD3D12CommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geome
     CmdBatch->AddInUseResource(IndexBuffer);
 }
 
-void CD3D12CommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
+void CD3D12CommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
 {
     D3D12_ERROR(RayTracingScene != nullptr, "RayTracingScene cannot be nullptr");
 
     FlushResourceBarriers();
 
-    CD3D12RHIRayTracingScene* DxScene = static_cast<CD3D12RHIRayTracingScene*>(RayTracingScene);
+    CD3D12RayTracingScene* DxScene = static_cast<CD3D12RayTracingScene*>(RayTracingScene);
     DxScene->Build(*this, Instances, NumInstances, bUpdate);
 
     CmdBatch->AddInUseResource(RayTracingScene);
@@ -928,7 +933,7 @@ void CD3D12CommandContext::SetRayTracingBindings(
     const SRayTracingShaderResources* HitGroupResources,
     uint32 NumHitGroupResources)
 {
-    CD3D12RHIRayTracingScene* DxScene = static_cast<CD3D12RHIRayTracingScene*>(RayTracingScene);
+    CD3D12RayTracingScene* DxScene = static_cast<CD3D12RayTracingScene*>(RayTracingScene);
     CD3D12RayTracingPipelineState* DxPipelineState = static_cast<CD3D12RayTracingPipelineState*>(PipelineState);
     D3D12_ERROR(DxScene != nullptr, "RayTracingScene cannot be nullptr");
     D3D12_ERROR(DxPipelineState != nullptr, "PipelineState cannot be nullptr");
@@ -984,8 +989,8 @@ void CD3D12CommandContext::SetRayTracingBindings(
         {
             for (int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
             {
-                CD3D12ConstantBufferView& DxConstantBufferView = static_cast<CD3D12ConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
-                DescriptorCache.SetConstantBufferView(&DxConstantBufferView, ShaderVisibility_All, i);
+                CD3D12ConstantBufferView* ConstantBufferView = static_cast<CD3D12Buffer*>(GlobalResource->ConstantBuffers[i])->GetConstantBufferView();
+                DescriptorCache.SetConstantBufferView(ConstantBufferView, ShaderVisibility_All, i);
             }
         }
         if (!GlobalResource->ShaderResourceViews.IsEmpty())
@@ -1026,7 +1031,7 @@ void CD3D12CommandContext::SetRayTracingBindings(
 
 void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
 {
-    CD3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
+    CD3D12Texture* DxTexture = D3D12TextureCast(Texture);
     D3D12_ERROR(DxTexture != nullptr, "Texture cannot be nullptr");
 
     D3D12_RESOURCE_DESC Desc = DxTexture->GetResource()->GetDesc();
@@ -1035,8 +1040,8 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     D3D12_ERROR(Desc.MipLevels > 1, "MipLevels must be more than one in order to generate any MipLevels");
 
     // TODO: Create this placed from a Heap? See what performance is 
-    TSharedRef<CD3D12Resource> StagingTexture = dbg_new CD3D12Resource(GetDevice(), Desc, DxTexture->GetResource()->GetHeapType());
-    if (!StagingTexture->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
+    CD3D12ResourceRef StagingTexture = CD3D12Resource::CreateResource(GetDevice(), Desc, DxTexture->GetResource()->GetHeapType(), D3D12_RESOURCE_STATE_COMMON, nullptr);
+    if (!StagingTexture)
     {
         D3D12_ERROR_ALWAYS("[D3D12CommandContext] Failed to create StagingTexture for GenerateMips");
         return;
@@ -1085,9 +1090,9 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
         UavDesc.Texture2D.PlaneSlice = 0;
     }
 
-    const uint32 MipLevelsPerDispatch = 4;
+    const uint32 MipLevelsPerDispatch     = 4;
     const uint32 UavDescriptorHandleCount = NMath::AlignUp<uint32>(Desc.MipLevels, MipLevelsPerDispatch);
-    const uint32 NumDispatches = UavDescriptorHandleCount / MipLevelsPerDispatch;
+    const uint32 NumDispatches            = UavDescriptorHandleCount / MipLevelsPerDispatch;
 
     CD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
 
@@ -1095,7 +1100,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     const uint32 StartDescriptorHandleIndex = ResourceHeap->AllocateHandles(UavDescriptorHandleCount + 1);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE SrvHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(StartDescriptorHandleIndex);
-    GetDevice()->CreateShaderResourceView(DxTexture->GetResource()->GetResource(), &SrvDesc, SrvHandle_CPU);
+    GetDevice()->CreateShaderResourceView(DxTexture->GetResource()->GetD3D12Resource(), &SrvDesc, SrvHandle_CPU);
 
     const uint32 UavStartDescriptorHandleIndex = StartDescriptorHandleIndex + 1;
     for (uint32 i = 0; i < Desc.MipLevels; i++)
@@ -1110,7 +1115,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
         }
 
         const D3D12_CPU_DESCRIPTOR_HANDLE UavHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(UavStartDescriptorHandleIndex + i);
-        GetDevice()->CreateUnorderedAccessView(StagingTexture->GetResource(), nullptr, &UavDesc, UavHandle_CPU);
+        GetDevice()->CreateUnorderedAccessView(StagingTexture->GetD3D12Resource(), nullptr, &UavDesc, UavHandle_CPU);
     }
 
     for (uint32 i = Desc.MipLevels; i < UavDescriptorHandleCount; i++)
@@ -1220,9 +1225,9 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
 void CD3D12CommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState)
 {
     const D3D12_RESOURCE_STATES DxBeforeState = ConvertResourceState(BeforeState);
-    const D3D12_RESOURCE_STATES DxAfterState = ConvertResourceState(AfterState);
+    const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);
 
-    CD3D12BaseTexture* Resource = D3D12TextureCast(Texture);
+    CD3D12Texture* Resource = D3D12TextureCast(Texture);
     TransitionResource(Resource->GetResource(), DxBeforeState, DxAfterState);
 
     CmdBatch->AddInUseResource(Texture);
@@ -1231,9 +1236,9 @@ void CD3D12CommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceS
 void CD3D12CommandContext::TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState)
 {
     const D3D12_RESOURCE_STATES DxBeforeState = ConvertResourceState(BeforeState);
-    const D3D12_RESOURCE_STATES DxAfterState = ConvertResourceState(AfterState);
+    const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);
 
-    CD3D12BaseBuffer* Resource = D3D12BufferCast(Buffer);
+    CD3D12Buffer* Resource = static_cast<CD3D12Buffer*>(Buffer);
     TransitionResource(Resource->GetResource(), DxBeforeState, DxAfterState);
 
     CmdBatch->AddInUseResource(Buffer);
@@ -1241,7 +1246,7 @@ void CD3D12CommandContext::TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceStat
 
 void CD3D12CommandContext::UnorderedAccessTextureBarrier(CRHITexture* Texture)
 {
-    CD3D12BaseTexture* Resource = D3D12TextureCast(Texture);
+    CD3D12Texture* Resource = D3D12TextureCast(Texture);
     UnorderedAccessBarrier(Resource->GetResource());
 
     CmdBatch->AddInUseResource(Texture);
@@ -1249,7 +1254,7 @@ void CD3D12CommandContext::UnorderedAccessTextureBarrier(CRHITexture* Texture)
 
 void CD3D12CommandContext::UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)
 {
-    CD3D12BaseBuffer* Resource = D3D12BufferCast(Buffer);
+    CD3D12Buffer* Resource = static_cast<CD3D12Buffer*>(Buffer);
     UnorderedAccessBarrier(Resource->GetResource());
 
     CmdBatch->AddInUseResource(Buffer);
@@ -1322,7 +1327,7 @@ void CD3D12CommandContext::Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroup
 
 void CD3D12CommandContext::DispatchRays(CRHIRayTracingScene* RayTracingScene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
 {
-    CD3D12RHIRayTracingScene* DxScene = static_cast<CD3D12RHIRayTracingScene*>(RayTracingScene);
+    CD3D12RayTracingScene* DxScene = static_cast<CD3D12RayTracingScene*>(RayTracingScene);
     D3D12_ERROR(DxScene != nullptr, "RayTracingScene cannot be nullptr");
 
     CD3D12RayTracingPipelineState* DxPipelineState = static_cast<CD3D12RayTracingPipelineState*>(PipelineState);
@@ -1339,12 +1344,12 @@ void CD3D12CommandContext::DispatchRays(CRHIRayTracingScene* RayTracingScene, CR
         CMemory::Memzero(&RayDispatchDesc);
 
         RayDispatchDesc.RayGenerationShaderRecord = DxScene->GetRayGenShaderRecord();
-        RayDispatchDesc.MissShaderTable = DxScene->GetMissShaderTable();
-        RayDispatchDesc.HitGroupTable = DxScene->GetHitGroupTable();
+        RayDispatchDesc.MissShaderTable           = DxScene->GetMissShaderTable();
+        RayDispatchDesc.HitGroupTable             = DxScene->GetHitGroupTable();
 
-        RayDispatchDesc.Width = Width;
+        RayDispatchDesc.Width  = Width;
         RayDispatchDesc.Height = Height;
-        RayDispatchDesc.Depth = Depth;
+        RayDispatchDesc.Depth  = Depth;
 
         DXRCommandList->SetPipelineState1(DxPipelineState->GetStateObject());
         DXRCommandList->DispatchRays(&RayDispatchDesc);

@@ -48,7 +48,7 @@ template<typename T>
 class TConsoleVariable : public CConsoleVariable
 {
 public:
-	
+    
     TConsoleVariable()
         : CConsoleVariable()
         , Value()

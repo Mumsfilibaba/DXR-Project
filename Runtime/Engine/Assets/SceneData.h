@@ -69,7 +69,7 @@ struct SImage2D
 {
     SImage2D() = default;
 
-    SImage2D(const String& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat)
+    SImage2D(const String& InPath, uint16 InWidth, uint16 InHeight, ERHIFormat InFormat)
         : Path(InPath)
         , Image()
         , Width(InWidth)
@@ -89,7 +89,7 @@ struct SImage2D
     uint16 Height = 0;
 
     /* The format that the image was loaded as */
-    EFormat Format = EFormat::Unknown;
+    ERHIFormat Format = ERHIFormat::Unknown;
 
     bool bIsLoaded = false;
 };

@@ -80,7 +80,7 @@ public:
     virtual void DiscardContents(class CRHIResource* Resource) override final { }
 
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer, bool bUpdate) override final { }
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final { }
+    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final { }
 
     virtual void SetRayTracingBindings(
         CRHIRayTracingScene* RayTracingScene,

@@ -15,11 +15,11 @@ class CD3D12RootSignature;
 
 enum class ERootSignatureType
 {
-    Unknown = 0,
-    Graphics = 1,
-    Compute = 2,
+    Unknown          = 0,
+    Graphics         = 1,
+    Compute          = 2,
     RayTracingGlobal = 3,
-    RayTracingLocal = 4,
+    RayTracingLocal  = 4,
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -71,9 +71,9 @@ public:
     CD3D12RootSignature(CD3D12Device* InDevice);
     ~CD3D12RootSignature() = default;
 
-    bool Init(const SD3D12RootSignatureResourceCount& RootSignatureInfo);
-    bool Init(const D3D12_ROOT_SIGNATURE_DESC& Desc);
-    bool Init(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
+    bool Initialize(const SD3D12RootSignatureResourceCount& RootSignatureInfo);
+    bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+    bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     // Returns -1 if root parameter is not valid
     FORCEINLINE int32 GetRootParameterIndex(EShaderVisibility Visibility, EResourceType Type) const
@@ -88,8 +88,7 @@ public:
 
     FORCEINLINE void SetName(const String& Name)
     {
-        WString WideName = CharToWide(Name);
-        RootSignature->SetName(WideName.CStr());
+        RootSignature->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.CStr());
     }
 
     FORCEINLINE ID3D12RootSignature* GetRootSignature() const
@@ -106,6 +105,7 @@ public:
 
 private:
     void CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+
     bool InternalInit(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     TComPtr<ID3D12RootSignature> RootSignature;
@@ -123,7 +123,7 @@ public:
     CD3D12RootSignatureCache(CD3D12Device* Device);
     ~CD3D12RootSignatureCache();
 
-    bool Init();
+    bool Initialize();
     void ReleaseAll();
 
     CD3D12RootSignature* GetOrCreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount);

@@ -84,7 +84,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2D* CreateTexture2D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * Creates a Texture2DArray
@@ -100,7 +100,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2DArray* CreateTexture2DArray(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * Creates a TextureCube
@@ -113,7 +113,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCube* CreateTextureCube(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * Creates a TextureCubeArray
@@ -127,7 +127,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCubeArray* CreateTextureCubeArray(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * Creates a Texture3D
@@ -142,15 +142,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
-
-    /**
-     * Create a SamplerState
-     * 
-     * @param CreateInfo: Structure with information about the SamplerState
-     * @return: Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
-     */
-    virtual CRHISamplerStateRef CreateSamplerState(const struct CRHISamplerStateDesc& CreateInfo) = 0;
+    virtual CRHITexture3D* CreateTexture3D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * Creates a new Buffer
@@ -163,6 +155,14 @@ public:
     virtual CRHIBufferRef CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
 
     /**
+     * Create a SamplerState
+     * 
+     * @param Desc: Structure with information about the SamplerState
+     * @return: Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
+     */
+    virtual CRHISamplerStateRef CreateSamplerState(const class CRHISamplerStateDesc& Desc) = 0;
+
+    /**
      * Create a new Ray tracing scene
      * 
      * @param Flags: Flags for the creation
@@ -170,49 +170,51 @@ public:
      * @param NumInstances: Number of instances in the array
      * @return: Returns the newly created Ray tracing Scene
      */
-    virtual CRHIRayTracingScene* CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) = 0;
+    virtual CRHIRayTracingScene* CreateRayTracingScene(uint32 Flags, SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances) = 0;
     
     /**
      * Create a new Ray tracing geometry
      *
      * @param Flags: Flags for the creation
-     * @param VertexBuffer: VertexBuffer the acceleration structure with
-     * @param IndexBuffer: IndexBuffer the acceleration structure with
+     * @param VertexBuffer: VertexBuffer to create the acceleration structure with
+     * @param NumVertices: Number of vertices in the VertexBuffer
+     * @param IndexBuffer: IndexBuffer to create the acceleration structure with
+     * @param NumIndices: Number of indices in the IndexBuffer
      * @return: Returns the newly created Ray tracing Geometry
      */
-    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer) = 0;
+    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, ERHIIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices) = 0;
 
     /**
      * Create a new ShaderResourceView
      * 
-     * @param CreateInfo: Info about the ShaderResourceView
+     * @param Desc: Info about the ShaderResourceView
      * @return: Returns the newly created ShaderResourceView
      */
-    virtual CRHIShaderResourceView* CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo) = 0;
+    virtual CRHIShaderResourceView* CreateShaderResourceView(const SRHIShaderResourceViewDesc& Desc) = 0;
     
     /**
      * Create a new UnorderedAccessView
      *
-     * @param CreateInfo: Info about the UnorderedAccessView
+     * @param Desc: Info about the UnorderedAccessView
      * @return: Returns the newly created UnorderedAccessView
      */
-    virtual CRHIUnorderedAccessView* CreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo) = 0;
+    virtual CRHIUnorderedAccessView* CreateUnorderedAccessView(const SRHIUnorderedAccessViewDesc& Desc) = 0;
     
     /**
      * Create a new RenderTargetView
      *
-     * @param CreateInfo: Info about the RenderTargetView
+     * @param Desc: Info about the RenderTargetView
      * @return: Returns the newly created RenderTargetView
      */
-    virtual CRHIRenderTargetView* CreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo) = 0;
+    virtual CRHIRenderTargetView* CreateRenderTargetView(const SRHIRenderTargetViewDesc& Desc) = 0;
     
     /**
      * Create a new DepthStencilView
      *
-     * @param CreateInfo: Info about the DepthStencilView
+     * @param Desc: Info about the DepthStencilView
      * @return: Returns the newly created DepthStencilView
      */
-    virtual CRHIDepthStencilView* CreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo) = 0;
+    virtual CRHIDepthStencilView* CreateDepthStencilView(const SRHIDepthStencilViewDesc& Desc) = 0;
 
     /**
      * Creates a new Compute Shader
@@ -313,58 +315,58 @@ public:
     /**
      * Create a new DepthStencilState
      * 
-     * @param CreateInfo: Info about a DepthStencilState
+     * @param Desc: Info about a DepthStencilState
      * @return: Returns the newly created DepthStencilState
      */
-    virtual class CRHIDepthStencilState* CreateDepthStencilState(const SRHIDepthStencilStateInfo& CreateInfo) = 0;
+    virtual class CRHIDepthStencilState* CreateDepthStencilState(const SRHIDepthStencilStateDesc& Desc) = 0;
 
     /**
      * Create a new RasterizerState
      *
-     * @param CreateInfo: Info about a RasterizerState
+     * @param Desc: Info about a RasterizerState
      * @return: Returns the newly created RasterizerState
      */
-    virtual class CRHIRasterizerState* CreateRasterizerState(const SRHIRasterizerStateInfo& CreateInfo) = 0;
+    virtual class CRHIRasterizerState* CreateRasterizerState(const SRHIRasterizerStateDesc& Desc) = 0;
 
     /**
      * Create a new BlendState
      *
-     * @param CreateInfo: Info about a BlendState
+     * @param Desc: Info about a BlendState
      * @return: Returns the newly created BlendState
      */
-    virtual class CRHIBlendState* CreateBlendState(const SRHIBlendStateInfo& CreateInfo) = 0;
+    virtual class CRHIBlendState* CreateBlendState(const SRHIBlendStateDesc& Desc) = 0;
 
     /**
      * Create a new InputLayoutState
      *
-     * @param CreateInfo: Info about a InputLayoutState
+     * @param Desc: Info about a InputLayoutState
      * @return: Returns the newly created InputLayoutState
      */
-    virtual class CRHIInputLayoutState* CreateInputLayout(const SRHIInputLayoutStateInfo& CreateInfo) = 0;
+    virtual class CRHIInputLayoutState* CreateInputLayout(const SRHIInputLayoutStateDesc& Desc) = 0;
 
     /**
      * Create a Graphics PipelineState
      * 
-     * @param CreateInfo: Info about the Graphics PipelineState
+     * @param Desc: Info about the Graphics PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIGraphicsPipelineState* CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateInfo& CreateInfo) = 0;
+    virtual class CRHIGraphicsPipelineState* CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateDesc& Desc) = 0;
     
     /**
      * Create a Compute PipelineState
      *
-     * @param CreateInfo: Info about the Compute PipelineState
+     * @param Desc: Info about the Compute PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIComputePipelineState* CreateComputePipelineState(const SRHIComputePipelineStateInfo& CreateInfo) = 0;
+    virtual class CRHIComputePipelineState* CreateComputePipelineState(const SRHIComputePipelineStateDesc& Desc) = 0;
     
     /**
      * Create a Ray-Tracing PipelineState
      *
-     * @param CreateInfo: Info about the Ray-Tracing PipelineState
+     * @param Desc: Info about the Ray-Tracing PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState(const SRHIRayTracingPipelineStateInfo& CreateInfo) = 0;
+    virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState(const SRHIRayTracingPipelineStateDesc& Desc) = 0;
 
     /**
      * Create a new Timestamp Query
@@ -384,7 +386,7 @@ public:
      * @param DepthFormat: Format for the depth
      * @return: Returns the newly created viewport
      */
-    virtual class CRHIViewport* CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
+    virtual class CRHIViewport* CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, ERHIFormat ColorFormat, ERHIFormat DepthFormat) = 0;
 
     /**
      * Retrieve the default CommandContext
@@ -423,7 +425,7 @@ public:
      * @param Format: Format to check
      * @return: Returns true if the current RHI supports UnorderedAccessViews with the specified format
      */
-    virtual bool UAVSupportsFormat(EFormat Format) const
+    virtual bool UAVSupportsFormat(ERHIFormat Format) const
     {
         UNREFERENCED_VARIABLE(Format);
         return false;
@@ -454,39 +456,39 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper functions
 
-FORCEINLINE CRHITexture2D* RHICreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture2D* RHICreateTexture2D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTexture2D(Format, Width, Height, NumMips, NumSamples, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTexture2DArray(Format, Width, Height, NumMips, NumSamples, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITextureCube* RHICreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITextureCube* RHICreateTextureCube(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTextureCube(Format, Size, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTextureCubeArray(Format, Size, NumMips, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture3D* RHICreateTexture3D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTexture3D(Format, Width, Height, Depth, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHISamplerStateRef RHICreateSamplerState(const class CRHISamplerStateDesc& CreateInfo)
+FORCEINLINE CRHISamplerStateRef RHICreateSamplerState(const class CRHISamplerStateDesc& Desc)
 {
-    return GRHIInstance->CreateSamplerState(CreateInfo);
+    return GRHIInstance->CreateSamplerState(Desc);
 }
 
 FORCEINLINE CRHIBufferRef RHICreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
 {
-	return GRHIInstance->CreateBuffer(BufferDesc, InitialState, InitialData);
+    return GRHIInstance->CreateBuffer(BufferDesc, InitialState, InitialData);
 }
 
 FORCEINLINE CRHIBufferRef RHICreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
@@ -527,257 +529,257 @@ FORCEINLINE CRHIBufferRef RHICreateStructuredBuffer(uint32 NumElements, uint32 F
     return RHICreateStructuredBuffer(sizeof(StructureType), NumElements, Flags, InitialState, InitialData);
 }
 
-FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)
+FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene(uint32 Flags, SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances)
 {
     return GRHIInstance->CreateRayTracingScene(Flags, Instances, NumInstances);
 }
 
-FORCEINLINE CRHIRayTracingGeometry* RHICreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer)
+FORCEINLINE CRHIRayTracingGeometry* RHICreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, ERHIIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices)
 {
-    return GRHIInstance->CreateRayTracingGeometry(Flags, VertexBuffer, IndexBuffer);
+    return GRHIInstance->CreateRayTracingGeometry(Flags, VertexBuffer, NumVertices, IndexFormat, IndexBuffer, NumIndices);
 }
 
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo)
+FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(const SRHIShaderResourceViewDesc& Desc)
 {
-    return GRHIInstance->CreateShaderResourceView(CreateInfo);
+    return GRHIInstance->CreateShaderResourceView(Desc);
 }
 
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITexture2D* Texture, EFormat Format, uint32 Mip, uint32 NumMips, float MinMipBias)
+FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITexture2D* Texture, ERHIFormat Format, uint32 Mip, uint32 NumMips, float MinMipBias)
 {
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::Texture2D);
-    CreateInfo.Texture2D.Texture = Texture;
-    CreateInfo.Texture2D.Format = Format;
-    CreateInfo.Texture2D.Mip = Mip;
-    CreateInfo.Texture2D.NumMips = NumMips;
-    CreateInfo.Texture2D.MinMipBias = MinMipBias;
-    return RHICreateShaderResourceView(CreateInfo);
+    SRHIShaderResourceViewDesc Desc(SRHIShaderResourceViewDesc::EType::Texture2D);
+    Desc.Texture2D.Texture    = Texture;
+    Desc.Texture2D.Format     = Format;
+    Desc.Texture2D.Mip        = Mip;
+    Desc.Texture2D.NumMips    = NumMips;
+    Desc.Texture2D.MinMipBias = MinMipBias;
+    return RHICreateShaderResourceView(Desc);
 }
 
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITexture2DArray* Texture, EFormat Format, uint32 Mip, uint32 NumMips, uint32 ArraySlice, uint32 NumArraySlices, float MinMipBias)
+FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITexture2DArray* Texture, ERHIFormat Format, uint32 Mip, uint32 NumMips, uint32 ArraySlice, uint32 NumArraySlices, float MinMipBias)
 {
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::Texture2DArray);
-    CreateInfo.Texture2DArray.Texture = Texture;
-    CreateInfo.Texture2DArray.Format = Format;
-    CreateInfo.Texture2DArray.Mip = Mip;
-    CreateInfo.Texture2DArray.NumMips = NumMips;
-    CreateInfo.Texture2DArray.ArraySlice = ArraySlice;
-    CreateInfo.Texture2DArray.NumArraySlices = NumArraySlices;
-    CreateInfo.Texture2DArray.MinMipBias = MinMipBias;
-    return RHICreateShaderResourceView(CreateInfo);
+    SRHIShaderResourceViewDesc Desc(SRHIShaderResourceViewDesc::EType::Texture2DArray);
+    Desc.Texture2DArray.Texture        = Texture;
+    Desc.Texture2DArray.Format         = Format;
+    Desc.Texture2DArray.Mip            = Mip;
+    Desc.Texture2DArray.NumMips        = NumMips;
+    Desc.Texture2DArray.ArraySlice     = ArraySlice;
+    Desc.Texture2DArray.NumArraySlices = NumArraySlices;
+    Desc.Texture2DArray.MinMipBias     = MinMipBias;
+    return RHICreateShaderResourceView(Desc);
 }
 
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITextureCube* Texture, EFormat Format, uint32 Mip, uint32 NumMips, float MinMipBias)
+FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITextureCube* Texture, ERHIFormat Format, uint32 Mip, uint32 NumMips, float MinMipBias)
 {
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::TextureCube);
-    CreateInfo.TextureCube.Texture = Texture;
-    CreateInfo.TextureCube.Format = Format;
-    CreateInfo.TextureCube.Mip = Mip;
-    CreateInfo.TextureCube.NumMips = NumMips;
-    CreateInfo.TextureCube.MinMipBias = MinMipBias;
-    return RHICreateShaderResourceView(CreateInfo);
+    SRHIShaderResourceViewDesc Desc(SRHIShaderResourceViewDesc::EType::TextureCube);
+    Desc.TextureCube.Texture    = Texture;
+    Desc.TextureCube.Format     = Format;
+    Desc.TextureCube.Mip        = Mip;
+    Desc.TextureCube.NumMips    = NumMips;
+    Desc.TextureCube.MinMipBias = MinMipBias;
+    return RHICreateShaderResourceView(Desc);
 }
 
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITextureCubeArray* Texture, EFormat Format, uint32 Mip, uint32 NumMips, uint32 ArraySlice, uint32 NumArraySlices, float MinMipBias)
+FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITextureCubeArray* Texture, ERHIFormat Format, uint32 Mip, uint32 NumMips, uint32 ArraySlice, uint32 NumArraySlices, float MinMipBias)
 {
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::TextureCubeArray);
-    CreateInfo.TextureCubeArray.Texture = Texture;
-    CreateInfo.TextureCubeArray.Format = Format;
-    CreateInfo.TextureCubeArray.Mip = Mip;
-    CreateInfo.TextureCubeArray.NumMips = NumMips;
-    CreateInfo.TextureCubeArray.ArraySlice = ArraySlice;
-    CreateInfo.TextureCubeArray.NumArraySlices = NumArraySlices;
-    CreateInfo.TextureCubeArray.MinMipBias = MinMipBias;
-    return RHICreateShaderResourceView(CreateInfo);
+    SRHIShaderResourceViewDesc Desc(SRHIShaderResourceViewDesc::EType::TextureCubeArray);
+    Desc.TextureCubeArray.Texture        = Texture;
+    Desc.TextureCubeArray.Format         = Format;
+    Desc.TextureCubeArray.Mip            = Mip;
+    Desc.TextureCubeArray.NumMips        = NumMips;
+    Desc.TextureCubeArray.ArraySlice     = ArraySlice;
+    Desc.TextureCubeArray.NumArraySlices = NumArraySlices;
+    Desc.TextureCubeArray.MinMipBias     = MinMipBias;
+    return RHICreateShaderResourceView(Desc);
 }
 
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITexture3D* Texture, EFormat Format, uint32 Mip, uint32 NumMips, uint32 DepthSlice, uint32 NumDepthSlices, float MinMipBias)
+FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITexture3D* Texture, ERHIFormat Format, uint32 Mip, uint32 NumMips, uint32 DepthSlice, uint32 NumDepthSlices, float MinMipBias)
 {
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::Texture3D);
-    CreateInfo.Texture3D.Texture = Texture;
-    CreateInfo.Texture3D.Format = Format;
-    CreateInfo.Texture3D.Mip = Mip;
-    CreateInfo.Texture3D.NumMips = NumMips;
-    CreateInfo.Texture3D.DepthSlice = DepthSlice;
-    CreateInfo.Texture3D.NumDepthSlices = NumDepthSlices;
-    CreateInfo.Texture3D.MinMipBias = MinMipBias;
-    return RHICreateShaderResourceView(CreateInfo);
+    SRHIShaderResourceViewDesc Desc(SRHIShaderResourceViewDesc::EType::Texture3D);
+    Desc.Texture3D.Texture        = Texture;
+    Desc.Texture3D.Format         = Format;
+    Desc.Texture3D.Mip            = Mip;
+    Desc.Texture3D.NumMips        = NumMips;
+    Desc.Texture3D.DepthSlice     = DepthSlice;
+    Desc.Texture3D.NumDepthSlices = NumDepthSlices;
+    Desc.Texture3D.MinMipBias     = MinMipBias;
+    return RHICreateShaderResourceView(Desc);
 }
 
 FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHIBuffer* Buffer, uint32 FirstVertex, uint32 NumVertices)
 {
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::VertexBuffer);
-    CreateInfo.VertexBuffer.Buffer = Buffer;
-    CreateInfo.VertexBuffer.FirstVertex = FirstVertex;
-    CreateInfo.VertexBuffer.NumVertices = NumVertices;
-    return RHICreateShaderResourceView(CreateInfo);
+    SRHIShaderResourceViewDesc Desc(SRHIShaderResourceViewDesc::EType::VertexBuffer);
+    Desc.VertexBuffer.Buffer      = Buffer;
+    Desc.VertexBuffer.FirstVertex = FirstVertex;
+    Desc.VertexBuffer.NumVertices = NumVertices;
+    return RHICreateShaderResourceView(Desc);
 }
 
-FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo)
+FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(const SRHIUnorderedAccessViewDesc& Desc)
 {
-    return GRHIInstance->CreateUnorderedAccessView(CreateInfo);
+    return GRHIInstance->CreateUnorderedAccessView(Desc);
 }
 
-FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHITexture2D* Texture, EFormat Format, uint32 Mip)
+FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHITexture2D* Texture, ERHIFormat Format, uint32 Mip)
 {
-    SRHIUnorderedAccessViewInfo CreateInfo(SRHIUnorderedAccessViewInfo::EType::Texture2D);
-    CreateInfo.Texture2D.Texture = Texture;
-    CreateInfo.Texture2D.Format = Format;
-    CreateInfo.Texture2D.Mip = Mip;
-    return RHICreateUnorderedAccessView(CreateInfo);
+    SRHIUnorderedAccessViewDesc Desc(SRHIUnorderedAccessViewDesc::EType::Texture2D);
+    Desc.Texture2D.Texture = Texture;
+    Desc.Texture2D.Format  = Format;
+    Desc.Texture2D.Mip     = Mip;
+    return RHICreateUnorderedAccessView(Desc);
 }
 
-FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHITexture2DArray* Texture, EFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
+FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHITexture2DArray* Texture, ERHIFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
 {
-    SRHIUnorderedAccessViewInfo CreateInfo(SRHIUnorderedAccessViewInfo::EType::Texture2DArray);
-    CreateInfo.Texture2DArray.Texture = Texture;
-    CreateInfo.Texture2DArray.Format = Format;
-    CreateInfo.Texture2DArray.Mip = Mip;
-    CreateInfo.Texture2DArray.ArraySlice = ArraySlice;
-    CreateInfo.Texture2DArray.NumArraySlices = NumArraySlices;
-    return RHICreateUnorderedAccessView(CreateInfo);
+    SRHIUnorderedAccessViewDesc Desc(SRHIUnorderedAccessViewDesc::EType::Texture2DArray);
+    Desc.Texture2DArray.Texture        = Texture;
+    Desc.Texture2DArray.Format         = Format;
+    Desc.Texture2DArray.Mip            = Mip;
+    Desc.Texture2DArray.ArraySlice     = ArraySlice;
+    Desc.Texture2DArray.NumArraySlices = NumArraySlices;
+    return RHICreateUnorderedAccessView(Desc);
 }
 
-FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHITextureCube* Texture, EFormat Format, uint32 Mip)
+FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHITextureCube* Texture, ERHIFormat Format, uint32 Mip)
 {
-    SRHIUnorderedAccessViewInfo CreateInfo(SRHIUnorderedAccessViewInfo::EType::TextureCube);
-    CreateInfo.TextureCube.Texture = Texture;
-    CreateInfo.TextureCube.Format = Format;
-    CreateInfo.TextureCube.Mip = Mip;
-    return RHICreateUnorderedAccessView(CreateInfo);
+    SRHIUnorderedAccessViewDesc Desc(SRHIUnorderedAccessViewDesc::EType::TextureCube);
+    Desc.TextureCube.Texture = Texture;
+    Desc.TextureCube.Format  = Format;
+    Desc.TextureCube.Mip     = Mip;
+    return RHICreateUnorderedAccessView(Desc);
 }
 
-FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHITextureCubeArray* Texture, EFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
+FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHITextureCubeArray* Texture, ERHIFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
 {
-    SRHIUnorderedAccessViewInfo CreateInfo(SRHIUnorderedAccessViewInfo::EType::TextureCubeArray);
-    CreateInfo.TextureCubeArray.Texture = Texture;
-    CreateInfo.TextureCubeArray.Format = Format;
-    CreateInfo.TextureCubeArray.Mip = Mip;
-    CreateInfo.TextureCubeArray.ArraySlice = ArraySlice;
-    CreateInfo.TextureCubeArray.NumArraySlices = NumArraySlices;
-    return RHICreateUnorderedAccessView(CreateInfo);
+    SRHIUnorderedAccessViewDesc Desc(SRHIUnorderedAccessViewDesc::EType::TextureCubeArray);
+    Desc.TextureCubeArray.Texture        = Texture;
+    Desc.TextureCubeArray.Format         = Format;
+    Desc.TextureCubeArray.Mip            = Mip;
+    Desc.TextureCubeArray.ArraySlice     = ArraySlice;
+    Desc.TextureCubeArray.NumArraySlices = NumArraySlices;
+    return RHICreateUnorderedAccessView(Desc);
 }
 
-FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHITexture3D* Texture, EFormat Format, uint32 Mip, uint32 DepthSlice, uint32 NumDepthSlices)
+FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHITexture3D* Texture, ERHIFormat Format, uint32 Mip, uint32 DepthSlice, uint32 NumDepthSlices)
 {
-    SRHIUnorderedAccessViewInfo CreateInfo(SRHIUnorderedAccessViewInfo::EType::Texture3D);
-    CreateInfo.Texture3D.Texture = Texture;
-    CreateInfo.Texture3D.Format = Format;
-    CreateInfo.Texture3D.Mip = Mip;
-    CreateInfo.Texture3D.DepthSlice = DepthSlice;
-    CreateInfo.Texture3D.NumDepthSlices = NumDepthSlices;
-    return RHICreateUnorderedAccessView(CreateInfo);
+    SRHIUnorderedAccessViewDesc Desc(SRHIUnorderedAccessViewDesc::EType::Texture3D);
+    Desc.Texture3D.Texture        = Texture;
+    Desc.Texture3D.Format         = Format;
+    Desc.Texture3D.Mip            = Mip;
+    Desc.Texture3D.DepthSlice     = DepthSlice;
+    Desc.Texture3D.NumDepthSlices = NumDepthSlices;
+    return RHICreateUnorderedAccessView(Desc);
 }
 
 FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHIBuffer* Buffer, uint32 FirstVertex, uint32 NumVertices)
 {
-    SRHIUnorderedAccessViewInfo CreateInfo(SRHIUnorderedAccessViewInfo::EType::VertexBuffer);
-    CreateInfo.VertexBuffer.Buffer = Buffer;
-    CreateInfo.VertexBuffer.FirstVertex = FirstVertex;
-    CreateInfo.VertexBuffer.NumVertices = NumVertices;
-    return RHICreateUnorderedAccessView(CreateInfo);
+    SRHIUnorderedAccessViewDesc Desc(SRHIUnorderedAccessViewDesc::EType::VertexBuffer);
+    Desc.VertexBuffer.Buffer      = Buffer;
+    Desc.VertexBuffer.FirstVertex = FirstVertex;
+    Desc.VertexBuffer.NumVertices = NumVertices;
+    return RHICreateUnorderedAccessView(Desc);
 }
 
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo)
+FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(const SRHIRenderTargetViewDesc& Desc)
 {
-    return GRHIInstance->CreateRenderTargetView(CreateInfo);
+    return GRHIInstance->CreateRenderTargetView(Desc);
 }
 
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITexture2D* Texture, EFormat Format, uint32 Mip)
+FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITexture2D* Texture, ERHIFormat Format, uint32 Mip)
 {
-    SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::Texture2D);
-    CreateInfo.Format = Format;
-    CreateInfo.Texture2D.Texture = Texture;
-    CreateInfo.Texture2D.Mip = Mip;
-    return RHICreateRenderTargetView(CreateInfo);
+    SRHIRenderTargetViewDesc Desc(SRHIRenderTargetViewDesc::EType::Texture2D);
+    Desc.Format            = Format;
+    Desc.Texture2D.Texture = Texture;
+    Desc.Texture2D.Mip     = Mip;
+    return RHICreateRenderTargetView(Desc);
 }
 
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITexture2DArray* Texture, EFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
+FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITexture2DArray* Texture, ERHIFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
 {
-    SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::Texture2DArray);
-    CreateInfo.Format = Format;
-    CreateInfo.Texture2DArray.Texture = Texture;
-    CreateInfo.Texture2DArray.Mip = Mip;
-    CreateInfo.Texture2DArray.ArraySlice = ArraySlice;
-    CreateInfo.Texture2DArray.NumArraySlices = NumArraySlices;
-    return RHICreateRenderTargetView(CreateInfo);
+    SRHIRenderTargetViewDesc Desc(SRHIRenderTargetViewDesc::EType::Texture2DArray);
+    Desc.Format                        = Format;
+    Desc.Texture2DArray.Texture        = Texture;
+    Desc.Texture2DArray.Mip            = Mip;
+    Desc.Texture2DArray.ArraySlice     = ArraySlice;
+    Desc.Texture2DArray.NumArraySlices = NumArraySlices;
+    return RHICreateRenderTargetView(Desc);
 }
 
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITextureCube* Texture, EFormat Format, ERHICubeFace CubeFace, uint32 Mip)
+FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITextureCube* Texture, ERHIFormat Format, ERHICubeFace CubeFace, uint32 Mip)
 {
-    SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::TextureCube);
-    CreateInfo.Format = Format;
-    CreateInfo.TextureCube.Texture = Texture;
-    CreateInfo.TextureCube.Mip = Mip;
-    CreateInfo.TextureCube.CubeFace = CubeFace;
-    return RHICreateRenderTargetView(CreateInfo);
+    SRHIRenderTargetViewDesc Desc(SRHIRenderTargetViewDesc::EType::TextureCube);
+    Desc.Format               = Format;
+    Desc.TextureCube.Texture  = Texture;
+    Desc.TextureCube.Mip      = Mip;
+    Desc.TextureCube.CubeFace = CubeFace;
+    return RHICreateRenderTargetView(Desc);
 }
 
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITextureCubeArray* Texture, EFormat Format, ERHICubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
+FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITextureCubeArray* Texture, ERHIFormat Format, ERHICubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
 {
-    SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::TextureCubeArray);
-    CreateInfo.Format = Format;
-    CreateInfo.TextureCubeArray.Texture = Texture;
-    CreateInfo.TextureCubeArray.Mip = Mip;
-    CreateInfo.TextureCubeArray.ArraySlice = ArraySlice;
-    CreateInfo.TextureCubeArray.CubeFace = CubeFace;
-    return RHICreateRenderTargetView(CreateInfo);
+    SRHIRenderTargetViewDesc Desc(SRHIRenderTargetViewDesc::EType::TextureCubeArray);
+    Desc.Format                      = Format;
+    Desc.TextureCubeArray.Texture    = Texture;
+    Desc.TextureCubeArray.Mip        = Mip;
+    Desc.TextureCubeArray.ArraySlice = ArraySlice;
+    Desc.TextureCubeArray.CubeFace   = CubeFace;
+    return RHICreateRenderTargetView(Desc);
 }
 
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITexture3D* Texture, EFormat Format, uint32 Mip, uint32 DepthSlice, uint32 NumDepthSlices)
+FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITexture3D* Texture, ERHIFormat Format, uint32 Mip, uint32 DepthSlice, uint32 NumDepthSlices)
 {
-    SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::Texture3D);
-    CreateInfo.Format = Format;
-    CreateInfo.Texture3D.Texture = Texture;
-    CreateInfo.Texture3D.Mip = Mip;
-    CreateInfo.Texture3D.DepthSlice = DepthSlice;
-    CreateInfo.Texture3D.NumDepthSlices = NumDepthSlices;
-    return RHICreateRenderTargetView(CreateInfo);
+    SRHIRenderTargetViewDesc Desc(SRHIRenderTargetViewDesc::EType::Texture3D);
+    Desc.Format                   = Format;
+    Desc.Texture3D.Texture        = Texture;
+    Desc.Texture3D.Mip            = Mip;
+    Desc.Texture3D.DepthSlice     = DepthSlice;
+    Desc.Texture3D.NumDepthSlices = NumDepthSlices;
+    return RHICreateRenderTargetView(Desc);
 }
 
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo)
+FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(const SRHIDepthStencilViewDesc& Desc)
 {
-    return GRHIInstance->CreateDepthStencilView(CreateInfo);
+    return GRHIInstance->CreateDepthStencilView(Desc);
 }
 
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITexture2D* Texture, EFormat Format, uint32 Mip)
+FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITexture2D* Texture, ERHIFormat Format, uint32 Mip)
 {
-    SRHIDepthStencilViewInfo CreateInfo(SRHIDepthStencilViewInfo::EType::Texture2D);
-    CreateInfo.Format = Format;
-    CreateInfo.Texture2D.Texture = Texture;
-    CreateInfo.Texture2D.Mip = Mip;
-    return RHICreateDepthStencilView(CreateInfo);
+    SRHIDepthStencilViewDesc Desc(SRHIDepthStencilViewDesc::EType::Texture2D);
+    Desc.Format            = Format;
+    Desc.Texture2D.Texture = Texture;
+    Desc.Texture2D.Mip     = Mip;
+    return RHICreateDepthStencilView(Desc);
 }
 
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITexture2DArray* Texture, EFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
+FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITexture2DArray* Texture, ERHIFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
 {
-    SRHIDepthStencilViewInfo CreateInfo(SRHIDepthStencilViewInfo::EType::Texture2DArray);
-    CreateInfo.Format = Format;
-    CreateInfo.Texture2DArray.Texture = Texture;
-    CreateInfo.Texture2DArray.Mip = Mip;
-    CreateInfo.Texture2DArray.ArraySlice = ArraySlice;
-    CreateInfo.Texture2DArray.NumArraySlices = NumArraySlices;
-    return RHICreateDepthStencilView(CreateInfo);
+    SRHIDepthStencilViewDesc Desc(SRHIDepthStencilViewDesc::EType::Texture2DArray);
+    Desc.Format                        = Format;
+    Desc.Texture2DArray.Texture        = Texture;
+    Desc.Texture2DArray.Mip            = Mip;
+    Desc.Texture2DArray.ArraySlice     = ArraySlice;
+    Desc.Texture2DArray.NumArraySlices = NumArraySlices;
+    return RHICreateDepthStencilView(Desc);
 }
 
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCube* Texture, EFormat Format, ERHICubeFace CubeFace, uint32 Mip)
+FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCube* Texture, ERHIFormat Format, ERHICubeFace CubeFace, uint32 Mip)
 {
-    SRHIDepthStencilViewInfo CreateInfo(SRHIDepthStencilViewInfo::EType::TextureCube);
-    CreateInfo.Format = Format;
-    CreateInfo.TextureCube.Texture = Texture;
-    CreateInfo.TextureCube.Mip = Mip;
-    CreateInfo.TextureCube.CubeFace = CubeFace;
-    return RHICreateDepthStencilView(CreateInfo);
+    SRHIDepthStencilViewDesc Desc(SRHIDepthStencilViewDesc::EType::TextureCube);
+    Desc.Format               = Format;
+    Desc.TextureCube.Texture  = Texture;
+    Desc.TextureCube.Mip      = Mip;
+    Desc.TextureCube.CubeFace = CubeFace;
+    return RHICreateDepthStencilView(Desc);
 }
 
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCubeArray* Texture, EFormat Format, ERHICubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
+FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCubeArray* Texture, ERHIFormat Format, ERHICubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
 {
-    SRHIDepthStencilViewInfo CreateInfo(SRHIDepthStencilViewInfo::EType::TextureCubeArray);
-    CreateInfo.Format = Format;
-    CreateInfo.TextureCubeArray.Texture = Texture;
-    CreateInfo.TextureCubeArray.Mip = Mip;
-    CreateInfo.TextureCubeArray.ArraySlice = ArraySlice;
-    CreateInfo.TextureCubeArray.CubeFace = CubeFace;
-    return RHICreateDepthStencilView(CreateInfo);
+    SRHIDepthStencilViewDesc Desc(SRHIDepthStencilViewDesc::EType::TextureCubeArray);
+    Desc.Format                      = Format;
+    Desc.TextureCubeArray.Texture    = Texture;
+    Desc.TextureCubeArray.Mip        = Mip;
+    Desc.TextureCubeArray.ArraySlice = ArraySlice;
+    Desc.TextureCubeArray.CubeFace   = CubeFace;
+    return RHICreateDepthStencilView(Desc);
 }
 
 FORCEINLINE CRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode)
@@ -840,39 +842,39 @@ FORCEINLINE CRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& Shade
     return GRHIInstance->CreateRayMissShader(ShaderCode);
 }
 
-FORCEINLINE CRHIInputLayoutState* RHICreateInputLayout(const SRHIInputLayoutStateInfo& CreateInfo)
+FORCEINLINE CRHIInputLayoutState* RHICreateInputLayout(const SRHIInputLayoutStateDesc& Desc)
 {
-    return GRHIInstance->CreateInputLayout(CreateInfo);
+    return GRHIInstance->CreateInputLayout(Desc);
 }
 
-FORCEINLINE CRHIDepthStencilState* RHICreateDepthStencilState(const SRHIDepthStencilStateInfo& CreateInfo)
+FORCEINLINE CRHIDepthStencilState* RHICreateDepthStencilState(const SRHIDepthStencilStateDesc& Desc)
 {
-    return GRHIInstance->CreateDepthStencilState(CreateInfo);
+    return GRHIInstance->CreateDepthStencilState(Desc);
 }
 
-FORCEINLINE CRHIRasterizerState* RHICreateRasterizerState(const SRHIRasterizerStateInfo& CreateInfo)
+FORCEINLINE CRHIRasterizerState* RHICreateRasterizerState(const SRHIRasterizerStateDesc& Desc)
 {
-    return GRHIInstance->CreateRasterizerState(CreateInfo);
+    return GRHIInstance->CreateRasterizerState(Desc);
 }
 
-FORCEINLINE CRHIBlendState* RHICreateBlendState(const SRHIBlendStateInfo& CreateInfo)
+FORCEINLINE CRHIBlendState* RHICreateBlendState(const SRHIBlendStateDesc& Desc)
 {
-    return GRHIInstance->CreateBlendState(CreateInfo);
+    return GRHIInstance->CreateBlendState(Desc);
 }
 
-FORCEINLINE CRHIComputePipelineState* RHICreateComputePipelineState(const SRHIComputePipelineStateInfo& CreateInfo)
+FORCEINLINE CRHIComputePipelineState* RHICreateComputePipelineState(const SRHIComputePipelineStateDesc& Desc)
 {
-    return GRHIInstance->CreateComputePipelineState(CreateInfo);
+    return GRHIInstance->CreateComputePipelineState(Desc);
 }
 
-FORCEINLINE CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const SRHIGraphicsPipelineStateInfo& CreateInfo)
+FORCEINLINE CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const SRHIGraphicsPipelineStateDesc& Desc)
 {
-    return GRHIInstance->CreateGraphicsPipelineState(CreateInfo);
+    return GRHIInstance->CreateGraphicsPipelineState(Desc);
 }
 
-FORCEINLINE CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const SRHIRayTracingPipelineStateInfo& CreateInfo)
+FORCEINLINE CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const SRHIRayTracingPipelineStateDesc& Desc)
 {
-    return GRHIInstance->CreateRayTracingPipelineState(CreateInfo);
+    return GRHIInstance->CreateRayTracingPipelineState(Desc);
 }
 
 FORCEINLINE class CRHITimestampQuery* RHICreateTimestampQuery()
@@ -880,12 +882,12 @@ FORCEINLINE class CRHITimestampQuery* RHICreateTimestampQuery()
     return GRHIInstance->CreateTimestampQuery();
 }
 
-FORCEINLINE class CRHIViewport* RHICreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
+FORCEINLINE class CRHIViewport* RHICreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, ERHIFormat ColorFormat, ERHIFormat DepthFormat)
 {
     return GRHIInstance->CreateViewport(WindowHandle, Width, Height, ColorFormat, DepthFormat);
 }
 
-FORCEINLINE bool RHIUAVSupportsFormat(EFormat Format)
+FORCEINLINE bool RHIUAVSupportsFormat(ERHIFormat Format)
 {
     return GRHIInstance->UAVSupportsFormat(Format);
 }

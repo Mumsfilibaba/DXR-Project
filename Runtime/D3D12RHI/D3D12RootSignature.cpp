@@ -237,13 +237,13 @@ CD3D12RootSignature::CD3D12RootSignature(CD3D12Device* InDevice)
     }
 }
 
-bool CD3D12RootSignature::Init(const SD3D12RootSignatureResourceCount& RootSignatureInfo)
+bool CD3D12RootSignature::Initialize(const SD3D12RootSignatureResourceCount& RootSignatureInfo)
 {
     CD3D12RootSignatureDescHelper Desc(RootSignatureInfo);
-    return Init(Desc.GetDesc());
+    return Initialize(Desc.GetDesc());
 }
 
-bool CD3D12RootSignature::Init(const D3D12_ROOT_SIGNATURE_DESC& Desc)
+bool CD3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 {
     TComPtr<ID3DBlob> SignatureBlob;
 
@@ -257,7 +257,7 @@ bool CD3D12RootSignature::Init(const D3D12_ROOT_SIGNATURE_DESC& Desc)
     return InternalInit(SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize());
 }
 
-bool CD3D12RootSignature::Init(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
+bool CD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
 {
     TComPtr<ID3D12RootSignatureDeserializer> Deserializer;
     HRESULT Result = ND3D12Functions::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
@@ -367,7 +367,7 @@ CD3D12RootSignatureCache::~CD3D12RootSignatureCache()
     Instance = nullptr;
 }
 
-bool CD3D12RootSignatureCache::Init()
+bool CD3D12RootSignatureCache::Initialize()
 {
     SD3D12RootSignatureResourceCount GraphicsKey;
     GraphicsKey.Type = ERootSignatureType::Graphics;
@@ -519,7 +519,7 @@ CD3D12RootSignatureCache& CD3D12RootSignatureCache::Get()
 CD3D12RootSignature* CD3D12RootSignatureCache::CreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount)
 {
     TSharedRef<CD3D12RootSignature> NewRootSignature = dbg_new CD3D12RootSignature(GetDevice());
-    if (!NewRootSignature->Init(ResourceCount))
+    if (!NewRootSignature->Initialize(ResourceCount))
     {
         return nullptr;
     }

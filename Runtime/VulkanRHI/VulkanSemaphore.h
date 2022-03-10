@@ -24,11 +24,11 @@ public:
 
     bool SetName(const String& Name);
 
-	FORCEINLINE VkSemaphore GetVkSemaphore() const
-	{
-		return Semaphore;
-	}
-	
+    FORCEINLINE VkSemaphore GetVkSemaphore() const
+    {
+        return Semaphore;
+    }
+    
 private:
     CVulkanSemaphore(CVulkanDevice* InDevice);
     ~CVulkanSemaphore();

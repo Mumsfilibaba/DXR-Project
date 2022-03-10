@@ -9,15 +9,15 @@ class CD3D12CommandList;
 class CMaterial;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIRayTracingGeometry
+// CD3D12RayTracingGeometry
 
-class CD3D12RHIRayTracingGeometry : public CRHIRayTracingGeometry, public CD3D12DeviceObject
+class CD3D12RayTracingGeometry : public CRHIRayTracingGeometry, public CD3D12DeviceObject
 {
 public:
-    CD3D12RHIRayTracingGeometry(CD3D12Device* InDevice, uint32 InFlags);
-    ~CD3D12RHIRayTracingGeometry() = default;
+    CD3D12RayTracingGeometry(CD3D12Device* InDevice, uint32 InFlags);
+    ~CD3D12RayTracingGeometry() = default;
 
-    bool Build(class CD3D12CommandContext& CmdContext, bool Update);
+    bool Build(class CD3D12CommandContext& CommandContext, bool Update);
 
     virtual void SetName(const String& InName) override
     {
@@ -36,24 +36,28 @@ public:
         return ResultBuffer->GetGPUVirtualAddress();
     }
 
-    TSharedRef<CD3D12VertexBuffer> VertexBuffer;
-    TSharedRef<CD3D12IndexBuffer>  IndexBuffer;
+    CD3D12BufferRef   VertexBuffer;
+    uint32            VertexCount;
 
-    TSharedRef<CD3D12Resource> ResultBuffer;
-    TSharedRef<CD3D12Resource> ScratchBuffer;
+    ERHIIndexFormat   IndexFormat;
+    CD3D12BufferRef   IndexBuffer;
+    uint32            IndexCount;
+
+    CD3D12ResourceRef ResultBuffer;
+    CD3D12ResourceRef ScratchBuffer;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12ShaderBindingTableEntry
+// SD3D12ShaderBindingTableEntry
 
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) SD3D12ShaderBindingTableEntry
 {
     char ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
-    D3D12_GPU_DESCRIPTOR_HANDLE	RootDescriptorTables[4] = { 0, 0, 0, 0 };
+    D3D12_GPU_DESCRIPTOR_HANDLE    RootDescriptorTables[4] = { 0, 0, 0, 0 };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12ShaderBindingTableBuilder
+// CD3D12ShaderBindingTableBuilder
 
 class CD3D12ShaderBindingTableBuilder : public CD3D12DeviceObject
 {
@@ -86,21 +90,21 @@ private:
     uint32 GPUResourceHandleSizes[1024];
     uint32 GPUSamplerHandleSizes[1024];
     uint32 CPUResourceIndex = 0;
-    uint32 CPUSamplerIndex = 0;
+    uint32 CPUSamplerIndex  = 0;
     uint32 GPUResourceIndex = 0;
-    uint32 GPUSamplerIndex = 0;
+    uint32 GPUSamplerIndex  = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIRayTracingScene
+// CD3D12RayTracingScene
 
-class CD3D12RHIRayTracingScene : public CRHIRayTracingScene, public CD3D12DeviceObject
+class CD3D12RayTracingScene : public CRHIRayTracingScene, public CD3D12DeviceObject
 {
 public:
-    CD3D12RHIRayTracingScene(CD3D12Device* InDevice, uint32 InFlags);
-    ~CD3D12RHIRayTracingScene() = default;
+    CD3D12RayTracingScene(CD3D12Device* InDevice, uint32 InFlags);
+    ~CD3D12RayTracingScene() = default;
 
-    bool Build(class CD3D12CommandContext& CmdContext, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update);
+    bool Build(class CD3D12CommandContext& CommandContext, const SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update);
 
     bool BuildBindingTable(
         class CD3D12CommandContext& CmdContext,
@@ -150,18 +154,19 @@ public:
     }
 
 private:
-    TArray<SRayTracingGeometryInstance>     Instances;
-    TSharedRef<CD3D12ShaderResourceView> View;
+    TArray<SRHIRayTracingGeometryInstance> Instances;
+    CD3D12ShaderResourceViewRef            View;
 
-    TSharedRef<CD3D12Resource> ResultBuffer;
-    TSharedRef<CD3D12Resource> ScratchBuffer;
-    TSharedRef<CD3D12Resource> InstanceBuffer;
-    TSharedRef<CD3D12Resource> BindingTable;
+    CD3D12ResourceRef ResultBuffer;
+    CD3D12ResourceRef ScratchBuffer;
+    CD3D12ResourceRef InstanceBuffer;
+    CD3D12ResourceRef BindingTable;
 
     uint32 BindingTableStride = 0;
-    uint32 NumHitGroups = 0;
+    uint32 NumHitGroups       = 0;
 
     // TODO: Maybe move these somewhere else
     CD3D12ShaderBindingTableBuilder ShaderBindingTableBuilder;
+
     ID3D12DescriptorHeap* BindingTableHeaps[2] = { nullptr, nullptr };
 };

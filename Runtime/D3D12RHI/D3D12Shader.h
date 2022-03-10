@@ -12,13 +12,13 @@
 
 enum EShaderVisibility
 {
-    ShaderVisibility_All = 0,
-    ShaderVisibility_Vertex = 1,
-    ShaderVisibility_Hull = 2,
-    ShaderVisibility_Domain = 3,
+    ShaderVisibility_All      = 0,
+    ShaderVisibility_Vertex   = 1,
+    ShaderVisibility_Hull     = 2,
+    ShaderVisibility_Domain   = 3,
     ShaderVisibility_Geometry = 4,
-    ShaderVisibility_Pixel = 5,
-    ShaderVisibility_Count = ShaderVisibility_Pixel + 1
+    ShaderVisibility_Pixel    = 5,
+    ShaderVisibility_Count    = ShaderVisibility_Pixel + 1
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -26,11 +26,11 @@ enum EShaderVisibility
 
 enum EResourceType
 {
-    ResourceType_CBV = 0,
-    ResourceType_SRV = 1,
-    ResourceType_UAV = 2,
+    ResourceType_CBV     = 0,
+    ResourceType_SRV     = 1,
+    ResourceType_UAV     = 2,
     ResourceType_Sampler = 3,
-    ResourceType_Count = ResourceType_Sampler + 1,
+    ResourceType_Count   = ResourceType_Sampler + 1,
     ResourceType_Unknown = 5,
 };
 
@@ -39,9 +39,9 @@ enum EResourceType
 
 struct SShaderResourceRange
 {
-    uint32 NumCBVs = 0;
-    uint32 NumSRVs = 0;
-    uint32 NumUAVs = 0;
+    uint32 NumCBVs     = 0;
+    uint32 NumSRVs     = 0;
+    uint32 NumUAVs     = 0;
     uint32 NumSamplers = 0;
 };
 
@@ -54,7 +54,7 @@ struct SShaderResourceCount
     bool IsCompatible(const SShaderResourceCount& Other) const;
 
     SShaderResourceRange Ranges;
-    uint32              Num32BitConstants = 0;
+    uint32               Num32BitConstants = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

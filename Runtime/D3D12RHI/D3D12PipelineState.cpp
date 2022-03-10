@@ -11,7 +11,7 @@ CD3D12GraphicsPipelineState::CD3D12GraphicsPipelineState(CD3D12Device* InDevice)
 {
 }
 
-bool CD3D12GraphicsPipelineState::Init(const SRHIGraphicsPipelineStateInfo& CreateInfo)
+bool CD3D12GraphicsPipelineState::Initialize(const SRHIGraphicsPipelineStateDesc& CreateInfo)
 {
     struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) SGraphicsPipelineStream
     {
@@ -201,7 +201,7 @@ bool CD3D12GraphicsPipelineState::Init(const SRHIGraphicsPipelineStateInfo& Crea
         D3D12_SHADER_BYTECODE ByteCode = ShadersWithRootSignature.FirstElement()->GetByteCode();
 
         RootSignature = dbg_new CD3D12RootSignature(GetDevice());
-        if (!RootSignature->Init(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
+        if (!RootSignature->Initialize(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
         {
             return false;
         }
@@ -245,7 +245,7 @@ CD3D12ComputePipelineState::CD3D12ComputePipelineState(CD3D12Device* InDevice, c
 {
 }
 
-bool CD3D12ComputePipelineState::Init()
+bool CD3D12ComputePipelineState::Initialize()
 {
     struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) SComputePipelineStream
     {
@@ -278,7 +278,7 @@ bool CD3D12ComputePipelineState::Init()
         D3D12_SHADER_BYTECODE ByteCode = Shader->GetByteCode();
 
         RootSignature = dbg_new CD3D12RootSignature(GetDevice());
-        if (!RootSignature->Init(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
+        if (!RootSignature->Initialize(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
         {
             return false;
         }
@@ -505,7 +505,7 @@ CD3D12RayTracingPipelineState::CD3D12RayTracingPipelineState(CD3D12Device* InDev
 {
 }
 
-bool CD3D12RayTracingPipelineState::Init(const SRHIRayTracingPipelineStateInfo& CreateInfo)
+bool CD3D12RayTracingPipelineState::Initialize(const SRHIRayTracingPipelineStateDesc& CreateInfo)
 {
     SD3D12RayTracingPipelineStateStream PipelineStream;
 
@@ -681,7 +681,7 @@ void* CD3D12RayTracingPipelineState::GetShaderIdentifer(const String& ExportName
             return nullptr;
         }
 
-        SRayTracingShaderIdentifer Identifier;
+        SD3D12RayTracingShaderIdentifer Identifier;
         CMemory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
         auto NewIdentifier = ShaderIdentifers.insert(std::make_pair(ExportName, Identifier));

@@ -682,7 +682,7 @@ public:
      * @param NumInstances: Number of instances to build
      * @param bUpdate: True if the build should be an update, false if it should build from the ground up
      */
-    void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
+    void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
     {
         Assert((Scene != nullptr) && (!bUpdate || (bUpdate && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)));
         InsertCommand<CRHIBuildRayTracingSceneCommand>(AddRef(Scene), Instances, NumInstances, bUpdate);
@@ -721,6 +721,8 @@ public:
      */
     void TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState)
     {
+        Assert(Texture != nullptr);
+
         if (BeforeState != AfterState)
         {
             InsertCommand<CRHITransitionTextureCommand>(AddRef(Texture), BeforeState, AfterState);
@@ -741,6 +743,7 @@ public:
     void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState)
     {
         Assert(Buffer != nullptr);
+        Assert(Buffer->IsDynamic() == false);
 
         if (BeforeState != AfterState)
         {

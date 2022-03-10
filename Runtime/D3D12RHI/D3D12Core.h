@@ -88,7 +88,7 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(uint32 Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if (Flag & ERHIBufferFlags::BufferFlag_UnorderedAccess)
+    if (Flag & ERHIBufferFlags::BufferFlag_UAV)
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
@@ -119,71 +119,88 @@ inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(uint32 Flag)
     return Result;
 }
 
-inline DXGI_FORMAT ConvertFormat(EFormat Format)
+inline DXGI_FORMAT ConvertFormat(ERHIFormat Format)
 {
     switch (Format)
     {
-    case EFormat::R32G32B32A32_Typeless: return DXGI_FORMAT_R32G32B32A32_TYPELESS;
-    case EFormat::R32G32B32A32_Float:    return DXGI_FORMAT_R32G32B32A32_FLOAT;
-    case EFormat::R32G32B32A32_Uint:     return DXGI_FORMAT_R32G32B32A32_UINT;
-    case EFormat::R32G32B32A32_Sint:     return DXGI_FORMAT_R32G32B32A32_SINT;
-    case EFormat::R32G32B32_Typeless:    return DXGI_FORMAT_R32G32B32_TYPELESS;
-    case EFormat::R32G32B32_Float:       return DXGI_FORMAT_R32G32B32_FLOAT;
-    case EFormat::R32G32B32_Uint:        return DXGI_FORMAT_R32G32B32_UINT;
-    case EFormat::R32G32B32_Sint:        return DXGI_FORMAT_R32G32B32_SINT;
-    case EFormat::R16G16B16A16_Typeless: return DXGI_FORMAT_R16G16B16A16_TYPELESS;
-    case EFormat::R16G16B16A16_Float:    return DXGI_FORMAT_R16G16B16A16_FLOAT;
-    case EFormat::R16G16B16A16_Unorm:    return DXGI_FORMAT_R16G16B16A16_UNORM;
-    case EFormat::R16G16B16A16_Uint:     return DXGI_FORMAT_R16G16B16A16_UINT;
-    case EFormat::R16G16B16A16_Snorm:    return DXGI_FORMAT_R16G16B16A16_SNORM;
-    case EFormat::R16G16B16A16_Sint:     return DXGI_FORMAT_R16G16B16A16_SINT;
-    case EFormat::R32G32_Typeless:       return DXGI_FORMAT_R32G32_TYPELESS;
-    case EFormat::R32G32_Float:          return DXGI_FORMAT_R32G32_FLOAT;
-    case EFormat::R32G32_Uint:           return DXGI_FORMAT_R32G32_UINT;
-    case EFormat::R32G32_Sint:           return DXGI_FORMAT_R32G32_SINT;
-    case EFormat::R10G10B10A2_Typeless:  return DXGI_FORMAT_R10G10B10A2_TYPELESS;
-    case EFormat::R10G10B10A2_Unorm:     return DXGI_FORMAT_R10G10B10A2_UNORM;
-    case EFormat::R10G10B10A2_Uint:      return DXGI_FORMAT_R10G10B10A2_UINT;
-    case EFormat::R11G11B10_Float:       return DXGI_FORMAT_R11G11B10_FLOAT;
-    case EFormat::R8G8B8A8_Typeless:     return DXGI_FORMAT_R8G8B8A8_TYPELESS;
-    case EFormat::R8G8B8A8_Unorm:        return DXGI_FORMAT_R8G8B8A8_UNORM;
-    case EFormat::R8G8B8A8_Unorm_SRGB:   return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-    case EFormat::R8G8B8A8_Uint:         return DXGI_FORMAT_R8G8B8A8_UINT;
-    case EFormat::R8G8B8A8_Snorm:        return DXGI_FORMAT_R8G8B8A8_SNORM;
-    case EFormat::R8G8B8A8_Sint:         return DXGI_FORMAT_R8G8B8A8_SINT;
-    case EFormat::R16G16_Typeless:       return DXGI_FORMAT_R16G16_TYPELESS;
-    case EFormat::R16G16_Float:          return DXGI_FORMAT_R16G16_FLOAT;
-    case EFormat::R16G16_Unorm:          return DXGI_FORMAT_R16G16_UNORM;
-    case EFormat::R16G16_Uint:           return DXGI_FORMAT_R16G16_UINT;
-    case EFormat::R16G16_Snorm:          return DXGI_FORMAT_R16G16_SNORM;
-    case EFormat::R16G16_Sint:           return DXGI_FORMAT_R16G16_SINT;
-    case EFormat::R32_Typeless:          return DXGI_FORMAT_R32_TYPELESS;
-    case EFormat::D32_Float:             return DXGI_FORMAT_D32_FLOAT;
-    case EFormat::R32_Float:             return DXGI_FORMAT_R32_FLOAT;
-    case EFormat::R32_Uint:              return DXGI_FORMAT_R32_UINT;
-    case EFormat::R32_Sint:              return DXGI_FORMAT_R32_SINT;
-    case EFormat::R24G8_Typeless:        return DXGI_FORMAT_R24G8_TYPELESS;
-    case EFormat::D24_Unorm_S8_Uint:     return DXGI_FORMAT_D24_UNORM_S8_UINT;
-    case EFormat::R24_Unorm_X8_Typeless: return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-    case EFormat::X24_Typeless_G8_Uint:  return DXGI_FORMAT_X24_TYPELESS_G8_UINT;
-    case EFormat::R8G8_Typeless:         return DXGI_FORMAT_R8G8_TYPELESS;
-    case EFormat::R8G8_Unorm:            return DXGI_FORMAT_R8G8_UNORM;
-    case EFormat::R8G8_Uint:             return DXGI_FORMAT_R8G8_UINT;
-    case EFormat::R8G8_Snorm:            return DXGI_FORMAT_R8G8_SNORM;
-    case EFormat::R8G8_Sint:             return DXGI_FORMAT_R8G8_SINT;
-    case EFormat::R16_Typeless:          return DXGI_FORMAT_R16_TYPELESS;
-    case EFormat::R16_Float:             return DXGI_FORMAT_R16_FLOAT;
-    case EFormat::D16_Unorm:             return DXGI_FORMAT_D16_UNORM;
-    case EFormat::R16_Unorm:             return DXGI_FORMAT_R16_UNORM;
-    case EFormat::R16_Uint:              return DXGI_FORMAT_R16_UINT;
-    case EFormat::R16_Snorm:             return DXGI_FORMAT_R16_SNORM;
-    case EFormat::R16_Sint:              return DXGI_FORMAT_R16_SINT;
-    case EFormat::R8_Typeless:           return DXGI_FORMAT_R8_TYPELESS;
-    case EFormat::R8_Unorm:              return DXGI_FORMAT_R8_UNORM;
-    case EFormat::R8_Uint:               return DXGI_FORMAT_R8_UINT;
-    case EFormat::R8_Snorm:              return DXGI_FORMAT_R8_SNORM;
-    case EFormat::R8_Sint:               return DXGI_FORMAT_R8_SINT;
-    default:                             return DXGI_FORMAT_UNKNOWN;
+    case ERHIFormat::R32G32B32A32_Typeless: return DXGI_FORMAT_R32G32B32A32_TYPELESS;
+    case ERHIFormat::R32G32B32A32_Float:    return DXGI_FORMAT_R32G32B32A32_FLOAT;
+    case ERHIFormat::R32G32B32A32_Uint:     return DXGI_FORMAT_R32G32B32A32_UINT;
+    case ERHIFormat::R32G32B32A32_Sint:     return DXGI_FORMAT_R32G32B32A32_SINT;
+    
+    case ERHIFormat::R32G32B32_Typeless:    return DXGI_FORMAT_R32G32B32_TYPELESS;
+    case ERHIFormat::R32G32B32_Float:       return DXGI_FORMAT_R32G32B32_FLOAT;
+    case ERHIFormat::R32G32B32_Uint:        return DXGI_FORMAT_R32G32B32_UINT;
+    case ERHIFormat::R32G32B32_Sint:        return DXGI_FORMAT_R32G32B32_SINT;
+    
+    case ERHIFormat::R16G16B16A16_Typeless: return DXGI_FORMAT_R16G16B16A16_TYPELESS;
+    case ERHIFormat::R16G16B16A16_Float:    return DXGI_FORMAT_R16G16B16A16_FLOAT;
+    case ERHIFormat::R16G16B16A16_Unorm:    return DXGI_FORMAT_R16G16B16A16_UNORM;
+    case ERHIFormat::R16G16B16A16_Uint:     return DXGI_FORMAT_R16G16B16A16_UINT;
+    case ERHIFormat::R16G16B16A16_Snorm:    return DXGI_FORMAT_R16G16B16A16_SNORM;
+    case ERHIFormat::R16G16B16A16_Sint:     return DXGI_FORMAT_R16G16B16A16_SINT;
+    
+    case ERHIFormat::R32G32_Typeless:       return DXGI_FORMAT_R32G32_TYPELESS;
+    case ERHIFormat::R32G32_Float:          return DXGI_FORMAT_R32G32_FLOAT;
+    case ERHIFormat::R32G32_Uint:           return DXGI_FORMAT_R32G32_UINT;
+    case ERHIFormat::R32G32_Sint:           return DXGI_FORMAT_R32G32_SINT;
+    
+    case ERHIFormat::R10G10B10A2_Typeless:  return DXGI_FORMAT_R10G10B10A2_TYPELESS;
+    case ERHIFormat::R10G10B10A2_Unorm:     return DXGI_FORMAT_R10G10B10A2_UNORM;
+    case ERHIFormat::R10G10B10A2_Uint:      return DXGI_FORMAT_R10G10B10A2_UINT;
+    
+    case ERHIFormat::R11G11B10_Float:       return DXGI_FORMAT_R11G11B10_FLOAT;
+    
+    case ERHIFormat::R8G8B8A8_Typeless:     return DXGI_FORMAT_R8G8B8A8_TYPELESS;
+    case ERHIFormat::R8G8B8A8_Unorm:        return DXGI_FORMAT_R8G8B8A8_UNORM;
+    case ERHIFormat::R8G8B8A8_Unorm_SRGB:   return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    case ERHIFormat::R8G8B8A8_Uint:         return DXGI_FORMAT_R8G8B8A8_UINT;
+    case ERHIFormat::R8G8B8A8_Snorm:        return DXGI_FORMAT_R8G8B8A8_SNORM;
+    case ERHIFormat::R8G8B8A8_Sint:         return DXGI_FORMAT_R8G8B8A8_SINT;
+
+    case ERHIFormat::B8G8R8A8_Typeless:     return DXGI_FORMAT_B8G8R8A8_TYPELESS;
+    case ERHIFormat::B8G8R8A8_Unorm:        return DXGI_FORMAT_B8G8R8A8_UNORM;
+    case ERHIFormat::B8G8R8A8_Unorm_SRGB:   return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+
+    case ERHIFormat::R16G16_Typeless:       return DXGI_FORMAT_R16G16_TYPELESS;
+    case ERHIFormat::R16G16_Float:          return DXGI_FORMAT_R16G16_FLOAT;
+    case ERHIFormat::R16G16_Unorm:          return DXGI_FORMAT_R16G16_UNORM;
+    case ERHIFormat::R16G16_Uint:           return DXGI_FORMAT_R16G16_UINT;
+    case ERHIFormat::R16G16_Snorm:          return DXGI_FORMAT_R16G16_SNORM;
+    case ERHIFormat::R16G16_Sint:           return DXGI_FORMAT_R16G16_SINT;
+    
+    case ERHIFormat::R32_Typeless:          return DXGI_FORMAT_R32_TYPELESS;
+    case ERHIFormat::D32_Float:             return DXGI_FORMAT_D32_FLOAT;
+    case ERHIFormat::R32_Float:             return DXGI_FORMAT_R32_FLOAT;
+    case ERHIFormat::R32_Uint:              return DXGI_FORMAT_R32_UINT;
+    case ERHIFormat::R32_Sint:              return DXGI_FORMAT_R32_SINT;
+
+    case ERHIFormat::R24G8_Typeless:        return DXGI_FORMAT_R24G8_TYPELESS;
+    case ERHIFormat::D24_Unorm_S8_Uint:     return DXGI_FORMAT_D24_UNORM_S8_UINT;
+    case ERHIFormat::R24_Unorm_X8_Typeless: return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+    case ERHIFormat::X24_Typeless_G8_Uint:  return DXGI_FORMAT_X24_TYPELESS_G8_UINT;
+    
+    case ERHIFormat::R8G8_Typeless:         return DXGI_FORMAT_R8G8_TYPELESS;
+    case ERHIFormat::R8G8_Unorm:            return DXGI_FORMAT_R8G8_UNORM;
+    case ERHIFormat::R8G8_Uint:             return DXGI_FORMAT_R8G8_UINT;
+    case ERHIFormat::R8G8_Snorm:            return DXGI_FORMAT_R8G8_SNORM;
+    case ERHIFormat::R8G8_Sint:             return DXGI_FORMAT_R8G8_SINT;
+    
+    case ERHIFormat::R16_Typeless:          return DXGI_FORMAT_R16_TYPELESS;
+    case ERHIFormat::R16_Float:             return DXGI_FORMAT_R16_FLOAT;
+    case ERHIFormat::D16_Unorm:             return DXGI_FORMAT_D16_UNORM;
+    case ERHIFormat::R16_Unorm:             return DXGI_FORMAT_R16_UNORM;
+    case ERHIFormat::R16_Uint:              return DXGI_FORMAT_R16_UINT;
+    case ERHIFormat::R16_Snorm:             return DXGI_FORMAT_R16_SNORM;
+    case ERHIFormat::R16_Sint:              return DXGI_FORMAT_R16_SINT;
+    
+    case ERHIFormat::R8_Typeless:           return DXGI_FORMAT_R8_TYPELESS;
+    case ERHIFormat::R8_Unorm:              return DXGI_FORMAT_R8_UNORM;
+    case ERHIFormat::R8_Uint:               return DXGI_FORMAT_R8_UINT;
+    case ERHIFormat::R8_Snorm:              return DXGI_FORMAT_R8_SNORM;
+    case ERHIFormat::R8_Sint:               return DXGI_FORMAT_R8_SINT;
+    
+    default:                                return DXGI_FORMAT_UNKNOWN;
     }
 }
 
@@ -408,11 +425,13 @@ inline D3D12_RESOURCE_STATES ConvertResourceState(ERHIResourceState ResourceStat
     case ERHIResourceState::CopySource:              return D3D12_RESOURCE_STATE_COPY_SOURCE;
     case ERHIResourceState::DepthRead:               return D3D12_RESOURCE_STATE_DEPTH_READ;
     case ERHIResourceState::DepthWrite:              return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+    case ERHIResourceState::DepthClear:              return D3D12_RESOURCE_STATE_DEPTH_WRITE;
     case ERHIResourceState::IndexBuffer:             return D3D12_RESOURCE_STATE_INDEX_BUFFER;
     case ERHIResourceState::NonPixelShaderResource:  return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
     case ERHIResourceState::PixelShaderResource:     return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
     case ERHIResourceState::Present:                 return D3D12_RESOURCE_STATE_PRESENT;
     case ERHIResourceState::RenderTarget:            return D3D12_RESOURCE_STATE_RENDER_TARGET;
+    case ERHIResourceState::RenderTargetClear:       return D3D12_RESOURCE_STATE_RENDER_TARGET;
     case ERHIResourceState::ResolveDest:             return D3D12_RESOURCE_STATE_RESOLVE_DEST;
     case ERHIResourceState::ResolveSource:           return D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
     case ERHIResourceState::ShadingRateSource:       return D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;

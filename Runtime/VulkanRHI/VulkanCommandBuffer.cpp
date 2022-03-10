@@ -35,14 +35,14 @@ bool CVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
         return false;
     }
 
-	VkCommandBufferAllocateInfo CommandBufferAllocateInfo;
+    VkCommandBufferAllocateInfo CommandBufferAllocateInfo;
     CMemory::Memzero(&CommandBufferAllocateInfo);
 
-	CommandBufferAllocateInfo.sType		         = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	CommandBufferAllocateInfo.pNext		         = nullptr;
-	CommandBufferAllocateInfo.commandPool        = CommandPool.GetVkCommandPool();
-	CommandBufferAllocateInfo.level		         = Level = InLevel;
-	CommandBufferAllocateInfo.commandBufferCount = 1;
+    CommandBufferAllocateInfo.sType                 = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    CommandBufferAllocateInfo.pNext                 = nullptr;
+    CommandBufferAllocateInfo.commandPool        = CommandPool.GetVkCommandPool();
+    CommandBufferAllocateInfo.level                 = Level = InLevel;
+    CommandBufferAllocateInfo.commandBufferCount = 1;
 
     VkResult Result = vkAllocateCommandBuffers(GetDevice()->GetVkDevice(), &CommandBufferAllocateInfo, &CommandBuffer);
     VULKAN_CHECK_RESULT(Result, "Failed to allocate CommandBuffer");

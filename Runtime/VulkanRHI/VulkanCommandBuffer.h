@@ -43,7 +43,7 @@ public:
             return false;
         }
 
-		// Avoid using the VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT since we can reuse the memory
+        // Avoid using the VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT since we can reuse the memory
         if (!CommandPool.Reset())
         {
             return false;
@@ -52,12 +52,12 @@ public:
         VkCommandBufferBeginInfo BeginInfo;
         CMemory::Memzero(&BeginInfo);
 
-		BeginInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		BeginInfo.pNext            = nullptr;
-		BeginInfo.flags            = Flags;
-		BeginInfo.pInheritanceInfo = nullptr;
+        BeginInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        BeginInfo.pNext            = nullptr;
+        BeginInfo.flags            = Flags;
+        BeginInfo.pInheritanceInfo = nullptr;
 
-		VkResult Result = vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
+        VkResult Result = vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
         VULKAN_CHECK_RESULT(Result, "vkBeginCommandBuffer Failed");
 
         return true;
@@ -128,11 +128,11 @@ public:
         return &Fence;
     }
 
-	FORCEINLINE VkCommandBuffer GetVkCommandBuffer() const
-	{
-		return CommandBuffer;
-	}
-	
+    FORCEINLINE VkCommandBuffer GetVkCommandBuffer() const
+    {
+        return CommandBuffer;
+    }
+    
 private:
     CVulkanCommandPool   CommandPool;
     CVulkanFence         Fence;

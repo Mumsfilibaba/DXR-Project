@@ -77,7 +77,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             PointLightPixelShader->SetName("Point ShadowMap PixelShader");
         }
 
-        SRHIDepthStencilStateInfo DepthStencilStateInfo;
+        SRHIDepthStencilStateDesc DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::LessEqual;
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -93,7 +93,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             DepthStencilState->SetName("Shadow DepthStencilState");
         }
 
-        SRHIRasterizerStateInfo RasterizerStateInfo;
+        SRHIRasterizerStateDesc RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
         TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -107,7 +107,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             RasterizerState->SetName("Shadow RasterizerState");
         }
 
-        SRHIBlendStateInfo BlendStateInfo;
+        SRHIBlendStateDesc BlendStateInfo;
 
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
@@ -120,7 +120,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             BlendState->SetName("Shadow BlendState");
         }
 
-        SRHIGraphicsPipelineStateInfo PipelineStateInfo;
+        SRHIGraphicsPipelineStateDesc PipelineStateInfo;
         PipelineStateInfo.BlendState = BlendState.Get();
         PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
         PipelineStateInfo.IBStripCutValue = EIndexBufferStripCutValue::Disabled;
@@ -177,7 +177,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             DirectionalLightShader->SetName("ShadowMap VertexShader");
         }
 
-        SRHIDepthStencilStateInfo DepthStencilStateInfo;
+        SRHIDepthStencilStateDesc DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::LessEqual;
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -193,7 +193,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             DepthStencilState->SetName("Shadow DepthStencilState");
         }
 
-        SRHIRasterizerStateInfo RasterizerStateInfo;
+        SRHIRasterizerStateDesc RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
         TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -207,7 +207,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             RasterizerState->SetName("Shadow RasterizerState");
         }
 
-        SRHIBlendStateInfo BlendStateInfo;
+        SRHIBlendStateDesc BlendStateInfo;
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
@@ -219,7 +219,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             BlendState->SetName("Shadow BlendState");
         }
 
-        SRHIGraphicsPipelineStateInfo PipelineStateInfo;
+        SRHIGraphicsPipelineStateDesc PipelineStateInfo;
         PipelineStateInfo.BlendState = BlendState.Get();
         PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
         PipelineStateInfo.IBStripCutValue = EIndexBufferStripCutValue::Disabled;
@@ -265,7 +265,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CascadeGenShader->SetName("CascadeGen ComputeShader");
         }
 
-        SRHIComputePipelineStateInfo CascadePSO;
+        SRHIComputePipelineStateDesc CascadePSO;
         CascadePSO.Shader = CascadeGenShader.Get();
 
         CascadeGen = RHICreateComputePipelineState(CascadePSO);
@@ -379,7 +379,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             DirectionalShadowMaskShader->SetName("Directional ShadowMask ComputeShader");
         }
 
-        SRHIComputePipelineStateInfo MaskPSO;
+        SRHIComputePipelineStateDesc MaskPSO;
         MaskPSO.Shader = DirectionalShadowMaskShader.Get();
 
         DirectionalShadowMaskPSO = RHICreateComputePipelineState(MaskPSO);

@@ -19,7 +19,7 @@ struct SVulkanSwapChainCreateInfo
     CVulkanSwapChain* PreviousSwapChain = nullptr;
     CVulkanSurface*   Surface           = nullptr;
     VkExtent2D        Extent            = { 0, 0 };
-    EFormat           Format            = EFormat::B8G8R8A8_Unorm;
+    ERHIFormat        Format            = ERHIFormat::B8G8R8A8_Unorm;
     VkColorSpaceKHR   ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     uint32            BufferCount       = 2;
     bool              bVerticalSync     = true;
@@ -49,11 +49,11 @@ public:
     { 
         return SwapChain; 
     }
-	
-	FORCEINLINE VkSurfaceFormatKHR GetVkSurfaceFormat() const
-	{
-		return Format;
-	}
+    
+    FORCEINLINE VkSurfaceFormatKHR GetVkSurfaceFormat() const
+    {
+        return Format;
+    }
     
     FORCEINLINE uint32 GetBufferCount() const 
     { 
@@ -70,10 +70,10 @@ private:
     ~CVulkanSwapChain();
 
     bool Initialize(const SVulkanSwapChainCreateInfo& CreateInfo);
-	
+    
     VkResult           PresentResult;
     VkSwapchainKHR     SwapChain;
     uint32             BufferIndex;
     uint32             BufferCount;
-	VkSurfaceFormatKHR Format;
+    VkSurfaceFormatKHR Format;
 };

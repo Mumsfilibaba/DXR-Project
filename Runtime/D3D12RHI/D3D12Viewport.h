@@ -17,10 +17,10 @@ class CD3D12Viewport : public CRHIViewport, public CD3D12DeviceObject
 {
 public:
 
-    CD3D12Viewport(CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+    CD3D12Viewport(CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, HWND InHwnd, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight);
     ~CD3D12Viewport();
 
-    bool Init();
+    bool Initialize();
 
     virtual bool Resize(uint32 Width, uint32 Height) override final;
 
@@ -53,14 +53,13 @@ private:
 
     TComPtr<IDXGISwapChain3> SwapChain;
 
-    CD3D12CommandContext* CmdContext;
+    CD3D12CommandContext* CommandContext;
 
-    HWND Hwnd = 0;
-
-    uint32 Flags = 0;
-    uint32 NumBackBuffers = 0;
+    uint32 Flags           = 0;
+    uint32 NumBackBuffers  = 0;
     uint32 BackBufferIndex = 0;
 
+    HWND   Hwnd = 0;
     HANDLE SwapChainWaitableObject = 0;
 
     TArray<TSharedRef<CD3D12Texture2D>>        BackBuffers;

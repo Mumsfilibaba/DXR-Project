@@ -296,7 +296,7 @@ public:
         CmdContext.SetVertexBuffers(VertexBuffers, VertexBufferCount, StartSlot);
     }
 
-	CRHIBuffer** VertexBuffers;
+    CRHIBuffer** VertexBuffers;
 
     uint32 VertexBufferCount;
     uint32 StartSlot;
@@ -316,7 +316,7 @@ public:
         CmdContext.SetIndexBuffer(IndexBuffer.Get());
     }
 
-	CRHIBufferRef IndexBuffer;
+    CRHIBufferRef IndexBuffer;
 };
 
 // Set RenderTargets RHICommand
@@ -710,7 +710,7 @@ public:
     CRHIBufferRef Destination;
     uint64 DestinationOffsetInBytes;
     uint64 SizeInBytes;
-	
+    
     const void* SourceData;
 };
 
@@ -758,7 +758,7 @@ public:
 
     CRHIBufferRef Destination;
     CRHIBufferRef Source;
-	
+    
     SRHICopyBufferInfo CopyBufferInfo;
 };
 
@@ -799,7 +799,7 @@ public:
 
     TSharedRef<CRHITexture> Destination;
     TSharedRef<CRHITexture> Source;
-	
+    
     SRHICopyTextureInfo CopyTextureInfo;
 };
 
@@ -865,7 +865,7 @@ public:
 class CRHIBuildRayTracingSceneCommand : public CRHICommand
 {
 public:
-    CRHIBuildRayTracingSceneCommand(CRHIRayTracingScene* InRayTracingScene, const SRayTracingGeometryInstance* InInstances, uint32 InNumInstances, bool bInUpdate)
+    CRHIBuildRayTracingSceneCommand(CRHIRayTracingScene* InRayTracingScene, const SRHIRayTracingGeometryInstance* InInstances, uint32 InNumInstances, bool bInUpdate)
         : RayTracingScene(InRayTracingScene)
         , Instances(InInstances)
         , NumInstances(InNumInstances)
@@ -879,7 +879,7 @@ public:
     }
 
     TSharedRef<CRHIRayTracingScene> RayTracingScene;
-    const SRayTracingGeometryInstance* Instances;
+    const SRHIRayTracingGeometryInstance* Instances;
     uint32 NumInstances;
     bool bUpdate;
 };

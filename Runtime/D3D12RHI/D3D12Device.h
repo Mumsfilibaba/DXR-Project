@@ -4,6 +4,7 @@
 
 #include <DXProgrammableCapture.h>
 
+class CRHIInstanceD3D12;
 class CD3D12OfflineDescriptorHeap;
 class CD3D12OnlineDescriptorHeap;
 class CD3D12ComputePipelineState;
@@ -29,7 +30,7 @@ class CD3D12Device : public CRefCounted
 {
 public:
 
-    static TSharedRef<CD3D12Device> CreateDevice(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
+    static TSharedRef<CD3D12Device> CreateDevice(CRHIInstanceD3D12* InInstance, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
 
     bool Initialize();
 
@@ -39,7 +40,12 @@ public:
 
 public:
 
-    FORCEINLINE ID3D12Device* GetDevice() const
+    FORCEINLINE CRHIInstanceD3D12* GetInstance() const
+    {
+        return Instance;
+    }
+
+    FORCEINLINE ID3D12Device* GetD3D12Device() const
     {
         return Device.Get();
     }
@@ -54,12 +60,12 @@ public:
         return GraphicsAnalysisInterface.Get();
     }
 
-    FORCEINLINE IDXGIFactory2* GetFactory() const
+    FORCEINLINE IDXGIFactory2* GetDXGIFactory() const
     {
         return Factory.Get();
     }
 
-    FORCEINLINE IDXGIAdapter1* GetAdapter() const
+    FORCEINLINE IDXGIAdapter1* GetDXGIAdapter() const
     {
         return Adapter.Get();
     }
@@ -163,8 +169,10 @@ public:
 
 private:
 
-    CD3D12Device(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
+    CD3D12Device(CRHIInstanceD3D12* InInstance, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
     ~CD3D12Device();
+
+    CRHIInstanceD3D12* Instance = nullptr; 
 
     TComPtr<IDXGIFactory2> Factory;
     TComPtr<IDXGIAdapter1> Adapter;

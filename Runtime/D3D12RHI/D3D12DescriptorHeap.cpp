@@ -10,8 +10,8 @@
 CD3D12DescriptorHeap::CD3D12DescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
     : CD3D12DeviceObject(InDevice)
     , Heap(nullptr)
-    , CPUStart({ 0 })
-    , GPUStart({ 0 })
+    , CpuStart({ 0 })
+    , GpuStart({ 0 })
     , DescriptorHandleIncrementSize(0)
     , Type(InType)
     , NumDescriptors(InNumDescriptors)
@@ -19,7 +19,7 @@ CD3D12DescriptorHeap::CD3D12DescriptorHeap(CD3D12Device* InDevice, D3D12_DESCRIP
 {
 }
 
-bool CD3D12DescriptorHeap::Init()
+bool CD3D12DescriptorHeap::Initialize()
 {
     D3D12_DESCRIPTOR_HEAP_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -28,19 +28,19 @@ bool CD3D12DescriptorHeap::Init()
     Desc.Flags = Flags;
     Desc.NumDescriptors = NumDescriptors;
 
-    HRESULT Result = GetDevice()->GetDevice()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));
     if (FAILED(Result))
     {
-        D3D12_ERROR_ALWAYS("[D3D12DescriptorHeap]: FAILED to Create DescriptorHeap");
+        D3D12_ERROR_ALWAYS("FAILED to Create DescriptorHeap");
         return false;
     }
     else
     {
-        LOG_INFO("[D3D12DescriptorHeap]: Created DescriptorHeap");
+        D3D12_INFO("Created DescriptorHeap");
     }
 
-    CPUStart = Heap->GetCPUDescriptorHandleForHeapStart();
-    GPUStart = Heap->GetGPUDescriptorHandleForHeapStart();
+    CpuStart = Heap->GetCPUDescriptorHandleForHeapStart();
+    GpuStart = Heap->GetGPUDescriptorHandleForHeapStart();
     DescriptorHandleIncrementSize = GetDevice()->GetDescriptorHandleIncrementSize(Desc.Type);
 
     return true;
@@ -57,7 +57,7 @@ CD3D12OfflineDescriptorHeap::CD3D12OfflineDescriptorHeap(CD3D12Device* InDevice,
 {
 }
 
-bool CD3D12OfflineDescriptorHeap::Init()
+bool CD3D12OfflineDescriptorHeap::Initialize()
 {
     DescriptorSize = GetDevice()->GetDescriptorHandleIncrementSize(Type);
     return AllocateHeap();
@@ -90,7 +90,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE CD3D12OfflineDescriptorHeap::Allocate(uint32& OutHea
         HeapIndex = static_cast<uint32>(Heaps.Size()) - 1;
     }
 
-    SDescriptorHeap& Heap = Heaps[HeapIndex];
+    SDescriptorHeap&  Heap  = Heaps[HeapIndex];
     SDescriptorRange& Range = Heap.FreeList.FirstElement();
 
     D3D12_CPU_DESCRIPTOR_HANDLE Handle = Range.Begin;
@@ -139,6 +139,19 @@ void CD3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint3
     }
 }
 
+CD3D12DescriptorHeap* CD3D12OfflineDescriptorHeap::GetDescriptorHeap(uint32 HeapIndex)
+{
+    if (HeapIndex < static_cast<uint32>(Heaps.Size()))
+    {
+        auto& HeapData = Heaps[HeapIndex].Heap;
+        return HeapData.Get();
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 void CD3D12OfflineDescriptorHeap::SetName(const String& InName)
 {
     Name = InName;
@@ -156,7 +169,7 @@ bool CD3D12OfflineDescriptorHeap::AllocateHeap()
     constexpr uint32 DescriptorCount = D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT;
 
     TSharedRef<CD3D12DescriptorHeap> Heap = dbg_new CD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-    if (Heap->Init())
+    if (Heap->Initialize())
     {
         if (!Name.IsEmpty())
         {
@@ -187,7 +200,7 @@ CD3D12OnlineDescriptorHeap::CD3D12OnlineDescriptorHeap(CD3D12Device* InDevice, u
 bool CD3D12OnlineDescriptorHeap::Init()
 {
     Heap = dbg_new CD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-    if (Heap->Init())
+    if (Heap->Initialize())
     {
         return true;
     }
@@ -223,7 +236,7 @@ bool CD3D12OnlineDescriptorHeap::AllocateFreshHeap()
     if (HeapPool.IsEmpty())
     {
         Heap = dbg_new CD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-        if (!Heap->Init())
+        if (!Heap->Initialize())
         {
             CDebug::DebugBreak();
             return false;

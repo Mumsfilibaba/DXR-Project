@@ -19,7 +19,7 @@ class CVulkanViewport final : public CRHIViewport, public CVulkanDeviceObject
 {
 public:
 
-    static TSharedRef<CVulkanViewport> CreateViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+    static TSharedRef<CVulkanViewport> CreateViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight);
 
     FORCEINLINE CVulkanSwapChain* GetSwapChain() const 
     { 
@@ -64,23 +64,23 @@ public:
 
 private:
 
-    CVulkanViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle, EFormat InFormat, uint32 InWidth, uint32 InHeight);
-	~CVulkanViewport();
+    CVulkanViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight);
+    ~CVulkanViewport();
 
     bool Initialize();
 
     bool CreateSwapChain();
-	bool CreateRenderTargets();
-	
-	void DestroySwapChain();
-	
-	bool AquireNextImage();
+    bool CreateRenderTargets();
+    
+    void DestroySwapChain();
+    
+    bool AquireNextImage();
 
-	void AdvanceSemaphoreIndex()
-	{
-		SemaphoreIndex = (SemaphoreIndex + 1) % ImageSemaphores.Size();
-	}
-	
+    void AdvanceSemaphoreIndex()
+    {
+        SemaphoreIndex = (SemaphoreIndex + 1) % ImageSemaphores.Size();
+    }
+    
     PlatformWindowHandle WindowHandle;
 
     CVulkanSurfaceRef    Surface;
@@ -90,9 +90,9 @@ private:
 
     TInlineArray<VkImage, NUM_BACK_BUFFERS>             Images;
     TInlineArray<CVulkanImageViewRef, NUM_BACK_BUFFERS> ImageViews;
-	
+    
     TInlineArray<CVulkanSemaphoreRef, NUM_BACK_BUFFERS> ImageSemaphores;
     TInlineArray<CVulkanSemaphoreRef, NUM_BACK_BUFFERS> RenderSemaphores;
-	uint32 SemaphoreIndex = 0;
+    uint32 SemaphoreIndex = 0;
 };
 

@@ -22,20 +22,20 @@ public:
         D3D12_COMMAND_QUEUE_DESC QueueDesc;
         CMemory::Memzero(&QueueDesc);
 
-        QueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        QueueDesc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
         QueueDesc.NodeMask = 1;
         QueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-        QueueDesc.Type = Type;
+        QueueDesc.Type     = Type;
 
-        HRESULT Result = GetDevice()->GetDevice()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
+        HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
         if (SUCCEEDED(Result))
         {
-            LOG_INFO("[CD3D12CommandQueue]: Created CommandQueue");
+            D3D12_INFO("Created CommandQueue");
             return true;
         }
         else
         {
-            LOG_ERROR("[CD3D12CommandQueue]: FAILED to create CommandQueue");
+            D3D12_ERROR_ALWAYS("FAILED to create CommandQueue");
             return false;
         }
     }
@@ -70,11 +70,10 @@ public:
 
     FORCEINLINE void SetName(const String& Name)
     {
-        WString WideDebugName = CharToWide(Name);
-        Queue->SetName(WideDebugName.CStr());
+        Queue->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.CStr());
     }
 
-    FORCEINLINE ID3D12CommandQueue* GetQueue() const
+    FORCEINLINE ID3D12CommandQueue* GetD3D12Queue() const
     {
         return Queue.Get();
     }

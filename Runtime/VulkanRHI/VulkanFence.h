@@ -54,15 +54,15 @@ public:
 
     FORCEINLINE bool Reset()
     {
-		VULKAN_CHECK_RESULT(vkResetFences(GetDevice()->GetVkDevice(), 1, &Fence), "vkResetFences Failed");
+        VULKAN_CHECK_RESULT(vkResetFences(GetDevice()->GetVkDevice(), 1, &Fence), "vkResetFences Failed");
         return true;
     }
 
-	FORCEINLINE VkFence GetVkFence() const
-	{
-		return Fence;
-	}
-	
+    FORCEINLINE VkFence GetVkFence() const
+    {
+        return Fence;
+    }
+    
 private:
     VkFence Fence;
 };

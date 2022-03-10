@@ -47,7 +47,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAOShader->SetName("SSAO Shader");
     }
 
-    SRHIComputePipelineStateInfo PipelineStateInfo;
+    SRHIComputePipelineStateDesc PipelineStateInfo;
     PipelineStateInfo.Shader = SSAOShader.Get();
 
     PipelineState = RHICreateComputePipelineState(PipelineStateInfo);
@@ -100,7 +100,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAONoise.Emplace(0.0f);
     }
 
-    SSAONoiseTex = RHICreateTexture2D(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, ERHIResourceState::NonPixelShaderResource, nullptr);
+    SSAONoiseTex = RHICreateTexture2D(ERHIFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, ERHIResourceState::NonPixelShaderResource, nullptr);
     if (!SSAONoiseTex)
     {
         CDebug::DebugBreak();
@@ -124,7 +124,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     const uint32 Stride = sizeof(CVector3);
     SRHIResourceData SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
-    SSAOSamples = RHICreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_ShaderResource | BufferFlag_Default, ERHIResourceState::Common, &SSAOSampleData);
+    SSAOSamples = RHICreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, ERHIResourceState::Common, &SSAOSampleData);
     if (!SSAOSamples)
     {
         CDebug::DebugBreak();
@@ -167,7 +167,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         BlurHorizontalShader->SetName("SSAO Horizontal Blur Shader");
     }
 
-    SRHIComputePipelineStateInfo PSOProperties;
+    SRHIComputePipelineStateDesc PSOProperties;
     PSOProperties.Shader = BlurHorizontalShader.Get();
 
     BlurHorizontalPSO = RHICreateComputePipelineState(PSOProperties);

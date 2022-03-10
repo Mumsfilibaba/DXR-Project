@@ -6,9 +6,9 @@
 #include "Core/Containers/StaticArray.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIShaderResourceViewInfo
+// SRHIShaderResourceViewDesc
 
-struct SRHIShaderResourceViewInfo
+struct SRHIShaderResourceViewDesc
 {
     enum class EType
     {
@@ -22,7 +22,7 @@ struct SRHIShaderResourceViewInfo
         StructuredBuffer = 8,
     };
 
-    FORCEINLINE SRHIShaderResourceViewInfo(EType InType)
+    FORCEINLINE SRHIShaderResourceViewDesc(EType InType)
         : Type(InType)
     {
     }
@@ -33,7 +33,7 @@ struct SRHIShaderResourceViewInfo
         struct
         {
             CRHITexture2D* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
+            ERHIFormat Format = ERHIFormat::Unknown;
             uint32  Mip = 0;
             uint32  NumMips = 0;
             float   MinMipBias = 0.0f;
@@ -41,7 +41,7 @@ struct SRHIShaderResourceViewInfo
         struct
         {
             CRHITexture2DArray* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
+            ERHIFormat Format = ERHIFormat::Unknown;
             uint32  Mip = 0;
             uint32  NumMips = 0;
             uint32  ArraySlice = 0;
@@ -51,7 +51,7 @@ struct SRHIShaderResourceViewInfo
         struct
         {
             CRHITextureCube* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
+            ERHIFormat Format = ERHIFormat::Unknown;
             uint32  Mip = 0;
             uint32  NumMips = 0;
             float   MinMipBias = 0.0f;
@@ -59,7 +59,7 @@ struct SRHIShaderResourceViewInfo
         struct
         {
             CRHITextureCubeArray* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
+            ERHIFormat Format = ERHIFormat::Unknown;
             uint32  Mip = 0;
             uint32  NumMips = 0;
             uint32  ArraySlice = 0;
@@ -69,7 +69,7 @@ struct SRHIShaderResourceViewInfo
         struct
         {
             CRHITexture3D* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
+            ERHIFormat Format = ERHIFormat::Unknown;
             uint32  Mip = 0;
             uint32  NumMips = 0;
             uint32  DepthSlice = 0;
@@ -98,9 +98,9 @@ struct SRHIShaderResourceViewInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIUnorderedAccessViewInfo
+// SRHIUnorderedAccessViewDesc
 
-struct SRHIUnorderedAccessViewInfo
+struct SRHIUnorderedAccessViewDesc
 {
     enum class EType
     {
@@ -114,7 +114,7 @@ struct SRHIUnorderedAccessViewInfo
         StructuredBuffer = 8,
     };
 
-    FORCEINLINE SRHIUnorderedAccessViewInfo(EType InType)
+    FORCEINLINE SRHIUnorderedAccessViewDesc(EType InType)
         : Type(InType)
     {
     }
@@ -125,13 +125,13 @@ struct SRHIUnorderedAccessViewInfo
         struct
         {
             CRHITexture2D* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
+            ERHIFormat Format = ERHIFormat::Unknown;
             uint32  Mip = 0;
         } Texture2D;
         struct
         {
             CRHITexture2DArray* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
+            ERHIFormat Format = ERHIFormat::Unknown;
             uint32  Mip = 0;
             uint32  ArraySlice = 0;
             uint32  NumArraySlices = 0;
@@ -139,13 +139,13 @@ struct SRHIUnorderedAccessViewInfo
         struct
         {
             CRHITextureCube* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
+            ERHIFormat Format = ERHIFormat::Unknown;
             uint32  Mip = 0;
         } TextureCube;
         struct
         {
             CRHITextureCubeArray* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
+            ERHIFormat Format = ERHIFormat::Unknown;
             uint32  Mip = 0;
             uint32  ArraySlice = 0;
             uint32  NumArraySlices = 0;
@@ -153,7 +153,7 @@ struct SRHIUnorderedAccessViewInfo
         struct
         {
             CRHITexture3D* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
+            ERHIFormat Format = ERHIFormat::Unknown;
             uint32  Mip = 0;
             uint32  DepthSlice = 0;
             uint32  NumDepthSlices = 0;
@@ -180,9 +180,9 @@ struct SRHIUnorderedAccessViewInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRenderTargetViewInfo
+// SRHIRenderTargetViewDesc
 
-struct SRHIRenderTargetViewInfo
+struct SRHIRenderTargetViewDesc
 {
     // TODO: Add support for texel buffers?
     enum class EType
@@ -194,13 +194,13 @@ struct SRHIRenderTargetViewInfo
         Texture3D = 5,
     };
 
-    FORCEINLINE SRHIRenderTargetViewInfo(EType InType)
+    FORCEINLINE SRHIRenderTargetViewDesc(EType InType)
         : Type(InType)
     {
     }
 
     EType   Type;
-    EFormat Format = EFormat::Unknown;
+    ERHIFormat Format = ERHIFormat::Unknown;
     union
     {
         struct
@@ -239,9 +239,9 @@ struct SRHIRenderTargetViewInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIDepthStencilViewInfo
+// SRHIDepthStencilViewDesc
 
-struct SRHIDepthStencilViewInfo
+struct SRHIDepthStencilViewDesc
 {
     enum class EType
     {
@@ -251,13 +251,13 @@ struct SRHIDepthStencilViewInfo
         TextureCubeArray = 4,
     };
 
-    FORCEINLINE SRHIDepthStencilViewInfo(EType InType)
+    FORCEINLINE SRHIDepthStencilViewDesc(EType InType)
         : Type(InType)
     {
     }
 
     EType   Type;
-    EFormat Format = EFormat::Unknown;
+    ERHIFormat Format = ERHIFormat::Unknown;
     union
     {
         struct

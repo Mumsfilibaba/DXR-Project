@@ -33,8 +33,8 @@ public:
 #else
         const int32 Mode = RTLD_NOW;
 #endif
-		
-		const char* LibraryNameWithExtension = RealName.CStr();
+        
+        const char* LibraryNameWithExtension = RealName.CStr();
         return dlopen(LibraryNameWithExtension, Mode);
     }
 

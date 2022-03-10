@@ -40,7 +40,7 @@ bool CTextureFactory::Init()
     }
 
     // Create pipeline
-    GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState(SRHIComputePipelineStateInfo(GlobalFactoryData.ComputeShader.Get()));
+    GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState(SRHIComputePipelineStateDesc(GlobalFactoryData.ComputeShader.Get()));
     if (GlobalFactoryData.PanoramaPSO)
     {
         GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");
@@ -68,7 +68,7 @@ CRHITexture2D* CTextureFactory::LoadFromImage2D(SImage2D* InImage, uint32 Create
     const uint8* Pixels = InImage->Image.Get();
     uint32  Width = InImage->Width;
     uint32  Height = InImage->Height;
-    EFormat Format = InImage->Format;
+    ERHIFormat Format = InImage->Format;
 
     CRHITexture2D* NewTexture = LoadFromMemory(Pixels, Width, Height, CreateFlags, Format);
     if (NewTexture)
@@ -80,7 +80,7 @@ CRHITexture2D* CTextureFactory::LoadFromImage2D(SImage2D* InImage, uint32 Create
     return NewTexture;
 }
 
-CRHITexture2D* CTextureFactory::LoadFromFile(const String& Filepath, uint32 CreateFlags, EFormat Format)
+CRHITexture2D* CTextureFactory::LoadFromFile(const String& Filepath, uint32 CreateFlags, ERHIFormat Format)
 {
     int32 Width = 0;
     int32 Height = 0;
@@ -88,15 +88,15 @@ CRHITexture2D* CTextureFactory::LoadFromFile(const String& Filepath, uint32 Crea
 
     // Load based on format
     TUniquePtr<uint8> Pixels;
-    if (Format == EFormat::R8G8B8A8_Unorm)
+    if (Format == ERHIFormat::R8G8B8A8_Unorm)
     {
         Pixels = TUniquePtr<uint8>(stbi_load(Filepath.CStr(), &Width, &Height, &ChannelCount, 4));
     }
-    else if (Format == EFormat::R8_Unorm)
+    else if (Format == ERHIFormat::R8_Unorm)
     {
         Pixels = TUniquePtr<uint8>(stbi_load(Filepath.CStr(), &Width, &Height, &ChannelCount, 1));
     }
-    else if (Format == EFormat::R32G32B32A32_Float)
+    else if (Format == ERHIFormat::R32G32B32A32_Float)
     {
         Pixels = TUniquePtr<uint8>(reinterpret_cast<uint8*>(stbi_loadf(Filepath.CStr(), &Width, &Height, &ChannelCount, 4)));
     }
@@ -120,9 +120,9 @@ CRHITexture2D* CTextureFactory::LoadFromFile(const String& Filepath, uint32 Crea
     return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);
 }
 
-CRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format)
+CRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, ERHIFormat Format)
 {
-    if (Format != EFormat::R8_Unorm && Format != EFormat::R8G8B8A8_Unorm && Format != EFormat::R32G32B32A32_Float)
+    if (Format != ERHIFormat::R8_Unorm && Format != ERHIFormat::R8G8B8A8_Unorm && Format != ERHIFormat::R32G32B32A32_Float)
     {
         LOG_ERROR("[CTextureFactory]: Format not supported");
         return nullptr;
@@ -161,7 +161,7 @@ CRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
     return Texture.ReleaseOwnership();
 }
 
-CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format)
+CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, ERHIFormat Format)
 {
     Assert(PanoramaSource->IsSRV());
 

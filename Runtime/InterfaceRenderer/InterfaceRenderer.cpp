@@ -35,7 +35,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-    FontTexture = CTextureFactory::LoadFromMemory(Pixels, Width, Height, 0, EFormat::R8G8B8A8_Unorm);
+    FontTexture = CTextureFactory::LoadFromMemory(Pixels, Width, Height, 0, ERHIFormat::R8G8B8A8_Unorm);
     if (!FontTexture)
     {
         return false;
@@ -116,11 +116,11 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    SRHIInputLayoutStateInfo InputLayoutInfo =
+    SRHIInputLayoutStateDesc InputLayoutInfo =
     {
-        { "POSITION", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EInputClassification::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EInputClassification::Vertex, 0 },
-        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EInputClassification::Vertex, 0 },
+        { "POSITION", 0, ERHIFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EInputClassification::Vertex, 0 },
+        { "TEXCOORD", 0, ERHIFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EInputClassification::Vertex, 0 },
+        { "COLOR",    0, ERHIFormat::R8G8B8A8_Unorm, 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EInputClassification::Vertex, 0 },
     };
 
     TSharedRef<CRHIInputLayoutState> InputLayout = RHICreateInputLayout(InputLayoutInfo);
@@ -134,7 +134,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         InputLayout->SetName("ImGui InputLayoutState");
     }
 
-    SRHIDepthStencilStateInfo DepthStencilStateInfo;
+    SRHIDepthStencilStateDesc DepthStencilStateInfo;
     DepthStencilStateInfo.bDepthEnable = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
@@ -149,7 +149,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         DepthStencilState->SetName("ImGui DepthStencilState");
     }
 
-    SRHIRasterizerStateInfo RasterizerStateInfo;
+    SRHIRasterizerStateDesc RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -163,7 +163,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         RasterizerState->SetName("ImGui RasterizerState");
     }
 
-    SRHIBlendStateInfo BlendStateInfo;
+    SRHIBlendStateDesc BlendStateInfo;
     BlendStateInfo.bIndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].bBlendEnable = true;
     BlendStateInfo.RenderTarget[0].SrcBlend = EBlend::SrcAlpha;
@@ -197,14 +197,14 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         BlendStateBlending->SetName("ImGui BlendState No Blending");
     }
 
-    SRHIGraphicsPipelineStateInfo PSOProperties;
+    SRHIGraphicsPipelineStateDesc PSOProperties;
     PSOProperties.ShaderState.VertexShader = VShader.Get();
     PSOProperties.ShaderState.PixelShader = PShader.Get();
     PSOProperties.InputLayoutState = InputLayout.Get();
     PSOProperties.DepthStencilState = DepthStencilState.Get();
     PSOProperties.BlendState = BlendStateBlending.Get();
     PSOProperties.RasterizerState = RasterizerState.Get();
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
+    PSOProperties.PipelineFormats.RenderTargetFormats[0] = ERHIFormat::R8G8B8A8_Unorm;
     PSOProperties.PipelineFormats.NumRenderTargets = 1;
     PSOProperties.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
 

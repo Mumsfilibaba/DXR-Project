@@ -52,26 +52,26 @@ struct SVulkanQueueFamilyIndices
 
 inline String GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properties)
 {
-	String PropertyString = "QueueCount=" + ToString(Properties.queueCount) + ", QueueBits=(";
-	if (Properties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-	{
-		PropertyString += "GRAPHICS | ";
-	}
-	if (Properties.queueFlags & VK_QUEUE_COMPUTE_BIT)
-	{
-		PropertyString += "COMPUTE | ";
-	}
-	if (Properties.queueFlags & VK_QUEUE_TRANSFER_BIT)
-	{
-		PropertyString += "COPY | ";
-	}
-	
-	PropertyString.Pop();
-	PropertyString.Pop();
-	PropertyString.Pop();
-	PropertyString += ')';
-	
-	return PropertyString;
+    String PropertyString = "QueueCount=" + ToString(Properties.queueCount) + ", QueueBits=(";
+    if (Properties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+    {
+        PropertyString += "GRAPHICS | ";
+    }
+    if (Properties.queueFlags & VK_QUEUE_COMPUTE_BIT)
+    {
+        PropertyString += "COMPUTE | ";
+    }
+    if (Properties.queueFlags & VK_QUEUE_TRANSFER_BIT)
+    {
+        PropertyString += "COPY | ";
+    }
+    
+    PropertyString.Pop();
+    PropertyString.Pop();
+    PropertyString.Pop();
+    PropertyString += ')';
+    
+    return PropertyString;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -103,28 +103,28 @@ public:
         return DeviceProperties;
     }
 
-	FORCEINLINE const VkPhysicalDeviceFeatures& GetDeviceFeatures() const
+    FORCEINLINE const VkPhysicalDeviceFeatures& GetDeviceFeatures() const
     {
         return DeviceFeatures;
     }
 
-	FORCEINLINE const VkPhysicalDeviceMemoryProperties& GetDeviceMemoryProperties() const
+    FORCEINLINE const VkPhysicalDeviceMemoryProperties& GetDeviceMemoryProperties() const
     {
         return DeviceMemoryProperties;
     }
-	
+    
 #if VK_KHR_get_physical_device_properties2
-	FORCEINLINE const VkPhysicalDeviceProperties2& GetDeviceProperties2() const
+    FORCEINLINE const VkPhysicalDeviceProperties2& GetDeviceProperties2() const
     {
         return DeviceProperties2;
     }
 
-	FORCEINLINE const VkPhysicalDeviceFeatures2& GetDeviceFeatures2() const
+    FORCEINLINE const VkPhysicalDeviceFeatures2& GetDeviceFeatures2() const
     {
         return DeviceFeatures2;
     }
 
-	FORCEINLINE const VkPhysicalDeviceMemoryProperties2& GetDeviceMemoryProperties2() const
+    FORCEINLINE const VkPhysicalDeviceMemoryProperties2& GetDeviceMemoryProperties2() const
     {
         return DeviceMemoryProperties2;
     }
@@ -132,21 +132,21 @@ public:
 
 private:
 
-	CVulkanPhysicalDevice(CVulkanInstance* InInstance);
+    CVulkanPhysicalDevice(CVulkanInstance* InInstance);
     ~CVulkanPhysicalDevice();
 
     bool Initialize(const SVulkanPhysicalDeviceDesc& AdapterDesc);
 
     CVulkanInstance* Instance;
     VkPhysicalDevice       PhysicalDevice;
-	
-	VkPhysicalDeviceProperties        DeviceProperties;
-	VkPhysicalDeviceFeatures          DeviceFeatures;
-	VkPhysicalDeviceMemoryProperties  DeviceMemoryProperties;
-	
+    
+    VkPhysicalDeviceProperties        DeviceProperties;
+    VkPhysicalDeviceFeatures          DeviceFeatures;
+    VkPhysicalDeviceMemoryProperties  DeviceMemoryProperties;
+    
 #if VK_KHR_get_physical_device_properties2
-	VkPhysicalDeviceProperties2       DeviceProperties2;
-	VkPhysicalDeviceFeatures2         DeviceFeatures2;
-	VkPhysicalDeviceMemoryProperties2 DeviceMemoryProperties2;
+    VkPhysicalDeviceProperties2       DeviceProperties2;
+    VkPhysicalDeviceFeatures2         DeviceFeatures2;
+    VkPhysicalDeviceMemoryProperties2 DeviceMemoryProperties2;
 #endif
 };

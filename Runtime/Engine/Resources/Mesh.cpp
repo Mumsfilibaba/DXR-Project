@@ -11,7 +11,7 @@ bool CMesh::Init(const SMeshData& Data)
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
     IndexCount = static_cast<uint32>(Data.Indices.Size());
 
-    const uint32 BufferFlags = RHISupportsRayTracing() ? BufferFlag_ShaderResource | BufferFlag_Default : BufferFlag_Default;
+    const uint32 BufferFlags = RHISupportsRayTracing() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
 
     SRHIResourceData InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
     VertexBuffer = RHICreateVertexBuffer<SVertex>(VertexCount, BufferFlags, ERHIResourceState::VertexAndConstantBuffer, &InitialData);
@@ -26,8 +26,10 @@ bool CMesh::Init(const SMeshData& Data)
 
     const bool bRTOn = RHISupportsRayTracing();
 
+    ERHIIndexFormat IndexFormat = ERHIIndexFormat::uint32;
+
     InitialData = SRHIResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
-    IndexBuffer = RHICreateIndexBuffer(ERHIIndexFormat::uint32, IndexCount, BufferFlags, ERHIResourceState::IndexBuffer, &InitialData);
+    IndexBuffer = RHICreateIndexBuffer(IndexFormat, IndexCount, BufferFlags, ERHIResourceState::IndexBuffer, &InitialData);
     if (!IndexBuffer)
     {
         return false;
@@ -39,7 +41,7 @@ bool CMesh::Init(const SMeshData& Data)
 
     if (bRTOn)
     {
-        RTGeometry = RHICreateRayTracingGeometry(RayTracingStructureBuildFlag_None, VertexBuffer.Get(), IndexBuffer.Get());
+        RTGeometry = RHICreateRayTracingGeometry(RayTracingStructureBuildFlag_None, VertexBuffer.Get(), VertexCount, IndexFormat, IndexBuffer.Get(), IndexCount);
         if (!RTGeometry)
         {
             return false;

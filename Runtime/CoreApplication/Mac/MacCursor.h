@@ -12,8 +12,8 @@ class CMacCursor final : public CPlatformCursor
 {
 public:
 
-	static TSharedPtr<CMacCursor> CreateCursor();
-	
+    static TSharedPtr<CMacCursor> CreateCursor();
+    
     virtual void SetCursor(ECursor Cursor) override final;
 
     virtual void SetPosition(CPlatformWindow* RelativeWindow, int32 x, int32 y) const override final;
@@ -23,14 +23,14 @@ public:
 
 private:
 
-	friend struct TDefaultDelete<CMacCursor>;
-	
+    friend struct TDefaultDelete<CMacCursor>;
+    
     CMacCursor()
         : CPlatformCursor()
     {
     }
-	
-	~CMacCursor() = default;
+    
+    ~CMacCursor() = default;
 };
 
 #endif

@@ -23,7 +23,7 @@ class CVulkanTexture : public CVulkanDeviceObject
 public:
     CVulkanTexture(CVulkanDevice* InDevice)
         : CVulkanDeviceObject(InDevice)
-		, Image(VK_NULL_HANDLE)
+        , Image(VK_NULL_HANDLE)
     {
     }
 
@@ -42,37 +42,37 @@ protected:
 class CVulkanTexture2D : public CRHITexture2D, public CVulkanTexture
 {
 public:
-    CVulkanTexture2D(CVulkanDevice* InDevice, EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CVulkanTexture2D(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITexture2D(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
-		, CVulkanTexture(InDevice)
+        , CVulkanTexture(InDevice)
         , RenderTargetView(dbg_new CVulkanRenderTargetView())
         , DepthStencilView(dbg_new CVulkanDepthStencilView())
         , UnorderedAccessView(dbg_new CVulkanUnorderedAccessView())
     {
     }
-	
-	virtual ~CVulkanTexture2D() = default;
+    
+    virtual ~CVulkanTexture2D() = default;
 
     virtual CRHIRenderTargetView*    GetRenderTargetView()    const override final { return RenderTargetView.Get(); }
     virtual CRHIDepthStencilView*    GetDepthStencilView()    const override final { return DepthStencilView.Get(); }
     virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
-	virtual CRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
-	
-	virtual void SetName(const String& InName) override final
-	{
-		CRHIResource::SetName(InName);
-	}
+    virtual CRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
+    
+    virtual void SetName(const String& InName) override final
+    {
+        CRHIResource::SetName(InName);
+    }
 
-	virtual bool IsValid() const override final
-	{
-		return true;
-	}
+    virtual bool IsValid() const override final
+    {
+        return true;
+    }
 
 protected:
     TSharedRef<CVulkanRenderTargetView>    RenderTargetView;
     TSharedRef<CVulkanDepthStencilView>    DepthStencilView;
     TSharedRef<CVulkanUnorderedAccessView> UnorderedAccessView;
-	TSharedRef<CVulkanShaderResourceView>  ShaderResourceView;
+    TSharedRef<CVulkanShaderResourceView>  ShaderResourceView;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -83,17 +83,17 @@ class CVulkanBackBuffer : public CVulkanTexture2D
 public:
 
     /* Create a new BackBuffer interface for a certain viewport */
-    static CVulkanBackBufferRef CreateBackBuffer(CVulkanDevice* InDevice, CVulkanViewport* InViewport, EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumSamples);
+    static CVulkanBackBufferRef CreateBackBuffer(CVulkanDevice* InDevice, CVulkanViewport* InViewport, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumSamples);
 
-	void AquireNextImage();
-	
+    void AquireNextImage();
+    
     FORCEINLINE CVulkanViewport* GetViewport() const
     {
         return Viewport.Get();
     }
 
 private:
-    CVulkanBackBuffer(CVulkanDevice* InDevice, CVulkanViewport* InViewport, EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumSamples);
+    CVulkanBackBuffer(CVulkanDevice* InDevice, CVulkanViewport* InViewport, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumSamples);
     ~CVulkanBackBuffer() = default;
 
     CVulkanViewportRef Viewport;
@@ -105,9 +105,9 @@ private:
 class CVulkanTexture2DArray : public CRHITexture2DArray, public CVulkanTexture
 {
 public:
-    CVulkanTexture2DArray(CVulkanDevice* InDevice, EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CVulkanTexture2DArray(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITexture2DArray(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InSizeZ, InFlags, InOptimalClearValue)
-		, CVulkanTexture(InDevice)
+        , CVulkanTexture(InDevice)
     {
     }
 };
@@ -118,9 +118,9 @@ public:
 class CVulkanTextureCube : public CRHITextureCube, public CVulkanTexture
 {
 public:
-    CVulkanTextureCube(CVulkanDevice* InDevice, EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CVulkanTextureCube(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InOptimalClearValue)
-		, CVulkanTexture(InDevice)
+        , CVulkanTexture(InDevice)
     {
     }
 };
@@ -131,9 +131,9 @@ public:
 class CVulkanTextureCubeArray : public CRHITextureCubeArray, public CVulkanTexture
 {
 public:
-    CVulkanTextureCubeArray(CVulkanDevice* InDevice, EFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CVulkanTextureCubeArray(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITextureCubeArray(InFormat, InSizeX, InNumMips, InSizeZ, InFlags, InOptimalClearValue)
-		, CVulkanTexture(InDevice)
+        , CVulkanTexture(InDevice)
     {
     }
 };
@@ -144,9 +144,9 @@ public:
 class CVulkanTexture3D : public CRHITexture3D, public CVulkanTexture
 {
 public:
-    CVulkanTexture3D(CVulkanDevice* InDevice, EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CVulkanTexture3D(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITexture3D(InFormat, InSizeX, InSizeY, InSizeZ, InNumMips, InFlags, InOptimalClearValue)
-		, CVulkanTexture(InDevice)
+        , CVulkanTexture(InDevice)
     {
     }
 };
@@ -189,29 +189,29 @@ private:
 
 inline CVulkanTexture* CastTexture(CRHITexture* Texture)
 {
-	if (Texture)
-	{
-		if (CRHITexture2D* Texture2D = Texture->AsTexture2D())
-		{
-			return reinterpret_cast<CVulkanTexture2D*>(Texture2D);
-		}
-		else if (CRHITexture2DArray* Texture2DArray = Texture->AsTexture2DArray())
-		{
-			return reinterpret_cast<CVulkanTexture2DArray*>(Texture2DArray);
-		}
-		else if (CRHITextureCube* TextureCube = Texture->AsTextureCube())
-		{
-			return reinterpret_cast<CVulkanTextureCube*>(TextureCube);
-		}
-		else if (CRHITextureCubeArray* TextureCubeArray = Texture->AsTextureCubeArray())
-		{
-			return reinterpret_cast<CVulkanTextureCubeArray*>(TextureCubeArray);
-		}
-		else if (CRHITexture3D* Texture3D = Texture->AsTexture3D())
-		{
-			return reinterpret_cast<CVulkanTexture3D*>(Texture3D);
-		}
-	}
-	
-	return nullptr;
+    if (Texture)
+    {
+        if (CRHITexture2D* Texture2D = Texture->AsTexture2D())
+        {
+            return reinterpret_cast<CVulkanTexture2D*>(Texture2D);
+        }
+        else if (CRHITexture2DArray* Texture2DArray = Texture->AsTexture2DArray())
+        {
+            return reinterpret_cast<CVulkanTexture2DArray*>(Texture2DArray);
+        }
+        else if (CRHITextureCube* TextureCube = Texture->AsTextureCube())
+        {
+            return reinterpret_cast<CVulkanTextureCube*>(TextureCube);
+        }
+        else if (CRHITextureCubeArray* TextureCubeArray = Texture->AsTextureCubeArray())
+        {
+            return reinterpret_cast<CVulkanTextureCubeArray*>(TextureCubeArray);
+        }
+        else if (CRHITexture3D* Texture3D = Texture->AsTexture3D())
+        {
+            return reinterpret_cast<CVulkanTexture3D*>(Texture3D);
+        }
+    }
+    
+    return nullptr;
 }

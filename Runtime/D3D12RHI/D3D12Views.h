@@ -4,8 +4,27 @@
 
 #include "RHI/RHIResourceViews.h"
 
-class CD3D12Device;
 class CD3D12OfflineDescriptorHeap;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedef
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12 Views
+
+template<typename BaseViewType>
+class TD3D12BaseView;
+
+using CD3D12RenderTargetView    = TD3D12BaseView<class CD3D12BaseRenderTargetView>;
+using CD3D12DepthStencilView    = TD3D12BaseView<class CD3D12BaseDepthStencilView>;
+using CD3D12UnorderedAccessView = TD3D12BaseView<class CD3D12BaseUnorderedAccessView>;
+using CD3D12ShaderResourceView  = TD3D12BaseView<class CD3D12BaseShaderResourceView>;
+
+typedef TSharedRef<class CD3D12ConstantBufferView> CD3D12ConstantBufferViewRef;
+typedef TSharedRef<CD3D12RenderTargetView>         CD3D12RenderTargetViewRef;
+typedef TSharedRef<CD3D12DepthStencilView>         CD3D12DepthStencilViewRef;
+typedef TSharedRef<CD3D12UnorderedAccessView>      CD3D12UnorderedAccessViewRef;
+typedef TSharedRef<CD3D12ShaderResourceView>       CD3D12ShaderResourceViewRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12View
@@ -17,12 +36,16 @@ public:
     virtual ~CD3D12View();
 
     bool AllocateHandle();
-
     void InvalidateAndFreeHandle();
 
     FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
     {
         return OfflineHandle;
+    }
+
+    FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetOnlineHandle() const
+    {
+        return OnlineHandle;
     }
 
     FORCEINLINE const CD3D12Resource* GetResource() const
@@ -31,17 +54,19 @@ public:
     }
 
 protected:
-    TSharedRef<CD3D12Resource> Resource;
+    CD3D12ResourceRef Resource;
  
-    CD3D12OfflineDescriptorHeap* Heap = nullptr;
+    CD3D12OfflineDescriptorHeap* Heap             = nullptr;
+    uint32                       OfflineHeapIndex = 0;
+
     D3D12_CPU_DESCRIPTOR_HANDLE  OfflineHandle;
-    uint32 OfflineHeapIndex = 0;
+    D3D12_GPU_DESCRIPTOR_HANDLE  OnlineHandle;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12ConstantBufferView
 
-class CD3D12ConstantBufferView : public CD3D12View
+class CD3D12ConstantBufferView : public CD3D12View, public CRefCounted
 {
 public:
 
@@ -169,11 +194,3 @@ public:
         return (OfflineHandle != 0);
     }
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Views
-
-using CD3D12RenderTargetView    = TD3D12BaseView<CD3D12BaseRenderTargetView>;
-using CD3D12DepthStencilView    = TD3D12BaseView<CD3D12BaseDepthStencilView>;
-using CD3D12UnorderedAccessView = TD3D12BaseView<CD3D12BaseUnorderedAccessView>;
-using CD3D12ShaderResourceView  = TD3D12BaseView<CD3D12BaseShaderResourceView>;

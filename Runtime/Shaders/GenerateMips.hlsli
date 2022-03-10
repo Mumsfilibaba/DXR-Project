@@ -6,7 +6,7 @@
 * https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/GenerateMipsCS.hlsli
 */
 
-//#define CUBE_MAP			1
+//#define CUBE_MAP            1
 #define BLOCK_SIZE          8
 #define CHANNEL_COMPONENTS  BLOCK_SIZE * BLOCK_SIZE
 #define POWER_OF_TWO        1
@@ -63,9 +63,9 @@ groupshared float AlphaChannel[CHANNEL_COMPONENTS];
 
 void StoreColor(uint Index, float4 Color)
 {
-    RedChannel[Index]	= Color.r;
+    RedChannel[Index]    = Color.r;
     GreenChannel[Index] = Color.g;
-    BlueChannel[Index]	= Color.b;
+    BlueChannel[Index]    = Color.b;
     AlphaChannel[Index] = Color.a;
 }
 
@@ -97,27 +97,27 @@ float4 PackColor(float4 Linear)
 static const float3x3 RotateUV[6] =
 {
     // +X
-    float3x3(	 0,  0, 1,
+    float3x3(     0,  0, 1,
                  0, -1, 0,
                 -1,  0, 0),
     // -X
-    float3x3(	0,  0, -1,
+    float3x3(    0,  0, -1,
                 0, -1,  0,
                 1,  0,  0),
     // +Y
-    float3x3(	1, 0, 0,
+    float3x3(    1, 0, 0,
                 0, 0, 1,
                 0, 1, 0),
     // -Y
-    float3x3(	1,  0,  0,
+    float3x3(    1,  0,  0,
                 0,  0, -1,
                 0, -1,  0),
     // +Z
-    float3x3(	1,  0, 0,
+    float3x3(    1,  0, 0,
                 0, -1, 0,
                 0,  0, 1),
     // -Z
-    float3x3(	-1,  0,  0,
+    float3x3(    -1,  0,  0,
                  0, -1,  0,
                  0,  0, -1)
 };
@@ -135,12 +135,12 @@ void Main(ComputeShaderInput Input)
     // have to take more source texture samples.
 #if CUBE_MAP
     float3 TexCoord = float3((Input.DispatchThreadID.xy * TexelSize) - 0.5f, 0.5f);
-    TexCoord		= normalize(mul(RotateUV[Input.DispatchThreadID.z], TexCoord));
-    float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
+    TexCoord        = normalize(mul(RotateUV[Input.DispatchThreadID.z], TexCoord));
+    float4 Src1        = SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
 #else
     #if POWER_OF_TWO
         float2 TexCoord = TexelSize * (Input.DispatchThreadID.xy + 0.5f);
-        float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
+        float4 Src1        = SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
     #else
         #error "Not supported yet"
     #endif

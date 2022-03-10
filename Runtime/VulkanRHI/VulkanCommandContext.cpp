@@ -18,7 +18,7 @@ CVulkanCommandContextRef CVulkanCommandContext::CreateCommandContext(CVulkanDevi
 
 CVulkanCommandContext::CVulkanCommandContext(CVulkanDevice* InDevice, CVulkanQueue* InCommandQueue)
     : CVulkanDeviceObject(InDevice)
-	, CommandQueue(::AddRef(InCommandQueue))
+    , CommandQueue(::AddRef(InCommandQueue))
     , CommandBuffer(InDevice, InCommandQueue->GetType())
 {
 }
@@ -46,8 +46,8 @@ void CVulkanCommandContext::End()
 {
     VULKAN_ERROR(CommandBuffer.End(), "Failed to End CommandBuffer");
 
-	CVulkanCommandBuffer* SubmitCommandBuffer = &CommandBuffer;
-	CommandQueue->ExecuteCommandBuffer(&SubmitCommandBuffer, 1, CommandBuffer.GetFence());
+    CVulkanCommandBuffer* SubmitCommandBuffer = &CommandBuffer;
+    CommandQueue->ExecuteCommandBuffer(&SubmitCommandBuffer, 1, CommandBuffer.GetFence());
 }
 
 void CVulkanCommandContext::BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
@@ -60,24 +60,24 @@ void CVulkanCommandContext::EndTimeStamp(CRHITimestampQuery* TimestampQuery, uin
 
 void CVulkanCommandContext::ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor)
 {
-	CVulkanRenderTargetView* VulkanRTV = reinterpret_cast<CVulkanRenderTargetView*>(RenderTargetView);
-	Assert(VulkanRTV != nullptr);
-	
-	VkClearColorValue VulkanClearColor;
-	CMemory::Memcpy(VulkanClearColor.float32, ClearColor.Elements, sizeof(ClearColor.Elements));
-	
-	VkImageSubresourceRange SubresourceRange;
-	SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	SubresourceRange.baseMipLevel   = 0;
-	SubresourceRange.levelCount     = 1;
-	SubresourceRange.baseArrayLayer = 0;
-	SubresourceRange.layerCount     = 1;
-	
-	CVulkanImageView* ImageView = VulkanRTV->GetImageView();
-	if (ImageView)
-	{
-		CommandBuffer.ClearColorImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1,  &SubresourceRange);
-	}
+    CVulkanRenderTargetView* VulkanRTV = reinterpret_cast<CVulkanRenderTargetView*>(RenderTargetView);
+    Assert(VulkanRTV != nullptr);
+    
+    VkClearColorValue VulkanClearColor;
+    CMemory::Memcpy(VulkanClearColor.float32, ClearColor.Elements, sizeof(ClearColor.Elements));
+    
+    VkImageSubresourceRange SubresourceRange;
+    SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    SubresourceRange.baseMipLevel   = 0;
+    SubresourceRange.levelCount     = 1;
+    SubresourceRange.baseArrayLayer = 0;
+    SubresourceRange.layerCount     = 1;
+    
+    CVulkanImageView* ImageView = VulkanRTV->GetImageView();
+    if (ImageView)
+    {
+        CommandBuffer.ClearColorImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1,  &SubresourceRange);
+    }
 }
 
 void CVulkanCommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue)
@@ -215,7 +215,7 @@ void CVulkanCommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geom
 {
 }
 
-void CVulkanCommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
+void CVulkanCommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
 {
 }
 
@@ -236,28 +236,28 @@ void CVulkanCommandContext::GenerateMips(CRHITexture* Texture)
 
 void CVulkanCommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState)
 {
-	CVulkanTexture* VulkanTexture = CastTexture(Texture);
-	if (VulkanTexture->GetVkImage() == VK_NULL_HANDLE)
-	{
-		return;
-	}
-	
-	SVulkanImageTransitionBarrier TransitionBarrier;
-	TransitionBarrier.Image                           = VulkanTexture->GetVkImage();
-	TransitionBarrier.PreviousLayout                  = ConvertResourceStateToImageLayout(BeforeState);
-	TransitionBarrier.NewLayout                       = ConvertResourceStateToImageLayout(AfterState);
-	TransitionBarrier.DependencyFlags                 = 0;
-	TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
-	TransitionBarrier.DstAccessMask                   = VK_ACCESS_NONE;
-	TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-	TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	TransitionBarrier.SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
-	TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
-	TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-	TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-	
-	CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+    CVulkanTexture* VulkanTexture = CastTexture(Texture);
+    if (VulkanTexture->GetVkImage() == VK_NULL_HANDLE)
+    {
+        return;
+    }
+    
+    SVulkanImageTransitionBarrier TransitionBarrier;
+    TransitionBarrier.Image                           = VulkanTexture->GetVkImage();
+    TransitionBarrier.PreviousLayout                  = ConvertResourceStateToImageLayout(BeforeState);
+    TransitionBarrier.NewLayout                       = ConvertResourceStateToImageLayout(AfterState);
+    TransitionBarrier.DependencyFlags                 = 0;
+    TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
+    TransitionBarrier.DstAccessMask                   = VK_ACCESS_NONE;
+    TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    TransitionBarrier.SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+    TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
+    TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+    TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+    
+    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
 }
 
 void CVulkanCommandContext::TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState)   

@@ -15,7 +15,7 @@
 
 TSharedRef<CMacWindow> CMacWindow::CreateWindow(CMacApplication* InApplication)
 {
-	return dbg_new CMacWindow(InApplication);
+    return dbg_new CMacWindow(InApplication);
 }
 
 CMacWindow::CMacWindow(CMacApplication* InApplication)
@@ -28,13 +28,13 @@ CMacWindow::CMacWindow(CMacApplication* InApplication)
 
 CMacWindow::~CMacWindow()
 {
-	MakeMainThreadCall(^
-	{
-		SCOPED_AUTORELEASE_POOL();
-			
-		[Window release];
-		[View release];
-	}, true);
+    MakeMainThreadCall(^
+    {
+        SCOPED_AUTORELEASE_POOL();
+            
+        [Window release];
+        [View release];
+    }, true);
 }
 
 bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
@@ -116,59 +116,59 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
 
 void CMacWindow::Show(bool bMaximized)
 {
-	MakeMainThreadCall(^
-	{
-		[Window makeKeyAndOrderFront:Window];
+    MakeMainThreadCall(^
+    {
+        [Window makeKeyAndOrderFront:Window];
 
-		if (bMaximized)
-		{
-			[Window zoom:Window];
-		}
+        if (bMaximized)
+        {
+            [Window zoom:Window];
+        }
 
-		PlatformApplicationMisc::PumpMessages(true);
-	}, true);
+        PlatformApplicationMisc::PumpMessages(true);
+    }, true);
 }
 
 void CMacWindow::Close()
 {
-	if (StyleParams.IsClosable())
-	{
-		MakeMainThreadCall(^
-		{
-			[Window performClose:Window];
-			PlatformApplicationMisc::PumpMessages(true);
-		}, true);
-	}
+    if (StyleParams.IsClosable())
+    {
+        MakeMainThreadCall(^
+        {
+            [Window performClose:Window];
+            PlatformApplicationMisc::PumpMessages(true);
+        }, true);
+    }
 }
 
 void CMacWindow::Minimize()
 {
-	if (StyleParams.IsMinimizable())
-	{
-		MakeMainThreadCall(^
-		{
-			[Window miniaturize:Window];
-			PlatformApplicationMisc::PumpMessages(true);
-		}, true);
-	}
+    if (StyleParams.IsMinimizable())
+    {
+        MakeMainThreadCall(^
+        {
+            [Window miniaturize:Window];
+            PlatformApplicationMisc::PumpMessages(true);
+        }, true);
+    }
 }
 
 void CMacWindow::Maximize()
 {
-	if (StyleParams.IsMaximizable())
-	{
-		MakeMainThreadCall(^
-		{
-			if ([Window isMiniaturized])
-			{
-				[Window deminiaturize:Window];
-			}
+    if (StyleParams.IsMaximizable())
+    {
+        MakeMainThreadCall(^
+        {
+            if ([Window isMiniaturized])
+            {
+                [Window deminiaturize:Window];
+            }
 
-			[Window zoom:Window];
+            [Window zoom:Window];
 
-			PlatformApplicationMisc::PumpMessages(true);
-		}, true);
-	}
+            PlatformApplicationMisc::PumpMessages(true);
+        }, true);
+    }
 }
 
 bool CMacWindow::IsActiveWindow() const
@@ -197,28 +197,28 @@ void CMacWindow::Restore()
 
 void CMacWindow::ToggleFullscreen()
 {
-	if (StyleParams.IsResizeable())
-	{
-		MakeMainThreadCall(^
-		{
-			[Window toggleFullScreen:Window];
-		}, true);
-	}
+    if (StyleParams.IsResizeable())
+    {
+        MakeMainThreadCall(^
+        {
+            [Window toggleFullScreen:Window];
+        }, true);
+    }
 }
 
 void CMacWindow::SetTitle(const String& InTitle)
 {
-	SCOPED_AUTORELEASE_POOL();
+    SCOPED_AUTORELEASE_POOL();
 
-	if (StyleParams.IsTitled())
-	{
-		NSString* Title = [NSString stringWithUTF8String:InTitle.CStr()];
+    if (StyleParams.IsTitled())
+    {
+        NSString* Title = [NSString stringWithUTF8String:InTitle.CStr()];
 
-		MakeMainThreadCall(^
-		{
-			[Window setTitle:Title];
-		}, true);
-	}
+        MakeMainThreadCall(^
+        {
+            [Window setTitle:Title];
+        }, true);
+    }
 }
 
 void CMacWindow::GetTitle(String& OutTitle)
@@ -230,92 +230,92 @@ void CMacWindow::GetTitle(String& OutTitle)
         OutTitle.Resize(static_cast<int32>(Length));
         
         const char* UTF8Title = [Title UTF8String];
-		CMemory::Memcpy(OutTitle.Data(), UTF8Title, sizeof(char) * Length);
+        CMemory::Memcpy(OutTitle.Data(), UTF8Title, sizeof(char) * Length);
     }
 }
 
 void CMacWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
 {
-	SCOPED_AUTORELEASE_POOL();
-	
-	MakeMainThreadCall(^
-	{
-		NSRect Frame = [Window frame];
-		if (StyleParams.IsResizeable())
-		{
-			Frame.size.width  = Shape.Width;
-			Frame.size.height = Shape.Height;
-			[Window setFrame: Frame display: YES animate: YES];
-		}
-		
-		if (bMove)
-		{
-			// TODO: Make sure this is correct
-			[Window setFrameOrigin:NSMakePoint(Shape.Position.x, Shape.Position.y - Frame.size.height + 1)];
-		}
-		
-		PlatformApplicationMisc::PumpMessages(true);
-	}, true);
+    SCOPED_AUTORELEASE_POOL();
+    
+    MakeMainThreadCall(^
+    {
+        NSRect Frame = [Window frame];
+        if (StyleParams.IsResizeable())
+        {
+            Frame.size.width  = Shape.Width;
+            Frame.size.height = Shape.Height;
+            [Window setFrame: Frame display: YES animate: YES];
+        }
+        
+        if (bMove)
+        {
+            // TODO: Make sure this is correct
+            [Window setFrameOrigin:NSMakePoint(Shape.Position.x, Shape.Position.y - Frame.size.height + 1)];
+        }
+        
+        PlatformApplicationMisc::PumpMessages(true);
+    }, true);
 }
 
 void CMacWindow::GetWindowShape(SWindowShape& OutWindowShape) const
 {
-	SCOPED_AUTORELEASE_POOL();
+    SCOPED_AUTORELEASE_POOL();
 
-	__block NSRect Frame;
-	__block NSRect ContentRect;
-	MakeMainThreadCall(^
-	{
-		Frame       = [Window frame];
-		ContentRect = [Window contentRectForFrameRect:[Window frame]];
-	}, true);
+    __block NSRect Frame;
+    __block NSRect ContentRect;
+    MakeMainThreadCall(^
+    {
+        Frame       = [Window frame];
+        ContentRect = [Window contentRectForFrameRect:[Window frame]];
+    }, true);
 
-	OutWindowShape.Width      = ContentRect.size.width;
-	OutWindowShape.Height     = ContentRect.size.height;
-	OutWindowShape.Position.x = Frame.origin.x;
-	OutWindowShape.Position.y = Frame.origin.y;
+    OutWindowShape.Width      = ContentRect.size.width;
+    OutWindowShape.Height     = ContentRect.size.height;
+    OutWindowShape.Position.x = Frame.origin.x;
+    OutWindowShape.Position.y = Frame.origin.y;
 }
 
 uint32 CMacWindow::GetWidth() const
 {
-	SCOPED_AUTORELEASE_POOL();
+    SCOPED_AUTORELEASE_POOL();
 
-	__block NSRect ContentRect;
-	MakeMainThreadCall(^
-	{
-		ContentRect = [Window contentRectForFrameRect:[Window frame]];
-	}, true);
+    __block NSRect ContentRect;
+    MakeMainThreadCall(^
+    {
+        ContentRect = [Window contentRectForFrameRect:[Window frame]];
+    }, true);
 
-	return uint32(ContentRect.size.width);
+    return uint32(ContentRect.size.width);
 }
 
 uint32 CMacWindow::GetHeight() const
 {
-	SCOPED_AUTORELEASE_POOL();
+    SCOPED_AUTORELEASE_POOL();
 
-	__block NSRect ContentRect;
-	MakeMainThreadCall(^
-	{
-		ContentRect = [Window contentRectForFrameRect:[Window frame]];
-	}, true);
+    __block NSRect ContentRect;
+    MakeMainThreadCall(^
+    {
+        ContentRect = [Window contentRectForFrameRect:[Window frame]];
+    }, true);
 
-	return uint32(ContentRect.size.height);
+    return uint32(ContentRect.size.height);
 }
 
 void CMacWindow::SetPlatformHandle(PlatformWindowHandle InPlatformHandle)
 {
-	if (InPlatformHandle)
-	{
-		NSObject* Object = reinterpret_cast<NSObject*>(InPlatformHandle);
+    if (InPlatformHandle)
+    {
+        NSObject* Object = reinterpret_cast<NSObject*>(InPlatformHandle);
 
-		// Make sure that the handle sent in is of correct type
-		CCocoaWindow* NewWindow = NSClassCast<CCocoaWindow>(Object);
-		if (NewWindow)
-		{
-			Window = NewWindow;
-			View   = [Window contentView];
-		}
-	}
+        // Make sure that the handle sent in is of correct type
+        CCocoaWindow* NewWindow = NSClassCast<CCocoaWindow>(Object);
+        if (NewWindow)
+        {
+            Window = NewWindow;
+            View   = [Window contentView];
+        }
+    }
 }
 
 #endif

@@ -9,7 +9,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TD3D12ViewCache
 
-template <typename ViewType, D3D12_DESCRIPTOR_HEAP_TYPE HeapType, uint32 kDescriptorTableSize>
+template <typename DescriptorViewType, D3D12_DESCRIPTOR_HEAP_TYPE HeapType, uint32 kDescriptorTableSize>
 class TD3D12ViewCache
 {
 public:
@@ -33,11 +33,11 @@ public:
     {
     }
 
-    FORCEINLINE void SetView(ViewType* DescriptorView, EShaderVisibility Visibility, uint32 ShaderRegister)
+    FORCEINLINE void SetView(DescriptorViewType* DescriptorView, EShaderVisibility Visibility, uint32 ShaderRegister)
     {
-        D3D12_ERROR(DescriptorView != nullptr, "[D3D12]: Trying to bind a ResourceView that was nullptr, check input from DescriptorCache");
+        D3D12_ERROR(DescriptorView != nullptr, "Trying to bind a ResourceView that was nullptr, check input from DescriptorCache");
 
-        ViewType* CurrentDescriptorView = ResourceViews[Visibility][ShaderRegister];
+        DescriptorViewType* CurrentDescriptorView = ResourceViews[Visibility][ShaderRegister];
         if (DescriptorView != CurrentDescriptorView)
         {
             ResourceViews[Visibility][ShaderRegister] = DescriptorView;
@@ -45,11 +45,11 @@ public:
         }
     }
 
-    void Reset(ViewType* DefaultView)
+    void Reset(DescriptorViewType* DefaultView)
     {
-        CMemory::Memzero(HostDescriptors, sizeof(HostDescriptors));
+        CMemory::Memzero(HostDescriptors,   sizeof(HostDescriptors));
         CMemory::Memzero(DeviceDescriptors, sizeof(DeviceDescriptors));
-        CMemory::Memzero(CopyDescriptors, sizeof(CopyDescriptors));
+        CMemory::Memzero(CopyDescriptors,   sizeof(CopyDescriptors));
 
         for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
         {
@@ -84,7 +84,7 @@ public:
             {
                 for (uint32 Index = 0; Index < kDescriptorTableSize; Index++)
                 {
-                    ViewType* View = ResourceViews[Stage][Index];
+                    DescriptorViewType* View = ResourceViews[Stage][Index];
                     Assert(View != nullptr);
 
                     CopyDescriptors[Stage][Index] = View->GetOfflineHandle();
@@ -116,13 +116,13 @@ public:
         }
     }
 
-    ViewType* ResourceViews[D3D12_CACHED_DESCRIPTORS_NUM_STAGES][kDescriptorTableSize];
+    DescriptorViewType*         ResourceViews[D3D12_CACHED_DESCRIPTORS_NUM_STAGES][kDescriptorTableSize];
 
     D3D12_CPU_DESCRIPTOR_HANDLE CopyDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES][kDescriptorTableSize];
 
     D3D12_CPU_DESCRIPTOR_HANDLE HostDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
     D3D12_GPU_DESCRIPTOR_HANDLE DeviceDescriptors[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
-    bool bDirty[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
+    bool                        bDirty[D3D12_CACHED_DESCRIPTORS_NUM_STAGES];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -150,9 +150,9 @@ public:
         Reset();
     }
 
-    FORCEINLINE void SetVertexBuffer(CD3D12VertexBuffer* VertexBuffer, uint32 Slot)
+    FORCEINLINE void SetVertexBuffer(CD3D12Buffer* VertexBuffer, uint32 Slot)
     {
-        D3D12_ERROR(Slot <= D3D12_MAX_VERTEX_BUFFER_SLOTS, "[D3D12]: Trying to bind a VertexBuffer to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxVertexBufferCount=" + ToString(D3D12_MAX_VERTEX_BUFFER_SLOTS) + ") ");
+        D3D12_ERROR(Slot <= D3D12_MAX_VERTEX_BUFFER_SLOTS, "Trying to bind a VertexBuffer to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxVertexBufferCount=" + ToString(D3D12_MAX_VERTEX_BUFFER_SLOTS) + ") ");
 
         if (VertexBuffers[Slot] != VertexBuffer)
         {
@@ -163,7 +163,7 @@ public:
         }
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12IndexBuffer* InIndexBuffer)
+    FORCEINLINE void SetIndexBuffer(CD3D12Buffer* InIndexBuffer)
     {
         if (IndexBuffer != InIndexBuffer)
         {
@@ -174,44 +174,48 @@ public:
 
     void CommitState(CD3D12CommandList& CmdList)
     {
-        ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+        ID3D12GraphicsCommandList* D3D12CmdList = CmdList.GetGraphicsCommandList();
         if (bVertexBuffersDirty)
         {
             for (uint32 i = 0; i < NumVertexBuffers; i++)
             {
-                CD3D12VertexBuffer* VertexBuffer = VertexBuffers[i];
-                if (!VertexBuffer)
-                {
-                    VertexBufferViews[i].BufferLocation = 0;
-                    VertexBufferViews[i].SizeInBytes = 0;
-                    VertexBufferViews[i].StrideInBytes = 0;
-                }
-                else
+                CD3D12Buffer* VertexBuffer = VertexBuffers[i];
+                if (VertexBuffer)
                 {
                     // TODO: Maybe save a ref so that we can ensure that the buffer
                     //       does not get deleted until command batch is finished
-                    VertexBufferViews[i] = VertexBuffer->GetView();
+                    VertexBufferViews[i].BufferLocation = VertexBuffer->GetGPUVirtualAddress();
+                    VertexBufferViews[i].SizeInBytes    = VertexBuffer->GetSize();
+                    VertexBufferViews[i].StrideInBytes  = VertexBuffer->GetStride();
+                }
+                else
+                {
+                    VertexBufferViews[i].BufferLocation = 0;
+                    VertexBufferViews[i].SizeInBytes    = 0;
+                    VertexBufferViews[i].StrideInBytes  = 0;
                 }
             }
 
-            DxCmdList->IASetVertexBuffers(0, NumVertexBuffers, VertexBufferViews);
+            D3D12CmdList->IASetVertexBuffers(0, NumVertexBuffers, VertexBufferViews);
             bVertexBuffersDirty = false;
         }
 
         if (bIndexBufferDirty)
         {
-            if (!IndexBuffer)
+            if (IndexBuffer)
             {
-                IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-                IndexBufferView.BufferLocation = 0;
-                IndexBufferView.SizeInBytes = 0;
+                IndexBufferView.Format         = DXGI_FORMAT_R32_UINT;
+                IndexBufferView.BufferLocation = IndexBuffer->GetGPUVirtualAddress();
+                IndexBufferView.SizeInBytes    = IndexBuffer->GetSize();
             }
             else
             {
-                IndexBufferView = IndexBuffer->GetView();
+                IndexBufferView.Format         = DXGI_FORMAT_R32_UINT;
+                IndexBufferView.BufferLocation = 0;
+                IndexBufferView.SizeInBytes    = 0;
             }
 
-            DxCmdList->IASetIndexBuffer(&IndexBufferView);
+            D3D12CmdList->IASetIndexBuffer(&IndexBufferView);
             bIndexBufferDirty = false;
         }
     }
@@ -228,14 +232,14 @@ public:
     }
 
 private:
-    CD3D12VertexBuffer* VertexBuffers[D3D12_MAX_VERTEX_BUFFER_SLOTS];
+    CD3D12Buffer*            VertexBuffers[D3D12_MAX_VERTEX_BUFFER_SLOTS];
     D3D12_VERTEX_BUFFER_VIEW VertexBufferViews[D3D12_MAX_VERTEX_BUFFER_SLOTS];
-    uint32 NumVertexBuffers;
-    bool   bVertexBuffersDirty;
+    uint32                   NumVertexBuffers;
+    bool                     bVertexBuffersDirty;
 
-    CD3D12IndexBuffer* IndexBuffer;
-    D3D12_INDEX_BUFFER_VIEW IndexBufferView;
-    bool bIndexBufferDirty;
+    CD3D12Buffer*            IndexBuffer;
+    D3D12_INDEX_BUFFER_VIEW  IndexBufferView;
+    bool                     bIndexBufferDirty;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -255,7 +259,7 @@ public:
 
     FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* RenderTargetView, uint32 Slot)
     {
-        D3D12_ERROR(Slot <= D3D12_MAX_RENDER_TARGET_COUNT, "[D3D12]: Trying to bind a RenderTarget to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxRenderTargetCount=" + ToString(D3D12_MAX_RENDER_TARGET_COUNT) + ") ");
+        D3D12_ERROR(Slot <= D3D12_MAX_RENDER_TARGET_COUNT, "Trying to bind a RenderTarget to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxRenderTargetCount=" + ToString(D3D12_MAX_RENDER_TARGET_COUNT) + ") ");
 
         if (RenderTargetView)
         {
@@ -333,12 +337,12 @@ public:
 
     void Reset();
 
-    FORCEINLINE void SetVertexBuffer(CD3D12VertexBuffer* VertexBuffer, uint32 Slot)
+    FORCEINLINE void SetVertexBuffer(CD3D12Buffer* VertexBuffer, uint32 Slot)
     {
         VertexBufferCache.SetVertexBuffer(VertexBuffer, Slot);
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12IndexBuffer* IndexBuffer)
+    FORCEINLINE void SetIndexBuffer(CD3D12Buffer* IndexBuffer)
     {
         VertexBufferCache.SetIndexBuffer(IndexBuffer);
     }
@@ -424,7 +428,7 @@ private:
         if (ParameterIndex >= 0 && ResourceViewCache.bDirty[ShaderVisibility])
         {
             const UINT DestRangeSize = TResourveViewCache::GetDescriptorTableSize();
-            const UINT NumSrcRanges = TResourveViewCache::GetDescriptorTableSize();
+            const UINT NumSrcRanges  = TResourveViewCache::GetDescriptorTableSize();
 
             const D3D12_CPU_DESCRIPTOR_HANDLE* SrcHostStarts = ResourceViewCache.CopyDescriptors[ShaderVisibility];
 

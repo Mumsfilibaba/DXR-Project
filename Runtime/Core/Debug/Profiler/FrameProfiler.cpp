@@ -33,13 +33,13 @@ void CFrameProfiler::Tick()
 
 void CFrameProfiler::Enable()
 {
-	CFrameProfiler& Instance = CFrameProfiler::Get();
+    CFrameProfiler& Instance = CFrameProfiler::Get();
     Instance.bEnabled = true;
 }
 
 void CFrameProfiler::Disable()
 {
-	CFrameProfiler& Instance = CFrameProfiler::Get();
+    CFrameProfiler& Instance = CFrameProfiler::Get();
     Instance.bEnabled = false;
 }
 

@@ -10,6 +10,8 @@ class CD3D12TimestampQuery : public CRHITimestampQuery, public CD3D12DeviceObjec
 {
 public:
 
+    static CD3D12TimestampQuery* Create(CD3D12Device* InDevice);
+
     CD3D12TimestampQuery(CD3D12Device* InDevice);
     ~CD3D12TimestampQuery() = default;
 
@@ -30,18 +32,16 @@ public:
         return QueryHeap.Get();
     }
 
-    static CD3D12TimestampQuery* Create(CD3D12Device* InDevice);
-
 private:
 
     // TODO: The download resource should be allocated in the context
     bool AllocateReadResource();
 
     TComPtr<ID3D12QueryHeap> QueryHeap;
-    TSharedRef<CD3D12Resource>      WriteResource;
+    CD3D12ResourceRef        WriteResource;
 
-    TArray<TSharedRef<CD3D12Resource>> ReadResources;
-    TArray<SRHITimestamp> TimeQueries;
+    TArray<CD3D12ResourceRef> ReadResources;
+    TArray<SRHITimestamp>     TimeQueries;
 
     UINT64 Frequency;
 };
