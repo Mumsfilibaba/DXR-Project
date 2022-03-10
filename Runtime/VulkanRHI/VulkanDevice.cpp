@@ -67,6 +67,7 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
         if (DeviceDesc.RequiredExtensionNames.Contains(ExtensionName, RawStringComparator) || DeviceDesc.OptionalExtensionNames.Contains(ExtensionName, RawStringComparator))
         {
             EnabledExtensionNames.Push(ExtensionName);
+			ExtensionNames.insert(String(ExtensionName));
         }
     }
 
@@ -76,10 +77,6 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
         {
             VULKAN_ERROR_ALWAYS(String("Instance layer '") + ExtensionName + "' could not be enabled");
             return false;
-        }
-        else
-        {
-            ExtensionNames.insert(String(ExtensionName));
         }
     }
 

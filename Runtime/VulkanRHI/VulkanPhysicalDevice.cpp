@@ -192,8 +192,22 @@ bool CVulkanPhysicalDevice::Initialize(const SVulkanPhysicalDeviceDesc& AdapterD
 #if VK_KHR_get_physical_device_properties2
     if (Instance->IsExtensionEnabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
     {
+		CMemory::Memzero(&DeviceProperties2);
+		DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+		DeviceProperties2.pNext = nullptr;
+		
         vkGetPhysicalDeviceProperties2(PhysicalDevice, &DeviceProperties2);
+		
+		CMemory::Memzero(&DeviceFeatures2);
+		DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		DeviceFeatures2.pNext = nullptr;
+		
         vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
+		
+		CMemory::Memzero(&DeviceMemoryProperties2);
+		DeviceMemoryProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+		DeviceMemoryProperties2.pNext = nullptr;
+		
         vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice, &DeviceMemoryProperties2);
     }
 #endif

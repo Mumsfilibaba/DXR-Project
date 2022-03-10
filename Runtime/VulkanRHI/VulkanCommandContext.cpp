@@ -61,7 +61,7 @@ void CVulkanCommandContext::EndTimeStamp(CRHITimestampQuery* TimestampQuery, uin
 void CVulkanCommandContext::ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor)
 {
     CVulkanRenderTargetView* VulkanRTV = reinterpret_cast<CVulkanRenderTargetView*>(RenderTargetView);
-    Assert(VulkanRTV != nullptr);
+	VULKAN_ERROR(VulkanRTV, "Trying to clear an RenderTargetView that is nullptr");
     
     VkClearColorValue VulkanClearColor;
     CMemory::Memcpy(VulkanClearColor.float32, ClearColor.Elements, sizeof(ClearColor.Elements));
@@ -74,10 +74,9 @@ void CVulkanCommandContext::ClearRenderTargetView(CRHIRenderTargetView* RenderTa
     SubresourceRange.layerCount     = 1;
     
     CVulkanImageView* ImageView = VulkanRTV->GetImageView();
-    if (ImageView)
-    {
-        CommandBuffer.ClearColorImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1,  &SubresourceRange);
-    }
+	VULKAN_ERROR(ImageView, "Trying to clear an image view that is nullptr");
+	
+	CommandBuffer.ClearColorImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1,  &SubresourceRange);
 }
 
 void CVulkanCommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue)

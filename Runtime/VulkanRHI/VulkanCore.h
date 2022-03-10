@@ -509,21 +509,47 @@ inline VkImageLayout ConvertResourceStateToImageLayout(ERHIResourceState Resourc
 {
     switch (ResourceState)
     {
-        case ERHIResourceState::Common:                    return VK_IMAGE_LAYOUT_GENERAL;
-        case ERHIResourceState::RenderTarget:            return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        case ERHIResourceState::RenderTargetClear:        return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ERHIResourceState::Common:                 return VK_IMAGE_LAYOUT_GENERAL;
+        case ERHIResourceState::RenderTarget:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        case ERHIResourceState::RenderTargetClear:      return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         case ERHIResourceState::UnorderedAccess:        return VK_IMAGE_LAYOUT_GENERAL;
-        case ERHIResourceState::DepthClear:                return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case ERHIResourceState::DepthWrite:                return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        case ERHIResourceState::DepthRead:                return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+        case ERHIResourceState::DepthClear:             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ERHIResourceState::DepthWrite:             return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        case ERHIResourceState::DepthRead:              return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
         case ERHIResourceState::PixelShaderResource:    return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         case ERHIResourceState::NonPixelShaderResource: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        case ERHIResourceState::CopyDest:                return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case ERHIResourceState::CopySource:                return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ERHIResourceState::CopyDest:               return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case ERHIResourceState::CopySource:             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         case ERHIResourceState::ResolveDest:            return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case ERHIResourceState::ResolveSource:            return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ERHIResourceState::ResolveSource:          return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         case ERHIResourceState::Present:                return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        case ERHIResourceState::ShadingRateSource:        return VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV;
+        case ERHIResourceState::ShadingRateSource:      return VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV;
         default:                                        return VK_IMAGE_LAYOUT_UNDEFINED;
     }
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CVulkanStructureHelper
+
+class CVulkanStructureHelper
+{
+public:
+	
+	template<typename StructureType>
+	CVulkanStructureHelper(StructureType& Structure)
+		: Next(&Structure.pNext)
+	{
+		(*Next) = nullptr;
+	}
+	
+	template<typename StructureType>
+	void AddNext(StructureType& Structure)
+	{
+		(*Next) = reinterpret_cast<const void*>(&Structure);
+		Next = &Structure.pNext;
+		(*Next) = nullptr;
+	}
+	
+private:
+	const void** Next;
+};

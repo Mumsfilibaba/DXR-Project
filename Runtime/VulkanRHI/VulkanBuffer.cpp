@@ -86,9 +86,40 @@ bool CVulkanBuffer::Initialize()
     VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &Buffer);
     VULKAN_CHECK_RESULT(Result, "Failed to create Buffer");
 
-    VkMemoryRequirements MemoryRequirements;
-    vkGetBufferMemoryRequirements(GetDevice()->GetVkDevice(), Buffer, &MemoryRequirements);
+	bool bUseDedicatedAllocation = false;
+	
+	VkMemoryRequirements MemoryRequirements;
+	if (CVulkanDedicatedAllocationKHR::IsEnabled())
+	{
+#if (VK_KHR_get_memory_requirements2) && (VK_KHR_dedicated_allocation)
+		VkMemoryDedicatedRequirementsKHR MemoryDedicatedRequirements;
+		CMemory::Memzero(&MemoryDedicatedRequirements);
+		
+		MemoryDedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS_KHR;
+		MemoryDedicatedRequirements.pNext = nullptr;
+		
+		VkBufferMemoryRequirementsInfo2KHR BufferMemoryRequirementsInfo;
+		BufferMemoryRequirementsInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2_KHR;
+		BufferMemoryRequirementsInfo.pNext  = nullptr;
+		BufferMemoryRequirementsInfo.buffer = Buffer;
+		
+		VkMemoryRequirements2KHR MemoryRequirements2;
+		CMemory::Memzero(&MemoryRequirements2);
+		
+		MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2_KHR;
+		MemoryRequirements2.pNext = &MemoryDedicatedRequirements;
 
+		vkGetBufferMemoryRequirements2KHR(GetDevice()->GetVkDevice(), &BufferMemoryRequirementsInfo, &MemoryRequirements2);
+		MemoryRequirements = MemoryRequirements2.memoryRequirements;
+		
+		bUseDedicatedAllocation = (MemoryDedicatedRequirements.requiresDedicatedAllocation != VK_FALSE) || (MemoryDedicatedRequirements.prefersDedicatedAllocation != VK_FALSE);
+#endif
+	}
+	else
+	{
+		vkGetBufferMemoryRequirements(GetDevice()->GetVkDevice(), Buffer, &MemoryRequirements);
+	}
+	
     VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     if (BufferDesc.IsDynamic())
     {
@@ -109,6 +140,8 @@ bool CVulkanBuffer::Initialize()
     AllocateInfo.memoryTypeIndex = MemoryTypeIndex;
     AllocateInfo.allocationSize  = MemoryRequirements.size;
 
+	CVulkanStructureHelper AllocationInfoHelper(AllocateInfo);
+	
 #if VK_KHR_buffer_device_address
     VkMemoryAllocateFlagsInfo AllocateFlagsInfo;
     CMemory::Memzero(&AllocateFlagsInfo);
@@ -118,14 +151,21 @@ bool CVulkanBuffer::Initialize()
 
     if (GetDevice()->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
     {
-        AllocateInfo.pNext = &AllocateFlagsInfo;
+		AllocationInfoHelper.AddNext(AllocateFlagsInfo);
     }
-    else
-    {
-        AllocateInfo.pNext = nullptr;
-    }
-#else
-    AllocateInfo.pNext = nullptr;
+#endif
+	
+#if VK_KHR_dedicated_allocation
+	VkMemoryDedicatedAllocateInfoKHR DedicatedAllocateInfo;
+	CMemory::Memzero(&DedicatedAllocateInfo);
+	
+	DedicatedAllocateInfo.sType  = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR;
+	DedicatedAllocateInfo.buffer = Buffer;
+	
+	if (bUseDedicatedAllocation && CVulkanDedicatedAllocationKHR::IsEnabled())
+	{
+		AllocationInfoHelper.AddNext(DedicatedAllocateInfo);
+	}
 #endif
 
 	const bool bResult = GetDevice()->AllocateMemory(AllocateInfo, &DeviceMemory);

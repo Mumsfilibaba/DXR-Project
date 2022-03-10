@@ -123,6 +123,12 @@ VULKAN_FUNCTION_DECLARATION(DestroyBuffer);
     VULKAN_FUNCTION_DECLARATION(GetBufferDeviceAddressKHR);
 #endif
 
+#if VK_KHR_get_memory_requirements2
+	VULKAN_FUNCTION_DECLARATION(GetImageMemoryRequirements2KHR);
+	VULKAN_FUNCTION_DECLARATION(GetBufferMemoryRequirements2KHR);
+	VULKAN_FUNCTION_DECLARATION(GetImageSparseMemoryRequirements2KHR);
+#endif
+
 VULKAN_FUNCTION_DECLARATION(AllocateCommandBuffers);
 VULKAN_FUNCTION_DECLARATION(FreeCommandBuffers);
 
@@ -175,6 +181,26 @@ public:
         DebugUtilsObjectNameInfo.objectType   = ObjectType;
 
         return vkSetDebugUtilsObjectNameEXT(Device, &DebugUtilsObjectNameInfo);
+#else
+		return VK_ERROR_UKNOWN;
 #endif
     }
 };
+
+/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// CVulkanDedicatedAllocationKHR
+
+class CVulkanDedicatedAllocationKHR
+{
+public:
+	static void Initialize(CVulkanDevice* Device);
+	
+	static FORCEINLINE bool IsEnabled()
+	{
+		return bIsEnabled;
+	}
+	
+private:
+	static bool bIsEnabled;
+};
+	

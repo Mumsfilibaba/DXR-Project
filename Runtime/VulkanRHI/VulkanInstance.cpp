@@ -155,6 +155,7 @@ bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
         if (InstanceDesc.RequiredLayerNames.Contains(LayerName, RawStringComparator) || InstanceDesc.OptionalLayerNames.Contains(LayerName, RawStringComparator))
         {
             EnabledLayerNames.Push(LayerName);
+			LayerNames.insert(String(LayerName));
         }
     }
 
@@ -164,10 +165,6 @@ bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
         {
             VULKAN_ERROR_ALWAYS(String("Instance layer '") + LayerName + "' could not be enabled");
             return false;
-        }
-        else
-        {
-            LayerNames.insert(String(LayerName));
         }
     }
 
@@ -179,6 +176,7 @@ bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
         if (InstanceDesc.RequiredExtensionNames.Contains(ExtensionName, RawStringComparator) || InstanceDesc.OptionalExtensionNames.Contains(ExtensionName, RawStringComparator))
         {
             EnabledExtensionNames.Push(ExtensionName);
+			ExtensionNames.insert(String(ExtensionName));
         }
     }
 
@@ -188,10 +186,6 @@ bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
         {
             VULKAN_ERROR_ALWAYS(String("Instance layer '") + ExtensionName + "' could not be enabled");
             return false;
-        }
-        else
-        {
-            ExtensionNames.insert(String(ExtensionName));
         }
     }
     
