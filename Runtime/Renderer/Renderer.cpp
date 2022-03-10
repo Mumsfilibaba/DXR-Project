@@ -682,12 +682,7 @@ void CRenderer::Tick(const CScene& Scene)
 
     INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "End UI Render");
     
-    MainCmdList.TransitionTexture(Resources.BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::RenderTargetClear);
-    
-    //SColorF BackBufferColor(1.0f, 0.0f, 0.0f, 0.0f);
-    //MainCmdList.ClearRenderTargetView(Resources.BackBuffer->GetRenderTargetView(), BackBufferColor);
-    
-    MainCmdList.TransitionTexture(Resources.BackBuffer, ERHIResourceState::RenderTargetClear, ERHIResourceState::Present);
+    MainCmdList.TransitionTexture(Resources.BackBuffer, ERHIResourceState::RenderTarget, ERHIResourceState::Present);
 
     INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "--END FRAME--");
 

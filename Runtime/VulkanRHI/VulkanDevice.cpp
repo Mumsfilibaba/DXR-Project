@@ -150,6 +150,34 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
     return true;
 }
 
+bool CVulkanDevice::AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationInfo, VkDeviceMemory* OutDeviceMemory)
+{
+	VULKAN_ERROR(OutDeviceMemory != nullptr, "DeviceMemory cannot be nullptr");
+	
+	VkResult Result = vkAllocateMemory(Device, &MemoryAllocationInfo, nullptr, OutDeviceMemory);
+	VULKAN_CHECK_RESULT(Result, "vkAllocateMemory failed");
+	
+	NumAllocations++;
+	
+	const VkPhysicalDeviceProperties& DeviceProperties = Adapter->GetDeviceProperties();
+	VULKAN_INFO(String("Allocated=") + ToString(MemoryAllocationInfo.allocationSize) + " Bytes, Allocation = " + ToString(NumAllocations.Load())+ "/" + ToString(DeviceProperties.limits.maxMemoryAllocationCount));
+	
+	return true;
+}
+
+void CVulkanDevice::FreeMemory(VkDeviceMemory* OutDeviceMemory)
+{
+	VULKAN_ERROR(OutDeviceMemory != nullptr, "DeviceMemory cannot be nullptr");
+	
+	vkFreeMemory(Device, *OutDeviceMemory, nullptr);
+	*OutDeviceMemory = VK_NULL_HANDLE;
+	
+	NumAllocations--;
+	
+	const VkPhysicalDeviceProperties& DeviceProperties = Adapter->GetDeviceProperties();
+	VULKAN_INFO(String("Allocation = ") + ToString(NumAllocations.Load()) + "/" + ToString(DeviceProperties.limits.maxMemoryAllocationCount));
+}
+
 uint32 CVulkanDevice::GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const
 {
     if (Type == EVulkanCommandQueueType::Graphics)

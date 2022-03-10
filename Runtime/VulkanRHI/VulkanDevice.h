@@ -8,6 +8,7 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Set.h"
 #include "Core/Containers/Optional.h"
+#include "Core/Threading/AtomicInt.h"
 
 class CVulkanInstance;
 class CVulkanPhysicalDevice;
@@ -44,6 +45,9 @@ public:
     /* Creates a new wrapper for VkDevice */
     static CVulkanDeviceRef CreateDevice(CVulkanInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc);
 
+	bool AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationInfo, VkDeviceMemory* OutDeviceMemory);
+	void FreeMemory(VkDeviceMemory* OutDeviceMemory);
+	
     uint32 GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
     FORCEINLINE bool IsLayerEnabled(const String& LayerName)
@@ -83,12 +87,14 @@ private:
 
     bool Initialize(const SVulkanDeviceDesc& DeviceDesc);
 
-    CVulkanInstance* Instance;
+    CVulkanInstance*       Instance;
     CVulkanPhysicalDevice* Adapter;
     VkDevice               Device;
 
     TOptional<SVulkanQueueFamilyIndices> QueueIndicies;
 
+	AtomicInt32 NumAllocations = 0;
+	
     TSet<String> ExtensionNames;
     TSet<String> LayerNames;
 };

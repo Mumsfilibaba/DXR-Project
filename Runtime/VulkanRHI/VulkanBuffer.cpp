@@ -25,8 +25,7 @@ CVulkanBuffer::~CVulkanBuffer()
 
     if (VULKAN_CHECK_HANDLE(DeviceMemory))
     {
-        vkFreeMemory(GetDevice()->GetVkDevice(), DeviceMemory, nullptr);
-        DeviceMemory = VK_NULL_HANDLE;
+		GetDevice()->FreeMemory(&DeviceMemory);
     }
 }
     
@@ -129,10 +128,8 @@ bool CVulkanBuffer::Initialize()
     AllocateInfo.pNext = nullptr;
 #endif
 
-    Result = vkAllocateMemory(GetDevice()->GetVkDevice(), &AllocateInfo, nullptr, &DeviceMemory);
-    VULKAN_CHECK_RESULT(Result, "Failed to allocate memory");
-    
-    VULKAN_INFO(String("Allocated=") + ToString(AllocateInfo.allocationSize) + " Bytes, Alignment=" + ToString(MemoryRequirements.alignment));
+	const bool bResult = GetDevice()->AllocateMemory(AllocateInfo, &DeviceMemory);
+    VULKAN_ERROR(bResult, "Failed to allocate memory");
 
     Result = vkBindBufferMemory(GetDevice()->GetVkDevice(), Buffer, DeviceMemory, 0);
     VULKAN_CHECK_RESULT(Result, "Failed to bind Buffer-DeviceMemory");
