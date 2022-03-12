@@ -124,9 +124,9 @@ VULKAN_FUNCTION_DECLARATION(DestroyBuffer);
 #endif
 
 #if VK_KHR_get_memory_requirements2
-	VULKAN_FUNCTION_DECLARATION(GetImageMemoryRequirements2KHR);
-	VULKAN_FUNCTION_DECLARATION(GetBufferMemoryRequirements2KHR);
-	VULKAN_FUNCTION_DECLARATION(GetImageSparseMemoryRequirements2KHR);
+    VULKAN_FUNCTION_DECLARATION(GetImageMemoryRequirements2KHR);
+    VULKAN_FUNCTION_DECLARATION(GetBufferMemoryRequirements2KHR);
+    VULKAN_FUNCTION_DECLARATION(GetImageSparseMemoryRequirements2KHR);
 #endif
 
 VULKAN_FUNCTION_DECLARATION(AllocateCommandBuffers);
@@ -182,7 +182,7 @@ public:
 
         return vkSetDebugUtilsObjectNameEXT(Device, &DebugUtilsObjectNameInfo);
 #else
-		return VK_ERROR_UKNOWN;
+        return VK_ERROR_UKNOWN;
 #endif
     }
 };
@@ -193,14 +193,14 @@ public:
 class CVulkanDedicatedAllocationKHR
 {
 public:
-	static void Initialize(CVulkanDevice* Device);
-	
-	static FORCEINLINE bool IsEnabled()
-	{
-		return bIsEnabled;
-	}
-	
+    static void Initialize(CVulkanDevice* Device);
+    
+    static FORCEINLINE bool IsEnabled()
+    {
+        return bIsEnabled;
+    }
+    
 private:
-	static bool bIsEnabled;
+    static bool bIsEnabled;
 };
-	
+    

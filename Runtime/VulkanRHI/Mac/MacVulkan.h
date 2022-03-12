@@ -16,18 +16,18 @@ public:
     { 
         return 
         {
-		#if VK_KHR_surface
+        #if VK_KHR_surface
             VK_KHR_SURFACE_EXTENSION_NAME,
-		#endif
-		#if VK_EXT_debug_utils
+        #endif
+        #if VK_EXT_debug_utils
             VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-		#endif
-		#if VK_EXT_metal_surface
+        #endif
+        #if VK_EXT_metal_surface
             VK_EXT_METAL_SURFACE_EXTENSION_NAME,
-		#endif
-		#if VK_MVK_macos_surface
+        #endif
+        #if VK_MVK_macos_surface
             VK_MVK_MACOS_SURFACE_EXTENSION_NAME,
-		#endif
+        #endif
         };
     }
 
@@ -40,9 +40,9 @@ public:
     { 
         return
         {
-		#if VK_KHR_swapchain
+        #if VK_KHR_swapchain
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-		#endif
+        #endif
         };
     }
 
@@ -59,7 +59,7 @@ public:
 #if VK_KHR_surface
     static FORCEINLINE VkResult CreateSurface(VkInstance Instance, void* WindowHandle, VkSurfaceKHR* OutSurface)
     {
-	#if VK_EXT_metal_surface
+    #if VK_EXT_metal_surface
         CCocoaWindow*      CocoaWindow = reinterpret_cast<CCocoaWindow*>(WindowHandle);
         CCocoaContentView* ContentView = [CocoaWindow contentView];
         CAMetalLayer*      MetalLayer  = [ContentView isKindOfClass:[CAMetalLayer class]] ? reinterpret_cast<CAMetalLayer*>([ContentView layer]) : nullptr;
@@ -75,7 +75,7 @@ public:
         MetalSurfaceCreateInfo.pLayer = MetalLayer;
 
         return vkCreateMetalSurfaceEXT(Instance, &MetalSurfaceCreateInfo, nullptr, OutSurface);
-	#elif VK_MVK_macos_surface
+    #elif VK_MVK_macos_surface
         CCocoaWindow*      CocoaWindow = reinterpret_cast<CCocoaWindow*>(WindowHandle);
         CCocoaContentView* ContentView = [CocoaWindow contentView];
         
@@ -88,9 +88,9 @@ public:
         MacOSSurfaceCreateInfo.pView = ContentView;
 
         return vkCreateMacOSSurfaceMVK(Instance, &MacOSSurfaceCreateInfo, nullptr, OutSurface);
-	#else
+    #else
         return VK_ERROR_UNKNOWN;
-	#endif
+    #endif
     }
 #endif
 };

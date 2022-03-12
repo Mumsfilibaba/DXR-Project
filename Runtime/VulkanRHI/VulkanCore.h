@@ -50,9 +50,9 @@
     } while (false)
 
 #else
-#define VULKAN_ERROR_ALWAYS(ErrorString)    do {} while(false)
-#define VULKAN_ERROR(Condtion, ErrorString) do {} while(false)
-#define VULKAN_WARNING(Message)             do {} while(false)
+    #define VULKAN_ERROR_ALWAYS(ErrorString)    do {} while(false)
+    #define VULKAN_ERROR(Condtion, ErrorString) do {} while(false)
+    #define VULKAN_WARNING(Message)             do {} while(false)
 #endif
 
 #ifndef VULKAN_SUCCEEDED
@@ -63,15 +63,27 @@
     #define VULKAN_FAILED(Result) (Result != VK_SUCCESS)
 #endif
 
+#ifndef VULKAN_CHECK
+    #define VULKAN_CHECK(Condition, ErrorMessage)  \
+        do                                         \
+        {                                          \
+            if (!(Condition))                      \
+            {                                      \
+                VULKAN_ERROR_ALWAYS(ErrorMessage); \
+                return false;                      \
+            }                                      \
+        } while(false)
+#endif
+
 #ifndef VULKAN_CHECK_RESULT
-    #define VULKAN_CHECK_RESULT(Result, ErrorMessage)     \
-        do                                                \
-        {                                                 \
-            if (VULKAN_FAILED(Result))                    \
-            {                                             \
-                VULKAN_ERROR_ALWAYS(ErrorMessage);        \
-                return false;                             \
-            }                                             \
+    #define VULKAN_CHECK_RESULT(Result, ErrorMessage) \
+        do                                            \
+        {                                             \
+            if (VULKAN_FAILED(Result))                \
+            {                                         \
+                VULKAN_ERROR_ALWAYS(ErrorMessage);    \
+                return false;                         \
+            }                                         \
         } while(false)
 #endif
 
@@ -534,22 +546,22 @@ inline VkImageLayout ConvertResourceStateToImageLayout(ERHIResourceState Resourc
 class CVulkanStructureHelper
 {
 public:
-	
-	template<typename StructureType>
-	CVulkanStructureHelper(StructureType& Structure)
-		: Next(&Structure.pNext)
-	{
-		(*Next) = nullptr;
-	}
-	
-	template<typename StructureType>
-	void AddNext(StructureType& Structure)
-	{
-		(*Next) = reinterpret_cast<const void*>(&Structure);
-		Next = &Structure.pNext;
-		(*Next) = nullptr;
-	}
-	
+    
+    template<typename StructureType>
+    CVulkanStructureHelper(StructureType& Structure)
+        : Next(&Structure.pNext)
+    {
+        (*Next) = nullptr;
+    }
+    
+    template<typename StructureType>
+    void AddNext(StructureType& Structure)
+    {
+        (*Next) = reinterpret_cast<const void*>(&Structure);
+        Next = &Structure.pNext;
+        (*Next) = nullptr;
+    }
+    
 private:
-	const void** Next;
+    const void** Next;
 };

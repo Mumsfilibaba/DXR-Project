@@ -12,6 +12,20 @@ class CVulkanInstance;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SVulkanPhysicalDeviceDesc
 
+struct SVulkanDeviceFeatures
+{
+    SVulkanDeviceFeatures()
+        : RequiredFeatures()
+    {
+        CMemory::Memzero(&RequiredFeatures);
+    }
+
+    VkPhysicalDeviceFeatures RequiredFeatures;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SVulkanPhysicalDeviceDesc
+
 struct SVulkanPhysicalDeviceDesc
 {
     SVulkanPhysicalDeviceDesc()
@@ -25,7 +39,8 @@ struct SVulkanPhysicalDeviceDesc
     TArray<const char*> RequiredExtensionNames;
     TArray<const char*> OptionalExtensionNames; // Used to select most optimal adapter
 
-    VkPhysicalDeviceFeatures RequiredFeatures;
+    VkPhysicalDeviceFeatures RequiredFeatures; 
+    // TODO: Optional features that can be used so select the best adapter
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -42,9 +57,9 @@ struct SVulkanQueueFamilyIndices
     {
     }
 
-    uint32 GraphicsQueueIndex = (~0);
-    uint32 CopyQueueIndex     = (~0);
-    uint32 ComputeQueueIndex  = (~0);
+    uint32 GraphicsQueueIndex = uint32(~0);
+    uint32 CopyQueueIndex     = uint32(~0);
+    uint32 ComputeQueueIndex  = uint32(~0);
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

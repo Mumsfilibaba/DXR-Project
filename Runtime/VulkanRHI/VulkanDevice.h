@@ -31,8 +31,18 @@ enum class EVulkanCommandQueueType
 
 struct SVulkanDeviceDesc
 {
+    SVulkanDeviceDesc()
+        : RequiredExtensionNames()
+        , OptionalExtensionNames()
+        , RequiredFeatures()
+    {
+        CMemory::Memzero(&RequiredFeatures);
+    }
+
     TArray<const char*> RequiredExtensionNames;
     TArray<const char*> OptionalExtensionNames;
+
+    VkPhysicalDeviceFeatures RequiredFeatures;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -45,9 +55,9 @@ public:
     /* Creates a new wrapper for VkDevice */
     static CVulkanDeviceRef CreateDevice(CVulkanInstance* InInstance, CVulkanPhysicalDevice* InAdapter, const SVulkanDeviceDesc& DeviceDesc);
 
-	bool AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationInfo, VkDeviceMemory* OutDeviceMemory);
-	void FreeMemory(VkDeviceMemory* OutDeviceMemory);
-	
+    bool AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationInfo, VkDeviceMemory* OutDeviceMemory);
+    void FreeMemory(VkDeviceMemory* OutDeviceMemory);
+    
     uint32 GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
     FORCEINLINE bool IsLayerEnabled(const String& LayerName)
@@ -93,8 +103,8 @@ private:
 
     TOptional<SVulkanQueueFamilyIndices> QueueIndicies;
 
-	AtomicInt32 NumAllocations = 0;
-	
+    AtomicInt32 NumAllocations = 0;
+    
     TSet<String> ExtensionNames;
     TSet<String> LayerNames;
 };

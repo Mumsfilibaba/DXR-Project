@@ -149,9 +149,9 @@ VULKAN_FUNCTION_DEFINITION(DestroyBuffer);
 #endif
 
 #if VK_KHR_get_memory_requirements2
-	VULKAN_FUNCTION_DEFINITION(GetImageMemoryRequirements2KHR);
-	VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements2KHR);
-	VULKAN_FUNCTION_DEFINITION(GetImageSparseMemoryRequirements2KHR);
+    VULKAN_FUNCTION_DEFINITION(GetImageMemoryRequirements2KHR);
+    VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements2KHR);
+    VULKAN_FUNCTION_DEFINITION(GetImageSparseMemoryRequirements2KHR);
 #endif
 
 VULKAN_FUNCTION_DEFINITION(AllocateCommandBuffers);
@@ -213,14 +213,14 @@ bool LoadDeviceFunctions(CVulkanDevice* Device)
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferDeviceAddressKHR);
     }
 #endif
-	
+    
 #if VK_KHR_get_memory_requirements2
-	if (Device->IsExtensionEnabled(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
-	{
-		VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageMemoryRequirements2KHR);
-		VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements2KHR);
-		VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageSparseMemoryRequirements2KHR);
-	}
+    if (Device->IsExtensionEnabled(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
+    {
+        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageMemoryRequirements2KHR);
+        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements2KHR);
+        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageSparseMemoryRequirements2KHR);
+    }
 #endif
     
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateImageView);
@@ -254,9 +254,9 @@ bool LoadDeviceFunctions(CVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdEndRenderPass);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPipelineBarrier);
 
-	// Initialize Dedicated Allocation extension helper
-	CVulkanDedicatedAllocationKHR::Initialize(Device);
-	
+    // Initialize Dedicated Allocation extension helper
+    CVulkanDedicatedAllocationKHR::Initialize(Device);
+    
     return true;
 }
 
@@ -267,12 +267,12 @@ bool CVulkanDedicatedAllocationKHR::bIsEnabled = false;
 
 void CVulkanDedicatedAllocationKHR::Initialize(CVulkanDevice* Device)
 {
-	VULKAN_ERROR(Device != nullptr, "Device cannot be nullptr");
-	
+    VULKAN_ERROR(Device != nullptr, "Device cannot be nullptr");
+    
 #if (VK_KHR_get_memory_requirements2) && (VK_KHR_dedicated_allocation)
-	if (Device->IsExtensionEnabled(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME) && Device->IsExtensionEnabled(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
-	{
-		bIsEnabled = true;
-	}
+    if (Device->IsExtensionEnabled(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME) && Device->IsExtensionEnabled(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
+    {
+        bIsEnabled = true;
+    }
 #endif
 }

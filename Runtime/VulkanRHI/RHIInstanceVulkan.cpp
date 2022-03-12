@@ -30,7 +30,7 @@ bool CRHIInstanceVulkan::Initialize(bool bEnableDebug)
     SVulkanInstanceDesc InstanceDesc;
     InstanceDesc.RequiredExtensionNames = PlatformVulkan::GetRequiredInstanceExtensions();
     InstanceDesc.RequiredLayerNames     = PlatformVulkan::GetRequiredInstanceLayers();
-	InstanceDesc.OptionalExtensionNames = PlatformVulkan::GetOptionalInstanceExtentions();
+    InstanceDesc.OptionalExtensionNames = PlatformVulkan::GetOptionalInstanceExtentions();
     InstanceDesc.bEnableValidationLayer = bEnableDebug;
     
     if (bEnableDebug)
@@ -56,7 +56,7 @@ bool CRHIInstanceVulkan::Initialize(bool bEnableDebug)
 
     SVulkanPhysicalDeviceDesc AdapterDesc;
     AdapterDesc.RequiredExtensionNames = PlatformVulkan::GetRequiredDeviceExtensions();
-	AdapterDesc.OptionalExtensionNames = PlatformVulkan::GetOptionalDeviceExtentions();
+    AdapterDesc.OptionalExtensionNames = PlatformVulkan::GetOptionalDeviceExtentions();
     AdapterDesc.RequiredFeatures.samplerAnisotropy = VK_TRUE;
 
     Adapter = CVulkanPhysicalDevice::QueryAdapter(GetInstance(), AdapterDesc);
@@ -69,6 +69,8 @@ bool CRHIInstanceVulkan::Initialize(bool bEnableDebug)
     SVulkanDeviceDesc DeviceDesc;
     DeviceDesc.RequiredExtensionNames = AdapterDesc.RequiredExtensionNames;
     DeviceDesc.OptionalExtensionNames = AdapterDesc.OptionalExtensionNames;
+
+    VkPhysicalDeviceBufferDeviceAddressFeaturesEXT BufferDeviceAddressFeatures;
 
     Device = CVulkanDevice::CreateDevice(GetInstance(), GetAdapter(), DeviceDesc);
     if (!Device)

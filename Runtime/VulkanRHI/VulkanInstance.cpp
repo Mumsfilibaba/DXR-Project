@@ -155,7 +155,7 @@ bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
         if (InstanceDesc.RequiredLayerNames.Contains(LayerName, RawStringComparator) || InstanceDesc.OptionalLayerNames.Contains(LayerName, RawStringComparator))
         {
             EnabledLayerNames.Push(LayerName);
-			LayerNames.insert(String(LayerName));
+            LayerNames.insert(String(LayerName));
         }
     }
 
@@ -176,7 +176,7 @@ bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
         if (InstanceDesc.RequiredExtensionNames.Contains(ExtensionName, RawStringComparator) || InstanceDesc.OptionalExtensionNames.Contains(ExtensionName, RawStringComparator))
         {
             EnabledExtensionNames.Push(ExtensionName);
-			ExtensionNames.insert(String(ExtensionName));
+            ExtensionNames.insert(String(ExtensionName));
         }
     }
 
@@ -223,7 +223,8 @@ bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
     ApplicationInfo.pEngineName        = "DXR-Engine";
     ApplicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     
-    VkInstanceCreateInfo InstanceCreateInfo{};
+
+    VkInstanceCreateInfo InstanceCreateInfo;
     CMemory::Memzero(&InstanceCreateInfo);
     
     InstanceCreateInfo.sType                    = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -233,6 +234,8 @@ bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
     InstanceCreateInfo.ppEnabledExtensionNames  = EnabledExtensionNames.Data();
     InstanceCreateInfo.enabledLayerCount        = EnabledLayerNames.Size();
     InstanceCreateInfo.ppEnabledLayerNames      = EnabledLayerNames.Data();
+    
+    CVulkanStructureHelper InstanceCreateHelper(InstanceCreateInfo);
 
 #if VK_EXT_debug_utils
     VkDebugUtilsMessengerCreateInfoEXT DebugMessengerCreateInfo;
@@ -248,13 +251,9 @@ bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
         DebugMessengerCreateInfo.pfnUserCallback = DebugLayerCallback;
         DebugMessengerCreateInfo.pUserData       = nullptr;
 
-        InstanceCreateInfo.pNext = reinterpret_cast<const void*>(&DebugMessengerCreateInfo);
+        InstanceCreateHelper.AddNext(DebugMessengerCreateInfo);
     }
-    else
 #endif
-    {
-        InstanceCreateInfo.pNext = nullptr;
-    }
 
     Result = vkCreateInstance(&InstanceCreateInfo, nullptr, &Instance);
     VULKAN_CHECK_RESULT(Result, "Failed to create Instance");
