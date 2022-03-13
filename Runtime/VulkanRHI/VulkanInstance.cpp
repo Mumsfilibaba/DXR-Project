@@ -217,7 +217,7 @@ bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
     
     ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     ApplicationInfo.pNext              = nullptr;
-    ApplicationInfo.apiVersion         = VK_API_VERSION_1_2;
+    ApplicationInfo.apiVersion         = VK_API_VERSION_1_1;
     ApplicationInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
     ApplicationInfo.pApplicationName   = "DXR-Project";
     ApplicationInfo.pEngineName        = "DXR-Engine";

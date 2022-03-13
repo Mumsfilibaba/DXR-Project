@@ -26,6 +26,9 @@ public:
 
     void WaitForCompletion();
 
+    // Create empty submit that waits for the semaphores and waits for completion
+    void Flush();
+
     FORCEINLINE VkQueue GetVkQueue() const
     {
         return CommandQueue;

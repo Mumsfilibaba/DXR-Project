@@ -82,6 +82,12 @@ public:
         #if VK_KHR_dedicated_allocation
             VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
         #endif
+        #if VK_KHR_spirv_1_4
+            VK_KHR_SPIRV_1_4_EXTENSION_NAME,
+        #endif
+        #if VK_KHR_shader_float_controls
+            VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME,
+        #endif
         };
     }
     

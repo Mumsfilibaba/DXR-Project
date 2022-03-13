@@ -75,29 +75,7 @@ bool CVulkanPhysicalDevice::Initialize(const SVulkanPhysicalDeviceDesc& AdapterD
         VkPhysicalDeviceProperties AdapterProperties;
         vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
 
-        VkPhysicalDeviceFeatures AdapterFeatures;
-        vkGetPhysicalDeviceFeatures(CurrentAdapter, &AdapterFeatures);
-
-        //Check for adapter features
-        constexpr uint32 NumFeatures = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
-
-        const VkBool32* RequiredFeatures  = reinterpret_cast<const VkBool32*>(&AdapterDesc.RequiredFeatures);
-        const VkBool32* AvailableFeatures = reinterpret_cast<const VkBool32*>(&AdapterFeatures);
-        
-        bool bHasAllFeatures = true;
-        for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures; ++FeatureIndex)
-        {
-            const bool bRequiresFeature = (RequiredFeatures[FeatureIndex]  == VK_TRUE);
-            const bool bHasFeature      = (AvailableFeatures[FeatureIndex] == VK_TRUE);
-            if (bRequiresFeature && !bHasFeature)
-            {
-                VULKAN_WARNING(String("Adapter '") + AdapterProperties.deviceName + "' does not have all required device-features. See PhyscicalDeviceFeature[" + ToString(FeatureIndex) + "]");
-                bHasAllFeatures = false;
-                break;
-            }
-        }
-        
-        if (!bHasAllFeatures)
+        if (!CheckAvailability(CurrentAdapter, AdapterDesc.RequiredFeatures))
         {
             continue;
         }
@@ -219,7 +197,7 @@ bool CVulkanPhysicalDevice::Initialize(const SVulkanPhysicalDeviceDesc& AdapterD
 
 TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndices(VkPhysicalDevice PhysicalDevice)
 {
-    const auto GetQueueFamilyIndex = [](VkQueueFlagBits QueueFlag, const TArray<VkQueueFamilyProperties>& QueueFamilies)
+    const auto GetQueueFamilyIndex = [](VkQueueFlagBits QueueFlag, const TArray<VkQueueFamilyProperties>& QueueFamilies) -> uint32
     {
         if (QueueFlag == VK_QUEUE_COMPUTE_BIT)
         {
@@ -265,7 +243,7 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
             }
         }
 
-        return (~0U);
+        return uint32(~0u);
     };
 
     // Retrieve the queue indices for the adapter
@@ -293,7 +271,7 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
     }
     
     const uint32 GraphicsIndex = GetQueueFamilyIndex(VK_QUEUE_GRAPHICS_BIT, QueueFamilies);
-    if (GraphicsIndex == (~0U))
+    if (GraphicsIndex == (~0u))
     {
         return QueueIndicies;
     }
@@ -301,7 +279,7 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
     QueueFamilies[GraphicsIndex].queueCount--;
     
     const uint32 CopyIndex = GetQueueFamilyIndex(VK_QUEUE_TRANSFER_BIT, QueueFamilies);
-    if (CopyIndex == (~0U))
+    if (CopyIndex == (~0u))
     {
         return QueueIndicies;
     }
@@ -309,7 +287,7 @@ TOptional<SVulkanQueueFamilyIndices> CVulkanPhysicalDevice::GetQueueFamilyIndice
     QueueFamilies[CopyIndex].queueCount--;
     
     const uint32 ComputeIndex = GetQueueFamilyIndex(VK_QUEUE_COMPUTE_BIT , QueueFamilies);
-    if (ComputeIndex == (~0U))
+    if (ComputeIndex == (~0u))
     {
         return QueueIndicies;
     }

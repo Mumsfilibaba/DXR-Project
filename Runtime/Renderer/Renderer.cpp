@@ -71,7 +71,10 @@ CRenderer::CRenderer()
 
 bool CRenderer::Init()
 {
-    Resources.MainWindowViewport = RHICreateViewport(GEngine->MainWindow->GetPlatformHandle(), 0, 0, Resources.BackBufferFormat, ERHIFormat::Unknown);
+    CPlatformWindowRef MainWindow = GEngine->MainWindow;
+    Assert(MainWindow != nullptr);
+
+    Resources.MainWindowViewport = RHICreateViewport(MainWindow->GetPlatformHandle(), MainWindow->GetWidth(), MainWindow->GetHeight(), Resources.BackBufferFormat, ERHIFormat::Unknown);
     if (!Resources.MainWindowViewport)
     {
         CDebug::DebugBreak();
@@ -349,8 +352,8 @@ void CRenderer::PerformAABBDebugPass(CRHICommandList& InCmdList)
         CVector3 Position = Box.GetCenter();
 
         CMatrix4 TranslationMatrix = CMatrix4::Translation(Position.x, Position.y, Position.z);
-        CMatrix4 ScaleMatrix = CMatrix4::Scale(Scale.x, Scale.y, Scale.z);
-        CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
+        CMatrix4 ScaleMatrix       = CMatrix4::Scale(Scale.x, Scale.y, Scale.z);
+        CMatrix4 TransformMatrix   = Command.CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
         TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
         TransformMatrix.Transpose();

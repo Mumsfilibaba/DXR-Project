@@ -40,5 +40,5 @@ protected:
     VkBuffer        Buffer;
     VkDeviceMemory  DeviceMemory;
     VkDeviceAddress DeviceAddress;
-    uint32          RequiredAlignment;
+    VkDeviceSize    RequiredAlignment;
 };

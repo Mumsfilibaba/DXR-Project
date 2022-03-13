@@ -18,7 +18,7 @@ CVulkanCommandContextRef CVulkanCommandContext::CreateCommandContext(CVulkanDevi
 
 CVulkanCommandContext::CVulkanCommandContext(CVulkanDevice* InDevice, CVulkanQueue* InCommandQueue)
     : CVulkanDeviceObject(InDevice)
-    , CommandQueue(::AddRef(InCommandQueue))
+    , CommandQueue(MakeSharedRef<CVulkanQueue>(InCommandQueue))
     , CommandBuffer(InDevice, InCommandQueue->GetType())
 {
 }
@@ -66,17 +66,14 @@ void CVulkanCommandContext::ClearRenderTargetView(CRHIRenderTargetView* RenderTa
     VkClearColorValue VulkanClearColor;
     CMemory::Memcpy(VulkanClearColor.float32, ClearColor.Elements, sizeof(ClearColor.Elements));
     
-    VkImageSubresourceRange SubresourceRange;
-    SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-    SubresourceRange.baseMipLevel   = 0;
-    SubresourceRange.levelCount     = 1;
-    SubresourceRange.baseArrayLayer = 0;
-    SubresourceRange.layerCount     = 1;
-    
     CVulkanImageView* ImageView = VulkanRTV->GetImageView();
-    VULKAN_ERROR(ImageView, "Trying to clear an image view that is nullptr");
-    
-    CommandBuffer.ClearColorImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1,  &SubresourceRange);
+    if (ImageView)
+    {
+        // VULKAN_ERROR(ImageView, "Trying to clear an image view that is nullptr");
+
+        VkImageSubresourceRange SubresourceRange = ImageView->GetSubresourceRange();
+        CommandBuffer.ClearColorImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1, &SubresourceRange);
+    }
 }
 
 void CVulkanCommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue)

@@ -549,19 +549,25 @@ public:
     
     template<typename StructureType>
     CVulkanStructureHelper(StructureType& Structure)
-        : Next(&Structure.pNext)
+        : Next(reinterpret_cast<void*>(&Structure.pNext))
     {
-        (*Next) = nullptr;
+        *reinterpret_cast<void**>(Next) = nullptr;
     }
     
     template<typename StructureType>
     void AddNext(StructureType& Structure)
     {
-        (*Next) = reinterpret_cast<const void*>(&Structure);
-        Next = &Structure.pNext;
-        (*Next) = nullptr;
+        void** CurrentNext = reinterpret_cast<void**>(Next);
+        
+        void* NewNextBase = reinterpret_cast<void*>(&Structure);
+        (*CurrentNext) = NewNextBase;
+
+        Next = reinterpret_cast<void*>(&Structure.pNext);
+
+        CurrentNext = reinterpret_cast<void**>(Next);
+        (*CurrentNext) = nullptr;
     }
     
 private:
-    const void** Next;
+    void* Next;
 };

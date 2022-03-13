@@ -25,7 +25,7 @@ public:
     CVulkanImageView(CVulkanDevice* InDevice);
     ~CVulkanImageView();
 
-    bool CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat Format, VkImageViewCreateFlags Flags, const VkImageSubresourceRange& SubresoureRange);
+    bool CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat Format, VkImageViewCreateFlags Flags, const VkImageSubresourceRange& InSubresourceRange);
     void DestroyView();
 
     FORCEINLINE bool IsValid() const
@@ -42,10 +42,16 @@ public:
     {
         return ImageView;
     }
+
+    FORCEINLINE const VkImageSubresourceRange& GetSubresourceRange() const
+    {
+        return SubresourceRange;
+    }
     
 private:
-    VkImage     Image;
-    VkImageView ImageView;
+    VkImageSubresourceRange SubresourceRange;
+    VkImage                 Image;
+    VkImageView             ImageView;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

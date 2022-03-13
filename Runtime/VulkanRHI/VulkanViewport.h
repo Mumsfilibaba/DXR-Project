@@ -71,6 +71,8 @@ private:
 
     bool CreateSwapChain();
     bool CreateRenderTargets();
+
+    bool RecreateSwapchain();
     
     void DestroySwapChain();
     
@@ -88,7 +90,8 @@ private:
     CVulkanQueueRef      Queue;
     CVulkanBackBufferRef BackBuffer;
 
-    TInlineArray<VkImage, NUM_BACK_BUFFERS>             Images;
+    TInlineArray<VkImage, NUM_BACK_BUFFERS> Images;
+
     TInlineArray<CVulkanImageViewRef, NUM_BACK_BUFFERS> ImageViews;
     
     TInlineArray<CVulkanSemaphoreRef, NUM_BACK_BUFFERS> ImageSemaphores;

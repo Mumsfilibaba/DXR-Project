@@ -16,7 +16,7 @@ CVulkanImageView::~CVulkanImageView()
     DestroyView();
 }
 
-bool CVulkanImageView::CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat Format, VkImageViewCreateFlags Flags, const VkImageSubresourceRange& SubresoureRange)
+bool CVulkanImageView::CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat Format, VkImageViewCreateFlags Flags, const VkImageSubresourceRange& InSubresourceRange)
 {
     VkImageViewCreateInfo ImageViewCreateInfo;
     CMemory::Memzero(&ImageViewCreateInfo);
@@ -31,7 +31,7 @@ bool CVulkanImageView::CreateView(VkImage InImage, VkImageViewType ViewType, VkF
     ImageViewCreateInfo.components.g     = VK_COMPONENT_SWIZZLE_G;
     ImageViewCreateInfo.components.b     = VK_COMPONENT_SWIZZLE_B;
     ImageViewCreateInfo.components.a     = VK_COMPONENT_SWIZZLE_A;
-    ImageViewCreateInfo.subresourceRange = SubresoureRange;
+    ImageViewCreateInfo.subresourceRange = SubresourceRange = InSubresourceRange;
 
     VkResult Result = vkCreateImageView(GetDevice()->GetVkDevice(), &ImageViewCreateInfo, nullptr, &ImageView);
     VULKAN_CHECK_RESULT(Result, "vkCreateImageView failed");

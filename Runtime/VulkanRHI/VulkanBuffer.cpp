@@ -60,22 +60,22 @@ bool CVulkanBuffer::Initialize()
     if (BufferDesc.Flags & BufferFlag_VertexBuffer)
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-        RequiredAlignment = NMath::Max<uint32>(RequiredAlignment, 1LLU);
+        RequiredAlignment = NMath::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
     if (BufferDesc.Flags & BufferFlag_IndexBuffer)
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-        RequiredAlignment = NMath::Max<uint32>(RequiredAlignment, 1LLU);
+        RequiredAlignment = NMath::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
     if (BufferDesc.Flags & BufferFlag_ConstantBuffer)
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        RequiredAlignment = NMath::Max<uint32>(RequiredAlignment, DeviceLimits.minUniformBufferOffsetAlignment);
+        RequiredAlignment = NMath::Max<VkDeviceSize>(RequiredAlignment, DeviceLimits.minUniformBufferOffsetAlignment);
     }
     if ((BufferDesc.Flags & BufferFlag_UAV) && (BufferDesc.Flags & BufferFlag_SRV))
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-        RequiredAlignment = NMath::Max<uint32>(RequiredAlignment, DeviceLimits.minStorageBufferOffsetAlignment);
+        RequiredAlignment = NMath::Max<VkDeviceSize>(RequiredAlignment, DeviceLimits.minStorageBufferOffsetAlignment);
     }
     /*if (BufferDesc.Flags & )
     {
@@ -164,6 +164,7 @@ bool CVulkanBuffer::Initialize()
     
     if (bUseDedicatedAllocation && CVulkanDedicatedAllocationKHR::IsEnabled())
     {
+        VULKAN_INFO("Using dedicated allocation for buffer");
         AllocationInfoHelper.AddNext(DedicatedAllocateInfo);
     }
 #endif
@@ -185,7 +186,7 @@ bool CVulkanBuffer::Initialize()
     if (GetDevice()->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
     {
         DeviceAddress = vkGetBufferDeviceAddressKHR(GetDevice()->GetVkDevice(), &DeviceAdressInfo);
-        VULKAN_CHECK(DeviceAddress == 0, "vkGetBufferDeviceAddressKHR returned nullptr");
+        VULKAN_CHECK(DeviceAddress != 0, "vkGetBufferDeviceAddressKHR returned nullptr");
     }
 #endif
 

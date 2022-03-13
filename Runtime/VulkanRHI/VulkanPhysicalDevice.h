@@ -1,5 +1,6 @@
 #pragma once 
 #include "VulkanCore.h"
+#include "VulkanLoader.h"
 
 #include "Core/RefCounted.h"
 #include "Core/Containers/SharedRef.h"
@@ -10,18 +11,36 @@
 class CVulkanInstance;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SVulkanPhysicalDeviceDesc
+// CheckAvailability
 
-struct SVulkanDeviceFeatures
+inline bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const VkPhysicalDeviceFeatures& Features)
 {
-    SVulkanDeviceFeatures()
-        : RequiredFeatures()
+    static constexpr uint32 NumFeatures = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
+
+    VkPhysicalDeviceProperties AdapterProperties;
+    vkGetPhysicalDeviceProperties(PhysicalDevice, &AdapterProperties);
+
+    VkPhysicalDeviceFeatures AdapterFeatures;
+    vkGetPhysicalDeviceFeatures(PhysicalDevice, &AdapterFeatures);
+
+    const VkBool32* RequiredFeatures  = reinterpret_cast<const VkBool32*>(&Features);
+    const VkBool32* AvailableFeatures = reinterpret_cast<const VkBool32*>(&AdapterFeatures);
+
+    bool bHasAllFeatures = true;
+    for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures; ++FeatureIndex)
     {
-        CMemory::Memzero(&RequiredFeatures);
+        const bool bRequiresFeature = (RequiredFeatures[FeatureIndex]  == VK_TRUE);
+        const bool bHasFeature      = (AvailableFeatures[FeatureIndex] == VK_TRUE);
+        if (bRequiresFeature && !bHasFeature)
+        {
+            VULKAN_WARNING(String("Adapter '") + AdapterProperties.deviceName + "' does not support all device-features. See PhysicalDeviceFeature[" + ToString(FeatureIndex) + "]");
+            bHasAllFeatures = false;
+            break;
+        }
     }
 
-    VkPhysicalDeviceFeatures RequiredFeatures;
-};
+    return bHasAllFeatures;
+}
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SVulkanPhysicalDeviceDesc
@@ -153,7 +172,7 @@ private:
     bool Initialize(const SVulkanPhysicalDeviceDesc& AdapterDesc);
 
     CVulkanInstance* Instance;
-    VkPhysicalDevice       PhysicalDevice;
+    VkPhysicalDevice PhysicalDevice;
     
     VkPhysicalDeviceProperties        DeviceProperties;
     VkPhysicalDeviceFeatures          DeviceFeatures;

@@ -60,13 +60,13 @@ bool CVulkanQueue::ExecuteCommandBuffer(CVulkanCommandBuffer* const* CommandBuff
     {
         SubmitInfo.waitSemaphoreCount = 0;
         SubmitInfo.pWaitSemaphores    = nullptr;
-        SubmitInfo.pWaitDstStageMask = nullptr;
+        SubmitInfo.pWaitDstStageMask  = nullptr;
     }
 
     if (!SignalSemaphores.IsEmpty())
     {
         SubmitInfo.signalSemaphoreCount = SignalSemaphores.Size();
-        SubmitInfo.pSignalSemaphores = SignalSemaphores.Data();
+        SubmitInfo.pSignalSemaphores    = SignalSemaphores.Data();
     }
     else
     {
@@ -93,7 +93,7 @@ bool CVulkanQueue::ExecuteCommandBuffer(CVulkanCommandBuffer* const* CommandBuff
     else
     {
         SubmitInfo.commandBufferCount = 0;
-        SubmitInfo.pCommandBuffers = nullptr;
+        SubmitInfo.pCommandBuffers    = nullptr;
     }
 
     VkFence SignalFence = Fence ? Fence->GetVkFence() : VK_NULL_HANDLE;
@@ -125,4 +125,11 @@ void CVulkanQueue::AddSignalSemaphore(VkSemaphore Semaphore)
 void CVulkanQueue::WaitForCompletion()
 {
     vkQueueWaitIdle(CommandQueue);
+}
+
+void CVulkanQueue::Flush()
+{
+    ExecuteCommandBuffer(nullptr, 0, nullptr);
+
+    WaitForCompletion();
 }

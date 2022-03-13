@@ -63,6 +63,9 @@ bool CD3D12Viewport::Initialize()
         Height = ClientRect.bottom - ClientRect.top;
     }
 
+    D3D12_ERROR(Width  != 0, "Viewport-width of zero is not supported");
+    D3D12_ERROR(Height != 0, "Viewport-height of zero is not supported");
+
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
     CMemory::Memzero(&SwapChainDesc);
 
@@ -128,7 +131,7 @@ bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     // TODO: Make sure that we release the old surfaces
 
-    if ((InWidth != Width || InHeight != Height) && InWidth > 0 && InHeight > 0)
+    if (((InWidth != Width) || (InHeight != Height)) && (InWidth > 0) && (InHeight > 0))
     {
         CommandContext->ClearState();
 
@@ -138,7 +141,7 @@ bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
         HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
         if (SUCCEEDED(Result))
         {
-            Width = InWidth;
+            Width  = InWidth;
             Height = InHeight;
         }
         else
@@ -149,9 +152,9 @@ bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 
         if (!RetriveBackBuffers())
         {
+            D3D12_WARNING("Resize FAILED");
             return false;
         }
-
     }
 
     // NOTE: Not considered an error to try to resize when the size is the same, maybe it should?

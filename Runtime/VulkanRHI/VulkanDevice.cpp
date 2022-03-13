@@ -129,9 +129,11 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
         QueueCreateInfos.Push(QueueCreateInfo);
     }
     
+
     VkDeviceCreateInfo DeviceCreateInfo;
+    CMemory::Memzero(&DeviceCreateInfo);
+
     DeviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    DeviceCreateInfo.pNext                   = nullptr;
     DeviceCreateInfo.flags                   = 0;
     DeviceCreateInfo.enabledLayerCount       = 0;
     DeviceCreateInfo.ppEnabledLayerNames     = nullptr;
@@ -139,7 +141,58 @@ bool CVulkanDevice::Initialize(const SVulkanDeviceDesc& DeviceDesc)
     DeviceCreateInfo.ppEnabledExtensionNames = EnabledExtensionNames.Data();
     DeviceCreateInfo.queueCreateInfoCount    = QueueCreateInfos.Size();
     DeviceCreateInfo.pQueueCreateInfos       = QueueCreateInfos.Data();
-    DeviceCreateInfo.pEnabledFeatures        = &DeviceDesc.RequiredFeatures;
+
+    CVulkanStructureHelper DeviceCreateHelper(DeviceCreateInfo);
+
+    VkPhysicalDeviceFeatures2 DeviceFeatures2;
+    CMemory::Memzero(&DeviceFeatures2);
+
+    DeviceFeatures2.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    DeviceFeatures2.features = DeviceDesc.RequiredFeatures;
+    DeviceCreateHelper.AddNext(DeviceFeatures2);
+
+    // TODO: Check for the availability of these features when the device is created
+#if VK_KHR_shader_draw_parameters
+    VkPhysicalDeviceShaderDrawParametersFeatures ShaderDrawParametersFeatures;
+    CMemory::Memzero(&ShaderDrawParametersFeatures);
+
+    ShaderDrawParametersFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
+    
+    if (IsExtensionEnabled(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME))
+    {
+        ShaderDrawParametersFeatures.shaderDrawParameters = VK_TRUE;
+    }
+
+    DeviceCreateHelper.AddNext(ShaderDrawParametersFeatures);
+#endif
+
+#if VK_KHR_buffer_device_address
+    VkPhysicalDeviceBufferDeviceAddressFeaturesKHR BufferDeviceAddressFeatures;
+    CMemory::Memzero(&BufferDeviceAddressFeatures);
+
+    BufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR;
+
+    if (IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
+    {
+        BufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+    }
+
+    DeviceCreateHelper.AddNext(BufferDeviceAddressFeatures);
+#endif
+
+#if VK_KHR_timeline_semaphore
+    VkPhysicalDeviceTimelineSemaphoreFeaturesKHR TimelineSemaphoreFeatures;
+    CMemory::Memzero(&TimelineSemaphoreFeatures);
+
+    TimelineSemaphoreFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR;
+
+    if (IsExtensionEnabled(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME))
+    {
+        TimelineSemaphoreFeatures.timelineSemaphore = VK_TRUE;
+    }
+
+    DeviceCreateHelper.AddNext(TimelineSemaphoreFeatures);
+#endif
 
     Result = vkCreateDevice(Adapter->GetVkPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);
     VULKAN_CHECK_RESULT(Result, "Failed to create Device");
@@ -157,7 +210,7 @@ bool CVulkanDevice::AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationI
     NumAllocations++;
     
     const VkPhysicalDeviceProperties& DeviceProperties = Adapter->GetDeviceProperties();
-    VULKAN_INFO(String("Allocated=") + ToString(MemoryAllocationInfo.allocationSize) + " Bytes, Allocation = " + ToString(NumAllocations.Load())+ "/" + ToString(DeviceProperties.limits.maxMemoryAllocationCount));
+    VULKAN_INFO(String("[AllocateMemory] Allocated=") + ToString(MemoryAllocationInfo.allocationSize) + " Bytes, Allocation = " + ToString(NumAllocations.Load())+ "/" + ToString(DeviceProperties.limits.maxMemoryAllocationCount));
     
     return true;
 }
@@ -172,7 +225,7 @@ void CVulkanDevice::FreeMemory(VkDeviceMemory* OutDeviceMemory)
     NumAllocations--;
     
     const VkPhysicalDeviceProperties& DeviceProperties = Adapter->GetDeviceProperties();
-    VULKAN_INFO(String("Allocation = ") + ToString(NumAllocations.Load()) + "/" + ToString(DeviceProperties.limits.maxMemoryAllocationCount));
+    VULKAN_INFO(String("[FreeMemory] Allocation = ") + ToString(NumAllocations.Load()) + "/" + ToString(DeviceProperties.limits.maxMemoryAllocationCount));
 }
 
 uint32 CVulkanDevice::GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const

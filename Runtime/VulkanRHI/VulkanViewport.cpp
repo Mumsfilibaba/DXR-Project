@@ -126,9 +126,12 @@ bool CVulkanViewport::CreateSwapChain()
     SwapChainCreateInfo.Surface           = GetSurface();
     SwapChainCreateInfo.BufferCount       = GBackbufferCount.GetInt();
     SwapChainCreateInfo.Extent.width      = GetWidth();
-    SwapChainCreateInfo.Extent.width      = GetHeight();
+    SwapChainCreateInfo.Extent.height     = GetHeight();
     SwapChainCreateInfo.Format            = GetColorFormat();
     SwapChainCreateInfo.bVerticalSync     = false;
+
+    VULKAN_ERROR(Width  != 0, "Viewport-width of zero is not supported");
+    VULKAN_ERROR(Height != 0, "Viewport-height of zero is not supported");
 
     SwapChain = CVulkanSwapChain::CreateSwapChain(GetDevice(), SwapChainCreateInfo);
     if (!SwapChain)
@@ -198,9 +201,9 @@ bool CVulkanViewport::CreateRenderTargets()
         VkImageSubresourceRange SubresourceRange;
         SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
         SubresourceRange.baseArrayLayer = 0;
-        SubresourceRange.layerCount     = 1;
-        SubresourceRange.levelCount     = 1;
+        SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         SubresourceRange.baseMipLevel   = 0;
+        SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
         
         if (!ImageView->CreateView(Images[Index], VK_IMAGE_VIEW_TYPE_2D, SurfaceFormat.format, 0, SubresourceRange))
         {
@@ -208,6 +211,21 @@ bool CVulkanViewport::CreateRenderTargets()
         }
     }
     
+    return true;
+}
+
+bool CVulkanViewport::RecreateSwapchain()
+{
+    if (!CreateSwapChain())
+    {
+        return false;
+    }
+
+    if (!CreateRenderTargets())
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -219,23 +237,49 @@ void CVulkanViewport::DestroySwapChain()
 
 bool CVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
 {
-    Width  = InWidth;
-    Height = InHeight;
+    if (((InWidth != Width) || (InHeight != Height)) && (InWidth > 0) && (InHeight > 0))
+    {
+        VULKAN_INFO("Swapchain Resize");
+
+        Width  = InWidth;
+        Height = InHeight;
+
+        // Makes sure that the semaphores are waited/signaled
+        Queue->AddWaitSemaphore(RenderSemaphores[SemaphoreIndex]->GetVkSemaphore(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+        Queue->Flush();
+
+        if (!RecreateSwapchain())
+        {
+            VULKAN_WARNING("Resize FAILED");
+            return false;
+        }
+
+        AdvanceSemaphoreIndex();
+
+        if (!AquireNextImage())
+        {
+            VULKAN_WARNING("Resize FAILED");
+            return false;
+        }
+    }
+
     return true;
 }
 
 bool CVulkanViewport::Present(bool bVerticalSync)
 {
     UNREFERENCED_VARIABLE(bVerticalSync);
-    
+
     CVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
 
     VkResult Result = SwapChain->Present(Queue.Get(), RenderSemaphore.Get());
     if (Result == VK_ERROR_OUT_OF_DATE_KHR)
     {
+        VULKAN_INFO("Swapchain OutOfDate");
+
         Queue->WaitForCompletion();
 
-        if (!CreateSwapChain())
+        if (!RecreateSwapchain())
         {
             return false;
         }
@@ -288,7 +332,7 @@ bool CVulkanViewport::AquireNextImage()
     VkResult Result = SwapChain->AquireNextImage(ImageSemaphore.Get());
     VULKAN_CHECK_RESULT(Result, "Failed to aquire image");
     
-    // TOOD: Maybe change this, if maybe is not always desireable to have a wait/signal
+    // TOOD: Maybe change this, if maybe is not always desirable to have a wait/signal
     Queue->AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     Queue->AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
     

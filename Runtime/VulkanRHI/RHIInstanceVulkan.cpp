@@ -70,8 +70,6 @@ bool CRHIInstanceVulkan::Initialize(bool bEnableDebug)
     DeviceDesc.RequiredExtensionNames = AdapterDesc.RequiredExtensionNames;
     DeviceDesc.OptionalExtensionNames = AdapterDesc.OptionalExtensionNames;
 
-    VkPhysicalDeviceBufferDeviceAddressFeaturesEXT BufferDeviceAddressFeatures;
-
     Device = CVulkanDevice::CreateDevice(GetInstance(), GetAdapter(), DeviceDesc);
     if (!Device)
     {

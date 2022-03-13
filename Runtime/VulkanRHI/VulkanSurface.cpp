@@ -64,13 +64,22 @@ bool CVulkanSurface::GetSupportedFormats(TArray<VkSurfaceFormatKHR>& OutSupporte
 
     uint32 FormatCount = 0;
     VkResult Result = vkGetPhysicalDeviceSurfaceFormatsKHR(Adapter->GetVkPhysicalDevice(), Surface, &FormatCount, nullptr);
+    if (Result == VK_ERROR_SURFACE_LOST_KHR)
+    {
+        return false;
+    }
+
     VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface formats");
 
     OutSupportedFormats.Resize(FormatCount);
 
     Result = vkGetPhysicalDeviceSurfaceFormatsKHR(Adapter->GetVkPhysicalDevice(), Surface, &FormatCount, OutSupportedFormats.Data());
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface formats");
+    if (Result == VK_ERROR_SURFACE_LOST_KHR)
+    {
+        return false;
+    }
 
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface formats");
     return true;
 }
 
@@ -80,13 +89,22 @@ bool CVulkanSurface::GetPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) 
 
     uint32 PresentModeCount = 0;
     VkResult Result = vkGetPhysicalDeviceSurfacePresentModesKHR(Adapter->GetVkPhysicalDevice(), Surface, &PresentModeCount, nullptr);
+    if (Result == VK_ERROR_SURFACE_LOST_KHR)
+    {
+        return false;
+    }
+    
     VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface presentation modes");
 
     OutPresentModes.Resize(PresentModeCount);
 
     Result = vkGetPhysicalDeviceSurfacePresentModesKHR(Adapter->GetVkPhysicalDevice(), Surface, &PresentModeCount, OutPresentModes.Data());
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface presentation modes");
+    if (Result == VK_ERROR_SURFACE_LOST_KHR)
+    {
+        return false;
+    }
 
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface presentation modes");
     return true;
 }
 
@@ -95,7 +113,11 @@ bool CVulkanSurface::GetCapabilities(VkSurfaceCapabilitiesKHR& OutCapabilities) 
     CVulkanPhysicalDevice* Adapter = GetDevice()->GetPhysicalDevice();
 
     VkResult Result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Adapter->GetVkPhysicalDevice(), Surface, &OutCapabilities);
-    VULKAN_CHECK_RESULT(Result, "Failed to get surface capabilities");
+    if (Result == VK_ERROR_SURFACE_LOST_KHR)
+    {
+        return false;
+    }
 
+    VULKAN_CHECK_RESULT(Result, "Failed to get surface capabilities");
     return true;
 }

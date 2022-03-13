@@ -23,6 +23,9 @@ class CWindowsDebugMisc final : public CPlatformDebugMisc
 {
 public:
 
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CPlatformDebugMisc Interface
+
     static FORCEINLINE void DebugBreak()
     {
         __debugbreak();

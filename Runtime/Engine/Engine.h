@@ -61,7 +61,7 @@ public:
     void Destroy();
 
     /** The main window of the app */
-    TSharedRef<CPlatformWindow> MainWindow;
+    CPlatformWindowRef MainWindow;
 
     /** The main viewport */
     TSharedRef<CRHIViewport> MainViewport;
