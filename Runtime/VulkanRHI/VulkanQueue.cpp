@@ -48,10 +48,10 @@ bool CVulkanQueue::ExecuteCommandBuffer(CVulkanCommandBuffer* const* CommandBuff
     SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     SubmitInfo.pNext = nullptr;
 
-    VULKAN_ERROR(WaitSemaphores.Size() == WaitStages.Size(), "The size of WaitSemaphores and WaitStages must be the same");
-
     if (!WaitSemaphores.IsEmpty())
     {
+        VULKAN_ERROR(WaitSemaphores.Size() == WaitStages.Size(), "The size of WaitSemaphores and WaitStages must be the same");
+        
         SubmitInfo.waitSemaphoreCount = WaitSemaphores.Size();
         SubmitInfo.pWaitSemaphores    = WaitSemaphores.Data();
         SubmitInfo.pWaitDstStageMask  = WaitStages.Data();
@@ -127,9 +127,42 @@ void CVulkanQueue::WaitForCompletion()
     vkQueueWaitIdle(CommandQueue);
 }
 
-void CVulkanQueue::Flush()
+bool CVulkanQueue::FlushWaitSemaphoresAndWait()
 {
-    ExecuteCommandBuffer(nullptr, 0, nullptr);
+    VkSubmitInfo SubmitInfo;
+    CMemory::Memzero(&SubmitInfo);
+
+    SubmitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    SubmitInfo.pNext                = nullptr;
+    SubmitInfo.commandBufferCount   = 0;
+    SubmitInfo.pCommandBuffers      = nullptr;
+    SubmitInfo.signalSemaphoreCount = 0;
+    SubmitInfo.pSignalSemaphores    = nullptr;
+
+    if (!WaitSemaphores.IsEmpty())
+    {
+        VULKAN_ERROR(WaitSemaphores.Size() == WaitStages.Size(), "The size of WaitSemaphores and WaitStages must be the same");
+        
+        SubmitInfo.waitSemaphoreCount = WaitSemaphores.Size();
+        SubmitInfo.pWaitSemaphores    = WaitSemaphores.Data();
+        SubmitInfo.pWaitDstStageMask  = WaitStages.Data();
+    }
+    else
+    {
+        SubmitInfo.waitSemaphoreCount = 0;
+        SubmitInfo.pWaitSemaphores    = nullptr;
+        SubmitInfo.pWaitDstStageMask  = nullptr;
+    }
+
+    VkResult Result = vkQueueSubmit(CommandQueue, 1, &SubmitInfo, VK_NULL_HANDLE);
+    VULKAN_CHECK_RESULT(Result, "vkQueueSubmit failed");
+
+    WaitSemaphores.Clear();
+    WaitStages.Clear();
+
+    SignalSemaphores.Clear();
 
     WaitForCompletion();
+
+    return true;
 }

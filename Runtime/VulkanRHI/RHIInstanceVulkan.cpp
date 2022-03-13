@@ -90,6 +90,8 @@ bool CRHIInstanceVulkan::Initialize(bool bEnableDebug)
         return false;
     }
 
+    DirectCommandQueue->SetName("Graphics Queue");
+
     DirectCommandContext = CVulkanCommandContext::CreateCommandContext(Device.Get(), DirectCommandQueue.Get());
     if (!DirectCommandContext)
     {

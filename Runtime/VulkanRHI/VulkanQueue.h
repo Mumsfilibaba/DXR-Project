@@ -27,7 +27,12 @@ public:
     void WaitForCompletion();
 
     // Create empty submit that waits for the semaphores and waits for completion
-    void Flush();
+    bool FlushWaitSemaphoresAndWait();
+
+    FORCEINLINE void SetName(const String& Name)
+    {
+        CVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), Name.CStr(), CommandQueue, VK_OBJECT_TYPE_QUEUE);
+    }
 
     FORCEINLINE VkQueue GetVkQueue() const
     {

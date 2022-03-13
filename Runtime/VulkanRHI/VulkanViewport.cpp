@@ -244,17 +244,13 @@ bool CVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
         Width  = InWidth;
         Height = InHeight;
 
-        // Makes sure that the semaphores are waited/signaled
-        Queue->AddWaitSemaphore(RenderSemaphores[SemaphoreIndex]->GetVkSemaphore(), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
-        Queue->Flush();
+        Queue->FlushWaitSemaphoresAndWait();
 
         if (!RecreateSwapchain())
         {
             VULKAN_WARNING("Resize FAILED");
             return false;
         }
-
-        AdvanceSemaphoreIndex();
 
         if (!AquireNextImage())
         {
@@ -332,7 +328,7 @@ bool CVulkanViewport::AquireNextImage()
     VkResult Result = SwapChain->AquireNextImage(ImageSemaphore.Get());
     VULKAN_CHECK_RESULT(Result, "Failed to aquire image");
     
-    // TOOD: Maybe change this, if maybe is not always desirable to have a wait/signal
+    // TOOD: Maybe change this, if maybe is not always desirable to always have a wait/signal
     Queue->AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     Queue->AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
     
