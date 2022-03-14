@@ -125,7 +125,9 @@ bool CD3D12DescriptorCache::Initialize()
 
 void CD3D12DescriptorCache::CommitGraphicsDescriptors(CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature)
 {
+#if 0
     TRACE_FUNCTION_SCOPE();
+#endif
 
     Assert(CmdBatch != nullptr);
     Assert(RootSignature != nullptr);
@@ -164,7 +166,9 @@ void CD3D12DescriptorCache::CommitGraphicsDescriptors(CD3D12CommandList& CmdList
 
 void CD3D12DescriptorCache::CommitComputeDescriptors(CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch, CD3D12RootSignature* RootSignature)
 {
+#if 0
     TRACE_FUNCTION_SCOPE();
+#endif
 
     Assert(CmdBatch != nullptr);
     Assert(RootSignature != nullptr);
