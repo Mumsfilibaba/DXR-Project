@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/RefCounted.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/SharedRef.h"
 
 #include "CoreApplication/CoreApplication.h"
 

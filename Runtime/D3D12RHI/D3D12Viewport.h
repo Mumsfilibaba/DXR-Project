@@ -22,9 +22,14 @@ public:
 
     bool Initialize();
 
-    virtual bool Resize(uint32 Width, uint32 Height) override final;
+    bool Present(bool VerticalSync);
+    
+public:
 
-    virtual bool Present(bool VerticalSync) override final;
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIViewport Interface
+
+    virtual bool Resize(uint32 Width, uint32 Height) override final;
 
     virtual void SetName(const String& Name) override final;
 

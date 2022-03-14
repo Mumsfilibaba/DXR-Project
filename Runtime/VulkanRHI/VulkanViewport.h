@@ -20,6 +20,8 @@ class CVulkanViewport final : public CRHIViewport, public CVulkanDeviceObject
 public:
 
     static TSharedRef<CVulkanViewport> CreateViewport(CVulkanDevice* InDevice, CVulkanQueue* InQueue, PlatformWindowHandle InWindowHandle, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight);
+	
+	bool Present(bool bVerticalSync);
 
     FORCEINLINE CVulkanSwapChain* GetSwapChain() const 
     { 
@@ -52,8 +54,6 @@ public:
     // CRHIViewport Interface
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
-
-    virtual bool Present(bool bVerticalSync) override final;
 
     virtual void SetName(const String& InName) override final;
 

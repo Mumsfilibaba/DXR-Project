@@ -42,13 +42,6 @@ public:
     virtual bool Resize(uint32 Width, uint32 Height) = 0;
 
     /**
-     * Swap the BackBuffers of the viewport
-     * 
-     * @param bVerticalSync: True if the swap should have VerticalSync enabled
-     */
-    virtual bool Present(bool bVerticalSync) = 0;
-
-    /**
      * Retrieve the current RenderTargetView of the viewport
      * 
      * @return: Returns the current RenderTargetView

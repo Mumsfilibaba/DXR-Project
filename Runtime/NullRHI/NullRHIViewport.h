@@ -30,13 +30,8 @@ public:
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final
     {
-        Width = InWidth;
+        Width  = InWidth;
         Height = InHeight;
-        return true;
-    }
-
-    virtual bool Present(bool bVerticalSync) override final
-    {
         return true;
     }
 
