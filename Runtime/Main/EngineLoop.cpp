@@ -130,7 +130,7 @@ bool CEngineLoop::PreInitialize()
 #if PLATFORM_MACOS
         ERHIType::Vulkan;
 #else
-        ERHIType::Vulkan;
+        ERHIType::D3D12;
 #endif
     if (!RHIInitialize(RenderApi))
     {

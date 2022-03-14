@@ -4,7 +4,7 @@
 #include "D3D12CommandList.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12CommandQueue
+// CD3D12CommandQueue
 
 class CD3D12CommandQueue : public CD3D12DeviceObject
 {

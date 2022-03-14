@@ -85,7 +85,7 @@ public:
 
     virtual CRHITimestampQuery*          CreateTimestampQuery() override final;
 
-    virtual CRHIViewport*                CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, ERHIFormat ColorFormat, ERHIFormat DepthFormat) override final;
+    virtual CRHIViewportRef              CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, ERHIFormat ColorFormat, ERHIFormat DepthFormat) override final;
 
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
     virtual bool UAVSupportsFormat(ERHIFormat Format) const override final;

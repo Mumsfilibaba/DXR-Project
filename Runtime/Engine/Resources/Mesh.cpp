@@ -9,7 +9,7 @@
 bool CMesh::Init(const SMeshData& Data)
 {
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
-    IndexCount = static_cast<uint32>(Data.Indices.Size());
+    IndexCount  = static_cast<uint32>(Data.Indices.Size());
 
     const uint32 BufferFlags = RHISupportsRayTracing() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
 

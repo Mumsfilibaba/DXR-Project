@@ -135,7 +135,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     }
 
     SRHIDepthStencilStateDesc DepthStencilStateInfo;
-    DepthStencilStateInfo.bDepthEnable = false;
+    DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
@@ -164,14 +164,14 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     }
 
     SRHIBlendStateDesc BlendStateInfo;
-    BlendStateInfo.bIndependentBlendEnable = false;
-    BlendStateInfo.RenderTarget[0].bBlendEnable = true;
-    BlendStateInfo.RenderTarget[0].SrcBlend = EBlend::SrcAlpha;
-    BlendStateInfo.RenderTarget[0].SrcBlendAlpha = EBlend::InvSrcAlpha;
-    BlendStateInfo.RenderTarget[0].DestBlend = EBlend::InvSrcAlpha;
+    BlendStateInfo.bIndependentBlendEnable        = false;
+    BlendStateInfo.RenderTarget[0].bBlendEnable   = true;
+    BlendStateInfo.RenderTarget[0].SrcBlend       = EBlend::SrcAlpha;
+    BlendStateInfo.RenderTarget[0].SrcBlendAlpha  = EBlend::InvSrcAlpha;
+    BlendStateInfo.RenderTarget[0].DestBlend      = EBlend::InvSrcAlpha;
     BlendStateInfo.RenderTarget[0].DestBlendAlpha = EBlend::Zero;
-    BlendStateInfo.RenderTarget[0].BlendOpAlpha = EBlendOp::Add;
-    BlendStateInfo.RenderTarget[0].BlendOp = EBlendOp::Add;
+    BlendStateInfo.RenderTarget[0].BlendOpAlpha   = EBlendOp::Add;
+    BlendStateInfo.RenderTarget[0].BlendOp        = EBlendOp::Add;
 
     TSharedRef<CRHIBlendState> BlendStateBlending = RHICreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
@@ -198,15 +198,15 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     }
 
     SRHIGraphicsPipelineStateDesc PSOProperties;
-    PSOProperties.ShaderState.VertexShader = VShader.Get();
-    PSOProperties.ShaderState.PixelShader = PShader.Get();
-    PSOProperties.InputLayoutState = InputLayout.Get();
-    PSOProperties.DepthStencilState = DepthStencilState.Get();
-    PSOProperties.BlendState = BlendStateBlending.Get();
-    PSOProperties.RasterizerState = RasterizerState.Get();
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = ERHIFormat::R8G8B8A8_Unorm;
-    PSOProperties.PipelineFormats.NumRenderTargets = 1;
-    PSOProperties.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
+    PSOProperties.ShaderState.VertexShader               = VShader.Get();
+    PSOProperties.ShaderState.PixelShader                = PShader.Get();
+    PSOProperties.InputLayoutState                       = InputLayout.Get();
+    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
+    PSOProperties.BlendState                             = BlendStateBlending.Get();
+    PSOProperties.RasterizerState                        = RasterizerState.Get();
+    PSOProperties.PipelineFormats.RenderTargetFormats[0] = ERHIFormat::B8G8R8A8_Unorm;
+    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
+    PSOProperties.PrimitiveTopologyType                  = ERHIPrimitiveTopologyType::Triangle;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)
@@ -249,7 +249,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     CreateInfo.AddressU = ERHISamplerMode::Clamp;
     CreateInfo.AddressV = ERHISamplerMode::Clamp;
     CreateInfo.AddressW = ERHISamplerMode::Clamp;
-    CreateInfo.Filter = ERHISamplerFilter::MinMagMipPoint;
+    CreateInfo.Filter   = ERHISamplerFilter::MinMagMipPoint;
 
     PointSampler = RHICreateSamplerState(CreateInfo);
     if (!PointSampler)
@@ -297,13 +297,15 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
     CmdList.Set32BitShaderConstants(PShader.Get(), &MVP, 16);
 
     CmdList.SetVertexBuffers(&VertexBuffer, 1, 0);
-    CmdList.SetIndexBuffer(IndexBuffer.Get());
+
+    constexpr ERHIIndexFormat IndexFormat = (sizeof(ImDrawIdx) == 2) ? ERHIIndexFormat::uint16 : ERHIIndexFormat::uint32;
+    CmdList.SetIndexBuffer(IndexBuffer.Get(), IndexFormat);
     CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
     CmdList.SetBlendFactor(SColorF(0.0f, 0.0f, 0.0f, 0.0f));
 
-    // TODO: Do not change to GenericRead, change to vertex/constantbuffer
+    // TODO: Do not change to GenericRead, change to vertex / constantbuffer
     CmdList.TransitionBuffer(VertexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest);
-    CmdList.TransitionBuffer(IndexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest);
+    CmdList.TransitionBuffer(IndexBuffer.Get() , ERHIResourceState::GenericRead, ERHIResourceState::CopyDest);
 
     uint32 VertexOffset = 0;
     uint32 IndexOffset = 0;
@@ -318,16 +320,17 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
         CmdList.UpdateBuffer(IndexBuffer.Get(), IndexOffset, IndexSize, ImCmdList->IdxBuffer.Data);
 
         VertexOffset += VertexSize;
-        IndexOffset += IndexSize;
+        IndexOffset  += IndexSize;
     }
 
     CmdList.TransitionBuffer(VertexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead);
-    CmdList.TransitionBuffer(IndexBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::GenericRead);
+    CmdList.TransitionBuffer(IndexBuffer.Get() , ERHIResourceState::CopyDest, ERHIResourceState::GenericRead);
 
     CmdList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
 
     int32  GlobalVertexOffset = 0;
-    int32  GlobalIndexOffset = 0;
+    int32  GlobalIndexOffset  = 0;
+
     ImVec2 ClipOff = DrawData->DisplayPos;
     for (int32 i = 0; i < DrawData->CmdListsCount; i++)
     {
@@ -368,7 +371,7 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
             CmdList.DrawIndexedInstanced(Cmd->ElemCount, 1, Cmd->IdxOffset + GlobalIndexOffset, Cmd->VtxOffset + GlobalVertexOffset, 0);
         }
 
-        GlobalIndexOffset += DrawCmdList->IdxBuffer.Size;
+        GlobalIndexOffset  += DrawCmdList->IdxBuffer.Size;
         GlobalVertexOffset += DrawCmdList->VtxBuffer.Size;
     }
 

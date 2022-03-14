@@ -539,7 +539,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
             if (Command.Material->ShouldRenderInPrePass())
             {
                 CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-                CmdList.SetIndexBuffer(Command.IndexBuffer);
+                CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
 
                 PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
@@ -653,7 +653,7 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
     for (const SMeshDrawCommand& Command : FrameResources.DeferredVisibleCommands)
     {
         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-        CmdList.SetIndexBuffer(Command.IndexBuffer);
+        CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
 
         if (Command.Material->IsBufferDirty())
         {

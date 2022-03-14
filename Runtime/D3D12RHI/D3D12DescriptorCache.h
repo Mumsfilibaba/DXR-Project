@@ -133,7 +133,7 @@ using CD3D12UnorderedAccessViewCache = TD3D12ViewCache<CD3D12UnorderedAccessView
 using CD3D12SamplerStateCache        = TD3D12ViewCache<CD3D12SamplerState       , D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER    , D3D12_DEFAULT_SAMPLER_STATE_COUNT>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12VertexBufferCache
+// CD3D12VertexBufferCache
 
 class CD3D12VertexBufferCache
 {
@@ -163,11 +163,14 @@ public:
         }
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12Buffer* InIndexBuffer)
+    FORCEINLINE void SetIndexBuffer(CD3D12Buffer* InIndexBuffer, ERHIIndexFormat InIndexFormat)
     {
-        if (IndexBuffer != InIndexBuffer)
+        DXGI_FORMAT D3dIndexFormat = (InIndexFormat == ERHIIndexFormat::uint32) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+        if ((IndexBuffer != InIndexBuffer) || (D3dIndexFormat != IndexFormat))
         {
             IndexBuffer = InIndexBuffer;
+            IndexFormat = D3dIndexFormat;
+
             bIndexBufferDirty = true;
         }
     }
@@ -204,13 +207,13 @@ public:
         {
             if (IndexBuffer)
             {
-                IndexBufferView.Format         = DXGI_FORMAT_R32_UINT;
+                IndexBufferView.Format         = IndexFormat;
                 IndexBufferView.BufferLocation = IndexBuffer->GetGPUVirtualAddress();
                 IndexBufferView.SizeInBytes    = IndexBuffer->GetSize();
             }
             else
             {
-                IndexBufferView.Format         = DXGI_FORMAT_R32_UINT;
+                IndexBufferView.Format         = IndexFormat;
                 IndexBufferView.BufferLocation = 0;
                 IndexBufferView.SizeInBytes    = 0;
             }
@@ -238,12 +241,13 @@ private:
     bool                     bVertexBuffersDirty;
 
     CD3D12Buffer*            IndexBuffer;
+    DXGI_FORMAT              IndexFormat;
     D3D12_INDEX_BUFFER_VIEW  IndexBufferView;
     bool                     bIndexBufferDirty;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RenderTargetState
+// CD3D12RenderTargetState
 
 class CD3D12RenderTargetState
 {
@@ -322,7 +326,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12DescriptorCache
+// CD3D12DescriptorCache
 
 class CD3D12DescriptorCache : public CD3D12DeviceObject
 {
@@ -342,9 +346,9 @@ public:
         VertexBufferCache.SetVertexBuffer(VertexBuffer, Slot);
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12Buffer* IndexBuffer)
+    FORCEINLINE void SetIndexBuffer(CD3D12Buffer* IndexBuffer, ERHIIndexFormat IndexFormat)
     {
-        VertexBufferCache.SetIndexBuffer(IndexBuffer);
+        VertexBufferCache.SetIndexBuffer(IndexBuffer, IndexFormat);
     }
 
     FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* RenderTargetView, uint32 Slot)
@@ -461,7 +465,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12ShaderConstantsCache
+// CD3D12ShaderConstantsCache
 
 class CD3D12ShaderConstantsCache
 {

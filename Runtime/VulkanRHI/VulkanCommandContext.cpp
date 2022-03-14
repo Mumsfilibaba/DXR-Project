@@ -1,6 +1,7 @@
 #include "VulkanCommandContext.h"
 #include "VulkanResourceView.h"
 #include "VulkanTexture.h"
+#include "VulkanViewport.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanCommandContext
@@ -37,17 +38,25 @@ bool CVulkanCommandContext::Initialize()
     return true;
 }
 
+void CVulkanCommandContext::FlushCommands()
+{
+    if (CommandBuffer.IsRecording())
+    {
+        VULKAN_ERROR(CommandBuffer.End(), "Failed to End CommandBuffer");
+
+        CVulkanCommandBuffer* SubmitCommandBuffer = GetCommandBuffer();
+        CommandQueue->ExecuteCommandBuffer(&SubmitCommandBuffer, 1, CommandBuffer.GetFence());
+    }
+}
+
 void CVulkanCommandContext::Begin()
 {
     VULKAN_ERROR(CommandBuffer.Begin(), "Failed to Begin CommandBuffer");
 }
 
-void CVulkanCommandContext::End()  
+void CVulkanCommandContext::End()
 {
-    VULKAN_ERROR(CommandBuffer.End(), "Failed to End CommandBuffer");
-
-    CVulkanCommandBuffer* SubmitCommandBuffer = &CommandBuffer;
-    CommandQueue->ExecuteCommandBuffer(&SubmitCommandBuffer, 1, CommandBuffer.GetFence());
+    FlushCommands();
 }
 
 void CVulkanCommandContext::BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
@@ -85,11 +94,11 @@ void CVulkanCommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessVie
 {
 }
 
-void CVulkanCommandContext::SetShadingRate(ERHIShadingRate ShadingRate)     
+void CVulkanCommandContext::SetShadingRate(ERHIShadingRate ShadingRate)
 {
 }
 
-void CVulkanCommandContext::SetShadingRateImage(CRHITexture2D* ShadingImage)
+void CVulkanCommandContext::SetShadingRateTexture(CRHITexture2D* ShadingImage)
 {
 }
 
@@ -123,7 +132,7 @@ void CVulkanCommandContext::SetVertexBuffers(CRHIBuffer* const* VertexBuffers, u
 {
 }
 
-void CVulkanCommandContext::SetIndexBuffer(CRHIBuffer* IndexBuffer)
+void CVulkanCommandContext::SetIndexBuffer(CRHIBuffer* IndexBuffer, ERHIIndexFormat IndexFormat)
 {
 }
 
@@ -292,22 +301,37 @@ void CVulkanCommandContext::DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTr
 {
 }
 
+void CVulkanCommandContext::PresentViewport(CRHIViewport* Viewport, bool bVerticalSync)
+{
+    FlushCommands();
+
+    CVulkanViewport* VulkanViewport = static_cast<CVulkanViewport*>(Viewport);
+    VulkanViewport->Present(bVerticalSync);
+}
+
 void CVulkanCommandContext::ClearState()
 {
+    Flush();
 }
 
 void CVulkanCommandContext::Flush()
 {
+    FlushCommands();
+
+    CommandQueue->WaitForCompletion();
 }
 
 void CVulkanCommandContext::InsertMarker(const String& Message)
 {
+    UNREFERENCED_VARIABLE(Message);
 }
 
 void CVulkanCommandContext::BeginExternalCapture()
 {
+    // TODO: Investigate the probability of this
 }
 
 void CVulkanCommandContext::EndExternalCapture()  
 {
+    // TODO: Investigate the probability of this
 }

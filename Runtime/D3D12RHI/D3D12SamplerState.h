@@ -31,7 +31,7 @@ public:
         OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
     }
 
-    bool Init(const D3D12_SAMPLER_DESC& InDesc)
+    bool Initialize(const D3D12_SAMPLER_DESC& InDesc)
     {
         OfflineHandle = OfflineHeap->Allocate(OfflineHeapIndex);
         if (OfflineHandle != 0)

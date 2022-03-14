@@ -8,7 +8,7 @@
 #include "D3D12DeviceChild.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12DescriptorHeap
+// CD3D12DescriptorHeap
 
 class CD3D12DescriptorHeap : public CD3D12DeviceObject, public CRefCounted
 {
@@ -78,7 +78,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12OfflineDescriptorHeap
+// CD3D12OfflineDescriptorHeap
 
 class CD3D12OfflineDescriptorHeap : public CD3D12DeviceObject, public CRefCounted
 {
@@ -164,7 +164,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12OnlineDescriptorHeap
+// CD3D12OnlineDescriptorHeap
 
 class CD3D12OnlineDescriptorHeap : public CD3D12DeviceObject, public CRefCounted
 {

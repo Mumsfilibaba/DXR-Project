@@ -184,7 +184,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     for (const SMeshDrawCommand& Command : FrameResources.ForwardVisibleCommands)
     {
         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-        CmdList.SetIndexBuffer(Command.IndexBuffer);
+        CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
 
         if (Command.Material->IsBufferDirty())
         {

@@ -200,7 +200,7 @@ void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& 
 
     CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
     CmdList.SetVertexBuffers(&SkyboxVertexBuffer, 1, 0);
-    CmdList.SetIndexBuffer(SkyboxIndexBuffer.Get());
+    CmdList.SetIndexBuffer(SkyboxIndexBuffer.Get(), ERHIIndexFormat::uint32);
     CmdList.SetGraphicsPipelineState(PipelineState.Get());
 
     struct SimpleCameraBuffer

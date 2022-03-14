@@ -274,10 +274,10 @@ CRHITimestampQuery* CRHIInstanceVulkan::CreateTimestampQuery()
     return NewQuery.ReleaseOwnership();
 }
 
-CRHIViewport* CRHIInstanceVulkan::CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, ERHIFormat ColorFormat, ERHIFormat DepthFormat)
+CRHIViewportRef CRHIInstanceVulkan::CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, ERHIFormat ColorFormat, ERHIFormat DepthFormat)
 {
     TSharedRef<CVulkanViewport> NewViewport = CVulkanViewport::CreateViewport(Device.Get(), DirectCommandQueue.Get(), WindowHandle, ColorFormat, Width, Height);
-    return NewViewport.ReleaseOwnership();
+    return NewViewport;
 }
 
 String CRHIInstanceVulkan::GetAdapterName() const

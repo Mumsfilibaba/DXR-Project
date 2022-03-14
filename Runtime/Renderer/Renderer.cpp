@@ -343,7 +343,7 @@ void CRenderer::PerformAABBDebugPass(CRHICommandList& InCmdList)
     InCmdList.SetConstantBuffer(AABBVertexShader.Get(), Resources.CameraBuffer.Get(), 0);
 
     InCmdList.SetVertexBuffers(&AABBVertexBuffer, 1, 0);
-    InCmdList.SetIndexBuffer(AABBIndexBuffer.Get());
+    InCmdList.SetIndexBuffer(AABBIndexBuffer.Get(), ERHIIndexFormat::uint32);
 
     for (const SMeshDrawCommand& Command : Resources.DeferredVisibleCommands)
     {
@@ -491,7 +491,7 @@ void CRenderer::Tick(const CScene& Scene)
 
         ShadingRateCmdList.TransitionTexture(ShadingImage.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::ShadingRateSource);
 
-        ShadingRateCmdList.SetShadingRateImage(ShadingImage.Get());
+        ShadingRateCmdList.SetShadingRateTexture(ShadingImage.Get());
 
         INSERT_DEBUG_CMDLIST_MARKER(ShadingRateCmdList, "End VRS Image");
     }
@@ -677,7 +677,7 @@ void CRenderer::Tick(const CScene& Scene)
         if (RHISupportsVariableRateShading())
         {
             MainCmdList.SetShadingRate(ERHIShadingRate::VRS_1x1);
-            MainCmdList.SetShadingRateImage(nullptr);
+            MainCmdList.SetShadingRateTexture(nullptr);
         }
 
         CApplicationInstance::Get().DrawWindows(MainCmdList);
@@ -694,6 +694,11 @@ void CRenderer::Tick(const CScene& Scene)
 #if 1
     MainCmdList.EndExternalCapture();
 #endif
+    
+    {
+        TRACE_SCOPE("Present");
+        MainCmdList.PresentViewport(Resources.MainWindowViewport.Get(), GVSyncEnabled.GetBool());
+    }
 
     CDispatchQueue::Get().WaitForAll();
 
@@ -718,11 +723,6 @@ void CRenderer::Tick(const CScene& Scene)
         FrameStatistics.NumDrawCalls      = CRHICommandQueue::Get().GetNumDrawCalls();
         FrameStatistics.NumDispatchCalls  = CRHICommandQueue::Get().GetNumDispatchCalls();
         FrameStatistics.NumRenderCommands = CRHICommandQueue::Get().GetNumCommands();
-    }
-
-    {
-        TRACE_SCOPE("Present");
-        Resources.MainWindowViewport->Present(GVSyncEnabled.GetBool());
     }
 }
 
@@ -788,7 +788,7 @@ void CRenderer::Release()
 
 void CRenderer::OnWindowResize(const SWindowResizeEvent& Event)
 {
-    const uint32 Width = Event.Width;
+    const uint32 Width  = Event.Width;
     const uint32 Height = Event.Height;
 
     if (!Resources.MainWindowViewport->Resize(Width, Height))

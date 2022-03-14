@@ -531,7 +531,7 @@ CRHISamplerStateRef CRHIInstanceD3D12::CreateSamplerState(const CRHISamplerState
     CMemory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor.Elements, sizeof(Desc.BorderColor));
 
     CD3D12SamplerStateRef NewSampler = dbg_new CD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap);
-    if (!(NewSampler && NewSampler->Init(Desc)))
+    if (!(NewSampler && NewSampler->Initialize(Desc)))
     {
         return nullptr;
     }
@@ -1302,20 +1302,18 @@ CRHITimestampQuery* CRHIInstanceD3D12::CreateTimestampQuery()
     return CD3D12TimestampQuery::Create(GetDevice());
 }
 
-CRHIViewport* CRHIInstanceD3D12::CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, ERHIFormat ColorFormat, ERHIFormat DepthFormat)
+CRHIViewportRef CRHIInstanceD3D12::CreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, ERHIFormat ColorFormat, ERHIFormat DepthFormat)
 {
     UNREFERENCED_VARIABLE(DepthFormat);
 
     // TODO: Take DepthFormat into account
     TSharedRef<CD3D12Viewport> Viewport = dbg_new CD3D12Viewport(GetDevice(), DirectCommandContext.Get(), reinterpret_cast<HWND>(WindowHandle), ColorFormat, Width, Height);
-    if (Viewport->Initialize())
+    if (Viewport && Viewport->Initialize())
     {
-        return Viewport.ReleaseOwnership();
+        return Viewport;
     }
-    else
-    {
-        return nullptr;
-    }
+
+    return nullptr;
 }
 
 bool CRHIInstanceD3D12::UAVSupportsFormat(ERHIFormat Format) const

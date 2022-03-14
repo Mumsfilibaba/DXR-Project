@@ -470,12 +470,12 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
                         Bottom = TransformMatrix.TransformPosition(Bottom);
 
                         SAABB Box;
-                        Box.Top = Top;
+                        Box.Top    = Top;
                         Box.Bottom = Bottom;
                         if (CameraFrustum.CheckAABB(Box))
                         {
                             CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-                            CmdList.SetIndexBuffer(Command.IndexBuffer);
+                            CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
 
                             ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
@@ -490,7 +490,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
                     for (const SMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
                     {
                         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-                        CmdList.SetIndexBuffer(Command.IndexBuffer);
+                        CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
 
                         ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
@@ -595,7 +595,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
             for (const SMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
             {
                 CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-                CmdList.SetIndexBuffer(Command.IndexBuffer);
+                CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
 
                 ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 

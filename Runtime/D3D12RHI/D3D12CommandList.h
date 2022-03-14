@@ -9,7 +9,7 @@
 class CD3D12ComputePipelineState;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12CommandList
+// CD3D12CommandList
 
 class CD3D12CommandList : public CD3D12DeviceObject
 {
@@ -50,7 +50,7 @@ public:
 
     FORCEINLINE bool Reset(CD3D12CommandAllocator& Allocator)
     {
-        bIsReady = true;
+        bIsRecording = true;
 
         HRESULT Result = CommandList->Reset(Allocator.GetAllocator(), nullptr);
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
@@ -63,7 +63,7 @@ public:
 
     FORCEINLINE bool Close()
     {
-        bIsReady = false;
+        bIsRecording = false;
 
         HRESULT Result = CommandList->Close();
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
@@ -275,9 +275,9 @@ public:
         CommandList->ResourceBarrier(1, &Barrier);
     }
 
-    FORCEINLINE bool IsReady() const
+    FORCEINLINE bool IsRecording() const
     {
-        return bIsReady;
+        return bIsRecording;
     }
 
     FORCEINLINE void SetName(const String& Name)
@@ -293,5 +293,5 @@ private:
     TComPtr<ID3D12GraphicsCommandList>  CommandList;
     TComPtr<ID3D12GraphicsCommandList5> CommandList5;
 
-    bool bIsReady = false;
+    bool bIsRecording = false;
 };

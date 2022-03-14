@@ -30,7 +30,7 @@ class CD3D12Device : public CRefCounted
 {
 public:
 
-    static TSharedRef<CD3D12Device> CreateDevice(CRHIInstanceD3D12* InInstance, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
+    static CD3D12DeviceRef CreateDevice(CRHIInstanceD3D12* InInstance, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
 
     bool Initialize();
 
@@ -174,27 +174,26 @@ private:
 
     CRHIInstanceD3D12* Instance = nullptr; 
 
-    TComPtr<IDXGIFactory2> Factory;
-    TComPtr<IDXGIAdapter1> Adapter;
-    TComPtr<ID3D12Device>  Device;
-    TComPtr<ID3D12Device5> DXRDevice;
-
+    TComPtr<IDXGIFactory2>       Factory;
+    TComPtr<IDXGIAdapter1>       Adapter;
+    uint32                       AdapterID = 0;
+    
+    TComPtr<ID3D12Device>        Device;
+    TComPtr<ID3D12Device5>       DXRDevice;
     TComPtr<IDXGraphicsAnalysis> GraphicsAnalysisInterface;
 
     D3D_FEATURE_LEVEL MinFeatureLevel    = D3D_FEATURE_LEVEL_12_0;
     D3D_FEATURE_LEVEL ActiveFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
-    D3D12_RAYTRACING_TIER            RayTracingTier          = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
-    D3D12_SAMPLER_FEEDBACK_TIER      SamplerFeedBackTier     = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
-    D3D12_MESH_SHADER_TIER           MeshShaderTier          = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
-    D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
-    uint32 VariableShadingRateTileSize = 0;
+    D3D12_RAYTRACING_TIER            RayTracingTier              = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+    D3D12_SAMPLER_FEEDBACK_TIER      SamplerFeedBackTier         = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
+    D3D12_MESH_SHADER_TIER           MeshShaderTier              = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+    D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier     = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
+    uint32                           VariableShadingRateTileSize = 0;
 
     HMODULE DXGILib  = 0;
     HMODULE D3D12Lib = 0;
     HMODULE PIXLib   = 0;
-
-    uint32 AdapterID = 0;
 
     bool bAllowTearing        = false;
     bool bEnableDebugLayer    = false;

@@ -53,7 +53,7 @@ void CD3D12TimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 I
 
 void CD3D12TimestampQuery::ResolveQueries(class CD3D12CommandContext& CommandContext)
 {
-    CD3D12CommandList CommandList = CommandContext.GetCommandList();
+    CD3D12CommandList& CommandList = CommandContext.GetCommandList();
 
     ID3D12CommandQueue*        Queue         = CommandContext.GetQueue().GetD3D12Queue();
     ID3D12GraphicsCommandList* DxCommandList = CommandList.GetGraphicsCommandList();

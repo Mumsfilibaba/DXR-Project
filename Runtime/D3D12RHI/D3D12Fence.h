@@ -56,6 +56,11 @@ public:
         }
     }
 
+    FORCEINLINE uint64 GetCompletedValue() const
+    {
+        return Fence->GetCompletedValue();
+    }
+
     FORCEINLINE bool Signal(uint64 Value)
     {
         HRESULT Result = Fence->Signal(Value);

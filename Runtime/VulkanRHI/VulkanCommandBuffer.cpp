@@ -11,6 +11,7 @@ CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanDevice* InDevice, EVulkanComma
     , Fence(InDevice)
     , CommandPool(InDevice, InType)
     , CommandBuffer(VK_NULL_HANDLE)
+    , bIsRecording(false)
 {
 }
 
@@ -19,6 +20,7 @@ CVulkanCommandBuffer::CVulkanCommandBuffer(CVulkanCommandBuffer&& Other)
     , Fence(Move(Other.Fence))
     , CommandPool(Move(Other.CommandPool))
     , CommandBuffer(Other.CommandBuffer)
+    , bIsRecording(false)
 {
     Other.CommandBuffer = VK_NULL_HANDLE;
 }

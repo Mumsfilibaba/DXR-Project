@@ -17,7 +17,30 @@ class CVulkanCommandContext : public IRHICommandContext, public CVulkanDeviceObj
 {
 public:
 
+    /** Create a new VulkanCommandContext */
     static CVulkanCommandContextRef CreateCommandContext(CVulkanDevice* InDevice, CVulkanQueue* InCommandQueue);
+
+    void FlushCommands();
+
+    FORCEINLINE CVulkanQueue* GetCommandQueue() const
+    {
+        return CommandQueue.Get();
+    }
+
+    FORCEINLINE CVulkanCommandBuffer* GetCommandBuffer()
+    {
+        return &CommandBuffer;
+    }
+
+    FORCEINLINE const CVulkanCommandBuffer* GetCommandBuffer() const
+    {
+        return &CommandBuffer;
+    }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // IRHICommandContext Interface
 
     virtual void Begin() override final;
     virtual void End()   override final;
@@ -30,7 +53,7 @@ public:
     virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor) override final;
 
     virtual void SetShadingRate(ERHIShadingRate ShadingRate)      override final;
-    virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) override final;
+    virtual void SetShadingRateTexture(CRHITexture2D* ShadingImage) override final;
 
     // TODO: Implement RenderPasses (For Vulkan)
     virtual void BeginRenderPass() override final;
@@ -44,7 +67,7 @@ public:
     virtual void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView) override final;
 
     virtual void SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
-    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer) override final;
+    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer, ERHIIndexFormat IndexFormat) override final;
 
     virtual void SetPrimitiveTopology(ERHIPrimitiveTopology PrimitveTopologyType) override final;
 
@@ -106,6 +129,8 @@ public:
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
 
     virtual void DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
+
+    virtual void PresentViewport(CRHIViewport* Viewport, bool bVerticalSync) override final;
 
     virtual void ClearState() override final;
 

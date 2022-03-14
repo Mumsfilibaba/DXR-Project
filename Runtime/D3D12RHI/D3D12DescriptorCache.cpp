@@ -108,7 +108,7 @@ bool CD3D12DescriptorCache::Initialize()
     SamplerDesc.MipLODBias     = 0.0f;
 
     NullSampler = dbg_new CD3D12SamplerState(GetDevice(), GD3D12RHIInstance->GetSamplerOfflineDescriptorHeap());
-    if (!NullSampler->Init(SamplerDesc))
+    if (!NullSampler->Initialize(SamplerDesc))
     {
         return false;
     }

@@ -60,12 +60,16 @@ public:
         VkResult Result = vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
         VULKAN_CHECK_RESULT(Result, "vkBeginCommandBuffer Failed");
 
+        bIsRecording = true;
+
         return true;
     }
 
     FORCEINLINE bool End()
     {
         VULKAN_CHECK_RESULT(vkEndCommandBuffer(CommandBuffer), "vkEndCommandBuffer Failed");
+
+        bIsRecording = false;
         return true;
     }
 
@@ -133,10 +137,17 @@ public:
         return CommandBuffer;
     }
     
+    FORCEINLINE bool IsRecording() const
+    {
+        return bIsRecording;
+    }
+
 private:
     CVulkanCommandPool   CommandPool;
     CVulkanFence         Fence;
 
     VkCommandBufferLevel Level;
     VkCommandBuffer      CommandBuffer;
+
+    bool                 bIsRecording;
 };

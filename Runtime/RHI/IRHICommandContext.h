@@ -2,6 +2,7 @@
 #include "RHITypes.h"
 #include "RHIResources.h"
 #include "RHIResourceViews.h"
+#include "RHIViewport.h"
 
 #include "Core/Containers/ArrayView.h"
 
@@ -74,7 +75,7 @@ public:
      * 
      * @param ShadingImage: Image containing the shading rate for the next upcoming draw-calls
      */
-    virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) = 0;
+    virtual void SetShadingRateTexture(CRHITexture2D* ShadingImage) = 0;
 
     /**
      * Begin a RenderPass 
@@ -137,8 +138,9 @@ public:
      * Set the current IndexBuffer 
      * 
      * @param IndexBuffer: IndexBuffer to use
+     * @param IndexFormat: Format that indices should use
      */
-    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer) = 0;
+    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer, ERHIIndexFormat IndexFormat) = 0;
 
     /**
      * Set the primitive topology 
@@ -445,6 +447,14 @@ public:
      * @param Depth: Number of rays in z-direction
      */ 
     virtual void DispatchRays(CRHIRayTracingScene* Scene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
+
+    /**
+     * Present a viewport
+     * 
+     * @param Viewport: Viewport to present
+     * @param bVerticalSync: Boolean that decides if the presentation should be synced with the displays refresh-rate
+     */
+    virtual void PresentViewport(CRHIViewport* Viewport, bool bVerticalSync) = 0;
 
     /**
      * Clears the state of the context, clearing all bound references currently bound

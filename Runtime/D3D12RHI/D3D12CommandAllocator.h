@@ -2,7 +2,7 @@
 #include "D3D12Device.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12CommandAllocator 
+// CD3D12CommandAllocator 
 
 class CD3D12CommandAllocator : public CD3D12DeviceObject
 {

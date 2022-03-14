@@ -45,7 +45,7 @@ bool CSandbox::Init()
 
     // Load Scene
     SSceneData SceneData;
-#if 1
+#if 0
     COBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
     SceneData.Scale = 0.015f;
 #else

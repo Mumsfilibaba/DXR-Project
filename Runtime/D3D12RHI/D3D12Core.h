@@ -12,7 +12,7 @@
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Error
+// D3D12 Log Macros
 
 #if !PRODUCTION_BUILD
 #define D3D12_ERROR_ALWAYS(ErrorMessage)                 \

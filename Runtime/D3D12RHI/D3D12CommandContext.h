@@ -32,7 +32,7 @@ struct SD3D12UploadAllocation
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12GPUResourceUploader
+// CD3D12GPUResourceUploader
 
 class CD3D12GPUResourceUploader : public CD3D12DeviceObject
 {
@@ -68,7 +68,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12CommandBatch
+// CD3D12CommandBatch
 
 class CD3D12CommandBatch
 {
@@ -84,7 +84,7 @@ public:
         {
             Resources.Clear();
             NativeResources.Clear();
-            DxResources.Clear();
+            D3dResources.Clear();
 
             GpuResourceUploader.Reset();
 
@@ -111,7 +111,7 @@ public:
     {
         if (InResource)
         {
-            DxResources.Emplace(MakeSharedRef<CD3D12Resource>(InResource));
+            D3dResources.Emplace(MakeSharedRef<CD3D12Resource>(InResource));
         }
     }
 
@@ -145,14 +145,16 @@ public:
 
     CD3D12Device* Device = nullptr;
 
+    uint64 AssignedFenceValue = 0;
+
     CD3D12CommandAllocator    CmdAllocator;
     CD3D12GPUResourceUploader GpuResourceUploader;
 
     TSharedRef<CD3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
     TSharedRef<CD3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
 
-    TArray<TSharedRef<CD3D12Resource>> DxResources;
-    TArray<TSharedRef<CRHIObject>>     Resources;
+    TArray<CD3D12ResourceRef>      D3dResources;
+    TArray<TSharedRef<CRHIObject>> Resources;
 
     TArray<TComPtr<ID3D12Resource>> NativeResources;
 };
@@ -211,7 +213,58 @@ class CD3D12CommandContext : public IRHICommandContext, public CD3D12DeviceObjec
 {
 public:
 
+    /** Create a new D3D12CommandContext */
     static CD3D12CommandContext* CreateContext(CD3D12Device* InDevice);
+    
+    void StartCommandRecording();
+    void FlushCommands();
+    
+    void UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
+
+    FORCEINLINE CD3D12CommandQueue& GetQueue()
+    {
+        return CommandQueue;
+    }
+
+    FORCEINLINE CD3D12CommandList& GetCommandList()
+    {
+        return CommandList;
+    }
+
+    FORCEINLINE uint32 GetCurrentEpochValue() const
+    {
+        uint32 MaxValue = NMath::Max<int32>((int32)CmdBatches.Size() - 1, 0);
+        return NMath::Min<uint32>(NextCmdBatch - 1, MaxValue);
+    }
+
+    FORCEINLINE void UnorderedAccessBarrier(CD3D12Resource* Resource)
+    {
+        D3D12_ERROR(Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
+        BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetD3D12Resource());
+    }
+
+    FORCEINLINE void TransitionResource(CD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
+    {
+        D3D12_ERROR(Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
+        D3D12_ERROR(Resource->GetHeapType() != D3D12_HEAP_TYPE_UPLOAD, "Resources from Upload-heap cannot be transitioned");
+
+        BarrierBatcher.AddTransitionBarrier(Resource->GetD3D12Resource(), BeforeState, AfterState);
+    }
+
+    FORCEINLINE void FlushResourceBarriers()
+    {
+        BarrierBatcher.FlushBarriers(CommandList);
+    }
+
+    FORCEINLINE void DestroyResource(CD3D12Resource* Resource)
+    {
+        CmdBatch->AddInUseResource(Resource);
+    }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // IRHICommandContext Interface
 
     virtual void Begin() override final;
     virtual void End() override final;
@@ -224,7 +277,7 @@ public:
     virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor) override final;
 
     virtual void SetShadingRate(ERHIShadingRate ShadingRate) override final;
-    virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) override final;
+    virtual void SetShadingRateTexture(CRHITexture2D* ShadingImage) override final;
 
     // TODO: Implement RenderPasses (For Vulkan)
     virtual void BeginRenderPass() override final;
@@ -238,7 +291,7 @@ public:
     virtual void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView) override final;
 
     virtual void SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
-    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer) override final;
+    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer, ERHIIndexFormat IndexFormat) override final;
 
     virtual void SetPrimitiveTopology(ERHIPrimitiveTopology PrimitveTopologyType) override final;
 
@@ -301,6 +354,8 @@ public:
 
     virtual void DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
 
+    virtual void PresentViewport(CRHIViewport* Viewport, bool bVerticalSync) override final;
+
     virtual void ClearState() override final;
 
     virtual void Flush() override final;
@@ -309,49 +364,6 @@ public:
 
     virtual void BeginExternalCapture() override final;
     virtual void EndExternalCapture() override final;
-
-public:
-    void UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
-
-    FORCEINLINE CD3D12CommandQueue& GetQueue()
-    {
-        return CommandQueue;
-    }
-
-    FORCEINLINE CD3D12CommandList& GetCommandList()
-    {
-        return CommandList;
-    }
-
-    FORCEINLINE uint32 GetCurrentEpochValue() const
-    {
-        uint32 MaxValue = NMath::Max<int32>((int32)CmdBatches.Size() - 1, 0);
-        return NMath::Min<uint32>(NextCmdBatch - 1, MaxValue);
-    }
-
-    FORCEINLINE void UnorderedAccessBarrier(CD3D12Resource* Resource)
-    {
-        D3D12_ERROR(Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
-        BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetD3D12Resource());
-    }
-
-    FORCEINLINE void TransitionResource(CD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
-    {
-        D3D12_ERROR(Resource != nullptr                              , "TransitionResource cannot be called with a nullptr resource");
-        D3D12_ERROR(Resource->GetHeapType() != D3D12_HEAP_TYPE_UPLOAD, "Resources from Upload-heap cannot be transitioned");
-
-        BarrierBatcher.AddTransitionBarrier(Resource->GetD3D12Resource(), BeforeState, AfterState);
-    }
-
-    FORCEINLINE void FlushResourceBarriers()
-    {
-        BarrierBatcher.FlushBarriers(CommandList);
-    }
-
-    FORCEINLINE void DestroyResource(CD3D12Resource* Resource)
-    {
-        CmdBatch->AddInUseResource(Resource);
-    }
 
 private:
 
@@ -384,6 +396,6 @@ private:
     CD3D12DescriptorCache        DescriptorCache;
     CD3D12ResourceBarrierBatcher BarrierBatcher;
 
-    bool bIsReady = false;
+    bool bIsReady     = false;
     bool bIsCapturing = false;
 };

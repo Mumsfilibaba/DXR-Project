@@ -3,11 +3,14 @@
 #include "IRHICommandContext.h"
 #include "RHIResources.h"
 #include "RHIResourceViews.h"
+#include "RHIViewport.h"
 
 #include "Core/Debug/Debug.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Logging/Log.h"
 #include "Core/Containers/ArrayView.h"
+
+#define DECLARE_RHICOMMAND(RHICommandName) class RHICommandName final : public TRHICommand<RHICommandName>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHICommand
@@ -17,150 +20,180 @@ class CRHICommand
 public:
     virtual ~CRHICommand() = default;
 
-    virtual void Execute(IRHICommandContext&) = 0;
+    virtual void Execute(IRHICommandContext& CommandContext)           = 0;
+    virtual void ExecuteAndRelease(IRHICommandContext& CommandContext) = 0;
 
-    FORCEINLINE void operator()(IRHICommandContext& CmdContext)
-    {
-        Execute(CmdContext);
-    }
-
-    CRHICommand* NextCmd = nullptr;
+    CRHICommand* NextCommand = nullptr;
 };
 
-// BeginTimeStamp RHICommand
-class CRHIBeginTimeStampCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TRHICommand
+
+template<typename CommandType>
+class TRHICommand : public CRHICommand
 {
 public:
-    CRHIBeginTimeStampCommand(CRHITimestampQuery* InProfiler, uint32 InIndex)
-        : Profiler(InProfiler)
+    TRHICommand()  = default;
+    ~TRHICommand() = default;
+
+    virtual void ExecuteAndRelease(IRHICommandContext& CommandContext) override final
+    {
+        CommandType* Command = static_cast<CommandType*>(this);
+        Command->Execute(CommandContext);
+        Command->~CommandType();
+    }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandBeginTimeStamp
+
+DECLARE_RHICOMMAND(CRHICommandBeginTimeStamp)
+{
+public:
+    FORCEINLINE CRHICommandBeginTimeStamp(CRHITimestampQuery* InQuery, uint32 InIndex)
+        : Query(InQuery)
         , Index(InIndex)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.BeginTimeStamp(Profiler.Get(), Index);
+        CommandContext.BeginTimeStamp(Query, Index);
     }
 
-    TSharedRef<CRHITimestampQuery> Profiler;
-    uint32 Index;
+    CRHITimestampQuery* Query;
+    uint32              Index;
 };
 
-// EndTimeStamp RHICommand
-class CRHIEndTimeStampCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandEndTimeStamp
+
+DECLARE_RHICOMMAND(CRHICommandEndTimeStamp)
 {
 public:
-    CRHIEndTimeStampCommand(CRHITimestampQuery* InProfiler, uint32 InIndex)
-        : Profiler(InProfiler)
+    FORCEINLINE CRHICommandEndTimeStamp(CRHITimestampQuery* InQuery, uint32 InIndex)
+        : Query(InQuery)
         , Index(InIndex)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.EndTimeStamp(Profiler.Get(), Index);
+        CommandContext.EndTimeStamp(Query, Index);
     }
 
-    TSharedRef<CRHITimestampQuery> Profiler;
-    uint32 Index;
+    CRHITimestampQuery* Query;
+    uint32              Index;
 };
 
-// Clear RenderTarget RHICommand
-class CRHIClearRenderTargetViewCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandClearRenderTargetView
+
+DECLARE_RHICOMMAND(CRHICommandClearRenderTargetView)
 {
 public:
-    CRHIClearRenderTargetViewCommand(CRHIRenderTargetView* InRenderTargetView, const SColorF& InClearColor)
+    FORCEINLINE CRHICommandClearRenderTargetView(CRHIRenderTargetView* InRenderTargetView, const SColorF& InClearColor)
         : RenderTargetView(InRenderTargetView)
         , ClearColor(InClearColor)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.ClearRenderTargetView(RenderTargetView.Get(), ClearColor);
+        CommandContext.ClearRenderTargetView(RenderTargetView, ClearColor);
     }
 
-    TSharedRef<CRHIRenderTargetView> RenderTargetView;
-    SColorF ClearColor;
+    CRHIRenderTargetView* RenderTargetView;
+    SColorF               ClearColor;
 };
 
-// Clear DepthStencil RHICommand
-class CRHIClearDepthStencilViewCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandClearDepthStencilView
+
+DECLARE_RHICOMMAND(CRHICommandClearDepthStencilView)
 {
 public:
-    CRHIClearDepthStencilViewCommand(CRHIDepthStencilView* InDepthStencilView, const SDepthStencil& InClearValue)
+    FORCEINLINE CRHICommandClearDepthStencilView(CRHIDepthStencilView* InDepthStencilView, const SDepthStencil& InClearValue)
         : DepthStencilView(InDepthStencilView)
         , ClearValue(InClearValue)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.ClearDepthStencilView(DepthStencilView.Get(), ClearValue);
+        CommandContext.ClearDepthStencilView(DepthStencilView, ClearValue);
     }
 
-    TSharedRef<CRHIDepthStencilView> DepthStencilView;
-    SDepthStencil ClearValue;
+    CRHIDepthStencilView* DepthStencilView;
+    SDepthStencil         ClearValue;
 };
 
-// Clear UnorderedAccessView RHICommand
-class CRHIClearUnorderedAccessViewFloatCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandClearUnorderedAccessViewFloat
+
+DECLARE_RHICOMMAND(CRHICommandClearUnorderedAccessViewFloat)
 {
 public:
-    CRHIClearUnorderedAccessViewFloatCommand(CRHIUnorderedAccessView* InUnorderedAccessView, const SColorF& InClearColor)
+    FORCEINLINE CRHICommandClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* InUnorderedAccessView, const SColorF& InClearColor)
         : UnorderedAccessView(InUnorderedAccessView)
         , ClearColor(InClearColor)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.ClearUnorderedAccessViewFloat(UnorderedAccessView.Get(), ClearColor);
+        CommandContext.ClearUnorderedAccessViewFloat(UnorderedAccessView, ClearColor);
     }
 
-    TSharedRef<CRHIUnorderedAccessView> UnorderedAccessView;
-    SColorF ClearColor;
+    CRHIUnorderedAccessView* UnorderedAccessView;
+    SColorF                  ClearColor;
 };
 
-// SetShadingRate RHICommand
-class CRHISetShadingRateCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetShadingRate
+
+DECLARE_RHICOMMAND(CRHICommandSetShadingRate)
 {
 public:
-    CRHISetShadingRateCommand(ERHIShadingRate ShadingRate)
+    FORCEINLINE CRHICommandSetShadingRate(ERHIShadingRate ShadingRate)
         : ShadingRate(ShadingRate)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetShadingRate(ShadingRate);
+        CommandContext.SetShadingRate(ShadingRate);
     }
 
     ERHIShadingRate ShadingRate;
 };
 
-// SetShadingRateImage RHICommand
-class CRHISetShadingRateImageCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetShadingRateTexture
+
+DECLARE_RHICOMMAND(CRHICommandSetShadingRateTexture)
 {
 public:
-    CRHISetShadingRateImageCommand(CRHITexture2D* InShadingImage)
+    FORCEINLINE CRHICommandSetShadingRateTexture(CRHITexture2D* InShadingImage)
         : ShadingImage(InShadingImage)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetShadingRateImage(ShadingImage.Get());
+        CommandContext.SetShadingRateTexture(ShadingImage);
     }
 
-    TSharedRef<CRHITexture2D> ShadingImage;
+    CRHITexture2D* ShadingImage;
 };
 
-// Set Viewport RHICommand
-class CRHISetViewportCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetViewport
+
+DECLARE_RHICOMMAND(CRHICommandSetViewport)
 {
 public:
-    CRHISetViewportCommand(float InWidth, float InHeight, float InMinDepth, float InMaxDepth, float InX, float InY)
+    FORCEINLINE CRHICommandSetViewport(float InWidth, float InHeight, float InMinDepth, float InMaxDepth, float InX, float InY)
         : Width(InWidth)
         , Height(InHeight)
         , MinDepth(InMinDepth)
@@ -170,9 +203,9 @@ public:
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetViewport(Width, Height, MinDepth, MaxDepth, x, y);
+        CommandContext.SetViewport(Width, Height, MinDepth, MaxDepth, x, y);
     }
 
     float Width;
@@ -183,11 +216,13 @@ public:
     float y;
 };
 
-// Set ScissorRect RHICommand
-class CRHISetScissorRectCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetScissorRect
+
+DECLARE_RHICOMMAND(CRHICommandSetScissorRect)
 {
 public:
-    CRHISetScissorRectCommand(float InWidth, float InHeight, float InX, float InY)
+    FORCEINLINE CRHICommandSetScissorRect(float InWidth, float InHeight, float InX, float InY)
         : Width(InWidth)
         , Height(InHeight)
         , x(InX)
@@ -195,9 +230,9 @@ public:
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetScissorRect(Width, Height, x, y);
+        CommandContext.SetScissorRect(Width, Height, x, y);
     }
 
     float Width;
@@ -206,156 +241,157 @@ public:
     float y;
 };
 
-// Set BlendFactor RHICommand
-class CRHISetBlendFactorCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetBlendFactor
+
+DECLARE_RHICOMMAND(CRHICommandSetBlendFactor)
 {
 public:
-    CRHISetBlendFactorCommand(const SColorF& InColor)
+    FORCEINLINE CRHICommandSetBlendFactor(const SColorF& InColor)
         : Color(InColor)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetBlendFactor(Color);
+        CommandContext.SetBlendFactor(Color);
     }
 
     SColorF Color;
 };
 
-// BeginRenderPass RHICommand
-class CRHIBeginRenderPassCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandBeginRenderPass
+
+DECLARE_RHICOMMAND(CRHICommandBeginRenderPass)
 {
 public:
-    CRHIBeginRenderPassCommand()
+    FORCEINLINE CRHICommandBeginRenderPass()
     {
         // Empty for now
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.BeginRenderPass();
+        CommandContext.BeginRenderPass();
     }
 };
 
-// End RHICommand
-class CRHIEndRenderPassCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandEndRenderPass
+
+DECLARE_RHICOMMAND(CRHICommandEndRenderPass)
 {
 public:
-    CRHIEndRenderPassCommand()
+    FORCEINLINE CRHICommandEndRenderPass()
     {
         // Empty for now
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.EndRenderPass();
+        CommandContext.EndRenderPass();
     }
 };
 
-// Bind PrimitiveTopology RHICommand
-class CRHISetPrimitiveTopologyCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetPrimitiveTopology
+
+DECLARE_RHICOMMAND(CRHICommandSetPrimitiveTopology)
 {
 public:
-    CRHISetPrimitiveTopologyCommand(ERHIPrimitiveTopology InPrimitiveTopologyType)
+    FORCEINLINE CRHICommandSetPrimitiveTopology(ERHIPrimitiveTopology InPrimitiveTopologyType)
         : PrimitiveTopologyType(InPrimitiveTopologyType)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetPrimitiveTopology(PrimitiveTopologyType);
+        CommandContext.SetPrimitiveTopology(PrimitiveTopologyType);
     }
 
     ERHIPrimitiveTopology PrimitiveTopologyType;
 };
 
-// Set VertexBuffers RHICommand
-class CRHISetVertexBuffersCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetVertexBuffers
+
+DECLARE_RHICOMMAND(CRHICommandSetVertexBuffers)
 {
 public:
-    CRHISetVertexBuffersCommand(CRHIBuffer** InVertexBuffers, uint32 InVertexBufferCount, uint32 InStartSlot)
+    FORCEINLINE CRHICommandSetVertexBuffers(CRHIBuffer** InVertexBuffers, uint32 InVertexBufferCount, uint32 InStartSlot)
         : VertexBuffers(InVertexBuffers)
         , VertexBufferCount(InVertexBufferCount)
         , StartSlot(InStartSlot)
     {
     }
 
-    ~CRHISetVertexBuffersCommand()
+    FORCEINLINE ~CRHICommandSetVertexBuffers()
     {
-        for (uint32 i = 0; i < VertexBufferCount; i++)
-        {
-            SafeRelease(VertexBuffers[i]);
-        }
-
         VertexBuffers = nullptr;
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetVertexBuffers(VertexBuffers, VertexBufferCount, StartSlot);
+        CommandContext.SetVertexBuffers(VertexBuffers, VertexBufferCount, StartSlot);
     }
 
     CRHIBuffer** VertexBuffers;
-
-    uint32 VertexBufferCount;
-    uint32 StartSlot;
+    uint32       VertexBufferCount;
+    uint32       StartSlot;
 };
 
-// Set IndexBuffer RHICommand
-class CRHISetIndexBufferCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetIndexBuffer
+
+DECLARE_RHICOMMAND(CRHICommandSetIndexBuffer)
 {
 public:
-    CRHISetIndexBufferCommand(const CRHIBufferRef InIndexBuffer)
+    FORCEINLINE CRHICommandSetIndexBuffer(CRHIBuffer* InIndexBuffer, ERHIIndexFormat InIndexFormat)
         : IndexBuffer(InIndexBuffer)
+        , IndexFormat(InIndexFormat)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetIndexBuffer(IndexBuffer.Get());
+        CommandContext.SetIndexBuffer(IndexBuffer, IndexFormat);
     }
 
-    CRHIBufferRef IndexBuffer;
+    CRHIBuffer*     IndexBuffer;
+    ERHIIndexFormat IndexFormat;
 };
 
-// Set RenderTargets RHICommand
-class CRHISetRenderTargetsCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetRenderTargets
+
+DECLARE_RHICOMMAND(CRHICommandSetRenderTargets)
 {
 public:
-    CRHISetRenderTargetsCommand(CRHIRenderTargetView** InRenderTargetViews, uint32 InRenderTargetViewCount, const TSharedRef<CRHIDepthStencilView>& InDepthStencilView)
+    FORCEINLINE CRHICommandSetRenderTargets(CRHIRenderTargetView** InRenderTargetViews, uint32 InRenderTargetViewCount, CRHIDepthStencilView* InDepthStencilView)
         : RenderTargetViews(InRenderTargetViews)
         , RenderTargetViewCount(InRenderTargetViewCount)
         , DepthStencilView(InDepthStencilView)
     {
     }
 
-    ~CRHISetRenderTargetsCommand()
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        for (uint32 i = 0; i < RenderTargetViewCount; i++)
-        {
-            SafeRelease(RenderTargetViews[i]);
-        }
-
-        RenderTargetViews = nullptr;
-    }
-
-    virtual void Execute(IRHICommandContext& CmdContext) override
-    {
-        CmdContext.SetRenderTargets(RenderTargetViews, RenderTargetViewCount, DepthStencilView.Get());
+        CommandContext.SetRenderTargets(RenderTargetViews, RenderTargetViewCount, DepthStencilView);
     }
 
     CRHIRenderTargetView** RenderTargetViews;
-    uint32 RenderTargetViewCount;
-
-    TSharedRef<CRHIDepthStencilView> DepthStencilView;
+    uint32                 RenderTargetViewCount;
+    CRHIDepthStencilView*  DepthStencilView;
 };
 
-// SetRayTracingBindings RHICommand
-class CRHISetRayTracingBindingsCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetRayTracingBindings
+
+DECLARE_RHICOMMAND(CRHICommandSetRayTracingBindings)
 {
 public:
-    CRHISetRayTracingBindingsCommand(
+    FORCEINLINE CRHICommandSetRayTracingBindings(
         CRHIRayTracingScene* InRayTracingScene,
         CRHIRayTracingPipelineState* InPipelineState,
         const SRayTracingShaderResources* InGlobalResources,
@@ -373,105 +409,111 @@ public:
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetRayTracingBindings(Scene.Get(), PipelineState.Get(), GlobalResources, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
+        CommandContext.SetRayTracingBindings(Scene, PipelineState, GlobalResources, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
 
-    TSharedRef<CRHIRayTracingScene>         Scene;
-    TSharedRef<CRHIRayTracingPipelineState> PipelineState;
-
+    CRHIRayTracingScene*              Scene;
+    CRHIRayTracingPipelineState*      PipelineState;
     const SRayTracingShaderResources* GlobalResources;
     const SRayTracingShaderResources* RayGenLocalResources;
     const SRayTracingShaderResources* MissLocalResources;
     const SRayTracingShaderResources* HitGroupResources;
-
-    uint32 NumHitGroupResources;
+    uint32                            NumHitGroupResources;
 };
 
-// Set GraphicsPipelineState RHICommand
-class CRHISetGraphicsPipelineStateCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetGraphicsPipelineState
+
+DECLARE_RHICOMMAND(CRHICommandSetGraphicsPipelineState)
 {
 public:
-    CRHISetGraphicsPipelineStateCommand(CRHIGraphicsPipelineState* InPipelineState)
+    FORCEINLINE CRHICommandSetGraphicsPipelineState(CRHIGraphicsPipelineState* InPipelineState)
         : PipelineState(InPipelineState)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetGraphicsPipelineState(PipelineState.Get());
+        CommandContext.SetGraphicsPipelineState(PipelineState);
     }
 
-    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
+    CRHIGraphicsPipelineState* PipelineState;
 };
 
-// Bind ComputePipelineState RHICommand
-class CRHISetComputePipelineStateCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetComputePipelineState
+
+DECLARE_RHICOMMAND(CRHICommandSetComputePipelineState)
 {
 public:
-    CRHISetComputePipelineStateCommand(CRHIComputePipelineState* InPipelineState)
+    FORCEINLINE CRHICommandSetComputePipelineState(CRHIComputePipelineState* InPipelineState)
         : PipelineState(InPipelineState)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetComputePipelineState(PipelineState.Get());
+        CommandContext.SetComputePipelineState(PipelineState);
     }
 
-    TSharedRef<CRHIComputePipelineState> PipelineState;
+    CRHIComputePipelineState* PipelineState;
 };
 
-// Set UseShaderResourceViews RHICommand
-class CRHISet32BitShaderConstantsCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSet32BitShaderConstants
+
+DECLARE_RHICOMMAND(CRHICommandSet32BitShaderConstants)
 {
 public:
-    CRHISet32BitShaderConstantsCommand(CRHIShader* InShader, const void* InShader32BitConstants, uint32 InNum32BitConstants)
+    FORCEINLINE CRHICommandSet32BitShaderConstants(CRHIShader* InShader, const void* InShader32BitConstants, uint32 InNum32BitConstants)
         : Shader(InShader)
         , Shader32BitConstants(InShader32BitConstants)
         , Num32BitConstants(InNum32BitConstants)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.Set32BitShaderConstants(Shader.Get(), Shader32BitConstants, Num32BitConstants);
+        CommandContext.Set32BitShaderConstants(Shader, Shader32BitConstants, Num32BitConstants);
     }
 
-    TSharedRef<CRHIShader> Shader;
-
+    CRHIShader* Shader;
     const void* Shader32BitConstants;
     uint32      Num32BitConstants;
 };
 
-// Set ShaderResourceViewCommand
-class CRHISetShaderResourceViewCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetShaderResourceView
+
+DECLARE_RHICOMMAND(CRHICommandSetShaderResourceView)
 {
 public:
-    CRHISetShaderResourceViewCommand(CRHIShader* InShader, CRHIShaderResourceView* InShaderResourceView, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetShaderResourceView(CRHIShader* InShader, CRHIShaderResourceView* InShaderResourceView, uint32 InParameterIndex)
         : Shader(InShader)
         , ShaderResourceView(InShaderResourceView)
         , ParameterIndex(InParameterIndex)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetShaderResourceView(Shader.Get(), ShaderResourceView.Get(), ParameterIndex);
+        CommandContext.SetShaderResourceView(Shader, ShaderResourceView, ParameterIndex);
     }
 
-    TSharedRef<CRHIShader>             Shader;
-    TSharedRef<CRHIShaderResourceView> ShaderResourceView;
-
-    uint32 ParameterIndex;
+    CRHIShader*             Shader;
+    CRHIShaderResourceView* ShaderResourceView;
+    uint32                  ParameterIndex;
 };
 
-// Set ShaderResourceViewsCommand
-class CRHISetShaderResourceViewsCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetShaderResourceViews
+
+DECLARE_RHICOMMAND(CRHICommandSetShaderResourceViews)
 {
 public:
-    CRHISetShaderResourceViewsCommand(CRHIShader* InShader, CRHIShaderResourceView** InShaderResourceViews, uint32 InNumShaderResourceViews, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetShaderResourceViews(CRHIShader* InShader, CRHIShaderResourceView** InShaderResourceViews, uint32 InNumShaderResourceViews, uint32 InParameterIndex)
         : Shader(InShader)
         , ShaderResourceViews(InShaderResourceViews)
         , NumShaderResourceViews(InNumShaderResourceViews)
@@ -479,55 +521,47 @@ public:
     {
     }
 
-    ~CRHISetShaderResourceViewsCommand()
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        for (uint32 i = 0; i < NumShaderResourceViews; i++)
-        {
-            SafeRelease(ShaderResourceViews[i]);
-        }
-
-        ShaderResourceViews = nullptr;
+        CommandContext.SetShaderResourceViews(Shader, ShaderResourceViews, NumShaderResourceViews, ParameterIndex);
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
-    {
-        CmdContext.SetShaderResourceViews(Shader.Get(), ShaderResourceViews, NumShaderResourceViews, ParameterIndex);
-    }
-
-    TSharedRef<CRHIShader>   Shader;
+    CRHIShader*              Shader;
     CRHIShaderResourceView** ShaderResourceViews;
-
-    uint32 NumShaderResourceViews;
-    uint32 ParameterIndex;
+    uint32                   NumShaderResourceViews;
+    uint32                   ParameterIndex;
 };
 
-// Set UnorderedAccessViewCommand
-class CRHISetUnorderedAccessViewCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetUnorderedAccessView
+
+DECLARE_RHICOMMAND(CRHICommandSetUnorderedAccessView)
 {
 public:
-    CRHISetUnorderedAccessViewCommand(CRHIShader* InShader, CRHIUnorderedAccessView* InUnorderedAccessView, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetUnorderedAccessView(CRHIShader* InShader, CRHIUnorderedAccessView* InUnorderedAccessView, uint32 InParameterIndex)
         : Shader(InShader)
         , UnorderedAccessView(InUnorderedAccessView)
         , ParameterIndex(InParameterIndex)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetUnorderedAccessView(Shader.Get(), UnorderedAccessView.Get(), ParameterIndex);
+        CommandContext.SetUnorderedAccessView(Shader, UnorderedAccessView, ParameterIndex);
     }
 
-    TSharedRef<CRHIShader>              Shader;
-    TSharedRef<CRHIUnorderedAccessView> UnorderedAccessView;
-
-    uint32 ParameterIndex;
+    CRHIShader*              Shader;
+    CRHIUnorderedAccessView* UnorderedAccessView;
+    uint32                   ParameterIndex;
 };
 
-// Set UnorderedAccessViewsCommand
-class CRHISetUnorderedAccessViewsCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetUnorderedAccessViews
+
+DECLARE_RHICOMMAND(CRHICommandSetUnorderedAccessViews)
 {
 public:
-    CRHISetUnorderedAccessViewsCommand(CRHIShader* InShader, CRHIUnorderedAccessView** InUnorderedAccessViews, uint32 InNumUnorderedAccessViews, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetUnorderedAccessViews(CRHIShader* InShader, CRHIUnorderedAccessView** InUnorderedAccessViews, uint32 InNumUnorderedAccessViews, uint32 InParameterIndex)
         : Shader(InShader)
         , UnorderedAccessViews(InUnorderedAccessViews)
         , NumUnorderedAccessViews(InNumUnorderedAccessViews)
@@ -535,55 +569,47 @@ public:
     {
     }
 
-    ~CRHISetUnorderedAccessViewsCommand()
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        for (uint32 i = 0; i < NumUnorderedAccessViews; i++)
-        {
-            SafeRelease(UnorderedAccessViews[i]);
-        }
-
-        UnorderedAccessViews = nullptr;
+        CommandContext.SetUnorderedAccessViews(Shader, UnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
-    {
-        CmdContext.SetUnorderedAccessViews(Shader.Get(), UnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
-    }
-
-    TSharedRef<CRHIShader>    Shader;
+    CRHIShader*               Shader;
     CRHIUnorderedAccessView** UnorderedAccessViews;
-
-    uint32 NumUnorderedAccessViews;
-    uint32 ParameterIndex;
+    uint32                    NumUnorderedAccessViews;
+    uint32                    ParameterIndex;
 };
 
-// Set ConstantBufferCommand
-class CRHISetConstantBufferCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetConstantBuffer
+
+DECLARE_RHICOMMAND(CRHICommandSetConstantBuffer)
 {
 public:
-    CRHISetConstantBufferCommand(CRHIShader* InShader, CRHIBuffer* InConstantBuffer, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetConstantBuffer(CRHIShader* InShader, CRHIBuffer* InConstantBuffer, uint32 InParameterIndex)
         : Shader(InShader)
         , ConstantBuffer(InConstantBuffer)
         , ParameterIndex(InParameterIndex)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetConstantBuffer(Shader.Get(), ConstantBuffer.Get(), ParameterIndex);
+        CommandContext.SetConstantBuffer(Shader, ConstantBuffer, ParameterIndex);
     }
 
-    TSharedRef<CRHIShader>         Shader;
-    TSharedRef<CRHIBuffer> ConstantBuffer;
-
-    uint32 ParameterIndex;
+    CRHIShader* Shader;
+    CRHIBuffer* ConstantBuffer;
+    uint32      ParameterIndex;
 };
 
-// Set ConstantBuffersCommand
-class CRHISetConstantBuffersCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetConstantBuffers
+
+DECLARE_RHICOMMAND(CRHICommandSetConstantBuffers)
 {
 public:
-    CRHISetConstantBuffersCommand(CRHIShader* InShader, CRHIBuffer** InConstantBuffers, uint32 InNumConstantBuffers, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetConstantBuffers(CRHIShader* InShader, CRHIBuffer** InConstantBuffers, uint32 InNumConstantBuffers, uint32 InParameterIndex)
         : Shader(InShader)
         , ConstantBuffers(InConstantBuffers)
         , NumConstantBuffers(InNumConstantBuffers)
@@ -591,55 +617,47 @@ public:
     {
     }
 
-    ~CRHISetConstantBuffersCommand()
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        for (uint32 i = 0; i < NumConstantBuffers; i++)
-        {
-            SafeRelease(ConstantBuffers[i]);
-        }
-
-        ConstantBuffers = nullptr;
+        CommandContext.SetConstantBuffers(Shader, ConstantBuffers, NumConstantBuffers, ParameterIndex);
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
-    {
-        CmdContext.SetConstantBuffers(Shader.Get(), ConstantBuffers, NumConstantBuffers, ParameterIndex);
-    }
-
-    TSharedRef<CRHIShader> Shader;
+    CRHIShader*  Shader;
     CRHIBuffer** ConstantBuffers;
-
-    uint32 NumConstantBuffers;
-    uint32 ParameterIndex;
+    uint32       NumConstantBuffers;
+    uint32       ParameterIndex;
 };
 
-// Set SamplerStateCommand
-class CRHISetSamplerStateCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetSamplerState
+
+DECLARE_RHICOMMAND(CRHICommandSetSamplerState)
 {
 public:
-    CRHISetSamplerStateCommand(CRHIShader* InShader, CRHISamplerState* InSamplerState, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetSamplerState(CRHIShader* InShader, CRHISamplerState* InSamplerState, uint32 InParameterIndex)
         : Shader(InShader)
         , SamplerState(InSamplerState)
         , ParameterIndex(InParameterIndex)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.SetSamplerState(Shader.Get(), SamplerState.Get(), ParameterIndex);
+        CommandContext.SetSamplerState(Shader, SamplerState, ParameterIndex);
     }
 
-    TSharedRef<CRHIShader>       Shader;
-    TSharedRef<CRHISamplerState> SamplerState;
-
-    uint32 ParameterIndex;
+    CRHIShader*       Shader;
+    CRHISamplerState* SamplerState;
+    uint32            ParameterIndex;
 };
 
-// Set SamplerStatesCommand
-class CRHISetSamplerStatesCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetSamplerStates
+
+DECLARE_RHICOMMAND(CRHICommandSetSamplerStates)
 {
 public:
-    CRHISetSamplerStatesCommand(CRHIShader* InShader, CRHISamplerState** InSamplerStates, uint32 InNumSamplerStates, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetSamplerStates(CRHIShader* InShader, CRHISamplerState** InSamplerStates, uint32 InNumSamplerStates, uint32 InParameterIndex)
         : Shader(InShader)
         , SamplerStates(InSamplerStates)
         , NumSamplerStates(InNumSamplerStates)
@@ -647,78 +665,72 @@ public:
     {
     }
 
-    ~CRHISetSamplerStatesCommand()
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        for (uint32 i = 0; i < NumSamplerStates; i++)
-        {
-            SafeRelease(SamplerStates[i]);
-        }
-
-        SamplerStates = nullptr;
+        CommandContext.SetSamplerStates(Shader, SamplerStates, NumSamplerStates, ParameterIndex);
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
-    {
-        CmdContext.SetSamplerStates(Shader.Get(), SamplerStates, NumSamplerStates, ParameterIndex);
-    }
-
-    TSharedRef<CRHIShader> Shader;
+    CRHIShader*        Shader;
     CRHISamplerState** SamplerStates;
-
-    uint32 NumSamplerStates;
-    uint32 ParameterIndex;
+    uint32             NumSamplerStates;
+    uint32             ParameterIndex;
 };
 
-// Resolve Texture RHICommand
-class CRHIResolveTextureCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandResolveTexture
+
+DECLARE_RHICOMMAND(CRHICommandResolveTexture)
 {
 public:
-    CRHIResolveTextureCommand(CRHITexture* InDestination, CRHITexture* InSource)
+    FORCEINLINE CRHICommandResolveTexture(CRHITexture* InDestination, CRHITexture* InSource)
         : Destination(InDestination)
         , Source(InSource)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.ResolveTexture(Destination.Get(), Source.Get());
+        CommandContext.ResolveTexture(Destination, Source);
     }
 
-    TSharedRef<CRHITexture> Destination;
-    TSharedRef<CRHITexture> Source;
+    CRHITexture* Destination;
+    CRHITexture* Source;
 };
 
-// Update Buffer RHICommand
-class CRHIUpdateBufferCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandUpdateBuffer
+
+DECLARE_RHICOMMAND(CRHICommandUpdateBuffer)
 {
 public:
-    CRHIUpdateBufferCommand(CRHIBuffer* InDestination, uint64 InDestinationOffsetInBytes, uint64 InSizeInBytes, const void* InSourceData)
+    FORCEINLINE CRHICommandUpdateBuffer(CRHIBuffer* InDestination, uint64 InDestinationOffsetInBytes, uint64 InSizeInBytes, const void* InSourceData)
         : Destination(InDestination)
         , DestinationOffsetInBytes(InDestinationOffsetInBytes)
         , SizeInBytes(InSizeInBytes)
         , SourceData(InSourceData)
     {
-        Assert(InSourceData != nullptr);
+        Assert(InSourceData  != nullptr);
         Assert(InSizeInBytes != 0);
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.UpdateBuffer(Destination.Get(), DestinationOffsetInBytes, SizeInBytes, SourceData);
+        CommandContext.UpdateBuffer(Destination, DestinationOffsetInBytes, SizeInBytes, SourceData);
     }
 
-    CRHIBufferRef Destination;
-    uint64 DestinationOffsetInBytes;
-    uint64 SizeInBytes;
-    
+    CRHIBuffer* Destination;
+    uint64      DestinationOffsetInBytes;
+    uint64      SizeInBytes;
     const void* SourceData;
 };
 
-// Update Texture2D RHICommand
-class CRHIUpdateTexture2DCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandUpdateTexture2D
+
+DECLARE_RHICOMMAND(CRHICommandUpdateTexture2D)
 {
 public:
-    CRHIUpdateTexture2DCommand(CRHITexture2D* InDestination, uint32 InWidth, uint32 InHeight, uint32 InMipLevel, const void* InSourceData)
+    FORCEINLINE CRHICommandUpdateTexture2D(CRHITexture2D* InDestination, uint32 InWidth, uint32 InHeight, uint32 InMipLevel, const void* InSourceData)
         : Destination(InDestination)
         , Width(InWidth)
         , Height(InHeight)
@@ -728,120 +740,130 @@ public:
         Assert(InSourceData != nullptr);
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.UpdateTexture2D(Destination.Get(), Width, Height, MipLevel, SourceData);
+        CommandContext.UpdateTexture2D(Destination, Width, Height, MipLevel, SourceData);
     }
 
-    TSharedRef<CRHITexture2D> Destination;
-    uint32 Width;
-    uint32 Height;
-    uint32 MipLevel;
-    const void* SourceData;
+    CRHITexture2D* Destination;
+    uint32         Width;
+    uint32         Height;
+    uint32         MipLevel;
+    const void*    SourceData;
 };
 
-// Copy Buffer RHICommand
-class CRHICopyBufferCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandCopyBuffer
+
+DECLARE_RHICOMMAND(CRHICommandCopyBuffer)
 {
 public:
-    CRHICopyBufferCommand(CRHIBuffer* InDestination, CRHIBuffer* InSource, const SRHICopyBufferInfo& InCopyBufferInfo)
+    FORCEINLINE CRHICommandCopyBuffer(CRHIBuffer* InDestination, CRHIBuffer* InSource, const SRHICopyBufferInfo& InCopyBufferInfo)
         : Destination(InDestination)
         , Source(InSource)
         , CopyBufferInfo(InCopyBufferInfo)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.CopyBuffer(Destination.Get(), Source.Get(), CopyBufferInfo);
+        CommandContext.CopyBuffer(Destination, Source, CopyBufferInfo);
     }
 
-    CRHIBufferRef Destination;
-    CRHIBufferRef Source;
-    
+    CRHIBuffer*        Destination;
+    CRHIBuffer*        Source;
     SRHICopyBufferInfo CopyBufferInfo;
 };
 
-// Copy Texture RHICommand
-class CRHICopyTextureCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandCopyTexture
+
+DECLARE_RHICOMMAND(CRHICommandCopyTexture)
 {
 public:
-    CRHICopyTextureCommand(CRHITexture* InDestination, CRHITexture* InSource)
+    FORCEINLINE CRHICommandCopyTexture(CRHITexture* InDestination, CRHITexture* InSource)
         : Destination(InDestination)
         , Source(InSource)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.CopyTexture(Destination.Get(), Source.Get());
+        CommandContext.CopyTexture(Destination, Source);
     }
 
-    TSharedRef<CRHITexture> Destination;
-    TSharedRef<CRHITexture> Source;
+    CRHITexture* Destination;
+    CRHITexture* Source;
 };
 
-// Copy Texture RHICommand
-class CRHICopyTextureRegionCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandCopyTextureRegion
+
+DECLARE_RHICOMMAND(CRHICommandCopyTextureRegion)
 {
 public:
-    CRHICopyTextureRegionCommand(CRHITexture* InDestination, CRHITexture* InSource, const SRHICopyTextureInfo& InCopyTextureInfo)
+    FORCEINLINE CRHICommandCopyTextureRegion(CRHITexture* InDestination, CRHITexture* InSource, const SRHICopyTextureInfo& InCopyTextureInfo)
         : Destination(InDestination)
         , Source(InSource)
         , CopyTextureInfo(InCopyTextureInfo)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.CopyTextureRegion(Destination.Get(), Source.Get(), CopyTextureInfo);
+        CommandContext.CopyTextureRegion(Destination, Source, CopyTextureInfo);
     }
 
-    TSharedRef<CRHITexture> Destination;
-    TSharedRef<CRHITexture> Source;
-    
+    CRHITexture*        Destination;
+    CRHITexture*        Source;
     SRHICopyTextureInfo CopyTextureInfo;
 };
 
-// Destroy Resource RHICommand
-class CRHIDestroyResourceCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandDestroyResource
+
+DECLARE_RHICOMMAND(CRHICommandDestroyResource)
 {
 public:
-    CRHIDestroyResourceCommand(CRHIObject* InResource)
+    FORCEINLINE CRHICommandDestroyResource(CRHIObject* InResource)
         : Resource(InResource)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.DestroyResource(Resource.Get());
+        CommandContext.DestroyResource(Resource);
     }
 
-    TSharedRef<CRHIObject> Resource;
+    CRHIObject* Resource;
 };
 
-// Discard Resource RHICommand
-class CRHIDiscardContentsCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandDiscardContents
+
+DECLARE_RHICOMMAND(CRHICommandDiscardContents)
 {
 public:
-    CRHIDiscardContentsCommand(CRHIResource* InResource)
+    FORCEINLINE CRHICommandDiscardContents(CRHIResource* InResource)
         : Resource(InResource)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.DiscardContents(Resource.Get());
+        CommandContext.DiscardContents(Resource);
     }
 
-    TSharedRef<CRHIResource> Resource;
+    CRHIResource* Resource;
 };
 
-// Build RayTracing Geometry RHICommand
-class CRHIBuildRayTracingGeometryCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandBuildRayTracingGeometry
+
+DECLARE_RHICOMMAND(CRHICommandBuildRayTracingGeometry)
 {
 public:
-    CRHIBuildRayTracingGeometryCommand(CRHIRayTracingGeometry* InRayTracingGeometry, CRHIBuffer* InVertexBuffer, CRHIBuffer* InIndexBuffer, bool bInUpdate)
+    FORCEINLINE CRHICommandBuildRayTracingGeometry(CRHIRayTracingGeometry* InRayTracingGeometry, CRHIBuffer* InVertexBuffer, CRHIBuffer* InIndexBuffer, bool bInUpdate)
         : RayTracingGeometry(InRayTracingGeometry)
         , VertexBuffer(InVertexBuffer)
         , IndexBuffer(InIndexBuffer)
@@ -849,23 +871,24 @@ public:
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.BuildRayTracingGeometry(RayTracingGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), bUpdate);
+        CommandContext.BuildRayTracingGeometry(RayTracingGeometry, VertexBuffer, IndexBuffer, bUpdate);
     }
 
-    TSharedRef<CRHIRayTracingGeometry> RayTracingGeometry;
-    TSharedRef<CRHIBuffer> VertexBuffer;
-    TSharedRef<CRHIBuffer>  IndexBuffer;
-
-    bool bUpdate;
+    CRHIRayTracingGeometry* RayTracingGeometry;
+    CRHIBuffer*             VertexBuffer;
+    CRHIBuffer*             IndexBuffer;
+    bool                    bUpdate;
 };
 
-// Build RayTracing Scene RHICommand
-class CRHIBuildRayTracingSceneCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandBuildRayTracingScene
+
+DECLARE_RHICOMMAND(CRHICommandBuildRayTracingScene)
 {
 public:
-    CRHIBuildRayTracingSceneCommand(CRHIRayTracingScene* InRayTracingScene, const SRHIRayTracingGeometryInstance* InInstances, uint32 InNumInstances, bool bInUpdate)
+    FORCEINLINE CRHICommandBuildRayTracingScene(CRHIRayTracingScene* InRayTracingScene, const SRHIRayTracingGeometryInstance* InInstances, uint32 InNumInstances, bool bInUpdate)
         : RayTracingScene(InRayTracingScene)
         , Instances(InInstances)
         , NumInstances(InNumInstances)
@@ -873,143 +896,157 @@ public:
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.BuildRayTracingScene(RayTracingScene.Get(), Instances, NumInstances, bUpdate);
+        CommandContext.BuildRayTracingScene(RayTracingScene, Instances, NumInstances, bUpdate);
     }
 
-    TSharedRef<CRHIRayTracingScene> RayTracingScene;
+    CRHIRayTracingScene*                  RayTracingScene;
     const SRHIRayTracingGeometryInstance* Instances;
-    uint32 NumInstances;
-    bool bUpdate;
+    uint32                                NumInstances;
+    bool                                  bUpdate;
 };
 
-// GenerateMips RHICommand
-class CRHIGenerateMipsCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandGenerateMips
+
+DECLARE_RHICOMMAND(CRHICommandGenerateMips)
 {
 public:
-    CRHIGenerateMipsCommand(CRHITexture* InTexture)
+    FORCEINLINE CRHICommandGenerateMips(CRHITexture* InTexture)
         : Texture(InTexture)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.GenerateMips(Texture.Get());
+        CommandContext.GenerateMips(Texture);
     }
 
-    TSharedRef<CRHITexture> Texture;
+    CRHITexture* Texture;
 };
 
-// TransitionTexture RHICommand
-class CRHITransitionTextureCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandTransitionTexture
+
+DECLARE_RHICOMMAND(CRHICommandTransitionTexture)
 {
 public:
-    CRHITransitionTextureCommand(CRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState)
+    FORCEINLINE CRHICommandTransitionTexture(CRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState)
         : Texture(InTexture)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.TransitionTexture(Texture.Get(), BeforeState, AfterState);
+        CommandContext.TransitionTexture(Texture, BeforeState, AfterState);
     }
 
-    TSharedRef<CRHITexture> Texture;
+    CRHITexture*      Texture;
     ERHIResourceState BeforeState;
     ERHIResourceState AfterState;
 };
 
-// TransitionBuffer RHICommand
-class CRHITransitionBufferCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandTransitionBuffer
+
+DECLARE_RHICOMMAND(CRHICommandTransitionBuffer)
 {
 public:
-    CRHITransitionBufferCommand(CRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState)
+    FORCEINLINE CRHICommandTransitionBuffer(CRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState)
         : Buffer(InBuffer)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.TransitionBuffer(Buffer.Get(), BeforeState, AfterState);
+        CommandContext.TransitionBuffer(Buffer, BeforeState, AfterState);
     }
 
-    CRHIBufferRef Buffer;
+    CRHIBuffer*       Buffer;
     ERHIResourceState BeforeState;
     ERHIResourceState AfterState;
 };
 
-// UnorderedAccessTextureBarrier RHICommand
-class CRHIUnorderedAccessTextureBarrierCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandUnorderedAccessTextureBarrier
+
+DECLARE_RHICOMMAND(CRHICommandUnorderedAccessTextureBarrier)
 {
 public:
-    CRHIUnorderedAccessTextureBarrierCommand(CRHITexture* InTexture)
+    FORCEINLINE CRHICommandUnorderedAccessTextureBarrier(CRHITexture* InTexture)
         : Texture(InTexture)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.UnorderedAccessTextureBarrier(Texture.Get());
+        CommandContext.UnorderedAccessTextureBarrier(Texture);
     }
 
-    TSharedRef<CRHITexture> Texture;
+    CRHITexture* Texture;
 };
 
-// UnorderedAccessBufferBarrier RHICommand
-class CRHIUnorderedAccessBufferBarrierCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandUnorderedAccessBufferBarrier
+
+DECLARE_RHICOMMAND(CRHICommandUnorderedAccessBufferBarrier)
 {
 public:
-    CRHIUnorderedAccessBufferBarrierCommand(CRHIBuffer* InBuffer)
+    FORCEINLINE CRHICommandUnorderedAccessBufferBarrier(CRHIBuffer* InBuffer)
         : Buffer(InBuffer)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.UnorderedAccessBufferBarrier(Buffer.Get());
+        CommandContext.UnorderedAccessBufferBarrier(Buffer);
     }
 
-    CRHIBufferRef Buffer;
+    CRHIBuffer* Buffer;
 };
 
-// Draw RHICommand
-class CRHIDrawCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandDraw
+
+DECLARE_RHICOMMAND(CRHICommandDraw)
 {
 public:
-    CRHIDrawCommand(uint32 InVertexCount, uint32 InStartVertexLocation)
+    FORCEINLINE CRHICommandDraw(uint32 InVertexCount, uint32 InStartVertexLocation)
         : VertexCount(InVertexCount)
         , StartVertexLocation(InStartVertexLocation)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.Draw(VertexCount, StartVertexLocation);
+        CommandContext.Draw(VertexCount, StartVertexLocation);
     }
 
     uint32 VertexCount;
     uint32 StartVertexLocation;
 };
 
-// DrawIndexed RHICommand
-class CRHIDrawIndexedCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandDrawIndexed
+
+DECLARE_RHICOMMAND(CRHICommandDrawIndexed)
 {
 public:
-    CRHIDrawIndexedCommand(uint32 InIndexCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation)
+    FORCEINLINE CRHICommandDrawIndexed(uint32 InIndexCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation)
         : IndexCount(InIndexCount)
         , StartIndexLocation(InStartIndexLocation)
         , BaseVertexLocation(InBaseVertexLocation)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
+        CommandContext.DrawIndexed(IndexCount, StartIndexLocation, BaseVertexLocation);
     }
 
     uint32 IndexCount;
@@ -1017,11 +1054,13 @@ public:
     int32  BaseVertexLocation;
 };
 
-// DrawInstanced RHICommand
-class CRHIDrawInstancedCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandDrawInstanced
+
+DECLARE_RHICOMMAND(CRHICommandDrawInstanced)
 {
 public:
-    CRHIDrawInstancedCommand(uint32 InVertexCountPerInstance, uint32 InInstanceCount, uint32 InStartVertexLocation, uint32 InStartInstanceLocation)
+    FORCEINLINE CRHICommandDrawInstanced(uint32 InVertexCountPerInstance, uint32 InInstanceCount, uint32 InStartVertexLocation, uint32 InStartInstanceLocation)
         : VertexCountPerInstance(InVertexCountPerInstance)
         , InstanceCount(InInstanceCount)
         , StartVertexLocation(InStartVertexLocation)
@@ -1029,9 +1068,9 @@ public:
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+        CommandContext.DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
     }
 
     uint32 VertexCountPerInstance;
@@ -1040,11 +1079,13 @@ public:
     uint32 StartInstanceLocation;
 };
 
-// DrawIndexedInstanced RHICommand
-class CRHIDrawIndexedInstancedCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandDrawIndexedInstanced
+
+DECLARE_RHICOMMAND(CRHICommandDrawIndexedInstanced)
 {
 public:
-    CRHIDrawIndexedInstancedCommand(uint32 InIndexCountPerInstance, uint32 InInstanceCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation, uint32 InStartInstanceLocation)
+    FORCEINLINE CRHICommandDrawIndexedInstanced(uint32 InIndexCountPerInstance, uint32 InInstanceCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation, uint32 InStartInstanceLocation)
         : IndexCountPerInstance(InIndexCountPerInstance)
         , InstanceCount(InInstanceCount)
         , StartIndexLocation(InStartIndexLocation)
@@ -1053,9 +1094,9 @@ public:
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+        CommandContext.DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
     }
 
     uint32 IndexCountPerInstance;
@@ -1065,20 +1106,22 @@ public:
     uint32 StartInstanceLocation;
 };
 
-// Dispatch Compute RHICommand
-class CRHIDispatchComputeCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandDispatch
+
+DECLARE_RHICOMMAND(CRHICommandDispatch)
 {
 public:
-    CRHIDispatchComputeCommand(uint32 InThreadGroupCountX, uint32 InThreadGroupCountY, uint32 InThreadGroupCountZ)
+    FORCEINLINE CRHICommandDispatch(uint32 InThreadGroupCountX, uint32 InThreadGroupCountY, uint32 InThreadGroupCountZ)
         : ThreadGroupCountX(InThreadGroupCountX)
         , ThreadGroupCountY(InThreadGroupCountY)
         , ThreadGroupCountZ(InThreadGroupCountZ)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+        CommandContext.Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
     }
 
     uint32 ThreadGroupCountX;
@@ -1086,11 +1129,13 @@ public:
     uint32 ThreadGroupCountZ;
 };
 
-// Dispatch Rays RHICommand
-class CRHIDispatchRaysCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandDispatchRays
+
+DECLARE_RHICOMMAND(CRHICommandDispatchRays)
 {
 public:
-    CRHIDispatchRaysCommand(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
+    FORCEINLINE CRHICommandDispatchRays(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
         : Scene(InScene)
         , PipelineState(InPipelineState)
         , Width(InWidth)
@@ -1099,65 +1144,94 @@ public:
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.DispatchRays(Scene.Get(), PipelineState.Get(), Width, Height, Depth);
+        CommandContext.DispatchRays(Scene, PipelineState, Width, Height, Depth);
     }
 
-    TSharedRef<CRHIRayTracingScene>         Scene;
-    TSharedRef<CRHIRayTracingPipelineState> PipelineState;
-    uint32 Width;
-    uint32 Height;
-    uint32 Depth;
+    CRHIRayTracingScene*         Scene;
+    CRHIRayTracingPipelineState* PipelineState;
+    uint32                       Width;
+    uint32                       Height;
+    uint32                       Depth;
 };
 
-// InsertCommandListMarker RHICommand
-class CRHIInsertCommandListMarkerCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandInsertMarker
+
+DECLARE_RHICOMMAND(CRHICommandInsertMarker)
 {
 public:
-    CRHIInsertCommandListMarkerCommand(const String& InMarker)
+    FORCEINLINE CRHICommandInsertMarker(const String& InMarker)
         : Marker(InMarker)
     {
     }
 
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         CDebug::OutputDebugString(Marker + '\n');
         LOG_INFO(Marker);
 
-        CmdContext.InsertMarker(Marker);
+        CommandContext.InsertMarker(Marker);
     }
 
     String Marker;
 };
 
-// DebugBreak RHICommand
-class CRHIDebugBreakCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandDebugBreak
+
+DECLARE_RHICOMMAND(CRHICommandDebugBreak)
 {
 public:
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        UNREFERENCED_VARIABLE(CmdContext);
+        UNREFERENCED_VARIABLE(CommandContext);
         CDebug::DebugBreak();
     }
 };
 
-// BeginExternalCapture RHICommand
-class CRHIBeginExternalCaptureCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandBeginExternalCapture
+
+DECLARE_RHICOMMAND(CRHICommandBeginExternalCapture)
 {
 public:
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.BeginExternalCapture();
+        CommandContext.BeginExternalCapture();
     }
 };
 
-// EndExternalCapture RHICommand
-class CRHIEndExternalCaptureCommand : public CRHICommand
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandEndExternalCapture
+
+DECLARE_RHICOMMAND(CRHICommandEndExternalCapture)
 {
 public:
-    virtual void Execute(IRHICommandContext& CmdContext) override
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CmdContext.EndExternalCapture();
+        CommandContext.EndExternalCapture();
     }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandPresentViewport
+
+DECLARE_RHICOMMAND(CRHICommandPresentViewport)
+{
+public:
+    FORCEINLINE CRHICommandPresentViewport(CRHIViewport* InViewport, bool bInVerticalSync)
+        : Viewport(InViewport)
+        , bVerticalSync(bInVerticalSync)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.PresentViewport(Viewport, bVerticalSync);
+    }
+
+    CRHIViewport* Viewport;
+    bool          bVerticalSync;
 };

@@ -13,6 +13,7 @@
 #include "D3D12CommandContext.h"
 #include "D3D12ResourceCast.inl"
 #include "D3D12FunctionPointers.h"
+#include "D3D12Viewport.h"
 
 #include "Core/Math/Vector2.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
@@ -298,32 +299,7 @@ void CD3D12CommandContext::Begin()
 {
     Assert(bIsReady == false);
 
-    TRACE_FUNCTION_SCOPE();
-
-    CmdBatch     = &CmdBatches[NextCmdBatch];
-    NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
-
-    // TODO: Investigate better ways of doing this 
-    if (FenceValue >= CmdBatches.Size())
-    {
-        const uint64 WaitValue = NMath::Max<uint64>(FenceValue - (CmdBatches.Size() - 1), 0);
-        Fence.WaitForValue(WaitValue);
-    }
-
-    if (!CmdBatch->Reset())
-    {
-        D3D12_ERROR_ALWAYS("Failed to reset D3D12CommandBatch");
-        return;
-    }
-
-    InternalClearState();
-
-    if (!CommandList.Reset(CmdBatch->GetCommandAllocator()))
-    {
-        D3D12_ERROR_ALWAYS("Failed to reset Commandlist");
-        return;
-    }
-
+    StartCommandRecording();
     bIsReady = true;
 }
 
@@ -331,36 +307,74 @@ void CD3D12CommandContext::End()
 {
     Assert(bIsReady == true);
 
-    TRACE_FUNCTION_SCOPE();
-
-    FlushResourceBarriers();
-
-    CmdBatch = nullptr;
-
-    const uint64 NewFenceValue = ++FenceValue;
-    for (int32 i = 0; i < ResolveProfilers.Size(); i++)
-    {
-        ResolveProfilers[i]->ResolveQueries(*this);
-    }
-
-    ResolveProfilers.Clear();
-
-    // Execute
-    if (!CommandList.Close())
-    {
-        D3D12_ERROR_ALWAYS("Failed to close CommandList");
-        return;
-    }
-
-    CommandQueue.ExecuteCommandList(&CommandList);
-
-    if (!CommandQueue.SignalFence(Fence, NewFenceValue))
-    {
-        D3D12_ERROR_ALWAYS("Failed to signal Fence on the GPU");
-        return;
-    }
-
+    FlushCommands();
     bIsReady = false;
+}
+
+void CD3D12CommandContext::StartCommandRecording()
+{
+    // TODO: Maybe need to do something fancier in the future
+    if (!CommandList.IsRecording())
+    {
+        TRACE_FUNCTION_SCOPE();
+
+        CmdBatch     = &CmdBatches[NextCmdBatch];
+        NextCmdBatch = (NextCmdBatch + 1) % CmdBatches.Size();
+
+        if (CmdBatch->AssignedFenceValue >= Fence.GetCompletedValue())
+        {
+            Fence.WaitForValue(CmdBatch->AssignedFenceValue);
+        }
+
+        if (!CmdBatch->Reset())
+        {
+            D3D12_ERROR_ALWAYS("Failed to reset D3D12CommandBatch");
+            return;
+        }
+
+        InternalClearState();
+
+        if (!CommandList.Reset(CmdBatch->GetCommandAllocator()))
+        {
+            D3D12_ERROR_ALWAYS("Failed to reset Commandlist");
+        }
+    }
+}
+
+void CD3D12CommandContext::FlushCommands()
+{
+    // TODO: Maybe need to do something fancier in the future
+    if (CommandList.IsRecording())
+    {
+        TRACE_FUNCTION_SCOPE();
+        
+        FlushResourceBarriers();
+
+        const uint64 NewFenceValue = ++FenceValue;
+        CmdBatch->AssignedFenceValue = NewFenceValue;
+        CmdBatch = nullptr;
+
+        for (int32 i = 0; i < ResolveProfilers.Size(); ++i)
+        {
+            ResolveProfilers[i]->ResolveQueries(*this);
+        }
+
+        ResolveProfilers.Clear();
+
+        // Execute
+        if (!CommandList.Close())
+        {
+            D3D12_ERROR_ALWAYS("Failed to close CommandList");
+            return;
+        }
+
+        CommandQueue.ExecuteCommandList(&CommandList);
+
+        if (!CommandQueue.SignalFence(Fence, NewFenceValue))
+        {
+            D3D12_ERROR_ALWAYS("Failed to signal Fence on the GPU");
+        }
+    }
 }
 
 void CD3D12CommandContext::BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
@@ -434,7 +448,7 @@ void CD3D12CommandContext::SetShadingRate(ERHIShadingRate ShadingRate)
     CommandList.RSSetShadingRate(DxShadingRate, Combiners);
 }
 
-void CD3D12CommandContext::SetShadingRateImage(CRHITexture2D* ShadingImage)
+void CD3D12CommandContext::SetShadingRateTexture(CRHITexture2D* ShadingImage)
 {
     FlushResourceBarriers();
 
@@ -516,10 +530,10 @@ void CD3D12CommandContext::SetVertexBuffers(CRHIBuffer* const* VertexBuffers, ui
     }
 }
 
-void CD3D12CommandContext::SetIndexBuffer(CRHIBuffer* IndexBuffer)
+void CD3D12CommandContext::SetIndexBuffer(CRHIBuffer* IndexBuffer, ERHIIndexFormat IndexFormat)
 {
     CD3D12Buffer* DxIndexBuffer = static_cast<CD3D12Buffer*>(IndexBuffer);
-    DescriptorCache.SetIndexBuffer(DxIndexBuffer);
+    DescriptorCache.SetIndexBuffer(DxIndexBuffer, IndexFormat);
 
     // TODO: Maybe this should be done by the descriptor cache
     CmdBatch->AddInUseResource(DxIndexBuffer);
@@ -793,7 +807,7 @@ void CD3D12CommandContext::UpdateTexture2D(CRHITexture2D* Destination, uint32 Wi
         SourceLocation.PlacedFootprint.Footprint.RowPitch = RowPitch;
         SourceLocation.PlacedFootprint.Offset             = Allocation.ResourceOffset;
 
-        // TODO: Miplevel may not be the correct subresource
+        // TODO: MipLevel may not be the correct subresource
         D3D12_TEXTURE_COPY_LOCATION DestLocation;
         CMemory::Memzero(&DestLocation);
 
@@ -933,33 +947,33 @@ void CD3D12CommandContext::SetRayTracingBindings(
     const SRayTracingShaderResources* HitGroupResources,
     uint32 NumHitGroupResources)
 {
-    CD3D12RayTracingScene* DxScene = static_cast<CD3D12RayTracingScene*>(RayTracingScene);
+    CD3D12RayTracingScene*         DxScene         = static_cast<CD3D12RayTracingScene*>(RayTracingScene);
     CD3D12RayTracingPipelineState* DxPipelineState = static_cast<CD3D12RayTracingPipelineState*>(PipelineState);
     D3D12_ERROR(DxScene != nullptr, "RayTracingScene cannot be nullptr");
     D3D12_ERROR(DxPipelineState != nullptr, "PipelineState cannot be nullptr");
 
     uint32 NumDescriptorsNeeded = 0;
-    uint32 NumSamplersNeeded = 0;
+    uint32 NumSamplersNeeded    = 0;
     if (GlobalResource)
     {
         NumDescriptorsNeeded += GlobalResource->NumResources();
-        NumSamplersNeeded += GlobalResource->NumSamplers();
+        NumSamplersNeeded    += GlobalResource->NumSamplers();
     }
     if (RayGenLocalResources)
     {
         NumDescriptorsNeeded += RayGenLocalResources->NumResources();
-        NumSamplersNeeded += RayGenLocalResources->NumSamplers();
+        NumSamplersNeeded    += RayGenLocalResources->NumSamplers();
     }
     if (MissLocalResources)
     {
         NumDescriptorsNeeded += MissLocalResources->NumResources();
-        NumSamplersNeeded += MissLocalResources->NumSamplers();
+        NumSamplersNeeded    += MissLocalResources->NumSamplers();
     }
 
     for (uint32 i = 0; i < NumHitGroupResources; i++)
     {
         NumDescriptorsNeeded += HitGroupResources[i].NumResources();
-        NumSamplersNeeded += HitGroupResources[i].NumSamplers();
+        NumSamplersNeeded    += HitGroupResources[i].NumSamplers();
     }
 
     D3D12_ERROR(NumDescriptorsNeeded < D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, "NumDescriptorsNeeded=" + ToString(NumDescriptorsNeeded) + ", but the maximum is '" + ToString(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT) + "'");
@@ -1057,19 +1071,19 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
     CMemory::Memzero(&SrvDesc);
 
-    SrvDesc.Format = Desc.Format;
+    SrvDesc.Format                  = Desc.Format;
     SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     if (bIsTextureCube)
     {
-        SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-        SrvDesc.TextureCube.MipLevels = Desc.MipLevels;
-        SrvDesc.TextureCube.MostDetailedMip = 0;
+        SrvDesc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
+        SrvDesc.TextureCube.MipLevels           = Desc.MipLevels;
+        SrvDesc.TextureCube.MostDetailedMip     = 0;
         SrvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
     }
     else
     {
-        SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        SrvDesc.Texture2D.MipLevels = Desc.MipLevels;
+        SrvDesc.ViewDimension             = D3D12_SRV_DIMENSION_TEXTURE2D;
+        SrvDesc.Texture2D.MipLevels       = Desc.MipLevels;
         SrvDesc.Texture2D.MostDetailedMip = 0;
     }
 
@@ -1079,14 +1093,14 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     UavDesc.Format = Desc.Format;
     if (bIsTextureCube)
     {
-        UavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-        UavDesc.Texture2DArray.ArraySize = 6;
+        UavDesc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+        UavDesc.Texture2DArray.ArraySize       = 6;
         UavDesc.Texture2DArray.FirstArraySlice = 0;
-        UavDesc.Texture2DArray.PlaneSlice = 0;
+        UavDesc.Texture2DArray.PlaneSlice      = 0;
     }
     else
     {
-        UavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+        UavDesc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
         UavDesc.Texture2D.PlaneSlice = 0;
     }
 
@@ -1169,7 +1183,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
         CVector2 TexelSize;
     } ConstantData;
 
-    uint32 DstWidth = static_cast<uint32>(Desc.Width);
+    uint32 DstWidth  = static_cast<uint32>(Desc.Width);
     uint32 DstHeight = Desc.Height;
     ConstantData.SrcMipLevel = 0;
 
@@ -1178,7 +1192,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     uint32 RemainingMiplevels = Desc.MipLevels;
     for (uint32 i = 0; i < NumDispatches; i++)
     {
-        ConstantData.TexelSize = CVector2(1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight));
+        ConstantData.TexelSize    = CVector2(1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight));
         ConstantData.NumMipLevels = NMath::Min<uint32>(4, RemainingMiplevels);
 
         CommandList.SetComputeRoot32BitConstants(&ConstantData, 4, 0, 0);
@@ -1201,14 +1215,14 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
         TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
         FlushResourceBarriers();
 
-        // TODO: Copy only miplevels (Maybe faster?)
+        // TODO: Copy only MipLevels
         CommandList.CopyResource(DxTexture->GetResource(), StagingTexture.Get());
 
         TransitionResource(DxTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         FlushResourceBarriers();
 
-        DstWidth = DstWidth / 16;
+        DstWidth  = DstWidth / 16;
         DstHeight = DstHeight / 16;
 
         ConstantData.SrcMipLevel += 3;
@@ -1356,6 +1370,16 @@ void CD3D12CommandContext::DispatchRays(CRHIRayTracingScene* RayTracingScene, CR
     }
 }
 
+void CD3D12CommandContext::PresentViewport(CRHIViewport* Viewport, bool bVerticalSync)
+{
+    FlushCommands();
+
+    CD3D12Viewport* D3D12Viewport = static_cast<CD3D12Viewport*>(Viewport);
+    D3D12Viewport->Present(bVerticalSync);
+
+    StartCommandRecording();
+}
+
 void CD3D12CommandContext::ClearState()
 {
     Flush();
@@ -1365,6 +1389,8 @@ void CD3D12CommandContext::ClearState()
 
 void CD3D12CommandContext::Flush()
 {
+    FlushCommands();
+
     const uint64 NewFenceValue = ++FenceValue;
     if (!CommandQueue.SignalFence(Fence, NewFenceValue))
     {
