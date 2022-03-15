@@ -9,7 +9,7 @@ typedef TSharedRef<class CRHIBuffer> CRHIBufferRef;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIIndexFormat 
 
-enum class ERHIIndexFormat
+enum class ERHIIndexFormat : uint8
 {
     Unknown = 0,
     uint16  = 1,
@@ -64,7 +64,7 @@ inline uint32 GetStrideFromIndexFormat(ERHIIndexFormat IndexFormat)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIBufferFlags
 
-enum ERHIBufferFlags : uint32
+enum ERHIBufferFlags : uint16
 {
     BufferFlag_None           = 0,
     
@@ -123,7 +123,8 @@ public:
         return CRHIBufferDesc(NumElements * Stride, Stride, InFlags | BufferFlags_RWBuffer);
     }
     
-    CRHIBufferDesc() = default;
+    CRHIBufferDesc()  = default;
+    ~CRHIBufferDesc() = default;
     
     CRHIBufferDesc(uint32 InSizeInBytes, uint32 InStrideInBytes, uint32 InFlags)
         : SizeInBytes(InSizeInBytes)
@@ -184,83 +185,22 @@ class CRHIBuffer : public CRHIResource
 {
 public:
 
-    /**
-     * Constructor
-     *
-     * @param InBufferDesc: Description of the buffer
-     */
     CRHIBuffer(const CRHIBufferDesc& InBufferDesc)
         : CRHIResource()
         , BufferDesc(InBufferDesc)
     {
     }
 
-    /**
-     * Cast resource to a Buffer
-     * 
-     * @return: Returns a pointer to a buffer interface if the object implements it
-     */
     virtual CRHIBuffer* AsBuffer() { return this; }
 
-    /**
-     * Check if the buffer can be used as a UnorderedAccessView
-     *
-     * @return: Returns true if the buffer was created with the UnorderedAccessView-flag
-     */
-    FORCEINLINE bool IsUAV() const
-    {
-        return (BufferDesc.Flags & BufferFlag_UAV);
-    }
+    inline bool IsUAV() const { return (BufferDesc.Flags & BufferFlag_UAV); }
+    inline bool IsSRV() const { return (BufferDesc.Flags & BufferFlag_SRV); }
 
-    /**
-     * Check if the buffer can be used as a ShaderResourceView
-     *
-     * @return: Returns true if the buffer was created with the ShaderResourceView-flag
-     */
-    FORCEINLINE bool IsSRV() const
-    {
-        return (BufferDesc.Flags & BufferFlag_SRV);
-    }
+    inline bool IsDynamic() const { return (BufferDesc.Flags & BufferFlag_Dynamic); }
 
-    /**
-     * Check if the buffer is dynamic
-     *
-     * @return: Returns true if the buffer uses dynamic memory
-     */
-    FORCEINLINE bool IsDynamic() const
-    {
-        return (BufferDesc.Flags & BufferFlag_Dynamic);
-    }
-
-    /**
-     * Retrieve the flags that the buffer was created with
-     * 
-     * @return: Returns the flags that the buffer was created with
-     */
-    FORCEINLINE uint32 GetFlags() const
-    {
-        return BufferDesc.Flags;
-    }
-    
-    /**
-     * Retrieve the size in bytes of the buffer
-     *
-     * @return: Returns the size in bytes of the buffer
-     */
-    FORCEINLINE uint32 GetSize() const
-    {
-        return BufferDesc.SizeInBytes;
-    }
-    
-    /**
-     * Retrieve the stride in bytes of the buffer
-     *
-     * @return: Returns the stride in bytes of the buffer
-     */
-    FORCEINLINE uint32 GetStride() const
-    {
-        return BufferDesc.StrideInBytes;
-    }
+    inline uint32 GetFlags()  const { return BufferDesc.Flags; }
+    inline uint32 GetSize()   const { return BufferDesc.SizeInBytes; }
+    inline uint32 GetStride() const { return BufferDesc.StrideInBytes; }
 
 protected:
     CRHIBufferDesc BufferDesc;

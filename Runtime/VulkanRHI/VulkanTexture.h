@@ -21,11 +21,8 @@ typedef TSharedRef<class CVulkanBackBuffer> CVulkanBackBufferRef;
 class CVulkanTexture : public CVulkanDeviceObject
 {
 public:
-    CVulkanTexture(CVulkanDevice* InDevice)
-        : CVulkanDeviceObject(InDevice)
-        , Image(VK_NULL_HANDLE)
-    {
-    }
+    CVulkanTexture(CVulkanDevice* InDevice);
+    virtual ~CVulkanTexture();
 
     FORCEINLINE VkImage GetVkImage() const
     {
@@ -33,7 +30,13 @@ public:
     }
 
 protected:
-    VkImage Image;
+
+    bool CreateImage(VkImageType ImageType, VkImageCreateFlags Flags, VkImageUsageFlags Usage, VkFormat Format, VkExtent2D Extent, uint32 DepthOrArraySize, uint32 NumMipLevels, uint32 NumSamples);
+
+    VkImage        Image;
+    bool           bIsImageOwner;
+
+    VkDeviceMemory DeviceMemory;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -42,21 +45,19 @@ protected:
 class CVulkanTexture2D : public CRHITexture2D, public CVulkanTexture
 {
 public:
-    CVulkanTexture2D(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
-        : CRHITexture2D(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
-        , CVulkanTexture(InDevice)
-        , RenderTargetView(dbg_new CVulkanRenderTargetView())
-        , DepthStencilView(dbg_new CVulkanDepthStencilView())
-        , UnorderedAccessView(dbg_new CVulkanUnorderedAccessView())
-    {
-    }
-    
-    virtual ~CVulkanTexture2D() = default;
 
-    virtual CRHIRenderTargetView*    GetRenderTargetView()    const override final { return RenderTargetView.Get(); }
-    virtual CRHIDepthStencilView*    GetDepthStencilView()    const override final { return DepthStencilView.Get(); }
+    /** Create a new Texture2D */
+    static CVulkanTexture2DRef CreateTexture2D(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue);
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHITexture2D Interface
+
+    virtual CRHIRenderTargetView*    GetRenderTargetView()    const override final { return RenderTargetView.Get();    }
+    virtual CRHIDepthStencilView*    GetDepthStencilView()    const override final { return DepthStencilView.Get();    }
     virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
-    virtual CRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
+    virtual CRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get();  }
     
     virtual void SetName(const String& InName) override final
     {
@@ -69,10 +70,15 @@ public:
     }
 
 protected:
-    TSharedRef<CVulkanRenderTargetView>    RenderTargetView;
-    TSharedRef<CVulkanDepthStencilView>    DepthStencilView;
-    TSharedRef<CVulkanUnorderedAccessView> UnorderedAccessView;
-    TSharedRef<CVulkanShaderResourceView>  ShaderResourceView;
+    CVulkanTexture2D(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue);
+    virtual ~CVulkanTexture2D() = default;
+
+    bool Initialize();
+
+    CVulkanRenderTargetViewRef    RenderTargetView;
+    CVulkanDepthStencilViewRef    DepthStencilView;
+    CVulkanUnorderedAccessViewRef UnorderedAccessView;
+    CVulkanShaderResourceViewRef  ShaderResourceView;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -82,7 +88,7 @@ class CVulkanBackBuffer : public CVulkanTexture2D
 {
 public:
 
-    /* Create a new BackBuffer interface for a certain viewport */
+    /** Create a new BackBuffer interface for a certain viewport */
     static CVulkanBackBufferRef CreateBackBuffer(CVulkanDevice* InDevice, CVulkanViewport* InViewport, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumSamples);
 
     void AquireNextImage();

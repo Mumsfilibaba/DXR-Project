@@ -186,13 +186,13 @@ bool CD3D12CommandBatch::Initialize()
     }
 
     OnlineResourceDescriptorHeap = dbg_new CD3D12OnlineDescriptorHeap(Device, D3D12_DEFAULT_ONLINE_RESOURCE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    if (!OnlineResourceDescriptorHeap->Init())
+    if (!OnlineResourceDescriptorHeap->Initialize())
     {
         return false;
     }
 
     OnlineSamplerDescriptorHeap = dbg_new CD3D12OnlineDescriptorHeap(Device, D3D12_DEFAULT_ONLINE_SAMPLER_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-    if (!OnlineSamplerDescriptorHeap->Init())
+    if (!OnlineSamplerDescriptorHeap->Initialize())
     {
         return false;
     }

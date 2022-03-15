@@ -53,7 +53,7 @@ public:
      * @param DepthStencilView: DepthStencilView to clear
      * @param ClearValue: Value to set each pixel within the DepthStencilView to
      */
-    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue) = 0;
+    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SRHIDepthStencil& ClearValue) = 0;
     
     /**
      * Clears a UnorderedAccessView with a specific value

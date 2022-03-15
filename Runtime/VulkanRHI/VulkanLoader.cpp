@@ -148,6 +148,11 @@ VULKAN_FUNCTION_DEFINITION(DestroyBuffer);
     VULKAN_FUNCTION_DEFINITION(GetBufferDeviceAddressKHR);
 #endif
 
+VULKAN_FUNCTION_DEFINITION(CreateImage);
+VULKAN_FUNCTION_DEFINITION(GetImageMemoryRequirements);
+VULKAN_FUNCTION_DEFINITION(BindImageMemory);
+VULKAN_FUNCTION_DEFINITION(DestroyImage);
+
 #if VK_KHR_get_memory_requirements2
     VULKAN_FUNCTION_DEFINITION(GetImageMemoryRequirements2KHR);
     VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements2KHR);
@@ -214,6 +219,11 @@ bool LoadDeviceFunctions(CVulkanDevice* Device)
     }
 #endif
     
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateImage);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageMemoryRequirements);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, BindImageMemory);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyImage);
+
 #if VK_KHR_get_memory_requirements2
     if (Device->IsExtensionEnabled(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
     {

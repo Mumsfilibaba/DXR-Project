@@ -212,6 +212,11 @@ bool CVulkanDevice::AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationI
     const VkPhysicalDeviceProperties& DeviceProperties = Adapter->GetDeviceProperties();
     VULKAN_INFO(String("[AllocateMemory] Allocated=") + ToString(MemoryAllocationInfo.allocationSize) + " Bytes, Allocation = " + ToString(NumAllocations.Load())+ "/" + ToString(DeviceProperties.limits.maxMemoryAllocationCount));
     
+    if (NumAllocations.Load() > MemoryAllocationInfo.allocationSize)
+    {
+        VULKAN_WARNING("Too many allocations");
+    }
+
     return true;
 }
 

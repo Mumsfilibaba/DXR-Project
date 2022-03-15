@@ -246,7 +246,7 @@ public:
      * @param DepthStencilView: DepthStencilView to clear
      * @param ClearValue: Value to set each pixel within the DepthStencilView to
      */
-    void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue)
+    void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SRHIDepthStencil& ClearValue)
     {
         Assert(DepthStencilView != nullptr);
         InsertCommand<CRHICommandClearDepthStencilView>(DepthStencilView, ClearValue);

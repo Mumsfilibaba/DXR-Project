@@ -89,9 +89,9 @@ bool CVulkanBuffer::Initialize()
     bool bUseDedicatedAllocation = false;
     
     VkMemoryRequirements MemoryRequirements;
+#if (VK_KHR_get_memory_requirements2) && (VK_KHR_dedicated_allocation)
     if (CVulkanDedicatedAllocationKHR::IsEnabled())
     {
-#if (VK_KHR_get_memory_requirements2) && (VK_KHR_dedicated_allocation)
         VkMemoryDedicatedRequirementsKHR MemoryDedicatedRequirements;
         CMemory::Memzero(&MemoryDedicatedRequirements);
         
@@ -113,9 +113,9 @@ bool CVulkanBuffer::Initialize()
         MemoryRequirements = MemoryRequirements2.memoryRequirements;
         
         bUseDedicatedAllocation = (MemoryDedicatedRequirements.requiresDedicatedAllocation != VK_FALSE) || (MemoryDedicatedRequirements.prefersDedicatedAllocation != VK_FALSE);
-#endif
     }
     else
+#endif
     {
         vkGetBufferMemoryRequirements(GetDevice()->GetVkDevice(), Buffer, &MemoryRequirements);
     }

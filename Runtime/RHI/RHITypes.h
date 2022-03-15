@@ -200,14 +200,24 @@ inline const char* ToString(ERHIShadingRate ShadingRate)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SDepthStencil
 
-struct SDepthStencil
+struct SRHIDepthStencil
 {
-    SDepthStencil() = default;
+    SRHIDepthStencil() = default;
 
-    FORCEINLINE SDepthStencil(float InDepth, uint8 InStencil)
+    FORCEINLINE SRHIDepthStencil(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     {
+    }
+
+    FORCEINLINE bool operator==(const SRHIDepthStencil& RHS) const
+    {
+        return (Depth == RHS.Depth) && (Stencil && RHS.Stencil);
+    }
+
+    FORCEINLINE bool operator!=(const SRHIDepthStencil& RHS) const
+    {
+        return !(*this == RHS);
     }
 
     float Depth   = 1.0f;
@@ -215,41 +225,41 @@ struct SDepthStencil
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SClearValue
+// CRHIClearValue
 
-struct SClearValue
+class CRHIClearValue
 {
 public:
 
-    enum class EType
+    enum class EType : uint8
     {
         Color        = 1,
         DepthStencil = 2
     };
 
     // NOTE: Default clear color is black
-    FORCEINLINE SClearValue()
+    FORCEINLINE CRHIClearValue()
         : Type(EType::Color)
         , Format(ERHIFormat::Unknown)
         , Color(0.0f, 0.0f, 0.0f, 1.0f)
     {
     }
 
-    FORCEINLINE SClearValue(ERHIFormat InFormat, float Depth, uint8 Stencil)
+    FORCEINLINE CRHIClearValue(ERHIFormat InFormat, float Depth, uint8 Stencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencil(Depth, Stencil)
     {
     }
 
-    FORCEINLINE SClearValue(ERHIFormat InFormat, float r, float g, float b, float a)
+    FORCEINLINE CRHIClearValue(ERHIFormat InFormat, float r, float g, float b, float a)
         : Type(EType::Color)
         , Format(InFormat)
         , Color(r, g, b, a)
     {
     }
 
-    FORCEINLINE SClearValue(const SClearValue& Other)
+    FORCEINLINE CRHIClearValue(const CRHIClearValue& Other)
         : Type(Other.Type)
         , Format(Other.Format)
         , Color()
@@ -264,33 +274,6 @@ public:
         }
     }
 
-    FORCEINLINE SClearValue& operator=(const SClearValue& Other)
-    {
-        Type = Other.Type;
-        Format = Other.Format;
-
-        if (Other.Type == EType::Color)
-        {
-            Color = Other.Color;
-        }
-        else if (Other.Type == EType::DepthStencil)
-        {
-            DepthStencil = Other.DepthStencil;
-        }
-
-        return *this;
-    }
-
-    FORCEINLINE EType GetType() const
-    {
-        return Type;
-    }
-
-    FORCEINLINE ERHIFormat GetFormat() const
-    {
-        return Format;
-    }
-
     FORCEINLINE SColorF& AsColor()
     {
         Assert(Type == EType::Color);
@@ -303,26 +286,78 @@ public:
         return Color;
     }
 
-    FORCEINLINE SDepthStencil& AsDepthStencil()
+    FORCEINLINE SRHIDepthStencil& AsDepthStencil()
     {
         Assert(Type == EType::DepthStencil);
         return DepthStencil;
     }
 
-    FORCEINLINE const SDepthStencil& AsDepthStencil() const
+    FORCEINLINE const SRHIDepthStencil& AsDepthStencil() const
     {
         Assert(Type == EType::DepthStencil);
         return DepthStencil;
+    }
+
+    FORCEINLINE EType GetType() const
+    {
+        return Type;
+    }
+
+    FORCEINLINE ERHIFormat GetFormat() const
+    {
+        return Format;
+    }
+
+    FORCEINLINE CRHIClearValue& operator=(const CRHIClearValue& RHS)
+    {
+        Type   = RHS.Type;
+        Format = RHS.Format;
+
+        if (RHS.Type == EType::Color)
+        {
+            Color = RHS.Color;
+        }
+        else if (RHS.Type == EType::DepthStencil)
+        {
+            DepthStencil = RHS.DepthStencil;
+        }
+
+        return *this;
+    }
+
+    FORCEINLINE bool operator==(const CRHIClearValue& RHS) const
+    {
+        if (Type != RHS.Type)
+        {
+            return false;
+        }
+
+        if (Format != RHS.Format)
+        {
+            return false;
+        }
+
+        if (Type == EType::Color)
+        {
+            return (Color == RHS.Color);
+        }
+
+        return (DepthStencil == RHS.DepthStencil);
+    }
+
+    FORCEINLINE bool operator==(const CRHIClearValue& RHS) const
+    {
+        return !(*this == RHS);
     }
 
 private:
-    EType   Type;
+    EType      Type;
     ERHIFormat Format;
     
     union
     {
-        SColorF       Color;
-        SDepthStencil DepthStencil;
+        SColorF          Color;
+        SRHIDepthStencil DepthStencil;
     };
 };
 

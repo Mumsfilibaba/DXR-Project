@@ -155,12 +155,12 @@ public:
 private:
     bool AllocateHeap();
 
-    String Name;
-
-    TArray<SDescriptorHeap> Heaps;
+    TArray<SDescriptorHeap>    Heaps;
 
     D3D12_DESCRIPTOR_HEAP_TYPE Type;
     uint32                     DescriptorSize = 0;
+    
+    String Name;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -172,7 +172,7 @@ public:
     CD3D12OnlineDescriptorHeap(CD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
     ~CD3D12OnlineDescriptorHeap() = default;
 
-    bool Init();
+    bool Initialize();
 
     uint32 AllocateHandles(uint32 NumHandles);
     bool   AllocateFreshHeap();

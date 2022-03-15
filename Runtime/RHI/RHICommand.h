@@ -87,6 +87,27 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandClearRenderTargetTexture
+
+DECLARE_RHICOMMAND(CRHICommandClearRenderTargetTexture)
+{
+public:
+    FORCEINLINE CRHICommandClearRenderTargetTexture(CRHITexture2D* InTexture, const SColorF& InClearColor)
+        : Texture(InTexture)
+        , ClearColor(InClearColor)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        //CommandContext.ClearRenderTargetView(RenderTargetView, ClearColor);
+    }
+
+    CRHITexture2D* Texture;
+    SColorF        ClearColor;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHICommandClearRenderTargetView
 
 DECLARE_RHICOMMAND(CRHICommandClearRenderTargetView)
@@ -108,12 +129,33 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandClearDepthStencilTexture
+
+DECLARE_RHICOMMAND(CRHICommandClearDepthStencilTexture)
+{
+public:
+    FORCEINLINE CRHICommandClearDepthStencilTexture(CRHITexture2D* InTexture, const SRHIDepthStencil& InClearValue)
+        : Texture(InTexture)
+        , ClearValue(InClearValue)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        //CommandContext.ClearDepthStencilView(DepthStencilView, ClearValue);
+    }
+
+    CRHITexture2D*   Texture;
+    SRHIDepthStencil ClearValue;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHICommandClearDepthStencilView
 
 DECLARE_RHICOMMAND(CRHICommandClearDepthStencilView)
 {
 public:
-    FORCEINLINE CRHICommandClearDepthStencilView(CRHIDepthStencilView* InDepthStencilView, const SDepthStencil& InClearValue)
+    FORCEINLINE CRHICommandClearDepthStencilView(CRHIDepthStencilView* InDepthStencilView, const SRHIDepthStencil& InClearValue)
         : DepthStencilView(InDepthStencilView)
         , ClearValue(InClearValue)
     {
@@ -125,7 +167,28 @@ public:
     }
 
     CRHIDepthStencilView* DepthStencilView;
-    SDepthStencil         ClearValue;
+    SRHIDepthStencil         ClearValue;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandClearUnorderedAccessTextureFloat
+
+DECLARE_RHICOMMAND(CRHICommandClearUnorderedAccessTextureFloat)
+{
+public:
+    FORCEINLINE CRHICommandClearUnorderedAccessTextureFloat(CRHITexture2D* InTexture, const SColorF& InClearColor)
+        : Texture(InTexture)
+        , ClearColor(InClearColor)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        //CommandContext.ClearUnorderedAccessViewFloat(UnorderedAccessView, ClearColor);
+    }
+
+    CRHITexture2D* Texture;
+    SColorF        ClearColor;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -485,6 +548,29 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetShaderResourceTexture
+
+DECLARE_RHICOMMAND(CRHICommandSetShaderResourceTexture)
+{
+public:
+    FORCEINLINE CRHICommandSetShaderResourceTexture(CRHIShader* InShader, CRHITexture* InTexture, uint32 InParameterIndex)
+        : Shader(InShader)
+        , Texture(InTexture)
+        , ParameterIndex(InParameterIndex)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        //CommandContext.SetShaderResourceView(Shader, ShaderResourceView, ParameterIndex);
+    }
+
+    CRHIShader*  Shader;
+    CRHITexture* Texture;
+    uint32       ParameterIndex;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHICommandSetShaderResourceView
 
 DECLARE_RHICOMMAND(CRHICommandSetShaderResourceView)
@@ -530,6 +616,29 @@ public:
     CRHIShaderResourceView** ShaderResourceViews;
     uint32                   NumShaderResourceViews;
     uint32                   ParameterIndex;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandSetUnorderedAccessTexture
+
+DECLARE_RHICOMMAND(CRHICommandSetUnorderedAccessTexture)
+{
+public:
+    FORCEINLINE CRHICommandSetUnorderedAccessTexture(CRHIShader* InShader, CRHITexture* InTexture, uint32 InParameterIndex)
+        : Shader(InShader)
+        , Texture(InTexture)
+        , ParameterIndex(InParameterIndex)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        //CommandContext.SetUnorderedAccessView(Shader, UnorderedAccessView, ParameterIndex);
+    }
+
+    CRHIShader*  Shader;
+    CRHITexture* Texture;
+    uint32       ParameterIndex;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1051,7 +1160,7 @@ public:
 
     uint32 IndexCount;
     uint32 StartIndexLocation;
-    int32  BaseVertexLocation;
+    uint32 BaseVertexLocation;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

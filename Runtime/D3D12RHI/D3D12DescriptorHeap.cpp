@@ -187,7 +187,7 @@ bool CD3D12OfflineDescriptorHeap::AllocateHeap()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12OnlineDescriptorHeap 
+// CD3D12OnlineDescriptorHeap 
 
 CD3D12OnlineDescriptorHeap::CD3D12OnlineDescriptorHeap(CD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType)
     : CD3D12DeviceObject(InDevice)
@@ -197,7 +197,7 @@ CD3D12OnlineDescriptorHeap::CD3D12OnlineDescriptorHeap(CD3D12Device* InDevice, u
 {
 }
 
-bool CD3D12OnlineDescriptorHeap::Init()
+bool CD3D12OnlineDescriptorHeap::Initialize()
 {
     Heap = dbg_new CD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     if (Heap->Initialize())
