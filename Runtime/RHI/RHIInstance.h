@@ -9,7 +9,7 @@
 
 #include "CoreApplication/Interface/PlatformWindow.h"
 
-struct SRHIResourceData;
+struct CRHIResourceData;
 struct SRHIClearValue;
 class CRHIRayTracingGeometry;
 class CRHIRayTracingScene;
@@ -80,7 +80,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DRef CreateTexture2D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHITexture2DRef CreateTexture2D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Creates a Texture2DArray
@@ -90,7 +90,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DArrayRef CreateTexture2DArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHITexture2DArrayRef CreateTexture2DArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Creates a TextureCube
@@ -100,7 +100,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeRef CreateTextureCube(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHITextureCubeRef CreateTextureCube(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Creates a TextureCubeArray
@@ -110,7 +110,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeArrayRef CreateTextureCubeArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHITextureCubeArrayRef CreateTextureCubeArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Creates a Texture3D
@@ -120,7 +120,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture3DRef CreateTexture3D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHITexture3DRef CreateTexture3D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Creates a new Buffer
@@ -130,7 +130,7 @@ public:
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created Buffer
      */
-    virtual CRHIBufferRef CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIBufferRef CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Create a SamplerState
@@ -434,27 +434,27 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper functions
 
-FORCEINLINE CRHITexture2DRef RHICreateTexture2D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr)
+FORCEINLINE CRHITexture2DRef RHICreateTexture2D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
 {
     return GRHIInstance->CreateTexture2D(TextureDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHITexture2DArrayRef RHICreateTexture2DArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr)
+FORCEINLINE CRHITexture2DArrayRef RHICreateTexture2DArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
 {
     return GRHIInstance->CreateTexture2DArray(TextureDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHITextureCubeRef RHICreateTextureCube(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr)
+FORCEINLINE CRHITextureCubeRef RHICreateTextureCube(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
 {
     return GRHIInstance->CreateTextureCube(TextureDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHITextureCubeArrayRef RHICreateTextureCubeArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr)
+FORCEINLINE CRHITextureCubeArrayRef RHICreateTextureCubeArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
 {
     return GRHIInstance->CreateTextureCubeArray(TextureDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHITexture3DRef RHICreateTexture3D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr)
+FORCEINLINE CRHITexture3DRef RHICreateTexture3D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
 {
     return GRHIInstance->CreateTexture3D(TextureDesc, InitialState, InitialData);
 }
@@ -464,45 +464,45 @@ FORCEINLINE CRHISamplerStateRef RHICreateSamplerState(const class CRHISamplerSta
     return GRHIInstance->CreateSamplerState(Desc);
 }
 
-FORCEINLINE CRHIBufferRef RHICreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
     return GRHIInstance->CreateBuffer(BufferDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHIBufferRef RHICreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
     return RHICreateBuffer(CRHIBufferDesc::CreateVertexBuffer(NumVertices, Stride, Flags), InitialState, InitialData);
 }
 
 template<typename T>
-FORCEINLINE CRHIBufferRef RHICreateVertexBuffer(uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateVertexBuffer(uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
     return RHICreateVertexBuffer(sizeof(T), NumVertices, Flags, InitialState, InitialData);
 }
 
-FORCEINLINE CRHIBufferRef RHICreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
     return RHICreateBuffer(CRHIBufferDesc::CreateIndexBuffer(NumIndices, Format, Flags), InitialState, InitialData);
 }
 
-FORCEINLINE CRHIBufferRef RHICreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
     return RHICreateBuffer(CRHIBufferDesc::CreateConstantBuffer(Size, Flags), InitialState, InitialData);
 }
 
 template<typename StructureType>
-FORCEINLINE CRHIBufferRef RHICreateConstantBuffer(uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateConstantBuffer(uint32 Flags, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
     return RHICreateConstantBuffer(sizeof(StructureType), Flags, InitialState, InitialData);
 }
 
-FORCEINLINE CRHIBufferRef RHICreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
     return RHICreateBuffer(CRHIBufferDesc::CreateStructuredBuffer(NumElements, Stride, Flags), InitialState, InitialData);
 }
 
 template<typename StructureType>
-FORCEINLINE CRHIBufferRef RHICreateStructuredBuffer(uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateStructuredBuffer(uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
     return RHICreateStructuredBuffer(sizeof(StructureType), NumElements, Flags, InitialState, InitialData);
 }

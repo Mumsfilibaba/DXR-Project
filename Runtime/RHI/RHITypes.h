@@ -198,7 +198,7 @@ inline const char* ToString(ERHIShadingRate ShadingRate)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SDepthStencil
+// SRHIDepthStencil
 
 struct SRHIDepthStencil
 {
@@ -345,7 +345,7 @@ public:
         return (DepthStencil == RHS.DepthStencil);
     }
 
-    FORCEINLINE bool operator==(const CRHIClearValue& RHS) const
+    FORCEINLINE bool operator!=(const CRHIClearValue& RHS) const
     {
         return !(*this == RHS);
     }
@@ -362,22 +362,24 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIResourceData
+// CRHIResourceData
 
-struct SRHIResourceData
+class CRHIResourceData
 {
-    FORCEINLINE SRHIResourceData()
+public:
+
+    FORCEINLINE CRHIResourceData()
         : Data(nullptr)
     {
     }
 
-    FORCEINLINE SRHIResourceData(const void* InData, uint32 InSizeInBytes)
+    FORCEINLINE CRHIResourceData(const void* InData, uint32 InSizeInBytes)
         : Data(InData)
         , SizeInBytes(InSizeInBytes)
     {
     }
 
-    FORCEINLINE SRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth)
+    FORCEINLINE CRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
@@ -385,7 +387,7 @@ struct SRHIResourceData
     {
     }
 
-    FORCEINLINE SRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
+    FORCEINLINE CRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
@@ -395,15 +397,15 @@ struct SRHIResourceData
 
     FORCEINLINE void Set(const void* InData, uint32 InSizeInBytes)
     {
-        Data = InData;
+        Data        = InData;
         SizeInBytes = InSizeInBytes;
     }
 
     FORCEINLINE void Set(const void* InData, ERHIFormat InFormat, uint32 InWidth)
     {
-        Data = InData;
+        Data   = InData;
         Format = InFormat;
-        Width = InWidth;
+        Width  = InWidth;
     }
 
     FORCEINLINE void Set(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
@@ -432,6 +434,16 @@ struct SRHIResourceData
         return GetByteStrideFromFormat(Format) * Width * Height;
     }
 
+    FORCEINLINE bool operator==(const CRHIResourceData& RHS) const
+    {
+        return (Data == RHS.Data) && (Format == RHS.Format) && (Width == RHS.Width) && (Height == RHS.Height);
+    }
+
+    FORCEINLINE bool operator!=(const CRHIResourceData& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
 private:
     const void* Data;
     
@@ -445,8 +457,8 @@ private:
         struct
         {
             ERHIFormat Format;
-            uint32  Width;
-            uint32  Height;
+            uint32     Width;
+            uint32     Height;
         };
     };
 };
@@ -463,6 +475,16 @@ struct SRHICopyBufferInfo
         , DestinationOffset(InDestinationOffset)
         , SizeInBytes(InSizeInBytes)
     {
+    }
+
+    FORCEINLINE bool operator==(const SRHICopyBufferInfo& RHS) const
+    {
+        return (SourceOffset == RHS.SourceOffset) && (DestinationOffset == RHS.DestinationOffset) && (SizeInBytes == RHS.SizeInBytes);
+    }
+
+    FORCEINLINE bool operator!=(const SRHICopyBufferInfo& RHS) const
+    {
+        return !(*this == RHS);
     }
 
     uint64 SourceOffset      = 0;
@@ -485,6 +507,16 @@ struct SRHICopyTextureSubresourceInfo
     {
     }
 
+    FORCEINLINE bool operator==(const SRHICopyTextureSubresourceInfo& RHS) const
+    {
+        return (SubresourceIndex == RHS.SubresourceIndex) && (x == RHS.x) && (y == RHS.y) && (z == RHS.z);
+    }
+
+    FORCEINLINE bool operator==(const SRHICopyTextureSubresourceInfo& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
     uint32 SubresourceIndex = 0;
     uint32 x                = 0;
     uint32 y                = 0;
@@ -496,10 +528,233 @@ struct SRHICopyTextureSubresourceInfo
 
 struct SRHICopyTextureInfo
 {
+    SRHICopyTextureInfo() = default;
+
+    FORCEINLINE bool operator==(const SRHICopyTextureInfo& RHS) const
+    {
+        return (Source == RHS.Source) && (Destination == RHS.Destination) && (Width == RHS.Width) && (Height == RHS.Height) && (Depth == RHS.Depth);
+    }
+
+    FORCEINLINE bool operator==(const SRHICopyTextureInfo& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
     SRHICopyTextureSubresourceInfo Source;
     SRHICopyTextureSubresourceInfo Destination;
     
     uint32 Width  = 0;
     uint32 Height = 0;
     uint32 Depth  = 0;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIRenderTargetEntry
+
+struct SRHIRenderTargetEntry
+{
+    enum class EType : uint8
+    {
+        Texture = 1,
+        View    = 2
+    };
+
+    SRHIRenderTargetEntry()
+        : Type(EType::Texture)
+        , Texture(nullptr)
+    {
+    }
+
+    explicit SRHIRenderTargetEntry(CRHITexture2D* InTexture)
+        : Type(EType::Texture)
+        , Texture(InTexture)
+    {
+    }
+
+    explicit SRHIRenderTargetEntry(CRHIRenderTargetView* InView)
+        : Type(EType::View)
+        , View(InView)
+    {
+    }
+
+    SRHIRenderTargetEntry(const SRHIRenderTargetEntry& Other)
+        : Type(Other.Type)
+        , Texture(Other.Texture)
+    {
+    }
+
+    SRHIRenderTargetEntry& operator=(const SRHIRenderTargetEntry& RHS)
+    {
+        Type = RHS.Type;
+        Texture = RHS.Texture;
+        return *this;
+    }
+
+    bool operator==(const SRHIRenderTargetEntry& RHS) const
+    {
+        return (Type == RHS.Type) && (Texture == RHS.Texture);
+    }
+
+    bool operator!=(const SRHIRenderTargetEntry& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    EType Type;
+
+    union
+    {
+        CRHITexture2D*        Texture;
+        CRHIRenderTargetView* View;
+    };
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIDepthStencilEntry
+
+struct SRHIDepthStencilEntry
+{
+    enum class EType : uint8
+    {
+        Texture = 1,
+        View    = 2
+    };
+
+    SRHIDepthStencilEntry()
+        : Type(EType::Texture)
+        , Texture(nullptr)
+    {
+    }
+
+    explicit SRHIDepthStencilEntry(CRHITexture2D* InTexture)
+        : Type(EType::Texture)
+        , Texture(InTexture)
+    {
+    }
+
+    explicit SRHIDepthStencilEntry(CRHIDepthStencilView* InView)
+        : Type(EType::View)
+        , View(InView)
+    {
+    }
+
+    SRHIDepthStencilEntry(const SRHIDepthStencilEntry& Other)
+        : Type(Other.Type)
+        , Texture(Other.Texture)
+    {
+    }
+
+    SRHIDepthStencilEntry& operator=(const SRHIDepthStencilEntry& RHS)
+    {
+        Type = RHS.Type;
+        Texture = RHS.Texture;
+        return *this;
+    }
+
+    bool operator==(const SRHIDepthStencilEntry& RHS) const
+    {
+        return (Type == RHS.Type) && (Texture == RHS.Texture);
+    }
+
+    bool operator!=(const SRHIDepthStencilEntry& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    EType Type;
+
+    union
+    {
+        CRHITexture2D*        Texture;
+        CRHIDepthStencilView* View;
+    };
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRenderPassDesc
+
+class CRHIRenderPass
+{
+public:
+
+    CRHIRenderPass()
+    {
+    }
+
+    CRHIRenderPass(CRHITexture2D* const* InRenderTargets, uint32 InNumRenderTargets, CRHITexture2D* InDepthStencil)
+        : RenderTargets()
+        , NumRenderTargets(0)
+        , DepthStencil(InDepthStencil)
+    {
+        SetRenderTargets(InRenderTargets, InNumRenderTargets);
+    }
+
+    CRHIRenderPass(CRHIRenderTargetView* const* InRenderTargetViews, uint32 InNumRenderTargetViews, CRHIDepthStencilView* InDepthStencilView)
+        : RenderTargets()
+        , NumRenderTargets(0)
+        , DepthStencil(InDepthStencilView)
+    {
+        SetRenderTargets(InRenderTargetViews, InNumRenderTargetViews);
+    }
+
+    void SetRenderTargets(CRHITexture2D* const* InRenderTargets, uint32 InNumRenderTargets)
+    {
+        Assert(InRenderTargetViews < ArrayCount(RenderTargets));
+
+        for (uint32 Index = 0; Index < InNumRenderTargets; ++Index)
+        {
+            RenderTargets[Index] = SRHIRenderTargetEntry(InRenderTargets[Index]);
+        }
+
+        NumRenderTargets = InNumRenderTargets;
+    }
+
+    void SetRenderTargets(CRHIRenderTargetView* const* InRenderTargetViews, uint32 InNumRenderTargetViews)
+    {
+        Assert(InRenderTargetViews < ArrayCount(RenderTargets));
+        
+        for (uint32 Index = 0; Index < InNumRenderTargetViews; ++Index)
+        {
+            RenderTargets[Index] = SRHIRenderTargetEntry(InRenderTargetViews[Index]);
+        }
+
+        NumRenderTargets = InNumRenderTargetViews;
+    }
+
+    void SetDepthStencil(CRHITexture2D* InDepthStencil)
+    {
+        DepthStencil = SRHIDepthStencilEntry(InDepthStencil);
+    }
+
+    void SetDepthStencil(CRHIDepthStencilView* InDepthStencilView)
+    {
+        DepthStencil = SRHIDepthStencilEntry(InDepthStencilView);
+    }
+
+    bool operator==(const CRHIRenderPass& RHS) const
+    {
+        if (NumRenderTargets != RHS.NumRenderTargets)
+        {
+            return false;
+        }
+
+        for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
+        {
+            if (RenderTargets[Index] != RHS.RenderTargets[Index])
+            {
+                return false;
+            }
+        }
+
+        return (DepthStencil == RHS.DepthStencil);
+    }
+
+    bool operator==(const CRHIRenderPass& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    SRHIRenderTargetEntry RenderTargets[8];
+    uint32                NumRenderTargets;
+    SRHIDepthStencilEntry DepthStencil;
 };

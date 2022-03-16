@@ -104,7 +104,7 @@ CRHICommandQueue& CRHICommandQueue::Get()
 }
 
 CRHICommandQueue::CRHICommandQueue()
-    : CmdContext(nullptr)
+    : CommandContext(nullptr)
     , NumDrawCalls(0)
     , NumDispatchCalls(0)
     , NumCommands(0)
@@ -149,9 +149,9 @@ void CRHICommandQueue::ExecuteCommandLists(CRHICommandList* const* CmdLists, uin
 
 void CRHICommandQueue::WaitForGPU()
 {
-    if (CmdContext)
+    if (CommandContext)
     {
-        CmdContext->Flush();
+        CommandContext->Flush();
     }
 }
 

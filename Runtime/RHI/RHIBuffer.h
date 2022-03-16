@@ -174,8 +174,8 @@ public:
     }
     
     uint32 SizeInBytes   = 0;
-    uint32 StrideInBytes = 0;
-    uint32 Flags         = 0;
+    uint16 StrideInBytes = 0;
+    uint16 Flags         = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -187,21 +187,25 @@ public:
 
     CRHIBuffer(const CRHIBufferDesc& InBufferDesc)
         : CRHIResource()
-        , BufferDesc(InBufferDesc)
+        , SizeInBytes(InBufferDesc.SizeInBytes)
+        , StrideInBytes(InBufferDesc.StrideInBytes)
+        , Flags(InBufferDesc.Flags)
     {
     }
 
     virtual CRHIBuffer* AsBuffer() { return this; }
 
-    inline bool IsUAV() const { return (BufferDesc.Flags & BufferFlag_UAV); }
-    inline bool IsSRV() const { return (BufferDesc.Flags & BufferFlag_SRV); }
+    inline bool IsUAV() const { return (Flags & BufferFlag_UAV); }
+    inline bool IsSRV() const { return (Flags & BufferFlag_SRV); }
 
-    inline bool IsDynamic() const { return (BufferDesc.Flags & BufferFlag_Dynamic); }
+    inline bool IsDynamic() const { return (Flags & BufferFlag_Dynamic); }
 
-    inline uint32 GetFlags()  const { return BufferDesc.Flags; }
-    inline uint32 GetSize()   const { return BufferDesc.SizeInBytes; }
-    inline uint32 GetStride() const { return BufferDesc.StrideInBytes; }
+    inline uint32 GetSize()   const { return SizeInBytes; }
+    inline uint16 GetStride() const { return StrideInBytes; }
+    inline uint16 GetFlags()  const { return Flags; }
 
 protected:
-    CRHIBufferDesc BufferDesc;
+    uint32 SizeInBytes   = 0;
+    uint16 StrideInBytes = 0;
+    uint16 Flags         = 0;
 };

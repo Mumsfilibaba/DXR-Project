@@ -76,83 +76,24 @@ class RHI_API CRHICommandQueue
 {
 public:
 
-    /**
-     * Retrieve the RHICommandQueue instance
-     * 
-     * @return: Returns the instance of the RHICommandQueue
-     */
     static CRHICommandQueue& Get();
 
-    /**
-     * Execute a single RHICommandList
-     * 
-     * @param CmdList: CommandList to execute
-     */
     void ExecuteCommandList(class CRHICommandList& CmdList);
-
-    /**
-     * Execute multiple RHICommandLists
-     *
-     * @param CmdLists: CommandLists to execute
-     * @param NumCmdLists: Number of CommandLists to execute
-     */
     void ExecuteCommandLists(class CRHICommandList* const* CmdLists, uint32 NumCmdLists);
 
-    /**
-     * Wait for the GPU to finish all submitted operations
-     */
     void WaitForGPU();
 
-    /**
-     * Set the context that should be used
-     * 
-     * @param InCmdContext: CommandContext to use when executing CommandLists
-     */
-    FORCEINLINE void SetContext(IRHICommandContext* InCmdContext)
+    void SetContext(IRHICommandContext* InCmdContext) { CommandContext = InCmdContext; }
+
+    IRHICommandContext& GetContext()
     {
-        CmdContext = InCmdContext;
+        Assert(CommandContext != nullptr);
+        return *CommandContext;
     }
 
-    /**
-     * Retrieve the CommandContext that is used when executing CommandLists
-     * 
-     * @return: Returns a reference to the CommandContext that is currently being used
-     */
-    FORCEINLINE IRHICommandContext& GetContext()
-    {
-        Assert(CmdContext != nullptr);
-        return *CmdContext;
-    }
-
-    /**
-     * Retrieve the number of draw-calls that where in the previously executed CommandList
-     * 
-     * @return: Returns the number of draw-calls in the previously executed CommandList
-     */
-    FORCEINLINE uint32 GetNumDrawCalls() const
-    {
-        return NumDrawCalls;
-    }
-
-    /**
-     * Retrieve the number of dispatch-calls that where in the previously executed CommandList
-     *
-     * @return: Returns the number of dispatch-calls in the previously executed CommandList
-     */
-    FORCEINLINE uint32 GetNumDispatchCalls() const
-    {
-        return NumDispatchCalls;
-    }
-
-    /**
-     * Retrieve the number of commands that where in the previously executed CommandList
-     *
-     * @return: Returns the number of commands in the previously executed CommandList
-     */
-    FORCEINLINE uint32 GetNumCommands() const
-    {
-        return NumCommands;
-    }
+    uint32 GetNumDrawCalls()     const { return NumDrawCalls; }
+    uint32 GetNumDispatchCalls() const { return NumDispatchCalls; }
+    uint32 GetNumCommands()      const { return NumCommands; }
 
 private:
 
@@ -164,12 +105,12 @@ private:
 
     FORCEINLINE void ResetStatistics()
     {
-        NumDrawCalls = 0;
+        NumDrawCalls     = 0;
         NumDispatchCalls = 0;
-        NumCommands = 0;
+        NumCommands      = 0;
     }
 
-    IRHICommandContext* CmdContext;
+    IRHICommandContext* CommandContext;
 
     // Statistics
     uint32 NumDrawCalls;
@@ -188,166 +129,84 @@ class CRHICommandList
 
 public:
 
-    /**
-     * Default constructor
-     */
     CRHICommandList()
-        : CmdAllocator()
+        : CommandAllocator()
         , FirstCommand(nullptr)
         , LastCommand(nullptr)
     {
     }
 
-    /**
-     * Destructor
-     */
     ~CRHICommandList()
     {
         Reset();
     }
 
-    /**
-     * Begins the timestamp with the specified index in the TimestampQuery
-     *
-     * @param TimestampQuery: Timestamp-Query object to work on
-     * @param Index: Timestamp index within the query object to begin
-     */
     void BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
     {
         InsertCommand<CRHICommandBeginTimeStamp>(TimestampQuery, Index);
     }
 
-    /**
-     * Ends the timestamp with the specified index in the TimestampQuery
-     *
-     * @param TimestampQuery: Timestamp-Query object to work on
-     * @param Index: Timestamp index within the query object to end
-     */
     void EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
     {
         InsertCommand<CRHICommandEndTimeStamp>(TimestampQuery, Index);
     }
 
-    /**
-     * Clears a RenderTargetView with a specific color
-     *
-     * @param RenderTargetView: RenderTargetView to clear
-     * @param ClearColor: Color to set each pixel within the RenderTargetView to
-     */
     void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor)
     {
         Assert(RenderTargetView != nullptr);
         InsertCommand<CRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
 
-    /**
-     * Clears a DepthStencilView with a specific value
-     *
-     * @param DepthStencilView: DepthStencilView to clear
-     * @param ClearValue: Value to set each pixel within the DepthStencilView to
-     */
     void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SRHIDepthStencil& ClearValue)
     {
         Assert(DepthStencilView != nullptr);
         InsertCommand<CRHICommandClearDepthStencilView>(DepthStencilView, ClearValue);
     }
 
-    /**
-     * Clears a UnorderedAccessView with a specific value
-     *
-     * @param UnorderedAccessView: UnorderedAccessView to clear
-     * @param ClearColor: Value to set each pixel within the UnorderedAccessView to
-     */
     void ClearUnorderedAccessView(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor)
     {
         Assert(UnorderedAccessView != nullptr);
         InsertCommand<CRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
 
-    /**
-     * Sets the Shading-Rate for the fullscreen
-     *
-     * @param ShadingRate: New shading-rate for the upcoming draw-calls
-     */
     void SetShadingRate(ERHIShadingRate ShadingRate)
     {
         InsertCommand<CRHICommandSetShadingRate>(ShadingRate);
     }
 
-    /**
-     * Set the Shading-Rate image that should be used
-     *
-     * @param ShadingImage: Image containing the shading rate for the next upcoming draw-calls
-     */
     void SetShadingRateTexture(CRHITexture2D* ShadingRateTexture)
     {
         InsertCommand<CRHICommandSetShadingRateTexture>(ShadingRateTexture);
     }
 
-    /**
-     * Begin a RenderPass
-     */
-    void BeginRenderPass()
+    void BeginRenderPass(const CRHIRenderPass& RenderPassDesc)
     {
         InsertCommand<CRHICommandBeginRenderPass>();
     }
 
-    /**
-     * Ends a RenderPass
-     */
     void EndRenderPass()
     {
         InsertCommand<CRHICommandEndRenderPass>();
     }
 
-    /**
-     * Set the current viewport settings
-     *
-     * @param Width: Width of the viewport
-     * @param Height: Height of the viewport
-     * @param MinDepth: Minimum-depth of the viewport
-     * @param MaxDepth: Maximum-depth of the viewport
-     * @param x: x-position of the viewport
-     * @param y: y-position of the viewport
-     */
     void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
     {
         InsertCommand<CRHICommandSetViewport>(Width, Height, MinDepth, MaxDepth, x, y);
     }
 
-    /**
-     * Set the current scissor settings
-     *
-     * @param Width: Width of the viewport
-     * @param Height: Height of the viewport
-     * @param x: x-position of the viewport
-     * @param y: y-position of the viewport
-     */
     void SetScissorRect(float Width, float Height, float x, float y)
     {
         InsertCommand<CRHICommandSetScissorRect>(Width, Height, x, y);
     }
 
-    /**
-     * Set the BlendFactor color
-     *
-     * @param Color: New blend-factor to use
-     */
     void SetBlendFactor(const SColorF& Color)
     {
         InsertCommand<CRHICommandSetBlendFactor>(Color);
     }
 
-    /**
-     * Set all the RenderTargetViews and the DepthStencilView that should be used, nullptr is valid if the slot should not be used
-     *
-     * @param RenderTargetViews: Array of RenderTargetViews to use, each pointer in the array must be valid
-     * @param RenderTargetCount: Number of RenderTargetViews in the array
-     * @param DepthStencilView: DepthStencilView to set
-     */
     void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView)
     {
-        CRHIRenderTargetView** RenderTargets = CmdAllocator.Allocate<CRHIRenderTargetView*>(RenderTargetCount);
+        CRHIRenderTargetView** RenderTargets = CommandAllocator.Allocate<CRHIRenderTargetView*>(RenderTargetCount);
         for (uint32 i = 0; i < RenderTargetCount; i++)
         {
             RenderTargets[i] = RenderTargetViews[i];
@@ -356,16 +215,9 @@ public:
         InsertCommand<CRHICommandSetRenderTargets>(RenderTargets, RenderTargetCount, DepthStencilView);
     }
 
-    /**
-     * Set the VertexBuffers to be used
-     *
-     * @param VertexBuffers: Array of VertexBuffers to use
-     * @param VertexBufferCount: Number of VertexBuffers in the array
-     * @param BufferSlot: Slot to start bind the array to
-     */
     void SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot)
     {
-        CRHIBuffer** Buffers = CmdAllocator.Allocate<CRHIBuffer*>(VertexBufferCount);
+        CRHIBuffer** Buffers = CommandAllocator.Allocate<CRHIBuffer*>(VertexBufferCount);
         for (uint32 i = 0; i < VertexBufferCount; i++)
         {
             Buffers[i] = VertexBuffers[i];
@@ -374,87 +226,44 @@ public:
         InsertCommand<CRHICommandSetVertexBuffers>(Buffers, VertexBufferCount, BufferSlot);
     }
 
-    /**
-     * Set the current IndexBuffer
-     *
-     * @param IndexBuffer: IndexBuffer to use
-     */
     void SetIndexBuffer(CRHIBuffer* IndexBuffer, ERHIIndexFormat IndexFormat)
     {
         InsertCommand<CRHICommandSetIndexBuffer>(IndexBuffer, IndexFormat);
     }
 
-    /**
-     * Set the primitive topology
-     *
-     * @param PrimitveTopologyType: New primitive topology to use
-     */
     void SetPrimitiveTopology(ERHIPrimitiveTopology PrimitveTopologyType)
     {
         InsertCommand<CRHICommandSetPrimitiveTopology>(PrimitveTopologyType);
     }
 
-    /**
-     * Sets the current graphics PipelineState
-     *
-     * @param PipelineState: New PipelineState to use
-     */
     void SetGraphicsPipelineState(CRHIGraphicsPipelineState* PipelineState)
     {
         InsertCommand<CRHICommandSetGraphicsPipelineState>(PipelineState);
     }
 
-    /**
-     * Sets the current compute PipelineState
-     *
-     * @param PipelineState: New PipelineState to use
-     */
     void SetComputePipelineState(CRHIComputePipelineState* PipelineState)
     {
         InsertCommand<CRHICommandSetComputePipelineState>(PipelineState);
     }
 
-    /**
-     * Set shader constants
-     *
-     * @param Shader: Shader to bind the constants to
-     * @param Shader32BitConstants: Array of 32-bit constants
-     * @param Num32bitConstants: Number o 32-bit constants (Each is 4 bytes)
-     */
     void Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
     {
         const uint32 Num32BitConstantsInBytes = Num32BitConstants * 4;
 
-        void* Shader32BitConstantsMemory = CmdAllocator.Allocate(Num32BitConstantsInBytes, 1);
+        void* Shader32BitConstantsMemory = CommandAllocator.Allocate(Num32BitConstantsInBytes, 1);
         CMemory::Memcpy(Shader32BitConstantsMemory, Shader32BitConstants, Num32BitConstantsInBytes);
 
         InsertCommand<CRHICommandSet32BitShaderConstants>(Shader, Shader32BitConstantsMemory, Num32BitConstants);
     }
 
-    /**
-     * Sets a single ShaderResourceView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param ShaderResourceView: ShaderResourceView to bind
-     * @param ParameterIndex: ShaderResourceView-index to bind to
-     */
     void SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
     {
         InsertCommand<CRHICommandSetShaderResourceView>(Shader, ShaderResourceView, ParameterIndex);
     }
 
-    /**
-     * Sets a multiple ShaderResourceViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
-     * which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param ShaderResourceViews: Array of ShaderResourceViews to bind
-     * @param NumShaderResourceViews: Number of ShaderResourceViews in the array
-     * @param ParameterIndex: ShaderResourceView-index to bind to
-     */
     void SetShaderResourceViews(CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceViews, uint32 NumShaderResourceViews, uint32 ParameterIndex)
     {
-        CRHIShaderResourceView** TempShaderResourceViews = CmdAllocator.Allocate<CRHIShaderResourceView*>(NumShaderResourceViews);
+        CRHIShaderResourceView** TempShaderResourceViews = CommandAllocator.Allocate<CRHIShaderResourceView*>(NumShaderResourceViews);
         for (uint32 i = 0; i < NumShaderResourceViews; i++)
         {
             TempShaderResourceViews[i] = ShaderResourceViews[i];
@@ -463,30 +272,14 @@ public:
         InsertCommand<CRHICommandSetShaderResourceViews>(Shader, TempShaderResourceViews, NumShaderResourceViews, ParameterIndex);
     }
 
-    /**
-     * Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param UnorderedAccessView: UnorderedAccessView to bind
-     * @param ParameterIndex: UnorderedAccessView-index to bind to
-     */
     void SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
     {
         InsertCommand<CRHICommandSetUnorderedAccessView>(Shader, UnorderedAccessView, ParameterIndex);
     }
 
-    /**
-     * Sets a multiple UnorderedAccessViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
-     * which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param UnorderedAccessViews: Array of UnorderedAccessViews to bind
-     * @param NumUnorderedAccessViews: Number of UnorderedAccessViews in the array
-     * @param ParameterIndex: UnorderedAccessView-index to bind to
-     */
     void SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
     {
-        CRHIUnorderedAccessView** TempUnorderedAccessViews = CmdAllocator.Allocate<CRHIUnorderedAccessView*>(NumUnorderedAccessViews);
+        CRHIUnorderedAccessView** TempUnorderedAccessViews = CommandAllocator.Allocate<CRHIUnorderedAccessView*>(NumUnorderedAccessViews);
         for (uint32 i = 0; i < NumUnorderedAccessViews; i++)
         {
             TempUnorderedAccessViews[i] = UnorderedAccessViews[i];
@@ -495,30 +288,14 @@ public:
         InsertCommand<CRHICommandSetUnorderedAccessViews>(Shader, TempUnorderedAccessViews, NumUnorderedAccessViews, ParameterIndex);
     }
 
-    /**
-     * Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param ConstantBuffer: ConstantBuffer to bind
-     * @param ParameterIndex: ConstantBuffer-index to bind to
-     */
     void SetConstantBuffer(CRHIShader* Shader, CRHIBuffer* ConstantBuffer, uint32 ParameterIndex)
     {
         InsertCommand<CRHICommandSetConstantBuffer>(Shader, ConstantBuffer, ParameterIndex);
     }
 
-    /**
-     * Sets a multiple ConstantBuffers to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
-     * which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param ConstantBuffers: Array of ConstantBuffers to bind
-     * @param NumConstantBuffers: Number of ConstantBuffers in the array
-     * @param ParameterIndex: ConstantBuffer-index to bind to
-     */
     void SetConstantBuffers(CRHIShader* Shader, CRHIBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
     {
-        CRHIBuffer** TempConstantBuffers = CmdAllocator.Allocate<CRHIBuffer*>(NumConstantBuffers);
+        CRHIBuffer** TempConstantBuffers = CommandAllocator.Allocate<CRHIBuffer*>(NumConstantBuffers);
         for (uint32 i = 0; i < NumConstantBuffers; i++)
         {
             TempConstantBuffers[i] = ConstantBuffers[i];
@@ -527,30 +304,14 @@ public:
         InsertCommand<CRHICommandSetConstantBuffers>(Shader, TempConstantBuffers, NumConstantBuffers, ParameterIndex);
     }
 
-    /**
-     * Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind sampler to
-     * @param SamplerState: SamplerState to bind
-     * @param ParameterIndex: SamplerState-index to bind to
-     */
     void SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex)
     {
         InsertCommand<CRHICommandSetSamplerState>(Shader, SamplerState, ParameterIndex);
     }
 
-    /**
-     * Sets a multiple SamplerStates to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
-     * which can be queried from the shader-object
-     *
-     * @param Shader: Shader to bind resource to
-     * @param SamplerStates: Array of SamplerStates to bind
-     * @param NumConstantBuffers: Number of ConstantBuffers in the array
-     * @param ParameterIndex: ConstantBuffer-index to bind to
-     */
     void SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
     {
-        CRHISamplerState** TempSamplerStates = CmdAllocator.Allocate<CRHISamplerState*>(NumSamplerStates);
+        CRHISamplerState** TempSamplerStates = CommandAllocator.Allocate<CRHISamplerState*>(NumSamplerStates);
         for (uint32 i = 0; i < NumSamplerStates; i++)
         {
             TempSamplerStates[i] = SamplerStates[i];
@@ -559,129 +320,60 @@ public:
         InsertCommand<CRHICommandSetSamplerStates>(Shader, TempSamplerStates, NumSamplerStates, ParameterIndex);
     }
 
-    /**
-     * Updates the contents of a Buffer
-     *
-     * @param Dst: Destination buffer to update
-     * @param OffsetInBytes: Offset in bytes inside the destination-buffer
-     * @param SizeInBytes: Number of bytes to copy over to the buffer
-     * @param SourceData: SourceData to copy to the GPU
-     */
     void UpdateBuffer(CRHIBuffer* Dst, uint64 DestinationOffsetInBytes, uint64 SizeInBytes, const void* SourceData)
     {
-        void* TempSourceData = CmdAllocator.Allocate(static_cast<uint32>(SizeInBytes), 1);
+        void* TempSourceData = CommandAllocator.Allocate(static_cast<uint32>(SizeInBytes), 1);
         CMemory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
         InsertCommand<CRHICommandUpdateBuffer>(Dst, DestinationOffsetInBytes, SizeInBytes, TempSourceData);
     }
 
-    /**
-     * Updates the contents of a Texture2D
-     *
-     * @param Dst: Destination Texture2D to update
-     * @param Width: Width of the texture to update
-     * @param Height: Height of the texture to update
-     * @param MipLevel: MipLevel of the texture to update
-     * @param SourceData: SourceData to copy to the GPU
-     */
     void UpdateTexture2D(CRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
     {
         const uint32 SizeInBytes = Width * Height * GetByteStrideFromFormat(Dst->GetFormat());
 
-        void* TempSourceData = CmdAllocator.Allocate(SizeInBytes, 1);
+        void* TempSourceData = CommandAllocator.Allocate(SizeInBytes, 1);
         CMemory::Memcpy(TempSourceData, SourceData, SizeInBytes);
 
         InsertCommand<CRHICommandUpdateTexture2D>(Dst, Width, Height, MipLevel, TempSourceData);
     }
 
-    /**
-     * Resolves a multi-sampled texture, must have the same sizes and compatible formats
-     *
-     * @param Dst: Destination texture, must have a single sample
-     * @param Src: Source texture to resolve
-     */
     void ResolveTexture(CRHITexture* Dst, CRHITexture* Src)
     {
         InsertCommand<CRHICommandResolveTexture>(Dst, Src);
     }
 
-    /**
-     * Copies the contents from one buffer to another
-     *
-     * @param Dst: Destination buffer to copy to
-     * @param Src: Source buffer to copy from
-     * @param CopyInfo: Information about the copy operation
-     */
     void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo)
     {
         InsertCommand<CRHICommandCopyBuffer>(Dst, Src, CopyInfo);
     }
 
-    /**
-     * Copies the entire contents of one texture to another, which require the size and formats to be the same
-     *
-     * @param Dst: Destination texture
-     * @param Src: Source texture
-     */
     void CopyTexture(CRHITexture* Dst, CRHITexture* Src)
     {
         InsertCommand<CRHICommandCopyTexture>(Dst, Src);
     }
 
-    /**
-     * Copies contents of a texture region of one texture to another, which require the size and formats to be the same
-     *
-     * @param Dst: Destination texture
-     * @param Src: Source texture
-     * @param CopyTextureInfo: Information about the copy operation
-     */
     void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo)
     {
         InsertCommand<CRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
     }
 
-    /**
-     * Destroys a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command-list is completed
-     *
-     * @param Resource: Resource to destroy
-     */
     void DestroyResource(CRHIObject* Resource)
     {
         InsertCommand<CRHICommandDestroyResource>(Resource);
     }
 
-    /**
-     * Signal the driver that the contents can be discarded
-     *
-     * @param Resource: Resource to discard contents of
-     */
     void DiscardContents(CRHIResource* Resource)
     {
         InsertCommand<CRHICommandDiscardContents>(Resource);
     }
 
-    /**
-     * Builds the Bottom-Level Acceleration-Structure for ray tracing
-     *
-     * @param Geometry: Bottom-level acceleration-structure to build or update
-     * @param VertexBuffer: VertexBuffer to build Geometry of
-     * @param IndexBuffer: IndexBuffer to build Geometry of
-     * @param bUpdate: True if the build should be an update, false if it should build from the ground up
-     */
     void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer, bool bUpdate)
     {
         Assert((Geometry != nullptr) && (!bUpdate || (bUpdate && Geometry->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)));
         InsertCommand<CRHICommandBuildRayTracingGeometry>(Geometry, VertexBuffer, IndexBuffer, bUpdate);
     }
 
-    /**
-     * Builds the Top-Level Acceleration-Structure for ray tracing
-     *
-     * @param Scene: Top-level acceleration-structure to build or update
-     * @param Instances: Instances to build the scene of
-     * @param NumInstances: Number of instances to build
-     * @param bUpdate: True if the build should be an update, false if it should build from the ground up
-     */
     void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
     {
         Assert((Scene != nullptr) && (!bUpdate || (bUpdate && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)));
@@ -701,24 +393,12 @@ public:
         InsertCommand<CRHICommandSetRayTracingBindings>(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
 
-    /**
-     * Generate MipLevels for a texture. Works with Texture2D and TextureCubes.
-     *
-     * @param Texture: Texture to generate MipLevels for
-     */
     void GenerateMips(CRHITexture* Texture)
     {
         Assert(Texture != nullptr);
         InsertCommand<CRHICommandGenerateMips>(Texture);
     }
 
-    /**
-     * Transition the ResourceState of a Texture resource
-     *
-     * @param Texture: Texture to transition ResourceState for
-     * @param BeforeState: State that the Texture had before the transition
-     * @param AfterState: State that the Texture have after the transition
-     */
     void TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState)
     {
         Assert(Texture != nullptr);
@@ -733,13 +413,6 @@ public:
         }
     }
 
-    /**
-     * Transition the ResourceState of a Buffer resource
-     *
-     * @param Buffer: Buffer to transition ResourceState for
-     * @param BeforeState: State that the Buffer had before the transition
-     * @param AfterState: State that the Buffer have after the transition
-     */
     void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState)
     {
         Assert(Buffer != nullptr);
@@ -755,156 +428,80 @@ public:
         }
     }
 
-    /**
-     * Add a UnorderedAccessBarrier for a Texture resource, which should be issued before reading of a resource in UnorderedAccessState
-     *
-     * @param Texture: Texture to issue barrier for
-     */
     void UnorderedAccessTextureBarrier(CRHITexture* Texture)
     {
         Assert(Texture != nullptr);
         InsertCommand<CRHICommandUnorderedAccessTextureBarrier>(Texture);
     }
 
-    /**
-     * Add a UnorderedAccessBarrier for a Buffer resource, which should be issued before reading of a resource in UnorderedAccessState
-     *
-     * @param Buffer: Buffer to issue barrier for
-     */
     void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)
     {
         Assert(Buffer != nullptr);
         InsertCommand<CRHICommandUnorderedAccessBufferBarrier>(Buffer);
     }
 
-    /**
-     * Issue a draw-call
-     *
-     * @param VertexCount: Number of vertices
-     * @param StartVertexLocation: Offset of the vertices
-     */
     void Draw(uint32 VertexCount, uint32 StartVertexLocation)
     {
         InsertCommand<CRHICommandDraw>(VertexCount, StartVertexLocation);
         NumDrawCalls++;
     }
 
-    /**
-     * Issue a draw-call for drawing with an IndexBuffer
-     *
-     * @param IndexCount: Number of indices
-     * @param StartIndexLocation: Offset in the index-buffer
-     * @param BaseVertexLocation: Index of the vertex that should be considered as index zero
-     */
     void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
     {
         InsertCommand<CRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
         NumDrawCalls++;
     }
 
-    /**
-     * Issue a draw-call for drawing instanced
-     *
-     * @param VertexCountPerInstance: Number of vertices per instance
-     * @param InstanceCount: Number of instances
-     * @param StartVertexLocation: Offset of the vertices
-     * @param StartInstanceLocation: Offset of the instances
-     */
     void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
     {
         InsertCommand<CRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
         NumDrawCalls++;
     }
 
-    /**
-     * Issue a draw-call for drawing instanced with an IndexBuffer
-     *
-     * @param IndexCountPerInstance: Number of indices per instance
-     * @param InstanceCount: Number of instances
-     * @param StartIndexLocation: Offset of the index to start with
-     * @param BaseVertexLocation: Offset of the vertices
-     * @param StartInstanceLocation: Offset of the instances
-     */
     void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
     {
         InsertCommand<CRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
         NumDrawCalls++;
     }
 
-    /**
-     * Issues a compute dispatch
-     *
-     * @param WorkGroupX: Number of work-groups in x-direction
-     * @param WorkGroupY: Number of work-groups in y-direction
-     * @param WorkGroupZ: Number of work-groups in z-direction
-     */
     void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
     {
         InsertCommand<CRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
         NumDispatchCalls++;
     }
 
-    /**
-     * Issues a ray generation dispatch
-     *
-     * @param Scene: Scene to trace rays in
-     * @param PipelineState: PipelineState to use when tracing
-     * @param Width: Number of rays in x-direction
-     * @param Height: Number of rays in y-direction
-     * @param Depth: Number of rays in z-direction
-     */
     void DispatchRays(CRHIRayTracingScene* Scene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
     {
         InsertCommand<CRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
     }
-    /**
-     * Present a viewport
-     *
-     * @param Viewport: Viewport to present
-     * @param bVerticalSync: Boolean that decides if the presentation should be synced with the displays refresh-rate
-     */
+
     void PresentViewport(CRHIViewport* Viewport, bool bVerticalSync)
     {
         InsertCommand<CRHICommandPresentViewport>(Viewport, bVerticalSync);
     }
 
-    /**
-     * Inserts a marker on the GPU timeline
-     *
-     * @param Message: Message for the marker
-     */
     void InsertCommandListMarker(const String& Marker)
     {
         InsertCommand<CRHICommandInsertMarker>(Marker);
     }
     
-    /**
-     * Insert a debug-break into the command-list
-     */
     void DebugBreak()
     {
         InsertCommand<CRHICommandDebugBreak>();
     }
 
-    /**
-     *  Begins a PIX capture event, currently only available on D3D12
-     */
+    /** Begins a PIX capture event, currently only available on D3D12 */
     void BeginExternalCapture()
     {
         InsertCommand<CRHICommandBeginExternalCapture>();
     }
 
-    /**
-     * Ends a PIX capture event, currently only available on D3D12
-     */
+    /** Ends a PIX capture event, currently only available on D3D12 */
     void EndExternalCapture()
     {
         InsertCommand<CRHICommandEndExternalCapture>();
     }
 
-    /**
-     * Resets the CommandList
-     */
     void Reset()
     {
         if (FirstCommand != nullptr)
@@ -926,45 +523,19 @@ public:
         NumDispatchCalls = 0;
         NumCommands      = 0;
 
-        CmdAllocator.Reset();
+        CommandAllocator.Reset();
     }
 
-    /**
-     * Retrieve the number of recorded draw-calls
-     * 
-     * @return: Returns the number of draw-calls
-     */
-    FORCEINLINE uint32 GetNumDrawCalls() const
-    {
-        return NumDrawCalls;
-    }
-
-    /**
-     * Retrieve the number of recorded dispatch-calls
-     *
-     * @return: Returns the number of dispatch-calls
-     */
-    FORCEINLINE uint32 GetNumDispatchCalls() const
-    {
-        return NumDispatchCalls;
-    }
-
-    /**
-     * Retrieve the number of recorded Commands
-     *
-     * @return: Returns the number of Commands
-     */
-    FORCEINLINE uint32 GetNumCommands() const
-    {
-        return NumCommands;
-    }
+    inline uint32 GetNumDrawCalls()     const { return NumDrawCalls; }
+    inline uint32 GetNumDispatchCalls() const { return NumDispatchCalls; }
+    inline uint32 GetNumCommands()      const { return NumCommands; }
 
 private:
 
     template<typename CommandType, typename... ArgTypes>
     void InsertCommand(ArgTypes&&... Args)
     {
-        CommandType* Cmd = CmdAllocator.Construct<CommandType>(Forward<ArgTypes>(Args)...);
+        CommandType* Cmd = CommandAllocator.Construct<CommandType>(Forward<ArgTypes>(Args)...);
         if (LastCommand)
         {
             LastCommand->NextCommand = Cmd;
@@ -979,7 +550,7 @@ private:
         ++NumCommands;
     }
 
-    CCommandAllocator CmdAllocator;
+    CCommandAllocator CommandAllocator;
 
     CRHICommand*      FirstCommand = nullptr;
     CRHICommand*      LastCommand  = nullptr;
