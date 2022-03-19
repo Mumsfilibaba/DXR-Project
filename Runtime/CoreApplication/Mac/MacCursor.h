@@ -27,8 +27,7 @@ private:
     
     CMacCursor()
         : CPlatformCursor()
-    {
-    }
+    { }
     
     ~CMacCursor() = default;
 };

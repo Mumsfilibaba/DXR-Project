@@ -106,8 +106,7 @@ namespace Internal
 
     template <uint32 Iteration, uint32 Index, typename ElementType, typename... Types>
     struct TTupleGetByIndexHelper<Iteration, Index, ElementType, Types...> : public TTupleGetByIndexHelper<Iteration + 1, Index, Types...>
-    {
-    };
+    { };
 
     template <uint32 Index, typename ElementType, typename... Types>
     struct TTupleGetByIndexHelper<Index, Index, ElementType, Types...>
@@ -134,8 +133,7 @@ namespace Internal
 
     template <uint32 SearchForIndex, typename... Types>
     struct TTupleGetByIndex : public TTupleGetByIndexHelper<0, SearchForIndex, Types...>
-    {
-    };
+    { };
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Tuple GetByElement Implementation
@@ -145,8 +143,7 @@ namespace Internal
 
     template <uint32 Iteration, typename WantedType, typename ElementType, typename... Types>
     struct TTupleGetByElementHelper<Iteration, WantedType, ElementType, Types...> : public TTupleGetByElementHelper<Iteration + 1, WantedType, Types...>
-    {
-    };
+    { };
 
     template <uint32 Iteration, typename WantedType, typename... Types>
     struct TTupleGetByElementHelper<Iteration, WantedType, WantedType, Types...>
@@ -173,8 +170,7 @@ namespace Internal
 
     template <typename WantedType, typename... Types>
     struct TTupleGetByElement : public TTupleGetByElementHelper<0, WantedType, Types...>
-    {
-    };
+    { };
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Implementation of tuple
@@ -583,8 +579,7 @@ public:
     template<typename... ArgTypes, typename = typename TEnableIf<(NumElements > 0)>::Type>
     FORCEINLINE explicit TTuple(ArgTypes&&... Args)
         : Super(Forward<ArgTypes>(Args)...)
-    {
-    }
+    { }
 
 public:
 

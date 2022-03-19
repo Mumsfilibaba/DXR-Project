@@ -12,71 +12,59 @@ typedef TSharedRef<class CRHIObject>   CRHIObjectRef;
 typedef TSharedRef<class CRHIResource> CRHIResourceRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RHIObject
+// CRHIObject
 
 class CRHIObject : public CRefCounted
 {
 public:
 
-    CRHIObject() = default;
+    CRHIObject()  = default;
     ~CRHIObject() = default;
 
-    /**
-     * Returns true if the native resource is valid to use 
-     * 
-     * @return: Returns true if the resource is backed by a native resource
-     */ 
     virtual bool IsValid() const { return false; }
 
-    /**
-     * Retrieve a handle to the native resource, nullptr is valid since not all RHI has handles for all resources
-     * 
-     * @return: Returns a pointer to the native resource that is currently being used
-     */
     virtual void* GetNativeResource() const { return nullptr; }
 
-    /**
-     * Sets a debug name on the resource
-     * 
-     * @param InName: Debug name for the resource
-     */
     virtual void SetName(const String& InName) { Name = InName; }
 
-    /**
-     * Retrieve the debug-name
-     * 
-     * @return: Returns the debug-name
-     */
-    FORCEINLINE const String& GetName() const
-    {
-        return Name;
-    }
+    inline const String& GetName() const { return Name; }
 
 private:
     String Name;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RHIResource
+// ERHIResourceDimension
+
+enum class ERHIResourceType : uint8
+{
+    Unknown        = 0,
+    Buffer         = 1,
+    ConstantBuffer = 2,
+    Texture        = 3,
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIResource
 
 class CRHIResource : public CRHIObject
 {
 public:
 
-    CRHIResource() = default;
+    CRHIResource(ERHIResourceType InResourceType)
+        : CRHIObject()
+        , Type(InResourceType)
+    { }
+    
     ~CRHIResource() = default;
 
-    /**
-     * Cast to a Buffer 
-     * 
-     * @return: Returns a pointer to a Buffer if the resource or nullptr if its not a Buffer
-     */
-    virtual class CRHIBuffer* AsBuffer() { return nullptr; }
-    
-    /**
-     * Cast to a Texture
-     *
-     * @return: Returns a pointer to a Texture if the resource or nullptr if its not a Texture
-     */
+    virtual class CRHIBuffer*         AsBuffer()         { return nullptr; }
+    virtual class CRHIConstantBuffer* AsConstantBuffer() { return nullptr; }
+
     virtual class CRHITexture* AsTexture() { return nullptr; }
+
+    inline ERHIResourceType GetType() const { return Type; }
+
+private:
+    ERHIResourceType Type;
 };

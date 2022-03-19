@@ -13,8 +13,7 @@ class CVulkanDeviceObject : public CNonCopyable
 public:
     CVulkanDeviceObject(CVulkanDevice* InDevice)
         : Device(InDevice)
-    {
-    }
+    { }
 
     FORCEINLINE CVulkanDevice* GetDevice() const noexcept
     {

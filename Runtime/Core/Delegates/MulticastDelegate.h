@@ -57,8 +57,7 @@ public:
      */
     FORCEINLINE TMulticastDelegate()
         : Super()
-    {
-    }
+    { }
 
     /**
      * Add a function to the delegate

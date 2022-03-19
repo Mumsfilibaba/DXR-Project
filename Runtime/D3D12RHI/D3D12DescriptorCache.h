@@ -30,8 +30,7 @@ public:
         , DeviceDescriptors()
         , CopyDescriptors()
         , bDirty()
-    {
-    }
+    { }
 
     FORCEINLINE void SetView(DescriptorViewType* DescriptorView, EShaderVisibility Visibility, uint32 ShaderRegister)
     {

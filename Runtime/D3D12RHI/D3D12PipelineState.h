@@ -76,8 +76,7 @@ public:
         : CRHIDepthStencilState()
         , CD3D12DeviceObject(InDevice)
         , Desc(InDesc)
-    {
-    }
+    { }
 
     virtual bool IsValid() const override
     {
@@ -103,8 +102,7 @@ public:
         : CRHIRasterizerState()
         , CD3D12DeviceObject(InDevice)
         , Desc(InDesc)
-    {
-    }
+    { }
 
     virtual bool IsValid() const override
     {
@@ -130,8 +128,7 @@ public:
         : CRHIBlendState()
         , CD3D12DeviceObject(InDevice)
         , Desc(InDesc)
-    {
-    }
+    { }
 
     virtual bool IsValid() const override
     {

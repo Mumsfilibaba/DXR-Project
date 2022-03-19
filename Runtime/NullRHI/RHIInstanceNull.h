@@ -32,8 +32,7 @@ public:
     CRHIInstanceNull()
         : CRHIInstance(ERHIType::Null)
         , CommandContext(CNullRHICommandContext::Make())
-    {
-    }
+    { }
 
     ~CRHIInstanceNull() = default;
 

@@ -25,8 +25,7 @@ public:
      */
     FORCEINLINE CSpinLock() noexcept
         : State(State_Unlocked)
-    {
-    }
+    { }
 
     /** Lock SpinLock for other threads */
     FORCEINLINE void Lock() noexcept

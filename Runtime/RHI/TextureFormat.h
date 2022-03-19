@@ -172,7 +172,7 @@ inline const char* ToString(ERHIFormat Format)
     case ERHIFormat::R8_Snorm:                 return "R8_Snorm";
     case ERHIFormat::R8_Sint:                  return "R8_Sint";
 
-    default:                                return "Unknown";
+    default:                                   return "Unknown";
     }
 }
 

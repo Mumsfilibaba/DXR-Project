@@ -4,7 +4,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedef
 
-typedef TSharedRef<class CRHIBuffer> CRHIBufferRef;
+typedef TSharedRef<class CRHIBuffer>         CRHIBufferRef;
+typedef TSharedRef<class CRHIConstantBuffer> CRHIConstantBufferRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIIndexFormat 
@@ -130,8 +131,7 @@ public:
         : SizeInBytes(InSizeInBytes)
         , StrideInBytes(InStrideInBytes)
         , Flags(InFlags)
-    {
-    }
+    { }
     
     bool IsUAV() const
     {
@@ -186,12 +186,11 @@ class CRHIBuffer : public CRHIResource
 public:
 
     CRHIBuffer(const CRHIBufferDesc& InBufferDesc)
-        : CRHIResource()
+        : CRHIResource(ERHIResourceType::Buffer)
         , SizeInBytes(InBufferDesc.SizeInBytes)
         , StrideInBytes(InBufferDesc.StrideInBytes)
         , Flags(InBufferDesc.Flags)
-    {
-    }
+    { }
 
     virtual CRHIBuffer* AsBuffer() { return this; }
 
@@ -208,4 +207,39 @@ protected:
     uint32 SizeInBytes   = 0;
     uint16 StrideInBytes = 0;
     uint16 Flags         = 0;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERHIConstantBufferFlags
+
+enum ERHIConstantBufferFlags : uint16
+{
+    ConstantBufferFlag_None = 0,
+
+    ConstantBufferFlag_Default = FLAG(1), // Default Device Memory
+    ConstantBufferFlag_Dynamic = FLAG(2), // Dynamic Memory
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIConstantBuffer
+
+class CRHIConstantBuffer : public CRHIResource
+{
+public:
+    CRHIConstantBuffer(uint32 InSize, uint16 InFlags)
+        : CRHIResource(ERHIResourceType::ConstantBuffer)
+        , Size(InSize)
+        , Flags(InFlags)
+    { }
+
+    virtual class CRHIConstantBuffer* AsConstantBuffer() { return this; }
+
+    inline bool IsDynamic() const { return Flags & ConstantBufferFlag_Dynamic; }
+
+    inline uint32 GetSize() const { return Size; }
+    inline uint16 GetFlags() const { return Flags;}
+
+private:
+    uint32 Size; 
+    uint16 Flags;
 };

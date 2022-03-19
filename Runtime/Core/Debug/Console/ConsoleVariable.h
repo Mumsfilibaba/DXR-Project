@@ -17,8 +17,7 @@ public:
     CConsoleVariable()
         : IConsoleVariable()
         , ChangedDelegate()
-    {
-    }
+    { }
 
     CConsoleVariable(const CConsoleVariableChangedDelegateType& VariableChangedDelegate)
         : IConsoleVariable()
@@ -52,20 +51,17 @@ public:
     TConsoleVariable()
         : CConsoleVariable()
         , Value()
-    {
-    }
+    { }
 
     TConsoleVariable(T StartValue)
         : CConsoleVariable()
         , Value(StartValue)
-    {
-    }
+    { }
 
     TConsoleVariable(T StartValue, const CConsoleVariableChangedDelegateType& VariableChangedDelegate)
         : CConsoleVariable(VariableChangedDelegate)
         , Value(StartValue)
-    {
-    }
+    { }
 
     virtual bool IsInt() const override final { return false; }
     virtual bool IsFloat() const override final { return false; }

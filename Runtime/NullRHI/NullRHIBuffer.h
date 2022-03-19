@@ -19,8 +19,7 @@ class CNullRHIBuffer : public CRHIBuffer
 public:
     CNullRHIBuffer(const CRHIBufferDesc& InBufferDesc)
         : CRHIBuffer(InBufferDesc)
-    {
-    }
+    { }
 
     virtual void SetName(const String& InName) override final
     {

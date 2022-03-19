@@ -97,8 +97,8 @@ public:
 
     bool operator==(const CRHISamplerStateDesc& RHS) const
     {
-        return 
-            (AddressU       == RHS.AddressU)       && 
+        return
+            (AddressU       == RHS.AddressU)       &&
             (AddressV       == RHS.AddressV)       && 
             (AddressW       == RHS.AddressW)       &&
             (Filter         == RHS.Filter)         && 
@@ -126,7 +126,6 @@ public:
     float              MaxLOD         = FLT_MAX;
     SColorF            BorderColor;
 };
-
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHISamplerState

@@ -114,8 +114,7 @@ public:
     CVulkanTexture2DArray(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITexture2DArray(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InSizeZ, InFlags, InOptimalClearValue)
         , CVulkanTexture(InDevice)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -127,8 +126,7 @@ public:
     CVulkanTextureCube(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InOptimalClearValue)
         , CVulkanTexture(InDevice)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -140,8 +138,7 @@ public:
     CVulkanTextureCubeArray(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITextureCubeArray(InFormat, InSizeX, InNumMips, InSizeZ, InFlags, InOptimalClearValue)
         , CVulkanTexture(InDevice)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -153,8 +150,7 @@ public:
     CVulkanTexture3D(CVulkanDevice* InDevice, ERHIFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
         : CRHITexture3D(InFormat, InSizeX, InSizeY, InSizeZ, InNumMips, InFlags, InOptimalClearValue)
         , CVulkanTexture(InDevice)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -168,8 +164,7 @@ public:
     TVulkanTexture(ArgTypes&&... Args)
         : BaseTextureType(Forward<ArgTypes>(Args)...)
         , ShaderResourceView(dbg_new CVulkanShaderResourceView())
-    {
-    }
+    { }
 
     virtual void SetName(const String& InName) override final
     {

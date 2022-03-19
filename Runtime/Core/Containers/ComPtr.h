@@ -25,8 +25,7 @@ public:
      */
     FORCEINLINE TComPtr() noexcept
         : Ptr(nullptr)
-    {
-    }
+    { }
 
     /**
      * Copy-constructor 
@@ -81,8 +80,7 @@ public:
      */
     FORCEINLINE TComPtr(ElementType* InPointer) noexcept
         : Ptr(InPointer)
-    {
-    }
+    { }
 
     /**
      * Construct a ComPtr from a raw pointer of a convertible type. The container takes ownership.
@@ -92,8 +90,7 @@ public:
     template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TComPtr(OtherType* InPointer) noexcept
         : Ptr(InPointer)
-    {
-    }
+    { }
 
     /**
      * Default destructor

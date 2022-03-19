@@ -133,6 +133,16 @@ public:
     virtual CRHIBufferRef CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
+     * Creates a new ConstantBuffer
+     * 
+     * @param Size: Size of the ConstantBuffer in bytes
+     * @param Flags: Flags of the usage of the buffer
+     * @param InitialData: Initial data supplied to the Buffer
+     * @return: Returns the newly created Buffer
+     */
+    virtual CRHIConstantBufferRef CreateConstantBuffer(uint32 Size, uint16 Flags, const CRHIResourceData* InitalData) = 0;
+
+    /**
      * Create a SamplerState
      * 
      * @param Desc: Structure with information about the SamplerState
@@ -423,8 +433,7 @@ protected:
 
     CRHIInstance(ERHIType InCurrentRHI)
         : CurrentRHI(InCurrentRHI)
-    {
-    }
+    { }
 
     virtual ~CRHIInstance() = default;
 

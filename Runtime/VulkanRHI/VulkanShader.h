@@ -11,8 +11,7 @@ class CVulkanComputeShader : public CRHIComputeShader
 public:
     CVulkanComputeShader()
         : CRHIComputeShader()
-    {
-    }
+    { }
 
     virtual CIntVector3 GetThreadGroupXYZ() const override
     {
@@ -29,8 +28,7 @@ class TVulkanShader : public BaseShaderType
 public:
     TVulkanShader()
         : BaseShaderType()
-    {
-    }
+    { }
 
     virtual void GetShaderParameterInfo(SRHIShaderParameterInfo& OutShaderParameterInfo) const override
     {

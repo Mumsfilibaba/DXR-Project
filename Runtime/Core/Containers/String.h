@@ -90,8 +90,7 @@ public:
      */
     FORCEINLINE TString() noexcept
         : Characters()
-    {
-    }
+    { }
 
     /**
      * Create a string from a raw array

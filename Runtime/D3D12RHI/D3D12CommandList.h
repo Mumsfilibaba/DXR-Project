@@ -19,8 +19,7 @@ public:
         : CD3D12DeviceObject(InDevice)
         , CommandList(nullptr)
         , CommandList5(nullptr)
-    {
-    }
+    { }
 
     FORCEINLINE bool Initialize(D3D12_COMMAND_LIST_TYPE Type, CD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline)
     {

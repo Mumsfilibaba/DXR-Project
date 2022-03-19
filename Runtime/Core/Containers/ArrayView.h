@@ -27,8 +27,7 @@ public:
     FORCEINLINE TArrayView() noexcept
         : View(nullptr)
         , ViewSize(0)
-    {
-    }
+    { }
 
     /**
      * Construct a view from an array of ArrayType
@@ -39,8 +38,7 @@ public:
     FORCEINLINE explicit TArrayView(ArrayType& InArray) noexcept
         : View(InArray.Data())
         , ViewSize(InArray.Size())
-    {
-    }
+    { }
 
     /**
      * Construct a view from a bounded array
@@ -51,8 +49,7 @@ public:
     FORCEINLINE explicit TArrayView(ElementType(&InArray)[N]) noexcept
         : View(InArray)
         , ViewSize(N)
-    {
-    }
+    { }
 
     /**
      * Construct a view from a raw-array
@@ -63,8 +60,7 @@ public:
     FORCEINLINE explicit TArrayView(ElementType* InArray, SizeType NumElements) noexcept
         : View(InArray)
         , ViewSize(NumElements)
-    {
-    }
+    { }
 
     /**
      * Copy-constructor
@@ -74,8 +70,7 @@ public:
     FORCEINLINE TArrayView(const TArrayView& Other) noexcept
         : View(Other.View)
         , ViewSize(Other.ViewSize)
-    {
-    }
+    { }
 
     /**
      * Move-constructor

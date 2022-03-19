@@ -19,14 +19,16 @@ public:
     virtual void BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) = 0;
     virtual void EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) = 0;
 
-    virtual void ClearRenderTargetTexture(CRHITexture2D* Texture, const SColorF& ClearColor) = 0;
-    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor) = 0;
+    virtual void ClearRenderTargetTexture(CRHITexture2D* Texture, const float ClearColor[4]) = 0;
+    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const float ClearColor[4]) = 0;
 
-    virtual void ClearDepthStencilTexture(CRHITexture2D* Texture, const SRHIDepthStencil& ClearValue) = 0;
-    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SRHIDepthStencil& ClearValue) = 0;
+    virtual void ClearDepthStencilTexture(CRHITexture2D* Texture, const SRHIDepthStencilValue& ClearValue) = 0;
+    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SRHIDepthStencilValue& ClearValue) = 0;
     
-    virtual void ClearUnorderedAccessTextureFloat(CRHITexture2D* Texture, const SColorF& ClearColor) = 0;
-    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor) = 0;
+    virtual void ClearUnorderedAccessTextureFloat(CRHITexture2D* Texture, const float ClearColor[4]) = 0;
+    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const float ClearColor[4]) = 0;
+    virtual void ClearUnorderedAccessTextureUint(CRHITexture2D* Texture, const uint32 ClearColor[4]) = 0;
+    virtual void ClearUnorderedAccessViewUint(CRHIUnorderedAccessView* UnorderedAccessView, const uint32 ClearColor[4]) = 0;
 
     virtual void SetShadingRate(ERHIShadingRate ShadingRate) = 0;
     virtual void SetShadingRateTexture(CRHITexture2D* ShadingImage) = 0;
@@ -59,18 +61,20 @@ public:
     virtual void SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) = 0;
     virtual void SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 StartParameterIndex) = 0;
 
-    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIBuffer* ConstantBuffer, uint32 ParameterIndex) = 0;
-    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 StartParameterIndex) = 0;
 
     virtual void SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex) = 0;
     virtual void SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) = 0;
 
     virtual void UpdateBuffer(CRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) = 0;
+    virtual void UpdateConstantBuffer(CRHIConstantBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) = 0;
     virtual void UpdateTexture2D(CRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) = 0;
 
     virtual void ResolveTexture(CRHITexture* Dst, CRHITexture* Src) = 0;
     
     virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo) = 0;
+    virtual void CopyConstantBuffer(CRHIConstantBuffer* Dst, CRHIConstantBuffer* Src, const SRHICopyBufferInfo& CopyInfo) = 0;
     virtual void CopyTexture(CRHITexture* Dst, CRHITexture* Src) = 0;
     virtual void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo) = 0;
 
@@ -84,15 +88,16 @@ public:
     virtual void SetRayTracingBindings(
         CRHIRayTracingScene* RayTracingScene,
         CRHIRayTracingPipelineState* PipelineState,
-        const SRayTracingShaderResources* GlobalResource,
-        const SRayTracingShaderResources* RayGenLocalResources,
-        const SRayTracingShaderResources* MissLocalResources,
-        const SRayTracingShaderResources* HitGroupResources,
+        const SRHIRayTracingShaderResources* GlobalResource,
+        const SRHIRayTracingShaderResources* RayGenLocalResources,
+        const SRHIRayTracingShaderResources* MissLocalResources,
+        const SRHIRayTracingShaderResources* HitGroupResources,
         uint32 NumHitGroupResources) = 0;
 
     virtual void GenerateMips(CRHITexture* Texture) = 0;
 
     virtual void TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState) = 0;
+    virtual void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState) = 0;
     virtual void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState) = 0;
 
     virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) = 0;

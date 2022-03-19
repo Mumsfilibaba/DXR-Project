@@ -16,8 +16,7 @@ public:
 
     FORCEINLINE CScopedAutoreleasePool()
         : Pool([[NSAutoreleasePool alloc] init])
-    {
-    }
+    { }
 
     FORCEINLINE ~CScopedAutoreleasePool()
     {

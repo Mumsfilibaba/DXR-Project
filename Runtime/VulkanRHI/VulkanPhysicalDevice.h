@@ -73,8 +73,7 @@ struct SVulkanQueueFamilyIndices
         : GraphicsQueueIndex(InGraphicsQueueIndex)
         , CopyQueueIndex(InCopyQueueIndex)
         , ComputeQueueIndex(InComputeQueueIndex)
-    {
-    }
+    { }
 
     uint32 GraphicsQueueIndex = uint32(~0);
     uint32 CopyQueueIndex     = uint32(~0);

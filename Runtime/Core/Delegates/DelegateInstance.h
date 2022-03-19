@@ -28,16 +28,14 @@ public:
      */
     FORCEINLINE CDelegateHandle()
         : Handle(InvalidHandle)
-    {
-    }
+    { }
 
     /**
      * Construct a new delegate handle which generates a new ID
      */
     FORCEINLINE explicit CDelegateHandle(EGenerateID)
         : Handle(GenerateID())
-    {
-    }
+    { }
 
     /**
      * Checks if the handle is equal to nullptr
@@ -187,8 +185,7 @@ protected:
     FORCEINLINE TDelegateInstance()
         : IDelegateInstance()
         , Handle(CDelegateHandle::EGenerateID::New)
-    {
-    }
+    { }
 
     CDelegateHandle Handle;
 };
@@ -213,8 +210,7 @@ public:
         : Super()
         , Function(InFunction)
         , Payload(Forward<PayloadTypes>(InPayload)...)
-    {
-    }
+    { }
 
     virtual ReturnType Execute(ArgTypes... Args) override final
     {
@@ -249,8 +245,7 @@ public:
     FORCEINLINE TFunctionDelegateInstance(FunctionType InFunction)
         : Super()
         , Function(InFunction)
-    {
-    }
+    { }
 
     virtual ReturnType Execute(ArgTypes... Args) override final
     {
@@ -384,8 +379,7 @@ public:
         : Super()
         , Functor(InFunctor)
         , Payload(Forward<PayloadTypes>(InPayload)...)
-    {
-    }
+    { }
 
     virtual ReturnType Execute(ArgTypes... Args) override
     {
@@ -419,8 +413,7 @@ public:
     FORCEINLINE TLambdaDelegateInstance(FunctorType&& InFunctor)
         : Super()
         , Functor(InFunctor)
-    {
-    }
+    { }
 
     virtual ReturnType Execute(ArgTypes... Args) override
     {

@@ -34,8 +34,7 @@ private:
 
     CWindowsCursor()
         : CPlatformCursor()
-    {
-    }
+    { }
 };
 
 #endif

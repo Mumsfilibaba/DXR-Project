@@ -137,7 +137,7 @@ inline const char* ToString(ERHIResourceState ResourceState)
     case ERHIResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
     case ERHIResourceState::ShadingRateSource:               return "ShadingRateSource";
     case ERHIResourceState::Present:                         return "Present";
-    default:                                                  return "Unknown";
+    default:                                                 return "Unknown";
     }
 }
 
@@ -200,22 +200,21 @@ inline const char* ToString(ERHIShadingRate ShadingRate)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRHIDepthStencil
 
-struct SRHIDepthStencil
+struct SRHIDepthStencilValue
 {
-    SRHIDepthStencil() = default;
+    SRHIDepthStencilValue() = default;
 
-    FORCEINLINE SRHIDepthStencil(float InDepth, uint8 InStencil)
+    FORCEINLINE SRHIDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
-    {
-    }
+    { }
 
-    FORCEINLINE bool operator==(const SRHIDepthStencil& RHS) const
+    FORCEINLINE bool operator==(const SRHIDepthStencilValue& RHS) const
     {
         return (Depth == RHS.Depth) && (Stencil && RHS.Stencil);
     }
 
-    FORCEINLINE bool operator!=(const SRHIDepthStencil& RHS) const
+    FORCEINLINE bool operator!=(const SRHIDepthStencilValue& RHS) const
     {
         return !(*this == RHS);
     }
@@ -237,27 +236,23 @@ public:
         DepthStencil = 2
     };
 
-    // NOTE: Default clear color is black
     FORCEINLINE CRHIClearValue()
         : Type(EType::Color)
         , Format(ERHIFormat::Unknown)
         , Color(0.0f, 0.0f, 0.0f, 1.0f)
-    {
-    }
+    { }
 
     FORCEINLINE CRHIClearValue(ERHIFormat InFormat, float Depth, uint8 Stencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencil(Depth, Stencil)
-    {
-    }
+    { }
 
     FORCEINLINE CRHIClearValue(ERHIFormat InFormat, float r, float g, float b, float a)
         : Type(EType::Color)
         , Format(InFormat)
         , Color(r, g, b, a)
-    {
-    }
+    { }
 
     FORCEINLINE CRHIClearValue(const CRHIClearValue& Other)
         : Type(Other.Type)
@@ -286,13 +281,13 @@ public:
         return Color;
     }
 
-    FORCEINLINE SRHIDepthStencil& AsDepthStencil()
+    FORCEINLINE SRHIDepthStencilValue& AsDepthStencil()
     {
         Assert(Type == EType::DepthStencil);
         return DepthStencil;
     }
 
-    FORCEINLINE const SRHIDepthStencil& AsDepthStencil() const
+    FORCEINLINE const SRHIDepthStencilValue& AsDepthStencil() const
     {
         Assert(Type == EType::DepthStencil);
         return DepthStencil;
@@ -356,8 +351,8 @@ private:
     
     union
     {
-        SColorF          Color;
-        SRHIDepthStencil DepthStencil;
+        SColorF               Color;
+        SRHIDepthStencilValue DepthStencil;
     };
 };
 
@@ -370,30 +365,26 @@ public:
 
     FORCEINLINE CRHIResourceData()
         : Data(nullptr)
-    {
-    }
+    { }
 
     FORCEINLINE CRHIResourceData(const void* InData, uint32 InSizeInBytes)
         : Data(InData)
         , SizeInBytes(InSizeInBytes)
-    {
-    }
+    { }
 
     FORCEINLINE CRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
         , Height(0)
-    {
-    }
+    { }
 
     FORCEINLINE CRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
         , Height(InHeight)
-    {
-    }
+    { }
 
     FORCEINLINE void Set(const void* InData, uint32 InSizeInBytes)
     {
@@ -474,8 +465,7 @@ struct SRHICopyBufferInfo
         : SourceOffset(InSourceOffset)
         , DestinationOffset(InDestinationOffset)
         , SizeInBytes(InSizeInBytes)
-    {
-    }
+    { }
 
     FORCEINLINE bool operator==(const SRHICopyBufferInfo& RHS) const
     {
@@ -504,8 +494,7 @@ struct SRHICopyTextureSubresourceInfo
         , x(InX)
         , y(InY)
         , z(InZ)
-    {
-    }
+    { }
 
     FORCEINLINE bool operator==(const SRHICopyTextureSubresourceInfo& RHS) const
     {
@@ -562,26 +551,22 @@ struct SRHIRenderTargetEntry
     SRHIRenderTargetEntry()
         : Type(EType::Texture)
         , Texture(nullptr)
-    {
-    }
+    { }
 
     explicit SRHIRenderTargetEntry(CRHITexture2D* InTexture)
         : Type(EType::Texture)
         , Texture(InTexture)
-    {
-    }
+    { }
 
     explicit SRHIRenderTargetEntry(CRHIRenderTargetView* InView)
         : Type(EType::View)
         , View(InView)
-    {
-    }
+    { }
 
     SRHIRenderTargetEntry(const SRHIRenderTargetEntry& Other)
         : Type(Other.Type)
         , Texture(Other.Texture)
-    {
-    }
+    { }
 
     SRHIRenderTargetEntry& operator=(const SRHIRenderTargetEntry& RHS)
     {
@@ -623,26 +608,22 @@ struct SRHIDepthStencilEntry
     SRHIDepthStencilEntry()
         : Type(EType::Texture)
         , Texture(nullptr)
-    {
-    }
+    { }
 
     explicit SRHIDepthStencilEntry(CRHITexture2D* InTexture)
         : Type(EType::Texture)
         , Texture(InTexture)
-    {
-    }
+    { }
 
     explicit SRHIDepthStencilEntry(CRHIDepthStencilView* InView)
         : Type(EType::View)
         , View(InView)
-    {
-    }
+    { }
 
     SRHIDepthStencilEntry(const SRHIDepthStencilEntry& Other)
         : Type(Other.Type)
         , Texture(Other.Texture)
-    {
-    }
+    { }
 
     SRHIDepthStencilEntry& operator=(const SRHIDepthStencilEntry& RHS)
     {
@@ -678,8 +659,7 @@ class CRHIRenderPass
 public:
 
     CRHIRenderPass()
-    {
-    }
+    { }
 
     CRHIRenderPass(CRHITexture2D* const* InRenderTargets, uint32 InNumRenderTargets, CRHITexture2D* InDepthStencil)
         : RenderTargets()

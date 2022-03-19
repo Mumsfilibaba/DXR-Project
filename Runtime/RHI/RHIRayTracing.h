@@ -11,8 +11,8 @@
 
 enum ERayTracingStructureBuildFlag
 {
-    RayTracingStructureBuildFlag_None = 0x0,
-    RayTracingStructureBuildFlag_AllowUpdate = FLAG(1),
+    RayTracingStructureBuildFlag_None            = 0,
+    RayTracingStructureBuildFlag_AllowUpdate     = FLAG(1),
     RayTracingStructureBuildFlag_PreferFastTrace = FLAG(2),
     RayTracingStructureBuildFlag_PreferFastBuild = FLAG(3),
 };
@@ -22,11 +22,11 @@ enum ERayTracingStructureBuildFlag
 
 enum ERayTracingInstanceFlags
 {
-    RayTracingInstanceFlags_None = 0,
-    RayTracingInstanceFlags_CullDisable = FLAG(1),
+    RayTracingInstanceFlags_None                  = 0,
+    RayTracingInstanceFlags_CullDisable           = FLAG(1),
     RayTracingInstanceFlags_FrontCounterClockwise = FLAG(2),
-    RayTracingInstanceFlags_ForceOpaque = FLAG(3),
-    RayTracingInstanceFlags_ForceNonOpaque = FLAG(4),
+    RayTracingInstanceFlags_ForceOpaque           = FLAG(3),
+    RayTracingInstanceFlags_ForceNonOpaque        = FLAG(4),
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -36,25 +36,11 @@ class CRHIRayTracingGeometry : public CRHIObject
 {
 public:
 
-    /**
-     * Constructor taking parameters for the RayTracingGeometry
-     * 
-     * @param InFlags: Flags for the RayTracingGeometry
-     */
     CRHIRayTracingGeometry(uint32 InFlags)
         : Flags(InFlags)
-    {
-    }
+    { }
 
-    /**
-     * Retrieve the flags for the RayTracingGeometry
-     * 
-     * @return: Returns the flag for the RayTracingGeometry
-     */
-    FORCEINLINE uint32 GetFlags() const
-    {
-        return Flags;
-    }
+    inline uint32 GetFlags() const { return Flags; }
 
 private:
     uint32 Flags;
@@ -67,32 +53,13 @@ class CRHIRayTracingScene : public CRHIObject
 {
 public:
 
-    /**
-     * Constructor taking parameters for the RayTracingGeometry
-     *
-     * @param InFlags: Flags for the RayTracingGeometry
-     */
     CRHIRayTracingScene(uint32 InFlags)
         : Flags(InFlags)
-    {
-    }
+    { }
 
-    /**
-     * Retrieve the ShaderResourceView for the RayTracingScene
-     * 
-     * @return: Returns the ShaderResourceView for the RayTracingScene
-     */
     virtual CRHIShaderResourceView* GetShaderResourceView() const = 0;
 
-    /**
-     * Retrieve the flags for the RayTracingGeometry
-     *
-     * @return: Returns the flag for the RayTracingGeometry
-     */
-    FORCEINLINE uint32 GetFlags() const
-    {
-        return Flags;
-    }
+    inline uint32 GetFlags() const { return Flags; }
 
 private:
     uint32 Flags;
@@ -104,35 +71,36 @@ private:
 struct SRHIRayTracingGeometryInstance
 {
     TSharedRef<CRHIRayTracingGeometry> Instance;
-    uint32 InstanceIndex = 0;
-    uint32 HitGroupIndex = 0;
-    uint32 Flags = RayTracingInstanceFlags_None;
-    uint32 Mask = 0xff;
+
+    uint32     InstanceIndex = 0;
+    uint32     HitGroupIndex = 0;
+    uint32     Flags         = RayTracingInstanceFlags_None;
+    uint32     Mask          = 0xff;
     CMatrix3x4 Transform;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRayPayload
+// SRHIRayPayload
 
-struct SRayPayload
+struct SRHIRayPayload
 {
     CVector3 Color;
     uint32   CurrentDepth;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRayIntersectionAttributes
+// SRHIRayIntersectionAttributes
 
-struct SRayIntersectionAttributes
+struct SRHIRayIntersectionAttributes
 {
     float Attrib0;
     float Attrib1;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRayTracingShaderResources
+// SRHIRayTracingShaderResources
 
-struct SRayTracingShaderResources
+struct SRHIRayTracingShaderResources
 {
     void AddConstantBuffer(CRHIBuffer* Buffer)
     {
@@ -174,7 +142,7 @@ struct SRayTracingShaderResources
 
     String Identifier;
 
-    TArray<CRHIBuffer*>      ConstantBuffers;
+    TArray<CRHIBuffer*>              ConstantBuffers;
     TArray<CRHIShaderResourceView*>  ShaderResourceViews;
     TArray<CRHIUnorderedAccessView*> UnorderedAccessViews;
     TArray<CRHISamplerState*>        SamplerStates;

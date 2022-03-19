@@ -22,13 +22,11 @@ struct TDefaultDelete
 
     template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete(const TDefaultDelete<U>&) noexcept
-    {
-    }
+    { }
 
     template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete(TDefaultDelete<U>&&) noexcept
-    {
-    }
+    { }
 
     FORCEINLINE void DeleteElement(ElementType* Pointer) noexcept
     {
@@ -65,13 +63,11 @@ struct TDefaultDelete<T[]>
 
     template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete(const TDefaultDelete<U>&) noexcept
-    {
-    }
+    { }
 
     template<typename U, typename = TEnableIf<TIsPointerConvertible<U, T>::Value>>
     FORCEINLINE TDefaultDelete(TDefaultDelete<U>&&) noexcept
-    {
-    }
+    { }
 
     FORCEINLINE void DeleteElement(ElementType* Pointer) noexcept
     {

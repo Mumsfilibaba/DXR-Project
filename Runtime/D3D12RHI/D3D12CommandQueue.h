@@ -14,8 +14,7 @@ public:
         : CD3D12DeviceObject(InDevice)
         , Queue(nullptr)
         , Desc()
-    {
-    }
+    { }
 
     FORCEINLINE bool Initialize(D3D12_COMMAND_LIST_TYPE Type)
     {

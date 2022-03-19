@@ -18,8 +18,7 @@ public:
     FORCEINLINE CMulticastDelegateBase(const CMulticastDelegateBase& Other)
         : Delegates(Other.Delegates)
         , LockVariable(Other.LockVariable)
-    {
-    }
+    { }
 
     /**
      * Move-constructor
@@ -29,8 +28,7 @@ public:
     FORCEINLINE CMulticastDelegateBase(CMulticastDelegateBase&& Other)
         : Delegates(Move(Other.Delegates))
         , LockVariable(Other.LockVariable)
-    {
-    }
+    { }
 
     /**
      * Destructor 
@@ -218,8 +216,7 @@ protected:
     FORCEINLINE explicit CMulticastDelegateBase()
         : Delegates()
         , LockVariable(0)
-    {
-    }
+    { }
 
     FORCEINLINE CDelegateHandle AddDelegate(const CDelegateBase& NewDelegate)
     {

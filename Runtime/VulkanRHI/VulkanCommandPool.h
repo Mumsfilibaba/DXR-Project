@@ -14,8 +14,7 @@ public:
         : CVulkanDeviceObject(InDevice)
         , Type(InType)
         , CommandPool(VK_NULL_HANDLE)
-    {
-    }
+    { }
 
     inline CVulkanCommandPool(CVulkanCommandPool&& Other)
         : CVulkanDeviceObject(Other.GetDevice())

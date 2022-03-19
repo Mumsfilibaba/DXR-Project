@@ -12,8 +12,7 @@ public:
     inline CVulkanFence(CVulkanDevice* InDevice)
         : CVulkanDeviceObject(InDevice)
         , Fence(VK_NULL_HANDLE)
-    {
-    }
+    { }
 
     inline CVulkanFence(CVulkanFence&& Other)
         : CVulkanDeviceObject(Other.GetDevice())

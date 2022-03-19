@@ -52,8 +52,7 @@ public:
     FORCEINLINE CRHICommandBeginTimeStamp(CRHITimestampQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -73,8 +72,7 @@ public:
     FORCEINLINE CRHICommandEndTimeStamp(CRHITimestampQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -91,10 +89,11 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandClearRenderTargetTexture)
 {
 public:
-    FORCEINLINE CRHICommandClearRenderTargetTexture(CRHITexture2D* InTexture, const SColorF& InClearColor)
+    FORCEINLINE CRHICommandClearRenderTargetTexture(CRHITexture2D* InTexture, const float InClearColor[4])
         : Texture(InTexture)
-        , ClearColor(InClearColor)
+        , ClearColor()
     {
+        CMemory::Memcpy(ClearColor, InClearColor, sizeof(ClearColor));
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -103,7 +102,7 @@ public:
     }
 
     CRHITexture2D* Texture;
-    SColorF        ClearColor;
+    float          ClearColor[4];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -112,10 +111,11 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandClearRenderTargetView)
 {
 public:
-    FORCEINLINE CRHICommandClearRenderTargetView(CRHIRenderTargetView* InRenderTargetView, const SColorF& InClearColor)
+    FORCEINLINE CRHICommandClearRenderTargetView(CRHIRenderTargetView* InRenderTargetView, const float InClearColor[4])
         : RenderTargetView(InRenderTargetView)
-        , ClearColor(InClearColor)
+        , ClearColor()
     {
+        CMemory::Memcpy(ClearColor, InClearColor, sizeof(ClearColor));
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -124,7 +124,7 @@ public:
     }
 
     CRHIRenderTargetView* RenderTargetView;
-    SColorF               ClearColor;
+    float                 ClearColor[4];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -133,19 +133,18 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandClearDepthStencilTexture)
 {
 public:
-    FORCEINLINE CRHICommandClearDepthStencilTexture(CRHITexture2D* InTexture, const SRHIDepthStencil& InClearValue)
+    FORCEINLINE CRHICommandClearDepthStencilTexture(CRHITexture2D* InTexture, const SRHIDepthStencilValue& InClearValue)
         : Texture(InTexture)
         , ClearValue(InClearValue)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         CommandContext.ClearDepthStencilTexture(Texture, ClearValue);
     }
 
-    CRHITexture2D*   Texture;
-    SRHIDepthStencil ClearValue;
+    CRHITexture2D*        Texture;
+    SRHIDepthStencilValue ClearValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -154,11 +153,10 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandClearDepthStencilView)
 {
 public:
-    FORCEINLINE CRHICommandClearDepthStencilView(CRHIDepthStencilView* InDepthStencilView, const SRHIDepthStencil& InClearValue)
+    FORCEINLINE CRHICommandClearDepthStencilView(CRHIDepthStencilView* InDepthStencilView, const SRHIDepthStencilValue& InClearValue)
         : DepthStencilView(InDepthStencilView)
         , ClearValue(InClearValue)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -166,7 +164,7 @@ public:
     }
 
     CRHIDepthStencilView* DepthStencilView;
-    SRHIDepthStencil         ClearValue;
+    SRHIDepthStencilValue         ClearValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -175,10 +173,11 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandClearUnorderedAccessTextureFloat)
 {
 public:
-    FORCEINLINE CRHICommandClearUnorderedAccessTextureFloat(CRHITexture2D* InTexture, const SColorF& InClearColor)
+    FORCEINLINE CRHICommandClearUnorderedAccessTextureFloat(CRHITexture2D* InTexture, const float InClearColor[4])
         : Texture(InTexture)
-        , ClearColor(InClearColor)
+        , ClearColor()
     {
+        CMemory::Memcpy(ClearColor, InClearColor, sizeof(ClearColor));
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -187,7 +186,7 @@ public:
     }
 
     CRHITexture2D* Texture;
-    SColorF        ClearColor;
+    float          ClearColor[4];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -196,10 +195,11 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandClearUnorderedAccessViewFloat)
 {
 public:
-    FORCEINLINE CRHICommandClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* InUnorderedAccessView, const SColorF& InClearColor)
+    FORCEINLINE CRHICommandClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* InUnorderedAccessView, const float InClearColor[4])
         : UnorderedAccessView(InUnorderedAccessView)
-        , ClearColor(InClearColor)
+        , ClearColor()
     {
+        CMemory::Memcpy(ClearColor, InClearColor, sizeof(ClearColor));
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -208,7 +208,51 @@ public:
     }
 
     CRHIUnorderedAccessView* UnorderedAccessView;
-    SColorF                  ClearColor;
+    float                    ClearColor[4];
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandClearUnorderedAccessTextureUint
+
+DECLARE_RHICOMMAND_CLASS(CRHICommandClearUnorderedAccessTextureUint)
+{
+public:
+    FORCEINLINE CRHICommandClearUnorderedAccessTextureUint(CRHITexture2D* InTexture, const uint32 InClearColor[4])
+        : Texture(InTexture)
+        , ClearColor()
+    {
+        CMemory::Memcpy(ClearColor, InClearColor, sizeof(ClearColor));
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.ClearUnorderedAccessTextureUint(Texture, ClearColor);
+    }
+
+    CRHITexture2D* Texture;
+    uint32         ClearColor[4];
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHICommandClearUnorderedAccessViewUint
+
+DECLARE_RHICOMMAND_CLASS(CRHICommandClearUnorderedAccessViewUint)
+{
+public:
+    FORCEINLINE CRHICommandClearUnorderedAccessViewUint(CRHIUnorderedAccessView* InUnorderedAccessView, const uint32 InClearColor[4])
+        : UnorderedAccessView(InUnorderedAccessView)
+        , ClearColor()
+    {
+        CMemory::Memcpy(ClearColor, InClearColor, sizeof(ClearColor));
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.ClearUnorderedAccessViewUint(UnorderedAccessView, ClearColor);
+    }
+
+    CRHIUnorderedAccessView* UnorderedAccessView;
+    uint32                   ClearColor[4];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -219,8 +263,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandSetShadingRate)
 public:
     FORCEINLINE CRHICommandSetShadingRate(ERHIShadingRate ShadingRate)
         : ShadingRate(ShadingRate)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -238,8 +281,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandSetShadingRateTexture)
 public:
     FORCEINLINE CRHICommandSetShadingRateTexture(CRHITexture2D* InShadingImage)
         : ShadingImage(InShadingImage)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -262,8 +304,7 @@ public:
         , MaxDepth(InMaxDepth)
         , x(InX)
         , y(InY)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -289,8 +330,7 @@ public:
         , Height(InHeight)
         , x(InX)
         , y(InY)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -311,8 +351,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandSetBlendFactor)
 public:
     FORCEINLINE CRHICommandSetBlendFactor(const SColorF& InColor)
         : Color(InColor)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -330,8 +369,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandBeginRenderPass)
 public:
     FORCEINLINE CRHICommandBeginRenderPass(const CRHIRenderPass& InRenderPass)
         : RenderPass(InRenderPass)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -364,8 +402,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandSetPrimitiveTopology)
 public:
     FORCEINLINE CRHICommandSetPrimitiveTopology(ERHIPrimitiveTopology InPrimitiveTopologyType)
         : PrimitiveTopologyType(InPrimitiveTopologyType)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -385,8 +422,7 @@ public:
         : VertexBuffers(InVertexBuffers)
         , VertexBufferCount(InVertexBufferCount)
         , StartSlot(InStartSlot)
-    {
-    }
+    { }
 
     FORCEINLINE ~CRHICommandSetVertexBuffers()
     {
@@ -412,8 +448,7 @@ public:
     FORCEINLINE CRHICommandSetIndexBuffer(CRHIBuffer* InIndexBuffer, ERHIIndexFormat InIndexFormat)
         : IndexBuffer(InIndexBuffer)
         , IndexFormat(InIndexFormat)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -433,10 +468,10 @@ public:
     FORCEINLINE CRHICommandSetRayTracingBindings(
         CRHIRayTracingScene* InRayTracingScene,
         CRHIRayTracingPipelineState* InPipelineState,
-        const SRayTracingShaderResources* InGlobalResources,
-        const SRayTracingShaderResources* InRayGenLocalResources,
-        const SRayTracingShaderResources* InMissLocalResources,
-        const SRayTracingShaderResources* InHitGroupResources,
+        const SRHIRayTracingShaderResources* InGlobalResources,
+        const SRHIRayTracingShaderResources* InRayGenLocalResources,
+        const SRHIRayTracingShaderResources* InMissLocalResources,
+        const SRHIRayTracingShaderResources* InHitGroupResources,
         uint32 InNumHitGroupResources)
         : Scene(InRayTracingScene)
         , PipelineState(InPipelineState)
@@ -445,8 +480,7 @@ public:
         , MissLocalResources(InMissLocalResources)
         , HitGroupResources(InHitGroupResources)
         , NumHitGroupResources(InNumHitGroupResources)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -455,10 +489,10 @@ public:
 
     CRHIRayTracingScene*              Scene;
     CRHIRayTracingPipelineState*      PipelineState;
-    const SRayTracingShaderResources* GlobalResources;
-    const SRayTracingShaderResources* RayGenLocalResources;
-    const SRayTracingShaderResources* MissLocalResources;
-    const SRayTracingShaderResources* HitGroupResources;
+    const SRHIRayTracingShaderResources* GlobalResources;
+    const SRHIRayTracingShaderResources* RayGenLocalResources;
+    const SRHIRayTracingShaderResources* MissLocalResources;
+    const SRHIRayTracingShaderResources* HitGroupResources;
     uint32                            NumHitGroupResources;
 };
 
@@ -470,8 +504,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandSetGraphicsPipelineState)
 public:
     FORCEINLINE CRHICommandSetGraphicsPipelineState(CRHIGraphicsPipelineState* InPipelineState)
         : PipelineState(InPipelineState)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -489,8 +522,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandSetComputePipelineState)
 public:
     FORCEINLINE CRHICommandSetComputePipelineState(CRHIComputePipelineState* InPipelineState)
         : PipelineState(InPipelineState)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -510,8 +542,7 @@ public:
         : Shader(InShader)
         , Shader32BitConstants(InShader32BitConstants)
         , Num32BitConstants(InNum32BitConstants)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -533,8 +564,7 @@ public:
         : Shader(InShader)
         , Texture(InTexture)
         , ParameterIndex(InParameterIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -557,8 +587,7 @@ public:
         , Textures(InTextures)
         , NumTextures(InNumTextures)
         , StartParameterIndex(InStartParameterIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -581,8 +610,7 @@ public:
         : Shader(InShader)
         , ShaderResourceView(InShaderResourceView)
         , ParameterIndex(InParameterIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -605,8 +633,7 @@ public:
         , ShaderResourceViews(InShaderResourceViews)
         , NumShaderResourceViews(InNumShaderResourceViews)
         , StartParameterIndex(InStartParameterIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -629,8 +656,7 @@ public:
         : Shader(InShader)
         , Texture(InTexture)
         , ParameterIndex(InParameterIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -653,8 +679,7 @@ public:
         , Textures(InTextures)
         , NumTextures(InNumTextures)
         , StartParameterIndex(InStartParameterIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -677,8 +702,7 @@ public:
         : Shader(InShader)
         , UnorderedAccessView(InUnorderedAccessView)
         , ParameterIndex(InParameterIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -701,8 +725,7 @@ public:
         , UnorderedAccessViews(InUnorderedAccessViews)
         , NumUnorderedAccessViews(InNumUnorderedAccessViews)
         , StartParameterIndex(InStartParameterIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -721,21 +744,20 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandSetConstantBuffer)
 {
 public:
-    FORCEINLINE CRHICommandSetConstantBuffer(CRHIShader* InShader, CRHIBuffer* InConstantBuffer, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetConstantBuffer(CRHIShader* InShader, CRHIConstantBuffer* InConstantBuffer, uint32 InParameterIndex)
         : Shader(InShader)
         , ConstantBuffer(InConstantBuffer)
         , ParameterIndex(InParameterIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         CommandContext.SetConstantBuffer(Shader, ConstantBuffer, ParameterIndex);
     }
 
-    CRHIShader* Shader;
-    CRHIBuffer* ConstantBuffer;
-    uint32      ParameterIndex;
+    CRHIShader*         Shader;
+    CRHIConstantBuffer* ConstantBuffer;
+    uint32              ParameterIndex;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -744,23 +766,22 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandSetConstantBuffers)
 {
 public:
-    FORCEINLINE CRHICommandSetConstantBuffers(CRHIShader* InShader, CRHIBuffer** InConstantBuffers, uint32 InNumConstantBuffers, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetConstantBuffers(CRHIShader* InShader, CRHIConstantBuffer* const* InConstantBuffers, uint32 InNumConstantBuffers, uint32 InStartParameterIndex)
         : Shader(InShader)
         , ConstantBuffers(InConstantBuffers)
         , NumConstantBuffers(InNumConstantBuffers)
-        , ParameterIndex(InParameterIndex)
-    {
-    }
+        , StartParameterIndex(InStartParameterIndex)
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetConstantBuffers(Shader, ConstantBuffers, NumConstantBuffers, ParameterIndex);
+        CommandContext.SetConstantBuffers(Shader, ConstantBuffers, NumConstantBuffers, StartParameterIndex);
     }
 
-    CRHIShader*  Shader;
-    CRHIBuffer** ConstantBuffers;
-    uint32       NumConstantBuffers;
-    uint32       ParameterIndex;
+    CRHIShader*                Shader;
+    CRHIConstantBuffer* const* ConstantBuffers;
+    uint32                     NumConstantBuffers;
+    uint32                     StartParameterIndex;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -773,8 +794,7 @@ public:
         : Shader(InShader)
         , SamplerState(InSamplerState)
         , ParameterIndex(InParameterIndex)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -792,23 +812,22 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandSetSamplerStates)
 {
 public:
-    FORCEINLINE CRHICommandSetSamplerStates(CRHIShader* InShader, CRHISamplerState** InSamplerStates, uint32 InNumSamplerStates, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetSamplerStates(CRHIShader* InShader, CRHISamplerState** InSamplerStates, uint32 InNumSamplerStates, uint32 InStartParameterIndex)
         : Shader(InShader)
         , SamplerStates(InSamplerStates)
         , NumSamplerStates(InNumSamplerStates)
-        , ParameterIndex(InParameterIndex)
-    {
-    }
+        , StartParameterIndex(InStartParameterIndex)
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.SetSamplerStates(Shader, SamplerStates, NumSamplerStates, ParameterIndex);
+        CommandContext.SetSamplerStates(Shader, SamplerStates, NumSamplerStates, StartParameterIndex);
     }
 
-    CRHIShader*        Shader;
-    CRHISamplerState** SamplerStates;
-    uint32             NumSamplerStates;
-    uint32             ParameterIndex;
+    CRHIShader*              Shader;
+    CRHISamplerState* const* SamplerStates;
+    uint32                   NumSamplerStates;
+    uint32                   StartParameterIndex;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -820,8 +839,7 @@ public:
     FORCEINLINE CRHICommandResolveTexture(CRHITexture* InDestination, CRHITexture* InSource)
         : Destination(InDestination)
         , Source(InSource)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -897,8 +915,7 @@ public:
         : Destination(InDestination)
         , Source(InSource)
         , CopyBufferInfo(InCopyBufferInfo)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -919,8 +936,7 @@ public:
     FORCEINLINE CRHICommandCopyTexture(CRHITexture* InDestination, CRHITexture* InSource)
         : Destination(InDestination)
         , Source(InSource)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -941,8 +957,7 @@ public:
         : Destination(InDestination)
         , Source(InSource)
         , CopyTextureInfo(InCopyTextureInfo)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -962,8 +977,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandDestroyResource)
 public:
     FORCEINLINE CRHICommandDestroyResource(CRHIObject* InResource)
         : Resource(InResource)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -981,8 +995,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandDiscardContents)
 public:
     FORCEINLINE CRHICommandDiscardContents(CRHIResource* InResource)
         : Resource(InResource)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1003,8 +1016,7 @@ public:
         , VertexBuffer(InVertexBuffer)
         , IndexBuffer(InIndexBuffer)
         , bUpdate(bInUpdate)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1028,8 +1040,7 @@ public:
         , Instances(InInstances)
         , NumInstances(InNumInstances)
         , bUpdate(bInUpdate)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1050,8 +1061,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandGenerateMips)
 public:
     FORCEINLINE CRHICommandGenerateMips(CRHITexture* InTexture)
         : Texture(InTexture)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1071,8 +1081,7 @@ public:
         : Texture(InTexture)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1094,8 +1103,7 @@ public:
         : Buffer(InBuffer)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1115,8 +1123,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandUnorderedAccessTextureBarrier)
 public:
     FORCEINLINE CRHICommandUnorderedAccessTextureBarrier(CRHITexture* InTexture)
         : Texture(InTexture)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1134,8 +1141,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandUnorderedAccessBufferBarrier)
 public:
     FORCEINLINE CRHICommandUnorderedAccessBufferBarrier(CRHIBuffer* InBuffer)
         : Buffer(InBuffer)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1154,8 +1160,7 @@ public:
     FORCEINLINE CRHICommandDraw(uint32 InVertexCount, uint32 InStartVertexLocation)
         : VertexCount(InVertexCount)
         , StartVertexLocation(InStartVertexLocation)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1176,8 +1181,7 @@ public:
         : IndexCount(InIndexCount)
         , StartIndexLocation(InStartIndexLocation)
         , BaseVertexLocation(InBaseVertexLocation)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1200,8 +1204,7 @@ public:
         , InstanceCount(InInstanceCount)
         , StartVertexLocation(InStartVertexLocation)
         , StartInstanceLocation(InStartInstanceLocation)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1226,8 +1229,7 @@ public:
         , StartIndexLocation(InStartIndexLocation)
         , BaseVertexLocation(InBaseVertexLocation)
         , StartInstanceLocation(InStartInstanceLocation)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1251,8 +1253,7 @@ public:
         : ThreadGroupCountX(InThreadGroupCountX)
         , ThreadGroupCountY(InThreadGroupCountY)
         , ThreadGroupCountZ(InThreadGroupCountZ)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1276,8 +1277,7 @@ public:
         , Width(InWidth)
         , Height(InHeight)
         , Depth(InDepth)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1299,8 +1299,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandInsertMarker)
 public:
     FORCEINLINE CRHICommandInsertMarker(const String& InMarker)
         : Marker(InMarker)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -1359,8 +1358,7 @@ public:
     FORCEINLINE CRHICommandPresentViewport(CRHIViewport* InViewport, bool bInVerticalSync)
         : Viewport(InViewport)
         , bVerticalSync(bInVerticalSync)
-    {
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {

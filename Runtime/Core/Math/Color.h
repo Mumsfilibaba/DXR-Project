@@ -14,8 +14,7 @@ struct SColorF
         , g(0.0f)
         , b(0.0f)
         , a(0.0f)
-    {
-    }
+    { }
 
     /**
      * Initialize color with all channels
@@ -30,8 +29,7 @@ struct SColorF
         , g(InG)
         , b(InB)
         , a(InA)
-    {
-    }
+    { }
 
     /**
      * Set all components

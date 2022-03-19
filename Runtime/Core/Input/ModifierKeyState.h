@@ -12,8 +12,7 @@ public:
 
     FORCEINLINE SModifierKeyState(uint8 InModifierMask)
         : ModifierMask(InModifierMask)
-    {
-    }
+    { }
 
     union
     {

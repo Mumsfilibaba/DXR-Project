@@ -34,6 +34,19 @@ enum ERHITextureFlags : uint16
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERHITextureDimension
+
+enum class ERHITextureDimension : uint8
+{
+    Unknown          = 0,
+    Texture2D        = 1,
+    Texture2DArray   = 2,
+    TextureCube      = 3,
+    TextureCubeArray = 4,
+    Texture3D        = 5
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITextureDesc
 
 class CRHITextureDesc
@@ -41,42 +54,42 @@ class CRHITextureDesc
 public:
     static CRHITextureDesc CreateTexture2D(ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags)
     {
-        return CRHITextureDesc(InFormat, InWidth, InHeight, 1, InNumMips, InNumSamples, InFlags);
+        return CRHITextureDesc(ERHITextureDimension::Texture2D, InFormat, InWidth, InHeight, 1, InNumMips, InNumSamples, InFlags);
     }
 
     static CRHITextureDesc CreateTexture2DArray(ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InArraySize, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags)
     {
-        return CRHITextureDesc(InFormat, InWidth, InHeight, InArraySize, InNumMips, InNumSamples, InFlags);
+        return CRHITextureDesc(ERHITextureDimension::Texture2DArray, InFormat, InWidth, InHeight, InArraySize, InNumMips, InNumSamples, InFlags);
     }
 
     static CRHITextureDesc CreateTextureCube(ERHIFormat InFormat, uint32 Size, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags)
     {
-        return CRHITextureDesc(InFormat, Size, Size, 1, InNumMips, InNumSamples, InFlags);
+        return CRHITextureDesc(ERHITextureDimension::TextureCube, InFormat, Size, Size, 1, InNumMips, InNumSamples, InFlags);
     }
 
     static CRHITextureDesc CreateTextureCubeArray(ERHIFormat InFormat, uint32 Size, uint32 InArraySize, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags)
     {
-        return CRHITextureDesc(InFormat, Size, Size, InArraySize, InNumMips, InNumSamples, InFlags);
+        return CRHITextureDesc(ERHITextureDimension::TextureCubeArray, InFormat, Size, Size, InArraySize, InNumMips, InNumSamples, InFlags);
     }
 
     static CRHITextureDesc CreateTexture3D(ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags)
     {
-        return CRHITextureDesc(InFormat, InWidth, InHeight, InDepth, InNumMips, InNumSamples, InFlags);
+        return CRHITextureDesc(ERHITextureDimension::Texture3D, InFormat, InWidth, InHeight, InDepth, InNumMips, InNumSamples, InFlags);
     }
 
     CRHITextureDesc()  = default;
     ~CRHITextureDesc() = default;
 
-    CRHITextureDesc(ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepthOrArraySize, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags)
-        : Format(InFormat)
+    CRHITextureDesc(ERHITextureDimension InDimension, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepthOrArraySize, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags)
+        : Dimension(InDimension)
+        , Format(InFormat)
         , Width(InWidth)
         , Height(InHeight)
         , DepthOrArraySize(InDepthOrArraySize)
         , NumMips(InNumMips)
         , NumSamples(InNumSamples)
         , Flags(InFlags)
-    {
-    }
+    { }
 
     bool IsUAV() const
     {
@@ -114,14 +127,15 @@ public:
         return !(*this == RHS);
     }
 
-    CRHIClearValue ClearValue       = CRHIClearValue();
-    ERHIFormat     Format           = ERHIFormat::Unknown;
-    uint16         Width            = 0;
-    uint16         Height           = 0;
-    uint16         DepthOrArraySize = 0;
-    uint8          NumMips          = 0;
-    uint8          NumSamples       = 0;
-    uint16         Flags            = 0;
+    ERHITextureDimension Dimension        = ERHITextureDimension::Unknown;
+    ERHIFormat           Format           = ERHIFormat::Unknown;
+    uint16               Width            = 0;
+    uint16               Height           = 0;
+    uint16               DepthOrArraySize = 0;
+    uint8                NumMips          = 0;
+    uint8                NumSamples       = 0;
+    uint16               Flags            = 0;
+    CRHIClearValue       ClearValue       = CRHIClearValue();
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -132,13 +146,13 @@ class CRHITexture : public CRHIResource
 public:
 
     CRHITexture(const CRHITextureDesc& InTextureDesc)
-        : CRHIResource()
-        , ClearValue(InTextureDesc.ClearValue)
+        : CRHIResource(ERHIResourceType::Texture)
+        , Dimension(InTextureDesc.Dimension)
         , Format(InTextureDesc.Format)
         , Flags(InTextureDesc.Flags)
         , NumMips(InTextureDesc.NumMips)
-    {
-    }
+        , ClearValue(InTextureDesc.ClearValue)
+    { }
 
     virtual CRHITexture* AsTexture() { return this; }
 
@@ -153,6 +167,12 @@ public:
     inline bool IsRTV() const { return (Flags & TextureFlag_RTV); }
     inline bool IsDSV() const { return (Flags & TextureFlag_DSV); }
 
+    virtual uint16      GetArraySize() const { return 1; }
+    virtual uint16      GetSizeX()     const { return 1; }
+    virtual uint16      GetSizeY()     const { return 1; }
+    virtual uint16      GetSizeZ()     const { return 1; }
+    virtual CIntVector3 GetSizeXYZ()   const { return CIntVector3(1, 1, 1); }
+
     inline const CRHIClearValue& GetClearValue() const { return ClearValue; }
 
     inline ERHIFormat GetFormat()  const { return Format; }
@@ -161,13 +181,16 @@ public:
 
     inline uint8 GetNumMips() const { return NumMips; }
 
+    inline ERHITextureDimension GetDimension() const { return Dimension; }
+
 protected:
-    CRHIClearValue ClearValue;
+    ERHITextureDimension Dimension;
+    ERHIFormat           Format;
     
-    ERHIFormat Format;
-    
-    uint16 Flags;
-    uint8  NumMips;
+    uint16               Flags;
+    uint8                NumMips;
+
+    CRHIClearValue       ClearValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -182,10 +205,13 @@ public:
         , Width(InTextureDesc.Width)
         , Height(InTextureDesc.Height)
         , NumSamples(InTextureDesc.NumSamples)
-    {
-    }
+    { }
 
     virtual CRHITexture2D* AsTexture2D() override { return this; }
+
+    virtual uint16      GetSizeX()   const override final { return Width; }
+    virtual uint16      GetSizeY()   const override final { return Height; }
+    virtual CIntVector3 GetSizeXYZ() const override final { return CIntVector3(Width, Height, 1); }
 
     inline bool IsMultiSampled() const { return (NumSamples > 1u); }
 
@@ -210,13 +236,12 @@ public:
     CRHITexture2DArray(const CRHITextureDesc& InTextureDesc)
         : CRHITexture2D(InTextureDesc)
         , ArraySize(InTextureDesc.DepthOrArraySize)
-    {
-    }
+    { }
 
     virtual CRHITexture2D*      AsTexture2D()      override { return nullptr; }
     virtual CRHITexture2DArray* AsTexture2DArray() override { return this; }
 
-    inline uint16 GetArraySize() const { return ArraySize; }
+    virtual uint16 GetArraySize() const override final { return ArraySize; }
 
 protected:
     uint16 ArraySize;
@@ -232,10 +257,13 @@ public:
     CRHITextureCube(const CRHITextureDesc& InTextureDesc)
         : CRHITexture(InTextureDesc)
         , Size(InTextureDesc.Width)
-    {
-    }
+    { }
 
     virtual CRHITextureCube* AsTextureCube() override { return this; }
+
+    virtual uint16      GetSizeX()   const override final { return Size; }
+    virtual uint16      GetSizeY()   const override final { return Size; }
+    virtual CIntVector3 GetSizeXYZ() const override final { return CIntVector3(Size, Size, 1); }
 
     inline uint16 GetSize() const { return Size; }
 
@@ -253,13 +281,12 @@ public:
     CRHITextureCubeArray(const CRHITextureDesc& InTextureDesc)
         : CRHITextureCube(InTextureDesc)
         , ArraySize(InTextureDesc.DepthOrArraySize)
-    {
-    }
+    { }
 
     virtual CRHITextureCube*      AsTextureCube()      override { return nullptr; }
     virtual CRHITextureCubeArray* AsTextureCubeArray() override { return this;    }
 
-    inline uint16 GetArraySize() const { return ArraySize; }
+    virtual uint16 GetArraySize() const override final { return ArraySize; }
 
 protected:
     uint16 ArraySize;
@@ -277,11 +304,15 @@ public:
         , Width(InTextureDesc.Width)
         , Height(InTextureDesc.Height)
         , Depth(InTextureDesc.DepthOrArraySize)
-    {
-    }
+    { }
 
     virtual CRHITexture3D* AsTexture3D() override { return this; }
     
+    virtual uint16      GetSizeX()   const override final { return Width; }
+    virtual uint16      GetSizeY()   const override final { return Height; }
+    virtual uint16      GetSizeZ()   const override final { return Depth; }
+    virtual CIntVector3 GetSizeXYZ() const override final { return CIntVector3(Width, Height, Depth); }
+
     inline uint16 GetWidth()  const { return Width; }
     inline uint16 GetHeight() const { return Height; }
     inline uint16 GetDepth()  const { return Depth; }

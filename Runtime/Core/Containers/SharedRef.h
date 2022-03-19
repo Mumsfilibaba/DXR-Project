@@ -22,8 +22,7 @@ public:
      */
     FORCEINLINE TSharedRef() noexcept
         : Ptr(nullptr)
-    {
-    }
+    { }
 
     /**
      * Copy-constructor
@@ -78,8 +77,7 @@ public:
      */
     FORCEINLINE TSharedRef(ElementType* InPointer) noexcept
         : Ptr(InPointer)
-    {
-    }
+    { }
 
     /**
      * Construct a SharedRef from a raw pointer of a convertible type. The container takes ownership.
@@ -89,8 +87,7 @@ public:
     template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedRef(OtherType* InPtr) noexcept
         : Ptr(InPtr)
-    {
-    }
+    { }
 
     /**
      * Destructor

@@ -135,8 +135,7 @@ protected:
     CPlatformApplication(const TSharedPtr<ICursor>& InCursor)
         : Cursor(InCursor)
         , MessageListener(nullptr)
-    {
-    }
+    { }
     
     virtual ~CPlatformApplication() = default;
 

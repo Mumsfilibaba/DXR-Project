@@ -48,9 +48,9 @@ RHI_API bool RHIInitialize(ERHIType InRenderApi);
 RHI_API void RHIRelease();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIModule
+// CRHIModuleInterface
 
-class RHI_API CRHIModule : public CDefaultEngineModule
+class RHI_API CRHIModuleInterface : public CDefaultEngineModule
 {
 public:
 
@@ -70,8 +70,8 @@ public:
 
 protected:
 
-    CRHIModule()  = default;
-    ~CRHIModule() = default;
+    CRHIModuleInterface()  = default;
+    ~CRHIModuleInterface() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

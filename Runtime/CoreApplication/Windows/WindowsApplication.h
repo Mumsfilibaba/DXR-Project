@@ -26,8 +26,7 @@ struct SWindowsMessage
         , lParam(InlParam)
         , MouseDeltaX(InMouseDeltaX)
         , MouseDeltaY(InMouseDeltaY)
-    {
-    }
+    { }
 
     // Standard Window Message
     HWND   Window;

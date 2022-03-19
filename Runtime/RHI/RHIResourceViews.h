@@ -24,8 +24,7 @@ struct SRHIShaderResourceViewDesc
 
     FORCEINLINE SRHIShaderResourceViewDesc(EType InType)
         : Type(InType)
-    {
-    }
+    { }
 
     EType Type;
     union
@@ -116,8 +115,7 @@ struct SRHIUnorderedAccessViewDesc
 
     FORCEINLINE SRHIUnorderedAccessViewDesc(EType InType)
         : Type(InType)
-    {
-    }
+    { }
 
     EType Type;
     union
@@ -196,8 +194,7 @@ struct SRHIRenderTargetViewDesc
 
     FORCEINLINE SRHIRenderTargetViewDesc(EType InType)
         : Type(InType)
-    {
-    }
+    { }
 
     EType   Type;
     ERHIFormat Format = ERHIFormat::Unknown;
@@ -253,8 +250,7 @@ struct SRHIDepthStencilViewDesc
 
     FORCEINLINE SRHIDepthStencilViewDesc(EType InType)
         : Type(InType)
-    {
-    }
+    { }
 
     EType   Type;
     ERHIFormat Format = ERHIFormat::Unknown;
@@ -295,6 +291,8 @@ struct SRHIDepthStencilViewDesc
 
 class CRHIShaderResourceView : public CRHIObject
 {
+public:
+    virtual CRHIResource* GetResource() const { return nullptr; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -302,15 +300,18 @@ class CRHIShaderResourceView : public CRHIObject
 
 class CRHIUnorderedAccessView : public CRHIObject
 {
+public:
+    virtual CRHIResource* GetResource() const { return nullptr; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIDepthStencilView
 
-using DepthStencilViewCube = TStaticArray<TSharedRef<CRHIDepthStencilView>, 6>;
 
 class CRHIDepthStencilView : public CRHIObject
 {
+public:
+    virtual CRHIResource* GetResource() const { return nullptr; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -318,4 +319,11 @@ class CRHIDepthStencilView : public CRHIObject
 
 class CRHIRenderTargetView : public CRHIObject
 {
+public:
+    virtual CRHIResource* GetResource() const { return nullptr; }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Helper
+
+using DepthStencilViewCube = TStaticArray<TSharedRef<CRHIDepthStencilView>, 6>;

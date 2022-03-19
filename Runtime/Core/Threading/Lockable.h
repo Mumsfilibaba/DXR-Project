@@ -16,15 +16,13 @@ public:
     FORCEINLINE Lockable() noexcept
         : LockableItem()
         , ItemLock()
-    {
-    }
+    { }
 
     template<typename... ArgTypes>
     FORCEINLINE Lockable(ArgTypes&&... Args) noexcept
         : LockableItem(Forward<ArgTypes>(Args)...)
         , ItemLock()
-    {
-    }
+    { }
 
     FORCEINLINE void Lock() noexcept
     {

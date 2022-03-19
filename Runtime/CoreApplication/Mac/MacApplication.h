@@ -30,8 +30,7 @@ struct SMacApplicationEvent
         , Size()
         , Position()
         , Character(uint32(-1))
-    {
-    }
+    { }
 
     FORCEINLINE SMacApplicationEvent(const SMacApplicationEvent& Other)
         : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nullptr)
@@ -40,8 +39,7 @@ struct SMacApplicationEvent
         , Size(Other.Size)
         , Position(Other.Position)
         , Character(Other.Character)
-    {
-    }
+    { }
 
     FORCEINLINE ~SMacApplicationEvent()
     {
