@@ -80,7 +80,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DRef CreateTexture2D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
+    virtual CRHITexture2DRef CreateTexture2D(const SRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Creates a Texture2DArray
@@ -90,7 +90,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DArrayRef CreateTexture2DArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
+    virtual CRHITexture2DArrayRef CreateTexture2DArray(const SRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Creates a TextureCube
@@ -100,7 +100,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeRef CreateTextureCube(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
+    virtual CRHITextureCubeRef CreateTextureCube(const SRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Creates a TextureCubeArray
@@ -110,7 +110,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeArrayRef CreateTextureCubeArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
+    virtual CRHITextureCubeArrayRef CreateTextureCubeArray(const SRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Creates a Texture3D
@@ -120,7 +120,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture3DRef CreateTexture3D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
+    virtual CRHITexture3DRef CreateTexture3D(const SRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Creates a new Buffer
@@ -130,7 +130,7 @@ public:
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created Buffer
      */
-    virtual CRHIBufferRef CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
+    virtual CRHIBufferRef CreateBuffer(const SRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * Creates a new ConstantBuffer
@@ -178,7 +178,7 @@ public:
      * @param Desc: Info about the ShaderResourceView
      * @return: Returns the newly created ShaderResourceView
      */
-    virtual CRHIShaderResourceView* CreateShaderResourceView(const SRHIShaderResourceViewDesc& Desc) = 0;
+    virtual CRHIShaderResourceViewRef CreateShaderResourceView(const SRHIShaderResourceViewDesc& Desc) = 0;
     
     /**
      * Create a new UnorderedAccessView
@@ -186,7 +186,7 @@ public:
      * @param Desc: Info about the UnorderedAccessView
      * @return: Returns the newly created UnorderedAccessView
      */
-    virtual CRHIUnorderedAccessView* CreateUnorderedAccessView(const SRHIUnorderedAccessViewDesc& Desc) = 0;
+    virtual CRHIUnorderedAccessViewRef CreateUnorderedAccessView(const SRHIUnorderedAccessViewDesc& Desc) = 0;
     
     /**
      * Create a new RenderTargetView
@@ -194,7 +194,7 @@ public:
      * @param Desc: Info about the RenderTargetView
      * @return: Returns the newly created RenderTargetView
      */
-    virtual CRHIRenderTargetView* CreateRenderTargetView(const SRHIRenderTargetViewDesc& Desc) = 0;
+    virtual CRHIRenderTargetViewRef CreateRenderTargetView(const SRHIRenderTargetViewDesc& Desc) = 0;
     
     /**
      * Create a new DepthStencilView
@@ -202,7 +202,7 @@ public:
      * @param Desc: Info about the DepthStencilView
      * @return: Returns the newly created DepthStencilView
      */
-    virtual CRHIDepthStencilView* CreateDepthStencilView(const SRHIDepthStencilViewDesc& Desc) = 0;
+    virtual CRHIDepthStencilViewRef CreateDepthStencilView(const SRHIDepthStencilViewDesc& Desc) = 0;
 
     /**
      * Creates a new Compute Shader
@@ -443,27 +443,27 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper functions
 
-FORCEINLINE CRHITexture2DRef RHICreateTexture2D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
+FORCEINLINE CRHITexture2DRef RHICreateTexture2D(const SRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
 {
     return GRHIInstance->CreateTexture2D(TextureDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHITexture2DArrayRef RHICreateTexture2DArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
+FORCEINLINE CRHITexture2DArrayRef RHICreateTexture2DArray(const SRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
 {
     return GRHIInstance->CreateTexture2DArray(TextureDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHITextureCubeRef RHICreateTextureCube(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
+FORCEINLINE CRHITextureCubeRef RHICreateTextureCube(const SRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
 {
     return GRHIInstance->CreateTextureCube(TextureDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHITextureCubeArrayRef RHICreateTextureCubeArray(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
+FORCEINLINE CRHITextureCubeArrayRef RHICreateTextureCubeArray(const SRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
 {
     return GRHIInstance->CreateTextureCubeArray(TextureDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHITexture3DRef RHICreateTexture3D(const CRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
+FORCEINLINE CRHITexture3DRef RHICreateTexture3D(const SRHITextureDesc& TextureDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData = nullptr)
 {
     return GRHIInstance->CreateTexture3D(TextureDesc, InitialState, InitialData);
 }
@@ -473,14 +473,14 @@ FORCEINLINE CRHISamplerStateRef RHICreateSamplerState(const class CRHISamplerSta
     return GRHIInstance->CreateSamplerState(Desc);
 }
 
-FORCEINLINE CRHIBufferRef RHICreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateBuffer(const SRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
     return GRHIInstance->CreateBuffer(BufferDesc, InitialState, InitialData);
 }
 
 FORCEINLINE CRHIBufferRef RHICreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
-    return RHICreateBuffer(CRHIBufferDesc::CreateVertexBuffer(NumVertices, Stride, Flags), InitialState, InitialData);
+    return RHICreateBuffer(SRHIBufferDesc::CreateVertexBuffer(NumVertices, Stride, Flags), InitialState, InitialData);
 }
 
 template<typename T>
@@ -491,12 +491,12 @@ FORCEINLINE CRHIBufferRef RHICreateVertexBuffer(uint32 NumVertices, uint32 Flags
 
 FORCEINLINE CRHIBufferRef RHICreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
-    return RHICreateBuffer(CRHIBufferDesc::CreateIndexBuffer(NumIndices, Format, Flags), InitialState, InitialData);
+    return RHICreateBuffer(SRHIBufferDesc::CreateIndexBuffer(NumIndices, Format, Flags), InitialState, InitialData);
 }
 
 FORCEINLINE CRHIBufferRef RHICreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
-    return RHICreateBuffer(CRHIBufferDesc::CreateConstantBuffer(Size, Flags), InitialState, InitialData);
+    return RHICreateBuffer(SRHIBufferDesc::CreateConstantBuffer(Size, Flags), InitialState, InitialData);
 }
 
 template<typename StructureType>
@@ -507,7 +507,7 @@ FORCEINLINE CRHIBufferRef RHICreateConstantBuffer(uint32 Flags, ERHIResourceStat
 
 FORCEINLINE CRHIBufferRef RHICreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const CRHIResourceData* InitialData)
 {
-    return RHICreateBuffer(CRHIBufferDesc::CreateStructuredBuffer(NumElements, Stride, Flags), InitialState, InitialData);
+    return RHICreateBuffer(SRHIBufferDesc::CreateStructured(NumElements, Stride, Flags), InitialState, InitialData);
 }
 
 template<typename StructureType>

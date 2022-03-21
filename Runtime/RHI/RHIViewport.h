@@ -14,28 +14,26 @@ class CRHIViewport : public CRHIObject
 {
 public:
     
-    CRHIViewport(ERHIFormat InFormat, uint16 InWidth, uint16 InHeight)
+    CRHIViewport(ERHIFormat InColorFormat, uint16 InWidth, uint16 InHeight)
         : CRHIObject()
         , Width(InWidth)
         , Height(InHeight)
-        , Format(InFormat)
+        , ColorFormat(InColorFormat)
     { }
 
     ~CRHIViewport() = default;
 
     virtual bool Resize(uint32 Width, uint32 Height) = 0;
-
-    virtual CRHIRenderTargetView* GetRenderTargetView() const = 0;
     
     virtual CRHITexture2D* GetBackBuffer() const = 0;
+
+    inline ERHIFormat GetColorFormat() const { return ColorFormat; }
 
     inline uint16 GetWidth()  const { return Width; }
     inline uint16 GetHeight() const { return Height; }
 
-    inline ERHIFormat GetColorFormat() const { return Format; }
-
 protected:
+    ERHIFormat ColorFormat;
     uint16     Width;
     uint16     Height;
-    ERHIFormat Format;
 };

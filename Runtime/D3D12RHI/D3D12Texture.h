@@ -1,8 +1,10 @@
 #pragma once
-#include "RHI/RHIResources.h"
-
 #include "D3D12Resource.h"
 #include "D3D12Views.h"
+
+#include "RHI/RHIResources.h"
+
+#include "Core/Containers/SharedRef.h"
 
 #ifdef COMPILER_MSVC
 #pragma warning(push)
@@ -10,6 +12,17 @@
 #endif
 
 #define TEXTURE_CUBE_FACE_COUNT (6)
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedef
+
+typedef TSharedRef<class CD3D12BackBuffer>       CD3D12BackBufferRef;
+typedef TSharedRef<class CD3D12Texture>          CD3D12TextureRef;
+typedef TSharedRef<class CD3D12Texture2D>        CD3D12Texture2DRef;
+typedef TSharedRef<class CD3D12Texture2DArray>   CD3D12Texture2DArrayRef;
+typedef TSharedRef<class CD3D12TextureCube>      CD3D12TextureCubeRef;
+typedef TSharedRef<class CD3D12TextureCubeArray> CD3D12TextureCubeArrayRef;
+typedef TSharedRef<class CD3D12Texture3D>        CD3D12Texture3DRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12Texture
@@ -60,7 +73,7 @@ public:
         uint32 InNumMips,
         uint32 InNumSamples,
         uint32 InFlags,
-        const SClearValue& InOptimalClearValue)
+        const SRHIClearValue& InOptimalClearValue)
         : CRHITexture2D(InFormat, SizeX, SizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
         , CD3D12Texture(InDevice)
         , RenderTargetView(nullptr)
@@ -101,6 +114,16 @@ private:
     TSharedRef<CD3D12RenderTargetView>    RenderTargetView;
     TSharedRef<CD3D12DepthStencilView>    DepthStencilView;
     TSharedRef<CD3D12UnorderedAccessView> UnorderedAccessView;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12BackBuffer
+
+class CD3D12BackBuffer : public CD3D12Texture2D
+{
+public:
+    CD3D12BackBuffer(CD3D12Device* InDevice, uint16 InWidth, uint16 InHeight);
+    ~CD3D12BackBuffer();
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

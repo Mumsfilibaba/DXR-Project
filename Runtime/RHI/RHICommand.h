@@ -164,7 +164,7 @@ public:
     }
 
     CRHIDepthStencilView* DepthStencilView;
-    SRHIDepthStencilValue         ClearValue;
+    SRHIDepthStencilValue ClearValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -423,11 +423,6 @@ public:
         , VertexBufferCount(InVertexBufferCount)
         , StartSlot(InStartSlot)
     { }
-
-    FORCEINLINE ~CRHICommandSetVertexBuffers()
-    {
-        VertexBuffers = nullptr;
-    }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -812,7 +807,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandSetSamplerStates)
 {
 public:
-    FORCEINLINE CRHICommandSetSamplerStates(CRHIShader* InShader, CRHISamplerState** InSamplerStates, uint32 InNumSamplerStates, uint32 InStartParameterIndex)
+    FORCEINLINE CRHICommandSetSamplerStates(CRHIShader* InShader, CRHISamplerState* const* InSamplerStates, uint32 InNumSamplerStates, uint32 InStartParameterIndex)
         : Shader(InShader)
         , SamplerStates(InSamplerStates)
         , NumSamplerStates(InNumSamplerStates)

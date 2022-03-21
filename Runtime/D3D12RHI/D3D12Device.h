@@ -34,6 +34,8 @@ public:
 
     bool Initialize();
 
+    class CD3D12Resource* CreateCommitedResource();
+
     int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
     String GetAdapterName() const;
@@ -172,7 +174,7 @@ private:
     CD3D12Device(CRHIInstanceD3D12* InInstance, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
     ~CD3D12Device();
 
-    CRHIInstanceD3D12* Instance = nullptr; 
+    CRHIInstanceD3D12*           Instance = nullptr; 
 
     TComPtr<IDXGIFactory2>       Factory;
     TComPtr<IDXGIAdapter1>       Adapter;
@@ -182,8 +184,8 @@ private:
     TComPtr<ID3D12Device5>       DXRDevice;
     TComPtr<IDXGraphicsAnalysis> GraphicsAnalysisInterface;
 
-    D3D_FEATURE_LEVEL MinFeatureLevel    = D3D_FEATURE_LEVEL_12_0;
-    D3D_FEATURE_LEVEL ActiveFeatureLevel = D3D_FEATURE_LEVEL_11_0;
+    D3D_FEATURE_LEVEL                MinFeatureLevel    = D3D_FEATURE_LEVEL_12_0;
+    D3D_FEATURE_LEVEL                ActiveFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
     D3D12_RAYTRACING_TIER            RayTracingTier              = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
     D3D12_SAMPLER_FEEDBACK_TIER      SamplerFeedBackTier         = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
@@ -195,8 +197,8 @@ private:
     HMODULE D3D12Lib = 0;
     HMODULE PIXLib   = 0;
 
-    bool bAllowTearing        = false;
-    bool bEnableDebugLayer    = false;
-    bool bEnableGPUValidation = false;
-    bool bEnableDRED          = false;
+    bool    bAllowTearing        = false;
+    bool    bEnableDebugLayer    = false;
+    bool    bEnableGPUValidation = false;
+    bool    bEnableDRED          = false;
 };
