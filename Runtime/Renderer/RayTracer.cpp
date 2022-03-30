@@ -84,7 +84,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
 
     uint32 Width = Resources.MainWindowViewport->GetWidth();
     uint32 Height = Resources.MainWindowViewport->GetHeight();
-    Resources.RTOutput = RHICreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, ERHIResourceState::UnorderedAccess, nullptr);
+    Resources.RTOutput = RHICreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, ERHIResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.RTOutput)
     {
         CDebug::DebugBreak();
@@ -220,6 +220,6 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
     AddDebugTexture(
         MakeSharedRef<CRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView()),
         Resources.RTOutput,
-        ERHIResourceState::UnorderedAccess,
-        ERHIResourceState::UnorderedAccess);
+        ERHIResourceAccess::UnorderedAccess,
+        ERHIResourceAccess::UnorderedAccess);
 }

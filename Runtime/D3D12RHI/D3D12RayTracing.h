@@ -21,7 +21,7 @@ public:
 
     virtual void SetName(const String& InName) override
     {
-        CRHIObject::SetName(InName);
+        CRHIResource::SetName(InName);
         ResultBuffer->SetName(InName);
     }
 

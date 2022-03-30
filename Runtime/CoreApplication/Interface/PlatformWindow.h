@@ -104,7 +104,7 @@ class CPlatformWindow : public CRefCounted
 public:
 
     /**
-     * Initializes the window
+     * @brief: Initializes the window
      * 
      * @param Title: Title of the window
      * @param InWidth: Width of the window
@@ -117,19 +117,19 @@ public:
     virtual bool Initialize(const String& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) { return true; }
 
     /**
-     * Shows the window 
+     * @brief: Shows the window 
      * 
      * @param bMaximized: True if the window should be shown maximized
      */
     virtual void Show(bool bMaximized) { }
 
     /**
-     * Minimizes the window 
+     * @brief: Minimizes the window 
      */
     virtual void Minimize() { }
 
     /**
-     *  Maximizes the window
+     * @brief:  Maximizes the window
      */
     virtual void Maximize() { }
 

@@ -12,7 +12,7 @@ public:
     FORCEINLINE CVector2() noexcept;
 
     /**
-     * Constructor initializing all components with a corresponding value.
+     * @brief: Constructor initializing all components with a corresponding value.
      *
      * @param InX: The x-coordinate
      * @param InY: The y-coordinate
@@ -20,14 +20,14 @@ public:
     FORCEINLINE explicit CVector2(float InX, float InY) noexcept;
 
     /**
-     * Constructor initializing all components with an array.
+     * @brief: Constructor initializing all components with an array.
      *
      * @param Arr: Array with 2 elements
      */
     FORCEINLINE explicit CVector2(const float* Arr) noexcept;
 
     /**
-     * Constructor initializing all components with a single value.
+     * @brief: Constructor initializing all components with a single value.
      *
      * @param Scalar: Value to set all components to
      */
@@ -37,14 +37,14 @@ public:
     inline void Normalize() noexcept;
 
     /**
-     * Returns a normalized version of this vector
+     * @brief: Returns a normalized version of this vector
      *
      * @return A copy of this vector normalized
      */
     FORCEINLINE CVector2 GetNormalized() const noexcept;
 
     /**
-     * Compares, within a threshold Epsilon, this vector with another vector
+     * @brief: Compares, within a threshold Epsilon, this vector with another vector
      *
      * @param Other: vector to compare against
      * @return True if equal, false if not
@@ -52,49 +52,49 @@ public:
     inline bool IsEqual(const CVector2& Other, float Epsilon = NMath::IS_EQUAL_EPISILON) const noexcept;
 
     /**
-     * Checks weather this vector is a unit vector not
+     * @brief: Checks weather this vector is a unit vector not
      *
      * @return True if the length equals one, false if not
      */
     FORCEINLINE bool IsUnitVector() const noexcept;
 
     /**
-     * Checks weather this vector has any component that equals NaN
+     * @brief: Checks weather this vector has any component that equals NaN
      *
      * @return True if the any component equals NaN, false if not
      */
     FORCEINLINE bool HasNan() const noexcept;
 
     /**
-     * Checks weather this vector has any component that equals infinity
+     * @brief: Checks weather this vector has any component that equals infinity
      *
      * @return True if the any component equals infinity, false if not
      */
     FORCEINLINE bool HasInfinity() const noexcept;
 
     /**
-     * Checks weather this vector has any value that equals infinity or NaN
+     * @brief: Checks weather this vector has any value that equals infinity or NaN
      *
      * @return False if the any value equals infinity or NaN, true if not
      */
     FORCEINLINE bool IsValid() const noexcept;
 
     /**
-     * Returns the length of this vector
+     * @brief: Returns the length of this vector
      *
      * @return The length of the vector
      */
     FORCEINLINE float Length() const noexcept;
 
     /**
-     * Returns the length of this vector squared
+     * @brief: Returns the length of this vector squared
      *
      * @return The length of the vector squared
      */
     FORCEINLINE float LengthSquared() const noexcept;
 
     /**
-     * Returns the dot product between this and another vector
+     * @brief: Returns the dot product between this and another vector
      *
      * @param Other: The vector to perform dot product with
      * @return The dot product
@@ -102,7 +102,7 @@ public:
     FORCEINLINE float DotProduct(const CVector2& Other) const noexcept;
 
     /**
-     * Returns the resulting vector after projecting this vector onto another.
+     * @brief: Returns the resulting vector after projecting this vector onto another.
      *
      * @param Other: The vector to project onto
      * @return The projected vector
@@ -110,14 +110,14 @@ public:
     inline CVector2 ProjectOn(const CVector2& Other) const noexcept;
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
     FORCEINLINE float* GetData() noexcept;
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
@@ -126,7 +126,7 @@ public:
 public:
 
     /**
-     * Returns a vector with the smallest of each component of two vectors
+     * @brief: Returns a vector with the smallest of each component of two vectors
      *
      * @param First: First vector to compare with
      * @param Second: Second vector to compare with
@@ -135,7 +135,7 @@ public:
     friend FORCEINLINE CVector2 Min(const CVector2& First, const CVector2& Second) noexcept;
 
     /**
-     * Returns a vector with the largest of each component of two vectors
+     * @brief: Returns a vector with the largest of each component of two vectors
      *
      * @param First: First vector to compare with
      * @param Second: Second vector to compare with
@@ -144,7 +144,7 @@ public:
     friend FORCEINLINE CVector2 Max(const CVector2& First, const CVector2& Second) noexcept;
 
     /**
-     * Returns the linear interpolation between two vectors
+     * @brief: Returns the linear interpolation between two vectors
      *
      * @param First: First vector to interpolate
      * @param Second: Second vector to interpolate
@@ -154,7 +154,7 @@ public:
     friend FORCEINLINE CVector2 Lerp(const CVector2& First, const CVector2& Second, float t) noexcept;
 
     /**
-     * Returns a vector with all the components within the range of a min and max value
+     * @brief: Returns a vector with all the components within the range of a min and max value
      *
      * @param Min: Vector with minimum values
      * @param Max: Vector with maximum values
@@ -164,7 +164,7 @@ public:
     friend FORCEINLINE CVector2 Clamp(const CVector2& Min, const CVector2& Max, const CVector2& Value) noexcept;
 
     /**
-     * Returns a vector with all the components within the range zero and one
+     * @brief: Returns a vector with all the components within the range zero and one
      *
      * @param Value: Value to saturate
      * @return A vector with the result of saturation
@@ -174,14 +174,14 @@ public:
 public:
 
     /**
-     * Return a vector with component-wise negation of this vector
+     * @brief: Return a vector with component-wise negation of this vector
      *
      * @return A negated vector
      */
     FORCEINLINE CVector2 operator-() const noexcept;
 
     /**
-     * Returns the result of component-wise adding this and another vector
+     * @brief: Returns the result of component-wise adding this and another vector
      *
      * @param Rhs: The vector to add
      * @return A vector with the result of addition
@@ -189,7 +189,7 @@ public:
     FORCEINLINE CVector2 operator+(const CVector2& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise adding this with another vector
+     * @brief: Returns this vector after component-wise adding this with another vector
      *
      * @param Rhs: The vector to add
      * @return A reference to this vector
@@ -197,7 +197,7 @@ public:
     FORCEINLINE CVector2& operator+=(const CVector2& Rhs) noexcept;
 
     /**
-     * Returns the result of adding a scalar to each component of this vector
+     * @brief: Returns the result of adding a scalar to each component of this vector
      *
      * @param Rhs: The scalar to add
      * @return A vector with the result of addition
@@ -205,7 +205,7 @@ public:
     FORCEINLINE CVector2 operator+(float Rhs) const noexcept;
 
     /**
-     * Returns this vector after adding a scalar to each component of this vector
+     * @brief: Returns this vector after adding a scalar to each component of this vector
      *
      * @param Rhs: The scalar to add
      * @return A reference to this vector
@@ -213,7 +213,7 @@ public:
     FORCEINLINE CVector2& operator+=(float Rhs) noexcept;
 
     /**
-     * Returns the result of component-wise subtraction between this and another vector
+     * @brief: Returns the result of component-wise subtraction between this and another vector
      *
      * @param Rhs: The vector to subtract
      * @return A vector with the result of subtraction
@@ -221,7 +221,7 @@ public:
     FORCEINLINE CVector2 operator-(const CVector2& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise subtraction between this and another vector
+     * @brief: Returns this vector after component-wise subtraction between this and another vector
      *
      * @param Rhs: The vector to subtract
      * @return A reference to this vector
@@ -229,7 +229,7 @@ public:
     FORCEINLINE CVector2& operator-=(const CVector2& Rhs) noexcept;
 
     /**
-     * Returns the result of subtracting each component of this vector with a scalar
+     * @brief: Returns the result of subtracting each component of this vector with a scalar
      *
      * @param Rhs: The scalar to subtract
      * @return A vector with the result of the subtraction
@@ -237,7 +237,7 @@ public:
     FORCEINLINE CVector2 operator-(float Rhs) const noexcept;
 
     /**
-     * Returns this vector after subtracting each component of this vector with a scalar
+     * @brief: Returns this vector after subtracting each component of this vector with a scalar
      *
      * @param Rhs: The scalar to subtract
      * @return A reference to this vector
@@ -245,7 +245,7 @@ public:
     FORCEINLINE CVector2& operator-=(float Rhs) noexcept;
 
     /**
-     * Returns the result of component-wise multiplication with this and another vector
+     * @brief: Returns the result of component-wise multiplication with this and another vector
      *
      * @param Rhs: The vector to multiply with
      * @return A vector with the result of the multiplication
@@ -253,7 +253,7 @@ public:
     FORCEINLINE CVector2 operator*(const CVector2& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise multiplication with this and another vector
+     * @brief: Returns this vector after component-wise multiplication with this and another vector
      *
      * @param Rhs: The vector to multiply with
      * @return A reference to this vector
@@ -261,7 +261,7 @@ public:
     FORCEINLINE CVector2& operator*=(const CVector2& Rhs) noexcept;
 
     /**
-     * Returns the result of multiplying each component of this vector with a scalar
+     * @brief: Returns the result of multiplying each component of this vector with a scalar
      *
      * @param Rhs: The scalar to multiply with
      * @return A vector with the result of the multiplication
@@ -269,7 +269,7 @@ public:
     FORCEINLINE CVector2 operator*(float Rhs) const noexcept;
 
     /**
-     * Returns the result of multiplying each component of a vector with a scalar
+     * @brief: Returns the result of multiplying each component of a vector with a scalar
      *
      * @param Lhs: The scalar to multiply with
      * @param Rhs: The vector to multiply with
@@ -278,7 +278,7 @@ public:
     friend FORCEINLINE CVector2 operator*(float Lhs, const CVector2& Rhs) noexcept;
 
     /**
-     * Returns this vector after multiplying each component of this vector with a scalar
+     * @brief: Returns this vector after multiplying each component of this vector with a scalar
      *
      * @param Rhs: The scalar to multiply with
      * @return A reference to this vector
@@ -286,7 +286,7 @@ public:
     FORCEINLINE CVector2 operator*=(float Rhs) noexcept;
 
     /**
-     * Returns the result of component-wise division with this and another vector
+     * @brief: Returns the result of component-wise division with this and another vector
      *
      * @param Rhs: The vector to divide with
      * @return A vector with the result of the division
@@ -294,7 +294,7 @@ public:
     FORCEINLINE CVector2 operator/(const CVector2& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise division with this and another vector
+     * @brief: Returns this vector after component-wise division with this and another vector
      *
      * @param Rhs: The vector to divide with
      * @return A reference to this vector
@@ -302,7 +302,7 @@ public:
     FORCEINLINE CVector2& operator/=(const CVector2& Rhs) noexcept;
 
     /**
-     * Returns the result of dividing each component of this vector and a scalar
+     * @brief: Returns the result of dividing each component of this vector and a scalar
      *
      * @param Rhs: The scalar to divide with
      * @return A vector with the result of the division
@@ -310,7 +310,7 @@ public:
     FORCEINLINE CVector2 operator/(float Rhs) const noexcept;
 
     /**
-     * Returns this vector after dividing each component of this vector and a scalar
+     * @brief: Returns this vector after dividing each component of this vector and a scalar
      *
      * @param Rhs: The scalar to divide with
      * @return A reference to this vector
@@ -318,7 +318,7 @@ public:
     FORCEINLINE CVector2& operator/=(float Rhs) noexcept;
 
     /**
-     * Returns the result after comparing this and another vector
+     * @brief: Returns the result after comparing this and another vector
      *
      * @param Other: The vector to compare with
      * @return True if equal, false if not
@@ -326,7 +326,7 @@ public:
     FORCEINLINE bool operator==(const CVector2& Other) const noexcept;
 
     /**
-     * Returns the negated result after comparing this and another vector
+     * @brief: Returns the negated result after comparing this and another vector
      *
      * @param Other: The vector to compare with
      * @return False if equal, true if not
@@ -334,7 +334,7 @@ public:
     FORCEINLINE bool operator!=(const CVector2& Other) const noexcept;
 
     /**
-     * Returns the component specifed
+     * @brief: Returns the component specifed
      *
      * @param Index: The component index
      * @return The component
@@ -342,7 +342,7 @@ public:
     FORCEINLINE float& operator[](int Index) noexcept;
 
     /**
-     * Returns the component specifed
+     * @brief: Returns the component specifed
      *
      * @param Index: The component index
      * @return The component

@@ -21,7 +21,7 @@ public:
     ~CSpinLock() = default;
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE CSpinLock() noexcept
         : State(State_Unlocked)
@@ -47,7 +47,7 @@ public:
     }
 
     /**
-     * Try to lock CriticalSection for other threads
+     * @brief: Try to lock CriticalSection for other threads
      *
      * @return; Returns true if the lock is successful
      */

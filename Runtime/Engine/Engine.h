@@ -20,28 +20,28 @@ class ENGINE_API CEngine
 public:
 
     /**
-     * Create a new engine instance 
+     * @brief: Create a new engine instance 
      * 
      * @return: Returns a new engine instance
      */
     static CEngine* Make();
 
     /**
-     * Initialize the engine 
+     * @brief: Initialize the engine 
      * 
      * @return: Returns true if the initialization was successful
      */
     virtual bool Initialize();
 
     /**
-     * Start the engine
+     * @brief: Start the engine
      * 
      * @return: Returns true if the startup was successful
      */
     virtual bool Start();
 
     /**
-     * Tick should be called once per frame 
+     * @brief: Tick should be called once per frame 
      * 
      * @param DeltaTime: Time since the last tick
      */

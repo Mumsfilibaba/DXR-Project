@@ -7,7 +7,7 @@
 struct SColorF
 {
     /**
-     * Default constructor (Initialize components to zero)
+     * @brief: Default constructor (Initialize components to zero)
      */
     FORCEINLINE SColorF()
         : r(0.0f)
@@ -17,7 +17,7 @@ struct SColorF
     { }
 
     /**
-     * Initialize color with all channels
+     * @brief: Initialize color with all channels
      * 
      * @param InR: Red channel
      * @param InG: Green channel
@@ -32,7 +32,7 @@ struct SColorF
     { }
 
     /**
-     * Set all components
+     * @brief: Set all components
      *
      * @param InR: Red channel
      * @param InG: Green channel
@@ -47,14 +47,14 @@ struct SColorF
         a = InA;
     }
 
-    bool operator==(const SColorF& RHS) const
+    bool operator==(const SColorF& Rhs) const
     {
-        return (r == RHS.r) && (g == RHS.g) && (b == RHS.b) && (a == RHS.a);
+        return (r == Rhs.r) && (g == Rhs.g) && (b == Rhs.b) && (a == Rhs.a);
     }
 
-    bool operator!=(const SColorF& RHS) const
+    bool operator!=(const SColorF& Rhs) const
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
     union

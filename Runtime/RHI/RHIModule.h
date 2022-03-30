@@ -1,23 +1,7 @@
 #pragma once
+#include "RHICore.h"
+
 #include "Core/Modules/ModuleManager.h"
-
-#if MONOLITHIC_BUILD
-#define RHI_API
-#else
-#if RHI_IMPL
-#define RHI_API MODULE_EXPORT
-#else
-#define RHI_API MODULE_IMPORT
-#endif
-#endif
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Config
-
-// TODO: Should be in a config file
-#define ENABLE_API_DEBUGGING       (0)
-#define ENABLE_API_GPU_DEBUGGING   (0) // D3D12
-#define ENABLE_API_GPU_BREADCRUMBS (0) // D3D12
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIType
@@ -55,14 +39,14 @@ class RHI_API CRHIModuleInterface : public CDefaultEngineModule
 public:
 
     /**
-     * Creates the RHI Instance
+     * @brief: Creates the RHI Instance
      * 
      * @return: Returns the newly created RHIInstance
      */
     virtual class CRHIInstance* CreateInterface() = 0;
 
     /**
-     * Creates the RHI shader compiler 
+     * @brief: Creates the RHI shader compiler 
      * 
      * @return: Returns the shader compiler for this RHI Module
      */

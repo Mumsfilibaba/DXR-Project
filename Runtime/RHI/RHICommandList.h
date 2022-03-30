@@ -10,12 +10,15 @@ class CRHIShaderResourceView;
 class CRHIUnorderedAccessView;
 class CRHIShader;
 
-#define ENABLE_INSERT_DEBUG_CMDLIST_MARKER 0
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CommandList Marker
 
-#if ENABLE_INSERT_DEBUG_CMDLIST_MARKER
-#define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString) CmdList.InsertCommandListMarker(MarkerString);
+#define ENABLE_INSERT_COMMAND_LIST_MARKER (0)
+
+#if ENABLE_INSERT_COMMAND_LIST_MARKER
+    #define INSERT_COMMAND_LIST_MARKER(CommandList, MarkerString) CommandList.InsertCommandListMarker(MarkerString);
 #else
-#define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString)
+    #define INSERT_COMMAND_LIST_MARKER(CommandList, MarkerString)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -149,7 +152,7 @@ public:
         InsertCommand<CRHICommandEndTimeStamp>(TimestampQuery, Index);
     }
 
-    void ClearRenderTargetTexture(CRHITexture2D* Texture, const float ClearColor[4])
+    void ClearRenderTargetTexture(CRHIResource* Texture, const float ClearColor[4])
     {
         Assert(Texture != nullptr);
         InsertCommand<CRHICommandClearRenderTargetTexture>(Texture, ClearColor);
@@ -161,7 +164,7 @@ public:
         InsertCommand<CRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
 
-    void ClearDepthStencilTexture(CRHITexture2D* Texture, const SRHIDepthStencilValue& ClearValue)
+    void ClearDepthStencilTexture(CRHIResource* Texture, const SRHIDepthStencilValue& ClearValue)
     {
         Assert(Texture != nullptr);
         InsertCommand<CRHICommandClearDepthStencilTexture>(Texture, ClearValue);
@@ -173,7 +176,7 @@ public:
         InsertCommand<CRHICommandClearDepthStencilView>(DepthStencilView, ClearValue);
     }
 
-    void ClearUnorderedAccessTextureFloat(CRHITexture2D* Texture, const float ClearColor[4])
+    void ClearUnorderedAccessTextureFloat(CRHIResource* Texture, const float ClearColor[4])
     {
         Assert(Texture != nullptr);
         InsertCommand<CRHICommandClearUnorderedAccessTextureFloat>(Texture, ClearColor);
@@ -185,7 +188,7 @@ public:
         InsertCommand<CRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
 
-    void ClearUnorderedAccessTextureUint(CRHITexture2D* Texture, const uint32 ClearColor[4])
+    void ClearUnorderedAccessTextureUint(CRHIResource* Texture, const uint32 ClearColor[4])
     {
         Assert(Texture != nullptr);
         InsertCommand<CRHICommandClearUnorderedAccessTextureUint>(Texture, ClearColor);
@@ -197,12 +200,12 @@ public:
         InsertCommand<CRHICommandClearUnorderedAccessViewUint>(UnorderedAccessView, ClearColor);
     }
 
-    void SetShadingRate(ERHIShadingRate ShadingRate)
+    void SetShadingRate(EShadingRate ShadingRate)
     {
         InsertCommand<CRHICommandSetShadingRate>(ShadingRate);
     }
 
-    void SetShadingRateTexture(CRHITexture2D* ShadingRateTexture)
+    void SetShadingRateTexture(CRHIResource* ShadingRateTexture)
     {
         InsertCommand<CRHICommandSetShadingRateTexture>(ShadingRateTexture);
     }
@@ -377,7 +380,7 @@ public:
         InsertCommand<CRHICommandUpdateBuffer>(Dst, DestinationOffsetInBytes, SizeInBytes, TempSourceData);
     }
 
-    void UpdateTexture2D(CRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
+    void UpdateTexture2D(CRHITexture* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
     {
         const uint32 SizeInBytes = Width * Height * GetByteStrideFromFormat(Dst->GetFormat());
 
@@ -407,7 +410,7 @@ public:
         InsertCommand<CRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
     }
 
-    void DestroyResource(CRHIObject* Resource)
+    void DestroyResource(CRHIResource* Resource)
     {
         InsertCommand<CRHICommandDestroyResource>(Resource);
     }
@@ -448,7 +451,7 @@ public:
         InsertCommand<CRHICommandGenerateMips>(Texture);
     }
 
-    void TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState)
+    void TransitionTexture(CRHITexture* Texture, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState)
     {
         Assert(Texture != nullptr);
 
@@ -462,10 +465,9 @@ public:
         }
     }
 
-    void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState)
+    void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState)
     {
         Assert(Buffer != nullptr);
-        Assert(Buffer->IsDynamic() == false);
 
         if (BeforeState != AfterState)
         {

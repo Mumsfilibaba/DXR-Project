@@ -1,12 +1,105 @@
 #pragma once
+#include "RHICore.h"
 #include "TextureFormat.h"
 
 #include "Core/Math/Color.h"
+#include "Core/Templates/EnumUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHICubeFace
+// EShadingRateTier
 
-enum class ERHICubeFace
+enum class EShadingRateTier : uint8
+{
+    NotSupported = 0,
+    Tier1        = 1,
+    Tier2        = 2,
+};
+
+inline const char* ToString(EShadingRateTier Tier)
+{
+    switch (Tier)
+    {
+    case EShadingRateTier::NotSupported: return "NotSupported";
+    case EShadingRateTier::Tier1:        return "Tier1";
+    case EShadingRateTier::Tier2:        return "Tier2";
+    default:                             return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIShadingRateSupport
+
+struct SRHIShadingRateSupport
+{
+    SRHIShadingRateSupport()
+        : Tier(EShadingRateTier::NotSupported)
+        , ShadingRateImageTileSize(0)
+    { }
+
+    bool operator==(const SRHIShadingRateSupport& Rhs) const
+    {
+        return (Tier == Rhs.Tier) && (ShadingRateImageTileSize == Rhs.ShadingRateImageTileSize);
+    }
+
+    bool operator!=(const SRHIShadingRateSupport& Rhs) const
+    {
+        return !(*this == Rhs);
+    }
+
+    EShadingRateTier Tier;
+    uint8            ShadingRateImageTileSize;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERayTracingTier
+
+enum class ERayTracingTier : uint8
+{
+    NotSupported = 0,
+    Tier1        = 1,
+    Tier1_1      = 2,
+};
+
+inline const char* ToString(ERayTracingTier Tier)
+{
+    switch (Tier)
+    {
+    case ERayTracingTier::NotSupported: return "NotSupported";
+    case ERayTracingTier::Tier1:        return "Tier1";
+    case ERayTracingTier::Tier1_1:      return "Tier1_1";
+    default:                            return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIRayTracingSupport
+
+struct SRHIRayTracingSupport
+{
+    SRHIRayTracingSupport()
+        : Tier(ERayTracingTier::NotSupported)
+        , MaxRecursionDepth(0)
+    { }
+
+    bool operator==(const SRHIRayTracingSupport& Rhs) const
+    {
+        return (Tier == Rhs.Tier) && (MaxRecursionDepth == Rhs.MaxRecursionDepth);
+    }
+
+    bool operator!=(const SRHIRayTracingSupport& Rhs) const
+    {
+        return !(*this == Rhs);
+    }
+
+    ERayTracingTier Tier;
+    uint16          MaxRecursionDepth;
+};
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ECubeFace
+
+enum class ECubeFace : uint8
 {
     PosX = 0,
     NegX = 1,
@@ -16,27 +109,20 @@ enum class ERHICubeFace
     NegZ = 5,
 };
 
-inline uint32 GetCubeFaceIndex(ERHICubeFace CubeFace)
+inline auto GetCubeFaceIndex(ECubeFace CubeFace)
 {
-    return static_cast<uint32>(CubeFace);
+    return static_cast<TUnderlyingType<ECubeFace>::Type>(CubeFace);
 }
 
-inline ERHICubeFace GetCubeFaceFromIndex(uint32 Index)
+inline ECubeFace GetCubeFaceFromIndex(uint32 Index)
 {
-    if (Index > GetCubeFaceIndex(ERHICubeFace::NegZ))
-    {
-        return static_cast<ERHICubeFace>(-1);
-    }
-    else
-    {
-        return static_cast<ERHICubeFace>(Index);
-    }
+    return (Index > GetCubeFaceIndex(ECubeFace::NegZ)) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIComparisonFunc
+// EComparisonFunc
 
-enum class ERHIComparisonFunc
+enum class EComparisonFunc
 {
     Never        = 1,
     Less         = 2,
@@ -48,26 +134,26 @@ enum class ERHIComparisonFunc
     Always       = 8
 };
 
-inline const char* ToString(ERHIComparisonFunc ComparisonFunc)
+inline const char* ToString(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
-    case ERHIComparisonFunc::Never:        return "Never";
-    case ERHIComparisonFunc::Less:         return "Less";
-    case ERHIComparisonFunc::Equal:        return "Equal";
-    case ERHIComparisonFunc::LessEqual:    return "LessEqual";
-    case ERHIComparisonFunc::Greater:      return "Greater";
-    case ERHIComparisonFunc::NotEqual:     return "NotEqual";
-    case ERHIComparisonFunc::GreaterEqual: return "GreaterEqual";
-    case ERHIComparisonFunc::Always:       return "Always";
+    case EComparisonFunc::Never:        return "Never";
+    case EComparisonFunc::Less:         return "Less";
+    case EComparisonFunc::Equal:        return "Equal";
+    case EComparisonFunc::LessEqual:    return "LessEqual";
+    case EComparisonFunc::Greater:      return "Greater";
+    case EComparisonFunc::NotEqual:     return "NotEqual";
+    case EComparisonFunc::GreaterEqual: return "GreaterEqual";
+    case EComparisonFunc::Always:       return "Always";
     default:                               return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIPrimitiveTopologyType
+// EPrimitiveTopologyType
 
-enum class ERHIPrimitiveTopologyType
+enum class EPrimitiveTopologyType : uint8
 {
     Undefined = 0,
     Point     = 1,
@@ -76,23 +162,23 @@ enum class ERHIPrimitiveTopologyType
     Patch     = 4
 };
 
-inline const char* ToString(ERHIPrimitiveTopologyType PrimitveTopologyType)
+inline const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 {
     switch (PrimitveTopologyType)
     {
-    case ERHIPrimitiveTopologyType::Undefined: return "Undefined";
-    case ERHIPrimitiveTopologyType::Point:     return "Point";
-    case ERHIPrimitiveTopologyType::Line:      return "Line";
-    case ERHIPrimitiveTopologyType::Triangle:  return "Triangle";
-    case ERHIPrimitiveTopologyType::Patch:     return "Patch";
-    default:                                   return "Unknown";
+    case EPrimitiveTopologyType::Undefined: return "Undefined";
+    case EPrimitiveTopologyType::Point:     return "Point";
+    case EPrimitiveTopologyType::Line:      return "Line";
+    case EPrimitiveTopologyType::Triangle:  return "Triangle";
+    case EPrimitiveTopologyType::Patch:     return "Patch";
+    default:                                return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIResourceState
+// EResourceAccess
 
-enum class ERHIResourceState
+enum class EResourceAccess
 {
     Common                          = 0,
     VertexAndConstantBuffer         = 1,
@@ -115,36 +201,36 @@ enum class ERHIResourceState
     GenericRead                     = 18,
 };
 
-inline const char* ToString(ERHIResourceState ResourceState)
+inline const char* ToString(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
-    case ERHIResourceState::Common:                          return "Common";
-    case ERHIResourceState::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
-    case ERHIResourceState::IndexBuffer:                     return "IndexBuffer";
-    case ERHIResourceState::RenderTarget:                    return "RenderTarget";
-    case ERHIResourceState::RenderTargetClear:               return "RenderTargetClear";
-    case ERHIResourceState::UnorderedAccess:                 return "UnorderedAccess";
-    case ERHIResourceState::DepthClear:                      return "DepthClear";
-    case ERHIResourceState::DepthWrite:                      return "DepthWrite";
-    case ERHIResourceState::DepthRead:                       return "DepthRead";
-    case ERHIResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
-    case ERHIResourceState::PixelShaderResource:             return "PixelShaderResource";
-    case ERHIResourceState::CopyDest:                        return "CopyDest";
-    case ERHIResourceState::CopySource:                      return "CopySource";
-    case ERHIResourceState::ResolveDest:                     return "ResolveDest";
-    case ERHIResourceState::ResolveSource:                   return "ResolveSource";
-    case ERHIResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
-    case ERHIResourceState::ShadingRateSource:               return "ShadingRateSource";
-    case ERHIResourceState::Present:                         return "Present";
-    default:                                                 return "Unknown";
+    case EResourceAccess::Common:                          return "Common";
+    case EResourceAccess::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
+    case EResourceAccess::IndexBuffer:                     return "IndexBuffer";
+    case EResourceAccess::RenderTarget:                    return "RenderTarget";
+    case EResourceAccess::RenderTargetClear:               return "RenderTargetClear";
+    case EResourceAccess::UnorderedAccess:                 return "UnorderedAccess";
+    case EResourceAccess::DepthClear:                      return "DepthClear";
+    case EResourceAccess::DepthWrite:                      return "DepthWrite";
+    case EResourceAccess::DepthRead:                       return "DepthRead";
+    case EResourceAccess::NonPixelShaderResource:          return "NonPixelShaderResource";
+    case EResourceAccess::PixelShaderResource:             return "PixelShaderResource";
+    case EResourceAccess::CopyDest:                        return "CopyDest";
+    case EResourceAccess::CopySource:                      return "CopySource";
+    case EResourceAccess::ResolveDest:                     return "ResolveDest";
+    case EResourceAccess::ResolveSource:                   return "ResolveSource";
+    case EResourceAccess::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
+    case EResourceAccess::ShadingRateSource:               return "ShadingRateSource";
+    case EResourceAccess::Present:                         return "Present";
+    default:                                               return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIPrimitiveTopology
+// EPrimitiveTopology
 
-enum class ERHIPrimitiveTopology
+enum class EPrimitiveTopology
 {
     Undefined     = 0,
     PointList     = 1,
@@ -154,24 +240,24 @@ enum class ERHIPrimitiveTopology
     TriangleStrip = 5,
 };
 
-inline const char* ToString(ERHIPrimitiveTopology ResourceState)
+inline const char* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
-    case ERHIPrimitiveTopology::Undefined:     return "Undefined";
-    case ERHIPrimitiveTopology::PointList:     return "PointList";
-    case ERHIPrimitiveTopology::LineList:      return "LineList";
-    case ERHIPrimitiveTopology::LineStrip:     return "LineStrip";
-    case ERHIPrimitiveTopology::TriangleList:  return "TriangleList";
-    case ERHIPrimitiveTopology::TriangleStrip: return "TriangleStrip";
-    default:                                   return "Unknown";
+    case EPrimitiveTopology::Undefined:     return "Undefined";
+    case EPrimitiveTopology::PointList:     return "PointList";
+    case EPrimitiveTopology::LineList:      return "LineList";
+    case EPrimitiveTopology::LineStrip:     return "LineStrip";
+    case EPrimitiveTopology::TriangleList:  return "TriangleList";
+    case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
+    default:                                return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIShadingRate
+// EShadingRate
 
-enum class ERHIShadingRate
+enum class EShadingRate
 {
     VRS_1x1 = 0x0,
     VRS_1x2 = 0x1,
@@ -182,20 +268,115 @@ enum class ERHIShadingRate
     VRS_4x4 = 0xa,
 };
 
-inline const char* ToString(ERHIShadingRate ShadingRate)
+inline const char* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
-    case ERHIShadingRate::VRS_1x1: return "VRS_1x1";
-    case ERHIShadingRate::VRS_1x2: return "VRS_1x2";
-    case ERHIShadingRate::VRS_2x1: return "VRS_2x1";
-    case ERHIShadingRate::VRS_2x2: return "VRS_2x2";
-    case ERHIShadingRate::VRS_2x4: return "VRS_2x4";
-    case ERHIShadingRate::VRS_4x2: return "VRS_4x2";
-    case ERHIShadingRate::VRS_4x4: return "VRS_4x4";
+    case EShadingRate::VRS_1x1: return "VRS_1x1";
+    case EShadingRate::VRS_1x2: return "VRS_1x2";
+    case EShadingRate::VRS_2x1: return "VRS_2x1";
+    case EShadingRate::VRS_2x2: return "VRS_2x2";
+    case EShadingRate::VRS_2x4: return "VRS_2x4";
+    case EShadingRate::VRS_4x2: return "VRS_4x2";
+    case EShadingRate::VRS_4x4: return "VRS_4x4";
     default:                       return "Unknown";
     }
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EDescriptorType
+
+enum class EDescriptorType : uint32
+{
+    Unknown         = 0,
+    UnorderedAccess = 1,
+    ShaderResource  = 2,
+    ConstantBuffer  = 3,
+};
+
+inline const char* ToString(EDescriptorType DescriptorType)
+{
+    switch (DescriptorType)
+    {
+    case EDescriptorType::UnorderedAccess: return "UnorderedAccess";
+    case EDescriptorType::ShaderResource:  return "ShaderResource";
+    default:                               return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIDescriptorHandle
+
+class CRHIDescriptorHandle
+{
+    enum 
+    {
+        InvalidHandle = uint32(~0)
+    };
+
+public:
+
+    /**
+     * @brief: Default Constructor 
+     */
+    CRHIDescriptorHandle()
+        : Type(EDescriptorType::Unknown)
+        , Index(InvalidHandle)
+    { }
+
+    /**
+     * @brief: Constructor that creates a descriptor-handle
+     * 
+     * @param InType: Type of descriptor
+     * @param InIndex: Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
+     */
+    CRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
+        : Type(InType)
+        , Index(InIndex)
+    { }
+
+    /**
+     * @brief: Check if the descriptor-handle is valid, that is it has a valid type and index
+     * 
+     * @return: Returns true if the handle is valid
+     */
+    bool IsValid() const 
+    { 
+        return (Type != EDescriptorType::Unknown) && (Index != InvalidHandle);
+    }
+
+    /**
+     * @brief: Compare two descriptor-handles to see if the reference the same resource
+     * 
+     * @return: Returns true if the handles are equal
+     */
+    bool operator==(const CRHIDescriptorHandle& Rhs) const 
+    {
+        return (Type == Rhs.Type) && (Index == Rhs.Index);
+    }
+
+    /**
+     * @brief: Compare two descriptor-handles to see if the reference the same resource
+     * 
+     * @return: Returns false if the handles are equal
+     */
+    bool operator!=(const CRHIDescriptorHandle& Rhs) const 
+    {
+        return !(*this == Rhs);
+    }
+
+private:
+    union
+    {
+        struct  
+        {
+            uint32          Index : 24;
+            EDescriptorType Type  : 8;
+        };
+
+        uint32 Data;
+    };
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRHIDepthStencil
@@ -204,19 +385,19 @@ struct SRHIDepthStencilValue
 {
     SRHIDepthStencilValue() = default;
 
-    FORCEINLINE SRHIDepthStencilValue(float InDepth, uint8 InStencil)
+    SRHIDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     { }
 
-    FORCEINLINE bool operator==(const SRHIDepthStencilValue& RHS) const
+    bool operator==(const SRHIDepthStencilValue& Rhs) const
     {
-        return (Depth == RHS.Depth) && (Stencil && RHS.Stencil);
+        return (Depth == Rhs.Depth) && (Stencil && Rhs.Stencil);
     }
 
-    FORCEINLINE bool operator!=(const SRHIDepthStencilValue& RHS) const
+    bool operator!=(const SRHIDepthStencilValue& Rhs) const
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
     float Depth   = 1.0f;
@@ -236,25 +417,25 @@ public:
         DepthStencil = 2
     };
 
-    FORCEINLINE CRHIClearValue()
+    CRHIClearValue()
         : Type(EType::Color)
         , Format(ERHIFormat::Unknown)
         , Color(0.0f, 0.0f, 0.0f, 1.0f)
     { }
 
-    FORCEINLINE CRHIClearValue(ERHIFormat InFormat, float Depth, uint8 Stencil)
+    CRHIClearValue(ERHIFormat InFormat, float Depth, uint8 Stencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencil(Depth, Stencil)
     { }
 
-    FORCEINLINE CRHIClearValue(ERHIFormat InFormat, float r, float g, float b, float a)
+    CRHIClearValue(ERHIFormat InFormat, float r, float g, float b, float a)
         : Type(EType::Color)
         , Format(InFormat)
         , Color(r, g, b, a)
     { }
 
-    FORCEINLINE CRHIClearValue(const CRHIClearValue& Other)
+    CRHIClearValue(const CRHIClearValue& Other)
         : Type(Other.Type)
         , Format(Other.Format)
         , Color()
@@ -269,80 +450,80 @@ public:
         }
     }
 
-    FORCEINLINE SColorF& AsColor()
+    SColorF& AsColor()
     {
         Assert(Type == EType::Color);
         return Color;
     }
 
-    FORCEINLINE const SColorF& AsColor() const
+    const SColorF& AsColor() const
     {
         Assert(Type == EType::Color);
         return Color;
     }
 
-    FORCEINLINE SRHIDepthStencilValue& AsDepthStencil()
+    SRHIDepthStencilValue& AsDepthStencil()
     {
         Assert(Type == EType::DepthStencil);
         return DepthStencil;
     }
 
-    FORCEINLINE const SRHIDepthStencilValue& AsDepthStencil() const
+    const SRHIDepthStencilValue& AsDepthStencil() const
     {
         Assert(Type == EType::DepthStencil);
         return DepthStencil;
     }
 
-    FORCEINLINE EType GetType() const
+    EType GetType() const
     {
         return Type;
     }
 
-    FORCEINLINE ERHIFormat GetFormat() const
+    ERHIFormat GetFormat() const
     {
         return Format;
     }
 
-    FORCEINLINE CRHIClearValue& operator=(const CRHIClearValue& RHS)
+    CRHIClearValue& operator=(const CRHIClearValue& Rhs)
     {
-        Type   = RHS.Type;
-        Format = RHS.Format;
+        Type   = Rhs.Type;
+        Format = Rhs.Format;
 
-        if (RHS.Type == EType::Color)
+        if (Rhs.Type == EType::Color)
         {
-            Color = RHS.Color;
+            Color = Rhs.Color;
         }
-        else if (RHS.Type == EType::DepthStencil)
+        else if (Rhs.Type == EType::DepthStencil)
         {
-            DepthStencil = RHS.DepthStencil;
+            DepthStencil = Rhs.DepthStencil;
         }
 
         return *this;
     }
 
-    FORCEINLINE bool operator==(const CRHIClearValue& RHS) const
+    bool operator==(const CRHIClearValue& Rhs) const
     {
-        if (Type != RHS.Type)
+        if (Type != Rhs.Type)
         {
             return false;
         }
 
-        if (Format != RHS.Format)
+        if (Format != Rhs.Format)
         {
             return false;
         }
 
         if (Type == EType::Color)
         {
-            return (Color == RHS.Color);
+            return (Color == Rhs.Color);
         }
 
-        return (DepthStencil == RHS.DepthStencil);
+        return (DepthStencil == Rhs.DepthStencil);
     }
 
-    FORCEINLINE bool operator!=(const CRHIClearValue& RHS) const
+    bool operator!=(const CRHIClearValue& Rhs) const
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
 private:
@@ -363,76 +544,79 @@ class CRHIResourceData
 {
 public:
 
-    FORCEINLINE CRHIResourceData()
+    CRHIResourceData()
         : Data(nullptr)
     { }
 
-    FORCEINLINE CRHIResourceData(const void* InData, uint32 InSizeInBytes)
+    CRHIResourceData(const void* InData, uint32 InSizeInBytes)
         : Data(InData)
         , SizeInBytes(InSizeInBytes)
     { }
 
-    FORCEINLINE CRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth)
+    CRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
         , Height(0)
     { }
 
-    FORCEINLINE CRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
+    CRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
         , Height(InHeight)
     { }
 
-    FORCEINLINE void Set(const void* InData, uint32 InSizeInBytes)
+    void Set(const void* InData, uint32 InSizeInBytes)
     {
         Data        = InData;
         SizeInBytes = InSizeInBytes;
     }
 
-    FORCEINLINE void Set(const void* InData, ERHIFormat InFormat, uint32 InWidth)
+    void Set(const void* InData, ERHIFormat InFormat, uint32 InWidth)
     {
         Data   = InData;
         Format = InFormat;
         Width  = InWidth;
     }
 
-    FORCEINLINE void Set(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
+    void Set(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
     {
         Set(InData, InFormat, InWidth);
         Height = InHeight;
     }
 
-    FORCEINLINE const void* GetData() const
+    const void* GetData() const
     {
         return Data;
     }
 
-    FORCEINLINE uint32 GetSizeInBytes() const
+    uint32 GetSizeInBytes() const
     {
         return SizeInBytes;
     }
 
-    FORCEINLINE uint32 GetPitch() const
+    uint32 GetPitch() const
     {
         return GetByteStrideFromFormat(Format) * Width;
     }
 
-    FORCEINLINE uint32 GetSlicePitch() const
+    uint32 GetSlicePitch() const
     {
         return GetByteStrideFromFormat(Format) * Width * Height;
     }
 
-    FORCEINLINE bool operator==(const CRHIResourceData& RHS) const
+    bool operator==(const CRHIResourceData& Rhs) const
     {
-        return (Data == RHS.Data) && (Format == RHS.Format) && (Width == RHS.Width) && (Height == RHS.Height);
+        return (Data   == Rhs.Data) 
+            && (Format == Rhs.Format) 
+            && (Width  == Rhs.Width) 
+            && (Height == Rhs.Height);
     }
 
-    FORCEINLINE bool operator!=(const CRHIResourceData& RHS) const
+    bool operator!=(const CRHIResourceData& Rhs) const
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
 private:
@@ -459,22 +643,28 @@ private:
 
 struct SRHICopyBufferInfo
 {
-    SRHICopyBufferInfo() = default;
+    SRHICopyBufferInfo()
+        : SourceOffset(0)
+        , DestinationOffset(0)
+        , SizeInBytes(0)
+    { }
 
-    FORCEINLINE SRHICopyBufferInfo(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes)
+    SRHICopyBufferInfo(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes)
         : SourceOffset(InSourceOffset)
         , DestinationOffset(InDestinationOffset)
         , SizeInBytes(InSizeInBytes)
     { }
 
-    FORCEINLINE bool operator==(const SRHICopyBufferInfo& RHS) const
+    bool operator==(const SRHICopyBufferInfo& Rhs) const
     {
-        return (SourceOffset == RHS.SourceOffset) && (DestinationOffset == RHS.DestinationOffset) && (SizeInBytes == RHS.SizeInBytes);
+        return (SourceOffset      == Rhs.SourceOffset) 
+            && (DestinationOffset == Rhs.DestinationOffset) 
+            && (SizeInBytes       == Rhs.SizeInBytes);
     }
 
-    FORCEINLINE bool operator!=(const SRHICopyBufferInfo& RHS) const
+    bool operator!=(const SRHICopyBufferInfo& Rhs) const
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
     uint64 SourceOffset      = 0;
@@ -487,29 +677,37 @@ struct SRHICopyBufferInfo
 
 struct SRHICopyTextureSubresourceInfo
 {
-    SRHICopyTextureSubresourceInfo() = default;
+    SRHICopyTextureSubresourceInfo()
+        : SubresourceIndex(0)
+        , x(0)
+        , y(0)
+        , z(0)
+    { }
 
-    FORCEINLINE SRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
+    SRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
         : SubresourceIndex(InSubresourceIndex)
         , x(InX)
         , y(InY)
         , z(InZ)
     { }
 
-    FORCEINLINE bool operator==(const SRHICopyTextureSubresourceInfo& RHS) const
+    bool operator==(const SRHICopyTextureSubresourceInfo& Rhs) const
     {
-        return (SubresourceIndex == RHS.SubresourceIndex) && (x == RHS.x) && (y == RHS.y) && (z == RHS.z);
+        return (SubresourceIndex == Rhs.SubresourceIndex) 
+            && (x                == Rhs.x) 
+            && (y                == Rhs.y) 
+            && (z                == Rhs.z);
     }
 
-    FORCEINLINE bool operator==(const SRHICopyTextureSubresourceInfo& RHS) const
+    bool operator==(const SRHICopyTextureSubresourceInfo& Rhs) const
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
-    uint32 SubresourceIndex = 0;
-    uint32 x                = 0;
-    uint32 y                = 0;
-    uint32 z                = 0;
+    uint32 SubresourceIndex;
+    uint32 x;
+    uint32 y;
+    uint32 z;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -517,24 +715,34 @@ struct SRHICopyTextureSubresourceInfo
 
 struct SRHICopyTextureInfo
 {
-    SRHICopyTextureInfo() = default;
+    SRHICopyTextureInfo()
+        : Source()
+        , Destination()
+        , Width(0)
+        , Height(0)
+        , Depth(0)
+    { }
 
-    FORCEINLINE bool operator==(const SRHICopyTextureInfo& RHS) const
+    bool operator==(const SRHICopyTextureInfo& Rhs) const
     {
-        return (Source == RHS.Source) && (Destination == RHS.Destination) && (Width == RHS.Width) && (Height == RHS.Height) && (Depth == RHS.Depth);
+        return (Source      == Rhs.Source) 
+            && (Destination == Rhs.Destination) 
+            && (Width       == Rhs.Width) 
+            && (Height      == Rhs.Height) 
+            && (Depth       == Rhs.Depth);
     }
 
-    FORCEINLINE bool operator==(const SRHICopyTextureInfo& RHS) const
+    bool operator==(const SRHICopyTextureInfo& Rhs) const
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
     SRHICopyTextureSubresourceInfo Source;
     SRHICopyTextureSubresourceInfo Destination;
     
-    uint32 Width  = 0;
-    uint32 Height = 0;
-    uint32 Depth  = 0;
+    uint32 Width;
+    uint32 Height;
+    uint32 Depth;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -553,7 +761,7 @@ struct SRHIRenderTargetEntry
         , Texture(nullptr)
     { }
 
-    explicit SRHIRenderTargetEntry(CRHITexture2D* InTexture)
+    explicit SRHIRenderTargetEntry(CRHITexture* InTexture)
         : Type(EType::Texture)
         , Texture(InTexture)
     { }
@@ -568,28 +776,28 @@ struct SRHIRenderTargetEntry
         , Texture(Other.Texture)
     { }
 
-    SRHIRenderTargetEntry& operator=(const SRHIRenderTargetEntry& RHS)
+    SRHIRenderTargetEntry& operator=(const SRHIRenderTargetEntry& Rhs)
     {
-        Type = RHS.Type;
-        Texture = RHS.Texture;
+        Type = Rhs.Type;
+        Texture = Rhs.Texture;
         return *this;
     }
 
-    bool operator==(const SRHIRenderTargetEntry& RHS) const
+    bool operator==(const SRHIRenderTargetEntry& Rhs) const
     {
-        return (Type == RHS.Type) && (Texture == RHS.Texture);
+        return (Type == Rhs.Type) && (Texture == Rhs.Texture);
     }
 
-    bool operator!=(const SRHIRenderTargetEntry& RHS) const
+    bool operator!=(const SRHIRenderTargetEntry& Rhs) const
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
     EType Type;
 
     union
     {
-        CRHITexture2D*        Texture;
+        CRHITexture*        Texture;
         CRHIRenderTargetView* View;
     };
 };
@@ -610,7 +818,7 @@ struct SRHIDepthStencilEntry
         , Texture(nullptr)
     { }
 
-    explicit SRHIDepthStencilEntry(CRHITexture2D* InTexture)
+    explicit SRHIDepthStencilEntry(CRHITexture* InTexture)
         : Type(EType::Texture)
         , Texture(InTexture)
     { }
@@ -625,28 +833,28 @@ struct SRHIDepthStencilEntry
         , Texture(Other.Texture)
     { }
 
-    SRHIDepthStencilEntry& operator=(const SRHIDepthStencilEntry& RHS)
+    SRHIDepthStencilEntry& operator=(const SRHIDepthStencilEntry& Rhs)
     {
-        Type = RHS.Type;
-        Texture = RHS.Texture;
+        Type = Rhs.Type;
+        Texture = Rhs.Texture;
         return *this;
     }
 
-    bool operator==(const SRHIDepthStencilEntry& RHS) const
+    bool operator==(const SRHIDepthStencilEntry& Rhs) const
     {
-        return (Type == RHS.Type) && (Texture == RHS.Texture);
+        return (Type == Rhs.Type) && (Texture == Rhs.Texture);
     }
 
-    bool operator!=(const SRHIDepthStencilEntry& RHS) const
+    bool operator!=(const SRHIDepthStencilEntry& Rhs) const
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
     EType Type;
 
     union
     {
-        CRHITexture2D*        Texture;
+        CRHITexture*        Texture;
         CRHIDepthStencilView* View;
     };
 };
@@ -659,9 +867,12 @@ class CRHIRenderPass
 public:
 
     CRHIRenderPass()
+        : RenderTargets()
+        , NumRenderTargets(0)
+        , DepthStencil()
     { }
 
-    CRHIRenderPass(CRHITexture2D* const* InRenderTargets, uint32 InNumRenderTargets, CRHITexture2D* InDepthStencil)
+    CRHIRenderPass(CRHITexture* const* InRenderTargets, uint32 InNumRenderTargets, CRHITexture* InDepthStencil)
         : RenderTargets()
         , NumRenderTargets(0)
         , DepthStencil(InDepthStencil)
@@ -677,7 +888,7 @@ public:
         SetRenderTargets(InRenderTargetViews, InNumRenderTargetViews);
     }
 
-    void SetRenderTargets(CRHITexture2D* const* InRenderTargets, uint32 InNumRenderTargets)
+    void SetRenderTargets(CRHITexture* const* InRenderTargets, uint32 InNumRenderTargets)
     {
         Assert(InRenderTargetViews < ArrayCount(RenderTargets));
 
@@ -701,7 +912,7 @@ public:
         NumRenderTargets = InNumRenderTargetViews;
     }
 
-    void SetDepthStencil(CRHITexture2D* InDepthStencil)
+    void SetDepthStencil(CRHITexture* InDepthStencil)
     {
         DepthStencil = SRHIDepthStencilEntry(InDepthStencil);
     }
@@ -711,27 +922,27 @@ public:
         DepthStencil = SRHIDepthStencilEntry(InDepthStencilView);
     }
 
-    bool operator==(const CRHIRenderPass& RHS) const
+    bool operator==(const CRHIRenderPass& Rhs) const
     {
-        if (NumRenderTargets != RHS.NumRenderTargets)
+        if (NumRenderTargets != Rhs.NumRenderTargets)
         {
             return false;
         }
 
         for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
         {
-            if (RenderTargets[Index] != RHS.RenderTargets[Index])
+            if (RenderTargets[Index] != Rhs.RenderTargets[Index])
             {
                 return false;
             }
         }
 
-        return (DepthStencil == RHS.DepthStencil);
+        return (DepthStencil == Rhs.DepthStencil);
     }
 
-    bool operator==(const CRHIRenderPass& RHS) const
+    bool operator==(const CRHIRenderPass& Rhs) const
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
     SRHIRenderTargetEntry RenderTargets[8];

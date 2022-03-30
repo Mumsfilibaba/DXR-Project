@@ -23,14 +23,14 @@ class APPLICATION_API CApplicationInstance : public CPlatformApplicationMessageH
 public:
 
     /**
-     * Creates a standard main application 
+     * @brief: Creates a standard main application 
      * 
      * @return: Returns true if the creation was successful
      */
     static bool Make();
 
     /**
-     * Initializes the singleton from an existing application - Used for classes inheriting from CApplicationInstance
+     * @brief: Initializes the singleton from an existing application - Used for classes inheriting from CApplicationInstance
      * 
      * @param InApplication: Existing application
      * @return: Returns true if the initialization was successful
@@ -38,12 +38,12 @@ public:
     static bool Make(const TSharedPtr<CApplicationInstance>& InApplication);
 
     /**
-     * Releases the global application instance
+     * @brief: Releases the global application instance
      */
     static void Release();
 
     /**
-     * Retrieve the singleton application instance 
+     * @brief: Retrieve the singleton application instance 
      * 
      * @return: Returns a reference to the InterfaceApplication instance
      */
@@ -53,7 +53,7 @@ public:
     }
 
     /**
-     * Check if the InterfaceApplication is initialized
+     * @brief: Check if the InterfaceApplication is initialized
      * 
      * @return: Returns true if the InterfaceApplication is initialized
      */
@@ -71,35 +71,35 @@ public:
     CMainViewportChange GetMainViewportChange() const { return MainViewportChange; }
 
     /**
-     * Creates a new window 
+     * @brief: Creates a new window 
      * 
      * @return: Returns the newly created window
      */
     TSharedRef<CPlatformWindow> MakeWindow();
 
     /**
-     * Tick and update the InterfaceApplication
+     * @brief: Tick and update the InterfaceApplication
      * 
      * @param DeltaTime: Time between this and the previous update
      */
     void Tick(CTimestamp DeltaTime);
     
     /**
-     * Set the current cursor type 
+     * @brief: Set the current cursor type 
      * 
      * @param Cursor: Cursor to set
      */
     void SetCursor(ECursor Cursor);
 
     /**
-     * Set the global cursor position
+     * @brief: Set the global cursor position
      * 
      * @param Position: New position to the cursor
      */
     void SetCursorPos(const CIntVector2& Position);
 
     /**
-     * Set the cursor position relative to a window
+     * @brief: Set the cursor position relative to a window
      *
      * @param RelativeWindow: Window that the position should be relative to
      * @param Position: New position to the cursor
@@ -107,14 +107,14 @@ public:
     void SetCursorPos(const TSharedRef<CPlatformWindow>& RelativeWindow, const CIntVector2& Position);
 
     /**
-     * Retrieve the current global cursor position 
+     * @brief: Retrieve the current global cursor position 
      * 
      * @return: Returns the global cursor position
      */
     CIntVector2 GetCursorPos() const;
 
     /**
-     * Retrieve the current cursor position relative to a window
+     * @brief: @bRetrieve the current cursor position relative to a window
      *
      * @param RelativeWindow: Window that the position should be relative to
      * @return: Returns the global cursor position
@@ -122,21 +122,21 @@ public:
     CIntVector2 GetCursorPos(const TSharedRef<CPlatformWindow>& RelativeWindow) const;
 
     /**
-     * Set the visibility of the cursor 
+     * @brief: Set the visibility of the cursor 
      * 
      * @param bIsVisible: Should the cursor be visible or not
      */
     void ShowCursor(bool bIsVisible);
 
     /**
-     *  Check the cursor visibility
+     * @brief:  Check the cursor visibility
      * 
      * @return: Returns true if the cursor is visible
      */
     bool IsCursorVisibile() const;
 
     /**
-     * Check if the application supports high-precision mouse movement 
+     * @brief: Check if the application supports high-precision mouse movement 
      * 
      * @return: Returns true if the application
      */
@@ -146,7 +146,7 @@ public:
     }
 
     /**
-     * Enables high-precision mouse movement for a certain window
+     * @brief: Enables high-precision mouse movement for a certain window
      *
      * @param Window: Window to enable high-precision mouse movement for
      * @return: Returns true if the window now uses high-precision mouse movement
@@ -157,21 +157,21 @@ public:
     }
 
     /**
-     * Sets the window that should have keyboard focus 
+     * @brief: Sets the window that should have keyboard focus 
      * 
      * @param CaptureWindow: Window that should have keyboard focus
      */
     void SetCapture(const TSharedRef<CPlatformWindow>& CaptureWindow);
 
     /**
-     * Sets the window that should be the active window
+     * @brief: Sets the window that should be the active window
      *
      * @param ActiveWindow: Window that should be the active window
      */
     void SetActiveWindow(const TSharedRef<CPlatformWindow>& ActiveWindow);
 
     /**
-     * Retrieves the window that currently has the keyboard focus, can return nullptr
+     * @brief: Retrieves the window that currently has the keyboard focus, can return nullptr
      * 
      * @return: Returns the window that currently has the keyboard focus
      */
@@ -181,7 +181,7 @@ public:
     }
 
     /**
-     * Retrieves the window that is currently active
+     * @brief: Retrieves the window that is currently active
      * 
      * @return: Returns the currently active window
      */
@@ -191,7 +191,7 @@ public:
     }
 
     /**
-     * Retrieves the window under the cursor 
+     * @brief: Retrieves the window under the cursor 
      * 
      * @return: Returns the window that currently is under the cursor
      */
@@ -201,7 +201,7 @@ public:
     }
 
     /**
-     * Adds a InputHandler to the application, which gets processed before the main viewport
+     * @brief: Adds a InputHandler to the application, which gets processed before the main viewport
      *
      * @param NewInputHandler: InputHandler to add
      * @param Priority: Priority of the InputHandler
@@ -209,63 +209,63 @@ public:
     void AddInputHandler(const TSharedPtr<CInputHandler>& NewInputHandler, uint32 Priority);
 
     /**
-     * Removes a InputHandler from the application 
+     * @brief: Removes a InputHandler from the application 
      * 
      * @param InputHandler: InputHandler to remove
      */
     void RemoveInputHandler(const TSharedPtr<CInputHandler>& InputHandler);
 
     /**
-     * Registers the main window of the application 
+     * @brief: Registers the main window of the application 
      * 
      * @param NewMainViewport: Viewport to be the new main-viewport
      */
     void RegisterMainViewport(const TSharedRef<CPlatformWindow>& NewMainViewport);
 
     /**
-     *  Sets the interface renderer 
+     * @brief:  Sets the interface renderer 
      * 
      * @param NewRenderer: New renderer for the InterfaceApplication
      */
     void SetRenderer(const TSharedRef<IInterfaceRenderer>& NewRenderer);
 
     /**
-     * Register a interface window 
+     * @brief: Register a interface window 
      * 
      * @param NewWindow: Window to add that should be drawn the next frame
      */
     void AddWindow(const TSharedRef<IWindow>& NewWindow);
 
     /**
-     * Removes a interface window
+     * @brief: Removes a interface window
      *
      * @param NewWindow: Window to remove
      */
     void RemoveWindow(const TSharedRef<IWindow>& Window);
 
     /**
-     * Draws a string in the viewport during the current frame, the strings are reset every frame 
+     * @brief: Draws a string in the viewport during the current frame, the strings are reset every frame 
      * 
      * @param NewString: String to start drawing
      */
     void DrawString(const String& NewString);
 
     /**
-     * Draw all InterfaceWindows
+     * @brief: Draw all InterfaceWindows
      * 
      * @param InCommandList: CommandList to submit draw-commands into
      */
     void DrawWindows(class CRHICommandList& InCommandList);
 
     /**
-     * Sets the platform application used to dispatch messages from the platform
+     * @brief: Sets the platform application used to dispatch messages from the platform
      * 
      * @param InPlatformApplication: New PlatformApplication
      */
     void SetPlatformApplication(const TSharedPtr<CPlatformApplication>& InPlatformApplication);
 
     /**
-     * Adds a WindowMessageHandler to the application, which gets processed before the application module 
+     * @brief: Adds a WindowMessageHandler to the application, which gets processed before the application module 
      * 
      * @param NewWindowMessageHandler: WindowMessageHandler to add
      * @param Priority: Priority of the InputHandler
@@ -273,14 +273,14 @@ public:
     void AddWindowMessageHandler(const TSharedPtr<CWindowMessageHandler>& NewWindowMessageHandler, uint32 Priority);
 
     /**
-     * Removes a WindowMessageHandler from the application
+     * @brief: Removes a WindowMessageHandler from the application
      *
      * @param WindowMessageHandler: WindowMessageHandler to remove
      */
     void RemoveWindowMessageHandler(const TSharedPtr<CWindowMessageHandler>& WindowMessageHandler);
 
     /**
-     * Retrieve the native application 
+     * @brief: Retrieve the native application 
      * 
      * @return: Returns the PlatformApplication
      */
@@ -290,7 +290,7 @@ public:
     }
 
     /**
-     * Retrieve the renderer for the Application 
+     * @brief: Retrieve the renderer for the Application 
      * 
      * @return: Returns the renderer
      */
@@ -300,7 +300,7 @@ public:
     }
 
     /**
-     *  Retrieve the window registered as the main viewport 
+     * @brief:  Retrieve the window registered as the main viewport 
      * 
      * @return: Returns the main viewport
      */
@@ -310,7 +310,7 @@ public:
     }
 
     /**
-     * Retrieve the cursor interface 
+     * @brief: Retrieve the cursor interface 
      * 
      * @return: Returns the cursor interface
      */
@@ -320,7 +320,7 @@ public:
     }
 
     /**
-     * Check if the application is currently running 
+     * @brief: Check if the application is currently running 
      * 
      * @return: Returns true if the application is running
      */

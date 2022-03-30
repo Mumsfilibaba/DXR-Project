@@ -216,7 +216,7 @@ class TVariant
 public:
     
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE TVariant() noexcept
         : Value()
@@ -224,7 +224,7 @@ public:
     { }
 
     /**
-     * In-Place constructor that constructs a variant of specified type with arguments for the types constructor
+     * @brief: In-Place constructor that constructs a variant of specified type with arguments for the types constructor
      * 
      * @param Args: Arguments for the elements constructor
      */
@@ -238,7 +238,7 @@ public:
     }
 
     /**
-     * In-Place constructor that constructs a variant of specified type with arguments for the types constructor
+     * @brief: In-Place constructor that constructs a variant of specified type with arguments for the types constructor
      *
      * @param Args: Arguments for the elements constructor
      */
@@ -254,7 +254,7 @@ public:
     }
 
     /**
-     * Copy constructor
+     * @brief: Copy constructor
      * 
      * @param Other: Variant to copy from
      */
@@ -269,7 +269,7 @@ public:
     }
 
     /**
-     * Move constructor
+     * @brief: Move constructor
      *
      * @param Other: Variant to move from
      */
@@ -286,7 +286,7 @@ public:
     }
 
     /**
-     * Destructor
+     * @brief: Destructor
      */
     FORCEINLINE ~TVariant()
     {
@@ -294,7 +294,7 @@ public:
     }
 
     /**
-     * Create a value in-place 
+     * @brief: Create a value in-place 
      * 
      * @param Args: Arguments for the constructor of the element
      * @return: Returns a reference to the newly created element
@@ -312,7 +312,7 @@ public:
     }
 
     /**
-     * Resets the variant and calls the destructor
+     * @brief: Resets the variant and calls the destructor
      */
     FORCEINLINE void Reset() noexcept
     {
@@ -324,7 +324,7 @@ public:
     }
 
     /**
-     * Swap this variant with another
+     * @brief: Swap this variant with another
      * 
      * @param Other: Variant to swap with
      */
@@ -363,7 +363,7 @@ public:
     }
 
     /**
-     * Check if the templated type is the current type
+     * @brief: Check if the templated type is the current type
      * 
      * @return: Returns true if the templated type is the currently held value
      */
@@ -374,7 +374,7 @@ public:
     }
 
     /**
-     * Retrieve the currently held value
+     * @brief: Retrieve the currently held value
      *
      * @return: Returns a reference to the currently held value
      */
@@ -386,7 +386,7 @@ public:
     }
 
     /**
-     * Retrieve the currently held value
+     * @brief: Retrieve the currently held value
      * 
      * @return: Returns a reference to the currently held value
      */
@@ -398,7 +398,7 @@ public:
     }
 
     /**
-     * Try and retrieve the currently held value, or get nullptr if value of specified type is not held
+     * @brief: Try and retrieve the currently held value, or get nullptr if value of specified type is not held
      *
      * @return: Returns a pointer to the currently stored value or nullptr if not correct type
      */
@@ -409,7 +409,7 @@ public:
     }
 
     /**
-     * Try and retrieve the currently held value, or get nullptr if value of specified type is not held
+     * @brief: Try and retrieve the currently held value, or get nullptr if value of specified type is not held
      *
      * @return: Returns a pointer to the currently stored value or nullptr if not correct type
      */
@@ -420,7 +420,7 @@ public:
     }
 
     /**
-     * Retrieve the type index of the currently held value
+     * @brief: Retrieve the type index of the currently held value
      * 
      * @return: Returns the index of the current held value
      */
@@ -430,7 +430,7 @@ public:
     }
 
     /**
-     * Check if the Variant is valid or not
+     * @brief: Check if the Variant is valid or not
      * 
      * @return: Returns true if the variant holds a value
      */
@@ -442,7 +442,7 @@ public:
 public:
 
     /**
-     * Copy assignment operator
+     * @brief: Copy assignment operator
      * 
      * @param Rhs: Variant to copy from
      * @return: Returns a reference to this instance
@@ -454,7 +454,7 @@ public:
     }
 
     /**
-     * Move assignment operator
+     * @brief: Move assignment operator
      *
      * @param Rhs: Variant to move from
      * @return: Returns a reference to this instance
@@ -466,7 +466,7 @@ public:
     }
 
     /**
-     * Comparison operator
+     * @brief: Comparison operator
      *
      * @param Lhs: Left side to compare with
      * @param Rhs: Right side to compare with
@@ -489,7 +489,7 @@ public:
     }
 
     /**
-     * Comparison operator
+     * @brief: Comparison operator
      *
      * @param Lhs: Left side to compare with 
      * @param Rhs: Right side to compare with
@@ -501,7 +501,7 @@ public:
     }
 
     /**
-     * Less than comparison operator
+     * @brief: Less than comparison operator
      *
      * @param Lhs: Left side to compare with
      * @param Rhs: Right side to compare with
@@ -524,7 +524,7 @@ public:
     }
 
     /**
-     * Less than or equal comparison operator
+     * @brief: Less than or equal comparison operator
      *
      * @param Lhs: Left side to compare with
      * @param Rhs: Right side to compare with
@@ -547,7 +547,7 @@ public:
     }
 
     /**
-     * Greater than comparison operator
+     * @brief: Greater than comparison operator
      *
      * @param Lhs: Left side to compare with
      * @param Rhs: Right side to compare with
@@ -559,7 +559,7 @@ public:
     }
 
     /**
-     * Greater than or equal comparison operator
+     * @brief: Greater than or equal comparison operator
      *
      * @param Lhs: Left side to compare with
      * @param Rhs: Right side to compare with

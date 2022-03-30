@@ -18,7 +18,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     SkyboxMesh = CMeshFactory::CreateSphere(1);
 
     SRHIResourceData VertexData = SRHIResourceData(SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes());
-    SkyboxVertexBuffer = RHICreateVertexBuffer<SVertex>(SkyboxMesh.Vertices.Size(), BufferFlag_Dynamic, ERHIResourceState::VertexAndConstantBuffer, &VertexData);
+    SkyboxVertexBuffer = RHICreateVertexBuffer<SVertex>(SkyboxMesh.Vertices.Size(), BufferFlag_Dynamic, ERHIResourceAccess::VertexAndConstantBuffer, &VertexData);
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -29,7 +29,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     }
 
     SRHIResourceData IndexData = SRHIResourceData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
-    SkyboxIndexBuffer = RHICreateIndexBuffer(ERHIIndexFormat::uint32, SkyboxMesh.Indices.Size(), BufferFlag_Dynamic, ERHIResourceState::VertexAndConstantBuffer, &IndexData);
+    SkyboxIndexBuffer = RHICreateIndexBuffer(ERHIIndexFormat::uint32, SkyboxMesh.Indices.Size(), BufferFlag_Dynamic, ERHIResourceAccess::VertexAndConstantBuffer, &IndexData);
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -183,7 +183,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
 
 void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "Begin Skybox");
 
     GPU_TRACE_SCOPE(CmdList, "Skybox");
 
@@ -219,7 +219,7 @@ void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& 
 
     CmdList.DrawIndexedInstanced(static_cast<uint32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "End Skybox");
 }
 
 void CSkyboxRenderPass::Release()

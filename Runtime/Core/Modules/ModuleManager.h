@@ -47,14 +47,14 @@ public:
     virtual ~IEngineModule() = default;
 
     /**
-     * Called when the module is first loaded into the application
+     * @brief: Called when the module is first loaded into the application
      *
      * @return: Returns true if the load is successful
      */
     virtual bool Load() = 0;
 
     /**
-     * Called before the module is unloaded by the application
+     * @brief: Called before the module is unloaded by the application
      *
      * @return: Returns true if the unload is successful
      */
@@ -69,14 +69,14 @@ class CDefaultEngineModule : public IEngineModule
 public:
 
     /**
-     * Called when the module is first loaded into the application
+     * @brief: Called when the module is first loaded into the application
      *
      * @return: Returns true if the load is successful
      */
     virtual bool Load() override { return true; }
 
     /**
-     * Called before the module is unloaded by the application
+     * @brief: Called before the module is unloaded by the application
      *
      * @return: Returns true if the unload is successful
      */
@@ -96,24 +96,24 @@ public:
     DECLARE_RETURN_DELEGATE(CInitializeStaticModuleDelegate, IEngineModule*);
 
     /**
-     * Retrieve the ModuleManager instance
+     * @brief: Retrieve the ModuleManager instance
      *
      * @return: Returns a reference to the ModuleManager
      */
     static CModuleManager& Get();
 
     /**
-     * Releases all modules that are loaded
+     * @brief: Releases all modules that are loaded
      */
     static void ReleaseAllLoadedModules();
 
     /**
-     * Destroy the module manager, after this no more modules can be loaded
+     * @brief: Destroy the module manager, after this no more modules can be loaded
      */
     static void Destroy();
 
     /**
-     * Load a new module into the engine
+     * @brief: Load a new module into the engine
      * 
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a pointer to a IEngineModule interface if the load is successful, otherwise nullptr
@@ -121,7 +121,7 @@ public:
     IEngineModule* LoadEngineModule(const char* ModuleName);
 
     /**
-     * Retrieve a already loaded module interface
+     * @brief: Retrieve a already loaded module interface
      *
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a pointer to a IEngineModule interface if the interface is present, otherwise nullptr
@@ -129,7 +129,7 @@ public:
     IEngineModule* GetEngineModule(const char* ModuleName);
 
     /**
-     * Retrieve a already loaded module's native handle
+     * @brief: Retrieve a already loaded module's native handle
      *
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a native handle to a module if the module is present otherwise a platform-defined invalid handle
@@ -145,7 +145,7 @@ public:
     void RegisterStaticModule(const char* ModuleName, CInitializeStaticModuleDelegate InitDelegate);
 
     /**
-     * Check if a module is already loaded
+     * @brief: Check if a module is already loaded
      * 
      * @param ModuleName: Name of the module to load without platform extension or prefix
      * @return: Returns true if the module is loaded, otherwise false
@@ -153,14 +153,14 @@ public:
     bool IsModuleLoaded(const char* ModuleName);
 
     /**
-     * Release a single module
+     * @brief: Release a single module
      *
      * @param ModuleName: Name of the module to load without platform extension or prefix
      */
     void UnloadModule(const char* ModuleName);
 
     /**
-     * Retrieve the number of loaded modules
+     * @brief: Retrieve the number of loaded modules
      * 
      * @return: Returns the number of loaded modules
      */
@@ -171,7 +171,7 @@ public:
     CModuleLoadedDelegate GetModuleLoadedDelegate() { return ModuleLoadedDelegate; }
 
     /**
-     * Load a new module into the engine
+     * @brief: Load a new module into the engine
      *
      * @param ModuleName: Name of the module to load without platform extension or prefix
      * @return: A reference to the IEngineModule interface, on fail an assert is triggered
@@ -185,7 +185,7 @@ public:
     }
 
     /**
-     * Load a new module into the engine
+     * @brief: Load a new module into the engine
      *
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a typed pointer to if the load is successful, otherwise nullptr
@@ -197,7 +197,7 @@ public:
     }
 
     /**
-     * Load a new module into the engine
+     * @brief: Load a new module into the engine
      *
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a typed reference to if the load is successful, on fail an assert is triggered
@@ -209,7 +209,7 @@ public:
     }
 
     /**
-     * Retrieve a already loaded module interface
+     * @brief: Retrieve a already loaded module interface
      *
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a reference to a typed interface if the interface is present, on fail an assert is triggered
@@ -223,7 +223,7 @@ public:
     }
 
     /**
-     * Load a new module into the engine
+     * @brief: Load a new module into the engine
      *
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a typed pointer to a interface if the load is successful, otherwise nullptr
@@ -235,7 +235,7 @@ public:
     }
 
     /**
-     * Load a new module into the engine
+     * @brief: Load a new module into the engine
      *
      * @param ModuleName: Name of the module without platform extension or prefix
      * @return: Returns a typed pointer to a interface if the load is successful, otherwise nullptr
@@ -305,7 +305,7 @@ class TStaticModuleInitializer
 public:
 
     /**
-     * Constructor that registers the module to the ModuleManager
+     * @brief: Constructor that registers the module to the ModuleManager
      * 
      * @param ModuleName: Name of the module
      */
@@ -316,7 +316,7 @@ public:
     }
 
     /**
-     * Creates the ModuleInterface
+     * @brief: Creates the ModuleInterface
      * 
      * @return: The newly created module interface
      */

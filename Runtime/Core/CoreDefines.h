@@ -43,19 +43,19 @@
 // Asserts
 
 #ifdef DEBUG_BUILD
-#ifndef ENABLE_ASSERTS 
-#define ENABLE_ASSERTS 1
-#endif
+    #ifndef ENABLE_ASSERTS 
+        #define ENABLE_ASSERTS 1
+    #endif
 #endif
 
 #ifndef Assert
-#include <cassert>
+    #include <cassert>
 
-#if ENABLE_ASSERTS
-#define Assert(Condition) assert(Condition)
-#else
-#define Assert(Condition) (void)(0)
-#endif
+    #if ENABLE_ASSERTS
+        #define Assert(Condition) assert(Condition)
+    #else
+        #define Assert(Condition) (void)(0)
+    #endif
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

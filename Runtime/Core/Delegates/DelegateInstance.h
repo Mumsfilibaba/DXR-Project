@@ -24,21 +24,21 @@ public:
     };
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE CDelegateHandle()
         : Handle(InvalidHandle)
     { }
 
     /**
-     * Construct a new delegate handle which generates a new ID
+     * @brief: Construct a new delegate handle which generates a new ID
      */
     FORCEINLINE explicit CDelegateHandle(EGenerateID)
         : Handle(GenerateID())
     { }
 
     /**
-     * Checks if the handle is equal to nullptr
+     * @brief: Checks if the handle is equal to nullptr
      * 
      * @return: Returns true if the handle is not equal to InvalidHandle
      */
@@ -54,7 +54,7 @@ public:
     }
 
     /**
-     * Retrieve the ID 
+     * @brief: Retrieve the ID 
      * 
      * @return: Returns the delegate-handle
      */
@@ -64,7 +64,7 @@ public:
     }
 
     /**
-     * Checks if the handle is equal to nullptr
+     * @brief: Checks if the handle is equal to nullptr
      *
      * @return: Returns true if the handle is not equal to InvalidHandle
      */
@@ -74,7 +74,7 @@ public:
     }
 
     /**
-     * Checks equality between two handles 
+     * @brief: Checks equality between two handles 
      * 
      * @param Rhs: Other delegate-handle to compare with
      * @return: Returns true if the delegate-handles are equal to each other
@@ -85,7 +85,7 @@ public:
     }
 
     /**
-     * Checks equality between two handles
+     * @brief: Checks equality between two handles
      *
      * @param Rhs: Other delegate-handle to compare with
      * @return: Returns false if the delegate-handles are equal to each other
@@ -117,14 +117,14 @@ public:
     virtual ~IDelegateInstance() noexcept = default;
 
     /**
-     * Retrieve the object of the function, returns nullptr for non-member delegates 
+     * @brief: Retrieve the object of the function, returns nullptr for non-member delegates 
      * 
      * @return: Returns the bound object of the delegate
      */
     virtual const void* GetBoundObject() const = 0;
 
     /**
-     * Check if the object is the one that is bound to the delegate instance 
+     * @brief: Check if the object is the one that is bound to the delegate instance 
      * 
      * @param Object: Object to check
      * @return: Returns true if the object is bound to the delegate
@@ -132,14 +132,14 @@ public:
     virtual bool IsObjectBound(const void* Object) const = 0;
 
     /**
-     * Retrieve the handle to the delegate 
+     * @brief: Retrieve the handle to the delegate 
      * 
      * @return: Returns the delegate-handle of this delegate-instance
      */
     virtual CDelegateHandle GetHandle() const = 0;
 
     /**
-     * Clones the delegate and stores it in the specified memory 
+     * @brief: Clones the delegate and stores it in the specified memory 
      * 
      * @param Memory: Memory to store the cloned instance into
      * @return: Returns a clone of the instance 
@@ -156,7 +156,7 @@ class TDelegateInstance : public IDelegateInstance
 public:
 
     /**
-     * Executes the stored function or functor 
+     * @brief: Executes the stored function or functor 
      * 
      * @param Args: Arguments to the function-call
      * @return: The result of the function-call

@@ -10,12 +10,12 @@ typedef TSharedRef<class CRHIViewport> CRHIViewportRef;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIViewport
 
-class CRHIViewport : public CRHIObject
+class CRHIViewport : public CRHIResource
 {
 public:
     
     CRHIViewport(ERHIFormat InColorFormat, uint16 InWidth, uint16 InHeight)
-        : CRHIObject()
+        : CRHIResource()
         , Width(InWidth)
         , Height(InHeight)
         , ColorFormat(InColorFormat)
@@ -25,7 +25,7 @@ public:
 
     virtual bool Resize(uint32 Width, uint32 Height) = 0;
     
-    virtual CRHITexture2D* GetBackBuffer() const = 0;
+    virtual CRHITexture* GetBackBuffer() const = 0;
 
     inline ERHIFormat GetColorFormat() const { return ColorFormat; }
 

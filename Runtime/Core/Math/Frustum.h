@@ -13,12 +13,12 @@ class CORE_API CFrustum
 public:
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     CFrustum() = default;
 
     /**
-     * Create a new frustum based on a view and projection matrix
+     * @brief: Create a new frustum based on a view and projection matrix
      * 
      * @param FarPlane: FarPlane of the camera
      * @param View: View-matrix of the camera
@@ -27,7 +27,7 @@ public:
     CFrustum(float FarPlane, const CMatrix4& View, const CMatrix4& Projection);
 
     /**
-     * Create a new frustum based on a view and projection matrix
+     * @brief: Create a new frustum based on a view and projection matrix
      *
      * @param FarPlane: FarPlane of the camera
      * @param View: View-matrix of the camera
@@ -36,7 +36,7 @@ public:
     void Create(float FarPlane, const CMatrix4& View, const CMatrix4& Projection);
 
     /**
-     * Checks if a bounding-box is intersecting with the frustum
+     * @brief: Checks if a bounding-box is intersecting with the frustum
      * 
      * @return: Returns true if the bounding-box is intersecting with the frustum
      */

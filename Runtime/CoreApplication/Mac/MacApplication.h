@@ -103,7 +103,7 @@ public:
 public:
     
     /**
-     * Retrieve window object from a NSWindow object
+     * @brief: Retrieve window object from a NSWindow object
      *
      * @param Window: Native window object to search for
      * @return: Returns the MacWindow accociated with the NSWindow object
@@ -111,14 +111,14 @@ public:
     TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
 
     /**
-     * Store event for handling later in the main loop
+     * @brief: Store event for handling later in the main loop
      *
      * @param EventOrNotificationObject: Native window object to search for
      */
     void DeferEvent(NSObject* EventOrNotificationObject);
     
     /**
-     * Returns the native appdelegate
+     * @brief: Returns the native appdelegate
      *
      * @return: Returns the application delegate
      */

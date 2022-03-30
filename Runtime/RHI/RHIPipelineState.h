@@ -17,7 +17,7 @@ inline const char* ToString(ERHIDepthWriteMask DepthWriteMask)
     {
     case ERHIDepthWriteMask::Zero: return "Zero";
     case ERHIDepthWriteMask::All:  return "All";
-    default: return "Unknown";
+    default:                       return "Unknown";
     }
 }
 
@@ -81,7 +81,7 @@ struct SRHIDepthStencilStateDesc
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIDepthStencilState
 
-class CRHIDepthStencilState : public CRHIObject
+class CRHIDepthStencilState : public CRHIResource
 {
 };
 
@@ -146,7 +146,7 @@ struct SRHIRasterizerStateDesc
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIRasterizerState
 
-class CRHIRasterizerState : public CRHIObject
+class CRHIRasterizerState : public CRHIResource
 {
 };
 
@@ -338,7 +338,7 @@ struct SRenderTargetBlendState
     ERHIBlendOp BlendOp        = ERHIBlendOp::Add;
     ERHIBlend   SrcBlendAlpha  = ERHIBlend::One;
     ERHIBlend   DestBlendAlpha = ERHIBlend::Zero;
-    ERHIBlendOp BlendOpAlpha   = ERHIBlendOp::Add;;
+    ERHIBlendOp BlendOpAlpha   = ERHIBlendOp::Add;
     ERHILogicOp LogicOp        = ERHILogicOp::Noop;
 
     bool bBlendEnable   = false;
@@ -361,7 +361,7 @@ struct SRHIBlendStateDesc
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIBlendState
 
-class CRHIBlendState : public CRHIObject
+class CRHIBlendState : public CRHIResource
 {
 };
 
@@ -419,7 +419,7 @@ struct SRHIInputLayoutStateDesc
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIInputLayoutState
 
-class CRHIInputLayoutState : public CRHIObject
+class CRHIInputLayoutState : public CRHIResource
 {
 };
 
@@ -458,26 +458,26 @@ struct SRHIPipelineRenderTargetFormats
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIPipelineState
 
-class CRHIPipelineState : public CRHIObject
+class CRHIPipelineState : public CRHIResource
 {
 public:
 
     /**
-     * Cast the PipelineState to a Graphics PipelineState
+     * @brief: Cast the PipelineState to a Graphics PipelineState
      *
      * @return: Returns a pointer to a Graphics PipelineState if the object implements it
      */
     virtual class CRHIGraphicsPipelineState* AsGraphics() { return nullptr; }
     
     /**
-     * Cast the PipelineState to a Compute PipelineState
+     * @brief: Cast the PipelineState to a Compute PipelineState
      *
      * @return: Returns a pointer to a Compute PipelineState if the object implements it
      */
     virtual class CRHIComputePipelineState* AsCompute() { return nullptr; }
 
     /**
-     * Cast the PipelineState to a Ray tracing PipelineState
+     * @brief: Cast the PipelineState to a Ray tracing PipelineState
      *
      * @return: Returns a pointer to a Ray tracing PipelineState if the object implements it
      */
@@ -528,7 +528,7 @@ class CRHIGraphicsPipelineState : public CRHIPipelineState
 public:
 
     /**
-     * Cast the PipelineState to a Graphics PipelineState
+     * @brief: Cast the PipelineState to a Graphics PipelineState
      *
      * @return: Returns a pointer to a Graphics PipelineState if the object implements it
      */
@@ -557,7 +557,7 @@ class CRHIComputePipelineState : public CRHIPipelineState
 public:
 
     /**
-     * Cast the PipelineState to a Compute PipelineState
+     * @brief: Cast the PipelineState to a Compute PipelineState
      *
      * @return: Returns a pointer to a Compute PipelineState if the object implements it
      */
@@ -617,7 +617,7 @@ class CRHIRayTracingPipelineState : public CRHIPipelineState
 public:
 
     /**
-     * Cast the PipelineState to a Ray tracing PipelineState
+     * @brief: Cast the PipelineState to a Ray tracing PipelineState
      * 
      * @return: Returns a pointer to a Ray tracing PipelineState if the object implements it
      */

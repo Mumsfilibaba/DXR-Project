@@ -30,14 +30,14 @@ public:
 public:
     
     /**
-     * Retrieve the number of lines currently written to the consolewindow
+     * @brief: Retrieve the number of lines currently written to the consolewindow
      *
      * @return: Returns the number of lines currently written to the console window
      */
     int32 GetLineCount() const;
     
     /**
-     * Called when the console window is closed
+     * @brief: Called when the console window is closed
      */
     void OnWindowDidClose();
 

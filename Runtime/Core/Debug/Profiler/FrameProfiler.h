@@ -112,7 +112,7 @@ class CORE_API CFrameProfiler
 public:
 
     /**
-     * Retrieve the Frame-Profiler instance
+     * @brief: Retrieve the Frame-Profiler instance
      * 
      * @return: Returns a reference to the Frame-Profiler instance
      */
@@ -131,14 +131,14 @@ public:
     void Reset();
 
     /**
-     * Starts a scope for a function 
+     * @brief: Starts a scope for a function 
      * 
      * @param Name: Name of the scope
      */ 
     void BeginTraceScope(const char* Name);
 
     /**
-     * Ends a scope for a function
+     * @brief: Ends a scope for a function
      *
      * @param Name: Name of the scope
      */

@@ -25,7 +25,7 @@ public:
     static constexpr CharType Null = '\0';
 
     /**
-     * Is the character a space
+     * @brief: Is the character a space
      * 
      * @param Char: Character to compare
      * @return: Returns true or false weather if the character is a space or not
@@ -36,7 +36,7 @@ public:
     }
 
     /**
-     * Is the character a null-terminator
+     * @brief: Is the character a null-terminator
      *
      * @param Char: Character to compare
      * @return: Returns true or false weather if the character is a null-terminator or not
@@ -47,7 +47,7 @@ public:
     }
 
     /**
-     * Is the character a whitespace or null-terminator
+     * @brief: Is the character a whitespace or null-terminator
      *
      * @param Char: Character to compare
      * @return: Returns true or false weather if the character is a null-terminator, whitespace or neither
@@ -58,7 +58,7 @@ public:
     }
 
     /**
-     * Search for a sub-string within a string
+     * @brief: Search for a sub-string within a string
      * 
      * @param String: String to search
      * @param Substring: Sub-string to search for
@@ -70,7 +70,7 @@ public:
     }
 
     /**
-     * Finds the first occurrence of one of the characters in the set
+     * @brief: Finds the first occurrence of one of the characters in the set
      * 
      * @param String: String to search 
      * @param Set: Set of characters to search for
@@ -82,7 +82,7 @@ public:
     }
 
     /**
-     * Finds the length of the range of characters only from the set
+     * @brief: Finds the length of the range of characters only from the set
      * 
      * @param String: String to search
      * @param Set: Set of characters to search for
@@ -94,7 +94,7 @@ public:
     }
 
     /**
-     * Finds character in string
+     * @brief: Finds character in string
      * 
      * @param String: String to search
      * @param Char: Character to search for
@@ -106,7 +106,7 @@ public:
     }
 
     /**
-     * Finds character in string by searching backwards
+     * @brief: Finds character in string by searching backwards
      * 
      * @param String: String to search
      * @param Char: Character to search for 
@@ -118,7 +118,7 @@ public:
     }
 
     /**
-     * Retrieve the length of a string
+     * @brief: Retrieve the length of a string
      * 
      * @param String: String to retrieve length of
      * @return: Returns the length of the string, not including null-terminator
@@ -129,7 +129,7 @@ public:
     }
 
     /**
-     * Format string-buffer
+     * @brief: Format string-buffer
      * 
      * @param Buffer: Buffer to store formatted string in
      * @param BufferLength: Length of the buffer 
@@ -147,7 +147,7 @@ public:
     }
 
     /**
-     * Format string-buffer with argument-list
+     * @brief: Format string-buffer with argument-list
      *
      * @param Buffer: Buffer to store formatted string in
      * @param BufferLength: Length of the buffer
@@ -160,7 +160,7 @@ public:
     }
 
     /**
-     * Convert character to lower-case
+     * @brief: Convert character to lower-case
      * 
      * @param Char: Character to convert
      * @return: Returns the character in lower case
@@ -171,7 +171,7 @@ public:
     }
 
     /**
-     * Convert character to upper-case
+     * @brief: Convert character to upper-case
      *
      * @param Char: Character to convert
      * @return: Returns the character in upper case
@@ -182,7 +182,7 @@ public:
     }
 
     /**
-     * Copy two strings
+     * @brief: Copy two strings
      * 
      * @param Dest: String to copy to
      * @param Source: String to copy from
@@ -194,7 +194,7 @@ public:
     }
 
     /**
-     * Copy two strings
+     * @brief: Copy two strings
      *
      * @param Dest: String to copy to
      * @param Source: String to copy from
@@ -207,7 +207,7 @@ public:
     }
 
     /**
-     * Move characters from one string to another
+     * @brief: Move characters from one string to another
      *
      * @param Dest: String to move to
      * @param Source: String to move from
@@ -219,7 +219,7 @@ public:
     }
 
     /**
-     * Move characters from one string to another
+     * @brief: Move characters from one string to another
      * 
      * @param Dest: String to move to
      * @param Source: String to move from
@@ -232,7 +232,7 @@ public:
     }
 
     /**
-     * Compare two strings 
+     * @brief: Compare two strings 
      * 
      * @param Lhs: Left-hand side to compare
      * @param Rhs: Right-hand side to compare
@@ -244,7 +244,7 @@ public:
     }
 
     /**
-     * Compare two strings
+     * @brief: Compare two strings
      *
      * @param Lhs: Left-hand side to compare
      * @param Rhs: Right-hand side to compare
@@ -257,7 +257,7 @@ public:
     }
 
     /**
-     * Retrieve the empty string 
+     * @brief: Retrieve the empty string 
      * 
      * @return: Returns an empty string
      */
@@ -282,7 +282,7 @@ public:
     static constexpr CharType Null = L'\0';
 
     /**
-     * Is the character a space
+     * @brief: Is the character a space
      *
      * @param Char: Character to compare
      * @return: Returns true or false weather if the character is a space or not
@@ -293,7 +293,7 @@ public:
     }
 
     /**
-     * Is the character a null-terminator
+     * @brief: Is the character a null-terminator
      *
      * @param Char: Character to compare
      * @return: Returns true or false weather if the character is a null-terminator or not
@@ -304,7 +304,7 @@ public:
     }
 
     /**
-     * Is the character a whitespace or null-terminator
+     * @brief: Is the character a whitespace or null-terminator
      *
      * @param Char: Character to compare
      * @return: Returns true or false weather if the character is a null-terminator, whitespace or neither
@@ -315,7 +315,7 @@ public:
     }
 
     /**
-     * Search for a sub-string within a string
+     * @brief: Search for a sub-string within a string
      *
      * @param String: String to search
      * @param Substring: Sub-string to search for
@@ -327,7 +327,7 @@ public:
     }
 
     /**
-     * Finds the first occurrence of one of the characters in the set
+     * @brief: Finds the first occurrence of one of the characters in the set
      *
      * @param String: String to search
      * @param Set: Set of characters to search for
@@ -339,7 +339,7 @@ public:
     }
 
     /**
-     * Finds the length of the range of characters only from the set
+     * @brief: Finds the length of the range of characters only from the set
      *
      * @param String: String to search
      * @param Set: Set of characters to search for
@@ -351,7 +351,7 @@ public:
     }
 
     /**
-     * Finds character in string
+     * @brief: Finds character in string
      *
      * @param String: String to search
      * @param Char: Character to search for
@@ -363,7 +363,7 @@ public:
     }
 
     /**
-     * Finds character in string by searching backwards
+     * @brief: Finds character in string by searching backwards
      *
      * @param String: String to search
      * @param Char: Character to search for
@@ -375,7 +375,7 @@ public:
     }
 
     /**
-     * Retrieve the length of a string
+     * @brief: Retrieve the length of a string
      *
      * @param String: String to retrieve length of
      * @return: Returns the length of the string, not including null-terminator
@@ -386,7 +386,7 @@ public:
     }
 
     /**
-     * Format string-buffer
+     * @brief: Format string-buffer
      *
      * @param Buffer: Buffer to store formatted string in
      * @param BufferLength: Length of the buffer
@@ -404,7 +404,7 @@ public:
     }
 
     /**
-     * Format string-buffer with argument-list
+     * @brief: Format string-buffer with argument-list
      *
      * @param Buffer: Buffer to store formatted string in
      * @param BufferLength: Length of the buffer
@@ -428,7 +428,7 @@ public:
     }
 
     /**
-     * Convert character to upper-case
+     * @brief: Convert character to upper-case
      *
      * @param Char: Character to convert
      * @return: Returns the character in upper case
@@ -439,7 +439,7 @@ public:
     }
 
     /**
-     * Copy two strings
+     * @brief: Copy two strings
      *
      * @param Dest: String to copy to
      * @param Source: String to copy from
@@ -451,7 +451,7 @@ public:
     }
 
     /**
-     * Copy two strings
+     * @brief: Copy two strings
      *
      * @param Dest: String to copy to
      * @param Source: String to copy from
@@ -464,7 +464,7 @@ public:
     }
 
     /**
-     * Move characters from one string to another
+     * @brief: Move characters from one string to another
      *
      * @param Dest: String to move to
      * @param Source: String to move from
@@ -476,7 +476,7 @@ public:
     }
 
     /**
-     * Move characters from one string to another
+     * @brief: Move characters from one string to another
      *
      * @param Dest: String to move to
      * @param Source: String to move from
@@ -489,7 +489,7 @@ public:
     }
 
     /**
-     * Compare two strings
+     * @brief: Compare two strings
      *
      * @param Lhs: Left-hand side to compare
      * @param Rhs: Right-hand side to compare
@@ -501,7 +501,7 @@ public:
     }
 
     /**
-     * Compare two strings
+     * @brief: Compare two strings
      *
      * @param Lhs: Left-hand side to compare
      * @param Rhs: Right-hand side to compare
@@ -514,7 +514,7 @@ public:
     }
 
     /**
-     * Retrieve the empty string
+     * @brief: Retrieve the empty string
      *
      * @return: Returns an empty string
      */
@@ -547,7 +547,7 @@ public:
     static typename TEnableIf<TIsIntegerNotBool<T>::Value, T>::Type ParseInt(const CharType* String, CharType** End, int32 Base);
 
     /**
-     * Parse a int8
+     * @brief: Parse a int8
      * 
      * @param String: String to parse from
      * @param End: Pointer that gets set to the character after the parsed value in the string
@@ -560,7 +560,7 @@ public:
     }
 
     /**
-     * Parse a int16
+     * @brief: Parse a int16
      *
      * @param String: String to parse from
      * @param End: Pointer that gets set to the character after the parsed value in the string
@@ -573,7 +573,7 @@ public:
     }
 
     /**
-     * Parse a int32
+     * @brief: Parse a int32
      *
      * @param String: String to parse from
      * @param End: Pointer that gets set to the character after the parsed value in the string
@@ -586,7 +586,7 @@ public:
     }
 
     /**
-     * Parse a int64
+     * @brief: Parse a int64
      *
      * @param String: String to parse from
      * @param End: Pointer that gets set to the character after the parsed value in the string
@@ -599,7 +599,7 @@ public:
     }
 
     /**
-     * Parse a uint8
+     * @brief: Parse a uint8
      *
      * @param String: String to parse from
      * @param End: Pointer that gets set to the character after the parsed value in the string
@@ -612,7 +612,7 @@ public:
     }
 
     /**
-     * Parse a uint16
+     * @brief: Parse a uint16
      *
      * @param String: String to parse from
      * @param End: Pointer that gets set to the character after the parsed value in the string
@@ -625,7 +625,7 @@ public:
     }
 
     /**
-     * Parse a uint32
+     * @brief: Parse a uint32
      *
      * @param String: String to parse from
      * @param End: Pointer that gets set to the character after the parsed value in the string
@@ -638,7 +638,7 @@ public:
     }
 
     /**
-     * Parse a uint64
+     * @brief: Parse a uint64
      *
      * @param String: String to parse from
      * @param End: Pointer that gets set to the character after the parsed value in the string
@@ -651,7 +651,7 @@ public:
     }
 
     /**
-     * Parse a float
+     * @brief: Parse a float
      *
      * @param String: String to parse from
      * @param End: Pointer that gets set to the character after the parsed value in the string
@@ -663,7 +663,7 @@ public:
     }
 
     /**
-     * Parse a double
+     * @brief: Parse a double
      *
      * @param String: String to parse from
      * @param End: Pointer that gets set to the character after the parsed value in the string

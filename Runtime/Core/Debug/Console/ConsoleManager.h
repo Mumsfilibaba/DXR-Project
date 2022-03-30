@@ -32,14 +32,14 @@ class CORE_API CConsoleManager
 public:
 
     /**
-     * Retrieve the ConsoleManager instance
+     * @brief: Retrieve the ConsoleManager instance
      * 
      * @return: Returns a reference to the ConsoleManager
      */
     static CConsoleManager& Get();
 
     /**
-     * Register a new console-command
+     * @brief: Register a new console-command
      * 
      * @param Name: Name of the console-command
      * @param Command: Command to register
@@ -47,7 +47,7 @@ public:
     void RegisterCommand(const String& Name, IConsoleCommand* Command);
     
     /**
-     * Register a new console-variable
+     * @brief: Register a new console-variable
      *
      * @param Name: Name of the console-variable
      * @param Variable: variable to register
@@ -55,14 +55,14 @@ public:
     void RegisterVariable(const String& Name, IConsoleVariable* Variable);
 
     /**
-     * Unregister a console-object
+     * @brief: Unregister a console-object
      * 
      * @param Name: Name of the console-object to unregister from the console manager
      */
     void UnregisterObject(const String& Name);
 
     /**
-     * Check weather or not a console-object exists with a specific name
+     * @brief: Check weather or not a console-object exists with a specific name
      * 
      * @param Name: Name of the console-object
      * @return: Returns true if there exists a console-object with the specified name
@@ -70,7 +70,7 @@ public:
     bool IsConsoleObject(const String& Name) const;
 
     /**
-     * Finds a console-command, returns nullptr otherwise, including if the object is a variable
+     * @brief: Finds a console-command, returns nullptr otherwise, including if the object is a variable
      * 
      * @param Name: Name of the console-command
      * @return: The console-command matching the name
@@ -78,7 +78,7 @@ public:
     IConsoleCommand* FindCommand(const String& Name);
 
     /**
-     * Finds a console-variable, returns nullptr otherwise, including if the object is a command
+     * @brief: Finds a console-variable, returns nullptr otherwise, including if the object is a command
      *
      * @param Name: Name of the console-variable
      * @return: The console-variable matching the name
@@ -86,7 +86,7 @@ public:
     IConsoleVariable* FindVariable(const String& Name);
 
     /**
-     * Retrieve all ConsoleObjects that fits the name of the specified string
+     * @brief: Retrieve all ConsoleObjects that fits the name of the specified string
      * 
      * @param CandidateName: Names to match
      * @param OutCandidates: Array to store the console-objects that matches the candidate-name
@@ -94,7 +94,7 @@ public:
     void FindCandidates(const StringView& CandidateName, TArray<TPair<IConsoleObject*, String>>& OutCandidates);
 
     /**
-     * Print a message to the console
+     * @brief: Print a message to the console
      * 
      * @param Message: Message to print to the console
      * @param Severity: Severity of the message
@@ -105,14 +105,14 @@ public:
     void ClearHistory();
 
     /**
-     * Execute a string from the console 
+     * @brief: Execute a string from the console 
      * 
      * @param Command: Command to execute by the console
      */
     void Execute(const String& Command);
 
     /**
-     * Retrieve all the messages printed to the console
+     * @brief: Retrieve all the messages printed to the console
      * 
      * @return: An array containing pairs of the console-messages and console-severity that has been printed to the console.
      */
@@ -122,7 +122,7 @@ public:
     }
 
     /**
-     * Retrieve all the history that has been written to the console 
+     * @brief: Retrieve all the history that has been written to the console 
      * 
      * @return: An array containing string of all history written to the console
      */

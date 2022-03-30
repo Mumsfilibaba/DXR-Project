@@ -293,7 +293,7 @@ bool CVulkanViewport::Present(bool bVerticalSync)
 
 void CVulkanViewport::SetName(const String& InName)
 {
-    CRHIObject::SetName(InName);
+    CRHIResource::SetName(InName);
     
     String ImageName;
     

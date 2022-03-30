@@ -14,7 +14,7 @@ public:
     CWindowsCriticalSection& operator=(const CWindowsCriticalSection&) = delete;
 
     /**
-     * Default constructor 
+     * @brief: Default constructor 
      */
     FORCEINLINE CWindowsCriticalSection() noexcept
         : Section()
@@ -23,7 +23,7 @@ public:
     }
 
     /**
-     * Destructor 
+     * @brief: Destructor 
      */
     FORCEINLINE ~CWindowsCriticalSection()
     {
@@ -37,7 +37,7 @@ public:
     }
 
     /**
-     * Try to lock CriticalSection for other threads
+     * @brief: Try to lock CriticalSection for other threads
      * 
      * @return; Returns true if the lock is successful
      */
@@ -53,7 +53,7 @@ public:
     }
 
     /**
-     * Retrieve platform specific handle
+     * @brief: Retrieve platform specific handle
      *
      * @return: Returns a platform specific handle or nullptr if no platform handle is defined
      */

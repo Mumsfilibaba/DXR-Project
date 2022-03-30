@@ -26,7 +26,7 @@ public:
     static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TArrayIterator require ArrayType and ElementType to have the same constness");
 
     /**
-     * Create a new iterator
+     * @brief: Create a new iterator
      * 
      * @param InArray: Array to iterate
      * @param StartIndex: Index in the array to start
@@ -39,7 +39,7 @@ public:
     }
 
     /**
-     * Check if the iterator belongs to a certain array
+     * @brief: Check if the iterator belongs to a certain array
      * 
      * @param FromArray: Array to check
      * @return: Returns true if the iterator is from the array, otherwise false 
@@ -51,7 +51,7 @@ public:
     }
 
     /**
-     * Check if the iterator is valid
+     * @brief: Check if the iterator is valid
      * 
      * @return: Returns true if the iterator is valid
      */
@@ -61,7 +61,7 @@ public:
     }
 
     /**
-     * Check if the iterator is equal to the end iterator
+     * @brief: Check if the iterator is equal to the end iterator
      * 
      * @return: Returns true if the iterator is the end-iterator
      */
@@ -71,7 +71,7 @@ public:
     }
 
     /**
-     * Retrieve a raw pointer to the data
+     * @brief: Retrieve a raw pointer to the data
      * 
      * @return: Returns a raw pointer to the data 
      */
@@ -82,7 +82,7 @@ public:
     }
 
     /**
-     * Retrieve the index to for the iterator in the array
+     * @brief: Retrieve the index to for the iterator in the array
      * 
      * @return: Returns the index to the element that the iterator represent within the array   
      */
@@ -94,7 +94,7 @@ public:
 public:
 
     /**
-     * Retrieve a raw pointer to the data
+     * @brief: Retrieve a raw pointer to the data
      * 
      * @return: Returns a raw pointer to the data 
      */
@@ -104,7 +104,7 @@ public:
     }
 
     /**
-     * Retrieve the data
+     * @brief: Retrieve the data
      * 
      * @return: Returns a reference to the data 
      */
@@ -114,7 +114,7 @@ public:
     }
 
     /**
-     * Increment the index for the iterator  
+     * @brief: Increment the index for the iterator  
      * 
      * @return: Returns a new iterator with the new value
      */
@@ -127,7 +127,7 @@ public:
     }
 
     /**
-     * Increment the index for the iterator  
+     * @brief: Increment the index for the iterator  
      * 
      * @return: Returns a new iterator with the previous value
      */
@@ -141,7 +141,7 @@ public:
     }
 
     /**
-     * Decrement the index for the iterator  
+     * @brief: Decrement the index for the iterator  
      * 
      * @return: Returns a new iterator with the new value
      */
@@ -154,7 +154,7 @@ public:
     }
 
     /**
-     * Decrement the index for the iterator  
+     * @brief: Decrement the index for the iterator  
      * 
      * @return: Returns a new iterator with the previous value
      */
@@ -168,7 +168,7 @@ public:
     }
 
     /**
-     * Add a new value to the iterator
+     * @brief: Add a new value to the iterator
      * 
      * @param Rhs: Value to add
      * @return: Returns a new iterator with the result from adding Rhs to this value 
@@ -180,7 +180,7 @@ public:
     }
 
     /**
-     * Subtract a new value to the iterator
+     * @brief: Subtract a new value to the iterator
      * 
      * @param Rhs: Value to subtract
      * @return: Returns a new iterator with the result from subtracting Rhs to this value 
@@ -192,7 +192,7 @@ public:
     }
 
     /**
-     * Add a value to the iterator and store it in this instance
+     * @brief: Add a value to the iterator and store it in this instance
      * 
      * @param Rhs: Value to add
      * @return: Returns a reference to this instance
@@ -206,7 +206,7 @@ public:
     }
 
     /**
-     * Subtract a value to the iterator and store it in this instance
+     * @brief: Subtract a value to the iterator and store it in this instance
      * 
      * @param Rhs: Value to subtract
      * @return: Returns a reference to this instance
@@ -220,7 +220,7 @@ public:
     }
 
     /**
-     * Compare this and another instance
+     * @brief: Compare this and another instance
      * 
      * @param Rhs: Value to compare with
      * @return: Returns true if the iterators are equal
@@ -231,7 +231,7 @@ public:
     }
 
     /**
-     * Compare this and another instance
+     * @brief: Compare this and another instance
      * 
      * @param Rhs: Value to compare with
      * @return: Returns false if the iterators are equal
@@ -242,7 +242,7 @@ public:
     }
 
     /**
-     * Create a constant iterator from this
+     * @brief: Create a constant iterator from this
      * 
      * @return: Returns a new iterator based on the index from this instance
      */
@@ -287,7 +287,7 @@ public:
     static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TReverseArrayIterator require ArrayType and ElementType to have the same constness");
 
     /**
-     * Create a new iterator
+     * @brief: Create a new iterator
      *
      * @param InArray: Array to iterate
      * @param StartIndex: Index in the array to start
@@ -300,7 +300,7 @@ public:
     }
 
     /**
-     * Check if the iterator belongs to a certain array
+     * @brief: Check if the iterator belongs to a certain array
      *
      * @param FromArray: Array to check
      * @return: Returns true if the iterator is from the array, otherwise false
@@ -312,7 +312,7 @@ public:
     }
 
     /**
-     * Check if the iterator is valid
+     * @brief: Check if the iterator is valid
      *
      * @return: Returns true if the iterator is valid
      */
@@ -322,7 +322,7 @@ public:
     }
 
     /**
-     * Check if the iterator is equal to the end iterator
+     * @brief: Check if the iterator is equal to the end iterator
      *
      * @return: Returns true if the iterator is the end-iterator
      */
@@ -332,7 +332,7 @@ public:
     }
 
     /**
-     * Retrieve a raw pointer to the data
+     * @brief: Retrieve a raw pointer to the data
      *
      * @return: Returns a raw pointer to the data
      */
@@ -343,7 +343,7 @@ public:
     }
 
     /**
-     * Retrieve the index to for the iterator in the array
+     * @brief: Retrieve the index to for the iterator in the array
      *
      * @return: Returns the index to the element that the iterator represent within the array
      */
@@ -355,7 +355,7 @@ public:
 public:
 
     /**
-     * Retrieve a raw pointer to the data
+     * @brief: Retrieve a raw pointer to the data
      *
      * @return: Returns a raw pointer to the data
      */
@@ -365,7 +365,7 @@ public:
     }
 
     /**
-     * Retrieve the data
+     * @brief: Retrieve the data
      *
      * @return: Returns a reference to the data
      */
@@ -375,7 +375,7 @@ public:
     }
 
     /**
-     * Increment the index for the iterator
+     * @brief: Increment the index for the iterator
      *
      * @return: Returns a new iterator with the new value
      */
@@ -388,7 +388,7 @@ public:
     }
 
     /**
-     * Increment the index for the iterator
+     * @brief: Increment the index for the iterator
      *
      * @return: Returns a new iterator with the previous value
      */
@@ -402,7 +402,7 @@ public:
     }
 
     /**
-     * Decrement the index for the iterator
+     * @brief: Decrement the index for the iterator
      *
      * @return: Returns a new iterator with the new value
      */
@@ -415,7 +415,7 @@ public:
     }
 
     /**
-     * Decrement the index for the iterator
+     * @brief: Decrement the index for the iterator
      *
      * @return: Returns a new iterator with the previous value
      */
@@ -429,7 +429,7 @@ public:
     }
 
     /**
-     * Add a new value to the iterator
+     * @brief: Add a new value to the iterator
      *
      * @param Rhs: Value to add
      * @return: Returns a new iterator with the result from adding Rhs to this value
@@ -441,7 +441,7 @@ public:
     }
 
     /**
-     * Subtract a new value to the iterator
+     * @brief: Subtract a new value to the iterator
      *
      * @param Rhs: Value to subtract
      * @return: Returns a new iterator with the result from subtracting Rhs to this value
@@ -453,7 +453,7 @@ public:
     }
 
     /**
-     * Add a value to the iterator and store it in this instance
+     * @brief: Add a value to the iterator and store it in this instance
      *
      * @param Rhs: Value to add
      * @return: Returns a reference to this instance
@@ -467,7 +467,7 @@ public:
     }
 
     /**
-     * Subtract a value to the iterator and store it in this instance
+     * @brief: Subtract a value to the iterator and store it in this instance
      *
      * @param Rhs: Value to subtract
      * @return: Returns a reference to this instance
@@ -481,7 +481,7 @@ public:
     }
 
     /**
-     * Compare this and another instance
+     * @brief: Compare this and another instance
      *
      * @param Rhs: Value to compare with
      * @return: Returns true if the iterators are equal
@@ -492,7 +492,7 @@ public:
     }
 
     /**
-     * Compare this and another instance
+     * @brief: Compare this and another instance
      *
      * @param Rhs: Value to compare with
      * @return: Returns false if the iterators are equal
@@ -503,7 +503,7 @@ public:
     }
 
     /**
-     * Create a constant iterator from this
+     * @brief: Create a constant iterator from this
      *
      * @return: Returns a new iterator based on the index from this instance
      */

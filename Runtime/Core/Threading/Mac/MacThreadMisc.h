@@ -17,7 +17,7 @@ class CMacThreadMisc : public CPlatformThreadMisc
 public:
 
     /**
-     * Performs platform specific initialization of thread handling 
+     * @brief: Performs platform specific initialization of thread handling 
      * 
      * @return: Returns true if the initialization was successful, otherwise false
      */
@@ -37,7 +37,7 @@ public:
     }
 
     /**
-     * Retrieve the number of logical processors on the system 
+     * @brief: Retrieve the number of logical processors on the system 
      * 
      * @return: Returns the number of logical processors on the system 
      */
@@ -48,7 +48,7 @@ public:
     }
 
     /**
-     * Retrieves the current thread's system ID 
+     * @brief: Retrieves the current thread's system ID 
      * 
      * @return: Returns a platform handle for the calling thread, return a invalid handle on failure
      */
@@ -59,7 +59,7 @@ public:
     }
 
     /**
-     * Makes the calling thread sleep for a specified amount of time 
+     * @brief: Makes the calling thread sleep for a specified amount of time 
      * 
      * @param Time: Time to sleep
      */
@@ -73,7 +73,7 @@ public:
     }
     
     /**
-     * Runs the main runloop, used to make sure that all logging etc. shows up properly
+     * @brief: Runs the main runloop, used to make sure that all logging etc. shows up properly
      */
     static FORCEINLINE void RunMainLoop()
     {
@@ -83,7 +83,7 @@ public:
     }
 
     /**
-     * Checks weather or not the calling thread is the main thread 
+     * @brief: Checks weather or not the calling thread is the main thread 
      * 
      * @return: Returns true if the calling thread is the main-thread
      */

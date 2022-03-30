@@ -12,7 +12,7 @@ public:
     FORCEINLINE CIntVector2() noexcept;
 
     /**
-     * Constructor initializing all components with a corresponding value.
+     * @brief: Constructor initializing all components with a corresponding value.
      *
      * @param InX: The x-coordinate
      * @param InY: The y-coordinate
@@ -20,21 +20,21 @@ public:
     FORCEINLINE explicit CIntVector2(int InX, int InY) noexcept;
 
     /**
-     * Constructor initializing all components with an array.
+     * @brief: Constructor initializing all components with an array.
      *
      * @param Arr: Array with 2 elements
      */
     FORCEINLINE explicit CIntVector2(const int* Arr) noexcept;
 
     /**
-     * Constructor initializing all components with a single value.
+     * @brief: Constructor initializing all components with a single value.
      *
      * @param Scalar: Value to set all components to
      */
     FORCEINLINE explicit CIntVector2(int Scalar) noexcept;
 
     /**
-     * Compares this vector with another vector
+     * @brief: Compares this vector with another vector
      *
      * @param Other: Vector to compare against
      * @return True if equal, false if not
@@ -43,7 +43,7 @@ public:
 
 public:
     /**
-     * Returns a vector with the smallest of each component of two vectors
+     * @brief: Returns a vector with the smallest of each component of two vectors
      *
      * @param Lhs: First vector to compare with
      * @param Rhs: Second vector to compare with
@@ -52,7 +52,7 @@ public:
     friend FORCEINLINE CIntVector2 Min(const CIntVector2& Lhs, const CIntVector2& Rhs) noexcept;
 
     /**
-     * Returns a vector with the largest of each component of two vectors
+     * @brief: Returns a vector with the largest of each component of two vectors
      *
      * @param Lhs: First vector to compare with
      * @param Rhs: Second vector to compare with
@@ -62,14 +62,14 @@ public:
 
 public:
     /**
-     * Return a vector with component-wise negation of this vector
+     * @brief: Return a vector with component-wise negation of this vector
      *
      * @return A negated vector
      */
     FORCEINLINE CIntVector2 operator-() const noexcept;
 
     /**
-     * Returns the result of component-wise adding this and another vector
+     * @brief: Returns the result of component-wise adding this and another vector
      *
      * @param Rhs: The vector to add
      * @return A vector with the result of addition
@@ -77,7 +77,7 @@ public:
     FORCEINLINE CIntVector2 operator+(const CIntVector2& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise adding this with another vector
+     * @brief: Returns this vector after component-wise adding this with another vector
      *
      * @param Rhs: The vector to add
      * @return A reference to this vector
@@ -85,7 +85,7 @@ public:
     FORCEINLINE CIntVector2& operator+=(const CIntVector2& Rhs) noexcept;
 
     /**
-     * Returns the result of adding a scalar to each component of this vector
+     * @brief: Returns the result of adding a scalar to each component of this vector
      *
      * @param Rhs: The scalar to add
      * @return A vector with the result of addition
@@ -93,7 +93,7 @@ public:
     FORCEINLINE CIntVector2 operator+(int Rhs) const noexcept;
 
     /**
-     * Returns this vector after adding a scalar to each component of this vector
+     * @brief: Returns this vector after adding a scalar to each component of this vector
      *
      * @param Rhs: The scalar to add
      * @return A reference to this vector
@@ -101,7 +101,7 @@ public:
     FORCEINLINE CIntVector2& operator+=(int Rhs) noexcept;
 
     /**
-     * Returns the result of component-wise subtraction between this and another vector
+     * @brief: Returns the result of component-wise subtraction between this and another vector
      *
      * @param Rhs: The vector to subtract
      * @return A vector with the result of subtraction
@@ -109,7 +109,7 @@ public:
     FORCEINLINE CIntVector2 operator-(const CIntVector2& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise subtraction between this and another vector
+     * @brief: Returns this vector after component-wise subtraction between this and another vector
      *
      * @param Rhs: The vector to subtract
      * @return A reference to this vector
@@ -117,7 +117,7 @@ public:
     FORCEINLINE CIntVector2& operator-=(const CIntVector2& Rhs) noexcept;
 
     /**
-     * Returns the result of subtracting each component of this vector with a scalar
+     * @brief: Returns the result of subtracting each component of this vector with a scalar
      *
      * @param Rhs: The scalar to subtract
      * @return A vector with the result of the subtraction
@@ -125,7 +125,7 @@ public:
     FORCEINLINE CIntVector2 operator-(int Rhs) const noexcept;
 
     /**
-     * Returns this vector after subtracting each component of this vector with a scalar
+     * @brief: Returns this vector after subtracting each component of this vector with a scalar
      *
      * @param Rhs: The scalar to subtract
      * @return A reference to this vector
@@ -133,7 +133,7 @@ public:
     FORCEINLINE CIntVector2& operator-=(int Rhs) noexcept;
 
     /**
-     * Returns the result of component-wise multiplication with this and another vector
+     * @brief: Returns the result of component-wise multiplication with this and another vector
      *
      * @param Rhs: The vector to multiply with
      * @return A vector with the result of the multiplication
@@ -141,7 +141,7 @@ public:
     FORCEINLINE CIntVector2 operator*(const CIntVector2& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise multiplication with this and another vector
+     * @brief: Returns this vector after component-wise multiplication with this and another vector
      *
      * @param Rhs: The vector to multiply with
      * @return A reference to this vector
@@ -149,7 +149,7 @@ public:
     FORCEINLINE CIntVector2& operator*=(const CIntVector2& Rhs) noexcept;
 
     /**
-     * Returns the result of multiplying each component of this vector with a scalar
+     * @brief: Returns the result of multiplying each component of this vector with a scalar
      *
      * @param Rhs: The scalar to multiply with
      * @return A vector with the result of the multiplication
@@ -157,7 +157,7 @@ public:
     FORCEINLINE CIntVector2 operator*(int Rhs) const noexcept;
 
     /**
-     * Returns this vector after multiplying each component of this vector with a scalar
+     * @brief: Returns this vector after multiplying each component of this vector with a scalar
      *
      * @param Rhs: The scalar to multiply with
      * @return A reference to this vector
@@ -165,7 +165,7 @@ public:
     FORCEINLINE CIntVector2& operator*=(int Rhs) noexcept;
 
     /**
-     * Returns the result of component-wise division with this and another vector
+     * @brief: Returns the result of component-wise division with this and another vector
      *
      * @param Rhs: The vector to divide with
      * @return A vector with the result of the division
@@ -173,7 +173,7 @@ public:
     FORCEINLINE CIntVector2 operator/(const CIntVector2& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise division with this and another vector
+     * @brief: Returns this vector after component-wise division with this and another vector
      *
      * @param Rhs: The vector to divide with
      * @return A reference to this vector
@@ -181,7 +181,7 @@ public:
     FORCEINLINE CIntVector2& operator/=(const CIntVector2& Rhs) noexcept;
 
     /**
-     * Returns the result of dividing each component of this vector and a scalar
+     * @brief: Returns the result of dividing each component of this vector and a scalar
      *
      * @param Rhs: The scalar to divide with
      * @return A vector with the result of the division
@@ -189,7 +189,7 @@ public:
     FORCEINLINE CIntVector2 operator/(int Rhs) const noexcept;
 
     /**
-     * Returns this vector after dividing each component of this vector and a scalar
+     * @brief: Returns this vector after dividing each component of this vector and a scalar
      *
      * @param Rhs: The scalar to divide with
      * @return A reference to this vector
@@ -197,7 +197,7 @@ public:
     FORCEINLINE CIntVector2& operator/=(int Rhs) noexcept;
 
     /**
-     * Returns the result after comparing this and another vector
+     * @brief: Returns the result after comparing this and another vector
      *
      * @param Other: The vector to compare with
      * @return True if equal, false if not
@@ -205,7 +205,7 @@ public:
     FORCEINLINE bool operator==(const CIntVector2& Other) const noexcept;
 
     /**
-     * Returns the negated result after comparing this and another vector
+     * @brief: Returns the negated result after comparing this and another vector
      *
      * @param Other: The vector to compare with
      * @return False if equal, true if not
@@ -213,7 +213,7 @@ public:
     FORCEINLINE bool operator!=(const CIntVector2& Other) const noexcept;
 
     /**
-     * Returns the component specifed
+     * @brief: Returns the component specifed
      *
      * @param Index: The component index
      * @return The component
@@ -221,7 +221,7 @@ public:
     FORCEINLINE int& operator[](int Index) noexcept;
 
     /**
-     * Returns the component specifed
+     * @brief: Returns the component specifed
      *
      * @param Index: The component index
      * @return The component

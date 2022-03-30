@@ -30,14 +30,14 @@ public:
     virtual ~ICursor() = default;
 
     /**
-     * Set the cursor image
+     * @brief: Set the cursor image
      *
      * @param Cursor: The new cursor icon
      */
     virtual void SetCursor(ECursor Cursor) = 0;
 
     /**
-     * Sets the position of the cursor
+     * @brief: Sets the position of the cursor
      *
      * @param RelativeWindow: Window that the new position is relative to
      * @param x: The new x-coordinate
@@ -46,7 +46,7 @@ public:
     virtual void SetPosition(CPlatformWindow* RelativeWindow, int32 x, int32 y) const = 0;
 
     /**
-     * Sets the position of the cursor
+     * @brief: Sets the position of the cursor
      *
      * @param RelativeWindow: Window that the new position is relative to
      * @param OutX: Variable to store the x-coordinate in
@@ -55,14 +55,14 @@ public:
     virtual void GetPosition(CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY) const = 0;
 
     /**
-     * Set the visibility of the cursor
+     * @brief: Set the visibility of the cursor
      *
      * @param bIsVisible: True if the cursor should be visible, otherwise false
      */
     virtual void SetVisibility(bool bIsVisible) = 0;
 
     /**
-     * Retrieve the mouse visibility
+     * @brief: Retrieve the mouse visibility
      *
      * @return: Returns true if the mouse-cursor is visibile, otherwise false
      */

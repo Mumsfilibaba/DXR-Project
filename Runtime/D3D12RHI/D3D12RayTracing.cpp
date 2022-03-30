@@ -442,7 +442,7 @@ bool CD3D12RayTracingScene::BuildBindingTable(
 
 void CD3D12RayTracingScene::SetName(const String& InName)
 {
-    CRHIObject::SetName(InName);
+    CRHIResource::SetName(InName);
     ResultBuffer->SetName(InName);
 
     if (ScratchBuffer)

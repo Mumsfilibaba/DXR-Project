@@ -32,12 +32,13 @@ enum ERayTracingInstanceFlags
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIRayTracingGeometry  - (Bottom-Level Acceleration-Structure)
 
-class CRHIRayTracingGeometry : public CRHIObject
+class CRHIRayTracingGeometry : public CRHIResource
 {
 public:
 
     CRHIRayTracingGeometry(uint32 InFlags)
-        : Flags(InFlags)
+        : CRHIResource(ERHIResourceType::RayTracingGeometry)
+        , Flags(InFlags)
     { }
 
     inline uint32 GetFlags() const { return Flags; }
@@ -49,15 +50,17 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIRayTracingScene  - (Top-Level Acceleration-Structure)
 
-class CRHIRayTracingScene : public CRHIObject
+class CRHIRayTracingScene : public CRHIResource
 {
 public:
 
     CRHIRayTracingScene(uint32 InFlags)
-        : Flags(InFlags)
+        : CRHIResource(ERHIResourceType::RayTracingScene)
+        , Flags(InFlags)
     { }
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const = 0;
+    virtual CRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
+    virtual CRHIDescriptorHandle    GetBindlessHandle()     const { return CRHIDescriptorHandle(); }
 
     inline uint32 GetFlags() const { return Flags; }
 

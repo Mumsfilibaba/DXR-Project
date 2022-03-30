@@ -24,14 +24,14 @@
 struct SFloat64
 {
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE SFloat64()
         : Float64(0.0)
     { }
 
     /**
-     * Construct a Float64 with a double
+     * @brief: Construct a Float64 with a double
      *
      * @param InFloat64: Value to set the float64 to
      */
@@ -40,7 +40,7 @@ struct SFloat64
     { }
 
     /**
-     * Copy constructor
+     * @brief: Copy constructor
      *
      * @param Other: Other instance to copy
      */
@@ -49,7 +49,7 @@ struct SFloat64
     { }
 
     /**
-     * Set the instance to a new value
+     * @brief: Set the instance to a new value
      *
      * @param InFloat64: Value to set the float64 to
      */

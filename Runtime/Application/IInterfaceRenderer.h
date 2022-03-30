@@ -15,7 +15,7 @@ public:
     virtual ~IInterfaceRenderer() = default;
 
     /**
-     * Init the context
+     * @brief: Init the context
      * 
      * @param NewContext: Context to set to the renderer
      * @return: Returns true if the initialization was successful
@@ -29,7 +29,7 @@ public:
     virtual void EndTick() = 0;
 
     /**
-     * Render all the UI for this frame 
+     * @brief: Render all the UI for this frame 
      * 
      * @param InCommandList: CommandList to record all draw-commands to
      */
@@ -45,7 +45,7 @@ class IInterfaceRendererModule : public CDefaultEngineModule
 public:
 
     /**
-     * Creates a interface renderer
+     * @brief: Creates a interface renderer
      * 
      * @return: Returns a newly created interface renderer
      */

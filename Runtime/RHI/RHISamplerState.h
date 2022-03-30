@@ -9,9 +9,9 @@
 typedef TSharedRef<class CRHISamplerState> CRHISamplerStateRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHISamplerMode
+// ESamplerMode
 
-enum class ERHISamplerMode : uint8
+enum class ESamplerMode : uint8
 {
     Unknown    = 0,
     Wrap       = 1,
@@ -21,23 +21,23 @@ enum class ERHISamplerMode : uint8
     MirrorOnce = 5,
 };
 
-inline const char* ToString(ERHISamplerMode SamplerMode)
+inline const char* ToString(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
-    case ERHISamplerMode::Wrap:       return "Wrap";
-    case ERHISamplerMode::Mirror:     return "Mirror";
-    case ERHISamplerMode::Clamp:      return "Clamp";
-    case ERHISamplerMode::Border:     return "Border";
-    case ERHISamplerMode::MirrorOnce: return "MirrorOnce";
-    default:                          return "Unknown";
+    case ESamplerMode::Wrap:       return "Wrap";
+    case ESamplerMode::Mirror:     return "Mirror";
+    case ESamplerMode::Clamp:      return "Clamp";
+    case ESamplerMode::Border:     return "Border";
+    case ESamplerMode::MirrorOnce: return "MirrorOnce";
+    default:                       return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHISamplerFilter
+// ESamplerFilter
 
-enum class ERHISamplerFilter : uint8
+enum class ESamplerFilter : uint8
 {
     Unknown                                 = 0,
     MinMagMipPoint                          = 1,
@@ -60,76 +60,134 @@ enum class ERHISamplerFilter : uint8
     Comparison_Anistrotopic                 = 18,
 };
 
-inline const char* ToString(ERHISamplerFilter SamplerFilter)
+inline const char* ToString(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
-    case ERHISamplerFilter::MinMagMipPoint:                          return "MinMagMipPoint";
-    case ERHISamplerFilter::MinMagPoint_MipLinear:                   return "MinMagPoint_MipLinear";
-    case ERHISamplerFilter::MinPoint_MagLinear_MipPoint:             return "MinPoint_MagLinear_MipPoint";
-    case ERHISamplerFilter::MinPoint_MagMipLinear:                   return "MinPoint_MagMipLinear";
-    case ERHISamplerFilter::MinLinear_MagMipPoint:                   return "MinLinear_MagMipPoint";
-    case ERHISamplerFilter::MinLinear_MagPoint_MipLinear:            return "MinLinear_MagPoint_MipLinear";
-    case ERHISamplerFilter::MinMagLinear_MipPoint:                   return "MinMagLinear_MipPoint";
-    case ERHISamplerFilter::MinMagMipLinear:                         return "MinMagMipLinear";
-    case ERHISamplerFilter::Anistrotopic:                            return "Anistrotopic";
-    case ERHISamplerFilter::Comparison_MinMagMipPoint:               return "Comparison_MinMagMipPoint";
-    case ERHISamplerFilter::Comparison_MinMagPoint_MipLinear:        return "Comparison_MinMagPoint_MipLinear";
-    case ERHISamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:  return "Comparison_MinPoint_MagLinear_MipPoint";
-    case ERHISamplerFilter::Comparison_MinPoint_MagMipLinear:        return "Comparison_MinPoint_MagMipLinear";
-    case ERHISamplerFilter::Comparison_MinLinear_MagMipPoint:        return "Comparison_MinLinear_MagMipPoint";
-    case ERHISamplerFilter::Comparison_MinLinear_MagPoint_MipLinear: return "Comparison_MinLinear_MagPoint_MipLinear";
-    case ERHISamplerFilter::Comparison_MinMagLinear_MipPoint:        return "Comparison_MinMagLinear_MipPoint";
-    case ERHISamplerFilter::Comparison_MinMagMipLinear:              return "Comparison_MinMagMipLinear";
-    case ERHISamplerFilter::Comparison_Anistrotopic:                 return "Comparison_Anistrotopic";
-    default:                                                         return "Unknown";
+    case ESamplerFilter::MinMagMipPoint:                          return "MinMagMipPoint";
+    case ESamplerFilter::MinMagPoint_MipLinear:                   return "MinMagPoint_MipLinear";
+    case ESamplerFilter::MinPoint_MagLinear_MipPoint:             return "MinPoint_MagLinear_MipPoint";
+    case ESamplerFilter::MinPoint_MagMipLinear:                   return "MinPoint_MagMipLinear";
+    case ESamplerFilter::MinLinear_MagMipPoint:                   return "MinLinear_MagMipPoint";
+    case ESamplerFilter::MinLinear_MagPoint_MipLinear:            return "MinLinear_MagPoint_MipLinear";
+    case ESamplerFilter::MinMagLinear_MipPoint:                   return "MinMagLinear_MipPoint";
+    case ESamplerFilter::MinMagMipLinear:                         return "MinMagMipLinear";
+    case ESamplerFilter::Anistrotopic:                            return "Anistrotopic";
+    case ESamplerFilter::Comparison_MinMagMipPoint:               return "Comparison_MinMagMipPoint";
+    case ESamplerFilter::Comparison_MinMagPoint_MipLinear:        return "Comparison_MinMagPoint_MipLinear";
+    case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:  return "Comparison_MinPoint_MagLinear_MipPoint";
+    case ESamplerFilter::Comparison_MinPoint_MagMipLinear:        return "Comparison_MinPoint_MagMipLinear";
+    case ESamplerFilter::Comparison_MinLinear_MagMipPoint:        return "Comparison_MinLinear_MagMipPoint";
+    case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear: return "Comparison_MinLinear_MagPoint_MipLinear";
+    case ESamplerFilter::Comparison_MinMagLinear_MipPoint:        return "Comparison_MinMagLinear_MipPoint";
+    case ESamplerFilter::Comparison_MinMagMipLinear:              return "Comparison_MinMagMipLinear";
+    case ESamplerFilter::Comparison_Anistrotopic:                 return "Comparison_Anistrotopic";
+    default:                                                      return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHISamplerStateDesc
+// SRHISamplerStateCreateDesc
 
-class CRHISamplerStateDesc
+struct SRHISamplerStateCreateDesc
 {
-public:
-    CRHISamplerStateDesc()  = default;
-    ~CRHISamplerStateDesc() = default;
+    SRHISamplerStateCreateDesc()
+        : AddressU(ESamplerMode::Clamp)
+        , AddressV(ESamplerMode::Clamp)
+        , AddressW(ESamplerMode::Clamp)
+        , Filter(ESamplerFilter::MinMagMipLinear)
+        , ComparisonFunc(EComparisonFunc::Never)
+        , MipLODBias(0.0f)
+        , MaxAnisotropy(1)
+        , MinLOD(-FLT_MAX)
+        , MaxLOD(FLT_MAX)
+        , BorderColor()
+    { }
 
-    bool operator==(const CRHISamplerStateDesc& RHS) const
+    SRHISamplerStateCreateDesc( ESamplerMode InAddressU
+                              , ESamplerMode InAddressV
+                              , ESamplerMode InAddressW
+                              , ESamplerFilter InFilter
+                              , EComparisonFunc InComparisonFunc
+                              , float InMipLODBias
+                              , uint32 InMaxAnisotropy
+                              , float InMinLOD
+                              , float InMaxLOD
+                              , SColorF InBorderColor)
+        : AddressU(InAddressU)
+        , AddressV(InAddressV)
+        , AddressW(InAddressW)
+        , Filter(InFilter)
+        , ComparisonFunc(InComparisonFunc)
+        , MipLODBias(InMipLODBias)
+        , MaxAnisotropy(InMaxAnisotropy)
+        , MinLOD(InMinLOD)
+        , MaxLOD(InMaxLOD)
+        , BorderColor()
+    { }
+
+    bool operator==(const SRHISamplerStateCreateDesc& Rhs) const
     {
-        return
-            (AddressU       == RHS.AddressU)       &&
-            (AddressV       == RHS.AddressV)       && 
-            (AddressW       == RHS.AddressW)       &&
-            (Filter         == RHS.Filter)         && 
-            (ComparisonFunc == RHS.ComparisonFunc) && 
-            (MipLODBias     == RHS.MipLODBias)     && 
-            (MaxAnisotropy  == RHS.MaxAnisotropy)  && 
-            (MinLOD         == RHS.MinLOD)         && 
-            (MaxLOD         == RHS.MaxLOD)         &&
-            (BorderColor    == RHS.BorderColor);
+        return (AddressU       == Rhs.AddressU)
+            && (AddressV       == Rhs.AddressV)
+            && (AddressW       == Rhs.AddressW) 
+            && (Filter         == Rhs.Filter)
+            && (ComparisonFunc == Rhs.ComparisonFunc) 
+            && (MipLODBias     == Rhs.MipLODBias) 
+            && (MaxAnisotropy  == Rhs.MaxAnisotropy) 
+            && (MinLOD         == Rhs.MinLOD) 
+            && (MaxLOD         == Rhs.MaxLOD) 
+            && (BorderColor    == Rhs.BorderColor);
     }
 
-    bool operator!=(const CRHISamplerStateDesc& RHS) const
+    bool operator!=(const SRHISamplerStateCreateDesc& Rhs) const
     {
-        return !(*this == RHS);
+        return !(*this == Rhs);
     }
 
-    ERHISamplerMode    AddressU       = ERHISamplerMode::Clamp;
-    ERHISamplerMode    AddressV       = ERHISamplerMode::Clamp;
-    ERHISamplerMode    AddressW       = ERHISamplerMode::Clamp;
-    ERHISamplerFilter  Filter         = ERHISamplerFilter::MinMagMipLinear;
-    ERHIComparisonFunc ComparisonFunc = ERHIComparisonFunc::Never;
-    float              MipLODBias     = 0.0f;
-    uint32             MaxAnisotropy  = 1;
-    float              MinLOD         = -FLT_MAX;
-    float              MaxLOD         = FLT_MAX;
-    SColorF            BorderColor;
+    ESamplerMode    AddressU;
+    ESamplerMode    AddressV;
+    ESamplerMode    AddressW;
+    ESamplerFilter  Filter;
+    EComparisonFunc ComparisonFunc;
+    float           MipLODBias;
+    uint32          MaxAnisotropy;
+    float           MinLOD;
+    float           MaxLOD;
+    SColorF         BorderColor;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHISamplerState
 
-class CRHISamplerState : public CRHIObject
+class CRHISamplerState : public CRHIResource
 {
+public:
+
+    /**
+     * @brief: Constructor
+     * 
+     * @param InDesc: Description for the SamplerState
+     */
+    CRHISamplerState(const SRHISamplerStateCreateDesc& InDesc)
+        : CRHIResource(ERHIResourceType::SamplerState)
+        , Desc(InDesc)
+    { }
+
+    /**
+     * @brief: Retrieve the bindless descriptor-handle if the RHI-supports descriptor-handles
+     * 
+     * @return: Returns the bindless descriptor-handle if the RHI-supports descriptor-handles
+     */
+    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
+
+    /**
+     * @brief: Retrieve the SamplerState description
+     * 
+     * @return: Returns the SamplerState description
+     */
+    const SRHISamplerStateCreateDesc& GetDesc() const { return Desc; }
+
+private:
+    SRHISamplerStateCreateDesc Desc;
 };

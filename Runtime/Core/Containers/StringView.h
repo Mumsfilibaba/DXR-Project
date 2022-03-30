@@ -31,7 +31,7 @@ public:
     typedef TReverseArrayIterator<const TStringView, const CharType> ReverseConstIteratorType;
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE TStringView() noexcept
         : ViewStart(nullptr)
@@ -39,7 +39,7 @@ public:
     { }
 
     /**
-     * Create a view from a raw string
+     * @brief: Create a view from a raw string
      * 
      * @param InString: String to view
      */
@@ -49,7 +49,7 @@ public:
     { }
 
     /**
-     * Create a view from a raw string with a fixed length
+     * @brief: Create a view from a raw string with a fixed length
      *
      * @param InString: String to view
      * @param InLength: Length of the string to view
@@ -60,7 +60,7 @@ public:
     { }
 
     /**
-     * Create a view from a string-type 
+     * @brief: Create a view from a string-type 
      * 
      * @param InString: String to view
      */
@@ -71,7 +71,7 @@ public:
     { }
 
     /**
-     * Copy Constructor
+     * @brief: Copy Constructor
      *
      * @param Other: Other view to copy from
      */
@@ -81,7 +81,7 @@ public:
     { }
 
     /**
-     * Move Constructor
+     * @brief: Move Constructor
      *
      * @param Other: Other view to move from
      */
@@ -94,7 +94,7 @@ public:
     }
 
     /**
-     * Clears the view
+     * @brief: Clears the view
      */
     FORCEINLINE void Clear() noexcept
     {
@@ -103,7 +103,7 @@ public:
     }
 
     /**
-     * Copy this string into buffer
+     * @brief: Copy this string into buffer
      *
      * @param Buffer: Buffer to fill
      * @param BufferSize: Size of the buffer to fill
@@ -119,7 +119,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the beginning and end of the string and returns a copy
+     * @brief: Removes whitespace from the beginning and end of the string and returns a copy
      *
      * @return: Returns a copy of this string with the whitespace removed in the end and beginning
      */
@@ -131,7 +131,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the beginning and end of the string
+     * @brief: Removes whitespace from the beginning and end of the string
      */
     FORCEINLINE void TrimInline() noexcept
     {
@@ -140,7 +140,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the beginning of the string and returns a copy
+     * @brief: Removes whitespace from the beginning of the string and returns a copy
      *
      * @return: Returns a copy of this string with all the whitespace removed from the beginning
      */
@@ -152,7 +152,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the beginning of the string
+     * @brief: Removes whitespace from the beginning of the string
      */
     FORCEINLINE void TrimStartInline() noexcept
     {
@@ -171,7 +171,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the end of the string and returns a copy
+     * @brief: Removes whitespace from the end of the string and returns a copy
      *
      * @return: Returns a copy of this string with all the whitespace removed from the end
      */
@@ -183,7 +183,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the end of the string
+     * @brief: Removes whitespace from the end of the string
      */
     FORCEINLINE void TrimEndInline() noexcept
     {
@@ -203,7 +203,7 @@ public:
     }
 
     /**
-     * Shrink the view from the left and return a copy
+     * @brief: Shrink the view from the left and return a copy
      * 
      * @param Num: Number of characters to trim
      * @return: Return a trimmed copy of the view
@@ -216,7 +216,7 @@ public:
     }
 
     /**
-     * Shrink the view from the left
+     * @brief: Shrink the view from the left
      *
      * @param Num: Number of characters to trim
      */
@@ -233,7 +233,7 @@ public:
     }
 
     /**
-     * Shrink the view from the right and return a copy
+     * @brief: Shrink the view from the right and return a copy
      *
      * @param Num: Number of characters to trim
      * @return: Return a trimmed copy of the view
@@ -246,7 +246,7 @@ public:
     }
 
     /**
-     * Shrink the view from the right
+     * @brief: Shrink the view from the right
      *
      * @param Num: Number of characters to trim
      */
@@ -263,7 +263,7 @@ public:
     }
 
     /**
-     * Compares this string to another string-type
+     * @brief: Compares this string to another string-type
      *
      * @param InString: String to compare with
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -275,7 +275,7 @@ public:
     }
 
     /**
-     * Compares this string with a raw-string
+     * @brief: Compares this string with a raw-string
      *
      * @param InString: String to compare with
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -286,7 +286,7 @@ public:
     }
 
     /**
-     * Compares this string with a raw-string of a fixed length
+     * @brief: Compares this string with a raw-string of a fixed length
      *
      * @param InString: String to compare with
      * @param InLength: Length of the string to compare
@@ -320,7 +320,7 @@ public:
     }
 
     /**
-     * Compares this string to another string-type without taking casing into account.
+     * @brief: Compares this string to another string-type without taking casing into account.
      *
      * @param InString: String to compare with
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -332,7 +332,7 @@ public:
     }
 
     /**
-     * Compares this string with a raw-string without taking casing into account.
+     * @brief: Compares this string with a raw-string without taking casing into account.
      *
      * @param InString: String to compare with
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -343,7 +343,7 @@ public:
     }
 
     /**
-     * Compares this string with a raw-string without taking casing into account.
+     * @brief: Compares this string with a raw-string without taking casing into account.
      *
      * @param InString: String to compare with
      * @param InLength: Length of the string to compare
@@ -380,7 +380,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string
+     * @brief: Find the position of the first occurrence of the start of the search-string
      *
      * @param InString: String to search
      * @param Position: Position to start search at
@@ -392,7 +392,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string
+     * @brief: Find the position of the first occurrence of the start of the search-string
      *
      * @param InString: String to search
      * @param Position: Position to start search at
@@ -405,7 +405,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string
+     * @brief: Find the position of the first occurrence of the start of the search-string
      *
      * @param InString: String to search
      * @param InString: Length of the search-string
@@ -444,7 +444,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of char
+     * @brief: Returns the position of the first occurrence of char
      *
      * @param Char: Character to search for
      * @param Position: Position to start search at
@@ -475,7 +475,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @brief: Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
      *
      * @param InString: String to search
      * @param Position: Position to start search at
@@ -487,7 +487,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @brief: Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
      *
      * @param InString: String to search
      * @param Position: Position to start search at
@@ -500,7 +500,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @brief: Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
      * Position is the end, instead of the start as with normal Find.
      *
      * @param InString: String to search
@@ -546,7 +546,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of char. Searches the string in reverse.
+     * @brief: Returns the position of the first occurrence of char. Searches the string in reverse.
      *
      * @param Char: Character to search for
      * @param Position: Position to start search at
@@ -580,7 +580,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of a character in the search-string that is found
+     * @brief: Returns the position of the first occurrence of a character in the search-string that is found
      *
      * @param InString: String of characters to search
      * @param Position: Position to start search at
@@ -592,7 +592,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of a character in the search-string that is found. The search string is of string-type.
+     * @brief: Returns the position of the first occurrence of a character in the search-string that is found. The search string is of string-type.
      *
      * @param InString: String of characters to search
      * @param Position: Position to start search at
@@ -605,7 +605,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of a character in the search-string that is found
+     * @brief: Returns the position of the first occurrence of a character in the search-string that is found
      *
      * @param InString: String of characters to search
      * @param InLength: Length of the search-string
@@ -641,7 +641,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character in the search-string that is found
+     * @brief: Returns the position of the last occurrence of a character in the search-string that is found
      *
      * @param InString: String of characters to search
      * @param Position: Position to start search at
@@ -653,7 +653,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character in the search-string that is found. The search string is of string-type.
+     * @brief: Returns the position of the last occurrence of a character in the search-string that is found. The search string is of string-type.
      *
      * @param InString: String of characters to search
      * @param Position: Position to start search at
@@ -666,7 +666,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character in the search-string that is found
+     * @brief: Returns the position of the last occurrence of a character in the search-string that is found
      *
      * @param InString: String of characters to search
      * @param InLength: Length of the search-string
@@ -710,7 +710,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of a character not a part of the search-string
+     * @brief: Returns the position of the first occurrence of a character not a part of the search-string
      *
      * @param InString: String of characters that should be a part of the string
      * @param Position: Position to start the search at
@@ -722,7 +722,7 @@ public:
     }
 
     /**
-     * Returns the position of the first character not a part of the search-string. The string is of a string-type.
+     * @brief: Returns the position of the first character not a part of the search-string. The string is of a string-type.
      *
      * @param InString: String of characters that should be a part of the string
      * @param Position: Position to start the search at
@@ -735,7 +735,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of a character not a part of the search-string
+     * @brief: Returns the position of the first occurrence of a character not a part of the search-string
      *
      * @param InString: String of characters that should be a part of the string
      * @param InLength: Length of the search-string
@@ -775,7 +775,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character not a part of the search-string
+     * @brief: Returns the position of the last occurrence of a character not a part of the search-string
      *
      * @param InString: String of characters that should be a part of the string
      * @param Position: Position to start the search at
@@ -787,7 +787,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character not a part of the search-string. The string is of a string-type.
+     * @brief: Returns the position of the last occurrence of a character not a part of the search-string. The string is of a string-type.
      *
      * @param InString: String of characters that should be a part of the string
      * @param Position: Position to start the search at
@@ -800,7 +800,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character not a part of the search-string
+     * @brief: Returns the position of the last occurrence of a character not a part of the search-string
      *
      * @param InString: String of characters that should be a part of the string
      * @param InLength: Length of the search-string
@@ -848,7 +848,7 @@ public:
     }
 
     /**
-     * Check if the search-string exists within the view
+     * @brief: Check if the search-string exists within the view
      *
      * @param InString: String to search for
      * @param Position: Position to start to search at
@@ -860,7 +860,7 @@ public:
     }
 
     /**
-     * Check if the search-string exists within the view. The string is of a string-type.
+     * @brief: Check if the search-string exists within the view. The string is of a string-type.
      *
      * @param InString: String to search for
      * @param Position: Position to start to search at
@@ -873,7 +873,7 @@ public:
     }
 
     /**
-     * Check if the search-string exists within the view
+     * @brief: Check if the search-string exists within the view
      *
      * @param InString: String to search for
      * @param Position: Position to start to search at
@@ -885,7 +885,7 @@ public:
     }
 
     /**
-     * Check if the character exists within the view
+     * @brief: Check if the character exists within the view
      *
      * @param InString: String to search for
      * @param Position: Position to start to search at
@@ -897,7 +897,7 @@ public:
     }
 
     /**
-     * Check if the one of the characters exists within the view
+     * @brief: Check if the one of the characters exists within the view
      *
      * @param InString: String of characters to search for
      * @param Position: Position to start to search at
@@ -909,7 +909,7 @@ public:
     }
 
     /**
-     * Check if the one of the characters exists within the view. The string is of a string-type.
+     * @brief: Check if the one of the characters exists within the view. The string is of a string-type.
      *
      * @param InString: String of characters to search for
      * @param Position: Position to start to search at
@@ -922,7 +922,7 @@ public:
     }
 
     /**
-     * Check if the one of the characters exists within the view
+     * @brief: Check if the one of the characters exists within the view
      *
      * @param InString: String of characters to search for
      * @param InLength: Length of the string with characters to search for
@@ -935,7 +935,7 @@ public:
     }
 
     /**
-     * Check if the container contains any elements
+     * @brief: Check if the container contains any elements
      *
      * @return: Returns true if the array is empty or false if it contains elements
      */
@@ -945,7 +945,7 @@ public:
     }
 
     /**
-     * Retrieve the first element of the view
+     * @brief: Retrieve the first element of the view
      *
      * @return: Returns a reference to the first element of the view
      */
@@ -956,7 +956,7 @@ public:
     }
 
     /**
-     * Retrieve the last element of the array
+     * @brief: Retrieve the last element of the array
      *
      * @return: Returns a reference to the last element of the view
      */
@@ -967,7 +967,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the view
+     * @brief: Retrieve a element at a certain index of the view
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -979,7 +979,7 @@ public:
     }
 
     /**
-     * Swap this view with another
+     * @brief: Swap this view with another
      *
      * @param Other: String to swap with
      */
@@ -990,7 +990,7 @@ public:
     }
 
     /**
-     * Retrieve the last index that can be used to retrieve an element from the view
+     * @brief: Retrieve the last index that can be used to retrieve an element from the view
      *
      * @return: Returns a the index to the last element of the view
      */
@@ -1001,7 +1001,7 @@ public:
     }
 
     /**
-     * Returns the size of the view
+     * @brief: Returns the size of the view
      *
      * @return: The current size of the view
      */
@@ -1011,7 +1011,7 @@ public:
     }
 
     /**
-     * Returns the length of the view
+     * @brief: Returns the length of the view
      *
      * @return: The current length of the view
      */
@@ -1021,7 +1021,7 @@ public:
     }
 
     /**
-     * Returns the size of the container in bytes
+     * @brief: Returns the size of the container in bytes
      *
      * @return: The current size of the container in bytes
      */
@@ -1031,7 +1031,7 @@ public:
     }
 
     /**
-     * Retrieve the data of the array
+     * @brief: Retrieve the data of the array
      *
      * @return: Returns a pointer to the data of the array
      */
@@ -1041,7 +1041,7 @@ public:
     }
 
     /**
-     * Retrieve a null-terminated string
+     * @brief: Retrieve a null-terminated string
      *
      * @return: Returns a pointer containing a null-terminated string
      */
@@ -1051,7 +1051,7 @@ public:
     }
 
     /**
-     * Create a sub-string view of this string
+     * @brief: Create a sub-string view of this string
      *
      * @param Position: Position to start the sub-string at
      * @param NumCharacters: Number of characters in the sub-string
@@ -1066,7 +1066,7 @@ public:
 public:
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -1077,7 +1077,7 @@ public:
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      *
      * @param Rhs: String to copy
      * @return: Return a reference to this instance
@@ -1089,7 +1089,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
      * @param Rhs: String to move
      * @return: Return a reference to this instance
@@ -1103,7 +1103,7 @@ public:
 public:
 
     /**
-     * Retrieve an iterator to the beginning of the array
+     * @brief: Retrieve an iterator to the beginning of the array
      *
      * @return: A iterator that points to the first element
      */
@@ -1113,7 +1113,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the end of the array
+     * @brief: Retrieve an iterator to the end of the array
      *
      * @return: A iterator that points to the element past the end
      */
@@ -1123,7 +1123,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the end of the array
+     * @brief: Retrieve an reverse-iterator to the end of the array
      *
      * @return: A reverse-iterator that points to the last element
      */
@@ -1133,7 +1133,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the start of the array
+     * @brief: Retrieve an reverse-iterator to the start of the array
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
@@ -1145,7 +1145,7 @@ public:
 public:
 
     /**
-     * STL start iterator, same as TArray::StartIterator
+     * @brief: STL start iterator, same as TArray::StartIterator
      *
      * @return: A iterator that points to the first element
      */
@@ -1155,7 +1155,7 @@ public:
     }
 
     /**
-     * STL end iterator, same as TArray::EndIterator
+     * @brief: STL end iterator, same as TArray::EndIterator
      *
      * @return: A iterator that points past the last element
      */

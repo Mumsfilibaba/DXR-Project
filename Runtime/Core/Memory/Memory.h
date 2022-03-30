@@ -32,7 +32,7 @@ class CORE_API CMemory
 public:
 
     /**
-     * Allocate memory
+     * @brief: Allocate memory
      * 
      * @param Size: The number of bytes to allocate
      * @return: Returns the newly allocated memory
@@ -40,7 +40,7 @@ public:
     static void* Malloc(uint64 Size) noexcept;
 
     /**
-     * Reallocate memory
+     * @brief: Reallocate memory
      *
      * @param Pointer: Pointer to the memory to reallocate
      * @param Size: The number of bytes to reallocate
@@ -49,14 +49,14 @@ public:
     static void* Realloc(void* Pointer, uint64 Size) noexcept;
 
     /**
-     * Free memory
+     * @brief: Free memory
      *
      * @param Pointer: A pointer to the memory to deallocate
      */
     static void Free(void* Pointer) noexcept;
 
     /**
-     * Move memory from one location to another. Can be overlapping memory-ranges.
+     * @brief: Move memory from one location to another. Can be overlapping memory-ranges.
      * 
      * @param Dest: Destination of the moved memory
      * @param Source: Source of the memory
@@ -66,7 +66,7 @@ public:
     static void* Memmove(void* Dest, const void* Source, uint64 Size) noexcept;
 
     /**
-     * Copy memory from one memory range to another
+     * @brief: Copy memory from one memory range to another
      *
      * @param Dest: Destination of the memory
      * @param Source: Source of the memory
@@ -76,7 +76,7 @@ public:
     static void* Memcpy(void* restrict_ptr Dest, const void* restrict_ptr Source, uint64 Size) noexcept;
 
     /**
-     * Set memory to a byte value
+     * @brief: Set memory to a byte value
      *
      * @param Dest: Destination of the memory to set
      * @param Value: Value to set each byte to 
@@ -86,7 +86,7 @@ public:
     static void* Memset(void* Dest, uint8 Value, uint64 Size) noexcept;
 
     /**
-     * Set memory to zero
+     * @brief: Set memory to zero
      *
      * @param Dest: Destination of the memory to set
      * @param Size: Size of the memory to set
@@ -97,7 +97,7 @@ public:
     // TODO: Check if we need all the information from memcmp and refactor in that case
     
     /**
-     * Compare two memory ranges
+     * @brief: Compare two memory ranges
      *
      * @param Lhs: Memory range 1
      * @param Rhs: Memory range 2
@@ -107,7 +107,7 @@ public:
     static bool Memcmp(const void* Lhs, const void* Rhs, uint64 Size) noexcept;
 
     /**
-     * Swaps the contents of two memory ranges
+     * @brief: Swaps the contents of two memory ranges
      *
      * @param Lhs: Memory range 1
      * @param Rhs: Memory range 2
@@ -116,7 +116,7 @@ public:
     static void Memswap(void* restrict_ptr Lhs, void* restrict_ptr Rhs, uint64 Size) noexcept;
 
     /**
-     * Copy memory range from one memory range to another and then set the source to zero
+     * @brief: Copy memory range from one memory range to another and then set the source to zero
      * 
      * @param Dest: Destination memory range
      * @param Source: Source memory range
@@ -132,7 +132,7 @@ public:
     }
 
     /**
-     * Allocate memory typed
+     * @brief: Allocate memory typed
      * 
      * @param Count: Number of elements to allocate
      * @return: Returns of the newly allocated memory
@@ -144,7 +144,7 @@ public:
     }
 
     /**
-     * Reallocate memory typed
+     * @brief: Reallocate memory typed
      *
      * @param Pointer: Pointer to the memory to reallocate
      * @param Count: Number of elements to allocate
@@ -158,7 +158,7 @@ public:
     }
 
     /**
-     * Set memory to zero
+     * @brief: Set memory to zero
      * 
      * @param Dest: Destination of memory to zero
      * @param SizeInBytes: Size of the memory zero
@@ -170,7 +170,7 @@ public:
     }
 
     /**
-     * Set memory to zero
+     * @brief: Set memory to zero
      *
      * @param Dest: Destination of memory to zero
      * @return: Returns the destination pointer
@@ -182,7 +182,7 @@ public:
     }
 
     /**
-     * Copy memory typed
+     * @brief: Copy memory typed
      *
      * @param Dest: Destination of memory to copy
      * @param Source: Source of the memory to copy
@@ -195,7 +195,7 @@ public:
     }
 
     /**
-     * Compare memory typed
+     * @brief: Compare memory typed
      *
      * @param Lhs: Destination of memory to copy
      * @param Rhs: Source of the memory to copy
@@ -209,7 +209,7 @@ public:
     }
 
     /**
-     * Copy typed memory range from one memory range to another and then set the source to zero
+     * @brief: Copy typed memory range from one memory range to another and then set the source to zero
      *
      * @param Dest: Destination memory range
      * @param Source: Source memory range

@@ -159,7 +159,7 @@ class TFunction<ReturnType(ArgTypes...)>
 public:
 
     /**
-     *  Default constructor
+     * @brief:  Default constructor
      */
     FORCEINLINE TFunction() noexcept
         : Storage()
@@ -167,7 +167,7 @@ public:
     { }
 
     /**
-     * Create from nullptr. Same as default constructor.
+     * @brief: Create from nullptr. Same as default constructor.
      */
     FORCEINLINE TFunction(NullptrType) noexcept
         : Storage()
@@ -175,7 +175,7 @@ public:
     { }
 
     /**
-     * Construct a function from a functor
+     * @brief: Construct a function from a functor
      *
      * @param Functor: Functor to store
      */
@@ -188,7 +188,7 @@ public:
     }
 
     /**
-     * Copy-constructor
+     * @brief: Copy-constructor
      *
      * @param Other: Function to copy from
      */
@@ -200,7 +200,7 @@ public:
     }
 
     /**
-     * Move-constructor
+     * @brief: Move-constructor
      *
      * @param Other: Function to move from
      */
@@ -212,7 +212,7 @@ public:
     }
 
     /**
-     * Destructor
+     * @brief: Destructor
      */
     FORCEINLINE ~TFunction()
     {
@@ -220,7 +220,7 @@ public:
     }
 
     /**
-     * Checks weather the pointer is valid or not
+     * @brief: Checks weather the pointer is valid or not
      *
      * @return: True if the pointer is not nullptr otherwise false
      */
@@ -230,7 +230,7 @@ public:
     }
 
     /**
-     * Swap functor with another instance
+     * @brief: Swap functor with another instance
      *
      * @param Other: Function to swap with
      */
@@ -243,7 +243,7 @@ public:
     }
 
     /**
-     * Assign a new functor
+     * @brief: Assign a new functor
      * 
      * @param Functor: New functor to store
      */
@@ -255,7 +255,7 @@ public:
     }
 
     /**
-     * Invoke the stored function
+     * @brief: Invoke the stored function
      *
      * @param Args: Arguments to forward to the function-call
      * @return: The return value from the function-call
@@ -267,7 +267,7 @@ public:
     }
 
     /**
-     * Invoke the stored function
+     * @brief: Invoke the stored function
      * 
      * @param Args: Arguments to forward to the function-call
      * @return: The return value from the function-call
@@ -280,7 +280,7 @@ public:
 public:
 
     /**
-     * Checks weather the pointer is valid or not
+     * @brief: Checks weather the pointer is valid or not
      *
      * @return: True if the pointer is not nullptr otherwise false
      */
@@ -290,7 +290,7 @@ public:
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      *
      * @param Rhs: Instance to copy from
      * @return: A reference to this object
@@ -302,7 +302,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
      * @param Rhs: Instance to move from
      * @return: A reference to this object
@@ -314,7 +314,7 @@ public:
     }
 
     /**
-     * Set the pointer to nullptr
+     * @brief: Set the pointer to nullptr
      *
      * @return: A reference to this object
      */

@@ -137,11 +137,11 @@ void CForwardRenderer::Release()
 void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup)
 {
     // Forward Pass
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin ForwardPass");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "Begin ForwardPass");
 
     TRACE_SCOPE("ForwardPass");
 
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), ERHIResourceAccess::NonPixelShaderResource, ERHIResourceAccess::PixelShaderResource);
 
     const float RenderWidth = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
@@ -214,7 +214,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
         CmdList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
     }
 
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), ERHIResourceAccess::PixelShaderResource, ERHIResourceAccess::NonPixelShaderResource);
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End ForwardPass");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "End ForwardPass");
 }

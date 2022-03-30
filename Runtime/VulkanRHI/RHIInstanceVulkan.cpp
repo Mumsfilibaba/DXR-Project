@@ -102,27 +102,27 @@ bool CRHIInstanceVulkan::Initialize(bool bEnableDebug)
     return true;
 }
 
-CRHITexture2D* CRHIInstanceVulkan::CreateTexture2D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
+CRHITexture2D* CRHIInstanceVulkan::CreateTexture2D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
 {
     return dbg_new CVulkanTexture2D(GetDevice(), Format, Width, Height, NumMipLevels, NumSamples, Flags, OptimizedClearValue);
 }
 
-CRHITexture2DArray* CRHIInstanceVulkan::CreateTexture2DArray(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
+CRHITexture2DArray* CRHIInstanceVulkan::CreateTexture2DArray(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
 {
     return dbg_new CVulkanTexture2DArray(GetDevice(), Format, Width, Height, NumMipLevels, NumSamples, NumArraySlices, Flags, OptimizedClearValue);
 }
 
-CRHITextureCube* CRHIInstanceVulkan::CreateTextureCube(ERHIFormat Format, uint32 Size, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
+CRHITextureCube* CRHIInstanceVulkan::CreateTextureCube(ERHIFormat Format, uint32 Size, uint32 NumMipLevels, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
 {
     return dbg_new CVulkanTextureCube(GetDevice(), Format, Size, NumMipLevels, Flags, OptimizedClearValue);
 }
 
-CRHITextureCubeArray* CRHIInstanceVulkan::CreateTextureCubeArray(ERHIFormat Format, uint32 Size, uint32 NumMipLevels, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
+CRHITextureCubeArray* CRHIInstanceVulkan::CreateTextureCubeArray(ERHIFormat Format, uint32 Size, uint32 NumMipLevels, uint32 NumArraySlices, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
 {
     return dbg_new CVulkanTextureCubeArray(GetDevice(), Format, Size, NumMipLevels, NumArraySlices, Flags, OptimizedClearValue);
 }
 
-CRHITexture3D* CRHIInstanceVulkan::CreateTexture3D(ERHIFormat Format, uint32 Width,uint32 Height, uint32 Depth, uint32 NumMipLevels, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
+CRHITexture3D* CRHIInstanceVulkan::CreateTexture3D(ERHIFormat Format, uint32 Width,uint32 Height, uint32 Depth, uint32 NumMipLevels, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue)
 {
     return dbg_new CVulkanTexture3D(GetDevice(), Format, Width, Height, Depth, NumMipLevels, Flags, OptimizedClearValue);
 }
@@ -132,7 +132,7 @@ CRHISamplerStateRef CRHIInstanceVulkan::CreateSamplerState(const class CRHISampl
     return dbg_new CVulkanSamplerState();
 }
 
-CRHIBufferRef CRHIInstanceVulkan::CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceState InitialState, const SRHIResourceData* InitalData)
+CRHIBufferRef CRHIInstanceVulkan::CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData)
 {
     CVulkanBufferRef NewBuffer = dbg_new CVulkanBuffer(GetDevice(), BufferDesc);
     if (NewBuffer && NewBuffer->Initialize())

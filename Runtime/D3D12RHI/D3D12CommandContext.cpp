@@ -888,7 +888,7 @@ void CD3D12CommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITextu
     CmdBatch->AddInUseResource(Source);
 }
 
-void CD3D12CommandContext::DestroyResource(CRHIObject* Resource)
+void CD3D12CommandContext::DestroyResource(CRHIResource* Resource)
 {
     CmdBatch->AddInUseResource(Resource);
 }
@@ -1236,7 +1236,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     CmdBatch->AddInUseResource(StagingTexture.Get());
 }
 
-void CD3D12CommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState)
+void CD3D12CommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState)
 {
     const D3D12_RESOURCE_STATES DxBeforeState = ConvertResourceState(BeforeState);
     const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);
@@ -1247,7 +1247,7 @@ void CD3D12CommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceS
     CmdBatch->AddInUseResource(Texture);
 }
 
-void CD3D12CommandContext::TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState)
+void CD3D12CommandContext::TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState)
 {
     const D3D12_RESOURCE_STATES DxBeforeState = ConvertResourceState(BeforeState);
     const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);

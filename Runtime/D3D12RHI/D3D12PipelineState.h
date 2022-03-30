@@ -157,7 +157,7 @@ public:
 
     virtual void SetName(const String& InName) override final
     {
-        CRHIObject::SetName(InName);
+        CRHIResource::SetName(InName);
         PipelineState->SetPrivateData(WKPDID_D3DDebugObjectName, InName.Length(), InName.CStr());
     }
 
@@ -200,7 +200,7 @@ public:
 
     virtual void SetName(const String& InName) override final
     {
-        CRHIObject::SetName(InName);
+        CRHIResource::SetName(InName);
         PipelineState->SetPrivateData(WKPDID_D3DDebugObjectName, InName.Length(), InName.CStr());
     }
 
@@ -251,7 +251,7 @@ public:
 
     virtual void SetName(const String& InName) override
     {
-        CRHIObject::SetName(InName);
+        CRHIResource::SetName(InName);
         StateObject->SetPrivateData(WKPDID_D3DDebugObjectName, InName.Length(), InName.CStr());
     }
 

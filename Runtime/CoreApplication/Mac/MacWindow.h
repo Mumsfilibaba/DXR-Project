@@ -18,7 +18,7 @@ class CMacWindow final : public CPlatformWindow
 public:
 
     /**
-     * Create new MacWindow object
+     * @brief: Create new MacWindow object
      *
      * @param InApplication: The application that created the window
      * @return: Returns the newly created window object
@@ -26,7 +26,7 @@ public:
     static TSharedRef<CMacWindow> CreateWindow(CMacApplication* InApplication);
     
     /**
-     * Retrieve the native window object
+     * @brief: Retrieve the native window object
      *
      * @return: Returns the native window object
      */

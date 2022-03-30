@@ -14,7 +14,7 @@ struct TPair
     TPair(TPair&&) = default;
 
     /**
-     * Create a new instance of a pair
+     * @brief: Create a new instance of a pair
      * 
      * @param InFirst: Instance of the first type to copy
      * @param InSecond: Instance of the second type to copy
@@ -25,7 +25,7 @@ struct TPair
     { }
 
     /**
-     * Create a new instance of a pair
+     * @brief: Create a new instance of a pair
      *
      * @param InFirst: Instance of the first type to move
      * @param InSecond: Instance of the second type to move
@@ -37,7 +37,7 @@ struct TPair
     { }
 
     /**
-     * Copy constructor
+     * @brief: Copy constructor
      * 
      * @param Other: Pair to copy
      */
@@ -48,7 +48,7 @@ struct TPair
     { }
 
     /**
-     * Move constructor
+     * @brief: Move constructor
      *
      * @param Other: Pair to move
      */
@@ -59,7 +59,7 @@ struct TPair
     { }
 
     /**
-     * Swap this pair with another
+     * @brief: Swap this pair with another
      * 
      * @param Other: Pair to swap with 
      */
@@ -72,7 +72,7 @@ struct TPair
 public:
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      * 
      * @param Rhs: Pair to copy
      * @return: A reference to this instance
@@ -84,7 +84,7 @@ public:
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      *
      * @param Rhs: Pair to copy
      * @return: A reference to this instance
@@ -98,7 +98,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
      * @param Rhs: Pair to move
      * @return: A reference to this instance
@@ -110,7 +110,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
      * @param Rhs: Pair to move
      * @return: A reference to this instance

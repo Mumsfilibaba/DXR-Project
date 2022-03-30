@@ -18,12 +18,12 @@ public:
     // TODO: Add parameters to console commands
 
     /**
-     * Execute the ConsoleCommand
+     * @brief: Execute the ConsoleCommand
      */
     virtual void Execute() = 0;
 
     /**
-     * Retrieve the delegate that gets broadcasted when the console executes the command 
+     * @brief: Retrieve the delegate that gets broadcasted when the console executes the command 
      * 
      * @return: Returns the execute delegate
      */

@@ -13,7 +13,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Adds two integers atomically and return original value
+     * @brief: Adds two integers atomically and return original value
      * 
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -25,7 +25,7 @@ public:
     }
 
     /**
-     * Adds two integers atomically and return original value
+     * @brief: Adds two integers atomically and return original value
      * 
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -37,7 +37,7 @@ public:
     }
 
     /**
-     * Adds two integers atomically and return original value
+     * @brief: Adds two integers atomically and return original value
      * 
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -49,7 +49,7 @@ public:
     }
 
     /**
-     * Adds two integers atomically and return original value
+     * @brief: Adds two integers atomically and return original value
      * 
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -63,7 +63,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Subtract two integers atomically and return original value
+     * @brief: Subtract two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -75,7 +75,7 @@ public:
     }
 
     /**
-     * Subtract two integers atomically and return original value
+     * @brief: Subtract two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -87,7 +87,7 @@ public:
     }
 
     /**
-     * Subtract two integers atomically and return original value
+     * @brief: Subtract two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -99,7 +99,7 @@ public:
     }
 
     /**
-     * Subtract two integers atomically and return original value
+     * @brief: Subtract two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -113,7 +113,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Bitwise AND two integers atomically and return original value
+     * @brief: Bitwise AND two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -125,7 +125,7 @@ public:
     }
 
     /**
-     * Bitwise AND two integers atomically and return original value
+     * @brief: Bitwise AND two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -137,7 +137,7 @@ public:
     }
 
     /**
-     * Bitwise AND two integers atomically and return original value
+     * @brief: Bitwise AND two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -149,7 +149,7 @@ public:
     }
 
     /**
-     * Bitwise AND two integers atomically and return original value
+     * @brief: Bitwise AND two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -163,7 +163,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Bitwise OR two integers atomically and return original value
+     * @brief: Bitwise OR two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -175,7 +175,7 @@ public:
     }
 
     /**
-     * Bitwise OR two integers atomically and return original value
+     * @brief: Bitwise OR two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -187,7 +187,7 @@ public:
     }
 
     /**
-     * Bitwise OR two integers atomically and return original value
+     * @brief: Bitwise OR two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -199,7 +199,7 @@ public:
     }
 
     /**
-     * Bitwise OR two integers atomically and return original value
+     * @brief: Bitwise OR two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -213,7 +213,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Bitwise XOR two integers atomically and return original value
+     * @brief: Bitwise XOR two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -225,7 +225,7 @@ public:
     }
 
     /**
-     * Bitwise XOR two integers atomically and return original value
+     * @brief: Bitwise XOR two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -237,7 +237,7 @@ public:
     }
 
     /**
-     * Bitwise XOR two integers atomically and return original value
+     * @brief: Bitwise XOR two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -249,7 +249,7 @@ public:
     }
 
     /**
-     * Bitwise XOR two integers atomically and return original value
+     * @brief: Bitwise XOR two integers atomically and return original value
      *
      * @param Lhs: Pointer to first, which is also used to store the result
      * @param Rhs: Second operand
@@ -263,7 +263,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Increment an integer atomically and return new value
+     * @brief: Increment an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to increment, which is also used to store the result
      * @return: Returns the new value
@@ -275,7 +275,7 @@ public:
     }
 
     /**
-     * Increment an integer atomically and return new value
+     * @brief: Increment an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to increment, which is also used to store the result
      * @return: Returns the new value
@@ -287,7 +287,7 @@ public:
     }
 
     /**
-     * Increment an integer atomically and return new value
+     * @brief: Increment an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to increment, which is also used to store the result
      * @return: Returns the new value
@@ -299,7 +299,7 @@ public:
     }
 
     /**
-     * Increment an integer atomically and return new value
+     * @brief: Increment an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to increment, which is also used to store the result
      * @return: Returns the new value
@@ -313,7 +313,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Decrement an integer atomically and return new value
+     * @brief: Decrement an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to decrement, which is also used to store the result
      * @return: Returns the new value
@@ -325,7 +325,7 @@ public:
     }
 
     /**
-     * Decrement an integer atomically and return new value
+     * @brief: Decrement an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to decrement, which is also used to store the result
      * @return: Returns the new value
@@ -337,7 +337,7 @@ public:
     }
 
     /**
-     * Decrement an integer atomically and return new value
+     * @brief: Decrement an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to decrement, which is also used to store the result
      * @return: Returns the new value
@@ -349,7 +349,7 @@ public:
     }
 
     /**
-     * Decrement an integer atomically and return new value
+     * @brief: Decrement an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to decrement, which is also used to store the result
      * @return: Returns the new value
@@ -363,7 +363,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Compares two values, if equal then one of them gets exchanged. Returns the original value.
+     * @brief: Compares two values, if equal then one of them gets exchanged. Returns the original value.
      *
      * @param Dest: Pointer to destination
      * @param Exchange: Value to exchange
@@ -376,7 +376,7 @@ public:
     }
 
     /**
-     * Compares two values, if equal then one of them gets exchanged. Returns the original value.
+     * @brief: Compares two values, if equal then one of them gets exchanged. Returns the original value.
      *
      * @param Dest: Pointer to destination
      * @param Exchange: Value to exchange
@@ -389,7 +389,7 @@ public:
     }
 
     /**
-     * Compares two values, if equal then one of them gets exchanged. Returns the original value.
+     * @brief: Compares two values, if equal then one of them gets exchanged. Returns the original value.
      *
      * @param Dest: Pointer to destination
      * @param Exchange: Value to exchange
@@ -402,7 +402,7 @@ public:
     }
 
     /**
-     * Compares two values, if equal then one of them gets exchanged. Returns the original value.
+     * @brief: Compares two values, if equal then one of them gets exchanged. Returns the original value.
      *
      * @param Dest: Pointer to destination
      * @param Exchange: Value to exchange
@@ -417,7 +417,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Sets an integer to a specified value atomically and returns the original value.
+     * @brief: Sets an integer to a specified value atomically and returns the original value.
      *
      * @param Target: Pointer to target
      * @param Value: New value to for the target
@@ -429,7 +429,7 @@ public:
     }
 
     /**
-     * Sets an integer to a specified value atomically and returns the original value.
+     * @brief: Sets an integer to a specified value atomically and returns the original value.
      *
      * @param Target: Pointer to target
      * @param Value: New value to for the target
@@ -441,7 +441,7 @@ public:
     }
 
     /**
-     * Sets an integer to a specified value atomically and returns the original value.
+     * @brief: Sets an integer to a specified value atomically and returns the original value.
      *
      * @param Target: Pointer to target
      * @param Value: New value to for the target
@@ -453,7 +453,7 @@ public:
     }
 
     /**
-     * Sets an integer to a specified value atomically and returns the original value.
+     * @brief: Sets an integer to a specified value atomically and returns the original value.
      *
      * @param Target: Pointer to target
      * @param Value: New value to for the target

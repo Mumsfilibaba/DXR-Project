@@ -17,7 +17,7 @@ public:
     FORCEINLINE void Lock() noexcept { }
 
     /**
-     * Try to lock CriticalSection for other threads
+     * @brief: Try to lock CriticalSection for other threads
      * 
      * @return; Returns true if the lock is successful
      */
@@ -27,7 +27,7 @@ public:
     FORCEINLINE void Unlock() noexcept { }
 
     /**
-     * Retrieve platform specific handle
+     * @brief: Retrieve platform specific handle
      *
      * @return: Returns a platform specific handle or nullptr if no platform handle is defined
      */

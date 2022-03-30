@@ -36,59 +36,59 @@ class COREAPPLICATION_API CPlatformConsoleWindow
 public:
 
     /**
-     * Creates a new console-window
+     * @brief: Creates a new console-window
      * 
      * @return: Returns a newly created console-window, returns nullptr on failure
      */
     static CPlatformConsoleWindow* CreateWindow() { return dbg_new CPlatformConsoleWindow(); }
 
     /**
-     * Show or hide the console-window 
+     * @brief: Show or hide the console-window 
      * 
      * @param bShow: True if the console-window should be visible, false otherwise
      */
     virtual void Show(bool bShow) { }
 
     /**
-     * Prints text to the console-window, but does not start a new line 
+     * @brief: Prints text to the console-window, but does not start a new line 
      * 
      * @param Message: Message to print to the console-window
      */
     virtual void Print(const String& Message) { }
 
     /**
-     * Prints text to the console-window and starts a new line
+     * @brief: Prints text to the console-window and starts a new line
      *
      * @param Message: Message to print to the console
      */
     virtual void PrintLine(const String& Message) { }
 
     /**
-     * Clear the console window 
+     * @brief: Clear the console window 
      */
     virtual void Clear() { }
 
     /**
-     *  Set the title of the console window
+     * @brief:  Set the title of the console window
      * 
      * @param Title: New title for the console-window
      */
     virtual void SetTitle(const String& Title) { }
 
     /**
-     * Set the text-color
+     * @brief: Set the text-color
      * 
      * @param Color: The new color for the text in the console-window
      */
     virtual void SetColor(EConsoleColor Color) { }
 
     /**
-     * Releases the console-window and destroys the object 
+     * @brief: Releases the console-window and destroys the object 
      */
     virtual void Release() { delete this; }
 
     /**
-     * Returns true if the console-window is currently being displayed 
+     * @brief: Returns true if the console-window is currently being displayed 
      * 
      * @return: Return true if the console-window is visible
      */

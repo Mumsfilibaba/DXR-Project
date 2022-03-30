@@ -100,7 +100,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAONoise.Emplace(0.0f);
     }
 
-    SSAONoiseTex = RHICreateTexture2D(ERHIFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, ERHIResourceState::NonPixelShaderResource, nullptr);
+    SSAONoiseTex = RHICreateTexture2D(ERHIFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, ERHIResourceAccess::NonPixelShaderResource, nullptr);
     if (!SSAONoiseTex)
     {
         CDebug::DebugBreak();
@@ -113,18 +113,18 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     CRHICommandList CmdList;
 
-    CmdList.TransitionTexture(FrameResources.SSAOBuffer.Get(), ERHIResourceState::Common, ERHIResourceState::NonPixelShaderResource);
-    CmdList.TransitionTexture(SSAONoiseTex.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::CopyDest);
+    CmdList.TransitionTexture(FrameResources.SSAOBuffer.Get(), ERHIResourceAccess::Common, ERHIResourceAccess::NonPixelShaderResource);
+    CmdList.TransitionTexture(SSAONoiseTex.Get(), ERHIResourceAccess::NonPixelShaderResource, ERHIResourceAccess::CopyDest);
 
     CmdList.UpdateTexture2D(SSAONoiseTex.Get(), 4, 4, 0, SSAONoise.Data());
 
-    CmdList.TransitionTexture(SSAONoiseTex.Get(), ERHIResourceState::CopyDest, ERHIResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(SSAONoiseTex.Get(), ERHIResourceAccess::CopyDest, ERHIResourceAccess::NonPixelShaderResource);
 
     CRHICommandQueue::Get().ExecuteCommandList(CmdList);
 
     const uint32 Stride = sizeof(CVector3);
     SRHIResourceData SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
-    SSAOSamples = RHICreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, ERHIResourceState::Common, &SSAOSampleData);
+    SSAOSamples = RHICreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, ERHIResourceAccess::Common, &SSAOSampleData);
     if (!SSAOSamples)
     {
         CDebug::DebugBreak();
@@ -237,7 +237,7 @@ bool CScreenSpaceOcclusionRenderer::ResizeResources(SFrameResources& FrameResour
 
 void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResources& FrameResources)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "Begin SSAO");
 
     TRACE_SCOPE("SSAO");
 
@@ -265,8 +265,8 @@ void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResou
     AddDebugTexture(
         MakeSharedRef<CRHIShaderResourceView>(SSAONoiseTex->GetShaderResourceView()),
         SSAONoiseTex,
-        ERHIResourceState::NonPixelShaderResource,
-        ERHIResourceState::NonPixelShaderResource);
+        ERHIResourceAccess::NonPixelShaderResource,
+        ERHIResourceAccess::NonPixelShaderResource);
 
     CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 1);
@@ -302,7 +302,7 @@ void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResou
 
     CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End SSAO");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "End SSAO");
 }
 
 bool CScreenSpaceOcclusionRenderer::CreateRenderTarget(SFrameResources& FrameResources)
@@ -311,7 +311,7 @@ bool CScreenSpaceOcclusionRenderer::CreateRenderTarget(SFrameResources& FrameRes
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
     const uint32 Flags = TextureFlags_RWTexture;
 
-    FrameResources.SSAOBuffer = RHICreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, ERHIResourceState::Common, nullptr);
+    FrameResources.SSAOBuffer = RHICreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, ERHIResourceAccess::Common, nullptr);
     if (!FrameResources.SSAOBuffer)
     {
         CDebug::DebugBreak();

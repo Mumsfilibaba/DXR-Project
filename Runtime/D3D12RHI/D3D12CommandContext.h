@@ -99,11 +99,11 @@ public:
         }
     }
 
-    FORCEINLINE void AddInUseResource(CRHIObject* InResource)
+    FORCEINLINE void AddInUseResource(CRHIResource* InResource)
     {
         if (InResource)
         {
-            Resources.Emplace(MakeSharedRef<CRHIObject>(InResource));
+            Resources.Emplace(MakeSharedRef<CRHIResource>(InResource));
         }
     }
 
@@ -154,7 +154,7 @@ public:
     TSharedRef<CD3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
 
     TArray<CD3D12ResourceRef>      D3dResources;
-    TArray<TSharedRef<CRHIObject>> Resources;
+    TArray<TSharedRef<CRHIResource>> Resources;
 
     TArray<TComPtr<ID3D12Resource>> NativeResources;
 };
@@ -321,7 +321,7 @@ public:
     virtual void CopyTexture(CRHITexture* Destination, CRHITexture* Source) override final;
     virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo) override final;
 
-    virtual void DestroyResource(class CRHIObject* Resource) override final;
+    virtual void DestroyResource(class CRHIResource* Resource) override final;
     virtual void DiscardContents(class CRHIResource* Resource) override final;
 
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer, bool bUpdate) override final;
@@ -339,8 +339,8 @@ public:
 
     virtual void GenerateMips(CRHITexture* Texture) override final;
 
-    virtual void TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState) override final;
-    virtual void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState) override final;
+    virtual void TransitionTexture(CRHITexture* Texture, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState) override final;
+    virtual void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState) override final;
 
     virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) override final;
     virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer) override final;

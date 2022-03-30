@@ -517,25 +517,25 @@ inline const char* GetVkErrorString(VkResult result)
     }
 }
 
-inline VkImageLayout ConvertResourceStateToImageLayout(ERHIResourceState ResourceState)
+inline VkImageLayout ConvertResourceStateToImageLayout(ERHIResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
-        case ERHIResourceState::Common:                 return VK_IMAGE_LAYOUT_GENERAL;
-        case ERHIResourceState::RenderTarget:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        case ERHIResourceState::RenderTargetClear:      return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case ERHIResourceState::UnorderedAccess:        return VK_IMAGE_LAYOUT_GENERAL;
-        case ERHIResourceState::DepthClear:             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case ERHIResourceState::DepthWrite:             return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        case ERHIResourceState::DepthRead:              return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-        case ERHIResourceState::PixelShaderResource:    return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        case ERHIResourceState::NonPixelShaderResource: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        case ERHIResourceState::CopyDest:               return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case ERHIResourceState::CopySource:             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case ERHIResourceState::ResolveDest:            return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case ERHIResourceState::ResolveSource:          return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case ERHIResourceState::Present:                return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        case ERHIResourceState::ShadingRateSource:      return VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV;
+        case ERHIResourceAccess::Common:                 return VK_IMAGE_LAYOUT_GENERAL;
+        case ERHIResourceAccess::RenderTarget:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        case ERHIResourceAccess::RenderTargetClear:      return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ERHIResourceAccess::UnorderedAccess:        return VK_IMAGE_LAYOUT_GENERAL;
+        case ERHIResourceAccess::DepthClear:             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ERHIResourceAccess::DepthWrite:             return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        case ERHIResourceAccess::DepthRead:              return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+        case ERHIResourceAccess::PixelShaderResource:    return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case ERHIResourceAccess::NonPixelShaderResource: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case ERHIResourceAccess::CopyDest:               return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case ERHIResourceAccess::CopySource:             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ERHIResourceAccess::ResolveDest:            return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case ERHIResourceAccess::ResolveSource:          return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case ERHIResourceAccess::Present:                return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        case ERHIResourceAccess::ShadingRateSource:      return VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV;
         default:                                        return VK_IMAGE_LAYOUT_UNDEFINED;
     }
 }

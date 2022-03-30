@@ -44,7 +44,7 @@ public:
 public:
 
     /**
-     * Calls GetLastError and retrieves a string from it 
+     * @brief: Calls GetLastError and retrieves a string from it 
      * 
      * @param OutErrorString: String that will hold the error string
      */

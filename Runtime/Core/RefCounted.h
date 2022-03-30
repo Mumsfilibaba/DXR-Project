@@ -4,39 +4,34 @@
 #include "Core/Threading/AtomicInt.h"
 #include "Core/Templates/IsBaseOf.h"
 #include "Core/Templates/EnableIf.h"
+#include "Core/Templates/ClassUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRefCounted - Base-class for intrusive ref-counted object
 
-class CORE_API CRefCounted
+class CORE_API CRefCounted : CNonCopyable, CNonMovable
 {
 public:
-
-    // CRefCounted is not copy- or movable
-    CRefCounted(const CRefCounted&) = delete;
-    CRefCounted(CRefCounted&&) = delete;
-    CRefCounted& operator=(const CRefCounted&) = delete;
-    CRefCounted& operator=(CRefCounted&&) = delete;
 
     CRefCounted();
     virtual ~CRefCounted();
 
     /**
-     * Adds a reference
+     * @brief: Adds a reference
      * 
      * @return: Returns the new reference count
      */
     int32 AddRef();
     
     /**
-     * Removes a reference
+     * @brief: Removes a reference
      *
      * @return: Returns the new reference count
      */
     int32 Release();
 
     /**
-     * Retrieve the reference count
+     * @brief: Retrieve the reference count
      *
      * @return: Returns the current reference count
      */

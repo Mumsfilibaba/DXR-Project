@@ -18,14 +18,14 @@ public:
     friend class TSharedRef;
 
     /**
-     *  Default constructor that set the pointer to nullptr
+     * @brief:  Default constructor that set the pointer to nullptr
      */
     FORCEINLINE TSharedRef() noexcept
         : Ptr(nullptr)
     { }
 
     /**
-     * Copy-constructor
+     * @brief: Copy-constructor
      *
      * @param Other: SharedRef to copy from
      */
@@ -36,7 +36,7 @@ public:
     }
 
     /**
-     * Copy-constructor from a SharedRef of a convertible type
+     * @brief: Copy-constructor from a SharedRef of a convertible type
      *
      * @param Other: SharedRef to copy from
      */
@@ -48,7 +48,7 @@ public:
     }
 
     /**
-     * Move-constructor
+     * @brief: Move-constructor
      *
      * @param Other: SharedRef to move from
      */
@@ -59,7 +59,7 @@ public:
     }
 
     /**
-     * Move-constructor from a SharedRef of a convertible type
+     * @brief: Move-constructor from a SharedRef of a convertible type
      *
      * @param Other: SharedRef to move from
      */
@@ -71,7 +71,7 @@ public:
     }
 
     /**
-     * Construct a SharedRef from a raw pointer. The container takes ownership.
+     * @brief: Construct a SharedRef from a raw pointer. The container takes ownership.
      *
      * @param InPointer: Pointer to reference
      */
@@ -80,7 +80,7 @@ public:
     { }
 
     /**
-     * Construct a SharedRef from a raw pointer of a convertible type. The container takes ownership.
+     * @brief: Construct a SharedRef from a raw pointer of a convertible type. The container takes ownership.
      *
      * @param InPointer: Pointer to reference
      */
@@ -90,7 +90,7 @@ public:
     { }
 
     /**
-     * Destructor
+     * @brief: Destructor
      */
     FORCEINLINE ~TSharedRef()
     {
@@ -98,7 +98,7 @@ public:
     }
 
     /**
-     * Resets the container and sets to a potential new raw pointer
+     * @brief: Resets the container and sets to a potential new raw pointer
      *
      * @param NewPtr: New pointer to reference
      */
@@ -108,7 +108,7 @@ public:
     }
 
     /**
-     * Resets the container and sets to a potential new raw pointer of a convertible type
+     * @brief: Resets the container and sets to a potential new raw pointer of a convertible type
      *
      * @param NewPtr: New pointer to reference
      */
@@ -119,7 +119,7 @@ public:
     }
 
     /**
-     * Swaps the pointers in the two containers
+     * @brief: Swaps the pointers in the two containers
      *
      * @param Other: SharedPtr to swap with
      */
@@ -129,7 +129,7 @@ public:
     }
 
     /**
-     * Releases the ownership of the pointer and returns the pointer
+     * @brief: Releases the ownership of the pointer and returns the pointer
      *
      * @return: Returns the pointer that was previously held by the container
      */
@@ -141,7 +141,7 @@ public:
     }
 
     /**
-     * Adds a reference to the stored pointer
+     * @brief: Adds a reference to the stored pointer
      */
     FORCEINLINE void AddRef() noexcept
     {
@@ -152,7 +152,7 @@ public:
     }
 
     /**
-     * Retrieve the raw pointer
+     * @brief: Retrieve the raw pointer
      *
      * @return: Returns the raw pointer
      */
@@ -162,7 +162,7 @@ public:
     }
 
     /**
-     * Retrieve the current reference count of the object. The object needs to be valid.
+     * @brief: Retrieve the current reference count of the object. The object needs to be valid.
      *
      * @return: The current reference count of the stored pointer
      */
@@ -173,7 +173,7 @@ public:
     }
 
     /**
-     * Releases the objects and returns the address of the stored pointer
+     * @brief: Releases the objects and returns the address of the stored pointer
      *
      * @return: Pointer to the stored pointer
      */
@@ -184,7 +184,7 @@ public:
     }
 
     /**
-     * Retrieve the raw pointer and add a reference
+     * @brief: Retrieve the raw pointer and add a reference
      *
      * @return: Returns the raw pointer
      */
@@ -195,7 +195,7 @@ public:
     }
 
     /**
-     * Retrieve the pointer as another type that is convertible
+     * @brief: Retrieve the pointer as another type that is convertible
      *
      * @return: A pointer of the casted type
      */
@@ -206,7 +206,7 @@ public:
     }
 
     /**
-     * Get the address of the raw pointer
+     * @brief: Get the address of the raw pointer
      *
      * @return: The address of the raw pointer
      */
@@ -216,7 +216,7 @@ public:
     }
 
     /**
-     * Get the address of the raw pointer
+     * @brief: Get the address of the raw pointer
      *
      * @return: The address of the raw pointer
      */
@@ -226,7 +226,7 @@ public:
     }
 
     /**
-     * Dereference the stored pointer
+     * @brief: Dereference the stored pointer
      *
      * @return: A reference to the object pointed to by the pointer
      */
@@ -236,7 +236,7 @@ public:
     }
 
     /**
-     * Checks weather the pointer is valid or not
+     * @brief: Checks weather the pointer is valid or not
      *
      * @return: True if the pointer is not nullptr otherwise false
      */
@@ -248,7 +248,7 @@ public:
 public:
 
     /**
-     * Retrieve the raw pointer
+     * @brief: Retrieve the raw pointer
      *
      * @return: Returns the raw pointer
      */
@@ -258,7 +258,7 @@ public:
     }
 
     /**
-     * Retrieve the address of the raw pointer
+     * @brief: Retrieve the address of the raw pointer
      *
      * @return: The address of the raw pointer
      */
@@ -268,7 +268,7 @@ public:
     }
 
     /**
-     * Retrieve the address of the raw pointer
+     * @brief: Retrieve the address of the raw pointer
      *
      * @return: The address of the raw pointer
      */
@@ -278,7 +278,7 @@ public:
     }
 
     /**
-     * Dereference the stored pointer
+     * @brief: Dereference the stored pointer
      *
      * @return: A reference to the object pointed to by the pointer
      */
@@ -288,7 +288,7 @@ public:
     }
 
     /**
-     * Checks weather the pointer is valid or not
+     * @brief: Checks weather the pointer is valid or not
      *
      * @return: True if the pointer is not nullptr otherwise false
      */
@@ -298,7 +298,7 @@ public:
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      * 
      * @param Rhs: SharedRef to copy from
      * @return: A reference to this instance
@@ -310,7 +310,7 @@ public:
     }
 
     /**
-     * Copy-assignment operator that takes a convertible type
+     * @brief: Copy-assignment operator that takes a convertible type
      *
      * @param Rhs: SharedRef to copy from
      * @return: A reference to this instance
@@ -323,7 +323,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
      * @param Rhs: SharedRef to move from
      * @return: A reference to this instance
@@ -335,7 +335,7 @@ public:
     }
 
     /**
-     * Move-assignment operator that takes a convertible type
+     * @brief: Move-assignment operator that takes a convertible type
      *
      * @param Rhs: SharedRef to move from
      * @return: A reference to this instance
@@ -348,7 +348,7 @@ public:
     }
 
     /**
-     * Assignment operator that takes a raw pointer
+     * @brief: Assignment operator that takes a raw pointer
      *
      * @param Rhs: Pointer to store
      * @return: A reference to this object
@@ -360,7 +360,7 @@ public:
     }
 
     /**
-     * Assignment operator that takes a raw pointer of a convertible type
+     * @brief: Assignment operator that takes a raw pointer of a convertible type
      *
      * @param Rhs: Pointer to store
      * @return: A reference to this object
@@ -373,7 +373,7 @@ public:
     }
 
     /**
-     * Set the pointer to nullptr
+     * @brief: Set the pointer to nullptr
      *
      * @return: A reference to this object
      */

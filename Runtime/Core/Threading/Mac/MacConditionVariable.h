@@ -18,7 +18,7 @@ public:
     CMacConditionVariable& operator=(const CMacConditionVariable&) = delete;
 
     /**
-     * Default constructor 
+     * @brief: Default constructor 
      */
     FORCEINLINE CMacConditionVariable()
         : ConditionVariable()
@@ -32,7 +32,7 @@ public:
     }
 
     /**
-     * Destructor 
+     * @brief: Destructor 
      */
     FORCEINLINE ~CMacConditionVariable()
     {
@@ -52,7 +52,7 @@ public:
     }
 
     /**
-     * Make a CriticalSections wait until notified 
+     * @brief: Make a CriticalSections wait until notified 
      * 
      * @param Lock: Lock that should wait for condition to be met
      * @return: Returns true if the wait is successful
@@ -68,7 +68,7 @@ public:
     }
 
     /**
-     * Retrieve platform specific handle 
+     * @brief: Retrieve platform specific handle 
      * 
      * @return: Returns a platform specific handle or nullptr if no platform handle is defined
      */

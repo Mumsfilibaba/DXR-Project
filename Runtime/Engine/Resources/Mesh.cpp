@@ -14,7 +14,7 @@ bool CMesh::Init(const SMeshData& Data)
     const uint32 BufferFlags = RHISupportsRayTracing() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
 
     SRHIResourceData InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
-    VertexBuffer = RHICreateVertexBuffer<SVertex>(VertexCount, BufferFlags, ERHIResourceState::VertexAndConstantBuffer, &InitialData);
+    VertexBuffer = RHICreateVertexBuffer<SVertex>(VertexCount, BufferFlags, ERHIResourceAccess::VertexAndConstantBuffer, &InitialData);
     if (!VertexBuffer)
     {
         return false;
@@ -29,7 +29,7 @@ bool CMesh::Init(const SMeshData& Data)
     ERHIIndexFormat IndexFormat = ERHIIndexFormat::uint32;
 
     InitialData = SRHIResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
-    IndexBuffer = RHICreateIndexBuffer(IndexFormat, IndexCount, BufferFlags, ERHIResourceState::IndexBuffer, &InitialData);
+    IndexBuffer = RHICreateIndexBuffer(IndexFormat, IndexCount, BufferFlags, ERHIResourceAccess::IndexBuffer, &InitialData);
     if (!IndexBuffer)
     {
         return false;

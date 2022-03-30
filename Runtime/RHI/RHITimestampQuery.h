@@ -13,7 +13,7 @@ struct SRHITimestamp
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITimestampQuery
 
-class CRHITimestampQuery : public CRHIObject
+class CRHITimestampQuery : public CRHIResource
 {
 public:
     virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const = 0;

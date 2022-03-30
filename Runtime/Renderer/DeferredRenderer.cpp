@@ -248,7 +248,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<CRHITexture2D> StagingTexture = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, ERHIResourceState::Common, nullptr);
+    TSharedRef<CRHITexture2D> StagingTexture = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, ERHIResourceAccess::Common, nullptr);
     if (!StagingTexture)
     {
         CDebug::DebugBreak();
@@ -259,7 +259,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         StagingTexture->SetName("Staging IntegrationLUT");
     }
 
-    FrameResources.IntegrationLUT = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_SRV, ERHIResourceState::Common, nullptr);
+    FrameResources.IntegrationLUT = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_SRV, ERHIResourceAccess::Common, nullptr);
     if (!FrameResources.IntegrationLUT)
     {
         CDebug::DebugBreak();
@@ -321,7 +321,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
         CRHICommandList CmdList;
 
-        CmdList.TransitionTexture(StagingTexture.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess);
+        CmdList.TransitionTexture(StagingTexture.Get(), ERHIResourceAccess::Common, ERHIResourceAccess::UnorderedAccess);
 
         CmdList.SetComputePipelineState(BRDF_PipelineState.Get());
 
@@ -335,12 +335,12 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
         CmdList.UnorderedAccessTextureBarrier(StagingTexture.Get());
 
-        CmdList.TransitionTexture(StagingTexture.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::CopySource);
-        CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), ERHIResourceState::Common, ERHIResourceState::CopyDest);
+        CmdList.TransitionTexture(StagingTexture.Get(), ERHIResourceAccess::UnorderedAccess, ERHIResourceAccess::CopySource);
+        CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), ERHIResourceAccess::Common, ERHIResourceAccess::CopyDest);
 
         CmdList.CopyTexture(FrameResources.IntegrationLUT.Get(), StagingTexture.Get());
 
-        CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), ERHIResourceState::CopyDest, ERHIResourceState::PixelShaderResource);
+        CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), ERHIResourceAccess::CopyDest, ERHIResourceAccess::PixelShaderResource);
 
         CRHICommandQueue::Get().ExecuteCommandList(CmdList);
     }
@@ -511,7 +511,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
     const float RenderWidth = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin PrePass");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "Begin PrePass");
 
     {
         TRACE_SCOPE("PrePass");
@@ -551,9 +551,9 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
         }
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End PrePass");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "End PrePass");
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Depth Reduction");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "Begin Depth Reduction");
 
     {
         TRACE_SCOPE("Depth Reduction");
@@ -572,9 +572,9 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
         ReductionConstants.FarPlane = Scene.GetCamera()->GetFarPlane();
 
         // Perform the first reduction
-        CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), ERHIResourceState::DepthWrite, ERHIResourceState::NonPixelShaderResource);
-        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess);
-        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess);
+        CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), ERHIResourceAccess::DepthWrite, ERHIResourceAccess::NonPixelShaderResource);
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), ERHIResourceAccess::NonPixelShaderResource, ERHIResourceAccess::UnorderedAccess);
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), ERHIResourceAccess::NonPixelShaderResource, ERHIResourceAccess::UnorderedAccess);
 
         CmdList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
 
@@ -587,8 +587,8 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
         uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();
         CmdList.Dispatch(ThreadsX, ThreadsY, 1);
 
-        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource);
-        CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::DepthWrite);
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), ERHIResourceAccess::UnorderedAccess, ERHIResourceAccess::NonPixelShaderResource);
+        CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), ERHIResourceAccess::NonPixelShaderResource, ERHIResourceAccess::DepthWrite);
 
         // Perform the other reductions
         CmdList.SetComputePipelineState(ReduceDepthPSO.Get());
@@ -600,8 +600,8 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
         ThreadsY = NMath::DivideByMultiple(ThreadsY, 16);
         CmdList.Dispatch(ThreadsX, ThreadsY, 1);
 
-        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess);
-        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource);
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), ERHIResourceAccess::NonPixelShaderResource, ERHIResourceAccess::UnorderedAccess);
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), ERHIResourceAccess::UnorderedAccess, ERHIResourceAccess::NonPixelShaderResource);
 
         CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetShaderResourceView(), 0);
         CmdList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
@@ -610,15 +610,15 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
         ThreadsY = NMath::DivideByMultiple(ThreadsY, 16);
         CmdList.Dispatch(ThreadsX, ThreadsY, 1);
 
-        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::NonPixelShaderResource);
+        CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), ERHIResourceAccess::UnorderedAccess, ERHIResourceAccess::NonPixelShaderResource);
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Depth Reduction");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "End Depth Reduction");
 }
 
 void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameResources& FrameResources)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin GeometryPass");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "Begin GeometryPass");
 
     TRACE_SCOPE("GeometryPass");
 
@@ -685,12 +685,12 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
         CmdList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "End GeometryPass");
 }
 
 void CDeferredRenderer::RenderDeferredTiledLightPass(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin LightPass");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "Begin LightPass");
 
     TRACE_SCOPE("LightPass");
 
@@ -760,7 +760,7 @@ void CDeferredRenderer::RenderDeferredTiledLightPass(CRHICommandList& CmdList, c
     const uint32 WorkGroupHeight = NMath::DivideByMultiple<uint32>(Settings.ScreenHeight, ThreadsXYZ.y);
     CmdList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End LightPass");
+    INSERT_COMMAND_LIST_MARKER(CmdList, "End LightPass");
 }
 
 bool CDeferredRenderer::ResizeResources(SFrameResources& FrameResources)
@@ -775,7 +775,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     const uint32 Usage = TextureFlags_RenderTarget;
 
     // Albedo
-    FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = RHICreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage, ERHIResourceState::Common, nullptr);
+    FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = RHICreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage, ERHIResourceAccess::Common, nullptr);
     if (FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->SetName("GBuffer Albedo");
@@ -786,7 +786,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     }
 
     // Normal
-    FrameResources.GBuffer[GBUFFER_NORMAL_INDEX] = RHICreateTexture2D(FrameResources.NormalFormat, Width, Height, 1, 1, Usage, ERHIResourceState::Common, nullptr);
+    FrameResources.GBuffer[GBUFFER_NORMAL_INDEX] = RHICreateTexture2D(FrameResources.NormalFormat, Width, Height, 1, 1, Usage, ERHIResourceAccess::Common, nullptr);
     if (FrameResources.GBuffer[GBUFFER_NORMAL_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->SetName("GBuffer Normal");
@@ -797,7 +797,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     }
 
     // Material Properties
-    FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX] = RHICreateTexture2D(FrameResources.MaterialFormat, Width, Height, 1, 1, Usage, ERHIResourceState::Common, nullptr);
+    FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX] = RHICreateTexture2D(FrameResources.MaterialFormat, Width, Height, 1, 1, Usage, ERHIResourceAccess::Common, nullptr);
     if (FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->SetName("GBuffer Material");
@@ -810,7 +810,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     // DepthStencil
     const SClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
 
-    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RHICreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, TextureFlags_ShadowMap, ERHIResourceState::Common, nullptr, DepthClearValue);
+    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RHICreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, TextureFlags_ShadowMap, ERHIResourceAccess::Common, nullptr, DepthClearValue);
     if (FrameResources.GBuffer[GBUFFER_DEPTH_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->SetName("GBuffer DepthStencil");
@@ -826,7 +826,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
 
     for (uint32 i = 0; i < 2; i++)
     {
-        FrameResources.ReducedDepthBuffer[i] = RHICreateTexture2D(ERHIFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, TextureFlags_RWTexture, ERHIResourceState::NonPixelShaderResource, nullptr);
+        FrameResources.ReducedDepthBuffer[i] = RHICreateTexture2D(ERHIFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, TextureFlags_RWTexture, ERHIResourceAccess::NonPixelShaderResource, nullptr);
         if (FrameResources.ReducedDepthBuffer[i])
         {
             FrameResources.ReducedDepthBuffer[i]->SetName("Reduced DepthStencil[" + ToString(i) + "]");
@@ -838,7 +838,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     }
 
     // View Normal
-    FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = RHICreateTexture2D(FrameResources.ViewNormalFormat, Width, Height, 1, 1, Usage, ERHIResourceState::Common, nullptr);
+    FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = RHICreateTexture2D(FrameResources.ViewNormalFormat, Width, Height, 1, 1, Usage, ERHIResourceAccess::Common, nullptr);
     if (FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->SetName("GBuffer ViewNormal");
@@ -849,7 +849,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     }
 
     // Final Image
-    FrameResources.FinalTarget = RHICreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, Usage | TextureFlag_UAV, ERHIResourceState::Common, nullptr);
+    FrameResources.FinalTarget = RHICreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, Usage | TextureFlag_UAV, ERHIResourceAccess::Common, nullptr);
     if (FrameResources.FinalTarget)
     {
         FrameResources.FinalTarget->SetName("Final Target");

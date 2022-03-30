@@ -13,14 +13,14 @@ public:
     FORCEINLINE CMatrix2() noexcept;
 
     /**
-     * Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
+     * @brief: Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
      *
      * @param Diagonal: Value to set on the diagonal
      */
     FORCEINLINE explicit CMatrix2(float Diagonal) noexcept;
 
     /**
-     * Constructor initializing all values with vectors specifying each row
+     * @brief: Constructor initializing all values with vectors specifying each row
      *
      * @param Row0: Vector to set the first row to
      * @param Row1: Vector to set the second row to
@@ -28,7 +28,7 @@ public:
     FORCEINLINE explicit CMatrix2(const CVector2& Row0, const CVector2& Row1) noexcept;
 
     /**
-     * Constructor initializing all values with corresponding value
+     * @brief: Constructor initializing all values with corresponding value
      *
      * @param In00: Value to set on row 0 and column 0
      * @param In01: Value to set on row 0 and column 1
@@ -38,63 +38,63 @@ public:
     FORCEINLINE explicit CMatrix2(float In00, float In01, float In10, float In11) noexcept;
 
     /**
-     * Constructor initializing all components with an array
+     * @brief: Constructor initializing all components with an array
      *
      * @param Arr: Array with at least 4 elements
      */
     FORCEINLINE explicit CMatrix2(const float* Arr) noexcept;
 
     /**
-     * Returns the transposed version of this matrix
+     * @brief: Returns the transposed version of this matrix
      *
      * @return Transposed matrix
      */
     inline CMatrix2 Transpose() const noexcept;
 
     /**
-     * Returns the inverted version of this matrix
+     * @brief: Returns the inverted version of this matrix
      *
      * @return Inverse matrix
      */
     inline CMatrix2 Invert() const noexcept;
 
     /**
-     * Returns the adjugate of this matrix
+     * @brief: Returns the adjugate of this matrix
      *
      * @return Adjugate matrix
      */
     FORCEINLINE CMatrix2 Adjoint() const noexcept;
 
     /**
-     * Returns the determinant of this matrix
+     * @brief: Returns the determinant of this matrix
      *
      * @return The determinant
      */
     FORCEINLINE float Determinant() const noexcept;
 
     /**
-     * Checks weather this matrix has any value that equals NaN
+     * @brief: Checks weather this matrix has any value that equals NaN
      *
      * @return True if the any value equals NaN, false if not
      */
     inline bool HasNan() const noexcept;
 
     /**
-     * Checks weather this matrix has any value that equals infinity
+     * @brief: Checks weather this matrix has any value that equals infinity
      *
      * @return True if the any value equals infinity, false if not
      */
     inline bool HasInfinity() const noexcept;
 
     /**
-     * Checks weather this matrix has any value that equals infinity or NaN
+     * @brief: Checks weather this matrix has any value that equals infinity or NaN
      *
      * @return False if the any value equals infinity or NaN, true if not
      */
     FORCEINLINE bool IsValid() const noexcept;
 
     /**
-     * Compares, within a threshold Epsilon, this matrix with another matrix
+     * @brief: Compares, within a threshold Epsilon, this matrix with another matrix
      *
      * @param Other: matrix to compare against
      * @return True if equal, false if not
@@ -105,7 +105,7 @@ public:
     FORCEINLINE void SetIdentity() noexcept;
 
     /**
-     * Returns a row of this matrix
+     * @brief: Returns a row of this matrix
      *
      * @param Row: The row to retrieve
      * @return A vector containing the specified row
@@ -113,7 +113,7 @@ public:
     FORCEINLINE CVector2 GetRow(int Row) const noexcept;
 
     /**
-     * Returns a column of this matrix
+     * @brief: Returns a column of this matrix
      *
      * @param Column: The column to retrieve
      * @return A vector containing the specified column
@@ -121,14 +121,14 @@ public:
     FORCEINLINE CVector2 GetColumn(int Column) const noexcept;
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
     FORCEINLINE float* GetData() noexcept;
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
@@ -137,7 +137,7 @@ public:
 public:
 
     /**
-     * Transforms a 2-D vector
+     * @brief: Transforms a 2-D vector
      *
      * @param Rhs: The vector to transform
      * @return A vector containing the transformation
@@ -145,7 +145,7 @@ public:
     FORCEINLINE CVector2 operator*(const CVector2& Rhs) const noexcept;
 
     /**
-     * Multiplies a matrix with another matrix
+     * @brief: Multiplies a matrix with another matrix
      *
      * @param Rhs: The other matrix
      * @return A matrix containing the result of the multiplication
@@ -153,7 +153,7 @@ public:
     FORCEINLINE CMatrix2 operator*(const CMatrix2& Rhs) const noexcept;
 
     /**
-     * Multiplies this matrix with another matrix
+     * @brief: Multiplies this matrix with another matrix
      *
      * @param Rhs: The other matrix
      * @return A reference to this matrix
@@ -161,7 +161,7 @@ public:
     FORCEINLINE CMatrix2& operator*=(const CMatrix2& Rhs) noexcept;
 
     /**
-     * Multiplies a matrix component-wise with a scalar
+     * @brief: Multiplies a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the multiplication
@@ -169,7 +169,7 @@ public:
     FORCEINLINE CMatrix2 operator*(float Rhs) const noexcept;
 
     /**
-     * Multiplies this matrix component-wise with a scalar
+     * @brief: Multiplies this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -177,7 +177,7 @@ public:
     FORCEINLINE CMatrix2& operator*=(float Rhs) noexcept;
 
     /**
-     * Adds a matrix component-wise with another matrix
+     * @brief: Adds a matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A matrix containing the result of the addition
@@ -185,7 +185,7 @@ public:
     FORCEINLINE CMatrix2 operator+(const CMatrix2& Rhs) const noexcept;
 
     /**
-     * Adds this matrix component-wise with another matrix
+     * @brief: Adds this matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A reference to this matrix
@@ -193,7 +193,7 @@ public:
     FORCEINLINE CMatrix2& operator+=(const CMatrix2& Rhs) noexcept;
 
     /**
-     * Adds a matrix component-wise with a scalar
+     * @brief: Adds a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the addition
@@ -201,7 +201,7 @@ public:
     FORCEINLINE CMatrix2 operator+(float Rhs) const noexcept;
 
     /**
-     * Adds this matrix component-wise with a scalar
+     * @brief: Adds this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -209,7 +209,7 @@ public:
     FORCEINLINE CMatrix2& operator+=(float Rhs) noexcept;
 
     /**
-     * Subtracts a matrix component-wise with another matrix
+     * @brief: Subtracts a matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A matrix containing the result of the subtraction
@@ -217,7 +217,7 @@ public:
     FORCEINLINE CMatrix2 operator-(const CMatrix2& Rhs) const noexcept;
 
     /**
-     * Subtracts this matrix component-wise with another matrix
+     * @brief: Subtracts this matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A reference to this matrix
@@ -225,7 +225,7 @@ public:
     FORCEINLINE CMatrix2& operator-=(const CMatrix2& Rhs) noexcept;
 
     /**
-     * Subtracts a matrix component-wise with a scalar
+     * @brief: Subtracts a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the subtraction
@@ -233,7 +233,7 @@ public:
     FORCEINLINE CMatrix2 operator-(float Rhs) const noexcept;
 
     /**
-     * Subtracts this matrix component-wise with a scalar
+     * @brief: Subtracts this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -241,7 +241,7 @@ public:
     FORCEINLINE CMatrix2& operator-=(float Rhs) noexcept;
 
     /**
-     * Divides a matrix component-wise with a scalar
+     * @brief: Divides a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the division
@@ -249,7 +249,7 @@ public:
     FORCEINLINE CMatrix2 operator/(float Rhs) const noexcept;
 
     /**
-     * Divides this matrix component-wise with a scalar
+     * @brief: Divides this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -257,7 +257,7 @@ public:
     FORCEINLINE CMatrix2& operator/=(float Rhs) noexcept;
 
     /**
-     * Returns the result after comparing this and another matrix
+     * @brief: Returns the result after comparing this and another matrix
      *
      * @param Other: The matrix to compare with
      * @return True if equal, false if not
@@ -265,7 +265,7 @@ public:
     FORCEINLINE bool operator==(const CMatrix2& Other) const noexcept;
 
     /**
-     * Returns the negated result after comparing this and another matrix
+     * @brief: Returns the negated result after comparing this and another matrix
      *
      * @param Other: The matrix to compare with
      * @return False if equal, true if not
@@ -275,14 +275,14 @@ public:
 public:
 
     /**
-     * Creates and returns a identity matrix
+     * @brief: Creates and returns a identity matrix
      *
      * @return A identity matrix
      */
     inline static CMatrix2 Identity() noexcept;
 
     /**
-     * Creates and returns a uniform scale matrix
+     * @brief: Creates and returns a uniform scale matrix
      *
      * @param Scale: Uniform scale that represents this matrix
      * @return A scale matrix
@@ -290,7 +290,7 @@ public:
     inline static CMatrix2 Scale(float Scale) noexcept;
 
     /**
-     * Creates and returns a scale matrix for each axis
+     * @brief: Creates and returns a scale matrix for each axis
      *
      * @param x: Scale for the x-axis
      * @param y: Scale for the y-axis
@@ -299,7 +299,7 @@ public:
     inline static CMatrix2 Scale(float x, float y) noexcept;
 
     /**
-     * Creates and returns a scale matrix for each axis
+     * @brief: Creates and returns a scale matrix for each axis
      *
      * @param VectorWithScale: A vector containing the scale for each axis in the x-, and y-components
      * @return A scale matrix
@@ -307,7 +307,7 @@ public:
     inline static CMatrix2 Scale(const CVector2& VectorWithScale) noexcept;
 
     /**
-     * Creates and returns a rotation matrix around the x-axis
+     * @brief: Creates and returns a rotation matrix around the x-axis
      *
      * @param Rotation: Rotation around in radians
      * @return A rotation matrix

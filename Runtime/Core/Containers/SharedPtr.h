@@ -289,21 +289,21 @@ public:
     friend class TSharedPtr;
 
     /**
-     * Default constructor 
+     * @brief: Default constructor 
      */
     FORCEINLINE TSharedPtr() noexcept
         : Storage()
     { }
 
     /**
-     * Constructor setting both counter and pointer to nullptr 
+     * @brief: Constructor setting both counter and pointer to nullptr 
      */
     FORCEINLINE TSharedPtr(NullptrType) noexcept
         : Storage()
     { }
 
     /**
-     * Constructor that initializes a new SharedPtr from a raw-pointer
+     * @brief: Constructor that initializes a new SharedPtr from a raw-pointer
      * 
      * @param InPointer: Raw pointer to store
      */
@@ -314,7 +314,7 @@ public:
     }
 
     /**
-     * Constructor that initializes a new SharedPtr from a raw-pointer of a convertible type
+     * @brief: Constructor that initializes a new SharedPtr from a raw-pointer of a convertible type
      *
      * @param InPointer: Raw pointer to store
      */
@@ -326,7 +326,7 @@ public:
     }
 
     /**
-     * Copy-constructor 
+     * @brief: Copy-constructor 
      * 
      * @param Other: SharedPtr to copy
      */
@@ -337,7 +337,7 @@ public:
     }
 
     /**
-     * Copy-constructor that copies from a convertible type
+     * @brief: Copy-constructor that copies from a convertible type
      *
      * @param Other: SharedPtr to copy
      */
@@ -349,7 +349,7 @@ public:
     }
 
     /**
-     * Move-constructor
+     * @brief: Move-constructor
      *
      * @param Other: SharedPtr to move
      */
@@ -358,7 +358,7 @@ public:
     { }
 
     /**
-     * Move-constructor that copies from a convertible type
+     * @brief: Move-constructor that copies from a convertible type
      *
      * @param Other: SharedPtr to move
      */
@@ -368,7 +368,7 @@ public:
     { }
 
     /**
-     * Copy constructor that copy the counter, but the pointer is taken from the raw-pointer to enable casting 
+     * @brief: Copy constructor that copy the counter, but the pointer is taken from the raw-pointer to enable casting 
      * 
      * @param Other: Container to take the counter from
      * @param InPointer: Raw pointer to store
@@ -381,7 +381,7 @@ public:
     }
 
     /**
-     * Move constructor that move the counter, but the pointer is taken from the raw-pointer to enable casting
+     * @brief: Move constructor that move the counter, but the pointer is taken from the raw-pointer to enable casting
      *
      * @param Other: Container to take the counter from
      * @param InPointer: Raw pointer to store
@@ -395,7 +395,7 @@ public:
     }
 
     /**
-     * Constructor that creates a SharedPtr from a WeakPtr 
+     * @brief: Constructor that creates a SharedPtr from a WeakPtr 
      * 
      * @param Other: WeakPtr to take counter and pointer from
      */
@@ -407,7 +407,7 @@ public:
     }
 
     /**
-     * Constructor that creates a SharedPtr from a UniquePtr
+     * @brief: Constructor that creates a SharedPtr from a UniquePtr
      *
      * @param Other: UniquePtr to take counter and pointer from
      */
@@ -419,7 +419,7 @@ public:
     }
 
     /**
-     * Destructor
+     * @brief: Destructor
      */
     FORCEINLINE ~TSharedPtr() noexcept
     {
@@ -427,7 +427,7 @@ public:
     }
 
     /**
-     * Reset the pointer and set it to a optional new pointer 
+     * @brief: Reset the pointer and set it to a optional new pointer 
      * 
      * @param NewPointer: New pointer to store
      */
@@ -441,7 +441,7 @@ public:
     }
 
     /**
-     * Reset the pointer and set it to a optional new pointer of convertible type
+     * @brief: Reset the pointer and set it to a optional new pointer of convertible type
      *
      * @param NewPointer: New pointer to store
      */
@@ -453,7 +453,7 @@ public:
     }
 
     /**
-     * Swaps the contents of this and another container 
+     * @brief: Swaps the contents of this and another container 
      * 
      * @param Other: SharedPtr to swap with 
      */
@@ -465,7 +465,7 @@ public:
     }
 
     /**
-     * Check weather the strong reference count is one
+     * @brief: Check weather the strong reference count is one
      * 
      * @return: Returns true if the strong reference count is equal to one
      */
@@ -475,7 +475,7 @@ public:
     }
 
     /**
-     * Check weather the pointer is nullptr or not
+     * @brief: Check weather the pointer is nullptr or not
      *
      * @return: Returns true if the pointer is not nullptr
      */
@@ -485,7 +485,7 @@ public:
     }
 
     /**
-     * Return the raw pointer 
+     * @brief: Return the raw pointer 
      * 
      * @return: Returns the stored pointer
      */
@@ -495,7 +495,7 @@ public:
     }
 
     /**
-     * Return the address of the raw pointer
+     * @brief: Return the address of the raw pointer
      *
      * @return: Returns the address of the stored pointer
      */
@@ -505,7 +505,7 @@ public:
     }
 
     /**
-     * Returns the number of strong references 
+     * @brief: Returns the number of strong references 
      * 
      * @return: The number of strong references
      */
@@ -515,7 +515,7 @@ public:
     }
 
     /**
-     * Returns the number of weak references
+     * @brief: Returns the number of weak references
      *
      * @return: The number of weak references
      */
@@ -525,7 +525,7 @@ public:
     }
 
     /**
-     * Dereference the pointer
+     * @brief: Dereference the pointer
      * 
      * @return: A reference to the object pointer to by the stored pointer
      */
@@ -538,7 +538,7 @@ public:
 public:
 
     /**
-     * Return the raw pointer
+     * @brief: Return the raw pointer
      *
      * @return: Returns the stored pointer
      */
@@ -547,7 +547,7 @@ public:
         return Get();
     }
     /**
-     * Dereference the pointer
+     * @brief: Dereference the pointer
      *
      * @return: A reference to the object pointer to by the stored pointer
      */
@@ -557,7 +557,7 @@ public:
     }
 
     /**
-     * Return the address of the raw pointer
+     * @brief: Return the address of the raw pointer
      *
      * @return: Returns the address of the stored pointer
      */
@@ -576,7 +576,7 @@ public:
     }
 
     /**
-     * Check weather the pointer is nullptr or not
+     * @brief: Check weather the pointer is nullptr or not
      *
      * @return: Returns true if the pointer is not nullptr
      */
@@ -586,7 +586,7 @@ public:
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      * 
      * @param Rhs: SharedPtr to copy
      * @return: A reference to this instance
@@ -598,7 +598,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
      * @param Rhs: SharedPtr to move
      * @return: A reference to this instance
@@ -610,7 +610,7 @@ public:
     }
 
     /**
-     * Copy-assignment operator with a convertible type
+     * @brief: Copy-assignment operator with a convertible type
      *
      * @param Rhs: SharedPtr to copy
      * @return: A reference to this instance
@@ -624,7 +624,7 @@ public:
     }
 
     /**
-     * Move-assignment operator with a convertible type
+     * @brief: Move-assignment operator with a convertible type
      *
      * @param Rhs: SharedPtr to move
      * @return: A reference to this instance
@@ -638,7 +638,7 @@ public:
     }
 
     /**
-     * Assignment operator that takes a raw-pointer
+     * @brief: Assignment operator that takes a raw-pointer
      * 
      * @param Rhs: Raw-pointer to store
      * @return: A reference to this instance
@@ -650,7 +650,7 @@ public:
     }
 
     /**
-     * Assignment operator that takes a nullptr
+     * @brief: Assignment operator that takes a nullptr
      * 
      * @return: A reference to this instance
      */
@@ -775,14 +775,14 @@ public:
     friend class TWeakPtr;
 
     /**
-     * Default constructor 
+     * @brief: Default constructor 
      */
     FORCEINLINE TWeakPtr() noexcept
         : Storage()
     { }
 
     /**
-     * Copy-constructor
+     * @brief: Copy-constructor
      *
      * @param Other: WeakPtr to copy
      */
@@ -793,7 +793,7 @@ public:
     }
 
     /**
-     * Move-constructor
+     * @brief: Move-constructor
      *
      * @param Other: WeakPtr to move
      */
@@ -802,7 +802,7 @@ public:
     { }
 
     /**
-     * Copy-constructor that copies from a convertible type
+     * @brief: Copy-constructor that copies from a convertible type
      *
      * @param Other: WeakPtr to copy
      */
@@ -814,7 +814,7 @@ public:
     }
 
     /**
-     * Move-constructor that moves from a convertible type
+     * @brief: Move-constructor that moves from a convertible type
      *
      * @param Other: WeakPtr to move
      */
@@ -824,7 +824,7 @@ public:
     { }
 
     /**
-     * Constructor that constructs a WeakPtr from a SharedPtr
+     * @brief: Constructor that constructs a WeakPtr from a SharedPtr
      * 
      * @param Other: SharedPtr to take pointer and counter from
      */
@@ -835,7 +835,7 @@ public:
     }
 
     /**
-     * Constructor that constructs a WeakPtr from a SharedPtr of convertible type
+     * @brief: Constructor that constructs a WeakPtr from a SharedPtr of convertible type
      *
      * @param Other: SharedPtr to take pointer and counter from
      */
@@ -847,7 +847,7 @@ public:
     }
 
     /**
-     * Destructor
+     * @brief: Destructor
      */
     FORCEINLINE ~TWeakPtr()
     {
@@ -855,7 +855,7 @@ public:
     }
 
     /**
-     * Reset the pointer and set it to a optional new pointer
+     * @brief: Reset the pointer and set it to a optional new pointer
      * 
      * @param NewPointer: New pointer to store
      */
@@ -869,7 +869,7 @@ public:
     }
 
     /**
-     * Reset the pointer and set it to a optional new pointer of a convertible type
+     * @brief: Reset the pointer and set it to a optional new pointer of a convertible type
      *
      * @param NewPointer: New pointer to store
      */
@@ -880,7 +880,7 @@ public:
     }
 
     /**
-     * Swaps the contents of this and another container 
+     * @brief: Swaps the contents of this and another container 
      * 
      * @param Other: Instance to swap with
      */
@@ -892,7 +892,7 @@ public:
     }
 
     /**
-     * Checks weather there are any strong references left
+     * @brief: Checks weather there are any strong references left
      * 
      * @return: Returns true if the strong reference count is less than one
      */
@@ -902,7 +902,7 @@ public:
     }
 
     /**
-     * Creates a shared pointer from this WeakPtr
+     * @brief: Creates a shared pointer from this WeakPtr
      * 
      * @return: A new SharedPtr that holds the same pointer as this WeakPtr
      */
@@ -912,7 +912,7 @@ public:
     }
 
     /**
-     * Checks weather the strong reference count is one 
+     * @brief: Checks weather the strong reference count is one 
      * 
      * @return: Returns true if the strong reference count is one
      */
@@ -922,7 +922,7 @@ public:
     }
 
     /**
-     * Checks weather the pointer is nullptr or not and the pointer is not expired
+     * @brief: Checks weather the pointer is nullptr or not and the pointer is not expired
      * 
      * @return: Returns true if the pointer is not nullptr and the strong reference count is more than zero
      */
@@ -932,7 +932,7 @@ public:
     }
 
     /**
-     * Retrieve the stored pointer
+     * @brief: Retrieve the stored pointer
      * 
      * @return: Returns the stored pointer
      */
@@ -942,7 +942,7 @@ public:
     }
 
     /**
-     * Retrieve the address of the stored pointer
+     * @brief: Retrieve the address of the stored pointer
      *
      * @return: Returns the address of the stored pointer
      */
@@ -952,7 +952,7 @@ public:
     }
 
     /**
-     * Retrieve the number of strong references
+     * @brief: Retrieve the number of strong references
      *
      * @return: Returns the number of strong references
      */
@@ -962,7 +962,7 @@ public:
     }
 
     /**
-     * Retrieve the number of weak references
+     * @brief: Retrieve the number of weak references
      *
      * @return: Returns the number of weak references
      */
@@ -972,7 +972,7 @@ public:
     }
 
     /**
-     * Dereference the pointer
+     * @brief: Dereference the pointer
      *
      * @return: A reference to the object pointer to by the stored pointer
      */
@@ -985,7 +985,7 @@ public:
 public:
 
     /**
-     * Retrieve the stored pointer
+     * @brief: Retrieve the stored pointer
      *
      * @return: Returns the stored pointer
      */
@@ -995,7 +995,7 @@ public:
     }
 
     /**
-     * Dereference the pointer
+     * @brief: Dereference the pointer
      *
      * @return: A reference to the object pointer to by the stored pointer
      */
@@ -1005,7 +1005,7 @@ public:
     }
 
     /**
-     * Retrieve the address of the stored pointer
+     * @brief: Retrieve the address of the stored pointer
      *
      * @return: Returns the address of the stored pointer
      */
@@ -1015,7 +1015,7 @@ public:
     }
 
     /**
-     * Retrieve an element at a certain index 
+     * @brief: Retrieve an element at a certain index 
      * 
      * @param Index: Index of the element to retrieve
      * @return: A reference to the retrieved element
@@ -1029,7 +1029,7 @@ public:
     }
 
     /**
-     * Checks weather the pointer is nullptr or not and the pointer is not expired
+     * @brief: Checks weather the pointer is nullptr or not and the pointer is not expired
      *
      * @return: Returns true if the pointer is not nullptr and the strong reference count is more than zero
      */
@@ -1039,7 +1039,7 @@ public:
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      * 
      * @param Rhs: WeakPtr to copy from
      * @return: Return the reference to this instance
@@ -1051,7 +1051,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
      * @param Rhs: WeakPtr to move from
      * @return: Return the reference to this instance
@@ -1063,7 +1063,7 @@ public:
     }
 
     /**
-     * Copy-assignment operator that takes a convertible type
+     * @brief: Copy-assignment operator that takes a convertible type
      *
      * @param Rhs: WeakPtr to copy from
      * @return: Return the reference to this instance
@@ -1077,7 +1077,7 @@ public:
     }
 
     /**
-     * Move-assignment operator that takes a convertible type
+     * @brief: Move-assignment operator that takes a convertible type
      *
      * @param Rhs: WeakPtr to move from
      * @return: Return the reference to this instance
@@ -1091,7 +1091,7 @@ public:
     }
 
     /**
-     * Assignment operator that takes a raw-pointer
+     * @brief: Assignment operator that takes a raw-pointer
      * 
      * @param Rhs: Pointer to store
      * @return: Return the reference to this instance
@@ -1103,7 +1103,7 @@ public:
     }
 
     /**
-     * Assignment operator from a nullptr
+     * @brief: Assignment operator from a nullptr
      *
      * @return: Return the reference to this instance
      */
