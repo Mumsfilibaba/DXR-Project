@@ -156,7 +156,7 @@ public:
     /**
      * @brief: Returns a row of this matrix
      *
-     * @param Row: The row to retrive
+     * @param Row: The row to retrieve
      * @return A vector containing the specified row
      */
     FORCEINLINE CVector4 GetRow(int Row) const noexcept;
@@ -164,7 +164,7 @@ public:
     /**
      * @brief: Returns a column of this matrix
      *
-     * @param Column: The column to retrive
+     * @param Column: The column to retrieve
      * @return A vector containing the specified column
      */
     FORCEINLINE CVector4 GetColumn(int Column) const noexcept;
@@ -1082,13 +1082,13 @@ FORCEINLINE void CMatrix4::SetTranslation(const CVector3& Translation) noexcept
 
 FORCEINLINE CVector4 CMatrix4::GetRow(int Row) const noexcept
 {
-    Assert(Row < 4);
+    Check(Row < 4);
     return CVector4(f[Row]);
 }
 
 FORCEINLINE CVector4 CMatrix4::GetColumn(int Column) const noexcept
 {
-    Assert(Column < 4);
+    Check(Column < 4);
     return CVector4(f[0][Column], f[1][Column], f[2][Column], f[3][Column]);
 }
 

@@ -18,7 +18,7 @@ public:
     CD3D12Buffer(CD3D12Device* InDevice, const CRHIBufferDesc& InBufferDesc);
     ~CD3D12Buffer() = default;
 
-    bool Initialize(class CD3D12CommandContext* CommandContext, ERHIResourceAccess InitalState, const CRHIResourceData* InitialData);
+    bool Initialize(class CD3D12CommandContext* CommandContext, EResourceAccess InitalState, const CRHIResourceData* InitialData);
 
     virtual void SetName(const String& InName) override final;
 

@@ -224,7 +224,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    VertexBuffer = RHICreateVertexBuffer<ImDrawVert>(1024 * 1024, BufferFlag_Default, ERHIResourceAccess::VertexAndConstantBuffer, nullptr);
+    VertexBuffer = RHICreateVertexBuffer<ImDrawVert>(1024 * 1024, BufferFlag_Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
     if (!VertexBuffer)
     {
         return false;
@@ -235,7 +235,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     }
 
     const ERHIIndexFormat IndexFormat = (sizeof(ImDrawIdx) == 2) ? ERHIIndexFormat::uint16 : ERHIIndexFormat::uint32;
-    IndexBuffer = RHICreateIndexBuffer(IndexFormat, 1024 * 1024, BufferFlag_Default, ERHIResourceAccess::Common, nullptr);
+    IndexBuffer = RHICreateIndexBuffer(IndexFormat, 1024 * 1024, BufferFlag_Default, EResourceAccess::Common, nullptr);
     if (!IndexBuffer)
     {
         return false;
@@ -304,8 +304,8 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
     CmdList.SetBlendFactor(SColorF(0.0f, 0.0f, 0.0f, 0.0f));
 
     // TODO: Do not change to GenericRead, change to vertex / constantbuffer
-    CmdList.TransitionBuffer(VertexBuffer.Get(), ERHIResourceAccess::GenericRead, ERHIResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(IndexBuffer.Get() , ERHIResourceAccess::GenericRead, ERHIResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(VertexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(IndexBuffer.Get() , EResourceAccess::GenericRead, EResourceAccess::CopyDest);
 
     uint32 VertexOffset = 0;
     uint32 IndexOffset = 0;
@@ -323,8 +323,8 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
         IndexOffset  += IndexSize;
     }
 
-    CmdList.TransitionBuffer(VertexBuffer.Get(), ERHIResourceAccess::CopyDest, ERHIResourceAccess::GenericRead);
-    CmdList.TransitionBuffer(IndexBuffer.Get() , ERHIResourceAccess::CopyDest, ERHIResourceAccess::GenericRead);
+    CmdList.TransitionBuffer(VertexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
+    CmdList.TransitionBuffer(IndexBuffer.Get() , EResourceAccess::CopyDest, EResourceAccess::GenericRead);
 
     CmdList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
 
@@ -345,12 +345,12 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
                 SInterfaceImage* Image = reinterpret_cast<SInterfaceImage*>(Cmd->TextureId);
                 RenderedImages.Emplace(Image);
 
-                if (Image->BeforeState != ERHIResourceAccess::PixelShaderResource)
+                if (Image->BeforeState != EResourceAccess::PixelShaderResource)
                 {
-                    CmdList.TransitionTexture(Image->Image.Get(), Image->BeforeState, ERHIResourceAccess::PixelShaderResource);
+                    CmdList.TransitionTexture(Image->Image.Get(), Image->BeforeState, EResourceAccess::PixelShaderResource);
 
                     // TODO: Another way to do this? May break somewhere?
-                    Image->BeforeState = ERHIResourceAccess::PixelShaderResource;
+                    Image->BeforeState = EResourceAccess::PixelShaderResource;
                 }
 
                 CmdList.SetShaderResourceView(PShader.Get(), Image->ImageView.Get(), 0);
@@ -377,11 +377,11 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
 
     for (SInterfaceImage* Image : RenderedImages)
     {
-        Assert(Image != nullptr);
+        Check(Image != nullptr);
 
-        if (Image->AfterState != ERHIResourceAccess::PixelShaderResource)
+        if (Image->AfterState != EResourceAccess::PixelShaderResource)
         {
-            CmdList.TransitionTexture(Image->Image.Get(), ERHIResourceAccess::PixelShaderResource, Image->AfterState);
+            CmdList.TransitionTexture(Image->Image.Get(), EResourceAccess::PixelShaderResource, Image->AfterState);
         }
     }
 

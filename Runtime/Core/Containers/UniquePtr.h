@@ -155,7 +155,7 @@ public:
      */
     FORCEINLINE ElementType& Dereference() const noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
         return *Ptr;
     }
 
@@ -429,7 +429,7 @@ public:
      */
     FORCEINLINE ElementType& At(SizeType Index) const noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
         return Get()[Index];
     }
 

@@ -97,7 +97,7 @@ bool CD3D12Viewport::Initialize()
         Result = TempSwapChain.GetAs<IDXGISwapChain3>(&SwapChain);
         if (FAILED(Result))
         {
-            D3D12_ERROR_ALWAYS("FAILED to retrive IDXGISwapChain3");
+            D3D12_ERROR_ALWAYS("FAILED to retrieve IDXGISwapChain3");
             return false;
         }
 

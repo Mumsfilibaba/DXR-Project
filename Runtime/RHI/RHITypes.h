@@ -122,7 +122,7 @@ inline ECubeFace GetCubeFaceFromIndex(uint32 Index)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EComparisonFunc
 
-enum class EComparisonFunc
+enum class EComparisonFunc : uint8
 {
     Never        = 1,
     Less         = 2,
@@ -452,25 +452,25 @@ public:
 
     SColorF& AsColor()
     {
-        Assert(Type == EType::Color);
+        Check(Type == EType::Color);
         return Color;
     }
 
     const SColorF& AsColor() const
     {
-        Assert(Type == EType::Color);
+        Check(Type == EType::Color);
         return Color;
     }
 
     SRHIDepthStencilValue& AsDepthStencil()
     {
-        Assert(Type == EType::DepthStencil);
+        Check(Type == EType::DepthStencil);
         return DepthStencil;
     }
 
     const SRHIDepthStencilValue& AsDepthStencil() const
     {
-        Assert(Type == EType::DepthStencil);
+        Check(Type == EType::DepthStencil);
         return DepthStencil;
     }
 
@@ -890,7 +890,7 @@ public:
 
     void SetRenderTargets(CRHITexture* const* InRenderTargets, uint32 InNumRenderTargets)
     {
-        Assert(InRenderTargetViews < ArrayCount(RenderTargets));
+        Check(InRenderTargetViews < ArrayCount(RenderTargets));
 
         for (uint32 Index = 0; Index < InNumRenderTargets; ++Index)
         {
@@ -902,7 +902,7 @@ public:
 
     void SetRenderTargets(CRHIRenderTargetView* const* InRenderTargetViews, uint32 InNumRenderTargetViews)
     {
-        Assert(InRenderTargetViews < ArrayCount(RenderTargets));
+        Check(InRenderTargetViews < ArrayCount(RenderTargets));
         
         for (uint32 Index = 0; Index < InNumRenderTargetViews; ++Index)
         {

@@ -11,7 +11,7 @@ CRefCounted::CRefCounted()
 
 CRefCounted::~CRefCounted()
 {
-    Assert(StrongReferences.Load() == 0);
+    Check(StrongReferences.Load() == 0);
 }
 
 int32 CRefCounted::AddRef()

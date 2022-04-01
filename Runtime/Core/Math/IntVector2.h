@@ -365,13 +365,13 @@ FORCEINLINE bool CIntVector2::operator!=(const CIntVector2& Other) const noexcep
 
 FORCEINLINE int& CIntVector2::operator[](int Index) noexcept
 {
-    Assert(Index < 2);
+    Check(Index < 2);
     return reinterpret_cast<int*>(this)[Index];
 }
 
 FORCEINLINE int CIntVector2::operator[](int Index) const noexcept
 {
-    Assert(Index < 2);
+    Check(Index < 2);
     return reinterpret_cast<const int*>(this)[Index];
 }
 

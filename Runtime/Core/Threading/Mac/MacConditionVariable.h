@@ -63,7 +63,7 @@ public:
         int Result = pthread_cond_wait(&ConditionVariable, Mutex);
 
         // TODO: Handle error
-        Assert(Result == 0);
+        Check(Result == 0);
         return (Result == 0);
     }
 

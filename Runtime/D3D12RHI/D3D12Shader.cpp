@@ -177,7 +177,7 @@ bool CD3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Refl
 
 bool CD3D12BaseShader::GetShaderReflection(CD3D12BaseShader* Shader)
 {
-    Assert(Shader != nullptr);
+    Check(Shader != nullptr);
 
     TComPtr<ID3D12ShaderReflection> Reflection;
     if (!GD3D12ShaderCompiler->GetReflection(Shader, &Reflection))
@@ -210,7 +210,7 @@ bool CD3D12BaseShader::GetShaderReflection(CD3D12BaseShader* Shader)
 
 bool CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(CD3D12BaseRayTracingShader* Shader)
 {
-    Assert(Shader != nullptr);
+    Check(Shader != nullptr);
 
     TComPtr<ID3D12LibraryReflection> Reflection;
     if (!GD3D12ShaderCompiler->GetLibraryReflection(Shader, &Reflection))
@@ -227,7 +227,7 @@ bool CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(CD3D12BaseRayTrac
         return false;
     }
 
-    Assert(LibDesc.FunctionCount > 0);
+    Check(LibDesc.FunctionCount > 0);
 
     // Make sure that the first shader is the one we wanted
     ID3D12FunctionReflection* Function = Reflection->GetFunctionByIndex(0);

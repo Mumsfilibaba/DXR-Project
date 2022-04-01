@@ -34,7 +34,7 @@ CVulkanSwapChain::~CVulkanSwapChain()
 bool CVulkanSwapChain::Initialize(const SVulkanSwapChainCreateInfo& CreateInfo)
 {
     CVulkanSurface* Surface = CreateInfo.Surface;
-    Assert(Surface != nullptr);
+    Check(Surface != nullptr);
  
     TArray<VkSurfaceFormatKHR> SupportedFormats;
     if (!Surface->GetSupportedFormats(SupportedFormats))
@@ -163,7 +163,7 @@ bool CVulkanSwapChain::Initialize(const SVulkanSwapChainCreateInfo& CreateInfo)
     VULKAN_CHECK_RESULT(Result, "Failed to create SwapChain");
 
     Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &BufferCount, nullptr);
-    VULKAN_CHECK_RESULT(Result, "Failed to retrive the number of images in SwapChain");
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve the number of images in SwapChain");
 
     Format = SelectedFormat;
     return true;
@@ -172,14 +172,14 @@ bool CVulkanSwapChain::Initialize(const SVulkanSwapChainCreateInfo& CreateInfo)
 bool CVulkanSwapChain::GetSwapChainImages(VkImage* OutImages)
 {
     VkResult Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &BufferCount, OutImages);
-    VULKAN_CHECK_RESULT(Result, "Failed to retrive the images of the SwapChain");
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve the images of the SwapChain");
 
     return true;
 }
 
 VkResult CVulkanSwapChain::Present(CVulkanQueue* Queue, CVulkanSemaphore* WaitSemaphore)
 {
-    Assert(Queue != nullptr);
+    Check(Queue != nullptr);
 
     VkPresentInfoKHR PresentInfo;
     CMemory::Memzero(&PresentInfo);

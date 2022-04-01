@@ -56,7 +56,7 @@ void SSceneData::AddToScene(CScene* Scene)
         }
     }
 
-    Assert(Materials.Size() == CreatedMaterials.Size());
+    Check(Materials.Size() == CreatedMaterials.Size());
 
     for (const SModelData& ModelData : Models)
     {

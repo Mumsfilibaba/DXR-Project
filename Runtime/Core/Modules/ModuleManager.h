@@ -179,7 +179,7 @@ public:
     FORCEINLINE IEngineModule& LoadEngineModuleRef(const char* ModuleName)
     {
         IEngineModule* Module = LoadEngineModule(ModuleName);
-        Assert(Module != nullptr);
+        Check(Module != nullptr);
 
         return *Module;
     }
@@ -217,7 +217,7 @@ public:
     FORCEINLINE IEngineModule& GetEngineModuleRef(const char* ModuleName)
     {
         IEngineModule* Module = GetEngineModule(ModuleName);
-        Assert(Module != nullptr);
+        Check(Module != nullptr);
 
         return *Module;
     }

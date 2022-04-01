@@ -72,7 +72,7 @@ void* CMacThread::ThreadRoutine(void* ThreadParameter)
             pthread_setname_np(CurrentThread->Name.CStr());
         }
 
-        Assert(CurrentThread->Function != nullptr);
+        Check(CurrentThread->Function != nullptr);
         CurrentThread->Function();
     }
 

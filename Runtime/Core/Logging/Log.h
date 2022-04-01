@@ -10,7 +10,7 @@
 
 #define LOG_ERROR(Message)                              \
     {                                                   \
-        Assert(NErrorDevice::GConsoleWindow != nullptr);              \
+        Check(NErrorDevice::GConsoleWindow != nullptr);              \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Red);   \
         NErrorDevice::GConsoleWindow->Print(String(Message) + "\n"); \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White); \
@@ -18,7 +18,7 @@
 
 #define LOG_WARNING(Message)                             \
     {                                                    \
-        Assert(NErrorDevice::GConsoleWindow != nullptr);               \
+        Check(NErrorDevice::GConsoleWindow != nullptr);               \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Yellow); \
         NErrorDevice::GConsoleWindow->Print(String(Message) + "\n");  \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White);  \
@@ -26,7 +26,7 @@
 
 #define LOG_INFO(Message)                               \
     {                                                   \
-        Assert(NErrorDevice::GConsoleWindow != nullptr);              \
+        Check(NErrorDevice::GConsoleWindow != nullptr);              \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::Green); \
         NErrorDevice::GConsoleWindow->Print(String(Message) + "\n"); \
         NErrorDevice::GConsoleWindow->SetColor(EConsoleColor::White); \

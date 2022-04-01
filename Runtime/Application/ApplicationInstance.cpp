@@ -516,7 +516,7 @@ void CApplicationInstance::SetPlatformApplication(const TSharedPtr<CPlatformAppl
 {
     if (InPlatformApplication)
     {
-        Assert(this == Instance);
+        Check(this == Instance);
         InPlatformApplication->SetMessageListener(Instance);
     }
 

@@ -9,7 +9,7 @@ CComponent::CComponent(CActor* InActorOwner)
     , bIsStartable(true)
     , bIsTickable(true)
 {
-    Assert(InActorOwner != nullptr);
+    Check(InActorOwner != nullptr);
     CORE_OBJECT_INIT();
 }
 

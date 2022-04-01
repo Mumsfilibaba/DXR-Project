@@ -297,7 +297,7 @@ void CD3D12CommandContext::UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetI
 
 void CD3D12CommandContext::Begin()
 {
-    Assert(bIsReady == false);
+    Check(bIsReady == false);
 
     StartCommandRecording();
     bIsReady = true;
@@ -305,7 +305,7 @@ void CD3D12CommandContext::Begin()
 
 void CD3D12CommandContext::End()
 {
-    Assert(bIsReady == true);
+    Check(bIsReady == true);
 
     FlushCommands();
     bIsReady = false;
@@ -1236,7 +1236,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     CmdBatch->AddInUseResource(StagingTexture.Get());
 }
 
-void CD3D12CommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState)
+void CD3D12CommandContext::TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     const D3D12_RESOURCE_STATES DxBeforeState = ConvertResourceState(BeforeState);
     const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);
@@ -1247,7 +1247,7 @@ void CD3D12CommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceA
     CmdBatch->AddInUseResource(Texture);
 }
 
-void CD3D12CommandContext::TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState)
+void CD3D12CommandContext::TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     const D3D12_RESOURCE_STATES DxBeforeState = ConvertResourceState(BeforeState);
     const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);

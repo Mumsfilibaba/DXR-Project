@@ -107,14 +107,14 @@ D3D12_CPU_DESCRIPTOR_HANDLE CD3D12OfflineDescriptorHeap::Allocate(uint32& OutHea
 
 void CD3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex)
 {
-    Assert(HeapIndex < (uint32)Heaps.Size());
+    Check(HeapIndex < (uint32)Heaps.Size());
 
     SDescriptorHeap& Heap = Heaps[HeapIndex];
 
     bool bFoundRange = false;
     for (SDescriptorRange& Range : Heap.FreeList)
     {
-        Assert(Range.IsValid());
+        Check(Range.IsValid());
 
         if (Handle.ptr + DescriptorSize == Range.Begin.ptr)
         {
@@ -212,7 +212,7 @@ bool CD3D12OnlineDescriptorHeap::Initialize()
 
 uint32 CD3D12OnlineDescriptorHeap::AllocateHandles(uint32 NumHandles)
 {
-    Assert(NumHandles <= DescriptorCount);
+    Check(NumHandles <= DescriptorCount);
 
     if (!HasSpace(NumHandles))
     {

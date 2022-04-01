@@ -168,7 +168,7 @@ public:
      */
     FORCEINLINE uint64 GetRefCount() const noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
         return Ptr->GetRefCount();
     }
 

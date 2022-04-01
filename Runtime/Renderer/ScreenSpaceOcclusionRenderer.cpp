@@ -100,7 +100,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAONoise.Emplace(0.0f);
     }
 
-    SSAONoiseTex = RHICreateTexture2D(ERHIFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, ERHIResourceAccess::NonPixelShaderResource, nullptr);
+    SSAONoiseTex = RHICreateTexture2D(ERHIFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, EResourceAccess::NonPixelShaderResource, nullptr);
     if (!SSAONoiseTex)
     {
         CDebug::DebugBreak();
@@ -113,18 +113,18 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     CRHICommandList CmdList;
 
-    CmdList.TransitionTexture(FrameResources.SSAOBuffer.Get(), ERHIResourceAccess::Common, ERHIResourceAccess::NonPixelShaderResource);
-    CmdList.TransitionTexture(SSAONoiseTex.Get(), ERHIResourceAccess::NonPixelShaderResource, ERHIResourceAccess::CopyDest);
+    CmdList.TransitionTexture(FrameResources.SSAOBuffer.Get(), EResourceAccess::Common, EResourceAccess::NonPixelShaderResource);
+    CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::CopyDest);
 
     CmdList.UpdateTexture2D(SSAONoiseTex.Get(), 4, 4, 0, SSAONoise.Data());
 
-    CmdList.TransitionTexture(SSAONoiseTex.Get(), ERHIResourceAccess::CopyDest, ERHIResourceAccess::NonPixelShaderResource);
+    CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource);
 
     CRHICommandQueue::Get().ExecuteCommandList(CmdList);
 
     const uint32 Stride = sizeof(CVector3);
     SRHIResourceData SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
-    SSAOSamples = RHICreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, ERHIResourceAccess::Common, &SSAOSampleData);
+    SSAOSamples = RHICreateStructuredBuffer(Stride, SSAOKernel.Size(), BufferFlag_SRV | BufferFlag_Default, EResourceAccess::Common, &SSAOSampleData);
     if (!SSAOSamples)
     {
         CDebug::DebugBreak();
@@ -265,8 +265,8 @@ void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResou
     AddDebugTexture(
         MakeSharedRef<CRHIShaderResourceView>(SSAONoiseTex->GetShaderResourceView()),
         SSAONoiseTex,
-        ERHIResourceAccess::NonPixelShaderResource,
-        ERHIResourceAccess::NonPixelShaderResource);
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
 
     CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 1);
@@ -311,7 +311,7 @@ bool CScreenSpaceOcclusionRenderer::CreateRenderTarget(SFrameResources& FrameRes
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
     const uint32 Flags = TextureFlags_RWTexture;
 
-    FrameResources.SSAOBuffer = RHICreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, ERHIResourceAccess::Common, nullptr);
+    FrameResources.SSAOBuffer = RHICreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceAccess::Common, nullptr);
     if (!FrameResources.SSAOBuffer)
     {
         CDebug::DebugBreak();

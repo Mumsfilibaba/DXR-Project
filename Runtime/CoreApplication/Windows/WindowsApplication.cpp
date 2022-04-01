@@ -537,7 +537,7 @@ LRESULT CWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
     LRESULT ResultFromListeners = 0;
     for (TSharedPtr<IWindowsMessageListener> NativeMessageListener : WindowsMessageListeners)
     {
-        Assert(NativeMessageListener != nullptr);
+        Check(NativeMessageListener != nullptr);
 
         LRESULT TempResult = NativeMessageListener->MessageProc(Window, Message, wParam, lParam);
         if (TempResult)

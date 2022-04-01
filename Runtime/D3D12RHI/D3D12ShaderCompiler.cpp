@@ -428,7 +428,7 @@ bool CD3D12ShaderCompiler::InternalCompileFromSource(
     TComPtr<IDxcBlob> CompiledBlob;
     if (FAILED(Result->GetResult(&CompiledBlob)))
     {
-        LOG_ERROR("[CD3D12ShaderCompiler]: FAILED to retrive result");
+        LOG_ERROR("[CD3D12ShaderCompiler]: FAILED to retrieve result");
         return false;
     }
 
@@ -494,7 +494,7 @@ bool CD3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Sha
         return false;
     }
 
-    Assert(LibDesc.FunctionCount > 0);
+    Check(LibDesc.FunctionCount > 0);
 
     // Make sure that the first shader is the one we wanted
     ID3D12FunctionReflection* Function = LibaryReflection->GetFunctionByIndex(0);

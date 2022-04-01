@@ -213,7 +213,7 @@ public:
      */
     FORCEINLINE void Reset(const ElementType* InputArray, SizeType NumElements) noexcept
     {
-        Assert((InputArray != nullptr) && (NumElements > 0));
+        Check((InputArray != nullptr) && (NumElements > 0));
 
         if (InputArray != Data())
         {
@@ -294,7 +294,7 @@ public:
             ElementType* LastElementPtr = Data() + ArraySize;
 
             // ...However, assert just in case
-            Assert(NumElementsToConstruct > 0);
+            Check(NumElementsToConstruct > 0);
 
             DefaultConstructRange<ElementType>(LastElementPtr, NumElementsToConstruct);
             ArraySize = NewSize;
@@ -302,7 +302,7 @@ public:
         else if (NewSize < ArraySize)
         {
             SizeType NumElementsToDestruct = ArraySize - NewSize;
-            Assert(NumElementsToDestruct > 0);
+            Check(NumElementsToDestruct > 0);
 
             InternalPopRange(NumElementsToDestruct);
         }
@@ -328,7 +328,7 @@ public:
             ElementType* LastElementPtr = Data() + ArraySize;
 
             // ...However, assert just in case
-            Assert(NumElementsToConstruct > 0);
+            Check(NumElementsToConstruct > 0);
 
             ConstructRangeFrom<ElementType>(LastElementPtr, NumElementsToConstruct, Element);
             ArraySize = NewSize;
@@ -336,7 +336,7 @@ public:
         else if (NewSize < ArraySize)
         {
             SizeType NumElementsToDestruct = ArraySize - NewSize;
-            Assert(NumElementsToDestruct > 0);
+            Check(NumElementsToDestruct > 0);
 
             InternalPopRange(NumElementsToDestruct);
         }
@@ -407,7 +407,7 @@ public:
     template<typename... ArgTypes>
     inline void EmplaceAt(SizeType Position, ArgTypes&&... Args) noexcept
     {
-        Assert(Position <= ArraySize);
+        Check(Position <= ArraySize);
 
         if (Position == ArraySize)
         {
@@ -487,8 +487,8 @@ public:
      */
     inline void Insert(SizeType Position, const ElementType* InputArray, SizeType NumElements) noexcept
     {
-        Assert(Position <= ArraySize);
-        Assert(InputArray != nullptr);
+        Check(Position <= ArraySize);
+        Check(InputArray != nullptr);
 
         if (Position == ArraySize)
         {
@@ -571,7 +571,7 @@ public:
      */
     inline void Append(const ElementType* InputArray, SizeType NumElements) noexcept
     {
-        Assert(InputArray != nullptr);
+        Check(InputArray != nullptr);
 
         const SizeType NewSize = ArraySize + NumElements;
         GrowIfNeeded(NewSize);
@@ -641,7 +641,7 @@ public:
      */
     inline void RemoveRangeAt(SizeType Position, SizeType NumElements) noexcept
     {
-        Assert(Position + NumElements <= ArraySize);
+        Check(Position + NumElements <= ArraySize);
 
         if (Position + NumElements == ArraySize)
         {
@@ -673,7 +673,7 @@ public:
      */
     FORCEINLINE IteratorType RemoveAt(IteratorType Iterator) noexcept
     {
-        Assert(Iterator.IsFrom(*this));
+        Check(Iterator.IsFrom(*this));
 
         RemoveAt(Iterator.GetIndex());
         return Iterator;
@@ -687,7 +687,7 @@ public:
      */
     FORCEINLINE ConstIteratorType RemoveAt(ConstIteratorType Iterator) noexcept
     {
-        Assert(Iterator.IsFrom(*this));
+        Check(Iterator.IsFrom(*this));
 
         RemoveAt(Iterator.GetIndex());
         return Iterator;
@@ -905,7 +905,7 @@ public:
      */
     FORCEINLINE ElementType& FirstElement() noexcept
     {
-        Assert(!IsEmpty());
+        Check(!IsEmpty());
         return Data()[0];
     }
 
@@ -916,7 +916,7 @@ public:
      */
     FORCEINLINE const ElementType& FirstElement() const noexcept
     {
-        Assert(!IsEmpty());
+        Check(!IsEmpty());
         return Data()[0];
     }
 
@@ -927,7 +927,7 @@ public:
      */
     FORCEINLINE ElementType& LastElement() noexcept
     {
-        Assert(!IsEmpty());
+        Check(!IsEmpty());
         return Data()[ArraySize - 1];
     }
 
@@ -938,7 +938,7 @@ public:
      */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
-        Assert(!IsEmpty());
+        Check(!IsEmpty());
         return Data()[ArraySize - 1];
     }
 
@@ -1020,7 +1020,7 @@ public:
      */
     FORCEINLINE ElementType& At(SizeType Index) noexcept
     {
-        Assert(Index < ArraySize);
+        Check(Index < ArraySize);
         return Data()[Index];
     }
 
@@ -1032,7 +1032,7 @@ public:
      */
     FORCEINLINE const ElementType& At(SizeType Index) const noexcept
     {
-        Assert(Index < ArraySize);
+        Check(Index < ArraySize);
         return Data()[Index];
     }
 
@@ -1045,7 +1045,7 @@ public:
      */
     FORCEINLINE TArrayView<ElementType> CreateView(SizeType Offset, SizeType NumElements) const noexcept
     {
-        Assert((NumElements < ArraySize) && (Offset + NumElements < ArraySize));
+        Check((NumElements < ArraySize) && (Offset + NumElements < ArraySize));
         return TArrayView<ElementType>(Data() + Offset, NumElements);
     }
 

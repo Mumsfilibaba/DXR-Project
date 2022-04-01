@@ -362,13 +362,13 @@ FORCEINLINE CIntVector3& CIntVector3::operator/=(int Rhs) noexcept
 
 FORCEINLINE int& CIntVector3::operator[](int Index) noexcept
 {
-    Assert(Index < 3);
+    Check(Index < 3);
     return reinterpret_cast<int*>(this)[Index];
 }
 
 FORCEINLINE int CIntVector3::operator[](int Index) const noexcept
 {
-    Assert(Index < 3);
+    Check(Index < 3);
     return reinterpret_cast<const int*>(this)[Index];
 }
 

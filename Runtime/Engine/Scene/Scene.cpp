@@ -75,7 +75,7 @@ void CScene::AddCamera(CCamera* InCamera)
 
 void CScene::AddActor(CActor* InActor)
 {
-    Assert(InActor != nullptr);
+    Check(InActor != nullptr);
     Actors.Emplace(InActor);
 
     CMeshComponent* Component = InActor->GetComponentOfType<CMeshComponent>();
@@ -87,7 +87,7 @@ void CScene::AddActor(CActor* InActor)
 
 void CScene::AddLight(CLight* InLight)
 {
-    Assert(InLight != nullptr);
+    Check(InLight != nullptr);
     Lights.Emplace(InLight);
 }
 

@@ -444,7 +444,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandSetIndexBuffer)
 {
 public:
-    FORCEINLINE CRHICommandSetIndexBuffer(CRHIBuffer* InIndexBuffer, ERHIIndexFormat InIndexFormat)
+    FORCEINLINE CRHICommandSetIndexBuffer(CRHIBuffer* InIndexBuffer, EIndexFormat InIndexFormat)
         : IndexBuffer(InIndexBuffer)
         , IndexFormat(InIndexFormat)
     { }
@@ -455,7 +455,7 @@ public:
     }
 
     CRHIBuffer*     IndexBuffer;
-    ERHIIndexFormat IndexFormat;
+    EIndexFormat IndexFormat;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -875,8 +875,8 @@ public:
         , SizeInBytes(InSizeInBytes)
         , SourceData(InSourceData)
     {
-        Assert(InSourceData  != nullptr);
-        Assert(InSizeInBytes != 0);
+        Check(InSourceData  != nullptr);
+        Check(InSizeInBytes != 0);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -903,7 +903,7 @@ public:
         , MipLevel(InMipLevel)
         , SourceData(InSourceData)
     {
-        Assert(InSourceData != nullptr);
+        Check(InSourceData != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)

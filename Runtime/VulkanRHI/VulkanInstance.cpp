@@ -100,20 +100,20 @@ bool CVulkanInstance::Initialize(const SVulkanInstanceDesc& InstanceDesc)
     // Instance Layers
     uint32 LayerPropertiesCount = 0;
     Result = vkEnumerateInstanceLayerProperties(&LayerPropertiesCount, nullptr);
-    VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance LayerProperties Count");
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve Instance LayerProperties Count");
     
     TArray<VkLayerProperties> LayerProperties(LayerPropertiesCount);
     Result = vkEnumerateInstanceLayerProperties(&LayerPropertiesCount, LayerProperties.Data());
-    VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance LayerProperties");
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve Instance LayerProperties");
 
     // Instance Extensions
     uint32 ExtensionPropertiesCount = 0;
     Result = vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, nullptr);
-    VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance ExtensionProperties Count");
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve Instance ExtensionProperties Count");
     
     TArray<VkExtensionProperties> ExtensionProperties(ExtensionPropertiesCount);
     Result = vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, ExtensionProperties.Data());
-    VULKAN_CHECK_RESULT(Result, "Failed to retrive Instance ExtensionProperties");
+    VULKAN_CHECK_RESULT(Result, "Failed to retrieve Instance ExtensionProperties");
 
     const bool bVerboseLogging = GVulkanVerboseLogging.GetBool();
     if (bVerboseLogging)

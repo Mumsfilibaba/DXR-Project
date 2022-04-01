@@ -115,7 +115,7 @@ public:
     /**
      * @brief: Returns a row of this matrix
      *
-     * @param Row: The row to retrive
+     * @param Row: The row to retrieve
      * @return A vector containing the specified row
      */
     FORCEINLINE CVector3 GetRow(int Row) const noexcept;
@@ -123,7 +123,7 @@ public:
     /**
      * @brief: Returns a column of this matrix
      *
-     * @param Column: The column to retrive
+     * @param Column: The column to retrieve
      * @return A vector containing the specified column
      */
     FORCEINLINE CVector3 GetColumn(int Column) const noexcept;
@@ -556,13 +556,13 @@ FORCEINLINE void CMatrix3::SetIdentity() noexcept
 
 FORCEINLINE CVector3 CMatrix3::GetRow(int Row) const noexcept
 {
-    Assert(Row < 3);
+    Check(Row < 3);
     return CVector3(f[Row]);
 }
 
 FORCEINLINE CVector3 CMatrix3::GetColumn(int Column) const noexcept
 {
-    Assert(Column < 3);
+    Check(Column < 3);
     return CVector3(f[0][Column], f[1][Column], f[2][Column]);
 }
 

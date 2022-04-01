@@ -15,7 +15,7 @@ class CRHIViewport : public CRHIResource
 public:
     
     CRHIViewport(ERHIFormat InColorFormat, uint16 InWidth, uint16 InHeight)
-        : CRHIResource()
+        : CRHIResource(ERHIResourceType::Viewport)
         , Width(InWidth)
         , Height(InHeight)
         , ColorFormat(InColorFormat)

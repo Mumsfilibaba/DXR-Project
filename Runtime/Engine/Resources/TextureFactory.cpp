@@ -128,20 +128,20 @@ CRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
         return nullptr;
     }
 
-    Assert(Pixels != nullptr);
+    Check(Pixels != nullptr);
 
     const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const uint32 NumMips = GenerateMips ? NMath::Max<uint32>(NMath::Log2(NMath::Max(Width, Height)), 1u) : 1;
 
-    Assert(NumMips != 0);
+    Check(NumMips != 0);
 
     const uint32 Stride = GetByteStrideFromFormat(Format);
     const uint32 RowPitch = Width * Stride;
 
-    Assert(RowPitch > 0);
+    Check(RowPitch > 0);
 
     SRHIResourceData InitalData = SRHIResourceData(Pixels, Format, Width);
-    TSharedRef<CRHITexture2D> Texture = RHICreateTexture2D(Format, Width, Height, NumMips, 1, TextureFlag_SRV, ERHIResourceAccess::PixelShaderResource, &InitalData);
+    TSharedRef<CRHITexture2D> Texture = RHICreateTexture2D(Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceAccess::PixelShaderResource, &InitalData);
     if (!Texture)
     {
         CDebug::DebugBreak();
@@ -151,9 +151,9 @@ CRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
     if (GenerateMips)
     {
         CRHICommandList& CmdList = GlobalFactoryData.CmdList;
-        CmdList.TransitionTexture(Texture.Get(), ERHIResourceAccess::PixelShaderResource, ERHIResourceAccess::CopyDest);
+        CmdList.TransitionTexture(Texture.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
         CmdList.GenerateMips(Texture.Get());
-        CmdList.TransitionTexture(Texture.Get(), ERHIResourceAccess::CopyDest, ERHIResourceAccess::PixelShaderResource);
+        CmdList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
         CRHICommandQueue::Get().ExecuteCommandList(CmdList);
     }
@@ -163,12 +163,12 @@ CRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
 
 CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, ERHIFormat Format)
 {
-    Assert(PanoramaSource->IsSRV());
+    Check(PanoramaSource->IsSRV());
 
     const bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const uint32 NumMips = (GenerateNumMips) ? NMath::Max<uint32>(NMath::Log2(CubeMapSize), 1u) : 1u;
 
-    TSharedRef<CRHITextureCube> StagingTexture = RHICreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_UAV, ERHIResourceAccess::Common, nullptr);
+    TSharedRef<CRHITextureCube> StagingTexture = RHICreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceAccess::Common, nullptr);
     if (!StagingTexture)
     {
         return nullptr;
@@ -188,7 +188,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* Pa
         StagingTexture->SetName("TextureCube From Panorama StagingTexture UAV");
     }
 
-    TSharedRef<CRHITextureCube> Texture = RHICreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_SRV, ERHIResourceAccess::Common, nullptr);
+    TSharedRef<CRHITextureCube> Texture = RHICreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceAccess::Common, nullptr);
     if (!Texture)
     {
         return nullptr;
@@ -196,8 +196,8 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* Pa
 
     CRHICommandList& CmdList = GlobalFactoryData.CmdList;
 
-    CmdList.TransitionTexture(PanoramaSource, ERHIResourceAccess::PixelShaderResource, ERHIResourceAccess::NonPixelShaderResource);
-    CmdList.TransitionTexture(StagingTexture.Get(), ERHIResourceAccess::Common, ERHIResourceAccess::UnorderedAccess);
+    CmdList.TransitionTexture(PanoramaSource, EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+    CmdList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
     CmdList.SetComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
 
@@ -218,9 +218,9 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* Pa
     const uint32 ThreadsY = NMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
     CmdList.Dispatch(ThreadsX, ThreadsY, 6);
 
-    CmdList.TransitionTexture(PanoramaSource, ERHIResourceAccess::NonPixelShaderResource, ERHIResourceAccess::PixelShaderResource);
-    CmdList.TransitionTexture(StagingTexture.Get(), ERHIResourceAccess::UnorderedAccess, ERHIResourceAccess::CopySource);
-    CmdList.TransitionTexture(Texture.Get(), ERHIResourceAccess::Common, ERHIResourceAccess::CopyDest);
+    CmdList.TransitionTexture(PanoramaSource, EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+    CmdList.TransitionTexture(StagingTexture.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
+    CmdList.TransitionTexture(Texture.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
 
     CmdList.CopyTexture(Texture.Get(), StagingTexture.Get());
 
@@ -229,7 +229,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* Pa
         CmdList.GenerateMips(Texture.Get());
     }
 
-    CmdList.TransitionTexture(Texture.Get(), ERHIResourceAccess::CopyDest, ERHIResourceAccess::PixelShaderResource);
+    CmdList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
     CRHICommandQueue::Get().ExecuteCommandList(CmdList);
 

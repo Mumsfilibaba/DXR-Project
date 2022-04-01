@@ -19,7 +19,7 @@ static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[ShaderVisibility_Count] =
 
 static D3D12_SHADER_VISIBILITY GetD3D12ShaderVisibility(uint32 Visbility)
 {
-    Assert(Visbility < ShaderVisibility_Count);
+    Check(Visbility < ShaderVisibility_Count);
     return GD3D12ShaderVisibility[Visbility];
 }
 
@@ -38,7 +38,7 @@ static EShaderVisibility GShaderVisibility[ShaderVisibility_Count] =
 
 static EShaderVisibility GetShaderVisibility(uint32 Visbility)
 {
-    Assert(Visbility < ShaderVisibility_Count);
+    Check(Visbility < ShaderVisibility_Count);
     return GShaderVisibility[Visbility];
 }
 
@@ -54,7 +54,7 @@ static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
     case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_UAV:     return ResourceType_UAV;
     case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER: return ResourceType_Sampler;
     default:
-        Assert(false);
+        Check(false);
         return ResourceType_Unknown;
     }
 }
@@ -109,8 +109,8 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
         const SShaderResourceCount& ResourceCounts = RootSignatureInfo.ResourceCounts[i];
         if (ResourceCounts.Ranges.NumCBVs > 0)
         {
-            Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
+            Check(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
+            Check(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_CBV, ResourceCounts.Ranges.NumCBVs, 0, Space);
             InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
@@ -122,8 +122,8 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
 
         if (ResourceCounts.Ranges.NumSRVs > 0)
         {
-            Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
+            Check(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
+            Check(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ResourceCounts.Ranges.NumSRVs, 0, Space);
             InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
@@ -135,8 +135,8 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
 
         if (ResourceCounts.Ranges.NumUAVs > 0)
         {
-            Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
+            Check(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
+            Check(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_UAV, ResourceCounts.Ranges.NumUAVs, 0, Space);
             InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
@@ -148,8 +148,8 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
 
         if (ResourceCounts.Ranges.NumSamplers > 0)
         {
-            Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
+            Check(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
+            Check(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ResourceCounts.Ranges.NumSamplers, 0, Space);
             InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
@@ -161,8 +161,8 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
 
         if (ResourceCounts.Num32BitConstants > 0)
         {
-            Assert(ResourceCounts.Num32BitConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
-            Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
+            Check(ResourceCounts.Num32BitConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
+            Check(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
             Init32BitConstantRange(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), ResourceCounts.Num32BitConstants, 0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
             NumRootParameters++;
@@ -270,7 +270,7 @@ bool CD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
     }
 
     const D3D12_ROOT_SIGNATURE_DESC* Desc = Deserializer->GetRootSignatureDesc();
-    Assert(Desc != nullptr);
+    Check(Desc != nullptr);
 
     CreateRootParameterMap(*Desc);
 
@@ -303,7 +303,7 @@ void CD3D12RootSignature::CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC
             uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
 
             // NOTE: We may want to support multiple ranges
-            Assert(Parameter.DescriptorTable.NumDescriptorRanges == 1);
+            Check(Parameter.DescriptorTable.NumDescriptorRanges == 1);
             D3D12_DESCRIPTOR_RANGE Range = Parameter.DescriptorTable.pDescriptorRanges[0];
 
             uint32 ResourceType = GetResourceType(Range.RangeType);
@@ -311,7 +311,7 @@ void CD3D12RootSignature::CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC
         }
         else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS)
         {
-            Assert(ConstantRootParameterIndex == -1);
+            Check(ConstantRootParameterIndex == -1);
             ConstantRootParameterIndex = i;
         }
     }
@@ -474,7 +474,7 @@ void CD3D12RootSignatureCache::ReleaseAll()
 
 CD3D12RootSignature* CD3D12RootSignatureCache::GetOrCreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount)
 {
-    Assert(RootSignatures.Size() == ResourceCounts.Size());
+    Check(RootSignatures.Size() == ResourceCounts.Size());
 
     for (int32 i = 0; i < ResourceCounts.Size(); i++)
     {
@@ -512,7 +512,7 @@ CD3D12RootSignature* CD3D12RootSignatureCache::GetOrCreateRootSignature(const SD
 
 CD3D12RootSignatureCache& CD3D12RootSignatureCache::Get()
 {
-    Assert(Instance != nullptr);
+    Check(Instance != nullptr);
     return *Instance;
 }
 

@@ -239,7 +239,7 @@ void CVulkanCommandContext::GenerateMips(CRHITexture* Texture)
 {
 }
 
-void CVulkanCommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState)
+void CVulkanCommandContext::TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     CVulkanTexture* VulkanTexture = CastTexture(Texture);
     if (VulkanTexture->GetVkImage() == VK_NULL_HANDLE)
@@ -265,7 +265,7 @@ void CVulkanCommandContext::TransitionTexture(CRHITexture* Texture, ERHIResource
     CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
 }
 
-void CVulkanCommandContext::TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState)   
+void CVulkanCommandContext::TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)   
 {
 }
 

@@ -1130,13 +1130,13 @@ FORCEINLINE CVector4& CVector4::operator/=(float Rhs) noexcept
 
 FORCEINLINE float& CVector4::operator[](int Index) noexcept
 {
-    Assert(Index < 4);
+    Check(Index < 4);
     return reinterpret_cast<float*>(this)[Index];
 }
 
 FORCEINLINE float CVector4::operator[](int Index) const noexcept
 {
-    Assert(Index < 4);
+    Check(Index < 4);
     return reinterpret_cast<const float*>(this)[Index];
 }
 

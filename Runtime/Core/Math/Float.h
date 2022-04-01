@@ -19,14 +19,16 @@
 #define MIN_EXPONENT      (DENORM_EXPONENT - 10)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// 64-bit floating point data
+// CFloat64
 
-struct SFloat64
+class CFloat64
 {
+public:
+
     /**
      * @brief: Default constructor
      */
-    FORCEINLINE SFloat64()
+    FORCEINLINE CFloat64()
         : Float64(0.0)
     { }
 
@@ -35,7 +37,7 @@ struct SFloat64
      *
      * @param InFloat64: Value to set the float64 to
      */
-    FORCEINLINE SFloat64(double InFloat64)
+    FORCEINLINE CFloat64(double InFloat64)
         : Float64(InFloat64)
     { }
 
@@ -44,7 +46,7 @@ struct SFloat64
      *
      * @param Other: Other instance to copy
      */
-    FORCEINLINE SFloat64(const SFloat64& Other)
+    FORCEINLINE CFloat64(const CFloat64& Other)
         : Float64(Other.Float64)
     { }
 
@@ -63,15 +65,20 @@ struct SFloat64
         return Float64;
     }
 
-    FORCEINLINE SFloat64& operator=(double InFloat64)
+    /**
+     * @brief: Set the instance to a new value
+     *
+     * @param InFloat64: Value to set the float64 to
+     */
+    FORCEINLINE CFloat64& operator=(double InFloat64)
     {
         Float64 = InFloat64;
         return *this;
     }
 
-    FORCEINLINE SFloat64& operator=(const SFloat64& Other)
+    FORCEINLINE CFloat64& operator=(const CFloat64& Rhs)
     {
-        Float64 = Other.Float64;
+        Float64 = Rhs.Float64;
         return *this;
     }
 
@@ -79,32 +86,53 @@ struct SFloat64
     {
         double Float64;
         uint64 Encoded;
+
         struct
         {
             uint64 Mantissa : 52;
             uint64 Exponent : 11;
-            uint64 Sign : 1;
+            uint64 Sign     : 1;
         };
     };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// 32-bit floating point data
+// SFloat32
 
-struct SFloat32
+class CFloat32
 {
-    FORCEINLINE SFloat32()
+public:
+
+    /**
+     * @brief: Default constructor
+     */
+    FORCEINLINE CFloat32()
         : Float32(0.0f)
     { }
 
-    FORCEINLINE SFloat32(float InFloat32)
+    /**
+     * @brief: Construct with a float
+     *
+     * @param InFloat32: Value to set the float to
+     */
+    FORCEINLINE CFloat32(float InFloat32)
         : Float32(InFloat32)
     { }
 
-    FORCEINLINE SFloat32(const SFloat32& Other)
+    /**
+     * @brief: Copy constructor
+     *
+     * @param Other: Other instance to copy
+     */
+    FORCEINLINE CFloat32(const CFloat32& Other)
         : Float32(Other.Float32)
     { }
 
+    /**
+     * @brief: Set the instance to a new value
+     *
+     * @param InFloat32: Value to set the float to
+     */
     FORCEINLINE void SetFloat(float InFloat32)
     {
         Float32 = InFloat32;
@@ -115,15 +143,20 @@ struct SFloat32
         return Float32;
     }
 
-    FORCEINLINE SFloat32& operator=(float InFloat32)
+    /**
+     * @brief: Set the instance to a new value
+     *
+     * @param InFloat32: Value to set the float to
+     */
+    FORCEINLINE CFloat32& operator=(float InFloat32)
     {
         Float32 = InFloat32;
         return *this;
     }
 
-    FORCEINLINE SFloat32& operator=(const SFloat32& Other)
+    FORCEINLINE CFloat32& operator=(const CFloat32& Rhs)
     {
-        Float32 = Other.Float32;
+        Float32 = Rhs.Float32;
         return *this;
     }
 
@@ -131,31 +164,42 @@ struct SFloat32
     {
         float  Float32;
         uint32 Encoded;
+
         struct
         {
             uint32 Mantissa : 23;
             uint32 Exponent : 8;
-            uint32 Sign : 1;
+            uint32 Sign     : 1;
         };
     };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// 16-bit floating point data
+// CFloat16
 
-struct SFloat16
+class CFloat16
 {
-    FORCEINLINE SFloat16()
+public:
+
+    /**
+     * @brief: Default constructor
+     */
+    FORCEINLINE CFloat16()
         : Encoded(0)
     { }
 
-    FORCEINLINE SFloat16(float Float32)
+    FORCEINLINE CFloat16(float Float32)
         : Encoded(0)
     {
         SetFloat(Float32);
     }
 
-    FORCEINLINE SFloat16(const SFloat16& Other)
+    /**
+     * @brief: Copy constructor
+     *
+     * @param Other: Other instance to copy
+     */
+    FORCEINLINE CFloat16(const CFloat16& Other)
         : Encoded(Other.Encoded)
     { }
 
@@ -168,29 +212,30 @@ struct SFloat16
         Encoded = static_cast<uint16>(_mm_cvtsi128_si32(Reg1));
 #else
         // Convert
-        const SFloat32 In(Float32);
-        Sign = In.Sign;
+        const CFloat32 Input(Float32);
+        Sign = Input.Sign;
 
         // This value is to large to be represented with Fp16 (Alt. Infinity or NaN)
-        if (In.Exponent >= MAX_EXPONENT)
+        if (Input.Exponent >= MAX_EXPONENT)
         {
             // Set mantissa to NaN if these bit are set otherwise Infinity
             constexpr uint32 SIGN_EXLUDE_MASK = 0x7fffffff;
-            const uint32 InEncoded = (In.Encoded & SIGN_EXLUDE_MASK);
-            Mantissa = (InEncoded > 0x7F800000) ? (0x200 | (In.Mantissa & 0x3ffu)) : 0u;
+
+            const uint32 InEncoded = (Input.Encoded & SIGN_EXLUDE_MASK);
+            Mantissa = (InEncoded > 0x7F800000) ? (0x200 | (Input.Mantissa & 0x3ffu)) : 0u;
             Exponent = FP16_MAX_EXPONENT;
         }
-        else if (In.Exponent <= MIN_EXPONENT)
+        else if (Input.Exponent <= MIN_EXPONENT)
         {
             // These values are too small to be represented by Fp16, these values results in +/- zero
             Exponent = 0;
             Mantissa = 0;
         }
-        else if (In.Exponent <= DENORM_EXPONENT)
+        else if (Input.Exponent <= DENORM_EXPONENT)
         {
             // Calculate new mantissa with hidden bit
-            const uint32 NewMantissa = FP32_HIDDEN_BIT | In.Mantissa;
-            const uint32 Shift = 125u - In.Exponent; // Calculate how much to shift to go from normalized to de-normalized
+            const uint32 NewMantissa = FP32_HIDDEN_BIT | Input.Mantissa;
+            const uint32 Shift       = 125u - Input.Exponent; // Calculate how much to shift to go from normalized to de-normalized
 
             Exponent = 0;
             Mantissa = NewMantissa >> (Shift + 1);
@@ -204,10 +249,10 @@ struct SFloat16
         else
         {
             // All other values
-            const int32 NewExponent = int32(In.Exponent) - 127 + 15; // Unbias and bias the exponents
+            const int32 NewExponent = int32(Input.Exponent) - 127 + 15; // Unbias and bias the exponents
             Exponent = uint16(NewExponent);
 
-            const int32 NewMantissa = int32(In.Mantissa) >> 13; // Bit-Shift difference in number of mantissa bits
+            const int32 NewMantissa = (int32(Input.Mantissa) >> 13); // Bit-Shift difference in number of mantissa bits
             Mantissa = uint16(NewMantissa);
         }
 #endif
@@ -221,10 +266,10 @@ struct SFloat16
         __m128i Reg1 = _mm_cvtps_ph(Reg0, _MM_FROUND_NO_EXC);
         Encoded = static_cast<uint16>(_mm_cvtsi128_si32(Reg1));
 #else
-        SFloat32 In(Float32);
-        Exponent = uint16(int32(In.Exponent) - 127 + 15); // Unbias and bias the exponents
-        Mantissa = uint16(In.Mantissa >> 13);               // Bit-Shift difference in number of mantissa bits
-        Sign = In.Sign;
+        CFloat32 Input(Float32);
+        Exponent = uint16(int32(Input.Exponent) - 127 + 15); // Unbias and bias the exponents
+        Mantissa = uint16(Input.Mantissa >> 13);             // Bit-Shift difference in number of mantissa bits
+        Sign     = Input.Sign;
 #endif
     }
 
@@ -236,7 +281,7 @@ struct SFloat16
         __m128  Reg1 = _mm_cvtph_ps(Reg0);
         return _mm_cvtss_f32(Reg1);
 #else
-        SFloat32 Ret;
+        CFloat32 Ret;
         Ret.Sign = Sign;
 
         // Infinity/NaN
@@ -275,26 +320,37 @@ struct SFloat16
 #endif
     }
 
-    FORCEINLINE SFloat16& operator=(float F32)
+    FORCEINLINE bool operator==(const CFloat16& Rhs) const
     {
-        SetFloat(F32);
+        return (Encoded == Rhs.Encoded);
+    }
+
+    FORCEINLINE bool operator!=(const CFloat16& Rhs) const
+    {
+        return (Encoded != Rhs.Encoded);
+    }
+
+    FORCEINLINE CFloat16& operator=(float Float32)
+    {
+        SetFloat(Float32);
         return *this;
     }
 
-    FORCEINLINE SFloat16& operator=(const SFloat16& Other)
+    FORCEINLINE CFloat16& operator=(const CFloat16& Rhs)
     {
-        Encoded = Other.Encoded;
+        Encoded = Rhs.Encoded;
         return *this;
     }
 
     union
     {
         uint16 Encoded;
+
         struct
         {
             uint16 Mantissa : 10;
             uint16 Exponent : 5;
-            uint16 Sign : 1;
+            uint16 Sign     : 1;
         };
     };
 };

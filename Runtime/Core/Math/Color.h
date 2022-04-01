@@ -1,15 +1,152 @@
 #pragma once
+#include "Float.h"
+
 #include "Core/Core.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Class for floating-point color-data 
+// CColor
 
-struct SColorF
+class CColor
 {
+public:
+    
     /**
      * @brief: Default constructor (Initialize components to zero)
      */
-    FORCEINLINE SColorF()
+    FORCEINLINE CColor()
+        : r(0.0f)
+        , g(0.0f)
+        , b(0.0f)
+        , a(0.0f)
+    { }
+
+    /**
+     * @brief: Initialize color with all channels
+     *
+     * @param InR: Red channel
+     * @param InG: Green channel
+     * @param InB: Blue channel
+     * @param InA: Alpha channel
+     */
+    FORCEINLINE CColor(uint8 InR, uint8 InG, uint8 InB, uint8 InA)
+        : r(InR)
+        , g(InG)
+        , b(InB)
+        , a(InA)
+    { }
+
+    FORCEINLINE uint8* GetData()
+    {
+        return reinterpret_cast<uint8*>(this);
+    }
+
+    FORCEINLINE const uint8* GetData() const
+    {
+        return reinterpret_cast<const uint8*>(this);
+    }
+
+    bool operator==(const CColor& Rhs) const
+    {
+        return (r == Rhs.r) && (g == Rhs.g) && (b == Rhs.b) && (a == Rhs.a);
+    }
+
+    bool operator!=(const CColor& Rhs) const
+    {
+        return !(*this == Rhs);
+    }
+
+    struct
+    {
+        /** Red channel */
+        uint8 r;
+
+        /** Green channel */
+        uint8 g;
+
+        /** Blue channel */
+        uint8 b;
+
+        /** Alpha channel */
+        uint8 a;
+    };
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CFloatColor16
+
+class CFloatColor16
+{
+public:
+
+    /**
+     * @brief: Default constructor (Initialize components to zero)
+     */
+    FORCEINLINE CFloatColor16()
+        : r(0.0f)
+        , g(0.0f)
+        , b(0.0f)
+        , a(0.0f)
+    { }
+
+    /**
+     * @brief: Initialize color with all channels
+     *
+     * @param InR: Red channel
+     * @param InG: Green channel
+     * @param InB: Blue channel
+     * @param InA: Alpha channel
+     */
+    FORCEINLINE CFloatColor16(float InR, float InG, float InB, float InA)
+        : r(InR)
+        , g(InG)
+        , b(InB)
+        , a(InA)
+    { }
+
+    FORCEINLINE uint16* GetData()
+    { 
+        return reinterpret_cast<uint16*>(this);
+    }
+
+    FORCEINLINE const uint16* GetData() const
+    { 
+        return reinterpret_cast<const uint16*>(this); 
+    }
+
+    bool operator==(const CFloatColor16& Rhs) const
+    {
+        return (r == Rhs.r) && (g == Rhs.g) && (b == Rhs.b) && (a == Rhs.a);
+    }
+
+    bool operator!=(const CFloatColor16& Rhs) const
+    {
+        return !(*this == Rhs);
+    }
+
+    /** Red channel */
+    CFloat16 r;
+
+    /** Green channel */
+    CFloat16 g;
+
+    /** Blue channel */
+    CFloat16 b;
+
+    /** Alpha channel */
+    CFloat16 a;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CFloatColor
+
+class CFloatColor
+{
+public:
+
+    /**
+     * @brief: Default constructor (Initialize components to zero)
+     */
+    FORCEINLINE CFloatColor()
         : r(0.0f)
         , g(0.0f)
         , b(0.0f)
@@ -24,52 +161,42 @@ struct SColorF
      * @param InB: Blue channel
      * @param InA: Alpha channel
      */
-    FORCEINLINE SColorF(float InR, float InG, float InB, float InA)
+    FORCEINLINE CFloatColor(float InR, float InG, float InB, float InA)
         : r(InR)
         , g(InG)
         , b(InB)
         , a(InA)
     { }
 
-    /**
-     * @brief: Set all components
-     *
-     * @param InR: Red channel
-     * @param InG: Green channel
-     * @param InB: Blue channel
-     * @param InA: Alpha channel
-     */
-    FORCEINLINE void SetElements(float InR, float InG, float InB, float InA)
+    FORCEINLINE float* GetData()
     {
-        r = InR;
-        g = InG;
-        b = InB;
-        a = InA;
+        return reinterpret_cast<float*>(this);
     }
 
-    bool operator==(const SColorF& Rhs) const
+    FORCEINLINE const float* GetData() const
+    {
+        return reinterpret_cast<const float*>(this);
+    }
+
+    bool operator==(const CFloatColor& Rhs) const
     {
         return (r == Rhs.r) && (g == Rhs.g) && (b == Rhs.b) && (a == Rhs.a);
     }
 
-    bool operator!=(const SColorF& Rhs) const
+    bool operator!=(const CFloatColor& Rhs) const
     {
         return !(*this == Rhs);
     }
 
-    union
-    {
-        float Elements[4];
-        struct
-        {
-            /** Red channel */
-            float r;
-            /** Green channel */
-            float g;
-            /** Blue channel */
-            float b;
-            /** Alpha channel */
-            float a;
-        };
-    };
+    /** Red channel */
+    float r;
+
+    /** Green channel */
+    float g;
+            
+    /** Blue channel */
+    float b;
+            
+    /** Alpha channel */
+    float a;
 };

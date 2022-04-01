@@ -539,13 +539,13 @@ FORCEINLINE void CMatrix2::SetIdentity() noexcept
 
 FORCEINLINE CVector2 CMatrix2::GetRow(int Row) const noexcept
 {
-    Assert(Row < 2);
+    Check(Row < 2);
     return CVector2(f[Row]);
 }
 
 FORCEINLINE CVector2 CMatrix2::GetColumn(int Column) const noexcept
 {
-    Assert(Column < 2);
+    Check(Column < 2);
     return CVector2(f[0][Column], f[1][Column]);
 }
 

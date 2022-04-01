@@ -64,7 +64,7 @@ public:
         CCocoaContentView* ContentView = [CocoaWindow contentView];
         CAMetalLayer*      MetalLayer  = [ContentView isKindOfClass:[CAMetalLayer class]] ? reinterpret_cast<CAMetalLayer*>([ContentView layer]) : nullptr;
 
-        Assert(MetalLayer != nullptr);
+        Check(MetalLayer != nullptr);
         
         VkMetalSurfaceCreateInfoEXT MetalSurfaceCreateInfo;
         CMemory::Memzero(&MetalSurfaceCreateInfo);

@@ -38,32 +38,32 @@ public:
 
     virtual bool Initialize(bool bEnableDebug) override final { return true; }
 
-    virtual CRHITexture2D* CreateTexture2D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture2D* CreateTexture2D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture2D>(Format, Width, Height, NumMips, NumSamples, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITexture2DArray* CreateTexture2DArray(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture2DArray* CreateTexture2DArray(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture2DArray>(Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITextureCube* CreateTextureCube(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITextureCube* CreateTextureCube(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITextureCube>(Format, Size, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITextureCubeArray* CreateTextureCubeArray(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITextureCubeArray* CreateTextureCubeArray(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITextureCubeArray>(Format, Size, NumArraySlices, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITexture3D* CreateTexture3D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture3D* CreateTexture3D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture3D>(Format, Width, Height, Depth, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual CRHIBufferRef CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIBufferRef CreateBuffer(const CRHIBufferDesc& BufferDesc, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
     {
         return dbg_new CNullRHIBuffer(BufferDesc);
     }

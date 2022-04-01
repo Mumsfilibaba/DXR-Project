@@ -31,8 +31,8 @@ void CD3D12TimestampQuery::GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32
 
 void CD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
-    Assert(Index < D3D12_DEFAULT_QUERY_COUNT);
-    Assert(CmdList != nullptr);
+    Check(Index < D3D12_DEFAULT_QUERY_COUNT);
+    Check(CmdList != nullptr);
 
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2));
 
@@ -45,8 +45,8 @@ void CD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32
 
 void CD3D12TimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
-    Assert(CmdList != nullptr);
-    Assert(Index < (uint32)TimeQueries.Size());
+    Check(CmdList != nullptr);
+    Check(Index < (uint32)TimeQueries.Size());
 
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2) + 1);
 }
@@ -58,8 +58,8 @@ void CD3D12TimestampQuery::ResolveQueries(class CD3D12CommandContext& CommandCon
     ID3D12CommandQueue*        Queue         = CommandContext.GetQueue().GetD3D12Queue();
     ID3D12GraphicsCommandList* DxCommandList = CommandList.GetGraphicsCommandList();
 
-    Assert(Queue != nullptr);
-    Assert(DxCommandList != nullptr);
+    Check(Queue != nullptr);
+    Check(DxCommandList != nullptr);
 
     uint32 ReadIndex = CommandContext.GetCurrentEpochValue();
     if (ReadIndex >= (uint32)ReadResources.Size())

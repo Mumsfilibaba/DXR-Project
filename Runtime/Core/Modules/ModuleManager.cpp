@@ -8,7 +8,7 @@
 
 IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
 {
-    Assert(ModuleName != nullptr);
+    Check(ModuleName != nullptr);
 
     IEngineModule* ExistingModule = GetEngineModule(ModuleName);
     if (ExistingModule)

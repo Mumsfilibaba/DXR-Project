@@ -229,7 +229,7 @@ bool CRHIInstanceD3D12::Initialize(bool bEnableDebug)
 }
 
 template<typename D3D12TextureType>
-D3D12TextureType* CRHIInstanceD3D12::CreateTexture(ERHIFormat Format, uint32 SizeX, uint32 SizeY, uint32 SizeZ, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+D3D12TextureType* CRHIInstanceD3D12::CreateTexture(ERHIFormat Format, uint32 SizeX, uint32 SizeY, uint32 SizeZ, uint32 NumMips, uint32 NumSamples, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     TSharedRef<D3D12TextureType> NewTexture = dbg_new D3D12TextureType(GetDevice(), Format, SizeX, SizeY, SizeZ, NumMips, NumSamples, Flags, OptimalClearValue);
 
@@ -452,20 +452,20 @@ D3D12TextureType* CRHIInstanceD3D12::CreateTexture(ERHIFormat Format, uint32 Siz
 
         DirectCommandContext->Begin();
 
-        DirectCommandContext->TransitionTexture(Texture2D, ERHIResourceAccess::Common, ERHIResourceAccess::CopyDest);
+        DirectCommandContext->TransitionTexture(Texture2D, EResourceAccess::Common, EResourceAccess::CopyDest);
         DirectCommandContext->UpdateTexture2D(Texture2D, SizeX, SizeY, 0, InitialData->GetData());
 
         // NOTE: Transition into InitialState
-        DirectCommandContext->TransitionTexture(Texture2D, ERHIResourceAccess::CopyDest, InitialState);
+        DirectCommandContext->TransitionTexture(Texture2D, EResourceAccess::CopyDest, InitialState);
 
         DirectCommandContext->End();
     }
     else
     {
-        if (InitialState != ERHIResourceAccess::Common)
+        if (InitialState != EResourceAccess::Common)
         {
             DirectCommandContext->Begin();
-            DirectCommandContext->TransitionTexture(NewTexture.Get(), ERHIResourceAccess::Common, InitialState);
+            DirectCommandContext->TransitionTexture(NewTexture.Get(), EResourceAccess::Common, InitialState);
             DirectCommandContext->End();
         }
     }
@@ -473,33 +473,33 @@ D3D12TextureType* CRHIInstanceD3D12::CreateTexture(ERHIFormat Format, uint32 Siz
     return NewTexture.ReleaseOwnership();
 }
 
-CRHITexture2D* CRHIInstanceD3D12::CreateTexture2D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITexture2D* CRHIInstanceD3D12::CreateTexture2D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     return CreateTexture<CD3D12Texture2D>(Format, Width, Height, 1, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHITexture2DArray* CRHIInstanceD3D12::CreateTexture2DArray(ERHIFormat Format,uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITexture2DArray* CRHIInstanceD3D12::CreateTexture2DArray(ERHIFormat Format,uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     return CreateTexture<CD3D12Texture2DArray>(Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHITextureCube* CRHIInstanceD3D12::CreateTextureCube(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITextureCube* CRHIInstanceD3D12::CreateTextureCube(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     return CreateTexture<CD3D12TextureCube>(Format, Size, Size, TEXTURE_CUBE_FACE_COUNT, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHITextureCubeArray* CRHIInstanceD3D12::CreateTextureCubeArray(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITextureCubeArray* CRHIInstanceD3D12::CreateTextureCubeArray(ERHIFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     const uint32 ArraySlices = NumArraySlices * TEXTURE_CUBE_FACE_COUNT;
     return CreateTexture<CD3D12TextureCubeArray>(Format, Size, Size, ArraySlices, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHITexture3D* CRHIInstanceD3D12::CreateTexture3D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITexture3D* CRHIInstanceD3D12::CreateTexture3D(ERHIFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
 {
     return CreateTexture<CD3D12Texture3D>(Format, Width, Height, Depth, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHIBufferRef CRHIInstanceD3D12::CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceAccess InitialState, const SRHIResourceData* InitalData)
+CRHIBufferRef CRHIInstanceD3D12::CreateBuffer(const CRHIBufferDesc& BufferDesc, EResourceAccess InitialState, const SRHIResourceData* InitalData)
 {
     CD3D12BufferRef NewBuffer = dbg_new CD3D12Buffer(GetDevice(), BufferDesc);
     if (!(NewBuffer && NewBuffer->Initialize(DirectCommandContext.Get(), InitialState, InitalData)))
@@ -595,7 +595,7 @@ CRHIShaderResourceView* CRHIInstanceD3D12::CreateShaderResourceView(const SRHISh
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.Texture2D.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.Texture2D.Texture->IsSRV() && ViewDesc.Texture2D.Format != ERHIFormat::Unknown);
+        Check(ViewDesc.Texture2D.Texture->IsSRV() && ViewDesc.Texture2D.Format != ERHIFormat::Unknown);
 
         Desc.Format = ConvertFormat(ViewDesc.Texture2D.Format);
         if (!ViewDesc.Texture2D.Texture->IsMultiSampled())
@@ -616,7 +616,7 @@ CRHIShaderResourceView* CRHIInstanceD3D12::CreateShaderResourceView(const SRHISh
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.Texture2DArray.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.Texture2DArray.Texture->IsSRV() && ViewDesc.Texture2DArray.Format != ERHIFormat::Unknown);
+        Check(ViewDesc.Texture2DArray.Texture->IsSRV() && ViewDesc.Texture2DArray.Format != ERHIFormat::Unknown);
 
         Desc.Format = ConvertFormat(ViewDesc.Texture2DArray.Format);
         if (!ViewDesc.Texture2DArray.Texture->IsMultiSampled())
@@ -641,7 +641,7 @@ CRHIShaderResourceView* CRHIInstanceD3D12::CreateShaderResourceView(const SRHISh
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.TextureCube.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.TextureCube.Texture->IsSRV() && ViewDesc.TextureCube.Format != ERHIFormat::Unknown);
+        Check(ViewDesc.TextureCube.Texture->IsSRV() && ViewDesc.TextureCube.Format != ERHIFormat::Unknown);
 
         Desc.Format                          = ConvertFormat(ViewDesc.Texture2D.Format);
         Desc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
@@ -654,7 +654,7 @@ CRHIShaderResourceView* CRHIInstanceD3D12::CreateShaderResourceView(const SRHISh
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.TextureCubeArray.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.TextureCubeArray.Texture->IsSRV() && ViewDesc.TextureCubeArray.Format != ERHIFormat::Unknown);
+        Check(ViewDesc.TextureCubeArray.Texture->IsSRV() && ViewDesc.TextureCubeArray.Format != ERHIFormat::Unknown);
 
         Desc.Format                               = ConvertFormat(ViewDesc.Texture2D.Format);
         Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
@@ -669,7 +669,7 @@ CRHIShaderResourceView* CRHIInstanceD3D12::CreateShaderResourceView(const SRHISh
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.Texture3D.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.Texture3D.Texture->IsSRV() && ViewDesc.Texture3D.Format != ERHIFormat::Unknown);
+        Check(ViewDesc.Texture3D.Texture->IsSRV() && ViewDesc.Texture3D.Format != ERHIFormat::Unknown);
 
         Desc.Format                        = ConvertFormat(ViewDesc.Texture3D.Format);
         Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE3D;
@@ -682,7 +682,7 @@ CRHIShaderResourceView* CRHIInstanceD3D12::CreateShaderResourceView(const SRHISh
         CD3D12Buffer* DxBuffer = static_cast<CD3D12Buffer*>(ViewDesc.VertexBuffer.Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(DxBuffer->IsSRV());
+        Check(DxBuffer->IsSRV());
 
         Desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = ViewDesc.VertexBuffer.FirstVertex;
@@ -696,7 +696,7 @@ CRHIShaderResourceView* CRHIInstanceD3D12::CreateShaderResourceView(const SRHISh
         CD3D12Buffer* DxBuffer = static_cast<CD3D12Buffer*>(ViewDesc.IndexBuffer.Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(DxBuffer->IsSRV());
+        Check(DxBuffer->IsSRV());
 
         Desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = ViewDesc.IndexBuffer.FirstIndex;
@@ -710,7 +710,7 @@ CRHIShaderResourceView* CRHIInstanceD3D12::CreateShaderResourceView(const SRHISh
         CD3D12Buffer* DxBuffer = static_cast<CD3D12Buffer*>(ViewDesc.StructuredBuffer.Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(DxBuffer->IsSRV());
+        Check(DxBuffer->IsSRV());
 
         Desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = ViewDesc.StructuredBuffer.FirstElement;
@@ -720,7 +720,7 @@ CRHIShaderResourceView* CRHIInstanceD3D12::CreateShaderResourceView(const SRHISh
         Desc.Buffer.StructureByteStride = DxBuffer->GetStride();
     }
 
-    Assert(Resource != nullptr);
+    Check(Resource != nullptr);
 
     TSharedRef<CD3D12ShaderResourceView> DxView = dbg_new CD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap);
     if (!DxView->AllocateHandle())
@@ -749,7 +749,7 @@ CRHIUnorderedAccessView* CRHIInstanceD3D12::CreateUnorderedAccessView(const SRHI
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.Texture2D.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.Texture2D.Texture->IsUAV() && ViewDesc.Texture2D.Format != ERHIFormat::Unknown);
+        Check(ViewDesc.Texture2D.Texture->IsUAV() && ViewDesc.Texture2D.Format != ERHIFormat::Unknown);
 
         Desc.Format               = ConvertFormat(ViewDesc.Texture2D.Format);
         Desc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
@@ -761,7 +761,7 @@ CRHIUnorderedAccessView* CRHIInstanceD3D12::CreateUnorderedAccessView(const SRHI
         CD3D12Texture*  DxTexture = D3D12TextureCast(ViewDesc.Texture2DArray.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.Texture2DArray.Texture->IsUAV() && ViewDesc.Texture2DArray.Format != ERHIFormat::Unknown);
+        Check(ViewDesc.Texture2DArray.Texture->IsUAV() && ViewDesc.Texture2DArray.Format != ERHIFormat::Unknown);
 
         Desc.Format                         = ConvertFormat(ViewDesc.Texture2DArray.Format);
         Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
@@ -775,7 +775,7 @@ CRHIUnorderedAccessView* CRHIInstanceD3D12::CreateUnorderedAccessView(const SRHI
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.TextureCube.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.TextureCube.Texture->IsUAV() && ViewDesc.TextureCube.Format != ERHIFormat::Unknown);
+        Check(ViewDesc.TextureCube.Texture->IsUAV() && ViewDesc.TextureCube.Format != ERHIFormat::Unknown);
 
         Desc.Format                         = ConvertFormat(ViewDesc.TextureCube.Format);
         Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
@@ -789,7 +789,7 @@ CRHIUnorderedAccessView* CRHIInstanceD3D12::CreateUnorderedAccessView(const SRHI
         CD3D12Texture*    DxTexture = D3D12TextureCast(ViewDesc.TextureCubeArray.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.TextureCubeArray.Texture->IsUAV() && ViewDesc.TextureCubeArray.Format != ERHIFormat::Unknown);
+        Check(ViewDesc.TextureCubeArray.Texture->IsUAV() && ViewDesc.TextureCubeArray.Format != ERHIFormat::Unknown);
 
         Desc.Format                         = ConvertFormat(ViewDesc.TextureCubeArray.Format);
         Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
@@ -803,7 +803,7 @@ CRHIUnorderedAccessView* CRHIInstanceD3D12::CreateUnorderedAccessView(const SRHI
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.Texture3D.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.Texture3D.Texture->IsUAV() && ViewDesc.Texture3D.Format != ERHIFormat::Unknown);
+        Check(ViewDesc.Texture3D.Texture->IsUAV() && ViewDesc.Texture3D.Format != ERHIFormat::Unknown);
 
         Desc.Format                = ConvertFormat(ViewDesc.Texture3D.Format);
         Desc.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE3D;
@@ -816,7 +816,7 @@ CRHIUnorderedAccessView* CRHIInstanceD3D12::CreateUnorderedAccessView(const SRHI
         CD3D12Buffer* DxBuffer = static_cast<CD3D12Buffer*>(ViewDesc.VertexBuffer.Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(DxBuffer->IsUAV());
+        Check(DxBuffer->IsUAV());
 
         Desc.ViewDimension              = D3D12_UAV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = ViewDesc.VertexBuffer.FirstVertex;
@@ -830,7 +830,7 @@ CRHIUnorderedAccessView* CRHIInstanceD3D12::CreateUnorderedAccessView(const SRHI
         CD3D12Buffer* DxBuffer = static_cast<CD3D12Buffer*>(ViewDesc.IndexBuffer.Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(DxBuffer->IsUAV());
+        Check(DxBuffer->IsUAV());
 
         Desc.ViewDimension              = D3D12_UAV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = ViewDesc.IndexBuffer.FirstIndex;
@@ -844,7 +844,7 @@ CRHIUnorderedAccessView* CRHIInstanceD3D12::CreateUnorderedAccessView(const SRHI
         CD3D12Buffer* DxBuffer = static_cast<CD3D12Buffer*>(ViewDesc.StructuredBuffer.Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(DxBuffer->IsUAV());
+        Check(DxBuffer->IsUAV());
 
         Desc.ViewDimension              = D3D12_UAV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = ViewDesc.StructuredBuffer.FirstElement;
@@ -860,7 +860,7 @@ CRHIUnorderedAccessView* CRHIInstanceD3D12::CreateUnorderedAccessView(const SRHI
         return nullptr;
     }
 
-    Assert(Resource != nullptr);
+    Check(Resource != nullptr);
 
     // TODO: Expose counter-resource
     if (DxView->CreateView(nullptr, Resource, Desc))
@@ -881,14 +881,14 @@ CRHIRenderTargetView* CRHIInstanceD3D12::CreateRenderTargetView(const SRHIRender
     CD3D12Resource* Resource = nullptr;
 
     Desc.Format = ConvertFormat(ViewDesc.Format);
-    Assert(ViewDesc.Format != ERHIFormat::Unknown);
+    Check(ViewDesc.Format != ERHIFormat::Unknown);
 
     if (ViewDesc.Type == SRHIRenderTargetViewDesc::EType::Texture2D)
     {
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.Texture2D.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.Texture2D.Texture->IsRTV());
+        Check(ViewDesc.Texture2D.Texture->IsRTV());
 
         if (ViewDesc.Texture2D.Texture->IsMultiSampled())
         {
@@ -906,7 +906,7 @@ CRHIRenderTargetView* CRHIInstanceD3D12::CreateRenderTargetView(const SRHIRender
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.Texture2DArray.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.Texture2DArray.Texture->IsRTV());
+        Check(ViewDesc.Texture2DArray.Texture->IsRTV());
 
         if (ViewDesc.Texture2DArray.Texture->IsMultiSampled())
         {
@@ -928,7 +928,7 @@ CRHIRenderTargetView* CRHIInstanceD3D12::CreateRenderTargetView(const SRHIRender
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.TextureCube.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.TextureCube.Texture->IsRTV());
+        Check(ViewDesc.TextureCube.Texture->IsRTV());
 
         Desc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = ViewDesc.TextureCube.Mip;
@@ -941,7 +941,7 @@ CRHIRenderTargetView* CRHIInstanceD3D12::CreateRenderTargetView(const SRHIRender
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.TextureCubeArray.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.TextureCubeArray.Texture->IsRTV());
+        Check(ViewDesc.TextureCubeArray.Texture->IsRTV());
 
         Desc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = ViewDesc.TextureCubeArray.Mip;
@@ -954,7 +954,7 @@ CRHIRenderTargetView* CRHIInstanceD3D12::CreateRenderTargetView(const SRHIRender
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.Texture3D.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.Texture3D.Texture->IsRTV());
+        Check(ViewDesc.Texture3D.Texture->IsRTV());
 
         Desc.ViewDimension         = D3D12_RTV_DIMENSION_TEXTURE3D;
         Desc.Texture3D.MipSlice    = ViewDesc.Texture3D.Mip;
@@ -968,7 +968,7 @@ CRHIRenderTargetView* CRHIInstanceD3D12::CreateRenderTargetView(const SRHIRender
         return nullptr;
     }
 
-    Assert(Resource != nullptr);
+    Check(Resource != nullptr);
 
     if (!DxView->CreateView(Resource, Desc))
     {
@@ -988,14 +988,14 @@ CRHIDepthStencilView* CRHIInstanceD3D12::CreateDepthStencilView(const SRHIDepthS
     CD3D12Resource* Resource = nullptr;
 
     Desc.Format = ConvertFormat(ViewDesc.Format);
-    Assert(ViewDesc.Format != ERHIFormat::Unknown);
+    Check(ViewDesc.Format != ERHIFormat::Unknown);
 
     if (ViewDesc.Type == SRHIDepthStencilViewDesc::EType::Texture2D)
     {
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.Texture2D.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.Texture2D.Texture->IsDSV());
+        Check(ViewDesc.Texture2D.Texture->IsDSV());
 
         if (ViewDesc.Texture2D.Texture->IsMultiSampled())
         {
@@ -1012,7 +1012,7 @@ CRHIDepthStencilView* CRHIInstanceD3D12::CreateDepthStencilView(const SRHIDepthS
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.Texture2DArray.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.Texture2DArray.Texture->IsDSV());
+        Check(ViewDesc.Texture2DArray.Texture->IsDSV());
 
         if (ViewDesc.Texture2DArray.Texture->IsMultiSampled())
         {
@@ -1033,7 +1033,7 @@ CRHIDepthStencilView* CRHIInstanceD3D12::CreateDepthStencilView(const SRHIDepthS
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.TextureCube.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.TextureCube.Texture->IsDSV());
+        Check(ViewDesc.TextureCube.Texture->IsDSV());
 
         Desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = ViewDesc.TextureCube.Mip;
@@ -1045,7 +1045,7 @@ CRHIDepthStencilView* CRHIInstanceD3D12::CreateDepthStencilView(const SRHIDepthS
         CD3D12Texture* DxTexture = D3D12TextureCast(ViewDesc.TextureCubeArray.Texture);
         Resource = DxTexture->GetResource();
 
-        Assert(ViewDesc.TextureCubeArray.Texture->IsDSV());
+        Check(ViewDesc.TextureCubeArray.Texture->IsDSV());
 
         Desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = ViewDesc.TextureCubeArray.Mip;
@@ -1142,7 +1142,7 @@ CRHIRayGenShader* CRHIInstanceD3D12::CreateRayGenShader(const TArray<uint8>& Sha
     TSharedRef<CD3D12RayGenShader> Shader = dbg_new CD3D12RayGenShader(GetDevice(), ShaderCode);
     if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        D3D12_ERROR_ALWAYS("Failed to retrive Shader Identifier");
+        D3D12_ERROR_ALWAYS("Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
@@ -1156,7 +1156,7 @@ CRHIRayAnyHitShader* CRHIInstanceD3D12::CreateRayAnyHitShader(const TArray<uint8
     TSharedRef<CD3D12RayAnyHitShader> Shader = dbg_new CD3D12RayAnyHitShader(GetDevice(), ShaderCode);
     if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        D3D12_ERROR_ALWAYS("Failed to retrive Shader Identifier");
+        D3D12_ERROR_ALWAYS("Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
@@ -1170,7 +1170,7 @@ CRHIRayClosestHitShader* CRHIInstanceD3D12::CreateRayClosestHitShader(const TArr
     TSharedRef<CD3D12RayClosestHitShader> Shader = dbg_new CD3D12RayClosestHitShader(GetDevice(), ShaderCode);
     if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        D3D12_ERROR_ALWAYS("Failed to retrive Shader Identifier");
+        D3D12_ERROR_ALWAYS("Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
@@ -1184,7 +1184,7 @@ CRHIRayMissShader* CRHIInstanceD3D12::CreateRayMissShader(const TArray<uint8>& S
     TSharedRef<CD3D12RayMissShader> Shader = dbg_new CD3D12RayMissShader(GetDevice(), ShaderCode);
     if (!CD3D12BaseRayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        D3D12_ERROR_ALWAYS("Failed to retrive Shader Identifier");
+        D3D12_ERROR_ALWAYS("Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
@@ -1272,7 +1272,7 @@ CRHIGraphicsPipelineState* CRHIInstanceD3D12::CreateGraphicsPipelineState(const 
 
 CRHIComputePipelineState* CRHIInstanceD3D12::CreateComputePipelineState(const SRHIComputePipelineStateDesc& Info)
 {
-    Assert(Info.Shader != nullptr);
+    Check(Info.Shader != nullptr);
 
     TSharedRef<CD3D12ComputeShader> Shader = MakeSharedRef<CD3D12ComputeShader>(Info.Shader);
     TSharedRef<CD3D12ComputePipelineState> NewPipelineState = dbg_new CD3D12ComputePipelineState(GetDevice(), Shader);

@@ -202,7 +202,7 @@ public:
      */
     FORCEINLINE ElementType& GetValue() noexcept
     {
-        Assert(HasValue());
+        Check(HasValue());
         return *Value.GetStorage();
     }
 
@@ -213,7 +213,7 @@ public:
      */
     FORCEINLINE const ElementType& GetValue() const noexcept
     {
-        Assert(HasValue());
+        Check(HasValue());
         return *Value.GetStorage();
     }
 
@@ -342,7 +342,7 @@ public:
      */
     FORCEINLINE T* operator->() noexcept
     {
-        Assert(HasValue());
+        Check(HasValue());
         return Value.GetStorage();
     }
 
@@ -353,7 +353,7 @@ public:
      */
     FORCEINLINE const T* operator->() const noexcept
     {
-        Assert(HasValue());
+        Check(HasValue());
         return Value.GetStorage();
     }
 
@@ -364,7 +364,7 @@ public:
      */
     FORCEINLINE T& operator*() noexcept
     {
-        Assert(HasValue());
+        Check(HasValue());
         return *Value.GetStorage();
     }
 
@@ -375,7 +375,7 @@ public:
      */
     FORCEINLINE const T& operator*() const noexcept
     {
-        Assert(HasValue());
+        Check(HasValue());
         return *Value.GetStorage();
     }
 

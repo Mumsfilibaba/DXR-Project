@@ -1,10 +1,9 @@
 #pragma once
 #include "RHITypes.h"
-#include "RHIResources.h"
-#include "RHIResourceViews.h"
-#include "RHICommandList.h"
 #include "RHIModule.h"
-#include "RHISamplerState.h"
+#include "RHIResources.h"
+#include "RHIPipeline.h"
+#include "RHICommandList.h"
 #include "RHIViewport.h"
 
 #include "CoreApplication/Interface/PlatformWindow.h"
@@ -42,7 +41,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureRef CreateTexture(const SRHITextureCreateDesc& TextureDesc, EResourceAccess InitialState, const CRHIResourceData* InitalData) = 0;
+    virtual CRHITextureRef CreateTexture(const CRHITextureCreateDesc& TextureDesc, EResourceAccess InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * @brief: Creates a new Buffer
@@ -52,7 +51,7 @@ public:
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created Buffer
      */
-    virtual CRHIBufferRef CreateBuffer(const SRHIBufferCreateDesc& BufferDesc, EResourceAccess InitialState, const CRHIResourceData* InitalData) = 0;
+    virtual CRHIBufferRef CreateBuffer(const CRHIBufferCreateDesc& BufferDesc, EResourceAccess InitialState, const CRHIResourceData* InitalData) = 0;
 
     /**
      * @brief: Create a SamplerState
@@ -60,36 +59,30 @@ public:
      * @param Desc: Structure with information about the SamplerState
      * @return: Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
      */
-    virtual CRHISamplerStateRef CreateSamplerState(const struct SRHISamplerStateCreateDesc& Desc) = 0;
+    virtual CRHISamplerStateRef CreateSamplerState(const CRHISamplerStateCreateDesc& Desc) = 0;
 
     /**
      * @brief: Create a new Ray tracing scene
      * 
-     * @param Flags: Flags for the creation
-     * @param Instances: Initial instances to create the acceleration structure with
-     * @param NumInstances: Number of instances in the array
+     * @param SceneDesc: RayTracingScene Description
      * @return: Returns the newly created Ray tracing Scene
      */
-    virtual CRHIRayTracingScene* CreateRayTracingScene(uint32 Flags, SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances) = 0;
+    virtual CRHIRayTracingSceneRef CreateRayTracingScene(const CRHIRayTracingSceneCreateDesc& SceneDesc) = 0;
     
     /**
      * @brief: Create a new Ray tracing geometry
      *
-     * @param Flags: Flags for the creation
-     * @param VertexBuffer: VertexBuffer to create the acceleration structure with
-     * @param NumVertices: Number of vertices in the VertexBuffer
-     * @param IndexBuffer: IndexBuffer to create the acceleration structure with
-     * @param NumIndices: Number of indices in the IndexBuffer
+     * @param GeometryDesc: RayTracingGeometry Description
      * @return: Returns the newly created Ray tracing Geometry
      */
-    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, ERHIIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices) = 0;
+    virtual CRHIRayTracingGeometryRef CreateRayTracingGeometry(const CRHIRayTracingGeometryCreateDesc& GeometryDesc) = 0;
 
     /**
      * @brief: Create a new ShaderResourceView
      *
      * @return: Returns the newly created ShaderResourceView
      */
-    virtual CRHIShaderResourceViewRef CreateShaderResourceView(CRHITexture* Texture, const SRHIShaderResourceViewDesc& Desc) = 0;
+    virtual CRHIShaderResourceViewRef CreateShaderResourceView(CRHITexture* Texture, const CRHIShaderResourceViewCreateDesc& Desc) = 0;
 
     /**
      * @brief: Create a new ShaderResourceView
@@ -104,7 +97,7 @@ public:
      * @param Desc: Info about the UnorderedAccessView
      * @return: Returns the newly created UnorderedAccessView
      */
-    virtual CRHIUnorderedAccessViewRef CreateUnorderedAccessView(CRHITexture* Texture, const SRHIUnorderedAccessViewDesc& Desc) = 0;
+    virtual CRHIUnorderedAccessViewRef CreateUnorderedAccessView(CRHITexture* Texture, const CRHIUnorderedAccessViewCreateDesc& Desc) = 0;
     
     /**
      * @brief: Create a new UnorderedAccessView
@@ -119,7 +112,7 @@ public:
      * @param Desc: Info about the RenderTargetView
      * @return: Returns the newly created RenderTargetView
      */
-    virtual CRHIRenderTargetViewRef CreateRenderTargetView(CRHITexture* Texture, const SRHIRenderTargetViewDesc& Desc) = 0;
+    virtual CRHIRenderTargetViewRef CreateRenderTargetView(CRHITexture* Texture, const CRHIRenderTargetViewCreateDesc& Desc) = 0;
     
     /**
      * @brief: Create a new DepthStencilView
@@ -127,7 +120,7 @@ public:
      * @param Desc: Info about the DepthStencilView
      * @return: Returns the newly created DepthStencilView
      */
-    virtual CRHIDepthStencilViewRef CreateDepthStencilView(CRHITexture* Texture, const SRHIDepthStencilViewDesc& Desc) = 0;
+    virtual CRHIDepthStencilViewRef CreateDepthStencilView(CRHITexture* Texture, const CRHIDepthStencilViewCreateDesc& Desc) = 0;
 
     /**
      * @brief: Creates a new Compute Shader
@@ -288,7 +281,6 @@ public:
      */
     virtual class CRHITimestampQuery* CreateTimestampQuery() = 0;
 
-
     /**
      * @brief: Create a new Viewport
      * 
@@ -362,37 +354,32 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper functions
 
-FORCEINLINE CRHITextureRef RHICreateTexture(const SRHITextureCreateDesc& TextureDesc, EResourceAccess InitialState, const CRHIResourceData* InitialData = nullptr)
+FORCEINLINE CRHITextureRef RHICreateTexture(const CRHITextureCreateDesc& TextureDesc, EResourceAccess InitialState, const CRHIResourceData* InitialData = nullptr)
 {
     return GRHIInstance->CreateTexture(TextureDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHIBufferRef RHICreateBuffer(const SRHIBufferCreateDesc& BufferDesc, EResourceAccess InitialState, const CRHIResourceData* InitialData)
+FORCEINLINE CRHIBufferRef RHICreateBuffer(const CRHIBufferCreateDesc& BufferDesc, EResourceAccess InitialState, const CRHIResourceData* InitialData)
 {
     return GRHIInstance->CreateBuffer(BufferDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHIConstantBufferRef RHICreateConstantBuffer(uint32 Size, uint32 Flags, const CRHIResourceData* InitialData)
+FORCEINLINE CRHISamplerStateRef RHICreateSamplerState(const CRHISamplerStateCreateDesc& SamplerDesc)
 {
-    return GRHIInstance->CreateConstantBuffer(Size, Flags, InitialData);
+    return GRHIInstance->CreateSamplerState(SamplerDesc);
 }
 
-FORCEINLINE CRHISamplerStateRef RHICreateSamplerState(const class SRHISamplerStateCreateDesc& Desc)
+FORCEINLINE CRHIRayTracingSceneRef RHICreateRayTracingScene(const CRHIRayTracingSceneCreateDesc& SceneDesc)
 {
-    return GRHIInstance->CreateSamplerState(Desc);
+    return GRHIInstance->CreateRayTracingScene(SceneDesc);
 }
 
-FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene(uint32 Flags, SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances)
+FORCEINLINE CRHIRayTracingGeometryRef RHICreateRayTracingGeometry(const CRHIRayTracingGeometryCreateDesc& GeometryDesc)
 {
-    return GRHIInstance->CreateRayTracingScene(Flags, Instances, NumInstances);
+    return GRHIInstance->CreateRayTracingGeometry(GeometryDesc);
 }
 
-FORCEINLINE CRHIRayTracingGeometry* RHICreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, ERHIIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices)
-{
-    return GRHIInstance->CreateRayTracingGeometry(Flags, VertexBuffer, NumVertices, IndexFormat, IndexBuffer, NumIndices);
-}
-
-FORCEINLINE CRHIShaderResourceViewRef RHICreateShaderResourceView(CRHITexture* Texture, const SRHIShaderResourceViewDesc& Desc)
+FORCEINLINE CRHIShaderResourceViewRef RHICreateShaderResourceView(CRHITexture* Texture, const CRHIShaderResourceViewCreateDesc& Desc)
 {
     return GRHIInstance->CreateShaderResourceView(Texture, Desc);
 }
@@ -402,7 +389,7 @@ FORCEINLINE CRHIShaderResourceViewRef RHICreateShaderResourceView(CRHIBuffer* Bu
     return GRHIInstance->CreateShaderResourceView(Buffer, FirstElement, NumElements, Stride);
 }
 
-FORCEINLINE CRHIUnorderedAccessViewRef RHICreateUnorderedAccessView(CRHITexture* Texture, const SRHIUnorderedAccessViewDesc& Desc)
+FORCEINLINE CRHIUnorderedAccessViewRef RHICreateUnorderedAccessView(CRHITexture* Texture, const CRHIUnorderedAccessViewCreateDesc& Desc)
 {
     return GRHIInstance->CreateUnorderedAccessView(Texture, Desc);
 }
@@ -412,12 +399,12 @@ FORCEINLINE CRHIUnorderedAccessViewRef RHICreateUnorderedAccessView(CRHIBuffer* 
     return GRHIInstance->CreateUnorderedAccessView(Buffer, FirstElement, NumElements, Stride);
 }
 
-FORCEINLINE CRHIRenderTargetViewRef RHICreateRenderTargetView(CRHITexture* Texture, const SRHIRenderTargetViewDesc& Desc)
+FORCEINLINE CRHIRenderTargetViewRef RHICreateRenderTargetView(CRHITexture* Texture, const CRHIRenderTargetViewCreateDesc& Desc)
 {
     return GRHIInstance->CreateRenderTargetView(Texture, Desc);
 }
 
-FORCEINLINE CRHIDepthStencilViewRef RHICreateDepthStencilView(CRHITexture* Texture, const SRHIDepthStencilViewDesc& Desc)
+FORCEINLINE CRHIDepthStencilViewRef RHICreateDepthStencilView(CRHITexture* Texture, const CRHIDepthStencilViewCreateDesc& Desc)
 {
     return GRHIInstance->CreateDepthStencilView(Texture, Desc);
 }
@@ -517,7 +504,7 @@ FORCEINLINE CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const 
     return GRHIInstance->CreateRayTracingPipelineState(Desc);
 }
 
-FORCEINLINE class CRHITimestampQuery* RHICreateTimestampQuery()
+FORCEINLINE CRHITimestampQueryRef RHICreateTimestampQuery()
 {
     return GRHIInstance->CreateTimestampQuery();
 }

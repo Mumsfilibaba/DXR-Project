@@ -71,8 +71,8 @@ private:
 
 inline bool IsSubClassOf(CCoreObject* CoreObject, CClassType* ClassType)
 {
-    Assert(CoreObject != nullptr);
-    Assert(CoreObject->GetClass() != nullptr);
+    Check(CoreObject != nullptr);
+    Check(CoreObject->GetClass() != nullptr);
     return CoreObject->GetClass()->IsSubClassOf(ClassType);
 }
 

@@ -613,13 +613,13 @@ FORCEINLINE CVector2& CVector2::operator/=(float Rhs) noexcept
 
 FORCEINLINE float& CVector2::operator[](int Index) noexcept
 {
-    Assert(Index < 2);
+    Check(Index < 2);
     return reinterpret_cast<float*>(this)[Index];
 }
 
 FORCEINLINE float CVector2::operator[](int Index) const noexcept
 {
-    Assert(Index < 2);
+    Check(Index < 2);
     return reinterpret_cast<const float*>(this)[Index];
 }
 

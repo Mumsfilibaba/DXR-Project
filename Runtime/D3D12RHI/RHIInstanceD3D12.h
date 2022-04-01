@@ -76,12 +76,12 @@ public:
 
     virtual bool Initialize(bool bEnableDebug) override final;
 
-    virtual CRHITexture2DRef                   CreateTexture2D(const CRHITextureDesc& InTextureDesc, ERHIResourceAccess InitialState, const CRHIResourceData* InitalData)        override final;
-    virtual CRHITexture2DArrayRef              CreateTexture2DArray(const CRHITextureDesc& InTextureDesc, ERHIResourceAccess InitialState, const CRHIResourceData* InitalData)   override final;
-    virtual CRHITextureCubeRef                 CreateTextureCube(const CRHITextureDesc& InTextureDesc, ERHIResourceAccess InitialState, const CRHIResourceData* InitalData)      override final;
-    virtual CRHITextureCubeArrayRef            CreateTextureCubeArray(const CRHITextureDesc& InTextureDesc, ERHIResourceAccess InitialState, const CRHIResourceData* InitalData) override final;
-    virtual CRHITexture3DRef                   CreateTexture3D(const CRHITextureDesc& InTextureDesc, ERHIResourceAccess InitialState, const CRHIResourceData* InitalData)        override final;
-    virtual CRHIBufferRef                      CreateBuffer(const CRHIBufferDesc& BufferDesc, ERHIResourceAccess InitialState, const CRHIResourceData* InitalData)               override final;
+    virtual CRHITexture2DRef                   CreateTexture2D(const CRHITextureDesc& InTextureDesc, EResourceAccess InitialState, const CRHIResourceData* InitalData)        override final;
+    virtual CRHITexture2DArrayRef              CreateTexture2DArray(const CRHITextureDesc& InTextureDesc, EResourceAccess InitialState, const CRHIResourceData* InitalData)   override final;
+    virtual CRHITextureCubeRef                 CreateTextureCube(const CRHITextureDesc& InTextureDesc, EResourceAccess InitialState, const CRHIResourceData* InitalData)      override final;
+    virtual CRHITextureCubeArrayRef            CreateTextureCubeArray(const CRHITextureDesc& InTextureDesc, EResourceAccess InitialState, const CRHIResourceData* InitalData) override final;
+    virtual CRHITexture3DRef                   CreateTexture3D(const CRHITextureDesc& InTextureDesc, EResourceAccess InitialState, const CRHIResourceData* InitalData)        override final;
+    virtual CRHIBufferRef                      CreateBuffer(const CRHIBufferDesc& BufferDesc, EResourceAccess InitialState, const CRHIResourceData* InitalData)               override final;
 
     virtual CRHISamplerStateRef                CreateSamplerState(const class CRHISamplerStateDesc& CreateInfo) override final;
 
@@ -137,7 +137,7 @@ private:
     ~CRHIInstanceD3D12();
 
     template<typename D3D12TextureType>
-    D3D12TextureType* CreateTexture(ERHIFormat Format, uint32 SizeX, uint32 SizeY, uint32 SizeZ, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue);
+    D3D12TextureType* CreateTexture(ERHIFormat Format, uint32 SizeX, uint32 SizeY, uint32 SizeZ, uint32 NumMips, uint32 NumSamples, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue);
 
     CD3D12DeviceRef         Device;
     CD3D12CommandContextRef DirectCommandContext;

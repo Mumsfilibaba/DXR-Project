@@ -75,7 +75,7 @@ public:
      */
     FORCEINLINE ElementType& At(SizeType Index) noexcept
     {
-        Assert(Index < NumElements);
+        Check(Index < NumElements);
         return Elements[Index];
     }
 
@@ -87,7 +87,7 @@ public:
      */
     FORCEINLINE const ElementType& At(SizeType Index) const noexcept
     {
-        Assert(Index < NumElements);
+        Check(Index < NumElements);
         return Elements[Index];
     }
 

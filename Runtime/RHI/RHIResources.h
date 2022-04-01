@@ -1,14 +1,13 @@
 #pragma once
 #include "RHITypes.h"
-#include "RHIShader.h"
-#include "RHIPipelineState.h"
-#include "RHISamplerState.h"
-#include "RHIRayTracing.h"
-#include "RHITimestampQuery.h"
 
-#include "Core/RefCounted.h"
+#include "Core/Math/Vector3.h"
+#include "Core/Math/IntVector3.h"
+#include "Core/Math/Matrix3x4.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedRef.h"
+
+class CRHIRayTracingGeometryInstance;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
@@ -24,6 +23,11 @@ typedef TSharedRef<class CRHIRenderTargetView>    CRHIRenderTargetViewRef;
 typedef TSharedRef<class CRHIDepthStencilView>    CRHIDepthStencilViewRef;
 
 typedef TSharedRef<class CRHISamplerState>        CRHISamplerStateRef;
+
+typedef TSharedRef<class CRHIRayTracingGeometry>  CRHIRayTracingGeometryRef;
+typedef TSharedRef<class CRHIRayTracingScene>     CRHIRayTracingSceneRef;
+
+typedef TSharedRef<class CRHITimestampQuery>      CRHITimestampQueryRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIResourceType
@@ -55,6 +59,8 @@ enum class ERHIResourceType : uint8
     Shader                  = 16,
 
     Viewport                = 17,
+
+    TimestampQuery          = 18,
 };
 
 inline const char* ToString(ERHIResourceType ResourceType)
@@ -113,7 +119,7 @@ public:
      */
     int32 AddRef()
     {
-        Assert(StrongReferences.Load() > 0);
+        Check(StrongReferences.Load() > 0);
         ++StrongReferences;
     }
 
@@ -125,7 +131,7 @@ public:
     int32 Release()
     {
         const int32 RefCount = --StrongReferences;
-        Assert(RefCount >= 0);
+        Check(RefCount >= 0);
 
         if (RefCount < 1)
         {
@@ -143,7 +149,7 @@ public:
     int32 Destroy()
     {
         const int32 RefCount = StrongReferences.Load();
-        Assert(RefCount > 0);
+        Check(RefCount > 0);
 
         Destroy_Internal();
 
@@ -171,50 +177,47 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIIndexFormat 
+// EIndexFormat 
 
-enum class ERHIIndexFormat : uint8
+enum class EIndexFormat : uint8
 {
     Unknown = 0,
     uint16  = 1,
     uint32  = 2,
 };
 
-inline const char* ToString(ERHIIndexFormat IndexFormat)
+inline const char* ToString(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)
     {
-    case ERHIIndexFormat::uint16: return "uint16";
-    case ERHIIndexFormat::uint32: return "uint32";
-    default:                      return "Unknown";
+    case EIndexFormat::uint16: return "uint16";
+    case EIndexFormat::uint32: return "uint32";
+    default:                   return "Unknown";
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIIndexFormat helpers
-
-inline ERHIIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
+inline EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
 {
     switch (StrideInBytes)
     {
-    case 2:  return ERHIIndexFormat::uint16;
-    case 4:  return ERHIIndexFormat::uint32;
-    default: return ERHIIndexFormat::Unknown;
+    case 2:  return EIndexFormat::uint16;
+    case 4:  return EIndexFormat::uint32;
+    default: return EIndexFormat::Unknown;
     }
 }
 
-inline uint32 GetStrideFromIndexFormat(ERHIIndexFormat IndexFormat)
+inline uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)
     {
-    case ERHIIndexFormat::uint16: 2;
-    case ERHIIndexFormat::uint32: 4;
-    default:                      0;
+    case EIndexFormat::uint16: 2;
+    case EIndexFormat::uint32: 4;
+    default:                   0;
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIBufferUsageFlags
+// EBufferUsageFlags
 
 enum class EBufferUsageFlags : uint8
 {
@@ -249,7 +252,7 @@ public:
      * @param VertexStride: Stride of one vertex
      * @param InFlags: Flags that describe the usage of the buffer
      */
-    static CRHIBufferCreateDesc CreateVertexDesc(uint32 NumVertices, uint16 VertexStride, EBufferUsageFlags InFlags)
+    static CRHIBufferCreateDesc CreateVertexDesc(uint32 NumVertices, uint16 VertexStride, EBufferUsageFlags InFlags = EBufferUsageFlags::None)
     {
         return CRHIBufferCreateDesc(NumVertices * VertexStride, VertexStride, InFlags | EBufferUsageFlags::AllowVertexBuffer);
     }
@@ -261,7 +264,7 @@ public:
      * @param NumIndices: Number of indices in the buffer
      * @param InFlags: Flags that describe the usage of the buffer
      */
-    static CRHIBufferCreateDesc CreateIndexDesc(ERHIIndexFormat IndexFormat, uint32 NumIndices, EBufferUsageFlags InFlags)
+    static CRHIBufferCreateDesc CreateIndexDesc(EIndexFormat IndexFormat, uint32 NumIndices, EBufferUsageFlags InFlags = EBufferUsageFlags::None)
     {
         return CRHIBufferCreateDesc( GetStrideFromIndexFormat(IndexFormat) * NumIndices
                                    , GetStrideFromIndexFormat(IndexFormat)
@@ -275,7 +278,7 @@ public:
      * @param Stride: Stride of each element in the Buffer
      * @param InFlags: Flags that describe the usage of the Buffer
      */
-    static CRHIBufferCreateDesc CreateStructuredDesc(uint32 NumElements, uint16 Stride, EBufferUsageFlags InFlags)
+    static CRHIBufferCreateDesc CreateStructuredDesc(uint32 NumElements, uint16 Stride, EBufferUsageFlags InFlags = EBufferUsageFlags::None)
     {
         return CRHIBufferCreateDesc(NumElements * Stride, Stride, InFlags);
     }
@@ -287,7 +290,7 @@ public:
      * @param Stride: Stride of each element in the Buffer
      * @param InFlags: Flags that describe the usage of the Buffer
      */
-    static CRHIBufferCreateDesc CreateConstantDesc(uint32 NumElements, uint16 Stride, EBufferUsageFlags InFlags)
+    static CRHIBufferCreateDesc CreateConstantDesc(uint32 NumElements, uint16 Stride, EBufferUsageFlags InFlags = EBufferUsageFlags::None)
     {
         return CRHIBufferCreateDesc(NumElements * Stride, Stride, InFlags | EBufferUsageFlags::AllowConstantBuffer);
     }
@@ -466,10 +469,11 @@ public:
 
 protected:
     CRHIDescriptorHandle BindlessHandle;
+
     EBufferUsageFlags    UsageFlags;
 
-    uint16 Stride;
-    uint32 Size;
+    uint16               Stride;
+    uint32               Size;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -497,7 +501,7 @@ enum class ETextureUsageFlags : uint8
 ENUM_OPERATORS(ETextureUsageFlags);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHITextureType
+// ETextureType
 
 enum class ETextureType : uint8
 {
@@ -976,31 +980,32 @@ public:
     uint8 GetNumSamples() const { return NumSamples; }
 
 private:
-    ETextureType       Type;
-    ETextureUsageFlags UsageFlags;
-    ERHIFormat         Format;
+    ETextureType         Type;
 
-    uint16 Width;
-    uint16 Height;
-    uint16 Depth;
-    uint16 ArraySize;
-    uint8  NumMips;
-    uint8  NumSamples;
+    ETextureUsageFlags   UsageFlags;
+    ERHIFormat           Format;
+
+    uint16               Width;
+    uint16               Height;
+    uint16               Depth;
+    uint16               ArraySize;
+    uint8                NumMips;
+    uint8                NumSamples;
 
     CRHIDescriptorHandle BindlessHandle;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIShaderResourceViewDesc
+// CRHIShaderResourceViewCreateDesc
 
-class CRHIShaderResourceViewDesc
+class CRHIShaderResourceViewCreateDesc
 {
 public:
 
     /**
      * @brief: Default Constructor
      */
-    CRHIShaderResourceViewDesc()
+    CRHIShaderResourceViewCreateDesc()
         : Format(ERHIFormat::Unknown)
         , FirstSlice(0)
         , NumSlices(0)
@@ -1017,11 +1022,7 @@ public:
      * @param InFirstMipLevel: First MipLevel of the texture in the view
      * @param InNumMipLevels: Number of MipLevels of the texture in the view
      */
-    CRHIShaderResourceViewDesc( ERHIFormat InFormat
-                              , uint16 InFirstSlice
-                              , uint16 InNumSlices
-                              , uint8 InFirstMipLevel
-                              , uint8 InNumMipLevels)
+    CRHIShaderResourceViewCreateDesc(ERHIFormat InFormat, uint16 InFirstSlice, uint16 InNumSlices, uint8 InFirstMipLevel, uint8 InNumMipLevels)
         : Format(InFormat)
         , FirstSlice(InFirstSlice)
         , NumSlices(InNumSlices)
@@ -1035,7 +1036,7 @@ public:
      * @param Rhs: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIShaderResourceViewDesc& Rhs) const
+    bool operator==(const CRHIShaderResourceViewCreateDesc& Rhs) const
     {
         return (Format        == Rhs.Format)
             && (FirstSlice    == Rhs.FirstSlice)
@@ -1050,7 +1051,7 @@ public:
      * @param Rhs: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHIShaderResourceViewDesc& Rhs) const
+    bool operator!=(const CRHIShaderResourceViewCreateDesc& Rhs) const
     {
         return !(*this == Rhs);
     }
@@ -1108,14 +1109,14 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIUnorderedAccessViewDesc
 
-class CRHIUnorderedAccessViewDesc
+class CRHIUnorderedAccessViewCreateDesc
 {
 public:
 
     /**
      * @brief: Default Constructor
      */
-    CRHIUnorderedAccessViewDesc()
+    CRHIUnorderedAccessViewCreateDesc()
         : Format(ERHIFormat::Unknown)
         , FirstSlice(0)
         , NumSlices(0)
@@ -1130,10 +1131,7 @@ public:
      * @param InNumSlices: Number of slices in the view in terms of depth or array-index
      * @param InMipLevel: MipLevel of the texture in the view
      */
-    CRHIUnorderedAccessViewDesc( ERHIFormat InFormat
-                               , uint16 InFirstSlice
-                               , uint16 InNumSlices
-                               , uint8 InMipLevel)
+    CRHIUnorderedAccessViewCreateDesc(ERHIFormat InFormat, uint16 InFirstSlice, uint16 InNumSlices, uint8 InMipLevel)
         : Format(InFormat)
         , FirstSlice(InFirstSlice)
         , NumSlices(InNumSlices)
@@ -1146,12 +1144,9 @@ public:
      * @param Rhs: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIUnorderedAccessViewDesc& Rhs) const
+    bool operator==(const CRHIUnorderedAccessViewCreateDesc& Rhs) const
     {
-        return (Format     == Rhs.Format) 
-            && (FirstSlice == Rhs.FirstSlice) 
-            && (NumSlices  == Rhs.NumSlices) 
-            && (MipLevel   == Rhs.MipLevel);
+        return (Format == Rhs.Format) && (FirstSlice == Rhs.FirstSlice) && (NumSlices == Rhs.NumSlices) && (MipLevel == Rhs.MipLevel);
     }
 
     /**
@@ -1160,7 +1155,7 @@ public:
      * @param Rhs: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHIUnorderedAccessViewDesc& Rhs) const
+    bool operator!=(const CRHIUnorderedAccessViewCreateDesc& Rhs) const
     {
         return !(*this == Rhs);
     }
@@ -1216,14 +1211,14 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIRenderTargetViewDesc
 
-class CRHIRenderTargetViewDesc
+class CRHIRenderTargetViewCreateDesc
 {
 public:
 
     /**
      * @brief: Default Constructor
      */
-    CRHIRenderTargetViewDesc()
+    CRHIRenderTargetViewCreateDesc()
         : Format(ERHIFormat::Unknown)
         , FirstSlice(0)
         , NumSlices(0)
@@ -1238,10 +1233,7 @@ public:
      * @param InNumSlices: Number of slices in the view in terms of depth or array-index
      * @param InMipLevel: MipLevel of the texture in the view
      */
-    CRHIRenderTargetViewDesc( ERHIFormat InFormat
-                            , uint16 InFirstSlice
-                            , uint16 InNumSlices
-                            , uint8 InMipLevel)
+    CRHIRenderTargetViewCreateDesc(ERHIFormat InFormat, uint16 InFirstSlice, uint16 InNumSlices, uint8 InMipLevel)
         : Format(InFormat)
         , FirstSlice(InFirstSlice)
         , NumSlices(InNumSlices)
@@ -1254,12 +1246,9 @@ public:
      * @param Rhs: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIRenderTargetViewDesc& Rhs) const
+    bool operator==(const CRHIRenderTargetViewCreateDesc& Rhs) const
     {
-        return (Format     == Rhs.Format) 
-            && (FirstSlice == Rhs.FirstSlice) 
-            && (NumSlices  == Rhs.NumSlices) 
-            && (MipLevel   == Rhs.MipLevel);
+        return (Format == Rhs.Format) && (FirstSlice == Rhs.FirstSlice) && (NumSlices == Rhs.NumSlices) && (MipLevel == Rhs.MipLevel);
     }
 
     /**
@@ -1268,7 +1257,7 @@ public:
      * @param Rhs: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHIRenderTargetViewDesc& Rhs) const
+    bool operator!=(const CRHIRenderTargetViewCreateDesc& Rhs) const
     {
         return !(*this == Rhs);
     }
@@ -1315,14 +1304,14 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIDepthStencilViewDesc
 
-class CRHIDepthStencilViewDesc
+class CRHIDepthStencilViewCreateDesc
 {
 public:
 
     /**
      * @brief: Default Constructor
      */
-    CRHIDepthStencilViewDesc()
+    CRHIDepthStencilViewCreateDesc()
         : Format(ERHIFormat::Unknown)
         , FirstSlice(0)
         , NumSlices(0)
@@ -1337,10 +1326,7 @@ public:
      * @param InNumSlices: Number of slices in the view in terms of depth or array-index
      * @param InMipLevel: MipLevel of the texture in the view
      */
-    CRHIDepthStencilViewDesc( ERHIFormat InFormat
-                            , uint16 InFirstSlice
-                            , uint16 InNumSlices
-                            , uint8 InMipLevel)
+    CRHIDepthStencilViewCreateDesc(ERHIFormat InFormat, uint16 InFirstSlice, uint16 InNumSlices, uint8 InMipLevel)
         : Format(InFormat)
         , FirstSlice(InFirstSlice)
         , NumSlices(InNumSlices)
@@ -1353,12 +1339,9 @@ public:
      * @param Rhs: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIRenderTargetViewDesc& Rhs) const
+    bool operator==(const CRHIRenderTargetViewCreateDesc& Rhs) const
     {
-        return (Format     == Rhs.Format) 
-            && (FirstSlice == Rhs.FirstSlice) 
-            && (NumSlices  == Rhs.NumSlices) 
-            && (MipLevel   == Rhs.MipLevel);
+        return (Format == Rhs.Format) && (FirstSlice == Rhs.FirstSlice) && (NumSlices  == Rhs.NumSlices) && (MipLevel == Rhs.MipLevel);
     }
 
     /**
@@ -1367,7 +1350,7 @@ public:
      * @param Rhs: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHIRenderTargetViewDesc& Rhs) const
+    bool operator!=(const CRHIRenderTargetViewCreateDesc& Rhs) const
     {
         return !(*this == Rhs);
     }
@@ -1512,16 +1495,30 @@ public:
         , BorderColor()
     { }
 
+    /**
+     * @brief: Constructor that fills in a new sampler
+     * 
+     * @param InAddressU: Sampler mode in the U-direction
+     * @param InAddressV: Sampler mode in the V-direction
+     * @param InAddressW: Sampler mode in the W-direction
+     * @param InFilter: Type of sampler
+     * @param InComparisonFunc: ComparisonFunction if the sampler is a comparison sampler otherwise this is a no-op
+     * @param InMipLODBias: Bias added to the selected MipLevel when sampling
+     * @param InMaxAnisotropy: Maximum anisotropy for the sampler when the sampler is a Anistrotopic sampler
+     * @param InMinLOD: Minimum MipLevel
+     * @param InMaxLOD: Maximum MipLevel
+     * @param InBorderColor: Color to return when the sampler should use a color when sampling out of range
+     */
     CRHISamplerStateCreateDesc( ESamplerMode InAddressU
                               , ESamplerMode InAddressV
                               , ESamplerMode InAddressW
                               , ESamplerFilter InFilter
                               , EComparisonFunc InComparisonFunc
                               , float InMipLODBias
-                              , uint32 InMaxAnisotropy
+                              , uint8 InMaxAnisotropy
                               , float InMinLOD
                               , float InMaxLOD
-                              , SColorF InBorderColor)
+                              , const CFloatColor& InBorderColor)
         : AddressU(InAddressU)
         , AddressV(InAddressV)
         , AddressW(InAddressW)
@@ -1534,6 +1531,12 @@ public:
         , BorderColor()
     { }
 
+    /**
+     * @brief: Compare this description with another instance
+     * 
+     * @param Rhs: Other instance to compare with
+     * @return: Returns true when the instances are equal
+     */
     bool operator==(const CRHISamplerStateCreateDesc& Rhs) const
     {
         return (AddressU       == Rhs.AddressU)
@@ -1548,21 +1551,46 @@ public:
             && (BorderColor    == Rhs.BorderColor);
     }
 
+    /**
+     * @brief: Compare this description with another instance
+     *
+     * @param Rhs: Other instance to compare with
+     * @return: Returns false when the instances are equal
+     */
     bool operator!=(const CRHISamplerStateCreateDesc& Rhs) const
     {
         return !(*this == Rhs);
     }
 
-    ESamplerMode    AddressU;
-    ESamplerMode    AddressV;
-    ESamplerMode    AddressW;
-    ESamplerFilter  Filter;
+    /** @brief: Sampler mode in the U-direction */
+    ESamplerMode AddressU;
+    
+    /** @brief: Sampler mode in the V-direction */
+    ESamplerMode AddressV;
+    
+    /** @brief: Sampler mode in the W-direction */
+    ESamplerMode AddressW;
+    
+    /** @brief: Type of sampler */
+    ESamplerFilter Filter;
+    
+    /** @brief: ComparisonFunction if the sampler is a comparison sampler otherwise this is a no-op */
     EComparisonFunc ComparisonFunc;
-    float           MipLODBias;
-    uint32          MaxAnisotropy;
-    float           MinLOD;
-    float           MaxLOD;
-    SColorF         BorderColor;
+    
+    /** @brief: Maximum anisotropy for the sampler when the sampler is a Anistrotopic sampler */
+    uint8 MaxAnisotropy;
+    
+    /** @brief: Bias added to the selected MipLevel when sampling */
+    float MipLODBias;
+    
+    /** @brief: Minimum MipLevel */
+    float MinLOD;
+    
+    /** @brief: Maximum MipLevel */
+    float MaxLOD;
+
+    /** @brief: Color to return when the sampler should use a color when sampling out of range */
+    CFloatColor BorderColor;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1599,4 +1627,371 @@ public:
 protected:
     CRHIDescriptorHandle       BindlessHandle;
     CRHISamplerStateCreateDesc Desc;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRayPayload
+
+struct SRayPayload
+{
+    CVector3 Color;
+    uint32   CurrentDepth;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRayIntersectionAttributes
+
+struct SRayIntersectionAttributes
+{
+    float Attrib0;
+    float Attrib1;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERayTracingStructureBuildFlag
+
+enum class ERayTracingStructureFlag : uint8
+{
+    None            = 0,
+    AllowUpdate     = FLAG(1),
+    PreferFastTrace = FLAG(2),
+    PreferFastBuild = FLAG(3),
+};
+
+ENUM_OPERATORS(ERayTracingStructureFlag);
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ERayTracingInstanceFlags
+
+enum class ERayTracingInstanceFlag : uint32
+{
+    None                  = 0,
+    CullDisable           = FLAG(1),
+    FrontCounterClockwise = FLAG(2),
+    ForceOpaque           = FLAG(3),
+    ForceNonOpaque        = FLAG(4),
+};
+
+ENUM_OPERATORS(ERayTracingInstanceFlag);
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingGeometryCreateDesc
+
+class CRHIRayTracingGeometryCreateDesc
+{
+public:
+
+    /**
+     * @brief: Default Constructor
+     */
+    CRHIRayTracingGeometryCreateDesc()
+        : VertexBuffer(nullptr)
+        , IndexBuffer(nullptr)
+        , NumVertices(0)
+        , NumIndicies(0)
+        , Flags(ERayTracingStructureFlag::None)
+    { }
+
+    /**
+     * @brief: Constructor that fills in all the members
+     * 
+     * @param InVertexBuffer: VertexBuffer for the geometry
+     * @param InNumVerteices: Number of vertices in the VertexBuffer
+     * @param InIndexBuffer: IndexBuffer for the geometry
+     */
+    CRHIRayTracingGeometryCreateDesc( CRHIBuffer* InVertexBuffer
+                                    , uint32 InNumVertices
+                                    , CRHIBuffer* InIndexbuffer
+                                    , EIndexFormat InIndexFormat
+                                    , uint32 InNumIndicies
+                                    , ERayTracingStructureFlag InFlags)
+        : VertexBuffer(InVertexBuffer)
+        , IndexBuffer(InIndexbuffer)
+        , IndexFormat(InIndexFormat)
+        , NumVertices(InNumVertices)
+        , NumIndicies(InNumIndicies)
+        , Flags(InFlags)
+    { }
+
+    /**
+     * @brief: Compare this instance to another one
+     * 
+     * @param Rhs: Instance to compare with
+     * @return: Returns true if the instances are equal
+     */
+    bool operator==(const CRHIRayTracingGeometryCreateDesc& Rhs) const
+    {
+        return (VertexBuffer == Rhs.VertexBuffer)
+            && (IndexBuffer  == Rhs.IndexBuffer)
+            && (IndexFormat  == Rhs.IndexFormat)
+            && (NumVertices  == Rhs.NumVertices)
+            && (NumIndicies  == Rhs.NumIndicies)
+            && (Flags        == Rhs.Flags);
+    }
+
+    /**
+     * @brief: Compare this instance to another one
+     *
+     * @param Rhs: Instance to compare with
+     * @return: Returns false if the instances are equal
+     */
+    bool operator!=(const CRHIRayTracingGeometryCreateDesc& Rhs) const
+    {
+        return !(*this == Rhs);
+    }
+
+    CRHIBuffer*              VertexBuffer;
+    CRHIBuffer*              IndexBuffer;
+    EIndexFormat             IndexFormat;
+    uint32                   NumVertices;
+    uint32                   NumIndicies;
+    ERayTracingStructureFlag Flags;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingGeometry - (Bottom-Level Acceleration-Structure)
+
+class CRHIRayTracingGeometry : public CRHIResource
+{
+public:
+
+    /**
+     * @brief: Constructor that fills in the members
+     * 
+     * @param InFlags: Flags for the RayTracingGeometry
+     */
+    CRHIRayTracingGeometry(ERayTracingStructureFlag InFlags)
+        : CRHIResource(ERHIResourceType::RayTracingGeometry)
+        , Flags(InFlags)
+    { }
+
+    /**
+     * @brief: Retrieve the Flags of the RayTracingGeometry
+     * 
+     * @return: Returns the Flags of the RayTracingGeometry
+     */
+    ERayTracingStructureFlag GetFlags() const { return Flags; }
+
+protected:
+    ERayTracingStructureFlag Flags;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHIRayTracingGeometryInstance
+
+class CRHIRayTracingGeometryInstance
+{
+public:
+
+    /**
+     * @brief: Default Constructor
+     */
+    CRHIRayTracingGeometryInstance()
+        : Geometry(nullptr)
+        , InstanceIndex(0)
+        , HitGroupIndex(0)
+        , Flags(ERayTracingInstanceFlag::None)
+        , Mask(0xff)
+        , Transform()
+    { }
+
+    /**
+     * @brief: Constructor that fills in all members
+     * 
+     * @param InGeometry: Geometry used for the instance
+     * @param InInstanceIndex: Custom instance-index
+     * @param InHitGroupIndex: Hit-Group index
+     * @param InFlags: Flags for the instance
+     * @param InMask: Instance mask
+     * @param InTransform: Instance-transform
+     */
+    CRHIRayTracingGeometryInstance( const CRHIRayTracingGeometryRef InGeometry
+                                  , uint32 InInstanceIndex
+                                  , uint32 InHitGroupIndex
+                                  , ERayTracingInstanceFlag InFlags
+                                  , uint32 InMask
+                                  , const CMatrix3x4& InTransform)
+        : Geometry(InGeometry)
+        , InstanceIndex(InInstanceIndex)
+        , HitGroupIndex(InHitGroupIndex)
+        , Flags(InFlags)
+        , Mask(InMask)
+        , Transform(InTransform)
+    { }
+
+    /**
+     * @brief: Check if two instances are equal
+     * 
+     * @param Rhs: Other instance to compare with
+     * @return: Returns true if the instances are equal
+     */
+    bool operator==(const CRHIRayTracingGeometryInstance& Rhs) const
+    {
+        return (Geometry      == Rhs.Geometry)
+            && (InstanceIndex == Rhs.InstanceIndex)
+            && (HitGroupIndex == Rhs.HitGroupIndex)
+            && (Flags         == Rhs.Flags)
+            && (Mask          == Rhs.Mask)
+            && (Transform     == Rhs.Transform);
+    }
+
+    /**
+     * @brief: Check if two instances are equal
+     *
+     * @param Rhs: Other instance to compare with
+     * @return: Returns false if the instances are equal
+     */
+    bool operator==(const CRHIRayTracingGeometryInstance& Rhs) const
+    {
+        return !(*this == Rhs);
+    }
+
+    /** @brief:Geometry to use for the instance */
+    CRHIRayTracingGeometryRef Geometry;
+
+    /** @brief: Custom InstanceIndex */
+    uint32 InstanceIndex;
+
+    /** @brief: Set the HitGroup index */
+    uint32 HitGroupIndex;
+
+    /** @brief: Flags for the instances */
+    ERayTracingInstanceFlag Flags;
+
+    /** @brief: Instance mask used to mask hits */
+    uint32 Mask;
+
+    /** @brief: Instance transform */
+    CMatrix3x4 Transform;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingSceneCreateDesc
+
+class CRHIRayTracingSceneCreateDesc
+{
+public:
+
+    /**
+     * @brief: Default Constructor
+     */
+    CRHIRayTracingSceneCreateDesc()
+        : Instances(nullptr)
+        , NumInstances(0)
+        , Flags(ERayTracingInstanceFlag::None)
+    { }
+
+    /**
+     * @brief: Constructor that fills in the members
+     * 
+     * @param InInstances: Instances for the Scene
+     * @param InNumInstances: Number of instances
+     * @param InFlags: Flags for the Scene
+     */
+    CRHIRayTracingSceneCreateDesc(CRHIRayTracingGeometryInstance* InInstances, uint32 InNumInstances, ERayTracingInstanceFlag InFlags)
+        : Instances(InInstances)
+        , NumInstances(InNumInstances)
+        , Flags(InFlags)
+    { }
+
+    /**
+     * @brief: Compare two instances with each other
+     * 
+     * @param Rhs: Other instance to compare with
+     * @return: Returns true if the instances are equal
+     */
+    bool operator==(const CRHIRayTracingSceneCreateDesc& Rhs) const
+    {
+        return (Instances == Rhs.Instances) && (NumInstances == Rhs.NumInstances) && (Flags == Rhs.Flags);
+    }
+
+    /**
+     * @brief: Compare two instances with each other
+     *
+     * @param Rhs: Other instance to compare with
+     * @return: Returns false if the instances are equal
+     */
+    bool operator==(const CRHIRayTracingSceneCreateDesc& Rhs) const
+    {
+        return !(*this == Rhs);
+    }
+
+    /** @brief: Array of Geometry instances */
+    CRHIRayTracingGeometryInstance* Instances;
+
+    /** @brief: Number of instances */
+    uint32 NumInstances;
+
+    /** @brief: Flags of the instance */
+    ERayTracingInstanceFlag Flags;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingScene  - (Top-Level Acceleration-Structure)
+
+class CRHIRayTracingScene : public CRHIResource
+{
+public:
+
+    /**
+     * @brief: Constructor that fills in the members
+     *
+     * @param InFlags: Flags for the RayTracingGeometry
+     */
+    CRHIRayTracingScene(ERayTracingStructureFlag InFlags)
+        : CRHIResource(ERHIResourceType::RayTracingScene)
+        , Flags(InFlags)
+    { }
+
+    /**
+     * @brief: Retrieve the default ShaderResourceView. Pointer is valid if the AllowShaderResouce flag is set.
+     *
+     * @return: Returns a pointer to the default ShaderResourceView
+     */
+    virtual CRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
+    
+    /**
+     * @brief: Retrieve the bindless descriptor-handle if the RHI-supports descriptor-handles
+     *
+     * @return: Returns the bindless descriptor-handle if the RHI-supports descriptor-handles
+     */
+    CRHIDescriptorHandle GetBindlessHandle() const { return BindlessHandle; }
+
+    /**
+     * @brief: Retrieve the Flags of the RayTracingScene
+     *
+     * @return: Returns the Flags of the RayTracingScene
+     */
+    ERayTracingStructureFlag GetFlags() const { return Flags; }
+
+protected:
+    ERayTracingStructureFlag Flags;
+    CRHIDescriptorHandle     BindlessHandle;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHITimestamp
+
+struct SRHITimestamp
+{
+    uint64 Begin;
+    uint64 End;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITimestampQuery
+
+class CRHITimestampQuery : public CRHIResource
+{
+public:
+
+    CRHITimestampQuery()
+        : CRHIResource(ERHIResourceType::TimestampQuery)
+    { }
+
+    virtual uint32 GetNumTimestamps() const = 0;
+
+    virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const = 0;
+
+    virtual uint64 GetFrequency() const = 0;
 };

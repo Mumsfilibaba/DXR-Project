@@ -114,19 +114,19 @@ public:
 
     inline void SetBit(uint32 BitIndex)
     {
-        Assert(BitIndex < Size());
+        Check(BitIndex < Size());
         Data[StorageIndexOfBit(BitIndex)] |= MakeBitmaskForStorage(BitIndex);
     }
 
     inline void ZeroBit(uint32 BitIndex)
     {
-        Assert(BitIndex < Size());
+        Check(BitIndex < Size());
         Data[StorageIndexOfBit(BitIndex)] &= ~MakeBitmaskForStorage(BitIndex);
     }
 
     inline bool GetBit(uint32 BitIndex) const
     {
-        Assert(BitIndex < Size());
+        Check(BitIndex < Size());
         return (Data[StorageIndexOfBit(BitIndex)] & MakeBitmaskForStorage(BitIndex)) != 0;
     }
 
@@ -137,9 +137,9 @@ public:
 
     inline void SetRange(uint32 From, uint32 To, bool Value = true)
     {
-        Assert(From < Size());
-        Assert(To <= Size());
-        Assert(From <= To);
+        Check(From < Size());
+        Check(To <= Size());
+        Check(From <= To);
 
         while (From < To)
         {
@@ -169,7 +169,7 @@ public:
 
     FORCEINLINE void SetBitAndUp(uint32 BitIndex, uint32 Count = ~0)
     {
-        Assert(BitIndex < Size());
+        Check(BitIndex < Size());
 
         Count = Count < Size() - BitIndex ? Count : Size() - BitIndex;
         SetRange(BitIndex, BitIndex + Count);
@@ -177,7 +177,7 @@ public:
 
     FORCEINLINE void SetBitAndDown(uint32 BitIndex, uint32 Count = ~0)
     {
-        Assert(BitIndex < Size());
+        Check(BitIndex < Size());
 
         Count = BitIndex < Count ? BitIndex : Count;
         SetRange(BitIndex - Count, BitIndex);

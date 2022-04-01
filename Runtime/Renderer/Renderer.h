@@ -165,7 +165,7 @@ private:
 
 extern RENDERER_API CRenderer GRenderer;
 
-inline void AddDebugTexture(const TSharedRef<CRHIShaderResourceView>& ImageView, const TSharedRef<CRHITexture>& Image, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState)
+inline void AddDebugTexture(const TSharedRef<CRHIShaderResourceView>& ImageView, const TSharedRef<CRHITexture>& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     GRenderer.GetTextureDebugger()->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
 }

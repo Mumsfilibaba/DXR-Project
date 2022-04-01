@@ -12,7 +12,7 @@ CD3D12Buffer::CD3D12Buffer(CD3D12Device* InDevice, const CRHIBufferDesc& InBuffe
 {
 }
 
-bool CD3D12Buffer::Initialize(CD3D12CommandContext* CommandContext, ERHIResourceAccess RHIInitalState, const SRHIResourceData* InitialData)
+bool CD3D12Buffer::Initialize(CD3D12CommandContext* CommandContext, EResourceAccess RHIInitalState, const SRHIResourceData* InitialData)
 {
     D3D12_ERROR(CommandContext != nullptr, "CommandContext cannot be nullptr");
 
@@ -86,19 +86,19 @@ bool CD3D12Buffer::Initialize(CD3D12CommandContext* CommandContext, ERHIResource
         {
             CommandContext->Begin();
 
-            CommandContext->TransitionBuffer(this, ERHIResourceAccess::Common, ERHIResourceAccess::CopyDest);
+            CommandContext->TransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             CommandContext->UpdateBuffer(this, 0, InitialData->GetSizeInBytes(), InitialData->GetData());
-            CommandContext->TransitionBuffer(this, ERHIResourceAccess::CopyDest, RHIInitalState);
+            CommandContext->TransitionBuffer(this, EResourceAccess::CopyDest, RHIInitalState);
 
             CommandContext->End();
         }
     }
     else
     {
-        if (RHIInitalState != ERHIResourceAccess::Common && !BufferDesc.IsDynamic())
+        if (RHIInitalState != EResourceAccess::Common && !BufferDesc.IsDynamic())
         {
             CommandContext->Begin();
-            CommandContext->TransitionBuffer(this, ERHIResourceAccess::Common, RHIInitalState);
+            CommandContext->TransitionBuffer(this, EResourceAccess::Common, RHIInitalState);
             CommandContext->End();
         }
     }

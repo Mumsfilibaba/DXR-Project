@@ -210,11 +210,11 @@ void CVulkanBackBuffer::AquireNextImage()
     CVulkanSwapChain* SwapChain = Viewport->GetSwapChain();
     
     Image = Viewport->GetImage(SwapChain->GetBufferIndex());
-    Assert(Image != VK_NULL_HANDLE);
+    Check(Image != VK_NULL_HANDLE);
     
     CVulkanImageView* ImageView = Viewport->GetImageView(SwapChain->GetBufferIndex());
-    Assert(ImageView != nullptr);
+    Check(ImageView != nullptr);
     
-    Assert(RenderTargetView != nullptr);
+    Check(RenderTargetView != nullptr);
     RenderTargetView->SetImageView(MakeSharedRef<CVulkanImageView>(ImageView));
 }

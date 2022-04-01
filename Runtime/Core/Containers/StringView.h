@@ -111,8 +111,8 @@ public:
      */
     FORCEINLINE void Copy(CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const noexcept
     {
-        Assert(Buffer != nullptr);
-        Assert((Position < Length()) || (Position == 0));
+        Check(Buffer != nullptr);
+        Check((Position < Length()) || (Position == 0));
 
         SizeType CopySize = NMath::Min(BufferSize, Length() - Position);
         StringMisc::Copy(Buffer, ViewStart + Position, CopySize);
@@ -414,7 +414,7 @@ public:
      */
     FORCEINLINE SizeType Find(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (Length() == 0))
         {
@@ -452,7 +452,7 @@ public:
      */
     FORCEINLINE SizeType Find(CharType Char, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         if (StringMisc::IsTerminator(Char) || (Length() == 0))
         {
@@ -510,7 +510,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
         if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (ThisLength == 0))
@@ -554,7 +554,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFind(CharType Char, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
         if (StringMisc::IsTerminator(Char) || (ThisLength == 0))
@@ -614,7 +614,7 @@ public:
      */
     FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (Length() == 0))
         {
@@ -675,7 +675,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
         if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (ThisLength == 0))
@@ -744,7 +744,7 @@ public:
      */
     FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (Length() == 0))
         {
@@ -809,7 +809,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
         if ((InLength == 0) || StringMisc::IsTerminator(*InString) || (ThisLength == 0))
@@ -951,7 +951,7 @@ public:
      */
     FORCEINLINE const ElementType& FirstElement() const noexcept
     {
-        Assert(!IsEmpty());
+        Check(!IsEmpty());
         return Data()[0];
     }
 
@@ -962,7 +962,7 @@ public:
      */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
-        Assert(!IsEmpty());
+        Check(!IsEmpty());
         return Data()[LastElementIndex()];
     }
 
@@ -974,7 +974,7 @@ public:
      */
     FORCEINLINE const CharType& At(SizeType Index) const noexcept
     {
-        Assert(Index < Length());
+        Check(Index < Length());
         return Data()[Index];
     }
 
@@ -1059,7 +1059,7 @@ public:
      */
     FORCEINLINE TStringView SubStringView(SizeType Offset, SizeType Count) const noexcept
     {
-        Assert((Count < Length()) && (Offset + Count < Length()));
+        Check((Count < Length()) && (Offset + Count < Length()));
         return TStringView(Data() + Offset, Count);
     }
 

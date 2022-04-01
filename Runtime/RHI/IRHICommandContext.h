@@ -114,18 +114,48 @@ public:
     virtual void SetShadingRateTexture(CRHITexture* ShadingTexture) = 0;
 
     /**
-     * @breief:
+     * @breief: Begin a RenderPass
+     * 
+     * @param RenderPass: Description of the RenderPass to begin
      */
     virtual void BeginRenderPass(const CRHIRenderPass& RenderPass) = 0;
+
+    /**
+     * @brief: End the current RenderPass
+     */
     virtual void EndRenderPass() = 0;
 
+    /**
+     * @brief: Set the current Viewport
+     * 
+     * @param Width: Width of the Viewport
+     * @param Height: Height of the Viewport
+     * @param MinDepth: Minimum depth of the Viewport
+     * @param MaxDepth: Maximum depth of the Viewport
+     * @param x: x-position of the Viewport
+     * @param y: y-position of the Viewport
+     */
     virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) = 0;
+
+    /**
+     * @brief: Set the current Scissor-Rect
+     *
+     * @param Width: Width of the Scissor-Rect
+     * @param Height: Height of the Scissor-Rect
+     * @param x: x-position of the Viewport
+     * @param y: y-position of the Viewport
+     */
     virtual void SetScissorRect(float Width, float Height, float x, float y) = 0;
 
-    virtual void SetBlendFactor(const SColorF& Color) = 0;
+    /**
+     * @brief: Set the current blend-color
+     * 
+     * @param Color: New color to use as blend-color
+     */
+    virtual void SetBlendFactor(const CFloatColor& Color) = 0;
 
     virtual void SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot) = 0;
-    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer, ERHIIndexFormat IndexFormat) = 0;
+    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) = 0;
 
     virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) = 0;
 

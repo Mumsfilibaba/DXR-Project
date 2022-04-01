@@ -8,28 +8,28 @@ IMPLEMENT_ENGINE_MODULE(CDefaultEngineModule, RHI);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Globals
 
-RHI_API CRHIInstance*       GRHIInstance = nullptr;
+RHI_API CRHIInstance*       GRHIInstance    = nullptr;
 RHI_API IRHIShaderCompiler* GShaderCompiler = nullptr;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RHI Functions
 
-static CRHIModule* LoadNullRHI()
+static CRHIModuleInterface* LoadNullRHI()
 {
-    return CModuleManager::Get().LoadEngineModule<CRHIModule>("NullRHI");
+    return CModuleManager::Get().LoadEngineModule<CRHIModuleInterface>("NullRHI");
 }
 
 bool RHIInitialize(ERHIType InRenderApi)
 {
     // Load Selected RHI
-    CRHIModule* RHIModule = nullptr;
+    CRHIModuleInterface* RHIModule = nullptr;
     if (InRenderApi == ERHIType::D3D12)
     {
-        RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>("D3D12RHI");
+        RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModuleInterface>("D3D12RHI");
     }
     else if (InRenderApi == ERHIType::Vulkan)
     {
-        RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>("VulkanRHI");
+        RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModuleInterface>("VulkanRHI");
     }
     else if (InRenderApi == ERHIType::Null)
     {

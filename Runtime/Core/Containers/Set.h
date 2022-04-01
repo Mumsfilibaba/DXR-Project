@@ -82,7 +82,7 @@ public:
      */
     FORCEINLINE ~TSet()
     {
-        Assert(NullNode != nullptr);
+        Check(NullNode != nullptr);
 
         FreeRoot();
 
@@ -103,7 +103,7 @@ private:
 
     FORCEINLINE void InititalizeRoot()
     {
-        Assert(RootNode == nullptr);
+        Check(RootNode == nullptr);
 
         RootNode = new STreeNode();
         RootNode->Parent = NullNode;
@@ -123,8 +123,8 @@ private:
 
     FORCEINLINE void RotateLeft(STreeNode* Node)
     {
-        Assert(Node != nullptr);
-        Assert(Node != NullNode);
+        Check(Node != nullptr);
+        Check(Node != NullNode);
 
         STreeNode* Right = Node->Right;
         Node->Right = Right->Left;
@@ -150,8 +150,8 @@ private:
 
     FORCEINLINE void RotateRight(STreeNode* Node)
     {
-        Assert(Node != nullptr);
-        Assert(Node != NullNode);
+        Check(Node != nullptr);
+        Check(Node != NullNode);
 
         STreeNode* Left = Node->Left;
         Node->Left = Left->Right;

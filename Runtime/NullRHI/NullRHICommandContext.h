@@ -92,8 +92,8 @@ public:
 
     virtual void GenerateMips(CRHITexture* Texture) override final { }
 
-    virtual void TransitionTexture(CRHITexture* Texture, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState) override final { }
-    virtual void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceAccess BeforeState, ERHIResourceAccess AfterState) override final { }
+    virtual void TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final { }
+    virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final { }
 
     virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) override final { }
     virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer) override final { }

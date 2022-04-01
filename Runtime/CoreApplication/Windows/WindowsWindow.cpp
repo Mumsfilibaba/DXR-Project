@@ -135,7 +135,7 @@ bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 In
 
 void CWindowsWindow::Show(bool bMaximized)
 {
-    Assert(Window != 0);
+    Check(Window != 0);
 
     if (IsValid())
     {
@@ -152,7 +152,7 @@ void CWindowsWindow::Show(bool bMaximized)
 
 void CWindowsWindow::Close()
 {
-    Assert(Window != 0);
+    Check(Window != 0);
 
     if (IsValid())
     {
@@ -165,7 +165,7 @@ void CWindowsWindow::Close()
 
 void CWindowsWindow::Minimize()
 {
-    Assert(Window != 0);
+    Check(Window != 0);
 
     if (StyleParams.IsMinimizable())
     {
@@ -189,7 +189,7 @@ void CWindowsWindow::Maximize()
 
 void CWindowsWindow::Restore()
 {
-    Assert(Window != 0);
+    Check(Window != 0);
 
     if (IsValid())
     {
@@ -203,7 +203,7 @@ void CWindowsWindow::Restore()
 
 void CWindowsWindow::ToggleFullscreen()
 {
-    Assert(Window != 0);
+    Check(Window != 0);
 
     if (IsValid())
     {
@@ -260,7 +260,7 @@ bool CWindowsWindow::IsActiveWindow() const
 
 void CWindowsWindow::SetTitle(const String& Title)
 {
-    Assert(Window != 0);
+    Check(Window != 0);
 
     if (StyleParams.IsTitled())
     {
@@ -295,7 +295,7 @@ void CWindowsWindow::MoveTo(int32 x, int32 y)
 
 void CWindowsWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
 {
-    Assert(Window != 0);
+    Check(Window != 0);
 
     if (IsValid())
     {
@@ -338,7 +338,7 @@ void CWindowsWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
 
 void CWindowsWindow::GetWindowShape(SWindowShape& OutWindowShape) const
 {
-    Assert(Window != 0);
+    Check(Window != 0);
 
     if (IsValid())
     {
@@ -383,7 +383,7 @@ void CWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) cons
         String Error;
         PlatformDebugMisc::GetLastErrorString(Error);
 
-        LOG_ERROR("[CWindowsWindow]: Failed to retrive monitorinfo. Reason: " + Error);
+        LOG_ERROR("[CWindowsWindow]: Failed to retrieve monitorinfo. Reason: " + Error);
     }
 }
 
