@@ -154,19 +154,82 @@ public:
      */
     virtual void SetBlendFactor(const CFloatColor& Color) = 0;
 
-    virtual void SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 VertexBufferCount, uint32 BufferSlot) = 0;
+    /**
+     * @brief: Set VertexBuffers to the Input-Assembler
+     * 
+     * @param VertexBuffers: Array of VertexBuffers to set
+     * @param NumVertexBuffers: Number of VertexBuffers in the VertexBuffers-Array
+     * @param StartBufferSlot: The slot to start set VertexBuffers at
+     */
+    virtual void SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 NumVertexBuffers, uint32 StartBufferSlot) = 0;
+
+    /**
+     * @brief: Set the IndexBuffer to the Input-Assembler
+     * 
+     * @param IndexBuffer: IndexBuffer to set
+     * @param IndexFormat: Format of each index
+     */
     virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) = 0;
 
+    /**
+     * @brief: The primitive topology of the geometry to render
+     * 
+     * @param PrimitveTopologyType: Type of primitive topology
+     */
     virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) = 0;
 
+    /**
+     * Set the GraphicsPipelineState
+     * 
+     * @param PipelineState: The PipelineState to use for upcoming Draw-calls
+     */
     virtual void SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState) = 0;
-    virtual void SetComputePipelineState(class CRHIComputePipelineState* PipelineState) = 0;
 
+    /**
+     * @brief: Set shader constants
+     * 
+     * @param Shader: Shader to bind the constants to
+     * @param Shader32BitConstants: A pointer containing the data
+     * @param Num32BitConstants: Number of 32-bit constants in Shader32BitConstants
+     */
     virtual void Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) = 0;
 
+    /**
+     * @brief: Set a texture as a ShaderResource
+     * 
+     * @param Shader: Shader to bind to the texture to
+     * @param Texture: Texture to bind
+     * @param ParameterIndex: Texture index in the shader to bind to
+     */
     virtual void SetShaderResourceTexture(CRHIShader* Shader, CRHITexture* Texture, uint32 ParameterIndex) = 0;
+
+    /**
+     * @brief: Set an array of textures as ShaderResources
+     *
+     * @param Shader: Shader to bind to the textures to
+     * @param Textures: Array of textures to bind
+     * @param NumTextures: Number of textures in the array to bind
+     * @param StartParameterIndex: Texture index in the shader to bind the first texture to
+     */
     virtual void SetShaderResourceTextures(CRHIShader* Shader, CRHITexture* const* Textures, uint32 NumTextures, uint32 StartParameterIndex) = 0;
+
+    /**
+     * @brief: Set a ShaderResourceView
+     *
+     * @param Shader: Shader to bind to the texture to
+     * @param ShaderResourceView: ShaderResourceView to bind
+     * @param ParameterIndex: ShaderResourceView index in the shader to bind to
+     */
     virtual void SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) = 0;
+
+    /**
+     * @brief: Set an array of ShaderResourceViews
+     *
+     * @param Shader: Shader to bind to the textures to
+     * @param ShaderResourceViews: Array of ShaderResourceViews to bind
+     * @param NumShaderResourceViews: Number of ShaderResourceViews in the array to bind
+     * @param StartParameterIndex: ShaderResourceView index in the shader to bind the first ShaderResourceView to
+     */
     virtual void SetShaderResourceViews( CRHIShader* Shader
                                        , CRHIShaderResourceView* const* ShaderResourceViews
                                        , uint32 NumShaderResourceViews
@@ -201,16 +264,7 @@ public:
     virtual void DiscardContents(class CRHIResource* Resource) = 0;
 
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer, bool bUpdate) = 0;
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) = 0;
-
-    /* Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
-    virtual void SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
-                                      , CRHIRayTracingPipelineState* PipelineState
-                                      , const SRHIRayTracingShaderResources* GlobalResource
-                                      , const SRHIRayTracingShaderResources* RayGenLocalResources
-                                      , const SRHIRayTracingShaderResources* MissLocalResources
-                                      , const SRHIRayTracingShaderResources* HitGroupResources
-                                      , uint32 NumHitGroupResources) = 0;
+    virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const CRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) = 0;
 
     virtual void GenerateMips(CRHITexture* Texture) = 0;
 
@@ -229,7 +283,7 @@ public:
                                      , uint32 BaseVertexLocation
                                      , uint32 StartInstanceLocation) = 0;
 
-    virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
+    virtual void Dispatch(CRHIComputeShader* ComputeShader, uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
 
     virtual void DispatchRays(CRHIRayTracingScene* Scene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
 
