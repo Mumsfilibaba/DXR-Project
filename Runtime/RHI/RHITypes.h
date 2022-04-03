@@ -367,7 +367,6 @@ struct SRHIRayTracingSupport
     uint16          MaxRecursionDepth;
 };
 
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ECubeFace
 
@@ -967,40 +966,6 @@ private:
             uint32     Height;
         };
     };
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyBufferInfo
-
-struct SRHICopyBufferInfo
-{
-    SRHICopyBufferInfo()
-        : SourceOffset(0)
-        , DestinationOffset(0)
-        , SizeInBytes(0)
-    { }
-
-    SRHICopyBufferInfo(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes)
-        : SourceOffset(InSourceOffset)
-        , DestinationOffset(InDestinationOffset)
-        , SizeInBytes(InSizeInBytes)
-    { }
-
-    bool operator==(const SRHICopyBufferInfo& RHS) const
-    {
-        return (SourceOffset      == RHS.SourceOffset) 
-            && (DestinationOffset == RHS.DestinationOffset) 
-            && (SizeInBytes       == RHS.SizeInBytes);
-    }
-
-    bool operator!=(const SRHICopyBufferInfo& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    uint64 SourceOffset      = 0;
-    uint32 DestinationOffset = 0;
-    uint32 SizeInBytes       = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

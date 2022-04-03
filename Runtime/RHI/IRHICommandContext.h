@@ -5,6 +5,50 @@
 #define RHI_SHADER_LOCAL_BINDING_COUNT (4)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHICopyBufferDesc
+
+struct SRHICopyBufferDesc
+{
+    /**
+     * @brief: Default Constructor
+     */
+    SRHICopyBufferDesc()
+        : SourceOffset(0)
+        , DestinationOffset(0)
+        , Size(0)
+    { }
+
+    /**
+     * @brief: Constructor that fills in the members
+     * 
+     * @param InSourceOffset: Offset in the source buffer
+     * @param InDestinationOffset: Offset in the destination buffer
+     * @param InSize: Size to copy
+     */
+    SRHICopyBufferDesc(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSize)
+        : SourceOffset(InSourceOffset)
+        , DestinationOffset(InDestinationOffset)
+        , Size(InSize)
+    { }
+
+    bool operator==(const SRHICopyBufferDesc& RHS) const
+    {
+        return (SourceOffset      == RHS.SourceOffset)
+            && (DestinationOffset == RHS.DestinationOffset)
+            && (Size              == RHS.Size);
+    }
+
+    bool operator!=(const SRHICopyBufferDesc& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    uint64 SourceOffset;
+    uint32 DestinationOffset;
+    uint32 Size;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRHICopyTextureSubresourceInfo
 
 struct SRHICopyTextureSubresourceInfo
@@ -483,8 +527,21 @@ public:
      */
     virtual void ResolveTexture(CRHITexture* Dst, CRHITexture* Src) = 0;
     
-    virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo) = 0;
-    virtual void CopyConstantBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo) = 0;
+    /**
+     * @brief: Copy buffers
+     * 
+     * @param Dst: Destination buffer
+     * @param Src: Source buffer
+     * @param CopyDesc: Copy description
+     */
+    virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferDesc& CopyDesc) = 0;
+
+    /**
+     * @brief: Copy textures that have the same parameters
+     * 
+     * @param Dst: Destination texture
+     * @param Src: Source texture
+     */
     virtual void CopyTexture(CRHITexture* Dst, CRHITexture* Src) = 0;
     virtual void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo) = 0;
 
