@@ -1,8 +1,8 @@
 #pragma once
 #include "RHITypes.h"
 #include "RHIResources.h"
-#include "RHIResourceViews.h"
-#include "RHIViewport.h"
+
+#define RHI_SHADER_LOCAL_BINDING_COUNT (4)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRHICopyTextureSubresourceInfo
@@ -75,6 +75,70 @@ struct SRHICopyTextureInfo
     uint32 Width;
     uint32 Height;
     uint32 Depth;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingShaderLocalBindings 
+
+class CRHIRayTracingShaderLocalBindings
+{
+public:
+
+    CRHIRayTracingShaderLocalBindings()
+        : ShaderResourceViews()
+        , NumShaderResourceViews(0)
+        , UnorderedAccessViews()
+        , NumUnorderedAccessView(0)
+        , ConstantBuffers()
+        , NumConstantBuffers(0)
+    { }
+
+    CRHIShaderResourceViewRef  ShaderResourceViews[RHI_SHADER_LOCAL_BINDING_COUNT];
+    uint32                     NumShaderResourceViews;
+    CRHIUnorderedAccessViewRef UnorderedAccessViews[RHI_SHADER_LOCAL_BINDING_COUNT];
+    uint32                     NumUnorderedAccessView;
+    CRHIBufferRef              ConstantBuffers[RHI_SHADER_LOCAL_BINDING_COUNT];
+    uint32                     NumConstantBuffers;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIBuildRayTracingGeometryDesc
+
+class CRHIBuildRayTracingGeometryDesc
+{
+public:
+
+    CRHIBuildRayTracingGeometryDesc()
+        : VertexBuffer(nullptr)
+        , IndexBuffer(nullptr)
+        , BuildType(ERayTracingStructureBuildType::Build)
+    { }
+
+    CRHIBuffer*                   VertexBuffer;
+    CRHIBuffer*                   IndexBuffer; 
+    ERayTracingStructureBuildType BuildType;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIBuildRayTracingSceneDesc
+
+class CRHIBuildRayTracingSceneDesc
+{
+public:
+
+    CRHIBuildRayTracingSceneDesc()
+        : Instances(nullptr)
+        , NumInstances(0)
+        , ShaderLocalBinding(nullptr)
+        , NumShaderLocalBindings(0)
+        , BuildType(ERayTracingStructureBuildType::Build)
+    { }
+
+    const CRHIRayTracingGeometryInstance*    Instances;
+    uint32                                   NumInstances;
+    const CRHIRayTracingShaderLocalBindings* ShaderLocalBinding;
+    uint32                                   NumShaderLocalBindings;
+    ERayTracingStructureBuildType            BuildType;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -393,11 +457,30 @@ public:
     /**
      * @brief: Update buffer with data
      * 
-     * @param Dst
+     * @param Dst: Buffer to update
+     * @param Offset: Offset in the buffer
+     * @param Size: Size of the SourceData
+     * @param SourceData: A pointer to the data that should be copied into the buffer
      */
-    virtual void UpdateBuffer(CRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) = 0;
+    virtual void UpdateBuffer(CRHIBuffer* Dst, uint64 Offset, uint64 Size, const void* SourceData) = 0;
+
+    /**
+     * @brief: Update a texture2D with data
+     * 
+     * @param Dst: Texture to update
+     * @param Width: Width of the TextureData
+     * @param Height: Height of the TextureData
+     * @param MipLevel: MipLevel to update
+     * @param SourceData: A pointer to the data that should be copied to the Texture
+     */
     virtual void UpdateTexture2D(CRHITexture* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) = 0;
 
+    /**
+     * @brief: Resolve a texture
+     * 
+     * @param Dst: Destination texture of the resolve, must have a single sample (1x MSAA)
+     * @param Src: Source texture of the resolve, must have multiple samples (2x - 16x MSAA)
+     */
     virtual void ResolveTexture(CRHITexture* Dst, CRHITexture* Src) = 0;
     
     virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo) = 0;
@@ -408,8 +491,8 @@ public:
     virtual void DestroyResource(class CRHIResource* Resource) = 0;
     virtual void DiscardContents(class CRHIResource* Resource) = 0;
 
-    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIBuffer* VertexBuffer, CRHIBuffer* IndexBuffer, bool bUpdate) = 0;
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const CRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) = 0;
+    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, const CRHIBuildRayTracingGeometryDesc& BuildDesc) = 0;
+    virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const CRHIBuildRayTracingSceneDesc& BuildDesc) = 0;
 
     virtual void GenerateMips(CRHITexture* Texture) = 0;
 

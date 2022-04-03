@@ -353,7 +353,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandSetBlendFactor)
 {
 public:
-    FORCEINLINE CRHICommandSetBlendFactor(const SColorF& InColor)
+    FORCEINLINE CRHICommandSetBlendFactor(const CFloatColor& InColor)
         : Color(InColor)
     { }
 
@@ -362,7 +362,7 @@ public:
         CommandContext.SetBlendFactor(Color);
     }
 
-    SColorF Color;
+    CFloatColor Color;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -456,48 +456,6 @@ public:
 
     CRHIBuffer*     IndexBuffer;
     EIndexFormat IndexFormat;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetRayTracingBindings
-
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetRayTracingBindings)
-{
-public:
-    FORCEINLINE CRHICommandSetRayTracingBindings( CRHIRayTracingScene* InRayTracingScene
-                                                , CRHIRayTracingPipelineState* InPipelineState
-                                                , const SRHIRayTracingShaderResources* InGlobalResources
-                                                , const SRHIRayTracingShaderResources* InRayGenLocalResources
-                                                , const SRHIRayTracingShaderResources* InMissLocalResources
-                                                , const SRHIRayTracingShaderResources* InHitGroupResources
-                                                , uint32 InNumHitGroupResources)
-        : Scene(InRayTracingScene)
-        , PipelineState(InPipelineState)
-        , GlobalResources(InGlobalResources)
-        , RayGenLocalResources(InRayGenLocalResources)
-        , MissLocalResources(InMissLocalResources)
-        , HitGroupResources(InHitGroupResources)
-        , NumHitGroupResources(InNumHitGroupResources)
-    { }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.SetRayTracingBindings( Scene
-                                            , PipelineState
-                                            , GlobalResources
-                                            , RayGenLocalResources
-                                            , MissLocalResources
-                                            , HitGroupResources
-                                            , NumHitGroupResources);
-    }
-
-    CRHIRayTracingScene*                 Scene;
-    CRHIRayTracingPipelineState*         PipelineState;
-    const SRHIRayTracingShaderResources* GlobalResources;
-    const SRHIRayTracingShaderResources* RayGenLocalResources;
-    const SRHIRayTracingShaderResources* MissLocalResources;
-    const SRHIRayTracingShaderResources* HitGroupResources;
-    uint32                               NumHitGroupResources;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

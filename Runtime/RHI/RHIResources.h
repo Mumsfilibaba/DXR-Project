@@ -2031,8 +2031,6 @@ public:
         , ColorFormat(InColorFormat)
     { }
 
-    ~CRHIViewport() = default;
-
     virtual bool Resize(uint32 Width, uint32 Height) = 0;
 
     virtual CRHITexture* GetBackBuffer() const = 0;
