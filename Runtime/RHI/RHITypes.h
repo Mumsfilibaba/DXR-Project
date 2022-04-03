@@ -36,14 +36,14 @@ struct SRHIShadingRateSupport
         , ShadingRateImageTileSize(0)
     { }
 
-    bool operator==(const SRHIShadingRateSupport& Rhs) const
+    bool operator==(const SRHIShadingRateSupport& RHS) const
     {
-        return (Tier == Rhs.Tier) && (ShadingRateImageTileSize == Rhs.ShadingRateImageTileSize);
+        return (Tier == RHS.Tier) && (ShadingRateImageTileSize == RHS.ShadingRateImageTileSize);
     }
 
-    bool operator!=(const SRHIShadingRateSupport& Rhs) const
+    bool operator!=(const SRHIShadingRateSupport& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     EShadingRateTier Tier;
@@ -81,14 +81,14 @@ struct SRHIRayTracingSupport
         , MaxRecursionDepth(0)
     { }
 
-    bool operator==(const SRHIRayTracingSupport& Rhs) const
+    bool operator==(const SRHIRayTracingSupport& RHS) const
     {
-        return (Tier == Rhs.Tier) && (MaxRecursionDepth == Rhs.MaxRecursionDepth);
+        return (Tier == RHS.Tier) && (MaxRecursionDepth == RHS.MaxRecursionDepth);
     }
 
-    bool operator!=(const SRHIRayTracingSupport& Rhs) const
+    bool operator!=(const SRHIRayTracingSupport& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     ERayTracingTier Tier;
@@ -146,7 +146,7 @@ inline const char* ToString(EComparisonFunc ComparisonFunc)
     case EComparisonFunc::NotEqual:     return "NotEqual";
     case EComparisonFunc::GreaterEqual: return "GreaterEqual";
     case EComparisonFunc::Always:       return "Always";
-    default:                               return "Unknown";
+    default:                            return "Unknown";
     }
 }
 
@@ -279,7 +279,47 @@ inline const char* ToString(EShadingRate ShadingRate)
     case EShadingRate::VRS_2x4: return "VRS_2x4";
     case EShadingRate::VRS_4x2: return "VRS_4x2";
     case EShadingRate::VRS_4x4: return "VRS_4x4";
-    default:                       return "Unknown";
+    default:                    return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EAttachmentLoadAction
+
+enum class EAttachmentLoadAction : uint8
+{
+    None  = 0, // Don't care 
+    Load  = 1, // Use the stored data when RenderPass begin
+    Clear = 2, // Clear data when RenderPass begin
+};
+
+inline const char* ToString(EAttachmentLoadAction LoadAction)
+{
+    switch (LoadAction)
+    {
+    case EAttachmentLoadAction::None:  return "None";
+    case EAttachmentLoadAction::Load:  return "Load";
+    case EAttachmentLoadAction::Clear: return "Clear";
+    default:                           return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EAttachmentStoreAction
+
+enum class EAttachmentStoreAction : uint8
+{
+    None  = 0, // Don't care 
+    Store = 1, // Store the data after the RenderPass is finished
+};
+
+inline const char* ToString(EAttachmentStoreAction StoreAction)
+{
+    switch (StoreAction)
+    {
+    case EAttachmentStoreAction::None:  return "None";
+    case EAttachmentStoreAction::Store: return "Store";
+    default:                            return "Unknown";
     }
 }
 
@@ -350,9 +390,9 @@ public:
      * 
      * @return: Returns true if the handles are equal
      */
-    bool operator==(const CRHIDescriptorHandle& Rhs) const 
+    bool operator==(const CRHIDescriptorHandle& RHS) const 
     {
-        return (Type == Rhs.Type) && (Index == Rhs.Index);
+        return (Type == RHS.Type) && (Index == RHS.Index);
     }
 
     /**
@@ -360,9 +400,9 @@ public:
      * 
      * @return: Returns false if the handles are equal
      */
-    bool operator!=(const CRHIDescriptorHandle& Rhs) const 
+    bool operator!=(const CRHIDescriptorHandle& RHS) const 
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
 private:
@@ -390,14 +430,14 @@ struct SRHIDepthStencilValue
         , Stencil(InStencil)
     { }
 
-    bool operator==(const SRHIDepthStencilValue& Rhs) const
+    bool operator==(const SRHIDepthStencilValue& RHS) const
     {
-        return (Depth == Rhs.Depth) && (Stencil && Rhs.Stencil);
+        return (Depth == RHS.Depth) && (Stencil && RHS.Stencil);
     }
 
-    bool operator!=(const SRHIDepthStencilValue& Rhs) const
+    bool operator!=(const SRHIDepthStencilValue& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     float Depth   = 1.0f;
@@ -484,46 +524,46 @@ public:
         return Format;
     }
 
-    CRHIClearValue& operator=(const CRHIClearValue& Rhs)
+    CRHIClearValue& operator=(const CRHIClearValue& RHS)
     {
-        Type   = Rhs.Type;
-        Format = Rhs.Format;
+        Type   = RHS.Type;
+        Format = RHS.Format;
 
-        if (Rhs.Type == EType::Color)
+        if (RHS.Type == EType::Color)
         {
-            Color = Rhs.Color;
+            Color = RHS.Color;
         }
-        else if (Rhs.Type == EType::DepthStencil)
+        else if (RHS.Type == EType::DepthStencil)
         {
-            DepthStencil = Rhs.DepthStencil;
+            DepthStencil = RHS.DepthStencil;
         }
 
         return *this;
     }
 
-    bool operator==(const CRHIClearValue& Rhs) const
+    bool operator==(const CRHIClearValue& RHS) const
     {
-        if (Type != Rhs.Type)
+        if (Type != RHS.Type)
         {
             return false;
         }
 
-        if (Format != Rhs.Format)
+        if (Format != RHS.Format)
         {
             return false;
         }
 
         if (Type == EType::Color)
         {
-            return (Color == Rhs.Color);
+            return (Color == RHS.Color);
         }
 
-        return (DepthStencil == Rhs.DepthStencil);
+        return (DepthStencil == RHS.DepthStencil);
     }
 
-    bool operator!=(const CRHIClearValue& Rhs) const
+    bool operator!=(const CRHIClearValue& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
 private:
@@ -606,17 +646,17 @@ public:
         return GetByteStrideFromFormat(Format) * Width * Height;
     }
 
-    bool operator==(const CRHIResourceData& Rhs) const
+    bool operator==(const CRHIResourceData& RHS) const
     {
-        return (Data   == Rhs.Data) 
-            && (Format == Rhs.Format) 
-            && (Width  == Rhs.Width) 
-            && (Height == Rhs.Height);
+        return (Data   == RHS.Data) 
+            && (Format == RHS.Format) 
+            && (Width  == RHS.Width) 
+            && (Height == RHS.Height);
     }
 
-    bool operator!=(const CRHIResourceData& Rhs) const
+    bool operator!=(const CRHIResourceData& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
 private:
@@ -655,94 +695,21 @@ struct SRHICopyBufferInfo
         , SizeInBytes(InSizeInBytes)
     { }
 
-    bool operator==(const SRHICopyBufferInfo& Rhs) const
+    bool operator==(const SRHICopyBufferInfo& RHS) const
     {
-        return (SourceOffset      == Rhs.SourceOffset) 
-            && (DestinationOffset == Rhs.DestinationOffset) 
-            && (SizeInBytes       == Rhs.SizeInBytes);
+        return (SourceOffset      == RHS.SourceOffset) 
+            && (DestinationOffset == RHS.DestinationOffset) 
+            && (SizeInBytes       == RHS.SizeInBytes);
     }
 
-    bool operator!=(const SRHICopyBufferInfo& Rhs) const
+    bool operator!=(const SRHICopyBufferInfo& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     uint64 SourceOffset      = 0;
     uint32 DestinationOffset = 0;
     uint32 SizeInBytes       = 0;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyTextureSubresourceInfo
-
-struct SRHICopyTextureSubresourceInfo
-{
-    SRHICopyTextureSubresourceInfo()
-        : SubresourceIndex(0)
-        , x(0)
-        , y(0)
-        , z(0)
-    { }
-
-    SRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
-        : SubresourceIndex(InSubresourceIndex)
-        , x(InX)
-        , y(InY)
-        , z(InZ)
-    { }
-
-    bool operator==(const SRHICopyTextureSubresourceInfo& Rhs) const
-    {
-        return (SubresourceIndex == Rhs.SubresourceIndex) 
-            && (x                == Rhs.x) 
-            && (y                == Rhs.y) 
-            && (z                == Rhs.z);
-    }
-
-    bool operator==(const SRHICopyTextureSubresourceInfo& Rhs) const
-    {
-        return !(*this == Rhs);
-    }
-
-    uint32 SubresourceIndex;
-    uint32 x;
-    uint32 y;
-    uint32 z;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyTextureInfo
-
-struct SRHICopyTextureInfo
-{
-    SRHICopyTextureInfo()
-        : Source()
-        , Destination()
-        , Width(0)
-        , Height(0)
-        , Depth(0)
-    { }
-
-    bool operator==(const SRHICopyTextureInfo& Rhs) const
-    {
-        return (Source      == Rhs.Source) 
-            && (Destination == Rhs.Destination) 
-            && (Width       == Rhs.Width) 
-            && (Height      == Rhs.Height) 
-            && (Depth       == Rhs.Depth);
-    }
-
-    bool operator==(const SRHICopyTextureInfo& Rhs) const
-    {
-        return !(*this == Rhs);
-    }
-
-    SRHICopyTextureSubresourceInfo Source;
-    SRHICopyTextureSubresourceInfo Destination;
-    
-    uint32 Width;
-    uint32 Height;
-    uint32 Depth;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -776,21 +743,21 @@ struct SRHIRenderTargetEntry
         , Texture(Other.Texture)
     { }
 
-    SRHIRenderTargetEntry& operator=(const SRHIRenderTargetEntry& Rhs)
+    SRHIRenderTargetEntry& operator=(const SRHIRenderTargetEntry& RHS)
     {
-        Type = Rhs.Type;
-        Texture = Rhs.Texture;
+        Type = RHS.Type;
+        Texture = RHS.Texture;
         return *this;
     }
 
-    bool operator==(const SRHIRenderTargetEntry& Rhs) const
+    bool operator==(const SRHIRenderTargetEntry& RHS) const
     {
-        return (Type == Rhs.Type) && (Texture == Rhs.Texture);
+        return (Type == RHS.Type) && (Texture == RHS.Texture);
     }
 
-    bool operator!=(const SRHIRenderTargetEntry& Rhs) const
+    bool operator!=(const SRHIRenderTargetEntry& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     EType Type;
@@ -833,21 +800,21 @@ struct SRHIDepthStencilEntry
         , Texture(Other.Texture)
     { }
 
-    SRHIDepthStencilEntry& operator=(const SRHIDepthStencilEntry& Rhs)
+    SRHIDepthStencilEntry& operator=(const SRHIDepthStencilEntry& RHS)
     {
-        Type = Rhs.Type;
-        Texture = Rhs.Texture;
+        Type = RHS.Type;
+        Texture = RHS.Texture;
         return *this;
     }
 
-    bool operator==(const SRHIDepthStencilEntry& Rhs) const
+    bool operator==(const SRHIDepthStencilEntry& RHS) const
     {
-        return (Type == Rhs.Type) && (Texture == Rhs.Texture);
+        return (Type == RHS.Type) && (Texture == RHS.Texture);
     }
 
-    bool operator!=(const SRHIDepthStencilEntry& Rhs) const
+    bool operator!=(const SRHIDepthStencilEntry& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     EType Type;
@@ -922,27 +889,27 @@ public:
         DepthStencil = SRHIDepthStencilEntry(InDepthStencilView);
     }
 
-    bool operator==(const CRHIRenderPass& Rhs) const
+    bool operator==(const CRHIRenderPass& RHS) const
     {
-        if (NumRenderTargets != Rhs.NumRenderTargets)
+        if (NumRenderTargets != RHS.NumRenderTargets)
         {
             return false;
         }
 
         for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
         {
-            if (RenderTargets[Index] != Rhs.RenderTargets[Index])
+            if (RenderTargets[Index] != RHS.RenderTargets[Index])
             {
                 return false;
             }
         }
 
-        return (DepthStencil == Rhs.DepthStencil);
+        return (DepthStencil == RHS.DepthStencil);
     }
 
-    bool operator==(const CRHIRenderPass& Rhs) const
+    bool operator==(const CRHIRenderPass& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     SRHIRenderTargetEntry RenderTargets[8];

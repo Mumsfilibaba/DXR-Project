@@ -6,9 +6,9 @@
 
 #include "Platform/PlatformVulkan.h"
 
-static const auto RawStringComparator = [](const char* Lhs, const char* Rhs) -> bool
+static const auto RawStringComparator = [](const char* LHS, const char* RHS) -> bool
 {
-    return StringMisc::Compare(Lhs, Rhs) == 0;
+    return StringMisc::Compare(LHS, RHS) == 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////*/

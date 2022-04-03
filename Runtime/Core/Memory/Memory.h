@@ -99,21 +99,21 @@ public:
     /**
      * @brief: Compare two memory ranges
      *
-     * @param Lhs: Memory range 1
-     * @param Rhs: Memory range 2
+     * @param LHS: Memory range 1
+     * @param RHS: Memory range 2
      * @param Size: Size of the memory ranges
      * @return: Returns true if the memory ranges are equal
      */
-    static bool Memcmp(const void* Lhs, const void* Rhs, uint64 Size) noexcept;
+    static bool Memcmp(const void* LHS, const void* RHS, uint64 Size) noexcept;
 
     /**
      * @brief: Swaps the contents of two memory ranges
      *
-     * @param Lhs: Memory range 1
-     * @param Rhs: Memory range 2
+     * @param LHS: Memory range 1
+     * @param RHS: Memory range 2
      * @param Size: Size of the memory ranges
      */
-    static void Memswap(void* restrict_ptr Lhs, void* restrict_ptr Rhs, uint64 Size) noexcept;
+    static void Memswap(void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size) noexcept;
 
     /**
      * @brief: Copy memory range from one memory range to another and then set the source to zero
@@ -197,15 +197,15 @@ public:
     /**
      * @brief: Compare memory typed
      *
-     * @param Lhs: Destination of memory to copy
-     * @param Rhs: Source of the memory to copy
+     * @param LHS: Destination of memory to copy
+     * @param RHS: Source of the memory to copy
      * @param Count: Number of elements to compare
      * @return: Returns true if the memory is equal to each other
      */
     template<typename T>
-    static FORCEINLINE bool Memcmp(const T* Lhs, const T* Rhs, uint64 Count) noexcept
+    static FORCEINLINE bool Memcmp(const T* LHS, const T* RHS, uint64 Count) noexcept
     {
-        return Memcmp(reinterpret_cast<const void*>(Lhs), reinterpret_cast<const void*>(Rhs), sizeof(T) * Count);
+        return Memcmp(reinterpret_cast<const void*>(LHS), reinterpret_cast<const void*>(RHS), sizeof(T) * Count);
     }
 
     /**

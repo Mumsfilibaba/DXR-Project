@@ -5,9 +5,82 @@
 #include "RHIViewport.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHICopyTextureSubresourceInfo
+
+struct SRHICopyTextureSubresourceInfo
+{
+    SRHICopyTextureSubresourceInfo()
+        : SubresourceIndex(0)
+        , x(0)
+        , y(0)
+        , z(0)
+    { }
+
+    SRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
+        : SubresourceIndex(InSubresourceIndex)
+        , x(InX)
+        , y(InY)
+        , z(InZ)
+    { }
+
+    bool operator==(const SRHICopyTextureSubresourceInfo& RHS) const
+    {
+        return (SubresourceIndex == RHS.SubresourceIndex)
+            && (x                == RHS.x)
+            && (y                == RHS.y)
+            && (z                == RHS.z);
+    }
+
+    bool operator==(const SRHICopyTextureSubresourceInfo& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    uint32 SubresourceIndex;
+    uint32 x;
+    uint32 y;
+    uint32 z;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRHICopyTextureInfo
+
+struct SRHICopyTextureInfo
+{
+    SRHICopyTextureInfo()
+        : Source()
+        , Destination()
+        , Width(0)
+        , Height(0)
+        , Depth(0)
+    { }
+
+    bool operator==(const SRHICopyTextureInfo& RHS) const
+    {
+        return (Source      == RHS.Source)
+            && (Destination == RHS.Destination)
+            && (Width       == RHS.Width)
+            && (Height      == RHS.Height)
+            && (Depth       == RHS.Depth);
+    }
+
+    bool operator==(const SRHICopyTextureInfo& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    SRHICopyTextureSubresourceInfo Source;
+    SRHICopyTextureSubresourceInfo Destination;
+
+    uint32 Width;
+    uint32 Height;
+    uint32 Depth;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IRHICommandContext 
 
-class IRHICommandContext : public CRefCounted
+class IRHICommandContext
 {
 public:
 
@@ -235,22 +308,94 @@ public:
                                        , uint32 NumShaderResourceViews
                                        , uint32 StartParameterIndex) = 0;
 
+    /**
+     * @brief: Set a texture as a UnorderedAccess-resource
+     *
+     * @param Shader: Shader to bind to the texture to
+     * @param Texture: Texture to bind
+     * @param ParameterIndex: Texture index in the shader to bind to
+     */
     virtual void SetUnorderedAccessTexture(CRHIShader* Shader, CRHITexture* Texture, uint32 ParameterIndex) = 0;
+
+    /**
+     * @brief: Set an array of textures as UnorderedAccess-resources
+     *
+     * @param Shader: Shader to bind to the textures to
+     * @param Textures: Array of textures to bind
+     * @param NumTextures: Number of textures in the array to bind
+     * @param StartParameterIndex: Texture index in the shader to bind the first texture to
+     */
     virtual void SetUnorderedAccessTextures(CRHIShader* Shader, CRHITexture* const* Textures, uint32 NumTextures, uint32 StartParameterIndex) = 0;
+
+    /**
+     * @brief: Set a UnorderedAccessView
+     *
+     * @param Shader: Shader to bind to the texture to
+     * @param UnorderedAccessView: UnorderedAccessView to bind
+     * @param ParameterIndex: UnorderedAccessView index in the shader to bind to
+     */
     virtual void SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) = 0;
+
+    /**
+     * @brief: Set an array of textures as UnorderedAccess-resources
+     *
+     * @param Shader: Shader to bind to the textures to
+     * @param UnorderedAccessViews: Array of UnorderedAccessViews to bind
+     * @param NumTextures: Number of UnorderedAccessViews in the array to bind
+     * @param StartParameterIndex: UnorderedAccessView index in the shader to bind the first UnorderedAccessView to
+     */
     virtual void SetUnorderedAccessViews( CRHIShader* Shader
                                         , CRHIUnorderedAccessView* const* UnorderedAccessViews
                                         , uint32 NumUnorderedAccessViews
                                         , uint32 StartParameterIndex) = 0;
 
+    /**
+     * @breif: Bind a ConstantBuffer to a shader
+     * 
+     * @param Shader: Shader to bind the buffer to
+     * @param ConstantBuffer: Buffer to bind
+     * @param ParameterIndex: ConstantBuffer index to bind to
+     */
     virtual void SetConstantBuffer(CRHIShader* Shader, CRHIBuffer* ConstantBuffer, uint32 ParameterIndex) = 0;
-    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 StartParameterIndex) = 0;
+    
+    /**
+     * @breif: Bind a ConstantBuffer to a shader
+     *
+     * @param Shader: Shader to bind the buffer to
+     * @param ConstantBuffers: Array of Buffers to bind
+     * @param NumConstantBuffers: Number of buffers in the array
+     * @param StartParameterIndex: ConstantBuffer index to bind the first buffer to
+     */
+    virtual void SetConstantBuffers( CRHIShader* Shader
+                                   , CRHIBuffer* const* ConstantBuffers
+                                   , uint32 NumConstantBuffers
+                                   , uint32 StartParameterIndex) = 0;
 
+    /**
+     * @brief: Set a SamplerState to a Shader
+     * 
+     * @param Shader: Shader to bind to 
+     * @param SamplerState: SamplerState to bind
+     * @param ParameterIndex: SamplerState index to bind the SamplerState to
+     */
     virtual void SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex) = 0;
-    virtual void SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) = 0;
 
+    /**
+     * @brief: Set a SamplerState to a Shader
+     *
+     * @param Shader: Shader to bind to
+     * @param SamplerStates: Array of SamplerStates to bind
+     * @param NumSamplerStates: Number of SamplerStates in the array
+     * @param StartParameterIndex: SamplerState index to bind the first SamplerState to
+     */
+    virtual void SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 StartParameterIndex) = 0;
+
+    /**
+     * @brief: Update buffer with data
+     * 
+     * @param Dst
+     */
     virtual void UpdateBuffer(CRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) = 0;
-    virtual void UpdateConstantBuffer(CRHIBuffer* Dst, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) = 0;
     virtual void UpdateTexture2D(CRHITexture* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) = 0;
 
     virtual void ResolveTexture(CRHITexture* Dst, CRHITexture* Src) = 0;
@@ -297,4 +442,6 @@ public:
 
     virtual void BeginExternalCapture() = 0;
     virtual void EndExternalCapture() = 0;
+
+    virtual void* GetRHIHandle() const = 0;
 };

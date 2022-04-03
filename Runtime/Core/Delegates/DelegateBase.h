@@ -156,24 +156,24 @@ public:
     /**
      * @brief: Move-assignment operator
      * 
-     * @param Rhs: Instance to move from
+     * @param RHS: Instance to move from
      * @return: A reference to this instance
      */
-    FORCEINLINE CDelegateBase& operator=(CDelegateBase&& Rhs) noexcept
+    FORCEINLINE CDelegateBase& operator=(CDelegateBase&& RHS) noexcept
     {
-        CDelegateBase(Move(Rhs)).Swap(*this);
+        CDelegateBase(Move(RHS)).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Copy-assignment operator
      *
-     * @param Rhs: Instance to copy from
+     * @param RHS: Instance to copy from
      * @return: A reference to this instance
      */
-    FORCEINLINE CDelegateBase& operator=(const CDelegateBase& Rhs)
+    FORCEINLINE CDelegateBase& operator=(const CDelegateBase& RHS)
     {
-        CDelegateBase(Rhs).Swap(*this);
+        CDelegateBase(RHS).Swap(*this);
         return *this;
     }
 

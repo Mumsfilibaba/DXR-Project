@@ -76,14 +76,14 @@ bool RHIInitialize(ERHIType InRenderApi)
 
     // Set the context to the command queue
     IRHICommandContext* CmdContext = GRHIInstance->GetDefaultCommandContext();
-    CRHICommandQueue::Get().SetContext(CmdContext);
+    CRHICommandExecutionManager::Get().SetContext(CmdContext);
 
     return true;
 }
 
 void RHIRelease()
 {
-    CRHICommandQueue::Get().SetContext(nullptr);
+    CRHICommandExecutionManager::Get().SetContext(nullptr);
 
     if (GRHIInstance)
     {

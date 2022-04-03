@@ -76,9 +76,9 @@ public:
         return *this;
     }
 
-    FORCEINLINE CFloat64& operator=(const CFloat64& Rhs)
+    FORCEINLINE CFloat64& operator=(const CFloat64& RHS)
     {
-        Float64 = Rhs.Float64;
+        Float64 = RHS.Float64;
         return *this;
     }
 
@@ -154,9 +154,9 @@ public:
         return *this;
     }
 
-    FORCEINLINE CFloat32& operator=(const CFloat32& Rhs)
+    FORCEINLINE CFloat32& operator=(const CFloat32& RHS)
     {
-        Float32 = Rhs.Float32;
+        Float32 = RHS.Float32;
         return *this;
     }
 
@@ -320,14 +320,14 @@ public:
 #endif
     }
 
-    FORCEINLINE bool operator==(const CFloat16& Rhs) const
+    FORCEINLINE bool operator==(const CFloat16& RHS) const
     {
-        return (Encoded == Rhs.Encoded);
+        return (Encoded == RHS.Encoded);
     }
 
-    FORCEINLINE bool operator!=(const CFloat16& Rhs) const
+    FORCEINLINE bool operator!=(const CFloat16& RHS) const
     {
-        return (Encoded != Rhs.Encoded);
+        return (Encoded != RHS.Encoded);
     }
 
     FORCEINLINE CFloat16& operator=(float Float32)
@@ -336,9 +336,9 @@ public:
         return *this;
     }
 
-    FORCEINLINE CFloat16& operator=(const CFloat16& Rhs)
+    FORCEINLINE CFloat16& operator=(const CFloat16& RHS)
     {
-        Encoded = Rhs.Encoded;
+        Encoded = RHS.Encoded;
         return *this;
     }
 

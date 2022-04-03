@@ -300,75 +300,75 @@ public:
     /**
      * @brief: Copy-assignment operator
      * 
-     * @param Rhs: SharedRef to copy from
+     * @param RHS: SharedRef to copy from
      * @return: A reference to this instance
      */
-    FORCEINLINE TSharedRef& operator=(const TSharedRef& Rhs) noexcept
+    FORCEINLINE TSharedRef& operator=(const TSharedRef& RHS) noexcept
     {
-        TSharedRef(Rhs).Swap(*this);
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Copy-assignment operator that takes a convertible type
      *
-     * @param Rhs: SharedRef to copy from
+     * @param RHS: SharedRef to copy from
      * @return: A reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(const TSharedRef<OtherType>& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(const TSharedRef<OtherType>& RHS) noexcept
     {
-        TSharedRef(Rhs).Swap(*this);
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Move-assignment operator
      *
-     * @param Rhs: SharedRef to move from
+     * @param RHS: SharedRef to move from
      * @return: A reference to this instance
      */
-    FORCEINLINE TSharedRef& operator=(TSharedRef&& Rhs) noexcept
+    FORCEINLINE TSharedRef& operator=(TSharedRef&& RHS) noexcept
     {
-        TSharedRef(Rhs).Swap(*this);
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Move-assignment operator that takes a convertible type
      *
-     * @param Rhs: SharedRef to move from
+     * @param RHS: SharedRef to move from
      * @return: A reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(TSharedRef<OtherType>&& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(TSharedRef<OtherType>&& RHS) noexcept
     {
-        TSharedRef(Rhs).Swap(*this);
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Assignment operator that takes a raw pointer
      *
-     * @param Rhs: Pointer to store
+     * @param RHS: Pointer to store
      * @return: A reference to this object
      */
-    FORCEINLINE TSharedRef& operator=(ElementType* Rhs) noexcept
+    FORCEINLINE TSharedRef& operator=(ElementType* RHS) noexcept
     {
-        TSharedRef(Rhs).Swap(*this);
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Assignment operator that takes a raw pointer of a convertible type
      *
-     * @param Rhs: Pointer to store
+     * @param RHS: Pointer to store
      * @return: A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(OtherType* Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(OtherType* RHS) noexcept
     {
-        TSharedRef(Rhs).Swap(*this);
+        TSharedRef(RHS).Swap(*this);
         return *this;
     }
 
@@ -401,63 +401,63 @@ private:
 // TSharedRef operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedRef<T>& Lhs, U* Rhs) noexcept
+FORCEINLINE bool operator==(const TSharedRef<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() == Rhs);
+    return (LHS.Get() == RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* Lhs, const TSharedRef<U>& Rhs) noexcept
+FORCEINLINE bool operator==(T* LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (Lhs == Rhs.Get());
+    return (LHS == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedRef<T>& Lhs, U* Rhs) noexcept
+FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() != Rhs);
+    return (LHS.Get() != RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* Lhs, const TSharedRef<U>& Rhs) noexcept
+FORCEINLINE bool operator!=(T* LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (Lhs != Rhs.Get());
+    return (LHS != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedRef<T>& Lhs, const TSharedRef<U>& Rhs) noexcept
+FORCEINLINE bool operator==(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (Lhs.Get() == Rhs.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedRef<T>& Lhs, const TSharedRef<U>& Rhs) noexcept
+FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (Lhs.Get() != Rhs.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TSharedRef<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator==(const TSharedRef<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() == nullptr);
+    return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TSharedRef<T>& Rhs) noexcept
+FORCEINLINE bool operator==(NullptrType, const TSharedRef<T>& RHS) noexcept
 {
-    return (nullptr == Rhs.Get());
+    return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TSharedRef<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() != nullptr);
+    return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TSharedRef<T>& Rhs) noexcept
+FORCEINLINE bool operator!=(NullptrType, const TSharedRef<T>& RHS) noexcept
 {
-    return (nullptr != Rhs.Get());
+    return (nullptr != RHS.Get());
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

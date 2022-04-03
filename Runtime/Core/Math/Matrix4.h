@@ -202,122 +202,122 @@ public:
     /**
      * @brief: Transforms a 4-D vector
      *
-     * @param Rhs: The vector to transform
+     * @param RHS: The vector to transform
      * @return A vector containing the transformation
      */
-    FORCEINLINE CVector4 operator*(const CVector4& Rhs) const noexcept;
+    FORCEINLINE CVector4 operator*(const CVector4& RHS) const noexcept;
 
     /**
      * @brief: Multiplies a matrix with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix4 operator*(const CMatrix4& Rhs) const noexcept;
+    FORCEINLINE CMatrix4 operator*(const CMatrix4& RHS) const noexcept;
 
     /**
      * @brief: Multiplies this matrix with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator*=(const CMatrix4& Rhs) noexcept;
+    FORCEINLINE CMatrix4& operator*=(const CMatrix4& RHS) noexcept;
 
     /**
      * @brief: Multiplies a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix4 operator*(float Rhs) const noexcept;
+    FORCEINLINE CMatrix4 operator*(float RHS) const noexcept;
 
     /**
      * @brief: Multiplies this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator*=(float Rhs) noexcept;
+    FORCEINLINE CMatrix4& operator*=(float RHS) noexcept;
 
     /**
      * @brief: Adds a matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix4 operator+(const CMatrix4& Rhs) const noexcept;
+    FORCEINLINE CMatrix4 operator+(const CMatrix4& RHS) const noexcept;
 
     /**
      * @brief: Adds this matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator+=(const CMatrix4& Rhs) noexcept;
+    FORCEINLINE CMatrix4& operator+=(const CMatrix4& RHS) noexcept;
 
     /**
      * @brief: Adds a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix4 operator+(float Rhs) const noexcept;
+    FORCEINLINE CMatrix4 operator+(float RHS) const noexcept;
 
     /**
      * @brief: Adds this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator+=(float Rhs) noexcept;
+    FORCEINLINE CMatrix4& operator+=(float RHS) noexcept;
 
     /**
      * @brief: Subtracts a matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix4 operator-(const CMatrix4& Rhs) const noexcept;
+    FORCEINLINE CMatrix4 operator-(const CMatrix4& RHS) const noexcept;
 
     /**
      * @brief: Subtracts this matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator-=(const CMatrix4& Rhs) noexcept;
+    FORCEINLINE CMatrix4& operator-=(const CMatrix4& RHS) noexcept;
 
     /**
      * @brief: Subtracts a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix4 operator-(float Rhs) const noexcept;
+    FORCEINLINE CMatrix4 operator-(float RHS) const noexcept;
 
     /**
      * @brief: Subtracts this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator-=(float Rhs) noexcept;
+    FORCEINLINE CMatrix4& operator-=(float RHS) noexcept;
 
     /**
      * @brief: Divides a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A matrix containing the result of the division
      */
-    FORCEINLINE CMatrix4 operator/(float Rhs) const noexcept;
+    FORCEINLINE CMatrix4 operator/(float RHS) const noexcept;
 
     /**
      * @brief: Divides this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix4& operator/=(float Rhs) noexcept;
+    FORCEINLINE CMatrix4& operator/=(float RHS) noexcept;
 
     /**
      * @brief: Returns the result after comparing this and another matrix
@@ -1122,20 +1122,20 @@ FORCEINLINE bool CMatrix4::operator!=(const CMatrix4& Other) const noexcept
     return !IsEqual(Other);
 }
 
-FORCEINLINE CVector4 CMatrix4::operator*(const CVector4& Rhs) const noexcept
+FORCEINLINE CVector4 CMatrix4::operator*(const CVector4& RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CVector4 Result;
-    Result.x = (Rhs[0] * m00) + (Rhs[1] * m10) + (Rhs[2] * m20) + (Rhs[3] * m30);
-    Result.y = (Rhs[0] * m01) + (Rhs[1] * m11) + (Rhs[2] * m21) + (Rhs[3] * m31);
-    Result.z = (Rhs[0] * m02) + (Rhs[1] * m12) + (Rhs[2] * m22) + (Rhs[3] * m32);
-    Result.w = (Rhs[0] * m03) + (Rhs[1] * m13) + (Rhs[2] * m23) + (Rhs[3] * m33);
+    Result.x = (RHS[0] * m00) + (RHS[1] * m10) + (RHS[2] * m20) + (RHS[3] * m30);
+    Result.y = (RHS[0] * m01) + (RHS[1] * m11) + (RHS[2] * m21) + (RHS[3] * m31);
+    Result.z = (RHS[0] * m02) + (RHS[1] * m12) + (RHS[2] * m22) + (RHS[3] * m32);
+    Result.w = (RHS[0] * m03) + (RHS[1] * m13) + (RHS[2] * m23) + (RHS[3] * m33);
     return Result;
 
 #else
 
-    NSIMD::Float128 Temp = NSIMD::LoadAligned(&Rhs);
+    NSIMD::Float128 Temp = NSIMD::LoadAligned(&RHS);
     Temp = NSIMD::Transform(this, Temp);
 
     CVector4 Result;
@@ -1145,45 +1145,45 @@ FORCEINLINE CVector4 CMatrix4::operator*(const CVector4& Rhs) const noexcept
 #endif
 }
 
-NOINLINE CMatrix4 CMatrix4::operator*(const CMatrix4& Rhs) const noexcept
+NOINLINE CMatrix4 CMatrix4::operator*(const CMatrix4& RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix4 Result;
-    Result.m00 = (m00 * Rhs.m00) + (m01 * Rhs.m10) + (m02 * Rhs.m20) + (m03 * Rhs.m30);
-    Result.m01 = (m00 * Rhs.m01) + (m01 * Rhs.m11) + (m02 * Rhs.m21) + (m03 * Rhs.m31);
-    Result.m02 = (m00 * Rhs.m02) + (m01 * Rhs.m12) + (m02 * Rhs.m22) + (m03 * Rhs.m32);
-    Result.m03 = (m00 * Rhs.m03) + (m01 * Rhs.m13) + (m02 * Rhs.m23) + (m03 * Rhs.m33);
+    Result.m00 = (m00 * RHS.m00) + (m01 * RHS.m10) + (m02 * RHS.m20) + (m03 * RHS.m30);
+    Result.m01 = (m00 * RHS.m01) + (m01 * RHS.m11) + (m02 * RHS.m21) + (m03 * RHS.m31);
+    Result.m02 = (m00 * RHS.m02) + (m01 * RHS.m12) + (m02 * RHS.m22) + (m03 * RHS.m32);
+    Result.m03 = (m00 * RHS.m03) + (m01 * RHS.m13) + (m02 * RHS.m23) + (m03 * RHS.m33);
 
-    Result.m10 = (m10 * Rhs.m00) + (m11 * Rhs.m10) + (m12 * Rhs.m20) + (m13 * Rhs.m30);
-    Result.m11 = (m10 * Rhs.m01) + (m11 * Rhs.m11) + (m12 * Rhs.m21) + (m13 * Rhs.m31);
-    Result.m12 = (m10 * Rhs.m02) + (m11 * Rhs.m12) + (m12 * Rhs.m22) + (m13 * Rhs.m32);
-    Result.m13 = (m10 * Rhs.m03) + (m11 * Rhs.m13) + (m12 * Rhs.m23) + (m13 * Rhs.m33);
+    Result.m10 = (m10 * RHS.m00) + (m11 * RHS.m10) + (m12 * RHS.m20) + (m13 * RHS.m30);
+    Result.m11 = (m10 * RHS.m01) + (m11 * RHS.m11) + (m12 * RHS.m21) + (m13 * RHS.m31);
+    Result.m12 = (m10 * RHS.m02) + (m11 * RHS.m12) + (m12 * RHS.m22) + (m13 * RHS.m32);
+    Result.m13 = (m10 * RHS.m03) + (m11 * RHS.m13) + (m12 * RHS.m23) + (m13 * RHS.m33);
 
-    Result.m20 = (m20 * Rhs.m00) + (m21 * Rhs.m10) + (m22 * Rhs.m20) + (m23 * Rhs.m30);
-    Result.m21 = (m20 * Rhs.m01) + (m21 * Rhs.m11) + (m22 * Rhs.m21) + (m23 * Rhs.m31);
-    Result.m22 = (m20 * Rhs.m02) + (m21 * Rhs.m12) + (m22 * Rhs.m22) + (m23 * Rhs.m32);
-    Result.m23 = (m20 * Rhs.m03) + (m21 * Rhs.m13) + (m22 * Rhs.m23) + (m23 * Rhs.m33);
+    Result.m20 = (m20 * RHS.m00) + (m21 * RHS.m10) + (m22 * RHS.m20) + (m23 * RHS.m30);
+    Result.m21 = (m20 * RHS.m01) + (m21 * RHS.m11) + (m22 * RHS.m21) + (m23 * RHS.m31);
+    Result.m22 = (m20 * RHS.m02) + (m21 * RHS.m12) + (m22 * RHS.m22) + (m23 * RHS.m32);
+    Result.m23 = (m20 * RHS.m03) + (m21 * RHS.m13) + (m22 * RHS.m23) + (m23 * RHS.m33);
 
-    Result.m30 = (m30 * Rhs.m00) + (m31 * Rhs.m10) + (m32 * Rhs.m20) + (m33 * Rhs.m30);
-    Result.m31 = (m30 * Rhs.m01) + (m31 * Rhs.m11) + (m32 * Rhs.m21) + (m33 * Rhs.m31);
-    Result.m32 = (m30 * Rhs.m02) + (m31 * Rhs.m12) + (m32 * Rhs.m22) + (m33 * Rhs.m32);
-    Result.m33 = (m30 * Rhs.m03) + (m31 * Rhs.m13) + (m32 * Rhs.m23) + (m33 * Rhs.m33);
+    Result.m30 = (m30 * RHS.m00) + (m31 * RHS.m10) + (m32 * RHS.m20) + (m33 * RHS.m30);
+    Result.m31 = (m30 * RHS.m01) + (m31 * RHS.m11) + (m32 * RHS.m21) + (m33 * RHS.m31);
+    Result.m32 = (m30 * RHS.m02) + (m31 * RHS.m12) + (m32 * RHS.m22) + (m33 * RHS.m32);
+    Result.m33 = (m30 * RHS.m03) + (m31 * RHS.m13) + (m32 * RHS.m23) + (m33 * RHS.m33);
     return Result;
 
 #else
 
     NSIMD::Float128 Row0 = NSIMD::LoadAligned(f[0]);
-    Row0 = NSIMD::Transform(&Rhs, Row0);
+    Row0 = NSIMD::Transform(&RHS, Row0);
 
     NSIMD::Float128 Row1 = NSIMD::LoadAligned(f[1]);
-    Row1 = NSIMD::Transform(&Rhs, Row1);
+    Row1 = NSIMD::Transform(&RHS, Row1);
 
     NSIMD::Float128 Row2 = NSIMD::LoadAligned(f[2]);
-    Row2 = NSIMD::Transform(&Rhs, Row2);
+    Row2 = NSIMD::Transform(&RHS, Row2);
 
     NSIMD::Float128 Row3 = NSIMD::LoadAligned(f[3]);
-    Row3 = NSIMD::Transform(&Rhs, Row3);
+    Row3 = NSIMD::Transform(&RHS, Row3);
 
     CMatrix4 Result;
     NSIMD::StoreAligned(Row0, Result.f[0]);
@@ -1195,40 +1195,40 @@ NOINLINE CMatrix4 CMatrix4::operator*(const CMatrix4& Rhs) const noexcept
 #endif
 }
 
-NOINLINE CMatrix4& CMatrix4::operator*=(const CMatrix4& Rhs) noexcept
+NOINLINE CMatrix4& CMatrix4::operator*=(const CMatrix4& RHS) noexcept
 {
-    return *this = *this * Rhs;
+    return *this = *this * RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator*(float Rhs) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator*(float RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix4 Result;
-    Result.m00 = m00 * Rhs;
-    Result.m01 = m01 * Rhs;
-    Result.m02 = m02 * Rhs;
-    Result.m03 = m03 * Rhs;
+    Result.m00 = m00 * RHS;
+    Result.m01 = m01 * RHS;
+    Result.m02 = m02 * RHS;
+    Result.m03 = m03 * RHS;
 
-    Result.m10 = m10 * Rhs;
-    Result.m11 = m11 * Rhs;
-    Result.m12 = m12 * Rhs;
-    Result.m13 = m13 * Rhs;
+    Result.m10 = m10 * RHS;
+    Result.m11 = m11 * RHS;
+    Result.m12 = m12 * RHS;
+    Result.m13 = m13 * RHS;
 
-    Result.m20 = m20 * Rhs;
-    Result.m21 = m21 * Rhs;
-    Result.m22 = m22 * Rhs;
-    Result.m23 = m23 * Rhs;
+    Result.m20 = m20 * RHS;
+    Result.m21 = m21 * RHS;
+    Result.m22 = m22 * RHS;
+    Result.m23 = m23 * RHS;
 
-    Result.m30 = m30 * Rhs;
-    Result.m31 = m31 * Rhs;
-    Result.m32 = m32 * Rhs;
-    Result.m33 = m33 * Rhs;
+    Result.m30 = m30 * RHS;
+    Result.m31 = m31 * RHS;
+    Result.m32 = m32 * RHS;
+    Result.m33 = m33 * RHS;
     return Result;
 
 #else
 
-    NSIMD::Float128 Scalars = NSIMD::Load(Rhs);
+    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
     NSIMD::Float128 Row0 = NSIMD::Mul(f[0], Scalars);
     NSIMD::Float128 Row1 = NSIMD::Mul(f[1], Scalars);
     NSIMD::Float128 Row2 = NSIMD::Mul(f[2], Scalars);
@@ -1244,43 +1244,43 @@ FORCEINLINE CMatrix4 CMatrix4::operator*(float Rhs) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator*=(float Rhs) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator*=(float RHS) noexcept
 {
-    return *this = *this * Rhs;
+    return *this = *this * RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator+(const CMatrix4& Rhs) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator+(const CMatrix4& RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix4 Result;
-    Result.m00 = m00 + Rhs.m00;
-    Result.m01 = m01 + Rhs.m01;
-    Result.m02 = m02 + Rhs.m02;
-    Result.m03 = m03 + Rhs.m03;
+    Result.m00 = m00 + RHS.m00;
+    Result.m01 = m01 + RHS.m01;
+    Result.m02 = m02 + RHS.m02;
+    Result.m03 = m03 + RHS.m03;
 
-    Result.m10 = m10 + Rhs.m10;
-    Result.m11 = m11 + Rhs.m11;
-    Result.m12 = m12 + Rhs.m12;
-    Result.m13 = m13 + Rhs.m13;
+    Result.m10 = m10 + RHS.m10;
+    Result.m11 = m11 + RHS.m11;
+    Result.m12 = m12 + RHS.m12;
+    Result.m13 = m13 + RHS.m13;
 
-    Result.m20 = m20 + Rhs.m20;
-    Result.m21 = m21 + Rhs.m21;
-    Result.m22 = m22 + Rhs.m22;
-    Result.m23 = m23 + Rhs.m23;
+    Result.m20 = m20 + RHS.m20;
+    Result.m21 = m21 + RHS.m21;
+    Result.m22 = m22 + RHS.m22;
+    Result.m23 = m23 + RHS.m23;
 
-    Result.m30 = m30 + Rhs.m30;
-    Result.m31 = m31 + Rhs.m31;
-    Result.m32 = m32 + Rhs.m32;
-    Result.m33 = m33 + Rhs.m33;
+    Result.m30 = m30 + RHS.m30;
+    Result.m31 = m31 + RHS.m31;
+    Result.m32 = m32 + RHS.m32;
+    Result.m33 = m33 + RHS.m33;
     return Result;
 
 #else
 
-    NSIMD::Float128 Row0 = NSIMD::Add(f[0], Rhs.f[0]);
-    NSIMD::Float128 Row1 = NSIMD::Add(f[1], Rhs.f[1]);
-    NSIMD::Float128 Row2 = NSIMD::Add(f[2], Rhs.f[2]);
-    NSIMD::Float128 Row3 = NSIMD::Add(f[3], Rhs.f[3]);
+    NSIMD::Float128 Row0 = NSIMD::Add(f[0], RHS.f[0]);
+    NSIMD::Float128 Row1 = NSIMD::Add(f[1], RHS.f[1]);
+    NSIMD::Float128 Row2 = NSIMD::Add(f[2], RHS.f[2]);
+    NSIMD::Float128 Row3 = NSIMD::Add(f[3], RHS.f[3]);
 
     CMatrix4 Result;
     NSIMD::StoreAligned(Row0, Result.f[0]);
@@ -1292,40 +1292,40 @@ FORCEINLINE CMatrix4 CMatrix4::operator+(const CMatrix4& Rhs) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator+=(const CMatrix4& Rhs) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator+=(const CMatrix4& RHS) noexcept
 {
-    return *this = *this + Rhs;
+    return *this = *this + RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator+(float Rhs) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator+(float RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix4 Result;
-    Result.m00 = m00 + Rhs;
-    Result.m01 = m01 + Rhs;
-    Result.m02 = m02 + Rhs;
-    Result.m03 = m03 + Rhs;
+    Result.m00 = m00 + RHS;
+    Result.m01 = m01 + RHS;
+    Result.m02 = m02 + RHS;
+    Result.m03 = m03 + RHS;
 
-    Result.m10 = m10 + Rhs;
-    Result.m11 = m11 + Rhs;
-    Result.m12 = m12 + Rhs;
-    Result.m13 = m13 + Rhs;
+    Result.m10 = m10 + RHS;
+    Result.m11 = m11 + RHS;
+    Result.m12 = m12 + RHS;
+    Result.m13 = m13 + RHS;
 
-    Result.m20 = m20 + Rhs;
-    Result.m21 = m21 + Rhs;
-    Result.m22 = m22 + Rhs;
-    Result.m23 = m23 + Rhs;
+    Result.m20 = m20 + RHS;
+    Result.m21 = m21 + RHS;
+    Result.m22 = m22 + RHS;
+    Result.m23 = m23 + RHS;
 
-    Result.m30 = m30 + Rhs;
-    Result.m31 = m31 + Rhs;
-    Result.m32 = m32 + Rhs;
-    Result.m33 = m33 + Rhs;
+    Result.m30 = m30 + RHS;
+    Result.m31 = m31 + RHS;
+    Result.m32 = m32 + RHS;
+    Result.m33 = m33 + RHS;
     return Result;
 
 #else
 
-    NSIMD::Float128 Scalars = NSIMD::Load(Rhs);
+    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
     NSIMD::Float128 Row0 = NSIMD::Add(f[0], Scalars);
     NSIMD::Float128 Row1 = NSIMD::Add(f[1], Scalars);
     NSIMD::Float128 Row2 = NSIMD::Add(f[2], Scalars);
@@ -1341,43 +1341,43 @@ FORCEINLINE CMatrix4 CMatrix4::operator+(float Rhs) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator+=(float Rhs) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator+=(float RHS) noexcept
 {
-    return *this = *this + Rhs;
+    return *this = *this + RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator-(const CMatrix4& Rhs) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator-(const CMatrix4& RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix4 Result;
-    Result.m00 = m00 - Rhs.m00;
-    Result.m01 = m01 - Rhs.m01;
-    Result.m02 = m02 - Rhs.m02;
-    Result.m03 = m03 - Rhs.m03;
+    Result.m00 = m00 - RHS.m00;
+    Result.m01 = m01 - RHS.m01;
+    Result.m02 = m02 - RHS.m02;
+    Result.m03 = m03 - RHS.m03;
 
-    Result.m10 = m10 - Rhs.m10;
-    Result.m11 = m11 - Rhs.m11;
-    Result.m12 = m12 - Rhs.m12;
-    Result.m13 = m13 - Rhs.m13;
+    Result.m10 = m10 - RHS.m10;
+    Result.m11 = m11 - RHS.m11;
+    Result.m12 = m12 - RHS.m12;
+    Result.m13 = m13 - RHS.m13;
 
-    Result.m20 = m20 - Rhs.m20;
-    Result.m21 = m21 - Rhs.m21;
-    Result.m22 = m22 - Rhs.m22;
-    Result.m23 = m23 - Rhs.m23;
+    Result.m20 = m20 - RHS.m20;
+    Result.m21 = m21 - RHS.m21;
+    Result.m22 = m22 - RHS.m22;
+    Result.m23 = m23 - RHS.m23;
 
-    Result.m30 = m30 - Rhs.m30;
-    Result.m31 = m31 - Rhs.m31;
-    Result.m32 = m32 - Rhs.m32;
-    Result.m33 = m33 - Rhs.m33;
+    Result.m30 = m30 - RHS.m30;
+    Result.m31 = m31 - RHS.m31;
+    Result.m32 = m32 - RHS.m32;
+    Result.m33 = m33 - RHS.m33;
     return Result;
 
 #else
 
-    NSIMD::Float128 Row0 = NSIMD::Sub(f[0], Rhs.f[0]);
-    NSIMD::Float128 Row1 = NSIMD::Sub(f[1], Rhs.f[1]);
-    NSIMD::Float128 Row2 = NSIMD::Sub(f[2], Rhs.f[2]);
-    NSIMD::Float128 Row3 = NSIMD::Sub(f[3], Rhs.f[3]);
+    NSIMD::Float128 Row0 = NSIMD::Sub(f[0], RHS.f[0]);
+    NSIMD::Float128 Row1 = NSIMD::Sub(f[1], RHS.f[1]);
+    NSIMD::Float128 Row2 = NSIMD::Sub(f[2], RHS.f[2]);
+    NSIMD::Float128 Row3 = NSIMD::Sub(f[3], RHS.f[3]);
 
     CMatrix4 Result;
     NSIMD::StoreAligned(Row0, Result.f[0]);
@@ -1389,40 +1389,40 @@ FORCEINLINE CMatrix4 CMatrix4::operator-(const CMatrix4& Rhs) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator-=(const CMatrix4& Rhs) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator-=(const CMatrix4& RHS) noexcept
 {
-    return *this = *this - Rhs;
+    return *this = *this - RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator-(float Rhs) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator-(float RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
     CMatrix4 Result;
-    Result.m00 = m00 - Rhs;
-    Result.m01 = m01 - Rhs;
-    Result.m02 = m02 - Rhs;
-    Result.m03 = m03 - Rhs;
+    Result.m00 = m00 - RHS;
+    Result.m01 = m01 - RHS;
+    Result.m02 = m02 - RHS;
+    Result.m03 = m03 - RHS;
 
-    Result.m10 = m10 - Rhs;
-    Result.m11 = m11 - Rhs;
-    Result.m12 = m12 - Rhs;
-    Result.m13 = m13 - Rhs;
+    Result.m10 = m10 - RHS;
+    Result.m11 = m11 - RHS;
+    Result.m12 = m12 - RHS;
+    Result.m13 = m13 - RHS;
 
-    Result.m20 = m20 - Rhs;
-    Result.m21 = m21 - Rhs;
-    Result.m22 = m22 - Rhs;
-    Result.m23 = m23 - Rhs;
+    Result.m20 = m20 - RHS;
+    Result.m21 = m21 - RHS;
+    Result.m22 = m22 - RHS;
+    Result.m23 = m23 - RHS;
 
-    Result.m30 = m30 - Rhs;
-    Result.m31 = m31 - Rhs;
-    Result.m32 = m32 - Rhs;
-    Result.m33 = m33 - Rhs;
+    Result.m30 = m30 - RHS;
+    Result.m31 = m31 - RHS;
+    Result.m32 = m32 - RHS;
+    Result.m33 = m33 - RHS;
     return Result;
 
 #else
 
-    NSIMD::Float128 Scalars = NSIMD::Load(Rhs);
+    NSIMD::Float128 Scalars = NSIMD::Load(RHS);
     NSIMD::Float128 Row0 = NSIMD::Sub(f[0], Scalars);
     NSIMD::Float128 Row1 = NSIMD::Sub(f[1], Scalars);
     NSIMD::Float128 Row2 = NSIMD::Sub(f[2], Scalars);
@@ -1438,16 +1438,16 @@ FORCEINLINE CMatrix4 CMatrix4::operator-(float Rhs) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator-=(float Rhs) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator-=(float RHS) noexcept
 {
-    return *this = *this - Rhs;
+    return *this = *this - RHS;
 }
 
-FORCEINLINE CMatrix4 CMatrix4::operator/(float Rhs) const noexcept
+FORCEINLINE CMatrix4 CMatrix4::operator/(float RHS) const noexcept
 {
 #if defined(DISABLE_SIMD)
 
-    const float Recip = 1.0f / Rhs;
+    const float Recip = 1.0f / RHS;
 
     CMatrix4 Result;
     Result.m00 = m00 * Recip;
@@ -1473,7 +1473,7 @@ FORCEINLINE CMatrix4 CMatrix4::operator/(float Rhs) const noexcept
 
 #else
 
-    NSIMD::Float128 RecipScalars = NSIMD::Load(1.0f / Rhs);
+    NSIMD::Float128 RecipScalars = NSIMD::Load(1.0f / RHS);
     NSIMD::Float128 Row0 = NSIMD::Mul(f[0], RecipScalars);
     NSIMD::Float128 Row1 = NSIMD::Mul(f[1], RecipScalars);
     NSIMD::Float128 Row2 = NSIMD::Mul(f[2], RecipScalars);
@@ -1489,9 +1489,9 @@ FORCEINLINE CMatrix4 CMatrix4::operator/(float Rhs) const noexcept
 #endif
 }
 
-FORCEINLINE CMatrix4& CMatrix4::operator/=(float Rhs) noexcept
+FORCEINLINE CMatrix4& CMatrix4::operator/=(float RHS) noexcept
 {
-    return *this = *this / Rhs;
+    return *this = *this / RHS;
 }
 
 inline CMatrix4 CMatrix4::Identity() noexcept

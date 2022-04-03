@@ -16,8 +16,8 @@ public:
     CConfigValue(const CConfigValue& Other) = default;
     ~CConfigValue() = default;
 
-    CConfigValue& operator=(CConfigValue&& Rhs) = default;
-    CConfigValue& operator=(const CConfigValue& Rhs) = default;
+    CConfigValue& operator=(CConfigValue&& RHS) = default;
+    CConfigValue& operator=(const CConfigValue& RHS) = default;
 
     /* Create value from string */
     explicit CConfigValue(String&& InString)

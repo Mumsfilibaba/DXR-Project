@@ -29,6 +29,8 @@ typedef TSharedRef<class CRHIRayTracingScene>     CRHIRayTracingSceneRef;
 
 typedef TSharedRef<class CRHITimestampQuery>      CRHITimestampQueryRef;
 
+typedef TSharedRef<class CRHIViewport>            CRHIViewportRef;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIResourceType
 
@@ -371,11 +373,11 @@ public:
      * 
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIBufferCreateDesc& Rhs) const
+    bool operator==(const CRHIBufferCreateDesc& RHS) const
     {
-        return (UsageFlags    == Rhs.UsageFlags) 
-            && (Size          == Rhs.Size) 
-            && (ElementStride == Rhs.ElementStride);
+        return (UsageFlags    == RHS.UsageFlags) 
+            && (Size          == RHS.Size) 
+            && (ElementStride == RHS.ElementStride);
     }
 
     /**
@@ -383,9 +385,9 @@ public:
      *
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHIBufferCreateDesc& Rhs) const
+    bool operator!=(const CRHIBufferCreateDesc& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /** @brief: Size of the buffer */
@@ -793,18 +795,18 @@ public:
      * 
      * @return: Returns true if the instances are equal to each other
      */
-    bool operator==(const CRHITextureCreateDesc& Rhs) const
+    bool operator==(const CRHITextureCreateDesc& RHS) const
     {
-        return (Type       == Rhs.Type) 
-            && (Format     == Rhs.Format)
-            && (Width      == Rhs.Width)
-            && (Height     == Rhs.Height)
-            && (Depth      == Rhs.Depth)
-            && (ArraySize  == Rhs.ArraySize)
-            && (NumMips    == Rhs.NumMips)
-            && (NumSamples == Rhs.NumSamples)
-            && (UsageFlags == Rhs.UsageFlags)
-            && (ClearValue == Rhs.ClearValue);
+        return (Type       == RHS.Type) 
+            && (Format     == RHS.Format)
+            && (Width      == RHS.Width)
+            && (Height     == RHS.Height)
+            && (Depth      == RHS.Depth)
+            && (ArraySize  == RHS.ArraySize)
+            && (NumMips    == RHS.NumMips)
+            && (NumSamples == RHS.NumSamples)
+            && (UsageFlags == RHS.UsageFlags)
+            && (ClearValue == RHS.ClearValue);
     }
 
     /**
@@ -812,9 +814,9 @@ public:
      *
      * @return: Returns false if the instances are equal to each other
      */
-    bool operator!=(const CRHITextureCreateDesc& Rhs) const
+    bool operator!=(const CRHITextureCreateDesc& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /** @brief: Type of texture and the dimension */
@@ -1033,27 +1035,27 @@ public:
     /**
      * @brief: Compare this instance with another
      * 
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIShaderResourceViewCreateDesc& Rhs) const
+    bool operator==(const CRHIShaderResourceViewCreateDesc& RHS) const
     {
-        return (Format        == Rhs.Format)
-            && (FirstSlice    == Rhs.FirstSlice)
-            && (NumSlices     == Rhs.NumSlices)
-            && (FirstMipLevel == Rhs.FirstMipLevel) 
-            && (NumMipLevels  == Rhs.NumMipLevels);
+        return (Format        == RHS.Format)
+            && (FirstSlice    == RHS.FirstSlice)
+            && (NumSlices     == RHS.NumSlices)
+            && (FirstMipLevel == RHS.FirstMipLevel) 
+            && (NumMipLevels  == RHS.NumMipLevels);
     }
 
     /**
      * @brief: Compare this instance with another
      *
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHIShaderResourceViewCreateDesc& Rhs) const
+    bool operator!=(const CRHIShaderResourceViewCreateDesc& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /** @brief: Format of the resource-view */
@@ -1141,23 +1143,23 @@ public:
     /**
      * @brief: Compare this instance with another
      *
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIUnorderedAccessViewCreateDesc& Rhs) const
+    bool operator==(const CRHIUnorderedAccessViewCreateDesc& RHS) const
     {
-        return (Format == Rhs.Format) && (FirstSlice == Rhs.FirstSlice) && (NumSlices == Rhs.NumSlices) && (MipLevel == Rhs.MipLevel);
+        return (Format == RHS.Format) && (FirstSlice == RHS.FirstSlice) && (NumSlices == RHS.NumSlices) && (MipLevel == RHS.MipLevel);
     }
 
     /**
      * @brief: Compare this instance with another
      *
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHIUnorderedAccessViewCreateDesc& Rhs) const
+    bool operator!=(const CRHIUnorderedAccessViewCreateDesc& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /** @brief: Format of the resource-view */
@@ -1243,23 +1245,23 @@ public:
     /**
      * @brief: Compare this instance with another
      *
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIRenderTargetViewCreateDesc& Rhs) const
+    bool operator==(const CRHIRenderTargetViewCreateDesc& RHS) const
     {
-        return (Format == Rhs.Format) && (FirstSlice == Rhs.FirstSlice) && (NumSlices == Rhs.NumSlices) && (MipLevel == Rhs.MipLevel);
+        return (Format == RHS.Format) && (FirstSlice == RHS.FirstSlice) && (NumSlices == RHS.NumSlices) && (MipLevel == RHS.MipLevel);
     }
 
     /**
      * @brief: Compare this instance with another
      *
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHIRenderTargetViewCreateDesc& Rhs) const
+    bool operator!=(const CRHIRenderTargetViewCreateDesc& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /** @brief: Format of the resource-view */
@@ -1336,23 +1338,23 @@ public:
     /**
      * @brief: Compare this instance with another
      *
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIRenderTargetViewCreateDesc& Rhs) const
+    bool operator==(const CRHIRenderTargetViewCreateDesc& RHS) const
     {
-        return (Format == Rhs.Format) && (FirstSlice == Rhs.FirstSlice) && (NumSlices  == Rhs.NumSlices) && (MipLevel == Rhs.MipLevel);
+        return (Format == RHS.Format) && (FirstSlice == RHS.FirstSlice) && (NumSlices  == RHS.NumSlices) && (MipLevel == RHS.MipLevel);
     }
 
     /**
      * @brief: Compare this instance with another
      *
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHIRenderTargetViewCreateDesc& Rhs) const
+    bool operator!=(const CRHIRenderTargetViewCreateDesc& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /** @brief: Format of the resource-view */
@@ -1534,32 +1536,32 @@ public:
     /**
      * @brief: Compare this description with another instance
      * 
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns true when the instances are equal
      */
-    bool operator==(const CRHISamplerStateCreateDesc& Rhs) const
+    bool operator==(const CRHISamplerStateCreateDesc& RHS) const
     {
-        return (AddressU       == Rhs.AddressU)
-            && (AddressV       == Rhs.AddressV)
-            && (AddressW       == Rhs.AddressW)
-            && (Filter         == Rhs.Filter)
-            && (ComparisonFunc == Rhs.ComparisonFunc)
-            && (MipLODBias     == Rhs.MipLODBias)
-            && (MaxAnisotropy  == Rhs.MaxAnisotropy)
-            && (MinLOD         == Rhs.MinLOD)
-            && (MaxLOD         == Rhs.MaxLOD)
-            && (BorderColor    == Rhs.BorderColor);
+        return (AddressU       == RHS.AddressU)
+            && (AddressV       == RHS.AddressV)
+            && (AddressW       == RHS.AddressW)
+            && (Filter         == RHS.Filter)
+            && (ComparisonFunc == RHS.ComparisonFunc)
+            && (MipLODBias     == RHS.MipLODBias)
+            && (MaxAnisotropy  == RHS.MaxAnisotropy)
+            && (MinLOD         == RHS.MinLOD)
+            && (MaxLOD         == RHS.MaxLOD)
+            && (BorderColor    == RHS.BorderColor);
     }
 
     /**
      * @brief: Compare this description with another instance
      *
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns false when the instances are equal
      */
-    bool operator!=(const CRHISamplerStateCreateDesc& Rhs) const
+    bool operator!=(const CRHISamplerStateCreateDesc& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /** @brief: Sampler mode in the U-direction */
@@ -1716,28 +1718,28 @@ public:
     /**
      * @brief: Compare this instance to another one
      * 
-     * @param Rhs: Instance to compare with
+     * @param RHS: Instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIRayTracingGeometryCreateDesc& Rhs) const
+    bool operator==(const CRHIRayTracingGeometryCreateDesc& RHS) const
     {
-        return (VertexBuffer == Rhs.VertexBuffer)
-            && (IndexBuffer  == Rhs.IndexBuffer)
-            && (IndexFormat  == Rhs.IndexFormat)
-            && (NumVertices  == Rhs.NumVertices)
-            && (NumIndicies  == Rhs.NumIndicies)
-            && (Flags        == Rhs.Flags);
+        return (VertexBuffer == RHS.VertexBuffer)
+            && (IndexBuffer  == RHS.IndexBuffer)
+            && (IndexFormat  == RHS.IndexFormat)
+            && (NumVertices  == RHS.NumVertices)
+            && (NumIndicies  == RHS.NumIndicies)
+            && (Flags        == RHS.Flags);
     }
 
     /**
      * @brief: Compare this instance to another one
      *
-     * @param Rhs: Instance to compare with
+     * @param RHS: Instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHIRayTracingGeometryCreateDesc& Rhs) const
+    bool operator!=(const CRHIRayTracingGeometryCreateDesc& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     CRHIBuffer*              VertexBuffer;
@@ -1822,28 +1824,28 @@ public:
     /**
      * @brief: Check if two instances are equal
      * 
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIRayTracingGeometryInstance& Rhs) const
+    bool operator==(const CRHIRayTracingGeometryInstance& RHS) const
     {
-        return (Geometry      == Rhs.Geometry)
-            && (InstanceIndex == Rhs.InstanceIndex)
-            && (HitGroupIndex == Rhs.HitGroupIndex)
-            && (Flags         == Rhs.Flags)
-            && (Mask          == Rhs.Mask)
-            && (Transform     == Rhs.Transform);
+        return (Geometry      == RHS.Geometry)
+            && (InstanceIndex == RHS.InstanceIndex)
+            && (HitGroupIndex == RHS.HitGroupIndex)
+            && (Flags         == RHS.Flags)
+            && (Mask          == RHS.Mask)
+            && (Transform     == RHS.Transform);
     }
 
     /**
      * @brief: Check if two instances are equal
      *
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator==(const CRHIRayTracingGeometryInstance& Rhs) const
+    bool operator==(const CRHIRayTracingGeometryInstance& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /** @brief:Geometry to use for the instance */
@@ -1897,23 +1899,23 @@ public:
     /**
      * @brief: Compare two instances with each other
      * 
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIRayTracingSceneCreateDesc& Rhs) const
+    bool operator==(const CRHIRayTracingSceneCreateDesc& RHS) const
     {
-        return (Instances == Rhs.Instances) && (NumInstances == Rhs.NumInstances) && (Flags == Rhs.Flags);
+        return (Instances == RHS.Instances) && (NumInstances == RHS.NumInstances) && (Flags == RHS.Flags);
     }
 
     /**
      * @brief: Compare two instances with each other
      *
-     * @param Rhs: Other instance to compare with
+     * @param RHS: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator==(const CRHIRayTracingSceneCreateDesc& Rhs) const
+    bool operator==(const CRHIRayTracingSceneCreateDesc& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /** @brief: Array of Geometry instances */
@@ -1985,13 +1987,63 @@ class CRHITimestampQuery : public CRHIResource
 {
 public:
 
+    /**
+     * @brief: Default Constructor
+     */
     CRHITimestampQuery()
         : CRHIResource(ERHIResourceType::TimestampQuery)
     { }
 
+    /**
+     * @brief: Retrieve the number of timestamps in the query (Highest index)
+     * 
+     * @return: Returns the number of timestamps recorded
+     */
     virtual uint32 GetNumTimestamps() const = 0;
 
+    /**
+     * @brief: Retrieve a timestamp from the query
+     * 
+     * @param OutQuery: Query to fill out
+     * @param Index: Index of the query to fill 
+     */
     virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const = 0;
 
+    /**
+     * @brief: Retrieve the frequency used to determine the timing in the query
+     * 
+     * @return: Returns the frequency which is used to convert the timestamps into a time-value
+     */
     virtual uint64 GetFrequency() const = 0;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIViewport
+
+class CRHIViewport : public CRHIResource
+{
+public:
+
+    CRHIViewport(ERHIFormat InColorFormat, uint16 InWidth, uint16 InHeight)
+        : CRHIResource(ERHIResourceType::Viewport)
+        , Width(InWidth)
+        , Height(InHeight)
+        , ColorFormat(InColorFormat)
+    { }
+
+    ~CRHIViewport() = default;
+
+    virtual bool Resize(uint32 Width, uint32 Height) = 0;
+
+    virtual CRHITexture* GetBackBuffer() const = 0;
+
+    ERHIFormat GetColorFormat() const { return ColorFormat; }
+
+    uint16 GetWidth()  const { return Width; }
+    uint16 GetHeight() const { return Height; }
+
+protected:
+    ERHIFormat ColorFormat;
+    uint16     Width;
+    uint16     Height;
 };

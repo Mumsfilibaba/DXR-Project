@@ -126,23 +126,23 @@ struct SRHISamplerStateCreateDesc
         , BorderColor()
     { }
 
-    bool operator==(const SRHISamplerStateCreateDesc& Rhs) const
+    bool operator==(const SRHISamplerStateCreateDesc& RHS) const
     {
-        return (AddressU       == Rhs.AddressU)
-            && (AddressV       == Rhs.AddressV)
-            && (AddressW       == Rhs.AddressW) 
-            && (Filter         == Rhs.Filter)
-            && (ComparisonFunc == Rhs.ComparisonFunc) 
-            && (MipLODBias     == Rhs.MipLODBias) 
-            && (MaxAnisotropy  == Rhs.MaxAnisotropy) 
-            && (MinLOD         == Rhs.MinLOD) 
-            && (MaxLOD         == Rhs.MaxLOD) 
-            && (BorderColor    == Rhs.BorderColor);
+        return (AddressU       == RHS.AddressU)
+            && (AddressV       == RHS.AddressV)
+            && (AddressW       == RHS.AddressW) 
+            && (Filter         == RHS.Filter)
+            && (ComparisonFunc == RHS.ComparisonFunc) 
+            && (MipLODBias     == RHS.MipLODBias) 
+            && (MaxAnisotropy  == RHS.MaxAnisotropy) 
+            && (MinLOD         == RHS.MinLOD) 
+            && (MaxLOD         == RHS.MaxLOD) 
+            && (BorderColor    == RHS.BorderColor);
     }
 
-    bool operator!=(const SRHISamplerStateCreateDesc& Rhs) const
+    bool operator!=(const SRHISamplerStateCreateDesc& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     ESamplerMode    AddressU;

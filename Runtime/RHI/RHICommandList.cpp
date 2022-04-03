@@ -5,7 +5,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CCommandAllocator
 
-CCommandAllocator::CCommandAllocator(uint32 StartSize)
+CRHICommandAllocator::CRHICommandAllocator(uint32 StartSize)
     : CurrentMemory(nullptr)
     , Size(StartSize)
     , Offset(0)
@@ -17,14 +17,14 @@ CCommandAllocator::CCommandAllocator(uint32 StartSize)
     AverageMemoryUsage = Size;
 }
 
-CCommandAllocator::~CCommandAllocator()
+CRHICommandAllocator::~CRHICommandAllocator()
 {
     ReleaseDiscardedMemory();
 
     SafeDelete(CurrentMemory);
 }
 
-void* CCommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
+void* CRHICommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
 {
     Check(CurrentMemory != nullptr);
 
@@ -56,7 +56,7 @@ void* CCommandAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment)
     }
 }
 
-void CCommandAllocator::Reset()
+void CRHICommandAllocator::Reset()
 {
     ReleaseDiscardedMemory();
 
@@ -83,7 +83,7 @@ void CCommandAllocator::Reset()
     Offset = 0;
 }
 
-void CCommandAllocator::ReleaseDiscardedMemory()
+void CRHICommandAllocator::ReleaseDiscardedMemory()
 {
     for (uint8* Memory : DiscardedMemory)
     {
@@ -96,14 +96,14 @@ void CCommandAllocator::ReleaseDiscardedMemory()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHICommandQueue
 
-CRHICommandQueue CRHICommandQueue::Instance;
+CRHICommandExecutionManager CRHICommandExecutionManager::Instance;
 
-CRHICommandQueue& CRHICommandQueue::Get()
+CRHICommandExecutionManager& CRHICommandExecutionManager::Get()
 {
     return Instance;
 }
 
-CRHICommandQueue::CRHICommandQueue()
+CRHICommandExecutionManager::CRHICommandExecutionManager()
     : CommandContext(nullptr)
     , NumDrawCalls(0)
     , NumDispatchCalls(0)
@@ -111,7 +111,7 @@ CRHICommandQueue::CRHICommandQueue()
 {
 }
 
-void CRHICommandQueue::ExecuteCommandList(CRHICommandList& CmdList)
+void CRHICommandExecutionManager::ExecuteCommandList(CRHICommandList& CmdList)
 {
     // Execute
     GetContext().StartContext();
@@ -127,7 +127,7 @@ void CRHICommandQueue::ExecuteCommandList(CRHICommandList& CmdList)
     GetContext().FinishContext();
 }
 
-void CRHICommandQueue::ExecuteCommandLists(CRHICommandList* const* CmdLists, uint32 NumCmdLists)
+void CRHICommandExecutionManager::ExecuteCommandLists(CRHICommandList* const* CmdLists, uint32 NumCmdLists)
 {
     // Execute
     GetContext().StartContext();
@@ -147,7 +147,7 @@ void CRHICommandQueue::ExecuteCommandLists(CRHICommandList* const* CmdLists, uin
     GetContext().FinishContext();
 }
 
-void CRHICommandQueue::WaitForGPU()
+void CRHICommandExecutionManager::WaitForGPU()
 {
     if (CommandContext)
     {
@@ -155,7 +155,7 @@ void CRHICommandQueue::WaitForGPU()
     }
 }
 
-void CRHICommandQueue::InternalExecuteCommandList(CRHICommandList& CmdList)
+void CRHICommandExecutionManager::InternalExecuteCommandList(CRHICommandList& CmdList)
 {
     if (CmdList.FirstCommand)
     {

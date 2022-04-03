@@ -1079,24 +1079,24 @@ public:
     /**
      * @brief: Copy-assignment operator
      *
-     * @param Rhs: String to copy
+     * @param RHS: String to copy
      * @return: Return a reference to this instance
      */
-    FORCEINLINE TStringView& operator=(const TStringView& Rhs) noexcept
+    FORCEINLINE TStringView& operator=(const TStringView& RHS) noexcept
     {
-        TStringView(Rhs).Swap(*this);
+        TStringView(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Move-assignment operator
      *
-     * @param Rhs: String to move
+     * @param RHS: String to move
      * @return: Return a reference to this instance
      */
-    FORCEINLINE TStringView& operator=(TStringView&& Rhs) noexcept
+    FORCEINLINE TStringView& operator=(TStringView&& RHS) noexcept
     {
-        TStringView(Move(Rhs)).Swap(*this);
+        TStringView(Move(RHS)).Swap(*this);
         return *this;
     }
 
@@ -1179,111 +1179,111 @@ using WStringView = TStringView<wchar_t>;
 // Operators
 
 template<typename CharType>
-inline bool operator==(const TStringView<CharType>& Lhs, const CharType* Rhs) noexcept
+inline bool operator==(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) == 0);
+    return (LHS.Compare(RHS) == 0);
 }
 
 template<typename CharType>
-inline bool operator==(const CharType* Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator==(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) == 0);
+    return (RHS.Compare(LHS) == 0);
 }
 
 template<typename CharType>
-inline bool operator==(const TStringView<CharType>& Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator==(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) == 0);
+    return (LHS.Compare(RHS) == 0);
 }
 
 template<typename CharType>
-inline bool operator!=(const TStringView<CharType>& Lhs, const CharType* Rhs) noexcept
+inline bool operator!=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
-    return !(Lhs == Rhs);
+    return !(LHS == RHS);
 }
 
 template<typename CharType>
-inline bool operator!=(const CharType* Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator!=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return !(Lhs == Rhs);
+    return !(LHS == RHS);
 }
 
 template<typename CharType>
-inline bool operator!=(const TStringView<CharType>& Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator!=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return !(Lhs == Rhs);
+    return !(LHS == RHS);
 }
 
 template<typename CharType>
-inline bool operator<(const TStringView<CharType>& Lhs, const CharType* Rhs) noexcept
+inline bool operator<(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) < 0);
+    return (LHS.Compare(RHS) < 0);
 }
 
 template<typename CharType>
-inline bool operator<(const CharType* Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator<(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) < 0);
+    return (RHS.Compare(LHS) < 0);
 }
 
 template<typename CharType>
-inline bool operator<(const TStringView<CharType>& Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator<(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) < 0);
+    return (LHS.Compare(RHS) < 0);
 }
 
 template<typename CharType>
-inline bool operator<=(const TStringView<CharType>& Lhs, const CharType* Rhs) noexcept
+inline bool operator<=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) <= 0);
+    return (LHS.Compare(RHS) <= 0);
 }
 
 template<typename CharType>
-inline bool operator<=(const CharType* Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator<=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) <= 0);
+    return (RHS.Compare(LHS) <= 0);
 }
 
 template<typename CharType>
-inline bool operator<=(const TStringView<CharType>& Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator<=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) <= 0);
+    return (LHS.Compare(RHS) <= 0);
 }
 
 template<typename CharType>
-inline bool operator>(const TStringView<CharType>& Lhs, const CharType* Rhs) noexcept
+inline bool operator>(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) > 0);
+    return (LHS.Compare(RHS) > 0);
 }
 
 template<typename CharType>
-inline bool operator>(const CharType* Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator>(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) > 0);
+    return (RHS.Compare(LHS) > 0);
 }
 
 template<typename CharType>
-inline bool operator>(const TStringView<CharType>& Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator>(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) > 0);
+    return (LHS.Compare(RHS) > 0);
 }
 
 template<typename CharType>
-inline bool operator>=(const TStringView<CharType>& Lhs, const CharType* Rhs) noexcept
+inline bool operator>=(const TStringView<CharType>& LHS, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) >= 0);
+    return (LHS.Compare(RHS) >= 0);
 }
 
 template<typename CharType>
-inline bool operator>=(const CharType* Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator>=(const CharType* LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) >= 0);
+    return (RHS.Compare(LHS) >= 0);
 }
 
 template<typename CharType>
-inline bool operator>=(const TStringView<CharType>& Lhs, const TStringView<CharType>& Rhs) noexcept
+inline bool operator>=(const TStringView<CharType>& LHS, const TStringView<CharType>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) >= 0);
+    return (LHS.Compare(RHS) >= 0);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

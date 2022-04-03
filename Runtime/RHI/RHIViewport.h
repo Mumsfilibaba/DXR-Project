@@ -27,10 +27,10 @@ public:
     
     virtual CRHITexture* GetBackBuffer() const = 0;
 
-    inline ERHIFormat GetColorFormat() const { return ColorFormat; }
+    ERHIFormat GetColorFormat() const { return ColorFormat; }
 
-    inline uint16 GetWidth()  const { return Width; }
-    inline uint16 GetHeight() const { return Height; }
+    uint16 GetWidth()  const { return Width; }
+    uint16 GetHeight() const { return Height; }
 
 protected:
     ERHIFormat ColorFormat;

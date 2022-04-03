@@ -265,63 +265,63 @@ public:
     /**
      * @brief: Copy-assignment operator
      *
-     * @param Rhs: Optional to copy from
+     * @param RHS: Optional to copy from
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(const TOptional& Rhs) noexcept
+    FORCEINLINE TOptional& operator=(const TOptional& RHS) noexcept
     {
-        TOptional(Rhs).Swap(*this);
+        TOptional(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Copy-assignment operator that takes another type
      *
-     * @param Rhs: Optional to copy from
+     * @param RHS: Optional to copy from
      * @return: Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& RHS) noexcept
     {
-        TOptional(Rhs).Swap(*this);
+        TOptional(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Move-assignment operator
      *
-     * @param Rhs: Optional to move from
+     * @param RHS: Optional to move from
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(TOptional&& Rhs) noexcept
+    FORCEINLINE TOptional& operator=(TOptional&& RHS) noexcept
     {
-        TOptional(Rhs).Swap(*this);
+        TOptional(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Move-assignment operator that takes another type
      *
-     * @param Rhs: Optional to move from
+     * @param RHS: Optional to move from
      * @return: Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& RHS) noexcept
     {
-        TOptional(Rhs).Swap(*this);
+        TOptional(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Assignment operator that can take a r-value reference
      *
-     * @param Rhs: Instance to move-construct value from
+     * @param RHS: Instance to move-construct value from
      * @return: Returns a reference to this instance
      */
     template<typename OtherType = T>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& RHS) noexcept
     {
-        TOptional(Rhs).Swap(*this);
+        TOptional(RHS).Swap(*this);
         return *this;
     }
 
@@ -384,103 +384,103 @@ public:
     /**
      * @brief: Comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
      * @return: Returns true if the values are equal
      */
-    friend FORCEINLINE bool operator==(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!Lhs.bHasValue && !Rhs.bHasValue)
+        if (!LHS.bHasValue && !RHS.bHasValue)
         {
             return true;
         }
 
-        if (!Lhs.bHasValue)
+        if (!LHS.bHasValue)
         {
             return false;
         }
 
-        return Lhs.IsEqual(Rhs);
+        return LHS.IsEqual(RHS);
     }
 
     /**
      * @brief: Comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
      * @return: Returns false if the values are equal
      */
-    friend FORCEINLINE bool operator!=(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        return !(Lhs != Rhs);
+        return !(LHS != RHS);
     }
 
     /**
      * @brief: Less than comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
-     * @return: Returns true if the Lhs is less than Rhs
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
+     * @return: Returns true if the LHS is less than RHS
      */
-    friend FORCEINLINE bool operator<(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!Lhs.bHasValue && !Rhs.bHasValue)
+        if (!LHS.bHasValue && !RHS.bHasValue)
         {
             return true;
         }
 
-        if (!Lhs.bHasValue)
+        if (!LHS.bHasValue)
         {
             return false;
         }
 
-        return Lhs.IsLessThan(Rhs);
+        return LHS.IsLessThan(RHS);
     }
 
     /**
      * @brief: Less than or equal comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
-     * @return: Returns true if the Lhs is less than or equal to Rhs
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
+     * @return: Returns true if the LHS is less than or equal to RHS
      */
-    friend FORCEINLINE bool operator<=(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!Lhs.bHasValue && !Rhs.bHasValue)
+        if (!LHS.bHasValue && !RHS.bHasValue)
         {
             return true;
         }
 
-        if (!Lhs.bHasValue)
+        if (!LHS.bHasValue)
         {
             return false;
         }
 
-        return Lhs.IsLessThan(Rhs) || Lhs.IsEqual(Rhs);
+        return LHS.IsLessThan(RHS) || LHS.IsEqual(RHS);
     }
 
     /**
      * @brief: Great than comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
-     * @return: Returns true if Lhs is greater than Rhs
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
+     * @return: Returns true if LHS is greater than RHS
      */
-    friend FORCEINLINE bool operator>(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        return !(Lhs <= Rhs);
+        return !(LHS <= RHS);
     }
 
     /**
      * @brief: Greater than or equal comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
-     * @return: Returns true if the Lhs is greater than or equal to Rhs
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
+     * @return: Returns true if the LHS is greater than or equal to RHS
      */
-    friend FORCEINLINE bool operator>=(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        return !(Lhs < Rhs);
+        return !(LHS < RHS);
     }
 
 private:
@@ -497,14 +497,14 @@ private:
         Value.GetStorage()->ElementDestructType::~ElementDestructType();
     }
 
-    FORCEINLINE bool IsEqual(const TOptional& Rhs) const noexcept
+    FORCEINLINE bool IsEqual(const TOptional& RHS) const noexcept
     {
-        return (*Value.GetStorage()) == (*Rhs.Value.GetStorage());
+        return (*Value.GetStorage()) == (*RHS.Value.GetStorage());
     }
 
-    FORCEINLINE bool IsLessThan(const TOptional& Rhs) const noexcept
+    FORCEINLINE bool IsLessThan(const TOptional& RHS) const noexcept
     {
-        return (*Value.GetStorage()) < (*Rhs.Value.GetStorage());
+        return (*Value.GetStorage()) < (*RHS.Value.GetStorage());
     }
 
     /** Bytes to store the value in */

@@ -256,30 +256,30 @@ public:
     /**
      * @brief: Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
      *
-     * @param Rhs: Array to compare with
+     * @param RHS: Array to compare with
      * @return: Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& Rhs) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
     {
-        if (Size() != Rhs.Size())
+        if (Size() != RHS.Size())
         {
             return false;
         }
 
-        return CompareRange<ElementType>(Data(), Rhs.Data(), Size());
+        return CompareRange<ElementType>(Data(), RHS.Data(), Size());
     }
 
     /**
      * @brief: Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
      *
-     * @param Rhs: Array to compare with
+     * @param RHS: Array to compare with
      * @return: Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& Rhs) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /**
@@ -307,30 +307,30 @@ public:
     /**
      * @brief: Copy-assignment operator
      *
-     * @param Rhs: View to copy
+     * @param RHS: View to copy
      * @return: A reference to this container
      */
-    FORCEINLINE TArrayView& operator=(const TArrayView& Rhs) noexcept
+    FORCEINLINE TArrayView& operator=(const TArrayView& RHS) noexcept
     {
-        View = Rhs.View;
-        ViewSize = Rhs.ViewSize;
+        View = RHS.View;
+        ViewSize = RHS.ViewSize;
         return *this;
     }
 
     /**
      * @brief: Move-assignment operator
      *
-     * @param Rhs: View to move
+     * @param RHS: View to move
      * @return: A reference to this container
      */
-    FORCEINLINE TArrayView& operator=(TArrayView&& Rhs) noexcept
+    FORCEINLINE TArrayView& operator=(TArrayView&& RHS) noexcept
     {
-        if (this != &Rhs)
+        if (this != &RHS)
         {
-            View = Rhs.View;
-            ViewSize = Rhs.ViewSize;
-            Rhs.View = nullptr;
-            Rhs.ViewSize = 0;
+            View = RHS.View;
+            ViewSize = RHS.ViewSize;
+            RHS.View = nullptr;
+            RHS.ViewSize = 0;
         }
 
         return *this;

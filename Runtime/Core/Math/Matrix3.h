@@ -147,122 +147,122 @@ public:
     /**
      * @brief: Transforms a 3-D vector
      *
-     * @param Rhs: The vector to transform
+     * @param RHS: The vector to transform
      * @return A vector containing the transformation
      */
-    FORCEINLINE CVector3 operator*(const CVector3& Rhs) const noexcept;
+    FORCEINLINE CVector3 operator*(const CVector3& RHS) const noexcept;
 
     /**
      * @brief: Multiplies a matrix with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix3 operator*(const CMatrix3& Rhs) const noexcept;
+    FORCEINLINE CMatrix3 operator*(const CMatrix3& RHS) const noexcept;
 
     /**
      * @brief: Multiplies this matrix with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator*=(const CMatrix3& Rhs) noexcept;
+    FORCEINLINE CMatrix3& operator*=(const CMatrix3& RHS) noexcept;
 
     /**
      * @brief: Multiplies a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix3 operator*(float Rhs) const noexcept;
+    FORCEINLINE CMatrix3 operator*(float RHS) const noexcept;
 
     /**
      * @brief: Multiplies this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator*=(float Rhs) noexcept;
+    FORCEINLINE CMatrix3& operator*=(float RHS) noexcept;
 
     /**
      * @brief: Adds a matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix3 operator+(const CMatrix3& Rhs) const noexcept;
+    FORCEINLINE CMatrix3 operator+(const CMatrix3& RHS) const noexcept;
 
     /**
      * @brief: Adds this matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator+=(const CMatrix3& Rhs) noexcept;
+    FORCEINLINE CMatrix3& operator+=(const CMatrix3& RHS) noexcept;
 
     /**
      * @brief: Adds a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix3 operator+(float Rhs) const noexcept;
+    FORCEINLINE CMatrix3 operator+(float RHS) const noexcept;
 
     /**
      * @brief: Adds this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator+=(float Rhs) noexcept;
+    FORCEINLINE CMatrix3& operator+=(float RHS) noexcept;
 
     /**
      * @brief: Subtracts a matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix3 operator-(const CMatrix3& Rhs) const noexcept;
+    FORCEINLINE CMatrix3 operator-(const CMatrix3& RHS) const noexcept;
 
     /**
      * @brief: Subtracts this matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator-=(const CMatrix3& Rhs) noexcept;
+    FORCEINLINE CMatrix3& operator-=(const CMatrix3& RHS) noexcept;
 
     /**
      * @brief: Subtracts a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix3 operator-(float Rhs) const noexcept;
+    FORCEINLINE CMatrix3 operator-(float RHS) const noexcept;
 
     /**
      * @brief: Subtracts this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator-=(float Rhs) noexcept;
+    FORCEINLINE CMatrix3& operator-=(float RHS) noexcept;
 
     /**
      * @brief: Divides a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A matrix containing the result of the division
      */
-    FORCEINLINE CMatrix3 operator/(float Rhs) const noexcept;
+    FORCEINLINE CMatrix3 operator/(float RHS) const noexcept;
 
     /**
      * @brief: Divides this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return A reference to this matrix
      */
-    FORCEINLINE CMatrix3& operator/=(float Rhs) noexcept;
+    FORCEINLINE CMatrix3& operator/=(float RHS) noexcept;
 
     /**
      * @brief: Returns the result after comparing this and another matrix
@@ -586,150 +586,150 @@ FORCEINLINE bool CMatrix3::operator!=(const CMatrix3& Other) const noexcept
     return !IsEqual(Other);
 }
 
-FORCEINLINE CVector3 CMatrix3::operator*(const CVector3& Rhs) const noexcept
+FORCEINLINE CVector3 CMatrix3::operator*(const CVector3& RHS) const noexcept
 {
     CVector3 Result;
-    Result.x = (Rhs[0] * m00) + (Rhs[1] * m10) + (Rhs[2] * m20);
-    Result.y = (Rhs[0] * m01) + (Rhs[1] * m11) + (Rhs[2] * m21);
-    Result.z = (Rhs[0] * m02) + (Rhs[1] * m12) + (Rhs[2] * m22);
+    Result.x = (RHS[0] * m00) + (RHS[1] * m10) + (RHS[2] * m20);
+    Result.y = (RHS[0] * m01) + (RHS[1] * m11) + (RHS[2] * m21);
+    Result.z = (RHS[0] * m02) + (RHS[1] * m12) + (RHS[2] * m22);
     return Result;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator*(const CMatrix3& Rhs) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator*(const CMatrix3& RHS) const noexcept
 {
     CMatrix3 Result;
-    Result.m00 = (m00 * Rhs.m00) + (m01 * Rhs.m10) + (m02 * Rhs.m20);
-    Result.m01 = (m00 * Rhs.m01) + (m01 * Rhs.m11) + (m02 * Rhs.m21);
-    Result.m02 = (m00 * Rhs.m02) + (m01 * Rhs.m12) + (m02 * Rhs.m22);
+    Result.m00 = (m00 * RHS.m00) + (m01 * RHS.m10) + (m02 * RHS.m20);
+    Result.m01 = (m00 * RHS.m01) + (m01 * RHS.m11) + (m02 * RHS.m21);
+    Result.m02 = (m00 * RHS.m02) + (m01 * RHS.m12) + (m02 * RHS.m22);
 
-    Result.m10 = (m10 * Rhs.m00) + (m11 * Rhs.m10) + (m12 * Rhs.m20);
-    Result.m11 = (m10 * Rhs.m01) + (m11 * Rhs.m11) + (m12 * Rhs.m21);
-    Result.m12 = (m10 * Rhs.m02) + (m11 * Rhs.m12) + (m12 * Rhs.m22);
+    Result.m10 = (m10 * RHS.m00) + (m11 * RHS.m10) + (m12 * RHS.m20);
+    Result.m11 = (m10 * RHS.m01) + (m11 * RHS.m11) + (m12 * RHS.m21);
+    Result.m12 = (m10 * RHS.m02) + (m11 * RHS.m12) + (m12 * RHS.m22);
 
-    Result.m20 = (m20 * Rhs.m00) + (m21 * Rhs.m10) + (m22 * Rhs.m20);
-    Result.m21 = (m20 * Rhs.m01) + (m21 * Rhs.m11) + (m22 * Rhs.m21);
-    Result.m22 = (m20 * Rhs.m02) + (m21 * Rhs.m12) + (m22 * Rhs.m22);
+    Result.m20 = (m20 * RHS.m00) + (m21 * RHS.m10) + (m22 * RHS.m20);
+    Result.m21 = (m20 * RHS.m01) + (m21 * RHS.m11) + (m22 * RHS.m21);
+    Result.m22 = (m20 * RHS.m02) + (m21 * RHS.m12) + (m22 * RHS.m22);
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator*=(const CMatrix3& Rhs) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator*=(const CMatrix3& RHS) noexcept
 {
-    return *this = *this * Rhs;
+    return *this = *this * RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator*(float Rhs) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator*(float RHS) const noexcept
 {
     CMatrix3 Result;
-    Result.m00 = m00 * Rhs;
-    Result.m01 = m01 * Rhs;
-    Result.m02 = m02 * Rhs;
+    Result.m00 = m00 * RHS;
+    Result.m01 = m01 * RHS;
+    Result.m02 = m02 * RHS;
 
-    Result.m10 = m10 * Rhs;
-    Result.m11 = m11 * Rhs;
-    Result.m12 = m12 * Rhs;
+    Result.m10 = m10 * RHS;
+    Result.m11 = m11 * RHS;
+    Result.m12 = m12 * RHS;
 
-    Result.m20 = m20 * Rhs;
-    Result.m21 = m21 * Rhs;
-    Result.m22 = m22 * Rhs;
+    Result.m20 = m20 * RHS;
+    Result.m21 = m21 * RHS;
+    Result.m22 = m22 * RHS;
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator*=(float Rhs) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator*=(float RHS) noexcept
 {
-    return *this = *this * Rhs;
+    return *this = *this * RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator+(const CMatrix3& Rhs) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator+(const CMatrix3& RHS) const noexcept
 {
     CMatrix3 Result;
-    Result.m00 = m00 + Rhs.m00;
-    Result.m01 = m01 + Rhs.m01;
-    Result.m02 = m02 + Rhs.m02;
+    Result.m00 = m00 + RHS.m00;
+    Result.m01 = m01 + RHS.m01;
+    Result.m02 = m02 + RHS.m02;
 
-    Result.m10 = m10 + Rhs.m10;
-    Result.m11 = m11 + Rhs.m11;
-    Result.m12 = m12 + Rhs.m12;
+    Result.m10 = m10 + RHS.m10;
+    Result.m11 = m11 + RHS.m11;
+    Result.m12 = m12 + RHS.m12;
 
-    Result.m20 = m20 + Rhs.m20;
-    Result.m21 = m21 + Rhs.m21;
-    Result.m22 = m22 + Rhs.m22;
+    Result.m20 = m20 + RHS.m20;
+    Result.m21 = m21 + RHS.m21;
+    Result.m22 = m22 + RHS.m22;
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator+=(const CMatrix3& Rhs) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator+=(const CMatrix3& RHS) noexcept
 {
-    return *this = *this + Rhs;
+    return *this = *this + RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator+(float Rhs) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator+(float RHS) const noexcept
 {
     CMatrix3 Result;
-    Result.m00 = m00 + Rhs;
-    Result.m01 = m01 + Rhs;
-    Result.m02 = m02 + Rhs;
+    Result.m00 = m00 + RHS;
+    Result.m01 = m01 + RHS;
+    Result.m02 = m02 + RHS;
 
-    Result.m10 = m10 + Rhs;
-    Result.m11 = m11 + Rhs;
-    Result.m12 = m12 + Rhs;
+    Result.m10 = m10 + RHS;
+    Result.m11 = m11 + RHS;
+    Result.m12 = m12 + RHS;
 
-    Result.m20 = m20 + Rhs;
-    Result.m21 = m21 + Rhs;
-    Result.m22 = m22 + Rhs;
+    Result.m20 = m20 + RHS;
+    Result.m21 = m21 + RHS;
+    Result.m22 = m22 + RHS;
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator+=(float Rhs) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator+=(float RHS) noexcept
 {
-    return *this = *this + Rhs;
+    return *this = *this + RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator-(const CMatrix3& Rhs) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator-(const CMatrix3& RHS) const noexcept
 {
     CMatrix3 Result;
-    Result.m00 = m00 - Rhs.m00;
-    Result.m01 = m01 - Rhs.m01;
-    Result.m02 = m02 - Rhs.m02;
+    Result.m00 = m00 - RHS.m00;
+    Result.m01 = m01 - RHS.m01;
+    Result.m02 = m02 - RHS.m02;
 
-    Result.m10 = m10 - Rhs.m10;
-    Result.m11 = m11 - Rhs.m11;
-    Result.m12 = m12 - Rhs.m12;
+    Result.m10 = m10 - RHS.m10;
+    Result.m11 = m11 - RHS.m11;
+    Result.m12 = m12 - RHS.m12;
 
-    Result.m20 = m20 - Rhs.m20;
-    Result.m21 = m21 - Rhs.m21;
-    Result.m22 = m22 - Rhs.m22;
+    Result.m20 = m20 - RHS.m20;
+    Result.m21 = m21 - RHS.m21;
+    Result.m22 = m22 - RHS.m22;
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator-=(const CMatrix3& Rhs) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator-=(const CMatrix3& RHS) noexcept
 {
-    return *this = *this - Rhs;
+    return *this = *this - RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator-(float Rhs) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator-(float RHS) const noexcept
 {
     CMatrix3 Result;
-    Result.m00 = m00 - Rhs;
-    Result.m01 = m01 - Rhs;
-    Result.m02 = m02 - Rhs;
+    Result.m00 = m00 - RHS;
+    Result.m01 = m01 - RHS;
+    Result.m02 = m02 - RHS;
 
-    Result.m10 = m10 - Rhs;
-    Result.m11 = m11 - Rhs;
-    Result.m12 = m12 - Rhs;
+    Result.m10 = m10 - RHS;
+    Result.m11 = m11 - RHS;
+    Result.m12 = m12 - RHS;
 
-    Result.m20 = m20 - Rhs;
-    Result.m21 = m21 - Rhs;
-    Result.m22 = m22 - Rhs;
+    Result.m20 = m20 - RHS;
+    Result.m21 = m21 - RHS;
+    Result.m22 = m22 - RHS;
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator-=(float Rhs) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator-=(float RHS) noexcept
 {
-    return *this = *this - Rhs;
+    return *this = *this - RHS;
 }
 
-FORCEINLINE CMatrix3 CMatrix3::operator/(float Rhs) const noexcept
+FORCEINLINE CMatrix3 CMatrix3::operator/(float RHS) const noexcept
 {
-    const float Recip = 1.0f / Rhs;
+    const float Recip = 1.0f / RHS;
 
     CMatrix3 Result;
     Result.m00 = m00 * Recip;
@@ -746,9 +746,9 @@ FORCEINLINE CMatrix3 CMatrix3::operator/(float Rhs) const noexcept
     return Result;
 }
 
-FORCEINLINE CMatrix3& CMatrix3::operator/=(float Rhs) noexcept
+FORCEINLINE CMatrix3& CMatrix3::operator/=(float RHS) noexcept
 {
-    return *this = *this / Rhs;
+    return *this = *this / RHS;
 }
 
 inline CMatrix3 CMatrix3::Identity() noexcept

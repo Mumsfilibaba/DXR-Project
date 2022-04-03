@@ -577,14 +577,14 @@ struct SRHIRayTracingHitGroup
         , ClosestHit(InClosestHit)
     { }
 
-    bool operator==(const SRHIRayTracingHitGroup& Rhs) const
+    bool operator==(const SRHIRayTracingHitGroup& RHS) const
     {
-        return (Name == Rhs.Name) && (AnyHit == Rhs.AnyHit) && (ClosestHit == Rhs.ClosestHit);
+        return (Name == RHS.Name) && (AnyHit == RHS.AnyHit) && (ClosestHit == RHS.ClosestHit);
     }
 
-    bool operator!=(const SRHIRayTracingHitGroup& Rhs) const
+    bool operator!=(const SRHIRayTracingHitGroup& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     String                   Name;

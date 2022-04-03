@@ -45,14 +45,14 @@ public:
         return reinterpret_cast<const uint8*>(this);
     }
 
-    bool operator==(const CColor& Rhs) const
+    bool operator==(const CColor& RHS) const
     {
-        return (r == Rhs.r) && (g == Rhs.g) && (b == Rhs.b) && (a == Rhs.a);
+        return (r == RHS.r) && (g == RHS.g) && (b == RHS.b) && (a == RHS.a);
     }
 
-    bool operator!=(const CColor& Rhs) const
+    bool operator!=(const CColor& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     struct
@@ -113,14 +113,14 @@ public:
         return reinterpret_cast<const uint16*>(this); 
     }
 
-    bool operator==(const CFloatColor16& Rhs) const
+    bool operator==(const CFloatColor16& RHS) const
     {
-        return (r == Rhs.r) && (g == Rhs.g) && (b == Rhs.b) && (a == Rhs.a);
+        return (r == RHS.r) && (g == RHS.g) && (b == RHS.b) && (a == RHS.a);
     }
 
-    bool operator!=(const CFloatColor16& Rhs) const
+    bool operator!=(const CFloatColor16& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /** Red channel */
@@ -178,14 +178,14 @@ public:
         return reinterpret_cast<const float*>(this);
     }
 
-    bool operator==(const CFloatColor& Rhs) const
+    bool operator==(const CFloatColor& RHS) const
     {
-        return (r == Rhs.r) && (g == Rhs.g) && (b == Rhs.b) && (a == Rhs.a);
+        return (r == RHS.r) && (g == RHS.g) && (b == RHS.b) && (a == RHS.a);
     }
 
-    bool operator!=(const CFloatColor& Rhs) const
+    bool operator!=(const CFloatColor& RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /** Red channel */
