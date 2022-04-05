@@ -711,33 +711,62 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRHIDepthStencil
 
-struct SRHIDepthStencilValue
+class CRHIDepthStencilClearValue
 {
-    SRHIDepthStencilValue() = default;
+public:
 
-    SRHIDepthStencilValue(float InDepth, uint8 InStencil)
+    /**
+     * @brief: Default Constructor
+     */
+    CRHIDepthStencilClearValue()
+        : Depth(1.0f)
+        , Stencil(0)
+    { }
+
+    /**
+     * @brief: Constructor taking depth and stencil value
+     * 
+     * @param InDepth: Depth-value
+     * @param InStencil: Stencil-value
+     */
+    CRHIDepthStencilClearValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     { }
 
-    bool operator==(const SRHIDepthStencilValue& RHS) const
+    /**
+     * @brief: Compare with another instance
+     * 
+     * @param RHS: Other instance to compare with
+     * @return: Returns true if the instances are equal
+     */
+    bool operator==(const CRHIDepthStencilClearValue& RHS) const
     {
         return (Depth == RHS.Depth) && (Stencil && RHS.Stencil);
     }
 
-    bool operator!=(const SRHIDepthStencilValue& RHS) const
+    /**
+     * @brief: Compare with another instance
+     * 
+     * @param RHS: Other instance to compare with
+     * @return: Returns false if the instances are equal
+     */
+    bool operator!=(const CRHIDepthStencilClearValue& RHS) const
     {
         return !(*this == RHS);
     }
 
-    float Depth   = 1.0f;
-    uint8 Stencil = 0;
+    /** @brief: Value to clear the depth portion of a texture with */
+    float Depth;
+
+    /** @brief: Value to clear the stencil portion of a texture with */
+    uint8 Stencil;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIClearValue
+// CRHITextureClearValue
 
-class CRHIClearValue
+class CRHITextureClearValue
 {
 public:
 
@@ -747,25 +776,49 @@ public:
         DepthStencil = 2
     };
 
-    CRHIClearValue()
+    /**
+     * @brief: Default Constructor that creates a black clear color
+     */
+    CRHITextureClearValue()
         : Type(EType::Color)
         , Format(ERHIFormat::Unknown)
         , Color(0.0f, 0.0f, 0.0f, 1.0f)
     { }
 
-    CRHIClearValue(ERHIFormat InFormat, float Depth, uint8 Stencil)
+    /**
+     * @brief: Constructor that creates a DepthStencil-ClearValue
+     * 
+     * @param InFormat: Format to clear
+     * @param InDepth: Depth-value
+     * @param InStencil: Stencil-value
+     */
+    CRHITextureClearValue(ERHIFormat InFormat, float InDepth, uint8 InStencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencil(Depth, Stencil)
     { }
 
-    CRHIClearValue(ERHIFormat InFormat, float r, float g, float b, float a)
+    /**
+     * @brief: Constructor that creates Color-ClearValue
+     * 
+     * @param InFormat: Format to clear
+     * @param InR: Red-Channel value
+     * @param InG: Green-Channel value
+     * @param InB: Blue-Channel value
+     * @param InA: Alpha-Channel value
+     */
+    CRHITextureClearValue(ERHIFormat InFormat, float InR, float InG, float InB, float InA)
         : Type(EType::Color)
         , Format(InFormat)
         , Color(r, g, b, a)
     { }
 
-    CRHIClearValue(const CRHIClearValue& Other)
+    /**
+     * @brief: Copy-constructor
+     * 
+     * @param Other: Instance to copy
+     */
+    CRHITextureClearValue(const CRHITextureClearValue& Other)
         : Type(Other.Type)
         , Format(Other.Format)
         , Color()
@@ -780,90 +833,141 @@ public:
         }
     }
 
-    SColorF& AsColor()
+    /**
+     * @brief: Check if the clear value is a Color-Value
+     * 
+     * @return: Returns a true if the value is a FloatColor
+     */
+    bool IsColorValue() const { return (Type == EType::Color); }
+
+        /**
+     * @brief: Check if the clear value is a DepthStencil-Value
+     * 
+     * @return: Returns a true if the value is a DepthStencilClearValue
+     */
+    bool IsDepthStencilValue() const { return (Type == EType::DepthStencil); }
+
+    /**
+     * @brief: Retrieve Color-Value
+     * 
+     * @return: Returns a FloatColor
+     */
+    CFloatColor& AsColor()
     {
-        Check(Type == EType::Color);
+        Check(IsColorValue());
         return Color;
     }
 
-    const SColorF& AsColor() const
+    /**
+     * @brief: Retrieve Color-Value
+     * 
+     * @return: Returns a FloatColor
+     */
+    const CFloatColor& AsColor() const
     {
-        Check(Type == EType::Color);
+        Check(IsColorValue());
         return Color;
     }
 
-    SRHIDepthStencilValue& AsDepthStencil()
+    /**
+     * @brief: Retrieve DepthStencil-Value
+     * 
+     * @return: Returns a DepthStencilClearValue
+     */
+    CRHIDepthStencilClearValue& AsDepthStencil()
     {
-        Check(Type == EType::DepthStencil);
+        Check(IsDepthStencilValue());
         return DepthStencil;
     }
 
-    const SRHIDepthStencilValue& AsDepthStencil() const
+    /**
+     * @brief: Retrieve DepthStencil-Value
+     * 
+     * @return: Returns a DepthStencilClearValue
+     */
+    const CRHIDepthStencilClearValue& AsDepthStencil() const
     {
-        Check(Type == EType::DepthStencil);
+        Check(IsDepthStencilValue());
         return DepthStencil;
     }
 
-    EType GetType() const
-    {
-        return Type;
-    }
-
-    ERHIFormat GetFormat() const
-    {
-        return Format;
-    }
-
-    CRHIClearValue& operator=(const CRHIClearValue& RHS)
+    /**
+     * @brief: Copy-assignment operator
+     * 
+     * @param RHS: Instance to copy
+     * @return: Returns a reference to this instance
+     */
+    CRHITextureClearValue& operator=(const CRHITextureClearValue& RHS)
     {
         Type   = RHS.Type;
         Format = RHS.Format;
 
-        if (RHS.Type == EType::Color)
+        if (RHS.IsColorValue())
         {
             Color = RHS.Color;
         }
-        else if (RHS.Type == EType::DepthStencil)
+        else if (RHS.IsDepthStencilValue())
         {
             DepthStencil = RHS.DepthStencil;
+        }
+        else
+        {
+            Check(false);
         }
 
         return *this;
     }
 
-    bool operator==(const CRHIClearValue& RHS) const
+    /**
+     * @brief: Compare with another instance
+     * 
+     * @param RHS: Instance to compare with
+     * @return: Returns true if the instances are equal
+     */
+    bool operator==(const CRHITextureClearValue& RHS) const
     {
-        if (Type != RHS.Type)
+        if ((Type != RHS.Type) || (Format != RHS.Format))
         {
             return false;
         }
 
-        if (Format != RHS.Format)
-        {
-            return false;
-        }
-
-        if (Type == EType::Color)
+        if (IsColorValue())
         {
             return (Color == RHS.Color);
         }
+        else if (IsDepthStencilValue())
+        {
+            return (DepthStencil == RHS.DepthStencil);
+        }
 
-        return (DepthStencil == RHS.DepthStencil);
+        Check(false);
+        return false;
     }
 
-    bool operator!=(const CRHIClearValue& RHS) const
+    /**
+     * @brief: Compare with another instance
+     * 
+     * @param RHS: Instance to compare with
+     * @return: Returns false if the instances are equal
+     */
+    bool operator!=(const CRHITextureClearValue& RHS) const
     {
         return !(*this == RHS);
     }
 
-private:
-    EType      Type;
+    /** @brief: Type of ClearValue */
+    EType Type;
+
+    /** @brief: Format of the ClearValue */
     ERHIFormat Format;
     
     union
     {
-        SColorF               Color;
-        SRHIDepthStencilValue DepthStencil;
+        /** @brief: Color-value */
+        CFloatColor Color;
+
+        /** @brief: DepthStencil-value */
+        CRHIDepthStencilClearValue DepthStencil;
     };
 };
 

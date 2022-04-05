@@ -2,7 +2,6 @@
 #include "RHIModule.h"
 #include "RHIResources.h"
 #include "RHICommand.h"
-#include "RHITimestampQuery.h"
 
 class CRHIRenderTargetView;
 class CRHIDepthStencilView;
@@ -166,13 +165,13 @@ public:
         InsertCommand<CRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
 
-    void ClearDepthStencilTexture(CRHIResource* Texture, const SRHIDepthStencilValue& ClearValue)
+    void ClearDepthStencilTexture(CRHIResource* Texture, const CRHIDepthStencilClearValue& ClearValue)
     {
         Check(Texture != nullptr);
         InsertCommand<CRHICommandClearDepthStencilTexture>(Texture, ClearValue);
     }
 
-    void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SRHIDepthStencilValue& ClearValue)
+    void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const CRHIDepthStencilClearValue& ClearValue)
     {
         Check(DepthStencilView != nullptr);
         InsertCommand<CRHICommandClearDepthStencilView>(DepthStencilView, ClearValue);
@@ -413,7 +412,7 @@ public:
         InsertCommand<CRHICommandCopyTexture>(Dst, Src);
     }
 
-    void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo)
+    void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureDesc& CopyTextureInfo)
     {
         InsertCommand<CRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
     }

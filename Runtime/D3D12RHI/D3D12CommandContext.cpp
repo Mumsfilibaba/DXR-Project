@@ -849,7 +849,7 @@ void CD3D12CommandContext::CopyTexture(CRHITexture* Destination, CRHITexture* So
     CmdBatch->AddInUseResource(Source);
 }
 
-void CD3D12CommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyInfo)
+void CD3D12CommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureDesc& CopyInfo)
 {
     D3D12_ERROR(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 

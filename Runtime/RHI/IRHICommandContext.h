@@ -87,11 +87,11 @@ struct SRHICopyTextureSubresourceInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyTextureInfo
+// SRHICopyTextureDesc
 
-struct SRHICopyTextureInfo
+struct SRHICopyTextureDesc
 {
-    SRHICopyTextureInfo()
+    SRHICopyTextureDesc()
         : Source()
         , Destination()
         , Width(0)
@@ -99,7 +99,7 @@ struct SRHICopyTextureInfo
         , Depth(0)
     { }
 
-    bool operator==(const SRHICopyTextureInfo& RHS) const
+    bool operator==(const SRHICopyTextureDesc& RHS) const
     {
         return (Source      == RHS.Source)
             && (Destination == RHS.Destination)
@@ -108,7 +108,7 @@ struct SRHICopyTextureInfo
             && (Depth       == RHS.Depth);
     }
 
-    bool operator==(const SRHICopyTextureInfo& RHS) const
+    bool operator==(const SRHICopyTextureDesc& RHS) const
     {
         return !(*this == RHS);
     }
@@ -295,11 +295,18 @@ public:
     virtual void SetShadingRateTexture(CRHITexture* ShadingTexture) = 0;
 
     /**
-     * @breief: Begin a RenderPass
+     * @brief: Set RenderTargets that should be used for an upcoming RenderPass
      * 
-     * @param RenderPass: Description of the RenderPass to begin
+     * @param RenderTargetViews: Array of RenderTargetViews to bind
+     * @param NumRenderTargetViews: Number of RenderTargetView in the array
+     * @param DepthStencilView: DepthStencilView to bind
      */
-    virtual void BeginRenderPass(const CRHIRenderPass& RenderPass) = 0;
+    virtual void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 NumRenderTargetViews, CRHIDepthStencilView* DepthStencilView) = 0;
+
+    /**
+     * @brief: Begin a RenderPass
+     */
+    virtual void BeginRenderPass() = 0;
 
     /**
      * @brief: End the current RenderPass
@@ -543,45 +550,185 @@ public:
      * @param Src: Source texture
      */
     virtual void CopyTexture(CRHITexture* Dst, CRHITexture* Src) = 0;
-    virtual void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureInfo& CopyTextureInfo) = 0;
 
-    virtual void DestroyResource(class CRHIResource* Resource) = 0;
-    virtual void DiscardContents(class CRHIResource* Resource) = 0;
+    /**
+     * @brief: Copy a region of one texture into another
+     *
+     * @param Dst: Destination texture
+     * @param Src: Source texture
+     * @param CopyTextureDesc: Description of the texture region to copy
+     */
+    virtual void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureDesc& CopyTextureDesc) = 0;
 
+    /**
+     * @brief: Enqueue the resource for being destroyed, the resource should not be used anymore after this call
+     * 
+     * @param Resource: Resource to destroy
+     */
+    virtual void DestroyResource(CRHIResource* Resource) = 0;
+
+    /**
+     * @brief: Inform the driver that we do not care about the contents of this resource anymore, the resource should be a texture or buffer
+     * 
+     * @param Resource: Resource to discard
+     */
+    virtual void DiscardContents(CRHIResource* Resource) = 0;
+
+    /**
+     * @brief: Build the acceleration structure of a RayTracing-Geometry instance
+     * 
+     * @param Geometry: Geometry to build acceleration structure for
+     * @param BuildDesc: Description of the acceleration structure to build
+    */
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, const CRHIBuildRayTracingGeometryDesc& BuildDesc) = 0;
+
+    /**
+     * @brief: Build the acceleration structure of a RayTracing-Geometry instance
+     * 
+     * @param Geometry: Geometry to build acceleration structure for
+     * @param BuildDesc: Description of the acceleration structure to build
+    */
     virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const CRHIBuildRayTracingSceneDesc& BuildDesc) = 0;
 
+    /**
+     * @brief: Generate MipLevels for a texture
+     * 
+     * @param Texture: Texture to generate MipLevels for
+     */
     virtual void GenerateMips(CRHITexture* Texture) = 0;
 
+    /**
+     * @brief: Transition a texture to a new state
+     * 
+     * @param Texture: Texture to transition
+     * @param BeforeState: Previous state of the Texture
+     * @param AfterState: New state of the Texture
+     */
     virtual void TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) = 0;
+
+    /**
+     * @brief: Transition a Buffer to a new state
+     * 
+     * @param Buffer: Buffer to transition
+     * @param BeforeState: Previous state of the Buffer
+     * @param AfterState: New state of the Buffer
+     */
     virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) = 0;
 
+    /**
+     * @brief: Insert a UnorderAccess barrier to ensure that the write operations finish before continuing
+     * 
+     * @param Texture: Texture that needs a barrier
+     */
     virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) = 0;
+
+    /**
+     * @brief: Insert a UnorderAccess barrier to ensure that the write operations finish before continuing
+     * 
+     * @param Buffer: Buffer that needs a barrier
+     */
     virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer) = 0;
 
+    /**
+     * @brief: Make a draw-call
+     * 
+     * @param VertexCount: Number of vertices to render
+     * @param StartVertexLocation: Vertex to start render (Index in VertexBuffer)
+     */
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) = 0;
+
+    /**
+     * @brief: Make a draw-call with an IndexBuffer
+     * 
+     * @param IndexCount: Number of indices to render
+     * @param StartIndexLocation: Index to start render (Index in IndexBuffer)
+     * @param BaseVertexLocation: Vertex to start render (Index in VertexBuffer)
+     */
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
+
+    /**
+     * @brief: Make a draw-call using instances
+     * 
+     * @param VertexCountPerInstance: Number of vertices per instance
+     * @param InstanceCount: Number of instances to render
+     * @param StartVertexLocation: Vertex to start render (Index in VertexBuffer)
+     * @param StartInstanceLocation: Instance to start render (Index in InstanceBuffer)
+     */
     virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) = 0;
+    
+    /**
+     * @brief: Make a draw-call using instances and an indexbuffer
+     * 
+     * @param IndexCountPerInstance: Number of indicies per instance
+     * @param InstanceCount: Number of instances to render
+     * @param StartIndexLocation: Index to start render (Index in IndexBuffer)
+     * @param BaseVertexLocation: Vertex to start render (Index in VertexBuffer)
+     * @param StartInstanceLocation: Instance to start render (Index in InstanceBuffer)
+     */
     virtual void DrawIndexedInstanced( uint32 IndexCountPerInstance
                                      , uint32 InstanceCount
                                      , uint32 StartIndexLocation
                                      , uint32 BaseVertexLocation
                                      , uint32 StartInstanceLocation) = 0;
 
+    /**
+     * @brief: Make a compute dispatch
+     * 
+     * @param ComputeShader: ComputeShader to use for the Dispatch
+     * @param WorkGroupsX: Number of WorkGroups on the x-axis
+     * @param WorkGroupsY: Number of WorkGroups on the y-axis
+     * @param WorkGroupsZ: Number of WorkGroups on the z-axis
+     */
     virtual void Dispatch(CRHIComputeShader* ComputeShader, uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
 
+    /**
+     * @brief: Make a Ray Tracing dispatch
+     * 
+     * @param Scene: RayTracingScene to trace rays into
+     * @param PipelineState: PipelineState to use
+     * @param Width: Width of the ray-grid
+     * @param Height: Height of the ray-grid
+     * @param Depth: Depth of the ray-grid
+     */
     virtual void DispatchRays(CRHIRayTracingScene* Scene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
 
+    /**
+     * @brief: Present the current BackBuffer
+     * 
+     * @param Viewport: Viewport to present
+     * @param bVerticalSync: Use VerticalSync when presenting
+     */
     virtual void PresentViewport(CRHIViewport* Viewport, bool bVerticalSync) = 0;
 
+    /**
+     * @brief: Clear all the current state that is set to the CommandContext
+     */
     virtual void ClearState() = 0;
 
+    /**
+     * @brief: Flush the context and ensure that the Commands are submitted to the GPU
+     */
     virtual void Flush() = 0;
 
+    /**
+     * @brief: Insert a debug-marker
+     */
     virtual void InsertMarker(const String& Message) = 0;
 
+    /**
+     * @brief: Begin an external capture (PIX)
+     */
     virtual void BeginExternalCapture() = 0;
+
+    /**
+     * @brief: End an external capture (PIX)
+     */
     virtual void EndExternalCapture() = 0;
 
+    /**
+     * @brief: Retrieve the native CommandList (D3D12 and Vulkan) 
+     * 
+     * @return: Returns the native CommandList 
+    */
     virtual void* GetRHIHandle() const = 0;
 };

@@ -4,7 +4,6 @@
 #include "RHIResources.h"
 #include "RHIPipeline.h"
 #include "RHICommandList.h"
-#include "RHIViewport.h"
 
 #include "CoreApplication/Interface/PlatformWindow.h"
 
@@ -105,22 +104,6 @@ public:
      * @return: Returns the newly created UnorderedAccessView
      */
     virtual CRHIUnorderedAccessViewRef CreateUnorderedAccessView(CRHIBuffer* Buffer, uint32 FirstElement, uint32 NumElements, uint32 Stride) = 0;
-
-    /**
-     * @brief: Create a new RenderTargetView
-     *
-     * @param Desc: Info about the RenderTargetView
-     * @return: Returns the newly created RenderTargetView
-     */
-    virtual CRHIRenderTargetViewRef CreateRenderTargetView(CRHITexture* Texture, const CRHIRenderTargetViewCreateDesc& Desc) = 0;
-    
-    /**
-     * @brief: Create a new DepthStencilView
-     *
-     * @param Desc: Info about the DepthStencilView
-     * @return: Returns the newly created DepthStencilView
-     */
-    virtual CRHIDepthStencilViewRef CreateDepthStencilView(CRHITexture* Texture, const CRHIDepthStencilViewCreateDesc& Desc) = 0;
 
     /**
      * @brief: Creates a new Compute Shader
@@ -397,16 +380,6 @@ FORCEINLINE CRHIUnorderedAccessViewRef RHICreateUnorderedAccessView(CRHITexture*
 FORCEINLINE CRHIUnorderedAccessViewRef RHICreateUnorderedAccessView(CRHIBuffer* Buffer, uint32 FirstElement, uint32 NumElements, uint32 Stride)
 {
     return GRHIInstance->CreateUnorderedAccessView(Buffer, FirstElement, NumElements, Stride);
-}
-
-FORCEINLINE CRHIRenderTargetViewRef RHICreateRenderTargetView(CRHITexture* Texture, const CRHIRenderTargetViewCreateDesc& Desc)
-{
-    return GRHIInstance->CreateRenderTargetView(Texture, Desc);
-}
-
-FORCEINLINE CRHIDepthStencilViewRef RHICreateDepthStencilView(CRHITexture* Texture, const CRHIDepthStencilViewCreateDesc& Desc)
-{
-    return GRHIInstance->CreateDepthStencilView(Texture, Desc);
 }
 
 FORCEINLINE CRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode)

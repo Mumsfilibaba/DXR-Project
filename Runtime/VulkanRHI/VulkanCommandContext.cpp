@@ -204,7 +204,7 @@ void CVulkanCommandContext::CopyTexture(CRHITexture* Destination, CRHITexture* S
 {
 }
 
-void CVulkanCommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo)
+void CVulkanCommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureDesc& CopyTextureInfo)
 {
 }
 

@@ -1,30 +1,30 @@
 #pragma once
 #include "RHIShader.h"
-#include "RHIResourceBase.h"
+#include "RHIResources.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIDepthWriteMask
+// EDepthWriteMask
 
-enum class ERHIDepthWriteMask
+enum class EDepthWriteMask
 {
     Zero = 0,
     All  = 1
 };
 
-inline const char* ToString(ERHIDepthWriteMask DepthWriteMask)
+inline const char* ToString(EDepthWriteMask DepthWriteMask)
 {
     switch (DepthWriteMask)
     {
-    case ERHIDepthWriteMask::Zero: return "Zero";
-    case ERHIDepthWriteMask::All:  return "All";
-    default:                       return "Unknown";
+    case EDepthWriteMask::Zero: return "Zero";
+    case EDepthWriteMask::All:  return "All";
+    default:                    return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIStencilOp
+// EStencilOp
 
-enum class ERHIStencilOp
+enum class EStencilOp
 {
     Keep                 = 1,
     Zero                 = 2,
@@ -36,30 +36,30 @@ enum class ERHIStencilOp
     Decrement            = 8
 };
 
-inline const char* ToString(ERHIStencilOp StencilOp)
+inline const char* ToString(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
-    case ERHIStencilOp::Keep:                 return "Keep";
-    case ERHIStencilOp::Zero:                 return "Zero";
-    case ERHIStencilOp::Replace:              return "Replace";
-    case ERHIStencilOp::IncrementAndSaturate: return "IncrementAndSaturate";
-    case ERHIStencilOp::DecrementAndSaturate: return "DecrementAndSaturate";
-    case ERHIStencilOp::Invert:               return "Invert";
-    case ERHIStencilOp::Increment:            return "Increment";
-    case ERHIStencilOp::Decrement:            return "Decrement";
-    default:                                  return "Unknown";
+    case EStencilOp::Keep:                 return "Keep";
+    case EStencilOp::Zero:                 return "Zero";
+    case EStencilOp::Replace:              return "Replace";
+    case EStencilOp::IncrementAndSaturate: return "IncrementAndSaturate";
+    case EStencilOp::DecrementAndSaturate: return "DecrementAndSaturate";
+    case EStencilOp::Invert:               return "Invert";
+    case EStencilOp::Increment:            return "Increment";
+    case EStencilOp::Decrement:            return "Decrement";
+    default:                               return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIDepthStencilOp
+// SRHIDepthStencilStateFaceDesc
 
-struct SRHIDepthStencilOp
+struct SRHIDepthStencilStateFaceDesc
 {
-    ERHIStencilOp      StencilFailOp      = ERHIStencilOp::Keep;
-    ERHIStencilOp      StencilDepthFailOp = ERHIStencilOp::Keep;
-    ERHIStencilOp      StencilPassOp      = ERHIStencilOp::Keep;
+    EStencilOp         StencilFailOp      = EStencilOp::Keep;
+    EStencilOp         StencilDepthFailOp = EStencilOp::Keep;
+    EStencilOp         StencilPassOp      = EStencilOp::Keep;
     ERHIComparisonFunc StencilFunc        = ERHIComparisonFunc::Always;
 };
 
@@ -68,14 +68,14 @@ struct SRHIDepthStencilOp
 
 struct SRHIDepthStencilStateDesc
 {
-    ERHIDepthWriteMask DepthWriteMask   = ERHIDepthWriteMask::All;
+    EDepthWriteMask DepthWriteMask   = EDepthWriteMask::All;
     ERHIComparisonFunc DepthFunc        = ERHIComparisonFunc::Less;
     bool               bDepthEnable     = true;
     uint8              StencilReadMask  = 0xff;
     uint8              StencilWriteMask = 0xff;
     bool               bStencilEnable   = false;
-    SRHIDepthStencilOp FrontFace        = SRHIDepthStencilOp();
-    SRHIDepthStencilOp BackFace         = SRHIDepthStencilOp();
+    SRHIDepthStencilStateFaceDesc FrontFace        = SRHIDepthStencilStateFaceDesc();
+    SRHIDepthStencilStateFaceDesc BackFace         = SRHIDepthStencilStateFaceDesc();
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

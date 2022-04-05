@@ -2,8 +2,6 @@
 #include "RHITypes.h"
 #include "IRHICommandContext.h"
 #include "RHIResources.h"
-#include "RHIResourceViews.h"
-#include "RHIViewport.h"
 
 #include "Core/Debug/Debug.h"
 #include "Core/Memory/Memory.h"
@@ -924,7 +922,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandCopyTextureRegion)
 {
 public:
-    FORCEINLINE CRHICommandCopyTextureRegion(CRHITexture* InDestination, CRHITexture* InSource, const SRHICopyTextureInfo& InCopyTextureInfo)
+    FORCEINLINE CRHICommandCopyTextureRegion(CRHITexture* InDestination, CRHITexture* InSource, const SRHICopyTextureDesc& InCopyTextureInfo)
         : Destination(InDestination)
         , Source(InSource)
         , CopyTextureInfo(InCopyTextureInfo)
@@ -937,7 +935,7 @@ public:
 
     CRHITexture*        Destination;
     CRHITexture*        Source;
-    SRHICopyTextureInfo CopyTextureInfo;
+    SRHICopyTextureDesc CopyTextureInfo;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

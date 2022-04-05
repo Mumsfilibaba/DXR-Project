@@ -319,7 +319,7 @@ public:
 
     virtual void CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo) override final;
     virtual void CopyTexture(CRHITexture* Destination, CRHITexture* Source) override final;
-    virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo) override final;
+    virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureDesc& CopyTextureInfo) override final;
 
     virtual void DestroyResource(class CRHIResource* Resource) override final;
     virtual void DiscardContents(class CRHIResource* Resource) override final;
