@@ -44,8 +44,6 @@ public:
         : Value(InValue)
     { }
 
-    ~TAtomicInt() = default;
-
     /**
      * @brief: Atomically increments the integer
      * 

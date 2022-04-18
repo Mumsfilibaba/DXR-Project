@@ -2,6 +2,7 @@
 #include "RHICore.h"
 
 #include "Core/Math/Color.h"
+#include "Core/Containers/Array.h"
 #include "Core/Templates/EnumUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -301,19 +302,24 @@ inline const char* ToString(EShadingRateTier Tier)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRHIShadingRateSupport
 
-struct SRHIShadingRateSupport
+struct SShadingRateSupport
 {
-    SRHIShadingRateSupport()
+    SShadingRateSupport()
         : Tier(EShadingRateTier::NotSupported)
         , ShadingRateImageTileSize(0)
     { }
 
-    bool operator==(const SRHIShadingRateSupport& RHS) const
+    SShadingRateSupport(EShadingRateTier InTier, uint8 InShadingRateImageTileSize)
+        : Tier(InTier)
+        , ShadingRateImageTileSize(InShadingRateImageTileSize)
+    { }
+
+    bool operator==(const SShadingRateSupport& RHS) const
     {
         return (Tier == RHS.Tier) && (ShadingRateImageTileSize == RHS.ShadingRateImageTileSize);
     }
 
-    bool operator!=(const SRHIShadingRateSupport& RHS) const
+    bool operator!=(const SShadingRateSupport& RHS) const
     {
         return !(*this == RHS);
     }
@@ -344,27 +350,32 @@ inline const char* ToString(ERayTracingTier Tier)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRayTracingSupport
+// SRayTracingSupport
 
-struct SRHIRayTracingSupport
+struct SRayTracingSupport
 {
-    SRHIRayTracingSupport()
+    SRayTracingSupport()
         : Tier(ERayTracingTier::NotSupported)
         , MaxRecursionDepth(0)
     { }
 
-    bool operator==(const SRHIRayTracingSupport& RHS) const
+    SRayTracingSupport(ERayTracingTier InTier, uint8 InMaxRecursionDepth)
+        : Tier(InTier)
+        , MaxRecursionDepth(InMaxRecursionDepth)
+    { }
+
+    bool operator==(const SRayTracingSupport& RHS) const
     {
         return (Tier == RHS.Tier) && (MaxRecursionDepth == RHS.MaxRecursionDepth);
     }
 
-    bool operator!=(const SRHIRayTracingSupport& RHS) const
+    bool operator!=(const SRayTracingSupport& RHS) const
     {
         return !(*this == RHS);
     }
 
     ERayTracingTier Tier;
-    uint16          MaxRecursionDepth;
+    uint8           MaxRecursionDepth;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -380,12 +391,12 @@ enum class ECubeFace : uint8
     NegZ = 5,
 };
 
-inline auto GetCubeFaceIndex(ECubeFace CubeFace)
+FORCEINLINE typename TUnderlyingType<ECubeFace>::Type GetCubeFaceIndex(ECubeFace CubeFace)
 {
     return static_cast<TUnderlyingType<ECubeFace>::Type>(CubeFace);
 }
 
-inline ECubeFace GetCubeFaceFromIndex(uint32 Index)
+FORCEINLINE ECubeFace GetCubeFaceFromIndex(typename TUnderlyingType<ECubeFace>::Type Index)
 {
     return (Index > GetCubeFaceIndex(ECubeFace::NegZ)) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
 }
@@ -395,6 +406,7 @@ inline ECubeFace GetCubeFaceFromIndex(uint32 Index)
 
 enum class EComparisonFunc : uint8
 {
+    Unknown      = 0,
     Never        = 1,
     Less         = 2,
     Equal        = 3,
@@ -449,7 +461,7 @@ inline const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EResourceAccess
 
-enum class EResourceAccess
+enum class EResourceAccess : uint16
 {
     Common                          = 0,
     VertexAndConstantBuffer         = 1,
@@ -709,16 +721,16 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIDepthStencil
+// CTextureDepthStencilValue
 
-class CRHIDepthStencilClearValue
+class CTextureDepthStencilValue
 {
 public:
 
     /**
      * @brief: Default Constructor
      */
-    CRHIDepthStencilClearValue()
+    CTextureDepthStencilValue()
         : Depth(1.0f)
         , Stencil(0)
     { }
@@ -729,7 +741,7 @@ public:
      * @param InDepth: Depth-value
      * @param InStencil: Stencil-value
      */
-    CRHIDepthStencilClearValue(float InDepth, uint8 InStencil)
+    CTextureDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     { }
@@ -740,7 +752,7 @@ public:
      * @param RHS: Other instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHIDepthStencilClearValue& RHS) const
+    bool operator==(const CTextureDepthStencilValue& RHS) const
     {
         return (Depth == RHS.Depth) && (Stencil && RHS.Stencil);
     }
@@ -751,7 +763,7 @@ public:
      * @param RHS: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHIDepthStencilClearValue& RHS) const
+    bool operator!=(const CTextureDepthStencilValue& RHS) const
     {
         return !(*this == RHS);
     }
@@ -766,7 +778,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITextureClearValue
 
-class CRHITextureClearValue
+class CTextureClearValue
 {
 public:
 
@@ -779,10 +791,10 @@ public:
     /**
      * @brief: Default Constructor that creates a black clear color
      */
-    CRHITextureClearValue()
+    CTextureClearValue()
         : Type(EType::Color)
         , Format(ERHIFormat::Unknown)
-        , Color(0.0f, 0.0f, 0.0f, 1.0f)
+        , ColorValue(0.0f, 0.0f, 0.0f, 1.0f)
     { }
 
     /**
@@ -792,10 +804,10 @@ public:
      * @param InDepth: Depth-value
      * @param InStencil: Stencil-value
      */
-    CRHITextureClearValue(ERHIFormat InFormat, float InDepth, uint8 InStencil)
+    CTextureClearValue(ERHIFormat InFormat, float InDepth, uint8 InStencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
-        , DepthStencil(Depth, Stencil)
+        , DepthStencilValue(InDepth, InStencil)
     { }
 
     /**
@@ -807,10 +819,10 @@ public:
      * @param InB: Blue-Channel value
      * @param InA: Alpha-Channel value
      */
-    CRHITextureClearValue(ERHIFormat InFormat, float InR, float InG, float InB, float InA)
+    CTextureClearValue(ERHIFormat InFormat, float InR, float InG, float InB, float InA)
         : Type(EType::Color)
         , Format(InFormat)
-        , Color(r, g, b, a)
+        , ColorValue(InR, InG, InB, InA)
     { }
 
     /**
@@ -818,18 +830,19 @@ public:
      * 
      * @param Other: Instance to copy
      */
-    CRHITextureClearValue(const CRHITextureClearValue& Other)
+    CTextureClearValue(const CTextureClearValue& Other)
         : Type(Other.Type)
         , Format(Other.Format)
-        , Color()
+        , ColorValue()
     {
-        if (Other.Type == EType::Color)
+        if (Other.IsColorValue())
         {
-            Color = Other.Color;
+            ColorValue = Other.ColorValue;
         }
-        else if (Other.Type == EType::DepthStencil)
+        else
         {
-            DepthStencil = Other.DepthStencil;
+            Check(Other.IsDepthStencilValue());
+            DepthStencilValue = Other.DepthStencilValue;
         }
     }
 
@@ -840,7 +853,7 @@ public:
      */
     bool IsColorValue() const { return (Type == EType::Color); }
 
-        /**
+    /**
      * @brief: Check if the clear value is a DepthStencil-Value
      * 
      * @return: Returns a true if the value is a DepthStencilClearValue
@@ -855,7 +868,7 @@ public:
     CFloatColor& AsColor()
     {
         Check(IsColorValue());
-        return Color;
+        return ColorValue;
     }
 
     /**
@@ -866,7 +879,7 @@ public:
     const CFloatColor& AsColor() const
     {
         Check(IsColorValue());
-        return Color;
+        return ColorValue;
     }
 
     /**
@@ -874,10 +887,10 @@ public:
      * 
      * @return: Returns a DepthStencilClearValue
      */
-    CRHIDepthStencilClearValue& AsDepthStencil()
+    CTextureDepthStencilValue& AsDepthStencil()
     {
         Check(IsDepthStencilValue());
-        return DepthStencil;
+        return DepthStencilValue;
     }
 
     /**
@@ -885,10 +898,10 @@ public:
      * 
      * @return: Returns a DepthStencilClearValue
      */
-    const CRHIDepthStencilClearValue& AsDepthStencil() const
+    const CTextureDepthStencilValue& AsDepthStencil() const
     {
         Check(IsDepthStencilValue());
-        return DepthStencil;
+        return DepthStencilValue;
     }
 
     /**
@@ -897,24 +910,21 @@ public:
      * @param RHS: Instance to copy
      * @return: Returns a reference to this instance
      */
-    CRHITextureClearValue& operator=(const CRHITextureClearValue& RHS)
+    CTextureClearValue& operator=(const CTextureClearValue& RHS)
     {
         Type   = RHS.Type;
         Format = RHS.Format;
 
         if (RHS.IsColorValue())
         {
-            Color = RHS.Color;
-        }
-        else if (RHS.IsDepthStencilValue())
-        {
-            DepthStencil = RHS.DepthStencil;
+            ColorValue = RHS.ColorValue;
         }
         else
         {
-            Check(false);
+            Check(RHS.IsDepthStencilValue());
+            DepthStencilValue = RHS.DepthStencilValue;
         }
-
+        
         return *this;
     }
 
@@ -924,7 +934,7 @@ public:
      * @param RHS: Instance to compare with
      * @return: Returns true if the instances are equal
      */
-    bool operator==(const CRHITextureClearValue& RHS) const
+    bool operator==(const CTextureClearValue& RHS) const
     {
         if ((Type != RHS.Type) || (Format != RHS.Format))
         {
@@ -933,15 +943,11 @@ public:
 
         if (IsColorValue())
         {
-            return (Color == RHS.Color);
-        }
-        else if (IsDepthStencilValue())
-        {
-            return (DepthStencil == RHS.DepthStencil);
+            return (ColorValue == RHS.ColorValue);
         }
 
-        Check(false);
-        return false;
+        Check(IsDepthStencilValue());
+        return (DepthStencilValue == RHS.DepthStencilValue);
     }
 
     /**
@@ -950,7 +956,7 @@ public:
      * @param RHS: Instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator!=(const CRHITextureClearValue& RHS) const
+    bool operator!=(const CTextureClearValue& RHS) const
     {
         return !(*this == RHS);
     }
@@ -964,315 +970,9 @@ public:
     union
     {
         /** @brief: Color-value */
-        CFloatColor Color;
+        CFloatColor ColorValue;
 
         /** @brief: DepthStencil-value */
-        CRHIDepthStencilClearValue DepthStencil;
+        CTextureDepthStencilValue DepthStencilValue;
     };
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIResourceData
-
-class CRHIResourceData
-{
-public:
-
-    CRHIResourceData()
-        : Data(nullptr)
-    { }
-
-    CRHIResourceData(const void* InData, uint32 InSizeInBytes)
-        : Data(InData)
-        , SizeInBytes(InSizeInBytes)
-    { }
-
-    CRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth)
-        : Data(InData)
-        , Format(InFormat)
-        , Width(InWidth)
-        , Height(0)
-    { }
-
-    CRHIResourceData(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
-        : Data(InData)
-        , Format(InFormat)
-        , Width(InWidth)
-        , Height(InHeight)
-    { }
-
-    void Set(const void* InData, uint32 InSizeInBytes)
-    {
-        Data        = InData;
-        SizeInBytes = InSizeInBytes;
-    }
-
-    void Set(const void* InData, ERHIFormat InFormat, uint32 InWidth)
-    {
-        Data   = InData;
-        Format = InFormat;
-        Width  = InWidth;
-    }
-
-    void Set(const void* InData, ERHIFormat InFormat, uint32 InWidth, uint32 InHeight)
-    {
-        Set(InData, InFormat, InWidth);
-        Height = InHeight;
-    }
-
-    const void* GetData() const
-    {
-        return Data;
-    }
-
-    uint32 GetSizeInBytes() const
-    {
-        return SizeInBytes;
-    }
-
-    uint32 GetPitch() const
-    {
-        return GetByteStrideFromFormat(Format) * Width;
-    }
-
-    uint32 GetSlicePitch() const
-    {
-        return GetByteStrideFromFormat(Format) * Width * Height;
-    }
-
-    bool operator==(const CRHIResourceData& RHS) const
-    {
-        return (Data   == RHS.Data) 
-            && (Format == RHS.Format) 
-            && (Width  == RHS.Width) 
-            && (Height == RHS.Height);
-    }
-
-    bool operator!=(const CRHIResourceData& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-private:
-    const void* Data;
-    
-    union
-    {
-        struct
-        {
-            uint32 SizeInBytes;
-        };
-        
-        struct
-        {
-            ERHIFormat Format;
-            uint32     Width;
-            uint32     Height;
-        };
-    };
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRenderTargetEntry
-
-struct SRHIRenderTargetEntry
-{
-    enum class EType : uint8
-    {
-        Texture = 1,
-        View    = 2
-    };
-
-    SRHIRenderTargetEntry()
-        : Type(EType::Texture)
-        , Texture(nullptr)
-    { }
-
-    explicit SRHIRenderTargetEntry(CRHITexture* InTexture)
-        : Type(EType::Texture)
-        , Texture(InTexture)
-    { }
-
-    explicit SRHIRenderTargetEntry(CRHIRenderTargetView* InView)
-        : Type(EType::View)
-        , View(InView)
-    { }
-
-    SRHIRenderTargetEntry(const SRHIRenderTargetEntry& Other)
-        : Type(Other.Type)
-        , Texture(Other.Texture)
-    { }
-
-    SRHIRenderTargetEntry& operator=(const SRHIRenderTargetEntry& RHS)
-    {
-        Type = RHS.Type;
-        Texture = RHS.Texture;
-        return *this;
-    }
-
-    bool operator==(const SRHIRenderTargetEntry& RHS) const
-    {
-        return (Type == RHS.Type) && (Texture == RHS.Texture);
-    }
-
-    bool operator!=(const SRHIRenderTargetEntry& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    EType Type;
-
-    union
-    {
-        CRHITexture*        Texture;
-        CRHIRenderTargetView* View;
-    };
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIDepthStencilEntry
-
-struct SRHIDepthStencilEntry
-{
-    enum class EType : uint8
-    {
-        Texture = 1,
-        View    = 2
-    };
-
-    SRHIDepthStencilEntry()
-        : Type(EType::Texture)
-        , Texture(nullptr)
-    { }
-
-    explicit SRHIDepthStencilEntry(CRHITexture* InTexture)
-        : Type(EType::Texture)
-        , Texture(InTexture)
-    { }
-
-    explicit SRHIDepthStencilEntry(CRHIDepthStencilView* InView)
-        : Type(EType::View)
-        , View(InView)
-    { }
-
-    SRHIDepthStencilEntry(const SRHIDepthStencilEntry& Other)
-        : Type(Other.Type)
-        , Texture(Other.Texture)
-    { }
-
-    SRHIDepthStencilEntry& operator=(const SRHIDepthStencilEntry& RHS)
-    {
-        Type = RHS.Type;
-        Texture = RHS.Texture;
-        return *this;
-    }
-
-    bool operator==(const SRHIDepthStencilEntry& RHS) const
-    {
-        return (Type == RHS.Type) && (Texture == RHS.Texture);
-    }
-
-    bool operator!=(const SRHIDepthStencilEntry& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    EType Type;
-
-    union
-    {
-        CRHITexture*        Texture;
-        CRHIDepthStencilView* View;
-    };
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRenderPassDesc
-
-class CRHIRenderPass
-{
-public:
-
-    CRHIRenderPass()
-        : RenderTargets()
-        , NumRenderTargets(0)
-        , DepthStencil()
-    { }
-
-    CRHIRenderPass(CRHITexture* const* InRenderTargets, uint32 InNumRenderTargets, CRHITexture* InDepthStencil)
-        : RenderTargets()
-        , NumRenderTargets(0)
-        , DepthStencil(InDepthStencil)
-    {
-        SetRenderTargets(InRenderTargets, InNumRenderTargets);
-    }
-
-    CRHIRenderPass(CRHIRenderTargetView* const* InRenderTargetViews, uint32 InNumRenderTargetViews, CRHIDepthStencilView* InDepthStencilView)
-        : RenderTargets()
-        , NumRenderTargets(0)
-        , DepthStencil(InDepthStencilView)
-    {
-        SetRenderTargets(InRenderTargetViews, InNumRenderTargetViews);
-    }
-
-    void SetRenderTargets(CRHITexture* const* InRenderTargets, uint32 InNumRenderTargets)
-    {
-        Check(InRenderTargetViews < ArrayCount(RenderTargets));
-
-        for (uint32 Index = 0; Index < InNumRenderTargets; ++Index)
-        {
-            RenderTargets[Index] = SRHIRenderTargetEntry(InRenderTargets[Index]);
-        }
-
-        NumRenderTargets = InNumRenderTargets;
-    }
-
-    void SetRenderTargets(CRHIRenderTargetView* const* InRenderTargetViews, uint32 InNumRenderTargetViews)
-    {
-        Check(InRenderTargetViews < ArrayCount(RenderTargets));
-        
-        for (uint32 Index = 0; Index < InNumRenderTargetViews; ++Index)
-        {
-            RenderTargets[Index] = SRHIRenderTargetEntry(InRenderTargetViews[Index]);
-        }
-
-        NumRenderTargets = InNumRenderTargetViews;
-    }
-
-    void SetDepthStencil(CRHITexture* InDepthStencil)
-    {
-        DepthStencil = SRHIDepthStencilEntry(InDepthStencil);
-    }
-
-    void SetDepthStencil(CRHIDepthStencilView* InDepthStencilView)
-    {
-        DepthStencil = SRHIDepthStencilEntry(InDepthStencilView);
-    }
-
-    bool operator==(const CRHIRenderPass& RHS) const
-    {
-        if (NumRenderTargets != RHS.NumRenderTargets)
-        {
-            return false;
-        }
-
-        for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
-        {
-            if (RenderTargets[Index] != RHS.RenderTargets[Index])
-            {
-                return false;
-            }
-        }
-
-        return (DepthStencil == RHS.DepthStencil);
-    }
-
-    bool operator==(const CRHIRenderPass& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    SRHIRenderTargetEntry RenderTargets[8];
-    uint32                NumRenderTargets;
-    SRHIDepthStencilEntry DepthStencil;
 };

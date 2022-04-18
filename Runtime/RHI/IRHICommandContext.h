@@ -1,18 +1,20 @@
 #pragma once
 #include "RHITypes.h"
 #include "RHIResources.h"
+#include "RHIShader.h"
+#include "RHIPipeline.h"
 
 #define RHI_SHADER_LOCAL_BINDING_COUNT (4)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyBufferDesc
+// SCopyBufferDesc
 
-struct SRHICopyBufferDesc
+struct SCopyBufferDesc
 {
     /**
      * @brief: Default Constructor
      */
-    SRHICopyBufferDesc()
+    SCopyBufferDesc()
         : SourceOffset(0)
         , DestinationOffset(0)
         , Size(0)
@@ -25,20 +27,18 @@ struct SRHICopyBufferDesc
      * @param InDestinationOffset: Offset in the destination buffer
      * @param InSize: Size to copy
      */
-    SRHICopyBufferDesc(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSize)
+    SCopyBufferDesc(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSize)
         : SourceOffset(InSourceOffset)
         , DestinationOffset(InDestinationOffset)
         , Size(InSize)
     { }
 
-    bool operator==(const SRHICopyBufferDesc& RHS) const
+    bool operator==(const SCopyBufferDesc& RHS) const
     {
-        return (SourceOffset      == RHS.SourceOffset)
-            && (DestinationOffset == RHS.DestinationOffset)
-            && (Size              == RHS.Size);
+        return (SourceOffset == RHS.SourceOffset) && (DestinationOffset == RHS.DestinationOffset) && (Size == RHS.Size);
     }
 
-    bool operator!=(const SRHICopyBufferDesc& RHS) const
+    bool operator!=(const SCopyBufferDesc& RHS) const
     {
         return !(*this == RHS);
     }
@@ -49,33 +49,30 @@ struct SRHICopyBufferDesc
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyTextureSubresourceInfo
+// SCopyTextureSubresourceInfo
 
-struct SRHICopyTextureSubresourceInfo
+struct SCopyTextureSubresourceInfo
 {
-    SRHICopyTextureSubresourceInfo()
+    SCopyTextureSubresourceInfo()
         : SubresourceIndex(0)
         , x(0)
         , y(0)
         , z(0)
     { }
 
-    SRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
+    SCopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
         : SubresourceIndex(InSubresourceIndex)
         , x(InX)
         , y(InY)
         , z(InZ)
     { }
 
-    bool operator==(const SRHICopyTextureSubresourceInfo& RHS) const
+    bool operator==(const SCopyTextureSubresourceInfo& RHS) const
     {
-        return (SubresourceIndex == RHS.SubresourceIndex)
-            && (x                == RHS.x)
-            && (y                == RHS.y)
-            && (z                == RHS.z);
+        return (SubresourceIndex == RHS.SubresourceIndex) && (x == RHS.x) && (y == RHS.y) && (z == RHS.z);
     }
 
-    bool operator==(const SRHICopyTextureSubresourceInfo& RHS) const
+    bool operator==(const SCopyTextureSubresourceInfo& RHS) const
     {
         return !(*this == RHS);
     }
@@ -89,9 +86,9 @@ struct SRHICopyTextureSubresourceInfo
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRHICopyTextureDesc
 
-struct SRHICopyTextureDesc
+struct SCopyTextureDesc
 {
-    SRHICopyTextureDesc()
+    SCopyTextureDesc()
         : Source()
         , Destination()
         , Width(0)
@@ -99,7 +96,7 @@ struct SRHICopyTextureDesc
         , Depth(0)
     { }
 
-    bool operator==(const SRHICopyTextureDesc& RHS) const
+    bool operator==(const SCopyTextureDesc& RHS) const
     {
         return (Source      == RHS.Source)
             && (Destination == RHS.Destination)
@@ -108,13 +105,13 @@ struct SRHICopyTextureDesc
             && (Depth       == RHS.Depth);
     }
 
-    bool operator==(const SRHICopyTextureDesc& RHS) const
+    bool operator==(const SCopyTextureDesc& RHS) const
     {
         return !(*this == RHS);
     }
 
-    SRHICopyTextureSubresourceInfo Source;
-    SRHICopyTextureSubresourceInfo Destination;
+    SCopyTextureSubresourceInfo Source;
+    SCopyTextureSubresourceInfo Destination;
 
     uint32 Width;
     uint32 Height;
@@ -137,22 +134,20 @@ public:
         , NumConstantBuffers(0)
     { }
 
-    CRHIShaderResourceViewRef  ShaderResourceViews[RHI_SHADER_LOCAL_BINDING_COUNT];
-    uint32                     NumShaderResourceViews;
-    CRHIUnorderedAccessViewRef UnorderedAccessViews[RHI_SHADER_LOCAL_BINDING_COUNT];
-    uint32                     NumUnorderedAccessView;
-    CRHIBufferRef              ConstantBuffers[RHI_SHADER_LOCAL_BINDING_COUNT];
-    uint32                     NumConstantBuffers;
+    CRHIShaderResourceView*  ShaderResourceViews[RHI_SHADER_LOCAL_BINDING_COUNT];
+    uint32                   NumShaderResourceViews;
+    CRHIUnorderedAccessView* UnorderedAccessViews[RHI_SHADER_LOCAL_BINDING_COUNT];
+    uint32                   NumUnorderedAccessView;
+    CRHIConstantBuffer*      ConstantBuffers[RHI_SHADER_LOCAL_BINDING_COUNT];
+    uint32                   NumConstantBuffers;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBuildRayTracingGeometryDesc
+// SBuildRayTracingGeometryDesc
 
-class CRHIBuildRayTracingGeometryDesc
+struct SBuildRayTracingGeometryDesc
 {
-public:
-
-    CRHIBuildRayTracingGeometryDesc()
+    SBuildRayTracingGeometryDesc()
         : VertexBuffer(nullptr)
         , IndexBuffer(nullptr)
         , BuildType(ERayTracingStructureBuildType::Build)
@@ -164,13 +159,11 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBuildRayTracingSceneDesc
+// SBuildRayTracingSceneDesc
 
-class CRHIBuildRayTracingSceneDesc
+struct SBuildRayTracingSceneDesc
 {
-public:
-
-    CRHIBuildRayTracingSceneDesc()
+    SBuildRayTracingSceneDesc()
         : Instances(nullptr)
         , NumInstances(0)
         , ShaderLocalBinding(nullptr)
@@ -192,10 +185,14 @@ class IRHICommandContext
 {
 public:
 
-    /** @brief: Start recording commands with this context */
+    /**
+     * @brief: Start recording commands with this context 
+     */
     virtual void StartContext() = 0;
 
-    /** @brief: End recording commands with this context */
+    /** 
+     * @brief: End recording commands with this context 
+     */
     virtual void FinishContext() = 0;
 
     /**
@@ -204,7 +201,7 @@ public:
      * @param Query: Query to insert timestamp into
      * @param Index: Index in the query of the timestamp
      */
-    virtual void BeginTimeStamp(CRHITimestampQuery* Query, uint32 Index) = 0;
+    virtual void BeginTimeStamp(CRHITimeQuery* Query, uint32 Index) = 0;
     
     /**
      * @brief: End timestamp of a certain index
@@ -212,7 +209,7 @@ public:
      * @param Query: Query to insert timestamp into
      * @param Index: Index in the query of the timestamp
      */
-    virtual void EndTimeStamp(CRHITimestampQuery* Query, uint32 Index) = 0;
+    virtual void EndTimeStamp(CRHITimeQuery* Query, uint32 Index) = 0;
 
     /**
      * @brief: Clear a texture as a RenderTarget
@@ -292,21 +289,16 @@ public:
      * 
      * @param ShadingTexture: Texture containing shading-rate information
      */
-    virtual void SetShadingRateTexture(CRHITexture* ShadingTexture) = 0;
-
-    /**
-     * @brief: Set RenderTargets that should be used for an upcoming RenderPass
-     * 
-     * @param RenderTargetViews: Array of RenderTargetViews to bind
-     * @param NumRenderTargetViews: Number of RenderTargetView in the array
-     * @param DepthStencilView: DepthStencilView to bind
-     */
-    virtual void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 NumRenderTargetViews, CRHIDepthStencilView* DepthStencilView) = 0;
+    virtual void SetShadingRateTexture(CRHITexture2D* ShadingTexture) = 0;
 
     /**
      * @brief: Begin a RenderPass
+     * 
+     * @param RenderTargetViews: Array of RenderTargetViews use for the RenderPass
+     * @param NumRenderTargetViews: Number of RenderTargetViews in the Array
+     * @param DepthStencilView: DepthStencilView to set
      */
-    virtual void BeginRenderPass() = 0;
+    virtual void BeginRenderPass(CRHIRenderTargetView* const* RenderTargetViews, uint32 NumRenderTargetViews, CRHIDepthStencilView* DepthStencilView) = 0;
 
     /**
      * @brief: End the current RenderPass
@@ -374,6 +366,13 @@ public:
     virtual void SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState) = 0;
 
     /**
+     * Set the ComputePipelineState
+     *
+     * @param PipelineState: The PipelineState to use for upcoming Dispatch-calls
+     */
+    virtual void SetComputePipelineState(class CRHIComputePipelineState* PipelineState) = 0;
+
+    /**
      * @brief: Set shader constants
      * 
      * @param Shader: Shader to bind the constants to
@@ -418,10 +417,7 @@ public:
      * @param NumShaderResourceViews: Number of ShaderResourceViews in the array to bind
      * @param StartParameterIndex: ShaderResourceView index in the shader to bind the first ShaderResourceView to
      */
-    virtual void SetShaderResourceViews( CRHIShader* Shader
-                                       , CRHIShaderResourceView* const* ShaderResourceViews
-                                       , uint32 NumShaderResourceViews
-                                       , uint32 StartParameterIndex) = 0;
+    virtual void SetShaderResourceViews(CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceViews, uint32 NumShaderResourceViews, uint32 StartParameterIndex) = 0;
 
     /**
      * @brief: Set a texture as a UnorderedAccess-resource
@@ -459,10 +455,7 @@ public:
      * @param NumTextures: Number of UnorderedAccessViews in the array to bind
      * @param StartParameterIndex: UnorderedAccessView index in the shader to bind the first UnorderedAccessView to
      */
-    virtual void SetUnorderedAccessViews( CRHIShader* Shader
-                                        , CRHIUnorderedAccessView* const* UnorderedAccessViews
-                                        , uint32 NumUnorderedAccessViews
-                                        , uint32 StartParameterIndex) = 0;
+    virtual void SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 StartParameterIndex) = 0;
 
     /**
      * @breif: Bind a ConstantBuffer to a shader
@@ -471,7 +464,7 @@ public:
      * @param ConstantBuffer: Buffer to bind
      * @param ParameterIndex: ConstantBuffer index to bind to
      */
-    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIBuffer* ConstantBuffer, uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) = 0;
     
     /**
      * @breif: Bind a ConstantBuffer to a shader
@@ -481,10 +474,7 @@ public:
      * @param NumConstantBuffers: Number of buffers in the array
      * @param StartParameterIndex: ConstantBuffer index to bind the first buffer to
      */
-    virtual void SetConstantBuffers( CRHIShader* Shader
-                                   , CRHIBuffer* const* ConstantBuffers
-                                   , uint32 NumConstantBuffers
-                                   , uint32 StartParameterIndex) = 0;
+    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 StartParameterIndex) = 0;
 
     /**
      * @brief: Set a SamplerState to a Shader
@@ -524,7 +514,19 @@ public:
      * @param MipLevel: MipLevel to update
      * @param SourceData: A pointer to the data that should be copied to the Texture
      */
-    virtual void UpdateTexture2D(CRHITexture* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) = 0;
+    virtual void UpdateTexture2D(CRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* MipData) = 0;
+
+    /**
+     * @brief: Update a texture2D with data
+     *
+     * @param Dst: Texture to update
+     * @param Width: Width of the TextureData
+     * @param Height: Height of the TextureData
+     * @param ArrayIndex: ArrayIndex of the TextureData
+     * @param MipLevel: MipLevel to update
+     * @param SourceData: A pointer to the data that should be copied to the Texture
+     */
+    virtual void UpdateTexture2DArray(CRHITexture2DArray* Dst, uint32 Width, uint32 Height, uint32 MipLevel, uint32 ArrayIndex, const void* SourceData) = 0;
 
     /**
      * @brief: Resolve a texture
@@ -541,7 +543,7 @@ public:
      * @param Src: Source buffer
      * @param CopyDesc: Copy description
      */
-    virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferDesc& CopyDesc) = 0;
+    virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SCopyBufferDesc& CopyDesc) = 0;
 
     /**
      * @brief: Copy textures that have the same parameters
@@ -558,7 +560,7 @@ public:
      * @param Src: Source texture
      * @param CopyTextureDesc: Description of the texture region to copy
      */
-    virtual void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureDesc& CopyTextureDesc) = 0;
+    virtual void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SCopyTextureDesc& CopyTextureDesc) = 0;
 
     /**
      * @brief: Enqueue the resource for being destroyed, the resource should not be used anymore after this call
@@ -580,7 +582,7 @@ public:
      * @param Geometry: Geometry to build acceleration structure for
      * @param BuildDesc: Description of the acceleration structure to build
     */
-    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, const CRHIBuildRayTracingGeometryDesc& BuildDesc) = 0;
+    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, const SBuildRayTracingGeometryDesc& BuildDesc) = 0;
 
     /**
      * @brief: Build the acceleration structure of a RayTracing-Geometry instance
@@ -588,7 +590,7 @@ public:
      * @param Geometry: Geometry to build acceleration structure for
      * @param BuildDesc: Description of the acceleration structure to build
     */
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const CRHIBuildRayTracingSceneDesc& BuildDesc) = 0;
+    virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SBuildRayTracingSceneDesc& BuildDesc) = 0;
 
     /**
      * @brief: Generate MipLevels for a texture
@@ -657,19 +659,15 @@ public:
     virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) = 0;
     
     /**
-     * @brief: Make a draw-call using instances and an indexbuffer
+     * @brief: Make a draw-call using instances and an IndexBuffer
      * 
-     * @param IndexCountPerInstance: Number of indicies per instance
+     * @param IndexCountPerInstance: Number of indices per instance
      * @param InstanceCount: Number of instances to render
      * @param StartIndexLocation: Index to start render (Index in IndexBuffer)
      * @param BaseVertexLocation: Vertex to start render (Index in VertexBuffer)
      * @param StartInstanceLocation: Instance to start render (Index in InstanceBuffer)
      */
-    virtual void DrawIndexedInstanced( uint32 IndexCountPerInstance
-                                     , uint32 InstanceCount
-                                     , uint32 StartIndexLocation
-                                     , uint32 BaseVertexLocation
-                                     , uint32 StartInstanceLocation) = 0;
+    virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) = 0;
 
     /**
      * @brief: Make a compute dispatch

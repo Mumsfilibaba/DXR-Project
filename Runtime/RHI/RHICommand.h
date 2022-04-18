@@ -47,7 +47,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandBeginTimeStamp)
 {
 public:
-    FORCEINLINE CRHICommandBeginTimeStamp(CRHITimestampQuery* InQuery, uint32 InIndex)
+    FORCEINLINE CRHICommandBeginTimeStamp(CRHITimeQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
     { }
@@ -57,8 +57,8 @@ public:
         CommandContext.BeginTimeStamp(Query, Index);
     }
 
-    CRHITimestampQuery* Query;
-    uint32              Index;
+    CRHITimeQuery* Query;
+    uint32         Index;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -67,7 +67,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandEndTimeStamp)
 {
 public:
-    FORCEINLINE CRHICommandEndTimeStamp(CRHITimestampQuery* InQuery, uint32 InIndex)
+    FORCEINLINE CRHICommandEndTimeStamp(CRHITimeQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
     { }
@@ -77,8 +77,8 @@ public:
         CommandContext.EndTimeStamp(Query, Index);
     }
 
-    CRHITimestampQuery* Query;
-    uint32              Index;
+    CRHITimeQuery* Query;
+    uint32         Index;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -100,7 +100,7 @@ public:
     }
 
     CRHITexture* Texture;
-    float          ClearColor[4];
+    float        ClearColor[4];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -188,7 +188,7 @@ public:
     }
 
     CRHITexture* Texture;
-    float          ClearColor[4];
+    float        ClearColor[4];
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -281,7 +281,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandSetShadingRateTexture)
 {
 public:
-    FORCEINLINE CRHICommandSetShadingRateTexture(CRHITexture* InShadingImage)
+    FORCEINLINE CRHICommandSetShadingRateTexture(CRHITexture2D* InShadingImage)
         : ShadingImage(InShadingImage)
     { }
 
@@ -290,7 +290,7 @@ public:
         CommandContext.SetShadingRateTexture(ShadingImage);
     }
 
-    CRHITexture* ShadingImage;
+    CRHITexture2D* ShadingImage;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -369,16 +369,13 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandBeginRenderPass)
 {
 public:
-    FORCEINLINE CRHICommandBeginRenderPass(const CRHIRenderPass& InRenderPass)
-        : RenderPass(InRenderPass)
-    { }
+
+    CRHICommandBeginRenderPass() = default;
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BeginRenderPass(RenderPass);
+        CommandContext.BeginRenderPass();
     }
-
-    CRHIRenderPass RenderPass;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -420,7 +417,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandSetVertexBuffers)
 {
 public:
-    FORCEINLINE CRHICommandSetVertexBuffers(CRHIBuffer** InVertexBuffers, uint32 InVertexBufferCount, uint32 InStartSlot)
+    FORCEINLINE CRHICommandSetVertexBuffers(CRHIBuffer* const* InVertexBuffers, uint32 InVertexBufferCount, uint32 InStartSlot)
         : VertexBuffers(InVertexBuffers)
         , VertexBufferCount(InVertexBufferCount)
         , StartSlot(InStartSlot)
@@ -431,9 +428,9 @@ public:
         CommandContext.SetVertexBuffers(VertexBuffers, VertexBufferCount, StartSlot);
     }
 
-    CRHIBuffer** VertexBuffers;
-    uint32       VertexBufferCount;
-    uint32       StartSlot;
+    CRHIBuffer* const* VertexBuffers;
+    uint32             VertexBufferCount;
+    uint32             StartSlot;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -452,7 +449,7 @@ public:
         CommandContext.SetIndexBuffer(IndexBuffer, IndexFormat);
     }
 
-    CRHIBuffer*     IndexBuffer;
+    CRHIBuffer*  IndexBuffer;
     EIndexFormat IndexFormat;
 };
 
@@ -710,7 +707,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandSetConstantBuffer)
 {
 public:
-    FORCEINLINE CRHICommandSetConstantBuffer(CRHIShader* InShader, CRHIBuffer* InConstantBuffer, uint32 InParameterIndex)
+    FORCEINLINE CRHICommandSetConstantBuffer(CRHIShader* InShader, CRHIConstantBuffer* InConstantBuffer, uint32 InParameterIndex)
         : Shader(InShader)
         , ConstantBuffer(InConstantBuffer)
         , ParameterIndex(InParameterIndex)
@@ -721,9 +718,9 @@ public:
         CommandContext.SetConstantBuffer(Shader, ConstantBuffer, ParameterIndex);
     }
 
-    CRHIShader* Shader;
-    CRHIBuffer* ConstantBuffer;
-    uint32      ParameterIndex;
+    CRHIShader*         Shader;
+    CRHIConstantBuffer* ConstantBuffer;
+    uint32              ParameterIndex;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -733,7 +730,7 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandSetConstantBuffers)
 {
 public:
     FORCEINLINE CRHICommandSetConstantBuffers( CRHIShader* InShader
-                                             , CRHIBuffer* const* InConstantBuffers
+                                             , CRHIConstantBuffer* const* InConstantBuffers
                                              , uint32 InNumConstantBuffers
                                              , uint32 InStartParameterIndex)
         : Shader(InShader)
@@ -747,10 +744,10 @@ public:
         CommandContext.SetConstantBuffers(Shader, ConstantBuffers, NumConstantBuffers, StartParameterIndex);
     }
 
-    CRHIShader*        Shader;
-    CRHIBuffer* const* ConstantBuffers;
-    uint32             NumConstantBuffers;
-    uint32             StartParameterIndex;
+    CRHIShader*                Shader;
+    CRHIConstantBuffer* const* ConstantBuffers;
+    uint32                     NumConstantBuffers;
+    uint32                     StartParameterIndex;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -830,10 +827,7 @@ public:
         , DestinationOffsetInBytes(InDestinationOffsetInBytes)
         , SizeInBytes(InSizeInBytes)
         , SourceData(InSourceData)
-    {
-        Check(InSourceData  != nullptr);
-        Check(InSizeInBytes != 0);
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
@@ -852,22 +846,20 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandUpdateTexture2D)
 {
 public:
-    FORCEINLINE CRHICommandUpdateTexture2D(CRHITexture* InDestination, uint32 InWidth, uint32 InHeight, uint32 InMipLevel, const void* InSourceData)
+    FORCEINLINE CRHICommandUpdateTexture2D(CRHITexture2D* InDestination, uint32 InWidth, uint32 InHeight, uint32 InMipLevel, const void* InSourceData)
         : Destination(InDestination)
         , Width(InWidth)
         , Height(InHeight)
         , MipLevel(InMipLevel)
         , SourceData(InSourceData)
-    {
-        Check(InSourceData != nullptr);
-    }
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         CommandContext.UpdateTexture2D(Destination, Width, Height, MipLevel, SourceData);
     }
 
-    CRHITexture* Destination;
+    CRHITexture2D* Destination;
     uint32         Width;
     uint32         Height;
     uint32         MipLevel;
@@ -880,7 +872,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandCopyBuffer)
 {
 public:
-    FORCEINLINE CRHICommandCopyBuffer(CRHIBuffer* InDestination, CRHIBuffer* InSource, const SRHICopyBufferInfo& InCopyBufferInfo)
+    FORCEINLINE CRHICommandCopyBuffer(CRHIBuffer* InDestination, CRHIBuffer* InSource, const SCopyBufferDesc& InCopyBufferInfo)
         : Destination(InDestination)
         , Source(InSource)
         , CopyBufferInfo(InCopyBufferInfo)
@@ -891,9 +883,9 @@ public:
         CommandContext.CopyBuffer(Destination, Source, CopyBufferInfo);
     }
 
-    CRHIBuffer*        Destination;
-    CRHIBuffer*        Source;
-    SRHICopyBufferInfo CopyBufferInfo;
+    CRHIBuffer*     Destination;
+    CRHIBuffer*     Source;
+    SCopyBufferDesc CopyBufferInfo;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -922,7 +914,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandCopyTextureRegion)
 {
 public:
-    FORCEINLINE CRHICommandCopyTextureRegion(CRHITexture* InDestination, CRHITexture* InSource, const SRHICopyTextureDesc& InCopyTextureInfo)
+    FORCEINLINE CRHICommandCopyTextureRegion(CRHITexture* InDestination, CRHITexture* InSource, const SCopyTextureDesc& InCopyTextureInfo)
         : Destination(InDestination)
         , Source(InSource)
         , CopyTextureInfo(InCopyTextureInfo)
@@ -933,9 +925,9 @@ public:
         CommandContext.CopyTextureRegion(Destination, Source, CopyTextureInfo);
     }
 
-    CRHITexture*        Destination;
-    CRHITexture*        Source;
-    SRHICopyTextureDesc CopyTextureInfo;
+    CRHITexture*     Destination;
+    CRHITexture*     Source;
+    SCopyTextureDesc CopyTextureInfo;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -980,25 +972,18 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandBuildRayTracingGeometry)
 {
 public:
-    FORCEINLINE CRHICommandBuildRayTracingGeometry( CRHIRayTracingGeometry* InRayTracingGeometry
-                                                  , CRHIBuffer* InVertexBuffer
-                                                  , CRHIBuffer* InIndexBuffer
-                                                  , bool bInUpdate)
+    FORCEINLINE CRHICommandBuildRayTracingGeometry( CRHIRayTracingGeometry* InRayTracingGeometry, const SBuildRayTracingGeometryDesc& InBuildDesc)
         : RayTracingGeometry(InRayTracingGeometry)
-        , VertexBuffer(InVertexBuffer)
-        , IndexBuffer(InIndexBuffer)
-        , bUpdate(bInUpdate)
+        , BuildDesc(InBuildDesc)
     { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BuildRayTracingGeometry(RayTracingGeometry, VertexBuffer, IndexBuffer, bUpdate);
+        CommandContext.BuildRayTracingGeometry(RayTracingGeometry, BuildDesc);
     }
 
-    CRHIRayTracingGeometry* RayTracingGeometry;
-    CRHIBuffer*             VertexBuffer;
-    CRHIBuffer*             IndexBuffer;
-    bool                    bUpdate;
+    CRHIRayTracingGeometry*      RayTracingGeometry;
+    SBuildRayTracingGeometryDesc BuildDesc;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1007,25 +992,18 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandBuildRayTracingScene)
 {
 public:
-    FORCEINLINE CRHICommandBuildRayTracingScene( CRHIRayTracingScene* InRayTracingScene
-                                               , const SRHIRayTracingGeometryInstance* InInstances
-                                               , uint32 InNumInstances
-                                               , bool bInUpdate)
+    FORCEINLINE CRHICommandBuildRayTracingScene( CRHIRayTracingScene* InRayTracingScene, const SBuildRayTracingSceneDesc& InBuildDesc)
         : RayTracingScene(InRayTracingScene)
-        , Instances(InInstances)
-        , NumInstances(InNumInstances)
-        , bUpdate(bInUpdate)
+        , BuildDesc(InBuildDesc)
     { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BuildRayTracingScene(RayTracingScene, Instances, NumInstances, bUpdate);
+        CommandContext.BuildRayTracingScene(RayTracingScene, BuildDesc);
     }
 
-    CRHIRayTracingScene*                  RayTracingScene;
-    const SRHIRayTracingGeometryInstance* Instances;
-    uint32                                NumInstances;
-    bool                                  bUpdate;
+    CRHIRayTracingScene*      RayTracingScene;
+    SBuildRayTracingSceneDesc BuildDesc;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1063,7 +1041,7 @@ public:
         CommandContext.TransitionTexture(Texture, BeforeState, AfterState);
     }
 
-    CRHITexture*      Texture;
+    CRHITexture*    Texture;
     EResourceAccess BeforeState;
     EResourceAccess AfterState;
 };
@@ -1085,7 +1063,7 @@ public:
         CommandContext.TransitionBuffer(Buffer, BeforeState, AfterState);
     }
 
-    CRHIBuffer*       Buffer;
+    CRHIBuffer*     Buffer;
     EResourceAccess BeforeState;
     EResourceAccess AfterState;
 };
@@ -1297,6 +1275,9 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandDebugBreak)
 {
 public:
+
+    CRHICommandDebugBreak() = default;
+
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         UNREFERENCED_VARIABLE(CommandContext);
@@ -1310,6 +1291,9 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandBeginExternalCapture)
 {
 public:
+
+    CRHICommandBeginExternalCapture() = default;
+
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         CommandContext.BeginExternalCapture();
@@ -1322,6 +1306,9 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandEndExternalCapture)
 {
 public:
+
+    CRHICommandEndExternalCapture() = default;
+
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         CommandContext.EndExternalCapture();

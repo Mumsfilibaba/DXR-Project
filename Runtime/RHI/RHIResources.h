@@ -1,5 +1,6 @@
 #pragma once
 #include "RHITypes.h"
+#include "IRHIResource.h"
 
 #include "Core/Math/Vector3.h"
 #include "Core/Math/IntVector3.h"
@@ -15,7 +16,13 @@ class CRHIRayTracingGeometryInstance;
 typedef TSharedRef<class CRHIResource>            CRHIResourceRef;
 
 typedef TSharedRef<class CRHIBuffer>              CRHIBufferRef;
+typedef TSharedRef<class CRHIConstantBuffer>      CRHIConstantBufferRef;
+
 typedef TSharedRef<class CRHITexture>             CRHITextureRef;
+typedef TSharedRef<class CRHITexture2D>           CRHITexture2DRef;
+typedef TSharedRef<class CRHITexture2DArray>      CRHITexture2DArrayRef;
+typedef TSharedRef<class CRHITextureCube>         CRHITextureCubeRef;
+typedef TSharedRef<class CRHITexture3D>           CRHITexture3DRef;
 
 typedef TSharedRef<class CRHIShaderResourceView>  CRHIShaderResourceViewRef;
 typedef TSharedRef<class CRHIUnorderedAccessView> CRHIUnorderedAccessViewRef;
@@ -27,110 +34,31 @@ typedef TSharedRef<class CRHISamplerState>        CRHISamplerStateRef;
 typedef TSharedRef<class CRHIRayTracingGeometry>  CRHIRayTracingGeometryRef;
 typedef TSharedRef<class CRHIRayTracingScene>     CRHIRayTracingSceneRef;
 
-typedef TSharedRef<class CRHITimestampQuery>      CRHITimestampQueryRef;
+typedef TSharedRef<class CRHITimeQuery>           CRHITimeQueryRef;
 
 typedef TSharedRef<class CRHIViewport>            CRHIViewportRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIResourceType
-
-enum class ERHIResourceType : uint8
-{
-    Unknown                 = 0,
-    Buffer                  = 1,
-    Texture                 = 2,
-
-    ShaderResourceView      = 3,
-    UnorderedAccessView     = 4,
-    RenderTargetView        = 5,
-    DepthStencilView        = 6,
-
-    RayTracingGeometry      = 7,
-    RayTracingScene         = 8,
-
-    GraphicsPipelineState   = 9,
-    ComputePipelineState    = 10,
-    RayTracingPipelineState = 11,
-
-    DepthStencilState       = 12,
-    RasterizerState         = 13,
-    VertexInputLayout       = 14,
-
-    SamplerState            = 15,
-
-    Shader                  = 16,
-
-    Viewport                = 17,
-
-    TimestampQuery          = 18,
-};
-
-inline const char* ToString(ERHIResourceType ResourceType)
-{
-    switch (ResourceType)
-    {
-    case ERHIResourceType::Buffer:                  return "Buffer";
-    case ERHIResourceType::Texture:                 return "Texture";
-    
-    case ERHIResourceType::ShaderResourceView:      return "ShaderResourceView";
-    case ERHIResourceType::UnorderedAccessView:     return "UnorderedAccessView";
-    case ERHIResourceType::RenderTargetView:        return "RenderTargetView";
-    case ERHIResourceType::DepthStencilView:        return "DepthStencilView";
-    
-    case ERHIResourceType::RayTracingGeometry:      return "RayTracingGeometry";
-    case ERHIResourceType::RayTracingScene:         return "RayTracingScene";
-    
-    case ERHIResourceType::GraphicsPipelineState:   return "GraphicsPipelineState";
-    case ERHIResourceType::ComputePipelineState:    return "ComputePipelineState";
-    case ERHIResourceType::RayTracingPipelineState: return "RayTracingPipelineState";
-
-    case ERHIResourceType::DepthStencilState:       return "DepthStencilState";
-    case ERHIResourceType::RasterizerState:         return "RasterizerState";
-    case ERHIResourceType::VertexInputLayout:       return "VertexInputLayout";
-    
-    case ERHIResourceType::SamplerState:            return "SamplerState";
-
-    case ERHIResourceType::Shader:                  return "Shader";
-
-    case ERHIResourceType::Viewport:                return "Viewport";
-    default:                                        return "Unknown";
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIResource
 
-class RHI_API CRHIResource
+class CRHIResource : public IRHIResource
 {
 public:
 
     /**
-     * @brief: Constructor taking the type of resource as argument
-     * 
-     * @param InResourceType: The type of resource being created
+     * @brief: Default Constructor
      */
-    CRHIResource(ERHIResourceType InResourceType)
-        : Type(InResourceType)
-        , StrongReferences(1)
+    CRHIResource()
+        : StrongReferences(1)
     { }
 
-    /**
-     * @brief: Add a reference to the reference-count, the new count is returned
-     * 
-     * @return: Returns the the Reference-Count
-     */
-    int32 AddRef()
+    virtual int32 AddRef() override final
     {
         Check(StrongReferences.Load() > 0);
         ++StrongReferences;
     }
 
-    /**
-     * @brief: Release a reference by decreasing the reference-count
-     * 
-     * @return: Returns the reference count
-     */
-    int32 Release()
+    virtual int32 Release() override final
     {
         const int32 RefCount = --StrongReferences;
         Check(RefCount >= 0);
@@ -143,12 +71,7 @@ public:
         return RefCount;
     }
 
-    /**
-     * @brief: Destroy the reference directly, bypassing the reference-count
-     * 
-     * @return: Returns the reference count
-     */
-    int32 Destroy()
+    virtual int32 Destroy() override final
     {
         const int32 RefCount = StrongReferences.Load();
         Check(RefCount > 0);
@@ -158,23 +81,15 @@ public:
         return RefCount;
     }
 
-    /**
-     * @brief: Retrieve the type of the resource
-     * 
-     * @return: Returns the type of the resource
-     */
-    ERHIResourceType GetType() const { return Type; }
-
 protected:
+
     virtual ~CRHIResource() = default;
 
-private:
     void Destroy_Internal()
     {
         delete this;
     }
-    
-    ERHIResourceType    Type;
+
     mutable AtomicInt32 StrongReferences;
 };
 
@@ -229,225 +144,45 @@ enum class EBufferUsageFlags : uint8
     Readback             = FLAG(2), // CPU readable Memory
     Dynamic              = FLAG(3), // Dynamic Memory
 
-    AllowVertexBuffer    = FLAG(5), // Can be used as VertexBuffer
-    AllowIndexBuffer     = FLAG(6), // Can be used as IndexBuffer
     AllowUnorderedAccess = FLAG(7), // Can be used in UnorderedAccessViews
     AllowShaderResource  = FLAG(8), // Can be used in ShaderResourceViews
-    AllowConstantBuffer  = FLAG(9), // Can be used as a ConstantBuffer (Must be exclusive)
 
     RWBuffer = AllowUnorderedAccess | AllowShaderResource
 };
 
-ENUM_OPERATORS(EBufferUsageFlags);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBufferDesc
-
-class RHI_API CRHIBufferDesc
-{
-public:
-
-    /**
-     * @brief: Default Constructor
-     */
-    CRHIBufferDesc()
-        : Size(0)
-        , ElementStride(0)
-        , UsageFlags(EBufferUsageFlags::None)
-    { }
-
-    /**
-     * @brief: Constructor
-     * 
-     * @param InSize: Size of the buffer in bytes
-     * @param InStride: Stride of each element in the buffer
-     * @param InFlags: Flags that describes the usage of the buffer
-     */
-    CRHIBufferDesc(uint32 InSize, uint16 InStride, EBufferUsageFlags InFlags)
-        : Size(InSize)
-        , ElementStride(InStride)
-        , UsageFlags(InFlags)
-    { }
-
-    /**
-     * @brief: Check if the Buffer can be used as a UnorderedAccessView
-     * 
-     * @return: Returns true if the buffer can be used as a UnorderedAccessView
-     */
-    bool IsUnorderedAccessBuffer() const { return bool(UsageFlags & EBufferUsageFlags::AllowUnorderedAccess); }
-    
-    /**
-     * @brief: Check if the Buffer can be used as a ShaderResourceView
-     *
-     * @return: Returns true if the buffer can be used as a ShaderResourceView
-     */
-    bool IsShaderResourceBuffer() const { return bool(UsageFlags & EBufferUsageFlags::AllowShaderResource); }
-
-    /**
-     * @brief: Check if the Buffer can be a used as a VertexBuffer
-     *
-     * @return: Returns true if the buffer can be used as a VertexBuffer
-     */
-    bool IsVertexBuffer() const { return bool(UsageFlags & EBufferUsageFlags::AllowVertexBuffer); }
-
-    /**
-     * @brief: Check if the Buffer can be a used as a IndexBuffer
-     *
-     * @return: Returns true if the buffer can be used as a IndexBuffer
-     */
-    bool IsIndexBuffer() const { return bool(UsageFlags & EBufferUsageFlags::AllowIndexBuffer); }
-
-    /**
-     * @brief: Check if the Buffer can be a used as a ConstantBuffer
-     *
-     * @return: Returns true if the buffer can be used as a ConstantBuffer
-     */
-    bool IsConstantBuffer() const { return bool(UsageFlags & EBufferUsageFlags::AllowConstantBuffer); }
-
-    /**
-     * @brief: Check if the Buffer is dynamic (Dynamic Buffers are stored CPU accessible)
-     * 
-     * @return: Returns true if the Buffer is dynamic
-     */
-    bool IsDynamic()  const { return bool(UsageFlags & EBufferUsageFlags::Dynamic); }
-    
-    /**
-     * @brief: Check if the data in the Buffer can be read back to the CPU
-     *
-     * @return: Returns true if the data in the Buffer can be read back to the CPU
-     */
-    bool IsReadBack() const { return bool(UsageFlags & EBufferUsageFlags::Readback); }
-
-    /**
-     * @brief: Compare this Buffer Description to another instance
-     * 
-     * @return: Returns true if the instances are equal
-     */
-    bool operator==(const CRHIBufferDesc& RHS) const
-    {
-        return (UsageFlags == RHS.UsageFlags) && (Size == RHS.Size) && (ElementStride == RHS.ElementStride);
-    }
-
-    /**
-     * @brief: Compare this Buffer Description to another instance
-     *
-     * @return: Returns false if the instances are equal
-     */
-    bool operator!=(const CRHIBufferDesc& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    /** @brief: Size of the buffer */
-    uint32 Size;
-    
-    /** @brief: Stride of each element in the buffer */
-    uint16 ElementStride;
-
-    /** @brief: Flags of describing the usage of the buffer */
-    EBufferUsageFlags UsageFlags;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIBufferCreateDesc
-
-class RHI_API CRHIBufferCreateDesc : public CRHIBufferDesc
-{
-public:
-
-    /**
-     * @brief: Creates a BufferDesc that describes a VertexBuffer
-     * 
-     * @param NumVertices: Number of vertices in the VertexBuffer
-     * @param VertexStride: Stride of one vertex
-     * @param InFlags: Flags that describe the usage of the buffer
-     */
-    static CRHIBufferCreateDesc CreateVertexBuffer(uint32 NumVertices, uint16 VertexStride, EBufferUsageFlags InFlags = EBufferUsageFlags::None)
-    {
-        return CRHIBufferCreateDesc(NumVertices * VertexStride, VertexStride, InFlags | EBufferUsageFlags::AllowVertexBuffer);
-    }
-
-    /**
-     * @brief: Creates a BufferDesc that describes a IndexBuffer
-     *
-     * @param IndexFormat: IndexFormat of the IndexBuffer
-     * @param NumIndices: Number of indices in the buffer
-     * @param InFlags: Flags that describe the usage of the buffer
-     */
-    static CRHIBufferCreateDesc CreateIndexBuffer(EIndexFormat IndexFormat, uint32 NumIndices, EBufferUsageFlags InFlags = EBufferUsageFlags::None)
-    {
-        return CRHIBufferCreateDesc( GetStrideFromIndexFormat(IndexFormat) * NumIndices
-                                   , GetStrideFromIndexFormat(IndexFormat)
-                                   , InFlags | EBufferUsageFlags::AllowIndexBuffer);
-    }
-
-    /**
-     * @brief: Creates a BufferDesc that describes a StructuredBuffer
-     *
-     * @param NumElements: Number of elements in the Buffer
-     * @param Stride: Stride of each element in the Buffer
-     * @param InFlags: Flags that describe the usage of the Buffer
-     */
-    static CRHIBufferCreateDesc CreateStructuredBuffer(uint32 NumElements, uint16 Stride, EBufferUsageFlags InFlags = EBufferUsageFlags::None)
-    {
-        return CRHIBufferCreateDesc(NumElements * Stride, Stride, InFlags);
-    }
-
-    /**
-     * @brief: Creates a BufferDesc that describes a ConstantBuffer
-     *
-     * @param NumElements: Number of elements in the Buffer
-     * @param Stride: Stride of each element in the Buffer
-     * @param InFlags: Flags that describe the usage of the Buffer
-     */
-    static CRHIBufferCreateDesc CreateConstantBuffer(uint32 NumElements, uint16 Stride, EBufferUsageFlags InFlags = EBufferUsageFlags::None)
-    {
-        return CRHIBufferCreateDesc(NumElements * Stride, Stride, InFlags | EBufferUsageFlags::AllowConstantBuffer);
-    }
-
-    /**
-     * @brief: Default Constructor
-     */
-    CRHIBufferCreateDesc()
-        : CRHIBufferDesc()
-    { }
-
-    /**
-     * @brief: Constructor
-     * 
-     * @param InSize: Size of the buffer in bytes
-     * @param InStride: Stride of each element in the buffer
-     * @param InFlags: Flags that describes the usage of the buffer
-     */
-    CRHIBufferCreateDesc(uint32 InSize, uint16 InStride, EBufferUsageFlags InFlags)
-        : CRHIBufferDesc(InSize, InStride, InFlags)
-    { }
-};
+ENUM_CLASS_OPERATORS(EBufferUsageFlags);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIBuffer
 
-class RHI_API CRHIBuffer : public CRHIResource
+class CRHIBuffer : public CRHIResource
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor for creating a new buffer
-     * 
-     * @param BufferDesc: Buffer Description
-     */
-    CRHIBuffer(const CRHIBufferCreateDesc& BufferDesc)
-        : CRHIResource(ERHIResourceType::Buffer)
-        , BufferDesc(BufferDesc)
-        , BindlessHandle()
+    CRHIBuffer(EBufferUsageFlags InUsageFlags)
+        : CRHIResource()
+        , UsageFlags(InUsageFlags)
     { }
 
-    /**
-     * @brief: Retrieve the Native handle of the Buffer
-     *
-     * @return: Returns the native handle of the Buffer
-     */
+public:
+
+    /** @return: Returns the CRHIVertexBuffer interface if implemented */
+    virtual class CRHIVertexBuffer* GetVertexBuffer( ) { return nullptr; }
+
+    /** @return: Returns the CRHIIndexBuffer interface if implemented */
+    virtual class CRHIIndexBuffer* GetIndexBuffer( ) { return nullptr; }
+
+    /** @return: Returns the CRHIGenericBuffer interface if implemented */
+    virtual class CRHIGenericBuffer* GetGenericBuffer( ) { return nullptr; }
+
+    /** @return: Returns the CRHIConstantBuffer interface if implemented */
+    virtual class CRHIConstantBuffer* GetConstantBuffer() { return nullptr; }
+
+    /** @return: Returns the native handle of the Buffer */
     virtual void* GetRHIHandle() const { return nullptr; }
+
+    /** @return: Returns the RHI-backend buffer interface */
+    virtual void* GetRHIBaseBuffer() const { return nullptr; }
 
     /**
      * @brief: Set the name of the Buffer
@@ -456,52 +191,150 @@ public:
      */
     virtual void SetName(const String& InName) { }
 
-    /**
-     * @brief: Retrieve the name of the Buffer
-     *
-     * @return: Returns the name of the Buffer
-     */
+    /** @return: Returns the name of the Buffer */
     virtual String GetName() const { return ""; }
 
-    /**
-     * @brief: Retrieve the bindless handle if the RHI-backend supports it, 
-     * and if the buffer is created with the ConstantBuffer- flag
-     *
-     * @return: Returns the bindless handle
-     */
-    CRHIDescriptorHandle GetBindlessHandle() const { return BindlessHandle; }
+    /** @return: Returns the Buffer Stride */
+    virtual uint16 GetStride() const { return 1; }
+    
+    /** @return: Returns the Buffer Size */
+    virtual uint32 GetSize() const { return 1; }
 
-    /**
-     * @brief: Retrieve the Buffer description
-     * 
-     * @return: Returns the Buffer description
-     */
-    const CRHIBufferDesc& GetDesc() const { return BufferDesc; }
-
-    /**
-     * @brief: Retrieve the Buffer Size
-     * 
-     * @return: Returns the Buffer Size
-     */
-    uint32 GetSize() const { return BufferDesc.Size; }
-
-    /**
-     * @brief: Retrieve the Stride of each element in the buffer
-     *
-     * @return: Returns the Buffer Stride
-     */
-    uint16 GetStride() const { return BufferDesc.Stride; }
-
-    /**
-     * @brief: Retrieve the Buffer UsageFlags
-     *
-     * @return: Returns the Buffer UsageFlags
-     */
-    EBufferUsageFlags GetUsageFlags() const { return BufferDesc.UsageFlags; }
+    /** @return: Returns the Buffer UsageFlags */
+    EBufferUsageFlags GetUsageFlags() const { return UsageFlags; }
 
 protected:
-    CRHIBufferDesc       BufferDesc;
-    CRHIDescriptorHandle BindlessHandle;
+    EBufferUsageFlags UsageFlags;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIVertexBuffer
+
+class CRHIVertexBuffer : public CRHIBuffer
+{
+protected:
+
+    CRHIVertexBuffer(EBufferUsageFlags InUsageFlags, uint32 InNumVertices, uint16 InStride)
+        : CRHIBuffer(InUsageFlags)
+        , NumVertices(InNumVertices)
+        , Stride(InStride)
+    { }
+
+public:
+
+    /** @return: Returns the CRHIVertexBuffer */
+    virtual CRHIVertexBuffer* GetVertexBuffer( ) override final { return this; }
+
+    /** @return: Returns the Buffer Stride */
+    virtual uint16 GetStride( ) const override final { return Stride; }
+
+    /** @return: Returns the Buffer Size */
+    virtual uint32 GetSize( ) const override final { return NumVertices * Stride; }
+
+    /** @return: Returns the number of vertices */
+    uint32 GetNumVertices( ) const { return NumVertices;  }
+
+protected:
+    uint32 NumVertices;
+    uint16 Stride;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIIndexBuffer
+
+class CRHIIndexBuffer : public CRHIBuffer
+{
+protected:
+
+    CRHIIndexBuffer(EBufferUsageFlags InUsageFlags, uint32 InNumIndicies, EIndexFormat InFormat)
+        : CRHIBuffer(InUsageFlags)
+        , Format(InFormat)
+        , NumIndicies(InNumIndicies)
+    { }
+
+public:
+
+    /** @return: Returns the CRHIIndexBuffer */
+    virtual CRHIIndexBuffer* GetIndexBuffer( ) override final { return this; }
+
+    /** @return: Returns the Buffer Stride */
+    virtual uint16 GetStride( ) const override final { return GetStrideFromIndexFormat(Format); }
+
+    /** @return: Returns the Buffer Size */
+    virtual uint32 GetSize( ) const override final { return NumIndicies * GetStride(); }
+
+    /** @return: Returns the number of indices */
+    uint32 GetNumIndicies( ) const { return NumIndicies; }
+
+    /** @return: Returns the format on the indices */
+    EIndexFormat GetIndexFormat( ) const { return Format; }
+
+protected:
+    uint32       NumIndicies;
+    EIndexFormat Format;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIGenericBuffer
+
+class CRHIGenericBuffer : public CRHIBuffer
+{
+protected:
+
+    CRHIGenericBuffer(EBufferUsageFlags InUsageFlags, uint32 InSize, uint16 InStride)
+        : CRHIBuffer(InUsageFlags)
+        , Size(InSize)
+        , Stride(InStride)
+    { }
+
+public:
+
+    /** @return: Returns the CRHIGenericBuffer */
+    virtual CRHIGenericBuffer* GetGenericBuffer( ) override final { return this; }
+
+    /** @return: Returns the Buffer Stride */
+    virtual uint16 GetStride( ) const override final { return Stride; }
+
+    /** @return: Returns the Buffer Size */
+    virtual uint32 GetSize( ) const override final { return Size; }
+
+protected:
+    uint32 Size;
+    uint32 Stride;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIConstantBuffer
+
+class CRHIConstantBuffer : public CRHIBuffer
+{
+protected:
+
+    CRHIConstantBuffer(EBufferUsageFlags InUsageFlags, uint32 InSize, uint16 InStride)
+        : CRHIBuffer(InUsageFlags)
+        , Size(InSize)
+        , Stride(InStride)
+    {
+        Check(!(InUsageFlags & (EBufferUsageFlags::AllowShaderResource | EBufferUsageFlags::AllowUnorderedAccess)));
+    }
+
+public:
+
+    /** @return: Returns the Bindless handle if the RHI-backend supports it */
+    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
+    
+    /** @return: Returns the CRHIConstantBuffer */
+    virtual CRHIConstantBuffer* GetConstantBuffer() override final { return this; }
+
+    /** @return: Returns the Buffer Stride */
+    virtual uint16 GetStride( ) const override final { return Stride; }
+
+    /** @return: Returns the Buffer Size */
+    virtual uint32 GetSize( ) const override final { return Size; }
+
+protected:
+    uint32 Size;
+    uint32 Stride;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -515,826 +348,325 @@ enum class ETextureUsageFlags : uint8
     AllowDepthStencil    = FLAG(2), // DepthStencilView
     AllowUnorderedAccess = FLAG(3), // UnorderedAccessView
     AllowShaderResource  = FLAG(4), // ShaderResourceView
-
-    NoDefaultRTV         = FLAG(5), // Do not create default RenderTargetView
-    NoDefaultDSV         = FLAG(6), // Do not create default DepthStencilView
-    NoDefaultUAV         = FLAG(7), // Do not create default UnorderedAccessView
-    NoDefaultSRV         = FLAG(8), // Do not create default ShaderResourceView
-
-    RWTexture    = AllowUnorderedAccess | AllowShaderResource,
-    RenderTarget = AllowRenderTarget    | AllowShaderResource,
-    ShadowMap    = AllowDepthStencil    | AllowShaderResource,
 };
 
-ENUM_OPERATORS(ETextureUsageFlags);
+ENUM_CLASS_OPERATORS(ETextureUsageFlags);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ETextureType
-
-enum class ETextureType : uint8
-{
-    Unknown          = 0,
-    Texture1D        = 1,
-    Texture1DArray   = 2,
-    Texture2D        = 3,
-    Texture2DArray   = 4,
-    TextureCube      = 5,
-    TextureCubeArray = 6,
-    Texture3D        = 7
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITextureDesc
-
-class RHI_API CRHITextureDesc
-{
-public:
-
-    /**
-     * @brief: Default Constructor
-     */
-    CRHITextureDesc()
-        : Type(ETextureType::Unknown)
-        , Format(ERHIFormat::Unknown)
-        , Width(0)
-        , Height(0)
-        , Depth(0)
-        , ArraySize(0)
-        , NumMips(0)
-        , NumSamples(0)
-        , UsageFlags(ETextureUsageFlags::None)
-    { }
-
-    /**
-     * @brief: Constructor
-     *
-     * @param InType: Type of the texture
-     * @param InFormat: Format of the Texture
-     * @param InWidth: Width of the Texture
-     * @param InHeight: Height of the Texture
-     * @param InDepth: Depth of the Texture
-     * @param InNumMips: Number of MipLevels of the Texture
-     * @param InNumSamples: Number of Samples of the Texture
-     * @param InFlags: UsageFlags of the Texture
-     */
-    CRHITextureDesc( ETextureType InType
-                   , ERHIFormat InFormat
-                   , uint16 InWidth
-                   , uint16 InHeight
-                   , uint16 InDepth
-                   , uint16 InArraySize
-                   , uint8 InNumMips
-                   , uint8 InNumSamples
-                   , ETextureUsageFlags InFlags)
-        : Type(InType)
-        , Format(InFormat)
-        , Width(InWidth)
-        , Height(InHeight)
-        , Depth(InDepth)
-        , ArraySize(InArraySize)
-        , NumMips(InNumMips)
-        , NumSamples(InNumSamples)
-        , UsageFlags(InFlags)
-    { }
-
-    /**
-     * @brief: Check if the texture type is Texture1D
-     * 
-     * @return: Returns true if Texture1D
-     */
-    bool IsTexture1D() const { return (Type == ETextureType::Texture1D) || (Type == ETextureType::Texture1DArray); }
-
-    /**
-     * @brief: Check if the texture type is Texture1DArray
-     *
-     * @return: Returns true if Texture1DArray
-     */
-    bool IsTexture1DArray() const { return (Type == ETextureType::Texture1DArray); }
-
-    /**
-     * @brief: Check if the texture type is Texture2D
-     *
-     * @return: Returns true if Texture2D
-     */
-    bool IsTexture2D() const { return (Type == ETextureType::Texture2D) || (Type == ETextureType::Texture2DArray); }
-
-    /**
-     * @brief: Check if the texture type is Texture2DArray
-     *
-     * @return: Returns true if Texture2DArray
-     */
-    bool IsTexture2DArray() const { return (Type == ETextureType::Texture2DArray); }
-
-    /**
-     * @brief: Check if the texture type is TextureCube
-     *
-     * @return: Returns true if TextureCube
-     */
-    bool IsTextureCube() const { return (Type == ETextureType::TextureCube) || (Type == ETextureType::TextureCubeArray); }
-    
-    /**
-     * @brief: Check if the texture type is TextureCubeArray
-     *
-     * @return: Returns true if TextureCubeArray
-     */
-    bool IsTextureCubeArray() const { return (Type == ETextureType::TextureCubeArray); }
-    
-    /**
-     * @brief: Check if the texture type is Texture3D
-     *
-     * @return: Returns true if Texture3D
-     */
-    bool IsTexture3D() const { return (Type == ETextureType::Texture3D); }
-
-    /**
-     * @brief: Check if the Texture can be used as a ShaderResourceView
-     * 
-     * @return: Returns true if the Texture can be used as a ShaderResourceView 
-     */
-    bool IsShaderResourceTexture() const { return bool(UsageFlags & ETextureUsageFlags::AllowShaderResource); }
-
-    /**
-     * @brief: Check if the Texture can be used as a UnorderedAccessView
-     *
-     * @return: Returns true if the Texture can be used as a UnorderedAccessView
-     */
-    bool IsUnorderedAccessTexture() const { return bool(UsageFlags & ETextureUsageFlags::AllowUnorderedAccess); }
-
-    /**
-     * @brief: Check if the Texture can be used as a RenderTargetView
-     *
-     * @return: Returns true if the Texture can be used as a RenderTargetView
-     */
-    bool IsRenderTarget() const { return bool(UsageFlags & ETextureUsageFlags::AllowRenderTarget); }
-
-    /**
-     * @brief: Check if the Texture can be used as a DepthStencilView
-     *
-     * @return: Returns true if the Texture can be used as a DepthStencilView
-     */
-    bool IsDepthStencilTarget() const { return bool(UsageFlags & ETextureUsageFlags::AllowDepthStencil); }
-
-    /**
-     * @brief: Check if the texture is multisampled
-     * 
-     * @return: Returns true if the texture is multisampled
-     */
-    bool IsMultisampled() const { return (NumSamples > 1);}
-
-    /**
-     * @brief: Compare two instances with each other
-     * 
-     * @return: Returns true if the instances are equal to each other
-     */
-    bool operator==(const CRHITextureDesc& RHS) const
-    {
-        return (Type       == RHS.Type) 
-            && (Format     == RHS.Format)
-            && (Width      == RHS.Width)
-            && (Height     == RHS.Height)
-            && (Depth      == RHS.Depth)
-            && (ArraySize  == RHS.ArraySize)
-            && (NumMips    == RHS.NumMips)
-            && (NumSamples == RHS.NumSamples)
-            && (UsageFlags == RHS.UsageFlags)
-            && (ClearValue == RHS.ClearValue);
-    }
-
-    /**
-     * @brief: Compare two instances with each other
-     *
-     * @return: Returns false if the instances are equal to each other
-     */
-    bool operator!=(const CRHITextureDesc& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    /** @brief: Type of texture and the dimension */
-    ETextureType Type;
-    
-    /** @brief: Format of the texture */
-    ERHIFormat Format;
-    
-    /** @brief: UsageFlags of the texture */
-    ETextureUsageFlags UsageFlags;
-    
-    /** @brief: Width of the texture */
-    uint16 Width;
-    
-    /** @brief: Height of the texture */
-    uint16 Height;
-    
-    /** @brief: Depth of the texture */
-    uint16 Depth;
-    
-    /** @brief: ArraySize of the texture */
-    uint16 ArraySize;
-    
-    /** @brief: Number of MipLevels of the texture */
-    uint8 NumMips;
-    
-    /** @brief: Number of Samples of the texture */
-    uint8 NumSamples;
-    
-    /** @brief: ClearValue of the texture */
-    CRHITextureClearValue ClearValue;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITextureCreateDesc
-
-class RHI_API CRHITextureCreateDesc : public CRHITextureDesc
-{
-public:
-
-    /**
-     * @brief: Create a Texture Description that describes a Texture1D
-     *
-     * @param InFormat: Format of the Texture
-     * @param InWidth: Width of the texture
-     * @param InNumMips: Number of MipLevels of the Texture
-     * @param InFlags: UsageFlags of the Texture
-     */
-    static CRHITextureCreateDesc Create1D( ERHIFormat InFormat
-                                         , uint16 InWidth
-                                         , uint8 InNumMips
-                                         , ETextureUsageFlags InFlags)
-    {
-        return CRHITextureCreateDesc(ETextureType::Texture1D, InFormat, InWidth, 1, 1, 1, InNumMips, 1, InFlags);
-    }
-
-    /**
-     * @brief: Create a Texture Description that describes a Texture1DArray
-     *
-     * @param InFormat: Format of the Texture
-     * @param InWidth: Width of the texture
-     * @param InArraySize: ArraySize of the Texture
-     * @param InNumMips: Number of MipLevels of the Texture
-     * @param InFlags: UsageFlags of the Texture
-     */
-    static CRHITextureCreateDesc Create1DArray( ERHIFormat InFormat
-                                              , uint16 InWidth
-                                              , uint16 InArraySize
-                                              , uint8 InNumMips
-                                              , ETextureUsageFlags InFlags)
-    {
-        return CRHITextureCreateDesc(ETextureType::Texture1DArray, InFormat, InWidth, 1, 1, InArraySize, InNumMips, 1, InFlags);
-    }
-
-    /**
-     * @brief: Create a Texture Description that describes a Texture2D
-     * 
-     * @param InFormat: Format of the Texture
-     * @param InWidth: Width of the texture
-     * @param InHeight: Height of the texture
-     * @param InNumMips: Number of MipLevels of the Texture
-     * @param InNumSamples: Number of Samples of the Texture
-     * @param InFlags: UsageFlags of the Texture
-     */
-    static CRHITextureCreateDesc Create2D( ERHIFormat InFormat
-                                         , uint16 InWidth
-                                         , uint16 InHeight
-                                         , uint8 InNumMips
-                                         , uint8 InNumSamples
-                                         , ETextureUsageFlags InFlags)
-    {
-        return CRHITextureCreateDesc(ETextureType::Texture2D, InFormat, InWidth, InHeight, 1, 1, InNumMips, InNumSamples, InFlags);
-    }
-
-    /**
-     * @brief: Create a Texture Description that describes a Texture2DArray
-     *
-     * @param InFormat: Format of the Texture
-     * @param InWidth: Width of the Texture
-     * @param InHeight: Height of the Texture
-     * @param InArraySize: ArraySize of the Texture
-     * @param InNumMips: Number of MipLevels of the Texture
-     * @param InNumSamples: Number of Samples of the Texture
-     * @param InFlags: UsageFlags of the Texture
-     */
-    static CRHITextureCreateDesc Create2DArray( ERHIFormat InFormat
-                                              , uint16 InWidth
-                                              , uint16 InHeight
-                                              , uint16 InArraySize
-                                              , uint8 InNumMips
-                                              , uint8 InNumSamples
-                                              , ETextureUsageFlags InFlags)
-    {
-        return CRHITextureCreateDesc(ETextureType::Texture2DArray, InFormat, InWidth, InHeight, 1, InArraySize, InNumMips, InNumSamples, InFlags);
-    }
-
-    /**
-     * @brief: Create a Texture Description that describes a TextureCube
-     *
-     * @param InFormat: Format of the Texture
-     * @param InSize: Width of the Texture
-     * @param InNumMips: Number of MipLevels of the Texture
-     * @param InNumSamples: Number of Samples of the Texture
-     * @param InFlags: UsageFlags of the Texture
-     */
-    static CRHITextureCreateDesc CreateCube( ERHIFormat InFormat
-                                           , uint16 InSize
-                                           , uint8 InNumMips
-                                           , uint8 InNumSamples
-                                           , ETextureUsageFlags InFlags)
-    {
-        return CRHITextureCreateDesc(ETextureType::TextureCube, InFormat, InSize, InSize, 1, 1, InNumMips, InNumSamples, InFlags);
-    }
-
-    /**
-     * @brief: Create a Texture Description that describes a TextureCubeArray
-     *
-     * @param InFormat: Format of the Texture
-     * @param InSize: Width of the Texture
-     * @param InArraySize: ArraySize of the Texture
-     * @param InNumMips: Number of MipLevels of the Texture
-     * @param InNumSamples: Number of Samples of the Texture
-     * @param InFlags: UsageFlags of the Texture
-     */
-    static CRHITextureCreateDesc CreateCubeArray( ERHIFormat InFormat
-                                                , uint16 InSize
-                                                , uint16 InArraySize
-                                                , uint8 InNumMips
-                                                , uint8 InNumSamples
-                                                , ETextureUsageFlags InFlags)
-    {
-        return CRHITextureCreateDesc(ETextureType::TextureCubeArray, InFormat, InSize, InSize, 1, InArraySize, InNumMips, InNumSamples, InFlags);
-    }
-
-    /**
-     * @brief: Create a Texture Description that describes a Texture3D
-     *
-     * @param InFormat: Format of the Texture
-     * @param InWidth: Width of the Texture
-     * @param InHeight: Height of the Texture
-     * @param InDepth: Depth of the Texture
-     * @param InNumMips: Number of MipLevels of the Texture
-     * @param InNumSamples: Number of Samples of the Texture
-     * @param InFlags: UsageFlags of the Texture
-     */
-    static CRHITextureCreateDesc Create3D( ERHIFormat InFormat
-                                         , uint16 InWidth
-                                         , uint16 InHeight
-                                         , uint16 InDepth
-                                         , uint8 InNumMips
-                                         , uint8 InNumSamples
-                                         , ETextureUsageFlags InFlags)
-    {
-        return CRHITextureCreateDesc(ETextureType::Texture3D, InFormat, InWidth, InHeight, InDepth, 1, InNumMips, InNumSamples, InFlags);
-    }
-
-    /**
-     * @brief: Default Constructor
-     */
-    CRHITextureCreateDesc()
-        : CRHITextureDesc()
-
-    /**
-     * @brief: Constructor
-     *
-     * @param InType: Type of the texture
-     * @param InFormat: Format of the Texture
-     * @param InWidth: Width of the Texture
-     * @param InHeight: Height of the Texture
-     * @param InDepth: Depth of the Texture
-     * @param InNumMips: Number of MipLevels of the Texture
-     * @param InNumSamples: Number of Samples of the Texture
-     * @param InFlags: UsageFlags of the Texture
-     */
-    CRHITextureCreateDesc( ETextureType InType
-                   , ERHIFormat InFormat
-                   , uint16 InWidth
-                   , uint16 InHeight
-                   , uint16 InDepth
-                   , uint16 InArraySize
-                   , uint8 InNumMips
-                   , uint8 InNumSamples
-                   , ETextureUsageFlags InFlags)
-        : CRHITextureDesc(InType, InFormat, InWidth, InHeight, InDepth, InArraySize, InNumMips, InNumSamples, InFlags)
-    { }
-};
+class CRHITextureDesc;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITexture
 
-class RHI_API CRHITexture : public CRHIResource
+class CRHITexture : public CRHIResource
 {
-public:
-
-    /**
-     * @brief: Constructor
-     *
-     * @param InTextureDesc: Texture Description
-     */
-    CRHITexture(const CRHITextureCreateDesc& InTextureDesc)
-        : CRHIResource(ERHIResourceType::Texture)
-        , TextureDesc(InTextureDesc)
-        , BindlessHandle()
+protected:
+ 
+    CRHITexture(ERHIFormat InFormat, ETextureUsageFlags InUsageFlags, uint8 InNumMips, const CTextureClearValue& InClearValue)
+        : CRHIResource()
+        , Format(InFormat)
+        , UsageFlags(InUsageFlags)
+        , NumMips(InNumMips)
     { }
 
-    /**
-     * @brief: Retrieve the default ShaderResourceView. Pointer is valid if the AllowShaderResouce flag is set.
-     * 
-     * @return: Returns a pointer to the default ShaderResourceView
-     */
-    virtual CRHIShaderResourceView* GetDefaultShaderResouceView() const { return nullptr; }
+public:
+
+    /** @return: Returns the CRHITexture2D interface if implemented otherwise nullptr */
+    virtual class CRHITexture2D* GetTexture2D( ) { return nullptr; }
+
+    /** @return: Returns the CRHITexture2DArray interface if implemented otherwise nullptr */
+    virtual class CRHITexture2DArray* GetTexture2DArray( ) { return nullptr; }
+
+    /** @return: Returns the CRHITextureCube interface if implemented otherwise nullptr */
+    virtual class CRHITextureCube* GetTextureCube( ) { return nullptr; }
+
+    /** @return: Returns the CRHITexture3D interface if implemented otherwise nullptr */
+    virtual class CRHITexture3D* GetTexture3D( ) { return nullptr; }
+
+    /** @return: Returns a valid pointer to the default ShaderResourceView if the AllowShaderResouce flag is set */
+    virtual CRHIShaderResourceView* GetDefaultShaderResouceView( ) const { return nullptr; }
 
     /**
-     * @brief: Retrieve the Native handle of the Texture
-     * 
-     * @return: Returns the native handle of the resource
+     * @return: Returns a valid Bindless descriptor-handle to the default ShaderResourceView
+     * if the AllowShaderResouce flag is set and the RHI supports
      */
-    virtual void* GetRHIHandle() const { return nullptr; }
+    virtual CRHIDescriptorHandle GetDefaultBindlessHandle( ) const { return CRHIDescriptorHandle( ); }
+
+    /** @return: Returns the native handle of the resource */
+    virtual void* GetRHIHandle( ) const { return nullptr; }
+
+    /** @return: Returns the RHI-backend texture interface */
+    virtual void* GetRHIBaseTexture( ) const { return nullptr; }
 
     /**
      * @brief: Set the name of the Texture
-     * 
+     *
      * @param InName: New name of of the resource
      */
     virtual void SetName(const String& InName) { }
 
-    /**
-     * @brief: Retrieve the name of the Texture
-     * 
-     * @return: Returns the name of the Texture
-     */
-    virtual String GetName() const { return ""; }
+    /** @return: Returns the name of the Texture */
+    virtual String GetName( ) const { return ""; }
 
-    /**
-     * @brief: Retrieve the extent of the texture
-     * 
-     * @return: Returns a IntVector3 with Width, Height, and Depth
-     */
-    CIntVector3 GetExtent() const { return CIntVector3(TextureDesc.Width, TextureDesc.Height, TextureDesc.Depth); }
+    /** @return: Returns a IntVector3 with Width, Height, and Depth */
+    virtual CIntVector3 GetExtent( ) const { return CIntVector3(1, 1, 1); }
 
-    /**
-     * @brief: Retrieve the default ShaderResourceView as a bindless descriptor-handle.
-     * Pointer is valid if the AllowShaderResouce flag is set.
-     *
-     * @return: Returns a pointer to the default ShaderResourceView as a bindless descriptor-handle
-     */
-    CRHIDescriptorHandle GetDefaultBindlessHandle() const { return BindlessHandle; }
+    /** @return: Returns the texture Width */
+    virtual uint16 GetWidth( ) const { return 1; }
 
-    /**
-     * @brief: Retrieve the Texture Description
-     * 
-     * @return: Returns the Texture description
-     */
-    const CRHITextureDesc& GetDesc() const { return TextureDesc; }
+    /** @return: Returns the texture Height */
+    virtual uint16 GetHeight( ) const { return 1; }
 
-    /**
-     * @brief: Retrieve the texture Type
-     *
-     * @return: Returns the texture Type
-     */
-    ETextureType GetType() const { return TextureDesc.Type; }
+    /** @return: Returns the texture Depth */
+    virtual uint16 GetDepth( ) const { return 1; }
 
-    /**
-     * @brief: Retrieve the Usage-Flags of the texture
-     *
-     * @return: Returns the Usage-Flags of the texture
-     */
-    ETextureUsageFlags GetFlags() const { return TextureDesc.UsageFlags; }
+    /** @return: Returns the texture ArraySize */
+    virtual uint16 GetArraySize( ) const { return 1; }
 
-    /**
-     * @brief: Retrieve the texture Format
-     * 
-     * @return: Returns the texture Format
-     */
-    ERHIFormat GetFormat() const { return TextureDesc.Format; }
+    /** @return: Returns the number of Samples of the texture */
+    virtual uint8 GetNumSamples( ) const { return 1; }
 
-    /**
-     * @brief: Retrieve the texture Width
-     *
-     * @return: Returns the texture Width
-     */
-    uint16 GetWidth() const { return TextureDesc.Width; }
+    /** @return: Returns the Usage-Flags of the texture */
+    ETextureUsageFlags GetFlags( ) const { return UsageFlags; }
 
-    /**
-     * @brief: Retrieve the texture Height
-     *
-     * @return: Returns the texture Height
-     */
-    uint16 GetHeight() const { return TextureDesc.Height; }
+    /** @return: Returns the texture Format */
+    ERHIFormat GetFormat( ) const { return Format; }
 
-    /**
-     * @brief: Retrieve the texture Depth
-     *
-     * @return: Returns the texture Depth
-     */
-    uint16 GetDepth() const { return TextureDesc.Depth; }
+    /** @return: Returns the number of MipLevels of the texture */
+    uint8 GetNumMips( ) const { return NumMips; }
 
-    /**
-     * @brief: Retrieve the texture Depth
-     *
-     * @return: Returns the texture Depth
-     */
-    uint16 GetArraySize() const { return TextureDesc.ArraySize; }
-
-    /**
-     * @brief: Retrieve the number of MipLevels of the texture
-     *
-     * @return: Returns the number of MipLevels of the texture
-     */
-    uint8 GetNumMips() const { return TextureDesc.NumMips; }
-
-    /**
-     * @brief: Retrieve the number of Samples of the texture
-     *
-     * @return: Returns the number of Samples of the texture
-     */
-    uint8 GetNumSamples() const { return TextureDesc.NumSamples; }
+    /** @return: Returns the ClearValue of the texture */
+    const CTextureClearValue& GetClearValue( ) const { return ClearValue; }
 
 private:
-    CRHITextureDesc      TextureDesc;
-    CRHIDescriptorHandle BindlessHandle;
+    ERHIFormat         Format;
+    ETextureUsageFlags UsageFlags;
+
+    uint8              NumMips;
+
+    CTextureClearValue ClearValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIShaderResourceViewCreateDesc
+// CRHITexture2D
 
-class RHI_API CRHIShaderResourceViewCreateDesc
+class CRHITexture2D : public CRHITexture
 {
+protected:
+
+    CRHITexture2D( ERHIFormat InFormat
+                 , ETextureUsageFlags InUsageFlags
+                 , uint16 InWidth
+                 , uint16 InHeight
+                 , uint8 InNumMips
+                 , uint8 InNumSamples
+                 , const CTextureClearValue& InClearValue)
+        : CRHITexture(InFormat, InUsageFlags, InNumMips, InClearValue)
+        , Width(InWidth)
+        , Height(InHeight)
+        , NumSamples(InNumSamples)
+    { }
+
 public:
 
-    /**
-     * @brief: Default Constructor
-     */
-    CRHIShaderResourceViewCreateDesc()
-        : Format(ERHIFormat::Unknown)
-        , FirstSlice(0)
-        , NumSlices(0)
-        , FirstMipLevel(0)
-        , NumMipLevels(0)
+    /** @return: Returns the CRHITexture2D interface */
+    virtual CRHITexture2D* GetTexture2D( ) { return this; }
+
+    /** @return: Returns a IntVector3 with Width, Height, and Depth */
+    virtual CIntVector3 GetExtent( ) const override { return CIntVector3(Width, Height, 1); }
+
+    /** @return: Returns the texture Width */
+    virtual uint16 GetWidth( ) const override final { return Width; }
+
+    /** @return: Returns the texture Height */
+    virtual uint16 GetHeight( ) const override final { return Height; }
+
+    /** @return: Returns the number of samples in the texture */
+    virtual uint8 GetNumSamples( ) const override final { return NumSamples; }
+
+protected:
+    uint16 Width;
+    uint16 Height;
+    uint16 NumSamples;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITexture2DArray
+
+class CRHITexture2DArray : public CRHITexture2D
+{
+protected:
+
+    CRHITexture2DArray( ERHIFormat InFormat
+                      , ETextureUsageFlags InUsageFlags
+                      , uint16 InWidth
+                      , uint16 InHeight
+                      , uint16 InArraySize
+                      , uint8 InNumMips
+                      , uint8 InNumSamples
+                      , const CTextureClearValue& InClearValue)
+        : CRHITexture2D(InFormat, InUsageFlags, InNumMips, InWidth, InHeight, InNumSamples, InClearValue)
+        , ArraySize(InArraySize)
     { }
 
-    /**
-     * @brief: Constructor
-     * 
-     * @param InFormat: Format for the ShaderResourceView
-     * @param InFirstSlice: First slice of the view in terms of depth or array-index
-     * @param InNumSlices: Number of slices in the view in terms of depth or array-index
-     * @param InFirstMipLevel: First MipLevel of the texture in the view
-     * @param InNumMipLevels: Number of MipLevels of the texture in the view
-     */
-    CRHIShaderResourceViewCreateDesc(ERHIFormat InFormat, uint16 InFirstSlice, uint16 InNumSlices, uint8 InFirstMipLevel, uint8 InNumMipLevels)
-        : Format(InFormat)
-        , FirstSlice(InFirstSlice)
-        , NumSlices(InNumSlices)
-        , FirstMipLevel(InFirstMipLevel)
-        , NumMipLevels(InNumMipLevels)
+public:
+
+    /** @return: Returns the CRHITexture2D interface */
+    virtual CRHITexture2D* GetTexture2D( ) override final { return nullptr; }
+
+    /** @return: Returns the CRHITexture2DArray interface */
+    virtual CRHITexture2DArray* GetTexture2DArray( ) override final { return this; }
+
+    /** @return: Returns a IntVector3 with Width, Height, and Depth */
+    virtual CIntVector3 GetExtent( ) const override final { return CIntVector3(GetWidth( ), GetDepth( ), ArraySize); }
+
+    /** @return: Returns the ArraySize of the texture */
+    virtual uint16 GetArraySize( ) const override final { return ArraySize; }
+
+protected:
+    uint16 ArraySize;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITextureCube
+
+class CRHITextureCube : public CRHITexture
+{
+protected:
+
+    CRHITextureCube( ERHIFormat InFormat
+                   , ETextureUsageFlags InUsageFlags
+                   , uint16 InExtent
+                   , uint16 InArraySize
+                   , uint8 InNumMips
+                   , uint8 InNumSamples
+                   , const CTextureClearValue& InClearValue)
+        : CRHITexture(InFormat, InUsageFlags, InNumMips, InClearValue)
+        , Extent(InExtent)
+        , ArraySize(InArraySize)
+        , NumSamples(InNumSamples)
     { }
 
-    /**
-     * @brief: Compare this instance with another
-     * 
-     * @param RHS: Other instance to compare with
-     * @return: Returns true if the instances are equal
-     */
-    bool operator==(const CRHIShaderResourceViewCreateDesc& RHS) const
-    {
-        return (Format        == RHS.Format)
-            && (FirstSlice    == RHS.FirstSlice)
-            && (NumSlices     == RHS.NumSlices)
-            && (FirstMipLevel == RHS.FirstMipLevel) 
-            && (NumMipLevels  == RHS.NumMipLevels);
-    }
+public:
 
-    /**
-     * @brief: Compare this instance with another
-     *
-     * @param RHS: Other instance to compare with
-     * @return: Returns false if the instances are equal
-     */
-    bool operator!=(const CRHIShaderResourceViewCreateDesc& RHS) const
-    {
-        return !(*this == RHS);
-    }
+    /** @return: Returns the CRHITextureCube interface if implemented otherwise nullptr */
+    virtual CRHITextureCube* GetTextureCube( ) override final { return this; }
 
-    /** @brief: Format of the resource-view */
-    ERHIFormat Format;
-    
-    /** @brief: First slice of depth or array-slice of the view */
-    uint16 FirstSlice;
-    
-    /** @brief: Number of slices of the view */
-    uint16 NumSlices;
-    
-    /** @brief: First MipLevel of the view */
-    uint8 FirstMipLevel;
-    
-    /** @brief: Number of MipLevels of the view */
-    uint8 NumMipLevels;
+    /** @return: Returns a IntVector3 with Width, Height, and Depth */
+    virtual CIntVector3 GetExtent( ) const override final { return CIntVector3(Extent, Extent, ArraySize); }
+
+    /** @return: Returns the texture Width */
+    virtual uint16 GetWidth( )  const override final { return Extent; }
+
+    /** @return: Returns the texture Height */
+    virtual uint16 GetHeight( ) const override final { return Extent; }
+
+    /** @return: Returns the ArraySize of the texture */
+    virtual uint16 GetArraySize( ) const override final { return ArraySize; }
+
+    /** @return: Returns the number of samples in the texture */
+    virtual uint8 GetNumSamples( ) const override final { return NumSamples; }
+
+protected:
+    uint16 Extent;
+    uint16 ArraySize;
+    uint16 NumSamples;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITexture3D
+
+class CRHITexture3D : public CRHITexture
+{
+protected:
+
+    CRHITexture3D( ERHIFormat InFormat
+                 , ETextureUsageFlags InUsageFlags
+                 , uint16 InWidth
+                 , uint16 InHeight
+                 , uint16 InDepth
+                 , uint8 InNumMips
+                 , const CTextureClearValue& InClearValue)
+        : CRHITexture(InFormat, InUsageFlags, InNumMips, InClearValue)
+        , Width(InWidth)
+        , Height(InHeight)
+        , Depth(InDepth)
+    { }
+
+public:
+
+    /** @return: Returns the CRHITexture3D interface if implemented otherwise nullptr */
+    virtual CRHITexture3D* GetTexture3D( ) override final { return this; }
+
+    /** @return: Returns a IntVector3 with Width, Height, and Depth */
+    virtual CIntVector3 GetExtent( ) const override final { return CIntVector3(Width, Height, Depth); }
+
+    /** @return: Returns the texture Width */
+    virtual uint16 GetWidth( ) const override final { return Width; }
+
+    /** @return: Returns the texture Height */
+    virtual uint16 GetHeight( ) const override final { return Height; }
+
+    /** @return: Returns the texture Depth */
+    virtual uint16 GetDepth( )  const override final { return Depth; }
+
+protected:
+    uint16 Width;
+    uint16 Height;
+    uint16 Depth;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIShaderResourceView
 
-class RHI_API CRHIShaderResourceView : public CRHIResource
+class CRHIShaderResourceView : public CRHIResource
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor
-     */
-    CRHIShaderResourceView(CRHIResource* InResource)
-        : CRHIResource(ERHIResourceType::ShaderResourceView)
+    explicit CRHIShaderResourceView(CRHIResource* InResource)
+        : CRHIResource()
         , Resource(InResource)
     { }
 
-    /**
-     * @brief: Retrieve the Resource that the View represents
-     * 
-     * @return: Returns the resource the View represents
-     */
-    CRHIResource* GetResource() const { return Resource; }
-
-    /**
-     * @brief: Retrieve the Bindless descriptor-handle for this view
-     *
-     * @param: Returns the bindless descriptor-handle for the view
-     */
-    CRHIDescriptorHandle GetBindlessHandle() const { return BindlessHandle; }
-
-protected:
-    CRHIResource*        Resource;
-    CRHIDescriptorHandle BindlessHandle;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIUnorderedAccessViewDesc
-
-class RHI_API CRHIUnorderedAccessViewCreateDesc
-{
 public:
 
-    /**
-     * @brief: Default Constructor
-     */
-    CRHIUnorderedAccessViewCreateDesc()
-        : Format(ERHIFormat::Unknown)
-        , FirstSlice(0)
-        , NumSlices(0)
-        , MipLevel(0)
-    { }
+    /** @return: Returns the Bindless handle if the RHI-backend supports it */
+    virtual CRHIDescriptorHandle GetBindlessHandle( ) const { return CRHIDescriptorHandle( ); }
 
-    /**
-     * @brief: Constructor
-     *
-     * @param InFormat: Format for the ShaderResourceView
-     * @param InFirstSlice: First slice of the view in terms of depth or array-index
-     * @param InNumSlices: Number of slices in the view in terms of depth or array-index
-     * @param InMipLevel: MipLevel of the texture in the view
-     */
-    CRHIUnorderedAccessViewCreateDesc(ERHIFormat InFormat, uint16 InFirstSlice, uint16 InNumSlices, uint8 InMipLevel)
-        : Format(InFormat)
-        , FirstSlice(InFirstSlice)
-        , NumSlices(InNumSlices)
-        , MipLevel(InMipLevel)
-    { }
+    /** @return: Returns the resource the View represents */
+    CRHIResource* GetResource( ) const { return Resource; }
 
-    /**
-     * @brief: Compare this instance with another
-     *
-     * @param RHS: Other instance to compare with
-     * @return: Returns true if the instances are equal
-     */
-    bool operator==(const CRHIUnorderedAccessViewCreateDesc& RHS) const
-    {
-        return (Format == RHS.Format) && (FirstSlice == RHS.FirstSlice) && (NumSlices == RHS.NumSlices) && (MipLevel == RHS.MipLevel);
-    }
-
-    /**
-     * @brief: Compare this instance with another
-     *
-     * @param RHS: Other instance to compare with
-     * @return: Returns false if the instances are equal
-     */
-    bool operator!=(const CRHIUnorderedAccessViewCreateDesc& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    /** @brief: Format of the resource-view */
-    ERHIFormat Format;
-    
-    /** @brief: First slice of depth or array-slice of the view */
-    uint16 FirstSlice;
-    
-    /** @brief: Number of slices of the view */
-    uint16 NumSlices;
-
-    /** @brief: MipLevel of the view */
-    uint8 MipLevel;
+protected:
+    CRHIResource* Resource;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIUnorderedAccessView
 
-class RHI_API CRHIUnorderedAccessView : public CRHIResource
+class CRHIUnorderedAccessView : public CRHIResource
 {
-public:
+protected:
 
-    /**
-     * @brief: Default Constructor
-     */
-    CRHIUnorderedAccessView(CRHIResource* InResource)
-        : CRHIResource(ERHIResourceType::UnorderedAccessView)
+    explicit CRHIUnorderedAccessView(CRHIResource* InResource)
+        : CRHIResource( )
         , Resource(InResource)
-        , BindlessHandle()
     { }
 
-    /**
-     * @brief: Retrieve the Resource that the View represents
-     *
-     * @return: Returns the resource the View represents
-     */
-    CRHIResource* GetResource() const { return Resource; }
+public:
 
-    /**
-     * @brief: Retrieve the Bindless descriptor-handle for this view
-     *
-     * @param: Returns the bindless descriptor-handle for the view
-     */
-    CRHIDescriptorHandle GetBindlessHandle() const { return BindlessHandle; }
+    /** @return: Returns the Bindless handle if the RHI-backend supports it */
+    virtual CRHIDescriptorHandle GetBindlessHandle( ) const { return CRHIDescriptorHandle( ); }
+
+    /** @return: Returns the resource the View represents */
+    CRHIResource* GetResource( ) const { return Resource; }
 
 protected:
-    CRHIResource*        Resource;
-    CRHIDescriptorHandle BindlessHandle;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRenderTargetViewDesc
-
-class CRHIRenderTargetViewCreateDesc
-{
-public:
-
-    /**
-     * @brief: Default Constructor
-     */
-    CRHIRenderTargetViewCreateDesc()
-        : Format(ERHIFormat::Unknown)
-        , FirstSlice(0)
-        , NumSlices(0)
-        , MipLevel(0)
-    { }
-
-    /**
-     * @brief: Constructor
-     *
-     * @param InFormat: Format for the ShaderResourceView
-     * @param InFirstSlice: First slice of the view in terms of depth or array-index
-     * @param InNumSlices: Number of slices in the view in terms of depth or array-index
-     * @param InMipLevel: MipLevel of the texture in the view
-     */
-    CRHIRenderTargetViewCreateDesc(ERHIFormat InFormat, uint16 InFirstSlice, uint16 InNumSlices, uint8 InMipLevel)
-        : Format(InFormat)
-        , FirstSlice(InFirstSlice)
-        , NumSlices(InNumSlices)
-        , MipLevel(InMipLevel)
-    { }
-
-    /**
-     * @brief: Compare this instance with another
-     *
-     * @param RHS: Other instance to compare with
-     * @return: Returns true if the instances are equal
-     */
-    bool operator==(const CRHIRenderTargetViewCreateDesc& RHS) const
-    {
-        return (Format == RHS.Format) && (FirstSlice == RHS.FirstSlice) && (NumSlices == RHS.NumSlices) && (MipLevel == RHS.MipLevel);
-    }
-
-    /**
-     * @brief: Compare this instance with another
-     *
-     * @param RHS: Other instance to compare with
-     * @return: Returns false if the instances are equal
-     */
-    bool operator!=(const CRHIRenderTargetViewCreateDesc& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    /** @brief: Format of the resource-view */
-    ERHIFormat Format;
-
-    /** @brief: First slice of depth or array-slice of the view */
-    uint16 FirstSlice;
-    
-    /** @brief: Number of slices of the view */
-    uint16 NumSlices;
-    
-    /** @brief: MipLevel of the view */
-    uint8 MipLevel;
+    CRHIResource* Resource;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIRenderTargetView
 
-class RHI_API CRHIRenderTargetView
+class CRHIRenderTargetView
 {
 public:
 
@@ -1344,58 +676,60 @@ public:
     CRHIRenderTargetView()
         : Texture(nullptr)
         , Format(ERHIFormat::Unknown)
-        , FirstSlice(0)
-        , NumSlices(0)
+        , FirstArraySlice(0)
+        , NumArraySlices(0)
         , MipLevel(0)
-        , LoadAction(EAttachmentLoadAction::None)
-        , StoreAction(EAttachmentStoreAction::None)
     { }
 
     /**
      * @brief: Constructor
-     *
-     * @param InFormat: Format for the RenderTargetView
-     * @param InFirstSlice: First slice of the view in terms of depth or array-index
-     * @param InNumSlices: Number of slices in the view in terms of depth or array-index
-     * @param InMipLevel: MipLevel of the texture in the view
+     * 
+     * @param InTexture: Texture that the view represent
+     * @param InFormat: Format of the texture
+     * @param InFirstArraySlice: FirstArraySlice of the texture
+     * @param InNumArraySlices: Number of ArraySlices of the texture
+     * @param InMipLevel: MipLevel of the texture
+     * @param InLoadAction: Action to take before rendering to the Rendertarget
+     * @param InStoreAction: Action to take after rendering to the Rendertarget 
      */
-    CRHIRenderTargetView( CRHITextureRef InTexture
+    CRHIRenderTargetView( CRHITexture* InTexture
                         , ERHIFormat InFormat
-                        , uint16 InFirstSlice
-                        , uint16 InNumSlices
+                        , uint16 InFirstArraySlice
+                        , uint16 InNumArraySlices
                         , uint8 InMipLevel
                         , EAttachmentLoadAction InLoadAction
                         , EAttachmentStoreAction InStoreAction)
         : Texture(InTexture)
         , Format(InFormat)
-        , FirstSlice(InFirstSlice)
-        , NumSlices(InNumSlices)
+        , FirstArraySlice(InFirstArraySlice)
+        , NumArraySlices(InNumArraySlices)
         , MipLevel(InMipLevel)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
     { }
 
     /**
-     * @brief: Compare this instance with another
-     *
-     * @param RHS: Other instance to compare with
+     * @brief: Compare the view with another view
+     * 
+     * @param RHS: Instance to compare with
      * @return: Returns true if the instances are equal
      */
     bool operator==(const CRHIRenderTargetView& RHS) const
     {
-        return (Texture     == RHS.Texture) 
-            && (Format      == RHS.Format) 
-            && (FirstSlice  == RHS.FirstSlice) 
-            && (NumSlices   == RHS.NumSlices) 
-            && (MipLevel    == RHS.MipLevel)
-            && (LoadAction  == RHS.LoadAction)
-            && (StoreAction == RHS.StoreAction);
+        return (Texture         == RHS.Texture) 
+            && (Format          == RHS.Format) 
+            && (FirstArraySlice == RHS.FirstArraySlice) 
+            && (NumArraySlices  == RHS.NumArraySlices) 
+            && (MipLevel        == RHS.MipLevel)
+            && (LoadAction      == RHS.LoadAction)
+            && (StoreAction     == RHS.StoreAction)
+            && (ClearValue      == RHS.ClearValue);
     }
 
     /**
-     * @brief: Compare this instance with another
+     * @brief: Compare the view with another view
      *
-     * @param RHS: Other instance to compare with
+     * @param RHS: Instance to compare with
      * @return: Returns false if the instances are equal
      */
     bool operator!=(const CRHIRenderTargetView& RHS) const
@@ -1403,32 +737,35 @@ public:
         return !(*this == RHS);
     }
 
-    /** @brief: Texture to represent */
-    CRHITextureRef Texture;
+    /** @brief: Texture that the view represent */
+    CRHITexture* Texture;
 
-    /** @brief: Format of the resource-view */
+    /** @brief: Format of the texture */
     ERHIFormat Format;
 
-    /** @brief: First slice of depth or array-slice of the view */
-    uint16 FirstSlice;
-    
-    /** @brief: Number of slices of the view */
-    uint16 NumSlices;
-    
-    /** @brief: MipLevel of the view */
+    /** @brief: FirstArraySlice of the texture */
+    uint16 FirstArraySlice;
+
+    /** @brief: Number of ArraySlices of the texture */
+    uint16 NumArraySlices;
+
+    /** @brief: MipLevel of the texture */
     uint8 MipLevel;
 
-    /** @brief: Action to take when the resource is loaded during rendering */
+    /** @brief: Action to take when loading the RenderTarget before rendering */
     EAttachmentLoadAction LoadAction;
 
-    /** @brief: Action to take when the resource is stored during rendering */
+    /** @breif: Action to take when storing the RenderTarget after rendering */
     EAttachmentStoreAction StoreAction;
+
+    /** @breif: Clear-value used if LoadAction is set to clear */
+    CFloatColor ClearValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIDepthStencilView
 
-class RHI_API CRHIDepthStencilView : public CRHIResource
+class CRHIDepthStencilView
 {
 public:
 
@@ -1438,58 +775,61 @@ public:
     CRHIDepthStencilView()
         : Texture(nullptr)
         , Format(ERHIFormat::Unknown)
-        , FirstSlice(0)
-        , NumSlices(0)
+        , FirstArraySlice(0)
+        , NumArraySlices(0)
         , MipLevel(0)
-        , LoadAction(EAttachmentLoadAction::None)
-        , StoreAction(EAttachmentStoreAction::None)
     { }
+
 
     /**
      * @brief: Constructor
      *
-     * @param InFormat: Format for the DepthStencilView
-     * @param InFirstSlice: First slice of the view in terms of depth or array-index
-     * @param InNumSlices: Number of slices in the view in terms of depth or array-index
-     * @param InMipLevel: MipLevel of the texture in the view
+     * @param InTexture: Texture that the view represent
+     * @param InFormat: Format of the texture
+     * @param InFirstArraySlice: FirstArraySlice of the texture
+     * @param InNumArraySlices: Number of ArraySlices of the texture
+     * @param InMipLevel: MipLevel of the texture
+     * @param InLoadAction: Action to take before rendering to the Rendertarget
+     * @param InStoreAction: Action to take after rendering to the Rendertarget
      */
-    CRHIDepthStencilView( CRHITextureRef InTexture
+    CRHIDepthStencilView( CRHITexture* InTexture
                         , ERHIFormat InFormat
-                        , uint16 InFirstSlice
-                        , uint16 InNumSlices
+                        , uint16 InFirstArraySlice
+                        , uint16 InNumArraySlices
                         , uint8 InMipLevel
                         , EAttachmentLoadAction InLoadAction
                         , EAttachmentStoreAction InStoreAction)
         : Texture(InTexture)
         , Format(InFormat)
-        , FirstSlice(InFirstSlice)
-        , NumSlices(InNumSlices)
+        , FirstArraySlice(InFirstArraySlice)
+        , NumArraySlices(InNumArraySlices)
         , MipLevel(InMipLevel)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
     { }
 
     /**
-     * @brief: Compare this instance with another
+     * @brief: Compare the view with another view
      *
-     * @param RHS: Other instance to compare with
+     * @param RHS: Instance to compare with
      * @return: Returns true if the instances are equal
      */
     bool operator==(const CRHIDepthStencilView& RHS) const
     {
-        return (Texture     == RHS.Texture) 
-            && (Format      == RHS.Format) 
-            && (FirstSlice  == RHS.FirstSlice) 
-            && (NumSlices   == RHS.NumSlices) 
-            && (MipLevel    == RHS.MipLevel)
-            && (LoadAction  == RHS.LoadAction)
-            && (StoreAction == RHS.StoreAction);
+        return (Texture         == RHS.Texture)
+            && (Format          == RHS.Format)
+            && (FirstArraySlice == RHS.FirstArraySlice)
+            && (NumArraySlices  == RHS.NumArraySlices)
+            && (MipLevel        == RHS.MipLevel)
+            && (LoadAction      == RHS.LoadAction)
+            && (StoreAction     == RHS.StoreAction)
+            && (ClearValue      == RHS.ClearValue);
     }
 
     /**
-     * @brief: Compare this instance with another
+     * @brief: Compare the view with another view
      *
-     * @param RHS: Other instance to compare with
+     * @param RHS: Instance to compare with
      * @return: Returns false if the instances are equal
      */
     bool operator!=(const CRHIDepthStencilView& RHS) const
@@ -1497,26 +837,29 @@ public:
         return !(*this == RHS);
     }
 
-    /** @brief: Texture to represent */
-    CRHITextureRef Texture;
+    /** @brief: Texture that the view represent */
+    CRHITexture* Texture;
 
-    /** @brief: Format of the resource-view */
+    /** @brief: Format of the texture */
     ERHIFormat Format;
 
-    /** @brief: First slice of depth or array-slice of the view */
-    uint16 FirstSlice;
-    
-    /** @brief: Number of slices of the view */
-    uint16 NumSlices;
-    
-    /** @brief: MipLevel of the view */
+    /** @brief: FirstArraySlice of the texture */
+    uint16 FirstArraySlice;
+
+    /** @brief: Number of ArraySlices of the texture */
+    uint16 NumArraySlices;
+
+    /** @brief: MipLevel of the texture */
     uint8 MipLevel;
 
-    /** @brief: Action to take when the resource is loaded during rendering */
+    /** @brief: Action to take when loading the RenderTarget before rendering */
     EAttachmentLoadAction LoadAction;
 
-    /** @brief: Action to take when the resource is stored during rendering */
+    /** @breif: Action to take when storing the RenderTarget after rendering */
     EAttachmentStoreAction StoreAction;
+
+    /** @breif: Clear-value used if LoadAction is set to clear */
+    CTextureDepthStencilValue ClearValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1603,6 +946,27 @@ inline const char* ToString(ESamplerFilter SamplerFilter)
 class CRHISamplerStateDesc
 {
 public:
+
+    /**
+     * @brief: Create a simple SamplerState
+     *
+     * @param InAddressMode: Address-mode for all axises
+     * @param InFilter: Filtering mode
+     * @param InMaxAnisotropy: Max count of anisotropic filtering if that is the selected filter
+     */
+    static CRHISamplerStateDesc Create(ESamplerMode InAddressMode, ESamplerFilter InFilter, uint8 InMaxAnisotropy)
+    {
+        return CRHISamplerStateDesc( InAddressMode
+                                   , InAddressMode
+                                   , InAddressMode
+                                   , InFilter
+                                   , EComparisonFunc::Unknown
+                                   , 0.0f
+                                   , InMaxAnisotropy
+                                   , 0.0f
+                                   , FLT_MAX
+                                   , CFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
+    }
 
     /**
      * @brief: Default Constructor
@@ -1719,101 +1083,26 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHISamplerStateCreateDesc
-
-class CRHISamplerStateCreateDesc : public CRHISamplerStateDesc
-{
-public:
-
-    /**
-     * @brief: Create a simple SamplerState
-     * 
-     * @param InAddressMode: Address-mode for all axises
-     * @param InFilter: Filtering mode
-     * @param InMaxAnisotropy: Max count of anisotropic filtering if that is the selected filter
-     */
-    static CRHISamplerStateDesc Create(ESamplerMode InAddressMode, ESamplerFilter InFilter, uint8 InMaxAnisotropy)
-    {
-        return CRHISamplerStateCreateDesc( InAddressMode
-                                         , InAddressMode
-                                         , InAddressMode
-                                         , InFilter
-                                         , EComparisonFunc::Unknown
-                                         , 0.0f
-                                         , InMaxAnisotropy
-                                         , 0.0f
-                                         , FLT_MAX
-                                         , CFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
-    }
-
-    /**
-     * @brief: Default Constructor
-     */
-    CRHISamplerStateCreateDesc()
-        : CRHISamplerStateDesc()
-    { }
-
-    /**
-     * @brief: Constructor that fills in a new sampler
-     * 
-     * @param InAddressU: Sampler mode in the U-direction
-     * @param InAddressV: Sampler mode in the V-direction
-     * @param InAddressW: Sampler mode in the W-direction
-     * @param InFilter: Type of sampler
-     * @param InComparisonFunc: ComparisonFunction if the sampler is a comparison sampler otherwise this is a no-op
-     * @param InMipLODBias: Bias added to the selected MipLevel when sampling
-     * @param InMaxAnisotropy: Maximum anisotropy for the sampler when the sampler is a Anistrotopic sampler
-     * @param InMinLOD: Minimum MipLevel
-     * @param InMaxLOD: Maximum MipLevel
-     * @param InBorderColor: Color to return when the sampler should use a color when sampling out of range
-     */
-    CRHISamplerStateCreateDesc( ESamplerMode InAddressU
-                              , ESamplerMode InAddressV
-                              , ESamplerMode InAddressW
-                              , ESamplerFilter InFilter
-                              , EComparisonFunc InComparisonFunc
-                              , float InMipLODBias
-                              , uint8 InMaxAnisotropy
-                              , float InMinLOD
-                              , float InMaxLOD
-                              , const CFloatColor& InBorderColor)
-        : CRHISamplerStateDesc(InAddressU, InAddressV, InAddressW, InFilter, InComparisonFunc, InMipLODBias, InMaxAnisotropy, InMinLOD, InMaxLOD, InBorderColor)
-    { }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHISamplerState
 
-class RHI_API CRHISamplerState : public CRHIResource
+class CRHISamplerState : public CRHIResource
 {
-public:
-
-    /**
-     * @brief: Constructor
-     *
-     * @param InDesc: Description for the SamplerState
-     */
-    CRHISamplerState(const CRHISamplerStateCreateDesc& InDesc)
-        : CRHIResource(ERHIResourceType::SamplerState)
+protected:
+ 
+    explicit CRHISamplerState(const CRHISamplerStateDesc& InDesc)
+        : CRHIResource()
         , SamplerDesc(InDesc)
     { }
 
-    /**
-     * @brief: Retrieve the bindless descriptor-handle if the RHI-supports descriptor-handles
-     *
-     * @return: Returns the bindless descriptor-handle if the RHI-supports descriptor-handles
-     */
-    CRHIDescriptorHandle GetBindlessHandle() const { return BindlessHandle; }
+public:
 
-    /**
-     * @brief: Retrieve the SamplerState description
-     *
-     * @return: Returns the SamplerState description
-     */
+    /** @return: Returns the Bindless descriptor-handle if the RHI-supports descriptor-handles */
+    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
+
+    /** @return: Returns the SamplerState description */
     const CRHISamplerStateDesc& GetDesc() const { return SamplerDesc; }
 
 protected:
-    CRHIDescriptorHandle BindlessHandle;
     CRHISamplerStateDesc SamplerDesc;
 };
 
@@ -1846,7 +1135,7 @@ enum class ERayTracingStructureFlag : uint8
     PreferFastBuild = FLAG(3),
 };
 
-ENUM_OPERATORS(ERayTracingStructureFlag);
+ENUM_CLASS_OPERATORS(ERayTracingStructureFlag);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERayTracingInstanceFlags
@@ -1860,104 +1149,23 @@ enum class ERayTracingInstanceFlag : uint32
     ForceNonOpaque        = FLAG(4),
 };
 
-ENUM_OPERATORS(ERayTracingInstanceFlag);
+ENUM_CLASS_OPERATORS(ERayTracingInstanceFlag);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingGeometryCreateDesc
-
-class CRHIRayTracingGeometryCreateDesc
-{
-public:
-
-    /**
-     * @brief: Default Constructor
-     */
-    CRHIRayTracingGeometryCreateDesc()
-        : VertexBuffer(nullptr)
-        , IndexBuffer(nullptr)
-        , NumVertices(0)
-        , NumIndicies(0)
-        , Flags(ERayTracingStructureFlag::None)
-    { }
-
-    /**
-     * @brief: Constructor that fills in all the members
-     * 
-     * @param InVertexBuffer: VertexBuffer for the geometry
-     * @param InNumVerteices: Number of vertices in the VertexBuffer
-     * @param InIndexBuffer: IndexBuffer for the geometry
-     */
-    CRHIRayTracingGeometryCreateDesc( CRHIBuffer* InVertexBuffer
-                                    , uint32 InNumVertices
-                                    , CRHIBuffer* InIndexbuffer
-                                    , EIndexFormat InIndexFormat
-                                    , uint32 InNumIndicies
-                                    , ERayTracingStructureFlag InFlags)
-        : VertexBuffer(InVertexBuffer)
-        , IndexBuffer(InIndexbuffer)
-        , IndexFormat(InIndexFormat)
-        , NumVertices(InNumVertices)
-        , NumIndicies(InNumIndicies)
-        , Flags(InFlags)
-    { }
-
-    /**
-     * @brief: Compare this instance to another one
-     * 
-     * @param RHS: Instance to compare with
-     * @return: Returns true if the instances are equal
-     */
-    bool operator==(const CRHIRayTracingGeometryCreateDesc& RHS) const
-    {
-        return (VertexBuffer == RHS.VertexBuffer)
-            && (IndexBuffer  == RHS.IndexBuffer)
-            && (IndexFormat  == RHS.IndexFormat)
-            && (NumVertices  == RHS.NumVertices)
-            && (NumIndicies  == RHS.NumIndicies)
-            && (Flags        == RHS.Flags);
-    }
-
-    /**
-     * @brief: Compare this instance to another one
-     *
-     * @param RHS: Instance to compare with
-     * @return: Returns false if the instances are equal
-     */
-    bool operator!=(const CRHIRayTracingGeometryCreateDesc& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    CRHIBuffer*              VertexBuffer;
-    CRHIBuffer*              IndexBuffer;
-    EIndexFormat             IndexFormat;
-    uint32                   NumVertices;
-    uint32                   NumIndicies;
-    ERayTracingStructureFlag Flags;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingGeometry - (Bottom-Level Acceleration-Structure)
+// CRHIRayTracingGeometry
 
 class CRHIRayTracingGeometry : public CRHIResource
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor that fills in the members
-     * 
-     * @param InFlags: Flags for the RayTracingGeometry
-     */
-    CRHIRayTracingGeometry(ERayTracingStructureFlag InFlags)
-        : CRHIResource(ERHIResourceType::RayTracingGeometry)
+    explicit CRHIRayTracingGeometry(ERayTracingStructureFlag InFlags)
+        : CRHIResource()
         , Flags(InFlags)
     { }
 
-    /**
-     * @brief: Retrieve the Flags of the RayTracingGeometry
-     * 
-     * @return: Returns the Flags of the RayTracingGeometry
-     */
+public:
+
+    /** @return: Returns the Flags of the RayTracingGeometry */
     ERayTracingStructureFlag GetFlags() const { return Flags; }
 
 protected:
@@ -1965,7 +1173,7 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRayTracingGeometryInstance
+// CRHIRayTracingGeometryInstance
 
 class CRHIRayTracingGeometryInstance
 {
@@ -1993,7 +1201,7 @@ public:
      * @param InMask: Instance mask
      * @param InTransform: Instance-transform
      */
-    CRHIRayTracingGeometryInstance( const CRHIRayTracingGeometryRef InGeometry
+    CRHIRayTracingGeometryInstance( CRHIRayTracingGeometry* InGeometry
                                   , uint32 InInstanceIndex
                                   , uint32 InHitGroupIndex
                                   , ERayTracingInstanceFlag InFlags
@@ -2035,7 +1243,7 @@ public:
     }
 
     /** @brief:Geometry to use for the instance */
-    CRHIRayTracingGeometryRef Geometry;
+    CRHIRayTracingGeometry* Geometry;
 
     /** @brief: Custom InstanceIndex */
     uint32 InstanceIndex;
@@ -2054,107 +1262,30 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingSceneCreateDesc
-
-class CRHIRayTracingSceneCreateDesc
-{
-public:
-
-    /**
-     * @brief: Default Constructor
-     */
-    CRHIRayTracingSceneCreateDesc()
-        : Instances(nullptr)
-        , NumInstances(0)
-        , Flags(ERayTracingInstanceFlag::None)
-    { }
-
-    /**
-     * @brief: Constructor that fills in the members
-     * 
-     * @param InInstances: Instances for the Scene
-     * @param InNumInstances: Number of instances
-     * @param InFlags: Flags for the Scene
-     */
-    CRHIRayTracingSceneCreateDesc(CRHIRayTracingGeometryInstance* InInstances, uint32 InNumInstances, ERayTracingInstanceFlag InFlags)
-        : Instances(InInstances)
-        , NumInstances(InNumInstances)
-        , Flags(InFlags)
-    { }
-
-    /**
-     * @brief: Compare two instances with each other
-     * 
-     * @param RHS: Other instance to compare with
-     * @return: Returns true if the instances are equal
-     */
-    bool operator==(const CRHIRayTracingSceneCreateDesc& RHS) const
-    {
-        return (Instances == RHS.Instances) && (NumInstances == RHS.NumInstances) && (Flags == RHS.Flags);
-    }
-
-    /**
-     * @brief: Compare two instances with each other
-     *
-     * @param RHS: Other instance to compare with
-     * @return: Returns false if the instances are equal
-     */
-    bool operator==(const CRHIRayTracingSceneCreateDesc& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    /** @brief: Array of Geometry instances */
-    CRHIRayTracingGeometryInstance* Instances;
-
-    /** @brief: Number of instances */
-    uint32 NumInstances;
-
-    /** @brief: Flags of the instance */
-    ERayTracingInstanceFlag Flags;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingScene  - (Top-Level Acceleration-Structure)
+// CRHIRayTracingScene
 
 class CRHIRayTracingScene : public CRHIResource
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor that fills in the members
-     *
-     * @param InFlags: Flags for the RayTracingGeometry
-     */
     CRHIRayTracingScene(ERayTracingStructureFlag InFlags)
-        : CRHIResource(ERHIResourceType::RayTracingScene)
+        : CRHIResource()
         , Flags(InFlags)
     { }
 
-    /**
-     * @brief: Retrieve the default ShaderResourceView. Pointer is valid if the AllowShaderResouce flag is set.
-     *
-     * @return: Returns a pointer to the default ShaderResourceView
-     */
+public:
+
+    /** @return: Returns a pointer to the ShaderResourceView */
     virtual CRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
     
-    /**
-     * @brief: Retrieve the bindless descriptor-handle if the RHI-supports descriptor-handles
-     *
-     * @return: Returns the bindless descriptor-handle if the RHI-supports descriptor-handles
-     */
-    CRHIDescriptorHandle GetBindlessHandle() const { return BindlessHandle; }
+    /** @return: Returns the Bindless descriptor-handle if the RHI supports descriptor-handles */
+    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 
-    /**
-     * @brief: Retrieve the Flags of the RayTracingScene
-     *
-     * @return: Returns the Flags of the RayTracingScene
-     */
+    /** @return: Returns the Flags of the RayTracingScene */
     ERayTracingStructureFlag GetFlags() const { return Flags; }
 
 protected:
     ERayTracingStructureFlag Flags;
-    CRHIDescriptorHandle     BindlessHandle;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -2162,29 +1293,44 @@ protected:
 
 struct SRHITimestamp
 {
+    SRHITimestamp() 
+        : Begin(0)
+        , End(0)
+    { }
+
+    SRHITimestamp(uint64 InBegin, uint64 InEnd)
+        : Begin(InBegin)
+        , End(InEnd)
+    { }
+
+    bool operator==(const SRHITimestamp& RHS) const
+    {
+        return (Begin == RHS.Begin) && (End == RHS.End);
+    }
+
+    bool operator!=(const SRHITimestamp& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
     uint64 Begin;
     uint64 End;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITimestampQuery
+// CRHITimeQuery
 
-class CRHITimestampQuery : public CRHIResource
+class CRHITimeQuery : public CRHIResource
 {
-public:
+protected:
 
-    /**
-     * @brief: Default Constructor
-     */
-    CRHITimestampQuery()
-        : CRHIResource(ERHIResourceType::TimestampQuery)
+    CRHITimeQuery()
+        : CRHIResource()
     { }
 
-    /**
-     * @brief: Retrieve the number of timestamps in the query (Highest index)
-     * 
-     * @return: Returns the number of timestamps recorded
-     */
+public:
+
+    /** @return: Returns the number of timestamps recorded */
     virtual uint32 GetNumTimestamps() const = 0;
 
     /**
@@ -2218,7 +1364,7 @@ public:
      * @param InHeight: The height of the viewport
      */
     CRHIViewport(ERHIFormat InColorFormat, uint16 InWidth, uint16 InHeight)
-        : CRHIResource(ERHIResourceType::Viewport)
+        : CRHIResource()
         , Width(InWidth)
         , Height(InHeight)
         , ColorFormat(InColorFormat)
@@ -2234,11 +1380,11 @@ public:
     virtual bool Resize(uint32 Width, uint32 Height) = 0;
 
     /**
-     * @brief: Retrieve the backbuffer
+     * @brief: Retrieve the BackBuffer
      * 
-     * @return: Returns the backbuffer
+     * @return: Returns the BackBuffer
      */
-    virtual CRHITexture* GetBackBuffer() const = 0;
+    virtual CRHITexture2D* GetBackBuffer() const = 0;
 
     /**
      * @brief: Retrieve the ColorFormat

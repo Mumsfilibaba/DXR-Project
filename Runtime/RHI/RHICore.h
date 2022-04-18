@@ -1,4 +1,6 @@
 #pragma once
+#include "Core/Core.h"
+
 #if MONOLITHIC_BUILD
     #define RHI_API
 #else

@@ -143,12 +143,12 @@ public:
         Reset();
     }
 
-    void BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
+    void BeginTimeStamp(CRHITimeQuery* TimestampQuery, uint32 Index)
     {
         InsertCommand<CRHICommandBeginTimeStamp>(TimestampQuery, Index);
     }
 
-    void EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
+    void EndTimeStamp(CRHITimeQuery* TimestampQuery, uint32 Index)
     {
         InsertCommand<CRHICommandEndTimeStamp>(TimestampQuery, Index);
     }
@@ -165,13 +165,13 @@ public:
         InsertCommand<CRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
 
-    void ClearDepthStencilTexture(CRHIResource* Texture, const CRHIDepthStencilClearValue& ClearValue)
+    void ClearDepthStencilTexture(CRHIResource* Texture, const CTextureDepthStencilValue& ClearValue)
     {
         Check(Texture != nullptr);
         InsertCommand<CRHICommandClearDepthStencilTexture>(Texture, ClearValue);
     }
 
-    void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const CRHIDepthStencilClearValue& ClearValue)
+    void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const CTextureDepthStencilValue& ClearValue)
     {
         Check(DepthStencilView != nullptr);
         InsertCommand<CRHICommandClearDepthStencilView>(DepthStencilView, ClearValue);
@@ -402,7 +402,7 @@ public:
         InsertCommand<CRHICommandResolveTexture>(Dst, Src);
     }
 
-    void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SRHICopyBufferInfo& CopyInfo)
+    void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SCopyBufferDesc& CopyInfo)
     {
         InsertCommand<CRHICommandCopyBuffer>(Dst, Src, CopyInfo);
     }
@@ -412,7 +412,7 @@ public:
         InsertCommand<CRHICommandCopyTexture>(Dst, Src);
     }
 
-    void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SRHICopyTextureDesc& CopyTextureInfo)
+    void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SCopyTextureDesc& CopyTextureInfo)
     {
         InsertCommand<CRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
     }
