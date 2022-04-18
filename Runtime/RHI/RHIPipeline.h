@@ -74,6 +74,15 @@ struct SDepthStencilStateFaceDesc
         , StencilFunc(InStencilFunc)
     { }
 
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToUnderlying(StencilFailOp);
+        HashCombine(Hash, ToUnderlying(StencilDepthFailOp));
+        HashCombine(Hash, ToUnderlying(StencilPassOp));
+        HashCombine(Hash, ToUnderlying(StencilFunc));
+        return Hash;
+    }
+
     bool operator==(const SDepthStencilStateFaceDesc& RHS) const
     {
         return (StencilFailOp      == RHS.StencilFailOp) 
@@ -126,6 +135,19 @@ struct SDepthStencilStateDesc
         , FrontFace(InFrontFace)
         , BackFace(InBackFace)
     { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToUnderlying(DepthWriteMask);
+        HashCombine(Hash, ToUnderlying(DepthFunc));
+        HashCombine(Hash, bDepthEnable);
+        HashCombine(Hash, StencilReadMask);
+        HashCombine(Hash, StencilWriteMask);
+        HashCombine(Hash, bStencilEnable);
+        HashCombine(Hash, FrontFace.GetHash());
+        HashCombine(Hash, BackFace.GetHash());
+        return Hash;
+    }
 
     bool operator==(const SDepthStencilStateDesc& RHS) const
     {
@@ -243,6 +265,22 @@ struct SRasterizerStateDesc
         , ForcedSampleCount(InForcedSampleCount)
         , bEnableConservativeRaster(bInEnableConservativeRaster)
     { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToUnderlying(FillMode);
+        HashCombine(Hash, ToUnderlying(CullMode));
+        HashCombine(Hash, bFrontCounterClockwise);
+        HashCombine(Hash, bDepthClipEnable);
+        HashCombine(Hash, bMultisampleEnable);
+        HashCombine(Hash, bAntialiasedLineEnable);
+        HashCombine(Hash, bEnableConservativeRaster);
+        HashCombine(Hash, ForcedSampleCount);
+        HashCombine(Hash, DepthBias);
+        HashCombine(Hash, DepthBiasClamp);
+        HashCombine(Hash, SlopeScaledDepthBias);
+        return Hash;
+    }
 
     bool operator==(const SRasterizerStateDesc& RHS) const
     {
@@ -498,6 +536,26 @@ struct SRenderTargetBlendStateDesc
         , RenderTargetWriteMask(InRenderTargetWriteMask)
     { }
 
+    uint64 GetHash() const
+    {
+        if (bBlendEnable && bLogicOpEnable)
+        {
+            return 0;
+        }
+
+        uint64 Hash = ToUnderlying(SrcBlend);
+        HashCombine(Hash, ToUnderlying(DstBlend));
+        HashCombine(Hash, ToUnderlying(BlendOp));
+        HashCombine(Hash, ToUnderlying(SrcBlendAlpha));
+        HashCombine(Hash, ToUnderlying(DstBlendAlpha));
+        HashCombine(Hash, ToUnderlying(BlendOpAlpha));
+        HashCombine(Hash, ToUnderlying(LogicOp));
+        HashCombine(Hash, bBlendEnable);
+        HashCombine(Hash, bLogicOpEnable);
+        HashCombine(Hash, RenderTargetWriteMask.Mask);
+        return Hash;
+    }
+
     bool operator==(const SRenderTargetBlendStateDesc& RHS) const
     {
         return (SrcBlend              == RHS.SrcBlend) 
@@ -593,6 +651,21 @@ struct SBlendStateDesc
         RenderTargets[1] = InRenderTarget1;
         RenderTargets[2] = InRenderTarget2;
         RenderTargets[3] = InRenderTarget3;
+    }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = 0;
+
+        const uint32 Count = bIndependentBlendEnable ? MaxRenderTargetCount : 1;
+        for (uint32 Index = 0; Index < Count; ++Index)
+        {
+            HashCombine(Hash, RenderTargets[Index].GetHash());
+        }
+
+        HashCombine(Hash, bAlphaToCoverageEnable);
+        HashCombine(Hash, bIndependentBlendEnable);
+        return Hash;
     }
 
     bool operator==(const SBlendStateDesc& RHS) const
@@ -708,9 +781,9 @@ inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SPipelineRenderTargetDesc
+// SRHIPipelineRenderTargetDesc
 
-struct SPipelineRenderTargetDesc
+struct SRHIPipelineRenderTargetDesc
 {
     ERHIFormat RenderTargetFormats[8];
     uint32     NumRenderTargets = 0;
@@ -721,11 +794,11 @@ struct SPipelineRenderTargetDesc
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRHIGraphicsPipelineShaderState
 
-struct SGraphicsPipelineShaders
+struct SRHIGraphicsPipelineShaderState
 {
-    SGraphicsPipelineShaders() = default;
+    SRHIGraphicsPipelineShaderState() = default;
 
-    SGraphicsPipelineShaders(CRHIVertexShader* InVertexShader, CRHIPixelShader* InPixelShader)
+    SRHIGraphicsPipelineShaderState(CRHIVertexShader* InVertexShader, CRHIPixelShader* InPixelShader)
         : VertexShader(InVertexShader)
         , PixelShader(InPixelShader)
     { }
@@ -737,7 +810,7 @@ struct SGraphicsPipelineShaders
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRHIGraphicsPipelineStateDesc
 
-struct SGraphicsPipelineStateDesc
+struct SRHIGraphicsPipelineStateCreateDesc
 {
     CRHIVertexInputLayout* InputLayoutState  = nullptr;
     CRHIDepthStencilState* DepthStencilState = nullptr;
@@ -750,23 +823,15 @@ struct SGraphicsPipelineStateDesc
 
     EIndexBufferStripCutValue IBStripCutValue       = EIndexBufferStripCutValue::Disabled;
     EPrimitiveTopologyType    PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
-    SGraphicsPipelineShaders  ShaderState;
-    SPipelineRenderTargetDesc PipelineFormats;
+    SRHIGraphicsPipelineShaderState  ShaderState;
+    SRHIPipelineRenderTargetDesc PipelineFormats;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIGraphicsPipelineState
 
-class CRHIGraphicsPipelineState : public CRHIPipelineState
+class CRHIGraphicsPipelineState : public CRHIResource
 {
-public:
-
-    /**
-     * @brief: Cast the PipelineState to a Graphics PipelineState
-     *
-     * @return: Returns a pointer to a Graphics PipelineState if the object implements it
-     */
-    virtual CRHIGraphicsPipelineState* AsGraphics() override { return this; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -786,16 +851,8 @@ struct SRHIComputePipelineStateDesc
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIComputePipelineState
 
-class CRHIComputePipelineState : public CRHIPipelineState
+class CRHIComputePipelineState : public CRHIResource
 {
-public:
-
-    /**
-     * @brief: Cast the PipelineState to a Compute PipelineState
-     *
-     * @return: Returns a pointer to a Compute PipelineState if the object implements it
-     */
-    virtual CRHIComputePipelineState* AsCompute() override { return this; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

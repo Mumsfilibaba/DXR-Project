@@ -6,6 +6,11 @@
 
 class IRHIResource
 {
+protected:
+
+    IRHIResource() = default;
+    virtual ~IRHIResource() = default;
+
 public:
 
     /**
@@ -22,13 +27,4 @@ public:
      */
     virtual int32 Release() = 0;
 
-    /**
-     * @brief: Destroy the reference directly, bypassing the reference-count
-     *
-     * @return: Returns the reference count
-     */
-    virtual int32 Destroy() = 0;
-
-protected:
-    virtual ~IRHIResource() = default;
 };

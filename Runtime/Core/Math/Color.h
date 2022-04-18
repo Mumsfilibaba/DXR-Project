@@ -168,6 +168,16 @@ public:
         , a(InA)
     { }
 
+    uint64 GetHash() const
+    {
+        uint64 Hash = 0;
+        HashCombine(Hash, r);
+        HashCombine(Hash, g);
+        HashCombine(Hash, b);
+        HashCombine(Hash, a);
+        return Hash;
+    }
+
     FORCEINLINE float* GetData()
     {
         return reinterpret_cast<float*>(this);

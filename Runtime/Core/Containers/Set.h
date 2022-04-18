@@ -3,8 +3,8 @@
 #if 1
 #include <set>
 
-template<typename ElementType, typename CompareType = std::less<ElementType>>
-using TSet = std::set<ElementType, CompareType>;
+template<typename T, typename CompareType = std::less<T>>
+using TSet = std::set<T, CompareType>;
 
 #else
 #include "Iterator.h"
@@ -62,10 +62,10 @@ class TSet
 
 public:
 
-    using ElementType = T;
+    using T = T;
 
-    using IteratorType = TTreeIterator<STreeNode, ElementType>;
-    using ConstIteratorType = TTreeIterator<const STreeNode, const ElementType>;
+    using IteratorType = TTreeIterator<STreeNode, T>;
+    using ConstIteratorType = TTreeIterator<const STreeNode, const T>;
 
     /**
      * @brief: Default constructor

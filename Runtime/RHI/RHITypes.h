@@ -745,6 +745,14 @@ public:
         : Depth(InDepth)
         , Stencil(InStencil)
     { }
+    
+    /** @return: Returns and calculates the hash for this type */
+    uint64 GetHash() const
+    {
+        uint64 Hash = Stencil;
+        HashCombine(Hash, Depth);
+        return Hash;
+    }
 
     /**
      * @brief: Compare with another instance
