@@ -1341,11 +1341,7 @@ public:
      */
     virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const = 0;
 
-    /**
-     * @brief: Retrieve the frequency used to determine the timing in the query
-     * 
-     * @return: Returns the frequency which is used to convert the timestamps into a time-value
-     */
+    /** @return: Returns the frequency which is used to convert the timestamps into a time-value */
     virtual uint64 GetFrequency() const = 0;
 };
 
@@ -1354,21 +1350,16 @@ public:
 
 class CRHIViewport : public CRHIResource
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor that takes format and size
-     * 
-     * @param InColorFormat: Format of the color target
-     * @param InWidth: The width of the viewport
-     * @param InHeight: The height of the viewport
-     */
     CRHIViewport(ERHIFormat InColorFormat, uint16 InWidth, uint16 InHeight)
         : CRHIResource()
         , Width(InWidth)
         , Height(InHeight)
         , ColorFormat(InColorFormat)
     { }
+
+public:
 
     /**
      * @brief: Resize the viewport
@@ -1379,36 +1370,46 @@ public:
      */
     virtual bool Resize(uint32 Width, uint32 Height) = 0;
 
-    /**
-     * @brief: Retrieve the BackBuffer
-     * 
-     * @return: Returns the BackBuffer
-     */
+    /** @return: Returns the BackBuffer */
     virtual CRHITexture2D* GetBackBuffer() const = 0;
 
-    /**
-     * @brief: Retrieve the ColorFormat
-     * 
-     * @return: Returns the ColorFormat
-     */
+    /** @return: Returns the ColorFormat */
     ERHIFormat GetColorFormat() const { return ColorFormat; }
 
-    /**
-     * @brief: Retrieve the Width
-     * 
-     * @return: Returns the Width
-     */
-    uint16 GetWidth()  const { return Width; }
+    /** @return: Returns the Width */
+    uint16 GetWidth() const { return Width; }
     
-    /**
-     * @brief: Retrieve the Height
-     * 
-     * @return: Returns the Height
-     */
+    /** @return: Returns the Height */
     uint16 GetHeight() const { return Height; }
 
 protected:
     ERHIFormat ColorFormat;
     uint16     Width;
     uint16     Height;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIShaderResourceViewCache
+
+class RHI_API CRHIShaderResourceViewCache
+{
+    struct SSRVTextureDesc
+    {
+    };
+
+    struct SSRVBufferDesc
+    {
+    };
+
+public:
+
+    static CRHIShaderResourceViewCache& Get();
+
+    CRHIShaderResourceViewRef GetOrCreateTextureView(CRHITexture* Texture, uint8 MipLevel);
+
+private:
+    CRHIShaderResourceViewCache();
+    ~CRHIShaderResourceViewCache();
+
+
 };
