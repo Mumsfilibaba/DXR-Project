@@ -28,9 +28,7 @@ class CPlatformDebugMisc
 {
 public:
 
-    /**
-     * @brief: If the debugger is attached, a breakpoint will be set at this point of the code
-     */
+    /** @brief: If the debugger is attached, a breakpoint will be set at this point of the code */
     static FORCEINLINE void DebugBreak() { }
 
     /**
@@ -40,11 +38,7 @@ public:
      */
     static FORCEINLINE void OutputDebugString(const String& Message) { }
 
-    /**
-     * @brief: Checks weather or not the application is running inside a debugger 
-     * 
-     * @return: Returns true if the debugger is present, otherwise false
-     */
+    /** @return: Returns true if a debugger is present, otherwise false */
     static FORCEINLINE bool IsDebuggerPresent() { return false; }
 };
 

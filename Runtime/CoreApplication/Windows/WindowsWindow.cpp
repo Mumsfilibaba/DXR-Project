@@ -110,7 +110,7 @@ bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 In
         }
 
         // Save style for later
-        StyleParams = InStyle;
+        Style = InStyle;
 
         // Set this to userdata
         SetLastError(0);
@@ -156,7 +156,7 @@ void CWindowsWindow::Close()
 
     if (IsValid())
     {
-        if (StyleParams.IsClosable())
+        if (Style.IsClosable())
         {
             CloseWindow(Window);
         }
@@ -167,7 +167,7 @@ void CWindowsWindow::Minimize()
 {
     Check(Window != 0);
 
-    if (StyleParams.IsMinimizable())
+    if (Style.IsMinimizable())
     {
         if (IsValid())
         {
@@ -178,7 +178,7 @@ void CWindowsWindow::Minimize()
 
 void CWindowsWindow::Maximize()
 {
-    if (StyleParams.IsMaximizable())
+    if (Style.IsMaximizable())
     {
         if (IsValid())
         {
@@ -262,7 +262,7 @@ void CWindowsWindow::SetTitle(const String& Title)
 {
     Check(Window != 0);
 
-    if (StyleParams.IsTitled())
+    if (Style.IsTitled())
     {
         if (IsValid())
         {
@@ -417,7 +417,7 @@ uint32 CWindowsWindow::GetHeight() const
     return 0;
 }
 
-void CWindowsWindow::SetPlatformHandle(PlatformWindowHandle InPlatformHandle)
+void CWindowsWindow::SetOSHandle(PlatformWindowHandle InPlatformHandle)
 {
     HWND InWindowHandle = reinterpret_cast<HWND>(InPlatformHandle);
     if (IsWindow(InWindowHandle))

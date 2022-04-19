@@ -17,7 +17,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for application
+// CPlatformApplication
 
 class CPlatformApplication
 {
@@ -81,9 +81,9 @@ public:
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const { return TSharedRef<CPlatformWindow>(); }
 
     /**
-     * @brief: Sets the PlatformWindow that should recive keyboard focus
+     * @brief: Sets the PlatformWindow that should receive keyboard focus
      * 
-     * @param Window: PlatformWindow that should recive keyboard focus
+     * @param Window: PlatformWindow that should receive keyboard focus
      */
     virtual void SetCapture(const TSharedRef<CPlatformWindow>& Window) { }
 
@@ -108,25 +108,11 @@ public:
      */
     virtual void SetMessageListener(const TSharedPtr<CPlatformApplicationMessageHandler>& InMessageHandler) { MessageListener = InMessageHandler; }
 
-    /**
-     * @brief: Retrieve the mouse-cursor interface 
-     * 
-     * @return: Returns the mouse-cursor interface 
-     */
-    FORCEINLINE TSharedPtr<ICursor> GetCursor() const
-    {
-        return Cursor;
-    }
+    /** @return: Returns the mouse-cursor interface */
+    TSharedPtr<ICursor> GetCursor() const { return Cursor; }
 
-    /**
-     * @brief: Retrieves the message handler
-     * 
-     * @return: Returns the current message handler
-     */
-    FORCEINLINE TSharedPtr<CPlatformApplicationMessageHandler> GetMessageListener() const
-    {
-        return MessageListener;
-    }
+    /** @return: Returns the current message handler */
+    TSharedPtr<CPlatformApplicationMessageHandler> GetMessageListener() const { return MessageListener; }
 
 protected:
 
@@ -139,7 +125,7 @@ protected:
     
     virtual ~CPlatformApplication() = default;
 
-    TSharedPtr<ICursor> Cursor;
+    TSharedPtr<ICursor>                            Cursor;
     TSharedPtr<CPlatformApplicationMessageHandler> MessageListener;
 };
 

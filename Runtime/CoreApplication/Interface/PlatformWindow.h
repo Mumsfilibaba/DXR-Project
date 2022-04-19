@@ -2,6 +2,9 @@
 #include "Core/RefCounted.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Templates/EnumUtilities.h"
+
+#include "Core/Math/IntVector2.h"
 
 #include "CoreApplication/CoreApplication.h"
 
@@ -18,86 +21,152 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
-typedef void* PlatformWindowHandle;
-
 typedef TSharedRef<class CPlatformWindow> CPlatformWindowRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EWindowStyleFlag - Window style flags
+// EWindowStyleFlag
 
-enum EWindowStyleFlag : uint32
+enum class EWindowStyleFlag : uint8
 {
-    WindowStyleFlag_None        = 0x0,
-    WindowStyleFlag_Titled      = FLAG(1),
-    WindowStyleFlag_Closable    = FLAG(2),
-    WindowStyleFlag_Minimizable = FLAG(3),
-    WindowStyleFlag_Maximizable = FLAG(4),
-    WindowStyleFlag_Resizeable  = FLAG(5),
+    None        = 0x0,
+    Titled      = FLAG(1),
+    Closable    = FLAG(2),
+    Minimizable = FLAG(3),
+    Maximizable = FLAG(4),
+    Resizeable  = FLAG(5),
 };
 
+ENUM_CLASS_OPERATORS(EWindowStyleFlag);
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SWindowStyle - Struct for checking window style
+// SWindowStyle
 
 struct SWindowStyle
 {
-    SWindowStyle() = default;
+    SWindowStyle()
+        : Style(EWindowStyleFlag::None)
+    { }
 
-    FORCEINLINE SWindowStyle(uint32 InStyle)
+    FORCEINLINE SWindowStyle(EWindowStyleFlag InStyle)
         : Style(InStyle)
     { }
 
     FORCEINLINE bool IsTitled() const
     {
-        return Style & WindowStyleFlag_Titled;
+        return bool(Style & EWindowStyleFlag::Titled);
     }
 
     FORCEINLINE bool IsClosable() const
     {
-        return Style & WindowStyleFlag_Closable;
+        return bool(Style & EWindowStyleFlag::Closable);
     }
 
     FORCEINLINE bool IsMinimizable() const
     {
-        return Style & WindowStyleFlag_Minimizable;
+        return bool(Style & EWindowStyleFlag::Minimizable);
     }
 
     FORCEINLINE bool IsMaximizable() const
     {
-        return Style & WindowStyleFlag_Maximizable;
+        return bool(Style & EWindowStyleFlag::Maximizable);
     }
 
     FORCEINLINE bool IsResizeable() const
     {
-        return Style & WindowStyleFlag_Resizeable;
+        return bool(Style & EWindowStyleFlag::Resizeable);
     }
 
-    uint32 Style = 0;
+    bool operator==(SWindowStyle RHS) const
+    {
+        return (Style == RHS.Style);
+    }
+
+    bool operator!=(SWindowStyle RHS) const
+    {
+        return (Style != RHS.Style);
+    }
+
+    EWindowStyleFlag Style;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SWindowShape - Struct defining the shape of a window
+// SWindowShape
 
 struct SWindowShape
 {
     SWindowShape() = default;
 
-    FORCEINLINE SWindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
+    SWindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
         : Width(InWidth)
         , Height(InHeight)
-        , Position({ x, y })
+        , Position(x, y)
     { }
 
-    uint32 Width = 0;
-    uint32 Height = 0;
-    struct
+    bool operator==(const SWindowShape& RHS) const
     {
-        int32 x = 0;
-        int32 y = 0;
-    } Position;
+        return (Width == RHS.Width) && (Height == RHS.Height) && (Position == RHS.Position);
+    }
+
+    bool operator!=(const SWindowShape& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    uint32      Width  = 0;
+    uint32      Height = 0;
+
+    CIntVector2 Position;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CPlatformWindow - Platform interface for a window
+// CWindowInitializer
+
+class CWindowInitializer
+{
+public:
+
+    CWindowInitializer()
+        : Title()
+        , Width(0)
+        , Height(0)
+        , Position(0)
+        , Style()
+    { }
+
+    CWindowInitializer(const String& InTitle, uint16 InWidth, uint16 InHeight, const CIntVector2& InPosition, SWindowStyle InStyle)
+        : Title(InTitle)
+        , Width(InWidth)
+        , Height(InHeight)
+        , Position(InPosition)
+        , Style(InStyle)
+    { }
+
+    bool operator==(const CWindowInitializer& RHS) const
+    {
+        return (Title    == RHS.Title) 
+            && (Width    == RHS.Width) 
+            && (Height   == RHS.Height) 
+            && (Position == RHS.Position) 
+            && (Style    == RHS.Style);
+    }
+
+    bool operator!=(const CWindowInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    String       Title;
+
+    uint16       Width;
+    uint16       Height;
+
+    CIntVector2  Position;
+
+    SWindowStyle Style;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CPlatformWindow
 
 class CPlatformWindow : public CRefCounted
 {
@@ -106,15 +175,10 @@ public:
     /**
      * @brief: Initializes the window
      * 
-     * @param Title: Title of the window
-     * @param InWidth: Width of the window
-     * @param InHeight: Height of the window
-     * @param x: x-coordinate of the window
-     * @param y: y-coordinate of the window
-     * @param Style: Style of the window
+     * @param Initializer: Struct containing information about how to initialize the window
      * @return: Returns true if the initialization is successful, otherwise false
      */
-    virtual bool Initialize(const String& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) { return true; }
+    virtual bool Initialize(const CWindowInitializer& Initializer) { return true; }
 
     /**
      * @brief: Shows the window 
@@ -128,65 +192,63 @@ public:
      */
     virtual void Minimize() { }
 
-    /**
-     * @brief:  Maximizes the window
-     */
+    /** @brief: Maximizes the window */
     virtual void Maximize() { }
 
-    /* Closes the window */
+    /* @brief: Closes the window */
     virtual void Close() { }
 
-    /* Restores the window after being minimized or maximized */
+    /* @brief: Restores the window after being minimized or maximized */
     virtual void Restore() { }
 
-    /* Makes the window a borderless fullscreen window */
+    /* @brief: Makes the window a borderless fullscreen window */
     virtual void ToggleFullscreen() { }
 
-    /* Checks if the underlaying native handle of the window is valid */
+    /* @brief: Checks if the OS-handle is valid */
     virtual bool IsValid() const { return false; }
 
-    /* Checks if this window is the currently active window */
+    /* @brief: Checks if this window is the currently active window */
     virtual bool IsActiveWindow() const { return false; }
 
-    /* Sets the title */
+    /* @brief: Sets the title */
     virtual void SetTitle(const String& Title) { }
 
-    /* Retrieve the window title */
+    /* @brief: Retrieve the window title */
     virtual void GetTitle(String& OutTitle) { }
 
-    /* Set the position of the window */
+    /* @brief: Set the position of the window */
     virtual void MoveTo(int32 x, int32 y) { }
 
-    /* Set the shape of the window */
+    /* @brief: Set the shape of the window */
     virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) { }
 
-    /* Retrieve the shape of the window */
+    /* @brief: Retrieve the shape of the window */
     virtual void GetWindowShape(SWindowShape& OutWindowShape) const { }
 
-    /* Get the fullscreen information of the monitor that the window currently is on */
+    /* @brief: Get the fullscreen information of the monitor that the window currently is on */
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const { }
 
-    /* Retrieve the width of the window */
+    /* @brief: Retrieve the width of the window */
     virtual uint32 GetWidth()  const { return 0; }
 
-    /* Retrieve the height of the window */
+    /* @brief: Retrieve the height of the window */
     virtual uint32 GetHeight() const { return 0; }
 
-    /* Set the native window handle */
-    virtual void SetPlatformHandle(PlatformWindowHandle InPlatformHandle) { }
+    /* @brief: Set the OS-window handle */
+    virtual void SetOSHandle(void* InPlatformHandle) { }
 
-    /* Retrieve the native handle */
-    virtual PlatformWindowHandle GetPlatformHandle() const { return nullptr; }
+    /* @brief: Retrieve the OS-window handle */
+    virtual void* GetOSHandle() const { return nullptr; }
 
-    /* Retrieve the style of the window */
-    FORCEINLINE SWindowStyle GetStyle() const { return StyleParams; }
+    /* @brief: Retrieve the style of the window */
+    SWindowStyle GetStyle() const { return Style; }
 
 protected:
 
     CPlatformWindow() = default;
     ~CPlatformWindow() = default;
 
-    SWindowStyle StyleParams;
+    SWindowStyle Style;
 };
 
 #if defined(COMPILER_MSVC)

@@ -2,29 +2,34 @@
 #include "Core/Core.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// State of which modifier keys are pressed
+// SModifierKeyState
 
 struct SModifierKeyState
 {
-public:
+    SModifierKeyState()
+        : ModifierMask(0)
+    { }
 
-    SModifierKeyState() = default;
-
-    FORCEINLINE SModifierKeyState(uint8 InModifierMask)
+    SModifierKeyState(uint8 InModifierMask)
         : ModifierMask(InModifierMask)
     { }
+
+    bool operator==(SModifierKeyState RHS) const
+    {
+        return (ModifierMask == RHS.ModifierMask);
+    }
 
     union
     {
         /* Flags */
         struct
         {
-            uint8 bIsCtrlDown : 1;
-            uint8 bIsAltDown : 1;
-            uint8 bIsShiftDown : 1;
+            uint8 bIsCtrlDown     : 1;
+            uint8 bIsAltDown      : 1;
+            uint8 bIsShiftDown    : 1;
             uint8 bIsCapsLockDown : 1;
             uint8 bIsSuperKeyDown : 1;
-            uint8 bIsNumPadDown : 1;
+            uint8 bIsNumPadDown   : 1;
         };
 
         /* Mask */

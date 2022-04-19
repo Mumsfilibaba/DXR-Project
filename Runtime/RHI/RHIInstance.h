@@ -355,7 +355,7 @@ public:
      * @param Desc: Info about a DepthStencilState
      * @return: Returns the newly created DepthStencilState
      */
-    virtual class CRHIDepthStencilState* CreateDepthStencilState(const SDepthStencilStateDesc& Desc) = 0;
+    virtual class CRHIDepthStencilState* CreateDepthStencilState(const CRHIDepthStencilStateInitializer& Desc) = 0;
 
     /**
      * @brief: Create a new RasterizerState
@@ -363,7 +363,7 @@ public:
      * @param Desc: Info about a RasterizerState
      * @return: Returns the newly created RasterizerState
      */
-    virtual class CRHIRasterizerState* CreateRasterizerState(const SRasterizerStateDesc& Desc) = 0;
+    virtual class CRHIRasterizerState* CreateRasterizerState(const CRHIRasterizerStateInitializer& Desc) = 0;
 
     /**
      * @brief: Create a new BlendState
@@ -371,7 +371,7 @@ public:
      * @param Desc: Info about a BlendState
      * @return: Returns the newly created BlendState
      */
-    virtual class CRHIBlendState* CreateBlendState(const SBlendStateDesc& Desc) = 0;
+    virtual class CRHIBlendState* CreateBlendState(const CRHIBlendStateInitializer& Desc) = 0;
 
     /**
      * @brief: Create a new InputLayoutState
@@ -603,17 +603,17 @@ FORCEINLINE CRHIVertexInputLayout* RHICreateInputLayout(const SVertexInputLayout
     return GRHIInstance->CreateInputLayout(Desc);
 }
 
-FORCEINLINE CRHIDepthStencilState* RHICreateDepthStencilState(const SDepthStencilStateDesc& Desc)
+FORCEINLINE CRHIDepthStencilState* RHICreateDepthStencilState(const CRHIDepthStencilStateInitializer& Desc)
 {
     return GRHIInstance->CreateDepthStencilState(Desc);
 }
 
-FORCEINLINE CRHIRasterizerState* RHICreateRasterizerState(const SRasterizerStateDesc& Desc)
+FORCEINLINE CRHIRasterizerState* RHICreateRasterizerState(const CRHIRasterizerStateInitializer& Desc)
 {
     return GRHIInstance->CreateRasterizerState(Desc);
 }
 
-FORCEINLINE CRHIBlendState* RHICreateBlendState(const SBlendStateDesc& Desc)
+FORCEINLINE CRHIBlendState* RHICreateBlendState(const CRHIBlendStateInitializer& Desc)
 {
     return GRHIInstance->CreateBlendState(Desc);
 }

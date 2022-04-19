@@ -63,9 +63,7 @@ public:
      */
     virtual void PrintLine(const String& Message) { }
 
-    /**
-     * @brief: Clear the console window 
-     */
+    /** @brief: Clear the console window  */
     virtual void Clear() { }
 
     /**
@@ -87,12 +85,8 @@ public:
      */
     virtual void Release() { delete this; }
 
-    /**
-     * @brief: Returns true if the console-window is currently being displayed 
-     * 
-     * @return: Return true if the console-window is visible
-     */
-    bool IsShowing() const { return bIsShowing; }
+    /** @return: Return true if the console-window is visible */
+    bool IsVisible() const { return bIsVisible; }
 
 protected:
 
@@ -100,7 +94,7 @@ protected:
     virtual ~CPlatformConsoleWindow() = default;
 
     // True or false depending on if the console is visible or not
-    bool bIsShowing = false;
+    bool bIsVisible = false;
 };
 
 #if defined(COMPILER_MSVC)

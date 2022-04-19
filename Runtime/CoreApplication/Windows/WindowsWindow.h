@@ -70,10 +70,10 @@ public:
     virtual uint32 GetHeight() const override final;
 
     /* Set the native window handle */
-    virtual void SetPlatformHandle(PlatformWindowHandle InPlatformHandle) override final;
+    virtual void SetOSHandle(PlatformWindowHandle InPlatformHandle) override final;
 
     /* Retrieve the native handle */
-    virtual PlatformWindowHandle GetPlatformHandle() const override final
+    virtual PlatformWindowHandle GetOSHandle() const override final
     {
         return reinterpret_cast<PlatformWindowHandle>(Window);
     }
