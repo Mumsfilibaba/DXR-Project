@@ -9,6 +9,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/HashTable.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/Optional.h"
 
 class CRHIRayTracingGeometryInstance;
 
@@ -604,6 +605,116 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITextureSRVInitializer
+
+class CRHITextureSRVInitializer
+{
+public:
+
+    CRHITextureSRVInitializer()
+        : Texture(nullptr)
+        , Format(ERHIFormat::Unknown)
+        , FirstMipLevel(0)
+        , NumMips(0)
+        , FirstArraySlice(0)
+        , NumSlices(0)
+    { }
+
+    CRHITextureSRVInitializer( CRHITexture* InTexture
+                            , ERHIFormat InFormat
+                            , uint8 InFirstMipLevel
+                            , uint8 InNumMips
+                            , uint16 InFirstArraySlice
+                            , uint16 InNumSlices)
+        : Texture(InTexture)
+        , Format(InFormat)
+        , FirstMipLevel(InFirstMipLevel)
+        , NumMips(InNumMips)
+        , FirstArraySlice(InFirstArraySlice)
+        , NumSlices(InNumSlices)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Texture);
+        HashCombine(Hash, ToUnderlying(Format));
+        HashCombine(Hash, FirstMipLevel);
+        HashCombine(Hash, NumMips);
+        HashCombine(Hash, FirstArraySlice);
+        HashCombine(Hash, NumSlices);
+        return Hash;
+    }
+
+    bool operator==(const CRHITextureSRVInitializer& RHS) const
+    {
+        return (Texture         == RHS.Texture)
+            && (Format          == RHS.Format)
+            && (FirstMipLevel   == RHS.FirstMipLevel)
+            && (NumMips         == RHS.NumMips)
+            && (FirstArraySlice == RHS.FirstArraySlice)
+            && (NumSlices       == RHS.NumSlices);
+    }
+
+    bool operator!=(const CRHITextureSRVInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHITexture* Texture;
+
+    ERHIFormat   Format;
+
+    uint8        FirstMipLevel;
+    uint8        NumMips;
+
+    uint16       FirstArraySlice;
+    uint16       NumSlices;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIBufferSRVInitializer
+
+class CRHIBufferSRVInitializer
+{
+public:
+
+    CRHIBufferSRVInitializer()
+        : Buffer(nullptr)
+        , FirstElement(0)
+        , NumElements(0)
+    { }
+
+    CRHIBufferSRVInitializer(CRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements)
+        : Buffer(InBuffer)
+        , FirstElement(InFirstElement)
+        , NumElements(InNumElements)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Buffer);
+        HashCombine(Hash, FirstElement);
+        HashCombine(Hash, NumElements);
+        return Hash;
+    }
+
+    bool operator==(const CRHIBufferSRVInitializer& RHS) const
+    {
+        return (Buffer == RHS.Buffer) && (FirstElement == RHS.FirstElement) && (NumElements == RHS.NumElements);
+    }
+
+    bool operator!=(const CRHIBufferSRVInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHIBuffer* Buffer;
+
+    uint32      FirstElement;
+    uint32      NumElements;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIShaderResourceView
 
 class CRHIShaderResourceView : public CRHIResource
@@ -625,6 +736,110 @@ public:
 
 protected:
     CRHIResource* Resource;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITextureUAVInitializer
+
+class CRHITextureUAVInitializer
+{
+public:
+
+    CRHITextureUAVInitializer()
+        : Texture(nullptr)
+        , Format(ERHIFormat::Unknown)
+        , MipLevel(0)
+        , FirstArraySlice(0)
+        , NumSlices(0)
+    { }
+
+    CRHITextureUAVInitializer( CRHITexture* InTexture
+                            , ERHIFormat InFormat
+                            , uint8 InMipLevel
+                            , uint16 InFirstArraySlice
+                            , uint16 InNumSlices)
+        : Texture(InTexture)
+        , Format(InFormat)
+        , MipLevel(InMipLevel)
+        , FirstArraySlice(InFirstArraySlice)
+        , NumSlices(InNumSlices)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Texture);
+        HashCombine(Hash, ToUnderlying(Format));
+        HashCombine(Hash, MipLevel);
+        HashCombine(Hash, FirstArraySlice);
+        HashCombine(Hash, NumSlices);
+        return Hash;
+    }
+
+    bool operator==(const CRHITextureUAVInitializer& RHS) const
+    {
+        return (Texture         == RHS.Texture)
+            && (Format          == RHS.Format)
+            && (MipLevel        == RHS.MipLevel)
+            && (FirstArraySlice == RHS.FirstArraySlice)
+            && (NumSlices       == RHS.NumSlices);
+    }
+
+    bool operator!=(const CRHITextureUAVInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHITexture* Texture;
+
+    ERHIFormat   Format;
+
+    uint8        MipLevel;
+
+    uint16       FirstArraySlice;
+    uint16       NumSlices;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIBufferUAVInitializer
+
+class CRHIBufferUAVInitializer
+{
+public:
+
+    CRHIBufferUAVInitializer()
+        : Buffer(nullptr)
+        , FirstElement(0)
+        , NumElements(0)
+    { }
+
+    CRHIBufferUAVInitializer(CRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements)
+        : Buffer(InBuffer)
+        , FirstElement(InFirstElement)
+        , NumElements(InNumElements)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Buffer);
+        HashCombine(Hash, FirstElement);
+        HashCombine(Hash, NumElements);
+        return Hash;
+    }
+
+    bool operator==(const CRHIBufferUAVInitializer& RHS) const
+    {
+        return (Buffer == RHS.Buffer) && (FirstElement == RHS.FirstElement) && (NumElements == RHS.NumElements);
+    }
+
+    bool operator!=(const CRHIBufferUAVInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHIBuffer* Buffer;
+
+    uint32      FirstElement;
+    uint32      NumElements;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -904,12 +1119,12 @@ inline const char* ToString(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
-    case ESamplerMode::Wrap:       return "Wrap";
-    case ESamplerMode::Mirror:     return "Mirror";
-    case ESamplerMode::Clamp:      return "Clamp";
-    case ESamplerMode::Border:     return "Border";
-    case ESamplerMode::MirrorOnce: return "MirrorOnce";
-    default:                       return "Unknown";
+        case ESamplerMode::Wrap:       return "Wrap";
+        case ESamplerMode::Mirror:     return "Mirror";
+        case ESamplerMode::Clamp:      return "Clamp";
+        case ESamplerMode::Border:     return "Border";
+        case ESamplerMode::MirrorOnce: return "MirrorOnce";
+        default:                       return "Unknown";
     }
 }
 
@@ -943,32 +1158,32 @@ inline const char* ToString(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
-    case ESamplerFilter::MinMagMipPoint:                          return "MinMagMipPoint";
-    case ESamplerFilter::MinMagPoint_MipLinear:                   return "MinMagPoint_MipLinear";
-    case ESamplerFilter::MinPoint_MagLinear_MipPoint:             return "MinPoint_MagLinear_MipPoint";
-    case ESamplerFilter::MinPoint_MagMipLinear:                   return "MinPoint_MagMipLinear";
-    case ESamplerFilter::MinLinear_MagMipPoint:                   return "MinLinear_MagMipPoint";
-    case ESamplerFilter::MinLinear_MagPoint_MipLinear:            return "MinLinear_MagPoint_MipLinear";
-    case ESamplerFilter::MinMagLinear_MipPoint:                   return "MinMagLinear_MipPoint";
-    case ESamplerFilter::MinMagMipLinear:                         return "MinMagMipLinear";
-    case ESamplerFilter::Anistrotopic:                            return "Anistrotopic";
-    case ESamplerFilter::Comparison_MinMagMipPoint:               return "Comparison_MinMagMipPoint";
-    case ESamplerFilter::Comparison_MinMagPoint_MipLinear:        return "Comparison_MinMagPoint_MipLinear";
-    case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:  return "Comparison_MinPoint_MagLinear_MipPoint";
-    case ESamplerFilter::Comparison_MinPoint_MagMipLinear:        return "Comparison_MinPoint_MagMipLinear";
-    case ESamplerFilter::Comparison_MinLinear_MagMipPoint:        return "Comparison_MinLinear_MagMipPoint";
-    case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear: return "Comparison_MinLinear_MagPoint_MipLinear";
-    case ESamplerFilter::Comparison_MinMagLinear_MipPoint:        return "Comparison_MinMagLinear_MipPoint";
-    case ESamplerFilter::Comparison_MinMagMipLinear:              return "Comparison_MinMagMipLinear";
-    case ESamplerFilter::Comparison_Anistrotopic:                 return "Comparison_Anistrotopic";
-    default:                                                      return "Unknown";
+        case ESamplerFilter::MinMagMipPoint:                          return "MinMagMipPoint";
+        case ESamplerFilter::MinMagPoint_MipLinear:                   return "MinMagPoint_MipLinear";
+        case ESamplerFilter::MinPoint_MagLinear_MipPoint:             return "MinPoint_MagLinear_MipPoint";
+        case ESamplerFilter::MinPoint_MagMipLinear:                   return "MinPoint_MagMipLinear";
+        case ESamplerFilter::MinLinear_MagMipPoint:                   return "MinLinear_MagMipPoint";
+        case ESamplerFilter::MinLinear_MagPoint_MipLinear:            return "MinLinear_MagPoint_MipLinear";
+        case ESamplerFilter::MinMagLinear_MipPoint:                   return "MinMagLinear_MipPoint";
+        case ESamplerFilter::MinMagMipLinear:                         return "MinMagMipLinear";
+        case ESamplerFilter::Anistrotopic:                            return "Anistrotopic";
+        case ESamplerFilter::Comparison_MinMagMipPoint:               return "Comparison_MinMagMipPoint";
+        case ESamplerFilter::Comparison_MinMagPoint_MipLinear:        return "Comparison_MinMagPoint_MipLinear";
+        case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:  return "Comparison_MinPoint_MagLinear_MipPoint";
+        case ESamplerFilter::Comparison_MinPoint_MagMipLinear:        return "Comparison_MinPoint_MagMipLinear";
+        case ESamplerFilter::Comparison_MinLinear_MagMipPoint:        return "Comparison_MinLinear_MagMipPoint";
+        case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear: return "Comparison_MinLinear_MagPoint_MipLinear";
+        case ESamplerFilter::Comparison_MinMagLinear_MipPoint:        return "Comparison_MinMagLinear_MipPoint";
+        case ESamplerFilter::Comparison_MinMagMipLinear:              return "Comparison_MinMagMipLinear";
+        case ESamplerFilter::Comparison_Anistrotopic:                 return "Comparison_Anistrotopic";
+        default:                                                      return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHISamplerStateDesc
 
-class CRHISamplerStateDesc
+class CRHISamplerStateInitializer
 {
 public:
 
@@ -979,9 +1194,9 @@ public:
      * @param InFilter: Filtering mode
      * @param InMaxAnisotropy: Max count of anisotropic filtering if that is the selected filter
      */
-    static CRHISamplerStateDesc Create(ESamplerMode InAddressMode, ESamplerFilter InFilter, uint8 InMaxAnisotropy)
+    static CRHISamplerStateInitializer Create(ESamplerMode InAddressMode, ESamplerFilter InFilter, uint8 InMaxAnisotropy)
     {
-        return CRHISamplerStateDesc(InAddressMode
+        return CRHISamplerStateInitializer(InAddressMode
                                     , InAddressMode
                                     , InAddressMode
                                     , InFilter
@@ -996,7 +1211,7 @@ public:
     /**
      * @brief: Default Constructor
      */
-    CRHISamplerStateDesc()
+    CRHISamplerStateInitializer()
         : AddressU(ESamplerMode::Clamp)
         , AddressV(ESamplerMode::Clamp)
         , AddressW(ESamplerMode::Clamp)
@@ -1023,16 +1238,16 @@ public:
      * @param InMaxLOD: Maximum MipLevel
      * @param InBorderColor: Color to return when the sampler should use a color when sampling out of range
      */
-    CRHISamplerStateDesc( ESamplerMode InAddressU
-                        , ESamplerMode InAddressV
-                        , ESamplerMode InAddressW
-                        , ESamplerFilter InFilter
-                        , EComparisonFunc InComparisonFunc
-                        , float InMipLODBias
-                        , uint8 InMaxAnisotropy
-                        , float InMinLOD
-                        , float InMaxLOD
-                        , const CFloatColor& InBorderColor)
+    CRHISamplerStateInitializer( ESamplerMode InAddressU
+                               , ESamplerMode InAddressV
+                               , ESamplerMode InAddressW
+                               , ESamplerFilter InFilter
+                               , EComparisonFunc InComparisonFunc
+                               , float InMipLODBias
+                               , uint8 InMaxAnisotropy
+                               , float InMinLOD
+                               , float InMaxLOD
+                               , const CFloatColor& InBorderColor)
         : AddressU(InAddressU)
         , AddressV(InAddressV)
         , AddressW(InAddressW)
@@ -1067,7 +1282,7 @@ public:
      * @param RHS: Other instance to compare with
      * @return: Returns true when the instances are equal
      */
-    bool operator==(const CRHISamplerStateDesc& RHS) const
+    bool operator==(const CRHISamplerStateInitializer& RHS) const
     {
         return (AddressU       == RHS.AddressU)
             && (AddressV       == RHS.AddressV)
@@ -1087,7 +1302,7 @@ public:
      * @param RHS: Other instance to compare with
      * @return: Returns false when the instances are equal
      */
-    bool operator!=(const CRHISamplerStateDesc& RHS) const
+    bool operator!=(const CRHISamplerStateInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -1130,9 +1345,9 @@ class CRHISamplerState : public CRHIResource
 {
 protected:
 
-    explicit CRHISamplerState(const CRHISamplerStateDesc& InDesc)
+    explicit CRHISamplerState(const CRHISamplerStateInitializer& InInitializer)
         : CRHIResource()
-        , SamplerDesc(InDesc)
+        , Initializer(InInitializer)
     { }
 
 public:
@@ -1141,10 +1356,10 @@ public:
     virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 
     /** @return: Returns the SamplerState description */
-    const CRHISamplerStateDesc& GetDesc() const { return SamplerDesc; }
+    const CRHISamplerStateInitializer& GetInitializer() const { return Initializer; }
 
 protected:
-    CRHISamplerStateDesc SamplerDesc;
+    CRHISamplerStateInitializer Initializer;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1435,124 +1650,24 @@ protected:
 
 class RHI_API CRHIShaderResourceViewCache
 {
-    struct SSRVTextureDesc
-    {
-        SSRVTextureDesc()
-            : Texture(nullptr)
-            , Format(ERHIFormat::Unknown)
-            , FirstMipLevel(0)
-            , NumMips(0)
-            , FirstArraySlice(0)
-            , NumSlices(0)
-        { }
-
-        SSRVTextureDesc( CRHITexture* InTexture
-                       , ERHIFormat InFormat
-                       , uint8 InFirstMipLevel
-                       , uint8 InNumMips
-                       , uint16 InFirstArraySlice
-                       , uint16 InNumSlices)
-            : Texture(InTexture)
-            , Format(InFormat)
-            , FirstMipLevel(InFirstMipLevel)
-            , NumMips(InNumMips)
-            , FirstArraySlice(InFirstArraySlice)
-            , NumSlices(InNumSlices)
-        { }
-
-        uint64 GetHash() const
-        {
-            uint64 Hash = ToInteger(Texture);
-            HashCombine(Hash, ToUnderlying(Format));
-            HashCombine(Hash, FirstMipLevel);
-            HashCombine(Hash, NumMips);
-            HashCombine(Hash, FirstArraySlice);
-            HashCombine(Hash, NumSlices);
-            return Hash;
-        }
-
-        bool operator==(const SSRVTextureDesc& RHS) const
-        {
-            return (Texture         == RHS.Texture)
-                && (Format          == RHS.Format)
-                && (FirstMipLevel   == RHS.FirstMipLevel)
-                && (NumMips         == RHS.NumMips)
-                && (FirstArraySlice == RHS.FirstArraySlice)
-                && (NumSlices       == RHS.NumSlices);
-        }
-
-        bool operator!=(const SSRVTextureDesc& RHS) const
-        {
-            return !(*this == RHS);
-        }
-
-        CRHITexture* Texture;
-
-        ERHIFormat   Format;
-
-        uint8        FirstMipLevel;
-        uint8        NumMips;
-
-        uint16       FirstArraySlice;
-        uint16       NumSlices;
-    };
-
-    struct SSRVBufferDesc
-    {
-        SSRVBufferDesc()
-            : Buffer(nullptr)
-            , FirstElement(0)
-            , NumElements(0)
-        { }
-
-        SSRVBufferDesc(CRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements)
-            : Buffer(InBuffer)
-            , FirstElement(InFirstElement)
-            , NumElements(InNumElements)
-        { }
-
-        uint64 GetHash() const
-        {
-            uint64 Hash = ToInteger(Buffer);
-            HashCombine(Hash, FirstElement);
-            HashCombine(Hash, NumElements);
-            return Hash;
-        }
-
-        bool operator==(const SSRVBufferDesc& RHS) const
-        {
-            return (Buffer == RHS.Buffer) && (FirstElement == RHS.FirstElement) && (NumElements == RHS.NumElements);
-        }
-
-        bool operator!=(const SSRVBufferDesc& RHS) const
-        {
-            return !(*this == RHS);
-        }
-
-        CRHIBuffer* Buffer;
-        
-        uint32      FirstElement;
-        uint32      NumElements;
-    };
-
 public:
 
     static CRHIShaderResourceViewCache& Get();
 
-    static void Release();
+    static void Destroy();
 
-    CRHIShaderResourceViewRef GetOrCreateView( CRHITexture* Texture
-                                             , ERHIFormat Format
-                                             , uint8 FirstMipLevel
-                                             , uint8 NumMips
-                                             , uint16 FirstArraySlice
-                                             , uint16 NumSlices);
-
-    CRHIShaderResourceViewRef GetOrCreateView(CRHIBuffer* Buffer, uint32 FirstElement, uint32 NumElements);
+    CRHIShaderResourceViewRef GetOrCreateView(const CRHITextureSRVInitializer& Initializer);
+    CRHIShaderResourceViewRef GetOrCreateView(const CRHIBufferSRVInitializer& Initializer);
 
 private:
-    CRHIShaderResourceViewCache() = default;
+
+    static TOptional<CRHIShaderResourceViewCache>& GetCacheInstance();
+
+    CRHIShaderResourceViewCache()  = default;
     ~CRHIShaderResourceViewCache() = default;
+
+    TStateHashTable<CRHIShaderResourceViewRef, CRHIBufferSRVInitializer>  Buffers;
+    TStateHashTable<CRHIShaderResourceViewRef, CRHITextureSRVInitializer> Textures;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1560,116 +1675,24 @@ private:
 
 class RHI_API CRHIUnorderedAccessViewCache
 {
-    struct SUAVTextureDesc
-    {
-        SUAVTextureDesc()
-            : Texture(nullptr)
-            , Format(ERHIFormat::Unknown)
-            , MipLevel(0)
-            , FirstArraySlice(0)
-            , NumSlices(0)
-        { }
-
-        SUAVTextureDesc(CRHITexture* InTexture, ERHIFormat InFormat, uint8 InMipLevel, uint16 InFirstArraySlice, uint16 InNumSlices)
-            : Texture(InTexture)
-            , Format(InFormat)
-            , MipLevel(InMipLevel)
-            , FirstArraySlice(InFirstArraySlice)
-            , NumSlices(InNumSlices)
-        { }
-
-        uint64 GetHash() const
-        {
-            uint64 Hash = ToInteger(Texture);
-            HashCombine(Hash, ToUnderlying(Format));
-            HashCombine(Hash, MipLevel);
-            HashCombine(Hash, FirstArraySlice);
-            HashCombine(Hash, NumSlices);
-            return Hash;
-        }
-
-        bool operator==(const SUAVTextureDesc& RHS) const
-        {
-            return (Texture         == RHS.Texture) 
-                && (Format          == RHS.Format) 
-                && (MipLevel        == RHS.MipLevel) 
-                && (FirstArraySlice == RHS.FirstArraySlice) 
-                && (NumSlices       == RHS.NumSlices);
-        }
-
-        bool operator!=(const SUAVTextureDesc& RHS) const
-        {
-            return !(*this == RHS);
-        }
-
-        CRHITexture* Texture;
-
-        ERHIFormat   Format;
-
-        uint8        MipLevel;
-
-        uint16       FirstArraySlice;
-        uint16       NumSlices;
-    };
-
-    struct SUAVBufferDesc
-    {
-        SUAVBufferDesc()
-            : Buffer(nullptr)
-            , FirstElement(0)
-            , NumElements(0)
-        { }
-
-        SUAVBufferDesc(CRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements)
-            : Buffer(InBuffer)
-            , FirstElement(InFirstElement)
-            , NumElements(InNumElements)
-        { }
-
-        uint64 GetHash() const
-        {
-            uint64 Hash = ToInteger(Buffer);
-            HashCombine(Hash, FirstElement);
-            HashCombine(Hash, NumElements);
-            return Hash;
-        }
-
-        bool operator==(const SUAVBufferDesc& RHS) const
-        {
-            return (Buffer == RHS.Buffer) && (FirstElement == RHS.FirstElement) && (NumElements == RHS.NumElements);
-        }
-
-        bool operator!=(const SUAVBufferDesc& RHS) const
-        {
-            return !(*this == RHS);
-        }
-
-        CRHIBuffer* Buffer;
-
-        uint32      FirstElement;
-        uint32      NumElements;
-    };
-
 public:
 
     static CRHIUnorderedAccessViewCache& Get();
 
-    static void Release();
+    static void Destroy();
 
-    CRHIUnorderedAccessViewRef GetOrCreateView( CRHITexture* Texture
-                                              , ERHIFormat Format
-                                              , uint8 MipLevel
-                                              , uint16 FirstArraySlice
-                                              , uint16 NumSlices);
-
-    CRHIUnorderedAccessViewRef GetOrCreateView(CRHIBuffer* Buffer, uint32 FirstElement, uint32 NumElements);
+    CRHIUnorderedAccessViewRef GetOrCreateView(const CRHITextureUAVInitializer& Initializer);
+    CRHIUnorderedAccessViewRef GetOrCreateView(const CRHIBufferUAVInitializer& Initializer);
 
 private:
+
+    static TOptional<CRHIUnorderedAccessViewCache>& GetCacheInstance();
+
     CRHIUnorderedAccessViewCache() = default;
     ~CRHIUnorderedAccessViewCache() = default;
 
-    TStateHashTable<CRHIUnorderedAccessViewRef, SUAVBufferDesc>  Buffers;
-    TStateHashTable<CRHIUnorderedAccessViewRef, SUAVTextureDesc> Textures;
+    TStateHashTable<CRHIUnorderedAccessViewRef, CRHIBufferUAVInitializer>  Buffers;
+    TStateHashTable<CRHIUnorderedAccessViewRef, CRHITextureUAVInitializer> Textures;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1680,13 +1703,16 @@ class RHI_API CRHISamplerStateCache
 public:
     static CRHISamplerStateCache& Get();
 
-    static void Release();
+    static void Destroy();
 
-    CRHISamplerStateRef GetOrCreateSampler(const CRHISamplerStateDesc& Desc);
+    CRHISamplerStateRef GetOrCreateSampler(const CRHISamplerStateInitializer& Initializer);
 
 private:
-    CRHISamplerStateCache() = default;
+    
+    static TOptional<CRHISamplerStateCache>& GetCacheInstance();
+    
+    CRHISamplerStateCache()  = default;
     ~CRHISamplerStateCache() = default;
 
-    TStateHashTable<CRHISamplerStateRef, CRHISamplerStateDesc> Samplers;
+    TStateHashTable<CRHISamplerStateRef, CRHISamplerStateInitializer> Samplers;
 };

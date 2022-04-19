@@ -96,87 +96,87 @@ inline const char* ToString(ERHIFormat Format)
 {
     switch (Format)
     {
-    case ERHIFormat::R32G32B32A32_Typeless:    return "R32G32B32A32_Typeless";
-    case ERHIFormat::R32G32B32A32_Float:       return "R32G32B32A32_Float";
-    case ERHIFormat::R32G32B32A32_Uint:        return "R32G32B32A32_Uint";
-    case ERHIFormat::R32G32B32A32_Sint:        return "R32G32B32A32_Sint";
+        case ERHIFormat::R32G32B32A32_Typeless:    return "R32G32B32A32_Typeless";
+        case ERHIFormat::R32G32B32A32_Float:       return "R32G32B32A32_Float";
+        case ERHIFormat::R32G32B32A32_Uint:        return "R32G32B32A32_Uint";
+        case ERHIFormat::R32G32B32A32_Sint:        return "R32G32B32A32_Sint";
 
-    case ERHIFormat::R32G32B32_Typeless:       return "R32G32B32_Typeless";
-    case ERHIFormat::R32G32B32_Float:          return "R32G32B32_Float";
-    case ERHIFormat::R32G32B32_Uint:           return "R32G32B32_Uint";
-    case ERHIFormat::R32G32B32_Sint:           return "R32G32B32_Sint";
+        case ERHIFormat::R32G32B32_Typeless:       return "R32G32B32_Typeless";
+        case ERHIFormat::R32G32B32_Float:          return "R32G32B32_Float";
+        case ERHIFormat::R32G32B32_Uint:           return "R32G32B32_Uint";
+        case ERHIFormat::R32G32B32_Sint:           return "R32G32B32_Sint";
 
-    case ERHIFormat::R16G16B16A16_Typeless:    return "R16G16B16A16_Typeless";
-    case ERHIFormat::R16G16B16A16_Float:       return "R16G16B16A16_Float";
-    case ERHIFormat::R16G16B16A16_Unorm:       return "R16G16B16A16_Unorm";
-    case ERHIFormat::R16G16B16A16_Uint:        return "R16G16B16A16_Uint";
-    case ERHIFormat::R16G16B16A16_Snorm:       return "R16G16B16A16_Snorm";
-    case ERHIFormat::R16G16B16A16_Sint:        return "R16G16B16A16_Sint";
+        case ERHIFormat::R16G16B16A16_Typeless:    return "R16G16B16A16_Typeless";
+        case ERHIFormat::R16G16B16A16_Float:       return "R16G16B16A16_Float";
+        case ERHIFormat::R16G16B16A16_Unorm:       return "R16G16B16A16_Unorm";
+        case ERHIFormat::R16G16B16A16_Uint:        return "R16G16B16A16_Uint";
+        case ERHIFormat::R16G16B16A16_Snorm:       return "R16G16B16A16_Snorm";
+        case ERHIFormat::R16G16B16A16_Sint:        return "R16G16B16A16_Sint";
 
-    case ERHIFormat::R32G32_Typeless:          return "R32G32_Typeless";
-    case ERHIFormat::R32G32_Float:             return "R32G32_Float";
-    case ERHIFormat::R32G32_Uint:              return "R32G32_Uint";
-    case ERHIFormat::R32G32_Sint:              return "R32G32_Sint";
+        case ERHIFormat::R32G32_Typeless:          return "R32G32_Typeless";
+        case ERHIFormat::R32G32_Float:             return "R32G32_Float";
+        case ERHIFormat::R32G32_Uint:              return "R32G32_Uint";
+        case ERHIFormat::R32G32_Sint:              return "R32G32_Sint";
 
-    case ERHIFormat::R10G10B10A2_Typeless:     return "R10G10B10A2_Typeless";
-    case ERHIFormat::R10G10B10A2_Unorm:        return "R10G10B10A2_Unorm";
-    case ERHIFormat::R10G10B10A2_Uint:         return "R10G10B10A2_Uint";
+        case ERHIFormat::R10G10B10A2_Typeless:     return "R10G10B10A2_Typeless";
+        case ERHIFormat::R10G10B10A2_Unorm:        return "R10G10B10A2_Unorm";
+        case ERHIFormat::R10G10B10A2_Uint:         return "R10G10B10A2_Uint";
 
-    case ERHIFormat::R11G11B10_Float:          return "R11G11B10_Float";
-    
-    case ERHIFormat::R8G8B8A8_Typeless:        return "R8G8B8A8_Typeless";
-    case ERHIFormat::R8G8B8A8_Unorm:           return "R8G8B8A8_Unorm";
-    case ERHIFormat::R8G8B8A8_Unorm_SRGB:      return "R8G8B8A8_Unorm_SRGB";
-    case ERHIFormat::R8G8B8A8_Uint:            return "R8G8B8A8_Uint";
-    case ERHIFormat::R8G8B8A8_Snorm:           return "R8G8B8A8_Snorm";
-    case ERHIFormat::R8G8B8A8_Sint:            return "R8G8B8A8_Sint";
+        case ERHIFormat::R11G11B10_Float:          return "R11G11B10_Float";
 
-    case ERHIFormat::B8G8R8A8_Typeless:        return "B8G8R8A8_Typeless";
-    case ERHIFormat::B8G8R8A8_Unorm:           return "B8G8R8A8_Unorm";
-    case ERHIFormat::B8G8R8A8_Unorm_SRGB:      return "B8G8R8A8_Unorm_SRGB";
-    case ERHIFormat::B8G8R8A8_Uint:            return "B8G8R8A8_Uint";
-    case ERHIFormat::B8G8R8A8_Snorm:           return "B8G8R8A8_Snorm";
-    case ERHIFormat::B8G8R8A8_Sint:            return "B8G8R8A8_Sint";
+        case ERHIFormat::R8G8B8A8_Typeless:        return "R8G8B8A8_Typeless";
+        case ERHIFormat::R8G8B8A8_Unorm:           return "R8G8B8A8_Unorm";
+        case ERHIFormat::R8G8B8A8_Unorm_SRGB:      return "R8G8B8A8_Unorm_SRGB";
+        case ERHIFormat::R8G8B8A8_Uint:            return "R8G8B8A8_Uint";
+        case ERHIFormat::R8G8B8A8_Snorm:           return "R8G8B8A8_Snorm";
+        case ERHIFormat::R8G8B8A8_Sint:            return "R8G8B8A8_Sint";
 
-    case ERHIFormat::R16G16_Typeless:          return "R16G16_Typeless";
-    case ERHIFormat::R16G16_Float:             return "R16G16_Float";
-    case ERHIFormat::R16G16_Unorm:             return "R16G16_Unorm";
-    case ERHIFormat::R16G16_Uint:              return "R16G16_Uint";
-    case ERHIFormat::R16G16_Snorm:             return "R16G16_Snorm";
-    case ERHIFormat::R16G16_Sint:              return "R16G16_Sint";
+        case ERHIFormat::B8G8R8A8_Typeless:        return "B8G8R8A8_Typeless";
+        case ERHIFormat::B8G8R8A8_Unorm:           return "B8G8R8A8_Unorm";
+        case ERHIFormat::B8G8R8A8_Unorm_SRGB:      return "B8G8R8A8_Unorm_SRGB";
+        case ERHIFormat::B8G8R8A8_Uint:            return "B8G8R8A8_Uint";
+        case ERHIFormat::B8G8R8A8_Snorm:           return "B8G8R8A8_Snorm";
+        case ERHIFormat::B8G8R8A8_Sint:            return "B8G8R8A8_Sint";
 
-    case ERHIFormat::R32_Typeless:             return "R32_Typeless";
-    case ERHIFormat::D32_Float:                return "D32_Float";
-    case ERHIFormat::R32_Float:                return "R32_Float";
-    case ERHIFormat::R32_Uint:                 return "R32_Uint";
-    case ERHIFormat::R32_Sint:                 return "R32_Sint";
-    
-    case ERHIFormat::R24G8_Typeless:           return "R24G8_Typeless";
-    case ERHIFormat::D24_Unorm_S8_Uint:        return "D24_Unorm_S8_Uint";
-    case ERHIFormat::R24_Unorm_X8_Typeless:    return "R24_Unorm_X8_Typeless";
-    case ERHIFormat::X24_Typeless_G8_Uint:     return "X24_Typeless_G8_Uint";
-    
-    case ERHIFormat::R8G8_Typeless:            return "R8G8_Typeless";
-    case ERHIFormat::R8G8_Unorm:               return "R8G8_Unorm";
-    case ERHIFormat::R8G8_Uint:                return "R8G8_Uint";
-    case ERHIFormat::R8G8_Snorm:               return "R8G8_Snorm";
-    case ERHIFormat::R8G8_Sint:                return "R8G8_Sint";
-    
-    case ERHIFormat::R16_Typeless:             return "R16_Typeless";
-    case ERHIFormat::R16_Float:                return "R16_Float";
-    case ERHIFormat::D16_Unorm:                return "D16_Unorm";
-    case ERHIFormat::R16_Unorm:                return "R16_Unorm";
-    case ERHIFormat::R16_Uint:                 return "R16_Uint";
-    case ERHIFormat::R16_Snorm:                return "R16_Snorm";
-    case ERHIFormat::R16_Sint:                 return "R16_Sint";
-    
-    case ERHIFormat::R8_Typeless:              return "R8_Typeless";
-    case ERHIFormat::R8_Unorm:                 return "R8_Unorm";
-    case ERHIFormat::R8_Uint:                  return "R8_Uint";
-    case ERHIFormat::R8_Snorm:                 return "R8_Snorm";
-    case ERHIFormat::R8_Sint:                  return "R8_Sint";
+        case ERHIFormat::R16G16_Typeless:          return "R16G16_Typeless";
+        case ERHIFormat::R16G16_Float:             return "R16G16_Float";
+        case ERHIFormat::R16G16_Unorm:             return "R16G16_Unorm";
+        case ERHIFormat::R16G16_Uint:              return "R16G16_Uint";
+        case ERHIFormat::R16G16_Snorm:             return "R16G16_Snorm";
+        case ERHIFormat::R16G16_Sint:              return "R16G16_Sint";
 
-    default:                                   return "Unknown";
+        case ERHIFormat::R32_Typeless:             return "R32_Typeless";
+        case ERHIFormat::D32_Float:                return "D32_Float";
+        case ERHIFormat::R32_Float:                return "R32_Float";
+        case ERHIFormat::R32_Uint:                 return "R32_Uint";
+        case ERHIFormat::R32_Sint:                 return "R32_Sint";
+
+        case ERHIFormat::R24G8_Typeless:           return "R24G8_Typeless";
+        case ERHIFormat::D24_Unorm_S8_Uint:        return "D24_Unorm_S8_Uint";
+        case ERHIFormat::R24_Unorm_X8_Typeless:    return "R24_Unorm_X8_Typeless";
+        case ERHIFormat::X24_Typeless_G8_Uint:     return "X24_Typeless_G8_Uint";
+
+        case ERHIFormat::R8G8_Typeless:            return "R8G8_Typeless";
+        case ERHIFormat::R8G8_Unorm:               return "R8G8_Unorm";
+        case ERHIFormat::R8G8_Uint:                return "R8G8_Uint";
+        case ERHIFormat::R8G8_Snorm:               return "R8G8_Snorm";
+        case ERHIFormat::R8G8_Sint:                return "R8G8_Sint";
+
+        case ERHIFormat::R16_Typeless:             return "R16_Typeless";
+        case ERHIFormat::R16_Float:                return "R16_Float";
+        case ERHIFormat::D16_Unorm:                return "D16_Unorm";
+        case ERHIFormat::R16_Unorm:                return "R16_Unorm";
+        case ERHIFormat::R16_Uint:                 return "R16_Uint";
+        case ERHIFormat::R16_Snorm:                return "R16_Snorm";
+        case ERHIFormat::R16_Sint:                 return "R16_Sint";
+
+        case ERHIFormat::R8_Typeless:              return "R8_Typeless";
+        case ERHIFormat::R8_Unorm:                 return "R8_Unorm";
+        case ERHIFormat::R8_Uint:                  return "R8_Uint";
+        case ERHIFormat::R8_Snorm:                 return "R8_Snorm";
+        case ERHIFormat::R8_Sint:                  return "R8_Sint";
+
+        default:                                   return "Unknown";
     }
 }
 
@@ -187,94 +187,94 @@ inline uint32 GetByteStrideFromFormat(ERHIFormat Format)
 {
     switch (Format)
     {
-    case ERHIFormat::R32G32B32A32_Typeless:
-    case ERHIFormat::R32G32B32A32_Float:
-    case ERHIFormat::R32G32B32A32_Uint:
-    case ERHIFormat::R32G32B32A32_Sint:
-    {
-        return 16;
-    }
+        case ERHIFormat::R32G32B32A32_Typeless:
+        case ERHIFormat::R32G32B32A32_Float:
+        case ERHIFormat::R32G32B32A32_Uint:
+        case ERHIFormat::R32G32B32A32_Sint:
+        {
+            return 16;
+        }
 
-    case ERHIFormat::R32G32B32_Typeless:
-    case ERHIFormat::R32G32B32_Float:
-    case ERHIFormat::R32G32B32_Uint:
-    case ERHIFormat::R32G32B32_Sint:
-    {
-        return 12;
-    }
+        case ERHIFormat::R32G32B32_Typeless:
+        case ERHIFormat::R32G32B32_Float:
+        case ERHIFormat::R32G32B32_Uint:
+        case ERHIFormat::R32G32B32_Sint:
+        {
+            return 12;
+        }
 
-    case ERHIFormat::R16G16B16A16_Typeless:
-    case ERHIFormat::R16G16B16A16_Float:
-    case ERHIFormat::R16G16B16A16_Unorm:
-    case ERHIFormat::R16G16B16A16_Uint:
-    case ERHIFormat::R16G16B16A16_Snorm:
-    case ERHIFormat::R16G16B16A16_Sint:
-    case ERHIFormat::R32G32_Typeless:
-    case ERHIFormat::R32G32_Float:
-    case ERHIFormat::R32G32_Uint:
-    case ERHIFormat::R32G32_Sint:
-    {
-        return 8;
-    }
+        case ERHIFormat::R16G16B16A16_Typeless:
+        case ERHIFormat::R16G16B16A16_Float:
+        case ERHIFormat::R16G16B16A16_Unorm:
+        case ERHIFormat::R16G16B16A16_Uint:
+        case ERHIFormat::R16G16B16A16_Snorm:
+        case ERHIFormat::R16G16B16A16_Sint:
+        case ERHIFormat::R32G32_Typeless:
+        case ERHIFormat::R32G32_Float:
+        case ERHIFormat::R32G32_Uint:
+        case ERHIFormat::R32G32_Sint:
+        {
+            return 8;
+        }
 
-    case ERHIFormat::R10G10B10A2_Typeless:
-    case ERHIFormat::R10G10B10A2_Unorm:
-    case ERHIFormat::R10G10B10A2_Uint:
-    case ERHIFormat::R11G11B10_Float:
-    case ERHIFormat::R8G8B8A8_Typeless:
-    case ERHIFormat::R8G8B8A8_Unorm:
-    case ERHIFormat::R8G8B8A8_Unorm_SRGB:
-    case ERHIFormat::R8G8B8A8_Uint:
-    case ERHIFormat::R8G8B8A8_Snorm:
-    case ERHIFormat::R8G8B8A8_Sint:
-    case ERHIFormat::R16G16_Typeless:
-    case ERHIFormat::R16G16_Float:
-    case ERHIFormat::R16G16_Unorm:
-    case ERHIFormat::R16G16_Uint:
-    case ERHIFormat::R16G16_Snorm:
-    case ERHIFormat::R16G16_Sint:
-    case ERHIFormat::R32_Typeless:
-    case ERHIFormat::D32_Float:
-    case ERHIFormat::R32_Float:
-    case ERHIFormat::R32_Uint:
-    case ERHIFormat::R32_Sint:
-    case ERHIFormat::R24G8_Typeless:
-    case ERHIFormat::D24_Unorm_S8_Uint:
-    case ERHIFormat::R24_Unorm_X8_Typeless:
-    case ERHIFormat::X24_Typeless_G8_Uint:
-    {
-        return 4;
-    }
+        case ERHIFormat::R10G10B10A2_Typeless:
+        case ERHIFormat::R10G10B10A2_Unorm:
+        case ERHIFormat::R10G10B10A2_Uint:
+        case ERHIFormat::R11G11B10_Float:
+        case ERHIFormat::R8G8B8A8_Typeless:
+        case ERHIFormat::R8G8B8A8_Unorm:
+        case ERHIFormat::R8G8B8A8_Unorm_SRGB:
+        case ERHIFormat::R8G8B8A8_Uint:
+        case ERHIFormat::R8G8B8A8_Snorm:
+        case ERHIFormat::R8G8B8A8_Sint:
+        case ERHIFormat::R16G16_Typeless:
+        case ERHIFormat::R16G16_Float:
+        case ERHIFormat::R16G16_Unorm:
+        case ERHIFormat::R16G16_Uint:
+        case ERHIFormat::R16G16_Snorm:
+        case ERHIFormat::R16G16_Sint:
+        case ERHIFormat::R32_Typeless:
+        case ERHIFormat::D32_Float:
+        case ERHIFormat::R32_Float:
+        case ERHIFormat::R32_Uint:
+        case ERHIFormat::R32_Sint:
+        case ERHIFormat::R24G8_Typeless:
+        case ERHIFormat::D24_Unorm_S8_Uint:
+        case ERHIFormat::R24_Unorm_X8_Typeless:
+        case ERHIFormat::X24_Typeless_G8_Uint:
+        {
+            return 4;
+        }
 
-    case ERHIFormat::R8G8_Typeless:
-    case ERHIFormat::R8G8_Unorm:
-    case ERHIFormat::R8G8_Uint:
-    case ERHIFormat::R8G8_Snorm:
-    case ERHIFormat::R8G8_Sint:
-    case ERHIFormat::R16_Typeless:
-    case ERHIFormat::R16_Float:
-    case ERHIFormat::D16_Unorm:
-    case ERHIFormat::R16_Unorm:
-    case ERHIFormat::R16_Uint:
-    case ERHIFormat::R16_Snorm:
-    case ERHIFormat::R16_Sint:
-    {
-        return 2;
-    }
+        case ERHIFormat::R8G8_Typeless:
+        case ERHIFormat::R8G8_Unorm:
+        case ERHIFormat::R8G8_Uint:
+        case ERHIFormat::R8G8_Snorm:
+        case ERHIFormat::R8G8_Sint:
+        case ERHIFormat::R16_Typeless:
+        case ERHIFormat::R16_Float:
+        case ERHIFormat::D16_Unorm:
+        case ERHIFormat::R16_Unorm:
+        case ERHIFormat::R16_Uint:
+        case ERHIFormat::R16_Snorm:
+        case ERHIFormat::R16_Sint:
+        {
+            return 2;
+        }
 
-    case ERHIFormat::R8_Typeless:
-    case ERHIFormat::R8_Unorm:
-    case ERHIFormat::R8_Uint:
-    case ERHIFormat::R8_Snorm:
-    case ERHIFormat::R8_Sint:
-    {
-        return 1;
-    }
+        case ERHIFormat::R8_Typeless:
+        case ERHIFormat::R8_Unorm:
+        case ERHIFormat::R8_Uint:
+        case ERHIFormat::R8_Snorm:
+        case ERHIFormat::R8_Sint:
+        {
+            return 1;
+        }
 
-    default:
-    {
-        return 0;
-    }
+        default:
+        {
+            return 0;
+        }
     }
 }
 
@@ -292,10 +292,10 @@ inline const char* ToString(EShadingRateTier Tier)
 {
     switch (Tier)
     {
-    case EShadingRateTier::NotSupported: return "NotSupported";
-    case EShadingRateTier::Tier1:        return "Tier1";
-    case EShadingRateTier::Tier2:        return "Tier2";
-    default:                             return "Unknown";
+        case EShadingRateTier::NotSupported: return "NotSupported";
+        case EShadingRateTier::Tier1:        return "Tier1";
+        case EShadingRateTier::Tier2:        return "Tier2";
+        default:                             return "Unknown";
     }
 }
 
@@ -342,10 +342,10 @@ inline const char* ToString(ERayTracingTier Tier)
 {
     switch (Tier)
     {
-    case ERayTracingTier::NotSupported: return "NotSupported";
-    case ERayTracingTier::Tier1:        return "Tier1";
-    case ERayTracingTier::Tier1_1:      return "Tier1_1";
-    default:                            return "Unknown";
+        case ERayTracingTier::NotSupported: return "NotSupported";
+        case ERayTracingTier::Tier1:        return "Tier1";
+        case ERayTracingTier::Tier1_1:      return "Tier1_1";
+        default:                            return "Unknown";
     }
 }
 
@@ -421,15 +421,15 @@ inline const char* ToString(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
-    case EComparisonFunc::Never:        return "Never";
-    case EComparisonFunc::Less:         return "Less";
-    case EComparisonFunc::Equal:        return "Equal";
-    case EComparisonFunc::LessEqual:    return "LessEqual";
-    case EComparisonFunc::Greater:      return "Greater";
-    case EComparisonFunc::NotEqual:     return "NotEqual";
-    case EComparisonFunc::GreaterEqual: return "GreaterEqual";
-    case EComparisonFunc::Always:       return "Always";
-    default:                            return "Unknown";
+        case EComparisonFunc::Never:        return "Never";
+        case EComparisonFunc::Less:         return "Less";
+        case EComparisonFunc::Equal:        return "Equal";
+        case EComparisonFunc::LessEqual:    return "LessEqual";
+        case EComparisonFunc::Greater:      return "Greater";
+        case EComparisonFunc::NotEqual:     return "NotEqual";
+        case EComparisonFunc::GreaterEqual: return "GreaterEqual";
+        case EComparisonFunc::Always:       return "Always";
+        default:                            return "Unknown";
     }
 }
 
@@ -449,19 +449,19 @@ inline const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 {
     switch (PrimitveTopologyType)
     {
-    case EPrimitiveTopologyType::Undefined: return "Undefined";
-    case EPrimitiveTopologyType::Point:     return "Point";
-    case EPrimitiveTopologyType::Line:      return "Line";
-    case EPrimitiveTopologyType::Triangle:  return "Triangle";
-    case EPrimitiveTopologyType::Patch:     return "Patch";
-    default:                                return "Unknown";
+        case EPrimitiveTopologyType::Undefined: return "Undefined";
+        case EPrimitiveTopologyType::Point:     return "Point";
+        case EPrimitiveTopologyType::Line:      return "Line";
+        case EPrimitiveTopologyType::Triangle:  return "Triangle";
+        case EPrimitiveTopologyType::Patch:     return "Patch";
+        default:                                return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EResourceAccess
 
-enum class EResourceAccess : uint16
+enum class EResourceAccess : uint8
 {
     Common                          = 0,
     VertexAndConstantBuffer         = 1,
@@ -488,25 +488,25 @@ inline const char* ToString(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
-    case EResourceAccess::Common:                          return "Common";
-    case EResourceAccess::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
-    case EResourceAccess::IndexBuffer:                     return "IndexBuffer";
-    case EResourceAccess::RenderTarget:                    return "RenderTarget";
-    case EResourceAccess::RenderTargetClear:               return "RenderTargetClear";
-    case EResourceAccess::UnorderedAccess:                 return "UnorderedAccess";
-    case EResourceAccess::DepthClear:                      return "DepthClear";
-    case EResourceAccess::DepthWrite:                      return "DepthWrite";
-    case EResourceAccess::DepthRead:                       return "DepthRead";
-    case EResourceAccess::NonPixelShaderResource:          return "NonPixelShaderResource";
-    case EResourceAccess::PixelShaderResource:             return "PixelShaderResource";
-    case EResourceAccess::CopyDest:                        return "CopyDest";
-    case EResourceAccess::CopySource:                      return "CopySource";
-    case EResourceAccess::ResolveDest:                     return "ResolveDest";
-    case EResourceAccess::ResolveSource:                   return "ResolveSource";
-    case EResourceAccess::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
-    case EResourceAccess::ShadingRateSource:               return "ShadingRateSource";
-    case EResourceAccess::Present:                         return "Present";
-    default:                                               return "Unknown";
+        case EResourceAccess::Common:                          return "Common";
+        case EResourceAccess::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
+        case EResourceAccess::IndexBuffer:                     return "IndexBuffer";
+        case EResourceAccess::RenderTarget:                    return "RenderTarget";
+        case EResourceAccess::RenderTargetClear:               return "RenderTargetClear";
+        case EResourceAccess::UnorderedAccess:                 return "UnorderedAccess";
+        case EResourceAccess::DepthClear:                      return "DepthClear";
+        case EResourceAccess::DepthWrite:                      return "DepthWrite";
+        case EResourceAccess::DepthRead:                       return "DepthRead";
+        case EResourceAccess::NonPixelShaderResource:          return "NonPixelShaderResource";
+        case EResourceAccess::PixelShaderResource:             return "PixelShaderResource";
+        case EResourceAccess::CopyDest:                        return "CopyDest";
+        case EResourceAccess::CopySource:                      return "CopySource";
+        case EResourceAccess::ResolveDest:                     return "ResolveDest";
+        case EResourceAccess::ResolveSource:                   return "ResolveSource";
+        case EResourceAccess::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
+        case EResourceAccess::ShadingRateSource:               return "ShadingRateSource";
+        case EResourceAccess::Present:                         return "Present";
+        default:                                               return "Unknown";
     }
 }
 
@@ -527,13 +527,13 @@ inline const char* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
-    case EPrimitiveTopology::Undefined:     return "Undefined";
-    case EPrimitiveTopology::PointList:     return "PointList";
-    case EPrimitiveTopology::LineList:      return "LineList";
-    case EPrimitiveTopology::LineStrip:     return "LineStrip";
-    case EPrimitiveTopology::TriangleList:  return "TriangleList";
-    case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
-    default:                                return "Unknown";
+        case EPrimitiveTopology::Undefined:     return "Undefined";
+        case EPrimitiveTopology::PointList:     return "PointList";
+        case EPrimitiveTopology::LineList:      return "LineList";
+        case EPrimitiveTopology::LineStrip:     return "LineStrip";
+        case EPrimitiveTopology::TriangleList:  return "TriangleList";
+        case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
+        default:                                return "Unknown";
     }
 }
 
@@ -555,14 +555,14 @@ inline const char* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
-    case EShadingRate::VRS_1x1: return "VRS_1x1";
-    case EShadingRate::VRS_1x2: return "VRS_1x2";
-    case EShadingRate::VRS_2x1: return "VRS_2x1";
-    case EShadingRate::VRS_2x2: return "VRS_2x2";
-    case EShadingRate::VRS_2x4: return "VRS_2x4";
-    case EShadingRate::VRS_4x2: return "VRS_4x2";
-    case EShadingRate::VRS_4x4: return "VRS_4x4";
-    default:                    return "Unknown";
+        case EShadingRate::VRS_1x1: return "VRS_1x1";
+        case EShadingRate::VRS_1x2: return "VRS_1x2";
+        case EShadingRate::VRS_2x1: return "VRS_2x1";
+        case EShadingRate::VRS_2x2: return "VRS_2x2";
+        case EShadingRate::VRS_2x4: return "VRS_2x4";
+        case EShadingRate::VRS_4x2: return "VRS_4x2";
+        case EShadingRate::VRS_4x4: return "VRS_4x4";
+        default:                    return "Unknown";
     }
 }
 
@@ -580,10 +580,10 @@ inline const char* ToString(EAttachmentLoadAction LoadAction)
 {
     switch (LoadAction)
     {
-    case EAttachmentLoadAction::None:  return "None";
-    case EAttachmentLoadAction::Load:  return "Load";
-    case EAttachmentLoadAction::Clear: return "Clear";
-    default:                           return "Unknown";
+        case EAttachmentLoadAction::None:  return "None";
+        case EAttachmentLoadAction::Load:  return "Load";
+        case EAttachmentLoadAction::Clear: return "Clear";
+        default:                           return "Unknown";
     }
 }
 
@@ -600,9 +600,9 @@ inline const char* ToString(EAttachmentStoreAction StoreAction)
 {
     switch (StoreAction)
     {
-    case EAttachmentStoreAction::None:  return "None";
-    case EAttachmentStoreAction::Store: return "Store";
-    default:                            return "Unknown";
+        case EAttachmentStoreAction::None:  return "None";
+        case EAttachmentStoreAction::Store: return "Store";
+        default:                            return "Unknown";
     }
 }
 
@@ -619,9 +619,9 @@ inline const char* ToString(ERayTracingStructureBuildType BuildType)
 {
     switch (BuildType)
     {
-    case ERayTracingStructureBuildType::Update: return "Update";
-    case ERayTracingStructureBuildType::Build:  return "Build";
-    default:                                    return "Unknown";
+        case ERayTracingStructureBuildType::Update: return "Update";
+        case ERayTracingStructureBuildType::Build:  return "Build";
+        default:                                    return "Unknown";
     }
 }
 
@@ -634,15 +634,18 @@ enum class EDescriptorType : uint32
     UnorderedAccess = 1,
     ShaderResource  = 2,
     ConstantBuffer  = 3,
+    Sampler         = 4
 };
 
 inline const char* ToString(EDescriptorType DescriptorType)
 {
     switch (DescriptorType)
     {
-    case EDescriptorType::UnorderedAccess: return "UnorderedAccess";
-    case EDescriptorType::ShaderResource:  return "ShaderResource";
-    default:                               return "Unknown";
+        case EDescriptorType::UnorderedAccess: return "UnorderedAccess";
+        case EDescriptorType::ShaderResource:  return "ShaderResource";
+        case EDescriptorType::ConstantBuffer:  return "ConstantBuffer";
+        case EDescriptorType::Sampler:         return "Sampler";
+        default:                               return "Unknown";
     }
 }
 

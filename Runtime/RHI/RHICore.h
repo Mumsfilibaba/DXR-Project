@@ -18,3 +18,11 @@
 #define ENABLE_API_DEBUGGING       (0)
 #define ENABLE_API_GPU_DEBUGGING   (0) // D3D12
 #define ENABLE_API_GPU_BREADCRUMBS (0) // D3D12
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Constants
+
+enum
+{
+    kMaxRenderTargetCount = 8
+};

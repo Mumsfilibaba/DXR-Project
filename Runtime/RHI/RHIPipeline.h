@@ -15,9 +15,9 @@ inline const char* ToString(EDepthWriteMask DepthWriteMask)
 {
     switch (DepthWriteMask)
     {
-    case EDepthWriteMask::Zero: return "Zero";
-    case EDepthWriteMask::All:  return "All";
-    default:                    return "Unknown";
+        case EDepthWriteMask::Zero: return "Zero";
+        case EDepthWriteMask::All:  return "All";
+        default:                    return "Unknown";
     }
 }
 
@@ -40,34 +40,34 @@ inline const char* ToString(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
-    case EStencilOp::Keep:                 return "Keep";
-    case EStencilOp::Zero:                 return "Zero";
-    case EStencilOp::Replace:              return "Replace";
-    case EStencilOp::IncrementAndSaturate: return "IncrementAndSaturate";
-    case EStencilOp::DecrementAndSaturate: return "DecrementAndSaturate";
-    case EStencilOp::Invert:               return "Invert";
-    case EStencilOp::Increment:            return "Increment";
-    case EStencilOp::Decrement:            return "Decrement";
-    default:                               return "Unknown";
+        case EStencilOp::Keep:                 return "Keep";
+        case EStencilOp::Zero:                 return "Zero";
+        case EStencilOp::Replace:              return "Replace";
+        case EStencilOp::IncrementAndSaturate: return "IncrementAndSaturate";
+        case EStencilOp::DecrementAndSaturate: return "DecrementAndSaturate";
+        case EStencilOp::Invert:               return "Invert";
+        case EStencilOp::Increment:            return "Increment";
+        case EStencilOp::Decrement:            return "Decrement";
+        default:                               return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SDepthStencilStateFaceDesc
 
-struct SDepthStencilStateFaceDesc
+struct SDepthStencilStateFace
 {
-    SDepthStencilStateFaceDesc()
+    SDepthStencilStateFace()
         : StencilFailOp(EStencilOp::Keep)
         , StencilDepthFailOp(EStencilOp::Keep)
         , StencilPassOp(EStencilOp::Keep)
         , StencilFunc(EComparisonFunc::Always)
     { }
 
-    SDepthStencilStateFaceDesc( EStencilOp InStencilFailOp
-                              , EStencilOp InStencilDepthFailOp
-                              , EStencilOp InStencilPassOp
-                              , EComparisonFunc InStencilFunc)
+    SDepthStencilStateFace( EStencilOp InStencilFailOp
+                          , EStencilOp InStencilDepthFailOp
+                          , EStencilOp InStencilPassOp
+                          , EComparisonFunc InStencilFunc)
         : StencilFailOp(InStencilFailOp)
         , StencilDepthFailOp(InStencilDepthFailOp)
         , StencilPassOp(InStencilPassOp)
@@ -83,7 +83,7 @@ struct SDepthStencilStateFaceDesc
         return Hash;
     }
 
-    bool operator==(const SDepthStencilStateFaceDesc& RHS) const
+    bool operator==(const SDepthStencilStateFace& RHS) const
     {
         return (StencilFailOp      == RHS.StencilFailOp) 
             && (StencilDepthFailOp == RHS.StencilDepthFailOp)
@@ -91,7 +91,7 @@ struct SDepthStencilStateFaceDesc
             && (StencilFunc        == RHS.StencilFunc);
     }
 
-    bool operator!=(const SDepthStencilStateFaceDesc& RHS) const
+    bool operator!=(const SDepthStencilStateFace& RHS) const
     {
         return !(*this == RHS);
     }
@@ -103,11 +103,13 @@ struct SDepthStencilStateFaceDesc
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SDepthStencilStateDesc
+// CRHIDepthStencilStateInitializer
 
-struct SDepthStencilStateDesc
+class CRHIDepthStencilStateInitializer
 {
-    SDepthStencilStateDesc()
+public:
+
+    CRHIDepthStencilStateInitializer()
         : DepthWriteMask(EDepthWriteMask::All)
         , DepthFunc(EComparisonFunc::Less)
         , bDepthEnable(true)
@@ -118,14 +120,14 @@ struct SDepthStencilStateDesc
         , BackFace()
     { }
 
-    SDepthStencilStateDesc( EDepthWriteMask InDepthWriteMask
+    CRHIDepthStencilStateInitializer( EDepthWriteMask InDepthWriteMask
                           , EComparisonFunc InDepthFunc
                           , bool bInDepthEnable
                           , uint8 InStencilReadMask
                           , uint8 InStencilWriteMask
                           , bool bInStencilEnable
-                          , const SDepthStencilStateFaceDesc& InFrontFace
-                          , const SDepthStencilStateFaceDesc& InBackFace)
+                          , const SDepthStencilStateFace& InFrontFace
+                          , const SDepthStencilStateFace& InBackFace)
         : DepthWriteMask(InDepthWriteMask)
         , DepthFunc(InDepthFunc)
         , bDepthEnable(bInDepthEnable)
@@ -149,7 +151,7 @@ struct SDepthStencilStateDesc
         return Hash;
     }
 
-    bool operator==(const SDepthStencilStateDesc& RHS) const
+    bool operator==(const CRHIDepthStencilStateInitializer& RHS) const
     {
         return (DepthWriteMask   == RHS.DepthWriteMask)
             && (DepthFunc        == RHS.DepthFunc)
@@ -161,19 +163,19 @@ struct SDepthStencilStateDesc
             && (BackFace         == RHS.BackFace);
     }
 
-    bool operator!=(const SDepthStencilStateDesc& RHS) const
+    bool operator!=(const CRHIDepthStencilStateInitializer& RHS) const
     {
         return !(*this == RHS);
     }
 
-    EDepthWriteMask            DepthWriteMask;
-    EComparisonFunc            DepthFunc;
-    bool                       bDepthEnable;
-    uint8                      StencilReadMask;
-    uint8                      StencilWriteMask;
-    bool                       bStencilEnable;
-    SDepthStencilStateFaceDesc FrontFace;
-    SDepthStencilStateFaceDesc BackFace;
+    EDepthWriteMask        DepthWriteMask;
+    EComparisonFunc        DepthFunc;
+    bool                   bDepthEnable;
+    uint8                  StencilReadMask;
+    uint8                  StencilWriteMask;
+    bool                   bStencilEnable;
+    SDepthStencilStateFace FrontFace;
+    SDepthStencilStateFace BackFace;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -197,10 +199,10 @@ inline const char* ToString(ECullMode CullMode)
 {
     switch (CullMode)
     {
-    case ECullMode::None:  return "None";
-    case ECullMode::Front: return "Front";
-    case ECullMode::Back:  return "Back";
-    default:               return "Unknown";
+        case ECullMode::None:  return "None";
+        case ECullMode::Front: return "Front";
+        case ECullMode::Back:  return "Back";
+        default:               return "Unknown";
     }
 }
 
@@ -217,18 +219,20 @@ inline const char* ToString(EFillMode FillMode)
 {
     switch (FillMode)
     {
-    case EFillMode::WireFrame: return "WireFrame";
-    case EFillMode::Solid:     return "Solid";
-    default:                   return "Unknown";
+        case EFillMode::WireFrame: return "WireFrame";
+        case EFillMode::Solid:     return "Solid";
+        default:                   return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRasterizerStateDesc
+// CRHIRasterizerStateInitializer
 
-struct SRasterizerStateDesc
+class CRHIRasterizerStateInitializer
 {
-    SRasterizerStateDesc()
+public:
+
+    CRHIRasterizerStateInitializer()
         : FillMode(EFillMode::Solid)
         , CullMode(ECullMode::Back)
         , bFrontCounterClockwise(false)
@@ -242,17 +246,17 @@ struct SRasterizerStateDesc
         , bEnableConservativeRaster(false)
     { }
 
-    SRasterizerStateDesc( EFillMode InFillMode
-                        , ECullMode InCullMode
-                        , bool bInFrontCounterClockwise
-                        , int32 InDepthBias
-                        , float InDepthBiasClamp
-                        , float InSlopeScaledDepthBias
-                        , bool bInDepthClipEnable
-                        , bool bInMultisampleEnable
-                        , bool bInAntialiasedLineEnable
-                        , uint32 InForcedSampleCount
-                        , bool bInEnableConservativeRaster)
+    CRHIRasterizerStateInitializer( EFillMode InFillMode
+                                  , ECullMode InCullMode
+                                  , bool bInFrontCounterClockwise
+                                  , int32 InDepthBias
+                                  , float InDepthBiasClamp
+                                  , float InSlopeScaledDepthBias
+                                  , bool bInDepthClipEnable
+                                  , bool bInMultisampleEnable
+                                  , bool bInAntialiasedLineEnable
+                                  , uint32 InForcedSampleCount
+                                  , bool bInEnableConservativeRaster)
         : FillMode(InFillMode)
         , CullMode(InCullMode)
         , bFrontCounterClockwise(bInFrontCounterClockwise)
@@ -282,7 +286,7 @@ struct SRasterizerStateDesc
         return Hash;
     }
 
-    bool operator==(const SRasterizerStateDesc& RHS) const
+    bool operator==(const CRHIRasterizerStateInitializer& RHS) const
     {
         return (FillMode                  == RHS.FillMode)
             && (CullMode                  == RHS.CullMode)
@@ -297,7 +301,7 @@ struct SRasterizerStateDesc
             && (bEnableConservativeRaster == RHS.bEnableConservativeRaster);
     }
 
-    bool operator!=(const SRasterizerStateDesc& RHS) const
+    bool operator!=(const CRHIRasterizerStateInitializer& RHS) const
     {
         return !(*this == RHS);
     }
@@ -350,24 +354,24 @@ inline const char* ToString(EBlendType Blend)
 {
     switch (Blend)
     {
-    case EBlendType::Zero:           return "Zero";
-    case EBlendType::One:            return "One";
-    case EBlendType::SrcColor:       return "SrcColor";
-    case EBlendType::InvSrcColor:    return "InvSrcColor";
-    case EBlendType::SrcAlpha:       return "SrcAlpha";
-    case EBlendType::InvSrcAlpha:    return "InvSrcAlpha";
-    case EBlendType::DestAlpha:      return "DestAlpha";
-    case EBlendType::InvDestAlpha:   return "InvDestAlpha";
-    case EBlendType::DestColor:      return "DestColor";
-    case EBlendType::InvDestColor:   return "InvDestColor";
-    case EBlendType::SrcAlphaSat:    return "SrcAlphaSat";
-    case EBlendType::BlendFactor:    return "BlendFactor";
-    case EBlendType::InvBlendFactor: return "InvBlendFactor";
-    case EBlendType::Src1Color:      return "Src1Color";
-    case EBlendType::InvSrc1Color:   return "InvSrc1Color";
-    case EBlendType::Src1Alpha:      return "Src1Alpha";
-    case EBlendType::InvSrc1Alpha:   return "InvSrc1Alpha";
-    default:                         return "Unknown";
+        case EBlendType::Zero:           return "Zero";
+        case EBlendType::One:            return "One";
+        case EBlendType::SrcColor:       return "SrcColor";
+        case EBlendType::InvSrcColor:    return "InvSrcColor";
+        case EBlendType::SrcAlpha:       return "SrcAlpha";
+        case EBlendType::InvSrcAlpha:    return "InvSrcAlpha";
+        case EBlendType::DestAlpha:      return "DestAlpha";
+        case EBlendType::InvDestAlpha:   return "InvDestAlpha";
+        case EBlendType::DestColor:      return "DestColor";
+        case EBlendType::InvDestColor:   return "InvDestColor";
+        case EBlendType::SrcAlphaSat:    return "SrcAlphaSat";
+        case EBlendType::BlendFactor:    return "BlendFactor";
+        case EBlendType::InvBlendFactor: return "InvBlendFactor";
+        case EBlendType::Src1Color:      return "Src1Color";
+        case EBlendType::InvSrc1Color:   return "InvSrc1Color";
+        case EBlendType::Src1Alpha:      return "Src1Alpha";
+        case EBlendType::InvSrc1Alpha:   return "InvSrc1Alpha";
+        default:                         return "Unknown";
     }
 }
 
@@ -387,12 +391,12 @@ inline const char* ToString(EBlendOp BlendOp)
 {
     switch (BlendOp)
     {
-    case EBlendOp::Add:         return "Add";
-    case EBlendOp::Subtract:    return "Subtract";
-    case EBlendOp::RevSubtract: return "RevSubtract";
-    case EBlendOp::Min:         return "Min";
-    case EBlendOp::Max:         return "Max";
-    default:                    return "Unknown";
+        case EBlendOp::Add:         return "Add";
+        case EBlendOp::Subtract:    return "Subtract";
+        case EBlendOp::RevSubtract: return "RevSubtract";
+        case EBlendOp::Min:         return "Min";
+        case EBlendOp::Max:         return "Max";
+        default:                    return "Unknown";
     }
 }
 
@@ -423,30 +427,30 @@ inline const char* ToString(ELogicOp LogicOp)
 {
     switch (LogicOp)
     {
-    case ELogicOp::Clear:        return "Clear";
-    case ELogicOp::Set:          return "Set";
-    case ELogicOp::Copy:         return "Copy";
-    case ELogicOp::CopyInverted: return "CopyInverted";
-    case ELogicOp::Noop:         return "Noop";
-    case ELogicOp::Invert:       return "Invert";
-    case ELogicOp::And:          return "And";
-    case ELogicOp::Nand:         return "Nand";
-    case ELogicOp::Or:           return "Or";
-    case ELogicOp::Nor:          return "Nor";
-    case ELogicOp::Xor:          return "Xor";
-    case ELogicOp::Equiv:        return "Equiv";
-    case ELogicOp::AndReverse:   return "AndReverse";
-    case ELogicOp::AndInverted:  return "AndInverted";
-    case ELogicOp::OrReverse:    return "OrReverse";
-    case ELogicOp::OrInverted:   return "OrInverted";
-    default:                     return "Unknown";
+        case ELogicOp::Clear:        return "Clear";
+        case ELogicOp::Set:          return "Set";
+        case ELogicOp::Copy:         return "Copy";
+        case ELogicOp::CopyInverted: return "CopyInverted";
+        case ELogicOp::Noop:         return "Noop";
+        case ELogicOp::Invert:       return "Invert";
+        case ELogicOp::And:          return "And";
+        case ELogicOp::Nand:         return "Nand";
+        case ELogicOp::Or:           return "Or";
+        case ELogicOp::Nor:          return "Nor";
+        case ELogicOp::Xor:          return "Xor";
+        case ELogicOp::Equiv:        return "Equiv";
+        case ELogicOp::AndReverse:   return "AndReverse";
+        case ELogicOp::AndInverted:  return "AndInverted";
+        case ELogicOp::OrReverse:    return "OrReverse";
+        case ELogicOp::OrInverted:   return "OrInverted";
+        default:                     return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EColorWriteFlag 
 
-enum EColorWriteFlag : uint8
+enum class EColorWriteFlag : uint8
 {
     None  = 0,
     Red   = FLAG(0),
@@ -473,13 +477,13 @@ struct SRenderTargetWriteState
 
     FORCEINLINE bool WriteNone() const { return Mask == EColorWriteFlag::None; }
 
-    FORCEINLINE bool WriteRed() const { return (Mask & EColorWriteFlag::Red); }
+    FORCEINLINE bool WriteRed() const { return bool(Mask & EColorWriteFlag::Red); }
 
-    FORCEINLINE bool WriteGreen() const { return (Mask & EColorWriteFlag::Green); }
+    FORCEINLINE bool WriteGreen() const { return bool(Mask & EColorWriteFlag::Green); }
 
-    FORCEINLINE bool WriteBlue() const { return (Mask & EColorWriteFlag::Blue); }
+    FORCEINLINE bool WriteBlue() const { return bool(Mask & EColorWriteFlag::Blue); }
 
-    FORCEINLINE bool WriteAlpha() const { return (Mask & EColorWriteFlag::Alpha); }
+    FORCEINLINE bool WriteAlpha() const { return bool(Mask & EColorWriteFlag::Alpha); }
 
     FORCEINLINE bool WriteAll() const { return (Mask == EColorWriteFlag::All); }
 
@@ -499,9 +503,9 @@ struct SRenderTargetWriteState
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRenderTargetBlendState
 
-struct SRenderTargetBlendStateDesc
+struct SRenderTargetBlendInfo
 {
-    SRenderTargetBlendStateDesc()
+    SRenderTargetBlendInfo()
         : SrcBlend(EBlendType::One)
         , DstBlend(EBlendType::Zero)
         , BlendOp(EBlendOp::Add)
@@ -514,16 +518,16 @@ struct SRenderTargetBlendStateDesc
         , RenderTargetWriteMask()
     { }
 
-    SRenderTargetBlendStateDesc( EBlendType InSrcBlend
-                               , EBlendType InDstBlend
-                               , EBlendOp InBlendOp
-                               , EBlendType InSrcBlendAlpha
-                               , EBlendType InDstBlendAlpha
-                               , EBlendOp InBlendOpAlpha
-                               , ELogicOp InLogicOp
-                               , bool bInBlendEnable
-                               , bool bInLogicOpEnable
-                               , SRenderTargetWriteState InRenderTargetWriteMask)
+    SRenderTargetBlendInfo( EBlendType InSrcBlend
+                          , EBlendType InDstBlend
+                          , EBlendOp InBlendOp
+                          , EBlendType InSrcBlendAlpha
+                          , EBlendType InDstBlendAlpha
+                          , EBlendOp InBlendOpAlpha
+                          , ELogicOp InLogicOp
+                          , bool bInBlendEnable
+                          , bool bInLogicOpEnable
+                          , SRenderTargetWriteState InRenderTargetWriteMask)
         : SrcBlend(InSrcBlend)
         , DstBlend(InDstBlend)
         , BlendOp(InBlendOp)
@@ -556,7 +560,7 @@ struct SRenderTargetBlendStateDesc
         return Hash;
     }
 
-    bool operator==(const SRenderTargetBlendStateDesc& RHS) const
+    bool operator==(const SRenderTargetBlendInfo& RHS) const
     {
         return (SrcBlend              == RHS.SrcBlend) 
             && (DstBlend              == RHS.DstBlend) 
@@ -570,7 +574,7 @@ struct SRenderTargetBlendStateDesc
             && (RenderTargetWriteMask == RHS.RenderTargetWriteMask);
     }
 
-    bool operator!=(const SRenderTargetBlendStateDesc& RHS) const
+    bool operator!=(const SRenderTargetBlendInfo& RHS) const
     {
         return !(*this == RHS);
     }
@@ -588,22 +592,19 @@ struct SRenderTargetBlendStateDesc
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SBlendStateDesc
+// CRHIBlendStateInitializer
 
-enum
+class CRHIBlendStateInitializer
 {
-    MaxRenderTargetCount = 8
-};
+public:
 
-struct SBlendStateDesc
-{
-    SBlendStateDesc()
+    CRHIBlendStateInitializer()
         : RenderTargets()
         , bAlphaToCoverageEnable(false)
         , bIndependentBlendEnable(false)
     { }
 
-    SBlendStateDesc(const SRenderTargetBlendStateDesc& InRenderTarget, bool bInAlphaToCoverageEnable, bool bInIndependentBlendEnable)
+    CRHIBlendStateInitializer(const SRenderTargetBlendInfo& InRenderTarget, bool bInAlphaToCoverageEnable, bool bInIndependentBlendEnable)
         : RenderTargets()
         , bAlphaToCoverageEnable(bInAlphaToCoverageEnable)
         , bIndependentBlendEnable(bInIndependentBlendEnable)
@@ -611,10 +612,10 @@ struct SBlendStateDesc
         RenderTargets[0] = InRenderTarget;
     }
 
-    SBlendStateDesc( const SRenderTargetBlendStateDesc& InRenderTarget0
-                   , const SRenderTargetBlendStateDesc& InRenderTarget1
-                   , bool bInAlphaToCoverageEnable
-                   , bool bInIndependentBlendEnable)
+    CRHIBlendStateInitializer( const SRenderTargetBlendInfo& InRenderTarget0
+                             , const SRenderTargetBlendInfo& InRenderTarget1
+                             , bool bInAlphaToCoverageEnable
+                             , bool bInIndependentBlendEnable)
         : RenderTargets()
         , bAlphaToCoverageEnable(bInAlphaToCoverageEnable)
         , bIndependentBlendEnable(bInIndependentBlendEnable)
@@ -623,11 +624,11 @@ struct SBlendStateDesc
         RenderTargets[1] = InRenderTarget1;
     }
 
-    SBlendStateDesc( const SRenderTargetBlendStateDesc& InRenderTarget0
-                   , const SRenderTargetBlendStateDesc& InRenderTarget1
-                   , const SRenderTargetBlendStateDesc& InRenderTarget2
-                   , bool bInAlphaToCoverageEnable
-                   , bool bInIndependentBlendEnable)
+    CRHIBlendStateInitializer( const SRenderTargetBlendInfo& InRenderTarget0
+                             , const SRenderTargetBlendInfo& InRenderTarget1
+                             , const SRenderTargetBlendInfo& InRenderTarget2
+                             , bool bInAlphaToCoverageEnable
+                             , bool bInIndependentBlendEnable)
         : RenderTargets()
         , bAlphaToCoverageEnable(bInAlphaToCoverageEnable)
         , bIndependentBlendEnable(bInIndependentBlendEnable)
@@ -637,12 +638,12 @@ struct SBlendStateDesc
         RenderTargets[2] = InRenderTarget2;
     }
 
-    SBlendStateDesc( const SRenderTargetBlendStateDesc& InRenderTarget0
-                   , const SRenderTargetBlendStateDesc& InRenderTarget1
-                   , const SRenderTargetBlendStateDesc& InRenderTarget2
-                   , const SRenderTargetBlendStateDesc& InRenderTarget3
-                   , bool bInAlphaToCoverageEnable
-                   , bool bInIndependentBlendEnable)
+    CRHIBlendStateInitializer( const SRenderTargetBlendInfo& InRenderTarget0
+                             , const SRenderTargetBlendInfo& InRenderTarget1
+                             , const SRenderTargetBlendInfo& InRenderTarget2
+                             , const SRenderTargetBlendInfo& InRenderTarget3
+                             , bool bInAlphaToCoverageEnable
+                             , bool bInIndependentBlendEnable)
         : RenderTargets()
         , bAlphaToCoverageEnable(bInAlphaToCoverageEnable)
         , bIndependentBlendEnable(bInIndependentBlendEnable)
@@ -657,7 +658,7 @@ struct SBlendStateDesc
     {
         uint64 Hash = 0;
 
-        const uint32 Count = bIndependentBlendEnable ? MaxRenderTargetCount : 1;
+        const uint32 Count = bIndependentBlendEnable ? kMaxRenderTargetCount : 1;
         for (uint32 Index = 0; Index < Count; ++Index)
         {
             HashCombine(Hash, RenderTargets[Index].GetHash());
@@ -668,7 +669,7 @@ struct SBlendStateDesc
         return Hash;
     }
 
-    bool operator==(const SBlendStateDesc& RHS) const
+    bool operator==(const CRHIBlendStateInitializer& RHS) const
     {
         return (RenderTargets[0]        == RHS.RenderTargets[0])
             && (RenderTargets[1]        == RHS.RenderTargets[1])
@@ -682,14 +683,14 @@ struct SBlendStateDesc
             && (bIndependentBlendEnable == RHS.bIndependentBlendEnable);
     }
 
-    bool operator!=(const SBlendStateDesc& RHS) const
+    bool operator!=(const CRHIBlendStateInitializer& RHS) const
     {
         return !(*this == RHS);
     }
 
-    SRenderTargetBlendStateDesc RenderTargets[MaxRenderTargetCount];
-    bool                        bAlphaToCoverageEnable;
-    bool                        bIndependentBlendEnable;
+    SRenderTargetBlendInfo RenderTargets[kMaxRenderTargetCount];
+    bool                   bAlphaToCoverageEnable;
+    bool                   bIndependentBlendEnable;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -712,14 +713,14 @@ inline const char* ToString(EVertexInputClass BlendOp)
 {
     switch (BlendOp)
     {
-    case EVertexInputClass::Vertex:   return "Vertex";
-    case EVertexInputClass::Instance: return "Instance";
-    default:                                   return "Unknown";
+        case EVertexInputClass::Vertex:   return "Vertex";
+        case EVertexInputClass::Instance: return "Instance";
+        default:                          return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIInputElement
+// SVertexInputElement
 
 struct SVertexInputElement
 {
@@ -773,10 +774,10 @@ inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 {
     switch (IndexBufferStripCutValue)
     {
-    case EIndexBufferStripCutValue::Disabled:          return "Disabled";
-    case EIndexBufferStripCutValue::uint16_0xffff:     return "0xffff";
-    case EIndexBufferStripCutValue::uint32_0xffffffff: return "0xffffffff";
-    default:                                           return "";
+        case EIndexBufferStripCutValue::Disabled:          return "Disabled";
+        case EIndexBufferStripCutValue::uint16_0xffff:     return "0xffff";
+        case EIndexBufferStripCutValue::uint32_0xffffffff: return "0xffffffff";
+        default:                                           return "";
     }
 }
 

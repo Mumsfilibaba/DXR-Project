@@ -12,11 +12,6 @@ struct SRHIClearValue;
 class CRHIRayTracingGeometry;
 class CRHIRayTracingScene;
 
-struct STexture2DCreateDesc;
-struct STexture2DArrayCreateDesc;
-struct STextureCubeCreateDesc;
-struct STexture3DCreaeteDesc;
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITextureInitializer
 
@@ -28,7 +23,17 @@ public:
         : InitialAccess(EResourceAccess::Common)
     { }
 
-    EResourceAccess InitialAccess;
+    CTextureClearValue ClearValue;
+
+    CInt16Vector3      Extent;
+
+    ERHIFormat         Format;
+    ETextureUsageFlags UsageFlags;
+    
+    uint8              NumMips;
+    uint8              NumSamples;
+
+    EResourceAccess    InitialAccess;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -187,7 +192,7 @@ public:
      * @param CreateDesc: Structure with information about the SamplerState
      * @return: Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
      */
-    virtual CRHISamplerStateRef CreateSamplerState(const CRHISamplerStateCreateDesc& CreateDesc) = 0;
+    virtual CRHISamplerStateRef CreateSamplerState(const CRHISamplerStateInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new Ray tracing scene
@@ -219,58 +224,34 @@ public:
     /**
      * @brief: Create a new ShaderResourceView
      *
-     * @param Texture: Texture to create the view for
-     * @param Format: Format of the view
-     * @param FirstMipLevel: First MipLevel that the view represents
-     * @param NumMips: Number of MipLevels that the view represents
-     * @param FirstArraySlice: First ArraySlice that the view represents
-     * @param NumArraySlices: Number of ArraySlices that the view represents
+     * @param CreateDesc: Description for the new view to create
      * @return: Returns the newly created ShaderResourceView
      */
-    virtual CRHIShaderResourceViewRef CreateShaderResourceView( CRHITexture* Texture
-                                                              , ERHIFormat Format
-                                                              , uint8 FirstMipLevel
-                                                              , uint8 NumMips
-                                                              , uint16 FirstArraySlice
-                                                              , uint16 NumArraySlices) = 0;
+    virtual CRHIShaderResourceViewRef CreateShaderResourceView(const CRHITextureSRVInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new ShaderResourceView
      *
-     * @param Buffer: Buffer to create a view for
-     * @param FirstElement: First element of the buffer for the view to represent
-     * @param NumElements: Number of elements of the buffer for the view to represent
-     * @param Stride: Stride of each element in the buffer that the view represents
+     * @param CreateDesc: Description for the new view to create
      * @return: Returns the newly created ShaderResourceView
      */
-    virtual CRHIShaderResourceViewRef CreateShaderResourceView(CRHIBuffer* Buffer, uint32 FirstElement, uint32 NumElements, uint32 Stride) = 0;
+    virtual CRHIShaderResourceViewRef CreateShaderResourceView(const CRHIBufferSRVInitializer& Initializer) = 0;
     
     /**
-     * @brief: Create a new UnorderedAccessView
+     * @brief: Create a new UnorderedAccessView for a texture
      *
-     * @param Texture: Texture to create the view for
-     * @param Format: Format of the view
-     * @param MipLevel: MipLevel that the view represents
-     * @param FirstArraySlice: First ArraySlice that the view represents
-     * @param NumArraySlices: Number of ArraySlices that the view represents
+     * @param CreateDesc: Description for the new view to create
      * @return: Returns the newly created UnorderedAccessView
      */
-    virtual CRHIUnorderedAccessViewRef CreateUnorderedAccessView( CRHITexture* Texture
-                                                                , ERHIFormat Format
-                                                                , uint8 MipLevel
-                                                                , uint16 FirstArraySlice
-                                                                , uint16 NumArraySlices) = 0;
+    virtual CRHIUnorderedAccessViewRef CreateUnorderedAccessView(const CRHITextureUAVInitializer& Initializer) = 0;
 
     /**
-     * @brief: Create a new UnorderedAccessView
+     * @brief: Create a new UnorderedAccessView for a buffer
      *
-     * @param Buffer: Buffer to create a view for
-     * @param FirstElement: First element of the buffer for the view to represent
-     * @param NumElements: Number of elements of the buffer for the view to represent
-     * @param Stride: Stride of each element in the buffer that the view represents
+     * @param CreateDesc: Description for the new view to create
      * @return: Returns the newly created UnorderedAccessView
      */
-    virtual CRHIUnorderedAccessViewRef CreateUnorderedAccessView(CRHIBuffer* Buffer, uint32 FirstElement, uint32 NumElements, uint32 Stride) = 0;
+    virtual CRHIUnorderedAccessViewRef CreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a new Compute Shader
@@ -406,7 +387,7 @@ public:
      * @param Desc: Info about the Graphics PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIGraphicsPipelineState* CreateGraphicsPipelineState(const SGraphicsPipelineStateDesc& Desc) = 0;
+    virtual class CRHIGraphicsPipelineState* CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateCreateDesc& Desc) = 0;
     
     /**
      * @brief: Create a Compute PipelineState
@@ -522,9 +503,9 @@ FORCEINLINE CRHIBufferRef RHICreateBuffer(const CRHIBufferCreateDesc& BufferDesc
     return GRHIInstance->CreateBuffer(BufferDesc, InitialState, InitialData);
 }
 
-FORCEINLINE CRHISamplerStateRef RHICreateSamplerState(const CRHISamplerStateCreateDesc& SamplerDesc)
+FORCEINLINE CRHISamplerStateRef RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer)
 {
-    return GRHIInstance->CreateSamplerState(SamplerDesc);
+    return GRHIInstance->CreateSamplerState(Initializer);
 }
 
 FORCEINLINE CRHIRayTracingSceneRef RHICreateRayTracingScene(const CRHIRayTracingSceneCreateDesc& SceneDesc)
@@ -537,24 +518,24 @@ FORCEINLINE CRHIRayTracingGeometryRef RHICreateRayTracingGeometry(const CRHIRayT
     return GRHIInstance->CreateRayTracingGeometry(GeometryDesc);
 }
 
-FORCEINLINE CRHIShaderResourceViewRef RHICreateShaderResourceView(CRHITexture* Texture, const CRHIShaderResourceViewCreateDesc& Desc)
+FORCEINLINE CRHIShaderResourceViewRef RHICreateShaderResourceView(const CRHITextureSRVInitializer& Initializer)
 {
-    return GRHIInstance->CreateShaderResourceView(Texture, Desc);
+    return GRHIInstance->CreateShaderResourceView(Initializer);
 }
 
-FORCEINLINE CRHIShaderResourceViewRef RHICreateShaderResourceView(CRHIBuffer* Buffer, uint32 FirstElement, uint32 NumElements, uint32 Stride)
+FORCEINLINE CRHIShaderResourceViewRef RHICreateShaderResourceView(const CRHIBufferSRVInitializer& Initializer)
 {
-    return GRHIInstance->CreateShaderResourceView(Buffer, FirstElement, NumElements, Stride);
+    return GRHIInstance->CreateShaderResourceView(Initializer);
 }
 
-FORCEINLINE CRHIUnorderedAccessViewRef RHICreateUnorderedAccessView(CRHITexture* Texture, const CRHIUnorderedAccessViewCreateDesc& Desc)
+FORCEINLINE CRHIUnorderedAccessViewRef RHICreateUnorderedAccessView(const CRHITextureUAVInitializer& Initializer)
 {
-    return GRHIInstance->CreateUnorderedAccessView(Texture, Desc);
+    return GRHIInstance->CreateUnorderedAccessView(Initializer);
 }
 
-FORCEINLINE CRHIUnorderedAccessViewRef RHICreateUnorderedAccessView(CRHIBuffer* Buffer, uint32 FirstElement, uint32 NumElements, uint32 Stride)
+FORCEINLINE CRHIUnorderedAccessViewRef RHICreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer)
 {
-    return GRHIInstance->CreateUnorderedAccessView(Buffer, FirstElement, NumElements, Stride);
+    return GRHIInstance->CreateUnorderedAccessView(Initializer);
 }
 
 FORCEINLINE CRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode)
@@ -642,7 +623,7 @@ FORCEINLINE CRHIComputePipelineState* RHICreateComputePipelineState(const SRHICo
     return GRHIInstance->CreateComputePipelineState(Desc);
 }
 
-FORCEINLINE CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const SGraphicsPipelineStateDesc& Desc)
+FORCEINLINE CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const SRHIGraphicsPipelineStateCreateDesc& Desc)
 {
     return GRHIInstance->CreateGraphicsPipelineState(Desc);
 }
@@ -652,7 +633,7 @@ FORCEINLINE CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const 
     return GRHIInstance->CreateRayTracingPipelineState(Desc);
 }
 
-FORCEINLINE CRHITimestampQueryRef RHICreateTimestampQuery()
+FORCEINLINE CRHITimeQueryRef RHICreateTimeQuery()
 {
     return GRHIInstance->CreateTimeQuery();
 }
