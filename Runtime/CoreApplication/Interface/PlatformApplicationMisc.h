@@ -49,11 +49,7 @@ public:
      */
     static FORCEINLINE void PumpMessages(bool bUntilEmpty) { }
 
-    /**
-     * @brief: Retrieves the state of modifier keys
-     * 
-     * @return: Returns the current modifier-key state 
-     */
+    /** @return: Returns the current modifier-key state */
     static FORCEINLINE SModifierKeyState GetModifierKeyState() { return SModifierKeyState(); }
 };
 

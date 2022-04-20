@@ -6,6 +6,11 @@
 
 class CPlatformCursor : public ICursor
 {
+protected:
+
+    CPlatformCursor()  = default;
+    ~CPlatformCursor() = default;
+
 public:
 
     /** @return: Returns true if the cursor is visible */
@@ -15,9 +20,5 @@ public:
     }
 
 protected:
-
-    CPlatformCursor() = default;
-    ~CPlatformCursor() = default;
-
     bool bIsVisible = true;
 };

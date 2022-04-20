@@ -33,6 +33,11 @@ enum class EConsoleColor : uint8
 
 class COREAPPLICATION_API CPlatformConsoleWindow
 {
+protected:
+
+    CPlatformConsoleWindow()          = default;
+    virtual ~CPlatformConsoleWindow() = default;
+
 public:
 
     /**
@@ -80,18 +85,13 @@ public:
      */
     virtual void SetColor(EConsoleColor Color) { }
 
-    /**
-     * @brief: Releases the console-window and destroys the object 
-     */
+    /** @brief: Releases the console-window and destroys the object  */
     virtual void Release() { delete this; }
 
     /** @return: Return true if the console-window is visible */
     bool IsVisible() const { return bIsVisible; }
 
 protected:
-
-    CPlatformConsoleWindow() = default;
-    virtual ~CPlatformConsoleWindow() = default;
 
     // True or false depending on if the console is visible or not
     bool bIsVisible = false;

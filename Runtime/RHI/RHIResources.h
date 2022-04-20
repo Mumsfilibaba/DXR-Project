@@ -19,6 +19,9 @@ class CRHIRayTracingGeometryInstance;
 typedef TSharedRef<class CRHIResource>            CRHIResourceRef;
 
 typedef TSharedRef<class CRHIBuffer>              CRHIBufferRef;
+typedef TSharedRef<class CRHIVertexBuffer>        CRHIVertexBufferRef;
+typedef TSharedRef<class CRHIIndexBuffer>         CRHIIndexBufferRef;
+typedef TSharedRef<class CRHIGenericBuffer>       CRHIGenericBufferRef;
 typedef TSharedRef<class CRHIConstantBuffer>      CRHIConstantBufferRef;
 
 typedef TSharedRef<class CRHITexture>             CRHITextureRef;
@@ -139,15 +142,46 @@ enum class EBufferUsageFlags : uint8
 ENUM_CLASS_OPERATORS(EBufferUsageFlags);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIBufferInitializer
+
+class CRHIBufferInitializer
+{
+public:
+
+    CRHIBufferInitializer()
+        : UsageFlags(EBufferUsageFlags::None)
+        , InitialState(EResourceAccess::Common)
+    { }
+
+    CRHIBufferInitializer(EBufferUsageFlags InUsageFlags, EResourceAccess InInitialState)
+        : UsageFlags(InUsageFlags)
+        , InitialState(InInitialState)
+    { }
+
+    bool operator==(const CRHIBufferInitializer& RHS) const
+    {
+        return (UsageFlags == RHS.UsageFlags) && (InitialState == RHS.InitialState);
+    }
+
+    bool operator!=(const CRHIBufferInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    EBufferUsageFlags UsageFlags;
+    EResourceAccess   InitialState;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIBuffer
 
 class CRHIBuffer : public CRHIResource
 {
 protected:
 
-    CRHIBuffer(EBufferUsageFlags InUsageFlags)
+    CRHIBuffer(const CRHIBufferInitializer& Initializer)
         : CRHIResource()
-        , UsageFlags(InUsageFlags)
+        , UsageFlags(Initializer.UsageFlags)
     { }
 
 public:
@@ -197,16 +231,51 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIVertexBufferInitializer
+
+class CRHIVertexBufferInitializer : public CRHIBufferInitializer
+{
+public:
+
+    CRHIVertexBufferInitializer()
+        : CRHIBufferInitializer()
+        , NumVertices(0)
+        , Stride(0)
+    { }
+
+    CRHIVertexBufferInitializer(EBufferUsageFlags InUsageFlags, uint32 InNumVertices, uint16 InStride, EResourceAccess InInitialState)
+        : CRHIBufferInitializer(InUsageFlags, InInitialState)
+        , NumVertices(InNumVertices)
+        , Stride(InStride)
+    { }
+
+    bool operator==(const CRHIVertexBufferInitializer& RHS) const
+    {
+        return CRHIBufferInitializer::operator==(RHS)
+            && (NumVertices == RHS.NumVertices)
+            && (Stride      == RHS.Stride);
+    }
+
+    bool operator!=(const CRHIVertexBufferInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    uint32 NumVertices;
+    uint16 Stride;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIVertexBuffer
 
 class CRHIVertexBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIVertexBuffer(EBufferUsageFlags InUsageFlags, uint32 InNumVertices, uint16 InStride)
-        : CRHIBuffer(InUsageFlags)
-        , NumVertices(InNumVertices)
-        , Stride(InStride)
+    CRHIVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
+        : CRHIBuffer(Initializer)
+        , NumVertices(Initializer.NumVertices)
+        , Stride(Initializer.Stride)
     { }
 
 public:
@@ -229,16 +298,51 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIIndexBufferInitializer
+
+class CRHIIndexBufferInitializer : public CRHIBufferInitializer
+{
+public:
+
+    CRHIIndexBufferInitializer()
+        : CRHIBufferInitializer()
+        , IndexFormat(EIndexFormat::Unknown)
+        , NumIndicies(0)
+    { }
+
+    CRHIIndexBufferInitializer(EBufferUsageFlags InUsageFlags, EIndexFormat InIndexFormat, uint32 InNumIndicies, EResourceAccess InInitialState)
+        : CRHIBufferInitializer(InUsageFlags, InInitialState)
+        , IndexFormat(InIndexFormat)
+        , NumIndicies(InNumIndicies)
+    { }
+
+    bool operator==(const CRHIIndexBufferInitializer& RHS) const
+    {
+        return CRHIBufferInitializer::operator==(RHS)
+            && (IndexFormat == RHS.IndexFormat)
+            && (NumIndicies == RHS.NumIndicies);
+    }
+
+    bool operator!=(const CRHIIndexBufferInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    EIndexFormat IndexFormat;
+    uint32       NumIndicies;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIIndexBuffer
 
 class CRHIIndexBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIIndexBuffer(EBufferUsageFlags InUsageFlags, uint32 InNumIndicies, EIndexFormat InFormat)
-        : CRHIBuffer(InUsageFlags)
-        , Format(InFormat)
-        , NumIndicies(InNumIndicies)
+    CRHIIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
+        : CRHIBuffer(Initializer)
+        , Format(Initializer.IndexFormat)
+        , NumIndicies(Initializer.NumIndicies)
     { }
 
 public:
@@ -264,16 +368,51 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIGenericBufferInitializer
+
+class CRHIGenericBufferInitializer : public CRHIBufferInitializer
+{
+public:
+
+    CRHIGenericBufferInitializer()
+        : CRHIBufferInitializer()
+        , Size(0)
+        , Stride(0)
+    { }
+
+    CRHIGenericBufferInitializer(EBufferUsageFlags InUsageFlags, uint32 InSize, uint32 InStride, EResourceAccess InInitialState)
+        : CRHIBufferInitializer(InUsageFlags, InInitialState)
+        , Size(InSize)
+        , Stride(InStride)
+    { }
+
+    bool operator==(const CRHIGenericBufferInitializer& RHS) const
+    {
+        return CRHIBufferInitializer::operator==(RHS)
+            && (Size   == RHS.Size)
+            && (Stride == RHS.Stride);
+    }
+
+    bool operator!=(const CRHIGenericBufferInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    uint32 Size;
+    uint32 Stride;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIGenericBuffer
 
 class CRHIGenericBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIGenericBuffer(EBufferUsageFlags InUsageFlags, uint32 InSize, uint16 InStride)
-        : CRHIBuffer(InUsageFlags)
-        , Size(InSize)
-        , Stride(InStride)
+    CRHIGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
+        : CRHIBuffer(Initializer)
+        , Size(Initializer.Size)
+        , Stride(Initializer.Stride)
     { }
 
 public:
@@ -293,16 +432,51 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIConstantBufferInitializer
+
+class CRHIConstantBufferInitializer : public CRHIBufferInitializer
+{
+public:
+
+    CRHIConstantBufferInitializer()
+        : CRHIBufferInitializer()
+        , Size(0)
+        , Stride(0)
+    { }
+
+    CRHIConstantBufferInitializer(EBufferUsageFlags InUsageFlags, uint32 InSize, uint32 InStride, EResourceAccess InInitialState)
+        : CRHIBufferInitializer(InUsageFlags, InInitialState)
+        , Size(InSize)
+        , Stride(InStride)
+    { }
+
+    bool operator==(const CRHIConstantBufferInitializer& RHS) const
+    {
+        return CRHIBufferInitializer::operator==(RHS)
+            && (Size   == RHS.Size)
+            && (Stride == RHS.Stride);
+    }
+
+    bool operator!=(const CRHIConstantBufferInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    uint32 Size;
+    uint32 Stride;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIConstantBuffer
 
 class CRHIConstantBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIConstantBuffer(EBufferUsageFlags InUsageFlags, uint32 InSize, uint16 InStride)
-        : CRHIBuffer(InUsageFlags)
-        , Size(InSize)
-        , Stride(InStride)
+    CRHIConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
+        : CRHIBuffer(Initializer)
+        , Size(Initializer.Size)
+        , Stride(Initializer.Stride)
     {
         Check(!(InUsageFlags & (EBufferUsageFlags::AllowShaderResource | EBufferUsageFlags::AllowUnorderedAccess)));
     }
@@ -341,7 +515,56 @@ enum class ETextureUsageFlags : uint8
 
 ENUM_CLASS_OPERATORS(ETextureUsageFlags);
 
-class CRHITextureDesc;
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITextureInitializer
+
+class CRHITextureInitializer
+{
+public:
+
+    CRHITextureInitializer()
+        : ClearValue()
+        , Format(ERHIFormat::Unknown)
+        , UsageFlags(ETextureUsageFlags::None)
+        , InitialAccess(EResourceAccess::Common)
+        , NumMips(1)
+    { }
+
+    CRHITextureInitializer( ERHIFormat InFormat
+                          , ETextureUsageFlags InUsageFlags
+                          , EResourceAccess InInitialAccess
+                          , uint8 InNumMips
+                          , const CTextureClearValue& InClearValue)
+        : ClearValue(InClearValue)
+        , Format(InFormat)
+        , UsageFlags(InUsageFlags)
+        , InitialAccess(InInitialAccess)
+        , NumMips(InNumMips)
+    { }
+
+    bool operator==(const CRHITextureInitializer& RHS) const
+    {
+        return (ClearValue    == RHS.ClearValue)
+            && (Format        == RHS.Format)
+            && (UsageFlags    == RHS.UsageFlags)
+            && (InitialAccess == RHS.InitialAccess)
+            && (NumMips       == RHS.NumMips);
+    }
+
+    bool operator!=(const CRHITextureInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CTextureClearValue ClearValue;
+    
+    ERHIFormat         Format;
+
+    ETextureUsageFlags UsageFlags;
+    EResourceAccess    InitialAccess;
+
+    uint8              NumMips;
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITexture
@@ -350,11 +573,11 @@ class CRHITexture : public CRHIResource
 {
 protected:
 
-    CRHITexture(ERHIFormat InFormat, ETextureUsageFlags InUsageFlags, uint8 InNumMips, const CTextureClearValue& InClearValue)
+    CRHITexture(const CRHITextureInitializer& Initializer)
         : CRHIResource()
-        , Format(InFormat)
-        , UsageFlags(InUsageFlags)
-        , NumMips(InNumMips)
+        , Format(Initializer.Format)
+        , UsageFlags(Initializer.UsageFlags)
+        , NumMips(Initializer.NumMips)
     { }
 
 public:
@@ -436,23 +659,68 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITexture2DInitializer
+
+class CRHITexture2DInitializer : public CRHITextureInitializer
+{
+public:
+
+    CRHITexture2DInitializer()
+        : CRHITextureInitializer()
+        , Width(1)
+        , Height(1)
+        , NumMips(1)
+        , NumSamples(1)
+    { }
+
+    CRHITexture2DInitializer( ERHIFormat InFormat
+                            , uint16 InWidth
+                            , uint16 InHeight
+                            , uint8 InNumMips
+                            , uint8 InNumSamples
+                            , ETextureUsageFlags InUsageFlags
+                            , EResourceAccess InInitialAccess
+                            , const CTextureClearValue& InClearValue)
+        : CRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InClearValue)
+        , Width(InWidth)
+        , Height(InHeight)
+        , NumMips(InNumMips)
+        , NumSamples(InNumSamples)
+    { }
+
+    bool operator==(const CRHITexture2DInitializer& RHS) const
+    {
+        return CRHITextureInitializer::operator==(RHS)
+            && (Width      == RHS.Width)
+            && (Height     == RHS.Height)
+            && (NumMips    == RHS.NumMips)
+            && (NumSamples == RHS.NumSamples);
+    }
+
+    bool operator!=(const CRHITexture2DInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    uint16 Width;
+    uint16 Height;
+
+    uint8  NumMips;
+    uint8  NumSamples;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITexture2D
 
 class CRHITexture2D : public CRHITexture
 {
 protected:
 
-    CRHITexture2D( ERHIFormat InFormat
-                 , ETextureUsageFlags InUsageFlags
-                 , uint16 InWidth
-                 , uint16 InHeight
-                 , uint8 InNumMips
-                 , uint8 InNumSamples
-                 , const CTextureClearValue& InClearValue)
-        : CRHITexture(InFormat, InUsageFlags, InNumMips, InClearValue)
-        , Width(InWidth)
-        , Height(InHeight)
-        , NumSamples(InNumSamples)
+    CRHITexture2D(const CRHITexture2DInitializer& Initializer)
+        : CRHITexture(Initializer)
+        , Width(Initializer.Width)
+        , Height(Initializer.Height)
+        , NumSamples(Initializer.NumSamples)
     { }
 
 public:
@@ -479,22 +747,54 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITexture2DArrayInitializer
+
+class CRHITexture2DArrayInitializer : public CRHITexture2DInitializer
+{
+public:
+
+    CRHITexture2DArrayInitializer()
+        : CRHITexture2DInitializer()
+        , ArraySize(1)
+    { }
+
+    CRHITexture2DArrayInitializer( ERHIFormat InFormat
+                                 , uint16 InWidth
+                                 , uint16 InHeight
+                                 , uint16 InArraySize
+                                 , uint8 InNumMips
+                                 , uint8 InNumSamples
+                                 , ETextureUsageFlags InUsageFlags
+                                 , EResourceAccess InInitialAccess
+                                 , const CTextureClearValue& InClearValue)
+        : CRHITexture2DInitializer(InFormat, InWidth, InHeight,InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InClearValue)
+        , ArraySize(InArraySize)
+    { }
+
+    bool operator==(const CRHITexture2DArrayInitializer& RHS) const
+    {
+        return CRHITexture2DInitializer::operator==(RHS)
+            && (ArraySize == RHS.ArraySize);
+    }
+
+    bool operator!=(const CRHITexture2DArrayInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    uint16 ArraySize;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITexture2DArray
 
 class CRHITexture2DArray : public CRHITexture2D
 {
 protected:
 
-    CRHITexture2DArray( ERHIFormat InFormat
-                      , ETextureUsageFlags InUsageFlags
-                      , uint16 InWidth
-                      , uint16 InHeight
-                      , uint16 InArraySize
-                      , uint8 InNumMips
-                      , uint8 InNumSamples
-                      , const CTextureClearValue& InClearValue)
-        : CRHITexture2D(InFormat, InUsageFlags, InNumMips, InWidth, InHeight, InNumSamples, InClearValue)
-        , ArraySize(InArraySize)
+    CRHITexture2DArray(const CRHITexture2DArrayInitializer& Initializer)
+        : CRHITexture2D(Initializer)
+        , ArraySize(Initializer.ArraySize)
     { }
 
 public:
@@ -516,23 +816,64 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITextureCubeInitializer
+
+class CRHITextureCubeInitializer : public CRHITextureInitializer
+{
+public:
+
+    CRHITextureCubeInitializer()
+        : CRHITextureInitializer()
+        , Extent(1)
+        , ArraySize(1)
+        , NumSamples(1)
+    { }
+
+    CRHITextureCubeInitializer(ERHIFormat InFormat
+                             , uint16 InExtent
+                             , uint16 InArraySize
+                             , uint8 InNumMips
+                             , uint8 InNumSamples
+                             , ETextureUsageFlags InUsageFlags
+                             , EResourceAccess InInitialAccess
+                             , const CTextureClearValue& InClearValue)
+        : CRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InClearValue)
+        , Extent(InExtent)
+        , ArraySize(InArraySize)
+        , NumSamples(InNumSamples)
+    { }
+
+    bool operator==(const CRHITextureCubeInitializer& RHS) const
+    {
+        return CRHITextureInitializer::operator==(RHS)
+            && (Extent     == RHS.Extent)
+            && (ArraySize  == RHS.ArraySize)
+            && (NumSamples == RHS.NumSamples);
+    }
+
+    bool operator!=(const CRHITextureCubeInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    uint16 Extent;
+    uint16 ArraySize;
+
+    uint8  NumSamples;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITextureCube
 
 class CRHITextureCube : public CRHITexture
 {
 protected:
 
-    CRHITextureCube( ERHIFormat InFormat
-                   , ETextureUsageFlags InUsageFlags
-                   , uint16 InExtent
-                   , uint16 InArraySize
-                   , uint8 InNumMips
-                   , uint8 InNumSamples
-                   , const CTextureClearValue& InClearValue)
-        : CRHITexture(InFormat, InUsageFlags, InNumMips, InClearValue)
-        , Extent(InExtent)
-        , ArraySize(InArraySize)
-        , NumSamples(InNumSamples)
+    CRHITextureCube(const CRHITextureCubeInitializer& Initializer)
+        : CRHITexture(Initializer)
+        , Extent(Initializer.Extent)
+        , ArraySize(Initializer.ArraySize)
+        , NumSamples(Initializer.NumSamples)
     { }
 
 public:
@@ -562,23 +903,63 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITexture3DInitializer
+
+class CRHITexture3DInitializer : public CRHITextureInitializer
+{
+public:
+
+    CRHITexture3DInitializer()
+        : CRHITextureInitializer()
+        , Width(1)
+        , Height(1)
+        , Depth(1)
+    { }
+
+    CRHITexture3DInitializer( ERHIFormat InFormat
+                            , uint16 InWidth
+                            , uint16 InHeight
+                            , uint16 InDepth
+                            , uint8 InNumMips
+                            , ETextureUsageFlags InUsageFlags
+                            , EResourceAccess InInitialAccess
+                            , const CTextureClearValue& InClearValue)
+        : CRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InClearValue)
+        , Width(InWidth)
+        , Height(InHeight)
+        , Depth(InDepth)
+    { }
+
+    bool operator==(const CRHITexture3DInitializer& RHS) const
+    {
+        return CRHITextureInitializer::operator==(RHS)
+            && (Width  == RHS.Width)
+            && (Height == RHS.Height)
+            && (Depth  == RHS.Depth);
+    }
+
+    bool operator!=(const CRHITexture3DInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    uint16 Width;
+    uint16 Height;
+    uint16 Depth;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITexture3D
 
 class CRHITexture3D : public CRHITexture
 {
 protected:
 
-    CRHITexture3D( ERHIFormat InFormat
-                 , ETextureUsageFlags InUsageFlags
-                 , uint16 InWidth
-                 , uint16 InHeight
-                 , uint16 InDepth
-                 , uint8 InNumMips
-                 , const CTextureClearValue& InClearValue)
-        : CRHITexture(InFormat, InUsageFlags, InNumMips, InClearValue)
-        , Width(InWidth)
-        , Height(InHeight)
-        , Depth(InDepth)
+    CRHITexture3D(const CRHITexture3DInitializer& Initializer)
+        : CRHITexture(Initializer)
+        , Width(Initializer.Width)
+        , Height(Initializer.Height)
+        , Depth(Initializer.Depth)
     { }
 
 public:

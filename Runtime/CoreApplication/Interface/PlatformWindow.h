@@ -170,6 +170,11 @@ public:
 
 class CPlatformWindow : public CRefCounted
 {
+protected:
+
+    CPlatformWindow()  = default;
+    ~CPlatformWindow() = default;
+
 public:
 
     /**
@@ -187,9 +192,7 @@ public:
      */
     virtual void Show(bool bMaximized) { }
 
-    /**
-     * @brief: Minimizes the window 
-     */
+    /** @brief: Minimizes the window */
     virtual void Minimize() { }
 
     /** @brief: Maximizes the window */
@@ -244,10 +247,6 @@ public:
     SWindowStyle GetStyle() const { return Style; }
 
 protected:
-
-    CPlatformWindow() = default;
-    ~CPlatformWindow() = default;
-
     SWindowStyle Style;
 };
 

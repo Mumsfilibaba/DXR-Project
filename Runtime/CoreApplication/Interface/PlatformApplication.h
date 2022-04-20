@@ -21,6 +21,17 @@
 
 class CPlatformApplication
 {
+protected:
+
+    friend struct TDefaultDelete<CPlatformApplication>;
+
+    CPlatformApplication(const TSharedPtr<ICursor>& InCursor)
+        : Cursor(InCursor)
+        , MessageListener(nullptr)
+    { }
+
+    virtual ~CPlatformApplication() = default;
+
 public:
 
     /**
@@ -51,11 +62,7 @@ public:
      */
     virtual void Tick(float Delta) { }
 
-    /**
-     * @brief: Check if the PlatformApplication support high-precision mouse-movement
-     * 
-     * @return: Returns true if the PlatformApplication supports high precision mouse-movement 
-     */
+    /** @return: Returns true if the PlatformApplication supports high precision mouse-movement  */
     virtual bool SupportsHighPrecisionMouse() const { return false; }
 
     /**
@@ -73,11 +80,7 @@ public:
      */
     virtual void SetActiveWindow(const TSharedRef<CPlatformWindow>& Window) { }
 
-    /**
-     * @brief: Retrieve the Active PlatformWindow
-     * 
-     * @return: Returns the currently active PlatformWindow
-     */
+    /** @return: Returns the currently active PlatformWindow */
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const { return TSharedRef<CPlatformWindow>(); }
 
     /**
@@ -87,18 +90,10 @@ public:
      */
     virtual void SetCapture(const TSharedRef<CPlatformWindow>& Window) { }
 
-    /**
-     * @brief: Retrieve the current PlatformWindow that has keyboard focus
-     * 
-     * @return: Returns the currently active PlatformWindow
-     */
+    /** @return: Returns the currently active PlatformWindow (The window with keyboard focus) */
     virtual TSharedRef<CPlatformWindow> GetCapture() const { return TSharedRef<CPlatformWindow>(); }
 
-    /**
-     * @brief: Retrieve the current PlatformWindow that is under the mouse-cursor
-     * 
-     * @return: Returns the current PlatformWindow that is under the mouse-cursor or nullptr if no application-window is under the cursor
-     */
+    /** @return: Returns the current PlatformWindow that is under the mouse-cursor or nullptr if no application-window is under the cursor */
     virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const { return TSharedRef<CPlatformWindow>(); }
 
     /**
@@ -115,16 +110,6 @@ public:
     TSharedPtr<CPlatformApplicationMessageHandler> GetMessageListener() const { return MessageListener; }
 
 protected:
-
-    friend struct TDefaultDelete<CPlatformApplication>;
-    
-    CPlatformApplication(const TSharedPtr<ICursor>& InCursor)
-        : Cursor(InCursor)
-        , MessageListener(nullptr)
-    { }
-    
-    virtual ~CPlatformApplication() = default;
-
     TSharedPtr<ICursor>                            Cursor;
     TSharedPtr<CPlatformApplicationMessageHandler> MessageListener;
 };

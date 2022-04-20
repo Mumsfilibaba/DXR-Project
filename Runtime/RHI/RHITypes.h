@@ -680,11 +680,7 @@ public:
         , Index(InIndex)
     { }
 
-    /**
-     * @brief: Check if the descriptor-handle is valid, that is it has a valid type and index
-     * 
-     * @return: Returns true if the handle is valid
-     */
+    /** @return: Returns true if the handle is valid */
     bool IsValid() const 
     { 
         return (Type != EDescriptorType::Unknown) && (Index != InvalidHandle);

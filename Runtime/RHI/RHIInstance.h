@@ -13,34 +13,18 @@ class CRHIRayTracingGeometry;
 class CRHIRayTracingScene;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITextureInitializer
-
-class CRHITextureInitializer
-{
-public:
-
-    CRHITextureInitializer()
-        : InitialAccess(EResourceAccess::Common)
-    { }
-
-    CTextureClearValue ClearValue;
-
-    CInt16Vector3      Extent;
-
-    ERHIFormat         Format;
-    ETextureUsageFlags UsageFlags;
-    
-    uint8              NumMips;
-    uint8              NumSamples;
-
-    EResourceAccess    InitialAccess;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIInstance
 
 class CRHIInstance
 {
+protected:
+
+    CRHIInstance(ERHIType InType)
+        : Type(InType)
+    { }
+
+    virtual ~CRHIInstance() = default;
+
 public:
 
     /**
@@ -59,132 +43,74 @@ public:
     /**
      * @brief: Creates a Texture2D
      *
-     * @param Format: Texture Format
-     * @param UsageFlags: Texture usage flags
-     * @param Width: Width of the Texture
-     * @param Height: Height of the Texture
-     * @param NumMips: Number of Texture MipLevels
-     * @param NumSamples: Number of Texture Samples
-     * @param ClearValue: Optimal ClearValue of the Texture
-     * @param InitialState: Initial ResourceState of the texture
+     * @param Initializer: Structure containing information for creating a Texture2D
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DRef CreateTexture2D( ERHIFormat Format
-                                            , ETextureUsageFlags UsageFlags
-                                            , uint16 Width
-                                            , uint16 Height
-                                            , uint8 NumMips
-                                            , uint8 NumSamples
-                                            , const CTextureClearValue& ClearValue
-                                            , EResourceAccess InitialState
-                                            , const SResourceInitializer* InitalData) = 0;
+    virtual CRHITexture2DRef CreateTexture2D(const CRHITexture2DInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
 
     /**
      * @brief: Creates a Texture2DArray
      *
-     * @param Format: Texture Format
-     * @param UsageFlags: Texture usage flags
-     * @param Width: Width of the Texture
-     * @param Height: Height of the Texture
-     * @param ArraySize: Number of slices in the Texture Array
-     * @param NumMips: Number of Texture MipLevels
-     * @param NumSamples: Number of Texture Samples
-     * @param ClearValue: Optimal ClearValue of the Texture
-     * @param InitialState: Initial ResourceState of the texture
+     * @param Initializer: Structure containing information for creating a Texture2DArray
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DArrayRef CreateTexture2DArray( ERHIFormat Format
-                                                      , ETextureUsageFlags UsageFlags
-                                                      , uint16 Width
-                                                      , uint16 Height
-                                                      , uint16 ArraySize
-                                                      , uint8 NumMips
-                                                      , uint8 NumSamples
-                                                      , const CTextureClearValue& ClearValue
-                                                      , EResourceAccess InitialState
-                                                      , const SResourceInitializer* InitalData) = 0;
+    virtual CRHITexture2DArrayRef CreateTexture2DArray(const CRHITexture2DArrayInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
 
     /**
      * @brief: Creates a TextureCube
      *
-     * @param Format: Texture Format
-     * @param UsageFlags: Texture usage flags
-     * @param Extent: Extent of one size of the TextureCube
-     * @param ArraySize: Number of cubes in the Texture Cube
-     * @param NumMips: Number of Texture MipLevels
-     * @param NumSamples: Number of Texture Samples
-     * @param ClearValue: Optimal ClearValue of the Texture
-     * @param InitialState: Initial ResourceState of the texture
+     * @param Initializer: Structure containing information for creating a TextureCube
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeRef CreateTextureCube( ERHIFormat Format
-                                                , ETextureUsageFlags UsageFlags
-                                                , uint16 Extent
-                                                , uint16 ArraySize
-                                                , uint8 NumMips
-                                                , uint8 NumSamples
-                                                , const CTextureClearValue& ClearValue
-                                                , EResourceAccess InitialState
-                                                , const SResourceInitializer* InitalData) = 0;
+    virtual CRHITextureCubeRef CreateTextureCube(const CRHITextureCubeInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
 
     /**
      * @brief: Creates a Texture3D
      *
-     * @param Format: Texture Format
-     * @param UsageFlags: Texture usage flags
-     * @param Width: Width of the Texture
-     * @param Height: Height of the Texture
-     * @param Depth: Depth of the Texture
-     * @param NumMips: Number of Texture MipLevels
-     * @param ClearValue: Optimal ClearValue of the Texture
-     * @param InitialState: Initial ResourceState of the texture
+     * @param Initializer: Structure containing information for creating a Texture3D
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture3DRef CreateTexture3D( ERHIFormat Format
-                                            , ETextureUsageFlags UsageFlags
-                                            , uint16 Width
-                                            , uint16 Height
-                                            , uint16 Depth
-                                            , uint8 NumMips
-                                            , const CTextureClearValue& ClearValue
-                                            , EResourceAccess InitialState
-                                            , const SResourceInitializer* InitalData) = 0;
+    virtual CRHITexture3DRef CreateTexture3D(const CRHITexture3DInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
 
     /**
-     * @brief: Creates a Buffer
-     * 
-     * @param UsageFlags: UsageFlags of the Buffer
-     * @param Size: Size of the Buffer
-     * @param Stride: Stride of each element in the Buffer
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created Buffer
-     */
-    virtual CRHIBufferRef CreateBuffer( EBufferUsageFlags UsageFlags
-                                      , uint32 Size
-                                      , uint32 Stride
-                                      , EResourceAccess InitialState
-                                      , const SResourceInitializer* InitalData) = 0;
-
-    /**
-     * @brief: Creates a Buffer
+     * @brief: Creates a VertexBuffer
      *
-     * @param UsageFlags: UsageFlags of the Buffer
-     * @param Size: Size of the Buffer
-     * @param Stride: Stride of each element in the Buffer
-     * @param InitialState: Initial ResurceState of the Buffer
+     * @param Initializer: State that contains information about a VertexBuffer
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created Buffer
      */
-    virtual CRHIConstantBufferRef CreateConstantBuffer( EBufferUsageFlags UsageFlags
-                                                      , uint32 Size
-                                                      , uint32 Stride
-                                                      , EResourceAccess InitialState
-                                                      , const SResourceInitializer* InitalData) = 0;
+    virtual CRHIVertexBufferRef CreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
+
+    /**
+     * @brief: Creates a IndexBuffer
+     *
+     * @param Initializer: State that contains information about a IndexBuffer
+     * @param InitialData: Initial data supplied to the Buffer
+     * @return: Returns the newly created Buffer
+     */
+    virtual CRHIIndexBufferRef CreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
+
+    /**
+     * @brief: Creates a GenericBuffer
+     * 
+     * @param Initializer: State that contains information about a GenericBuffer
+     * @param InitialData: Initial data supplied to the Buffer
+     * @return: Returns the newly created Buffer
+     */
+    virtual CRHIGenericBufferRef CreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
+
+    /**
+     * @brief: Creates a ConstantBuffer
+     *
+     * @param Initializer: State that contains information about a ConstantBuffer
+     * @param InitialData: Initial data supplied to the Buffer
+     * @return: Returns the newly created Buffer
+     */
+    virtual CRHIConstantBufferRef CreateConstantBuffer( const CRHIConstantBufferInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
 
     /**
      * @brief: Create a SamplerState
@@ -422,7 +348,7 @@ public:
      * @param DepthFormat: Format for the depth
      * @return: Returns the newly created viewport
      */
-    virtual CRHIViewportRef CreateViewport( PlatformWindowHandle WindowHandle
+    virtual CRHIViewportRef CreateViewport( void* WindowHandle
                                           , uint32 Width
                                           , uint32 Height
                                           , ERHIFormat ColorFormat
@@ -472,13 +398,6 @@ public:
     ERHIType GetType() const { return Type; }
 
 protected:
-
-    CRHIInstance(ERHIType InType)
-        : Type(InType)
-    { }
-
-    virtual ~CRHIInstance() = default;
-
     ERHIType Type;
 };
 

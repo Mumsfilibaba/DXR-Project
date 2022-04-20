@@ -75,6 +75,11 @@ private:
 
 class RHI_API CRHICommandExecutionManager
 {
+private:
+
+    CRHICommandExecutionManager();
+    ~CRHICommandExecutionManager() = default;
+
 public:
 
     static bool Initialize();
@@ -99,9 +104,6 @@ public:
     FORCEINLINE uint32 GetNumCommands()      const { return NumCommands; }
 
 private:
-
-    CRHICommandExecutionManager();
-    ~CRHICommandExecutionManager() = default;
 
     /** Internal function for executing the CommandList */
     void InternalExecuteCommandList(class CRHICommandList& CmdList);
