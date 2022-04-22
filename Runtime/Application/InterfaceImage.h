@@ -1,6 +1,5 @@
 #pragma once
-#include "RHI/RHIResourceViews.h"
-
+#include "RHI/RHIResources.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // SInterfaceImage - Used when rendering images with ImGui
@@ -9,15 +8,15 @@ struct SInterfaceImage
 {
     SInterfaceImage() = default;
 
-    SInterfaceImage(const TSharedRef<CRHIShaderResourceView>& InImageView, const TSharedRef<CRHITexture>& InImage, EResourceAccess InBefore, EResourceAccess InAfter)
+    SInterfaceImage(const CRHIShaderResourceViewRef& InImageView, const CRHITextureRef& InImage, EResourceAccess InBefore, EResourceAccess InAfter)
         : ImageView(InImageView)
         , Image(InImage)
         , BeforeState(InBefore)
         , AfterState(InAfter)
     { }
 
-    TSharedRef<CRHIShaderResourceView> ImageView;
-    TSharedRef<CRHITexture> Image;
+    CRHIShaderResourceViewRef ImageView;
+    CRHITextureRef            Image;
 
     EResourceAccess BeforeState;
     EResourceAccess AfterState;

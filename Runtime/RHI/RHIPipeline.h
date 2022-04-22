@@ -2,6 +2,19 @@
 #include "RHIShader.h"
 #include "RHIResources.h"
 
+#include "Core/Containers/StaticArray.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedefs
+
+typedef TSharedRef<class CRHIRasterizerState>         CRHIRasterizerStateRef;
+typedef TSharedRef<class CRHIBlendState>              CRHIBlendStateRef;
+typedef TSharedRef<class CRHIDepthStencilState>       CRHIDepthStencilStateRef;
+typedef TSharedRef<class CRHIVertexInputLayout>       CRHIVertexInputLayoutRef;
+typedef TSharedRef<class CRHIGraphicsPipelineState>   CRHIGraphicsPipelineStateRef;
+typedef TSharedRef<class CRHIComputePipelineState>    CRHIComputePipelineStateRef;
+typedef TSharedRef<class CRHIRayTracingPipelineState> CRHIRayTracingPipelineStateRef;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EDepthWriteMask
 
@@ -120,14 +133,14 @@ public:
         , BackFace()
     { }
 
-    CRHIDepthStencilStateInitializer( EDepthWriteMask InDepthWriteMask
-                          , EComparisonFunc InDepthFunc
-                          , bool bInDepthEnable
-                          , uint8 InStencilReadMask
-                          , uint8 InStencilWriteMask
-                          , bool bInStencilEnable
-                          , const SDepthStencilStateFace& InFrontFace
-                          , const SDepthStencilStateFace& InBackFace)
+    CRHIDepthStencilStateInitializer( EComparisonFunc InDepthFunc
+                                    , bool bInDepthEnable
+                                    , EDepthWriteMask InDepthWriteMask          = EDepthWriteMask::All
+                                    , bool bInStencilEnable                     = false
+                                    , uint8 InStencilReadMask                   = 0xff
+                                    , uint8 InStencilWriteMask                  = 0xff
+                                    , const SDepthStencilStateFace& InFrontFace = SDepthStencilStateFace()
+                                    , const SDepthStencilStateFace& InBackFace  = SDepthStencilStateFace())
         : DepthWriteMask(InDepthWriteMask)
         , DepthFunc(InDepthFunc)
         , bDepthEnable(bInDepthEnable)
@@ -183,6 +196,10 @@ public:
 
 class CRHIDepthStencilState : public CRHIResource
 {
+protected:
+
+    CRHIDepthStencilState()  = default;
+    ~CRHIDepthStencilState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -248,15 +265,15 @@ public:
 
     CRHIRasterizerStateInitializer( EFillMode InFillMode
                                   , ECullMode InCullMode
-                                  , bool bInFrontCounterClockwise
-                                  , int32 InDepthBias
-                                  , float InDepthBiasClamp
-                                  , float InSlopeScaledDepthBias
-                                  , bool bInDepthClipEnable
-                                  , bool bInMultisampleEnable
-                                  , bool bInAntialiasedLineEnable
-                                  , uint32 InForcedSampleCount
-                                  , bool bInEnableConservativeRaster)
+                                  , bool bInFrontCounterClockwise    = false
+                                  , int32 InDepthBias                = 0
+                                  , float InDepthBiasClamp           = 0.0f
+                                  , float InSlopeScaledDepthBias     = 0.0f
+                                  , bool bInDepthClipEnable          = true
+                                  , bool bInMultisampleEnable        = false
+                                  , bool bInAntialiasedLineEnable    = false
+                                  , uint32 InForcedSampleCount       = 1
+                                  , bool bInEnableConservativeRaster = false)
         : FillMode(InFillMode)
         , CullMode(InCullMode)
         , bFrontCounterClockwise(bInFrontCounterClockwise)
@@ -324,6 +341,10 @@ public:
 
 class CRHIRasterizerState : public CRHIResource
 {
+protected:
+
+    CRHIRasterizerState()  = default;
+    ~CRHIRasterizerState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -604,61 +625,19 @@ public:
         , bIndependentBlendEnable(false)
     { }
 
-    CRHIBlendStateInitializer(const SRenderTargetBlendInfo& InRenderTarget, bool bInAlphaToCoverageEnable, bool bInIndependentBlendEnable)
-        : RenderTargets()
-        , bAlphaToCoverageEnable(bInAlphaToCoverageEnable)
-        , bIndependentBlendEnable(bInIndependentBlendEnable)
-    {
-        RenderTargets[0] = InRenderTarget;
-    }
-
-    CRHIBlendStateInitializer( const SRenderTargetBlendInfo& InRenderTarget0
-                             , const SRenderTargetBlendInfo& InRenderTarget1
+    CRHIBlendStateInitializer( const TStaticArray<SRenderTargetBlendInfo, kRHIMaxRenderTargetCount>& InRenderTargets
                              , bool bInAlphaToCoverageEnable
                              , bool bInIndependentBlendEnable)
-        : RenderTargets()
+        : RenderTargets(InRenderTargets)
         , bAlphaToCoverageEnable(bInAlphaToCoverageEnable)
         , bIndependentBlendEnable(bInIndependentBlendEnable)
-    {
-        RenderTargets[0] = InRenderTarget0;
-        RenderTargets[1] = InRenderTarget1;
-    }
-
-    CRHIBlendStateInitializer( const SRenderTargetBlendInfo& InRenderTarget0
-                             , const SRenderTargetBlendInfo& InRenderTarget1
-                             , const SRenderTargetBlendInfo& InRenderTarget2
-                             , bool bInAlphaToCoverageEnable
-                             , bool bInIndependentBlendEnable)
-        : RenderTargets()
-        , bAlphaToCoverageEnable(bInAlphaToCoverageEnable)
-        , bIndependentBlendEnable(bInIndependentBlendEnable)
-    {
-        RenderTargets[0] = InRenderTarget0;
-        RenderTargets[1] = InRenderTarget1;
-        RenderTargets[2] = InRenderTarget2;
-    }
-
-    CRHIBlendStateInitializer( const SRenderTargetBlendInfo& InRenderTarget0
-                             , const SRenderTargetBlendInfo& InRenderTarget1
-                             , const SRenderTargetBlendInfo& InRenderTarget2
-                             , const SRenderTargetBlendInfo& InRenderTarget3
-                             , bool bInAlphaToCoverageEnable
-                             , bool bInIndependentBlendEnable)
-        : RenderTargets()
-        , bAlphaToCoverageEnable(bInAlphaToCoverageEnable)
-        , bIndependentBlendEnable(bInIndependentBlendEnable)
-    {
-        RenderTargets[0] = InRenderTarget0;
-        RenderTargets[1] = InRenderTarget1;
-        RenderTargets[2] = InRenderTarget2;
-        RenderTargets[3] = InRenderTarget3;
-    }
+    { }
 
     uint64 GetHash() const
     {
         uint64 Hash = 0;
 
-        const uint32 Count = bIndependentBlendEnable ? kMaxRenderTargetCount : 1;
+        const uint32 Count = bIndependentBlendEnable ? kRHIMaxRenderTargetCount : 1;
         for (uint32 Index = 0; Index < Count; ++Index)
         {
             HashCombine(Hash, RenderTargets[Index].GetHash());
@@ -671,14 +650,7 @@ public:
 
     bool operator==(const CRHIBlendStateInitializer& RHS) const
     {
-        return (RenderTargets[0]        == RHS.RenderTargets[0])
-            && (RenderTargets[1]        == RHS.RenderTargets[1])
-            && (RenderTargets[2]        == RHS.RenderTargets[2])
-            && (RenderTargets[3]        == RHS.RenderTargets[3])
-            && (RenderTargets[4]        == RHS.RenderTargets[4])
-            && (RenderTargets[5]        == RHS.RenderTargets[5])
-            && (RenderTargets[6]        == RHS.RenderTargets[6])
-            && (RenderTargets[7]        == RHS.RenderTargets[7])
+        return (RenderTargets           == RHS.RenderTargets)
             && (bAlphaToCoverageEnable  == RHS.bAlphaToCoverageEnable)
             && (bIndependentBlendEnable == RHS.bIndependentBlendEnable);
     }
@@ -688,9 +660,9 @@ public:
         return !(*this == RHS);
     }
 
-    SRenderTargetBlendInfo RenderTargets[kMaxRenderTargetCount];
-    bool                   bAlphaToCoverageEnable;
-    bool                   bIndependentBlendEnable;
+    TStaticArray<SRenderTargetBlendInfo, kRHIMaxRenderTargetCount> RenderTargets;
+    bool                                                        bAlphaToCoverageEnable;
+    bool                                                        bIndependentBlendEnable;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -698,6 +670,10 @@ public:
 
 class CRHIBlendState : public CRHIResource
 {
+protected:
+
+    CRHIBlendState()  = default;
+    ~CRHIBlendState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -724,31 +700,85 @@ inline const char* ToString(EVertexInputClass BlendOp)
 
 struct SVertexInputElement
 {
-    String            Semantic            = "";
-    uint32            SemanticIndex       = 0;
-    ERHIFormat        Format              = ERHIFormat::Unknown;
-    uint32            InputSlot           = 0;
-    uint32            ByteOffset          = 0;
-    EVertexInputClass InputClassification = EVertexInputClass::Vertex;
-    uint32            InstanceStepRate    = 0;
+    SVertexInputElement()
+        : Semantic("")
+        , SemanticIndex(0)
+        , Format(ERHIFormat::Unknown)
+        , InputSlot(0)
+        , ByteOffset(0)
+        , InputClass(EVertexInputClass::Vertex)
+        , InstanceStepRate(0)
+    { }
+
+    SVertexInputElement( const String& InSemantic
+                       , uint32 InSemanticIndex
+                       , ERHIFormat InFormat
+                       , uint32 InInputSlot
+                       , uint32 InByteOffset
+                       , EVertexInputClass InInputClass
+                       , uint32 InInstanceStepRate)
+        : Semantic(InSemantic)
+        , SemanticIndex(InSemanticIndex)
+        , Format(InFormat)
+        , InputSlot(InInputSlot)
+        , ByteOffset(InByteOffset)
+        , InputClass(InInputClass)
+        , InstanceStepRate(InInstanceStepRate)
+    { }
+
+    bool operator==(const SVertexInputElement& RHS) const
+    {
+        return (Semantic         == RHS.Semantic)
+            && (SemanticIndex    == RHS.SemanticIndex)
+            && (Format           == RHS.Format)
+            && (InputSlot        == RHS.InputSlot)
+            && (ByteOffset       == RHS.ByteOffset)
+            && (InputClass       == RHS.InputClass)
+            && (InstanceStepRate == RHS.InstanceStepRate);
+    }
+
+    bool operator!=(const SVertexInputElement& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    String            Semantic;
+    uint32            SemanticIndex;
+    ERHIFormat        Format;
+    uint32            InputSlot;
+    uint32            ByteOffset;
+    EVertexInputClass InputClass;
+    uint32            InstanceStepRate;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SVertexInputLayoutDesc
 
-struct SVertexInputLayoutDesc
+class CRHIVertexInputLayoutInitializer
 {
-    SVertexInputLayoutDesc()
+public:
+
+    CRHIVertexInputLayoutInitializer()
         : Elements()
     { }
 
-    SVertexInputLayoutDesc(const TArray<SVertexInputElement>& InElements)
+    CRHIVertexInputLayoutInitializer(const TArray<SVertexInputElement>& InElements)
         : Elements(InElements)
     { }
 
-    SVertexInputLayoutDesc(std::initializer_list<SVertexInputElement> InList)
+    CRHIVertexInputLayoutInitializer(std::initializer_list<SVertexInputElement> InList)
         : Elements(InList)
     { }
+
+    bool operator==(const CRHIVertexInputLayoutInitializer& RHS) const
+    {
+        return (Elements == RHS.Elements);
+    }
+
+    bool operator!=(const CRHIVertexInputLayoutInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
 
     TArray<SVertexInputElement> Elements;
 };
@@ -758,152 +788,373 @@ struct SVertexInputLayoutDesc
 
 class CRHIVertexInputLayout : public CRHIResource
 {
+protected:
+
+    CRHIVertexInputLayout()  = default;
+    ~CRHIVertexInputLayout() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EIndexBufferStripCutValue
 
-enum class EIndexBufferStripCutValue
+enum EIndexBufferStripCutValue
 {
-    Disabled          = 0,
-    uint16_0xffff     = 1,
-    uint32_0xffffffff = 2
+    IndexBufferStripCutValue_Disabled   = 0,
+    IndexBufferStripCutValue_0xffff     = 1,
+    IndexBufferStripCutValue_0xffffffff = 2
 };
 
 inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 {
     switch (IndexBufferStripCutValue)
     {
-        case EIndexBufferStripCutValue::Disabled:          return "Disabled";
-        case EIndexBufferStripCutValue::uint16_0xffff:     return "0xffff";
-        case EIndexBufferStripCutValue::uint32_0xffffffff: return "0xffffffff";
-        default:                                           return "";
+        case IndexBufferStripCutValue_Disabled:   return "IndexBufferStripCutValue_Disabled";
+        case IndexBufferStripCutValue_0xffff:     return "IndexBufferStripCutValue_0xffff";
+        case IndexBufferStripCutValue_0xffffffff: return "IndexBufferStripCutValue_0xffffffff";
+        default:                                  return "";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIPipelineRenderTargetDesc
+// SGraphicsPipelineFormats
 
-struct SRHIPipelineRenderTargetDesc
+struct SGraphicsPipelineFormats
 {
-    ERHIFormat RenderTargetFormats[8];
-    uint32     NumRenderTargets = 0;
-
-    ERHIFormat DepthStencilFormat = ERHIFormat::Unknown;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIGraphicsPipelineShaderState
-
-struct SRHIGraphicsPipelineShaderState
-{
-    SRHIGraphicsPipelineShaderState() = default;
-
-    SRHIGraphicsPipelineShaderState(CRHIVertexShader* InVertexShader, CRHIPixelShader* InPixelShader)
-        : VertexShader(InVertexShader)
-        , PixelShader(InPixelShader)
+    SGraphicsPipelineFormats()
+        : RenderTargetFormats()
+        , NumRenderTargets(0)
+        , DepthStencilFormat(ERHIFormat::Unknown)
     { }
 
-    CRHIVertexShader* VertexShader = nullptr;
-    CRHIPixelShader*  PixelShader  = nullptr;
+    SGraphicsPipelineFormats( const TStaticArray<ERHIFormat, kRHIMaxRenderTargetCount>& InRenderTargetFormats
+                            , uint32 InNumRenderTargets
+                            , ERHIFormat InDepthStencilFormat)
+        : RenderTargetFormats(InRenderTargetFormats)
+        , NumRenderTargets(InNumRenderTargets)
+        , DepthStencilFormat(InDepthStencilFormat)
+    { }
+
+    bool operator==(const SGraphicsPipelineFormats& RHS) const
+    {
+        return (RenderTargetFormats == RHS.RenderTargetFormats)
+            && (NumRenderTargets    == RHS.NumRenderTargets)
+            && (DepthStencilFormat  == RHS.DepthStencilFormat);
+    }
+
+    bool operator!=(const SGraphicsPipelineFormats& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    TStaticArray<ERHIFormat, kRHIMaxRenderTargetCount> RenderTargetFormats;
+    uint32                                          NumRenderTargets;
+    ERHIFormat                                      DepthStencilFormat;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIGraphicsPipelineStateDesc
+// SGraphicsPipelineShaderState
 
-struct SRHIGraphicsPipelineStateCreateDesc
+struct SGraphicsPipelineShaders
 {
-    CRHIVertexInputLayout* InputLayoutState  = nullptr;
-    CRHIDepthStencilState* DepthStencilState = nullptr;
-    CRHIRasterizerState*   RasterizerState   = nullptr;
-    CRHIBlendState*        BlendState        = nullptr;
+    SGraphicsPipelineShaders()
+        : VertexShader(nullptr)
+        , PixelShader(nullptr)
+    { }
 
-    uint32 SampleCount   = 1;
-    uint32 SampleQuality = 0;
-    uint32 SampleMask    = 0xffffffff;
+    SGraphicsPipelineShaders(CRHIVertexShader* InVertexShader, CRHIPixelShader* InPixelShader)
+        : VertexShader(MakeSharedRef<CRHIVertexShader>(InVertexShader))
+        , PixelShader(MakeSharedRef<CRHIPixelShader>(InPixelShader))
+    { }
 
-    EIndexBufferStripCutValue IBStripCutValue       = EIndexBufferStripCutValue::Disabled;
-    EPrimitiveTopologyType    PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
-    SRHIGraphicsPipelineShaderState  ShaderState;
-    SRHIPipelineRenderTargetDesc PipelineFormats;
+    bool operator==(const SGraphicsPipelineShaders& RHS) const
+    {
+        return (VertexShader == RHS.VertexShader)
+            && (PixelShader  == RHS.PixelShader);
+    }
+
+    bool operator!=(const SGraphicsPipelineShaders& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHIVertexShaderRef VertexShader;
+    CRHIPixelShaderRef  PixelShader;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIGraphicsPipelineStateInitializer
+
+class CRHIPipelineState : public CRHIResource
+{
+protected:
+    
+    explicit CRHIPipelineState()
+        : CRHIResource()
+    { }
+
+public:
+
+    /**
+     * @brief: Set the name of the Texture
+     *
+     * @param InName: New name of of the resource
+     */
+    virtual void SetName(const String& InName) { }
+
+    /** @return: Returns the name of the Texture */
+    virtual String GetName() const { return ""; }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIGraphicsPipelineStateInitializer
+
+class CRHIGraphicsPipelineStateInitializer
+{
+public:
+
+    CRHIGraphicsPipelineStateInitializer()
+        : VertexInputLayout(nullptr)
+        , DepthStencilState(nullptr)
+        , RasterizerState(nullptr)
+        , BlendState(nullptr)
+        , SampleCount(1)
+        , SampleQuality(0)
+        , SampleMask(0xffffffff)
+        , IBStripCutValue(IndexBufferStripCutValue_Disabled)
+        , PrimitiveTopologyType(EPrimitiveTopologyType::Triangle)
+        , ShaderState()
+        , PipelineFormats()
+    { }
+
+    CRHIGraphicsPipelineStateInitializer( const CRHIVertexInputLayoutRef& InVertexInputLayout
+                                        , const CRHIDepthStencilStateRef& InDepthStencilState
+                                        , const CRHIRasterizerStateRef& InRasterizerState
+                                        , const CRHIBlendStateRef& InBlendState
+                                        , uint32 InSampleCount
+                                        , uint32 InSampleQuality
+                                        , uint32 InSampleMask
+                                        , EIndexBufferStripCutValue InIBStripCutValue
+                                        , EPrimitiveTopologyType InPrimitiveTopologyType
+                                        , const SGraphicsPipelineShaders& InShaderState
+                                        , const SGraphicsPipelineFormats& InPipelineFormats)
+        : VertexInputLayout(InVertexInputLayout)
+        , DepthStencilState(InDepthStencilState)
+        , RasterizerState(InRasterizerState)
+        , BlendState(InBlendState)
+        , SampleCount(InSampleCount)
+        , SampleQuality(InSampleQuality)
+        , SampleMask(InSampleMask)
+        , IBStripCutValue(InIBStripCutValue)
+        , PrimitiveTopologyType(InPrimitiveTopologyType)
+        , ShaderState(InShaderState)
+        , PipelineFormats(InPipelineFormats)
+    { }
+
+    bool operator==(const CRHIGraphicsPipelineStateInitializer& RHS) const
+    {
+        return (VertexInputLayout     == RHS.VertexInputLayout)
+            && (DepthStencilState     == RHS.DepthStencilState)
+            && (RasterizerState       == RHS.RasterizerState)
+            && (BlendState            == RHS.BlendState)
+            && (SampleCount           == RHS.SampleCount)
+            && (SampleQuality         == RHS.SampleQuality)
+            && (SampleMask            == RHS.SampleMask)
+            && (IBStripCutValue       == RHS.IBStripCutValue)
+            && (PrimitiveTopologyType == RHS.PrimitiveTopologyType)
+            && (ShaderState           == RHS.ShaderState)
+            && (PipelineFormats       == RHS.PipelineFormats);
+    }
+
+    bool operator!=(const CRHIGraphicsPipelineStateInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHIVertexInputLayoutRef  VertexInputLayout;
+    CRHIDepthStencilStateRef  DepthStencilState;
+    CRHIRasterizerStateRef    RasterizerState;
+    CRHIBlendStateRef         BlendState;
+
+    uint32                    SampleCount;
+    uint32                    SampleQuality;
+    uint32                    SampleMask;
+
+    EIndexBufferStripCutValue IBStripCutValue;
+    EPrimitiveTopologyType    PrimitiveTopologyType;
+    SGraphicsPipelineShaders  ShaderState;
+    SGraphicsPipelineFormats  PipelineFormats;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIGraphicsPipelineState
 
-class CRHIGraphicsPipelineState : public CRHIResource
+class CRHIGraphicsPipelineState : public CRHIPipelineState
 {
+protected:
+
+    CRHIGraphicsPipelineState()  = default;
+    ~CRHIGraphicsPipelineState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIComputePipelineStateDesc
+// CRHIComputePipelineStateInitializer
 
-struct SRHIComputePipelineStateDesc
+class CRHIComputePipelineStateInitializer
 {
-    SRHIComputePipelineStateDesc() = default;
+public:
 
-    SRHIComputePipelineStateDesc(CRHIComputeShader* InShader)
-        : Shader(InShader)
+    CRHIComputePipelineStateInitializer()
+        : Shader(nullptr)
     { }
 
-    CRHIComputeShader* Shader = nullptr;
+    CRHIComputePipelineStateInitializer(CRHIComputeShader* InShader)
+        : Shader(MakeSharedRef<CRHIComputeShader>(InShader))
+    { }
+
+    bool operator==(const CRHIComputePipelineStateInitializer& RHS) const
+    {
+        return (Shader == RHS.Shader);
+    }
+
+    bool operator!=(const CRHIComputePipelineStateInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHIComputeShaderRef Shader;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIComputePipelineState
 
-class CRHIComputePipelineState : public CRHIResource
+class CRHIComputePipelineState : public CRHIPipelineState
 {
+protected:
+
+    CRHIComputePipelineState()  = default;
+    ~CRHIComputePipelineState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRayTracingHitGroup
+// CRHIRayTracingHitGroup
 
-struct SRHIRayTracingHitGroup
+class CRHIRayTracingHitGroup
 {
-    SRHIRayTracingHitGroup() = default;
+public:
 
-    SRHIRayTracingHitGroup(const String& InName, CRHIRayAnyHitShader* InAnyHit, CRHIRayClosestHitShader* InClosestHit)
-        : Name(InName)
-        , AnyHit(InAnyHit)
-        , ClosestHit(InClosestHit)
+    CRHIRayTracingHitGroup()
+        : Name()
+        , Shaders()
     { }
 
-    bool operator==(const SRHIRayTracingHitGroup& RHS) const
-    {
-        return (Name == RHS.Name) && (AnyHit == RHS.AnyHit) && (ClosestHit == RHS.ClosestHit);
+    CRHIRayTracingHitGroup(const String& InName, const TArrayView<CRHIRayTracingShader*>& InRayTracingShaders)
+        : Name(InName)
+        , Shaders()
+    { 
+        Shaders.Reserve(InRayTracingShaders.Size());
+        for (CRHIRayTracingShader* Shader : InRayTracingShaders)
+        {
+            Shaders.Emplace(MakeSharedRef<CRHIRayTracingShader>(Shader));
+        }
     }
 
-    bool operator!=(const SRHIRayTracingHitGroup& RHS) const
+    bool operator==(const CRHIRayTracingHitGroup& RHS) const
+    {
+        return (Name == RHS.Name) && (Shaders == RHS.Shaders);
+    }
+
+    bool operator!=(const CRHIRayTracingHitGroup& RHS) const
     {
         return !(*this == RHS);
     }
 
-    String                   Name;
-    CRHIRayAnyHitShader*     AnyHit;
-    CRHIRayClosestHitShader* ClosestHit;
+    String                          Name;
+    TArray<CRHIRayTracingShaderRef> Shaders;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRayTracingPipelineStateDesc
+// CRHIRayTracingPipelineStateInitializer
 
-struct SRHIRayTracingPipelineStateDesc
+class CRHIRayTracingPipelineStateInitializer
 {
-    CRHIRayGenShader*                    RayGen = nullptr;
+public:
 
-    TArrayView<CRHIRayAnyHitShader*>     AnyHitShaders;
-    TArrayView<CRHIRayClosestHitShader*> ClosestHitShaders;
-    TArrayView<CRHIRayMissShader*>       MissShaders;
-    TArrayView<SRHIRayTracingHitGroup>   HitGroups;
+    CRHIRayTracingPipelineStateInitializer()
+        : RayGenShaders()
+        , CallableShaders()
+        , HitGroups()
+        , MissShaders()
+        , MaxAttributeSizeInBytes(0)
+        , MaxPayloadSizeInBytes(0)
+        , MaxRecursionDepth(1)
+    { }
 
-    uint32 MaxAttributeSizeInBytes = 0;
-    uint32 MaxPayloadSizeInBytes   = 0;
-    uint32 MaxRecursionDepth       = 1;
+    CRHIRayTracingPipelineStateInitializer( const TArrayView<CRHIRayGenShader*>& InRayGenShaders
+                                          , const TArrayView<CRHIRayCallableShader*>& InCallableShaders
+                                          , const TArrayView<CRHIRayTracingHitGroup>& InHitGroups
+                                          , const TArrayView<CRHIRayMissShader*>& InMissShaders
+                                          , uint32 InMaxAttributeSizeInBytes
+                                          , uint32 InMaxPayloadSizeInBytes
+                                          , uint32 InMaxRecursionDepth)
+        : RayGenShaders()
+        , CallableShaders()
+        , HitGroups(InHitGroups)
+        , MissShaders()
+        , MaxAttributeSizeInBytes(InMaxAttributeSizeInBytes)
+        , MaxPayloadSizeInBytes(InMaxPayloadSizeInBytes)
+        , MaxRecursionDepth(InMaxRecursionDepth)
+    { 
+        RayGenShaders.Reserve(InRayGenShaders.Size());
+        for (CRHIRayGenShader* Shader : InRayGenShaders)
+        {
+            RayGenShaders.Emplace(MakeSharedRef<CRHIRayGenShader>(Shader));
+        }
+
+        CallableShaders.Reserve(InCallableShaders.Size());
+        for (CRHIRayCallableShader* Shader : InCallableShaders)
+        {
+            CallableShaders.Emplace(MakeSharedRef<CRHIRayCallableShader>(Shader));
+        }
+
+        MissShaders.Reserve(InMissShaders.Size());
+        for (CRHIRayMissShader* Shader : InMissShaders)
+        {
+            MissShaders.Emplace(MakeSharedRef<CRHIRayMissShader>(Shader));
+        }
+    }
+
+    bool operator==(const CRHIRayTracingPipelineStateInitializer& RHS) const
+    {
+        return (RayGenShaders           == RHS.RayGenShaders)
+            && (CallableShaders         == RHS.CallableShaders)
+            && (HitGroups               == RHS.HitGroups)
+            && (MissShaders             == RHS.MissShaders)
+            && (MaxAttributeSizeInBytes == RHS.MaxAttributeSizeInBytes)
+            && (MaxPayloadSizeInBytes   == RHS.MaxPayloadSizeInBytes)
+            && (MaxRecursionDepth       == RHS.MaxRecursionDepth);
+    }
+
+    bool operator!=(const CRHIRayTracingPipelineStateInitializer& RHS) const 
+    {
+        return !(*this == RHS);
+    }
+
+    TArray<CRHIRayGenShaderRef>      RayGenShaders;
+    TArray<CRHIRayCallableShaderRef> CallableShaders;
+    TArray<CRHIRayTracingHitGroup>   HitGroups;
+    TArray<CRHIRayMissShaderRef>     MissShaders;
+    uint32                           MaxAttributeSizeInBytes;
+    uint32                           MaxPayloadSizeInBytes;
+    uint32                           MaxRecursionDepth;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIRayTracingPipelineState
 
-class CRHIRayTracingPipelineState : public CRHIResource
+class CRHIRayTracingPipelineState : public CRHIPipelineState
 {
+protected:
+
+    CRHIRayTracingPipelineState()  = default;
+    ~CRHIRayTracingPipelineState() = default;
 };

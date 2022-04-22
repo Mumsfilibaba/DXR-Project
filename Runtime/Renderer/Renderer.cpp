@@ -99,10 +99,10 @@ bool CRenderer::Init()
     // Init standard input layout
     SRHIInputLayoutStateDesc InputLayout =
     {
-        { "POSITION", 0, ERHIFormat::R32G32B32_Float, 0, 0,  EInputClassification::Vertex, 0 },
-        { "NORMAL",   0, ERHIFormat::R32G32B32_Float, 0, 12, EInputClassification::Vertex, 0 },
-        { "TANGENT",  0, ERHIFormat::R32G32B32_Float, 0, 24, EInputClassification::Vertex, 0 },
-        { "TEXCOORD", 0, ERHIFormat::R32G32_Float,    0, 36, EInputClassification::Vertex, 0 },
+        { "POSITION", 0, ERHIFormat::R32G32B32_Float, 0, 0,  EVertexInputClass::Vertex, 0 },
+        { "NORMAL",   0, ERHIFormat::R32G32B32_Float, 0, 12, EVertexInputClass::Vertex, 0 },
+        { "TANGENT",  0, ERHIFormat::R32G32B32_Float, 0, 24, EVertexInputClass::Vertex, 0 },
+        { "TEXCOORD", 0, ERHIFormat::R32G32_Float,    0, 36, EVertexInputClass::Vertex, 0 },
     };
 
     Resources.StdInputLayout = RHICreateInputLayout(InputLayout);
@@ -216,7 +216,7 @@ bool CRenderer::Init()
 
     LightProbeRenderer.RenderSkyLightProbe(MainCmdList, LightSetup, Resources);
 
-    CRHICommandQueue::Get().ExecuteCommandList(MainCmdList);
+    CRHICommandExecutionManager::Get().ExecuteCommandList(MainCmdList);
 
     CApplicationInstance& Application = CApplicationInstance::Get();
 
@@ -718,17 +718,17 @@ void CRenderer::Tick(const CScene& Scene)
             &MainCmdList
         };
 
-        CRHICommandQueue::Get().ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
+        CRHICommandExecutionManager::Get().ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
 
-        FrameStatistics.NumDrawCalls      = CRHICommandQueue::Get().GetNumDrawCalls();
-        FrameStatistics.NumDispatchCalls  = CRHICommandQueue::Get().GetNumDispatchCalls();
-        FrameStatistics.NumRenderCommands = CRHICommandQueue::Get().GetNumCommands();
+        FrameStatistics.NumDrawCalls      = CRHICommandExecutionManager::Get().GetNumDrawCalls();
+        FrameStatistics.NumDispatchCalls  = CRHICommandExecutionManager::Get().GetNumDispatchCalls();
+        FrameStatistics.NumRenderCommands = CRHICommandExecutionManager::Get().GetNumCommands();
     }
 }
 
 void CRenderer::Release()
 {
-    CRHICommandQueue::Get().WaitForGPU();
+    CRHICommandExecutionManager::Get().WaitForGPU();
 
     PreShadowsCmdList.Reset();
     PointShadowCmdList.Reset();
@@ -819,7 +819,7 @@ void CRenderer::OnWindowResize(const SWindowResizeEvent& Event)
 bool CRenderer::InitBoundingBoxDebugPass()
 {
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "VSMain", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -836,7 +836,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         AABBVertexShader->SetName("Debug VertexShader");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "PSMain", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -855,10 +855,10 @@ bool CRenderer::InitBoundingBoxDebugPass()
 
     SRHIInputLayoutStateDesc InputLayout =
     {
-        { "POSITION", 0, ERHIFormat::R32G32B32_Float, 0, 0, EInputClassification::Vertex, 0 },
+        { "POSITION", 0, ERHIFormat::R32G32B32_Float, 0, 0, EVertexInputClass::Vertex, 0 },
     };
 
-    TSharedRef<CRHIInputLayoutState> InputLayoutState = RHICreateInputLayout(InputLayout);
+    CRHIVertexInputLayoutRef InputLayoutState = RHICreateInputLayout(InputLayout);
     if (!InputLayoutState)
     {
         CDebug::DebugBreak();
@@ -869,7 +869,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         InputLayoutState->SetName("Debug InputLayoutState");
     }
 
-    SRHIDepthStencilStateDesc DepthStencilStateInfo;
+    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc      = ERHIComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
@@ -997,7 +997,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
 bool CRenderer::InitAA()
 {
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FullscreenVS.hlsl", "Main", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FullscreenVS.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -1014,7 +1014,7 @@ bool CRenderer::InitAA()
         VShader->SetName("Fullscreen VertexShader");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/PostProcessPS.hlsl", "Main", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/PostProcessPS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -1031,7 +1031,7 @@ bool CRenderer::InitAA()
         PostShader->SetName("PostProcess PixelShader");
     }
 
-    SRHIDepthStencilStateDesc DepthStencilStateInfo;
+    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc      = ERHIComparisonFunc::Always;
     DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
@@ -1112,7 +1112,7 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -1147,7 +1147,7 @@ bool CRenderer::InitAA()
         SShaderDefine("ENABLE_DEBUG", "1")
     };
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", &Defines, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -1204,7 +1204,7 @@ bool CRenderer::InitShadingImage()
     }
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ShadingImage.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ShadingImage.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;

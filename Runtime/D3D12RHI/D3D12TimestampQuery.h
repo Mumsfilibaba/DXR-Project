@@ -1,5 +1,5 @@
 #pragma once
-#include "RHI/RHITimestampQuery.h"
+#include "RHI/RHIResources.h"
 
 #include "D3D12Resource.h"
 

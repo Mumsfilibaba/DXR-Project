@@ -1,5 +1,5 @@
 #pragma once
-#include "RHI/RHITimestampQuery.h"
+#include "RHI/RHIResources.h"
 
 #if defined(COMPILER_MSVC)
 #pragma warning(push)

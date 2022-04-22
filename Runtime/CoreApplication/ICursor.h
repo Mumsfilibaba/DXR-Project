@@ -61,10 +61,6 @@ public:
      */
     virtual void SetVisibility(bool bIsVisible) = 0;
 
-    /**
-     * @brief: Retrieve the mouse visibility
-     *
-     * @return: Returns true if the mouse-cursor is visibile, otherwise false
-     */
+    /** @return: Returns true if the mouse-cursor is visible, otherwise false */
     virtual bool IsVisible() const = 0;
 };

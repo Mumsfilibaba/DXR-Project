@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
 
-#include "RHI/RHIResourceViews.h"
+#include "RHI/RHIResources.h"
 
 #include "Application/InterfaceImage.h"
 #include "Application/IWindow.h"

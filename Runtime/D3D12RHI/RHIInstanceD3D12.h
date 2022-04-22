@@ -108,7 +108,7 @@ public:
     virtual class CRHIRayClosestHitShader*     CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
     virtual class CRHIRayMissShader*           CreateRayMissShader(const TArray<uint8>& ShaderCode)       override final;
 
-    virtual class CRHIDepthStencilState*       CreateDepthStencilState(const SRHIDepthStencilStateDesc& CreateInfo) override final;
+    virtual class CRHIDepthStencilState*       CreateDepthStencilState(const CRHIDepthStencilStateInitializer& CreateInfo) override final;
     virtual class CRHIRasterizerState*         CreateRasterizerState(const SRHIRasterizerStateDesc& CreateInfo)     override final;
     virtual class CRHIBlendState*              CreateBlendState(const SRHIBlendStateDesc& CreateInfo)               override final;
     virtual class CRHIInputLayoutState*        CreateInputLayout(const SRHIInputLayoutStateDesc& CreateInfo)        override final;

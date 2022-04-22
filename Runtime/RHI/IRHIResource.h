@@ -14,7 +14,7 @@ protected:
 public:
 
     /**
-     * @brief: Add a reference to the reference-count, the new count is returned
+     * @brief: Add a reference by increasing the reference-count
      *
      * @return: Returns the the Reference-Count
      */

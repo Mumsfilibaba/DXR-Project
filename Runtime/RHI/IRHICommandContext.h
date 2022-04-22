@@ -4,178 +4,368 @@
 #include "RHIShader.h"
 #include "RHIPipeline.h"
 
-#define RHI_SHADER_LOCAL_BINDING_COUNT (4)
+#include "Core/Math/IntVector2.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SCopyBufferDesc
+// SCopyBufferRegionInfo
 
-struct SCopyBufferDesc
+struct SCopyBufferRegionInfo
 {
     /**
      * @brief: Default Constructor
      */
-    SCopyBufferDesc()
-        : SourceOffset(0)
-        , DestinationOffset(0)
+    SCopyBufferRegionInfo()
+        : SrcOffset(0)
+        , SrcBuffer(nullptr)
+        , DstOffset(0)
+        , DstBuffer(nullptr)
         , Size(0)
     { }
 
     /**
      * @brief: Constructor that fills in the members
      * 
-     * @param InSourceOffset: Offset in the source buffer
-     * @param InDestinationOffset: Offset in the destination buffer
+     * @param InSrcOffset: Offset in the source buffer
+     * @param InDstOffset: Offset in the destination buffer
      * @param InSize: Size to copy
      */
-    SCopyBufferDesc(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSize)
-        : SourceOffset(InSourceOffset)
-        , DestinationOffset(InDestinationOffset)
+    SCopyBufferRegionInfo( CRHIBuffer* InSrcBuffer
+                         , uint32 InSrcOffset
+                         , CRHIBuffer* InDstBuffer
+                         , uint32 InDstOffset
+                         , uint32 InSize)
+        : SrcBuffer(InSrcBuffer)
+        , SrcOffset(InSrcOffset)
+        , DstBuffer(InDstBuffer)
+        , DstOffset(InDstOffset)
         , Size(InSize)
     { }
 
-    bool operator==(const SCopyBufferDesc& RHS) const
+    bool operator==(const SCopyBufferRegionInfo& RHS) const
     {
-        return (SourceOffset == RHS.SourceOffset) && (DestinationOffset == RHS.DestinationOffset) && (Size == RHS.Size);
+        return (SrcBuffer == RHS.SrcBuffer)
+            && (SrcOffset == RHS.SrcOffset)
+            && (DstBuffer == RHS.DstBuffer)
+            && (DstOffset == RHS.DstOffset) 
+            && (Size      == RHS.Size);
     }
 
-    bool operator!=(const SCopyBufferDesc& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    uint64 SourceOffset;
-    uint32 DestinationOffset;
-    uint32 Size;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SCopyTextureSubresourceInfo
-
-struct SCopyTextureSubresourceInfo
-{
-    SCopyTextureSubresourceInfo()
-        : SubresourceIndex(0)
-        , x(0)
-        , y(0)
-        , z(0)
-    { }
-
-    SCopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
-        : SubresourceIndex(InSubresourceIndex)
-        , x(InX)
-        , y(InY)
-        , z(InZ)
-    { }
-
-    bool operator==(const SCopyTextureSubresourceInfo& RHS) const
-    {
-        return (SubresourceIndex == RHS.SubresourceIndex) && (x == RHS.x) && (y == RHS.y) && (z == RHS.z);
-    }
-
-    bool operator==(const SCopyTextureSubresourceInfo& RHS) const
+    bool operator!=(const SCopyBufferRegionInfo& RHS) const
     {
         return !(*this == RHS);
     }
 
-    uint32 SubresourceIndex;
-    uint32 x;
-    uint32 y;
-    uint32 z;
+    CRHIBuffer* SrcBuffer;
+    CRHIBuffer* DstBuffer;
+
+    uint32      SrcOffset;
+    uint32      DstOffset;
+
+    uint32      Size;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyTextureDesc
+// SCopyTexture2DRegion
 
-struct SCopyTextureDesc
+struct SCopyTexture2DRegionInfo
 {
-    SCopyTextureDesc()
-        : Source()
-        , Destination()
+    SCopyTexture2DRegionInfo()
+        : SrcPosition()
+        , DstPosition()
+        , Width()
+        , Height()
+    { }
+
+    SCopyTexture2DRegionInfo( const CInt16Vector2& InSrcPosition
+                        , const CInt16Vector2& InDstPosition
+                        , uint16 InWidth
+                        , uint16 InHeight)
+        : SrcPosition(InSrcPosition)
+        , DstPosition(InDstPosition)
+        , Width(InWidth)
+        , Height(InHeight)
+    { }
+
+    bool operator==(const SCopyTexture2DRegionInfo& RHS) const
+    {
+        return (SrcPosition == RHS.SrcPosition)
+            && (DstPosition == RHS.DstPosition)
+            && (Width       == RHS.Width)
+            && (Height      == RHS.Height);
+    }
+
+    bool operator!=(const SCopyTexture2DRegionInfo& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CInt16Vector2 SrcPosition;
+    CInt16Vector2 DstPosition;
+    uint16        Width;
+    uint16        Height;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SCopyTexture2DArrayRegion
+
+struct SCopyTexture2DArrayRegion
+{
+    SCopyTexture2DArrayRegion()
+        : SrcPosition(0, 0)
+        , DstPosition(0, 0)
+        , SrcArraySlice(0)
+        , DstArraySlice(0)
+        , NumArraySlices(0)
         , Width(0)
         , Height(0)
-        , Depth(0)
     { }
 
-    bool operator==(const SCopyTextureDesc& RHS) const
+    SCopyTexture2DArrayRegion( const CInt16Vector2& InSrcPosition
+                             , const CInt16Vector2& InDstPosition
+                             , uint16 InSrcArraySlice
+                             , uint16 InDstArraySlice
+                             , uint16 InNumArraySlices
+                             , uint16 InWidth
+                             , uint16 InHeight)
+        : SrcPosition(InSrcPosition)
+        , DstPosition(InDstPosition)
+        , SrcArraySlice(InSrcArraySlice)
+        , DstArraySlice(InDstArraySlice)
+        , NumArraySlices(InNumArraySlices)
+        , Width(InWidth)
+        , Height(InHeight)
+    { }
+
+    bool operator==(const SCopyTexture2DArrayRegion& RHS) const
     {
-        return (Source      == RHS.Source)
-            && (Destination == RHS.Destination)
-            && (Width       == RHS.Width)
-            && (Height      == RHS.Height)
-            && (Depth       == RHS.Depth);
+        return (SrcPosition    == RHS.SrcPosition)
+            && (DstPosition    == RHS.DstPosition)
+            && (SrcArraySlice  == RHS.SrcArraySlice)
+            && (DstArraySlice  == RHS.DstArraySlice)
+            && (NumArraySlices == RHS.NumArraySlices)
+            && (Width          == RHS.Width)
+            && (Height         == RHS.Height);
     }
 
-    bool operator==(const SCopyTextureDesc& RHS) const
+    bool operator!=(const SCopyTexture2DArrayRegion& RHS) const
     {
         return !(*this == RHS);
     }
 
-    SCopyTextureSubresourceInfo Source;
-    SCopyTextureSubresourceInfo Destination;
-
-    uint32 Width;
-    uint32 Height;
-    uint32 Depth;
+    CInt16Vector2 SrcPosition;
+    CInt16Vector2 DstPosition;
+    uint16        SrcArraySlice;
+    uint16        DstArraySlice;
+    uint16        NumArraySlices;
+    uint16        Width;
+    uint16        Height;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingShaderLocalBindings 
 
-class CRHIRayTracingShaderLocalBindings
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingLocalShaderBindings 
+
+class CRHIRayTracingLocalShaderBindings
 {
 public:
 
-    CRHIRayTracingShaderLocalBindings()
+    CRHIRayTracingLocalShaderBindings()
         : ShaderResourceViews()
         , NumShaderResourceViews(0)
         , UnorderedAccessViews()
-        , NumUnorderedAccessView(0)
+        , NumUnorderedAccessViews(0)
         , ConstantBuffers()
         , NumConstantBuffers(0)
     { }
 
-    CRHIShaderResourceView*  ShaderResourceViews[RHI_SHADER_LOCAL_BINDING_COUNT];
-    uint32                   NumShaderResourceViews;
-    CRHIUnorderedAccessView* UnorderedAccessViews[RHI_SHADER_LOCAL_BINDING_COUNT];
-    uint32                   NumUnorderedAccessView;
-    CRHIConstantBuffer*      ConstantBuffers[RHI_SHADER_LOCAL_BINDING_COUNT];
-    uint32                   NumConstantBuffers;
+    CRHIRayTracingLocalShaderBindings( const TStaticArray<CRHIShaderResourceView*, kRHIMaxLocalShaderBindings>& InShaderResourceViews
+                                     , uint32 InNumShaderResourceViews
+                                     , const TStaticArray<CRHIUnorderedAccessViewRef*, kRHIMaxLocalShaderBindings>& InUnorderedAccessViews
+                                     , uint32 InNumUnorderedAccessView
+                                     , const TStaticArray<CRHIConstantBuffer*, kRHIMaxLocalShaderBindings>& InConstantBuffers
+                                     , uint32 InNumConstantBuffers)
+        : ShaderResourceViews(InShaderResourceViews)
+        , NumShaderResourceViews(InNumShaderResourceViews)
+        , UnorderedAccessViews(InUnorderedAccessViews)
+        , NumUnorderedAccessViews(InNumUnorderedAccessView)
+        , ConstantBuffers(InConstantBuffers)
+        , NumConstantBuffers(InNumConstantBuffers)
+    { }
+
+    bool operator==(const CRHIRayTracingLocalShaderBindings& RHS) const
+    {
+        return (ShaderResourceViews     == RHS.ShaderResourceViews)
+            && (NumShaderResourceViews  == RHS.NumShaderResourceViews)
+            && (UnorderedAccessViews    == RHS.UnorderedAccessViews)
+            && (NumUnorderedAccessViews == RHS.NumUnorderedAccessViews)
+            && (ConstantBuffers         == RHS.ConstantBuffers)
+            && (NumConstantBuffers      == RHS.NumConstantBuffers);
+    }
+
+    bool operator!=(const CRHIRayTracingLocalShaderBindings& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    TStaticArray<CRHIShaderResourceView*, kRHIMaxLocalShaderBindings>     ShaderResourceViews;
+    uint32                                                                NumShaderResourceViews;
+    TStaticArray<CRHIUnorderedAccessViewRef*, kRHIMaxLocalShaderBindings> UnorderedAccessViews;
+    uint32                                                                NumUnorderedAccessViews;
+    TStaticArray<CRHIConstantBuffer*, kRHIMaxLocalShaderBindings>         ConstantBuffers;
+    uint32                                                                NumConstantBuffers;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SBuildRayTracingGeometryDesc
+// SBuildRayTracingGeometryInfo
 
-struct SBuildRayTracingGeometryDesc
+struct SBuildRayTracingGeometryInfo
 {
-    SBuildRayTracingGeometryDesc()
+    SBuildRayTracingGeometryInfo()
         : VertexBuffer(nullptr)
         , IndexBuffer(nullptr)
         , BuildType(ERayTracingStructureBuildType::Build)
     { }
 
-    CRHIBuffer*                   VertexBuffer;
-    CRHIBuffer*                   IndexBuffer; 
+    SBuildRayTracingGeometryInfo( CRHIVertexBuffer* InVertexBuffer
+                                , CRHIIndexBuffer* InIndexBuffer
+                                , ERayTracingStructureBuildType InBuildType)
+        : VertexBuffer(InVertexBuffer)
+        , IndexBuffer(InIndexBuffer)
+        , BuildType(InBuildType)
+    { }
+
+    bool operator==(const SBuildRayTracingGeometryInfo& RHS) const
+    {
+        return (VertexBuffer == RHS.VertexBuffer)
+            && (IndexBuffer  == RHS.IndexBuffer)
+            && (BuildType    == RHS.BuildType);
+    }
+
+    bool operator!=(const SBuildRayTracingGeometryInfo& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHIVertexBuffer*             VertexBuffer;
+    CRHIIndexBuffer*              IndexBuffer; 
     ERayTracingStructureBuildType BuildType;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SBuildRayTracingSceneDesc
+// SBuildRayTracingSceneInfo
 
-struct SBuildRayTracingSceneDesc
+struct SBuildRayTracingSceneInfo
 {
-    SBuildRayTracingSceneDesc()
-        : Instances(nullptr)
-        , NumInstances(0)
-        , ShaderLocalBinding(nullptr)
-        , NumShaderLocalBindings(0)
+    SBuildRayTracingSceneInfo()
+        : LocalShaderBindings()
+        , Instances()
         , BuildType(ERayTracingStructureBuildType::Build)
     { }
 
-    const CRHIRayTracingGeometryInstance*    Instances;
-    uint32                                   NumInstances;
-    const CRHIRayTracingShaderLocalBindings* ShaderLocalBinding;
-    uint32                                   NumShaderLocalBindings;
-    ERayTracingStructureBuildType            BuildType;
+    SBuildRayTracingSceneInfo( const TArrayView<const CRHIRayTracingLocalShaderBindings>& InLocalShaderBinding
+                             , const TArrayView<const CRHIRayTracingGeometryInstance>& InInstances
+                             , ERayTracingStructureBuildType InBuildType)
+        : LocalShaderBindings(InLocalShaderBinding)
+        , Instances(InInstances)
+        , BuildType(InBuildType)
+    { }
+
+    bool operator==(const SBuildRayTracingSceneInfo& RHS) const
+    {
+        return (LocalShaderBindings == RHS.LocalShaderBindings)
+            && (Instances           == RHS.Instances)
+            && (BuildType           == RHS.BuildType);
+    }
+
+    bool operator!=(const SBuildRayTracingSceneInfo& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    TArrayView<const CRHIRayTracingLocalShaderBindings> LocalShaderBindings;
+    TArrayView<const CRHIRayTracingGeometryInstance>    Instances;
+    ERayTracingStructureBuildType                       BuildType;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SSetShaderConstantsInfo
+
+struct SSetShaderConstantsInfo
+{
+    SSetShaderConstantsInfo()
+        : ShaderConstants()
+        , NumShaderConstants()
+    { }
+
+    SSetShaderConstantsInfo( const TStaticArray<uint32, kRHIMaxShaderConstants>& InShaderConstants
+                           , uint32 InNumShaderConstants)
+        : ShaderConstants(InShaderConstants)
+        , NumShaderConstants(InNumShaderConstants)
+    { }
+
+    SSetShaderConstantsInfo(const void* InShaderConstants, uint32 Size)
+        : ShaderConstants()
+        , NumShaderConstants()
+    {
+        const uint32 NumConstants = NMath::BytesToNum32BitConstants(Size);
+        Check(NumConstants <= kRHIMaxShaderConstants);
+
+        CMemory::Memcpy(ShaderConstants.Data(), InShaderConstants, Size);
+        NumShaderConstants = NumConstants;
+    }
+
+    TStaticArray<uint32, kRHIMaxShaderConstants> ShaderConstants;
+    uint32                                       NumShaderConstants;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRenderPassInitializer
+
+class CRHIRenderPassInitializer
+{
+public:
+
+    CRHIRenderPassInitializer()
+        : RenderTargets()
+        , NumRenderTargets(0)
+        , DepthStencilView()
+        , ShadingRateTexture(nullptr)
+        , StaticShadingRate(EShadingRate::VRS_1x1)
+    { }
+
+    CRHIRenderPassInitializer( const TStaticArray<CRHIRenderTargetView, kRHIMaxRenderTargetCount>& InRenderTargets
+                             , uint32 InNumRenderTargets
+                             , CRHIDepthStencilView InDepthStencilView
+                             , CRHITexture2D* InShadingRateTexture
+                             , EShadingRate InStaticShadingRate)
+        : RenderTargets(InRenderTargets)
+        , NumRenderTargets(InNumRenderTargets)
+        , DepthStencilView(InDepthStencilView)
+        , ShadingRateTexture(InShadingRateTexture)
+        , StaticShadingRate(InStaticShadingRate)
+    { }
+
+    bool operator==(const CRHIRenderPassInitializer& RHS) const
+    {
+        return (NumRenderTargets   == RHS.NumRenderTargets)
+            && (RenderTargets      == RHS.RenderTargets)
+            && (DepthStencilView   == RHS.DepthStencilView)
+            && (ShadingRateTexture == RHS.ShadingRateTexture)
+            && (StaticShadingRate  == RHS.StaticShadingRate);
+    }
+
+    bool operator!=(const CRHIRenderPassInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    TStaticArray<CRHIRenderTargetView, kRHIMaxRenderTargetCount> RenderTargets;
+    uint32                                                       NumRenderTargets;
+
+    CRHIDepthStencilView                                         DepthStencilView;
+
+    CRHITexture2D*                                               ShadingRateTexture;
+    EShadingRate                                                 StaticShadingRate;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -183,6 +373,11 @@ struct SBuildRayTracingSceneDesc
 
 class IRHICommandContext
 {
+protected:
+    
+    IRHICommandContext()  = default;
+    ~IRHICommandContext() = default;
+
 public:
 
     /**
@@ -217,25 +412,8 @@ public:
      * @param Texture: Texture to clear
      * @param ClearColor: Array of float containing the ClearColor
      */
-    virtual void ClearRenderTargetTexture(CRHITexture* Texture, const float ClearColor[4]) = 0;
+    virtual void ClearRenderTargetView(const CRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor) = 0;
     
-    /**
-     * @brief: Clear a RenderTarget
-     *
-     * @param RenderTargetView: RenderTargetView to clear
-     * @param ClearColor: Array of float containing the ClearColor
-     */
-    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const float ClearColor[4]) = 0;
-
-    /**
-     * @brief: Clear a texture as a DepthStencil
-     *
-     * @param Texture: Texture to clear
-     * @param Depth: Value to clear the depth part of the texture to
-     * @param Stencil: Value to clear the stencil part of the texture to
-     */
-    virtual void ClearDepthStencilTexture(CRHITexture* Texture, const float Depth, uint8 Stencil) = 0;
-
     /**
      * @brief: Clear a DepthStencilView
      *
@@ -243,7 +421,7 @@ public:
      * @param Depth: Value to clear the depth part of the DepthStencilView to
      * @param Stencil: Value to clear the stencil part of the DepthStencilView to
      */
-    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) = 0;
+    virtual void ClearDepthStencilView(const CRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) = 0;
     
     /**
      * @brief: Clear a texture with float values
@@ -251,7 +429,7 @@ public:
      * @param Texture: Texture to clear
      * @param ClearColor: Float-values to clear the texture to 
      */
-    virtual void ClearUnorderedAccessTextureFloat(CRHITexture* Texture, const float ClearColor[4]) = 0;
+    virtual void ClearUnorderedAccessTextureFloat(CRHITexture* Texture, const TStaticArray<float, 4>& ClearColor) = 0;
 
     /**
      * @brief: Clear a UnorderedAccessView with float values
@@ -259,7 +437,7 @@ public:
      * @param UnorderedAccessView: UnorderedAccessView to clear
      * @param ClearColor: Float-values to clear the texture to
      */
-    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const float ClearColor[4]) = 0;
+    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) = 0;
 
     /**
      * @brief: Clear a texture with uint values
@@ -267,7 +445,7 @@ public:
      * @param Texture: Texture to clear
      * @param ClearColor: Uint-values to clear the texture to
      */
-    virtual void ClearUnorderedAccessTextureUint(CRHITexture* Texture, const uint32 ClearColor[4]) = 0;
+    virtual void ClearUnorderedAccessTextureUint(CRHITexture* Texture, const TStaticArray<uint32, 4>& ClearColor) = 0;
 
     /**
      * @brief: Clear a UnorderedAccessView with uint values
@@ -275,30 +453,14 @@ public:
      * @param UnorderedAccessView: UnorderedAccessView to clear
      * @param ClearColor: Uint-values to clear the texture to
      */
-    virtual void ClearUnorderedAccessViewUint(CRHIUnorderedAccessView* UnorderedAccessView, const uint32 ClearColor[4]) = 0;
-
-    /**
-     * @brief: Set the shading rate for the entire RenderTarget
-     * 
-     * @param ShadingRate: ShadingRate to set the 
-     */
-    virtual void SetShadingRate(EShadingRate ShadingRate) = 0;
-
-    /**
-     * @brief: Set the shading rate texture
-     * 
-     * @param ShadingTexture: Texture containing shading-rate information
-     */
-    virtual void SetShadingRateTexture(CRHITexture2D* ShadingTexture) = 0;
+    virtual void ClearUnorderedAccessViewUint(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<uint32, 4>& ClearColor) = 0;
 
     /**
      * @brief: Begin a RenderPass
      * 
-     * @param RenderTargetViews: Array of RenderTargetViews use for the RenderPass
-     * @param NumRenderTargetViews: Number of RenderTargetViews in the Array
-     * @param DepthStencilView: DepthStencilView to set
+     * @param Initializer: Structure containing all information needed to start a RenderPass
      */
-    virtual void BeginRenderPass(CRHIRenderTargetView* const* RenderTargetViews, uint32 NumRenderTargetViews, CRHIDepthStencilView* DepthStencilView) = 0;
+    virtual void BeginRenderPass(const CRHIRenderPassInitializer& Initializer) = 0;
 
     /**
      * @brief: End the current RenderPass
@@ -332,7 +494,7 @@ public:
      * 
      * @param Color: New color to use as blend-color
      */
-    virtual void SetBlendFactor(const CFloatColor& Color) = 0;
+    virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) = 0;
 
     /**
      * @brief: Set VertexBuffers to the Input-Assembler
@@ -341,7 +503,7 @@ public:
      * @param NumVertexBuffers: Number of VertexBuffers in the VertexBuffers-Array
      * @param StartBufferSlot: The slot to start set VertexBuffers at
      */
-    virtual void SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 NumVertexBuffers, uint32 StartBufferSlot) = 0;
+    virtual void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 NumVertexBuffers, uint32 StartBufferSlot) = 0;
 
     /**
      * @brief: Set the IndexBuffer to the Input-Assembler
@@ -349,7 +511,7 @@ public:
      * @param IndexBuffer: IndexBuffer to set
      * @param IndexFormat: Format of each index
      */
-    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) = 0;
+    virtual void SetIndexBuffer(CRHIIndexBuffer* IndexBuffer) = 0;
 
     /**
      * @brief: The primitive topology of the geometry to render
@@ -376,10 +538,9 @@ public:
      * @brief: Set shader constants
      * 
      * @param Shader: Shader to bind the constants to
-     * @param Shader32BitConstants: A pointer containing the data
-     * @param Num32BitConstants: Number of 32-bit constants in Shader32BitConstants
+     * @param ShaderConstantsInfo: Structure containing the ShaderConstants
      */
-    virtual void Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) = 0;
+    virtual void Set32BitShaderConstants(CRHIShader* Shader, const SSetShaderConstantsInfo& ShaderConstantsInfo) = 0;
 
     /**
      * @brief: Set a texture as a ShaderResource
@@ -499,34 +660,41 @@ public:
      * @brief: Update buffer with data
      * 
      * @param Dst: Buffer to update
+     * @param SrcData: A pointer to the data that should be copied into the buffer
      * @param Offset: Offset in the buffer
-     * @param Size: Size of the SourceData
-     * @param SourceData: A pointer to the data that should be copied into the buffer
+     * @param Size: Size of the SrcData
      */
-    virtual void UpdateBuffer(CRHIBuffer* Dst, uint64 Offset, uint64 Size, const void* SourceData) = 0;
+    virtual void UpdateBuffer(CRHIBuffer* Dst, const void* SrcData, uint64 Offset, uint64 Size) = 0;
 
     /**
      * @brief: Update a texture2D with data
      * 
      * @param Dst: Texture to update
+     * @param SrcData: A pointer to the data that should be copied to the Texture
      * @param Width: Width of the TextureData
      * @param Height: Height of the TextureData
      * @param MipLevel: MipLevel to update
-     * @param SourceData: A pointer to the data that should be copied to the Texture
      */
-    virtual void UpdateTexture2D(CRHITexture2D* Dst, uint32 Width, uint32 Height, uint32 MipLevel, const void* MipData) = 0;
+    virtual void UpdateTexture2D(CRHITexture2D* Dst, const void* SrcData, uint32 Width, uint32 Height, uint32 MipLevel) = 0;
 
     /**
      * @brief: Update a texture2D with data
      *
      * @param Dst: Texture to update
+     * @param SrcData: A pointer to the data that should be copied to the Texture
      * @param Width: Width of the TextureData
      * @param Height: Height of the TextureData
-     * @param ArrayIndex: ArrayIndex of the TextureData
      * @param MipLevel: MipLevel to update
-     * @param SourceData: A pointer to the data that should be copied to the Texture
+     * @param ArrayIndex: ArrayIndex of the TextureData
+     * @param NumArraySlices: Number of ArraySlices to Update
      */
-    virtual void UpdateTexture2DArray(CRHITexture2DArray* Dst, uint32 Width, uint32 Height, uint32 MipLevel, uint32 ArrayIndex, const void* SourceData) = 0;
+    virtual void UpdateTexture2DArray( CRHITexture2DArray* Dst
+                                     , const void* SrcData
+                                     , uint32 Width
+                                     , uint32 Height
+                                     , uint32 MipLevel
+                                     , uint32 ArrayIndex
+                                     , uint32 NumArraySlices) = 0;
 
     /**
      * @brief: Resolve a texture
@@ -541,9 +709,17 @@ public:
      * 
      * @param Dst: Destination buffer
      * @param Src: Source buffer
+     */
+    virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src) = 0;
+
+    /**
+     * @brief: Copy buffers
+     *
+     * @param Dst: Destination buffer
+     * @param Src: Source buffer
      * @param CopyDesc: Copy description
      */
-    virtual void CopyBuffer(CRHIBuffer* Dst, CRHIBuffer* Src, const SCopyBufferDesc& CopyDesc) = 0;
+    virtual void CopyBufferRegion(const SCopyBufferRegionInfo& CopyDesc) = 0;
 
     /**
      * @brief: Copy textures that have the same parameters
@@ -558,9 +734,18 @@ public:
      *
      * @param Dst: Destination texture
      * @param Src: Source texture
-     * @param CopyTextureDesc: Description of the texture region to copy
+     * @param CopyInfo: Description of the texture region to copy
      */
-    virtual void CopyTextureRegion(CRHITexture* Dst, CRHITexture* Src, const SCopyTextureDesc& CopyTextureDesc) = 0;
+    virtual void CopyTexture2DRegion(CRHITexture2D* Dst, CRHITexture2D* Src, const SCopyTexture2DRegionInfo& CopyInfo) = 0;
+
+    /**
+     * @brief: Copy a region of one texture into another
+     *
+     * @param Dst: Destination texture
+     * @param Src: Source texture
+     * @param CopyInfo: Description of the texture region to copy
+     */
+    virtual void CopyTexture2DArrayRegion(CRHITexture2DArray* Dst, CRHITexture2DArray* Src, const SCopyTexture2DArrayRegion& CopyInfo) = 0;
 
     /**
      * @brief: Enqueue the resource for being destroyed, the resource should not be used anymore after this call
@@ -582,7 +767,7 @@ public:
      * @param Geometry: Geometry to build acceleration structure for
      * @param BuildDesc: Description of the acceleration structure to build
     */
-    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, const SBuildRayTracingGeometryDesc& BuildDesc) = 0;
+    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, const SBuildRayTracingGeometryInfo& BuildDesc) = 0;
 
     /**
      * @brief: Build the acceleration structure of a RayTracing-Geometry instance
@@ -590,7 +775,7 @@ public:
      * @param Geometry: Geometry to build acceleration structure for
      * @param BuildDesc: Description of the acceleration structure to build
     */
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SBuildRayTracingSceneDesc& BuildDesc) = 0;
+    virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SBuildRayTracingSceneInfo& BuildDesc) = 0;
 
     /**
      * @brief: Generate MipLevels for a texture
@@ -672,12 +857,11 @@ public:
     /**
      * @brief: Make a compute dispatch
      * 
-     * @param ComputeShader: ComputeShader to use for the Dispatch
      * @param WorkGroupsX: Number of WorkGroups on the x-axis
      * @param WorkGroupsY: Number of WorkGroups on the y-axis
      * @param WorkGroupsZ: Number of WorkGroups on the z-axis
      */
-    virtual void Dispatch(CRHIComputeShader* ComputeShader, uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
+    virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
 
     /**
      * @brief: Make a Ray Tracing dispatch

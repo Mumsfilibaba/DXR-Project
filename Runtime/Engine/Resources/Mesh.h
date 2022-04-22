@@ -16,7 +16,7 @@
 class ENGINE_API CMesh
 {
 public:
-    CMesh() = default;
+    CMesh()  = default;
     ~CMesh() = default;
 
     bool Init(const SMeshData& Data);
@@ -28,14 +28,14 @@ public:
 public:
     void CreateBoundingBox(const SMeshData& Data);
 
-    TSharedRef<CRHIBuffer>       VertexBuffer;
-    TSharedRef<CRHIShaderResourceView> VertexBufferSRV;
-    TSharedRef<CRHIBuffer>        IndexBuffer;
-    TSharedRef<CRHIShaderResourceView> IndexBufferSRV;
-    TSharedRef<CRHIRayTracingGeometry> RTGeometry;
+    CRHIVertexBufferRef       VertexBuffer;
+    CRHIShaderResourceViewRef VertexBufferSRV;
+    CRHIIndexBufferRef        IndexBuffer;
+    CRHIShaderResourceViewRef IndexBufferSRV;
+    CRHIRayTracingGeometryRef RTGeometry;
 
     uint32 VertexCount = 0;
-    uint32 IndexCount = 0;
+    uint32 IndexCount  = 0;
 
     SAABB BoundingBox;
 };

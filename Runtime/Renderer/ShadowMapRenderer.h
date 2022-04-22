@@ -90,15 +90,15 @@ private:
 
     TSharedRef<CRHIBuffer>        PerShadowMapBuffer;
 
-    TSharedRef<CRHIGraphicsPipelineState> DirectionalLightPSO;
+    CRHIGraphicsPipelineStateRef DirectionalLightPSO;
     TSharedRef<CRHIVertexShader>          DirectionalLightShader;
 
     TSharedRef<CRHIComputePipelineState>  DirectionalShadowMaskPSO;
     TSharedRef<CRHIComputeShader>         DirectionalShadowMaskShader;
 
-    TSharedRef<CRHIGraphicsPipelineState> PointLightPipelineState;
+    CRHIGraphicsPipelineStateRef PointLightPipelineState;
     TSharedRef<CRHIVertexShader>          PointLightVertexShader;
-    TSharedRef<CRHIPixelShader>           PointLightPixelShader;
+    CRHIPixelShaderRef           PointLightPixelShader;
 
     TSharedRef<CRHIBuffer>        PerCascadeBuffer;
     TSharedRef<CRHIBuffer>        CascadeGenerationData;

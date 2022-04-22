@@ -51,29 +51,19 @@ struct SWindowStyle
         : Style(InStyle)
     { }
 
-    FORCEINLINE bool IsTitled() const
-    {
-        return bool(Style & EWindowStyleFlag::Titled);
-    }
+    FORCEINLINE bool IsTitled() const { return bool(Style & EWindowStyleFlag::Titled); }
 
-    FORCEINLINE bool IsClosable() const
-    {
-        return bool(Style & EWindowStyleFlag::Closable);
-    }
+    FORCEINLINE bool IsClosable() const { return bool(Style & EWindowStyleFlag::Closable); }
 
-    FORCEINLINE bool IsMinimizable() const
-    {
-        return bool(Style & EWindowStyleFlag::Minimizable);
-    }
+    FORCEINLINE bool IsMinimizable() const { return bool(Style & EWindowStyleFlag::Minimizable); }
 
-    FORCEINLINE bool IsMaximizable() const
-    {
-        return bool(Style & EWindowStyleFlag::Maximizable);
-    }
+    FORCEINLINE bool IsMaximizable() const { return bool(Style & EWindowStyleFlag::Maximizable); }
 
-    FORCEINLINE bool IsResizeable() const
+    FORCEINLINE bool IsResizeable() const { return bool(Style & EWindowStyleFlag::Resizeable); }
+
+    operator bool() const
     {
-        return bool(Style & EWindowStyleFlag::Resizeable);
+        return (Style != EWindowStyleFlag::None);
     }
 
     bool operator==(SWindowStyle RHS) const
@@ -238,7 +228,7 @@ public:
     virtual uint32 GetHeight() const { return 0; }
 
     /* @brief: Set the OS-window handle */
-    virtual void SetOSHandle(void* InPlatformHandle) { }
+    virtual void SetOSHandle(void* InOSHandle) { }
 
     /* @brief: Retrieve the OS-window handle */
     virtual void* GetOSHandle() const { return nullptr; }

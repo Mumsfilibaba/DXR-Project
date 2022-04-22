@@ -446,7 +446,7 @@ void CApplicationInstance::RegisterMainViewport(const TSharedRef<CPlatformWindow
     ImGuiIO& InterfaceState = ImGui::GetIO();
     if (MainViewport)
     {
-        InterfaceState.ImeWindowHandle = MainViewport->GetPlatformHandle();
+        InterfaceState.ImeWindowHandle = MainViewport->GetOSHandle();
     }
     else
     {

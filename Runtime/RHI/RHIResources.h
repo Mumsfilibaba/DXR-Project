@@ -11,6 +11,14 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Optional.h"
 
+#if defined(COMPILER_MSVC)
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
 class CRHIRayTracingGeometryInstance;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -32,8 +40,6 @@ typedef TSharedRef<class CRHITexture3D>           CRHITexture3DRef;
 
 typedef TSharedRef<class CRHIShaderResourceView>  CRHIShaderResourceViewRef;
 typedef TSharedRef<class CRHIUnorderedAccessView> CRHIUnorderedAccessViewRef;
-typedef TSharedRef<class CRHIRenderTargetView>    CRHIRenderTargetViewRef;
-typedef TSharedRef<class CRHIDepthStencilView>    CRHIDepthStencilViewRef;
 
 typedef TSharedRef<class CRHISamplerState>        CRHISamplerStateRef;
 
@@ -63,6 +69,7 @@ public:
     {
         Check(StrongReferences.Load() > 0);
         ++StrongReferences;
+        return StrongReferences.Load();
     }
 
     virtual int32 Release() override final
@@ -123,9 +130,135 @@ inline uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHISubresourceData 
+
+class CRHISubresourceInitializer
+{
+public:
+
+    /**
+     * @brief: Default Constructor
+     */
+    CRHISubresourceInitializer() noexcept
+        : Data(nullptr)
+        , Size(0)
+    { }
+
+    /**
+     * @brief: Initialized the BufferData with a raw pointer and size
+     *
+     * @param InData: Data for the initializer
+     * @param InSize: Size of the data
+     */
+    CRHISubresourceInitializer(const void* InData, uint32 InSize) noexcept
+        : Data(nullptr)
+        , Size(InSize)
+    {
+        Data = CMemory::Realloc(Data, Size);
+        CMemory::Memcpy(Data, InData, Size);
+    }
+
+    /**
+     * @brief: Move Constructor
+     *
+     * @param Other: Other instance
+     */
+    CRHISubresourceInitializer(CRHISubresourceInitializer&& Other) noexcept
+        : Data(Other.Data)
+        , Size(Other.Size)
+    {
+        Other.ReleaseWithoutFree();
+    }
+
+    /**
+     * @brief: Copy Constructor
+     *
+     * @param Other: Other instance
+     */
+    CRHISubresourceInitializer(const CRHISubresourceInitializer& Other) noexcept
+        : Data(nullptr)
+        , Size(Other.Size)
+    {
+        Data = CMemory::Realloc(Data, Size);
+        CMemory::Memcpy(Data, Other.GetData(), Size);
+    }
+
+    /** @brief: Destructor */
+    ~CRHISubresourceInitializer() noexcept
+    {
+        Release();
+    }
+
+    /** @brief: Reset and free the data */
+    void Release() noexcept
+    {
+        CMemory::Free(Data);
+
+        ReleaseWithoutFree();
+    }
+
+    /** @brief: Reset the data */
+    void ReleaseWithoutFree() noexcept
+    {
+        Data = nullptr;
+        Size = 0;
+    }
+
+    /** @return: Returns the size of the stored data */
+    uint32 GetSize() const noexcept { return Size; }
+
+    /** @return: Returns the stored data */
+    const void* GetData() const noexcept { return Data; }
+
+    /**
+     * @brief: Move assignment
+     *
+     * @param RHS: Instance to move
+     * @return: Returns this instance
+     */
+    CRHISubresourceInitializer& operator=(CRHISubresourceInitializer&& RHS) noexcept
+    {
+        if (this != &RHS)
+        {
+            Release();
+
+            Data = RHS.Data;
+            Size = RHS.Size;
+
+            RHS.ReleaseWithoutFree();
+        }
+
+        return *this;
+    }
+
+    /**
+     * @brief: Copy assignment
+     *
+     * @param RHS: Instance to copy
+     * @return: Returns this instance
+     */
+    CRHISubresourceInitializer& operator=(const CRHISubresourceInitializer& RHS) noexcept
+    {
+        if (this != &RHS)
+        {
+            Data = CMemory::Realloc(Data, Size);
+            CMemory::Memcpy(Data, RHS.GetData(), Size);
+
+            Size = RHS.Size;
+        }
+
+        return *this;
+    }
+
+private:
+    void*  Data;
+    uint32 Size;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EBufferUsageFlags
 
-enum class EBufferUsageFlags : uint8
+enum class EBufferUsageFlags : uint16
 {
     None                 = 0,
 
@@ -151,11 +284,13 @@ public:
     CRHIBufferInitializer()
         : UsageFlags(EBufferUsageFlags::None)
         , InitialState(EResourceAccess::Common)
+        , InitialData()
     { }
 
     CRHIBufferInitializer(EBufferUsageFlags InUsageFlags, EResourceAccess InInitialState)
         : UsageFlags(InUsageFlags)
         , InitialState(InInitialState)
+        , InitialData()
     { }
 
     bool operator==(const CRHIBufferInitializer& RHS) const
@@ -168,8 +303,10 @@ public:
         return !(*this == RHS);
     }
 
-    EBufferUsageFlags UsageFlags;
-    EResourceAccess   InitialState;
+    EBufferUsageFlags          UsageFlags;
+    EResourceAccess            InitialState;
+
+    CRHISubresourceInitializer InitialData;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -179,7 +316,7 @@ class CRHIBuffer : public CRHIResource
 {
 protected:
 
-    CRHIBuffer(const CRHIBufferInitializer& Initializer)
+    explicit CRHIBuffer(const CRHIBufferInitializer& Initializer)
         : CRHIResource()
         , UsageFlags(Initializer.UsageFlags)
     { }
@@ -218,7 +355,7 @@ public:
     virtual String GetName() const { return ""; }
 
     /** @return: Returns the Buffer Stride */
-    virtual uint16 GetStride() const { return 1; }
+    virtual uint32 GetStride() const { return 1; }
 
     /** @return: Returns the Buffer Size */
     virtual uint32 GetSize() const { return 1; }
@@ -272,7 +409,7 @@ class CRHIVertexBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
+    explicit CRHIVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
         : CRHIBuffer(Initializer)
         , NumVertices(Initializer.NumVertices)
         , Stride(Initializer.Stride)
@@ -284,7 +421,7 @@ public:
     virtual CRHIVertexBuffer* GetVertexBuffer() override final { return this; }
 
     /** @return: Returns the Buffer Stride */
-    virtual uint16 GetStride() const override final { return Stride; }
+    virtual uint32 GetStride() const override final { return Stride; }
 
     /** @return: Returns the Buffer Size */
     virtual uint32 GetSize() const override final { return NumVertices * Stride; }
@@ -339,7 +476,7 @@ class CRHIIndexBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
+    explicit CRHIIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
         : CRHIBuffer(Initializer)
         , Format(Initializer.IndexFormat)
         , NumIndicies(Initializer.NumIndicies)
@@ -351,7 +488,7 @@ public:
     virtual CRHIIndexBuffer* GetIndexBuffer() override final { return this; }
 
     /** @return: Returns the Buffer Stride */
-    virtual uint16 GetStride() const override final { return GetStrideFromIndexFormat(Format); }
+    virtual uint32 GetStride() const override final { return GetStrideFromIndexFormat(Format); }
 
     /** @return: Returns the Buffer Size */
     virtual uint32 GetSize() const override final { return NumIndicies * GetStride(); }
@@ -409,7 +546,7 @@ class CRHIGenericBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
+    explicit CRHIGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
         : CRHIBuffer(Initializer)
         , Size(Initializer.Size)
         , Stride(Initializer.Stride)
@@ -421,7 +558,7 @@ public:
     virtual CRHIGenericBuffer* GetGenericBuffer() override final { return this; }
 
     /** @return: Returns the Buffer Stride */
-    virtual uint16 GetStride() const override final { return Stride; }
+    virtual uint32 GetStride() const override final { return Stride; }
 
     /** @return: Returns the Buffer Size */
     virtual uint32 GetSize() const override final { return Size; }
@@ -473,24 +610,24 @@ class CRHIConstantBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
+    explicit CRHIConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
         : CRHIBuffer(Initializer)
         , Size(Initializer.Size)
         , Stride(Initializer.Stride)
     {
-        Check(!(InUsageFlags & (EBufferUsageFlags::AllowShaderResource | EBufferUsageFlags::AllowUnorderedAccess)));
+        Check(!(Initializer.UsageFlags & (EBufferUsageFlags::AllowShaderResource | EBufferUsageFlags::AllowUnorderedAccess)));
     }
 
 public:
 
-    /** @return: Returns the Bindless handle if the RHI-backend supports it */
+    /** @return: Returns a Bindless descriptor-handle if the RHI supports it */
     virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 
     /** @return: Returns the CRHIConstantBuffer */
     virtual CRHIConstantBuffer* GetConstantBuffer() override final { return this; }
 
     /** @return: Returns the Buffer Stride */
-    virtual uint16 GetStride() const override final { return Stride; }
+    virtual uint32 GetStride() const override final { return Stride; }
 
     /** @return: Returns the Buffer Size */
     virtual uint32 GetSize() const override final { return Size; }
@@ -503,7 +640,7 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ETextureUsageFlags
 
-enum class ETextureUsageFlags : uint8
+enum class ETextureUsageFlags : uint16
 {
     None                 = 0,
 
@@ -533,13 +670,13 @@ public:
     CRHITextureInitializer( ERHIFormat InFormat
                           , ETextureUsageFlags InUsageFlags
                           , EResourceAccess InInitialAccess
-                          , uint8 InNumMips
+                          , uint32 InNumMips
                           , const CTextureClearValue& InClearValue)
         : ClearValue(InClearValue)
         , Format(InFormat)
         , UsageFlags(InUsageFlags)
         , InitialAccess(InInitialAccess)
-        , NumMips(InNumMips)
+        , NumMips(uint8(InNumMips))
     { }
 
     bool operator==(const CRHITextureInitializer& RHS) const
@@ -556,14 +693,16 @@ public:
         return !(*this == RHS);
     }
 
-    CTextureClearValue ClearValue;
+    CTextureClearValue                 ClearValue;
     
-    ERHIFormat         Format;
+    ERHIFormat                         Format;
 
-    ETextureUsageFlags UsageFlags;
-    EResourceAccess    InitialAccess;
+    ETextureUsageFlags                 UsageFlags;
+    EResourceAccess                    InitialAccess;
 
-    uint8              NumMips;
+    TArray<CRHISubresourceInitializer> InitialSubresourceData;
+
+    uint8                              NumMips;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -573,7 +712,7 @@ class CRHITexture : public CRHIResource
 {
 protected:
 
-    CRHITexture(const CRHITextureInitializer& Initializer)
+    explicit CRHITexture(const CRHITextureInitializer& Initializer)
         : CRHIResource()
         , Format(Initializer.Format)
         , UsageFlags(Initializer.UsageFlags)
@@ -597,10 +736,7 @@ public:
     /** @return: Returns a valid pointer to the default ShaderResourceView if the AllowShaderResouce flag is set */
     virtual CRHIShaderResourceView* GetDefaultShaderResouceView() const { return nullptr; }
 
-    /**
-     * @return: Returns a valid Bindless descriptor-handle to the default ShaderResourceView
-     * if the AllowShaderResouce flag is set and the RHI supports
-     */
+    /** @return: Returns a Bindless descriptor-handle to the default ShaderResourceView if the RHI supports it */
     virtual CRHIDescriptorHandle GetDefaultBindlessHandle() const { return CRHIDescriptorHandle(); }
 
     /** @return: Returns the native handle of the resource */
@@ -608,6 +744,24 @@ public:
 
     /** @return: Returns the RHI-backend texture interface */
     virtual void* GetRHIBaseTexture() const { return nullptr; }
+
+    /** @return: Returns a IntVector3 with Width, Height, and Depth */
+    virtual CIntVector3 GetExtent() const { return CIntVector3(1, 1, 1); }
+
+    /** @return: Returns the texture Width */
+    virtual uint32 GetWidth() const { return 1; }
+
+    /** @return: Returns the texture Height */
+    virtual uint32 GetHeight() const { return 1; }
+
+    /** @return: Returns the texture Depth */
+    virtual uint32 GetDepth() const { return 1; }
+
+    /** @return: Returns the texture ArraySize */
+    virtual uint32 GetArraySize() const { return 1; }
+
+    /** @return: Returns the number of Samples of the texture */
+    virtual uint32 GetNumSamples() const { return 1; }
 
     /**
      * @brief: Set the name of the Texture
@@ -619,24 +773,6 @@ public:
     /** @return: Returns the name of the Texture */
     virtual String GetName() const { return ""; }
 
-    /** @return: Returns a IntVector3 with Width, Height, and Depth */
-    virtual CIntVector3 GetExtent() const { return CIntVector3(1, 1, 1); }
-
-    /** @return: Returns the texture Width */
-    virtual uint16 GetWidth() const { return 1; }
-
-    /** @return: Returns the texture Height */
-    virtual uint16 GetHeight() const { return 1; }
-
-    /** @return: Returns the texture Depth */
-    virtual uint16 GetDepth() const { return 1; }
-
-    /** @return: Returns the texture ArraySize */
-    virtual uint16 GetArraySize() const { return 1; }
-
-    /** @return: Returns the number of Samples of the texture */
-    virtual uint8 GetNumSamples() const { return 1; }
-
     /** @return: Returns the Usage-Flags of the texture */
     ETextureUsageFlags GetFlags() const { return UsageFlags; }
 
@@ -644,7 +780,7 @@ public:
     ERHIFormat GetFormat() const { return Format; }
 
     /** @return: Returns the number of MipLevels of the texture */
-    uint8 GetNumMips() const { return NumMips; }
+    uint32 GetNumMips() const { return NumMips; }
 
     /** @return: Returns the ClearValue of the texture */
     const CTextureClearValue& GetClearValue() const { return ClearValue; }
@@ -653,9 +789,9 @@ private:
     ERHIFormat         Format;
     ETextureUsageFlags UsageFlags;
 
-    uint8              NumMips;
-
     CTextureClearValue ClearValue;
+
+    uint8              NumMips;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -674,18 +810,18 @@ public:
     { }
 
     CRHITexture2DInitializer( ERHIFormat InFormat
-                            , uint16 InWidth
-                            , uint16 InHeight
-                            , uint8 InNumMips
-                            , uint8 InNumSamples
+                            , uint32 InWidth
+                            , uint32 InHeight
+                            , uint32 InNumMips
+                            , uint32 InNumSamples
                             , ETextureUsageFlags InUsageFlags
                             , EResourceAccess InInitialAccess
-                            , const CTextureClearValue& InClearValue)
+                            , const CTextureClearValue& InClearValue = CTextureClearValue())
         : CRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InClearValue)
-        , Width(InWidth)
-        , Height(InHeight)
-        , NumMips(InNumMips)
-        , NumSamples(InNumSamples)
+        , Width(uint16(InWidth))
+        , Height(uint16(InHeight))
+        , NumMips(uint8(InNumMips))
+        , NumSamples(uint8(InNumSamples))
     { }
 
     bool operator==(const CRHITexture2DInitializer& RHS) const
@@ -716,7 +852,7 @@ class CRHITexture2D : public CRHITexture
 {
 protected:
 
-    CRHITexture2D(const CRHITexture2DInitializer& Initializer)
+    explicit CRHITexture2D(const CRHITexture2DInitializer& Initializer)
         : CRHITexture(Initializer)
         , Width(Initializer.Width)
         , Height(Initializer.Height)
@@ -732,18 +868,19 @@ public:
     virtual CIntVector3 GetExtent() const override { return CIntVector3(Width, Height, 1); }
 
     /** @return: Returns the texture Width */
-    virtual uint16 GetWidth() const override final { return Width; }
+    virtual uint32 GetWidth() const override final { return Width; }
 
     /** @return: Returns the texture Height */
-    virtual uint16 GetHeight() const override final { return Height; }
+    virtual uint32 GetHeight() const override final { return Height; }
 
     /** @return: Returns the number of samples in the texture */
-    virtual uint8 GetNumSamples() const override final { return NumSamples; }
+    virtual uint32 GetNumSamples() const override final { return NumSamples; }
 
 protected:
+    uint8  NumSamples;
+
     uint16 Width;
     uint16 Height;
-    uint16 NumSamples;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -759,16 +896,16 @@ public:
     { }
 
     CRHITexture2DArrayInitializer( ERHIFormat InFormat
-                                 , uint16 InWidth
-                                 , uint16 InHeight
-                                 , uint16 InArraySize
-                                 , uint8 InNumMips
-                                 , uint8 InNumSamples
+                                 , uint32 InWidth
+                                 , uint32 InHeight
+                                 , uint32 InArraySize
+                                 , uint32 InNumMips
+                                 , uint32 InNumSamples
                                  , ETextureUsageFlags InUsageFlags
                                  , EResourceAccess InInitialAccess
-                                 , const CTextureClearValue& InClearValue)
+                                 , const CTextureClearValue& InClearValue = CTextureClearValue())
         : CRHITexture2DInitializer(InFormat, InWidth, InHeight,InNumMips, InNumSamples, InUsageFlags, InInitialAccess, InClearValue)
-        , ArraySize(InArraySize)
+        , ArraySize(uint16(InArraySize))
     { }
 
     bool operator==(const CRHITexture2DArrayInitializer& RHS) const
@@ -792,7 +929,7 @@ class CRHITexture2DArray : public CRHITexture2D
 {
 protected:
 
-    CRHITexture2DArray(const CRHITexture2DArrayInitializer& Initializer)
+    explicit CRHITexture2DArray(const CRHITexture2DArrayInitializer& Initializer)
         : CRHITexture2D(Initializer)
         , ArraySize(Initializer.ArraySize)
     { }
@@ -809,7 +946,7 @@ public:
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(GetWidth(), GetDepth(), ArraySize); }
 
     /** @return: Returns the ArraySize of the texture */
-    virtual uint16 GetArraySize() const override final { return ArraySize; }
+    virtual uint32 GetArraySize() const override final { return ArraySize; }
 
 protected:
     uint16 ArraySize;
@@ -829,18 +966,18 @@ public:
         , NumSamples(1)
     { }
 
-    CRHITextureCubeInitializer(ERHIFormat InFormat
-                             , uint16 InExtent
-                             , uint16 InArraySize
-                             , uint8 InNumMips
-                             , uint8 InNumSamples
-                             , ETextureUsageFlags InUsageFlags
-                             , EResourceAccess InInitialAccess
-                             , const CTextureClearValue& InClearValue)
+    CRHITextureCubeInitializer( ERHIFormat InFormat
+                              , uint32 InExtent
+                              , uint32 InArraySize
+                              , uint32 InNumMips
+                              , uint32 InNumSamples
+                              , ETextureUsageFlags InUsageFlags
+                              , EResourceAccess InInitialAccess
+                              , const CTextureClearValue& InClearValue = CTextureClearValue())
         : CRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InClearValue)
-        , Extent(InExtent)
-        , ArraySize(InArraySize)
-        , NumSamples(InNumSamples)
+        , Extent(uint16(InExtent))
+        , ArraySize(uint16(InArraySize))
+        , NumSamples(uint8(InNumSamples))
     { }
 
     bool operator==(const CRHITextureCubeInitializer& RHS) const
@@ -856,10 +993,10 @@ public:
         return !(*this == RHS);
     }
 
+    uint8  NumSamples;
+
     uint16 Extent;
     uint16 ArraySize;
-
-    uint8  NumSamples;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -869,7 +1006,7 @@ class CRHITextureCube : public CRHITexture
 {
 protected:
 
-    CRHITextureCube(const CRHITextureCubeInitializer& Initializer)
+    explicit CRHITextureCube(const CRHITextureCubeInitializer& Initializer)
         : CRHITexture(Initializer)
         , Extent(Initializer.Extent)
         , ArraySize(Initializer.ArraySize)
@@ -885,21 +1022,25 @@ public:
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(Extent, Extent, ArraySize); }
 
     /** @return: Returns the texture Width */
-    virtual uint16 GetWidth()  const override final { return Extent; }
+    virtual uint32 GetWidth()  const override final { return Extent; }
 
     /** @return: Returns the texture Height */
-    virtual uint16 GetHeight() const override final { return Extent; }
+    virtual uint32 GetHeight() const override final { return Extent; }
 
     /** @return: Returns the ArraySize of the texture */
-    virtual uint16 GetArraySize() const override final { return ArraySize; }
+    virtual uint32 GetArraySize() const override final { return ArraySize; }
 
     /** @return: Returns the number of samples in the texture */
-    virtual uint8 GetNumSamples() const override final { return NumSamples; }
+    virtual uint32 GetNumSamples() const override final { return NumSamples; }
+
+    /** @return: Returns the number of Cubes/Arraysize */
+    uint32 GetNumCubes() const { return ArraySize; }
 
 protected:
+    uint8  NumSamples;
+
     uint16 Extent;
     uint16 ArraySize;
-    uint16 NumSamples;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -923,7 +1064,7 @@ public:
                             , uint8 InNumMips
                             , ETextureUsageFlags InUsageFlags
                             , EResourceAccess InInitialAccess
-                            , const CTextureClearValue& InClearValue)
+                            , const CTextureClearValue& InClearValue = CTextureClearValue())
         : CRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InClearValue)
         , Width(InWidth)
         , Height(InHeight)
@@ -955,7 +1096,7 @@ class CRHITexture3D : public CRHITexture
 {
 protected:
 
-    CRHITexture3D(const CRHITexture3DInitializer& Initializer)
+    explicit CRHITexture3D(const CRHITexture3DInitializer& Initializer)
         : CRHITexture(Initializer)
         , Width(Initializer.Width)
         , Height(Initializer.Height)
@@ -971,13 +1112,13 @@ public:
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(Width, Height, Depth); }
 
     /** @return: Returns the texture Width */
-    virtual uint16 GetWidth() const override final { return Width; }
+    virtual uint32 GetWidth() const override final { return Width; }
 
     /** @return: Returns the texture Height */
-    virtual uint16 GetHeight() const override final { return Height; }
+    virtual uint32 GetHeight() const override final { return Height; }
 
     /** @return: Returns the texture Depth */
-    virtual uint16 GetDepth()  const override final { return Depth; }
+    virtual uint32 GetDepth()  const override final { return Depth; }
 
 protected:
     uint16 Width;
@@ -1002,11 +1143,11 @@ public:
     { }
 
     CRHITextureSRVInitializer( CRHITexture* InTexture
-                            , ERHIFormat InFormat
-                            , uint8 InFirstMipLevel
-                            , uint8 InNumMips
-                            , uint16 InFirstArraySlice
-                            , uint16 InNumSlices)
+                             , ERHIFormat InFormat
+                             , uint8 InFirstMipLevel
+                             , uint8 InNumMips
+                             , uint16 InFirstArraySlice
+                             , uint16 InNumSlices)
         : Texture(InTexture)
         , Format(InFormat)
         , FirstMipLevel(InFirstMipLevel)
@@ -1135,15 +1276,15 @@ public:
     { }
 
     CRHITextureUAVInitializer( CRHITexture* InTexture
-                            , ERHIFormat InFormat
-                            , uint8 InMipLevel
-                            , uint16 InFirstArraySlice
-                            , uint16 InNumSlices)
+                             , ERHIFormat InFormat
+                             , uint32 InMipLevel
+                             , uint32 InFirstArraySlice
+                             , uint32 InNumSlices)
         : Texture(InTexture)
         , Format(InFormat)
-        , MipLevel(InMipLevel)
-        , FirstArraySlice(InFirstArraySlice)
-        , NumSlices(InNumSlices)
+        , MipLevel(uint8(InMipLevel))
+        , FirstArraySlice(uint16(InFirstArraySlice))
+        , NumSlices(uint16(InNumSlices))
     { }
 
     uint64 GetHash() const
@@ -1281,17 +1422,17 @@ public:
      */
     CRHIRenderTargetView( CRHITexture* InTexture
                         , ERHIFormat InFormat
-                        , uint16 InFirstArraySlice
-                        , uint16 InNumArraySlices
-                        , uint8 InMipLevel
+                        , uint32 InFirstArraySlice
+                        , uint32 InNumArraySlices
+                        , uint32 InMipLevel
                         , EAttachmentLoadAction InLoadAction
                         , EAttachmentStoreAction InStoreAction
-                        , CFloatColor InClearValue)
+                        , const CFloatColor& InClearValue)
         : Texture(InTexture)
         , Format(InFormat)
-        , FirstArraySlice(InFirstArraySlice)
-        , NumArraySlices(InNumArraySlices)
-        , MipLevel(InMipLevel)
+        , FirstArraySlice(uint16(InFirstArraySlice))
+        , NumArraySlices(uint16(InNumArraySlices))
+        , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
         , ClearValue(InClearValue)
@@ -1404,7 +1545,7 @@ public:
                         , uint8 InMipLevel
                         , EAttachmentLoadAction InLoadAction
                         , EAttachmentStoreAction InStoreAction
-                        , CTextureDepthStencilValue InClearValue)
+                        , const CTextureDepthStencilValue& InClearValue)
         : Texture(InTexture)
         , Format(InFormat)
         , FirstArraySlice(InFirstArraySlice)
@@ -1577,16 +1718,16 @@ public:
      */
     static CRHISamplerStateInitializer Create(ESamplerMode InAddressMode, ESamplerFilter InFilter, uint8 InMaxAnisotropy)
     {
-        return CRHISamplerStateInitializer(InAddressMode
-                                    , InAddressMode
-                                    , InAddressMode
-                                    , InFilter
-                                    , EComparisonFunc::Unknown
-                                    , 0.0f
-                                    , InMaxAnisotropy
-                                    , 0.0f
-                                    , FLT_MAX
-                                    , CFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
+        return CRHISamplerStateInitializer( InAddressMode
+                                          , InAddressMode
+                                          , InAddressMode
+                                          , InFilter
+                                          , EComparisonFunc::Unknown
+                                          , 0.0f
+                                          , InMaxAnisotropy
+                                          , 0.0f
+                                          , FLT_MAX
+                                          , CFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
     }
 
     /**
@@ -1638,7 +1779,7 @@ public:
         , MaxAnisotropy(InMaxAnisotropy)
         , MinLOD(InMinLOD)
         , MaxLOD(InMaxLOD)
-        , BorderColor()
+        , BorderColor(InBorderColor)
     { }
 
     /** @return: Returns and calculates the hash for this type */
@@ -1764,7 +1905,7 @@ struct SRayIntersectionAttributes
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERayTracingStructureBuildFlag
 
-enum class ERayTracingStructureFlag : uint8
+enum class ERayTracingStructureBuildFlag : uint8
 {
     None            = 0,
     AllowUpdate     = FLAG(1),
@@ -1772,7 +1913,7 @@ enum class ERayTracingStructureFlag : uint8
     PreferFastBuild = FLAG(3),
 };
 
-ENUM_CLASS_OPERATORS(ERayTracingStructureFlag);
+ENUM_CLASS_OPERATORS(ERayTracingStructureBuildFlag);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERayTracingInstanceFlags
@@ -1789,24 +1930,97 @@ enum class ERayTracingInstanceFlag : uint32
 ENUM_CLASS_OPERATORS(ERayTracingInstanceFlag);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingGeometry
+// CRHIAccelerationStructure
 
-class CRHIRayTracingGeometry : public CRHIResource
+class CRHIAccelerationStructure : public CRHIResource
 {
 protected:
 
-    explicit CRHIRayTracingGeometry(ERayTracingStructureFlag InFlags)
+    explicit CRHIAccelerationStructure(ERayTracingStructureBuildFlag InFlags)
         : CRHIResource()
         , Flags(InFlags)
     { }
 
 public:
 
-    /** @return: Returns the Flags of the RayTracingGeometry */
-    ERayTracingStructureFlag GetFlags() const { return Flags; }
+    /** @return: Returns the CRHIRayTracingScene interface if implemented otherwise nullptr */
+    virtual class CRHIRayTracingScene* GetRayTracingScene() { return nullptr; }
+
+    /** @return: Returns the CRHIRayTracingGeometry interface if implemented otherwise nullptr */
+    virtual class CRHIRayTracingGeometry* GetRayTracingGeometry() { return nullptr; }
+
+    /** @return: Returns the native handle of the resource */
+    virtual void* GetRHIHandle() const { return nullptr; }
+
+    /**
+     * @brief: Set the name of the Texture
+     *
+     * @param InName: New name of of the resource
+     */
+    virtual void SetName(const String& InName) { }
+
+    /** @return: Returns the name of the Texture */
+    virtual String GetName() const { return ""; }
+
+    /** @return: Returns the Flags of the RayTracingScene */
+    ERayTracingStructureBuildFlag GetFlags() const { return Flags; }
 
 protected:
-    ERayTracingStructureFlag Flags;
+    ERayTracingStructureBuildFlag Flags;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingGeometryInitializer
+
+class CRHIRayTracingGeometryInitializer
+{
+public:
+
+    CRHIRayTracingGeometryInitializer()
+        : VertexBuffer(nullptr)
+        , IndexBuffer(nullptr)
+        , Flags(ERayTracingStructureBuildFlag::None)
+    { }
+
+    CRHIRayTracingGeometryInitializer( const CRHIVertexBufferRef& InVertexBuffer
+                                     , const CRHIIndexBufferRef& InIndexBuffer
+                                     , ERayTracingStructureBuildFlag InFlags)
+        : VertexBuffer(InVertexBuffer)
+        , IndexBuffer(InIndexBuffer)
+        , Flags(InFlags)
+    { }
+
+    bool operator==(const CRHIRayTracingGeometryInitializer& RHS) const
+    {
+        return (VertexBuffer == RHS.VertexBuffer) && (IndexBuffer == RHS.IndexBuffer) && (Flags == RHS.Flags);
+    }
+
+    bool operator!=(const CRHIRayTracingGeometryInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHIVertexBufferRef           VertexBuffer;
+    CRHIIndexBufferRef            IndexBuffer;
+    ERayTracingStructureBuildFlag Flags;
+};
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingGeometry
+
+class CRHIRayTracingGeometry : public CRHIAccelerationStructure
+{
+protected:
+
+    explicit CRHIRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer)
+        : CRHIAccelerationStructure(Initializer.Flags)
+    { }
+
+public:
+
+    /** @return: Returns the CRHIRayTracingGeometry interface if implemented otherwise nullptr */
+    virtual CRHIRayTracingGeometry* GetRayTracingGeometry() { return this; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1874,7 +2088,7 @@ public:
      * @param RHS: Other instance to compare with
      * @return: Returns false if the instances are equal
      */
-    bool operator==(const CRHIRayTracingGeometryInstance& RHS) const
+    bool operator!=(const CRHIRayTracingGeometryInstance& RHS) const
     {
         return !(*this == RHS);
     }
@@ -1899,30 +2113,57 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingScene
+// CRHIRayTracingSceneInitializer
 
-class CRHIRayTracingScene : public CRHIResource
+class CRHIRayTracingSceneInitializer
 {
-protected:
+public:
 
-    CRHIRayTracingScene(ERayTracingStructureFlag InFlags)
-        : CRHIResource()
+    CRHIRayTracingSceneInitializer()
+        : Instances()
+        , Flags(ERayTracingStructureBuildFlag::None)
+    { }
+
+    CRHIRayTracingSceneInitializer(CRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, ERayTracingStructureBuildFlag InFlags)
+        : Instances(Instances, NumInstances)
         , Flags(InFlags)
     { }
 
+    bool operator==(const CRHIRayTracingSceneInitializer& RHS) const
+    {
+        return (Instances == RHS.Instances) && (Flags == RHS.Flags);
+    }
+
+    bool operator!=(const CRHIRayTracingSceneInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    TArray<CRHIRayTracingGeometryInstance> Instances;
+    ERayTracingStructureBuildFlag          Flags;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingScene
+
+class CRHIRayTracingScene : public CRHIAccelerationStructure
+{
+protected:
+
+    explicit CRHIRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
+        : CRHIAccelerationStructure(Initializer.Flags)
+    { }
+
 public:
+    
+    /** @return: Returns the CRHIRayTracingScene interface if implemented otherwise nullptr */
+    virtual CRHIRayTracingScene* GetRayTracingScene() { return this; }
 
     /** @return: Returns a pointer to the ShaderResourceView */
     virtual CRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
 
-    /** @return: Returns the Bindless descriptor-handle if the RHI supports descriptor-handles */
+    /** @return: Returns a Bindless descriptor-handle if the RHI supports it */
     virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
-
-    /** @return: Returns the Flags of the RayTracingScene */
-    ERayTracingStructureFlag GetFlags() const { return Flags; }
-
-protected:
-    ERayTracingStructureFlag Flags;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1983,17 +2224,67 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIViewportInitializer
+
+class CRHIViewportInitializer
+{
+public:
+
+    CRHIViewportInitializer()
+        : OSWindowHandle(nullptr)
+        , ColorFormat(ERHIFormat::Unknown)
+        , DepthFormat(ERHIFormat::Unknown)
+        , Width(0)
+        , Height(0)
+    { }
+
+    CRHIViewportInitializer( void* InOSWindowHandle
+                           , ERHIFormat InColorFormat
+                           , ERHIFormat InDepthFormat
+                           , uint16 InWidth
+                           , uint16 InHeight)
+        : OSWindowHandle(InOSWindowHandle)
+        , ColorFormat(InColorFormat)
+        , DepthFormat(InDepthFormat)
+        , Width(InWidth)
+        , Height(InHeight)
+    { }
+
+    bool operator==(const CRHIViewportInitializer& RHS) const
+    {
+        return (OSWindowHandle == RHS.OSWindowHandle)
+            && (ColorFormat    == RHS.ColorFormat)
+            && (DepthFormat    == RHS.DepthFormat)
+            && (Width          == RHS.Width)
+            && (Height         == RHS.Height);
+    }
+
+    bool operator!=(const CRHIViewportInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    void*      OSWindowHandle;
+
+    ERHIFormat ColorFormat;
+    ERHIFormat DepthFormat;
+
+    uint16     Width;
+    uint16     Height;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIViewport
 
 class CRHIViewport : public CRHIResource
 {
 protected:
 
-    CRHIViewport(ERHIFormat InColorFormat, uint16 InWidth, uint16 InHeight)
+    explicit CRHIViewport(const CRHIViewportInitializer& Initializer)
         : CRHIResource()
-        , Width(InWidth)
-        , Height(InHeight)
-        , ColorFormat(InColorFormat)
+        , Width(Initializer.Width)
+        , Height(Initializer.Height)
+        , ColorFormat(Initializer.ColorFormat)
     { }
 
 public:
@@ -2042,13 +2333,14 @@ public:
 
 private:
 
+    friend class TOptional<CRHIShaderResourceViewCache>;
     static TOptional<CRHIShaderResourceViewCache>& GetCacheInstance();
 
     CRHIShaderResourceViewCache()  = default;
     ~CRHIShaderResourceViewCache() = default;
 
-    TStateHashTable<CRHIShaderResourceViewRef, CRHIBufferSRVInitializer>  Buffers;
-    TStateHashTable<CRHIShaderResourceViewRef, CRHITextureSRVInitializer> Textures;
+    TRHIStructHashTable<CRHIShaderResourceViewRef, CRHIBufferSRVInitializer>  Buffers;
+    TRHIStructHashTable<CRHIShaderResourceViewRef, CRHITextureSRVInitializer> Textures;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -2067,13 +2359,14 @@ public:
 
 private:
 
+    friend class TOptional<CRHIUnorderedAccessViewCache>;
     static TOptional<CRHIUnorderedAccessViewCache>& GetCacheInstance();
 
     CRHIUnorderedAccessViewCache() = default;
     ~CRHIUnorderedAccessViewCache() = default;
 
-    TStateHashTable<CRHIUnorderedAccessViewRef, CRHIBufferUAVInitializer>  Buffers;
-    TStateHashTable<CRHIUnorderedAccessViewRef, CRHITextureUAVInitializer> Textures;
+    TRHIStructHashTable<CRHIUnorderedAccessViewRef, CRHIBufferUAVInitializer>  Buffers;
+    TRHIStructHashTable<CRHIUnorderedAccessViewRef, CRHITextureUAVInitializer> Textures;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -2090,10 +2383,11 @@ public:
 
 private:
     
+    friend class TOptional<CRHISamplerStateCache>;
     static TOptional<CRHISamplerStateCache>& GetCacheInstance();
     
     CRHISamplerStateCache()  = default;
     ~CRHISamplerStateCache() = default;
 
-    TStateHashTable<CRHISamplerStateRef, CRHISamplerStateInitializer> Samplers;
+    TRHIStructHashTable<CRHISamplerStateRef, CRHISamplerStateInitializer> Samplers;
 };

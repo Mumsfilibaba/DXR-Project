@@ -94,7 +94,7 @@ void CRHICommandAllocator::ReleaseDiscardedMemory()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandQueue
+// CRHICommandExecutionManager
 
 CRHICommandExecutionManager CRHICommandExecutionManager::Instance;
 

@@ -4,7 +4,7 @@
 #include "Core/Time/Timer.h"
 
 #include "RHI/RHIResources.h"
-#include "RHI/RHIResourceViews.h"
+#include "RHi/RHIPipeline.h"
 
 #include "Application/InputHandler.h"
 #include "Application/IInterfaceRenderer.h"
@@ -32,16 +32,16 @@ public:
 
 private:
 
-    CInterfaceRenderer() = default;
+    CInterfaceRenderer()  = default;
     ~CInterfaceRenderer() = default;
 
     TArray<SInterfaceImage*> RenderedImages;
 
-    TSharedRef<CRHITexture2D>             FontTexture;
-    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<CRHIGraphicsPipelineState> PipelineStateNoBlending;
-    TSharedRef<CRHIPixelShader>           PShader;
-    TSharedRef<CRHIBuffer>          VertexBuffer;
-    TSharedRef<CRHIBuffer>           IndexBuffer;
-    TSharedRef<CRHISamplerState>          PointSampler;
+    CRHITexture2DRef             FontTexture;
+    CRHIGraphicsPipelineStateRef PipelineState;
+    CRHIGraphicsPipelineStateRef PipelineStateNoBlending;
+    CRHIPixelShaderRef           PShader;
+    CRHIVertexBufferRef          VertexBuffer;
+    CRHIIndexBufferRef           IndexBuffer;
+    CRHISamplerStateRef          PointSampler;
 };

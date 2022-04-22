@@ -5,7 +5,7 @@
 #include "Core/RefCounted.h"
 #include "Core/Containers/SharedRef.h"
 
-#include "RHI/RHIResourceViews.h"
+#include "RHI/RHIResources.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs

@@ -3,18 +3,18 @@
 #include "Core/Utilities/HashUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TStateHasher
+// TRHIStructHasher
 
-template<typename StateDescType>
-struct TStateHasher
+template<typename StructureType>
+struct TRHIStructHasher
 {
-    typename ReturnType = size_t;
+    using ReturnType = size_t;
 
-    ReturnType operator()(const StateDescType& State) const noexcept
+    ReturnType operator()(const StructureType& State) const noexcept
     {
         return static_cast<ReturnType>(State.GetHash());
     }
 };
 
-template<typename StateType, typename StateDescType>
-using TStateHashTable = THashTable<StateDescType, StateType, TStateHasher<StateDescType>>;
+template<typename T, typename StructureType>
+using TRHIStructHashTable = THashTable<StructureType, T, TRHIStructHasher<StructureType>>;

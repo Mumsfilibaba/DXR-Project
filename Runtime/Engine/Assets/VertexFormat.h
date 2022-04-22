@@ -8,14 +8,17 @@
 
 struct SVertex
 {
-    FORCEINLINE bool operator==(const SVertex& Other) const
+    FORCEINLINE bool operator==(const SVertex& RHS) const
     {
-        return (Position == Other.Position) && (Normal == Other.Normal) && (Tangent == Other.Tangent) && (TexCoord == Other.TexCoord);
+        return (Position == RHS.Position) 
+            && (Normal   == RHS.Normal) 
+            && (Tangent  == RHS.Tangent) 
+            && (TexCoord == RHS.TexCoord);
     }
 
-    FORCEINLINE bool operator!=(const SVertex& Other) const
+    FORCEINLINE bool operator!=(const SVertex& RHS) const
     {
-        return !(*this == Other);
+        return !(*this == RHS);
     }
 
     CVector3 Position;

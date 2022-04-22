@@ -41,20 +41,23 @@ CEngine::CEngine()
 
 bool CEngine::Initialize()
 {
-    const uint32 Style =
-        WindowStyleFlag_Titled |
-        WindowStyleFlag_Closable |
-        WindowStyleFlag_Minimizable |
-        WindowStyleFlag_Maximizable |
-        WindowStyleFlag_Resizeable;
+    const SWindowStyle Style =
+        EWindowStyleFlag::Titled      |
+        EWindowStyleFlag::Closable    |
+        EWindowStyleFlag::Minimizable |
+        EWindowStyleFlag::Maximizable |
+        EWindowStyleFlag::Resizeable;
 
     CApplicationInstance& Application = CApplicationInstance::Get();
 
+    // TODO: Console-Variable
     const uint32 WindowWidth  = 1920;
     const uint32 WindowHeight = 1080;
 
+    CWindowInitializer WindowInitializer(CProjectManager::GetProjectName(), WindowWidth, WindowHeight, CIntVector2(0, 0), Style);
     MainWindow = Application.MakeWindow();
-    if (MainWindow && MainWindow->Initialize(CProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
+
+    if (MainWindow && MainWindow->Initialize(WindowInitializer))
     {
         MainWindow->Show(false);
 
@@ -80,7 +83,7 @@ bool CEngine::Initialize()
     // Create standard textures
     uint8 Pixels[] = { 255, 255, 255, 255 };
 
-    BaseTexture = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, ERHIFormat::R8G8B8A8_Unorm);
+    BaseTexture = CTextureFactory::LoadFromMemory(Pixels, 1, 1, ETextureFactoryFlags::None, ERHIFormat::R8G8B8A8_Unorm);
     if (!BaseTexture)
     {
         LOG_WARNING("Failed to create BaseTexture");
@@ -94,7 +97,7 @@ bool CEngine::Initialize()
     Pixels[1] = 127;
     Pixels[2] = 255;
 
-    BaseNormal = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, ERHIFormat::R8G8B8A8_Unorm);
+    BaseNormal = CTextureFactory::LoadFromMemory(Pixels, 1, 1, ETextureFactoryFlags::None, ERHIFormat::R8G8B8A8_Unorm);
     if (!BaseNormal)
     {
         LOG_WARNING("Failed to create BaseNormal-Texture");
@@ -105,18 +108,18 @@ bool CEngine::Initialize()
     }
 
     /* Create material sampler (Used for now by all materials) */
-    CRHISamplerStateDesc SamplerCreateInfo;
-    SamplerCreateInfo.AddressU       = ERHISamplerMode::Wrap;
-    SamplerCreateInfo.AddressV       = ERHISamplerMode::Wrap;
-    SamplerCreateInfo.AddressW       = ERHISamplerMode::Wrap;
-    SamplerCreateInfo.ComparisonFunc = ERHIComparisonFunc::Never;
-    SamplerCreateInfo.Filter         = ERHISamplerFilter::Anistrotopic;
-    SamplerCreateInfo.MaxAnisotropy  = 16;
-    SamplerCreateInfo.MaxLOD         = FLT_MAX;
-    SamplerCreateInfo.MinLOD         = -FLT_MAX;
-    SamplerCreateInfo.MipLODBias     = 0.0f;
+    CRHISamplerStateInitializer SamplerStateInitializer;
+    SamplerStateInitializer.AddressU       = ESamplerMode::Wrap;
+    SamplerStateInitializer.AddressV       = ESamplerMode::Wrap;
+    SamplerStateInitializer.AddressW       = ESamplerMode::Wrap;
+    SamplerStateInitializer.ComparisonFunc = EComparisonFunc::Never;
+    SamplerStateInitializer.Filter         = ESamplerFilter::Anistrotopic;
+    SamplerStateInitializer.MaxAnisotropy  = 16;
+    SamplerStateInitializer.MaxLOD         = FLT_MAX;
+    SamplerStateInitializer.MinLOD         = -FLT_MAX;
+    SamplerStateInitializer.MipLODBias     = 0.0f;
 
-    BaseMaterialSampler = RHICreateSamplerState(SamplerCreateInfo);
+    BaseMaterialSampler = CRHISamplerStateCache::Get().GetOrCreateSampler(SamplerStateInitializer);
 
     /* Base material */
     SMaterialDesc MaterialDesc;

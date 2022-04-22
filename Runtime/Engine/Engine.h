@@ -7,7 +7,7 @@
 #include "Application/ApplicationUser.h"
 #include "Application/WindowMessageHandler.h"
 
-#include "RHI/RHIViewport.h"
+#include "RHI/RHIResources.h"
 
 #include "Engine/Scene/Scene.h"
 #include "Engine/Resources/Material.h"
@@ -73,13 +73,13 @@ public:
     TSharedPtr<CScene> Scene;
 
     /** A completely white texture */
-    TSharedRef<CRHITexture2D> BaseTexture;
+    CRHITexture2DRef BaseTexture;
 
     /** A completely flat normal map*/
-    TSharedRef<CRHITexture2D> BaseNormal;
+    CRHITexture2DRef BaseNormal;
 
     /** Base sampler used by all materials */
-    TSharedRef<CRHISamplerState> BaseMaterialSampler;
+    CRHISamplerStateRef BaseMaterialSampler;
 
     /** Base material */
     TSharedPtr<CMaterial> BaseMaterial;

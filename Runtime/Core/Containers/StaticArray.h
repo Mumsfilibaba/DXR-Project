@@ -18,7 +18,7 @@ struct TStaticArray
 public:
 
     using ElementType = T;
-    using SizeType = int32;
+    using SizeType    = int32;
 
     typedef TArrayIterator<TStaticArray, ElementType>                    IteratorType;
     typedef TArrayIterator<const TStaticArray, const ElementType>        ConstIteratorType;
@@ -27,41 +27,25 @@ public:
 
     static_assert(NumElements > 0, "The number of elements has to be more than zero");
 
-    /**
-     * @brief: Retrieve the first element of the array
-     *
-     * @return: Returns a reference to the first element of the array
-     */
+    /** @return: Returns a reference to the first element of the array */
     FORCEINLINE ElementType& FirstElement() noexcept
     {
         return Elements[0];
     }
 
-    /**
-     * @brief: Retrieve the first element of the array
-     *
-     * @return: Returns a reference to the first element of the array
-     */
+    /** @return: Returns a reference to the first element of the array */
     FORCEINLINE const ElementType& FirstElement() const noexcept
     {
         return Elements[0];
     }
 
-    /**
-     * @brief: Retrieve the last element of the array
-     *
-     * @return: Returns a reference to the last element of the array
-     */
+    /** @return: Returns a reference to the last element of the array */
     FORCEINLINE ElementType& LastElement() noexcept
     {
         return Elements[NumElements - 1];
     }
 
-    /**
-     * @brief: Retrieve the last element of the array
-     *
-     * @return: Returns a reference to the last element of the array
-     */
+    /** @return: Returns a reference to the last element of the array */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
         return Elements[NumElements - 1];
@@ -116,21 +100,13 @@ public:
         Other = Move(TempArray);
     }
 
-    /**
-     * @brief: Retrieve the data of the array
-     *
-     * @return: Returns a pointer to the data of the array
-     */
+    /** @return: Returns a pointer to the data of the array */
     FORCEINLINE ElementType* Data() noexcept
     {
         return Elements;
     }
 
-    /**
-     * @brief: Retrieve the data of the array
-     *
-     * @return: Returns a pointer to the data of the array
-     */
+    /** @return: Returns a pointer to the data of the array */
     FORCEINLINE const ElementType* Data() const noexcept
     {
         return Elements;
@@ -191,51 +167,31 @@ public:
 
 public:
 
-    /**
-     * @brief: Retrieve the last index that can be used to retrieve an element from the array
-     *
-     * @return: Returns a the index to the last element of the array
-     */
+    /** @return: Returns the last index that can be used to retrieve an element from the array */
     constexpr SizeType LastElementIndex() const noexcept
     {
         return NumElements - 1;
     }
 
-    /**
-     * @brief: Returns the size of the container
-     *
-     * @return: The current size of the container
-     */
+    /** @return: The current size of the container */
     constexpr SizeType Size() const noexcept
     {
         return NumElements;
     }
 
-    /**
-     * @brief: Returns the size of the container in bytes
-     *
-     * @return: The current size of the container in bytes
-     */
+    /** @return: The current size of the container in bytes */
     constexpr SizeType SizeInBytes() const noexcept
     {
         return Size() * sizeof(ElementType);
     }
 
-    /**
-     * @brief: Returns the capacity of the container
-     *
-     * @return: The current capacity of the container
-     */
+    /** @return: The current capacity of the container */
     constexpr SizeType Capacity() const noexcept
     {
         return NumElements;
     }
 
-    /**
-     * @brief: Returns the capacity of the container in bytes
-     *
-     * @return: The current capacity of the container in bytes
-     */
+    /** @return: The current capacity of the container in bytes */
     constexpr SizeType CapacityInBytes() const noexcept
     {
         return Capacity() * sizeof(ElementType);
@@ -243,81 +199,49 @@ public:
 
 public:
 
-    /**
-     * @brief: Retrieve an iterator to the beginning of the array
-     *
-     * @return: A iterator that points to the first element
-     */
+    /** @return: A iterator that points to the first element */
     FORCEINLINE IteratorType StartIterator() noexcept
     {
         return IteratorType(*this, 0);
     }
 
-    /**
-     * @brief: Retrieve an iterator to the end of the array
-     *
-     * @return: A iterator that points to the element past the end
-     */
+    /** @return: A iterator that points to the element past the end */
     FORCEINLINE IteratorType EndIterator() noexcept
     {
         return IteratorType(*this, Size());
     }
 
-    /**
-     * @brief: Retrieve an iterator to the beginning of the array
-     *
-     * @return: A iterator that points to the first element
-     */
+    /** @return: A iterator that points to the first element */
     FORCEINLINE ConstIteratorType StartIterator() const noexcept
     {
         return ConstIteratorType(*this, 0);
     }
 
-    /**
-     * @brief: Retrieve an iterator to the end of the array
-     *
-     * @return: A iterator that points to the element past the end
-     */
+    /** @return: A iterator that points to the element past the end */
     FORCEINLINE ConstIteratorType EndIterator() const noexcept
     {
         return ConstIteratorType(*this, Size());
     }
 
-    /**
-     * @brief: Retrieve an reverse-iterator to the end of the array
-     *
-     * @return: A reverse-iterator that points to the last element
-     */
+    /** @return: A reverse-iterator that points to the last element */
     FORCEINLINE ReverseIteratorType ReverseStartIterator() noexcept
     {
         return ReverseIteratorType(*this, Size());
     }
 
-    /**
-     * @brief: Retrieve an reverse-iterator to the start of the array
-     *
-     * @return: A reverse-iterator that points to the element before the first element
-     */
+    /** @return: A reverse-iterator that points to the element before the first element */
     FORCEINLINE ReverseIteratorType ReverseEndIterator() noexcept
     {
         return ReverseIteratorType(*this, 0);
     }
 
-    /**
-     * @brief: Retrieve an reverse-iterator to the end of the array
-     *
-     * @return: A reverse-iterator that points to the last element
-     */
+    /** @return: A reverse-iterator that points to the last element */
     FORCEINLINE ReverseConstIteratorType ReverseStartIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, Size());
     }
 
-    /**
-     * @brief: Retrieve an reverse-iterator to the start of the array
-     *
-     * @return: A reverse-iterator that points to the element before the first element
-     */
+    /** @return: A reverse-iterator that points to the element before the first element */
     FORCEINLINE ReverseConstIteratorType ReverseEndIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, 0);
@@ -325,41 +249,25 @@ public:
 
 public:
 
-    /**
-     * @brief: STL start iterator, same as TArray::StartIterator
-     *
-     * @return: A iterator that points to the first element
-     */
+    /** @return: A iterator that points to the first element */
     FORCEINLINE IteratorType begin() noexcept
     {
         return StartIterator();
     }
 
-    /**
-     * @brief: STL end iterator, same as TArray::EndIterator
-     *
-     * @return: A iterator that points past the last element
-     */
+    /** @return: A iterator that points past the last element */
     FORCEINLINE IteratorType end() noexcept
     {
         return EndIterator();
     }
 
-    /**
-     * @brief: STL start iterator, same as TArray::StartIterator
-     *
-     * @return: A iterator that points to the first element
-     */
+    /** @return: A iterator that points to the first element */
     FORCEINLINE ConstIteratorType begin() const noexcept
     {
         return StartIterator();
     }
 
-    /**
-     * @brief: STL end iterator, same as TArray::EndIterator
-     *
-     * @return: A iterator that points past the last element
-     */
+    /** @return: A iterator that points past the last element */
     FORCEINLINE ConstIteratorType end() const noexcept
     {
         return EndIterator();

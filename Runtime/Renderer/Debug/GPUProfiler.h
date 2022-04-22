@@ -4,7 +4,7 @@
 
 #include "Renderer/RendererModule.h"
 
-#include "RHI/RHITimestampQuery.h"
+#include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
 
 #define ENABLE_GPU_PROFILER      (1)

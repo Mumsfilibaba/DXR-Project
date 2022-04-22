@@ -5,7 +5,7 @@
 
 #include "Engine/Engine.h"
 
-#define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetShaderResourceView() : nullptr
+#define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetDefaultShaderResouceView() : nullptr
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMaterial
@@ -24,7 +24,9 @@ CMaterial::CMaterial(const SMaterialDesc& InProperties)
 
 void CMaterial::Init()
 {
-    MaterialBuffer = RHICreateConstantBuffer<SMaterialDesc>(BufferFlag_Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+    CRHIConstantBufferInitializer ConstantBufferInitializer(EBufferUsageFlags::Default, sizeof(SMaterialDesc), sizeof(SMaterialDesc), EResourceAccess::VertexAndConstantBuffer);
+
+    MaterialBuffer = RHICreateConstantBuffer(ConstantBufferInitializer);
     if (MaterialBuffer)
     {
         MaterialBuffer->SetName("MaterialBuffer");
@@ -36,7 +38,7 @@ void CMaterial::Init()
 void CMaterial::BuildBuffer(CRHICommandList& CmdList)
 {
     CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-    CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(SMaterialDesc), &Properties);
+    CmdList.UpdateBuffer(MaterialBuffer.Get(), &Properties, 0, sizeof(SMaterialDesc));
     CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
 
     bMaterialBufferIsDirty = false;

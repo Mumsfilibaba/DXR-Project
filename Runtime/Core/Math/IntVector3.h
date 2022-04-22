@@ -2,7 +2,7 @@
 #include "MathCommon.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A 3-D vector (x, y, z) using 16-bit integers
+// CInt16Vector3 - A 3-D vector (x, y, z) using 16-bit integers
 
 class CInt16Vector3
 {
@@ -336,7 +336,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A 3-D vector (x, y, z) using integers
+// CIntVector3 - A 3-D vector (x, y, z) using 32-bit integers
 
 class CIntVector3
 {

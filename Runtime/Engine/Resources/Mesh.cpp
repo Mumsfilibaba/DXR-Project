@@ -8,13 +8,17 @@
 
 bool CMesh::Init(const SMeshData& Data)
 {
+    const bool bRTOn = RHISupportsRayTracing();
+    
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
     IndexCount  = static_cast<uint32>(Data.Indices.Size());
 
-    const uint32 BufferFlags = RHISupportsRayTracing() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
+    const EBufferUsageFlags BufferFlags = bRTOn ? EBufferUsageFlags::AllowShaderResource | EBufferUsageFlags::Default : EBufferUsageFlags::Default;
 
-    SRHIResourceData InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
-    VertexBuffer = RHICreateVertexBuffer<SVertex>(VertexCount, BufferFlags, EResourceAccess::VertexAndConstantBuffer, &InitialData);
+    CRHIVertexBufferInitializer VertexBufferInitializer(BufferFlags, VertexCount, sizeof(SVertex), EResourceAccess::VertexAndConstantBuffer);
+    VertexBufferInitializer.InitialData = CRHISubresourceInitializer(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
+    
+    VertexBuffer = RHICreateVertexBuffer(VertexBufferInitializer);
     if (!VertexBuffer)
     {
         return false;
@@ -24,12 +28,12 @@ bool CMesh::Init(const SMeshData& Data)
         VertexBuffer->SetName("VertexBuffer");
     }
 
-    const bool bRTOn = RHISupportsRayTracing();
+    EIndexFormat IndexFormat = EIndexFormat::uint32;
+    
+    CRHIIndexBufferInitializer IndexBufferInitializer(BufferFlags, IndexFormat, IndexCount, EResourceAccess::IndexBuffer);
+    IndexBufferInitializer.InitialData = CRHISubresourceInitializer(Data.Indices.Data(), Data.Indices.SizeInBytes());
 
-    ERHIIndexFormat IndexFormat = ERHIIndexFormat::uint32;
-
-    InitialData = SRHIResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
-    IndexBuffer = RHICreateIndexBuffer(IndexFormat, IndexCount, BufferFlags, EResourceAccess::IndexBuffer, &InitialData);
+    IndexBuffer = RHICreateIndexBuffer(IndexBufferInitializer);
     if (!IndexBuffer)
     {
         return false;
@@ -41,7 +45,8 @@ bool CMesh::Init(const SMeshData& Data)
 
     if (bRTOn)
     {
-        RTGeometry = RHICreateRayTracingGeometry(RayTracingStructureBuildFlag_None, VertexBuffer.Get(), VertexCount, IndexFormat, IndexBuffer.Get(), IndexCount);
+        CRHIRayTracingGeometryInitializer RayTracingGeometryInitializer(VertexBuffer, IndexBuffer, ERayTracingStructureBuildFlag::None);
+        RTGeometry = RHICreateRayTracingGeometry(RayTracingGeometryInitializer);
         if (!RTGeometry)
         {
             return false;
@@ -51,16 +56,22 @@ bool CMesh::Init(const SMeshData& Data)
             RTGeometry->SetName("RayTracing Geometry");
         }
 
-        VertexBufferSRV = RHICreateShaderResourceView(VertexBuffer.Get(), 0, VertexCount);
-        if (!VertexBufferSRV)
         {
-            return false;
+            CRHIBufferSRVInitializer BufferSRVInitializer(VertexBuffer.Get(), 0, VertexCount);
+            VertexBufferSRV = RHICreateShaderResourceView(BufferSRVInitializer);
+            if (!VertexBufferSRV)
+            {
+                return false;
+            }
         }
 
-        IndexBufferSRV = RHICreateShaderResourceView(IndexBuffer.Get(), 0, IndexCount);
-        if (!IndexBufferSRV)
         {
-            return false;
+            CRHIBufferSRVInitializer BufferSRVInitializer(IndexBuffer.Get(), 0, IndexCount);
+            IndexBufferSRV = RHICreateShaderResourceView(BufferSRVInitializer);
+            if (!IndexBufferSRV)
+            {
+                return false;
+            }
         }
     }
 
@@ -70,7 +81,8 @@ bool CMesh::Init(const SMeshData& Data)
 
 bool CMesh::BuildAccelerationStructure(CRHICommandList& CmdList)
 {
-    CmdList.BuildRayTracingGeometry(RTGeometry.Get(), VertexBuffer.Get(), IndexBuffer.Get(), true);
+    SBuildRayTracingGeometryInfo Info(VertexBuffer.Get(), IndexBuffer.Get(), ERayTracingStructureBuildType::Build);
+    CmdList.BuildRayTracingGeometry(RTGeometry.Get(), Info);
     return true;
 }
 

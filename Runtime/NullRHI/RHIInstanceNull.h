@@ -163,7 +163,7 @@ public:
         return dbg_new TNullRHIShader<CRHIRayMissShader>();
     }
 
-    virtual class CRHIDepthStencilState* CreateDepthStencilState(const SRHIDepthStencilStateDesc& CreateInfo) override final
+    virtual class CRHIDepthStencilState* CreateDepthStencilState(const CRHIDepthStencilStateInitializer& CreateInfo) override final
     {
         return dbg_new CNullRHIDepthStencilState();
     }

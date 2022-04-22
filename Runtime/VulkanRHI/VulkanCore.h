@@ -5,7 +5,7 @@
 #include "Core/Containers/String.h"
 
 #include "RHI/RHITypes.h"
-#include "RHI/TextureFormat.h"
+#include "RHI/RHITypes.h"
 
 #if PLATFORM_MACOS
     #define VK_USE_PLATFORM_MACOS_MVK

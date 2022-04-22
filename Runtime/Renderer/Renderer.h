@@ -19,7 +19,7 @@
 
 #include "RHI/RHIModule.h"
 #include "RHI/RHICommandList.h"
-#include "RHI/RHIViewport.h"
+#include "RHI/RHIResources.h"
 
 #include "Debug/TextureDebugger.h"
 #include "Debug/RendererInfoWindow.h"
@@ -138,22 +138,22 @@ private:
     SFrameResources Resources;
     SLightSetup     LightSetup;
 
-    TSharedRef<CRHITexture2D>            ShadingImage;
+    CRHITexture2DRef            ShadingImage;
     TSharedRef<CRHIComputePipelineState> ShadingRatePipeline;
     TSharedRef<CRHIComputeShader>        ShadingRateShader;
 
     TSharedRef<CRHIBuffer>                AABBVertexBuffer;
     TSharedRef<CRHIBuffer>                AABBIndexBuffer;
-    TSharedRef<CRHIGraphicsPipelineState> AABBDebugPipelineState;
+    CRHIGraphicsPipelineStateRef AABBDebugPipelineState;
     TSharedRef<CRHIVertexShader>          AABBVertexShader;
-    TSharedRef<CRHIPixelShader>           AABBPixelShader;
+    CRHIPixelShaderRef           AABBPixelShader;
 
-    TSharedRef<CRHIGraphicsPipelineState> PostPSO;
-    TSharedRef<CRHIPixelShader>           PostShader;
-    TSharedRef<CRHIGraphicsPipelineState> FXAAPSO;
-    TSharedRef<CRHIPixelShader>           FXAAShader;
-    TSharedRef<CRHIGraphicsPipelineState> FXAADebugPSO;
-    TSharedRef<CRHIPixelShader>           FXAADebugShader;
+    CRHIGraphicsPipelineStateRef PostPSO;
+    CRHIPixelShaderRef           PostShader;
+    CRHIGraphicsPipelineStateRef FXAAPSO;
+    CRHIPixelShaderRef           FXAAShader;
+    CRHIGraphicsPipelineStateRef FXAADebugPSO;
+    CRHIPixelShaderRef           FXAADebugShader;
 
     TSharedRef<CRHITimestampQuery> TimestampQueries;
 

@@ -13,7 +13,7 @@
 void* CMemory::Malloc(uint64 Size) noexcept
 {
     // Since malloc is not guaranteed to return nullptr, we check for it here
-    // Source: https://www.cplusplus.com/reference/cstdlib/malloc/
+    // Src: https://www.cplusplus.com/reference/cstdlib/malloc/
     if (Size)
     {
         return malloc(Size);
@@ -24,9 +24,9 @@ void* CMemory::Malloc(uint64 Size) noexcept
     }
 }
 
-void* CMemory::Realloc(void* Pointer, uint64 Size) noexcept
+void* CMemory::Realloc(void* Ptr, uint64 Size) noexcept
 {
-    return realloc(Pointer, Size);
+    return realloc(Ptr, Size);
 }
 
 void CMemory::Free(void* Ptr) noexcept
@@ -34,24 +34,24 @@ void CMemory::Free(void* Ptr) noexcept
     free(Ptr);
 }
 
-void* CMemory::Memset(void* Destination, uint8 Value, uint64 Size) noexcept
+void* CMemory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept
 {
-    return memset(Destination, static_cast<int>(Value), Size);
+    return memset(Dst, static_cast<int>(Value), Size);
 }
 
-void* CMemory::Memzero(void* Destination, uint64 Size) noexcept
+void* CMemory::Memzero(void* Dst, uint64 Size) noexcept
 {
-    return memset(Destination, 0, Size);
+    return memset(Dst, 0, Size);
 }
 
-void* CMemory::Memcpy(void* restrict_ptr Destination, const void* restrict_ptr Source, uint64 Size) noexcept
+void* CMemory::Memcpy(void* restrict_ptr Dst, const void* restrict_ptr Src, uint64 Size) noexcept
 {
-    return memcpy(Destination, Source, Size);
+    return memcpy(Dst, Src, Size);
 }
 
-void* CMemory::Memmove(void* Destination, const void* Source, uint64 Size) noexcept
+void* CMemory::Memmove(void* Dst, const void* Src, uint64 Size) noexcept
 {
-    return memmove(Destination, Source, Size);
+    return memmove(Dst, Src, Size);
 }
 
 bool CMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept

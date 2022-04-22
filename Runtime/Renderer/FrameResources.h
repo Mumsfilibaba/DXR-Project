@@ -2,7 +2,6 @@
 #include "RendererModule.h"
 
 #include "RHI/RHIResources.h"
-#include "RHI/RHIViewport.h"
 
 #include "Renderer/MeshDrawCommand.h"
 
@@ -10,11 +9,11 @@
 
 #include "Core/Containers/HashTable.h"
 
-#define GBUFFER_ALBEDO_INDEX      0
-#define GBUFFER_NORMAL_INDEX      1
-#define GBUFFER_MATERIAL_INDEX    2
-#define GBUFFER_DEPTH_INDEX       3
-#define GBUFFER_VIEW_NORMAL_INDEX 4
+#define GBUFFER_ALBEDO_INDEX      (0)
+#define GBUFFER_NORMAL_INDEX      (1)
+#define GBUFFER_MATERIAL_INDEX    (2)
+#define GBUFFER_DEPTH_INDEX       (3)
+#define GBUFFER_VIEW_NORMAL_INDEX (4)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TResourceCache
@@ -86,28 +85,28 @@ struct RENDERER_API SFrameResources
     TSharedRef<CRHIBuffer> CameraBuffer;
     TSharedRef<CRHIBuffer> TransformBuffer;
 
-    TSharedRef<CRHISamplerState> PointLightShadowSampler;
-    TSharedRef<CRHISamplerState> DirectionalLightShadowSampler;
-    TSharedRef<CRHISamplerState> IrradianceSampler;
+    CRHISamplerStateRef PointLightShadowSampler;
+    CRHISamplerStateRef DirectionalLightShadowSampler;
+    CRHISamplerStateRef IrradianceSampler;
 
-    TSharedRef<CRHITextureCube> Skybox;
+    CRHITextureCubeRef Skybox;
 
-    TSharedRef<CRHITexture2D>    IntegrationLUT;
-    TSharedRef<CRHISamplerState> IntegrationLUTSampler;
+    CRHITexture2DRef    IntegrationLUT;
+    CRHISamplerStateRef IntegrationLUTSampler;
 
-    TSharedRef<CRHITexture2D> SSAOBuffer;
-    TSharedRef<CRHITexture2D> FinalTarget;
-    TSharedRef<CRHITexture2D> GBuffer[5];
+    CRHITexture2DRef SSAOBuffer;
+    CRHITexture2DRef FinalTarget;
+    CRHITexture2DRef GBuffer[5];
 
     // Two resources that can be ping-ponged between
-    TSharedRef<CRHITexture2D> ReducedDepthBuffer[2];
+    CRHITexture2DRef ReducedDepthBuffer[2];
 
-    TSharedRef<CRHISamplerState> GBufferSampler;
-    TSharedRef<CRHISamplerState> FXAASampler;
+    CRHISamplerStateRef GBufferSampler;
+    CRHISamplerStateRef FXAASampler;
 
-    TSharedRef<CRHIInputLayoutState> StdInputLayout;
+    CRHIVertexInputLayoutRef StdInputLayout;
 
-    TSharedRef<CRHITexture2D>       RTOutput;
+    CRHITexture2DRef       RTOutput;
     TSharedRef<CRHIRayTracingScene> RTScene;
 
     SRayTracingShaderResources GlobalResources;

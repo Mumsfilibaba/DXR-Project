@@ -9,7 +9,7 @@
 #include "CoreApplication/Interface/PlatformWindow.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows-specific interface for a window
+// CWindowsWindow
 
 class COREAPPLICATION_API CWindowsWindow final : public CPlatformWindow
 {
@@ -19,7 +19,7 @@ public:
     static TSharedRef<CWindowsWindow> Make(class CWindowsApplication* InApplication);
 
     /* Initializes the window */
-    virtual bool Initialize(const String& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
+    virtual bool Initialize(const CWindowInitializer& Initializer) override final;
 
     /* Shows the window */
     virtual void Show(bool bMaximized) override final;
@@ -70,15 +70,12 @@ public:
     virtual uint32 GetHeight() const override final;
 
     /* Set the native window handle */
-    virtual void SetOSHandle(PlatformWindowHandle InPlatformHandle) override final;
+    virtual void SetOSHandle(void* InOSHandle) override final;
 
-    /* Retrieve the native handle */
-    virtual PlatformWindowHandle GetOSHandle() const override final
-    {
-        return reinterpret_cast<PlatformWindowHandle>(Window);
-    }
+    /* @return: Returns the native handle */
+    virtual void* GetOSHandle() const override final { return reinterpret_cast<void*>(Window); }
 
-    FORCEINLINE HWND GetHandle() const { return Window; }
+    HWND GetHandle() const { return Window; }
 
 private:
 
@@ -95,8 +92,8 @@ private:
     /* Used when toggling fullscreen */
     WINDOWPLACEMENT StoredPlacement;
 
-    DWORD Style;
-    DWORD StyleEx;
+    DWORD DwStyle;
+    DWORD DwStyleEx;
 };
 
 #endif

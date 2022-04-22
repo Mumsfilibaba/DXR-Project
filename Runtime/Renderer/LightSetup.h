@@ -2,7 +2,7 @@
 #include "RendererModule.h"
 
 #include "RHI/RHIResources.h"
-#include "RHI/RHIResourceViews.h"
+#include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
 
 #include "Engine/Scene/Scene.h"
@@ -113,21 +113,21 @@ struct RENDERER_API SLightSetup
 
     TSharedRef<CRHIBuffer> DirectionalLightsBuffer;
 
-    TSharedRef<CRHITexture2D> ShadowMapCascades[4];
-    TSharedRef<CRHITexture2D> DirectionalShadowMask;
+    CRHITexture2DRef ShadowMapCascades[4];
+    CRHITexture2DRef DirectionalShadowMask;
 
     TSharedRef<CRHIBuffer>    CascadeMatrixBuffer;
     TSharedRef<CRHIShaderResourceView>  CascadeMatrixBufferSRV;
-    TSharedRef<CRHIUnorderedAccessView> CascadeMatrixBufferUAV;
+    CRHIUnorderedAccessViewRef CascadeMatrixBufferUAV;
 
     TSharedRef<CRHIBuffer>    CascadeSplitsBuffer;
     TSharedRef<CRHIShaderResourceView>  CascadeSplitsBufferSRV;
-    TSharedRef<CRHIUnorderedAccessView> CascadeSplitsBufferUAV;
+    CRHIUnorderedAccessViewRef CascadeSplitsBufferUAV;
 
-    TSharedRef<CRHITextureCube>         IrradianceMap;
-    TSharedRef<CRHIUnorderedAccessView> IrradianceMapUAV;
+    CRHITextureCubeRef         IrradianceMap;
+    CRHIUnorderedAccessViewRef IrradianceMapUAV;
 
-    TSharedRef<CRHITextureCube>                 SpecularIrradianceMap;
-    TArray<TSharedRef<CRHIUnorderedAccessView>> SpecularIrradianceMapUAVs;
+    CRHITextureCubeRef                 SpecularIrradianceMap;
+    TArray<CRHIUnorderedAccessViewRef> SpecularIrradianceMapUAVs;
     TArray<CRHIUnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
 };

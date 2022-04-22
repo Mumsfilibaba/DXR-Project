@@ -8,10 +8,10 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
 
-#include "RHI/TextureFormat.h"
+#include "RHI/RHITypes.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MeshData
+// SMeshData
 
 struct SMeshData
 {
@@ -36,7 +36,7 @@ struct SMeshData
     }
 
     TArray<SVertex> Vertices;
-    TArray<uint32> Indices;
+    TArray<uint32>  Indices;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -46,10 +46,10 @@ struct SModelData
 {
     SModelData() = default;
 
-    SModelData(SModelData&&) = default;
+    SModelData(SModelData&&)      = default;
     SModelData(const SModelData&) = default;
 
-    SModelData& operator=(SModelData&&) = default;
+    SModelData& operator=(SModelData&&)      = default;
     SModelData& operator=(const SModelData&) = default;
 
     /* Name of the mesh specified in the model-file */

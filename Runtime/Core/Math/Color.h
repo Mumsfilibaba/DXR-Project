@@ -2,6 +2,7 @@
 #include "Float.h"
 
 #include "Core/Core.h"
+#include "Core/Utilities/HashUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CColor
@@ -14,10 +15,10 @@ public:
      * @brief: Default constructor (Initialize components to zero)
      */
     FORCEINLINE CColor()
-        : r(0.0f)
-        , g(0.0f)
-        , b(0.0f)
-        , a(0.0f)
+        : r(0)
+        , g(0)
+        , b(0)
+        , a(0)
     { }
 
     /**

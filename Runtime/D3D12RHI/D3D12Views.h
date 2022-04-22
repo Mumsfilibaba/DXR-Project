@@ -2,7 +2,7 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12Resource.h"
 
-#include "RHI/RHIResourceViews.h"
+#include "RHI/RHIResources.h"
 
 class CD3D12OfflineDescriptorHeap;
 

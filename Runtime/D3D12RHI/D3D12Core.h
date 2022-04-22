@@ -45,10 +45,10 @@
 
 
 #else
-    #define D3D12_ERROR_ALWAYS(ErrorMessage)     do {} while(0)
-    #define D3D12_ERROR(Condition, ErrorMessage) do {} while(0)
-    #define D3D12_WARNING(Message)               do {} while(0)
-    #define D3D12_INFO(Message)                  do {} while(0)
+    #define D3D12_ERROR_ALWAYS(ErrorMessage)     do { } while(0)
+    #define D3D12_ERROR(Condition, ErrorMessage) do { } while(0)
+    #define D3D12_WARNING(Message)               do { } while(0)
+    #define D3D12_INFO(Message)                  do { } while(0)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -204,12 +204,12 @@ inline DXGI_FORMAT ConvertFormat(ERHIFormat Format)
     }
 }
 
-inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification(EInputClassification InputClassification)
+inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification(EVertexInputClass InputClassification)
 {
     switch (InputClassification)
     {
-    case EInputClassification::Instance: return D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
-    case EInputClassification::Vertex:   return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+    case EVertexInputClass::Instance: return D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
+    case EVertexInputClass::Vertex:   return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
     }
 
     return D3D12_INPUT_CLASSIFICATION();

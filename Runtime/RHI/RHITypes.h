@@ -654,7 +654,7 @@ inline const char* ToString(EDescriptorType DescriptorType)
 
 class CRHIDescriptorHandle
 {
-    enum 
+    enum : uint32
     {
         InvalidHandle = uint32(~0)
     };
@@ -698,7 +698,7 @@ public:
 
     /**
      * @brief: Compare two descriptor-handles to see if the reference the same resource
-     * 
+     *
      * @return: Returns false if the handles are equal
      */
     bool operator!=(const CRHIDescriptorHandle& RHS) const 
@@ -853,58 +853,34 @@ public:
         }
     }
 
-    /**
-     * @brief: Check if the clear value is a Color-Value
-     * 
-     * @return: Returns a true if the value is a FloatColor
-     */
+    /** @return: Returns a true if the value is a FloatColor */
     bool IsColorValue() const { return (Type == EType::Color); }
 
-    /**
-     * @brief: Check if the clear value is a DepthStencil-Value
-     * 
-     * @return: Returns a true if the value is a DepthStencilClearValue
-     */
+    /** @return: Returns a true if the value is a DepthStencilClearValue */
     bool IsDepthStencilValue() const { return (Type == EType::DepthStencil); }
 
-    /**
-     * @brief: Retrieve Color-Value
-     * 
-     * @return: Returns a FloatColor
-     */
+    /** @return: Returns a FloatColor */
     CFloatColor& AsColor()
     {
         Check(IsColorValue());
         return ColorValue;
     }
 
-    /**
-     * @brief: Retrieve Color-Value
-     * 
-     * @return: Returns a FloatColor
-     */
+    /** @return: Returns a FloatColor */
     const CFloatColor& AsColor() const
     {
         Check(IsColorValue());
         return ColorValue;
     }
 
-    /**
-     * @brief: Retrieve DepthStencil-Value
-     * 
-     * @return: Returns a DepthStencilClearValue
-     */
+    /** @return: Returns a DepthStencilClearValue */
     CTextureDepthStencilValue& AsDepthStencil()
     {
         Check(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
-    /**
-     * @brief: Retrieve DepthStencil-Value
-     * 
-     * @return: Returns a DepthStencilClearValue
-     */
+    /** @return: Returns a DepthStencilClearValue */
     const CTextureDepthStencilValue& AsDepthStencil() const
     {
         Check(IsDepthStencilValue());

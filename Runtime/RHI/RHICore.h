@@ -22,7 +22,14 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Constants
 
-enum
+enum : uint32
 {
-    kMaxRenderTargetCount = 8
+    // Maximums
+    kRHIMaxRenderTargetCount    = 8,
+    kRHIMaxLocalShaderBindings  = 4,
+    kRHIMaxShaderConstants      = 32,
+
+    // Other
+    kRHIAllRemainingMipLevels   = uint32(~0),
+    kRHIAllRemainingArraySlices = uint32(~0),
 };

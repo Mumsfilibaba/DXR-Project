@@ -20,7 +20,7 @@
 
 CInterfaceRenderer* CInterfaceRenderer::Make()
 {
-    return dbg_new CInterfaceRenderer();;
+    return dbg_new CInterfaceRenderer();
 }
 
 bool CInterfaceRenderer::InitContext(InterfaceContext Context)
@@ -29,13 +29,13 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
 
     // Build texture atlas
     uint8* Pixels = nullptr;
-    int32 Width = 0;
-    int32 Height = 0;
+    int32  Width  = 0;
+    int32  Height = 0;
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-    FontTexture = CTextureFactory::LoadFromMemory(Pixels, Width, Height, 0, ERHIFormat::R8G8B8A8_Unorm);
+    FontTexture = CTextureFactory::LoadFromMemory(Pixels, Width, Height, ETextureFactoryFlags::None, ERHIFormat::R8G8B8A8_Unorm);
     if (!FontTexture)
     {
         return false;
@@ -72,7 +72,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         })*";
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileShader(VSSource, "Main", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileShader(VSSource, "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -103,7 +103,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
             return OutColor;
         })*";
 
-    if (!CRHIShaderCompiler::CompileShader(PSSource, "Main", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileShader(PSSource, "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -116,51 +116,36 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    SRHIInputLayoutStateDesc InputLayoutInfo =
+    CRHIVertexInputLayoutInitializer InputLayoutInfo =
     {
-        { "POSITION", 0, ERHIFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EInputClassification::Vertex, 0 },
-        { "TEXCOORD", 0, ERHIFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EInputClassification::Vertex, 0 },
-        { "COLOR",    0, ERHIFormat::R8G8B8A8_Unorm, 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EInputClassification::Vertex, 0 },
+        { "POSITION", 0, ERHIFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EVertexInputClass::Vertex, 0 },
+        { "TEXCOORD", 0, ERHIFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EVertexInputClass::Vertex, 0 },
+        { "COLOR",    0, ERHIFormat::R8G8B8A8_Unorm, 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EVertexInputClass::Vertex, 0 },
     };
 
-    TSharedRef<CRHIInputLayoutState> InputLayout = RHICreateInputLayout(InputLayoutInfo);
+    CRHIVertexInputLayoutRef InputLayout = RHICreateInputLayout(InputLayoutInfo);
     if (!InputLayout)
     {
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        InputLayout->SetName("ImGui InputLayoutState");
-    }
 
-    SRHIDepthStencilStateDesc DepthStencilStateInfo;
-    DepthStencilStateInfo.bDepthEnable   = false;
-    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
+    CRHIDepthStencilStateInitializer DepthStencilStateInfo(EComparisonFunc::Less, false, EDepthWriteMask::Zero);
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+    CRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        DepthStencilState->SetName("ImGui DepthStencilState");
-    }
 
-    SRHIRasterizerStateDesc RasterizerStateInfo;
-    RasterizerStateInfo.CullMode = ECullMode::None;
+    CRHIRasterizerStateInitializer RasterizerStateInfo(EFillMode::Solid, ECullMode::None);
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    CRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         CDebug::DebugBreak();
         return false;
-    }
-    else
-    {
-        RasterizerState->SetName("ImGui RasterizerState");
     }
 
     SRHIBlendStateDesc BlendStateInfo;

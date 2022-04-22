@@ -89,13 +89,13 @@ public:
     }
 
 public:
-    TSharedRef<CRHITexture2D> AlbedoMap;
-    TSharedRef<CRHITexture2D> NormalMap;
-    TSharedRef<CRHITexture2D> RoughnessMap;
-    TSharedRef<CRHITexture2D> HeightMap;
-    TSharedRef<CRHITexture2D> AOMap;
-    TSharedRef<CRHITexture2D> MetallicMap;
-    TSharedRef<CRHITexture2D> AlphaMask;
+    CRHITexture2DRef AlbedoMap;
+    CRHITexture2DRef NormalMap;
+    CRHITexture2DRef RoughnessMap;
+    CRHITexture2DRef HeightMap;
+    CRHITexture2DRef AOMap;
+    CRHITexture2DRef MetallicMap;
+    CRHITexture2DRef AlphaMask;
 
 private:
 
@@ -110,7 +110,7 @@ private:
 
     SMaterialDesc                   Properties;
     TSharedRef<CRHIBuffer> MaterialBuffer;
-    TSharedRef<CRHISamplerState>   Sampler;
+    CRHISamplerStateRef   Sampler;
 
     mutable TStaticArray<CRHIShaderResourceView*, 7> ShaderResourceViews;
 };

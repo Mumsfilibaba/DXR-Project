@@ -233,7 +233,7 @@ CRHIRayMissShader* CRHIInstanceVulkan::CreateRayMissShader(const TArray<uint8>& 
     return dbg_new TVulkanShader<CRHIRayMissShader>();
 }
 
-CRHIDepthStencilState* CRHIInstanceVulkan::CreateDepthStencilState(const SRHIDepthStencilStateDesc& CreateInfo)
+CRHIDepthStencilState* CRHIInstanceVulkan::CreateDepthStencilState(const CRHIDepthStencilStateInitializer& CreateInfo)
 {
     return dbg_new CVulkanDepthStencilState();
 }

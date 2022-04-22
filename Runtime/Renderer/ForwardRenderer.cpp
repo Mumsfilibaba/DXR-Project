@@ -22,7 +22,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     };
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "VSMain", &Defines, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -39,7 +39,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         VShader->SetName("ForwardPass VertexShader");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "PSMain", &Defines, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -56,7 +56,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         PShader->SetName("ForwardPass PixelShader");
     }
 
-    SRHIDepthStencilStateDesc DepthStencilStateInfo;
+    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;

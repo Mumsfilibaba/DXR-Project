@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/ArrayView.h"
 
-#include "RHI/RHIViewport.h"
+#include "RHI/RHIResources.h"
 
 #include "Core/Windows/Windows.h"
 

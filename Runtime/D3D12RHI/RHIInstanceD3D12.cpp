@@ -170,7 +170,7 @@ bool CRHIInstanceD3D12::Initialize(bool bEnableDebug)
 
     // Init GenerateMips Shaders and pipeline states 
     TArray<uint8> Code;
-    if (!GD3D12ShaderCompiler->CompileFromFile("../Runtime/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!GD3D12ShaderCompiler->CompileFromFile("../Runtime/Shaders/GenerateMipsTex2D.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         D3D12_ERROR_ALWAYS("Failed to compile GenerateMipsTex2D Shader");
         return false;
@@ -194,7 +194,7 @@ bool CRHIInstanceD3D12::Initialize(bool bEnableDebug)
         GenerateMipsTex2D_PSO->SetName("GenerateMipsTex2D Gen PSO");
     }
 
-    if (!GD3D12ShaderCompiler->CompileFromFile("../Runtime/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!GD3D12ShaderCompiler->CompileFromFile("../Runtime/Shaders/GenerateMipsTexCube.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         D3D12_ERROR_ALWAYS("Failed to compile GenerateMipsTexCube Shader");
         return false;
@@ -1193,7 +1193,7 @@ CRHIRayMissShader* CRHIInstanceD3D12::CreateRayMissShader(const TArray<uint8>& S
     }
 }
 
-CRHIDepthStencilState* CRHIInstanceD3D12::CreateDepthStencilState(const SRHIDepthStencilStateDesc& CreateInfo)
+CRHIDepthStencilState* CRHIInstanceD3D12::CreateDepthStencilState(const CRHIDepthStencilStateInitializer& CreateInfo)
 {
     D3D12_DEPTH_STENCIL_DESC Desc;
     CMemory::Memzero(&Desc);

@@ -29,7 +29,7 @@ static TSharedPtr<SImage2D> LoadMaterialTexture(const String& Path, const String
     return CStbImageLoader::LoadFile(Fullpath);
 }
 
-bool COBJLoader::LoadFile(const String& Filename, SSceneData& OutScene, bool ReverseHandedness)
+bool COBJLoader::LoadFile(const String& Filename, SSceneData& OutScene, bool bReverseHandedness)
 {
     // Make sure to clear everything
     OutScene.Models.Clear();
@@ -134,7 +134,7 @@ bool COBJLoader::LoadFile(const String& Filename, SSceneData& OutScene, bool Rev
             // Calculate tangents and create mesh
             CMeshUtilities::CalculateTangents(Data.Mesh);
 
-            if (ReverseHandedness)
+            if (bReverseHandedness)
             {
                 CMeshUtilities::ReverseHandedness(Data.Mesh);
             }

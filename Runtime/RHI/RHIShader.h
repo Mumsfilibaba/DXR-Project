@@ -5,47 +5,77 @@
 #include "Core/Containers/String.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIShaderStage
+// Typedefs
 
-enum class EShaderStage
+typedef TSharedRef<class CRHIShader>                CRHIShaderRef;
+
+typedef TSharedRef<class CRHIVertexShader>          CRHIVertexShaderRef;
+typedef TSharedRef<class CRHIHullShader>            CRHIHullShaderRef;
+typedef TSharedRef<class CRHIDomainShader>          CRHIDomainShaderRef;
+typedef TSharedRef<class CRHIGeometryShader>        CRHIGeometryShaderRef;
+typedef TSharedRef<class CRHIMeshShader>            CRHIMeshShaderRef;
+typedef TSharedRef<class CRHIAmplificationShader>   CRHIAmplificationShaderRef;
+typedef TSharedRef<class CRHIPixelShader>           CRHIPixelShaderRef;
+
+typedef TSharedRef<class CRHIComputeShader>         CRHIComputeShaderRef;
+
+typedef TSharedRef<class CRHIRayTracingShader>      CRHIRayTracingShaderRef;
+typedef TSharedRef<class CRHIRayGenShader>          CRHIRayGenShaderRef;
+typedef TSharedRef<class CRHIRayMissShader>         CRHIRayMissShaderRef;
+typedef TSharedRef<class CRHIRayClosestHitShader>   CRHIRayClosestHitShaderRef;
+typedef TSharedRef<class CRHIRayAnyHitShader>       CRHIRayAnyHitShaderRef;
+typedef TSharedRef<class CRHIRayIntersectionShader> CRHIRayIntersectionShaderRef;
+typedef TSharedRef<class CRHIRayCallableShader>     CRHIRayCallableShaderRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EShaderStage
+
+enum class EShaderStage : uint8
 {
-    Vertex        = 1,
-    Hull          = 2,
-    Domain        = 3,
-    Geometry      = 4,
-    Mesh          = 5,
-    Amplification = 6,
-    Pixel         = 7,
-    Compute       = 8,
-    RayGen        = 9,
-    RayAnyHit     = 10,
-    RayClosestHit = 11,
-    RayMiss       = 12,
+    // Graphics
+    Vertex          = 1,
+    Hull            = 2,
+    Domain          = 3,
+    Geometry        = 4,
+    Mesh            = 5,
+    Amplification   = 6,
+    Pixel           = 7,
+
+    // Compute
+    Compute         = 8,
+    
+    // RayTracing
+    RayGen          = 9,
+    RayAnyHit       = 10,
+    RayClosestHit   = 11,
+    RayMiss         = 12,
+    RayIntersection = 13,
+    RayCallable     = 14
 };
 
 inline const char* ToString(EShaderStage ShaderStage)
 {
     switch(ShaderStage)
     {
-    case EShaderStage::Vertex:        return "Vertex";
-    case EShaderStage::Hull:          return "Hull";
-    case EShaderStage::Domain:        return "Domain";
-    case EShaderStage::Geometry:      return "Geometry";
-    case EShaderStage::Mesh:          return "Mesh";
-    case EShaderStage::Amplification: return "Amplification";
-    case EShaderStage::Pixel:         return "Pixel";
-    case EShaderStage::Compute:       return "Compute";
-    case EShaderStage::RayGen:        return "RayGen";
-    case EShaderStage::RayAnyHit:     return "RayAnyHit";
-    case EShaderStage::RayClosestHit: return "RayClosestHit";
-    case EShaderStage::RayMiss:       return "RayMiss";
+        case EShaderStage::Vertex:        return "Vertex";
+        case EShaderStage::Hull:          return "Hull";
+        case EShaderStage::Domain:        return "Domain";
+        case EShaderStage::Geometry:      return "Geometry";
+        case EShaderStage::Mesh:          return "Mesh";
+        case EShaderStage::Amplification: return "Amplification";
+        case EShaderStage::Pixel:         return "Pixel";
+        case EShaderStage::Compute:       return "Compute";
+        case EShaderStage::RayGen:        return "RayGen";
+        case EShaderStage::RayAnyHit:     return "RayAnyHit";
+        case EShaderStage::RayClosestHit: return "RayClosestHit";
+        case EShaderStage::RayMiss:       return "RayMiss";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIShaderParameterInfo
+// SShaderParameterInfo
 
-struct SRHIShaderParameterInfo
+struct SShaderParameterInfo
 {
     uint32 NumConstantBuffers      = 0;
     uint32 NumShaderResourceViews  = 0;
@@ -58,14 +88,16 @@ struct SRHIShaderParameterInfo
 
 class CRHIShader : public CRHIResource
 {
-public:
+protected:
 
     CRHIShader(EShaderStage InShaderStage)
         : CRHIResource()
         , ShaderStage(InShaderStage)
     { }
 
-    virtual void GetShaderParameterInfo(SRHIShaderParameterInfo& OutShaderParameterInfo) const = 0;
+public:
+
+    virtual void GetShaderParameterInfo(SShaderParameterInfo& OutShaderParameterInfo) const = 0;
 
     virtual bool GetConstantBufferIndexByName(const String& InName, uint32& OutIndex) const = 0;
     virtual bool GetUnorderedAccessViewIndexByName(const String& InName, uint32& OutIndex) const = 0;
@@ -78,101 +110,188 @@ private:
     EShaderStage ShaderStage;
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIComputeShader
+
 class CRHIComputeShader : public CRHIShader
 {
-public:
+protected:
+
     CRHIComputeShader()
         : CRHIShader(EShaderStage::Compute)
     { }
 
+public:
+
+    /** @return: Returns a vector with the ThreadGroup count of the shader */
     virtual CIntVector3 GetThreadGroupXYZ() const { return CIntVector3(1, 1, 1); };
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIVertexShader
+
 class CRHIVertexShader : public CRHIShader
 {
-public:
+protected:
+    
     CRHIVertexShader()
         : CRHIShader(EShaderStage::Vertex)
     { }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIHullShader
+
 class CRHIHullShader : public CRHIShader
 {
-public:
+protected:
+    
     CRHIHullShader()
         : CRHIShader(EShaderStage::Hull)
     { }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIDomainShader
+
 class CRHIDomainShader : public CRHIShader
 {
-public:
+protected:
+    
     CRHIDomainShader()
         : CRHIShader(EShaderStage::Domain)
     { }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIGeometryShader
+
 class CRHIGeometryShader : public CRHIShader
 {
-public:
+protected:
+    
     CRHIGeometryShader()
         : CRHIShader(EShaderStage::Geometry)
     { }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIMeshShader
+
 class CRHIMeshShader : public CRHIShader
 {
-public:
+protected:
+    
     CRHIMeshShader()
         : CRHIShader(EShaderStage::Mesh)
     { }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIAmplificationShader
+
 class CRHIAmplificationShader : public CRHIShader
 {
-public:
+protected:
+    
     CRHIAmplificationShader()
         : CRHIShader(EShaderStage::Amplification)
     { }
 };
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIPixelShader
+
 class CRHIPixelShader : public CRHIShader
 {
-public:
+protected:
+
     CRHIPixelShader()
         : CRHIShader(EShaderStage::Pixel)
     { }
 };
 
-class CRHIRayGenShader : public CRHIShader
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingShader
+
+class CRHIRayTracingShader : public CRHIShader
 {
-public:
+protected:
+
+    CRHIRayTracingShader(EShaderStage InShaderStage)
+        : CRHIShader(InShaderStage)
+    { }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayGenShader
+
+class CRHIRayGenShader : public CRHIRayTracingShader
+{
+protected:
+    
     CRHIRayGenShader()
-        : CRHIShader(EShaderStage::RayGen)
+        : CRHIRayTracingShader(EShaderStage::RayGen)
     { }
 };
 
-class CRHIRayAnyHitShader : public CRHIShader
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayAnyHitShader
+
+class CRHIRayAnyHitShader : public CRHIRayTracingShader
 {
-public:
+protected:
+    
     CRHIRayAnyHitShader()
-        : CRHIShader(EShaderStage::RayAnyHit)
+        : CRHIRayTracingShader(EShaderStage::RayAnyHit)
     { }
 };
 
-class CRHIRayClosestHitShader : public CRHIShader
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayClosestHitShader
+
+class CRHIRayClosestHitShader : public CRHIRayTracingShader
 {
-public:
+protected:
+
     CRHIRayClosestHitShader()
-        : CRHIShader(EShaderStage::RayClosestHit)
+        : CRHIRayTracingShader(EShaderStage::RayClosestHit)
     { }
 };
 
-class CRHIRayMissShader : public CRHIShader
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayMissShader
+
+class CRHIRayMissShader : public CRHIRayTracingShader
 {
-public:
+protected:
+
     CRHIRayMissShader()
-        : CRHIShader(EShaderStage::RayMiss)
+        : CRHIRayTracingShader(EShaderStage::RayMiss)
+    { }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayIntersectionShader
+
+class CRHIRayIntersectionShader : public CRHIRayTracingShader
+{
+protected:
+
+    CRHIRayIntersectionShader()
+        : CRHIRayTracingShader(EShaderStage::RayMiss)
+    { }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayCallableShader
+
+class CRHIRayCallableShader : public CRHIRayTracingShader
+{
+protected:
+
+    CRHIRayCallableShader()
+        : CRHIRayTracingShader(EShaderStage::RayMiss)
     { }
 };
 
@@ -181,61 +300,18 @@ public:
 
 inline bool ShaderStageIsGraphics(EShaderStage ShaderStage)
 {
-    switch (ShaderStage)
-    {
-    case EShaderStage::Vertex:
-    case EShaderStage::Hull:
-    case EShaderStage::Domain:
-    case EShaderStage::Geometry:
-    case EShaderStage::Pixel:
-    case EShaderStage::Mesh:
-    case EShaderStage::Amplification:
-    {
-        return true;
-    }
-
-    default:
-    {
-        return false;
-    }
-    }
+    return ((ShaderStage >= EShaderStage::Vertex) && (ShaderStage < EShaderStage::Compute)) ? true : false;
 }
 
+/**
+ * @brief: Determine if the Compute Pipeline is used (DXR uses the compute pipeline for RootSignatures)
+ */
 inline bool ShaderStageIsCompute(EShaderStage ShaderStage)
 {
-    switch (ShaderStage)
-    {
-    case EShaderStage::Compute:
-    case EShaderStage::RayGen:
-    case EShaderStage::RayClosestHit:
-    case EShaderStage::RayAnyHit:
-    case EShaderStage::RayMiss:
-    {
-        return true;
-    }
-
-    default:
-    {
-        return false;
-    }
-    }
+    return (ShaderStage >= EShaderStage::Compute) ? true : false;
 }
 
 inline bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
 {
-    switch (ShaderStage)
-    {
-    case EShaderStage::RayGen:
-    case EShaderStage::RayClosestHit:
-    case EShaderStage::RayAnyHit:
-    case EShaderStage::RayMiss:
-    {
-        return true;
-    }
-
-    default:
-    {
-        return false;
-    }
-    }
+    return (ShaderStage >= EShaderStage::RayGen) ? true : false;
 }

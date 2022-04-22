@@ -1,7 +1,7 @@
 #pragma once
 #include "VulkanDeviceObject.h"
 
-#include "RHI/RHITimestampQuery.h"
+#include "RHI/RHIResources.h"
 
 #include "Core/Containers/SharedRef.h"
 

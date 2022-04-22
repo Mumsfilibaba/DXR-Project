@@ -29,9 +29,9 @@ struct SD3D12RootSignatureResourceCount
 {
     bool IsCompatible(const SD3D12RootSignatureResourceCount& Other) const;
 
-    ERootSignatureType  Type = ERootSignatureType::Unknown;
+    ERootSignatureType   Type = ERootSignatureType::Unknown;
     SShaderResourceCount ResourceCounts[ShaderVisibility_Count];
-    bool AllowInputAssembler = false;
+    bool                 bAllowInputAssembler = false;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -43,16 +43,26 @@ public:
     CD3D12RootSignatureDescHelper(const SD3D12RootSignatureResourceCount& RootSignatureInfo);
     ~CD3D12RootSignatureDescHelper() = default;
 
-    FORCEINLINE const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const
-    {
-        return Desc;
-    }
+    FORCEINLINE const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const { return Desc; }
 
 private:
 
-    static void InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace);
-    static void InitDescriptorTable(D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges);
-    static void Init32BitConstantRange(D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace);
+    static void InitDescriptorRange( D3D12_DESCRIPTOR_RANGE& OutRange
+                                   , D3D12_DESCRIPTOR_RANGE_TYPE Type
+                                   , uint32 NumDescriptors
+                                   , uint32 BaseShaderRegister
+                                   , uint32 RegisterSpace);
+    
+    static void InitDescriptorTable( D3D12_ROOT_PARAMETER& OutParameter
+                                   , D3D12_SHADER_VISIBILITY ShaderVisibility
+                                   , const D3D12_DESCRIPTOR_RANGE* DescriptorRanges
+                                   , uint32 NumDescriptorRanges);
+
+    static void Init32BitConstantRange( D3D12_ROOT_PARAMETER& OutParameter
+                                      , D3D12_SHADER_VISIBILITY ShaderVisibility
+                                      , uint32 Num32BitConstants
+                                      , uint32 ShaderRegister
+                                      , uint32 RegisterSpace);
 
     D3D12_ROOT_SIGNATURE_DESC Desc;
     D3D12_ROOT_PARAMETER      Parameters[D3D12_MAX_ROOT_PARAMETERS];
@@ -110,6 +120,7 @@ private:
 
     TComPtr<ID3D12RootSignature> RootSignature;
     int32 RootParameterMap[ShaderVisibility_Count][ResourceType_Count];
+
     // TODO: Enable this for all shader visibilities
     int32 ConstantRootParameterIndex;
 };

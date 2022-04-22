@@ -36,9 +36,9 @@ public:
     FORCEINLINE explicit CMatrix3x4( float In00, float In01, float In02, float In03
                                    , float In10, float In11, float In12, float In13
                                    , float In20, float In21, float In22, float In23) noexcept
-        : m00(m00), m01(m01), m02(m02), m03(m03)
-        , m10(m10), m11(m11), m12(m12), m13(m13)
-        , m20(m20), m21(m21), m22(m22), m23(m23)
+        : m00(In00), m01(In01), m02(In02), m03(In03)
+        , m10(In10), m11(In11), m12(In12), m13(In13)
+        , m20(In20), m21(In21), m22(In22), m23(In23)
     { }
 
     /**

@@ -14,7 +14,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
     }
 
     TArray<uint8> Code;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/IrradianceGen.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("Failed to compile IrradianceGen Shader");
         CDebug::DebugBreak();
@@ -42,7 +42,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         IrradianceGenPSO->SetName("IrradianceGen PSO");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
         CDebug::DebugBreak();
@@ -190,7 +190,7 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
 
     for (uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        TSharedRef<CRHIUnorderedAccessView> Uav = RHICreateUnorderedAccessView(LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel);
+        CRHIUnorderedAccessViewRef Uav = RHICreateUnorderedAccessView(LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel);
         if (Uav)
         {
             LightSetup.SpecularIrradianceMapUAVs.Emplace(Uav);

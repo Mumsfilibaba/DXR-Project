@@ -5,10 +5,8 @@
 #include "RHIPipeline.h"
 #include "RHICommandList.h"
 
-#include "CoreApplication/Interface/PlatformWindow.h"
+#include "Core/Memory/Memory.h"
 
-struct SResourceInitializer;
-struct SRHIClearValue;
 class CRHIRayTracingGeometry;
 class CRHIRayTracingScene;
 
@@ -47,7 +45,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DRef CreateTexture2D(const CRHITexture2DInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
+    virtual CRHITexture2DRef CreateTexture2D(const CRHITexture2DInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a Texture2DArray
@@ -56,7 +54,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DArrayRef CreateTexture2DArray(const CRHITexture2DArrayInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
+    virtual CRHITexture2DArrayRef CreateTexture2DArray(const CRHITexture2DArrayInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a TextureCube
@@ -65,7 +63,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeRef CreateTextureCube(const CRHITextureCubeInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
+    virtual CRHITextureCubeRef CreateTextureCube(const CRHITextureCubeInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a Texture3D
@@ -74,7 +72,7 @@ public:
      * @param InitialData: Initial data of the texture, can be nullptr
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture3DRef CreateTexture3D(const CRHITexture3DInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
+    virtual CRHITexture3DRef CreateTexture3D(const CRHITexture3DInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a VertexBuffer
@@ -83,7 +81,7 @@ public:
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created Buffer
      */
-    virtual CRHIVertexBufferRef CreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
+    virtual CRHIVertexBufferRef CreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a IndexBuffer
@@ -92,7 +90,7 @@ public:
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created Buffer
      */
-    virtual CRHIIndexBufferRef CreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
+    virtual CRHIIndexBufferRef CreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a GenericBuffer
@@ -101,7 +99,7 @@ public:
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created Buffer
      */
-    virtual CRHIGenericBufferRef CreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
+    virtual CRHIGenericBufferRef CreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a ConstantBuffer
@@ -110,12 +108,12 @@ public:
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created Buffer
      */
-    virtual CRHIConstantBufferRef CreateConstantBuffer( const CRHIConstantBufferInitializer& Initializer, const SResourceInitializer* InitalData) = 0;
+    virtual CRHIConstantBufferRef CreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a SamplerState
      * 
-     * @param CreateDesc: Structure with information about the SamplerState
+     * @param Initializer: Structure with information about the SamplerState
      * @return: Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
      */
     virtual CRHISamplerStateRef CreateSamplerState(const CRHISamplerStateInitializer& Initializer) = 0;
@@ -123,34 +121,23 @@ public:
     /**
      * @brief: Create a new Ray tracing scene
      * 
-     * @param Instances: Array of Geometry Instances to build the Scene from
-     * @param NumInstances: Number of instances in the Array
-     * @param Flags: Flags for the RayTracing scene
+     * @param Initializer: Structure containing information about the Scene
      * @return: Returns the newly created Ray tracing Scene
      */
-    virtual CRHIRayTracingSceneRef CreateRayTracingScene(CRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, ERayTracingInstanceFlag Flags) = 0;
+    virtual CRHIRayTracingSceneRef CreateRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer) = 0;
     
     /**
      * @brief: Create a new Ray tracing geometry
      *
-     * @param VertexBuffer: VertexBuffer for the Geometry-Structure
-     * @param NumVertices: Number of vertices in the VertexBuffer
-     * @param IndexBuffer: IndexBuffer for the Geometry-Structure
-     * @param NumIndicies: Number of instances in the IndexBuffer
-     * @param Flags: Flags for the GeometryStructure
+     * @param Initializer: Structure containing information about the Geometry
      * @return: Returns the newly created Ray tracing Geometry
      */
-    virtual CRHIRayTracingGeometryRef CreateRayTracingGeometry( CRHIBuffer* VertexBuffer
-                                                              , uint32 NumVertices
-                                                              , CRHIBuffer* Indexbuffer
-                                                              , EIndexFormat IndexFormat
-                                                              , uint32 NumIndicies
-                                                              , ERayTracingStructureFlag Flags) = 0;
+    virtual CRHIRayTracingGeometryRef CreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new ShaderResourceView
      *
-     * @param CreateDesc: Description for the new view to create
+     * @param Initializer: Description for the new view to create
      * @return: Returns the newly created ShaderResourceView
      */
     virtual CRHIShaderResourceViewRef CreateShaderResourceView(const CRHITextureSRVInitializer& Initializer) = 0;
@@ -158,7 +145,7 @@ public:
     /**
      * @brief: Create a new ShaderResourceView
      *
-     * @param CreateDesc: Description for the new view to create
+     * @param Initializer: Description for the new view to create
      * @return: Returns the newly created ShaderResourceView
      */
     virtual CRHIShaderResourceViewRef CreateShaderResourceView(const CRHIBufferSRVInitializer& Initializer) = 0;
@@ -166,7 +153,7 @@ public:
     /**
      * @brief: Create a new UnorderedAccessView for a texture
      *
-     * @param CreateDesc: Description for the new view to create
+     * @param Initializer: Description for the new view to create
      * @return: Returns the newly created UnorderedAccessView
      */
     virtual CRHIUnorderedAccessViewRef CreateUnorderedAccessView(const CRHITextureUAVInitializer& Initializer) = 0;
@@ -174,7 +161,7 @@ public:
     /**
      * @brief: Create a new UnorderedAccessView for a buffer
      *
-     * @param CreateDesc: Description for the new view to create
+     * @param Initializer: Description for the new view to create
      * @return: Returns the newly created UnorderedAccessView
      */
     virtual CRHIUnorderedAccessViewRef CreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer) = 0;
@@ -305,7 +292,7 @@ public:
      * @param Desc: Info about a InputLayoutState
      * @return: Returns the newly created InputLayoutState
      */
-    virtual class CRHIVertexInputLayout* CreateInputLayout(const SVertexInputLayoutDesc& Desc) = 0;
+    virtual class CRHIVertexInputLayout* CreateInputLayout(const CRHIVertexInputLayoutInitializer& Desc) = 0;
 
     /**
      * @brief: Create a Graphics PipelineState
@@ -313,7 +300,7 @@ public:
      * @param Desc: Info about the Graphics PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIGraphicsPipelineState* CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateCreateDesc& Desc) = 0;
+    virtual class CRHIGraphicsPipelineState* CreateGraphicsPipelineState(const CRHIGraphicsPipelineStateInitializer& Desc) = 0;
     
     /**
      * @brief: Create a Compute PipelineState
@@ -321,7 +308,7 @@ public:
      * @param Desc: Info about the Compute PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIComputePipelineState* CreateComputePipelineState(const SRHIComputePipelineStateDesc& Desc) = 0;
+    virtual class CRHIComputePipelineState* CreateComputePipelineState(const CRHIComputePipelineStateInitializer& Desc) = 0;
     
     /**
      * @brief: Create a Ray-Tracing PipelineState
@@ -329,7 +316,7 @@ public:
      * @param Desc: Info about the Ray-Tracing PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState(const SRHIRayTracingPipelineStateDesc& Desc) = 0;
+    virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState(const CRHIRayTracingPipelineStateInitializer& Desc) = 0;
 
     /**
      * @brief: Create a new Timestamp Query
@@ -341,18 +328,10 @@ public:
     /**
      * @brief: Create a new Viewport
      * 
-     * @param Window: Window to bind to the viewport
-     * @param Width: Width of the viewport
-     * @param Height: Height of the viewport
-     * @param ColorFormat: Format for the color
-     * @param DepthFormat: Format for the depth
+     * @param Initializer: Structure containing information about the viewport
      * @return: Returns the newly created viewport
      */
-    virtual CRHIViewportRef CreateViewport( void* WindowHandle
-                                          , uint32 Width
-                                          , uint32 Height
-                                          , ERHIFormat ColorFormat
-                                          , ERHIFormat DepthFormat) = 0;
+    virtual CRHIViewportRef CreateViewport(const CRHIViewportInitializer& Initializer) = 0;
 
     /**
      * @brief: Retrieve the default CommandContext
@@ -404,22 +383,44 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper functions
 
-FORCEINLINE CRHITexture2DRef RHICreateTexture2D( ERHIFormat Format
-                                               , ETextureUsageFlags UsageFlags
-                                               , uint16 Width
-                                               , uint16 Height
-                                               , uint8 NumMips
-                                               , uint8 NumSamples
-                                               , const CTextureClearValue& ClearValue
-                                               , EResourceAccess InitialState
-                                               , const SResourceInitializer* InitalData)
+FORCEINLINE CRHITexture2DRef RHICreateTexture2D(const CRHITexture2DInitializer& Initializer)
 {
-    return GRHIInstance->CreateTexture2D(Format, UsageFlags, Width, Height, NumMips, NumSamples, ClearValue, InitialState, );
+    return GRHIInstance->CreateTexture2D(Initializer);
 }
 
-FORCEINLINE CRHIBufferRef RHICreateBuffer(const CRHIBufferCreateDesc& BufferDesc, EResourceAccess InitialState, const SResourceInitializer* InitialData)
+FORCEINLINE CRHITexture2DArrayRef RHICreateTexture2DArray(const CRHITexture2DArrayInitializer& Initializer)
 {
-    return GRHIInstance->CreateBuffer(BufferDesc, InitialState, InitialData);
+    return GRHIInstance->CreateTexture2DArray(Initializer);
+}
+
+FORCEINLINE CRHITextureCubeRef RHICreateTextureCube(const CRHITextureCubeInitializer& Initializer)
+{
+    return GRHIInstance->CreateTextureCube(Initializer);
+}
+
+FORCEINLINE CRHITexture3DRef RHICreateTexture3D(const CRHITexture3DInitializer& Initializer)
+{
+    return GRHIInstance->CreateTexture3D(Initializer);
+}
+
+FORCEINLINE CRHIVertexBufferRef RHICreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
+{
+    return GRHIInstance->CreateVertexBuffer(Initializer);
+}
+
+FORCEINLINE CRHIIndexBufferRef RHICreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
+{
+    return GRHIInstance->CreateIndexBuffer(Initializer);
+}
+
+FORCEINLINE CRHIGenericBufferRef RHICreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
+{
+    return GRHIInstance->CreateGenericBuffer(Initializer);
+}
+
+FORCEINLINE CRHIConstantBufferRef RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
+{
+    return GRHIInstance->CreateConstantBuffer(Initializer);
 }
 
 FORCEINLINE CRHISamplerStateRef RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer)
@@ -427,14 +428,14 @@ FORCEINLINE CRHISamplerStateRef RHICreateSamplerState(const CRHISamplerStateInit
     return GRHIInstance->CreateSamplerState(Initializer);
 }
 
-FORCEINLINE CRHIRayTracingSceneRef RHICreateRayTracingScene(const CRHIRayTracingSceneCreateDesc& SceneDesc)
+FORCEINLINE CRHIRayTracingSceneRef RHICreateRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
 {
-    return GRHIInstance->CreateRayTracingScene(SceneDesc);
+    return GRHIInstance->CreateRayTracingScene(Initializer);
 }
 
-FORCEINLINE CRHIRayTracingGeometryRef RHICreateRayTracingGeometry(const CRHIRayTracingGeometryCreateDesc& GeometryDesc)
+FORCEINLINE CRHIRayTracingGeometryRef RHICreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer)
 {
-    return GRHIInstance->CreateRayTracingGeometry(GeometryDesc);
+    return GRHIInstance->CreateRayTracingGeometry(Initializer);
 }
 
 FORCEINLINE CRHIShaderResourceViewRef RHICreateShaderResourceView(const CRHITextureSRVInitializer& Initializer)
@@ -517,7 +518,7 @@ FORCEINLINE CRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& Shade
     return GRHIInstance->CreateRayMissShader(ShaderCode);
 }
 
-FORCEINLINE CRHIVertexInputLayout* RHICreateInputLayout(const SVertexInputLayoutDesc& Desc)
+FORCEINLINE CRHIVertexInputLayout* RHICreateInputLayout(const CRHIVertexInputLayoutInitializer& Desc)
 {
     return GRHIInstance->CreateInputLayout(Desc);
 }
@@ -537,17 +538,17 @@ FORCEINLINE CRHIBlendState* RHICreateBlendState(const CRHIBlendStateInitializer&
     return GRHIInstance->CreateBlendState(Desc);
 }
 
-FORCEINLINE CRHIComputePipelineState* RHICreateComputePipelineState(const SRHIComputePipelineStateDesc& Desc)
+FORCEINLINE CRHIComputePipelineState* RHICreateComputePipelineState(const CRHIComputePipelineStateInitializer& Desc)
 {
     return GRHIInstance->CreateComputePipelineState(Desc);
 }
 
-FORCEINLINE CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const SRHIGraphicsPipelineStateCreateDesc& Desc)
+FORCEINLINE CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const CRHIGraphicsPipelineStateInitializer& Desc)
 {
     return GRHIInstance->CreateGraphicsPipelineState(Desc);
 }
 
-FORCEINLINE CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const SRHIRayTracingPipelineStateDesc& Desc)
+FORCEINLINE CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const CRHIRayTracingPipelineStateInitializer& Desc)
 {
     return GRHIInstance->CreateRayTracingPipelineState(Desc);
 }
@@ -557,9 +558,9 @@ FORCEINLINE CRHITimeQueryRef RHICreateTimeQuery()
     return GRHIInstance->CreateTimeQuery();
 }
 
-FORCEINLINE CRHIViewportRef RHICreateViewport(PlatformWindowHandle WindowHandle, uint32 Width, uint32 Height, ERHIFormat ColorFormat, ERHIFormat DepthFormat)
+FORCEINLINE CRHIViewportRef RHICreateViewport(const CRHIViewportInitializer& Initializer)
 {
-    return GRHIInstance->CreateViewport(WindowHandle, Width, Height, ColorFormat, DepthFormat);
+    return GRHIInstance->CreateViewport(Initializer);
 }
 
 FORCEINLINE bool RHIUAVSupportsFormat(ERHIFormat Format)

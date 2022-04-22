@@ -5,7 +5,7 @@
 #include "VulkanSurface.h"
 #include "VulkanSwapChain.h"
 
-#include "RHI/RHIViewport.h"
+#include "RHI/RHIResources.h"
 
 #include "Core/Containers/ArrayView.h"
 #include "Core/Containers/SharedRef.h"

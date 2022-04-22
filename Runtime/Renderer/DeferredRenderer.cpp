@@ -49,7 +49,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             { "ENABLE_NORMAL_MAPPING",   "1" },
         };
 
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/GeometryPass.hlsl", "VSMain", &Defines, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/GeometryPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -66,7 +66,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             BaseVertexShader->SetName("GeometryPass VertexShader");
         }
 
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/GeometryPass.hlsl", "PSMain", &Defines, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/GeometryPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -83,7 +83,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             BasePixelShader->SetName("GeometryPass PixelShader");
         }
 
-        SRHIDepthStencilStateDesc DepthStencilStateInfo;
+        CRHIDepthStencilStateInitializer DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::LessEqual;
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -156,7 +156,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
     // PrePass
     {
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/PrePass.hlsl", "Main", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/PrePass.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -173,7 +173,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             PrePassVertexShader->SetName("PrePass VertexShader");
         }
 
-        SRHIDepthStencilStateDesc DepthStencilStateInfo;
+        CRHIDepthStencilStateInitializer DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc = ERHIComparisonFunc::Less;
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -248,7 +248,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<CRHITexture2D> StagingTexture = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceAccess::Common, nullptr);
+    CRHITexture2DRef StagingTexture = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceAccess::Common, nullptr);
     if (!StagingTexture)
     {
         CDebug::DebugBreak();
@@ -287,7 +287,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         FrameResources.IntegrationLUTSampler->SetName("IntegrationLUT Sampler");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/BRDFIntegationGen.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/BRDFIntegationGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -342,11 +342,11 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
         CmdList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-        CRHICommandQueue::Get().ExecuteCommandList(CmdList);
+        CRHICommandExecutionManager::Get().ExecuteCommandList(CmdList);
     }
 
     {
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DeferredLightPass.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DeferredLightPass.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -384,7 +384,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             SShaderDefine("DRAW_TILE_DEBUG", "1")
         };
 
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DeferredLightPass.hlsl", "Main", &Defines, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DeferredLightPass.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -417,7 +417,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DepthReduction.hlsl", "ReductionMainInital", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DepthReduction.hlsl", "ReductionMainInital", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;
@@ -450,7 +450,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DepthReduction.hlsl", "ReductionMain", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+        if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/DepthReduction.hlsl", "ReductionMain", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
         {
             CDebug::DebugBreak();
             return false;

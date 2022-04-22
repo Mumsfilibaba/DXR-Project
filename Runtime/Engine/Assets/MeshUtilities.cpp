@@ -123,7 +123,7 @@ void CMeshUtilities::Subdivide(SMeshData& OutData, uint32 Subdivisions) noexcept
 void CMeshUtilities::Optimize(SMeshData& OutData, uint32 StartVertex) noexcept
 {
     uint32 VertexCount = static_cast<uint32>(OutData.Vertices.Size());
-    uint32 IndexCount = static_cast<uint32>(OutData.Indices.Size());
+    uint32 IndexCount  = static_cast<uint32>(OutData.Indices.Size());
 
     uint32 k = 0;
     uint32 j = 0;

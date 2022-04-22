@@ -179,7 +179,7 @@ bool CD3D12GraphicsPipelineState::Initialize(const SRHIGraphicsPipelineStateDesc
         SD3D12RootSignatureResourceCount ResourceCounts;
         ResourceCounts.Type = ERootSignatureType::Graphics;
         // TODO: Check if any shader actually uses the input assembler
-        ResourceCounts.AllowInputAssembler = true;
+        ResourceCounts.bAllowInputAssembler = true;
 
         // NOTE: For now all constants are put in visibility_all
         uint32 Num32BitConstants = 0;
@@ -268,7 +268,7 @@ bool CD3D12ComputePipelineState::Initialize()
     {
         SD3D12RootSignatureResourceCount ResourceCounts;
         ResourceCounts.Type = ERootSignatureType::Compute;
-        ResourceCounts.AllowInputAssembler = false;
+        ResourceCounts.bAllowInputAssembler = false;
         ResourceCounts.ResourceCounts[ShaderVisibility_All] = Shader->GetResourceCount();
 
         RootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(ResourceCounts));
@@ -515,7 +515,7 @@ bool CD3D12RayTracingPipelineState::Initialize(const SRHIRayTracingPipelineState
 
     SD3D12RootSignatureResourceCount RayGenLocalResourceCounts;
     RayGenLocalResourceCounts.Type = ERootSignatureType::RayTracingLocal;
-    RayGenLocalResourceCounts.AllowInputAssembler = false;
+    RayGenLocalResourceCounts.bAllowInputAssembler = false;
     RayGenLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = RayGen->GetRTLocalResourceCount();
 
     RayGenLocalRootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(RayGenLocalResourceCounts));
@@ -554,7 +554,7 @@ bool CD3D12RayTracingPipelineState::Initialize(const SRHIRayTracingPipelineState
 
         SD3D12RootSignatureResourceCount AnyHitLocalResourceCounts;
         AnyHitLocalResourceCounts.Type = ERootSignatureType::RayTracingLocal;
-        AnyHitLocalResourceCounts.AllowInputAssembler = false;
+        AnyHitLocalResourceCounts.bAllowInputAssembler = false;
         AnyHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = DxAnyHit->GetRTLocalResourceCount();
 
         HitLocalRootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(AnyHitLocalResourceCounts));
@@ -576,7 +576,7 @@ bool CD3D12RayTracingPipelineState::Initialize(const SRHIRayTracingPipelineState
 
         SD3D12RootSignatureResourceCount ClosestHitLocalResourceCounts;
         ClosestHitLocalResourceCounts.Type = ERootSignatureType::RayTracingLocal;
-        ClosestHitLocalResourceCounts.AllowInputAssembler = false;
+        ClosestHitLocalResourceCounts.bAllowInputAssembler = false;
         ClosestHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = DxClosestHit->GetRTLocalResourceCount();
 
         HitLocalRootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(ClosestHitLocalResourceCounts));
@@ -598,7 +598,7 @@ bool CD3D12RayTracingPipelineState::Initialize(const SRHIRayTracingPipelineState
 
         SD3D12RootSignatureResourceCount MissLocalResourceCounts;
         MissLocalResourceCounts.Type = ERootSignatureType::RayTracingLocal;
-        MissLocalResourceCounts.AllowInputAssembler = false;
+        MissLocalResourceCounts.bAllowInputAssembler = false;
         MissLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = DxMiss->GetRTLocalResourceCount();
 
         MissLocalRootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(MissLocalResourceCounts));
@@ -626,7 +626,7 @@ bool CD3D12RayTracingPipelineState::Initialize(const SRHIRayTracingPipelineState
 
     SD3D12RootSignatureResourceCount GlobalResourceCounts;
     GlobalResourceCounts.Type = ERootSignatureType::RayTracingGlobal;
-    GlobalResourceCounts.AllowInputAssembler = false;
+    GlobalResourceCounts.bAllowInputAssembler = false;
     GlobalResourceCounts.ResourceCounts[ShaderVisibility_All] = CombinedResourceCount;
 
     GlobalRootSignature = MakeSharedRef<CD3D12RootSignature>(CD3D12RootSignatureCache::Get().GetOrCreateRootSignature(GlobalResourceCounts));

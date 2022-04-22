@@ -17,10 +17,9 @@ CWindowsWindow::CWindowsWindow(CWindowsApplication* InApplication)
     , Window(0)
     , bIsFullscreen(false)
     , StoredPlacement()
-    , Style(0)
-    , StyleEx(0)
-{
-}
+    , DwStyle(0)
+    , DwStyleEx(0)
+{ }
 
 CWindowsWindow::~CWindowsWindow()
 {
@@ -35,31 +34,32 @@ TSharedRef<CWindowsWindow> CWindowsWindow::Make(CWindowsApplication* InApplicati
     return dbg_new CWindowsWindow(InApplication);
 }
 
-bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
+bool CWindowsWindow::Initialize(const CWindowInitializer& Initializer)
 {
     // Determine the window style for WinAPI
     DWORD NewStyle = 0;
     DWORD NewStyleEx = WS_EX_APPWINDOW;
-    if (InStyle.Style != 0)
+
+    if (Initializer.Style)
     {
         NewStyle = WS_OVERLAPPED;
-        if (InStyle.IsTitled())
+        if (Initializer.Style.IsTitled())
         {
             NewStyle |= WS_CAPTION;
         }
-        if (InStyle.IsClosable())
+        if (Initializer.Style.IsClosable())
         {
             NewStyle |= WS_SYSMENU;
         }
-        if (InStyle.IsMinimizable())
+        if (Initializer.Style.IsMinimizable())
         {
             NewStyle |= WS_SYSMENU | WS_MINIMIZEBOX;
         }
-        if (InStyle.IsMaximizable())
+        if (Initializer.Style.IsMaximizable())
         {
             NewStyle |= WS_SYSMENU | WS_MAXIMIZEBOX;
         }
-        if (InStyle.IsResizeable())
+        if (Initializer.Style.IsResizeable())
         {
             NewStyle |= WS_THICKFRAME;
         }
@@ -74,8 +74,8 @@ bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 In
     {
         0,
         0,
-        static_cast<LONG>(InWidth),
-        static_cast<LONG>(InHeight)
+        static_cast<LONG>(Initializer.Width),
+        static_cast<LONG>(Initializer.Height)
     };
 
 #if PLATFORM_WINDOWS_10_ANNIVERSARY
@@ -84,15 +84,15 @@ bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 In
     AdjustWindowRectEx(&ClientRect, NewStyle, false, NewStyleEx);
 #endif
 
-    int32 PositionX = x;
-    int32 PositionY = y;
-    int32 RealWidth = ClientRect.right - ClientRect.left;
+    int32 PositionX  = Initializer.Position.x;
+    int32 PositionY  = Initializer.Position.y;
+    int32 RealWidth  = ClientRect.right - ClientRect.left;
     int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
     HINSTANCE Instance = Application->GetInstance();
-    LPCSTR WindowClassName = PlatformApplication::GetWindowClassName();
+    LPCSTR WindowClassName = CWindowsApplication::GetWindowClassName();
 
-    Window = CreateWindowEx(NewStyleEx, WindowClassName, InTitle.CStr(), NewStyle, PositionX, PositionY, RealWidth, RealHeight, NULL, NULL, Instance, NULL);
+    Window = CreateWindowEx(NewStyleEx, WindowClassName, Initializer.Title.CStr(), NewStyle, PositionX, PositionY, RealWidth, RealHeight, NULL, NULL, Instance, NULL);
     if (Window == 0)
     {
         LOG_ERROR("[CWindowsWindow]: FAILED to create window\n");
@@ -103,14 +103,14 @@ bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 In
         // If the window has a sys-menu we check if the close-button should be active
         if (NewStyle & WS_SYSMENU)
         {
-            if (!(InStyle.IsClosable()))
+            if (!(Initializer.Style.IsClosable()))
             {
                 EnableMenuItem(GetSystemMenu(Window, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
             }
         }
 
         // Save style for later
-        Style = InStyle;
+        Style = Initializer.Style;
 
         // Set this to userdata
         SetLastError(0);
@@ -213,22 +213,22 @@ void CWindowsWindow::ToggleFullscreen()
 
             GetWindowPlacement(Window, &StoredPlacement);
 
-            if (Style == 0)
+            if (DwStyle == 0)
             {
-                Style = GetWindowLong(Window, GWL_STYLE);
+                DwStyle = GetWindowLong(Window, GWL_STYLE);
             }
 
-            if (StyleEx == 0)
+            if (DwStyleEx == 0)
             {
-                StyleEx = GetWindowLong(Window, GWL_EXSTYLE);
+                DwStyleEx = GetWindowLong(Window, GWL_EXSTYLE);
             }
 
-            LONG NewStyle = Style;
+            LONG NewStyle = DwStyle;
             NewStyle &= ~WS_BORDER;
             NewStyle &= ~WS_DLGFRAME;
             NewStyle &= ~WS_THICKFRAME;
 
-            LONG NewStyleEx = StyleEx;
+            LONG NewStyleEx = DwStyleEx;
             NewStyleEx &= ~WS_EX_WINDOWEDGE;
 
             SetWindowLong(Window, GWL_STYLE, NewStyle | WS_POPUP);
@@ -239,8 +239,8 @@ void CWindowsWindow::ToggleFullscreen()
         {
             bIsFullscreen = false;
 
-            SetWindowLong(Window, GWL_STYLE, Style);
-            SetWindowLong(Window, GWL_EXSTYLE, StyleEx);
+            SetWindowLong(Window, GWL_STYLE, DwStyle);
+            SetWindowLong(Window, GWL_EXSTYLE, DwStyleEx);
             ShowWindow(Window, SW_SHOWNORMAL);
             SetWindowPlacement(Window, &StoredPlacement);
         }
@@ -285,7 +285,7 @@ void CWindowsWindow::GetTitle(String& OutTitle)
 void CWindowsWindow::MoveTo(int32 x, int32 y)
 {
     RECT BorderRect = { 0, 0, 0, 0 };
-    AdjustWindowRectEx(&BorderRect, Style, false, StyleEx);
+    AdjustWindowRectEx(&BorderRect, DwStyle, false, DwStyleEx);
 
     x += BorderRect.left;
     y += BorderRect.top;
@@ -322,9 +322,9 @@ void CWindowsWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
 
 #if PLATFORM_WINDOWS_10_ANNIVERSARY
         uint32 WindowDPI = GetDpiForWindow(Window);
-        AdjustWindowRectExForDpi(&ClientRect, Style, false, StyleEx, WindowDPI);
+        AdjustWindowRectExForDpi(&ClientRect, DwStyle, false, DwStyleEx, WindowDPI);
 #else
-        AdjustWindowRectEx(&ClientRect, Style, false, StyleEx);
+        AdjustWindowRectEx(&ClientRect, DwStyle, false, DwStyleEx);
 #endif
 
         int32 PositionX = Shape.Position.x;
@@ -417,15 +417,15 @@ uint32 CWindowsWindow::GetHeight() const
     return 0;
 }
 
-void CWindowsWindow::SetOSHandle(PlatformWindowHandle InPlatformHandle)
+void CWindowsWindow::SetOSHandle(void* InOSHandle)
 {
-    HWND InWindowHandle = reinterpret_cast<HWND>(InPlatformHandle);
+    HWND InWindowHandle = reinterpret_cast<HWND>(InOSHandle);
     if (IsWindow(InWindowHandle))
     {
         Window = InWindowHandle;
 
-        Style   = GetWindowLong(Window, GWL_STYLE);
-        StyleEx = GetWindowLong(Window, GWL_EXSTYLE);
+        DwStyle   = GetWindowLong(Window, GWL_STYLE);
+        DwStyleEx = GetWindowLong(Window, GWL_EXSTYLE);
 
         // Check if the window with high probability is in fullscreen mode
         uint32 FullscreenWidth;
@@ -439,7 +439,7 @@ void CWindowsWindow::SetOSHandle(PlatformWindowHandle InPlatformHandle)
         const LONG BorderlessStyleExMask = ~WS_EX_WINDOWEDGE;
 
         const bool bHasFullscreenSize  = (FullscreenWidth == WindowShape.Width) && (FullscreenHeight == WindowShape.Height);
-        const bool bHasFullscreenStyle = ((Style & BorderlessStyleMask) == 0) && ((Style & BorderlessStyleExMask) == 0); 
+        const bool bHasFullscreenStyle = ((DwStyle & BorderlessStyleMask) == 0) && ((DwStyle & BorderlessStyleExMask) == 0); 
         bIsFullscreen = bHasFullscreenSize && bHasFullscreenStyle; 
     }
     else

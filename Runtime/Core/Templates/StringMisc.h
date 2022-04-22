@@ -184,51 +184,51 @@ public:
     /**
      * @brief: Copy two strings
      * 
-     * @param Dest: String to copy to
-     * @param Source: String to copy from
+     * @param Dst: String to copy to
+     * @param Src: String to copy from
      * @return: Returns the pointer to the destination string
      */
-    static FORCEINLINE CharType* Copy(CharType* Dest, const CharType* Source) noexcept
+    static FORCEINLINE CharType* Copy(CharType* Dst, const CharType* Src) noexcept
     {
-        return Copy(Dest, Source, Length(Source));
+        return Copy(Dst, Src, Length(Src));
     }
 
     /**
      * @brief: Copy two strings
      *
-     * @param Dest: String to copy to
-     * @param Source: String to copy from
+     * @param Dst: String to copy to
+     * @param Src: String to copy from
      * @param InLength: Number of characters to copy
      * @return: Returns the pointer to the destination string
      */
-    static FORCEINLINE CharType* Copy(CharType* Dest, const CharType* Source, uint64 InLength) noexcept
+    static FORCEINLINE CharType* Copy(CharType* Dst, const CharType* Src, uint32 InLength) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memcpy(Dest, Source, InLength * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(CMemory::MemcpyTyped<CharType>(Dst, Src, InLength));
     }
 
     /**
      * @brief: Move characters from one string to another
      *
-     * @param Dest: String to move to
-     * @param Source: String to move from
+     * @param Dst: String to move to
+     * @param Src: String to move from
      * @return: Returns the destination string
      */
-    static FORCEINLINE CharType* Move(CharType* Dest, const CharType* Source) noexcept
+    static FORCEINLINE CharType* Move(CharType* Dst, const CharType* Src) noexcept
     {
-        return Move(Dest, Source, Length(Source));
+        return Move(Dst, Src, Length(Src));
     }
 
     /**
      * @brief: Move characters from one string to another
      * 
-     * @param Dest: String to move to
-     * @param Source: String to move from
+     * @param Dst: String to move to
+     * @param Src: String to move from
      * @param InLength: Number of characters to move
      * @return: Returns the destination string
      */
-    static FORCEINLINE CharType* Move(CharType* Dest, const CharType* Source, uint64 InLength) noexcept
+    static FORCEINLINE CharType* Move(CharType* Dst, const CharType* Src, uint64 InLength) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memmove(Dest, Source, InLength * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(CMemory::Memmove(Dst, Src, InLength * sizeof(CharType)));
     }
 
     /**
@@ -441,51 +441,51 @@ public:
     /**
      * @brief: Copy two strings
      *
-     * @param Dest: String to copy to
-     * @param Source: String to copy from
+     * @param Dst: String to copy to
+     * @param Src: String to copy from
      * @return: Returns the pointer to the destination string
      */
-    static FORCEINLINE CharType* Copy(CharType* Dest, const CharType* Source) noexcept
+    static FORCEINLINE CharType* Copy(CharType* Dst, const CharType* Src) noexcept
     {
-        return Copy(Dest, Source, Length(Source));
+        return Copy(Dst, Src, Length(Src));
     }
 
     /**
      * @brief: Copy two strings
      *
-     * @param Dest: String to copy to
-     * @param Source: String to copy from
+     * @param Dst: String to copy to
+     * @param Src: String to copy from
      * @param InLength: Number of characters to copy
      * @return: Returns the pointer to the destination string
      */
-    static FORCEINLINE CharType* Copy(CharType* Dest, const CharType* Source, uint64 Length) noexcept
+    static FORCEINLINE CharType* Copy(CharType* Dst, const CharType* Src, uint32 Length) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memcpy(Dest, Source, Length * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(CMemory::MemcpyTyped<CharType>(Dst, Src, Length));
     }
 
     /**
      * @brief: Move characters from one string to another
      *
-     * @param Dest: String to move to
-     * @param Source: String to move from
+     * @param Dst: String to move to
+     * @param Src: String to move from
      * @return: Returns the destination string
      */
-    static FORCEINLINE CharType* Move(CharType* Dest, const CharType* Source) noexcept
+    static FORCEINLINE CharType* Move(CharType* Dst, const CharType* Src) noexcept
     {
-        return Move(Dest, Source, Length(Source));
+        return Move(Dst, Src, Length(Src));
     }
 
     /**
      * @brief: Move characters from one string to another
      *
-     * @param Dest: String to move to
-     * @param Source: String to move from
+     * @param Dst: String to move to
+     * @param Src: String to move from
      * @param InLength: Number of characters to move
      * @return: Returns the destination string
      */
-    static FORCEINLINE CharType* Move(CharType* Dest, const CharType* Source, uint64 Length) noexcept
+    static FORCEINLINE CharType* Move(CharType* Dst, const CharType* Src, uint64 Length) noexcept
     {
-        return reinterpret_cast<CharType*>(CMemory::Memmove(Dest, Source, Length * sizeof(CharType)));
+        return reinterpret_cast<CharType*>(CMemory::Memmove(Dst, Src, Length * sizeof(CharType)));
     }
 
     /**
