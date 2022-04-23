@@ -162,9 +162,9 @@ public:
         }
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12Buffer* InIndexBuffer, ERHIIndexFormat InIndexFormat)
+    FORCEINLINE void SetIndexBuffer(CD3D12Buffer* InIndexBuffer, EIndexFormat InIndexFormat)
     {
-        DXGI_FORMAT D3dIndexFormat = (InIndexFormat == ERHIIndexFormat::uint32) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+        DXGI_FORMAT D3dIndexFormat = (InIndexFormat == EIndexFormat::uint32) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
         if ((IndexBuffer != InIndexBuffer) || (D3dIndexFormat != IndexFormat))
         {
             IndexBuffer = InIndexBuffer;
@@ -345,7 +345,7 @@ public:
         VertexBufferCache.SetVertexBuffer(VertexBuffer, Slot);
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12Buffer* IndexBuffer, ERHIIndexFormat IndexFormat)
+    FORCEINLINE void SetIndexBuffer(CD3D12Buffer* IndexBuffer, EIndexFormat IndexFormat)
     {
         VertexBufferCache.SetIndexBuffer(IndexBuffer, IndexFormat);
     }

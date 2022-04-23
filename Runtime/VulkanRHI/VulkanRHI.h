@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CVulkanRHI
 
-class CVulkanRHI final : public CRHIModule
+class CVulkanRHI final : public CRHIModuleInterface
 {
 public:
 

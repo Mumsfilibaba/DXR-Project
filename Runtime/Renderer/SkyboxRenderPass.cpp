@@ -29,7 +29,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     }
 
     SRHIResourceData IndexData = SRHIResourceData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
-    SkyboxIndexBuffer = RHICreateIndexBuffer(ERHIIndexFormat::uint32, SkyboxMesh.Indices.Size(), BufferFlag_Dynamic, EResourceAccess::VertexAndConstantBuffer, &IndexData);
+    SkyboxIndexBuffer = RHICreateIndexBuffer(EIndexFormat::uint32, SkyboxMesh.Indices.Size(), BufferFlag_Dynamic, EResourceAccess::VertexAndConstantBuffer, &IndexData);
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -63,10 +63,10 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     }
 
     CRHISamplerStateDesc CreateInfo;
-    CreateInfo.AddressU = ERHISamplerMode::Wrap;
-    CreateInfo.AddressV = ERHISamplerMode::Wrap;
-    CreateInfo.AddressW = ERHISamplerMode::Wrap;
-    CreateInfo.Filter = ERHISamplerFilter::MinMagMipLinear;
+    CreateInfo.AddressU = ESamplerMode::Wrap;
+    CreateInfo.AddressV = ESamplerMode::Wrap;
+    CreateInfo.AddressW = ESamplerMode::Wrap;
+    CreateInfo.Filter = ESamplerFilter::MinMagMipLinear;
     CreateInfo.MinLOD = 0.0f;
     CreateInfo.MaxLOD = 0.0f;
 
@@ -111,10 +111,10 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         SkyboxPixelShader->SetName("Skybox PixelShader");
     }
 
-    SRHIRasterizerStateDesc RasterizerStateInfo;
+    CRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    CRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         CDebug::DebugBreak();
@@ -129,7 +129,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     BlendStateInfo.bIndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
-    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+    CRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         CDebug::DebugBreak();
@@ -145,7 +145,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     DepthStencilStateInfo.bDepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+    CRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         CDebug::DebugBreak();
@@ -198,9 +198,9 @@ void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& 
     CRHIRenderTargetView* RenderTarget[] = { FrameResources.FinalTarget->GetRenderTargetView() };
     CmdList.SetRenderTargets(RenderTarget, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
-    CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
+    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     CmdList.SetVertexBuffers(&SkyboxVertexBuffer, 1, 0);
-    CmdList.SetIndexBuffer(SkyboxIndexBuffer.Get(), ERHIIndexFormat::uint32);
+    CmdList.SetIndexBuffer(SkyboxIndexBuffer.Get(), EIndexFormat::uint32);
     CmdList.SetGraphicsPipelineState(PipelineState.Get());
 
     struct SimpleCameraBuffer

@@ -6,7 +6,7 @@
 #include "Core/Templates/Move.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TDefaultDelete for scalar types
+// TDefaultDelete
 
 template<typename T>
 struct TDefaultDelete
@@ -17,6 +17,7 @@ struct TDefaultDelete
     TDefaultDelete(const TDefaultDelete&) = default;
     TDefaultDelete(TDefaultDelete&&) = default;
     ~TDefaultDelete() = default;
+
     TDefaultDelete& operator=(const TDefaultDelete&) = default;
     TDefaultDelete& operator=(TDefaultDelete&&) = default;
 
@@ -47,7 +48,7 @@ struct TDefaultDelete
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TDefaultDelete for array types
+// TDefaultDelete
 
 template<typename T>
 struct TDefaultDelete<T[]>

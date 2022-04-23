@@ -6,22 +6,22 @@
 
 enum class ECursor
 {
-    None = 0,
-    Arrow = 1,
-    TextInput = 2,
-    ResizeAll = 3,
-    ResizeEW = 4,
-    ResizeNS = 5,
+    None       = 0,
+    Arrow      = 1,
+    TextInput  = 2,
+    ResizeAll  = 3,
+    ResizeEW   = 4,
+    ResizeNS   = 5,
     ResizeNESW = 6,
     ResizeNWSE = 7,
-    Hand = 8,
+    Hand       = 8,
     NotAllowed = 9,
 };
 
 class CPlatformWindow;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ICursor - Platform interface for cursor
+// ICursor
 
 class ICursor
 {

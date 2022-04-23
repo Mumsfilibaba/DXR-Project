@@ -86,7 +86,7 @@ public:
     virtual CRHISamplerStateRef                CreateSamplerState(const class CRHISamplerStateDesc& CreateInfo) override final;
 
     virtual class CRHIRayTracingScene*         CreateRayTracingScene(uint32 Flags, SRHIRayTracingGeometryInstance* Instances, uint32 NumInstances) override final;
-    virtual class CRHIRayTracingGeometry*      CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, ERHIIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices) override final;
+    virtual class CRHIRayTracingGeometry*      CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, EIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices) override final;
 
     virtual CRHIShaderResourceView*            CreateShaderResourceView(const SRHIShaderResourceViewDesc& CreateInfo)   override final;
     virtual CRHIUnorderedAccessView*           CreateUnorderedAccessView(const SRHIUnorderedAccessViewDesc& CreateInfo) override final;
@@ -109,7 +109,7 @@ public:
     virtual class CRHIRayMissShader*           CreateRayMissShader(const TArray<uint8>& ShaderCode)       override final;
 
     virtual class CRHIDepthStencilState*       CreateDepthStencilState(const CRHIDepthStencilStateInitializer& CreateInfo) override final;
-    virtual class CRHIRasterizerState*         CreateRasterizerState(const SRHIRasterizerStateDesc& CreateInfo)     override final;
+    virtual class CRHIRasterizerState*         CreateRasterizerState(const CRHIRasterizerStateInitializer& CreateInfo)     override final;
     virtual class CRHIBlendState*              CreateBlendState(const SRHIBlendStateDesc& CreateInfo)               override final;
     virtual class CRHIInputLayoutState*        CreateInputLayout(const SRHIInputLayoutStateDesc& CreateInfo)        override final;
 

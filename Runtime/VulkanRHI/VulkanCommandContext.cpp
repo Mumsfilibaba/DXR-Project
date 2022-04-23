@@ -132,11 +132,11 @@ void CVulkanCommandContext::SetVertexBuffers(CRHIBuffer* const* VertexBuffers, u
 {
 }
 
-void CVulkanCommandContext::SetIndexBuffer(CRHIBuffer* IndexBuffer, ERHIIndexFormat IndexFormat)
+void CVulkanCommandContext::SetIndexBuffer(CRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
 {
 }
 
-void CVulkanCommandContext::SetPrimitiveTopology(ERHIPrimitiveTopology PrimitveTopologyType)
+void CVulkanCommandContext::SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
 {
 }
 

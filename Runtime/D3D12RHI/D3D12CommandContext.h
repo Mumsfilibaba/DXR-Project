@@ -291,9 +291,9 @@ public:
     virtual void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView) override final;
 
     virtual void SetVertexBuffers(CRHIBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
-    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer, ERHIIndexFormat IndexFormat) override final;
+    virtual void SetIndexBuffer(CRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) override final;
 
-    virtual void SetPrimitiveTopology(ERHIPrimitiveTopology PrimitveTopologyType) override final;
+    virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
 
     virtual void SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState) override final;
     virtual void SetComputePipelineState(class CRHIComputePipelineState* PipelineState) override final;

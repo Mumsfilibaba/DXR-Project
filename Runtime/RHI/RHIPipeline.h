@@ -539,16 +539,16 @@ struct SRenderTargetBlendInfo
         , RenderTargetWriteMask()
     { }
 
-    SRenderTargetBlendInfo( EBlendType InSrcBlend
+    SRenderTargetBlendInfo( bool bInBlendEnable
+                          , EBlendType InSrcBlend
                           , EBlendType InDstBlend
-                          , EBlendOp InBlendOp
-                          , EBlendType InSrcBlendAlpha
-                          , EBlendType InDstBlendAlpha
-                          , EBlendOp InBlendOpAlpha
-                          , ELogicOp InLogicOp
-                          , bool bInBlendEnable
-                          , bool bInLogicOpEnable
-                          , SRenderTargetWriteState InRenderTargetWriteMask)
+                          , EBlendOp InBlendOp                              = EBlendOp::Add
+                          , EBlendType InSrcBlendAlpha                      = EBlendType::One
+                          , EBlendType InDstBlendAlpha                      = EBlendType::Zero
+                          , EBlendOp InBlendOpAlpha                         = EBlendOp::Add
+                          , ELogicOp InLogicOp                              = ELogicOp::Noop
+                          , bool bInLogicOpEnable                           = false
+                          , SRenderTargetWriteState InRenderTargetWriteMask = SRenderTargetWriteState())
         : SrcBlend(InSrcBlend)
         , DstBlend(InDstBlend)
         , BlendOp(InBlendOp)
@@ -661,8 +661,8 @@ public:
     }
 
     TStaticArray<SRenderTargetBlendInfo, kRHIMaxRenderTargetCount> RenderTargets;
-    bool                                                        bAlphaToCoverageEnable;
-    bool                                                        bIndependentBlendEnable;
+    bool                                                           bAlphaToCoverageEnable;
+    bool                                                           bIndependentBlendEnable;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -828,7 +828,7 @@ struct SGraphicsPipelineFormats
 
     SGraphicsPipelineFormats( const TStaticArray<ERHIFormat, kRHIMaxRenderTargetCount>& InRenderTargetFormats
                             , uint32 InNumRenderTargets
-                            , ERHIFormat InDepthStencilFormat)
+                            , ERHIFormat InDepthStencilFormat = ERHIFormat::Unknown)
         : RenderTargetFormats(InRenderTargetFormats)
         , NumRenderTargets(InNumRenderTargets)
         , DepthStencilFormat(InDepthStencilFormat)
@@ -930,13 +930,13 @@ public:
                                         , const CRHIDepthStencilStateRef& InDepthStencilState
                                         , const CRHIRasterizerStateRef& InRasterizerState
                                         , const CRHIBlendStateRef& InBlendState
-                                        , uint32 InSampleCount
-                                        , uint32 InSampleQuality
-                                        , uint32 InSampleMask
-                                        , EIndexBufferStripCutValue InIBStripCutValue
-                                        , EPrimitiveTopologyType InPrimitiveTopologyType
                                         , const SGraphicsPipelineShaders& InShaderState
-                                        , const SGraphicsPipelineFormats& InPipelineFormats)
+                                        , const SGraphicsPipelineFormats& InPipelineFormats
+                                        , EPrimitiveTopologyType InPrimitiveTopologyType = EPrimitiveTopologyType::Triangle
+                                        , uint32 InSampleCount                           = 1
+                                        , uint32 InSampleQuality                         = 0
+                                        , uint32 InSampleMask                            = 0xffffffff
+                                        , EIndexBufferStripCutValue InIBStripCutValue    = IndexBufferStripCutValue_Disabled)
         : VertexInputLayout(InVertexInputLayout)
         , DepthStencilState(InDepthStencilState)
         , RasterizerState(InRasterizerState)

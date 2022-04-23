@@ -61,7 +61,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     DepthStencilStateInfo.bDepthEnable = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+    CRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
     {
         CDebug::DebugBreak();
@@ -72,10 +72,10 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         DepthStencilState->SetName("ForwardPass DepthStencilState");
     }
 
-    SRHIRasterizerStateDesc RasterizerStateInfo;
+    CRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    CRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         CDebug::DebugBreak();
@@ -90,7 +90,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     BlendStateInfo.bIndependentBlendEnable = false;
     BlendStateInfo.RenderTarget[0].bBlendEnable = true;
 
-    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+    CRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         CDebug::DebugBreak();
@@ -111,7 +111,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
     PSOProperties.PipelineFormats.NumRenderTargets       = 1;
     PSOProperties.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
-    PSOProperties.PrimitiveTopologyType                  = ERHIPrimitiveTopologyType::Triangle;
+    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopology::Triangle;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)
@@ -146,7 +146,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     const float RenderWidth = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
 
-    CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
+    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
@@ -184,7 +184,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     for (const SMeshDrawCommand& Command : FrameResources.ForwardVisibleCommands)
     {
         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-        CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
+        CmdList.SetIndexBuffer(Command.IndexBuffer, EIndexFormat::uint32);
 
         if (Command.Material->IsBufferDirty())
         {

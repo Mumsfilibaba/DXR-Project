@@ -7,15 +7,18 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EWindowsMasks
+
 enum EWindowsMasks : uint32
 {
-    ScanCodeMask = 0x01ff,
-    KeyRepeatMask = 0x40000000,
+    ScanCodeMask   = 0x01ff,
+    KeyRepeatMask  = 0x40000000,
     BackButtonMask = 0x0001
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A small wrapper for "moved" message
+// SPointMessage
 
 struct SPointMessage
 {
@@ -80,11 +83,11 @@ bool CWindowsApplication::RegisterWindowClass()
     WNDCLASS WindowClass;
     CMemory::Memzero(&WindowClass);
 
-    WindowClass.hInstance = InstanceHandle;
+    WindowClass.hInstance     = InstanceHandle;
     WindowClass.lpszClassName = CWindowsApplication::GetWindowClassName();
     WindowClass.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
-    WindowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-    WindowClass.lpfnWndProc = CWindowsApplication::StaticMessageProc;
+    WindowClass.hCursor       = LoadCursor(NULL, IDC_ARROW);
+    WindowClass.lpfnWndProc   = CWindowsApplication::StaticMessageProc;
 
     ATOM ClassAtom = RegisterClass(&WindowClass);
     if (ClassAtom == 0)
@@ -104,9 +107,9 @@ bool CWindowsApplication::RegisterRawInputDevices(HWND Window)
     CMemory::Memzero(Devices, sizeof(Devices));
 
     // Mouse
-    Devices[0].dwFlags = 0;
-    Devices[0].hwndTarget = Window;
-    Devices[0].usUsage = 0x02;
+    Devices[0].dwFlags     = 0;
+    Devices[0].hwndTarget  = Window;
+    Devices[0].usUsage     = 0x02;
     Devices[0].usUsagePage = 0x01;
 
     bool bResult = !!::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
@@ -130,9 +133,9 @@ bool CWindowsApplication::UnregisterRawInputDevices()
     CMemory::Memzero(Devices, sizeof(Devices));
 
     // Mouse
-    Devices[0].dwFlags = RIDEV_REMOVE;
-    Devices[0].hwndTarget = 0;
-    Devices[0].usUsage = 0x02;
+    Devices[0].dwFlags     = RIDEV_REMOVE;
+    Devices[0].hwndTarget  = 0;
+    Devices[0].usUsage     = 0x02;
     Devices[0].usUsagePage = 0x01;
 
     bool bResult = !!::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));

@@ -148,7 +148,7 @@ CRHIRayTracingScene* CRHIInstanceVulkan::CreateRayTracingScene(uint32 Flags, SRH
     return nullptr;
 }
 
-CRHIRayTracingGeometry* CRHIInstanceVulkan::CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, ERHIIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices)
+CRHIRayTracingGeometry* CRHIInstanceVulkan::CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, EIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices)
 {
     return nullptr;
 }
@@ -238,7 +238,7 @@ CRHIDepthStencilState* CRHIInstanceVulkan::CreateDepthStencilState(const CRHIDep
     return dbg_new CVulkanDepthStencilState();
 }
 
-CRHIRasterizerState* CRHIInstanceVulkan::CreateRasterizerState(const SRHIRasterizerStateDesc& CreateInfo)
+CRHIRasterizerState* CRHIInstanceVulkan::CreateRasterizerState(const CRHIRasterizerStateInitializer& CreateInfo)
 {
     return dbg_new CVulkanRasterizerState();
 }

@@ -1,5 +1,3 @@
-
-#if PLATFORM_WINDOWS
 #include "WindowsWindow.h"
 
 #include "Core/Logging/Log.h"
@@ -9,7 +7,7 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowsWindow
+// CWindowsWindow
 
 CWindowsWindow::CWindowsWindow(CWindowsApplication* InApplication)
     : CPlatformWindow()
@@ -447,5 +445,3 @@ void CWindowsWindow::SetOSHandle(void* InOSHandle)
         LOG_ERROR("[CWindowsWindow]: Tried to set an invalid WindowHandle")
     }
 }
-
-#endif

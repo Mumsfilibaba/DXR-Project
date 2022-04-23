@@ -4,7 +4,7 @@
 #include "Core/Windows/Windows.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// IWindowsMessageListener - Interface for handling windows messages before they get handled by the WindowsApplication
+// IWindowsMessageListener
 
 class IWindowsMessageListener
 {

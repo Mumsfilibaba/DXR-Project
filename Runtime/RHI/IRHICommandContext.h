@@ -752,14 +752,14 @@ public:
      * 
      * @param Resource: Resource to destroy
      */
-    virtual void DestroyResource(CRHIResource* Resource) = 0;
+    virtual void DestroyResource(IRHIResource* Resource) = 0;
 
     /**
-     * @brief: Inform the driver that we do not care about the contents of this resource anymore, the resource should be a texture or buffer
+     * @brief: Inform the driver that we do not care about the contents of this texture anymore
      * 
      * @param Resource: Resource to discard
      */
-    virtual void DiscardContents(CRHIResource* Resource) = 0;
+    virtual void DiscardContents(CRHITexture* Resource) = 0;
 
     /**
      * @brief: Build the acceleration structure of a RayTracing-Geometry instance

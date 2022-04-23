@@ -37,7 +37,7 @@ bool CD3D12RayTracingGeometry::Build(CD3D12CommandContext& CmdContext, bool bUpd
 
     if (IndexBuffer)
     {
-        GeometryDesc.Triangles.IndexFormat = (IndexFormat == ERHIIndexFormat::uint32) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+        GeometryDesc.Triangles.IndexFormat = (IndexFormat == EIndexFormat::uint32) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
         GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetResource()->GetGPUVirtualAddress();
         GeometryDesc.Triangles.IndexCount  = IndexCount;
     }

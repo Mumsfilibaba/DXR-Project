@@ -39,7 +39,7 @@ public:
     CD3D12BufferRef   VertexBuffer;
     uint32            VertexCount;
 
-    ERHIIndexFormat   IndexFormat;
+    EIndexFormat   IndexFormat;
     CD3D12BufferRef   IndexBuffer;
     uint32            IndexCount;
 

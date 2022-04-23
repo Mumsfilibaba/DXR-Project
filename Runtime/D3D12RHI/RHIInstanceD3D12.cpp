@@ -542,7 +542,7 @@ CRHISamplerStateRef CRHIInstanceD3D12::CreateSamplerState(const CRHISamplerState
 }
 
 
-CRHIRayTracingGeometry* CRHIInstanceD3D12::CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, ERHIIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices)
+CRHIRayTracingGeometry* CRHIInstanceD3D12::CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, EIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices)
 {
     TSharedRef<CD3D12RayTracingGeometry> Geometry = dbg_new CD3D12RayTracingGeometry(GetDevice(), Flags);
     Geometry->VertexBuffer = MakeSharedRef<CD3D12Buffer>(VertexBuffer);
@@ -1210,7 +1210,7 @@ CRHIDepthStencilState* CRHIInstanceD3D12::CreateDepthStencilState(const CRHIDept
     return dbg_new CD3D12DepthStencilState(GetDevice(), Desc);
 }
 
-CRHIRasterizerState* CRHIInstanceD3D12::CreateRasterizerState(const SRHIRasterizerStateDesc& CreateInfo)
+CRHIRasterizerState* CRHIInstanceD3D12::CreateRasterizerState(const CRHIRasterizerStateInitializer& CreateInfo)
 {
     D3D12_RASTERIZER_DESC Desc;
     CMemory::Memzero(&Desc);

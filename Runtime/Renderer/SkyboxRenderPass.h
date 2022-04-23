@@ -23,7 +23,7 @@ public:
 
 private:
     CRHIGraphicsPipelineStateRef PipelineState;
-    TSharedRef<CRHIVertexShader> SkyboxVertexShader;
+    CRHIVertexShaderRef SkyboxVertexShader;
     CRHIPixelShaderRef  SkyboxPixelShader;
     TSharedRef<CRHIBuffer> SkyboxVertexBuffer;
     TSharedRef<CRHIBuffer>  SkyboxIndexBuffer;

@@ -20,6 +20,6 @@ public:
 
 private:
     CRHIGraphicsPipelineStateRef PipelineState;
-    TSharedRef<CRHIVertexShader>          VShader;
+    CRHIVertexShaderRef          VShader;
     CRHIPixelShaderRef           PShader;
 };

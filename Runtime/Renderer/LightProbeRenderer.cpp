@@ -71,10 +71,10 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
     }
 
     CRHISamplerStateDesc CreateInfo;
-    CreateInfo.AddressU = ERHISamplerMode::Wrap;
-    CreateInfo.AddressV = ERHISamplerMode::Wrap;
-    CreateInfo.AddressW = ERHISamplerMode::Wrap;
-    CreateInfo.Filter = ERHISamplerFilter::MinMagMipLinear;
+    CreateInfo.AddressU = ESamplerMode::Wrap;
+    CreateInfo.AddressV = ESamplerMode::Wrap;
+    CreateInfo.AddressW = ESamplerMode::Wrap;
+    CreateInfo.Filter = ESamplerFilter::MinMagMipLinear;
 
     FrameResources.IrradianceSampler = RHICreateSamplerState(CreateInfo);
     if (!FrameResources.IrradianceSampler)

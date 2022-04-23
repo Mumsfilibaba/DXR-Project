@@ -145,7 +145,7 @@ private:
     TSharedRef<CRHIBuffer>                AABBVertexBuffer;
     TSharedRef<CRHIBuffer>                AABBIndexBuffer;
     CRHIGraphicsPipelineStateRef AABBDebugPipelineState;
-    TSharedRef<CRHIVertexShader>          AABBVertexShader;
+    CRHIVertexShaderRef          AABBVertexShader;
     CRHIPixelShaderRef           AABBPixelShader;
 
     CRHIGraphicsPipelineStateRef PostPSO;

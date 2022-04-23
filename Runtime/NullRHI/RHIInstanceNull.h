@@ -1,7 +1,7 @@
 #pragma once
 #include "RHI/RHIInstance.h"
 
-#include "NullRHIBuffer.h"
+#include "NullRHIResources.h"
 #include "NullRHITexture.h"
 #include "NullRHIResourceView.h"
 #include "NullRHISamplerState.h"
@@ -9,7 +9,7 @@
 #include "NullRHIShader.h"
 #include "NullRHICommandContext.h"
 #include "NullRHITimestampQuery.h"
-#include "NullRHIPipelineState.h"
+#include "NullRHIPipeline.h"
 #include "NullRHIRayTracing.h"
 
 #if defined(COMPILER_MSVC)
@@ -78,7 +78,7 @@ public:
         return dbg_new CNullRHIRayTracingScene(Flags);
     }
 
-    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, ERHIIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices) override final
+    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIBuffer* VertexBuffer, uint32 NumVertices, EIndexFormat IndexFormat, CRHIBuffer* IndexBuffer, uint32 NumIndices) override final
     {
         return dbg_new CNullRHIRayTracingGeometry(Flags);
     }
@@ -168,7 +168,7 @@ public:
         return dbg_new CNullRHIDepthStencilState();
     }
 
-    virtual class CRHIRasterizerState* CreateRasterizerState(const SRHIRasterizerStateDesc& CreateInfo) override final
+    virtual class CRHIRasterizerState* CreateRasterizerState(const CRHIRasterizerStateInitializer& CreateInfo) override final
     {
         return dbg_new CNullRHIRasterizerState();
     }

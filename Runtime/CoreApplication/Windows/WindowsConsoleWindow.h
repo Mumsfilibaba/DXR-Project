@@ -18,11 +18,21 @@
 // Windows-specific interface for ConsoleWindow
 
 class COREAPPLICATION_API CWindowsConsoleWindow final : public CPlatformConsoleWindow
-{
+{ 
+private:
+
+    CWindowsConsoleWindow();
+    ~CWindowsConsoleWindow();
+
 public:
 
     /* Creates a new console, can only be called once */
     static CWindowsConsoleWindow* CreateWindow();
+    
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CPlatformConsoleWindow Interface
 
     virtual void Print(const String& Message) override final;
     virtual void PrintLine(const String& Message) override final;
@@ -33,14 +43,7 @@ public:
     virtual void SetColor(EConsoleColor Color)  override final;
 
 private:
-
-    CWindowsConsoleWindow();
-    ~CWindowsConsoleWindow();
-
-    /* Handle to the console window */
-    HANDLE ConsoleHandle;
-
-    /* Mutex protecting for errors when printing from multiple threads */
+    HANDLE           ConsoleHandle;
     CCriticalSection ConsoleMutex;
 };
 

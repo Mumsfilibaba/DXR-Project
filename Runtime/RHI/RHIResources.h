@@ -53,7 +53,7 @@ typedef TSharedRef<class CRHIViewport>            CRHIViewportRef;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIResource
 
-class CRHIResource : public IRHIResource
+class RHI_API CRHIResource : public IRHIResource
 {
 protected:
 
@@ -348,8 +348,8 @@ public:
      */
     virtual void SetName(const String& InName) { }
 
-    /** @return: Returns true if the buffer is structured or not (If stride is more than one) */
-    virtual bool IsStructured() const { return (GetStride() > 1); }
+    /** @return: Returns true if the buffer is structured or not */
+    virtual bool IsStructured() const { return false; }
 
     /** @return: Returns the name of the Buffer */
     virtual String GetName() const { return ""; }
@@ -373,6 +373,12 @@ protected:
 class CRHIVertexBufferInitializer : public CRHIBufferInitializer
 {
 public:
+
+    template<typename VertexType>
+    static CRHIVertexBufferInitializer CreateStructured(EBufferUsageFlags InUsageFlags, uint32 InNumVertices, EResourceAccess InInitialState)
+    {
+        return CRHIVertexBufferInitializer(InUsageFlags, InNumVertices, sizeof(VertexType), InInitialState);
+    }
 
     CRHIVertexBufferInitializer()
         : CRHIBufferInitializer()
@@ -417,14 +423,12 @@ protected:
 
 public:
 
-    /** @return: Returns the CRHIVertexBuffer */
     virtual CRHIVertexBuffer* GetVertexBuffer() override final { return this; }
 
-    /** @return: Returns the Buffer Stride */
     virtual uint32 GetStride() const override final { return Stride; }
+    virtual uint32 GetSize()   const override final { return NumVertices * Stride; }
 
-    /** @return: Returns the Buffer Size */
-    virtual uint32 GetSize() const override final { return NumVertices * Stride; }
+    virtual bool IsStructured() const override final { return true; }
 
     /** @return: Returns the number of vertices */
     uint32 GetNumVertices() const { return NumVertices; }
@@ -484,14 +488,12 @@ protected:
 
 public:
 
-    /** @return: Returns the CRHIIndexBuffer */
     virtual CRHIIndexBuffer* GetIndexBuffer() override final { return this; }
 
-    /** @return: Returns the Buffer Stride */
     virtual uint32 GetStride() const override final { return GetStrideFromIndexFormat(Format); }
+    virtual uint32 GetSize()   const override final { return NumIndicies * GetStride(); }
 
-    /** @return: Returns the Buffer Size */
-    virtual uint32 GetSize() const override final { return NumIndicies * GetStride(); }
+    virtual bool IsStructured() const override final { return false; }
 
     /** @return: Returns the number of indices */
     uint32 GetNumIndicies() const { return NumIndicies; }
@@ -554,14 +556,12 @@ protected:
 
 public:
 
-    /** @return: Returns the CRHIGenericBuffer */
     virtual CRHIGenericBuffer* GetGenericBuffer() override final { return this; }
 
-    /** @return: Returns the Buffer Stride */
     virtual uint32 GetStride() const override final { return Stride; }
+    virtual uint32 GetSize()   const override final { return Size; }
 
-    /** @return: Returns the Buffer Size */
-    virtual uint32 GetSize() const override final { return Size; }
+    virtual bool IsStructured() const override final { return (Stride > sizeof(uint32)); }
 
 protected:
     uint32 Size;
@@ -620,17 +620,15 @@ protected:
 
 public:
 
-    /** @return: Returns a Bindless descriptor-handle if the RHI supports it */
-    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
-
-    /** @return: Returns the CRHIConstantBuffer */
     virtual CRHIConstantBuffer* GetConstantBuffer() override final { return this; }
 
-    /** @return: Returns the Buffer Stride */
     virtual uint32 GetStride() const override final { return Stride; }
+    virtual uint32 GetSize()   const override final { return Size; }
 
-    /** @return: Returns the Buffer Size */
-    virtual uint32 GetSize() const override final { return Size; }
+    virtual bool IsStructured() const override final { return false; }
+    
+    /** @return: Returns a Bindless descriptor-handle if the RHI supports it */
+    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 
 protected:
     uint32 Size;
@@ -861,19 +859,13 @@ protected:
 
 public:
 
-    /** @return: Returns the CRHITexture2D interface */
     virtual CRHITexture2D* GetTexture2D() { return this; }
 
-    /** @return: Returns a IntVector3 with Width, Height, and Depth */
     virtual CIntVector3 GetExtent() const override { return CIntVector3(Width, Height, 1); }
 
-    /** @return: Returns the texture Width */
-    virtual uint32 GetWidth() const override final { return Width; }
-
-    /** @return: Returns the texture Height */
+    virtual uint32 GetWidth()  const override final { return Width; }
     virtual uint32 GetHeight() const override final { return Height; }
 
-    /** @return: Returns the number of samples in the texture */
     virtual uint32 GetNumSamples() const override final { return NumSamples; }
 
 protected:
@@ -936,16 +928,11 @@ protected:
 
 public:
 
-    /** @return: Returns the CRHITexture2D interface */
-    virtual CRHITexture2D* GetTexture2D() override final { return nullptr; }
-
-    /** @return: Returns the CRHITexture2DArray interface */
+    virtual CRHITexture2D*      GetTexture2D() override final { return nullptr; }
     virtual CRHITexture2DArray* GetTexture2DArray() override final { return this; }
 
-    /** @return: Returns a IntVector3 with Width, Height, and Depth */
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(GetWidth(), GetDepth(), ArraySize); }
 
-    /** @return: Returns the ArraySize of the texture */
     virtual uint32 GetArraySize() const override final { return ArraySize; }
 
 protected:
@@ -1015,25 +1002,17 @@ protected:
 
 public:
 
-    /** @return: Returns the CRHITextureCube interface if implemented otherwise nullptr */
     virtual CRHITextureCube* GetTextureCube() override final { return this; }
 
-    /** @return: Returns a IntVector3 with Width, Height, and Depth */
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(Extent, Extent, ArraySize); }
 
-    /** @return: Returns the texture Width */
     virtual uint32 GetWidth()  const override final { return Extent; }
-
-    /** @return: Returns the texture Height */
     virtual uint32 GetHeight() const override final { return Extent; }
 
-    /** @return: Returns the ArraySize of the texture */
     virtual uint32 GetArraySize() const override final { return ArraySize; }
 
-    /** @return: Returns the number of samples in the texture */
     virtual uint32 GetNumSamples() const override final { return NumSamples; }
 
-    /** @return: Returns the number of Cubes/Arraysize */
     uint32 GetNumCubes() const { return ArraySize; }
 
 protected:
@@ -1105,19 +1084,12 @@ protected:
 
 public:
 
-    /** @return: Returns the CRHITexture3D interface if implemented otherwise nullptr */
     virtual CRHITexture3D* GetTexture3D() override final { return this; }
 
-    /** @return: Returns a IntVector3 with Width, Height, and Depth */
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(Width, Height, Depth); }
 
-    /** @return: Returns the texture Width */
-    virtual uint32 GetWidth() const override final { return Width; }
-
-    /** @return: Returns the texture Height */
+    virtual uint32 GetWidth()  const override final { return Width; }
     virtual uint32 GetHeight() const override final { return Height; }
-
-    /** @return: Returns the texture Depth */
     virtual uint32 GetDepth()  const override final { return Depth; }
 
 protected:
@@ -1538,14 +1510,14 @@ public:
      * @param InLoadAction: Action to take before rendering to the Rendertarget
      * @param InStoreAction: Action to take after rendering to the Rendertarget
      */
-    CRHIDepthStencilView( CRHITexture* InTexture
-                        , ERHIFormat InFormat
-                        , uint16 InFirstArraySlice
-                        , uint16 InNumArraySlices
-                        , uint8 InMipLevel
-                        , EAttachmentLoadAction InLoadAction
-                        , EAttachmentStoreAction InStoreAction
-                        , const CTextureDepthStencilValue& InClearValue)
+    explicit CRHIDepthStencilView( CRHITexture* InTexture
+                                 , ERHIFormat InFormat
+                                 , uint16 InFirstArraySlice
+                                 , uint16 InNumArraySlices
+                                 , uint8 InMipLevel
+                                 , EAttachmentLoadAction InLoadAction
+                                 , EAttachmentStoreAction InStoreAction
+                                 , const CTextureDepthStencilValue& InClearValue)
         : Texture(InTexture)
         , Format(InFormat)
         , FirstArraySlice(InFirstArraySlice)
@@ -1716,7 +1688,7 @@ public:
      * @param InFilter: Filtering mode
      * @param InMaxAnisotropy: Max count of anisotropic filtering if that is the selected filter
      */
-    static CRHISamplerStateInitializer Create(ESamplerMode InAddressMode, ESamplerFilter InFilter, uint8 InMaxAnisotropy)
+    static CRHISamplerStateInitializer CreateSimple(ESamplerMode InAddressMode, ESamplerFilter InFilter)
     {
         return CRHISamplerStateInitializer( InAddressMode
                                           , InAddressMode
@@ -1724,7 +1696,7 @@ public:
                                           , InFilter
                                           , EComparisonFunc::Unknown
                                           , 0.0f
-                                          , InMaxAnisotropy
+                                          , 0
                                           , 0.0f
                                           , FLT_MAX
                                           , CFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
@@ -2018,8 +1990,6 @@ protected:
     { }
 
 public:
-
-    /** @return: Returns the CRHIRayTracingGeometry interface if implemented otherwise nullptr */
     virtual CRHIRayTracingGeometry* GetRayTracingGeometry() { return this; }
 };
 
@@ -2156,7 +2126,6 @@ protected:
 
 public:
     
-    /** @return: Returns the CRHIRayTracingScene interface if implemented otherwise nullptr */
     virtual CRHIRayTracingScene* GetRayTracingScene() { return this; }
 
     /** @return: Returns a pointer to the ShaderResourceView */

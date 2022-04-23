@@ -68,6 +68,7 @@ private:
     TSharedRef<CNullRHIShaderResourceView> View;
 };
 
+
 #if defined(COMPILER_MSVC)
 #pragma warning(pop)
 

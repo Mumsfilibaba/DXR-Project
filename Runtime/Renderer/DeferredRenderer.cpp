@@ -29,10 +29,10 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
     {
         CRHISamplerStateDesc CreateInfo;
-        CreateInfo.AddressU = ERHISamplerMode::Clamp;
-        CreateInfo.AddressV = ERHISamplerMode::Clamp;
-        CreateInfo.AddressW = ERHISamplerMode::Clamp;
-        CreateInfo.Filter = ERHISamplerFilter::MinMagMipPoint;
+        CreateInfo.AddressU = ESamplerMode::Clamp;
+        CreateInfo.AddressV = ESamplerMode::Clamp;
+        CreateInfo.AddressW = ESamplerMode::Clamp;
+        CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
 
         FrameResources.GBufferSampler = RHICreateSamplerState(CreateInfo);
         if (!FrameResources.GBufferSampler)
@@ -88,7 +88,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> GeometryDepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+        CRHIDepthStencilStateRef GeometryDepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
         if (!GeometryDepthStencilState)
         {
             CDebug::DebugBreak();
@@ -99,10 +99,10 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             GeometryDepthStencilState->SetName("GeometryPass DepthStencilState");
         }
 
-        SRHIRasterizerStateDesc RasterizerStateInfo;
+        CRHIRasterizerStateInitializer RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<CRHIRasterizerState> GeometryRasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+        CRHIRasterizerStateRef GeometryRasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
         if (!GeometryRasterizerState)
         {
             CDebug::DebugBreak();
@@ -117,7 +117,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         BlendStateInfo.bIndependentBlendEnable = false;
         BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
-        TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+        CRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             CDebug::DebugBreak();
@@ -178,7 +178,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+        CRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
         if (!DepthStencilState)
         {
             CDebug::DebugBreak();
@@ -189,10 +189,10 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             DepthStencilState->SetName("Prepass DepthStencilState");
         }
 
-        SRHIRasterizerStateDesc RasterizerStateInfo;
+        CRHIRasterizerStateInitializer RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+        CRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             CDebug::DebugBreak();
@@ -207,7 +207,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         BlendStateInfo.bIndependentBlendEnable = false;
         BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
-        TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+        CRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             CDebug::DebugBreak();
@@ -271,10 +271,10 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     CRHISamplerStateDesc CreateInfo;
-    CreateInfo.AddressU = ERHISamplerMode::Clamp;
-    CreateInfo.AddressV = ERHISamplerMode::Clamp;
-    CreateInfo.AddressW = ERHISamplerMode::Clamp;
-    CreateInfo.Filter = ERHISamplerFilter::MinMagMipPoint;
+    CreateInfo.AddressU = ESamplerMode::Clamp;
+    CreateInfo.AddressV = ESamplerMode::Clamp;
+    CreateInfo.AddressW = ESamplerMode::Clamp;
+    CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
 
     FrameResources.IntegrationLUTSampler = RHICreateSamplerState(CreateInfo);
     if (!FrameResources.IntegrationLUTSampler)
@@ -518,7 +518,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
 
         GPU_TRACE_SCOPE(CmdList, "Pre Pass");
 
-        CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
+        CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
         CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
         CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
@@ -539,7 +539,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
             if (Command.Material->ShouldRenderInPrePass())
             {
                 CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-                CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
+                CmdList.SetIndexBuffer(Command.IndexBuffer, EIndexFormat::uint32);
 
                 PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
@@ -627,7 +627,7 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
     const float RenderWidth = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
 
-    CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
+    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
@@ -653,7 +653,7 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
     for (const SMeshDrawCommand& Command : FrameResources.DeferredVisibleCommands)
     {
         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-        CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
+        CmdList.SetIndexBuffer(Command.IndexBuffer, EIndexFormat::uint32);
 
         if (Command.Material->IsBufferDirty())
         {

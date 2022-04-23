@@ -13,87 +13,65 @@
 
 class COREAPPLICATION_API CWindowsWindow final : public CPlatformWindow
 {
-public:
-
-    /* Create a new window */
-    static TSharedRef<CWindowsWindow> Make(class CWindowsApplication* InApplication);
-
-    /* Initializes the window */
-    virtual bool Initialize(const CWindowInitializer& Initializer) override final;
-
-    /* Shows the window */
-    virtual void Show(bool bMaximized) override final;
-
-    /* Minimizes the window */
-    virtual void Minimize() override final;
-
-    /* Maximizes the window */
-    virtual void Maximize() override final;
-
-    /* Closes the window */
-    virtual void Close() override final;
-
-    /* Restores the window after being minimized or maximized */
-    virtual void Restore() override final;
-
-    /* Makes the window a borderless fullscreen window */
-    virtual void ToggleFullscreen() override final;
-
-    /* Checks if the underlaying native handle of the window is valid */
-    virtual bool IsValid() const override final;
-
-    /* Checks if this window is the currently active window */
-    virtual bool IsActiveWindow() const override final;
-
-    /* Sets the title */
-    virtual void SetTitle(const String& Title) override final;
-
-    /* Retrieve the window title */
-    virtual void GetTitle(String& OutTitle) override final;
-
-    /* Set the position of the window */
-    virtual void MoveTo(int32 x, int32 y) override final;
-
-    /* Set the shape of the window */
-    virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) override final;
-
-    /* Retrieve the shape of the window */
-    virtual void GetWindowShape(SWindowShape& OutWindowShape) const override final;
-
-    /* Get the fullscreen information of the monitor that the window currently is on */
-    virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const override final;
-
-    /* Retrieve the width of the window */
-    virtual uint32 GetWidth()  const override final;
-
-    /* Retrieve the height of the window */
-    virtual uint32 GetHeight() const override final;
-
-    /* Set the native window handle */
-    virtual void SetOSHandle(void* InOSHandle) override final;
-
-    /* @return: Returns the native handle */
-    virtual void* GetOSHandle() const override final { return reinterpret_cast<void*>(Window); }
-
-    HWND GetHandle() const { return Window; }
-
 private:
 
     CWindowsWindow(CWindowsApplication* InApplication);
     ~CWindowsWindow();
 
-    // Owning application
+public:
+
+    /* Create a new window */
+    static TSharedRef<CWindowsWindow> Make(class CWindowsApplication* InApplication);
+
+    HWND GetHandle() const { return Window; }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CPlatformWindow Interface
+
+    virtual bool Initialize(const CWindowInitializer& Initializer) override final;
+    virtual void Show(bool bMaximized) override final;
+
+    virtual void Minimize() override final;
+    virtual void Maximize() override final;
+
+    virtual void Close() override final;
+    virtual void Restore() override final;
+
+    virtual void ToggleFullscreen() override final;
+
+    virtual bool IsValid() const override final;
+    virtual bool IsActiveWindow() const override final;
+
+    virtual void SetTitle(const String& Title) override final;
+    virtual void GetTitle(String& OutTitle) override final;
+
+    virtual void MoveTo(int32 x, int32 y) override final;
+
+    virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) override final;
+    virtual void GetWindowShape(SWindowShape& OutWindowShape) const override final;
+
+    virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const override final;
+
+    virtual uint32 GetWidth()  const override final;
+    virtual uint32 GetHeight() const override final;
+
+    virtual void  SetOSHandle(void* InOSHandle) override final;
+    virtual void* GetOSHandle() const override final { return reinterpret_cast<void*>(Window); }
+
+private:
     CWindowsApplication* Application;
 
-    HWND Window;
+    HWND                 Window;
 
-    bool bIsFullscreen;
+    bool                 bIsFullscreen;
 
-    /* Used when toggling fullscreen */
-    WINDOWPLACEMENT StoredPlacement;
+    // Used when toggling fullscreen 
+    WINDOWPLACEMENT      StoredPlacement;
 
-    DWORD DwStyle;
-    DWORD DwStyleEx;
+    DWORD                DwStyle;
+    DWORD                DwStyleEx;
 };
 
 #endif

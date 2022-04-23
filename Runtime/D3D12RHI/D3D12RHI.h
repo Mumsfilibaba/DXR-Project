@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RHI
 
-class CD3D12RHI final : public CRHIModule
+class CD3D12RHI final : public CRHIModuleInterface
 {
 public:
 

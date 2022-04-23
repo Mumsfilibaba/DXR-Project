@@ -29,11 +29,11 @@ private:
     bool CreateGBuffer(SFrameResources& FrameResources);
 
     CRHIGraphicsPipelineStateRef PipelineState;
-    TSharedRef<CRHIVertexShader>          BaseVertexShader;
+    CRHIVertexShaderRef          BaseVertexShader;
     CRHIPixelShaderRef           BasePixelShader;
 
     CRHIGraphicsPipelineStateRef PrePassPipelineState;
-    TSharedRef<CRHIVertexShader>          PrePassVertexShader;
+    CRHIVertexShaderRef          PrePassVertexShader;
 
     TSharedRef<CRHIComputePipelineState>  TiledLightPassPSO;
     TSharedRef<CRHIComputeShader>         TiledLightShader;

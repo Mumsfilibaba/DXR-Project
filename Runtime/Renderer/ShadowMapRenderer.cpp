@@ -82,7 +82,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+        CRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
         if (!DepthStencilState)
         {
             CDebug::DebugBreak();
@@ -93,10 +93,10 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             DepthStencilState->SetName("Shadow DepthStencilState");
         }
 
-        SRHIRasterizerStateDesc RasterizerStateInfo;
+        CRHIRasterizerStateInitializer RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+        CRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             CDebug::DebugBreak();
@@ -109,7 +109,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
         SRHIBlendStateDesc BlendStateInfo;
 
-        TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+        CRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             CDebug::DebugBreak();
@@ -125,7 +125,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
         PipelineStateInfo.IBStripCutValue = EIndexBufferStripCutValue::Disabled;
         PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
+        PipelineStateInfo.PrimitiveTopologyType = EPrimitiveTopology::Triangle;
         PipelineStateInfo.RasterizerState = RasterizerState.Get();
         PipelineStateInfo.SampleCount = 1;
         PipelineStateInfo.SampleQuality = 0;
@@ -149,7 +149,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
     // Cascaded shadowmap
     {
-        PerCascadeBuffer = RHICreateConstantBuffer<SPerCascade>(ERHIBufferFlags::BufferFlag_Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+        PerCascadeBuffer = RHICreateConstantBuffer<SPerCascade>(EBufferUsageFlags::BufferFlag_Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
         if (!PerCascadeBuffer)
         {
             CDebug::DebugBreak();
@@ -182,7 +182,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         DepthStencilStateInfo.bDepthEnable = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+        CRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
         if (!DepthStencilState)
         {
             CDebug::DebugBreak();
@@ -193,10 +193,10 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             DepthStencilState->SetName("Shadow DepthStencilState");
         }
 
-        SRHIRasterizerStateDesc RasterizerStateInfo;
+        CRHIRasterizerStateInitializer RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+        CRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             CDebug::DebugBreak();
@@ -208,7 +208,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         }
 
         SRHIBlendStateDesc BlendStateInfo;
-        TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+        CRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             CDebug::DebugBreak();
@@ -224,7 +224,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
         PipelineStateInfo.IBStripCutValue = EIndexBufferStripCutValue::Disabled;
         PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
+        PipelineStateInfo.PrimitiveTopologyType = EPrimitiveTopology::Triangle;
         PipelineStateInfo.RasterizerState = RasterizerState.Get();
         PipelineStateInfo.SampleCount = 1;
         PipelineStateInfo.SampleQuality = 0;
@@ -406,7 +406,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
     //    PointLightFrame = 0;
     //}
 
-    CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
+    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
     CmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite);
 
@@ -475,7 +475,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
                         if (CameraFrustum.CheckAABB(Box))
                         {
                             CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-                            CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
+                            CmdList.SetIndexBuffer(Command.IndexBuffer, EIndexFormat::uint32);
 
                             ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
@@ -490,7 +490,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
                     for (const SMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
                     {
                         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-                        CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
+                        CmdList.SetIndexBuffer(Command.IndexBuffer, EIndexFormat::uint32);
 
                         ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
@@ -558,7 +558,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
         CmdList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
         CmdList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
 
-        CmdList.SetPrimitiveTopology(ERHIPrimitiveTopology::TriangleList);
+        CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
         CmdList.SetGraphicsPipelineState(DirectionalLightPSO.Get());
 
         // PerObject Structs
@@ -595,7 +595,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
             for (const SMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
             {
                 CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-                CmdList.SetIndexBuffer(Command.IndexBuffer, ERHIIndexFormat::uint32);
+                CmdList.SetIndexBuffer(Command.IndexBuffer, EIndexFormat::uint32);
 
                 ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
 
@@ -682,7 +682,7 @@ void CShadowMapRenderer::Release()
 
 bool CShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, SLightSetup& LightSetup)
 {
-    LightSetup.DirectionalShadowMask = RHICreateTexture2D(LightSetup.ShadowMaskFormat, Width, Height, 1, 1, ERHITextureFlags::TextureFlags_RWTexture, EResourceAccess::NonPixelShaderResource, nullptr);
+    LightSetup.DirectionalShadowMask = RHICreateTexture2D(LightSetup.ShadowMaskFormat, Width, Height, 1, 1, ETextureUsageFlags::TextureFlags_RWTexture, EResourceAccess::NonPixelShaderResource, nullptr);
     if (LightSetup.DirectionalShadowMask)
     {
         LightSetup.DirectionalShadowMask->SetName("Directional Shadow Mask 0");

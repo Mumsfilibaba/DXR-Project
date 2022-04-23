@@ -17,30 +17,10 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows-specific interface for debug functions
+// CWindowsDebugMisc
 
 class CWindowsDebugMisc final : public CPlatformDebugMisc
 {
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CPlatformDebugMisc Interface
-
-    static FORCEINLINE void DebugBreak()
-    {
-        __debugbreak();
-    }
-
-    static FORCEINLINE void OutputDebugString(const String& Message)
-    {
-        OutputDebugStringA(Message.CStr());
-    }
-
-    static FORCEINLINE bool IsDebuggerPresent()
-    {
-        return ::IsDebuggerPresent();
-    }
-
 public:
 
     /**
@@ -62,6 +42,27 @@ public:
 
         LocalFree(MessageBuffer);
     }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CPlatformDebugMisc Interface
+
+    static FORCEINLINE void DebugBreak()
+    {
+        __debugbreak();
+    }
+
+    static FORCEINLINE void OutputDebugString(const String& Message)
+    {
+        OutputDebugStringA(Message.CStr());
+    }
+
+    static FORCEINLINE bool IsDebuggerPresent()
+    {
+        return ::IsDebuggerPresent();
+    }
+
 };
 
 #endif

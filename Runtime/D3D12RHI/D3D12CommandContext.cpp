@@ -504,7 +504,7 @@ void CD3D12CommandContext::SetBlendFactor(const SColorF& Color)
     CommandList.OMSetBlendFactor(Color.Elements);
 }
 
-void CD3D12CommandContext::SetPrimitiveTopology(ERHIPrimitiveTopology InPrimitveTopology)
+void CD3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTopology)
 {
     const D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = ConvertPrimitiveTopology(InPrimitveTopology);
     if (CurrentPrimitiveTolpology != PrimitiveTopology)
@@ -530,7 +530,7 @@ void CD3D12CommandContext::SetVertexBuffers(CRHIBuffer* const* VertexBuffers, ui
     }
 }
 
-void CD3D12CommandContext::SetIndexBuffer(CRHIBuffer* IndexBuffer, ERHIIndexFormat IndexFormat)
+void CD3D12CommandContext::SetIndexBuffer(CRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
 {
     CD3D12Buffer* DxIndexBuffer = static_cast<CD3D12Buffer*>(IndexBuffer);
     DescriptorCache.SetIndexBuffer(DxIndexBuffer, IndexFormat);
