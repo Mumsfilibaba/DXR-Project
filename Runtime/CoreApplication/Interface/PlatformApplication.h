@@ -86,9 +86,9 @@ public:
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const { return TSharedRef<CPlatformWindow>(); }
 
     /**
-     * Sets the PlatformWindow that should recive keyboard focus
+     * Sets the PlatformWindow that should receive keyboard focus
      * 
-     * @param Window: PlatformWindow that should recive keyboard focus
+     * @param Window: PlatformWindow that should receive keyboard focus
      */
     virtual void SetCapture(const TSharedRef<CPlatformWindow>& Window) { }
 
