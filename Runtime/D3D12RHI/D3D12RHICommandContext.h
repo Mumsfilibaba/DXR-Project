@@ -138,18 +138,20 @@ public:
         return OnlineSamplerDescriptorHeap.Get();
     }
 
-    CD3D12Device* Device = nullptr;
+    CD3D12Device*                          Device = nullptr;
+    
+    uint64                                 AssignedFenceValue = 0;
 
-    CD3D12CommandAllocator    CmdAllocator;
-    CD3D12GPUResourceUploader GpuResourceUploader;
+    CD3D12CommandAllocator                 CmdAllocator;
+    CD3D12GPUResourceUploader              GpuResourceUploader;
 
     TSharedRef<CD3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
     TSharedRef<CD3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
 
-    TArray<TSharedRef<CD3D12Resource>> DxResources;
-    TArray<TSharedRef<CRHIObject>>     Resources;
+    TArray<TSharedRef<CD3D12Resource>>     DxResources;
+    TArray<TSharedRef<CRHIObject>>         Resources;
 
-    TArray<TComPtr<ID3D12Resource>> NativeResources;
+    TArray<TComPtr<ID3D12Resource>>        NativeResources;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -204,9 +206,61 @@ private:
 
 class CD3D12RHICommandContext : public IRHICommandContext, public CD3D12DeviceChild
 {
+private:
+
+    friend class CD3D12RHIInstance;
+
+    CD3D12RHICommandContext(CD3D12Device* InDevice);
+    ~CD3D12RHICommandContext();
+
 public:
 
     static CD3D12RHICommandContext* Make(CD3D12Device* InDevice);
+
+    void UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
+
+    FORCEINLINE CD3D12CommandQueue& GetQueue()
+    {
+        return CommandQueue;
+    }
+
+    FORCEINLINE CD3D12CommandList& GetCommandList()
+    {
+        return CommandList;
+    }
+
+    FORCEINLINE uint32 GetCurrentEpochValue() const
+    {
+        uint32 MaxValue = NMath::Max<int32>((int32)CmdBatches.Size() - 1, 0);
+        return NMath::Min<uint32>(NextCmdBatch - 1, MaxValue);
+    }
+
+    FORCEINLINE void UnorderedAccessBarrier(CD3D12Resource* Resource)
+    {
+        D3D12_ERROR(Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
+        BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetResource());
+    }
+
+    FORCEINLINE void TransitionResource(CD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
+    {
+        D3D12_ERROR(Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
+        BarrierBatcher.AddTransitionBarrier(Resource->GetResource(), BeforeState, AfterState);
+    }
+
+    FORCEINLINE void FlushResourceBarriers()
+    {
+        BarrierBatcher.FlushBarriers(CommandList);
+    }
+
+    FORCEINLINE void DestroyResource(CD3D12Resource* Resource)
+    {
+        CmdBatch->AddInUseResource(Resource);
+    }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // IRHICommandContext Interface
 
     virtual void Begin() override final;
     virtual void End() override final;
@@ -214,9 +268,9 @@ public:
     virtual void BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
     virtual void EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
 
-    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor) override final;
-    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue) override final;
-    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor) override final;
+    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const TStaticArray<float, 4>& ClearColor) override final;
+    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) override final;
+    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) override final;
 
     virtual void SetShadingRate(ERHIShadingRate ShadingRate) override final;
     virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) override final;
@@ -228,7 +282,7 @@ public:
     virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final;
     virtual void SetScissorRect(float Width, float Height, float x, float y) override final;
 
-    virtual void SetBlendFactor(const SColorF& Color) override final;
+    virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) override final;
 
     virtual void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView) override final;
 
@@ -270,14 +324,13 @@ public:
     virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final;
 
     /* Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
-    virtual void SetRayTracingBindings(
-        CRHIRayTracingScene* RayTracingScene,
-        CRHIRayTracingPipelineState* PipelineState,
-        const SRayTracingShaderResources* GlobalResource,
-        const SRayTracingShaderResources* RayGenLocalResources,
-        const SRayTracingShaderResources* MissLocalResources,
-        const SRayTracingShaderResources* HitGroupResources,
-        uint32 NumHitGroupResources) override final;
+    virtual void SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
+                                      , CRHIRayTracingPipelineState* PipelineState
+                                      , const SRayTracingShaderResources* GlobalResource
+                                      , const SRayTracingShaderResources* RayGenLocalResources
+                                      , const SRayTracingShaderResources* MissLocalResources
+                                      , const SRayTracingShaderResources* HitGroupResources
+                                      , uint32 NumHitGroupResources) override final;
 
     virtual void GenerateMips(CRHITexture* Texture) override final;
 
@@ -305,65 +358,20 @@ public:
     virtual void BeginExternalCapture() override final;
     virtual void EndExternalCapture() override final;
 
-public:
-    void UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
-
-    FORCEINLINE CD3D12CommandQueue& GetQueue()
-    {
-        return CmdQueue;
-    }
-
-    FORCEINLINE CD3D12CommandList& GetCommandList()
-    {
-        return CmdList;
-    }
-
-    FORCEINLINE uint32 GetCurrentEpochValue() const
-    {
-        uint32 MaxValue = NMath::Max<int32>((int32)CmdBatches.Size() - 1, 0);
-        return NMath::Min<uint32>(NextCmdBatch - 1, MaxValue);
-    }
-
-    FORCEINLINE void UnorderedAccessBarrier(CD3D12Resource* Resource)
-    {
-        D3D12_ERROR(Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
-        BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetResource());
-    }
-
-    FORCEINLINE void TransitionResource(CD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
-    {
-        D3D12_ERROR(Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
-        BarrierBatcher.AddTransitionBarrier(Resource->GetResource(), BeforeState, AfterState);
-    }
-
-    FORCEINLINE void FlushResourceBarriers()
-    {
-        BarrierBatcher.FlushBarriers(CmdList);
-    }
-
-    FORCEINLINE void DestroyResource(CD3D12Resource* Resource)
-    {
-        CmdBatch->AddInUseResource(Resource);
-    }
-
 private:
-
-    CD3D12RHICommandContext(CD3D12Device* InDevice);
-    ~CD3D12RHICommandContext();
-
     bool Init();
 
     void InternalClearState();
 
-    CD3D12CommandList  CmdList;
+    CD3D12CommandList  CommandList;
     CD3D12Fence        Fence;
-    CD3D12CommandQueue CmdQueue;
+    CD3D12CommandQueue CommandQueue;
 
-    uint64 FenceValue = 0;
+    uint64 FenceValue   = 0;
     uint32 NextCmdBatch = 0;
 
     TArray<CD3D12CommandBatch> CmdBatches;
-    CD3D12CommandBatch* CmdBatch = nullptr;
+    CD3D12CommandBatch*        CmdBatch = nullptr;
 
     TArray<TSharedRef<CD3D12RHITimestampQuery>> ResolveProfilers;
 
@@ -378,6 +386,6 @@ private:
     CD3D12DescriptorCache        DescriptorCache;
     CD3D12ResourceBarrierBatcher BarrierBatcher;
 
-    bool bIsReady = false;
+    bool bIsReady     = false;
     bool bIsCapturing = false;
 };

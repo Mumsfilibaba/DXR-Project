@@ -3,7 +3,7 @@
 #include "D3D12DeviceChild.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12Fence
+// CD3D12Fence
 
 class CD3D12Fence : public CD3D12DeviceChild
 {
@@ -23,19 +23,19 @@ public:
         }
     }
 
-    bool Init(uint64 InitalValue)
+    bool Initialize(uint64 InitalValue)
     {
-        HRESULT Result = GetDevice()->GetDevice()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
+        HRESULT Result = GetDevice()->GetD3D12Device()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
         if (FAILED(Result))
         {
-            LOG_INFO("[D3D12FenceHandle]: FAILED to create Fence");
+            LOG_INFO("FAILED to create Fence");
             return false;
         }
 
         Event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
         if (Event == NULL)
         {
-            LOG_ERROR("[D3D12FenceHandle]: FAILED to create Event for Fence");
+            D3D12_ERROR_ALWAYS("FAILED to create Event for Fence");
             return false;
         }
 
@@ -56,6 +56,11 @@ public:
         }
     }
 
+    FORCEINLINE uint64 GetCompletedValue() const
+    {
+        return Fence->GetCompletedValue();
+    }
+
     FORCEINLINE bool Signal(uint64 Value)
     {
         HRESULT Result = Fence->Signal(Value);
@@ -64,8 +69,7 @@ public:
 
     FORCEINLINE void SetName(const String& Name)
     {
-        WString WideName = CharToWide(Name);
-        Fence->SetName(WideName.CStr());
+        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.CStr());
     }
 
     FORCEINLINE ID3D12Fence* GetFence() const
@@ -75,5 +79,5 @@ public:
 
 private:
     TComPtr<ID3D12Fence> Fence;
-    HANDLE Event = 0;
+    HANDLE               Event = 0;
 };

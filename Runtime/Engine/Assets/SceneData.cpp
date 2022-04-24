@@ -22,9 +22,9 @@ void SSceneData::AddToScene(CScene* Scene)
         for (const SMaterialData& MaterialData : Materials)
         {
             SMaterialDesc Desc;
-            Desc.Albedo = MaterialData.Diffuse;
-            Desc.AO = MaterialData.AO;
-            Desc.Metallic = MaterialData.Metallic;
+            Desc.Albedo    = MaterialData.Diffuse;
+            Desc.AO        = MaterialData.AO;
+            Desc.Metallic  = MaterialData.Metallic;
             Desc.Roughness = MaterialData.Roughness;
 
             // TODO: Should probably have a better connection between RHITexture and a Texture

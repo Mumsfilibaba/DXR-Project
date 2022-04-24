@@ -27,7 +27,7 @@ public:
         QueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
         QueueDesc.Type = Type;
 
-        HRESULT Result = GetDevice()->GetDevice()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
+        HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
         if (SUCCEEDED(Result))
         {
             LOG_INFO("[CD3D12CommandQueue]: Created CommandQueue");

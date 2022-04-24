@@ -9,11 +9,9 @@
 #if defined(COMPILER_MSVC)
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
-
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -21,6 +19,17 @@
 
 class CPlatformApplication
 {
+protected:
+
+    friend struct TDefaultDelete<CPlatformApplication>;
+
+    CPlatformApplication(const TSharedPtr<ICursor>& InCursor)
+        : Cursor(InCursor)
+        , MessageListener(nullptr)
+    { }
+
+    virtual ~CPlatformApplication() = default;
+
 public:
 
     /**
@@ -28,19 +37,14 @@ public:
      * 
      * @return: Returns the newly created PlatformApplication 
      */
-    static TSharedPtr<CPlatformApplication> Make() { return TSharedPtr<CPlatformApplication>(); }
-
-    /**
-     * Public destructor for TSharedPtr 
-     */
-    virtual ~CPlatformApplication() = default;
+    static TSharedPtr<CPlatformApplication> Make() { return nullptr; }
 
     /**
      * Create a new PlatformWindow
      * 
      * @return: Returns the newly created PlatformWindow
      */
-    virtual TSharedRef<CPlatformWindow> MakeWindow() { return TSharedRef<CPlatformWindow>(); }
+    virtual TSharedRef<CPlatformWindow> MakeWindow() { return nullptr; }
 
     /**
      * Initialize the PlatformApplication
@@ -83,7 +87,7 @@ public:
      * 
      * @return: Returns the currently active PlatformWindow
      */
-    virtual TSharedRef<CPlatformWindow> GetActiveWindow() const { return TSharedRef<CPlatformWindow>(); }
+    virtual TSharedRef<CPlatformWindow> GetActiveWindow() const { return nullptr; }
 
     /**
      * Sets the PlatformWindow that should receive keyboard focus
@@ -97,14 +101,14 @@ public:
      * 
      * @return: Returns the currently active PlatformWindow
      */
-    virtual TSharedRef<CPlatformWindow> GetCapture() const { return TSharedRef<CPlatformWindow>(); }
+    virtual TSharedRef<CPlatformWindow> GetCapture() const { return nullptr; }
 
     /**
      * Retrieve the current PlatformWindow that is under the mouse-cursor
      * 
      * @return: Returns the current PlatformWindow that is under the mouse-cursor or nullptr if no application-window is under the cursor
      */
-    virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const { return TSharedRef<CPlatformWindow>(); }
+    virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const { return nullptr; }
 
     /**
      * Set message-listener interface
@@ -134,13 +138,6 @@ public:
     }
 
 protected:
-
-    CPlatformApplication(const TSharedPtr<ICursor>& InCursor)
-        : Cursor(InCursor)
-        , MessageListener(nullptr)
-    {
-    }
-
     TSharedPtr<ICursor> Cursor;
     
     /** Handler for platform messages/events */

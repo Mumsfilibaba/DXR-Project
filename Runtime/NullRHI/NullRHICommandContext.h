@@ -18,30 +18,37 @@
 
 class CNullRHICommandContext : public IRHICommandContext
 {
+private:
+
+    friend class CNullRHIInstance;
+
+    CNullRHICommandContext() = default;
+    ~CNullRHICommandContext() = default;
+
 public:
 
     static FORCEINLINE CNullRHICommandContext* Make() { return dbg_new CNullRHICommandContext(); }
 
     virtual void Begin() override final { }
-    virtual void End() override final { }
+    virtual void End()   override final { }
 
     virtual void BeginTimeStamp(CRHITimestampQuery* Profiler, uint32 Index) override final { }
-    virtual void EndTimeStamp(CRHITimestampQuery* Profiler, uint32 Index) override final { }
+    virtual void EndTimeStamp(CRHITimestampQuery* Profiler, uint32 Index)   override final { }
 
-    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor) override final { }
-    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue) override final { }
-    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor) override final { }
+    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const TStaticArray<float, 4>& ClearColor) override final { }
+    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) override final { }
+    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) override final { }
 
-    virtual void SetShadingRate(ERHIShadingRate ShadingRate) override final { }
+    virtual void SetShadingRate(ERHIShadingRate ShadingRate)      override final { }
     virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) override final { }
 
     virtual void BeginRenderPass() override final { }
-    virtual void EndRenderPass() override final { }
+    virtual void EndRenderPass()   override final { }
 
     virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final { }
     virtual void SetScissorRect(float Width, float Height, float x, float y) override final { }
 
-    virtual void SetBlendFactor(const SColorF& Color) override final { }
+    virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) override final { }
 
     virtual void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView) override final { }
 
@@ -51,7 +58,7 @@ public:
     virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final { }
 
     virtual void SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState) override final { }
-    virtual void SetComputePipelineState(class CRHIComputePipelineState* PipelineState) override final { }
+    virtual void SetComputePipelineState(class CRHIComputePipelineState* PipelineState)   override final { }
 
     virtual void Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final { }
 
@@ -82,13 +89,13 @@ public:
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final { }
     virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final { }
 
-    virtual void SetRayTracingBindings(
-        CRHIRayTracingScene* RayTracingScene,
-        CRHIRayTracingPipelineState* PipelineState,
-        const SRayTracingShaderResources* GlobalResource,
-        const SRayTracingShaderResources* RayGenLocalResources,
-        const SRayTracingShaderResources* MissLocalResources,
-        const SRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) override final { }
+    virtual void SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
+                                      , CRHIRayTracingPipelineState* PipelineState
+                                      , const SRayTracingShaderResources* GlobalResource
+                                      , const SRayTracingShaderResources* RayGenLocalResources
+                                      , const SRayTracingShaderResources* MissLocalResources
+                                      , const SRayTracingShaderResources* HitGroupResources
+                                      , uint32 NumHitGroupResources) override final { }
 
     virtual void GenerateMips(CRHITexture* Texture) override final { }
 
@@ -115,11 +122,6 @@ public:
 
     virtual void BeginExternalCapture() override final { }
     virtual void EndExternalCapture() override final { }
-
-private:
-
-    CNullRHICommandContext() = default;
-    ~CNullRHICommandContext() = default;
 };
 
 #if defined(COMPILER_MSVC)

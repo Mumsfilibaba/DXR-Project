@@ -13,7 +13,7 @@
 void* CMemory::Malloc(uint64 Size) noexcept
 {
     // Since malloc is not guaranteed to return nullptr, we check for it here
-    // Source: https://www.cplusplus.com/reference/cstdlib/malloc/
+    // Src: https://www.cplusplus.com/reference/cstdlib/malloc/
     if (Size)
     {
         return malloc(Size);
@@ -24,9 +24,9 @@ void* CMemory::Malloc(uint64 Size) noexcept
     }
 }
 
-void* CMemory::Realloc(void* Pointer, uint64 Size) noexcept
+void* CMemory::Realloc(void* Ptr, uint64 Size) noexcept
 {
-    return realloc(Pointer, Size);
+    return realloc(Ptr, Size);
 }
 
 void CMemory::Free(void* Ptr) noexcept
@@ -34,38 +34,38 @@ void CMemory::Free(void* Ptr) noexcept
     free(Ptr);
 }
 
-void* CMemory::Memset(void* Destination, uint8 Value, uint64 Size) noexcept
+void* CMemory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept
 {
-    return memset(Destination, static_cast<int>(Value), Size);
+    return memset(Dst, static_cast<int>(Value), Size);
 }
 
-void* CMemory::Memzero(void* Destination, uint64 Size) noexcept
+void* CMemory::Memzero(void* Dst, uint64 Size) noexcept
 {
-    return memset(Destination, 0, Size);
+    return memset(Dst, 0, Size);
 }
 
-void* CMemory::Memcpy(void* restrict_ptr Destination, const void* restrict_ptr Source, uint64 Size) noexcept
+void* CMemory::Memcpy(void* restrict_ptr Dst, const void* restrict_ptr Src, uint64 Size) noexcept
 {
-    return memcpy(Destination, Source, Size);
+    return memcpy(Dst, Src, Size);
 }
 
-void* CMemory::Memmove(void* Destination, const void* Source, uint64 Size) noexcept
+void* CMemory::Memmove(void* Dst, const void* Src, uint64 Size) noexcept
 {
-    return memmove(Destination, Source, Size);
+    return memmove(Dst, Src, Size);
 }
 
-bool CMemory::Memcmp(const void* Lhs, const void* Rhs, uint64 Size)  noexcept
+bool CMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
 {
-    return (memcmp(Lhs, Rhs, Size) == 0);
+    return (memcmp(LHS, RHS, Size) == 0);
 }
 
-void CMemory::Memswap(void* restrict_ptr Lhs, void* restrict_ptr Rhs, uint64 Size) noexcept
+void CMemory::Memswap(void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size) noexcept
 {
-    Assert(Lhs != nullptr && Rhs != nullptr);
+    Assert(LHS != nullptr && RHS != nullptr);
 
     // Move 8 bytes at a time 
-    uint64* Left = reinterpret_cast<uint64*>(Lhs);
-    uint64* Right = reinterpret_cast<uint64*>(Rhs);
+    uint64* Left = reinterpret_cast<uint64*>(LHS);
+    uint64* Right = reinterpret_cast<uint64*>(RHS);
 
     while (Size >= 8)
     {
@@ -80,8 +80,8 @@ void CMemory::Memswap(void* restrict_ptr Lhs, void* restrict_ptr Rhs, uint64 Siz
     }
 
     // Move remaining bytes
-    uint8* LeftBytes = reinterpret_cast<uint8*>(Lhs);
-    uint8* RightBytes = reinterpret_cast<uint8*>(Rhs);
+    uint8* LeftBytes = reinterpret_cast<uint8*>(LHS);
+    uint8* RightBytes = reinterpret_cast<uint8*>(RHS);
 
     while (Size)
     {

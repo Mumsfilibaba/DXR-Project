@@ -28,7 +28,7 @@ bool CD3D12DescriptorHeap::Init()
     Desc.Flags = Flags;
     Desc.NumDescriptors = NumDescriptors;
 
-    HRESULT Result = GetDevice()->GetDevice()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));
     if (FAILED(Result))
     {
         D3D12_ERROR_ALWAYS("[D3D12DescriptorHeap]: FAILED to Create DescriptorHeap");
@@ -40,7 +40,11 @@ bool CD3D12DescriptorHeap::Init()
     }
 
     CPUStart = Heap->GetCPUDescriptorHandleForHeapStart();
-    GPUStart = Heap->GetGPUDescriptorHandleForHeapStart();
+    if (Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+    {
+        GPUStart = Heap->GetGPUDescriptorHandleForHeapStart();
+    }
+
     DescriptorHandleIncrementSize = GetDevice()->GetDescriptorHandleIncrementSize(Desc.Type);
 
     return true;

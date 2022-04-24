@@ -3,12 +3,10 @@
 #include "RHIResources.h"
 #include "RHIResourceViews.h"
 
-#include "Core/Containers/ArrayView.h"
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IRHICommandContext 
 
-class IRHICommandContext : public CRefCounted
+class IRHICommandContext
 {
 public:
 
@@ -44,7 +42,7 @@ public:
      * @param RenderTargetView: RenderTargetView to clear
      * @param ClearColor: Color to set each pixel within the RenderTargetView to
      */
-    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const SColorF& ClearColor) = 0;
+    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const TStaticArray<float, 4>& ClearColor) = 0;
 
     /**
      * Clears a DepthStencilView with a specific value
@@ -52,7 +50,7 @@ public:
      * @param DepthStencilView: DepthStencilView to clear
      * @param ClearValue: Value to set each pixel within the DepthStencilView to
      */
-    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const SDepthStencil& ClearValue) = 0;
+    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, const uint8 Stencil) = 0;
     
     /**
      * Clears a UnorderedAccessView with a specific value
@@ -60,7 +58,7 @@ public:
      * @param UnorderedAccessView: UnorderedAccessView to clear
      * @param ClearColor: Value to set each pixel within the UnorderedAccessView to
      */
-    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const SColorF& ClearColor) = 0;
+    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) = 0;
 
     /**
      * Sets the Shading-Rate for the fullscreen
@@ -113,7 +111,7 @@ public:
      * 
      * @param Color: New blend-factor to use
      */
-    virtual void SetBlendFactor(const SColorF& Color) = 0;
+    virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) = 0;
 
     /**
      * Set all the RenderTargetViews and the DepthStencilView that should be used, nullptr is valid if the slot should not be used
@@ -340,14 +338,13 @@ public:
     virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) = 0;
 
     /* Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
-    virtual void SetRayTracingBindings(
-        CRHIRayTracingScene* RayTracingScene,
-        CRHIRayTracingPipelineState* PipelineState,
-        const SRayTracingShaderResources* GlobalResource,
-        const SRayTracingShaderResources* RayGenLocalResources,
-        const SRayTracingShaderResources* MissLocalResources,
-        const SRayTracingShaderResources* HitGroupResources,
-        uint32 NumHitGroupResources) = 0;
+    virtual void SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
+                                      , CRHIRayTracingPipelineState* PipelineState
+                                      , const SRayTracingShaderResources* GlobalResource
+                                      , const SRayTracingShaderResources* RayGenLocalResources
+                                      , const SRayTracingShaderResources* MissLocalResources
+                                      , const SRayTracingShaderResources* HitGroupResources
+                                      , uint32 NumHitGroupResources) = 0;
 
     /**
      * Generate MipLevels for a texture. Works with Texture2D and TextureCubes.

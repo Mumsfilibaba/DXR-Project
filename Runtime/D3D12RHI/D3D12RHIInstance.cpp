@@ -89,7 +89,7 @@ CD3D12RHIInstance::CD3D12RHIInstance()
 
 CD3D12RHIInstance::~CD3D12RHIInstance()
 {
-    DirectCmdContext.Reset();
+    SafeDelete(DirectCmdContext);
 
     GenerateMipsTex2D_PSO.Reset();
     GenerateMipsTexCube_PSO.Reset();
@@ -123,7 +123,7 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
 #endif
 
     Device = dbg_new CD3D12Device(bEnableDebug, bGPUBasedValidationOn, bDREDOn);
-    if (!Device->Init())
+    if (!Device->Initialize())
     {
         return false;
     }
@@ -1489,7 +1489,7 @@ CRHIViewport* CD3D12RHIInstance::CreateViewport(CPlatformWindow* Window, uint32 
         Height = WinWindow->GetHeight();
     }
 
-    TSharedRef<CD3D12RHIViewport> Viewport = dbg_new CD3D12RHIViewport(Device, DirectCmdContext.Get(), WinWindow->GetHandle(), ColorFormat, Width, Height);
+    TSharedRef<CD3D12RHIViewport> Viewport = dbg_new CD3D12RHIViewport(Device, DirectCmdContext, WinWindow->GetHandle(), ColorFormat, Width, Height);
     if (Viewport->Init())
     {
         return Viewport.ReleaseOwnership();
@@ -1505,7 +1505,7 @@ bool CD3D12RHIInstance::UAVSupportsFormat(EFormat Format) const
     D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
     CMemory::Memzero(&FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
 
-    HRESULT Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
+    HRESULT Result = Device->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
     if (SUCCEEDED(Result))
     {
         if (FeatureData.TypedUAVLoadAdditionalFormats)
@@ -1517,7 +1517,7 @@ bool CD3D12RHIInstance::UAVSupportsFormat(EFormat Format) const
                 D3D12_FORMAT_SUPPORT2_NONE
             };
 
-            Result = Device->GetDevice()->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
+            Result = Device->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
             if (FAILED(Result) || (FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD) == 0)
             {
                 return false;

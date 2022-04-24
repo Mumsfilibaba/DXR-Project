@@ -4,17 +4,17 @@
 #include "RHI/RHICommandList.h"
 #include "RHI/RHITimestampQuery.h"
 
-#include "Core/Threading/Lockable.h"
+#include "Core/Threading/Spinlock.h"
 #include "Core/Containers/HashTable.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FrameProfiler config
+// Config
 
 #define ENABLE_PROFILER      (1)
 #define NUM_PROFILER_SAMPLES (200)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Scoped profiling macros
+// Macros
 
 #if ENABLE_PROFILER
 #define TRACE_SCOPE(Name)      SScopedTrace PREPROCESS_CONCAT(ScopedTrace_Line_, __LINE__)(Name)
@@ -25,7 +25,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Struct to hold samples for the frame-profiler
+// SProfileSample
 
 struct SProfileSample
 {
@@ -97,13 +97,13 @@ struct SProfileSample
     float Max = -FLT_MAX;
     float Min = FLT_MAX;
 
-    int32 SampleCount = 0;
+    int32 SampleCount   = 0;
     int32 CurrentSample = 0;
-    int32 TotalCalls = 0;
+    int32 TotalCalls    = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FrameProfiler - Manages samples that gets updated each frame
+// CFrameProfiler
 
 using ProfileSamplesTable = THashTable<String, SProfileSample, SStringHasher>;
 
@@ -164,15 +164,16 @@ private:
     CTimer Clock;
 
     int32 CurrentFps = 0;
-    int32 Fps = 0;
+    int32 Fps        = 0;
 
     bool bEnabled = true;
 
-    Lockable<ProfileSamplesTable> CPUSamples;
+    ProfileSamplesTable SamplesTable;
+    CSpinLock           SamplesTableLock;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Struct for profiling a scope
+// SScopedTrace
 
 struct SScopedTrace
 {

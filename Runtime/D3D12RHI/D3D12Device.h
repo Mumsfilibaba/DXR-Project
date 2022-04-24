@@ -18,7 +18,7 @@ class CD3D12RootSignature;
 void RHID3D12DeviceRemovedHandler(class CD3D12Device* Device);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12Device
+// CD3D12Device
 
 class CD3D12Device
 {
@@ -26,7 +26,7 @@ public:
     CD3D12Device(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
     ~CD3D12Device();
 
-    bool Init();
+    bool Initialize();
 
     int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
@@ -34,7 +34,7 @@ public:
 
 public:
 
-    FORCEINLINE ID3D12Device* GetDevice() const
+    FORCEINLINE ID3D12Device* GetD3D12Device() const
     {
         return Device.Get();
     }
@@ -157,30 +157,29 @@ public:
     }
 
 private:
-    TComPtr<IDXGIFactory2> Factory;
-    TComPtr<IDXGIAdapter1> Adapter;
-    TComPtr<ID3D12Device>  Device;
-    TComPtr<ID3D12Device5> DXRDevice;
-
+    TComPtr<IDXGIFactory2>       Factory;
+    TComPtr<IDXGIAdapter1>       Adapter;
+    TComPtr<ID3D12Device>        Device;
+    TComPtr<ID3D12Device5>       DXRDevice;
     TComPtr<IDXGraphicsAnalysis> GraphicsAnalysisInterface;
 
-    D3D_FEATURE_LEVEL MinFeatureLevel = D3D_FEATURE_LEVEL_12_0;
+    D3D_FEATURE_LEVEL MinFeatureLevel    = D3D_FEATURE_LEVEL_12_0;
     D3D_FEATURE_LEVEL ActiveFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
-    D3D12_RAYTRACING_TIER            RayTracingTier = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
-    D3D12_SAMPLER_FEEDBACK_TIER      SamplerFeedBackTier = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
-    D3D12_MESH_SHADER_TIER           MeshShaderTier = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
-    D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
-    uint32 VariableShadingRateTileSize = 0;
+    D3D12_RAYTRACING_TIER            RayTracingTier              = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+    D3D12_SAMPLER_FEEDBACK_TIER      SamplerFeedBackTier         = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
+    D3D12_MESH_SHADER_TIER           MeshShaderTier              = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+    D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier     = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
+    uint32                           VariableShadingRateTileSize = 0;
 
-    HMODULE DXGILib = 0;
+    HMODULE DXGILib  = 0;
     HMODULE D3D12Lib = 0;
-    HMODULE PIXLib = 0;
+    HMODULE PIXLib   = 0;
 
     uint32 AdapterID = 0;
 
-    bool bAllowTearing = false;
-    bool bEnableDebugLayer = false;
+    bool bAllowTearing        = false;
+    bool bEnableDebugLayer    = false;
     bool bEnableGPUValidation = false;
-    bool bEnableDRED = false;
+    bool bEnableDRED          = false;
 };
