@@ -28,7 +28,7 @@ function CTargetBuildRules(InName)
     -- Folder path for engine-modules
     local RuntimeFolderPath = GetRuntimeFolderPath()
 
-    -- The type of target, decides if there should be a launcher and DLL or if the application should be a ConsoleApp
+    -- The type of target, decides if there should be a Standalone and DLL or if the application should be a ConsoleApp
     self.TargetType = ETargetType.Client
     -- Weather or not the build should be forced monolithic
     self.bIsMonolithic = IsMonolithic()
@@ -110,10 +110,10 @@ function CTargetBuildRules(InName)
                 BaseGenerate()
                 printf('    ---Finished generating target project')
                 
-                -- Launcher-executable
-                printf('    ---Generating client executable\n')
+                -- Standalone-executable
+                printf('    ---Generating Standablone client executable\n')
                 
-                local Executeble = CBuildRules(self.Name .. 'Launcher')
+                local Executeble = CBuildRules(self.Name .. 'Standalone')
                 Executeble.Kind = 'WindowedApp'
 
                 Executeble.AddLinkLibraries(
@@ -144,7 +144,7 @@ function CTargetBuildRules(InName)
                 -- System includes can be included in a dependency header and therefore necessary in this module aswell
                 Executeble.AddSystemIncludes(self.SystemIncludes)
 
-                -- Generate launcher
+                -- Generate Standalone executable
                 Executeble.Generate()
 
                 printf('    ---Finished generating client executable\n')

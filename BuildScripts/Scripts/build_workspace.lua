@@ -313,7 +313,7 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
         
         local StartProject = ''
         if (TempTarget.TargetType == ETargetType.Client) and (not TempTarget.bIsMonolithic) then
-            StartProject = TempTarget.Name .. 'Launcher'
+            StartProject = TempTarget.Name .. 'Standalone'
         else
             StartProject = TempTarget.Name
         end

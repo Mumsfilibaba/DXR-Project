@@ -1,5 +1,8 @@
 include '../../BuildScripts/Scripts/build_module.lua'
 
+---------------------------------------------------------------------------------------------------
+-- Engine Module
+
 local EngineModule = CModuleBuildRules('Engine')
 EngineModule.AddSystemIncludes( 
 {
