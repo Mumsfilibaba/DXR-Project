@@ -454,12 +454,12 @@ void CRenderer::Tick(const CScene& Scene)
     PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::RenderTarget);
     PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::DepthWrite);
 
-    SColorF BlackClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    TStaticArray<float, 4> BlackClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
     PrepareGBufferCmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(), BlackClearColor);
     PrepareGBufferCmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
     PrepareGBufferCmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(), BlackClearColor);
     PrepareGBufferCmdList.ClearRenderTargetView(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(), BlackClearColor);
-    PrepareGBufferCmdList.ClearDepthStencilView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), SDepthStencil(1.0f, 0));
+    PrepareGBufferCmdList.ClearDepthStencilView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView(), 1.0f, 0);
 
     if (GPrePassEnabled.GetBool())
     {
@@ -554,8 +554,7 @@ void CRenderer::Tick(const CScene& Scene)
     MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), ERHIResourceState::DepthWrite, ERHIResourceState::NonPixelShaderResource);
     MainCmdList.TransitionTexture(Resources.SSAOBuffer.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::UnorderedAccess);
 
-    const SColorF WhiteColor = { 1.0f, 1.0f, 1.0f, 1.0f };
-    MainCmdList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), WhiteColor);
+    MainCmdList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), { 1.0f, 1.0f, 1.0f, 1.0f });
 
     if (GEnableSSAO.GetBool())
     {
@@ -712,8 +711,8 @@ void CRenderer::Tick(const CScene& Scene)
 
         CRHICommandQueue::Get().ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
 
-        FrameStatistics.NumDrawCalls = CRHICommandQueue::Get().GetNumDrawCalls();
-        FrameStatistics.NumDispatchCalls = CRHICommandQueue::Get().GetNumDispatchCalls();
+        FrameStatistics.NumDrawCalls      = CRHICommandQueue::Get().GetNumDrawCalls();
+        FrameStatistics.NumDispatchCalls  = CRHICommandQueue::Get().GetNumDispatchCalls();
         FrameStatistics.NumRenderCommands = CRHICommandQueue::Get().GetNumCommands();
     }
 

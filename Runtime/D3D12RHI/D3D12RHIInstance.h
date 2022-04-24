@@ -85,7 +85,7 @@ public:
     // TODO: Create functions like "CheckRayTracingSupport(RayTracingSupportInfo& OutInfo)" instead
     virtual bool UAVSupportsFormat(EFormat Format) const override final;
 
-    virtual class IRHICommandContext* GetDefaultCommandContext() override final { return DirectCmdContext.Get(); }
+    virtual class IRHICommandContext* GetDefaultCommandContext() override final { return DirectCmdContext; }
 
     virtual String GetAdapterName() const override final { return Device->GetAdapterName(); }
 
@@ -142,7 +142,7 @@ private:
 
     CD3D12Device* Device = nullptr;
     
-    TSharedRef<CD3D12RHICommandContext> DirectCmdContext;
+    CD3D12RHICommandContext* DirectCmdContext;
     
     CD3D12RootSignatureCache* RootSignatureCache = nullptr;
 

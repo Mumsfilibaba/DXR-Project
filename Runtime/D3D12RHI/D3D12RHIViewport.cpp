@@ -123,7 +123,7 @@ bool CD3D12RHIViewport::Resize(uint32 InWidth, uint32 InHeight)
         HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
         if (SUCCEEDED(Result))
         {
-            Width = InWidth;
+            Width  = InWidth;
             Height = InHeight;
         }
         else

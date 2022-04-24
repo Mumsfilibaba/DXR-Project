@@ -157,24 +157,22 @@ void CRHICommandQueue::WaitForGPU()
 
 void CRHICommandQueue::InternalExecuteCommandList(CRHICommandList& CmdList)
 {
-    if (CmdList.First)
+    if (CmdList.FirstCommand)
     {
-        SRHIRenderCommand* CurrentCmd = CmdList.First;
-        while (CurrentCmd != nullptr)
+        CRHICommand* CurrentCommand = CmdList.FirstCommand;
+        while (CurrentCommand != nullptr)
         {
-            SRHIRenderCommand* PreviousCmd = CurrentCmd;
-            CurrentCmd = CurrentCmd->NextCmd;
-
-            PreviousCmd->Execute(GetContext());
-            PreviousCmd->~SRHIRenderCommand();
+            CRHICommand* PreviousCommand = CurrentCommand;
+            CurrentCommand = CurrentCommand->NextCommand;
+            PreviousCommand->ExecuteAndRelease(GetContext());
         }
 
-        NumDrawCalls += CmdList.GetNumDrawCalls();
+        NumDrawCalls     += CmdList.GetNumDrawCalls();
         NumDispatchCalls += CmdList.GetNumDispatchCalls();
-        NumCommands += CmdList.GetNumCommands();
+        NumCommands      += CmdList.GetNumCommands();
 
-        CmdList.First = nullptr;
-        CmdList.Last = nullptr;
+        CmdList.FirstCommand = nullptr;
+        CmdList.LastCommand  = nullptr;
         CmdList.Reset();
     }
 }

@@ -32,10 +32,12 @@ public:
     CNullRHIInstance()
         : CRHIInstance(ERHIInstanceApi::Null)
         , CommandContext(CNullRHICommandContext::Make())
-    {
-    }
+    { }
 
-    ~CNullRHIInstance() = default;
+    ~CNullRHIInstance()
+    {
+        SafeDelete(CommandContext);
+    }
 
     virtual bool Initialize(bool bEnableDebug) override final { return true; }
 
@@ -226,7 +228,7 @@ public:
 
     virtual class IRHICommandContext* GetDefaultCommandContext() override final
     {
-        return CommandContext.Get();
+        return CommandContext;
     }
 
     virtual String GetAdapterName() const override final
@@ -250,7 +252,7 @@ public:
     }
 
 private:
-    TSharedRef<CNullRHICommandContext> CommandContext;
+    CNullRHICommandContext* CommandContext;
 };
 
 #if defined(COMPILER_MSVC)

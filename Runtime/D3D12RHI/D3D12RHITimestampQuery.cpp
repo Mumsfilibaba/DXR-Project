@@ -99,7 +99,7 @@ CD3D12RHITimestampQuery* CD3D12RHITimestampQuery::Create(CD3D12Device* InDevice)
 {
     TSharedRef<CD3D12RHITimestampQuery> NewProfiler = dbg_new CD3D12RHITimestampQuery(InDevice);
 
-    ID3D12Device* DxDevice = InDevice->GetDevice();
+    ID3D12Device* DxDevice = InDevice->GetD3D12Device();
 
     D3D12_QUERY_HEAP_DESC QueryHeap;
     CMemory::Memzero(&QueryHeap);

@@ -81,7 +81,7 @@ void RHID3D12DeviceRemovedHandler(CD3D12Device* Device)
     String Message = "[D3D12] Device Removed";
     LOG_ERROR(Message);
 
-    ID3D12Device* DxDevice = Device->GetDevice();
+    ID3D12Device* DxDevice = Device->GetD3D12Device();
 
     TComPtr<ID3D12DeviceRemovedExtendedData> Dred;
     if (FAILED(DxDevice->QueryInterface(IID_PPV_ARGS(&Dred))))
@@ -188,7 +188,7 @@ CD3D12Device::~CD3D12Device()
     D3D12Lib = 0;
 }
 
-bool CD3D12Device::Init()
+bool CD3D12Device::Initialize()
 {
     DXGILib = LoadLibrary("dxgi.dll");
     if (!DXGILib)

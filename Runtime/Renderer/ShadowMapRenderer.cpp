@@ -436,7 +436,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
             for (uint32 Face = 0; Face < 6; Face++)
             {
                 auto& Cube = LightSetup.PointLightShadowMapDSVs[i];
-                CmdList.ClearDepthStencilView(Cube[Face].Get(), SDepthStencil(1.0f, 0));
+                CmdList.ClearDepthStencilView(Cube[Face].Get(), 1.0f, 0);
 
                 CmdList.SetRenderTargets(nullptr, 0, Cube[Face].Get());
 
@@ -571,7 +571,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
         for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
         {
             CRHIDepthStencilView* CascadeDSV = LightSetup.ShadowMapCascades[i]->GetDepthStencilView();
-            CmdList.ClearDepthStencilView(CascadeDSV, SDepthStencil(1.0f, 0));
+            CmdList.ClearDepthStencilView(CascadeDSV, 1.0f, 0);
 
             CmdList.SetRenderTargets(nullptr, 0, CascadeDSV);
 
@@ -717,7 +717,7 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
         {
             for (uint32 Face = 0; Face < 6; Face++)
             {
-                TStaticArray<TSharedRef<CRHIDepthStencilView>, 6>& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
+                DepthStencilViewCube& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
                 DepthCube[Face] = RHICreateDepthStencilView(LightSetup.PointLightShadowMaps.Get(), LightSetup.ShadowMapFormat, GetCubeFaceFromIndex(Face), 0, i);
                 if (!DepthCube[Face])
                 {

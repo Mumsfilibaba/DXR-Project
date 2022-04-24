@@ -1,5 +1,8 @@
 include '../../BuildScripts/Scripts/build_module.lua'
 
+---------------------------------------------------------------------------------------------------
+-- InterfaceRenderer Module
+
 local InterfaceRendererModule = CModuleBuildRules('InterfaceRenderer')
 InterfaceRendererModule.bRuntimeLinking = false
 

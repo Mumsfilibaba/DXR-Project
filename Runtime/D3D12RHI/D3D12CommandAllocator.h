@@ -16,7 +16,7 @@ public:
 
     FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type)
     {
-        HRESULT Result = GetDevice()->GetDevice()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
+        HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
         if (SUCCEEDED(Result))
         {
             LOG_INFO("[CD3D12CommandAllocator]: Created CommandAllocator");

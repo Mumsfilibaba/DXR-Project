@@ -8,10 +8,12 @@
 
 bool CMesh::Init(const SMeshData& Data)
 {
-    VertexCount = static_cast<uint32>(Data.Vertices.Size());
-    IndexCount = static_cast<uint32>(Data.Indices.Size());
+    const bool bRTOn = false; // RHISupportsRayTracing();
 
-    const uint32 BufferFlags = RHISupportsRayTracing() ? BufferFlag_SRV | BufferFlag_Default : BufferFlag_Default;
+    VertexCount = static_cast<uint32>(Data.Vertices.Size());
+    IndexCount  = static_cast<uint32>(Data.Indices.Size());
+
+    const uint32 BufferFlags = bRTOn ? (BufferFlag_SRV | BufferFlag_Default) : BufferFlag_Default;
 
     SRHIResourceData InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
     VertexBuffer = RHICreateVertexBuffer<SVertex>(VertexCount, BufferFlags, ERHIResourceState::VertexAndConstantBuffer, &InitialData);
@@ -24,10 +26,26 @@ bool CMesh::Init(const SMeshData& Data)
         VertexBuffer->SetName("VertexBuffer");
     }
 
-    const bool bRTOn = RHISupportsRayTracing();
+    TArray<uint16> NewIndicies;
 
-    InitialData = SRHIResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
-    IndexBuffer = RHICreateIndexBuffer(ERHIIndexFormat::uint32, IndexCount, BufferFlags, ERHIResourceState::IndexBuffer, &InitialData);
+    const ERHIIndexFormat IndexFormat = (IndexCount < UINT16_MAX) && (!bRTOn) ? ERHIIndexFormat::uint16 : ERHIIndexFormat::uint32;
+    if (IndexFormat == ERHIIndexFormat::uint16)
+    {
+        NewIndicies.Reserve(Data.Indices.Size());
+
+        for (uint32 Index : Data.Indices)
+        {
+            NewIndicies.Emplace(uint16(Index));
+        }
+
+        InitialData = SRHIResourceData(NewIndicies.Data(), NewIndicies.SizeInBytes());
+    }
+    else
+    {
+        InitialData = SRHIResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
+    }
+
+    IndexBuffer = RHICreateIndexBuffer(IndexFormat, IndexCount, BufferFlags, ERHIResourceState::IndexBuffer, &InitialData);
     if (!IndexBuffer)
     {
         return false;
@@ -97,6 +115,6 @@ void CMesh::CreateBoundingBox(const SMeshData& Data)
         MaxBounds = Max(MaxBounds, Vertex.Position);
     }
 
-    BoundingBox.Top = MaxBounds;
+    BoundingBox.Top    = MaxBounds;
     BoundingBox.Bottom = MinBounds;
 }

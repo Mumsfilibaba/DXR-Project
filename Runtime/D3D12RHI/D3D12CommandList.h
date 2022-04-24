@@ -9,7 +9,7 @@
 class CD3D12RHIComputePipelineState;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12CommandList
+// CD3D12CommandList
 
 class CD3D12CommandList : public CD3D12DeviceChild
 {
@@ -24,7 +24,7 @@ public:
 
     FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type, CD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline)
     {
-        HRESULT Result = GetDevice()->GetDevice()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
+        HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandList(1, Type, Allocator.GetAllocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
         if (SUCCEEDED(Result))
         {
             CmdList->Close();

@@ -1,7 +1,8 @@
+
 include '../../BuildScripts/Scripts/build_module.lua'
 
 ---------------------------------------------------------------------------------------------------
--- ApplicationModule
+-- Application Module
 
 local ApplicationModule = CModuleBuildRules('Application')
 ApplicationModule.AddSystemIncludes( 
@@ -18,7 +19,7 @@ ApplicationModule.AddModuleDependencies(
 ApplicationModule.AddLinkLibraries( 
 {
     'ImGui',
-}
+})
 
 if BuildWithXcode() then
     ApplicationModule.AddFrameWorks( 

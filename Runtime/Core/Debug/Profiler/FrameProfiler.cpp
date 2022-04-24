@@ -3,7 +3,7 @@
 #include "Core/Threading/ScopedLock.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FrameProfiler
+// CFrameProfiler
 
 CFrameProfiler& CFrameProfiler::Get()
 {
@@ -48,8 +48,8 @@ void CFrameProfiler::Reset()
     CPUFrameTime.Reset();
 
     {
-        TScopedLock Lock(CPUSamples);
-        for (auto& Sample : CPUSamples.Get())
+        TScopedLock Lock(SamplesTableLock);
+        for (auto& Sample : SamplesTable)
         {
             Sample.second.Reset();
         }
@@ -60,14 +60,14 @@ void CFrameProfiler::BeginTraceScope(const char* Name)
 {
     if (bEnabled)
     {
-        TScopedLock Lock(CPUSamples);
+        TScopedLock Lock(SamplesTableLock);
 
         const String ScopeName = Name;
 
-        auto Entry = CPUSamples.Get().find(ScopeName);
-        if (Entry == CPUSamples.Get().end())
+        auto Entry = SamplesTable.find(ScopeName);
+        if (Entry == SamplesTable.end())
         {
-            auto NewSample = CPUSamples.Get().insert(std::make_pair(ScopeName, SProfileSample()));
+            auto NewSample = SamplesTable.insert(std::make_pair(ScopeName, SProfileSample()));
             NewSample.first->second.Begin();
         }
         else
@@ -83,10 +83,10 @@ void CFrameProfiler::EndTraceScope(const char* Name)
     {
         const String ScopeName = Name;
 
-        TScopedLock Lock(CPUSamples);
+        TScopedLock Lock(SamplesTableLock);
 
-        auto Entry = CPUSamples.Get().find(ScopeName);
-        if (Entry != CPUSamples.Get().end())
+        auto Entry = SamplesTable.find(ScopeName);
+        if (Entry != SamplesTable.end())
         {
             Entry->second.End();
         }
@@ -99,6 +99,6 @@ void CFrameProfiler::EndTraceScope(const char* Name)
 
 void CFrameProfiler::GetCPUSamples(ProfileSamplesTable& OutCPUSamples)
 {
-    TScopedLock Lock(CPUSamples);
-    OutCPUSamples = CPUSamples.Get();
+    TScopedLock Lock(SamplesTableLock);
+    OutCPUSamples = SamplesTable;
 }

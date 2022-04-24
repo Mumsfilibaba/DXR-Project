@@ -1,5 +1,8 @@
 include '../../BuildScripts/Scripts/build_module.lua'
 
+---------------------------------------------------------------------------------------------------
+-- NullRHI Module
+
 local NullRHIModule = CModuleBuildRules('NullRHI')
 NullRHIModule.bRuntimeLinking = false
 

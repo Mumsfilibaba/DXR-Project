@@ -299,7 +299,7 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
     CmdList.SetVertexBuffers(&VertexBuffer, 1, 0);
     CmdList.SetIndexBuffer(IndexBuffer.Get());
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-    CmdList.SetBlendFactor(SColorF(0.0f, 0.0f, 0.0f, 0.0f));
+    CmdList.SetBlendFactor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
     // TODO: Do not change to GenericRead, change to vertex/constantbuffer
     CmdList.TransitionBuffer(VertexBuffer.Get(), ERHIResourceState::GenericRead, ERHIResourceState::CopyDest);

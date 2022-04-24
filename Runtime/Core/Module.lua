@@ -1,7 +1,7 @@
 include '../../BuildScripts/Scripts/build_module.lua'
 
 ---------------------------------------------------------------------------------------------------
--- CoreModule
+-- Core Module
 
 local CoreModule = CModuleBuildRules('Core')
 CoreModule.bUsePrecompiledHeaders = true
