@@ -23,15 +23,13 @@ public:
     explicit CConfigValue(String&& InString)
         : SavedValue(InString)
         , CurrentValue(Move(InString))
-    {
-    }
+    { }
 
     /* Create value from string */
     explicit CConfigValue(const String& InString)
         : SavedValue(InString)
         , CurrentValue(InString)
-    {
-    }
+    { }
 
     /* Restores the value to the value currently in the save file */
     FORCEINLINE void Restore() { CurrentValue = SavedValue; }

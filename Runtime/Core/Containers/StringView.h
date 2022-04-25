@@ -36,8 +36,7 @@ public:
     FORCEINLINE TStringView() noexcept
         : ViewStart(nullptr)
         , ViewEnd(nullptr)
-    {
-    }
+    { }
 
     /**
      * Create a view from a raw string
@@ -47,8 +46,7 @@ public:
     FORCEINLINE TStringView(const CharType* InString) noexcept
         : ViewStart(InString)
         , ViewEnd(InString + StringUtils::Length(InString))
-    {
-    }
+    { }
 
     /**
      * Create a view from a raw string with a fixed length
@@ -59,8 +57,7 @@ public:
     FORCEINLINE explicit TStringView(const CharType* InString, SizeType InLength) noexcept
         : ViewStart(InString)
         , ViewEnd(InString + InLength)
-    {
-    }
+    { }
 
     /**
      * Create a view from a string-type 
@@ -71,8 +68,7 @@ public:
     FORCEINLINE explicit TStringView(const StringType& InString) noexcept
         : ViewStart(InString.CStr())
         , ViewEnd(InString.CStr() + InString.Length())
-    {
-    }
+    { }
 
     /**
      * Copy Constructor
@@ -82,8 +78,7 @@ public:
     FORCEINLINE TStringView(const TStringView& Other) noexcept
         : ViewStart(Other.ViewStart)
         , ViewEnd(Other.ViewEnd)
-    {
-    }
+    { }
 
     /**
      * Move Constructor

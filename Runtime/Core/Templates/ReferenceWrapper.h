@@ -26,8 +26,7 @@ public:
      */
     FORCEINLINE TReferenceWrapper(Type& In)
         : Pointer(::AddressOf(In))
-    {
-    }
+    { }
 
     /**
      * Retrieve reference

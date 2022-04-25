@@ -293,8 +293,7 @@ struct SRenderTargetWriteState
 
     SRenderTargetWriteState(uint8 InMask)
         : Mask(InMask)
-    {
-    }
+    { }
 
     FORCEINLINE bool WriteNone() const
     {
@@ -407,13 +406,11 @@ struct SRHIInputLayoutStateInfo
 
     SRHIInputLayoutStateInfo(const TArray<SInputElement>& InElements)
         : Elements(InElements)
-    {
-    }
+    { }
 
     SRHIInputLayoutStateInfo(std::initializer_list<SInputElement> InList)
         : Elements(InList)
-    {
-    }
+    { }
 
     TArray<SInputElement> Elements;
 };
@@ -495,8 +492,7 @@ struct SGraphicsPipelineShaderState
     SGraphicsPipelineShaderState(CRHIVertexShader* InVertexShader, CRHIPixelShader* InPixelShader)
         : VertexShader(InVertexShader)
         , PixelShader(InPixelShader)
-    {
-    }
+    { }
 
     CRHIVertexShader* VertexShader = nullptr;
     CRHIPixelShader* PixelShader = nullptr;
@@ -546,8 +542,7 @@ struct SRHIComputePipelineStateInfo
 
     SRHIComputePipelineStateInfo(CRHIComputeShader* InShader)
         : Shader(InShader)
-    {
-    }
+    { }
 
     CRHIComputeShader* Shader = nullptr;
 };
@@ -578,8 +573,7 @@ struct SRayTracingHitGroup
         : Name(InName)
         , AnyHit(InAnyHit)
         , ClosestHit(InClosestHit)
-    {
-    }
+    { }
 
     String              Name;
     CRHIRayAnyHitShader* AnyHit;

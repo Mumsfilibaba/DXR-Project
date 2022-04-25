@@ -21,8 +21,7 @@ public:
     FORCEINLINE CPointerReferenceCounter() noexcept
         : NumWeakRefs(0)
         , NumStrongRefs(0)
-    {
-    }
+    { }
 
     FORCEINLINE CounterType AddWeakRef() noexcept
     {
@@ -81,8 +80,7 @@ public:
         : DeleterType()
         , Ptr(nullptr)
         , Counter(nullptr)
-    {
-    }
+    { }
 
     FORCEINLINE TPointerReferencedStorage(TPointerReferencedStorage&& Other) noexcept
         : DeleterType(Move(Other))
@@ -295,16 +293,14 @@ public:
      */
     FORCEINLINE TSharedPtr() noexcept
         : Storage()
-    {
-    }
+    { }
 
     /**
      * Constructor setting both counter and pointer to nullptr 
      */
     FORCEINLINE TSharedPtr(NullptrType) noexcept
         : Storage()
-    {
-    }
+    { }
 
     /**
      * Constructor that initializes a new SharedPtr from a raw-pointer
@@ -359,8 +355,7 @@ public:
      */
     FORCEINLINE TSharedPtr(TSharedPtr&& Other) noexcept
         : Storage(Move(Other.Storage))
-    {
-    }
+    { }
 
     /**
      * Move-constructor that copies from a convertible type
@@ -370,8 +365,7 @@ public:
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<typename TRemoveExtent<OtherType>::Type*, ElementType*>::Value>::Type>
     FORCEINLINE TSharedPtr(TSharedPtr<OtherType, OtherDeleterType>&& Other) noexcept
         : Storage(Move(Other.Storage))
-    {
-    }
+    { }
 
     /**
      * Copy constructor that copy the counter, but the pointer is taken from the raw-pointer to enable casting 
@@ -785,8 +779,7 @@ public:
      */
     FORCEINLINE TWeakPtr() noexcept
         : Storage()
-    {
-    }
+    { }
 
     /**
      * Copy-constructor
@@ -806,8 +799,7 @@ public:
      */
     FORCEINLINE TWeakPtr(TWeakPtr&& Other) noexcept
         : Storage(Move(Other.Storage))
-    {
-    }
+    { }
 
     /**
      * Copy-constructor that copies from a convertible type
@@ -829,8 +821,7 @@ public:
     template<typename OtherType, typename OtherDeleterType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TWeakPtr(TWeakPtr<OtherType, OtherDeleterType>&& Other) noexcept
         : Storage(Move(Other.Storage))
-    {
-    }
+    { }
 
     /**
      * Constructor that constructs a WeakPtr from a SharedPtr

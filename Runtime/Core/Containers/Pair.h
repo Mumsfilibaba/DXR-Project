@@ -22,8 +22,7 @@ struct TPair
     FORCEINLINE explicit TPair(const FirstType& InFirst, const SecondType& InSecond)
         : First(InFirst)
         , Second(InSecond)
-    {
-    }
+    { }
 
     /**
      * Create a new instance of a pair
@@ -35,8 +34,7 @@ struct TPair
     FORCEINLINE explicit TPair(OtherFirstType&& InFirst, OtherSecondType&& InSecond)
         : First(Forward<OtherFirstType>(InFirst))
         , Second(Forward<OtherSecondType>(InSecond))
-    {
-    }
+    { }
 
     /**
      * Copy constructor
@@ -47,8 +45,7 @@ struct TPair
     FORCEINLINE explicit TPair(const TPair<OtherFirstType, OtherSecondType>& Other)
         : First(Other.First)
         , Second(Other.Second)
-    {
-    }
+    { }
 
     /**
      * Move constructor
@@ -59,8 +56,7 @@ struct TPair
     FORCEINLINE explicit TPair(TPair<OtherFirstType, OtherSecondType>&& Other)
         : First(Move(Other.First))
         , Second(Move(Other.Second))
-    {
-    }
+    { }
 
     /**
      * Swap this pair with another

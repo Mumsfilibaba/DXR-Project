@@ -85,8 +85,7 @@ public:
     CRHIBuffer(uint32 InFlags)
         : CRHIResource()
         , Flags(InFlags)
-    {
-    }
+    { }
 
     /**
      * Cast resource to a Buffer
@@ -202,8 +201,7 @@ public:
         : CRHIBuffer(InFlags)
         , NumVertices(InNumVertices)
         , Stride(InStride)
-    {
-    }
+    { }
 
     /**
      * Cast to VertexBuffer
@@ -256,8 +254,7 @@ public:
         : CRHIBuffer(InFlags)
         , Format(InFormat)
         , NumIndicies(InNumIndicies)
-    {
-    }
+    { }
 
     /**
      * Cast to IndexBuffer
@@ -307,8 +304,7 @@ public:
     CRHIConstantBuffer(uint32 InSize, uint32 InFlags)
         : CRHIBuffer(InFlags)
         , Size(InSize)
-    {
-    }
+    { }
 
     /**
      * Cast to ConstantBuffer
@@ -349,8 +345,7 @@ public:
         : CRHIBuffer(InFlags)
         , Stride(InStride)
         , NumElements(InNumElements)
-    {
-    }
+    { }
 
     /**
      * Cast to StructuredBuffer

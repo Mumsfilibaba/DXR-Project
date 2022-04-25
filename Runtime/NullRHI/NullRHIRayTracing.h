@@ -21,8 +21,7 @@ class CNullRHIRayTracingGeometry : public CRHIRayTracingGeometry
 public:
     CNullRHIRayTracingGeometry(uint32 InFlags)
         : CRHIRayTracingGeometry(InFlags)
-    {
-    }
+    { }
 
     ~CNullRHIRayTracingGeometry() = default;
 
@@ -46,8 +45,7 @@ public:
     CNullRHIRayTracingScene(uint32 InFlags)
         : CRHIRayTracingScene(InFlags)
         , View(dbg_new CNullRHIShaderResourceView())
-    {
-    }
+    { }
 
     ~CNullRHIRayTracingScene() = default;
 

@@ -79,8 +79,7 @@ public:
 
     FORCEINLINE TDefaultArrayAllocator() noexcept
         : Allocation(nullptr)
-    {
-    }
+    { }
 
     FORCEINLINE ~TDefaultArrayAllocator()
     {
@@ -185,8 +184,7 @@ public:
     FORCEINLINE TInlineArrayAllocator() noexcept
         : InlineAllocation()
         , DynamicAllocation()
-    {
-    }
+    { }
 
     FORCEINLINE ~TInlineArrayAllocator()
     {

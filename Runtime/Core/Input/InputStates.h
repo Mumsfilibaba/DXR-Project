@@ -12,8 +12,7 @@ struct SKeyState
         , PreviousState(0)
         , RepeatCount(0)
         , TimePressed(0.0f)
-    {
-    }
+    { }
 
     /** The key for this key-state */
     const EKey KeyCode;
@@ -37,8 +36,7 @@ struct SMouseButtonState
         , IsDown(0)
         , PreviousState(0)
         , TimePressed(0.0f)
-    {
-    }
+    { }
 
     /** The button associated with this button-state */
     const EMouseButton Button;

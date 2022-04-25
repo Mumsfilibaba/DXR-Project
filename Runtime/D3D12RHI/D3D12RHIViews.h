@@ -159,8 +159,7 @@ public:
 
     TD3D12RHIBaseView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
         : BaseViewType(InDevice, InHeap)
-    {
-    }
+    { }
 
     ~TD3D12RHIBaseView() = default;
 

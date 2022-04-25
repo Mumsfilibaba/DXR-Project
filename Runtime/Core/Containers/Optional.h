@@ -25,8 +25,7 @@ public:
     FORCEINLINE TOptional() noexcept
         : Value()
         , bHasValue(false)
-    {
-    }
+    { }
 
     /**
      * Construct from nullptr
@@ -35,8 +34,7 @@ public:
         : Value()
         , bHasValue(false)
     
-    {
-    }
+    { }
 
     /**
      * Copy-constructor

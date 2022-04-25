@@ -479,8 +479,7 @@ protected:
 
     CRHIInstance(ERHIInstanceApi InCurrentRHI)
         : CurrentRHI(InCurrentRHI)
-    {
-    }
+    { }
 
     virtual ~CRHIInstance() = default;
 

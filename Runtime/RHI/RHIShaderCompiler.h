@@ -26,14 +26,12 @@ struct SShaderDefine
     FORCEINLINE SShaderDefine(const String& InDefine)
         : Define(InDefine)
         , Value()
-    {
-    }
+    { }
 
     FORCEINLINE SShaderDefine(const String& InDefine, const String& InValue)
         : Define(InDefine)
         , Value(InValue)
-    {
-    }
+    { }
 
     String Define;
     String Value;

@@ -41,8 +41,7 @@ public:
         , NumMips(InNumMips)
         , Flags(InFlags)
         , OptimalClearValue(InOptimalClearValue)
-    {
-    }
+    { }
 
     /**
      * Cast resource to texture 
@@ -203,8 +202,7 @@ public:
         , Width(InWidth)
         , Height(InHeight)
         , NumSamples(InNumSamples)
-    {
-    }
+    { }
 
     /**
      * Cast to Texture2D
@@ -309,8 +307,7 @@ public:
     CRHITexture2DArray(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InNumArraySlices, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITexture2D(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InFlags, InOptimizedClearValue)
         , NumArraySlices(InNumArraySlices)
-    {
-    }
+    { }
 
     /**
      * Cast to Texture2D
@@ -359,8 +356,7 @@ public:
     CRHITextureCube(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITexture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
         , Size(InSize)
-    {
-    }
+    { }
 
     /* Cast to TextureCube */
     virtual CRHITextureCube* AsTextureCube() override { return this; }
@@ -394,8 +390,7 @@ public:
     CRHITextureCubeArray(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InNumArraySlices, uint32 InFlags, const SClearValue& InOptimizedClearValue)
         : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InOptimizedClearValue)
         , NumArraySlices(InNumArraySlices)
-    {
-    }
+    { }
 
     /**
      * Cast to TextureCube
@@ -447,8 +442,7 @@ public:
         , Width(InWidth)
         , Height(InHeight)
         , Depth(InDepth)
-    {
-    }
+    { }
 
     /**
      * Cast to Texture3D

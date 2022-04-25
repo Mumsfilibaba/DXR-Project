@@ -6,6 +6,16 @@
 
 struct SAABB
 {
+    SAABB()
+        : Top()
+        , Bottom()
+    { }
+
+    SAABB(const CVector3& InTop, const CVector3& InBottom)
+        : Top(InTop)
+        , Bottom(InBottom)
+    { }
+
    /**
     * Returns the center position of the bounding box
     * 

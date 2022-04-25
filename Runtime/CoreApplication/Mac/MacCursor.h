@@ -33,8 +33,7 @@ private:
 
     CMacCursor()
         : CPlatformCursor()
-    {
-    }
+    { }
 };
 
 #endif

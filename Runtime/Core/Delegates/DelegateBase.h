@@ -185,8 +185,7 @@ protected:
     FORCEINLINE explicit CDelegateBase()
         : Storage()
         , Size(0)
-    {
-    }
+    { }
 
     FORCEINLINE void Release()
     {

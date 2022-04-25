@@ -75,8 +75,7 @@ struct SImage2D
         , Width(InWidth)
         , Height(InHeight)
         , Format(InFormat)
-    {
-    }
+    { }
 
     /* Relative path to the image specified in the model-file */
     String Path;

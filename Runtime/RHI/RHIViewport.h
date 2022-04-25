@@ -22,8 +22,7 @@ public:
         , Width(InWidth)
         , Height(InHeight)
         , Format(InFormat)
-    {
-    }
+    { }
 
     ~CRHIViewport() = default;
 

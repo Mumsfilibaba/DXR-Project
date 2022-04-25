@@ -195,8 +195,7 @@ public:
         : CmdAllocator()
         , FirstCommand(nullptr)
         , LastCommand(nullptr)
-    {
-    }
+    { }
 
     /**
      * Destructor

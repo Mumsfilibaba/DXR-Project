@@ -13,8 +13,7 @@ public:
     CD3D12BaseBuffer(CD3D12Device* InDevice)
         : CD3D12DeviceChild(InDevice)
         , Resource(nullptr)
-    {
-    }
+    { }
 
     // Set the native resource, this function takes ownership of the current reference, call AddRef to use it in more places
     virtual void SetResource(CD3D12Resource* InResource) { Resource = InResource; }
@@ -43,8 +42,7 @@ public:
         : CRHIVertexBuffer(InNumVertices, InStride, InFlags)
         , CD3D12BaseBuffer(InDevice)
         , View()
-    {
-    }
+    { }
 
     // Set the resource and construct the view
     virtual void SetResource(CD3D12Resource* InResource) override final
@@ -76,8 +74,7 @@ public:
         : CRHIIndexBuffer(InIndexFormat, InNumIndices, InFlags)
         , CD3D12BaseBuffer(InDevice)
         , View()
-    {
-    }
+    { }
 
     // Set the resource and construct the view
     virtual void SetResource(CD3D12Resource* InResource) override final
@@ -114,8 +111,7 @@ public:
         : CRHIConstantBuffer(InSizeInBytes, InFlags)
         , CD3D12BaseBuffer(InDevice)
         , View(InDevice, InHeap)
-    {
-    }
+    { }
 
     virtual void SetResource(CD3D12Resource* InResource) override final
     {
@@ -161,8 +157,7 @@ public:
     CD3D12RHIBaseStructuredBuffer(CD3D12Device* InDevice, uint32 InSizeInBytes, uint32 InStride, uint32 InFlags)
         : CRHIStructuredBuffer(InSizeInBytes, InStride, InFlags)
         , CD3D12BaseBuffer(InDevice)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -176,8 +171,7 @@ public:
     template<typename... TBufferArgs>
     TD3D12RHIBaseBuffer(CD3D12Device* InDevice, TBufferArgs&&... BufferArgs)
         : BaseBufferType(InDevice, Forward<TBufferArgs>(BufferArgs)...)
-    {
-    }
+    { }
 
     virtual void* Map(uint32 Offset, uint32 InSize) override
     {
@@ -251,8 +245,7 @@ class CD3D12RHIVertexBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseVertexBuff
 public:
     CD3D12RHIVertexBuffer(CD3D12Device* InDevice, uint32 InNumVertices, uint32 InStride, uint32 InFlags)
         : TD3D12RHIBaseBuffer<CD3D12RHIBaseVertexBuffer>(InDevice, InNumVertices, InStride, InFlags)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -263,8 +256,7 @@ class CD3D12RHIIndexBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseIndexBuffer
 public:
     CD3D12RHIIndexBuffer(CD3D12Device* InDevice, ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
         : TD3D12RHIBaseBuffer<CD3D12RHIBaseIndexBuffer>(InDevice, InIndexFormat, InNumIndices, InFlags)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -275,8 +267,7 @@ class CD3D12RHIConstantBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseConstant
 public:
     CD3D12RHIConstantBuffer(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, uint32 InSizeInBytes, uint32 InFlags)
         : TD3D12RHIBaseBuffer<CD3D12RHIBaseConstantBuffer>(InDevice, InHeap, InSizeInBytes, InFlags)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -287,8 +278,7 @@ class CD3D12RHIStructuredBuffer : public TD3D12RHIBaseBuffer<CD3D12RHIBaseStruct
 public:
     CD3D12RHIStructuredBuffer(CD3D12Device* InDevice, uint32 InNumElements, uint32 InStride, uint32 InFlags)
         : TD3D12RHIBaseBuffer<CD3D12RHIBaseStructuredBuffer>(InDevice, InNumElements, InStride, InFlags)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

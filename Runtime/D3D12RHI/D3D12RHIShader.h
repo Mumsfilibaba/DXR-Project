@@ -70,8 +70,7 @@ struct SD3D12ShaderParameter
         , Space(InSpace)
         , NumDescriptors(InNumDescriptors)
         , SizeInBytes(InSizeInBytes)
-    {
-    }
+    { }
 
     String Name;
     uint32 Register = 0;
@@ -198,8 +197,7 @@ public:
     CD3D12RHIBaseVertexShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIVertexShader()
         , CD3D12BaseShader(InDevice, InCode, ShaderVisibility_Vertex)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -211,8 +209,7 @@ public:
     CD3D12RHIBasePixelShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIPixelShader()
         , CD3D12BaseShader(InDevice, InCode, ShaderVisibility_Pixel)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -223,8 +220,7 @@ class CD3D12RHIBaseRayTracingShader : public CD3D12BaseShader
 public:
     CD3D12RHIBaseRayTracingShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CD3D12BaseShader(InDevice, InCode, ShaderVisibility_All)
-    {
-    }
+    { }
 
     FORCEINLINE const String& GetIdentifier() const
     {
@@ -246,8 +242,7 @@ public:
     CD3D12RHIBaseRayGenShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayGenShader()
         , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -259,8 +254,7 @@ public:
     CD3D12RHIBaseRayAnyhitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayAnyHitShader()
         , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -272,8 +266,7 @@ public:
     CD3D12RHIBaseRayClosestHitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayClosestHitShader()
         , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -285,8 +278,7 @@ public:
     CD3D12RHIBaseRayMissShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayMissShader()
         , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -299,8 +291,7 @@ public:
         : CRHIComputeShader()
         , CD3D12BaseShader(InDevice, InCode, ShaderVisibility_All)
         , ThreadGroupXYZ(0, 0, 0)
-    {
-    }
+    { }
 
     bool Init();
 
@@ -322,8 +313,7 @@ class TD3D12RHIShader : public BaseShaderType
 public:
     TD3D12RHIShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : BaseShaderType(InDevice, InCode)
-    {
-    }
+    { }
 
     virtual void GetShaderParameterInfo(SRHIShaderParameterInfo& OutShaderParameterInfo) const override
     {

@@ -36,8 +36,7 @@ struct SWindowStyle
 
     FORCEINLINE SWindowStyle(uint32 InStyle)
         : Style(InStyle)
-    {
-    }
+    { }
 
     FORCEINLINE bool IsTitled() const
     {
@@ -78,8 +77,7 @@ struct SWindowShape
         : Width(InWidth)
         , Height(InHeight)
         , Position({ x, y })
-    {
-    }
+    { }
 
     uint32 Width = 0;
     uint32 Height = 0;

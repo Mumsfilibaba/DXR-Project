@@ -562,8 +562,7 @@ struct SD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
 {
     FORCEINLINE SD3D12CpuDescriptorHandle() noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE({ 0 })
-    {
-    }
+    { }
 
     FORCEINLINE explicit SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) noexcept 
         : D3D12_CPU_DESCRIPTOR_HANDLE(Other)
@@ -572,13 +571,11 @@ struct SD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
 
     FORCEINLINE SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) })
-    {
-    }
+    { }
 
     FORCEINLINE SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) })
-    {
-    }
+    { }
     
     FORCEINLINE SD3D12CpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
     {
@@ -640,8 +637,7 @@ struct SD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
 {
     FORCEINLINE SD3D12GpuDescriptorHandle() noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE({ 0 })
-    {
-    }
+    { }
 
     FORCEINLINE explicit SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) noexcept 
         : D3D12_GPU_DESCRIPTOR_HANDLE(Other)
@@ -650,13 +646,11 @@ struct SD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
 
     FORCEINLINE SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) })
-    {
-    }
+    { }
 
     FORCEINLINE SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) })
-    {
-    }
+    { }
     
     FORCEINLINE SD3D12GpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
     {

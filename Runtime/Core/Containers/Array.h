@@ -36,8 +36,7 @@ public:
         : Allocator()
         , ArraySize(0)
         , ArrayCapacity(0)
-    {
-    }
+    { }
 
     /** 
      * Constructor that default creates a certain number of elements 

@@ -30,8 +30,7 @@ public:
     FORCEINLINE TUniquePtr() noexcept
         : DeleterType()
         , Ptr(nullptr)
-    {
-    }
+    { }
 
     /**
      * Construct from nullptr
@@ -39,8 +38,7 @@ public:
     FORCEINLINE TUniquePtr(NullptrType) noexcept
         : DeleterType()
         , Ptr(nullptr)
-    {
-    }
+    { }
 
     /**
      * Constructor that takes a raw pointer
@@ -50,8 +48,7 @@ public:
     FORCEINLINE explicit TUniquePtr(ElementType* InPointer) noexcept
         : DeleterType()
         , Ptr(InPointer)
-    {
-    }
+    { }
 
     /**
      * Move-constructor
@@ -296,8 +293,7 @@ public:
     FORCEINLINE TUniquePtr() noexcept
         : DeleterType()
         , Ptr(nullptr)
-    {
-    }
+    { }
 
     /**
      * Construct from nullptr
@@ -305,8 +301,7 @@ public:
     FORCEINLINE TUniquePtr(NullptrType) noexcept
         : DeleterType()
         , Ptr(nullptr)
-    {
-    }
+    { }
 
     /**
      * Constructor that takes a raw pointer
@@ -316,8 +311,7 @@ public:
     FORCEINLINE explicit TUniquePtr(ElementType* InPointer) noexcept
         : DeleterType()
         , Ptr(InPointer)
-    {
-    }
+    { }
 
     /**
      * Move-constructor

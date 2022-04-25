@@ -21,8 +21,7 @@ public:
      */
     FORCEINLINE TAtomicInt() noexcept
         : Value(0)
-    {
-    }
+    { }
 
     /**
      * Copy-constructor
@@ -43,8 +42,7 @@ public:
      */
     FORCEINLINE TAtomicInt(T InValue) noexcept
         : Value(InValue)
-    {
-    }
+    { }
 
     ~TAtomicInt() = default;
 

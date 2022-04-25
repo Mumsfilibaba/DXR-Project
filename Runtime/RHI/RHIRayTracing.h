@@ -43,8 +43,7 @@ public:
      */
     CRHIRayTracingGeometry(uint32 InFlags)
         : Flags(InFlags)
-    {
-    }
+    { }
 
     /**
      * Retrieve the flags for the RayTracingGeometry
@@ -74,8 +73,7 @@ public:
      */
     CRHIRayTracingScene(uint32 InFlags)
         : Flags(InFlags)
-    {
-    }
+    { }
 
     /**
      * Retrieve the ShaderResourceView for the RayTracingScene

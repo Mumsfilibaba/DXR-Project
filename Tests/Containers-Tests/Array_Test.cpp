@@ -31,8 +31,7 @@ public:
     SClock()
         : Duration( 0 )
         , TotalDuration( 0 )
-    {
-    }
+    { }
 
     inline void Reset()
     {
@@ -94,8 +93,7 @@ struct Vec3
         : x( InX )
         , y( InY )
         , z( InZ )
-    {
-    }
+    { }
 
     double x;
     double y;

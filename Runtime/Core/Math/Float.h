@@ -28,8 +28,7 @@ struct SFloat64
      */
     FORCEINLINE SFloat64()
         : Float64(0.0)
-    {
-    }
+    { }
 
     /**
      * Construct a Float64 with a double
@@ -38,8 +37,7 @@ struct SFloat64
      */
     FORCEINLINE SFloat64(double InFloat64)
         : Float64(InFloat64)
-    {
-    }
+    { }
 
     /**
      * Copy constructor
@@ -48,8 +46,7 @@ struct SFloat64
      */
     FORCEINLINE SFloat64(const SFloat64& Other)
         : Float64(Other.Float64)
-    {
-    }
+    { }
 
     /**
      * Set the instance to a new value
@@ -98,18 +95,15 @@ struct SFloat32
 {
     FORCEINLINE SFloat32()
         : Float32(0.0f)
-    {
-    }
+    { }
 
     FORCEINLINE SFloat32(float InFloat32)
         : Float32(InFloat32)
-    {
-    }
+    { }
 
     FORCEINLINE SFloat32(const SFloat32& Other)
         : Float32(Other.Float32)
-    {
-    }
+    { }
 
     FORCEINLINE void SetFloat(float InFloat32)
     {
@@ -153,8 +147,7 @@ struct SFloat16
 {
     FORCEINLINE SFloat16()
         : Encoded(0)
-    {
-    }
+    { }
 
     FORCEINLINE SFloat16(float Float32)
         : Encoded(0)
@@ -164,8 +157,7 @@ struct SFloat16
 
     FORCEINLINE SFloat16(const SFloat16& Other)
         : Encoded(Other.Encoded)
-    {
-    }
+    { }
 
     FORCEINLINE void SetFloat(float Float32)
     {

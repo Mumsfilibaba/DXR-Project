@@ -21,8 +21,7 @@ struct SPointMessage
 {
     FORCEINLINE SPointMessage(LPARAM InParam)
         : Param(InParam)
-    {
-    }
+    { }
 
     union
     {

@@ -156,8 +156,7 @@ public:
      */
     FORCEINLINE explicit TDelegate()
         : Super()
-    {
-    }
+    { }
 
     /**
      * Bind a function to the delegate

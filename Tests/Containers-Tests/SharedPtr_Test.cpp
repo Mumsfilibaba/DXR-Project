@@ -31,8 +31,7 @@ class VirtualDerived : public VirtualBase
 {
 public:
     virtual void Func() override
-    {
-    }
+    { }
 };
 
 template<typename RefPointerType>

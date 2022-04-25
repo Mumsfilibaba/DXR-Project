@@ -647,8 +647,7 @@ public:
     explicit TBitArrayIterator(const BitFieldType& InBitField, uint32 InIndex)
         : Index(InIndex)
         , BitField(InBitField)
-    {
-    }
+    { }
 
     FORCEINLINE void operator++()
     {

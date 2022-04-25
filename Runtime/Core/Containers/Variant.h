@@ -221,8 +221,7 @@ public:
     FORCEINLINE TVariant() noexcept
         : Value()
         , TypeIndex(InvalidTypeIndex)
-    {
-    }
+    { }
 
     /**
      * In-Place constructor that constructs a variant of specified type with arguments for the types constructor

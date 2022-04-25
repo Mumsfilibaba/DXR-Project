@@ -164,8 +164,7 @@ public:
     FORCEINLINE TFunction() noexcept
         : Storage()
         , Size(0)
-    {
-    }
+    { }
 
     /**
      * Create from nullptr. Same as default constructor.
@@ -173,8 +172,7 @@ public:
     FORCEINLINE TFunction(NullptrType) noexcept
         : Storage()
         , Size(0)
-    {
-    }
+    { }
 
     /**
      * Construct a function from a functor
