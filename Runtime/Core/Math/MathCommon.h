@@ -34,24 +34,23 @@ namespace NMath
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Constants
 
-    constexpr const double PI = 3.1415926535898;
-    constexpr const double E = 2.7182818284590;
-    constexpr const double HALF_PI = PI / 2.0f;
-    constexpr const double TWO_PI = PI * 2.0;
-    constexpr const double ONE_DEGREE = PI / 180.0f;
+    constexpr const double kPI         = 3.1415926535898;
+    constexpr const double kE          = 2.7182818284590;
+    constexpr const double kHalfPI     = kPI / 2.0f;
+    constexpr const double kTwoPI      = kPI * 2.0;
+    constexpr const double kOneDegree  = kPI / 180.0f;
 
-    constexpr const float PI_F = 3.141592653f;
-    constexpr const float E_F = 2.718281828f;
-    constexpr const float HALF_PI_F = PI_F / 2.0f;
-    constexpr const float TWO_PI_F = 2.0f * PI_F;
-    constexpr const float ONE_DEGREE_F = PI_F / 180.0f;
+    constexpr const float kPI_f        = 3.141592653f;
+    constexpr const float kE_f         = 2.718281828f;
+    constexpr const float kHalfPI_f    = kPI_f / 2.0f;
+    constexpr const float kTwoPI_f     = 2.0f * kPI_f;
+    constexpr const float kOneDegree_f = kPI_f / 180.0f;
 
-    constexpr const float IS_EQUAL_EPISILON = 0.0005f;
+    constexpr const float kIsEqualEpsilon = 0.0005f;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Functions
 
-    // TODO: Move all math functions and constants to one location
     FORCEINLINE float VECTORCALL Sqrt(float v)
     {
 #if ARCHITECTURE_X86_X64
@@ -119,13 +118,13 @@ namespace NMath
     template<typename T>
     FORCEINLINE T ToRadians(T Degrees)
     {
-        return static_cast<T>(static_cast<float>(Degrees) * (PI_F / 180.0f));
+        return static_cast<T>(static_cast<float>(Degrees) * (kPI_f / 180.0f));
     }
 
     template<typename T>
     FORCEINLINE T ToDegrees(T Radians)
     {
-        return static_cast<T>(static_cast<float>(Radians) * (180.0f / PI_F));
+        return static_cast<T>(static_cast<float>(Radians) * (180.0f / kPI_f));
     }
 
     template<typename T>
@@ -147,13 +146,13 @@ namespace NMath
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsNan(T Float)
+    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsNaN(T Float)
     {
         return isnan(Float);
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsInf(T Float)
+    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsInfinity(T Float)
     {
         return isinf(Float);
     }

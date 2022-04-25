@@ -12,7 +12,7 @@ public:
     FORCEINLINE CVector3() noexcept;
 
     /**
-     * Constructor initializing all components with a corresponding value.
+     * @brief: Constructor initializing all components with a corresponding value.
      *
      * @param InX: The x-coordinate
      * @param InY: The y-coordinate
@@ -21,14 +21,14 @@ public:
     FORCEINLINE explicit CVector3(float InX, float InY, float InZ) noexcept;
 
     /**
-     * Constructor initializing all components with an array.
+     * @brief: Constructor initializing all components with an array.
      *
      * @param Arr: Array with 3 elements
      */
     FORCEINLINE explicit CVector3(const float* Arr) noexcept;
 
     /**
-     * Constructor initializing all components with a single value.
+     * @brief: Constructor initializing all components with a single value.
      *
      * @param Scalar: Value to set all components to
      */
@@ -38,64 +38,64 @@ public:
     inline void Normalize() noexcept;
 
     /**
-     * Returns a normalized version of this vector
+     * @brief: Returns a normalized version of this vector
      *
      * @return A copy of this vector normalized
      */
     FORCEINLINE CVector3 GetNormalized() const noexcept;
 
     /**
-     * Compares, within a threshold Epsilon, this vector with another vector
+     * @brief: Compares, within a threshold Epsilon, this vector with another vector
      *
      * @param Other: vector to compare against
      * @return True if equal, false if not
      */
-    inline bool IsEqual(const CVector3& Other, float Epsilon = NMath::IS_EQUAL_EPISILON) const noexcept;
+    inline bool IsEqual(const CVector3& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept;
 
     /**
-     * Checks weather this vector is a unit vector not
+     * @brief: Checks weather this vector is a unit vector not
      *
      * @return True if the length equals one, false if not
      */
     FORCEINLINE bool IsUnitVector() const noexcept;
 
     /**
-     * Checks weather this vector has any component that equals NaN
+     * @brief: Checks weather this vector has any component that equals NaN
      *
      * @return True if the any component equals NaN, false if not
      */
     FORCEINLINE bool HasNan() const noexcept;
 
     /**
-     * Checks weather this vector has any component that equals infinity
+     * @brief: Checks weather this vector has any component that equals infinity
      *
      * @return True if the any component equals infinity, false if not
      */
     FORCEINLINE bool HasInfinity() const noexcept;
 
     /**
-     * Checks weather this vector has any value that equals infinity or NaN
+     * @brief: Checks weather this vector has any value that equals infinity or NaN
      *
      * @return False if the any value equals infinity or NaN, true if not
      */
     FORCEINLINE bool IsValid() const noexcept;
 
     /**
-     * Returns the length of this vector
+     * @brief: Returns the length of this vector
      *
      * @return The length of the vector
      */
     FORCEINLINE float Length() const noexcept;
 
     /**
-     * Returns the length of this vector squared
+     * @brief: Returns the length of this vector squared
      *
      * @return The length of the vector squared
      */
     FORCEINLINE float LengthSquared() const noexcept;
 
     /**
-     * Returns the dot product between this and another vector
+     * @brief: Returns the dot product between this and another vector
      *
      * @param Other: The vector to perform dot product with
      * @return The dot product
@@ -103,7 +103,7 @@ public:
     FORCEINLINE float DotProduct(const CVector3& Other) const noexcept;
 
     /**
-     * Returns the cross product of this vector and another vector.
+     * @brief: Returns the cross product of this vector and another vector.
      *
      * @param Other: The vector to perform cross product with
      * @return The cross product
@@ -111,7 +111,7 @@ public:
     inline CVector3 CrossProduct(const CVector3& Other) const noexcept;
 
     /**
-     * Returns the resulting vector after projecting this vector onto another.
+     * @brief: Returns the resulting vector after projecting this vector onto another.
      *
      * @param Other: The vector to project onto
      * @return The projected vector
@@ -119,7 +119,7 @@ public:
     inline CVector3 ProjectOn(const CVector3& Other) const noexcept;
 
     /**
-     * Returns the reflected vector after reflecting this vector around a normal.
+     * @brief: Returns the reflected vector after reflecting this vector around a normal.
      *
      * @param Normal: Vector to reflect around
      * @return The reflected vector
@@ -127,14 +127,14 @@ public:
     inline CVector3 Reflect(const CVector3& Normal) const noexcept;
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
     FORCEINLINE float* GetData() noexcept;
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
@@ -143,7 +143,7 @@ public:
 public:
 
     /**
-     * Returns a vector with the smallest of each component of two vectors
+     * @brief: Returns a vector with the smallest of each component of two vectors
      *
      * @param First: First vector to compare with
      * @param Second: Second vector to compare with
@@ -152,7 +152,7 @@ public:
     friend FORCEINLINE CVector3 Min(const CVector3& First, const CVector3& Second) noexcept;
 
     /**
-     * Returns a vector with the largest of each component of two vectors
+     * @brief: Returns a vector with the largest of each component of two vectors
      *
      * @param First: First vector to compare with
      * @param Second: Second vector to compare with
@@ -161,7 +161,7 @@ public:
     friend FORCEINLINE CVector3 Max(const CVector3& First, const CVector3& Second) noexcept;
 
     /**
-     * Returns the linear interpolation between two vectors
+     * @brief: Returns the linear interpolation between two vectors
      *
      * @param First: First vector to interpolate
      * @param Second: Second vector to interpolate
@@ -171,7 +171,7 @@ public:
     friend FORCEINLINE CVector3 Lerp(const CVector3& First, const CVector3& Second, float t) noexcept;
 
     /**
-     * Returns a vector with all the components within the range of a min and max value
+     * @brief: Returns a vector with all the components within the range of a min and max value
      *
      * @param Min: Vector with minimum values
      * @param Max: Vector with maximum values
@@ -181,7 +181,7 @@ public:
     friend FORCEINLINE CVector3 Clamp(const CVector3& Min, const CVector3& Max, const CVector3& Value) noexcept;
 
     /**
-     * Returns a vector with all the components within the range zero and one
+     * @brief: Returns a vector with all the components within the range zero and one
      *
      * @param Value: Value to saturate
      * @return A vector with the result of saturation
@@ -191,14 +191,14 @@ public:
 public:
 
     /**
-     * Return a vector with component-wise negation of this vector
+     * @brief: Return a vector with component-wise negation of this vector
      *
      * @return A negated vector
      */
     FORCEINLINE CVector3 operator-() const noexcept;
 
     /**
-     * Returns the result of component-wise adding this and another vector
+     * @brief: Returns the result of component-wise adding this and another vector
      *
      * @param Rhs: The vector to add
      * @return A vector with the result of addition
@@ -206,7 +206,7 @@ public:
     FORCEINLINE CVector3 operator+(const CVector3& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise adding this with another vector
+     * @brief: Returns this vector after component-wise adding this with another vector
      *
      * @param Rhs: The vector to add
      * @return A reference to this vector
@@ -214,7 +214,7 @@ public:
     FORCEINLINE CVector3& operator+=(const CVector3& Rhs) noexcept;
 
     /**
-     * Returns the result of adding a scalar to each component of this vector
+     * @brief: Returns the result of adding a scalar to each component of this vector
      *
      * @param Rhs: The scalar to add
      * @return A vector with the result of addition
@@ -222,7 +222,7 @@ public:
     FORCEINLINE CVector3 operator+(float Rhs) const noexcept;
 
     /**
-     * Returns this vector after adding a scalar to each component of this vector
+     * @brief: Returns this vector after adding a scalar to each component of this vector
      *
      * @param Rhs: The scalar to add
      * @return A reference to this vector
@@ -230,7 +230,7 @@ public:
     FORCEINLINE CVector3& operator+=(float Rhs) noexcept;
 
     /**
-     * Returns the result of component-wise subtraction between this and another vector
+     * @brief: Returns the result of component-wise subtraction between this and another vector
      *
      * @param Rhs: The vector to subtract
      * @return A vector with the result of subtraction
@@ -238,7 +238,7 @@ public:
     FORCEINLINE CVector3 operator-(const CVector3& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise subtraction between this and another vector
+     * @brief: Returns this vector after component-wise subtraction between this and another vector
      *
      * @param Rhs: The vector to subtract
      * @return A reference to this vector
@@ -246,7 +246,7 @@ public:
     FORCEINLINE CVector3& operator-=(const CVector3& Rhs) noexcept;
 
     /**
-     * Returns the result of subtracting each component of this vector with a scalar
+     * @brief: Returns the result of subtracting each component of this vector with a scalar
      *
      * @param Rhs: The scalar to subtract
      * @return A vector with the result of the subtraction
@@ -254,7 +254,7 @@ public:
     FORCEINLINE CVector3 operator-(float Rhs) const noexcept;
 
     /**
-     * Returns this vector after subtracting each component of this vector with a scalar
+     * @brief: Returns this vector after subtracting each component of this vector with a scalar
      *
      * @param Rhs: The scalar to subtract
      * @return A reference to this vector
@@ -262,7 +262,7 @@ public:
     FORCEINLINE CVector3& operator-=(float Rhs) noexcept;
 
     /**
-     * Returns the result of component-wise multiplication with this and another vector
+     * @brief: Returns the result of component-wise multiplication with this and another vector
      *
      * @param Rhs: The vector to multiply with
      * @return A vector with the result of the multiplication
@@ -270,7 +270,7 @@ public:
     FORCEINLINE CVector3 operator*(const CVector3& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise multiplication with this and another vector
+     * @brief: Returns this vector after component-wise multiplication with this and another vector
      *
      * @param Rhs: The vector to multiply with
      * @return A reference to this vector
@@ -278,7 +278,7 @@ public:
     FORCEINLINE CVector3& operator*=(const CVector3& Rhs) noexcept;
 
     /**
-     * Returns the result of multiplying each component of this vector with a scalar
+     * @brief: Returns the result of multiplying each component of this vector with a scalar
      *
      * @param Rhs: The scalar to multiply with
      * @return A vector with the result of the multiplication
@@ -286,7 +286,7 @@ public:
     FORCEINLINE CVector3 operator*(float Rhs) const noexcept;
 
     /**
-     * Returns the result of multiplying each component of a vector with a scalar
+     * @brief: Returns the result of multiplying each component of a vector with a scalar
      *
      * @param Lhs: The scalar to multiply with
      * @param Rhs: The vector to multiply with
@@ -295,7 +295,7 @@ public:
     friend FORCEINLINE CVector3 operator*(float Lhs, const CVector3& Rhs) noexcept;
 
     /**
-     * Returns this vector after multiplying each component of this vector with a scalar
+     * @brief: Returns this vector after multiplying each component of this vector with a scalar
      *
      * @param Rhs: The scalar to multiply with
      * @return A reference to this vector
@@ -303,7 +303,7 @@ public:
     FORCEINLINE CVector3 operator*=(float Rhs) noexcept;
 
     /**
-     * Returns the result of component-wise division with this and another vector
+     * @brief: Returns the result of component-wise division with this and another vector
      *
      * @param Rhs: The vector to divide with
      * @return A vector with the result of the division
@@ -311,7 +311,7 @@ public:
     FORCEINLINE CVector3 operator/(const CVector3& Rhs) const noexcept;
 
     /**
-     * Returns this vector after component-wise division with this and another vector
+     * @brief: Returns this vector after component-wise division with this and another vector
      *
      * @param Rhs: The vector to divide with
      * @return A reference to this vector
@@ -319,7 +319,7 @@ public:
     FORCEINLINE CVector3& operator/=(const CVector3& Rhs) noexcept;
 
     /**
-     * Returns the result of dividing each component of this vector and a scalar
+     * @brief: Returns the result of dividing each component of this vector and a scalar
      *
      * @param Rhs: The scalar to divide with
      * @return A vector with the result of the division
@@ -327,7 +327,7 @@ public:
     FORCEINLINE CVector3 operator/(float Rhs) const noexcept;
 
     /**
-     * Returns this vector after dividing each component of this vector and a scalar
+     * @brief: Returns this vector after dividing each component of this vector and a scalar
      *
      * @param Rhs: The scalar to divide with
      * @return A reference to this vector
@@ -335,7 +335,7 @@ public:
     FORCEINLINE CVector3& operator/=(float Rhs) noexcept;
 
     /**
-     * Returns the result after comparing this and another vector
+     * @brief: Returns the result after comparing this and another vector
      *
      * @param Other: The vector to compare with
      * @return True if equal, false if not
@@ -343,7 +343,7 @@ public:
     FORCEINLINE bool operator==(const CVector3& Other) const noexcept;
 
     /**
-     * Returns the negated result after comparing this and another vector
+     * @brief: Returns the negated result after comparing this and another vector
      *
      * @param Other: The vector to compare with
      * @return False if equal, true if not
@@ -351,7 +351,7 @@ public:
     FORCEINLINE bool operator!=(const CVector3& Other) const noexcept;
 
     /**
-     * Returns the component specified
+     * @brief: Returns the component specified
      *
      * @param Index: The component index
      * @return The component
@@ -359,7 +359,7 @@ public:
     FORCEINLINE float& operator[](int Index) noexcept;
 
     /**
-     * Returns the component specified
+     * @brief: Returns the component specified
      *
      * @param Index: The component index
      * @return The component
@@ -447,14 +447,14 @@ FORCEINLINE bool CVector3::IsUnitVector() const noexcept
     // LengthSquared should be the same as length if this is a unit vector
     // However, this way the sqrt can be avoided
     float fLengthSquared = NMath::Abs(1.0f - LengthSquared());
-    return (fLengthSquared < NMath::IS_EQUAL_EPISILON);
+    return (fLengthSquared < NMath::kIsEqualEpsilon);
 }
 
 FORCEINLINE bool CVector3::HasNan() const noexcept
 {
     for (int i = 0; i < 4; i++)
     {
-        if (NMath::IsNan(reinterpret_cast<const float*>(this)[i]))
+        if (NMath::IsNaN(reinterpret_cast<const float*>(this)[i]))
         {
             return true;
         }
@@ -467,7 +467,7 @@ FORCEINLINE bool CVector3::HasInfinity() const noexcept
 {
     for (int i = 0; i < 4; i++)
     {
-        if (NMath::IsInf(reinterpret_cast<const float*>(this)[i]))
+        if (NMath::IsInfinity(reinterpret_cast<const float*>(this)[i]))
         {
             return true;
         }

@@ -11,19 +11,19 @@ class VECTOR_ALIGN CPlane
 public:
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE CPlane() noexcept;
 
     /**
-     * Constructor that creates a plane from a Vector4
+     * @brief: Constructor that creates a plane from a Vector4
      * 
      * @param Plane: Vector4 representing a plane
      */
     FORCEINLINE explicit CPlane(const CVector4& Plane) noexcept;
 
     /**
-     * Constructor that creates a plane from a normal and offset
+     * @brief: Constructor that creates a plane from a normal and offset
      *
      * @param Normal: Normal of a plane
      * @param InW: Offset from origin in direction of the normal
@@ -31,7 +31,7 @@ public:
     FORCEINLINE explicit CPlane(const CVector3& Normal, float InW) noexcept;
     
     /**
-     * Constructor that creates a plane from components of a Vector4
+     * @brief: Constructor that creates a plane from components of a Vector4
      *
      * @param InX: x-component of a Vector4
      * @param InY: y-component of a Vector4
@@ -41,15 +41,15 @@ public:
     FORCEINLINE explicit CPlane(float InX, float InY, float InZ, float InW) noexcept;
 
     /**
-     * Compares, within a threshold Epsilon, this plane with another plane
+     * @brief: Compares, within a threshold Epsilon, this plane with another plane
      *
      * @param Other: plane to compare against
      * @return True if equal, false if not
      */
-    inline bool IsEqual(const CPlane& Other, float Epsilon = NMath::IS_EQUAL_EPISILON) const noexcept;
+    inline bool IsEqual(const CPlane& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept;
 
     /**
-     * Normalized the plane
+     * @brief: Normalized the plane
      */
     FORCEINLINE void Normalize() noexcept;
 
@@ -62,21 +62,21 @@ public:
     FORCEINLINE float PlaneDotCoord(const CVector3& Point) const noexcept;
 
     /**
-     * Retrieve the normal of the plane
+     * @brief: Retrieve the normal of the plane
      * 
      * @return: Returns the normal of the plane
      */
     FORCEINLINE CVector3 GetNormal() const noexcept;
 
     /**
-     * Retrieve the data as an array
+     * @brief: Retrieve the data as an array
      * 
      * @return: A pointer to the data representing the plane
      */
     FORCEINLINE float* GetData() noexcept;
 
     /**
-     * Retrieve the data as an array
+     * @brief: Retrieve the data as an array
      *
      * @return: A pointer to the data representing the plane
      */
@@ -85,7 +85,7 @@ public:
 public:
 
     /**
-     * Returns the result after comparing this and another plane
+     * @brief: Returns the result after comparing this and another plane
      *
      * @param Other: The plane to compare with
      * @return True if equal, false if not
@@ -93,7 +93,7 @@ public:
     FORCEINLINE bool operator==(const CPlane& Other) const noexcept;
 
     /**
-     * Returns the negated result after comparing this and another plane
+     * @brief: Returns the negated result after comparing this and another plane
      *
      * @param Other: The plane to compare with
      * @return False if equal, true if not

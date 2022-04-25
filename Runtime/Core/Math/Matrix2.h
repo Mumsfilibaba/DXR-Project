@@ -3,132 +3,292 @@
 #include "SIMD.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A 2x2 matrix with SIMD capabilities
+// CMatrix2
 
 class VECTOR_ALIGN CMatrix2
 {
 public:
 
-    /** Default constructor (Initialize components to zero) */
-    FORCEINLINE CMatrix2() noexcept;
+    /** 
+     * @brief: Default constructor (Initialize components to zero) 
+     */
+    FORCEINLINE CMatrix2() noexcept 
+        : m00(0.0f), m01(0.0f)
+        , m10(0.0f), m11(0.0f)
+    { }
 
     /**
-     * Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
+     * @brief: Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
      *
      * @param Diagonal: Value to set on the diagonal
      */
-    FORCEINLINE explicit CMatrix2(float Diagonal) noexcept;
+    FORCEINLINE explicit CMatrix2(float Diagonal) noexcept
+        : m00(Diagonal), m01(0.0f)
+        , m10(0.0f), m11(Diagonal)
+    { }
 
     /**
-     * Constructor initializing all values with vectors specifying each row
+     * @brief: Constructor initializing all values with vectors specifying each row
      *
      * @param Row0: Vector to set the first row to
      * @param Row1: Vector to set the second row to
      */
-    FORCEINLINE explicit CMatrix2(const CVector2& Row0, const CVector2& Row1) noexcept;
+    FORCEINLINE explicit CMatrix2(const CVector2& Row0, const CVector2& Row1) noexcept
+        : m00(Row0.x), m01(Row0.y)
+        , m10(Row1.x), m11(Row1.y)
+    { }
 
     /**
-     * Constructor initializing all values with corresponding value
+     * @brief: Constructor initializing all values with corresponding value
      *
      * @param In00: Value to set on row 0 and column 0
      * @param In01: Value to set on row 0 and column 1
      * @param In10: Value to set on row 1 and column 0
      * @param In11: Value to set on row 1 and column 1
      */
-    FORCEINLINE explicit CMatrix2(float In00, float In01, float In10, float In11) noexcept;
+    FORCEINLINE explicit CMatrix2(float In00, float In01, float In10, float In11) noexcept
+        : m00(In00), m01(In01)
+        , m10(In10), m11(In11)
+    { }
 
     /**
-     * Constructor initializing all components with an array
+     * @brief: Constructor initializing all components with an array
      *
      * @param Arr: Array with at least 4 elements
      */
-    FORCEINLINE explicit CMatrix2(const float* Arr) noexcept;
+    FORCEINLINE explicit CMatrix2(const float* Arr) noexcept
+        : m00(Arr[0]), m01(Arr[1])
+        , m10(Arr[2]), m11(Arr[3])
+    { }
 
     /**
-     * Returns the transposed version of this matrix
+     * @brief: Returns the transposed version of this matrix
      *
      * @return Transposed matrix
      */
-    inline CMatrix2 Transpose() const noexcept;
+    inline CMatrix2 Transpose() const noexcept
+    {
+#if defined(DISABLE_SIMD)
+        CMatrix2 Transpose;
+        Transpose.f[0][0] = f[0][0];
+        Transpose.f[0][1] = f[1][0];
+
+        Transpose.f[1][0] = f[0][1];
+        Transpose.f[1][1] = f[1][1];
+        return Transpose;
+#else
+        CMatrix2 Transpose;
+
+        NSIMD::Float128 This = NSIMD::LoadAligned(this);
+        This = NSIMD::Shuffle<0, 2, 1, 3>(This);
+
+        NSIMD::StoreAligned(This, &Transpose);
+        return Transpose;
+#endif
+    }
 
     /**
-     * Returns the inverted version of this matrix
+     * @brief: Returns the inverted version of this matrix
      *
      * @return Inverse matrix
      */
-    inline CMatrix2 Invert() const noexcept;
+    inline CMatrix2 Invert() const noexcept
+    {
+        const float fDeterminant = (m00 * m11) - (m01 * m10);
+
+#if defined(DISABLE_SIMD)
+        const float RecipDeterminant = 1.0f / fDeterminant;
+
+        CMatrix2 Inverse;
+        Inverse.m00 =  m11 * RecipDeterminant;
+        Inverse.m10 = -m10 * RecipDeterminant;
+        Inverse.m01 = -m01 * RecipDeterminant;
+        Inverse.m11 =  m00 * RecipDeterminant;
+        return Inverse;
+#else
+        CMatrix2 Inverse;
+
+        NSIMD::Float128 This = NSIMD::LoadAligned(this);
+        This = NSIMD::Shuffle<3, 2, 1, 0>(This);
+
+        constexpr int32 Keep   = 0;
+        constexpr int32 Negate = (1 << 31);
+
+        NSIMD::Int128 Mask = NSIMD::Load(Keep, Negate, Negate, Keep);
+        This = NSIMD::Or(This, NSIMD::CastIntToFloat(Mask));
+
+        NSIMD::Float128 RcpDeterminant = NSIMD::Recip(NSIMD::Load(fDeterminant));
+        This = NSIMD::Mul(This, RcpDeterminant);
+
+        NSIMD::StoreAligned(This, &Inverse);
+        return Inverse;
+#endif
+    }
 
     /**
-     * Returns the adjugate of this matrix
+     * @brief: Returns the adjugate of this matrix
      *
      * @return Adjugate matrix
      */
-    FORCEINLINE CMatrix2 Adjoint() const noexcept;
+    FORCEINLINE CMatrix2 Adjoint() const noexcept
+    {
+#if defined(DISABLE_SIMD)
+        CMatrix2 Adjugate;
+        Adjugate.m00 =  m11;
+        Adjugate.m10 = -m10;
+        Adjugate.m01 = -m01;
+        Adjugate.m11 =  m00;
+        return Adjugate;
+#else
+        CMatrix2 Adjugate;
+
+        NSIMD::Float128 This = NSIMD::LoadAligned(this);
+        This = NSIMD::Shuffle<3, 2, 1, 0>(This);
+
+        constexpr int32 Keep   = 0;
+        constexpr int32 Negate = (1 << 31);
+
+        NSIMD::Int128 Mask = NSIMD::Load(Keep, Negate, Negate, Keep);
+        This = NSIMD::Or(This, NSIMD::CastIntToFloat(Mask));
+
+        NSIMD::StoreAligned(This, &Adjugate);
+        return Adjugate;
+#endif
+    }
 
     /**
-     * Returns the determinant of this matrix
+     * @brief: Returns the determinant of this matrix
      *
      * @return The determinant
      */
-    FORCEINLINE float Determinant() const noexcept;
+    FORCEINLINE float Determinant() const noexcept
+    {
+        return (m00 * m11) - (m01 * m10);
+    }
 
     /**
-     * Checks weather this matrix has any value that equals NaN
+     * @brief: Checks weather this matrix has any value that equals NaN
      *
      * @return True if the any value equals NaN, false if not
      */
-    inline bool HasNan() const noexcept;
+    inline bool HasNaN() const noexcept
+    {
+        for (int32 Index = 0; Index < 4; ++Index)
+        {
+            if (NMath::IsNaN(reinterpret_cast<const float*>(this)[Index]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
-     * Checks weather this matrix has any value that equals infinity
+     * @brief: Checks weather this matrix has any value that equals infinity
      *
      * @return True if the any value equals infinity, false if not
      */
-    inline bool HasInfinity() const noexcept;
+    inline bool HasInfinity() const noexcept
+    {
+        for (int32 Index = 0; Index < 4; ++Index)
+        {
+            if (NMath::IsInfinity(reinterpret_cast<const float*>(this)[Index]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
-     * Checks weather this matrix has any value that equals infinity or NaN
+     * @brief: Checks weather this matrix has any value that equals infinity or NaN
      *
      * @return False if the any value equals infinity or NaN, true if not
      */
-    FORCEINLINE bool IsValid() const noexcept;
+    FORCEINLINE bool IsValid() const noexcept
+    {
+        return !HasNaN() && !HasInfinity();
+    }
 
     /**
-     * Compares, within a threshold Epsilon, this matrix with another matrix
+     * @brief: Compares, within a threshold Epsilon, this matrix with another matrix
      *
      * @param Other: matrix to compare against
      * @return True if equal, false if not
      */
-    inline bool IsEqual(const CMatrix2& Other, float Epsilon = NMath::IS_EQUAL_EPISILON) const noexcept;
+    inline bool IsEqual(const CMatrix2& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    {
+#if defined(DISABLE_SIMD)
 
-    /* Sets this matrix to an identity matrix */
-    FORCEINLINE void SetIdentity() noexcept;
+        Epsilon = NMath::Abs(Epsilon);
+
+        for (int32 i = 0; i < 4; i++)
+        {
+            float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
+            if (NMath::Abs(Diff) > Epsilon)
+            {
+                return false;
+            }
+        }
+
+        return true;
+
+#else
+        NSIMD::Float128 Espilon128 = NSIMD::Load(Epsilon);
+        Espilon128 = NSIMD::Abs(Espilon128);
+
+        NSIMD::Float128 Diff = NSIMD::Sub(this, &Other);
+        Diff = NSIMD::Abs(Diff);
+        return NSIMD::LessThan(Diff, Espilon128);
+#endif
+    }
+
+    /* @brief: Sets this matrix to an identity matrix */
+    FORCEINLINE void SetIdentity() noexcept
+    {
+#if defined(DISABLE_SIMD)
+        m00 = 1.0f;
+        m01 = 0.0f;
+
+        m10 = 0.0f;
+        m11 = 1.0f;
+#else
+        NSIMD::Float128 Constant = NSIMD::Load(1.0f, 0.0f, 0.0f, 1.0f);
+        NSIMD::StoreAligned(Constant, this);
+#endif
+    }
 
     /**
-     * Returns a row of this matrix
+     * @brief: Returns a row of this matrix
      *
      * @param Row: The row to retrieve
      * @return A vector containing the specified row
      */
-    FORCEINLINE CVector2 GetRow(int Row) const noexcept;
+    FORCEINLINE CVector2 GetRow(int32 Row) const noexcept
+    {
+        Assert(Row < 2);
+        return CVector2(f[Row]);
+    }
 
     /**
-     * Returns a column of this matrix
+     * @brief: Returns a column of this matrix
      *
      * @param Column: The column to retrieve
      * @return A vector containing the specified column
      */
-    FORCEINLINE CVector2 GetColumn(int Column) const noexcept;
+    FORCEINLINE CVector2 GetColumn(int32 Column) const noexcept;
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
     FORCEINLINE float* GetData() noexcept;
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
@@ -137,7 +297,7 @@ public:
 public:
 
     /**
-     * Transforms a 2-D vector
+     * @brief: Transforms a 2-D vector
      *
      * @param Rhs: The vector to transform
      * @return A vector containing the transformation
@@ -145,7 +305,7 @@ public:
     FORCEINLINE CVector2 operator*(const CVector2& Rhs) const noexcept;
 
     /**
-     * Multiplies a matrix with another matrix
+     * @brief: Multiplies a matrix with another matrix
      *
      * @param Rhs: The other matrix
      * @return A matrix containing the result of the multiplication
@@ -153,7 +313,7 @@ public:
     FORCEINLINE CMatrix2 operator*(const CMatrix2& Rhs) const noexcept;
 
     /**
-     * Multiplies this matrix with another matrix
+     * @brief: Multiplies this matrix with another matrix
      *
      * @param Rhs: The other matrix
      * @return A reference to this matrix
@@ -161,7 +321,7 @@ public:
     FORCEINLINE CMatrix2& operator*=(const CMatrix2& Rhs) noexcept;
 
     /**
-     * Multiplies a matrix component-wise with a scalar
+     * @brief: Multiplies a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the multiplication
@@ -169,7 +329,7 @@ public:
     FORCEINLINE CMatrix2 operator*(float Rhs) const noexcept;
 
     /**
-     * Multiplies this matrix component-wise with a scalar
+     * @brief: Multiplies this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -177,7 +337,7 @@ public:
     FORCEINLINE CMatrix2& operator*=(float Rhs) noexcept;
 
     /**
-     * Adds a matrix component-wise with another matrix
+     * @brief: Adds a matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A matrix containing the result of the addition
@@ -185,7 +345,7 @@ public:
     FORCEINLINE CMatrix2 operator+(const CMatrix2& Rhs) const noexcept;
 
     /**
-     * Adds this matrix component-wise with another matrix
+     * @brief: Adds this matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A reference to this matrix
@@ -193,7 +353,7 @@ public:
     FORCEINLINE CMatrix2& operator+=(const CMatrix2& Rhs) noexcept;
 
     /**
-     * Adds a matrix component-wise with a scalar
+     * @brief: Adds a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the addition
@@ -201,7 +361,7 @@ public:
     FORCEINLINE CMatrix2 operator+(float Rhs) const noexcept;
 
     /**
-     * Adds this matrix component-wise with a scalar
+     * @brief: Adds this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -209,7 +369,7 @@ public:
     FORCEINLINE CMatrix2& operator+=(float Rhs) noexcept;
 
     /**
-     * Subtracts a matrix component-wise with another matrix
+     * @brief: Subtracts a matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A matrix containing the result of the subtraction
@@ -217,7 +377,7 @@ public:
     FORCEINLINE CMatrix2 operator-(const CMatrix2& Rhs) const noexcept;
 
     /**
-     * Subtracts this matrix component-wise with another matrix
+     * @brief: Subtracts this matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A reference to this matrix
@@ -225,7 +385,7 @@ public:
     FORCEINLINE CMatrix2& operator-=(const CMatrix2& Rhs) noexcept;
 
     /**
-     * Subtracts a matrix component-wise with a scalar
+     * @brief: Subtracts a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the subtraction
@@ -233,7 +393,7 @@ public:
     FORCEINLINE CMatrix2 operator-(float Rhs) const noexcept;
 
     /**
-     * Subtracts this matrix component-wise with a scalar
+     * @brief: Subtracts this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -241,7 +401,7 @@ public:
     FORCEINLINE CMatrix2& operator-=(float Rhs) noexcept;
 
     /**
-     * Divides a matrix component-wise with a scalar
+     * @brief: Divides a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the division
@@ -249,7 +409,7 @@ public:
     FORCEINLINE CMatrix2 operator/(float Rhs) const noexcept;
 
     /**
-     * Divides this matrix component-wise with a scalar
+     * @brief: Divides this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -257,7 +417,7 @@ public:
     FORCEINLINE CMatrix2& operator/=(float Rhs) noexcept;
 
     /**
-     * Returns the result after comparing this and another matrix
+     * @brief: Returns the result after comparing this and another matrix
      *
      * @param Other: The matrix to compare with
      * @return True if equal, false if not
@@ -265,7 +425,7 @@ public:
     FORCEINLINE bool operator==(const CMatrix2& Other) const noexcept;
 
     /**
-     * Returns the negated result after comparing this and another matrix
+     * @brief: Returns the negated result after comparing this and another matrix
      *
      * @param Other: The matrix to compare with
      * @return False if equal, true if not
@@ -275,14 +435,14 @@ public:
 public:
 
     /**
-     * Creates and returns a identity matrix
+     * @brief: Creates and returns a identity matrix
      *
      * @return A identity matrix
      */
     inline static CMatrix2 Identity() noexcept;
 
     /**
-     * Creates and returns a uniform scale matrix
+     * @brief: Creates and returns a uniform scale matrix
      *
      * @param Scale: Uniform scale that represents this matrix
      * @return A scale matrix
@@ -290,7 +450,7 @@ public:
     inline static CMatrix2 Scale(float Scale) noexcept;
 
     /**
-     * Creates and returns a scale matrix for each axis
+     * @brief: Creates and returns a scale matrix for each axis
      *
      * @param x: Scale for the x-axis
      * @param y: Scale for the y-axis
@@ -299,7 +459,7 @@ public:
     inline static CMatrix2 Scale(float x, float y) noexcept;
 
     /**
-     * Creates and returns a scale matrix for each axis
+     * @brief: Creates and returns a scale matrix for each axis
      *
      * @param VectorWithScale: A vector containing the scale for each axis in the x-, and y-components
      * @return A scale matrix
@@ -307,7 +467,7 @@ public:
     inline static CMatrix2 Scale(const CVector2& VectorWithScale) noexcept;
 
     /**
-     * Creates and returns a rotation matrix around the x-axis
+     * @brief: Creates and returns a rotation matrix around the x-axis
      *
      * @param Rotation: Rotation around in radians
      * @return A rotation matrix
@@ -333,217 +493,51 @@ public:
 // Implementation
 
 FORCEINLINE CMatrix2::CMatrix2() noexcept
-    : m00(0.0f), m01(0.0f)
-    , m10(0.0f), m11(0.0f)
-{
-}
+
 
 FORCEINLINE CMatrix2::CMatrix2(float Diagonal) noexcept
-    : m00(Diagonal), m01(0.0f)
-    , m10(0.0f), m11(Diagonal)
-{
-}
+
 
 FORCEINLINE CMatrix2::CMatrix2(const CVector2& Row0, const CVector2& Row1) noexcept
-    : m00(Row0.x), m01(Row0.y)
-    , m10(Row1.x), m11(Row1.y)
-{
-}
+
 
 FORCEINLINE CMatrix2::CMatrix2(float In00, float In01, float In10, float In11) noexcept
-    : m00(In00), m01(In01)
-    , m10(In10), m11(In11)
-{
-}
+
 
 FORCEINLINE CMatrix2::CMatrix2(const float* Arr) noexcept
-    : m00(Arr[0]), m01(Arr[1])
-    , m10(Arr[2]), m11(Arr[3])
-{
-}
+
 
 FORCEINLINE CMatrix2 CMatrix2::Transpose() const noexcept
-{
-#if defined(DISABLE_SIMD)
 
-    CMatrix2 Transpose;
-    Transpose.f[0][0] = f[0][0];
-    Transpose.f[0][1] = f[1][0];
-
-    Transpose.f[1][0] = f[0][1];
-    Transpose.f[1][1] = f[1][1];
-    return Transpose;
-
-#else
-
-    CMatrix2 Transpose;
-
-    NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    This = NSIMD::Shuffle<0, 2, 1, 3>(This);
-
-    NSIMD::StoreAligned(This, &Transpose);
-    return Transpose;
-
-#endif
-}
 
 inline CMatrix2 CMatrix2::Invert() const noexcept
-{
-    const float fDeterminant = (m00 * m11) - (m01 * m10);
 
-#if defined(DISABLE_SIMD)
-
-    const float RecipDeterminant = 1.0f / fDeterminant;
-
-    CMatrix2 Inverse;
-    Inverse.m00 = m11 * RecipDeterminant;
-    Inverse.m10 = -m10 * RecipDeterminant;
-    Inverse.m01 = -m01 * RecipDeterminant;
-    Inverse.m11 = m00 * RecipDeterminant;
-    return Inverse;
-
-#else
-
-    CMatrix2 Inverse;
-
-    NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    This = NSIMD::Shuffle<3, 2, 1, 0>(This);
-
-    constexpr int Keep = 0;
-    constexpr int Negate = 1 << 31;
-
-    NSIMD::Int128 Mask = NSIMD::Load(Keep, Negate, Negate, Keep);
-    This = NSIMD::Or(This, NSIMD::CastIntToFloat(Mask));
-
-    NSIMD::Float128 RcpDeterminant = NSIMD::Recip(NSIMD::Load(fDeterminant));
-    This = NSIMD::Mul(This, RcpDeterminant);
-
-    NSIMD::StoreAligned(This, &Inverse);
-    return Inverse;
-
-#endif
-}
 
 FORCEINLINE CMatrix2 CMatrix2::Adjoint() const noexcept
-{
-#if defined(DISABLE_SIMD)
 
-    CMatrix2 Adjugate;
-    Adjugate.m00 = m11;
-    Adjugate.m10 = -m10;
-    Adjugate.m01 = -m01;
-    Adjugate.m11 = m00;
-    return Adjugate;
-
-#else
-
-    CMatrix2 Adjugate;
-
-    NSIMD::Float128 This = NSIMD::LoadAligned(this);
-    This = NSIMD::Shuffle<3, 2, 1, 0>(This);
-
-    constexpr int Keep = 0;
-    constexpr int Negate = 1 << 31;
-
-    NSIMD::Int128 Mask = NSIMD::Load(Keep, Negate, Negate, Keep);
-    This = NSIMD::Or(This, NSIMD::CastIntToFloat(Mask));
-
-    NSIMD::StoreAligned(This, &Adjugate);
-    return Adjugate;
-
-#endif
-}
 
 FORCEINLINE float CMatrix2::Determinant() const noexcept
-{
-    return (m00 * m11) - (m01 * m10);
-}
 
-inline bool CMatrix2::HasNan() const noexcept
-{
-    for (int i = 0; i < 4; i++)
-    {
-        if (NMath::IsNan(reinterpret_cast<const float*>(this)[i]))
-        {
-            return true;
-        }
-    }
 
-    return false;
-}
+inline bool CMatrix2::HasNaN() const noexcept
+
 
 inline bool CMatrix2::HasInfinity() const noexcept
-{
-    for (int i = 0; i < 4; i++)
-    {
-        if (NMath::IsInf(reinterpret_cast<const float*>(this)[i]))
-        {
-            return true;
-        }
-    }
 
-    return false;
-}
 
 FORCEINLINE bool CMatrix2::IsValid() const noexcept
-{
-    return !HasNan() && !HasInfinity();
-}
+
 
 inline bool CMatrix2::IsEqual(const CMatrix2& Other, float Epsilon) const noexcept
-{
-#if defined(DISABLE_SIMD)
 
-    Epsilon = NMath::Abs(Epsilon);
-
-    for (int i = 0; i < 4; i++)
-    {
-        float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
-        if (NMath::Abs(Diff) > Epsilon)
-        {
-            return false;
-        }
-    }
-
-    return true;
-
-#else
-
-    NSIMD::Float128 Espilon128 = NSIMD::Load(Epsilon);
-    Espilon128 = NSIMD::Abs(Espilon128);
-
-    NSIMD::Float128 Diff = NSIMD::Sub(this, &Other);
-    Diff = NSIMD::Abs(Diff);
-    return NSIMD::LessThan(Diff, Espilon128);
-
-#endif
-}
 
 FORCEINLINE void CMatrix2::SetIdentity() noexcept
-{
-#if defined(DISABLE_SIMD)
 
-    m00 = 1.0f;
-    m01 = 0.0f;
 
-    m10 = 0.0f;
-    m11 = 1.0f;
+FORCEINLINE CVector2 CMatrix2::GetRow(int32 Row) const noexcept
 
-#else
 
-    NSIMD::Float128 Constant = NSIMD::Load(1.0f, 0.0f, 0.0f, 1.0f);
-    NSIMD::StoreAligned(Constant, this);
-
-#endif
-}
-
-FORCEINLINE CVector2 CMatrix2::GetRow(int Row) const noexcept
-{
-    Assert(Row < 2);
-    return CVector2(f[Row]);
-}
-
-FORCEINLINE CVector2 CMatrix2::GetColumn(int Column) const noexcept
+FORCEINLINE CVector2 CMatrix2::GetColumn(int32 Column) const noexcept
 {
     Assert(Column < 2);
     return CVector2(f[0][Column], f[1][Column]);

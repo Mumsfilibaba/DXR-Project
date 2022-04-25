@@ -14,14 +14,14 @@ public:
     FORCEINLINE CMatrix4() noexcept;
 
     /**
-     * Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
+     * @brief: Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
      *
      * @param Diagonal: Value to set on the diagonal
      */
     FORCEINLINE explicit CMatrix4(float Diagonal) noexcept;
 
     /**
-     * Constructor initializing all values with vectors specifying each row
+     * @brief: Constructor initializing all values with vectors specifying each row
      *
      * @param Row0: Vector to set the first row to
      * @param Row1: Vector to set the second row to
@@ -31,7 +31,7 @@ public:
     FORCEINLINE explicit CMatrix4(const CVector4& Row0, const CVector4& Row1, const CVector4& Row2, const CVector4& Row3) noexcept;
 
     /**
-     * Constructor initializing all values with corresponding value
+     * @brief: Constructor initializing all values with corresponding value
      *
      * @param In00: Value to set on row 0 and column 0
      * @param In01: Value to set on row 0 and column 1
@@ -57,14 +57,14 @@ public:
         float In30, float In31, float In32, float In33) noexcept;
 
     /**
-     * Constructor initializing all components with an array
+     * @brief: Constructor initializing all components with an array
      *
      * @param Arr: Array with at least 16 elements
      */
     FORCEINLINE explicit CMatrix4(const float* Arr) noexcept;
 
     /**
-     * Transform a 3-D vector as position, fourth component to one
+     * @brief: Transform a 3-D vector as position, fourth component to one
      *
      * @param Position: Vector to transform
      * @return Transformed vector
@@ -72,7 +72,7 @@ public:
     FORCEINLINE CVector3 TransformPosition(const CVector3& Position) noexcept;
 
     /**
-     * Transform a 3-D vector as direction, fourth component to zero
+     * @brief: Transform a 3-D vector as direction, fourth component to zero
      *
      * @param Direction: Vector to transform
      * @return Transformed vector
@@ -80,81 +80,81 @@ public:
     FORCEINLINE CVector3 TransformDirection(const CVector3& Direction) noexcept;
 
     /**
-     * Returns the transposed version of this matrix
+     * @brief: Returns the transposed version of this matrix
      *
      * @return Transposed matrix
      */
     inline CMatrix4 Transpose() const noexcept;
 
     /**
-     * Returns the inverted version of this matrix
+     * @brief: Returns the inverted version of this matrix
      *
      * @return Inverse matrix
      */
     inline CMatrix4 Invert() const noexcept;
 
     /**
-     * Returns the adjugate of this matrix
+     * @brief: Returns the adjugate of this matrix
      *
      * @return Adjugate matrix
      */
     inline CMatrix4 Adjoint() const noexcept;
 
     /**
-     * Returns the determinant of this matrix
+     * @brief: Returns the determinant of this matrix
      *
      * @return The determinant
      */
     inline float Determinant() const noexcept;
 
     /**
-     * Checks weather this matrix has any value that equals NaN
+     * @brief: Checks weather this matrix has any value that equals NaN
      *
      * @return True if the any value equals NaN, false if not
      */
     inline bool HasNan() const noexcept;
 
     /**
-     * Checks weather this matrix has any value that equals infinity
+     * @brief: Checks weather this matrix has any value that equals infinity
      *
      * @return True if the any value equals infinity, false if not
      */
     inline bool HasInfinity() const noexcept;
 
     /**
-     * Checks weather this matrix has any value that equals infinity or NaN
+     * @brief: Checks weather this matrix has any value that equals infinity or NaN
      *
      * @return False if the any value equals infinity or NaN, true if not
      */
     FORCEINLINE bool IsValid() const noexcept;
 
     /**
-     * Compares, within a threshold Epsilon, this matrix with another matrix
+     * @brief: Compares, within a threshold Epsilon, this matrix with another matrix
      *
      * @param Other: matrix to compare against
      * @return True if equal, false if not
      */
-    inline bool IsEqual(const CMatrix4& Other, float Epsilon = NMath::IS_EQUAL_EPISILON) const noexcept;
+    inline bool IsEqual(const CMatrix4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept;
 
     /* Sets this matrix to an identity matrix */
     FORCEINLINE void SetIdentity() noexcept;
 
     /**
-     * Sets the upper 3x3 matrix
+     * @brief: Sets the upper 3x3 matrix
      *
      * @param RotationAndScale: 3x3 to set the upper quadrant to
      */
     FORCEINLINE void SetRotationAndScale(const CMatrix3& RotationAndScale) noexcept;
 
     /**
-     * Sets the translation part of a matrix
+     * @brief: Sets the translation part of a matrix
      *
      * @param Translation: The translation part
      */
     FORCEINLINE void SetTranslation(const CVector3& Translation) noexcept;
 
     /**
-     * Returns a row of this matrix
+     * @brief: Returns a row of this matrix
      *
      * @param Row: The row to retrive
      * @return A vector containing the specified row
@@ -162,7 +162,7 @@ public:
     FORCEINLINE CVector4 GetRow(int Row) const noexcept;
 
     /**
-     * Returns a column of this matrix
+     * @brief: Returns a column of this matrix
      *
      * @param Column: The column to retrive
      * @return A vector containing the specified column
@@ -170,7 +170,7 @@ public:
     FORCEINLINE CVector4 GetColumn(int Column) const noexcept;
 
     /**
-     * Returns the translation part of this matrix, that is
+     * @brief: Returns the translation part of this matrix, that is
      * the x-, y-, and z-coordinates of the fourth row
      *
      * @return A vector containing the translation
@@ -178,21 +178,21 @@ public:
     FORCEINLINE CVector3 GetTranslation() const noexcept;
 
     /**
-     * Returns the 3x3 matrix thats forming the upper quadrant of this matrix.
+     * @brief: Returns the 3x3 matrix thats forming the upper quadrant of this matrix.
      *
      * @return A matrix containing the upper part of the matrix
      */
     FORCEINLINE CMatrix3 GetRotationAndScale() const noexcept;
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
     FORCEINLINE float* GetData() noexcept;
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
@@ -200,7 +200,7 @@ public:
 
 public:
     /**
-     * Transforms a 4-D vector
+     * @brief: Transforms a 4-D vector
      *
      * @param Rhs: The vector to transform
      * @return A vector containing the transformation
@@ -208,7 +208,7 @@ public:
     FORCEINLINE CVector4 operator*(const CVector4& Rhs) const noexcept;
 
     /**
-     * Multiplies a matrix with another matrix
+     * @brief: Multiplies a matrix with another matrix
      *
      * @param Rhs: The other matrix
      * @return A matrix containing the result of the multiplication
@@ -216,7 +216,7 @@ public:
     FORCEINLINE CMatrix4 operator*(const CMatrix4& Rhs) const noexcept;
 
     /**
-     * Multiplies this matrix with another matrix
+     * @brief: Multiplies this matrix with another matrix
      *
      * @param Rhs: The other matrix
      * @return A reference to this matrix
@@ -224,7 +224,7 @@ public:
     FORCEINLINE CMatrix4& operator*=(const CMatrix4& Rhs) noexcept;
 
     /**
-     * Multiplies a matrix component-wise with a scalar
+     * @brief: Multiplies a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the multiplication
@@ -232,7 +232,7 @@ public:
     FORCEINLINE CMatrix4 operator*(float Rhs) const noexcept;
 
     /**
-     * Multiplies this matrix component-wise with a scalar
+     * @brief: Multiplies this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -240,7 +240,7 @@ public:
     FORCEINLINE CMatrix4& operator*=(float Rhs) noexcept;
 
     /**
-     * Adds a matrix component-wise with another matrix
+     * @brief: Adds a matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A matrix containing the result of the addition
@@ -248,7 +248,7 @@ public:
     FORCEINLINE CMatrix4 operator+(const CMatrix4& Rhs) const noexcept;
 
     /**
-     * Adds this matrix component-wise with another matrix
+     * @brief: Adds this matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A reference to this matrix
@@ -256,7 +256,7 @@ public:
     FORCEINLINE CMatrix4& operator+=(const CMatrix4& Rhs) noexcept;
 
     /**
-     * Adds a matrix component-wise with a scalar
+     * @brief: Adds a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the addition
@@ -264,7 +264,7 @@ public:
     FORCEINLINE CMatrix4 operator+(float Rhs) const noexcept;
 
     /**
-     * Adds this matrix component-wise with a scalar
+     * @brief: Adds this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -272,7 +272,7 @@ public:
     FORCEINLINE CMatrix4& operator+=(float Rhs) noexcept;
 
     /**
-     * Subtracts a matrix component-wise with another matrix
+     * @brief: Subtracts a matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A matrix containing the result of the subtraction
@@ -280,7 +280,7 @@ public:
     FORCEINLINE CMatrix4 operator-(const CMatrix4& Rhs) const noexcept;
 
     /**
-     * Subtracts this matrix component-wise with another matrix
+     * @brief: Subtracts this matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
      * @return A reference to this matrix
@@ -288,7 +288,7 @@ public:
     FORCEINLINE CMatrix4& operator-=(const CMatrix4& Rhs) noexcept;
 
     /**
-     * Subtracts a matrix component-wise with a scalar
+     * @brief: Subtracts a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the subtraction
@@ -296,7 +296,7 @@ public:
     FORCEINLINE CMatrix4 operator-(float Rhs) const noexcept;
 
     /**
-     * Subtracts this matrix component-wise with a scalar
+     * @brief: Subtracts this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -304,7 +304,7 @@ public:
     FORCEINLINE CMatrix4& operator-=(float Rhs) noexcept;
 
     /**
-     * Divides a matrix component-wise with a scalar
+     * @brief: Divides a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A matrix containing the result of the division
@@ -312,7 +312,7 @@ public:
     FORCEINLINE CMatrix4 operator/(float Rhs) const noexcept;
 
     /**
-     * Divides this matrix component-wise with a scalar
+     * @brief: Divides this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
      * @return A reference to this matrix
@@ -320,7 +320,7 @@ public:
     FORCEINLINE CMatrix4& operator/=(float Rhs) noexcept;
 
     /**
-     * Returns the result after comparing this and another matrix
+     * @brief: Returns the result after comparing this and another matrix
      *
      * @param Other: The matrix to compare with
      * @return True if equal, false if not
@@ -328,7 +328,7 @@ public:
     FORCEINLINE bool operator==(const CMatrix4& Other) const noexcept;
 
     /**
-     * Returns the negated result after comparing this and another matrix
+     * @brief: Returns the negated result after comparing this and another matrix
      *
      * @param Other: The matrix to compare with
      * @return False if equal, true if not
@@ -337,14 +337,14 @@ public:
 
 public:
     /**
-     * Creates and returns a identity matrix
+     * @brief: Creates and returns a identity matrix
      *
      * @return A identity matrix
      */
     inline static CMatrix4 Identity() noexcept;
 
     /**
-     * Creates and returns a uniform scale matrix
+     * @brief: Creates and returns a uniform scale matrix
      *
      * @param Scale: Uniform scale that represents this matrix
      * @return A scale matrix
@@ -352,7 +352,7 @@ public:
     inline static CMatrix4 Scale(float Scale) noexcept;
 
     /**
-     * Creates and returns a scale matrix for each axis
+     * @brief: Creates and returns a scale matrix for each axis
      *
      * @param x: Scale for the x-axis
      * @param y: Scale for the y-axis
@@ -362,7 +362,7 @@ public:
     inline static CMatrix4 Scale(float x, float y, float z) noexcept;
 
     /**
-     * Creates and returns a scale matrix for each axis
+     * @brief: Creates and returns a scale matrix for each axis
      *
      * @param VectorWithScale: A vector containing the scale for each axis in the x-, y-, z-components
      * @return A scale matrix
@@ -370,7 +370,7 @@ public:
     inline static CMatrix4 Scale(const CVector3& VectorWithScale) noexcept;
 
     /**
-     * Creates and returns a translation matrix
+     * @brief: Creates and returns a translation matrix
      *
      * @param x: Translation for the x-axis
      * @param y: Translation for the y-axis
@@ -380,7 +380,7 @@ public:
     inline static CMatrix4 Translation(float x, float y, float z) noexcept;
 
     /**
-     * Creates and returns a translation matrix
+     * @brief: Creates and returns a translation matrix
      *
      * @param Translation: A vector containing the translation
      * @return A translation matrix
@@ -388,7 +388,7 @@ public:
     inline static CMatrix4 Translation(const CVector3& Translation) noexcept;
 
     /**
-     * Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
+     * @brief: Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
      *
      * @param Pitch: Rotation around the x-axis in radians
      * @param Yaw: Rotation around the y-axis in radians
@@ -398,7 +398,7 @@ public:
     inline static CMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept;
 
     /**
-     * Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
+     * @brief: Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
      *
      * @param PitchYawRoll: A vector containing the PitchYawRoll (x = Pitch, y = Yaw, z = Roll)
      * @return A rotation matrix
@@ -406,7 +406,7 @@ public:
     inline static CMatrix4 RotationRollPitchYaw(const CVector3& PitchYawRoll) noexcept;
 
     /**
-     * Creates and returns a rotation matrix around the x-axis
+     * @brief: Creates and returns a rotation matrix around the x-axis
      *
      * @param x: Rotation around the x-axis in radians
      * @return A rotation matrix
@@ -414,7 +414,7 @@ public:
     inline static CMatrix4 RotationX(float x) noexcept;
 
     /**
-     * Creates and returns a rotation matrix around the y-axis
+     * @brief: Creates and returns a rotation matrix around the y-axis
      *
      * @param y: Rotation around the y-axis in radians
      * @return A rotation matrix
@@ -422,7 +422,7 @@ public:
     inline static CMatrix4 RotationY(float y) noexcept;
 
     /**
-     * Creates and returns a rotation matrix around the z-axis
+     * @brief: Creates and returns a rotation matrix around the z-axis
      *
      * @param z: Rotation around the z-axis in radians
      * @return A rotation matrix
@@ -430,7 +430,7 @@ public:
     inline static CMatrix4 RotationZ(float z) noexcept;
 
     /**
-     * Creates a ortographic-projection matrix (Left-handed)
+     * @brief: Creates a ortographic-projection matrix (Left-handed)
      *
      * @param Width: Width of the projection plane in pixels
      * @param Height: Height of the projection plane in pixels
@@ -441,7 +441,7 @@ public:
     inline static CMatrix4 OrtographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept;
 
     /**
-     * Creates a ortographic-projection matrix (Left-handed)
+     * @brief: Creates a ortographic-projection matrix (Left-handed)
      *
      * @param Left: Negative offset on the x-axis in world-units
      * @param Right: Positive offset on the x-axis in world-units
@@ -454,7 +454,7 @@ public:
     inline static CMatrix4 OrtographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept;
 
     /**
-     * Creates a perspective-projection matrix (Left-handed)
+     * @brief: Creates a perspective-projection matrix (Left-handed)
      *
      * @param Fov: Field of view of the projection in radians
      * @param AspectRatio: Aspect ratio of the projection (Width / Height)
@@ -465,7 +465,7 @@ public:
     inline static CMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept;
 
     /**
-     * Creates a perspective-projection matrix (Left-handed)
+     * @brief: Creates a perspective-projection matrix (Left-handed)
      *
      * @param Fov: Field of view of the projection in radians
      * @param Width: Width of the projection plane in pixels
@@ -479,7 +479,7 @@ public:
     // Create a lookat matrix (Left-handed)
 
     /**
-     * Creates a look-at matrix (Left-handed)
+     * @brief: Creates a look-at matrix (Left-handed)
      *
      * @param Eye: Position to look from
      * @param At: Position to look at
@@ -489,7 +489,7 @@ public:
     inline static CMatrix4 LookAt(const CVector3& Eye, const CVector3& At, const CVector3& Up) noexcept;
 
     /**
-     * Creates a look-to matrix (Left-handed)
+     * @brief: Creates a look-to matrix (Left-handed)
      *
      * @param Eye: Position to look from
      * @param Direction: Direction to look in
@@ -959,7 +959,7 @@ inline bool CMatrix4::HasNan() const noexcept
 {
     for (int i = 0; i < 16; i++)
     {
-        if (NMath::IsNan(reinterpret_cast<const float*>(this)[i]))
+        if (NMath::IsNaN(reinterpret_cast<const float*>(this)[i]))
         {
             return true;
         }
@@ -972,7 +972,7 @@ inline bool CMatrix4::HasInfinity() const noexcept
 {
     for (int i = 0; i < 16; i++)
     {
-        if (NMath::IsInf(reinterpret_cast<const float*>(this)[i]))
+        if (NMath::IsInfinity(reinterpret_cast<const float*>(this)[i]))
         {
             return true;
         }
@@ -1620,7 +1620,7 @@ inline CMatrix4 CMatrix4::OrtographicProjection(float Left, float Right, float B
 
 inline CMatrix4 CMatrix4::PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
 {
-    if (Fov < NMath::ONE_DEGREE_F || Fov >(NMath::PI_F - NMath::ONE_DEGREE_F))
+    if (Fov < NMath::kOneDegree_f || Fov >(NMath::kPI_f - NMath::kOneDegree_f))
     {
         return CMatrix4();
     }
