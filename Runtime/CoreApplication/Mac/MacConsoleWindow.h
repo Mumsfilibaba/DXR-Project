@@ -12,31 +12,31 @@ class COREAPPLICATION_API CMacConsoleWindow final : public CPlatformConsoleWindo
 {
 public:
 
-    /* Creates a new console */
+     /** @brief: Creates a new console */
 	static CMacConsoleWindow* Make();
 	
-	/* Show or hide the console window */
+	 /** @brief: Show or hide the console window */
 	virtual void Show(bool bShow) override final;
 
-	/* Prints text to the console window, but does not start a new line */
+	 /** @brief: Prints text to the console window, but does not start a new line */
 	virtual void Print(const String& Message) override final;
 	
-	/* Prints a line to the console window */
+	 /** @brief: Prints a line to the console window */
 	virtual void PrintLine(const String& Message) override final;
 
-	/* Clear the console window */
+	 /** @brief: Clear the console window */
 	virtual void Clear() override final;
 
-	/* Set the title of the console window */
+	 /** @brief: Set the title of the console window */
 	virtual void SetTitle(const String& Title) override final;
 	
-	/* Set the text-color */
+	 /** @brief: Set the text-color */
 	virtual void SetColor(EConsoleColor Color) override final;
 	
-	/* Retrieve the number of lines currently written to the consolewindow */
+	 /** @brief: Retrieve the number of lines currently written to the consolewindow */
 	int32 GetLineCount() const;
 	
-	/* Called when the console window is closed */
+	 /** @brief: Called when the console window is closed */
 	void OnWindowDidClose();
 
 private:
@@ -50,7 +50,7 @@ private:
 	// Destroy the console window
 	void DestroyConsole();
 
-	/* Destroys resources without the window and should only be called on the mainthread */
+	 /** @brief: Destroys resources without the window and should only be called on the mainthread */
 	void DestroyResources();
 	
 	// Appends a new string to the textview and scroll to the bottom

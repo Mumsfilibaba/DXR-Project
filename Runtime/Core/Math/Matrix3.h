@@ -2,21 +2,31 @@
 #include "Vector3.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A 3x3 matrix
+// CMatrix3
 
 class CMatrix3
 {
 public:
 
-    /** Default constructor (Initialize components to zero) */
-    FORCEINLINE CMatrix3() noexcept;
+    /** 
+     * @brief: Default constructor (Initialize components to zero)
+     */
+    FORCEINLINE CMatrix3() noexcept
+        : m00(0.0f), m01(0.0f), m02(0.0f)
+        , m10(0.0f), m11(0.0f), m12(0.0f)
+        , m20(0.0f), m21(0.0f), m22(0.0f)
+    { }
 
     /**
      * @brief: Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
      *
      * @param Diagonal: Value to set on the diagonal
      */
-    FORCEINLINE explicit CMatrix3(float Diagonal) noexcept;
+    FORCEINLINE explicit CMatrix3(float Diagonal) noexcept
+        : m00(Diagonal), m01(0.0f), m02(0.0f)
+        , m10(0.0f), m11(Diagonal), m12(0.0f)
+        , m20(0.0f), m21(0.0f), m22(Diagonal)
+    { }
 
     /**
      * @brief: Constructor initializing all values with vectors specifying each row
@@ -25,7 +35,11 @@ public:
      * @param Row1: Vector to set the second row to
      * @param Row2: Vector to set the third row to
      */
-    FORCEINLINE explicit CMatrix3(const CVector3& Row0, const CVector3& Row1, const CVector3& Row2) noexcept;
+    FORCEINLINE explicit CMatrix3(const CVector3& Row0, const CVector3& Row1, const CVector3& Row2) noexcept
+        : m00(Row0.x), m01(Row0.y), m02(Row0.z)
+        , m10(Row1.x), m11(Row1.y), m12(Row1.z)
+        , m20(Row2.x), m21(Row2.y), m22(Row2.z)
+    { }
 
     /**
      * @brief: Constructor initializing all values with corresponding value
@@ -40,66 +54,176 @@ public:
      * @param In21: Value to set on row 2 and column 1
      * @param In22: Value to set on row 2 and column 2
      */
-    FORCEINLINE explicit CMatrix3(
-        float In00, float In01, float In02,
-        float In10, float In11, float In12,
-        float In20, float In21, float In22) noexcept;
+    FORCEINLINE explicit CMatrix3(float In00, float In01, float In02
+                                 ,float In10, float In11, float In12
+                                 ,float In20, float In21, float In22) noexcept
+        : m00(In00), m01(In01), m02(In02)
+        , m10(In10), m11(In11), m12(In12)
+        , m20(In20), m21(In21), m22(In22)
+    { }
 
     /**
      * @brief: Constructor initializing all components with an array
      *
      * @param Arr: Array with at least 9 elements
      */
-    FORCEINLINE explicit CMatrix3(const float* Arr) noexcept;
+    FORCEINLINE explicit CMatrix3(const float* Arr) noexcept
+        : m00(Arr[0]), m01(Arr[1]), m02(Arr[2])
+        , m10(Arr[3]), m11(Arr[4]), m12(Arr[5])
+        , m20(Arr[6]), m21(Arr[7]), m22(Arr[8])
+    { }
 
     /**
      * @brief: Returns the transposed version of this matrix
      *
      * @return Transposed matrix
      */
-    inline CMatrix3 Transpose() const noexcept;
+    inline CMatrix3 Transpose() const noexcept
+    {
+        CMatrix3 Result;
+        Result.f[0][0] = f[0][0];
+        Result.f[0][1] = f[1][0];
+        Result.f[0][2] = f[2][0];
+
+        Result.f[1][0] = f[0][1];
+        Result.f[1][1] = f[1][1];
+        Result.f[1][2] = f[2][1];
+
+        Result.f[2][0] = f[0][2];
+        Result.f[2][1] = f[1][2];
+        Result.f[2][2] = f[2][2];
+        return Result;
+    }
 
     /**
      * @brief: Returns the inverted version of this matrix
      *
      * @return Inverse matrix
      */
-    inline CMatrix3 Invert() const noexcept;
+    inline CMatrix3 Invert() const noexcept
+    {
+        CMatrix3 Result;
+
+        //d11
+        Result.m00 = (m11 * m22) - (m12 * m21);
+        //d12
+        Result.m10 = -((m10 * m22) - (m12 * m20));
+        //d13
+        Result.m20 = (m10 * m21) - (m11 * m20);
+
+        const float Determinant      = (m00 * Result.m00) - (m01 * Result.m10) + (m02 * Result.m20);
+        const float RecipDeterminant = 1.0f / Determinant;
+
+        Result.m00 *= RecipDeterminant;
+        Result.m10 *= RecipDeterminant;
+        Result.m20 *= RecipDeterminant;
+
+        //d21 
+        Result.m01 = -((m01 * m22) - (m02 * m21)) * RecipDeterminant;
+        //d22
+        Result.m11 = ((m00 * m22) - (m02 * m20)) * RecipDeterminant;
+        //d23
+        Result.m21 = -((m00 * m21) - (m01 * m20)) * RecipDeterminant;
+
+        //d31
+        Result.m02 = ((m01 * m12) - (m02 * m11)) * RecipDeterminant;
+        //d32
+        Result.m12 = -((m00 * m12) - (m02 * m10)) * RecipDeterminant;
+        //d33
+        Result.m22 = ((m00 * m11) - (m01 * m10)) * RecipDeterminant;
+        return Result;
+    }
 
     /**
-     * @brief: Returns the adjuagte of this matrix
+     * @brief: Returns the adjugate of this matrix
      *
      * @return Adjugate matrix
      */
-    inline CMatrix3 Adjoint() const noexcept;
+    inline CMatrix3 Adjoint() const noexcept
+    {
+        CMatrix3 Adjugate;
+
+        //d11
+        Adjugate.m00 = ((m11 * m22) - (m12 * m21));
+        //d12
+        Adjugate.m10 = -((m10 * m22) - (m12 * m20));
+        //d13
+        Adjugate.m20 = ((m10 * m21) - (m11 * m20));
+
+        //d21 
+        Adjugate.m01 = -((m01 * m22) - (m02 * m21));
+        //d22
+        Adjugate.m11 = ((m00 * m22) - (m02 * m20));
+        //d23
+        Adjugate.m21 = -((m00 * m21) - (m01 * m20));
+
+        //d31
+        Adjugate.m02 = ((m01 * m12) - (m02 * m11));
+        //d32
+        Adjugate.m12 = -((m00 * m12) - (m02 * m10));
+        //d33
+        Adjugate.m22 = ((m00 * m11) - (m01 * m10));
+        return Adjugate;
+    }
 
     /**
      * @brief: Returns the determinant of this matrix
      *
      * @return The determinant
      */
-    inline float Determinant() const noexcept;
+    inline float Determinant() const noexcept
+    {
+        float a = m00 * ((m11 * m22) - (m12 * m21));
+        float b = m01 * ((m10 * m22) - (m12 * m20));
+        float c = m02 * ((m10 * m21) - (m11 * m20));
+        return a - b + c;
+    }
 
     /**
      * @brief: Checks weather this matrix has any value that equals NaN
      *
      * @return True if the any value equals NaN, false if not
      */
-    inline bool HasNan() const noexcept;
+    inline bool HasNan() const noexcept
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            if (NMath::IsNaN(reinterpret_cast<const float*>(this)[i]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * @brief: Checks weather this matrix has any value that equals infinity
      *
      * @return True if the any value equals infinity, false if not
      */
-    inline bool HasInfinity() const noexcept;
+    inline bool HasInfinity() const noexcept
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            if (NMath::IsInfinity(reinterpret_cast<const float*>(this)[i]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * @brief: Checks weather this matrix has any value that equals infinity or NaN
      *
      * @return False if the any value equals infinity or NaN, true if not
      */
-    FORCEINLINE bool IsValid() const noexcept;
+    FORCEINLINE bool IsValid() const noexcept
+    {
+        return !HasNan() && !HasInfinity();
+    }
 
     /**
      * @brief: Compares, within a threshold Epsilon, this matrix with another matrix
@@ -107,15 +231,43 @@ public:
      * @param Other: matrix to compare against
      * @return True if equal, false if not
      */
-    inline bool IsEqual(const CMatrix3& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept;
+    inline bool IsEqual(const CMatrix3& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    {
+        Epsilon = NMath::Abs(Epsilon);
 
-    /* Sets this matrix to an identity matrix */
-    FORCEINLINE void SetIdentity() noexcept;
+        for (int i = 0; i < 9; i++)
+        {
+            float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
+            if (NMath::Abs(Diff) > Epsilon)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+     /** @brief: Sets this matrix to an identity matrix */
+    FORCEINLINE void SetIdentity() noexcept
+    {
+        m00 = 1.0f;
+        m01 = 0.0f;
+        m02 = 0.0f;
+
+        m10 = 0.0f;
+        m11 = 1.0f;
+        m12 = 0.0f;
+
+        m20 = 0.0f;
+        m21 = 0.0f;
+        m22 = 1.0f;
+    }
+
 
     /**
      * @brief: Returns a row of this matrix
      *
-     * @param Row: The row to retrive
+     * @param Row: The row to retrieve
      * @return A vector containing the specified row
      */
     FORCEINLINE CVector3 GetRow(int Row) const noexcept;
@@ -123,7 +275,7 @@ public:
     /**
      * @brief: Returns a column of this matrix
      *
-     * @param Column: The column to retrive
+     * @param Column: The column to retrieve
      * @return A vector containing the specified column
      */
     FORCEINLINE CVector3 GetColumn(int Column) const noexcept;
@@ -352,7 +504,7 @@ public:
 public:
     union
     {
-        /* Each element of the matrix */
+         /** @brief: Each element of the matrix */
         struct
         {
             float m00, m01, m02;
@@ -360,7 +512,7 @@ public:
             float m20, m21, m22;
         };
 
-        /* 2-D array of the matrix */
+         /** @brief: 2-D array of the matrix */
         float f[3][3];
     };
 };
@@ -369,190 +521,48 @@ public:
 // Implementation
 
 FORCEINLINE CMatrix3::CMatrix3() noexcept
-    : m00(0.0f), m01(0.0f), m02(0.0f)
-    , m10(0.0f), m11(0.0f), m12(0.0f)
-    , m20(0.0f), m21(0.0f), m22(0.0f)
-{
-}
+
 
 FORCEINLINE CMatrix3::CMatrix3(float Diagonal) noexcept
-    : m00(Diagonal), m01(0.0f), m02(0.0f)
-    , m10(0.0f), m11(Diagonal), m12(0.0f)
-    , m20(0.0f), m21(0.0f), m22(Diagonal)
-{
-}
+
 
 FORCEINLINE CMatrix3::CMatrix3(const CVector3& Row0, const CVector3& Row1, const CVector3& Row2) noexcept
-    : m00(Row0.x), m01(Row0.y), m02(Row0.z)
-    , m10(Row1.x), m11(Row1.y), m12(Row1.z)
-    , m20(Row2.x), m21(Row2.y), m22(Row2.z)
-{
-}
+
 
 FORCEINLINE CMatrix3::CMatrix3(
     float In00, float In01, float In02,
     float In10, float In11, float In12,
     float In20, float In21, float In22) noexcept
-    : m00(In00), m01(In01), m02(In02)
-    , m10(In10), m11(In11), m12(In12)
-    , m20(In20), m21(In21), m22(In22)
-{
-}
+
 
 FORCEINLINE CMatrix3::CMatrix3(const float* Arr) noexcept
-    : m00(Arr[0]), m01(Arr[1]), m02(Arr[2])
-    , m10(Arr[3]), m11(Arr[4]), m12(Arr[5])
-    , m20(Arr[6]), m21(Arr[7]), m22(Arr[8])
-{
-}
+
 
 inline CMatrix3 CMatrix3::Transpose() const noexcept
-{
-    CMatrix3 Transpose;
-    Transpose.f[0][0] = f[0][0];
-    Transpose.f[0][1] = f[1][0];
-    Transpose.f[0][2] = f[2][0];
 
-    Transpose.f[1][0] = f[0][1];
-    Transpose.f[1][1] = f[1][1];
-    Transpose.f[1][2] = f[2][1];
-
-    Transpose.f[2][0] = f[0][2];
-    Transpose.f[2][1] = f[1][2];
-    Transpose.f[2][2] = f[2][2];
-    return Transpose;
-}
 
 inline CMatrix3 CMatrix3::Invert() const noexcept
-{
-    CMatrix3 Inverse;
 
-    //d11
-    Inverse.m00 = (m11 * m22) - (m12 * m21);
-    //d12
-    Inverse.m10 = -((m10 * m22) - (m12 * m20));
-    //d13
-    Inverse.m20 = (m10 * m21) - (m11 * m20);
-
-    const float Determinant = (m00 * Inverse.m00) - (m01 * Inverse.m10) + (m02 * Inverse.m20);
-    const float RecipDeterminant = 1.0f / Determinant;
-
-    Inverse.m00 *= RecipDeterminant;
-    Inverse.m10 *= RecipDeterminant;
-    Inverse.m20 *= RecipDeterminant;
-
-    //d21 
-    Inverse.m01 = -((m01 * m22) - (m02 * m21)) * RecipDeterminant;
-    //d22
-    Inverse.m11 = ((m00 * m22) - (m02 * m20)) * RecipDeterminant;
-    //d23
-    Inverse.m21 = -((m00 * m21) - (m01 * m20)) * RecipDeterminant;
-
-    //d31
-    Inverse.m02 = ((m01 * m12) - (m02 * m11)) * RecipDeterminant;
-    //d32
-    Inverse.m12 = -((m00 * m12) - (m02 * m10)) * RecipDeterminant;
-    //d33
-    Inverse.m22 = ((m00 * m11) - (m01 * m10)) * RecipDeterminant;
-    return Inverse;
-}
 
 inline CMatrix3 CMatrix3::Adjoint() const noexcept
-{
-    CMatrix3 Adjugate;
 
-    //d11
-    Adjugate.m00 = ((m11 * m22) - (m12 * m21));
-    //d12
-    Adjugate.m10 = -((m10 * m22) - (m12 * m20));
-    //d13
-    Adjugate.m20 = ((m10 * m21) - (m11 * m20));
-
-    //d21 
-    Adjugate.m01 = -((m01 * m22) - (m02 * m21));
-    //d22
-    Adjugate.m11 = ((m00 * m22) - (m02 * m20));
-    //d23
-    Adjugate.m21 = -((m00 * m21) - (m01 * m20));
-
-    //d31
-    Adjugate.m02 = ((m01 * m12) - (m02 * m11));
-    //d32
-    Adjugate.m12 = -((m00 * m12) - (m02 * m10));
-    //d33
-    Adjugate.m22 = ((m00 * m11) - (m01 * m10));
-    return Adjugate;
-}
 
 inline float CMatrix3::Determinant() const noexcept
-{
-    float a = m00 * ((m11 * m22) - (m12 * m21));
-    float b = m01 * ((m10 * m22) - (m12 * m20));
-    float c = m02 * ((m10 * m21) - (m11 * m20));
-    return a - b + c;
-}
+
 
 inline bool CMatrix3::HasNan() const noexcept
-{
-    for (int i = 0; i < 9; i++)
-    {
-        if (NMath::IsNaN(reinterpret_cast<const float*>(this)[i]))
-        {
-            return true;
-        }
-    }
 
-    return false;
-}
 
 inline bool CMatrix3::HasInfinity() const noexcept
-{
-    for (int i = 0; i < 9; i++)
-    {
-        if (NMath::IsInfinity(reinterpret_cast<const float*>(this)[i]))
-        {
-            return true;
-        }
-    }
 
-    return false;
-}
 
 FORCEINLINE bool CMatrix3::IsValid() const noexcept
-{
-    return !HasNan() && !HasInfinity();
-}
+
 
 inline bool CMatrix3::IsEqual(const CMatrix3& Other, float Epsilon) const noexcept
-{
-    Epsilon = NMath::Abs(Epsilon);
 
-    for (int i = 0; i < 9; i++)
-    {
-        float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
-        if (NMath::Abs(Diff) > Epsilon)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
 
 FORCEINLINE void CMatrix3::SetIdentity() noexcept
-{
-    m00 = 1.0f;
-    m01 = 0.0f;
-    m02 = 0.0f;
-
-    m10 = 0.0f;
-    m11 = 1.0f;
-    m12 = 0.0f;
-
-    m20 = 0.0f;
-    m21 = 0.0f;
-    m22 = 1.0f;
-}
 
 FORCEINLINE CVector3 CMatrix3::GetRow(int Row) const noexcept
 {

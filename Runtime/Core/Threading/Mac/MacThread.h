@@ -61,16 +61,16 @@ private:
 
     static void* ThreadRoutine(void* ThreadParameter);
 
-    /* Native thread handle */
+     /** @brief: Native thread handle */
     pthread_t Thread;
 
-    /* Function to run */
+     /** @brief: Function to run */
     ThreadFunction Function;
 
-    /* Name of the thread */
+     /** @brief: Name of the thread */
     String Name;
 
-    /* Check if thread is running or not */
+     /** @brief: Check if thread is running or not */
     bool bIsRunning;
 };
 

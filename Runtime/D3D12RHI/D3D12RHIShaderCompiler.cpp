@@ -428,7 +428,7 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
     TComPtr<IDxcBlob> CompiledBlob;
     if (FAILED(Result->GetResult(&CompiledBlob)))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to retrive result");
+        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to retrieve result");
         return false;
     }
 

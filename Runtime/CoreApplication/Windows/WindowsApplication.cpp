@@ -25,14 +25,14 @@ struct SPointMessage
 
     union
     {
-        /* Used for resize messages */
+         /** @brief: Used for resize messages */
         struct
         {
             uint16 Width;
             uint16 Height;
         };
 
-        /* Used for move messages */
+         /** @brief: Used for move messages */
         struct
         {
             int16 x;

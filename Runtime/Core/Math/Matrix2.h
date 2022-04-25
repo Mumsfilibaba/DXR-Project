@@ -245,7 +245,7 @@ public:
 #endif
     }
 
-    /* @brief: Sets this matrix to an identity matrix */
+     /** @brief: @brief: Sets this matrix to an identity matrix */
     FORCEINLINE void SetIdentity() noexcept
     {
 #if defined(DISABLE_SIMD)
@@ -684,14 +684,14 @@ public:
 public:
     union
     {
-        /* Each element of the matrix */
+         /** @brief: Each element of the matrix */
         struct
         {
             float m00, m01;
             float m10, m11;
         };
 
-        /* 2-D array of the matrix */
+         /** @brief: 2-D array of the matrix */
         float f[2][2];
     };
 };

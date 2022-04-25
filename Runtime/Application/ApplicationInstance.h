@@ -329,13 +329,13 @@ public:
         return bIsRunning;
     }
 
-    /* Get the number of registered users */
+     /** @brief: Get the number of registered users */
     FORCEINLINE uint32 GetNumUsers() const { return static_cast<uint32>(RegisteredUsers.Size()); }
 
-    /* Register a new user to the application */
+     /** @brief: Register a new user to the application */
     FORCEINLINE void RegisterUser(const TSharedPtr<CApplicationUser>& NewUser) { RegisteredUsers.Push(NewUser); }
 
-    /* Retrieve the first user */
+     /** @brief: Retrieve the first user */
     FORCEINLINE TSharedPtr<CApplicationUser> GetFirstUser() const
     {
         if (!RegisteredUsers.IsEmpty())
@@ -348,7 +348,7 @@ public:
         }
     }
 
-    /* Retrieve a user from user index */
+     /** @brief: Retrieve a user from user index */
     FORCEINLINE TSharedPtr<CApplicationUser> GetUserFromIndex(uint32 UserIndex) const
     {
         if (UserIndex < (uint32)RegisteredUsers.Size())

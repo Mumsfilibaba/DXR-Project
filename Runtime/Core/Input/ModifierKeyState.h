@@ -16,7 +16,7 @@ public:
 
     union
     {
-        /* Flags */
+         /** @brief: Flags */
         struct
         {
             uint8 bIsCtrlDown : 1;
@@ -27,7 +27,7 @@ public:
             uint8 bIsNumPadDown : 1;
         };
 
-        /* Mask */
+         /** @brief: Mask */
         uint8 ModifierMask = 0;
     };
 };

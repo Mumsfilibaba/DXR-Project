@@ -38,7 +38,7 @@ public:
      */
     void Start();
 
-    /* Ticks all actors in the scene, should be called once per frame */
+     /** @brief: Ticks all actors in the scene, should be called once per frame */
     void Tick(CTimestamp DeltaTime);
 
     /**

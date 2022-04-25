@@ -34,7 +34,7 @@ public:
      */
     FORCEINLINE explicit CVector3(float Scalar) noexcept;
 
-    /* Normalized this vector */
+     /** @brief: Normalized this vector */
     inline void Normalize() noexcept;
 
     /**
@@ -368,11 +368,11 @@ public:
 
 public:
 
-    /* The x-coordinate */
+     /** @brief: The x-coordinate */
     float x;
-    /* The y-coordinate */
+     /** @brief: The y-coordinate */
     float y;
-    /* The z-coordinate */
+     /** @brief: The z-coordinate */
     float z;
 };
 

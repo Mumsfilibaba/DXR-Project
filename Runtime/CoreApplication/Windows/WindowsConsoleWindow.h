@@ -21,7 +21,7 @@ class COREAPPLICATION_API CWindowsConsoleWindow final : public CPlatformConsoleW
 {
 public:
 
-    /* Creates a new console, can only be called once */
+     /** @brief: Creates a new console, can only be called once */
     static CWindowsConsoleWindow* Make();
 
     virtual void Print(const String& Message) override final;
@@ -37,10 +37,10 @@ private:
     CWindowsConsoleWindow();
     ~CWindowsConsoleWindow();
 
-    /* Handle to the console window */
+     /** @brief: Handle to the console window */
     HANDLE ConsoleHandle;
 
-    /* Mutex protecting for errors when printing from multiple threads */
+     /** @brief: Mutex protecting for errors when printing from multiple threads */
     CCriticalSection ConsoleMutex;
 };
 

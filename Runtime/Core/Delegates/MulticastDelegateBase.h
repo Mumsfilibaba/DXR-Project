@@ -308,6 +308,6 @@ protected:
 
     TArray<CDelegateBase> Delegates;
 
-    /* Lock protecting the delegate when removing during broadcasting */
+     /** @brief: Lock protecting the delegate when removing during broadcasting */
     mutable uint64 LockVariable = 0;
 };

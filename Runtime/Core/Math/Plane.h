@@ -102,13 +102,13 @@ public:
 
 public:
 
-    /* The normals x-coordinate */
+     /** @brief: The normals x-coordinate */
     float x;
-    /* The normals y-coordinate */
+     /** @brief: The normals y-coordinate */
     float y;
-    /* The normals z-coordinate */
+     /** @brief: The normals z-coordinate */
     float z;
-    /* The w-coordinate */
+     /** @brief: The w-coordinate */
     float w;
 };
 

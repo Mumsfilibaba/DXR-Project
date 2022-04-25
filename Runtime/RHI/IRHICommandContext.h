@@ -337,7 +337,7 @@ public:
      */
     virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) = 0;
 
-    /* Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
+     /** @brief: Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
     virtual void SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
                                       , CRHIRayTracingPipelineState* PipelineState
                                       , const SRayTracingShaderResources* GlobalResource

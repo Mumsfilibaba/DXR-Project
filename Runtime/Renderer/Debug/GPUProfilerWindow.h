@@ -13,10 +13,10 @@ public:
 
     static TSharedRef<CGPUProfilerWindow> Make();
 
-    /* Update the panel, for ImGui this is where the ImGui-Commands should be called */
+     /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;
 
-    /* Returns true if the panel should be updated this frame */
+     /** @brief: Returns true if the panel should be updated this frame */
     virtual bool IsTickable() override final;
 
 private:
@@ -24,12 +24,12 @@ private:
     CGPUProfilerWindow() = default;
     ~CGPUProfilerWindow() = default;
 
-    /* Draw the profiler window */
+     /** @brief: Draw the profiler window */
     void DrawWindow();
 
-    /* Draw the GPU data */
+     /** @brief: Draw the GPU data */
     void DrawGPUData(float Width);
 
-    /* Stores tables here to avoid allocating memory every frame */
+     /** @brief: Stores tables here to avoid allocating memory every frame */
     GPUProfileSamplesTable Samples;
 };

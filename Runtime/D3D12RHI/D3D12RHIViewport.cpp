@@ -79,7 +79,7 @@ bool CD3D12RHIViewport::Init()
         Result = TempSwapChain.GetAs<IDXGISwapChain3>(&SwapChain);
         if (FAILED(Result))
         {
-            LOG_ERROR("[CD3D12Viewport]: FAILED to retrive IDXGISwapChain3");
+            LOG_ERROR("[CD3D12Viewport]: FAILED to retrieve IDXGISwapChain3");
             return false;
         }
 

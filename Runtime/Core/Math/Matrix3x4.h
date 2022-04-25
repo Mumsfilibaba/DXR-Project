@@ -10,7 +10,7 @@ class CMatrix3x4
 {
 public:
 
-    /* Default constructor (Initialize components to zero) */
+     /** @brief: Default constructor (Initialize components to zero) */
     FORCEINLINE CMatrix3x4() noexcept;
 
     /**
@@ -37,7 +37,7 @@ public:
 public:
     union
     {
-        /* Each element of the matrix */
+         /** @brief: Each element of the matrix */
         struct
         {
             float m00, m01, m02, m03;
@@ -45,7 +45,7 @@ public:
             float m20, m21, m22, m23;
         };
 
-        /* 2-D array of the matrix */
+         /** @brief: 2-D array of the matrix */
         float Elements[3][4];
     };
 };

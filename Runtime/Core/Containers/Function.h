@@ -41,7 +41,7 @@ namespace NBindInternal
 
     private:
 
-        /* Arguments stored when calling bind and then applied to the function when invoked */
+         /** @brief: Arguments stored when calling bind and then applied to the function when invoked */
         TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
 
         FunctionType Func;

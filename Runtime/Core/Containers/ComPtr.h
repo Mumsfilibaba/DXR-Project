@@ -477,7 +477,7 @@ FORCEINLINE bool operator!=(NullptrType, const TComPtr<T>& Rhs) noexcept
     return (nullptr != Rhs.Get());
 }
 
-/* Converts a raw pointer into a TComPtr */
+ /** @brief: Converts a raw pointer into a TComPtr */
 template<typename T, typename U>
 FORCEINLINE TComPtr<T> MakeComPtr(U* InRefCountedObject)
 {

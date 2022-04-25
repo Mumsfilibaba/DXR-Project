@@ -29,18 +29,18 @@ public:
 
     virtual ~ICursor() = default;
 
-    /* Sets the type of cursor that is being used */
+     /** @brief: Sets the type of cursor that is being used */
     virtual void SetCursor(ECursor Cursor) = 0;
 
-    /* Sets the position of the cursor */
+     /** @brief: Sets the position of the cursor */
     virtual void SetPosition(CPlatformWindow* RelativeWindow, int32 x, int32 y) const = 0;
 
-    /* Retrieve the cursor position of a window */
+     /** @brief: Retrieve the cursor position of a window */
     virtual void GetPosition(CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY) const = 0;
 
-    /* Show or hide the mouse */
+     /** @brief: Show or hide the mouse */
     virtual void SetVisibility(bool bIsVisible) = 0;
 
-    /* Retrieve the mouse visibility */
+     /** @brief: Retrieve the mouse visibility */
     virtual bool IsVisible() const = 0;
 };

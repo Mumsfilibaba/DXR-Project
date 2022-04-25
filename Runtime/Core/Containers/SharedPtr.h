@@ -566,7 +566,7 @@ public:
         return GetAddressOf();
     }
 
-    /* Retrieve element at a certain index */
+     /** @brief: Retrieve element at a certain index */
     template<typename U = T>
     FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[](SizeType Index) const noexcept

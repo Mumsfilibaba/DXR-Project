@@ -32,7 +32,7 @@ public:
 
             if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList5>(&CmdList5)))
             {
-                D3D12_ERROR_ALWAYS("[CD3D12CommandList]: FAILED to retrive DXR-CommandList");
+                D3D12_ERROR_ALWAYS("[CD3D12CommandList]: FAILED to retrieve DXR-CommandList");
                 return false;
             }
             else

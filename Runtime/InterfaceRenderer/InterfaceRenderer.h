@@ -18,16 +18,16 @@ public:
 
     static CInterfaceRenderer* Make();
 
-    /* Init the context */
+     /** @brief: Init the context */
     virtual bool InitContext(InterfaceContext Context) override final;
 
-    /* Start the update of the UI, after the call to this function, calls to UI window's tick are valid */
+     /** @brief: Start the update of the UI, after the call to this function, calls to UI window's tick are valid */
     virtual void BeginTick() override final;
 
-    /* End the update of the UI, after the call to this function, calls to UI window's tick are NOT valid  */
+     /** @brief: End the update of the UI, after the call to this function, calls to UI window's tick are NOT valid  */
     virtual void EndTick() override final;
 
-    /* Render all the UI for this frame */
+     /** @brief: Render all the UI for this frame */
     virtual void Render(class CRHICommandList& Commandlist) override final;
 
 private:

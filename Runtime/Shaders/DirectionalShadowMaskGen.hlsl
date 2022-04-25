@@ -41,7 +41,7 @@ SamplerState Sampler : register(s0);
 #define PCF_RADIUS     (0.002f)
 #define ROTATE_SAMPLES (0)
 
-/* Shadow Helpers */
+ /** @brief: Shadow Helpers */
 
 float2 SamplePoissonBlocker(uint Index)
 {

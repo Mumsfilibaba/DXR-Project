@@ -320,10 +320,10 @@ public:
 
 public:
 
-    /* The x-coordinate */
+     /** @brief: The x-coordinate */
     int16 x;
 
-    /* The y-coordinate */
+     /** @brief: The y-coordinate */
     int16 y;
 };
 
@@ -646,9 +646,9 @@ public:
 
 public:
 
-    /* The x-coordinate */
+     /** @brief: The x-coordinate */
     int32 x;
 
-    /* The y-coordinate */
+     /** @brief: The y-coordinate */
     int32 y;
 };

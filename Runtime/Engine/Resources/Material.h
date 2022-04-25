@@ -99,13 +99,13 @@ public:
 
 private:
 
-    /* Name for the material mostly used for debug purposes */
+     /** @brief: Name for the material mostly used for debug purposes */
     String DebugName;
 
-    /* This indicates that the constantbuffer is dirty and needs updating */
+     /** @brief: This indicates that the constantbuffer is dirty and needs updating */
     bool bMaterialBufferIsDirty = true;
 
-    /* True if the material should render in the forward pass (Transparent surfaces) */
+     /** @brief: True if the material should render in the forward pass (Transparent surfaces) */
     bool bRenderInForwardPass = false;
 
     SMaterialDesc        	       Properties;

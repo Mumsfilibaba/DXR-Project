@@ -11,6 +11,6 @@ public:
     CInterfaceRendererModule() = default;
     ~CInterfaceRendererModule() = default;
 
-    /* Create the renderer */
+     /** @brief: Create the renderer */
     virtual IInterfaceRenderer* CreateRenderer() override final;
 };

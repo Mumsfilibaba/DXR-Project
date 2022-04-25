@@ -325,13 +325,13 @@ public:
 
 public:
 
-    /* The x-coordinate */
+     /** @brief: The x-coordinate */
     int16 x;
 
-    /* The y-coordinate */
+     /** @brief: The y-coordinate */
     int16 y;
 
-    /* The z-coordinate */
+     /** @brief: The z-coordinate */
     int16 z;
 };
 
@@ -659,12 +659,12 @@ public:
 
 public:
 
-    /* The x-coordinate */
+     /** @brief: The x-coordinate */
     int32 x;
 
-    /* The y-coordinate */
+     /** @brief: The y-coordinate */
     int32 y;
 
-    /* The z-coordinate */
+     /** @brief: The z-coordinate */
     int32 z;
 };

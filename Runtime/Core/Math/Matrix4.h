@@ -136,7 +136,7 @@ public:
      */
     inline bool IsEqual(const CMatrix4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept;
 
-    /* Sets this matrix to an identity matrix */
+     /** @brief: Sets this matrix to an identity matrix */
     FORCEINLINE void SetIdentity() noexcept;
 
     /**
@@ -156,7 +156,7 @@ public:
     /**
      * @brief: Returns a row of this matrix
      *
-     * @param Row: The row to retrive
+     * @param Row: The row to retrieve
      * @return A vector containing the specified row
      */
     FORCEINLINE CVector4 GetRow(int Row) const noexcept;
@@ -164,7 +164,7 @@ public:
     /**
      * @brief: Returns a column of this matrix
      *
-     * @param Column: The column to retrive
+     * @param Column: The column to retrieve
      * @return A vector containing the specified column
      */
     FORCEINLINE CVector4 GetColumn(int Column) const noexcept;
@@ -501,7 +501,7 @@ public:
 public:
     union
     {
-        /* Each element of the matrix */
+         /** @brief: Each element of the matrix */
         struct
         {
             float m00, m01, m02, m03;
@@ -510,7 +510,7 @@ public:
             float m30, m31, m32, m33;
         };
 
-        /* 2-D array of the matrix */
+         /** @brief: 2-D array of the matrix */
         float f[4][4];
     };
 };

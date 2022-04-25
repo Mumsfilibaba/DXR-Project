@@ -116,7 +116,7 @@ private:
 
     CApplicationUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
 
-    /* Get the index in the key-state array */
+     /** @brief: Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const
     {
         SKeyState TempState(KeyCode);
@@ -126,7 +126,7 @@ private:
         });
     }
 
-    /* Get the index in the key-state array */
+     /** @brief: Get the index in the key-state array */
     FORCEINLINE int32 GetMouseButtonStateIndexFromMouseButton(EMouseButton Button) const
     {
         SMouseButtonState TempState(Button);

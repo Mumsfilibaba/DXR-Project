@@ -358,7 +358,7 @@ public:
         , Size(InSize)
     { }
 
-    /* Cast to TextureCube */
+     /** @brief: Cast to TextureCube */
     virtual CRHITextureCube* AsTextureCube() override { return this; }
 
     FORCEINLINE uint32 GetSize() const

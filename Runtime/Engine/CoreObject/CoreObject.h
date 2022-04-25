@@ -62,7 +62,7 @@ protected:
 
 private:
 
-    /* Object representing the class */
+     /** @brief: Object representing the class */
     const CClassType* Class = nullptr;
 };
 

@@ -127,52 +127,52 @@ public:
      */
     virtual void Maximize() { }
 
-    /* Closes the window */
+     /** @brief: Closes the window */
     virtual void Close() { }
 
-    /* Restores the window after being minimized or maximized */
+     /** @brief: Restores the window after being minimized or maximized */
     virtual void Restore() { }
 
-    /* Makes the window a borderless fullscreen window */
+     /** @brief: Makes the window a borderless fullscreen window */
     virtual void ToggleFullscreen() { }
 
-    /* Checks if the underlaying native handle of the window is valid */
+     /** @brief: Checks if the underlaying native handle of the window is valid */
     virtual bool IsValid() const { return false; }
 
-    /* Checks if this window is the currently active window */
+     /** @brief: Checks if this window is the currently active window */
     virtual bool IsActiveWindow() const { return false; }
 
-    /* Sets the title */
+     /** @brief: Sets the title */
     virtual void SetTitle(const String& Title) { }
 
-    /* Retrieve the window title */
+     /** @brief: Retrieve the window title */
     virtual void GetTitle(String& OutTitle) { }
 
-    /* Set the position of the window */
+     /** @brief: Set the position of the window */
     virtual void MoveTo(int32 x, int32 y) { }
 
-    /* Set the shape of the window */
+     /** @brief: Set the shape of the window */
     virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) { }
 
-    /* Retrieve the shape of the window */
+     /** @brief: Retrieve the shape of the window */
     virtual void GetWindowShape(SWindowShape& OutWindowShape) const { }
 
-    /* Get the fullscreen information of the monitor that the window currently is on */
+     /** @brief: Get the fullscreen information of the monitor that the window currently is on */
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const { }
 
-    /* Retrieve the width of the window */
+     /** @brief: Retrieve the width of the window */
     virtual uint32 GetWidth()  const { return 0; }
 
-    /* Retrieve the height of the window */
+     /** @brief: Retrieve the height of the window */
     virtual uint32 GetHeight() const { return 0; }
 
-    /* Set the native window handle */
+     /** @brief: Set the native window handle */
     virtual void SetPlatformHandle(PlatformWindowHandle InPlatformHandle) { }
 
-    /* Retrieve the native handle */
+     /** @brief: Retrieve the native handle */
     virtual PlatformWindowHandle GetPlatformHandle() const { return nullptr; }
 
-    /* Retrieve the style of the window */
+     /** @brief: Retrieve the style of the window */
     FORCEINLINE SWindowStyle GetStyle() const { return StyleParams; }
 
 protected:
