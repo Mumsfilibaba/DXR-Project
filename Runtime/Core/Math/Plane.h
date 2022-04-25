@@ -44,7 +44,7 @@ public:
      * @brief: Compares, within a threshold Epsilon, this plane with another plane
      *
      * @param Other: plane to compare against
-     * @return True if equal, false if not
+     * @return: True if equal, false if not
      */
     inline bool IsEqual(const CPlane& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept;
 
@@ -88,7 +88,7 @@ public:
      * @brief: Returns the result after comparing this and another plane
      *
      * @param Other: The plane to compare with
-     * @return True if equal, false if not
+     * @return: True if equal, false if not
      */
     FORCEINLINE bool operator==(const CPlane& Other) const noexcept;
 
@@ -96,7 +96,7 @@ public:
      * @brief: Returns the negated result after comparing this and another plane
      *
      * @param Other: The plane to compare with
-     * @return False if equal, true if not
+     * @return: False if equal, true if not
      */
     FORCEINLINE bool operator!=(const CPlane& Other) const noexcept;
 

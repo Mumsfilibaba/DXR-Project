@@ -64,7 +64,7 @@ public:
     /**
      * @brief: Returns the transposed version of this matrix
      *
-     * @return Transposed matrix
+     * @return: Transposed matrix
      */
     inline CMatrix2 Transpose() const noexcept
     {
@@ -90,7 +90,7 @@ public:
     /**
      * @brief: Returns the inverted version of this matrix
      *
-     * @return Inverse matrix
+     * @return: Inverse matrix
      */
     inline CMatrix2 Invert() const noexcept
     {
@@ -128,7 +128,7 @@ public:
     /**
      * @brief: Returns the adjugate of this matrix
      *
-     * @return Adjugate matrix
+     * @return: Adjugate matrix
      */
     FORCEINLINE CMatrix2 Adjoint() const noexcept
     {
@@ -159,7 +159,7 @@ public:
     /**
      * @brief: Returns the determinant of this matrix
      *
-     * @return The determinant
+     * @return: The determinant
      */
     FORCEINLINE float Determinant() const noexcept
     {
@@ -169,7 +169,7 @@ public:
     /**
      * @brief: Checks weather this matrix has any value that equals NaN
      *
-     * @return True if the any value equals NaN, false if not
+     * @return: True if the any value equals NaN, false if not
      */
     inline bool HasNaN() const noexcept
     {
@@ -187,7 +187,7 @@ public:
     /**
      * @brief: Checks weather this matrix has any value that equals infinity
      *
-     * @return True if the any value equals infinity, false if not
+     * @return: True if the any value equals infinity, false if not
      */
     inline bool HasInfinity() const noexcept
     {
@@ -205,7 +205,7 @@ public:
     /**
      * @brief: Checks weather this matrix has any value that equals infinity or NaN
      *
-     * @return False if the any value equals infinity or NaN, true if not
+     * @return: False if the any value equals infinity or NaN, true if not
      */
     FORCEINLINE bool IsValid() const noexcept
     {
@@ -216,7 +216,7 @@ public:
      * @brief: Compares, within a threshold Epsilon, this matrix with another matrix
      *
      * @param Other: matrix to compare against
-     * @return True if equal, false if not
+     * @return: True if equal, false if not
      */
     inline bool IsEqual(const CMatrix2& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
@@ -264,7 +264,7 @@ public:
      * @brief: Returns a row of this matrix
      *
      * @param Row: The row to retrieve
-     * @return A vector containing the specified row
+     * @return: A vector containing the specified row
      */
     FORCEINLINE CVector2 GetRow(int32 Row) const noexcept
     {
@@ -276,7 +276,7 @@ public:
      * @brief: Returns a column of this matrix
      *
      * @param Column: The column to retrieve
-     * @return A vector containing the specified column
+     * @return: A vector containing the specified column
      */
     FORCEINLINE CVector2 GetColumn(int32 Column) const noexcept
     {
@@ -287,7 +287,7 @@ public:
     /**
      * @brief: Returns the data of this matrix as a pointer
      *
-     * @return A pointer to the data
+     * @return: A pointer to the data
      */
     FORCEINLINE float* Data() noexcept
     {
@@ -297,7 +297,7 @@ public:
     /**
      * @brief: Returns the data of this matrix as a pointer
      *
-     * @return A pointer to the data
+     * @return: A pointer to the data
      */
     FORCEINLINE const float* Data() const noexcept
     {
@@ -310,7 +310,7 @@ public:
      * @brief: Transforms a 2-D vector
      *
      * @param Rhs: The vector to transform
-     * @return A vector containing the transformation
+     * @return: A vector containing the transformation
      */
     FORCEINLINE CVector2 operator*(const CVector2& Rhs) const noexcept
     {
@@ -339,7 +339,7 @@ public:
      * @brief: Multiplies a matrix with another matrix
      *
      * @param Rhs: The other matrix
-     * @return A matrix containing the result of the multiplication
+     * @return: A matrix containing the result of the multiplication
      */
     FORCEINLINE CMatrix2 operator*(const CMatrix2& Rhs) const noexcept
     {
@@ -367,7 +367,7 @@ public:
      * @brief: Multiplies this matrix with another matrix
      *
      * @param Rhs: The other matrix
-     * @return A reference to this matrix
+     * @return: A reference to this matrix
      */
     FORCEINLINE CMatrix2& operator*=(const CMatrix2& Rhs) noexcept
     {
@@ -378,7 +378,7 @@ public:
      * @brief: Multiplies a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
-     * @return A matrix containing the result of the multiplication
+     * @return: A matrix containing the result of the multiplication
      */
     FORCEINLINE CMatrix2 operator*(float Rhs) const noexcept
     {
@@ -405,7 +405,7 @@ public:
      * @brief: Multiplies this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
-     * @return A reference to this matrix
+     * @return: A reference to this matrix
      */
     FORCEINLINE CMatrix2& operator*=(float Rhs) noexcept
     {
@@ -416,7 +416,7 @@ public:
      * @brief: Adds a matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
-     * @return A matrix containing the result of the addition
+     * @return: A matrix containing the result of the addition
      */
     FORCEINLINE CMatrix2 operator+(const CMatrix2& Rhs) const noexcept
     {
@@ -440,7 +440,7 @@ public:
      * @brief: Adds this matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
-     * @return A reference to this matrix
+     * @return: A reference to this matrix
      */
     FORCEINLINE CMatrix2& operator+=(const CMatrix2& Rhs) noexcept
     {
@@ -451,7 +451,7 @@ public:
      * @brief: Adds a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
-     * @return A matrix containing the result of the addition
+     * @return: A matrix containing the result of the addition
      */
     FORCEINLINE CMatrix2 operator+(float Rhs) const noexcept
     {
@@ -478,7 +478,7 @@ public:
      * @brief: Adds this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
-     * @return A reference to this matrix
+     * @return: A reference to this matrix
      */
     FORCEINLINE CMatrix2& operator+=(float Rhs) noexcept
     {
@@ -489,7 +489,7 @@ public:
      * @brief: Subtracts a matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
-     * @return A matrix containing the result of the subtraction
+     * @return: A matrix containing the result of the subtraction
      */
     FORCEINLINE CMatrix2 operator-(const CMatrix2& Rhs) const noexcept
     {
@@ -513,7 +513,7 @@ public:
      * @brief: Subtracts this matrix component-wise with another matrix
      *
      * @param Rhs: The other matrix
-     * @return A reference to this matrix
+     * @return: A reference to this matrix
      */
     FORCEINLINE CMatrix2& operator-=(const CMatrix2& Rhs) noexcept
     {
@@ -524,7 +524,7 @@ public:
      * @brief: Subtracts a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
-     * @return A matrix containing the result of the subtraction
+     * @return: A matrix containing the result of the subtraction
      */
     FORCEINLINE CMatrix2 operator-(float Rhs) const noexcept
     {
@@ -551,7 +551,7 @@ public:
      * @brief: Subtracts this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
-     * @return A reference to this matrix
+     * @return: A reference to this matrix
      */
     FORCEINLINE CMatrix2& operator-=(float Rhs) noexcept
     {
@@ -562,7 +562,7 @@ public:
      * @brief: Divides a matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
-     * @return A matrix containing the result of the division
+     * @return: A matrix containing the result of the division
      */
     FORCEINLINE CMatrix2 operator/(float Rhs) const noexcept
     {
@@ -592,7 +592,7 @@ public:
      * @brief: Divides this matrix component-wise with a scalar
      *
      * @param Rhs: The scalar
-     * @return A reference to this matrix
+     * @return: A reference to this matrix
      */
     FORCEINLINE CMatrix2& operator/=(float Rhs) noexcept
     {
@@ -603,7 +603,7 @@ public:
      * @brief: Returns the result after comparing this and another matrix
      *
      * @param Other: The matrix to compare with
-     * @return True if equal, false if not
+     * @return: True if equal, false if not
      */
     FORCEINLINE bool operator==(const CMatrix2& Other) const noexcept
     {
@@ -614,7 +614,7 @@ public:
      * @brief: Returns the negated result after comparing this and another matrix
      *
      * @param Other: The matrix to compare with
-     * @return False if equal, true if not
+     * @return: False if equal, true if not
      */
     FORCEINLINE bool operator!=(const CMatrix2& Other) const noexcept
     {
@@ -626,7 +626,7 @@ public:
     /**
      * @brief: Creates and returns a identity matrix
      *
-     * @return A identity matrix
+     * @return: A identity matrix
      */
     inline static CMatrix2 Identity() noexcept
     {
@@ -637,7 +637,7 @@ public:
      * @brief: Creates and returns a uniform scale matrix
      *
      * @param Scale: Uniform scale that represents this matrix
-     * @return A scale matrix
+     * @return: A scale matrix
      */
     inline static CMatrix2 Scale(float Scale) noexcept
     {
@@ -649,7 +649,7 @@ public:
      *
      * @param x: Scale for the x-axis
      * @param y: Scale for the y-axis
-     * @return A scale matrix
+     * @return: A scale matrix
      */
     inline static CMatrix2 Scale(float x, float y) noexcept
     {
@@ -660,7 +660,7 @@ public:
      * @brief: Creates and returns a scale matrix for each axis
      *
      * @param VectorWithScale: A vector containing the scale for each axis in the x-, and y-components
-     * @return A scale matrix
+     * @return: A scale matrix
      */
     inline static CMatrix2 Scale(const CVector2& VectorWithScale) noexcept
     {
@@ -671,7 +671,7 @@ public:
      * @brief: Creates and returns a rotation matrix around the x-axis
      *
      * @param Rotation: Rotation around in radians
-     * @return A rotation matrix
+     * @return: A rotation matrix
      */
     inline static CMatrix2 Rotation(float Rotation) noexcept
     {

@@ -49,7 +49,7 @@ public:
     /**
      * @brief: Try to lock CriticalSection for other threads
      *
-     * @return; Returns true if the lock is successful
+     * @return:; Returns true if the lock is successful
      */
     FORCEINLINE bool TryLock() noexcept
     {

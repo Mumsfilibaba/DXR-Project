@@ -56,7 +56,7 @@ public:
      * @brief: Compares this vector with another vector
      *
      * @param Other: Vector to compare against
-     * @return True if equal, false if not
+     * @return: True if equal, false if not
      */
     FORCEINLINE bool IsEqual(const CInt16Vector3& Other) const noexcept
     {
@@ -70,7 +70,7 @@ public:
      *
      * @param LHS: First vector to compare with
      * @param RHS: Second vector to compare with
-     * @return A vector with the smallest components of LHS and RHS
+     * @return: A vector with the smallest components of LHS and RHS
      */
     friend FORCEINLINE CInt16Vector3 Min(const CInt16Vector3& LHS, const CInt16Vector3& RHS) noexcept
     {
@@ -82,7 +82,7 @@ public:
      *
      * @param LHS: First vector to compare with
      * @param RHS: Second vector to compare with
-     * @return A vector with the largest components of LHS and RHS
+     * @return: A vector with the largest components of LHS and RHS
      */
     friend FORCEINLINE CInt16Vector3 Max(const CInt16Vector3& LHS, const CInt16Vector3& RHS) noexcept
     {
@@ -94,7 +94,7 @@ public:
     /**
      * @brief: Return a vector with component-wise negation of this vector
      *
-     * @return A negated vector
+     * @return: A negated vector
      */
     FORCEINLINE CInt16Vector3 operator-() const noexcept
     {
@@ -105,7 +105,7 @@ public:
      * @brief: Returns the result of component-wise adding this and another vector
      *
      * @param RHS: The vector to add
-     * @return A vector with the result of addition
+     * @return: A vector with the result of addition
      */
     FORCEINLINE CInt16Vector3 operator+(const CInt16Vector3& RHS) const noexcept
     {
@@ -116,7 +116,7 @@ public:
      * @brief: Returns this vector after component-wise adding this with another vector
      *
      * @param RHS: The vector to add
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CInt16Vector3& operator+=(const CInt16Vector3& RHS) noexcept
     {
@@ -127,7 +127,7 @@ public:
      * @brief: Returns the result of adding a scalar to each component of this vector
      *
      * @param RHS: The scalar to add
-     * @return A vector with the result of addition
+     * @return: A vector with the result of addition
      */
     FORCEINLINE CInt16Vector3 operator+(int16 RHS) const noexcept
     {
@@ -138,7 +138,7 @@ public:
      * @brief: Returns this vector after adding a scalar to each component of this vector
      *
      * @param RHS: The scalar to add
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CInt16Vector3& operator+=(int16 RHS) noexcept
     {
@@ -149,7 +149,7 @@ public:
      * @brief: Returns the result of component-wise subtraction between this and another vector
      *
      * @param RHS: The vector to subtract
-     * @return A vector with the result of subtraction
+     * @return: A vector with the result of subtraction
      */
     FORCEINLINE CInt16Vector3 operator-(const CInt16Vector3& RHS) const noexcept
     {
@@ -160,7 +160,7 @@ public:
      * @brief: Returns this vector after component-wise subtraction between this and another vector
      *
      * @param RHS: The vector to subtract
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CInt16Vector3& operator-=(const CInt16Vector3& RHS) noexcept
     {
@@ -171,7 +171,7 @@ public:
      * @brief: Returns the result of subtracting each component of this vector with a scalar
      *
      * @param RHS: The scalar to subtract
-     * @return A vector with the result of the subtraction
+     * @return: A vector with the result of the subtraction
      */
     FORCEINLINE CInt16Vector3 operator-(int16 RHS) const noexcept
     {
@@ -182,7 +182,7 @@ public:
      * @brief: Returns this vector after subtracting each component of this vector with a scalar
      *
      * @param RHS: The scalar to subtract
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CInt16Vector3& operator-=(int16 RHS) noexcept
     {
@@ -193,7 +193,7 @@ public:
      * @brief: Returns the result of component-wise multiplication with this and another vector
      *
      * @param RHS: The vector to multiply with
-     * @return A vector with the result of the multiplication
+     * @return: A vector with the result of the multiplication
      */
     FORCEINLINE CInt16Vector3 operator*(const CInt16Vector3& RHS) const noexcept
     {
@@ -204,7 +204,7 @@ public:
      * @brief: Returns this vector after component-wise multiplication with this and another vector
      *
      * @param RHS: The vector to multiply with
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CInt16Vector3& operator*=(const CInt16Vector3& RHS) noexcept
     {
@@ -215,7 +215,7 @@ public:
      * @brief: Returns the result of multiplying each component of this vector with a scalar
      *
      * @param RHS: The scalar to multiply with
-     * @return A vector with the result of the multiplication
+     * @return: A vector with the result of the multiplication
      */
     FORCEINLINE CInt16Vector3 operator*(int16 RHS) const noexcept
     {
@@ -226,7 +226,7 @@ public:
      * @brief: Returns this vector after multiplying each component of this vector with a scalar
      *
      * @param RHS: The scalar to multiply with
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CInt16Vector3& operator*=(int16 RHS) noexcept
     {
@@ -237,7 +237,7 @@ public:
      * @brief: Returns the result of component-wise division with this and another vector
      *
      * @param RHS: The vector to divide with
-     * @return A vector with the result of the division
+     * @return: A vector with the result of the division
      */
     FORCEINLINE CInt16Vector3 operator/(const CInt16Vector3& RHS) const noexcept
     {
@@ -248,7 +248,7 @@ public:
      * @brief: Returns this vector after component-wise division with this and another vector
      *
      * @param RHS: The vector to divide with
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CInt16Vector3& operator/=(const CInt16Vector3& RHS) noexcept
     {
@@ -259,7 +259,7 @@ public:
      * @brief: Returns the result of dividing each component of this vector and a scalar
      *
      * @param RHS: The scalar to divide with
-     * @return A vector with the result of the division
+     * @return: A vector with the result of the division
      */
     FORCEINLINE CInt16Vector3 operator/(int16 RHS) const noexcept
     {
@@ -270,7 +270,7 @@ public:
      * @brief: Returns this vector after dividing each component of this vector and a scalar
      *
      * @param RHS: The scalar to divide with
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CInt16Vector3& operator/=(int16 RHS) noexcept
     {
@@ -281,7 +281,7 @@ public:
      * @brief: Returns the result after comparing this and another vector
      *
      * @param Other: The vector to compare with
-     * @return True if equal, false if not
+     * @return: True if equal, false if not
      */
     FORCEINLINE bool operator==(const CInt16Vector3& Other) const noexcept
     {
@@ -292,7 +292,7 @@ public:
      * @brief: Returns the negated result after comparing this and another vector
      *
      * @param Other: The vector to compare with
-     * @return False if equal, true if not
+     * @return: False if equal, true if not
      */
     FORCEINLINE bool operator!=(const CInt16Vector3& Other) const noexcept
     {
@@ -303,7 +303,7 @@ public:
      * @brief: Returns the component specified
      *
      * @param Index: The component index
-     * @return The component
+     * @return: The component
      */
     FORCEINLINE int16& operator[](int16 Index) noexcept
     {
@@ -315,7 +315,7 @@ public:
      * @brief: Returns the component specified
      *
      * @param Index: The component index
-     * @return The component
+     * @return: The component
      */
     FORCEINLINE int16 operator[](int16 Index) const noexcept
     {
@@ -390,7 +390,7 @@ public:
      * @brief: Compares this vector with another vector
      *
      * @param Other: Vector to compare against
-     * @return True if equal, false if not
+     * @return: True if equal, false if not
      */
     FORCEINLINE bool IsEqual(const CIntVector3& Other) const noexcept
     {
@@ -404,7 +404,7 @@ public:
      *
      * @param LHS: First vector to compare with
      * @param RHS: Second vector to compare with
-     * @return A vector with the smallest components of LHS and RHS
+     * @return: A vector with the smallest components of LHS and RHS
      */
     friend FORCEINLINE CIntVector3 Min(const CIntVector3& LHS, const CIntVector3& RHS) noexcept
     {
@@ -416,7 +416,7 @@ public:
      *
      * @param LHS: First vector to compare with
      * @param RHS: Second vector to compare with
-     * @return A vector with the largest components of LHS and RHS
+     * @return: A vector with the largest components of LHS and RHS
      */
     friend FORCEINLINE CIntVector3 Max(const CIntVector3& LHS, const CIntVector3& RHS) noexcept
     {
@@ -428,7 +428,7 @@ public:
     /**
      * @brief: Return a vector with component-wise negation of this vector
      *
-     * @return A negated vector
+     * @return: A negated vector
      */
     FORCEINLINE CIntVector3 operator-() const noexcept
     {
@@ -439,7 +439,7 @@ public:
      * @brief: Returns the result of component-wise adding this and another vector
      *
      * @param RHS: The vector to add
-     * @return A vector with the result of addition
+     * @return: A vector with the result of addition
      */
     FORCEINLINE CIntVector3 operator+(const CIntVector3& RHS) const noexcept
     {
@@ -450,7 +450,7 @@ public:
      * @brief: Returns this vector after component-wise adding this with another vector
      *
      * @param RHS: The vector to add
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CIntVector3& operator+=(const CIntVector3& RHS) noexcept
     {
@@ -461,7 +461,7 @@ public:
      * @brief: Returns the result of adding a scalar to each component of this vector
      *
      * @param RHS: The scalar to add
-     * @return A vector with the result of addition
+     * @return: A vector with the result of addition
      */
     FORCEINLINE CIntVector3 operator+(int32 RHS) const noexcept
     {
@@ -472,7 +472,7 @@ public:
      * @brief: Returns this vector after adding a scalar to each component of this vector
      *
      * @param RHS: The scalar to add
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CIntVector3& operator+=(int32 RHS) noexcept
     {
@@ -483,7 +483,7 @@ public:
      * @brief: Returns the result of component-wise subtraction between this and another vector
      *
      * @param RHS: The vector to subtract
-     * @return A vector with the result of subtraction
+     * @return: A vector with the result of subtraction
      */
     FORCEINLINE CIntVector3 operator-(const CIntVector3& RHS) const noexcept
     {
@@ -494,7 +494,7 @@ public:
      * @brief: Returns this vector after component-wise subtraction between this and another vector
      *
      * @param RHS: The vector to subtract
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CIntVector3& operator-=(const CIntVector3& RHS) noexcept
     {
@@ -505,7 +505,7 @@ public:
      * @brief: Returns the result of subtracting each component of this vector with a scalar
      *
      * @param RHS: The scalar to subtract
-     * @return A vector with the result of the subtraction
+     * @return: A vector with the result of the subtraction
      */
     FORCEINLINE CIntVector3 operator-(int32 RHS) const noexcept
     {
@@ -516,7 +516,7 @@ public:
      * @brief: Returns this vector after subtracting each component of this vector with a scalar
      *
      * @param RHS: The scalar to subtract
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CIntVector3& operator-=(int32 RHS) noexcept
     {
@@ -527,7 +527,7 @@ public:
      * @brief: Returns the result of component-wise multiplication with this and another vector
      *
      * @param RHS: The vector to multiply with
-     * @return A vector with the result of the multiplication
+     * @return: A vector with the result of the multiplication
      */
     FORCEINLINE CIntVector3 operator*(const CIntVector3& RHS) const noexcept
     {
@@ -538,7 +538,7 @@ public:
      * @brief: Returns this vector after component-wise multiplication with this and another vector
      *
      * @param RHS: The vector to multiply with
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CIntVector3& operator*=(const CIntVector3& RHS) noexcept
     {
@@ -549,7 +549,7 @@ public:
      * @brief: Returns the result of multiplying each component of this vector with a scalar
      *
      * @param RHS: The scalar to multiply with
-     * @return A vector with the result of the multiplication
+     * @return: A vector with the result of the multiplication
      */
     FORCEINLINE CIntVector3 operator*(int32 RHS) const noexcept
     {
@@ -560,7 +560,7 @@ public:
      * @brief: Returns this vector after multiplying each component of this vector with a scalar
      *
      * @param RHS: The scalar to multiply with
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CIntVector3& operator*=(int32 RHS) noexcept
     {
@@ -571,7 +571,7 @@ public:
      * @brief: Returns the result of component-wise division with this and another vector
      *
      * @param RHS: The vector to divide with
-     * @return A vector with the result of the division
+     * @return: A vector with the result of the division
      */
     FORCEINLINE CIntVector3 operator/(const CIntVector3& RHS) const noexcept
     {
@@ -582,7 +582,7 @@ public:
      * @brief: Returns this vector after component-wise division with this and another vector
      *
      * @param RHS: The vector to divide with
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CIntVector3& operator/=(const CIntVector3& RHS) noexcept
     {
@@ -593,7 +593,7 @@ public:
      * @brief: Returns the result of dividing each component of this vector and a scalar
      *
      * @param RHS: The scalar to divide with
-     * @return A vector with the result of the division
+     * @return: A vector with the result of the division
      */
     FORCEINLINE CIntVector3 operator/(int32 RHS) const noexcept
     {
@@ -604,7 +604,7 @@ public:
      * @brief: Returns this vector after dividing each component of this vector and a scalar
      *
      * @param RHS: The scalar to divide with
-     * @return A reference to this vector
+     * @return: A reference to this vector
      */
     FORCEINLINE CIntVector3& operator/=(int32 RHS) noexcept
     {
@@ -615,7 +615,7 @@ public:
      * @brief: Returns the result after comparing this and another vector
      *
      * @param Other: The vector to compare with
-     * @return True if equal, false if not
+     * @return: True if equal, false if not
      */
     FORCEINLINE bool operator==(const CIntVector3& Other) const noexcept
     {
@@ -626,7 +626,7 @@ public:
      * @brief: Returns the negated result after comparing this and another vector
      *
      * @param Other: The vector to compare with
-     * @return False if equal, true if not
+     * @return: False if equal, true if not
      */
     FORCEINLINE bool operator!=(const CIntVector3& Other) const noexcept
     {
@@ -637,7 +637,7 @@ public:
      * @brief: Returns the component specified
      *
      * @param Index: The component index
-     * @return The component
+     * @return: The component
      */
     FORCEINLINE int32& operator[](int32 Index) noexcept
     {
@@ -649,7 +649,7 @@ public:
      * @brief: Returns the component specified
      *
      * @param Index: The component index
-     * @return The component
+     * @return: The component
      */
     FORCEINLINE int32 operator[](int32 Index) const noexcept
     {
