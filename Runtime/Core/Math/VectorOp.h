@@ -24,9 +24,9 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SIMD Helper library
+// NVectorOp - SIMD Helper library
 
-namespace NSIMD
+namespace NVectorOp
 {
     /* TODO: Add fallback when we have no SSE intrinsics */
 
@@ -300,7 +300,6 @@ namespace NSIMD
     {
         return _mm_max_ps(A, B);
     }
-
 #endif
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -564,8 +563,8 @@ namespace NSIMD
 
     FORCEINLINE void VECTORCALL Transpose(const float* InMat, float* OutMat) noexcept
     {
-        Float128 Row0 = LoadAligned(&InMat[0]);
-        Float128 Row1 = LoadAligned(&InMat[4]);
+        Float128 Row0  = LoadAligned(&InMat[0]);
+        Float128 Row1  = LoadAligned(&InMat[4]);
         Float128 Temp0 = Shuffle0101<0, 0, 1, 1>(Row0, Row1);
         Float128 Temp1 = Shuffle0101<2, 2, 3, 3>(Row0, Row1);
 
@@ -613,13 +612,13 @@ namespace NSIMD
 
     FORCEINLINE Float128 VECTORCALL Mat2Mul(Float128 A, Float128 B)
     {
-        NSIMD::Float128 Temp0 = NSIMD::Shuffle<0, 3, 0, 3>(B);
-        NSIMD::Float128 Temp1 = NSIMD::Mul(A, Temp0);
-        NSIMD::Float128 Temp2 = NSIMD::Shuffle<1, 0, 3, 2>(A);
-        Temp0 = NSIMD::Shuffle<2, 1, 2, 1>(B);
+        Float128 Temp0 = Shuffle<0, 3, 0, 3>(B);
+        Float128 Temp1 = Mul(A, Temp0);
+        Float128 Temp2 = Shuffle<1, 0, 3, 2>(A);
+        Temp0 = Shuffle<2, 1, 2, 1>(B);
 
-        NSIMD::Float128 Temp3 = NSIMD::Mul(Temp2, Temp0);
-        return NSIMD::Add(Temp1, Temp3);
+        Float128 Temp3 = Mul(Temp2, Temp0);
+        return Add(Temp1, Temp3);
     }
 
     FORCEINLINE Float128 VECTORCALL Mat2AdjointMul(Float128 A, Float128 B)

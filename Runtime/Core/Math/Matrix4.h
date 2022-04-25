@@ -189,14 +189,14 @@ public:
      *
      * @return A pointer to the data
      */
-    FORCEINLINE float* GetData() noexcept;
+    FORCEINLINE float* Data() noexcept;
 
     /**
      * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
-    FORCEINLINE const float* GetData() const noexcept;
+    FORCEINLINE const float* Data() const noexcept;
 
 public:
     /**
@@ -1102,12 +1102,12 @@ FORCEINLINE CMatrix3 CMatrix4::GetRotationAndScale() const noexcept
     return CMatrix3(m00, m01, m02, m10, m11, m12, m20, m21, m22);
 }
 
-FORCEINLINE float* CMatrix4::GetData() noexcept
+FORCEINLINE float* CMatrix4::Data() noexcept
 {
     return reinterpret_cast<float*>(this);
 }
 
-FORCEINLINE const float* CMatrix4::GetData() const noexcept
+FORCEINLINE const float* CMatrix4::Data() const noexcept
 {
     return reinterpret_cast<const float*>(this);
 }

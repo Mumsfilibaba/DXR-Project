@@ -133,14 +133,14 @@ public:
      *
      * @return A pointer to the data
      */
-    FORCEINLINE float* GetData() noexcept;
+    FORCEINLINE float* Data() noexcept;
 
     /**
      * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
-    FORCEINLINE const float* GetData() const noexcept;
+    FORCEINLINE const float* Data() const noexcept;
 
 public:
 
@@ -566,12 +566,12 @@ FORCEINLINE CVector3 CMatrix3::GetColumn(int Column) const noexcept
     return CVector3(f[0][Column], f[1][Column], f[2][Column]);
 }
 
-FORCEINLINE float* CMatrix3::GetData() noexcept
+FORCEINLINE float* CMatrix3::Data() noexcept
 {
     return reinterpret_cast<float*>(this);
 }
 
-FORCEINLINE const float* CMatrix3::GetData() const noexcept
+FORCEINLINE const float* CMatrix3::Data() const noexcept
 {
     return reinterpret_cast<const float*>(this);
 }

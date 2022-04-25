@@ -51,38 +51,33 @@ namespace NMath
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Functions
 
-    FORCEINLINE float VECTORCALL Sqrt(float v)
+    FORCEINLINE float VECTORCALL Sqrt(float Value)
     {
 #if ARCHITECTURE_X86_X64
-        return _mm_cvtss_f32(_mm_sqrt_ss(_mm_load_ss(&v)));
+        return _mm_cvtss_f32(_mm_sqrt_ss(_mm_load_ss(&Value)));
 #else
-        return sqrtf(v);
+        return sqrtf(Value);
 #endif
     }
 
     template<typename T>
-    FORCEINLINE T DivideByMultiple(T v, uint32 Alignment)
+    FORCEINLINE typename TEnableIf<TIsInteger<T>::Value, T>::Type DivideByMultiple(T Value, uint32 Alignment)
     {
-        static_assert(TIsInteger<T>::Value);
-        return static_cast<T>((v + Alignment - 1) / Alignment);
+        return static_cast<T>((Value + Alignment - 1) / Alignment);
     }
 
     template<typename T>
-    FORCEINLINE T AlignUp(T v, T Alignment)
+    FORCEINLINE typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignUp(T Value, T Alignment)
     {
-        static_assert(TIsInteger<T>::Value);
-
         const T Mask = Alignment - 1;
-        return ((v + Mask) & (~Mask));
+        return ((Value + Mask) & (~Mask));
     }
 
     template<typename T>
-    FORCEINLINE T AlignDown(T v, T Alignment)
+    FORCEINLINE typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignDown(T Value, T Alignment)
     {
-        static_assert(TIsInteger<T>::Value);
-
         const T Mask = Alignment - 1;
-        return ((v) & (~Mask));
+        return ((Value) & (~Mask));
     }
 
     FORCEINLINE float Lerp(float a, float b, float f)
@@ -134,15 +129,27 @@ namespace NMath
     }
 
     template<typename T>
-    FORCEINLINE T Asin(T v)
+    FORCEINLINE T Asin(T Value)
     {
-        return static_cast<T>(std::asinf(static_cast<float>(v)));
+        return static_cast<T>(std::asinf(static_cast<float>(Value)));
     }
 
     template<typename T>
     FORCEINLINE T Atan2(T y, T x)
     {
         return static_cast<T>(std::atan2f(static_cast<float>(y), static_cast<float>(x)));
+    }
+
+    template<typename T>
+    FORCEINLINE T Sin(T Value)
+    {
+        return static_cast<T>(std::sinf(static_cast<float>(Value)));
+    }
+
+    template<typename T>
+    FORCEINLINE T Cos(T Value)
+    {
+        return static_cast<T>(std::cosf(static_cast<float>(Value)));
     }
 
     template<typename T>

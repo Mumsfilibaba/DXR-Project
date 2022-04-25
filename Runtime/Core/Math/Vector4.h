@@ -149,14 +149,14 @@ public:
      *
      * @return A pointer to the data
      */
-    FORCEINLINE float* GetData() noexcept;
+    FORCEINLINE float* Data() noexcept;
 
     /**
      * @brief: Returns the data of this matrix as a pointer
      *
      * @return A pointer to the data
      */
-    FORCEINLINE const float* GetData() const noexcept;
+    FORCEINLINE const float* Data() const noexcept;
 
 public:
 
@@ -668,12 +668,12 @@ inline CVector4 CVector4::Reflect(const CVector4& Normal) const noexcept
 #endif
 }
 
-FORCEINLINE float* CVector4::GetData() noexcept
+FORCEINLINE float* CVector4::Data() noexcept
 {
     return reinterpret_cast<float*>(this);
 }
 
-FORCEINLINE const float* CVector4::GetData() const noexcept
+FORCEINLINE const float* CVector4::Data() const noexcept
 {
     return reinterpret_cast<const float*>(this);
 }

@@ -73,14 +73,14 @@ public:
      * 
      * @return: A pointer to the data representing the plane
      */
-    FORCEINLINE float* GetData() noexcept;
+    FORCEINLINE float* Data() noexcept;
 
     /**
      * @brief: Retrieve the data as an array
      *
      * @return: A pointer to the data representing the plane
      */
-    FORCEINLINE const float* GetData() const noexcept;
+    FORCEINLINE const float* Data() const noexcept;
 
 public:
 
@@ -203,12 +203,12 @@ FORCEINLINE CVector3 CPlane::GetNormal() const noexcept
     return CVector3(x, y, z);
 }
 
-FORCEINLINE float* CPlane::GetData() noexcept
+FORCEINLINE float* CPlane::Data() noexcept
 {
     return reinterpret_cast<float*>(this);
 }
 
-FORCEINLINE const float* CPlane::GetData() const noexcept
+FORCEINLINE const float* CPlane::Data() const noexcept
 {
     return reinterpret_cast<const float*>(this);
 }
