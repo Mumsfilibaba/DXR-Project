@@ -1538,12 +1538,12 @@ inline CMatrix4 CMatrix4::Translation(const CVector3& InTranslation) noexcept
 
 inline CMatrix4 CMatrix4::RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
 {
-    const float SinP = sinf(Pitch);
-    const float SinY = sinf(Yaw);
-    const float SinR = sinf(Roll);
-    const float CosP = cosf(Pitch);
-    const float CosY = cosf(Yaw);
-    const float CosR = cosf(Roll);
+    const float SinP = NMath::Sin(Pitch);
+    const float SinY = NMath::Sin(Yaw);
+    const float SinR = NMath::Sin(Roll);
+    const float CosP = NMath::Cos(Pitch);
+    const float CosY = NMath::Cos(Yaw);
+    const float CosR = NMath::Cos(Roll);
 
     const float SinRSinP = SinR * SinP;
     const float CosRSinP = CosR * SinP;
@@ -1562,8 +1562,8 @@ inline CMatrix4 CMatrix4::RotationRollPitchYaw(const CVector3& PitchYawRoll) noe
 
 inline CMatrix4 CMatrix4::RotationX(float x) noexcept
 {
-    const float SinX = sinf(x);
-    const float CosX = cosf(x);
+    const float SinX = NMath::Sin(x);
+    const float CosX = NMath::Cos(x);
 
     return CMatrix4(
         1.0f, 0.0f, 0.0f, 0.0f,
@@ -1574,8 +1574,8 @@ inline CMatrix4 CMatrix4::RotationX(float x) noexcept
 
 inline CMatrix4 CMatrix4::RotationY(float y) noexcept
 {
-    const float SinY = sinf(y);
-    const float CosY = cosf(y);
+    const float SinY = NMath::Sin(y);
+    const float CosY = NMath::Cos(y);
 
     return CMatrix4(
         CosY, 0.0f, -SinY, 0.0f,
@@ -1586,8 +1586,8 @@ inline CMatrix4 CMatrix4::RotationY(float y) noexcept
 
 inline CMatrix4 CMatrix4::RotationZ(float z) noexcept
 {
-    const float SinZ = sinf(z);
-    const float CosZ = cosf(z);
+    const float SinZ = NMath::Sin(z);
+    const float CosZ = NMath::Cos(z);
 
     return CMatrix4(
         CosZ, SinZ, 0.0f, 0.0f,

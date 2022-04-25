@@ -593,7 +593,10 @@ public:
      *
      * @return: A identity matrix
      */
-    inline static CMatrix3 Identity() noexcept;
+    inline static CMatrix3 Identity() noexcept
+    {
+        return CMatrix3(1.0f);
+    }
 
     /**
      * @brief: Creates and returns a uniform scale matrix
@@ -601,7 +604,10 @@ public:
      * @param Scale: Uniform scale that represents this matrix
      * @return: A scale matrix
      */
-    inline static CMatrix3 Scale(float Scale) noexcept;
+    inline static CMatrix3 Scale(float Scale) noexcept
+    {
+        return CMatrix3(Scale);
+    }
 
     /**
      * @brief: Creates and returns a scale matrix for each axis
@@ -611,7 +617,12 @@ public:
      * @param z: Scale for the z-axis
      * @return: A scale matrix
      */
-    inline static CMatrix3 Scale(float x, float y, float z) noexcept;
+    inline static CMatrix3 Scale(float x, float y, float z) noexcept
+    {
+        return CMatrix3( x   , 0.0f, 0.0f
+                       , 0.0f, y   , 0.0f
+                       , 0.0f, 0.0f, z);
+    }
 
     /**
      * @brief: Creates and returns a scale matrix for each axis
@@ -619,7 +630,10 @@ public:
      * @param VectorWithScale: A vector containing the scale for each axis in the x-, y-, z-components
      * @return: A scale matrix
      */
-    inline static CMatrix3 Scale(const CVector3& VectorWithScale) noexcept;
+    inline static CMatrix3 Scale(const CVector3& VectorWithScale) noexcept
+    {
+        return Scale(VectorWithScale.x, VectorWithScale.y, VectorWithScale.z);
+    }
 
     /**
      * @brief: Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
@@ -629,7 +643,22 @@ public:
      * @param Roll: Rotation around the z-axis in radians
      * @return: A rotation matrix
      */
-    inline static CMatrix3 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept;
+    inline static CMatrix3 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
+    {
+        const float SinP = NMath::Sin(Pitch);
+        const float SinY = NMath::Sin(Yaw);
+        const float SinR = NMath::Sin(Roll);
+        const float CosP = NMath::Cos(Pitch);
+        const float CosY = NMath::Cos(Yaw);
+        const float CosR = NMath::Cos(Roll);
+
+        const float SinRSinP = SinR * SinP;
+        const float CosRSinP = CosR * SinP;
+
+        return CMatrix3((CosR * CosY) + (SinRSinP * SinY), (SinR * CosP), (SinRSinP * CosY) - (CosR * SinY)
+                       ,(CosRSinP * SinY) - (SinR * CosY), (CosR * CosP), (SinR * SinY) + (CosRSinP * CosY)
+                       ,(CosP * SinY)                    , -SinP        , (CosP * CosY));
+    }
 
     /**
      * @brief: Creates and returns a rotation matrix around the x-axis
@@ -637,7 +666,15 @@ public:
      * @param x: Rotation around the x-axis in radians
      * @return: A rotation matrix
      */
-    inline static CMatrix3 RotationX(float x) noexcept;
+    inline static CMatrix3 RotationX(float x) noexcept
+    {
+        const float SinX = NMath::Sin(x);
+        const float CosX = NMath::Cos(x);
+
+        return CMatrix3(1.0f,  0.0f, 0.0f
+                       ,0.0f,  CosX, SinX
+                       ,0.0f, -SinX, CosX);
+    }
 
     /**
      * @brief: Creates and returns a rotation matrix around the y-axis
@@ -645,7 +682,15 @@ public:
      * @param y: Rotation around the y-axis in radians
      * @return: A rotation matrix
      */
-    inline static CMatrix3 RotationY(float y) noexcept;
+    inline static CMatrix3 RotationY(float y) noexcept
+    {
+        const float SinY = NMath::Sin(y);
+        const float CosY = NMath::Cos(y);
+
+        return CMatrix3(CosY, 0.0f, -SinY
+                       ,0.0f, 1.0f,  0.0f
+                       ,SinY, 0.0f,  CosY);
+    }
 
     /**
      * @brief: Creates and returns a rotation matrix around the z-axis
@@ -653,7 +698,15 @@ public:
      * @param z: Rotation around the z-axis in radians
      * @return: A rotation matrix
      */
-    inline static CMatrix3 RotationZ(float z) noexcept;
+    inline static CMatrix3 RotationZ(float z) noexcept
+    {
+        const float SinZ = NMath::Sin(z);
+        const float CosZ = NMath::Cos(z);
+
+        return CMatrix3( CosZ, SinZ, 0.0f
+                       ,-SinZ, CosZ, 0.0f
+                       , 0.0f, 0.0f, 1.0f);
+    }
 
 public:
     union
@@ -670,126 +723,3 @@ public:
         float f[3][3];
     };
 };
-
-
-FORCEINLINE CVector3 CMatrix3::operator*(const CVector3& Rhs) const noexcept
-
-
-FORCEINLINE CMatrix3 CMatrix3::operator*(const CMatrix3& Rhs) const noexcept
-
-
-FORCEINLINE CMatrix3& CMatrix3::operator*=(const CMatrix3& Rhs) noexcept
-
-
-FORCEINLINE CMatrix3 CMatrix3::operator*(float Rhs) const noexcept
-
-FORCEINLINE CMatrix3& CMatrix3::operator*=(float Rhs) noexcept
-
-
-FORCEINLINE CMatrix3 CMatrix3::operator+(const CMatrix3& Rhs) const noexcept
-
-
-FORCEINLINE CMatrix3& CMatrix3::operator+=(const CMatrix3& Rhs) noexcept
-
-
-FORCEINLINE CMatrix3 CMatrix3::operator+(float Rhs) const noexcept
-
-
-FORCEINLINE CMatrix3& CMatrix3::operator+=(float Rhs) noexcept
-
-
-FORCEINLINE CMatrix3 CMatrix3::operator-(const CMatrix3& Rhs) const noexcept
-
-
-FORCEINLINE CMatrix3& CMatrix3::operator-=(const CMatrix3& Rhs) noexcept
-
-
-FORCEINLINE CMatrix3 CMatrix3::operator-(float Rhs) const noexcept
-
-
-FORCEINLINE CMatrix3& CMatrix3::operator-=(float Rhs) noexcept
-{
-    return *this = *this - Rhs;
-}
-
-FORCEINLINE CMatrix3 CMatrix3::operator/(float Rhs) const noexcept
-
-
-FORCEINLINE CMatrix3& CMatrix3::operator/=(float Rhs) noexcept
-{
-    return *this = *this / Rhs;
-}
-
-inline CMatrix3 CMatrix3::Identity() noexcept
-{
-    return CMatrix3(1.0f);
-}
-
-inline CMatrix3 CMatrix3::Scale(float Scale) noexcept
-{
-    return CMatrix3(Scale);
-}
-
-inline CMatrix3 CMatrix3::Scale(float x, float y, float z) noexcept
-{
-    return CMatrix3(
-        x, 0.0f, 0.0f,
-        0.0f, y, 0.0f,
-        0.0f, 0.0f, z);
-}
-
-inline CMatrix3 CMatrix3::Scale(const CVector3& VectorWithScale) noexcept
-{
-    return Scale(VectorWithScale.x, VectorWithScale.y, VectorWithScale.z);
-}
-
-inline CMatrix3 CMatrix3::RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
-{
-    const float SinP = sinf(Pitch);
-    const float SinY = sinf(Yaw);
-    const float SinR = sinf(Roll);
-    const float CosP = cosf(Pitch);
-    const float CosY = cosf(Yaw);
-    const float CosR = cosf(Roll);
-
-    const float SinRSinP = SinR * SinP;
-    const float CosRSinP = CosR * SinP;
-
-    return CMatrix3(
-        (CosR * CosY) + (SinRSinP * SinY), (SinR * CosP), (SinRSinP * CosY) - (CosR * SinY),
-        (CosRSinP * SinY) - (SinR * CosY), (CosR * CosP), (SinR * SinY) + (CosRSinP * CosY),
-        (CosP * SinY), -SinP, (CosP * CosY));
-}
-
-inline CMatrix3 CMatrix3::RotationX(float x) noexcept
-{
-    const float SinX = sinf(x);
-    const float CosX = cosf(x);
-
-    return CMatrix3(
-        1.0f, 0.0f, 0.0f,
-        0.0f, CosX, SinX,
-        0.0f, -SinX, CosX);
-}
-
-inline CMatrix3 CMatrix3::RotationY(float y) noexcept
-{
-    const float SinY = sinf(y);
-    const float CosY = cosf(y);
-
-    return CMatrix3(
-        CosY, 0.0f, -SinY,
-        0.0f, 1.0f, 0.0f,
-        SinY, 0.0f, CosY);
-}
-
-inline CMatrix3 CMatrix3::RotationZ(float z) noexcept
-{
-    const float SinZ = sinf(z);
-    const float CosZ = cosf(z);
-
-    return CMatrix3(
-        CosZ, SinZ, 0.0f,
-        -SinZ, CosZ, 0.0f,
-        0.0f, 0.0f, 1.0f);
-}
