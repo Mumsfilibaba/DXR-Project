@@ -14,7 +14,7 @@ class CMacTime : public CPlatformTime
 public:
 
     /**
-     * Query the current state of the performance counter
+     * @brief: Query the current state of the performance counter
      *
      * @return: Returns the current value of the performance counter
      */
@@ -24,7 +24,7 @@ public:
     }
 
     /**
-     * Query the frequency of the performance counter
+     * @brief: Query the frequency of the performance counter
      *
      * @return: Returns the frequency of the performance counter
      */

@@ -25,7 +25,7 @@ public:
     virtual ~CPlatformApplicationMessageHandler() = default;
 
     /**
-     * Handle a key released event
+     * @brief: Handle a key released event
      * 
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
@@ -33,7 +33,7 @@ public:
     virtual void HandleKeyReleased(EKey KeyCode, SModifierKeyState ModierKeyState) { }
 
     /**
-     * Handle a key pressed event
+     * @brief: Handle a key pressed event
      *
      * @param KeyCode: The key-code for the event
      * @param bIsRepeat: True if this event is a repeated event die to the user holding the key
@@ -42,14 +42,14 @@ public:
     virtual void HandleKeyPressed(EKey KeyCode, bool bIsRepeat, SModifierKeyState ModierKeyState) { }
 
     /**
-     * Handle a key character event
+     * @brief: Handle a key character event
      *
      * @param Character: An character code for the event which takes into account modifier keys
      */
     virtual void HandleKeyChar(uint32 Character) { }
 
     /**
-     * Handle a mouse move event
+     * @brief: Handle a mouse move event
      *
      * @param x: The new x-coordinate for the mouse within the client window
      * @param y: The new y-coordinate for the mouse within the client window
@@ -57,7 +57,7 @@ public:
     virtual void HandleMouseMove(int32 x, int32 y) { }
 
     /**
-     * Handle a mouse released event
+     * @brief: Handle a mouse released event
      *
      * @param Button: The mousebutton-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
@@ -65,7 +65,7 @@ public:
     virtual void HandleMouseReleased(EMouseButton Button, SModifierKeyState ModierKeyState) { }
 
     /**
-     * Handle a key released event
+     * @brief: Handle a key released event
      *
      * @param Button: The mousebutton-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
@@ -73,7 +73,7 @@ public:
     virtual void HandleMousePressed(EMouseButton Button, SModifierKeyState ModierKeyState) { }
 
     /**
-     * Handle a mouse scrolled event
+     * @brief: Handle a mouse scrolled event
      *
      * @param HorizontalDelta: The delta of the horizontal scroll-wheel
      * @param VerticalDelta: The delta of the vertical scroll-wheel
@@ -81,7 +81,7 @@ public:
     virtual void HandleMouseScrolled(float HorizontalDelta, float VerticalDelta) { }
 
     /**
-     * Handle a high-precision mouse event
+     * @brief: Handle a high-precision mouse event
      *
      * @param Window: Window which received the event
      * @param x: Delta in x-position for this event
@@ -90,7 +90,7 @@ public:
     virtual void HandleHighPrecisionMouseInput(const TSharedRef<CPlatformWindow>& Window, int32 x, uint32 y) { }
 
     /**
-     * Handle a key released event
+     * @brief: Handle a key released event
      *
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
@@ -98,7 +98,7 @@ public:
     virtual void HandleWindowResized(const TSharedRef<CPlatformWindow>& Window, uint32 Width, uint32 Height) { }
 
     /**
-     * Handle a key released event
+     * @brief: Handle a key released event
      *
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
@@ -106,7 +106,7 @@ public:
     virtual void HandleWindowMoved(const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y) { }
 
     /**
-     * Handle a key released event
+     * @brief: Handle a key released event
      *
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
@@ -114,7 +114,7 @@ public:
     virtual void HandleWindowFocusChanged(const TSharedRef<CPlatformWindow>& Window, bool bHasFocus) { }
 
     /**
-     * Handle a key released event
+     * @brief: Handle a key released event
      *
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
@@ -122,7 +122,7 @@ public:
     virtual void HandleWindowMouseLeft(const TSharedRef<CPlatformWindow>& Window) { }
 
     /**
-     * Handle a key released event
+     * @brief: Handle a key released event
      *
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
@@ -130,7 +130,7 @@ public:
     virtual void HandleWindowMouseEntered(const TSharedRef<CPlatformWindow>& Window) { }
 
     /**
-     * Handle a key released event
+     * @brief: Handle a key released event
      *
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
@@ -138,7 +138,7 @@ public:
     virtual void HandleWindowClosed(const TSharedRef<CPlatformWindow>& Window) { }
 
     /**
-     * Handle a key released event
+     * @brief: Handle a key released event
      *
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred

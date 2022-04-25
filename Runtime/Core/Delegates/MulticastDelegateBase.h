@@ -11,7 +11,7 @@ class CMulticastDelegateBase
 public:
 
     /**
-     * Copy-constructor 
+     * @brief: Copy-constructor 
      * 
      * @param Other: Other delegate to copy
      */
@@ -21,7 +21,7 @@ public:
     { }
 
     /**
-     * Move-constructor
+     * @brief: Move-constructor
      *
      * @param Other: Other delegate to move
      */
@@ -31,7 +31,7 @@ public:
     { }
 
     /**
-     * Destructor 
+     * @brief: Destructor 
      */
     FORCEINLINE ~CMulticastDelegateBase()
     {
@@ -39,7 +39,7 @@ public:
     }
 
     /**
-     *  Unbind all bound delegates 
+     * @brief:  Unbind all bound delegates 
      */
     FORCEINLINE void UnbindAll()
     {
@@ -57,7 +57,7 @@ public:
     }
 
     /**
-     * Swap this instance with another delegate
+     * @brief: Swap this instance with another delegate
      * 
      * @param Other: Delegate to swap with
      */
@@ -67,7 +67,7 @@ public:
     }
 
     /**
-     * Unbind a handle 
+     * @brief: Unbind a handle 
      * 
      * @param Handle: Handle to remove
      * @return: Returns true if the handle was found and unbound
@@ -98,7 +98,7 @@ public:
     }
 
     /**
-     * Remove a delegate if an object is bound to it
+     * @brief: Remove a delegate if an object is bound to it
      * 
      * @param Object: Object to check for
      * @return: Returns true if the object was unbound from any delegate
@@ -136,7 +136,7 @@ public:
     }
 
     /**
-     * Checks if a valid delegate is bound 
+     * @brief: Checks if a valid delegate is bound 
      * 
      * @return: Returns true if there is any delegate bound
      */
@@ -155,7 +155,7 @@ public:
     }
 
     /**
-     * Checks if an object is bound to any delegate
+     * @brief: Checks if an object is bound to any delegate
      * 
      * @param Object: Object to check for
      * @return: Returns true if any of the delegates has the object bound
@@ -178,7 +178,7 @@ public:
     }
 
     /**
-     * Retrieve the number of delegates 
+     * @brief: Retrieve the number of delegates 
      * 
      * @return: Returns the number of delegates bound
      */
@@ -188,7 +188,7 @@ public:
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      * 
      * @param Rhs: Delegate to copy from
      * @return: Returns a reference to this instance
@@ -200,7 +200,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
      * @param Rhs: Delegate to move from
      * @return: Returns a reference to this instance

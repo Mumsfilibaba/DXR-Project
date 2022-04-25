@@ -461,21 +461,21 @@ class CRHIPipelineState : public CRHIObject
 public:
 
     /**
-     * Cast the PipelineState to a Graphics PipelineState
+     * @brief: Cast the PipelineState to a Graphics PipelineState
      *
      * @return: Returns a pointer to a Graphics PipelineState if the object implements it
      */
     virtual class CRHIGraphicsPipelineState* AsGraphics() { return nullptr; }
     
     /**
-     * Cast the PipelineState to a Compute PipelineState
+     * @brief: Cast the PipelineState to a Compute PipelineState
      *
      * @return: Returns a pointer to a Compute PipelineState if the object implements it
      */
     virtual class CRHIComputePipelineState* AsCompute() { return nullptr; }
 
     /**
-     * Cast the PipelineState to a Ray tracing PipelineState
+     * @brief: Cast the PipelineState to a Ray tracing PipelineState
      *
      * @return: Returns a pointer to a Ray tracing PipelineState if the object implements it
      */
@@ -526,7 +526,7 @@ class CRHIGraphicsPipelineState : public CRHIPipelineState
 public:
 
     /**
-     * Cast the PipelineState to a Graphics PipelineState
+     * @brief: Cast the PipelineState to a Graphics PipelineState
      *
      * @return: Returns a pointer to a Graphics PipelineState if the object implements it
      */
@@ -555,7 +555,7 @@ class CRHIComputePipelineState : public CRHIPipelineState
 public:
 
     /**
-     * Cast the PipelineState to a Compute PipelineState
+     * @brief: Cast the PipelineState to a Compute PipelineState
      *
      * @return: Returns a pointer to a Compute PipelineState if the object implements it
      */
@@ -605,7 +605,7 @@ class CRHIRayTracingPipelineState : public CRHIPipelineState
 public:
 
     /**
-     * Cast the PipelineState to a Ray tracing PipelineState
+     * @brief: Cast the PipelineState to a Ray tracing PipelineState
      * 
      * @return: Returns a pointer to a Ray tracing PipelineState if the object implements it
      */

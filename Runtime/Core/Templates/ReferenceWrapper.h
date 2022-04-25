@@ -20,7 +20,7 @@ public:
     static_assert(TIsObject<T>::Value || TIsFunction<T>::Value, "TReferenceWrapper requires T to be of object or function type");
 
     /**
-     * Construct a new reference-wrapper from a reference
+     * @brief: Construct a new reference-wrapper from a reference
      * 
      * @param In: The reference to store
      */
@@ -29,7 +29,7 @@ public:
     { }
 
     /**
-     * Retrieve reference
+     * @brief: Retrieve reference
      * 
      * @return: Returns the stored reference
      */
@@ -39,7 +39,7 @@ public:
     }
 
     /**
-     * Retrieve the raw pointer 
+     * @brief: Retrieve the raw pointer 
      * 
      * @return: Retrieve the address of the stored reference
      */
@@ -49,7 +49,7 @@ public:
     }
 
     /**
-     * Retrieve reference
+     * @brief: Retrieve reference
      *
      * @return: Returns the stored reference
      */
@@ -59,7 +59,7 @@ public:
     }
 
     /**
-     * Invoke if type is invokable 
+     * @brief: Invoke if type is invokable 
      * 
      * @param Args: Arguments to call
      * @return: Returns the return-value

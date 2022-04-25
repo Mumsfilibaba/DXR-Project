@@ -572,7 +572,7 @@ public:
     TTuple& operator=(const TTuple&) = default;
 
     /**
-     * Constructor
+     * @brief: Constructor
      * 
      * @param Args: Arguments for each type
      */
@@ -584,7 +584,7 @@ public:
 public:
 
     /**
-     * Retrieve the number of elements 
+     * @brief: Retrieve the number of elements 
      * 
      * @return: Returns the number of elements for the tuples
      */

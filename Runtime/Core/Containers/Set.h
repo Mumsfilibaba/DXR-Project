@@ -64,7 +64,7 @@ public:
     using ConstIteratorType = TTreeIterator<const STreeNode, const ElementType>;
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE TSet()
         : RootNode(nullptr)
@@ -74,7 +74,7 @@ public:
     }
 
     /**
-     * Destructor 
+     * @brief: Destructor 
      */
     FORCEINLINE ~TSet()
     {

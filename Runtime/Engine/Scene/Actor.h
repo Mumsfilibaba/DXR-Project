@@ -94,28 +94,28 @@ public:
     virtual void Start();
 
     /**
-     * Tick component, should be called once every frame
+     * @brief: Tick component, should be called once every frame
      *
      * @param DeltaTime: Time since the last call to tick
      */
     virtual void Tick(CTimestamp DeltaTime);
 
     /**
-     * Add a new component to the actor 
+     * @brief: Add a new component to the actor 
      * 
      * @param InComponent: Component to add to the Actor
      */
     void AddComponent(CComponent* InComponent);
 
     /**
-     * Set name of the actor 
+     * @brief: Set name of the actor 
      * 
      * @param InName: Name of the actor
      */
     void SetName(const String& InName);
 
     /**
-     * Check if the actor has a component of the component-class 
+     * @brief: Check if the actor has a component of the component-class 
      * 
      * @param ComponentClass: ClassObject to of the component to retrieve 
      * @return: Returns true if the actor contains a component of a certain type
@@ -123,7 +123,7 @@ public:
     bool HasComponentOfClass(class CClassType* ComponentClass) const;
 
     /**
-     * Check if the actor has a component of the component-class
+     * @brief: Check if the actor has a component of the component-class
      *
      * @return: Returns true if the actor contains a component of a certain type
      */
@@ -134,7 +134,7 @@ public:
     }
 
     /**
-     * Retrieve a component from the actor of the component-class 
+     * @brief: Retrieve a component from the actor of the component-class 
      * 
      * @param ComponentClass: ClassObject to of the component to retrieve
      * @return: Returns a pointer to the requested component, or nullptr if no component of the type exist
@@ -142,7 +142,7 @@ public:
     CComponent* GetComponentOfClass(class CClassType* ComponentClass) const;
 
     /**
-     * Retrieve a component from the actor of the component-class
+     * @brief: Retrieve a component from the actor of the component-class
      *
      * @return: Returns a pointer to the requested component, or nullptr if no component of the type exist
      */
@@ -153,7 +153,7 @@ public:
     }
 
     /**
-     * Set the transform of the actor
+     * @brief: Set the transform of the actor
      * 
      * @param InTransform: New transform of the actor
      */
@@ -163,7 +163,7 @@ public:
     }
 
     /**
-     * Retrieve the name of the actor
+     * @brief: Retrieve the name of the actor
      * 
      * @return: Returns the name of the actor
      */
@@ -173,7 +173,7 @@ public:
     }
 
     /**
-     * Retrieve the Scene that owns the actor
+     * @brief: Retrieve the Scene that owns the actor
      *
      * @return: Returns the Scene that owns the actor
      */
@@ -183,7 +183,7 @@ public:
     }
 
     /**
-     * Retrieve the transform of the actor
+     * @brief: Retrieve the transform of the actor
      *
      * @return: Returns the transform of the actor
      */
@@ -193,7 +193,7 @@ public:
     }
 
     /**
-     * Retrieve the transform of the actor
+     * @brief: Retrieve the transform of the actor
      *
      * @return: Returns the transform of the actor
      */
@@ -203,7 +203,7 @@ public:
     }
 
     /**
-     * Check if Start should be called on the component
+     * @brief: Check if Start should be called on the component
      *
      * @return: Returns true if the component's Start-method should be called
      */
@@ -213,7 +213,7 @@ public:
     }
 
     /**
-     * Check if Tick should be called on the component
+     * @brief: Check if Tick should be called on the component
      *
      * @return: Returns true if the component's Tick-method should be called
      */

@@ -38,7 +38,7 @@ public:
     virtual ~IWindow() = default;
 
     /**
-     * Initializes the window's context
+     * @brief: Initializes the window's context
      * 
      * @param ContextHandle: Context for the interface 
      */
@@ -48,7 +48,7 @@ public:
     virtual void Tick() = 0;
 
     /**
-     * Check if the window should be updated this frame
+     * @brief: Check if the window should be updated this frame
      * 
      * @return: Returns true if the window should be updated
      */

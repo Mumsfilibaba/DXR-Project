@@ -52,7 +52,7 @@ public:
     }
 
     /**
-     * Constructor that Allocates the specified amount of elements, and initializes them to the same value 
+     * @brief: Constructor that Allocates the specified amount of elements, and initializes them to the same value 
      * 
      * @param InSize: Number of elements to construct
      * @param Element: Element to copy into all positions of the array
@@ -66,7 +66,7 @@ public:
     }
 
     /**
-     * Constructor that creates an array from a raw pointer array 
+     * @brief: Constructor that creates an array from a raw pointer array 
      * 
      * @param InputArray: Pointer to the start of the array to copy from
      * @param NumElements: Number of elements in 'InputArray', which also is the resulting size of the constructed array
@@ -106,7 +106,7 @@ public:
     }
 
     /**
-     * Copy-constructor from another type of array
+     * @brief: Copy-constructor from another type of array
      *
      * @param Other: Array to copy from
      */
@@ -141,7 +141,7 @@ public:
     }
 
     /**
-     * Destruct all elements of the array and deallocates the memory 
+     * @brief: Destruct all elements of the array and deallocates the memory 
      */
     FORCEINLINE void Empty() noexcept
     {
@@ -165,7 +165,7 @@ public:
     }
 
     /**
-     * Resets the container, but does not deallocate the memory. Takes an optional parameter to 
+     * @brief: Resets the container, but does not deallocate the memory. Takes an optional parameter to 
      * default construct a new amount of elements.
      * 
      * @param NewSize: Number of elements to construct
@@ -243,7 +243,7 @@ public:
     }
 
     /**
-     * Resets the container by moving elements from another array to this one.
+     * @brief: Resets the container by moving elements from another array to this one.
      * 
      * @param InputArray: Array to copy-construct elements from
      */
@@ -276,7 +276,7 @@ public:
     }
 
     /**
-     * Resizes the container with a new size, and default constructs them
+     * @brief: Resizes the container with a new size, and default constructs them
      * 
      * @param NewSize: The new size of the array
      */
@@ -309,7 +309,7 @@ public:
     }
 
     /**
-     * Resizes the container with a new size, and constructs them with value 
+     * @brief: Resizes the container with a new size, and constructs them with value 
      * 
      * @param NewSize: The new size of the array
      * @param Elements: Element to copy into all positions of the array
@@ -343,7 +343,7 @@ public:
     }
 
     /**
-     * Reallocate the array to a new capacity
+     * @brief: Reallocate the array to a new capacity
      * 
      * @param NewCapacity: The new capacity of the allocated array
      */
@@ -377,7 +377,7 @@ public:
     }
 
     /**
-     * Inserts a new element at the end of the array
+     * @brief: Inserts a new element at the end of the array
      * 
      * @param Element: Element to insert into the array by copy
      * @return: Returns a reference to the newly created element
@@ -388,7 +388,7 @@ public:
     }
 
     /**
-     * Inserts a new element at the end of the array
+     * @brief: Inserts a new element at the end of the array
      * 
      * @param Element: Element to insert into the array by move
      * @return: Returns a reference to the newly created element
@@ -399,7 +399,7 @@ public:
     }
 
     /**
-     * Constructs a new element at a specific position in the array
+     * @brief: Constructs a new element at a specific position in the array
      *
      * @param Position: Position of the new element
      * @param Args: Arguments for the constructor of the element
@@ -423,7 +423,7 @@ public:
     }
 
     /**
-     * Constructs a new element at a specific position in the array
+     * @brief: Constructs a new element at a specific position in the array
      *
      * @param Position: Iterator pointing to the position of the new element
      * @param Args: Arguments for the constructor of the element
@@ -435,7 +435,7 @@ public:
     }
 
     /**
-     * Insert a new element at a specific position in the array
+     * @brief: Insert a new element at a specific position in the array
      *
      * @param Position: Position of the new element
      * @param Element: Element to copy into the position
@@ -446,7 +446,7 @@ public:
     }
 
     /**
-     * Insert a new element at a specific position in the array
+     * @brief: Insert a new element at a specific position in the array
      *
      * @param Position: Iterator pointing to the position of the new element
      * @param Element: Element to copy into the position
@@ -457,7 +457,7 @@ public:
     }
 
     /**
-     * Insert a new element at the a specific position in the array by moving
+     * @brief: Insert a new element at the a specific position in the array by moving
      *
      * @param Position: Position of the new element
      * @param Element: Element to move into the position
@@ -468,7 +468,7 @@ public:
     }
 
     /**
-     * Insert a new element at the a specific position in the array by moving
+     * @brief: Insert a new element at the a specific position in the array by moving
      *
      * @param Position: Iterator pointing to the position of the new element
      * @param Element: Element to move into the position
@@ -479,7 +479,7 @@ public:
     }
 
     /**
-     * Insert an array at a specific position in the array
+     * @brief: Insert an array at a specific position in the array
      *
      * @param Position: Position of the new element
      * @param InputArray: Array to copy into the array
@@ -504,7 +504,7 @@ public:
     }
 
     /**
-     * Insert an array at a specific position in the array
+     * @brief: Insert an array at a specific position in the array
      *
      * @param Position: Iterator pointing to the position of the new element
      * @param InputArray: Array to copy into the array
@@ -516,7 +516,7 @@ public:
     }
 
     /**
-     * Insert elements from a initializer list at a specific position in the array
+     * @brief: Insert elements from a initializer list at a specific position in the array
      *
      * @param Position: Position of the new element
      * @param InitList: Initializer list to insert into the array
@@ -527,7 +527,7 @@ public:
     }
 
     /**
-     * Insert elements from a initializer list at a specific position in the array
+     * @brief: Insert elements from a initializer list at a specific position in the array
      *
      * @param Position: Iterator pointing to the position of the new element
      * @param InitList: Initializer list to insert into the array
@@ -564,7 +564,7 @@ public:
     }
 
     /**
-     * Insert an array from a raw-pointer at the end of the array
+     * @brief: Insert an array from a raw-pointer at the end of the array
      * 
      * @param InputArray: Array to copy elements from
      * @param NumElements: Number of elements in the input-array
@@ -581,7 +581,7 @@ public:
     }
 
     /**
-     * Insert another array at the end of the array, which can be of another array-type
+     * @brief: Insert another array at the end of the array, which can be of another array-type
      *
      * @param Other: Array to copy elements from
      */
@@ -592,7 +592,7 @@ public:
     }
 
     /**
-     * Insert an initializer-list at the end of the array, which can be of another array-type
+     * @brief: Insert an initializer-list at the end of the array, which can be of another array-type
      *
      * @param InitList: Initializer-list to copy elements from
      */
@@ -602,7 +602,7 @@ public:
     }
 
     /**
-     * Create a number of uninitialized elements at the end of the array
+     * @brief: Create a number of uninitialized elements at the end of the array
      * 
      * @param NewSize: Number of elements to append
      */
@@ -613,7 +613,7 @@ public:
     }
 
     /**
-     * Remove and destroy a number of elements from the back
+     * @brief: Remove and destroy a number of elements from the back
      *
      * @param NumElements: Number of elements destroy from the end
      */
@@ -634,7 +634,7 @@ public:
     }
 
     /**
-     * Remove a range of elements starting at position
+     * @brief: Remove a range of elements starting at position
      * 
      * @param Position: Position of the array to start remove elements from
      * @param NumElements: Number of elements to remove
@@ -656,7 +656,7 @@ public:
     }
 
     /**
-     * Removes the element at the position 
+     * @brief: Removes the element at the position 
      * 
      * @param Position: Position of element to remove
      */
@@ -666,7 +666,7 @@ public:
     }
 
     /**
-     * Removes the element at the position
+     * @brief: Removes the element at the position
      *
      * @param Position: Iterator pointing to the position of element to remove
      * @return: Returns the iterator to the element that follows the removed element
@@ -680,7 +680,7 @@ public:
     }
 
     /**
-     * Removes the element at the position
+     * @brief: Removes the element at the position
      *
      * @param Position: Iterator pointing to the position of element to remove
      * @return: Returns the iterator to the element that follow the removed element
@@ -694,7 +694,7 @@ public:
     }
 
     /**
-     * Search the array and remove the first instance of the element from the array if it is found. 
+     * @brief: Search the array and remove the first instance of the element from the array if it is found. 
      * 
      * @param Element: Element to remove
      */
@@ -715,7 +715,7 @@ public:
     }
 
     /**
-     * Search the array and remove the all instances of the element from the array if it is found.
+     * @brief: Search the array and remove the all instances of the element from the array if it is found.
      *
      * @param Element: Element to remove
      */
@@ -735,7 +735,7 @@ public:
     }
 
     /**
-     * Check if an element exists in the array
+     * @brief: Check if an element exists in the array
      * 
      * @param Element: Element to check for
      * @return: Returns true if the element is found in the array and false if not
@@ -754,7 +754,7 @@ public:
     }
 
     /**
-     * Check if an element that satisfies the conditions of a comparator exists in the array
+     * @brief: Check if an element that satisfies the conditions of a comparator exists in the array
      * 
      * @param Comparator: Callable that compares an element in the array against some condition
      * @return: Returns true if the comparator returned true for one element
@@ -774,7 +774,7 @@ public:
     }
 
     /**
-     * Check if an element that satisfies the conditions of a comparator
+     * @brief: Check if an element that satisfies the conditions of a comparator
      *
      * @param Element: Element to compare with
      * @param Comparator: Callable that compares an element in the array against some condition
@@ -795,7 +795,7 @@ public:
     }
 
     /**
-     * Returns the index of an element if it is present in the array, or -1 if it is not found
+     * @brief: Returns the index of an element if it is present in the array, or -1 if it is not found
      * 
      * @param Element: Element to search for
      * @return: The index of the element if found or -1 if not
@@ -814,7 +814,7 @@ public:
     }
 
     /**
-     * Returns the index of the element that satisfy the conditions of a comparator 
+     * @brief: Returns the index of the element that satisfy the conditions of a comparator 
      *
      * @param Comparator: Callable that compares an element in the array against some condition
      * @return: The index of the element if found or -1 if not
@@ -834,7 +834,7 @@ public:
     }
 
     /**
-     * Returns the index of the element that satisfy the conditions of a comparator
+     * @brief: Returns the index of the element that satisfy the conditions of a comparator
      *
      * @param Element: Element to compare with
      * @param Comparator: Callable that compares an element in the array against some condition
@@ -855,7 +855,7 @@ public:
     }
 
     /**
-     * Perform some function on each element in the array
+     * @brief: Perform some function on each element in the array
      * 
      * @param Functor: Callable that takes one element and perform some operation on it
      */
@@ -869,7 +869,7 @@ public:
     }
 
     /**
-     * Swap the contents of this array with another
+     * @brief: Swap the contents of this array with another
      * 
      * @param Other: The other array to swap with
      */
@@ -881,7 +881,7 @@ public:
     }
 
     /**
-     * Shrink the allocation to perfectly fit with the size of the array
+     * @brief: Shrink the allocation to perfectly fit with the size of the array
      */
     FORCEINLINE void ShrinkToFit() noexcept
     {
@@ -889,7 +889,7 @@ public:
     }
 
     /**
-     * Check if the container contains any elements
+     * @brief: Check if the container contains any elements
      * 
      * @return: Returns true if the array is empty or false if it contains elements
      */
@@ -899,7 +899,7 @@ public:
     }
 
     /**
-     * Retrieve the first element of the array
+     * @brief: Retrieve the first element of the array
      * 
      * @return: Returns a reference to the first element of the array
      */
@@ -910,7 +910,7 @@ public:
     }
 
     /**
-     * Retrieve the first element of the array
+     * @brief: Retrieve the first element of the array
      *
      * @return: Returns a reference to the first element of the array
      */
@@ -921,7 +921,7 @@ public:
     }
 
     /**
-     * Retrieve the last element of the array
+     * @brief: Retrieve the last element of the array
      *
      * @return: Returns a reference to the last element of the array
      */
@@ -932,7 +932,7 @@ public:
     }
 
     /**
-     * Retrieve the last element of the array
+     * @brief: Retrieve the last element of the array
      *
      * @return: Returns a reference to the last element of the array
      */
@@ -943,7 +943,7 @@ public:
     }
 
     /**
-     * Retrieve the data of the array
+     * @brief: Retrieve the data of the array
      *
      * @return: Returns a pointer to the data of the array
      */
@@ -953,7 +953,7 @@ public:
     }
 
     /**
-     * Retrieve the data of the array
+     * @brief: Retrieve the data of the array
      *
      * @return: Returns a pointer to the data of the array
      */
@@ -963,7 +963,7 @@ public:
     }
 
     /**
-     * Retrieve the last index that can be used to retrieve an element from the array
+     * @brief: Retrieve the last index that can be used to retrieve an element from the array
      *
      * @return: Returns a the index to the last element of the array
      */
@@ -973,7 +973,7 @@ public:
     }
 
     /**
-     * Returns the size of the container
+     * @brief: Returns the size of the container
      * 
      * @return: The current size of the container
      */
@@ -983,7 +983,7 @@ public:
     }
 
     /**
-     * Returns the size of the container in bytes
+     * @brief: Returns the size of the container in bytes
      *
      * @return: The current size of the container in bytes
      */
@@ -993,7 +993,7 @@ public:
     }
 
     /**
-     * Returns the capacity of the container
+     * @brief: Returns the capacity of the container
      *
      * @return: The current capacity of the container
      */
@@ -1003,7 +1003,7 @@ public:
     }
 
     /**
-     * Returns the capacity of the container in bytes
+     * @brief: Returns the capacity of the container in bytes
      *
      * @return: The current capacity of the container in bytes
      */
@@ -1013,7 +1013,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the array
+     * @brief: Retrieve a element at a certain index of the array
      * 
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -1025,7 +1025,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the array
+     * @brief: Retrieve a element at a certain index of the array
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -1037,7 +1037,7 @@ public:
     }
 
     /**
-     * Create an array-view of the array
+     * @brief: Create an array-view of the array
      * 
      * @param Offset: Offset into the array
      * @param NumElements: Number of elements to include in the view
@@ -1050,7 +1050,7 @@ public:
     }
 
     /**
-     * Create a heap of the array 
+     * @brief: Create a heap of the array 
      */
     inline void Heapify() noexcept
     {
@@ -1062,7 +1062,7 @@ public:
     }
 
     /**
-     * Retrieve the top of the heap. The same as the first element.
+     * @brief: Retrieve the top of the heap. The same as the first element.
      * 
      * @return: A reference to the element at the top of the heap
      */
@@ -1072,7 +1072,7 @@ public:
     }
 
     /**
-     * Retrieve the top of the heap. The same as the first element.
+     * @brief: Retrieve the top of the heap. The same as the first element.
      *
      * @return: A reference to the element at the top of the heap
      */
@@ -1082,7 +1082,7 @@ public:
     }
 
     /**
-     * Inserts a new element at the top of the heap
+     * @brief: Inserts a new element at the top of the heap
      * 
      * @param Element: Element to copy to the top of the heap
      */
@@ -1093,7 +1093,7 @@ public:
     }
 
     /**
-     * Inserts a new element at the top of the heap
+     * @brief: Inserts a new element at the top of the heap
      *
      * @param Element: Element to move to the top of the heap
      */
@@ -1104,7 +1104,7 @@ public:
     }
 
     /**
-     * Remove the top of the heap and retrieve the element on top
+     * @brief: Remove the top of the heap and retrieve the element on top
      * 
      * @param OutElement: Reference that the top element will be copied to
      */
@@ -1115,7 +1115,7 @@ public:
     }
 
     /**
-     * Remove the top of the heap
+     * @brief: Remove the top of the heap
      */
     FORCEINLINE void HeapPop() noexcept
     {
@@ -1124,7 +1124,7 @@ public:
     }
 
     /**
-     * Performs heap sort on the array (assuming the operator> exists for the elements)
+     * @brief: Performs heap sort on the array (assuming the operator> exists for the elements)
      */
     FORCEINLINE void HeapSort()
     {
@@ -1140,7 +1140,7 @@ public:
 public:
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      * 
      * @param Rhs: Array to copy
      * @return: A reference to this container
@@ -1152,7 +1152,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
      * @param Rhs: Array to move
      * @return: A reference to this container
@@ -1164,7 +1164,7 @@ public:
     }
 
     /**
-     * Assignment-operator that takes a initializer-list
+     * @brief: Assignment-operator that takes a initializer-list
      * 
      * @param Rhs: A initializer list to replace the current contents with
      * @return: A reference to this container
@@ -1176,7 +1176,7 @@ public:
     }
 
     /**
-     * Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
+     * @brief: Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
      * 
      * @param Rhs: Array to compare with
      * @return: Returns true if all elements are equal to each other
@@ -1193,7 +1193,7 @@ public:
     }
 
     /**
-     * Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
+     * @brief: Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
      *
      * @param Rhs: Array to compare with
      * @return: Returns true if all elements are NOT equal to each other
@@ -1205,7 +1205,7 @@ public:
     }
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      * 
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -1216,7 +1216,7 @@ public:
     }
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -1229,7 +1229,7 @@ public:
 public:
 
     /**
-     * Retrieve an iterator to the beginning of the array
+     * @brief: Retrieve an iterator to the beginning of the array
      * 
      * @return: A iterator that points to the first element
      */
@@ -1239,7 +1239,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the end of the array
+     * @brief: Retrieve an iterator to the end of the array
      *
      * @return: A iterator that points to the element past the end
      */
@@ -1249,7 +1249,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the beginning of the array
+     * @brief: Retrieve an iterator to the beginning of the array
      *
      * @return: A iterator that points to the first element
      */
@@ -1259,7 +1259,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the end of the array
+     * @brief: Retrieve an iterator to the end of the array
      *
      * @return: A iterator that points to the element past the end
      */
@@ -1269,7 +1269,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the end of the array
+     * @brief: Retrieve an reverse-iterator to the end of the array
      *
      * @return: A reverse-iterator that points to the last element
      */
@@ -1279,7 +1279,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the start of the array
+     * @brief: Retrieve an reverse-iterator to the start of the array
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
@@ -1289,7 +1289,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the end of the array
+     * @brief: Retrieve an reverse-iterator to the end of the array
      *
      * @return: A reverse-iterator that points to the last element
      */
@@ -1299,7 +1299,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the start of the array
+     * @brief: Retrieve an reverse-iterator to the start of the array
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
@@ -1311,7 +1311,7 @@ public:
 public:
 
     /**
-     * STL start iterator, same as TArray::StartIterator
+     * @brief: STL start iterator, same as TArray::StartIterator
      * 
      * @return: A iterator that points to the first element
      */
@@ -1321,7 +1321,7 @@ public:
     }
 
     /**
-     * STL end iterator, same as TArray::EndIterator
+     * @brief: STL end iterator, same as TArray::EndIterator
      *
      * @return: A iterator that points past the last element
      */
@@ -1331,7 +1331,7 @@ public:
     }
 
     /**
-     * STL start iterator, same as TArray::StartIterator
+     * @brief: STL start iterator, same as TArray::StartIterator
      *
      * @return: A iterator that points to the first element
      */
@@ -1341,7 +1341,7 @@ public:
     }
 
     /**
-     * STL end iterator, same as TArray::EndIterator
+     * @brief: STL end iterator, same as TArray::EndIterator
      *
      * @return: A iterator that points past the last element
      */

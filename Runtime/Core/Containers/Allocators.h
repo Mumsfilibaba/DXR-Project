@@ -18,7 +18,7 @@ public:
     ~TArrayAllocatorInterface() = default;
 
     /**
-     * Reallocates the allocation
+     * @brief: Reallocates the allocation
      * 
      * @param CurrentCount: Current number of elements that are allocated 
      * @param NewCount: The new number of elements to allocate
@@ -26,40 +26,40 @@ public:
     FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) noexcept { return nullptr; }
 
     /**
-     * Free the allocation
+     * @brief: Free the allocation
      */
     FORCEINLINE void Free() noexcept { }
 
     /**
-     * Move allocation from another allocator-instance
+     * @brief: Move allocation from another allocator-instance
      * 
      * @param Other: Other allocator instance
      */
     FORCEINLINE void MoveFrom(TArrayAllocatorInterface&& Other) { }
 
     /**
-     * Retrieve the allocation
+     * @brief: Retrieve the allocation
      * 
      * @return: Returns the allocation
      */
     FORCEINLINE ElementType* GetAllocation() noexcept { return nullptr; }
 
     /**
-     * Retrieve the allocation
+     * @brief: Retrieve the allocation
      *
      * @return: Returns the allocation
      */
     FORCEINLINE const ElementType* GetAllocation() const noexcept { return nullptr; }
 
     /**
-     * Returns the current state of the allocation
+     * @brief: Returns the current state of the allocation
      *
      * @return: Returns true or false if there is an allocation
      */
     FORCEINLINE bool HasAllocation() const noexcept { return false; }
 
     /**
-     * Returns the current state of the allocation
+     * @brief: Returns the current state of the allocation
      *
      * @return: Returns true or false if the allocation is allocated on the heap
      */

@@ -14,7 +14,7 @@ public:
     FORCEINLINE CMatrix3x4() noexcept;
 
     /**
-     * Constructor initializing all values with corresponding value
+     * @brief: Constructor initializing all values with corresponding value
      *
      * @param In00: Value to set on row 0 and column 0
      * @param In01: Value to set on row 0 and column 1

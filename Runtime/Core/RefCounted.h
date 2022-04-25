@@ -16,21 +16,21 @@ public:
     virtual ~CRefCounted();
 
     /**
-     * Adds a reference
+     * @brief: Adds a reference
      * 
      * @return: Returns the new reference count
      */
     int32 AddRef();
     
     /**
-     * Removes a reference
+     * @brief: Removes a reference
      *
      * @return: Returns the new reference count
      */
     int32 Release();
 
     /**
-     * Retrieve the reference count
+     * @brief: Retrieve the reference count
      *
      * @return: Returns the current reference count
      */

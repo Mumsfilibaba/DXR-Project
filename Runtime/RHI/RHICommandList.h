@@ -77,21 +77,21 @@ class RHI_API CRHICommandQueue
 public:
 
     /**
-     * Retrieve the RHICommandQueue instance
+     * @brief: Retrieve the RHICommandQueue instance
      * 
      * @return: Returns the instance of the RHICommandQueue
      */
     static CRHICommandQueue& Get();
 
     /**
-     * Execute a single RHICommandList
+     * @brief: Execute a single RHICommandList
      * 
      * @param CmdList: CommandList to execute
      */
     void ExecuteCommandList(class CRHICommandList& CmdList);
 
     /**
-     * Execute multiple RHICommandLists
+     * @brief: Execute multiple RHICommandLists
      *
      * @param CmdLists: CommandLists to execute
      * @param NumCmdLists: Number of CommandLists to execute
@@ -99,12 +99,12 @@ public:
     void ExecuteCommandLists(class CRHICommandList* const* CmdLists, uint32 NumCmdLists);
 
     /**
-     * Wait for the GPU to finish all submitted operations
+     * @brief: Wait for the GPU to finish all submitted operations
      */
     void WaitForGPU();
 
     /**
-     * Set the context that should be used
+     * @brief: Set the context that should be used
      * 
      * @param InCmdContext: CommandContext to use when executing CommandLists
      */
@@ -114,7 +114,7 @@ public:
     }
 
     /**
-     * Retrieve the CommandContext that is used when executing CommandLists
+     * @brief: Retrieve the CommandContext that is used when executing CommandLists
      * 
      * @return: Returns a reference to the CommandContext that is currently being used
      */
@@ -125,7 +125,7 @@ public:
     }
 
     /**
-     * Retrieve the number of draw-calls that where in the previously executed CommandList
+     * @brief: Retrieve the number of draw-calls that where in the previously executed CommandList
      * 
      * @return: Returns the number of draw-calls in the previously executed CommandList
      */
@@ -135,7 +135,7 @@ public:
     }
 
     /**
-     * Retrieve the number of dispatch-calls that where in the previously executed CommandList
+     * @brief: Retrieve the number of dispatch-calls that where in the previously executed CommandList
      *
      * @return: Returns the number of dispatch-calls in the previously executed CommandList
      */
@@ -145,7 +145,7 @@ public:
     }
 
     /**
-     * Retrieve the number of commands that where in the previously executed CommandList
+     * @brief: Retrieve the number of commands that where in the previously executed CommandList
      *
      * @return: Returns the number of commands in the previously executed CommandList
      */
@@ -189,7 +189,7 @@ class CRHICommandList
 public:
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     CRHICommandList()
         : CmdAllocator()
@@ -198,7 +198,7 @@ public:
     { }
 
     /**
-     * Destructor
+     * @brief: Destructor
      */
     ~CRHICommandList()
     {
@@ -206,7 +206,7 @@ public:
     }
 
     /**
-     * Begins the timestamp with the specified index in the TimestampQuery
+     * @brief: Begins the timestamp with the specified index in the TimestampQuery
      *
      * @param TimestampQuery: Timestamp-Query object to work on
      * @param Index: Timestamp index within the query object to begin
@@ -217,7 +217,7 @@ public:
     }
 
     /**
-     * Ends the timestamp with the specified index in the TimestampQuery
+     * @brief: Ends the timestamp with the specified index in the TimestampQuery
      *
      * @param TimestampQuery: Timestamp-Query object to work on
      * @param Index: Timestamp index within the query object to end
@@ -228,7 +228,7 @@ public:
     }
 
     /**
-     * Clears a RenderTargetView with a specific color
+     * @brief: Clears a RenderTargetView with a specific color
      *
      * @param RenderTargetView: RenderTargetView to clear
      * @param ClearColor: Color to set each pixel within the RenderTargetView to
@@ -240,7 +240,7 @@ public:
     }
 
     /**
-     * Clears a DepthStencilView with a specific value
+     * @brief: Clears a DepthStencilView with a specific value
      *
      * @param DepthStencilView: DepthStencilView to clear
      * @param ClearValue: Value to set each pixel within the DepthStencilView to
@@ -252,7 +252,7 @@ public:
     }
 
     /**
-     * Clears a UnorderedAccessView with a specific value
+     * @brief: Clears a UnorderedAccessView with a specific value
      *
      * @param UnorderedAccessView: UnorderedAccessView to clear
      * @param ClearColor: Value to set each pixel within the UnorderedAccessView to
@@ -264,7 +264,7 @@ public:
     }
 
     /**
-     * Sets the Shading-Rate for the fullscreen
+     * @brief: Sets the Shading-Rate for the fullscreen
      *
      * @param ShadingRate: New shading-rate for the upcoming draw-calls
      */
@@ -274,7 +274,7 @@ public:
     }
 
     /**
-     * Set the Shading-Rate image that should be used
+     * @brief: Set the Shading-Rate image that should be used
      *
      * @param ShadingImage: Image containing the shading rate for the next upcoming draw-calls
      */
@@ -284,7 +284,7 @@ public:
     }
 
     /**
-     * Begin a RenderPass
+     * @brief: Begin a RenderPass
      */
     void BeginRenderPass()
     {
@@ -292,7 +292,7 @@ public:
     }
 
     /**
-     * Ends a RenderPass
+     * @brief: Ends a RenderPass
      */
     void EndRenderPass()
     {
@@ -300,7 +300,7 @@ public:
     }
 
     /**
-     * Set the current viewport settings
+     * @brief: Set the current viewport settings
      *
      * @param Width: Width of the viewport
      * @param Height: Height of the viewport
@@ -315,7 +315,7 @@ public:
     }
 
     /**
-     * Set the current scissor settings
+     * @brief: Set the current scissor settings
      *
      * @param Width: Width of the viewport
      * @param Height: Height of the viewport
@@ -328,7 +328,7 @@ public:
     }
 
     /**
-     * Set the BlendFactor color
+     * @brief: Set the BlendFactor color
      *
      * @param Color: New blend-factor to use
      */
@@ -338,7 +338,7 @@ public:
     }
 
     /**
-     * Set all the RenderTargetViews and the DepthStencilView that should be used, nullptr is valid if the slot should not be used
+     * @brief: Set all the RenderTargetViews and the DepthStencilView that should be used, nullptr is valid if the slot should not be used
      *
      * @param RenderTargetViews: Array of RenderTargetViews to use, each pointer in the array must be valid
      * @param RenderTargetCount: Number of RenderTargetViews in the array
@@ -360,7 +360,7 @@ public:
     }
 
     /**
-     * Set the VertexBuffers to be used
+     * @brief: Set the VertexBuffers to be used
      *
      * @param VertexBuffers: Array of VertexBuffers to use
      * @param VertexBufferCount: Number of VertexBuffers in the array
@@ -382,7 +382,7 @@ public:
     }
 
     /**
-     * Set the current IndexBuffer
+     * @brief: Set the current IndexBuffer
      *
      * @param IndexBuffer: IndexBuffer to use
      */
@@ -392,7 +392,7 @@ public:
     }
 
     /**
-     * Set the primitive topology
+     * @brief: Set the primitive topology
      *
      * @param PrimitveTopologyType: New primitive topology to use
      */
@@ -402,7 +402,7 @@ public:
     }
 
     /**
-     * Sets the current graphics PipelineState
+     * @brief: Sets the current graphics PipelineState
      *
      * @param PipelineState: New PipelineState to use
      */
@@ -412,7 +412,7 @@ public:
     }
 
     /**
-     * Sets the current compute PipelineState
+     * @brief: Sets the current compute PipelineState
      *
      * @param PipelineState: New PipelineState to use
      */
@@ -422,7 +422,7 @@ public:
     }
 
     /**
-     * Set shader constants
+     * @brief: Set shader constants
      *
      * @param Shader: Shader to bind the constants to
      * @param Shader32BitConstants: Array of 32-bit constants
@@ -439,7 +439,7 @@ public:
     }
 
     /**
-     * Sets a single ShaderResourceView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
+     * @brief: Sets a single ShaderResourceView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
      * @param ShaderResourceView: ShaderResourceView to bind
@@ -451,7 +451,7 @@ public:
     }
 
     /**
-     * Sets a multiple ShaderResourceViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
+     * @brief: Sets a multiple ShaderResourceViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
@@ -475,7 +475,7 @@ public:
     }
 
     /**
-     * Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
+     * @brief: Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
      * @param UnorderedAccessView: UnorderedAccessView to bind
@@ -487,7 +487,7 @@ public:
     }
 
     /**
-     * Sets a multiple UnorderedAccessViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
+     * @brief: Sets a multiple UnorderedAccessViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
@@ -511,7 +511,7 @@ public:
     }
 
     /**
-     * Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
+     * @brief: Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
      * @param ConstantBuffer: ConstantBuffer to bind
@@ -523,7 +523,7 @@ public:
     }
 
     /**
-     * Sets a multiple ConstantBuffers to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
+     * @brief: Sets a multiple ConstantBuffers to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
@@ -547,7 +547,7 @@ public:
     }
 
     /**
-     * Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
+     * @brief: Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object
      *
      * @param Shader: Shader to bind sampler to
      * @param SamplerState: SamplerState to bind
@@ -559,7 +559,7 @@ public:
     }
 
     /**
-     * Sets a multiple SamplerStates to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
+     * @brief: Sets a multiple SamplerStates to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader,
      * which can be queried from the shader-object
      *
      * @param Shader: Shader to bind resource to
@@ -583,7 +583,7 @@ public:
     }
 
     /**
-     * Updates the contents of a Buffer
+     * @brief: Updates the contents of a Buffer
      *
      * @param Dst: Destination buffer to update
      * @param OffsetInBytes: Offset in bytes inside the destination-buffer
@@ -599,7 +599,7 @@ public:
     }
 
     /**
-     * Updates the contents of a Texture2D
+     * @brief: Updates the contents of a Texture2D
      *
      * @param Dst: Destination Texture2D to update
      * @param Width: Width of the texture to update
@@ -618,7 +618,7 @@ public:
     }
 
     /**
-     * Resolves a multi-sampled texture, must have the same sizes and compatible formats
+     * @brief: Resolves a multi-sampled texture, must have the same sizes and compatible formats
      *
      * @param Dst: Destination texture, must have a single sample
      * @param Src: Source texture to resolve
@@ -629,7 +629,7 @@ public:
     }
 
     /**
-     * Copies the contents from one buffer to another
+     * @brief: Copies the contents from one buffer to another
      *
      * @param Dst: Destination buffer to copy to
      * @param Src: Source buffer to copy from
@@ -641,7 +641,7 @@ public:
     }
 
     /**
-     * Copies the entire contents of one texture to another, which require the size and formats to be the same
+     * @brief: Copies the entire contents of one texture to another, which require the size and formats to be the same
      *
      * @param Dst: Destination texture
      * @param Src: Source texture
@@ -652,7 +652,7 @@ public:
     }
 
     /**
-     * Copies contents of a texture region of one texture to another, which require the size and formats to be the same
+     * @brief: Copies contents of a texture region of one texture to another, which require the size and formats to be the same
      *
      * @param Dst: Destination texture
      * @param Src: Source texture
@@ -664,7 +664,7 @@ public:
     }
 
     /**
-     * Destroys a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command-list is completed
+     * @brief: Destroys a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command-list is completed
      *
      * @param Resource: Resource to destroy
      */
@@ -674,7 +674,7 @@ public:
     }
 
     /**
-     * Signal the driver that the contents can be discarded
+     * @brief: Signal the driver that the contents can be discarded
      *
      * @param Resource: Resource to discard contents of
      */
@@ -684,7 +684,7 @@ public:
     }
 
     /**
-     * Builds the Bottom-Level Acceleration-Structure for ray tracing
+     * @brief: Builds the Bottom-Level Acceleration-Structure for ray tracing
      *
      * @param Geometry: Bottom-level acceleration-structure to build or update
      * @param VertexBuffer: VertexBuffer to build Geometry of
@@ -698,7 +698,7 @@ public:
     }
 
     /**
-     * Builds the Top-Level Acceleration-Structure for ray tracing
+     * @brief: Builds the Top-Level Acceleration-Structure for ray tracing
      *
      * @param Scene: Top-level acceleration-structure to build or update
      * @param Instances: Instances to build the scene of
@@ -724,7 +724,7 @@ public:
     }
 
     /**
-     * Generate MipLevels for a texture. Works with Texture2D and TextureCubes.
+     * @brief: Generate MipLevels for a texture. Works with Texture2D and TextureCubes.
      *
      * @param Texture: Texture to generate MipLevels for
      */
@@ -735,7 +735,7 @@ public:
     }
 
     /**
-     * Transition the ResourceState of a Texture resource
+     * @brief: Transition the ResourceState of a Texture resource
      *
      * @param Texture: Texture to transition ResourceState for
      * @param BeforeState: State that the Texture had before the transition
@@ -754,7 +754,7 @@ public:
     }
 
     /**
-     * Transition the ResourceState of a Buffer resource
+     * @brief: Transition the ResourceState of a Buffer resource
      *
      * @param Buffer: Buffer to transition ResourceState for
      * @param BeforeState: State that the Buffer had before the transition
@@ -775,7 +775,7 @@ public:
     }
 
     /**
-     * Add a UnorderedAccessBarrier for a Texture resource, which should be issued before reading of a resource in UnorderedAccessState
+     * @brief: Add a UnorderedAccessBarrier for a Texture resource, which should be issued before reading of a resource in UnorderedAccessState
      *
      * @param Texture: Texture to issue barrier for
      */
@@ -786,7 +786,7 @@ public:
     }
 
     /**
-     * Add a UnorderedAccessBarrier for a Buffer resource, which should be issued before reading of a resource in UnorderedAccessState
+     * @brief: Add a UnorderedAccessBarrier for a Buffer resource, which should be issued before reading of a resource in UnorderedAccessState
      *
      * @param Buffer: Buffer to issue barrier for
      */
@@ -797,7 +797,7 @@ public:
     }
 
     /**
-     * Issue a draw-call
+     * @brief: Issue a draw-call
      *
      * @param VertexCount: Number of vertices
      * @param StartVertexLocation: Offset of the vertices
@@ -809,7 +809,7 @@ public:
     }
 
     /**
-     * Issue a draw-call for drawing with an IndexBuffer
+     * @brief: Issue a draw-call for drawing with an IndexBuffer
      *
      * @param IndexCount: Number of indices
      * @param StartIndexLocation: Offset in the index-buffer
@@ -822,7 +822,7 @@ public:
     }
 
     /**
-     * Issue a draw-call for drawing instanced
+     * @brief: Issue a draw-call for drawing instanced
      *
      * @param VertexCountPerInstance: Number of vertices per instance
      * @param InstanceCount: Number of instances
@@ -836,7 +836,7 @@ public:
     }
 
     /**
-     * Issue a draw-call for drawing instanced with an IndexBuffer
+     * @brief: Issue a draw-call for drawing instanced with an IndexBuffer
      *
      * @param IndexCountPerInstance: Number of indices per instance
      * @param InstanceCount: Number of instances
@@ -851,7 +851,7 @@ public:
     }
 
     /**
-     * Issues a compute dispatch
+     * @brief: Issues a compute dispatch
      *
      * @param WorkGroupX: Number of work-groups in x-direction
      * @param WorkGroupY: Number of work-groups in y-direction
@@ -864,7 +864,7 @@ public:
     }
 
     /**
-     * Issues a ray generation dispatch
+     * @brief: Issues a ray generation dispatch
      *
      * @param Scene: Scene to trace rays in
      * @param PipelineState: PipelineState to use when tracing
@@ -878,7 +878,7 @@ public:
     }
 
     /**
-     * Inserts a marker on the GPU timeline
+     * @brief: Inserts a marker on the GPU timeline
      *
      * @param Message: Message for the marker
      */
@@ -888,7 +888,7 @@ public:
     }
     
     /**
-     * Insert a debug-break into the command-list
+     * @brief: Insert a debug-break into the command-list
      */
     void DebugBreak()
     {
@@ -896,7 +896,7 @@ public:
     }
 
     /**
-     *  Begins a PIX capture event, currently only available on D3D12
+     * @brief:  Begins a PIX capture event, currently only available on D3D12
      */
     void BeginExternalCapture()
     {
@@ -904,7 +904,7 @@ public:
     }
 
     /**
-     * Ends a PIX capture event, currently only available on D3D12
+     * @brief: Ends a PIX capture event, currently only available on D3D12
      */
     void EndExternalCapture()
     {
@@ -912,7 +912,7 @@ public:
     }
 
     /**
-     * Resets the CommandList
+     * @brief: Resets the CommandList
      */
     void Reset()
     {
@@ -938,7 +938,7 @@ public:
     }
 
     /**
-     * Retrieve the number of recorded draw-calls
+     * @brief: Retrieve the number of recorded draw-calls
      * 
      * @return: Returns the number of draw-calls
      */
@@ -948,7 +948,7 @@ public:
     }
 
     /**
-     * Retrieve the number of recorded dispatch-calls
+     * @brief: Retrieve the number of recorded dispatch-calls
      *
      * @return: Returns the number of dispatch-calls
      */
@@ -958,7 +958,7 @@ public:
     }
 
     /**
-     * Retrieve the number of recorded Commands
+     * @brief: Retrieve the number of recorded Commands
      *
      * @return: Returns the number of Commands
      */

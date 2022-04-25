@@ -21,14 +21,14 @@ public:
     virtual void Start();
 
     /**
-     * Tick component, should be called once every frame 
+     * @brief: Tick component, should be called once every frame 
      * 
      * @param DeltaTime: Time since the last call to tick
      */
     virtual void Tick(CTimestamp DeltaTime);
 
     /**
-     * Retrieve the actor that the component belongs to
+     * @brief: Retrieve the actor that the component belongs to
      * 
      * @return: Returns a pointer to the actor that the component belongs to
      */
@@ -38,7 +38,7 @@ public:
     }
 
     /**
-     * Check if Start should be called on the component
+     * @brief: Check if Start should be called on the component
      * 
      * @return: Returns true if the component's Start-method should be called 
      */
@@ -48,7 +48,7 @@ public:
     }
 
     /**
-     * Check if Tick should be called on the component
+     * @brief: Check if Tick should be called on the component
      *
      * @return: Returns true if the component's Tick-method should be called
      */

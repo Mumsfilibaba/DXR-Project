@@ -22,7 +22,7 @@ public:
     typedef TReverseArrayIterator<const TArrayView, const ElementType> ReverseConstIteratorType;
 
     /**
-     * Default construct an empty view 
+     * @brief: Default construct an empty view 
      */
     FORCEINLINE TArrayView() noexcept
         : View(nullptr)
@@ -30,7 +30,7 @@ public:
     { }
 
     /**
-     * Construct a view from an array of ArrayType
+     * @brief: Construct a view from an array of ArrayType
      * 
      * @param InArray: Array to create view from
      */
@@ -41,7 +41,7 @@ public:
     { }
 
     /**
-     * Construct a view from a bounded array
+     * @brief: Construct a view from a bounded array
      *
      * @param InArray: Array to create view from
      */
@@ -52,7 +52,7 @@ public:
     { }
 
     /**
-     * Construct a view from a raw-array
+     * @brief: Construct a view from a raw-array
      *
      * @param InArray: Array to create view from
      * @param NumElements: Number of elements in the array
@@ -63,7 +63,7 @@ public:
     { }
 
     /**
-     * Copy-constructor
+     * @brief: Copy-constructor
      * 
      * @param Other: Array to copy from
      */
@@ -73,7 +73,7 @@ public:
     { }
 
     /**
-     * Move-constructor
+     * @brief: Move-constructor
      *
      * @param Other: Array to move from
      */
@@ -86,7 +86,7 @@ public:
     }
 
     /**
-     * Check if the view contains elements or not
+     * @brief: Check if the view contains elements or not
      * 
      * @return: Returns true if the view is empty
      */
@@ -96,7 +96,7 @@ public:
     }
 
     /**
-     * Retrieve the first element of the view
+     * @brief: Retrieve the first element of the view
      *
      * @return: Returns a reference to the first element of the view
      */
@@ -107,7 +107,7 @@ public:
     }
 
     /**
-     * Retrieve the first element of the view
+     * @brief: Retrieve the first element of the view
      *
      * @return: Returns a reference to the first element of the view
      */
@@ -118,7 +118,7 @@ public:
     }
 
     /**
-     * Retrieve the last element of the array
+     * @brief: Retrieve the last element of the array
      *
      * @return: Returns a reference to the last element of the view
      */
@@ -129,7 +129,7 @@ public:
     }
 
     /**
-     * Retrieve the last element of the array
+     * @brief: Retrieve the last element of the array
      *
      * @return: Returns a reference to the last element of the view
      */
@@ -140,7 +140,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the view
+     * @brief: Retrieve a element at a certain index of the view
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -152,7 +152,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the view
+     * @brief: Retrieve a element at a certain index of the view
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -164,7 +164,7 @@ public:
     }
 
     /**
-     * Swap the contents of this view with another
+     * @brief: Swap the contents of this view with another
      *
      * @param Other: The other view to swap with
      */
@@ -176,7 +176,7 @@ public:
     }
 
     /**
-     * Fill the container with the specified value
+     * @brief: Fill the container with the specified value
      *
      * @param InputElement: Element to copy into all elements in the view
      */
@@ -189,7 +189,7 @@ public:
     }
 
     /**
-     * Retrieve the last index that can be used to retrieve an element from the view
+     * @brief: Retrieve the last index that can be used to retrieve an element from the view
      *
      * @return: Returns a the index to the last element of the view
      */
@@ -199,7 +199,7 @@ public:
     }
 
     /**
-     * Returns the size of the container
+     * @brief: Returns the size of the container
      *
      * @return: The current size of the container
      */
@@ -209,7 +209,7 @@ public:
     }
 
     /**
-     * Returns the size of the container in bytes
+     * @brief: Returns the size of the container in bytes
      *
      * @return: The current size of the container in bytes
      */
@@ -219,7 +219,7 @@ public:
     }
 
     /**
-     * Retrieve the data of the view
+     * @brief: Retrieve the data of the view
      *
      * @return: Returns a pointer to the data of the view
      */
@@ -229,7 +229,7 @@ public:
     }
 
     /**
-     * Retrieve the data of the view
+     * @brief: Retrieve the data of the view
      *
      * @return: Returns a pointer to the data of the view
      */
@@ -239,7 +239,7 @@ public:
     }
 
     /**
-     * Create a sub-view
+     * @brief: Create a sub-view
      * 
      * @param Offset: Offset into the view
      * @param NumElements: Number of elements to include in the view
@@ -254,7 +254,7 @@ public:
 public:
 
     /**
-     * Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
+     * @brief: Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
      *
      * @param Rhs: Array to compare with
      * @return: Returns true if all elements are equal to each other
@@ -271,7 +271,7 @@ public:
     }
 
     /**
-     * Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
+     * @brief: Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
      *
      * @param Rhs: Array to compare with
      * @return: Returns true if all elements are NOT equal to each other
@@ -283,7 +283,7 @@ public:
     }
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -294,7 +294,7 @@ public:
     }
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -305,7 +305,7 @@ public:
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      *
      * @param Rhs: View to copy
      * @return: A reference to this container
@@ -318,7 +318,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
      * @param Rhs: View to move
      * @return: A reference to this container
@@ -339,7 +339,7 @@ public:
 public:
 
     /**
-     * Retrieve an iterator to the beginning of the view
+     * @brief: Retrieve an iterator to the beginning of the view
      *
      * @return: A iterator that points to the first element
      */
@@ -349,7 +349,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the end of the view
+     * @brief: Retrieve an iterator to the end of the view
      *
      * @return: A iterator that points to the element past the end
      */
@@ -359,7 +359,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the beginning of the view
+     * @brief: Retrieve an iterator to the beginning of the view
      *
      * @return: A iterator that points to the first element
      */
@@ -369,7 +369,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the end of the view
+     * @brief: Retrieve an iterator to the end of the view
      *
      * @return: A iterator that points to the element past the end
      */
@@ -379,7 +379,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the end of the view
+     * @brief: Retrieve an reverse-iterator to the end of the view
      *
      * @return: A reverse-iterator that points to the last element
      */
@@ -389,7 +389,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the start of the view
+     * @brief: Retrieve an reverse-iterator to the start of the view
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
@@ -399,7 +399,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the end of the view
+     * @brief: Retrieve an reverse-iterator to the end of the view
      *
      * @return: A reverse-iterator that points to the last element
      */
@@ -409,7 +409,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the start of the view
+     * @brief: Retrieve an reverse-iterator to the start of the view
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
@@ -421,7 +421,7 @@ public:
 public:
 
     /**
-     * STL start iterator, same as TArrayView::StartIterator
+     * @brief: STL start iterator, same as TArrayView::StartIterator
      *
      * @return: A iterator that points to the first element
      */
@@ -431,7 +431,7 @@ public:
     }
 
     /**
-     * STL end iterator, same as TArrayView::EndIterator
+     * @brief: STL end iterator, same as TArrayView::EndIterator
      *
      * @return: A iterator that points past the last element
      */
@@ -441,7 +441,7 @@ public:
     }
 
     /**
-     * STL start iterator, same as TArrayView::StartIterator
+     * @brief: STL start iterator, same as TArrayView::StartIterator
      *
      * @return: A iterator that points to the first element
      */
@@ -451,7 +451,7 @@ public:
     }
 
     /**
-     * STL end iterator, same as TArrayView::EndIterator
+     * @brief: STL end iterator, same as TArrayView::EndIterator
      *
      * @return: A iterator that points past the last element
      */

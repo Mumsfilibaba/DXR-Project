@@ -42,84 +42,84 @@ class CRHIShader : public CRHIObject
 public:
 
     /**
-     * Cast shader to a VertexShader
+     * @brief: Cast shader to a VertexShader
      * 
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
     virtual class CRHIVertexShader* AsVertexShader() { return nullptr; }
     
     /**
-     * Cast shader to a HullShader
+     * @brief: Cast shader to a HullShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
     virtual class CRHIHullShader* AsHullShader() { return nullptr; }
 
     /**
-     * Cast shader to a DomainShader
+     * @brief: Cast shader to a DomainShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
     virtual class CRHIDomainShader* AsDomainShader() { return nullptr; }
 
     /**
-     * Cast shader to a GeometryShader
+     * @brief: Cast shader to a GeometryShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
     virtual class CRHIGeometryShader* AsGeometryShader() { return nullptr; }
 
     /**
-     * Cast shader to a PixelShader
+     * @brief: Cast shader to a PixelShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
     virtual class CRHIPixelShader* AsPixelShader() { return nullptr; }
 
     /**
-     * Cast shader to a ComputeShader
+     * @brief: Cast shader to a ComputeShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
     virtual class CRHIComputeShader* AsComputeShader() { return nullptr; }
 
     /**
-     * Cast shader to a RayGenShader
+     * @brief: Cast shader to a RayGenShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
     virtual class CRHIRayGenShader* AsRayGenShader() { return nullptr; }
 
     /**
-     * Cast shader to a RayAnyHitShader
+     * @brief: Cast shader to a RayAnyHitShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
     virtual class CRHIRayAnyHitShader* AsRayAnyHitShader() { return nullptr; }
 
     /**
-     * Cast shader to a RayClosestHitShader
+     * @brief: Cast shader to a RayClosestHitShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
     virtual class CRHIRayClosestHitShader* AsRayClosestHitShader() { return nullptr; }
 
     /**
-     * Cast shader to a RayMissShader
+     * @brief: Cast shader to a RayMissShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
     virtual class CRHIRayMissShader* AsRayMissShader() { return nullptr; }
 
     /**
-     * Retrieve the number of ShaderParameters
+     * @brief: Retrieve the number of ShaderParameters
      * 
      * @param OutShaderParameterInfo: A structure containing the number of different ShaderParameters
      */
     virtual void GetShaderParameterInfo(SRHIShaderParameterInfo& OutShaderParameterInfo) const = 0;
 
     /**
-     * Retrieve a ConstantBuffer index by the name
+     * @brief: Retrieve a ConstantBuffer index by the name
      * 
      * @param InName: Name of the variable
      * @param OutIndex: Index of the variable
@@ -128,7 +128,7 @@ public:
     virtual bool GetConstantBufferIndexByName(const String& InName, uint32& OutIndex) const = 0;
 
     /**
-     * Retrieve a UnorderedAccessView index by the name
+     * @brief: Retrieve a UnorderedAccessView index by the name
      *
      * @param InName: Name of the variable
      * @param OutIndex: Index of the variable
@@ -137,7 +137,7 @@ public:
     virtual bool GetUnorderedAccessViewIndexByName(const String& InName, uint32& OutIndex) const = 0;
 
     /**
-     * Retrieve a ShaderResourceView index by the name
+     * @brief: Retrieve a ShaderResourceView index by the name
      *
      * @param InName: Name of the variable
      * @param OutIndex: Index of the variable
@@ -146,7 +146,7 @@ public:
     virtual bool GetShaderResourceViewIndexByName(const String& InName, uint32& OutIndex) const = 0;
 
     /**
-     * Retrieve a Sampler index by the name
+     * @brief: Retrieve a Sampler index by the name
      *
      * @param InName: Name of the variable
      * @param OutIndex: Index of the variable
@@ -163,7 +163,7 @@ class CRHIComputeShader : public CRHIShader
 public:
 
     /**
-     * Cast shader to a ComputeShader
+     * @brief: Cast shader to a ComputeShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
@@ -171,7 +171,7 @@ public:
 
 
     /**
-     * Retrieve the threadgroup-count
+     * @brief: Retrieve the threadgroup-count
      * 
      * @return: Returns a vector with the number of thread in each dimension
      */
@@ -186,7 +186,7 @@ class CRHIVertexShader : public CRHIShader
 public:
 
     /**
-     * Cast shader to a VertexShader
+     * @brief: Cast shader to a VertexShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
@@ -201,7 +201,7 @@ class CRHIHullShader : public CRHIShader
 public:
 
     /**
-     * Cast shader to a HullShader
+     * @brief: Cast shader to a HullShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
@@ -216,7 +216,7 @@ class CRHIDomainShader : public CRHIShader
 public:
 
     /**
-     * Cast shader to a DomainShader
+     * @brief: Cast shader to a DomainShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
@@ -231,7 +231,7 @@ class CRHIGeometryShader : public CRHIShader
 public:
 
     /**
-     * Cast shader to a GeometryShader
+     * @brief: Cast shader to a GeometryShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
@@ -262,7 +262,7 @@ class CRHIPixelShader : public CRHIShader
 public:
 
     /**
-     * Cast shader to a PixelShader
+     * @brief: Cast shader to a PixelShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
@@ -277,7 +277,7 @@ class CRHIRayGenShader : public CRHIShader
 public:
 
     /**
-     * Cast shader to a RayGenShader
+     * @brief: Cast shader to a RayGenShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
@@ -292,7 +292,7 @@ class CRHIRayAnyHitShader : public CRHIShader
 public:
 
     /**
-     * Cast shader to a RayAnyHitShader
+     * @brief: Cast shader to a RayAnyHitShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
@@ -307,7 +307,7 @@ class CRHIRayClosestHitShader : public CRHIShader
 public:
 
     /**
-     * Cast shader to a RayClosestHitShader
+     * @brief: Cast shader to a RayClosestHitShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */
@@ -322,7 +322,7 @@ class CRHIRayMissShader : public CRHIShader
 public:
 
     /**
-     * Cast shader to a RayMissShader
+     * @brief: Cast shader to a RayMissShader
      *
      * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
      */

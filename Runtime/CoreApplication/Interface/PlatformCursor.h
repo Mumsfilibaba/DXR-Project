@@ -9,7 +9,7 @@ class CPlatformCursor : public ICursor
 public:
 
     /**
-     * Retrieve the mouse visibility
+     * @brief: Retrieve the mouse visibility
      * 
      * @return: Returns true if the cursor is visible
      */

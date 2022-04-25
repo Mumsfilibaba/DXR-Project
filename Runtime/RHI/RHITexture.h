@@ -28,7 +28,7 @@ class CRHITexture : public CRHIResource
 public:
 
     /**
-     * Constructor taking parameters for creating a texture
+     * @brief: Constructor taking parameters for creating a texture
      * 
      * @param InFormat: Format of the texture
      * @param InNumMips: Number of MipLevels of the texture
@@ -44,56 +44,56 @@ public:
     { }
 
     /**
-     * Cast resource to texture 
+     * @brief: Cast resource to texture 
      * 
      * @return: Returns a pointer to a Texture
      */
     virtual CRHITexture* AsTexture() { return this; }
 
     /**
-     * Cast to Texture2D 
+     * @brief: Cast to Texture2D 
      * 
      * @return: Returns a pointer to a Texture2D if the texture if of correct type
      */
     virtual class CRHITexture2D* AsTexture2D() { return nullptr; }
 
     /**
-     * Cast to Texture2DArray
+     * @brief: Cast to Texture2DArray
      *
      * @return: Returns a pointer to a Texture2DArray if the texture if of correct type
      */
     virtual class CRHITexture2DArray* AsTexture2DArray() { return nullptr; }
     
     /**
-     * Cast to TextureCube
+     * @brief: Cast to TextureCube
      *
      * @return: Returns a pointer to a TextureCube if the texture if of correct type
      */
     virtual class CRHITextureCube* AsTextureCube() { return nullptr; }
 
     /**
-     * Cast to TextureCubeArray
+     * @brief: Cast to TextureCubeArray
      *
      * @return: Returns a pointer to a TextureCubeArray if the texture if of correct type
      */
     virtual class CRHITextureCubeArray* AsTextureCubeArray() { return nullptr; }
 
     /**
-     * Cast to Texture3D
+     * @brief: Cast to Texture3D
      *
      * @return: Returns a pointer to a Texture3D if the texture if of correct type
      */
     virtual class CRHITexture3D* AsTexture3D() { return nullptr; }
 
     /**
-     * Returns a ShaderResourceView of the full resource if texture is created with TextureFlag_SRV
+     * @brief: Returns a ShaderResourceView of the full resource if texture is created with TextureFlag_SRV
      * 
      * @return: Returns a pointer to a ShaderResourceView
      */
     virtual class CRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
 
     /**
-     * Retrieve the format of the texture
+     * @brief: Retrieve the format of the texture
      * 
      * @return: Returns the format of the texture
      */
@@ -103,7 +103,7 @@ public:
     }
 
     /**
-     * Retrieve the number of MipLevels of the texture
+     * @brief: Retrieve the number of MipLevels of the texture
      *
      * @return: Returns the number of MipLevels of the texture
      */
@@ -113,7 +113,7 @@ public:
     }
 
     /**
-     * Retrieve the flags of the texture
+     * @brief: Retrieve the flags of the texture
      *
      * @return: Returns the flags of the texture
      */
@@ -123,7 +123,7 @@ public:
     }
 
     /**
-     * Retrieve the optimized clear-value of the texture
+     * @brief: Retrieve the optimized clear-value of the texture
      *
      * @return: Returns the optimized clear-value of the texture
      */
@@ -133,7 +133,7 @@ public:
     }
 
     /**
-     * Check if the texture can be used as a UnorderedAccessView
+     * @brief: Check if the texture can be used as a UnorderedAccessView
      * 
      * @return: Returns true if the texture was created with the UnorderedAccessView-flag
      */
@@ -143,7 +143,7 @@ public:
     }
 
     /**
-     * Check if the texture can be used as a ShaderResourceView
+     * @brief: Check if the texture can be used as a ShaderResourceView
      *
      * @return: Returns true if the texture was created with the ShaderResourceView-flag
      */
@@ -153,7 +153,7 @@ public:
     }
 
     /**
-     * Check if the texture can be used as a RenderTargetView
+     * @brief: Check if the texture can be used as a RenderTargetView
      *
      * @return: Returns true if the texture was created with the RenderTargetView-flag
      */
@@ -163,7 +163,7 @@ public:
     }
 
     /**
-     * Check if the texture can be used as a DepthStencilView
+     * @brief: Check if the texture can be used as a DepthStencilView
      *
      * @return: Returns true if the texture was created with the DepthStencilView-flag
      */
@@ -187,7 +187,7 @@ class CRHITexture2D : public CRHITexture
 public:
 
     /**
-     * Constructor taking parameters for creating a texture
+     * @brief: Constructor taking parameters for creating a texture
      *
      * @param InFormat: Format of the texture
      * @param InWidth: Width of the texture
@@ -205,35 +205,35 @@ public:
     { }
 
     /**
-     * Cast to Texture2D
+     * @brief: Cast to Texture2D
      *
      * @return: Returns a pointer to a Texture2D if the texture if of correct type
      */
     virtual CRHITexture2D* AsTexture2D() override { return this; }
 
     /**
-     * Returns a RenderTargetView of the full resource if texture is created with TextureFlag_SRV
+     * @brief: Returns a RenderTargetView of the full resource if texture is created with TextureFlag_SRV
      *
      * @return: Returns a pointer to a RenderTargetView
      */
     virtual class CRHIRenderTargetView* GetRenderTargetView() const { return nullptr; }
 
     /**
-     * Returns a DepthStencilView of the full resource if texture is created with TextureFlag_SRV
+     * @brief: Returns a DepthStencilView of the full resource if texture is created with TextureFlag_SRV
      *
      * @return: Returns a pointer to a DepthStencilView
      */
     virtual class CRHIDepthStencilView* GetDepthStencilView() const { return nullptr; }
 
     /**
-     * Returns a UnorderedAccessView of the full resource if texture is created with TextureFlag_SRV
+     * @brief: Returns a UnorderedAccessView of the full resource if texture is created with TextureFlag_SRV
      *
      * @return: Returns a pointer to a UnorderedAccessView
      */
     virtual class CRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
     /**
-     * Retrieve the width of the texture
+     * @brief: Retrieve the width of the texture
      * 
      * @return: Returns the width of the texture
      */
@@ -243,7 +243,7 @@ public:
     }
 
     /**
-     * Retrieve the height of the texture
+     * @brief: Retrieve the height of the texture
      *
      * @return: Returns the height of the texture
      */
@@ -253,7 +253,7 @@ public:
     }
 
     /**
-     * Retrieve the number of samples of the texture
+     * @brief: Retrieve the number of samples of the texture
      *
      * @return: Returns the number of samples of the texture
      */
@@ -263,7 +263,7 @@ public:
     }
 
     /**
-     * Check if the texture is multi-sampled
+     * @brief: Check if the texture is multi-sampled
      * 
      * @return: Returns true if the number of samples is more than one
      */
@@ -293,7 +293,7 @@ class CRHITexture2DArray : public CRHITexture2D
 public:
 
     /**
-     * Constructor taking parameters for creating a texture
+     * @brief: Constructor taking parameters for creating a texture
      *
      * @param InFormat: Format of the texture
      * @param InWidth: Width of the texture
@@ -310,21 +310,21 @@ public:
     { }
 
     /**
-     * Cast to Texture2D
+     * @brief: Cast to Texture2D
      *
      * @return: Returns a pointer to a Texture2D if the texture if of correct type
      */
     virtual CRHITexture2D* AsTexture2D() override { return nullptr; }
     
     /**
-     * Cast to Texture2DArray
+     * @brief: Cast to Texture2DArray
      *
      * @return: Returns a pointer to a Texture2DArray if the texture if of correct type
      */
     virtual CRHITexture2DArray* AsTexture2DArray() override { return this; }
 
     /**
-     * Retrieve the number of array-slices of the texture
+     * @brief: Retrieve the number of array-slices of the texture
      *
      * @return: Returns the number of array-slices of the texture
      */
@@ -345,7 +345,7 @@ class CRHITextureCube : public CRHITexture
 public:
 
     /**
-     * Constructor taking parameters for creating a texture
+     * @brief: Constructor taking parameters for creating a texture
      *
      * @param InFormat: Format of the texture
      * @param InSize: Width and height of the texture faces
@@ -378,7 +378,7 @@ class CRHITextureCubeArray : public CRHITextureCube
 public:
 
     /**
-     * Constructor taking parameters for creating a texture
+     * @brief: Constructor taking parameters for creating a texture
      *
      * @param InFormat: Format of the texture
      * @param InSize: Width and height of the texture faces
@@ -393,21 +393,21 @@ public:
     { }
 
     /**
-     * Cast to TextureCube
+     * @brief: Cast to TextureCube
      *
      * @return: Returns a pointer to a TextureCube if the texture if of correct type
      */
     virtual CRHITextureCube* AsTextureCube() override { return nullptr; }
     
     /**
-     * Cast to TextureCubeArray
+     * @brief: Cast to TextureCubeArray
      *
      * @return: Returns a pointer to a TextureCubeArray if the texture if of correct type
      */
     virtual CRHITextureCubeArray* AsTextureCubeArray() override { return this; }
 
     /**
-     * Retrieve the number of array-slices of the texture
+     * @brief: Retrieve the number of array-slices of the texture
      *
      * @return: Returns the number of array-slices of the texture
      */
@@ -427,7 +427,7 @@ class CRHITexture3D : public CRHITexture
 public:
 
     /**
-     * Constructor taking parameters for creating a texture
+     * @brief: Constructor taking parameters for creating a texture
      *
      * @param InFormat: Format of the texture
      * @param InWidth: Width of the texture
@@ -445,14 +445,14 @@ public:
     { }
 
     /**
-     * Cast to Texture3D
+     * @brief: Cast to Texture3D
      *
      * @return: Returns a pointer to a Texture3D if the texture if of correct type
      */
     virtual CRHITexture3D* AsTexture3D() override { return this; }
     
     /**
-     * Retrieve the width of the texture
+     * @brief: Retrieve the width of the texture
      *
      * @return: Returns the width of the texture
      */
@@ -462,7 +462,7 @@ public:
     }
 
     /**
-     * Retrieve the height of the texture
+     * @brief: Retrieve the height of the texture
      *
      * @return: Returns the height of the texture
      */
@@ -472,7 +472,7 @@ public:
     }
 
     /**
-     * Retrieve the depth of the texture
+     * @brief: Retrieve the depth of the texture
      *
      * @return: Returns the depth of the texture
      */

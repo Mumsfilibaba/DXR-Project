@@ -11,7 +11,7 @@ class CORE_API CWindowsThread final : public CPlatformThread
 public:
 
     /**
-     * Create a new thread
+     * @brief: Create a new thread
      *
      * @param InFunction: Entry-point for the new thread
      * @return: An newly created thread interface
@@ -28,7 +28,7 @@ public:
     static TSharedRef<CWindowsThread> Make(ThreadFunction InFunction, const String & InName);
 
     /**
-     * Start thread-execution
+     * @brief: Start thread-execution
      *
      * @return: Returns true if the thread started successfully
      */
@@ -38,14 +38,14 @@ public:
     virtual void WaitUntilFinished() override final;
 
     /**
-     * Set name of thread. Needs to be called before start on some platforms for the changes to take effect
+     * @brief: Set name of thread. Needs to be called before start on some platforms for the changes to take effect
      *
      * @param InName: New name of the thread
      */
     virtual void SetName(const String& InName) override final;
 
     /**
-     * Retrieve platform specific handle
+     * @brief: Retrieve platform specific handle
      *
      * @return: Returns a platform specific handle or zero if no platform handle is defined
      */

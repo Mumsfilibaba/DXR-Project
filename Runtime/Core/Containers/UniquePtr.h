@@ -25,7 +25,7 @@ public:
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE TUniquePtr() noexcept
         : DeleterType()
@@ -33,7 +33,7 @@ public:
     { }
 
     /**
-     * Construct from nullptr
+     * @brief: Construct from nullptr
      */
     FORCEINLINE TUniquePtr(NullptrType) noexcept
         : DeleterType()
@@ -41,7 +41,7 @@ public:
     { }
 
     /**
-     * Constructor that takes a raw pointer
+     * @brief: Constructor that takes a raw pointer
      * 
      * @param InPointer: Raw pointer to store
      */
@@ -51,7 +51,7 @@ public:
     { }
 
     /**
-     * Move-constructor
+     * @brief: Move-constructor
      * 
      * @param Other: UniquePtr to move from
      */
@@ -63,7 +63,7 @@ public:
     }
 
     /**
-     * Move-constructor that takes a convertible type
+     * @brief: Move-constructor that takes a convertible type
      *
      * @param Other: UniquePtr to move from
      */
@@ -76,7 +76,7 @@ public:
     }
 
     /**
-     * Destructor
+     * @brief: Destructor
      */
     FORCEINLINE ~TUniquePtr()
     {
@@ -84,7 +84,7 @@ public:
     }
 
     /**
-     * Reset stored pointer to nullptr and return the old pointer
+     * @brief: Reset stored pointer to nullptr and return the old pointer
      * 
      * @return: Returns the pointer previously stored
      */
@@ -96,7 +96,7 @@ public:
     }
 
     /**
-     * Resets the container by setting the pointer to a new value and releases the old one 
+     * @brief: Resets the container by setting the pointer to a new value and releases the old one 
      * 
      * @param NewPointer: New pointer to store
      */
@@ -106,7 +106,7 @@ public:
     }
 
     /**
-     * Resets the container by setting the pointer to a new value of a convertible type and releases the old one
+     * @brief: Resets the container by setting the pointer to a new value of a convertible type and releases the old one
      *
      * @param NewPointer: New pointer to store
      */
@@ -117,7 +117,7 @@ public:
     }
 
     /**
-     * Swaps this UniquePtr with another
+     * @brief: Swaps this UniquePtr with another
      * 
      * @param Other: Pointer to swap
      */ 
@@ -129,7 +129,7 @@ public:
     }
 
     /**
-     * Retrieve the stored pointer 
+     * @brief: Retrieve the stored pointer 
      * 
      * @return: Returns the stored pointer
      */
@@ -139,7 +139,7 @@ public:
     }
 
     /**
-     * Retrieve the address of the stored pointer
+     * @brief: Retrieve the address of the stored pointer
      *
      * @return: Returns the address of the stored pointer
      */
@@ -149,7 +149,7 @@ public:
     }
 
     /**
-     * Dereference the stored pointer
+     * @brief: Dereference the stored pointer
      * 
      * @return: A reference to the object pointed to by the stored pointer
      */
@@ -160,7 +160,7 @@ public:
     }
 
     /**
-     * Checks if the stored pointer is valid
+     * @brief: Checks if the stored pointer is valid
      * 
      * @return: Returns true if the stored pointer is not nullptr
      */
@@ -172,7 +172,7 @@ public:
 public:
 
     /**
-     * Retrieve the stored pointer
+     * @brief: Retrieve the stored pointer
      *
      * @return: Returns the stored pointer
      */
@@ -182,7 +182,7 @@ public:
     }
 
     /**
-     * Dereference the stored pointer
+     * @brief: Dereference the stored pointer
      *
      * @return: A reference to the object pointed to by the stored pointer
      */
@@ -192,7 +192,7 @@ public:
     }
 
     /**
-     * Retrieve the address of the stored pointer
+     * @brief: Retrieve the address of the stored pointer
      *
      * @return: Returns the address of the stored pointer
      */
@@ -202,7 +202,7 @@ public:
     }
 
     /**
-     * Assignment operator that takes a raw pointer 
+     * @brief: Assignment operator that takes a raw pointer 
      * 
      * @param Rhs: Pointer to store
      * @return: A reference to this instance
@@ -214,7 +214,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      * 
      * @param Rhs: UniquePtr to move from
      * @return: A reference to this instance
@@ -226,7 +226,7 @@ public:
     }
 
     /**
-     * Move-assignment operator that takes a convertible type
+     * @brief: Move-assignment operator that takes a convertible type
      *
      * @param Rhs: UniquePtr to move from
      * @return: A reference to this instance
@@ -239,7 +239,7 @@ public:
     }
 
     /**
-     * Assignment operator that takes a nullptr
+     * @brief: Assignment operator that takes a nullptr
      */
     FORCEINLINE TUniquePtr& operator=(NullptrType) noexcept
     {
@@ -248,7 +248,7 @@ public:
     }
 
     /**
-     * Checks if the stored pointer is valid
+     * @brief: Checks if the stored pointer is valid
      *
      * @return: Returns true if the stored pointer is not nullptr
      */
@@ -288,7 +288,7 @@ public:
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE TUniquePtr() noexcept
         : DeleterType()
@@ -296,7 +296,7 @@ public:
     { }
 
     /**
-     * Construct from nullptr
+     * @brief: Construct from nullptr
      */
     FORCEINLINE TUniquePtr(NullptrType) noexcept
         : DeleterType()
@@ -304,7 +304,7 @@ public:
     { }
 
     /**
-     * Constructor that takes a raw pointer
+     * @brief: Constructor that takes a raw pointer
      *
      * @param InPointer: Raw pointer to store
      */
@@ -314,7 +314,7 @@ public:
     { }
 
     /**
-     * Move-constructor
+     * @brief: Move-constructor
      *
      * @param Other: UniquePtr to move from
      */
@@ -326,7 +326,7 @@ public:
     }
 
     /**
-     * Move-constructor that takes a convertible type
+     * @brief: Move-constructor that takes a convertible type
      *
      * @param Other: UniquePtr to move from
      */
@@ -339,7 +339,7 @@ public:
     }
 
     /**
-     * Destructor
+     * @brief: Destructor
      */
     FORCEINLINE ~TUniquePtr()
     {
@@ -347,7 +347,7 @@ public:
     }
 
     /**
-     * Reset stored pointer to nullptr and return the old pointer
+     * @brief: Reset stored pointer to nullptr and return the old pointer
      *
      * @return: Returns the pointer previously stored
      */
@@ -359,7 +359,7 @@ public:
     }
 
     /**
-     * Resets the container by setting the pointer to a new value and releases the old one
+     * @brief: Resets the container by setting the pointer to a new value and releases the old one
      *
      * @param NewPointer: New pointer to store
      */
@@ -369,7 +369,7 @@ public:
     }
 
     /**
-     * Resets the container by setting the pointer to a new value of a convertible type and releases the old one
+     * @brief: Resets the container by setting the pointer to a new value of a convertible type and releases the old one
      *
      * @param NewPointer: New pointer to store
      */
@@ -380,7 +380,7 @@ public:
     }
 
     /**
-     * Swaps this UniquePtr with another
+     * @brief: Swaps this UniquePtr with another
      *
      * @param Other: Pointer to swap
      */
@@ -392,7 +392,7 @@ public:
     }
 
     /**
-     * Retrieve the stored pointer
+     * @brief: Retrieve the stored pointer
      *
      * @return: Returns the stored pointer
      */
@@ -402,7 +402,7 @@ public:
     }
 
     /**
-     * Retrieve the address of the stored pointer
+     * @brief: Retrieve the address of the stored pointer
      *
      * @return: Returns the address of the stored pointer
      */
@@ -412,7 +412,7 @@ public:
     }
 
     /**
-     * Checks if the stored pointer is valid
+     * @brief: Checks if the stored pointer is valid
      *
      * @return: Returns true if the stored pointer is not nullptr
      */
@@ -422,7 +422,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the array
+     * @brief: Retrieve a element at a certain index of the array
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -436,7 +436,7 @@ public:
 public:
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -447,7 +447,7 @@ public:
     }
 
     /**
-     * Retrieve the address of the stored pointer
+     * @brief: Retrieve the address of the stored pointer
      *
      * @return: Returns the address of the stored pointer
      */
@@ -457,7 +457,7 @@ public:
     }
 
     /**
-     * Assignment operator that takes a raw pointer
+     * @brief: Assignment operator that takes a raw pointer
      *
      * @param Rhs: Pointer to store
      * @return: A reference to this instance
@@ -469,7 +469,7 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
      * @param Rhs: UniquePtr to move from
      * @return: A reference to this instance
@@ -481,7 +481,7 @@ public:
     }
 
     /**
-     * Move-assignment operator that takes a convertible type
+     * @brief: Move-assignment operator that takes a convertible type
      *
      * @param Rhs: UniquePtr to move from
      * @return: A reference to this instance
@@ -494,7 +494,7 @@ public:
     }
 
     /**
-     * Assignment operator that takes a nullptr
+     * @brief: Assignment operator that takes a nullptr
      *
      * @return: A reference to this instance
      */
@@ -505,7 +505,7 @@ public:
     }
 
     /**
-     * Checks if the stored pointer is valid
+     * @brief: Checks if the stored pointer is valid
      *
      * @return: Returns true if the stored pointer is not nullptr
      */

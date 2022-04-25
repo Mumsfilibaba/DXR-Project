@@ -17,14 +17,14 @@ public:
     static_assert(TIsSigned<T>::Value, "AtomicInt only supports signed types");
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE TAtomicInt() noexcept
         : Value(0)
     { }
 
     /**
-     * Copy-constructor
+     * @brief: Copy-constructor
      * 
      * @param Other: Instance to copy
      */
@@ -36,7 +36,7 @@ public:
     }
 
     /**
-     * Construct with a initial value
+     * @brief: Construct with a initial value
      * 
      * @param InValue: Initial value
      */
@@ -47,7 +47,7 @@ public:
     ~TAtomicInt() = default;
 
     /**
-     * Atomically increments the integer
+     * @brief: Atomically increments the integer
      * 
      * @return: Returns the new value
      */
@@ -57,7 +57,7 @@ public:
     }
 
     /**
-     * Atomically decrements the integer
+     * @brief: Atomically decrements the integer
      *
      * @return: Returns the new value
      */
@@ -67,7 +67,7 @@ public:
     }
 
     /**
-     * Atomically adds a value to the integer
+     * @brief: Atomically adds a value to the integer
      *
      * @return: Returns the new value
      */
@@ -78,7 +78,7 @@ public:
     }
 
     /**
-     * Atomically subtracts a value from the integer
+     * @brief: Atomically subtracts a value from the integer
      *
      * @return: Returns the new value
      */
@@ -89,7 +89,7 @@ public:
     }
 
     /**
-     * Performs a bitwise AND atomically with a value and the integer
+     * @brief: Performs a bitwise AND atomically with a value and the integer
      *
      * @return: Returns the new value
      */
@@ -100,7 +100,7 @@ public:
     }
 
     /**
-     * Performs a bitwise OR atomically with a value and the integer
+     * @brief: Performs a bitwise OR atomically with a value and the integer
      *
      * @return: Returns the new value
      */
@@ -111,7 +111,7 @@ public:
     }
 
     /**
-     * Performs a bitwise XOR atomically with a value and the integer
+     * @brief: Performs a bitwise XOR atomically with a value and the integer
      *
      * @return: Returns the new value
      */
@@ -122,7 +122,7 @@ public:
     }
 
     /**
-     * Retrieves the integer atomically and makes sure that all prior accesses has completed 
+     * @brief: Retrieves the integer atomically and makes sure that all prior accesses has completed 
      *
      * @return: Returns the stored value
      */
@@ -132,7 +132,7 @@ public:
     }
 
     /**
-     * Retrieves the integer atomically without making sure that all prior accesses has completed
+     * @brief: Retrieves the integer atomically without making sure that all prior accesses has completed
      *
      * @return: Returns the stored value
      */
@@ -142,7 +142,7 @@ public:
     }
 
     /**
-     * Exchanges the integer to a new value and return the original value
+     * @brief: Exchanges the integer to a new value and return the original value
      * 
      * @param InValue: Value to exchange
      * @return: Returns the original value
@@ -153,7 +153,7 @@ public:
     }
 
     /**
-     * Stores a new integer atomically and makes sure that all prior accesses has completed
+     * @brief: Stores a new integer atomically and makes sure that all prior accesses has completed
      *
      * @param InValue: New value to store
      */
@@ -163,7 +163,7 @@ public:
     }
 
     /**
-     * Stores a new integer atomically without making sure that all prior accesses has completed
+     * @brief: Stores a new integer atomically without making sure that all prior accesses has completed
      *
      * @param InValue: New value to store
      */
@@ -178,7 +178,7 @@ public:
     // Operators
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      * 
      * @param Rhs: Value to copy
      * @return: Returns a reference to this instance
@@ -191,7 +191,7 @@ public:
     }
 
     /**
-     * Assign a new value
+     * @brief: Assign a new value
      *
      * @param Rhs: Value to assign
      * @return: Returns a reference to this instance
@@ -202,7 +202,7 @@ public:
     }
 
     /**
-     * Increment the integer with one
+     * @brief: Increment the integer with one
      *
      * @return: Returns a the previous value
      */
@@ -214,7 +214,7 @@ public:
     }
 
     /**
-     * Increment the integer with one
+     * @brief: Increment the integer with one
      *
      * @return: Returns a the new value
      */
@@ -224,7 +224,7 @@ public:
     }
 
     /**
-     * Decrement the integer with one
+     * @brief: Decrement the integer with one
      *
      * @return: Returns a the previous value
      */
@@ -236,7 +236,7 @@ public:
     }
 
     /**
-     * Decrement the integer with one
+     * @brief: Decrement the integer with one
      *
      * @return: Returns a the new value
      */
@@ -246,7 +246,7 @@ public:
     }
 
     /**
-     * Add a value
+     * @brief: Add a value
      * 
      * @param Rhs: Value to add to the integer
      * @return: Returns a the new value
@@ -257,7 +257,7 @@ public:
     }
 
     /**
-     * Subtract a value
+     * @brief: Subtract a value
      *
      * @param Rhs: Value to subtract to the integer
      * @return: Returns a the new value
@@ -268,7 +268,7 @@ public:
     }
 
     /**
-     * Bitwise AND with a value
+     * @brief: Bitwise AND with a value
      *
      * @param Rhs: Value to AND with the integer
      * @return: Returns a the new value
@@ -279,7 +279,7 @@ public:
     }
 
     /**
-     * Bitwise OR with a value
+     * @brief: Bitwise OR with a value
      *
      * @param Rhs: Value to OR with the integer
      * @return: Returns a the new value
@@ -290,7 +290,7 @@ public:
     }
 
     /**
-     * Bitwise XOR with a value
+     * @brief: Bitwise XOR with a value
      *
      * @param Rhs: Value to XOR with the integer
      * @return: Returns a the new value
