@@ -120,9 +120,9 @@ private:
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const
     {
         SKeyState TempState(KeyCode);
-        return KeyStates.Find(TempState, [](const SKeyState& Lhs, const SKeyState& Rhs) -> bool
+        return KeyStates.Find(TempState, [](const SKeyState& Lhs, const SKeyState& RHS) -> bool
         {
-            return (Lhs.KeyCode == Rhs.KeyCode);
+            return (Lhs.KeyCode == RHS.KeyCode);
         });
     }
 
@@ -130,9 +130,9 @@ private:
     FORCEINLINE int32 GetMouseButtonStateIndexFromMouseButton(EMouseButton Button) const
     {
         SMouseButtonState TempState(Button);
-        return MouseButtonStates.Find(TempState, [](const SMouseButtonState& Lhs, const SMouseButtonState& Rhs) -> bool
+        return MouseButtonStates.Find(TempState, [](const SMouseButtonState& Lhs, const SMouseButtonState& RHS) -> bool
         {
-            return (Lhs.Button == Rhs.Button);
+            return (Lhs.Button == RHS.Button);
         });
     }
 

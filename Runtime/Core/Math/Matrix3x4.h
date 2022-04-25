@@ -49,7 +49,7 @@ public:
      * @param Other: matrix to compare against
      * @return: True if equal, false if not
      */
-    inline bool IsEqual(const CMatrix3x4& Other, float Epsilon = NMath::IS_EQUAL_EPISILON) const noexcept
+    inline bool IsEqual(const CMatrix3x4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
         Epsilon = NMath::Abs(Epsilon);
 

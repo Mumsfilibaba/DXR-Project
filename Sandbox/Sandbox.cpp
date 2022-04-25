@@ -168,7 +168,7 @@ bool CSandbox::Init()
     NewActor = CurrentScene->MakeActor();
 
     NewActor->SetName("Plane");
-    NewActor->GetTransform().SetRotation(NMath::HALF_PI_F, 0.0f, 0.0f);
+    NewActor->GetTransform().SetRotation(NMath::kHalfPI_f, 0.0f, 0.0f);
     NewActor->GetTransform().SetUniformScale(50.0f);
     NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 

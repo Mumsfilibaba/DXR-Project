@@ -74,7 +74,7 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Vector4.h"
 #include "Core/Math/Plane.h"
-#include "Core/Math/SIMD.h"
+#include "Core/Math/VectorOp.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Memory 

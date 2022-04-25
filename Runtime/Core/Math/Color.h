@@ -13,10 +13,10 @@ struct CColor
      * @brief: Default constructor (Initialize components to zero)
      */
     FORCEINLINE CColor()
-        : R(0.0f)
-        , G(0.0f)
-        , B(0.0f)
-        , A(0.0f)
+        : R(0)
+        , G(0)
+        , B(0)
+        , A(0)
     { }
 
     /**

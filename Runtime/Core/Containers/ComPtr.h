@@ -317,75 +317,75 @@ public:
     /**
      * @brief: Copy-assignment operator
      * 
-     * @param Rhs: Instance to copy from
+     * @param RHS: Instance to copy from
      * @return: A reference to this object
      */
-    FORCEINLINE TComPtr& operator=(const TComPtr& Rhs) noexcept
+    FORCEINLINE TComPtr& operator=(const TComPtr& RHS) noexcept
     {
-        TComPtr(Rhs).Swap(*this);
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Copy-assignment operator that takes a convertible type
      *
-     * @param Rhs: Instance to copy from
+     * @param RHS: Instance to copy from
      * @return: A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(const TComPtr<OtherType>& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(const TComPtr<OtherType>& RHS) noexcept
     {
-        TComPtr(Rhs).Swap(*this);
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Move-assignment operator
      *
-     * @param Rhs: Instance to move from
+     * @param RHS: Instance to move from
      * @return: A reference to this object
      */
-    FORCEINLINE TComPtr& operator=(TComPtr&& Rhs) noexcept
+    FORCEINLINE TComPtr& operator=(TComPtr&& RHS) noexcept
     {
-        TComPtr(Rhs).Swap(*this);
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Move-assignment operator that takes a convertible type
      *
-     * @param Rhs: Instance to move from
+     * @param RHS: Instance to move from
      * @return: A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(TComPtr<OtherType>&& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(TComPtr<OtherType>&& RHS) noexcept
     {
-        TComPtr(Rhs).Swap(*this);
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Assignment operator that takes a raw pointer
      *
-     * @param Rhs: Pointer to store
+     * @param RHS: Pointer to store
      * @return: A reference to this object
      */
-    FORCEINLINE TComPtr& operator=(ElementType* Rhs) noexcept
+    FORCEINLINE TComPtr& operator=(ElementType* RHS) noexcept
     {
-        TComPtr(Rhs).Swap(*this);
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Assignment operator that takes a raw pointer of a convertible type
      *
-     * @param Rhs: Pointer to store
+     * @param RHS: Pointer to store
      * @return: A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(OtherType* Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(OtherType* RHS) noexcept
     {
-        TComPtr(Rhs).Swap(*this);
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
@@ -418,39 +418,39 @@ private:
 // TComPtr equality operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TComPtr<T>& Lhs, U* Rhs) noexcept
+FORCEINLINE bool operator==(const TComPtr<T>& Lhs, U* RHS) noexcept
 {
-    return (Lhs.Get() == Rhs);
+    return (Lhs.Get() == RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* Lhs, const TComPtr<U>& Rhs) noexcept
+FORCEINLINE bool operator==(T* Lhs, const TComPtr<U>& RHS) noexcept
 {
-    return (Lhs == Rhs.Get());
+    return (Lhs == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TComPtr<T>& Lhs, U* Rhs) noexcept
+FORCEINLINE bool operator!=(const TComPtr<T>& Lhs, U* RHS) noexcept
 {
-    return (Lhs.Get() != Rhs);
+    return (Lhs.Get() != RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* Lhs, const TComPtr<U>& Rhs) noexcept
+FORCEINLINE bool operator!=(T* Lhs, const TComPtr<U>& RHS) noexcept
 {
-    return (Lhs != Rhs.Get());
+    return (Lhs != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TComPtr<T>& Lhs, const TComPtr<U>& Rhs) noexcept
+FORCEINLINE bool operator==(const TComPtr<T>& Lhs, const TComPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() == Rhs.Get());
+    return (Lhs.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TComPtr<T>& Lhs, const TComPtr<U>& Rhs) noexcept
+FORCEINLINE bool operator!=(const TComPtr<T>& Lhs, const TComPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() != Rhs.Get());
+    return (Lhs.Get() != RHS.Get());
 }
 
 template<typename T>
@@ -460,9 +460,9 @@ FORCEINLINE bool operator==(const TComPtr<T>& Lhs, NullptrType) noexcept
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TComPtr<T>& Rhs) noexcept
+FORCEINLINE bool operator==(NullptrType, const TComPtr<T>& RHS) noexcept
 {
-    return (nullptr == Rhs.Get());
+    return (nullptr == RHS.Get());
 }
 
 template<typename T>
@@ -472,9 +472,9 @@ FORCEINLINE bool operator!=(const TComPtr<T>& Lhs, NullptrType) noexcept
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TComPtr<T>& Rhs) noexcept
+FORCEINLINE bool operator!=(NullptrType, const TComPtr<T>& RHS) noexcept
 {
-    return (nullptr != Rhs.Get());
+    return (nullptr != RHS.Get());
 }
 
  /** @brief: Converts a raw pointer into a TComPtr */

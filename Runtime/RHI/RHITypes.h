@@ -283,13 +283,13 @@ public:
         return Format;
     }
 
-    FORCEINLINE SColorF& AsColor()
+    FORCEINLINE CFloatColor& AsColor()
     {
         Assert(Type == EType::Color);
         return Color;
     }
 
-    FORCEINLINE const SColorF& AsColor() const
+    FORCEINLINE const CFloatColor& AsColor() const
     {
         Assert(Type == EType::Color);
         return Color;
@@ -312,7 +312,7 @@ private:
     EFormat Format;
     union
     {
-        SColorF       Color;
+        CFloatColor       Color;
         SDepthStencil DepthStencil;
     };
 };

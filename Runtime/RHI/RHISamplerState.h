@@ -93,7 +93,7 @@ struct SRHISamplerStateInfo
     EComparisonFunc ComparisonFunc = EComparisonFunc::Never;
     float           MipLODBias = 0.0f;
     uint32          MaxAnisotropy = 1;
-    SColorF          BorderColor;
+    CFloatColor     BorderColor;
     float           MinLOD = -FLT_MAX;
     float           MaxLOD = FLT_MAX;
 };

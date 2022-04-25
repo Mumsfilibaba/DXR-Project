@@ -271,7 +271,7 @@ D3D12TextureType* CD3D12RHIInstance::CreateTexture(EFormat Format, uint32 SizeX,
         }
         else if (OptimalClearValue.GetType() == SClearValue::EType::Color)
         {
-            CMemory::Memcpy(ClearValue.Color, OptimalClearValue.AsColor().Elements, sizeof(float[4]));
+            CMemory::Memcpy(ClearValue.Color, OptimalClearValue.AsColor().Data(), sizeof(float[4]));
             ClearValuePtr = &ClearValue;
         }
     }
@@ -515,7 +515,7 @@ CRHISamplerState* CD3D12RHIInstance::CreateSamplerState(const SRHISamplerStateIn
     Desc.MinLOD = CreateInfo.MinLOD;
     Desc.MipLODBias = CreateInfo.MipLODBias;
 
-    CMemory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor.Elements, sizeof(Desc.BorderColor));
+    CMemory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor.Data(), sizeof(Desc.BorderColor));
 
     TSharedRef<CD3D12RHISamplerState> Sampler = dbg_new CD3D12RHISamplerState(Device, SamplerOfflineDescriptorHeap);
     if (!Sampler->Init(Desc))

@@ -76,23 +76,23 @@ public:
     /**
      * @brief: Checks equality between two handles 
      * 
-     * @param Rhs: Other delegate-handle to compare with
+     * @param RHS: Other delegate-handle to compare with
      * @return: Returns true if the delegate-handles are equal to each other
      */
-    FORCEINLINE bool operator==(CDelegateHandle Rhs) const
+    FORCEINLINE bool operator==(CDelegateHandle RHS) const
     {
-        return (Handle == Rhs.Handle);
+        return (Handle == RHS.Handle);
     }
 
     /**
      * @brief: Checks equality between two handles
      *
-     * @param Rhs: Other delegate-handle to compare with
+     * @param RHS: Other delegate-handle to compare with
      * @return: Returns false if the delegate-handles are equal to each other
      */
-    FORCEINLINE bool operator!=(CDelegateHandle Rhs) const
+    FORCEINLINE bool operator!=(CDelegateHandle RHS) const
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
 private:

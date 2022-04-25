@@ -34,11 +34,11 @@ constexpr T&& Forward(typename TRemoveReference<T>::Type&& Value) noexcept
 }
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsConst<T>>::Value>::Type Swap(T& Lhs, T& Rhs) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsConst<T>>::Value>::Type Swap(T& Lhs, T& RHS) noexcept
 {
     T TempElement = Move(Lhs);
-    Lhs = Move(Rhs);
-    Rhs = Move(TempElement);
+    Lhs = Move(RHS);
+    RHS = Move(TempElement);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

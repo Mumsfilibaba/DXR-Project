@@ -170,36 +170,36 @@ public:
     /**
      * @brief: Add a new value to the iterator
      * 
-     * @param Rhs: Value to add
-     * @return: Returns a new iterator with the result from adding Rhs to this value 
+     * @param RHS: Value to add
+     * @return: Returns a new iterator with the result from adding RHS to this value 
      */
-    FORCEINLINE TArrayIterator operator+(SizeType Rhs) const noexcept
+    FORCEINLINE TArrayIterator operator+(SizeType RHS) const noexcept
     {
         TArrayIterator NewIterator(*this);
-        return NewIterator += Rhs;
+        return NewIterator += RHS;
     }
 
     /**
      * @brief: Subtract a new value to the iterator
      * 
-     * @param Rhs: Value to subtract
-     * @return: Returns a new iterator with the result from subtracting Rhs to this value 
+     * @param RHS: Value to subtract
+     * @return: Returns a new iterator with the result from subtracting RHS to this value 
      */
-    FORCEINLINE TArrayIterator operator-(SizeType Rhs) const noexcept
+    FORCEINLINE TArrayIterator operator-(SizeType RHS) const noexcept
     {
         TArrayIterator NewIterator(*this);
-        return NewIterator -= Rhs;
+        return NewIterator -= RHS;
     }
 
     /**
      * @brief: Add a value to the iterator and store it in this instance
      * 
-     * @param Rhs: Value to add
+     * @param RHS: Value to add
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TArrayIterator& operator+=(SizeType Rhs) noexcept
+    FORCEINLINE TArrayIterator& operator+=(SizeType RHS) noexcept
     {
-        Index += Rhs;
+        Index += RHS;
 
         Assert(IsValid());
         return *this;
@@ -208,12 +208,12 @@ public:
     /**
      * @brief: Subtract a value to the iterator and store it in this instance
      * 
-     * @param Rhs: Value to subtract
+     * @param RHS: Value to subtract
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TArrayIterator& operator-=(SizeType Rhs) noexcept
+    FORCEINLINE TArrayIterator& operator-=(SizeType RHS) noexcept
     {
-        Index -= Rhs;
+        Index -= RHS;
 
         Assert(IsValid());
         return *this;
@@ -222,23 +222,23 @@ public:
     /**
      * @brief: Compare this and another instance
      * 
-     * @param Rhs: Value to compare with
+     * @param RHS: Value to compare with
      * @return: Returns true if the iterators are equal
      */
-    FORCEINLINE bool operator==(const TArrayIterator& Rhs) const noexcept
+    FORCEINLINE bool operator==(const TArrayIterator& RHS) const noexcept
     {
-        return (Index == Rhs.Index) && Rhs.IsFrom(Array);
+        return (Index == RHS.Index) && RHS.IsFrom(Array);
     }
 
     /**
      * @brief: Compare this and another instance
      * 
-     * @param Rhs: Value to compare with
+     * @param RHS: Value to compare with
      * @return: Returns false if the iterators are equal
      */
-    FORCEINLINE bool operator!=(const TArrayIterator& Rhs) const noexcept
+    FORCEINLINE bool operator!=(const TArrayIterator& RHS) const noexcept
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /**
@@ -261,9 +261,9 @@ private:
 // Add offset to iterator and return a new
 
 template<typename ArrayType, typename ElementType>
-FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIterator<ArrayType, ElementType>::SizeType Lhs, const TArrayIterator<ArrayType, ElementType>& Rhs) noexcept
+FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIterator<ArrayType, ElementType>::SizeType Lhs, const TArrayIterator<ArrayType, ElementType>& RHS) noexcept
 {
-    TArrayIterator NewIterator(Rhs);
+    TArrayIterator NewIterator(RHS);
     return NewIterator += Lhs;
 }
 
@@ -431,36 +431,36 @@ public:
     /**
      * @brief: Add a new value to the iterator
      *
-     * @param Rhs: Value to add
-     * @return: Returns a new iterator with the result from adding Rhs to this value
+     * @param RHS: Value to add
+     * @return: Returns a new iterator with the result from adding RHS to this value
      */
-    FORCEINLINE TReverseArrayIterator operator+(SizeType Rhs) const noexcept
+    FORCEINLINE TReverseArrayIterator operator+(SizeType RHS) const noexcept
     {
         TReverseArrayIterator NewIterator(*this);
-        return NewIterator += Rhs; // Uses operator, therefore +=
+        return NewIterator += RHS; // Uses operator, therefore +=
     }
 
     /**
      * @brief: Subtract a new value to the iterator
      *
-     * @param Rhs: Value to subtract
-     * @return: Returns a new iterator with the result from subtracting Rhs to this value
+     * @param RHS: Value to subtract
+     * @return: Returns a new iterator with the result from subtracting RHS to this value
      */
-    FORCEINLINE TReverseArrayIterator operator-(SizeType Rhs) const noexcept
+    FORCEINLINE TReverseArrayIterator operator-(SizeType RHS) const noexcept
     {
         TReverseArrayIterator NewIterator(*this);
-        return NewIterator -= Rhs; // Uses operator, therefore -=
+        return NewIterator -= RHS; // Uses operator, therefore -=
     }
 
     /**
      * @brief: Add a value to the iterator and store it in this instance
      *
-     * @param Rhs: Value to add
+     * @param RHS: Value to add
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TReverseArrayIterator& operator+=(SizeType Rhs) noexcept
+    FORCEINLINE TReverseArrayIterator& operator+=(SizeType RHS) noexcept
     {
-        Index -= Rhs;
+        Index -= RHS;
 
         Assert(IsValid());
         return *this;
@@ -469,12 +469,12 @@ public:
     /**
      * @brief: Subtract a value to the iterator and store it in this instance
      *
-     * @param Rhs: Value to subtract
+     * @param RHS: Value to subtract
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TReverseArrayIterator& operator-=(SizeType Rhs) noexcept
+    FORCEINLINE TReverseArrayIterator& operator-=(SizeType RHS) noexcept
     {
-        Index += Rhs;
+        Index += RHS;
 
         Assert(IsValid());
         return *this;
@@ -483,23 +483,23 @@ public:
     /**
      * @brief: Compare this and another instance
      *
-     * @param Rhs: Value to compare with
+     * @param RHS: Value to compare with
      * @return: Returns true if the iterators are equal
      */
-    FORCEINLINE bool operator==(const TReverseArrayIterator& Rhs) const noexcept
+    FORCEINLINE bool operator==(const TReverseArrayIterator& RHS) const noexcept
     {
-        return (Index == Rhs.Index) && Rhs.IsFrom(Array);
+        return (Index == RHS.Index) && RHS.IsFrom(Array);
     }
 
     /**
      * @brief: Compare this and another instance
      *
-     * @param Rhs: Value to compare with
+     * @param RHS: Value to compare with
      * @return: Returns false if the iterators are equal
      */
-    FORCEINLINE bool operator!=(const TReverseArrayIterator& Rhs) const noexcept
+    FORCEINLINE bool operator!=(const TReverseArrayIterator& RHS) const noexcept
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /**
@@ -522,9 +522,9 @@ private:
 // Add offset to iterator and return a new
 
 template<typename ArrayType, typename ElementType>
-FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TReverseArrayIterator<ArrayType, ElementType>::SizeType Lhs, const TReverseArrayIterator<ArrayType, ElementType>& Rhs) noexcept
+FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TReverseArrayIterator<ArrayType, ElementType>::SizeType Lhs, const TReverseArrayIterator<ArrayType, ElementType>& RHS) noexcept
 {
-    TReverseArrayIterator NewIterator(Rhs);
+    TReverseArrayIterator NewIterator(RHS);
     return NewIterator += Lhs;
 }
 
@@ -605,14 +605,14 @@ public:
         return NewIterator;
     }
 
-    FORCEINLINE bool operator==(const TTreeIterator& Rhs) const noexcept
+    FORCEINLINE bool operator==(const TTreeIterator& RHS) const noexcept
     {
-        return (Node == Rhs.Node);
+        return (Node == RHS.Node);
     }
 
-    FORCEINLINE bool operator!=(const TTreeIterator& Rhs) const noexcept
+    FORCEINLINE bool operator!=(const TTreeIterator& RHS) const noexcept
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     FORCEINLINE operator TTreeIterator<const NodeType, const ElementType>() const noexcept

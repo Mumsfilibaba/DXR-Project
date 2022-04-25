@@ -153,6 +153,12 @@ namespace NMath
     }
 
     template<typename T>
+    FORCEINLINE T Tan(T Value)
+    {
+        return static_cast<T>(std::tanf(static_cast<float>(Value)));
+    }
+
+    template<typename T>
     FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsNaN(T Float)
     {
         return isnan(Float);

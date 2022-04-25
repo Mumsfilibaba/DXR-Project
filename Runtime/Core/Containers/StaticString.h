@@ -1437,37 +1437,37 @@ public:
     /**
      * @brief: Appends a character to this string
      * 
-     * @param Rhs: Character to append
+     * @param RHS: Character to append
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TStaticString& operator+=(CharType Rhs) noexcept
+    FORCEINLINE TStaticString& operator+=(CharType RHS) noexcept
     {
-        Append(Rhs);
+        Append(RHS);
         return *this;
     }
 
     /**
      * @brief: Appends a string to this string
      *
-     * @param Rhs: String to append
+     * @param RHS: String to append
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TStaticString& operator+=(const CharType* Rhs) noexcept
+    FORCEINLINE TStaticString& operator+=(const CharType* RHS) noexcept
     {
-        Append(Rhs);
+        Append(RHS);
         return *this;
     }
 
     /**
      * @brief: Appends a string of a string-type to this string
      *
-     * @param Rhs: String to append
+     * @param RHS: String to append
      * @return: Returns a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator+=(const StringType& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator+=(const StringType& RHS) noexcept
     {
-        Append<StringType>(Rhs);
+        Append<StringType>(RHS);
         return *this;
     }
 
@@ -1496,49 +1496,49 @@ public:
     /**
      * @brief: Assignment operator that takes a raw string
      * 
-     * @param Rhs: String to copy
+     * @param RHS: String to copy
      * @return: Return a reference to this instance
      */
-    FORCEINLINE TStaticString& operator=(const CharType* Rhs) noexcept
+    FORCEINLINE TStaticString& operator=(const CharType* RHS) noexcept
     {
-        TStaticString(Rhs).Swap(*this);
+        TStaticString(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Copy-assignment operator 
      * 
-     * @param Rhs: String to copy
+     * @param RHS: String to copy
      * @return: Return a reference to this instance
      */
-    FORCEINLINE TStaticString& operator=(const TStaticString& Rhs) noexcept
+    FORCEINLINE TStaticString& operator=(const TStaticString& RHS) noexcept
     {
-        TStaticString(Rhs).Swap(*this);
+        TStaticString(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Assignment operator that takes another string-type
      *
-     * @param Rhs: String to copy
+     * @param RHS: String to copy
      * @return: Return a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator=(const StringType& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator=(const StringType& RHS) noexcept
     {
-        TStaticString<StringType, CharCount>(Rhs).Swap(*this);
+        TStaticString<StringType, CharCount>(RHS).Swap(*this);
         return *this;
     }
 
     /**
      * @brief: Move-assignment operator
      *
-     * @param Rhs: String to move
+     * @param RHS: String to move
      * @return: Return a reference to this instance
      */
-    FORCEINLINE TStaticString& operator=(TStaticString&& Rhs) noexcept
+    FORCEINLINE TStaticString& operator=(TStaticString&& RHS) noexcept
     {
-        TStaticString(Move(Rhs)).Swap(*this);
+        TStaticString(Move(RHS)).Swap(*this);
         return *this;
     }
 
@@ -1725,43 +1725,43 @@ using WStaticString = TStaticString<wchar_t, CharCount>;
 // TStaticString operators
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     TStaticString<CharType, CharCount> NewString = Lhs;
-    NewString.Append(Rhs);
+    NewString.Append(RHS);
     return NewString;
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline TStaticString<CharType, CharCount> operator+(const CharType* Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     TStaticString<CharType, CharCount> NewString = Lhs;
-    NewString.Append(Rhs);
+    NewString.Append(RHS);
     return NewString;
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& Lhs, const CharType* RHS) noexcept
 {
     TStaticString<CharType, CharCount> NewString = Lhs;
-    NewString.Append(Rhs);
+    NewString.Append(RHS);
     return NewString;
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+(CharType Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline TStaticString<CharType, CharCount> operator+(CharType Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     TStaticString<CharType, CharCount> NewString;
     NewString.Append(Lhs);
-    NewString.Append(Rhs);
+    NewString.Append(RHS);
     return NewString;
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& Lhs, CharType Rhs) noexcept
+inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& Lhs, CharType RHS) noexcept
 {
     TStaticString<CharType, CharCount> NewString = Lhs;
-    NewString.Append(Rhs);
+    NewString.Append(RHS);
     return NewString;
 }
 
@@ -1769,111 +1769,111 @@ inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType
 // TStaticString comparison operators
 
 template<typename CharType, int32 CharCount>
-inline bool operator==(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator==(const TStaticString<CharType, CharCount>& Lhs, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) == 0);
+    return (Lhs.Compare(RHS) == 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator==(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator==(const CharType* Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) == 0);
+    return (RHS.Compare(Lhs) == 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator==(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator==(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) == 0);
+    return (Lhs.Compare(RHS) == 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator!=(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator!=(const TStaticString<CharType, CharCount>& Lhs, const CharType* RHS) noexcept
 {
-    return !(Lhs == Rhs);
+    return !(Lhs == RHS);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator!=(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator!=(const CharType* Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return !(Lhs == Rhs);
+    return !(Lhs == RHS);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator!=(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator!=(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return !(Lhs == Rhs);
+    return !(Lhs == RHS);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator<(const TStaticString<CharType, CharCount>& Lhs, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) < 0);
+    return (Lhs.Compare(RHS) < 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator<(const CharType* Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) < 0);
+    return (RHS.Compare(Lhs) < 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator<(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) < 0);
+    return (Lhs.Compare(RHS) < 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<=(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator<=(const TStaticString<CharType, CharCount>& Lhs, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) <= 0);
+    return (Lhs.Compare(RHS) <= 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<=(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator<=(const CharType* Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) <= 0);
+    return (RHS.Compare(Lhs) <= 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<=(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator<=(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) <= 0);
+    return (Lhs.Compare(RHS) <= 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator>(const TStaticString<CharType, CharCount>& Lhs, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) > 0);
+    return (Lhs.Compare(RHS) > 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator>(const CharType* Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) > 0);
+    return (RHS.Compare(Lhs) > 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator>(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) > 0);
+    return (Lhs.Compare(RHS) > 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>=(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator>=(const TStaticString<CharType, CharCount>& Lhs, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) >= 0);
+    return (Lhs.Compare(RHS) >= 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>=(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator>=(const CharType* Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) >= 0);
+    return (RHS.Compare(Lhs) >= 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>=(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator>=(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) >= 0);
+    return (Lhs.Compare(RHS) >= 0);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

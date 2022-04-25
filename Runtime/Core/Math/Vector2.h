@@ -63,7 +63,7 @@ public:
      *
      * @return: True if the any component equals NaN, false if not
      */
-    FORCEINLINE bool HasNan() const noexcept;
+    FORCEINLINE bool HasNaN() const noexcept;
 
     /**
      * @brief: Checks weather this vector has any component that equals infinity
@@ -183,139 +183,139 @@ public:
     /**
      * @brief: Returns the result of component-wise adding this and another vector
      *
-     * @param Rhs: The vector to add
+     * @param RHS: The vector to add
      * @return: A vector with the result of addition
      */
-    FORCEINLINE CVector2 operator+(const CVector2& Rhs) const noexcept;
+    FORCEINLINE CVector2 operator+(const CVector2& RHS) const noexcept;
 
     /**
      * @brief: Returns this vector after component-wise adding this with another vector
      *
-     * @param Rhs: The vector to add
+     * @param RHS: The vector to add
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector2& operator+=(const CVector2& Rhs) noexcept;
+    FORCEINLINE CVector2& operator+=(const CVector2& RHS) noexcept;
 
     /**
      * @brief: Returns the result of adding a scalar to each component of this vector
      *
-     * @param Rhs: The scalar to add
+     * @param RHS: The scalar to add
      * @return: A vector with the result of addition
      */
-    FORCEINLINE CVector2 operator+(float Rhs) const noexcept;
+    FORCEINLINE CVector2 operator+(float RHS) const noexcept;
 
     /**
      * @brief: Returns this vector after adding a scalar to each component of this vector
      *
-     * @param Rhs: The scalar to add
+     * @param RHS: The scalar to add
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector2& operator+=(float Rhs) noexcept;
+    FORCEINLINE CVector2& operator+=(float RHS) noexcept;
 
     /**
      * @brief: Returns the result of component-wise subtraction between this and another vector
      *
-     * @param Rhs: The vector to subtract
+     * @param RHS: The vector to subtract
      * @return: A vector with the result of subtraction
      */
-    FORCEINLINE CVector2 operator-(const CVector2& Rhs) const noexcept;
+    FORCEINLINE CVector2 operator-(const CVector2& RHS) const noexcept;
 
     /**
      * @brief: Returns this vector after component-wise subtraction between this and another vector
      *
-     * @param Rhs: The vector to subtract
+     * @param RHS: The vector to subtract
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector2& operator-=(const CVector2& Rhs) noexcept;
+    FORCEINLINE CVector2& operator-=(const CVector2& RHS) noexcept;
 
     /**
      * @brief: Returns the result of subtracting each component of this vector with a scalar
      *
-     * @param Rhs: The scalar to subtract
+     * @param RHS: The scalar to subtract
      * @return: A vector with the result of the subtraction
      */
-    FORCEINLINE CVector2 operator-(float Rhs) const noexcept;
+    FORCEINLINE CVector2 operator-(float RHS) const noexcept;
 
     /**
      * @brief: Returns this vector after subtracting each component of this vector with a scalar
      *
-     * @param Rhs: The scalar to subtract
+     * @param RHS: The scalar to subtract
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector2& operator-=(float Rhs) noexcept;
+    FORCEINLINE CVector2& operator-=(float RHS) noexcept;
 
     /**
      * @brief: Returns the result of component-wise multiplication with this and another vector
      *
-     * @param Rhs: The vector to multiply with
+     * @param RHS: The vector to multiply with
      * @return: A vector with the result of the multiplication
      */
-    FORCEINLINE CVector2 operator*(const CVector2& Rhs) const noexcept;
+    FORCEINLINE CVector2 operator*(const CVector2& RHS) const noexcept;
 
     /**
      * @brief: Returns this vector after component-wise multiplication with this and another vector
      *
-     * @param Rhs: The vector to multiply with
+     * @param RHS: The vector to multiply with
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector2& operator*=(const CVector2& Rhs) noexcept;
+    FORCEINLINE CVector2& operator*=(const CVector2& RHS) noexcept;
 
     /**
      * @brief: Returns the result of multiplying each component of this vector with a scalar
      *
-     * @param Rhs: The scalar to multiply with
+     * @param RHS: The scalar to multiply with
      * @return: A vector with the result of the multiplication
      */
-    FORCEINLINE CVector2 operator*(float Rhs) const noexcept;
+    FORCEINLINE CVector2 operator*(float RHS) const noexcept;
 
     /**
      * @brief: Returns the result of multiplying each component of a vector with a scalar
      *
      * @param Lhs: The scalar to multiply with
-     * @param Rhs: The vector to multiply with
+     * @param RHS: The vector to multiply with
      * @return: A vector with the result of the multiplication
      */
-    friend FORCEINLINE CVector2 operator*(float Lhs, const CVector2& Rhs) noexcept;
+    friend FORCEINLINE CVector2 operator*(float Lhs, const CVector2& RHS) noexcept;
 
     /**
      * @brief: Returns this vector after multiplying each component of this vector with a scalar
      *
-     * @param Rhs: The scalar to multiply with
+     * @param RHS: The scalar to multiply with
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector2 operator*=(float Rhs) noexcept;
+    FORCEINLINE CVector2 operator*=(float RHS) noexcept;
 
     /**
      * @brief: Returns the result of component-wise division with this and another vector
      *
-     * @param Rhs: The vector to divide with
+     * @param RHS: The vector to divide with
      * @return: A vector with the result of the division
      */
-    FORCEINLINE CVector2 operator/(const CVector2& Rhs) const noexcept;
+    FORCEINLINE CVector2 operator/(const CVector2& RHS) const noexcept;
 
     /**
      * @brief: Returns this vector after component-wise division with this and another vector
      *
-     * @param Rhs: The vector to divide with
+     * @param RHS: The vector to divide with
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector2& operator/=(const CVector2& Rhs) noexcept;
+    FORCEINLINE CVector2& operator/=(const CVector2& RHS) noexcept;
 
     /**
      * @brief: Returns the result of dividing each component of this vector and a scalar
      *
-     * @param Rhs: The scalar to divide with
+     * @param RHS: The scalar to divide with
      * @return: A vector with the result of the division
      */
-    FORCEINLINE CVector2 operator/(float Rhs) const noexcept;
+    FORCEINLINE CVector2 operator/(float RHS) const noexcept;
 
     /**
      * @brief: Returns this vector after dividing each component of this vector and a scalar
      *
-     * @param Rhs: The scalar to divide with
+     * @param RHS: The scalar to divide with
      * @return: A reference to this vector
      */
-    FORCEINLINE CVector2& operator/=(float Rhs) noexcept;
+    FORCEINLINE CVector2& operator/=(float RHS) noexcept;
 
     /**
      * @brief: Returns the result after comparing this and another vector
@@ -426,7 +426,7 @@ FORCEINLINE bool CVector2::IsUnitVector() const noexcept
     return (fLengthSquared < NMath::kIsEqualEpsilon);
 }
 
-FORCEINLINE bool CVector2::HasNan() const noexcept
+FORCEINLINE bool CVector2::HasNaN() const noexcept
 {
     for (int i = 0; i < 2; i++)
     {
@@ -454,7 +454,7 @@ FORCEINLINE bool CVector2::HasInfinity() const noexcept
 
 FORCEINLINE bool CVector2::IsValid() const noexcept
 {
-    return !HasNan() && !HasInfinity();
+    return !HasNaN() && !HasInfinity();
 }
 
 FORCEINLINE float CVector2::Length() const noexcept
@@ -490,14 +490,14 @@ FORCEINLINE const float* CVector2::Data() const noexcept
     return reinterpret_cast<const float*>(this);
 }
 
-FORCEINLINE CVector2 Min(const CVector2& Lhs, const CVector2& Rhs) noexcept
+FORCEINLINE CVector2 Min(const CVector2& Lhs, const CVector2& RHS) noexcept
 {
-    return CVector2(NMath::Min(Lhs.x, Rhs.x), NMath::Min(Lhs.y, Rhs.y));
+    return CVector2(NMath::Min(Lhs.x, RHS.x), NMath::Min(Lhs.y, RHS.y));
 }
 
-FORCEINLINE CVector2 Max(const CVector2& Lhs, const CVector2& Rhs) noexcept
+FORCEINLINE CVector2 Max(const CVector2& Lhs, const CVector2& RHS) noexcept
 {
-    return CVector2(NMath::Max(Lhs.x, Rhs.x), NMath::Max(Lhs.y, Rhs.y));
+    return CVector2(NMath::Max(Lhs.x, RHS.x), NMath::Max(Lhs.y, RHS.y));
 }
 
 FORCEINLINE CVector2 Lerp(const CVector2& First, const CVector2& Second, float t) noexcept
@@ -526,89 +526,89 @@ FORCEINLINE CVector2 CVector2::operator-() const noexcept
     return CVector2(-x, -y);
 }
 
-FORCEINLINE CVector2 CVector2::operator+(const CVector2& Rhs) const noexcept
+FORCEINLINE CVector2 CVector2::operator+(const CVector2& RHS) const noexcept
 {
-    return CVector2(x + Rhs.x, y + Rhs.y);
+    return CVector2(x + RHS.x, y + RHS.y);
 }
 
-FORCEINLINE CVector2& CVector2::operator+=(const CVector2& Rhs) noexcept
+FORCEINLINE CVector2& CVector2::operator+=(const CVector2& RHS) noexcept
 {
-    return *this = *this + Rhs;
+    return *this = *this + RHS;
 }
 
-FORCEINLINE CVector2 CVector2::operator+(float Rhs) const noexcept
+FORCEINLINE CVector2 CVector2::operator+(float RHS) const noexcept
 {
-    return CVector2(x + Rhs, y + Rhs);
+    return CVector2(x + RHS, y + RHS);
 }
 
-FORCEINLINE CVector2& CVector2::operator+=(float Rhs) noexcept
+FORCEINLINE CVector2& CVector2::operator+=(float RHS) noexcept
 {
-    return *this = *this + Rhs;
+    return *this = *this + RHS;
 }
 
-FORCEINLINE CVector2 CVector2::operator-(const CVector2& Rhs) const noexcept
+FORCEINLINE CVector2 CVector2::operator-(const CVector2& RHS) const noexcept
 {
-    return CVector2(x - Rhs.x, y - Rhs.y);
+    return CVector2(x - RHS.x, y - RHS.y);
 }
 
-FORCEINLINE CVector2& CVector2::operator-=(const CVector2& Rhs) noexcept
+FORCEINLINE CVector2& CVector2::operator-=(const CVector2& RHS) noexcept
 {
-    return *this = *this - Rhs;
+    return *this = *this - RHS;
 }
 
-FORCEINLINE CVector2 CVector2::operator-(float Rhs) const noexcept
+FORCEINLINE CVector2 CVector2::operator-(float RHS) const noexcept
 {
-    return CVector2(x - Rhs, y - Rhs);
+    return CVector2(x - RHS, y - RHS);
 }
 
-FORCEINLINE CVector2& CVector2::operator-=(float Rhs) noexcept
+FORCEINLINE CVector2& CVector2::operator-=(float RHS) noexcept
 {
-    return *this = *this - Rhs;
+    return *this = *this - RHS;
 }
 
-FORCEINLINE CVector2 CVector2::operator*(const CVector2& Rhs) const noexcept
+FORCEINLINE CVector2 CVector2::operator*(const CVector2& RHS) const noexcept
 {
-    return CVector2(x * Rhs.x, y * Rhs.y);
+    return CVector2(x * RHS.x, y * RHS.y);
 }
 
-FORCEINLINE CVector2& CVector2::operator*=(const CVector2& Rhs) noexcept
+FORCEINLINE CVector2& CVector2::operator*=(const CVector2& RHS) noexcept
 {
-    return *this = *this * Rhs;
+    return *this = *this * RHS;
 }
 
-FORCEINLINE CVector2 CVector2::operator*(float Rhs) const noexcept
+FORCEINLINE CVector2 CVector2::operator*(float RHS) const noexcept
 {
-    return CVector2(x * Rhs, y * Rhs);
+    return CVector2(x * RHS, y * RHS);
 }
 
-FORCEINLINE CVector2 operator*(float Lhs, const CVector2& Rhs) noexcept
+FORCEINLINE CVector2 operator*(float Lhs, const CVector2& RHS) noexcept
 {
-    return CVector2(Lhs * Rhs.x, Lhs * Rhs.y);
+    return CVector2(Lhs * RHS.x, Lhs * RHS.y);
 }
 
-FORCEINLINE CVector2 CVector2::operator*=(float Rhs) noexcept
+FORCEINLINE CVector2 CVector2::operator*=(float RHS) noexcept
 {
-    return *this = *this * Rhs;
+    return *this = *this * RHS;
 }
 
-FORCEINLINE CVector2 CVector2::operator/(const CVector2& Rhs) const noexcept
+FORCEINLINE CVector2 CVector2::operator/(const CVector2& RHS) const noexcept
 {
-    return CVector2(x / Rhs.x, y / Rhs.y);
+    return CVector2(x / RHS.x, y / RHS.y);
 }
 
-FORCEINLINE CVector2& CVector2::operator/=(const CVector2& Rhs) noexcept
+FORCEINLINE CVector2& CVector2::operator/=(const CVector2& RHS) noexcept
 {
-    return *this = *this / Rhs;
+    return *this = *this / RHS;
 }
 
-FORCEINLINE CVector2 CVector2::operator/(float Rhs) const noexcept
+FORCEINLINE CVector2 CVector2::operator/(float RHS) const noexcept
 {
-    return CVector2(x / Rhs, y / Rhs);
+    return CVector2(x / RHS, y / RHS);
 }
 
-FORCEINLINE CVector2& CVector2::operator/=(float Rhs) noexcept
+FORCEINLINE CVector2& CVector2::operator/=(float RHS) noexcept
 {
-    return *this = *this / Rhs;
+    return *this = *this / RHS;
 }
 
 FORCEINLINE float& CVector2::operator[](int Index) noexcept

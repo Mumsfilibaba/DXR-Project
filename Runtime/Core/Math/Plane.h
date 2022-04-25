@@ -166,13 +166,13 @@ FORCEINLINE bool CPlane::IsEqual(const CPlane& Other, float Epsilon) const noexc
 
 #else
 
-    NSIMD::Float128 Espilon128 = NSIMD::Load(Epsilon);
-    Espilon128 = NSIMD::Abs(Espilon128);
+    NVectorOp::Float128 Espilon128 = NVectorOp::Load(Epsilon);
+    Espilon128 = NVectorOp::Abs(Espilon128);
 
-    NSIMD::Float128 Diff = NSIMD::Sub(this, &Other);
-    Diff = NSIMD::Abs(Diff);
+    NVectorOp::Float128 Diff = NVectorOp::Sub(this, &Other);
+    Diff = NVectorOp::Abs(Diff);
 
-    return NSIMD::LessThan(Diff, Espilon128);
+    return NVectorOp::LessThan(Diff, Espilon128);
 
 #endif
 }

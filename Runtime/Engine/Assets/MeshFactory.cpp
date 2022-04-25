@@ -195,8 +195,8 @@ SMeshData CMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
         Sphere.Vertices[i].Position = Position * Radius;
 
         // Calculate uvs
-        Sphere.Vertices[i].TexCoord.y = (NMath::Asin(Sphere.Vertices[i].Position.y) / NMath::PI_F) + 0.5f;
-        Sphere.Vertices[i].TexCoord.x = (NMath::Atan2(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + NMath::PI_F) / (2.0f * NMath::PI_F);
+        Sphere.Vertices[i].TexCoord.y = (NMath::Asin(Sphere.Vertices[i].Position.y) / NMath::kPI_f) + 0.5f;
+        Sphere.Vertices[i].TexCoord.x = (NMath::Atan2(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + NMath::kPI_f) / (2.0f * NMath::kPI_f);
     }
 
     Sphere.Indices.ShrinkToFit();

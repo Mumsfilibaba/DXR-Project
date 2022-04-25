@@ -1142,66 +1142,66 @@ public:
     /**
      * @brief: Copy-assignment operator
      * 
-     * @param Rhs: Array to copy
+     * @param RHS: Array to copy
      * @return: A reference to this container
      */
-    FORCEINLINE TArray& operator=(const TArray& Rhs) noexcept
+    FORCEINLINE TArray& operator=(const TArray& RHS) noexcept
     {
-        Reset(Rhs);
+        Reset(RHS);
         return *this;
     }
 
     /**
      * @brief: Move-assignment operator
      *
-     * @param Rhs: Array to move
+     * @param RHS: Array to move
      * @return: A reference to this container
      */
-    FORCEINLINE TArray& operator=(TArray&& Rhs) noexcept
+    FORCEINLINE TArray& operator=(TArray&& RHS) noexcept
     {
-        MoveFrom(Forward<TArray>(Rhs));
+        MoveFrom(Forward<TArray>(RHS));
         return *this;
     }
 
     /**
      * @brief: Assignment-operator that takes a initializer-list
      * 
-     * @param Rhs: A initializer list to replace the current contents with
+     * @param RHS: A initializer list to replace the current contents with
      * @return: A reference to this container
      */
-    FORCEINLINE TArray& operator=(std::initializer_list<ElementType> Rhs) noexcept
+    FORCEINLINE TArray& operator=(std::initializer_list<ElementType> RHS) noexcept
     {
-        Reset(Rhs);
+        Reset(RHS);
         return *this;
     }
 
     /**
      * @brief: Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
      * 
-     * @param Rhs: Array to compare with
+     * @param RHS: Array to compare with
      * @return: Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& Rhs) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
     {
-        if (Size() != Rhs.Size())
+        if (Size() != RHS.Size())
         {
             return false;
         }
 
-        return CompareRange<ElementType>(Data(), Rhs.Data(), Size());
+        return CompareRange<ElementType>(Data(), RHS.Data(), Size());
     }
 
     /**
      * @brief: Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
      *
-     * @param Rhs: Array to compare with
+     * @param RHS: Array to compare with
      * @return: Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& Rhs) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /**

@@ -190,24 +190,24 @@ public:
     /**
      * @brief: Copy-assignment operator
      * 
-     * @param Rhs: Delegate to copy from
+     * @param RHS: Delegate to copy from
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE CMulticastDelegateBase& operator=(const CMulticastDelegateBase& Rhs)
+    FORCEINLINE CMulticastDelegateBase& operator=(const CMulticastDelegateBase& RHS)
     {
-        CopyFrom(Rhs);
+        CopyFrom(RHS);
         return *this;
     }
 
     /**
      * @brief: Move-assignment operator
      *
-     * @param Rhs: Delegate to move from
+     * @param RHS: Delegate to move from
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE CMulticastDelegateBase& operator=(CMulticastDelegateBase&& Rhs)
+    FORCEINLINE CMulticastDelegateBase& operator=(CMulticastDelegateBase&& RHS)
     {
-        MoveFrom(Forward<CMulticastDelegateBase>(Rhs));
+        MoveFrom(Forward<CMulticastDelegateBase>(RHS));
         return *this;
     }
 

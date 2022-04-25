@@ -309,21 +309,21 @@ public:
     /**
      * @brief: Transforms a 2-D vector
      *
-     * @param Rhs: The vector to transform
+     * @param RHS: The vector to transform
      * @return: A vector containing the transformation
      */
-    FORCEINLINE CVector2 operator*(const CVector2& Rhs) const noexcept
+    FORCEINLINE CVector2 operator*(const CVector2& RHS) const noexcept
     {
 #if defined(DISABLE_SIMD)
         CVector2 Result;
-        Result.x = (Rhs[0] * m00) + (Rhs[1] * m10);
-        Result.y = (Rhs[0] * m01) + (Rhs[1] * m11);
+        Result.x = (RHS[0] * m00) + (RHS[1] * m10);
+        Result.y = (RHS[0] * m01) + (RHS[1] * m11);
         return Result;
 #else
         CVector2 Result;
 
-        NVectorOp::Float128 X128  = NVectorOp::LoadSingle(Rhs.x);
-        NVectorOp::Float128 Y128  = NVectorOp::LoadSingle(Rhs.y);
+        NVectorOp::Float128 X128  = NVectorOp::LoadSingle(RHS.x);
+        NVectorOp::Float128 Y128  = NVectorOp::LoadSingle(RHS.y);
         NVectorOp::Float128 Temp0 = NVectorOp::Shuffle0011<0, 0, 0, 0>(X128, Y128);
         NVectorOp::Float128 Temp1 = NVectorOp::Mul(this, Temp0);
         Temp0 = NVectorOp::Shuffle<2, 3, 2, 3>(Temp1);
@@ -338,24 +338,24 @@ public:
     /**
      * @brief: Multiplies a matrix with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return: A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix2 operator*(const CMatrix2& Rhs) const noexcept
+    FORCEINLINE CMatrix2 operator*(const CMatrix2& RHS) const noexcept
     {
 #if defined(DISABLE_SIMD)
         CMatrix2 Result;
-        Result.m00 = (m00 * Rhs.m00) + (m01 * Rhs.m10);
-        Result.m01 = (m01 * Rhs.m11) + (m00 * Rhs.m01);
+        Result.m00 = (m00 * RHS.m00) + (m01 * RHS.m10);
+        Result.m01 = (m01 * RHS.m11) + (m00 * RHS.m01);
 
-        Result.m10 = (m10 * Rhs.m00) + (m11 * Rhs.m10);
-        Result.m11 = (m11 * Rhs.m11) + (m10 * Rhs.m01);
+        Result.m10 = (m10 * RHS.m00) + (m11 * RHS.m10);
+        Result.m11 = (m11 * RHS.m11) + (m10 * RHS.m01);
         return Result;
 #else
         CMatrix2 Result;
 
         NVectorOp::Float128 This = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Temp = NVectorOp::LoadAligned(&Rhs);
+        NVectorOp::Float128 Temp = NVectorOp::LoadAligned(&RHS);
         Temp = NVectorOp::Mat2Mul(This, Temp);
 
         NVectorOp::StoreAligned(Temp, &Result);
@@ -366,34 +366,34 @@ public:
     /**
      * @brief: Multiplies this matrix with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator*=(const CMatrix2& Rhs) noexcept
+    FORCEINLINE CMatrix2& operator*=(const CMatrix2& RHS) noexcept
     {
-        return *this = *this * Rhs;
+        return *this = *this * RHS;
     }
 
     /**
      * @brief: Multiplies a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return: A matrix containing the result of the multiplication
      */
-    FORCEINLINE CMatrix2 operator*(float Rhs) const noexcept
+    FORCEINLINE CMatrix2 operator*(float RHS) const noexcept
     {
 #if defined(DISABLE_SIMD)
         CMatrix2 Result;
-        Result.m00 = m00 * Rhs;
-        Result.m01 = m01 * Rhs;
+        Result.m00 = m00 * RHS;
+        Result.m01 = m01 * RHS;
 
-        Result.m10 = m10 * Rhs;
-        Result.m11 = m11 * Rhs;
+        Result.m10 = m10 * RHS;
+        Result.m11 = m11 * RHS;
         return Result;
 #else
         CMatrix2 Result;
 
-        NVectorOp::Float128 Temp = NVectorOp::Load(Rhs);
+        NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
         Temp = NVectorOp::Mul(this, Temp);
 
         NVectorOp::StoreAligned(Temp, &Result);
@@ -404,33 +404,33 @@ public:
     /**
      * @brief: Multiplies this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator*=(float Rhs) noexcept
+    FORCEINLINE CMatrix2& operator*=(float RHS) noexcept
     {
-        return *this = *this * Rhs;
+        return *this = *this * RHS;
     }
 
     /**
      * @brief: Adds a matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return: A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix2 operator+(const CMatrix2& Rhs) const noexcept
+    FORCEINLINE CMatrix2 operator+(const CMatrix2& RHS) const noexcept
     {
 #if defined(DISABLE_SIMD)
         CMatrix2 Result;
-        Result.m00 = m00 + Rhs.m00;
-        Result.m01 = m01 + Rhs.m01;
+        Result.m00 = m00 + RHS.m00;
+        Result.m01 = m01 + RHS.m01;
 
-        Result.m10 = m10 + Rhs.m10;
-        Result.m11 = m11 + Rhs.m11;
+        Result.m10 = m10 + RHS.m10;
+        Result.m11 = m11 + RHS.m11;
         return Result;
 #else
         CMatrix2 Result;
-        NVectorOp::Float128 Temp = NVectorOp::Add(this, &Rhs);
+        NVectorOp::Float128 Temp = NVectorOp::Add(this, &RHS);
         NVectorOp::StoreAligned(Temp, &Result);
         return Result;
 #endif
@@ -439,34 +439,34 @@ public:
     /**
      * @brief: Adds this matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator+=(const CMatrix2& Rhs) noexcept
+    FORCEINLINE CMatrix2& operator+=(const CMatrix2& RHS) noexcept
     {
-        return *this = *this + Rhs;
+        return *this = *this + RHS;
     }
 
     /**
      * @brief: Adds a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return: A matrix containing the result of the addition
      */
-    FORCEINLINE CMatrix2 operator+(float Rhs) const noexcept
+    FORCEINLINE CMatrix2 operator+(float RHS) const noexcept
     {
 #if defined(DISABLE_SIMD)
         CMatrix2 Result;
-        Result.m00 = m00 + Rhs;
-        Result.m01 = m01 + Rhs;
+        Result.m00 = m00 + RHS;
+        Result.m01 = m01 + RHS;
 
-        Result.m10 = m10 + Rhs;
-        Result.m11 = m11 + Rhs;
+        Result.m10 = m10 + RHS;
+        Result.m11 = m11 + RHS;
         return Result;
 #else
         CMatrix2 Result;
 
-        NVectorOp::Float128 Temp = NVectorOp::Load(Rhs);
+        NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
         Temp = NVectorOp::Add(this, Temp);
 
         NVectorOp::StoreAligned(Temp, &Result);
@@ -477,33 +477,33 @@ public:
     /**
      * @brief: Adds this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator+=(float Rhs) noexcept
+    FORCEINLINE CMatrix2& operator+=(float RHS) noexcept
     {
-        return *this = *this + Rhs;
+        return *this = *this + RHS;
     }
 
     /**
      * @brief: Subtracts a matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return: A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix2 operator-(const CMatrix2& Rhs) const noexcept
+    FORCEINLINE CMatrix2 operator-(const CMatrix2& RHS) const noexcept
     {
 #if defined(DISABLE_SIMD)
         CMatrix2 Result;
-        Result.m00 = m00 - Rhs.m00;
-        Result.m01 = m01 - Rhs.m01;
+        Result.m00 = m00 - RHS.m00;
+        Result.m01 = m01 - RHS.m01;
 
-        Result.m10 = m10 - Rhs.m10;
-        Result.m11 = m11 - Rhs.m11;
+        Result.m10 = m10 - RHS.m10;
+        Result.m11 = m11 - RHS.m11;
         return Result;
 #else
         CMatrix2 Result;
-        NVectorOp::Float128 Temp = NVectorOp::Sub(this, &Rhs);
+        NVectorOp::Float128 Temp = NVectorOp::Sub(this, &RHS);
         NVectorOp::StoreAligned(Temp, &Result);
         return Result;
 #endif
@@ -512,34 +512,34 @@ public:
     /**
      * @brief: Subtracts this matrix component-wise with another matrix
      *
-     * @param Rhs: The other matrix
+     * @param RHS: The other matrix
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator-=(const CMatrix2& Rhs) noexcept
+    FORCEINLINE CMatrix2& operator-=(const CMatrix2& RHS) noexcept
     {
-        return *this = *this - Rhs;
+        return *this = *this - RHS;
     }
 
     /**
      * @brief: Subtracts a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return: A matrix containing the result of the subtraction
      */
-    FORCEINLINE CMatrix2 operator-(float Rhs) const noexcept
+    FORCEINLINE CMatrix2 operator-(float RHS) const noexcept
     {
 #if defined(DISABLE_SIMD)
         CMatrix2 Result;
-        Result.m00 = m00 - Rhs;
-        Result.m01 = m01 - Rhs;
+        Result.m00 = m00 - RHS;
+        Result.m01 = m01 - RHS;
 
-        Result.m10 = m10 - Rhs;
-        Result.m11 = m11 - Rhs;
+        Result.m10 = m10 - RHS;
+        Result.m11 = m11 - RHS;
         return Result;
 #else
         CMatrix2 Result;
 
-        NVectorOp::Float128 Temp = NVectorOp::Load(Rhs);
+        NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
         Temp = NVectorOp::Sub(this, Temp);
 
         NVectorOp::StoreAligned(Temp, &Result);
@@ -550,24 +550,24 @@ public:
     /**
      * @brief: Subtracts this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator-=(float Rhs) noexcept
+    FORCEINLINE CMatrix2& operator-=(float RHS) noexcept
     {
-        return *this = *this - Rhs;
+        return *this = *this - RHS;
     }
 
     /**
      * @brief: Divides a matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return: A matrix containing the result of the division
      */
-    FORCEINLINE CMatrix2 operator/(float Rhs) const noexcept
+    FORCEINLINE CMatrix2 operator/(float RHS) const noexcept
     {
 #if defined(DISABLE_SIMD)
-        float Recip = 1.0f / Rhs;
+        float Recip = 1.0f / RHS;
 
         CMatrix2 Result;
         Result.m00 = m00 * Recip;
@@ -580,7 +580,7 @@ public:
 #else
         CMatrix2 Result;
 
-        NVectorOp::Float128 Temp = NVectorOp::Load(Rhs);
+        NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
         Temp = NVectorOp::Div(this, Temp);
 
         NVectorOp::StoreAligned(Temp, &Result);
@@ -591,12 +591,12 @@ public:
     /**
      * @brief: Divides this matrix component-wise with a scalar
      *
-     * @param Rhs: The scalar
+     * @param RHS: The scalar
      * @return: A reference to this matrix
      */
-    FORCEINLINE CMatrix2& operator/=(float Rhs) noexcept
+    FORCEINLINE CMatrix2& operator/=(float RHS) noexcept
     {
-        return *this = *this / Rhs;
+        return *this = *this / RHS;
     }
 
     /**

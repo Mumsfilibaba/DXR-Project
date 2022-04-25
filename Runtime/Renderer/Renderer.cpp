@@ -119,7 +119,7 @@ bool CRenderer::Init()
         CreateInfo.AddressV = ESamplerMode::Border;
         CreateInfo.AddressW = ESamplerMode::Border;
         CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
-        CreateInfo.BorderColor = SColorF(1.0f, 1.0f, 1.0f, 1.0f);
+        CreateInfo.BorderColor = CFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         Resources.DirectionalLightShadowSampler = RHICreateSamplerState(CreateInfo);
         if (!Resources.DirectionalLightShadowSampler)
