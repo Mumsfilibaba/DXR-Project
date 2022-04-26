@@ -36,7 +36,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Interface that all engine modules must implement
+// IEngineModule
 
 typedef class IEngineModule* (*PFNLoadEngineModule)();
 
@@ -46,70 +46,65 @@ public:
 
     virtual ~IEngineModule() = default;
 
-    /**
-     * @brief: Called when the module is first loaded into the application
-     *
-     * @return: Returns true if the load is successful
-     */
+    /** @return: Returns true if the load is successful */
     virtual bool Load() = 0;
 
-    /**
-     * @brief: Called before the module is unloaded by the application
-     *
-     * @return: Returns true if the unload is successful
-     */
+    /** @return: Returns true if the unload is successful */
     virtual bool Unload() = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Default engine module that returns true for Load and Unload by default 
+// CDefaultEngineModule
 
 class CDefaultEngineModule : public IEngineModule
 {
 public:
 
-    /**
-     * @brief: Called when the module is first loaded into the application
-     *
-     * @return: Returns true if the load is successful
-     */
+    /** @return: Returns true if the load is successful */
     virtual bool Load() override { return true; }
 
-    /**
-     * @brief: Called before the module is unloaded by the application
-     *
-     * @return: Returns true if the unload is successful
-     */
+    /** @return: Returns true if the unload is successful */
     virtual bool Unload() override { return true; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ModuleManager that manages the modules used by the engine
+// CModuleManager
 
 typedef PlatformLibrary::PlatformHandle PlatformModule;
 
 class CORE_API CModuleManager
 {
+private:
+
+    friend class TOptional<CModuleManager>;
+
+    struct SModule
+    {
+        SModule() = default;
+
+        SModule(const String& InName, IEngineModule* InInterface)
+            : Name(InName)
+            , Interface(InInterface)
+            , Handle(0)
+        { }
+
+        String         Name;
+        IEngineModule* Interface;
+        PlatformModule Handle;
+    };
+
 public:
 
     // Delegate for when a new module is loaded into the engine, name and IEngineModule pointer is the arguments
     DECLARE_RETURN_DELEGATE(CInitializeStaticModuleDelegate, IEngineModule*);
 
-    /**
-     * @brief: Retrieve the ModuleManager instance
-     *
-     * @return: Returns a reference to the ModuleManager
-     */
+    /** @return: Returns a reference to the ModuleManager */
     static CModuleManager& Get();
 
-    /**
-     * @brief: Releases all modules that are loaded
-     */
+    /** @brief: Releases all modules that are loaded */
     static void ReleaseAllLoadedModules();
 
-    /**
-     * @brief: Destroy the module manager, after this no more modules can be loaded
-     */
+    /** @brief: Destroy the module manager, after this no more modules can be loaded */
     static void Destroy();
 
     /**
@@ -159,11 +154,7 @@ public:
      */
     void UnloadModule(const char* ModuleName);
 
-    /**
-     * @brief: Retrieve the number of loaded modules
-     * 
-     * @return: Returns the number of loaded modules
-     */
+    /** @return: Returns the number of loaded modules */
     uint32 GetLoadedModuleCount();
 
     /** Delegate for when a new module is loaded into the engine, name and IEngineModule pointer is the arguments */
@@ -248,44 +239,12 @@ public:
 
 private:
 
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Stores information about a loaded engine module
-
-    struct SModule
-    {
-        SModule() = default;
-
-        SModule(const String& InName, IEngineModule* InInterface)
-            : Name(InName)
-            , Interface(InInterface)
-            , Handle(0)
-        {
-        }
-
-        /** Name of the module */
-        String Name;
-        /** The actual interface */
-        IEngineModule* Interface;
-        /** Platform Handle, this is zero if the module is loaded statically and is the only time it should be zero */
-        PlatformModule Handle;
-    };
-
-    friend class TOptional<CModuleManager>;
-
-    /** Retrieve the static instance */
     static TOptional<CModuleManager>& GetModuleManagerInstance();
 
-    CModuleManager() = default;
-    ~CModuleManager() = default;
-
-    /** Returns the index of the specified module, if not found it returns -1 */
-    int32 GetModuleIndex(const char* ModuleName);
-
-    /** Returns a delegate to initialize a static module, if not found it returns nullptr */ 
     CInitializeStaticModuleDelegate* GetStaticModuleDelegate(const char* ModuleName);
 
-    /** Release all modules that are loaded */
+    int32 GetModuleIndex(const char* ModuleName);
+
     void ReleaseAllModules();
 
     CModuleLoadedDelegate ModuleLoadedDelegate;
@@ -295,7 +254,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Class that registers a static engine module */
+// TStaticModuleInitializer
 
 template<typename ModuleClass>
 class TStaticModuleInitializer
@@ -315,11 +274,7 @@ public:
         CModuleManager::Get().RegisterStaticModule(ModuleName, InitializeDelegate);
     }
 
-    /**
-     * @brief: Creates the ModuleInterface
-     * 
-     * @return: The newly created module interface
-     */
+    /** @return: The newly created module interface */
     IEngineModule* MakeModuleInterface()
     {
         return dbg_new ModuleClass();

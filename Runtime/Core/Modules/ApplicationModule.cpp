@@ -5,7 +5,7 @@
 CORE_API CApplicationModule* GApplicationModule;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ApplicationModule
+// CApplicationModule
 
 bool CApplicationModule::Init()
 {
