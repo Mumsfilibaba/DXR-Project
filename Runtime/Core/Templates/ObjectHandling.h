@@ -21,7 +21,7 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type DefaultConstruc
     {
         new(StartAddress) T();
         StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-        Count--;
+        --Count;
     }
 }
 
@@ -53,7 +53,7 @@ FORCEINLINE void ConstructRangeFrom(void* restrict_ptr StartAddress, uint32 Coun
     {
         new(StartAddress) T(Element);
         StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-        Count--;
+        --Count;
     }
 }
 
@@ -67,7 +67,7 @@ FORCEINLINE void ConstructRangeFrom(void* restrict_ptr StartAddress, uint32 Coun
     {
         new(StartAddress) T(Forward<T>(Element));
         StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-        Count--;
+        --Count;
     }
 }
 
@@ -81,8 +81,8 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyConstructRa
     {
         new(StartAddress) T(*Source);
         StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-        Source++;
-        Count--;
+        ++Source;
+        --Count;
     }
 }
 
@@ -113,9 +113,9 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type CopyAssignRange
     while (Count)
     {
         *Destination = *Source;
-        Destination++;
-        Source++;
-        Count--;
+        ++Destination;
+        ++Source;
+        --Count;
     }
 }
 
@@ -147,8 +147,8 @@ FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<T>>::Value>::Type MoveConst
     {
         new(StartAddress) T(Move(*Source));
         StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-        Source++;
-        Count--;
+        ++Source;
+        --Count;
     }
 }
 
@@ -179,9 +179,9 @@ FORCEINLINE typename TEnableIf<TNot<TIsReallocatable<T>>::Value>::Type MoveAssig
     while (Count)
     {
         *Destination = Move(*Source);
-        Destination++;
-        Source++;
-        Count--;
+        ++Destination;
+        ++Source;
+        --Count;
     }
 }
 
@@ -212,7 +212,7 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value>::Type DestructRange(c
     while (Count)
     {
         (StartObject++)->~T();
-        Count--;
+        --Count;
     }
 }
 
@@ -247,13 +247,13 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsMoveConstructa
 
         while (Count)
         {
-            Source--;
+            --Source;
             StartAddress = reinterpret_cast<T*>(StartAddress) - 1;
 
             new(StartAddress) T(Move(*Source));
             Source->~T();
 
-            Count--;
+            --Count;
         }
     }
     else
@@ -264,9 +264,9 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsMoveConstructa
             Source->~T();
 
             StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-            Source++;
+            ++Source;
 
-            Count--;
+            --Count;
         }
     }
 }
@@ -286,12 +286,12 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsCopyConstructa
         while (Count)
         {
             StartAddress = reinterpret_cast<T*>(StartAddress) - 1;
-            Source--;
+            --Source;
 
             new(StartAddress) T(*Source);
             Source->~T();
 
-            Count--;
+            --Count;
         }
     }
     else
@@ -302,9 +302,9 @@ FORCEINLINE typename TEnableIf<TAnd<TNot<TIsReallocatable<T>>, TIsCopyConstructa
             Source->~T();
 
             StartAddress = reinterpret_cast<T*>(StartAddress) + 1;
-            Source++;
+            ++Source;
 
-            Count--;
+            --Count;
         }
     }
 }
@@ -331,7 +331,7 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value, bool>::Type CompareRa
             return false;
         }
 
-        Count--;
+        --Count;
     }
 
     return true;
@@ -344,4 +344,18 @@ template<typename T>
 FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value, bool>::Type CompareRange(const T* LHS, const T* RHS, uint32 Count) noexcept
 {
     return CMemory::Memcmp<T>(LHS, RHS, Count);
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Fill objects in range with the copy assignment operator
+
+template<typename T>
+FORCEINLINE void FillRange(T* restrict_ptr Destination, const T& Source, uint32 Count) noexcept
+{
+    while (Count)
+    {
+        *Destination = Source;
+        ++Destination;
+        --Count;
+    }
 }

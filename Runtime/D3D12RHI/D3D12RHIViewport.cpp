@@ -43,34 +43,34 @@ bool CD3D12RHIViewport::Init()
     Flags = GetDevice()->CanAllowTearing() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
-    const uint32 NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
-    const DXGI_FORMAT NativeFormat = ConvertFormat(Format);
+    const uint32      NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
+    const DXGI_FORMAT NativeFormat        = ConvertFormat(Format);
 
     Assert(Width > 0 && Height > 0);
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
     CMemory::Memzero(&SwapChainDesc);
 
-    SwapChainDesc.Width = Width;
-    SwapChainDesc.Height = Height;
-    SwapChainDesc.Format = NativeFormat;
-    SwapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    SwapChainDesc.BufferCount = NumSwapChainBuffers;
-    SwapChainDesc.SampleDesc.Count = 1;
+    SwapChainDesc.Width              = Width;
+    SwapChainDesc.Height             = Height;
+    SwapChainDesc.Format             = NativeFormat;
+    SwapChainDesc.BufferUsage        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    SwapChainDesc.BufferCount        = NumSwapChainBuffers;
+    SwapChainDesc.SampleDesc.Count   = 1;
     SwapChainDesc.SampleDesc.Quality = 0;
-    SwapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-    SwapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-    SwapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-    SwapChainDesc.Flags = Flags;
+    SwapChainDesc.Scaling            = DXGI_SCALING_STRETCH;
+    SwapChainDesc.SwapEffect         = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+    SwapChainDesc.AlphaMode          = DXGI_ALPHA_MODE_IGNORE;
+    SwapChainDesc.Flags              = Flags;
 
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc;
     CMemory::Memzero(&FullscreenDesc);
 
-    FullscreenDesc.RefreshRate.Numerator = 0;
+    FullscreenDesc.RefreshRate.Numerator   = 0;
     FullscreenDesc.RefreshRate.Denominator = 1;
-    FullscreenDesc.Scaling = DXGI_MODE_SCALING_STRETCHED;
-    FullscreenDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-    FullscreenDesc.Windowed = true;
+    FullscreenDesc.Scaling                 = DXGI_MODE_SCALING_STRETCHED;
+    FullscreenDesc.ScanlineOrdering        = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    FullscreenDesc.Windowed                = true;
 
     TComPtr<IDXGISwapChain1> TempSwapChain;
     HRESULT Result = GetDevice()->GetFactory()->CreateSwapChainForHwnd(CmdContext->GetQueue().GetQueue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
@@ -231,9 +231,9 @@ bool CD3D12RHIViewport::RetriveBackBuffers()
         D3D12_RENDER_TARGET_VIEW_DESC Desc;
         CMemory::Memzero(&Desc);
 
-        Desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-        Desc.Format = BackBuffers[i]->GetNativeFormat();
-        Desc.Texture2D.MipSlice = 0;
+        Desc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
+        Desc.Format               = BackBuffers[i]->GetNativeFormat();
+        Desc.Texture2D.MipSlice   = 0;
         Desc.Texture2D.PlaneSlice = 0;
 
         if (!BackBufferViews[i]->CreateView(BackBuffers[i]->GetResource(), Desc))

@@ -53,9 +53,9 @@ void CD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource
         D3D12_RESOURCE_BARRIER Barrier;
         CMemory::Memzero(&Barrier);
 
-        Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        Barrier.Transition.pResource = Resource;
-        Barrier.Transition.StateAfter = AfterState;
+        Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        Barrier.Transition.pResource   = Resource;
+        Barrier.Transition.StateAfter  = AfterState;
         Barrier.Transition.StateBefore = BeforeState;
         Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
@@ -93,22 +93,22 @@ bool CD3D12GPUResourceUploader::Reserve(uint32 InSizeInBytes)
     D3D12_HEAP_PROPERTIES HeapProperties;
     CMemory::Memzero(&HeapProperties);
 
-    HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
+    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
     D3D12_RESOURCE_DESC Desc;
     CMemory::Memzero(&Desc);
 
-    Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-    Desc.Format = DXGI_FORMAT_UNKNOWN;
-    Desc.Width = InSizeInBytes;
-    Desc.Height = 1;
-    Desc.DepthOrArraySize = 1;
-    Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.MipLevels = 1;
-    Desc.SampleDesc.Count = 1;
+    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    Desc.Flags              = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+    Desc.Format             = DXGI_FORMAT_UNKNOWN;
+    Desc.Width              = InSizeInBytes;
+    Desc.Height             = 1;
+    Desc.DepthOrArraySize   = 1;
+    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    Desc.MipLevels          = 1;
+    Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
     HRESULT Result = GetDevice()->CreateCommitedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&Resource));
@@ -117,7 +117,7 @@ bool CD3D12GPUResourceUploader::Reserve(uint32 InSizeInBytes)
         Resource->SetName(L"[D3D12GPUResourceUploader] Buffer");
         Resource->Map(0, nullptr, reinterpret_cast<void**>(&MappedMemory));
 
-        SizeInBytes = InSizeInBytes;
+        SizeInBytes   = InSizeInBytes;
         OffsetInBytes = 0;
         return true;
     }
@@ -777,21 +777,21 @@ void CD3D12RHICommandContext::UpdateTexture2D(CRHITexture2D* Destination, uint32
         D3D12_TEXTURE_COPY_LOCATION SourceLocation;
         CMemory::Memzero(&SourceLocation);
 
-        SourceLocation.pResource = GpuResourceUploader.GetGpuResource();
-        SourceLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-        SourceLocation.PlacedFootprint.Footprint.Format = NativeFormat;
-        SourceLocation.PlacedFootprint.Footprint.Width = Width;
-        SourceLocation.PlacedFootprint.Footprint.Height = Height;
-        SourceLocation.PlacedFootprint.Footprint.Depth = 1;
+        SourceLocation.pResource                          = GpuResourceUploader.GetGpuResource();
+        SourceLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+        SourceLocation.PlacedFootprint.Footprint.Format   = NativeFormat;
+        SourceLocation.PlacedFootprint.Footprint.Width    = Width;
+        SourceLocation.PlacedFootprint.Footprint.Height   = Height;
+        SourceLocation.PlacedFootprint.Footprint.Depth    = 1;
         SourceLocation.PlacedFootprint.Footprint.RowPitch = RowPitch;
-        SourceLocation.PlacedFootprint.Offset = Allocation.ResourceOffset;
+        SourceLocation.PlacedFootprint.Offset             = Allocation.ResourceOffset;
 
         // TODO: Miplevel may not be the correct subresource
         D3D12_TEXTURE_COPY_LOCATION DestLocation;
         CMemory::Memzero(&DestLocation);
 
-        DestLocation.pResource = DxDestination->GetResource()->GetResource();
-        DestLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+        DestLocation.pResource        = DxDestination->GetResource()->GetResource();
+        DestLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
         DestLocation.SubresourceIndex = MipLevel;
 
         CommandList.CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
@@ -833,30 +833,30 @@ void CD3D12RHICommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITe
     D3D12_ERROR(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 
     CD3D12BaseTexture* DxDestination = D3D12TextureCast(Destination);
-    CD3D12BaseTexture* DxSource = D3D12TextureCast(Source);
+    CD3D12BaseTexture* DxSource      = D3D12TextureCast(Source);
 
     // Source
     D3D12_TEXTURE_COPY_LOCATION SourceLocation;
     CMemory::Memzero(&SourceLocation);
 
-    SourceLocation.pResource = DxSource->GetResource()->GetResource();
-    SourceLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    SourceLocation.pResource        = DxSource->GetResource()->GetResource();
+    SourceLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     SourceLocation.SubresourceIndex = CopyInfo.Source.SubresourceIndex;
 
     D3D12_BOX SourceBox;
-    SourceBox.left = CopyInfo.Source.x;
-    SourceBox.right = CopyInfo.Source.x + CopyInfo.Width;
+    SourceBox.left   = CopyInfo.Source.x;
+    SourceBox.right  = CopyInfo.Source.x + CopyInfo.Width;
     SourceBox.bottom = CopyInfo.Source.y;
-    SourceBox.top = CopyInfo.Source.y + CopyInfo.Height;
-    SourceBox.front = CopyInfo.Source.z;
-    SourceBox.back = CopyInfo.Source.z + CopyInfo.Depth;
+    SourceBox.top    = CopyInfo.Source.y + CopyInfo.Height;
+    SourceBox.front  = CopyInfo.Source.z;
+    SourceBox.back   = CopyInfo.Source.z + CopyInfo.Depth;
 
     // Destination
     D3D12_TEXTURE_COPY_LOCATION DestinationLocation;
     CMemory::Memzero(&DestinationLocation);
 
-    DestinationLocation.pResource = DxDestination->GetResource()->GetResource();
-    DestinationLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    DestinationLocation.pResource        = DxDestination->GetResource()->GetResource();
+    DestinationLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     DestinationLocation.SubresourceIndex = CopyInfo.Destination.SubresourceIndex;
 
     FlushResourceBarriers();
@@ -1049,19 +1049,19 @@ void CD3D12RHICommandContext::GenerateMips(CRHITexture* Texture)
     D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
     CMemory::Memzero(&SrvDesc);
 
-    SrvDesc.Format = Desc.Format;
+    SrvDesc.Format                  = Desc.Format;
     SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     if (bIsTextureCube)
     {
-        SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-        SrvDesc.TextureCube.MipLevels = Desc.MipLevels;
-        SrvDesc.TextureCube.MostDetailedMip = 0;
+        SrvDesc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
+        SrvDesc.TextureCube.MipLevels           = Desc.MipLevels;
+        SrvDesc.TextureCube.MostDetailedMip     = 0;
         SrvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
     }
     else
     {
-        SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        SrvDesc.Texture2D.MipLevels = Desc.MipLevels;
+        SrvDesc.ViewDimension             = D3D12_SRV_DIMENSION_TEXTURE2D;
+        SrvDesc.Texture2D.MipLevels       = Desc.MipLevels;
         SrvDesc.Texture2D.MostDetailedMip = 0;
     }
 
@@ -1071,20 +1071,20 @@ void CD3D12RHICommandContext::GenerateMips(CRHITexture* Texture)
     UavDesc.Format = Desc.Format;
     if (bIsTextureCube)
     {
-        UavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-        UavDesc.Texture2DArray.ArraySize = 6;
+        UavDesc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+        UavDesc.Texture2DArray.ArraySize       = 6;
         UavDesc.Texture2DArray.FirstArraySlice = 0;
-        UavDesc.Texture2DArray.PlaneSlice = 0;
+        UavDesc.Texture2DArray.PlaneSlice      = 0;
     }
     else
     {
-        UavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+        UavDesc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
         UavDesc.Texture2D.PlaneSlice = 0;
     }
 
-    const uint32 MipLevelsPerDispatch = 4;
+    const uint32 MipLevelsPerDispatch     = 4;
     const uint32 UavDescriptorHandleCount = NMath::AlignUp<uint32>(Desc.MipLevels, MipLevelsPerDispatch);
-    const uint32 NumDispatches = UavDescriptorHandleCount / MipLevelsPerDispatch;
+    const uint32 NumDispatches            = UavDescriptorHandleCount / MipLevelsPerDispatch;
 
     CD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
 
@@ -1336,12 +1336,12 @@ void CD3D12RHICommandContext::DispatchRays(CRHIRayTracingScene* RayTracingScene,
         CMemory::Memzero(&RayDispatchDesc);
 
         RayDispatchDesc.RayGenerationShaderRecord = DxScene->GetRayGenShaderRecord();
-        RayDispatchDesc.MissShaderTable = DxScene->GetMissShaderTable();
-        RayDispatchDesc.HitGroupTable = DxScene->GetHitGroupTable();
+        RayDispatchDesc.MissShaderTable           = DxScene->GetMissShaderTable();
+        RayDispatchDesc.HitGroupTable             = DxScene->GetHitGroupTable();
 
-        RayDispatchDesc.Width = Width;
+        RayDispatchDesc.Width  = Width;
         RayDispatchDesc.Height = Height;
-        RayDispatchDesc.Depth = Depth;
+        RayDispatchDesc.Depth  = Depth;
 
         DXRCommandList->SetPipelineState1(DxPipelineState->GetStateObject());
         DXRCommandList->DispatchRays(&RayDispatchDesc);

@@ -80,11 +80,11 @@ bool CWindowsApplication::RegisterWindowClass()
     WNDCLASS WindowClass;
     CMemory::Memzero(&WindowClass);
 
-    WindowClass.hInstance = InstanceHandle;
+    WindowClass.hInstance     = InstanceHandle;
     WindowClass.lpszClassName = CWindowsApplication::GetWindowClassName();
     WindowClass.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
-    WindowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-    WindowClass.lpfnWndProc = CWindowsApplication::StaticMessageProc;
+    WindowClass.hCursor       = LoadCursor(NULL, IDC_ARROW);
+    WindowClass.lpfnWndProc   = CWindowsApplication::StaticMessageProc;
 
     ATOM ClassAtom = RegisterClass(&WindowClass);
     if (ClassAtom == 0)
@@ -101,15 +101,15 @@ bool CWindowsApplication::RegisterRawInputDevices(HWND Window)
     constexpr uint32 DeviceCount = 1;
 
     RAWINPUTDEVICE Devices[DeviceCount];
-    CMemory::Memzero(Devices, sizeof(Devices));
+    CMemory::Memzero(Devices, DeviceCount);
 
     // Mouse
-    Devices[0].dwFlags = 0;
-    Devices[0].hwndTarget = Window;
-    Devices[0].usUsage = 0x02;
+    Devices[0].dwFlags     = 0;
+    Devices[0].hwndTarget  = Window;
+    Devices[0].usUsage     = 0x02;
     Devices[0].usUsagePage = 0x01;
 
-    bool bResult = !!::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
+    const bool bResult = !!::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
     if (!bResult)
     {
         LOG_ERROR("[CWindowsApplication] Failed to register Raw Input devices");
@@ -127,15 +127,15 @@ bool CWindowsApplication::UnregisterRawInputDevices()
     constexpr uint32 DeviceCount = 1;
 
     RAWINPUTDEVICE Devices[DeviceCount];
-    CMemory::Memzero(Devices, sizeof(Devices));
+    CMemory::Memzero(Devices, DeviceCount);
 
     // Mouse
-    Devices[0].dwFlags = RIDEV_REMOVE;
-    Devices[0].hwndTarget = 0;
-    Devices[0].usUsage = 0x02;
+    Devices[0].dwFlags     = RIDEV_REMOVE;
+    Devices[0].hwndTarget  = 0;
+    Devices[0].usUsage     = 0x02;
     Devices[0].usUsagePage = 0x01;
 
-    bool bResult = !!::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
+    const bool bResult = !!::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
     if (!bResult)
     {
         LOG_ERROR("[CWindowsApplication] Failed to unregister Raw Input devices");
@@ -416,8 +416,8 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
             TRACKMOUSEEVENT TrackEvent;
             CMemory::Memzero(&TrackEvent);
 
-            TrackEvent.cbSize = sizeof(TRACKMOUSEEVENT);
-            TrackEvent.dwFlags = TME_LEAVE;
+            TrackEvent.cbSize    = sizeof(TRACKMOUSEEVENT);
+            TrackEvent.dwFlags   = TME_LEAVE;
             TrackEvent.hwndTrack = Window;
             TrackMouseEvent(&TrackEvent);
 

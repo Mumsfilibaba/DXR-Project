@@ -21,10 +21,10 @@ public:
         D3D12_COMMAND_QUEUE_DESC QueueDesc;
         CMemory::Memzero(&QueueDesc);
 
-        QueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        QueueDesc.Flags    = D3D12_COMMAND_QUEUE_FLAG_NONE;
         QueueDesc.NodeMask = 1;
         QueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-        QueueDesc.Type = Type;
+        QueueDesc.Type     = Type;
 
         HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
         if (SUCCEEDED(Result))

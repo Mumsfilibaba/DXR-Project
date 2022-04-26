@@ -1,9 +1,8 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* GCC compiler specific macros etc.
-*  For now this file should only be included into CoreDefines.h
-*/
+// GCC compiler specific macros etc.
+// For now this file should only be included into CoreDefines.h
 
 #if COMPILER_GCC
 

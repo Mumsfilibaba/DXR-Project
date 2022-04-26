@@ -46,13 +46,13 @@ public:
 
     void Reset(ViewType* DefaultView)
     {
-        CMemory::Memzero(HostDescriptors, sizeof(HostDescriptors));
+        CMemory::Memzero(HostDescriptors  , sizeof(HostDescriptors));
         CMemory::Memzero(DeviceDescriptors, sizeof(DeviceDescriptors));
-        CMemory::Memzero(CopyDescriptors, sizeof(CopyDescriptors));
+        CMemory::Memzero(CopyDescriptors  , sizeof(CopyDescriptors));
 
-        for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+        for (uint32 Stage = 0; Stage < ShaderVisibility_Count; ++Stage)
         {
-            for (uint32 Index = 0; Index < kDescriptorTableSize; Index++)
+            for (uint32 Index = 0; Index < kDescriptorTableSize; ++Index)
             {
                 ResourceViews[Stage][Index] = DefaultView;
             }

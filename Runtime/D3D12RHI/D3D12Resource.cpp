@@ -31,8 +31,8 @@ bool CD3D12Resource::Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_
     D3D12_HEAP_PROPERTIES HeapProperties;
     CMemory::Memzero(&HeapProperties);
 
-    HeapProperties.Type = HeapType;
-    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.Type                 = HeapType;
+    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
     HRESULT Result = GetDevice()->CreateCommitedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, InitialState, OptimizedClearValue, IID_PPV_ARGS(&DxResource));

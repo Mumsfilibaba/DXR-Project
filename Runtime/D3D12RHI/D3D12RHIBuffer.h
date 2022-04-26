@@ -50,8 +50,8 @@ public:
         CD3D12BaseBuffer::SetResource(InResource);
 
         CMemory::Memzero(&View);
-        View.StrideInBytes = GetStride();
-        View.SizeInBytes = GetNumVertices() * View.StrideInBytes;
+        View.StrideInBytes  = GetStride();
+        View.SizeInBytes    = GetNumVertices() * View.StrideInBytes;
         View.BufferLocation = CD3D12BaseBuffer::Resource->GetGPUVirtualAddress();
     }
 
@@ -86,8 +86,8 @@ public:
         ERHIIndexFormat IndexFormat = GetFormat();
         if (IndexFormat != ERHIIndexFormat::Unknown)
         {
-            View.Format = IndexFormat == ERHIIndexFormat::uint16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
-            View.SizeInBytes = GetNumIndicies() * GetStrideFromIndexFormat(IndexFormat);
+            View.Format         = IndexFormat == ERHIIndexFormat::uint16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+            View.SizeInBytes    = GetNumIndicies() * GetStrideFromIndexFormat(IndexFormat);
             View.BufferLocation = CD3D12BaseBuffer::Resource->GetGPUVirtualAddress();
         }
     }
@@ -121,7 +121,7 @@ public:
         CMemory::Memzero(&ViewDesc);
 
         ViewDesc.BufferLocation = CD3D12BaseBuffer::Resource->GetGPUVirtualAddress();
-        ViewDesc.SizeInBytes = (uint32)CD3D12BaseBuffer::GetSizeInBytes();
+        ViewDesc.SizeInBytes    = (uint32)CD3D12BaseBuffer::GetSizeInBytes();
 
         if (View.GetOfflineHandle() == 0)
         {

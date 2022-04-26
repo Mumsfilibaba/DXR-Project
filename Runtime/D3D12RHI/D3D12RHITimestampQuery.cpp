@@ -104,8 +104,8 @@ CD3D12RHITimestampQuery* CD3D12RHITimestampQuery::Create(CD3D12Device* InDevice)
     D3D12_QUERY_HEAP_DESC QueryHeap;
     CMemory::Memzero(&QueryHeap);
 
-    QueryHeap.Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
-    QueryHeap.Count = D3D12_DEFAULT_QUERY_COUNT * 2;
+    QueryHeap.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+    QueryHeap.Count    = D3D12_DEFAULT_QUERY_COUNT * 2;
     QueryHeap.NodeMask = 0;
 
     TComPtr<ID3D12QueryHeap> Heap;
@@ -119,16 +119,16 @@ CD3D12RHITimestampQuery* CD3D12RHITimestampQuery::Create(CD3D12Device* InDevice)
     D3D12_RESOURCE_DESC Desc;
     CMemory::Memzero(&Desc);
 
-    Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-    Desc.Format = DXGI_FORMAT_UNKNOWN;
-    Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width = D3D12_DEFAULT_QUERY_COUNT * sizeof(SRHITimestamp);
-    Desc.Height = 1;
-    Desc.DepthOrArraySize = 1;
-    Desc.MipLevels = 1;
-    Desc.Alignment = 0;
-    Desc.SampleDesc.Count = 1;
+    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+    Desc.Format             = DXGI_FORMAT_UNKNOWN;
+    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(SRHITimestamp);
+    Desc.Height             = 1;
+    Desc.DepthOrArraySize   = 1;
+    Desc.MipLevels          = 1;
+    Desc.Alignment          = 0;
+    Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
     TSharedRef<CD3D12Resource> WriteResource = dbg_new CD3D12Resource(InDevice, Desc, D3D12_HEAP_TYPE_DEFAULT);
@@ -150,7 +150,7 @@ CD3D12RHITimestampQuery* CD3D12RHITimestampQuery::Create(CD3D12Device* InDevice)
         }
     }
 
-    NewProfiler->QueryHeap = Heap;
+    NewProfiler->QueryHeap     = Heap;
     NewProfiler->WriteResource = WriteResource;
     return NewProfiler.ReleaseOwnership();
 }
@@ -160,16 +160,16 @@ bool CD3D12RHITimestampQuery::AllocateReadResource()
     D3D12_RESOURCE_DESC Desc;
     CMemory::Memzero(&Desc);
 
-    Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-    Desc.Format = DXGI_FORMAT_UNKNOWN;
-    Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width = D3D12_DEFAULT_QUERY_COUNT * sizeof(SRHITimestamp);
-    Desc.Height = 1;
-    Desc.DepthOrArraySize = 1;
-    Desc.MipLevels = 1;
-    Desc.Alignment = 0;
-    Desc.SampleDesc.Count = 1;
+    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+    Desc.Format             = DXGI_FORMAT_UNKNOWN;
+    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(SRHITimestamp);
+    Desc.Height             = 1;
+    Desc.DepthOrArraySize   = 1;
+    Desc.MipLevels          = 1;
+    Desc.Alignment          = 0;
+    Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
     TSharedRef<CD3D12Resource> ReadResource = dbg_new CD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK);

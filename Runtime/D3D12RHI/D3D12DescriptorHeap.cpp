@@ -24,8 +24,8 @@ bool CD3D12DescriptorHeap::Init()
     D3D12_DESCRIPTOR_HEAP_DESC Desc;
     CMemory::Memzero(&Desc);
 
-    Desc.Type = Type;
-    Desc.Flags = Flags;
+    Desc.Type           = Type;
+    Desc.Flags          = Flags;
     Desc.NumDescriptors = NumDescriptors;
 
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));

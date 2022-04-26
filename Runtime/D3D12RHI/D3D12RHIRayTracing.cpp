@@ -28,29 +28,29 @@ bool CD3D12RHIRayTracingGeometry::Build(CD3D12RHICommandContext& CmdContext, boo
     D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc;
     CMemory::Memzero(&GeometryDesc);
 
-    GeometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-    GeometryDesc.Triangles.VertexBuffer.StartAddress = VertexBuffer->GetResource()->GetGPUVirtualAddress();
+    GeometryDesc.Type                                 = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+    GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetResource()->GetGPUVirtualAddress();
     GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetStride();
-    GeometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-    GeometryDesc.Triangles.VertexCount = VertexBuffer->GetNumVertices();
-    GeometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+    GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
+    GeometryDesc.Triangles.VertexCount                = VertexBuffer->GetNumVertices();
+    GeometryDesc.Flags                                = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
     if (IndexBuffer)
     {
-        ERHIIndexFormat IndexFormat = IndexBuffer->GetFormat();
+        ERHIIndexFormat IndexFormat        = IndexBuffer->GetFormat();
         GeometryDesc.Triangles.IndexFormat = IndexFormat == ERHIIndexFormat::uint32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
         GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetResource()->GetGPUVirtualAddress();
-        GeometryDesc.Triangles.IndexCount = IndexBuffer->GetNumIndicies();
+        GeometryDesc.Triangles.IndexCount  = IndexBuffer->GetNumIndicies();
     }
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
     CMemory::Memzero(&Inputs);
 
-    Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    Inputs.NumDescs = 1;
+    Inputs.DescsLayout    = D3D12_ELEMENTS_LAYOUT_ARRAY;
+    Inputs.NumDescs       = 1;
     Inputs.pGeometryDescs = &GeometryDesc;
-    Inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
-    Inputs.Flags = ConvertAccelerationStructureBuildFlags(GetFlags());
+    Inputs.Type           = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+    Inputs.Flags          = ConvertAccelerationStructureBuildFlags(GetFlags());
     if (Update)
     {
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
@@ -66,16 +66,16 @@ bool CD3D12RHIRayTracingGeometry::Build(CD3D12RHICommandContext& CmdContext, boo
         D3D12_RESOURCE_DESC Desc;
         CMemory::Memzero(&Desc);
 
-        Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        Desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Desc.Format = DXGI_FORMAT_UNKNOWN;
-        Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        Desc.Width = PreBuildInfo.ResultDataMaxSizeInBytes;
-        Desc.Height = 1;
-        Desc.DepthOrArraySize = 1;
-        Desc.MipLevels = 1;
-        Desc.Alignment = 0;
-        Desc.SampleDesc.Count = 1;
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = PreBuildInfo.ResultDataMaxSizeInBytes;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
         TSharedRef<CD3D12Resource> Buffer = dbg_new CD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
@@ -97,16 +97,16 @@ bool CD3D12RHIRayTracingGeometry::Build(CD3D12RHICommandContext& CmdContext, boo
         D3D12_RESOURCE_DESC Desc;
         CMemory::Memzero(&Desc);
 
-        Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        Desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Desc.Format = DXGI_FORMAT_UNKNOWN;
-        Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        Desc.Width = RequiredSize;
-        Desc.Height = 1;
-        Desc.DepthOrArraySize = 1;
-        Desc.MipLevels = 1;
-        Desc.Alignment = 0;
-        Desc.SampleDesc.Count = 1;
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = RequiredSize;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
         TSharedRef<CD3D12Resource> Buffer = dbg_new CD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
@@ -126,8 +126,8 @@ bool CD3D12RHIRayTracingGeometry::Build(CD3D12RHICommandContext& CmdContext, boo
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc;
     CMemory::Memzero(&AccelerationStructureDesc);
 
-    AccelerationStructureDesc.Inputs = Inputs;
-    AccelerationStructureDesc.DestAccelerationStructureData = ResultBuffer->GetGPUVirtualAddress();
+    AccelerationStructureDesc.Inputs                           = Inputs;
+    AccelerationStructureDesc.DestAccelerationStructureData    = ResultBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
 
     CmdContext.FlushResourceBarriers();
@@ -166,9 +166,10 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
     CMemory::Memzero(&Inputs);
 
     Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    Inputs.NumDescs = NumInstances;
-    Inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
-    Inputs.Flags = ConvertAccelerationStructureBuildFlags(GetFlags());
+    Inputs.NumDescs    = NumInstances;
+    Inputs.Type        = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
+    Inputs.Flags       = ConvertAccelerationStructureBuildFlags(GetFlags());
+    
     if (Update)
     {
         Assert(GetFlags() & RayTracingStructureBuildFlag_AllowUpdate);
@@ -185,16 +186,16 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
         D3D12_RESOURCE_DESC Desc;
         CMemory::Memzero(&Desc);
 
-        Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        Desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Desc.Format = DXGI_FORMAT_UNKNOWN;
-        Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        Desc.Width = PreBuildInfo.ResultDataMaxSizeInBytes;
-        Desc.Height = 1;
-        Desc.DepthOrArraySize = 1;
-        Desc.MipLevels = 1;
-        Desc.Alignment = 0;
-        Desc.SampleDesc.Count = 1;
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = PreBuildInfo.ResultDataMaxSizeInBytes;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
         TSharedRef<CD3D12Resource> Buffer = dbg_new CD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
@@ -211,8 +212,8 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
         D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
         CMemory::Memzero(&SrvDesc);
 
-        SrvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
-        SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        SrvDesc.ViewDimension                            = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+        SrvDesc.Shader4ComponentMapping                  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
 
         View = dbg_new CD3D12RHIShaderResourceView(GetDevice(), GD3D12RHIInstance->GetResourceOfflineDescriptorHeap());
@@ -234,16 +235,16 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
         D3D12_RESOURCE_DESC Desc;
         CMemory::Memzero(&Desc);
 
-        Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        Desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Desc.Format = DXGI_FORMAT_UNKNOWN;
-        Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        Desc.Width = RequiredSize;
-        Desc.Height = 1;
-        Desc.DepthOrArraySize = 1;
-        Desc.MipLevels = 1;
-        Desc.Alignment = 0;
-        Desc.SampleDesc.Count = 1;
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = RequiredSize;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
         TSharedRef<CD3D12Resource> Buffer = dbg_new CD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
@@ -266,10 +267,10 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
         CD3D12RHIRayTracingGeometry* DxGeometry = static_cast<CD3D12RHIRayTracingGeometry*>(InInstances[i].Instance.Get());
         CMemory::Memcpy(&InstanceDescs[i].Transform, &InInstances[i].Transform, sizeof(CMatrix3x4));
 
-        InstanceDescs[i].AccelerationStructure = DxGeometry->GetGPUVirtualAddress();
-        InstanceDescs[i].InstanceID = InInstances[i].InstanceIndex;
-        InstanceDescs[i].Flags = ConvertRayTracingInstanceFlags(InInstances[i].Flags);
-        InstanceDescs[i].InstanceMask = InInstances[i].Mask;
+        InstanceDescs[i].AccelerationStructure               = DxGeometry->GetGPUVirtualAddress();
+        InstanceDescs[i].InstanceID                          = InInstances[i].InstanceIndex;
+        InstanceDescs[i].Flags                               = ConvertRayTracingInstanceFlags(InInstances[i].Flags);
+        InstanceDescs[i].InstanceMask                        = InInstances[i].Mask;
         InstanceDescs[i].InstanceContributionToHitGroupIndex = InInstances[i].HitGroupIndex;
     }
 
@@ -279,16 +280,16 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
         D3D12_RESOURCE_DESC Desc;
         CMemory::Memzero(&Desc);
 
-        Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        Desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Desc.Format = DXGI_FORMAT_UNKNOWN;
-        Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        Desc.Width = InstanceDescs.SizeInBytes();
-        Desc.Height = 1;
-        Desc.DepthOrArraySize = 1;
-        Desc.MipLevels = 1;
-        Desc.Alignment = 0;
-        Desc.SampleDesc.Count = 1;
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = InstanceDescs.SizeInBytes();
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
         TSharedRef<CD3D12Resource> Buffer = dbg_new CD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
@@ -312,9 +313,9 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc;
     CMemory::Memzero(&AccelerationStructureDesc);
 
-    AccelerationStructureDesc.Inputs = Inputs;
-    AccelerationStructureDesc.Inputs.InstanceDescs = InstanceBuffer->GetGPUVirtualAddress();
-    AccelerationStructureDesc.DestAccelerationStructureData = ResultBuffer->GetGPUVirtualAddress();
+    AccelerationStructureDesc.Inputs                           = Inputs;
+    AccelerationStructureDesc.Inputs.InstanceDescs             = InstanceBuffer->GetGPUVirtualAddress();
+    AccelerationStructureDesc.DestAccelerationStructureData    = ResultBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
     if (Update)
     {
@@ -334,15 +335,14 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
     return true;
 }
 
-bool CD3D12RHIRayTracingScene::BuildBindingTable(
-    CD3D12RHICommandContext& CmdContext,
-    CD3D12RHIRayTracingPipelineState* PipelineState,
-    CD3D12OnlineDescriptorHeap* ResourceHeap,
-    CD3D12OnlineDescriptorHeap* SamplerHeap,
-    const SRayTracingShaderResources* RayGenLocalResources,
-    const SRayTracingShaderResources* MissLocalResources,
-    const SRayTracingShaderResources* HitGroupResources,
-    uint32 NumHitGroupResources)
+bool CD3D12RHIRayTracingScene::BuildBindingTable( CD3D12RHICommandContext& CmdContext
+                                                , CD3D12RHIRayTracingPipelineState* PipelineState
+                                                , CD3D12OnlineDescriptorHeap* ResourceHeap
+                                                , CD3D12OnlineDescriptorHeap* SamplerHeap
+                                                , const SRayTracingShaderResources* RayGenLocalResources
+                                                , const SRayTracingShaderResources* MissLocalResources
+                                                , const SRayTracingShaderResources* HitGroupResources
+                                                , uint32 NumHitGroupResources)
 {
     Assert(ResourceHeap != nullptr);
     Assert(SamplerHeap != nullptr);
@@ -396,16 +396,16 @@ bool CD3D12RHIRayTracingScene::BuildBindingTable(
         D3D12_RESOURCE_DESC Desc;
         CMemory::Memzero(&Desc);
 
-        Desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        Desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Desc.Format = DXGI_FORMAT_UNKNOWN;
-        Desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        Desc.Width = BindingTableSize;
-        Desc.Height = 1;
-        Desc.DepthOrArraySize = 1;
-        Desc.MipLevels = 1;
-        Desc.Alignment = 0;
-        Desc.SampleDesc.Count = 1;
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = BindingTableSize;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
         TSharedRef<CD3D12Resource> Buffer = dbg_new CD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
@@ -465,8 +465,8 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE CD3D12RHIRayTracingScene::GetHitGroup
     Assert(BindingTableStride != 0);
 
     uint64 BindingTableAdress = BindingTable->GetGPUVirtualAddress();
-    uint64 AddressOffset = BindingTableStride * 2;
-    uint64 SizeInBytes = (BindingTableStride * NumHitGroups);
+    uint64 AddressOffset      = BindingTableStride * 2;
+    uint64 SizeInBytes        = (BindingTableStride * NumHitGroups);
     return { BindingTableAdress + AddressOffset, SizeInBytes, BindingTableStride };
 }
 
@@ -485,7 +485,7 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE CD3D12RHIRayTracingScene::GetMissShad
     Assert(BindingTableStride != 0);
 
     uint64 BindingTableAdress = BindingTable->GetGPUVirtualAddress();
-    uint64 AddressOffset = BindingTableStride;
+    uint64 AddressOffset      = BindingTableStride;
     return { BindingTableAdress + AddressOffset, BindingTableStride, BindingTableStride };
 }
 
@@ -519,10 +519,10 @@ void CD3D12ShaderBindingTableBuilder::PopulateEntry(
         Assert(RootIndex < 4);
 
         uint32 NumDescriptors = Resources.ConstantBuffers.Size();
-        uint32 Handle = ResourceHeap->AllocateHandles(NumDescriptors);
+        uint32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
         OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
 
-        GPUResourceHandles[GPUResourceIndex] = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
+        GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
         GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
 
         for (CRHIConstantBuffer* CBuffer : Resources.ConstantBuffers)
@@ -537,10 +537,10 @@ void CD3D12ShaderBindingTableBuilder::PopulateEntry(
         Assert(RootIndex < 4);
 
         uint32 NumDescriptors = Resources.ShaderResourceViews.Size();
-        uint32 Handle = ResourceHeap->AllocateHandles(NumDescriptors);
+        uint32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
         OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
 
-        GPUResourceHandles[GPUResourceIndex] = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
+        GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
         GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
 
         for (CRHIShaderResourceView* ShaderResourceView : Resources.ShaderResourceViews)
@@ -608,7 +608,7 @@ void CD3D12ShaderBindingTableBuilder::Reset()
     }
 
     CPUResourceIndex = 0;
-    CPUSamplerIndex = 0;
+    CPUSamplerIndex  = 0;
     GPUResourceIndex = 0;
-    GPUSamplerIndex = 0;
+    GPUSamplerIndex  = 0;
 }

@@ -1,19 +1,15 @@
-#if PLATFORM_WINDOWS
 #include "WindowsKeyMapping.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Key tables
+// CWindowsKeyMapping
 
-EKey   CWindowsKeyMapping::KeyCodeFromScanCodeTable[NumKeys];
-uint16 CWindowsKeyMapping::ScanCodeFromKeyCodeTable[NumKeys];
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows KeyMapping
+TStaticArray<uint16, CWindowsKeyMapping::kNumKeys> CWindowsKeyMapping::ScanCodeFromKeyCodeTable;
+TStaticArray<EKey  , CWindowsKeyMapping::kNumKeys> CWindowsKeyMapping::KeyCodeFromScanCodeTable;
 
 void CWindowsKeyMapping::Initialize()
 {
-    CMemory::Memzero(KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable));
-    CMemory::Memzero(ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable));
+    KeyCodeFromScanCodeTable.Memzero(); 
+    ScanCodeFromKeyCodeTable.Memzero();
 
     KeyCodeFromScanCodeTable[0x00B] = EKey::Key_0;
     KeyCodeFromScanCodeTable[0x002] = EKey::Key_1;
@@ -138,7 +134,7 @@ void CWindowsKeyMapping::Initialize()
     KeyCodeFromScanCodeTable[0x137] = EKey::Key_PrintScreen;
     KeyCodeFromScanCodeTable[0x146] = EKey::Key_Pause;
 
-    for (uint16 Index = 0; Index < NumKeys; Index++)
+    for (uint16 Index = 0; Index < kNumKeys; ++Index)
     {
         if (KeyCodeFromScanCodeTable[Index] != EKey::Key_Unknown)
         {
@@ -146,5 +142,3 @@ void CWindowsKeyMapping::Initialize()
         }
     }
 }
-
-#endif

@@ -254,9 +254,9 @@ public:
         D3D12_RESOURCE_BARRIER Barrier;
         CMemory::Memzero(&Barrier);
 
-        Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        Barrier.Transition.pResource = Resource;
-        Barrier.Transition.StateAfter = AfterState;
+        Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        Barrier.Transition.pResource   = Resource;
+        Barrier.Transition.StateAfter  = AfterState;
         Barrier.Transition.StateBefore = BeforeState;
         Barrier.Transition.Subresource = Subresource;
 
@@ -268,7 +268,7 @@ public:
         D3D12_RESOURCE_BARRIER Barrier;
         CMemory::Memzero(&Barrier);
 
-        Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
         Barrier.UAV.pResource = Resource;
 
         CmdList->ResourceBarrier(1, &Barrier);
