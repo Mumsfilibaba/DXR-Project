@@ -203,8 +203,7 @@ struct SDepthStencil
     FORCEINLINE SDepthStencil(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
-    {
-    }
+    { }
 
     float Depth = 1.0f;
     uint8 Stencil = 0;
@@ -228,22 +227,19 @@ public:
         : Type(EType::Color)
         , Format(EFormat::Unknown)
         , Color(0.0f, 0.0f, 0.0f, 1.0f)
-    {
-    }
+    { }
 
     FORCEINLINE SClearValue(EFormat InFormat, float Depth, uint8 Stencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencil(Depth, Stencil)
-    {
-    }
+    { }
 
     FORCEINLINE SClearValue(EFormat InFormat, float r, float g, float b, float a)
         : Type(EType::Color)
         , Format(InFormat)
         , Color(r, g, b, a)
-    {
-    }
+    { }
 
     FORCEINLINE SClearValue(const SClearValue& Other)
         : Type(Other.Type)
@@ -287,13 +283,13 @@ public:
         return Format;
     }
 
-    FORCEINLINE SColorF& AsColor()
+    FORCEINLINE CFloatColor& AsColor()
     {
         Assert(Type == EType::Color);
         return Color;
     }
 
-    FORCEINLINE const SColorF& AsColor() const
+    FORCEINLINE const CFloatColor& AsColor() const
     {
         Assert(Type == EType::Color);
         return Color;
@@ -316,7 +312,7 @@ private:
     EFormat Format;
     union
     {
-        SColorF       Color;
+        CFloatColor       Color;
         SDepthStencil DepthStencil;
     };
 };
@@ -328,30 +324,26 @@ struct SRHIResourceData
 {
     FORCEINLINE SRHIResourceData()
         : Data(nullptr)
-    {
-    }
+    { }
 
     FORCEINLINE SRHIResourceData(const void* InData, uint32 InSizeInBytes)
         : Data(InData)
         , SizeInBytes(InSizeInBytes)
-    {
-    }
+    { }
 
     FORCEINLINE SRHIResourceData(const void* InData, EFormat InFormat, uint32 InWidth)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
         , Height(0)
-    {
-    }
+    { }
 
     FORCEINLINE SRHIResourceData(const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight)
         : Data(InData)
         , Format(InFormat)
         , Width(InWidth)
         , Height(InHeight)
-    {
-    }
+    { }
 
     FORCEINLINE void Set(const void* InData, uint32 InSizeInBytes)
     {
@@ -420,8 +412,7 @@ struct SRHICopyBufferInfo
         : SourceOffset(InSourceOffset)
         , DestinationOffset(InDestinationOffset)
         , SizeInBytes(InSizeInBytes)
-    {
-    }
+    { }
 
     uint64 SourceOffset = 0;
     uint32 DestinationOffset = 0;
@@ -440,8 +431,7 @@ struct SRHICopyTextureSubresourceInfo
         , y(InY)
         , z(InZ)
         , SubresourceIndex(InSubresourceIndex)
-    {
-    }
+    { }
 
     uint32 x = 0;
     uint32 y = 0;

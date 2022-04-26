@@ -124,7 +124,7 @@ bool TestMatrix4()
     // Perspective Projection
     float Width = 1920.0f;
     float Height = 1080.0f;
-    float FOV = NMath::PI_F / 2.0f;
+    float FOV = NMath::kPI_f / 2.0f;
     float Near = 0.01f;
     float Far = 100.0f;
     CMatrix4 Projection = CMatrix4::PerspectiveProjection( FOV, Width, Height, Near, Far );

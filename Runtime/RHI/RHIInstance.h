@@ -58,7 +58,7 @@ class CRHIInstance
 public:
 
     /**
-     * Initialize the RHI instance that the engine should be using
+     * @brief: Initialize the RHI instance that the engine should be using
      * 
      * @param bEnableDebug: True if the debug-layer should be enabled
      * @return: Returns true if the initialization was successful
@@ -66,12 +66,12 @@ public:
     virtual bool Initialize(bool bEnableDebug) = 0;
 
     /**
-     * Destroys the instance
+     * @brief: Destroys the instance
      */
     virtual void Destroy() { delete this; }
 
     /**
-     * Creates a Texture2D
+     * @brief: Creates a Texture2D
      * 
      * @param Format: Format of the texture
      * @param Width: Width of the texture
@@ -86,7 +86,7 @@ public:
     virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
-     * Creates a Texture2DArray
+     * @brief: Creates a Texture2DArray
      *
      * @param Format: Format of the texture
      * @param Width: Width of the texture
@@ -102,7 +102,7 @@ public:
     virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
-     * Creates a TextureCube
+     * @brief: Creates a TextureCube
      *
      * @param Format: Format of the texture
      * @param Size: Width and Height each side of the texture
@@ -115,7 +115,7 @@ public:
     virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
-     * Creates a TextureCubeArray
+     * @brief: Creates a TextureCubeArray
      *
      * @param Format: Format of the texture
      * @param Size: Width and Height each side of the texture
@@ -129,7 +129,7 @@ public:
     virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
-     * Creates a Texture3D
+     * @brief: Creates a Texture3D
      *
      * @param Format: Format of the texture
      * @param Width: Width of the texture
@@ -144,7 +144,7 @@ public:
     virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
-     * Create a SamplerState
+     * @brief: Create a SamplerState
      * 
      * @param CreateInfo: Structure with information about the SamplerState
      * @return: Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
@@ -152,7 +152,7 @@ public:
     virtual class CRHISamplerState* CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo) = 0;
 
     /**
-     * Creates a new VertexBuffer
+     * @brief: Creates a new VertexBuffer
      * 
      * @param Stride: Stride of each vertex in the VertexBuffer
      * @param NumVertices: Number of vertices in the VertexBuffer
@@ -164,7 +164,7 @@ public:
     virtual CRHIVertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
     
     /**
-     * Creates a new IndexBuffer
+     * @brief: Creates a new IndexBuffer
      *
      * @param Format: Format of each index in the IndexBuffer
      * @param NumIndices: Number of indices in the IndexBuffer
@@ -176,7 +176,7 @@ public:
     virtual CRHIIndexBuffer* CreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
     
     /**
-     * Creates a new ConstantBuffer
+     * @brief: Creates a new ConstantBuffer
      *
      * @param Size: Size of  the ConstantBuffer
      * @param Flags: Buffer flags
@@ -187,7 +187,7 @@ public:
     virtual CRHIConstantBuffer* CreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
     
     /**
-     * Creates a new StructuredBuffer
+     * @brief: Creates a new StructuredBuffer
      *
      * @param Stride: Stride of each element in the StructuredBuffer
      * @param NumElements: Number of elements in the StructuredBuffer
@@ -199,7 +199,7 @@ public:
     virtual CRHIStructuredBuffer* CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
 
     /**
-     * Create a new Ray tracing scene
+     * @brief: Create a new Ray tracing scene
      * 
      * @param Flags: Flags for the creation
      * @param Instances: Initial instances to create the acceleration structure with
@@ -209,7 +209,7 @@ public:
     virtual CRHIRayTracingScene* CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) = 0;
     
     /**
-     * Create a new Ray tracing geometry
+     * @brief: Create a new Ray tracing geometry
      *
      * @param Flags: Flags for the creation
      * @param VertexBuffer: VertexBuffer the acceleration structure with
@@ -219,7 +219,7 @@ public:
     virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer) = 0;
 
     /**
-     * Create a new ShaderResourceView
+     * @brief: Create a new ShaderResourceView
      * 
      * @param CreateInfo: Info about the ShaderResourceView
      * @return: Returns the newly created ShaderResourceView
@@ -227,7 +227,7 @@ public:
     virtual CRHIShaderResourceView* CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo) = 0;
     
     /**
-     * Create a new UnorderedAccessView
+     * @brief: Create a new UnorderedAccessView
      *
      * @param CreateInfo: Info about the UnorderedAccessView
      * @return: Returns the newly created UnorderedAccessView
@@ -235,7 +235,7 @@ public:
     virtual CRHIUnorderedAccessView* CreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo) = 0;
     
     /**
-     * Create a new RenderTargetView
+     * @brief: Create a new RenderTargetView
      *
      * @param CreateInfo: Info about the RenderTargetView
      * @return: Returns the newly created RenderTargetView
@@ -243,7 +243,7 @@ public:
     virtual CRHIRenderTargetView* CreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo) = 0;
     
     /**
-     * Create a new DepthStencilView
+     * @brief: Create a new DepthStencilView
      *
      * @param CreateInfo: Info about the DepthStencilView
      * @return: Returns the newly created DepthStencilView
@@ -251,7 +251,7 @@ public:
     virtual CRHIDepthStencilView* CreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo) = 0;
 
     /**
-     * Creates a new Compute Shader
+     * @brief: Creates a new Compute Shader
      * 
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -259,7 +259,7 @@ public:
     virtual class CRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
-     * Creates a new Vertex Shader
+     * @brief: Creates a new Vertex Shader
      *
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -267,7 +267,7 @@ public:
     virtual class CRHIVertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
-     * Creates a new Hull Shader
+     * @brief: Creates a new Hull Shader
      *
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -275,7 +275,7 @@ public:
     virtual class CRHIHullShader* CreateHullShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
-     * Creates a new Domain Shader
+     * @brief: Creates a new Domain Shader
      *
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -283,7 +283,7 @@ public:
     virtual class CRHIDomainShader* CreateDomainShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
-     * Creates a new Geometry Shader
+     * @brief: Creates a new Geometry Shader
      *
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -291,7 +291,7 @@ public:
     virtual class CRHIGeometryShader* CreateGeometryShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
-     * Creates a new Mesh Shader
+     * @brief: Creates a new Mesh Shader
      *
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -299,7 +299,7 @@ public:
     virtual class CRHIMeshShader* CreateMeshShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
-     * Creates a new Amplification Shader
+     * @brief: Creates a new Amplification Shader
      *
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -307,7 +307,7 @@ public:
     virtual class CRHIAmplificationShader* CreateAmplificationShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
-     * Creates a new Pixel Shader
+     * @brief: Creates a new Pixel Shader
      *
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -315,7 +315,7 @@ public:
     virtual class CRHIPixelShader* CreatePixelShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
-     * Creates a new Ray-Generation Shader
+     * @brief: Creates a new Ray-Generation Shader
      *
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -323,7 +323,7 @@ public:
     virtual class CRHIRayGenShader* CreateRayGenShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
-     * Creates a new Ray Any-Hit Shader
+     * @brief: Creates a new Ray Any-Hit Shader
      *
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -331,7 +331,7 @@ public:
     virtual class CRHIRayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
-     * Creates a new Ray-Closest-Hit Shader
+     * @brief: Creates a new Ray-Closest-Hit Shader
      *
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -339,7 +339,7 @@ public:
     virtual class CRHIRayClosestHitShader* CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
-     * Creates a new Ray-Miss Shader
+     * @brief: Creates a new Ray-Miss Shader
      *
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
@@ -347,7 +347,7 @@ public:
     virtual class CRHIRayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
-     * Create a new DepthStencilState
+     * @brief: Create a new DepthStencilState
      * 
      * @param CreateInfo: Info about a DepthStencilState
      * @return: Returns the newly created DepthStencilState
@@ -355,7 +355,7 @@ public:
     virtual class CRHIDepthStencilState* CreateDepthStencilState(const SRHIDepthStencilStateInfo& CreateInfo) = 0;
 
     /**
-     * Create a new RasterizerState
+     * @brief: Create a new RasterizerState
      *
      * @param CreateInfo: Info about a RasterizerState
      * @return: Returns the newly created RasterizerState
@@ -363,7 +363,7 @@ public:
     virtual class CRHIRasterizerState* CreateRasterizerState(const SRHIRasterizerStateInfo& CreateInfo) = 0;
 
     /**
-     * Create a new BlendState
+     * @brief: Create a new BlendState
      *
      * @param CreateInfo: Info about a BlendState
      * @return: Returns the newly created BlendState
@@ -371,7 +371,7 @@ public:
     virtual class CRHIBlendState* CreateBlendState(const SRHIBlendStateInfo& CreateInfo) = 0;
 
     /**
-     * Create a new InputLayoutState
+     * @brief: Create a new InputLayoutState
      *
      * @param CreateInfo: Info about a InputLayoutState
      * @return: Returns the newly created InputLayoutState
@@ -379,7 +379,7 @@ public:
     virtual class CRHIInputLayoutState* CreateInputLayout(const SRHIInputLayoutStateInfo& CreateInfo) = 0;
 
     /**
-     * Create a Graphics PipelineState
+     * @brief: Create a Graphics PipelineState
      * 
      * @param CreateInfo: Info about the Graphics PipelineState
      * @return: Returns the newly created PipelineState
@@ -387,7 +387,7 @@ public:
     virtual class CRHIGraphicsPipelineState* CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateInfo& CreateInfo) = 0;
     
     /**
-     * Create a Compute PipelineState
+     * @brief: Create a Compute PipelineState
      *
      * @param CreateInfo: Info about the Compute PipelineState
      * @return: Returns the newly created PipelineState
@@ -395,7 +395,7 @@ public:
     virtual class CRHIComputePipelineState* CreateComputePipelineState(const SRHIComputePipelineStateInfo& CreateInfo) = 0;
     
     /**
-     * Create a Ray-Tracing PipelineState
+     * @brief: Create a Ray-Tracing PipelineState
      *
      * @param CreateInfo: Info about the Ray-Tracing PipelineState
      * @return: Returns the newly created PipelineState
@@ -403,7 +403,7 @@ public:
     virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState(const SRHIRayTracingPipelineStateInfo& CreateInfo) = 0;
 
     /**
-     * Create a new Timestamp Query
+     * @brief: Create a new Timestamp Query
      * 
      * @return: Returns the newly created Timestamp Query
      */
@@ -411,7 +411,7 @@ public:
 
 
     /**
-     * Create a new Viewport
+     * @brief: Create a new Viewport
      * 
      * @param Window: Window to bind to the viewport
      * @param Width: Width of the viewport
@@ -423,14 +423,14 @@ public:
     virtual class CRHIViewport* CreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
 
     /**
-     * Retrieve the default CommandContext
+     * @brief: Retrieve the default CommandContext
      * 
      * @return: Returns the default CommandContext
      */
     virtual class IRHICommandContext* GetDefaultCommandContext() = 0;
 
     /**
-     * Retrieve the name of the Adapter
+     * @brief: Retrieve the name of the Adapter
      * 
      * @return: Returns a string with the Adapter name
      */
@@ -440,21 +440,21 @@ public:
     }
 
     /**
-     * Check for Ray tracing support
+     * @brief: Check for Ray tracing support
      * 
      * @param OutSupport: Struct containing the Ray tracing support for the system and current RHI
      */
     virtual void CheckRayTracingSupport(SRHIRayTracingSupport& OutSupport) const = 0;
 
     /**
-     * Check for Shading-rate support
+     * @brief: Check for Shading-rate support
      *
      * @param OutSupport: Struct containing the Shading-rate support for the system and current RHI
      */
     virtual void CheckShadingRateSupport(SRHIShadingRateSupport& OutSupport) const = 0;
 
     /**
-     * Check if the current RHI supports UnorderedAccessViews for the specified format
+     * @brief: Check if the current RHI supports UnorderedAccessViews for the specified format
      * 
      * @param Format: Format to check
      * @return: Returns true if the current RHI supports UnorderedAccessViews with the specified format
@@ -466,7 +466,7 @@ public:
     }
 
     /**
-     * retrieve the current API that is used
+     * @brief: retrieve the current API that is used
      * 
      * @return: Returns the current RHI's API
      */
@@ -479,8 +479,7 @@ protected:
 
     CRHIInstance(ERHIInstanceApi InCurrentRHI)
         : CurrentRHI(InCurrentRHI)
-    {
-    }
+    { }
 
     virtual ~CRHIInstance() = default;
 

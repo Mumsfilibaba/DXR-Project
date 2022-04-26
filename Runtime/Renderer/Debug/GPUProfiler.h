@@ -84,39 +84,39 @@ class RENDERER_API CGPUProfiler
 {
 public:
 
-    /* Creates the profiler, requires the RHI to be initialized */
+     /** @brief: Creates the profiler, requires the RHI to be initialized */
     static bool Init();
 
-    /* Release the resources */
+     /** @brief: Release the resources */
     static void Release();
 
     static FORCEINLINE CGPUProfiler& Get() { return Instance; }
 
-    /* Enables the collection of samples (Resume) */
+     /** @brief: Enables the collection of samples (Resume) */
     void Enable();
 
-    /* Disables the collection of samples (Pause) */
+     /** @brief: Disables the collection of samples (Pause) */
     void Disable();
 
-    /* Updates the profiler, should be called once per frame */
+     /** @brief: Updates the profiler, should be called once per frame */
     void Tick();
 
-    /* Resets all the samples */
+     /** @brief: Resets all the samples */
     void Reset();
 
-    /* Retrieve a copy of the GPU Profiler samples */
+     /** @brief: Retrieve a copy of the GPU Profiler samples */
     void GetGPUSamples(GPUProfileSamplesTable& OutGPUSamples);
 
-    /* Start the GPU frame */
+     /** @brief: Start the GPU frame */
     void BeginGPUFrame(CRHICommandList& CmdList);
 
-    /* End the GPU frame */
+     /** @brief: End the GPU frame */
     void EndGPUFrame(CRHICommandList& CmdList);
 
-    /* Begin a GPU scope */
+     /** @brief: Begin a GPU scope */
     void BeginGPUTrace(CRHICommandList& CmdList, const char* Name);
 
-    /* End a GPU scope */
+     /** @brief: End a GPU scope */
     void EndGPUTrace(CRHICommandList& CmdList, const char* Name);
 
     FORCEINLINE const SGPUProfileSample& GetGPUFrameTime() const
@@ -129,15 +129,15 @@ private:
     CGPUProfiler();
     ~CGPUProfiler() = default;
 
-    /* Queries for GPUTimeStamps */
+     /** @brief: Queries for GPUTimeStamps */
     TSharedRef<CRHITimestampQuery> Timequeries;
 
     uint32 CurrentTimeQueryIndex = 0;
 
-    /* Sample for the GPU FrameTime */
+     /** @brief: Sample for the GPU FrameTime */
     SGPUProfileSample FrameTime;
 
-    /* Lockable table for GPU- samples */
+     /** @brief: Lockable table for GPU- samples */
     Lockable<GPUProfileSamplesTable> Samples;
 
     bool bEnabled;

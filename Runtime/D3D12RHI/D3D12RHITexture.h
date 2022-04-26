@@ -20,8 +20,7 @@ public:
     CD3D12BaseTexture(CD3D12Device* InDevice)
         : CD3D12DeviceChild(InDevice)
         , Resource(nullptr)
-    {
-    }
+    { }
 
     FORCEINLINE void SetResource(CD3D12Resource* InResource)
     {
@@ -71,8 +70,7 @@ public:
         , RenderTargetView(nullptr)
         , DepthStencilView(nullptr)
         , UnorderedAccessView(nullptr)
-    {
-    }
+    { }
 
     virtual CRHIRenderTargetView* GetRenderTargetView() const override { return RenderTargetView.Get(); }
     virtual CRHIDepthStencilView* GetDepthStencilView() const override { return DepthStencilView.Get(); }
@@ -128,8 +126,7 @@ public:
         const SClearValue& InOptimalClearValue)
         : CRHITexture2DArray(InFormat, SizeX, SizeY, InNumMips, InNumSamples, SizeZ, InFlags, InOptimalClearValue)
         , CD3D12BaseTexture(InDevice)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -148,8 +145,7 @@ public:
         const SClearValue& InOptimalClearValue)
         : CRHITextureCube(InFormat, SizeX, InNumMips, InFlags, InOptimalClearValue)
         , CD3D12BaseTexture(InDevice)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -168,8 +164,7 @@ public:
         const SClearValue& InOptimalClearValue)
         : CRHITextureCubeArray(InFormat, SizeX, InNumMips, SizeZ, InFlags, InOptimalClearValue)
         , CD3D12BaseTexture(InDevice)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -188,8 +183,7 @@ public:
         const SClearValue& InOptimalClearValue)
         : CRHITexture3D(InFormat, SizeX, SizeY, SizeZ, InNumMips, InFlags, InOptimalClearValue)
         , CD3D12BaseTexture(InDevice)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -208,8 +202,7 @@ public:
         uint32 InFlags,
         const SClearValue& InOptimalClearValue)
         : BaseTextureType(InDevice, InFormat, SizeX, SizeY, SizeZ, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
-    {
-    }
+    { }
 
     virtual void SetName(const String& InName) override
     {

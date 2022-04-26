@@ -18,7 +18,7 @@ public:
     CMacCriticalSection& operator=(const CMacCriticalSection&) = delete;
 
     /**
-     * Default constructor 
+     * @brief: Default constructor 
      */
     FORCEINLINE CMacCriticalSection()
         : Mutex()
@@ -33,7 +33,7 @@ public:
     }
 
     /**
-     * Destructor 
+     * @brief: Destructor 
      */
     FORCEINLINE ~CMacCriticalSection()
     {
@@ -47,9 +47,9 @@ public:
     }
 
     /**
-     * Try to lock CriticalSection for other threads
+     * @brief: Try to lock CriticalSection for other threads
      * 
-     * @return; Returns true if the lock is successful
+     * @return:; Returns true if the lock is successful
      */
     FORCEINLINE bool TryLock() noexcept
     {
@@ -63,7 +63,7 @@ public:
     }
 
     /**
-     * Retrieve platform specific handle
+     * @brief: Retrieve platform specific handle
      *
      * @return: Returns a platform specific handle or nullptr if no platform handle is defined
      */

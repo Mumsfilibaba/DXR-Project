@@ -14,8 +14,7 @@ struct SInterfaceImage
         , Image(InImage)
         , BeforeState(InBefore)
         , AfterState(InAfter)
-    {
-    }
+    { }
 
     TSharedRef<CRHIShaderResourceView> ImageView;
     TSharedRef<CRHITexture> Image;

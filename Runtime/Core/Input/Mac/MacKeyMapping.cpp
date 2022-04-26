@@ -18,7 +18,7 @@ uint8        CMacKeyMapping::ButtonIndexFromButton[EMouseButton::MouseButton_Cou
 
 void CMacKeyMapping::Initialize()
 {
-    /* Keys */
+     /** @brief: Keys */
     CMemory::Memzero(KeyCodeFromScanCodeTable, sizeof(KeyCodeFromScanCodeTable));
     CMemory::Memzero(ScanCodeFromKeyCodeTable, sizeof(ScanCodeFromKeyCodeTable));
 
@@ -142,7 +142,7 @@ void CMacKeyMapping::Initialize()
         }
     }
 
-    /* Mouse buttons */
+     /** @brief: Mouse buttons */
     CMemory::Memzero(ButtonFromButtonIndex, sizeof(ButtonFromButtonIndex));
     CMemory::Memzero(ButtonIndexFromButton, sizeof(ButtonIndexFromButton));
 

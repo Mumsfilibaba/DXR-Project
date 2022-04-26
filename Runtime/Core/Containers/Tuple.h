@@ -106,8 +106,7 @@ namespace Internal
 
     template <uint32 Iteration, uint32 Index, typename ElementType, typename... Types>
     struct TTupleGetByIndexHelper<Iteration, Index, ElementType, Types...> : public TTupleGetByIndexHelper<Iteration + 1, Index, Types...>
-    {
-    };
+    { };
 
     template <uint32 Index, typename ElementType, typename... Types>
     struct TTupleGetByIndexHelper<Index, Index, ElementType, Types...>
@@ -134,8 +133,7 @@ namespace Internal
 
     template <uint32 SearchForIndex, typename... Types>
     struct TTupleGetByIndex : public TTupleGetByIndexHelper<0, SearchForIndex, Types...>
-    {
-    };
+    { };
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Tuple GetByElement Implementation
@@ -145,8 +143,7 @@ namespace Internal
 
     template <uint32 Iteration, typename WantedType, typename ElementType, typename... Types>
     struct TTupleGetByElementHelper<Iteration, WantedType, ElementType, Types...> : public TTupleGetByElementHelper<Iteration + 1, WantedType, Types...>
-    {
-    };
+    { };
 
     template <uint32 Iteration, typename WantedType, typename... Types>
     struct TTupleGetByElementHelper<Iteration, WantedType, WantedType, Types...>
@@ -173,8 +170,7 @@ namespace Internal
 
     template <typename WantedType, typename... Types>
     struct TTupleGetByElement : public TTupleGetByElementHelper<0, WantedType, Types...>
-    {
-    };
+    { };
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Implementation of tuple
@@ -503,24 +499,24 @@ namespace Internal
     struct TTupleComparators
     {
         template <typename FirstTupleType, typename SecondTupleType>
-        static FORCEINLINE bool IsEqual(const FirstTupleType& Lhs, const SecondTupleType& Rhs)
+        static FORCEINLINE bool IsEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
-            return TTupleComparators<Index - 1>::IsEqual(Lhs, Rhs) && (Lhs.template GetByIndex<Index - 1>() == Rhs.template GetByIndex<Index - 1>());
+            return TTupleComparators<Index - 1>::IsEqual(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() == RHS.template GetByIndex<Index - 1>());
         }
 
         template <typename FirstTupleType, typename SecondTupleType>
-        static FORCEINLINE bool IsLessThan(const FirstTupleType& Lhs, const SecondTupleType& Rhs)
+        static FORCEINLINE bool IsLessThan(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
-            return TTupleComparators<Index - 1>::IsLessThan(Lhs, Rhs) && (Lhs.template GetByIndex<Index - 1>() < Rhs.template GetByIndex<Index - 1>());
+            return TTupleComparators<Index - 1>::IsLessThan(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() < RHS.template GetByIndex<Index - 1>());
         }
 
         template <typename FirstTupleType, typename SecondTupleType>
-        static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType& Lhs, const SecondTupleType& Rhs)
+        static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
             static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
-            return TTupleComparators<Index - 1>::IsLessThanOrEqual(Lhs, Rhs) && (Lhs.template GetByIndex<Index - 1>() <= Rhs.template GetByIndex<Index - 1>());
+            return TTupleComparators<Index - 1>::IsLessThanOrEqual(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() <= RHS.template GetByIndex<Index - 1>());
         }
     };
 
@@ -576,20 +572,19 @@ public:
     TTuple& operator=(const TTuple&) = default;
 
     /**
-     * Constructor
+     * @brief: Constructor
      * 
      * @param Args: Arguments for each type
      */
     template<typename... ArgTypes, typename = typename TEnableIf<(NumElements > 0)>::Type>
     FORCEINLINE explicit TTuple(ArgTypes&&... Args)
         : Super(Forward<ArgTypes>(Args)...)
-    {
-    }
+    { }
 
 public:
 
     /**
-     * Retrieve the number of elements 
+     * @brief: Retrieve the number of elements 
      * 
      * @return: Returns the number of elements for the tuples
      */
@@ -603,39 +598,39 @@ public:
 // Operators
 
 template<typename... FirstTypes, typename... SecondTypes>
-inline bool operator==(const TTuple<FirstTypes...>& Lhs, const TTuple<SecondTypes...>& Rhs)
+inline bool operator==(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
-    return Internal::TTupleComparators<sizeof...(FirstTypes)>::IsEqual(Lhs, Rhs);
+    return Internal::TTupleComparators<sizeof...(FirstTypes)>::IsEqual(LHS, RHS);
 }
 
 template<typename... FirstTypes, typename... SecondTypes>
-inline bool operator!=(const TTuple<FirstTypes...>& Lhs, const TTuple<SecondTypes...>& Rhs)
+inline bool operator!=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
-    return !(Lhs == Rhs);
+    return !(LHS == RHS);
 }
 
 template<typename... FirstTypes, typename... SecondTypes>
-inline bool operator<=(const TTuple<FirstTypes...>& Lhs, const TTuple<SecondTypes...>& Rhs)
+inline bool operator<=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
-    return Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThanOrEqual(Lhs, Rhs);
+    return Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThanOrEqual(LHS, RHS);
 }
 
 template<typename... FirstTypes, typename... SecondTypes>
-inline bool operator<(const TTuple<FirstTypes...>& Lhs, const TTuple<SecondTypes...>& Rhs)
+inline bool operator<(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
-    return Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThan(Lhs, Rhs);
+    return Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThan(LHS, RHS);
 }
 
 template<typename... FirstTypes, typename... SecondTypes>
-inline bool operator>(const TTuple<FirstTypes...>& Lhs, const TTuple<SecondTypes...>& Rhs)
+inline bool operator>(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
-    return (Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThanOrEqual(Lhs, Rhs) == false);
+    return (Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThanOrEqual(LHS, RHS) == false);
 }
 
 template<typename... FirstTypes, typename... SecondTypes>
-inline bool operator>=(const TTuple<FirstTypes...>& Lhs, const TTuple<SecondTypes...>& Rhs)
+inline bool operator>=(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
-    return (Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThan(Lhs, Rhs) == false);
+    return (Internal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThan(LHS, RHS) == false);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

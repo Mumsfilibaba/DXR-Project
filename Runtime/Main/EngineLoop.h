@@ -5,18 +5,18 @@ class CEngineLoop
 {
 public:
 
-    /* Loads all the core modules */
+     /** @brief: Loads all the core modules */
     static bool LoadCoreModules();
 
-    /* Creates the application and load modules */
+     /** @brief: Creates the application and load modules */
     static bool PreInitialize();
 
-    /* Initializes and starts up the engine */
+     /** @brief: Initializes and starts up the engine */
     static bool Initialize();
 
-    /* Ticks the engine */
+     /** @brief: Ticks the engine */
     static void Tick( CTimestamp Deltatime );
 
-    /* Releases the engine */
+     /** @brief: Releases the engine */
     static bool Release();
 };

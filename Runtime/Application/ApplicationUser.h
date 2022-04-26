@@ -116,23 +116,23 @@ private:
 
     CApplicationUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
 
-    /* Get the index in the key-state array */
+     /** @brief: Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const
     {
         SKeyState TempState(KeyCode);
-        return KeyStates.Find(TempState, [](const SKeyState& Lhs, const SKeyState& Rhs) -> bool
+        return KeyStates.Find(TempState, [](const SKeyState& LHS, const SKeyState& RHS) -> bool
         {
-            return (Lhs.KeyCode == Rhs.KeyCode);
+            return (LHS.KeyCode == RHS.KeyCode);
         });
     }
 
-    /* Get the index in the key-state array */
+     /** @brief: Get the index in the key-state array */
     FORCEINLINE int32 GetMouseButtonStateIndexFromMouseButton(EMouseButton Button) const
     {
         SMouseButtonState TempState(Button);
-        return MouseButtonStates.Find(TempState, [](const SMouseButtonState& Lhs, const SMouseButtonState& Rhs) -> bool
+        return MouseButtonStates.Find(TempState, [](const SMouseButtonState& LHS, const SMouseButtonState& RHS) -> bool
         {
-            return (Lhs.Button == Rhs.Button);
+            return (LHS.Button == RHS.Button);
         });
     }
 

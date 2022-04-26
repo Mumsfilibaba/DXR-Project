@@ -53,15 +53,14 @@ private:
 public:
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE TMulticastDelegate()
         : Super()
-    {
-    }
+    { }
 
     /**
-     * Add a function to the delegate
+     * @brief: Add a function to the delegate
      *
      * @param Function: Function to bind to the delegate
      * @param Payload: Arguments to bind to the delegate
@@ -73,7 +72,7 @@ public:
     }
 
     /**
-     * Add a member-function to the delegate
+     * @brief: Add a member-function to the delegate
      *
      * @param This: Pointer to an instance to bind to the delegate
      * @param Function: MemberFunction to bind to the delegate
@@ -86,7 +85,7 @@ public:
     }
 
     /**
-     * Add a member-function to the delegate
+     * @brief: Add a member-function to the delegate
      *
      * @param This: Pointer to an instance to bind to the delegate
      * @param Function: MemberFunction to bind to the delegate
@@ -99,7 +98,7 @@ public:
     }
 
     /**
-     * Add a const member-function to the delegate
+     * @brief: Add a const member-function to the delegate
      *
      * @param This: Pointer to an instance to bind to the delegate
      * @param Function: MemberFunction to bind to the delegate
@@ -112,7 +111,7 @@ public:
     }
 
     /**
-     * Add a const member-function to the delegate
+     * @brief: Add a const member-function to the delegate
      *
      * @param This: Pointer to an instance to bind to the delegate
      * @param Function: MemberFunction to bind to the delegate
@@ -125,7 +124,7 @@ public:
     }
 
     /**
-     * Bind a lambda to the delegate
+     * @brief: Bind a lambda to the delegate
      *
      * @param Functor: Functor to bind to the delegate
      * @param Payload: Arguments to bind to the delegate
@@ -137,7 +136,7 @@ public:
     }
 
     /**
-     * Add any delegate
+     * @brief: Add any delegate
      * 
      * @param Delegate: Delegate to add
      * @return: Returns the delegate-handle of the added delegate
@@ -148,7 +147,7 @@ public:
     }
 
     /**
-     * Execute all bound delegates
+     * @brief: Execute all bound delegates
      * 
      * @param Args: Arguments for the function-calls
      */

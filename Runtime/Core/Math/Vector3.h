@@ -2,678 +2,580 @@
 #include "MathCommon.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A 3-D floating point vector (x, y, z)
+// CVector3
 
 class CVector3
 {
 public:
 
-    /** Default constructor (Initialize components to zero) */
-    FORCEINLINE CVector3() noexcept;
+    /** 
+     * @brief: Default constructor (Initialize components to zero) 
+     */
+    FORCEINLINE CVector3() noexcept
+        : x(0.0f)
+        , y(0.0f)
+        , z(0.0f)
+    { }
 
     /**
-     * Constructor initializing all components with a corresponding value.
+     * @brief: Constructor initializing all components with a corresponding value.
      *
      * @param InX: The x-coordinate
      * @param InY: The y-coordinate
      * @param InZ: The z-coordinate
      */
-    FORCEINLINE explicit CVector3(float InX, float InY, float InZ) noexcept;
+    FORCEINLINE explicit CVector3(float InX, float InY, float InZ) noexcept
+        : x(InX)
+        , y(InY)
+        , z(InZ)
+    { }
 
     /**
-     * Constructor initializing all components with an array.
+     * @brief: Constructor initializing all components with an array.
      *
      * @param Arr: Array with 3 elements
      */
-    FORCEINLINE explicit CVector3(const float* Arr) noexcept;
+    FORCEINLINE explicit CVector3(const float* Arr) noexcept
+        : x(Arr[0])
+        , y(Arr[1])
+        , z(Arr[2])
+    { }
 
     /**
-     * Constructor initializing all components with a single value.
+     * @brief: Constructor initializing all components with a single value.
      *
      * @param Scalar: Value to set all components to
      */
-    FORCEINLINE explicit CVector3(float Scalar) noexcept;
+    FORCEINLINE explicit CVector3(float Scalar) noexcept
+        : x(Scalar)
+        , y(Scalar)
+        , z(Scalar)
+    { }
 
-    /* Normalized this vector */
-    inline void Normalize() noexcept;
+     /** @brief: Normalized this vector */
+    inline void Normalize() noexcept
+    {
+        const float fLengthSquared = LengthSquared();
+        if (fLengthSquared != 0.0f)
+        {
+            const float fRecipLength = 1.0f / NMath::Sqrt(fLengthSquared);
+            x *= fRecipLength;
+            y *= fRecipLength;
+            z *= fRecipLength;
+        }
+    }
 
     /**
-     * Returns a normalized version of this vector
+     * @brief: Returns a normalized version of this vector
      *
-     * @return A copy of this vector normalized
+     * @return: A copy of this vector normalized
      */
-    FORCEINLINE CVector3 GetNormalized() const noexcept;
+    FORCEINLINE CVector3 GetNormalized() const noexcept
+    {
+        CVector3 Result(*this);
+        Result.Normalize();
+        return Result;
+    }
 
     /**
-     * Compares, within a threshold Epsilon, this vector with another vector
+     * @brief: Compares, within a threshold Epsilon, this vector with another vector
      *
      * @param Other: vector to compare against
-     * @return True if equal, false if not
+     * @return: True if equal, false if not
      */
-    inline bool IsEqual(const CVector3& Other, float Epsilon = NMath::IS_EQUAL_EPISILON) const noexcept;
+    inline bool IsEqual(const CVector3& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    {
+        Epsilon = NMath::Abs(Epsilon);
+
+        for (int32 i = 0; i < 3; i++)
+        {
+            float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
+            if (NMath::Abs(Diff) > Epsilon)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /**
-     * Checks weather this vector is a unit vector not
+     * @brief: Checks weather this vector is a unit vector not
      *
-     * @return True if the length equals one, false if not
+     * @return: True if the length equals one, false if not
      */
-    FORCEINLINE bool IsUnitVector() const noexcept;
+    FORCEINLINE bool IsUnitVector() const noexcept
+    {
+        const float fLengthSquared = NMath::Abs(1.0f - LengthSquared());
+        return (fLengthSquared < NMath::kIsEqualEpsilon);
+    }
 
     /**
-     * Checks weather this vector has any component that equals NaN
+     * @brief: Checks weather this vector has any component that equals NaN
      *
-     * @return True if the any component equals NaN, false if not
+     * @return: True if the any component equals NaN, false if not
      */
-    FORCEINLINE bool HasNan() const noexcept;
+    FORCEINLINE bool HasNaN() const noexcept
+    {
+        for (int32 Index = 0; Index < 3; ++Index)
+        {
+            if (NMath::IsNaN(reinterpret_cast<const float*>(this)[Index]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
-     * Checks weather this vector has any component that equals infinity
+     * @brief: Checks weather this vector has any component that equals infinity
      *
-     * @return True if the any component equals infinity, false if not
+     * @return: True if the any component equals infinity, false if not
      */
-    FORCEINLINE bool HasInfinity() const noexcept;
+    FORCEINLINE bool HasInfinity() const noexcept
+    {
+        for (int32 Index = 0; Index < 3; ++Index)
+        {
+            if (NMath::IsInfinity(reinterpret_cast<const float*>(this)[Index]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
-     * Checks weather this vector has any value that equals infinity or NaN
+     * @brief: Checks weather this vector has any value that equals infinity or NaN
      *
-     * @return False if the any value equals infinity or NaN, true if not
+     * @return: False if the any value equals infinity or NaN, true if not
      */
-    FORCEINLINE bool IsValid() const noexcept;
+    FORCEINLINE bool IsValid() const noexcept
+    {
+        return !HasNaN() && !HasInfinity();
+    }
 
     /**
-     * Returns the length of this vector
+     * @brief: Returns the length of this vector
      *
-     * @return The length of the vector
+     * @return: The length of the vector
      */
-    FORCEINLINE float Length() const noexcept;
+    FORCEINLINE float Length() const noexcept
+    {
+        const float fLengthSquared = LengthSquared();
+        return NMath::Sqrt(fLengthSquared);
+    }
 
     /**
-     * Returns the length of this vector squared
+     * @brief: Returns the length of this vector squared
      *
-     * @return The length of the vector squared
+     * @return: The length of the vector squared
      */
-    FORCEINLINE float LengthSquared() const noexcept;
+    FORCEINLINE float LengthSquared() const noexcept
+    {
+        return DotProduct(*this);
+    }
 
     /**
-     * Returns the dot product between this and another vector
+     * @brief: Returns the dot product between this and another vector
      *
      * @param Other: The vector to perform dot product with
-     * @return The dot product
+     * @return: The dot product
      */
-    FORCEINLINE float DotProduct(const CVector3& Other) const noexcept;
+    FORCEINLINE float DotProduct(const CVector3& Other) const noexcept
+    {
+        return (x * Other.x) + (y * Other.y) + (z * Other.z);
+    }
 
     /**
-     * Returns the cross product of this vector and another vector.
+     * @brief: Returns the cross product of this vector and another vector.
      *
      * @param Other: The vector to perform cross product with
-     * @return The cross product
+     * @return: The cross product
      */
-    inline CVector3 CrossProduct(const CVector3& Other) const noexcept;
+    inline CVector3 CrossProduct(const CVector3& Other) const noexcept
+    {
+        return CVector3((y * Other.z) - (z * Other.y)
+                       ,(z * Other.x) - (x * Other.z)
+                       ,(x * Other.y) - (y * Other.x));
+    }
 
     /**
-     * Returns the resulting vector after projecting this vector onto another.
+     * @brief: Returns the resulting vector after projecting this vector onto another.
      *
      * @param Other: The vector to project onto
-     * @return The projected vector
+     * @return: The projected vector
      */
-    inline CVector3 ProjectOn(const CVector3& Other) const noexcept;
+    inline CVector3 ProjectOn(const CVector3& Other) const noexcept
+    {
+        float AdotB = DotProduct(Other);
+        float BdotB = Other.LengthSquared();
+        return (AdotB / BdotB) * Other;
+    }
 
     /**
-     * Returns the reflected vector after reflecting this vector around a normal.
+     * @brief: Returns the reflected vector after reflecting this vector around a normal.
      *
      * @param Normal: Vector to reflect around
-     * @return The reflected vector
+     * @return: The reflected vector
      */
-    inline CVector3 Reflect(const CVector3& Normal) const noexcept;
+    inline CVector3 Reflect(const CVector3& Normal) const noexcept
+    {
+        float VdotN = DotProduct(Normal);
+        float NdotN = Normal.LengthSquared();
+        return *this - ((2.0f * (VdotN / NdotN)) * Normal);
+    }
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
-     * @return A pointer to the data
+     * @return: A pointer to the data
      */
-    FORCEINLINE float* GetData() noexcept;
+    FORCEINLINE float* Data() noexcept
+    {
+        return reinterpret_cast<float*>(this);
+    }
 
     /**
-     * Returns the data of this matrix as a pointer
+     * @brief: Returns the data of this matrix as a pointer
      *
-     * @return A pointer to the data
+     * @return: A pointer to the data
      */
-    FORCEINLINE const float* GetData() const noexcept;
+    FORCEINLINE const float* Data() const noexcept
+    {
+        return reinterpret_cast<const float*>(this);
+    }
 
 public:
 
     /**
-     * Returns a vector with the smallest of each component of two vectors
+     * @brief: Returns a vector with the smallest of each component of two vectors
      *
      * @param First: First vector to compare with
      * @param Second: Second vector to compare with
-     * @return A vector with the smallest components of First and Second
+     * @return: A vector with the smallest components of First and Second
      */
-    friend FORCEINLINE CVector3 Min(const CVector3& First, const CVector3& Second) noexcept;
+    friend FORCEINLINE CVector3 Min(const CVector3& First, const CVector3& Second) noexcept
+    {
+        return CVector3(NMath::Min(First.x, Second.x), NMath::Min(First.y, Second.y), NMath::Min(First.z, Second.z));
+    }
 
     /**
-     * Returns a vector with the largest of each component of two vectors
+     * @brief: Returns a vector with the largest of each component of two vectors
      *
      * @param First: First vector to compare with
      * @param Second: Second vector to compare with
-     * @return A vector with the largest components of First and Second
+     * @return: A vector with the largest components of First and Second
      */
-    friend FORCEINLINE CVector3 Max(const CVector3& First, const CVector3& Second) noexcept;
+    friend FORCEINLINE CVector3 Max(const CVector3& First, const CVector3& Second) noexcept
+    {
+        return CVector3(NMath::Max(First.x, Second.x), NMath::Max(First.y, Second.y), NMath::Max(First.z, Second.z));
+    }
 
     /**
-     * Returns the linear interpolation between two vectors
+     * @brief: Returns the linear interpolation between two vectors
      *
      * @param First: First vector to interpolate
      * @param Second: Second vector to interpolate
      * @param Factor: Factor to interpolate with. Zero returns First, One returns seconds
-     * @return A vector with the result of interpolation
+     * @return: A vector with the result of interpolation
      */
-    friend FORCEINLINE CVector3 Lerp(const CVector3& First, const CVector3& Second, float t) noexcept;
+    friend FORCEINLINE CVector3 Lerp(const CVector3& First, const CVector3& Second, float Factor) noexcept
+    {
+        return CVector3((1.0f - Factor) * First.x + Factor * Second.x
+                       ,(1.0f - Factor) * First.y + Factor * Second.y
+                       ,(1.0f - Factor) * First.z + Factor * Second.z);
+    }
 
     /**
-     * Returns a vector with all the components within the range of a min and max value
+     * @brief: Returns a vector with all the components within the range of a min and max value
      *
      * @param Min: Vector with minimum values
      * @param Max: Vector with maximum values
      * @param Value: Vector to clamp
-     * @return A vector with the result of clamping
+     * @return: A vector with the result of clamping
      */
-    friend FORCEINLINE CVector3 Clamp(const CVector3& Min, const CVector3& Max, const CVector3& Value) noexcept;
+    friend FORCEINLINE CVector3 Clamp(const CVector3& Min, const CVector3& Max, const CVector3& Value) noexcept
+    {
+        return CVector3(NMath::Min(NMath::Max(Value.x, Min.x), Max.x)
+                       ,NMath::Min(NMath::Max(Value.y, Min.y), Max.y)
+                       ,NMath::Min(NMath::Max(Value.z, Min.z), Max.z));
+    }
 
     /**
-     * Returns a vector with all the components within the range zero and one
+     * @brief: Returns a vector with all the components within the range zero and one
      *
      * @param Value: Value to saturate
-     * @return A vector with the result of saturation
+     * @return: A vector with the result of saturation
      */
-    friend FORCEINLINE CVector3 Saturate(const CVector3& Value) noexcept;
+    friend FORCEINLINE CVector3 Saturate(const CVector3& Value) noexcept
+    {
+        return CVector3(NMath::Min(NMath::Max(Value.x, 0.0f), 1.0f)
+                       ,NMath::Min(NMath::Max(Value.y, 0.0f), 1.0f)
+                       ,NMath::Min(NMath::Max(Value.z, 0.0f), 1.0f));
+    }
 
 public:
 
     /**
-     * Return a vector with component-wise negation of this vector
+     * @brief: Return a vector with component-wise negation of this vector
      *
-     * @return A negated vector
+     * @return: A negated vector
      */
-    FORCEINLINE CVector3 operator-() const noexcept;
+    FORCEINLINE CVector3 operator-() const noexcept
+    {
+        return CVector3(-x, -y, -z);
+    }
 
     /**
-     * Returns the result of component-wise adding this and another vector
+     * @brief: Returns the result of component-wise adding this and another vector
      *
-     * @param Rhs: The vector to add
-     * @return A vector with the result of addition
+     * @param RHS: The vector to add
+     * @return: A vector with the result of addition
      */
-    FORCEINLINE CVector3 operator+(const CVector3& Rhs) const noexcept;
+    FORCEINLINE CVector3 operator+(const CVector3& RHS) const noexcept
+    {
+        return CVector3(x + RHS.x, y + RHS.y, z + RHS.z);
+    }
 
     /**
-     * Returns this vector after component-wise adding this with another vector
+     * @brief: Returns this vector after component-wise adding this with another vector
      *
-     * @param Rhs: The vector to add
-     * @return A reference to this vector
+     * @param RHS: The vector to add
+     * @return: A reference to this vector
      */
-    FORCEINLINE CVector3& operator+=(const CVector3& Rhs) noexcept;
+    FORCEINLINE CVector3& operator+=(const CVector3& RHS) noexcept
+    {
+        return *this = *this + RHS;
+    }
 
     /**
-     * Returns the result of adding a scalar to each component of this vector
+     * @brief: Returns the result of adding a scalar to each component of this vector
      *
-     * @param Rhs: The scalar to add
-     * @return A vector with the result of addition
+     * @param RHS: The scalar to add
+     * @return: A vector with the result of addition
      */
-    FORCEINLINE CVector3 operator+(float Rhs) const noexcept;
+    FORCEINLINE CVector3 operator+(float RHS) const noexcept
+    {
+        return CVector3(x + RHS, y + RHS, z + RHS);
+    }
 
     /**
-     * Returns this vector after adding a scalar to each component of this vector
+     * @brief: Returns this vector after adding a scalar to each component of this vector
      *
-     * @param Rhs: The scalar to add
-     * @return A reference to this vector
+     * @param RHS: The scalar to add
+     * @return: A reference to this vector
      */
-    FORCEINLINE CVector3& operator+=(float Rhs) noexcept;
+    FORCEINLINE CVector3& operator+=(float RHS) noexcept
+    {
+        return *this = *this + RHS;
+    }
 
     /**
-     * Returns the result of component-wise subtraction between this and another vector
+     * @brief: Returns the result of component-wise subtraction between this and another vector
      *
-     * @param Rhs: The vector to subtract
-     * @return A vector with the result of subtraction
+     * @param RHS: The vector to subtract
+     * @return: A vector with the result of subtraction
      */
-    FORCEINLINE CVector3 operator-(const CVector3& Rhs) const noexcept;
+    FORCEINLINE CVector3 operator-(const CVector3& RHS) const noexcept
+    {
+        return CVector3(x - RHS.x, y - RHS.y, z - RHS.z);
+    }
 
     /**
-     * Returns this vector after component-wise subtraction between this and another vector
+     * @brief: Returns this vector after component-wise subtraction between this and another vector
      *
-     * @param Rhs: The vector to subtract
-     * @return A reference to this vector
+     * @param RHS: The vector to subtract
+     * @return: A reference to this vector
      */
-    FORCEINLINE CVector3& operator-=(const CVector3& Rhs) noexcept;
+    FORCEINLINE CVector3& operator-=(const CVector3& RHS) noexcept
+    {
+        return *this = *this - RHS;
+    }
 
     /**
-     * Returns the result of subtracting each component of this vector with a scalar
+     * @brief: Returns the result of subtracting each component of this vector with a scalar
      *
-     * @param Rhs: The scalar to subtract
-     * @return A vector with the result of the subtraction
+     * @param RHS: The scalar to subtract
+     * @return: A vector with the result of the subtraction
      */
-    FORCEINLINE CVector3 operator-(float Rhs) const noexcept;
+    FORCEINLINE CVector3 operator-(float RHS) const noexcept
+    {
+        return CVector3(x - RHS, y - RHS, z - RHS);
+    }
 
     /**
-     * Returns this vector after subtracting each component of this vector with a scalar
+     * @brief: Returns this vector after subtracting each component of this vector with a scalar
      *
-     * @param Rhs: The scalar to subtract
-     * @return A reference to this vector
+     * @param RHS: The scalar to subtract
+     * @return: A reference to this vector
      */
-    FORCEINLINE CVector3& operator-=(float Rhs) noexcept;
+    FORCEINLINE CVector3& operator-=(float RHS) noexcept
+    {
+        return *this = *this - RHS;
+    }
 
     /**
-     * Returns the result of component-wise multiplication with this and another vector
+     * @brief: Returns the result of component-wise multiplication with this and another vector
      *
-     * @param Rhs: The vector to multiply with
-     * @return A vector with the result of the multiplication
+     * @param RHS: The vector to multiply with
+     * @return: A vector with the result of the multiplication
      */
-    FORCEINLINE CVector3 operator*(const CVector3& Rhs) const noexcept;
+    FORCEINLINE CVector3 operator*(const CVector3& RHS) const noexcept
+    {
+        return CVector3(x * RHS.x, y * RHS.y, z * RHS.z);
+    }
 
     /**
-     * Returns this vector after component-wise multiplication with this and another vector
+     * @brief: Returns this vector after component-wise multiplication with this and another vector
      *
-     * @param Rhs: The vector to multiply with
-     * @return A reference to this vector
+     * @param RHS: The vector to multiply with
+     * @return: A reference to this vector
      */
-    FORCEINLINE CVector3& operator*=(const CVector3& Rhs) noexcept;
+    FORCEINLINE CVector3& operator*=(const CVector3& RHS) noexcept
+    {
+        return *this = *this * RHS;
+    }
 
     /**
-     * Returns the result of multiplying each component of this vector with a scalar
+     * @brief: Returns the result of multiplying each component of this vector with a scalar
      *
-     * @param Rhs: The scalar to multiply with
-     * @return A vector with the result of the multiplication
+     * @param RHS: The scalar to multiply with
+     * @return: A vector with the result of the multiplication
      */
-    FORCEINLINE CVector3 operator*(float Rhs) const noexcept;
+    FORCEINLINE CVector3 operator*(float RHS) const noexcept
+    {
+        return CVector3(x * RHS, y * RHS, z * RHS);
+    }
 
     /**
-     * Returns the result of multiplying each component of a vector with a scalar
+     * @brief: Returns the result of multiplying each component of a vector with a scalar
      *
-     * @param Lhs: The scalar to multiply with
-     * @param Rhs: The vector to multiply with
-     * @return A vector with the result of the multiplication
+     * @param LHS: The scalar to multiply with
+     * @param RHS: The vector to multiply with
+     * @return: A vector with the result of the multiplication
      */
-    friend FORCEINLINE CVector3 operator*(float Lhs, const CVector3& Rhs) noexcept;
+    friend FORCEINLINE CVector3 operator*(float LHS, const CVector3& RHS) noexcept
+    {
+        return CVector3(LHS * RHS.x, LHS * RHS.y, LHS * RHS.z);
+    }
 
     /**
-     * Returns this vector after multiplying each component of this vector with a scalar
+     * @brief: Returns this vector after multiplying each component of this vector with a scalar
      *
-     * @param Rhs: The scalar to multiply with
-     * @return A reference to this vector
+     * @param RHS: The scalar to multiply with
+     * @return: A reference to this vector
      */
-    FORCEINLINE CVector3 operator*=(float Rhs) noexcept;
+    FORCEINLINE CVector3 operator*=(float RHS) noexcept
+    {
+        return *this = *this * RHS;
+    }
 
     /**
-     * Returns the result of component-wise division with this and another vector
+     * @brief: Returns the result of component-wise division with this and another vector
      *
-     * @param Rhs: The vector to divide with
-     * @return A vector with the result of the division
+     * @param RHS: The vector to divide with
+     * @return: A vector with the result of the division
      */
-    FORCEINLINE CVector3 operator/(const CVector3& Rhs) const noexcept;
+    FORCEINLINE CVector3 operator/(const CVector3& RHS) const noexcept
+    {
+        return CVector3(x / RHS.x, y / RHS.y, z / RHS.z);
+    }
 
     /**
-     * Returns this vector after component-wise division with this and another vector
+     * @brief: Returns this vector after component-wise division with this and another vector
      *
-     * @param Rhs: The vector to divide with
-     * @return A reference to this vector
+     * @param RHS: The vector to divide with
+     * @return: A reference to this vector
      */
-    FORCEINLINE CVector3& operator/=(const CVector3& Rhs) noexcept;
+    FORCEINLINE CVector3& operator/=(const CVector3& RHS) noexcept
+    {
+        return *this = *this / RHS;
+    }
 
     /**
-     * Returns the result of dividing each component of this vector and a scalar
+     * @brief: Returns the result of dividing each component of this vector and a scalar
      *
-     * @param Rhs: The scalar to divide with
-     * @return A vector with the result of the division
+     * @param RHS: The scalar to divide with
+     * @return: A vector with the result of the division
      */
-    FORCEINLINE CVector3 operator/(float Rhs) const noexcept;
+    FORCEINLINE CVector3 operator/(float RHS) const noexcept
+    {
+        return CVector3(x / RHS, y / RHS, z / RHS);
+    }
 
     /**
-     * Returns this vector after dividing each component of this vector and a scalar
+     * @brief: Returns this vector after dividing each component of this vector and a scalar
      *
-     * @param Rhs: The scalar to divide with
-     * @return A reference to this vector
+     * @param RHS: The scalar to divide with
+     * @return: A reference to this vector
      */
-    FORCEINLINE CVector3& operator/=(float Rhs) noexcept;
+    FORCEINLINE CVector3& operator/=(float RHS) noexcept
+    {
+        return *this = *this / RHS;
+    }
 
     /**
-     * Returns the result after comparing this and another vector
+     * @brief: Returns the result after comparing this and another vector
      *
      * @param Other: The vector to compare with
-     * @return True if equal, false if not
+     * @return: True if equal, false if not
      */
-    FORCEINLINE bool operator==(const CVector3& Other) const noexcept;
+    FORCEINLINE bool operator==(const CVector3& Other) const noexcept
+    {
+        return IsEqual(Other);
+    }
 
     /**
-     * Returns the negated result after comparing this and another vector
+     * @brief: Returns the negated result after comparing this and another vector
      *
      * @param Other: The vector to compare with
-     * @return False if equal, true if not
+     * @return: False if equal, true if not
      */
-    FORCEINLINE bool operator!=(const CVector3& Other) const noexcept;
+    FORCEINLINE bool operator!=(const CVector3& Other) const noexcept
+    {
+        return !IsEqual(Other);
+    }
 
     /**
-     * Returns the component specified
+     * @brief: Returns the component specified
      *
      * @param Index: The component index
-     * @return The component
+     * @return: The component
      */
-    FORCEINLINE float& operator[](int Index) noexcept;
+    FORCEINLINE float& operator[](int32 Index) noexcept
+    {
+        Assert(Index < 3);
+        return reinterpret_cast<float*>(this)[Index];
+    }
 
     /**
-     * Returns the component specified
+     * @brief: Returns the component specified
      *
      * @param Index: The component index
-     * @return The component
+     * @return: The component
      */
-    FORCEINLINE float operator[](int Index) const noexcept;
+    FORCEINLINE float operator[](int32 Index) const noexcept
+    {
+        Assert(Index < 3);
+        return reinterpret_cast<const float*>(this)[Index];
+    }
 
 public:
 
-    /* The x-coordinate */
+     /** @brief: The x-coordinate */
     float x;
-    /* The y-coordinate */
+
+     /** @brief: The y-coordinate */
     float y;
-    /* The z-coordinate */
+    
+    /** @brief: The z-coordinate */
     float z;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Implementation
-
-FORCEINLINE CVector3::CVector3() noexcept
-    : x(0.0f)
-    , y(0.0f)
-    , z(0.0f)
-{
-}
-
-FORCEINLINE CVector3::CVector3(float InX, float InY, float InZ) noexcept
-    : x(InX)
-    , y(InY)
-    , z(InZ)
-{
-}
-
-FORCEINLINE CVector3::CVector3(const float* Arr) noexcept
-    : x(Arr[0])
-    , y(Arr[1])
-    , z(Arr[2])
-{
-}
-
-FORCEINLINE CVector3::CVector3(float Scalar) noexcept
-    : x(Scalar)
-    , y(Scalar)
-    , z(Scalar)
-{
-}
-
-inline void CVector3::Normalize() noexcept
-{
-    float fLengthSquared = LengthSquared();
-    if (fLengthSquared != 0.0f)
-    {
-        float fRecipLength = 1.0f / NMath::Sqrt(fLengthSquared);
-        x = x * fRecipLength;
-        y = y * fRecipLength;
-        z = z * fRecipLength;
-    }
-}
-
-FORCEINLINE CVector3 CVector3::GetNormalized() const noexcept
-{
-    CVector3 Result(*this);
-    Result.Normalize();
-    return Result;
-}
-
-FORCEINLINE bool CVector3::IsEqual(const CVector3& Other, float Epsilon) const noexcept
-{
-    Epsilon = NMath::Abs(Epsilon);
-
-    for (int i = 0; i < 3; i++)
-    {
-        float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
-        if (NMath::Abs(Diff) > Epsilon)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-FORCEINLINE bool CVector3::IsUnitVector() const noexcept
-{
-    // LengthSquared should be the same as length if this is a unit vector
-    // However, this way the sqrt can be avoided
-    float fLengthSquared = NMath::Abs(1.0f - LengthSquared());
-    return (fLengthSquared < NMath::IS_EQUAL_EPISILON);
-}
-
-FORCEINLINE bool CVector3::HasNan() const noexcept
-{
-    for (int i = 0; i < 4; i++)
-    {
-        if (NMath::IsNan(reinterpret_cast<const float*>(this)[i]))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-FORCEINLINE bool CVector3::HasInfinity() const noexcept
-{
-    for (int i = 0; i < 4; i++)
-    {
-        if (NMath::IsInf(reinterpret_cast<const float*>(this)[i]))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-FORCEINLINE bool CVector3::IsValid() const noexcept
-{
-    return !HasNan() && !HasInfinity();
-}
-
-FORCEINLINE float CVector3::Length() const noexcept
-{
-    float fLengthSquared = LengthSquared();
-    return NMath::Sqrt(fLengthSquared);
-}
-
-FORCEINLINE float CVector3::LengthSquared() const noexcept
-{
-    return DotProduct(*this);
-}
-
-FORCEINLINE float CVector3::DotProduct(const CVector3& Other) const noexcept
-{
-    return (x * Other.x) + (y * Other.y) + (z * Other.z);
-}
-
-FORCEINLINE CVector3 CVector3::CrossProduct(const CVector3& Other) const noexcept
-{
-    float NewX = (y * Other.z) - (z * Other.y);
-    float NewY = (z * Other.x) - (x * Other.z);
-    float NewZ = (x * Other.y) - (y * Other.x);
-    return CVector3(NewX, NewY, NewZ);
-}
-
-inline CVector3 CVector3::ProjectOn(const CVector3& Other) const noexcept
-{
-    float AdotB = this->DotProduct(Other);
-    float BdotB = Other.LengthSquared();
-    return (AdotB / BdotB) * Other;
-}
-
-inline CVector3 CVector3::Reflect(const CVector3& Normal) const noexcept
-{
-    float VdotN = this->DotProduct(Normal);
-    float NdotN = Normal.LengthSquared();
-    return *this - ((2.0f * (VdotN / NdotN)) * Normal);
-}
-
-FORCEINLINE float* CVector3::GetData() noexcept
-{
-    return reinterpret_cast<float*>(this);
-}
-
-FORCEINLINE const float* CVector3::GetData() const noexcept
-{
-    return reinterpret_cast<const float*>(this);
-}
-
-FORCEINLINE CVector3 Min(const CVector3& Lhs, const CVector3& Rhs) noexcept
-{
-    return CVector3(NMath::Min(Lhs.x, Rhs.x), NMath::Min(Lhs.y, Rhs.y), NMath::Min(Lhs.z, Rhs.z));
-}
-
-FORCEINLINE CVector3 Max(const CVector3& Lhs, const CVector3& Rhs) noexcept
-{
-    return CVector3(NMath::Max(Lhs.x, Rhs.x), NMath::Max(Lhs.y, Rhs.y), NMath::Max(Lhs.z, Rhs.z));
-}
-
-FORCEINLINE CVector3 Lerp(const CVector3& First, const CVector3& Second, float t) noexcept
-{
-    return CVector3(
-        (1.0f - t) * First.x + t * Second.x,
-        (1.0f - t) * First.y + t * Second.y,
-        (1.0f - t) * First.z + t * Second.z);
-}
-
-FORCEINLINE CVector3 Clamp(const CVector3& Min, const CVector3& Max, const CVector3& Value) noexcept
-{
-    return CVector3(
-        NMath::Min(NMath::Max(Value.x, Min.x), Max.x),
-        NMath::Min(NMath::Max(Value.y, Min.y), Max.y),
-        NMath::Min(NMath::Max(Value.z, Min.z), Max.z));
-}
-
-FORCEINLINE CVector3 Saturate(const CVector3& Value) noexcept
-{
-    return CVector3(
-        NMath::Min(NMath::Max(Value.x, 0.0f), 1.0f),
-        NMath::Min(NMath::Max(Value.y, 0.0f), 1.0f),
-        NMath::Min(NMath::Max(Value.z, 0.0f), 1.0f));
-}
-
-FORCEINLINE CVector3 CVector3::operator-() const noexcept
-{
-    return CVector3(-x, -y, -z);
-}
-
-FORCEINLINE CVector3 CVector3::operator+(const CVector3& Rhs) const noexcept
-{
-    return CVector3(x + Rhs.x, y + Rhs.y, z + Rhs.z);
-}
-
-FORCEINLINE CVector3& CVector3::operator+=(const CVector3& Rhs) noexcept
-{
-    return *this = *this + Rhs;
-}
-
-FORCEINLINE CVector3 CVector3::operator+(float Rhs) const noexcept
-{
-    return CVector3(x + Rhs, y + Rhs, z + Rhs);
-}
-
-FORCEINLINE CVector3& CVector3::operator+=(float Rhs) noexcept
-{
-    return *this = *this + Rhs;
-}
-
-FORCEINLINE CVector3 CVector3::operator-(const CVector3& Rhs) const noexcept
-{
-    return CVector3(x - Rhs.x, y - Rhs.y, z - Rhs.z);
-}
-
-FORCEINLINE CVector3& CVector3::operator-=(const CVector3& Rhs) noexcept
-{
-    return *this = *this - Rhs;
-}
-
-FORCEINLINE CVector3 CVector3::operator-(float Rhs) const noexcept
-{
-    return CVector3(x - Rhs, y - Rhs, z - Rhs);
-}
-
-FORCEINLINE CVector3& CVector3::operator-=(float Rhs) noexcept
-{
-    return *this = *this - Rhs;
-}
-
-FORCEINLINE CVector3 CVector3::operator*(const CVector3& Rhs) const noexcept
-{
-    return CVector3(x * Rhs.x, y * Rhs.y, z * Rhs.z);
-}
-
-FORCEINLINE CVector3& CVector3::operator*=(const CVector3& Rhs) noexcept
-{
-    return *this = *this * Rhs;
-}
-
-FORCEINLINE CVector3 CVector3::operator*(float Rhs) const noexcept
-{
-    return CVector3(x * Rhs, y * Rhs, z * Rhs);
-}
-
-FORCEINLINE CVector3 operator*(float Lhs, const CVector3& Rhs) noexcept
-{
-    return CVector3(Lhs * Rhs.x, Lhs * Rhs.y, Lhs * Rhs.z);
-}
-
-FORCEINLINE CVector3 CVector3::operator*=(float Rhs) noexcept
-{
-    return *this = *this * Rhs;
-}
-
-FORCEINLINE CVector3 CVector3::operator/(const CVector3& Rhs) const noexcept
-{
-    return CVector3(x / Rhs.x, y / Rhs.y, z / Rhs.z);
-}
-
-FORCEINLINE CVector3& CVector3::operator/=(const CVector3& Rhs) noexcept
-{
-    return *this = *this / Rhs;
-}
-
-FORCEINLINE CVector3 CVector3::operator/(float Rhs) const noexcept
-{
-    return CVector3(x / Rhs, y / Rhs, z / Rhs);
-}
-
-FORCEINLINE CVector3& CVector3::operator/=(float Rhs) noexcept
-{
-    return *this = *this / Rhs;
-}
-
-FORCEINLINE float& CVector3::operator[](int Index) noexcept
-{
-    Assert(Index < 4);
-    return reinterpret_cast<float*>(this)[Index];
-}
-
-FORCEINLINE float CVector3::operator[](int Index) const noexcept
-{
-    Assert(Index < 4);
-    return reinterpret_cast<const float*>(this)[Index];
-}
-
-FORCEINLINE bool CVector3::operator==(const CVector3& Other) const noexcept
-{
-    return IsEqual(Other);
-}
-
-FORCEINLINE bool CVector3::operator!=(const CVector3& Other) const noexcept
-{
-    return !IsEqual(Other);
-}
+// Radians and Degree conversion
 
 namespace NMath
 {

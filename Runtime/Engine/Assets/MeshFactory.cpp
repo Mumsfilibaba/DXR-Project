@@ -195,8 +195,8 @@ SMeshData CMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
         Sphere.Vertices[i].Position = Position * Radius;
 
         // Calculate uvs
-        Sphere.Vertices[i].TexCoord.y = (NMath::Asin(Sphere.Vertices[i].Position.y) / NMath::PI_F) + 0.5f;
-        Sphere.Vertices[i].TexCoord.x = (NMath::Atan2(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + NMath::PI_F) / (2.0f * NMath::PI_F);
+        Sphere.Vertices[i].TexCoord.y = (NMath::Asin(Sphere.Vertices[i].Position.y) / NMath::kPI_f) + 0.5f;
+        Sphere.Vertices[i].TexCoord.x = (NMath::Atan2(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + NMath::kPI_f) / (2.0f * NMath::kPI_f);
     }
 
     Sphere.Indices.ShrinkToFit();
@@ -240,8 +240,8 @@ SMeshData CMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noe
     for (size_t i = 0; i < sides; i++)
     {
         // BOTTOM CAP VERTICES
-        float x = cosf((pi<float>() / 2.0f) + (angle * i));
-        float z = sinf((pi<float>() / 2.0f) + (angle * i));
+        float x = NMath::Cos((pi<float>() / 2.0f) + (angle * i));
+        float z = NMath::Sin((pi<float>() / 2.0f) + (angle * i));
 
         XMFLOAT3 pos = normalize(XMFLOAT3(x, 0.0f, z));
         data.Vertices[i + 1].Position = (pos * radius);
@@ -425,8 +425,8 @@ SMeshData CMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height)
     for (size_t i = 0; i < sides; i++)
     {
         // TOP CAP VERTICES
-        float x = cosf((pi<float>() / 2.0f) + (angle * i));
-        float z = sinf((pi<float>() / 2.0f) + (angle * i));
+        float x = NMath::Cos((pi<float>() / 2.0f) + (angle * i));
+        float z = NMath::Sin((pi<float>() / 2.0f) + (angle * i));
         XMFLOAT3 pos = normalize(XMFLOAT3(x, 0.0f, z));
         data.Vertices[i + 1].Position = (pos * radius) + XMFLOAT3(0.0f, halfHeight, 0.0f);
         data.Vertices[i + 1].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);

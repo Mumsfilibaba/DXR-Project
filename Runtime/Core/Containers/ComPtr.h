@@ -21,15 +21,14 @@ public:
     friend class TComPtr;
 
     /**
-     *  Default constructor that set the pointer to nullptr 
+     * @brief:  Default constructor that set the pointer to nullptr 
      */
     FORCEINLINE TComPtr() noexcept
         : Ptr(nullptr)
-    {
-    }
+    { }
 
     /**
-     * Copy-constructor 
+     * @brief: Copy-constructor 
      * 
      * @param Other: ComPtr to copy from
      */
@@ -40,7 +39,7 @@ public:
     }
 
     /**
-     * Copy-constructor that copies from a ComPtr of a convertible type
+     * @brief: Copy-constructor that copies from a ComPtr of a convertible type
      *
      * @param Other: ComPtr to copy from
      */
@@ -52,7 +51,7 @@ public:
     }
 
     /**
-     * Move-constructor
+     * @brief: Move-constructor
      *
      * @param Other: ComPtr to move from
      */
@@ -63,7 +62,7 @@ public:
     }
 
     /**
-     * Move-constructor that moves from a ComPtr of a convertible type
+     * @brief: Move-constructor that moves from a ComPtr of a convertible type
      *
      * @param Other: ComPtr to move from
      */
@@ -75,28 +74,26 @@ public:
     }
 
     /**
-     * Construct a ComPtr from a raw pointer. The container takes ownership.
+     * @brief: Construct a ComPtr from a raw pointer. The container takes ownership.
      * 
      * @param InPointer: Pointer to reference
      */
     FORCEINLINE TComPtr(ElementType* InPointer) noexcept
         : Ptr(InPointer)
-    {
-    }
+    { }
 
     /**
-     * Construct a ComPtr from a raw pointer of a convertible type. The container takes ownership.
+     * @brief: Construct a ComPtr from a raw pointer of a convertible type. The container takes ownership.
      *
      * @param InPointer: Pointer to reference
      */
     template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
     FORCEINLINE TComPtr(OtherType* InPointer) noexcept
         : Ptr(InPointer)
-    {
-    }
+    { }
 
     /**
-     * Default destructor
+     * @brief: Default destructor
      */
     FORCEINLINE ~TComPtr()
     {
@@ -104,7 +101,7 @@ public:
     }
 
     /**
-     * Resets the container and sets to a potential new raw pointer 
+     * @brief: Resets the container and sets to a potential new raw pointer 
      * 
      * @param NewPtr: New pointer to reference
      */
@@ -114,7 +111,7 @@ public:
     }
 
     /**
-     * Resets the container and sets to a new raw pointer from a convertible type
+     * @brief: Resets the container and sets to a new raw pointer from a convertible type
      *
      * @param NewPtr: New pointer to reference
      */
@@ -125,7 +122,7 @@ public:
     }
 
     /**
-     * Swaps the pointers in the two containers 
+     * @brief: Swaps the pointers in the two containers 
      * 
      * @param Other: ComPtr to swap with
      */
@@ -135,7 +132,7 @@ public:
     }
 
     /**
-     * Releases the ownership of the pointer and returns the pointer
+     * @brief: Releases the ownership of the pointer and returns the pointer
      * 
      * @return: Returns the pointer that was previously held by the container
      */
@@ -147,7 +144,7 @@ public:
     }
 
     /**
-     * Adds a reference to the stored pointer 
+     * @brief: Adds a reference to the stored pointer 
      */
     FORCEINLINE void AddRef() noexcept
     {
@@ -158,7 +155,7 @@ public:
     }
 
     /**
-     * Retrieve the raw pointer 
+     * @brief: Retrieve the raw pointer 
      * 
      * @return: Returns the raw pointer
      */
@@ -168,7 +165,7 @@ public:
     }
 
     /**
-     * Retrieve the current reference count of the object. The object needs to be valid.
+     * @brief: Retrieve the current reference count of the object. The object needs to be valid.
      * 
      * @return: The current reference count of the stored pointer
      */
@@ -182,7 +179,7 @@ public:
     }
 
     /**
-     * Retrieve the raw pointer and add a reference 
+     * @brief: Retrieve the raw pointer and add a reference 
      * 
      * @return: Returns the raw pointer
      */
@@ -193,7 +190,7 @@ public:
     }
 
     /**
-     * Releases the objects and returns the address of the stored pointer
+     * @brief: Releases the objects and returns the address of the stored pointer
      * 
      * @return: Pointer to the stored pointer
      */
@@ -216,7 +213,7 @@ public:
     }
 
     /**
-     * Retrieve the pointer as another type that is convertible by querying the interface type
+     * @brief: Retrieve the pointer as another type that is convertible by querying the interface type
      *
      * @param Riid: The IID of the type to query
      * @param NewPointer: A ComPtr of unknown type to store the result in
@@ -236,7 +233,7 @@ public:
     }
 
     /**
-     * Get the address of the raw pointer 
+     * @brief: Get the address of the raw pointer 
      * 
      * @return: The address of the raw pointer
      */
@@ -246,7 +243,7 @@ public:
     }
 
     /**
-     * Get the address of the raw pointer
+     * @brief: Get the address of the raw pointer
      *
      * @return: The address of the raw pointer
      */
@@ -256,7 +253,7 @@ public:
     }
 
     /**
-     * Checks weather the pointer is valid or not 
+     * @brief: Checks weather the pointer is valid or not 
      * 
      * @return: True if the pointer is not nullptr otherwise false
      */
@@ -268,7 +265,7 @@ public:
 public:
 
     /**
-     * Retrieve the raw pointer
+     * @brief: Retrieve the raw pointer
      *
      * @return: Returns the raw pointer
      */
@@ -278,7 +275,7 @@ public:
     }
 
     /**
-     * Get the address of the raw pointer
+     * @brief: Get the address of the raw pointer
      *
      * @return: The address of the raw pointer
      */
@@ -288,7 +285,7 @@ public:
     }
 
     /**
-     * Get the address of the raw pointer
+     * @brief: Get the address of the raw pointer
      *
      * @return: The address of the raw pointer
      */
@@ -298,7 +295,7 @@ public:
     }
 
     /**
-     * Dereference the stored pointer
+     * @brief: Dereference the stored pointer
      *
      * @return: A reference to the object pointed to by the pointer
      */
@@ -308,7 +305,7 @@ public:
     }
 
     /**
-     * Checks weather the pointer is valid or not
+     * @brief: Checks weather the pointer is valid or not
      *
      * @return: True if the pointer is not nullptr otherwise false
      */
@@ -318,82 +315,82 @@ public:
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      * 
-     * @param Rhs: Instance to copy from
+     * @param RHS: Instance to copy from
      * @return: A reference to this object
      */
-    FORCEINLINE TComPtr& operator=(const TComPtr& Rhs) noexcept
+    FORCEINLINE TComPtr& operator=(const TComPtr& RHS) noexcept
     {
-        TComPtr(Rhs).Swap(*this);
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /**
-     * Copy-assignment operator that takes a convertible type
+     * @brief: Copy-assignment operator that takes a convertible type
      *
-     * @param Rhs: Instance to copy from
+     * @param RHS: Instance to copy from
      * @return: A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(const TComPtr<OtherType>& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(const TComPtr<OtherType>& RHS) noexcept
     {
-        TComPtr(Rhs).Swap(*this);
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
-     * @param Rhs: Instance to move from
+     * @param RHS: Instance to move from
      * @return: A reference to this object
      */
-    FORCEINLINE TComPtr& operator=(TComPtr&& Rhs) noexcept
+    FORCEINLINE TComPtr& operator=(TComPtr&& RHS) noexcept
     {
-        TComPtr(Rhs).Swap(*this);
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /**
-     * Move-assignment operator that takes a convertible type
+     * @brief: Move-assignment operator that takes a convertible type
      *
-     * @param Rhs: Instance to move from
-     * @return: A reference to this object
-     */
-    template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(TComPtr<OtherType>&& Rhs) noexcept
-    {
-        TComPtr(Rhs).Swap(*this);
-        return *this;
-    }
-
-    /**
-     * Assignment operator that takes a raw pointer
-     *
-     * @param Rhs: Pointer to store
-     * @return: A reference to this object
-     */
-    FORCEINLINE TComPtr& operator=(ElementType* Rhs) noexcept
-    {
-        TComPtr(Rhs).Swap(*this);
-        return *this;
-    }
-
-    /**
-     * Assignment operator that takes a raw pointer of a convertible type
-     *
-     * @param Rhs: Pointer to store
+     * @param RHS: Instance to move from
      * @return: A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(OtherType* Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(TComPtr<OtherType>&& RHS) noexcept
     {
-        TComPtr(Rhs).Swap(*this);
+        TComPtr(RHS).Swap(*this);
         return *this;
     }
 
     /**
-     * Set the pointer to nullptr 
+     * @brief: Assignment operator that takes a raw pointer
+     *
+     * @param RHS: Pointer to store
+     * @return: A reference to this object
+     */
+    FORCEINLINE TComPtr& operator=(ElementType* RHS) noexcept
+    {
+        TComPtr(RHS).Swap(*this);
+        return *this;
+    }
+
+    /**
+     * @brief: Assignment operator that takes a raw pointer of a convertible type
+     *
+     * @param RHS: Pointer to store
+     * @return: A reference to this object
+     */
+    template<typename OtherType>
+    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TComPtr&>::Type operator=(OtherType* RHS) noexcept
+    {
+        TComPtr(RHS).Swap(*this);
+        return *this;
+    }
+
+    /**
+     * @brief: Set the pointer to nullptr 
      * 
      * @return: A reference to this object
      */
@@ -421,66 +418,66 @@ private:
 // TComPtr equality operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TComPtr<T>& Lhs, U* Rhs) noexcept
+FORCEINLINE bool operator==(const TComPtr<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() == Rhs);
+    return (LHS.Get() == RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* Lhs, const TComPtr<U>& Rhs) noexcept
+FORCEINLINE bool operator==(T* LHS, const TComPtr<U>& RHS) noexcept
 {
-    return (Lhs == Rhs.Get());
+    return (LHS == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TComPtr<T>& Lhs, U* Rhs) noexcept
+FORCEINLINE bool operator!=(const TComPtr<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() != Rhs);
+    return (LHS.Get() != RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* Lhs, const TComPtr<U>& Rhs) noexcept
+FORCEINLINE bool operator!=(T* LHS, const TComPtr<U>& RHS) noexcept
 {
-    return (Lhs != Rhs.Get());
+    return (LHS != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TComPtr<T>& Lhs, const TComPtr<U>& Rhs) noexcept
+FORCEINLINE bool operator==(const TComPtr<T>& LHS, const TComPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() == Rhs.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TComPtr<T>& Lhs, const TComPtr<U>& Rhs) noexcept
+FORCEINLINE bool operator!=(const TComPtr<T>& LHS, const TComPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() != Rhs.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TComPtr<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator==(const TComPtr<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() == nullptr);
+    return (LHS.Get() == nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TComPtr<T>& Rhs) noexcept
+FORCEINLINE bool operator==(NullptrType, const TComPtr<T>& RHS) noexcept
 {
-    return (nullptr == Rhs.Get());
+    return (nullptr == RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TComPtr<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TComPtr<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() != nullptr);
+    return (LHS.Get() != nullptr);
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TComPtr<T>& Rhs) noexcept
+FORCEINLINE bool operator!=(NullptrType, const TComPtr<T>& RHS) noexcept
 {
-    return (nullptr != Rhs.Get());
+    return (nullptr != RHS.Get());
 }
 
-/* Converts a raw pointer into a TComPtr */
+ /** @brief: Converts a raw pointer into a TComPtr */
 template<typename T, typename U>
 FORCEINLINE TComPtr<T> MakeComPtr(U* InRefCountedObject)
 {

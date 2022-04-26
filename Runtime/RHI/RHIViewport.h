@@ -10,7 +10,7 @@ class CRHIViewport : public CRHIObject
 public:
 
     /**
-     * Constructor
+     * @brief: Constructor
      * 
      * @param InFormat: Format for the viewport
      * @param InWidth: Width of the viewport
@@ -22,13 +22,12 @@ public:
         , Width(InWidth)
         , Height(InHeight)
         , Format(InFormat)
-    {
-    }
+    { }
 
     ~CRHIViewport() = default;
 
     /**
-     * Resize the viewport
+     * @brief: Resize the viewport
      * 
      * @param Width: New width of the viewport
      * @param Height: New height of the viewport
@@ -37,28 +36,28 @@ public:
     virtual bool Resize(uint32 Width, uint32 Height) = 0;
 
     /**
-     * Swap the backbuffers of the viewport
+     * @brief: Swap the backbuffers of the viewport
      * 
      * @param bVerticalSync: True if the swap should have VerticalSync enabled
      */
     virtual bool Present(bool bVerticalSync) = 0;
 
     /**
-     * Retrieve the current RenderTargetView of the viewport
+     * @brief: Retrieve the current RenderTargetView of the viewport
      * 
      * @return: Returns the current RenderTargetView
      */
     virtual CRHIRenderTargetView* GetRenderTargetView() const = 0;
     
     /**
-     * Retrieve the current Texture2D of the viewport
+     * @brief: Retrieve the current Texture2D of the viewport
      *
      * @return: Returns the current Texture2D
      */
     virtual CRHITexture2D* GetBackBuffer() const = 0;
 
     /**
-     * Retrieve the width of the viewport
+     * @brief: Retrieve the width of the viewport
      * 
      * @return: Returns the viewport of the width
      */
@@ -68,7 +67,7 @@ public:
     }
 
     /**
-     * Retrieve the height of the viewport
+     * @brief: Retrieve the height of the viewport
      *
      * @return: Returns the height of the width
      */
@@ -78,7 +77,7 @@ public:
     }
 
     /**
-     * Retrieve the color-format of the viewport
+     * @brief: Retrieve the color-format of the viewport
      *
      * @return: Returns the color-format of the width
      */

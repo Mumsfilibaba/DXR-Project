@@ -16,7 +16,7 @@ public:
     TScopedLock& operator=(const TScopedLock&) = delete;
     
     /**
-     * Constructor that takes a lock and tries to lock it
+     * @brief: Constructor that takes a lock and tries to lock it
      * 
      * @param InLock: Lock to lock
      */
@@ -27,7 +27,7 @@ public:
     }
 
     /**
-     * Destructor
+     * @brief: Destructor
      */
     FORCEINLINE ~TScopedLock()
     {
@@ -35,7 +35,7 @@ public:
     }
 
     /**
-     * Retrieve the lock
+     * @brief: Retrieve the lock
      * 
      * @return: Returns a reference to the lock
      */
@@ -45,7 +45,7 @@ public:
     }
 
     /**
-     * Retrieve the lock
+     * @brief: Retrieve the lock
      *
      * @return: Returns a reference to the lock
      */

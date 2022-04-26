@@ -19,8 +19,7 @@ class CNullRHIVertexBuffer : public CRHIVertexBuffer
 public:
     CNullRHIVertexBuffer(uint32 InNumVertices, uint32 InStride, uint32 InFlags)
         : CRHIVertexBuffer(InNumVertices, InStride, InFlags)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -31,8 +30,7 @@ class CNullRHIIndexBuffer : public CRHIIndexBuffer
 public:
     CNullRHIIndexBuffer(ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
         : CRHIIndexBuffer(InIndexFormat, InNumIndices, InFlags)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -43,8 +41,7 @@ class CNullRHIConstantBuffer : public CRHIConstantBuffer
 public:
     CNullRHIConstantBuffer(uint32 InSizeInBytes, uint32 InFlags)
         : CRHIConstantBuffer(InSizeInBytes, InFlags)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -55,8 +52,7 @@ class CNullRHIStructuredBuffer : public CRHIStructuredBuffer
 public:
     CNullRHIStructuredBuffer(uint32 InSizeInBytes, uint32 InStride, uint32 InFlags)
         : CRHIStructuredBuffer(InSizeInBytes, InStride, InFlags)
-    {
-    }
+    { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -70,8 +66,7 @@ public:
     template<typename... ArgTypes>
     TNullRHIBuffer(ArgTypes&&... Args)
         : BaseBufferType(Forward<ArgTypes>(Args)...)
-    {
-    }
+    { }
 
     virtual void* Map(uint32 Offset, uint32 InSize) override
     {
@@ -79,8 +74,7 @@ public:
     }
 
     virtual void Unmap(uint32 Offset, uint32 InSize) override final
-    {
-    }
+    { }
 
     virtual void SetName(const String& InName) override final
     {

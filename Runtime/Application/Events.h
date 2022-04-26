@@ -14,8 +14,7 @@ struct SEvent
 {
     FORCEINLINE SEvent()
         : bIsConsumed(false)
-    {
-    }
+    { }
 
     /** If the key was down or nor */
     bool bIsConsumed;
@@ -31,8 +30,7 @@ struct SKeyEvent : public SEvent
         , bIsDown(bInIsDown)
         , bIsRepeat(bInIsRepeat)
         , ModiferKeyState(InModiferKeyState)
-    {
-    }
+    { }
 
     /** The KeyCode for this event */
     EKey KeyCode;
@@ -51,8 +49,7 @@ struct SKeyCharEvent : public SEvent
 {
     FORCEINLINE SKeyCharEvent(uint32 InCharacter)
         : Character(InCharacter)
-    {
-    }
+    { }
 
     FORCEINLINE char GetPrintableCharacter() const
     {
@@ -71,8 +68,7 @@ struct SMouseMovedEvent : public SEvent
     FORCEINLINE SMouseMovedEvent(int32 InX, int32 InY)
         : x(InX)
         , y(InY)
-    {
-    }
+    { }
 
     int32 x;
     int32 y;
@@ -87,8 +83,7 @@ struct SHighPrecisionMouseEvent : public SEvent
         : Window(InWindow)
         , x(InX)
         , y(InY)
-    {
-    }
+    { }
 
     TSharedRef<CPlatformWindow> Window;
     int32 x;
@@ -104,8 +99,7 @@ struct SMouseButtonEvent : public SEvent
         : Button(InButton)
         , bIsDown(bInIsDown)
         , Modifiers(InModifiers)
-    {
-    }
+    { }
 
     /** The mouse button that for the event */
     EMouseButton Button;
@@ -123,8 +117,7 @@ struct SMouseScrolledEvent : public SEvent
     FORCEINLINE SMouseScrolledEvent(float InHorizontalDelta, float InVerticalDelta)
         : HorizontalDelta(InHorizontalDelta)
         , VerticalDelta(InVerticalDelta)
-    {
-    }
+    { }
 
     float HorizontalDelta;
     float VerticalDelta;
@@ -139,8 +132,7 @@ struct SWindowResizeEvent : public SEvent
         : Window(InWindow)
         , Width(InWidth)
         , Height(InHeight)
-    {
-    }
+    { }
 
     TSharedRef<CPlatformWindow> Window;
 
@@ -156,8 +148,7 @@ struct SWindowFocusChangedEvent : public SEvent
     FORCEINLINE SWindowFocusChangedEvent(const TSharedRef<CPlatformWindow>& InWindow, bool bInHasFocus)
         : Window(InWindow)
         , bHasFocus(bInHasFocus)
-    {
-    }
+    { }
 
     TSharedRef<CPlatformWindow> Window;
     bool bHasFocus;
@@ -172,8 +163,7 @@ struct SWindowMovedEvent : public SEvent
         : Window(InWindow)
         , x(InX)
         , y(InY)
-    {
-    }
+    { }
 
     TSharedRef<CPlatformWindow> Window;
 
@@ -189,8 +179,7 @@ struct SWindowFrameMouseEvent : public SEvent
     FORCEINLINE SWindowFrameMouseEvent(const TSharedRef<CPlatformWindow>& InWindow, bool bInMouseEntered)
         : Window(InWindow)
         , bMouseEntered(bInMouseEntered)
-    {
-    }
+    { }
 
     TSharedRef<CPlatformWindow> Window;
     bool bMouseEntered;
@@ -203,8 +192,7 @@ struct SWindowClosedEvent : public SEvent
 {
     FORCEINLINE SWindowClosedEvent(const TSharedRef<CPlatformWindow>& InWindow)
         : Window(InWindow)
-    {
-    }
+    { }
 
     TSharedRef<CPlatformWindow> Window;
 };

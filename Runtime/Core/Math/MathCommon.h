@@ -34,61 +34,56 @@ namespace NMath
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Constants
 
-    constexpr const double PI = 3.1415926535898;
-    constexpr const double E = 2.7182818284590;
-    constexpr const double HALF_PI = PI / 2.0f;
-    constexpr const double TWO_PI = PI * 2.0;
-    constexpr const double ONE_DEGREE = PI / 180.0f;
+    constexpr const double kPI            = 3.1415926535898;
+    constexpr const double kE             = 2.7182818284590;
+    constexpr const double kHalfPI        = kPI / 2.0f;
+    constexpr const double kTwoPI         = kPI * 2.0;
+    constexpr const double kOneDegree     = kPI / 180.0f;
 
-    constexpr const float PI_F = 3.141592653f;
-    constexpr const float E_F = 2.718281828f;
-    constexpr const float HALF_PI_F = PI_F / 2.0f;
-    constexpr const float TWO_PI_F = 2.0f * PI_F;
-    constexpr const float ONE_DEGREE_F = PI_F / 180.0f;
+    constexpr const float kPI_f           = 3.141592653f;
+    constexpr const float kE_f            = 2.718281828f;
+    constexpr const float kHalfPI_f       = kPI_f / 2.0f;
+    constexpr const float kTwoPI_f        = 2.0f * kPI_f;
+    constexpr const float kOneDegree_f    = kPI_f / 180.0f;
 
-    constexpr const float IS_EQUAL_EPISILON = 0.0005f;
+    constexpr const float kIsEqualEpsilon = 0.0005f;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Functions
 
-    // TODO: Move all math functions and constants to one location
-    FORCEINLINE float VECTORCALL Sqrt(float v)
+    FORCEINLINE float VECTORCALL Sqrt(float Value)
     {
 #if ARCHITECTURE_X86_X64
-        return _mm_cvtss_f32(_mm_sqrt_ss(_mm_load_ss(&v)));
+        return _mm_cvtss_f32(_mm_sqrt_ss(_mm_load_ss(&Value)));
 #else
-        return sqrtf(v);
+        return std::sqrtf(Value);
 #endif
     }
 
     template<typename T>
-    FORCEINLINE T DivideByMultiple(T v, uint32 Alignment)
+    FORCEINLINE typename TEnableIf<TIsInteger<T>::Value, T>::Type DivideByMultiple(T Value, uint32 Alignment)
     {
-        static_assert(TIsInteger<T>::Value);
-        return static_cast<T>((v + Alignment - 1) / Alignment);
+        return static_cast<T>((Value + Alignment - 1) / Alignment);
     }
 
     template<typename T>
-    FORCEINLINE T AlignUp(T v, T Alignment)
+    FORCEINLINE typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignUp(T Value, T Alignment)
     {
-        static_assert(TIsInteger<T>::Value);
-
         const T Mask = Alignment - 1;
-        return ((v + Mask) & (~Mask));
+        return ((Value + Mask) & (~Mask));
     }
 
     template<typename T>
-    FORCEINLINE T AlignDown(T v, T Alignment)
+    FORCEINLINE typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignDown(T Value, T Alignment)
     {
-        static_assert(TIsInteger<T>::Value);
-
         const T Mask = Alignment - 1;
-        return ((v) & (~Mask));
+        return ((Value) & (~Mask));
     }
 
-    FORCEINLINE float Lerp(float a, float b, float f)
+    template<typename T>
+    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, T>::Type Lerp(T First, T Second, T Factor)
     {
-        return (-f * b) + ((a * f) + b);
+        return (-Factor * Second) + ((First * Factor) + Second);
     }
 
     template<typename T>
@@ -112,20 +107,27 @@ namespace NMath
     template<typename T>
     FORCEINLINE T Abs(T a)
     {
-        return ::abs(a);
+        return std::abs(a);
+        // return (a > T( 0 )) ? ((a * a) / a) : T( 0 ); // TODO: Causes crash?
+    }
+
+    template<typename T>
+    FORCEINLINE T Round(T a)
+    {
+        return static_cast<T>(std::roundf(static_cast<float>(a)));
         // return (a > T( 0 )) ? ((a * a) / a) : T( 0 ); // TODO: Causes crash?
     }
 
     template<typename T>
     FORCEINLINE T ToRadians(T Degrees)
     {
-        return static_cast<T>(static_cast<float>(Degrees) * (PI_F / 180.0f));
+        return static_cast<T>(static_cast<float>(Degrees) * (kPI_f / 180.0f));
     }
 
     template<typename T>
     FORCEINLINE T ToDegrees(T Radians)
     {
-        return static_cast<T>(static_cast<float>(Radians) * (180.0f / PI_F));
+        return static_cast<T>(static_cast<float>(Radians) * (180.0f / kPI_f));
     }
 
     template<typename T>
@@ -135,9 +137,9 @@ namespace NMath
     }
 
     template<typename T>
-    FORCEINLINE T Asin(T v)
+    FORCEINLINE T Asin(T Value)
     {
-        return static_cast<T>(std::asinf(static_cast<float>(v)));
+        return static_cast<T>(std::asinf(static_cast<float>(Value)));
     }
 
     template<typename T>
@@ -147,13 +149,31 @@ namespace NMath
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsNan(T Float)
+    FORCEINLINE T Sin(T Value)
+    {
+        return static_cast<T>(std::sinf(static_cast<float>(Value)));
+    }
+
+    template<typename T>
+    FORCEINLINE T Cos(T Value)
+    {
+        return static_cast<T>(std::cosf(static_cast<float>(Value)));
+    }
+
+    template<typename T>
+    FORCEINLINE T Tan(T Value)
+    {
+        return static_cast<T>(std::tanf(static_cast<float>(Value)));
+    }
+
+    template<typename T>
+    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsNaN(T Float)
     {
         return isnan(Float);
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsInf(T Float)
+    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsInfinity(T Float)
     {
         return isinf(Float);
     }
@@ -161,5 +181,11 @@ namespace NMath
     FORCEINLINE uint32 BytesToNum32BitConstants(uint32 Bytes)
     {
         return Bytes / 4;
+    }
+
+    template<const uint32 kBits>
+    constexpr uint32 MaxNum()
+    {
+        return ((1 << kBits) - 1);
     }
 }

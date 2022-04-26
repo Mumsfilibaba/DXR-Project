@@ -20,26 +20,24 @@ public:
     class TOptional;
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE TOptional() noexcept
         : Value()
         , bHasValue(false)
-    {
-    }
+    { }
 
     /**
-     * Construct from nullptr
+     * @brief: Construct from nullptr
      */
     FORCEINLINE TOptional(NullptrType) noexcept
         : Value()
         , bHasValue(false)
     
-    {
-    }
+    { }
 
     /**
-     * Copy-constructor
+     * @brief: Copy-constructor
      * 
      * @param Other: Optional to copy from
      */
@@ -55,7 +53,7 @@ public:
     }
 
     /**
-     * Copy-constructor that takes another type
+     * @brief: Copy-constructor that takes another type
      *
      * @param Other: Optional to copy from
      */
@@ -72,7 +70,7 @@ public:
     }
 
     /**
-     * Move-constructor
+     * @brief: Move-constructor
      *
      * @param Other: Optional to move from
      */
@@ -89,7 +87,7 @@ public:
     }
 
     /**
-     * Move-constructor taking another type
+     * @brief: Move-constructor taking another type
      *
      * @param Other: Optional to move from
      */
@@ -107,7 +105,7 @@ public:
     }
 
     /**
-     * Constructor that creates a value in-place
+     * @brief: Constructor that creates a value in-place
      * 
      * @param Args: Arguments for the element to create
      */
@@ -120,7 +118,7 @@ public:
     }
 
     /**
-     * Destructor
+     * @brief: Destructor
      */
     FORCEINLINE ~TOptional()
     {
@@ -128,7 +126,7 @@ public:
     }
 
     /**
-     * Check if optional has a value assigned
+     * @brief: Check if optional has a value assigned
      * 
      * @return: Returns true if there is a value assigned
      */
@@ -138,7 +136,7 @@ public:
     }
 
     /**
-     * Emplace constructs a new element in the optional and destructs any old value
+     * @brief: Emplace constructs a new element in the optional and destructs any old value
      * 
      * @param Args: Arguments for constructor
      * @return: Returns a reference to the newly constructed value
@@ -156,7 +154,7 @@ public:
     }
 
     /**
-     * Resets the Optional and destructs any existing element
+     * @brief: Resets the Optional and destructs any existing element
      */
     FORCEINLINE void Reset() noexcept
     {
@@ -168,7 +166,7 @@ public:
     }
 
     /**
-     * Swap between this optional and another optional
+     * @brief: Swap between this optional and another optional
      * 
      * @param Other: Optional to swap with
      */
@@ -198,7 +196,7 @@ public:
     }
 
     /**
-     * Retrieve the optional value
+     * @brief: Retrieve the optional value
      * 
      * @return: Returns a reference to the stored value
      */
@@ -209,7 +207,7 @@ public:
     }
 
     /**
-     * Retrieve the optional value
+     * @brief: Retrieve the optional value
      *
      * @return: Returns a reference to the stored value
      */
@@ -220,7 +218,7 @@ public:
     }
 
     /**
-     * Try and retrieve the optional value, if no value is stored, it returns nullptr
+     * @brief: Try and retrieve the optional value, if no value is stored, it returns nullptr
      *
      * @return: Returns a pointer to the stored value, or nullptr if no value is held
      */
@@ -230,7 +228,7 @@ public:
     }
 
     /**
-     * Try and retrieve the optional value, if no value is stored, it returns nullptr
+     * @brief: Try and retrieve the optional value, if no value is stored, it returns nullptr
      *
      * @return: Returns a pointer to the stored value, or nullptr if no value is held
      */
@@ -240,7 +238,7 @@ public:
     }
 
     /**
-     * Retrieve the optional value
+     * @brief: Retrieve the optional value
      *
      * @param Default: Default value to return if a value is not set
      * @return: Returns a reference to the stored value
@@ -254,7 +252,7 @@ public:
 public:
 
     /**
-     * Nullptr assignment operator
+     * @brief: Nullptr assignment operator
      * 
      * @return: Returns a reference to this instance
      */
@@ -265,70 +263,70 @@ public:
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      *
-     * @param Rhs: Optional to copy from
+     * @param RHS: Optional to copy from
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(const TOptional& Rhs) noexcept
+    FORCEINLINE TOptional& operator=(const TOptional& RHS) noexcept
     {
-        TOptional(Rhs).Swap(*this);
+        TOptional(RHS).Swap(*this);
         return *this;
     }
 
     /**
-     * Copy-assignment operator that takes another type
+     * @brief: Copy-assignment operator that takes another type
      *
-     * @param Rhs: Optional to copy from
-     * @return: Returns a reference to this instance
-     */
-    template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& Rhs) noexcept
-    {
-        TOptional(Rhs).Swap(*this);
-        return *this;
-    }
-
-    /**
-     * Move-assignment operator
-     *
-     * @param Rhs: Optional to move from
-     * @return: Returns a reference to this instance
-     */
-    FORCEINLINE TOptional& operator=(TOptional&& Rhs) noexcept
-    {
-        TOptional(Rhs).Swap(*this);
-        return *this;
-    }
-
-    /**
-     * Move-assignment operator that takes another type
-     *
-     * @param Rhs: Optional to move from
+     * @param RHS: Optional to copy from
      * @return: Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& RHS) noexcept
     {
-        TOptional(Rhs).Swap(*this);
+        TOptional(RHS).Swap(*this);
         return *this;
     }
 
     /**
-     * Assignment operator that can take a r-value reference
+     * @brief: Move-assignment operator
      *
-     * @param Rhs: Instance to move-construct value from
+     * @param RHS: Optional to move from
+     * @return: Returns a reference to this instance
+     */
+    FORCEINLINE TOptional& operator=(TOptional&& RHS) noexcept
+    {
+        TOptional(RHS).Swap(*this);
+        return *this;
+    }
+
+    /**
+     * @brief: Move-assignment operator that takes another type
+     *
+     * @param RHS: Optional to move from
+     * @return: Returns a reference to this instance
+     */
+    template<typename OtherType>
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& RHS) noexcept
+    {
+        TOptional(RHS).Swap(*this);
+        return *this;
+    }
+
+    /**
+     * @brief: Assignment operator that can take a r-value reference
+     *
+     * @param RHS: Instance to move-construct value from
      * @return: Returns a reference to this instance
      */
     template<typename OtherType = T>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& RHS) noexcept
     {
-        TOptional(Rhs).Swap(*this);
+        TOptional(RHS).Swap(*this);
         return *this;
     }
 
     /**
-     * Operator that returns true if there is a stored value
+     * @brief: Operator that returns true if there is a stored value
      * 
      * @return: Returns true if the optional has a stored value
      */
@@ -338,7 +336,7 @@ public:
     }
 
     /**
-     * Retrieve a pointer to the stored value
+     * @brief: Retrieve a pointer to the stored value
      *
      * @return: Returns a pointer to the stored value
      */
@@ -349,7 +347,7 @@ public:
     }
 
     /**
-     * Retrieve a pointer to the stored value
+     * @brief: Retrieve a pointer to the stored value
      *
      * @return: Returns a pointer to the stored value
      */
@@ -360,7 +358,7 @@ public:
     }
 
     /**
-     * Retrieve a reference to the stored value
+     * @brief: Retrieve a reference to the stored value
      *
      * @return: Returns a reference to the stored value
      */
@@ -371,7 +369,7 @@ public:
     }
 
     /**
-     * Retrieve a pointer to the stored value
+     * @brief: Retrieve a pointer to the stored value
      *
      * @return: Returns a pointer to the stored value
      */
@@ -384,15 +382,15 @@ public:
 public:
 
     /**
-     * Comparison operator
+     * @brief: Comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
      * @return: Returns true if the values are equal
      */
-    friend FORCEINLINE bool operator==(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!bHasValue && !Rhs.bHasValue)
+        if (!bHasValue && !RHS.bHasValue)
         {
             return true;
         }
@@ -402,31 +400,31 @@ public:
             return false;
         }
 
-        return Lhs.IsEqual(Rhs);
+        return LHS.IsEqual(RHS);
     }
 
     /**
-     * Comparison operator
+     * @brief: Comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
      * @return: Returns false if the values are equal
      */
-    friend FORCEINLINE bool operator!=(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        return !(Lhs != Rhs);
+        return !(LHS != RHS);
     }
 
     /**
-     * Less than comparison operator
+     * @brief: Less than comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
-     * @return: Returns true if the Lhs is less than Rhs
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
+     * @return: Returns true if the LHS is less than RHS
      */
-    friend FORCEINLINE bool operator<(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!bHasValue && !Rhs.bHasValue)
+        if (!bHasValue && !RHS.bHasValue)
         {
             return true;
         }
@@ -436,19 +434,19 @@ public:
             return false;
         }
 
-        return Lhs.IsLessThan(Rhs);
+        return LHS.IsLessThan(RHS);
     }
 
     /**
-     * Less than or equal comparison operator
+     * @brief: Less than or equal comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
-     * @return: Returns true if the Lhs is less than or equal to Rhs
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
+     * @return: Returns true if the LHS is less than or equal to RHS
      */
-    friend FORCEINLINE bool operator<=(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!bHasValue && !Rhs.bHasValue)
+        if (!bHasValue && !RHS.bHasValue)
         {
             return true;
         }
@@ -458,31 +456,31 @@ public:
             return false;
         }
 
-        return Lhs.IsLessThan(Rhs) || Lhs.IsEqual(Rhs);
+        return LHS.IsLessThan(RHS) || LHS.IsEqual(RHS);
     }
 
     /**
-     * Great than comparison operator
+     * @brief: Great than comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
-     * @return: Returns true if Lhs is greater than Rhs
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
+     * @return: Returns true if LHS is greater than RHS
      */
-    friend FORCEINLINE bool operator>(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        return !(Lhs <= Rhs);
+        return !(LHS <= RHS);
     }
 
     /**
-     * Greater than or equal comparison operator
+     * @brief: Greater than or equal comparison operator
      *
-     * @param Lhs: Left side to compare with
-     * @param Rhs: Right side to compare with
-     * @return: Returns true if the Lhs is greater than or equal to Rhs
+     * @param LHS: Left side to compare with
+     * @param RHS: Right side to compare with
+     * @return: Returns true if the LHS is greater than or equal to RHS
      */
-    friend FORCEINLINE bool operator>=(const TOptional& Lhs, const TOptional& Rhs) noexcept
+    friend FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        return !(Lhs < Rhs);
+        return !(LHS < RHS);
     }
 
 private:
@@ -499,14 +497,14 @@ private:
         Value.GetStorage()->ElementDestructType::~ElementDestructType();
     }
 
-    FORCEINLINE bool IsEqual(const TOptional& Rhs) const noexcept
+    FORCEINLINE bool IsEqual(const TOptional& RHS) const noexcept
     {
-        return (*Value.GetStorage()) == (*Rhs.Value.GetStorage());
+        return (*Value.GetStorage()) == (*RHS.Value.GetStorage());
     }
 
-    FORCEINLINE bool IsLessThan(const TOptional& Rhs) const noexcept
+    FORCEINLINE bool IsLessThan(const TOptional& RHS) const noexcept
     {
-        return (*Value.GetStorage()) < (*Rhs.Value.GetStorage());
+        return (*Value.GetStorage()) < (*RHS.Value.GetStorage());
     }
 
     /** Bytes to store the value in */

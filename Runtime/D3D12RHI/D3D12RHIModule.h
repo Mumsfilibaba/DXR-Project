@@ -13,10 +13,10 @@ public:
     CD3D12RHIModule() = default;
     ~CD3D12RHIModule() = default;
 
-    /* Creates the core RHI object */
+     /** @brief: Creates the core RHI object */
     virtual class CRHIInstance* CreateInterface() override final;
 
-    /* Creates the RHI shader compiler */
+     /** @brief: Creates the RHI shader compiler */
     virtual class IRHIShaderCompiler* CreateCompiler() override final;
 
 };

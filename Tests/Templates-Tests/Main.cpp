@@ -55,8 +55,7 @@ class CNotTrivialCopy
 {
 public:
     CNotTrivialCopy( const CNotTrivialCopy& )
-    {
-    }
+    { }
 };
 
 class CVirtualDestructor
@@ -69,8 +68,7 @@ struct SStruct
 {
     SStruct( int InX )
         : x( InX )
-    {
-    }
+    { }
 
     SStruct( const SStruct& ) = default;
     SStruct& operator=( const SStruct& ) = default;

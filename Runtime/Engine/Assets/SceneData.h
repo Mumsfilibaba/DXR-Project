@@ -52,13 +52,13 @@ struct SModelData
     SModelData& operator=(SModelData&&) = default;
     SModelData& operator=(const SModelData&) = default;
 
-    /* Name of the mesh specified in the model-file */
+     /** @brief: Name of the mesh specified in the model-file */
     String Name;
 
-    /* Model mesh data */
+     /** @brief: Model mesh data */
     SMeshData Mesh;
 
-    /* The Material index in the SSceneData Materials Array */
+     /** @brief: The Material index in the SSceneData Materials Array */
     int32 MaterialIndex = -1;
 };
 
@@ -75,20 +75,19 @@ struct SImage2D
         , Width(InWidth)
         , Height(InHeight)
         , Format(InFormat)
-    {
-    }
+    { }
 
-    /* Relative path to the image specified in the model-file */
+     /** @brief: Relative path to the image specified in the model-file */
     String Path;
 
-    /* Pointer to image data */
+     /** @brief: Pointer to image data */
     TUniquePtr<uint8[]> Image;
 
-    /* Size of the image */
+     /** @brief: Size of the image */
     uint16 Width = 0;
     uint16 Height = 0;
 
-    /* The format that the image was loaded as */
+     /** @brief: The format that the image was loaded as */
     EFormat Format = EFormat::Unknown;
 
     bool bIsLoaded = false;
@@ -99,40 +98,40 @@ struct SImage2D
 
 struct SMaterialData
 {
-    /* Diffuse texture */
+     /** @brief: Diffuse texture */
     TSharedPtr<SImage2D> DiffuseTexture;
 
-    /* Normal texture */
+     /** @brief: Normal texture */
     TSharedPtr<SImage2D> NormalTexture;
 
-    /* Specular texture - Stores AO, Metallic, and Roughness in the same textures */
+     /** @brief: Specular texture - Stores AO, Metallic, and Roughness in the same textures */
     TSharedPtr<SImage2D> SpecularTexture;
 
-    /* Emissive texture */
+     /** @brief: Emissive texture */
     TSharedPtr<SImage2D> EmissiveTexture;
 
-    /* AO texture - Ambient Occlusion */
+     /** @brief: AO texture - Ambient Occlusion */
     TSharedPtr<SImage2D> AOTexture;
 
-    /* Roughness texture*/
+     /** @brief: Roughness texture*/
     TSharedPtr<SImage2D> RoughnessTexture;
 
-    /* Metallic Texture*/
+     /** @brief: Metallic Texture*/
     TSharedPtr<SImage2D> MetallicTexture;
 
-    /* Metallic Texture*/
+     /** @brief: Metallic Texture*/
     TSharedPtr<SImage2D> AlphaMaskTexture;
 
-    /* Diffuse Parameter */
+     /** @brief: Diffuse Parameter */
     CVector3 Diffuse;
 
-    /* AO Parameter */
+     /** @brief: AO Parameter */
     float AO = 1.0f;
 
-    /* Roughness Parameter */
+     /** @brief: Roughness Parameter */
     float Roughness = 1.0f;
 
-    /* Metallic Parameter */
+     /** @brief: Metallic Parameter */
     float Metallic = 1.0f;
 };
 
@@ -162,6 +161,6 @@ struct ENGINE_API SSceneData
     TArray<SModelData>    Models;
     TArray<SMaterialData> Materials;
 
-    /* A scale used to scale each actor when using add to scene */
+     /** @brief: A scale used to scale each actor when using add to scene */
     float Scale = 1.0f;
 };

@@ -13,7 +13,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Reads a value atomically. All memory loads and stores are synced.
+     * @brief: Reads a value atomically. All memory loads and stores are synced.
      * 
      * @param Source: Pointer to variable to read from
      * @return: Returns the read value
@@ -26,7 +26,7 @@ public:
     }
 
     /**
-     * Reads a value atomically. All memory loads and stores are synced.
+     * @brief: Reads a value atomically. All memory loads and stores are synced.
      * 
      * @param Source: Pointer to variable to read from
      * @return: Returns the read value
@@ -39,7 +39,7 @@ public:
     }
 
     /**
-     * Reads a value atomically. All memory loads and stores are synced.
+     * @brief: Reads a value atomically. All memory loads and stores are synced.
      * 
      * @param Source: Pointer to variable to read from
      * @return: Returns the read value
@@ -52,7 +52,7 @@ public:
     }
 
     /**
-     * Reads a value atomically. All memory loads and stores are synced.
+     * @brief: Reads a value atomically. All memory loads and stores are synced.
      * 
      * @param Source: Pointer to variable to read from
      * @return: Returns the read value
@@ -67,7 +67,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
+     * @brief: Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
      *
      * @param Source: Pointer to variable to read from
      * @return: Returns the read value
@@ -80,7 +80,7 @@ public:
     }
 
     /**
-     * Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
+     * @brief: Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
      *
      * @param Source: Pointer to variable to read from
      * @return: Returns the read value
@@ -93,7 +93,7 @@ public:
     }
 
     /**
-     * Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
+     * @brief: Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
      *
      * @param Source: Pointer to variable to read from
      * @return: Returns the read value
@@ -106,7 +106,7 @@ public:
     }
 
     /**
-     * Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
+     * @brief: Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
      *
      * @param Source: Pointer to variable to read from
      * @return: Returns the read value
@@ -121,7 +121,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Stores a value atomically. All memory-loads and stores are synced.
+     * @brief: Stores a value atomically. All memory-loads and stores are synced.
      *
      * @param Dest: Pointer to variable to store value in
      * @param Value: Value to store
@@ -132,7 +132,7 @@ public:
     }
 
     /**
-     * Stores a value atomically. All memory-loads and stores are synced.
+     * @brief: Stores a value atomically. All memory-loads and stores are synced.
      *
      * @param Dest: Pointer to variable to store value in
      * @param Value: Value to store
@@ -143,7 +143,7 @@ public:
     }
 
     /**
-     * Stores a value atomically. All memory-loads and stores are synced.
+     * @brief: Stores a value atomically. All memory-loads and stores are synced.
      *
      * @param Dest: Pointer to variable to store value in
      * @param Value: Value to store
@@ -154,7 +154,7 @@ public:
     }
 
     /**
-     * Stores a value atomically. All memory-loads and stores are synced.
+     * @brief: Stores a value atomically. All memory-loads and stores are synced.
      *
      * @param Dest: Pointer to variable to store value in
      * @param Value: Value to store
@@ -167,7 +167,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
+     * @brief: Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
      *
      * @param Dest: Pointer to variable to store value in
      * @param Value: Value to store
@@ -178,7 +178,7 @@ public:
     }
 
     /**
-     * Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
+     * @brief: Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
      *
      * @param Dest: Pointer to variable to store value in
      * @param Value: Value to store
@@ -189,7 +189,7 @@ public:
     }
 
     /**
-     * Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
+     * @brief: Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
      *
      * @param Dest: Pointer to variable to store value in
      * @param Value: Value to store
@@ -200,7 +200,7 @@ public:
     }
 
     /**
-     * Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
+     * @brief: Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
      *
      * @param Dest: Pointer to variable to store value in
      * @param Value: Value to store

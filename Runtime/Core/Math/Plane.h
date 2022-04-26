@@ -4,54 +4,109 @@
 // TODO: Finish this class
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* Represents a 3-D plane */
+// CPlane
 
 class VECTOR_ALIGN CPlane
 {
 public:
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
-    FORCEINLINE CPlane() noexcept;
+    FORCEINLINE CPlane() noexcept
+        : x(0.0f)
+        , y(1.0f)
+        , z(0.0f)
+        , w(0.0f)
+    { }
 
     /**
-     * Constructor that creates a plane from a Vector4
+     * @brief: Constructor that creates a plane from a Vector4
      * 
      * @param Plane: Vector4 representing a plane
      */
-    FORCEINLINE explicit CPlane(const CVector4& Plane) noexcept;
+    FORCEINLINE explicit CPlane(const CVector4& Plane) noexcept
+        : x(Plane.x)
+        , y(Plane.y)
+        , z(Plane.z)
+        , w(Plane.w)
+    { }
 
     /**
-     * Constructor that creates a plane from a normal and offset
+     * @brief: Constructor that creates a plane from a normal and offset
      *
      * @param Normal: Normal of a plane
      * @param InW: Offset from origin in direction of the normal
      */
-    FORCEINLINE explicit CPlane(const CVector3& Normal, float InW) noexcept;
+    FORCEINLINE explicit CPlane(const CVector3& Normal, float InW) noexcept
+        : x(Normal.x)
+        , y(Normal.y)
+        , z(Normal.z)
+        , w(InW)
+    { }
     
     /**
-     * Constructor that creates a plane from components of a Vector4
+     * @brief: Constructor that creates a plane from components of a Vector4
      *
      * @param InX: x-component of a Vector4
      * @param InY: y-component of a Vector4
      * @param InZ: z-component of a Vector4
      * @param InW: w-component of a Vector4
      */
-    FORCEINLINE explicit CPlane(float InX, float InY, float InZ, float InW) noexcept;
+    FORCEINLINE explicit CPlane(float InX, float InY, float InZ, float InW) noexcept
+        : x(InX)
+        , y(InY)
+        , z(InZ)
+        , w(InW)
+    { }
 
     /**
-     * Compares, within a threshold Epsilon, this plane with another plane
+     * @brief: Compares, within a threshold Epsilon, this plane with another plane
      *
      * @param Other: plane to compare against
-     * @return True if equal, false if not
+     * @return: True if equal, false if not
      */
-    inline bool IsEqual(const CPlane& Other, float Epsilon = NMath::IS_EQUAL_EPISILON) const noexcept;
+    inline bool IsEqual(const CPlane& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
+    {
+#if defined(DISABLE_SIMD)
+        Epsilon = NMath::Abs(Epsilon);
+
+        for (int32 Index = 0; Index < 4; ++Index)
+        {
+            float Diff = reinterpret_cast<const float*>(this)[Index] - reinterpret_cast<const float*>(&Other)[Index];
+            if (NMath::Abs(Diff) > Epsilon)
+            {
+                return false;
+            }
+        }
+
+        return true;
+#else
+        NVectorOp::Float128 Espilon128 = NVectorOp::Load(Epsilon);
+        Espilon128 = NVectorOp::Abs(Espilon128);
+
+        NVectorOp::Float128 Diff = NVectorOp::Sub(this, &Other);
+        Diff = NVectorOp::Abs(Diff);
+
+        return NVectorOp::LessThan(Diff, Espilon128);
+#endif
+    }
 
     /**
-     * Normalized the plane
+     * @brief: Normalized the plane
      */
-    FORCEINLINE void Normalize() noexcept;
+    FORCEINLINE void Normalize() noexcept
+    {
+        CVector3 Normal = GetNormal();
+
+        const float ReciprocalLength = 1.0f / Normal.Length();
+        x *= ReciprocalLength;
+        y *= ReciprocalLength;
+        z *= ReciprocalLength;
+        w *= ReciprocalLength;
+
+        // TODO: Implement SIMD
+    }
 
     /*
      * Performs dot-product between a plane and a point
@@ -59,166 +114,79 @@ public:
      * @param Point: Point to perform dot-product with
      * @return: Returns the dot-product
      */
-    FORCEINLINE float PlaneDotCoord(const CVector3& Point) const noexcept;
+    FORCEINLINE float PlaneDotCoord(const CVector3& Point) const noexcept
+    {
+        CVector3 Normal = GetNormal();
+        return Normal.DotProduct(Point) + w;
+
+        // TODO: Implement SIMD
+    }
 
     /**
-     * Retrieve the normal of the plane
+     * @brief: Retrieve the normal of the plane
      * 
      * @return: Returns the normal of the plane
      */
-    FORCEINLINE CVector3 GetNormal() const noexcept;
+    FORCEINLINE CVector3 GetNormal() const noexcept
+    {
+        return CVector3(x, y, z);
+    }
 
     /**
-     * Retrieve the data as an array
+     * @brief: Retrieve the data as an array
      * 
      * @return: A pointer to the data representing the plane
      */
-    FORCEINLINE float* GetData() noexcept;
+    FORCEINLINE float* Data() noexcept
+    {
+        return reinterpret_cast<float*>(this);
+    }
 
     /**
-     * Retrieve the data as an array
+     * @brief: Retrieve the data as an array
      *
      * @return: A pointer to the data representing the plane
      */
-    FORCEINLINE const float* GetData() const noexcept;
-
-public:
-
-    /**
-     * Returns the result after comparing this and another plane
-     *
-     * @param Other: The plane to compare with
-     * @return True if equal, false if not
-     */
-    FORCEINLINE bool operator==(const CPlane& Other) const noexcept;
-
-    /**
-     * Returns the negated result after comparing this and another plane
-     *
-     * @param Other: The plane to compare with
-     * @return False if equal, true if not
-     */
-    FORCEINLINE bool operator!=(const CPlane& Other) const noexcept;
-
-public:
-
-    /* The normals x-coordinate */
-    float x;
-    /* The normals y-coordinate */
-    float y;
-    /* The normals z-coordinate */
-    float z;
-    /* The w-coordinate */
-    float w;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Implementation
-
-FORCEINLINE CPlane::CPlane() noexcept
-    : x(0.0f)
-    , y(1.0f)
-    , z(0.0f)
-    , w(0.0f)
-{
-}
-
-FORCEINLINE CPlane::CPlane(const CVector4& Plane) noexcept
-    : x(Plane.x)
-    , y(Plane.y)
-    , z(Plane.z)
-    , w(Plane.w)
-{
-}
-
-FORCEINLINE CPlane::CPlane(const CVector3& Normal, float InW) noexcept
-    : x(Normal.x)
-    , y(Normal.y)
-    , z(Normal.z)
-    , w(InW)
-{
-}
-
-FORCEINLINE CPlane::CPlane(float InX, float InY, float InZ, float InW) noexcept
-    : x(InX)
-    , y(InY)
-    , z(InZ)
-    , w(InW)
-{
-}
-
-FORCEINLINE bool CPlane::IsEqual(const CPlane& Other, float Epsilon) const noexcept
-{
-#if defined(DISABLE_SIMD)
-
-    Epsilon = fabsf(Epsilon);
-
-    for (int i = 0; i < 4; i++)
+    FORCEINLINE const float* Data() const noexcept
     {
-        float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
-        if (fabsf(Diff) > Epsilon)
-        {
-            return false;
-        }
+        return reinterpret_cast<const float*>(this);
     }
 
-    return true;
+public:
 
-#else
+    /**
+     * @brief: Returns the result after comparing this and another plane
+     *
+     * @param Other: The plane to compare with
+     * @return: True if equal, false if not
+     */
+    FORCEINLINE bool operator==(const CPlane& Other) const noexcept
+    {
+        return IsEqual(Other);
+    }
 
-    NSIMD::Float128 Espilon128 = NSIMD::Load(Epsilon);
-    Espilon128 = NSIMD::Abs(Espilon128);
+    /**
+     * @brief: Returns the negated result after comparing this and another plane
+     *
+     * @param Other: The plane to compare with
+     * @return: False if equal, true if not
+     */
+    FORCEINLINE bool operator!=(const CPlane& Other) const noexcept
+    {
+        return !IsEqual(Other);
+    }
 
-    NSIMD::Float128 Diff = NSIMD::Sub(this, &Other);
-    Diff = NSIMD::Abs(Diff);
+public:
 
-    return NSIMD::LessThan(Diff, Espilon128);
+     /** @brief: The normals x-coordinate */
+    float x;
 
-#endif
-}
-
-FORCEINLINE void CPlane::Normalize() noexcept
-{
-    CVector3 Normal = GetNormal();
-
-    float ReciprocalLength = 1.0f / Normal.Length();
-    x = x * ReciprocalLength;
-    y = y * ReciprocalLength;
-    z = z * ReciprocalLength;
-    w = w * ReciprocalLength;
-
-    // TODO: Implement SIMD
-}
-
-FORCEINLINE float CPlane::PlaneDotCoord(const CVector3& Point) const noexcept
-{
-    CVector3 Normal = GetNormal();
-    return Normal.DotProduct(Point) + w;
-
-    // TODO: Implement SIMD
-}
-
-FORCEINLINE CVector3 CPlane::GetNormal() const noexcept
-{
-    return CVector3(x, y, z);
-}
-
-FORCEINLINE float* CPlane::GetData() noexcept
-{
-    return reinterpret_cast<float*>(this);
-}
-
-FORCEINLINE const float* CPlane::GetData() const noexcept
-{
-    return reinterpret_cast<const float*>(this);
-}
-
-FORCEINLINE bool CPlane::operator==(const CPlane& Other) const noexcept
-{
-    return IsEqual(Other);
-}
-
-FORCEINLINE bool CPlane::operator!=(const CPlane& Other) const noexcept
-{
-    return !IsEqual(Other);
-}
+     /** @brief: The normals y-coordinate */
+    float y;
+    
+    /** @brief: The normals z-coordinate */
+    float z;
+    
+    /** @brief: The w-coordinate */
+    float w;
+};

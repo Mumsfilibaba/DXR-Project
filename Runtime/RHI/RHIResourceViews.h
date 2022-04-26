@@ -24,8 +24,7 @@ struct SRHIShaderResourceViewInfo
 
     FORCEINLINE SRHIShaderResourceViewInfo(EType InType)
         : Type(InType)
-    {
-    }
+    { }
 
     EType Type;
     union
@@ -116,8 +115,7 @@ struct SRHIUnorderedAccessViewInfo
 
     FORCEINLINE SRHIUnorderedAccessViewInfo(EType InType)
         : Type(InType)
-    {
-    }
+    { }
 
     EType Type;
     union
@@ -196,8 +194,7 @@ struct SRHIRenderTargetViewInfo
 
     FORCEINLINE SRHIRenderTargetViewInfo(EType InType)
         : Type(InType)
-    {
-    }
+    { }
 
     EType   Type;
     EFormat Format = EFormat::Unknown;
@@ -253,8 +250,7 @@ struct SRHIDepthStencilViewInfo
 
     FORCEINLINE SRHIDepthStencilViewInfo(EType InType)
         : Type(InType)
-    {
-    }
+    { }
 
     EType   Type;
     EFormat Format = EFormat::Unknown;

@@ -28,7 +28,7 @@ public:
     static_assert(NumElements > 0, "The number of elements has to be more than zero");
 
     /**
-     * Retrieve the first element of the array
+     * @brief: Retrieve the first element of the array
      *
      * @return: Returns a reference to the first element of the array
      */
@@ -38,7 +38,7 @@ public:
     }
 
     /**
-     * Retrieve the first element of the array
+     * @brief: Retrieve the first element of the array
      *
      * @return: Returns a reference to the first element of the array
      */
@@ -48,7 +48,7 @@ public:
     }
 
     /**
-     * Retrieve the last element of the array
+     * @brief: Retrieve the last element of the array
      *
      * @return: Returns a reference to the last element of the array
      */
@@ -58,7 +58,7 @@ public:
     }
 
     /**
-     * Retrieve the last element of the array
+     * @brief: Retrieve the last element of the array
      *
      * @return: Returns a reference to the last element of the array
      */
@@ -68,7 +68,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the array
+     * @brief: Retrieve a element at a certain index of the array
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -80,7 +80,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the array
+     * @brief: Retrieve a element at a certain index of the array
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -92,7 +92,7 @@ public:
     }
 
     /**
-     * Fill the container with the specified value
+     * @brief: Fill the container with the specified value
      *
      * @param InputElement: Element to copy into all elements in the array
      */
@@ -105,7 +105,7 @@ public:
     }
 
     /**
-     * Swap the contents of this array with another
+     * @brief: Swap the contents of this array with another
      *
      * @param Other: The other array to swap with
      */
@@ -117,7 +117,7 @@ public:
     }
 
     /**
-     * Retrieve the data of the array
+     * @brief: Retrieve the data of the array
      *
      * @return: Returns a pointer to the data of the array
      */
@@ -127,7 +127,7 @@ public:
     }
 
     /**
-     * Retrieve the data of the array
+     * @brief: Retrieve the data of the array
      *
      * @return: Returns a pointer to the data of the array
      */
@@ -139,7 +139,7 @@ public:
 public:
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -150,7 +150,7 @@ public:
     }
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -161,38 +161,38 @@ public:
     }
 
     /**
-     * Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
+     * @brief: Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
      *
-     * @param Rhs: Array to compare with
+     * @param RHS: Array to compare with
      * @return: Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& Rhs) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
     {
-        if (Size() != Rhs.Size())
+        if (Size() != RHS.Size())
         {
             return false;
         }
 
-        return CompareRange<ElementType>(Data(), Rhs.Data(), Size());
+        return CompareRange<ElementType>(Data(), RHS.Data(), Size());
     }
 
     /**
-     * Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
+     * @brief: Comparison operator that compares all elements in the array, which can be of any ArrayType qualified type
      *
-     * @param Rhs: Array to compare with
+     * @param RHS: Array to compare with
      * @return: Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& Rhs) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
 public:
 
     /**
-     * Retrieve the last index that can be used to retrieve an element from the array
+     * @brief: Retrieve the last index that can be used to retrieve an element from the array
      *
      * @return: Returns a the index to the last element of the array
      */
@@ -202,7 +202,7 @@ public:
     }
 
     /**
-     * Returns the size of the container
+     * @brief: Returns the size of the container
      *
      * @return: The current size of the container
      */
@@ -212,7 +212,7 @@ public:
     }
 
     /**
-     * Returns the size of the container in bytes
+     * @brief: Returns the size of the container in bytes
      *
      * @return: The current size of the container in bytes
      */
@@ -222,7 +222,7 @@ public:
     }
 
     /**
-     * Returns the capacity of the container
+     * @brief: Returns the capacity of the container
      *
      * @return: The current capacity of the container
      */
@@ -232,7 +232,7 @@ public:
     }
 
     /**
-     * Returns the capacity of the container in bytes
+     * @brief: Returns the capacity of the container in bytes
      *
      * @return: The current capacity of the container in bytes
      */
@@ -244,7 +244,7 @@ public:
 public:
 
     /**
-     * Retrieve an iterator to the beginning of the array
+     * @brief: Retrieve an iterator to the beginning of the array
      *
      * @return: A iterator that points to the first element
      */
@@ -254,7 +254,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the end of the array
+     * @brief: Retrieve an iterator to the end of the array
      *
      * @return: A iterator that points to the element past the end
      */
@@ -264,7 +264,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the beginning of the array
+     * @brief: Retrieve an iterator to the beginning of the array
      *
      * @return: A iterator that points to the first element
      */
@@ -274,7 +274,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the end of the array
+     * @brief: Retrieve an iterator to the end of the array
      *
      * @return: A iterator that points to the element past the end
      */
@@ -284,7 +284,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the end of the array
+     * @brief: Retrieve an reverse-iterator to the end of the array
      *
      * @return: A reverse-iterator that points to the last element
      */
@@ -294,7 +294,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the start of the array
+     * @brief: Retrieve an reverse-iterator to the start of the array
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
@@ -304,7 +304,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the end of the array
+     * @brief: Retrieve an reverse-iterator to the end of the array
      *
      * @return: A reverse-iterator that points to the last element
      */
@@ -314,7 +314,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the start of the array
+     * @brief: Retrieve an reverse-iterator to the start of the array
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
@@ -326,7 +326,7 @@ public:
 public:
 
     /**
-     * STL start iterator, same as TArray::StartIterator
+     * @brief: STL start iterator, same as TArray::StartIterator
      *
      * @return: A iterator that points to the first element
      */
@@ -336,7 +336,7 @@ public:
     }
 
     /**
-     * STL end iterator, same as TArray::EndIterator
+     * @brief: STL end iterator, same as TArray::EndIterator
      *
      * @return: A iterator that points past the last element
      */
@@ -346,7 +346,7 @@ public:
     }
 
     /**
-     * STL start iterator, same as TArray::StartIterator
+     * @brief: STL start iterator, same as TArray::StartIterator
      *
      * @return: A iterator that points to the first element
      */
@@ -356,7 +356,7 @@ public:
     }
 
     /**
-     * STL end iterator, same as TArray::EndIterator
+     * @brief: STL end iterator, same as TArray::EndIterator
      *
      * @return: A iterator that points past the last element
      */

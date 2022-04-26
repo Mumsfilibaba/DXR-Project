@@ -12,8 +12,7 @@ public:
 
     CConsoleCommand()
         : ExecuteDelegate()
-    {
-    }
+    { }
 
     CConsoleCommand(const CExecutedDelegateType& Delegate)
         : ExecuteDelegate()

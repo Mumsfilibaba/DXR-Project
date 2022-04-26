@@ -19,8 +19,7 @@ class CNullRHIComputeShader : public CRHIComputeShader
 public:
     CNullRHIComputeShader()
         : CRHIComputeShader()
-    {
-    }
+    { }
 
     virtual CIntVector3 GetThreadGroupXYZ() const override
     {
@@ -37,8 +36,7 @@ class TNullRHIShader : public BaseShaderType
 public:
     TNullRHIShader()
         : BaseShaderType()
-    {
-    }
+    { }
 
     virtual void GetShaderParameterInfo(SRHIShaderParameterInfo& OutShaderParameterInfo) const override
     {

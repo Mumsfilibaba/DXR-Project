@@ -17,60 +17,60 @@ class ENGINE_API CScene
 public:
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     CScene();
 
     /**
-     * Destructor
+     * @brief: Destructor
      */
     ~CScene();
 
     /**
-     * Create a new actor and add it to the scene 
+     * @brief: Create a new actor and add it to the scene 
      * 
      * @return: Returns the newly created actor
      */
     class CActor* MakeActor();
 
     /**
-     * Start game 
+     * @brief: Start game 
      */
     void Start();
 
-    /* Ticks all actors in the scene, should be called once per frame */
+     /** @brief: Ticks all actors in the scene, should be called once per frame */
     void Tick(CTimestamp DeltaTime);
 
     /**
-     * Adds a camera into the scene 
+     * @brief: Adds a camera into the scene 
      * 
      * @param InCamera: Camera to add to the scene
      */
     void AddCamera(CCamera* InCamera);
 
     /**
-     * Adds an actor into the scene 
+     * @brief: Adds an actor into the scene 
      * 
      * @param InActor: Actor to add to the scene
      */
     void AddActor(CActor* InActor);
 
     /**
-     * Adds an light into the scene
+     * @brief: Adds an light into the scene
      *
      * @param InLight: Light to add to the scene
      */
     void AddLight(CLight* InLight);
 
     /**
-     * Function called when adding a component
+     * @brief: Function called when adding a component
      * 
      * @param NewComponent: New component just added to the scene
      */
     void OnAddedComponent(CComponent* NewComponent);
 
     /**
-     * Retrieve all components of a certain type
+     * @brief: Retrieve all components of a certain type
      * 
      * @return: Returns an array of all components of the specified type
      */
@@ -93,7 +93,7 @@ public:
     }
 
     /**
-     * Retrieve all actors of the scene
+     * @brief: Retrieve all actors of the scene
      * 
      * @return: Returns a reference to an array of all actors in the scene
      */
@@ -103,7 +103,7 @@ public:
     }
 
     /**
-     * Retrieve all lights of the scene
+     * @brief: Retrieve all lights of the scene
      *
      * @return: Returns a reference to an array of all lights in the scene
      */
@@ -113,7 +113,7 @@ public:
     }
 
     /**
-     * Retrieve all MeshDrawCommands of the scene
+     * @brief: Retrieve all MeshDrawCommands of the scene
      *
      * @return: Returns a reference to an array of all MeshDrawCommands in the scene
      */
@@ -123,7 +123,7 @@ public:
     }
 
     /**
-     * Retrieve the camera of the scene
+     * @brief: Retrieve the camera of the scene
      * 
      * @return: Returns a pointer to the camera of the scene
      */

@@ -324,7 +324,7 @@ bool CD3D12Device::Initialize()
         TComPtr<IDXGIFactory5> Factory5;
         if (FAILED(Factory.GetAs(&Factory5)))
         {
-            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrive IDXGIFactory5");
+            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrieve IDXGIFactory5");
             return false;
         }
         else
@@ -351,7 +351,7 @@ bool CD3D12Device::Initialize()
         DXGI_ADAPTER_DESC1 Desc;
         if (FAILED(TempAdapter->GetDesc1(&Desc)))
         {
-            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrive DXGI_ADAPTER_DESC1");
+            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrieve DXGI_ADAPTER_DESC1");
             return false;
         }
 
@@ -374,7 +374,7 @@ bool CD3D12Device::Initialize()
 
     if (!TempAdapter)
     {
-        D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrive adapter");
+        D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrieve adapter");
         return false;
     }
     else
@@ -419,7 +419,7 @@ bool CD3D12Device::Initialize()
 
     if (FAILED(Device.GetAs<ID3D12Device5>(&DXRDevice)))
     {
-        D3D12_ERROR_ALWAYS("[CD3D12Device]: Failed to retrive DXR-Device");
+        D3D12_ERROR_ALWAYS("[CD3D12Device]: Failed to retrieve DXR-Device");
         return false;
     }
 

@@ -30,8 +30,7 @@ struct SMacApplicationEvent
 		, Size()
 		, Position()
 		, Character(uint32(-1))
-    {
-    }
+    { }
 
     FORCEINLINE SMacApplicationEvent(const SMacApplicationEvent& Other)
         : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nullptr)
@@ -40,8 +39,7 @@ struct SMacApplicationEvent
 		, Size(Other.Size)
 		, Position(Other.Position)
 		, Character(Other.Character)
-    {
-    }
+    { }
 
     FORCEINLINE ~SMacApplicationEvent()
     {
@@ -86,61 +84,61 @@ class CMacApplication final : public CPlatformApplication
 {
 public:
 
-    /* Creates the mac application */
+     /** @brief: Creates the mac application */
 	static TSharedPtr<CMacApplication> Make();
 
-    /* Public destructor for TSharedPtr */
+     /** @brief: Public destructor for TSharedPtr */
     ~CMacApplication();
 
-    /* Create a window */
+     /** @brief: Create a window */
     virtual TSharedRef<CPlatformWindow> MakeWindow() override final;
 
-    /* Initialized the application */
+     /** @brief: Initialized the application */
     virtual bool Initialize() override final;
 
-    /* Tick the application, this handles messages that has been queued up after calls to PumpMessages */
+     /** @brief: Tick the application, this handles messages that has been queued up after calls to PumpMessages */
     virtual void Tick(float Delta) override final;
 
-    /* Sets the window that is currently active */
+     /** @brief: Sets the window that is currently active */
     virtual void SetActiveWindow(const TSharedRef<CPlatformWindow>& Window) override final;
 
-    /* Retrieves the window that is currently active */
+     /** @brief: Retrieves the window that is currently active */
     virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
 
-	/* Retrieve the window that is currently under the cursor, if no window is under the cursor, the value is nullptr */
+	 /** @brief: Retrieve the window that is currently under the cursor, if no window is under the cursor, the value is nullptr */
 	virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const override final;
 	
-    /* Retrieves a from a NSWindow */
+     /** @brief: Retrieves a from a NSWindow */
     TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
 
-    /* Store event for handling later in the main loop */
+     /** @brief: Store event for handling later in the main loop */
     void DeferEvent(NSObject* EventOrNotificationObject);
 	
-    /* Returns the native appdelegate */
+     /** @brief: Returns the native appdelegate */
     FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const { return AppDelegate; }
 
 private:
 
     CMacApplication();
 
-    /* Initializes the applications menu in the menubar */
+     /** @brief: Initializes the applications menu in the menubar */
     bool InitializeAppMenu();
 
-    /* Handles a notification */
+     /** @brief: Handles a notification */
     void HandleEvent(const SMacApplicationEvent& Notification);
 
-    /* Delegate to talk with macOS */
+     /** @brief: Delegate to talk with macOS */
     CCocoaAppDelegate* AppDelegate = nullptr;
 
-    /* All the windows of the application */
+     /** @brief: All the windows of the application */
     TArray<TSharedRef<CMacWindow>> Windows;
     mutable CCriticalSection       WindowsMutex;
 
-    /* Deferred events, events are not processed directly */
+     /** @brief: Deferred events, events are not processed directly */
     TArray<SMacApplicationEvent> DeferredEvents;
     CCriticalSection             DeferredEventsMutex;
 
-    /* If the application has been terminating or not */
+     /** @brief: If the application has been terminating or not */
     bool bIsTerminating = false;
 };
 

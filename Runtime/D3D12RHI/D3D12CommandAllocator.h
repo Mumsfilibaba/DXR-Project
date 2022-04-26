@@ -11,8 +11,7 @@ public:
     FORCEINLINE CD3D12CommandAllocator(CD3D12Device* InDevice)
         : CD3D12DeviceChild(InDevice)
         , Allocator(nullptr)
-    {
-    }
+    { }
 
     FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type)
     {

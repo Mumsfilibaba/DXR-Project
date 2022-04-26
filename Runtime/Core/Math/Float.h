@@ -9,7 +9,7 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Constant masks
+// Constants
 
 #define FP32_HIDDEN_BIT   (0x800000U)
 #define FP32_MAX_EXPONENT (0xff)
@@ -19,40 +19,37 @@
 #define MIN_EXPONENT      (DENORM_EXPONENT - 10)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// 64-bit floating point data
+// SFloat64
 
 struct SFloat64
 {
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE SFloat64()
         : Float64(0.0)
-    {
-    }
+    { }
 
     /**
-     * Construct a Float64 with a double
+     * @brief: Construct a Float64 with a double
      *
      * @param InFloat64: Value to set the float64 to
      */
     FORCEINLINE SFloat64(double InFloat64)
         : Float64(InFloat64)
-    {
-    }
+    { }
 
     /**
-     * Copy constructor
+     * @brief: Copy constructor
      *
      * @param Other: Other instance to copy
      */
     FORCEINLINE SFloat64(const SFloat64& Other)
         : Float64(Other.Float64)
-    {
-    }
+    { }
 
     /**
-     * Set the instance to a new value
+     * @brief: Set the instance to a new value
      *
      * @param InFloat64: Value to set the float64 to
      */
@@ -64,6 +61,16 @@ struct SFloat64
     FORCEINLINE double GetFloat() const
     {
         return Float64;
+    }
+
+    bool operator==(const SFloat64& RHS) const
+    {
+        return (Encoded == RHS.Encoded);
+    }
+
+    bool operator!=(const SFloat64& RHS) const
+    {
+        return !(*this == RHS);
     }
 
     FORCEINLINE SFloat64& operator=(double InFloat64)
@@ -82,34 +89,32 @@ struct SFloat64
     {
         double Float64;
         uint64 Encoded;
+
         struct
         {
             uint64 Mantissa : 52;
             uint64 Exponent : 11;
-            uint64 Sign : 1;
+            uint64 Sign     : 1;
         };
     };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// 32-bit floating point data
+// SFloat32
 
 struct SFloat32
 {
     FORCEINLINE SFloat32()
         : Float32(0.0f)
-    {
-    }
+    { }
 
     FORCEINLINE SFloat32(float InFloat32)
         : Float32(InFloat32)
-    {
-    }
+    { }
 
     FORCEINLINE SFloat32(const SFloat32& Other)
         : Float32(Other.Float32)
-    {
-    }
+    { }
 
     FORCEINLINE void SetFloat(float InFloat32)
     {
@@ -119,6 +124,16 @@ struct SFloat32
     FORCEINLINE float GetFloat() const
     {
         return Float32;
+    }
+
+    bool operator==(const SFloat32& RHS) const
+    {
+        return (Encoded == RHS.Encoded);
+    }
+
+    bool operator!=(const SFloat32& RHS) const
+    {
+        return !(*this == RHS);
     }
 
     FORCEINLINE SFloat32& operator=(float InFloat32)
@@ -137,24 +152,24 @@ struct SFloat32
     {
         float  Float32;
         uint32 Encoded;
+
         struct
         {
             uint32 Mantissa : 23;
             uint32 Exponent : 8;
-            uint32 Sign : 1;
+            uint32 Sign     : 1;
         };
     };
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// 16-bit floating point data
+// SFloat16
 
 struct SFloat16
 {
     FORCEINLINE SFloat16()
         : Encoded(0)
-    {
-    }
+    { }
 
     FORCEINLINE SFloat16(float Float32)
         : Encoded(0)
@@ -164,8 +179,7 @@ struct SFloat16
 
     FORCEINLINE SFloat16(const SFloat16& Other)
         : Encoded(Other.Encoded)
-    {
-    }
+    { }
 
     FORCEINLINE void SetFloat(float Float32)
     {
@@ -224,7 +238,7 @@ struct SFloat16
     FORCEINLINE void SetFloatFast(float Float32)
     {
         // TODO: Ensure that the fast-path also works on macOS
-#if ARCHITECTURE_X86_X64
+#if ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
         __m128  Reg0 = _mm_set_ss(Float32);
         __m128i Reg1 = _mm_cvtps_ph(Reg0, _MM_FROUND_NO_EXC);
         Encoded = static_cast<uint16>(_mm_cvtsi128_si32(Reg1));
@@ -238,9 +252,9 @@ struct SFloat16
 
     FORCEINLINE float GetFloat() const
     {
-        // TODO: Ensure that the fast-path also works on macOS
-#if ARCHITECTURE_X86_X64
-        __m128i Reg0 = _mm_cvtsi32_si128(static_cast<uint32_t>(Encoded));
+        // TODO: Ensure that this also works on macOS
+#if ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
+        __m128i Reg0 = _mm_cvtsi32_si128(static_cast<uint32>(Encoded));
         __m128  Reg1 = _mm_cvtph_ps(Reg0);
         return _mm_cvtss_f32(Reg1);
 #else
@@ -283,6 +297,16 @@ struct SFloat16
 #endif
     }
 
+    bool operator==(const SFloat16& RHS) const
+    {
+        return (Encoded == RHS.Encoded);
+    }
+
+    bool operator!=(const SFloat16& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
     FORCEINLINE SFloat16& operator=(float F32)
     {
         SetFloat(F32);
@@ -298,11 +322,12 @@ struct SFloat16
     union
     {
         uint16 Encoded;
+
         struct
         {
             uint16 Mantissa : 10;
             uint16 Exponent : 5;
-            uint16 Sign : 1;
+            uint16 Sign     : 1;
         };
     };
 };

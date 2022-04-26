@@ -19,7 +19,7 @@ public:
     typedef void* PlatformHandle;
 
     /**
-     * Load a dynamic library on the platform 
+     * @brief: Load a dynamic library on the platform 
      * 
      * @param LibraryName: Name of the library to load without extension or prefixes
      * @return: A native handle to a dynamic library
@@ -39,7 +39,7 @@ public:
     }
 
     /**
-     * Retrieves a handle a dynamic handle if the library is already loaded into the application
+     * @brief: Retrieves a handle a dynamic handle if the library is already loaded into the application
      *
      * @param LibraryName: Name of the library to load without extension or prefixes
      * @return: A native handle to a dynamic library
@@ -66,7 +66,7 @@ public:
     }
 
     /**
-     * Free a dynamic library on the platform 
+     * @brief: Free a dynamic library on the platform 
      * 
      * @param LibraryHandle: Handle to the dynamic library unload from the application
      */
@@ -76,7 +76,7 @@ public:
     }
 
     /**
-     * Loads a function or variable with specified name from the specified library 
+     * @brief: Loads a function or variable with specified name from the specified library 
      * 
      * @param SymbolName: Name of the symbol to load
      * @param LibraryHandle: Handle to the library to load from
@@ -88,7 +88,7 @@ public:
     }
 
     /**
-     * Retrieve the extension that dynamic libraries use on the platform 
+     * @brief: Retrieve the extension that dynamic libraries use on the platform 
      * 
      * @return: Returns the extension that is used on the platform for dynamic libraries
      */
@@ -98,7 +98,7 @@ public:
     }
 
     /**
-     * Retrieve the full name for the library including prefixes and extension 
+     * @brief: Retrieve the full name for the library including prefixes and extension 
      * 
      * @param LibraryName: Name of the library without extension or prefixes
      */
@@ -109,7 +109,7 @@ public:
     }
 
     /**
-     * Check if the dynamic library is already loaded into the application 
+     * @brief: Check if the dynamic library is already loaded into the application 
      * 
      * @param LibraryName: Name of the library without extension or prefixes
      * @return: Returns true if the library is loaded into the application
@@ -120,7 +120,7 @@ public:
     }
 
     /**
-     * Loads a typed function or variable from with specified name from the specified library
+     * @brief: Loads a typed function or variable from with specified name from the specified library
      * 
      * @param SymbolName: Name of the symbol to load
      * @param LibraryHandle: Handle to the library to load from

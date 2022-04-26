@@ -16,15 +16,13 @@ public:
     FORCEINLINE Lockable() noexcept
         : LockableItem()
         , ItemLock()
-    {
-    }
+    { }
 
     template<typename... ArgTypes>
     FORCEINLINE Lockable(ArgTypes&&... Args) noexcept
         : LockableItem(Forward<ArgTypes>(Args)...)
         , ItemLock()
-    {
-    }
+    { }
 
     FORCEINLINE void Lock() noexcept
     {
@@ -63,14 +61,14 @@ public:
 
 public:
 
-    FORCEINLINE bool operator==(const ElementType& Rhs) const noexcept
+    FORCEINLINE bool operator==(const ElementType& RHS) const noexcept
     {
-        return (LockableItem == Rhs);
+        return (LockableItem == RHS);
     }
 
-    FORCEINLINE bool operator!=(const ElementType& Rhs) const noexcept
+    FORCEINLINE bool operator!=(const ElementType& RHS) const noexcept
     {
-        return (LockableItem != Rhs);
+        return (LockableItem != RHS);
     }
 
     FORCEINLINE T* operator&() noexcept

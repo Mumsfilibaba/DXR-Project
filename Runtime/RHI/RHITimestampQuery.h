@@ -18,7 +18,7 @@ class CRHITimestampQuery : public CRHIObject
 public:
 
     /**
-     * Retrieve a certain timestamp 
+     * @brief: Retrieve a certain timestamp 
      * 
      * @param OutQuery: Structure to store the timestamp in
      * @param Index: Index of the query to retrieve 
@@ -26,7 +26,7 @@ public:
     virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const = 0;
 
     /**
-     * Get the frequency of the queue that the query where used on 
+     * @brief: Get the frequency of the queue that the query where used on 
      * 
      * @return: Returns the frequency of the query
      */

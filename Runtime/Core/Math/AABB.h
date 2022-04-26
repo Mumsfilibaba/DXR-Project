@@ -6,8 +6,18 @@
 
 struct SAABB
 {
+    SAABB()
+        : Top()
+        , Bottom()
+    { }
+
+    SAABB(const CVector3& InTop, const CVector3& InBottom)
+        : Top(InTop)
+        , Bottom(InBottom)
+    { }
+
    /**
-    * Returns the center position of the bounding box
+    * @brief: Returns the center position of the bounding box
     * 
     * @return: Returns the center position of the box
     */
@@ -17,7 +27,7 @@ struct SAABB
     }
 
     /**
-    * Return the width of the bounding box
+    * @brief: Return the width of the bounding box
     * 
     * @return: Return the width of the bounding box
     */
@@ -27,7 +37,7 @@ struct SAABB
     }
 
     /**
-    * Return the height of the bounding box
+    * @brief: Return the height of the bounding box
     *
     * @return: Return the height of the bounding box
     */
@@ -37,7 +47,7 @@ struct SAABB
     }
 
     /**
-    * Return the depth of the bounding box
+    * @brief: Return the depth of the bounding box
     *
     * @return: Return the depth of the bounding box
     */

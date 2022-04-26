@@ -78,53 +78,52 @@ class CRHIBuffer : public CRHIResource
 public:
 
     /**
-     * Constructor taking in flags for the buffer
+     * @brief: Constructor taking in flags for the buffer
      * 
      * @param InFlags: Flags that the buffer was created with
      */
     CRHIBuffer(uint32 InFlags)
         : CRHIResource()
         , Flags(InFlags)
-    {
-    }
+    { }
 
     /**
-     * Cast resource to a Buffer
+     * @brief: Cast resource to a Buffer
      * 
      * @return: Returns a pointer to a buffer interface if the object implements it
      */
     virtual CRHIBuffer* AsBuffer() { return this; }
 
     /**
-     * Cast to VertexBuffer 
+     * @brief: Cast to VertexBuffer 
      * 
      * @return: Returns a pointer to a VertexBuffer interface if the object implements it
      */
     virtual class CRHIVertexBuffer* AsVertexBuffer() { return nullptr; }
 
     /**
-     * Cast to IndexBuffer
+     * @brief: Cast to IndexBuffer
      *
      * @return: Returns a pointer to a IndexBuffer interface if the object implements it
      */
     virtual class CRHIIndexBuffer* AsIndexBuffer() { return nullptr; }
 
     /**
-     * Cast to ConstantBuffer
+     * @brief: Cast to ConstantBuffer
      *
      * @return: Returns a pointer to a ConstantBuffer interface if the object implements it
      */
     virtual class CRHIConstantBuffer* AsConstantBuffer() { return nullptr; }
 
     /**
-     * Cast to StructuredBuffer
+     * @brief: Cast to StructuredBuffer
      *
      * @return: Returns a pointer to a StructuredBuffer interface if the object implements it
      */
     virtual class CRHIStructuredBuffer* AsStructuredBuffer() { return nullptr; }
 
     /**
-     * Map GPU buffer memory to the CPU. Setting both size and offset to zero indicate the whole resource.
+     * @brief: Map GPU buffer memory to the CPU. Setting both size and offset to zero indicate the whole resource.
      * 
      * @param Offset: Offset in the buffer were the buffer should start mapping
      * @param Size: Size of the range to map
@@ -133,7 +132,7 @@ public:
     virtual void* Map(uint32 Offset = 0, uint32 Size = 0) = 0;
 
     /**
-     * Unmap GPU buffer memory to the CPU. Setting both size and offset to zero indicate the whole resource.
+     * @brief: Unmap GPU buffer memory to the CPU. Setting both size and offset to zero indicate the whole resource.
      *
      * @param Offset: Offset in the buffer were the buffer were used on the CPU
      * @param Size: Size of the range that were used on the CPU
@@ -141,7 +140,7 @@ public:
     virtual void Unmap(uint32 Offset = 0, uint32 Size = 0) = 0;
 
     /**
-     * Check if the buffer is considered dynamic
+     * @brief: Check if the buffer is considered dynamic
      * 
      * @return: Returns true if the buffer is dynamic
      */
@@ -151,7 +150,7 @@ public:
     }
 
     /**
-     * Check if the buffer can be used with UnorderedAccessViews
+     * @brief: Check if the buffer can be used with UnorderedAccessViews
      *
      * @return: Returns true if the buffer can be used with UnorderedAccessViews
      */
@@ -161,7 +160,7 @@ public:
     }
 
     /**
-     * Check if the buffer can be used with ShaderResourceViews
+     * @brief: Check if the buffer can be used with ShaderResourceViews
      *
      * @return: Returns true if the buffer can be used with ShaderResourceViews
      */
@@ -171,7 +170,7 @@ public:
     }
 
     /**
-     * Retrieve the flags that the buffer was created with
+     * @brief: Retrieve the flags that the buffer was created with
      * 
      * @return: Returns the flags that the buffer was created with
      */
@@ -192,7 +191,7 @@ class CRHIVertexBuffer : public CRHIBuffer
 public:
 
     /**
-     * Constructor taking the parameters that the buffer was created with
+     * @brief: Constructor taking the parameters that the buffer was created with
      * 
      * @param InNumVertices: The number of vertices within the buffer
      * @param InStride: Stride of the each vertex
@@ -202,11 +201,10 @@ public:
         : CRHIBuffer(InFlags)
         , NumVertices(InNumVertices)
         , Stride(InStride)
-    {
-    }
+    { }
 
     /**
-     * Cast to VertexBuffer
+     * @brief: Cast to VertexBuffer
      *
      * @return: Returns a pointer to a VertexBuffer interface if the object implements it
      */
@@ -214,7 +212,7 @@ public:
 
 
     /**
-     * Retrieve the stride of the VertexBuffer
+     * @brief: Retrieve the stride of the VertexBuffer
      * 
      * @return: Returns the stride for each vertex in the VertexBuffer
      */
@@ -224,7 +222,7 @@ public:
     }
 
     /**
-     * Retrieve the number of vertices in the buffer
+     * @brief: Retrieve the number of vertices in the buffer
      *
      * @return: Returns the number of vertices in the VertexBuffer
      */
@@ -246,7 +244,7 @@ class CRHIIndexBuffer : public CRHIBuffer
 public:
 
     /**
-     * Constructor taking parameters for the IndexBuffer
+     * @brief: Constructor taking parameters for the IndexBuffer
      * 
      * @param InFormat: Format that the IndexBuffer uses
      * @param InNumIndices: Number of indices in the IndexBuffer
@@ -256,18 +254,17 @@ public:
         : CRHIBuffer(InFlags)
         , Format(InFormat)
         , NumIndicies(InNumIndicies)
-    {
-    }
+    { }
 
     /**
-     * Cast to IndexBuffer
+     * @brief: Cast to IndexBuffer
      *
      * @return: Returns a pointer to a IndexBuffer interface if the object implements it
      */
     virtual CRHIIndexBuffer* AsIndexBuffer() override { return this; }
 
     /**
-     * Retrieve the format that the IndexBuffer was created with
+     * @brief: Retrieve the format that the IndexBuffer was created with
      * 
      * @return: Returns the format that the IndexBuffer uses
      */
@@ -277,7 +274,7 @@ public:
     }
 
     /**
-     * Retrieve the number of indices that the IndexBuffer contains
+     * @brief: Retrieve the number of indices that the IndexBuffer contains
      * 
      * @return: Returns the number of indices in the IndexBuffer
      */
@@ -299,7 +296,7 @@ class CRHIConstantBuffer : public CRHIBuffer
 public:
 
     /**
-     * Constructor taking create params
+     * @brief: Constructor taking create params
      * 
      * @param InSize: Size of the ConstantBuffer
      * @param InFlags: Flags of the ConstantBuffer
@@ -307,18 +304,17 @@ public:
     CRHIConstantBuffer(uint32 InSize, uint32 InFlags)
         : CRHIBuffer(InFlags)
         , Size(InSize)
-    {
-    }
+    { }
 
     /**
-     * Cast to ConstantBuffer
+     * @brief: Cast to ConstantBuffer
      *
      * @return: Returns a pointer to a ConstantBuffer interface if the object implements it
      */
     virtual CRHIConstantBuffer* AsConstantBuffer() override { return this; }
 
     /**
-     * Retrieve the size of the ConstantBuffer
+     * @brief: Retrieve the size of the ConstantBuffer
      * 
      * @return: Returns the Size of the ConstantBuffer
      */
@@ -339,7 +335,7 @@ class CRHIStructuredBuffer : public CRHIBuffer
 public:
 
     /**
-     * Constructor taking parameters for creating a StructuredBuffer
+     * @brief: Constructor taking parameters for creating a StructuredBuffer
      * 
      * @param InNumElements: Number of elements in the StructuredBuffer
      * @param InStride: Stride of each element in the buffer
@@ -349,18 +345,17 @@ public:
         : CRHIBuffer(InFlags)
         , Stride(InStride)
         , NumElements(InNumElements)
-    {
-    }
+    { }
 
     /**
-     * Cast to StructuredBuffer
+     * @brief: Cast to StructuredBuffer
      *
      * @return: Returns a pointer to a StructuredBuffer interface if the object implements it
      */
     virtual CRHIStructuredBuffer* AsStructuredBuffer() override { return this; }
 
     /**
-     * Retrieve the stride of the StructuredBuffer
+     * @brief: Retrieve the stride of the StructuredBuffer
      * 
      * @return: Returns the stride of the StructuredBuffer
      */
@@ -370,7 +365,7 @@ public:
     }
 
     /**
-     * Retrieve the number of elements of the StructuredBuffer
+     * @brief: Retrieve the number of elements of the StructuredBuffer
      *
      * @return: Returns the number of elements of the StructuredBuffer
      */

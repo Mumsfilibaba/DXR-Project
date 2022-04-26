@@ -17,8 +17,7 @@ public:
 
     FORCEINLINE CTimestamp(uint64 InNanoseconds = 0)
         : Nanoseconds(InNanoseconds)
-    {
-    }
+    { }
 
     FORCEINLINE double AsSeconds() const
     {

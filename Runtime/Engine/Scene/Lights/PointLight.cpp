@@ -77,7 +77,7 @@ void CPointLight::CalculateMatrices()
 
     for (uint32 i = 0; i < 6; i++)
     {
-        CMatrix4 LightProjection = CMatrix4::PerspectiveProjection(NMath::PI_F / 2.0f, 1.0f, ShadowNearPlane, ShadowFarPlane);
+        CMatrix4 LightProjection = CMatrix4::PerspectiveProjection(NMath::kPI_f / 2.0f, 1.0f, ShadowNearPlane, ShadowFarPlane);
         CMatrix4 LightView = CMatrix4::LookTo(Position, Directions[i], UpVectors[i]);
         ViewMatrices[i] = LightView.Transpose();
         Matrices[i] = (LightView * LightProjection).Transpose();

@@ -13,10 +13,10 @@ public:
 
     static TSharedRef<CRendererInfoWindow> Make();
 
-    /* Update the panel, for ImGui this is where the ImGui-Commands should be called */
+     /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Tick() override final;
 
-    /* Returns true if the panel should be updated this frame */
+     /** @brief: Returns true if the panel should be updated this frame */
     virtual bool IsTickable() override final;
 
 private:

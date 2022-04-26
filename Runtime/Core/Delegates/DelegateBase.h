@@ -17,7 +17,7 @@ class CDelegateBase
 public:
 
     /**
-     * Copy constructor 
+     * @brief: Copy constructor 
      * 
      * @param Other: Delegate to copy from
      */
@@ -29,7 +29,7 @@ public:
     }
 
     /**
-     * Move constructor
+     * @brief: Move constructor
      *
      * @param Other: Delegate to move from
      */
@@ -42,7 +42,7 @@ public:
     }
 
     /**
-     * Destructor 
+     * @brief: Destructor 
      */
     FORCEINLINE ~CDelegateBase()
     {
@@ -50,7 +50,7 @@ public:
     }
 
     /**
-     * Unbinds any bound delegate 
+     * @brief: Unbinds any bound delegate 
      */
     FORCEINLINE void Unbind()
     {
@@ -58,7 +58,7 @@ public:
     }
 
     /**
-     * Swaps two delegates 
+     * @brief: Swaps two delegates 
      * 
      * @param Other: Delegate to swap with
      */
@@ -73,7 +73,7 @@ public:
     }
 
     /**
-     * Checks weather or not there exist any delegate bound 
+     * @brief: Checks weather or not there exist any delegate bound 
      * 
      * @return: Returns true if there is a delegate bound
      */
@@ -83,7 +83,7 @@ public:
     }
 
     /**
-     * Check if an object is bound to this delegate
+     * @brief: Check if an object is bound to this delegate
      * 
      * @param Object: Pointer to object to check for
      * @return: Returns true if this Object is bound to the delegate
@@ -101,7 +101,7 @@ public:
     }
 
     /**
-     * Check if object is bound to this delegate
+     * @brief: Check if object is bound to this delegate
      *
      * @param Object: Pointer to object to check for
      * @return: Returns true if the Object was unbound from the delegate
@@ -120,7 +120,7 @@ public:
     }
 
     /**
-     * Retrieve the bound object, returns nullptr for non-member delegates 
+     * @brief: Retrieve the bound object, returns nullptr for non-member delegates 
      * 
      * @return: Returns the pointer to the object bound to the delegate
      */
@@ -137,7 +137,7 @@ public:
     }
 
     /**
-     * Retrieve the delegate handle for this delegate
+     * @brief: Retrieve the delegate handle for this delegate
      * 
      * @return: Returns the delegate handle to this delegate
      */
@@ -154,26 +154,26 @@ public:
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      * 
-     * @param Rhs: Instance to move from
+     * @param RHS: Instance to move from
      * @return: A reference to this instance
      */
-    FORCEINLINE CDelegateBase& operator=(CDelegateBase&& Rhs) noexcept
+    FORCEINLINE CDelegateBase& operator=(CDelegateBase&& RHS) noexcept
     {
-        CDelegateBase(Move(Rhs)).Swap(*this);
+        CDelegateBase(Move(RHS)).Swap(*this);
         return *this;
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      *
-     * @param Rhs: Instance to copy from
+     * @param RHS: Instance to copy from
      * @return: A reference to this instance
      */
-    FORCEINLINE CDelegateBase& operator=(const CDelegateBase& Rhs)
+    FORCEINLINE CDelegateBase& operator=(const CDelegateBase& RHS)
     {
-        CDelegateBase(Rhs).Swap(*this);
+        CDelegateBase(RHS).Swap(*this);
         return *this;
     }
 
@@ -185,8 +185,7 @@ protected:
     FORCEINLINE explicit CDelegateBase()
         : Storage()
         , Size(0)
-    {
-    }
+    { }
 
     FORCEINLINE void Release()
     {

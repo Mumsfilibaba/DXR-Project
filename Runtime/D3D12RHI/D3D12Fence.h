@@ -12,8 +12,7 @@ public:
         : CD3D12DeviceChild(InDevice)
         , Fence(nullptr)
         , Event(0)
-    {
-    }
+    { }
 
     FORCEINLINE ~CD3D12Fence()
     {

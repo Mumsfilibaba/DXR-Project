@@ -15,64 +15,64 @@ class COREAPPLICATION_API CWindowsWindow final : public CPlatformWindow
 {
 public:
 
-    /* Create a new window */
+     /** @brief: Create a new window */
     static TSharedRef<CWindowsWindow> Make(class CWindowsApplication* InApplication);
 
-    /* Initializes the window */
+     /** @brief: Initializes the window */
     virtual bool Initialize(const String& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
 
-    /* Shows the window */
+     /** @brief: Shows the window */
     virtual void Show(bool bMaximized) override final;
 
-    /* Minimizes the window */
+     /** @brief: Minimizes the window */
     virtual void Minimize() override final;
 
-    /* Maximizes the window */
+     /** @brief: Maximizes the window */
     virtual void Maximize() override final;
 
-    /* Closes the window */
+     /** @brief: Closes the window */
     virtual void Close() override final;
 
-    /* Restores the window after being minimized or maximized */
+     /** @brief: Restores the window after being minimized or maximized */
     virtual void Restore() override final;
 
-    /* Makes the window a borderless fullscreen window */
+     /** @brief: Makes the window a borderless fullscreen window */
     virtual void ToggleFullscreen() override final;
 
-    /* Checks if the underlaying native handle of the window is valid */
+     /** @brief: Checks if the underlaying native handle of the window is valid */
     virtual bool IsValid() const override final;
 
-    /* Checks if this window is the currently active window */
+     /** @brief: Checks if this window is the currently active window */
     virtual bool IsActiveWindow() const override final;
 
-    /* Sets the title */
+     /** @brief: Sets the title */
     virtual void SetTitle(const String& Title) override final;
 
-    /* Retrieve the window title */
+     /** @brief: Retrieve the window title */
     virtual void GetTitle(String& OutTitle) override final;
 
-    /* Set the position of the window */
+     /** @brief: Set the position of the window */
     virtual void MoveTo(int32 x, int32 y) override final;
 
-    /* Set the shape of the window */
+     /** @brief: Set the shape of the window */
     virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) override final;
 
-    /* Retrieve the shape of the window */
+     /** @brief: Retrieve the shape of the window */
     virtual void GetWindowShape(SWindowShape& OutWindowShape) const override final;
 
-    /* Get the fullscreen information of the monitor that the window currently is on */
+     /** @brief: Get the fullscreen information of the monitor that the window currently is on */
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const override final;
 
-    /* Retrieve the width of the window */
+     /** @brief: Retrieve the width of the window */
     virtual uint32 GetWidth()  const override final;
 
-    /* Retrieve the height of the window */
+     /** @brief: Retrieve the height of the window */
     virtual uint32 GetHeight() const override final;
 
-    /* Set the native window handle */
+     /** @brief: Set the native window handle */
     virtual void SetPlatformHandle(PlatformWindowHandle InPlatformHandle) override final;
 
-    /* Retrieve the native handle */
+     /** @brief: Retrieve the native handle */
     virtual PlatformWindowHandle GetPlatformHandle() const override final
     {
         return reinterpret_cast<PlatformWindowHandle>(Window);
@@ -92,7 +92,7 @@ private:
 
     bool bIsFullscreen;
 
-    /* Used when toggling fullscreen */
+     /** @brief: Used when toggling fullscreen */
     WINDOWPLACEMENT StoredPlacement;
 
     DWORD Style;

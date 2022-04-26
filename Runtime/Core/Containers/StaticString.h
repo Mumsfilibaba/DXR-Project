@@ -30,7 +30,7 @@ public:
     typedef TReverseArrayIterator<const TStaticString, const CharType> ReverseConstIteratorType;
 
     /**
-     * Create a static string from a formatted string
+     * @brief: Create a static string from a formatted string
      * 
      * @param Format: Formatted string
      * @return: Returns the formatted string based on the format string
@@ -48,7 +48,7 @@ public:
     }
 
     /**
-     * Create a static string from a formatted string and an argument-list
+     * @brief: Create a static string from a formatted string and an argument-list
      *
      * @param Format: Formatted string
      * @param ArgsList: Argument-list to be formatted based on the format-string
@@ -62,7 +62,7 @@ public:
     }
 
     /**
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE TStaticString() noexcept
         : Characters()
@@ -72,7 +72,7 @@ public:
     }
 
     /**
-     * Create a fixed string from a raw string. If the string is longer than the fixed length
+     * @brief: Create a fixed string from a raw string. If the string is longer than the fixed length
      * the string will be shortened to fit.
      * 
      * @param InString: String to copy
@@ -88,7 +88,7 @@ public:
     }
 
     /**
-     * Create a fixed string from a specified length raw array. If the string is longer than the 
+     * @brief: Create a fixed string from a specified length raw array. If the string is longer than the 
      * fixed length the string will be shortened to fit.
      *
      * @param InString: String to copy
@@ -105,7 +105,7 @@ public:
     }
 
     /**
-     * Create a static string from another string-type. If the string is longer than the
+     * @brief: Create a static string from another string-type. If the string is longer than the
      * fixed length the string will be shortened to fit.
      * 
      * @param InString: String to copy from
@@ -119,7 +119,7 @@ public:
     }
 
     /**
-     * Copy Constructor
+     * @brief: Copy Constructor
      * 
      * @param Other: Other string to copy from
      */
@@ -131,7 +131,7 @@ public:
     }
 
     /**
-     * Move Constructor
+     * @brief: Move Constructor
      *
      * @param Other: Other string to move from
      */
@@ -143,7 +143,7 @@ public:
     }
 
     /**
-     * Clears the string
+     * @brief: Clears the string
      */
     FORCEINLINE void Clear() noexcept
     {
@@ -152,7 +152,7 @@ public:
     }
 
     /**
-     * Appends a character to this string 
+     * @brief: Appends a character to this string 
      * 
      * @param Char: Character to append
      */
@@ -165,7 +165,7 @@ public:
     }
 
     /**
-     * Appends a raw-string to this string
+     * @brief: Appends a raw-string to this string
      *
      * @param InString: String to append
      */
@@ -175,7 +175,7 @@ public:
     }
 
     /**
-     * Appends a string of another string-type to this string
+     * @brief: Appends a string of another string-type to this string
      *
      * @param InString: String to append
      */
@@ -186,7 +186,7 @@ public:
     }
 
     /**
-     * Appends a raw-string to this string with a fixed length
+     * @brief: Appends a raw-string to this string with a fixed length
      *
      * @param InString: String to append
      * @param InLength: Length of the string
@@ -203,7 +203,7 @@ public:
     }
 
     /**
-     * Resize the string
+     * @brief: Resize the string
      * 
      * @param NewLength: New length of the string 
      */
@@ -213,7 +213,7 @@ public:
     }
 
     /**
-     * Resize the string and fill the new elements with a specified character
+     * @brief: Resize the string and fill the new elements with a specified character
      *
      * @param NewLength: New length of the string
      * @param FillElement: Element to fill the string with
@@ -234,7 +234,7 @@ public:
     }
 
     /**
-     * Copy this string into buffer 
+     * @brief: Copy this string into buffer 
      * 
      * @param Buffer: Buffer to fill
      * @param BufferSize: Size of the buffer to fill
@@ -250,7 +250,7 @@ public:
     }
 
     /**
-     * Replace the string with a formatted string (similar to snprintf)
+     * @brief: Replace the string with a formatted string (similar to snprintf)
      * 
      * @param Format: Formatted string to replace the string with
      */
@@ -263,7 +263,7 @@ public:
     }
 
     /**
-     * Replace the string with a formatted string (similar to snprintf)
+     * @brief: Replace the string with a formatted string (similar to snprintf)
      *
      * @param Format: Formatted string to replace the string with
      * @param ArgList: Argument list filled with arguments for the formatted string
@@ -284,7 +284,7 @@ public:
     }
 
     /**
-     * Appends a formatted string to the string
+     * @brief: Appends a formatted string to the string
      * 
      * @param Format: Formatted string to append
      */
@@ -297,7 +297,7 @@ public:
     }
 
     /**
-     * Appends a formatted string to the string
+     * @brief: Appends a formatted string to the string
      *
      * @param Format: Formatted string to append
      * @param ArgList: Argument-list for the formatted string
@@ -319,7 +319,7 @@ public:
     }
 
     /**
-     * Convert this string to a lower-case string
+     * @brief: Convert this string to a lower-case string
      */ 
     FORCEINLINE void ToLowerInline() noexcept
     {
@@ -333,7 +333,7 @@ public:
     }
 
     /**
-     * Convert this string to a lower-case string and returns a copy
+     * @brief: Convert this string to a lower-case string and returns a copy
      * 
      * @return: Returns a copy of this string, with all characters in lower-case
      */
@@ -345,7 +345,7 @@ public:
     }
 
     /**
-     * Convert this string to a upper-case string
+     * @brief: Convert this string to a upper-case string
      */
     FORCEINLINE void ToUpperInline() noexcept
     {
@@ -359,7 +359,7 @@ public:
     }
 
     /**
-     * Convert this string to a upper-case string and returns a copy
+     * @brief: Convert this string to a upper-case string and returns a copy
      *
      * @return: Returns a copy of this string, with all characters in upper-case
      */
@@ -371,7 +371,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the beginning and end of the string 
+     * @brief: Removes whitespace from the beginning and end of the string 
      */
     FORCEINLINE void TrimInline() noexcept
     {
@@ -380,7 +380,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the beginning and end of the string and returns a copy
+     * @brief: Removes whitespace from the beginning and end of the string and returns a copy
      * 
      * @return: Returns a copy of this string with the whitespace removed in the end and beginning
      */
@@ -392,7 +392,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the beginning of the string 
+     * @brief: Removes whitespace from the beginning of the string 
      */
     FORCEINLINE void TrimStartInline() noexcept
     {
@@ -413,7 +413,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the beginning of the string and returns a copy
+     * @brief: Removes whitespace from the beginning of the string and returns a copy
      * 
      * @return: Returns a copy of this string with all the whitespace removed from the beginning
      */
@@ -425,7 +425,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the end of the string
+     * @brief: Removes whitespace from the end of the string
      */
     FORCEINLINE void TrimEndInline() noexcept
     {
@@ -445,7 +445,7 @@ public:
     }
 
     /**
-     * Removes whitespace from the end of the string and returns a copy
+     * @brief: Removes whitespace from the end of the string and returns a copy
      *
      * @return: Returns a copy of this string with all the whitespace removed from the end
      */
@@ -457,7 +457,7 @@ public:
     }
 
     /**
-     * Reverses the order of all the characters in the string
+     * @brief: Reverses the order of all the characters in the string
      */
     FORCEINLINE void ReverseInline() noexcept
     {
@@ -472,7 +472,7 @@ public:
     }
 
     /**
-     * Reverses the order of all the characters in the string and returns a copy
+     * @brief: Reverses the order of all the characters in the string and returns a copy
      * 
      * @return: Returns a string with all the characters reversed
      */
@@ -484,7 +484,7 @@ public:
     }
 
     /**
-     * Compares this string to another string-type
+     * @brief: Compares this string to another string-type
      * 
      * @param InString: String to compare with
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -496,7 +496,7 @@ public:
     }
 
     /**
-     * Compares this string with a raw-string
+     * @brief: Compares this string with a raw-string
      *
      * @param InString: String to compare with
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -507,7 +507,7 @@ public:
     }
 
     /**
-     * Compares this string with a raw-string of a fixed length
+     * @brief: Compares this string with a raw-string of a fixed length
      *
      * @param InString: String to compare with
      * @param InLength: Length of the string to compare
@@ -519,7 +519,7 @@ public:
     }
 
     /**
-     * Compares this string to another string-type without taking casing into account.
+     * @brief: Compares this string to another string-type without taking casing into account.
      *
      * @param InString: String to compare with
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -531,7 +531,7 @@ public:
     }
 
     /**
-     * Compares this string with a raw-string without taking casing into account.
+     * @brief: Compares this string with a raw-string without taking casing into account.
      *
      * @param InString: String to compare with
      * @return: Returns the position of the characters that is not equal. The sign determines difference of the character.
@@ -542,7 +542,7 @@ public:
     }
 
     /**
-     * Compares this string with a raw-string without taking casing into account.
+     * @brief: Compares this string with a raw-string without taking casing into account.
      *
      * @param InString: String to compare with
      * @param InLength: Length of the string to compare
@@ -570,7 +570,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string 
+     * @brief: Find the position of the first occurrence of the start of the search-string 
      * 
      * @param InString: String to search
      * @param Position: Position to start search at
@@ -582,7 +582,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string
+     * @brief: Find the position of the first occurrence of the start of the search-string
      *
      * @param InString: String to search
      * @param Position: Position to start search at
@@ -595,7 +595,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string
+     * @brief: Find the position of the first occurrence of the start of the search-string
      *
      * @param InString: String to search
      * @param InString: Length of the search-string
@@ -624,7 +624,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of char
+     * @brief: Returns the position of the first occurrence of char
      * 
      * @param Char: Character to search for
      * @param Position: Position to start search at
@@ -652,7 +652,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @brief: Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
      *
      * @param InString: String to search
      * @param Position: Position to start search at
@@ -664,7 +664,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @brief: Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
      *
      * @param InString: String to search
      * @param Position: Position to start search at
@@ -677,7 +677,7 @@ public:
     }
 
     /**
-     * Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @brief: Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
      * Position is the end, instead of the start as with normal Find.
      * 
      * @param InString: String to search
@@ -720,7 +720,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of char. Searches the string in reverse.
+     * @brief: Returns the position of the first occurrence of char. Searches the string in reverse.
      *
      * @param Char: Character to search for
      * @param Position: Position to start search at
@@ -764,7 +764,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of a character in the search-string that is found
+     * @brief: Returns the position of the first occurrence of a character in the search-string that is found
      * 
      * @param InString: String of characters to search
      * @param Position: Position to start search at
@@ -776,7 +776,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of a character in the search-string that is found. The search string is of string-type.
+     * @brief: Returns the position of the first occurrence of a character in the search-string that is found. The search string is of string-type.
      *
      * @param InString: String of characters to search
      * @param Position: Position to start search at
@@ -789,7 +789,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of a character in the search-string that is found
+     * @brief: Returns the position of the first occurrence of a character in the search-string that is found
      *
      * @param InString: String of characters to search
      * @param InLength: Length of the search-string
@@ -818,7 +818,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character in the search-string that is found
+     * @brief: Returns the position of the last occurrence of a character in the search-string that is found
      *
      * @param InString: String of characters to search
      * @param Position: Position to start search at
@@ -830,7 +830,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character in the search-string that is found. The search string is of string-type.
+     * @brief: Returns the position of the last occurrence of a character in the search-string that is found. The search string is of string-type.
      *
      * @param InString: String of characters to search
      * @param Position: Position to start search at
@@ -843,7 +843,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character in the search-string that is found
+     * @brief: Returns the position of the last occurrence of a character in the search-string that is found
      *
      * @param InString: String of characters to search
      * @param InLength: Length of the search-string
@@ -883,7 +883,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of a character not a part of the search-string
+     * @brief: Returns the position of the first occurrence of a character not a part of the search-string
      * 
      * @param InString: String of characters that should be a part of the string
      * @param Position: Position to start the search at
@@ -895,7 +895,7 @@ public:
     }
 
     /**
-     * Returns the position of the first character not a part of the search-string. The string is of a string-type.
+     * @brief: Returns the position of the first character not a part of the search-string. The string is of a string-type.
      *
      * @param InString: String of characters that should be a part of the string
      * @param Position: Position to start the search at
@@ -908,7 +908,7 @@ public:
     }
 
     /**
-     * Returns the position of the first occurrence of a character not a part of the search-string
+     * @brief: Returns the position of the first occurrence of a character not a part of the search-string
      *
      * @param InString: String of characters that should be a part of the string
      * @param InLength: Length of the search-string
@@ -937,7 +937,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character not a part of the search-string
+     * @brief: Returns the position of the last occurrence of a character not a part of the search-string
      *
      * @param InString: String of characters that should be a part of the string
      * @param Position: Position to start the search at
@@ -949,7 +949,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character not a part of the search-string. The string is of a string-type.
+     * @brief: Returns the position of the last occurrence of a character not a part of the search-string. The string is of a string-type.
      *
      * @param InString: String of characters that should be a part of the string
      * @param Position: Position to start the search at
@@ -962,7 +962,7 @@ public:
     }
 
     /**
-     * Returns the position of the last occurrence of a character not a part of the search-string
+     * @brief: Returns the position of the last occurrence of a character not a part of the search-string
      *
      * @param InString: String of characters that should be a part of the string
      * @param InLength: Length of the search-string
@@ -1006,7 +1006,7 @@ public:
     }
 
     /**
-     * Check if the search-string exists within the string 
+     * @brief: Check if the search-string exists within the string 
      * 
      * @param InString: String to search for
      * @param Position: Position to start to search at
@@ -1018,7 +1018,7 @@ public:
     }
 
     /**
-     * Check if the search-string exists within the string. The string is of a string-type.
+     * @brief: Check if the search-string exists within the string. The string is of a string-type.
      *
      * @param InString: String to search for
      * @param Position: Position to start to search at
@@ -1031,7 +1031,7 @@ public:
     }
 
     /**
-     * Check if the search-string exists within the string
+     * @brief: Check if the search-string exists within the string
      *
      * @param InString: String to search for
      * @param Position: Position to start to search at
@@ -1043,7 +1043,7 @@ public:
     }
 
     /**
-     * Check if the character exists within the string
+     * @brief: Check if the character exists within the string
      *
      * @param InString: String to search for
      * @param Position: Position to start to search at
@@ -1055,7 +1055,7 @@ public:
     }
 
     /**
-     * Check if the one of the characters exists within the string
+     * @brief: Check if the one of the characters exists within the string
      *
      * @param InString: String of characters to search for
      * @param Position: Position to start to search at
@@ -1067,7 +1067,7 @@ public:
     }
 
     /**
-     * Check if the one of the characters exists within the string. The string is of a string-type.
+     * @brief: Check if the one of the characters exists within the string. The string is of a string-type.
      *
      * @param InString: String of characters to search for
      * @param Position: Position to start to search at
@@ -1080,7 +1080,7 @@ public:
     }
 
     /**
-     * Check if the one of the characters exists within the string
+     * @brief: Check if the one of the characters exists within the string
      *
      * @param InString: String of characters to search for
      * @param InLength: Length of the string with characters to search for
@@ -1093,7 +1093,7 @@ public:
     }
 
     /**
-     * Removes count characters from position and forward
+     * @brief: Removes count characters from position and forward
      * 
      * @param Position: Position to start remove at
      * @param NumCharacters: Number of characters to remove
@@ -1110,7 +1110,7 @@ public:
     }
 
     /**
-     * Insert a string at a specified position
+     * @brief: Insert a string at a specified position
      * 
      * @param InString: String to insert
      * @param Position: Position to start the insertion at
@@ -1121,7 +1121,7 @@ public:
     }
 
     /**
-     * Insert a string at a specified position. The string is of string-type.
+     * @brief: Insert a string at a specified position. The string is of string-type.
      *
      * @param InString: String to insert
      * @param Position: Position to start the insertion at
@@ -1133,7 +1133,7 @@ public:
     }
 
     /**
-     * Insert a string at a specified position
+     * @brief: Insert a string at a specified position
      *
      * @param InString: String to insert
      * @param InLength: Length of the string to insert
@@ -1156,7 +1156,7 @@ public:
     }
 
     /**
-     * Insert a character at specified position 
+     * @brief: Insert a character at specified position 
      * 
      * @param Char: Character to insert
      * @param Position: Position to insert character at
@@ -1179,7 +1179,7 @@ public:
     }
 
     /**
-     * Replace a part of the string
+     * @brief: Replace a part of the string
      * 
      * @param InString: String to replace
      * @param Position: Position to start the replacing at
@@ -1190,7 +1190,7 @@ public:
     }
 
     /**
-     * Replace a part of the string. String is of string-type.
+     * @brief: Replace a part of the string. String is of string-type.
      *
      * @param InString: String to replace
      * @param Position: Position to start the replacing at
@@ -1202,7 +1202,7 @@ public:
     }
 
     /**
-     * Replace a part of the string
+     * @brief: Replace a part of the string
      *
      * @param InString: String to replace
      * @param InLenght: Length of the string to replace
@@ -1215,7 +1215,7 @@ public:
     }
 
     /**
-     * Replace a character in the string
+     * @brief: Replace a character in the string
      * 
      * @param Char: Character to replace
      * @param Position: Position of the character to replace 
@@ -1229,7 +1229,7 @@ public:
     }
 
     /**
-     * Insert a new character at the end
+     * @brief: Insert a new character at the end
      * 
      * @param Char: Character to insert at the end
      */
@@ -1239,7 +1239,7 @@ public:
     }
 
     /**
-     * Remove the character at the end
+     * @brief: Remove the character at the end
      */
     FORCEINLINE void Pop() noexcept
     {
@@ -1247,7 +1247,7 @@ public:
     }
 
     /**
-     * Swap this string with another
+     * @brief: Swap this string with another
      * 
      * @param Other: String to swap with
      */
@@ -1259,7 +1259,7 @@ public:
     }
 
     /**
-     * Create a sub-string of this string
+     * @brief: Create a sub-string of this string
      * 
      * @param Position: Position to start the sub-string at
      * @param NumCharacters: Number of characters in the sub-string
@@ -1272,7 +1272,7 @@ public:
     }
 
     /**
-     * Create a sub-string view of this string
+     * @brief: Create a sub-string view of this string
      *
      * @param Position: Position to start the sub-string at
      * @param NumCharacters: Number of characters in the sub-string
@@ -1285,7 +1285,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the string
+     * @brief: Retrieve a element at a certain index of the string
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -1297,7 +1297,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the string
+     * @brief: Retrieve a element at a certain index of the string
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -1309,7 +1309,7 @@ public:
     }
 
     /**
-     * Retrieve the data of the array
+     * @brief: Retrieve the data of the array
      *
      * @return: Returns a pointer to the data of the array
      */
@@ -1319,7 +1319,7 @@ public:
     }
 
     /**
-     * Retrieve the data of the array
+     * @brief: Retrieve the data of the array
      *
      * @return: Returns a pointer to the data of the array
      */
@@ -1329,7 +1329,7 @@ public:
     }
 
     /**
-     * Retrieve the string as a c-array
+     * @brief: Retrieve the string as a c-array
      *
      * @return: Returns a pointer to the data of the array
      */
@@ -1339,7 +1339,7 @@ public:
     }
 
     /**
-     * Returns the size of the container
+     * @brief: Returns the size of the container
      *
      * @return: The current size of the container
      */
@@ -1349,7 +1349,7 @@ public:
     }
 
     /**
-     * Retrieve the last index that can be used to retrieve an element from the array
+     * @brief: Retrieve the last index that can be used to retrieve an element from the array
      *
      * @return: Returns a the index to the last element of the array
      */
@@ -1359,7 +1359,7 @@ public:
     }
 
     /**
-     * Returns the length of the string
+     * @brief: Returns the length of the string
      *
      * @return: The current length of the string
      */
@@ -1369,7 +1369,7 @@ public:
     }
 
     /**
-     * Returns the size of the container in bytes
+     * @brief: Returns the size of the container in bytes
      *
      * @return: The current size of the container in bytes
      */
@@ -1379,7 +1379,7 @@ public:
     }
 
     /**
-     * Check if the container contains any elements
+     * @brief: Check if the container contains any elements
      *
      * @return: Returns true if the array is empty or false if it contains elements
      */
@@ -1389,7 +1389,7 @@ public:
     }
 
     /**
-     * Retrieve the first element of the array
+     * @brief: Retrieve the first element of the array
      *
      * @return: Returns a reference to the first element of the array
      */
@@ -1400,7 +1400,7 @@ public:
     }
 
     /**
-     * Retrieve the first element of the array
+     * @brief: Retrieve the first element of the array
      *
      * @return: Returns a reference to the first element of the array
      */
@@ -1411,7 +1411,7 @@ public:
     }
 
     /**
-     * Retrieve the last element of the array
+     * @brief: Retrieve the last element of the array
      *
      * @return: Returns a reference to the last element of the array
      */
@@ -1422,7 +1422,7 @@ public:
     }
 
     /**
-     * Retrieve the last element of the array
+     * @brief: Retrieve the last element of the array
      *
      * @return: Returns a reference to the last element of the array
      */
@@ -1435,44 +1435,44 @@ public:
 public:
 
     /**
-     * Appends a character to this string
+     * @brief: Appends a character to this string
      * 
-     * @param Rhs: Character to append
+     * @param RHS: Character to append
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TStaticString& operator+=(CharType Rhs) noexcept
+    FORCEINLINE TStaticString& operator+=(CharType RHS) noexcept
     {
-        Append(Rhs);
+        Append(RHS);
         return *this;
     }
 
     /**
-     * Appends a string to this string
+     * @brief: Appends a string to this string
      *
-     * @param Rhs: String to append
+     * @param RHS: String to append
      * @return: Returns a reference to this instance
      */
-    FORCEINLINE TStaticString& operator+=(const CharType* Rhs) noexcept
+    FORCEINLINE TStaticString& operator+=(const CharType* RHS) noexcept
     {
-        Append(Rhs);
+        Append(RHS);
         return *this;
     }
 
     /**
-     * Appends a string of a string-type to this string
+     * @brief: Appends a string of a string-type to this string
      *
-     * @param Rhs: String to append
+     * @param RHS: String to append
      * @return: Returns a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator+=(const StringType& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator+=(const StringType& RHS) noexcept
     {
-        Append<StringType>(Rhs);
+        Append<StringType>(RHS);
         return *this;
     }
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -1483,7 +1483,7 @@ public:
     }
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -1494,58 +1494,58 @@ public:
     }
 
     /**
-     * Assignment operator that takes a raw string
+     * @brief: Assignment operator that takes a raw string
      * 
-     * @param Rhs: String to copy
+     * @param RHS: String to copy
      * @return: Return a reference to this instance
      */
-    FORCEINLINE TStaticString& operator=(const CharType* Rhs) noexcept
+    FORCEINLINE TStaticString& operator=(const CharType* RHS) noexcept
     {
-        TStaticString(Rhs).Swap(*this);
+        TStaticString(RHS).Swap(*this);
         return *this;
     }
 
     /**
-     * Copy-assignment operator 
+     * @brief: Copy-assignment operator 
      * 
-     * @param Rhs: String to copy
+     * @param RHS: String to copy
      * @return: Return a reference to this instance
      */
-    FORCEINLINE TStaticString& operator=(const TStaticString& Rhs) noexcept
+    FORCEINLINE TStaticString& operator=(const TStaticString& RHS) noexcept
     {
-        TStaticString(Rhs).Swap(*this);
+        TStaticString(RHS).Swap(*this);
         return *this;
     }
 
     /**
-     * Assignment operator that takes another string-type
+     * @brief: Assignment operator that takes another string-type
      *
-     * @param Rhs: String to copy
+     * @param RHS: String to copy
      * @return: Return a reference to this instance
      */
     template<typename StringType>
-    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator=(const StringType& Rhs) noexcept
+    FORCEINLINE typename TEnableIf<TIsTStringType<StringType>::Value, typename TAddReference<TStaticString>::LValue>::Type operator=(const StringType& RHS) noexcept
     {
-        TStaticString<StringType, CharCount>(Rhs).Swap(*this);
+        TStaticString<StringType, CharCount>(RHS).Swap(*this);
         return *this;
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
-     * @param Rhs: String to move
+     * @param RHS: String to move
      * @return: Return a reference to this instance
      */
-    FORCEINLINE TStaticString& operator=(TStaticString&& Rhs) noexcept
+    FORCEINLINE TStaticString& operator=(TStaticString&& RHS) noexcept
     {
-        TStaticString(Move(Rhs)).Swap(*this);
+        TStaticString(Move(RHS)).Swap(*this);
         return *this;
     }
 
 public:
 
     /**
-     * Retrieve the capacity of the container
+     * @brief: Retrieve the capacity of the container
      *
      * @return: The capacity of the container
      */
@@ -1555,7 +1555,7 @@ public:
     }
 
     /**
-     * Retrieve the capacity of the container in bytes
+     * @brief: Retrieve the capacity of the container in bytes
      *
      * @return: The capacity of the container in bytes
      */
@@ -1567,7 +1567,7 @@ public:
 public:
 
     /**
-     * Retrieve an iterator to the beginning of the array
+     * @brief: Retrieve an iterator to the beginning of the array
      *
      * @return: A iterator that points to the first element
      */
@@ -1577,7 +1577,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the end of the array
+     * @brief: Retrieve an iterator to the end of the array
      *
      * @return: A iterator that points to the element past the end
      */
@@ -1587,7 +1587,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the beginning of the array
+     * @brief: Retrieve an iterator to the beginning of the array
      *
      * @return: A iterator that points to the first element
      */
@@ -1597,7 +1597,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the end of the array
+     * @brief: Retrieve an iterator to the end of the array
      *
      * @return: A iterator that points to the element past the end
      */
@@ -1607,7 +1607,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the end of the array
+     * @brief: Retrieve an reverse-iterator to the end of the array
      *
      * @return: A reverse-iterator that points to the last element
      */
@@ -1617,7 +1617,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the start of the array
+     * @brief: Retrieve an reverse-iterator to the start of the array
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
@@ -1627,7 +1627,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the end of the array
+     * @brief: Retrieve an reverse-iterator to the end of the array
      *
      * @return: A reverse-iterator that points to the last element
      */
@@ -1637,7 +1637,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the start of the array
+     * @brief: Retrieve an reverse-iterator to the start of the array
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
@@ -1649,7 +1649,7 @@ public:
 public:
 
     /**
-     * STL start iterator, same as TArray::StartIterator
+     * @brief: STL start iterator, same as TArray::StartIterator
      *
      * @return: A iterator that points to the first element
      */
@@ -1659,7 +1659,7 @@ public:
     }
 
     /**
-     * STL end iterator, same as TArray::EndIterator
+     * @brief: STL end iterator, same as TArray::EndIterator
      *
      * @return: A iterator that points past the last element
      */
@@ -1669,7 +1669,7 @@ public:
     }
 
     /**
-     * STL start iterator, same as TArray::StartIterator
+     * @brief: STL start iterator, same as TArray::StartIterator
      *
      * @return: A iterator that points to the first element
      */
@@ -1679,7 +1679,7 @@ public:
     }
 
     /**
-     * STL end iterator, same as TArray::EndIterator
+     * @brief: STL end iterator, same as TArray::EndIterator
      *
      * @return: A iterator that points past the last element
      */
@@ -1725,43 +1725,43 @@ using WStaticString = TStaticString<wchar_t, CharCount>;
 // TStaticString operators
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    TStaticString<CharType, CharCount> NewString = Lhs;
-    NewString.Append(Rhs);
+    TStaticString<CharType, CharCount> NewString = LHS;
+    NewString.Append(RHS);
     return NewString;
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline TStaticString<CharType, CharCount> operator+(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    TStaticString<CharType, CharCount> NewString = Lhs;
-    NewString.Append(Rhs);
+    TStaticString<CharType, CharCount> NewString = LHS;
+    NewString.Append(RHS);
     return NewString;
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
-    TStaticString<CharType, CharCount> NewString = Lhs;
-    NewString.Append(Rhs);
+    TStaticString<CharType, CharCount> NewString = LHS;
+    NewString.Append(RHS);
     return NewString;
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+(CharType Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline TStaticString<CharType, CharCount> operator+(CharType LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
     TStaticString<CharType, CharCount> NewString;
-    NewString.Append(Lhs);
-    NewString.Append(Rhs);
+    NewString.Append(LHS);
+    NewString.Append(RHS);
     return NewString;
 }
 
 template<typename CharType, int32 CharCount>
-inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& Lhs, CharType Rhs) noexcept
+inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType, CharCount>& LHS, CharType RHS) noexcept
 {
-    TStaticString<CharType, CharCount> NewString = Lhs;
-    NewString.Append(Rhs);
+    TStaticString<CharType, CharCount> NewString = LHS;
+    NewString.Append(RHS);
     return NewString;
 }
 
@@ -1769,111 +1769,111 @@ inline TStaticString<CharType, CharCount> operator+(const TStaticString<CharType
 // TStaticString comparison operators
 
 template<typename CharType, int32 CharCount>
-inline bool operator==(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator==(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) == 0);
+    return (LHS.Compare(RHS) == 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator==(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator==(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) == 0);
+    return (RHS.Compare(LHS) == 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator==(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator==(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) == 0);
+    return (LHS.Compare(RHS) == 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator!=(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator!=(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
-    return !(Lhs == Rhs);
+    return !(LHS == RHS);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator!=(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator!=(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return !(Lhs == Rhs);
+    return !(LHS == RHS);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator!=(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator!=(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return !(Lhs == Rhs);
+    return !(LHS == RHS);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator<(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) < 0);
+    return (LHS.Compare(RHS) < 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator<(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) < 0);
+    return (RHS.Compare(LHS) < 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator<(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) < 0);
+    return (LHS.Compare(RHS) < 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<=(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator<=(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) <= 0);
+    return (LHS.Compare(RHS) <= 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<=(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator<=(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) <= 0);
+    return (RHS.Compare(LHS) <= 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator<=(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator<=(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) <= 0);
+    return (LHS.Compare(RHS) <= 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator>(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) > 0);
+    return (LHS.Compare(RHS) > 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator>(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) > 0);
+    return (RHS.Compare(LHS) > 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator>(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) > 0);
+    return (LHS.Compare(RHS) > 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>=(const TStaticString<CharType, CharCount>& Lhs, const CharType* Rhs) noexcept
+inline bool operator>=(const TStaticString<CharType, CharCount>& LHS, const CharType* RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) >= 0);
+    return (LHS.Compare(RHS) >= 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>=(const CharType* Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator>=(const CharType* LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Rhs.Compare(Lhs) >= 0);
+    return (RHS.Compare(LHS) >= 0);
 }
 
 template<typename CharType, int32 CharCount>
-inline bool operator>=(const TStaticString<CharType, CharCount>& Lhs, const TStaticString<CharType, CharCount>& Rhs) noexcept
+inline bool operator>=(const TStaticString<CharType, CharCount>& LHS, const TStaticString<CharType, CharCount>& RHS) noexcept
 {
-    return (Lhs.Compare(Rhs) >= 0);
+    return (LHS.Compare(RHS) >= 0);
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

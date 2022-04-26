@@ -293,8 +293,7 @@ struct SRenderTargetWriteState
 
     SRenderTargetWriteState(uint8 InMask)
         : Mask(InMask)
-    {
-    }
+    { }
 
     FORCEINLINE bool WriteNone() const
     {
@@ -407,13 +406,11 @@ struct SRHIInputLayoutStateInfo
 
     SRHIInputLayoutStateInfo(const TArray<SInputElement>& InElements)
         : Elements(InElements)
-    {
-    }
+    { }
 
     SRHIInputLayoutStateInfo(std::initializer_list<SInputElement> InList)
         : Elements(InList)
-    {
-    }
+    { }
 
     TArray<SInputElement> Elements;
 };
@@ -464,21 +461,21 @@ class CRHIPipelineState : public CRHIObject
 public:
 
     /**
-     * Cast the PipelineState to a Graphics PipelineState
+     * @brief: Cast the PipelineState to a Graphics PipelineState
      *
      * @return: Returns a pointer to a Graphics PipelineState if the object implements it
      */
     virtual class CRHIGraphicsPipelineState* AsGraphics() { return nullptr; }
     
     /**
-     * Cast the PipelineState to a Compute PipelineState
+     * @brief: Cast the PipelineState to a Compute PipelineState
      *
      * @return: Returns a pointer to a Compute PipelineState if the object implements it
      */
     virtual class CRHIComputePipelineState* AsCompute() { return nullptr; }
 
     /**
-     * Cast the PipelineState to a Ray tracing PipelineState
+     * @brief: Cast the PipelineState to a Ray tracing PipelineState
      *
      * @return: Returns a pointer to a Ray tracing PipelineState if the object implements it
      */
@@ -495,8 +492,7 @@ struct SGraphicsPipelineShaderState
     SGraphicsPipelineShaderState(CRHIVertexShader* InVertexShader, CRHIPixelShader* InPixelShader)
         : VertexShader(InVertexShader)
         , PixelShader(InPixelShader)
-    {
-    }
+    { }
 
     CRHIVertexShader* VertexShader = nullptr;
     CRHIPixelShader* PixelShader = nullptr;
@@ -530,7 +526,7 @@ class CRHIGraphicsPipelineState : public CRHIPipelineState
 public:
 
     /**
-     * Cast the PipelineState to a Graphics PipelineState
+     * @brief: Cast the PipelineState to a Graphics PipelineState
      *
      * @return: Returns a pointer to a Graphics PipelineState if the object implements it
      */
@@ -546,8 +542,7 @@ struct SRHIComputePipelineStateInfo
 
     SRHIComputePipelineStateInfo(CRHIComputeShader* InShader)
         : Shader(InShader)
-    {
-    }
+    { }
 
     CRHIComputeShader* Shader = nullptr;
 };
@@ -560,7 +555,7 @@ class CRHIComputePipelineState : public CRHIPipelineState
 public:
 
     /**
-     * Cast the PipelineState to a Compute PipelineState
+     * @brief: Cast the PipelineState to a Compute PipelineState
      *
      * @return: Returns a pointer to a Compute PipelineState if the object implements it
      */
@@ -578,8 +573,7 @@ struct SRayTracingHitGroup
         : Name(InName)
         , AnyHit(InAnyHit)
         , ClosestHit(InClosestHit)
-    {
-    }
+    { }
 
     String              Name;
     CRHIRayAnyHitShader* AnyHit;
@@ -611,7 +605,7 @@ class CRHIRayTracingPipelineState : public CRHIPipelineState
 public:
 
     /**
-     * Cast the PipelineState to a Ray tracing PipelineState
+     * @brief: Cast the PipelineState to a Ray tracing PipelineState
      * 
      * @return: Returns a pointer to a Ray tracing PipelineState if the object implements it
      */

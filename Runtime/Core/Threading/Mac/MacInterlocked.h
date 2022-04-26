@@ -13,11 +13,11 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Adds two integers atomically and return original value
+     * @brief: Adds two integers atomically and return original value
      * 
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int8 InterlockedAdd(volatile int8* Dest, int8 Value)
     {
@@ -25,11 +25,11 @@ public:
     }
 
     /**
-     * Adds two integers atomically and return original value
+     * @brief: Adds two integers atomically and return original value
      * 
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int16 InterlockedAdd(volatile int16* Dest, int16 Value)
     {
@@ -37,11 +37,11 @@ public:
     }
 
     /**
-     * Adds two integers atomically and return original value
+     * @brief: Adds two integers atomically and return original value
      * 
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int32 InterlockedAdd(volatile int32* Dest, int32 Value)
     {
@@ -49,11 +49,11 @@ public:
     }
 
     /**
-     * Adds two integers atomically and return original value
+     * @brief: Adds two integers atomically and return original value
      * 
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int64 InterlockedAdd(volatile int64* Dest, int64 Value)
     {
@@ -63,11 +63,11 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Subtract two integers atomically and return original value
+     * @brief: Subtract two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int8 InterlockedSub(volatile int8* Dest, int8 Value)
     {
@@ -75,11 +75,11 @@ public:
     }
 
     /**
-     * Subtract two integers atomically and return original value
+     * @brief: Subtract two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int16 InterlockedSub(volatile int16* Dest, int16 Value)
     {
@@ -87,11 +87,11 @@ public:
     }
 
     /**
-     * Subtract two integers atomically and return original value
+     * @brief: Subtract two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int32 InterlockedSub(volatile int32* Dest, int32 Value)
     {
@@ -99,11 +99,11 @@ public:
     }
 
     /**
-     * Subtract two integers atomically and return original value
+     * @brief: Subtract two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int64 InterlockedSub(volatile int64* Dest, int64 Value)
     {
@@ -113,11 +113,11 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Bitwise AND two integers atomically and return original value
+     * @brief: Bitwise AND two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int8 InterlockedAnd(volatile int8* Dest, int8 Value)
     {
@@ -125,11 +125,11 @@ public:
     }
 
     /**
-     * Bitwise AND two integers atomically and return original value
+     * @brief: Bitwise AND two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int16 InterlockedAnd(volatile int16* Dest, int16 Value)
     {
@@ -137,11 +137,11 @@ public:
     }
 
     /**
-     * Bitwise AND two integers atomically and return original value
+     * @brief: Bitwise AND two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int32 InterlockedAnd(volatile int32* Dest, int32 Value)
     {
@@ -149,11 +149,11 @@ public:
     }
 
     /**
-     * Bitwise AND two integers atomically and return original value
+     * @brief: Bitwise AND two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int64 InterlockedAnd(volatile int64* Dest, int64 Value)
     {
@@ -163,11 +163,11 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Bitwise OR two integers atomically and return original value
+     * @brief: Bitwise OR two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int8 InterlockedOr(volatile int8* Dest, int8 Value)
     {
@@ -175,11 +175,11 @@ public:
     }
 
     /**
-     * Bitwise OR two integers atomically and return original value
+     * @brief: Bitwise OR two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int16 InterlockedOr(volatile int16* Dest, int16 Value)
     {
@@ -187,11 +187,11 @@ public:
     }
 
     /**
-     * Bitwise OR two integers atomically and return original value
+     * @brief: Bitwise OR two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int32 InterlockedOr(volatile int32* Dest, int32 Value)
     {
@@ -199,11 +199,11 @@ public:
     }
 
     /**
-     * Bitwise OR two integers atomically and return original value
+     * @brief: Bitwise OR two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int64 InterlockedOr(volatile int64* Dest, int64 Value)
     {
@@ -213,11 +213,11 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Bitwise XOR two integers atomically and return original value
+     * @brief: Bitwise XOR two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int8 InterlockedXor(volatile int8* Dest, int8 Value)
     {
@@ -225,11 +225,11 @@ public:
     }
 
     /**
-     * Bitwise XOR two integers atomically and return original value
+     * @brief: Bitwise XOR two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int16 InterlockedXor(volatile int16* Dest, int16 Value)
     {
@@ -237,11 +237,11 @@ public:
     }
 
     /**
-     * Bitwise XOR two integers atomically and return original value
+     * @brief: Bitwise XOR two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int32 InterlockedXor(volatile int32* Dest, int32 Value)
     {
@@ -249,11 +249,11 @@ public:
     }
 
     /**
-     * Bitwise XOR two integers atomically and return original value
+     * @brief: Bitwise XOR two integers atomically and return original value
      *
-     * @param Lhs: Pointer to first, which is also used to store the result
-     * @param Rhs: Second operand
-     * @return: Returns the original value of Lhs
+     * @param LHS: Pointer to first, which is also used to store the result
+     * @param RHS: Second operand
+     * @return: Returns the original value of LHS
      */
     static FORCEINLINE int64 InterlockedXor(volatile int64* Dest, int64 Value)
     {
@@ -263,7 +263,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Increment an integer atomically and return new value
+     * @brief: Increment an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to increment, which is also used to store the result
      * @return: Returns the new value
@@ -275,7 +275,7 @@ public:
     }
 
     /**
-     * Increment an integer atomically and return new value
+     * @brief: Increment an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to increment, which is also used to store the result
      * @return: Returns the new value
@@ -287,7 +287,7 @@ public:
     }
 
     /**
-     * Increment an integer atomically and return new value
+     * @brief: Increment an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to increment, which is also used to store the result
      * @return: Returns the new value
@@ -299,7 +299,7 @@ public:
     }
 
     /**
-     * Increment an integer atomically and return new value
+     * @brief: Increment an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to increment, which is also used to store the result
      * @return: Returns the new value
@@ -313,7 +313,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Decrement an integer atomically and return new value
+     * @brief: Decrement an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to decrement, which is also used to store the result
      * @return: Returns the new value
@@ -325,7 +325,7 @@ public:
     }
 
     /**
-     * Decrement an integer atomically and return new value
+     * @brief: Decrement an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to decrement, which is also used to store the result
      * @return: Returns the new value
@@ -337,7 +337,7 @@ public:
     }
 
     /**
-     * Decrement an integer atomically and return new value
+     * @brief: Decrement an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to decrement, which is also used to store the result
      * @return: Returns the new value
@@ -349,7 +349,7 @@ public:
     }
 
     /**
-     * Decrement an integer atomically and return new value
+     * @brief: Decrement an integer atomically and return new value
      *
      * @param Addend: Pointer to integer to decrement, which is also used to store the result
      * @return: Returns the new value
@@ -363,7 +363,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Compares two values, if equal then one of them gets exchanged. Returns the original value.
+     * @brief: Compares two values, if equal then one of them gets exchanged. Returns the original value.
      *
      * @param Dest: Pointer to destination
      * @param Exchange: Value to exchange
@@ -376,7 +376,7 @@ public:
     }
 
     /**
-     * Compares two values, if equal then one of them gets exchanged. Returns the original value.
+     * @brief: Compares two values, if equal then one of them gets exchanged. Returns the original value.
      *
      * @param Dest: Pointer to destination
      * @param Exchange: Value to exchange
@@ -389,7 +389,7 @@ public:
     }
 
     /**
-     * Compares two values, if equal then one of them gets exchanged. Returns the original value.
+     * @brief: Compares two values, if equal then one of them gets exchanged. Returns the original value.
      *
      * @param Dest: Pointer to destination
      * @param Exchange: Value to exchange
@@ -402,7 +402,7 @@ public:
     }
 
     /**
-     * Compares two values, if equal then one of them gets exchanged. Returns the original value.
+     * @brief: Compares two values, if equal then one of them gets exchanged. Returns the original value.
      *
      * @param Dest: Pointer to destination
      * @param Exchange: Value to exchange
@@ -417,7 +417,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
-     * Sets an integer to a specified value atomically and returns the original value.
+     * @brief: Sets an integer to a specified value atomically and returns the original value.
      *
      * @param Target: Pointer to target
      * @param Value: New value to for the target
@@ -429,7 +429,7 @@ public:
     }
 
     /**
-     * Sets an integer to a specified value atomically and returns the original value.
+     * @brief: Sets an integer to a specified value atomically and returns the original value.
      *
      * @param Target: Pointer to target
      * @param Value: New value to for the target
@@ -441,7 +441,7 @@ public:
     }
 
     /**
-     * Sets an integer to a specified value atomically and returns the original value.
+     * @brief: Sets an integer to a specified value atomically and returns the original value.
      *
      * @param Target: Pointer to target
      * @param Value: New value to for the target
@@ -453,7 +453,7 @@ public:
     }
 
     /**
-     * Sets an integer to a specified value atomically and returns the original value.
+     * @brief: Sets an integer to a specified value atomically and returns the original value.
      *
      * @param Target: Pointer to target
      * @param Value: New value to for the target

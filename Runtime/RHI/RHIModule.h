@@ -52,10 +52,10 @@ class RHI_API CRHIModule : public CDefaultEngineModule
 {
 public:
 
-    /* Creates the core RHI object */
+     /** @brief: Creates the core RHI object */
     virtual class CRHIInstance* CreateInterface() = 0;
 
-    /* Creates the RHI shader compiler */
+     /** @brief: Creates the RHI shader compiler */
     virtual class IRHIShaderCompiler* CreateCompiler() = 0;
 
 protected:

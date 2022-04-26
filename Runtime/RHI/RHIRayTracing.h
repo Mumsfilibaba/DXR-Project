@@ -37,17 +37,16 @@ class CRHIRayTracingGeometry : public CRHIObject
 public:
 
     /**
-     * Constructor taking parameters for the RayTracingGeometry
+     * @brief: Constructor taking parameters for the RayTracingGeometry
      * 
      * @param InFlags: Flags for the RayTracingGeometry
      */
     CRHIRayTracingGeometry(uint32 InFlags)
         : Flags(InFlags)
-    {
-    }
+    { }
 
     /**
-     * Retrieve the flags for the RayTracingGeometry
+     * @brief: Retrieve the flags for the RayTracingGeometry
      * 
      * @return: Returns the flag for the RayTracingGeometry
      */
@@ -68,24 +67,23 @@ class CRHIRayTracingScene : public CRHIObject
 public:
 
     /**
-     * Constructor taking parameters for the RayTracingGeometry
+     * @brief: Constructor taking parameters for the RayTracingGeometry
      *
      * @param InFlags: Flags for the RayTracingGeometry
      */
     CRHIRayTracingScene(uint32 InFlags)
         : Flags(InFlags)
-    {
-    }
+    { }
 
     /**
-     * Retrieve the ShaderResourceView for the RayTracingScene
+     * @brief: Retrieve the ShaderResourceView for the RayTracingScene
      * 
      * @return: Returns the ShaderResourceView for the RayTracingScene
      */
     virtual CRHIShaderResourceView* GetShaderResourceView() const = 0;
 
     /**
-     * Retrieve the flags for the RayTracingGeometry
+     * @brief: Retrieve the flags for the RayTracingGeometry
      *
      * @return: Returns the flag for the RayTracingGeometry
      */

@@ -24,13 +24,13 @@ private:
     CFrameProfilerWindow() = default;
     ~CFrameProfilerWindow() = default;
 
-    /* Draw a simple FPS counter */
+     /** @brief: Draw a simple FPS counter */
     void DrawFPS();
 
-    /* Draw the profiler window */
+     /** @brief: Draw the profiler window */
     void DrawWindow();
 
-    /* Draw the CPU data */
+     /** @brief: Draw the CPU data */
     void DrawCPUData(float Width);
 
     ProfileSamplesTable Samples;

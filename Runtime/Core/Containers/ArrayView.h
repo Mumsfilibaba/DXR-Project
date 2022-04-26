@@ -22,16 +22,15 @@ public:
     typedef TReverseArrayIterator<const TArrayView, const ElementType> ReverseConstIteratorType;
 
     /**
-     * Default construct an empty view 
+     * @brief: Default construct an empty view 
      */
     FORCEINLINE TArrayView() noexcept
         : View(nullptr)
         , ViewSize(0)
-    {
-    }
+    { }
 
     /**
-     * Construct a view from an array of ArrayType
+     * @brief: Construct a view from an array of ArrayType
      * 
      * @param InArray: Array to create view from
      */
@@ -39,11 +38,10 @@ public:
     FORCEINLINE explicit TArrayView(ArrayType& InArray) noexcept
         : View(InArray.Data())
         , ViewSize(InArray.Size())
-    {
-    }
+    { }
 
     /**
-     * Construct a view from a bounded array
+     * @brief: Construct a view from a bounded array
      *
      * @param InArray: Array to create view from
      */
@@ -51,11 +49,10 @@ public:
     FORCEINLINE explicit TArrayView(ElementType(&InArray)[N]) noexcept
         : View(InArray)
         , ViewSize(N)
-    {
-    }
+    { }
 
     /**
-     * Construct a view from a raw-array
+     * @brief: Construct a view from a raw-array
      *
      * @param InArray: Array to create view from
      * @param NumElements: Number of elements in the array
@@ -63,22 +60,20 @@ public:
     FORCEINLINE explicit TArrayView(ElementType* InArray, SizeType NumElements) noexcept
         : View(InArray)
         , ViewSize(NumElements)
-    {
-    }
+    { }
 
     /**
-     * Copy-constructor
+     * @brief: Copy-constructor
      * 
      * @param Other: Array to copy from
      */
     FORCEINLINE TArrayView(const TArrayView& Other) noexcept
         : View(Other.View)
         , ViewSize(Other.ViewSize)
-    {
-    }
+    { }
 
     /**
-     * Move-constructor
+     * @brief: Move-constructor
      *
      * @param Other: Array to move from
      */
@@ -91,7 +86,7 @@ public:
     }
 
     /**
-     * Check if the view contains elements or not
+     * @brief: Check if the view contains elements or not
      * 
      * @return: Returns true if the view is empty
      */
@@ -101,7 +96,7 @@ public:
     }
 
     /**
-     * Retrieve the first element of the view
+     * @brief: Retrieve the first element of the view
      *
      * @return: Returns a reference to the first element of the view
      */
@@ -112,7 +107,7 @@ public:
     }
 
     /**
-     * Retrieve the first element of the view
+     * @brief: Retrieve the first element of the view
      *
      * @return: Returns a reference to the first element of the view
      */
@@ -123,7 +118,7 @@ public:
     }
 
     /**
-     * Retrieve the last element of the array
+     * @brief: Retrieve the last element of the array
      *
      * @return: Returns a reference to the last element of the view
      */
@@ -134,7 +129,7 @@ public:
     }
 
     /**
-     * Retrieve the last element of the array
+     * @brief: Retrieve the last element of the array
      *
      * @return: Returns a reference to the last element of the view
      */
@@ -145,7 +140,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the view
+     * @brief: Retrieve a element at a certain index of the view
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -157,7 +152,7 @@ public:
     }
 
     /**
-     * Retrieve a element at a certain index of the view
+     * @brief: Retrieve a element at a certain index of the view
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -169,7 +164,7 @@ public:
     }
 
     /**
-     * Swap the contents of this view with another
+     * @brief: Swap the contents of this view with another
      *
      * @param Other: The other view to swap with
      */
@@ -181,7 +176,7 @@ public:
     }
 
     /**
-     * Fill the container with the specified value
+     * @brief: Fill the container with the specified value
      *
      * @param InputElement: Element to copy into all elements in the view
      */
@@ -194,7 +189,7 @@ public:
     }
 
     /**
-     * Retrieve the last index that can be used to retrieve an element from the view
+     * @brief: Retrieve the last index that can be used to retrieve an element from the view
      *
      * @return: Returns a the index to the last element of the view
      */
@@ -204,7 +199,7 @@ public:
     }
 
     /**
-     * Returns the size of the container
+     * @brief: Returns the size of the container
      *
      * @return: The current size of the container
      */
@@ -214,7 +209,7 @@ public:
     }
 
     /**
-     * Returns the size of the container in bytes
+     * @brief: Returns the size of the container in bytes
      *
      * @return: The current size of the container in bytes
      */
@@ -224,7 +219,7 @@ public:
     }
 
     /**
-     * Retrieve the data of the view
+     * @brief: Retrieve the data of the view
      *
      * @return: Returns a pointer to the data of the view
      */
@@ -234,7 +229,7 @@ public:
     }
 
     /**
-     * Retrieve the data of the view
+     * @brief: Retrieve the data of the view
      *
      * @return: Returns a pointer to the data of the view
      */
@@ -244,7 +239,7 @@ public:
     }
 
     /**
-     * Create a sub-view
+     * @brief: Create a sub-view
      * 
      * @param Offset: Offset into the view
      * @param NumElements: Number of elements to include in the view
@@ -259,36 +254,36 @@ public:
 public:
 
     /**
-     * Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
+     * @brief: Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
      *
-     * @param Rhs: Array to compare with
+     * @param RHS: Array to compare with
      * @return: Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& Rhs) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator==(const ArrayType& RHS) const noexcept
     {
-        if (Size() != Rhs.Size())
+        if (Size() != RHS.Size())
         {
             return false;
         }
 
-        return CompareRange<ElementType>(Data(), Rhs.Data(), Size());
+        return CompareRange<ElementType>(Data(), RHS.Data(), Size());
     }
 
     /**
-     * Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
+     * @brief: Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
      *
-     * @param Rhs: Array to compare with
+     * @param RHS: Array to compare with
      * @return: Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
-    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& Rhs) const noexcept
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value, bool>::Type operator!=(const ArrayType& RHS) const noexcept
     {
-        return !(*this == Rhs);
+        return !(*this == RHS);
     }
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -299,7 +294,7 @@ public:
     }
 
     /**
-     * Bracket-operator to retrieve an element at a certain index
+     * @brief: Bracket-operator to retrieve an element at a certain index
      *
      * @param Index: Index of the element to retrieve
      * @return: A reference to the element at the index
@@ -310,32 +305,32 @@ public:
     }
 
     /**
-     * Copy-assignment operator
+     * @brief: Copy-assignment operator
      *
-     * @param Rhs: View to copy
+     * @param RHS: View to copy
      * @return: A reference to this container
      */
-    FORCEINLINE TArrayView& operator=(const TArrayView& Rhs) noexcept
+    FORCEINLINE TArrayView& operator=(const TArrayView& RHS) noexcept
     {
-        View = Rhs.View;
-        ViewSize = Rhs.ViewSize;
+        View = RHS.View;
+        ViewSize = RHS.ViewSize;
         return *this;
     }
 
     /**
-     * Move-assignment operator
+     * @brief: Move-assignment operator
      *
-     * @param Rhs: View to move
+     * @param RHS: View to move
      * @return: A reference to this container
      */
-    FORCEINLINE TArrayView& operator=(TArrayView&& Rhs) noexcept
+    FORCEINLINE TArrayView& operator=(TArrayView&& RHS) noexcept
     {
-        if (this != &Rhs)
+        if (this != &RHS)
         {
-            View = Rhs.View;
-            ViewSize = Rhs.ViewSize;
-            Rhs.View = nullptr;
-            Rhs.ViewSize = 0;
+            View = RHS.View;
+            ViewSize = RHS.ViewSize;
+            RHS.View = nullptr;
+            RHS.ViewSize = 0;
         }
 
         return *this;
@@ -344,7 +339,7 @@ public:
 public:
 
     /**
-     * Retrieve an iterator to the beginning of the view
+     * @brief: Retrieve an iterator to the beginning of the view
      *
      * @return: A iterator that points to the first element
      */
@@ -354,7 +349,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the end of the view
+     * @brief: Retrieve an iterator to the end of the view
      *
      * @return: A iterator that points to the element past the end
      */
@@ -364,7 +359,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the beginning of the view
+     * @brief: Retrieve an iterator to the beginning of the view
      *
      * @return: A iterator that points to the first element
      */
@@ -374,7 +369,7 @@ public:
     }
 
     /**
-     * Retrieve an iterator to the end of the view
+     * @brief: Retrieve an iterator to the end of the view
      *
      * @return: A iterator that points to the element past the end
      */
@@ -384,7 +379,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the end of the view
+     * @brief: Retrieve an reverse-iterator to the end of the view
      *
      * @return: A reverse-iterator that points to the last element
      */
@@ -394,7 +389,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the start of the view
+     * @brief: Retrieve an reverse-iterator to the start of the view
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
@@ -404,7 +399,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the end of the view
+     * @brief: Retrieve an reverse-iterator to the end of the view
      *
      * @return: A reverse-iterator that points to the last element
      */
@@ -414,7 +409,7 @@ public:
     }
 
     /**
-     * Retrieve an reverse-iterator to the start of the view
+     * @brief: Retrieve an reverse-iterator to the start of the view
      *
      * @return: A reverse-iterator that points to the element before the first element
      */
@@ -426,7 +421,7 @@ public:
 public:
 
     /**
-     * STL start iterator, same as TArrayView::StartIterator
+     * @brief: STL start iterator, same as TArrayView::StartIterator
      *
      * @return: A iterator that points to the first element
      */
@@ -436,7 +431,7 @@ public:
     }
 
     /**
-     * STL end iterator, same as TArrayView::EndIterator
+     * @brief: STL end iterator, same as TArrayView::EndIterator
      *
      * @return: A iterator that points past the last element
      */
@@ -446,7 +441,7 @@ public:
     }
 
     /**
-     * STL start iterator, same as TArrayView::StartIterator
+     * @brief: STL start iterator, same as TArrayView::StartIterator
      *
      * @return: A iterator that points to the first element
      */
@@ -456,7 +451,7 @@ public:
     }
 
     /**
-     * STL end iterator, same as TArrayView::EndIterator
+     * @brief: STL end iterator, same as TArrayView::EndIterator
      *
      * @return: A iterator that points past the last element
      */
