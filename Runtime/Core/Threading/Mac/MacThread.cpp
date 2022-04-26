@@ -1,26 +1,26 @@
-#if PLATFORM_MACOS
 #include "MacThread.h"
 #include "MacThreadMisc.h"
 
 #include "Core/Logging/Log.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMacThread
+
 CMacThread::CMacThread(ThreadFunction InFunction)
-    : CPlatformThread()
+    : CGenericThread()
     , Thread()
     , Function(InFunction)
     , Name()
     , bIsRunning(false)
-{
-}
+{ }
 
 CMacThread::CMacThread(ThreadFunction InFunction, const String& InName)
-    : CPlatformThread()
+    : CGenericThread()
     , Thread()
     , Function(InFunction)
     , Name(InName)
     , bIsRunning(false)
-{
-}
+{ }
 
 bool CMacThread::Start()
 {
@@ -79,4 +79,3 @@ void* CMacThread::ThreadRoutine(void* ThreadParameter)
     pthread_exit(NULL);
     return nullptr;
 }
-#endif

@@ -2,19 +2,17 @@
 #include "Core/Core.h"
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for atomic operations
+// CGenericAtomic
 
-class CPlatformAtomic
+class CGenericAtomic
 {
 public:
 
@@ -50,8 +48,6 @@ public:
      */
     static FORCEINLINE int64 Read(volatile const int64* Source) { return 0; }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
     /**
      * @brief: Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
      *
@@ -83,8 +79,6 @@ public:
      * @return: Returns the read value
      */
     static FORCEINLINE int64 RelaxedRead(volatile const int64* Source) { return 0; }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     
     /**
      * @brief: Stores a value atomically. All memory-loads and stores are synced.
@@ -117,8 +111,6 @@ public:
      * @param Value: Value to store
      */
     static FORCEINLINE void Store(volatile const int64* Dest, int64 Value) { }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
      * @brief: Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
@@ -154,9 +146,7 @@ public:
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
+    #pragma warning(pop)
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
-
+    #pragma clang diagnostic pop
 #endif

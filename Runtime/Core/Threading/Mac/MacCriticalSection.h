@@ -1,25 +1,20 @@
 #pragma once
-
-#if PLATFORM_MACOS
-#include "Core/Threading/Interface/PlatformCriticalSection.h"
+#include "Core/Threading/Generic/GenericCriticalSection.h"
 
 #include <pthread.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Mac specific implementation of CriticalSection
+// CMacCriticalSection
 
-class CMacCriticalSection final : public CPlatformCriticalSection
+class CMacCriticalSection final : public CGenericCriticalSection
 {
 public:
 
     typedef pthread_mutex_t* PlatformHandle;
 
-    CMacCriticalSection(const CMacCriticalSection&) = delete;
-    CMacCriticalSection& operator=(const CMacCriticalSection&) = delete;
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CGenericCriticalSection Interface
 
-    /**
-     * @brief: Default constructor 
-     */
     FORCEINLINE CMacCriticalSection()
         : Mutex()
     {
@@ -32,41 +27,26 @@ public:
         pthread_mutexattr_destroy(&MutexAttributes);
     }
 
-    /**
-     * @brief: Destructor 
-     */
     FORCEINLINE ~CMacCriticalSection()
     {
         pthread_mutex_destroy(&Mutex);
     }
 
-    /** Lock CriticalSection for other threads */
     FORCEINLINE void Lock() noexcept
     {
         pthread_mutex_lock(&Mutex);
     }
 
-    /**
-     * @brief: Try to lock CriticalSection for other threads
-     * 
-     * @return:; Returns true if the lock is successful
-     */
     FORCEINLINE bool TryLock() noexcept
     {
         return (pthread_mutex_trylock(&Mutex) == 0);
     }
 
-    /** Unlock CriticalSection for other threads */
     FORCEINLINE void Unlock() noexcept
     {
         pthread_mutex_unlock(&Mutex);
     }
 
-    /**
-     * @brief: Retrieve platform specific handle
-     *
-     * @return: Returns a platform specific handle or nullptr if no platform handle is defined
-     */
     FORCEINLINE PlatformHandle GetPlatformHandle()
     {
         return &Mutex;
@@ -76,4 +56,3 @@ private:
     pthread_mutex_t Mutex;
 };
 
-#endif

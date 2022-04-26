@@ -1,10 +1,9 @@
-#if PLATFORM_WINDOWS
 #include "WindowsThread.h"
 
 #include "Core/Utilities/StringUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowsThread
+// CWindowsThread
 
 TSharedRef<CWindowsThread> CWindowsThread::Make(ThreadFunction InFunction)
 {
@@ -17,22 +16,20 @@ TSharedRef<CWindowsThread> CWindowsThread::Make(ThreadFunction InFunction, const
 }
 
 CWindowsThread::CWindowsThread(ThreadFunction InFunction)
-    : CPlatformThread()
+    : CGenericThread()
     , Thread(0)
     , hThreadID(0)
     , Name()
     , Function(InFunction)
-{
-}
+{ }
 
 CWindowsThread::CWindowsThread(ThreadFunction InFunction, const String& InName)
-    : CPlatformThread()
+    : CGenericThread()
     , Thread(0)
     , hThreadID(0)
     , Name(InName)
     , Function(InFunction)
-{
-}
+{ }
 
 CWindowsThread::~CWindowsThread()
 {
@@ -44,7 +41,7 @@ CWindowsThread::~CWindowsThread()
 
 bool CWindowsThread::Start()
 {
-    Thread = CreateThread(NULL, 0, CWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), 0, &hThreadID);
+    Thread = CreateThread(nullptr, 0, CWindowsThread::ThreadRoutine, reinterpret_cast<void*>(this), 0, &hThreadID);
     if (!Thread)
     {
         LOG_ERROR("[CWindowsThread] Failed to create thread");
@@ -69,9 +66,9 @@ void CWindowsThread::SetName(const String& InName)
     Name = InName;
 }
 
-PlatformThreadHandle CWindowsThread::GetPlatformHandle()
+void* CWindowsThread::GetOSHandle()
 {
-    return hThreadID;
+    return reinterpret_cast<void*>(static_cast<uintptr_t>(hThreadID));
 }
 
 DWORD WINAPI CWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
@@ -93,5 +90,3 @@ DWORD WINAPI CWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
 
     return (DWORD)-1;
 }
-
-#endif

@@ -4,7 +4,7 @@
 #include "Core/Math/MathCommon.h"
 #include "Core/Containers/HashTable.h"
 #include "Core/Utilities/StringUtilities.h"
-#include "Core/Threading/DispatchQueue.h"
+#include "Core/Threading/AsyncTaskManager.h"
 #include "Core/Logging/Log.h"
 
 #include "Engine/Assets/MeshUtilities.h"
@@ -153,7 +153,7 @@ bool COBJLoader::LoadFile(const String& Filename, SSceneData& OutScene, bool Rev
     OutScene.Models.ShrinkToFit();
     OutScene.Materials.ShrinkToFit();
 
-    CDispatchQueue::Get().WaitForAll();
+    CAsyncTaskManager::Get().WaitForAll();
 
     return true;
 }

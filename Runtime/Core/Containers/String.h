@@ -38,9 +38,9 @@ public:
     static_assert(TIsSame<CharType, char>::Value || TIsSame<CharType, wchar_t>::Value, "Only char and wchar_t is supported for strings");
 
     using ElementType = CharType;
-    using SizeType = int32;
+    using SizeType    = int32;
     using StringUtils = TStringUtils<ElementType>;
-    using ViewType = TStringView<ElementType>;
+    using ViewType    = TStringView<ElementType>;
     using StorageType = TArray<CharType, TStringAllocator<CharType>>;
 
     enum
@@ -2070,6 +2070,12 @@ template<>
 inline String ToString<uint64>(uint64 Element)
 {
     return String::MakeFormated("%llu", Element);
+}
+
+template<>
+inline String ToString<void*>(void* Element)
+{
+    return String::MakeFormated("%p", Element);
 }
 
 template<>

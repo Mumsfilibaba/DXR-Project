@@ -389,7 +389,7 @@ void CRenderer::Tick(const CScene& Scene)
         PointShadowTask.Delegate.BindLambda(RenderPointShadows);
     }
 
-    CDispatchQueue::Get().Dispatch(PointShadowTask);
+    CAsyncTaskManager::Get().Dispatch(PointShadowTask);
 
     // Init directional light task
     const auto RenderDirShadows = [&]()
@@ -398,7 +398,7 @@ void CRenderer::Tick(const CScene& Scene)
     };
 
     DirShadowTask.Delegate.BindLambda(RenderDirShadows);
-    CDispatchQueue::Get().Dispatch(DirShadowTask);
+    CAsyncTaskManager::Get().Dispatch(DirShadowTask);
 
     // Perform frustum culling
     Resources.DeferredVisibleCommands.Clear();
@@ -469,7 +469,7 @@ void CRenderer::Tick(const CScene& Scene)
         };
 
         PrePassTask.Delegate.BindLambda(RenderPrePass);
-        CDispatchQueue::Get().Dispatch(PrePassTask);
+        CAsyncTaskManager::Get().Dispatch(PrePassTask);
     }
 
     if (ShadingImage && GEnableVariableRateShading.GetBool())
@@ -506,7 +506,7 @@ void CRenderer::Tick(const CScene& Scene)
         };
 
         RayTracingTask.Delegate.BindLambda(RenderRayTracing);
-        CDispatchQueue::Get().Dispatch(RayTracingTask);
+        CAsyncTaskManager::Get().Dispatch(RayTracingTask);
     }
 
     {
@@ -516,7 +516,7 @@ void CRenderer::Tick(const CScene& Scene)
         };
 
         BasePassTask.Delegate.BindLambda(RenderBasePass);
-        CDispatchQueue::Get().Dispatch(BasePassTask);
+        CAsyncTaskManager::Get().Dispatch(BasePassTask);
     }
 
     MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), ERHIResourceState::RenderTarget, ERHIResourceState::NonPixelShaderResource);
@@ -691,7 +691,7 @@ void CRenderer::Tick(const CScene& Scene)
     MainCmdList.EndExternalCapture();
 #endif
 
-    CDispatchQueue::Get().WaitForAll();
+    CAsyncTaskManager::Get().WaitForAll();
 
     {
         TRACE_SCOPE("ExecuteCommandList");

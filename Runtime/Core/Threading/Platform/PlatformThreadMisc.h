@@ -1,15 +1,12 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-#include "Core/Threading/Windows/WindowsThreadMisc.h"
-typedef CWindowsThreadMisc PlatformThreadMisc;
-
+    #include "Core/Threading/Windows/WindowsThreadMisc.h"
+    typedef CWindowsThreadMisc PlatformThreadMisc;
 #elif PLATFORM_MACOS
-#include "Core/Threading/Mac/MacThreadMisc.h"
-typedef CMacThreadMisc PlatformThreadMisc;
-
+    #include "Core/Threading/Mac/MacThreadMisc.h"
+    typedef CMacThreadMisc PlatformThreadMisc;
 #else
-#include "Core/Threading/Interface/PlatformThreadMisc.h"
-typedef CPlatformThreadMisc PlatformThreadMisc;
-
+    #include "Core/Threading/Generic/PlatformThreadMisc.h"
+    typedef CGenericThreadMisc PlatformThreadMisc;
 #endif

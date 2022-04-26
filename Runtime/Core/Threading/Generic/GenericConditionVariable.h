@@ -3,31 +3,29 @@
 #include "Core/Threading/Platform/CriticalSection.h"
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for condition variables
+// CGenericConditionVariable
 
-class CPlatformConditionVariable
+class CGenericConditionVariable : CNonCopyable
 {
 public:
 
     typedef void* PlatformHandle;
 
-    CPlatformConditionVariable() = default;
-    ~CPlatformConditionVariable() = default;
+    CGenericConditionVariable()  = default;
+    ~CGenericConditionVariable() = default;
 
-    /** Notifies a single CriticalSection */
+    /** @brief: Notifies a single CriticalSection */
     FORCEINLINE void NotifyOne() noexcept { }
 
-    /** Notifies a all CriticalSections */
+    /** @brief: Notifies a all CriticalSections */
     FORCEINLINE void NotifyAll() noexcept { }
 
     /**
@@ -47,9 +45,7 @@ public:
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
+    #pragma warning(pop)
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
-
+    #pragma clang diagnostic pop
 #endif

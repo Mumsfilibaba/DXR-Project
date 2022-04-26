@@ -1,22 +1,24 @@
 #include "ScopedLock.h"
-#include "DispatchQueue.h"
+#include "AsyncTaskManager.h"
 
 #include "Platform/PlatformThreadMisc.h"
 
-CDispatchQueue CDispatchQueue::Instance;
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CAsyncTaskManager
 
-CDispatchQueue::CDispatchQueue()
+CAsyncTaskManager CAsyncTaskManager::Instance;
+
+CAsyncTaskManager::CAsyncTaskManager()
     : QueueMutex()
     , bIsRunning(false)
-{
-}
+{ }
 
-CDispatchQueue::~CDispatchQueue()
+CAsyncTaskManager::~CAsyncTaskManager()
 {
     KillWorkers();
 }
 
-bool CDispatchQueue::PopDispatch(SDispatch& OutTask)
+bool CAsyncTaskManager::PopDispatch(SAsyncTask& OutTask)
 {
     TScopedLock<CCriticalSection> Lock(QueueMutex);
 
@@ -33,20 +35,20 @@ bool CDispatchQueue::PopDispatch(SDispatch& OutTask)
     }
 }
 
-void CDispatchQueue::KillWorkers()
+void CAsyncTaskManager::KillWorkers()
 {
     bIsRunning = false;
 
     WakeCondition.NotifyAll();
 }
 
-void CDispatchQueue::WorkThread()
+void CAsyncTaskManager::WorkThread()
 {
     LOG_INFO("Starting Work thread: " + ToString(PlatformThreadMisc::GetThreadHandle()));
 
     while (Instance.bIsRunning)
     {
-        SDispatch CurrentTask;
+        SAsyncTask CurrentTask;
 
         if (!Instance.PopDispatch(CurrentTask))
         {
@@ -63,7 +65,7 @@ void CDispatchQueue::WorkThread()
     LOG_INFO("End Work thread: " + ToString(PlatformThreadMisc::GetThreadHandle()));
 }
 
-bool CDispatchQueue::Initialize()
+bool CAsyncTaskManager::Initialize()
 {
     uint32 ThreadCount = NMath::Max<int32>(PlatformThreadMisc::GetNumProcessors() - 1, 1);
     WorkerThreads.Resize(ThreadCount);
@@ -85,7 +87,7 @@ bool CDispatchQueue::Initialize()
         String ThreadName;
         ThreadName.Format("WorkerThread[%d]", i);
 
-        TSharedRef<CPlatformThread> NewThread = PlatformThread::Make(CDispatchQueue::WorkThread, ThreadName);
+        TSharedRef<CGenericThread> NewThread = PlatformThread::Make(CAsyncTaskManager::WorkThread, ThreadName);
         if (NewThread)
         {
             WorkerThreads[i] = NewThread;
@@ -101,12 +103,12 @@ bool CDispatchQueue::Initialize()
     return true;
 }
 
-DispatchID CDispatchQueue::Dispatch(const SDispatch& NewTask)
+DispatchID CAsyncTaskManager::Dispatch(const SAsyncTask& NewTask)
 {
     if (WorkerThreads.IsEmpty())
     {
         // Execute task on main-thread
-        SDispatch MainThreadTask = NewTask;
+        SAsyncTask MainThreadTask = NewTask;
         MainThreadTask.Delegate.ExecuteIfBound();
 
         // Make sure that both fences is incremented
@@ -124,7 +126,7 @@ DispatchID CDispatchQueue::Dispatch(const SDispatch& NewTask)
     return NewTaskID;
 }
 
-void CDispatchQueue::WaitFor(DispatchID Task)
+void CAsyncTaskManager::WaitFor(DispatchID Task)
 {
     while (DispatchCompleted.Load() < Task)
     {
@@ -133,7 +135,7 @@ void CDispatchQueue::WaitFor(DispatchID Task)
     }
 }
 
-void CDispatchQueue::WaitForAll()
+void CAsyncTaskManager::WaitForAll()
 {
     while (DispatchCompleted.Load() < DispatchAdded.Load())
     {
@@ -142,11 +144,11 @@ void CDispatchQueue::WaitForAll()
     }
 }
 
-void CDispatchQueue::Release()
+void CAsyncTaskManager::Release()
 {
     KillWorkers();
 
-    for (TSharedRef<CPlatformThread> Thread : WorkerThreads)
+    for (TSharedRef<CGenericThread> Thread : WorkerThreads)
     {
         Thread->WaitUntilFinished();
     }
@@ -154,7 +156,7 @@ void CDispatchQueue::Release()
     WorkerThreads.Clear();
 }
 
-CDispatchQueue& CDispatchQueue::Get()
+CAsyncTaskManager& CAsyncTaskManager::Get()
 {
     return Instance;
 }

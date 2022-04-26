@@ -5,7 +5,7 @@
 #include "Core/Threading/Platform/PlatformAtomic.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Templated integer that support atomic operations
+// TAtomicInt
 
 template<typename T>
 class TAtomicInt
@@ -43,8 +43,6 @@ public:
     FORCEINLINE TAtomicInt(T InValue) noexcept
         : Value(InValue)
     { }
-
-    ~TAtomicInt() = default;
 
     /**
      * @brief: Atomically increments the integer

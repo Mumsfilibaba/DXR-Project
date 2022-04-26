@@ -1,4 +1,3 @@
-#if PLATFORM_MACOS
 #include "MacRunLoop.h"
 
 #include "Core/Containers/Array.h"
@@ -8,7 +7,9 @@
 
 #include <Foundation/Foundation.h>
 
-/* Create definition for CMacRunLoopSource, is not needed outside this compilation unit */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMacRunLoopSource
+
 class CMacRunLoopSource
 {
 public:
