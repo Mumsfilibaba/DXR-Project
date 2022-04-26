@@ -5,7 +5,7 @@
 // TODO: Custom hash map implementation
 
 #if 1
-template<typename KeyType, typename T, typename HashType = std::hash<KeyType>>
+template<typename KeyType, typename T, typename HashType = THash<KeyType>>
 using THashTable = std::unordered_map<KeyType, T, HashType>;
 
 #else

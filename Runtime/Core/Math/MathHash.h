@@ -7,7 +7,7 @@
 #include "Core/Utilities/HashUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// std::hash
+// THash
 
 namespace std
 {
@@ -19,7 +19,7 @@ namespace std
     {
         size_t operator()(const CVector4& Value) const
         {
-            std::hash<float> Hasher;
+            THash<float> Hasher;
 
             size_t Hash = Hasher(Value.x);
             HashCombine<float>(Hash, Value.y);
@@ -34,7 +34,7 @@ namespace std
     {
         size_t operator()(const CVector3& Value) const
         {
-            std::hash<float> Hasher;
+            THash<float> Hasher;
 
             size_t Hash = Hasher(Value.x);
             HashCombine<float>(Hash, Value.y);
@@ -48,7 +48,7 @@ namespace std
     {
         size_t operator()(const CVector2& Value) const
         {
-            std::hash<float> Hasher;
+            THash<float> Hasher;
 
             size_t Hash = Hasher(Value.x);
             HashCombine<float>(Hash, Value.y);
@@ -64,7 +64,7 @@ namespace std
     {
         size_t operator()(const SFloat16& Value) const
         {
-            std::hash<uint16> Hasher;
+            THash<uint16> Hasher;
             return Hasher(Value.Encoded);
         }
     };
@@ -74,7 +74,7 @@ namespace std
     {
         size_t operator()(const SFloat32& Value) const
         {
-            std::hash<uint32> Hasher;
+            THash<uint32> Hasher;
             return Hasher(Value.Encoded);
         }
     };
@@ -84,7 +84,7 @@ namespace std
     {
         size_t operator()(const SFloat64& Value) const
         {
-            std::hash<uint64> Hasher;
+            THash<uint64> Hasher;
             return Hasher(Value.Encoded);
         }
     };

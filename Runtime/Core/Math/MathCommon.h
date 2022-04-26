@@ -80,9 +80,10 @@ namespace NMath
         return ((Value) & (~Mask));
     }
 
-    FORCEINLINE float Lerp(float a, float b, float f)
+    template<typename T>
+    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, T>::Type Lerp(T First, T Second, T Factor)
     {
-        return (-f * b) + ((a * f) + b);
+        return (-Factor * Second) + ((First * Factor) + Second);
     }
 
     template<typename T>
@@ -107,6 +108,13 @@ namespace NMath
     FORCEINLINE T Abs(T a)
     {
         return std::abs(a);
+        // return (a > T( 0 )) ? ((a * a) / a) : T( 0 ); // TODO: Causes crash?
+    }
+
+    template<typename T>
+    FORCEINLINE T Round(T a)
+    {
+        return static_cast<T>(std::roundf(static_cast<float>(a)));
         // return (a > T( 0 )) ? ((a * a) / a) : T( 0 ); // TODO: Causes crash?
     }
 
@@ -173,5 +181,11 @@ namespace NMath
     FORCEINLINE uint32 BytesToNum32BitConstants(uint32 Bytes)
     {
         return Bytes / 4;
+    }
+
+    template<const uint32 kBits>
+    constexpr uint32 MaxNum()
+    {
+        return ((1 << kBits) - 1);
     }
 }
