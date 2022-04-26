@@ -34,17 +34,17 @@ namespace NMath
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // Constants
 
-    constexpr const double kPI         = 3.1415926535898;
-    constexpr const double kE          = 2.7182818284590;
-    constexpr const double kHalfPI     = kPI / 2.0f;
-    constexpr const double kTwoPI      = kPI * 2.0;
-    constexpr const double kOneDegree  = kPI / 180.0f;
+    constexpr const double kPI            = 3.1415926535898;
+    constexpr const double kE             = 2.7182818284590;
+    constexpr const double kHalfPI        = kPI / 2.0f;
+    constexpr const double kTwoPI         = kPI * 2.0;
+    constexpr const double kOneDegree     = kPI / 180.0f;
 
-    constexpr const float kPI_f        = 3.141592653f;
-    constexpr const float kE_f         = 2.718281828f;
-    constexpr const float kHalfPI_f    = kPI_f / 2.0f;
-    constexpr const float kTwoPI_f     = 2.0f * kPI_f;
-    constexpr const float kOneDegree_f = kPI_f / 180.0f;
+    constexpr const float kPI_f           = 3.141592653f;
+    constexpr const float kE_f            = 2.718281828f;
+    constexpr const float kHalfPI_f       = kPI_f / 2.0f;
+    constexpr const float kTwoPI_f        = 2.0f * kPI_f;
+    constexpr const float kOneDegree_f    = kPI_f / 180.0f;
 
     constexpr const float kIsEqualEpsilon = 0.0005f;
 
@@ -56,7 +56,7 @@ namespace NMath
 #if ARCHITECTURE_X86_X64
         return _mm_cvtss_f32(_mm_sqrt_ss(_mm_load_ss(&Value)));
 #else
-        return sqrtf(Value);
+        return std::sqrtf(Value);
 #endif
     }
 
@@ -106,7 +106,7 @@ namespace NMath
     template<typename T>
     FORCEINLINE T Abs(T a)
     {
-        return ::abs(a);
+        return std::abs(a);
         // return (a > T( 0 )) ? ((a * a) / a) : T( 0 ); // TODO: Causes crash?
     }
 

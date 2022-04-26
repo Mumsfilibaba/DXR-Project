@@ -401,45 +401,45 @@ private:
 // TSharedRef operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedRef<T>& Lhs, U* RHS) noexcept
+FORCEINLINE bool operator==(const TSharedRef<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() == RHS);
+    return (LHS.Get() == RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* Lhs, const TSharedRef<U>& RHS) noexcept
+FORCEINLINE bool operator==(T* LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (Lhs == RHS.Get());
+    return (LHS == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedRef<T>& Lhs, U* RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() != RHS);
+    return (LHS.Get() != RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* Lhs, const TSharedRef<U>& RHS) noexcept
+FORCEINLINE bool operator!=(T* LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (Lhs != RHS.Get());
+    return (LHS != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedRef<T>& Lhs, const TSharedRef<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (Lhs.Get() == RHS.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedRef<T>& Lhs, const TSharedRef<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (Lhs.Get() != RHS.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TSharedRef<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator==(const TSharedRef<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() == nullptr);
+    return (LHS.Get() == nullptr);
 }
 
 template<typename T>
@@ -449,9 +449,9 @@ FORCEINLINE bool operator==(NullptrType, const TSharedRef<T>& RHS) noexcept
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TSharedRef<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() != nullptr);
+    return (LHS.Get() != nullptr);
 }
 
 template<typename T>

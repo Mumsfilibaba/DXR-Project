@@ -159,33 +159,33 @@ class TVariant
     template<typename T>
     struct TVariantComparators
     {
-        static bool IsEqual(const void* Lhs, const void* RHS) noexcept
+        static bool IsEqual(const void* LHS, const void* RHS) noexcept
         {
-            return (*reinterpret_cast<const T*>(Lhs)) == (*reinterpret_cast<const T*>(RHS));
+            return (*reinterpret_cast<const T*>(LHS)) == (*reinterpret_cast<const T*>(RHS));
         }
 
-        static bool IsLessThan(const void* Lhs, const void* RHS) noexcept
+        static bool IsLessThan(const void* LHS, const void* RHS) noexcept
         {
-            return (*reinterpret_cast<const T*>(Lhs)) < (*reinterpret_cast<const T*>(RHS));
+            return (*reinterpret_cast<const T*>(LHS)) < (*reinterpret_cast<const T*>(RHS));
         }
     };
 
     struct TVariantComparatorsTable
     {
-        static bool IsEqual(TypeIndexType Index, const void* Lhs, const void* RHS) noexcept
+        static bool IsEqual(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
         {
             static constexpr bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsEqual... };
 
             Assert(Index < ArrayCount(Table));
-            return Table[Index](Lhs, RHS);
+            return Table[Index](LHS, RHS);
         }
 
-        static bool IsLessThan(TypeIndexType Index, const void* Lhs, const void* RHS) noexcept
+        static bool IsLessThan(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
         {
             static constexpr bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsLessThan... };
 
             Assert(Index < ArrayCount(Table));
-            return Table[Index](Lhs, RHS);
+            return Table[Index](LHS, RHS);
         }
     };
 
@@ -468,106 +468,106 @@ public:
     /**
      * @brief: Comparison operator
      *
-     * @param Lhs: Left side to compare with
+     * @param LHS: Left side to compare with
      * @param RHS: Right side to compare with
      * @return: Returns true if the variants are equal
      */
-    friend FORCEINLINE bool operator==(const TVariant& Lhs, const TVariant& RHS) noexcept
+    friend FORCEINLINE bool operator==(const TVariant& LHS, const TVariant& RHS) noexcept
     {
-        if (Lhs.TypeIndex != RHS.TypeIndex)
+        if (LHS.TypeIndex != RHS.TypeIndex)
         {
             return false;
         }
 
         // Both indices are equal at this point
-        if (!Lhs.IsValid())
+        if (!LHS.IsValid())
         {
             return true;
         }
 
-        return Lhs.IsEqual(RHS);
+        return LHS.IsEqual(RHS);
     }
 
     /**
      * @brief: Comparison operator
      *
-     * @param Lhs: Left side to compare with 
+     * @param LHS: Left side to compare with 
      * @param RHS: Right side to compare with
      * @return: Returns false if the variants are equal
      */
-    friend FORCEINLINE bool operator!=(const TVariant& Lhs, const TVariant& RHS) noexcept
+    friend FORCEINLINE bool operator!=(const TVariant& LHS, const TVariant& RHS) noexcept
     {
-        return !(Lhs == RHS);
+        return !(LHS == RHS);
     }
 
     /**
      * @brief: Less than comparison operator
      *
-     * @param Lhs: Left side to compare with
+     * @param LHS: Left side to compare with
      * @param RHS: Right side to compare with
-     * @return: Returns true if Lhs is less than RHS
+     * @return: Returns true if LHS is less than RHS
      */
-    friend FORCEINLINE bool operator<(const TVariant& Lhs, const TVariant& RHS) noexcept
+    friend FORCEINLINE bool operator<(const TVariant& LHS, const TVariant& RHS) noexcept
     {
-        if (Lhs.TypeIndex != RHS.TypeIndex)
+        if (LHS.TypeIndex != RHS.TypeIndex)
         {
             return false;
         }
 
         // Both indices are equal at this point
-        if (!Lhs.IsValid())
+        if (!LHS.IsValid())
         {
             return true;
         }
 
-        return Lhs.IsLessThan(RHS);
+        return LHS.IsLessThan(RHS);
     }
 
     /**
      * @brief: Less than or equal comparison operator
      *
-     * @param Lhs: Left side to compare with
+     * @param LHS: Left side to compare with
      * @param RHS: Right side to compare with
-     * @return: Returns true if Lhs is less than or equal to RHS
+     * @return: Returns true if LHS is less than or equal to RHS
      */
-    friend FORCEINLINE bool operator<=(const TVariant& Lhs, const TVariant& RHS) noexcept
+    friend FORCEINLINE bool operator<=(const TVariant& LHS, const TVariant& RHS) noexcept
     {
-        if (Lhs.TypeIndex != RHS.TypeIndex)
+        if (LHS.TypeIndex != RHS.TypeIndex)
         {
             return false;
         }
 
         // Both indices are equal at this point
-        if (!Lhs.IsValid())
+        if (!LHS.IsValid())
         {
             return true;
         }
 
-        return Lhs.IsLessThan(RHS) || Lhs.IsEqual(RHS);
+        return LHS.IsLessThan(RHS) || LHS.IsEqual(RHS);
     }
 
     /**
      * @brief: Greater than comparison operator
      *
-     * @param Lhs: Left side to compare with
+     * @param LHS: Left side to compare with
      * @param RHS: Right side to compare with
-     * @return: Returns true if Lhs is greater than RHS
+     * @return: Returns true if LHS is greater than RHS
      */
-    friend FORCEINLINE bool operator>(const TVariant& Lhs, const TVariant& RHS) noexcept
+    friend FORCEINLINE bool operator>(const TVariant& LHS, const TVariant& RHS) noexcept
     {
-        return !(Lhs <= RHS);
+        return !(LHS <= RHS);
     }
 
     /**
      * @brief: Greater than or equal comparison operator
      *
-     * @param Lhs: Left side to compare with
+     * @param LHS: Left side to compare with
      * @param RHS: Right side to compare with
-     * @return: Returns true if Lhs is greater than or equal to RHS
+     * @return: Returns true if LHS is greater than or equal to RHS
      */
-    friend FORCEINLINE bool operator>=(const TVariant& Lhs, const TVariant& RHS) noexcept
+    friend FORCEINLINE bool operator>=(const TVariant& LHS, const TVariant& RHS) noexcept
     {
-        return !(Lhs < RHS);
+        return !(LHS < RHS);
     }
 
 private:

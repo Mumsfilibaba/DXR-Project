@@ -261,10 +261,10 @@ private:
 // Add offset to iterator and return a new
 
 template<typename ArrayType, typename ElementType>
-FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIterator<ArrayType, ElementType>::SizeType Lhs, const TArrayIterator<ArrayType, ElementType>& RHS) noexcept
+FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIterator<ArrayType, ElementType>::SizeType LHS, const TArrayIterator<ArrayType, ElementType>& RHS) noexcept
 {
     TArrayIterator NewIterator(RHS);
-    return NewIterator += Lhs;
+    return NewIterator += LHS;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -522,10 +522,10 @@ private:
 // Add offset to iterator and return a new
 
 template<typename ArrayType, typename ElementType>
-FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TReverseArrayIterator<ArrayType, ElementType>::SizeType Lhs, const TReverseArrayIterator<ArrayType, ElementType>& RHS) noexcept
+FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TReverseArrayIterator<ArrayType, ElementType>::SizeType LHS, const TReverseArrayIterator<ArrayType, ElementType>& RHS) noexcept
 {
     TReverseArrayIterator NewIterator(RHS);
-    return NewIterator += Lhs;
+    return NewIterator += LHS;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

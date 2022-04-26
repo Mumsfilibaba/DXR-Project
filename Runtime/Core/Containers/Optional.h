@@ -384,11 +384,11 @@ public:
     /**
      * @brief: Comparison operator
      *
-     * @param Lhs: Left side to compare with
+     * @param LHS: Left side to compare with
      * @param RHS: Right side to compare with
      * @return: Returns true if the values are equal
      */
-    friend FORCEINLINE bool operator==(const TOptional& Lhs, const TOptional& RHS) noexcept
+    friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!bHasValue && !RHS.bHasValue)
         {
@@ -400,29 +400,29 @@ public:
             return false;
         }
 
-        return Lhs.IsEqual(RHS);
+        return LHS.IsEqual(RHS);
     }
 
     /**
      * @brief: Comparison operator
      *
-     * @param Lhs: Left side to compare with
+     * @param LHS: Left side to compare with
      * @param RHS: Right side to compare with
      * @return: Returns false if the values are equal
      */
-    friend FORCEINLINE bool operator!=(const TOptional& Lhs, const TOptional& RHS) noexcept
+    friend FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        return !(Lhs != RHS);
+        return !(LHS != RHS);
     }
 
     /**
      * @brief: Less than comparison operator
      *
-     * @param Lhs: Left side to compare with
+     * @param LHS: Left side to compare with
      * @param RHS: Right side to compare with
-     * @return: Returns true if the Lhs is less than RHS
+     * @return: Returns true if the LHS is less than RHS
      */
-    friend FORCEINLINE bool operator<(const TOptional& Lhs, const TOptional& RHS) noexcept
+    friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!bHasValue && !RHS.bHasValue)
         {
@@ -434,17 +434,17 @@ public:
             return false;
         }
 
-        return Lhs.IsLessThan(RHS);
+        return LHS.IsLessThan(RHS);
     }
 
     /**
      * @brief: Less than or equal comparison operator
      *
-     * @param Lhs: Left side to compare with
+     * @param LHS: Left side to compare with
      * @param RHS: Right side to compare with
-     * @return: Returns true if the Lhs is less than or equal to RHS
+     * @return: Returns true if the LHS is less than or equal to RHS
      */
-    friend FORCEINLINE bool operator<=(const TOptional& Lhs, const TOptional& RHS) noexcept
+    friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         if (!bHasValue && !RHS.bHasValue)
         {
@@ -456,31 +456,31 @@ public:
             return false;
         }
 
-        return Lhs.IsLessThan(RHS) || Lhs.IsEqual(RHS);
+        return LHS.IsLessThan(RHS) || LHS.IsEqual(RHS);
     }
 
     /**
      * @brief: Great than comparison operator
      *
-     * @param Lhs: Left side to compare with
+     * @param LHS: Left side to compare with
      * @param RHS: Right side to compare with
-     * @return: Returns true if Lhs is greater than RHS
+     * @return: Returns true if LHS is greater than RHS
      */
-    friend FORCEINLINE bool operator>(const TOptional& Lhs, const TOptional& RHS) noexcept
+    friend FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        return !(Lhs <= RHS);
+        return !(LHS <= RHS);
     }
 
     /**
      * @brief: Greater than or equal comparison operator
      *
-     * @param Lhs: Left side to compare with
+     * @param LHS: Left side to compare with
      * @param RHS: Right side to compare with
-     * @return: Returns true if the Lhs is greater than or equal to RHS
+     * @return: Returns true if the LHS is greater than or equal to RHS
      */
-    friend FORCEINLINE bool operator>=(const TOptional& Lhs, const TOptional& RHS) noexcept
+    friend FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        return !(Lhs < RHS);
+        return !(LHS < RHS);
     }
 
 private:

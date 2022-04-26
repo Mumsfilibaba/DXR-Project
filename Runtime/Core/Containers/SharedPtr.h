@@ -673,45 +673,45 @@ private:
 // TSharedPtr operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& Lhs, U* RHS) noexcept
+FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() == RHS);
+    return (LHS.Get() == RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* Lhs, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(T* LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (Lhs == RHS.Get());
+    return (LHS == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& Lhs, U* RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() != RHS);
+    return (LHS.Get() != RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* Lhs, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(T* LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (Lhs != RHS.Get());
+    return (LHS != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& Lhs, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() == RHS.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& Lhs, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() != RHS.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TSharedPtr<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() == nullptr);
+    return (LHS.Get() == nullptr);
 }
 
 template<typename T>
@@ -721,9 +721,9 @@ FORCEINLINE bool operator==(NullptrType, const TSharedPtr<T>& RHS) noexcept
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() != nullptr);
+    return (LHS.Get() != nullptr);
 }
 
 template<typename T>
@@ -733,27 +733,27 @@ FORCEINLINE bool operator!=(NullptrType, const TSharedPtr<T>& RHS) noexcept
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& Lhs, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() == RHS.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& Lhs, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() == RHS.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& Lhs, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() != RHS.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& Lhs, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() != RHS.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -1126,45 +1126,45 @@ private:
 // TWeakPtr operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& Lhs, U* RHS) noexcept
+FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() == RHS);
+    return (LHS.Get() == RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* Lhs, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(T* LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (Lhs == RHS.Get());
+    return (LHS == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& Lhs, U* RHS) noexcept
+FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() != RHS);
+    return (LHS.Get() != RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* Lhs, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(T* LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (Lhs != RHS.Get());
+    return (LHS != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& Lhs, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() == RHS.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& Lhs, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() != RHS.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TWeakPtr<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() == nullptr);
+    return (LHS.Get() == nullptr);
 }
 
 template<typename T>
@@ -1174,9 +1174,9 @@ FORCEINLINE bool operator==(NullptrType, const TWeakPtr<T>& RHS) noexcept
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() != nullptr);
+    return (LHS.Get() != nullptr);
 }
 
 template<typename T>
@@ -1186,51 +1186,51 @@ FORCEINLINE bool operator!=(NullptrType, const TWeakPtr<T>& RHS) noexcept
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& Lhs, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() == RHS.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedPtr<T>& Lhs, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() == RHS.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& Lhs, const TSharedPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() != RHS.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedPtr<T>& Lhs, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() != RHS.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TWeakPtr<T>& Lhs, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() == RHS.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& Lhs, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() == RHS.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TWeakPtr<T>& Lhs, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() != RHS.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& Lhs, const TWeakPtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() != RHS.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

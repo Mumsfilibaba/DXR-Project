@@ -532,45 +532,45 @@ private:
 // Operators
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& Lhs, U* RHS) noexcept
+FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() == RHS);
+    return (LHS.Get() == RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(T* Lhs, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(T* LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (Lhs == RHS.Get());
+    return (LHS == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& Lhs, U* RHS) noexcept
+FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, U* RHS) noexcept
 {
-    return (Lhs.Get() != RHS);
+    return (LHS.Get() != RHS);
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(T* Lhs, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(T* LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (Lhs != RHS.Get());
+    return (LHS != RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator==(const TUniquePtr<T>& Lhs, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() == RHS.Get());
+    return (LHS.Get() == RHS.Get());
 }
 
 template<typename T, typename U>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& Lhs, const TUniquePtr<U>& RHS) noexcept
+FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (Lhs.Get() != RHS.Get());
+    return (LHS.Get() != RHS.Get());
 }
 
 template<typename T>
-FORCEINLINE bool operator==(const TUniquePtr<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() == nullptr);
+    return (LHS.Get() == nullptr);
 }
 
 template<typename T>
@@ -580,9 +580,9 @@ FORCEINLINE bool operator==(NullptrType, const TUniquePtr<T>& RHS) noexcept
 }
 
 template<typename T>
-FORCEINLINE bool operator!=(const TUniquePtr<T>& Lhs, NullptrType) noexcept
+FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, NullptrType) noexcept
 {
-    return (Lhs.Get() != nullptr);
+    return (LHS.Get() != nullptr);
 }
 
 template<typename T>

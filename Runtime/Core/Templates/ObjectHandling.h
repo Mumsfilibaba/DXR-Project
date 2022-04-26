@@ -322,11 +322,11 @@ FORCEINLINE typename TEnableIf<TIsReallocatable<T>::Value>::Type RelocateRange(v
 // Compares elements in the range if they are equal or not
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value, bool>::Type CompareRange(const T* Lhs, const T* RHS, uint32 Count) noexcept
+FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value, bool>::Type CompareRange(const T* LHS, const T* RHS, uint32 Count) noexcept
 {
     while (Count)
     {
-        if (!(*(Lhs++) == *(RHS++)))
+        if (!(*(LHS++) == *(RHS++)))
         {
             return false;
         }
@@ -341,7 +341,7 @@ FORCEINLINE typename TEnableIf<TNot<TIsTrivial<T>>::Value, bool>::Type CompareRa
 // Compares elements in the range if they are equal or not
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value, bool>::Type CompareRange(const T* Lhs, const T* RHS, uint32 Count) noexcept
+FORCEINLINE typename TEnableIf<TIsTrivial<T>::Value, bool>::Type CompareRange(const T* LHS, const T* RHS, uint32 Count) noexcept
 {
-    return CMemory::Memcmp<T>(Lhs, RHS, Count);
+    return CMemory::Memcmp<T>(LHS, RHS, Count);
 }
