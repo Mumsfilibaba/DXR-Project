@@ -1,23 +1,16 @@
 #pragma once
-
-#if PLATFORM_MACOS
-#include "Core/Threading/Interface/PlatformAtomic.h"
+#include "Core/Threading/Generic/PlatformAtomic.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Mac specific implementation for atomic operations
+// CMacAtomic
 
-class CMacAtomic final : public CPlatformAtomic
+class CMacAtomic final : public CGenericAtomic
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CGenericAtomic Interface
 
-    /**
-     * @brief: Reads a value atomically. All memory loads and stores are synced.
-     * 
-     * @param Source: Pointer to variable to read from
-     * @return: Returns the read value
-     */
     static FORCEINLINE int8 Read(volatile const int8* Source)
     {
         int8 Result;
@@ -25,12 +18,6 @@ public:
         return Result;
     }
 
-    /**
-     * @brief: Reads a value atomically. All memory loads and stores are synced.
-     * 
-     * @param Source: Pointer to variable to read from
-     * @return: Returns the read value
-     */
     static FORCEINLINE int16 Read(volatile const int16* Source)
     {
         int16 Result;
@@ -38,12 +25,6 @@ public:
         return Result;
     }
 
-    /**
-     * @brief: Reads a value atomically. All memory loads and stores are synced.
-     * 
-     * @param Source: Pointer to variable to read from
-     * @return: Returns the read value
-     */
     static FORCEINLINE int32 Read(volatile const int32* Source)
     {
         int32 Result;
@@ -51,12 +32,6 @@ public:
         return Result;
     }
 
-    /**
-     * @brief: Reads a value atomically. All memory loads and stores are synced.
-     * 
-     * @param Source: Pointer to variable to read from
-     * @return: Returns the read value
-     */
     static FORCEINLINE int64 Read(volatile const int64* Source)
     {
         int64 Result;
@@ -64,14 +39,6 @@ public:
         return Result;
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-    /**
-     * @brief: Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
-     *
-     * @param Source: Pointer to variable to read from
-     * @return: Returns the read value
-     */
     static FORCEINLINE int8 RelaxedRead(volatile const int8* Source)
     {
         int8 Result;
@@ -79,12 +46,6 @@ public:
         return Result;
     }
 
-    /**
-     * @brief: Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
-     *
-     * @param Source: Pointer to variable to read from
-     * @return: Returns the read value
-     */
     static FORCEINLINE int16 RelaxedRead(volatile const int16* Source)
     {
         int16 Result;
@@ -92,12 +53,6 @@ public:
         return Result;
     }
 
-    /**
-     * @brief: Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
-     *
-     * @param Source: Pointer to variable to read from
-     * @return: Returns the read value
-     */
     static FORCEINLINE int32 RelaxedRead(volatile const int32* Source)
     {
         int32 Result;
@@ -105,12 +60,6 @@ public:
         return Result;
     }
 
-    /**
-     * @brief: Performs a relaxed atomic read. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
-     *
-     * @param Source: Pointer to variable to read from
-     * @return: Returns the read value
-     */
     static FORCEINLINE int64 RelaxedRead(volatile const int64* Source)
     {
         int64 Result;
@@ -118,97 +67,43 @@ public:
         return Result;
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-    /**
-     * @brief: Stores a value atomically. All memory-loads and stores are synced.
-     *
-     * @param Dest: Pointer to variable to store value in
-     * @param Value: Value to store
-     */
     static FORCEINLINE void Store(volatile int8* Dest, int8 Value)
     {
         __atomic_store((volatile int8*)Dest, &Value, __ATOMIC_SEQ_CST);
     }
 
-    /**
-     * @brief: Stores a value atomically. All memory-loads and stores are synced.
-     *
-     * @param Dest: Pointer to variable to store value in
-     * @param Value: Value to store
-     */
     static FORCEINLINE void Store(volatile int16* Dest, int16 Value )
     {
         __atomic_store((volatile int16*)Dest, &Value, __ATOMIC_SEQ_CST);
     }
 
-    /**
-     * @brief: Stores a value atomically. All memory-loads and stores are synced.
-     *
-     * @param Dest: Pointer to variable to store value in
-     * @param Value: Value to store
-     */
     static FORCEINLINE void Store(volatile int32* Dest, int32 Value )
     {
         __atomic_store((volatile int32*)Dest, &Value, __ATOMIC_SEQ_CST);
     }
 
-    /**
-     * @brief: Stores a value atomically. All memory-loads and stores are synced.
-     *
-     * @param Dest: Pointer to variable to store value in
-     * @param Value: Value to store
-     */
     static FORCEINLINE void Store(volatile int64* Dest, int64 Value )
     {
         __atomic_store((volatile int64*)Dest, &Value, __ATOMIC_SEQ_CST);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-    /**
-     * @brief: Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
-     *
-     * @param Dest: Pointer to variable to store value in
-     * @param Value: Value to store
-     */
     static FORCEINLINE void RelaxedStore(volatile int8* Dest, int8 Value)
     {
         __atomic_store((volatile int8*)Dest, &Value, __ATOMIC_RELAXED);
     }
 
-    /**
-     * @brief: Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
-     *
-     * @param Dest: Pointer to variable to store value in
-     * @param Value: Value to store
-     */
     static FORCEINLINE void RelaxedStore(volatile int16* Dest, int16 Value )
     {
         __atomic_store((volatile int16*)Dest, &Value, __ATOMIC_RELAXED);
     }
 
-    /**
-     * @brief: Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
-     *
-     * @param Dest: Pointer to variable to store value in
-     * @param Value: Value to store
-     */
     static FORCEINLINE void RelaxedStore(volatile int32* Dest, int32 Value )
     {
         __atomic_store((volatile int32*)Dest, &Value, __ATOMIC_RELAXED);
     }
 
-    /**
-     * @brief: Performs a relaxed atomic store. No memory-barriers or synchronization takes place. Only guaranteed to be atomic.
-     *
-     * @param Dest: Pointer to variable to store value in
-     * @param Value: Value to store
-     */
     static FORCEINLINE void RelaxedStore(volatile int64* Dest, int64 Value )
     {
         __atomic_store((volatile int64*)Dest, &Value, __ATOMIC_RELAXED);
     }
 };
-
-#endif

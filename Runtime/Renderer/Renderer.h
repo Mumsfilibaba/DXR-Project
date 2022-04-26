@@ -8,7 +8,7 @@
 #include "RayTracer.h"
 
 #include "Core/Time/Timer.h"
-#include "Core/Threading/DispatchQueue.h"
+#include "Core/Threading/AsyncTaskManager.h"
 
 #include "Engine/Scene/Actor.h"
 #include "Engine/Scene/Scene.h"
@@ -121,11 +121,11 @@ private:
     CRHICommandList BasePassCmdList;
     CRHICommandList MainCmdList;
 
-    SDispatch PointShadowTask;
-    SDispatch DirShadowTask;
-    SDispatch PrePassTask;
-    SDispatch BasePassTask;
-    SDispatch RayTracingTask;
+    SAsyncTask PointShadowTask;
+    SAsyncTask DirShadowTask;
+    SAsyncTask PrePassTask;
+    SAsyncTask BasePassTask;
+    SAsyncTask RayTracingTask;
 
     CDeferredRenderer             DeferredRenderer;
     CShadowMapRenderer            ShadowMapRenderer;

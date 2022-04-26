@@ -1,9 +1,8 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* MSVC compiler specific macros etc.
-*  For now this file should only be included into CoreDefines.h
-*/
+// MSVC compiler specific macros etc.
+// For now this file should only be included into CoreDefines.h
 
 #if COMPILER_MSVC
 

@@ -1,46 +1,36 @@
 #pragma once
-
-#if PLATFORM_MACOS
-#include "Core/Input/InputCodes.h"
 #include "Core/Containers/StaticArray.h"
-#include "Core/Input/Interface/PlatformKeyMapping.h"
+#include "Core/Input/InputCodes.h"
+#include "Core/Input/Generic/GenericKeyMapping.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Class that maps key-code from scan-codes and the reverse
+// CMacKeyMapping
 
-class CMacKeyMapping : public CPlatformKeyMapping
+class CMacKeyMapping : public CGenericKeyMapping
 {
     enum
     {
-        NumKeys = 256
+        kNumKeys = 256
     };
 
 public:
 
-    /** Initialize key-tables */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CGenericKeyMapping Interface
+
     static void Initialize();
     
-    /**
-     * @brief: Retrieve the key-code from the scan-code 
-     * 
-     * @param Scan-Code: Scan-Code to convert into a engine key-code
-     * @return: Returns a engine key-code
-     */
     static FORCEINLINE EKey GetKeyCodeFromScanCode(uint32 ScanCode)
     {
         return KeyCodeFromScanCodeTable[ScanCode];
     }
 
-    /**
-     * @brief: Retrieve the scan-code from the key-code
-     *
-     * @param Key-Code: Engine key-code to convert into a scan-code
-     * @return: Returns a scan-code representing the engine key-code
-     */
     static FORCEINLINE uint32 GetScanCodeFromKeyCode(EKey KeyCode)
     {
         return static_cast<uint32>(ScanCodeFromKeyCodeTable[KeyCode]);
     }
+
+public:
 
     /**
      * @brief: Retrieve the mousebutton-code from mousebutton-index
@@ -66,14 +56,8 @@ public:
 
 private:
 
-    /** Lookup table for converting from scan-code to enum */
-    static EKey KeyCodeFromScanCodeTable[NumKeys];
-    /** Lookup table for converting from scan-code to enum */
-    static uint16 ScanCodeFromKeyCodeTable[NumKeys];
-    /** Converts the button-index to mouse button */
-    static EMouseButton ButtonFromButtonIndex[EMouseButton::MouseButton_Count];
-    /** Converts the button-index to mouse button */
-    static uint8 ButtonIndexFromButton[EMouseButton::MouseButton_Count];
+    static TStaticArray<EKey        , kNumKeys>                        KeyCodeFromScanCodeTable;
+    static TStaticArray<uint16      , kNumKeys>                        ScanCodeFromKeyCodeTable;
+    static TStaticArray<EMouseButton, EMouseButton::MouseButton_Count> ButtonFromButtonIndex;
+    static TStaticArray<uint8       , EMouseButton::MouseButton_Count> ButtonIndexFromButton;
 };
-
-#endif

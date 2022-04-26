@@ -1,33 +1,24 @@
 #pragma once
-
-#if PLATFORM_WINDOWS
 #include "Core/Core.h"
-#include "Core/Threading/Interface/PlatformThreadMisc.h"
+#include "Core/Threading/Generic/GenericThreadMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for miscellaneous thread utility functions
+// CWindowsThreadMisc
 
-class CWindowsThreadMisc : public CPlatformThreadMisc
+class CWindowsThreadMisc : public CGenericThreadMisc
 {
 public:
 
-    /**
-     * @brief: Performs platform specific initialization of thread handling
-     *
-     * @return: Returns true if the initialization was successful, otherwise false
-     */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CGenericThreadMisc Interface
+
     static FORCEINLINE bool Initialize()
     {
         // This must be executed on the main-thread
-        MainThreadHandle = GetThreadHandle();
+        MainThreadHandle = GetCurrentThreadId();
         return true;
     }
 
-    /**
-     * @brief: Retrieve the number of logical processors on the system
-     *
-     * @return: Returns the number of logical processors on the system
-     */
     static FORCEINLINE uint32 GetNumProcessors()
     {
         SYSTEM_INFO SystemInfo;
@@ -38,40 +29,23 @@ public:
         return static_cast<uint32>(SystemInfo.dwNumberOfProcessors);
     }
 
-    /**
-     * @brief: Retrieves the current thread's system ID
-     *
-     * @return: Returns a platform handle for the calling thread, return a invalid handle on failure
-     */
-    static FORCEINLINE PlatformThreadHandle GetThreadHandle()
+    static FORCEINLINE void* GetThreadHandle()
     {
         DWORD CurrentHandle = GetCurrentThreadId();
-        return static_cast<PlatformThreadHandle>(CurrentHandle);
+        return reinterpret_cast<void*>(static_cast<uintptr_t>(CurrentHandle));
     }
 
-    /**
-     * @brief: Makes the calling thread sleep for a specified amount of time
-     *
-     * @param Time: Time to sleep
-     */
     static FORCEINLINE void Sleep(CTimestamp Time)
     {
         DWORD Milliseconds = static_cast<DWORD>(Time.AsMilliSeconds());
         ::Sleep(Milliseconds);
     }
 
-    /**
-     * @brief: Checks weather or not the calling thread is the main thread
-     *
-     * @return: Returns true if the calling thread is the main-thread
-     */
     static FORCEINLINE bool IsMainThread()
     {
-        return (MainThreadHandle == GetThreadHandle());
+        return (MainThreadHandle == GetCurrentThreadId());
     }
 
 private:
-    static CORE_API PlatformThreadHandle MainThreadHandle;
+    static CORE_API DWORD MainThreadHandle;
 };
-
-#endif

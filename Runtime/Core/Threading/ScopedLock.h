@@ -1,19 +1,14 @@
 #pragma once
 #include "Core/Core.h"
+#include "Core/Templates/ClassUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helper class that locks a lock in constructor and releases it in the destructor
+// TScopedLock
 
 template<typename LockType>
-class TScopedLock
+class TScopedLock : CNonCopyable, CNonMovable
 {
 public:
-
-    TScopedLock(TScopedLock&&) = delete;
-    TScopedLock(const TScopedLock&) = delete;
-
-    TScopedLock& operator=(TScopedLock&&) = delete;
-    TScopedLock& operator=(const TScopedLock&) = delete;
     
     /**
      * @brief: Constructor that takes a lock and tries to lock it
@@ -26,29 +21,19 @@ public:
         Lock.Lock();
     }
 
-    /**
-     * @brief: Destructor
-     */
+    /** @brief: Destructor */
     FORCEINLINE ~TScopedLock()
     {
         Lock.Unlock();
     }
 
-    /**
-     * @brief: Retrieve the lock
-     * 
-     * @return: Returns a reference to the lock
-     */
+    /** @return: Returns a reference to the lock */
     FORCEINLINE LockType& GetLock()
     {
         return Lock;
     }
 
-    /**
-     * @brief: Retrieve the lock
-     *
-     * @return: Returns a reference to the lock
-     */
+    /** @return: Returns a reference to the lock */
     FORCEINLINE const LockType& GetLock() const
     {
         return Lock;

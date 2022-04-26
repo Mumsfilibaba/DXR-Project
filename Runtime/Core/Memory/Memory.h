@@ -171,18 +171,6 @@ public:
      * @brief: Set memory to zero
      *
      * @param Dst: Destination of memory to zero
-     * @param SizeInBytes: Size of the memory zero
-     */
-    template<typename T>
-    static FORCEINLINE T* Memzero(T* Dst, uint64 SizeInBytes) noexcept
-    {
-        return reinterpret_cast<T*>(Memzero(reinterpret_cast<void*>(Dst), SizeInBytes));
-    }
-
-    /**
-     * @brief: Set memory to zero
-     *
-     * @param Dst: Destination of memory to zero
      * @return: Returns the destination pointer
      */
     template<typename T>
@@ -198,7 +186,7 @@ public:
      * @return: Returns the destination pointer
      */
     template<typename T>
-    static FORCEINLINE T* Memzero(T* Dst, uint32 NumElements) noexcept
+    static FORCEINLINE T* MemzeroTyped(T* Dst, uint32 NumElements) noexcept
     {
         return reinterpret_cast<T*>(Memzero(reinterpret_cast<void*>(Dst), sizeof(T) * NumElements));
     }

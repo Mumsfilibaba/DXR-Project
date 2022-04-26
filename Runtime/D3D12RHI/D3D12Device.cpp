@@ -213,15 +213,15 @@ bool CD3D12Device::Initialize()
     }
 
     // Load DXGI functions 
-    NDXGIFunctions::CreateDXGIFactory2 = PlatformLibrary::LoadSymbolAddress<PFN_CREATE_DXGI_FACTORY_2>("CreateDXGIFactory2", DXGILib);
+    NDXGIFunctions::CreateDXGIFactory2     = PlatformLibrary::LoadSymbolAddress<PFN_CREATE_DXGI_FACTORY_2>("CreateDXGIFactory2", DXGILib);
     NDXGIFunctions::DXGIGetDebugInterface1 = PlatformLibrary::LoadSymbolAddress<PFN_DXGI_GET_DEBUG_INTERFACE_1>("DXGIGetDebugInterface1", DXGILib);
 
     // Load D3D12 functions
-    ND3D12Functions::D3D12CreateDevice = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_CREATE_DEVICE>("D3D12CreateDevice", D3D12Lib);
-    ND3D12Functions::D3D12GetDebugInterface = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_GET_DEBUG_INTERFACE>("D3D12GetDebugInterface", D3D12Lib);
-    ND3D12Functions::D3D12SerializeRootSignature = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_SERIALIZE_ROOT_SIGNATURE>("D3D12SerializeRootSignature", D3D12Lib);
-    ND3D12Functions::D3D12SerializeVersionedRootSignature = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE>("D3D12SerializeVersionedRootSignature", D3D12Lib);
-    ND3D12Functions::D3D12CreateRootSignatureDeserializer = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>("D3D12CreateRootSignatureDeserializer", D3D12Lib);
+    ND3D12Functions::D3D12CreateDevice                             = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_CREATE_DEVICE>("D3D12CreateDevice", D3D12Lib);
+    ND3D12Functions::D3D12GetDebugInterface                        = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_GET_DEBUG_INTERFACE>("D3D12GetDebugInterface", D3D12Lib);
+    ND3D12Functions::D3D12SerializeRootSignature                   = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_SERIALIZE_ROOT_SIGNATURE>("D3D12SerializeRootSignature", D3D12Lib);
+    ND3D12Functions::D3D12SerializeVersionedRootSignature          = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE>("D3D12SerializeVersionedRootSignature", D3D12Lib);
+    ND3D12Functions::D3D12CreateRootSignatureDeserializer          = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>("D3D12CreateRootSignatureDeserializer", D3D12Lib);
     ND3D12Functions::D3D12CreateVersionedRootSignatureDeserializer = PlatformLibrary::LoadSymbolAddress<PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER>("D3D12CreateVersionedRootSignatureDeserializer", D3D12Lib);
 
     if (bEnableDebugLayer)
@@ -400,7 +400,7 @@ bool CD3D12Device::Initialize()
         if (SUCCEEDED(Device.GetAs(&InfoQueue)))
         {
             InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR     , true);
 
             D3D12_MESSAGE_ID Hide[] =
             {
@@ -411,7 +411,7 @@ bool CD3D12Device::Initialize()
             D3D12_INFO_QUEUE_FILTER Filter;
             CMemory::Memzero(&Filter);
 
-            Filter.DenyList.NumIDs = ArrayCount(Hide);
+            Filter.DenyList.NumIDs  = ArrayCount(Hide);
             Filter.DenyList.pIDList = Hide;
             InfoQueue->AddStorageFilterEntries(&Filter);
         }
@@ -449,7 +449,7 @@ bool CD3D12Device::Initialize()
     // Check for Ray-Tracing support
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
-        CMemory::Memzero(&Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+        CMemory::Memzero(&Features5);
 
         Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
         if (SUCCEEDED(Result))
@@ -461,7 +461,7 @@ bool CD3D12Device::Initialize()
     // Checking for Variable Shading Rate support
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
-        CMemory::Memzero(&Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
+        CMemory::Memzero(&Features6);
 
         Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
         if (SUCCEEDED(Result))
@@ -474,7 +474,7 @@ bool CD3D12Device::Initialize()
     // Check for Mesh-Shaders, and SamplerFeedback support
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
-        CMemory::Memzero(&Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
+        CMemory::Memzero(&Features7);
 
         Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
         if (SUCCEEDED(Result))
@@ -492,8 +492,8 @@ int32 CD3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount
     D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data;
     CMemory::Memzero(&Data);
 
-    Data.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
-    Data.Format = Format;
+    Data.Flags       = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
+    Data.Format      = Format;
     Data.SampleCount = SampleCount;
 
     HRESULT hr = Device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &Data, sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS));

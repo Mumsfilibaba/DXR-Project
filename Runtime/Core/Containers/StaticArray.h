@@ -98,10 +98,16 @@ public:
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        for (ElementType& Element : *this)
-        {
-            Element = InputElement;
-        }
+        FillRange(Elements, InputElement, Size());
+    }
+
+    /**
+     * @brief: Sets the array to zero
+     */
+    template<typename U = ElementType>
+    FORCEINLINE typename TEnableIf<TIsTrivial<U>::Value>::Type Memzero()
+    {
+        CMemory::Memzero(Elements, SizeInBytes());
     }
 
     /**

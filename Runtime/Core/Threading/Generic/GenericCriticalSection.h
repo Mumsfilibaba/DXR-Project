@@ -1,19 +1,21 @@
 #pragma once
 #include "Core/Core.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for Critical Sections
+#include "Core/Templates/ClassUtilities.h"
 
-class CPlatformCriticalSection
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CGenericCriticalSection
+
+class CGenericCriticalSection : CNonCopyable
 {
 public:
 
     typedef void* PlatformHandle;
 
-    CPlatformCriticalSection() = default;
-    ~CPlatformCriticalSection() = default;
+    CGenericCriticalSection()  = default;
+    ~CGenericCriticalSection() = default;
 
-    /** Lock CriticalSection for other threads */
+    /** @brief: Lock CriticalSection for other threads */
     FORCEINLINE void Lock() noexcept { }
 
     /**
@@ -23,7 +25,7 @@ public:
      */
     FORCEINLINE bool TryLock() noexcept { return false; }
 
-    /** Unlock CriticalSection for other threads */
+    /** @brief: Unlock CriticalSection for other threads */
     FORCEINLINE void Unlock() noexcept { }
 
     /**

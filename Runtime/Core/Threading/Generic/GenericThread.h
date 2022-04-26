@@ -3,27 +3,25 @@
 #include "Core/Containers/String.h"
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 typedef void(*ThreadFunction)();
-typedef uint64 PlatformThreadHandle;
-
-// Might need to be different on other platforms. However this is valid on windows. 
-// See: https://docs.microsoft.com/en-us/windows/win32/procthread/thread-handles-and-identifiers
-#define INVALID_THREAD_ID 0
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for threads
+// CGenericThread
 
-class CPlatformThread : public CRefCounted
+class CGenericThread : public CRefCounted
 {
+protected:
+
+    CGenericThread()  = default;
+    ~CGenericThread() = default;
+
 public:
 
     // TODO: Enable member-functions and lambdas (Use TFunction to solve this)
@@ -34,7 +32,7 @@ public:
      * @param InFunction: Entry-point for the new thread
      * @return: An newly created thread interface
      */
-    static TSharedRef<CPlatformThread> Make(ThreadFunction InFunction) { return dbg_new CPlatformThread(); }
+    static TSharedRef<CGenericThread> Make(ThreadFunction InFunction) { return dbg_new CGenericThread(); }
    
     /**
       * Create a new thread with a name
@@ -43,16 +41,12 @@ public:
       * @param InName: Name of the new thread
       * @return: An newly created thread interface
       */
-    static TSharedRef<CPlatformThread> Make(ThreadFunction InFunction, const String& InName) { return dbg_new CPlatformThread(); }
+    static TSharedRef<CGenericThread> Make(ThreadFunction InFunction, const String& InName) { return dbg_new CGenericThread(); }
 
-    /**
-     * @brief: Start thread-execution 
-     * 
-     * @return: Returns true if the thread started successfully
-     */
+    /** @return: Start thread-execution and returns true if the thread started successfully */
     virtual bool Start() { return true; }
 
-    /** Wait until thread has finished running */
+    /** @brief: Wait until thread has finished running */
     virtual void WaitUntilFinished() { }
 
     /**
@@ -67,18 +61,11 @@ public:
      *
      * @return: Returns a platform specific handle or zero if no platform handle is defined
      */
-    virtual PlatformThreadHandle GetPlatformHandle() { return static_cast<PlatformThreadHandle>(0); }
-
-protected:
-
-    CPlatformThread() = default;
-    ~CPlatformThread() = default;
+    virtual void* GetOSHandle() { return nullptr; }
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
+    #pragma warning(pop)
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
-
+    #pragma clang diagnostic pop
 #endif

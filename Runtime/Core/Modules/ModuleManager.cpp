@@ -4,7 +4,7 @@
 #include "Core/Templates/StringUtils.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ModuleManager
+// CModuleManager
 
 IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
 {

@@ -1,6 +1,6 @@
 #include "StbImageLoader.h"
 
-#include "Core/Threading/DispatchQueue.h"
+#include "Core/Threading/AsyncTaskManager.h"
 #include "Core/Logging/Log.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -150,10 +150,10 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const String& Filename)
         Image->bIsLoaded = true;
     };
 
-    SDispatch NewTask;
+    SAsyncTask NewTask;
     NewTask.Delegate.BindLambda(LoadImageAsync);
 
-    CDispatchQueue::Get().Dispatch(NewTask);
+    CAsyncTaskManager::Get().Dispatch(NewTask);
 
     return Image;
 }

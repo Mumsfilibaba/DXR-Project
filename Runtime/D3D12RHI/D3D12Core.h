@@ -45,11 +45,11 @@ inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
     D3D12_HEAP_PROPERTIES HeapProperties;
     CMemory::Memzero(&HeapProperties);
 
-    HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
+    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    HeapProperties.VisibleNodeMask = 1;
-    HeapProperties.CreationNodeMask = 1;
+    HeapProperties.VisibleNodeMask      = 1;
+    HeapProperties.CreationNodeMask     = 1;
 
     return HeapProperties;
 }
@@ -59,11 +59,11 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
     D3D12_HEAP_PROPERTIES HeapProperties;
     CMemory::Memzero(&HeapProperties);
 
-    HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
-    HeapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
+    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-    HeapProperties.VisibleNodeMask = 1;
-    HeapProperties.CreationNodeMask = 1;
+    HeapProperties.VisibleNodeMask      = 1;
+    HeapProperties.CreationNodeMask     = 1;
 
     return HeapProperties;
 }

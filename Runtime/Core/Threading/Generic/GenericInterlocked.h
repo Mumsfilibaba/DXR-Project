@@ -5,60 +5,56 @@
 // Remove Windows.h defines
 
 #if defined(InterlockedAdd)
-#undef InterlockedAdd
+    #undef InterlockedAdd
 #endif
 
 #if defined(InterlockedSub)
-#undef InterlockedSub
+    #undef InterlockedSub
 #endif
 
 #if defined(InterlockedAnd)
-#undef InterlockedAnd
+    #undef InterlockedAnd
 #endif
 
 #if defined(InterlockedOr)
-#undef InterlockedOr
+    #undef InterlockedOr
 #endif
 
 #if defined(InterlockedXor)
-#undef InterlockedXor
+    #undef InterlockedXor
 #endif
 
 #if defined(InterlockedIncrement)
-#undef InterlockedIncrement
+    #undef InterlockedIncrement
 #endif
 
 #if defined(InterlockedDecrement)
-#undef InterlockedDecrement
+    #undef InterlockedDecrement
 #endif
 
 #if defined(InterlockedCompareExchange)
-#undef InterlockedCompareExchange
+    #undef InterlockedCompareExchange
 #endif
 
 #if defined(InterlockedExchange)
-#undef InterlockedExchange
+    #undef InterlockedExchange
 #endif
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for interlocked mathematical operations
+// CGenericInterlocked
 
-class CPlatformInterlocked
+class CGenericInterlocked
 {
 public:
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    
     /**
      * @brief: Adds two integers atomically and return original value
      * 
@@ -94,8 +90,6 @@ public:
      * @return: Returns the original value of LHS
      */
     static FORCEINLINE int64 InterlockedAdd(volatile int64* LHS, int64 RHS) { return 0; }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
      * @brief: Subtract two integers atomically and return original value
@@ -133,8 +127,6 @@ public:
      */
     static FORCEINLINE int64 InterlockedSub(volatile int64* LHS, int64 RHS) { return 0; }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
     /**
      * @brief: Bitwise AND two integers atomically and return original value
      *
@@ -170,8 +162,6 @@ public:
      * @return: Returns the original value of LHS
      */
     static FORCEINLINE int64 InterlockedAnd(volatile int64* LHS, int64 RHS) { return 0; }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
      * @brief: Bitwise OR two integers atomically and return original value
@@ -209,8 +199,6 @@ public:
      */
     static FORCEINLINE int64 InterlockedOr(volatile int64* LHS, int64 RHS) { return 0; }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
     /**
      * @brief: Bitwise XOR two integers atomically and return original value
      *
@@ -246,8 +234,6 @@ public:
      * @return: Returns the original value of LHS
      */
     static FORCEINLINE int64 InterlockedXor(volatile int64* LHS, int64 RHS) { return 0; }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     
     /**
      * @brief: Increment an integer atomically and return new value
@@ -280,8 +266,6 @@ public:
      * @return: Returns the new value
      */
     static FORCEINLINE int64 InterlockedIncrement(volatile int64* Addend) { return 0; }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     
     /**
      * @brief: Decrement an integer atomically and return new value
@@ -314,8 +298,6 @@ public:
      * @return: Returns the new value
      */
     static FORCEINLINE int64 InterlockedDecrement(volatile int64* Addend) { return 0; }
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
     /**
      * @brief: Compares two values, if equal then one of them gets exchanged. Returns the original value.
@@ -357,8 +339,6 @@ public:
      */
     static FORCEINLINE int64 InterlockedCompareExchange(volatile int64* Dest, int64 Exchange, int64 Comparand) { return 0; }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
     /**
      * @brief: Sets an integer to a specified value atomically and returns the original value.
      *
@@ -397,9 +377,7 @@ public:
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
+    #pragma warning(pop)
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
-
+    #pragma clang diagnostic pop
 #endif

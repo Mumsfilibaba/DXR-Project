@@ -1,9 +1,8 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* Clang compiler specific macros etc.
-*  For now this file should only be included into CoreDefines.h
-*/
+// Clang compiler specific macros etc.
+// For now this file should only be included into CoreDefines.h
 
 #if COMPILER_CLANG
 

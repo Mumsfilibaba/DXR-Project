@@ -2,19 +2,17 @@
 #include "Core/Core.h"
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// PlatformLibrary - Base dynamic library interface
+// CGenericLibrary
 
-class CPlatformLibrary
+class CGenericLibrary
 {
 public:
 
@@ -81,17 +79,15 @@ public:
      * @param LibraryHandle: Handle to the library to load from
      * @return: Returns a pointer to the symbol in the dynamic library
      */
-    template<typename T>
-    static FORCEINLINE T LoadSymbolAddress(const char* SymbolName, PlatformHandle LibraryHandle)
+    template<typename SymbolType>
+    static FORCEINLINE SymbolType LoadSymbolAddress(const char* SymbolName, PlatformHandle LibraryHandle)
     {
-        return reinterpret_cast<T>(LoadSymbolAddress(SymbolName, LibraryHandle));
+        return reinterpret_cast<SymbolType>(LoadSymbolAddress(SymbolName, LibraryHandle));
     }
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
+    #pragma warning(pop)
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
-
+    #pragma clang diagnostic pop
 #endif

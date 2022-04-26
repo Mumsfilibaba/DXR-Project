@@ -1,15 +1,12 @@
 #pragma once
 
 #if PLATFORM_WINDOWS
-#include "Core/Modules/Windows/WindowsLibrary.h"
-typedef CWindowsLibrary PlatformLibrary;
-
+    #include "Core/Modules/Windows/WindowsLibrary.h"
+    typedef CWindowsLibrary PlatformLibrary;
 #elif PLATFORM_MACOS
-#include "Core/Modules/Mac/MacLibrary.h"
-typedef CMacLibrary PlatformLibrary;
-
+    #include "Core/Modules/Mac/MacLibrary.h"
+    typedef CMacLibrary PlatformLibrary;
 #else
-#include "Core/Modules/Interface/PlatformLibrary.h"
-typedef CPlatformLibrary PlatformLibrary;
-
+    #include "Core/Modules/Interface/PlatformLibrary.h"
+    typedef CGenericLibrary PlatformLibrary;
 #endif

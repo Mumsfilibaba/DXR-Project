@@ -5,14 +5,14 @@
 #include "Engine/Resources/TextureFactory.h"
 
 #if PROJECT_EDITOR
-#include "EditorEngine.h"
+    #include "EditorEngine.h"
 #endif
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Modules/ApplicationModule.h"
-#include "Core/Threading/DispatchQueue.h"
+#include "Core/Threading/AsyncTaskManager.h"
 #include "Core/Threading/Platform/PlatformThreadMisc.h"
 #include "Core/Misc/EngineLoopDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
@@ -120,7 +120,7 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    if (!CDispatchQueue::Get().Initialize())
+    if (!CAsyncTaskManager::Get().Initialize())
     {
         return false;
     }
@@ -268,7 +268,7 @@ bool CEngineLoop::Release()
 
     RHIRelease();
 
-    CDispatchQueue::Get().Release();
+    CAsyncTaskManager::Get().Release();
 
     CApplicationInstance::Release();
 

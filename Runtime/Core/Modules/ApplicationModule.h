@@ -5,7 +5,7 @@
 #include "Core/Delegates/DelegateInstance.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Application-Module interface
+// CApplicationModule
 
 class CORE_API CApplicationModule : public IEngineModule
 {
@@ -14,11 +14,7 @@ public:
     CApplicationModule() = default;
     virtual ~CApplicationModule() = default;
 
-    /**
-     * @brief: Initialize the application module 
-     * 
-     * @return: Returns true if the initialization is successful
-     */
+    /** @return: Returns true if the initialization is successful */
     virtual bool Init();
 
     /**
@@ -28,25 +24,13 @@ public:
      */
     virtual void Tick(CTimestamp Deltatime);
 
-    /**
-     * @brief: Release the application module
-     *
-     * @return: Returns true if the release is successful
-     */
+    /** @return: Returns true if the release is successful */
     virtual bool Release();
 
-    /**
-     * @brief: Called when the module is first loaded into the application
-     *
-     * @return: Returns true if the load is successful
-     */
+    /** @return: Returns true if the load is successful */
     virtual bool Load() override;
 
-    /**
-     * @brief: Called before the module is unloaded by the application
-     *
-     * @return: Returns true if the unload is successful
-     */
+    /** @return: Returns true if the unload is successful */
     virtual bool Unload() override;
 
 protected:

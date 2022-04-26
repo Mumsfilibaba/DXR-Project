@@ -172,7 +172,7 @@ public:
         D3D12_RESOURCE_BARRIER Barrier;
         CMemory::Memzero(&Barrier);
 
-        Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
         Barrier.UAV.pResource = Resource;
 
         Barriers.Emplace(Barrier);

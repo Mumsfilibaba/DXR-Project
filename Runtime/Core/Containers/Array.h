@@ -269,10 +269,8 @@ public:
      */
     FORCEINLINE void Fill(const ElementType& InputElement) noexcept
     {
-        for (ElementType& Element : *this)
-        {
-            Element = InputElement;
-        }
+        ElementType* Elements = Data();
+        FillRange(Elements, InputElement, Size());
     }
 
     /**
