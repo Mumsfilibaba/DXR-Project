@@ -1,4 +1,3 @@
-#if PLATFORM_MACOS
 #include "MacApplication.h"
 #include "MacWindow.h"
 #include "MacCursor.h"
@@ -15,6 +14,7 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMacApplication
 
 TSharedPtr<CMacApplication> CMacApplication::Make()
 {
@@ -29,8 +29,7 @@ CMacApplication::CMacApplication()
     , DeferredEvents()
     , DeferredEventsMutex()
 	, bIsTerminating(false)
-{
-}
+{ }
 
 CMacApplication::~CMacApplication()
 {
@@ -402,5 +401,3 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 		MessageListener->HandleKeyTyped(Event.Character);
 	}
 }
-
-#endif

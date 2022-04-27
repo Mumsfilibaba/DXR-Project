@@ -1,6 +1,4 @@
 #pragma once 
-
-#if PLATFORM_MACOS
 #include "CoreApplication/Generic/GenericConsoleWindow.h"
 
 #include <stdarg.h>
@@ -10,7 +8,7 @@
 class CMacConsoleWindow;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Specific cocoa console window
+// CCocoaConsoleWindow
 
 @interface CCocoaConsoleWindow : NSWindow<NSWindowDelegate>
 {
@@ -24,5 +22,3 @@ class CMacConsoleWindow;
 +(NSString*)convertStringWithArgs:(const char*)Format Args : (va_list)Args;
 
 @end
-
-#endif

@@ -1,7 +1,9 @@
-#if PLATFORM_MACOS
 #include "CocoaContentView.h"
 #include "MacApplication.h"
 #include "ScopedAutoreleasePool.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CCocoaContentView
 
 @implementation CCocoaContentView
 
@@ -194,5 +196,3 @@
 }
 
 @end
-
-#endif
