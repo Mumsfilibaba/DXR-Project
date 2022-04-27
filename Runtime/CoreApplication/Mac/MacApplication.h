@@ -7,7 +7,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Threading/Platform/CriticalSection.h"
 
-#include "CoreApplication/Interface/PlatformApplication.h"
+#include "CoreApplication/Generic/GenericApplication.h"
 
 #include <AppKit/AppKit.h>
 #include <Foundation/Foundation.h>
@@ -80,7 +80,7 @@ struct SMacApplicationEvent
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Mac specific implementation of the application interface
 
-class CMacApplication final : public CPlatformApplication
+class CMacApplication final : public CGenericApplication
 {
 public:
 
@@ -91,7 +91,7 @@ public:
     ~CMacApplication();
 
      /** @brief: Create a window */
-    virtual TSharedRef<CPlatformWindow> MakeWindow() override final;
+    virtual TSharedRef<CGenericWindow> MakeWindow() override final;
 
      /** @brief: Initialized the application */
     virtual bool Initialize() override final;
@@ -100,13 +100,13 @@ public:
     virtual void Tick(float Delta) override final;
 
      /** @brief: Sets the window that is currently active */
-    virtual void SetActiveWindow(const TSharedRef<CPlatformWindow>& Window) override final;
+    virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) override final;
 
      /** @brief: Retrieves the window that is currently active */
-    virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
+    virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
 
 	 /** @brief: Retrieve the window that is currently under the cursor, if no window is under the cursor, the value is nullptr */
-	virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const override final;
+	virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
 	
      /** @brief: Retrieves a from a NSWindow */
     TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;

@@ -1,4 +1,3 @@
-#if PLATFORM_WINDOWS
 #include "WindowsApplication.h"
 
 #include "Core/Threading/ScopedLock.h"
@@ -7,15 +6,18 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EWindowsMasks
+
 enum EWindowsMasks : uint32
 {
-    ScanCodeMask = 0x01ff,
-    KeyRepeatMask = 0x40000000,
+    ScanCodeMask   = 0x01ff,
+    KeyRepeatMask  = 0x40000000,
     BackButtonMask = 0x0001
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A small wrapper for "moved" message
+// SPointMessage
 
 struct SPointMessage
 {
@@ -44,11 +46,11 @@ struct SPointMessage
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowsApplication
+// CWindowsApplication
 
 CWindowsApplication* CWindowsApplication::Instance = nullptr;
 
-TSharedPtr<CWindowsApplication> CWindowsApplication::Make()
+TSharedPtr<CWindowsApplication> CWindowsApplication::CreateApplication()
 {
     HINSTANCE TempInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0));
 
@@ -57,7 +59,7 @@ TSharedPtr<CWindowsApplication> CWindowsApplication::Make()
 }
 
 CWindowsApplication::CWindowsApplication(HINSTANCE InInstanceHandle)
-    : CPlatformApplication(CWindowsCursor::Make())
+    : CGenericApplication(CWindowsCursor::Make())
     , Windows()
     , Messages()
     , MessagesCriticalSection()
@@ -148,7 +150,7 @@ bool CWindowsApplication::UnregisterRawInputDevices()
     }
 }
 
-TSharedRef<CPlatformWindow> CWindowsApplication::MakeWindow()
+TSharedRef<CGenericWindow> CWindowsApplication::MakeWindow()
 {
     TSharedRef<CWindowsWindow> NewWindow = CWindowsWindow::Make(this);
     Windows.Emplace(NewWindow);
@@ -196,7 +198,7 @@ bool CWindowsApplication::SupportsRawMouse() const
     return true;
 }
 
-bool CWindowsApplication::EnableRawMouse(const TSharedRef<CPlatformWindow>& Window)
+bool CWindowsApplication::EnableRawMouse(const TSharedRef<CGenericWindow>& Window)
 {
     if (Window)
     {
@@ -209,7 +211,7 @@ bool CWindowsApplication::EnableRawMouse(const TSharedRef<CPlatformWindow>& Wind
     }
 }
 
-void CWindowsApplication::SetCapture(const TSharedRef<CPlatformWindow>& Window)
+void CWindowsApplication::SetCapture(const TSharedRef<CGenericWindow>& Window)
 {
     if (Window)
     {
@@ -227,7 +229,7 @@ void CWindowsApplication::SetCapture(const TSharedRef<CPlatformWindow>& Window)
     }
 }
 
-void CWindowsApplication::SetActiveWindow(const TSharedRef<CPlatformWindow>& Window)
+void CWindowsApplication::SetActiveWindow(const TSharedRef<CGenericWindow>& Window)
 {
     TSharedRef<CWindowsWindow> WindowsWindow = StaticCast<CWindowsWindow>(Window);
 
@@ -238,21 +240,21 @@ void CWindowsApplication::SetActiveWindow(const TSharedRef<CPlatformWindow>& Win
     }
 }
 
-TSharedRef<CPlatformWindow> CWindowsApplication::GetCapture() const
+TSharedRef<CGenericWindow> CWindowsApplication::GetCapture() const
 {
     // TODO: Should we add a reference here
     HWND CaptureWindow = ::GetCapture();
     return GetWindowsWindowFromHWND(CaptureWindow);
 }
 
-TSharedRef<CPlatformWindow> CWindowsApplication::GetActiveWindow() const
+TSharedRef<CGenericWindow> CWindowsApplication::GetActiveWindow() const
 {
     // TODO: Should we add a reference here
     HWND ActiveWindow = ::GetActiveWindow();
     return GetWindowsWindowFromHWND(ActiveWindow);
 }
 
-TSharedRef<CPlatformWindow> CWindowsApplication::GetWindowUnderCursor() const
+TSharedRef<CGenericWindow> CWindowsApplication::GetWindowUnderCursor() const
 {
     POINT CursorPos;
     if (!GetCursorPos(&CursorPos))
@@ -628,5 +630,3 @@ LRESULT CWindowsApplication::ProcessRawInput(HWND Window, UINT Message, WPARAM w
         return DefRawInputProc(&RawInput, 1, sizeof(RAWINPUTHEADER));
     }
 }
-
-#endif

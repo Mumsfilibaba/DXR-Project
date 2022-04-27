@@ -38,7 +38,7 @@ TAutoConsoleVariable<bool> GRayTracingEnabled("renderer.EnableRayTracing", true)
 //static const uint32 ShadowMapSampleCount = 2;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CameraBufferDesc
+// SCameraBufferDesc
 
 struct SCameraBufferDesc
 {
@@ -234,12 +234,14 @@ bool CRenderer::Init()
     return true;
 }
 
-void CRenderer::PerformFrustumCulling(const CScene& Scene)
+void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
 {
     TRACE_SCOPE("Frustum Culling");
 
-    CCamera* Camera = Scene.GetCamera();
+    CCamera* Camera        = Scene.GetCamera();
     CFrustum CameraFrustum = CFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+    
+    // Cull frustum
     for (const SMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
     {
         CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
@@ -247,12 +249,11 @@ void CRenderer::PerformFrustumCulling(const CScene& Scene)
 
         CVector3 Top = CVector3(&Command.Mesh->BoundingBox.Top.x);
         Top = TransformMatrix.TransformPosition(Top);
+
         CVector3 Bottom = CVector3(&Command.Mesh->BoundingBox.Bottom.x);
         Bottom = TransformMatrix.TransformPosition(Bottom);
 
-        SAABB Box;
-        Box.Top = Top;
-        Box.Bottom = Bottom;
+        SAABB Box(Top, Bottom);
         if (CameraFrustum.CheckAABB(Box))
         {
             if (Command.Material->ShouldRenderInForwardPass())
@@ -265,6 +266,39 @@ void CRenderer::PerformFrustumCulling(const CScene& Scene)
             }
         }
     }
+
+    TArray<float>            NewCommandsDistances;
+    TArray<SMeshDrawCommand> NewDeferredCommands;
+
+    // Sort the commands based on camera distance
+    const CVector3 CameraPosition = Camera->GetPosition();
+    for (const SMeshDrawCommand& Command : Resources.DeferredVisibleCommands)
+    {
+        CMatrix4 Transform = Command.CurrentActor->GetTransform().GetMatrix();
+        Transform = Transform.Transpose();
+
+        CVector3 CenterPosition = Command.Mesh->BoundingBox.GetCenter();
+        CenterPosition = Transform.TransformPosition(CenterPosition);
+
+        CVector3 DistanceVector = CenterPosition - CameraPosition;
+
+        const float NewDistance = DistanceVector.Length();
+
+        int32 Index = 0;
+        for (; Index < NewDeferredCommands.Size(); ++Index)
+        {
+            const float Distance = NewCommandsDistances[Index];
+            if (NewDistance < Distance)
+            {
+                break;
+            }
+        }
+
+        NewDeferredCommands.Insert(Index, Command);
+        NewCommandsDistances.Insert(Index, NewDistance);
+    }
+
+    Resources.DeferredVisibleCommands.Swap(NewDeferredCommands);
 }
 
 void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
@@ -424,7 +458,7 @@ void CRenderer::Tick(const CScene& Scene)
     }
     else
     {
-        PerformFrustumCulling(Scene);
+        PerformFrustumCullingAndSort(Scene);
     }
 
     // Update camera-buffer

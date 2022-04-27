@@ -5,5 +5,5 @@
 
 namespace NErrorDevice
 {
-    CORE_API CPlatformConsoleWindow* GConsoleWindow = nullptr;
+    CORE_API CGenericConsoleWindow* GConsoleWindow = nullptr;
 }

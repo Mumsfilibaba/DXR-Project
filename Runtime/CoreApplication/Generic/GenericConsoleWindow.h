@@ -4,17 +4,15 @@
 #include "CoreApplication/CoreApplication.h"
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EConsoleColor - Color of the console text
+// EConsoleColor
 
 enum class EConsoleColor : uint8
 {
@@ -25,10 +23,15 @@ enum class EConsoleColor : uint8
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for ConsoleWindow
+// CGenericConsoleWindow
 
-class COREAPPLICATION_API CPlatformConsoleWindow
+class COREAPPLICATION_API CGenericConsoleWindow
 {
+protected:
+
+    CGenericConsoleWindow() = default;
+    virtual ~CGenericConsoleWindow() = default;
+
 public:
 
     /**
@@ -36,7 +39,7 @@ public:
      * 
      * @return: Returns a newly created console-window, returns nullptr on failure
      */
-    static CPlatformConsoleWindow* Make() { return dbg_new CPlatformConsoleWindow(); }
+    static CGenericConsoleWindow* Make() { return dbg_new CGenericConsoleWindow(); }
 
     /**
      * @brief: Show or hide the console-window 
@@ -88,15 +91,10 @@ public:
      * 
      * @return: Return true if the console-window is visible
      */
-    bool IsShowing() const { return bIsShowing; }
+    bool IsVisible() const { return bIsVisible; }
 
 protected:
-
-    CPlatformConsoleWindow() = default;
-    virtual ~CPlatformConsoleWindow() = default;
-
-    // True or false depending on if the console is visible or not
-    bool bIsShowing = false;
+    bool bIsVisible = false;
 };
 
 #if defined(COMPILER_MSVC)

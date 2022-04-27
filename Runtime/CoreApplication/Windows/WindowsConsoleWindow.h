@@ -1,28 +1,38 @@
 #pragma once
-
-#if PLATFORM_WINDOWS
 #include "Core/Windows/Windows.h"
 
 #include "Core/Core.h"
 #include "Core/Threading/Platform/CriticalSection.h"
 
-#include "CoreApplication/Interface/PlatformConsoleWindow.h"
+#include "CoreApplication/Generic/GenericConsoleWindow.h"
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4275) // Non DLL-interface class used '...' as base for DLL-interface class '...'
-#pragma warning(disable : 4251) // Class '...' needs to have DLL-interface to be used by clients of class '...'
+    #pragma warning(push)
+    #pragma warning(disable : 4275) // Non DLL-interface class used '...' as base for DLL-interface class '...'
+    #pragma warning(disable : 4251) // Class '...' needs to have DLL-interface to be used by clients of class '...'
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows-specific interface for ConsoleWindow
+// CWindowsConsoleWindow
 
-class COREAPPLICATION_API CWindowsConsoleWindow final : public CPlatformConsoleWindow
+class COREAPPLICATION_API CWindowsConsoleWindow final : public CGenericConsoleWindow
 {
+private:
+
+    CWindowsConsoleWindow();
+    ~CWindowsConsoleWindow();
+
 public:
 
-     /** @brief: Creates a new console, can only be called once */
+     /**
+      * @brief: Creates a new console, can only be called once 
+      *
+      * @return: Returns the new ConsoleWindow
+      */
     static CWindowsConsoleWindow* Make();
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CWindowsConsoleWindow Interface
 
     virtual void Print(const String& Message) override final;
     virtual void PrintLine(const String& Message) override final;
@@ -33,19 +43,10 @@ public:
     virtual void SetColor(EConsoleColor Color)  override final;
 
 private:
-
-    CWindowsConsoleWindow();
-    ~CWindowsConsoleWindow();
-
-     /** @brief: Handle to the console window */
-    HANDLE ConsoleHandle;
-
-     /** @brief: Mutex protecting for errors when printing from multiple threads */
+    HANDLE           ConsoleHandle;
     CCriticalSection ConsoleMutex;
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-#endif
-
+    #pragma warning(pop)
 #endif

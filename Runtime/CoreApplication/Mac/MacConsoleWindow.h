@@ -3,12 +3,12 @@
 #if PLATFORM_MACOS
 #include "CocoaConsoleWindow.h"
 
-#include "CoreApplication/Interface/PlatformConsoleWindow.h"
+#include "CoreApplication/Generic/GenericConsoleWindow.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Mac specific implementation for console window
 
-class COREAPPLICATION_API CMacConsoleWindow final : public CPlatformConsoleWindow
+class COREAPPLICATION_API CMacConsoleWindow final : public CGenericConsoleWindow
 {
 public:
 

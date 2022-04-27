@@ -1,10 +1,9 @@
-#if PLATFORM_WINDOWS
 #include "WindowsConsoleWindow.h"
 
 #include "Core/Threading/ScopedLock.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowsConsoleWindow
+// CWindowsConsoleWindow
 
 CWindowsConsoleWindow::CWindowsConsoleWindow()
     : ConsoleHandle(0)
@@ -102,5 +101,3 @@ void CWindowsConsoleWindow::SetColor(EConsoleColor Color)
         SetConsoleTextAttribute(ConsoleHandle, wColor);
     }
 }
-
-#endif

@@ -114,7 +114,7 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    if (!CApplicationInstance::Make())
+    if (!CApplicationInstance::CreateApplication())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return false;

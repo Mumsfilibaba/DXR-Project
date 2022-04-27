@@ -1,10 +1,8 @@
 #pragma once
-
-#if PLATFORM_WINDOWS
 #include "Core/Windows/Windows.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// IWindowsMessageListener - Interface for handling windows messages before they get handled by the WindowsApplication
+// IWindowsMessageListener
 
 class IWindowsMessageListener
 {
@@ -18,5 +16,3 @@ public:
     */
     virtual LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam) = 0;
 };
-
-#endif

@@ -1,4 +1,3 @@
-#if PLATFORM_WINDOWS
 #include "WindowsCursor.h"
 #include "WindowsWindow.h"
 #include "Windows.h"
@@ -6,7 +5,7 @@
 #include "Core/Containers/SharedRef.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowsCursor
+// CWindowsCursor
 
 TSharedPtr<CWindowsCursor> CWindowsCursor::Make()
 {
@@ -59,7 +58,7 @@ void CWindowsCursor::SetCursor(ECursor Cursor)
     // TODO: Log error
 }
 
-void CWindowsCursor::SetPosition(CPlatformWindow* RelativeWindow, int32 x, int32 y) const
+void CWindowsCursor::SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 y) const
 {
     POINT CursorPos = { x, y };
     if (RelativeWindow)
@@ -76,7 +75,7 @@ void CWindowsCursor::SetPosition(CPlatformWindow* RelativeWindow, int32 x, int32
     ::SetCursorPos(CursorPos.x, CursorPos.y);
 }
 
-void CWindowsCursor::GetPosition(CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY) const
+void CWindowsCursor::GetPosition(CGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const
 {
     POINT CursorPos = { };
     if (!GetCursorPos(&CursorPos))
@@ -119,5 +118,3 @@ void CWindowsCursor::SetVisibility(bool bVisible)
         }
     }
 }
-
-#endif

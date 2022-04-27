@@ -5,25 +5,23 @@
 #include "CoreApplication/CoreApplication.h"
 
 #ifdef MessageBox
-#undef MessageBox
+    #undef MessageBox
 #endif
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 // TODO: Enable other types of Modal windows for supported platforms
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for miscellaneous application utility functions
+// CGenericApplicationMisc
 
-class CPlatformApplicationMisc
+class CGenericApplicationMisc
 {
 public:
 
@@ -50,17 +48,13 @@ public:
     static FORCEINLINE void PumpMessages(bool bUntilEmpty) { }
 
     /**
-     * @brief: Retrieves the state of modifier keys
-     * 
      * @return: Returns the current modifier-key state 
      */
     static FORCEINLINE SModifierKeyState GetModifierKeyState() { return SModifierKeyState(); }
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
+    #pragma warning(pop)
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
-
+    #pragma clang diagnostic pop
 #endif

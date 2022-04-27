@@ -5,10 +5,10 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/SharedRef.h"
 
-#include "CoreApplication/Interface/PlatformWindow.h"
+#include "CoreApplication/Generic/GenericWindow.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SEvent - Base class for events
+// SEvent 
 
 struct SEvent
 {
@@ -16,7 +16,7 @@ struct SEvent
         : bIsConsumed(false)
     { }
 
-    /** If the key was down or nor */
+    /** @brief: If the key was down or nor */
     bool bIsConsumed;
 };
 
@@ -32,13 +32,16 @@ struct SKeyEvent : public SEvent
         , ModiferKeyState(InModiferKeyState)
     { }
 
-    /** The KeyCode for this event */
+    /** @brief: The KeyCode for this event */
     EKey KeyCode;
-    /** If the key was down or not */
+    
+    /** @brief: If the key was down or not */
     bool bIsDown : 1;
-    /** Is a repeated key event */
+    
+    /** @brief: Is a repeated key event */
     bool bIsRepeat : 1;
-    /** The other modifier keys that where down at the same time as the event */
+    
+    /** @brief: The other modifier keys that where down at the same time as the event */
     SModifierKeyState ModiferKeyState;
 };
 
@@ -56,7 +59,7 @@ struct SKeyCharEvent : public SEvent
         return static_cast<char>(Character);
     }
 
-    /** The character that where pressed, this is a ascii character in most cases */
+    /** @brief: The character that where pressed, this is a ascii character in most cases */
     uint32 Character;
 };
 
@@ -66,12 +69,15 @@ struct SKeyCharEvent : public SEvent
 struct SMouseMovedEvent : public SEvent
 {
     FORCEINLINE SMouseMovedEvent(int32 InX, int32 InY)
-        : x(InX)
-        , y(InY)
+        : X(InX)
+        , Y(InY)
     { }
 
-    int32 x;
-    int32 y;
+    /** @brief: Cursor X-Position */
+    int32 X;
+
+    /** @brief: Cursor Y-Position */
+    int32 Y;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -79,15 +85,20 @@ struct SMouseMovedEvent : public SEvent
 
 struct SHighPrecisionMouseEvent : public SEvent
 {
-    FORCEINLINE SHighPrecisionMouseEvent(const TSharedRef<CPlatformWindow>& InWindow, int32 InX, int32 InY)
+    FORCEINLINE SHighPrecisionMouseEvent(const TSharedRef<CGenericWindow>& InWindow, int32 InX, int32 InY)
         : Window(InWindow)
-        , x(InX)
-        , y(InY)
+        , X(InX)
+        , Y(InY)
     { }
 
-    TSharedRef<CPlatformWindow> Window;
-    int32 x;
-    int32 y;
+    /** @brief: Window that the cursor moved inside */
+    TSharedRef<CGenericWindow> Window;
+
+    /** @brief: Cursor X-Position */
+    int32 X;
+
+    /** @brief: Cursor Y-Position */
+    int32 Y;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -101,11 +112,13 @@ struct SMouseButtonEvent : public SEvent
         , Modifiers(InModifiers)
     { }
 
-    /** The mouse button that for the event */
+    /** @brief: The mouse button that for the event */
     EMouseButton Button;
-    /** If the button where pressed or released */
+    
+    /** @brief: If the button where pressed or released */
     bool bIsDown;
-    /** The modifier keys that also where pressed */
+    
+    /** @brief: The modifier keys that also where pressed */
     SModifierKeyState Modifiers;
 };
 
@@ -119,7 +132,10 @@ struct SMouseScrolledEvent : public SEvent
         , VerticalDelta(InVerticalDelta)
     { }
 
+    /** @brief: Horizontal mouse-wheel delta */
     float HorizontalDelta;
+    
+    /** @brief: Vertical mouse-wheel delta */
     float VerticalDelta;
 };
 
@@ -128,15 +144,19 @@ struct SMouseScrolledEvent : public SEvent
 
 struct SWindowResizeEvent : public SEvent
 {
-    FORCEINLINE SWindowResizeEvent(const TSharedRef<CPlatformWindow>& InWindow, uint32 InWidth, uint32 InHeight)
+    FORCEINLINE SWindowResizeEvent(const TSharedRef<CGenericWindow>& InWindow, uint32 InWidth, uint32 InHeight)
         : Window(InWindow)
         , Width(InWidth)
         , Height(InHeight)
     { }
 
-    TSharedRef<CPlatformWindow> Window;
+    /** @brief: Window that got resized */
+    TSharedRef<CGenericWindow> Window;
 
+    /** @brief: New width of the window */
     uint32 Width;
+    
+    /** @brief: New height of the window */
     uint32 Height;
 };
 
@@ -145,12 +165,15 @@ struct SWindowResizeEvent : public SEvent
 
 struct SWindowFocusChangedEvent : public SEvent
 {
-    FORCEINLINE SWindowFocusChangedEvent(const TSharedRef<CPlatformWindow>& InWindow, bool bInHasFocus)
+    FORCEINLINE SWindowFocusChangedEvent(const TSharedRef<CGenericWindow>& InWindow, bool bInHasFocus)
         : Window(InWindow)
         , bHasFocus(bInHasFocus)
     { }
 
-    TSharedRef<CPlatformWindow> Window;
+    /** @brief: Window that had focus-status changed */
+    TSharedRef<CGenericWindow> Window;
+
+    /** @brief: Indicates weather the window got or lost focus */
     bool bHasFocus;
 };
 
@@ -159,16 +182,20 @@ struct SWindowFocusChangedEvent : public SEvent
 
 struct SWindowMovedEvent : public SEvent
 {
-    FORCEINLINE SWindowMovedEvent(const TSharedRef<CPlatformWindow>& InWindow, int32 InX, int32 InY)
+    FORCEINLINE SWindowMovedEvent(const TSharedRef<CGenericWindow>& InWindow, int32 InX, int32 InY)
         : Window(InWindow)
-        , x(InX)
-        , y(InY)
+        , X(InX)
+        , Y(InY)
     { }
 
-    TSharedRef<CPlatformWindow> Window;
+    /** @brief: Window that moved */
+    TSharedRef<CGenericWindow> Window;
 
-    int32 x;
-    int32 y;
+    /** @brief: New x-position of the window */
+    int32 X;
+    
+    /** @brief: New y-position of the window */
+    int32 Y;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -176,12 +203,15 @@ struct SWindowMovedEvent : public SEvent
 
 struct SWindowFrameMouseEvent : public SEvent
 {
-    FORCEINLINE SWindowFrameMouseEvent(const TSharedRef<CPlatformWindow>& InWindow, bool bInMouseEntered)
+    FORCEINLINE SWindowFrameMouseEvent(const TSharedRef<CGenericWindow>& InWindow, bool bInMouseEntered)
         : Window(InWindow)
         , bMouseEntered(bInMouseEntered)
     { }
 
-    TSharedRef<CPlatformWindow> Window;
+    /** @brief: Window that is affected by the event */
+    TSharedRef<CGenericWindow> Window;
+
+    /** @brief: True if the cursor just entered the window, false otherwise */
     bool bMouseEntered;
 };
 
@@ -190,9 +220,10 @@ struct SWindowFrameMouseEvent : public SEvent
 
 struct SWindowClosedEvent : public SEvent
 {
-    FORCEINLINE SWindowClosedEvent(const TSharedRef<CPlatformWindow>& InWindow)
+    FORCEINLINE SWindowClosedEvent(const TSharedRef<CGenericWindow>& InWindow)
         : Window(InWindow)
     { }
 
-    TSharedRef<CPlatformWindow> Window;
+    /** @brief: Window that got closed */
+    TSharedRef<CGenericWindow> Window;
 };

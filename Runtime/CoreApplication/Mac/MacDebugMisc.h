@@ -1,12 +1,12 @@
 #pragma once
 
 #if PLATFORM_MACOS 
-#include "CoreApplication/Interface/PlatformDebugMisc.h"
+#include "CoreApplication/Generic/GenericDebugMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Mac specific implementation for miscellaneous debug functions
 
-class CMacDebugMisc final : public CPlatformDebugMisc
+class CMacDebugMisc final : public CGenericDebugMisc
 {
 public:
 

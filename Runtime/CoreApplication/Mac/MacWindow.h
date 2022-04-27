@@ -3,7 +3,7 @@
 #if PLATFORM_MACOS
 #include "Core/Containers/SharedRef.h"
 
-#include "CoreApplication/Interface/PlatformWindow.h"
+#include "CoreApplication/Generic/GenericWindow.h"
 
 #if defined(__OBJC__)
 @class CCocoaWindow;
@@ -18,7 +18,7 @@ class CCocoaContentView;
 
 class CMacApplication;
 
-class CMacWindow final : public CPlatformWindow
+class CMacWindow final : public CGenericWindow
 {
 public:
 

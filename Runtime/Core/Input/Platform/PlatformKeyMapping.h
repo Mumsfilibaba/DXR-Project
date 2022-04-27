@@ -7,6 +7,6 @@
     #include "Core/Input/Mac/MacKeyMapping.h"
     typedef CMacKeyMapping PlatformKeyMapping;
 #else
-    #include "Core/Input/Interface/PlatformKeyMapping.h"
+    #include "Core/Input/Generic/GenericKeyMapping.h"
     typedef CGenericKeyMapping PlatformKeyMapping;
 #endif

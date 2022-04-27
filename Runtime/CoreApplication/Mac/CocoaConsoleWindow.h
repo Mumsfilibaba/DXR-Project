@@ -1,7 +1,7 @@
 #pragma once 
 
 #if PLATFORM_MACOS
-#include "CoreApplication/Interface/PlatformConsoleWindow.h"
+#include "CoreApplication/Generic/GenericConsoleWindow.h"
 
 #include <stdarg.h>
 

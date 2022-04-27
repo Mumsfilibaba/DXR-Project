@@ -1,28 +1,26 @@
 #pragma once
-#include "PlatformWindow.h"
+#include "GenericWindow.h"
 
 #include "Core/Input/InputCodes.h"
 #include "Core/Input/ModifierKeyState.h"
 #include "Core/Containers/SharedRef.h"
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Interface for a listener to platform messages
+// CGenericApplicationMessageHandler
 
-class CPlatformApplicationMessageHandler
+class CGenericApplicationMessageHandler
 {
 public:
 
-    virtual ~CPlatformApplicationMessageHandler() = default;
+    virtual ~CGenericApplicationMessageHandler() = default;
 
     /**
      * @brief: Handle a key released event
@@ -87,7 +85,7 @@ public:
      * @param x: Delta in x-position for this event
      * @param y: Delta in y-position for this event
      */
-    virtual void HandleHighPrecisionMouseInput(const TSharedRef<CPlatformWindow>& Window, int32 x, uint32 y) { }
+    virtual void HandleHighPrecisionMouseInput(const TSharedRef<CGenericWindow>& Window, int32 x, uint32 y) { }
 
     /**
      * @brief: Handle a key released event
@@ -95,7 +93,7 @@ public:
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
      */
-    virtual void HandleWindowResized(const TSharedRef<CPlatformWindow>& Window, uint32 Width, uint32 Height) { }
+    virtual void HandleWindowResized(const TSharedRef<CGenericWindow>& Window, uint32 Width, uint32 Height) { }
 
     /**
      * @brief: Handle a key released event
@@ -103,7 +101,7 @@ public:
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
      */
-    virtual void HandleWindowMoved(const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y) { }
+    virtual void HandleWindowMoved(const TSharedRef<CGenericWindow>& Window, int32 x, int32 y) { }
 
     /**
      * @brief: Handle a key released event
@@ -111,7 +109,7 @@ public:
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
      */
-    virtual void HandleWindowFocusChanged(const TSharedRef<CPlatformWindow>& Window, bool bHasFocus) { }
+    virtual void HandleWindowFocusChanged(const TSharedRef<CGenericWindow>& Window, bool bHasFocus) { }
 
     /**
      * @brief: Handle a key released event
@@ -119,7 +117,7 @@ public:
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
      */
-    virtual void HandleWindowMouseLeft(const TSharedRef<CPlatformWindow>& Window) { }
+    virtual void HandleWindowMouseLeft(const TSharedRef<CGenericWindow>& Window) { }
 
     /**
      * @brief: Handle a key released event
@@ -127,7 +125,7 @@ public:
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
      */
-    virtual void HandleWindowMouseEntered(const TSharedRef<CPlatformWindow>& Window) { }
+    virtual void HandleWindowMouseEntered(const TSharedRef<CGenericWindow>& Window) { }
 
     /**
      * @brief: Handle a key released event
@@ -135,7 +133,7 @@ public:
      * @param KeyCode: The key-code for the event
      * @param ModifierKeyState: The state of the modifier keys when the event occurred
      */
-    virtual void HandleWindowClosed(const TSharedRef<CPlatformWindow>& Window) { }
+    virtual void HandleWindowClosed(const TSharedRef<CGenericWindow>& Window) { }
 
     /**
      * @brief: Handle a key released event

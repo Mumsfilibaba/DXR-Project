@@ -81,7 +81,7 @@ public:
 
     void Release();
 
-    void PerformFrustumCulling(const CScene& Scene);
+    void PerformFrustumCullingAndSort(const CScene& Scene);
     void PerformFXAA(CRHICommandList& InCmdList);
     void PerformBackBufferBlit(CRHICommandList& InCmdList);
 

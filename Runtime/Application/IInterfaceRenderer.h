@@ -22,10 +22,10 @@ public:
      */
     virtual bool InitContext(InterfaceContext NewContext) = 0;
 
-    /** Start the update of the UI, after the call to this function, calls to UI window's tick are valid */
+    /** @brief: Start the update of the UI, after the call to this function, calls to UI window's tick are valid */
     virtual void BeginTick() = 0;
 
-    /** End the update of the UI, after the call to this function, calls to UI window's tick are NOT valid  */
+    /** @brief: End the update of the UI, after the call to this function, calls to UI window's tick are NOT valid  */
     virtual void EndTick() = 0;
 
     /**

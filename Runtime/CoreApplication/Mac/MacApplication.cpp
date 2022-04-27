@@ -22,7 +22,7 @@ TSharedPtr<CMacApplication> CMacApplication::Make()
 }
 
 CMacApplication::CMacApplication()
-    : CPlatformApplication(CMacCursor::Make())
+    : CGenericApplication(CMacCursor::Make())
 	, AppDelegate(nullptr)
     , Windows()
     , WindowsMutex()
@@ -38,7 +38,7 @@ CMacApplication::~CMacApplication()
     [AppDelegate release];
 }
 
-TSharedRef<CPlatformWindow> CMacApplication::MakeWindow()
+TSharedRef<CGenericWindow> CMacApplication::MakeWindow()
 {
     TSharedRef<CMacWindow> NewWindow = CMacWindow::Make(this);
     
@@ -147,7 +147,7 @@ void CMacApplication::Tick(float)
 	}
 }
 
-void CMacApplication::SetActiveWindow(const TSharedRef<CPlatformWindow>& Window)
+void CMacApplication::SetActiveWindow(const TSharedRef<CGenericWindow>& Window)
 {
     MakeMainThreadCall(^
     {
@@ -156,7 +156,7 @@ void CMacApplication::SetActiveWindow(const TSharedRef<CPlatformWindow>& Window)
     }, true);
 }
 
-TSharedRef<CPlatformWindow> CMacApplication::GetActiveWindow() const
+TSharedRef<CGenericWindow> CMacApplication::GetActiveWindow() const
 {
 	SCOPED_AUTORELEASE_POOL();
 
@@ -164,7 +164,7 @@ TSharedRef<CPlatformWindow> CMacApplication::GetActiveWindow() const
     return GetWindowFromNSWindow(KeyWindow);
 }
 
-TSharedRef<CPlatformWindow> CMacApplication::GetWindowUnderCursor() const
+TSharedRef<CGenericWindow> CMacApplication::GetWindowUnderCursor() const
 {
 	SCOPED_AUTORELEASE_POOL();
 	

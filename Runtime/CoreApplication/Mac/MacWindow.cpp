@@ -16,7 +16,7 @@ TSharedRef<CMacWindow> CMacWindow::Make(CMacApplication* InApplication)
 }
 
 CMacWindow::CMacWindow(CMacApplication* InApplication)
-    : CPlatformWindow()
+    : CGenericWindow()
     , Application(InApplication)
     , Window(nullptr)
     , View(nullptr)

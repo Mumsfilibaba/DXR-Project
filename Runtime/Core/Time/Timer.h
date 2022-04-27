@@ -2,7 +2,7 @@
 #include "Timestamp.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Simple timer to count time between ticks
+// CTimer
 
 class CORE_API CTimer
 {
@@ -11,10 +11,10 @@ public:
     CTimer();
     ~CTimer() = default;
 
-    /** Measure time between this and last call to tick */
+    /** @brief: Measure time between this and last call to tick */
     void Tick();
 
-    /** Resets the time to zero */
+    /** @brief: Resets the time to zero */
     FORCEINLINE void Reset()
     {
         DeltaTime = CTimestamp(0);
@@ -35,6 +35,6 @@ private:
     CTimestamp TotalTime;
     CTimestamp DeltaTime;
 
-    uint64 LastTime = 0;
-    uint64 Frequency = 0;
+    uint64     LastTime  = 0;
+    uint64     Frequency = 0;
 };

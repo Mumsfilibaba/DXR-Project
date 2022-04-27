@@ -12,9 +12,9 @@
 
 TSharedPtr<CApplicationInstance> CApplicationInstance::Instance;
 
-bool CApplicationInstance::Make()
+bool CApplicationInstance::CreateApplication()
 {
-    TSharedPtr<CPlatformApplication> Application = PlatformApplication::Make();
+    TSharedPtr<CGenericApplication> Application = PlatformApplication::CreateApplication();
     if (Application && !Application->Initialize())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to create PlatformApplication");
@@ -33,7 +33,7 @@ bool CApplicationInstance::Make()
     return true;
 }
 
-bool CApplicationInstance::Make(const TSharedPtr<CApplicationInstance>& InApplication)
+bool CApplicationInstance::CreateApplication(const TSharedPtr<CApplicationInstance>& InApplication)
 {
     Instance = InApplication;
     return (Instance != nullptr);
@@ -48,8 +48,8 @@ void CApplicationInstance::Release()
     }
 }
 
-CApplicationInstance::CApplicationInstance(const TSharedPtr<CPlatformApplication>& InPlatformApplication)
-    : CPlatformApplicationMessageHandler()
+CApplicationInstance::CApplicationInstance(const TSharedPtr<CGenericApplication>& InPlatformApplication)
+    : CGenericApplicationMessageHandler()
     , PlatformApplication(InPlatformApplication)
     , Renderer()
     , MainViewport()
@@ -60,8 +60,7 @@ CApplicationInstance::CApplicationInstance(const TSharedPtr<CPlatformApplication
     , RegisteredUsers()
     , bIsRunning(true)
     , Context(nullptr)
-{
-}
+{ }
 
 bool CApplicationInstance::CreateContext()
 {
@@ -81,28 +80,28 @@ bool CApplicationInstance::CreateContext()
     UIState.BackendPlatformName = "Windows";
 
     // Keyboard mapping. ImGui will use those indices to peek into the IO.KeysDown[] array that we will update during the application lifetime.
-    UIState.KeyMap[ImGuiKey_Tab] = EKey::Key_Tab;
-    UIState.KeyMap[ImGuiKey_LeftArrow] = EKey::Key_Left;
-    UIState.KeyMap[ImGuiKey_RightArrow] = EKey::Key_Right;
-    UIState.KeyMap[ImGuiKey_UpArrow] = EKey::Key_Up;
-    UIState.KeyMap[ImGuiKey_DownArrow] = EKey::Key_Down;
-    UIState.KeyMap[ImGuiKey_PageUp] = EKey::Key_PageUp;
-    UIState.KeyMap[ImGuiKey_PageDown] = EKey::Key_PageDown;
-    UIState.KeyMap[ImGuiKey_Home] = EKey::Key_Home;
-    UIState.KeyMap[ImGuiKey_End] = EKey::Key_End;
-    UIState.KeyMap[ImGuiKey_Insert] = EKey::Key_Insert;
-    UIState.KeyMap[ImGuiKey_Delete] = EKey::Key_Delete;
-    UIState.KeyMap[ImGuiKey_Backspace] = EKey::Key_Backspace;
-    UIState.KeyMap[ImGuiKey_Space] = EKey::Key_Space;
-    UIState.KeyMap[ImGuiKey_Enter] = EKey::Key_Enter;
-    UIState.KeyMap[ImGuiKey_Escape] = EKey::Key_Escape;
+    UIState.KeyMap[ImGuiKey_Tab]         = EKey::Key_Tab;
+    UIState.KeyMap[ImGuiKey_LeftArrow]   = EKey::Key_Left;
+    UIState.KeyMap[ImGuiKey_RightArrow]  = EKey::Key_Right;
+    UIState.KeyMap[ImGuiKey_UpArrow]     = EKey::Key_Up;
+    UIState.KeyMap[ImGuiKey_DownArrow]   = EKey::Key_Down;
+    UIState.KeyMap[ImGuiKey_PageUp]      = EKey::Key_PageUp;
+    UIState.KeyMap[ImGuiKey_PageDown]    = EKey::Key_PageDown;
+    UIState.KeyMap[ImGuiKey_Home]        = EKey::Key_Home;
+    UIState.KeyMap[ImGuiKey_End]         = EKey::Key_End;
+    UIState.KeyMap[ImGuiKey_Insert]      = EKey::Key_Insert;
+    UIState.KeyMap[ImGuiKey_Delete]      = EKey::Key_Delete;
+    UIState.KeyMap[ImGuiKey_Backspace]   = EKey::Key_Backspace;
+    UIState.KeyMap[ImGuiKey_Space]       = EKey::Key_Space;
+    UIState.KeyMap[ImGuiKey_Enter]       = EKey::Key_Enter;
+    UIState.KeyMap[ImGuiKey_Escape]      = EKey::Key_Escape;
     UIState.KeyMap[ImGuiKey_KeyPadEnter] = EKey::Key_KeypadEnter;
-    UIState.KeyMap[ImGuiKey_A] = EKey::Key_A;
-    UIState.KeyMap[ImGuiKey_C] = EKey::Key_C;
-    UIState.KeyMap[ImGuiKey_V] = EKey::Key_V;
-    UIState.KeyMap[ImGuiKey_X] = EKey::Key_X;
-    UIState.KeyMap[ImGuiKey_Y] = EKey::Key_Y;
-    UIState.KeyMap[ImGuiKey_Z] = EKey::Key_Z;
+    UIState.KeyMap[ImGuiKey_A]           = EKey::Key_A;
+    UIState.KeyMap[ImGuiKey_C]           = EKey::Key_C;
+    UIState.KeyMap[ImGuiKey_V]           = EKey::Key_V;
+    UIState.KeyMap[ImGuiKey_X]           = EKey::Key_X;
+    UIState.KeyMap[ImGuiKey_Y]           = EKey::Key_Y;
+    UIState.KeyMap[ImGuiKey_Z]           = EKey::Key_Z;
 
     ImGui::StyleColorsDark();
 
@@ -113,18 +112,18 @@ bool CApplicationInstance::CreateContext()
 
     // Size
     Style.WindowBorderSize = 0.0f;
-    Style.FrameBorderSize = 1.0f;
-    Style.ChildBorderSize = 1.0f;
-    Style.PopupBorderSize = 1.0f;
-    Style.ScrollbarSize = 14.0f;
-    Style.GrabMinSize = 20.0f;
+    Style.FrameBorderSize  = 1.0f;
+    Style.ChildBorderSize  = 1.0f;
+    Style.PopupBorderSize  = 1.0f;
+    Style.ScrollbarSize    = 14.0f;
+    Style.GrabMinSize      = 20.0f;
 
     // Rounding
-    Style.WindowRounding = 4.0f;
-    Style.FrameRounding = 4.0f;
-    Style.PopupRounding = 4.0f;
-    Style.GrabRounding = 4.0f;
-    Style.TabRounding = 4.0f;
+    Style.WindowRounding    = 4.0f;
+    Style.FrameRounding     = 4.0f;
+    Style.PopupRounding     = 4.0f;
+    Style.GrabRounding      = 4.0f;
+    Style.TabRounding       = 4.0f;
     Style.ScrollbarRounding = 6.0f;
 
     Style.Colors[ImGuiCol_WindowBg].x = 0.2f;
@@ -243,7 +242,7 @@ CApplicationInstance::~CApplicationInstance()
     }
 }
 
-TSharedRef<CPlatformWindow> CApplicationInstance::MakeWindow()
+TSharedRef<CGenericWindow> CApplicationInstance::MakeWindow()
 {
     return PlatformApplication->MakeWindow();
 }
@@ -253,7 +252,7 @@ void CApplicationInstance::Tick(CTimestamp DeltaTime)
     // Update UI
     ImGuiIO& UIState = ImGui::GetIO();
 
-    TSharedRef<CPlatformWindow> Window = MainViewport;
+    TSharedRef<CGenericWindow> Window = MainViewport;
     if (UIState.WantSetMousePos)
     {
         SetCursorPos(Window, CIntVector2(static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y)));
@@ -345,7 +344,7 @@ void CApplicationInstance::SetCursorPos(const CIntVector2& Position)
     Cursor->SetPosition(nullptr, Position.x, Position.y);
 }
 
-void CApplicationInstance::SetCursorPos(const TSharedRef<CPlatformWindow>& RelativeWindow, const CIntVector2& Position)
+void CApplicationInstance::SetCursorPos(const TSharedRef<CGenericWindow>& RelativeWindow, const CIntVector2& Position)
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
     Cursor->SetPosition(RelativeWindow.Get(), Position.x, Position.y);
@@ -361,7 +360,7 @@ CIntVector2 CApplicationInstance::GetCursorPos() const
     return CursorPosition;
 }
 
-CIntVector2 CApplicationInstance::GetCursorPos(const TSharedRef<CPlatformWindow>& RelativeWindow) const
+CIntVector2 CApplicationInstance::GetCursorPos(const TSharedRef<CGenericWindow>& RelativeWindow) const
 {
     TSharedPtr<ICursor> Cursor = GetCursor();
 
@@ -383,18 +382,20 @@ bool CApplicationInstance::IsCursorVisibile() const
     return Cursor->IsVisible();
 }
 
-void CApplicationInstance::SetCapture(const TSharedRef<CPlatformWindow>& CaptureWindow)
+void CApplicationInstance::SetCapture(const TSharedRef<CGenericWindow>& CaptureWindow)
 {
     PlatformApplication->SetCapture(CaptureWindow);
 }
 
-void CApplicationInstance::SetActiveWindow(const TSharedRef<CPlatformWindow>& ActiveWindow)
+void CApplicationInstance::SetActiveWindow(const TSharedRef<CGenericWindow>& ActiveWindow)
 {
     PlatformApplication->SetActiveWindow(ActiveWindow);
 }
 
 template<typename MessageHandlerType>
-void CApplicationInstance::InsertMessageHandler(TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray, const TSharedPtr<MessageHandlerType>& NewMessageHandler, uint32 NewPriority)
+void CApplicationInstance::InsertMessageHandler(TArray<TPair<TSharedPtr<MessageHandlerType>, uint32>>& OutMessageHandlerArray
+                                               ,const TSharedPtr<MessageHandlerType>& NewMessageHandler
+                                               ,uint32 NewPriority)
 {
     TPair NewPair(NewMessageHandler, NewPriority);
     if (!OutMessageHandlerArray.Contains(NewPair))
@@ -435,7 +436,7 @@ void CApplicationInstance::RemoveInputHandler(const TSharedPtr<CInputHandler>& I
     }
 }
 
-void CApplicationInstance::RegisterMainViewport(const TSharedRef<CPlatformWindow>& NewMainViewport)
+void CApplicationInstance::RegisterMainViewport(const TSharedRef<CGenericWindow>& NewMainViewport)
 {
     MainViewport = NewMainViewport;
     if (MainViewportChange.IsBound())
@@ -512,7 +513,7 @@ void CApplicationInstance::RemoveWindowMessageHandler(const TSharedPtr<CWindowMe
     }
 }
 
-void CApplicationInstance::SetPlatformApplication(const TSharedPtr<CPlatformApplication>& InPlatformApplication)
+void CApplicationInstance::SetPlatformApplication(const TSharedPtr<CGenericApplication>& InPlatformApplication)
 {
     if (InPlatformApplication)
     {
@@ -605,7 +606,7 @@ void CApplicationInstance::HandleMouseMove(int32 x, int32 y)
 
 void CApplicationInstance::HandleMouseReleased(EMouseButton Button, SModifierKeyState ModierKeyState)
 {
-    TSharedRef<CPlatformWindow> CaptureWindow = PlatformApplication->GetCapture();
+    TSharedRef<CGenericWindow> CaptureWindow = PlatformApplication->GetCapture();
     if (CaptureWindow)
     {
         PlatformApplication->SetCapture(nullptr);
@@ -617,10 +618,10 @@ void CApplicationInstance::HandleMouseReleased(EMouseButton Button, SModifierKey
 
 void CApplicationInstance::HandleMousePressed(EMouseButton Button, SModifierKeyState ModierKeyState)
 {
-    TSharedRef<CPlatformWindow> CaptureWindow = PlatformApplication->GetCapture();
+    TSharedRef<CGenericWindow> CaptureWindow = PlatformApplication->GetCapture();
     if (!CaptureWindow)
     {
-        TSharedRef<CPlatformWindow> ActiveWindow = PlatformApplication->GetActiveWindow();
+        TSharedRef<CGenericWindow> ActiveWindow = PlatformApplication->GetActiveWindow();
         PlatformApplication->SetCapture(ActiveWindow);
     }
 
@@ -702,7 +703,7 @@ void CApplicationInstance::HandleMouseScrolled(float HorizontalDelta, float Vert
     }
 }
 
-void CApplicationInstance::HandleWindowResized(const TSharedRef<CPlatformWindow>& Window, uint32 Width, uint32 Height)
+void CApplicationInstance::HandleWindowResized(const TSharedRef<CGenericWindow>& Window, uint32 Width, uint32 Height)
 {
     SWindowResizeEvent WindowResizeEvent(Window, Width, Height);
     for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
@@ -715,7 +716,7 @@ void CApplicationInstance::HandleWindowResized(const TSharedRef<CPlatformWindow>
     }
 }
 
-void CApplicationInstance::HandleWindowMoved(const TSharedRef<CPlatformWindow>& Window, int32 x, int32 y)
+void CApplicationInstance::HandleWindowMoved(const TSharedRef<CGenericWindow>& Window, int32 x, int32 y)
 {
     SWindowMovedEvent WindowsMovedEvent(Window, x, y);
     for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
@@ -728,7 +729,7 @@ void CApplicationInstance::HandleWindowMoved(const TSharedRef<CPlatformWindow>& 
     }
 }
 
-void CApplicationInstance::HandleWindowFocusChanged(const TSharedRef<CPlatformWindow>& Window, bool bHasFocus)
+void CApplicationInstance::HandleWindowFocusChanged(const TSharedRef<CGenericWindow>& Window, bool bHasFocus)
 {
     SWindowFocusChangedEvent WindowFocusChangedEvent(Window, bHasFocus);
     for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)
@@ -741,13 +742,13 @@ void CApplicationInstance::HandleWindowFocusChanged(const TSharedRef<CPlatformWi
     }
 }
 
-void CApplicationInstance::HandleWindowMouseLeft(const TSharedRef<CPlatformWindow>& Window)
+void CApplicationInstance::HandleWindowMouseLeft(const TSharedRef<CGenericWindow>& Window)
 {
     SWindowFrameMouseEvent WindowFrameMouseEvent(Window, false);
     HandleWindowFrameMouseEvent(WindowFrameMouseEvent);
 }
 
-void CApplicationInstance::HandleWindowMouseEntered(const TSharedRef<CPlatformWindow>& Window)
+void CApplicationInstance::HandleWindowMouseEntered(const TSharedRef<CGenericWindow>& Window)
 {
     SWindowFrameMouseEvent WindowFrameMouseEvent(Window, true);
     HandleWindowFrameMouseEvent(WindowFrameMouseEvent);
@@ -797,7 +798,7 @@ void CApplicationInstance::RenderStrings()
     }
 }
 
-void CApplicationInstance::HandleWindowClosed(const TSharedRef<CPlatformWindow>& Window)
+void CApplicationInstance::HandleWindowClosed(const TSharedRef<CGenericWindow>& Window)
 {
     SWindowClosedEvent WindowClosedEvent(Window);
     for (int32 Index = 0; Index < WindowMessageHandlers.Size(); Index++)

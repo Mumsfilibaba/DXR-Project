@@ -1,7 +1,7 @@
 #pragma once
 
 #if PLATFORM_MACOS 
-#include "CoreApplication/Interface/PlatformApplicationMisc.h"
+#include "CoreApplication/Generic/GenericApplicationMisc.h"
 
 #if defined(COMPILER_CLANG)
 #pragma clang diagnostic push
@@ -13,7 +13,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Mac specific implementation for miscellaneous application utility functions
 
-class CMacApplicationMisc final : public CPlatformApplicationMisc
+class CMacApplicationMisc final : public CGenericApplicationMisc
 {
 public:
 

@@ -7,6 +7,6 @@
     #include "Core/Modules/Mac/MacLibrary.h"
     typedef CMacLibrary PlatformLibrary;
 #else
-    #include "Core/Modules/Interface/PlatformLibrary.h"
+    #include "Core/Modules/Generic/GenericLibrary.h"
     typedef CGenericLibrary PlatformLibrary;
 #endif

@@ -6,7 +6,7 @@
 #include "Core/Templates/EnableIf.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RefCounted - Base-class for intrusive ref-counted object
+// CRefCounted
 
 class CORE_API CRefCounted
 {

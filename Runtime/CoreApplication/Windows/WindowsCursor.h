@@ -1,40 +1,36 @@
 #pragma once
-
-#if PLATFORM_WINDOWS
 #include "Core/Containers/SharedPtr.h"
 
 #include "CoreApplication/CoreApplication.h"
-#include "CoreApplication/Interface/PlatformCursor.h"
+#include "CoreApplication/Generic/GenericCursor.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows-specific interface for cursor
+// CWindowsCursor
 
-class COREAPPLICATION_API CWindowsCursor final : public CPlatformCursor
+class COREAPPLICATION_API CWindowsCursor final : public CGenericCursor
 {
+private:
+
+    friend struct TDefaultDelete<CWindowsCursor>;
+
+    CWindowsCursor()
+        : CGenericCursor()
+    { }
+
+    ~CWindowsCursor() = default;
+
 public:
 
     static TSharedPtr<CWindowsCursor> Make();
 
-     /** @brief: Public constructor for the TSharedPtr*/
-    ~CWindowsCursor() = default;
+public:
 
-     /** @brief: Sets the type of cursor that is being used */
-    virtual void SetCursor(ECursor Cursor) override final;
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CGenericCursor Interface
 
-     /** @brief: Sets the position of the cursor */
-    virtual void SetPosition(CPlatformWindow* RelativeWindow, int32 x, int32 y) const override final;
-
-     /** @brief: Retrieve the cursor position of a window */
-    virtual void GetPosition(CPlatformWindow* RelativeWindow, int32& OutX, int32& OutY) const override final;
-
-     /** @brief: Show or hide the mouse */
+    virtual void SetCursor(ECursor Cursor)      override final;
     virtual void SetVisibility(bool bIsVisible) override final;
 
-private:
-
-    CWindowsCursor()
-        : CPlatformCursor()
-    { }
+    virtual void SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 y)         const override final;
+    virtual void GetPosition(CGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const override final;
 };
-
-#endif

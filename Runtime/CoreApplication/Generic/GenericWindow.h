@@ -1,17 +1,16 @@
 #pragma once
 #include "Core/RefCounted.h"
 #include "Core/Containers/String.h"
+#include "Core/Templates/EnumUtilities.h"
 
 #include "CoreApplication/CoreApplication.h"
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -27,8 +26,10 @@ enum EWindowStyleFlag : uint32
     WindowStyleFlag_Resizeable  = FLAG(5),
 };
 
+ENUM_CLASS_OPERATORS(EWindowStyleFlag);
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowStyle - Struct for checking window style
+// SWindowStyle
 
 struct SWindowStyle
 {
@@ -67,7 +68,7 @@ struct SWindowStyle
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowShape - Struct defining the shape of a window
+// SWindowShape
 
 struct SWindowShape
 {
@@ -89,12 +90,15 @@ struct SWindowShape
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Platform interface for a window
+// CGenericWindow
 
-typedef void* PlatformWindowHandle;
-
-class CPlatformWindow : public CRefCounted
+class CGenericWindow : public CRefCounted
 {
+protected:
+
+    CGenericWindow() = default;
+    ~CGenericWindow() = default;
+
 public:
 
     /**
@@ -167,27 +171,20 @@ public:
     virtual uint32 GetHeight() const { return 0; }
 
      /** @brief: Set the native window handle */
-    virtual void SetPlatformHandle(PlatformWindowHandle InPlatformHandle) { }
+    virtual void SetPlatformHandle(void* InPlatformHandle) { }
 
      /** @brief: Retrieve the native handle */
-    virtual PlatformWindowHandle GetPlatformHandle() const { return nullptr; }
+    virtual void* GetPlatformHandle() const { return nullptr; }
 
      /** @brief: Retrieve the style of the window */
     FORCEINLINE SWindowStyle GetStyle() const { return StyleParams; }
 
 protected:
-
-    CPlatformWindow() = default;
-    ~CPlatformWindow() = default;
-
-    // Style of the window
     SWindowStyle StyleParams;
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
+    #pragma warning(pop)
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
-
+    #pragma clang diagnostic pop
 #endif

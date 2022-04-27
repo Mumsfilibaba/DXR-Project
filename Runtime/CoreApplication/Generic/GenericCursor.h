@@ -2,10 +2,15 @@
 #include "CoreApplication/ICursor.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Base Platform interface for cursor
+// CGenericCursor
 
-class CPlatformCursor : public ICursor
+class CGenericCursor : public ICursor
 {
+protected:
+
+    CGenericCursor() = default;
+    ~CGenericCursor() = default;
+
 public:
 
     /**
@@ -19,9 +24,5 @@ public:
     }
 
 protected:
-
-    CPlatformCursor() = default;
-    ~CPlatformCursor() = default;
-
     bool bIsVisible = true;
 };

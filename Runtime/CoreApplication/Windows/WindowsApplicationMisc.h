@@ -1,40 +1,35 @@
 #pragma once
-
-#if PLATFORM_WINDOWS
 #include "Windows.h"
 
 #include "Core/Core.h"
 
-#include "CoreApplication/Interface/PlatformApplicationMisc.h"
+#include "CoreApplication/Generic/GenericApplicationMisc.h"
 
 #ifdef MessageBox
-#undef MessageBox
+    #undef MessageBox
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows-specific interface for miscellaneous application utility functions
+// CWindowsApplicationMisc
 
-class COREAPPLICATION_API CWindowsApplicationMisc final : public CPlatformApplicationMisc
+class COREAPPLICATION_API CWindowsApplicationMisc final : public CGenericApplicationMisc
 {
 public:
 
-     /** @brief: Shows a message box with desired title and message */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CGenericApplicationMisc Interface
+
     static FORCEINLINE void MessageBox(const String& Title, const String& Message)
     {
         MessageBoxA(0, Message.CStr(), Title.CStr(), MB_ICONERROR | MB_OK);
     }
 
-     /** @brief: Sends a quit message which then is handled in the applications message loop */
     static FORCEINLINE void RequestExit(int32 ExitCode)
     {
         PostQuitMessage(ExitCode);
     }
 
-     /** @brief: Pumps the application's message queue */
     static void PumpMessages(bool bUntilEmpty);
 
-     /** @brief: Retrieves the current modifier key- state */
     static SModifierKeyState GetModifierKeyState();
 };
-
-#endif

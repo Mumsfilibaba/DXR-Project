@@ -28,7 +28,7 @@ CGameConsoleWindow::CGameConsoleWindow()
 
 void CGameConsoleWindow::Tick()
 {
-    TSharedRef<CPlatformWindow> MainWindow = CApplicationInstance::Get().GetMainViewport();
+    TSharedRef<CGenericWindow> MainWindow = CApplicationInstance::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainWindow->GetWidth();
 

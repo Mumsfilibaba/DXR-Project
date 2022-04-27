@@ -11,7 +11,7 @@
 #include "CoreApplication/ICursor.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ApplicationUser
+// CApplicationUser
 
 class APPLICATION_API CApplicationUser
 {
@@ -136,10 +136,10 @@ private:
         });
     }
 
-    const uint32 UserIndex;
+    const uint32              UserIndex;
     
-    TSharedPtr<ICursor> Cursor;
+    TSharedPtr<ICursor>       Cursor;
 
-    TArray<SKeyState> KeyStates; // TODO: Use a map instead? 
+    TArray<SKeyState>         KeyStates; // TODO: Use a map instead? 
     TArray<SMouseButtonState> MouseButtonStates;
 };
