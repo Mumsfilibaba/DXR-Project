@@ -9,6 +9,16 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CWindowsWindow
 
+CWindowsWindow* CWindowsWindow::CreateWindowsWindow(CWindowsApplication* InApplication)
+{
+    return dbg_new CWindowsWindow(InApplication);
+}
+
+const char* CWindowsWindow::GetClassName()
+{
+    return "WindowClass";
+}
+
 CWindowsWindow::CWindowsWindow(CWindowsApplication* InApplication)
     : CGenericWindow()
     , Application(InApplication)
@@ -17,8 +27,7 @@ CWindowsWindow::CWindowsWindow(CWindowsApplication* InApplication)
     , StoredPlacement()
     , Style(0)
     , StyleEx(0)
-{
-}
+{ }
 
 CWindowsWindow::~CWindowsWindow()
 {
@@ -26,11 +35,6 @@ CWindowsWindow::~CWindowsWindow()
     {
         DestroyWindow(Window);
     }
-}
-
-TSharedRef<CWindowsWindow> CWindowsWindow::Make(CWindowsApplication* InApplication)
-{
-    return dbg_new CWindowsWindow(InApplication);
 }
 
 bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
@@ -88,9 +92,18 @@ bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 In
     int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
     HINSTANCE Instance = Application->GetInstance();
-    LPCSTR WindowClassName = PlatformApplication::GetWindowClassName();
-
-    Window = CreateWindowEx(NewStyleEx, WindowClassName, InTitle.CStr(), NewStyle, PositionX, PositionY, RealWidth, RealHeight, NULL, NULL, Instance, NULL);
+    Window = CreateWindowEx( NewStyleEx
+                           , CWindowsWindow::GetClassName()
+                           , InTitle.CStr()
+                           , NewStyle
+                           , PositionX
+                           , PositionY
+                           , RealWidth
+                           , RealHeight
+                           , nullptr
+                           , nullptr
+                           , Instance
+                           , nullptr);
     if (Window == 0)
     {
         LOG_ERROR("[CWindowsWindow]: FAILED to create window\n");
@@ -231,6 +244,7 @@ void CWindowsWindow::ToggleFullscreen()
 
             SetWindowLong(Window, GWL_STYLE, NewStyle | WS_POPUP);
             SetWindowLong(Window, GWL_EXSTYLE, NewStyleEx | WS_EX_TOPMOST);
+            
             ShowWindow(Window, SW_SHOWMAXIMIZED);
         }
         else
@@ -239,7 +253,9 @@ void CWindowsWindow::ToggleFullscreen()
 
             SetWindowLong(Window, GWL_STYLE, Style);
             SetWindowLong(Window, GWL_EXSTYLE, StyleEx);
+            
             ShowWindow(Window, SW_SHOWNORMAL);
+
             SetWindowPlacement(Window, &StoredPlacement);
         }
     }
@@ -330,7 +346,7 @@ void CWindowsWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
         int32 RealWidth  = ClientRect.right  - ClientRect.left;
         int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
-        SetWindowPos(Window, NULL, PositionX, PositionY, RealWidth, RealHeight, Flags);
+        SetWindowPos(Window, nullptr, PositionX, PositionY, RealWidth, RealHeight, Flags);
     }
 }
 

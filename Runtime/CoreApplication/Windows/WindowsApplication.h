@@ -43,6 +43,22 @@ struct SWindowsMessage
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// IWindowsMessageListener
+
+class IWindowsMessageListener
+{
+public:
+
+    virtual ~IWindowsMessageListener() = default;
+
+    /*
+    * Handles messages sent from the application's MessageProc
+    * See https://docs.microsoft.com/en-us/windows/win32/learnwin32/writing-the-window-procedure
+    */
+    virtual LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam) = 0;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CWindowsApplication
 
 class COREAPPLICATION_API CWindowsApplication final : public CGenericApplication
@@ -56,35 +72,7 @@ private:
 
 public:
 
-     /** 
-      * @brief: Creates an instance of the WindowsApplication, also loads the icon 
-      *
-      * @return: Returns the newly created WindowsApplication
-      */
-    static TSharedPtr<CWindowsApplication> CreateApplication();
-
-     /**
-      * @return: Returns class name for the window-class used for a Window 
-      */
-    static FORCEINLINE const char* GetWindowClassName() {  return "WindowClass";  }
-
-     /**
-      * @return: Returns the HINSTANCE of the application or retrieves it in case the application is not initialized 
-      */
-    static FORCEINLINE HINSTANCE GetStaticInstance()
-    {
-        return Instance ? Instance->GetInstance() : static_cast<HINSTANCE>(GetModuleHandle(0));
-    }
-
-     /** 
-      * @return: Returns the instance of the windows application 
-      */
-    static FORCEINLINE CWindowsApplication* Get() { return Instance; }
-
-     /** 
-      * @return: Returns true if the WindowsApplication has been created 
-      */
-    static FORCEINLINE bool IsInitialized() { return (Instance != nullptr); }
+    static CWindowsApplication* CreateWindowsApplication();
 
 public:
     
@@ -93,59 +81,36 @@ public:
 
     virtual TSharedRef<CGenericWindow> MakeWindow() override final;
 
-    virtual bool Initialize()      override final;
+    virtual bool Initialize() override final;
+
     virtual void Tick(float Delta) override final;
 
     virtual bool SupportsRawMouse() const;
+
     virtual bool EnableRawMouse(const TSharedRef<CGenericWindow>& Window);
 
-    virtual void SetCapture(const TSharedRef<CGenericWindow>& Window)      override final;
+    virtual void SetCapture(const TSharedRef<CGenericWindow>& Window) override final;
+
     virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) override final;
 
-    virtual TSharedRef<CGenericWindow> GetCapture()           const override final;
-    virtual TSharedRef<CGenericWindow> GetActiveWindow()      const override final;
+    virtual TSharedRef<CGenericWindow> GetCapture() const override final;
+
+    virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
+
     virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
 
 public:
 
-     /** 
-      * @brief: Searches all the created windows and return the one with the specified handle 
-      *
-      * @param Window: Window handle 
-      * @return: Returns the WindowsWindow that belongs to the specified handle
-      */
     TSharedRef<CWindowsWindow> GetWindowsWindowFromHWND(HWND Window) const;
 
-     /**
-      * @brief: Store a message for handling during next call to Tick
-      */
     void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
-     /** 
-      * @brief: Add a native message listener 
-      *
-      * @param NewWindowsMessageListener: New WindowsMessageListener to add
-      */
     void AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener);
 
-     /**
-      * @brief: Remove a native message listener
-      *
-      * @param WindowsMessageListener: WindowsMessageListener to remove
-      */
     void RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener);
 
-     /** 
-      * @brief: Check if a native message listener is added 
-      *
-      * @param WindowsMessageListener: WindowsMessageListener to check for
-      * @return: Returns true if the WindowMessageListener is added
-      */
     bool IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener) const;
 
-     /** 
-      * @return: Returns the HINSTANCE of the application 
-      */
     FORCEINLINE HINSTANCE GetInstance() const 
     { 
         return InstanceHandle;
@@ -156,22 +121,29 @@ private:
     static LRESULT StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
     bool RegisterWindowClass();
+
     bool RegisterRawInputDevices(HWND Window);
+    
     bool UnregisterRawInputDevices();
 
     LRESULT ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
+    
     LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
 
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
-    TArray<TSharedRef<CWindowsWindow>>          Windows;
-    TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
+private:
 
     TArray<SWindowsMessage> Messages;
     CCriticalSection        MessagesCriticalSection;
 
-    bool                    bIsTrackingMouse;
-    HINSTANCE               InstanceHandle;
+    bool bIsTrackingMouse;
+    
+    HINSTANCE InstanceHandle;
+    
+    TArray<TSharedRef<CWindowsWindow>>          Windows;
 
-    static CWindowsApplication* Instance;
+    TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
 };
+
+extern CWindowsApplication* WindowsApplication;

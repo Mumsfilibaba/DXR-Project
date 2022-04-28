@@ -4,25 +4,20 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CGenericCursor
 
-class CGenericCursor : public ICursor
+class COREAPPLICATION_API CGenericCursor : public ICursor
 {
 protected:
 
-    CGenericCursor() = default;
+    CGenericCursor()
+        : bIsVisible(true)
+    { }
+
     ~CGenericCursor() = default;
 
 public:
 
-    /**
-     * @brief: Retrieve the mouse visibility
-     * 
-     * @return: Returns true if the cursor is visible
-     */
-    virtual bool IsVisible() const override final
-    {
-        return bIsVisible;
-    }
+    virtual bool IsVisible() const override final { return bIsVisible; }
 
 protected:
-    bool bIsVisible = true;
+    bool bIsVisible;
 };

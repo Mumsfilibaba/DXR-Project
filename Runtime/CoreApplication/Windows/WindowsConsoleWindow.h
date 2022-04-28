@@ -24,22 +24,21 @@ private:
 
 public:
 
-     /**
-      * @brief: Creates a new console, can only be called once 
-      *
-      * @return: Returns the new ConsoleWindow
-      */
-    static CWindowsConsoleWindow* Make();
+    static CWindowsConsoleWindow* CreateWindowsConsole();
+
+public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CWindowsConsoleWindow Interface
 
     virtual void Print(const String& Message) override final;
+
     virtual void PrintLine(const String& Message) override final;
 
     virtual void Clear() override final;
 
     virtual void SetTitle(const String& Title) override final;
+    
     virtual void SetColor(EConsoleColor Color)  override final;
 
 private:

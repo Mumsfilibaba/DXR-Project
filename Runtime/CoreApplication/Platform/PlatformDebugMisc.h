@@ -7,6 +7,6 @@
     #include "CoreApplication/Mac/MacDebugMisc.h"
     typedef CMacDebugMisc PlatformDebugMisc;
 #else
-    #include "CoreApplication/Platform/PlatformDebugMisc.h"
+    #include "CoreApplication/Generic/GenericDebugMisc.h"
     typedef CGenericDebugMisc PlatformDebugMisc;
 #endif

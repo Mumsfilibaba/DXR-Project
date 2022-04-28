@@ -19,6 +19,10 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CGenericApplicationMisc Interface
 
+    static class CGenericApplication* CreateApplication();
+
+    static class CGenericConsoleWindow* CreateConsoleWindow();
+
     static FORCEINLINE void MessageBox(const String& Title, const String& Message)
     {
         MessageBoxA(0, Message.CStr(), Title.CStr(), MB_ICONERROR | MB_OK);

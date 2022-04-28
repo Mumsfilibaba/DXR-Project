@@ -74,7 +74,7 @@ bool CEngineLoop::LoadCoreModules()
 
 bool CEngineLoop::PreInitialize()
 {
-    NErrorDevice::GConsoleWindow = PlatformConsoleWindow::Make();
+    NErrorDevice::GConsoleWindow = PlatformApplicationMisc::CreateConsoleWindow();
     if (!NErrorDevice::GConsoleWindow)
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize ConsoleWindow");

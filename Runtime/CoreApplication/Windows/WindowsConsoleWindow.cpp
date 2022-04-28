@@ -5,6 +5,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CWindowsConsoleWindow
 
+CWindowsConsoleWindow* CWindowsConsoleWindow::CreateWindowsConsole()
+{
+    return dbg_new CWindowsConsoleWindow();
+}
+
 CWindowsConsoleWindow::CWindowsConsoleWindow()
     : ConsoleHandle(0)
 {
@@ -22,11 +27,6 @@ CWindowsConsoleWindow::~CWindowsConsoleWindow()
         FreeConsole();
         ConsoleHandle = 0;
     }
-}
-
-CWindowsConsoleWindow* CWindowsConsoleWindow::Make()
-{
-    return dbg_new CWindowsConsoleWindow();
 }
 
 void CWindowsConsoleWindow::Print(const String& Message)

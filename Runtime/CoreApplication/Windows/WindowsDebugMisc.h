@@ -43,11 +43,6 @@ public:
 
 public:
 
-     /** 
-      * @brief: Calls GetLastError and retrieves a string from it 
-      *
-      * @param OutErrorString: String to store the error message in
-      */
     static FORCEINLINE void GetLastErrorString(String& OutErrorString)
     {
         int32 LastError = ::GetLastError();

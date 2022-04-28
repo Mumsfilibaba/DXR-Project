@@ -14,14 +14,14 @@ TSharedPtr<CApplicationInstance> CApplicationInstance::Instance;
 
 bool CApplicationInstance::CreateApplication()
 {
-    TSharedPtr<CGenericApplication> Application = PlatformApplication::CreateApplication();
+    TSharedPtr<CGenericApplication> Application = MakeSharedPtr(PlatformApplicationMisc::CreateApplication());
     if (Application && !Application->Initialize())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to create PlatformApplication");
         return false;
     }
 
-    Instance = TSharedPtr<CApplicationInstance>(dbg_new CApplicationInstance(Application));
+    Instance = MakeSharedPtr(dbg_new CApplicationInstance(Application));
     if (!Instance->CreateContext())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to create UI Context");

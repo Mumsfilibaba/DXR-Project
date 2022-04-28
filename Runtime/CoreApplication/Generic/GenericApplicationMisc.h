@@ -21,35 +21,20 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CGenericApplicationMisc
 
-class CGenericApplicationMisc
+class COREAPPLICATION_API CGenericApplicationMisc
 {
 public:
 
-    /**
-     * @brief: Takes the title of the MessageBox and the message to be displayed
-     * 
-     * @param Title: Title of the message-box
-     * @param Message: Message of the message-box
-     */
+    static class CGenericApplication* CreateApplication();
+
+    static class CGenericConsoleWindow* CreateConsoleWindow();
+
     static FORCEINLINE void MessageBox(const String& Title, const String& Message) { }
 
-    /**
-     * @brief: Sends a Exit Message to the application with a certain ExitCode, this way the application instance is not required to pump the messages 
-     * 
-     * @param ExitCode: Exit code for the exit-event
-     */
     static FORCEINLINE void RequestExit(int32 ExitCode) { }
 
-    /**
-     * @brief: Pumps the application's message queue, this way the application instance is not required to pump the messages 
-     * 
-     * @param bUntilEmpty: Pump messages until there are no longer any messages in the queue
-     */
     static FORCEINLINE void PumpMessages(bool bUntilEmpty) { }
 
-    /**
-     * @return: Returns the current modifier-key state 
-     */
     static FORCEINLINE SModifierKeyState GetModifierKeyState() { return SModifierKeyState(); }
 };
 
