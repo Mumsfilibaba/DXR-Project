@@ -1,5 +1,5 @@
 #pragma once
-#include "Time/Time.h"
+#include "Core/Time/Time.h"
 #include "Core/Time/Generic/GenericTime.h"
 
 #include <mach/mach_time.h>

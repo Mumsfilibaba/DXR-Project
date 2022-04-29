@@ -1,4 +1,3 @@
-#if PLATFORM_MACOS
 #include "MacCursor.h"
 #include "MacWindow.h"
 #include "CocoaWindow.h"
@@ -7,9 +6,9 @@
 
 #include <AppKit/AppKit.h>
 
-/*
-These cursors are available but not documented
-See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
+/**
+ * These cursors are available but not documented
+ * See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
  */
 @interface NSCursor()
 + (id)_windowResizeNorthWestSouthEastCursor;
@@ -19,10 +18,11 @@ See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
 @end
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMacCursor
 
-TSharedPtr<CMacCursor> CMacCursor::Make()
+CMacCursor* CMacCursor::CreateMacCursor()
 {
-	return TSharedPtr<CMacCursor>(dbg_new CMacCursor());
+	return dbg_new CMacCursor();
 }
 
 void CMacCursor::SetCursor(ECursor Cursor)
@@ -136,5 +136,3 @@ void CMacCursor::SetVisibility(bool bVisible)
         }
     }
 }
-
-#endif

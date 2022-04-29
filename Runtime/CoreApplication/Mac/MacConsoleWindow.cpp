@@ -1,4 +1,3 @@
-#if PLATFORM_MACOS && defined(__OBJC__)
 #include "MacConsoleWindow.h"
 #include "CocoaConsoleWindow.h"
 #include "ScopedAutoreleasePool.h"
@@ -7,7 +6,10 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-CMacConsoleWindow* CMacConsoleWindow::Make()
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMacConsoleWindow
+
+CMacConsoleWindow* CMacConsoleWindow::CreateMacConsole()
 {
 	return dbg_new CMacConsoleWindow();
 }
@@ -17,8 +19,7 @@ CMacConsoleWindow::CMacConsoleWindow()
 	, TextView(nullptr)
 	, ScrollView(nullptr)
 	, ConsoleColor(nullptr)
-{
-}
+{ }
 
 CMacConsoleWindow::~CMacConsoleWindow()
 {
@@ -75,7 +76,7 @@ void CMacConsoleWindow::CreateConsole()
 
 void CMacConsoleWindow::DestroyConsole()
 {
-	if (IsShowing())
+	if (IsVisible())
 	{
 		MakeMainThreadCall(^
 		{
@@ -119,7 +120,7 @@ void CMacConsoleWindow::DestroyResources()
 
 void CMacConsoleWindow::Show(bool bShow)
 {
-	if (bIsShowing != bShow)
+	if (bIsVisible != bShow)
 	{
 		if (bShow)
 		{
@@ -266,7 +267,7 @@ int32 CMacConsoleWindow::GetLineCount() const
 void CMacConsoleWindow::OnWindowDidClose()
 {
 	DestroyResources();
-	bIsShowing = false;
+	bIsVisible = false;
 }
 
 void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
@@ -319,5 +320,3 @@ void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
 		}, true);
 	}
 }
-
-#endif

@@ -7,5 +7,5 @@
 template<typename T>
 struct TUnderlyingType
 {
-    typedef TIdentity<__underlying_type(T)>::Type Type;
+    typedef typename TIdentity<__underlying_type(T)>::Type Type;
 };

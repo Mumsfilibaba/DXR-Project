@@ -21,16 +21,18 @@ private:
 
 public:
 
-    static TSharedPtr<CWindowsCursor> Make();
+    static CWindowsCursor* CreateWindowsCursor();
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CGenericCursor Interface
 
-    virtual void SetCursor(ECursor Cursor)      override final;
+    virtual void SetCursor(ECursor Cursor) override final;
+
     virtual void SetVisibility(bool bIsVisible) override final;
 
-    virtual void SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 y)         const override final;
+    virtual void SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 y) const override final;
+    
     virtual void GetPosition(CGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const override final;
 };

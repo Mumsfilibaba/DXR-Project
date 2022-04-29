@@ -14,7 +14,7 @@
     };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Multicast delegate
+// TMulticastDelegate
 
 template<typename... ArgTypes>
 class TMulticastDelegate : public CMulticastDelegateBase

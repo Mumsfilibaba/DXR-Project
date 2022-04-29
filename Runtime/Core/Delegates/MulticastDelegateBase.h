@@ -4,7 +4,7 @@
 #include "Core/Containers/Array.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MulticastDelegateBase - Base-class for multi-cast delegates
+// CMulticastDelegateBase
 
 class CMulticastDelegateBase
 {

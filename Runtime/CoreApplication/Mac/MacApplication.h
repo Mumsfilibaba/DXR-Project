@@ -81,16 +81,12 @@ private:
 
 public:
 
-     /** @brief: Creates the mac application */
-	static TSharedPtr<CMacApplication> Make();
+	static CMacApplication* CreateMacApplication();
     
-     /** @brief: Retrieves a from a NSWindow */
     TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
 
-     /** @brief: Store event for handling later in the main loop */
     void DeferEvent(NSObject* EventOrNotificationObject);
 	
-     /** @brief: Returns the native appdelegate */
     FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const { return AppDelegate; }
 
 public:
@@ -101,11 +97,13 @@ public:
     virtual TSharedRef<CGenericWindow> MakeWindow() override final;
 
     virtual bool Initialize()      override final;
+    
     virtual void Tick(float Delta) override final;
 
     virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) override final;
 
     virtual TSharedRef<CGenericWindow> GetActiveWindow()      const override final;
+
 	virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
 
 private:

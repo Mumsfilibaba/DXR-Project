@@ -1,6 +1,4 @@
 #pragma once
-
-#if PLATFORM_MACOS
 #include "Core/CoreDefines.h"
 
 #include <Foundation/Foundation.h>
@@ -8,7 +6,7 @@
 #define SCOPED_AUTORELEASE_POOL() CScopedAutoreleasePool PREPROCESS_CONCAT(AutoReleasePool_, __LINE__)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Creates a autorelease pool and releases it when destroyed
+// CScopedAutoreleasePool
 
 class CScopedAutoreleasePool
 {
@@ -26,5 +24,3 @@ public:
 private:
     NSAutoreleasePool* Pool;
 };
-
-#endif

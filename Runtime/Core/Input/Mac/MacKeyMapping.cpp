@@ -127,7 +127,7 @@ void CMacKeyMapping::Initialize()
     KeyCodeFromScanCodeTable[0x2C] = EKey::Key_Slash;
     KeyCodeFromScanCodeTable[0x0A] = EKey::Key_World1;
 
-    for (uint16 Index = 0; Index < NumKeys; ++Index)
+    for (uint16 Index = 0; Index < kNumKeys; ++Index)
     {
         if (KeyCodeFromScanCodeTable[Index] != EKey::Key_Unknown)
         {

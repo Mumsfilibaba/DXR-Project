@@ -13,7 +13,7 @@
     typedef TDelegate<ReturnType(__VA_ARGS__)> DelegateName;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Delegate - Similar to TFunction, but allows direct binding of functions instead of binding a functor type
+// TDelegate
 
 template<typename InvokableType>
 class TDelegate;

@@ -1,4 +1,3 @@
-#if PLATFORM_MACOS
 #include "MacWindow.h"
 #include "ScopedAutoreleasePool.h"
 #include "CocoaWindow.h"
@@ -10,7 +9,10 @@
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-TSharedRef<CMacWindow> CMacWindow::Make(CMacApplication* InApplication)
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMacWindow
+
+CMacWindow* CMacWindow::CreateMacWindow(CMacApplication* InApplication)
 {
 	return dbg_new CMacWindow(InApplication);
 }
@@ -20,8 +22,7 @@ CMacWindow::CMacWindow(CMacApplication* InApplication)
     , Application(InApplication)
     , Window(nullptr)
     , View(nullptr)
-{
-}
+{ }
 
 CMacWindow::~CMacWindow()
 {
@@ -299,7 +300,7 @@ uint32 CMacWindow::GetHeight() const
 	return uint32(ContentRect.size.height);
 }
 
-void CMacWindow::SetPlatformHandle(PlatformWindowHandle InPlatformHandle)
+void CMacWindow::SetPlatformHandle(void* InPlatformHandle)
 {
 	if (InPlatformHandle)
 	{
@@ -314,5 +315,3 @@ void CMacWindow::SetPlatformHandle(PlatformWindowHandle InPlatformHandle)
 		}
 	}
 }
-
-#endif

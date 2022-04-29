@@ -56,9 +56,9 @@ void CMacThread::SetName(const String& InName)
     }
 }
 
-PlatformThreadHandle CMacThread::GetPlatformHandle()
+void* CMacThread::GetPlatformHandle()
 {
-    return reinterpret_cast<PlatformThreadHandle>(Thread);
+    return reinterpret_cast<void*>(Thread);
 }
 
 void* CMacThread::ThreadRoutine(void* ThreadParameter)

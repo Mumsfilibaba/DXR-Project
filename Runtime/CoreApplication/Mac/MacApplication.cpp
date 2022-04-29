@@ -16,13 +16,13 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMacApplication
 
-TSharedPtr<CMacApplication> CMacApplication::Make()
+CMacApplication* CMacApplication::CreateMacApplication()
 {
-	return TSharedPtr<CMacApplication>(dbg_new CMacApplication());
+	return dbg_new CMacApplication();
 }
 
 CMacApplication::CMacApplication()
-    : CGenericApplication(CMacCursor::Make())
+    : CGenericApplication(TSharedPtr<ICursor>(CMacCursor::CreateMacCursor()))
 	, AppDelegate(nullptr)
     , Windows()
     , WindowsMutex()
@@ -39,7 +39,7 @@ CMacApplication::~CMacApplication()
 
 TSharedRef<CGenericWindow> CMacApplication::MakeWindow()
 {
-    TSharedRef<CMacWindow> NewWindow = CMacWindow::Make(this);
+    TSharedRef<CMacWindow> NewWindow = CMacWindow::CreateMacWindow(this);
     
     {
         TScopedLock Lock(WindowsMutex);
@@ -237,7 +237,7 @@ void CMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 				const unichar Codepoint = [Characters characterAtIndex:Index];
 				if ((Codepoint & 0xff00) != 0xf700)
 				{
-					MessageListener->HandleKeyTyped(uint32(Codepoint));
+					MessageListener->HandleKeyChar(uint32(Codepoint));
 				}
 			}
 		}
@@ -398,6 +398,6 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 	}
 	else if (Event.Character != uint32(-1))
 	{
-		MessageListener->HandleKeyTyped(Event.Character);
+		MessageListener->HandleKeyChar(Event.Character);
 	}
 }

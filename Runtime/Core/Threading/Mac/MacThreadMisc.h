@@ -20,7 +20,7 @@ public:
     static FORCEINLINE bool Initialize() 
     { 
         // This must be executed on the mainthread
-        MainThreadHandle = GetThreadHandle();
+		MainThreadHandle = pthread_self();
 
         // Then init the mainthread runloop
 		return RegisterMainRunLoop();

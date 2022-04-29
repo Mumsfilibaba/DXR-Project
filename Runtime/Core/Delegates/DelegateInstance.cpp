@@ -1,6 +1,6 @@
 #include "DelegateInstance.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// DelegateInstance
+// CDelegateHandle
 
 CORE_API DelegateHandle CDelegateHandle::NextID = 0;
