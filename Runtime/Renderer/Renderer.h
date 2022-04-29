@@ -109,10 +109,10 @@ private:
     
     bool InitShadingImage();
 
-    void FrustumCullingAndSortingInternal( const CCamera* Camera
-                                         , const TArrayView<const SMeshDrawCommand>& DrawCommands
-                                         , TArray<SMeshDrawCommand>& OutDeferredDrawCommands
-                                         , TArray<SMeshDrawCommand>& OutForwardDrawCommands);
+    NOINLINE void FrustumCullingAndSortingInternal( const CCamera* Camera
+                                                  , const TPair<uint32, uint32>& DrawCommands
+                                                  , TArray<uint32>& OutDeferredDrawCommands
+                                                  , TArray<uint32>& OutForwardDrawCommands);
 
     TSharedPtr<CRendererWindowHandler> WindowHandler;
 
@@ -167,14 +167,16 @@ private:
     TSharedRef<CRHITimestampQuery> TimestampQueries;
 
     SRendererStatistics FrameStatistics;
-
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 extern RENDERER_API CRenderer GRenderer;
 
-inline void AddDebugTexture(const TSharedRef<CRHIShaderResourceView>& ImageView, const TSharedRef<CRHITexture>& Image, ERHIResourceState BeforeState, ERHIResourceState AfterState)
+inline void AddDebugTexture( const TSharedRef<CRHIShaderResourceView>& ImageView
+                           , const TSharedRef<CRHITexture>& Image
+                           , ERHIResourceState BeforeState
+                           , ERHIResourceState AfterState)
 {
     GRenderer.GetTextureDebugger()->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
 }

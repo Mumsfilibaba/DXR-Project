@@ -21,7 +21,7 @@ class TArray
 public:
 
     using ElementType = T;
-    using SizeType = int32;
+    using SizeType    = int32;
 
     /* Iterators */
     typedef TArrayIterator<TArray, ElementType>                    IteratorType;
@@ -1393,9 +1393,9 @@ private:
             DestructRange<ElementType>(Data(), Size());
             Allocator.MoveFrom(Move(FromArray.Allocator));
 
-            ArraySize = FromArray.ArraySize;
-            ArrayCapacity = FromArray.ArrayCapacity;
-            FromArray.ArraySize = 0;
+            ArraySize               = FromArray.ArraySize;
+            ArrayCapacity           = FromArray.ArrayCapacity;
+            FromArray.ArraySize     = 0;
             FromArray.ArrayCapacity = 0;
         }
     }
@@ -1471,7 +1471,7 @@ private:
     FORCEINLINE void Heapify(SizeType Size, SizeType Index) noexcept
     {
         SizeType StartIndex = Index;
-        SizeType Largest = Index;
+        SizeType Largest    = Index;
 
         while (true)
         {

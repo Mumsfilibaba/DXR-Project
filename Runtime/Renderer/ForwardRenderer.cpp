@@ -155,7 +155,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     CmdList.SetRenderTargets(&FinalTargetRTV, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
     CmdList.SetConstantBuffer(PShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-    // TODO: Fix pointlight count in shader
+    // TODO: Fix point-light count in shader
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsBuffer.Get(), 1);
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsPosRadBuffer.Get(), 2);
     CmdList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsBuffer.Get(), 1);
@@ -165,7 +165,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     CmdList.SetShaderResourceView(PShader.Get(), LightSetup.IrradianceMap->GetShaderResourceView(), 0);
     CmdList.SetShaderResourceView(PShader.Get(), LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 1);
     CmdList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
-    //TODO: Fix dirlight shadows
+    //TODO: Fix directional-light shadows
     //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
     CmdList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 3);
 
@@ -181,8 +181,10 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     } TransformPerObject;
 
     CmdList.SetGraphicsPipelineState(PipelineState.Get());
-    for (const SMeshDrawCommand& Command : FrameResources.ForwardVisibleCommands)
+    for (const auto CommandIndex : FrameResources.ForwardVisibleCommands)
     {
+        const SMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
+
         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
         CmdList.SetIndexBuffer(Command.IndexBuffer);
 

@@ -68,9 +68,9 @@ void CFrustum::Create(float FarPlane, const CMatrix4& View, const CMatrix4& Proj
 bool CFrustum::CheckAABB(const SAABB& Box)
 {
     const CVector3 Center = Box.GetCenter();
-    const float Width = Box.GetWidth() / 2.0f;
+    const float Width  = Box.GetWidth()  / 2.0f;
     const float Height = Box.GetHeight() / 2.0f;
-    const float Depth = Box.GetDepth() / 2.0f;
+    const float Depth  = Box.GetDepth()  / 2.0f;
 
     CVector3 Coords[8];
     Coords[0] = CVector3(Center.x - Width, Center.y - Height, Center.z - Depth);
@@ -85,42 +85,42 @@ bool CFrustum::CheckAABB(const SAABB& Box)
     for (int32 Index = 0; Index < 6; Index++)
     {
         const CPlane& Plane = Planes[Index];
-        if (Plane.PlaneDotCoord(Coords[0]) >= 0.0f)
+        if (Plane.DotProductCoord(Coords[0]) >= 0.0f)
         {
             continue;
         }
 
-        if (Plane.PlaneDotCoord(Coords[1]) >= 0.0f)
+        if (Plane.DotProductCoord(Coords[1]) >= 0.0f)
         {
             continue;
         }
 
-        if (Plane.PlaneDotCoord(Coords[2]) >= 0.0f)
+        if (Plane.DotProductCoord(Coords[2]) >= 0.0f)
         {
             continue;
         }
 
-        if (Plane.PlaneDotCoord(Coords[3]) >= 0.0f)
+        if (Plane.DotProductCoord(Coords[3]) >= 0.0f)
         {
             continue;
         }
 
-        if (Plane.PlaneDotCoord(Coords[4]) >= 0.0f)
+        if (Plane.DotProductCoord(Coords[4]) >= 0.0f)
         {
             continue;
         }
 
-        if (Plane.PlaneDotCoord(Coords[5]) >= 0.0f)
+        if (Plane.DotProductCoord(Coords[5]) >= 0.0f)
         {
             continue;
         }
 
-        if (Plane.PlaneDotCoord(Coords[6]) >= 0.0f)
+        if (Plane.DotProductCoord(Coords[6]) >= 0.0f)
         {
             continue;
         }
 
-        if (Plane.PlaneDotCoord(Coords[7]) >= 0.0f)
+        if (Plane.DotProductCoord(Coords[7]) >= 0.0f)
         {
             continue;
         }

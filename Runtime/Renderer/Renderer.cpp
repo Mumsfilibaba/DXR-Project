@@ -236,26 +236,26 @@ bool CRenderer::Init()
 }
 
 void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
-                                                , const TArrayView<const SMeshDrawCommand>& DrawCommands
-                                                , TArray<SMeshDrawCommand>& OutDeferredDrawCommands
-                                                , TArray<SMeshDrawCommand>& OutForwardDrawCommands)
+                                                , const TPair<uint32, uint32>& DrawCommands
+                                                , TArray<uint32>& OutDeferredDrawCommands
+                                                , TArray<uint32>& OutForwardDrawCommands)
 {
 
     TRACE_SCOPE("Frustum Culling And Sorting Inner");
 
     // Inserts a mesh based on distance
-    const auto InsertSorted = []( const SMeshDrawCommand& Command
+    const auto InsertSorted = []( int32 CommandIndex
                                 , const CCamera* Camera
                                 , const CVector3& WorldPosition
                                 , TArray<float>& OutDistances
-                                , TArray<SMeshDrawCommand>& OutCommands) -> void
+                                , TArray<uint32>& OutCommands) -> void
     {
         Assert(OutDistances.Size() == OutCommands.Size());
 
         CVector3 CameraPosition = Camera->GetPosition();
         CVector3 DistanceVector = WorldPosition - CameraPosition;
 
-        const float NewDistance = DistanceVector.Length();
+        const float NewDistance = DistanceVector.LengthSquared();
 
         int32 Index = 0;
         for (; Index < OutCommands.Size(); ++Index)
@@ -267,19 +267,27 @@ void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
             }
         }
 
-        OutCommands.Insert(Index, Command);
+        OutCommands.Insert(Index, CommandIndex);
         OutDistances.Insert(Index, NewDistance);
     };
 
+
     // Perform frustum culling and insert based on distance to the camera
     TArray<float> DeferredDistances;
-    DeferredDistances.Reserve(DrawCommands.Size());
-    OutDeferredDrawCommands.Reserve(DrawCommands.Size());
+    
+    const uint32 StartCommand = DrawCommands.First;
+    const uint32 NumCommands  = DrawCommands.Second;
+
+    DeferredDistances.Reserve(NumCommands);
+    OutDeferredDrawCommands.Reserve(NumCommands);
 
     CFrustum CameraFrustum = CFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
-
-    for (const SMeshDrawCommand& Command : DrawCommands)
+    for (uint32 Index = 0; Index < NumCommands; ++Index)
     {
+        const uint32 CommandIndex = StartCommand + Index;
+
+        const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
+
         CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
 
@@ -294,52 +302,15 @@ void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
         {
             if (Command.Material->ShouldRenderInForwardPass())
             {
-                OutForwardDrawCommands.Emplace(Command);
+                OutForwardDrawCommands.Emplace(CommandIndex);
             }
             else
             {
                 CVector3 WorldPosition = Box.GetCenter();
-                InsertSorted(Command, Camera, WorldPosition, DeferredDistances, OutDeferredDrawCommands);
+                InsertSorted(CommandIndex, Camera, WorldPosition, DeferredDistances, OutDeferredDrawCommands);
             }
         }
     }
-
-    //{
-    //    TRACE_SCOPE("Sort Meshes");
-
-    //    TArray<SMeshDrawCommand> NewDeferredCommands;
-
-    //    const CVector3 CameraPosition = Camera->GetPosition();
-
-    //    // Sort the commands based on camera distance
-    //    for (const SMeshDrawCommand& Command : OutDeferredDrawCommands)
-    //    {
-    //        CMatrix4 Transform = Command.CurrentActor->GetTransform().GetMatrix();
-    //        Transform = Transform.Transpose();
-
-    //        CVector3 CenterPosition = Command.Mesh->BoundingBox.GetCenter();
-    //        CenterPosition = Transform.TransformPosition(CenterPosition);
-
-    //        CVector3 DistanceVector = CenterPosition - CameraPosition;
-
-    //        const float NewDistance = DistanceVector.Length();
-
-    //        int32 Index = 0;
-    //        for (; Index < NewDeferredCommands.Size(); ++Index)
-    //        {
-    //            const float Distance = DeferredDistances[Index];
-    //            if (NewDistance < Distance)
-    //            {
-    //                break;
-    //            }
-    //        }
-
-    //        NewDeferredCommands.Insert(Index, Command);
-    //        DeferredDistances.Insert(Index, NewDistance);
-    //    }
-
-    //    OutDeferredDrawCommands.Swap(NewDeferredCommands);
-    //}
 }
 
 void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
@@ -348,34 +319,39 @@ void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
 
     const auto NumThreads = PlatformThreadMisc::GetNumProcessors();
     
-    TArray<TArray<SMeshDrawCommand>> WriteableDeferredMeshCommands;
+    TArray<TArray<uint32>> WriteableDeferredMeshCommands;
     WriteableDeferredMeshCommands.Reserve(NumThreads);
 
-    TArray<TArray<SMeshDrawCommand>> WriteableForwardMeshCommands;
+    TArray<TArray<uint32>> WriteableForwardMeshCommands;
     WriteableForwardMeshCommands.Reserve(NumThreads);
 
-    TArray<TArrayView<const SMeshDrawCommand>> ReadableMeshCommands;
+    TArray<TPair<uint32, uint32>> ReadableMeshCommands;
     ReadableMeshCommands.Reserve(NumThreads);
 
     const auto CameraPtr            = Scene.GetCamera();
-    auto       MeshCommandsStartPtr = Scene.GetMeshDrawCommands().Data();
     const auto NumMeshCommands      = Scene.GetMeshDrawCommands().Size();
-    const auto NumCommandsPerThread = NumMeshCommands / NumThreads;
+    const auto NumCommandsPerThread = (NumMeshCommands / NumThreads) + 1;
+
+    int32 RemainingCommands = NumMeshCommands;
+    int32 StartCommand      = 0;
 
     TArray<DispatchID> Tasks(NumThreads);
     for (uint32 Index = 0; Index < NumThreads; ++Index)
     {
         // Allocate Array for commands to fill
-        TArray<SMeshDrawCommand>& WriteDeferredMeshCommands = WriteableDeferredMeshCommands.Emplace();
-        TArray<SMeshDrawCommand>& WriteForwardMeshCommands  = WriteableForwardMeshCommands.Emplace();
+        TArray<uint32>& WriteDeferredMeshCommands = WriteableDeferredMeshCommands.Emplace();
+        TArray<uint32>& WriteForwardMeshCommands  = WriteableForwardMeshCommands.Emplace();
         
+        const int32 NumCommands = NMath::Min<int32>(RemainingCommands, NumCommandsPerThread);
+        RemainingCommands -= NumCommands;
+
         // Allocate ArrayView for reading
-        TArrayView<const SMeshDrawCommand>& ReadMeshCommands = ReadableMeshCommands.Emplace(MeshCommandsStartPtr, NumCommandsPerThread);
-        MeshCommandsStartPtr += NumCommandsPerThread;
+        TPair<uint32, uint32>& ReadMeshCommands = ReadableMeshCommands.Emplace(StartCommand, NumCommands);
+        StartCommand += NumCommands;
 
         const auto CullAndSort = [&]() -> void
         {
-            this->FrustumCullingAndSortingInternal(CameraPtr, ReadMeshCommands, WriteDeferredMeshCommands, WriteForwardMeshCommands);
+            FrustumCullingAndSortingInternal(CameraPtr, ReadMeshCommands, WriteDeferredMeshCommands, WriteForwardMeshCommands);
         };
 
         SAsyncTask AsyncTask;
@@ -384,16 +360,15 @@ void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
         Tasks[Index] = CAsyncTaskManager::Get().Dispatch(AsyncTask);
     }
 
-    // TODO: Investigate why ID does not work
-    CAsyncTaskManager::Get().WaitForAll();
-    
     // Sync and insert
     for (uint32 Index = 0; Index < NumThreads; ++Index)
     {
-        const TArray<SMeshDrawCommand>& WriteForwardMeshCommands = WriteableForwardMeshCommands[Index];
+        CAsyncTaskManager::Get().WaitFor(Tasks[Index], true);
+        
+        const TArray<uint32>& WriteForwardMeshCommands = WriteableForwardMeshCommands[Index];
         Resources.ForwardVisibleCommands.Append(WriteForwardMeshCommands);
 
-        const TArray<SMeshDrawCommand>& WriteDeferredMeshCommands = WriteableDeferredMeshCommands[Index];
+        const TArray<uint32>& WriteDeferredMeshCommands = WriteableDeferredMeshCommands[Index];
         Resources.DeferredVisibleCommands.Append(WriteDeferredMeshCommands);
     }
 }
@@ -412,7 +387,7 @@ void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
         float Height;
     } Settings;
 
-    Settings.Width = static_cast<float>(Resources.BackBuffer->GetWidth());
+    Settings.Width  = static_cast<float>(Resources.BackBuffer->GetWidth());
     Settings.Height = static_cast<float>(Resources.BackBuffer->GetHeight());
 
     CRHIRenderTargetView* BackBufferRTV = Resources.BackBuffer->GetRenderTargetView();
@@ -473,15 +448,18 @@ void CRenderer::PerformAABBDebugPass(CRHICommandList& InCmdList)
     InCmdList.SetVertexBuffers(&AABBVertexBuffer, 1, 0);
     InCmdList.SetIndexBuffer(AABBIndexBuffer.Get());
 
-    for (const SMeshDrawCommand& Command : Resources.DeferredVisibleCommands)
+    for (const auto CommandIndex : Resources.DeferredVisibleCommands)
     {
+        const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
+
         SAABB& Box = Command.Mesh->BoundingBox;
-        CVector3 Scale = CVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
+
+        CVector3 Scale    = CVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
         CVector3 Position = Box.GetCenter();
 
         CMatrix4 TranslationMatrix = CMatrix4::Translation(Position.x, Position.y, Position.z);
-        CMatrix4 ScaleMatrix = CMatrix4::Scale(Scale.x, Scale.y, Scale.z);
-        CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
+        CMatrix4 ScaleMatrix       = CMatrix4::Scale(Scale.x, Scale.y, Scale.z);
+        CMatrix4 TransformMatrix   = Command.CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
         TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
         TransformMatrix.Transpose();
@@ -496,7 +474,8 @@ void CRenderer::PerformAABBDebugPass(CRHICommandList& InCmdList)
 
 void CRenderer::Tick(const CScene& Scene)
 {
-    Resources.BackBuffer = Resources.MainWindowViewport->GetBackBuffer();
+    Resources.BackBuffer             = Resources.MainWindowViewport->GetBackBuffer();
+    Resources.GlobalMeshDrawCommands = TArrayView<const SMeshDrawCommand>(Scene.GetMeshDrawCommands());
 
     // Prepare Lights
 #if 1
@@ -541,15 +520,16 @@ void CRenderer::Tick(const CScene& Scene)
 
     if (!GFrustumCullEnabled.GetBool())
     {
-        for (const SMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+        for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.Size(); ++CommandIndex)
         {
+            const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
             if (Command.Material->HasAlphaMask())
             {
-                Resources.ForwardVisibleCommands.Emplace(Command);
+                Resources.ForwardVisibleCommands.Emplace(CommandIndex);
             }
             else
             {
-                Resources.DeferredVisibleCommands.Emplace(Command);
+                Resources.DeferredVisibleCommands.Emplace(CommandIndex);
             }
         }
     }

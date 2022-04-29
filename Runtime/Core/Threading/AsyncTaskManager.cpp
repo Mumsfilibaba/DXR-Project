@@ -46,7 +46,8 @@ void CAsyncTaskManager::WorkThread()
 {
     LOG_INFO("Starting Work thread: " + ToString(PlatformThreadMisc::GetThreadHandle()));
 
-    while (Instance.bIsRunning)
+    CAsyncTaskManager& AsyncTaskManager = CAsyncTaskManager::Get();
+    while (AsyncTaskManager.bIsRunning)
     {
         SAsyncTask CurrentTask;
 
@@ -127,22 +128,29 @@ DispatchID CAsyncTaskManager::Dispatch(const SAsyncTask& NewTask)
     return NewTaskID;
 }
 
-void CAsyncTaskManager::WaitFor(DispatchID Task)
+void CAsyncTaskManager::WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting)
 {
     while (DispatchCompleted.Load() < Task)
     {
+        if (bUseThisThreadWhileWaiting)
+        {
+            SAsyncTask CurrentTask;
+
+            if (Instance.PopDispatch(CurrentTask))
+            {
+                CurrentTask.Delegate.ExecuteIfBound();
+                Instance.DispatchCompleted.Increment();
+            }
+        }
+
         // TODO: Look into proper yield
         PlatformThreadMisc::Sleep(0);
     }
 }
 
-void CAsyncTaskManager::WaitForAll()
+void CAsyncTaskManager::WaitForAll(bool bUseThisThreadWhileWaiting)
 {
-    while (DispatchCompleted.Load() < DispatchAdded.Load())
-    {
-        // TODO: Look into proper yield
-        PlatformThreadMisc::Sleep(0);
-    }
+    WaitFor(DispatchAdded.Load(), bUseThisThreadWhileWaiting);
 }
 
 void CAsyncTaskManager::Release()

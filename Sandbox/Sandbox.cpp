@@ -24,7 +24,7 @@
 #include <random>
 
 #define ENABLE_LIGHT_TEST   (0)
-#define ENABLE_MANY_SPHERES (0)
+#define ENABLE_MANY_SPHERES (1)
 
 IMPLEMENT_ENGINE_MODULE(CSandbox, Sandbox);
 
@@ -106,8 +106,8 @@ bool CSandbox::Init()
 
 #if ENABLE_MANY_SPHERES
     {
-        constexpr uint32 kNumSpheres = 32768;
-        constexpr float  kMaxRadius  = 64.0f;
+        constexpr uint32 kNumSpheres = 1024;
+        constexpr float  kMaxRadius  = 32.0f;
 
         std::default_random_engine            Generator;
 
@@ -132,7 +132,7 @@ bool CSandbox::Init()
             const float PositionY = Radius * SinAlpha * SinTheta;
             const float PositionZ = Radius * CosTheta;
 
-            const float Offset = -110.0f;
+            const float Offset = -60.0f;
 
             NewActor = CurrentScene->MakeActor();
             NewActor->GetTransform().SetTranslation(PositionX, PositionY + 10.0f, Offset + PositionZ);

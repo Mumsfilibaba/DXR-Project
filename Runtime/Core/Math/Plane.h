@@ -114,7 +114,7 @@ public:
      * @param Point: Point to perform dot-product with
      * @return: Returns the dot-product
      */
-    FORCEINLINE float PlaneDotCoord(const CVector3& Point) const noexcept
+    FORCEINLINE float DotProductCoord(const CVector3& Point) const noexcept
     {
         CVector3 Normal = GetNormal();
         return Normal.DotProduct(Point) + w;
@@ -129,7 +129,7 @@ public:
      */
     FORCEINLINE CVector3 GetNormal() const noexcept
     {
-        return CVector3(x, y, z);
+        return *reinterpret_cast<const CVector3*>(this);
     }
 
     /**

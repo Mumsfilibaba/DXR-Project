@@ -41,6 +41,17 @@ public:
     { }
 
     /**
+     * @brief: Construct a view from an array of ArrayType
+     *
+     * @param InArray: Array to create view from
+     */
+    template<typename ArrayType, typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
+    FORCEINLINE explicit TArrayView(const ArrayType& InArray) noexcept
+        : View(InArray.Data())
+        , ViewSize(InArray.Size())
+    { }
+
+    /**
      * @brief: Construct a view from a bounded array
      *
      * @param InArray: Array to create view from

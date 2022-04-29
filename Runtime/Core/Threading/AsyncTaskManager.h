@@ -53,12 +53,12 @@ public:
      * 
      * @param Task: A taskID to wait for
      */
-    void WaitFor(DispatchID Task);
+    void WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting = false);
 
     /**
      * @brief: Wait for all queued up tasks to be dispatched and finish 
      */
-    void WaitForAll();
+    void WaitForAll(bool bUseThisThreadWhileWaiting = false);
 
     /**
      * @brief: Release the DispatchQueue 
@@ -72,6 +72,8 @@ private:
     bool PopDispatch(SAsyncTask& OutTask);
 
     void KillWorkers();
+
+    void ExecuteNextTask();
 
     TArray<TSharedRef<CGenericThread>> WorkerThreads;
 
