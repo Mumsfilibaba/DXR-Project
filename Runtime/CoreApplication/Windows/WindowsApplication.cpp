@@ -60,7 +60,7 @@ CWindowsApplication* CWindowsApplication::CreateWindowsApplication()
 }
 
 CWindowsApplication::CWindowsApplication(HINSTANCE InInstanceHandle)
-    : CGenericApplication(TSharedPtr(CWindowsCursor::CreateWindowsCursor()))
+    : CGenericApplication(TSharedPtr<ICursor>(CWindowsCursor::CreateWindowsCursor()))
     , Windows()
     , Messages()
     , MessagesCriticalSection()

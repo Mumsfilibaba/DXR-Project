@@ -26,7 +26,7 @@ public:
 
     virtual void SetName(const String& InName) override final;
 
-    virtual void* GetOSHandle() override final;
+    virtual void* GetPlatformHandle() override final;
 
 private:
 
