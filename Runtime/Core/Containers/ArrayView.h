@@ -325,9 +325,9 @@ public:
     {
         if (this != &RHS)
         {
-            View = RHS.View;
-            ViewSize = RHS.ViewSize;
-            RHS.View = nullptr;
+            View         = RHS.View;
+            ViewSize     = RHS.ViewSize;
+            RHS.View     = nullptr;
             RHS.ViewSize = 0;
         }
 

@@ -1,34 +1,35 @@
 #include "Sandbox.h"
+#include "GameComponents.h"
 
-#include "Core/Math/Math.h"
+#include <Core/Math/Math.h>
 
-#include "Renderer/Renderer.h"
+#include <Renderer/Renderer.h>
 
-#include "Engine/Engine.h"
-#include "Engine/Assets/Loaders/OBJLoader.h"
-#include "Engine/Assets/Loaders/FBXLoader.h"
-#include "Engine/Scene/Scene.h"
-#include "Engine/Scene/Lights/PointLight.h"
-#include "Engine/Scene/Lights/DirectionalLight.h"
-#include "Engine/Scene/Components/MeshComponent.h"
-#include "Engine/Resources/TextureFactory.h"
+#include <Engine/Engine.h>
+#include <Engine/Assets/Loaders/OBJLoader.h>
+#include <Engine/Assets/Loaders/FBXLoader.h>
+#include <Engine/Scene/Scene.h>
+#include <Engine/Scene/Lights/PointLight.h>
+#include <Engine/Scene/Lights/DirectionalLight.h>
+#include <Engine/Scene/Components/MeshComponent.h>
+#include <Engine/Resources/TextureFactory.h>
 
-#include "Core/Logging/Log.h"
+#include <Core/Logging/Log.h>
 
-#include "Application/ApplicationInstance.h"
+#include <Application/ApplicationInstance.h>
 
-#include "InterfaceRenderer/InterfaceRenderer.h"
+#include <InterfaceRenderer/InterfaceRenderer.h>
 
 // TODO: Custom random
 #include <random>
 
-#define ENABLE_LIGHT_TEST 0
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+#define ENABLE_LIGHT_TEST   (0)
+#define ENABLE_MANY_SPHERES (0)
 
 IMPLEMENT_ENGINE_MODULE(CSandbox, Sandbox);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CSandbox
 
 bool CSandbox::Init()
 {
@@ -38,7 +39,7 @@ bool CSandbox::Init()
     }
 
     // Initialize Scene
-    CActor* NewActor = nullptr;
+    CActor*         NewActor     = nullptr;
     CMeshComponent* NewComponent = nullptr;
 
     TSharedPtr<CScene> CurrentScene = GEngine->Scene;
@@ -61,12 +62,12 @@ bool CSandbox::Init()
 
     TSharedPtr<CMesh> SphereMesh = CMesh::Make(SphereMeshData);
 
-    constexpr float  SphereOffset = 1.25f;
-    constexpr uint32 SphereCountX = 8;
+    constexpr float  SphereOffset   = 1.25f;
+    constexpr uint32 SphereCountX   = 8;
     constexpr float  StartPositionX = (-static_cast<float>(SphereCountX) * SphereOffset) / 2.0f;
-    constexpr uint32 SphereCountY = 8;
+    constexpr uint32 SphereCountY   = 8;
     constexpr float  StartPositionY = (-static_cast<float>(SphereCountY) * SphereOffset) / 2.0f;
-    constexpr float  MetallicDelta = 1.0f / SphereCountY;
+    constexpr float  MetallicDelta  = 1.0f / SphereCountY;
     constexpr float  RoughnessDelta = 1.0f / SphereCountX;
 
     SMaterialDesc MatProperties;
@@ -87,11 +88,11 @@ bool CSandbox::Init()
             NewComponent->Mesh = SphereMesh;
             NewComponent->Material = MakeShared<CMaterial>(MatProperties);
 
-            NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
-            NewComponent->Material->NormalMap = GEngine->BaseNormal;
+            NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+            NewComponent->Material->NormalMap    = GEngine->BaseNormal;
             NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-            NewComponent->Material->AOMap = GEngine->BaseTexture;
-            NewComponent->Material->MetallicMap = GEngine->BaseTexture;
+            NewComponent->Material->AOMap        = GEngine->BaseTexture;
+            NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
             NewComponent->Material->Init();
 
             NewActor->AddComponent(NewComponent);
@@ -103,6 +104,64 @@ bool CSandbox::Init()
         MatProperties.Metallic += MetallicDelta;
     }
 
+#if ENABLE_MANY_SPHERES
+    {
+        constexpr uint32 kNumSpheres = 32768;
+        constexpr float  kMaxRadius  = 64.0f;
+
+        std::default_random_engine            Generator;
+
+        std::uniform_real_distribution<float> Random0(0.0f, NMath::kTwoPI_f);
+        std::uniform_real_distribution<float> Random1(0.05f, 1.0);
+        std::uniform_real_distribution<float> Random2(0.05f, 0.7);
+        std::uniform_real_distribution<float> Random3(0.5f, 1.0);
+        std::uniform_real_distribution<float> Random4(1.0f, 10.0f);
+
+        for (uint32 i = 0; i < kNumSpheres; ++i)
+        {
+            const float Radius = Random1(Generator) * kMaxRadius;
+            const float Alpha  = Random0(Generator);
+            const float Theta  = Random0(Generator);
+
+            const float CosAlpha = NMath::Cos(Alpha);
+            const float SinAlpha = NMath::Sin(Alpha);
+            const float CosTheta = NMath::Cos(Theta);
+            const float SinTheta = NMath::Sin(Theta);
+
+            const float PositionX = Radius * CosAlpha * SinTheta;
+            const float PositionY = Radius * SinAlpha * SinTheta;
+            const float PositionZ = Radius * CosTheta;
+
+            const float Offset = -110.0f;
+
+            NewActor = CurrentScene->MakeActor();
+            NewActor->GetTransform().SetTranslation(PositionX, PositionY + 10.0f, Offset + PositionZ);
+
+            // MovingBallComponent
+            NewActor->AddComponent(dbg_new CMovingBallComponent(NewActor, Random4(Generator)));
+
+            NewActor->SetName("Random Sphere[" + ToString(i) + "]");
+
+            // MeshComponent
+            NewComponent           = dbg_new CMeshComponent(NewActor);
+            NewComponent->Mesh     = SphereMesh;
+            NewComponent->Material = MakeShared<CMaterial>(MatProperties);
+
+            NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+            NewComponent->Material->NormalMap    = GEngine->BaseNormal;
+            NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
+            NewComponent->Material->AOMap        = GEngine->BaseTexture;
+            NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
+            NewComponent->Material->Init();
+
+            NewActor->AddComponent(NewComponent);
+
+            MatProperties.Roughness = Random2(Generator);
+            MatProperties.Metallic  = Random3(Generator);
+        }
+    }
+#endif
+
     // Create Other Meshes
     SMeshData CubeMeshData = CMeshFactory::CreateCube();
 
@@ -111,13 +170,13 @@ bool CSandbox::Init()
     NewActor->SetName("Cube");
     NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
 
-    MatProperties.AO = 1.0f;
-    MatProperties.Metallic = 1.0f;
-    MatProperties.Roughness = 1.0f;
+    MatProperties.AO           = 1.0f;
+    MatProperties.Metallic     = 1.0f;
+    MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 1;
 
-    NewComponent = dbg_new CMeshComponent(NewActor);
-    NewComponent->Mesh = CMesh::Make(CubeMeshData);
+    NewComponent           = dbg_new CMeshComponent(NewActor);
+    NewComponent->Mesh     = CMesh::Make(CubeMeshData);
     NewComponent->Material = MakeShared<CMaterial>(MatProperties);
 
     TSharedRef<CRHITexture2D> AlbedoMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
@@ -156,12 +215,12 @@ bool CSandbox::Init()
         MetallicMap->SetName("MetallicMap");
     }
 
-    NewComponent->Material->AlbedoMap = AlbedoMap;
-    NewComponent->Material->NormalMap = NormalMap;
+    NewComponent->Material->AlbedoMap    = AlbedoMap;
+    NewComponent->Material->NormalMap    = NormalMap;
     NewComponent->Material->RoughnessMap = RoughnessMap;
-    NewComponent->Material->HeightMap = HeightMap;
-    NewComponent->Material->AOMap = AOMap;
-    NewComponent->Material->MetallicMap = MetallicMap;
+    NewComponent->Material->HeightMap    = HeightMap;
+    NewComponent->Material->AOMap        = AOMap;
+    NewComponent->Material->MetallicMap  = MetallicMap;
     NewComponent->Material->Init();
     NewActor->AddComponent(NewComponent);
 
@@ -172,21 +231,22 @@ bool CSandbox::Init()
     NewActor->GetTransform().SetUniformScale(50.0f);
     NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
-    MatProperties.AO = 1.0f;
-    MatProperties.Metallic = 0.0f;
-    MatProperties.Roughness = 1.0f;
+    MatProperties.AO           = 1.0f;
+    MatProperties.Metallic     = 0.0f;
+    MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo = CVector3(1.0f);
+    MatProperties.Albedo       = CVector3(1.0f);
 
-    NewComponent = dbg_new CMeshComponent(NewActor);
-    NewComponent->Mesh = CMesh::Make(CMeshFactory::CreatePlane(10, 10));
-    NewComponent->Material = MakeShared<CMaterial>(MatProperties);
-    NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
-    NewComponent->Material->NormalMap = GEngine->BaseNormal;
+    NewComponent                         = dbg_new CMeshComponent(NewActor);
+    NewComponent->Mesh                   = CMesh::Make(CMeshFactory::CreatePlane(10, 10));
+    NewComponent->Material               = MakeShared<CMaterial>(MatProperties);
+    NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+    NewComponent->Material->NormalMap    = GEngine->BaseNormal;
     NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-    NewComponent->Material->AOMap = GEngine->BaseTexture;
-    NewComponent->Material->MetallicMap = GEngine->BaseTexture;
+    NewComponent->Material->AOMap        = GEngine->BaseTexture;
+    NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
     NewComponent->Material->Init();
+
     NewActor->AddComponent(NewComponent);
 
     AlbedoMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/StreetLight/BaseColor.jpg"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
@@ -233,23 +293,23 @@ bool CSandbox::Init()
         NewActor->GetTransform().SetUniformScale(0.25f);
         NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - ((float)i * 3.0f));
 
-        NewComponent = dbg_new CMeshComponent(NewActor);
-        NewComponent->Mesh = StreetLight;
-        NewComponent->Material = StreetLightMat;
-        NewComponent->Material->AlbedoMap = AlbedoMap;
-        NewComponent->Material->NormalMap = NormalMap;
+        NewComponent                         = dbg_new CMeshComponent(NewActor);
+        NewComponent->Mesh                   = StreetLight;
+        NewComponent->Material               = StreetLightMat;
+        NewComponent->Material->AlbedoMap    = AlbedoMap;
+        NewComponent->Material->NormalMap    = NormalMap;
         NewComponent->Material->RoughnessMap = RoughnessMap;
-        NewComponent->Material->AOMap = GEngine->BaseTexture;
-        NewComponent->Material->MetallicMap = MetallicMap;
+        NewComponent->Material->AOMap        = GEngine->BaseTexture;
+        NewComponent->Material->MetallicMap  = MetallicMap;
         NewComponent->Material->Init();
         NewActor->AddComponent(NewComponent);
     }
 
-    MatProperties.AO = 1.0f;
-    MatProperties.Metallic = 0.0f;
-    MatProperties.Roughness = 1.0f;
+    MatProperties.AO           = 1.0f;
+    MatProperties.Metallic     = 0.0f;
+    MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo = CVector3(0.4f);
+    MatProperties.Albedo       = CVector3(0.4f);
 
     SSceneData PillarData;
     COBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Models/Pillar.obj"), PillarData);
@@ -265,15 +325,16 @@ bool CSandbox::Init()
         NewActor->GetTransform().SetUniformScale(0.25f);
         NewActor->GetTransform().SetTranslation(-15.0f + ((float)i * 1.75f), 0.0f, 60.0f);
 
-        NewComponent = dbg_new CMeshComponent(NewActor);
-        NewComponent->Mesh = Pillar;
-        NewComponent->Material = PillarMat;
-        NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
-        NewComponent->Material->NormalMap = GEngine->BaseNormal;
+        NewComponent                         = dbg_new CMeshComponent(NewActor);
+        NewComponent->Mesh                   = Pillar;
+        NewComponent->Material               = PillarMat;
+        NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+        NewComponent->Material->NormalMap    = GEngine->BaseNormal;
         NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-        NewComponent->Material->AOMap = GEngine->BaseTexture;
-        NewComponent->Material->MetallicMap = MetallicMap;
+        NewComponent->Material->AOMap        = GEngine->BaseTexture;
+        NewComponent->Material->MetallicMap  = MetallicMap;
         NewComponent->Material->Init();
+
         NewActor->AddComponent(NewComponent);
     }
 
@@ -324,22 +385,24 @@ bool CSandbox::Init()
     CurrentScene->AddLight(Light3);
 
 #if ENABLE_LIGHT_TEST
-    // Add multiple lights
-    std::uniform_real_distribution<float> RandomFloats(0.0f, 1.0f);
-    std::default_random_engine Generator;
-
-    for (uint32 i = 0; i < 256; i++)
     {
-        float x = RandomFloats(Generator) * 35.0f - 17.5f;
-        float y = RandomFloats(Generator) * 22.0f;
-        float z = RandomFloats(Generator) * 16.0f - 8.0f;
-        float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
+        // Add multiple lights
+        std::uniform_real_distribution<float> RandomFloats(0.0f, 1.0f);
+        std::default_random_engine            Generator;
 
-        CPointLight* Light = dbg_new CPointLight();
-        Light->SetPosition(x, y, z);
-        Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
-        Light->SetIntensity(Intentsity);
-        CScene->AddLight(Light);
+        for (uint32 i = 0; i < 256; i++)
+        {
+            float x = RandomFloats(Generator) * 35.0f - 17.5f;
+            float y = RandomFloats(Generator) * 22.0f;
+            float z = RandomFloats(Generator) * 16.0f - 8.0f;
+            float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
+
+            CPointLight* Light = dbg_new CPointLight();
+            Light->SetPosition(x, y, z);
+            Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
+            Light->SetIntensity(Intentsity);
+            CScene->AddLight(Light);
+        }
     }
 #endif
 

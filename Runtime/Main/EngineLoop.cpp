@@ -35,7 +35,7 @@ bool CEngineLoop::LoadCoreModules()
 {
     CModuleManager& ModuleManager = CModuleManager::Get();
 
-    IEngineModule* CoreModule = ModuleManager.LoadEngineModule("Core");
+    IEngineModule* CoreModule            = ModuleManager.LoadEngineModule("Core");
     IEngineModule* CoreApplicationModule = ModuleManager.LoadEngineModule("CoreApplication");
     if (!CoreModule || !CoreApplicationModule)
     {

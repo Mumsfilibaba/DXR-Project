@@ -16,6 +16,7 @@
 #include "Core/Math/Frustum.h"
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Threading/Platform/PlatformThreadMisc.h"
 
 #include "Renderer/Debug/GPUProfiler.h"
 
@@ -138,7 +139,7 @@ bool CRenderer::Init()
         CreateInfo.AddressU = ESamplerMode::Wrap;
         CreateInfo.AddressV = ESamplerMode::Wrap;
         CreateInfo.AddressW = ESamplerMode::Wrap;
-        CreateInfo.Filter = ESamplerFilter::Comparison_MinMagMipLinear;
+        CreateInfo.Filter   = ESamplerFilter::Comparison_MinMagMipLinear;
         CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
 
         Resources.PointLightShadowSampler = RHICreateSamplerState(CreateInfo);
@@ -234,23 +235,58 @@ bool CRenderer::Init()
     return true;
 }
 
-void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
+void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
+                                                , const TArrayView<const SMeshDrawCommand>& DrawCommands
+                                                , TArray<SMeshDrawCommand>& OutDeferredDrawCommands
+                                                , TArray<SMeshDrawCommand>& OutForwardDrawCommands)
 {
-    TRACE_SCOPE("Frustum Culling");
 
-    CCamera* Camera        = Scene.GetCamera();
+    TRACE_SCOPE("Frustum Culling And Sorting Inner");
+
+    // Inserts a mesh based on distance
+    const auto InsertSorted = []( const SMeshDrawCommand& Command
+                                , const CCamera* Camera
+                                , const CVector3& WorldPosition
+                                , TArray<float>& OutDistances
+                                , TArray<SMeshDrawCommand>& OutCommands) -> void
+    {
+        Assert(OutDistances.Size() == OutCommands.Size());
+
+        CVector3 CameraPosition = Camera->GetPosition();
+        CVector3 DistanceVector = WorldPosition - CameraPosition;
+
+        const float NewDistance = DistanceVector.Length();
+
+        int32 Index = 0;
+        for (; Index < OutCommands.Size(); ++Index)
+        {
+            const float Distance = OutDistances[Index];
+            if (NewDistance < Distance)
+            {
+                break;
+            }
+        }
+
+        OutCommands.Insert(Index, Command);
+        OutDistances.Insert(Index, NewDistance);
+    };
+
+    // Perform frustum culling and insert based on distance to the camera
+    TArray<float> DeferredDistances;
+    DeferredDistances.Reserve(DrawCommands.Size());
+    OutDeferredDrawCommands.Reserve(DrawCommands.Size());
+
     CFrustum CameraFrustum = CFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
-    
-    // Cull frustum
-    for (const SMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+
+    for (const SMeshDrawCommand& Command : DrawCommands)
     {
         CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
 
-        CVector3 Top = CVector3(&Command.Mesh->BoundingBox.Top.x);
+        CVector3 Top = CVector3(Command.Mesh->BoundingBox.Top);
         Top = TransformMatrix.TransformPosition(Top);
 
-        CVector3 Bottom = CVector3(&Command.Mesh->BoundingBox.Bottom.x);
+        CVector3 Bottom = CVector3(Command.Mesh->BoundingBox.Bottom);
         Bottom = TransformMatrix.TransformPosition(Bottom);
 
         SAABB Box(Top, Bottom);
@@ -258,47 +294,108 @@ void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
         {
             if (Command.Material->ShouldRenderInForwardPass())
             {
-                Resources.ForwardVisibleCommands.Emplace(Command);
+                OutForwardDrawCommands.Emplace(Command);
             }
             else
             {
-                Resources.DeferredVisibleCommands.Emplace(Command);
+                CVector3 WorldPosition = Box.GetCenter();
+                InsertSorted(Command, Camera, WorldPosition, DeferredDistances, OutDeferredDrawCommands);
             }
         }
     }
 
-    TArray<float>            NewCommandsDistances;
-    TArray<SMeshDrawCommand> NewDeferredCommands;
+    //{
+    //    TRACE_SCOPE("Sort Meshes");
 
-    // Sort the commands based on camera distance
-    const CVector3 CameraPosition = Camera->GetPosition();
-    for (const SMeshDrawCommand& Command : Resources.DeferredVisibleCommands)
+    //    TArray<SMeshDrawCommand> NewDeferredCommands;
+
+    //    const CVector3 CameraPosition = Camera->GetPosition();
+
+    //    // Sort the commands based on camera distance
+    //    for (const SMeshDrawCommand& Command : OutDeferredDrawCommands)
+    //    {
+    //        CMatrix4 Transform = Command.CurrentActor->GetTransform().GetMatrix();
+    //        Transform = Transform.Transpose();
+
+    //        CVector3 CenterPosition = Command.Mesh->BoundingBox.GetCenter();
+    //        CenterPosition = Transform.TransformPosition(CenterPosition);
+
+    //        CVector3 DistanceVector = CenterPosition - CameraPosition;
+
+    //        const float NewDistance = DistanceVector.Length();
+
+    //        int32 Index = 0;
+    //        for (; Index < NewDeferredCommands.Size(); ++Index)
+    //        {
+    //            const float Distance = DeferredDistances[Index];
+    //            if (NewDistance < Distance)
+    //            {
+    //                break;
+    //            }
+    //        }
+
+    //        NewDeferredCommands.Insert(Index, Command);
+    //        DeferredDistances.Insert(Index, NewDistance);
+    //    }
+
+    //    OutDeferredDrawCommands.Swap(NewDeferredCommands);
+    //}
+}
+
+void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
+{
+    TRACE_SCOPE("FrustumCulling And Sorting");
+
+    const auto NumThreads = PlatformThreadMisc::GetNumProcessors();
+    
+    TArray<TArray<SMeshDrawCommand>> WriteableDeferredMeshCommands;
+    WriteableDeferredMeshCommands.Reserve(NumThreads);
+
+    TArray<TArray<SMeshDrawCommand>> WriteableForwardMeshCommands;
+    WriteableForwardMeshCommands.Reserve(NumThreads);
+
+    TArray<TArrayView<const SMeshDrawCommand>> ReadableMeshCommands;
+    ReadableMeshCommands.Reserve(NumThreads);
+
+    const auto CameraPtr            = Scene.GetCamera();
+    auto       MeshCommandsStartPtr = Scene.GetMeshDrawCommands().Data();
+    const auto NumMeshCommands      = Scene.GetMeshDrawCommands().Size();
+    const auto NumCommandsPerThread = NumMeshCommands / NumThreads;
+
+    TArray<DispatchID> Tasks(NumThreads);
+    for (uint32 Index = 0; Index < NumThreads; ++Index)
     {
-        CMatrix4 Transform = Command.CurrentActor->GetTransform().GetMatrix();
-        Transform = Transform.Transpose();
+        // Allocate Array for commands to fill
+        TArray<SMeshDrawCommand>& WriteDeferredMeshCommands = WriteableDeferredMeshCommands.Emplace();
+        TArray<SMeshDrawCommand>& WriteForwardMeshCommands  = WriteableForwardMeshCommands.Emplace();
+        
+        // Allocate ArrayView for reading
+        TArrayView<const SMeshDrawCommand>& ReadMeshCommands = ReadableMeshCommands.Emplace(MeshCommandsStartPtr, NumCommandsPerThread);
+        MeshCommandsStartPtr += NumCommandsPerThread;
 
-        CVector3 CenterPosition = Command.Mesh->BoundingBox.GetCenter();
-        CenterPosition = Transform.TransformPosition(CenterPosition);
-
-        CVector3 DistanceVector = CenterPosition - CameraPosition;
-
-        const float NewDistance = DistanceVector.Length();
-
-        int32 Index = 0;
-        for (; Index < NewDeferredCommands.Size(); ++Index)
+        const auto CullAndSort = [&]() -> void
         {
-            const float Distance = NewCommandsDistances[Index];
-            if (NewDistance < Distance)
-            {
-                break;
-            }
-        }
+            this->FrustumCullingAndSortingInternal(CameraPtr, ReadMeshCommands, WriteDeferredMeshCommands, WriteForwardMeshCommands);
+        };
 
-        NewDeferredCommands.Insert(Index, Command);
-        NewCommandsDistances.Insert(Index, NewDistance);
+        SAsyncTask AsyncTask;
+        AsyncTask.Delegate.BindLambda(CullAndSort);
+
+        Tasks[Index] = CAsyncTaskManager::Get().Dispatch(AsyncTask);
     }
 
-    Resources.DeferredVisibleCommands.Swap(NewDeferredCommands);
+    // TODO: Investigate why ID does not work
+    CAsyncTaskManager::Get().WaitForAll();
+    
+    // Sync and insert
+    for (uint32 Index = 0; Index < NumThreads; ++Index)
+    {
+        const TArray<SMeshDrawCommand>& WriteForwardMeshCommands = WriteableForwardMeshCommands[Index];
+        Resources.ForwardVisibleCommands.Append(WriteForwardMeshCommands);
+
+        const TArray<SMeshDrawCommand>& WriteDeferredMeshCommands = WriteableDeferredMeshCommands[Index];
+        Resources.DeferredVisibleCommands.Append(WriteDeferredMeshCommands);
+    }
 }
 
 void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
@@ -309,7 +406,7 @@ void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
 
     GPU_TRACE_SCOPE(InCmdList, "FXAA");
 
-    struct FXAASettings
+    struct SFXAASettings
     {
         float Width;
         float Height;
@@ -438,7 +535,7 @@ void CRenderer::Tick(const CScene& Scene)
     Resources.DeferredVisibleCommands.Clear();
     Resources.ForwardVisibleCommands.Clear();
 
-    // Clear the images that were debuggable last frame 
+    // Clear the images that were debug gable last frame 
     // TODO: Make this persistent, we do not need to do this every frame, right know it is because the resource-state system needs overhaul
     TextureDebugger->ClearImages();
 
@@ -462,23 +559,23 @@ void CRenderer::Tick(const CScene& Scene)
     }
 
     // Update camera-buffer
-    SCameraBufferDesc CamBuff;
-    CamBuff.ViewProjection = Scene.GetCamera()->GetViewProjectionMatrix();
-    CamBuff.View = Scene.GetCamera()->GetViewMatrix();
-    CamBuff.ViewInv = Scene.GetCamera()->GetViewInverseMatrix();
-    CamBuff.Projection = Scene.GetCamera()->GetProjectionMatrix();
-    CamBuff.ProjectionInv = Scene.GetCamera()->GetProjectionInverseMatrix();
-    CamBuff.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
-    CamBuff.Position = Scene.GetCamera()->GetPosition();
-    CamBuff.Forward = Scene.GetCamera()->GetForward();
-    CamBuff.Right = Scene.GetCamera()->GetRight();
-    CamBuff.NearPlane = Scene.GetCamera()->GetNearPlane();
-    CamBuff.FarPlane = Scene.GetCamera()->GetFarPlane();
-    CamBuff.AspectRatio = Scene.GetCamera()->GetAspectRatio();
+    SCameraBufferDesc CamBuffer;
+    CamBuffer.ViewProjection    = Scene.GetCamera()->GetViewProjectionMatrix();
+    CamBuffer.View              = Scene.GetCamera()->GetViewMatrix();
+    CamBuffer.ViewInv           = Scene.GetCamera()->GetViewInverseMatrix();
+    CamBuffer.Projection        = Scene.GetCamera()->GetProjectionMatrix();
+    CamBuffer.ProjectionInv     = Scene.GetCamera()->GetProjectionInverseMatrix();
+    CamBuffer.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
+    CamBuffer.Position          = Scene.GetCamera()->GetPosition();
+    CamBuffer.Forward           = Scene.GetCamera()->GetForward();
+    CamBuffer.Right             = Scene.GetCamera()->GetRight();
+    CamBuffer.NearPlane         = Scene.GetCamera()->GetNearPlane();
+    CamBuffer.FarPlane          = Scene.GetCamera()->GetFarPlane();
+    CamBuffer.AspectRatio       = Scene.GetCamera()->GetAspectRatio();
 
     PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), ERHIResourceState::VertexAndConstantBuffer, ERHIResourceState::CopyDest);
 
-    PrepareGBufferCmdList.UpdateBuffer(Resources.CameraBuffer.Get(), 0, sizeof(SCameraBufferDesc), &CamBuff);
+    PrepareGBufferCmdList.UpdateBuffer(Resources.CameraBuffer.Get(), 0, sizeof(SCameraBufferDesc), &CamBuffer);
 
     PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::VertexAndConstantBuffer);
 

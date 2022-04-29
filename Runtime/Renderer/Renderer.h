@@ -82,7 +82,9 @@ public:
     void Release();
 
     void PerformFrustumCullingAndSort(const CScene& Scene);
+
     void PerformFXAA(CRHICommandList& InCmdList);
+    
     void PerformBackBufferBlit(CRHICommandList& InCmdList);
 
     void PerformAABBDebugPass(CRHICommandList& InCmdList);
@@ -102,8 +104,15 @@ private:
     void OnWindowResize(const SWindowResizeEvent& Event);
 
     bool InitBoundingBoxDebugPass();
+
     bool InitAA();
+    
     bool InitShadingImage();
+
+    void FrustumCullingAndSortingInternal( const CCamera* Camera
+                                         , const TArrayView<const SMeshDrawCommand>& DrawCommands
+                                         , TArray<SMeshDrawCommand>& OutDeferredDrawCommands
+                                         , TArray<SMeshDrawCommand>& OutForwardDrawCommands);
 
     TSharedPtr<CRendererWindowHandler> WindowHandler;
 

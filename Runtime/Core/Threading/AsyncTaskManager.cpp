@@ -72,25 +72,24 @@ bool CAsyncTaskManager::Initialize()
 
     if (ThreadCount == 1)
     {
-        LOG_INFO("[CTaskManager]: No workers available, tasks will be executing on the main thread");
+        LOG_INFO("[CAsyncTaskManager]: No workers available, tasks will be executing on the main thread");
         WorkerThreads.Clear();
         return true;
     }
 
-    LOG_INFO("[CTaskManager]: Starting '" + ToString(ThreadCount) + "' Workers");
+    LOG_INFO("[CAsyncTaskManager]: Starting '" + ToString(ThreadCount) + "' Workers");
 
     // Start so that workers now that they should be running
     bIsRunning = true;
 
-    for (uint32 i = 0; i < ThreadCount; i++)
+    for (uint32 Thread = 0; Thread < ThreadCount; ++Thread)
     {
-        String ThreadName;
-        ThreadName.Format("WorkerThread[%d]", i);
+        String ThreadName = String::MakeFormated("WorkerThread[%d]", Thread);
 
         TSharedRef<CGenericThread> NewThread = PlatformThread::Make(CAsyncTaskManager::WorkThread, ThreadName);
         if (NewThread)
         {
-            WorkerThreads[i] = NewThread;
+            WorkerThreads[Thread] = NewThread;
             NewThread->Start();
         }
         else
@@ -112,16 +111,18 @@ DispatchID CAsyncTaskManager::Dispatch(const SAsyncTask& NewTask)
         MainThreadTask.Delegate.ExecuteIfBound();
 
         // Make sure that both fences is incremented
-        Instance.DispatchCompleted.Increment();
-        return DispatchAdded.Increment();
+        DispatchID NewTaskID = DispatchAdded.Increment();
+        DispatchCompleted.Increment();
+        return NewTaskID;
     }
+
+    DispatchID NewTaskID = DispatchAdded.Increment();
 
     {
         TScopedLock<CCriticalSection> Lock(QueueMutex);
         Queue.Emplace(NewTask);
     }
 
-    DispatchID NewTaskID = DispatchAdded.Increment();
     WakeCondition.NotifyOne();
     return NewTaskID;
 }
@@ -130,7 +131,7 @@ void CAsyncTaskManager::WaitFor(DispatchID Task)
 {
     while (DispatchCompleted.Load() < Task)
     {
-        // Look into proper yield
+        // TODO: Look into proper yield
         PlatformThreadMisc::Sleep(0);
     }
 }
@@ -139,7 +140,7 @@ void CAsyncTaskManager::WaitForAll()
 {
     while (DispatchCompleted.Load() < DispatchAdded.Load())
     {
-        // Look into proper yield
+        // TODO: Look into proper yield
         PlatformThreadMisc::Sleep(0);
     }
 }

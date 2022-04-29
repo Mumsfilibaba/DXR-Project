@@ -30,10 +30,14 @@ private:
 
 public:
 
-    /** @return: Returns the DispatchQueue instance */
+    /**
+     * @return: Returns the DispatchQueue instance 
+     */
     static CAsyncTaskManager& Get();
 
-    /** @return: Returns true if the initialization was successful */
+    /**
+     * @return: Returns true if the initialization was successful 
+     */
     bool Initialize();
 
     /**
@@ -51,10 +55,14 @@ public:
      */
     void WaitFor(DispatchID Task);
 
-    /** @brief:Wait for all queued up tasks to be dispatched and finish */
+    /**
+     * @brief: Wait for all queued up tasks to be dispatched and finish 
+     */
     void WaitForAll();
 
-    /** @brief: Release the DispatchQueue */
+    /**
+     * @brief: Release the DispatchQueue 
+     */
     void Release();
 
 private:

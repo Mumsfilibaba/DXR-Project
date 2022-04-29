@@ -106,10 +106,10 @@ private:
     TSharedRef<CRHIComputePipelineState>  CascadeGen;
     TSharedRef<CRHIComputeShader>         CascadeGenShader;
 
-    bool bUpdateDirLight = true;
+    bool bUpdateDirLight   = true;
     bool bUpdatePointLight = true;
 
-    uint64 DirLightFrame = 0;
+    uint64 DirLightFrame   = 0;
     uint64 PointLightFrame = 0;
 
     //uint64 FrameIndex = 0;

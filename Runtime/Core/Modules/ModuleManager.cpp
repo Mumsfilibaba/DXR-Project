@@ -91,9 +91,7 @@ IEngineModule* CModuleManager::GetEngineModule(const char* ModuleName)
     const int32 Index = GetModuleIndex(ModuleName);
     if (Index >= 0)
     {
-        const SModule& Module = Modules[Index];
-
-        IEngineModule* EngineModule = Module.Interface;
+        IEngineModule* EngineModule = Modules[Index].Interface;
         if (EngineModule)
         {
             LOG_WARNING("Module is loaded but does not contain an EngineModule interface");
@@ -142,8 +140,7 @@ void  CModuleManager::ReleaseAllModules()
             SafeDelete(EngineModule);
         }
 
-        PlatformModule Handle = Module.Handle;
-        PlatformLibrary::FreeDynamicLib(Handle);
+        PlatformLibrary::FreeDynamicLib(Module.Handle);
         Module.Handle = nullptr;
     }
 
@@ -155,8 +152,7 @@ PlatformModule CModuleManager::GetModuleHandle(const char* ModuleName)
     const int32 Index = GetModuleIndex(ModuleName);
     if (Index >= 0)
     {
-        const SModule& Module = Modules[Index];
-        return Module.Handle;
+        return Modules[Index].Handle;
     }
     else
     {
@@ -197,8 +193,7 @@ void CModuleManager::UnloadModule(const char* ModuleName)
             SafeDelete(EngineModule);
         }
 
-        PlatformModule Handle = Module.Handle;
-        PlatformLibrary::FreeDynamicLib(Handle);
+        PlatformLibrary::FreeDynamicLib(Module.Handle);
         Module.Handle = nullptr;
 
         Modules.RemoveAt(Index);

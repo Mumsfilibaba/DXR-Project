@@ -569,13 +569,16 @@ public:
      */
     inline void Append(const ElementType* InputArray, SizeType NumElements) noexcept
     {
-        Assert(InputArray != nullptr);
+        if (NumElements > 0)
+        {
+            Assert(InputArray != nullptr);
 
-        const SizeType NewSize = ArraySize + NumElements;
-        GrowIfNeeded(NewSize);
+            const SizeType NewSize = ArraySize + NumElements;
+            GrowIfNeeded(NewSize);
 
-        CopyConstructRange<ElementType>(Data() + ArraySize, InputArray, NumElements);
-        ArraySize = NewSize;
+            CopyConstructRange<ElementType>(Data() + ArraySize, InputArray, NumElements);
+            ArraySize = NewSize;
+        }
     }
 
     /**
