@@ -95,8 +95,8 @@ bool CD3D12RHIGraphicsPipelineState::Init(const SRHIGraphicsPipelineStateInfo& C
         InputLayoutDesc = DxInputLayoutState->GetDesc();
     }
 
-    TArray<CD3D12BaseShader*> ShadersWithRootSignature;
-    TArray<CD3D12BaseShader*> BaseShaders;
+    TArray<CD3D12Shader*> ShadersWithRootSignature;
+    TArray<CD3D12Shader*> BaseShaders;
 
     // VertexShader
     CD3D12RHIVertexShader* DxVertexShader = static_cast<CD3D12RHIVertexShader*>(CreateInfo.ShaderState.VertexShader);
@@ -183,7 +183,7 @@ bool CD3D12RHIGraphicsPipelineState::Init(const SRHIGraphicsPipelineStateInfo& C
 
         // NOTE: For now all constants are put in visibility_all
         uint32 Num32BitConstants = 0;
-        for (CD3D12BaseShader* DxShader : BaseShaders)
+        for (CD3D12Shader* DxShader : BaseShaders)
         {
             uint32 Index = DxShader->GetShaderVisibility();
             ResourceCounts.ResourceCounts[Index]                   = DxShader->GetResourceCount();
@@ -509,7 +509,7 @@ bool CD3D12RHIRayTracingPipelineState::Init(const SRHIRayTracingPipelineStateInf
 {
     SD3D12RayTracingPipelineStateStream PipelineStream;
 
-    TArray<CD3D12BaseShader*> Shaders;
+    TArray<CD3D12Shader*> Shaders;
     CD3D12RHIRayGenShader* RayGen = static_cast<CD3D12RHIRayGenShader*>(CreateInfo.RayGen);
     Shaders.Emplace(RayGen);
 
@@ -618,7 +618,7 @@ bool CD3D12RHIRayTracingPipelineState::Init(const SRHIRayTracingPipelineStateInf
     PipelineStream.PipelineConfig.MaxTraceRecursionDepth = CreateInfo.MaxRecursionDepth;
 
     SShaderResourceCount CombinedResourceCount;
-    for (CD3D12BaseShader* Shader : Shaders)
+    for (CD3D12Shader* Shader : Shaders)
     {
         Assert(Shader != nullptr);
         CombinedResourceCount.Combine(Shader->GetResourceCount());

@@ -35,10 +35,10 @@ public:
         EShaderModel ShaderModel,
         TArray<uint8>& Code) override final;
 
-    bool GetReflection(CD3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection);
-    bool GetLibraryReflection(CD3D12BaseShader* Shader, ID3D12LibraryReflection** Reflection);
+    bool GetReflection(CD3D12Shader* Shader, ID3D12ShaderReflection** Reflection);
+    bool GetLibraryReflection(CD3D12Shader* Shader, ID3D12LibraryReflection** Reflection);
 
-    bool HasRootSignature(CD3D12BaseShader* Shader);
+    bool HasRootSignature(CD3D12Shader* Shader);
 
 private:
     bool InternalCompileFromSource(

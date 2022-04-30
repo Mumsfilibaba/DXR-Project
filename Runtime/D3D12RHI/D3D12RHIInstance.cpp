@@ -80,7 +80,7 @@ CD3D12RHIInstance* CD3D12RHIInstance::CreateD3D12Instance()
 }
 
 CD3D12RHIInstance::CD3D12RHIInstance()
-    : CRHIInstance(ERHIInstanceApi::D3D12)
+    : CRHIInstance(ERHIInstanceType::D3D12)
     , Device(nullptr)
     , DirectCmdContext(nullptr)
 {
@@ -650,7 +650,7 @@ CRHIIndexBuffer* CD3D12RHIInstance::CreateIndexBuffer(EIndexFormat Format, uint3
 
 CRHIConstantBuffer* CD3D12RHIInstance::CreateConstantBuffer(uint32 Size, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
 {
-    Assert(!(Flags & BufferFlag_UAV) && !(Flags & EBufferUsageFlags::AllowSRV));
+    Assert(((Flags & EBufferUsageFlags::AllowUAV) == EBufferUsageFlags::None) && ((Flags & EBufferUsageFlags::AllowSRV) == EBufferUsageFlags::None));
 
     const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
@@ -829,7 +829,7 @@ CRHIShaderResourceView* CD3D12RHIInstance::CreateShaderResourceView(const SRHISh
         CD3D12Buffer*     DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(Buffer->IsSRV());
+        Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
 
         Desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = CreateInfo.VertexBuffer.FirstVertex;
@@ -844,7 +844,7 @@ CRHIShaderResourceView* CD3D12RHIInstance::CreateShaderResourceView(const SRHISh
         CD3D12Buffer*    DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(Buffer->IsSRV());
+        Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
         Assert(Buffer->GetFormat() != EIndexFormat::uint16);
 
         Desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
@@ -860,7 +860,7 @@ CRHIShaderResourceView* CD3D12RHIInstance::CreateShaderResourceView(const SRHISh
         CD3D12Buffer*      DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(Buffer->IsSRV());
+        Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
 
         Desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = CreateInfo.StructuredBuffer.FirstElement;
@@ -972,7 +972,7 @@ CRHIUnorderedAccessView* CD3D12RHIInstance::CreateUnorderedAccessView(const SRHI
         CD3D12Buffer* DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(Buffer->IsUAV());
+        Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowUAV) != EBufferUsageFlags::None));
 
         Desc.ViewDimension              = D3D12_UAV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = CreateInfo.VertexBuffer.FirstVertex;
@@ -987,7 +987,7 @@ CRHIUnorderedAccessView* CD3D12RHIInstance::CreateUnorderedAccessView(const SRHI
         CD3D12Buffer* DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(Buffer->IsUAV());
+        Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowUAV) != EBufferUsageFlags::None));
 
         Desc.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement = CreateInfo.IndexBuffer.FirstIndex;
@@ -1006,7 +1006,7 @@ CRHIUnorderedAccessView* CD3D12RHIInstance::CreateUnorderedAccessView(const SRHI
         CD3D12Buffer*     DxBuffer = D3D12BufferCast(Buffer);
         Resource = DxBuffer->GetResource();
 
-        Assert(Buffer->IsUAV());
+        Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowUAV) != EBufferUsageFlags::None));
 
         Desc.ViewDimension              = D3D12_UAV_DIMENSION_BUFFER;
         Desc.Buffer.FirstElement        = CreateInfo.StructuredBuffer.FirstElement;
@@ -1024,7 +1024,7 @@ CRHIUnorderedAccessView* CD3D12RHIInstance::CreateUnorderedAccessView(const SRHI
 
     Assert(Resource != nullptr);
 
-    // TODO: Expose counterresource
+    // TODO: Expose counter resource
     if (DxView->CreateView(nullptr, Resource, Desc))
     {
         return DxView.ReleaseOwnership();
@@ -1254,7 +1254,7 @@ CRHIComputeShader* CD3D12RHIInstance::CreateComputeShader(const TArray<uint8>& S
 CRHIVertexShader* CD3D12RHIInstance::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<CD3D12RHIVertexShader> Shader = dbg_new CD3D12RHIVertexShader(Device, ShaderCode);
-    if (!CD3D12BaseShader::GetShaderReflection(Shader.Get()))
+    if (!CD3D12Shader::GetShaderReflection(Shader.Get()))
     {
         return nullptr;
     }
@@ -1300,7 +1300,7 @@ CRHIAmplificationShader* CD3D12RHIInstance::CreateAmplificationShader(const TArr
 CRHIPixelShader* CD3D12RHIInstance::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<CD3D12RHIPixelShader> Shader = dbg_new CD3D12RHIPixelShader(Device, ShaderCode);
-    if (!CD3D12BaseShader::GetShaderReflection(Shader.Get()))
+    if (!CD3D12Shader::GetShaderReflection(Shader.Get()))
     {
         return nullptr;
     }

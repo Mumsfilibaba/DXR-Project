@@ -579,7 +579,7 @@ void CD3D12CommandContext::Set32BitShaderConstants(CRHIShader* Shader, const voi
 
 void CD3D12CommandContext::SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
 {
-    CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    CD3D12Shader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetShaderResourceParameter(ParameterIndex);
@@ -592,7 +592,7 @@ void CD3D12CommandContext::SetShaderResourceView(CRHIShader* Shader, CRHIShaderR
 
 void CD3D12CommandContext::SetShaderResourceViews(CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex)
 {
-    CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    CD3D12Shader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetShaderResourceParameter(ParameterIndex);
@@ -608,7 +608,7 @@ void CD3D12CommandContext::SetShaderResourceViews(CRHIShader* Shader, CRHIShader
 
 void CD3D12CommandContext::SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
 {
-    CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    CD3D12Shader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetUnorderedAccessParameter(ParameterIndex);
@@ -621,7 +621,7 @@ void CD3D12CommandContext::SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorde
 
 void CD3D12CommandContext::SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
 {
-    CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    CD3D12Shader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetUnorderedAccessParameter(ParameterIndex);
@@ -637,7 +637,7 @@ void CD3D12CommandContext::SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnord
 
 void CD3D12CommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
 {
-    CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    CD3D12Shader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetConstantBufferParameter(ParameterIndex);
@@ -657,7 +657,7 @@ void CD3D12CommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuf
 
 void CD3D12CommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
 {
-    CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    CD3D12Shader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetConstantBufferParameter(ParameterIndex);
@@ -680,7 +680,7 @@ void CD3D12CommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstantBu
 
 void CD3D12CommandContext::SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex)
 {
-    CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    CD3D12Shader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetSamplerStateParameter(ParameterIndex);
@@ -693,7 +693,7 @@ void CD3D12CommandContext::SetSamplerState(CRHIShader* Shader, CRHISamplerState*
 
 void CD3D12CommandContext::SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
 {
-    CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
+    CD3D12Shader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = DxShader->GetSamplerStateParameter(ParameterIndex);

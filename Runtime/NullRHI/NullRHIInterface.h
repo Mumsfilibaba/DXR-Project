@@ -28,7 +28,7 @@ class CNullRHIInstance final : public CRHIInstance
 public:
 
     CNullRHIInstance()
-        : CRHIInstance(ERHIInstanceApi::Null)
+        : CRHIInstance(ERHIInstanceType::Null)
         , CommandContext(CNullRHICommandContext::CreateNullRHIContext())
     { }
 

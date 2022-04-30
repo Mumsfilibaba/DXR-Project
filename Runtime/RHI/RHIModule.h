@@ -2,13 +2,13 @@
 #include "Core/Modules/ModuleManager.h"
 
 #if MONOLITHIC_BUILD
-#define RHI_API
+    #define RHI_API
 #else
-#if RHI_IMPL
-#define RHI_API MODULE_EXPORT
-#else
-#define RHI_API MODULE_IMPORT
-#endif
+    #if RHI_IMPL
+        #define RHI_API MODULE_EXPORT
+    #else
+        #define RHI_API MODULE_IMPORT
+    #endif
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -20,29 +20,29 @@
 #define ENABLE_API_GPU_BREADCRUMBS (0)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIInstanceApi
+// ERHIInstanceType
 
-enum class ERHIInstanceApi : uint32
+enum class ERHIInstanceType : uint32
 {
     Unknown = 0,
-    Null = 1,
-    D3D12 = 2,
+    Null    = 1,
+    D3D12   = 2,
 };
 
-inline const char* ToString(ERHIInstanceApi RenderLayerApi)
+inline const char* ToString(ERHIInstanceType RenderLayerApi)
 {
     switch (RenderLayerApi)
     {
-    case ERHIInstanceApi::D3D12: return "D3D12";
-    case ERHIInstanceApi::Null:  return "Null";
-    default:                return "Unknown";
+    case ERHIInstanceType::D3D12: return "D3D12";
+    case ERHIInstanceType::Null:  return "Null";
+    default:                      return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RHI Functions
 
-RHI_API bool RHIInitialize(ERHIInstanceApi InRenderApi);
+RHI_API bool RHIInitialize(ERHIInstanceType InRenderApi);
 RHI_API void RHIRelease();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

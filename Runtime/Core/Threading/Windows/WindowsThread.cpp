@@ -54,7 +54,7 @@ bool CWindowsThread::Start()
 
 void CWindowsThread::WaitUntilFinished(uint64 TimeoutInMilliseconds)
 {
-    WaitForSingleObject(Thread, TimeoutInMilliseconds);
+    WaitForSingleObject(Thread, DWORD(TimeoutInMilliseconds));
 }
 
 void CWindowsThread::SetName(const String& InName)
@@ -81,7 +81,7 @@ DWORD WINAPI CWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
             SetThreadDescription(CurrentThread->Thread, WideName.CStr());
         }
 
-        Assert(CurrentThread->Function != nullptr);
+        Assert(CurrentThread->Function);
         CurrentThread->Function();
 
         return 0;

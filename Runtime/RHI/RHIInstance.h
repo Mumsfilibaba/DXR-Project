@@ -470,20 +470,20 @@ public:
      * 
      * @return: Returns the current RHI's API
      */
-    FORCEINLINE ERHIInstanceApi GetApi() const
+    FORCEINLINE ERHIInstanceType GetApi() const
     {
         return CurrentRHI;
     }
 
 protected:
 
-    CRHIInstance(ERHIInstanceApi InCurrentRHI)
+    CRHIInstance(ERHIInstanceType InCurrentRHI)
         : CurrentRHI(InCurrentRHI)
     { }
 
     virtual ~CRHIInstance() = default;
 
-    ERHIInstanceApi CurrentRHI;
+    ERHIInstanceType CurrentRHI;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

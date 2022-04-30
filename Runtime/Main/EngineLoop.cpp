@@ -126,11 +126,11 @@ bool CEngineLoop::PreInitialize()
     }
 
     // TODO: Decide this via command line
-    ERHIInstanceApi RenderApi =
+    ERHIInstanceType RenderApi =
 #if PLATFORM_MACOS
-        ERHIInstanceApi::Null;
+        ERHIInstanceType::Null;
 #else
-        ERHIInstanceApi::D3D12;
+        ERHIInstanceType::D3D12;
 #endif
     if (!RHIInitialize(RenderApi))
     {
