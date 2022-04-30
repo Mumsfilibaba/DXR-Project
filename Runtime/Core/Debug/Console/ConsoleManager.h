@@ -8,27 +8,38 @@
 #include "Core/Containers/HashTable.h"
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/StringView.h"
+#include "Core/Containers/Optional.h"
 
-#ifdef COMPILER_MSVC
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
+#if defined(COMPILER_MSVC)
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Severity of the console-message
+// EConsoleSeverity
 
 enum class EConsoleSeverity
 {
-    Info = 0,
+    Info    = 0,
     Warning = 1,
-    Error = 2
+    Error   = 2
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ConsoleManager - Manages ConsoleObjects
+// CConsoleManager
 
 class CORE_API CConsoleManager
 {
+private:
+
+    friend class TOptional<CConsoleManager>;
+
+    CConsoleManager() = default;
+    ~CConsoleManager() = default;
+
 public:
 
     /**
@@ -132,10 +143,9 @@ public:
     }
 
 private:
-
-    CConsoleManager() = default;
-    ~CConsoleManager() = default;
-
+    
+    static TOptional<CConsoleManager>& GetConsoleManagerInstance();
+    
     bool RegisterObject(const String& Name, IConsoleObject* Variable);
 
     IConsoleObject* FindConsoleObject(const String& Name);
@@ -147,11 +157,11 @@ private:
     TArray<TPair<String, EConsoleSeverity>> ConsoleMessages;
 
     TArray<String> History;
-    int32 HistoryLength = 50;
+    int32          HistoryLength = 50;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// AutoConsoleCommand - Console-command that registers itself to the console-manager
+// CAutoConsoleCommand
 
 class CAutoConsoleCommand : public CConsoleCommand
 {
@@ -180,7 +190,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// AutoConsoleVariable - Console-variable that registers itself to the console-manager
+// TAutoConsoleVariable
 
 template<typename T>
 class TAutoConsoleVariable : public TConsoleVariable<T>
@@ -209,6 +219,8 @@ private:
     String Name;
 };
 
-#ifdef COMPILER_MSVC
-#pragma warning(pop)
+#if defined(COMPILER_MSVC)
+    #pragma warning(pop)
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic pop
 #endif

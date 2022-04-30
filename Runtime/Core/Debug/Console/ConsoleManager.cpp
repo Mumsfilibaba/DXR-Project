@@ -10,9 +10,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console commands for the console
 
-CAutoConsoleCommand GClearHistory("ClearHistory", CExecutedDelegateType::CreateRaw(&CConsoleManager::Get(), &CConsoleManager::ClearHistory));
+CAutoConsoleCommand GClearHistory("ClearHistory", 
+                                  CExecutedDelegateType::CreateRaw(&CConsoleManager::Get(), &CConsoleManager::ClearHistory));
 
-TAutoConsoleVariable<String> GEcho("Echo", "", CConsoleVariableChangedDelegateType::CreateLambda([](IConsoleVariable* InVariable) -> void
+TAutoConsoleVariable<String> GEcho("Echo", "", 
+                                   CConsoleVariableChangedDelegateType::CreateLambda([](IConsoleVariable* InVariable) -> void
 {
     if (InVariable->IsString())
     {
@@ -22,12 +24,18 @@ TAutoConsoleVariable<String> GEcho("Echo", "", CConsoleVariableChangedDelegateTy
 }));
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ConsoleManager
+// CConsoleManager
+
+TOptional<CConsoleManager>& CConsoleManager::GetConsoleManagerInstance()
+{
+    static TOptional<CConsoleManager> Instance(InPlace);
+    return Instance;
+}
 
 CConsoleManager& CConsoleManager::Get()
 {
-    static CConsoleManager Instance;
-    return Instance;
+    TOptional<CConsoleManager>& ConsoleManager = GetConsoleManagerInstance();
+    return ConsoleManager.GetValue();
 }
 
 void CConsoleManager::RegisterCommand(const String& Name, IConsoleCommand* Command)

@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/Function.h"
 
 #if defined(COMPILER_MSVC)
     #pragma warning(push)
@@ -10,33 +11,42 @@
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-typedef void(*ThreadFunction)();
+enum : uint64
+{
+    kWaitForThreadInfinity = uint64(~0)
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CGenericThread
 
-class CGenericThread : public CRefCounted
+class CORE_API CGenericThread : public CRefCounted
 {
+    friend class CGenericThreadMisc;
+
 protected:
 
-    CGenericThread()  = default;
+    CGenericThread(const TFunction<void()>& InFunction)
+        : Function(InFunction)
+    { }
+
     ~CGenericThread() = default;
 
 public:
 
-    // TODO: Enable member-functions and lambdas (Use TFunction to solve this)
-
-    static TSharedRef<CGenericThread> Make(ThreadFunction InFunction) { return dbg_new CGenericThread(); }
-   
-    static TSharedRef<CGenericThread> Make(ThreadFunction InFunction, const String& InName) { return dbg_new CGenericThread(); }
-
     virtual bool Start() { return true; }
 
-    virtual void WaitUntilFinished() { }
+    virtual void WaitUntilFinished(uint64 TimeoutInMilliseconds) { }
 	
     virtual void SetName(const String& InName) { }
 
     virtual void* GetPlatformHandle() { return nullptr; }
+
+    virtual String GetName() const { return ""; }
+
+    TFunction<void()> GetFunction() const { return Function; }
+
+protected:
+    TFunction<void()> Function;
 };
 
 #if defined(COMPILER_MSVC)

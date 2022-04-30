@@ -1,6 +1,15 @@
+#include "WindowsThread.h"
 #include "WindowsThreadMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CWindowsThreadMisc
 
-DWORD CWindowsThreadMisc::MainThreadHandle;
+CGenericThread* CWindowsThreadMisc::CreateThread(const TFunction<void()>& InFunction)
+{
+    return CWindowsThread::CreateWindowsThread(InFunction);
+}
+
+CGenericThread* CWindowsThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const String& InName)
+{
+    return CWindowsThread::CreateWindowsThread(InFunction, InName);
+}
