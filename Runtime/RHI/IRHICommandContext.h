@@ -65,7 +65,7 @@ public:
      * 
      * @param ShadingRate: New shading-rate for the upcoming draw-calls
      */
-    virtual void SetShadingRate(ERHIShadingRate ShadingRate) = 0;
+    virtual void SetShadingRate(EShadingRate ShadingRate) = 0;
 
     /**
      * @brief: Set the Shading-Rate image that should be used 
@@ -360,7 +360,7 @@ public:
      * @param BeforeState: State that the Texture had before the transition
      * @param AfterState: State that the Texture have after the transition
      */
-    virtual void TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState) = 0;
+    virtual void TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) = 0;
     
     /**
      * @brief: Transition the ResourceState of a Buffer resource
@@ -369,7 +369,7 @@ public:
      * @param BeforeState: State that the Buffer had before the transition
      * @param AfterState: State that the Buffer have after the transition
      */
-    virtual void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState) = 0;
+    virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) = 0;
 
     /**
      * @brief: Add a UnorderedAccessBarrier for a Texture resource, which should be issued before reading of a resource in UnorderedAccessState 

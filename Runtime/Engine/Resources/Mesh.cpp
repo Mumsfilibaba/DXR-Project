@@ -13,10 +13,10 @@ bool CMesh::Init(const SMeshData& Data)
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
     IndexCount  = static_cast<uint32>(Data.Indices.Size());
 
-    const uint32 BufferFlags = bRTOn ? (BufferFlag_SRV | BufferFlag_Default) : BufferFlag_Default;
+    const EBufferUsageFlags BufferFlags = bRTOn ? (EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default) : EBufferUsageFlags::Default;
 
     SRHIResourceData InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
-    VertexBuffer = RHICreateVertexBuffer<SVertex>(VertexCount, BufferFlags, ERHIResourceState::VertexAndConstantBuffer, &InitialData);
+    VertexBuffer = RHICreateVertexBuffer<SVertex>(VertexCount, BufferFlags, EResourceAccess::VertexAndConstantBuffer, &InitialData);
     if (!VertexBuffer)
     {
         return false;
@@ -28,8 +28,8 @@ bool CMesh::Init(const SMeshData& Data)
 
     TArray<uint16> NewIndicies;
 
-    const ERHIIndexFormat IndexFormat = (IndexCount < UINT16_MAX) && (!bRTOn) ? ERHIIndexFormat::uint16 : ERHIIndexFormat::uint32;
-    if (IndexFormat == ERHIIndexFormat::uint16)
+    const EIndexFormat IndexFormat = (IndexCount < UINT16_MAX) && (!bRTOn) ? EIndexFormat::uint16 : EIndexFormat::uint32;
+    if (IndexFormat == EIndexFormat::uint16)
     {
         NewIndicies.Reserve(Data.Indices.Size());
 
@@ -45,7 +45,7 @@ bool CMesh::Init(const SMeshData& Data)
         InitialData = SRHIResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
     }
 
-    IndexBuffer = RHICreateIndexBuffer(IndexFormat, IndexCount, BufferFlags, ERHIResourceState::IndexBuffer, &InitialData);
+    IndexBuffer = RHICreateIndexBuffer(IndexFormat, IndexCount, BufferFlags, EResourceAccess::IndexBuffer, &InitialData);
     if (!IndexBuffer)
     {
         return false;

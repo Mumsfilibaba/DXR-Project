@@ -12,14 +12,14 @@ struct SRHIShaderResourceViewInfo
 {
     enum class EType
     {
-        Texture2D = 1,
-        Texture2DArray = 2,
-        TextureCube = 3,
+        Texture2D        = 1,
+        Texture2DArray   = 2,
+        TextureCube      = 3,
         TextureCubeArray = 4,
-        Texture3D = 5,
-        VertexBuffer = 6,
-        IndexBuffer = 7,
-        StructuredBuffer = 8,
+        Texture3D        = 5,
+        VertexBuffer     = 6,
+        IndexBuffer      = 7,
+        GenericBuffer    = 8,
     };
 
     FORCEINLINE SRHIShaderResourceViewInfo(EType InType)
@@ -89,7 +89,7 @@ struct SRHIShaderResourceViewInfo
         } IndexBuffer;
         struct
         {
-            CRHIStructuredBuffer* Buffer = nullptr;
+            CRHIGenericBuffer* Buffer = nullptr;
             uint32 FirstElement = 0;
             uint32 NumElements = 0;
         } StructuredBuffer;
@@ -103,14 +103,14 @@ struct SRHIUnorderedAccessViewInfo
 {
     enum class EType
     {
-        Texture2D = 1,
-        Texture2DArray = 2,
-        TextureCube = 3,
+        Texture2D        = 1,
+        Texture2DArray   = 2,
+        TextureCube      = 3,
         TextureCubeArray = 4,
-        Texture3D = 5,
-        VertexBuffer = 6,
-        IndexBuffer = 7,
-        StructuredBuffer = 8,
+        Texture3D        = 5,
+        VertexBuffer     = 6,
+        IndexBuffer      = 7,
+        GenericBuffer    = 8,
     };
 
     FORCEINLINE SRHIUnorderedAccessViewInfo(EType InType)
@@ -170,7 +170,7 @@ struct SRHIUnorderedAccessViewInfo
         } IndexBuffer;
         struct
         {
-            CRHIStructuredBuffer* Buffer = nullptr;
+            CRHIGenericBuffer* Buffer = nullptr;
             uint32 FirstElement = 0;
             uint32 NumElements = 0;
         } StructuredBuffer;
@@ -185,11 +185,11 @@ struct SRHIRenderTargetViewInfo
     // TODO: Add support for texel buffers?
     enum class EType
     {
-        Texture2D = 1,
-        Texture2DArray = 2,
-        TextureCube = 3,
+        Texture2D        = 1,
+        Texture2DArray   = 2,
+        TextureCube      = 3,
         TextureCubeArray = 4,
-        Texture3D = 5,
+        Texture3D        = 5,
     };
 
     FORCEINLINE SRHIRenderTargetViewInfo(EType InType)
@@ -242,9 +242,9 @@ struct SRHIDepthStencilViewInfo
 {
     enum class EType
     {
-        Texture2D = 1,
-        Texture2DArray = 2,
-        TextureCube = 3,
+        Texture2D        = 1,
+        Texture2DArray   = 2,
+        TextureCube      = 3,
         TextureCubeArray = 4,
     };
 
@@ -284,7 +284,6 @@ struct SRHIDepthStencilViewInfo
         } TextureCubeArray;
     };
 };
-
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIShaderResourceView

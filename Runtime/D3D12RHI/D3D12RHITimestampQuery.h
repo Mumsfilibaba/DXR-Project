@@ -23,7 +23,7 @@ public:
     void BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
     void EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
 
-    void ResolveQueries(class CD3D12RHICommandContext& CmdContext);
+    void ResolveQueries(class CD3D12CommandContext& CmdContext);
 
     FORCEINLINE ID3D12QueryHeap* GetQueryHeap() const
     {

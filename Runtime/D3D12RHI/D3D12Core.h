@@ -33,8 +33,8 @@
     } while (0)
 
 #else
-#define D3D12_ERROR(Condtion, ErrorString) do {} while(0)
-#define D3D12_ERROR_ALWAYS(ErrorString)    do {} while(0)
+#define D3D12_ERROR(Condtion, ErrorString) do { } while(0)
+#define D3D12_ERROR_ALWAYS(ErrorString)    do { } while(0)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -71,10 +71,10 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RHI conversion functions 
 
-inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(uint32 Flag)
+inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if (Flag & ERHIBufferFlags::BufferFlag_UAV)
+    if ((Flags & EBufferUsageFlags::AllowUAV) != EBufferUsageFlags::None)
     {
         Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
@@ -87,18 +87,18 @@ inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(uint32 Flag)
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
     if (Flag & ERHITextureFlags::TextureFlag_UAV)
     {
-        Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Result |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
     if (Flag & ERHITextureFlags::TextureFlag_RTV)
     {
-        Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+        Result |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     }
     if (Flag & ERHITextureFlags::TextureFlag_DSV)
     {
-        Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+        Result |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
         if (!(Flag & ERHITextureFlags::TextureFlag_SRV))
         {
-            Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+            Result |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
         }
     }
 
@@ -356,15 +356,15 @@ inline uint8 ConvertRenderTargetWriteState(const SRenderTargetWriteState& Render
     return RenderTargetWriteMask;
 }
 
-inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(ERHIPrimitiveTopologyType PrimitiveTopologyType)
+inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopologyType PrimitiveTopologyType)
 {
     switch (PrimitiveTopologyType)
     {
-    case ERHIPrimitiveTopologyType::Line:      return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-    case ERHIPrimitiveTopologyType::Patch:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
-    case ERHIPrimitiveTopologyType::Point:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-    case ERHIPrimitiveTopologyType::Triangle:  return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    case ERHIPrimitiveTopologyType::Undefined: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+    case EPrimitiveTopologyType::Line:      return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+    case EPrimitiveTopologyType::Patch:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+    case EPrimitiveTopologyType::Point:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+    case EPrimitiveTopologyType::Triangle:  return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    case EPrimitiveTopologyType::Undefined: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
     }
 
     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
@@ -385,26 +385,26 @@ inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology Prim
     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 }
 
-inline D3D12_RESOURCE_STATES ConvertResourceState(ERHIResourceState ResourceState)
+inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
-    case ERHIResourceState::Common:                  return D3D12_RESOURCE_STATE_COMMON;
-    case ERHIResourceState::CopyDest:                return D3D12_RESOURCE_STATE_COPY_DEST;
-    case ERHIResourceState::CopySource:              return D3D12_RESOURCE_STATE_COPY_SOURCE;
-    case ERHIResourceState::DepthRead:               return D3D12_RESOURCE_STATE_DEPTH_READ;
-    case ERHIResourceState::DepthWrite:              return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-    case ERHIResourceState::IndexBuffer:             return D3D12_RESOURCE_STATE_INDEX_BUFFER;
-    case ERHIResourceState::NonPixelShaderResource:  return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-    case ERHIResourceState::PixelShaderResource:     return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-    case ERHIResourceState::Present:                 return D3D12_RESOURCE_STATE_PRESENT;
-    case ERHIResourceState::RenderTarget:            return D3D12_RESOURCE_STATE_RENDER_TARGET;
-    case ERHIResourceState::ResolveDest:             return D3D12_RESOURCE_STATE_RESOLVE_DEST;
-    case ERHIResourceState::ResolveSource:           return D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
-    case ERHIResourceState::ShadingRateSource:       return D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
-    case ERHIResourceState::UnorderedAccess:         return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-    case ERHIResourceState::VertexAndConstantBuffer: return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-    case ERHIResourceState::GenericRead:             return D3D12_RESOURCE_STATE_GENERIC_READ;
+    case EResourceAccess::Common:                  return D3D12_RESOURCE_STATE_COMMON;
+    case EResourceAccess::CopyDest:                return D3D12_RESOURCE_STATE_COPY_DEST;
+    case EResourceAccess::CopySource:              return D3D12_RESOURCE_STATE_COPY_SOURCE;
+    case EResourceAccess::DepthRead:               return D3D12_RESOURCE_STATE_DEPTH_READ;
+    case EResourceAccess::DepthWrite:              return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+    case EResourceAccess::IndexBuffer:             return D3D12_RESOURCE_STATE_INDEX_BUFFER;
+    case EResourceAccess::NonPixelShaderResource:  return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+    case EResourceAccess::PixelShaderResource:     return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+    case EResourceAccess::Present:                 return D3D12_RESOURCE_STATE_PRESENT;
+    case EResourceAccess::RenderTarget:            return D3D12_RESOURCE_STATE_RENDER_TARGET;
+    case EResourceAccess::ResolveDest:             return D3D12_RESOURCE_STATE_RESOLVE_DEST;
+    case EResourceAccess::ResolveSource:           return D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
+    case EResourceAccess::ShadingRateSource:       return D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
+    case EResourceAccess::UnorderedAccess:         return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+    case EResourceAccess::VertexAndConstantBuffer: return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+    case EResourceAccess::GenericRead:             return D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
     return D3D12_RESOURCE_STATES();
@@ -451,17 +451,17 @@ inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
     return D3D12_FILTER();
 }
 
-inline D3D12_SHADING_RATE ConvertShadingRate(ERHIShadingRate ShadingRate)
+inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
-    case ERHIShadingRate::VRS_1x1: return D3D12_SHADING_RATE_1X1;
-    case ERHIShadingRate::VRS_1x2: return D3D12_SHADING_RATE_1X2;
-    case ERHIShadingRate::VRS_2x1: return D3D12_SHADING_RATE_2X1;
-    case ERHIShadingRate::VRS_2x2: return D3D12_SHADING_RATE_2X2;
-    case ERHIShadingRate::VRS_2x4: return D3D12_SHADING_RATE_2X4;
-    case ERHIShadingRate::VRS_4x2: return D3D12_SHADING_RATE_4X2;
-    case ERHIShadingRate::VRS_4x4: return D3D12_SHADING_RATE_4X4;
+    case EShadingRate::VRS_1x1: return D3D12_SHADING_RATE_1X1;
+    case EShadingRate::VRS_1x2: return D3D12_SHADING_RATE_1X2;
+    case EShadingRate::VRS_2x1: return D3D12_SHADING_RATE_2X1;
+    case EShadingRate::VRS_2x2: return D3D12_SHADING_RATE_2X2;
+    case EShadingRate::VRS_2x4: return D3D12_SHADING_RATE_2X4;
+    case EShadingRate::VRS_4x2: return D3D12_SHADING_RATE_4X2;
+    case EShadingRate::VRS_4x4: return D3D12_SHADING_RATE_4X4;
     }
 
     return D3D12_SHADING_RATE();

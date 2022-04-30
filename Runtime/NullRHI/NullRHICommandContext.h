@@ -4,13 +4,11 @@
 #include "Core/Containers/SharedRef.h"
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -27,7 +25,12 @@ private:
 
 public:
 
-    static FORCEINLINE CNullRHICommandContext* Make() { return dbg_new CNullRHICommandContext(); }
+    static FORCEINLINE CNullRHICommandContext* CreateNullRHIContext() { return dbg_new CNullRHICommandContext(); }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // IRHICommandContext Interface
 
     virtual void Begin() override final { }
     virtual void End()   override final { }
@@ -39,7 +42,7 @@ public:
     virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) override final { }
     virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) override final { }
 
-    virtual void SetShadingRate(ERHIShadingRate ShadingRate)      override final { }
+    virtual void SetShadingRate(EShadingRate ShadingRate)      override final { }
     virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) override final { }
 
     virtual void BeginRenderPass() override final { }
@@ -99,8 +102,8 @@ public:
 
     virtual void GenerateMips(CRHITexture* Texture) override final { }
 
-    virtual void TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState) override final { }
-    virtual void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState) override final { }
+    virtual void TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final { }
+    virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final { }
 
     virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) override final { }
     virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer) override final { }

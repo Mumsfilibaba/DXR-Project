@@ -4,13 +4,13 @@
 #include "D3D12Core.h"
 #include "D3D12Shader.h"
 #include "D3D12RHIInstance.h"
-#include "D3D12RHIBuffer.h"
+#include "D3D12Buffer.h"
 #include "D3D12RHITexture.h"
 #include "D3D12RHIPipelineState.h"
 #include "D3D12RHIRayTracing.h"
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12RHITimestampQuery.h"
-#include "D3D12RHICommandContext.h"
+#include "D3D12CommandContext.h"
 #include "D3D12ResourceCast.inl"
 #include "D3D12FunctionPointers.h"
 
@@ -64,7 +64,7 @@ void CD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12GPUResourceUploader
+// CD3D12GPUResourceUploader
 
 CD3D12GPUResourceUploader::CD3D12GPUResourceUploader(CD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
@@ -160,7 +160,7 @@ SD3D12UploadAllocation CD3D12GPUResourceUploader::LinearAllocate(uint32 InSizeIn
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12CommandBatch
+// CD3D12CommandBatch
 
 CD3D12CommandBatch::CD3D12CommandBatch(CD3D12Device* InDevice)
     : Device(InDevice)
@@ -198,9 +198,9 @@ bool CD3D12CommandBatch::Init()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RHICommandContext
 
-CD3D12RHICommandContext* CD3D12RHICommandContext::Make(CD3D12Device* InDevice)
+CD3D12CommandContext* CD3D12CommandContext::Make(CD3D12Device* InDevice)
 {
-    CD3D12RHICommandContext* NewContext = dbg_new CD3D12RHICommandContext(InDevice);
+    CD3D12CommandContext* NewContext = dbg_new CD3D12CommandContext(InDevice);
     if (NewContext && NewContext->Init())
     {
         return NewContext;
@@ -212,7 +212,7 @@ CD3D12RHICommandContext* CD3D12RHICommandContext::Make(CD3D12Device* InDevice)
     }
 }
 
-CD3D12RHICommandContext::CD3D12RHICommandContext(CD3D12Device* InDevice)
+CD3D12CommandContext::CD3D12CommandContext(CD3D12Device* InDevice)
     : IRHICommandContext()
     , CD3D12DeviceChild(InDevice)
     , CommandQueue(InDevice)
@@ -223,12 +223,12 @@ CD3D12RHICommandContext::CD3D12RHICommandContext(CD3D12Device* InDevice)
     , BarrierBatcher()
 { }
 
-CD3D12RHICommandContext::~CD3D12RHICommandContext()
+CD3D12CommandContext::~CD3D12CommandContext()
 {
     Flush();
 }
 
-bool CD3D12RHICommandContext::Init()
+bool CD3D12CommandContext::Init()
 {
     if (!CommandQueue.Init(D3D12_COMMAND_LIST_TYPE_DIRECT))
     {
@@ -267,7 +267,7 @@ bool CD3D12RHICommandContext::Init()
     return true;
 }
 
-void CD3D12RHICommandContext::UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
+void CD3D12CommandContext::UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
 {
     D3D12_ERROR(Resource != nullptr, "Resource cannot be nullptr");
 
@@ -288,7 +288,7 @@ void CD3D12RHICommandContext::UpdateBuffer(CD3D12Resource* Resource, uint64 Offs
     }
 }
 
-void CD3D12RHICommandContext::Begin()
+void CD3D12CommandContext::Begin()
 {
     Assert(bIsReady == false);
 
@@ -318,7 +318,7 @@ void CD3D12RHICommandContext::Begin()
     bIsReady = true;
 }
 
-void CD3D12RHICommandContext::End()
+void CD3D12CommandContext::End()
 {
     Assert(bIsReady == true);
 
@@ -354,7 +354,7 @@ void CD3D12RHICommandContext::End()
     bIsReady = false;
 }
 
-void CD3D12RHICommandContext::BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
+void CD3D12CommandContext::BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
 {
     CD3D12RHITimestampQuery* DxTimestampQuery = static_cast<CD3D12RHITimestampQuery*>(TimestampQuery);
     D3D12_ERROR(DxTimestampQuery != nullptr, "TimestampQuery cannot be nullptr");
@@ -365,7 +365,7 @@ void CD3D12RHICommandContext::BeginTimeStamp(CRHITimestampQuery* TimestampQuery,
     ResolveProfilers.Emplace(MakeSharedRef<CD3D12RHITimestampQuery>(DxTimestampQuery));
 }
 
-void CD3D12RHICommandContext::EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
+void CD3D12CommandContext::EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
 {
     CD3D12RHITimestampQuery* DxTimestampQuery = static_cast<CD3D12RHITimestampQuery*>(TimestampQuery);
     D3D12_ERROR(DxTimestampQuery != nullptr, "TimestampQuery cannot be nullptr");
@@ -374,7 +374,7 @@ void CD3D12RHICommandContext::EndTimeStamp(CRHITimestampQuery* TimestampQuery, u
     DxTimestampQuery->EndQuery(DxCmdList, Index);
 }
 
-void CD3D12RHICommandContext::ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const TStaticArray<float, 4>& ClearColor)
+void CD3D12CommandContext::ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const TStaticArray<float, 4>& ClearColor)
 {
     D3D12_ERROR(RenderTargetView != nullptr, "RenderTargetView cannot be nullptr when clearing the surface");
 
@@ -386,7 +386,7 @@ void CD3D12RHICommandContext::ClearRenderTargetView(CRHIRenderTargetView* Render
     CommandList.ClearRenderTargetView(DxRenderTargetView->GetOfflineHandle(), ClearColor.Elements, 0, nullptr);
 }
 
-void CD3D12RHICommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil)
+void CD3D12CommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil)
 {
     D3D12_ERROR(DepthStencilView != nullptr, "DepthStencilView cannot be nullptr when clearing the surface");
 
@@ -398,7 +398,7 @@ void CD3D12RHICommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthS
     CommandList.ClearDepthStencilView(DxDepthStencilView->GetOfflineHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, Depth, Stencil);
 }
 
-void CD3D12RHICommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor)
+void CD3D12CommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor)
 {
     D3D12_ERROR(UnorderedAccessView != nullptr, "UnorderedAccessView cannot be nullptr when clearing the surface");
 
@@ -418,7 +418,7 @@ void CD3D12RHICommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessV
     CommandList.ClearUnorderedAccessViewFloat(OnlineHandle_GPU, DxUnorderedAccessView, ClearColor.Elements);
 }
 
-void CD3D12RHICommandContext::SetShadingRate(ERHIShadingRate ShadingRate)
+void CD3D12CommandContext::SetShadingRate(EShadingRate ShadingRate)
 {
     D3D12_SHADING_RATE DxShadingRate = ConvertShadingRate(ShadingRate);
 
@@ -431,7 +431,7 @@ void CD3D12RHICommandContext::SetShadingRate(ERHIShadingRate ShadingRate)
     CommandList.RSSetShadingRate(DxShadingRate, Combiners);
 }
 
-void CD3D12RHICommandContext::SetShadingRateImage(CRHITexture2D* ShadingImage)
+void CD3D12CommandContext::SetShadingRateImage(CRHITexture2D* ShadingImage)
 {
     FlushResourceBarriers();
 
@@ -448,17 +448,17 @@ void CD3D12RHICommandContext::SetShadingRateImage(CRHITexture2D* ShadingImage)
     }
 }
 
-void CD3D12RHICommandContext::BeginRenderPass()
+void CD3D12CommandContext::BeginRenderPass()
 {
     // Empty for now
 }
 
-void CD3D12RHICommandContext::EndRenderPass()
+void CD3D12CommandContext::EndRenderPass()
 {
     // Empty for now
 }
 
-void CD3D12RHICommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
+void CD3D12CommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
 {
     D3D12_VIEWPORT Viewport;
     Viewport.Width    = Width;
@@ -471,7 +471,7 @@ void CD3D12RHICommandContext::SetViewport(float Width, float Height, float MinDe
     CommandList.RSSetViewports(&Viewport, 1);
 }
 
-void CD3D12RHICommandContext::SetScissorRect(float Width, float Height, float x, float y)
+void CD3D12CommandContext::SetScissorRect(float Width, float Height, float x, float y)
 {
     D3D12_RECT ScissorRect;
     ScissorRect.top    = LONG(y);
@@ -482,12 +482,12 @@ void CD3D12RHICommandContext::SetScissorRect(float Width, float Height, float x,
     CommandList.RSSetScissorRects(&ScissorRect, 1);
 }
 
-void CD3D12RHICommandContext::SetBlendFactor(const TStaticArray<float, 4>& Color)
+void CD3D12CommandContext::SetBlendFactor(const TStaticArray<float, 4>& Color)
 {
     CommandList.OMSetBlendFactor(Color.Elements);
 }
 
-void CD3D12RHICommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTopology)
+void CD3D12CommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitveTopology)
 {
     const D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = ConvertPrimitiveTopology(InPrimitveTopology);
     if (CurrentPrimitiveTolpology != PrimitiveTopology)
@@ -497,24 +497,24 @@ void CD3D12RHICommandContext::SetPrimitiveTopology(EPrimitiveTopology InPrimitve
     }
 }
 
-void CD3D12RHICommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
+void CD3D12CommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
 {
     D3D12_ERROR(BufferSlot + BufferCount < D3D12_MAX_VERTEX_BUFFER_SLOTS, "Trying to set a VertexBuffer to an invalid slot");
 
     for (uint32 Index = 0; Index < BufferCount; ++Index)
     {
-        CD3D12RHIVertexBuffer* DxVertexBuffer = static_cast<CD3D12RHIVertexBuffer*>(VertexBuffers[Index]);
+        CD3D12VertexBuffer* DxVertexBuffer = static_cast<CD3D12VertexBuffer*>(VertexBuffers[Index]);
         DescriptorCache.SetVertexBuffer(DxVertexBuffer, BufferSlot + Index);
     }
 }
 
-void CD3D12RHICommandContext::SetIndexBuffer(CRHIIndexBuffer* IndexBuffer)
+void CD3D12CommandContext::SetIndexBuffer(CRHIIndexBuffer* IndexBuffer)
 {
-    CD3D12RHIIndexBuffer* DxIndexBuffer = static_cast<CD3D12RHIIndexBuffer*>(IndexBuffer);
+    CD3D12IndexBuffer* DxIndexBuffer = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
     DescriptorCache.SetIndexBuffer(DxIndexBuffer);
 }
 
-void CD3D12RHICommandContext::SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView)
+void CD3D12CommandContext::SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView)
 {
     for (uint32 Slot = 0; Slot < RenderTargetCount; Slot++)
     {
@@ -531,7 +531,7 @@ void CD3D12RHICommandContext::SetRenderTargets(CRHIRenderTargetView* const* Rend
     CmdBatch->AddInUseResource(DxDepthStencilView);
 }
 
-void CD3D12RHICommandContext::SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState)
+void CD3D12CommandContext::SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState)
 {
     // TODO: Maybe it should be supported to unbind pipelines by setting it to nullptr
     D3D12_ERROR(PipelineState != nullptr, "PipelineState cannot be nullptr ");
@@ -551,7 +551,7 @@ void CD3D12RHICommandContext::SetGraphicsPipelineState(class CRHIGraphicsPipelin
     }
 }
 
-void CD3D12RHICommandContext::SetComputePipelineState(class CRHIComputePipelineState* PipelineState)
+void CD3D12CommandContext::SetComputePipelineState(class CRHIComputePipelineState* PipelineState)
 {
     // TODO: Maybe it should be supported to unbind pipelines by setting it to nullptr
     D3D12_ERROR(PipelineState != nullptr, "PipelineState cannot be nullptr ");
@@ -571,13 +571,13 @@ void CD3D12RHICommandContext::SetComputePipelineState(class CRHIComputePipelineS
     }
 }
 
-void CD3D12RHICommandContext::Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
+void CD3D12CommandContext::Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
 {
     UNREFERENCED_VARIABLE(Shader);
     ShaderConstantsCache.Set32BitShaderConstants(reinterpret_cast<const uint32*>(Shader32BitConstants), Num32BitConstants);
 }
 
-void CD3D12RHICommandContext::SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
+void CD3D12CommandContext::SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
@@ -590,7 +590,7 @@ void CD3D12RHICommandContext::SetShaderResourceView(CRHIShader* Shader, CRHIShad
     DescriptorCache.SetShaderResourceView(DxShaderResourceView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
 }
 
-void CD3D12RHICommandContext::SetShaderResourceViews(CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex)
+void CD3D12CommandContext::SetShaderResourceViews(CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex)
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
@@ -606,7 +606,7 @@ void CD3D12RHICommandContext::SetShaderResourceViews(CRHIShader* Shader, CRHISha
     }
 }
 
-void CD3D12RHICommandContext::SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
+void CD3D12CommandContext::SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
@@ -619,7 +619,7 @@ void CD3D12RHICommandContext::SetUnorderedAccessView(CRHIShader* Shader, CRHIUno
     DescriptorCache.SetUnorderedAccessView(DxUnorderedAccessView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
 }
 
-void CD3D12RHICommandContext::SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
+void CD3D12CommandContext::SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
@@ -635,7 +635,7 @@ void CD3D12RHICommandContext::SetUnorderedAccessViews(CRHIShader* Shader, CRHIUn
     }
 }
 
-void CD3D12RHICommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
+void CD3D12CommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
@@ -646,7 +646,7 @@ void CD3D12RHICommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstant
 
     if (ConstantBuffer)
     {
-        CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffer)->GetView();
+        CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12ConstantBuffer*>(ConstantBuffer)->GetView();
         DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
     }
     else
@@ -655,7 +655,7 @@ void CD3D12RHICommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstant
     }
 }
 
-void CD3D12RHICommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
+void CD3D12CommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
@@ -668,7 +668,7 @@ void CD3D12RHICommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstan
     {
         if (ConstantBuffers[i])
         {
-            CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(ConstantBuffers[i])->GetView();
+            CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12ConstantBuffer*>(ConstantBuffers[i])->GetView();
             DescriptorCache.SetConstantBufferView(&DxConstantBufferView, DxShader->GetShaderVisibility(), ParameterInfo.Register);
         }
         else
@@ -678,7 +678,7 @@ void CD3D12RHICommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstan
     }
 }
 
-void CD3D12RHICommandContext::SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex)
+void CD3D12CommandContext::SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex)
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
@@ -691,7 +691,7 @@ void CD3D12RHICommandContext::SetSamplerState(CRHIShader* Shader, CRHISamplerSta
     DescriptorCache.SetSamplerState(DxSamplerState, DxShader->GetShaderVisibility(), ParameterInfo.Register);
 }
 
-void CD3D12RHICommandContext::SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
+void CD3D12CommandContext::SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
 {
     CD3D12BaseShader* DxShader = D3D12ShaderCast(Shader);
     D3D12_ERROR(DxShader != nullptr, "Cannot bind resources to a shader that is nullptr");
@@ -707,7 +707,7 @@ void CD3D12RHICommandContext::SetSamplerStates(CRHIShader* Shader, CRHISamplerSt
     }
 }
 
-void CD3D12RHICommandContext::ResolveTexture(CRHITexture* Destination, CRHITexture* Source)
+void CD3D12CommandContext::ResolveTexture(CRHITexture* Destination, CRHITexture* Source)
 {
     D3D12_ERROR(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 
@@ -727,18 +727,18 @@ void CD3D12RHICommandContext::ResolveTexture(CRHITexture* Destination, CRHITextu
     CmdBatch->AddInUseResource(Source);
 }
 
-void CD3D12RHICommandContext::UpdateBuffer(CRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
+void CD3D12CommandContext::UpdateBuffer(CRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
 {
     if (SizeInBytes > 0)
     {
-        CD3D12BaseBuffer* DxDestination = D3D12BufferCast(Destination);
+        CD3D12Buffer* DxDestination = D3D12BufferCast(Destination);
         UpdateBuffer(DxDestination->GetResource(), OffsetInBytes, SizeInBytes, SourceData);
 
         CmdBatch->AddInUseResource(Destination);
     }
 }
 
-void CD3D12RHICommandContext::UpdateTexture2D(CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
+void CD3D12CommandContext::UpdateTexture2D(CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
 {
     D3D12_ERROR(Destination != nullptr, "Destination cannot be nullptr");
 
@@ -792,21 +792,21 @@ void CD3D12RHICommandContext::UpdateTexture2D(CRHITexture2D* Destination, uint32
     }
 }
 
-void CD3D12RHICommandContext::CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo)
+void CD3D12CommandContext::CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo)
 {
     D3D12_ERROR(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 
     FlushResourceBarriers();
 
-    CD3D12BaseBuffer* DxDestination = D3D12BufferCast(Destination);
-    CD3D12BaseBuffer* DxSource = D3D12BufferCast(Source);
+    CD3D12Buffer* DxDestination = D3D12BufferCast(Destination);
+    CD3D12Buffer* DxSource = D3D12BufferCast(Source);
     CommandList.CopyBufferRegion(DxDestination->GetResource(), CopyInfo.DestinationOffset, DxSource->GetResource(), CopyInfo.SourceOffset, CopyInfo.SizeInBytes);
 
     CmdBatch->AddInUseResource(Destination);
     CmdBatch->AddInUseResource(Source);
 }
 
-void CD3D12RHICommandContext::CopyTexture(CRHITexture* Destination, CRHITexture* Source)
+void CD3D12CommandContext::CopyTexture(CRHITexture* Destination, CRHITexture* Source)
 {
     D3D12_ERROR(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 
@@ -820,7 +820,7 @@ void CD3D12RHICommandContext::CopyTexture(CRHITexture* Destination, CRHITexture*
     CmdBatch->AddInUseResource(Source);
 }
 
-void CD3D12RHICommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyInfo)
+void CD3D12CommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyInfo)
 {
     D3D12_ERROR(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 
@@ -859,12 +859,12 @@ void CD3D12RHICommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITe
     CmdBatch->AddInUseResource(Source);
 }
 
-void CD3D12RHICommandContext::DestroyResource(CRHIObject* Resource)
+void CD3D12CommandContext::DestroyResource(CRHIObject* Resource)
 {
     CmdBatch->AddInUseResource(Resource);
 }
 
-void CD3D12RHICommandContext::DiscardContents(CRHIResource* Resource)
+void CD3D12CommandContext::DiscardContents(CRHIResource* Resource)
 {
     // TODO: Enable regions to be discarded
 
@@ -876,14 +876,14 @@ void CD3D12RHICommandContext::DiscardContents(CRHIResource* Resource)
     }
 }
 
-void CD3D12RHICommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
+void CD3D12CommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
 {
     D3D12_ERROR(Geometry != nullptr, "Geometry cannot be nullptr");
 
     FlushResourceBarriers();
 
-    CD3D12RHIVertexBuffer* DxVertexBuffer = static_cast<CD3D12RHIVertexBuffer*>(VertexBuffer);
-    CD3D12RHIIndexBuffer* DxIndexBuffer = static_cast<CD3D12RHIIndexBuffer*>(IndexBuffer);
+    CD3D12VertexBuffer* DxVertexBuffer = static_cast<CD3D12VertexBuffer*>(VertexBuffer);
+    CD3D12IndexBuffer*  DxIndexBuffer  = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
     D3D12_ERROR(DxVertexBuffer != nullptr, "VertexBuffer cannot be nullptr");
 
     CD3D12RHIRayTracingGeometry* DxGeometry = static_cast<CD3D12RHIRayTracingGeometry*>(Geometry);
@@ -896,7 +896,7 @@ void CD3D12RHICommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Ge
     CmdBatch->AddInUseResource(IndexBuffer);
 }
 
-void CD3D12RHICommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
+void CD3D12CommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
 {
     D3D12_ERROR(RayTracingScene != nullptr, "RayTracingScene cannot be nullptr");
 
@@ -908,13 +908,13 @@ void CD3D12RHICommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTraci
     CmdBatch->AddInUseResource(RayTracingScene);
 }
 
-void CD3D12RHICommandContext::SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
-                                                   , CRHIRayTracingPipelineState* PipelineState
-                                                   , const SRayTracingShaderResources* GlobalResource
-                                                   , const SRayTracingShaderResources* RayGenLocalResources
-                                                   , const SRayTracingShaderResources* MissLocalResources
-                                                   , const SRayTracingShaderResources* HitGroupResources
-                                                   , uint32 NumHitGroupResources)
+void CD3D12CommandContext::SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
+                                                , CRHIRayTracingPipelineState* PipelineState
+                                                , const SRayTracingShaderResources* GlobalResource
+                                                , const SRayTracingShaderResources* RayGenLocalResources
+                                                , const SRayTracingShaderResources* MissLocalResources
+                                                , const SRayTracingShaderResources* HitGroupResources
+                                                , uint32 NumHitGroupResources)
 {
     CD3D12RHIRayTracingScene*         DxScene         = static_cast<CD3D12RHIRayTracingScene*>(RayTracingScene);
     CD3D12RHIRayTracingPipelineState* DxPipelineState = static_cast<CD3D12RHIRayTracingPipelineState*>(PipelineState);
@@ -974,7 +974,7 @@ void CD3D12RHICommandContext::SetRayTracingBindings( CRHIRayTracingScene* RayTra
         {
             for (int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
             {
-                CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12RHIConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
+                CD3D12RHIConstantBufferView& DxConstantBufferView = static_cast<CD3D12ConstantBuffer*>(GlobalResource->ConstantBuffers[i])->GetView();
                 DescriptorCache.SetConstantBufferView(&DxConstantBufferView, ShaderVisibility_All, i);
             }
         }
@@ -1014,7 +1014,7 @@ void CD3D12RHICommandContext::SetRayTracingBindings( CRHIRayTracingScene* RayTra
     DescriptorCache.CommitComputeDescriptors(CommandList, CmdBatch, CurrentRootSignature.Get());
 }
 
-void CD3D12RHICommandContext::GenerateMips(CRHITexture* Texture)
+void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
 {
     CD3D12BaseTexture* DxTexture = D3D12TextureCast(Texture);
     D3D12_ERROR(DxTexture != nullptr, "Texture cannot be nullptr");
@@ -1207,7 +1207,7 @@ void CD3D12RHICommandContext::GenerateMips(CRHITexture* Texture)
     CmdBatch->AddInUseResource(StagingTexture.Get());
 }
 
-void CD3D12RHICommandContext::TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState)
+void CD3D12CommandContext::TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     const D3D12_RESOURCE_STATES DxBeforeState = ConvertResourceState(BeforeState);
     const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);
@@ -1218,18 +1218,18 @@ void CD3D12RHICommandContext::TransitionTexture(CRHITexture* Texture, ERHIResour
     CmdBatch->AddInUseResource(Texture);
 }
 
-void CD3D12RHICommandContext::TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState)
+void CD3D12CommandContext::TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     const D3D12_RESOURCE_STATES DxBeforeState = ConvertResourceState(BeforeState);
     const D3D12_RESOURCE_STATES DxAfterState  = ConvertResourceState(AfterState);
 
-    CD3D12BaseBuffer* Resource = D3D12BufferCast(Buffer);
+    CD3D12Buffer* Resource = D3D12BufferCast(Buffer);
     TransitionResource(Resource->GetResource(), DxBeforeState, DxAfterState);
 
     CmdBatch->AddInUseResource(Buffer);
 }
 
-void CD3D12RHICommandContext::UnorderedAccessTextureBarrier(CRHITexture* Texture)
+void CD3D12CommandContext::UnorderedAccessTextureBarrier(CRHITexture* Texture)
 {
     CD3D12BaseTexture* Resource = D3D12TextureCast(Texture);
     UnorderedAccessBarrier(Resource->GetResource());
@@ -1237,15 +1237,15 @@ void CD3D12RHICommandContext::UnorderedAccessTextureBarrier(CRHITexture* Texture
     CmdBatch->AddInUseResource(Texture);
 }
 
-void CD3D12RHICommandContext::UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)
+void CD3D12CommandContext::UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)
 {
-    CD3D12BaseBuffer* Resource = D3D12BufferCast(Buffer);
+    CD3D12Buffer* Resource = D3D12BufferCast(Buffer);
     UnorderedAccessBarrier(Resource->GetResource());
 
     CmdBatch->AddInUseResource(Buffer);
 }
 
-void CD3D12RHICommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
+void CD3D12CommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 {
     FlushResourceBarriers();
 
@@ -1258,7 +1258,7 @@ void CD3D12RHICommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocatio
     }
 }
 
-void CD3D12RHICommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
+void CD3D12CommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
     FlushResourceBarriers();
 
@@ -1271,7 +1271,7 @@ void CD3D12RHICommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLo
     }
 }
 
-void CD3D12RHICommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
+void CD3D12CommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
     FlushResourceBarriers();
 
@@ -1284,7 +1284,7 @@ void CD3D12RHICommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint3
     }
 }
 
-void CD3D12RHICommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
+void CD3D12CommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
     FlushResourceBarriers();
 
@@ -1297,7 +1297,7 @@ void CD3D12RHICommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance,
     }
 }
 
-void CD3D12RHICommandContext::Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
+void CD3D12CommandContext::Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 {
     FlushResourceBarriers();
 
@@ -1310,7 +1310,7 @@ void CD3D12RHICommandContext::Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGr
     }
 }
 
-void CD3D12RHICommandContext::DispatchRays(CRHIRayTracingScene* RayTracingScene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
+void CD3D12CommandContext::DispatchRays(CRHIRayTracingScene* RayTracingScene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
 {
     CD3D12RHIRayTracingScene* DxScene = static_cast<CD3D12RHIRayTracingScene*>(RayTracingScene);
     D3D12_ERROR(DxScene != nullptr, "RayTracingScene cannot be nullptr");
@@ -1341,14 +1341,14 @@ void CD3D12RHICommandContext::DispatchRays(CRHIRayTracingScene* RayTracingScene,
     }
 }
 
-void CD3D12RHICommandContext::ClearState()
+void CD3D12CommandContext::ClearState()
 {
     Flush();
 
     InternalClearState();
 }
 
-void CD3D12RHICommandContext::Flush()
+void CD3D12CommandContext::Flush()
 {
     const uint64 NewFenceValue = ++FenceValue;
     if (!CommandQueue.SignalFence(Fence, NewFenceValue))
@@ -1364,7 +1364,7 @@ void CD3D12RHICommandContext::Flush()
     }
 }
 
-void CD3D12RHICommandContext::InsertMarker(const String& Message)
+void CD3D12CommandContext::InsertMarker(const String& Message)
 {
     if (ND3D12Functions::SetMarkerOnCommandList)
     {
@@ -1372,7 +1372,7 @@ void CD3D12RHICommandContext::InsertMarker(const String& Message)
     }
 }
 
-void CD3D12RHICommandContext::BeginExternalCapture()
+void CD3D12CommandContext::BeginExternalCapture()
 {
     IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetGraphicsAnalysisInterface();
     if (GraphicsAnalysis && !bIsCapturing)
@@ -1382,7 +1382,7 @@ void CD3D12RHICommandContext::BeginExternalCapture()
     }
 }
 
-void CD3D12RHICommandContext::EndExternalCapture()
+void CD3D12CommandContext::EndExternalCapture()
 {
     IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetGraphicsAnalysisInterface();
     if (GraphicsAnalysis && bIsCapturing)
@@ -1392,7 +1392,7 @@ void CD3D12RHICommandContext::EndExternalCapture()
     }
 }
 
-void CD3D12RHICommandContext::InternalClearState()
+void CD3D12CommandContext::InternalClearState()
 {
     DescriptorCache.Reset();
     ShaderConstantsCache.Reset();

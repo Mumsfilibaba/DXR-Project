@@ -23,7 +23,7 @@ public:
         const String& FilePath,
         const String& EntryPoint,
         const TArray<SShaderDefine>* Defines,
-        ERHIShaderStage ShaderStage,
+        EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         TArray<uint8>& Code) override final;
 
@@ -31,7 +31,7 @@ public:
         const String& ShaderSource,
         const String& EntryPoint,
         const TArray<SShaderDefine>* Defines,
-        ERHIShaderStage ShaderStage,
+        EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         TArray<uint8>& Code) override final;
 
@@ -45,7 +45,7 @@ private:
         IDxcBlob* SourceBlob,
         LPCWSTR FilePath,
         LPCWSTR Entrypoint,
-        ERHIShaderStage ShaderStage,
+        EShaderStage ShaderStage,
         EShaderModel ShaderModel,
         const TArray<SShaderDefine>* Defines,
         TArray<uint8>& Code);

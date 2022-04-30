@@ -1,7 +1,7 @@
 #include "D3D12DescriptorCache.h"
 #include "D3D12DescriptorHeap.h"
 #include "D3D12RHIInstance.h"
-#include "D3D12RHICommandContext.h"
+#include "D3D12CommandContext.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
 
@@ -308,7 +308,7 @@ void CD3D12VertexBufferCache::CommitState(CD3D12CommandList& CmdList, CD3D12Comm
 
         for (uint32 Index = 0; Index < NumVertexBuffers; ++Index)
         {
-            CD3D12RHIVertexBuffer* VertexBuffer = VertexBuffers[Index];
+            CD3D12VertexBuffer* VertexBuffer = VertexBuffers[Index];
             if (VertexBuffer)
             {
                 VertexBufferViews[Index] = VertexBuffer->GetView();

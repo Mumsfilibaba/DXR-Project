@@ -10,8 +10,8 @@ struct SInterfaceImage
 
     SInterfaceImage( const TSharedRef<CRHIShaderResourceView>& InImageView
                    , const TSharedRef<CRHITexture>& InImage
-                   , ERHIResourceState InBefore
-                   , ERHIResourceState InAfter)
+                   , EResourceAccess InBefore
+                   , EResourceAccess InAfter)
         : ImageView(InImageView)
         , Image(InImage)
         , BeforeState(InBefore)
@@ -21,8 +21,8 @@ struct SInterfaceImage
     TSharedRef<CRHIShaderResourceView> ImageView;
     TSharedRef<CRHITexture> Image;
 
-    ERHIResourceState BeforeState;
-    ERHIResourceState AfterState;
+    EResourceAccess BeforeState;
+    EResourceAccess AfterState;
 
     bool bAllowBlending = false;
 };

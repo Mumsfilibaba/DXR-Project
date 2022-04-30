@@ -15,7 +15,7 @@
 bool CRayTracer::Init(SFrameResources& Resources)
 {
     TArray<uint8> Code;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/RayGen.hlsl", "RayGen", nullptr, ERHIShaderStage::RayGen, EShaderModel::SM_6_3, Code))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/RayGen.hlsl", "RayGen", nullptr, EShaderStage::RayGen, EShaderModel::SM_6_3, Code))
     {
         CDebug::DebugBreak();
         return false;
@@ -32,7 +32,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
         RayGenShader->SetName("RayGenShader");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, ERHIShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code))
     {
         CDebug::DebugBreak();
         return false;
@@ -49,7 +49,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
         RayClosestHitShader->SetName("RayClosestHitShader");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Miss.hlsl", "Miss", nullptr, ERHIShaderStage::RayMiss, EShaderModel::SM_6_3, Code))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Miss.hlsl", "Miss", nullptr, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code))
     {
         CDebug::DebugBreak();
         return false;
@@ -84,7 +84,7 @@ bool CRayTracer::Init(SFrameResources& Resources)
 
     uint32 Width = Resources.MainWindowViewport->GetWidth();
     uint32 Height = Resources.MainWindowViewport->GetHeight();
-    Resources.RTOutput = RHICreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, ERHIResourceState::UnorderedAccess, nullptr);
+    Resources.RTOutput = RHICreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.RTOutput)
     {
         CDebug::DebugBreak();
@@ -220,6 +220,6 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
     AddDebugTexture(
         MakeSharedRef<CRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView()),
         Resources.RTOutput,
-        ERHIResourceState::UnorderedAccess,
-        ERHIResourceState::UnorderedAccess);
+        EResourceAccess::UnorderedAccess,
+        EResourceAccess::UnorderedAccess);
 }

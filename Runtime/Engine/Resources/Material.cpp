@@ -24,7 +24,7 @@ CMaterial::CMaterial(const SMaterialDesc& InProperties)
 
 void CMaterial::Init()
 {
-    MaterialBuffer = RHICreateConstantBuffer<SMaterialDesc>(BufferFlag_Default, ERHIResourceState::VertexAndConstantBuffer, nullptr);
+    MaterialBuffer = RHICreateConstantBuffer<SMaterialDesc>(EBufferUsageFlags::Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
     if (MaterialBuffer)
     {
         MaterialBuffer->SetName("MaterialBuffer");
@@ -35,9 +35,9 @@ void CMaterial::Init()
 
 void CMaterial::BuildBuffer(CRHICommandList& CmdList)
 {
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), ERHIResourceState::VertexAndConstantBuffer, ERHIResourceState::CopyDest);
+    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
     CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(SMaterialDesc), &Properties);
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), ERHIResourceState::CopyDest, ERHIResourceState::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
 
     bMaterialBufferIsDirty = false;
 }

@@ -8,7 +8,7 @@
 #include "D3D12Core.h"
 #include "D3D12RHITexture.h"
 #include "D3D12RHIViews.h"
-#include "D3D12RHICommandContext.h"
+#include "D3D12CommandContext.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIViewport
@@ -17,7 +17,7 @@ class CD3D12RHIViewport : public CRHIViewport, public CD3D12DeviceChild
 {
 public:
 
-    CD3D12RHIViewport(CD3D12Device* InDevice, CD3D12RHICommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight);
+    CD3D12RHIViewport(CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight);
     ~CD3D12RHIViewport();
 
     bool Init();
@@ -53,7 +53,7 @@ private:
 
     TComPtr<IDXGISwapChain3> SwapChain;
 
-    CD3D12RHICommandContext* CmdContext;
+    CD3D12CommandContext* CmdContext;
 
     HWND Hwnd = 0;
 

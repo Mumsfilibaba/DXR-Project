@@ -11,7 +11,7 @@
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Fence.h"
 #include "D3D12DescriptorCache.h"
-#include "D3D12RHIBuffer.h"
+#include "D3D12Buffer.h"
 #include "D3D12RHIViews.h"
 #include "D3D12RHISamplerState.h"
 #include "D3D12RHIPipelineState.h"
@@ -27,7 +27,7 @@ struct SD3D12UploadAllocation
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12GPUResourceUploader
+// CD3D12GPUResourceUploader
 
 class CD3D12GPUResourceUploader : public CD3D12DeviceChild
 {
@@ -63,7 +63,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12CommandBatch
+// CD3D12CommandBatch
 
 class CD3D12CommandBatch
 {
@@ -155,7 +155,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12ResourceBarrierBatcher
+// CD3D12ResourceBarrierBatcher
 
 class CD3D12ResourceBarrierBatcher
 {
@@ -202,20 +202,20 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHICommandContext
+// CD3D12CommandContext
 
-class CD3D12RHICommandContext : public IRHICommandContext, public CD3D12DeviceChild
+class CD3D12CommandContext : public IRHICommandContext, public CD3D12DeviceChild
 {
 private:
 
     friend class CD3D12RHIInstance;
 
-    CD3D12RHICommandContext(CD3D12Device* InDevice);
-    ~CD3D12RHICommandContext();
+    CD3D12CommandContext(CD3D12Device* InDevice);
+    ~CD3D12CommandContext();
 
 public:
 
-    static CD3D12RHICommandContext* Make(CD3D12Device* InDevice);
+    static CD3D12CommandContext* Make(CD3D12Device* InDevice);
 
     void UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
 
@@ -272,7 +272,7 @@ public:
     virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) override final;
     virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) override final;
 
-    virtual void SetShadingRate(ERHIShadingRate ShadingRate) override final;
+    virtual void SetShadingRate(EShadingRate ShadingRate) override final;
     virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) override final;
 
     // TODO: Implement RenderPasses (For Vulkan)
@@ -334,8 +334,8 @@ public:
 
     virtual void GenerateMips(CRHITexture* Texture) override final;
 
-    virtual void TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState) override final;
-    virtual void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState) override final;
+    virtual void TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
+    virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
 
     virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) override final;
     virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer) override final;

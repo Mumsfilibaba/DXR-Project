@@ -116,11 +116,11 @@ struct RENDERER_API SLightSetup
     TSharedRef<CRHITexture2D> ShadowMapCascades[4];
     TSharedRef<CRHITexture2D> DirectionalShadowMask;
 
-    TSharedRef<CRHIStructuredBuffer>    CascadeMatrixBuffer;
+    TSharedRef<CRHIGenericBuffer>    CascadeMatrixBuffer;
     TSharedRef<CRHIShaderResourceView>  CascadeMatrixBufferSRV;
     TSharedRef<CRHIUnorderedAccessView> CascadeMatrixBufferUAV;
 
-    TSharedRef<CRHIStructuredBuffer>    CascadeSplitsBuffer;
+    TSharedRef<CRHIGenericBuffer>    CascadeSplitsBuffer;
     TSharedRef<CRHIShaderResourceView>  CascadeSplitsBufferSRV;
     TSharedRef<CRHIUnorderedAccessView> CascadeSplitsBufferUAV;
 

@@ -2,13 +2,11 @@
 #include "RHI/RHIResources.h"
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -17,8 +15,8 @@
 class CNullRHIVertexBuffer : public CRHIVertexBuffer
 {
 public:
-    CNullRHIVertexBuffer(uint32 InNumVertices, uint32 InStride, uint32 InFlags)
-        : CRHIVertexBuffer(InNumVertices, InStride, InFlags)
+    CNullRHIVertexBuffer(EBufferUsageFlags InFlags, uint32 InNumVertices, uint32 InStride)
+        : CRHIVertexBuffer(InFlags, InNumVertices, InStride)
     { }
 };
 
@@ -28,8 +26,8 @@ public:
 class CNullRHIIndexBuffer : public CRHIIndexBuffer
 {
 public:
-    CNullRHIIndexBuffer(ERHIIndexFormat InIndexFormat, uint32 InNumIndices, uint32 InFlags)
-        : CRHIIndexBuffer(InIndexFormat, InNumIndices, InFlags)
+    CNullRHIIndexBuffer(EBufferUsageFlags InFlags, EIndexFormat InIndexFormat, uint32 InNumIndices)
+        : CRHIIndexBuffer(InFlags, InIndexFormat, InNumIndices)
     { }
 };
 
@@ -39,19 +37,19 @@ public:
 class CNullRHIConstantBuffer : public CRHIConstantBuffer
 {
 public:
-    CNullRHIConstantBuffer(uint32 InSizeInBytes, uint32 InFlags)
-        : CRHIConstantBuffer(InSizeInBytes, InFlags)
+    CNullRHIConstantBuffer(EBufferUsageFlags InFlags, uint32 InSizeInBytes)
+        : CRHIConstantBuffer(InFlags, InSizeInBytes)
     { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIStructuredBuffer
+// CNullRHIGenericBuffer
 
-class CNullRHIStructuredBuffer : public CRHIStructuredBuffer
+class CNullRHIGenericBuffer : public CRHIGenericBuffer
 {
 public:
-    CNullRHIStructuredBuffer(uint32 InSizeInBytes, uint32 InStride, uint32 InFlags)
-        : CRHIStructuredBuffer(InSizeInBytes, InStride, InFlags)
+    CNullRHIGenericBuffer(EBufferUsageFlags InFlags, uint32 InSizeInBytes, uint32 InStride)
+        : CRHIGenericBuffer(InFlags, InSizeInBytes, InStride)
     { }
 };
 
@@ -68,28 +66,31 @@ public:
         : BaseBufferType(Forward<ArgTypes>(Args)...)
     { }
 
-    virtual void* Map(uint32 Offset, uint32 InSize) override
-    {
-        return nullptr;
-    }
+public:
 
-    virtual void Unmap(uint32 Offset, uint32 InSize) override final
-    { }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIBuffer Interface
 
-    virtual void SetName(const String& InName) override final
-    {
-        CRHIResource::SetName(InName);
-    }
+    virtual void* GetRHIResourceHandle() const override final { return nullptr; }
 
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
+    virtual void* GetRHIBaseBuffer() override final { return this; }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Deprecated
+
+    virtual void* Map(uint32 Offset, uint32 InSize) override final { return nullptr; }
+
+    virtual void Unmap(uint32 Offset, uint32 InSize) override final { }
+
+    virtual void SetName(const String& InName) override final { CRHIResource::SetName(InName); }
+
+    virtual bool IsValid() const override final { return true; }
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
+    #pragma warning(pop)
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
+    #pragma clang diagnostic pop
 #endif

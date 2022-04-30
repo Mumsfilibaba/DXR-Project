@@ -2,6 +2,7 @@
 #include "TextureFormat.h"
 
 #include "Core/Math/Color.h"
+#include "Core/Templates/EnumUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Constants
@@ -68,80 +69,84 @@ inline const char* ToString(EComparisonFunc ComparisonFunc)
     case EComparisonFunc::NotEqual:     return "NotEqual";
     case EComparisonFunc::GreaterEqual: return "GreaterEqual";
     case EComparisonFunc::Always:       return "Always";
-    default: return "Unknown";
+    default:                            return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIPrimitiveTopologyType
+// EPrimitiveTopologyType
 
-enum class ERHIPrimitiveTopologyType
+enum class EPrimitiveTopologyType
 {
     Undefined = 0,
-    Point = 1,
-    Line = 2,
-    Triangle = 3,
-    Patch = 4
+    Point     = 1,
+    Line      = 2,
+    Triangle  = 3,
+    Patch     = 4
 };
 
-inline const char* ToString(ERHIPrimitiveTopologyType PrimitveTopologyType)
+inline const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 {
     switch (PrimitveTopologyType)
     {
-    case ERHIPrimitiveTopologyType::Undefined: return "Undefined";
-    case ERHIPrimitiveTopologyType::Point:     return "Point";
-    case ERHIPrimitiveTopologyType::Line:      return "Line";
-    case ERHIPrimitiveTopologyType::Triangle:  return "Triangle";
-    case ERHIPrimitiveTopologyType::Patch:     return "Patch";
-    default: return "Unknown";
+    case EPrimitiveTopologyType::Undefined: return "Undefined";
+    case EPrimitiveTopologyType::Point:     return "Point";
+    case EPrimitiveTopologyType::Line:      return "Line";
+    case EPrimitiveTopologyType::Triangle:  return "Triangle";
+    case EPrimitiveTopologyType::Patch:     return "Patch";
+    default:                                return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIResourceState
+// EResourceAccess
 
-enum class ERHIResourceState
+// TODO: These should be flags
+
+enum class EResourceAccess
 {
-    Common = 0,
-    VertexAndConstantBuffer = 1,
-    IndexBuffer = 2,
-    RenderTarget = 3,
-    UnorderedAccess = 4,
-    DepthWrite = 5,
-    DepthRead = 6,
-    NonPixelShaderResource = 7,
-    PixelShaderResource = 8,
-    CopyDest = 9,
-    CopySource = 10,
-    ResolveDest = 11,
-    ResolveSource = 12,
+    Common                          = 0,
+    VertexAndConstantBuffer         = 1,
+    IndexBuffer                     = 2,
+    RenderTarget                    = 3,
+    UnorderedAccess                 = 4,
+    DepthWrite                      = 5,
+    DepthRead                       = 6,
+    NonPixelShaderResource          = 7,
+    PixelShaderResource             = 8,
+    CopyDest                        = 9,
+    CopySource                      = 10,
+    ResolveDest                     = 11,
+    ResolveSource                   = 12,
     RayTracingAccelerationStructure = 13,
-    ShadingRateSource = 14,
-    Present = 15,
-    GenericRead = 16,
+    ShadingRateSource               = 14,
+    Present                         = 15,
+    GenericRead                     = 16,
 };
 
-inline const char* ToString(ERHIResourceState ResourceState)
+ENUM_CLASS_OPERATORS(EResourceAccess);
+
+inline const char* ToString(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
-    case ERHIResourceState::Common:                          return "Common";
-    case ERHIResourceState::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
-    case ERHIResourceState::IndexBuffer:                     return "IndexBuffer";
-    case ERHIResourceState::RenderTarget:                    return "RenderTarget";
-    case ERHIResourceState::UnorderedAccess:                 return "UnorderedAccess";
-    case ERHIResourceState::DepthWrite:                      return "DepthWrite";
-    case ERHIResourceState::DepthRead:                       return "DepthRead";
-    case ERHIResourceState::NonPixelShaderResource:          return "NonPixelShaderResource";
-    case ERHIResourceState::PixelShaderResource:             return "PixelShaderResource";
-    case ERHIResourceState::CopyDest:                        return "CopyDest";
-    case ERHIResourceState::CopySource:                      return "CopySource";
-    case ERHIResourceState::ResolveDest:                     return "ResolveDest";
-    case ERHIResourceState::ResolveSource:                   return "ResolveSource";
-    case ERHIResourceState::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
-    case ERHIResourceState::ShadingRateSource:               return "ShadingRateSource";
-    case ERHIResourceState::Present:                         return "Present";
-    default: return "Unknown";
+    case EResourceAccess::Common:                          return "Common";
+    case EResourceAccess::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
+    case EResourceAccess::IndexBuffer:                     return "IndexBuffer";
+    case EResourceAccess::RenderTarget:                    return "RenderTarget";
+    case EResourceAccess::UnorderedAccess:                 return "UnorderedAccess";
+    case EResourceAccess::DepthWrite:                      return "DepthWrite";
+    case EResourceAccess::DepthRead:                       return "DepthRead";
+    case EResourceAccess::NonPixelShaderResource:          return "NonPixelShaderResource";
+    case EResourceAccess::PixelShaderResource:             return "PixelShaderResource";
+    case EResourceAccess::CopyDest:                        return "CopyDest";
+    case EResourceAccess::CopySource:                      return "CopySource";
+    case EResourceAccess::ResolveDest:                     return "ResolveDest";
+    case EResourceAccess::ResolveSource:                   return "ResolveSource";
+    case EResourceAccess::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
+    case EResourceAccess::ShadingRateSource:               return "ShadingRateSource";
+    case EResourceAccess::Present:                         return "Present";
+    default:                                               return "Unknown";
     }
 }
 
@@ -150,11 +155,11 @@ inline const char* ToString(ERHIResourceState ResourceState)
 
 enum class EPrimitiveTopology
 {
-    Undefined = 0,
-    PointList = 1,
-    LineList = 2,
-    LineStrip = 3,
-    TriangleList = 4,
+    Undefined     = 0,
+    PointList     = 1,
+    LineList      = 2,
+    LineStrip     = 3,
+    TriangleList  = 4,
     TriangleStrip = 5,
 };
 
@@ -168,14 +173,14 @@ inline const char* ToString(EPrimitiveTopology ResourceState)
     case EPrimitiveTopology::LineStrip:     return "LineStrip";
     case EPrimitiveTopology::TriangleList:  return "TriangleList";
     case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
-    default: return "Unknown";
+    default:                                return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIShadingRate
+// EShadingRate
 
-enum class ERHIShadingRate
+enum class EShadingRate
 {
     VRS_1x1 = 0x0,
     VRS_1x2 = 0x1,
@@ -186,20 +191,111 @@ enum class ERHIShadingRate
     VRS_4x4 = 0xa,
 };
 
-inline const char* ToString(ERHIShadingRate ShadingRate)
+inline const char* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
-    case ERHIShadingRate::VRS_1x1: return "VRS_1x1";
-    case ERHIShadingRate::VRS_1x2: return "VRS_1x2";
-    case ERHIShadingRate::VRS_2x1: return "VRS_2x1";
-    case ERHIShadingRate::VRS_2x2: return "VRS_2x2";
-    case ERHIShadingRate::VRS_2x4: return "VRS_2x4";
-    case ERHIShadingRate::VRS_4x2: return "VRS_4x2";
-    case ERHIShadingRate::VRS_4x4: return "VRS_4x4";
-    default: return "Unknown";
+    case EShadingRate::VRS_1x1: return "VRS_1x1";
+    case EShadingRate::VRS_1x2: return "VRS_1x2";
+    case EShadingRate::VRS_2x1: return "VRS_2x1";
+    case EShadingRate::VRS_2x2: return "VRS_2x2";
+    case EShadingRate::VRS_2x4: return "VRS_2x4";
+    case EShadingRate::VRS_4x2: return "VRS_4x2";
+    case EShadingRate::VRS_4x4: return "VRS_4x4";
+    default:                    return "Unknown";
     }
 }
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EDescriptorType
+
+enum class EDescriptorType : uint32
+{
+    Unknown         = 0,
+    UnorderedAccess = 1,
+    ShaderResource  = 2,
+    ConstantBuffer  = 3,
+    Sampler         = 4
+};
+
+inline const char* ToString(EDescriptorType DescriptorType)
+{
+    switch (DescriptorType)
+    {
+        case EDescriptorType::UnorderedAccess: return "UnorderedAccess";
+        case EDescriptorType::ShaderResource:  return "ShaderResource";
+        case EDescriptorType::ConstantBuffer:  return "ConstantBuffer";
+        case EDescriptorType::Sampler:         return "Sampler";
+        default:                               return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIDescriptorHandle
+
+class CRHIDescriptorHandle
+{
+    enum : uint32
+    {
+        InvalidHandle = uint32(~0)
+    };
+
+public:
+
+    /**
+     * @brief: Default Constructor
+     */
+    CRHIDescriptorHandle()
+        : Type(EDescriptorType::Unknown)
+        , Index(InvalidHandle)
+    { }
+
+    /**
+     * @brief: Constructor that creates a descriptor-handle
+     *
+     * @param InType: Type of descriptor
+     * @param InIndex: Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
+     */
+    CRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
+        : Type(InType)
+        , Index(InIndex)
+    { }
+
+    /** @return: Returns true if the handle is valid */
+    bool IsValid() const { return (Type != EDescriptorType::Unknown) && (Index != InvalidHandle); }
+
+    /**
+     * @brief: Compare two descriptor-handles to see if the reference the same resource
+     *
+     * @return: Returns true if the handles are equal
+     */
+    bool operator==(const CRHIDescriptorHandle& RHS) const
+    {
+        return (Type == RHS.Type) && (Index == RHS.Index);
+    }
+
+    /**
+     * @brief: Compare two descriptor-handles to see if the reference the same resource
+     *
+     * @return: Returns false if the handles are equal
+     */
+    bool operator!=(const CRHIDescriptorHandle& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+private:
+    union
+    {
+        struct
+        {
+            uint32          Index : 24;
+            EDescriptorType Type  : 8;
+        };
+
+        uint32 Data;
+    };
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SDepthStencil
