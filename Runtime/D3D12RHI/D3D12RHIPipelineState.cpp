@@ -201,7 +201,7 @@ bool CD3D12RHIGraphicsPipelineState::Init(const SRHIGraphicsPipelineStateInfo& C
         D3D12_SHADER_BYTECODE ByteCode = ShadersWithRootSignature.FirstElement()->GetByteCode();
 
         RootSignature = dbg_new CD3D12RootSignature(GetDevice());
-        if (!RootSignature->Init(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
+        if (!RootSignature->Initialize(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
         {
             return false;
         }
@@ -278,7 +278,7 @@ bool CD3D12RHIComputePipelineState::Init()
         D3D12_SHADER_BYTECODE ByteCode = Shader->GetByteCode();
 
         RootSignature = dbg_new CD3D12RootSignature(GetDevice());
-        if (!RootSignature->Init(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
+        if (!RootSignature->Initialize(ByteCode.pShaderBytecode, ByteCode.BytecodeLength))
         {
             return false;
         }

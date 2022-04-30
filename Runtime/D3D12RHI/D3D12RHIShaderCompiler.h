@@ -2,7 +2,7 @@
 #include "RHI/RHIShaderCompiler.h"
 
 #include "D3D12Core.h"
-#include "D3D12RHIShader.h"
+#include "D3D12Shader.h"
 
 #include <string>
 

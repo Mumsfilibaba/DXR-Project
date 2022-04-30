@@ -1,7 +1,7 @@
 #pragma once
 #include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
-#include "D3D12RHIShader.h"
+#include "D3D12Shader.h"
 
 #include "Core/RefCounted.h"
 #include "Core/Utilities/StringUtilities.h"
@@ -77,9 +77,9 @@ public:
     CD3D12RootSignature(CD3D12Device* InDevice);
     ~CD3D12RootSignature() = default;
 
-    bool Init(const SD3D12RootSignatureResourceCount& RootSignatureInfo);
-    bool Init(const D3D12_ROOT_SIGNATURE_DESC& Desc);
-    bool Init(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
+    bool Initialize(const SD3D12RootSignatureResourceCount& RootSignatureInfo);
+    bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+    bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     // Returns -1 if root parameter is not valid
     FORCEINLINE int32 GetRootParameterIndex(EShaderVisibility Visibility, EResourceType Type) const
@@ -129,12 +129,13 @@ public:
     CD3D12RootSignatureCache(CD3D12Device* Device);
     ~CD3D12RootSignatureCache();
 
-    bool Init();
+    static CD3D12RootSignatureCache& Get();
+
+    bool Initialize();
+
     void ReleaseAll();
 
     CD3D12RootSignature* GetOrCreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount);
-
-    static CD3D12RootSignatureCache& Get();
 
 private:
     CD3D12RootSignature* CreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount);

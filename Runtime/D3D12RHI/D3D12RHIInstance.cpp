@@ -130,7 +130,7 @@ bool CD3D12RHIInstance::Initialize(bool bEnableDebug)
 
     // RootSignature cache
     RootSignatureCache = dbg_new CD3D12RootSignatureCache(Device);
-    if (!RootSignatureCache->Init())
+    if (!RootSignatureCache->Initialize())
     {
         return false;
     }
