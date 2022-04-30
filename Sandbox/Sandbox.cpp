@@ -24,7 +24,7 @@
 #include <random>
 
 #define ENABLE_LIGHT_TEST   (0)
-#define ENABLE_MANY_SPHERES (1)
+#define ENABLE_MANY_SPHERES (0)
 
 IMPLEMENT_ENGINE_MODULE(CSandbox, Sandbox);
 

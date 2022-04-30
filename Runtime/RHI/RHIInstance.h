@@ -83,7 +83,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a Texture2DArray
@@ -99,7 +99,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a TextureCube
@@ -112,7 +112,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a TextureCubeArray
@@ -126,7 +126,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a Texture3D
@@ -141,7 +141,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Create a SamplerState
@@ -161,7 +161,7 @@ public:
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created VertexBuffer
      */
-    virtual CRHIVertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIVertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
     
     /**
      * @brief: Creates a new IndexBuffer
@@ -173,7 +173,7 @@ public:
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created IndexBuffer
      */
-    virtual CRHIIndexBuffer* CreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIIndexBuffer* CreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
     
     /**
      * @brief: Creates a new ConstantBuffer
@@ -184,7 +184,7 @@ public:
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created ConstantBuffer
      */
-    virtual CRHIConstantBuffer* CreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIConstantBuffer* CreateConstantBuffer(uint32 Size, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
     
     /**
      * @brief: Creates a new StructuredBuffer
@@ -196,7 +196,7 @@ public:
      * @param InitialData: Initial data supplied to the Buffer
      * @return: Returns the newly created StructuredBuffer
      */
-    virtual CRHIStructuredBuffer* CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIGenericBuffer* CreateGenericBuffer(uint32 Stride, uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
 
     /**
      * @brief: Create a new Ray tracing scene
@@ -489,27 +489,27 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper functions
 
-FORCEINLINE CRHITexture2D* RHICreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture2D* RHICreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTexture2D(Format, Width, Height, NumMips, NumSamples, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTexture2DArray(Format, Width, Height, NumMips, NumSamples, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITextureCube* RHICreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITextureCube* RHICreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTextureCube(Format, Size, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTextureCubeArray(Format, Size, NumMips, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTexture3D(Format, Width, Height, Depth, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
@@ -519,45 +519,45 @@ FORCEINLINE class CRHISamplerState* RHICreateSamplerState(const struct SRHISampl
     return GRHIInstance->CreateSamplerState(CreateInfo);
 }
 
-FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(uint32 Stride, uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
 {
     return GRHIInstance->CreateVertexBuffer(Stride, NumVertices, Flags, InitialState, InitialData);
 }
 
 template<typename T>
-FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
 {
     constexpr uint32 STRIDE = sizeof(T);
     return RHICreateVertexBuffer(STRIDE, NumVertices, Flags, InitialState, InitialData);
 }
 
-FORCEINLINE CRHIIndexBuffer* RHICreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIIndexBuffer* RHICreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
 {
     return GRHIInstance->CreateIndexBuffer(Format, NumIndices, Flags, InitialState, InitialData);
 }
 
-FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(uint32 Size, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
 {
     return GRHIInstance->CreateConstantBuffer(Size, Flags, InitialState, InitialData);
 }
 
 template<typename TSize>
-FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
 {
     constexpr uint32 SIZE_IN_BYTES = sizeof(TSize);
     return RHICreateConstantBuffer(SIZE_IN_BYTES, Flags, InitialState, InitialData);
 }
 
-FORCEINLINE CRHIStructuredBuffer* RHICreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIGenericBuffer* RHICreateGenericBuffer(uint32 Stride, uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
 {
-    return GRHIInstance->CreateStructuredBuffer(Stride, NumElements, Flags, InitialState, InitialData);
+    return GRHIInstance->CreateGenericBuffer(Stride, NumElements, Flags, InitialState, InitialData);
 }
 
 template<typename TStride>
-FORCEINLINE CRHIStructuredBuffer* RHICreateStructuredBuffer(uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIGenericBuffer* RHICreateGenericBuffer(uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
 {
     constexpr uint32 STRIDE_IN_BYTES = sizeof(TStride);
-    return RHICreateStructuredBuffer(STRIDE_IN_BYTES, NumElements, Flags, InitialState, InitialData);
+    return RHICreateGenericBuffer(STRIDE_IN_BYTES, NumElements, Flags, InitialState, InitialData);
 }
 
 FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)
@@ -654,9 +654,9 @@ FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHIIndexBuffer*
     return RHICreateShaderResourceView(CreateInfo);
 }
 
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHIStructuredBuffer* Buffer, uint32 FirstElement, uint32 NumElements)
+FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHIGenericBuffer* Buffer, uint32 FirstElement, uint32 NumElements)
 {
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::StructuredBuffer);
+    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::GenericBuffer);
     CreateInfo.StructuredBuffer.Buffer = Buffer;
     CreateInfo.StructuredBuffer.FirstElement = FirstElement;
     CreateInfo.StructuredBuffer.NumElements = NumElements;
@@ -737,9 +737,9 @@ FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHIIndexBuffe
     return RHICreateUnorderedAccessView(CreateInfo);
 }
 
-FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHIStructuredBuffer* Buffer, uint32 FirstElement, uint32 NumElements)
+FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(CRHIGenericBuffer* Buffer, uint32 FirstElement, uint32 NumElements)
 {
-    SRHIUnorderedAccessViewInfo CreateInfo(SRHIUnorderedAccessViewInfo::EType::StructuredBuffer);
+    SRHIUnorderedAccessViewInfo CreateInfo(SRHIUnorderedAccessViewInfo::EType::GenericBuffer);
     CreateInfo.StructuredBuffer.Buffer = Buffer;
     CreateInfo.StructuredBuffer.FirstElement = FirstElement;
     CreateInfo.StructuredBuffer.NumElements = NumElements;

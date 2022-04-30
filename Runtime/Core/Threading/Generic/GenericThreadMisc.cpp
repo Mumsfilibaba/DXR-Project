@@ -1,5 +1,4 @@
-#pragma once
-#include "RHI/RHITimestampQuery.h"
+#include "GenericThreadMisc.h"
 
 #if defined(COMPILER_MSVC)
     #pragma warning(push)
@@ -10,24 +9,17 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHITimestampQuery
+// CGenericThreadMisc
 
-class CNullRHITimestampQuery : public CRHITimestampQuery
+CGenericThread* CGenericThreadMisc::CreateThread(const TFunction<void()>& InFunction)
 {
-public:
-    CNullRHITimestampQuery() = default;
-    ~CNullRHITimestampQuery() = default;
+    return dbg_new CGenericThread(InFunction);
+}
 
-    virtual void GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const override final
-    {
-        OutQuery = SRHITimestamp();
-    }
-
-    virtual uint64 GetFrequency() const override final
-    {
-        return 1;
-    }
-};
+CGenericThread* CGenericThreadMisc::CreateNamedThread(const TFunction<void()>& InFunction, const String& InName)
+{
+    return dbg_new CGenericThread(InFunction);
+}
 
 #if defined(COMPILER_MSVC)
     #pragma warning(pop)

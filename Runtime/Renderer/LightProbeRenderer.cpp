@@ -14,7 +14,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
     }
 
     TArray<uint8> Code;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/IrradianceGen.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("Failed to compile IrradianceGen Shader");
         CDebug::DebugBreak();
@@ -42,7 +42,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         IrradianceGenPSO->SetName("IrradianceGen PSO");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, ERHIShaderStage::Compute, EShaderModel::SM_6_0, Code))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
         CDebug::DebugBreak();
@@ -97,8 +97,8 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
 {
     const uint32 IrradianceMapSize = static_cast<uint32>(LightSetup.IrradianceMap->GetSize());
 
-    CmdList.TransitionTexture(FrameResources.Skybox.Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess);
+    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
     CmdList.SetComputePipelineState(IrradianceGenPSO.Get());
 
@@ -115,8 +115,8 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
 
     CmdList.UnorderedAccessTextureBarrier(LightSetup.IrradianceMap.Get());
 
-    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::PixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), ERHIResourceState::Common, ERHIResourceState::UnorderedAccess);
+    CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
     CmdList.SetShaderResourceView(IrradianceGenShader.Get(), SkyboxSRV, 0);
 
@@ -145,14 +145,14 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
         Roughness += RoughnessDelta;
     }
 
-    CmdList.TransitionTexture(FrameResources.Skybox.Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource);
-    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), ERHIResourceState::UnorderedAccess, ERHIResourceState::PixelShaderResource);
+    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
 }
 
 bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
 {
     // Generate global irradiance (From Skybox)
-    LightSetup.IrradianceMap = RHICreateTextureCube(LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, TextureFlags_RWTexture, ERHIResourceState::Common, nullptr);
+    LightSetup.IrradianceMap = RHICreateTextureCube(LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, TextureFlags_RWTexture, EResourceAccess::Common, nullptr);
     if (!LightSetup.IrradianceMap)
     {
         CDebug::DebugBreak();
@@ -176,7 +176,7 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
         LightSetup.SpecularIrradianceSize,
         SpecularIrradianceMiplevels,
         TextureFlags_RWTexture,
-        ERHIResourceState::Common,
+        EResourceAccess::Common,
         nullptr);
     if (!LightSetup.SpecularIrradianceMap)
     {

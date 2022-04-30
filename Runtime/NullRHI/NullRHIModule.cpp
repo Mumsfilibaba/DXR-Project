@@ -2,7 +2,6 @@
 #include "NullRHIInterface.h"
 #include "NullRHIShaderCompiler.h"
 
-
 IMPLEMENT_ENGINE_MODULE(CNullRHIModule, NullRHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

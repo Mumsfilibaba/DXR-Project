@@ -12,12 +12,9 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CGenericThreadMisc Interface
 
-    static FORCEINLINE bool Initialize()
-    {
-        // This must be executed on the main-thread
-        MainThreadHandle = GetCurrentThreadId();
-        return true;
-    }
+    static CGenericThread* CreateThread(const TFunction<void()>& InFunction);
+
+    static CGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const String& InString);
 
     static FORCEINLINE uint32 GetNumProcessors()
     {
@@ -40,12 +37,4 @@ public:
         DWORD Milliseconds = static_cast<DWORD>(Time.AsMilliSeconds());
         ::Sleep(Milliseconds);
     }
-
-    static FORCEINLINE bool IsMainThread()
-    {
-        return (MainThreadHandle == GetCurrentThreadId());
-    }
-
-private:
-    static CORE_API DWORD MainThreadHandle;
 };

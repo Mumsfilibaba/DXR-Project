@@ -21,7 +21,7 @@ CD3D12RHIRayTracingGeometry::CD3D12RHIRayTracingGeometry(CD3D12Device* InDevice,
 {
 }
 
-bool CD3D12RHIRayTracingGeometry::Build(CD3D12RHICommandContext& CmdContext, bool Update)
+bool CD3D12RHIRayTracingGeometry::Build(CD3D12CommandContext& CmdContext, bool Update)
 {
     Assert(VertexBuffer != nullptr);
 
@@ -37,8 +37,8 @@ bool CD3D12RHIRayTracingGeometry::Build(CD3D12RHICommandContext& CmdContext, boo
 
     if (IndexBuffer)
     {
-        ERHIIndexFormat IndexFormat        = IndexBuffer->GetFormat();
-        GeometryDesc.Triangles.IndexFormat = IndexFormat == ERHIIndexFormat::uint32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+        EIndexFormat IndexFormat        = IndexBuffer->GetFormat();
+        GeometryDesc.Triangles.IndexFormat = IndexFormat == EIndexFormat::uint32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
         GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetResource()->GetGPUVirtualAddress();
         GeometryDesc.Triangles.IndexCount  = IndexBuffer->GetNumIndicies();
     }
@@ -158,7 +158,7 @@ CD3D12RHIRayTracingScene::CD3D12RHIRayTracingScene(CD3D12Device* InDevice, uint3
 {
 }
 
-bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const SRayTracingGeometryInstance* InInstances, uint32 NumInstances, bool Update)
+bool CD3D12RHIRayTracingScene::Build(CD3D12CommandContext& CmdContext, const SRayTracingGeometryInstance* InInstances, uint32 NumInstances, bool Update)
 {
     Assert(InInstances != nullptr && NumInstances != 0);
 
@@ -335,7 +335,7 @@ bool CD3D12RHIRayTracingScene::Build(CD3D12RHICommandContext& CmdContext, const 
     return true;
 }
 
-bool CD3D12RHIRayTracingScene::BuildBindingTable( CD3D12RHICommandContext& CmdContext
+bool CD3D12RHIRayTracingScene::BuildBindingTable( CD3D12CommandContext& CmdContext
                                                 , CD3D12RHIRayTracingPipelineState* PipelineState
                                                 , CD3D12OnlineDescriptorHeap* ResourceHeap
                                                 , CD3D12OnlineDescriptorHeap* SamplerHeap
@@ -527,7 +527,7 @@ void CD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         for (CRHIConstantBuffer* CBuffer : Resources.ConstantBuffers)
         {
-            CD3D12RHIConstantBuffer* DxConstantBuffer = static_cast<CD3D12RHIConstantBuffer*>(CBuffer);
+            CD3D12ConstantBuffer* DxConstantBuffer = static_cast<CD3D12ConstantBuffer*>(CBuffer);
             ResourceHandles[CPUResourceIndex++] = DxConstantBuffer->GetView().GetOfflineHandle();
         }
     }

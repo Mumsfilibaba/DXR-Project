@@ -149,7 +149,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandSetShadingRate)
 {
 public:
-    FORCEINLINE CRHICommandSetShadingRate(ERHIShadingRate InShadingRate)
+    FORCEINLINE CRHICommandSetShadingRate(EShadingRate InShadingRate)
         : ShadingRate(InShadingRate)
     { }
 
@@ -158,7 +158,7 @@ public:
         CommandContext.SetShadingRate(ShadingRate);
     }
 
-    ERHIShadingRate ShadingRate;
+    EShadingRate ShadingRate;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -901,7 +901,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandTransitionTexture)
 {
 public:
-    FORCEINLINE CRHICommandTransitionTexture(CRHITexture* InTexture, ERHIResourceState InBeforeState, ERHIResourceState InAfterState)
+    FORCEINLINE CRHICommandTransitionTexture(CRHITexture* InTexture, EResourceAccess InBeforeState, EResourceAccess InAfterState)
         : Texture(InTexture)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
@@ -913,8 +913,8 @@ public:
     }
 
     CRHITexture*      Texture;
-    ERHIResourceState BeforeState;
-    ERHIResourceState AfterState;
+    EResourceAccess BeforeState;
+    EResourceAccess AfterState;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -923,7 +923,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandTransitionBuffer)
 {
 public:
-    FORCEINLINE CRHICommandTransitionBuffer(CRHIBuffer* InBuffer, ERHIResourceState InBeforeState, ERHIResourceState InAfterState)
+    FORCEINLINE CRHICommandTransitionBuffer(CRHIBuffer* InBuffer, EResourceAccess InBeforeState, EResourceAccess InAfterState)
         : Buffer(InBuffer)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
@@ -935,8 +935,8 @@ public:
     }
 
     CRHIBuffer*       Buffer;
-    ERHIResourceState BeforeState;
-    ERHIResourceState AfterState;
+    EResourceAccess BeforeState;
+    EResourceAccess AfterState;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

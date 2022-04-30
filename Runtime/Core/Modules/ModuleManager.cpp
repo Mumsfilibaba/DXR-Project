@@ -107,6 +107,12 @@ IEngineModule* CModuleManager::GetEngineModule(const char* ModuleName)
     }
 }
 
+TOptional<CModuleManager>& CModuleManager::GetModuleManagerInstance()
+{
+    static TOptional<CModuleManager> Instance(InPlace);
+    return Instance;
+}
+
 CModuleManager& CModuleManager::Get()
 {
     TOptional<CModuleManager>& ModuleManager = GetModuleManagerInstance();
@@ -202,12 +208,6 @@ void CModuleManager::UnloadModule(const char* ModuleName)
 uint32 CModuleManager::GetLoadedModuleCount()
 {
     return static_cast<uint32>(Modules.Size());
-}
-
-TOptional<CModuleManager>& CModuleManager::GetModuleManagerInstance()
-{
-    static TOptional<CModuleManager> Instance(InPlace);
-    return Instance;
 }
 
 int32 CModuleManager::GetModuleIndex(const char* ModuleName)

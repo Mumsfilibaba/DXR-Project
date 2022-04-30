@@ -13,13 +13,11 @@
 #include "NullRHIRayTracing.h"
 
 #if defined(COMPILER_MSVC)
-#pragma warning(push)
-#pragma warning(disable : 4100) // Disable unreferenced variable
-
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -31,7 +29,7 @@ public:
 
     CNullRHIInstance()
         : CRHIInstance(ERHIInstanceApi::Null)
-        , CommandContext(CNullRHICommandContext::Make())
+        , CommandContext(CNullRHICommandContext::CreateNullRHIContext())
     { }
 
     ~CNullRHIInstance()
@@ -39,29 +37,34 @@ public:
         SafeDelete(CommandContext);
     }
 
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIInstance Interface
+
     virtual bool Initialize(bool bEnableDebug) override final { return true; }
 
-    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture2D>(Format, Width, Height, NumMips, NumSamples, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture2DArray>(Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITextureCube>(Format, Size, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITextureCubeArray>(Format, Size, NumArraySlices, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture3D>(Format, Width, Height, Depth, NumMips, Flags, OptimizedClearValue);
     }
@@ -71,24 +74,24 @@ public:
         return dbg_new CNullRHISamplerState();
     }
 
-    virtual CRHIVertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIVertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIVertexBuffer>(NumVertices, Stride, Flags);
+        return dbg_new TNullRHIBuffer<CNullRHIVertexBuffer>(Flags, NumVertices, Stride);
     }
 
-    virtual CRHIIndexBuffer* CreateIndexBuffer(ERHIIndexFormat Format, uint32 NumIndices, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIIndexBuffer* CreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIIndexBuffer>(Format, NumIndices, Flags);
+        return dbg_new TNullRHIBuffer<CNullRHIIndexBuffer>(Flags, Format, NumIndices);
     }
 
-    virtual CRHIConstantBuffer* CreateConstantBuffer(uint32 Size, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIConstantBuffer* CreateConstantBuffer(uint32 Size, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIConstantBuffer>(Size, Flags);
+        return dbg_new TNullRHIBuffer<CNullRHIConstantBuffer>(Flags, Size);
     }
 
-    virtual CRHIStructuredBuffer* CreateStructuredBuffer(uint32 Stride, uint32 NumElements, uint32 Flags, ERHIResourceState InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIGenericBuffer* CreateGenericBuffer(uint32 Stride, uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIStructuredBuffer>(Stride * NumElements, Stride, Flags);
+        return dbg_new TNullRHIBuffer<CNullRHIGenericBuffer>(Flags, Stride * NumElements, Stride);
     }
 
     virtual CRHIRayTracingScene* CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) override final
@@ -256,8 +259,7 @@ private:
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
+    #pragma warning(pop)
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
+    #pragma clang diagnostic pop
 #endif

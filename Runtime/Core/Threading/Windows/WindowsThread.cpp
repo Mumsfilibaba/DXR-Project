@@ -1,34 +1,33 @@
 #include "WindowsThread.h"
 
+#include "Core/Logging/Log.h"
 #include "Core/Utilities/StringUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CWindowsThread
 
-TSharedRef<CWindowsThread> CWindowsThread::Make(ThreadFunction InFunction)
+CWindowsThread* CWindowsThread::CreateWindowsThread(const TFunction<void()>& InFunction)
 {
     return dbg_new CWindowsThread(InFunction);
 }
 
-TSharedRef<CWindowsThread> CWindowsThread::Make(ThreadFunction InFunction, const String & InName)
+CWindowsThread* CWindowsThread::CreateWindowsThread(const TFunction<void()>& InFunction, const String & InName)
 {
     return dbg_new CWindowsThread(InFunction, InName);
 }
 
-CWindowsThread::CWindowsThread(ThreadFunction InFunction)
-    : CGenericThread()
+CWindowsThread::CWindowsThread(const TFunction<void()>& InFunction)
+    : CGenericThread(InFunction)
     , Thread(0)
     , hThreadID(0)
     , Name()
-    , Function(InFunction)
 { }
 
-CWindowsThread::CWindowsThread(ThreadFunction InFunction, const String& InName)
-    : CGenericThread()
+CWindowsThread::CWindowsThread(const TFunction<void()>& InFunction, const String& InName)
+    : CGenericThread(InFunction)
     , Thread(0)
     , hThreadID(0)
     , Name(InName)
-    , Function(InFunction)
 { }
 
 CWindowsThread::~CWindowsThread()
@@ -53,9 +52,9 @@ bool CWindowsThread::Start()
     }
 }
 
-void CWindowsThread::WaitUntilFinished()
+void CWindowsThread::WaitUntilFinished(uint64 TimeoutInMilliseconds)
 {
-    WaitForSingleObject(Thread, INFINITE);
+    WaitForSingleObject(Thread, TimeoutInMilliseconds);
 }
 
 void CWindowsThread::SetName(const String& InName)
@@ -73,7 +72,7 @@ void* CWindowsThread::GetPlatformHandle()
 
 DWORD WINAPI CWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
 {
-    CWindowsThread* CurrentThread = (CWindowsThread*)ThreadParameter;
+    CWindowsThread* CurrentThread = reinterpret_cast<CWindowsThread*>(ThreadParameter);
     if (CurrentThread)
     {
         if (!CurrentThread->Name.IsEmpty())
@@ -88,5 +87,5 @@ DWORD WINAPI CWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
         return 0;
     }
 
-    return (DWORD)-1;
+    return DWORD(-1);
 }

@@ -22,7 +22,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     };
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "VSMain", &Defines, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -39,7 +39,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         VShader->SetName("ForwardPass VertexShader");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "PSMain", &Defines, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -111,7 +111,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
     PSOProperties.PipelineFormats.NumRenderTargets = 1;
     PSOProperties.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
-    PSOProperties.PrimitiveTopologyType = ERHIPrimitiveTopologyType::Triangle;
+    PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)
@@ -141,7 +141,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
 
     TRACE_SCOPE("ForwardPass");
 
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), ERHIResourceState::NonPixelShaderResource, ERHIResourceState::PixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
 
     const float RenderWidth = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
@@ -216,7 +216,7 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
         CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
     }
 
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), ERHIResourceState::PixelShaderResource, ERHIResourceState::NonPixelShaderResource);
+    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End ForwardPass");
 }

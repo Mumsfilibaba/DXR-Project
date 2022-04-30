@@ -2,7 +2,7 @@
 #include "D3D12RootSignature.h"
 #include "D3D12DescriptorHeap.h"
 #include "D3D12CommandList.h"
-#include "D3D12RHIBuffer.h"
+#include "D3D12Buffer.h"
 #include "D3D12RHIViews.h"
 #include "D3D12RHISamplerState.h"
 
@@ -152,7 +152,7 @@ public:
 
     void CommitState(CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch);
 
-    FORCEINLINE void SetVertexBuffer(CD3D12RHIVertexBuffer* VertexBuffer, uint32 Slot)
+    FORCEINLINE void SetVertexBuffer(CD3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
         D3D12_ERROR( Slot <= D3D12_MAX_VERTEX_BUFFER_SLOTS
                    , "[D3D12]: Trying to bind a VertexBuffer to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxVertexBufferCount=" + ToString(D3D12_MAX_VERTEX_BUFFER_SLOTS) + ") ");
@@ -166,7 +166,7 @@ public:
         }
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12RHIIndexBuffer* InIndexBuffer)
+    FORCEINLINE void SetIndexBuffer(CD3D12IndexBuffer* InIndexBuffer)
     {
         if (IndexBuffer != InIndexBuffer)
         {
@@ -187,10 +187,10 @@ public:
     }
 
 private:
-    TStaticArray<CD3D12RHIVertexBuffer*, D3D12_MAX_VERTEX_BUFFER_SLOTS> VertexBuffers;
+    TStaticArray<CD3D12VertexBuffer*, D3D12_MAX_VERTEX_BUFFER_SLOTS> VertexBuffers;
     uint32 NumVertexBuffers;
 
-    CD3D12RHIIndexBuffer* IndexBuffer;
+    CD3D12IndexBuffer* IndexBuffer;
 
     bool bVertexBuffersDirty;
     bool bIndexBufferDirty;
@@ -291,12 +291,12 @@ public:
 
     void Reset();
 
-    FORCEINLINE void SetVertexBuffer(CD3D12RHIVertexBuffer* VertexBuffer, uint32 Slot)
+    FORCEINLINE void SetVertexBuffer(CD3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
         VertexBufferCache.SetVertexBuffer(VertexBuffer, Slot);
     }
 
-    FORCEINLINE void SetIndexBuffer(CD3D12RHIIndexBuffer* IndexBuffer)
+    FORCEINLINE void SetIndexBuffer(CD3D12IndexBuffer* IndexBuffer)
     {
         VertexBufferCache.SetIndexBuffer(IndexBuffer);
     }

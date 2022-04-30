@@ -5,22 +5,22 @@
 #include "Core/Containers/String.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIShaderStage
+// EShaderStage
 
-enum class ERHIShaderStage
+enum class EShaderStage
 {
-    Vertex = 1,
-    Hull = 2,
-    Domain = 3,
-    Geometry = 4,
-    Mesh = 5,
+    Vertex        = 1,
+    Hull          = 2,
+    Domain        = 3,
+    Geometry      = 4,
+    Mesh          = 5,
     Amplification = 6,
-    Pixel = 7,
-    Compute = 8,
-    RayGen = 9,
-    RayAnyHit = 10,
+    Pixel         = 7,
+    Compute       = 8,
+    RayGen        = 9,
+    RayAnyHit     = 10,
     RayClosestHit = 11,
-    RayMiss = 12,
+    RayMiss       = 12,
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -28,10 +28,10 @@ enum class ERHIShaderStage
 
 struct SRHIShaderParameterInfo
 {
-    uint32 NumConstantBuffers = 0;
-    uint32 NumShaderResourceViews = 0;
+    uint32 NumConstantBuffers      = 0;
+    uint32 NumShaderResourceViews  = 0;
     uint32 NumUnorderedAccessViews = 0;
-    uint32 NumSamplerStates = 0;
+    uint32 NumSamplerStates        = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -332,17 +332,17 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helpers
 
-inline bool ShaderStageIsGraphics(ERHIShaderStage ShaderStage)
+inline bool ShaderStageIsGraphics(EShaderStage ShaderStage)
 {
     switch (ShaderStage)
     {
-    case ERHIShaderStage::Vertex:
-    case ERHIShaderStage::Hull:
-    case ERHIShaderStage::Domain:
-    case ERHIShaderStage::Geometry:
-    case ERHIShaderStage::Pixel:
-    case ERHIShaderStage::Mesh:
-    case ERHIShaderStage::Amplification:
+    case EShaderStage::Vertex:
+    case EShaderStage::Hull:
+    case EShaderStage::Domain:
+    case EShaderStage::Geometry:
+    case EShaderStage::Pixel:
+    case EShaderStage::Mesh:
+    case EShaderStage::Amplification:
     {
         return true;
     }
@@ -354,15 +354,15 @@ inline bool ShaderStageIsGraphics(ERHIShaderStage ShaderStage)
     }
 }
 
-inline bool ShaderStageIsCompute(ERHIShaderStage ShaderStage)
+inline bool ShaderStageIsCompute(EShaderStage ShaderStage)
 {
     switch (ShaderStage)
     {
-    case ERHIShaderStage::Compute:
-    case ERHIShaderStage::RayGen:
-    case ERHIShaderStage::RayClosestHit:
-    case ERHIShaderStage::RayAnyHit:
-    case ERHIShaderStage::RayMiss:
+    case EShaderStage::Compute:
+    case EShaderStage::RayGen:
+    case EShaderStage::RayClosestHit:
+    case EShaderStage::RayAnyHit:
+    case EShaderStage::RayMiss:
     {
         return true;
     }
@@ -374,14 +374,14 @@ inline bool ShaderStageIsCompute(ERHIShaderStage ShaderStage)
     }
 }
 
-inline bool ShaderStageIsRayTracing(ERHIShaderStage ShaderStage)
+inline bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
 {
     switch (ShaderStage)
     {
-    case ERHIShaderStage::RayGen:
-    case ERHIShaderStage::RayClosestHit:
-    case ERHIShaderStage::RayAnyHit:
-    case ERHIShaderStage::RayMiss:
+    case EShaderStage::RayGen:
+    case EShaderStage::RayClosestHit:
+    case EShaderStage::RayAnyHit:
+    case EShaderStage::RayMiss:
     {
         return true;
     }

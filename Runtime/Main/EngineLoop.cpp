@@ -8,14 +8,14 @@
     #include "EditorEngine.h"
 #endif
 
-#include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Debug/Console/ConsoleManager.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Modules/ApplicationModule.h"
+#include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/AsyncTaskManager.h"
-#include "Core/Threading/Platform/PlatformThreadMisc.h"
 #include "Core/Misc/EngineLoopDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
+#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Debug/Console/ConsoleManager.h"
 
 #include "Application/ApplicationInstance.h"
 
@@ -92,7 +92,7 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    // TODO: Use a seperate profiler for booting the engine
+    // TODO: Use a separate profiler for booting the engine
     CFrameProfiler::Enable();
     TRACE_FUNCTION_SCOPE();
 
@@ -108,9 +108,9 @@ bool CEngineLoop::PreInitialize()
     LOG_INFO("ProjectPath=" + String(CProjectManager::GetProjectPath()));
 #endif
 
-    if (!PlatformThreadMisc::Initialize())
+    if (!CThreadManager::Initialize())
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to init PlatformThreadMisc");
+        PlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");
         return false;
     }
 
@@ -272,7 +272,7 @@ bool CEngineLoop::Release()
 
     CApplicationInstance::Release();
 
-    PlatformThreadMisc::Release();
+    CThreadManager::Release();
 
     CModuleManager::ReleaseAllLoadedModules();
 

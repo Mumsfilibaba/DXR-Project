@@ -4,9 +4,9 @@
 #include "RHI/RHIModule.h"
 
 #if NULLRHI_IMPL
-#define NULLRHI_API MODULE_EXPORT
+    #define NULLRHI_API MODULE_EXPORT
 #else
-#define NULLRHI_API 
+    #define NULLRHI_API 
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -19,6 +19,6 @@ public:
     CNullRHIModule() = default;
     ~CNullRHIModule() = default;
 
-    virtual class CRHIInstance* CreateInterface() override final;
+    virtual class CRHIInstance*       CreateInterface() override final;
     virtual class IRHIShaderCompiler* CreateCompiler() override final;
 };

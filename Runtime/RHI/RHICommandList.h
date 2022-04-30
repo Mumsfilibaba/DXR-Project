@@ -271,7 +271,7 @@ public:
      *
      * @param ShadingRate: New shading-rate for the upcoming draw-calls
      */
-    void SetShadingRate(ERHIShadingRate ShadingRate)
+    void SetShadingRate(EShadingRate ShadingRate)
     {
         InsertCommand<CRHICommandSetShadingRate>(ShadingRate);
     }
@@ -759,7 +759,7 @@ public:
      * @param BeforeState: State that the Texture had before the transition
      * @param AfterState: State that the Texture have after the transition
      */
-    void TransitionTexture(CRHITexture* Texture, ERHIResourceState BeforeState, ERHIResourceState AfterState)
+    void TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
     {
         if (BeforeState != AfterState)
         {
@@ -778,7 +778,7 @@ public:
      * @param BeforeState: State that the Buffer had before the transition
      * @param AfterState: State that the Buffer have after the transition
      */
-    void TransitionBuffer(CRHIBuffer* Buffer, ERHIResourceState BeforeState, ERHIResourceState AfterState)
+    void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
     {
         Assert(Buffer != nullptr);
 

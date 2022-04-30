@@ -1,52 +1,65 @@
 #pragma once
 #include "RHIResourceBase.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIIndexFormat 
+#include "Core/Templates/EnumUtilities.h"
+#include "Core/Containers/SharedRef.h"
 
-enum class ERHIIndexFormat
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedefs
+
+typedef TSharedRef<class CRHIBuffer>         RHIBufferRef;
+
+typedef TSharedRef<class CRHIVertexBuffer>   RHIVertexBufferRef;
+typedef TSharedRef<class CRHIIndexBuffer>    RHIIndexBufferRef;
+typedef TSharedRef<class CRHIGenericBuffer>  RHIGenericBufferRef;
+typedef TSharedRef<class CRHIConstantBuffer> RHIConstantBufferRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EIndexFormat 
+
+enum class EIndexFormat
 {
     Unknown = 0,
-    uint16 = 1,
-    uint32 = 2,
+    uint16  = 1,
+    uint32  = 2,
 };
 
-inline const char* ToString(ERHIIndexFormat IndexFormat)
+inline const char* ToString(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)
     {
-    case ERHIIndexFormat::uint16: return "uint16";
-    case ERHIIndexFormat::uint32: return "uint32";
-    default: return "Unknown";
+    case EIndexFormat::uint16: return "uint16";
+    case EIndexFormat::uint32: return "uint32";
+    default:                   return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Indices helpers
 
-inline ERHIIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
+inline EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
 {
     if (StrideInBytes == 2)
     {
-        return ERHIIndexFormat::uint16;
+        return EIndexFormat::uint16;
     }
     else if (StrideInBytes == 4)
     {
-        return ERHIIndexFormat::uint32;
+        return EIndexFormat::uint32;
     }
     else
     {
-        return ERHIIndexFormat::Unknown;
+        return EIndexFormat::Unknown;
     }
 }
 
-inline uint32 GetStrideFromIndexFormat(ERHIIndexFormat IndexFormat)
+inline uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
 {
-    if (IndexFormat == ERHIIndexFormat::uint16)
+    if (IndexFormat == EIndexFormat::uint16)
     {
         return 2;
     }
-    else if (IndexFormat == ERHIIndexFormat::uint32)
+    else if (IndexFormat == EIndexFormat::uint32)
     {
         return 4;
     }
@@ -57,70 +70,76 @@ inline uint32 GetStrideFromIndexFormat(ERHIIndexFormat IndexFormat)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHIBufferFlags
+// EBufferUsageFlags 
 
-enum ERHIBufferFlags : uint32
+enum class EBufferUsageFlags : uint32
 {
-    BufferFlag_None = 0,
-    BufferFlag_Default = FLAG(1), // Default Device Memory
-    BufferFlag_Dynamic = FLAG(2), // Dynamic Memory
-    BufferFlag_UAV = FLAG(3), // Can be used in UnorderedAccessViews
-    BufferFlag_SRV = FLAG(4), // Can be used in ShaderResourceViews
+    None     = 0,
+    Default  = FLAG(1), // Default Device Memory
+    Dynamic  = FLAG(2), // Dynamic Memory
+    AllowUAV = FLAG(3), // Can be used in UnorderedAccessViews
+    AllowSRV = FLAG(4), // Can be used in ShaderResourceViews
 
-    BufferFlags_RWBuffer = BufferFlag_UAV | BufferFlag_SRV
+    RWBuffer = AllowUAV | AllowSRV
 };
+
+ENUM_CLASS_OPERATORS(EBufferUsageFlags);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIBuffer
 
 class CRHIBuffer : public CRHIResource
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor taking in flags for the buffer
-     * 
-     * @param InFlags: Flags that the buffer was created with
-     */
-    CRHIBuffer(uint32 InFlags)
+    CRHIBuffer(EBufferUsageFlags InFlags)
         : CRHIResource()
         , Flags(InFlags)
     { }
 
-    /**
-     * @brief: Cast resource to a Buffer
-     * 
-     * @return: Returns a pointer to a buffer interface if the object implements it
-     */
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIResource Interface
+
     virtual CRHIBuffer* AsBuffer() { return this; }
 
-    /**
-     * @brief: Cast to VertexBuffer 
-     * 
-     * @return: Returns a pointer to a VertexBuffer interface if the object implements it
-     */
-    virtual class CRHIVertexBuffer* AsVertexBuffer() { return nullptr; }
+public:
 
-    /**
-     * @brief: Cast to IndexBuffer
-     *
-     * @return: Returns a pointer to a IndexBuffer interface if the object implements it
-     */
-    virtual class CRHIIndexBuffer* AsIndexBuffer() { return nullptr; }
+    /** @return: Returns a pointer to a VertexBuffer interface if implemented */
+    virtual class CRHIVertexBuffer* GetVertexBuffer() { return nullptr; }
 
-    /**
-     * @brief: Cast to ConstantBuffer
-     *
-     * @return: Returns a pointer to a ConstantBuffer interface if the object implements it
-     */
-    virtual class CRHIConstantBuffer* AsConstantBuffer() { return nullptr; }
+    /** @return: Returns a pointer to a IndexBuffer interface if implemented */
+    virtual class CRHIIndexBuffer* GetIndexBuffer() { return nullptr; }
 
-    /**
-     * @brief: Cast to StructuredBuffer
-     *
-     * @return: Returns a pointer to a StructuredBuffer interface if the object implements it
-     */
-    virtual class CRHIStructuredBuffer* AsStructuredBuffer() { return nullptr; }
+    /** @return: Returns a pointer to a ConstantBuffer interface if implemented */
+    virtual class CRHIConstantBuffer* GetConstantBuffer() { return nullptr; }
+
+    /** @return: Returns a pointer to a GenericBuffer interface if implemented */
+    virtual class CRHIGenericBuffer* GetGenericBuffer() { return nullptr; }
+
+    /** @return: Returns the native handle of the Buffer */
+    virtual void* GetRHIResourceHandle() const { return nullptr; }
+
+    /** @return: Returns the RHI-backend buffer interface */
+    virtual void* GetRHIBaseBuffer() { return nullptr; }
+
+    /** @return: Returns true if the buffer is structured or not */
+    virtual bool IsStructured() const { return false; }
+
+    /** @return: Returns the Buffer Stride */
+    virtual uint32 GetStride() const { return 1; }
+
+    /** @return: Returns the Buffer Size */
+    virtual uint32 GetSize() const { return 1; }
+
+    /** @return: Returns the flags that the buffer was created with */
+    EBufferUsageFlags GetFlags() const { return Flags; }
+
+public:
+    
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Deprecated
 
     /**
      * @brief: Map GPU buffer memory to the CPU. Setting both size and offset to zero indicate the whole resource.
@@ -139,48 +158,8 @@ public:
      */
     virtual void Unmap(uint32 Offset = 0, uint32 Size = 0) = 0;
 
-    /**
-     * @brief: Check if the buffer is considered dynamic
-     * 
-     * @return: Returns true if the buffer is dynamic
-     */
-    FORCEINLINE bool IsDynamic() const
-    {
-        return (Flags & BufferFlag_Dynamic);
-    }
-
-    /**
-     * @brief: Check if the buffer can be used with UnorderedAccessViews
-     *
-     * @return: Returns true if the buffer can be used with UnorderedAccessViews
-     */
-    FORCEINLINE bool IsUAV() const
-    {
-        return (Flags & BufferFlag_UAV);
-    }
-
-    /**
-     * @brief: Check if the buffer can be used with ShaderResourceViews
-     *
-     * @return: Returns true if the buffer can be used with ShaderResourceViews
-     */
-    FORCEINLINE bool IsSRV() const
-    {
-        return (Flags & BufferFlag_SRV);
-    }
-
-    /**
-     * @brief: Retrieve the flags that the buffer was created with
-     * 
-     * @return: Returns the flags that the buffer was created with
-     */
-    FORCEINLINE uint32 GetFlags() const
-    {
-        return Flags;
-    }
-
 private:
-    uint32 Flags;
+    EBufferUsageFlags Flags;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -188,48 +167,31 @@ private:
 
 class CRHIVertexBuffer : public CRHIBuffer
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor taking the parameters that the buffer was created with
-     * 
-     * @param InNumVertices: The number of vertices within the buffer
-     * @param InStride: Stride of the each vertex
-     * @param InFlags: Flags that the buffer was created with
-     */
-    CRHIVertexBuffer(uint32 InNumVertices, uint32 InStride, uint32 InFlags)
+    CRHIVertexBuffer(EBufferUsageFlags InFlags, uint32 InNumVertices, uint32 InStride)
         : CRHIBuffer(InFlags)
         , NumVertices(InNumVertices)
         , Stride(InStride)
     { }
 
-    /**
-     * @brief: Cast to VertexBuffer
-     *
-     * @return: Returns a pointer to a VertexBuffer interface if the object implements it
-     */
-    virtual CRHIVertexBuffer* AsVertexBuffer() override { return this; }
+public:
 
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIBuffer Interface
 
-    /**
-     * @brief: Retrieve the stride of the VertexBuffer
-     * 
-     * @return: Returns the stride for each vertex in the VertexBuffer
-     */
-    FORCEINLINE uint32 GetStride() const
-    {
-        return Stride;
-    }
+    virtual CRHIVertexBuffer* GetVertexBuffer() override final { return this; }
 
-    /**
-     * @brief: Retrieve the number of vertices in the buffer
-     *
-     * @return: Returns the number of vertices in the VertexBuffer
-     */
-    FORCEINLINE uint32 GetNumVertices() const
-    {
-        return NumVertices;
-    }
+    virtual bool IsStructured() const override final { return true; }
+
+    virtual uint32 GetStride() const override final { return Stride; }
+
+    virtual uint32 GetSize() const override final { return GetStride() * NumVertices; }
+
+public:
+
+    /** @return: Returns the number of vertices in the VertexBuffer */
+    uint32 GetNumVertices() const { return NumVertices; }
 
 private:
     uint32 NumVertices;
@@ -241,50 +203,35 @@ private:
 
 class CRHIIndexBuffer : public CRHIBuffer
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor taking parameters for the IndexBuffer
-     * 
-     * @param InFormat: Format that the IndexBuffer uses
-     * @param InNumIndices: Number of indices in the IndexBuffer
-     * @param InFlags: Flags that the buffer was created with
-     */
-    CRHIIndexBuffer(ERHIIndexFormat InFormat, uint32 InNumIndicies, uint32 InFlags)
+    CRHIIndexBuffer(EBufferUsageFlags InFlags, EIndexFormat InFormat, uint32 InNumIndicies)
         : CRHIBuffer(InFlags)
         , Format(InFormat)
         , NumIndicies(InNumIndicies)
     { }
 
-    /**
-     * @brief: Cast to IndexBuffer
-     *
-     * @return: Returns a pointer to a IndexBuffer interface if the object implements it
-     */
-    virtual CRHIIndexBuffer* AsIndexBuffer() override { return this; }
+public:
 
-    /**
-     * @brief: Retrieve the format that the IndexBuffer was created with
-     * 
-     * @return: Returns the format that the IndexBuffer uses
-     */
-    FORCEINLINE ERHIIndexFormat GetFormat() const
-    {
-        return Format;
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIBuffer Interface
 
-    /**
-     * @brief: Retrieve the number of indices that the IndexBuffer contains
-     * 
-     * @return: Returns the number of indices in the IndexBuffer
-     */
-    FORCEINLINE uint32 GetNumIndicies() const
-    {
-        return NumIndicies;
-    }
+    virtual CRHIIndexBuffer* GetIndexBuffer() override final { return this; }
+
+    virtual uint32 GetStride() const override final { return GetStrideFromIndexFormat(Format); }
+
+    virtual uint32 GetSize() const override final { return GetStride() * NumIndicies; }
+
+public:
+
+    /** @return: Returns the format that the IndexBuffer uses */
+    EIndexFormat GetFormat() const { return Format; }
+
+    /** @return: Returns the number of indices in the IndexBuffer */
+    uint32 GetNumIndicies() const { return NumIndicies; }
 
 private:
-    ERHIIndexFormat Format;
+    EIndexFormat Format;
     uint32       NumIndicies;
 };
 
@@ -293,86 +240,58 @@ private:
 
 class CRHIConstantBuffer : public CRHIBuffer
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor taking create params
-     * 
-     * @param InSize: Size of the ConstantBuffer
-     * @param InFlags: Flags of the ConstantBuffer
-     */
-    CRHIConstantBuffer(uint32 InSize, uint32 InFlags)
+    CRHIConstantBuffer(EBufferUsageFlags InFlags, uint32 InSize)
         : CRHIBuffer(InFlags)
         , Size(InSize)
+        , Stride(1)
     { }
 
-    /**
-     * @brief: Cast to ConstantBuffer
-     *
-     * @return: Returns a pointer to a ConstantBuffer interface if the object implements it
-     */
-    virtual CRHIConstantBuffer* AsConstantBuffer() override { return this; }
+public:
 
-    /**
-     * @brief: Retrieve the size of the ConstantBuffer
-     * 
-     * @return: Returns the Size of the ConstantBuffer
-     */
-    FORCEINLINE uint32 GetSize() const
-    {
-        return Size;
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIBuffer Interface
+
+    virtual CRHIConstantBuffer* GetConstantBuffer() override final { return this; }
+
+    virtual uint32 GetStride() const override final { return Stride; }
+
+    virtual uint32 GetSize() const override final { return Size; }
+
+public:
+
+    /** @return: Returns a Bindless descriptor-handle if the RHI supports it */
+    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 
 private:
     uint32 Size;
+    uint32 Stride;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIStructuredBuffer
+// CRHIGenericBuffer
 
-class CRHIStructuredBuffer : public CRHIBuffer
+class CRHIGenericBuffer : public CRHIBuffer
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor taking parameters for creating a StructuredBuffer
-     * 
-     * @param InNumElements: Number of elements in the StructuredBuffer
-     * @param InStride: Stride of each element in the buffer
-     * @param InFlags: Flags for the buffer
-     */
-    CRHIStructuredBuffer(uint32 InNumElements, uint32 InStride, uint32 InFlags)
+    CRHIGenericBuffer(EBufferUsageFlags InFlags, uint32 InNumElements, uint32 InStride)
         : CRHIBuffer(InFlags)
         , Stride(InStride)
         , NumElements(InNumElements)
     { }
 
-    /**
-     * @brief: Cast to StructuredBuffer
-     *
-     * @return: Returns a pointer to a StructuredBuffer interface if the object implements it
-     */
-    virtual CRHIStructuredBuffer* AsStructuredBuffer() override { return this; }
+public:
 
-    /**
-     * @brief: Retrieve the stride of the StructuredBuffer
-     * 
-     * @return: Returns the stride of the StructuredBuffer
-     */
-    FORCEINLINE uint32 GetStride() const
-    {
-        return Stride;
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIBuffer Interface
 
-    /**
-     * @brief: Retrieve the number of elements of the StructuredBuffer
-     *
-     * @return: Returns the number of elements of the StructuredBuffer
-     */
-    FORCEINLINE uint32 GetNumElements() const
-    {
-        return NumElements;
-    }
+    virtual CRHIGenericBuffer* GetGenericBuffer() override final { return this; }
+
+    virtual uint32 GetStride() const override final { return Stride; }
+
+    virtual uint32 GetSize() const override final { return NumElements * Stride; }
 
 private:
     uint32 Stride;

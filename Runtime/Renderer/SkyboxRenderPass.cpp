@@ -18,7 +18,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     SkyboxMesh = CMeshFactory::CreateSphere(1);
 
     SRHIResourceData VertexData = SRHIResourceData(SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes());
-    SkyboxVertexBuffer = RHICreateVertexBuffer<SVertex>(SkyboxMesh.Vertices.Size(), BufferFlag_Dynamic, ERHIResourceState::VertexAndConstantBuffer, &VertexData);
+    SkyboxVertexBuffer = RHICreateVertexBuffer<SVertex>(SkyboxMesh.Vertices.Size(), EBufferUsageFlags::Dynamic, EResourceAccess::VertexAndConstantBuffer, &VertexData);
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -29,7 +29,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     }
 
     SRHIResourceData IndexData = SRHIResourceData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
-    SkyboxIndexBuffer = RHICreateIndexBuffer(ERHIIndexFormat::uint32, SkyboxMesh.Indices.Size(), BufferFlag_Dynamic, ERHIResourceState::VertexAndConstantBuffer, &IndexData);
+    SkyboxIndexBuffer = RHICreateIndexBuffer(EIndexFormat::uint32, SkyboxMesh.Indices.Size(), EBufferUsageFlags::Dynamic, EResourceAccess::VertexAndConstantBuffer, &IndexData);
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -77,7 +77,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     }
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Skybox.hlsl", "VSMain", nullptr, ERHIShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Skybox.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;
@@ -94,7 +94,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         SkyboxVertexShader->SetName("Skybox VertexShader");
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Skybox.hlsl", "PSMain", nullptr, ERHIShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Skybox.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
         CDebug::DebugBreak();
         return false;

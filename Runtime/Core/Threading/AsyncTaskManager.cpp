@@ -1,5 +1,6 @@
 #include "ScopedLock.h"
 #include "AsyncTaskManager.h"
+#include "ThreadManager.h"
 
 #include "Platform/PlatformThreadMisc.h"
 
@@ -87,7 +88,7 @@ bool CAsyncTaskManager::Initialize()
     {
         String ThreadName = String::MakeFormated("WorkerThread[%d]", Thread);
 
-        TSharedRef<CGenericThread> NewThread = PlatformThread::Make(CAsyncTaskManager::WorkThread, ThreadName);
+        GenericThreadRef NewThread = CThreadManager::Get().CreateNamedThread(CAsyncTaskManager::WorkThread, ThreadName);
         if (NewThread)
         {
             WorkerThreads[Thread] = NewThread;
@@ -159,7 +160,7 @@ void CAsyncTaskManager::Release()
 
     for (TSharedRef<CGenericThread> Thread : WorkerThreads)
     {
-        Thread->WaitUntilFinished();
+        Thread->WaitUntilFinished(kWaitForThreadInfinity);
     }
 
     WorkerThreads.Clear();

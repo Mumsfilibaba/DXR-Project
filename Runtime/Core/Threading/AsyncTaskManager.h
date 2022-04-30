@@ -73,18 +73,16 @@ private:
 
     void KillWorkers();
 
-    void ExecuteNextTask();
-
     TArray<TSharedRef<CGenericThread>> WorkerThreads;
 
-    TArray<SAsyncTask>  Queue;
+    TArray<SAsyncTask> Queue;
     CCriticalSection   QueueMutex;
 
     CConditionVariable WakeCondition;
     CCriticalSection   WakeMutex;
 
-    AtomicInt32        DispatchAdded;
-    AtomicInt32        DispatchCompleted;
+    AtomicInt64        DispatchAdded;
+    AtomicInt64        DispatchCompleted;
 
     volatile bool      bIsRunning;
 

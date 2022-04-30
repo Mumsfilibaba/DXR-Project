@@ -7,6 +7,6 @@
     #include "Core/Threading/Mac/MacThreadMisc.h"
     typedef CMacThreadMisc PlatformThreadMisc;
 #else
-    #include "Core/Threading/Generic/PlatformThreadMisc.h"
+    #include "Core/Threading/Generic/GenericThreadMisc.h"
     typedef CGenericThreadMisc PlatformThreadMisc;
 #endif
