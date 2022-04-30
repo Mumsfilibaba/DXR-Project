@@ -5,7 +5,7 @@
 #include "RHICommandList.h"
 #include "RHIModule.h"
 
-#include "CoreApplication/Interface/PlatformWindow.h"
+#include "CoreApplication/Generic/GenericWindow.h"
 
 struct SRHIResourceData;
 struct SClearValue;
@@ -420,7 +420,7 @@ public:
      * @param DepthFormat: Format for the depth
      * @return: Returns the newly created viewport
      */
-    virtual class CRHIViewport* CreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
+    virtual class CRHIViewport* CreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
 
     /**
      * @brief: Retrieve the default CommandContext
@@ -949,7 +949,7 @@ FORCEINLINE class CRHITimestampQuery* RHICreateTimestampQuery()
     return GRHIInstance->CreateTimestampQuery();
 }
 
-FORCEINLINE class CRHIViewport* RHICreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
+FORCEINLINE class CRHIViewport* RHICreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
 {
     return GRHIInstance->CreateViewport(Window, Width, Height, ColorFormat, DepthFormat);
 }

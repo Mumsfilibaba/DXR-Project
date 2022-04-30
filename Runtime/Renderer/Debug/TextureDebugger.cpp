@@ -27,7 +27,7 @@ void CTextureDebugWindow::Tick()
         constexpr float InvAspectRatio = 16.0f / 9.0f;
         constexpr float AspectRatio = 9.0f / 16.0f;
 
-        TSharedRef<CPlatformWindow> MainViewport = CApplicationInstance::Get().GetMainViewport();
+        TSharedRef<CGenericWindow> MainViewport = CApplicationInstance::Get().GetMainViewport();
 
         const uint32 WindowWidth = MainViewport->GetWidth();
         const uint32 WindowHeight = MainViewport->GetHeight();

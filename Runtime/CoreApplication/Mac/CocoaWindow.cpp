@@ -1,7 +1,9 @@
-#if PLATFORM_MACOS
 #include "CocoaWindow.h"
 #include "MacApplication.h"
 #include "ScopedAutoreleasePool.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CCocoaWindow
 
 @implementation CCocoaWindow
 
@@ -92,5 +94,3 @@
 }
 
 @end
-
-#endif

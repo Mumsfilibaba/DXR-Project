@@ -1,9 +1,11 @@
-#if PLATFORM_MACOS
 #include "CocoaAppDelegate.h"
 
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Platform/PlatformDebugMisc.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CCocoaAppDelegate
 
 @implementation CCocoaAppDelegate
 
@@ -37,5 +39,3 @@
 }
 
 @end
-
-#endif

@@ -441,7 +441,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
                 CmdList.SetRenderTargets(nullptr, 0, Cube[Face].Get());
 
                 auto& Data = LightSetup.PointLightShadowMapsGenerationData[i];
-                PerShadowMapData.Matrix = Data.Matrix[Face];
+                PerShadowMapData.Matrix   = Data.Matrix[Face];
                 PerShadowMapData.Position = Data.Position;
                 PerShadowMapData.FarPlane = Data.FarPlane;
 

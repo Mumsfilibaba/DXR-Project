@@ -6,7 +6,7 @@
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
 
-#include "CoreApplication/Interface/PlatformDebugMisc.h"
+#include "CoreApplication/Generic/GenericDebugMisc.h"
 
 #ifdef MessageBox
 #undef MessageBox
@@ -17,39 +17,40 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows-specific interface for debug functions
+// CWindowsDebugMisc
 
-class CWindowsDebugMisc final : public CPlatformDebugMisc
+class CWindowsDebugMisc final : public CGenericDebugMisc
 {
 public:
 
-     /** @brief: If the debugger is attached, a breakpoint will be set at this point of the code */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CGenericDebugMisc Interface
+
     static FORCEINLINE void DebugBreak()
     {
         __debugbreak();
     }
 
-     /** @brief: Outputs a debug string to the attached debugger */
     static FORCEINLINE void OutputDebugString(const String& Message)
     {
         OutputDebugStringA(Message.CStr());
     }
 
-     /** @brief: Checks weather or not the application is running inside a debugger */
     static FORCEINLINE bool IsDebuggerPresent()
     {
         return ::IsDebuggerPresent();
     }
 
-     /** @brief: Calls GetLastError and retrieves a string from it */
+public:
+
     static FORCEINLINE void GetLastErrorString(String& OutErrorString)
     {
-        int LastError = ::GetLastError();
+        int32 LastError = ::GetLastError();
 
         const uint32 Flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
 
         LPSTR  MessageBuffer = nullptr;
-        uint32 MessageLength = FormatMessageA(Flags, NULL, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&MessageBuffer, 0, NULL);
+        uint32 MessageLength = FormatMessageA(Flags, nullptr, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&MessageBuffer, 0, nullptr);
 
         OutErrorString.Clear();
         OutErrorString.Append(MessageBuffer, MessageLength);

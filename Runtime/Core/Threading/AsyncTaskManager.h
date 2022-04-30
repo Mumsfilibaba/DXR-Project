@@ -30,10 +30,14 @@ private:
 
 public:
 
-    /** @return: Returns the DispatchQueue instance */
+    /**
+     * @return: Returns the DispatchQueue instance 
+     */
     static CAsyncTaskManager& Get();
 
-    /** @return: Returns true if the initialization was successful */
+    /**
+     * @return: Returns true if the initialization was successful 
+     */
     bool Initialize();
 
     /**
@@ -49,12 +53,16 @@ public:
      * 
      * @param Task: A taskID to wait for
      */
-    void WaitFor(DispatchID Task);
+    void WaitFor(DispatchID Task, bool bUseThisThreadWhileWaiting = false);
 
-    /** @brief:Wait for all queued up tasks to be dispatched and finish */
-    void WaitForAll();
+    /**
+     * @brief: Wait for all queued up tasks to be dispatched and finish 
+     */
+    void WaitForAll(bool bUseThisThreadWhileWaiting = false);
 
-    /** @brief: Release the DispatchQueue */
+    /**
+     * @brief: Release the DispatchQueue 
+     */
     void Release();
 
 private:
@@ -64,6 +72,8 @@ private:
     bool PopDispatch(SAsyncTask& OutTask);
 
     void KillWorkers();
+
+    void ExecuteNextTask();
 
     TArray<TSharedRef<CGenericThread>> WorkerThreads;
 

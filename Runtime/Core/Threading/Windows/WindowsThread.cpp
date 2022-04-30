@@ -66,7 +66,7 @@ void CWindowsThread::SetName(const String& InName)
     Name = InName;
 }
 
-void* CWindowsThread::GetOSHandle()
+void* CWindowsThread::GetPlatformHandle()
 {
     return reinterpret_cast<void*>(static_cast<uintptr_t>(hThreadID));
 }

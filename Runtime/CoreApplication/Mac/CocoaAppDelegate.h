@@ -1,12 +1,10 @@
 #pragma once
-
-#if PLATFORM_MACOS 
 #include <Appkit/Appkit.h>
 
 class CMacApplication;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Delegate for NSApplication
+// CCocoaAppDelegate
 
 @interface CCocoaAppDelegate : NSObject<NSApplicationDelegate>
 {
@@ -16,5 +14,3 @@ class CMacApplication;
 - (id)init : (CMacApplication*)InApplication;
 
 @end
-
-#endif

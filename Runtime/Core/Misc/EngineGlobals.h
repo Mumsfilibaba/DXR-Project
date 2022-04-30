@@ -1,12 +1,12 @@
 #pragma once
 #include "Core/Core.h"
 
-#include "CoreApplication/Interface/PlatformConsoleWindow.h"
+#include "CoreApplication/Generic/GenericConsoleWindow.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Current error-device
 
 namespace NErrorDevice
 {
-    extern CORE_API CPlatformConsoleWindow* GConsoleWindow;
+    extern CORE_API CGenericConsoleWindow* GConsoleWindow;
 }

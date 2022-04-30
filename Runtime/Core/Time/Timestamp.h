@@ -4,12 +4,12 @@
 #include "Core/Core.h"
 
 #ifdef COMPILER_MSVC
-#pragma warning(push)
-#pragma warning(disable : 4251)
+    #pragma warning(push)
+    #pragma warning(disable : 4251)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Holds a time-value and functions to make it easier to convert between units of time
+// CTimestamp
 
 class CTimestamp
 {
@@ -95,9 +95,6 @@ public:
 
 public:
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Operators
-
     FORCEINLINE friend CTimestamp operator+(const CTimestamp& Left, const CTimestamp& Right)
     {
         return CTimestamp(Left.Nanoseconds + Right.Nanoseconds);
@@ -143,5 +140,5 @@ private:
 };
 
 #ifdef COMPILER_MSVC
-#pragma warning(pop)
+    #pragma warning(pop)
 #endif

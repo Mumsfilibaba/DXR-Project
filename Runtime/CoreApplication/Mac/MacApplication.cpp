@@ -1,4 +1,3 @@
-#if PLATFORM_MACOS
 #include "MacApplication.h"
 #include "MacWindow.h"
 #include "MacCursor.h"
@@ -15,22 +14,22 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMacApplication
 
-TSharedPtr<CMacApplication> CMacApplication::Make()
+CMacApplication* CMacApplication::CreateMacApplication()
 {
-	return TSharedPtr<CMacApplication>(dbg_new CMacApplication());
+	return dbg_new CMacApplication();
 }
 
 CMacApplication::CMacApplication()
-    : CPlatformApplication(CMacCursor::Make())
+    : CGenericApplication(TSharedPtr<ICursor>(CMacCursor::CreateMacCursor()))
 	, AppDelegate(nullptr)
     , Windows()
     , WindowsMutex()
     , DeferredEvents()
     , DeferredEventsMutex()
 	, bIsTerminating(false)
-{
-}
+{ }
 
 CMacApplication::~CMacApplication()
 {
@@ -38,9 +37,9 @@ CMacApplication::~CMacApplication()
     [AppDelegate release];
 }
 
-TSharedRef<CPlatformWindow> CMacApplication::MakeWindow()
+TSharedRef<CGenericWindow> CMacApplication::MakeWindow()
 {
-    TSharedRef<CMacWindow> NewWindow = CMacWindow::Make(this);
+    TSharedRef<CMacWindow> NewWindow = CMacWindow::CreateMacWindow(this);
     
     {
         TScopedLock Lock(WindowsMutex);
@@ -147,7 +146,7 @@ void CMacApplication::Tick(float)
 	}
 }
 
-void CMacApplication::SetActiveWindow(const TSharedRef<CPlatformWindow>& Window)
+void CMacApplication::SetActiveWindow(const TSharedRef<CGenericWindow>& Window)
 {
     MakeMainThreadCall(^
     {
@@ -156,7 +155,7 @@ void CMacApplication::SetActiveWindow(const TSharedRef<CPlatformWindow>& Window)
     }, true);
 }
 
-TSharedRef<CPlatformWindow> CMacApplication::GetActiveWindow() const
+TSharedRef<CGenericWindow> CMacApplication::GetActiveWindow() const
 {
 	SCOPED_AUTORELEASE_POOL();
 
@@ -164,7 +163,7 @@ TSharedRef<CPlatformWindow> CMacApplication::GetActiveWindow() const
     return GetWindowFromNSWindow(KeyWindow);
 }
 
-TSharedRef<CPlatformWindow> CMacApplication::GetWindowUnderCursor() const
+TSharedRef<CGenericWindow> CMacApplication::GetWindowUnderCursor() const
 {
 	SCOPED_AUTORELEASE_POOL();
 	
@@ -238,7 +237,7 @@ void CMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 				const unichar Codepoint = [Characters characterAtIndex:Index];
 				if ((Codepoint & 0xff00) != 0xf700)
 				{
-					MessageListener->HandleKeyTyped(uint32(Codepoint));
+					MessageListener->HandleKeyChar(uint32(Codepoint));
 				}
 			}
 		}
@@ -399,8 +398,6 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 	}
 	else if (Event.Character != uint32(-1))
 	{
-		MessageListener->HandleKeyTyped(Event.Character);
+		MessageListener->HandleKeyChar(Event.Character);
 	}
 }
-
-#endif

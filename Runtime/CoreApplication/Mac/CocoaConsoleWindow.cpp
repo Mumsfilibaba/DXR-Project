@@ -1,7 +1,9 @@
-#if PLATFORM_MACOS && defined(__OBJC__)
 #include "CocoaConsoleWindow.h"
 #include "MacConsoleWindow.h"
 #include "ScopedAutoreleasePool.h"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CCocoaConsoleWindow
 
 @implementation CCocoaConsoleWindow
 
@@ -42,5 +44,3 @@
 }
 
 @end
-
-#endif

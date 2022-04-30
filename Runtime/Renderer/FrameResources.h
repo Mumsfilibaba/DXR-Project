@@ -9,12 +9,13 @@
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
 #include "Core/Containers/HashTable.h"
+#include "Core/Containers/ArrayView.h"
 
-#define GBUFFER_ALBEDO_INDEX      0
-#define GBUFFER_NORMAL_INDEX      1
-#define GBUFFER_MATERIAL_INDEX    2
-#define GBUFFER_DEPTH_INDEX       3
-#define GBUFFER_VIEW_NORMAL_INDEX 4
+#define GBUFFER_ALBEDO_INDEX      (0)
+#define GBUFFER_NORMAL_INDEX      (1)
+#define GBUFFER_MATERIAL_INDEX    (2)
+#define GBUFFER_DEPTH_INDEX       (3)
+#define GBUFFER_VIEW_NORMAL_INDEX (4)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TResourceCache
@@ -118,8 +119,9 @@ struct RENDERER_API SFrameResources
     THashTable<class CMesh*, uint32>       RTMeshToHitGroupIndex;
     TResourceCache<CRHIShaderResourceView> RTMaterialTextureCache;
 
-    TArray<SMeshDrawCommand> DeferredVisibleCommands;
-    TArray<SMeshDrawCommand> ForwardVisibleCommands;
+    TArrayView<const SMeshDrawCommand> GlobalMeshDrawCommands;
+    TArray<uint32>                     DeferredVisibleCommands;
+    TArray<uint32>                     ForwardVisibleCommands;
 
     TSharedRef<CRHIViewport> MainWindowViewport;
 };

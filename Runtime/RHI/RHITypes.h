@@ -4,6 +4,14 @@
 #include "Core/Math/Color.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Constants
+
+enum
+{
+    kRHIMaxVertexBuffers = 32
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ECubeFace
 
 enum class ECubeFace
@@ -38,14 +46,14 @@ inline ECubeFace GetCubeFaceFromIndex(uint32 Index)
 
 enum class EComparisonFunc
 {
-    Never = 1,
-    Less = 2,
-    Equal = 3,
-    LessEqual = 4,
-    Greater = 5,
-    NotEqual = 6,
+    Never        = 1,
+    Less         = 2,
+    Equal        = 3,
+    LessEqual    = 4,
+    Greater      = 5,
+    NotEqual     = 6,
     GreaterEqual = 7,
-    Always = 8
+    Always       = 8
 };
 
 inline const char* ToString(EComparisonFunc ComparisonFunc)

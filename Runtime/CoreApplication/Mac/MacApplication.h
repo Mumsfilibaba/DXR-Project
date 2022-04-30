@@ -1,13 +1,11 @@
 #pragma once
-
-#if PLATFORM_MACOS
 #include "MacCursor.h"
 #include "ScopedAutoreleasePool.h"
 
 #include "Core/Containers/Array.h"
 #include "Core/Threading/Platform/CriticalSection.h"
 
-#include "CoreApplication/Interface/PlatformApplication.h"
+#include "CoreApplication/Generic/GenericApplication.h"
 
 #include <AppKit/AppKit.h>
 #include <Foundation/Foundation.h>
@@ -18,7 +16,7 @@
 class CMacWindow;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Holds information about an event or notification that occurs when calling PumpMessages and CMacApplication::Tick
+// SMacApplicationEvent
 
 // TODO: Finish
 struct SMacApplicationEvent
@@ -61,85 +59,65 @@ struct SMacApplicationEvent
         }
     }
 
-    // Name of notification, nullptr if not a notification
 	NSNotificationName NotificationName;
-    // Event object, nullptr if not an event
-    NSEvent* Event;
+    NSEvent*           Event;
 	
-    // Window for the event, nullptr if no associated window exists
-	CCocoaWindow* Window;
-	// Size of the window
-	CGSize Size;
-	// Position of the window
-	CGPoint Position;
-	
-	// On Character typed event
-	uint32 Character;
+	CCocoaWindow*      Window;
+	CGSize             Size;
+	CGPoint            Position;
+
+	uint32             Character;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Mac specific implementation of the application interface
+// CMacApplication
 
-class CMacApplication final : public CPlatformApplication
+class CMacApplication final : public CGenericApplication
 {
-public:
-
-     /** @brief: Creates the mac application */
-	static TSharedPtr<CMacApplication> Make();
-
-     /** @brief: Public destructor for TSharedPtr */
-    ~CMacApplication();
-
-     /** @brief: Create a window */
-    virtual TSharedRef<CPlatformWindow> MakeWindow() override final;
-
-     /** @brief: Initialized the application */
-    virtual bool Initialize() override final;
-
-     /** @brief: Tick the application, this handles messages that has been queued up after calls to PumpMessages */
-    virtual void Tick(float Delta) override final;
-
-     /** @brief: Sets the window that is currently active */
-    virtual void SetActiveWindow(const TSharedRef<CPlatformWindow>& Window) override final;
-
-     /** @brief: Retrieves the window that is currently active */
-    virtual TSharedRef<CPlatformWindow> GetActiveWindow() const override final;
-
-	 /** @brief: Retrieve the window that is currently under the cursor, if no window is under the cursor, the value is nullptr */
-	virtual TSharedRef<CPlatformWindow> GetWindowUnderCursor() const override final;
-	
-     /** @brief: Retrieves a from a NSWindow */
-    TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
-
-     /** @brief: Store event for handling later in the main loop */
-    void DeferEvent(NSObject* EventOrNotificationObject);
-	
-     /** @brief: Returns the native appdelegate */
-    FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const { return AppDelegate; }
-
 private:
 
     CMacApplication();
+    ~CMacApplication();
 
-     /** @brief: Initializes the applications menu in the menubar */
+public:
+
+	static CMacApplication* CreateMacApplication();
+    
+    TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
+
+    void DeferEvent(NSObject* EventOrNotificationObject);
+	
+    FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const { return AppDelegate; }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CGenericApplication Interface
+
+    virtual TSharedRef<CGenericWindow> MakeWindow() override final;
+
+    virtual bool Initialize()      override final;
+    
+    virtual void Tick(float Delta) override final;
+
+    virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) override final;
+
+    virtual TSharedRef<CGenericWindow> GetActiveWindow()      const override final;
+
+	virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
+
+private:
     bool InitializeAppMenu();
 
-     /** @brief: Handles a notification */
     void HandleEvent(const SMacApplicationEvent& Notification);
 
-     /** @brief: Delegate to talk with macOS */
-    CCocoaAppDelegate* AppDelegate = nullptr;
+    CCocoaAppDelegate*             AppDelegate = nullptr;
 
-     /** @brief: All the windows of the application */
     TArray<TSharedRef<CMacWindow>> Windows;
     mutable CCriticalSection       WindowsMutex;
 
-     /** @brief: Deferred events, events are not processed directly */
-    TArray<SMacApplicationEvent> DeferredEvents;
-    CCriticalSection             DeferredEventsMutex;
+    TArray<SMacApplicationEvent>   DeferredEvents;
+    CCriticalSection               DeferredEventsMutex;
 
-     /** @brief: If the application has been terminating or not */
-    bool bIsTerminating = false;
+    bool                           bIsTerminating = false;
 };
-
-#endif

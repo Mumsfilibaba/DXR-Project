@@ -59,5 +59,3 @@ public:
 private:
     pthread_cond_t ConditionVariable;
 };
-
-#endif

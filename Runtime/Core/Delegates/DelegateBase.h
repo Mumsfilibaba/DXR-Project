@@ -4,7 +4,7 @@
 #include "Core/Containers/Allocators.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// DelegateBase - Base class containing variables that does not require templates
+// CDelegateBase
 
 class CDelegateBase
 {
@@ -96,7 +96,7 @@ public:
         }
         else
         {
-            return nullptr;
+            return false;
         }
     }
 

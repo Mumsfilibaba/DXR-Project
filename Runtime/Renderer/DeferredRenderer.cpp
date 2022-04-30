@@ -534,8 +534,9 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
 
         CmdList.SetConstantBuffer(PrePassVertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-        for (const SMeshDrawCommand& Command : FrameResources.DeferredVisibleCommands)
+        for (const auto CommandIndex : FrameResources.DeferredVisibleCommands)
         {
+            const SMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
             if (Command.Material->ShouldRenderInPrePass())
             {
                 CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
@@ -638,6 +639,7 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
         FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(),
         FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(),
     };
+
     CmdList.SetRenderTargets(RenderTargets, 4, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
 
     // Setup Pipeline
@@ -649,8 +651,10 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
         CMatrix4 TransformInv;
     } TransformPerObject;
 
-    for (const SMeshDrawCommand& Command : FrameResources.DeferredVisibleCommands)
+    for (const auto CommandIndex : FrameResources.DeferredVisibleCommands)
     {
+        const SMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
+
         CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
         CmdList.SetIndexBuffer(Command.IndexBuffer);
 

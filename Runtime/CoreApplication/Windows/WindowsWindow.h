@@ -1,102 +1,90 @@
 #pragma once
-
-#if PLATFORM_WINDOWS
 #include "Windows.h"
 
 #include "Core/Containers/SharedRef.h"
 
 #include "CoreApplication/CoreApplication.h"
-#include "CoreApplication/Interface/PlatformWindow.h"
+#include "CoreApplication/Generic/GenericWindow.h"
+
+#ifdef GetClassName
+    #undef GetClassName
+#endif
+
+class CWindowsApplication;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows-specific interface for a window
+// CWindowsWindow
 
-class COREAPPLICATION_API CWindowsWindow final : public CPlatformWindow
+class COREAPPLICATION_API CWindowsWindow final : public CGenericWindow
 {
-public:
-
-     /** @brief: Create a new window */
-    static TSharedRef<CWindowsWindow> Make(class CWindowsApplication* InApplication);
-
-     /** @brief: Initializes the window */
-    virtual bool Initialize(const String& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
-
-     /** @brief: Shows the window */
-    virtual void Show(bool bMaximized) override final;
-
-     /** @brief: Minimizes the window */
-    virtual void Minimize() override final;
-
-     /** @brief: Maximizes the window */
-    virtual void Maximize() override final;
-
-     /** @brief: Closes the window */
-    virtual void Close() override final;
-
-     /** @brief: Restores the window after being minimized or maximized */
-    virtual void Restore() override final;
-
-     /** @brief: Makes the window a borderless fullscreen window */
-    virtual void ToggleFullscreen() override final;
-
-     /** @brief: Checks if the underlaying native handle of the window is valid */
-    virtual bool IsValid() const override final;
-
-     /** @brief: Checks if this window is the currently active window */
-    virtual bool IsActiveWindow() const override final;
-
-     /** @brief: Sets the title */
-    virtual void SetTitle(const String& Title) override final;
-
-     /** @brief: Retrieve the window title */
-    virtual void GetTitle(String& OutTitle) override final;
-
-     /** @brief: Set the position of the window */
-    virtual void MoveTo(int32 x, int32 y) override final;
-
-     /** @brief: Set the shape of the window */
-    virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) override final;
-
-     /** @brief: Retrieve the shape of the window */
-    virtual void GetWindowShape(SWindowShape& OutWindowShape) const override final;
-
-     /** @brief: Get the fullscreen information of the monitor that the window currently is on */
-    virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const override final;
-
-     /** @brief: Retrieve the width of the window */
-    virtual uint32 GetWidth()  const override final;
-
-     /** @brief: Retrieve the height of the window */
-    virtual uint32 GetHeight() const override final;
-
-     /** @brief: Set the native window handle */
-    virtual void SetPlatformHandle(PlatformWindowHandle InPlatformHandle) override final;
-
-     /** @brief: Retrieve the native handle */
-    virtual PlatformWindowHandle GetPlatformHandle() const override final
-    {
-        return reinterpret_cast<PlatformWindowHandle>(Window);
-    }
-
-    FORCEINLINE HWND GetHandle() const { return Window; }
-
 private:
 
     CWindowsWindow(CWindowsApplication* InApplication);
     ~CWindowsWindow();
 
-    // Owning application
+public:
+
+    static CWindowsWindow* CreateWindowsWindow(CWindowsApplication* InApplication);
+
+    static const char* GetClassName();
+
+    FORCEINLINE HWND GetHandle() const 
+    { 
+        return Window;
+    }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CGenericWindow Interface
+
+    virtual bool Initialize(const String& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) override final;
+
+    virtual void Show(bool bMaximized) override final;
+
+    virtual void Minimize() override final;
+    
+    virtual void Maximize() override final;
+
+    virtual void Close() override final;
+
+    virtual void Restore() override final;
+
+    virtual void ToggleFullscreen() override final;
+
+    virtual bool IsValid() const override final;
+    
+    virtual bool IsActiveWindow() const override final;
+
+    virtual void SetTitle(const String& Title) override final;
+    
+    virtual void GetTitle(String& OutTitle) override final;
+
+    virtual void MoveTo(int32 x, int32 y) override final;
+
+    virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) override final;
+    
+    virtual void GetWindowShape(SWindowShape& OutWindowShape) const override final;
+
+    virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const override final;
+
+    virtual uint32 GetWidth() const override final;
+
+    virtual uint32 GetHeight() const override final;
+
+    virtual void  SetPlatformHandle(void* InPlatformHandle) override final;
+
+    virtual void* GetPlatformHandle() const override final { return reinterpret_cast<void*>(Window); }
+
+private:
     CWindowsApplication* Application;
 
-    HWND Window;
+    HWND                 Window;
 
-    bool bIsFullscreen;
+    DWORD                Style;
+    DWORD                StyleEx;
 
-     /** @brief: Used when toggling fullscreen */
-    WINDOWPLACEMENT StoredPlacement;
+    bool                 bIsFullscreen;
 
-    DWORD Style;
-    DWORD StyleEx;
+    WINDOWPLACEMENT      StoredPlacement;
 };
-
-#endif

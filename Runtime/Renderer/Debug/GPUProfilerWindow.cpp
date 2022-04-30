@@ -174,7 +174,7 @@ void CGPUProfilerWindow::DrawGPUData(float Width)
 void CGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    TSharedRef<CPlatformWindow> MainViewport = CApplicationInstance::Get().GetMainViewport();
+    TSharedRef<CGenericWindow> MainViewport = CApplicationInstance::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

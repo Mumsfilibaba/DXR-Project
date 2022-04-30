@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Threading/Generic/PlatformAtomic.h"
+#include "Core/Threading/Generic/GenericAtomic.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMacAtomic

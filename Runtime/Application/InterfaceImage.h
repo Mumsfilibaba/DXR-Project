@@ -1,15 +1,17 @@
 #pragma once
 #include "RHI/RHIResourceViews.h"
 
-
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// SInterfaceImage - Used when rendering images with ImGui
+// SInterfaceImage
 
 struct SInterfaceImage
 {
     SInterfaceImage() = default;
 
-    SInterfaceImage(const TSharedRef<CRHIShaderResourceView>& InImageView, const TSharedRef<CRHITexture>& InImage, ERHIResourceState InBefore, ERHIResourceState InAfter)
+    SInterfaceImage( const TSharedRef<CRHIShaderResourceView>& InImageView
+                   , const TSharedRef<CRHITexture>& InImage
+                   , ERHIResourceState InBefore
+                   , ERHIResourceState InAfter)
         : ImageView(InImageView)
         , Image(InImage)
         , BeforeState(InBefore)

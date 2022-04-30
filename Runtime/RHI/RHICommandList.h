@@ -195,6 +195,9 @@ public:
         : CmdAllocator()
         , FirstCommand(nullptr)
         , LastCommand(nullptr)
+        , NumCommands(0)
+        , NumDispatchCalls(0)
+        , NumDrawCalls(0)
     { }
 
     /**
@@ -366,19 +369,34 @@ public:
      * @param VertexBufferCount: Number of VertexBuffers in the array
      * @param BufferSlot: Slot to start bind the array to
      */
-    void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 NumVertexBuffers, uint32 BufferSlot)
+    void SetVertexBuffers(CRHIVertexBuffer* const* InVertexBuffers, uint32 NumVertexBuffers, uint32 BufferSlot)
     {
-        CRHIVertexBuffer** TempVertexBuffers = CmdAllocator.Allocate<CRHIVertexBuffer*>(NumVertexBuffers);
-        if (VertexBuffers)
+        bool bNeedsBinding = false;
+        for (uint32 Index = 0; Index < NumVertexBuffers; ++Index)
         {
-            CMemory::MemcpyTyped(TempVertexBuffers, VertexBuffers, NumVertexBuffers);
-        }
-        else
-        {
-            CMemory::Memzero(TempVertexBuffers, NumVertexBuffers);
+            const uint32 RealIndex = BufferSlot + Index;
+            if (VertexBuffers[RealIndex] != InVertexBuffers[Index])
+            {
+                bNeedsBinding = true;
+                VertexBuffers[RealIndex] = InVertexBuffers[Index];
+                break;
+            }
         }
 
-        InsertCommand<CRHICommandSetVertexBuffers>(TempVertexBuffers, NumVertexBuffers, BufferSlot);
+        if (bNeedsBinding)
+        {
+            CRHIVertexBuffer** TempVertexBuffers = CmdAllocator.Allocate<CRHIVertexBuffer*>(NumVertexBuffers);
+            if (InVertexBuffers)
+            {
+                CMemory::MemcpyTyped(TempVertexBuffers, InVertexBuffers, NumVertexBuffers);
+            }
+            else
+            {
+                CMemory::Memzero(TempVertexBuffers, NumVertexBuffers);
+            }
+
+            InsertCommand<CRHICommandSetVertexBuffers>(TempVertexBuffers, NumVertexBuffers, BufferSlot);
+        }
     }
 
     /**
@@ -935,6 +953,8 @@ public:
         NumCommands      = 0;
 
         CmdAllocator.Reset();
+
+        VertexBuffers.Memzero();
     }
 
     /**
@@ -987,6 +1007,8 @@ private:
         NumCommands++;
     }
 
+private:
+
     CCommandAllocator CmdAllocator;
 
     CRHICommand*      FirstCommand;
@@ -995,4 +1017,6 @@ private:
     uint32            NumDrawCalls     = 0;
     uint32            NumDispatchCalls = 0;
     uint32            NumCommands      = 0;
+
+    TStaticArray<CRHIVertexBuffer*, kRHIMaxVertexBuffers> VertexBuffers;
 };

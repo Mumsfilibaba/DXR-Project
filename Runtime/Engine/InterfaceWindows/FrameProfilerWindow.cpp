@@ -11,7 +11,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variables
 
-TAutoConsoleVariable<bool> GDrawFps("renderer.DrawFps", false);
+TAutoConsoleVariable<bool> GDrawFps("renderer.DrawFps", true);
 TAutoConsoleVariable<bool> GDrawFrameProfiler("renderer.DrawFrameProfiler", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -214,7 +214,7 @@ void CFrameProfilerWindow::DrawCPUData(float Width)
 void CFrameProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    TSharedRef<CPlatformWindow> MainViewport = CApplicationInstance::Get().GetMainViewport();
+    TSharedRef<CGenericWindow> MainViewport = CApplicationInstance::Get().GetMainViewport();
 
     const uint32 WindowWidth = MainViewport->GetWidth();
     const uint32 WindowHeight = MainViewport->GetHeight();

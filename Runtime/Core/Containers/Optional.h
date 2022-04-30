@@ -17,7 +17,7 @@ public:
     using ElementType = T;
 
     template<typename OtherType>
-    class TOptional;
+    friend class TOptional;
 
     /**
      * @brief: Default constructor
@@ -390,12 +390,12 @@ public:
      */
     friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!bHasValue && !RHS.bHasValue)
+        if (!LHS.bHasValue && !RHS.bHasValue)
         {
             return true;
         }
 
-        if (!bHasValue)
+        if (!LHS.bHasValue)
         {
             return false;
         }
@@ -424,12 +424,12 @@ public:
      */
     friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!bHasValue && !RHS.bHasValue)
+        if (!LHS.bHasValue && !RHS.bHasValue)
         {
             return true;
         }
 
-        if (!bHasValue)
+        if (!LHS.bHasValue)
         {
             return false;
         }
@@ -446,12 +446,12 @@ public:
      */
     friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!bHasValue && !RHS.bHasValue)
+        if (!LHS.bHasValue && !RHS.bHasValue)
         {
             return true;
         }
 
-        if (!bHasValue)
+        if (!LHS.bHasValue)
         {
             return false;
         }
@@ -507,8 +507,6 @@ private:
         return (*Value.GetStorage()) < (*RHS.Value.GetStorage());
     }
 
-    /** Bytes to store the value in */
     TTypedStorage<ElementType> Value;
-    /** Flag if there is a value or not */
-    bool bHasValue;
+    bool                       bHasValue;
 };

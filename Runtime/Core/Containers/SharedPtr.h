@@ -1236,6 +1236,12 @@ FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) no
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Creation helpers
 
+template<typename T>
+FORCEINLINE TSharedPtr<T> MakeSharedPtr(T* InPointer) noexcept
+{
+    return TSharedPtr<T>(InPointer);
+}
+
 template<typename T, typename... ArgTypes>
 FORCEINLINE typename TEnableIf<!TIsArray<T>::Value, TSharedPtr<T>>::Type MakeShared(ArgTypes&&... Args) noexcept
 {

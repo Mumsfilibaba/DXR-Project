@@ -1473,7 +1473,7 @@ CRHITimestampQuery* CD3D12RHIInstance::CreateTimestampQuery()
     return CD3D12RHITimestampQuery::Create(Device);
 }
 
-CRHIViewport* CD3D12RHIInstance::CreateViewport(CPlatformWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
+CRHIViewport* CD3D12RHIInstance::CreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
 {
     UNREFERENCED_VARIABLE(DepthFormat);
 

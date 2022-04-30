@@ -9,14 +9,14 @@
 #include "Engine/CoreObject/CoreObject.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Transform
+// CActorTransform
 
-class ENGINE_API CTransform
+class ENGINE_API CActorTransform
 {
 public:
 
-    CTransform();
-    ~CTransform() = default;
+    CActorTransform();
+    ~CActorTransform() = default;
 
     void SetTranslation(float x, float y, float z);
     void SetTranslation(const CVector3& InPosition);
@@ -51,14 +51,18 @@ public:
     {
         return Matrix;
     }
-    FORCEINLINE const CMatrix4& GetMatrixInverse() const
+
+    FORCEINLINE CMatrix4 GetMatrixInverse() const
     {
-        return MatrixInv;
+        CMatrix4 MatrixInverse = Matrix.Invert();
+        return MatrixInverse.Transpose();
     }
 
-    FORCEINLINE const CMatrix3x4& GetTinyMatrix() const
+    FORCEINLINE CMatrix3x4 GetTinyMatrix() const
     {
-        return TinyMatrix;
+        return CMatrix3x4( Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03
+                         , Matrix.m10, Matrix.m11, Matrix.m12, Matrix.m13
+                         , Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23);
     }
 
 private:
@@ -66,20 +70,18 @@ private:
     void CalculateMatrix();
 
     CMatrix4 Matrix;
-    CMatrix4 MatrixInv;
-
-    CMatrix3x4 TinyMatrix;
-
     CVector3 Translation;
     CVector3 Scale;
     CVector3 Rotation;
 };
 
+// constexpr auto size = sizeof(CActorTransform);
+
 class CScene;
 class CComponent;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Actor
+// CActor
 
 class ENGINE_API CActor : public CCoreObject
 {
@@ -90,7 +92,9 @@ public:
     CActor(class CScene* InSceneOwner);
     ~CActor();
 
-    /** Start actor, called in the beginning of the run, perform initialization here */
+    /**
+     * @brief: Start actor, called in the beginning of the run, perform initialization here
+     */
     virtual void Start();
 
     /**
@@ -157,7 +161,7 @@ public:
      * 
      * @param InTransform: New transform of the actor
      */
-    FORCEINLINE void SetTransform(const CTransform& InTransform)
+    FORCEINLINE void SetTransform(const CActorTransform& InTransform)
     {
         Transform = InTransform;
     }
@@ -187,7 +191,7 @@ public:
      *
      * @return: Returns the transform of the actor
      */
-    FORCEINLINE CTransform& GetTransform()
+    FORCEINLINE CActorTransform& GetTransform()
     {
         return Transform;
     }
@@ -197,7 +201,7 @@ public:
      *
      * @return: Returns the transform of the actor
      */
-    FORCEINLINE const CTransform& GetTransform() const
+    FORCEINLINE const CActorTransform& GetTransform() const
     {
         return Transform;
     }
@@ -223,14 +227,14 @@ public:
     }
 
 private:
-    String Name;
+    String              Name;
 
-    CScene* SceneOwner = nullptr;
+    CScene*             SceneOwner = nullptr;
 
-    CTransform Transform;
+    CActorTransform     Transform;
 
     TArray<CComponent*> Components;
 
     bool bIsStartable : 1;
-    bool bIsTickable : 1;
+    bool bIsTickable  : 1;
 };

@@ -158,4 +158,3 @@ void MakeMainThreadCall(dispatch_block_t Block, bool WaitUntilFinished)
     
     Block_release(CopiedBlock);
 }
-#endif

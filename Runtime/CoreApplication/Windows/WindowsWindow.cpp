@@ -1,5 +1,3 @@
-
-#if PLATFORM_WINDOWS
 #include "WindowsWindow.h"
 
 #include "Core/Logging/Log.h"
@@ -9,18 +7,27 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowsWindow
+// CWindowsWindow
+
+CWindowsWindow* CWindowsWindow::CreateWindowsWindow(CWindowsApplication* InApplication)
+{
+    return dbg_new CWindowsWindow(InApplication);
+}
+
+const char* CWindowsWindow::GetClassName()
+{
+    return "WindowClass";
+}
 
 CWindowsWindow::CWindowsWindow(CWindowsApplication* InApplication)
-    : CPlatformWindow()
+    : CGenericWindow()
     , Application(InApplication)
     , Window(0)
     , bIsFullscreen(false)
     , StoredPlacement()
     , Style(0)
     , StyleEx(0)
-{
-}
+{ }
 
 CWindowsWindow::~CWindowsWindow()
 {
@@ -30,15 +37,10 @@ CWindowsWindow::~CWindowsWindow()
     }
 }
 
-TSharedRef<CWindowsWindow> CWindowsWindow::Make(CWindowsApplication* InApplication)
-{
-    return dbg_new CWindowsWindow(InApplication);
-}
-
 bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
 {
     // Determine the window style for WinAPI
-    DWORD NewStyle = 0;
+    DWORD NewStyle   = 0;
     DWORD NewStyleEx = WS_EX_APPWINDOW;
     if (InStyle.Style != 0)
     {
@@ -84,15 +86,24 @@ bool CWindowsWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 In
     AdjustWindowRectEx(&ClientRect, NewStyle, false, NewStyleEx);
 #endif
 
-    int32 PositionX = x;
-    int32 PositionY = y;
-    int32 RealWidth = ClientRect.right - ClientRect.left;
+    int32 PositionX  = x;
+    int32 PositionY  = y;
+    int32 RealWidth  = ClientRect.right - ClientRect.left;
     int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
     HINSTANCE Instance = Application->GetInstance();
-    LPCSTR WindowClassName = PlatformApplication::GetWindowClassName();
-
-    Window = CreateWindowEx(NewStyleEx, WindowClassName, InTitle.CStr(), NewStyle, PositionX, PositionY, RealWidth, RealHeight, NULL, NULL, Instance, NULL);
+    Window = CreateWindowEx( NewStyleEx
+                           , CWindowsWindow::GetClassName()
+                           , InTitle.CStr()
+                           , NewStyle
+                           , PositionX
+                           , PositionY
+                           , RealWidth
+                           , RealHeight
+                           , nullptr
+                           , nullptr
+                           , Instance
+                           , nullptr);
     if (Window == 0)
     {
         LOG_ERROR("[CWindowsWindow]: FAILED to create window\n");
@@ -233,6 +244,7 @@ void CWindowsWindow::ToggleFullscreen()
 
             SetWindowLong(Window, GWL_STYLE, NewStyle | WS_POPUP);
             SetWindowLong(Window, GWL_EXSTYLE, NewStyleEx | WS_EX_TOPMOST);
+            
             ShowWindow(Window, SW_SHOWMAXIMIZED);
         }
         else
@@ -241,7 +253,9 @@ void CWindowsWindow::ToggleFullscreen()
 
             SetWindowLong(Window, GWL_STYLE, Style);
             SetWindowLong(Window, GWL_EXSTYLE, StyleEx);
+            
             ShowWindow(Window, SW_SHOWNORMAL);
+
             SetWindowPlacement(Window, &StoredPlacement);
         }
     }
@@ -327,12 +341,12 @@ void CWindowsWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
         AdjustWindowRectEx(&ClientRect, Style, false, StyleEx);
 #endif
 
-        int32 PositionX = Shape.Position.x;
-        int32 PositionY = Shape.Position.y;
-        int32 RealWidth = ClientRect.right  - ClientRect.left;
+        int32 PositionX  = Shape.Position.x;
+        int32 PositionY  = Shape.Position.y;
+        int32 RealWidth  = ClientRect.right  - ClientRect.left;
         int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
-        SetWindowPos(Window, NULL, PositionX, PositionY, RealWidth, RealHeight, Flags);
+        SetWindowPos(Window, nullptr, PositionX, PositionY, RealWidth, RealHeight, Flags);
     }
 }
 
@@ -344,8 +358,8 @@ void CWindowsWindow::GetWindowShape(SWindowShape& OutWindowShape) const
     {
         int32  PositionX = 0;
         int32  PositionY = 0;
-        uint32 Width = 0;
-        uint32 Height = 0;
+        uint32 Width     = 0;
+        uint32 Height    = 0;
 
         RECT Rect = { };
         if (GetWindowRect(Window, &Rect) != 0)
@@ -417,7 +431,7 @@ uint32 CWindowsWindow::GetHeight() const
     return 0;
 }
 
-void CWindowsWindow::SetPlatformHandle(PlatformWindowHandle InPlatformHandle)
+void CWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
 {
     HWND InWindowHandle = reinterpret_cast<HWND>(InPlatformHandle);
     if (IsWindow(InWindowHandle))
@@ -447,5 +461,3 @@ void CWindowsWindow::SetPlatformHandle(PlatformWindowHandle InPlatformHandle)
         LOG_ERROR("[CWindowsWindow]: Tried to set an invalid WindowHandle")
     }
 }
-
-#endif

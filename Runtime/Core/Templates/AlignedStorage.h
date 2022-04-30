@@ -83,12 +83,12 @@ public:
 
     FORCEINLINE T* GetStorage() noexcept
     {
-        return Storage.CastStorage<T>();
+        return Storage.template CastStorage<T>();
     }
 
     FORCEINLINE const T* GetStorage() const noexcept
     {
-        return Storage.CastStorage<T>();
+        return Storage.template CastStorage<T>();
     }
 
 private:

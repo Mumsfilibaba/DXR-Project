@@ -19,8 +19,7 @@ CD3D12DescriptorCache::CD3D12DescriptorCache(CD3D12Device* InDevice)
     , ConstantBufferViewCache()
     , SamplerStateCache()
     , RangeSizes()
-{
-}
+{ }
 
 CD3D12DescriptorCache::~CD3D12DescriptorCache()
 {
@@ -127,11 +126,11 @@ void CD3D12DescriptorCache::CommitGraphicsDescriptors(CD3D12CommandList& CmdList
 {
     // TRACE_FUNCTION_SCOPE();
 
-    Assert(CmdBatch != nullptr);
+    Assert(CmdBatch      != nullptr);
     Assert(RootSignature != nullptr);
 
     // Vertex and render-targets
-    VertexBufferCache.CommitState(CmdList);
+    VertexBufferCache.CommitState(CmdList, CmdBatch);
     RenderTargetCache.CommitState(CmdList);
 
     // Allocate descriptors for resources and samplers 
@@ -166,7 +165,7 @@ void CD3D12DescriptorCache::CommitComputeDescriptors(CD3D12CommandList& CmdList,
 {
     // TRACE_FUNCTION_SCOPE();
 
-    Assert(CmdBatch != nullptr);
+    Assert(CmdBatch      != nullptr);
     Assert(RootSignature != nullptr);
 
     ID3D12Device*              DxDevice  = GetDevice()->GetD3D12Device();
@@ -294,5 +293,53 @@ void CD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommand
         D3D12_CPU_DESCRIPTOR_HANDLE HostHandle   = SamplerHeap->GetCPUDescriptorHandleAt(SamplerDescriptorHandle);
         D3D12_GPU_DESCRIPTOR_HANDLE DeviceHandle = SamplerHeap->GetGPUDescriptorHandleAt(SamplerDescriptorHandle);
         SamplerStateCache.SetAllocatedDescriptorHandles(HostHandle, DeviceHandle, SamplerHeap->GetDescriptorHandleIncrementSize());
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12VertexBufferCache
+
+void CD3D12VertexBufferCache::CommitState(CD3D12CommandList& CmdList, CD3D12CommandBatch* CmdBatch)
+{
+    ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+    if (bVertexBuffersDirty)
+    {
+        TStaticArray<D3D12_VERTEX_BUFFER_VIEW, D3D12_MAX_VERTEX_BUFFER_SLOTS> VertexBufferViews;
+
+        for (uint32 Index = 0; Index < NumVertexBuffers; ++Index)
+        {
+            CD3D12RHIVertexBuffer* VertexBuffer = VertexBuffers[Index];
+            if (VertexBuffer)
+            {
+                VertexBufferViews[Index] = VertexBuffer->GetView();
+                CmdBatch->AddInUseResource(VertexBuffer);
+            }
+            else
+            {
+                CMemory::Memzero(&VertexBufferViews[Index]);
+            }
+        }
+
+        DxCmdList->IASetVertexBuffers(0, NumVertexBuffers, VertexBufferViews.Data());
+        bVertexBuffersDirty = false;
+    }
+
+    if (bIndexBufferDirty)
+    {
+        D3D12_INDEX_BUFFER_VIEW IndexBufferView;
+        if (!IndexBuffer)
+        {
+            IndexBufferView.Format         = DXGI_FORMAT_R32_UINT;
+            IndexBufferView.BufferLocation = 0;
+            IndexBufferView.SizeInBytes    = 0;
+        }
+        else
+        {
+            IndexBufferView = IndexBuffer->GetView();
+            CmdBatch->AddInUseResource(IndexBuffer);
+        }
+
+        DxCmdList->IASetIndexBuffer(&IndexBufferView);
+        bIndexBufferDirty = false;
     }
 }

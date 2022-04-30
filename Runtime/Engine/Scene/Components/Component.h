@@ -15,9 +15,12 @@ class ENGINE_API CComponent : public CCoreObject
 public:
 
     CComponent(CActor* InActorOwner);
+    CComponent(CActor* InActorOwner, bool bInIsStartable, bool bInIsTickable);
     virtual ~CComponent() = default;
 
-    /** Start component, called in the beginning of the run, perform initialization here */
+    /**
+     * @brief: Start component, called in the beginning of the run, perform initialization here
+     */
     virtual void Start();
 
     /**
@@ -57,9 +60,9 @@ public:
         return bIsTickable;
     }
 
-protected:
+private:
     CActor* ActorOwner = nullptr;
 
     bool bIsStartable : 1;
-    bool bIsTickable : 1;
+    bool bIsTickable  : 1;
 };

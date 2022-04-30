@@ -35,7 +35,7 @@ bool CEngineLoop::LoadCoreModules()
 {
     CModuleManager& ModuleManager = CModuleManager::Get();
 
-    IEngineModule* CoreModule = ModuleManager.LoadEngineModule("Core");
+    IEngineModule* CoreModule            = ModuleManager.LoadEngineModule("Core");
     IEngineModule* CoreApplicationModule = ModuleManager.LoadEngineModule("CoreApplication");
     if (!CoreModule || !CoreApplicationModule)
     {
@@ -74,7 +74,7 @@ bool CEngineLoop::LoadCoreModules()
 
 bool CEngineLoop::PreInitialize()
 {
-    NErrorDevice::GConsoleWindow = PlatformConsoleWindow::Make();
+    NErrorDevice::GConsoleWindow = PlatformApplicationMisc::CreateConsoleWindow();
     if (!NErrorDevice::GConsoleWindow)
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize ConsoleWindow");
@@ -114,7 +114,7 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    if (!CApplicationInstance::Make())
+    if (!CApplicationInstance::CreateApplication())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return false;

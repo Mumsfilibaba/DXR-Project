@@ -15,8 +15,8 @@ class ENGINE_API CMeshComponent : public CComponent
 
 public:
 
-    CMeshComponent(CActor* InOwningActor)
-        : CComponent(InOwningActor)
+    CMeshComponent(CActor* InActorOwner)
+        : CComponent(InActorOwner, false, false)
         , Material(nullptr)
         , Mesh(nullptr)
     {

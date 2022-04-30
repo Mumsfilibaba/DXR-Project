@@ -58,7 +58,7 @@ bool CEngine::Initialize()
     {
         MainWindow->Show(false);
 
-        GToggleFullscreen.GetExecutedDelgate().AddRaw(MainWindow.Get(), &CPlatformWindow::ToggleFullscreen);
+        GToggleFullscreen.GetExecutedDelgate().AddRaw(MainWindow.Get(), &CGenericWindow::ToggleFullscreen);
     }
     else
     {

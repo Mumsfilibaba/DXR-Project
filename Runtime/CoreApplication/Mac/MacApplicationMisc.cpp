@@ -1,11 +1,22 @@
-#if PLATFORM_MACOS && defined(__OBJC__)
 #include "MacApplicationMisc.h"
+#include "MacApplication.h"
+#include "MacConsoleWindow.h"
 #include "ScopedAutoreleasePool.h"
 
 #include "Core/Input/InputCodes.h"
 
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
+
+CGenericApplication* CMacApplicationMisc::CreateApplication()
+{
+    return CMacApplication::CreateMacApplication();
+}
+
+CGenericConsoleWindow* CMacApplicationMisc::CreateConsoleWindow()
+{
+    return CMacConsoleWindow::CreateMacConsole();
+}
 
 void CMacApplicationMisc::MessageBox(const String& Title, const String& Message)
 {
@@ -71,5 +82,3 @@ SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
         
     return SModifierKeyState(Mask);
 }
-
-#endif

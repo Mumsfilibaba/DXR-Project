@@ -1,11 +1,21 @@
-#if PLATFORM_WINDOWS
 #include "WindowsApplication.h"
 #include "WindowsApplicationMisc.h"
+#include "WindowsConsoleWindow.h"
 
 #include "Core/Input/ModifierKeyState.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// WindowsApplicationMisc
+// CWindowsApplicationMisc
+
+CGenericApplication* CWindowsApplicationMisc::CreateApplication()
+{
+    return CWindowsApplication::CreateWindowsApplication();
+}
+
+CGenericConsoleWindow* CWindowsApplicationMisc::CreateConsoleWindow()
+{
+    return CWindowsConsoleWindow::CreateWindowsConsole();
+}
 
 void CWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
@@ -24,10 +34,9 @@ void CWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 
         if (Message.message == WM_QUIT)
         {
-            CWindowsApplication* Application = CWindowsApplication::Get();
-            if (Application)
+            if (WindowsApplication)
             {
-                Application->StoreMessage(Message.hwnd, Message.message, Message.wParam, Message.lParam, 0, 0);
+                WindowsApplication->StoreMessage(Message.hwnd, Message.message, Message.wParam, Message.lParam, 0, 0);
             }
         }
 
@@ -69,6 +78,3 @@ SModifierKeyState CWindowsApplicationMisc::GetModifierKeyState()
 
     return SModifierKeyState(ModifierMask);
 }
-
-#endif
-

@@ -28,7 +28,7 @@ public:
 
     virtual void SetName(const String& InName) override final;
 
-    virtual PlatformThreadHandle GetPlatformHandle() override final;
+    virtual void* GetPlatformHandle() override final;
 
 private:
 
@@ -41,5 +41,3 @@ private:
 
     bool           bIsRunning;
 };
-
-#endif
