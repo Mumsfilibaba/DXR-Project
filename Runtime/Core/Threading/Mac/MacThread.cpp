@@ -6,25 +6,25 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMacThread
 
-CMacThread::CMacThread(ThreadFunction InFunction)
-    : CGenericThread()
-    , Thread()
-    , Function(InFunction)
+CMacThread::CMacThread(const TFunction<void()>& InFunction)
+    : CGenericThread(InFunction)
     , Name()
+    , Thread()
+	, ThreadExitCode(-1)
     , bIsRunning(false)
 { }
 
-CMacThread::CMacThread(ThreadFunction InFunction, const String& InName)
-    : CGenericThread()
-    , Thread()
-    , Function(InFunction)
+CMacThread::CMacThread(const TFunction<void()>& InFunction, const String& InName)
+    : CGenericThread(InFunction)
     , Name(InName)
+    , Thread()
+    , ThreadExitCode(-1)
     , bIsRunning(false)
 { }
 
 bool CMacThread::Start()
 {
-    int Result = pthread_create(&Thread, NULL, CMacThread::ThreadRoutine, reinterpret_cast<void*>(this));
+    const auto Result = pthread_create(&Thread, nullptr, CMacThread::ThreadRoutine, reinterpret_cast<void*>(this));
     if (Result)
     {
         LOG_ERROR("[CMacThread] Failed to create thread");
@@ -36,9 +36,11 @@ bool CMacThread::Start()
     }
 }
 
-void CMacThread::WaitUntilFinished()
+int32 CMacThread::WaitForCompletion(uint64 TimeoutInMs)
 {
-    pthread_join(Thread, NULL);
+    // TODO: Investigate timeout
+    const auto Result = pthread_join(Thread, nullptr);
+    return Result ? ThreadExitCode : int32(-1);
 }
 
 void CMacThread::SetName(const String& InName)
@@ -72,10 +74,12 @@ void* CMacThread::ThreadRoutine(void* ThreadParameter)
             pthread_setname_np(CurrentThread->Name.CStr());
         }
 
-        Assert(CurrentThread->Function != nullptr);
+        Assert(CurrentThread->Function);
         CurrentThread->Function();
+
+		CurrentThread->ThreadExitCode = 0;
     }
 
-    pthread_exit(NULL);
+    pthread_exit(nullptr);
     return nullptr;
 }

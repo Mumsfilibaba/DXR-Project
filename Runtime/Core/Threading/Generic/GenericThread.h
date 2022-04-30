@@ -33,9 +33,14 @@ protected:
 
 public:
 
+    /**
+     * @brief: Waits for the thread to complete and joins with caller 
+     * 
+     * @return: Returns the return-value from the thread
+     */
+    virtual int32 WaitForCompletion(uint64 TimeoutInMs) { }
+    
     virtual bool Start() { return true; }
-
-    virtual void WaitUntilFinished(uint64 TimeoutInMilliseconds) { }
 	
     virtual void SetName(const String& InName) { }
 

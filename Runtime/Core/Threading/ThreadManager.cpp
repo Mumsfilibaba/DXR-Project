@@ -42,10 +42,13 @@ bool CThreadManager::Release()
     TOptional<CThreadManager>& ThreadManager = GetConsoleManagerInstance();
     for (const auto& Thread : ThreadManager->Threads)
     {
-        Thread->WaitUntilFinished(kWaitForThreadInfinity);
+        Thread->WaitForCompletion(kWaitForThreadInfinity);
     }
 
     ThreadManager.Reset();
+
+    PlatformThreadMisc::Release();
+
     return true;
 }
 
