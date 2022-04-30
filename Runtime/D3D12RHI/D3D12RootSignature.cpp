@@ -1,7 +1,7 @@
 #include "D3D12Device.h"
 #include "D3D12RootSignature.h"
 #include "D3D12Core.h"
-#include "D3D12RHIShader.h"
+#include "D3D12Shader.h"
 #include "D3D12FunctionPointers.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -53,6 +53,7 @@ static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
     case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_SRV:     return ResourceType_SRV;
     case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_UAV:     return ResourceType_UAV;
     case D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER: return ResourceType_Sampler;
+    
     default:
         Assert(false);
         return ResourceType_Unknown;
@@ -60,7 +61,7 @@ static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RootSignatureResourceCount
+// SD3D12RootSignatureResourceCount
 
 bool SD3D12RootSignatureResourceCount::IsCompatible(const SD3D12RootSignatureResourceCount& Other) const
 {
@@ -81,15 +82,15 @@ bool SD3D12RootSignatureResourceCount::IsCompatible(const SD3D12RootSignatureRes
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RootSignatureDescHelper
+// CD3D12RootSignatureDescHelper
 
 CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSignatureResourceCount& RootSignatureInfo)
     : Desc()
-    , Parameters()
+    , RootParameters()
     , DescriptorRanges()
     , NumDescriptorRanges(0)
 {
-    D3D12_ROOT_SIGNATURE_FLAGS DxRootSignatureFlags[ShaderVisibility_Count] =
+    const D3D12_ROOT_SIGNATURE_FLAGS RootSignatureFlags[ShaderVisibility_Count] =
     {
         D3D12_ROOT_SIGNATURE_FLAG_NONE,
         D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS,
@@ -100,22 +101,22 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
     };
 
     // NOTE: This can crash if the pipeline is using to many tables, max is 64
-    uint32 Space = (RootSignatureInfo.Type == ERootSignatureType::RayTracingLocal) ? D3D12_SHADER_REGISTER_SPACE_RT_LOCAL : 0;
-    uint32 NumRootParameters = 0;
-    for (uint32 i = 0; i < ShaderVisibility_Count; i++)
+    const uint32 Space = (RootSignatureInfo.Type == ERootSignatureType::RayTracingLocal) ? D3D12_SHADER_REGISTER_SPACE_RT_LOCAL : 0;
+    
+    for (uint32 ShaderStage = 0; ShaderStage < ShaderVisibility_Count; ++ShaderStage)
     {
         bool AddFlag = true;
 
-        const SShaderResourceCount& ResourceCounts = RootSignatureInfo.ResourceCounts[i];
+        const SShaderResourceCount& ResourceCounts = RootSignatureInfo.ResourceCounts[ShaderStage];
         if (ResourceCounts.Ranges.NumCBVs > 0)
         {
             Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
+            Assert(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_CBV, ResourceCounts.Ranges.NumCBVs, 0, Space);
-            InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
+            InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
+
             NumDescriptorRanges++;
-            NumRootParameters++;
 
             AddFlag = false;
         }
@@ -123,12 +124,12 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
         if (ResourceCounts.Ranges.NumSRVs > 0)
         {
             Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
+            Assert(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ResourceCounts.Ranges.NumSRVs, 0, Space);
-            InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
+            InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
+
             NumDescriptorRanges++;
-            NumRootParameters++;
 
             AddFlag = false;
         }
@@ -136,12 +137,12 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
         if (ResourceCounts.Ranges.NumUAVs > 0)
         {
             Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
+            Assert(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_UAV, ResourceCounts.Ranges.NumUAVs, 0, Space);
-            InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
+            InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
+
             NumDescriptorRanges++;
-            NumRootParameters++;
 
             AddFlag = false;
         }
@@ -149,12 +150,12 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
         if (ResourceCounts.Ranges.NumSamplers > 0)
         {
             Assert(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
-            Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
+            Assert(NumRootParameters   < D3D12_MAX_ROOT_PARAMETERS);
 
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ResourceCounts.Ranges.NumSamplers, 0, Space);
-            InitDescriptorTable(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), &DescriptorRanges[NumDescriptorRanges], 1);
+            InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
+
             NumDescriptorRanges++;
-            NumRootParameters++;
 
             AddFlag = false;
         }
@@ -164,24 +165,26 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
             Assert(ResourceCounts.Num32BitConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
             Assert(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
-            Init32BitConstantRange(Parameters[NumRootParameters], GetD3D12ShaderVisibility(i), ResourceCounts.Num32BitConstants, 0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
-            NumRootParameters++;
+            Insert32BitConstantRange(GetD3D12ShaderVisibility(ShaderStage), ResourceCounts.Num32BitConstants, 0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
 
             AddFlag = false;
         }
 
         if (AddFlag)
         {
-            Desc.Flags |= DxRootSignatureFlags[i];
+            Desc.Flags |= RootSignatureFlags[ShaderStage];
         }
     }
 
+    Assert(RootSignatureCost <= D3D12_MAX_ROOT_PARAMETER_COST);
+    LOG_INFO("[CD3D12RootSignatureDescHelper] RootSignatureCost=" + ToString(RootSignatureCost));
+
     Desc.NumParameters = NumRootParameters;
-    Desc.pParameters = Parameters;
+    Desc.pParameters   = RootParameters;
 
     // TODO: Enable Static Samplers
     Desc.NumStaticSamplers = 0;
-    Desc.pStaticSamplers = nullptr;
+    Desc.pStaticSamplers   = nullptr;
 
     if (RootSignatureInfo.AllowInputAssembler)
     {
@@ -195,32 +198,80 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
 
 void CD3D12RootSignatureDescHelper::InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace)
 {
-    OutRange.BaseShaderRegister = BaseShaderRegister;
-    OutRange.NumDescriptors = NumDescriptors;
-    OutRange.RangeType = Type;
-    OutRange.RegisterSpace = RegisterSpace;
+    Assert(NumDescriptors > 0);
+
+    OutRange.BaseShaderRegister                = BaseShaderRegister;
+    OutRange.NumDescriptors                    = NumDescriptors;
+    OutRange.RangeType                         = Type;
+    OutRange.RegisterSpace                     = RegisterSpace;
     OutRange.OffsetInDescriptorsFromTableStart = 0;
 }
 
-void CD3D12RootSignatureDescHelper::InitDescriptorTable(D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges)
+void CD3D12RootSignatureDescHelper::InsertDescriptorTable(D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* InDescriptorRanges, uint32 InNumDescriptorRanges)
 {
-    OutParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    OutParameter.ShaderVisibility = ShaderVisibility;
-    OutParameter.DescriptorTable.NumDescriptorRanges = NumDescriptorRanges;
-    OutParameter.DescriptorTable.pDescriptorRanges = DescriptorRanges;
+    D3D12_ROOT_PARAMETER& NewParameters = RootParameters[NumRootParameters++];
+    NewParameters.ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    NewParameters.ShaderVisibility                    = ShaderVisibility;
+    NewParameters.DescriptorTable.NumDescriptorRanges = InNumDescriptorRanges;
+    NewParameters.DescriptorTable.pDescriptorRanges   = InDescriptorRanges;
+
+    // Each descriptor table cost 1 DWORD
+    RootSignatureCost++;
 }
 
-void CD3D12RootSignatureDescHelper::Init32BitConstantRange(D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace)
+void CD3D12RootSignatureDescHelper::Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace)
 {
-    OutParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-    OutParameter.ShaderVisibility = ShaderVisibility;
-    OutParameter.Constants.Num32BitValues = Num32BitConstants;
-    OutParameter.Constants.ShaderRegister = ShaderRegister;
-    OutParameter.Constants.RegisterSpace = RegisterSpace;
+    Assert(Num32BitConstants > 0);
+
+    D3D12_ROOT_PARAMETER& NewParameters = RootParameters[NumRootParameters++];
+    NewParameters.ParameterType            = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+    NewParameters.ShaderVisibility         = ShaderVisibility;
+    NewParameters.Constants.Num32BitValues = Num32BitConstants;
+    NewParameters.Constants.ShaderRegister = ShaderRegister;
+    NewParameters.Constants.RegisterSpace  = RegisterSpace;
+
+    // Each constant cost 1 DWORD
+    RootSignatureCost += Num32BitConstants;
+}
+
+void CD3D12RootSignatureDescHelper::InsertRootCBV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace)
+{
+    D3D12_ROOT_PARAMETER& NewParameters = RootParameters[NumRootParameters++];
+    NewParameters.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    NewParameters.ShaderVisibility          = ShaderVisibility;
+    NewParameters.Descriptor.ShaderRegister = ShaderRegister;
+    NewParameters.Descriptor.RegisterSpace  = RegisterSpace;
+
+    // Each root descriptor cost 2 DWORDs
+    RootSignatureCost += 2;
+}
+
+void CD3D12RootSignatureDescHelper::InsertRootSRV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace)
+{
+    D3D12_ROOT_PARAMETER& NewParameters = RootParameters[NumRootParameters++];
+    NewParameters.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_SRV;
+    NewParameters.ShaderVisibility          = ShaderVisibility;
+    NewParameters.Descriptor.ShaderRegister = ShaderRegister;
+    NewParameters.Descriptor.RegisterSpace  = RegisterSpace;
+
+    // Each root descriptor cost 2 DWORDs
+    RootSignatureCost += 2;
+}
+
+void CD3D12RootSignatureDescHelper::InsertRootUAV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace)
+{
+    D3D12_ROOT_PARAMETER& NewParameters = RootParameters[NumRootParameters++];
+    NewParameters.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_UAV;
+    NewParameters.ShaderVisibility          = ShaderVisibility;
+    NewParameters.Descriptor.ShaderRegister = ShaderRegister;
+    NewParameters.Descriptor.RegisterSpace  = RegisterSpace;
+
+    // Each root descriptor cost 2 DWORDs
+    RootSignatureCost += 2;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RootSignature
+// CD3D12RootSignature
 
 CD3D12RootSignature::CD3D12RootSignature(CD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
@@ -237,13 +288,13 @@ CD3D12RootSignature::CD3D12RootSignature(CD3D12Device* InDevice)
     }
 }
 
-bool CD3D12RootSignature::Init(const SD3D12RootSignatureResourceCount& RootSignatureInfo)
+bool CD3D12RootSignature::Initialize(const SD3D12RootSignatureResourceCount& RootSignatureInfo)
 {
     CD3D12RootSignatureDescHelper Desc(RootSignatureInfo);
-    return Init(Desc.GetDesc());
+    return Initialize(Desc.GetDesc());
 }
 
-bool CD3D12RootSignature::Init(const D3D12_ROOT_SIGNATURE_DESC& Desc)
+bool CD3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 {
     TComPtr<ID3DBlob> SignatureBlob;
 
@@ -257,7 +308,7 @@ bool CD3D12RootSignature::Init(const D3D12_ROOT_SIGNATURE_DESC& Desc)
     return InternalInit(SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize());
 }
 
-bool CD3D12RootSignature::Init(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
+bool CD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes)
 {
     TComPtr<ID3D12RootSignatureDeserializer> Deserializer;
     HRESULT Result = ND3D12Functions::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
@@ -367,19 +418,19 @@ CD3D12RootSignatureCache::~CD3D12RootSignatureCache()
     Instance = nullptr;
 }
 
-bool CD3D12RootSignatureCache::Init()
+bool CD3D12RootSignatureCache::Initialize()
 {
     SD3D12RootSignatureResourceCount GraphicsKey;
-    GraphicsKey.Type = ERootSignatureType::Graphics;
+    GraphicsKey.Type                = ERootSignatureType::Graphics;
     GraphicsKey.AllowInputAssembler = true;
     GraphicsKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
 
-    // NOTE: Skips visibility all, however constants are still visibile to all stages
+    // NOTE: Skips visibility all, however constants are still visible to all stages
     for (uint32 i = 1; i < ShaderVisibility_Count; i++)
     {
-        GraphicsKey.ResourceCounts[i].Ranges.NumCBVs = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
-        GraphicsKey.ResourceCounts[i].Ranges.NumSRVs = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
-        GraphicsKey.ResourceCounts[i].Ranges.NumUAVs = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
+        GraphicsKey.ResourceCounts[i].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
+        GraphicsKey.ResourceCounts[i].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
+        GraphicsKey.ResourceCounts[i].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
         GraphicsKey.ResourceCounts[i].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
     }
 
@@ -395,12 +446,12 @@ bool CD3D12RootSignatureCache::Init()
     }
 
     SD3D12RootSignatureResourceCount ComputeKey;
-    ComputeKey.Type = ERootSignatureType::Compute;
+    ComputeKey.Type                = ERootSignatureType::Compute;
     ComputeKey.AllowInputAssembler = false;
-    ComputeKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
-    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
-    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
-    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
+    ComputeKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
+    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
+    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
+    ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
     ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
 
     CD3D12RootSignature* ComputeRootSignature = CreateRootSignature(ComputeKey);
@@ -420,12 +471,12 @@ bool CD3D12RootSignatureCache::Init()
     }
 
     SD3D12RootSignatureResourceCount RTGlobalKey;
-    RTGlobalKey.Type = ERootSignatureType::RayTracingGlobal;
+    RTGlobalKey.Type                = ERootSignatureType::RayTracingGlobal;
     RTGlobalKey.AllowInputAssembler = false;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
     RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
 
     CD3D12RootSignature* RTGlobalRootSignature = CreateRootSignature(RTGlobalKey);
@@ -440,11 +491,11 @@ bool CD3D12RootSignatureCache::Init()
     }
 
     SD3D12RootSignatureResourceCount RTLocalKey;
-    RTLocalKey.Type = ERootSignatureType::RayTracingLocal;
+    RTLocalKey.Type                = ERootSignatureType::RayTracingLocal;
     RTLocalKey.AllowInputAssembler = false;
-    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs = D3D12_DEFAULT_LOCAL_CONSTANT_BUFFER_COUNT;
-    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs = D3D12_DEFAULT_LOCAL_SHADER_RESOURCE_VIEW_COUNT;
-    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs = D3D12_DEFAULT_LOCAL_UNORDERED_ACCESS_VIEW_COUNT;
+    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_LOCAL_CONSTANT_BUFFER_COUNT;
+    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_LOCAL_SHADER_RESOURCE_VIEW_COUNT;
+    RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_LOCAL_UNORDERED_ACCESS_VIEW_COUNT;
     RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSamplers = D3D12_DEFAULT_LOCAL_SAMPLER_STATE_COUNT;
 
     CD3D12RootSignature* RTLocalRootSignature = CreateRootSignature(RTLocalKey);
@@ -519,7 +570,7 @@ CD3D12RootSignatureCache& CD3D12RootSignatureCache::Get()
 CD3D12RootSignature* CD3D12RootSignatureCache::CreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount)
 {
     TSharedRef<CD3D12RootSignature> NewRootSignature = dbg_new CD3D12RootSignature(GetDevice());
-    if (!NewRootSignature->Init(ResourceCount))
+    if (!NewRootSignature->Initialize(ResourceCount))
     {
         return nullptr;
     }

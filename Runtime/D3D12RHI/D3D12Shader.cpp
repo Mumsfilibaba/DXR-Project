@@ -5,7 +5,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12BaseShader
 
-CD3D12BaseShader::CD3D12BaseShader(CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility)
+CD3D12Shader::CD3D12Shader(CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility)
     : CD3D12DeviceChild(InDevice)
     , ByteCode()
     , Visibility(InVisibility)
@@ -16,7 +16,7 @@ CD3D12BaseShader::CD3D12BaseShader(CD3D12Device* InDevice, const TArray<uint8>& 
     CMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
 }
 
-CD3D12BaseShader::~CD3D12BaseShader()
+CD3D12Shader::~CD3D12Shader()
 {
     CMemory::Free((void*)ByteCode.pShaderBytecode);
 
@@ -58,7 +58,7 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
 }
 
 template<typename TD3D12ReflectionInterface>
-bool CD3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, CD3D12BaseShader* Shader, uint32 NumBoundResources)
+bool CD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, CD3D12Shader* Shader, uint32 NumBoundResources)
 {
     SShaderResourceCount          ResourceCount;
     SShaderResourceCount          RTLocalResourceCount;
@@ -175,7 +175,7 @@ bool CD3D12BaseShader::GetShaderResourceBindings(TD3D12ReflectionInterface* Refl
     return true;
 }
 
-bool CD3D12BaseShader::GetShaderReflection(CD3D12BaseShader* Shader)
+bool CD3D12Shader::GetShaderReflection(CD3D12Shader* Shader)
 {
     Assert(Shader != nullptr);
 

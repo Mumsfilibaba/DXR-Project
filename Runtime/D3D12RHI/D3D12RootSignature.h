@@ -1,7 +1,7 @@
 #pragma once
 #include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
-#include "D3D12RHIShader.h"
+#include "D3D12Shader.h"
 
 #include "Core/RefCounted.h"
 #include "Core/Utilities/StringUtilities.h"
@@ -15,27 +15,27 @@ class CD3D12RootSignature;
 
 enum class ERootSignatureType
 {
-    Unknown = 0,
-    Graphics = 1,
-    Compute = 2,
+    Unknown          = 0,
+    Graphics         = 1,
+    Compute          = 2,
     RayTracingGlobal = 3,
-    RayTracingLocal = 4,
+    RayTracingLocal  = 4,
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RootSignatureResourceCount
+// SD3D12RootSignatureResourceCount
 
 struct SD3D12RootSignatureResourceCount
 {
     bool IsCompatible(const SD3D12RootSignatureResourceCount& Other) const;
 
-    ERootSignatureType  Type = ERootSignatureType::Unknown;
+    ERootSignatureType   Type = ERootSignatureType::Unknown;
     SShaderResourceCount ResourceCounts[ShaderVisibility_Count];
     bool AllowInputAssembler = false;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RootSignatureDescHelper
+// CD3D12RootSignatureDescHelper
 
 class CD3D12RootSignatureDescHelper
 {
@@ -43,26 +43,32 @@ public:
     CD3D12RootSignatureDescHelper(const SD3D12RootSignatureResourceCount& RootSignatureInfo);
     ~CD3D12RootSignatureDescHelper() = default;
 
-    FORCEINLINE const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const
-    {
-        return Desc;
-    }
+    const uint32 GetRootSignatureCost() const { return RootSignatureCost; }
+
+    const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const { return Desc; }
 
 private:
 
     static void InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace);
-    static void InitDescriptorTable(D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges);
-    static void Init32BitConstantRange(D3D12_ROOT_PARAMETER& OutParameter, D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace);
+
+    void InsertDescriptorTable(D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges);
+    void Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace);
+    void InsertRootCBV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
+    void InsertRootSRV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
+    void InsertRootUAV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
 
     D3D12_ROOT_SIGNATURE_DESC Desc;
-    D3D12_ROOT_PARAMETER      Parameters[D3D12_MAX_ROOT_PARAMETERS];
+
+    D3D12_ROOT_PARAMETER      RootParameters[D3D12_MAX_ROOT_PARAMETERS];
     D3D12_DESCRIPTOR_RANGE    DescriptorRanges[D3D12_MAX_DESCRIPTOR_RANGES];
 
+    uint32 NumRootParameters   = 0;
     uint32 NumDescriptorRanges = 0;
+    uint32 RootSignatureCost   = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RootSignature
+// CD3D12RootSignature
 
 class CD3D12RootSignature : public CD3D12DeviceChild, public CRefCounted
 {
@@ -71,9 +77,9 @@ public:
     CD3D12RootSignature(CD3D12Device* InDevice);
     ~CD3D12RootSignature() = default;
 
-    bool Init(const SD3D12RootSignatureResourceCount& RootSignatureInfo);
-    bool Init(const D3D12_ROOT_SIGNATURE_DESC& Desc);
-    bool Init(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
+    bool Initialize(const SD3D12RootSignatureResourceCount& RootSignatureInfo);
+    bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+    bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     // Returns -1 if root parameter is not valid
     FORCEINLINE int32 GetRootParameterIndex(EShaderVisibility Visibility, EResourceType Type) const
@@ -115,7 +121,7 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RootSignatureCache
+// CD3D12RootSignatureCache
 
 class CD3D12RootSignatureCache : public CD3D12DeviceChild
 {
@@ -123,12 +129,13 @@ public:
     CD3D12RootSignatureCache(CD3D12Device* Device);
     ~CD3D12RootSignatureCache();
 
-    bool Init();
+    static CD3D12RootSignatureCache& Get();
+
+    bool Initialize();
+
     void ReleaseAll();
 
     CD3D12RootSignature* GetOrCreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount);
-
-    static CD3D12RootSignatureCache& Get();
 
 private:
     CD3D12RootSignature* CreateRootSignature(const SD3D12RootSignatureResourceCount& ResourceCount);

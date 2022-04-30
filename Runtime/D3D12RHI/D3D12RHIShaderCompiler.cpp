@@ -231,19 +231,19 @@ bool CD3D12RHIShaderCompiler::CompileShader(
     return InternalCompileFromSource(SourceBlob.Get(), nullptr, WideEntrypoint.CStr(), ShaderStage, ShaderModel, Defines, Code);
 }
 
-bool CD3D12RHIShaderCompiler::GetReflection(CD3D12BaseShader* Shader, ID3D12ShaderReflection** Reflection)
+bool CD3D12RHIShaderCompiler::GetReflection(CD3D12Shader* Shader, ID3D12ShaderReflection** Reflection)
 {
     TComPtr<IDxcBlob> ShaderBlob = dbg_new CExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     return InternalGetReflection(ShaderBlob, IID_PPV_ARGS(Reflection));
 }
 
-bool CD3D12RHIShaderCompiler::GetLibraryReflection(CD3D12BaseShader* Shader, ID3D12LibraryReflection** Reflection)
+bool CD3D12RHIShaderCompiler::GetLibraryReflection(CD3D12Shader* Shader, ID3D12LibraryReflection** Reflection)
 {
     TComPtr<IDxcBlob> ShaderBlob = dbg_new CExistingBlob((LPVOID)Shader->GetCode(), Shader->GetCodeSize());
     return InternalGetReflection(ShaderBlob, IID_PPV_ARGS(Reflection));
 }
 
-bool CD3D12RHIShaderCompiler::HasRootSignature(CD3D12BaseShader* Shader)
+bool CD3D12RHIShaderCompiler::HasRootSignature(CD3D12Shader* Shader)
 {
     TComPtr<IDxcContainerReflection> Reflection;
     HRESULT Result = DxcCreateInstanceFunc(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));

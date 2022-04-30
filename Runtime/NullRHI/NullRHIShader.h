@@ -15,14 +15,17 @@
 class CNullRHIComputeShader : public CRHIComputeShader
 {
 public:
+
     CNullRHIComputeShader()
         : CRHIComputeShader()
     { }
 
-    virtual CIntVector3 GetThreadGroupXYZ() const override
-    {
-        return CIntVector3(1, 1, 1);
-    }
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIComputeShader Interface
+
+    virtual CIntVector3 GetThreadGroupXYZ() const override final { return CIntVector3(1, 1, 1); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -32,39 +35,34 @@ template<typename BaseShaderType>
 class TNullRHIShader : public BaseShaderType
 {
 public:
+
     TNullRHIShader()
         : BaseShaderType()
     { }
 
-    virtual void GetShaderParameterInfo(SRHIShaderParameterInfo& OutShaderParameterInfo) const override
-    {
-        OutShaderParameterInfo = SRHIShaderParameterInfo();
-    }
+public:
 
-    virtual bool GetShaderResourceViewIndexByName(const String& InName, uint32& OutIndex) const override
-    {
-        return true;
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
 
-    virtual bool GetSamplerIndexByName(const String& InName, uint32& OutIndex) const override
-    {
-        return true;
-    }
+    virtual void* GetRHIBaseShader() override final { return this; }
 
-    virtual bool GetUnorderedAccessViewIndexByName(const String& InName, uint32& OutIndex) const override
-    {
-        return true;
-    }
+    virtual void GetShaderParameterInfo(SShaderParameterInfo& OutShaderParameterInfo) const override final { OutShaderParameterInfo = SShaderParameterInfo(); }
 
-    virtual bool GetConstantBufferIndexByName(const String& InName, uint32& OutIndex) const override
-    {
-        return true;
-    }
+    virtual bool GetShaderResourceViewIndexByName(const String& InName, uint32& OutIndex) const override final { return true; }
 
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
+    virtual bool GetSamplerIndexByName(const String& InName, uint32& OutIndex) const override final { return true; }
+
+    virtual bool GetUnorderedAccessViewIndexByName(const String& InName, uint32& OutIndex) const override final { return true; }
+
+    virtual bool GetConstantBufferIndexByName(const String& InName, uint32& OutIndex) const override final { return true; }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // Deprecated
+
+    virtual bool IsValid() const override final { return true; }
 };
 
 #if defined(COMPILER_MSVC)

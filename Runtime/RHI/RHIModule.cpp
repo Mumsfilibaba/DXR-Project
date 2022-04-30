@@ -19,15 +19,15 @@ static CRHIModule* LoadNullRHI()
     return CModuleManager::Get().LoadEngineModule<CRHIModule>("NullRHI");
 }
 
-bool RHIInitialize(ERHIInstanceApi InRenderApi)
+bool RHIInitialize(ERHIInstanceType InRenderApi)
 {
     // Load Selected RHI
     CRHIModule* RHIModule = nullptr;
-    if (InRenderApi == ERHIInstanceApi::D3D12)
+    if (InRenderApi == ERHIInstanceType::D3D12)
     {
         RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>("D3D12RHI");
     }
-    else if (InRenderApi == ERHIInstanceApi::Null)
+    else if (InRenderApi == ERHIInstanceType::Null)
     {
         RHIModule = LoadNullRHI();
     }

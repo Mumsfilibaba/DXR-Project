@@ -24,9 +24,9 @@ enum class EShaderStage
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIShaderParameterInfo
+// SShaderParameterInfo
 
-struct SRHIShaderParameterInfo
+struct SShaderParameterInfo
 {
     uint32 NumConstantBuffers      = 0;
     uint32 NumShaderResourceViews  = 0;
@@ -39,84 +39,55 @@ struct SRHIShaderParameterInfo
 
 class CRHIShader : public CRHIObject
 {
+protected:
+
+    CRHIShader() = default;
+    ~CRHIShader() = default;
+
 public:
 
-    /**
-     * @brief: Cast shader to a VertexShader
-     * 
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /** @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type */
     virtual class CRHIVertexShader* AsVertexShader() { return nullptr; }
     
-    /**
-     * @brief: Cast shader to a HullShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /** @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type */
     virtual class CRHIHullShader* AsHullShader() { return nullptr; }
 
-    /**
-     * @brief: Cast shader to a DomainShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /** @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type */
     virtual class CRHIDomainShader* AsDomainShader() { return nullptr; }
 
-    /**
-     * @brief: Cast shader to a GeometryShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /** @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type */
     virtual class CRHIGeometryShader* AsGeometryShader() { return nullptr; }
 
-    /**
-     * @brief: Cast shader to a PixelShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /** @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type */
     virtual class CRHIPixelShader* AsPixelShader() { return nullptr; }
 
-    /**
-     * @brief: Cast shader to a ComputeShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /** @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type */
     virtual class CRHIComputeShader* AsComputeShader() { return nullptr; }
 
-    /**
-     * @brief: Cast shader to a RayGenShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /** @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type */
     virtual class CRHIRayGenShader* AsRayGenShader() { return nullptr; }
 
-    /**
-     * @brief: Cast shader to a RayAnyHitShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /** @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type */
     virtual class CRHIRayAnyHitShader* AsRayAnyHitShader() { return nullptr; }
 
-    /**
-     * @brief: Cast shader to a RayClosestHitShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /** @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type */
     virtual class CRHIRayClosestHitShader* AsRayClosestHitShader() { return nullptr; }
 
-    /**
-     * @brief: Cast shader to a RayMissShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /** @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type */
     virtual class CRHIRayMissShader* AsRayMissShader() { return nullptr; }
+
+    /** @return: Returns the native handle of the Shader */
+    virtual void* GetRHIResourceHandle() const { return nullptr; }
+
+    /** @return: Returns the RHI-backend Shader interface */
+    virtual void* GetRHIBaseShader() { return nullptr; }
 
     /**
      * @brief: Retrieve the number of ShaderParameters
      * 
      * @param OutShaderParameterInfo: A structure containing the number of different ShaderParameters
      */
-    virtual void GetShaderParameterInfo(SRHIShaderParameterInfo& OutShaderParameterInfo) const = 0;
+    virtual void GetShaderParameterInfo(SShaderParameterInfo& OutShaderParameterInfo) const = 0;
 
     /**
      * @brief: Retrieve a ConstantBuffer index by the name
@@ -160,15 +131,19 @@ public:
 
 class CRHIComputeShader : public CRHIShader
 {
+protected:
+
+    CRHIComputeShader() = default;
+    ~CRHIComputeShader() = default;
+
 public:
 
-    /**
-     * @brief: Cast shader to a ComputeShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
     virtual CRHIComputeShader* AsComputeShader() { return this; }
 
+public:
 
     /**
      * @brief: Retrieve the threadgroup-count
@@ -183,13 +158,16 @@ public:
 
 class CRHIVertexShader : public CRHIShader
 {
+protected:
+
+    CRHIVertexShader() = default;
+    ~CRHIVertexShader() = default;
+
 public:
 
-    /**
-     * @brief: Cast shader to a VertexShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
     virtual CRHIVertexShader* AsVertexShader() { return this; }
 };
 
@@ -198,13 +176,16 @@ public:
 
 class CRHIHullShader : public CRHIShader
 {
+protected:
+
+    CRHIHullShader() = default;
+    ~CRHIHullShader() = default;
+
 public:
 
-    /**
-     * @brief: Cast shader to a HullShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
     virtual CRHIHullShader* AsHullShader() { return this; }
 };
 
@@ -213,13 +194,16 @@ public:
 
 class CRHIDomainShader : public CRHIShader
 {
+protected:
+
+    CRHIDomainShader() = default;
+    ~CRHIDomainShader() = default;
+
 public:
 
-    /**
-     * @brief: Cast shader to a DomainShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
     virtual CRHIDomainShader* AsDomainShader() { return this; }
 };
 
@@ -228,13 +212,16 @@ public:
 
 class CRHIGeometryShader : public CRHIShader
 {
+protected:
+
+    CRHIGeometryShader() = default;
+    ~CRHIGeometryShader() = default;
+
 public:
 
-    /**
-     * @brief: Cast shader to a GeometryShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
     virtual CRHIGeometryShader* AsGeometryShader() { return this; }
 };
 
@@ -259,13 +246,16 @@ class CRHIAmplificationShader : public CRHIShader
 
 class CRHIPixelShader : public CRHIShader
 {
+protected:
+
+    CRHIPixelShader() = default;
+    ~CRHIPixelShader() = default;
+
 public:
 
-    /**
-     * @brief: Cast shader to a PixelShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
     virtual CRHIPixelShader* AsPixelShader() { return this; }
 };
 
@@ -274,13 +264,16 @@ public:
 
 class CRHIRayGenShader : public CRHIShader
 {
+protected:
+
+    CRHIRayGenShader() = default;
+    ~CRHIRayGenShader() = default;
+
 public:
 
-    /**
-     * @brief: Cast shader to a RayGenShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
     virtual CRHIRayGenShader* AsRayGenShader() { return this; }
 };
 
@@ -289,13 +282,16 @@ public:
 
 class CRHIRayAnyHitShader : public CRHIShader
 {
+protected:
+
+    CRHIRayAnyHitShader() = default;
+    ~CRHIRayAnyHitShader() = default;
+
 public:
 
-    /**
-     * @brief: Cast shader to a RayAnyHitShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
     virtual CRHIRayAnyHitShader* AsRayAnyHitShader() { return this; }
 };
 
@@ -304,13 +300,16 @@ public:
 
 class CRHIRayClosestHitShader : public CRHIShader
 {
+protected:
+
+    CRHIRayClosestHitShader() = default;
+    ~CRHIRayClosestHitShader() = default;
+
 public:
 
-    /**
-     * @brief: Cast shader to a RayClosestHitShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
     virtual CRHIRayClosestHitShader* AsRayClosestHitShader() { return this; }
 };
 
@@ -319,13 +318,16 @@ public:
 
 class CRHIRayMissShader : public CRHIShader
 {
+protected:
+
+    CRHIRayMissShader() = default;
+    ~CRHIRayMissShader() = default;
+
 public:
 
-    /**
-     * @brief: Cast shader to a RayMissShader
-     *
-     * @return: Returns a pointer to the interface if the type is correct or nullptr if the shader is another type
-     */
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
     virtual CRHIRayMissShader* AsRayMissShader() { return this; }
 };
 
@@ -336,21 +338,21 @@ inline bool ShaderStageIsGraphics(EShaderStage ShaderStage)
 {
     switch (ShaderStage)
     {
-    case EShaderStage::Vertex:
-    case EShaderStage::Hull:
-    case EShaderStage::Domain:
-    case EShaderStage::Geometry:
-    case EShaderStage::Pixel:
-    case EShaderStage::Mesh:
-    case EShaderStage::Amplification:
-    {
-        return true;
-    }
+        case EShaderStage::Vertex:
+        case EShaderStage::Hull:
+        case EShaderStage::Domain:
+        case EShaderStage::Geometry:
+        case EShaderStage::Pixel:
+        case EShaderStage::Mesh:
+        case EShaderStage::Amplification:
+        {
+            return true;
+        }
 
-    default:
-    {
-        return false;
-    }
+        default:
+        {
+            return false;
+        }
     }
 }
 
@@ -358,19 +360,19 @@ inline bool ShaderStageIsCompute(EShaderStage ShaderStage)
 {
     switch (ShaderStage)
     {
-    case EShaderStage::Compute:
-    case EShaderStage::RayGen:
-    case EShaderStage::RayClosestHit:
-    case EShaderStage::RayAnyHit:
-    case EShaderStage::RayMiss:
-    {
-        return true;
-    }
+        case EShaderStage::Compute:
+        case EShaderStage::RayGen:
+        case EShaderStage::RayClosestHit:
+        case EShaderStage::RayAnyHit:
+        case EShaderStage::RayMiss:
+        {
+            return true;
+        }
 
-    default:
-    {
-        return false;
-    }
+        default:
+        {
+            return false;
+        }
     }
 }
 
@@ -378,17 +380,17 @@ inline bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
 {
     switch (ShaderStage)
     {
-    case EShaderStage::RayGen:
-    case EShaderStage::RayClosestHit:
-    case EShaderStage::RayAnyHit:
-    case EShaderStage::RayMiss:
-    {
-        return true;
-    }
+        case EShaderStage::RayGen:
+        case EShaderStage::RayClosestHit:
+        case EShaderStage::RayAnyHit:
+        case EShaderStage::RayMiss:
+        {
+            return true;
+        }
 
-    default:
-    {
-        return false;
-    }
+        default:
+        {
+            return false;
+        }
     }
 }

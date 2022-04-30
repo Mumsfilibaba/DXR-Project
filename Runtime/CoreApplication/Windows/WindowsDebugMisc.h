@@ -1,6 +1,4 @@
 #pragma once
-
-#if PLATFORM_WINDOWS
 #include "Windows.h"
 
 #include "Core/Core.h"
@@ -9,11 +7,11 @@
 #include "CoreApplication/Generic/GenericDebugMisc.h"
 
 #ifdef MessageBox
-#undef MessageBox
+    #undef MessageBox
 #endif
 
 #ifdef OutputDebugString
-#undef OutputDebugString
+    #undef OutputDebugString
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -58,5 +56,3 @@ public:
         LocalFree(MessageBuffer);
     }
 };
-
-#endif
