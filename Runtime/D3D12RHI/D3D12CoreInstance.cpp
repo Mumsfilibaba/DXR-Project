@@ -372,7 +372,7 @@ D3D12TextureType* CD3D12CoreInstance::CreateTexture( EFormat Format
     const bool bIsTexture2D = (Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D) && (SizeZ == 1);
     if (((Flags & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None) && ((Flags & ETextureUsageFlags::NoDefaultRTV) == ETextureUsageFlags::None) && bIsTexture2D)
     {
-        CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
+        CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->GetTexture2D());
 
         D3D12_RENDER_TARGET_VIEW_DESC ViewDesc;
         CMemory::Memzero(&ViewDesc);
@@ -399,7 +399,7 @@ D3D12TextureType* CD3D12CoreInstance::CreateTexture( EFormat Format
 
     if (((Flags & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None) && ((Flags & ETextureUsageFlags::NoDefaultDSV) == ETextureUsageFlags::None) && bIsTexture2D)
     {
-        CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
+        CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->GetTexture2D());
 
         D3D12_DEPTH_STENCIL_VIEW_DESC ViewDesc;
         CMemory::Memzero(&ViewDesc);
@@ -425,7 +425,7 @@ D3D12TextureType* CD3D12CoreInstance::CreateTexture( EFormat Format
 
     if (((Flags & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None) && ((Flags & ETextureUsageFlags::NoDefaultUAV) == ETextureUsageFlags::None) && bIsTexture2D)
     {
-        CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->AsTexture2D());
+        CD3D12RHITexture2D* NewTexture2D = static_cast<CD3D12RHITexture2D*>(NewTexture->GetTexture2D());
 
         D3D12_UNORDERED_ACCESS_VIEW_DESC ViewDesc;
         CMemory::Memzero(&ViewDesc);
@@ -454,7 +454,7 @@ D3D12TextureType* CD3D12CoreInstance::CreateTexture( EFormat Format
     {
         // TODO: Support other types than texture 2D
 
-        CRHITexture2D* Texture2D = NewTexture->AsTexture2D();
+        CRHITexture2D* Texture2D = NewTexture->GetTexture2D();
         if (!Texture2D)
         {
             return nullptr;
@@ -527,7 +527,7 @@ CRHISamplerState* CD3D12CoreInstance::CreateSamplerState(const SRHISamplerStateI
     CMemory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor.Data(), sizeof(Desc.BorderColor));
 
     TSharedRef<CD3D12SamplerState> Sampler = dbg_new CD3D12SamplerState(Device, SamplerOfflineDescriptorHeap);
-    if (!Sampler->Init(Desc))
+    if (!Sampler->CreateSampler(Desc))
     {
         return nullptr;
     }
@@ -565,14 +565,17 @@ bool CD3D12CoreInstance::CreateBuffer(D3D12BufferType* Buffer, EBufferUsageFlags
         DxInitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
-    TSharedRef<CD3D12Resource> Resource = dbg_new CD3D12Resource(Device, Desc, DxHeapType);
-    if (!Resource->Init(DxInitialState, nullptr))
+    // Limit the scope of the new resource
     {
-        return false;
-    }
-    else
-    {
-        Buffer->SetResource(Resource.ReleaseOwnership());
+        TSharedRef<CD3D12Resource> D3D12Resource = dbg_new CD3D12Resource(Device, Desc, DxHeapType);
+        if (!D3D12Resource->Init(DxInitialState, nullptr))
+        {
+            return false;
+        }
+        else
+        {
+            Buffer->SetResource(D3D12Resource.ReleaseOwnership());
+        }
     }
 
     D3D12_ERROR(Buffer->GetSizeInBytes() <= SizeInBytes, "Size of InitialData is larger than the allocated memory");
@@ -583,20 +586,22 @@ bool CD3D12CoreInstance::CreateBuffer(D3D12BufferType* Buffer, EBufferUsageFlags
 
         if ((Buffer->GetFlags() & EBufferUsageFlags::Dynamic) != EBufferUsageFlags::None)
         {
-            void* HostData = Buffer->Map(0, 0);
-            if (!HostData)
+            CD3D12Resource* D3D12Resource = Buffer->GetD3D12Resource();
+
+            void* BufferData = D3D12Resource->Map(0, 0);
+            if (!BufferData)
             {
                 return false;
             }
 
             // Copy over relevant data
             const uint32 InitialDataSize = InitialData->GetSizeInBytes();
-            CMemory::Memcpy(HostData, InitialData->GetData(), InitialDataSize);
+            CMemory::Memcpy(BufferData, InitialData->GetData(), InitialDataSize);
 
             // Set the remaining, unused memory to zero
-            CMemory::Memzero(reinterpret_cast<uint8*>(HostData) + InitialDataSize, SizeInBytes - InitialDataSize);
+            CMemory::Memzero(reinterpret_cast<uint8*>(BufferData) + InitialDataSize, SizeInBytes - InitialDataSize);
 
-            Buffer->Unmap(0, 0);
+            D3D12Resource->Unmap(0, 0);
         }
         else
         {

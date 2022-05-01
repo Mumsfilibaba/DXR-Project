@@ -8,10 +8,10 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
 
-#include "RHI/TextureFormat.h"
+#include "RHI/RHITypes.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MeshData
+// SMeshData
 
 struct SMeshData
 {
@@ -36,11 +36,11 @@ struct SMeshData
     }
 
     TArray<SVertex> Vertices;
-    TArray<uint32> Indices;
+    TArray<uint32>  Indices;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ModelData
+// SModelData
 
 struct SModelData
 {
@@ -94,7 +94,7 @@ struct SImage2D
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MaterialData
+// SMaterialData
 
 struct SMaterialData
 {
@@ -136,11 +136,10 @@ struct SMaterialData
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SceneData
+// SSceneData
 
 struct ENGINE_API SSceneData
 {
-
     void AddToScene(class CScene* Scene);
 
     FORCEINLINE bool HasData() const

@@ -120,7 +120,7 @@ public:
     virtual class CRHIGenericBuffer* GetGenericBuffer() { return nullptr; }
 
     /** @return: Returns the native handle of the Buffer */
-    virtual void* GetRHIBaseResourceHandle() const { return nullptr; }
+    virtual void* GetRHIBaseResource() const { return nullptr; }
 
     /** @return: Returns the RHI-backend buffer interface */
     virtual void* GetRHIBaseBuffer() { return nullptr; }
@@ -142,28 +142,6 @@ public:
 
     /** @return: Returns the flags that the buffer was created with */
     EBufferUsageFlags GetFlags() const { return Flags; }
-
-public:
-    
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Deprecated
-
-    /**
-     * @brief: Map GPU buffer memory to the CPU. Setting both size and offset to zero indicate the whole resource.
-     * 
-     * @param Offset: Offset in the buffer were the buffer should start mapping
-     * @param Size: Size of the range to map
-     * @return: Returns a pointer to the data, or nullptr if mapping was unsuccessful
-     */
-    virtual void* Map(uint32 Offset = 0, uint32 Size = 0) = 0;
-
-    /**
-     * @brief: Unmap GPU buffer memory to the CPU. Setting both size and offset to zero indicate the whole resource.
-     *
-     * @param Offset: Offset in the buffer were the buffer were used on the CPU
-     * @param Size: Size of the range that were used on the CPU
-     */
-    virtual void Unmap(uint32 Offset = 0, uint32 Size = 0) = 0;
 
 private:
     EBufferUsageFlags Flags;

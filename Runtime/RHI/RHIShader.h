@@ -77,7 +77,7 @@ public:
     virtual class CRHIRayMissShader* AsRayMissShader() { return nullptr; }
 
     /** @return: Returns the native handle of the Shader */
-    virtual void* GetRHIBaseResourceHandle() const { return nullptr; }
+    virtual void* GetRHIBaseResource() const { return nullptr; }
 
     /** @return: Returns the RHI-backend Shader interface */
     virtual void* GetRHIBaseShader() { return nullptr; }

@@ -109,7 +109,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual void* GetRHIBaseResourceHandle() const { return nullptr; }
+    virtual void* GetRHIBaseResource() const { return nullptr; }
 
     virtual void* GetRHIBaseTexture() { return reinterpret_cast<void*>(this); }
 
