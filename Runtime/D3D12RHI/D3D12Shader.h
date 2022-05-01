@@ -58,7 +58,7 @@ struct SShaderResourceCount
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12ShaderParameter
+// SD3D12ShaderParameter
 
 struct SD3D12ShaderParameter
 {
@@ -162,27 +162,55 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12BaseVertexShader
+// CD3D12VertexShader
 
-class CD3D12BaseVertexShader : public CRHIVertexShader, public CD3D12Shader
+class CD3D12VertexShader : public CRHIVertexShader, public CD3D12Shader
 {
 public:
-    CD3D12BaseVertexShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+
+    CD3D12VertexShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIVertexShader()
         , CD3D12Shader(InDevice, InCode, ShaderVisibility_Vertex)
     { }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
+
+    virtual void* GetRHIBaseShader() override final
+    {
+        CD3D12Shader* D3D12Shader = static_cast<CD3D12Shader*>(this);
+        return reinterpret_cast<void*>(D3D12Shader);
+    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12BasePixelShader
+// CD3D12PixelShader
 
-class CD3D12BasePixelShader : public CRHIPixelShader, public CD3D12Shader
+class CD3D12PixelShader : public CRHIPixelShader, public CD3D12Shader
 {
 public:
-    CD3D12BasePixelShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+
+    CD3D12PixelShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIPixelShader()
         , CD3D12Shader(InDevice, InCode, ShaderVisibility_Pixel)
     { }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
+
+    virtual void* GetRHIBaseShader() override final
+    {
+        CD3D12Shader* D3D12Shader = static_cast<CD3D12Shader*>(this);
+        return reinterpret_cast<void*>(D3D12Shader);
+    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -199,71 +227,124 @@ public:
 
     static bool GetRayTracingShaderReflection(class CD3D12RayTracingShader* Shader);
     
-    FORCEINLINE const String& GetIdentifier() const
-    {
-        return Identifier;
-    }
+    FORCEINLINE const String& GetIdentifier() const { return Identifier; }
 
 protected:
     String Identifier;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12BaseRayGenShader
+// CD3D12RayGenShader
 
-class CD3D12BaseRayGenShader : public CRHIRayGenShader, public CD3D12RayTracingShader
+class CD3D12RayGenShader : public CRHIRayGenShader, public CD3D12RayTracingShader
 {
 public:
-    CD3D12BaseRayGenShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+
+    CD3D12RayGenShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayGenShader()
         , CD3D12RayTracingShader(InDevice, InCode)
     { }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
+
+    virtual void* GetRHIBaseShader() override final
+    {
+        CD3D12RayTracingShader* D3D12Shader = static_cast<CD3D12RayTracingShader*>(this);
+        return reinterpret_cast<void*>(D3D12Shader);
+    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12BaseRayAnyhitShader
+// CD3D12RayAnyHitShader
 
-class CD3D12BaseRayAnyhitShader : public CRHIRayAnyHitShader, public CD3D12RayTracingShader
+class CD3D12RayAnyHitShader : public CRHIRayAnyHitShader, public CD3D12RayTracingShader
 {
 public:
-    CD3D12BaseRayAnyhitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    
+    CD3D12RayAnyHitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayAnyHitShader()
         , CD3D12RayTracingShader(InDevice, InCode)
     { }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
+
+    virtual void* GetRHIBaseShader() override final
+    {
+        CD3D12RayTracingShader* D3D12Shader = static_cast<CD3D12RayTracingShader*>(this);
+        return reinterpret_cast<void*>(D3D12Shader);
+    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12BaseRayClosestHitShader
+// CD3D12RayClosestHitShader
 
-class CD3D12BaseRayClosestHitShader : public CRHIRayClosestHitShader, public CD3D12RayTracingShader
+class CD3D12RayClosestHitShader : public CRHIRayClosestHitShader, public CD3D12RayTracingShader
 {
 public:
-    CD3D12BaseRayClosestHitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    
+    CD3D12RayClosestHitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayClosestHitShader()
         , CD3D12RayTracingShader(InDevice, InCode)
     { }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
+
+    virtual void* GetRHIBaseShader() override final
+    {
+        CD3D12RayTracingShader* D3D12Shader = static_cast<CD3D12RayTracingShader*>(this);
+        return reinterpret_cast<void*>(D3D12Shader);
+    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12BaseRayMissShader
+// CD3D12RayMissShader
 
-class CD3D12BaseRayMissShader : public CRHIRayMissShader, public CD3D12RayTracingShader
+class CD3D12RayMissShader : public CRHIRayMissShader, public CD3D12RayTracingShader
 {
 public:
-    CD3D12BaseRayMissShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+
+    CD3D12RayMissShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayMissShader()
         , CD3D12RayTracingShader(InDevice, InCode)
     { }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIShader Interface
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
+
+    virtual void* GetRHIBaseShader() override final
+    {
+        CD3D12RayTracingShader* D3D12Shader = static_cast<CD3D12RayTracingShader*>(this);
+        return reinterpret_cast<void*>(D3D12Shader);
+    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12BaseComputeShader
+// CD3D12ComputeShader
 
-class CD3D12BaseComputeShader : public CRHIComputeShader, public CD3D12Shader
+class CD3D12ComputeShader : public CRHIComputeShader, public CD3D12Shader
 {
 public:
 
-    CD3D12BaseComputeShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12ComputeShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIComputeShader()
         , CD3D12Shader(InDevice, InCode, ShaderVisibility_All)
         , ThreadGroupXYZ(0, 0, 0)
@@ -276,27 +357,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHIShader Interface
 
-    virtual CIntVector3 GetThreadGroupXYZ() const override final { return ThreadGroupXYZ; }
-
-protected:
-    CIntVector3 ThreadGroupXYZ;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TD3D12Shader
-
-template<typename BaseShaderType>
-class TD3D12Shader : public BaseShaderType
-{
-public:
-    TD3D12Shader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
-        : BaseShaderType(InDevice, InCode)
-    { }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIShader Interface
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
 
     virtual void* GetRHIBaseShader() override final
     {
@@ -304,62 +365,11 @@ public:
         return reinterpret_cast<void*>(D3D12Shader);
     }
 
-    virtual void GetShaderParameterInfo(SShaderParameterInfo& OutShaderParameterInfo) const override final
-    {
-        OutShaderParameterInfo.NumConstantBuffers      = ConstantBufferParameters.Size();
-        OutShaderParameterInfo.NumShaderResourceViews  = ShaderResourceParameters.Size();
-        OutShaderParameterInfo.NumUnorderedAccessViews = UnorderedAccessParameters.Size();
-        OutShaderParameterInfo.NumSamplerStates        = SamplerParameters.Size();
-    }
+    virtual CIntVector3 GetThreadGroupXYZ() const override final { return ThreadGroupXYZ; }
 
-    virtual bool GetShaderResourceViewIndexByName(const String& InName, uint32& OutIndex) const override final
-    {
-        return FindParameterIndexByName(ShaderResourceParameters, InName, OutIndex);
-    }
-
-    virtual bool GetSamplerIndexByName(const String& InName, uint32& OutIndex) const override final
-    {
-        return FindParameterIndexByName(SamplerParameters, InName, OutIndex);
-    }
-
-    virtual bool GetUnorderedAccessViewIndexByName(const String& InName, uint32& OutIndex) const override final
-    {
-        return FindParameterIndexByName(UnorderedAccessParameters, InName, OutIndex);
-    }
-
-    virtual bool GetConstantBufferIndexByName(const String& InName, uint32& OutIndex) const override final
-    {
-        return FindParameterIndexByName(ConstantBufferParameters, InName, OutIndex);
-    }
-
-private:
-    bool FindParameterIndexByName(const TArray<SD3D12ShaderParameter>& Parameters, const String& InName, uint32& OutIndex) const
-    {
-        for (int32 i = 0; i < Parameters.Size(); i++)
-        {
-            if (Parameters[i].Name == InName)
-            {
-                OutIndex = i;
-                return true;
-            }
-        }
-
-        return false;
-    }
+protected:
+    CIntVector3 ThreadGroupXYZ;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Shaders
-
-using D3D12VertexShader        = TD3D12Shader<CD3D12BaseVertexShader>;
-using D3D12PixelShader         = TD3D12Shader<CD3D12BasePixelShader>;
-
-using D3D12ComputeShader       = TD3D12Shader<CD3D12BaseComputeShader>;
-
-using D3D12RayGenShader        = TD3D12Shader<CD3D12BaseRayGenShader>;
-using D3D12RayAnyHitShader     = TD3D12Shader<CD3D12BaseRayAnyhitShader>;
-using D3D12RayClosestHitShader = TD3D12Shader<CD3D12BaseRayClosestHitShader>;
-using D3D12RayMissShader       = TD3D12Shader<CD3D12BaseRayMissShader>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12ShaderCast
@@ -367,4 +377,9 @@ using D3D12RayMissShader       = TD3D12Shader<CD3D12BaseRayMissShader>;
 inline CD3D12Shader* D3D12ShaderCast(CRHIShader* Shader)
 {
     return Shader ? reinterpret_cast<CD3D12Shader*>(Shader->GetRHIBaseShader()) : nullptr;
+}
+
+inline CD3D12RayTracingShader* D3D12RayTracingShaderCast(CRHIRayTracingShader* Shader)
+{
+    return Shader ? reinterpret_cast<CD3D12RayTracingShader*>(Shader->GetRHIBaseShader()) : nullptr;
 }

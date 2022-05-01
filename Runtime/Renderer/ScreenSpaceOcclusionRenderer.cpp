@@ -43,7 +43,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    SRHIComputePipelineStateInfo PipelineStateInfo;
+    CRHIComputePipelineStateInitializer PipelineStateInfo;
     PipelineStateInfo.Shader = SSAOShader.Get();
 
     PipelineState = RHICreateComputePipelineState(PipelineStateInfo);
@@ -155,7 +155,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    SRHIComputePipelineStateInfo PSOProperties;
+    CRHIComputePipelineStateInitializer PSOProperties;
     PSOProperties.Shader = BlurHorizontalShader.Get();
 
     BlurHorizontalPSO = RHICreateComputePipelineState(PSOProperties);

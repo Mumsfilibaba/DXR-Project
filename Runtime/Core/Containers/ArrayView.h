@@ -13,7 +13,7 @@ class TArrayView
 public:
 
     using ElementType = T;
-    using SizeType = int32;
+    using SizeType    = int32;
 
     /* Iterators */
     typedef TArrayIterator<TArrayView, ElementType>                    IteratorType;
@@ -60,6 +60,17 @@ public:
     FORCEINLINE explicit TArrayView(ElementType(&InArray)[N]) noexcept
         : View(InArray)
         , ViewSize(N)
+    { }
+
+    /**
+     * @brief: Construct a view from a raw-array
+     *
+     * @param InArray: Array to create view from
+     * @param NumElements: Number of elements in the array
+     */
+    FORCEINLINE TArrayView(std::initializer_list<ElementType> InitList) noexcept
+        : View(const_cast<ElementType*>(InitList.begin()))
+        , ViewSize(static_cast<SizeType>(InitList.size()))
     { }
 
     /**

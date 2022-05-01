@@ -7,6 +7,14 @@
 
 #include "CoreApplication/Generic/GenericWindow.h"
 
+#if defined(COMPILER_MSVC)
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
 struct SRHIResourceData;
 struct SClearValue;
 class CRHIRayTracingGeometry;
@@ -55,6 +63,14 @@ struct SRHIRayTracingSupport
 
 class CRHICoreInstance
 {
+protected:
+
+    CRHICoreInstance(ERHIInstanceType InRHIType)
+        : RHIType(InRHIType)
+    { }
+
+    virtual ~CRHICoreInstance() = default;
+
 public:
 
     /**
@@ -256,7 +272,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief: Creates a new Vertex Shader
@@ -264,7 +280,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIVertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Hull Shader
@@ -272,7 +288,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIHullShader* CreateHullShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Domain Shader
@@ -280,7 +296,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIDomainShader* CreateDomainShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Geometry Shader
@@ -288,7 +304,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIGeometryShader* CreateGeometryShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Mesh Shader
@@ -296,7 +312,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIMeshShader* CreateMeshShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Amplification Shader
@@ -304,7 +320,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIAmplificationShader* CreateAmplificationShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Pixel Shader
@@ -312,7 +328,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIPixelShader* CreatePixelShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief: Creates a new Ray-Generation Shader
@@ -320,7 +336,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIRayGenShader* CreateRayGenShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIRayGenShader* RHICreateRayGenShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Ray Any-Hit Shader
@@ -328,7 +344,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIRayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIRayAnyHitShader* RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Ray-Closest-Hit Shader
@@ -336,7 +352,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIRayClosestHitShader* CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIRayClosestHitShader* RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Ray-Miss Shader
@@ -344,7 +360,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIRayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual class CRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief: Create a new DepthStencilState
@@ -352,7 +368,7 @@ public:
      * @param CreateInfo: Info about a DepthStencilState
      * @return: Returns the newly created DepthStencilState
      */
-    virtual class CRHIDepthStencilState* CreateDepthStencilState(const SRHIDepthStencilStateInfo& CreateInfo) = 0;
+    virtual class CRHIDepthStencilState* RHICreateDepthStencilState(const CRHIDepthStencilStateInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new RasterizerState
@@ -360,7 +376,7 @@ public:
      * @param CreateInfo: Info about a RasterizerState
      * @return: Returns the newly created RasterizerState
      */
-    virtual class CRHIRasterizerState* CreateRasterizerState(const SRHIRasterizerStateInfo& CreateInfo) = 0;
+    virtual class CRHIRasterizerState* RHICreateRasterizerState(const CRHIRasterizerStateInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new BlendState
@@ -368,7 +384,7 @@ public:
      * @param CreateInfo: Info about a BlendState
      * @return: Returns the newly created BlendState
      */
-    virtual class CRHIBlendState* CreateBlendState(const SRHIBlendStateInfo& CreateInfo) = 0;
+    virtual class CRHIBlendState* RHICreateBlendState(const CRHIBlendStateInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new InputLayoutState
@@ -376,7 +392,7 @@ public:
      * @param CreateInfo: Info about a InputLayoutState
      * @return: Returns the newly created InputLayoutState
      */
-    virtual class CRHIVertexInputLayout* CreateInputLayout(const SRHIVertexInputLayoutInitializer& CreateInfo) = 0;
+    virtual class CRHIVertexInputLayout* RHICreateVertexInputLayout(const CRHIVertexInputLayoutInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a Graphics PipelineState
@@ -384,7 +400,7 @@ public:
      * @param CreateInfo: Info about the Graphics PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIGraphicsPipelineState* CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateInfo& CreateInfo) = 0;
+    virtual class CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const CRHIGraphicsPipelineStateInitializer& Initializer) = 0;
     
     /**
      * @brief: Create a Compute PipelineState
@@ -392,7 +408,7 @@ public:
      * @param CreateInfo: Info about the Compute PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIComputePipelineState* CreateComputePipelineState(const SRHIComputePipelineStateInfo& CreateInfo) = 0;
+    virtual class CRHIComputePipelineState* RHICreateComputePipelineState(const CRHIComputePipelineStateInitializer& Initializer) = 0;
     
     /**
      * @brief: Create a Ray-Tracing PipelineState
@@ -400,15 +416,14 @@ public:
      * @param CreateInfo: Info about the Ray-Tracing PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState(const SRHIRayTracingPipelineStateInfo& CreateInfo) = 0;
+    virtual class CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const CRHIRayTracingPipelineStateInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new Timestamp Query
      * 
      * @return: Returns the newly created Timestamp Query
      */
-    virtual class CRHITimestampQuery* CreateTimestampQuery() = 0;
-
+    virtual class CRHITimestampQuery* RHICreateTimestampQuery() = 0;
 
     /**
      * @brief: Create a new Viewport
@@ -430,28 +445,18 @@ public:
     virtual class IRHICommandContext* GetDefaultCommandContext() = 0;
 
     /**
-     * @brief: Retrieve the name of the Adapter
-     * 
-     * @return: Returns a string with the Adapter name
-     */
-    virtual String GetAdapterName() const
-    {
-        return String();
-    }
-
-    /**
      * @brief: Check for Ray tracing support
      * 
      * @param OutSupport: Struct containing the Ray tracing support for the system and current RHI
      */
-    virtual void CheckRayTracingSupport(SRHIRayTracingSupport& OutSupport) const = 0;
+    virtual void RHIQueryRayTracingSupport(SRHIRayTracingSupport& OutSupport) const = 0;
 
     /**
      * @brief: Check for Shading-rate support
      *
      * @param OutSupport: Struct containing the Shading-rate support for the system and current RHI
      */
-    virtual void CheckShadingRateSupport(SRHIShadingRateSupport& OutSupport) const = 0;
+    virtual void RHIQueryShadingRateSupport(SRHIShadingRateSupport& OutSupport) const = 0;
 
     /**
      * @brief: Check if the current RHI supports UnorderedAccessViews for the specified format
@@ -459,31 +464,24 @@ public:
      * @param Format: Format to check
      * @return: Returns true if the current RHI supports UnorderedAccessViews with the specified format
      */
-    virtual bool UAVSupportsFormat(EFormat Format) const
-    {
-        UNREFERENCED_VARIABLE(Format);
-        return false;
-    }
+    virtual bool RHIQueryUAVFormatSupport(EFormat Format) const { return false; }
+
+    /**
+     * @brief: Retrieve the name of the Adapter
+     * 
+     * @return: Returns a string with the Adapter name
+     */
+    virtual String GetAdapterName() const { return ""; }
 
     /**
      * @brief: retrieve the current API that is used
      * 
      * @return: Returns the current RHI's API
      */
-    FORCEINLINE ERHIInstanceType GetApi() const
-    {
-        return CurrentRHI;
-    }
+    ERHIInstanceType GetApi() const { return RHIType; }
 
 protected:
-
-    CRHICoreInstance(ERHIInstanceType InCurrentRHI)
-        : CurrentRHI(InCurrentRHI)
-    { }
-
-    virtual ~CRHICoreInstance() = default;
-
-    ERHIInstanceType CurrentRHI;
+    ERHIInstanceType RHIType;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -851,102 +849,102 @@ FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCubeArray
 
 FORCEINLINE CRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreateComputeShader(ShaderCode);
+    return GRHIInstance->RHICreateComputeShader(ShaderCode);
 }
 
 FORCEINLINE CRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreateVertexShader(ShaderCode);
+    return GRHIInstance->RHICreateVertexShader(ShaderCode);
 }
 
 FORCEINLINE CRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreateHullShader(ShaderCode);
+    return GRHIInstance->RHICreateHullShader(ShaderCode);
 }
 
 FORCEINLINE CRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreateDomainShader(ShaderCode);
+    return GRHIInstance->RHICreateDomainShader(ShaderCode);
 }
 
 FORCEINLINE CRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreateGeometryShader(ShaderCode);
+    return GRHIInstance->RHICreateGeometryShader(ShaderCode);
 }
 
 FORCEINLINE CRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreateMeshShader(ShaderCode);
+    return GRHIInstance->RHICreateMeshShader(ShaderCode);
 }
 
 FORCEINLINE CRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreateAmplificationShader(ShaderCode);
+    return GRHIInstance->RHICreateAmplificationShader(ShaderCode);
 }
 
 FORCEINLINE CRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreatePixelShader(ShaderCode);
+    return GRHIInstance->RHICreatePixelShader(ShaderCode);
 }
 
 FORCEINLINE CRHIRayGenShader* RHICreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreateRayGenShader(ShaderCode);
+    return GRHIInstance->RHICreateRayGenShader(ShaderCode);
 }
 
 FORCEINLINE CRHIRayAnyHitShader* RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreateRayAnyHitShader(ShaderCode);
+    return GRHIInstance->RHICreateRayAnyHitShader(ShaderCode);
 }
 
 FORCEINLINE CRHIRayClosestHitShader* RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreateRayClosestHitShader(ShaderCode);
+    return GRHIInstance->RHICreateRayClosestHitShader(ShaderCode);
 }
 
 FORCEINLINE CRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    return GRHIInstance->CreateRayMissShader(ShaderCode);
+    return GRHIInstance->RHICreateRayMissShader(ShaderCode);
 }
 
-FORCEINLINE CRHIVertexInputLayout* RHICreateInputLayout(const SRHIVertexInputLayoutInitializer& CreateInfo)
+FORCEINLINE CRHIVertexInputLayout* RHICreateVertexInputLayout(const CRHIVertexInputLayoutInitializer& Initializer)
 {
-    return GRHIInstance->CreateInputLayout(CreateInfo);
+    return GRHIInstance->RHICreateVertexInputLayout(Initializer);
 }
 
-FORCEINLINE CRHIDepthStencilState* RHICreateDepthStencilState(const SRHIDepthStencilStateInfo& CreateInfo)
+FORCEINLINE CRHIDepthStencilState* RHICreateDepthStencilState(const CRHIDepthStencilStateInitializer& Initializer)
 {
-    return GRHIInstance->CreateDepthStencilState(CreateInfo);
+    return GRHIInstance->RHICreateDepthStencilState(Initializer);
 }
 
-FORCEINLINE CRHIRasterizerState* RHICreateRasterizerState(const SRHIRasterizerStateInfo& CreateInfo)
+FORCEINLINE CRHIRasterizerState* RHICreateRasterizerState(const CRHIRasterizerStateInitializer& Initializer)
 {
-    return GRHIInstance->CreateRasterizerState(CreateInfo);
+    return GRHIInstance->RHICreateRasterizerState(Initializer);
 }
 
-FORCEINLINE CRHIBlendState* RHICreateBlendState(const SRHIBlendStateInfo& CreateInfo)
+FORCEINLINE CRHIBlendState* RHICreateBlendState(const CRHIBlendStateInitializer& Initializer)
 {
-    return GRHIInstance->CreateBlendState(CreateInfo);
+    return GRHIInstance->RHICreateBlendState(Initializer);
 }
 
-FORCEINLINE CRHIComputePipelineState* RHICreateComputePipelineState(const SRHIComputePipelineStateInfo& CreateInfo)
+FORCEINLINE CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const CRHIGraphicsPipelineStateInitializer& Initializer)
 {
-    return GRHIInstance->CreateComputePipelineState(CreateInfo);
+    return GRHIInstance->RHICreateGraphicsPipelineState(Initializer);
 }
 
-FORCEINLINE CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const SRHIGraphicsPipelineStateInfo& CreateInfo)
+FORCEINLINE CRHIComputePipelineState* RHICreateComputePipelineState(const CRHIComputePipelineStateInitializer& Initializer)
 {
-    return GRHIInstance->CreateGraphicsPipelineState(CreateInfo);
+    return GRHIInstance->RHICreateComputePipelineState(Initializer);
 }
 
-FORCEINLINE CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const SRHIRayTracingPipelineStateInfo& CreateInfo)
+FORCEINLINE CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const CRHIRayTracingPipelineStateInitializer& Initializer)
 {
-    return GRHIInstance->CreateRayTracingPipelineState(CreateInfo);
+    return GRHIInstance->RHICreateRayTracingPipelineState(Initializer);
 }
 
 FORCEINLINE class CRHITimestampQuery* RHICreateTimestampQuery()
 {
-    return GRHIInstance->CreateTimestampQuery();
+    return GRHIInstance->RHICreateTimestampQuery();
 }
 
 FORCEINLINE class CRHIViewport* RHICreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
@@ -954,9 +952,9 @@ FORCEINLINE class CRHIViewport* RHICreateViewport(CGenericWindow* Window, uint32
     return GRHIInstance->CreateViewport(Window, Width, Height, ColorFormat, DepthFormat);
 }
 
-FORCEINLINE bool RHIUAVSupportsFormat(EFormat Format)
+FORCEINLINE bool RHIQueryUAVFormatSupport(EFormat Format)
 {
-    return GRHIInstance->UAVSupportsFormat(Format);
+    return GRHIInstance->RHIQueryUAVFormatSupport(Format);
 }
 
 FORCEINLINE class IRHICommandContext* RHIGetDefaultCommandContext()
@@ -969,28 +967,34 @@ FORCEINLINE String RHIGetAdapterName()
     return GRHIInstance->GetAdapterName();
 }
 
-FORCEINLINE void RHICheckShadingRateSupport(SRHIShadingRateSupport& OutSupport)
+FORCEINLINE void RHIQueryShadingRateSupport(SRHIShadingRateSupport& OutSupport)
 {
-    GRHIInstance->CheckShadingRateSupport(OutSupport);
+    GRHIInstance->RHIQueryShadingRateSupport(OutSupport);
 }
 
-FORCEINLINE void RHICheckRayTracingSupport(SRHIRayTracingSupport& OutSupport)
+FORCEINLINE void RHIQueryRayTracingSupport(SRHIRayTracingSupport& OutSupport)
 {
-    GRHIInstance->CheckRayTracingSupport(OutSupport);
+    GRHIInstance->RHIQueryRayTracingSupport(OutSupport);
 }
 
 FORCEINLINE bool RHISupportsRayTracing()
 {
     SRHIRayTracingSupport Support;
-    RHICheckRayTracingSupport(Support);
+    RHIQueryRayTracingSupport(Support);
 
-    return (Support.Tier != ERHIRayTracingTier::NotSupported);
+    return false;// (Support.Tier != ERHIRayTracingTier::NotSupported);
 }
 
 FORCEINLINE bool RHISupportsVariableRateShading()
 {
     SRHIShadingRateSupport Support;
-    RHICheckShadingRateSupport(Support);
+    RHIQueryShadingRateSupport(Support);
 
     return (Support.Tier != ERHIShadingRateTier::NotSupported);
 }
+
+#if defined(COMPILER_MSVC)
+    #pragma warning(pop)
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic pop
+#endif

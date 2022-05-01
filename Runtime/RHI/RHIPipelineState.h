@@ -3,6 +3,7 @@
 #include "RHIResourceBase.h"
 
 #include "Core/Templates/UnderlyingType.h"
+#include "core/Containers/StaticArray.h"
 
 #if defined(COMPILER_MSVC)
     #pragma warning(push)
@@ -26,7 +27,7 @@ typedef TSharedRef<class CRHIRayTracingPipelineState> RHIRayTracingPipelineState
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EDepthWriteMask
 
-enum class EDepthWriteMask
+enum class EDepthWriteMask : uint8
 {
     Zero = 0,
     All  = 1
@@ -36,16 +37,16 @@ inline const char* ToString(EDepthWriteMask DepthWriteMask)
 {
     switch (DepthWriteMask)
     {
-    case EDepthWriteMask::Zero: return "Zero";
-    case EDepthWriteMask::All:  return "All";
-    default:                    return "Unknown";
+        case EDepthWriteMask::Zero: return "Zero";
+        case EDepthWriteMask::All:  return "All";
+        default:                    return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EStencilOp
 
-enum class EStencilOp
+enum class EStencilOp : uint8
 {
     Keep    = 1,
     Zero    = 2,
@@ -61,15 +62,15 @@ inline const char* ToString(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
-    case EStencilOp::Keep:    return "Keep";
-    case EStencilOp::Zero:    return "Zero";
-    case EStencilOp::Replace: return "Replace";
-    case EStencilOp::IncrSat: return "IncrSat";
-    case EStencilOp::DecrSat: return "DecrSat";
-    case EStencilOp::Invert:  return "Invert";
-    case EStencilOp::Incr:    return "Incr";
-    case EStencilOp::Decr:    return "Decr";
-    default:                  return "Unknown";
+        case EStencilOp::Keep:    return "Keep";
+        case EStencilOp::Zero:    return "Zero";
+        case EStencilOp::Replace: return "Replace";
+        case EStencilOp::IncrSat: return "IncrSat";
+        case EStencilOp::DecrSat: return "DecrSat";
+        case EStencilOp::Invert:  return "Invert";
+        case EStencilOp::Incr:    return "Incr";
+        case EStencilOp::Decr:    return "Decr";
+        default:                  return "Unknown";
     }
 }
 
@@ -124,18 +125,79 @@ struct SDepthStencilStateFace
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIDepthStencilStateInfo
+// CRHIDepthStencilStateInitializer
 
-struct SRHIDepthStencilStateInfo
+class CRHIDepthStencilStateInitializer
 {
-    EDepthWriteMask DepthWriteMask   = EDepthWriteMask::All;
-    EComparisonFunc DepthFunc        = EComparisonFunc::Less;
-    bool            bDepthEnable     = true;
-    uint8           StencilReadMask  = 0xff;
-    uint8           StencilWriteMask = 0xff;
-    bool            bStencilEnable   = false;
-    SDepthStencilStateFace FrontFace        = SDepthStencilStateFace();
-    SDepthStencilStateFace BackFace         = SDepthStencilStateFace();
+public:
+
+    CRHIDepthStencilStateInitializer()
+        : DepthWriteMask(EDepthWriteMask::All)
+        , DepthFunc(EComparisonFunc::Less)
+        , bDepthEnable(true)
+        , StencilReadMask(0xff)
+        , StencilWriteMask(0xff)
+        , bStencilEnable(false)
+        , FrontFace()
+        , BackFace()
+    { }
+
+    CRHIDepthStencilStateInitializer( EComparisonFunc InDepthFunc
+                                    , bool bInDepthEnable
+                                    , EDepthWriteMask InDepthWriteMask = EDepthWriteMask::All
+                                    , bool bInStencilEnable = false
+                                    , uint8 InStencilReadMask = 0xff
+                                    , uint8 InStencilWriteMask = 0xff
+                                    , const SDepthStencilStateFace& InFrontFace = SDepthStencilStateFace()
+                                    , const SDepthStencilStateFace& InBackFace = SDepthStencilStateFace())
+        : DepthWriteMask(InDepthWriteMask)
+        , DepthFunc(InDepthFunc)
+        , bDepthEnable(bInDepthEnable)
+        , StencilReadMask(InStencilReadMask)
+        , StencilWriteMask(InStencilWriteMask)
+        , bStencilEnable(bInStencilEnable)
+        , FrontFace(InFrontFace)
+        , BackFace(InBackFace)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToUnderlying(DepthWriteMask);
+        HashCombine(Hash, ToUnderlying(DepthFunc));
+        HashCombine(Hash, bDepthEnable);
+        HashCombine(Hash, StencilReadMask);
+        HashCombine(Hash, StencilWriteMask);
+        HashCombine(Hash, bStencilEnable);
+        HashCombine(Hash, FrontFace.GetHash());
+        HashCombine(Hash, BackFace.GetHash());
+        return Hash;
+    }
+
+    bool operator==(const CRHIDepthStencilStateInitializer& RHS) const
+    {
+        return (DepthWriteMask   == RHS.DepthWriteMask)
+            && (DepthFunc        == RHS.DepthFunc)
+            && (bDepthEnable     == RHS.bDepthEnable)
+            && (StencilReadMask  == RHS.StencilReadMask)
+            && (StencilWriteMask == RHS.StencilWriteMask)
+            && (bStencilEnable   == RHS.bStencilEnable)
+            && (FrontFace        == RHS.FrontFace)
+            && (BackFace         == RHS.BackFace);
+    }
+
+    bool operator!=(const CRHIDepthStencilStateInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    EDepthWriteMask        DepthWriteMask;
+    EComparisonFunc        DepthFunc;
+    bool                   bDepthEnable;
+    uint8                  StencilReadMask;
+    uint8                  StencilWriteMask;
+    bool                   bStencilEnable;
+    SDepthStencilStateFace FrontFace;
+    SDepthStencilStateFace BackFace;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -152,7 +214,7 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ECullMode
 
-enum class ECullMode
+enum class ECullMode : uint8
 {
     None  = 1,
     Front = 2,
@@ -163,17 +225,17 @@ inline const char* ToString(ECullMode CullMode)
 {
     switch (CullMode)
     {
-    case ECullMode::None:  return "None";
-    case ECullMode::Front: return "Front";
-    case ECullMode::Back:  return "Back";
-    default:               return "Unknown";
+        case ECullMode::None:  return "None";
+        case ECullMode::Front: return "Front";
+        case ECullMode::Back:  return "Back";
+        default:               return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EFillMode
 
-enum class EFillMode
+enum class EFillMode : uint8
 {
     WireFrame = 1,
     Solid     = 2
@@ -183,28 +245,104 @@ inline const char* ToString(EFillMode FillMode)
 {
     switch (FillMode)
     {
-    case EFillMode::WireFrame: return "WireFrame";
-    case EFillMode::Solid:     return "Solid";
-    default:                   return "Unknown";
+        case EFillMode::WireFrame: return "WireFrame";
+        case EFillMode::Solid:     return "Solid";
+        default:                   return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRasterizerStateInfo
+// CRHIRasterizerStateInitializer
 
-struct SRHIRasterizerStateInfo
+class CRHIRasterizerStateInitializer
 {
-    EFillMode FillMode                  = EFillMode::Solid;
-    ECullMode CullMode                  = ECullMode::Back;
-    bool      bFrontCounterClockwise    = false;
-    int32     DepthBias                 = 0;
-    float     DepthBiasClamp            = 0.0f;
-    float     SlopeScaledDepthBias      = 0.0f;
-    bool      bDepthClipEnable          = true;
-    bool      bMultisampleEnable        = false;
-    bool      bAntialiasedLineEnable    = false;
-    uint32    ForcedSampleCount         = 0;
-    bool      bEnableConservativeRaster = false;
+public:
+
+    CRHIRasterizerStateInitializer()
+        : FillMode(EFillMode::Solid)
+        , CullMode(ECullMode::Back)
+        , bFrontCounterClockwise(false)
+        , DepthBias(0)
+        , DepthBiasClamp(0.0f)
+        , SlopeScaledDepthBias(0.0f)
+        , bDepthClipEnable(true)
+        , bMultisampleEnable(false)
+        , bAntialiasedLineEnable(false)
+        , ForcedSampleCount(0)
+        , bEnableConservativeRaster(false)
+    { }
+
+    CRHIRasterizerStateInitializer( EFillMode InFillMode
+                                  , ECullMode InCullMode
+                                  , bool bInFrontCounterClockwise = false
+                                  , int32 InDepthBias = 0
+                                  , float InDepthBiasClamp = 0.0f
+                                  , float InSlopeScaledDepthBias = 0.0f
+                                  , bool bInDepthClipEnable = true
+                                  , bool bInMultisampleEnable = false
+                                  , bool bInAntialiasedLineEnable = false
+                                  , uint32 InForcedSampleCount = 1
+                                  , bool bInEnableConservativeRaster = false)
+        : FillMode(InFillMode)
+        , CullMode(InCullMode)
+        , bFrontCounterClockwise(bInFrontCounterClockwise)
+        , DepthBias(InDepthBias)
+        , DepthBiasClamp(InDepthBiasClamp)
+        , SlopeScaledDepthBias(InSlopeScaledDepthBias)
+        , bDepthClipEnable(bInDepthClipEnable)
+        , bMultisampleEnable(bInMultisampleEnable)
+        , bAntialiasedLineEnable(bInAntialiasedLineEnable)
+        , ForcedSampleCount(InForcedSampleCount)
+        , bEnableConservativeRaster(bInEnableConservativeRaster)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToUnderlying(FillMode);
+        HashCombine(Hash, ToUnderlying(CullMode));
+        HashCombine(Hash, bFrontCounterClockwise);
+        HashCombine(Hash, bDepthClipEnable);
+        HashCombine(Hash, bMultisampleEnable);
+        HashCombine(Hash, bAntialiasedLineEnable);
+        HashCombine(Hash, bEnableConservativeRaster);
+        HashCombine(Hash, ForcedSampleCount);
+        HashCombine(Hash, DepthBias);
+        HashCombine(Hash, DepthBiasClamp);
+        HashCombine(Hash, SlopeScaledDepthBias);
+        return Hash;
+    }
+
+    bool operator==(const CRHIRasterizerStateInitializer& RHS) const
+    {
+        return (FillMode                  == RHS.FillMode)
+            && (CullMode                  == RHS.CullMode)
+            && (bFrontCounterClockwise    == RHS.bFrontCounterClockwise)
+            && (DepthBias                 == RHS.DepthBias)
+            && (DepthBiasClamp            == RHS.DepthBiasClamp)
+            && (SlopeScaledDepthBias      == RHS.SlopeScaledDepthBias)
+            && (bDepthClipEnable          == RHS.bDepthClipEnable)
+            && (bMultisampleEnable        == RHS.bMultisampleEnable)
+            && (bAntialiasedLineEnable    == RHS.bAntialiasedLineEnable)
+            && (ForcedSampleCount         == RHS.ForcedSampleCount)
+            && (bEnableConservativeRaster == RHS.bEnableConservativeRaster);
+    }
+
+    bool operator!=(const CRHIRasterizerStateInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    EFillMode FillMode;
+    ECullMode CullMode;
+    bool      bFrontCounterClockwise;
+    bool      bDepthClipEnable;
+    bool      bMultisampleEnable;
+    bool      bAntialiasedLineEnable;
+    bool      bEnableConservativeRaster;
+    uint32    ForcedSampleCount;
+    int32     DepthBias;
+    float     DepthBiasClamp;
+    float     SlopeScaledDepthBias;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -221,7 +359,7 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EBlendType 
 
-enum class EBlendType 
+enum class EBlendType : uint8
 {
     Zero           = 1,
     One            = 2,
@@ -229,10 +367,10 @@ enum class EBlendType
     InvSrcColor    = 4,
     SrcAlpha       = 5,
     InvSrcAlpha    = 6,
-    DestAlpha      = 7,
-    InvDestAlpha   = 8,
-    DestColor      = 9,
-    InvDestColor   = 10,
+    DstAlpha       = 7,
+    InvDstAlpha    = 8,
+    DstColor       = 9,
+    InvDstColor    = 10,
     SrcAlphaSat    = 11,
     BlendFactor    = 12,
     InvBlendFactor = 13,
@@ -246,31 +384,31 @@ inline const char* ToString(EBlendType  Blend)
 {
     switch (Blend)
     {
-    case EBlendType ::Zero:           return "Zero";
-    case EBlendType ::One:            return "One";
-    case EBlendType ::SrcColor:       return "SrcColor";
-    case EBlendType ::InvSrcColor:    return "InvSrcColor";
-    case EBlendType ::SrcAlpha:       return "SrcAlpha";
-    case EBlendType ::InvSrcAlpha:    return "InvSrcAlpha";
-    case EBlendType ::DestAlpha:      return "DestAlpha";
-    case EBlendType ::InvDestAlpha:   return "InvDestAlpha";
-    case EBlendType ::DestColor:      return "DestColor";
-    case EBlendType ::InvDestColor:   return "InvDestColor";
-    case EBlendType ::SrcAlphaSat:    return "SrcAlphaSat";
-    case EBlendType ::BlendFactor:    return "BlendFactor";
-    case EBlendType ::InvBlendFactor: return "InvBlendFactor";
-    case EBlendType ::Src1Color:      return "Src1Color";
-    case EBlendType ::InvSrc1Color:   return "InvSrc1Color";
-    case EBlendType ::Src1Alpha:      return "Src1Alpha";
-    case EBlendType ::InvSrc1Alpha:   return "InvSrc1Alpha";
-    default:                          return "Unknown";
+        case EBlendType ::Zero:           return "Zero";
+        case EBlendType ::One:            return "One";
+        case EBlendType ::SrcColor:       return "SrcColor";
+        case EBlendType ::InvSrcColor:    return "InvSrcColor";
+        case EBlendType ::SrcAlpha:       return "SrcAlpha";
+        case EBlendType ::InvSrcAlpha:    return "InvSrcAlpha";
+        case EBlendType ::DstAlpha:       return "DstAlpha";
+        case EBlendType ::InvDstAlpha:    return "InvDstAlpha";
+        case EBlendType ::DstColor:       return "DstColor";
+        case EBlendType ::InvDstColor:    return "InvDstColor";
+        case EBlendType ::SrcAlphaSat:    return "SrcAlphaSat";
+        case EBlendType ::BlendFactor:    return "BlendFactor";
+        case EBlendType ::InvBlendFactor: return "InvBlendFactor";
+        case EBlendType ::Src1Color:      return "Src1Color";
+        case EBlendType ::InvSrc1Color:   return "InvSrc1Color";
+        case EBlendType ::Src1Alpha:      return "Src1Alpha";
+        case EBlendType ::InvSrc1Alpha:   return "InvSrc1Alpha";
+        default:                          return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EBlendOp
 
-enum class EBlendOp
+enum class EBlendOp : uint8
 {
     Add         = 1,
     Subtract    = 2,
@@ -283,19 +421,19 @@ inline const char* ToString(EBlendOp BlendOp)
 {
     switch (BlendOp)
     {
-    case EBlendOp::Add:         return "Add";
-    case EBlendOp::Subtract:    return "Subtract";
-    case EBlendOp::RevSubtract: return "RevSubtract";
-    case EBlendOp::Min:         return "Min";
-    case EBlendOp::Max:         return "Max";
-    default:                    return "Unknown";
+        case EBlendOp::Add:         return "Add";
+        case EBlendOp::Subtract:    return "Subtract";
+        case EBlendOp::RevSubtract: return "RevSubtract";
+        case EBlendOp::Min:         return "Min";
+        case EBlendOp::Max:         return "Max";
+        default:                    return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ELogicOp
 
-enum class ELogicOp
+enum class ELogicOp : uint8
 {
     Clear        = 0,
     Set          = 1,
@@ -319,110 +457,239 @@ inline const char* ToString(ELogicOp LogicOp)
 {
     switch (LogicOp)
     {
-    case ELogicOp::Clear:        return "Clear";
-    case ELogicOp::Set:          return "Set";
-    case ELogicOp::Copy:         return "Copy";
-    case ELogicOp::CopyInverted: return "CopyInverted";
-    case ELogicOp::Noop:         return "Noop";
-    case ELogicOp::Invert:       return "Invert";
-    case ELogicOp::And:          return "And";
-    case ELogicOp::Nand:         return "Nand";
-    case ELogicOp::Or:           return "Or";
-    case ELogicOp::Nor:          return "Nor";
-    case ELogicOp::Xor:          return "Xor";
-    case ELogicOp::Equiv:        return "Equiv";
-    case ELogicOp::AndReverse:   return "AndReverse";
-    case ELogicOp::AndInverted:  return "AndInverted";
-    case ELogicOp::OrReverse:    return "OrReverse";
-    case ELogicOp::OrInverted:   return "OrInverted";
-    default:                     return "Unknown";
+        case ELogicOp::Clear:        return "Clear";
+        case ELogicOp::Set:          return "Set";
+        case ELogicOp::Copy:         return "Copy";
+        case ELogicOp::CopyInverted: return "CopyInverted";
+        case ELogicOp::Noop:         return "Noop";
+        case ELogicOp::Invert:       return "Invert";
+        case ELogicOp::And:          return "And";
+        case ELogicOp::Nand:         return "Nand";
+        case ELogicOp::Or:           return "Or";
+        case ELogicOp::Nor:          return "Nor";
+        case ELogicOp::Xor:          return "Xor";
+        case ELogicOp::Equiv:        return "Equiv";
+        case ELogicOp::AndReverse:   return "AndReverse";
+        case ELogicOp::AndInverted:  return "AndInverted";
+        case ELogicOp::OrReverse:    return "OrReverse";
+        case ELogicOp::OrInverted:   return "OrInverted";
+        default:                     return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EColorWriteFlag
 
-enum EColorWriteFlag : uint8
+enum class EColorWriteFlag : uint8
 {
-    ColorWriteFlag_None  = 0,
-    ColorWriteFlag_Red   = 1,
-    ColorWriteFlag_Green = 2,
-    ColorWriteFlag_Blue  = 4,
-    ColorWriteFlag_Alpha = 8,
-    ColorWriteFlag_All   = (((ColorWriteFlag_Red | ColorWriteFlag_Green) | ColorWriteFlag_Blue) | ColorWriteFlag_Alpha)
+    None  = 0,
+    Red   = FLAG(0),
+    Green = FLAG(1),
+    Blue  = FLAG(2),
+    Alpha = FLAG(3),
+    All   = (Red | Green | Blue | Alpha)
 };
+
+ENUM_CLASS_OPERATORS(EColorWriteFlag);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRenderTargetWriteState
 
 struct SRenderTargetWriteState
 {
-    SRenderTargetWriteState() = default;
+    SRenderTargetWriteState()
+        : Mask(EColorWriteFlag::All)
+    { }
 
-    SRenderTargetWriteState(uint8 InMask)
+    SRenderTargetWriteState(EColorWriteFlag InMask)
         : Mask(InMask)
     { }
 
     FORCEINLINE bool WriteNone() const
     {
-        return Mask == ColorWriteFlag_None;
+        return (Mask == EColorWriteFlag::None);
     }
 
     FORCEINLINE bool WriteRed() const
     {
-        return (Mask & ColorWriteFlag_Red);
+        return ((Mask & EColorWriteFlag::Red) != EColorWriteFlag::None);
     }
 
     FORCEINLINE bool WriteGreen() const
     {
-        return (Mask & ColorWriteFlag_Green);
+        return ((Mask & EColorWriteFlag::Green) != EColorWriteFlag::None);
     }
 
     FORCEINLINE bool WriteBlue() const
     {
-        return (Mask & ColorWriteFlag_Blue);
+        return ((Mask & EColorWriteFlag::Blue) != EColorWriteFlag::None);
     }
 
     FORCEINLINE bool WriteAlpha() const
     {
-        return (Mask & ColorWriteFlag_Alpha);
+        return ((Mask & EColorWriteFlag::Alpha) != EColorWriteFlag::None);
     }
 
     FORCEINLINE bool WriteAll() const
     {
-        return Mask == ColorWriteFlag_All;
+        return (Mask == EColorWriteFlag::All);
     }
 
-    uint8 Mask = ColorWriteFlag_All;
+    FORCEINLINE bool operator==(SRenderTargetWriteState RHS) const
+    {
+        return (Mask == RHS.Mask);
+    }
+
+    FORCEINLINE bool operator!=(SRenderTargetWriteState RHS) const
+    {
+        return (Mask != RHS.Mask);
+    }
+
+    EColorWriteFlag Mask;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRenderTargetBlendState
+// SRenderTargetBlendDesc
 
-struct SRenderTargetBlendState
+struct SRenderTargetBlendDesc
 {
-    EBlendType SrcBlend       = EBlendType ::One;
-    EBlendType DestBlend      = EBlendType ::Zero;
-    EBlendOp   BlendOp        = EBlendOp::Add;
-    EBlendType SrcBlendAlpha  = EBlendType ::One;
-    EBlendType DestBlendAlpha = EBlendType ::Zero;
-    EBlendOp   BlendOpAlpha   = EBlendOp::Add;;
-    ELogicOp   LogicOp        = ELogicOp::Noop;
+    SRenderTargetBlendDesc()
+        : SrcBlend(EBlendType::One)
+        , DstBlend(EBlendType::Zero)
+        , BlendOp(EBlendOp::Add)
+        , SrcBlendAlpha(EBlendType::One)
+        , DstBlendAlpha(EBlendType::Zero)
+        , BlendOpAlpha(EBlendOp::Add)
+        , LogicOp(ELogicOp::Noop)
+        , bBlendEnable(false)
+        , bLogicOpEnable(false)
+        , RenderTargetWriteMask()
+    { }
 
-    bool bBlendEnable         = false;
-    bool bLogicOpEnable       = false;
+    SRenderTargetBlendDesc( bool bInBlendEnable
+                          , EBlendType InSrcBlend
+                          , EBlendType InDstBlend
+                          , EBlendOp InBlendOp = EBlendOp::Add
+                          , EBlendType InSrcBlendAlpha = EBlendType::One
+                          , EBlendType InDstBlendAlpha = EBlendType::Zero
+                          , EBlendOp InBlendOpAlpha = EBlendOp::Add
+                          , ELogicOp InLogicOp = ELogicOp::Noop
+                          , bool bInLogicOpEnable = false
+                          , SRenderTargetWriteState InRenderTargetWriteMask = SRenderTargetWriteState())
+        : SrcBlend(InSrcBlend)
+        , DstBlend(InDstBlend)
+        , BlendOp(InBlendOp)
+        , SrcBlendAlpha(InSrcBlendAlpha)
+        , DstBlendAlpha(InDstBlendAlpha)
+        , BlendOpAlpha(InBlendOpAlpha)
+        , LogicOp(InLogicOp)
+        , bBlendEnable(bInBlendEnable)
+        , bLogicOpEnable(bInLogicOpEnable)
+        , RenderTargetWriteMask(InRenderTargetWriteMask)
+    { }
 
+    uint64 GetHash() const
+    {
+        if (bBlendEnable && bLogicOpEnable)
+        {
+            return 0;
+        }
+
+        uint64 Hash = ToUnderlying(SrcBlend);
+        HashCombine(Hash, ToUnderlying(DstBlend));
+        HashCombine(Hash, ToUnderlying(BlendOp));
+        HashCombine(Hash, ToUnderlying(SrcBlendAlpha));
+        HashCombine(Hash, ToUnderlying(DstBlendAlpha));
+        HashCombine(Hash, ToUnderlying(BlendOpAlpha));
+        HashCombine(Hash, ToUnderlying(LogicOp));
+        HashCombine(Hash, bBlendEnable);
+        HashCombine(Hash, bLogicOpEnable);
+        HashCombine(Hash, RenderTargetWriteMask.Mask);
+        return Hash;
+    }
+
+    bool operator==(const SRenderTargetBlendDesc& RHS) const
+    {
+        return (SrcBlend              == RHS.SrcBlend)
+            && (DstBlend              == RHS.DstBlend)
+            && (BlendOp               == RHS.BlendOp)
+            && (SrcBlendAlpha         == RHS.SrcBlendAlpha)
+            && (DstBlendAlpha         == RHS.DstBlendAlpha)
+            && (BlendOpAlpha          == RHS.BlendOpAlpha)
+            && (LogicOp               == RHS.LogicOp)
+            && (bBlendEnable          == RHS.bBlendEnable)
+            && (bLogicOpEnable        == RHS.bLogicOpEnable)
+            && (RenderTargetWriteMask == RHS.RenderTargetWriteMask);
+    }
+
+    bool operator!=(const SRenderTargetBlendDesc& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    EBlendType              SrcBlend;
+    EBlendType              DstBlend;
+    EBlendOp                BlendOp;
+    EBlendType              SrcBlendAlpha;
+    EBlendType              DstBlendAlpha;
+    EBlendOp                BlendOpAlpha;
+    ELogicOp                LogicOp;
+    bool                    bBlendEnable;
+    bool                    bLogicOpEnable;
     SRenderTargetWriteState RenderTargetWriteMask;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIBlendStateInfo
+// CRHIBlendStateInitializer
 
-struct SRHIBlendStateInfo
+class CRHIBlendStateInitializer
 {
-    bool bAlphaToCoverageEnable  = false;
-    bool bIndependentBlendEnable = false;
-    SRenderTargetBlendState RenderTarget[8];
+public:
+
+    CRHIBlendStateInitializer()
+        : RenderTargets()
+        , bAlphaToCoverageEnable(false)
+        , bIndependentBlendEnable(false)
+    { }
+
+    CRHIBlendStateInitializer( const TStaticArray<SRenderTargetBlendDesc, kRHIMaxRenderTargetCount>& InRenderTargets
+                             , bool bInAlphaToCoverageEnable
+                             , bool bInIndependentBlendEnable)
+        : RenderTargets(InRenderTargets)
+        , bAlphaToCoverageEnable(bInAlphaToCoverageEnable)
+        , bIndependentBlendEnable(bInIndependentBlendEnable)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = 0;
+
+        const uint32 NumRenderTargets = bIndependentBlendEnable ? kRHIMaxRenderTargetCount : 1u;
+        for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
+        {
+            HashCombine(Hash, RenderTargets[Index].GetHash());
+        }
+
+        HashCombine(Hash, bAlphaToCoverageEnable);
+        HashCombine(Hash, bIndependentBlendEnable);
+        return Hash;
+    }
+
+    bool operator==(const CRHIBlendStateInitializer& RHS) const
+    {
+        return (RenderTargets           == RHS.RenderTargets)
+            && (bAlphaToCoverageEnable  == RHS.bAlphaToCoverageEnable)
+            && (bIndependentBlendEnable == RHS.bIndependentBlendEnable);
+    }
+
+    bool operator!=(const CRHIBlendStateInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    TStaticArray<SRenderTargetBlendDesc, kRHIMaxRenderTargetCount> RenderTargets;
+    bool bAlphaToCoverageEnable;
+    bool bIndependentBlendEnable;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -439,7 +706,7 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EVertexInputClass
 
-enum class EVertexInputClass
+enum class EVertexInputClass : uint8
 {
     Vertex   = 0,
     Instance = 1,
@@ -460,29 +727,85 @@ inline const char* ToString(EVertexInputClass BlendOp)
 
 struct SVertexInputElement
 {
-    String            Semantic            = "";
-    uint32            SemanticIndex       = 0;
-    EFormat           Format              = EFormat::Unknown;
-    uint32            InputSlot           = 0;
-    uint32            ByteOffset          = 0;
-    EVertexInputClass InputClassification = EVertexInputClass::Vertex;
-    uint32            InstanceStepRate    = 0;
+    SVertexInputElement()
+        : Semantic("")
+        , SemanticIndex(0)
+        , Format(EFormat::Unknown)
+        , InputSlot(0)
+        , ByteOffset(0)
+        , InputClass(EVertexInputClass::Vertex)
+        , InstanceStepRate(0)
+    { }
+
+    SVertexInputElement( const String& InSemantic
+                       , uint32 InSemanticIndex
+                       , EFormat InFormat
+                       , uint32 InInputSlot
+                       , uint32 InByteOffset
+                       , EVertexInputClass InInputClass
+                       , uint32 InInstanceStepRate)
+        : Semantic(InSemantic)
+        , SemanticIndex(InSemanticIndex)
+        , Format(InFormat)
+        , InputSlot(InInputSlot)
+        , ByteOffset(InByteOffset)
+        , InputClass(InInputClass)
+        , InstanceStepRate(InInstanceStepRate)
+    { }
+
+    bool operator==(const SVertexInputElement& RHS) const
+    {
+        return (Semantic         == RHS.Semantic)
+            && (SemanticIndex    == RHS.SemanticIndex)
+            && (Format           == RHS.Format)
+            && (InputSlot        == RHS.InputSlot)
+            && (ByteOffset       == RHS.ByteOffset)
+            && (InputClass       == RHS.InputClass)
+            && (InstanceStepRate == RHS.InstanceStepRate);
+    }
+
+    bool operator!=(const SVertexInputElement& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    String            Semantic;
+    uint32            SemanticIndex;
+    EFormat           Format;
+    uint32            InputSlot;
+    uint32            ByteOffset;
+    EVertexInputClass InputClass;
+    uint32            InstanceStepRate;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIVertexInputLayoutInitializer
+// CRHIVertexInputLayoutInitializer
 
-struct SRHIVertexInputLayoutInitializer
+class CRHIVertexInputLayoutInitializer
 {
-    SRHIVertexInputLayoutInitializer() = default;
+public:
 
-    SRHIVertexInputLayoutInitializer(const TArray<SVertexInputElement>& InElements)
+    CRHIVertexInputLayoutInitializer()
+        : Elements()
+    { }
+
+    CRHIVertexInputLayoutInitializer(const TArray<SVertexInputElement>& InElements)
         : Elements(InElements)
     { }
 
-    SRHIVertexInputLayoutInitializer(std::initializer_list<SVertexInputElement> InList)
+    CRHIVertexInputLayoutInitializer(std::initializer_list<SVertexInputElement> InList)
         : Elements(InList)
     { }
+
+    bool operator==(const CRHIVertexInputLayoutInitializer& RHS) const
+    {
+        return (Elements == RHS.Elements);
+    }
+
+    bool operator!=(const CRHIVertexInputLayoutInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
 
     TArray<SVertexInputElement> Elements;
 };
@@ -501,7 +824,7 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EIndexBufferStripCutValue
 
-enum EIndexBufferStripCutValue
+enum EIndexBufferStripCutValue : uint8
 {
     IndexBufferStripCutValue_Disabled   = 0,
     IndexBufferStripCutValue_0xffff     = 1,
@@ -518,16 +841,6 @@ inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
         default:                                  return "";
     }
 }
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SPipelineRenderTargetFormats
-
-struct SPipelineRenderTargetFormats
-{
-    EFormat RenderTargetFormats[8];
-    uint32  NumRenderTargets   = 0;
-    EFormat DepthStencilFormat = EFormat::Unknown;
-};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIPipelineState
@@ -549,39 +862,152 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SGraphicsPipelineShaderState
+// SGraphicsPipelineFormats
 
-struct SGraphicsPipelineShaderState
+struct SGraphicsPipelineFormats
 {
-    SGraphicsPipelineShaderState() = default;
+    SGraphicsPipelineFormats()
+        : RenderTargetFormats()
+        , NumRenderTargets(0)
+        , DepthStencilFormat(EFormat::Unknown)
+    {
+        RenderTargetFormats.Fill(EFormat::Unknown);
+    }
 
-    SGraphicsPipelineShaderState(CRHIVertexShader* InVertexShader, CRHIPixelShader* InPixelShader)
+    SGraphicsPipelineFormats( const TStaticArray<EFormat, kRHIMaxRenderTargetCount>& InRenderTargetFormats
+                            , uint32 InNumRenderTargets
+                            , EFormat InDepthStencilFormat = EFormat::Unknown)
+        : RenderTargetFormats(InRenderTargetFormats)
+        , NumRenderTargets(InNumRenderTargets)
+        , DepthStencilFormat(InDepthStencilFormat)
+    { }
+
+    bool operator==(const SGraphicsPipelineFormats& RHS) const
+    {
+        return (RenderTargetFormats == RHS.RenderTargetFormats)
+            && (NumRenderTargets    == RHS.NumRenderTargets)
+            && (DepthStencilFormat  == RHS.DepthStencilFormat);
+    }
+
+    bool operator!=(const SGraphicsPipelineFormats& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    TStaticArray<EFormat, kRHIMaxRenderTargetCount> RenderTargetFormats;
+    uint32 NumRenderTargets;
+
+    EFormat DepthStencilFormat;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SGraphicsPipelineShaders
+
+struct SGraphicsPipelineShaders
+{
+    SGraphicsPipelineShaders()
+        : VertexShader(nullptr)
+        , PixelShader(nullptr)
+    { }
+
+    SGraphicsPipelineShaders(CRHIVertexShader* InVertexShader, CRHIPixelShader* InPixelShader)
         : VertexShader(InVertexShader)
         , PixelShader(InPixelShader)
     { }
+
+    bool operator==(const SGraphicsPipelineShaders& RHS) const
+    {
+        return (VertexShader == RHS.VertexShader)
+            && (PixelShader  == RHS.PixelShader);
+    }
+
+    bool operator!=(const SGraphicsPipelineShaders& RHS) const
+    {
+        return !(*this == RHS);
+    }
 
     CRHIVertexShader* VertexShader = nullptr;
     CRHIPixelShader*  PixelShader  = nullptr;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIGraphicsPipelineStateInfo
+// CRHIGraphicsPipelineStateInitializer
 
-struct SRHIGraphicsPipelineStateInfo
+class CRHIGraphicsPipelineStateInitializer
 {
-    CRHIVertexInputLayout* InputLayoutState  = nullptr;
-    CRHIDepthStencilState* DepthStencilState = nullptr;
-    CRHIRasterizerState*   RasterizerState   = nullptr;
-    CRHIBlendState*        BlendState        = nullptr;
+public:
 
-    uint32 SampleCount   = 1;
-    uint32 SampleQuality = 0;
-    uint32 SampleMask    = 0xffffffff;
+    CRHIGraphicsPipelineStateInitializer()
+        : VertexInputLayout(nullptr)
+        , DepthStencilState(nullptr)
+        , RasterizerState(nullptr)
+        , BlendState(nullptr)
+        , SampleCount(1)
+        , SampleQuality(0)
+        , SampleMask(0xffffffff)
+        , IBStripCutValue(IndexBufferStripCutValue_Disabled)
+        , PrimitiveTopologyType(EPrimitiveTopologyType::Triangle)
+        , ShaderState()
+        , PipelineFormats()
+    { }
 
-    EIndexBufferStripCutValue    IBStripCutValue       = IndexBufferStripCutValue_Disabled;
-    EPrimitiveTopologyType       PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
-    SGraphicsPipelineShaderState ShaderState;
-    SPipelineRenderTargetFormats PipelineFormats;
+    CRHIGraphicsPipelineStateInitializer( CRHIVertexInputLayout* InVertexInputLayout
+                                        , CRHIDepthStencilState* InDepthStencilState
+                                        , CRHIRasterizerState* InRasterizerState
+                                        , CRHIBlendState* InBlendState
+                                        , const SGraphicsPipelineShaders& InShaderState
+                                        , const SGraphicsPipelineFormats& InPipelineFormats
+                                        , EPrimitiveTopologyType InPrimitiveTopologyType = EPrimitiveTopologyType::Triangle
+                                        , uint32 InSampleCount = 1
+                                        , uint32 InSampleQuality = 0
+                                        , uint32 InSampleMask = 0xffffffff
+                                        , EIndexBufferStripCutValue InIBStripCutValue = IndexBufferStripCutValue_Disabled)
+        : VertexInputLayout(InVertexInputLayout)
+        , DepthStencilState(InDepthStencilState)
+        , RasterizerState(InRasterizerState)
+        , BlendState(InBlendState)
+        , SampleCount(InSampleCount)
+        , SampleQuality(InSampleQuality)
+        , SampleMask(InSampleMask)
+        , IBStripCutValue(InIBStripCutValue)
+        , PrimitiveTopologyType(InPrimitiveTopologyType)
+        , ShaderState(InShaderState)
+        , PipelineFormats(InPipelineFormats)
+    { }
+
+    bool operator==(const CRHIGraphicsPipelineStateInitializer& RHS) const
+    {
+        return (VertexInputLayout     == RHS.VertexInputLayout)
+            && (DepthStencilState     == RHS.DepthStencilState)
+            && (RasterizerState       == RHS.RasterizerState)
+            && (BlendState            == RHS.BlendState)
+            && (SampleCount           == RHS.SampleCount)
+            && (SampleQuality         == RHS.SampleQuality)
+            && (SampleMask            == RHS.SampleMask)
+            && (IBStripCutValue       == RHS.IBStripCutValue)
+            && (PrimitiveTopologyType == RHS.PrimitiveTopologyType)
+            && (ShaderState           == RHS.ShaderState)
+            && (PipelineFormats       == RHS.PipelineFormats);
+    }
+
+    bool operator!=(const CRHIGraphicsPipelineStateInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHIVertexInputLayout*    VertexInputLayout;
+    CRHIDepthStencilState*    DepthStencilState;
+    CRHIRasterizerState*      RasterizerState;
+    CRHIBlendState*           BlendState;
+
+    uint32                    SampleCount;
+    uint32                    SampleQuality;
+    uint32                    SampleMask;
+
+    EIndexBufferStripCutValue IBStripCutValue;
+    EPrimitiveTopologyType    PrimitiveTopologyType;
+    SGraphicsPipelineShaders  ShaderState;
+    SGraphicsPipelineFormats  PipelineFormats;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -596,17 +1022,31 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIComputePipelineStateInfo
+// CRHIComputePipelineStateInitializer
 
-struct SRHIComputePipelineStateInfo
+class CRHIComputePipelineStateInitializer
 {
-    SRHIComputePipelineStateInfo() = default;
+public:
 
-    SRHIComputePipelineStateInfo(CRHIComputeShader* InShader)
+    CRHIComputePipelineStateInitializer()
+        : Shader(nullptr)
+    { }
+
+    CRHIComputePipelineStateInitializer(CRHIComputeShader* InShader)
         : Shader(InShader)
     { }
 
-    CRHIComputeShader* Shader = nullptr;
+    bool operator==(const CRHIComputePipelineStateInitializer& RHS) const
+    {
+        return (Shader == RHS.Shader);
+    }
+
+    bool operator!=(const CRHIComputePipelineStateInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHIComputeShader* Shader;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -621,38 +1061,109 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRayTracingHitGroup
+// ERayTracingHitGroupType
 
-struct SRayTracingHitGroup
+enum class ERayTracingHitGroupType : uint8
 {
-    SRayTracingHitGroup() = default;
-
-    SRayTracingHitGroup(const String& InName, CRHIRayAnyHitShader* InAnyHit, CRHIRayClosestHitShader* InClosestHit)
-        : Name(InName)
-        , AnyHit(InAnyHit)
-        , ClosestHit(InClosestHit)
-    { }
-
-    String                   Name;
-    CRHIRayAnyHitShader*     AnyHit;
-    CRHIRayClosestHitShader* ClosestHit;
+    Unknown    = 0,
+    Triangles  = 1,
+    Procedural = 2
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRayTracingPipelineStateInfo
+// CRHIRayTracingHitGroupInitializer
 
-struct SRHIRayTracingPipelineStateInfo
+class CRHIRayTracingHitGroupInitializer
 {
-    CRHIRayGenShader* RayGen = nullptr;
+public:
 
-    TArray<CRHIRayAnyHitShader*>     AnyHitShaders;
-    TArray<CRHIRayClosestHitShader*> ClosestHitShaders;
-    TArray<CRHIRayMissShader*>       MissShaders;
-    TArray<SRayTracingHitGroup>      HitGroups;
+    CRHIRayTracingHitGroupInitializer()
+        : Name()
+        , Type(ERayTracingHitGroupType::Unknown)
+        , Shaders()
+    { }
 
-    uint32 MaxAttributeSizeInBytes = 0;
-    uint32 MaxPayloadSizeInBytes   = 0;
-    uint32 MaxRecursionDepth       = 1;
+    CRHIRayTracingHitGroupInitializer( const String& InName
+                                     , ERayTracingHitGroupType InType
+                                     , const TArrayView<CRHIRayTracingShader*>& InRayTracingShaders)
+        : Name(InName)
+        , Type(InType)
+        , Shaders(InRayTracingShaders)
+    { }
+
+    bool operator==(const CRHIRayTracingHitGroupInitializer& RHS) const
+    {
+        return (Name == RHS.Name) && (Shaders == RHS.Shaders) && (Type == RHS.Type);
+    }
+
+    bool operator!=(const CRHIRayTracingHitGroupInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    String                        Name;
+    ERayTracingHitGroupType       Type;
+    TArray<CRHIRayTracingShader*> Shaders;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRayTracingPipelineStateInitializer
+
+class CRHIRayTracingPipelineStateInitializer
+{
+public:
+
+    CRHIRayTracingPipelineStateInitializer()
+        : RayGenShaders()
+        , CallableShaders()
+        , HitGroups()
+        , MissShaders()
+        , MaxAttributeSizeInBytes(0)
+        , MaxPayloadSizeInBytes(0)
+        , MaxRecursionDepth(1)
+    {
+    }
+
+    CRHIRayTracingPipelineStateInitializer( const TArrayView<CRHIRayGenShader*>& InRayGenShaders
+                                          , const TArrayView<CRHIRayCallableShader*>& InCallableShaders
+                                          , const TArrayView<CRHIRayTracingHitGroupInitializer>& InHitGroups
+                                          , const TArrayView<CRHIRayMissShader*>& InMissShaders
+                                          , uint32 InMaxAttributeSizeInBytes
+                                          , uint32 InMaxPayloadSizeInBytes
+                                          , uint32 InMaxRecursionDepth)
+        : RayGenShaders(InRayGenShaders)
+        , CallableShaders(InCallableShaders)
+        , HitGroups(InHitGroups)
+        , MissShaders(InMissShaders)
+        , MaxAttributeSizeInBytes(InMaxAttributeSizeInBytes)
+        , MaxPayloadSizeInBytes(InMaxPayloadSizeInBytes)
+        , MaxRecursionDepth(InMaxRecursionDepth)
+    { }
+
+    bool operator==(const CRHIRayTracingPipelineStateInitializer& RHS) const
+    {
+        return (RayGenShaders           == RHS.RayGenShaders)
+            && (CallableShaders         == RHS.CallableShaders)
+            && (HitGroups               == RHS.HitGroups)
+            && (MissShaders             == RHS.MissShaders)
+            && (MaxAttributeSizeInBytes == RHS.MaxAttributeSizeInBytes)
+            && (MaxPayloadSizeInBytes   == RHS.MaxPayloadSizeInBytes)
+            && (MaxRecursionDepth       == RHS.MaxRecursionDepth);
+    }
+
+    bool operator!=(const CRHIRayTracingPipelineStateInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    TArray<CRHIRayGenShader*>                 RayGenShaders;
+    TArray<CRHIRayCallableShader*>            CallableShaders;
+    TArray<CRHIRayMissShader*>                MissShaders;
+    TArray<CRHIRayTracingHitGroupInitializer> HitGroups;
+    
+    uint32 MaxAttributeSizeInBytes;
+    uint32 MaxPayloadSizeInBytes;
+    uint32 MaxRecursionDepth;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

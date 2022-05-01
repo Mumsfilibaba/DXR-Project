@@ -186,7 +186,7 @@ inline DXGI_FORMAT ConvertFormat(EFormat Format)
     }
 }
 
-inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification(EVertexInputClass InputClassification)
+inline D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass InputClassification)
 {
     switch (InputClassification)
     {
@@ -298,10 +298,10 @@ inline D3D12_BLEND ConvertBlend(EBlendType  Blend)
         case EBlendType ::InvSrcColor:    return D3D12_BLEND_INV_SRC_COLOR;
         case EBlendType ::SrcAlpha:       return D3D12_BLEND_SRC_ALPHA;
         case EBlendType ::InvSrcAlpha:    return D3D12_BLEND_INV_SRC_ALPHA;
-        case EBlendType ::DestAlpha:      return D3D12_BLEND_DEST_ALPHA;
-        case EBlendType ::InvDestAlpha:   return D3D12_BLEND_INV_DEST_ALPHA;
-        case EBlendType ::DestColor:      return D3D12_BLEND_DEST_COLOR;
-        case EBlendType ::InvDestColor:   return D3D12_BLEND_INV_DEST_COLOR;
+        case EBlendType ::DstAlpha:       return D3D12_BLEND_DEST_ALPHA;
+        case EBlendType ::InvDstAlpha:    return D3D12_BLEND_INV_DEST_ALPHA;
+        case EBlendType ::DstColor:       return D3D12_BLEND_DEST_COLOR;
+        case EBlendType ::InvDstColor:    return D3D12_BLEND_INV_DEST_COLOR;
         case EBlendType ::SrcAlphaSat:    return D3D12_BLEND_SRC_ALPHA_SAT;
         case EBlendType ::Src1Color:      return D3D12_BLEND_SRC1_COLOR;
         case EBlendType ::InvSrc1Color:   return D3D12_BLEND_INV_SRC1_COLOR;

@@ -46,16 +46,6 @@ public:
     // CRHIShader Interface
 
     virtual void* GetRHIBaseShader() override final { return this; }
-
-    virtual void GetShaderParameterInfo(SShaderParameterInfo& OutShaderParameterInfo) const override final { OutShaderParameterInfo = SShaderParameterInfo(); }
-
-    virtual bool GetShaderResourceViewIndexByName(const String& InName, uint32& OutIndex) const override final { return true; }
-
-    virtual bool GetSamplerIndexByName(const String& InName, uint32& OutIndex) const override final { return true; }
-
-    virtual bool GetUnorderedAccessViewIndexByName(const String& InName, uint32& OutIndex) const override final { return true; }
-
-    virtual bool GetConstantBufferIndexByName(const String& InName, uint32& OutIndex) const override final { return true; }
 };
 
 #if defined(COMPILER_MSVC)

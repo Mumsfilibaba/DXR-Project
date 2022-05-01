@@ -7,7 +7,7 @@
 CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource)
     : CRefCounted()
     , CD3D12DeviceChild(InDevice)
-    , DxResource(InNativeResource)
+    , Resource(InNativeResource)
     , HeapType(D3D12_HEAP_TYPE_DEFAULT)
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
     , Desc()
@@ -18,7 +18,7 @@ CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resou
 CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
     : CRefCounted()
     , CD3D12DeviceChild(InDevice)
-    , DxResource(nullptr)
+    , Resource(nullptr)
     , HeapType(InHeapType)
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
     , Desc(InDesc)
@@ -35,12 +35,12 @@ bool CD3D12Resource::Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_
     HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
-    HRESULT Result = GetDevice()->CreateCommitedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, InitialState, OptimizedClearValue, IID_PPV_ARGS(&DxResource));
+    HRESULT Result = GetDevice()->CreateCommitedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, InitialState, OptimizedClearValue, IID_PPV_ARGS(&Resource));
     if (SUCCEEDED(Result))
     {
         if (Desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
         {
-            Address = DxResource->GetGPUVirtualAddress();
+            Address = Resource->GetGPUVirtualAddress();
         }
 
         ResourceState = InitialState;
@@ -62,7 +62,7 @@ void* CD3D12Resource::Map(uint32 SubResource, const D3D12_RANGE* Range)
 {
     void* MappedData = nullptr;
 
-    HRESULT Result = DxResource->Map(SubResource, Range, &MappedData);
+    HRESULT Result = Resource->Map(SubResource, Range, &MappedData);
     if (FAILED(Result))
     {
         LOG_ERROR("[D3D12Resource::Map] Failed");
@@ -76,5 +76,5 @@ void* CD3D12Resource::Map(uint32 SubResource, const D3D12_RANGE* Range)
 
 void CD3D12Resource::Unmap(uint32 SubResource, const D3D12_RANGE* Range)
 {
-    DxResource->Unmap(SubResource, Range);
+    Resource->Unmap(SubResource, Range);
 }

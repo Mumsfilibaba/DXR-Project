@@ -76,7 +76,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         }
 
 
-        SRHIDepthStencilStateInfo DepthStencilStateInfo;
+        CRHIDepthStencilStateInitializer DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
         DepthStencilStateInfo.bDepthEnable   = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -88,7 +88,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        SRHIRasterizerStateInfo RasterizerStateInfo;
+        CRHIRasterizerStateInitializer RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
         TSharedRef<CRHIRasterizerState> GeometryRasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -98,9 +98,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        SRHIBlendStateInfo BlendStateInfo;
-        BlendStateInfo.bIndependentBlendEnable      = false;
-        BlendStateInfo.RenderTarget[0].bBlendEnable = false;
+        CRHIBlendStateInitializer BlendStateInfo;
 
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
@@ -109,8 +107,8 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        SRHIGraphicsPipelineStateInfo PipelineStateInfo;
-        PipelineStateInfo.InputLayoutState                       = FrameResources.StdInputLayout.Get();
+        CRHIGraphicsPipelineStateInitializer PipelineStateInfo;
+        PipelineStateInfo.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
         PipelineStateInfo.BlendState                             = BlendState.Get();
         PipelineStateInfo.DepthStencilState                      = GeometryDepthStencilState.Get();
         PipelineStateInfo.RasterizerState                        = GeometryRasterizerState.Get();
@@ -150,7 +148,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        SRHIDepthStencilStateInfo DepthStencilStateInfo;
+        CRHIDepthStencilStateInitializer DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc      = EComparisonFunc::Less;
         DepthStencilStateInfo.bDepthEnable   = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -162,7 +160,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        SRHIRasterizerStateInfo RasterizerStateInfo;
+        CRHIRasterizerStateInitializer RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
         TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -172,9 +170,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        SRHIBlendStateInfo BlendStateInfo;
-        BlendStateInfo.bIndependentBlendEnable      = false;
-        BlendStateInfo.RenderTarget[0].bBlendEnable = false;
+        CRHIBlendStateInitializer BlendStateInfo;
 
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
@@ -183,8 +179,8 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        SRHIGraphicsPipelineStateInfo PipelineStateInfo;
-        PipelineStateInfo.InputLayoutState                   = FrameResources.StdInputLayout.Get();
+        CRHIGraphicsPipelineStateInitializer PipelineStateInfo;
+        PipelineStateInfo.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
         PipelineStateInfo.BlendState                         = BlendState.Get();
         PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
         PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
@@ -201,7 +197,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 
     constexpr uint32  LUTSize   = 512;
     constexpr EFormat LUTFormat = EFormat::R16G16_Float;
-    if (!RHIUAVSupportsFormat(LUTFormat))
+    if (!RHIQueryUAVFormatSupport(LUTFormat))
     {
         LOG_ERROR("[CRenderer]: R16G16_Float is not supported for UAVs");
 
@@ -258,7 +254,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        SRHIComputePipelineStateInfo PipelineStateInfo;
+        CRHIComputePipelineStateInitializer PipelineStateInfo;
         PipelineStateInfo.Shader = CShader.Get();
 
         TSharedRef<CRHIComputePipelineState> BRDF_PipelineState = RHICreateComputePipelineState(PipelineStateInfo);
@@ -312,7 +308,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        SRHIComputePipelineStateInfo DeferredLightPassCreateInfo;
+        CRHIComputePipelineStateInitializer DeferredLightPassCreateInfo;
         DeferredLightPassCreateInfo.Shader = TiledLightShader.Get();
 
         TiledLightPassPSO = RHICreateComputePipelineState(DeferredLightPassCreateInfo);
@@ -342,7 +338,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        SRHIComputePipelineStateInfo DeferredLightPassCreateInfo;
+        CRHIComputePipelineStateInitializer DeferredLightPassCreateInfo;
         DeferredLightPassCreateInfo.Shader = TiledLightDebugShader.Get();
 
         TiledLightPassPSODebug = RHICreateComputePipelineState(DeferredLightPassCreateInfo);
@@ -371,7 +367,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        SRHIComputePipelineStateInfo PipelineStateInfo;
+        CRHIComputePipelineStateInitializer PipelineStateInfo;
         PipelineStateInfo.Shader = ReduceDepthInitalShader.Get();
 
         ReduceDepthInitalPSO = RHICreateComputePipelineState(PipelineStateInfo);
@@ -396,7 +392,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             return false;
         }
 
-        SRHIComputePipelineStateInfo PipelineStateInfo;
+        CRHIComputePipelineStateInitializer PipelineStateInfo;
         PipelineStateInfo.Shader = ReduceDepthShader.Get();
 
         ReduceDepthPSO = RHICreateComputePipelineState(PipelineStateInfo);

@@ -158,9 +158,9 @@ public:
     /**
      * @brief: Empties the storage 
      */
-    FORCEINLINE void Empty() noexcept
+    FORCEINLINE void MakeEmpty() noexcept
     {
-        Characters.Empty();
+        Characters.MakeEmpty();
     }
 
     /**

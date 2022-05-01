@@ -137,13 +137,13 @@ public:
      */
     FORCEINLINE ~TArray()
     {
-        Empty();
+        MakeEmpty();
     }
 
     /**
      * @brief: Destruct all elements of the array and deallocates the memory 
      */
-    FORCEINLINE void Empty() noexcept
+    FORCEINLINE void MakeEmpty() noexcept
     {
         if (ArraySize)
         {

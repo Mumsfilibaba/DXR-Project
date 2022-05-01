@@ -2,28 +2,6 @@
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12RootSignature.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12BaseShader
-
-CD3D12Shader::CD3D12Shader(CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility)
-    : CD3D12DeviceChild(InDevice)
-    , ByteCode()
-    , Visibility(InVisibility)
-{
-    ByteCode.BytecodeLength = InCode.SizeInBytes();
-    ByteCode.pShaderBytecode = CMemory::Malloc(ByteCode.BytecodeLength);
-
-    CMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
-}
-
-CD3D12Shader::~CD3D12Shader()
-{
-    CMemory::Free((void*)ByteCode.pShaderBytecode);
-
-    ByteCode.pShaderBytecode = nullptr;
-    ByteCode.BytecodeLength = 0;
-}
-
 static bool IsShaderResourceView(D3D_SHADER_INPUT_TYPE Type)
 {
     return Type == D3D_SIT_TEXTURE || Type == D3D_SIT_BYTEADDRESS || Type == D3D_SIT_STRUCTURED || Type == D3D_SIT_RTACCELERATIONSTRUCTURE;
@@ -55,6 +33,28 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
     }
 
     return false;
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12Shader
+
+CD3D12Shader::CD3D12Shader(CD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility)
+    : CD3D12DeviceChild(InDevice)
+    , ByteCode()
+    , Visibility(InVisibility)
+{
+    ByteCode.BytecodeLength = InCode.SizeInBytes();
+    ByteCode.pShaderBytecode = CMemory::Malloc(ByteCode.BytecodeLength);
+
+    CMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
+}
+
+CD3D12Shader::~CD3D12Shader()
+{
+    CMemory::Free((void*)ByteCode.pShaderBytecode);
+
+    ByteCode.pShaderBytecode = nullptr;
+    ByteCode.BytecodeLength = 0;
 }
 
 template<typename TD3D12ReflectionInterface>
@@ -165,12 +165,12 @@ bool CD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
         }
     }
 
-    Shader->ConstantBufferParameters = Move(ConstantBufferParameters);
-    Shader->SamplerParameters = Move(SamplerParameters);
-    Shader->ShaderResourceParameters = Move(ShaderResourceParameters);
+    Shader->ConstantBufferParameters  = Move(ConstantBufferParameters);
+    Shader->SamplerParameters         = Move(SamplerParameters);
+    Shader->ShaderResourceParameters  = Move(ShaderResourceParameters);
     Shader->UnorderedAccessParameters = Move(UnorderedAccessParameters);
-    Shader->ResourceCount = ResourceCount;
-    Shader->RTLocalResourceCount = RTLocalResourceCount;
+    Shader->ResourceCount             = ResourceCount;
+    Shader->RTLocalResourceCount      = RTLocalResourceCount;
 
     return true;
 }
@@ -206,7 +206,7 @@ bool CD3D12Shader::GetShaderReflection(CD3D12Shader* Shader)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRayTracingShader
+// CD3D12RayTracingShader
 
 bool CD3D12RayTracingShader::GetRayTracingShaderReflection(CD3D12RayTracingShader* Shader)
 {
@@ -243,11 +243,11 @@ bool CD3D12RayTracingShader::GetRayTracingShaderReflection(CD3D12RayTracingShade
 
     if (!GetShaderResourceBindings(Function, Shader, FuncDesc.BoundResources))
     {
-        LOG_ERROR("[D3D12BaseRayTracingShader]: Error when analysing shader parameters");
+        LOG_ERROR("[CD3D12RayTracingShader]: Error when analysing shader parameters");
         return false;
     }
 
-    // NOTE: Since the Nvidia driver can't handle these names, we have to change the names :(
+    // HACK: Since the Nvidia driver can't handle these names, we have to change the names :(
     String Identifier = FuncDesc.Name;
 
     auto NameStart = Identifier.ReverseFindOneOf("\x1?");
@@ -256,16 +256,16 @@ bool CD3D12RayTracingShader::GetRayTracingShaderReflection(CD3D12RayTracingShade
         NameStart++;
     }
 
-    auto NameEnd = Identifier.Find("@");
+    const auto NameEnd = Identifier.Find("@");
 
     Shader->Identifier = Identifier.SubString(NameStart, NameEnd - NameStart);
     return true;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseComputeShader
+// CD3D12ComputeShader
 
-bool CD3D12BaseComputeShader::Init()
+bool CD3D12ComputeShader::Init()
 {
     TComPtr<ID3D12ShaderReflection> Reflection;
     if (!GD3D12ShaderCompiler->GetReflection(this, &Reflection))
@@ -306,11 +306,11 @@ bool CD3D12BaseComputeShader::Init()
 
 void SShaderResourceCount::Combine(const SShaderResourceCount& Other)
 {
-    Ranges.NumCBVs = NMath::Max(Ranges.NumCBVs, Other.Ranges.NumCBVs);
-    Ranges.NumSRVs = NMath::Max(Ranges.NumSRVs, Other.Ranges.NumSRVs);
-    Ranges.NumUAVs = NMath::Max(Ranges.NumUAVs, Other.Ranges.NumUAVs);
+    Ranges.NumCBVs     = NMath::Max(Ranges.NumCBVs, Other.Ranges.NumCBVs);
+    Ranges.NumSRVs     = NMath::Max(Ranges.NumSRVs, Other.Ranges.NumSRVs);
+    Ranges.NumUAVs     = NMath::Max(Ranges.NumUAVs, Other.Ranges.NumUAVs);
     Ranges.NumSamplers = NMath::Max(Ranges.NumSamplers, Other.Ranges.NumSamplers);
-    Num32BitConstants = NMath::Max(Num32BitConstants, Other.Num32BitConstants);
+    Num32BitConstants  = NMath::Max(Num32BitConstants, Other.Num32BitConstants);
 }
 
 bool SShaderResourceCount::IsCompatible(const SShaderResourceCount& Other) const

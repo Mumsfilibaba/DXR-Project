@@ -54,16 +54,15 @@ bool CRayTracer::Init(SFrameResources& Resources)
         return false;
     }
 
-    SRHIRayTracingPipelineStateInfo CreateInfo;
-    CreateInfo.RayGen                  = RayGenShader.Get();
-    CreateInfo.ClosestHitShaders       = { RayClosestHitShader.Get() };
-    CreateInfo.MissShaders             = { RayMissShader.Get() };
-    CreateInfo.HitGroups               = { SRayTracingHitGroup("HitGroup", nullptr, RayClosestHitShader.Get()) };
-    CreateInfo.MaxRecursionDepth       = 4;
-    CreateInfo.MaxAttributeSizeInBytes = sizeof(SRayIntersectionAttributes);
-    CreateInfo.MaxPayloadSizeInBytes   = sizeof(SRayPayload);
+    CRHIRayTracingPipelineStateInitializer Initializer;
+    Initializer.RayGenShaders           = { RayGenShader.Get() };
+    Initializer.MissShaders             = { RayMissShader.Get() };
+    Initializer.HitGroups               = { CRHIRayTracingHitGroupInitializer("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
+    Initializer.MaxRecursionDepth       = 4;
+    Initializer.MaxAttributeSizeInBytes = sizeof(SRayIntersectionAttributes);
+    Initializer.MaxPayloadSizeInBytes   = sizeof(SRayPayload);
 
-    Pipeline = RHICreateRayTracingPipelineState(CreateInfo);
+    Pipeline = RHICreateRayTracingPipelineState(Initializer);
     if (!Pipeline)
     {
         CDebug::DebugBreak();
@@ -96,46 +95,50 @@ void CRayTracer::Release()
 
 void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources, const CScene& Scene)
 {
+    UNREFERENCED_VARIABLE(Scene);
+
     TRACE_SCOPE("Gather Instances");
 
     Resources.RTGeometryInstances.Clear();
 
     CRHISamplerState* Sampler = nullptr;
 
-    for (const SMeshDrawCommand& Cmd : Scene.GetMeshDrawCommands())
+    for (int32 Index = 0; Index < Resources.GlobalMeshDrawCommands.Size(); ++Index)
     {
-        CMaterial* Mat = Cmd.Material;
-        if (Cmd.Material->HasAlphaMask())
+        const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[Index];
+
+        CMaterial* Material = Command.Material;
+        if (Command.Material->HasAlphaMask())
         {
             continue;
         }
 
-        uint32 AlbedoIndex = Resources.RTMaterialTextureCache.Add(Mat->AlbedoMap->GetDefaultShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->NormalMap->GetDefaultShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->RoughnessMap->GetDefaultShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->HeightMap->GetDefaultShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->MetallicMap->GetDefaultShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->AOMap->GetDefaultShaderResourceView());
-        Sampler = Mat->GetMaterialSampler();
+        uint32 AlbedoIndex = Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->AlbedoMap));
+        Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->NormalMap));
+        Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->RoughnessMap));
+        Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->HeightMap));
+        Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->MetallicMap));
+        Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->AOMap));
+        Sampler = Material->GetMaterialSampler();
 
-        const CMatrix3x4 TinyTransform = Cmd.CurrentActor->GetTransform().GetTinyMatrix();
+        const CMatrix3x4 TinyTransform = Command.CurrentActor->GetTransform().GetTinyMatrix();
         uint32 HitGroupIndex = 0;
 
-        auto HitGroupIndexPair = Resources.RTMeshToHitGroupIndex.find(Cmd.Mesh);
+        auto HitGroupIndexPair = Resources.RTMeshToHitGroupIndex.find(Command.Mesh);
         if (HitGroupIndexPair == Resources.RTMeshToHitGroupIndex.end())
         {
             HitGroupIndex = Resources.RTHitGroupResources.Size();
-            Resources.RTMeshToHitGroupIndex[Cmd.Mesh] = HitGroupIndex;
+            Resources.RTMeshToHitGroupIndex[Command.Mesh] = HitGroupIndex;
 
             SRayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";
-            if (Cmd.Mesh->VertexBufferSRV)
+            if (Command.Mesh->VertexBufferSRV)
             {
-                HitGroupResources.AddShaderResourceView(Cmd.Mesh->VertexBufferSRV.Get());
+                HitGroupResources.AddShaderResourceView(Command.Mesh->VertexBufferSRV.Get());
             }
-            if (Cmd.Mesh->IndexBufferSRV)
+            if (Command.Mesh->IndexBufferSRV)
             {
-                HitGroupResources.AddShaderResourceView(Cmd.Mesh->IndexBufferSRV.Get());
+                HitGroupResources.AddShaderResourceView(Command.Mesh->IndexBufferSRV.Get());
             }
 
             Resources.RTHitGroupResources.Emplace(HitGroupResources);
@@ -146,7 +149,7 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
         }
 
         SRayTracingGeometryInstance Instance;
-        Instance.Instance      = MakeSharedRef<CRHIRayTracingGeometry>(Cmd.Geometry);
+        Instance.Instance      = MakeSharedRef<CRHIRayTracingGeometry>(Command.Geometry);
         Instance.Flags         = RayTracingInstanceFlags_None;
         Instance.HitGroupIndex = HitGroupIndex;
         Instance.InstanceIndex = AlbedoIndex;

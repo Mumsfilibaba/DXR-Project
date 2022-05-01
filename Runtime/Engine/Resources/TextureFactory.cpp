@@ -40,7 +40,7 @@ bool CTextureFactory::Init()
     }
 
     // Create pipeline
-    GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState(SRHIComputePipelineStateInfo(GlobalFactoryData.ComputeShader.Get()));
+    GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState(CRHIComputePipelineStateInitializer(GlobalFactoryData.ComputeShader.Get()));
     if (GlobalFactoryData.PanoramaPSO)
     {
         GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");
