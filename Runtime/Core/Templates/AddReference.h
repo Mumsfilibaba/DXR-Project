@@ -2,7 +2,7 @@
 #include "Identity.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Adds a l-value reference to the type
+// TAddLValueReference
 
 template<typename T>
 struct TAddLValueReference
@@ -21,7 +21,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Adds a rvalue reference to the type
+// TAddRValueReference
 
 template<typename T>
 struct TAddRValueReference
@@ -40,7 +40,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Adds a reference of choice
+// TAddReference
 
 template<typename T>
 struct TAddReference

@@ -4,7 +4,7 @@
 #include "IsUnion.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determines if a type is of class or struct type
+// TIsClass
 
 template<typename T>
 struct TIsClass
@@ -22,6 +22,6 @@ public:
 
     enum
     {
-        Value = !TIsUnion<T>::Value && sizeof(Test<T>(0)) == 1
+        Value = (!(TIsUnion<T>::Value) && (sizeof(Test<T>(0)) == 1))
     };
 };

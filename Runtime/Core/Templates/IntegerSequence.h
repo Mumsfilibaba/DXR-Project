@@ -3,7 +3,7 @@
 #include "IsInteger.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Implements integer sequence
+// TIntegerSequence
 
 template <typename T, T... Sequence>
 struct TIntegerSequence
@@ -19,7 +19,7 @@ struct TIntegerSequence
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Forward-declare helper
+// TMakeIntegerSequenceImpl
 
 namespace Internal
 {
@@ -28,7 +28,7 @@ namespace Internal
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Create a integer sequence
+// TMakeIntegerSequence
 
 template<typename T, T N>
 using TMakeIntegerSequence = typename Internal::TMakeIntegerSequenceImpl<T, N>::Type;
@@ -36,7 +36,7 @@ using TMakeIntegerSequence = typename Internal::TMakeIntegerSequenceImpl<T, N>::
 namespace Internal
 {
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Helper to create a integer sequence
+    // TSequenceHelper
 
     template<uint32 N, typename FirstSequence, typename SecondSequence>
     struct TSequenceHelper;
@@ -46,12 +46,15 @@ namespace Internal
     {
         using Type = TIntegerSequence<T, First..., (T(N + Second))...>;
     };
+    
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // TSequenceHelperType
 
     template<uint32 N, typename FirstSequence, typename SecondSequence>
     using TSequenceHelperType = typename TSequenceHelper<N, FirstSequence, SecondSequence>::Type;
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Create a integer sequence
+    // TMakeIntegerSequenceImpl
 
     template<typename T, uint32 N>
     struct TMakeIntegerSequenceImpl : TSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>
@@ -59,17 +62,11 @@ namespace Internal
         using Type = TSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>;
     };
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Create a integer sequence with zero
-
     template<typename T>
     struct TMakeIntegerSequenceImpl<T, 1> : TIntegerSequence<T, T(0)>
     {
         using Type = TIntegerSequence<T, T(0)>;
     };
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Create a empty integer sequence
 
     template<typename T>
     struct TMakeIntegerSequenceImpl<T, 0> : TIntegerSequence<T>

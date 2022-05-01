@@ -3,7 +3,7 @@
 #include "IsSame.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determine if type is a integer type
+// TIsInteger
 
 template<typename T>
 struct TIsInteger
@@ -177,7 +177,7 @@ struct TIsInteger<const volatile T>
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Check if the type is an integer but not a bool
+// TIsIntegerNotBool
 
 template<typename T>
 struct TIsIntegerNotBool

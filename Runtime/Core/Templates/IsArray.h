@@ -2,7 +2,7 @@
 #include "Core/CoreTypes.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Check if type is an array type
+// TIsArray
 
 template<typename T>
 struct TIsArray
@@ -31,7 +31,9 @@ struct TIsArray<T[N]>
     };
 };
 
-/* Check if the array is bounded */
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TIsBoundedArray
+
 template<typename T>
 struct TIsBoundedArray
 {
@@ -51,7 +53,7 @@ struct TIsBoundedArray<T[N]>
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Check if the array is unbounded
+// TIsUnboundedArray
 
 template<typename T>
 struct TIsUnboundedArray

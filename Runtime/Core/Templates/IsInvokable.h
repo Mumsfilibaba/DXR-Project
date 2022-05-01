@@ -7,12 +7,13 @@
 // TODO: This may need another check
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determines if the type is invokable or not
+// TIsInvokable
 
 template<typename FuncType, typename... ArgTypes>
 struct TIsInvokable
 {
 private:
+
     template<typename Fn, typename = void, typename... Args>
     struct TIsInvokableHelper
     {
@@ -40,12 +41,13 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determines if the type is invokable or not, with return-type
+// TIsInvokableR
 
 template<typename FuncType, typename ReturnType, typename... ArgTypes>
 struct TIsInvokableR
 {
 private:
+
     template<typename Fn, typename Ret, typename = void, typename... Args>
     struct TIsInvokableRHelper
     {

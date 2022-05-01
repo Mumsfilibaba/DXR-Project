@@ -2,7 +2,7 @@
 #include "Not.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Checks if two types are the same
+// TIsSame
 
 template<typename T, typename U>
 struct TIsSame
@@ -23,7 +23,7 @@ struct TIsSame<T, T>
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Checks if two types are not the same
+// TIsNotSame
 
 template<typename T, typename U>
 struct TIsNotSame

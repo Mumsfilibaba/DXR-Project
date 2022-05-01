@@ -4,17 +4,16 @@
 #include "Or.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determine if type is a floating point type
+// TIsFloatingPoint
 
 template<typename T>
 struct TIsFloatingPoint
 {
     enum
     {
-        Value = (TOr<
-        TIsSame<float, typename TRemoveCV<T>::Type>,
-            TIsSame<double, typename TRemoveCV<T>::Type>,
-            TIsSame<long double, typename TRemoveCV<T>::Type>>::Value)
+        Value = (TOr< TIsSame<float      , typename TRemoveCV<T>::Type>
+                    , TIsSame<double     , typename TRemoveCV<T>::Type>
+                    , TIsSame<long double, typename TRemoveCV<T>::Type>>::Value)
     };
 };
 

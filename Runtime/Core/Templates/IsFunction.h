@@ -9,18 +9,18 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determine if the type is a function
+// TIsFunction
 
 template<typename T>
 struct TIsFunction
 {
     enum
     {
-        /* Functions and references cannot be are not const */
+        /* Functions and references cannot be const */
         Value = (!TIsConst<const T>::Value) && (!TIsReference<T>::Value)
     };
 };
 
 #if COMPILER_MSVC
-#pragma warning(pop)
+    #pragma warning(pop)
 #endif

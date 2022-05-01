@@ -2,6 +2,8 @@
 #include "RHIShader.h"
 #include "RHIResourceBase.h"
 
+#include "Core/Templates/UnderlyingType.h"
+
 #if defined(COMPILER_MSVC)
     #pragma warning(push)
     #pragma warning(disable : 4100) // Disable unreferenced variable
@@ -9,6 +11,17 @@
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedefs
+
+typedef TSharedRef<class CRHIRasterizerState>         RHIRasterizerStateRef;
+typedef TSharedRef<class CRHIBlendState>              RHIBlendStateRef;
+typedef TSharedRef<class CRHIDepthStencilState>       RHIDepthStencilStateRef;
+typedef TSharedRef<class CRHIVertexInputLayout>       RHIVertexInputLayoutRef;
+typedef TSharedRef<class CRHIGraphicsPipelineState>   RHIGraphicsPipelineStateRef;
+typedef TSharedRef<class CRHIComputePipelineState>    RHIComputePipelineStateRef;
+typedef TSharedRef<class CRHIRayTracingPipelineState> RHIRayTracingPipelineStateRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EDepthWriteMask
@@ -61,14 +74,53 @@ inline const char* ToString(EStencilOp StencilOp)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SDepthStencilOp
+// SDepthStencilStateFace
 
-struct SDepthStencilOp
+struct SDepthStencilStateFace
 {
-    EStencilOp      StencilFailOp      = EStencilOp::Keep;
-    EStencilOp      StencilDepthFailOp = EStencilOp::Keep;
-    EStencilOp      StencilPassOp      = EStencilOp::Keep;
-    EComparisonFunc StencilFunc        = EComparisonFunc::Always;
+    SDepthStencilStateFace()
+        : StencilFailOp(EStencilOp::Keep)
+        , StencilDepthFailOp(EStencilOp::Keep)
+        , StencilPassOp(EStencilOp::Keep)
+        , StencilFunc(EComparisonFunc::Always)
+    { }
+
+    SDepthStencilStateFace( EStencilOp InStencilFailOp
+                          , EStencilOp InStencilDepthFailOp
+                          , EStencilOp InStencilPassOp
+                          , EComparisonFunc InStencilFunc)
+        : StencilFailOp(InStencilFailOp)
+        , StencilDepthFailOp(InStencilDepthFailOp)
+        , StencilPassOp(InStencilPassOp)
+        , StencilFunc(InStencilFunc)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToUnderlying(StencilFailOp);
+        HashCombine(Hash, ToUnderlying(StencilDepthFailOp));
+        HashCombine(Hash, ToUnderlying(StencilPassOp));
+        HashCombine(Hash, ToUnderlying(StencilFunc));
+        return Hash;
+    }
+
+    bool operator==(const SDepthStencilStateFace& RHS) const
+    {
+        return (StencilFailOp      == RHS.StencilFailOp) 
+            && (StencilDepthFailOp == RHS.StencilDepthFailOp)
+            && (StencilPassOp      == RHS.StencilPassOp)
+            && (StencilFunc        == RHS.StencilFunc);
+    }
+
+    bool operator!=(const SDepthStencilStateFace& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    EStencilOp      StencilFailOp;
+    EStencilOp      StencilDepthFailOp;
+    EStencilOp      StencilPassOp;
+    EComparisonFunc StencilFunc;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -82,8 +134,8 @@ struct SRHIDepthStencilStateInfo
     uint8           StencilReadMask  = 0xff;
     uint8           StencilWriteMask = 0xff;
     bool            bStencilEnable   = false;
-    SDepthStencilOp FrontFace        = SDepthStencilOp();
-    SDepthStencilOp BackFace         = SDepthStencilOp();
+    SDepthStencilStateFace FrontFace        = SDepthStencilStateFace();
+    SDepthStencilStateFace BackFace         = SDepthStencilStateFace();
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

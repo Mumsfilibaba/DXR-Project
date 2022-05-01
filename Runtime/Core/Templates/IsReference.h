@@ -2,7 +2,7 @@
 #include "Or.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Check if type is l-value reference type
+// TIsLValueReference
 
 template<typename T>
 struct TIsLValueReference
@@ -23,7 +23,7 @@ struct TIsLValueReference<T&>
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Check if type is rvalue reference type
+// TIsRValueReference
 
 template<typename T>
 struct TIsRValueReference
@@ -44,7 +44,7 @@ struct TIsRValueReference<T&&>
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Check if type is either l-value- or r-value reference
+// TIsReference
 
 template<typename T>
 struct TIsReference

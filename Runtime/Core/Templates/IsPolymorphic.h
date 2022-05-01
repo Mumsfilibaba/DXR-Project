@@ -1,7 +1,7 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determine if type has any virtual functions
+// TIsPolymorphic
 
 template<typename T>
 struct TIsPolymorphic
