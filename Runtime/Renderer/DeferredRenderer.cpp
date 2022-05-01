@@ -28,7 +28,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        SRHISamplerStateInfo CreateInfo;
+        CRHISamplerStateInitializer CreateInfo;
         CreateInfo.AddressU = ESamplerMode::Clamp;
         CreateInfo.AddressV = ESamplerMode::Clamp;
         CreateInfo.AddressW = ESamplerMode::Clamp;
@@ -227,7 +227,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         FrameResources.IntegrationLUT->SetName("IntegrationLUT");
     }
 
-    SRHISamplerStateInfo CreateInfo;
+    CRHISamplerStateInitializer CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;

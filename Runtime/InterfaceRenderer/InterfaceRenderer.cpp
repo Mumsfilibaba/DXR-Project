@@ -230,7 +230,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         IndexBuffer->SetName("ImGui IndexBuffer");
     }
 
-    SRHISamplerStateInfo CreateInfo;
+    CRHISamplerStateInitializer CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;

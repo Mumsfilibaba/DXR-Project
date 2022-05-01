@@ -111,7 +111,7 @@ bool CRenderer::Init()
     }
 
     {
-        SRHISamplerStateInfo CreateInfo;
+        CRHISamplerStateInitializer CreateInfo;
         CreateInfo.AddressU    = ESamplerMode::Border;
         CreateInfo.AddressV    = ESamplerMode::Border;
         CreateInfo.AddressW    = ESamplerMode::Border;
@@ -127,7 +127,7 @@ bool CRenderer::Init()
     }
 
     {
-        SRHISamplerStateInfo CreateInfo;
+        CRHISamplerStateInitializer CreateInfo;
         CreateInfo.AddressU       = ESamplerMode::Wrap;
         CreateInfo.AddressV       = ESamplerMode::Wrap;
         CreateInfo.AddressW       = ESamplerMode::Wrap;
@@ -1134,7 +1134,7 @@ bool CRenderer::InitAA()
     }
 
     // FXAA
-    SRHISamplerStateInfo CreateInfo;
+    CRHISamplerStateInitializer CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;

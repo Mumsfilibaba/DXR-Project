@@ -4,6 +4,7 @@
 #include "RHIResourceViews.h"
 #include "RHICommandList.h"
 #include "RHIModule.h"
+#include "RHISamplerState.h"
 
 #include "CoreApplication/Generic/GenericWindow.h"
 
@@ -46,8 +47,28 @@ inline const char* ToString(ERHIShadingRateTier Tier)
 
 struct SShadingRateSupport
 {
-    ERHIShadingRateTier Tier = ERHIShadingRateTier::NotSupported;
-    uint32              ShadingRateImageTileSize = 0;
+    SShadingRateSupport()
+        : Tier(ERHIShadingRateTier::NotSupported)
+        , ShadingRateImageTileSize(0)
+    { }
+
+    SShadingRateSupport(ERHIShadingRateTier InTier, uint8 InShadingRateImageTileSize)
+        : Tier(InTier)
+        , ShadingRateImageTileSize(InShadingRateImageTileSize)
+    { }
+
+    bool operator==(const SShadingRateSupport& RHS) const
+    {
+        return (Tier == RHS.Tier) && (ShadingRateImageTileSize == RHS.ShadingRateImageTileSize);
+    }
+
+    bool operator!=(const SShadingRateSupport& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    ERHIShadingRateTier Tier;
+    uint8               ShadingRateImageTileSize;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -60,13 +81,44 @@ enum class ERHIRayTracingTier : uint8
     Tier1_1      = 2,
 };
 
+inline const char* ToString(ERHIRayTracingTier Tier)
+{
+    switch (Tier)
+    {
+        case ERHIRayTracingTier::NotSupported: return "NotSupported";
+        case ERHIRayTracingTier::Tier1:        return "Tier1";
+        case ERHIRayTracingTier::Tier1_1:      return "Tier1_1";
+        default:                               return "Unknown";
+    }
+}
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRayTracingSupport
 
 struct SRayTracingSupport
 {
+    SRayTracingSupport()
+        : Tier(ERHIRayTracingTier::NotSupported)
+        , MaxRecursionDepth(0)
+    { }
+
+    SRayTracingSupport(ERHIRayTracingTier InTier, uint8 InMaxRecursionDepth)
+        : Tier(InTier)
+        , MaxRecursionDepth(InMaxRecursionDepth)
+    { }
+
+    bool operator==(const SRayTracingSupport& RHS) const
+    {
+        return (Tier == RHS.Tier) && (MaxRecursionDepth == RHS.MaxRecursionDepth);
+    }
+
+    bool operator!=(const SRayTracingSupport& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
     ERHIRayTracingTier Tier;
-    uint32             MaxRecursionDepth;
+    uint8              MaxRecursionDepth;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -173,10 +225,10 @@ public:
     /**
      * @brief: Create a SamplerState
      * 
-     * @param CreateInfo: Structure with information about the SamplerState
+     * @param Initializer: Structure with information about the SamplerState
      * @return: Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
      */
-    virtual class CRHISamplerState* CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo) = 0;
+    virtual class CRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a VertexBuffer
@@ -508,9 +560,9 @@ FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint
     return GRHIInstance->CreateTexture3D(Format, Width, Height, Depth, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE class CRHISamplerState* RHICreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo)
+FORCEINLINE CRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer)
 {
-    return GRHIInstance->CreateSamplerState(CreateInfo);
+    return GRHIInstance->RHICreateSamplerState(Initializer);
 }
 
 FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer)

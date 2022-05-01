@@ -62,7 +62,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         SpecularIrradianceGenPSO->SetName("Specular IrradianceGen PSO");
     }
 
-    SRHISamplerStateInfo CreateInfo;
+    CRHISamplerStateInitializer CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Wrap;
     CreateInfo.AddressV = ESamplerMode::Wrap;
     CreateInfo.AddressW = ESamplerMode::Wrap;

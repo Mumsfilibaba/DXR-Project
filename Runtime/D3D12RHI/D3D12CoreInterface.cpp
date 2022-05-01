@@ -509,22 +509,22 @@ CRHITexture3D* CD3D12CoreInterface::CreateTexture3D(EFormat Format, uint32 Width
     return CreateTexture<CD3D12RHITexture3D>(Format, Width, Height, Depth, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
 }
 
-CRHISamplerState* CD3D12CoreInterface::CreateSamplerState(const SRHISamplerStateInfo& CreateInfo)
+CRHISamplerState* CD3D12CoreInterface::RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer)
 {
     D3D12_SAMPLER_DESC Desc;
     CMemory::Memzero(&Desc);
 
-    Desc.AddressU       = ConvertSamplerMode(CreateInfo.AddressU);
-    Desc.AddressV       = ConvertSamplerMode(CreateInfo.AddressV);
-    Desc.AddressW       = ConvertSamplerMode(CreateInfo.AddressW);
-    Desc.ComparisonFunc = ConvertComparisonFunc(CreateInfo.ComparisonFunc);
-    Desc.Filter         = ConvertSamplerFilter(CreateInfo.Filter);
-    Desc.MaxAnisotropy  = CreateInfo.MaxAnisotropy;
-    Desc.MaxLOD         = CreateInfo.MaxLOD;
-    Desc.MinLOD         = CreateInfo.MinLOD;
-    Desc.MipLODBias     = CreateInfo.MipLODBias;
+    Desc.AddressU       = ConvertSamplerMode(Initializer.AddressU);
+    Desc.AddressV       = ConvertSamplerMode(Initializer.AddressV);
+    Desc.AddressW       = ConvertSamplerMode(Initializer.AddressW);
+    Desc.ComparisonFunc = ConvertComparisonFunc(Initializer.ComparisonFunc);
+    Desc.Filter         = ConvertSamplerFilter(Initializer.Filter);
+    Desc.MaxAnisotropy  = Initializer.MaxAnisotropy;
+    Desc.MaxLOD         = Initializer.MaxLOD;
+    Desc.MinLOD         = Initializer.MinLOD;
+    Desc.MipLODBias     = Initializer.MipLODBias;
 
-    CMemory::Memcpy(Desc.BorderColor, CreateInfo.BorderColor.Data(), sizeof(Desc.BorderColor));
+    CMemory::Memcpy(Desc.BorderColor, Initializer.BorderColor.Data(), sizeof(Desc.BorderColor));
 
     TSharedRef<CD3D12SamplerState> Sampler = dbg_new CD3D12SamplerState(Device, SamplerOfflineDescriptorHeap);
     if (!Sampler->CreateSampler(Desc))
@@ -1575,5 +1575,5 @@ void CD3D12CoreInterface::RHIQueryShadingRateSupport(SShadingRateSupport& OutSup
         OutSupport.Tier = ERHIShadingRateTier::Tier2;
     }
 
-    OutSupport.ShadingRateImageTileSize = Device->GetVariableRateShadingTileSize();
+    OutSupport.ShadingRateImageTileSize = uint8(Device->GetVariableRateShadingTileSize());
 }

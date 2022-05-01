@@ -301,6 +301,7 @@ inline ECubeFace GetCubeFaceFromIndex(uint32 Index)
 
 enum class EComparisonFunc
 {
+    Unknown      = 0,
     Never        = 1,
     Less         = 2,
     Equal        = 3,

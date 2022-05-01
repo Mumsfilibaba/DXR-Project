@@ -66,15 +66,15 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         FrameResources.Skybox->SetName("Skybox");
     }
 
-    SRHISamplerStateInfo CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::Wrap;
-    CreateInfo.AddressV = ESamplerMode::Wrap;
-    CreateInfo.AddressW = ESamplerMode::Wrap;
-    CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
-    CreateInfo.MinLOD   = 0.0f;
-    CreateInfo.MaxLOD   = 0.0f;
+    CRHISamplerStateInitializer Initializer;
+    Initializer.AddressU = ESamplerMode::Wrap;
+    Initializer.AddressV = ESamplerMode::Wrap;
+    Initializer.AddressW = ESamplerMode::Wrap;
+    Initializer.Filter   = ESamplerFilter::MinMagMipLinear;
+    Initializer.MinLOD   = 0.0f;
+    Initializer.MaxLOD   = 0.0f;
 
-    SkyboxSampler = RHICreateSamplerState(CreateInfo);
+    SkyboxSampler = RHICreateSamplerState(Initializer);
     if (!SkyboxSampler)
     {
         return false;

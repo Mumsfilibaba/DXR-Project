@@ -26,6 +26,8 @@ public:
         OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
     }
 
+public:
+
     bool CreateSampler(const D3D12_SAMPLER_DESC& InDesc)
     {
         OfflineHandle = OfflineHeap->Allocate(OfflineHeapIndex);

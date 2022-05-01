@@ -69,7 +69,7 @@ public:
         return dbg_new TNullRHITexture<CNullRHITexture3D>(Format, Width, Height, Depth, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual class CRHISamplerState* CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo) override final
+    virtual CRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHISamplerState();
     }
