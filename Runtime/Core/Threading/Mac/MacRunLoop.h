@@ -14,7 +14,7 @@ CORE_API bool RegisterMainRunLoop();
 CORE_API void UnregisterMainRunLoop();
 
 /** @brief: Perform a call on the MainThread */
-CORE_API void MakeMainThreadCall(dispatch_block_t Block, bool WaitUntilFinished);
+CORE_API void MakeMainThreadCall(dispatch_block_t Block, bool WaitForCompletion);
 
 /** @brief: Perform a call on the MainThread and wait for a returnvalue */
 template<typename ReturnType>

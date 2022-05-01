@@ -162,42 +162,42 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseVertexShader
+// CD3D12BaseVertexShader
 
-class CD3D12RHIBaseVertexShader : public CRHIVertexShader, public CD3D12Shader
+class CD3D12BaseVertexShader : public CRHIVertexShader, public CD3D12Shader
 {
 public:
-    CD3D12RHIBaseVertexShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseVertexShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIVertexShader()
         , CD3D12Shader(InDevice, InCode, ShaderVisibility_Vertex)
     { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBasePixelShader
+// CD3D12BasePixelShader
 
-class CD3D12RHIBasePixelShader : public CRHIPixelShader, public CD3D12Shader
+class CD3D12BasePixelShader : public CRHIPixelShader, public CD3D12Shader
 {
 public:
-    CD3D12RHIBasePixelShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BasePixelShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIPixelShader()
         , CD3D12Shader(InDevice, InCode, ShaderVisibility_Pixel)
     { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRayTracingShader
+// CD3D12RayTracingShader
 
-class CD3D12RHIBaseRayTracingShader : public CD3D12Shader
+class CD3D12RayTracingShader : public CD3D12Shader
 {
 public:
-    CD3D12RHIBaseRayTracingShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12RayTracingShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CD3D12Shader(InDevice, InCode, ShaderVisibility_All)
     { }
 
 public:
 
-    static bool GetRayTracingShaderReflection(class CD3D12RHIBaseRayTracingShader* Shader);
+    static bool GetRayTracingShaderReflection(class CD3D12RayTracingShader* Shader);
     
     FORCEINLINE const String& GetIdentifier() const
     {
@@ -209,61 +209,61 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRayGenShader
+// CD3D12BaseRayGenShader
 
-class CD3D12RHIBaseRayGenShader : public CRHIRayGenShader, public CD3D12RHIBaseRayTracingShader
+class CD3D12BaseRayGenShader : public CRHIRayGenShader, public CD3D12RayTracingShader
 {
 public:
-    CD3D12RHIBaseRayGenShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseRayGenShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayGenShader()
-        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
+        , CD3D12RayTracingShader(InDevice, InCode)
     { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRayAnyhitShader
+// CD3D12BaseRayAnyhitShader
 
-class CD3D12RHIBaseRayAnyhitShader : public CRHIRayAnyHitShader, public CD3D12RHIBaseRayTracingShader
+class CD3D12BaseRayAnyhitShader : public CRHIRayAnyHitShader, public CD3D12RayTracingShader
 {
 public:
-    CD3D12RHIBaseRayAnyhitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseRayAnyhitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayAnyHitShader()
-        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
+        , CD3D12RayTracingShader(InDevice, InCode)
     { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRayClosestHitShader
+// CD3D12BaseRayClosestHitShader
 
-class CD3D12RHIBaseRayClosestHitShader : public CRHIRayClosestHitShader, public CD3D12RHIBaseRayTracingShader
+class CD3D12BaseRayClosestHitShader : public CRHIRayClosestHitShader, public CD3D12RayTracingShader
 {
 public:
-    CD3D12RHIBaseRayClosestHitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseRayClosestHitShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayClosestHitShader()
-        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
+        , CD3D12RayTracingShader(InDevice, InCode)
     { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRayMissShader
+// CD3D12BaseRayMissShader
 
-class CD3D12RHIBaseRayMissShader : public CRHIRayMissShader, public CD3D12RHIBaseRayTracingShader
+class CD3D12BaseRayMissShader : public CRHIRayMissShader, public CD3D12RayTracingShader
 {
 public:
-    CD3D12RHIBaseRayMissShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseRayMissShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIRayMissShader()
-        , CD3D12RHIBaseRayTracingShader(InDevice, InCode)
+        , CD3D12RayTracingShader(InDevice, InCode)
     { }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseComputeShader
+// CD3D12BaseComputeShader
 
-class CD3D12RHIBaseComputeShader : public CRHIComputeShader, public CD3D12Shader
+class CD3D12BaseComputeShader : public CRHIComputeShader, public CD3D12Shader
 {
 public:
 
-    CD3D12RHIBaseComputeShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    CD3D12BaseComputeShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : CRHIComputeShader()
         , CD3D12Shader(InDevice, InCode, ShaderVisibility_All)
         , ThreadGroupXYZ(0, 0, 0)
@@ -283,13 +283,13 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIShader
+// TD3D12Shader
 
 template<typename BaseShaderType>
-class TD3D12RHIShader : public BaseShaderType
+class TD3D12Shader : public BaseShaderType
 {
 public:
-    TD3D12RHIShader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
+    TD3D12Shader(CD3D12Device* InDevice, const TArray<uint8>& InCode)
         : BaseShaderType(InDevice, InCode)
     { }
 
@@ -332,16 +332,6 @@ public:
         return FindParameterIndexByName(ConstantBufferParameters, InName, OutIndex);
     }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Deprecated
-
-    virtual bool IsValid() const override final
-    {
-        return ByteCode.pShaderBytecode != nullptr && ByteCode.BytecodeLength > 0;
-    }
-
 private:
     bool FindParameterIndexByName(const TArray<SD3D12ShaderParameter>& Parameters, const String& InName, uint32& OutIndex) const
     {
@@ -361,15 +351,15 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12 Shaders
 
-using CD3D12RHIVertexShader     = TD3D12RHIShader<CD3D12RHIBaseVertexShader>;
-using CD3D12RHIPixelShader      = TD3D12RHIShader<CD3D12RHIBasePixelShader>;
+using D3D12VertexShader        = TD3D12Shader<CD3D12BaseVertexShader>;
+using D3D12PixelShader         = TD3D12Shader<CD3D12BasePixelShader>;
 
-using CD3D12RHIComputeShader    = TD3D12RHIShader<CD3D12RHIBaseComputeShader>;
+using D3D12ComputeShader       = TD3D12Shader<CD3D12BaseComputeShader>;
 
-using CD3D12RHIRayGenShader     = TD3D12RHIShader<CD3D12RHIBaseRayGenShader>;
-using CD3D12RHIRayAnyHitShader  = TD3D12RHIShader<CD3D12RHIBaseRayAnyhitShader>;
-using CD3D12RayClosestHitShader = TD3D12RHIShader<CD3D12RHIBaseRayClosestHitShader>;
-using CD3D12RHIRayMissShader    = TD3D12RHIShader<CD3D12RHIBaseRayMissShader>;
+using D3D12RayGenShader        = TD3D12Shader<CD3D12BaseRayGenShader>;
+using D3D12RayAnyHitShader     = TD3D12Shader<CD3D12BaseRayAnyhitShader>;
+using D3D12RayClosestHitShader = TD3D12Shader<CD3D12BaseRayClosestHitShader>;
+using D3D12RayMissShader       = TD3D12Shader<CD3D12BaseRayMissShader>;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12ShaderCast

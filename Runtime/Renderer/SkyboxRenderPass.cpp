@@ -5,7 +5,7 @@
 
 #include "Renderer/Debug/GPUProfiler.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/TextureFactory.h"
@@ -66,9 +66,9 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     CreateInfo.AddressU = ESamplerMode::Wrap;
     CreateInfo.AddressV = ESamplerMode::Wrap;
     CreateInfo.AddressW = ESamplerMode::Wrap;
-    CreateInfo.Filter = ESamplerFilter::MinMagMipLinear;
-    CreateInfo.MinLOD = 0.0f;
-    CreateInfo.MaxLOD = 0.0f;
+    CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
+    CreateInfo.MinLOD   = 0.0f;
+    CreateInfo.MaxLOD   = 0.0f;
 
     SkyboxSampler = RHICreateSamplerState(CreateInfo);
     if (!SkyboxSampler)
@@ -89,10 +89,6 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        SkyboxVertexShader->SetName("Skybox VertexShader");
-    }
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Skybox.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
@@ -106,10 +102,6 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        SkyboxPixelShader->SetName("Skybox PixelShader");
-    }
 
     SRHIRasterizerStateInfo RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
@@ -120,13 +112,9 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        RasterizerState->SetName("Skybox RasterizerState");
-    }
 
     SRHIBlendStateInfo BlendStateInfo;
-    BlendStateInfo.bIndependentBlendEnable = false;
+    BlendStateInfo.bIndependentBlendEnable      = false;
     BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
@@ -135,14 +123,10 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        BlendState->SetName("Skybox BlendState");
-    }
 
     SRHIDepthStencilStateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-    DepthStencilStateInfo.bDepthEnable = true;
+    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
+    DepthStencilStateInfo.bDepthEnable   = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
@@ -151,21 +135,17 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        DepthStencilState->SetName("Skybox DepthStencilState");
-    }
 
     SRHIGraphicsPipelineStateInfo PipelineStateInfo;
-    PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
-    PipelineStateInfo.BlendState = BlendState.Get();
-    PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
-    PipelineStateInfo.RasterizerState = RasterizerState.Get();
-    PipelineStateInfo.ShaderState.VertexShader = SkyboxVertexShader.Get();
-    PipelineStateInfo.ShaderState.PixelShader = SkyboxPixelShader.Get();
+    PipelineStateInfo.InputLayoutState                       = FrameResources.StdInputLayout.Get();
+    PipelineStateInfo.BlendState                             = BlendState.Get();
+    PipelineStateInfo.DepthStencilState                      = DepthStencilState.Get();
+    PipelineStateInfo.RasterizerState                        = RasterizerState.Get();
+    PipelineStateInfo.ShaderState.VertexShader               = SkyboxVertexShader.Get();
+    PipelineStateInfo.ShaderState.PixelShader                = SkyboxPixelShader.Get();
     PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
-    PipelineStateInfo.PipelineFormats.NumRenderTargets = 1;
-    PipelineStateInfo.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
+    PipelineStateInfo.PipelineFormats.NumRenderTargets       = 1;
+    PipelineStateInfo.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
 
     PipelineState = RHICreateGraphicsPipelineState(PipelineStateInfo);
     if (!PipelineState)
@@ -212,7 +192,7 @@ void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& 
 
     CmdList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, 16);
 
-    CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
+    CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetDefaultShaderResourceView();
     CmdList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);
 
     CmdList.SetSamplerState(SkyboxPixelShader.Get(), SkyboxSampler.Get(), 0);

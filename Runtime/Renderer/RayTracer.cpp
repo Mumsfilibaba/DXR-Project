@@ -1,7 +1,7 @@
 #include "RayTracer.h"
 #include "Renderer.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Material.h"
@@ -27,10 +27,6 @@ bool CRayTracer::Init(SFrameResources& Resources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        RayGenShader->SetName("RayGenShader");
-    }
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ClosestHit.hlsl", "ClosestHit", nullptr, EShaderStage::RayClosestHit, EShaderModel::SM_6_3, Code))
     {
@@ -43,10 +39,6 @@ bool CRayTracer::Init(SFrameResources& Resources)
     {
         CDebug::DebugBreak();
         return false;
-    }
-    else
-    {
-        RayClosestHitShader->SetName("RayClosestHitShader");
     }
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Miss.hlsl", "Miss", nullptr, EShaderStage::RayMiss, EShaderModel::SM_6_3, Code))
@@ -61,19 +53,15 @@ bool CRayTracer::Init(SFrameResources& Resources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        RayMissShader->SetName("RayMissShader");
-    }
 
     SRHIRayTracingPipelineStateInfo CreateInfo;
-    CreateInfo.RayGen = RayGenShader.Get();
-    CreateInfo.ClosestHitShaders = { RayClosestHitShader.Get() };
-    CreateInfo.MissShaders = { RayMissShader.Get() };
-    CreateInfo.HitGroups = { SRayTracingHitGroup("HitGroup", nullptr, RayClosestHitShader.Get()) };
-    CreateInfo.MaxRecursionDepth = 4;
+    CreateInfo.RayGen                  = RayGenShader.Get();
+    CreateInfo.ClosestHitShaders       = { RayClosestHitShader.Get() };
+    CreateInfo.MissShaders             = { RayMissShader.Get() };
+    CreateInfo.HitGroups               = { SRayTracingHitGroup("HitGroup", nullptr, RayClosestHitShader.Get()) };
+    CreateInfo.MaxRecursionDepth       = 4;
     CreateInfo.MaxAttributeSizeInBytes = sizeof(SRayIntersectionAttributes);
-    CreateInfo.MaxPayloadSizeInBytes = sizeof(SRayPayload);
+    CreateInfo.MaxPayloadSizeInBytes   = sizeof(SRayPayload);
 
     Pipeline = RHICreateRayTracingPipelineState(CreateInfo);
     if (!Pipeline)
@@ -82,9 +70,9 @@ bool CRayTracer::Init(SFrameResources& Resources)
         return false;
     }
 
-    uint32 Width = Resources.MainWindowViewport->GetWidth();
+    uint32 Width  = Resources.MainWindowViewport->GetWidth();
     uint32 Height = Resources.MainWindowViewport->GetHeight();
-    Resources.RTOutput = RHICreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, TextureFlags_RWTexture, EResourceAccess::UnorderedAccess, nullptr);
+    Resources.RTOutput = RHICreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.RTOutput)
     {
         CDebug::DebugBreak();
@@ -122,12 +110,12 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
             continue;
         }
 
-        uint32 AlbedoIndex = Resources.RTMaterialTextureCache.Add(Mat->AlbedoMap->GetShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->NormalMap->GetShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->RoughnessMap->GetShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->HeightMap->GetShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->MetallicMap->GetShaderResourceView());
-        Resources.RTMaterialTextureCache.Add(Mat->AOMap->GetShaderResourceView());
+        uint32 AlbedoIndex = Resources.RTMaterialTextureCache.Add(Mat->AlbedoMap->GetDefaultShaderResourceView());
+        Resources.RTMaterialTextureCache.Add(Mat->NormalMap->GetDefaultShaderResourceView());
+        Resources.RTMaterialTextureCache.Add(Mat->RoughnessMap->GetDefaultShaderResourceView());
+        Resources.RTMaterialTextureCache.Add(Mat->HeightMap->GetDefaultShaderResourceView());
+        Resources.RTMaterialTextureCache.Add(Mat->MetallicMap->GetDefaultShaderResourceView());
+        Resources.RTMaterialTextureCache.Add(Mat->AOMap->GetDefaultShaderResourceView());
         Sampler = Mat->GetMaterialSampler();
 
         const CMatrix3x4 TinyTransform = Cmd.CurrentActor->GetTransform().GetTinyMatrix();
@@ -158,22 +146,18 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
         }
 
         SRayTracingGeometryInstance Instance;
-        Instance.Instance = MakeSharedRef<CRHIRayTracingGeometry>(Cmd.Geometry);
-        Instance.Flags = RayTracingInstanceFlags_None;
+        Instance.Instance      = MakeSharedRef<CRHIRayTracingGeometry>(Cmd.Geometry);
+        Instance.Flags         = RayTracingInstanceFlags_None;
         Instance.HitGroupIndex = HitGroupIndex;
         Instance.InstanceIndex = AlbedoIndex;
-        Instance.Mask = 0xff;
-        Instance.Transform = TinyTransform;
+        Instance.Mask          = 0xff;
+        Instance.Transform     = TinyTransform;
         Resources.RTGeometryInstances.Emplace(Instance);
     }
 
     if (!Resources.RTScene)
     {
         Resources.RTScene = RHICreateRayTracingScene(RayTracingStructureBuildFlag_None, Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size());
-        if (Resources.RTScene)
-        {
-            Resources.RTScene->SetName("RayTracingScene");
-        }
     }
     else
     {
@@ -186,9 +170,9 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
     Resources.GlobalResources.AddSamplerState(Resources.GBufferSampler.Get());
     Resources.GlobalResources.AddSamplerState(Sampler);
     Resources.GlobalResources.AddShaderResourceView(Resources.RTScene->GetShaderResourceView());
-    Resources.GlobalResources.AddShaderResourceView(Resources.Skybox->GetShaderResourceView());
-    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView());
-    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.Skybox->GetDefaultShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetDefaultShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDefaultShaderResourceView());
 
     for (uint32 i = 0; i < Resources.RTMaterialTextureCache.Size(); i++)
     {
@@ -202,24 +186,22 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
     Resources.MissLocalResources.Identifier = "Miss";
 
     // TODO: NO MORE BINDINGS CAN BE BOUND BEFORE DISPATCH RAYS, FIX THIS
-    CmdList.SetRayTracingBindings(
-        Resources.RTScene.Get(),
-        Pipeline.Get(),
-        &Resources.GlobalResources,
-        &Resources.RayGenLocalResources,
-        &Resources.MissLocalResources,
-        Resources.RTHitGroupResources.Data(),
-        Resources.RTHitGroupResources.Size());
+    CmdList.SetRayTracingBindings( Resources.RTScene.Get()
+                                 , Pipeline.Get()
+                                 , &Resources.GlobalResources
+                                 , &Resources.RayGenLocalResources
+                                 , &Resources.MissLocalResources
+                                 , Resources.RTHitGroupResources.Data()
+                                 , Resources.RTHitGroupResources.Size());
 
-    uint32 Width = Resources.RTOutput->GetWidth();
+    uint32 Width  = Resources.RTOutput->GetWidth();
     uint32 Height = Resources.RTOutput->GetHeight();
     CmdList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
 
     CmdList.UnorderedAccessTextureBarrier(Resources.RTOutput.Get());
 
-    AddDebugTexture(
-        MakeSharedRef<CRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView()),
-        Resources.RTOutput,
-        EResourceAccess::UnorderedAccess,
-        EResourceAccess::UnorderedAccess);
+    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.RTOutput->GetDefaultShaderResourceView())
+                   , Resources.RTOutput
+                   , EResourceAccess::UnorderedAccess
+                   , EResourceAccess::UnorderedAccess);
 }

@@ -1,17 +1,17 @@
 #pragma once
-#include "RHI/RHIResources.h"
-
 #include "D3D12DescriptorHeap.h"
 #include "D3D12Device.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHISamplerState
+#include "RHI/RHIResources.h"
 
-class CD3D12RHISamplerState : public CRHISamplerState, public CD3D12DeviceChild
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12SamplerState
+
+class CD3D12SamplerState : public CRHISamplerState, public CD3D12DeviceChild
 {
 public:
 
-    CD3D12RHISamplerState(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap)
+    CD3D12SamplerState(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap)
         : CRHISamplerState()
         , CD3D12DeviceChild(InDevice)
         , OfflineHeap(InOfflineHeap)
@@ -21,7 +21,7 @@ public:
         Assert(InOfflineHeap != nullptr);
     }
 
-    ~CD3D12RHISamplerState()
+    ~CD3D12SamplerState()
     {
         OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
     }
@@ -41,29 +41,13 @@ public:
         }
     }
 
-    virtual void* GetNativeResource() const override final
-    {
-        return reinterpret_cast<void*>(OfflineHandle.ptr);
-    }
+    D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
 
-    virtual bool IsValid() const override
-    {
-        return OfflineHandle != 0;
-    }
-
-    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
-    {
-        return OfflineHandle;
-    }
-
-    FORCEINLINE const D3D12_SAMPLER_DESC& GetDesc() const
-    {
-        return Desc;
-    }
+    FORCEINLINE const D3D12_SAMPLER_DESC& GetDesc() const { return Desc; }
 
 private:
     CD3D12OfflineDescriptorHeap* OfflineHeap = nullptr;
-    uint32                      OfflineHeapIndex = 0;
-    D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandle;
-    D3D12_SAMPLER_DESC          Desc;
+    uint32                       OfflineHeapIndex = 0;
+    D3D12_CPU_DESCRIPTOR_HANDLE  OfflineHandle;
+    D3D12_SAMPLER_DESC           Desc;
 };

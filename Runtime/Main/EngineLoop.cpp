@@ -255,7 +255,7 @@ bool CEngineLoop::Release()
         CApplicationInstance::Get().SetRenderer(nullptr);
     }
 
-    // Release the engine. Protect against failed initialization where the global pointer was never initialized
+    // Release the Engine. Protect against failed initialization where the global pointer was never initialized
     if (GEngine)
     {
         GEngine->Release();

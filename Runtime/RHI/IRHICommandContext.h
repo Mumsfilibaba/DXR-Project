@@ -13,12 +13,12 @@ public:
     /**
      * @brief: Start recording commands with this command context 
      */
-    virtual void Begin() = 0;
+    virtual void StartContext() = 0;
     
     /**
      * @brief: Stop recording commands with this command context
      */
-    virtual void End() = 0;
+    virtual void FinishContext() = 0;
 
     /**
      * @brief: Begins the timestamp with the specified index in the TimestampQuery 
@@ -308,14 +308,14 @@ public:
      * 
      * @param Resource: Resource to destroy
      */
-    virtual void DestroyResource(class CRHIObject* Resource) = 0;
+    virtual void DestroyResource(class IRHIResource* Resource) = 0;
 
     /**
      * @brief: Signal the driver that the contents can be discarded
      *
-     * @param Resource: Resource to discard contents of
+     * @param Texture: Resource to discard contents of
      */
-    virtual void DiscardContents(class CRHIResource* Resource) = 0;
+    virtual void DiscardContents(class CRHITexture* Texture) = 0;
 
     /**
      * @brief: Builds the Bottom-Level Acceleration-Structure for ray tracing 
@@ -469,4 +469,11 @@ public:
      * @brief: Ends a PIX capture event, currently only available on D3D12 
      */
     virtual void EndExternalCapture() = 0;
+
+    /**
+     * @brief: Retrieve the native CommandList (D3D12 and Vulkan)
+     *
+     * @return: Returns the native CommandList
+     */
+    virtual void* GetRHIBaseCommandList() = 0;
 };

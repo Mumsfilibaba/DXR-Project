@@ -17,10 +17,13 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CGenericThreadMisc Interface
 
+    static CGenericThread* CreateThread(const TFunction<void()>& InFunction);
+
+    static CGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const String& InString);
+
     static FORCEINLINE bool Initialize() 
     { 
-        // This must be executed on the mainthread
-		MainThreadHandle = pthread_self();
+        Assert(IsMainThread());
 
         // Then init the mainthread runloop
 		return RegisterMainRunLoop();
@@ -46,9 +49,12 @@ public:
     static FORCEINLINE void Sleep(CTimestamp Time)
     {
         // HACK: When the thread sleeps and we are on mainthread, run the mainloop
-        CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
-        CFRunLoopWakeUp(RunLoop);
-        CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, false);
+        if (IsMainThread())
+        {
+            CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
+            CFRunLoopWakeUp(RunLoop);
+            CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, false);
+        }
 		
         float MicroSeconds = Time.AsMicroSeconds();
         usleep(static_cast<useconds_t>(MicroSeconds));
@@ -58,7 +64,4 @@ public:
     {
 		return [NSThread isMainThread];
     }
-
-private:
-    static pthread_t MainThreadHandle;
 };

@@ -7,7 +7,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Resources/TextureFactory.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShaderCompiler.h"
 
@@ -29,8 +29,8 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
 
     // Build texture atlas
     uint8* Pixels = nullptr;
-    int32 Width = 0;
-    int32 Height = 0;
+    int32  Width  = 0;
+    int32  Height = 0;
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
@@ -116,26 +116,22 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    SRHIInputLayoutStateInfo InputLayoutInfo =
+    SRHIVertexInputLayoutInitializer InputLayoutInfo =
     {
-        { "POSITION", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EInputClassification::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EInputClassification::Vertex, 0 },
-        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EInputClassification::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EVertexInputClass::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EVertexInputClass::Vertex, 0 },
+        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EVertexInputClass::Vertex, 0 },
     };
 
-    TSharedRef<CRHIInputLayoutState> InputLayout = RHICreateInputLayout(InputLayoutInfo);
+    TSharedRef<CRHIVertexInputLayout> InputLayout = RHICreateInputLayout(InputLayoutInfo);
     if (!InputLayout)
     {
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        InputLayout->SetName("ImGui InputLayoutState");
-    }
 
     SRHIDepthStencilStateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.bDepthEnable = false;
+    DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
@@ -143,10 +139,6 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     {
         CDebug::DebugBreak();
         return false;
-    }
-    else
-    {
-        DepthStencilState->SetName("ImGui DepthStencilState");
     }
 
     SRHIRasterizerStateInfo RasterizerStateInfo;
@@ -158,30 +150,22 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        RasterizerState->SetName("ImGui RasterizerState");
-    }
 
     SRHIBlendStateInfo BlendStateInfo;
-    BlendStateInfo.bIndependentBlendEnable = false;
-    BlendStateInfo.RenderTarget[0].bBlendEnable = true;
-    BlendStateInfo.RenderTarget[0].SrcBlend = EBlend::SrcAlpha;
-    BlendStateInfo.RenderTarget[0].SrcBlendAlpha = EBlend::InvSrcAlpha;
-    BlendStateInfo.RenderTarget[0].DestBlend = EBlend::InvSrcAlpha;
-    BlendStateInfo.RenderTarget[0].DestBlendAlpha = EBlend::Zero;
-    BlendStateInfo.RenderTarget[0].BlendOpAlpha = EBlendOp::Add;
-    BlendStateInfo.RenderTarget[0].BlendOp = EBlendOp::Add;
+    BlendStateInfo.bIndependentBlendEnable        = false;
+    BlendStateInfo.RenderTarget[0].bBlendEnable   = true;
+    BlendStateInfo.RenderTarget[0].SrcBlend       = EBlendType ::SrcAlpha;
+    BlendStateInfo.RenderTarget[0].SrcBlendAlpha  = EBlendType ::InvSrcAlpha;
+    BlendStateInfo.RenderTarget[0].DestBlend      = EBlendType ::InvSrcAlpha;
+    BlendStateInfo.RenderTarget[0].DestBlendAlpha = EBlendType ::Zero;
+    BlendStateInfo.RenderTarget[0].BlendOpAlpha   = EBlendOp::Add;
+    BlendStateInfo.RenderTarget[0].BlendOp        = EBlendOp::Add;
 
     TSharedRef<CRHIBlendState> BlendStateBlending = RHICreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
         CDebug::DebugBreak();
         return false;
-    }
-    else
-    {
-        BlendStateBlending->SetName("ImGui BlendState");
     }
 
     BlendStateInfo.RenderTarget[0].bBlendEnable = false;
@@ -192,21 +176,17 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        BlendStateBlending->SetName("ImGui BlendState No Blending");
-    }
 
     SRHIGraphicsPipelineStateInfo PSOProperties;
-    PSOProperties.ShaderState.VertexShader = VShader.Get();
-    PSOProperties.ShaderState.PixelShader = PShader.Get();
-    PSOProperties.InputLayoutState = InputLayout.Get();
-    PSOProperties.DepthStencilState = DepthStencilState.Get();
-    PSOProperties.BlendState = BlendStateBlending.Get();
-    PSOProperties.RasterizerState = RasterizerState.Get();
+    PSOProperties.ShaderState.VertexShader               = VShader.Get();
+    PSOProperties.ShaderState.PixelShader                = PShader.Get();
+    PSOProperties.InputLayoutState                       = InputLayout.Get();
+    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
+    PSOProperties.BlendState                             = BlendStateBlending.Get();
+    PSOProperties.RasterizerState                        = RasterizerState.Get();
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
-    PSOProperties.PipelineFormats.NumRenderTargets = 1;
-    PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
+    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)
@@ -249,7 +229,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;
-    CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
+    CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
 
     PointSampler = RHICreateSamplerState(CreateInfo);
     if (!PointSampler)
@@ -359,7 +339,7 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
             }
             else
             {
-                CRHIShaderResourceView* View = FontTexture->GetShaderResourceView();
+                CRHIShaderResourceView* View = FontTexture->GetDefaultShaderResourceView();
                 CmdList.SetShaderResourceView(PShader.Get(), View, 0);
             }
 

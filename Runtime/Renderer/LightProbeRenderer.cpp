@@ -1,6 +1,6 @@
 #include "LightProbeRenderer.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 #include "RHI/RHIShaderCompiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -26,10 +26,6 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         LOG_ERROR("Failed to create IrradianceGen Shader");
         CDebug::DebugBreak();
     }
-    else
-    {
-        IrradianceGenShader->SetName("IrradianceGen Shader");
-    }
 
     IrradianceGenPSO = RHICreateComputePipelineState(SRHIComputePipelineStateInfo(IrradianceGenShader.Get()));
     if (!IrradianceGenPSO)
@@ -54,10 +50,6 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         LOG_ERROR("Failed to create Specular IrradianceGen Shader");
         CDebug::DebugBreak();
     }
-    else
-    {
-        SpecularIrradianceGenShader->SetName("Specular IrradianceGen Shader");
-    }
 
     SpecularIrradianceGenPSO = RHICreateComputePipelineState(SRHIComputePipelineStateInfo(SpecularIrradianceGenShader.Get()));
     if (!SpecularIrradianceGenPSO)
@@ -74,7 +66,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
     CreateInfo.AddressU = ESamplerMode::Wrap;
     CreateInfo.AddressV = ESamplerMode::Wrap;
     CreateInfo.AddressW = ESamplerMode::Wrap;
-    CreateInfo.Filter = ESamplerFilter::MinMagMipLinear;
+    CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
 
     FrameResources.IrradianceSampler = RHICreateSamplerState(CreateInfo);
     if (!FrameResources.IrradianceSampler)
@@ -95,20 +87,20 @@ void CLightProbeRenderer::Release()
 
 void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& FrameResources)
 {
-    const uint32 IrradianceMapSize = static_cast<uint32>(LightSetup.IrradianceMap->GetSize());
+    const uint32 IrradianceMapSize = static_cast<uint32>(LightSetup.IrradianceMap->GetWidth());
 
     CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
     CmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
     CmdList.SetComputePipelineState(IrradianceGenPSO.Get());
 
-    CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
+    CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetDefaultShaderResourceView();
     CmdList.SetShaderResourceView(IrradianceGenShader.Get(), SkyboxSRV, 0);
     CmdList.SetUnorderedAccessView(IrradianceGenShader.Get(), LightSetup.IrradianceMapUAV.Get(), 0);
 
     {
         const CIntVector3 ThreadCount = IrradianceGenShader->GetThreadGroupXYZ();
-        const uint32 ThreadWidth = NMath::DivideByMultiple(IrradianceMapSize, ThreadCount.x);
+        const uint32 ThreadWidth  = NMath::DivideByMultiple(IrradianceMapSize, ThreadCount.x);
         const uint32 ThreadHeight = NMath::DivideByMultiple(IrradianceMapSize, ThreadCount.y);
         CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
     }
@@ -122,10 +114,10 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
 
     CmdList.SetComputePipelineState(SpecularIrradianceGenPSO.Get());
 
-    uint32 Width = LightSetup.SpecularIrradianceMap->GetSize();
+    uint32 Width = LightSetup.SpecularIrradianceMap->GetWidth();
     float  Roughness = 0.0f;
 
-    const uint32 NumMiplevels = LightSetup.SpecularIrradianceMap->GetNumMips();
+    const uint32 NumMiplevels   = LightSetup.SpecularIrradianceMap->GetNumMips();
     const float  RoughnessDelta = 1.0f / (NumMiplevels - 1);
     for (uint32 Mip = 0; Mip < NumMiplevels; Mip++)
     {
@@ -134,7 +126,7 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
 
         {
             const CIntVector3 ThreadCount = SpecularIrradianceGenShader->GetThreadGroupXYZ();
-            const uint32 ThreadWidth = NMath::DivideByMultiple(Width, ThreadCount.x);
+            const uint32 ThreadWidth  = NMath::DivideByMultiple(Width, ThreadCount.x);
             const uint32 ThreadHeight = NMath::DivideByMultiple(Width, ThreadCount.y);
             CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
         }
@@ -152,7 +144,7 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
 bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
 {
     // Generate global irradiance (From Skybox)
-    LightSetup.IrradianceMap = RHICreateTextureCube(LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, TextureFlags_RWTexture, EResourceAccess::Common, nullptr);
+    LightSetup.IrradianceMap = RHICreateTextureCube(LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, ETextureUsageFlags::RWTexture, EResourceAccess::Common, nullptr);
     if (!LightSetup.IrradianceMap)
     {
         CDebug::DebugBreak();
@@ -171,13 +163,12 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
     }
 
     const uint16 SpecularIrradianceMiplevels = NMath::Max<uint16>(NMath::Log2(LightSetup.SpecularIrradianceSize), 1u);
-    LightSetup.SpecularIrradianceMap = RHICreateTextureCube(
-        LightSetup.LightProbeFormat,
-        LightSetup.SpecularIrradianceSize,
-        SpecularIrradianceMiplevels,
-        TextureFlags_RWTexture,
-        EResourceAccess::Common,
-        nullptr);
+    LightSetup.SpecularIrradianceMap = RHICreateTextureCube( LightSetup.LightProbeFormat
+                                                           , LightSetup.SpecularIrradianceSize
+                                                           , SpecularIrradianceMiplevels
+                                                           , ETextureUsageFlags::RWTexture
+                                                           , EResourceAccess::Common
+                                                           , nullptr);
     if (!LightSetup.SpecularIrradianceMap)
     {
         CDebug::DebugBreak();

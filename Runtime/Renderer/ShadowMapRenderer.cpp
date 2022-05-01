@@ -1,7 +1,7 @@
 #include "ShadowMapRenderer.h"
 #include "MeshDrawCommand.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Mesh.h"
@@ -38,10 +38,6 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            PerShadowMapBuffer->SetName("Per ShadowMap Buffer");
-        }
 
         if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ShadowMap.hlsl", "Point_VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
         {
@@ -54,10 +50,6 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            PointLightVertexShader->SetName("Point ShadowMap VertexShader");
         }
 
         if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ShadowMap.hlsl", "Point_PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
@@ -72,14 +64,10 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            PointLightPixelShader->SetName("Point ShadowMap PixelShader");
-        }
 
         SRHIDepthStencilStateInfo DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-        DepthStencilStateInfo.bDepthEnable = true;
+        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
+        DepthStencilStateInfo.bDepthEnable   = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
@@ -87,10 +75,6 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            DepthStencilState->SetName("Shadow DepthStencilState");
         }
 
         SRHIRasterizerStateInfo RasterizerStateInfo;
@@ -102,10 +86,6 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            RasterizerState->SetName("Shadow RasterizerState");
-        }
 
         SRHIBlendStateInfo BlendStateInfo;
 
@@ -115,24 +95,20 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            BlendState->SetName("Shadow BlendState");
-        }
 
         SRHIGraphicsPipelineStateInfo PipelineStateInfo;
-        PipelineStateInfo.BlendState = BlendState.Get();
-        PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
-        PipelineStateInfo.IBStripCutValue = EIndexBufferStripCutValue::Disabled;
-        PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
-        PipelineStateInfo.RasterizerState = RasterizerState.Get();
-        PipelineStateInfo.SampleCount = 1;
-        PipelineStateInfo.SampleQuality = 0;
-        PipelineStateInfo.SampleMask = 0xffffffff;
-        PipelineStateInfo.ShaderState.VertexShader = PointLightVertexShader.Get();
-        PipelineStateInfo.ShaderState.PixelShader = PointLightPixelShader.Get();
-        PipelineStateInfo.PipelineFormats.NumRenderTargets = 0;
+        PipelineStateInfo.BlendState                         = BlendState.Get();
+        PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
+        PipelineStateInfo.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
+        PipelineStateInfo.InputLayoutState                   = FrameResources.StdInputLayout.Get();
+        PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
+        PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
+        PipelineStateInfo.SampleCount                        = 1;
+        PipelineStateInfo.SampleQuality                      = 0;
+        PipelineStateInfo.SampleMask                         = 0xffffffff;
+        PipelineStateInfo.ShaderState.VertexShader           = PointLightVertexShader.Get();
+        PipelineStateInfo.ShaderState.PixelShader            = PointLightPixelShader.Get();
+        PipelineStateInfo.PipelineFormats.NumRenderTargets   = 0;
         PipelineStateInfo.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
 
         PointLightPipelineState = RHICreateGraphicsPipelineState(PipelineStateInfo);
@@ -172,14 +148,10 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            DirectionalLightShader->SetName("ShadowMap VertexShader");
-        }
 
         SRHIDepthStencilStateInfo DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-        DepthStencilStateInfo.bDepthEnable = true;
+        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
+        DepthStencilStateInfo.bDepthEnable   = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
@@ -187,10 +159,6 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            DepthStencilState->SetName("Shadow DepthStencilState");
         }
 
         SRHIRasterizerStateInfo RasterizerStateInfo;
@@ -202,10 +170,6 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            RasterizerState->SetName("Shadow RasterizerState");
-        }
 
         SRHIBlendStateInfo BlendStateInfo;
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
@@ -214,24 +178,20 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            BlendState->SetName("Shadow BlendState");
-        }
 
         SRHIGraphicsPipelineStateInfo PipelineStateInfo;
-        PipelineStateInfo.BlendState = BlendState.Get();
-        PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
-        PipelineStateInfo.IBStripCutValue = EIndexBufferStripCutValue::Disabled;
-        PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
-        PipelineStateInfo.RasterizerState = RasterizerState.Get();
-        PipelineStateInfo.SampleCount = 1;
-        PipelineStateInfo.SampleQuality = 0;
-        PipelineStateInfo.SampleMask = 0xffffffff;
-        PipelineStateInfo.ShaderState.VertexShader = DirectionalLightShader.Get();
-        PipelineStateInfo.ShaderState.PixelShader = nullptr;
-        PipelineStateInfo.PipelineFormats.NumRenderTargets = 0;
+        PipelineStateInfo.BlendState                         = BlendState.Get();
+        PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
+        PipelineStateInfo.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
+        PipelineStateInfo.InputLayoutState                   = FrameResources.StdInputLayout.Get();
+        PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
+        PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
+        PipelineStateInfo.SampleCount                        = 1;
+        PipelineStateInfo.SampleQuality                      = 0;
+        PipelineStateInfo.SampleMask                         = 0xffffffff;
+        PipelineStateInfo.ShaderState.VertexShader           = DirectionalLightShader.Get();
+        PipelineStateInfo.ShaderState.PixelShader            = nullptr;
+        PipelineStateInfo.PipelineFormats.NumRenderTargets   = 0;
         PipelineStateInfo.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
 
         DirectionalLightPSO = RHICreateGraphicsPipelineState(PipelineStateInfo);
@@ -259,10 +219,6 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            CascadeGenShader->SetName("CascadeGen ComputeShader");
         }
 
         SRHIComputePipelineStateInfo CascadePSO;
@@ -310,20 +266,12 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            LightSetup.CascadeMatrixBufferSRV->SetName("Cascade MatrixBuffer SRV");
-        }
 
         LightSetup.CascadeMatrixBufferUAV = RHICreateUnorderedAccessView(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
         if (!LightSetup.CascadeMatrixBufferUAV)
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            LightSetup.CascadeMatrixBufferUAV->SetName("Cascade MatrixBuffer UAV");
         }
 
         LightSetup.CascadeSplitsBuffer = RHICreateGenericBuffer<SCascadeSplits>(NUM_SHADOW_CASCADES, EBufferUsageFlags::RWBuffer, EResourceAccess::UnorderedAccess, nullptr);
@@ -343,20 +291,12 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            LightSetup.CascadeSplitsBufferSRV->SetName("Cascade SplitBuffer SRV");
-        }
 
         LightSetup.CascadeSplitsBufferUAV = RHICreateUnorderedAccessView(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
         if (!LightSetup.CascadeSplitsBufferUAV)
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            LightSetup.CascadeSplitsBufferUAV->SetName("Cascade SplitBuffer UAV");
         }
     }
 
@@ -373,10 +313,6 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            DirectionalShadowMaskShader->SetName("Directional ShadowMask ComputeShader");
         }
 
         SRHIComputePipelineStateInfo MaskPSO;
@@ -425,7 +361,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
         CmdList.SetGraphicsPipelineState(PointLightPipelineState.Get());
 
         // PerObject Structs
-        struct ShadowPerObject
+        struct SShadowPerObject
         {
             CMatrix4 Matrix;
         } ShadowPerObjectBuffer;
@@ -455,7 +391,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
                 CmdList.SetConstantBuffer(PointLightPixelShader.Get(), PerShadowMapBuffer.Get(), 0);
 
                 // Draw all objects to depth buffer
-                IConsoleVariable* GlobalFrustumCullEnabled = CConsoleManager::Get().FindVariable("renderer.EnableFrustumCulling");
+                IConsoleVariable* GlobalFrustumCullEnabled = CConsoleManager::Get().FindVariable("Renderer.EnableFrustumCulling");
                 if (GlobalFrustumCullEnabled && GlobalFrustumCullEnabled->GetBool())
                 {
                     CFrustum CameraFrustum = CFrustum(Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face]);
@@ -537,7 +473,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
         CmdList.SetUnorderedAccessView(CascadeGenShader.Get(), LightSetup.CascadeMatrixBufferUAV.Get(), 0);
         CmdList.SetUnorderedAccessView(CascadeGenShader.Get(), LightSetup.CascadeSplitsBufferUAV.Get(), 1);
 
-        CmdList.SetShaderResourceView(CascadeGenShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
+        CmdList.SetShaderResourceView(CascadeGenShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetDefaultShaderResourceView(), 0);
 
         CmdList.Dispatch(NUM_SHADOW_CASCADES, 1, 1);
 
@@ -632,13 +568,13 @@ void CShadowMapRenderer::RenderShadowMasks(CRHICommandList& CmdList, const SLigh
         CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
         CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.CascadeSplitsBufferSRV.Get(), 1);
 
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 2);
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetDefaultShaderResourceView(), 2);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDefaultShaderResourceView(), 3);
 
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 4);
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[1]->GetShaderResourceView(), 5);
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[2]->GetShaderResourceView(), 6);
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[3]->GetShaderResourceView(), 7);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[0]->GetDefaultShaderResourceView(), 4);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[1]->GetDefaultShaderResourceView(), 5);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[2]->GetDefaultShaderResourceView(), 6);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[3]->GetDefaultShaderResourceView(), 7);
 
         CmdList.SetUnorderedAccessView(DirectionalShadowMaskShader.Get(), LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), 0);
 
@@ -682,7 +618,7 @@ void CShadowMapRenderer::Release()
 
 bool CShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, SLightSetup& LightSetup)
 {
-    LightSetup.DirectionalShadowMask = RHICreateTexture2D(LightSetup.ShadowMaskFormat, Width, Height, 1, 1, ERHITextureFlags::TextureFlags_RWTexture, EResourceAccess::NonPixelShaderResource, nullptr);
+    LightSetup.DirectionalShadowMask = RHICreateTexture2D(LightSetup.ShadowMaskFormat, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::NonPixelShaderResource, nullptr);
     if (LightSetup.DirectionalShadowMask)
     {
         LightSetup.DirectionalShadowMask->SetName("Directional Shadow Mask 0");
@@ -697,7 +633,7 @@ bool CShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, SLightSet
 
 bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResources& FrameResources)
 {
-    const uint32 Width = FrameResources.MainWindowViewport->GetWidth();
+    const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
 
     if (!CreateShadowMask(Width, Height, LightSetup))
@@ -707,7 +643,14 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
 
     const SClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
 
-    LightSetup.PointLightShadowMaps = RHICreateTextureCubeArray(LightSetup.ShadowMapFormat, LightSetup.PointLightShadowSize, 1, LightSetup.MaxPointLightShadows, TextureFlags_ShadowMap, EResourceAccess::PixelShaderResource, nullptr, DepthClearValue);
+    LightSetup.PointLightShadowMaps = RHICreateTextureCubeArray( LightSetup.ShadowMapFormat
+                                                               , LightSetup.PointLightShadowSize
+                                                               , 1
+                                                               , LightSetup.MaxPointLightShadows
+                                                               , ETextureUsageFlags::ShadowMap
+                                                               , EResourceAccess::PixelShaderResource
+                                                               , nullptr
+                                                               , DepthClearValue);
     if (LightSetup.PointLightShadowMaps)
     {
         LightSetup.PointLightShadowMaps->SetName("PointLight ShadowMaps");
@@ -736,7 +679,15 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
     {
         const uint16 CascadeSize = LightSetup.CascadeSize;
 
-        LightSetup.ShadowMapCascades[i] = RHICreateTexture2D(LightSetup.ShadowMapFormat, CascadeSize, CascadeSize, 1, 1, TextureFlags_ShadowMap, EResourceAccess::NonPixelShaderResource, nullptr, DepthClearValue);
+        LightSetup.ShadowMapCascades[i] = RHICreateTexture2D( LightSetup.ShadowMapFormat
+                                                            , CascadeSize
+                                                            , CascadeSize
+                                                            , 1
+                                                            , 1
+                                                            , ETextureUsageFlags::ShadowMap
+                                                            , EResourceAccess::NonPixelShaderResource
+                                                            , nullptr
+                                                            , DepthClearValue);
         if (LightSetup.ShadowMapCascades[i])
         {
             LightSetup.ShadowMapCascades[i]->SetName("Shadow Map Cascade[" + ToString(i) + "]");

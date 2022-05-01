@@ -18,22 +18,22 @@ class CNullRHICommandContext : public IRHICommandContext
 {
 private:
 
-    friend class CNullRHIInstance;
+    friend class CNullRHICoreInstance;
 
-    CNullRHICommandContext() = default;
+    CNullRHICommandContext()  = default;
     ~CNullRHICommandContext() = default;
 
 public:
 
-    static FORCEINLINE CNullRHICommandContext* CreateNullRHIContext() { return dbg_new CNullRHICommandContext(); }
+    static CNullRHICommandContext* CreateNullRHIContext() { return dbg_new CNullRHICommandContext(); }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // IRHICommandContext Interface
 
-    virtual void Begin() override final { }
-    virtual void End()   override final { }
+    virtual void StartContext()  override final { }
+    virtual void FinishContext() override final { }
 
     virtual void BeginTimeStamp(CRHITimestampQuery* Profiler, uint32 Index) override final { }
     virtual void EndTimeStamp(CRHITimestampQuery* Profiler, uint32 Index)   override final { }
@@ -86,8 +86,9 @@ public:
     virtual void CopyTexture(CRHITexture* Destination, CRHITexture* Source) override final { }
     virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo) override final { }
 
-    virtual void DestroyResource(class CRHIObject* Resource) override final { }
-    virtual void DiscardContents(class CRHIResource* Resource) override final { }
+    virtual void DestroyResource(class IRHIResource* Resource) override final { }
+
+    virtual void DiscardContents(class CRHITexture* Texture) override final { }
 
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final { }
     virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final { }
@@ -124,12 +125,13 @@ public:
     virtual void InsertMarker(const String& Message) override final { }
 
     virtual void BeginExternalCapture() override final { }
-    virtual void EndExternalCapture() override final { }
+    virtual void EndExternalCapture()   override final { }
+
+    virtual void* GetRHIBaseCommandList() override final { return nullptr; }
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
+    #pragma warning(pop)
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
+    #pragma clang diagnostic pop
 #endif

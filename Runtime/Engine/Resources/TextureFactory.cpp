@@ -2,7 +2,7 @@
 
 #include "Engine/Assets/SceneData.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIPipelineState.h"
 #include "RHI/RHIShaderCompiler.h"
@@ -135,13 +135,13 @@ CRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
 
     Assert(NumMips != 0);
 
-    const uint32 Stride = GetByteStrideFromFormat(Format);
+    const uint32 Stride   = GetByteStrideFromFormat(Format);
     const uint32 RowPitch = Width * Stride;
 
     Assert(RowPitch > 0);
 
     SRHIResourceData InitalData = SRHIResourceData(Pixels, Format, Width);
-    TSharedRef<CRHITexture2D> Texture = RHICreateTexture2D(Format, Width, Height, NumMips, 1, TextureFlag_SRV, EResourceAccess::PixelShaderResource, &InitalData);
+    TSharedRef<CRHITexture2D> Texture = RHICreateTexture2D(Format, Width, Height, NumMips, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::PixelShaderResource, &InitalData);
     if (!Texture)
     {
         CDebug::DebugBreak();
@@ -163,12 +163,12 @@ CRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
 
 CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format)
 {
-    Assert(PanoramaSource->IsSRV());
+    Assert((PanoramaSource->GetFlags() & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None);
 
     const bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const uint32 NumMips = (GenerateNumMips) ? NMath::Max<uint32>(NMath::Log2(CubeMapSize), 1u) : 1u;
 
-    TSharedRef<CRHITextureCube> StagingTexture = RHICreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_UAV, EResourceAccess::Common, nullptr);
+    TSharedRef<CRHITextureCube> StagingTexture = RHICreateTextureCube(Format, CubeMapSize, NumMips, ETextureUsageFlags::AllowUAV, EResourceAccess::Common, nullptr);
     if (!StagingTexture)
     {
         return nullptr;
@@ -188,7 +188,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* Pa
         StagingTexture->SetName("TextureCube From Panorama StagingTexture UAV");
     }
 
-    TSharedRef<CRHITextureCube> Texture = RHICreateTextureCube(Format, CubeMapSize, NumMips, TextureFlag_SRV, EResourceAccess::Common, nullptr);
+    TSharedRef<CRHITextureCube> Texture = RHICreateTextureCube(Format, CubeMapSize, NumMips, ETextureUsageFlags::AllowSRV, EResourceAccess::Common, nullptr);
     if (!Texture)
     {
         return nullptr;
@@ -210,7 +210,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* Pa
     CmdList.Set32BitShaderConstants(GlobalFactoryData.ComputeShader.Get(), &CB0, 1);
     CmdList.SetUnorderedAccessView(GlobalFactoryData.ComputeShader.Get(), StagingTextureUAV.Get(), 0);
 
-    CRHIShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
+    CRHIShaderResourceView* PanoramaSourceView = PanoramaSource->GetDefaultShaderResourceView();
     CmdList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
 
     constexpr uint32 LocalWorkGroupCount = 16;

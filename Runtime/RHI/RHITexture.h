@@ -1,182 +1,137 @@
 #pragma once
 #include "RHIResourceBase.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERHITextureFlags
+#include "Core/Templates/EnumUtilities.h"
+#include "Core/Containers/SharedRef.h"
 
-enum ERHITextureFlags
+#if defined(COMPILER_MSVC)
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedefs
+
+typedef TSharedRef<class CRHITexture>        RHITextureRef;
+
+typedef TSharedRef<class CRHITexture2D>      RHITexture2DRef;
+typedef TSharedRef<class CRHITexture2DArray> RHITexture2DArrayRef;
+typedef TSharedRef<class CRHITextureCube>    RHITextureCubeRef;
+typedef TSharedRef<class CRHITexture3D>      RHITexture3DRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ETextureUsageFlags
+
+enum class ETextureUsageFlags
 {
-    TextureFlag_None = 0,
-    TextureFlag_RTV = FLAG(1), // RenderTargetView
-    TextureFlag_DSV = FLAG(2), // DepthStencilView
-    TextureFlag_UAV = FLAG(3), // UnorderedAccessView
-    TextureFlag_SRV = FLAG(4), // ShaderResourceView
-    TextureFlag_NoDefaultRTV = FLAG(5), // Do not create default RenderTargetView
-    TextureFlag_NoDefaultDSV = FLAG(6), // Do not create default DepthStencilView
-    TextureFlag_NoDefaultUAV = FLAG(7), // Do not create default UnorderedAccessView
-    TextureFlag_NoDefaultSRV = FLAG(8), // Do not create default ShaderResourceView
-    TextureFlags_RWTexture = TextureFlag_UAV | TextureFlag_SRV,
-    TextureFlags_RenderTarget = TextureFlag_RTV | TextureFlag_SRV,
-    TextureFlags_ShadowMap = TextureFlag_DSV | TextureFlag_SRV,
+    None         = 0,
+    AllowRTV     = FLAG(1), // RenderTargetView
+    AllowDSV     = FLAG(2), // DepthStencilView
+    AllowUAV     = FLAG(3), // UnorderedAccessView
+    AllowSRV     = FLAG(4), // ShaderResourceView
+    NoDefaultRTV = FLAG(5), // Do not create default RenderTargetView
+    NoDefaultDSV = FLAG(6), // Do not create default DepthStencilView
+    NoDefaultUAV = FLAG(7), // Do not create default UnorderedAccessView
+    NoDefaultSRV = FLAG(8), // Do not create default ShaderResourceView
+    
+    RWTexture    = AllowUAV | AllowSRV,
+    RenderTarget = AllowRTV | AllowSRV,
+    ShadowMap    = AllowDSV | AllowSRV,
 };
+
+ENUM_CLASS_OPERATORS(ETextureUsageFlags);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITexture
 
 class CRHITexture : public CRHIResource
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor taking parameters for creating a texture
-     * 
-     * @param InFormat: Format of the texture
-     * @param InNumMips: Number of MipLevels of the texture
-     * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
-     */
-    CRHITexture(EFormat InFormat, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimalClearValue)
+    CRHITexture(EFormat InFormat, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InOptimalClearValue)
         : CRHIResource()
         , Format(InFormat)
-        , NumMips(InNumMips)
-        , Flags(InFlags)
+        , NumMips(uint8(InNumMips))
+        , UsageFlags(InFlags)
         , OptimalClearValue(InOptimalClearValue)
     { }
 
-    /**
-     * @brief: Cast resource to texture 
-     * 
-     * @return: Returns a pointer to a Texture
-     */
-    virtual CRHITexture* AsTexture() { return this; }
+public:
 
-    /**
-     * @brief: Cast to Texture2D 
-     * 
-     * @return: Returns a pointer to a Texture2D if the texture if of correct type
-     */
+    /** @return: Returns a pointer to a CRHITexture2D if the interface is implemented */
     virtual class CRHITexture2D* AsTexture2D() { return nullptr; }
 
-    /**
-     * @brief: Cast to Texture2DArray
-     *
-     * @return: Returns a pointer to a Texture2DArray if the texture if of correct type
-     */
+    /** @return: Returns a pointer to a CRHITexture2DArray if the interface is implemented */
     virtual class CRHITexture2DArray* AsTexture2DArray() { return nullptr; }
     
-    /**
-     * @brief: Cast to TextureCube
-     *
-     * @return: Returns a pointer to a TextureCube if the texture if of correct type
-     */
+    /** @return: Returns a pointer to a CRHITextureCube if the interface is implemented */
     virtual class CRHITextureCube* AsTextureCube() { return nullptr; }
 
-    /**
-     * @brief: Cast to TextureCubeArray
-     *
-     * @return: Returns a pointer to a TextureCubeArray if the texture if of correct type
-     */
+    /** @return: Returns a pointer to a CRHITextureCubeArray if the interface is implemented */
     virtual class CRHITextureCubeArray* AsTextureCubeArray() { return nullptr; }
 
-    /**
-     * @brief: Cast to Texture3D
-     *
-     * @return: Returns a pointer to a Texture3D if the texture if of correct type
-     */
+    /** @return: Returns a pointer to a CRHITexture3D if the interface is implemented */
     virtual class CRHITexture3D* AsTexture3D() { return nullptr; }
 
-    /**
-     * @brief: Returns a ShaderResourceView of the full resource if texture is created with TextureFlag_SRV
-     * 
-     * @return: Returns a pointer to a ShaderResourceView
-     */
-    virtual class CRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
+    /** @return: Returns the RHI-backend Resource interface */
+    virtual void* GetRHIBaseResourceHandle() const { return nullptr; }
 
-    /**
-     * @brief: Retrieve the format of the texture
-     * 
-     * @return: Returns the format of the texture
-     */
-    FORCEINLINE EFormat GetFormat() const
-    {
-        return Format;
-    }
+    /** @return: Returns the RHI-backend BaseTexture interface */
+    virtual void* GetRHIBaseTexture() { return nullptr; }
 
-    /**
-     * @brief: Retrieve the number of MipLevels of the texture
-     *
-     * @return: Returns the number of MipLevels of the texture
-     */
-    FORCEINLINE uint32 GetNumMips() const
-    {
-        return NumMips;
-    }
+    /** @return: Returns the default SRV of the full resource if texture is created with the flag AllowSRV */
+    virtual class CRHIShaderResourceView* GetDefaultShaderResourceView() const { return nullptr; }
 
-    /**
-     * @brief: Retrieve the flags of the texture
-     *
-     * @return: Returns the flags of the texture
-     */
-    FORCEINLINE uint32 GetFlags() const
-    {
-        return Flags;
-    }
+    /** @return: Returns a Bindless descriptor-handle to the default ShaderResourceView if the RHI supports it */
+    virtual CRHIDescriptorHandle GetDefaultBindlessHandle() const { return CRHIDescriptorHandle(); }
 
-    /**
-     * @brief: Retrieve the optimized clear-value of the texture
-     *
-     * @return: Returns the optimized clear-value of the texture
-     */
-    FORCEINLINE const SClearValue& GetOptimalClearValue() const
-    {
-        return OptimalClearValue;
-    }
+    /** @return: Returns a IntVector3 with Width, Height, and Depth */
+    virtual CIntVector3 GetExtent() const { return CIntVector3(1, 1, 1); }
 
-    /**
-     * @brief: Check if the texture can be used as a UnorderedAccessView
-     * 
-     * @return: Returns true if the texture was created with the UnorderedAccessView-flag
-     */
-    FORCEINLINE bool IsUAV() const
-    {
-        return (Flags & TextureFlag_UAV) && !(Flags & TextureFlag_NoDefaultUAV);
-    }
+    /** @return: Returns the texture Width */
+    virtual uint32 GetWidth() const { return 1; }
 
-    /**
-     * @brief: Check if the texture can be used as a ShaderResourceView
-     *
-     * @return: Returns true if the texture was created with the ShaderResourceView-flag
-     */
-    FORCEINLINE bool IsSRV() const
-    {
-        return (Flags & TextureFlag_SRV) && !(Flags & TextureFlag_NoDefaultSRV);
-    }
+    /** @return: Returns the texture Height */
+    virtual uint32 GetHeight() const { return 1; }
 
-    /**
-     * @brief: Check if the texture can be used as a RenderTargetView
-     *
-     * @return: Returns true if the texture was created with the RenderTargetView-flag
-     */
-    FORCEINLINE bool IsRTV() const
-    {
-        return (Flags & TextureFlag_RTV) && !(Flags & TextureFlag_NoDefaultRTV);
-    }
+    /** @return: Returns the texture Depth */
+    virtual uint32 GetDepth() const { return 1; }
 
-    /**
-     * @brief: Check if the texture can be used as a DepthStencilView
-     *
-     * @return: Returns true if the texture was created with the DepthStencilView-flag
-     */
-    FORCEINLINE bool IsDSV() const
-    {
-        return (Flags & TextureFlag_SRV) && !(Flags & TextureFlag_NoDefaultSRV);
-    }
+    /** @return: Returns the texture ArraySize */
+    virtual uint32 GetArraySize() const { return 1; }
 
-private:
-    EFormat Format;
-    uint32  NumMips;
-    uint32  Flags;
-    SClearValue OptimalClearValue;
+    /** @return: Returns the number of Samples of the texture */
+    virtual uint32 GetNumSamples() const { return 1; }
+
+    /** @brief: Set the debug-name of the Texture */
+    virtual void SetName(const String& InName) { }
+
+    /** @return: Returns the name of the Texture */
+    virtual String GetName() const { return ""; }
+
+    /** @return: Returns true if the number of samples is more than one */
+    bool IsMultiSampled() const { return (GetNumSamples() > 1); }
+
+    /** @return: Returns the Usage-Flags of the texture */
+    ETextureUsageFlags GetFlags() const { return UsageFlags; }
+
+    /** @return: Returns the texture Format */
+    EFormat GetFormat() const { return Format; }
+
+    /** @return: Returns the number of MipLevels of the texture */
+    uint32 GetNumMips() const { return NumMips; }
+
+    /** @return: Returns the clear-value */
+    const SClearValue& GetClearValue() const { return OptimalClearValue; }
+
+protected:
+    EFormat            Format;
+    uint8              NumMips;
+    ETextureUsageFlags UsageFlags;
+    SClearValue        OptimalClearValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -184,105 +139,45 @@ private:
 
 class CRHITexture2D : public CRHITexture
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor taking parameters for creating a texture
-     *
-     * @param InFormat: Format of the texture
-     * @param InWidth: Width of the texture
-     * @param InHeight: Height of the texture
-     * @param InNumMips: Number of MipLevels of the texture
-     * @param InNumSamples: Number of samples of the texture
-     * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
-     */
-    CRHITexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InFlags, const SClearValue& InOptimizedClearValue)
-        : CRHITexture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
-        , Width(InWidth)
-        , Height(InHeight)
-        , NumSamples(InNumSamples)
+    CRHITexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
+        : CRHITexture(InFormat, InNumMips, InFlags, InClearValue)
+        , NumSamples(uint8(InNumSamples))
+        , Width(uint16(InWidth))
+        , Height(uint16(InHeight))
     { }
 
-    /**
-     * @brief: Cast to Texture2D
-     *
-     * @return: Returns a pointer to a Texture2D if the texture if of correct type
-     */
-    virtual CRHITexture2D* AsTexture2D() override { return this; }
+public:
 
-    /**
-     * @brief: Returns a RenderTargetView of the full resource if texture is created with TextureFlag_SRV
-     *
-     * @return: Returns a pointer to a RenderTargetView
-     */
+    /** @return: Returns the default RTV of the full resource if the texture is created with ETextureUsageFlags::AllowRTV */
     virtual class CRHIRenderTargetView* GetRenderTargetView() const { return nullptr; }
 
-    /**
-     * @brief: Returns a DepthStencilView of the full resource if texture is created with TextureFlag_SRV
-     *
-     * @return: Returns a pointer to a DepthStencilView
-     */
+    /** @return: Returns the default DSV of the full resource  if texture is created with ETextureUsageFlags::AllowDSV */
     virtual class CRHIDepthStencilView* GetDepthStencilView() const { return nullptr; }
 
-    /**
-     * @brief: Returns a UnorderedAccessView of the full resource if texture is created with TextureFlag_SRV
-     *
-     * @return: Returns a pointer to a UnorderedAccessView
-     */
+    /** @return: Returns the default UAV of the full resource if texture is created with ETextureUsageFlags::AllowUAV */
     virtual class CRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
-    /**
-     * @brief: Retrieve the width of the texture
-     * 
-     * @return: Returns the width of the texture
-     */
-    FORCEINLINE uint32 GetWidth() const
-    {
-        return Width;
-    }
+public:
 
-    /**
-     * @brief: Retrieve the height of the texture
-     *
-     * @return: Returns the height of the texture
-     */
-    FORCEINLINE uint32 GetHeight() const
-    {
-        return Height;
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHITexture Interface
 
-    /**
-     * @brief: Retrieve the number of samples of the texture
-     *
-     * @return: Returns the number of samples of the texture
-     */
-    FORCEINLINE uint32 GetNumSamples() const
-    {
-        return NumSamples;
-    }
+    virtual CRHITexture2D* AsTexture2D() override { return this; }
 
-    /**
-     * @brief: Check if the texture is multi-sampled
-     * 
-     * @return: Returns true if the number of samples is more than one
-     */
-    FORCEINLINE bool IsMultiSampled() const
-    {
-        return NumSamples > 1;
-    }
+    virtual CIntVector3 GetExtent() const override { return CIntVector3(Width, Height, 1); }
+
+    virtual uint32 GetWidth() const override final { return Width; }
+    
+    virtual uint32 GetHeight() const override final { return Height; }
+
+    virtual uint32 GetNumSamples() const override final { return NumSamples; }
 
 protected:
-    FORCEINLINE void SetSize(uint32 InWidth, uint32 InHeight)
-    {
-        Width = InWidth;
-        Height = InHeight;
-    }
-
-private:
-    uint32 Width;
-    uint32 Height;
-    uint32 NumSamples;
+    uint8  NumSamples;
+    uint16 Width;
+    uint16 Height;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -290,51 +185,28 @@ private:
 
 class CRHITexture2DArray : public CRHITexture2D
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor taking parameters for creating a texture
-     *
-     * @param InFormat: Format of the texture
-     * @param InWidth: Width of the texture
-     * @param InHeight: Height of the texture
-     * @param InNumMips: Number of MipLevels of the texture
-     * @param InNumSamples: Number of samples of the texture
-     * @param InNumArraySlices: Number of array-slices of the texture
-     * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
-     */
-    CRHITexture2DArray(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InNumArraySlices, uint32 InFlags, const SClearValue& InOptimizedClearValue)
-        : CRHITexture2D(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InFlags, InOptimizedClearValue)
-        , NumArraySlices(InNumArraySlices)
+    CRHITexture2DArray(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InArraySize, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
+        : CRHITexture2D(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InFlags, InClearValue)
+        , ArraySize(uint16(InArraySize))
     { }
 
-    /**
-     * @brief: Cast to Texture2D
-     *
-     * @return: Returns a pointer to a Texture2D if the texture if of correct type
-     */
-    virtual CRHITexture2D* AsTexture2D() override { return nullptr; }
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHITexture Interface
+
+    virtual CRHITexture2D* AsTexture2D() override final { return nullptr; }
     
-    /**
-     * @brief: Cast to Texture2DArray
-     *
-     * @return: Returns a pointer to a Texture2DArray if the texture if of correct type
-     */
-    virtual CRHITexture2DArray* AsTexture2DArray() override { return this; }
+    virtual CRHITexture2DArray* AsTexture2DArray() override final { return this; }
 
-    /**
-     * @brief: Retrieve the number of array-slices of the texture
-     *
-     * @return: Returns the number of array-slices of the texture
-     */
-    FORCEINLINE uint32 GetNumArraySlices() const
-    {
-        return NumArraySlices;
-    }
+    virtual CIntVector3 GetExtent() const override final { return CIntVector3(GetWidth(), GetDepth(), ArraySize); }
 
-private:
-    uint32 NumArraySlices;
+    virtual uint32 GetArraySize() const override final { return ArraySize; }
+
+protected:
+    uint16 ArraySize;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -342,32 +214,32 @@ private:
 
 class CRHITextureCube : public CRHITexture
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor taking parameters for creating a texture
-     *
-     * @param InFormat: Format of the texture
-     * @param InSize: Width and height of the texture faces
-     * @param InNumMips: Number of MipLevels of the texture
-     * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
-     */
-    CRHITextureCube(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimizedClearValue)
-        : CRHITexture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
-        , Size(InSize)
+    CRHITextureCube(EFormat InFormat, uint32 InExtent, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
+        : CRHITexture(InFormat, InNumMips, InFlags, InClearValue)
+        , Extent(uint16(InExtent))
+        , NumSamples(1)
     { }
 
-     /** @brief: Cast to TextureCube */
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHITexture Interface
+
     virtual CRHITextureCube* AsTextureCube() override { return this; }
 
-    FORCEINLINE uint32 GetSize() const
-    {
-        return Size;
-    }
+    virtual CIntVector3 GetExtent() const override { return CIntVector3(Extent, Extent, 1); }
 
-private:
-    uint32 Size;
+    virtual uint32 GetWidth()  const override final { return Extent; }
+    
+    virtual uint32 GetHeight() const override final { return Extent; }
+
+    virtual uint32 GetNumSamples() const override final { return NumSamples; }
+
+protected:
+    uint8  NumSamples;
+    uint16 Extent;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -375,114 +247,71 @@ private:
 
 class CRHITextureCubeArray : public CRHITextureCube
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor taking parameters for creating a texture
-     *
-     * @param InFormat: Format of the texture
-     * @param InSize: Width and height of the texture faces
-     * @param InNumMips: Number of MipLevels of the texture
-     * @param InNumArraySlices: Number of array-slices of the texture
-     * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
-     */
-    CRHITextureCubeArray(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InNumArraySlices, uint32 InFlags, const SClearValue& InOptimizedClearValue)
-        : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InOptimizedClearValue)
-        , NumArraySlices(InNumArraySlices)
+    CRHITextureCubeArray(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InArraySize, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
+        : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InClearValue)
+        , ArraySize(uint16(InArraySize))
     { }
 
-    /**
-     * @brief: Cast to TextureCube
-     *
-     * @return: Returns a pointer to a TextureCube if the texture if of correct type
-     */
-    virtual CRHITextureCube* AsTextureCube() override { return nullptr; }
+public:
+
+    /** @return: Returns the number of Cubes in the array */
+    uint32 GetNumCubes() const { return ArraySize; }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHITexture Interface
+
+    virtual CRHITextureCube* AsTextureCube() override final { return nullptr; }
     
-    /**
-     * @brief: Cast to TextureCubeArray
-     *
-     * @return: Returns a pointer to a TextureCubeArray if the texture if of correct type
-     */
-    virtual CRHITextureCubeArray* AsTextureCubeArray() override { return this; }
+    virtual CRHITextureCubeArray* AsTextureCubeArray() override final { return this; }
 
-    /**
-     * @brief: Retrieve the number of array-slices of the texture
-     *
-     * @return: Returns the number of array-slices of the texture
-     */
-    FORCEINLINE uint32 GetNumArraySlices() const
-    {
-        return NumArraySlices;
-    }
+    virtual CIntVector3 GetExtent() const override final { return CIntVector3(GetWidth(), GetHeight(), ArraySize); }
 
-private:
-    uint32 NumArraySlices;
+    virtual uint32 GetArraySize() const override final { return ArraySize; }
+
+protected:
+    uint16 ArraySize;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
 class CRHITexture3D : public CRHITexture
 {
-public:
+protected:
 
-    /**
-     * @brief: Constructor taking parameters for creating a texture
-     *
-     * @param InFormat: Format of the texture
-     * @param InWidth: Width of the texture
-     * @param InHeight: Height of the texture
-     * @param InDepth: Depth of the texture
-     * @param InNumMips: Number of MipLevels of the texture
-     * @param InFlags: Flags of the texture
-     * @InOptimalClearValue: Optimized clear value for the texture
-     */
-    CRHITexture3D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMips, uint32 InFlags, const SClearValue& InOptimizedClearValue)
-        : CRHITexture(InFormat, InNumMips, InFlags, InOptimizedClearValue)
-        , Width(InWidth)
-        , Height(InHeight)
-        , Depth(InDepth)
+    CRHITexture3D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
+        : CRHITexture(InFormat, InNumMips, InFlags, InClearValue)
+        , Width(uint16(InWidth))
+        , Height(uint16(InHeight))
+        , Depth(uint16(InDepth))
     { }
 
-    /**
-     * @brief: Cast to Texture3D
-     *
-     * @return: Returns a pointer to a Texture3D if the texture if of correct type
-     */
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHITexture Interface
+
     virtual CRHITexture3D* AsTexture3D() override { return this; }
+
+    virtual CIntVector3 GetExtent() const override final { return CIntVector3(Width, Height, Depth); }
+
+    virtual uint32 GetWidth()  const override final { return Width; }
     
-    /**
-     * @brief: Retrieve the width of the texture
-     *
-     * @return: Returns the width of the texture
-     */
-    FORCEINLINE uint32 GetWidth() const
-    {
-        return Width;
-    }
+    virtual uint32 GetHeight() const override final { return Height; }
 
-    /**
-     * @brief: Retrieve the height of the texture
-     *
-     * @return: Returns the height of the texture
-     */
-    FORCEINLINE uint32 GetHeight() const
-    {
-        return Height;
-    }
+    virtual uint32 GetDepth()  const override final { return Depth; }
 
-    /**
-     * @brief: Retrieve the depth of the texture
-     *
-     * @return: Returns the depth of the texture
-     */
-    FORCEINLINE uint32 GetDepth()  const
-    {
-        return Depth;
-    }
-
-private:
-    uint32 Width;
-    uint32 Height;
-    uint32 Depth;
+protected:
+    uint16 Width;
+    uint16 Height;
+    uint16 Depth;
 };
+
+#if defined(COMPILER_MSVC)
+    #pragma warning(pop)
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic pop
+#endif

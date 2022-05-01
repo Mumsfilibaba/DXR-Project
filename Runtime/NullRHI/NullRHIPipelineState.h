@@ -14,16 +14,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHIInputLayoutState
 
-class CNullRHIInputLayoutState : public CRHIInputLayoutState
+class CNullRHIInputLayoutState : public CRHIVertexInputLayout
 {
 public:
-    CNullRHIInputLayoutState() = default;
-    ~CNullRHIInputLayoutState() = default;
 
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
+    CNullRHIInputLayoutState()  = default;
+    ~CNullRHIInputLayoutState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -32,13 +28,9 @@ public:
 class CNullRHIDepthStencilState : public CRHIDepthStencilState
 {
 public:
-    CNullRHIDepthStencilState() = default;
-    ~CNullRHIDepthStencilState() = default;
 
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
+    CNullRHIDepthStencilState()  = default;
+    ~CNullRHIDepthStencilState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -47,13 +39,9 @@ public:
 class CNullRHIRasterizerState : public CRHIRasterizerState
 {
 public:
-    CNullRHIRasterizerState() = default;
-    ~CNullRHIRasterizerState() = default;
 
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
+    CNullRHIRasterizerState()  = default;
+    ~CNullRHIRasterizerState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -62,13 +50,9 @@ public:
 class CNullRHIBlendState : public CRHIBlendState
 {
 public:
-    CNullRHIBlendState() = default;
-    ~CNullRHIBlendState() = default;
 
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
+    CNullRHIBlendState()  = default;
+    ~CNullRHIBlendState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -77,18 +61,18 @@ public:
 class CNullRHIGraphicsPipelineState : public CRHIGraphicsPipelineState
 {
 public:
-    CNullRHIGraphicsPipelineState() = default;
+
+    CNullRHIGraphicsPipelineState()  = default;
     ~CNullRHIGraphicsPipelineState() = default;
 
-    virtual void SetName(const String& InName) override final
-    {
-        CRHIObject::SetName(InName);
-    }
+public:
 
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIPipelineState Interface
+
+    virtual void SetName(const String& InName) override final { }
+
+    virtual String GetName() const override final { return ""; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -97,18 +81,18 @@ public:
 class CNullRHIComputePipelineState : public CRHIComputePipelineState
 {
 public:
-    CNullRHIComputePipelineState() = default;
+
+    CNullRHIComputePipelineState()  = default;
     ~CNullRHIComputePipelineState() = default;
 
-    virtual void SetName(const String& InName) override final
-    {
-        CRHIObject::SetName(InName);
-    }
+public:
 
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIPipelineState Interface
+
+    virtual void SetName(const String& InName) override final { }
+
+    virtual String GetName() const override final { return ""; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -117,18 +101,18 @@ public:
 class CNullRHIRayTracingPipelineState : public CRHIRayTracingPipelineState
 {
 public:
-    CNullRHIRayTracingPipelineState() = default;
+
+    CNullRHIRayTracingPipelineState()  = default;
     ~CNullRHIRayTracingPipelineState() = default;
 
-    virtual void SetName(const String& InName) override final
-    {
-        CRHIObject::SetName(InName);
-    }
+public:
 
-    virtual bool IsValid() const override final
-    {
-        return true;
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIPipelineState Interface
+
+    virtual void SetName(const String& InName) override final { }
+
+    virtual String GetName() const override final { return ""; }
 };
 
 #if defined(COMPILER_MSVC)

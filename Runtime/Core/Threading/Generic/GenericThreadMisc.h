@@ -18,11 +18,11 @@ class CGenericThreadMisc
 {
 public:
 
-    static FORCEINLINE bool Initialize() { return true; }
-
     static CGenericThread* CreateThread(const TFunction<void()>& InFunction);
 
     static CGenericThread* CreateNamedThread(const TFunction<void()>& InFunction, const String& InName);
+
+    static FORCEINLINE bool Initialize() { return true; }
 
     static FORCEINLINE void Release() { }
 

@@ -3,32 +3,21 @@
 
 #include "D3D12DeviceChild.h"
 #include "D3D12Buffer.h"
-#include "D3D12RHIViews.h"
+#include "D3D12Views.h"
 
 class CD3D12CommandList;
 class CMaterial;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIRayTracingGeometry
+// CD3D12RayTracingGeometry
 
-class CD3D12RHIRayTracingGeometry : public CRHIRayTracingGeometry, public CD3D12DeviceChild
+class CD3D12RayTracingGeometry : public CRHIRayTracingGeometry, public CD3D12DeviceChild
 {
 public:
-    CD3D12RHIRayTracingGeometry(CD3D12Device* InDevice, uint32 InFlags);
-    ~CD3D12RHIRayTracingGeometry() = default;
+    CD3D12RayTracingGeometry(CD3D12Device* InDevice, uint32 InFlags);
+    ~CD3D12RayTracingGeometry() = default;
 
     bool Build(class CD3D12CommandContext& CmdContext, bool Update);
-
-    virtual void SetName(const String& InName) override
-    {
-        CRHIObject::SetName(InName);
-        ResultBuffer->SetName(InName);
-    }
-
-    virtual bool IsValid() const override
-    {
-        return ResultBuffer != nullptr;
-    }
 
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
     {
@@ -44,7 +33,7 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12ShaderBindingTableEntry
+// SD3D12ShaderBindingTableEntry
 
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) SD3D12ShaderBindingTableEntry
 {
@@ -53,7 +42,7 @@ struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) SD3D12ShaderBinding
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12ShaderBindingTableBuilder
+// CD3D12ShaderBindingTableBuilder
 
 class CD3D12ShaderBindingTableBuilder : public CD3D12DeviceChild
 {
@@ -61,13 +50,12 @@ public:
     CD3D12ShaderBindingTableBuilder(CD3D12Device* InDevice);
     ~CD3D12ShaderBindingTableBuilder() = default;
 
-    void PopulateEntry(
-        CD3D12RHIRayTracingPipelineState* PipelineState,
-        CD3D12RootSignature* RootSignature,
-        CD3D12OnlineDescriptorHeap* ResourceHeap,
-        CD3D12OnlineDescriptorHeap* SamplerHeap,
-        SD3D12ShaderBindingTableEntry& OutShaderBindingEntry,
-        const SRayTracingShaderResources& Resources);
+    void PopulateEntry( CD3D12RayTracingPipelineState* PipelineState
+                      , CD3D12RootSignature* RootSignature
+                      , CD3D12OnlineDescriptorHeap* ResourceHeap
+                      , CD3D12OnlineDescriptorHeap* SamplerHeap
+                      , SD3D12ShaderBindingTableEntry& OutShaderBindingEntry
+                      , const SRayTracingShaderResources& Resources);
 
     void CopyDescriptors();
 
@@ -86,43 +74,32 @@ private:
     uint32 GPUResourceHandleSizes[1024];
     uint32 GPUSamplerHandleSizes[1024];
     uint32 CPUResourceIndex = 0;
-    uint32 CPUSamplerIndex = 0;
+    uint32 CPUSamplerIndex  = 0;
     uint32 GPUResourceIndex = 0;
-    uint32 GPUSamplerIndex = 0;
+    uint32 GPUSamplerIndex  = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIRayTracingScene
+// CD3D12RayTracingScene
 
-class CD3D12RHIRayTracingScene : public CRHIRayTracingScene, public CD3D12DeviceChild
+class CD3D12RayTracingScene : public CRHIRayTracingScene, public CD3D12DeviceChild
 {
 public:
-    CD3D12RHIRayTracingScene(CD3D12Device* InDevice, uint32 InFlags);
-    ~CD3D12RHIRayTracingScene() = default;
+    CD3D12RayTracingScene(CD3D12Device* InDevice, uint32 InFlags);
+    ~CD3D12RayTracingScene() = default;
 
     bool Build(class CD3D12CommandContext& CmdContext, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update);
 
-    bool BuildBindingTable(
-        class CD3D12CommandContext& CmdContext,
-        CD3D12RHIRayTracingPipelineState* PipelineState,
-        CD3D12OnlineDescriptorHeap* ResourceHeap,
-        CD3D12OnlineDescriptorHeap* SamplerHeap,
-        const SRayTracingShaderResources* RayGenLocalResources,
-        const SRayTracingShaderResources* MissLocalResources,
-        const SRayTracingShaderResources* HitGroupResources,
-        uint32 NumHitGroupResources);
+    bool BuildBindingTable( class CD3D12CommandContext& CmdContext
+                          , CD3D12RayTracingPipelineState* PipelineState
+                          , CD3D12OnlineDescriptorHeap* ResourceHeap
+                          , CD3D12OnlineDescriptorHeap* SamplerHeap
+                          , const SRayTracingShaderResources* RayGenLocalResources
+                          , const SRayTracingShaderResources* MissLocalResources
+                          , const SRayTracingShaderResources* HitGroupResources
+                          , uint32 NumHitGroupResources);
 
-    virtual void SetName(const String& InName) override;
-
-    virtual bool IsValid() const override
-    {
-        return ResultBuffer != nullptr;
-    }
-
-    virtual CRHIShaderResourceView* GetShaderResourceView() const
-    {
-        return View.Get();
-    }
+    virtual CRHIShaderResourceView* GetShaderResourceView() const { return View.Get(); }
 
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE            GetRayGenShaderRecord() const;
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetMissShaderTable() const;
@@ -134,24 +111,15 @@ public:
         return ResultBuffer->GetGPUVirtualAddress();
     }
 
-    FORCEINLINE CD3D12Resource* GetResultBuffer()  const
-    {
-        return ResultBuffer.Get();
-    }
+    FORCEINLINE CD3D12Resource* GetResultBuffer()  const { return ResultBuffer.Get(); }
 
-    FORCEINLINE CD3D12Resource* GetInstanceuffer() const
-    {
-        return InstanceBuffer.Get();
-    }
+    FORCEINLINE CD3D12Resource* GetInstanceuffer() const { return InstanceBuffer.Get(); }
 
-    FORCEINLINE CD3D12Resource* GetBindingTable()  const
-    {
-        return BindingTable.Get();
-    }
+    FORCEINLINE CD3D12Resource* GetBindingTable()  const { return BindingTable.Get(); }
 
 private:
     TArray<SRayTracingGeometryInstance>     Instances;
-    TSharedRef<CD3D12RHIShaderResourceView> View;
+    TSharedRef<CD3D12ShaderResourceView> View;
 
     TSharedRef<CD3D12Resource> ResultBuffer;
     TSharedRef<CD3D12Resource> ScratchBuffer;

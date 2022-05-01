@@ -208,7 +208,7 @@ bool CD3D12Shader::GetShaderReflection(CD3D12Shader* Shader)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIBaseRayTracingShader
 
-bool CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection(CD3D12RHIBaseRayTracingShader* Shader)
+bool CD3D12RayTracingShader::GetRayTracingShaderReflection(CD3D12RayTracingShader* Shader)
 {
     Assert(Shader != nullptr);
 
@@ -265,7 +265,7 @@ bool CD3D12RHIBaseRayTracingShader::GetRayTracingShaderReflection(CD3D12RHIBaseR
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHIBaseComputeShader
 
-bool CD3D12RHIBaseComputeShader::Init()
+bool CD3D12BaseComputeShader::Init()
 {
     TComPtr<ID3D12ShaderReflection> Reflection;
     if (!GD3D12ShaderCompiler->GetReflection(this, &Reflection))

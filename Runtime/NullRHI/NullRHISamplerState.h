@@ -15,13 +15,9 @@
 class CNullRHISamplerState : public CRHISamplerState
 {
 public:
-    CNullRHISamplerState() = default;
-    ~CNullRHISamplerState() = default;
 
-    virtual bool IsValid() const override final
-    {
-        return true;
-    }
+    CNullRHISamplerState()  = default;
+    ~CNullRHISamplerState() = default;
 };
 
 #if defined(COMPILER_MSVC)

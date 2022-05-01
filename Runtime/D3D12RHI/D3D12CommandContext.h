@@ -12,9 +12,9 @@
 #include "D3D12Fence.h"
 #include "D3D12DescriptorCache.h"
 #include "D3D12Buffer.h"
-#include "D3D12RHIViews.h"
-#include "D3D12RHISamplerState.h"
-#include "D3D12RHIPipelineState.h"
+#include "D3D12Views.h"
+#include "D3D12SamplerState.h"
+#include "D3D12PipelineState.h"
 #include "D3D12RHITimestampQuery.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -94,11 +94,11 @@ public:
         }
     }
 
-    FORCEINLINE void AddInUseResource(CRHIObject* InResource)
+    FORCEINLINE void AddInUseResource(IRHIResource* InResource)
     {
         if (InResource)
         {
-            Resources.Emplace(MakeSharedRef<CRHIObject>(InResource));
+            Resources.Emplace(MakeSharedRef<IRHIResource>(InResource));
         }
     }
 
@@ -149,7 +149,7 @@ public:
     TSharedRef<CD3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
 
     TArray<TSharedRef<CD3D12Resource>>     DxResources;
-    TArray<TSharedRef<CRHIObject>>         Resources;
+    TArray<TSharedRef<IRHIResource>>       Resources;
 
     TArray<TComPtr<ID3D12Resource>>        NativeResources;
 };
@@ -208,7 +208,7 @@ class CD3D12CommandContext : public IRHICommandContext, public CD3D12DeviceChild
 {
 private:
 
-    friend class CD3D12RHIInstance;
+    friend class CD3D12CoreInstance;
 
     CD3D12CommandContext(CD3D12Device* InDevice);
     ~CD3D12CommandContext();
@@ -262,8 +262,8 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // IRHICommandContext Interface
 
-    virtual void Begin() override final;
-    virtual void End() override final;
+    virtual void StartContext()  override final;
+    virtual void FinishContext() override final;
 
     virtual void BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
     virtual void EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
@@ -317,8 +317,8 @@ public:
     virtual void CopyTexture(CRHITexture* Destination, CRHITexture* Source) override final;
     virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo) override final;
 
-    virtual void DestroyResource(class CRHIObject* Resource) override final;
-    virtual void DiscardContents(class CRHIResource* Resource) override final;
+    virtual void DestroyResource(class IRHIResource* Resource) override final;
+    virtual void DiscardContents(class CRHITexture* Texture)   override final;
 
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final;
     virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final;
@@ -335,10 +335,10 @@ public:
     virtual void GenerateMips(CRHITexture* Texture) override final;
 
     virtual void TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
-    virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
+    virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)    override final;
 
     virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) override final;
-    virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer) override final;
+    virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)    override final;
 
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final;
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
@@ -358,8 +358,10 @@ public:
     virtual void BeginExternalCapture() override final;
     virtual void EndExternalCapture() override final;
 
+    virtual void* GetRHIBaseCommandList() override final { return reinterpret_cast<void*>(&CommandList); }
+
 private:
-    bool Init();
+    bool Initialize();
 
     void InternalClearState();
 
@@ -373,10 +375,10 @@ private:
     TArray<CD3D12CommandBatch> CmdBatches;
     CD3D12CommandBatch*        CmdBatch = nullptr;
 
-    TArray<TSharedRef<CD3D12RHITimestampQuery>> ResolveProfilers;
+    TArray<TSharedRef<CD3D12RHITimestampQuery>> ResolveQueries;
 
-    TSharedRef<CD3D12RHIGraphicsPipelineState> CurrentGraphicsPipelineState;
-    TSharedRef<CD3D12RHIComputePipelineState>  CurrentComputePipelineState;
+    TSharedRef<CD3D12GraphicsPipelineState> CurrentGraphicsPipelineState;
+    TSharedRef<CD3D12ComputePipelineState>  CurrentComputePipelineState;
 
     TSharedRef<CD3D12RootSignature> CurrentRootSignature;
 

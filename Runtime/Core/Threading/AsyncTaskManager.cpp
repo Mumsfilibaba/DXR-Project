@@ -160,7 +160,7 @@ void CAsyncTaskManager::Release()
 
     for (TSharedRef<CGenericThread> Thread : WorkerThreads)
     {
-        Thread->WaitUntilFinished(kWaitForThreadInfinity);
+        Thread->WaitForCompletion(kWaitForThreadInfinity);
     }
 
     WorkerThreads.Clear();

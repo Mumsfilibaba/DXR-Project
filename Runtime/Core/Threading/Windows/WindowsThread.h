@@ -23,9 +23,9 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CGenericThread Interface
 
-    virtual bool Start() override final;
+    virtual int32 WaitForCompletion(uint64 TimeoutInMs) override final;
 
-    virtual void WaitUntilFinished(uint64 TimeoutInMilliseconds) override final;
+    virtual bool Start() override final;
 
     virtual void SetName(const String& InName) override final;
 

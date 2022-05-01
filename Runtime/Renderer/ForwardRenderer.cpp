@@ -1,7 +1,7 @@
 #include "ForwardRenderer.h"
 #include "MeshDrawCommand.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Mesh.h"
@@ -34,10 +34,6 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        VShader->SetName("ForwardPass VertexShader");
-    }
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
@@ -51,14 +47,10 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        PShader->SetName("ForwardPass PixelShader");
-    }
 
     SRHIDepthStencilStateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-    DepthStencilStateInfo.bDepthEnable = true;
+    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
+    DepthStencilStateInfo.bDepthEnable   = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
     TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
@@ -66,10 +58,6 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     {
         CDebug::DebugBreak();
         return false;
-    }
-    else
-    {
-        DepthStencilState->SetName("ForwardPass DepthStencilState");
     }
 
     SRHIRasterizerStateInfo RasterizerStateInfo;
@@ -80,10 +68,6 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
     {
         CDebug::DebugBreak();
         return false;
-    }
-    else
-    {
-        RasterizerState->SetName("ForwardPass RasterizerState");
     }
 
     SRHIBlendStateInfo BlendStateInfo;
@@ -96,32 +80,24 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        BlendState->SetName("ForwardPass BlendState");
-    }
 
     SRHIGraphicsPipelineStateInfo PSOProperties;
-    PSOProperties.ShaderState.VertexShader = VShader.Get();
-    PSOProperties.ShaderState.PixelShader = PShader.Get();
-    PSOProperties.InputLayoutState = FrameResources.StdInputLayout.Get();
-    PSOProperties.DepthStencilState = DepthStencilState.Get();
-    PSOProperties.BlendState = BlendState.Get();
-    PSOProperties.RasterizerState = RasterizerState.Get();
+    PSOProperties.ShaderState.VertexShader               = VShader.Get();
+    PSOProperties.ShaderState.PixelShader                = PShader.Get();
+    PSOProperties.InputLayoutState                       = FrameResources.StdInputLayout.Get();
+    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
+    PSOProperties.BlendState                             = BlendState.Get();
+    PSOProperties.RasterizerState                        = RasterizerState.Get();
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
-    PSOProperties.PipelineFormats.NumRenderTargets = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
-    PSOProperties.PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
+    PSOProperties.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)
     {
         CDebug::DebugBreak();
         return false;
-    }
-    else
-    {
-        PipelineState->SetName("Forward PipelineState");
     }
 
     return true;
@@ -162,12 +138,12 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     CmdList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 2);
     CmdList.SetConstantBuffer(PShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 3);
 
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.IrradianceMap->GetShaderResourceView(), 0);
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 1);
-    CmdList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
+    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.IrradianceMap->GetDefaultShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.SpecularIrradianceMap->GetDefaultShaderResourceView(), 1);
+    CmdList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetDefaultShaderResourceView(), 2);
     //TODO: Fix directional-light shadows
-    //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 3);
+    //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetDefaultShaderResourceView(), 3);
+    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetDefaultShaderResourceView(), 3);
 
     CmdList.SetSamplerState(PShader.Get(), FrameResources.IntegrationLUTSampler.Get(), 1);
     CmdList.SetSamplerState(PShader.Get(), FrameResources.IrradianceSampler.Get(), 2);

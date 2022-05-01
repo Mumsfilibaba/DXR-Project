@@ -115,7 +115,7 @@ void UnregisterMainRunLoop()
     SafeDelete(GMainThread);
 }
 
-void MakeMainThreadCall(dispatch_block_t Block, bool WaitUntilFinished)
+void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
 {
     dispatch_block_t CopiedBlock = Block_copy(Block);
     
@@ -129,7 +129,7 @@ void MakeMainThreadCall(dispatch_block_t Block, bool WaitUntilFinished)
         // Otherwise schedule Block on main thread
         Assert(GMainThread != nullptr);
 
-        if (WaitUntilFinished)
+        if (bWaitUntilFinished)
         {
             dispatch_semaphore_t WaitSemaphore = dispatch_semaphore_create(0);
             

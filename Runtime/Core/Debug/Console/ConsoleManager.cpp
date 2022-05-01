@@ -220,6 +220,8 @@ bool CConsoleManager::RegisterObject(const String& Name, IConsoleObject* Object)
     auto ExistingObject = ConsoleObjects.find(Name);
     if (ExistingObject == ConsoleObjects.end())
     {
+        LOG_INFO("Registered ConsoleObject '" + Name + "'");
+
         ConsoleObjects.insert(std::make_pair(Name, Object));
         return true;
     }

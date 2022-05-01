@@ -114,7 +114,7 @@ CRHICommandQueue::CRHICommandQueue()
 void CRHICommandQueue::ExecuteCommandList(CRHICommandList& CmdList)
 {
     // Execute
-    GetContext().Begin();
+    GetContext().StartContext();
 
     {
         TRACE_FUNCTION_SCOPE();
@@ -124,13 +124,13 @@ void CRHICommandQueue::ExecuteCommandList(CRHICommandList& CmdList)
         InternalExecuteCommandList(CmdList);
     }
 
-    GetContext().End();
+    GetContext().FinishContext();
 }
 
 void CRHICommandQueue::ExecuteCommandLists(CRHICommandList* const* CmdLists, uint32 NumCmdLists)
 {
     // Execute
-    GetContext().Begin();
+    GetContext().StartContext();
 
     {
         TRACE_FUNCTION_SCOPE();
@@ -144,7 +144,7 @@ void CRHICommandQueue::ExecuteCommandLists(CRHICommandList* const* CmdLists, uin
         }
     }
 
-    GetContext().End();
+    GetContext().FinishContext();
 }
 
 void CRHICommandQueue::WaitForGPU()

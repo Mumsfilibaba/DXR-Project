@@ -750,7 +750,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandDestroyResource)
 {
 public:
-    FORCEINLINE CRHICommandDestroyResource(CRHIObject* InResource)
+    FORCEINLINE CRHICommandDestroyResource(IRHIResource* InResource)
         : Resource(InResource)
     { }
 
@@ -759,7 +759,7 @@ public:
         CommandContext.DestroyResource(Resource);
     }
 
-    CRHIObject* Resource;
+    IRHIResource* Resource;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -768,16 +768,16 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandDiscardContents)
 {
 public:
-    FORCEINLINE CRHICommandDiscardContents(CRHIResource* InResource)
-        : Resource(InResource)
+    FORCEINLINE CRHICommandDiscardContents(CRHITexture* InTexture)
+        : Texture(InTexture)
     { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.DiscardContents(Resource);
+        CommandContext.DiscardContents(Texture);
     }
 
-    CRHIResource* Resource;
+    CRHITexture* Texture;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

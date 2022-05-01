@@ -4,9 +4,9 @@
 #include "D3D12RootSignature.h"
 #include "D3D12DescriptorHeap.h"
 #include "D3D12CommandAllocator.h"
-#include "D3D12RHIViews.h"
+#include "D3D12Views.h"
 
-class CD3D12RHIComputePipelineState;
+class CD3D12ComputePipelineState;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12CommandList
@@ -83,7 +83,7 @@ public:
         CmdList->ClearDepthStencilView(DepthStencilView, Flags, Depth, Stencil, 0, nullptr);
     }
 
-    FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const CD3D12RHIUnorderedAccessView* View, const float ClearColor[4])
+    FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const CD3D12UnorderedAccessView* View, const float ClearColor[4])
     {
         const CD3D12Resource* Resource = View->GetResource();
         CmdList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), Resource->GetResource(), ClearColor, 0, nullptr);

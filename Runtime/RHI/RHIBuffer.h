@@ -4,6 +4,14 @@
 #include "Core/Templates/EnumUtilities.h"
 #include "Core/Containers/SharedRef.h"
 
+#if defined(COMPILER_MSVC)
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Typedefs
 
@@ -99,13 +107,6 @@ protected:
 
 public:
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIResource Interface
-
-    virtual CRHIBuffer* AsBuffer() { return this; }
-
-public:
-
     /** @return: Returns a pointer to a VertexBuffer interface if implemented */
     virtual class CRHIVertexBuffer* GetVertexBuffer() { return nullptr; }
 
@@ -119,7 +120,7 @@ public:
     virtual class CRHIGenericBuffer* GetGenericBuffer() { return nullptr; }
 
     /** @return: Returns the native handle of the Buffer */
-    virtual void* GetRHIResourceHandle() const { return nullptr; }
+    virtual void* GetRHIBaseResourceHandle() const { return nullptr; }
 
     /** @return: Returns the RHI-backend buffer interface */
     virtual void* GetRHIBaseBuffer() { return nullptr; }
@@ -132,6 +133,12 @@ public:
 
     /** @return: Returns the Buffer Size */
     virtual uint32 GetSize() const { return 1; }
+
+    /** @brief: Set the debug-name of the Texture */
+    virtual void SetName(const String& InName) { }
+
+    /** @return: Returns the name of the Texture */
+    virtual String GetName() const { return ""; }
 
     /** @return: Returns the flags that the buffer was created with */
     EBufferUsageFlags GetFlags() const { return Flags; }
@@ -297,3 +304,9 @@ private:
     uint32 Stride;
     uint32 NumElements;
 };
+
+#if defined(COMPILER_MSVC)
+    #pragma warning(pop)
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic pop
+#endif

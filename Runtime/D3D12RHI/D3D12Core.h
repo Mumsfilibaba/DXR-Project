@@ -28,8 +28,8 @@
 #define D3D12_ERROR_ALWAYS(ErrorMessage) \
     do                                   \
     {                                    \
-            LOG_ERROR(ErrorMessage);     \
-            CDebug::DebugBreak();        \
+        LOG_ERROR(ErrorMessage);         \
+        CDebug::DebugBreak();            \
     } while (0)
 
 #else
@@ -82,21 +82,21 @@ inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
     return Result;
 }
 
-inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(uint32 Flag)
+inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if (Flag & ERHITextureFlags::TextureFlag_UAV)
+    if ((Flag & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None)
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
-    if (Flag & ERHITextureFlags::TextureFlag_RTV)
+    if ((Flag & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None)
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     }
-    if (Flag & ERHITextureFlags::TextureFlag_DSV)
+    if ((Flag & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None)
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-        if (!(Flag & ERHITextureFlags::TextureFlag_SRV))
+        if ((Flag & ETextureUsageFlags::AllowSRV) == ETextureUsageFlags::None)
         {
             Result |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
         }
@@ -169,16 +169,16 @@ inline DXGI_FORMAT ConvertFormat(EFormat Format)
     case EFormat::R8_Uint:               return DXGI_FORMAT_R8_UINT;
     case EFormat::R8_Snorm:              return DXGI_FORMAT_R8_SNORM;
     case EFormat::R8_Sint:               return DXGI_FORMAT_R8_SINT;
-    default: return DXGI_FORMAT_UNKNOWN;
+    default:                             return DXGI_FORMAT_UNKNOWN;
     }
 }
 
-inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification(EInputClassification InputClassification)
+inline D3D12_INPUT_CLASSIFICATION ConvertInputClassification(EVertexInputClass InputClassification)
 {
     switch (InputClassification)
     {
-    case EInputClassification::Instance: return D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
-    case EInputClassification::Vertex:   return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+    case EVertexInputClass::Instance: return D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
+    case EVertexInputClass::Vertex:   return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
     }
 
     return D3D12_INPUT_CLASSIFICATION();
@@ -275,27 +275,27 @@ inline D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
     return D3D12_BLEND_OP();
 }
 
-inline D3D12_BLEND ConvertBlend(EBlend Blend)
+inline D3D12_BLEND ConvertBlend(EBlendType  Blend)
 {
     switch (Blend)
     {
-    case EBlend::Zero:           return D3D12_BLEND_ZERO;
-    case EBlend::One:            return D3D12_BLEND_ONE;
-    case EBlend::SrcColor:       return D3D12_BLEND_SRC_COLOR;
-    case EBlend::InvSrcColor:    return D3D12_BLEND_INV_SRC_COLOR;
-    case EBlend::SrcAlpha:       return D3D12_BLEND_SRC_ALPHA;
-    case EBlend::InvSrcAlpha:    return D3D12_BLEND_INV_SRC_ALPHA;
-    case EBlend::DestAlpha:      return D3D12_BLEND_DEST_ALPHA;
-    case EBlend::InvDestAlpha:   return D3D12_BLEND_INV_DEST_ALPHA;
-    case EBlend::DestColor:      return D3D12_BLEND_DEST_COLOR;
-    case EBlend::InvDestColor:   return D3D12_BLEND_INV_DEST_COLOR;
-    case EBlend::SrcAlphaSat:    return D3D12_BLEND_SRC_ALPHA_SAT;
-    case EBlend::Src1Color:      return D3D12_BLEND_SRC1_COLOR;
-    case EBlend::InvSrc1Color:   return D3D12_BLEND_INV_SRC1_COLOR;
-    case EBlend::Src1Alpha:      return D3D12_BLEND_SRC1_ALPHA;
-    case EBlend::InvSrc1Alpha:   return D3D12_BLEND_INV_SRC1_ALPHA;
-    case EBlend::BlendFactor:    return D3D12_BLEND_BLEND_FACTOR;
-    case EBlend::InvBlendFactor: return D3D12_BLEND_INV_BLEND_FACTOR;
+    case EBlendType ::Zero:           return D3D12_BLEND_ZERO;
+    case EBlendType ::One:            return D3D12_BLEND_ONE;
+    case EBlendType ::SrcColor:       return D3D12_BLEND_SRC_COLOR;
+    case EBlendType ::InvSrcColor:    return D3D12_BLEND_INV_SRC_COLOR;
+    case EBlendType ::SrcAlpha:       return D3D12_BLEND_SRC_ALPHA;
+    case EBlendType ::InvSrcAlpha:    return D3D12_BLEND_INV_SRC_ALPHA;
+    case EBlendType ::DestAlpha:      return D3D12_BLEND_DEST_ALPHA;
+    case EBlendType ::InvDestAlpha:   return D3D12_BLEND_INV_DEST_ALPHA;
+    case EBlendType ::DestColor:      return D3D12_BLEND_DEST_COLOR;
+    case EBlendType ::InvDestColor:   return D3D12_BLEND_INV_DEST_COLOR;
+    case EBlendType ::SrcAlphaSat:    return D3D12_BLEND_SRC_ALPHA_SAT;
+    case EBlendType ::Src1Color:      return D3D12_BLEND_SRC1_COLOR;
+    case EBlendType ::InvSrc1Color:   return D3D12_BLEND_INV_SRC1_COLOR;
+    case EBlendType ::Src1Alpha:      return D3D12_BLEND_SRC1_ALPHA;
+    case EBlendType ::InvSrc1Alpha:   return D3D12_BLEND_INV_SRC1_ALPHA;
+    case EBlendType ::BlendFactor:    return D3D12_BLEND_BLEND_FACTOR;
+    case EBlendType ::InvBlendFactor: return D3D12_BLEND_INV_BLEND_FACTOR;
     }
 
     return D3D12_BLEND();

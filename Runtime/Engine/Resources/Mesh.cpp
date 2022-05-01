@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 #include "RHI/RHICommandList.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -64,7 +64,7 @@ bool CMesh::Init(const SMeshData& Data)
         }
         else
         {
-            RTGeometry->SetName("RayTracing Geometry");
+            // RTGeometry->SetName("RayTracing Geometry");
         }
 
         VertexBufferSRV = RHICreateShaderResourceView(VertexBuffer.Get(), 0, VertexCount);

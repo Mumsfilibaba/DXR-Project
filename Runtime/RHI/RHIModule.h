@@ -1,23 +1,7 @@
 #pragma once
+#include "RHICore.h"
+
 #include "Core/Modules/ModuleManager.h"
-
-#if MONOLITHIC_BUILD
-    #define RHI_API
-#else
-    #if RHI_IMPL
-        #define RHI_API MODULE_EXPORT
-    #else
-        #define RHI_API MODULE_IMPORT
-    #endif
-#endif
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Config
-
-// TODO: Should be in a config file
-#define ENABLE_API_DEBUGGING       (0)
-#define ENABLE_API_GPU_DEBUGGING   (0)
-#define ENABLE_API_GPU_BREADCRUMBS (0)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIInstanceType
@@ -50,22 +34,30 @@ RHI_API void RHIRelease();
 
 class RHI_API CRHIModule : public CDefaultEngineModule
 {
-public:
-
-     /** @brief: Creates the core RHI object */
-    virtual class CRHIInstance* CreateInterface() = 0;
-
-     /** @brief: Creates the RHI shader compiler */
-    virtual class IRHIShaderCompiler* CreateCompiler() = 0;
-
 protected:
 
     CRHIModule() = default;
     ~CRHIModule() = default;
+
+public:
+
+    /**
+     * @brief: Creates the RHI Instance
+     *
+     * @return: Returns the newly created RHIInstance
+     */
+    virtual class CRHICoreInstance* CreateInterface() = 0;
+
+    /**
+     * @brief: Creates the RHI shader compiler
+     *
+     * @return: Returns the shader compiler for this RHI Module
+     */
+    virtual class IRHIShaderCompiler* CreateCompiler() = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Global variables
 
-extern RHI_API class CRHIInstance*       GRHIInstance;
+extern RHI_API class CRHICoreInstance*       GRHIInstance;
 extern RHI_API class IRHIShaderCompiler* GShaderCompiler;
