@@ -5,7 +5,7 @@
 
 #include "Renderer/Debug/GPUProfiler.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/TextureFactory.h"
@@ -17,8 +17,10 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
 {
     SkyboxMesh = CMeshFactory::CreateSphere(1);
 
-    SRHIResourceData VertexData = SRHIResourceData(SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes());
-    SkyboxVertexBuffer = RHICreateVertexBuffer<SVertex>(SkyboxMesh.Vertices.Size(), EBufferUsageFlags::Dynamic, EResourceAccess::VertexAndConstantBuffer, &VertexData);
+    CRHIBufferDataInitializer VertexData(SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes());
+
+    CRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, SkyboxMesh.Vertices.Size(), sizeof(SVertex), EResourceAccess::VertexAndConstantBuffer, &VertexData);
+    SkyboxVertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -28,8 +30,10 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         SkyboxVertexBuffer->SetName("Skybox VertexBuffer");
     }
 
-    SRHIResourceData IndexData = SRHIResourceData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
-    SkyboxIndexBuffer = RHICreateIndexBuffer(EIndexFormat::uint32, SkyboxMesh.Indices.Size(), EBufferUsageFlags::Dynamic, EResourceAccess::VertexAndConstantBuffer, &IndexData);
+    CRHIBufferDataInitializer IndexData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
+
+    CRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint32, SkyboxMesh.Indices.Size(), EResourceAccess::IndexBuffer, &IndexData);
+    SkyboxIndexBuffer = RHICreateIndexBuffer(IBInitializer);
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -113,39 +117,39 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    CRHIBlendStateInitializer BlendStateInfo;
+    CRHIBlendStateInitializer BlendStateInitializer;
 
-    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
         CDebug::DebugBreak();
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
-    DepthStencilStateInfo.bDepthEnable   = true;
-    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
+    CRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+    DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
+    DepthStencilStateInitializer.bDepthEnable   = true;
+    DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
     if (!DepthStencilState)
     {
         CDebug::DebugBreak();
         return false;
     }
 
-    CRHIGraphicsPipelineStateInitializer PipelineStateInfo;
-    PipelineStateInfo.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
-    PipelineStateInfo.BlendState                             = BlendState.Get();
-    PipelineStateInfo.DepthStencilState                      = DepthStencilState.Get();
-    PipelineStateInfo.RasterizerState                        = RasterizerState.Get();
-    PipelineStateInfo.ShaderState.VertexShader               = SkyboxVertexShader.Get();
-    PipelineStateInfo.ShaderState.PixelShader                = SkyboxPixelShader.Get();
-    PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
-    PipelineStateInfo.PipelineFormats.NumRenderTargets       = 1;
-    PipelineStateInfo.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+    CRHIGraphicsPipelineStateInitializer PipelineStateInitializer;
+    PipelineStateInitializer.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
+    PipelineStateInitializer.BlendState                             = BlendState.Get();
+    PipelineStateInitializer.DepthStencilState                      = DepthStencilState.Get();
+    PipelineStateInitializer.RasterizerState                        = RasterizerState.Get();
+    PipelineStateInitializer.ShaderState.VertexShader               = SkyboxVertexShader.Get();
+    PipelineStateInitializer.ShaderState.PixelShader                = SkyboxPixelShader.Get();
+    PipelineStateInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
+    PipelineStateInitializer.PipelineFormats.NumRenderTargets       = 1;
+    PipelineStateInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
 
-    PipelineState = RHICreateGraphicsPipelineState(PipelineStateInfo);
+    PipelineState = RHICreateGraphicsPipelineState(PipelineStateInitializer);
     if (!PipelineState)
     {
         CDebug::DebugBreak();

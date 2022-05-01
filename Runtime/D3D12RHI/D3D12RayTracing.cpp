@@ -1,7 +1,7 @@
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
 #include "D3D12DescriptorHeap.h"
-#include "D3D12CoreInstance.h"
+#include "D3D12CoreInterface.h"
 #include "D3D12RayTracing.h"
 
 #include "RHI/RHIModule.h"

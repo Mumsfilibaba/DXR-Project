@@ -18,7 +18,7 @@ class CNullRHICommandContext : public IRHICommandContext
 {
 private:
 
-    friend class CNullRHICoreInstance;
+    friend class CNullRHICoreInterface;
 
     CNullRHICommandContext()  = default;
     ~CNullRHICommandContext() = default;

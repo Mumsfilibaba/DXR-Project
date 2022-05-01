@@ -6,6 +6,8 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Containers/StaticArray.h"
 
+#define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetDefaultShaderResourceView() : nullptr)
+
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // SMaterialDesc
 
@@ -14,10 +16,10 @@ struct SMaterialDesc
     CVector3 Albedo = CVector3(1.0f);
     float Roughness = 0.0f;
 
-    float Metallic = 0.0f;
-    float AO = 0.5f;
+    float Metallic     = 0.0f;
+    float AO           = 0.5f;
     int32 EnableHeight = 0;
-    int32 EnableMask = 0;
+    int32 EnableMask   = 0;
 };
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -98,15 +100,10 @@ public:
     TSharedRef<CRHITexture2D> AlphaMask;
 
 private:
-
-     /** @brief: Name for the material mostly used for debug purposes */
     String DebugName;
 
-     /** @brief: This indicates that the constantbuffer is dirty and needs updating */
     bool bMaterialBufferIsDirty = true;
-
-     /** @brief: True if the material should render in the forward pass (Transparent surfaces) */
-    bool bRenderInForwardPass = false;
+    bool bRenderInForwardPass   = false;
 
     SMaterialDesc        	       Properties;
     TSharedRef<CRHIConstantBuffer> MaterialBuffer;

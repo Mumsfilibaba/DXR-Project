@@ -5,7 +5,7 @@
 #include "D3D12CommandContext.h"
 #include "D3D12Texture.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 
 #include "CoreApplication/Windows/WindowsWindow.h"
 
@@ -21,16 +21,16 @@ template<typename D3D12TextureType>
 bool IsTextureCube();
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12CoreInstance
+// CD3D12CoreInterface
 
-class CD3D12CoreInstance : public CRHICoreInstance
+class CD3D12CoreInterface : public CRHICoreInterface
 {
-    CD3D12CoreInstance();
-    ~CD3D12CoreInstance();
+    CD3D12CoreInterface();
+    ~CD3D12CoreInterface();
 
 public:
 
-    static CD3D12CoreInstance* CreateD3D12Instance();
+    static CD3D12CoreInterface* CreateD3D12Instance();
 
     FORCEINLINE CD3D12Device* GetDevice() const
     {
@@ -70,7 +70,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHICoreInstance Interface
+    // CRHICoreInterface Interface
 
     virtual bool Initialize(bool bEnableDebug) override final;
 
@@ -82,10 +82,10 @@ public:
 
     virtual class CRHISamplerState*            CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo) override final;
 
-    virtual CRHIVertexBuffer*                  CreateVertexBuffer(uint32 Stride, uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData)     override final;
-    virtual CRHIIndexBuffer*                   CreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final;
-    virtual CRHIConstantBuffer*                CreateConstantBuffer(uint32 Size, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData)                         override final;
-    virtual CRHIGenericBuffer*                 CreateGenericBuffer(uint32 Stride, uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData)    override final;
+    virtual CRHIVertexBuffer*                  RHICreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer)     override final;
+    virtual CRHIIndexBuffer*                   RHICreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer)       override final;
+    virtual CRHIConstantBuffer*                RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer) override final;
+    virtual CRHIGenericBuffer*                 RHICreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer)   override final;
 
     virtual class CRHIRayTracingScene*         CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)     override final;
     virtual class CRHIRayTracingGeometry*      CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer) override final;
@@ -130,8 +130,8 @@ public:
 
     virtual String GetAdapterName() const override final { return Device->GetAdapterName(); }
 
-    virtual void RHIQueryRayTracingSupport(SRHIRayTracingSupport& OutSupport)   const override final;
-    virtual void RHIQueryShadingRateSupport(SRHIShadingRateSupport& OutSupport) const override final;
+    virtual void RHIQueryRayTracingSupport(SRayTracingSupport& OutSupport)   const override final;
+    virtual void RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport) const override final;
 
 private:
 
@@ -147,12 +147,9 @@ private:
                                    , const SRHIResourceData* InitialData
                                    , const SClearValue& OptimalClearValue);
 
+    // TODO: Avoid template here
     template<typename D3D12BufferType>
-    bool CreateBuffer( D3D12BufferType* Buffer
-                     , EBufferUsageFlags Flags
-                     , uint32 SizeInBytes
-                     , EResourceAccess InitialState
-                     , const SRHIResourceData* InitialData);
+    bool CreateBuffer(D3D12BufferType* Buffer, uint32 Size, const CRHIBufferInitializer& Initializer);
 
     CD3D12Device* Device = nullptr;
     
@@ -169,4 +166,4 @@ private:
     TSharedRef<CD3D12ComputePipelineState> GenerateMipsTexCube_PSO;
 };
 
-extern CD3D12CoreInstance* GD3D12Instance;
+extern CD3D12CoreInterface* GD3D12Instance;

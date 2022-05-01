@@ -1,5 +1,5 @@
 #pragma once
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 
 #include "NullRHIBuffer.h"
 #include "NullRHITexture.h"
@@ -21,18 +21,18 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHICoreInstance
+// CNullRHICoreInterface
 
-class CNullRHICoreInstance final : public CRHICoreInstance
+class CNullRHICoreInterface final : public CRHICoreInterface
 {
 public:
 
-    CNullRHICoreInstance()
-        : CRHICoreInstance(ERHIInstanceType::Null)
+    CNullRHICoreInterface()
+        : CRHICoreInterface(ERHIInstanceType::Null)
         , CommandContext(CNullRHICommandContext::CreateNullRHIContext())
     { }
 
-    ~CNullRHICoreInstance()
+    ~CNullRHICoreInterface()
     {
         SafeDelete(CommandContext);
     }
@@ -40,7 +40,7 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHICoreInstance Interface
+    // CRHICoreInterface Interface
 
     virtual bool Initialize(bool bEnableDebug) override final { return true; }
 
@@ -74,24 +74,24 @@ public:
         return dbg_new CNullRHISamplerState();
     }
 
-    virtual CRHIVertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIVertexBuffer* RHICreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIVertexBuffer>(Flags, NumVertices, Stride);
+        return dbg_new TNullRHIBuffer<CNullRHIVertexBuffer>(Initializer);
     }
 
-    virtual CRHIIndexBuffer* CreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIIndexBuffer* RHICreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIIndexBuffer>(Flags, Format, NumIndices);
+        return dbg_new TNullRHIBuffer<CNullRHIIndexBuffer>(Initializer);
     }
 
-    virtual CRHIConstantBuffer* CreateConstantBuffer(uint32 Size, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIGenericBuffer* RHICreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIConstantBuffer>(Flags, Size);
+        return dbg_new TNullRHIBuffer<CNullRHIGenericBuffer>(Initializer);
     }
 
-    virtual CRHIGenericBuffer* CreateGenericBuffer(uint32 Stride, uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIConstantBuffer* RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIGenericBuffer>(Flags, Stride * NumElements, Stride);
+        return dbg_new TNullRHIBuffer<CNullRHIConstantBuffer>(Initializer);
     }
 
     virtual CRHIRayTracingScene* CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) override final
@@ -239,14 +239,14 @@ public:
         return String();
     }
 
-    virtual void RHIQueryRayTracingSupport(SRHIRayTracingSupport& OutSupport) const override final
+    virtual void RHIQueryRayTracingSupport(SRayTracingSupport& OutSupport) const override final
     {
-        OutSupport = SRHIRayTracingSupport();
+        OutSupport = SRayTracingSupport();
     }
 
-    virtual void RHIQueryShadingRateSupport(SRHIShadingRateSupport& OutSupport) const override final
+    virtual void RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport) const override final
     {
-        OutSupport = SRHIShadingRateSupport();
+        OutSupport = SShadingRateSupport();
     }
 
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final

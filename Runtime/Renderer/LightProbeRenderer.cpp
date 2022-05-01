@@ -1,6 +1,6 @@
 #include "LightProbeRenderer.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

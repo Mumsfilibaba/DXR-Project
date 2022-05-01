@@ -1,7 +1,7 @@
 #include "ScreenSpaceOcclusionRenderer.h"
 #include "Renderer.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Core/Math/Vector2.h"
@@ -118,9 +118,14 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 
     CRHICommandQueue::Get().ExecuteCommandList(CmdList);
 
-    const uint32 Stride = sizeof(CVector3);
-    SRHIResourceData SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
-    SSAOSamples = RHICreateGenericBuffer(Stride, SSAOKernel.Size(), EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default, EResourceAccess::Common, &SSAOSampleData);
+    CRHIBufferDataInitializer    SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
+    CRHIGenericBufferInitializer SSAOSamplesInitializer( EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default
+                                                       , SSAOKernel.SizeInBytes()
+                                                       , sizeof(CVector3)
+                                                       , EResourceAccess::Common
+                                                       , &SSAOSampleData);
+
+    SSAOSamples = RHICreateGenericBuffer(SSAOSamplesInitializer);
     if (!SSAOSamples)
     {
         CDebug::DebugBreak();

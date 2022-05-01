@@ -4,7 +4,7 @@
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/TextureFactory.h"
@@ -82,7 +82,8 @@ bool CRenderer::Init()
         // Resources.MainWindowViewport->SetName("Main Window Viewport");
     }
 
-    Resources.CameraBuffer = RHICreateConstantBuffer<SCameraBufferDesc>(EBufferUsageFlags::Default, EResourceAccess::Common, nullptr);
+    CRHIConstantBufferInitializer CBInitializer(EBufferUsageFlags::Default, sizeof(SCameraBufferDesc), EResourceAccess::Common);
+    Resources.CameraBuffer = RHICreateConstantBuffer(CBInitializer);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create CameraBuffer");
@@ -1005,9 +1006,10 @@ bool CRenderer::InitBoundingBoxDebugPass()
         CVector3(-0.5f,  0.5f, -0.5f)
     };
 
-    SRHIResourceData VertexData(Vertices.Data(), Vertices.SizeInBytes());
+    CRHIBufferDataInitializer VertexData(Vertices.Data(), Vertices.SizeInBytes());
 
-    AABBVertexBuffer = RHICreateVertexBuffer<CVector3>(Vertices.Size(), EBufferUsageFlags::Default, EResourceAccess::Common, &VertexData);
+    CRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, Vertices.Size(), sizeof(CVector3), EResourceAccess::Common, &VertexData);
+    AABBVertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!AABBVertexBuffer)
     {
         CDebug::DebugBreak();
@@ -1035,9 +1037,10 @@ bool CRenderer::InitBoundingBoxDebugPass()
         2, 7,
     };
 
-    SRHIResourceData IndexData(Indices.Data(), Indices.SizeInBytes());
+    CRHIBufferDataInitializer IndexData(Indices.Data(), Indices.SizeInBytes());
 
-    AABBIndexBuffer = RHICreateIndexBuffer(EIndexFormat::uint16, Indices.Size(), EBufferUsageFlags::Default, EResourceAccess::Common, &IndexData);
+    CRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint16, Indices.Size(), EResourceAccess::Common, &IndexData);
+    AABBIndexBuffer = RHICreateIndexBuffer(IBInitializer);
     if (!AABBIndexBuffer)
     {
         CDebug::DebugBreak();
@@ -1201,7 +1204,7 @@ bool CRenderer::InitAA()
 
 bool CRenderer::InitShadingImage()
 {
-    SRHIShadingRateSupport Support;
+    SShadingRateSupport Support;
     RHIQueryShadingRateSupport(Support);
 
     if (Support.Tier != ERHIShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)

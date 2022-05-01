@@ -1,7 +1,7 @@
 #include "RayTracer.h"
 #include "Renderer.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Material.h"

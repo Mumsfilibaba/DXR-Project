@@ -1,6 +1,6 @@
 #include "LightSetup.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
@@ -12,7 +12,9 @@
 
 bool SLightSetup::Init()
 {
-    DirectionalLightsBuffer = RHICreateConstantBuffer(sizeof(DirectionalLightData), EBufferUsageFlags::Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+    CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(DirectionalLightData));
+
+    DirectionalLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!DirectionalLightsBuffer)
     {
         CDebug::DebugBreak();
@@ -24,7 +26,9 @@ bool SLightSetup::Init()
     }
 
     PointLightsData.Reserve(256);
-    PointLightsBuffer = RHICreateConstantBuffer(PointLightsData.CapacityInBytes(), EBufferUsageFlags::Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+    Initializer = CRHIConstantBufferInitializer(EBufferUsageFlags::Default, PointLightsData.CapacityInBytes());
+
+    PointLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!PointLightsBuffer)
     {
         CDebug::DebugBreak();
@@ -36,7 +40,9 @@ bool SLightSetup::Init()
     }
 
     PointLightsPosRad.Reserve(256);
-    PointLightsPosRadBuffer = RHICreateConstantBuffer(PointLightsPosRad.CapacityInBytes(), EBufferUsageFlags::Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+    Initializer = CRHIConstantBufferInitializer(EBufferUsageFlags::Default, PointLightsPosRad.CapacityInBytes());
+
+    PointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
     if (!PointLightsPosRadBuffer)
     {
         CDebug::DebugBreak();
@@ -48,11 +54,9 @@ bool SLightSetup::Init()
     }
 
     ShadowCastingPointLightsData.Reserve(8);
-    ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(
-        ShadowCastingPointLightsData.CapacityInBytes(),
-        EBufferUsageFlags::Default,
-        EResourceAccess::VertexAndConstantBuffer,
-        nullptr);
+    Initializer = CRHIConstantBufferInitializer(EBufferUsageFlags::Default, ShadowCastingPointLightsData.CapacityInBytes());
+
+    ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(Initializer);
     if (!ShadowCastingPointLightsBuffer)
     {
         CDebug::DebugBreak();
@@ -64,11 +68,9 @@ bool SLightSetup::Init()
     }
 
     ShadowCastingPointLightsPosRad.Reserve(8);
-    ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(
-        ShadowCastingPointLightsPosRad.CapacityInBytes(),
-        EBufferUsageFlags::Default,
-        EResourceAccess::VertexAndConstantBuffer,
-        nullptr);
+    Initializer = CRHIConstantBufferInitializer(EBufferUsageFlags::Default, ShadowCastingPointLightsPosRad.CapacityInBytes());
+
+    ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
     if (!ShadowCastingPointLightsPosRadBuffer)
     {
         CDebug::DebugBreak();
@@ -113,14 +115,14 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
             float Radius = sqrt(Dot / MinLuma);
 
             CVector3 Position = CurrentLight->GetPosition();
-            CVector4 PosRad = CVector4(Position, Radius);
+            CVector4 PosRad   = CVector4(Position, Radius);
             if (CurrentLight->IsShadowCaster())
             {
                 SShadowCastingPointLightData Data;
-                Data.Color = Color;
-                Data.FarPlane = CurrentLight->GetShadowFarPlane();
+                Data.Color         = Color;
+                Data.FarPlane      = CurrentLight->GetShadowFarPlane();
                 Data.MaxShadowBias = CurrentLight->GetMaxShadowBias();
-                Data.ShadowBias = CurrentLight->GetShadowBias();
+                Data.ShadowBias    = CurrentLight->GetShadowBias();
 
                 ShadowCastingPointLightsData.Emplace(Data);
                 ShadowCastingPointLightsPosRad.Emplace(PosRad);
@@ -131,7 +133,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
 
                 for (uint32 Face = 0; Face < 6; Face++)
                 {
-                    ShadowMapData.Matrix[Face] = CurrentLight->GetMatrix(Face);
+                    ShadowMapData.Matrix[Face]     = CurrentLight->GetMatrix(Face);
                     ShadowMapData.ViewMatrix[Face] = CurrentLight->GetViewMatrix(Face);
                     ShadowMapData.ProjMatrix[Face] = CurrentLight->GetProjectionMatrix(Face);
                 }
@@ -154,10 +156,10 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
 
             CurrentLight->UpdateCascades(*Camera);
 
-            DirectionalLightData.Color = CVector3(Color.x, Color.y, Color.z);
-            DirectionalLightData.ShadowBias = CurrentLight->GetShadowBias();
-            DirectionalLightData.Direction = CurrentLight->GetDirection();
-            DirectionalLightData.Up = CurrentLight->GetUp();
+            DirectionalLightData.Color         = CVector3(Color.x, Color.y, Color.z);
+            DirectionalLightData.ShadowBias    = CurrentLight->GetShadowBias();
+            DirectionalLightData.Direction     = CurrentLight->GetDirection();
+            DirectionalLightData.Up            = CurrentLight->GetUp();
             DirectionalLightData.MaxShadowBias = CurrentLight->GetMaxShadowBias();
             //DirectionalLightData.Position      = CurrentLight->GetPosition();
 
@@ -180,7 +182,8 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
     {
         CmdList.DestroyResource(PointLightsBuffer.Get());
 
-        PointLightsBuffer = RHICreateConstantBuffer(PointLightsData.CapacityInBytes(), EBufferUsageFlags::Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, PointLightsData.CapacityInBytes());
+        PointLightsBuffer = RHICreateConstantBuffer(Initializer);
         if (!PointLightsBuffer)
         {
             CDebug::DebugBreak();
@@ -191,7 +194,8 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
     {
         CmdList.DestroyResource(PointLightsPosRadBuffer.Get());
 
-        PointLightsPosRadBuffer = RHICreateConstantBuffer(PointLightsPosRad.CapacityInBytes(), EBufferUsageFlags::Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, PointLightsPosRad.CapacityInBytes());
+        PointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
         if (!PointLightsPosRadBuffer)
         {
             CDebug::DebugBreak();
@@ -202,11 +206,8 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
     {
         CmdList.DestroyResource(ShadowCastingPointLightsBuffer.Get());
 
-        ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(
-            ShadowCastingPointLightsData.CapacityInBytes(),
-            EBufferUsageFlags::Default,
-            EResourceAccess::VertexAndConstantBuffer,
-            nullptr);
+        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, ShadowCastingPointLightsData.CapacityInBytes());
+        ShadowCastingPointLightsBuffer = RHICreateConstantBuffer(Initializer);
         if (!ShadowCastingPointLightsBuffer)
         {
             CDebug::DebugBreak();
@@ -217,27 +218,23 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
     {
         CmdList.DestroyResource(ShadowCastingPointLightsPosRadBuffer.Get());
 
-        ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(
-            ShadowCastingPointLightsPosRad.CapacityInBytes(),
-            EBufferUsageFlags::Default,
-            EResourceAccess::VertexAndConstantBuffer,
-            nullptr);
+        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, ShadowCastingPointLightsPosRad.CapacityInBytes());
+        ShadowCastingPointLightsPosRadBuffer = RHICreateConstantBuffer(Initializer);
         if (!ShadowCastingPointLightsPosRadBuffer)
         {
             CDebug::DebugBreak();
         }
     }
 
-    CmdList.TransitionBuffer(DirectionalLightsBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(PointLightsBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(PointLightsPosRadBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(DirectionalLightsBuffer.Get()             , EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(PointLightsBuffer.Get()                   , EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(PointLightsPosRadBuffer.Get()             , EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get()      , EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
     CmdList.TransitionBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
 
     if (DirectionalLightDataDirty)
     {
         CmdList.UpdateBuffer(DirectionalLightsBuffer.Get(), 0, sizeof(DirectionalLightData), &DirectionalLightData);
-
         DirectionalLightDataDirty = false;
     }
 
@@ -253,10 +250,10 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
         CmdList.UpdateBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), 0, ShadowCastingPointLightsPosRad.SizeInBytes(), ShadowCastingPointLightsPosRad.Data());
     }
 
-    CmdList.TransitionBuffer(DirectionalLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
-    CmdList.TransitionBuffer(PointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
-    CmdList.TransitionBuffer(PointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
-    CmdList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(DirectionalLightsBuffer.Get()             , EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(PointLightsBuffer.Get()                   , EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(PointLightsPosRadBuffer.Get()             , EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
+    CmdList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get()      , EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
     CmdList.TransitionBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Update Lights");

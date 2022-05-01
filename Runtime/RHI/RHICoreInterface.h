@@ -23,17 +23,28 @@ class CRHIRayTracingScene;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIShadingRateTier
 
-enum class ERHIShadingRateTier
+enum class ERHIShadingRateTier : uint8
 {
     NotSupported = 0,
     Tier1        = 1,
     Tier2        = 2,
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIShadingRateSupport
+inline const char* ToString(ERHIShadingRateTier Tier)
+{
+    switch (Tier)
+    {
+        case ERHIShadingRateTier::NotSupported: return "NotSupported";
+        case ERHIShadingRateTier::Tier1:        return "Tier1";
+        case ERHIShadingRateTier::Tier2:        return "Tier2";
+        default:                                return "Unknown";
+    }
+}
 
-struct SRHIShadingRateSupport
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SShadingRateSupport
+
+struct SShadingRateSupport
 {
     ERHIShadingRateTier Tier = ERHIShadingRateTier::NotSupported;
     uint32              ShadingRateImageTileSize = 0;
@@ -42,7 +53,7 @@ struct SRHIShadingRateSupport
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIRayTracingTier
 
-enum class ERHIRayTracingTier
+enum class ERHIRayTracingTier : uint8
 {
     NotSupported = 0,
     Tier1        = 1,
@@ -50,26 +61,26 @@ enum class ERHIRayTracingTier
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRayTracingSupport
+// SRayTracingSupport
 
-struct SRHIRayTracingSupport
+struct SRayTracingSupport
 {
     ERHIRayTracingTier Tier;
     uint32             MaxRecursionDepth;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICoreInstance
+// CRHICoreInterface
 
-class CRHICoreInstance
+class CRHICoreInterface
 {
 protected:
 
-    CRHICoreInstance(ERHIInstanceType InRHIType)
+    CRHICoreInterface(ERHIInstanceType InRHIType)
         : RHIType(InRHIType)
     { }
 
-    virtual ~CRHICoreInstance() = default;
+    virtual ~CRHICoreInterface() = default;
 
 public:
 
@@ -168,52 +179,37 @@ public:
     virtual class CRHISamplerState* CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo) = 0;
 
     /**
-     * @brief: Creates a new VertexBuffer
-     * 
-     * @param Stride: Stride of each vertex in the VertexBuffer
-     * @param NumVertices: Number of vertices in the VertexBuffer
-     * @param Flags: Buffer flags
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created VertexBuffer
+     * @brief: Creates a VertexBuffer
+     *
+     * @param Initializer: State that contains information about a VertexBuffer
+     * @return: Returns the newly created Buffer
      */
-    virtual CRHIVertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIVertexBuffer* RHICreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer) = 0;
     
     /**
-     * @brief: Creates a new IndexBuffer
+     * @brief: Creates a IndexBuffer
      *
-     * @param Format: Format of each index in the IndexBuffer
-     * @param NumIndices: Number of indices in the IndexBuffer
-     * @param Flags: Buffer flags
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created IndexBuffer
+     * @param Initializer: State that contains information about a IndexBuffer
+     * @return: Returns the newly created Buffer
      */
-    virtual CRHIIndexBuffer* CreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIIndexBuffer* RHICreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer) = 0;
     
     /**
-     * @brief: Creates a new ConstantBuffer
+     * @brief: Creates a GenericBuffer
      *
-     * @param Size: Size of  the ConstantBuffer
-     * @param Flags: Buffer flags
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created ConstantBuffer
+     * @param Initializer: State that contains information about a GenericBuffer
+     * @return: Returns the newly created Buffer
      */
-    virtual CRHIConstantBuffer* CreateConstantBuffer(uint32 Size, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
-    
-    /**
-     * @brief: Creates a new StructuredBuffer
-     *
-     * @param Stride: Stride of each element in the StructuredBuffer
-     * @param NumElements: Number of elements in the StructuredBuffer
-     * @param Flags: Buffer flags
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created StructuredBuffer
-     */
-    virtual CRHIGenericBuffer* CreateGenericBuffer(uint32 Stride, uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIGenericBuffer* RHICreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer) = 0;
 
+    /**
+     * @brief: Creates a ConstantBuffer
+     *
+     * @param Initializer: State that contains information about a ConstantBuffer
+     * @return: Returns the newly created Buffer
+     */
+    virtual CRHIConstantBuffer* RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer) = 0;
+    
     /**
      * @brief: Create a new Ray tracing scene
      * 
@@ -449,14 +445,14 @@ public:
      * 
      * @param OutSupport: Struct containing the Ray tracing support for the system and current RHI
      */
-    virtual void RHIQueryRayTracingSupport(SRHIRayTracingSupport& OutSupport) const = 0;
+    virtual void RHIQueryRayTracingSupport(SRayTracingSupport& OutSupport) const = 0;
 
     /**
      * @brief: Check for Shading-rate support
      *
      * @param OutSupport: Struct containing the Shading-rate support for the system and current RHI
      */
-    virtual void RHIQueryShadingRateSupport(SRHIShadingRateSupport& OutSupport) const = 0;
+    virtual void RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport) const = 0;
 
     /**
      * @brief: Check if the current RHI supports UnorderedAccessViews for the specified format
@@ -517,45 +513,24 @@ FORCEINLINE class CRHISamplerState* RHICreateSamplerState(const struct SRHISampl
     return GRHIInstance->CreateSamplerState(CreateInfo);
 }
 
-FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(uint32 Stride, uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
 {
-    return GRHIInstance->CreateVertexBuffer(Stride, NumVertices, Flags, InitialState, InitialData);
+    return GRHIInstance->RHICreateVertexBuffer(Initializer);
 }
 
-template<typename T>
-FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIIndexBuffer* RHICreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
 {
-    constexpr uint32 STRIDE = sizeof(T);
-    return RHICreateVertexBuffer(STRIDE, NumVertices, Flags, InitialState, InitialData);
+    return GRHIInstance->RHICreateIndexBuffer(Initializer);
 }
 
-FORCEINLINE CRHIIndexBuffer* RHICreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIGenericBuffer* RHICreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
 {
-    return GRHIInstance->CreateIndexBuffer(Format, NumIndices, Flags, InitialState, InitialData);
+    return GRHIInstance->RHICreateGenericBuffer(Initializer);
 }
 
-FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(uint32 Size, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
 {
-    return GRHIInstance->CreateConstantBuffer(Size, Flags, InitialState, InitialData);
-}
-
-template<typename TSize>
-FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
-{
-    constexpr uint32 SIZE_IN_BYTES = sizeof(TSize);
-    return RHICreateConstantBuffer(SIZE_IN_BYTES, Flags, InitialState, InitialData);
-}
-
-FORCEINLINE CRHIGenericBuffer* RHICreateGenericBuffer(uint32 Stride, uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
-{
-    return GRHIInstance->CreateGenericBuffer(Stride, NumElements, Flags, InitialState, InitialData);
-}
-
-template<typename TStride>
-FORCEINLINE CRHIGenericBuffer* RHICreateGenericBuffer(uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
-{
-    constexpr uint32 STRIDE_IN_BYTES = sizeof(TStride);
-    return RHICreateGenericBuffer(STRIDE_IN_BYTES, NumElements, Flags, InitialState, InitialData);
+    return GRHIInstance->RHICreateConstantBuffer(Initializer);
 }
 
 FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)
@@ -967,19 +942,19 @@ FORCEINLINE String RHIGetAdapterName()
     return GRHIInstance->GetAdapterName();
 }
 
-FORCEINLINE void RHIQueryShadingRateSupport(SRHIShadingRateSupport& OutSupport)
+FORCEINLINE void RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport)
 {
     GRHIInstance->RHIQueryShadingRateSupport(OutSupport);
 }
 
-FORCEINLINE void RHIQueryRayTracingSupport(SRHIRayTracingSupport& OutSupport)
+FORCEINLINE void RHIQueryRayTracingSupport(SRayTracingSupport& OutSupport)
 {
     GRHIInstance->RHIQueryRayTracingSupport(OutSupport);
 }
 
 FORCEINLINE bool RHISupportsRayTracing()
 {
-    SRHIRayTracingSupport Support;
+    SRayTracingSupport Support;
     RHIQueryRayTracingSupport(Support);
 
     return false;// (Support.Tier != ERHIRayTracingTier::NotSupported);
@@ -987,7 +962,7 @@ FORCEINLINE bool RHISupportsRayTracing()
 
 FORCEINLINE bool RHISupportsVariableRateShading()
 {
-    SRHIShadingRateSupport Support;
+    SShadingRateSupport Support;
     RHIQueryShadingRateSupport(Support);
 
     return (Support.Tier != ERHIShadingRateTier::NotSupported);

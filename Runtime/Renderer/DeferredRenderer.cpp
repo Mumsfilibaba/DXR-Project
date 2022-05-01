@@ -1,7 +1,7 @@
 #include "DeferredRenderer.h"
 #include "MeshDrawCommand.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Mesh.h"

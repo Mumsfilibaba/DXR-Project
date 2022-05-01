@@ -208,7 +208,7 @@ class CD3D12CommandContext : public IRHICommandContext, public CD3D12DeviceChild
 {
 private:
 
-    friend class CD3D12CoreInstance;
+    friend class CD3D12CoreInterface;
 
     CD3D12CommandContext(CD3D12Device* InDevice);
     ~CD3D12CommandContext();
