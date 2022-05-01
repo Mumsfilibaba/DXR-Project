@@ -17,45 +17,32 @@
 class CNullRHIViewport : public CRHIViewport
 {
 public:
+    
     CNullRHIViewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
         : CRHIViewport(InFormat, InWidth, InHeight)
-        , BackBuffer(dbg_new TNullRHITexture<CNullRHITexture2D>(InFormat, Width, Height, 1, 1, 0, SClearValue()))
+        , BackBuffer(dbg_new TNullRHITexture<CNullRHITexture2D>(InFormat, Width, Height, 1, 1, ETextureUsageFlags::None, SClearValue()))
         , BackBufferView(dbg_new CNullRHIRenderTargetView())
     { }
 
     ~CNullRHIViewport() = default;
 
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIViewport Interface
+
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final
     {
-        Width = InWidth;
+        Width  = InWidth;
         Height = InHeight;
         return true;
     }
 
-    virtual bool Present(bool bVerticalSync) override final
-    {
-        return true;
-    }
+    virtual bool Present(bool bVerticalSync) override final { return true; }
 
-    virtual void SetName(const String& InName) override final
-    {
-        CRHIObject::SetName(InName);
-    }
+    virtual CRHIRenderTargetView* GetRenderTargetView() const override final { return BackBufferView.Get(); }
 
-    virtual CRHIRenderTargetView* GetRenderTargetView() const override final
-    {
-        return BackBufferView.Get();
-    }
-
-    virtual CRHITexture2D* GetBackBuffer() const override final
-    {
-        return BackBuffer.Get();
-    }
-
-    virtual bool IsValid() const override final
-    {
-        return true;
-    }
+    virtual CRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
 private:
     TSharedRef<CNullRHITexture2D>        BackBuffer;

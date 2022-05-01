@@ -38,7 +38,7 @@ public:
      * 
      * @return: Returns the return-value from the thread
      */
-    virtual int32 WaitForCompletion(uint64 TimeoutInMs) { }
+    virtual int32 WaitForCompletion(uint64 TimeoutInMs) { return 0; }
     
     virtual bool Start() { return true; }
 	

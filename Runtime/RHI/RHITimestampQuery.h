@@ -13,7 +13,7 @@ struct SRHITimestamp
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITimestampQuery
 
-class CRHITimestampQuery : public CRHIObject
+class CRHITimestampQuery : public CRHIResource
 {
 public:
 

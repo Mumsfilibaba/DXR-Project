@@ -19,6 +19,6 @@ public:
     CNullRHIModule() = default;
     ~CNullRHIModule() = default;
 
-    virtual class CRHIInstance*       CreateInterface() override final;
+    virtual class CRHICoreInstance*       CreateInterface() override final;
     virtual class IRHIShaderCompiler* CreateCompiler() override final;
 };

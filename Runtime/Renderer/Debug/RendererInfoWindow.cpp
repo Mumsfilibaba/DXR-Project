@@ -2,7 +2,7 @@
 
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 
 #include "Renderer/Renderer.h"
 
@@ -13,7 +13,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variable 
 
-TAutoConsoleVariable<bool> GDrawRendererInfo("renderer.DrawRendererInfo", false);
+TAutoConsoleVariable<bool> GDrawRendererInfo("Renderer.DrawRendererInfo", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // RendererInfoWindow

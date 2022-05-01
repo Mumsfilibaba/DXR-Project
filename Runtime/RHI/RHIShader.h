@@ -37,7 +37,7 @@ struct SShaderParameterInfo
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIShader
 
-class CRHIShader : public CRHIObject
+class CRHIShader : public CRHIResource
 {
 protected:
 
@@ -77,7 +77,7 @@ public:
     virtual class CRHIRayMissShader* AsRayMissShader() { return nullptr; }
 
     /** @return: Returns the native handle of the Shader */
-    virtual void* GetRHIResourceHandle() const { return nullptr; }
+    virtual void* GetRHIBaseResourceHandle() const { return nullptr; }
 
     /** @return: Returns the RHI-backend Shader interface */
     virtual void* GetRHIBaseShader() { return nullptr; }

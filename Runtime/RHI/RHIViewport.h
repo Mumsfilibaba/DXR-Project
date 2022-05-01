@@ -5,7 +5,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIViewport
 
-class CRHIViewport : public CRHIObject
+class CRHIViewport : public CRHIResource
 {
 public:
 
@@ -18,7 +18,7 @@ public:
      */
     
     CRHIViewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
-        : CRHIObject()
+        : CRHIResource()
         , Width(InWidth)
         , Height(InHeight)
         , Format(InFormat)

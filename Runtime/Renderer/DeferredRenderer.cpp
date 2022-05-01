@@ -1,7 +1,7 @@
 #include "DeferredRenderer.h"
 #include "MeshDrawCommand.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Mesh.h"
@@ -15,10 +15,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variable
 
-TAutoConsoleVariable<bool> GDrawTileDebug("renderer.DrawTileDebug", false);
+TAutoConsoleVariable<bool> GDrawTileDebug("Renderer.DrawTileDebug", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// DeferredRenderer
+// CDeferredRenderer
 
 bool CDeferredRenderer::Init(SFrameResources& FrameResources)
 {
@@ -32,7 +32,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         CreateInfo.AddressU = ESamplerMode::Clamp;
         CreateInfo.AddressV = ESamplerMode::Clamp;
         CreateInfo.AddressW = ESamplerMode::Clamp;
-        CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
+        CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
 
         FrameResources.GBufferSampler = RHICreateSamplerState(CreateInfo);
         if (!FrameResources.GBufferSampler)
@@ -61,10 +61,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            BaseVertexShader->SetName("GeometryPass VertexShader");
-        }
 
         if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/GeometryPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
         {
@@ -78,14 +74,11 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            BasePixelShader->SetName("GeometryPass PixelShader");
-        }
+
 
         SRHIDepthStencilStateInfo DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc = EComparisonFunc::LessEqual;
-        DepthStencilStateInfo.bDepthEnable = true;
+        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
+        DepthStencilStateInfo.bDepthEnable   = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<CRHIDepthStencilState> GeometryDepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
@@ -93,10 +86,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            GeometryDepthStencilState->SetName("GeometryPass DepthStencilState");
         }
 
         SRHIRasterizerStateInfo RasterizerStateInfo;
@@ -108,13 +97,9 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            GeometryRasterizerState->SetName("GeometryPass RasterizerState");
-        }
 
         SRHIBlendStateInfo BlendStateInfo;
-        BlendStateInfo.bIndependentBlendEnable = false;
+        BlendStateInfo.bIndependentBlendEnable      = false;
         BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
@@ -123,24 +108,20 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            BlendState->SetName("GeometryPass BlendState");
-        }
 
         SRHIGraphicsPipelineStateInfo PipelineStateInfo;
-        PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.BlendState = BlendState.Get();
-        PipelineStateInfo.DepthStencilState = GeometryDepthStencilState.Get();
-        PipelineStateInfo.RasterizerState = GeometryRasterizerState.Get();
-        PipelineStateInfo.ShaderState.VertexShader = BaseVertexShader.Get();
-        PipelineStateInfo.ShaderState.PixelShader = BasePixelShader.Get();
-        PipelineStateInfo.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
+        PipelineStateInfo.InputLayoutState                       = FrameResources.StdInputLayout.Get();
+        PipelineStateInfo.BlendState                             = BlendState.Get();
+        PipelineStateInfo.DepthStencilState                      = GeometryDepthStencilState.Get();
+        PipelineStateInfo.RasterizerState                        = GeometryRasterizerState.Get();
+        PipelineStateInfo.ShaderState.VertexShader               = BaseVertexShader.Get();
+        PipelineStateInfo.ShaderState.PixelShader                = BasePixelShader.Get();
+        PipelineStateInfo.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[1] = FrameResources.NormalFormat;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[2] = EFormat::R8G8B8A8_Unorm;
         PipelineStateInfo.PipelineFormats.RenderTargetFormats[3] = FrameResources.ViewNormalFormat;
-        PipelineStateInfo.PipelineFormats.NumRenderTargets = 4;
+        PipelineStateInfo.PipelineFormats.NumRenderTargets       = 4;
 
         PipelineState = RHICreateGraphicsPipelineState(PipelineStateInfo);
         if (!PipelineState)
@@ -168,14 +149,10 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            PrePassVertexShader->SetName("PrePass VertexShader");
-        }
 
         SRHIDepthStencilStateInfo DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc = EComparisonFunc::Less;
-        DepthStencilStateInfo.bDepthEnable = true;
+        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::Less;
+        DepthStencilStateInfo.bDepthEnable   = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
 
         TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
@@ -183,10 +160,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            DepthStencilState->SetName("Prepass DepthStencilState");
         }
 
         SRHIRasterizerStateInfo RasterizerStateInfo;
@@ -198,13 +171,9 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            RasterizerState->SetName("Prepass RasterizerState");
-        }
 
         SRHIBlendStateInfo BlendStateInfo;
-        BlendStateInfo.bIndependentBlendEnable = false;
+        BlendStateInfo.bIndependentBlendEnable      = false;
         BlendStateInfo.RenderTarget[0].bBlendEnable = false;
 
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
@@ -213,17 +182,13 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            BlendState->SetName("Prepass BlendState");
-        }
 
         SRHIGraphicsPipelineStateInfo PipelineStateInfo;
-        PipelineStateInfo.InputLayoutState = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.BlendState = BlendState.Get();
-        PipelineStateInfo.DepthStencilState = DepthStencilState.Get();
-        PipelineStateInfo.RasterizerState = RasterizerState.Get();
-        PipelineStateInfo.ShaderState.VertexShader = PrePassVertexShader.Get();
+        PipelineStateInfo.InputLayoutState                   = FrameResources.StdInputLayout.Get();
+        PipelineStateInfo.BlendState                         = BlendState.Get();
+        PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
+        PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
+        PipelineStateInfo.ShaderState.VertexShader           = PrePassVertexShader.Get();
         PipelineStateInfo.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
 
         PrePassPipelineState = RHICreateGraphicsPipelineState(PipelineStateInfo);
@@ -231,14 +196,10 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            PrePassPipelineState->SetName("PrePass PipelineState");
-        }
+        } 
     }
 
-    constexpr uint32  LUTSize = 512;
+    constexpr uint32  LUTSize   = 512;
     constexpr EFormat LUTFormat = EFormat::R16G16_Float;
     if (!RHIUAVSupportsFormat(LUTFormat))
     {
@@ -248,7 +209,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<CRHITexture2D> StagingTexture = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_UAV, EResourceAccess::Common, nullptr);
+    TSharedRef<CRHITexture2D> StagingTexture = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::AllowUAV, EResourceAccess::Common, nullptr);
     if (!StagingTexture)
     {
         CDebug::DebugBreak();
@@ -259,7 +220,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         StagingTexture->SetName("Staging IntegrationLUT");
     }
 
-    FrameResources.IntegrationLUT = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, TextureFlag_SRV, EResourceAccess::Common, nullptr);
+    FrameResources.IntegrationLUT = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::Common, nullptr);
     if (!FrameResources.IntegrationLUT)
     {
         CDebug::DebugBreak();
@@ -274,17 +235,13 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;
-    CreateInfo.Filter = ESamplerFilter::MinMagMipPoint;
+    CreateInfo.Filter   = ESamplerFilter::MinMagMipPoint;
 
     FrameResources.IntegrationLUTSampler = RHICreateSamplerState(CreateInfo);
     if (!FrameResources.IntegrationLUTSampler)
     {
         CDebug::DebugBreak();
         return false;
-    }
-    else
-    {
-        FrameResources.IntegrationLUTSampler->SetName("IntegrationLUT Sampler");
     }
 
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/BRDFIntegationGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
@@ -298,10 +255,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     {
         CDebug::DebugBreak();
         return false;
-    }
-    else
-    {
-        CShader->SetName("BRDFIntegationGen ComputeShader");
     }
 
     {
@@ -329,7 +282,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         CmdList.SetUnorderedAccessView(CShader.Get(), StagingUAV, 0);
 
         constexpr uint32 ThreadCount = 16;
-        const uint32 DispatchWidth = NMath::DivideByMultiple(LUTSize, ThreadCount);
+        const uint32 DispatchWidth  = NMath::DivideByMultiple(LUTSize, ThreadCount);
         const uint32 DispatchHeight = NMath::DivideByMultiple(LUTSize, ThreadCount);
         CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
@@ -358,10 +311,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            TiledLightShader->SetName("DeferredLightPass Shader");
-        }
 
         SRHIComputePipelineStateInfo DeferredLightPassCreateInfo;
         DeferredLightPassCreateInfo.Shader = TiledLightShader.Get();
@@ -371,10 +320,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            TiledLightPassPSO->SetName("DeferredLightPass PipelineState");
         }
     }
 
@@ -395,10 +340,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            TiledLightDebugShader->SetName("DeferredLightPass Debug Shader");
         }
 
         SRHIComputePipelineStateInfo DeferredLightPassCreateInfo;
@@ -429,10 +370,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
             CDebug::DebugBreak();
             return false;
         }
-        else
-        {
-            ReduceDepthInitalShader->SetName("DepthReduction Inital ComputeShader");
-        }
 
         SRHIComputePipelineStateInfo PipelineStateInfo;
         PipelineStateInfo.Shader = ReduceDepthInitalShader.Get();
@@ -442,10 +379,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            ReduceDepthInitalPSO->SetName("DepthReduction Initial PipelineState");
         }
     }
 
@@ -461,10 +394,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         {
             CDebug::DebugBreak();
             return false;
-        }
-        else
-        {
-            ReduceDepthShader->SetName("DepthReduction ComputeShader");
         }
 
         SRHIComputePipelineStateInfo PipelineStateInfo;
@@ -508,7 +437,7 @@ void CDeferredRenderer::Release()
 
 void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene)
 {
-    const float RenderWidth = float(FrameResources.MainWindowViewport->GetWidth());
+    const float RenderWidth  = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin PrePass");
@@ -560,7 +489,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
 
         GPU_TRACE_SCOPE(CmdList, "Depth Reduction");
 
-        struct ReductionConstants
+        struct SReductionConstants
         {
             CMatrix4 CamProjection;
             float NearPlane;
@@ -568,8 +497,8 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
         } ReductionConstants;
 
         ReductionConstants.CamProjection = Scene.GetCamera()->GetProjectionMatrix();
-        ReductionConstants.NearPlane = Scene.GetCamera()->GetNearPlane();
-        ReductionConstants.FarPlane = Scene.GetCamera()->GetFarPlane();
+        ReductionConstants.NearPlane     = Scene.GetCamera()->GetNearPlane();
+        ReductionConstants.FarPlane      = Scene.GetCamera()->GetFarPlane();
 
         // Perform the first reduction
         CmdList.TransitionTexture(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
@@ -578,7 +507,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
 
         CmdList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
 
-        CmdList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 0);
+        CmdList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDefaultShaderResourceView(), 0);
         CmdList.SetUnorderedAccessView(ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
         CmdList.Set32BitShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, NMath::BytesToNum32BitConstants(sizeof(ReductionConstants)));
@@ -593,7 +522,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
         // Perform the other reductions
         CmdList.SetComputePipelineState(ReduceDepthPSO.Get());
 
-        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
+        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetDefaultShaderResourceView(), 0);
         CmdList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetUnorderedAccessView(), 0);
 
         ThreadsX = NMath::DivideByMultiple(ThreadsX, 16);
@@ -603,7 +532,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
         CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
         CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
 
-        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetShaderResourceView(), 0);
+        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetDefaultShaderResourceView(), 0);
         CmdList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
         ThreadsX = NMath::DivideByMultiple(ThreadsX, 16);
@@ -711,17 +640,17 @@ void CDeferredRenderer::RenderDeferredTiledLightPass(CRHICommandList& CmdList, c
         CmdList.SetComputePipelineState(TiledLightPassPSO.Get());
     }
 
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView(), 0);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 1);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 2);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetDefaultShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetDefaultShaderResourceView(), 1);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetDefaultShaderResourceView(), 2);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDefaultShaderResourceView(), 3);
     //CmdList.SetShaderResourceView(LightPassShader, nullptr, 4); // Reflection
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.IrradianceMap->GetShaderResourceView(), 4);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 5);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 6);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirectionalShadowMask->GetShaderResourceView(), 7);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 8);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 9);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.IrradianceMap->GetDefaultShaderResourceView(), 4);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.SpecularIrradianceMap->GetDefaultShaderResourceView(), 5);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetDefaultShaderResourceView(), 6);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirectionalShadowMask->GetDefaultShaderResourceView(), 7);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetDefaultShaderResourceView(), 8);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetDefaultShaderResourceView(), 9);
 
     //CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeMatrixBufferSRV.Get(), 13);
     //CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeSplitsBufferSRV.Get(), 14);
@@ -741,7 +670,7 @@ void CDeferredRenderer::RenderDeferredTiledLightPass(CRHICommandList& CmdList, c
     CRHIUnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
     CmdList.SetUnorderedAccessView(LightPassShader, FinalTargetUAV, 0);
 
-    struct LightPassSettings
+    struct SLightPassSettings
     {
         int32 NumPointLights;
         int32 NumShadowCastingPointLights;
@@ -773,9 +702,10 @@ bool CDeferredRenderer::ResizeResources(SFrameResources& FrameResources)
 
 bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
 {
-    const uint32 Width = FrameResources.MainWindowViewport->GetWidth();
+    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget;
+
+    const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
-    const uint32 Usage = TextureFlags_RenderTarget;
 
     // Albedo
     FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = RHICreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage, EResourceAccess::Common, nullptr);
@@ -813,7 +743,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     // DepthStencil
     const SClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
 
-    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RHICreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, TextureFlags_ShadowMap, EResourceAccess::Common, nullptr, DepthClearValue);
+    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RHICreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, ETextureUsageFlags::ShadowMap, EResourceAccess::Common, nullptr, DepthClearValue);
     if (FrameResources.GBuffer[GBUFFER_DEPTH_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->SetName("GBuffer DepthStencil");
@@ -824,12 +754,13 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     }
 
     constexpr uint32 Alignment = 16;
-    const uint32 ReducedWidth = NMath::DivideByMultiple(Width, Alignment);
+
+    const uint32 ReducedWidth  = NMath::DivideByMultiple(Width, Alignment);
     const uint32 ReducedHeight = NMath::DivideByMultiple(Height, Alignment);
 
     for (uint32 i = 0; i < 2; i++)
     {
-        FrameResources.ReducedDepthBuffer[i] = RHICreateTexture2D(EFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, TextureFlags_RWTexture, EResourceAccess::NonPixelShaderResource, nullptr);
+        FrameResources.ReducedDepthBuffer[i] = RHICreateTexture2D(EFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::NonPixelShaderResource, nullptr);
         if (FrameResources.ReducedDepthBuffer[i])
         {
             FrameResources.ReducedDepthBuffer[i]->SetName("Reduced DepthStencil[" + ToString(i) + "]");
@@ -852,7 +783,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     }
 
     // Final Image
-    FrameResources.FinalTarget = RHICreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, Usage | TextureFlag_UAV, EResourceAccess::Common, nullptr);
+    FrameResources.FinalTarget = RHICreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, Usage | ETextureUsageFlags::AllowUAV, EResourceAccess::Common, nullptr);
     if (FrameResources.FinalTarget)
     {
         FrameResources.FinalTarget->SetName("Final Target");

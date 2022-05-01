@@ -686,7 +686,7 @@ public:
      *
      * @param Resource: Resource to destroy
      */
-    void DestroyResource(CRHIObject* Resource)
+    void DestroyResource(IRHIResource* Resource)
     {
         InsertCommand<CRHICommandDestroyResource>(Resource);
     }
@@ -694,11 +694,11 @@ public:
     /**
      * @brief: Signal the driver that the contents can be discarded
      *
-     * @param Resource: Resource to discard contents of
+     * @param Texture: Texture to discard contents of
      */
-    void DiscardContents(CRHIResource* Resource)
+    void DiscardContents(CRHITexture* Texture)
     {
-        InsertCommand<CRHICommandDiscardContents>(Resource);
+        InsertCommand<CRHICommandDiscardContents>(Texture);
     }
 
     /**

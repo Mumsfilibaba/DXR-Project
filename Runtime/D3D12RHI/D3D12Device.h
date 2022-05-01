@@ -6,7 +6,7 @@
 
 class CD3D12OfflineDescriptorHeap;
 class CD3D12OnlineDescriptorHeap;
-class CD3D12RHIComputePipelineState;
+class CD3D12ComputePipelineState;
 class CD3D12RootSignature;
 
 #define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))

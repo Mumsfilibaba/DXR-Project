@@ -56,13 +56,6 @@ public:
     virtual bool GetUnorderedAccessViewIndexByName(const String& InName, uint32& OutIndex) const override final { return true; }
 
     virtual bool GetConstantBufferIndexByName(const String& InName, uint32& OutIndex) const override final { return true; }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Deprecated
-
-    virtual bool IsValid() const override final { return true; }
 };
 
 #if defined(COMPILER_MSVC)

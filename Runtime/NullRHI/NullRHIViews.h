@@ -15,13 +15,9 @@
 class CNullRHIShaderResourceView : public CRHIShaderResourceView
 {
 public:
+
     CNullRHIShaderResourceView() = default;
     ~CNullRHIShaderResourceView() = default;
-
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -30,13 +26,9 @@ public:
 class CNullRHIUnorderedAccessView : public CRHIUnorderedAccessView
 {
 public:
+
     CNullRHIUnorderedAccessView() = default;
     ~CNullRHIUnorderedAccessView() = default;
-
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -45,13 +37,9 @@ public:
 class CNullRHIRenderTargetView : public CRHIRenderTargetView
 {
 public:
+
     CNullRHIRenderTargetView() = default;
     ~CNullRHIRenderTargetView() = default;
-
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -60,13 +48,9 @@ public:
 class CNullRHIDepthStencilView : public CRHIDepthStencilView
 {
 public:
+
     CNullRHIDepthStencilView() = default;
     ~CNullRHIDepthStencilView() = default;
-
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
 };
 
 #if defined(COMPILER_MSVC)

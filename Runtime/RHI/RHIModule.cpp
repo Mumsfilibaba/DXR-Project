@@ -1,5 +1,5 @@
 #include "RHIModule.h"
-#include "RHIInstance.h"
+#include "RHICoreInstance.h"
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
 
@@ -8,7 +8,7 @@ IMPLEMENT_ENGINE_MODULE(CDefaultEngineModule, RHI);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Globals
 
-RHI_API CRHIInstance*       GRHIInstance = nullptr;
+RHI_API CRHICoreInstance*       GRHIInstance = nullptr;
 RHI_API IRHIShaderCompiler* GShaderCompiler = nullptr;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -52,7 +52,7 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
         false;
 #endif
 
-    CRHIInstance* RHIInterface = RHIModule->CreateInterface();
+    CRHICoreInstance* RHIInterface = RHIModule->CreateInterface();
     if (!(RHIInterface && RHIInterface->Initialize(bEnableDebug)))
     {
         LOG_ERROR("[InitRHI] Failed to init RHIInterface, the application has to terminate");

@@ -14,7 +14,7 @@
 #include "Engine/InterfaceWindows/FrameProfilerWindow.h"
 #include "Engine/Project/ProjectManager.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 
@@ -23,8 +23,8 @@ ENGINE_API CEngine* GEngine;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ConsoleCommands
 
-CAutoConsoleCommand GExit("engine.Exit");
-CAutoConsoleCommand GToggleFullscreen("viewport.ToggleFullscreen");
+CAutoConsoleCommand GExit("Engine.Exit");
+CAutoConsoleCommand GToggleFullscreen("MainViewport.ToggleFullscreen");
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Engine

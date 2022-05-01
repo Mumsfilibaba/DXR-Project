@@ -4,17 +4,17 @@
 #include "RHI/RHIModule.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIModule
+// CD3D12Module
 
-class CD3D12RHIModule final : public CRHIModule
+class CD3D12Module final : public CRHIModule
 {
 public:
 
-    CD3D12RHIModule() = default;
-    ~CD3D12RHIModule() = default;
+    CD3D12Module()  = default;
+    ~CD3D12Module() = default;
 
      /** @brief: Creates the core RHI object */
-    virtual class CRHIInstance* CreateInterface() override final;
+    virtual class CRHICoreInstance* CreateInterface() override final;
 
      /** @brief: Creates the RHI shader compiler */
     virtual class IRHIShaderCompiler* CreateCompiler() override final;

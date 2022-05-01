@@ -1,75 +1,44 @@
 #pragma once
 #include "RHITypes.h"
+#include "IRHIResource.h"
 
-#include "Core/RefCounted.h"
-#include "Core/Containers/String.h"
+#include "Core/Threading/AtomicInt.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RHIObject
+// CRHIResource
 
-class CRHIObject : public CRefCounted
+class RHI_API CRHIResource : public IRHIResource
 {
+protected:
+
+    CRHIResource()
+        : StrongReferences(1)
+    { }
+
+    virtual ~CRHIResource() = default;
+
 public:
 
-    CRHIObject() = default;
-    ~CRHIObject() = default;
-
-    /**
-     * @brief: Returns true if the native resource is valid to use 
-     * 
-     * @return: Returns true if the resource is backed by a native resource
-     */ 
-    virtual bool IsValid() const { return false; }
-
-    /**
-     * @brief: Retrieve a handle to the native resource, nullptr is valid since not all RHI has handles for all resources
-     * 
-     * @return: Returns a pointer to the native resource that is currently being used
-     */
-    virtual void* GetNativeResource() const { return nullptr; }
-
-    /**
-     * @brief: Sets a debug name on the resource
-     * 
-     * @param InName: Debug name for the resource
-     */
-    virtual void SetName(const String& InName) { Name = InName; }
-
-    /**
-     * @brief: Retrieve the debug-name
-     * 
-     * @return: Returns the debug-name
-     */
-    FORCEINLINE const String& GetName() const
+    virtual int32 AddRef() override final
     {
-        return Name;
+        Assert(StrongReferences.Load() > 0);
+        ++StrongReferences;
+        return StrongReferences.Load();
     }
 
-private:
-    String Name;
-};
+    virtual int32 Release() override final
+    {
+        const int32 RefCount = --StrongReferences;
+        Assert(RefCount >= 0);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RHIResource
+        if (RefCount < 1)
+        {
+            delete this;
+        }
 
-class CRHIResource : public CRHIObject
-{
-public:
+        return RefCount;
+    }
 
-    CRHIResource() = default;
-    ~CRHIResource() = default;
-
-    /**
-     * @brief: Cast to a Buffer 
-     * 
-     * @return: Returns a pointer to a Buffer if the resource or nullptr if its not a Buffer
-     */
-    virtual class CRHIBuffer* AsBuffer() { return nullptr; }
-    
-    /**
-     * @brief: Cast to a Texture
-     *
-     * @return: Returns a pointer to a Texture if the resource or nullptr if its not a Texture
-     */
-    virtual class CRHITexture* AsTexture() { return nullptr; }
+protected:
+    mutable AtomicInt32 StrongReferences;
 };

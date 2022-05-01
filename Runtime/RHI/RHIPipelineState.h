@@ -2,13 +2,21 @@
 #include "RHIShader.h"
 #include "RHIResourceBase.h"
 
+#if defined(COMPILER_MSVC)
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EDepthWriteMask
 
 enum class EDepthWriteMask
 {
     Zero = 0,
-    All = 1
+    All  = 1
 };
 
 inline const char* ToString(EDepthWriteMask DepthWriteMask)
@@ -17,7 +25,7 @@ inline const char* ToString(EDepthWriteMask DepthWriteMask)
     {
     case EDepthWriteMask::Zero: return "Zero";
     case EDepthWriteMask::All:  return "All";
-    default: return "Unknown";
+    default:                    return "Unknown";
     }
 }
 
@@ -26,14 +34,14 @@ inline const char* ToString(EDepthWriteMask DepthWriteMask)
 
 enum class EStencilOp
 {
-    Keep = 1,
-    Zero = 2,
+    Keep    = 1,
+    Zero    = 2,
     Replace = 3,
     IncrSat = 4,
     DecrSat = 5,
-    Invert = 6,
-    Incr = 7,
-    Decr = 8
+    Invert  = 6,
+    Incr    = 7,
+    Decr    = 8
 };
 
 inline const char* ToString(EStencilOp StencilOp)
@@ -48,7 +56,7 @@ inline const char* ToString(EStencilOp StencilOp)
     case EStencilOp::Invert:  return "Invert";
     case EStencilOp::Incr:    return "Incr";
     case EStencilOp::Decr:    return "Decr";
-    default: return "Unknown";
+    default:                  return "Unknown";
     }
 }
 
@@ -57,10 +65,10 @@ inline const char* ToString(EStencilOp StencilOp)
 
 struct SDepthStencilOp
 {
-    EStencilOp      StencilFailOp = EStencilOp::Keep;
+    EStencilOp      StencilFailOp      = EStencilOp::Keep;
     EStencilOp      StencilDepthFailOp = EStencilOp::Keep;
-    EStencilOp      StencilPassOp = EStencilOp::Keep;
-    EComparisonFunc StencilFunc = EComparisonFunc::Always;
+    EStencilOp      StencilPassOp      = EStencilOp::Keep;
+    EComparisonFunc StencilFunc        = EComparisonFunc::Always;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -68,21 +76,25 @@ struct SDepthStencilOp
 
 struct SRHIDepthStencilStateInfo
 {
-    EDepthWriteMask DepthWriteMask = EDepthWriteMask::All;
-    EComparisonFunc DepthFunc = EComparisonFunc::Less;
-    bool            bDepthEnable = true;
-    uint8           StencilReadMask = 0xff;
+    EDepthWriteMask DepthWriteMask   = EDepthWriteMask::All;
+    EComparisonFunc DepthFunc        = EComparisonFunc::Less;
+    bool            bDepthEnable     = true;
+    uint8           StencilReadMask  = 0xff;
     uint8           StencilWriteMask = 0xff;
-    bool            bStencilEnable = false;
-    SDepthStencilOp FrontFace = SDepthStencilOp();
-    SDepthStencilOp BackFace = SDepthStencilOp();
+    bool            bStencilEnable   = false;
+    SDepthStencilOp FrontFace        = SDepthStencilOp();
+    SDepthStencilOp BackFace         = SDepthStencilOp();
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIDepthStencilState
 
-class CRHIDepthStencilState : public CRHIObject
+class CRHIDepthStencilState : public CRHIResource
 {
+protected:
+
+    CRHIDepthStencilState()  = default;
+    ~CRHIDepthStencilState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -90,9 +102,9 @@ class CRHIDepthStencilState : public CRHIObject
 
 enum class ECullMode
 {
-    None = 1,
+    None  = 1,
     Front = 2,
-    Back = 3
+    Back  = 3
 };
 
 inline const char* ToString(ECullMode CullMode)
@@ -102,7 +114,7 @@ inline const char* ToString(ECullMode CullMode)
     case ECullMode::None:  return "None";
     case ECullMode::Front: return "Front";
     case ECullMode::Back:  return "Back";
-    default: return "Unknown";
+    default:               return "Unknown";
     }
 }
 
@@ -112,7 +124,7 @@ inline const char* ToString(ECullMode CullMode)
 enum class EFillMode
 {
     WireFrame = 1,
-    Solid = 2
+    Solid     = 2
 };
 
 inline const char* ToString(EFillMode FillMode)
@@ -121,7 +133,7 @@ inline const char* ToString(EFillMode FillMode)
     {
     case EFillMode::WireFrame: return "WireFrame";
     case EFillMode::Solid:     return "Solid";
-    default: return "Unknown";
+    default:                   return "Unknown";
     }
 }
 
@@ -130,72 +142,76 @@ inline const char* ToString(EFillMode FillMode)
 
 struct SRHIRasterizerStateInfo
 {
-    EFillMode FillMode = EFillMode::Solid;
-    ECullMode CullMode = ECullMode::Back;
-    bool   bFrontCounterClockwise = false;
-    int32  DepthBias = 0;
-    float  DepthBiasClamp = 0.0f;
-    float  SlopeScaledDepthBias = 0.0f;
-    bool   bDepthClipEnable = true;
-    bool   bMultisampleEnable = false;
-    bool   bAntialiasedLineEnable = false;
-    uint32 ForcedSampleCount = 0;
-    bool   bEnableConservativeRaster = false;
+    EFillMode FillMode                  = EFillMode::Solid;
+    ECullMode CullMode                  = ECullMode::Back;
+    bool      bFrontCounterClockwise    = false;
+    int32     DepthBias                 = 0;
+    float     DepthBiasClamp            = 0.0f;
+    float     SlopeScaledDepthBias      = 0.0f;
+    bool      bDepthClipEnable          = true;
+    bool      bMultisampleEnable        = false;
+    bool      bAntialiasedLineEnable    = false;
+    uint32    ForcedSampleCount         = 0;
+    bool      bEnableConservativeRaster = false;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIRasterizerState
 
-class CRHIRasterizerState : public CRHIObject
+class CRHIRasterizerState : public CRHIResource
 {
+protected:
+
+    CRHIRasterizerState()  = default;
+    ~CRHIRasterizerState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EBlend
+// EBlendType 
 
-enum class EBlend
+enum class EBlendType 
 {
-    Zero = 1,
-    One = 2,
-    SrcColor = 3,
-    InvSrcColor = 4,
-    SrcAlpha = 5,
-    InvSrcAlpha = 6,
-    DestAlpha = 7,
-    InvDestAlpha = 8,
-    DestColor = 9,
-    InvDestColor = 10,
-    SrcAlphaSat = 11,
-    BlendFactor = 12,
+    Zero           = 1,
+    One            = 2,
+    SrcColor       = 3,
+    InvSrcColor    = 4,
+    SrcAlpha       = 5,
+    InvSrcAlpha    = 6,
+    DestAlpha      = 7,
+    InvDestAlpha   = 8,
+    DestColor      = 9,
+    InvDestColor   = 10,
+    SrcAlphaSat    = 11,
+    BlendFactor    = 12,
     InvBlendFactor = 13,
-    Src1Color = 14,
-    InvSrc1Color = 15,
-    Src1Alpha = 16,
-    InvSrc1Alpha = 17
+    Src1Color      = 14,
+    InvSrc1Color   = 15,
+    Src1Alpha      = 16,
+    InvSrc1Alpha   = 17
 };
 
-inline const char* ToString(EBlend Blend)
+inline const char* ToString(EBlendType  Blend)
 {
     switch (Blend)
     {
-    case EBlend::Zero:           return "Zero";
-    case EBlend::One:            return "One";
-    case EBlend::SrcColor:       return "SrcColor";
-    case EBlend::InvSrcColor:    return "InvSrcColor";
-    case EBlend::SrcAlpha:       return "SrcAlpha";
-    case EBlend::InvSrcAlpha:    return "InvSrcAlpha";
-    case EBlend::DestAlpha:      return "DestAlpha";
-    case EBlend::InvDestAlpha:   return "InvDestAlpha";
-    case EBlend::DestColor:      return "DestColor";
-    case EBlend::InvDestColor:   return "InvDestColor";
-    case EBlend::SrcAlphaSat:    return "SrcAlphaSat";
-    case EBlend::BlendFactor:    return "BlendFactor";
-    case EBlend::InvBlendFactor: return "InvBlendFactor";
-    case EBlend::Src1Color:      return "Src1Color";
-    case EBlend::InvSrc1Color:   return "InvSrc1Color";
-    case EBlend::Src1Alpha:      return "Src1Alpha";
-    case EBlend::InvSrc1Alpha:   return "InvSrc1Alpha";
-    default: return "Unknown";
+    case EBlendType ::Zero:           return "Zero";
+    case EBlendType ::One:            return "One";
+    case EBlendType ::SrcColor:       return "SrcColor";
+    case EBlendType ::InvSrcColor:    return "InvSrcColor";
+    case EBlendType ::SrcAlpha:       return "SrcAlpha";
+    case EBlendType ::InvSrcAlpha:    return "InvSrcAlpha";
+    case EBlendType ::DestAlpha:      return "DestAlpha";
+    case EBlendType ::InvDestAlpha:   return "InvDestAlpha";
+    case EBlendType ::DestColor:      return "DestColor";
+    case EBlendType ::InvDestColor:   return "InvDestColor";
+    case EBlendType ::SrcAlphaSat:    return "SrcAlphaSat";
+    case EBlendType ::BlendFactor:    return "BlendFactor";
+    case EBlendType ::InvBlendFactor: return "InvBlendFactor";
+    case EBlendType ::Src1Color:      return "Src1Color";
+    case EBlendType ::InvSrc1Color:   return "InvSrc1Color";
+    case EBlendType ::Src1Alpha:      return "Src1Alpha";
+    case EBlendType ::InvSrc1Alpha:   return "InvSrc1Alpha";
+    default:                          return "Unknown";
     }
 }
 
@@ -204,11 +220,11 @@ inline const char* ToString(EBlend Blend)
 
 enum class EBlendOp
 {
-    Add = 1,
-    Subtract = 2,
+    Add         = 1,
+    Subtract    = 2,
     RevSubtract = 3,
-    Min = 4,
-    Max = 5
+    Min         = 4,
+    Max         = 5
 };
 
 inline const char* ToString(EBlendOp BlendOp)
@@ -220,7 +236,7 @@ inline const char* ToString(EBlendOp BlendOp)
     case EBlendOp::RevSubtract: return "RevSubtract";
     case EBlendOp::Min:         return "Min";
     case EBlendOp::Max:         return "Max";
-    default: return "Unknown";
+    default:                    return "Unknown";
     }
 }
 
@@ -229,22 +245,22 @@ inline const char* ToString(EBlendOp BlendOp)
 
 enum class ELogicOp
 {
-    Clear = 0,
-    Set = 1,
-    Copy = 2,
+    Clear        = 0,
+    Set          = 1,
+    Copy         = 2,
     CopyInverted = 3,
-    Noop = 4,
-    Invert = 5,
-    And = 6,
-    Nand = 7,
-    Or = 8,
-    Nor = 9,
-    Xor = 10,
-    Equiv = 11,
-    AndReverse = 12,
-    AndInverted = 13,
-    OrReverse = 14,
-    OrInverted = 15
+    Noop         = 4,
+    Invert       = 5,
+    And          = 6,
+    Nand         = 7,
+    Or           = 8,
+    Nor          = 9,
+    Xor          = 10,
+    Equiv        = 11,
+    AndReverse   = 12,
+    AndInverted  = 13,
+    OrReverse    = 14,
+    OrInverted   = 15
 };
 
 inline const char* ToString(ELogicOp LogicOp)
@@ -267,7 +283,7 @@ inline const char* ToString(ELogicOp LogicOp)
     case ELogicOp::AndInverted:  return "AndInverted";
     case ELogicOp::OrReverse:    return "OrReverse";
     case ELogicOp::OrInverted:   return "OrInverted";
-    default: return "Unknown";
+    default:                     return "Unknown";
     }
 }
 
@@ -276,12 +292,12 @@ inline const char* ToString(ELogicOp LogicOp)
 
 enum EColorWriteFlag : uint8
 {
-    ColorWriteFlag_None = 0,
-    ColorWriteFlag_Red = 1,
+    ColorWriteFlag_None  = 0,
+    ColorWriteFlag_Red   = 1,
     ColorWriteFlag_Green = 2,
-    ColorWriteFlag_Blue = 4,
+    ColorWriteFlag_Blue  = 4,
     ColorWriteFlag_Alpha = 8,
-    ColorWriteFlag_All = (((ColorWriteFlag_Red | ColorWriteFlag_Green) | ColorWriteFlag_Blue) | ColorWriteFlag_Alpha)
+    ColorWriteFlag_All   = (((ColorWriteFlag_Red | ColorWriteFlag_Green) | ColorWriteFlag_Blue) | ColorWriteFlag_Alpha)
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -333,16 +349,16 @@ struct SRenderTargetWriteState
 
 struct SRenderTargetBlendState
 {
-    EBlend   SrcBlend = EBlend::One;
-    EBlend   DestBlend = EBlend::Zero;
-    EBlendOp BlendOp = EBlendOp::Add;
-    EBlend   SrcBlendAlpha = EBlend::One;
-    EBlend   DestBlendAlpha = EBlend::Zero;
-    EBlendOp BlendOpAlpha = EBlendOp::Add;;
-    ELogicOp LogicOp = ELogicOp::Noop;
+    EBlendType SrcBlend       = EBlendType ::One;
+    EBlendType DestBlend      = EBlendType ::Zero;
+    EBlendOp   BlendOp        = EBlendOp::Add;
+    EBlendType SrcBlendAlpha  = EBlendType ::One;
+    EBlendType DestBlendAlpha = EBlendType ::Zero;
+    EBlendOp   BlendOpAlpha   = EBlendOp::Add;;
+    ELogicOp   LogicOp        = ELogicOp::Noop;
 
-    bool bBlendEnable = false;
-    bool bLogicOpEnable = false;
+    bool bBlendEnable         = false;
+    bool bLogicOpEnable       = false;
 
     SRenderTargetWriteState RenderTargetWriteMask;
 };
@@ -352,7 +368,7 @@ struct SRenderTargetBlendState
 
 struct SRHIBlendStateInfo
 {
-    bool bAlphaToCoverageEnable = false;
+    bool bAlphaToCoverageEnable  = false;
     bool bIndependentBlendEnable = false;
     SRenderTargetBlendState RenderTarget[8];
 };
@@ -360,86 +376,94 @@ struct SRHIBlendStateInfo
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIBlendState
 
-class CRHIBlendState : public CRHIObject
+class CRHIBlendState : public CRHIResource
 {
+protected:
+
+    CRHIBlendState()  = default;
+    ~CRHIBlendState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EInputClassification
+// EVertexInputClass
 
-enum class EInputClassification
+enum class EVertexInputClass
 {
-    Vertex = 0,
+    Vertex   = 0,
     Instance = 1,
 };
 
-inline const char* ToString(EInputClassification BlendOp)
+inline const char* ToString(EVertexInputClass BlendOp)
 {
     switch (BlendOp)
     {
-    case EInputClassification::Vertex:   return "Vertex";
-    case EInputClassification::Instance: return "Instance";
-    default: return "Unknown";
+    case EVertexInputClass::Vertex:   return "Vertex";
+    case EVertexInputClass::Instance: return "Instance";
+    default:                          return "Unknown";
     }
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SInputElement
+// SVertexInputElement
 
-struct SInputElement
+struct SVertexInputElement
 {
-    String              Semantic = "";
-    uint32               SemanticIndex = 0;
-    EFormat              Format = EFormat::Unknown;
-    uint32               InputSlot = 0;
-    uint32               ByteOffset = 0;
-    EInputClassification InputClassification = EInputClassification::Vertex;
-    uint32               InstanceStepRate = 0;
+    String            Semantic            = "";
+    uint32            SemanticIndex       = 0;
+    EFormat           Format              = EFormat::Unknown;
+    uint32            InputSlot           = 0;
+    uint32            ByteOffset          = 0;
+    EVertexInputClass InputClassification = EVertexInputClass::Vertex;
+    uint32            InstanceStepRate    = 0;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIInputLayoutStateInfo
+// SRHIVertexInputLayoutInitializer
 
-struct SRHIInputLayoutStateInfo
+struct SRHIVertexInputLayoutInitializer
 {
-    SRHIInputLayoutStateInfo() = default;
+    SRHIVertexInputLayoutInitializer() = default;
 
-    SRHIInputLayoutStateInfo(const TArray<SInputElement>& InElements)
+    SRHIVertexInputLayoutInitializer(const TArray<SVertexInputElement>& InElements)
         : Elements(InElements)
     { }
 
-    SRHIInputLayoutStateInfo(std::initializer_list<SInputElement> InList)
+    SRHIVertexInputLayoutInitializer(std::initializer_list<SVertexInputElement> InList)
         : Elements(InList)
     { }
 
-    TArray<SInputElement> Elements;
+    TArray<SVertexInputElement> Elements;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIInputLayoutState
+// CRHIVertexInputLayout
 
-class CRHIInputLayoutState : public CRHIObject
+class CRHIVertexInputLayout : public CRHIResource
 {
+protected:
+
+    CRHIVertexInputLayout()  = default;
+    ~CRHIVertexInputLayout() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EIndexBufferStripCutValue
 
-enum class EIndexBufferStripCutValue
+enum EIndexBufferStripCutValue
 {
-    Disabled = 0,
-    _0xffff = 1,
-    _0xffffffff = 2
+    IndexBufferStripCutValue_Disabled   = 0,
+    IndexBufferStripCutValue_0xffff     = 1,
+    IndexBufferStripCutValue_0xffffffff = 2
 };
 
 inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 {
     switch (IndexBufferStripCutValue)
     {
-    case EIndexBufferStripCutValue::Disabled:    return "Disabled";
-    case EIndexBufferStripCutValue::_0xffff:     return "0xffff";
-    case EIndexBufferStripCutValue::_0xffffffff: return "0xffffffff";
-    default: return "";
+        case IndexBufferStripCutValue_Disabled:   return "IndexBufferStripCutValue_Disabled";
+        case IndexBufferStripCutValue_0xffff:     return "IndexBufferStripCutValue_0xffff";
+        case IndexBufferStripCutValue_0xffffffff: return "IndexBufferStripCutValue_0xffffffff";
+        default:                                  return "";
     }
 }
 
@@ -449,37 +473,27 @@ inline const char* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
 struct SPipelineRenderTargetFormats
 {
     EFormat RenderTargetFormats[8];
-    uint32  NumRenderTargets = 0;
+    uint32  NumRenderTargets   = 0;
     EFormat DepthStencilFormat = EFormat::Unknown;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIPipelineState
 
-class CRHIPipelineState : public CRHIObject
+class CRHIPipelineState : public CRHIResource
 {
+protected:
+
+    CRHIPipelineState()  = default;
+    ~CRHIPipelineState() = default;
+
 public:
 
-    /**
-     * @brief: Cast the PipelineState to a Graphics PipelineState
-     *
-     * @return: Returns a pointer to a Graphics PipelineState if the object implements it
-     */
-    virtual class CRHIGraphicsPipelineState* AsGraphics() { return nullptr; }
-    
-    /**
-     * @brief: Cast the PipelineState to a Compute PipelineState
-     *
-     * @return: Returns a pointer to a Compute PipelineState if the object implements it
-     */
-    virtual class CRHIComputePipelineState* AsCompute() { return nullptr; }
+    /** @brief: Set the name of the PipelineState */
+    virtual void SetName(const String& InName) { }
 
-    /**
-     * @brief: Cast the PipelineState to a Ray tracing PipelineState
-     *
-     * @return: Returns a pointer to a Ray tracing PipelineState if the object implements it
-     */
-    virtual class CRHIRayTracingPipelineState* AsRayTracing() { return nullptr; }
+    /** @return: Returns the name of the PipelineState */
+    virtual String GetName() const { return ""; }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -495,7 +509,7 @@ struct SGraphicsPipelineShaderState
     { }
 
     CRHIVertexShader* VertexShader = nullptr;
-    CRHIPixelShader* PixelShader = nullptr;
+    CRHIPixelShader*  PixelShader  = nullptr;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -503,17 +517,17 @@ struct SGraphicsPipelineShaderState
 
 struct SRHIGraphicsPipelineStateInfo
 {
-    CRHIInputLayoutState* InputLayoutState = nullptr;
+    CRHIVertexInputLayout* InputLayoutState  = nullptr;
     CRHIDepthStencilState* DepthStencilState = nullptr;
-    CRHIRasterizerState* RasterizerState = nullptr;
-    CRHIBlendState* BlendState = nullptr;
+    CRHIRasterizerState*   RasterizerState   = nullptr;
+    CRHIBlendState*        BlendState        = nullptr;
 
-    uint32 SampleCount = 1;
+    uint32 SampleCount   = 1;
     uint32 SampleQuality = 0;
-    uint32 SampleMask = 0xffffffff;
+    uint32 SampleMask    = 0xffffffff;
 
-    EIndexBufferStripCutValue   IBStripCutValue = EIndexBufferStripCutValue::Disabled;
-    EPrimitiveTopologyType      PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
+    EIndexBufferStripCutValue    IBStripCutValue       = IndexBufferStripCutValue_Disabled;
+    EPrimitiveTopologyType       PrimitiveTopologyType = EPrimitiveTopologyType::Triangle;
     SGraphicsPipelineShaderState ShaderState;
     SPipelineRenderTargetFormats PipelineFormats;
 };
@@ -523,14 +537,10 @@ struct SRHIGraphicsPipelineStateInfo
 
 class CRHIGraphicsPipelineState : public CRHIPipelineState
 {
-public:
+protected:
 
-    /**
-     * @brief: Cast the PipelineState to a Graphics PipelineState
-     *
-     * @return: Returns a pointer to a Graphics PipelineState if the object implements it
-     */
-    virtual CRHIGraphicsPipelineState* AsGraphics() override { return this; }
+    CRHIGraphicsPipelineState()  = default;
+    ~CRHIGraphicsPipelineState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -552,14 +562,10 @@ struct SRHIComputePipelineStateInfo
 
 class CRHIComputePipelineState : public CRHIPipelineState
 {
-public:
+protected:
 
-    /**
-     * @brief: Cast the PipelineState to a Compute PipelineState
-     *
-     * @return: Returns a pointer to a Compute PipelineState if the object implements it
-     */
-    virtual CRHIComputePipelineState* AsCompute() override { return this; }
+    CRHIComputePipelineState()  = default;
+    ~CRHIComputePipelineState() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -575,8 +581,8 @@ struct SRayTracingHitGroup
         , ClosestHit(InClosestHit)
     { }
 
-    String              Name;
-    CRHIRayAnyHitShader* AnyHit;
+    String                   Name;
+    CRHIRayAnyHitShader*     AnyHit;
     CRHIRayClosestHitShader* ClosestHit;
 };
 
@@ -593,8 +599,8 @@ struct SRHIRayTracingPipelineStateInfo
     TArray<SRayTracingHitGroup>      HitGroups;
 
     uint32 MaxAttributeSizeInBytes = 0;
-    uint32 MaxPayloadSizeInBytes = 0;
-    uint32 MaxRecursionDepth = 1;
+    uint32 MaxPayloadSizeInBytes   = 0;
+    uint32 MaxRecursionDepth       = 1;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -602,12 +608,14 @@ struct SRHIRayTracingPipelineStateInfo
 
 class CRHIRayTracingPipelineState : public CRHIPipelineState
 {
-public:
+protected:
 
-    /**
-     * @brief: Cast the PipelineState to a Ray tracing PipelineState
-     * 
-     * @return: Returns a pointer to a Ray tracing PipelineState if the object implements it
-     */
-    virtual CRHIRayTracingPipelineState* AsRayTracing() override { return this; }
+    CRHIRayTracingPipelineState()  = default;
+    ~CRHIRayTracingPipelineState() = default;
 };
+
+#if defined(COMPILER_MSVC)
+    #pragma warning(pop)
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic pop
+#endif

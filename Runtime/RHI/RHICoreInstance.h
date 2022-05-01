@@ -18,8 +18,8 @@ class CRHIRayTracingScene;
 enum class ERHIShadingRateTier
 {
     NotSupported = 0,
-    Tier1 = 1,
-    Tier2 = 2,
+    Tier1        = 1,
+    Tier2        = 2,
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -37,8 +37,8 @@ struct SRHIShadingRateSupport
 enum class ERHIRayTracingTier
 {
     NotSupported = 0,
-    Tier1 = 1,
-    Tier1_1 = 2,
+    Tier1        = 1,
+    Tier1_1      = 2,
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -51,9 +51,9 @@ struct SRHIRayTracingSupport
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIInstance
+// CRHICoreInstance
 
-class CRHIInstance
+class CRHICoreInstance
 {
 public:
 
@@ -83,7 +83,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a Texture2DArray
@@ -99,7 +99,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a TextureCube
@@ -112,7 +112,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a TextureCubeArray
@@ -126,7 +126,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a Texture3D
@@ -141,7 +141,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Create a SamplerState
@@ -376,7 +376,7 @@ public:
      * @param CreateInfo: Info about a InputLayoutState
      * @return: Returns the newly created InputLayoutState
      */
-    virtual class CRHIInputLayoutState* CreateInputLayout(const SRHIInputLayoutStateInfo& CreateInfo) = 0;
+    virtual class CRHIVertexInputLayout* CreateInputLayout(const SRHIVertexInputLayoutInitializer& CreateInfo) = 0;
 
     /**
      * @brief: Create a Graphics PipelineState
@@ -477,11 +477,11 @@ public:
 
 protected:
 
-    CRHIInstance(ERHIInstanceType InCurrentRHI)
+    CRHICoreInstance(ERHIInstanceType InCurrentRHI)
         : CurrentRHI(InCurrentRHI)
     { }
 
-    virtual ~CRHIInstance() = default;
+    virtual ~CRHICoreInstance() = default;
 
     ERHIInstanceType CurrentRHI;
 };
@@ -489,27 +489,27 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper functions
 
-FORCEINLINE CRHITexture2D* RHICreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture2D* RHICreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTexture2D(Format, Width, Height, NumMips, NumSamples, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTexture2DArray(Format, Width, Height, NumMips, NumSamples, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITextureCube* RHICreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITextureCube* RHICreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTextureCube(Format, Size, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTextureCubeArray(Format, Size, NumMips, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, uint32 Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
 {
     return GRHIInstance->CreateTexture3D(Format, Width, Height, Depth, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
@@ -909,7 +909,7 @@ FORCEINLINE CRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& Shade
     return GRHIInstance->CreateRayMissShader(ShaderCode);
 }
 
-FORCEINLINE CRHIInputLayoutState* RHICreateInputLayout(const SRHIInputLayoutStateInfo& CreateInfo)
+FORCEINLINE CRHIVertexInputLayout* RHICreateInputLayout(const SRHIVertexInputLayoutInitializer& CreateInfo)
 {
     return GRHIInstance->CreateInputLayout(CreateInfo);
 }

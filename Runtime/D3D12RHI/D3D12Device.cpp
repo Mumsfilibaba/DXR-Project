@@ -4,7 +4,7 @@
 #include "D3D12RootSignature.h"
 #include "D3D12CommandAllocator.h"
 #include "D3D12CommandQueue.h"
-#include "D3D12RHIPipelineState.h"
+#include "D3D12PipelineState.h"
 #include "D3D12FunctionPointers.h"
 
 #include "Core/Windows/Windows.h"

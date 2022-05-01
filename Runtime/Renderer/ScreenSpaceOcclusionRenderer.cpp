@@ -1,7 +1,7 @@
 #include "ScreenSpaceOcclusionRenderer.h"
 #include "Renderer.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Core/Math/Vector2.h"
@@ -15,12 +15,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variable
 
-TAutoConsoleVariable<float> GSSAORadius("renderer.SSAORadius", 0.4f);
-TAutoConsoleVariable<float> GSSAOBias("renderer.SSAOBias", 0.025f);
-TAutoConsoleVariable<int32> GSSAOKernelSize("renderer.SSAOKernelSize", 32);
+TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAORadius", 0.4f);
+TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAOBias", 0.025f);
+TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAOKernelSize", 32);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ScreenSpaceOcclusionRenderer
+// CScreenSpaceOcclusionRenderer
 
 bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
 {
@@ -42,10 +42,6 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        SSAOShader->SetName("SSAO Shader");
-    }
 
     SRHIComputePipelineStateInfo PipelineStateInfo;
     PipelineStateInfo.Shader = SSAOShader.Get();
@@ -62,8 +58,8 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     }
 
     // Generate SSAO Kernel
+    std::default_random_engine            Generator;
     std::uniform_real_distribution<float> RandomFloats(0.0f, 1.0f);
-    std::default_random_engine Generator;
 
     CVector3 Normal = CVector3(0.0f, 0.0f, 1.0f);
 
@@ -100,7 +96,7 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAONoise.Emplace(0.0f);
     }
 
-    SSAONoiseTex = RHICreateTexture2D(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, TextureFlag_SRV, EResourceAccess::NonPixelShaderResource, nullptr);
+    SSAONoiseTex = RHICreateTexture2D(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::NonPixelShaderResource, nullptr);
     if (!SSAONoiseTex)
     {
         CDebug::DebugBreak();
@@ -141,10 +137,6 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         CDebug::DebugBreak();
         return false;
     }
-    else
-    {
-        SSAOSamplesSRV->SetName("SSAO Samples SRV");
-    }
 
     TArray<SShaderDefine> Defines;
     Defines.Emplace("HORIZONTAL_PASS", "1");
@@ -161,10 +153,6 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     {
         CDebug::DebugBreak();
         return false;
-    }
-    else
-    {
-        BlurHorizontalShader->SetName("SSAO Horizontal Blur Shader");
     }
 
     SRHIComputePipelineStateInfo PSOProperties;
@@ -195,10 +183,6 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
     {
         CDebug::DebugBreak();
         return false;
-    }
-    else
-    {
-        BlurVerticalShader->SetName("SSAO Vertcial Blur Shader");
     }
 
     PSOProperties.Shader = BlurVerticalShader.Get();
@@ -252,25 +236,24 @@ void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResou
         int32    KernelSize;
     } SSAOSettings;
 
-    const uint32 Width = FrameResources.SSAOBuffer->GetWidth();
+    const uint32 Width  = FrameResources.SSAOBuffer->GetWidth();
     const uint32 Height = FrameResources.SSAOBuffer->GetHeight();
     SSAOSettings.ScreenSize = CVector2(float(Width), float(Height));
-    SSAOSettings.NoiseSize = CVector2(4.0f, 4.0f);
-    SSAOSettings.Radius = GSSAORadius.GetFloat();
+    SSAOSettings.NoiseSize  = CVector2(4.0f, 4.0f);
+    SSAOSettings.Radius     = GSSAORadius.GetFloat();
     SSAOSettings.KernelSize = GSSAOKernelSize.GetInt();
-    SSAOSettings.Bias = GSSAOBias.GetFloat();
+    SSAOSettings.Bias       = GSSAOBias.GetFloat();
 
     CmdList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    AddDebugTexture(
-        MakeSharedRef<CRHIShaderResourceView>(SSAONoiseTex->GetShaderResourceView()),
-        SSAONoiseTex,
-        EResourceAccess::NonPixelShaderResource,
-        EResourceAccess::NonPixelShaderResource);
+    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(SSAONoiseTex->GetDefaultShaderResourceView())
+                   , SSAONoiseTex
+                   , EResourceAccess::NonPixelShaderResource
+                   , EResourceAccess::NonPixelShaderResource);
 
-    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(), 0);
-    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 1);
-    CmdList.SetShaderResourceView(SSAOShader.Get(), SSAONoiseTex->GetShaderResourceView(), 2);
+    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetDefaultShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDefaultShaderResourceView(), 1);
+    CmdList.SetShaderResourceView(SSAOShader.Get(), SSAONoiseTex->GetDefaultShaderResourceView(), 2);
     CmdList.SetShaderResourceView(SSAOShader.Get(), SSAOSamplesSRV.Get(), 3);
 
     CmdList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 0);
@@ -280,7 +263,8 @@ void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResou
     CmdList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, 7);
 
     constexpr uint32 ThreadCount = 16;
-    const uint32 DispatchWidth = NMath::DivideByMultiple<uint32>(Width, ThreadCount);
+
+    const uint32 DispatchWidth  = NMath::DivideByMultiple<uint32>(Width, ThreadCount);
     const uint32 DispatchHeight = NMath::DivideByMultiple<uint32>(Height, ThreadCount);
     CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
@@ -307,9 +291,10 @@ void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResou
 
 bool CScreenSpaceOcclusionRenderer::CreateRenderTarget(SFrameResources& FrameResources)
 {
-    const uint32 Width = FrameResources.MainWindowViewport->GetWidth();
+    const ETextureUsageFlags Flags = ETextureUsageFlags::RWTexture;
+    
+    const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
-    const uint32 Flags = TextureFlags_RWTexture;
 
     FrameResources.SSAOBuffer = RHICreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceAccess::Common, nullptr);
     if (!FrameResources.SSAOBuffer)

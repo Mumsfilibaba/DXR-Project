@@ -105,7 +105,7 @@ struct RENDERER_API SFrameResources
     TSharedRef<CRHISamplerState> GBufferSampler;
     TSharedRef<CRHISamplerState> FXAASampler;
 
-    TSharedRef<CRHIInputLayoutState> StdInputLayout;
+    TSharedRef<CRHIVertexInputLayout> StdInputLayout;
 
     TSharedRef<CRHITexture2D>       RTOutput;
     TSharedRef<CRHIRayTracingScene> RTScene;

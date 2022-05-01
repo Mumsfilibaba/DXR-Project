@@ -1,11 +1,11 @@
 #include "Material.h"
 
-#include "RHI/RHIInstance.h"
+#include "RHI/RHICoreInstance.h"
 #include "RHI/RHICommandList.h"
 
 #include "Engine/Engine.h"
 
-#define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetShaderResourceView() : nullptr
+#define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetDefaultShaderResourceView() : nullptr
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMaterial

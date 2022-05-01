@@ -11,8 +11,8 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Console-variables
 
-TAutoConsoleVariable<bool> GDrawFps("renderer.DrawFps", true);
-TAutoConsoleVariable<bool> GDrawFrameProfiler("renderer.DrawFrameProfiler", false);
+TAutoConsoleVariable<bool> GDrawFps("Renderer.DrawFps", true);
+TAutoConsoleVariable<bool> GDrawFrameProfiler("Renderer.DrawFrameProfiler", false);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // FrameProfilerWindow

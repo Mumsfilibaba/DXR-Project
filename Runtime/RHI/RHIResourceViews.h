@@ -288,14 +288,14 @@ struct SRHIDepthStencilViewInfo
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIShaderResourceView
 
-class CRHIShaderResourceView : public CRHIObject
+class CRHIShaderResourceView : public CRHIResource
 {
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIUnorderedAccessView
 
-class CRHIUnorderedAccessView : public CRHIObject
+class CRHIUnorderedAccessView : public CRHIResource
 {
 };
 
@@ -304,13 +304,13 @@ class CRHIUnorderedAccessView : public CRHIObject
 
 using DepthStencilViewCube = TStaticArray<TSharedRef<CRHIDepthStencilView>, 6>;
 
-class CRHIDepthStencilView : public CRHIObject
+class CRHIDepthStencilView : public CRHIResource
 {
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIRenderTargetView
 
-class CRHIRenderTargetView : public CRHIObject
+class CRHIRenderTargetView : public CRHIResource
 {
 };

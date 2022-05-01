@@ -458,6 +458,6 @@ void CWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
     }
     else
     {
-        LOG_ERROR("[CWindowsWindow]: Tried to set an invalid WindowHandle")
+        LOG_ERROR("[CWindowsWindow]: Tried to set an invalid WindowHandle");
     }
 }

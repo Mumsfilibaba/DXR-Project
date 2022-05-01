@@ -1,7 +1,7 @@
 #pragma once
-#include "RHI/RHIRayTracing.h"
-
 #include "NullRHIViews.h"
+
+#include "RHI/RHIRayTracing.h"
 
 #if defined(COMPILER_MSVC)
     #pragma warning(push)
@@ -17,21 +17,12 @@
 class CNullRHIRayTracingGeometry : public CRHIRayTracingGeometry
 {
 public:
+
     CNullRHIRayTracingGeometry(uint32 InFlags)
         : CRHIRayTracingGeometry(InFlags)
     { }
 
     ~CNullRHIRayTracingGeometry() = default;
-
-    virtual void SetName(const String& InName) override
-    {
-        CRHIObject::SetName(InName);
-    }
-
-    virtual bool IsValid() const override
-    {
-        return true;
-    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -47,20 +38,12 @@ public:
 
     ~CNullRHIRayTracingScene() = default;
 
-    virtual void SetName(const String& InName) override final
-    {
-        CRHIObject::SetName(InName);
-    }
+public:
 
-    virtual bool IsValid() const override final
-    {
-        return true;
-    }
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIRayTracingScene Interface
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const override final
-    {
-        return View.Get();
-    }
+    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
 
 private:
     TSharedRef<CNullRHIShaderResourceView> View;
