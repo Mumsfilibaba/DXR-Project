@@ -3,21 +3,63 @@
 #include "RHIResourceViews.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIViewportInitializer
+
+class CRHIViewportInitializer
+{
+public:
+
+    CRHIViewportInitializer()
+        : WindowHandle(nullptr)
+        , ColorFormat(EFormat::Unknown)
+        , DepthFormat(EFormat::Unknown)
+        , Width(0)
+        , Height(0)
+    { }
+
+    CRHIViewportInitializer( void* InWindowHandle
+                           , EFormat InColorFormat
+                           , EFormat InDepthFormat
+                           , uint16 InWidth
+                           , uint16 InHeight)
+        : WindowHandle(InWindowHandle)
+        , ColorFormat(InColorFormat)
+        , DepthFormat(InDepthFormat)
+        , Width(InWidth)
+        , Height(InHeight)
+    { }
+
+    bool operator==(const CRHIViewportInitializer& RHS) const
+    {
+        return (WindowHandle == RHS.WindowHandle)
+            && (ColorFormat  == RHS.ColorFormat)
+            && (DepthFormat  == RHS.DepthFormat)
+            && (Width        == RHS.Width)
+            && (Height       == RHS.Height);
+    }
+
+    bool operator!=(const CRHIViewportInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    void*   WindowHandle;
+
+    EFormat ColorFormat;
+    EFormat DepthFormat;
+
+    uint16  Width;
+    uint16  Height;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIViewport
 
 class CRHIViewport : public CRHIResource
 {
-public:
-
-    /**
-     * @brief: Constructor
-     * 
-     * @param InFormat: Format for the viewport
-     * @param InWidth: Width of the viewport
-     * @param InHeight: Height of the viewport
-     */
+protected:
     
-    CRHIViewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
+    explicit CRHIViewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
         : CRHIResource()
         , Width(InWidth)
         , Height(InHeight)
@@ -25,6 +67,8 @@ public:
     { }
 
     ~CRHIViewport() = default;
+
+public:
 
     /**
      * @brief: Resize the viewport

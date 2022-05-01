@@ -84,12 +84,13 @@ ENUM_CLASS_OPERATORS(EBufferUsageFlags);
 class CRHIBufferDataInitializer
 {
 public:
+    
     CRHIBufferDataInitializer()
         : BufferData(nullptr)
         , Size(0)
     { }
 
-    CRHIBufferDataInitializer(const void* InBufferData, uint32 InSize)
+    explicit CRHIBufferDataInitializer(const void* InBufferData, uint32 InSize)
         : BufferData(InBufferData)
         , Size(InSize)
     { }
@@ -338,7 +339,7 @@ class CRHIBuffer : public CRHIResource
 {
 protected:
 
-    CRHIBuffer(const CRHIBufferInitializer& Initializer)
+    explicit CRHIBuffer(const CRHIBufferInitializer& Initializer)
         : CRHIResource()
         , Flags(Initializer.UsageFlags)
     { }
@@ -392,7 +393,7 @@ class CRHIVertexBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
+    explicit CRHIVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
         : CRHIBuffer(Initializer)
         , NumVertices(Initializer.NumVertices)
         , Stride(Initializer.Stride)
@@ -428,7 +429,7 @@ class CRHIIndexBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
+    explicit CRHIIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
         : CRHIBuffer(Initializer)
         , Format(Initializer.IndexFormat)
         , NumIndicies(Initializer.NumIndicies)
@@ -465,7 +466,7 @@ class CRHIGenericBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
+    explicit CRHIGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
         : CRHIBuffer(Initializer)
         , Stride(Initializer.Stride)
         , Size(Initializer.Size)
@@ -494,7 +495,7 @@ class CRHIConstantBuffer : public CRHIBuffer
 {
 protected:
 
-    CRHIConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
+    explicit CRHIConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
         : CRHIBuffer(Initializer)
         , Size(Initializer.Size)
         , Stride(Initializer.Stride)

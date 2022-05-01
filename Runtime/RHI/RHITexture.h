@@ -51,7 +51,7 @@ class CRHITexture : public CRHIResource
 {
 protected:
 
-    CRHITexture(EFormat InFormat, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InOptimalClearValue)
+    explicit CRHITexture(EFormat InFormat, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InOptimalClearValue)
         : CRHIResource()
         , Format(InFormat)
         , NumMips(uint8(InNumMips))
@@ -141,7 +141,7 @@ class CRHITexture2D : public CRHITexture
 {
 protected:
 
-    CRHITexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
+    explicit CRHITexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
         : CRHITexture(InFormat, InNumMips, InFlags, InClearValue)
         , NumSamples(uint8(InNumSamples))
         , Width(uint16(InWidth))
@@ -187,7 +187,7 @@ class CRHITexture2DArray : public CRHITexture2D
 {
 protected:
 
-    CRHITexture2DArray(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InArraySize, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
+    explicit CRHITexture2DArray(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips, uint32 InNumSamples, uint32 InArraySize, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
         : CRHITexture2D(InFormat, InWidth, InHeight, InNumMips, InNumSamples, InFlags, InClearValue)
         , ArraySize(uint16(InArraySize))
     { }
@@ -216,7 +216,7 @@ class CRHITextureCube : public CRHITexture
 {
 protected:
 
-    CRHITextureCube(EFormat InFormat, uint32 InExtent, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
+    explicit CRHITextureCube(EFormat InFormat, uint32 InExtent, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
         : CRHITexture(InFormat, InNumMips, InFlags, InClearValue)
         , Extent(uint16(InExtent))
         , NumSamples(1)
@@ -249,7 +249,7 @@ class CRHITextureCubeArray : public CRHITextureCube
 {
 protected:
 
-    CRHITextureCubeArray(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InArraySize, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
+    explicit CRHITextureCubeArray(EFormat InFormat, uint32 InSize, uint32 InNumMips, uint32 InArraySize, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
         : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InClearValue)
         , ArraySize(uint16(InArraySize))
     { }
@@ -282,7 +282,7 @@ class CRHITexture3D : public CRHITexture
 {
 protected:
 
-    CRHITexture3D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
+    explicit CRHITexture3D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InClearValue)
         : CRHITexture(InFormat, InNumMips, InFlags, InClearValue)
         , Width(uint16(InWidth))
         , Height(uint16(InHeight))

@@ -80,7 +80,7 @@ class CRHIShader : public CRHIResource
 {
 protected:
 
-    CRHIShader(EShaderStage InShaderStage)
+    explicit CRHIShader(EShaderStage InShaderStage)
         : ShaderStage(InShaderStage)
     { }
 
@@ -127,7 +127,7 @@ class CRHIGraphicsShader : public CRHIShader
 {
 protected:
 
-    CRHIGraphicsShader(EShaderStage InShaderStage)
+    explicit CRHIGraphicsShader(EShaderStage InShaderStage)
         : CRHIShader(InShaderStage)
     { }
 
@@ -239,7 +239,7 @@ class CRHIRayTracingShader : public CRHIShader
 {
 protected:
 
-    CRHIRayTracingShader(EShaderStage InShaderStage)
+    explicit CRHIRayTracingShader(EShaderStage InShaderStage)
         : CRHIShader(InShaderStage)
     { }
 

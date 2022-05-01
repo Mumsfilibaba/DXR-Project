@@ -15,6 +15,11 @@ struct SRHITimestamp
 
 class CRHITimestampQuery : public CRHIResource
 {
+protected:
+
+    CRHITimestampQuery()  = default;
+    ~CRHITimestampQuery() = default;
+
 public:
 
     /**
