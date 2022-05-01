@@ -14,7 +14,7 @@ class CD3D12VertexInputLayout : public CRHIVertexInputLayout, public CD3D12Devic
 {
 public:
 
-    CD3D12VertexInputLayout(CD3D12Device* InDevice, const SRHIVertexInputLayoutInitializer& CreateInfo)
+    CD3D12VertexInputLayout(CD3D12Device* InDevice, const CRHIVertexInputLayoutInitializer& CreateInfo)
         : CRHIVertexInputLayout()
         , CD3D12DeviceChild(InDevice)
         , SemanticNames()
@@ -30,7 +30,7 @@ public:
             D3D12Element.Format               = ConvertFormat(Element.Format);
             D3D12Element.InputSlot            = Element.InputSlot;
             D3D12Element.AlignedByteOffset    = Element.ByteOffset;
-            D3D12Element.InputSlotClass       = ConvertInputClassification(Element.InputClassification);
+            D3D12Element.InputSlotClass       = ConvertVertexInputClass(Element.InputClass);
             D3D12Element.InstanceDataStepRate = Element.InstanceStepRate;
             ElementDesc.Emplace(D3D12Element);
         }
@@ -118,7 +118,7 @@ public:
     CD3D12GraphicsPipelineState(CD3D12Device* InDevice);
     ~CD3D12GraphicsPipelineState() = default;
 
-    bool Init(const SRHIGraphicsPipelineStateInfo& CreateInfo);
+    bool Init(const CRHIGraphicsPipelineStateInitializer& CreateInfo);
 
     virtual void SetName(const String& InName) override final
     {
@@ -148,7 +148,7 @@ class CD3D12ComputePipelineState : public CRHIComputePipelineState, public CD3D1
 {
 public:
 
-    CD3D12ComputePipelineState(CD3D12Device* InDevice, const TSharedRef<D3D12ComputeShader>& InShader);
+    CD3D12ComputePipelineState(CD3D12Device* InDevice, const TSharedRef<CD3D12ComputeShader>& InShader);
     ~CD3D12ComputePipelineState() = default;
 
     bool Init();
@@ -171,7 +171,7 @@ public:
 
 private:
     TComPtr<ID3D12PipelineState>       PipelineState;
-    TSharedRef<D3D12ComputeShader> Shader;
+    TSharedRef<CD3D12ComputeShader> Shader;
     TSharedRef<CD3D12RootSignature>    RootSignature;
 };
 
@@ -192,7 +192,7 @@ public:
     CD3D12RayTracingPipelineState(CD3D12Device* InDevice);
     ~CD3D12RayTracingPipelineState() = default;
 
-    bool Init(const SRHIRayTracingPipelineStateInfo& CreateInfo);
+    bool Init(const CRHIRayTracingPipelineStateInitializer& CreateInfo);
 
     virtual void SetName(const String& InName) override
     {

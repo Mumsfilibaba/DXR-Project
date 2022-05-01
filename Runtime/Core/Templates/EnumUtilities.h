@@ -1,6 +1,9 @@
 #pragma once
 #include "UnderlyingType.h"
 
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// ENUM_CLASS_OPERATORS
+
 #define ENUM_CLASS_OPERATORS(EnumType)                                                                         \
     inline constexpr EnumType operator|(EnumType LHS, EnumType RHS) noexcept                                   \
     {                                                                                                          \

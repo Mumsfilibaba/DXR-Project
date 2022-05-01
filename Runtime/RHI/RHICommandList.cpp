@@ -90,7 +90,7 @@ void CCommandAllocator::ReleaseDiscardedMemory()
         SafeDelete(Memory);
     }
 
-    DiscardedMemory.Empty();
+    DiscardedMemory.MakeEmpty();
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

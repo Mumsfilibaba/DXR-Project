@@ -108,4 +108,9 @@ protected:
 
     CRHISamplerState()  = default;
     ~CRHISamplerState() = default;
+
+public:
+
+    /** @return: Returns the Bindless descriptor-handle if the RHI-supports descriptor-handles */
+    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 };

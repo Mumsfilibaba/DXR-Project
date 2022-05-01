@@ -18,6 +18,13 @@ public:
 
     CNullRHISamplerState()  = default;
     ~CNullRHISamplerState() = default;
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHISamplerState Interface
+
+    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 };
 
 #if defined(COMPILER_MSVC)

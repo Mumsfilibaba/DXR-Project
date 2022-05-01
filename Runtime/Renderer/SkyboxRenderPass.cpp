@@ -103,7 +103,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    SRHIRasterizerStateInfo RasterizerStateInfo;
+    CRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -113,9 +113,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    SRHIBlendStateInfo BlendStateInfo;
-    BlendStateInfo.bIndependentBlendEnable      = false;
-    BlendStateInfo.RenderTarget[0].bBlendEnable = false;
+    CRHIBlendStateInitializer BlendStateInfo;
 
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
@@ -124,7 +122,7 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    SRHIDepthStencilStateInfo DepthStencilStateInfo;
+    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable   = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -136,8 +134,8 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    SRHIGraphicsPipelineStateInfo PipelineStateInfo;
-    PipelineStateInfo.InputLayoutState                       = FrameResources.StdInputLayout.Get();
+    CRHIGraphicsPipelineStateInitializer PipelineStateInfo;
+    PipelineStateInfo.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
     PipelineStateInfo.BlendState                             = BlendState.Get();
     PipelineStateInfo.DepthStencilState                      = DepthStencilState.Get();
     PipelineStateInfo.RasterizerState                        = RasterizerState.Get();
@@ -183,7 +181,7 @@ void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& 
     CmdList.SetIndexBuffer(SkyboxIndexBuffer.Get());
     CmdList.SetGraphicsPipelineState(PipelineState.Get());
 
-    struct SimpleCameraBuffer
+    struct SSimpleCameraBuffer
     {
         CMatrix4 Matrix;
     } SimpleCamera;

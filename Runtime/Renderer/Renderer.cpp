@@ -94,7 +94,7 @@ bool CRenderer::Init()
     }
 
     // Init standard input layout
-    SRHIVertexInputLayoutInitializer InputLayout =
+    CRHIVertexInputLayoutInitializer InputLayout =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0,  EVertexInputClass::Vertex, 0 },
         { "NORMAL",   0, EFormat::R32G32B32_Float, 0, 12, EVertexInputClass::Vertex, 0 },
@@ -102,7 +102,7 @@ bool CRenderer::Init()
         { "TEXCOORD", 0, EFormat::R32G32_Float,    0, 36, EVertexInputClass::Vertex, 0 },
     };
 
-    Resources.StdInputLayout = RHICreateInputLayout(InputLayout);
+    Resources.StdInputLayout = RHICreateVertexInputLayout(InputLayout);
     if (!Resources.StdInputLayout)
     {
         CDebug::DebugBreak();
@@ -595,7 +595,7 @@ void CRenderer::Tick(const CScene& Scene)
         ShadingRateCmdList.SetShadingRate(EShadingRate::VRS_1x1);
     }
 
-    if ( /* DISABLES CODE */ (false) /*IsRayTracingSupported())*/)
+    if (RHISupportsRayTracing())
     {
         const auto RenderRayTracing = [&]()
         {
@@ -926,19 +926,19 @@ bool CRenderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    SRHIVertexInputLayoutInitializer InputLayout =
+    CRHIVertexInputLayoutInitializer InputLayout =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0, EVertexInputClass::Vertex, 0 },
     };
 
-    TSharedRef<CRHIVertexInputLayout> InputLayoutState = RHICreateInputLayout(InputLayout);
+    TSharedRef<CRHIVertexInputLayout> InputLayoutState = RHICreateVertexInputLayout(InputLayout);
     if (!InputLayoutState)
     {
         CDebug::DebugBreak();
         return false;
     }
 
-    SRHIDepthStencilStateInfo DepthStencilStateInfo;
+    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
@@ -950,7 +950,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    SRHIRasterizerStateInfo RasterizerStateInfo;
+    CRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -960,7 +960,7 @@ bool CRenderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    SRHIBlendStateInfo BlendStateInfo;
+    CRHIBlendStateInitializer BlendStateInfo;
 
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
@@ -969,10 +969,10 @@ bool CRenderer::InitBoundingBoxDebugPass()
         return false;
     }
 
-    SRHIGraphicsPipelineStateInfo PSOProperties;
+    CRHIGraphicsPipelineStateInitializer PSOProperties;
     PSOProperties.BlendState                             = BlendState.Get();
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.InputLayoutState                       = InputLayoutState.Get();
+    PSOProperties.VertexInputLayout                      = InputLayoutState.Get();
     PSOProperties.RasterizerState                        = RasterizerState.Get();
     PSOProperties.ShaderState.VertexShader               = AABBVertexShader.Get();
     PSOProperties.ShaderState.PixelShader                = AABBPixelShader.Get();
@@ -1080,7 +1080,7 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    SRHIDepthStencilStateInfo DepthStencilStateInfo;
+    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc      = EComparisonFunc::Always;
     DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
@@ -1092,7 +1092,7 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    SRHIRasterizerStateInfo RasterizerStateInfo;
+    CRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -1102,9 +1102,7 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    SRHIBlendStateInfo BlendStateInfo;
-    BlendStateInfo.bIndependentBlendEnable      = false;
-    BlendStateInfo.RenderTarget[0].bBlendEnable = false;
+    CRHIBlendStateInitializer BlendStateInfo;
 
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
@@ -1113,8 +1111,8 @@ bool CRenderer::InitAA()
         return false;
     }
 
-    SRHIGraphicsPipelineStateInfo PSOProperties;
-    PSOProperties.InputLayoutState                       = nullptr;
+    CRHIGraphicsPipelineStateInitializer PSOProperties;
+    PSOProperties.VertexInputLayout                      = nullptr;
     PSOProperties.BlendState                             = BlendState.Get();
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
     PSOProperties.RasterizerState                        = RasterizerState.Get();
@@ -1204,7 +1202,7 @@ bool CRenderer::InitAA()
 bool CRenderer::InitShadingImage()
 {
     SRHIShadingRateSupport Support;
-    RHICheckShadingRateSupport(Support);
+    RHIQueryShadingRateSupport(Support);
 
     if (Support.Tier != ERHIShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)
     {
@@ -1238,7 +1236,7 @@ bool CRenderer::InitShadingImage()
         return false;
     }
 
-    SRHIComputePipelineStateInfo CreateInfo(ShadingRateShader.Get());
+    CRHIComputePipelineStateInitializer CreateInfo(ShadingRateShader.Get());
     ShadingRatePipeline = RHICreateComputePipelineState(CreateInfo);
     if (!ShadingRatePipeline)
     {

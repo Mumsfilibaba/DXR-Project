@@ -27,7 +27,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         CDebug::DebugBreak();
     }
 
-    IrradianceGenPSO = RHICreateComputePipelineState(SRHIComputePipelineStateInfo(IrradianceGenShader.Get()));
+    IrradianceGenPSO = RHICreateComputePipelineState(CRHIComputePipelineStateInitializer(IrradianceGenShader.Get()));
     if (!IrradianceGenPSO)
     {
         LOG_ERROR("Failed to create IrradianceGen PipelineState");
@@ -51,7 +51,7 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
         CDebug::DebugBreak();
     }
 
-    SpecularIrradianceGenPSO = RHICreateComputePipelineState(SRHIComputePipelineStateInfo(SpecularIrradianceGenShader.Get()));
+    SpecularIrradianceGenPSO = RHICreateComputePipelineState(CRHIComputePipelineStateInitializer(SpecularIrradianceGenShader.Get()));
     if (!SpecularIrradianceGenPSO)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen PipelineState");

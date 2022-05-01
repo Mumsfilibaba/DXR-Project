@@ -81,18 +81,9 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHIBuffer Interface
 
-    virtual void* GetRHIBaseResourceHandle() const override final { return nullptr; }
+    virtual void* GetRHIBaseResource() const override final { return nullptr; }
 
     virtual void* GetRHIBaseBuffer() override final { return this; }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Deprecated
-
-    virtual void* Map(uint32 Offset, uint32 InSize) override final { return nullptr; }
-
-    virtual void Unmap(uint32 Offset, uint32 InSize) override final { }
 };
 
 #if defined(COMPILER_MSVC)

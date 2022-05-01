@@ -1,7 +1,7 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determines weather the type can be assigned by the specified type
+// TIsAssignable
 
 template<typename T, typename FromType>
 struct TIsAssignable

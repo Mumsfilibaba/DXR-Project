@@ -4,7 +4,7 @@
 #include "IsAssignable.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Checks weather the type can be constructed with a move constructor
+// TIsMoveConstructable
 
 template<typename T>
 struct TIsMoveConstructable
@@ -16,7 +16,7 @@ struct TIsMoveConstructable
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Checks weather the type can be constructed with a move assignment operator
+// TIsMoveAssignable
 
 template<typename T>
 struct TIsMoveAssignable

@@ -6,8 +6,10 @@
 
 #include "Core/CoreDefines.h"
 
+/** Move an object by converting it into a r-value */
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Move an object by converting it into a r-value
+// Move
 
 template<typename T>
 constexpr typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
@@ -15,8 +17,10 @@ constexpr typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
     return static_cast<typename TRemoveReference<T>::Type&&>(Value);
 }
 
+/** Forward an object by converting it into a rvalue from an l-value */
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Forward an object by converting it into a rvalue from an l-value
+// Forward
 
 template<typename T>
 constexpr T&& Forward(typename TRemoveReference<T>::Type& Value) noexcept
@@ -24,8 +28,7 @@ constexpr T&& Forward(typename TRemoveReference<T>::Type& Value) noexcept
     return static_cast<T&&>(Value);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Forward an object by converting it into a r-value from an r-value
+/** Forward an object by converting it into a r-value from an r-value */
 
 template<typename T>
 constexpr T&& Forward(typename TRemoveReference<T>::Type&& Value) noexcept
@@ -42,7 +45,7 @@ FORCEINLINE typename TEnableIf<TNot<TIsConst<T>>::Value>::Type Swap(T& LHS, T& R
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helps expand variadic packs
+// ExpandPacks
 
 template<typename... Packs>
 inline void ExpandPacks(Packs&&...)

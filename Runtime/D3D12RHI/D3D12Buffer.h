@@ -46,7 +46,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHIVertexBuffer Interface
 
-    virtual void* GetRHIBaseResourceHandle() const override final
+    virtual void* GetRHIBaseResource() const override final
     {
         CD3D12Resource* D3D12Resource = GetD3D12Resource();
         return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
@@ -56,6 +56,15 @@ public:
     {
         CD3D12Buffer* D3D12Buffer = static_cast<CD3D12Buffer*>(this);
         return reinterpret_cast<void*>(D3D12Buffer);
+    }
+
+    virtual void SetName(const String& InName) override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        if (D3D12Resource)
+        {
+            D3D12Resource->SetName(InName);
+        }
     }
 
 public:
@@ -71,60 +80,6 @@ public:
         View.StrideInBytes  = GetStride();
         View.SizeInBytes    = GetNumVertices() * View.StrideInBytes;
         View.BufferLocation = CD3D12Buffer::Resource->GetGPUVirtualAddress();
-    }
-
-    virtual void SetName(const String& InName) override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
-    }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Deprecated
-
-    virtual void* Map(uint32 Offset, uint32 InSize) override final
-    {
-        D3D12_ERROR((GetFlags() & EBufferUsageFlags::Dynamic) != EBufferUsageFlags::None, "Map is only supported on dynamic buffers");
-
-        CD3D12Resource* DxResource = CD3D12Buffer::Resource.Get();
-        if (DxResource)
-        {
-            if (Offset != 0 || InSize != 0)
-            {
-                D3D12_RANGE MapRange = { Offset, InSize };
-                return DxResource->Map(0, &MapRange);
-            }
-            else
-            {
-                return DxResource->Map(0, nullptr);
-            }
-        }
-
-        return nullptr;
-    }
-
-    virtual void Unmap(uint32 Offset, uint32 InSize) override final
-    {
-        D3D12_ERROR((GetFlags() & EBufferUsageFlags::Dynamic) != EBufferUsageFlags::None, "Unmap is only supported on dynamic buffers");
-
-        CD3D12Resource* DxResource = CD3D12Buffer::Resource.Get();
-        if (DxResource)
-        {
-            if (Offset != 0 || InSize != 0)
-            {
-                D3D12_RANGE MapRange = { Offset, InSize };
-                DxResource->Unmap(0, &MapRange);
-            }
-            else
-            {
-                DxResource->Unmap(0, nullptr);
-            }
-        }
     }
 
 private:
@@ -151,7 +106,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHIIndexBuffer Interface
 
-    virtual void* GetRHIBaseResourceHandle() const override final
+    virtual void* GetRHIBaseResource() const override final
     {
         CD3D12Resource* D3D12Resource = GetD3D12Resource();
         return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
@@ -192,51 +147,6 @@ public:
         }
     }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Deprecated
-
-    virtual void* Map(uint32 Offset, uint32 InSize) override final
-    {
-        D3D12_ERROR((GetFlags() & EBufferUsageFlags::Dynamic) != EBufferUsageFlags::None, "Map is only supported on dynamic buffers");
-
-        CD3D12Resource* DxResource = CD3D12Buffer::Resource.Get();
-        if (DxResource)
-        {
-            if (Offset != 0 || InSize != 0)
-            {
-                D3D12_RANGE MapRange = { Offset, InSize };
-                return DxResource->Map(0, &MapRange);
-            }
-            else
-            {
-                return DxResource->Map(0, nullptr);
-            }
-        }
-
-        return nullptr;
-    }
-
-    virtual void Unmap(uint32 Offset, uint32 InSize) override final
-    {
-        D3D12_ERROR((GetFlags() & EBufferUsageFlags::Dynamic) != EBufferUsageFlags::None, "Unmap is only supported on dynamic buffers");
-
-        CD3D12Resource* DxResource = CD3D12Buffer::Resource.Get();
-        if (DxResource)
-        {
-            if (Offset != 0 || InSize != 0)
-            {
-                D3D12_RANGE MapRange = { Offset, InSize };
-                DxResource->Unmap(0, &MapRange);
-            }
-            else
-            {
-                DxResource->Unmap(0, nullptr);
-            }
-        }
-    }
-
 private:
     D3D12_INDEX_BUFFER_VIEW View;
 };
@@ -263,7 +173,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHIConstantBuffer Interface
 
-    virtual void* GetRHIBaseResourceHandle() const override final
+    virtual void* GetRHIBaseResource() const override final
     {
         CD3D12Resource* D3D12Resource = GetD3D12Resource();
         return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
@@ -312,51 +222,6 @@ public:
         View.CreateView(CD3D12Buffer::Resource.Get(), ViewDesc);
     }
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Deprecated
-
-    virtual void* Map(uint32 Offset, uint32 InSize) override final
-    {
-        D3D12_ERROR((GetFlags() & EBufferUsageFlags::Dynamic) != EBufferUsageFlags::None, "Map is only supported on dynamic buffers");
-
-        CD3D12Resource* DxResource = CD3D12Buffer::Resource.Get();
-        if (DxResource)
-        {
-            if (Offset != 0 || InSize != 0)
-            {
-                D3D12_RANGE MapRange = { Offset, InSize };
-                return DxResource->Map(0, &MapRange);
-            }
-            else
-            {
-                return DxResource->Map(0, nullptr);
-            }
-        }
-
-        return nullptr;
-    }
-
-    virtual void Unmap(uint32 Offset, uint32 InSize) override final
-    {
-        D3D12_ERROR((GetFlags() & EBufferUsageFlags::Dynamic) != EBufferUsageFlags::None, "Unmap is only supported on dynamic buffers");
-
-        CD3D12Resource* DxResource = CD3D12Buffer::Resource.Get();
-        if (DxResource)
-        {
-            if (Offset != 0 || InSize != 0)
-            {
-                D3D12_RANGE MapRange = { Offset, InSize };
-                DxResource->Unmap(0, &MapRange);
-            }
-            else
-            {
-                DxResource->Unmap(0, nullptr);
-            }
-        }
-    }
-
 private:
     CD3D12ConstantBufferView View;
 };
@@ -378,7 +243,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHIGenericBuffer Interface
 
-    virtual void* GetRHIBaseResourceHandle() const override final
+    virtual void* GetRHIBaseResource() const override final
     {
         CD3D12Resource* D3D12Resource = GetD3D12Resource();
         return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
@@ -398,51 +263,6 @@ public:
             D3D12Resource->SetName(InName);
         }
     }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Deprecated
-
-    virtual void* Map(uint32 Offset, uint32 InSize) override
-    {
-        D3D12_ERROR((GetFlags() & EBufferUsageFlags::Dynamic) != EBufferUsageFlags::None, "Map is only supported on dynamic buffers");
-
-        CD3D12Resource* DxResource = CD3D12Buffer::Resource.Get();
-        if (DxResource)
-        {
-            if (Offset != 0 || InSize != 0)
-            {
-                D3D12_RANGE MapRange = { Offset, InSize };
-                return DxResource->Map(0, &MapRange);
-            }
-            else
-            {
-                return DxResource->Map(0, nullptr);
-            }
-        }
-
-        return nullptr;
-    }
-
-    virtual void Unmap(uint32 Offset, uint32 InSize) override
-    {
-        D3D12_ERROR((GetFlags() & EBufferUsageFlags::Dynamic) != EBufferUsageFlags::None, "Unmap is only supported on dynamic buffers");
-
-        CD3D12Resource* DxResource = CD3D12Buffer::Resource.Get();
-        if (DxResource)
-        {
-            if (Offset != 0 || InSize != 0)
-            {
-                D3D12_RANGE MapRange = { Offset, InSize };
-                DxResource->Unmap(0, &MapRange);
-            }
-            else
-            {
-                DxResource->Unmap(0, nullptr);
-            }
-        }
-    }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -455,5 +275,5 @@ inline CD3D12Buffer* D3D12BufferCast(CRHIBuffer* Buffer)
 
 inline CD3D12Resource* D3D12ResourceCast(CRHIBuffer* Buffer)
 {
-    return Buffer ? reinterpret_cast<CD3D12Resource*>(Buffer->GetRHIBaseResourceHandle()) : nullptr;
+    return Buffer ? reinterpret_cast<CD3D12Resource*>(Buffer->GetRHIBaseResource()) : nullptr;
 }

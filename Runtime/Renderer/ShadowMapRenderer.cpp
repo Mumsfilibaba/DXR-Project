@@ -65,7 +65,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        SRHIDepthStencilStateInfo DepthStencilStateInfo;
+        CRHIDepthStencilStateInitializer DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
         DepthStencilStateInfo.bDepthEnable   = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -77,7 +77,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        SRHIRasterizerStateInfo RasterizerStateInfo;
+        CRHIRasterizerStateInitializer RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
         TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -87,7 +87,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        SRHIBlendStateInfo BlendStateInfo;
+        CRHIBlendStateInitializer BlendStateInfo;
 
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
@@ -96,11 +96,11 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        SRHIGraphicsPipelineStateInfo PipelineStateInfo;
+        CRHIGraphicsPipelineStateInitializer PipelineStateInfo;
         PipelineStateInfo.BlendState                         = BlendState.Get();
         PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
         PipelineStateInfo.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
-        PipelineStateInfo.InputLayoutState                   = FrameResources.StdInputLayout.Get();
+        PipelineStateInfo.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
         PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
         PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
         PipelineStateInfo.SampleCount                        = 1;
@@ -149,7 +149,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        SRHIDepthStencilStateInfo DepthStencilStateInfo;
+        CRHIDepthStencilStateInitializer DepthStencilStateInfo;
         DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
         DepthStencilStateInfo.bDepthEnable   = true;
         DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -161,7 +161,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        SRHIRasterizerStateInfo RasterizerStateInfo;
+        CRHIRasterizerStateInitializer RasterizerStateInfo;
         RasterizerStateInfo.CullMode = ECullMode::Back;
 
         TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -171,7 +171,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        SRHIBlendStateInfo BlendStateInfo;
+        CRHIBlendStateInitializer BlendStateInfo;
         TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
@@ -179,11 +179,11 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        SRHIGraphicsPipelineStateInfo PipelineStateInfo;
+        CRHIGraphicsPipelineStateInitializer PipelineStateInfo;
         PipelineStateInfo.BlendState                         = BlendState.Get();
         PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
         PipelineStateInfo.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
-        PipelineStateInfo.InputLayoutState                   = FrameResources.StdInputLayout.Get();
+        PipelineStateInfo.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
         PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
         PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
         PipelineStateInfo.SampleCount                        = 1;
@@ -221,7 +221,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        SRHIComputePipelineStateInfo CascadePSO;
+        CRHIComputePipelineStateInitializer CascadePSO;
         CascadePSO.Shader = CascadeGenShader.Get();
 
         CascadeGen = RHICreateComputePipelineState(CascadePSO);
@@ -315,7 +315,7 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        SRHIComputePipelineStateInfo MaskPSO;
+        CRHIComputePipelineStateInitializer MaskPSO;
         MaskPSO.Shader = DirectionalShadowMaskShader.Get();
 
         DirectionalShadowMaskPSO = RHICreateComputePipelineState(MaskPSO);

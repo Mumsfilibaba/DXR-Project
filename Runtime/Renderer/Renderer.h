@@ -59,8 +59,8 @@ struct SRendererStatistics
 
     void Reset()
     {
-        NumDrawCalls = 0;
-        NumDispatchCalls = 0;
+        NumDrawCalls      = 0;
+        NumDispatchCalls  = 0;
         NumRenderCommands = 0;
     }
 };

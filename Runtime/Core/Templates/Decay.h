@@ -7,12 +7,15 @@
 #include "RemoveReference.h"
 #include "RemoveExtent.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////
-*  Decays T into the value that can be passed to a function by non-const/volatile value
-*  - T[N] -> T*
-*  - const T& -> T
-*  - etc.
-*/
+/**
+ *  Decays T into the value that can be passed to a function by non-const/volatile value
+ *  - T[N] -> T*
+ *  - const T& -> T
+ *  - etc.
+ */
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// TDecay
 
 template<typename T>
 struct TDecay

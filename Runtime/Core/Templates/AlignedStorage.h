@@ -1,4 +1,6 @@
 #pragma once
+#include "ClassUtilities.h"
+
 #include "Core/CoreTypes.h"
 #include "Core/CoreDefines.h"
 
@@ -34,9 +36,10 @@ public:
     TAlignedStorage() = default;
     TAlignedStorage(const TAlignedStorage&) = default;
     TAlignedStorage(TAlignedStorage&&) = default;
+    ~TAlignedStorage() = default;
+
     TAlignedStorage& operator=(const TAlignedStorage&) = default;
     TAlignedStorage& operator=(TAlignedStorage&&) = default;
-    ~TAlignedStorage() = default;
 
     FORCEINLINE void* GetStorage() noexcept
     {
@@ -77,9 +80,10 @@ public:
     TTypedStorage() = default;
     TTypedStorage(const TTypedStorage&) = default;
     TTypedStorage(TTypedStorage&&) = default;
+    ~TTypedStorage() = default;
+
     TTypedStorage& operator=(const TTypedStorage&) = default;
     TTypedStorage& operator=(TTypedStorage&&) = default;
-    ~TTypedStorage() = default;
 
     FORCEINLINE T* GetStorage() noexcept
     {

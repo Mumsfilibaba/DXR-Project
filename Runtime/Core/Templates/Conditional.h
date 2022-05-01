@@ -1,7 +1,7 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Returns TrueType if condition is true, otherwise returns FalseType
+// TConditional
 
 template<bool Condition, typename TrueType, typename FalseType>
 struct TConditional

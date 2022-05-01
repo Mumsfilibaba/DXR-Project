@@ -264,10 +264,10 @@ bool CD3D12RayTracingScene::Build(CD3D12CommandContext& CmdContext, const SRayTr
     TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(NumInstances);
     for (int32 i = 0; i < InstanceDescs.Size(); i++)
     {
-        CD3D12RayTracingGeometry* DxGeometry = static_cast<CD3D12RayTracingGeometry*>(InInstances[i].Instance.Get());
+        CD3D12RayTracingGeometry* D3D12Geometry = static_cast<CD3D12RayTracingGeometry*>(InInstances[i].Instance.Get());
         CMemory::Memcpy(&InstanceDescs[i].Transform, &InInstances[i].Transform, sizeof(CMatrix3x4));
 
-        InstanceDescs[i].AccelerationStructure               = DxGeometry->GetGPUVirtualAddress();
+        InstanceDescs[i].AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
         InstanceDescs[i].InstanceID                          = InInstances[i].InstanceIndex;
         InstanceDescs[i].Flags                               = ConvertRayTracingInstanceFlags(InInstances[i].Flags);
         InstanceDescs[i].InstanceMask                        = InInstances[i].Mask;

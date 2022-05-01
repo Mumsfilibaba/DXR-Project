@@ -8,7 +8,7 @@
 
 bool CMesh::Init(const SMeshData& Data)
 {
-    const bool bRTOn = false; // RHISupportsRayTracing();
+    const bool bRTOn = RHISupportsRayTracing();
 
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
     IndexCount  = static_cast<uint32>(Data.Indices.Size());

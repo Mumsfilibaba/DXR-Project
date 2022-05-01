@@ -201,7 +201,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual void* GetRHIBaseResourceHandle() const 
+    virtual void* GetRHIBaseResource() const 
     { 
         CD3D12Resource* D3D12Resource = GetD3D12Resource();
         return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
@@ -250,7 +250,7 @@ inline CD3D12Texture* D3D12TextureCast(CRHITexture* Texture)
 
 inline CD3D12Resource* D3D12ResourceCast(CRHITexture* Texture)
 {
-    return Texture ? reinterpret_cast<CD3D12Resource*>(Texture->GetRHIBaseResourceHandle()) : nullptr;
+    return Texture ? reinterpret_cast<CD3D12Resource*>(Texture->GetRHIBaseResource()) : nullptr;
 }
 
 #ifdef COMPILER_MSVC

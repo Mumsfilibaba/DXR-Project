@@ -62,22 +62,22 @@ protected:
 public:
 
     /** @return: Returns a pointer to a CRHITexture2D if the interface is implemented */
-    virtual class CRHITexture2D* AsTexture2D() { return nullptr; }
+    virtual class CRHITexture2D* GetTexture2D() { return nullptr; }
 
     /** @return: Returns a pointer to a CRHITexture2DArray if the interface is implemented */
-    virtual class CRHITexture2DArray* AsTexture2DArray() { return nullptr; }
+    virtual class CRHITexture2DArray* GetTexture2DArray() { return nullptr; }
     
     /** @return: Returns a pointer to a CRHITextureCube if the interface is implemented */
-    virtual class CRHITextureCube* AsTextureCube() { return nullptr; }
+    virtual class CRHITextureCube* GetTextureCube() { return nullptr; }
 
     /** @return: Returns a pointer to a CRHITextureCubeArray if the interface is implemented */
-    virtual class CRHITextureCubeArray* AsTextureCubeArray() { return nullptr; }
+    virtual class CRHITextureCubeArray* GetTextureCubeArray() { return nullptr; }
 
     /** @return: Returns a pointer to a CRHITexture3D if the interface is implemented */
-    virtual class CRHITexture3D* AsTexture3D() { return nullptr; }
+    virtual class CRHITexture3D* GetTexture3D() { return nullptr; }
 
     /** @return: Returns the RHI-backend Resource interface */
-    virtual void* GetRHIBaseResourceHandle() const { return nullptr; }
+    virtual void* GetRHIBaseResource() const { return nullptr; }
 
     /** @return: Returns the RHI-backend BaseTexture interface */
     virtual void* GetRHIBaseTexture() { return nullptr; }
@@ -164,7 +164,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual CRHITexture2D* AsTexture2D() override { return this; }
+    virtual CRHITexture2D* GetTexture2D() override { return this; }
 
     virtual CIntVector3 GetExtent() const override { return CIntVector3(Width, Height, 1); }
 
@@ -197,9 +197,9 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual CRHITexture2D* AsTexture2D() override final { return nullptr; }
+    virtual CRHITexture2D* GetTexture2D() override final { return nullptr; }
     
-    virtual CRHITexture2DArray* AsTexture2DArray() override final { return this; }
+    virtual CRHITexture2DArray* GetTexture2DArray() override final { return this; }
 
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(GetWidth(), GetDepth(), ArraySize); }
 
@@ -227,7 +227,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual CRHITextureCube* AsTextureCube() override { return this; }
+    virtual CRHITextureCube* GetTextureCube() override { return this; }
 
     virtual CIntVector3 GetExtent() const override { return CIntVector3(Extent, Extent, 1); }
 
@@ -264,9 +264,9 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual CRHITextureCube* AsTextureCube() override final { return nullptr; }
+    virtual CRHITextureCube* GetTextureCube() override final { return nullptr; }
     
-    virtual CRHITextureCubeArray* AsTextureCubeArray() override final { return this; }
+    virtual CRHITextureCubeArray* GetTextureCubeArray() override final { return this; }
 
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(GetWidth(), GetHeight(), ArraySize); }
 
@@ -294,7 +294,7 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual CRHITexture3D* AsTexture3D() override { return this; }
+    virtual CRHITexture3D* GetTexture3D() override { return this; }
 
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(Width, Height, Depth); }
 

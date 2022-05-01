@@ -6,7 +6,7 @@
 #include "IsBaseOf.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Internal details for invoke
+// Internal::Invoke
 
 namespace Internal
 {
@@ -47,7 +47,7 @@ namespace Internal
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Invoke a callable object
+// Invoke
 
 template <typename FuncType, typename... ArgTypes>
 inline decltype(auto) Invoke(FuncType&& Func, ArgTypes&&... Args)

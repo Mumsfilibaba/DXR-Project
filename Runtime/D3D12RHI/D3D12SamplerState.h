@@ -26,7 +26,7 @@ public:
         OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
     }
 
-    bool Init(const D3D12_SAMPLER_DESC& InDesc)
+    bool CreateSampler(const D3D12_SAMPLER_DESC& InDesc)
     {
         OfflineHandle = OfflineHeap->Allocate(OfflineHeapIndex);
         if (OfflineHandle != 0)
@@ -44,6 +44,13 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
 
     FORCEINLINE const D3D12_SAMPLER_DESC& GetDesc() const { return Desc; }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHISamplerState Interface
+
+    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 
 private:
     CD3D12OfflineDescriptorHeap* OfflineHeap = nullptr;

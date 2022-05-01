@@ -1,10 +1,10 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determines if the type is Plain Old Data (POD)
+// TIsPOD
 
 template<typename T>
-struct TIsPlainOldData
+struct TIsPOD
 {
     enum
     {

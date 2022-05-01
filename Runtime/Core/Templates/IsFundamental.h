@@ -4,7 +4,7 @@
 #include "IsNullptr.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determines if the type is fundamental or not
+// TIsFundamental
 
 template<typename T>
 struct TIsFundamental
@@ -16,7 +16,7 @@ struct TIsFundamental
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determines if the type is compound or not
+// TIsCompound
 
 template<typename T>
 struct TIsCompound

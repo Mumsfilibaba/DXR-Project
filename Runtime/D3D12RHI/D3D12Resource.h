@@ -5,7 +5,7 @@
 #include "Core/Utilities/StringUtilities.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12Resource
+// CD3D12Resource
 
 class CD3D12Resource : public CD3D12DeviceChild, public CRefCounted
 {
@@ -24,12 +24,12 @@ public:
     FORCEINLINE void SetName(const String& Name)
     {
         WString WideName = CharToWide(Name);
-        DxResource->SetName(WideName.CStr());
+        Resource->SetName(WideName.CStr());
     }
 
     FORCEINLINE ID3D12Resource* GetResource() const
     {
-        return DxResource.Get();
+        return Resource.Get();
     }
 
     FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
@@ -63,17 +63,10 @@ public:
     }
 
 private:
+    TComPtr<ID3D12Resource>   Resource;
 
-    // Native resource
-    TComPtr<ID3D12Resource> DxResource;
-
-    // Initial resource-state 
-    D3D12_RESOURCE_STATES ResourceState;
-
-    // Cached heap-type
-    D3D12_HEAP_TYPE HeapType;
-    // Cached description
-    D3D12_RESOURCE_DESC Desc;
-    // Cached GPU address
+    D3D12_RESOURCE_STATES     ResourceState;
+    D3D12_HEAP_TYPE           HeapType;
+    D3D12_RESOURCE_DESC       Desc;
     D3D12_GPU_VIRTUAL_ADDRESS Address = 0;
 };

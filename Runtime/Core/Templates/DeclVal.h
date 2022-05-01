@@ -2,7 +2,7 @@
 #include "AddReference.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Dummy function
+// DeclVal
 
 template<typename T>
 typename TAddReference<T>::RValue DeclVal() noexcept;

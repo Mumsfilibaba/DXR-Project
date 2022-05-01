@@ -4,7 +4,7 @@
 #include "IsFloatingPoint.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determine if the type is arthemic or not
+// TIsArithmetic
 
 template<typename T>
 struct TIsArithmetic

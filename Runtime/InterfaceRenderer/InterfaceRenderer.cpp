@@ -116,21 +116,21 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    SRHIVertexInputLayoutInitializer InputLayoutInfo =
+    CRHIVertexInputLayoutInitializer InputLayoutInfo =
     {
         { "POSITION", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EVertexInputClass::Vertex, 0 },
         { "TEXCOORD", 0, EFormat::R32G32_Float,   0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EVertexInputClass::Vertex, 0 },
         { "COLOR",    0, EFormat::R8G8B8A8_Unorm, 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EVertexInputClass::Vertex, 0 },
     };
 
-    TSharedRef<CRHIVertexInputLayout> InputLayout = RHICreateInputLayout(InputLayoutInfo);
+    TSharedRef<CRHIVertexInputLayout> InputLayout = RHICreateVertexInputLayout(InputLayoutInfo);
     if (!InputLayout)
     {
         CDebug::DebugBreak();
         return false;
     }
 
-    SRHIDepthStencilStateInfo DepthStencilStateInfo;
+    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
     DepthStencilStateInfo.bDepthEnable   = false;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
 
@@ -141,7 +141,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    SRHIRasterizerStateInfo RasterizerStateInfo;
+    CRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -151,15 +151,15 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    SRHIBlendStateInfo BlendStateInfo;
+    CRHIBlendStateInitializer BlendStateInfo;
     BlendStateInfo.bIndependentBlendEnable        = false;
-    BlendStateInfo.RenderTarget[0].bBlendEnable   = true;
-    BlendStateInfo.RenderTarget[0].SrcBlend       = EBlendType ::SrcAlpha;
-    BlendStateInfo.RenderTarget[0].SrcBlendAlpha  = EBlendType ::InvSrcAlpha;
-    BlendStateInfo.RenderTarget[0].DestBlend      = EBlendType ::InvSrcAlpha;
-    BlendStateInfo.RenderTarget[0].DestBlendAlpha = EBlendType ::Zero;
-    BlendStateInfo.RenderTarget[0].BlendOpAlpha   = EBlendOp::Add;
-    BlendStateInfo.RenderTarget[0].BlendOp        = EBlendOp::Add;
+    BlendStateInfo.RenderTargets[0].bBlendEnable  = true;
+    BlendStateInfo.RenderTargets[0].SrcBlend      = EBlendType ::SrcAlpha;
+    BlendStateInfo.RenderTargets[0].SrcBlendAlpha = EBlendType ::InvSrcAlpha;
+    BlendStateInfo.RenderTargets[0].DstBlend      = EBlendType ::InvSrcAlpha;
+    BlendStateInfo.RenderTargets[0].DstBlendAlpha = EBlendType ::Zero;
+    BlendStateInfo.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
+    BlendStateInfo.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
     TSharedRef<CRHIBlendState> BlendStateBlending = RHICreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
@@ -168,7 +168,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    BlendStateInfo.RenderTarget[0].bBlendEnable = false;
+    BlendStateInfo.RenderTargets[0].bBlendEnable = false;
 
     TSharedRef<CRHIBlendState> BlendStateNoBlending = RHICreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
@@ -177,10 +177,10 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    SRHIGraphicsPipelineStateInfo PSOProperties;
+    CRHIGraphicsPipelineStateInitializer PSOProperties;
     PSOProperties.ShaderState.VertexShader               = VShader.Get();
     PSOProperties.ShaderState.PixelShader                = PShader.Get();
-    PSOProperties.InputLayoutState                       = InputLayout.Get();
+    PSOProperties.VertexInputLayout                      = InputLayout.Get();
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
     PSOProperties.BlendState                             = BlendStateBlending.Get();
     PSOProperties.RasterizerState                        = RasterizerState.Get();

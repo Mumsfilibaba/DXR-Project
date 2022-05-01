@@ -4,7 +4,7 @@
 #include "IsAssignable.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Checks weather the type can be constructed with a copy constructor
+// TIsCopyConstructable
 
 template<typename T>
 struct TIsCopyConstructable
@@ -16,7 +16,7 @@ struct TIsCopyConstructable
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Checks weather the type can be constructed with a copy assignment operator
+// TIsCopyAssignable
 
 template<typename T>
 struct TIsCopyAssignable

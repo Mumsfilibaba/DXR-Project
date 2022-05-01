@@ -124,102 +124,102 @@ public:
         return dbg_new CNullRHIDepthStencilView();
     }
 
-    virtual class CRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final
     {
         return dbg_new TNullRHIShader<CNullRHIComputeShader>();
     }
 
-    virtual class CRHIVertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode) override final
     {
         return dbg_new TNullRHIShader<CRHIVertexShader>();
     }
 
-    virtual class CRHIHullShader* CreateHullShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIDomainShader* CreateDomainShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIGeometryShader* CreateGeometryShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIMeshShader* CreateMeshShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIAmplificationShader* CreateAmplificationShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode) override final
     {
         return nullptr;
     }
 
-    virtual class CRHIPixelShader* CreatePixelShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode) override final
     {
         return dbg_new TNullRHIShader<CRHIPixelShader>();
     }
 
-    virtual class CRHIRayGenShader* CreateRayGenShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIRayGenShader* RHICreateRayGenShader(const TArray<uint8>& ShaderCode) override final
     {
         return dbg_new TNullRHIShader<CRHIRayGenShader>();
     }
 
-    virtual class CRHIRayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIRayAnyHitShader* RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final
     {
         return dbg_new TNullRHIShader<CRHIRayAnyHitShader>();
     }
 
-    virtual class CRHIRayClosestHitShader* CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIRayClosestHitShader* RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final
     {
         return dbg_new TNullRHIShader<CRHIRayClosestHitShader>();
     }
 
-    virtual class CRHIRayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode) override final
+    virtual class CRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode) override final
     {
         return dbg_new TNullRHIShader<CRHIRayMissShader>();
     }
 
-    virtual class CRHIDepthStencilState* CreateDepthStencilState(const SRHIDepthStencilStateInfo& CreateInfo) override final
+    virtual class CRHIDepthStencilState* RHICreateDepthStencilState(const CRHIDepthStencilStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHIDepthStencilState();
     }
 
-    virtual class CRHIRasterizerState* CreateRasterizerState(const SRHIRasterizerStateInfo& CreateInfo) override final
+    virtual class CRHIRasterizerState* RHICreateRasterizerState(const CRHIRasterizerStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHIRasterizerState();
     }
 
-    virtual class CRHIBlendState* CreateBlendState(const SRHIBlendStateInfo& CreateInfo) override final
+    virtual class CRHIBlendState* RHICreateBlendState(const CRHIBlendStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHIBlendState();
     }
 
-    virtual class CRHIVertexInputLayout* CreateInputLayout(const SRHIVertexInputLayoutInitializer& CreateInfo) override final
+    virtual class CRHIVertexInputLayout* RHICreateVertexInputLayout(const CRHIVertexInputLayoutInitializer& Initializer) override final
     {
         return dbg_new CNullRHIInputLayoutState();
     }
 
-    virtual class CRHIGraphicsPipelineState* CreateGraphicsPipelineState(const SRHIGraphicsPipelineStateInfo& CreateInfo) override final
+    virtual class CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const CRHIGraphicsPipelineStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHIGraphicsPipelineState();
     }
 
-    virtual class CRHIComputePipelineState* CreateComputePipelineState(const SRHIComputePipelineStateInfo& CreateInfo) override final
+    virtual class CRHIComputePipelineState* RHICreateComputePipelineState(const CRHIComputePipelineStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHIComputePipelineState();
     }
 
-    virtual class CRHIRayTracingPipelineState* CreateRayTracingPipelineState(const SRHIRayTracingPipelineStateInfo& CreateInfo) override final
+    virtual class CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const CRHIRayTracingPipelineStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHIRayTracingPipelineState();
     }
 
-    virtual class CRHITimestampQuery* CreateTimestampQuery() override final
+    virtual class CRHITimestampQuery* RHICreateTimestampQuery() override final
     {
         return dbg_new CNullRHITimestampQuery();
     }
@@ -239,17 +239,17 @@ public:
         return String();
     }
 
-    virtual void CheckRayTracingSupport(SRHIRayTracingSupport& OutSupport) const override final
+    virtual void RHIQueryRayTracingSupport(SRHIRayTracingSupport& OutSupport) const override final
     {
         OutSupport = SRHIRayTracingSupport();
     }
 
-    virtual void CheckShadingRateSupport(SRHIShadingRateSupport& OutSupport) const override final
+    virtual void RHIQueryShadingRateSupport(SRHIShadingRateSupport& OutSupport) const override final
     {
         OutSupport = SRHIShadingRateSupport();
     }
 
-    virtual bool UAVSupportsFormat(EFormat Format) const override final
+    virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final
     {
         return true;
     }

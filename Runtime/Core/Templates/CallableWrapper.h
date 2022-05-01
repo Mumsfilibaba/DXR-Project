@@ -1,7 +1,7 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Wrapper for a callable
+// TCallableWrapper
 
 template<typename ReturnType, typename... ArgTypes>
 struct TCallableWrapper

@@ -17,6 +17,8 @@
 #define GBUFFER_DEPTH_INDEX       (3)
 #define GBUFFER_VIEW_NORMAL_INDEX (4)
 
+#define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetDefaultShaderResourceView() : nullptr)
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TResourceCache
 

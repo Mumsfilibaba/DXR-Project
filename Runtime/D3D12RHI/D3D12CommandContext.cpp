@@ -1036,7 +1036,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     }
 
     // Check Type
-    const bool bIsTextureCube = (Texture->AsTextureCube() != nullptr);
+    const bool bIsTextureCube = (Texture->GetTextureCube() != nullptr);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
     CMemory::Memzero(&SrvDesc);

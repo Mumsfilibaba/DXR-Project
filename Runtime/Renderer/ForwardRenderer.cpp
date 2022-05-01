@@ -48,7 +48,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    SRHIDepthStencilStateInfo DepthStencilStateInfo;
+    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
     DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable   = true;
     DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
@@ -60,7 +60,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    SRHIRasterizerStateInfo RasterizerStateInfo;
+    CRHIRasterizerStateInitializer RasterizerStateInfo;
     RasterizerStateInfo.CullMode = ECullMode::None;
 
     TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
@@ -70,9 +70,7 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    SRHIBlendStateInfo BlendStateInfo;
-    BlendStateInfo.bIndependentBlendEnable = false;
-    BlendStateInfo.RenderTarget[0].bBlendEnable = true;
+    CRHIBlendStateInitializer BlendStateInfo( { SRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero) }, false , false);
 
     TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
     if (!BlendState)
@@ -81,10 +79,10 @@ bool CForwardRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    SRHIGraphicsPipelineStateInfo PSOProperties;
+    CRHIGraphicsPipelineStateInitializer PSOProperties;
     PSOProperties.ShaderState.VertexShader               = VShader.Get();
     PSOProperties.ShaderState.PixelShader                = PShader.Get();
-    PSOProperties.InputLayoutState                       = FrameResources.StdInputLayout.Get();
+    PSOProperties.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
     PSOProperties.BlendState                             = BlendState.Get();
     PSOProperties.RasterizerState                        = RasterizerState.Get();

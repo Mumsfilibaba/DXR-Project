@@ -1,10 +1,12 @@
 #pragma once
 #include "And.h"
 
+/** Determine if the object is trivially copyable. This in practice means that these
+ *  objects can be safley copied with Memory::Memcpy
+ */
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-/* Determine if the object is trivially copyable. This in practice means that these
-*  objects can be safley copied with Memory::Memcpy
-*/
+// TIsTriviallyCopyable
 
 template<typename T>
 struct TIsTriviallyCopyable
@@ -16,7 +18,7 @@ struct TIsTriviallyCopyable
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determine if the object is trivially constructible, that is that it has a compiler generated constructor
+// TIsTriviallyConstructable
 
 template<typename T, typename... ArgTypes>
 struct TIsTriviallyConstructable
@@ -28,7 +30,7 @@ struct TIsTriviallyConstructable
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determine if the object is trivially destructible, that is that it has a compiler generated destructor.
+// TIsTriviallyDestructable
 
 template<typename T>
 struct TIsTriviallyDestructable
@@ -40,7 +42,7 @@ struct TIsTriviallyDestructable
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Determines if the type is trivially copyable and default constructible
+// TIsTrivial
 
 template<typename T>
 struct TIsTrivial

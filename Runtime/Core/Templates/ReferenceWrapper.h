@@ -5,12 +5,13 @@
 #include "AddressOf.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Wrapper for a reference making them copyable
+// TReferenceWrapper
 
 template<typename T>
 class TReferenceWrapper
 {
 public:
+
     typedef T Type;
 
     TReferenceWrapper(const TReferenceWrapper&) = default;
