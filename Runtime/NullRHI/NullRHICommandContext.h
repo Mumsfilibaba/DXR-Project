@@ -91,7 +91,7 @@ public:
     virtual void DiscardContents(class CRHITexture* Texture) override final { }
 
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final { }
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final { }
+    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final { }
 
     virtual void SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
                                       , CRHIRayTracingPipelineState* PipelineState

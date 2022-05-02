@@ -60,14 +60,15 @@ bool CMesh::Init(const SMeshData& Data)
 
     if (bRTOn)
     {
-        RTGeometry = RHICreateRayTracingGeometry(RayTracingStructureBuildFlag_None, VertexBuffer.Get(), IndexBuffer.Get());
+        CRHIRayTracingGeometryInitializer GeometryInitializer(VertexBuffer.Get(), IndexBuffer.Get(), EAccelerationStructureBuildFlags::None);
+        RTGeometry = RHICreateRayTracingGeometry(GeometryInitializer);
         if (!RTGeometry)
         {
             return false;
         }
         else
         {
-            // RTGeometry->SetName("RayTracing Geometry");
+            RTGeometry->SetName("RayTracing Geometry");
         }
 
         VertexBufferSRV = RHICreateShaderResourceView(VertexBuffer.Get(), 0, VertexCount);

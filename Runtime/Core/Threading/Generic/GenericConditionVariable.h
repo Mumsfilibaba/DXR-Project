@@ -13,7 +13,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CGenericConditionVariable
 
-class CGenericConditionVariable : CNonCopyable
+class CGenericConditionVariable : NonCopyable
 {
 public:
 

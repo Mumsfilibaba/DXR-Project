@@ -1,11 +1,11 @@
 #include "D3D12Device.h"
 #include "D3D12CommandContext.h"
-#include "D3D12RHITimestampQuery.h"
+#include "D3D12TimestampQuery.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12RHITimestampQuery
 
-CD3D12RHITimestampQuery::CD3D12RHITimestampQuery(CD3D12Device* InDevice)
+CD3D12TimestampQuery::CD3D12TimestampQuery(CD3D12Device* InDevice)
     : CD3D12DeviceChild(InDevice)
     , CRHITimestampQuery()
     , QueryHeap(nullptr)
@@ -16,7 +16,7 @@ CD3D12RHITimestampQuery::CD3D12RHITimestampQuery(CD3D12Device* InDevice)
 {
 }
 
-void CD3D12RHITimestampQuery::GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const
+void CD3D12TimestampQuery::GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const
 {
     if (Index >= (uint32)TimeQueries.Size())
     {
@@ -29,7 +29,7 @@ void CD3D12RHITimestampQuery::GetTimestampFromIndex(SRHITimestamp& OutQuery, uin
     }
 }
 
-void CD3D12RHITimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
+void CD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
     Assert(Index < D3D12_DEFAULT_QUERY_COUNT);
     Assert(CmdList != nullptr);
@@ -43,7 +43,7 @@ void CD3D12RHITimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uin
     }
 }
 
-void CD3D12RHITimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
+void CD3D12TimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
     Assert(CmdList != nullptr);
     Assert(Index < (uint32)TimeQueries.Size());
@@ -51,10 +51,10 @@ void CD3D12RHITimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint3
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2) + 1);
 }
 
-void CD3D12RHITimestampQuery::ResolveQueries(class CD3D12CommandContext& CmdContext)
+void CD3D12TimestampQuery::ResolveQueries(class CD3D12CommandContext& CmdContext)
 {
-    CD3D12CommandList CmdList = CmdContext.GetCommandList();
-    ID3D12CommandQueue* CmdQueue = CmdContext.GetQueue().GetQueue();
+    CD3D12CommandList          CmdList    = CmdContext.GetCommandList();
+    ID3D12CommandQueue*        CmdQueue   = CmdContext.GetQueue().GetQueue();
     ID3D12GraphicsCommandList* GfxCmdList = CmdList.GetGraphicsCommandList();
 
     Assert(CmdQueue != nullptr);
@@ -91,13 +91,13 @@ void CD3D12RHITimestampQuery::ResolveQueries(class CD3D12CommandContext& CmdCont
     HRESULT Result = CmdQueue->GetTimestampFrequency(&Frequency);
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12GPUProfiler] FAILED to query ClockCalibration");
+        LOG_ERROR("[CD3D12TimestampQuery] FAILED to query ClockCalibration");
     }
 }
 
-CD3D12RHITimestampQuery* CD3D12RHITimestampQuery::Create(CD3D12Device* InDevice)
+CD3D12TimestampQuery* CD3D12TimestampQuery::Create(CD3D12Device* InDevice)
 {
-    TSharedRef<CD3D12RHITimestampQuery> NewProfiler = dbg_new CD3D12RHITimestampQuery(InDevice);
+    TSharedRef<CD3D12TimestampQuery> NewProfiler = dbg_new CD3D12TimestampQuery(InDevice);
 
     ID3D12Device* DxDevice = InDevice->GetD3D12Device();
 
@@ -155,7 +155,7 @@ CD3D12RHITimestampQuery* CD3D12RHITimestampQuery::Create(CD3D12Device* InDevice)
     return NewProfiler.ReleaseOwnership();
 }
 
-bool CD3D12RHITimestampQuery::AllocateReadResource()
+bool CD3D12TimestampQuery::AllocateReadResource()
 {
     D3D12_RESOURCE_DESC Desc;
     CMemory::Memzero(&Desc);

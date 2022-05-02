@@ -711,7 +711,7 @@ public:
      */
     void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
     {
-        Assert((Geometry != nullptr) && (!bUpdate || (bUpdate && Geometry->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)));
+        Assert((Geometry != nullptr) && (!bUpdate || (bUpdate && (Geometry->GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)));
         InsertCommand<CRHICommandBuildRayTracingGeometry>(Geometry, VertexBuffer, IndexBuffer, bUpdate);
     }
 
@@ -720,13 +720,12 @@ public:
      *
      * @param Scene: Top-level acceleration-structure to build or update
      * @param Instances: Instances to build the scene of
-     * @param NumInstances: Number of instances to build
      * @param bUpdate: True if the build should be an update, false if it should build from the ground up
      */
-    void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
+    void BuildRayTracingScene(CRHIRayTracingScene* Scene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
     {
-        Assert((Scene != nullptr) && (!bUpdate || (bUpdate && Scene->GetFlags() & RayTracingStructureBuildFlag_AllowUpdate)));
-        InsertCommand<CRHICommandBuildRayTracingScene>(Scene, Instances, NumInstances, bUpdate);
+        Assert((Scene != nullptr) && (!bUpdate || (bUpdate && (Scene->GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)));
+        InsertCommand<CRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);
     }
 
     // TODO: Refactor

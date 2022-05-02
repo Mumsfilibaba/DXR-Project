@@ -15,7 +15,7 @@
 #include "D3D12Views.h"
 #include "D3D12SamplerState.h"
 #include "D3D12PipelineState.h"
-#include "D3D12RHITimestampQuery.h"
+#include "D3D12TimestampQuery.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SD3D12UploadAllocation
@@ -321,7 +321,7 @@ public:
     virtual void DiscardContents(class CRHITexture* Texture)   override final;
 
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final;
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) override final;
+    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final;
 
      /** @brief: Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
     virtual void SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
@@ -375,7 +375,7 @@ private:
     TArray<CD3D12CommandBatch> CmdBatches;
     CD3D12CommandBatch*        CmdBatch = nullptr;
 
-    TArray<TSharedRef<CD3D12RHITimestampQuery>> ResolveQueries;
+    TArray<TSharedRef<CD3D12TimestampQuery>> ResolveQueries;
 
     TSharedRef<CD3D12GraphicsPipelineState> CurrentGraphicsPipelineState;
     TSharedRef<CD3D12ComputePipelineState>  CurrentComputePipelineState;

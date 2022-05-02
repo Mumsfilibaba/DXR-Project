@@ -9,7 +9,7 @@
 #include "D3D12PipelineState.h"
 #include "D3D12RayTracing.h"
 #include "D3D12RHIShaderCompiler.h"
-#include "D3D12RHITimestampQuery.h"
+#include "D3D12TimestampQuery.h"
 #include "D3D12CommandContext.h"
 #include "D3D12FunctionPointers.h"
 
@@ -355,18 +355,18 @@ void CD3D12CommandContext::FinishContext()
 
 void CD3D12CommandContext::BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
 {
-    CD3D12RHITimestampQuery* D3D12TimestampQuery = static_cast<CD3D12RHITimestampQuery*>(TimestampQuery);
+    CD3D12TimestampQuery* D3D12TimestampQuery = static_cast<CD3D12TimestampQuery*>(TimestampQuery);
     D3D12_ERROR(D3D12TimestampQuery != nullptr, "TimestampQuery cannot be nullptr");
 
     ID3D12GraphicsCommandList* DxCmdList = CommandList.GetGraphicsCommandList();
     D3D12TimestampQuery->BeginQuery(DxCmdList, Index);
 
-    ResolveQueries.Emplace(MakeSharedRef<CD3D12RHITimestampQuery>(D3D12TimestampQuery));
+    ResolveQueries.Emplace(MakeSharedRef<CD3D12TimestampQuery>(D3D12TimestampQuery));
 }
 
 void CD3D12CommandContext::EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index)
 {
-    CD3D12RHITimestampQuery* D3D12TimestampQuery = static_cast<CD3D12RHITimestampQuery*>(TimestampQuery);
+    CD3D12TimestampQuery* D3D12TimestampQuery = static_cast<CD3D12TimestampQuery*>(TimestampQuery);
     D3D12_ERROR(D3D12TimestampQuery != nullptr, "TimestampQuery cannot be nullptr");
 
     ID3D12GraphicsCommandList* D3D12CmdList = CommandList.GetGraphicsCommandList();
@@ -875,9 +875,9 @@ void CD3D12CommandContext::DiscardContents(CRHITexture* Texture)
     }
 }
 
-void CD3D12CommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
+void CD3D12CommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* RayTracingGeometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
 {
-    D3D12_ERROR(Geometry != nullptr, "Geometry cannot be nullptr");
+    D3D12_ERROR(RayTracingGeometry != nullptr, "RayTracingGeometry cannot be nullptr");
 
     FlushResourceBarriers();
 
@@ -885,24 +885,22 @@ void CD3D12CommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geome
     CD3D12IndexBuffer*  D3D12IndexBuffer  = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
     D3D12_ERROR(D3D12VertexBuffer != nullptr, "VertexBuffer cannot be nullptr");
 
-    CD3D12RayTracingGeometry* D3D12Geometry = static_cast<CD3D12RayTracingGeometry*>(Geometry);
-    D3D12Geometry->VertexBuffer = D3D12VertexBuffer;
-    D3D12Geometry->IndexBuffer  = D3D12IndexBuffer;
-    D3D12Geometry->Build(*this, bUpdate);
+    CD3D12RayTracingGeometry* D3D12Geometry = static_cast<CD3D12RayTracingGeometry*>(RayTracingGeometry);
+    D3D12Geometry->Build(*this, D3D12VertexBuffer, D3D12IndexBuffer, bUpdate);
 
-    CmdBatch->AddInUseResource(Geometry);
+    CmdBatch->AddInUseResource(RayTracingGeometry);
     CmdBatch->AddInUseResource(VertexBuffer);
     CmdBatch->AddInUseResource(IndexBuffer);
 }
 
-void CD3D12CommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate)
+void CD3D12CommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
 {
     D3D12_ERROR(RayTracingScene != nullptr, "RayTracingScene cannot be nullptr");
 
     FlushResourceBarriers();
 
     CD3D12RayTracingScene* D3D12Scene = static_cast<CD3D12RayTracingScene*>(RayTracingScene);
-    D3D12Scene->Build(*this, Instances, NumInstances, bUpdate);
+    D3D12Scene->Build(*this, Instances, bUpdate);
 
     CmdBatch->AddInUseResource(RayTracingScene);
 }

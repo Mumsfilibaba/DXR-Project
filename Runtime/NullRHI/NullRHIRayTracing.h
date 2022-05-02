@@ -18,11 +18,20 @@ class CNullRHIRayTracingGeometry : public CRHIRayTracingGeometry
 {
 public:
 
-    CNullRHIRayTracingGeometry(uint32 InFlags)
-        : CRHIRayTracingGeometry(InFlags)
+    CNullRHIRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer)
+        : CRHIRayTracingGeometry(Initializer)
     { }
 
     ~CNullRHIRayTracingGeometry() = default;
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIRayTracingGeometry Interface
+
+    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
+
+    virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -31,8 +40,8 @@ public:
 class CNullRHIRayTracingScene : public CRHIRayTracingScene
 {
 public:
-    CNullRHIRayTracingScene(uint32 InFlags)
-        : CRHIRayTracingScene(InFlags)
+    CNullRHIRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
+        : CRHIRayTracingScene(Initializer)
         , View(dbg_new CNullRHIShaderResourceView())
     { }
 
@@ -44,6 +53,12 @@ public:
     // CRHIRayTracingScene Interface
 
     virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
+
+    virtual CRHIDescriptorHandle GetBindlessHandle() const override final{ return CRHIDescriptorHandle(); }
+
+    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
+
+    virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
 
 private:
     TSharedRef<CNullRHIShaderResourceView> View;

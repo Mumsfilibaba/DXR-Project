@@ -814,24 +814,21 @@ DECLARE_RHICOMMAND_CLASS(CRHICommandBuildRayTracingScene)
 {
 public:
     FORCEINLINE CRHICommandBuildRayTracingScene( CRHIRayTracingScene* InScene
-                                               , const SRayTracingGeometryInstance* InInstances
-                                               , uint32 InNumInstances
+                                               , const TArrayView<const CRHIRayTracingGeometryInstance>& InInstances
                                                , bool bInUpdate)
         : Scene(InScene)
         , Instances(InInstances)
-        , NumInstances(InNumInstances)
         , bUpdate(bInUpdate)
     { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BuildRayTracingScene(Scene, Instances, NumInstances, bUpdate);
+        CommandContext.BuildRayTracingScene(Scene, Instances, bUpdate);
     }
 
-    CRHIRayTracingScene*               Scene;
-    const SRayTracingGeometryInstance* Instances;
-    uint32                             NumInstances;
-    bool                               bUpdate;
+    CRHIRayTracingScene*                             Scene;
+    TArrayView<const CRHIRayTracingGeometryInstance> Instances;
+    bool                                             bUpdate;
 };
 
 

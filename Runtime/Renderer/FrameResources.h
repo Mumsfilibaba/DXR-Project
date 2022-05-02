@@ -113,7 +113,7 @@ struct RENDERER_API SFrameResources
     SRayTracingShaderResources GlobalResources;
     SRayTracingShaderResources RayGenLocalResources;
     SRayTracingShaderResources MissLocalResources;
-    TArray<SRayTracingGeometryInstance> RTGeometryInstances;
+    TArray<CRHIRayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<SRayTracingShaderResources>     RTHitGroupResources;
     THashTable<class CMesh*, uint32>       RTMeshToHitGroupIndex;

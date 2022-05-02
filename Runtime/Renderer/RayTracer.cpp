@@ -148,9 +148,9 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
             HitGroupIndex = HitGroupIndexPair->second;
         }
 
-        SRayTracingGeometryInstance Instance;
-        Instance.Instance      = MakeSharedRef<CRHIRayTracingGeometry>(Command.Geometry);
-        Instance.Flags         = RayTracingInstanceFlags_None;
+        CRHIRayTracingGeometryInstance Instance;
+        Instance.Geometry      = Command.Geometry;
+        Instance.Flags         = ERayTracingInstanceFlags::None;
         Instance.HitGroupIndex = HitGroupIndex;
         Instance.InstanceIndex = AlbedoIndex;
         Instance.Mask          = 0xff;
@@ -160,11 +160,12 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
 
     if (!Resources.RTScene)
     {
-        Resources.RTScene = RHICreateRayTracingScene(RayTracingStructureBuildFlag_None, Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size());
+        CRHIRayTracingSceneInitializer SceneInitializer(Resources.RTGeometryInstances.CreateView(), EAccelerationStructureBuildFlags::None);
+        Resources.RTScene = RHICreateRayTracingScene(SceneInitializer);
     }
     else
     {
-        CmdList.BuildRayTracingScene(Resources.RTScene.Get(), Resources.RTGeometryInstances.Data(), Resources.RTGeometryInstances.Size(), false);
+        CmdList.BuildRayTracingScene(Resources.RTScene.Get(), TArrayView(Resources.RTGeometryInstances.CreateView()), false);
     }
 
     Resources.GlobalResources.Reset();

@@ -6,7 +6,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CGenericCriticalSection
 
-class CGenericCriticalSection : CNonCopyable
+class CGenericCriticalSection : NonCopyable
 {
 public:
 

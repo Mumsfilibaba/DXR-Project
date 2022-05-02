@@ -16,7 +16,7 @@
 #include "D3D12SamplerState.h"
 #include "D3D12Viewport.h"
 #include "D3D12RHIShaderCompiler.h"
-#include "D3D12RHITimestampQuery.h"
+#include "D3D12TimestampQuery.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12 Helpers
@@ -690,18 +690,16 @@ CRHIGenericBuffer* CD3D12CoreInterface::RHICreateGenericBuffer(const CRHIGeneric
     }
 }
 
-CRHIRayTracingGeometry* CD3D12CoreInterface::CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer)
+CRHIRayTracingGeometry* CD3D12CoreInterface::RHICreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer)
 {
-    CD3D12VertexBuffer* D3D12VertexBuffer = static_cast<CD3D12VertexBuffer*>(VertexBuffer);
-    CD3D12IndexBuffer*  D3D12IndexBuffer  = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
+    CD3D12VertexBuffer* D3D12VertexBuffer = static_cast<CD3D12VertexBuffer*>(Initializer.VertexBuffer);
+    CD3D12IndexBuffer*  D3D12IndexBuffer  = static_cast<CD3D12IndexBuffer*>(Initializer.IndexBuffer);
 
-    TSharedRef<CD3D12RayTracingGeometry> D3D12Geometry = dbg_new CD3D12RayTracingGeometry(Device, Flags);
-    D3D12Geometry->VertexBuffer = MakeSharedRef<CD3D12VertexBuffer>(D3D12VertexBuffer);
-    D3D12Geometry->IndexBuffer  = MakeSharedRef<CD3D12IndexBuffer>(D3D12IndexBuffer);
+    TSharedRef<CD3D12RayTracingGeometry> D3D12Geometry = dbg_new CD3D12RayTracingGeometry(Device, Initializer);
 
     DirectCmdContext->StartContext();
-
-    if (!D3D12Geometry->Build(*DirectCmdContext, false))
+    
+    if (!D3D12Geometry->Build(*DirectCmdContext, D3D12VertexBuffer, D3D12IndexBuffer, false))
     {
         CDebug::DebugBreak();
         D3D12Geometry.Reset();
@@ -712,13 +710,13 @@ CRHIRayTracingGeometry* CD3D12CoreInterface::CreateRayTracingGeometry(uint32 Fla
     return D3D12Geometry.ReleaseOwnership();
 }
 
-CRHIRayTracingScene* CD3D12CoreInterface::CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)
+CRHIRayTracingScene* CD3D12CoreInterface::RHICreateRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
 {
-    TSharedRef<CD3D12RayTracingScene> D3D12Scene = dbg_new CD3D12RayTracingScene(Device, Flags);
+    TSharedRef<CD3D12RayTracingScene> D3D12Scene = dbg_new CD3D12RayTracingScene(Device, Initializer);
 
     DirectCmdContext->StartContext();
 
-    if (!D3D12Scene->Build(*DirectCmdContext, Instances, NumInstances, false))
+    if (!D3D12Scene->Build(*DirectCmdContext, Initializer.Instances.CreateView(), false))
     {
         CDebug::DebugBreak();
         D3D12Scene.Reset();
@@ -1478,7 +1476,7 @@ CRHIRayTracingPipelineState* CD3D12CoreInterface::RHICreateRayTracingPipelineSta
 
 CRHITimestampQuery* CD3D12CoreInterface::RHICreateTimestampQuery()
 {
-    return CD3D12RHITimestampQuery::Create(Device);
+    return CD3D12TimestampQuery::Create(Device);
 }
 
 CRHIViewport* CD3D12CoreInterface::CreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)

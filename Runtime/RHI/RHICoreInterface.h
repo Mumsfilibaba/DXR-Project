@@ -263,24 +263,20 @@ public:
     virtual CRHIConstantBuffer* RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer) = 0;
     
     /**
-     * @brief: Create a new Ray tracing scene
+     * @brief: Create a new Ray Tracing Scene
      * 
-     * @param Flags: Flags for the creation
-     * @param Instances: Initial instances to create the acceleration structure with
-     * @param NumInstances: Number of instances in the array
+     * @param Initializer: Struct containing information about the Ray Tracing Scene
      * @return: Returns the newly created Ray tracing Scene
      */
-    virtual CRHIRayTracingScene* CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) = 0;
+    virtual CRHIRayTracingScene* RHICreateRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer) = 0;
     
     /**
      * @brief: Create a new Ray tracing geometry
      *
-     * @param Flags: Flags for the creation
-     * @param VertexBuffer: VertexBuffer the acceleration structure with
-     * @param IndexBuffer: IndexBuffer the acceleration structure with
+     * @param Initializer: Struct containing information about the Ray Tracing Geometry
      * @return: Returns the newly created Ray tracing Geometry
      */
-    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer) = 0;
+    virtual CRHIRayTracingGeometry* RHICreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new ShaderResourceView
@@ -585,14 +581,14 @@ FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(const CRHIConstantBuffer
     return GRHIInstance->RHICreateConstantBuffer(Initializer);
 }
 
-FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)
+FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
 {
-    return GRHIInstance->CreateRayTracingScene(Flags, Instances, NumInstances);
+    return GRHIInstance->RHICreateRayTracingScene(Initializer);
 }
 
-FORCEINLINE CRHIRayTracingGeometry* RHICreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer)
+FORCEINLINE CRHIRayTracingGeometry* RHICreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer)
 {
-    return GRHIInstance->CreateRayTracingGeometry(Flags, VertexBuffer, IndexBuffer);
+    return GRHIInstance->RHICreateRayTracingGeometry(Initializer);
 }
 
 FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo)

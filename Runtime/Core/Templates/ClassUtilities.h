@@ -1,29 +1,29 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNonCopyable
+// NonCopyable
 
-class CNonCopyable
+class NonCopyable
 {
 public:
 
-    CNonCopyable()  = default;
-    ~CNonCopyable() = default;
+    NonCopyable()  = default;
+    ~NonCopyable() = default;
 
-    CNonCopyable(const CNonCopyable&)            = delete;
-    CNonCopyable& operator=(const CNonCopyable&) = delete;
+    NonCopyable(const NonCopyable&)            = delete;
+    NonCopyable& operator=(const NonCopyable&) = delete;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNonMovable
+// NonMovable
 
-class CNonMovable
+class NonMovable
 {
 public:
 
-    CNonMovable()  = default;
-    ~CNonMovable() = default;
+    NonMovable()  = default;
+    ~NonMovable() = default;
 
-    CNonMovable(const CNonMovable&)            = delete;
-    CNonMovable& operator=(const CNonMovable&) = delete;
+    NonMovable(const NonMovable&)            = delete;
+    NonMovable& operator=(const NonMovable&) = delete;
 };

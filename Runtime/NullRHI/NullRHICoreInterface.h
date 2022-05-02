@@ -94,14 +94,14 @@ public:
         return dbg_new TNullRHIBuffer<CNullRHIConstantBuffer>(Initializer);
     }
 
-    virtual CRHIRayTracingScene* CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) override final
+    virtual CRHIRayTracingScene* RHICreateRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer) override final
     {
-        return dbg_new CNullRHIRayTracingScene(Flags);
+        return dbg_new CNullRHIRayTracingScene(Initializer);
     }
 
-    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer) override final
+    virtual CRHIRayTracingGeometry* RHICreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer) override final
     {
-        return dbg_new CNullRHIRayTracingGeometry(Flags);
+        return dbg_new CNullRHIRayTracingGeometry(Initializer);
     }
 
     virtual CRHIShaderResourceView* CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo) override final
