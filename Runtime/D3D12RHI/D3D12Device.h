@@ -13,9 +13,9 @@ class CD3D12RootSignature;
 #define D3D12_ENABLE_PIX_MARKERS              (1)
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RHID3D12DeviceRemovedHandler
+// D3D12DeviceRemovedHandlerRHI
 
-void RHID3D12DeviceRemovedHandler(class CD3D12Device* Device);
+void D3D12DeviceRemovedHandlerRHI(class CD3D12Device* Device);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12Device

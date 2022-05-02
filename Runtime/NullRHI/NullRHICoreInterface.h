@@ -44,27 +44,27 @@ public:
 
     virtual bool Initialize(bool bEnableDebug) override final { return true; }
 
-    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture2D>(Format, Width, Height, NumMips, NumSamples, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture2DArray>(Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITextureCube>(Format, Size, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITextureCubeArray>(Format, Size, NumArraySlices, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture3D>(Format, Width, Height, Depth, NumMips, Flags, OptimizedClearValue);
     }
@@ -224,12 +224,12 @@ public:
         return dbg_new CNullRHITimestampQuery();
     }
 
-    virtual class CRHIViewport* CreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) override final
+    virtual class CRHIViewport* RHICreateViewport(const CRHIViewportInitializer& Initializer) override final
     {
-        return dbg_new CNullRHIViewport(ColorFormat, Width, Height);
+        return dbg_new CNullRHIViewport(Initializer);
     }
 
-    virtual class IRHICommandContext* GetDefaultCommandContext() override final
+    virtual class IRHICommandContext* RHIGetDefaultCommandContext() override final
     {
         return CommandContext;
     }

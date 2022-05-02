@@ -5,6 +5,8 @@
 #include "RHICommandList.h"
 #include "RHIModule.h"
 #include "RHISamplerState.h"
+#include "RHIViewport.h"
+#include "IRHICommandContext.h"
 
 #include "CoreApplication/Generic/GenericWindow.h"
 
@@ -17,7 +19,7 @@
 #endif
 
 struct SRHIResourceData;
-struct SClearValue;
+
 class CRHIRayTracingGeometry;
 class CRHIRayTracingScene;
 
@@ -162,7 +164,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a Texture2DArray
@@ -178,7 +180,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a TextureCube
@@ -191,7 +193,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a TextureCubeArray
@@ -205,7 +207,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a Texture3D
@@ -220,7 +222,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Create a SamplerState
@@ -228,7 +230,7 @@ public:
      * @param Initializer: Structure with information about the SamplerState
      * @return: Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
      */
-    virtual class CRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer) = 0;
+    virtual CRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a VertexBuffer
@@ -472,21 +474,17 @@ public:
     /**
      * @brief: Create a new Viewport
      * 
-     * @param Window: Window to bind to the viewport
-     * @param Width: Width of the viewport
-     * @param Height: Height of the viewport
-     * @param ColorFormat: Format for the color
-     * @param DepthFormat: Format for the depth
+     * @param Initializer: Structure containing the information for the Viewport
      * @return: Returns the newly created viewport
      */
-    virtual class CRHIViewport* CreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
+    virtual class CRHIViewport* RHICreateViewport(const CRHIViewportInitializer& Initializer) = 0;
 
     /**
      * @brief: Retrieve the default CommandContext
      * 
      * @return: Returns the default CommandContext
      */
-    virtual class IRHICommandContext* GetDefaultCommandContext() = 0;
+    virtual class IRHICommandContext* RHIGetDefaultCommandContext() = 0;
 
     /**
      * @brief: Check for Ray tracing support
@@ -531,27 +529,27 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper functions
 
-FORCEINLINE CRHITexture2D* RHICreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture2D* RHICreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
 {
     return GRHIInstance->CreateTexture2D(Format, Width, Height, NumMips, NumSamples, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
 {
     return GRHIInstance->CreateTexture2DArray(Format, Width, Height, NumMips, NumSamples, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITextureCube* RHICreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITextureCube* RHICreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
 {
     return GRHIInstance->CreateTextureCube(Format, Size, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
 {
     return GRHIInstance->CreateTextureCubeArray(Format, Size, NumMips, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
 {
     return GRHIInstance->CreateTexture3D(Format, Width, Height, Depth, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
@@ -970,9 +968,9 @@ FORCEINLINE class CRHITimestampQuery* RHICreateTimestampQuery()
     return GRHIInstance->RHICreateTimestampQuery();
 }
 
-FORCEINLINE class CRHIViewport* RHICreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
+FORCEINLINE class CRHIViewport* RHICreateViewport(const CRHIViewportInitializer& Initializer)
 {
-    return GRHIInstance->CreateViewport(Window, Width, Height, ColorFormat, DepthFormat);
+    return GRHIInstance->RHICreateViewport(Initializer);
 }
 
 FORCEINLINE bool RHIQueryUAVFormatSupport(EFormat Format)
@@ -982,7 +980,7 @@ FORCEINLINE bool RHIQueryUAVFormatSupport(EFormat Format)
 
 FORCEINLINE class IRHICommandContext* RHIGetDefaultCommandContext()
 {
-    return GRHIInstance->GetDefaultCommandContext();
+    return GRHIInstance->RHIGetDefaultCommandContext();
 }
 
 FORCEINLINE String RHIGetAdapterName()

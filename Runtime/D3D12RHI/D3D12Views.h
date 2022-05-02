@@ -22,7 +22,7 @@ public:
 
     FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
 
-    FORCEINLINE const CD3D12Resource* GetResource() const { return Resource.Get(); }
+    FORCEINLINE const CD3D12Resource* GetD3D12Resource() const { return Resource.Get(); }
 
 protected:
     TSharedRef<CD3D12Resource> Resource;
@@ -82,7 +82,7 @@ public:
 
     FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const { return Desc; }
 
-    FORCEINLINE const CD3D12Resource* GetCounterResource() const { return CounterResource.Get(); }
+    FORCEINLINE const CD3D12Resource* GetD3D12CounterResource() const { return CounterResource.Get(); }
 
 private:
     TSharedRef<CD3D12Resource>       CounterResource;

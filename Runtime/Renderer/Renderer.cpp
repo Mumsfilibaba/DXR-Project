@@ -71,7 +71,9 @@ CRenderer::CRenderer()
 
 bool CRenderer::Init()
 {
-    Resources.MainWindowViewport = RHICreateViewport(GEngine->MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
+    CRHIViewportInitializer ViewportInitializer(GEngine->MainWindow->GetPlatformHandle(), EFormat::R8G8B8A8_Unorm, EFormat::Unknown, 0, 0);
+
+    Resources.MainWindowViewport = RHICreateViewport(ViewportInitializer);
     if (!Resources.MainWindowViewport)
     {
         CDebug::DebugBreak();
@@ -111,14 +113,14 @@ bool CRenderer::Init()
     }
 
     {
-        CRHISamplerStateInitializer CreateInfo;
-        CreateInfo.AddressU    = ESamplerMode::Border;
-        CreateInfo.AddressV    = ESamplerMode::Border;
-        CreateInfo.AddressW    = ESamplerMode::Border;
-        CreateInfo.Filter      = ESamplerFilter::MinMagMipPoint;
-        CreateInfo.BorderColor = CFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
+        CRHISamplerStateInitializer Initializer;
+        Initializer.AddressU    = ESamplerMode::Border;
+        Initializer.AddressV    = ESamplerMode::Border;
+        Initializer.AddressW    = ESamplerMode::Border;
+        Initializer.Filter      = ESamplerFilter::MinMagMipPoint;
+        Initializer.BorderColor = CFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-        Resources.DirectionalLightShadowSampler = RHICreateSamplerState(CreateInfo);
+        Resources.DirectionalLightShadowSampler = RHICreateSamplerState(Initializer);
         if (!Resources.DirectionalLightShadowSampler)
         {
             CDebug::DebugBreak();
@@ -127,14 +129,14 @@ bool CRenderer::Init()
     }
 
     {
-        CRHISamplerStateInitializer CreateInfo;
-        CreateInfo.AddressU       = ESamplerMode::Wrap;
-        CreateInfo.AddressV       = ESamplerMode::Wrap;
-        CreateInfo.AddressW       = ESamplerMode::Wrap;
-        CreateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
-        CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
+        CRHISamplerStateInitializer Initializer;
+        Initializer.AddressU       = ESamplerMode::Wrap;
+        Initializer.AddressV       = ESamplerMode::Wrap;
+        Initializer.AddressW       = ESamplerMode::Wrap;
+        Initializer.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
+        Initializer.ComparisonFunc = EComparisonFunc::LessEqual;
 
-        Resources.PointLightShadowSampler = RHICreateSamplerState(CreateInfo);
+        Resources.PointLightShadowSampler = RHICreateSamplerState(Initializer);
         if (!Resources.PointLightShadowSampler)
         {
             CDebug::DebugBreak();

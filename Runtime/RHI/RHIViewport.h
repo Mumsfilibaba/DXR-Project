@@ -2,6 +2,19 @@
 #include "RHIResources.h"
 #include "RHIResourceViews.h"
 
+#if defined(COMPILER_MSVC)
+    #pragma warning(push)
+    #pragma warning(disable : 4100) // Disable unreferenced variable
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedefs
+
+typedef TSharedRef<class CRHIViewport> RHIViewportRef;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIViewportInitializer
 
@@ -59,11 +72,11 @@ class CRHIViewport : public CRHIResource
 {
 protected:
     
-    explicit CRHIViewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
+    explicit CRHIViewport(const CRHIViewportInitializer& Initializer)
         : CRHIResource()
-        , Width(InWidth)
-        , Height(InHeight)
-        , Format(InFormat)
+        , Width(Initializer.Width)
+        , Height(Initializer.Height)
+        , Format(Initializer.ColorFormat)
     { }
 
     ~CRHIViewport() = default;
@@ -73,65 +86,38 @@ public:
     /**
      * @brief: Resize the viewport
      * 
-     * @param Width: New width of the viewport
-     * @param Height: New height of the viewport
+     * @param InWidth: New width of the viewport
+     * @param InHeight: New height of the viewport
      * @return: Returns true if the resize is successful
      */
-    virtual bool Resize(uint32 Width, uint32 Height) = 0;
+    virtual bool Resize(uint32 InWidth, uint32 InHeight) { return true; }
 
-    /**
-     * @brief: Swap the backbuffers of the viewport
-     * 
-     * @param bVerticalSync: True if the swap should have VerticalSync enabled
-     */
-    virtual bool Present(bool bVerticalSync) = 0;
+    /** @param bVerticalSync: True if the swap should have VerticalSync enabled */
+    virtual bool Present(bool bVerticalSync) { return true; }
 
-    /**
-     * @brief: Retrieve the current RenderTargetView of the viewport
-     * 
-     * @return: Returns the current RenderTargetView
-     */
-    virtual CRHIRenderTargetView* GetRenderTargetView() const = 0;
+    /** @return: Returns the current RenderTargetView */
+    virtual CRHIRenderTargetView* GetRenderTargetView() const { return nullptr; };
     
-    /**
-     * @brief: Retrieve the current Texture2D of the viewport
-     *
-     * @return: Returns the current Texture2D
-     */
-    virtual CRHITexture2D* GetBackBuffer() const = 0;
+    /** @return: Returns the current Texture2D */
+    virtual CRHITexture2D* GetBackBuffer() const { return nullptr; };
 
-    /**
-     * @brief: Retrieve the width of the viewport
-     * 
-     * @return: Returns the viewport of the width
-     */
-    FORCEINLINE uint32 GetWidth()  const
-    {
-        return Width;
-    }
+    /** @return: Returns the Width of the Viewport */
+    uint32 GetWidth() const { return Width; }
 
-    /**
-     * @brief: Retrieve the height of the viewport
-     *
-     * @return: Returns the height of the width
-     */
-    FORCEINLINE uint32 GetHeight() const
-    {
-        return Height;
-    }
+    /** @return: Returns the Height of the Viewport */
+    uint32 GetHeight() const { return Height; }
 
-    /**
-     * @brief: Retrieve the color-format of the viewport
-     *
-     * @return: Returns the color-format of the width
-     */
-    FORCEINLINE EFormat GetColorFormat() const
-    {
-        return Format;
-    }
+    /** @return: Returns the ColorFormat of the Viewport */
+    EFormat GetColorFormat() const { return Format; }
 
 protected:
-    uint32  Width;
-    uint32  Height;
+    uint16  Width;
+    uint16  Height;
     EFormat Format;
 };
+
+#if defined(COMPILER_MSVC)
+    #pragma warning(pop)
+#elif defined(COMPILER_CLANG)
+    #pragma clang diagnostic pop
+#endif

@@ -44,7 +44,7 @@ public:
         HRESULT Result = Queue->Signal(Fence.GetFence(), FenceValue);
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
         {
-            RHID3D12DeviceRemovedHandler(GetDevice());
+            D3D12DeviceRemovedHandlerRHI(GetDevice());
         }
 
         return SUCCEEDED(Result);
@@ -55,7 +55,7 @@ public:
         HRESULT Result = Queue->Wait(Fence.GetFence(), FenceValue);
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
         {
-            RHID3D12DeviceRemovedHandler(GetDevice());
+            D3D12DeviceRemovedHandlerRHI(GetDevice());
         }
 
         return SUCCEEDED(Result);

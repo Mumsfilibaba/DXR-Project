@@ -54,7 +54,7 @@ public:
         HRESULT Result = CmdList->Reset(Allocator.GetAllocator(), nullptr);
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
         {
-            RHID3D12DeviceRemovedHandler(GetDevice());
+            D3D12DeviceRemovedHandlerRHI(GetDevice());
         }
 
         return SUCCEEDED(Result);
@@ -67,7 +67,7 @@ public:
         HRESULT Result = CmdList->Close();
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
         {
-            RHID3D12DeviceRemovedHandler(GetDevice());
+            D3D12DeviceRemovedHandlerRHI(GetDevice());
         }
 
         return SUCCEEDED(Result);
@@ -85,7 +85,7 @@ public:
 
     FORCEINLINE void ClearUnorderedAccessViewFloat(D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, const CD3D12UnorderedAccessView* View, const float ClearColor[4])
     {
-        const CD3D12Resource* Resource = View->GetResource();
+        const CD3D12Resource* Resource = View->GetD3D12Resource();
         CmdList->ClearUnorderedAccessViewFloat(GPUHandle, View->GetOfflineHandle(), Resource->GetResource(), ClearColor, 0, nullptr);
     }
 
@@ -234,7 +234,10 @@ public:
         CmdList->OMSetBlendFactor(BlendFactor);
     }
 
-    FORCEINLINE void OMSetRenderTargets(const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors, uint32 NumRenderTargetDescriptors, bool bRTsSingleHandleToDescriptorRange, const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor)
+    FORCEINLINE void OMSetRenderTargets( const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors
+                                       , uint32 NumRenderTargetDescriptors
+                                       , bool bRTsSingleHandleToDescriptorRange
+                                       , const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor)
     {
         CmdList->OMSetRenderTargets(NumRenderTargetDescriptors, RenderTargetDescriptors, bRTsSingleHandleToDescriptorRange, DepthStencilDescriptor);
     }

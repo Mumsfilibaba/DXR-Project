@@ -77,11 +77,11 @@ public:
 
     virtual bool Initialize(bool bEnableDebug) override final;
 
-    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
-    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
-    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMipLevels, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
-    virtual CRHITextureCubeArray*CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
-    virtual CRHITexture3D* CreateTexture3D(EFormat Format,uint32 Width,uint32 Height, uint32 Depth, uint32 NumMipLevels, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final;
+    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final;
+    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final;
+    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMipLevels, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final;
+    virtual CRHITextureCubeArray*CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final;
+    virtual CRHITexture3D* CreateTexture3D(EFormat Format,uint32 Width,uint32 Height, uint32 Depth, uint32 NumMipLevels, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final;
 
     virtual CRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer) override final;
 
@@ -124,9 +124,9 @@ public:
 
     virtual class CRHITimestampQuery* RHICreateTimestampQuery() override final;
 
-    virtual class CRHIViewport* CreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) override final;
+    virtual class CRHIViewport* RHICreateViewport(const CRHIViewportInitializer& Initializer) override final;
 
-    virtual class IRHICommandContext* GetDefaultCommandContext() override final { return DirectCmdContext; }
+    virtual class IRHICommandContext* RHIGetDefaultCommandContext() override final { return DirectCmdContext; }
 
     virtual String GetAdapterName() const override final { return Device->GetAdapterName(); }
 
@@ -147,7 +147,7 @@ private:
                                    , ETextureUsageFlags Flags
                                    , EResourceAccess InitialState
                                    , const SRHIResourceData* InitialData
-                                   , const SClearValue& OptimalClearValue);
+                                   , const CTextureClearValue& ClearValue);
 
     // TODO: Avoid template here
     template<typename D3D12BufferType>

@@ -71,7 +71,7 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
     GShaderCompiler = Compiler;
 
     // Set the context to the command queue
-    IRHICommandContext* CmdContext = GRHIInstance->GetDefaultCommandContext();
+    IRHICommandContext* CmdContext = GRHIInstance->RHIGetDefaultCommandContext();
     CRHICommandQueue::Get().SetContext(CmdContext);
 
     return true;

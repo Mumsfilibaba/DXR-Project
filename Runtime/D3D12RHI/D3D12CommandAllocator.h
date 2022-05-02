@@ -33,7 +33,7 @@ public:
         HRESULT Result = Allocator->Reset();
         if (Result == DXGI_ERROR_DEVICE_REMOVED)
         {
-            RHID3D12DeviceRemovedHandler(GetDevice());
+            D3D12DeviceRemovedHandlerRHI(GetDevice());
         }
 
         return SUCCEEDED(Result);

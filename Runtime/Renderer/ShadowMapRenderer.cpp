@@ -650,7 +650,7 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
         return false;
     }
 
-    const SClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
+    const CTextureClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
 
     LightSetup.PointLightShadowMaps = RHICreateTextureCubeArray( LightSetup.ShadowMapFormat
                                                                , LightSetup.PointLightShadowSize

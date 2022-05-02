@@ -53,7 +53,7 @@ public:
                           , uint32 InNumMips
                           , uint32 InNumSamples
                           , ETextureUsageFlags InFlags
-                          , const SClearValue& InClearValue)
+                          , const CTextureClearValue& InClearValue)
         : CRHITexture2D(InFormat, SizeX, SizeY, InNumMips, InNumSamples, InFlags, InClearValue)
         , CD3D12Texture(InDevice)
         , RenderTargetView(nullptr)
@@ -107,7 +107,7 @@ public:
                                , uint32 InNumMips
                                , uint32 InNumSamples
                                , ETextureUsageFlags InFlags
-                               , const SClearValue& InClearValue)
+                               , const CTextureClearValue& InClearValue)
         : CRHITexture2DArray(InFormat, SizeX, SizeY, InNumMips, InNumSamples, SizeZ, InFlags, InClearValue)
         , CD3D12Texture(InDevice)
     { }
@@ -128,7 +128,7 @@ public:
                              , uint32 InNumMips
                              , uint32 InNumSamples
                              , ETextureUsageFlags InFlags
-                             , const SClearValue& InClearValue)
+                             , const CTextureClearValue& InClearValue)
         : CRHITextureCube(InFormat, SizeX, InNumMips, InFlags, InClearValue)
         , CD3D12Texture(InDevice)
     { }
@@ -149,7 +149,7 @@ public:
                                  , uint32 InNumMips
                                  , uint32 InNumSamples
                                  , ETextureUsageFlags InFlags
-                                 , const SClearValue& InClearValue)
+                                 , const CTextureClearValue& InClearValue)
         : CRHITextureCubeArray(InFormat, SizeX, InNumMips, SizeZ, InFlags, InClearValue)
         , CD3D12Texture(InDevice)
     { }
@@ -170,7 +170,7 @@ public:
                           , uint32 InNumMips
                           , uint32 InNumSamples
                           , ETextureUsageFlags InFlags
-                          , const SClearValue& InClearValue)
+                          , const CTextureClearValue& InClearValue)
         : CRHITexture3D(InFormat, SizeX, SizeY, SizeZ, InNumMips, InFlags, InClearValue)
         , CD3D12Texture(InDevice)
     { }
@@ -184,15 +184,15 @@ class TD3D12RHIBaseTexture : public BaseTextureType
 {
 public:
 
-    TD3D12RHIBaseTexture(CD3D12Device* InDevice
-                         , EFormat InFormat
-                         , uint32 SizeX
-                         , uint32 SizeY
-                         , uint32 SizeZ
-                         , uint32 InNumMips
-                         , uint32 InNumSamples
-                         , ETextureUsageFlags InFlags
-                         , const SClearValue& InClearValue)
+    TD3D12RHIBaseTexture( CD3D12Device* InDevice
+                        , EFormat InFormat
+                        , uint32 SizeX
+                        , uint32 SizeY
+                        , uint32 SizeZ
+                        , uint32 InNumMips
+                        , uint32 InNumSamples
+                        , ETextureUsageFlags InFlags
+                        , const CTextureClearValue& InClearValue)
         : BaseTextureType(InDevice, InFormat, SizeX, SizeY, SizeZ, InNumMips, InNumSamples, InFlags, InClearValue)
     { }
 

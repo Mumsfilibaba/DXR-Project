@@ -231,17 +231,17 @@ bool CD3D12CoreInterface::Initialize(bool bEnableDebug)
 
 template<typename D3D12TextureType>
 D3D12TextureType* CD3D12CoreInterface::CreateTexture( EFormat Format
-                                                  , uint32 SizeX
-                                                  , uint32 SizeY
-                                                  , uint32 SizeZ
-                                                  , uint32 NumMips
-                                                  , uint32 NumSamples
-                                                  , ETextureUsageFlags Flags
-                                                  , EResourceAccess InitialState
-                                                  , const SRHIResourceData* InitialData
-                                                  , const SClearValue& OptimalClearValue)
+                                                    , uint32 SizeX
+                                                    , uint32 SizeY
+                                                    , uint32 SizeZ
+                                                    , uint32 NumMips
+                                                    , uint32 NumSamples
+                                                    , ETextureUsageFlags Flags
+                                                    , EResourceAccess InitialState
+                                                    , const SRHIResourceData* InitialData
+                                                    , const CTextureClearValue& ClearValue)
 {
-    TSharedRef<D3D12TextureType> NewTexture = dbg_new D3D12TextureType(Device, Format, SizeX, SizeY, SizeZ, NumMips, NumSamples, Flags, OptimalClearValue);
+    TSharedRef<D3D12TextureType> NewTexture = dbg_new D3D12TextureType(Device, Format, SizeX, SizeY, SizeZ, NumMips, NumSamples, Flags, ClearValue);
 
     D3D12_RESOURCE_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -267,26 +267,26 @@ D3D12TextureType* CD3D12CoreInterface::CreateTexture( EFormat Format
         Desc.SampleDesc.Quality = 0;
     }
 
-    D3D12_CLEAR_VALUE* ClearValuePtr = nullptr;
-    D3D12_CLEAR_VALUE  ClearValue;
+    D3D12_CLEAR_VALUE* D3D12ClearValuePtr = nullptr;
+    D3D12_CLEAR_VALUE  D3D12ClearValue;
     if ((Flags & (ETextureUsageFlags::AllowRTV | ETextureUsageFlags::AllowDSV)) != ETextureUsageFlags::None)
     {
-        ClearValue.Format = (OptimalClearValue.GetFormat() != EFormat::Unknown) ? ConvertFormat(OptimalClearValue.GetFormat()) : Desc.Format;
-        if (OptimalClearValue.GetType() == SClearValue::EType::DepthStencil)
+        D3D12ClearValue.Format = (ClearValue.Format != EFormat::Unknown) ? ConvertFormat(ClearValue.Format) : Desc.Format;
+        if (ClearValue.IsDepthStencilValue())
         {
-            ClearValue.DepthStencil.Depth   = OptimalClearValue.AsDepthStencil().Depth;
-            ClearValue.DepthStencil.Stencil = OptimalClearValue.AsDepthStencil().Stencil;
-            ClearValuePtr = &ClearValue;
+            D3D12ClearValue.DepthStencil.Depth   = ClearValue.AsDepthStencil().Depth;
+            D3D12ClearValue.DepthStencil.Stencil = ClearValue.AsDepthStencil().Stencil;
+            D3D12ClearValuePtr = &D3D12ClearValue;
         }
-        else if (OptimalClearValue.GetType() == SClearValue::EType::Color)
+        else if (ClearValue.IsColorValue())
         {
-            CMemory::Memcpy(ClearValue.Color, OptimalClearValue.AsColor().Data(), sizeof(float[4]));
-            ClearValuePtr = &ClearValue;
+            CMemory::Memcpy(D3D12ClearValue.Color, ClearValue.AsColor().Data(), sizeof(float[4]));
+            D3D12ClearValuePtr = &D3D12ClearValue;
         }
     }
 
     TSharedRef<CD3D12Resource> Resource = dbg_new CD3D12Resource(Device, Desc, D3D12_HEAP_TYPE_DEFAULT);
-    if (!Resource->Init(D3D12_RESOURCE_STATE_COMMON, ClearValuePtr))
+    if (!Resource->Init(D3D12_RESOURCE_STATE_COMMON, D3D12ClearValuePtr))
     {
         return nullptr;
     }
@@ -483,30 +483,30 @@ D3D12TextureType* CD3D12CoreInterface::CreateTexture( EFormat Format
     return NewTexture.ReleaseOwnership();
 }
 
-CRHITexture2D* CD3D12CoreInterface::CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITexture2D* CD3D12CoreInterface::CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const CTextureClearValue& ClearValue)
 {
-    return CreateTexture<CD3D12RHITexture2D>(Format, Width, Height, 1, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue);
+    return CreateTexture<CD3D12RHITexture2D>(Format, Width, Height, 1, NumMips, NumSamples, Flags, InitialState, InitialData, ClearValue);
 }
 
-CRHITexture2DArray* CD3D12CoreInterface::CreateTexture2DArray(EFormat Format,uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITexture2DArray* CD3D12CoreInterface::CreateTexture2DArray(EFormat Format,uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const CTextureClearValue& ClearValue)
 {
-    return CreateTexture<CD3D12RHITexture2DArray>(Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, InitialState, InitialData, OptimalClearValue);
+    return CreateTexture<CD3D12RHITexture2DArray>(Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, InitialState, InitialData, ClearValue);
 }
 
-CRHITextureCube* CD3D12CoreInterface::CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITextureCube* CD3D12CoreInterface::CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const CTextureClearValue& ClearValue)
 {
-    return CreateTexture<CD3D12RHITextureCube>(Format, Size, Size, TEXTURE_CUBE_FACE_COUNT, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
+    return CreateTexture<CD3D12RHITextureCube>(Format, Size, Size, TEXTURE_CUBE_FACE_COUNT, NumMips, 1, Flags, InitialState, InitialData, ClearValue);
 }
 
-CRHITextureCubeArray* CD3D12CoreInterface::CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITextureCubeArray* CD3D12CoreInterface::CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const CTextureClearValue& ClearValue)
 {
     const uint32 ArraySlices = NumArraySlices * TEXTURE_CUBE_FACE_COUNT;
-    return CreateTexture<CD3D12RHITextureCubeArray>(Format, Size, Size, ArraySlices, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
+    return CreateTexture<CD3D12RHITextureCubeArray>(Format, Size, Size, ArraySlices, NumMips, 1, Flags, InitialState, InitialData, ClearValue);
 }
 
-CRHITexture3D* CD3D12CoreInterface::CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const SClearValue& OptimalClearValue)
+CRHITexture3D* CD3D12CoreInterface::CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData, const CTextureClearValue& ClearValue)
 {
-    return CreateTexture<CD3D12RHITexture3D>(Format, Width, Height, Depth, NumMips, 1, Flags, InitialState, InitialData, OptimalClearValue);
+    return CreateTexture<CD3D12RHITexture3D>(Format, Width, Height, Depth, NumMips, 1, Flags, InitialState, InitialData, ClearValue);
 }
 
 CRHISamplerState* CD3D12CoreInterface::RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer)
@@ -1479,24 +1479,9 @@ CRHITimestampQuery* CD3D12CoreInterface::RHICreateTimestampQuery()
     return CD3D12TimestampQuery::Create(Device);
 }
 
-CRHIViewport* CD3D12CoreInterface::CreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
+CRHIViewport* CD3D12CoreInterface::RHICreateViewport(const CRHIViewportInitializer& Initializer)
 {
-    UNREFERENCED_VARIABLE(DepthFormat);
-
-    // TODO: Take DepthFormat into account
-
-    TSharedRef<CWindowsWindow> WinWindow = MakeSharedRef<CWindowsWindow>(Window);
-    if (Width == 0)
-    {
-        Width = WinWindow->GetWidth();
-    }
-
-    if (Height == 0)
-    {
-        Height = WinWindow->GetHeight();
-    }
-
-    TSharedRef<CD3D12Viewport> Viewport = dbg_new CD3D12Viewport(Device, DirectCmdContext, WinWindow->GetHandle(), ColorFormat, Width, Height);
+    TSharedRef<CD3D12Viewport> Viewport = dbg_new CD3D12Viewport(Device, DirectCmdContext, Initializer);
     if (Viewport->Init())
     {
         return Viewport.ReleaseOwnership();

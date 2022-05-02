@@ -6,6 +6,14 @@
 #include "Core/Containers/StaticArray.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedefs
+
+typedef TSharedRef<class CRHIShaderResourceView>  RHIShaderResourceViewRef;
+typedef TSharedRef<class CRHIUnorderedAccessView> RHIUnorderedAccessViewRef;
+typedef TSharedRef<class CRHIRenderTargetView>    RHIRenderTargetViewRef;
+typedef TSharedRef<class CRHIDepthStencilView>    RHIDepthStencilViewRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRHIShaderResourceViewInfo
 
 struct SRHIShaderResourceViewInfo
@@ -286,17 +294,414 @@ struct SRHIDepthStencilViewInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITextureSRVInitializer
+
+class CRHITextureSRVInitializer
+{
+public:
+
+    CRHITextureSRVInitializer()
+        : Texture(nullptr)
+        , Format(EFormat::Unknown)
+        , FirstMipLevel(0)
+        , NumMips(0)
+        , FirstArraySlice(0)
+        , NumSlices(0)
+    { }
+
+    CRHITextureSRVInitializer( CRHITexture* InTexture
+                             , EFormat InFormat
+                             , uint8 InFirstMipLevel
+                             , uint8 InNumMips
+                             , uint16 InFirstArraySlice
+                             , uint16 InNumSlices)
+        : Texture(InTexture)
+        , Format(InFormat)
+        , FirstMipLevel(InFirstMipLevel)
+        , NumMips(InNumMips)
+        , FirstArraySlice(InFirstArraySlice)
+        , NumSlices(InNumSlices)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Texture);
+        HashCombine(Hash, ToUnderlying(Format));
+        HashCombine(Hash, FirstMipLevel);
+        HashCombine(Hash, NumMips);
+        HashCombine(Hash, FirstArraySlice);
+        HashCombine(Hash, NumSlices);
+        return Hash;
+    }
+
+    bool operator==(const CRHITextureSRVInitializer& RHS) const
+    {
+        return (Texture         == RHS.Texture)
+            && (Format          == RHS.Format)
+            && (FirstMipLevel   == RHS.FirstMipLevel)
+            && (NumMips         == RHS.NumMips)
+            && (FirstArraySlice == RHS.FirstArraySlice)
+            && (NumSlices       == RHS.NumSlices);
+    }
+
+    bool operator!=(const CRHITextureSRVInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHITexture* Texture;
+
+    EFormat      Format;
+
+    uint8        FirstMipLevel;
+    uint8        NumMips;
+
+    uint16       FirstArraySlice;
+    uint16       NumSlices;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIBufferSRVInitializer
+
+class CRHIBufferSRVInitializer
+{
+public:
+
+    CRHIBufferSRVInitializer()
+        : Buffer(nullptr)
+        , FirstElement(0)
+        , NumElements(0)
+    { }
+
+    CRHIBufferSRVInitializer(CRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements)
+        : Buffer(InBuffer)
+        , FirstElement(InFirstElement)
+        , NumElements(InNumElements)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Buffer);
+        HashCombine(Hash, FirstElement);
+        HashCombine(Hash, NumElements);
+        return Hash;
+    }
+
+    bool operator==(const CRHIBufferSRVInitializer& RHS) const
+    {
+        return (Buffer == RHS.Buffer) && (FirstElement == RHS.FirstElement) && (NumElements == RHS.NumElements);
+    }
+
+    bool operator!=(const CRHIBufferSRVInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHIBuffer* Buffer;
+
+    uint32      FirstElement;
+    uint32      NumElements;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITextureUAVInitializer
+
+class CRHITextureUAVInitializer
+{
+public:
+
+    CRHITextureUAVInitializer()
+        : Texture(nullptr)
+        , Format(EFormat::Unknown)
+        , MipLevel(0)
+        , FirstArraySlice(0)
+        , NumSlices(0)
+    { }
+
+    CRHITextureUAVInitializer( CRHITexture* InTexture
+                             , EFormat InFormat
+                             , uint32 InMipLevel
+                             , uint32 InFirstArraySlice
+                             , uint32 InNumSlices)
+        : Texture(InTexture)
+        , Format(InFormat)
+        , MipLevel(uint8(InMipLevel))
+        , FirstArraySlice(uint16(InFirstArraySlice))
+        , NumSlices(uint16(InNumSlices))
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Texture);
+        HashCombine(Hash, ToUnderlying(Format));
+        HashCombine(Hash, MipLevel);
+        HashCombine(Hash, FirstArraySlice);
+        HashCombine(Hash, NumSlices);
+        return Hash;
+    }
+
+    bool operator==(const CRHITextureUAVInitializer& RHS) const
+    {
+        return (Texture         == RHS.Texture)
+            && (Format          == RHS.Format)
+            && (MipLevel        == RHS.MipLevel)
+            && (FirstArraySlice == RHS.FirstArraySlice)
+            && (NumSlices       == RHS.NumSlices);
+    }
+
+    bool operator!=(const CRHITextureUAVInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHITexture* Texture;
+
+    EFormat      Format;
+
+    uint8        MipLevel;
+
+    uint16       FirstArraySlice;
+    uint16       NumSlices;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIBufferUAVInitializer
+
+class CRHIBufferUAVInitializer
+{
+public:
+
+    CRHIBufferUAVInitializer()
+        : Buffer(nullptr)
+        , FirstElement(0)
+        , NumElements(0)
+    { }
+
+    CRHIBufferUAVInitializer(CRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements)
+        : Buffer(InBuffer)
+        , FirstElement(InFirstElement)
+        , NumElements(InNumElements)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Buffer);
+        HashCombine(Hash, FirstElement);
+        HashCombine(Hash, NumElements);
+        return Hash;
+    }
+
+    bool operator==(const CRHIBufferUAVInitializer& RHS) const
+    {
+        return (Buffer == RHS.Buffer) && (FirstElement == RHS.FirstElement) && (NumElements == RHS.NumElements);
+    }
+
+    bool operator!=(const CRHIBufferUAVInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHIBuffer* Buffer;
+
+    uint32      FirstElement;
+    uint32      NumElements;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITextureRTVInitializer
+
+class CRHITextureRTVInitializer
+{
+public:
+
+    CRHITextureRTVInitializer()
+        : Texture(nullptr)
+        , Format(EFormat::Unknown)
+        , MipLevel(0)
+        , FirstArraySlice(0)
+        , NumSlices(0)
+    { }
+
+    CRHITextureRTVInitializer( CRHITexture* InTexture
+                             , EFormat InFormat
+                             , uint32 InMipLevel
+                             , uint32 InFirstArraySlice
+                             , uint32 InNumSlices)
+        : Texture(InTexture)
+        , Format(InFormat)
+        , MipLevel(uint8(InMipLevel))
+        , FirstArraySlice(uint16(InFirstArraySlice))
+        , NumSlices(uint16(InNumSlices))
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Texture);
+        HashCombine(Hash, ToUnderlying(Format));
+        HashCombine(Hash, MipLevel);
+        HashCombine(Hash, FirstArraySlice);
+        HashCombine(Hash, NumSlices);
+        return Hash;
+    }
+
+    bool operator==(const CRHITextureRTVInitializer& RHS) const
+    {
+        return (Texture         == RHS.Texture)
+            && (Format          == RHS.Format)
+            && (MipLevel        == RHS.MipLevel)
+            && (FirstArraySlice == RHS.FirstArraySlice)
+            && (NumSlices       == RHS.NumSlices);
+    }
+
+    bool operator!=(const CRHITextureRTVInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHITexture* Texture;
+
+    EFormat      Format;
+
+    uint8        MipLevel;
+
+    uint16       FirstArraySlice;
+    uint16       NumSlices;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITextureDSVInitializer
+
+class CRHITextureDSVInitializer
+{
+public:
+
+    CRHITextureDSVInitializer()
+        : Texture(nullptr)
+        , Format(EFormat::Unknown)
+        , MipLevel(0)
+        , FirstArraySlice(0)
+        , NumSlices(0)
+    { }
+
+    CRHITextureDSVInitializer( CRHITexture* InTexture
+                             , EFormat InFormat
+                             , uint32 InMipLevel
+                             , uint32 InFirstArraySlice
+                             , uint32 InNumSlices)
+        : Texture(InTexture)
+        , Format(InFormat)
+        , MipLevel(uint8(InMipLevel))
+        , FirstArraySlice(uint16(InFirstArraySlice))
+        , NumSlices(uint16(InNumSlices))
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Texture);
+        HashCombine(Hash, ToUnderlying(Format));
+        HashCombine(Hash, MipLevel);
+        HashCombine(Hash, FirstArraySlice);
+        HashCombine(Hash, NumSlices);
+        return Hash;
+    }
+
+    bool operator==(const CRHITextureDSVInitializer& RHS) const
+    {
+        return (Texture         == RHS.Texture)
+            && (Format          == RHS.Format)
+            && (MipLevel        == RHS.MipLevel)
+            && (FirstArraySlice == RHS.FirstArraySlice)
+            && (NumSlices       == RHS.NumSlices);
+    }
+
+    bool operator!=(const CRHITextureDSVInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHITexture* Texture;
+
+    EFormat      Format;
+
+    uint8        MipLevel;
+
+    uint16       FirstArraySlice;
+    uint16       NumSlices;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIResourceView
+
+class CRHIResourceView : public CRHIResource
+{
+protected:
+
+    explicit CRHIResourceView(CRHIResource* InResource)
+        : CRHIResource()
+        , Resource(InResource)
+    { }
+
+    ~CRHIResourceView() = default;
+
+public:
+
+    /** @return: Returns the resource the View represents */
+    CRHIResource* GetResource() const { return Resource; }
+
+protected:
+    CRHIResource* Resource;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIShaderResourceView
 
-class CRHIShaderResourceView : public CRHIResource
+class CRHIShaderResourceView : public CRHIResourceView
 {
+protected:
+
+    explicit CRHIShaderResourceView()
+        : CRHIResourceView(nullptr)
+    { }
+
+    ~CRHIShaderResourceView() = default;
+
+public:
+
+    /** @return: Returns the Bindless handle if the RHI-backend supports it */
+    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIUnorderedAccessView
 
-class CRHIUnorderedAccessView : public CRHIResource
+class CRHIUnorderedAccessView : public CRHIResourceView
 {
+protected:
+
+    explicit CRHIUnorderedAccessView()
+        : CRHIResourceView(nullptr)
+    { }
+
+    ~CRHIUnorderedAccessView() = default;
+
+public:
+
+    /** @return: Returns the Bindless handle if the RHI-backend supports it */
+    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRenderTargetView
+
+class CRHIRenderTargetView : public CRHIResourceView
+{
+protected:
+
+    explicit CRHIRenderTargetView()
+        : CRHIResourceView(nullptr)
+    { }
+
+    ~CRHIRenderTargetView() = default;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -304,13 +709,13 @@ class CRHIUnorderedAccessView : public CRHIResource
 
 using DepthStencilViewCube = TStaticArray<TSharedRef<CRHIDepthStencilView>, 6>;
 
-class CRHIDepthStencilView : public CRHIResource
+class CRHIDepthStencilView : public CRHIResourceView
 {
-};
+protected:
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRenderTargetView
+    explicit CRHIDepthStencilView()
+        : CRHIResourceView(nullptr)
+    { }
 
-class CRHIRenderTargetView : public CRHIResource
-{
+    ~CRHIDepthStencilView() = default;
 };

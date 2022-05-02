@@ -18,9 +18,9 @@ class CNullRHIViewport : public CRHIViewport
 {
 public:
     
-    CNullRHIViewport(EFormat InFormat, uint32 InWidth, uint32 InHeight)
-        : CRHIViewport(InFormat, InWidth, InHeight)
-        , BackBuffer(dbg_new TNullRHITexture<CNullRHITexture2D>(InFormat, Width, Height, 1, 1, ETextureUsageFlags::None, SClearValue()))
+    CNullRHIViewport(const CRHIViewportInitializer& Initializer)
+        : CRHIViewport(Initializer)
+        , BackBuffer(dbg_new TNullRHITexture<CNullRHITexture2D>(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::None, CTextureClearValue()))
         , BackBufferView(dbg_new CNullRHIRenderTargetView())
     { }
 
@@ -33,8 +33,8 @@ public:
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final
     {
-        Width  = InWidth;
-        Height = InHeight;
+        Width  = uint16(InWidth);
+        Height = uint16(InHeight);
         return true;
     }
 

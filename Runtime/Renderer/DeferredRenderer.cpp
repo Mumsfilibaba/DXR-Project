@@ -737,7 +737,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     }
 
     // DepthStencil
-    const SClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
+    const CTextureClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
 
     FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RHICreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, ETextureUsageFlags::ShadowMap, EResourceAccess::Common, nullptr, DepthClearValue);
     if (FrameResources.GBuffer[GBUFFER_DEPTH_INDEX])
