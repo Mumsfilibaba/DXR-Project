@@ -137,7 +137,7 @@ void CMacApplication::Tick(float)
 	{
 		TScopedLock Lock(DeferredEventsMutex);
 		ProcessableEvents.Swap(DeferredEvents);
-		DeferredEvents.Empty();
+		DeferredEvents.MakeEmpty();
 	}
 	
 	for (const SMacApplicationEvent& CurrentEvent : ProcessableEvents)
