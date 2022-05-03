@@ -18,7 +18,7 @@ class CNullRHITexture2D : public CRHITexture2D
 {
 public:
 
-    CNullRHITexture2D(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, ETextureUsageFlags InFlags, const SClearValue& InOptimalClearValue)
+    CNullRHITexture2D(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, ETextureUsageFlags InFlags, const CTextureClearValue& InOptimalClearValue)
         : CRHITexture2D(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
         , RenderTargetView(dbg_new CNullRHIRenderTargetView())
         , DepthStencilView(dbg_new CNullRHIDepthStencilView())
@@ -49,7 +49,7 @@ class CNullRHITexture2DArray : public CRHITexture2DArray
 {
 public:
 
-    CNullRHITexture2DArray(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InNumSamples, ETextureUsageFlags InFlags, const SClearValue& InOptimalClearValue)
+    CNullRHITexture2DArray(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InNumSamples, ETextureUsageFlags InFlags, const CTextureClearValue& InOptimalClearValue)
         : CRHITexture2DArray(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InSizeZ, InFlags, InOptimalClearValue)
     { }
 };
@@ -61,7 +61,7 @@ class CNullRHITextureCube : public CRHITextureCube
 {
 public:
 
-    CNullRHITextureCube(EFormat InFormat, uint32 InSize, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InOptimalClearValue)
+    CNullRHITextureCube(EFormat InFormat, uint32 InSize, uint32 InNumMips, ETextureUsageFlags InFlags, const CTextureClearValue& InOptimalClearValue)
         : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InOptimalClearValue)
     { }
 };
@@ -73,7 +73,7 @@ class CNullRHITextureCubeArray : public CRHITextureCubeArray
 {
 public:
     
-    CNullRHITextureCubeArray(EFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InOptimalClearValue)
+    CNullRHITextureCubeArray(EFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, ETextureUsageFlags InFlags, const CTextureClearValue& InOptimalClearValue)
         : CRHITextureCubeArray(InFormat, InSizeX, InNumMips, InSizeZ, InFlags, InOptimalClearValue)
     { }
 };
@@ -85,7 +85,7 @@ class CNullRHITexture3D : public CRHITexture3D
 {
 public:
     
-    CNullRHITexture3D(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, ETextureUsageFlags InFlags, const SClearValue& InOptimalClearValue)
+    CNullRHITexture3D(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, ETextureUsageFlags InFlags, const CTextureClearValue& InOptimalClearValue)
         : CRHITexture3D(InFormat, InSizeX, InSizeY, InSizeZ, InNumMips, InFlags, InOptimalClearValue)
     { }
 };

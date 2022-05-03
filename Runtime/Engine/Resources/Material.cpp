@@ -1,11 +1,9 @@
 #include "Material.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHICommandList.h"
 
 #include "Engine/Engine.h"
-
-#define GET_SAFE_SRV(Texture) (Texture != nullptr) ? Texture->GetDefaultShaderResourceView() : nullptr
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMaterial
@@ -19,12 +17,13 @@ CMaterial::CMaterial(const SMaterialDesc& InProperties)
     , MetallicMap()
     , Properties(InProperties)
     , MaterialBuffer()
-{
-}
+{ }
 
 void CMaterial::Init()
 {
-    MaterialBuffer = RHICreateConstantBuffer<SMaterialDesc>(EBufferUsageFlags::Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+    CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SMaterialDesc));
+
+    MaterialBuffer = RHICreateConstantBuffer(Initializer);
     if (MaterialBuffer)
     {
         MaterialBuffer->SetName("MaterialBuffer");
@@ -44,31 +43,31 @@ void CMaterial::BuildBuffer(CRHICommandList& CmdList)
 
 void CMaterial::SetAlbedo(const CVector3& Albedo)
 {
-    Properties.Albedo = Albedo;
+    Properties.Albedo      = Albedo;
     bMaterialBufferIsDirty = true;
 }
 
 void CMaterial::SetAlbedo(float r, float g, float b)
 {
-    Properties.Albedo = CVector3(r, g, b);
+    Properties.Albedo      = CVector3(r, g, b);
     bMaterialBufferIsDirty = true;
 }
 
 void CMaterial::SetMetallic(float Metallic)
 {
-    Properties.Metallic = Metallic;
+    Properties.Metallic    = Metallic;
     bMaterialBufferIsDirty = true;
 }
 
 void CMaterial::SetRoughness(float Roughness)
 {
-    Properties.Roughness = Roughness;
+    Properties.Roughness   = Roughness;
     bMaterialBufferIsDirty = true;
 }
 
 void CMaterial::SetAmbientOcclusion(float AO)
 {
-    Properties.AO = AO;
+    Properties.AO          = AO;
     bMaterialBufferIsDirty = true;
 }
 
@@ -94,13 +93,13 @@ void CMaterial::SetDebugName(const String& InDebugName)
 
 CRHIShaderResourceView* const* CMaterial::GetShaderResourceViews() const
 {
-    ShaderResourceViews[0] = GET_SAFE_SRV(AlbedoMap);
-    ShaderResourceViews[1] = GET_SAFE_SRV(NormalMap);
-    ShaderResourceViews[2] = GET_SAFE_SRV(RoughnessMap);
-    ShaderResourceViews[3] = GET_SAFE_SRV(HeightMap);
-    ShaderResourceViews[4] = GET_SAFE_SRV(MetallicMap);
-    ShaderResourceViews[5] = GET_SAFE_SRV(AOMap);
-    ShaderResourceViews[6] = GET_SAFE_SRV(AlphaMask);
+    ShaderResourceViews[0] = SafeGetDefaultSRV(AlbedoMap);
+    ShaderResourceViews[1] = SafeGetDefaultSRV(NormalMap);
+    ShaderResourceViews[2] = SafeGetDefaultSRV(RoughnessMap);
+    ShaderResourceViews[3] = SafeGetDefaultSRV(HeightMap);
+    ShaderResourceViews[4] = SafeGetDefaultSRV(MetallicMap);
+    ShaderResourceViews[5] = SafeGetDefaultSRV(AOMap);
+    ShaderResourceViews[6] = SafeGetDefaultSRV(AlphaMask);
 
     return ShaderResourceViews.Data();
 }

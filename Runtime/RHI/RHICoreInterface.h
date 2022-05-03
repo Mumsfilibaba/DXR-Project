@@ -4,6 +4,9 @@
 #include "RHIResourceViews.h"
 #include "RHICommandList.h"
 #include "RHIModule.h"
+#include "RHISamplerState.h"
+#include "RHIViewport.h"
+#include "IRHICommandContext.h"
 
 #include "CoreApplication/Generic/GenericWindow.h"
 
@@ -16,60 +19,122 @@
 #endif
 
 struct SRHIResourceData;
-struct SClearValue;
+
 class CRHIRayTracingGeometry;
 class CRHIRayTracingScene;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIShadingRateTier
 
-enum class ERHIShadingRateTier
+enum class ERHIShadingRateTier : uint8
 {
     NotSupported = 0,
     Tier1        = 1,
     Tier2        = 2,
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIShadingRateSupport
-
-struct SRHIShadingRateSupport
+inline const char* ToString(ERHIShadingRateTier Tier)
 {
-    ERHIShadingRateTier Tier = ERHIShadingRateTier::NotSupported;
-    uint32              ShadingRateImageTileSize = 0;
+    switch (Tier)
+    {
+        case ERHIShadingRateTier::NotSupported: return "NotSupported";
+        case ERHIShadingRateTier::Tier1:        return "Tier1";
+        case ERHIShadingRateTier::Tier2:        return "Tier2";
+        default:                                return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SShadingRateSupport
+
+struct SShadingRateSupport
+{
+    SShadingRateSupport()
+        : Tier(ERHIShadingRateTier::NotSupported)
+        , ShadingRateImageTileSize(0)
+    { }
+
+    SShadingRateSupport(ERHIShadingRateTier InTier, uint8 InShadingRateImageTileSize)
+        : Tier(InTier)
+        , ShadingRateImageTileSize(InShadingRateImageTileSize)
+    { }
+
+    bool operator==(const SShadingRateSupport& RHS) const
+    {
+        return (Tier == RHS.Tier) && (ShadingRateImageTileSize == RHS.ShadingRateImageTileSize);
+    }
+
+    bool operator!=(const SShadingRateSupport& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    ERHIShadingRateTier Tier;
+    uint8               ShadingRateImageTileSize;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ERHIRayTracingTier
 
-enum class ERHIRayTracingTier
+enum class ERHIRayTracingTier : uint8
 {
     NotSupported = 0,
     Tier1        = 1,
     Tier1_1      = 2,
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRayTracingSupport
-
-struct SRHIRayTracingSupport
+inline const char* ToString(ERHIRayTracingTier Tier)
 {
+    switch (Tier)
+    {
+        case ERHIRayTracingTier::NotSupported: return "NotSupported";
+        case ERHIRayTracingTier::Tier1:        return "Tier1";
+        case ERHIRayTracingTier::Tier1_1:      return "Tier1_1";
+        default:                               return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// SRayTracingSupport
+
+struct SRayTracingSupport
+{
+    SRayTracingSupport()
+        : Tier(ERHIRayTracingTier::NotSupported)
+        , MaxRecursionDepth(0)
+    { }
+
+    SRayTracingSupport(ERHIRayTracingTier InTier, uint8 InMaxRecursionDepth)
+        : Tier(InTier)
+        , MaxRecursionDepth(InMaxRecursionDepth)
+    { }
+
+    bool operator==(const SRayTracingSupport& RHS) const
+    {
+        return (Tier == RHS.Tier) && (MaxRecursionDepth == RHS.MaxRecursionDepth);
+    }
+
+    bool operator!=(const SRayTracingSupport& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
     ERHIRayTracingTier Tier;
-    uint32             MaxRecursionDepth;
+    uint8              MaxRecursionDepth;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICoreInstance
+// CRHICoreInterface
 
-class CRHICoreInstance
+class CRHICoreInterface
 {
 protected:
 
-    CRHICoreInstance(ERHIInstanceType InRHIType)
+    CRHICoreInterface(ERHIInstanceType InRHIType)
         : RHIType(InRHIType)
     { }
 
-    virtual ~CRHICoreInstance() = default;
+    virtual ~CRHICoreInterface() = default;
 
 public:
 
@@ -99,7 +164,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a Texture2DArray
@@ -115,7 +180,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a TextureCube
@@ -128,7 +193,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a TextureCubeArray
@@ -142,7 +207,7 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Creates a Texture3D
@@ -157,82 +222,63 @@ public:
      * @param OptizedClearValue: Optimal clear-value for the texture
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
 
     /**
      * @brief: Create a SamplerState
      * 
-     * @param CreateInfo: Structure with information about the SamplerState
+     * @param Initializer: Structure with information about the SamplerState
      * @return: Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
      */
-    virtual class CRHISamplerState* CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo) = 0;
+    virtual CRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer) = 0;
 
     /**
-     * @brief: Creates a new VertexBuffer
-     * 
-     * @param Stride: Stride of each vertex in the VertexBuffer
-     * @param NumVertices: Number of vertices in the VertexBuffer
-     * @param Flags: Buffer flags
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created VertexBuffer
+     * @brief: Creates a VertexBuffer
+     *
+     * @param Initializer: State that contains information about a VertexBuffer
+     * @return: Returns the newly created Buffer
      */
-    virtual CRHIVertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIVertexBuffer* RHICreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer) = 0;
     
     /**
-     * @brief: Creates a new IndexBuffer
+     * @brief: Creates a IndexBuffer
      *
-     * @param Format: Format of each index in the IndexBuffer
-     * @param NumIndices: Number of indices in the IndexBuffer
-     * @param Flags: Buffer flags
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created IndexBuffer
+     * @param Initializer: State that contains information about a IndexBuffer
+     * @return: Returns the newly created Buffer
      */
-    virtual CRHIIndexBuffer* CreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIIndexBuffer* RHICreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer) = 0;
     
     /**
-     * @brief: Creates a new ConstantBuffer
+     * @brief: Creates a GenericBuffer
      *
-     * @param Size: Size of  the ConstantBuffer
-     * @param Flags: Buffer flags
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created ConstantBuffer
+     * @param Initializer: State that contains information about a GenericBuffer
+     * @return: Returns the newly created Buffer
      */
-    virtual CRHIConstantBuffer* CreateConstantBuffer(uint32 Size, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
-    
-    /**
-     * @brief: Creates a new StructuredBuffer
-     *
-     * @param Stride: Stride of each element in the StructuredBuffer
-     * @param NumElements: Number of elements in the StructuredBuffer
-     * @param Flags: Buffer flags
-     * @param InitialState: Initial ResurceState of the Buffer
-     * @param InitialData: Initial data supplied to the Buffer
-     * @return: Returns the newly created StructuredBuffer
-     */
-    virtual CRHIGenericBuffer* CreateGenericBuffer(uint32 Stride, uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) = 0;
+    virtual CRHIGenericBuffer* RHICreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer) = 0;
 
     /**
-     * @brief: Create a new Ray tracing scene
+     * @brief: Creates a ConstantBuffer
+     *
+     * @param Initializer: State that contains information about a ConstantBuffer
+     * @return: Returns the newly created Buffer
+     */
+    virtual CRHIConstantBuffer* RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer) = 0;
+    
+    /**
+     * @brief: Create a new Ray Tracing Scene
      * 
-     * @param Flags: Flags for the creation
-     * @param Instances: Initial instances to create the acceleration structure with
-     * @param NumInstances: Number of instances in the array
+     * @param Initializer: Struct containing information about the Ray Tracing Scene
      * @return: Returns the newly created Ray tracing Scene
      */
-    virtual CRHIRayTracingScene* CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) = 0;
+    virtual CRHIRayTracingScene* RHICreateRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer) = 0;
     
     /**
      * @brief: Create a new Ray tracing geometry
      *
-     * @param Flags: Flags for the creation
-     * @param VertexBuffer: VertexBuffer the acceleration structure with
-     * @param IndexBuffer: IndexBuffer the acceleration structure with
+     * @param Initializer: Struct containing information about the Ray Tracing Geometry
      * @return: Returns the newly created Ray tracing Geometry
      */
-    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer) = 0;
+    virtual CRHIRayTracingGeometry* RHICreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new ShaderResourceView
@@ -428,35 +474,31 @@ public:
     /**
      * @brief: Create a new Viewport
      * 
-     * @param Window: Window to bind to the viewport
-     * @param Width: Width of the viewport
-     * @param Height: Height of the viewport
-     * @param ColorFormat: Format for the color
-     * @param DepthFormat: Format for the depth
+     * @param Initializer: Structure containing the information for the Viewport
      * @return: Returns the newly created viewport
      */
-    virtual class CRHIViewport* CreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) = 0;
+    virtual class CRHIViewport* RHICreateViewport(const CRHIViewportInitializer& Initializer) = 0;
 
     /**
      * @brief: Retrieve the default CommandContext
      * 
      * @return: Returns the default CommandContext
      */
-    virtual class IRHICommandContext* GetDefaultCommandContext() = 0;
+    virtual class IRHICommandContext* RHIGetDefaultCommandContext() = 0;
 
     /**
      * @brief: Check for Ray tracing support
      * 
      * @param OutSupport: Struct containing the Ray tracing support for the system and current RHI
      */
-    virtual void RHIQueryRayTracingSupport(SRHIRayTracingSupport& OutSupport) const = 0;
+    virtual void RHIQueryRayTracingSupport(SRayTracingSupport& OutSupport) const = 0;
 
     /**
      * @brief: Check for Shading-rate support
      *
      * @param OutSupport: Struct containing the Shading-rate support for the system and current RHI
      */
-    virtual void RHIQueryShadingRateSupport(SRHIShadingRateSupport& OutSupport) const = 0;
+    virtual void RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport) const = 0;
 
     /**
      * @brief: Check if the current RHI supports UnorderedAccessViews for the specified format
@@ -487,85 +529,64 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper functions
 
-FORCEINLINE CRHITexture2D* RHICreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture2D* RHICreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
 {
     return GRHIInstance->CreateTexture2D(Format, Width, Height, NumMips, NumSamples, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
 {
     return GRHIInstance->CreateTexture2DArray(Format, Width, Height, NumMips, NumSamples, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITextureCube* RHICreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITextureCube* RHICreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
 {
     return GRHIInstance->CreateTextureCube(Format, Size, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
 {
     return GRHIInstance->CreateTextureCubeArray(Format, Size, NumMips, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const SClearValue& OptimizedClearValue = SClearValue())
+FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
 {
     return GRHIInstance->CreateTexture3D(Format, Width, Height, Depth, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
 }
 
-FORCEINLINE class CRHISamplerState* RHICreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo)
+FORCEINLINE CRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer)
 {
-    return GRHIInstance->CreateSamplerState(CreateInfo);
+    return GRHIInstance->RHICreateSamplerState(Initializer);
 }
 
-FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(uint32 Stride, uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
 {
-    return GRHIInstance->CreateVertexBuffer(Stride, NumVertices, Flags, InitialState, InitialData);
+    return GRHIInstance->RHICreateVertexBuffer(Initializer);
 }
 
-template<typename T>
-FORCEINLINE CRHIVertexBuffer* RHICreateVertexBuffer(uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIIndexBuffer* RHICreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
 {
-    constexpr uint32 STRIDE = sizeof(T);
-    return RHICreateVertexBuffer(STRIDE, NumVertices, Flags, InitialState, InitialData);
+    return GRHIInstance->RHICreateIndexBuffer(Initializer);
 }
 
-FORCEINLINE CRHIIndexBuffer* RHICreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIGenericBuffer* RHICreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
 {
-    return GRHIInstance->CreateIndexBuffer(Format, NumIndices, Flags, InitialState, InitialData);
+    return GRHIInstance->RHICreateGenericBuffer(Initializer);
 }
 
-FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(uint32 Size, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
 {
-    return GRHIInstance->CreateConstantBuffer(Size, Flags, InitialState, InitialData);
+    return GRHIInstance->RHICreateConstantBuffer(Initializer);
 }
 
-template<typename TSize>
-FORCEINLINE CRHIConstantBuffer* RHICreateConstantBuffer(EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
 {
-    constexpr uint32 SIZE_IN_BYTES = sizeof(TSize);
-    return RHICreateConstantBuffer(SIZE_IN_BYTES, Flags, InitialState, InitialData);
+    return GRHIInstance->RHICreateRayTracingScene(Initializer);
 }
 
-FORCEINLINE CRHIGenericBuffer* RHICreateGenericBuffer(uint32 Stride, uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
+FORCEINLINE CRHIRayTracingGeometry* RHICreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer)
 {
-    return GRHIInstance->CreateGenericBuffer(Stride, NumElements, Flags, InitialState, InitialData);
-}
-
-template<typename TStride>
-FORCEINLINE CRHIGenericBuffer* RHICreateGenericBuffer(uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData)
-{
-    constexpr uint32 STRIDE_IN_BYTES = sizeof(TStride);
-    return RHICreateGenericBuffer(STRIDE_IN_BYTES, NumElements, Flags, InitialState, InitialData);
-}
-
-FORCEINLINE CRHIRayTracingScene* RHICreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances)
-{
-    return GRHIInstance->CreateRayTracingScene(Flags, Instances, NumInstances);
-}
-
-FORCEINLINE CRHIRayTracingGeometry* RHICreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer)
-{
-    return GRHIInstance->CreateRayTracingGeometry(Flags, VertexBuffer, IndexBuffer);
+    return GRHIInstance->RHICreateRayTracingGeometry(Initializer);
 }
 
 FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo)
@@ -947,9 +968,9 @@ FORCEINLINE class CRHITimestampQuery* RHICreateTimestampQuery()
     return GRHIInstance->RHICreateTimestampQuery();
 }
 
-FORCEINLINE class CRHIViewport* RHICreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat)
+FORCEINLINE class CRHIViewport* RHICreateViewport(const CRHIViewportInitializer& Initializer)
 {
-    return GRHIInstance->CreateViewport(Window, Width, Height, ColorFormat, DepthFormat);
+    return GRHIInstance->RHICreateViewport(Initializer);
 }
 
 FORCEINLINE bool RHIQueryUAVFormatSupport(EFormat Format)
@@ -959,7 +980,7 @@ FORCEINLINE bool RHIQueryUAVFormatSupport(EFormat Format)
 
 FORCEINLINE class IRHICommandContext* RHIGetDefaultCommandContext()
 {
-    return GRHIInstance->GetDefaultCommandContext();
+    return GRHIInstance->RHIGetDefaultCommandContext();
 }
 
 FORCEINLINE String RHIGetAdapterName()
@@ -967,19 +988,19 @@ FORCEINLINE String RHIGetAdapterName()
     return GRHIInstance->GetAdapterName();
 }
 
-FORCEINLINE void RHIQueryShadingRateSupport(SRHIShadingRateSupport& OutSupport)
+FORCEINLINE void RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport)
 {
     GRHIInstance->RHIQueryShadingRateSupport(OutSupport);
 }
 
-FORCEINLINE void RHIQueryRayTracingSupport(SRHIRayTracingSupport& OutSupport)
+FORCEINLINE void RHIQueryRayTracingSupport(SRayTracingSupport& OutSupport)
 {
     GRHIInstance->RHIQueryRayTracingSupport(OutSupport);
 }
 
 FORCEINLINE bool RHISupportsRayTracing()
 {
-    SRHIRayTracingSupport Support;
+    SRayTracingSupport Support;
     RHIQueryRayTracingSupport(Support);
 
     return false;// (Support.Tier != ERHIRayTracingTier::NotSupported);
@@ -987,7 +1008,7 @@ FORCEINLINE bool RHISupportsRayTracing()
 
 FORCEINLINE bool RHISupportsVariableRateShading()
 {
-    SRHIShadingRateSupport Support;
+    SShadingRateSupport Support;
     RHIQueryShadingRateSupport(Support);
 
     return (Support.Tier != ERHIShadingRateTier::NotSupported);

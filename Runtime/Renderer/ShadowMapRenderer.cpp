@@ -1,7 +1,7 @@
 #include "ShadowMapRenderer.h"
 #include "MeshDrawCommand.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Mesh.h"
@@ -32,7 +32,9 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
     // Point Shadow Maps
     {
-        PerShadowMapBuffer = RHICreateConstantBuffer<SPerShadowMap>(EBufferUsageFlags::Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SPerShadowMap));
+
+        PerShadowMapBuffer = RHICreateConstantBuffer(Initializer);
         if (!PerShadowMapBuffer)
         {
             CDebug::DebugBreak();
@@ -125,7 +127,9 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
     // Cascaded shadow map
     {
-        PerCascadeBuffer = RHICreateConstantBuffer<SPerCascade>(EBufferUsageFlags::Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SPerCascade));
+
+        PerCascadeBuffer = RHICreateConstantBuffer(Initializer);
         if (!PerCascadeBuffer)
         {
             CDebug::DebugBreak();
@@ -238,7 +242,9 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
 
     // Create buffers for cascade matrix generation
     {
-        CascadeGenerationData = RHICreateConstantBuffer<SCascadeGenerationInfo>(EBufferUsageFlags::Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+        CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SCascadeGenerationInfo));
+
+        CascadeGenerationData = RHICreateConstantBuffer(Initializer);
         if (!CascadeGenerationData)
         {
             CDebug::DebugBreak();
@@ -249,7 +255,9 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             CascadeGenerationData->SetName("Cascade GenerationData");
         }
 
-        LightSetup.CascadeMatrixBuffer = RHICreateGenericBuffer<SCascadeMatrices>(NUM_SHADOW_CASCADES, EBufferUsageFlags::RWBuffer, EResourceAccess::UnorderedAccess, nullptr);
+        CRHIGenericBufferInitializer GenericInitializer(EBufferUsageFlags::RWBuffer, NUM_SHADOW_CASCADES, sizeof(SCascadeMatrices), EResourceAccess::UnorderedAccess);
+
+        LightSetup.CascadeMatrixBuffer = RHICreateGenericBuffer(GenericInitializer);
         if (!LightSetup.CascadeMatrixBuffer)
         {
             CDebug::DebugBreak();
@@ -274,7 +282,9 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        LightSetup.CascadeSplitsBuffer = RHICreateGenericBuffer<SCascadeSplits>(NUM_SHADOW_CASCADES, EBufferUsageFlags::RWBuffer, EResourceAccess::UnorderedAccess, nullptr);
+        GenericInitializer = CRHIGenericBufferInitializer(EBufferUsageFlags::RWBuffer, NUM_SHADOW_CASCADES, sizeof(SCascadeSplits), EResourceAccess::UnorderedAccess);
+
+        LightSetup.CascadeSplitsBuffer = RHICreateGenericBuffer(GenericInitializer);
         if (!LightSetup.CascadeSplitsBuffer)
         {
             CDebug::DebugBreak();
@@ -402,12 +412,11 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
 
                         CVector3 Top = CVector3(&Command.Mesh->BoundingBox.Top.x);
                         Top = TransformMatrix.TransformPosition(Top);
+
                         CVector3 Bottom = CVector3(&Command.Mesh->BoundingBox.Bottom.x);
                         Bottom = TransformMatrix.TransformPosition(Bottom);
 
-                        SAABB Box;
-                        Box.Top = Top;
-                        Box.Bottom = Bottom;
+                        SAABB Box(Top, Bottom);
                         if (CameraFrustum.CheckAABB(Box))
                         {
                             CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
@@ -457,9 +466,9 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
 
         SCascadeGenerationInfo GenerationInfo;
         GenerationInfo.CascadeSplitLambda = LightSetup.CascadeSplitLambda;
-        GenerationInfo.LightUp = LightSetup.DirectionalLightData.Up;
-        GenerationInfo.LightDirection = LightSetup.DirectionalLightData.Direction;
-        GenerationInfo.CascadeResolution = (float)LightSetup.CascadeSize;
+        GenerationInfo.LightUp            = LightSetup.DirectionalLightData.Up;
+        GenerationInfo.LightDirection     = LightSetup.DirectionalLightData.Direction;
+        GenerationInfo.CascadeResolution  = (float)LightSetup.CascadeSize;
 
         CmdList.TransitionBuffer(CascadeGenerationData.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
         CmdList.UpdateBuffer(CascadeGenerationData.Get(), 0, sizeof(SCascadeGenerationInfo), &GenerationInfo);
@@ -641,7 +650,7 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
         return false;
     }
 
-    const SClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
+    const CTextureClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
 
     LightSetup.PointLightShadowMaps = RHICreateTextureCubeArray( LightSetup.ShadowMapFormat
                                                                , LightSetup.PointLightShadowSize

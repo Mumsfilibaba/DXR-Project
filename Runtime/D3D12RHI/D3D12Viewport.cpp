@@ -1,5 +1,5 @@
 #include "D3D12CommandQueue.h"
-#include "D3D12CoreInstance.h"
+#include "D3D12CoreInterface.h"
 #include "D3D12Viewport.h"
 
 #include "Core/Debug/Profiler/FrameProfiler.h"
@@ -7,10 +7,10 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12Viewport
 
-CD3D12Viewport::CD3D12Viewport(CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, HWND InHwnd, EFormat InFormat, uint32 InWidth, uint32 InHeight)
+CD3D12Viewport::CD3D12Viewport(CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, const CRHIViewportInitializer& Initializer)
     : CD3D12DeviceChild(InDevice)
-    , CRHIViewport(InFormat, InWidth, InHeight)
-    , Hwnd(InHwnd)
+    , CRHIViewport(Initializer)
+    , Hwnd(reinterpret_cast<HWND>(Initializer.WindowHandle))
     , SwapChain(nullptr)
     , CmdContext(InCmdContext)
     , BackBuffers()
@@ -45,7 +45,21 @@ bool CD3D12Viewport::Init()
     const uint32      NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
     const DXGI_FORMAT NativeFormat        = ConvertFormat(Format);
 
-    Assert(Width > 0 && Height > 0);
+    RECT ClientRect;
+    GetClientRect(Hwnd, &ClientRect);
+
+    if (Width == 0)
+    {
+        Width = uint16(ClientRect.right - ClientRect.left);
+    }
+
+    if (Height == 0)
+    {
+        Height = uint16(ClientRect.bottom - ClientRect.top);
+    }
+
+    D3D12_ERROR(Width  != 0, "Viewport-width of zero is not supported");
+    D3D12_ERROR(Height != 0, "Viewport-height of zero is not supported");
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
     CMemory::Memzero(&SwapChainDesc);
@@ -112,7 +126,7 @@ bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     // TODO: Make sure that we release the old surfaces
 
-    if ((InWidth != Width || InHeight != Height) && InWidth > 0 && InHeight > 0)
+    if ((InWidth != Width || InHeight != Height) && (InWidth > 0) && (InHeight > 0))
     {
         CmdContext->ClearState();
 
@@ -122,8 +136,8 @@ bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
         HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
         if (SUCCEEDED(Result))
         {
-            Width  = InWidth;
-            Height = InHeight;
+            Width  = uint16(InWidth);
+            Height = uint16(InHeight);
         }
         else
         {
@@ -149,7 +163,7 @@ bool CD3D12Viewport::Present(bool VerticalSync)
     const uint32 SyncInterval = !!VerticalSync;
 
     uint32 PresentFlags = 0;
-    if (SyncInterval == 0 && Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
+    if (SyncInterval == 0 && (Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING))
     {
         PresentFlags = DXGI_PRESENT_ALLOW_TEARING;
     }
@@ -157,7 +171,7 @@ bool CD3D12Viewport::Present(bool VerticalSync)
     HRESULT Result = SwapChain->Present(SyncInterval, PresentFlags);
     if (Result == DXGI_ERROR_DEVICE_REMOVED)
     {
-        RHID3D12DeviceRemovedHandler(GetDevice());
+        D3D12DeviceRemovedHandlerRHI(GetDevice());
     }
 
     if (SUCCEEDED(Result))
@@ -212,7 +226,7 @@ bool CD3D12Viewport::RetriveBackBuffers()
             return false;
         }
 
-        BackBuffers[i] = dbg_new CD3D12RHITexture2D(GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, ETextureUsageFlags::AllowRTV, SClearValue());
+        BackBuffers[i] = dbg_new CD3D12RHITexture2D(GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, ETextureUsageFlags::AllowRTV, CTextureClearValue());
         BackBuffers[i]->SetResource(dbg_new CD3D12Resource(GetDevice(), BackBufferResource));
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;

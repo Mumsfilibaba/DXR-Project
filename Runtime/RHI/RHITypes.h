@@ -301,6 +301,7 @@ inline ECubeFace GetCubeFaceFromIndex(uint32 Index)
 
 enum class EComparisonFunc
 {
+    Unknown      = 0,
     Never        = 1,
     Less         = 2,
     Equal        = 3,
@@ -552,126 +553,243 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SDepthStencil
+// CTextureDepthStencilValue
 
-struct SDepthStencil
+class CTextureDepthStencilValue
 {
-    SDepthStencil() = default;
+public:
 
-    FORCEINLINE SDepthStencil(float InDepth, uint8 InStencil)
+    /**
+     * @brief: Default Constructor
+     */
+    CTextureDepthStencilValue()
+        : Depth(1.0f)
+        , Stencil(0)
+    { }
+
+    /**
+     * @brief: Constructor taking depth and stencil value
+     *
+     * @param InDepth: Depth-value
+     * @param InStencil: Stencil-value
+     */
+    CTextureDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     { }
 
-    float Depth = 1.0f;
-    uint8 Stencil = 0;
+    /** @return: Returns and calculates the hash for this type */
+    uint64 GetHash() const
+    {
+        uint64 Hash = Stencil;
+        HashCombine(Hash, Depth);
+        return Hash;
+    }
+
+    /**
+     * @brief: Compare with another instance
+     *
+     * @param RHS: Other instance to compare with
+     * @return: Returns true if the instances are equal
+     */
+    bool operator==(const CTextureDepthStencilValue& RHS) const
+    {
+        return (Depth == RHS.Depth) && (Stencil && RHS.Stencil);
+    }
+
+    /**
+     * @brief: Compare with another instance
+     *
+     * @param RHS: Other instance to compare with
+     * @return: Returns false if the instances are equal
+     */
+    bool operator!=(const CTextureDepthStencilValue& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    /** @brief: Value to clear the depth portion of a texture with */
+    float Depth;
+
+    /** @brief: Value to clear the stencil portion of a texture with */
+    uint8 Stencil;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SClearValue
+// CTextureClearValue
 
-struct SClearValue
+class CTextureClearValue
 {
 public:
 
-    enum class EType
+    enum class EType : uint8
     {
         Color = 1,
         DepthStencil = 2
     };
 
-    // NOTE: Default clear color is black
-    FORCEINLINE SClearValue()
+    /**
+     * @brief: Default Constructor that creates a black clear color
+     */
+    CTextureClearValue()
         : Type(EType::Color)
         , Format(EFormat::Unknown)
-        , Color(0.0f, 0.0f, 0.0f, 1.0f)
+        , ColorValue(0.0f, 0.0f, 0.0f, 1.0f)
     { }
 
-    FORCEINLINE SClearValue(EFormat InFormat, float Depth, uint8 Stencil)
+    /**
+     * @brief: Constructor that creates a DepthStencil-ClearValue
+     *
+     * @param InFormat: Format to clear
+     * @param InDepth: Depth-value
+     * @param InStencil: Stencil-value
+     */
+    CTextureClearValue(EFormat InFormat, float InDepth, uint8 InStencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
-        , DepthStencil(Depth, Stencil)
+        , DepthStencilValue(InDepth, InStencil)
     { }
 
-    FORCEINLINE SClearValue(EFormat InFormat, float r, float g, float b, float a)
+    /**
+     * @brief: Constructor that creates Color-ClearValue
+     *
+     * @param InFormat: Format to clear
+     * @param InR: Red-Channel value
+     * @param InG: Green-Channel value
+     * @param InB: Blue-Channel value
+     * @param InA: Alpha-Channel value
+     */
+    CTextureClearValue(EFormat InFormat, float InR, float InG, float InB, float InA)
         : Type(EType::Color)
         , Format(InFormat)
-        , Color(r, g, b, a)
+        , ColorValue(InR, InG, InB, InA)
     { }
 
-    FORCEINLINE SClearValue(const SClearValue& Other)
+    /**
+     * @brief: Copy-constructor
+     *
+     * @param Other: Instance to copy
+     */
+    CTextureClearValue(const CTextureClearValue& Other)
         : Type(Other.Type)
         , Format(Other.Format)
-        , Color()
+        , ColorValue()
     {
-        if (Other.Type == EType::Color)
+        if (Other.IsColorValue())
         {
-            Color = Other.Color;
+            ColorValue = Other.ColorValue;
         }
-        else if (Other.Type == EType::DepthStencil)
+        else
         {
-            DepthStencil = Other.DepthStencil;
+            Assert(Other.IsDepthStencilValue());
+            DepthStencilValue = Other.DepthStencilValue;
         }
     }
 
-    FORCEINLINE SClearValue& operator=(const SClearValue& Other)
-    {
-        Type = Other.Type;
-        Format = Other.Format;
+    /** @return: Returns a true if the value is a FloatColor */
+    bool IsColorValue() const { return (Type == EType::Color); }
 
-        if (Other.Type == EType::Color)
+    /** @return: Returns a true if the value is a DepthStencilClearValue */
+    bool IsDepthStencilValue() const { return (Type == EType::DepthStencil); }
+
+    /** @return: Returns a FloatColor */
+    CFloatColor& AsColor()
+    {
+        Assert(IsColorValue());
+        return ColorValue;
+    }
+
+    /** @return: Returns a FloatColor */
+    const CFloatColor& AsColor() const
+    {
+        Assert(IsColorValue());
+        return ColorValue;
+    }
+
+    /** @return: Returns a DepthStencilClearValue */
+    CTextureDepthStencilValue& AsDepthStencil()
+    {
+        Assert(IsDepthStencilValue());
+        return DepthStencilValue;
+    }
+
+    /** @return: Returns a DepthStencilClearValue */
+    const CTextureDepthStencilValue& AsDepthStencil() const
+    {
+        Assert(IsDepthStencilValue());
+        return DepthStencilValue;
+    }
+
+    /**
+     * @brief: Copy-assignment operator
+     *
+     * @param RHS: Instance to copy
+     * @return: Returns a reference to this instance
+     */
+    CTextureClearValue& operator=(const CTextureClearValue& RHS)
+    {
+        Type = RHS.Type;
+        Format = RHS.Format;
+
+        if (RHS.IsColorValue())
         {
-            Color = Other.Color;
+            ColorValue = RHS.ColorValue;
         }
-        else if (Other.Type == EType::DepthStencil)
+        else
         {
-            DepthStencil = Other.DepthStencil;
+            Assert(RHS.IsDepthStencilValue());
+            DepthStencilValue = RHS.DepthStencilValue;
         }
 
         return *this;
     }
 
-    FORCEINLINE EType GetType() const
+    /**
+     * @brief: Compare with another instance
+     *
+     * @param RHS: Instance to compare with
+     * @return: Returns true if the instances are equal
+     */
+    bool operator==(const CTextureClearValue& RHS) const
     {
-        return Type;
+        if ((Type != RHS.Type) || (Format != RHS.Format))
+        {
+            return false;
+        }
+
+        if (IsColorValue())
+        {
+            return (ColorValue == RHS.ColorValue);
+        }
+
+        Assert(IsDepthStencilValue());
+        return (DepthStencilValue == RHS.DepthStencilValue);
     }
 
-    FORCEINLINE EFormat GetFormat() const
+    /**
+     * @brief: Compare with another instance
+     *
+     * @param RHS: Instance to compare with
+     * @return: Returns false if the instances are equal
+     */
+    bool operator!=(const CTextureClearValue& RHS) const
     {
-        return Format;
+        return !(*this == RHS);
     }
 
-    FORCEINLINE CFloatColor& AsColor()
-    {
-        Assert(Type == EType::Color);
-        return Color;
-    }
+    /** @brief: Type of ClearValue */
+    EType Type;
 
-    FORCEINLINE const CFloatColor& AsColor() const
-    {
-        Assert(Type == EType::Color);
-        return Color;
-    }
-
-    FORCEINLINE SDepthStencil& AsDepthStencil()
-    {
-        Assert(Type == EType::DepthStencil);
-        return DepthStencil;
-    }
-
-    FORCEINLINE const SDepthStencil& AsDepthStencil() const
-    {
-        Assert(Type == EType::DepthStencil);
-        return DepthStencil;
-    }
-
-private:
-    EType   Type;
+    /** @brief: Format of the ClearValue */
     EFormat Format;
+
     union
     {
-        CFloatColor       Color;
-        SDepthStencil DepthStencil;
+        /** @brief: Color-value */
+        CFloatColor ColorValue;
+
+        /** @brief: DepthStencil-value */
+        CTextureDepthStencilValue DepthStencilValue;
     };
 };
 

@@ -3,6 +3,7 @@
 
 #include "Core/Templates/Move.h"
 #include "Core/Templates/IsTArrayType.h"
+#include "Core/Templates/InitializerList.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TArrayView - View of an array similar to std::span
@@ -31,35 +32,34 @@ public:
 
     /**
      * @brief: Construct a view from an array of ArrayType
-     * 
+     *
      * @param InArray: Array to create view from
      */
-    template<typename ArrayType, typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
-    FORCEINLINE explicit TArrayView(ArrayType& InArray) noexcept
+    FORCEINLINE TArrayView(const TArrayView& InArray) noexcept
         : View(InArray.Data())
         , ViewSize(InArray.Size())
     { }
 
     /**
      * @brief: Construct a view from an array of ArrayType
-     *
+     * 
      * @param InArray: Array to create view from
      */
     template<typename ArrayType, typename = typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type>
-    FORCEINLINE explicit TArrayView(const ArrayType& InArray) noexcept
+    FORCEINLINE TArrayView(const ArrayType& InArray) noexcept
         : View(InArray.Data())
         , ViewSize(InArray.Size())
     { }
 
     /**
-     * @brief: Construct a view from a bounded array
+     * @brief: Construct a view from a raw-array
      *
      * @param InArray: Array to create view from
+     * @param NumElements: Number of elements in the array
      */
-    template<SizeType N>
-    FORCEINLINE explicit TArrayView(ElementType(&InArray)[N]) noexcept
-        : View(InArray)
-        , ViewSize(N)
+    FORCEINLINE TArrayView(std::initializer_list<ElementType> InList) noexcept
+        : View(GetInitializerListData(InList))
+        , ViewSize(GetInitializerListSize(InList))
     { }
 
     /**
@@ -68,44 +68,11 @@ public:
      * @param InArray: Array to create view from
      * @param NumElements: Number of elements in the array
      */
-    FORCEINLINE TArrayView(std::initializer_list<ElementType> InitList) noexcept
-        : View(const_cast<ElementType*>(InitList.begin()))
-        , ViewSize(static_cast<SizeType>(InitList.size()))
-    { }
-
-    /**
-     * @brief: Construct a view from a raw-array
-     *
-     * @param InArray: Array to create view from
-     * @param NumElements: Number of elements in the array
-     */
-    FORCEINLINE explicit TArrayView(ElementType* InArray, SizeType NumElements) noexcept
+    template<typename OtherElementType>
+    FORCEINLINE TArrayView(OtherElementType* InArray, SizeType NumElements) noexcept
         : View(InArray)
         , ViewSize(NumElements)
     { }
-
-    /**
-     * @brief: Copy-constructor
-     * 
-     * @param Other: Array to copy from
-     */
-    FORCEINLINE TArrayView(const TArrayView& Other) noexcept
-        : View(Other.View)
-        , ViewSize(Other.ViewSize)
-    { }
-
-    /**
-     * @brief: Move-constructor
-     *
-     * @param Other: Array to move from
-     */
-    FORCEINLINE TArrayView(TArrayView&& Other) noexcept
-        : View(Other.View)
-        , ViewSize(Other.ViewSize)
-    {
-        Other.View = nullptr;
-        Other.ViewSize = 0;
-    }
 
     /**
      * @brief: Check if the view contains elements or not
@@ -332,27 +299,8 @@ public:
      */
     FORCEINLINE TArrayView& operator=(const TArrayView& RHS) noexcept
     {
-        View = RHS.View;
+        View     = RHS.View;
         ViewSize = RHS.ViewSize;
-        return *this;
-    }
-
-    /**
-     * @brief: Move-assignment operator
-     *
-     * @param RHS: View to move
-     * @return: A reference to this container
-     */
-    FORCEINLINE TArrayView& operator=(TArrayView&& RHS) noexcept
-    {
-        if (this != &RHS)
-        {
-            View         = RHS.View;
-            ViewSize     = RHS.ViewSize;
-            RHS.View     = nullptr;
-            RHS.ViewSize = 0;
-        }
-
         return *this;
     }
 
@@ -482,11 +430,11 @@ public:
 
 private:
     ElementType* View;
-    SizeType ViewSize;
+    SizeType     ViewSize;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Enable TArrayType
+// TIsTArrayType
 
 template<typename T>
 struct TIsTArrayType<TArrayView<T>>

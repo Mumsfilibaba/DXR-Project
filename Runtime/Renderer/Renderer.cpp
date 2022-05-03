@@ -4,7 +4,7 @@
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/TextureFactory.h"
@@ -71,7 +71,9 @@ CRenderer::CRenderer()
 
 bool CRenderer::Init()
 {
-    Resources.MainWindowViewport = RHICreateViewport(GEngine->MainWindow.Get(), 0, 0, EFormat::R8G8B8A8_Unorm, EFormat::Unknown);
+    CRHIViewportInitializer ViewportInitializer(GEngine->MainWindow->GetPlatformHandle(), EFormat::R8G8B8A8_Unorm, EFormat::Unknown, 0, 0);
+
+    Resources.MainWindowViewport = RHICreateViewport(ViewportInitializer);
     if (!Resources.MainWindowViewport)
     {
         CDebug::DebugBreak();
@@ -82,7 +84,8 @@ bool CRenderer::Init()
         // Resources.MainWindowViewport->SetName("Main Window Viewport");
     }
 
-    Resources.CameraBuffer = RHICreateConstantBuffer<SCameraBufferDesc>(EBufferUsageFlags::Default, EResourceAccess::Common, nullptr);
+    CRHIConstantBufferInitializer CBInitializer(EBufferUsageFlags::Default, sizeof(SCameraBufferDesc), EResourceAccess::Common);
+    Resources.CameraBuffer = RHICreateConstantBuffer(CBInitializer);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create CameraBuffer");
@@ -110,14 +113,14 @@ bool CRenderer::Init()
     }
 
     {
-        SRHISamplerStateInfo CreateInfo;
-        CreateInfo.AddressU    = ESamplerMode::Border;
-        CreateInfo.AddressV    = ESamplerMode::Border;
-        CreateInfo.AddressW    = ESamplerMode::Border;
-        CreateInfo.Filter      = ESamplerFilter::MinMagMipPoint;
-        CreateInfo.BorderColor = CFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
+        CRHISamplerStateInitializer Initializer;
+        Initializer.AddressU    = ESamplerMode::Border;
+        Initializer.AddressV    = ESamplerMode::Border;
+        Initializer.AddressW    = ESamplerMode::Border;
+        Initializer.Filter      = ESamplerFilter::MinMagMipPoint;
+        Initializer.BorderColor = CFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-        Resources.DirectionalLightShadowSampler = RHICreateSamplerState(CreateInfo);
+        Resources.DirectionalLightShadowSampler = RHICreateSamplerState(Initializer);
         if (!Resources.DirectionalLightShadowSampler)
         {
             CDebug::DebugBreak();
@@ -126,14 +129,14 @@ bool CRenderer::Init()
     }
 
     {
-        SRHISamplerStateInfo CreateInfo;
-        CreateInfo.AddressU       = ESamplerMode::Wrap;
-        CreateInfo.AddressV       = ESamplerMode::Wrap;
-        CreateInfo.AddressW       = ESamplerMode::Wrap;
-        CreateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
-        CreateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
+        CRHISamplerStateInitializer Initializer;
+        Initializer.AddressU       = ESamplerMode::Wrap;
+        Initializer.AddressV       = ESamplerMode::Wrap;
+        Initializer.AddressW       = ESamplerMode::Wrap;
+        Initializer.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
+        Initializer.ComparisonFunc = EComparisonFunc::LessEqual;
 
-        Resources.PointLightShadowSampler = RHICreateSamplerState(CreateInfo);
+        Resources.PointLightShadowSampler = RHICreateSamplerState(Initializer);
         if (!Resources.PointLightShadowSampler)
         {
             CDebug::DebugBreak();
@@ -1005,9 +1008,10 @@ bool CRenderer::InitBoundingBoxDebugPass()
         CVector3(-0.5f,  0.5f, -0.5f)
     };
 
-    SRHIResourceData VertexData(Vertices.Data(), Vertices.SizeInBytes());
+    CRHIBufferDataInitializer VertexData(Vertices.Data(), Vertices.SizeInBytes());
 
-    AABBVertexBuffer = RHICreateVertexBuffer<CVector3>(Vertices.Size(), EBufferUsageFlags::Default, EResourceAccess::Common, &VertexData);
+    CRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, Vertices.Size(), sizeof(CVector3), EResourceAccess::Common, &VertexData);
+    AABBVertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!AABBVertexBuffer)
     {
         CDebug::DebugBreak();
@@ -1035,9 +1039,10 @@ bool CRenderer::InitBoundingBoxDebugPass()
         2, 7,
     };
 
-    SRHIResourceData IndexData(Indices.Data(), Indices.SizeInBytes());
+    CRHIBufferDataInitializer IndexData(Indices.Data(), Indices.SizeInBytes());
 
-    AABBIndexBuffer = RHICreateIndexBuffer(EIndexFormat::uint16, Indices.Size(), EBufferUsageFlags::Default, EResourceAccess::Common, &IndexData);
+    CRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint16, Indices.Size(), EResourceAccess::Common, &IndexData);
+    AABBIndexBuffer = RHICreateIndexBuffer(IBInitializer);
     if (!AABBIndexBuffer)
     {
         CDebug::DebugBreak();
@@ -1131,7 +1136,7 @@ bool CRenderer::InitAA()
     }
 
     // FXAA
-    SRHISamplerStateInfo CreateInfo;
+    CRHISamplerStateInitializer CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;
@@ -1201,7 +1206,7 @@ bool CRenderer::InitAA()
 
 bool CRenderer::InitShadingImage()
 {
-    SRHIShadingRateSupport Support;
+    SShadingRateSupport Support;
     RHIQueryShadingRateSupport(Support);
 
     if (Support.Tier != ERHIShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)

@@ -4,6 +4,11 @@
 #include "Core/Math/Float.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedefs
+
+typedef TSharedRef<class CRHISamplerState> RHISamplerStateRef;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ESamplerMode
 
 enum class ESamplerMode : uint8
@@ -82,22 +87,111 @@ inline const char* ToString(ESamplerFilter SamplerFilter)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHISamplerStateInfo
+// CRHISamplerStateInitializer
 
-struct SRHISamplerStateInfo
+class CRHISamplerStateInitializer
 {
-    ESamplerMode    AddressU       = ESamplerMode::Clamp;
-    ESamplerMode    AddressV       = ESamplerMode::Clamp;
-    ESamplerMode    AddressW       = ESamplerMode::Clamp;
-    ESamplerFilter  Filter         = ESamplerFilter::MinMagMipLinear;
-    EComparisonFunc ComparisonFunc = EComparisonFunc::Never;
-    float           MipLODBias     = 0.0f;
-    uint32          MaxAnisotropy  = 1;
-    CFloatColor     BorderColor;
-    float           MinLOD         = -FLT_MAX;
-    float           MaxLOD         = FLT_MAX;
-};
+public:
 
+    CRHISamplerStateInitializer()
+        : AddressU(ESamplerMode::Clamp)
+        , AddressV(ESamplerMode::Clamp)
+        , AddressW(ESamplerMode::Clamp)
+        , Filter(ESamplerFilter::MinMagMipLinear)
+        , ComparisonFunc(EComparisonFunc::Never)
+        , MipLODBias(0.0f)
+        , MaxAnisotropy(1)
+        , MinLOD(-FLT_MAX)
+        , MaxLOD(FLT_MAX)
+        , BorderColor()
+    { }
+
+    CRHISamplerStateInitializer(ESamplerMode InAddressMode, ESamplerFilter InFilter)
+        : AddressU(InAddressMode)
+        , AddressV(InAddressMode)
+        , AddressW(InAddressMode)
+        , Filter(InFilter)
+        , ComparisonFunc(EComparisonFunc::Unknown)
+        , MipLODBias(0.0f)
+        , MaxAnisotropy(0)
+        , MinLOD(0.0f)
+        , MaxLOD(FLT_MAX)
+        , BorderColor(0.0f, 0.0f, 0.0f, 1.0f)
+    { }
+
+    CRHISamplerStateInitializer( ESamplerMode InAddressU
+                               , ESamplerMode InAddressV
+                               , ESamplerMode InAddressW
+                               , ESamplerFilter InFilter
+                               , EComparisonFunc InComparisonFunc
+                               , float InMipLODBias
+                               , uint8 InMaxAnisotropy
+                               , float InMinLOD
+                               , float InMaxLOD
+                               , const CFloatColor& InBorderColor)
+        : AddressU(InAddressU)
+        , AddressV(InAddressV)
+        , AddressW(InAddressW)
+        , Filter(InFilter)
+        , ComparisonFunc(InComparisonFunc)
+        , MipLODBias(InMipLODBias)
+        , MaxAnisotropy(InMaxAnisotropy)
+        , MinLOD(InMinLOD)
+        , MaxLOD(InMaxLOD)
+        , BorderColor(InBorderColor)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToUnderlying(AddressU);
+        HashCombine(Hash, ToUnderlying(AddressV));
+        HashCombine(Hash, ToUnderlying(AddressW));
+        HashCombine(Hash, ToUnderlying(Filter));
+        HashCombine(Hash, ToUnderlying(ComparisonFunc));
+        HashCombine(Hash, MaxAnisotropy);
+        HashCombine(Hash, MinLOD);
+        HashCombine(Hash, MinLOD);
+        HashCombine(Hash, MaxLOD);
+        HashCombine(Hash, BorderColor.GetHash());
+        return Hash;
+    }
+
+    bool operator==(const CRHISamplerStateInitializer& RHS) const
+    {
+        return (AddressU       == RHS.AddressU)
+            && (AddressV       == RHS.AddressV)
+            && (AddressW       == RHS.AddressW)
+            && (Filter         == RHS.Filter)
+            && (ComparisonFunc == RHS.ComparisonFunc)
+            && (MipLODBias     == RHS.MipLODBias)
+            && (MaxAnisotropy  == RHS.MaxAnisotropy)
+            && (MinLOD         == RHS.MinLOD)
+            && (MaxLOD         == RHS.MaxLOD)
+            && (BorderColor    == RHS.BorderColor);
+    }
+
+    bool operator!=(const CRHISamplerStateInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    ESamplerMode    AddressU;
+    ESamplerMode    AddressV;
+    ESamplerMode    AddressW;
+    
+    ESamplerFilter  Filter;
+
+    EComparisonFunc ComparisonFunc;
+
+    uint8           MaxAnisotropy;
+
+    float           MipLODBias;
+
+    float           MinLOD;
+    float           MaxLOD;
+
+    CFloatColor     BorderColor;
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHISamplerState

@@ -332,10 +332,9 @@ public:
      *
      * @param Scene: Top-level acceleration-structure to build or update
      * @param Instances: Instances to build the scene of
-     * @param NumInstances: Number of instances to build
      * @param bUpdate: True if the build should be an update, false if it should build from the ground up
      */
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) = 0;
+    virtual void BuildRayTracingScene(CRHIRayTracingScene* Scene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate) = 0;
 
      /** @brief: Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
     virtual void SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene

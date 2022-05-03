@@ -1,5 +1,5 @@
 #pragma once
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 
 #include "NullRHIBuffer.h"
 #include "NullRHITexture.h"
@@ -21,18 +21,18 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHICoreInstance
+// CNullRHICoreInterface
 
-class CNullRHICoreInstance final : public CRHICoreInstance
+class CNullRHICoreInterface final : public CRHICoreInterface
 {
 public:
 
-    CNullRHICoreInstance()
-        : CRHICoreInstance(ERHIInstanceType::Null)
+    CNullRHICoreInterface()
+        : CRHICoreInterface(ERHIInstanceType::Null)
         , CommandContext(CNullRHICommandContext::CreateNullRHIContext())
     { }
 
-    ~CNullRHICoreInstance()
+    ~CNullRHICoreInterface()
     {
         SafeDelete(CommandContext);
     }
@@ -40,68 +40,68 @@ public:
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHICoreInstance Interface
+    // CRHICoreInterface Interface
 
     virtual bool Initialize(bool bEnableDebug) override final { return true; }
 
-    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture2D>(Format, Width, Height, NumMips, NumSamples, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture2DArray>(Format, Width, Height, NumArraySlices, NumMips, NumSamples, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITextureCube>(Format, Size, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITextureCubeArray>(Format, Size, NumArraySlices, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const SClearValue& OptimizedClearValue) override final
+    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final
     {
         return dbg_new TNullRHITexture<CNullRHITexture3D>(Format, Width, Height, Depth, NumMips, Flags, OptimizedClearValue);
     }
 
-    virtual class CRHISamplerState* CreateSamplerState(const struct SRHISamplerStateInfo& CreateInfo) override final
+    virtual CRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer) override final
     {
         return dbg_new CNullRHISamplerState();
     }
 
-    virtual CRHIVertexBuffer* CreateVertexBuffer(uint32 Stride, uint32 NumVertices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIVertexBuffer* RHICreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIVertexBuffer>(Flags, NumVertices, Stride);
+        return dbg_new TNullRHIBuffer<CNullRHIVertexBuffer>(Initializer);
     }
 
-    virtual CRHIIndexBuffer* CreateIndexBuffer(EIndexFormat Format, uint32 NumIndices, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIIndexBuffer* RHICreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIIndexBuffer>(Flags, Format, NumIndices);
+        return dbg_new TNullRHIBuffer<CNullRHIIndexBuffer>(Initializer);
     }
 
-    virtual CRHIConstantBuffer* CreateConstantBuffer(uint32 Size, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIGenericBuffer* RHICreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIConstantBuffer>(Flags, Size);
+        return dbg_new TNullRHIBuffer<CNullRHIGenericBuffer>(Initializer);
     }
 
-    virtual CRHIGenericBuffer* CreateGenericBuffer(uint32 Stride, uint32 NumElements, EBufferUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData) override final
+    virtual CRHIConstantBuffer* RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer) override final
     {
-        return dbg_new TNullRHIBuffer<CNullRHIGenericBuffer>(Flags, Stride * NumElements, Stride);
+        return dbg_new TNullRHIBuffer<CNullRHIConstantBuffer>(Initializer);
     }
 
-    virtual CRHIRayTracingScene* CreateRayTracingScene(uint32 Flags, SRayTracingGeometryInstance* Instances, uint32 NumInstances) override final
+    virtual CRHIRayTracingScene* RHICreateRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer) override final
     {
-        return dbg_new CNullRHIRayTracingScene(Flags);
+        return dbg_new CNullRHIRayTracingScene(Initializer);
     }
 
-    virtual CRHIRayTracingGeometry* CreateRayTracingGeometry(uint32 Flags, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer) override final
+    virtual CRHIRayTracingGeometry* RHICreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer) override final
     {
-        return dbg_new CNullRHIRayTracingGeometry(Flags);
+        return dbg_new CNullRHIRayTracingGeometry(Initializer);
     }
 
     virtual CRHIShaderResourceView* CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo) override final
@@ -224,12 +224,12 @@ public:
         return dbg_new CNullRHITimestampQuery();
     }
 
-    virtual class CRHIViewport* CreateViewport(CGenericWindow* Window, uint32 Width, uint32 Height, EFormat ColorFormat, EFormat DepthFormat) override final
+    virtual class CRHIViewport* RHICreateViewport(const CRHIViewportInitializer& Initializer) override final
     {
-        return dbg_new CNullRHIViewport(ColorFormat, Width, Height);
+        return dbg_new CNullRHIViewport(Initializer);
     }
 
-    virtual class IRHICommandContext* GetDefaultCommandContext() override final
+    virtual class IRHICommandContext* RHIGetDefaultCommandContext() override final
     {
         return CommandContext;
     }
@@ -239,14 +239,14 @@ public:
         return String();
     }
 
-    virtual void RHIQueryRayTracingSupport(SRHIRayTracingSupport& OutSupport) const override final
+    virtual void RHIQueryRayTracingSupport(SRayTracingSupport& OutSupport) const override final
     {
-        OutSupport = SRHIRayTracingSupport();
+        OutSupport = SRayTracingSupport();
     }
 
-    virtual void RHIQueryShadingRateSupport(SRHIShadingRateSupport& OutSupport) const override final
+    virtual void RHIQueryShadingRateSupport(SShadingRateSupport& OutSupport) const override final
     {
-        OutSupport = SRHIShadingRateSupport();
+        OutSupport = SShadingRateSupport();
     }
 
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final

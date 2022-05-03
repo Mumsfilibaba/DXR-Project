@@ -10,10 +10,8 @@
 #include "Core/Templates/Not.h"
 #include "Core/Templates/IsReallocatable.h"
 
-#include <initializer_list>
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Dynamic Array similar to std::vector
+// TArray - Dynamic Array similar to std::vector
 
 template<typename T, typename AllocatorType = TDefaultArrayAllocator<T>>
 class TArray
@@ -30,7 +28,7 @@ public:
     typedef TReverseArrayIterator<const TArray, const ElementType> ReverseConstIteratorType;
 
     /** 
-     * Default constructor
+     * @brief: Default constructor
      */
     FORCEINLINE TArray() noexcept
         : Allocator()
@@ -39,7 +37,7 @@ public:
     { }
 
     /** 
-     * Constructor that default creates a certain number of elements 
+     * @brief: Constructor that default creates a certain number of elements 
      *
      * @param InSize: Number of elements to construct
      */
@@ -71,7 +69,8 @@ public:
      * @param InputArray: Pointer to the start of the array to copy from
      * @param NumElements: Number of elements in 'InputArray', which also is the resulting size of the constructed array
      */
-    FORCEINLINE explicit TArray(const ElementType* InputArray, SizeType NumElements) noexcept
+    template<typename OtherElementType>
+    FORCEINLINE explicit TArray(const OtherElementType* InputArray, SizeType NumElements) noexcept
         : Allocator()
         , ArraySize(0)
         , ArrayCapacity(0)
@@ -82,14 +81,14 @@ public:
     /** 
      * Constructor that creates an array from an std::initializer_list
      * 
-     * @param InitList: Initializer list containing all elements to construct the array from
+     * @param InList: Initializer list containing all elements to construct the array from
      */
-    FORCEINLINE TArray(std::initializer_list<ElementType> InitList) noexcept
+    FORCEINLINE TArray(std::initializer_list<ElementType> InList) noexcept
         : Allocator()
         , ArraySize(0)
         , ArrayCapacity(0)
     {
-        CopyConstructFrom(InitList.begin(), static_cast<SizeType>(InitList.size()));
+        CopyConstructFrom(GetInitializerListData(InList) ,GetInitializerListSize(InList));
     }
 
     /** 
@@ -255,11 +254,11 @@ public:
     /** 
      * Resets the container and copy-construct a new array from an initializer-list
      *
-     * @param InitList: Initializer-list to copy-construct elements from
+     * @param InList: Initializer-list to copy-construct elements from
      */
-    FORCEINLINE void Reset(std::initializer_list<ElementType> InitList) noexcept
+    FORCEINLINE void Reset(std::initializer_list<ElementType> InList) noexcept
     {
-        Reset(InitList.begin(), static_cast<SizeType>(InitList.size()));
+        Reset(GetInitializerListData(InList), GetInitializerListSize(InList));
     }
 
     /** 
@@ -517,22 +516,22 @@ public:
      * @brief: Insert elements from a initializer list at a specific position in the array
      *
      * @param Position: Position of the new element
-     * @param InitList: Initializer list to insert into the array
+     * @param InList: Initializer list to insert into the array
      */
-    FORCEINLINE void Insert(SizeType Position, std::initializer_list<ElementType> InitList) noexcept
+    FORCEINLINE void Insert(SizeType Position, std::initializer_list<ElementType> InList) noexcept
     {
-        Insert(Position, InitList.begin(), static_cast<SizeType>(InitList.size()));
+        Insert(Position, GetInitializerListData(InList), GetInitializerListSize(InList));
     }
 
     /**
      * @brief: Insert elements from a initializer list at a specific position in the array
      *
      * @param Position: Iterator pointing to the position of the new element
-     * @param InitList: Initializer list to insert into the array
+     * @param InList: Initializer list to insert into the array
      */
-    FORCEINLINE void Insert(ConstIteratorType Position, std::initializer_list<ElementType> InitList) noexcept
+    FORCEINLINE void Insert(ConstIteratorType Position, std::initializer_list<ElementType> InList) noexcept
     {
-        Insert(Position.GetIndex(), InitList.begin(), static_cast<SizeType>(InitList.size()));
+        Insert(Position.GetIndex(), GetInitializerListData(InList), GetInitializerListSize(InList));
     }
 
     /**
@@ -595,11 +594,11 @@ public:
     /**
      * @brief: Insert an initializer-list at the end of the array, which can be of another array-type
      *
-     * @param InitList: Initializer-list to copy elements from
+     * @param InList: Initializer-list to copy elements from
      */
-    FORCEINLINE void Append(std::initializer_list<ElementType> InitList) noexcept
+    FORCEINLINE void Append(std::initializer_list<ElementType> InList) noexcept
     {
-        Append(InitList.begin(), static_cast<SizeType>(InitList.size()));
+        Append(GetInitializerListData(InList), GetInitializerListSize(InList));
     }
 
     /**
@@ -1039,15 +1038,48 @@ public:
 
     /**
      * @brief: Create an array-view of the array
+     *
+     * @return: A new array-view pointing this array's data
+     */
+    FORCEINLINE TArrayView<ElementType> CreateView() noexcept
+    {
+        return TArrayView<ElementType>(Data(), Size());
+    }
+
+    /**
+     * @brief: Create an array-view of the array
+     *
+     * @return: A new array-view pointing this array's data
+     */
+    FORCEINLINE TArrayView<const ElementType> CreateView() const noexcept
+    {
+        return TArrayView<const ElementType>(Data(), Size());
+    }
+
+    /**
+     * @brief: Create an array-view of the array
      * 
      * @param Offset: Offset into the array
      * @param NumElements: Number of elements to include in the view
      * @return: A new array-view pointing to the specified elements
      */
-    FORCEINLINE TArrayView<ElementType> CreateView(SizeType Offset, SizeType NumElements) const noexcept
+    FORCEINLINE TArrayView<ElementType> CreateView(SizeType Offset, SizeType NumElements) noexcept
     {
         Assert((NumElements < ArraySize) && (Offset + NumElements < ArraySize));
         return TArrayView<ElementType>(Data() + Offset, NumElements);
+    }
+
+    /**
+     * @brief: Create an array-view of the array
+     *
+     * @param Offset: Offset into the array
+     * @param NumElements: Number of elements to include in the view
+     * @return: A new array-view pointing to the specified elements
+     */
+    FORCEINLINE TArrayView<const ElementType> CreateView(SizeType Offset, SizeType NumElements) const noexcept
+    {
+        Assert((NumElements < ArraySize) && (Offset + NumElements < ArraySize));
+        return TArrayView<const ElementType>(Data() + Offset, NumElements);
     }
 
     /**
@@ -1151,6 +1183,7 @@ public:
         Reset(RHS);
         return *this;
     }
+
 
     /**
      * @brief: Move-assignment operator

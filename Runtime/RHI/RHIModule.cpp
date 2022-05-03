@@ -1,5 +1,5 @@
 #include "RHIModule.h"
-#include "RHICoreInstance.h"
+#include "RHICoreInterface.h"
 #include "RHICommandList.h"
 #include "RHIShaderCompiler.h"
 
@@ -8,7 +8,7 @@ IMPLEMENT_ENGINE_MODULE(CDefaultEngineModule, RHI);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Globals
 
-RHI_API CRHICoreInstance*       GRHIInstance = nullptr;
+RHI_API CRHICoreInterface*       GRHIInstance = nullptr;
 RHI_API IRHIShaderCompiler* GShaderCompiler = nullptr;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -52,7 +52,7 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
         false;
 #endif
 
-    CRHICoreInstance* RHIInterface = RHIModule->CreateInterface();
+    CRHICoreInterface* RHIInterface = RHIModule->CreateInterface();
     if (!(RHIInterface && RHIInterface->Initialize(bEnableDebug)))
     {
         LOG_ERROR("[InitRHI] Failed to init RHIInterface, the application has to terminate");
@@ -71,7 +71,7 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
     GShaderCompiler = Compiler;
 
     // Set the context to the command queue
-    IRHICommandContext* CmdContext = GRHIInstance->GetDefaultCommandContext();
+    IRHICommandContext* CmdContext = GRHIInstance->RHIGetDefaultCommandContext();
     CRHICommandQueue::Get().SetContext(CmdContext);
 
     return true;

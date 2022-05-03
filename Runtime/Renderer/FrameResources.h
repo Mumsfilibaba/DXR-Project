@@ -17,8 +17,6 @@
 #define GBUFFER_DEPTH_INDEX       (3)
 #define GBUFFER_VIEW_NORMAL_INDEX (4)
 
-#define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetDefaultShaderResourceView() : nullptr)
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // TResourceCache
 
@@ -115,7 +113,7 @@ struct RENDERER_API SFrameResources
     SRayTracingShaderResources GlobalResources;
     SRayTracingShaderResources RayGenLocalResources;
     SRayTracingShaderResources MissLocalResources;
-    TArray<SRayTracingGeometryInstance> RTGeometryInstances;
+    TArray<CRHIRayTracingGeometryInstance> RTGeometryInstances;
 
     TArray<SRayTracingShaderResources>     RTHitGroupResources;
     THashTable<class CMesh*, uint32>       RTMeshToHitGroupIndex;

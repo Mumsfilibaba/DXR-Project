@@ -1,36 +1,14 @@
 #pragma once
-#include "RHI/RHIRayTracing.h"
-
 #include "D3D12DeviceChild.h"
 #include "D3D12Buffer.h"
 #include "D3D12Views.h"
 
+#include "RHI/RHIRayTracing.h"
+
+#include "Core/Containers/Array.h"
+
 class CD3D12CommandList;
 class CMaterial;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RayTracingGeometry
-
-class CD3D12RayTracingGeometry : public CRHIRayTracingGeometry, public CD3D12DeviceChild
-{
-public:
-    CD3D12RayTracingGeometry(CD3D12Device* InDevice, uint32 InFlags);
-    ~CD3D12RayTracingGeometry() = default;
-
-    bool Build(class CD3D12CommandContext& CmdContext, bool Update);
-
-    D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
-    {
-        Assert(ResultBuffer != nullptr);
-        return ResultBuffer->GetGPUVirtualAddress();
-    }
-
-    TSharedRef<CD3D12VertexBuffer> VertexBuffer;
-    TSharedRef<CD3D12IndexBuffer>  IndexBuffer;
-
-    TSharedRef<CD3D12Resource> ResultBuffer;
-    TSharedRef<CD3D12Resource> ScratchBuffer;
-};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SD3D12ShaderBindingTableEntry
@@ -80,15 +58,88 @@ private:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RayTracingScene
+// CD3D12AccelerationStructure
 
-class CD3D12RayTracingScene : public CRHIRayTracingScene, public CD3D12DeviceChild
+class CD3D12AccelerationStructure : public CD3D12DeviceChild
 {
 public:
-    CD3D12RayTracingScene(CD3D12Device* InDevice, uint32 InFlags);
+
+    CD3D12AccelerationStructure(CD3D12Device* InDevice);
+    ~CD3D12AccelerationStructure() = default;
+    
+    D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
+    {
+        Assert(ResultBuffer != nullptr);
+        return ResultBuffer->GetGPUVirtualAddress();
+    }
+
+    CD3D12Resource* GetD3D12Resource() const { return ResultBuffer.Get(); }
+
+    CD3D12Resource* GetD3D12ScratchBuffer() const { return ScratchBuffer.Get(); }
+
+protected:
+    TSharedRef<CD3D12Resource> ResultBuffer;
+    TSharedRef<CD3D12Resource> ScratchBuffer;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12RayTracingGeometry
+
+class CD3D12RayTracingGeometry : public CRHIRayTracingGeometry, public CD3D12AccelerationStructure
+{
+public:
+    CD3D12RayTracingGeometry(CD3D12Device* InDevice, const CRHIRayTracingGeometryInitializer& Initializer);
+    ~CD3D12RayTracingGeometry() = default;
+
+    bool Build(class CD3D12CommandContext& CmdContext, CD3D12VertexBuffer* InVertexBuffer, CD3D12IndexBuffer* InIndexBuffer, bool bUpdate);
+
+    CD3D12VertexBuffer* GetVertexBuffer() const { return VertexBuffer.Get(); }
+
+    CD3D12IndexBuffer* GetIndexBuffer() const { return IndexBuffer.Get(); }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIRayTracingGeometry
+
+    virtual void* GetRHIBaseBVHBuffer() override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        return reinterpret_cast<void*>(D3D12Resource);
+    }
+
+    virtual void* GetRHIBaseAccelerationStructure() override final
+    {
+        CD3D12AccelerationStructure* D3D12AccelerationStructure = static_cast<CD3D12AccelerationStructure*>(this);
+        return reinterpret_cast<void*>(D3D12AccelerationStructure);
+    }
+
+    virtual void SetName(const String& InName) override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        if (D3D12Resource)
+        {
+            D3D12Resource->SetName(InName);
+        }
+    }
+
+private:
+    TSharedRef<CD3D12VertexBuffer> VertexBuffer;
+    TSharedRef<CD3D12IndexBuffer>  IndexBuffer;
+};
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12RayTracingScene
+
+class CD3D12RayTracingScene : public CRHIRayTracingScene, public CD3D12AccelerationStructure
+{
+public:
+
+    CD3D12RayTracingScene(CD3D12Device* InDevice, const CRHIRayTracingSceneInitializer& Initializer);
     ~CD3D12RayTracingScene() = default;
 
-    bool Build(class CD3D12CommandContext& CmdContext, const SRayTracingGeometryInstance* Instances, uint32 NumInstances, bool Update);
+    bool Build(class CD3D12CommandContext& CmdContext, const TArrayView<const CRHIRayTracingGeometryInstance>& InInstances, bool bUpdate);
 
     bool BuildBindingTable( class CD3D12CommandContext& CmdContext
                           , CD3D12RayTracingPipelineState* PipelineState
@@ -99,37 +150,57 @@ public:
                           , const SRayTracingShaderResources* HitGroupResources
                           , uint32 NumHitGroupResources);
 
-    virtual CRHIShaderResourceView* GetShaderResourceView() const { return View.Get(); }
 
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE            GetRayGenShaderRecord() const;
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetMissShaderTable() const;
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetHitGroupTable() const;
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetMissShaderTable()    const;
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetHitGroupTable()      const;
 
-    FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
+    CD3D12Resource* GetInstanceuffer() const { return InstanceBuffer.Get(); }
+
+    CD3D12Resource* GetBindingTable()  const { return BindingTable.Get(); }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHIRayTracingScene
+
+    virtual CRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
+
+    virtual CRHIDescriptorHandle GetBindlessHandle() const override final { return CRHIDescriptorHandle(); }
+
+    virtual void* GetRHIBaseBVHBuffer() override final
     {
-        Assert(ResultBuffer != nullptr);
-        return ResultBuffer->GetGPUVirtualAddress();
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        return reinterpret_cast<void*>(D3D12Resource);
     }
 
-    FORCEINLINE CD3D12Resource* GetResultBuffer()  const { return ResultBuffer.Get(); }
+    virtual void* GetRHIBaseAccelerationStructure() override final
+    { 
+        CD3D12AccelerationStructure* D3D12AccelerationStructure = static_cast<CD3D12AccelerationStructure*>(this);
+        return reinterpret_cast<void*>(D3D12AccelerationStructure);
+    }
 
-    FORCEINLINE CD3D12Resource* GetInstanceuffer() const { return InstanceBuffer.Get(); }
-
-    FORCEINLINE CD3D12Resource* GetBindingTable()  const { return BindingTable.Get(); }
+    virtual void SetName(const String& InName) override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        if (D3D12Resource)
+        {
+            D3D12Resource->SetName(InName);
+        }
+    }
 
 private:
-    TArray<SRayTracingGeometryInstance>     Instances;
-    TSharedRef<CD3D12ShaderResourceView> View;
+    TArray<CRHIRayTracingGeometryInstance> Instances;
 
-    TSharedRef<CD3D12Resource> ResultBuffer;
-    TSharedRef<CD3D12Resource> ScratchBuffer;
-    TSharedRef<CD3D12Resource> InstanceBuffer;
-    TSharedRef<CD3D12Resource> BindingTable;
+    TSharedRef<CD3D12ShaderResourceView>   View;
+
+    TSharedRef<CD3D12Resource>             InstanceBuffer;
+    TSharedRef<CD3D12Resource>             BindingTable;
 
     uint32 BindingTableStride = 0;
-    uint32 NumHitGroups = 0;
+    uint32 NumHitGroups       = 0;
 
     // TODO: Maybe move these somewhere else
     CD3D12ShaderBindingTableBuilder ShaderBindingTableBuilder;
-    ID3D12DescriptorHeap* BindingTableHeaps[2] = { nullptr, nullptr };
+    ID3D12DescriptorHeap*           BindingTableHeaps[2] = { nullptr, nullptr };
 };

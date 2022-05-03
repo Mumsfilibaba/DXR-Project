@@ -16,8 +16,8 @@ class CNullRHIVertexBuffer : public CRHIVertexBuffer
 {
 public:
 
-    CNullRHIVertexBuffer(EBufferUsageFlags InFlags, uint32 InNumVertices, uint32 InStride)
-        : CRHIVertexBuffer(InFlags, InNumVertices, InStride)
+    CNullRHIVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
+        : CRHIVertexBuffer(Initializer)
     { }
 };
 
@@ -28,8 +28,8 @@ class CNullRHIIndexBuffer : public CRHIIndexBuffer
 {
 public:
     
-    CNullRHIIndexBuffer(EBufferUsageFlags InFlags, EIndexFormat InIndexFormat, uint32 InNumIndices)
-        : CRHIIndexBuffer(InFlags, InIndexFormat, InNumIndices)
+    CNullRHIIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
+        : CRHIIndexBuffer(Initializer)
     { }
 };
 
@@ -40,8 +40,8 @@ class CNullRHIConstantBuffer : public CRHIConstantBuffer
 {
 public:
     
-    CNullRHIConstantBuffer(EBufferUsageFlags InFlags, uint32 InSizeInBytes)
-        : CRHIConstantBuffer(InFlags, InSizeInBytes)
+    CNullRHIConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
+        : CRHIConstantBuffer(Initializer)
     { }
 
 public:
@@ -58,8 +58,8 @@ class CNullRHIGenericBuffer : public CRHIGenericBuffer
 {
 public:
     
-    CNullRHIGenericBuffer(EBufferUsageFlags InFlags, uint32 InSizeInBytes, uint32 InStride)
-        : CRHIGenericBuffer(InFlags, InSizeInBytes, InStride)
+    CNullRHIGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
+        : CRHIGenericBuffer(Initializer)
     { }
 };
 

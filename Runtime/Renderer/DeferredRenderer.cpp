@@ -1,7 +1,7 @@
 #include "DeferredRenderer.h"
 #include "MeshDrawCommand.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHIShaderCompiler.h"
 
 #include "Engine/Resources/Mesh.h"
@@ -28,7 +28,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     }
 
     {
-        SRHISamplerStateInfo CreateInfo;
+        CRHISamplerStateInitializer CreateInfo;
         CreateInfo.AddressU = ESamplerMode::Clamp;
         CreateInfo.AddressV = ESamplerMode::Clamp;
         CreateInfo.AddressW = ESamplerMode::Clamp;
@@ -227,7 +227,7 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         FrameResources.IntegrationLUT->SetName("IntegrationLUT");
     }
 
-    SRHISamplerStateInfo CreateInfo;
+    CRHISamplerStateInitializer CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;
@@ -737,7 +737,7 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     }
 
     // DepthStencil
-    const SClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
+    const CTextureClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
 
     FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RHICreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, ETextureUsageFlags::ShadowMap, EResourceAccess::Common, nullptr, DepthClearValue);
     if (FrameResources.GBuffer[GBUFFER_DEPTH_INDEX])

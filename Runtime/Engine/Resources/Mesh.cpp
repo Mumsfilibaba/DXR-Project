@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHICommandList.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -15,8 +15,10 @@ bool CMesh::Init(const SMeshData& Data)
 
     const EBufferUsageFlags BufferFlags = bRTOn ? (EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default) : EBufferUsageFlags::Default;
 
-    SRHIResourceData InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
-    VertexBuffer = RHICreateVertexBuffer<SVertex>(VertexCount, BufferFlags, EResourceAccess::VertexAndConstantBuffer, &InitialData);
+    CRHIBufferDataInitializer InitialData(Data.Vertices.Data(), Data.Vertices.SizeInBytes());
+    
+    CRHIVertexBufferInitializer VBInitializer(BufferFlags, VertexCount, sizeof(SVertex), EResourceAccess::VertexAndConstantBuffer, &InitialData);
+    VertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!VertexBuffer)
     {
         return false;
@@ -38,14 +40,15 @@ bool CMesh::Init(const SMeshData& Data)
             NewIndicies.Emplace(uint16(Index));
         }
 
-        InitialData = SRHIResourceData(NewIndicies.Data(), NewIndicies.SizeInBytes());
+        InitialData = CRHIBufferDataInitializer(NewIndicies.Data(), NewIndicies.SizeInBytes());
     }
     else
     {
-        InitialData = SRHIResourceData(Data.Indices.Data(), Data.Indices.SizeInBytes());
+        InitialData = CRHIBufferDataInitializer(Data.Indices.Data(), Data.Indices.SizeInBytes());
     }
 
-    IndexBuffer = RHICreateIndexBuffer(IndexFormat, IndexCount, BufferFlags, EResourceAccess::IndexBuffer, &InitialData);
+    CRHIIndexBufferInitializer IndexBufferInitializer(BufferFlags, IndexFormat, IndexCount, EResourceAccess::IndexBuffer, &InitialData);
+    IndexBuffer = RHICreateIndexBuffer(IndexBufferInitializer);
     if (!IndexBuffer)
     {
         return false;
@@ -57,14 +60,15 @@ bool CMesh::Init(const SMeshData& Data)
 
     if (bRTOn)
     {
-        RTGeometry = RHICreateRayTracingGeometry(RayTracingStructureBuildFlag_None, VertexBuffer.Get(), IndexBuffer.Get());
+        CRHIRayTracingGeometryInitializer GeometryInitializer(VertexBuffer.Get(), IndexBuffer.Get(), EAccelerationStructureBuildFlags::None);
+        RTGeometry = RHICreateRayTracingGeometry(GeometryInitializer);
         if (!RTGeometry)
         {
             return false;
         }
         else
         {
-            // RTGeometry->SetName("RayTracing Geometry");
+            RTGeometry->SetName("RayTracing Geometry");
         }
 
         VertexBufferSRV = RHICreateShaderResourceView(VertexBuffer.Get(), 0, VertexCount);
@@ -106,7 +110,8 @@ TSharedPtr<CMesh> CMesh::Make(const SMeshData& Data)
 void CMesh::CreateBoundingBox(const SMeshData& Data)
 {
     constexpr float Inf = std::numeric_limits<float>::infinity();
-    CVector3 MinBounds = CVector3(Inf, Inf, Inf);
+
+    CVector3 MinBounds = CVector3( Inf,  Inf,  Inf);
     CVector3 MaxBounds = CVector3(-Inf, -Inf, -Inf);
 
     for (const SVertex& Vertex : Data.Vertices)

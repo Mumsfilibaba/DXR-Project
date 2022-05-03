@@ -480,18 +480,18 @@ inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
     return D3D12_SHADING_RATE();
 }
 
-inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(uint32 InFlags)
+inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags InFlags)
 {
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-    if (InFlags & RayTracingStructureBuildFlag_AllowUpdate)
+    if ((InFlags & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)
     {
         Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
     }
-    if (InFlags & RayTracingStructureBuildFlag_PreferFastTrace)
+    if ((InFlags & EAccelerationStructureBuildFlags::PreferFastTrace) != EAccelerationStructureBuildFlags::None)
     {
         Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
     }
-    if (InFlags & RayTracingStructureBuildFlag_PreferFastBuild)
+    if ((InFlags & EAccelerationStructureBuildFlags::PreferFastBuild) != EAccelerationStructureBuildFlags::None)
     {
         Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
     }
@@ -499,22 +499,22 @@ inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationSt
     return Flags;
 }
 
-inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(uint32 InFlags)
+inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(ERayTracingInstanceFlags InFlags)
 {
     D3D12_RAYTRACING_INSTANCE_FLAGS Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-    if (InFlags & RayTracingInstanceFlags_CullDisable)
+    if ((InFlags & ERayTracingInstanceFlags::CullDisable) != ERayTracingInstanceFlags::None)
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_CULL_DISABLE;
     }
-    if (InFlags & RayTracingInstanceFlags_FrontCounterClockwise)
+    if ((InFlags & ERayTracingInstanceFlags::FrontCounterClockwise) != ERayTracingInstanceFlags::None)
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_TRIANGLE_FRONT_COUNTERCLOCKWISE;
     }
-    if (InFlags & RayTracingInstanceFlags_ForceOpaque)
+    if ((InFlags & ERayTracingInstanceFlags::ForceOpaque) != ERayTracingInstanceFlags::None)
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
     }
-    if (InFlags & RayTracingInstanceFlags_ForceNonOpaque)
+    if ((InFlags & ERayTracingInstanceFlags::ForceNonOpaque) != ERayTracingInstanceFlags::None)
     {
         Flags |= D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_NON_OPAQUE;
     }

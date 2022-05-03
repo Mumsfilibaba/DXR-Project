@@ -1,7 +1,7 @@
 #include "D3D12Device.h"
 #include "D3D12CommandList.h"
 #include "D3D12DescriptorHeap.h"
-#include "D3D12CoreInstance.h"
+#include "D3D12CoreInterface.h"
 #include "D3D12RayTracing.h"
 
 #include "RHI/RHIModule.h"
@@ -11,19 +11,28 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RayTracingGeometry
 
-CD3D12RayTracingGeometry::CD3D12RayTracingGeometry(CD3D12Device* InDevice, uint32 InFlags)
-    : CRHIRayTracingGeometry(InFlags)
-    , CD3D12DeviceChild(InDevice)
-    , VertexBuffer(nullptr)
-    , IndexBuffer(nullptr)
+CD3D12AccelerationStructure::CD3D12AccelerationStructure(CD3D12Device* InDevice)
+    : CD3D12DeviceChild(InDevice)
     , ResultBuffer(nullptr)
     , ScratchBuffer(nullptr)
-{
-}
+{ }
 
-bool CD3D12RayTracingGeometry::Build(CD3D12CommandContext& CmdContext, bool Update)
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12RayTracingGeometry
+
+CD3D12RayTracingGeometry::CD3D12RayTracingGeometry(CD3D12Device* InDevice, const CRHIRayTracingGeometryInitializer& Initializer)
+    : CRHIRayTracingGeometry(Initializer)
+    , CD3D12AccelerationStructure(InDevice)
+    , VertexBuffer(nullptr)
+    , IndexBuffer(nullptr)
+{ }
+
+bool CD3D12RayTracingGeometry::Build(CD3D12CommandContext& CmdContext, CD3D12VertexBuffer* InVertexBuffer, CD3D12IndexBuffer* InIndexBuffer, bool bUpdate)
 {
     Assert(VertexBuffer != nullptr);
+
+    VertexBuffer = MakeSharedRef<CD3D12VertexBuffer>(InVertexBuffer);
+    IndexBuffer  = MakeSharedRef<CD3D12IndexBuffer>(InIndexBuffer);
 
     D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc;
     CMemory::Memzero(&GeometryDesc);
@@ -37,7 +46,7 @@ bool CD3D12RayTracingGeometry::Build(CD3D12CommandContext& CmdContext, bool Upda
 
     if (IndexBuffer)
     {
-        EIndexFormat IndexFormat        = IndexBuffer->GetFormat();
+        EIndexFormat IndexFormat           = IndexBuffer->GetFormat();
         GeometryDesc.Triangles.IndexFormat = IndexFormat == EIndexFormat::uint32 ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
         GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
         GeometryDesc.Triangles.IndexCount  = IndexBuffer->GetNumIndicies();
@@ -51,7 +60,7 @@ bool CD3D12RayTracingGeometry::Build(CD3D12CommandContext& CmdContext, bool Upda
     Inputs.pGeometryDescs = &GeometryDesc;
     Inputs.Type           = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
     Inputs.Flags          = ConvertAccelerationStructureBuildFlags(GetFlags());
-    if (Update)
+    if (bUpdate)
     {
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
     }
@@ -143,11 +152,9 @@ bool CD3D12RayTracingGeometry::Build(CD3D12CommandContext& CmdContext, bool Upda
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RayTracingScene
 
-CD3D12RayTracingScene::CD3D12RayTracingScene(CD3D12Device* InDevice, uint32 InFlags)
-    : CRHIRayTracingScene(InFlags)
-    , CD3D12DeviceChild(InDevice)
-    , ResultBuffer(nullptr)
-    , ScratchBuffer(nullptr)
+CD3D12RayTracingScene::CD3D12RayTracingScene(CD3D12Device* InDevice, const CRHIRayTracingSceneInitializer& Initializer)
+    : CRHIRayTracingScene(Initializer)
+    , CD3D12AccelerationStructure(InDevice)
     , InstanceBuffer(nullptr)
     , BindingTable(nullptr)
     , BindingTableStride(0)
@@ -155,24 +162,21 @@ CD3D12RayTracingScene::CD3D12RayTracingScene(CD3D12Device* InDevice, uint32 InFl
     , View(nullptr)
     , Instances()
     , ShaderBindingTableBuilder(InDevice)
-{
-}
+{ }
 
-bool CD3D12RayTracingScene::Build(CD3D12CommandContext& CmdContext, const SRayTracingGeometryInstance* InInstances, uint32 NumInstances, bool Update)
+bool CD3D12RayTracingScene::Build(CD3D12CommandContext& CmdContext, const TArrayView<const CRHIRayTracingGeometryInstance>& InInstances, bool bUpdate)
 {
-    Assert(InInstances != nullptr && NumInstances != 0);
-
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
     CMemory::Memzero(&Inputs);
 
     Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    Inputs.NumDescs    = NumInstances;
+    Inputs.NumDescs    = InInstances.Size();
     Inputs.Type        = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
     Inputs.Flags       = ConvertAccelerationStructureBuildFlags(GetFlags());
     
-    if (Update)
+    if (bUpdate)
     {
-        Assert(GetFlags() & RayTracingStructureBuildFlag_AllowUpdate);
+        Assert((GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None);
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
     }
 
@@ -261,17 +265,17 @@ bool CD3D12RayTracingScene::Build(CD3D12CommandContext& CmdContext, const SRayTr
         CmdContext.TransitionResource(ScratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(NumInstances);
-    for (int32 i = 0; i < InstanceDescs.Size(); i++)
+    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(InInstances.Size());
+    for (int32 Instance = 0; Instance < InstanceDescs.Size(); Instance++)
     {
-        CD3D12RayTracingGeometry* D3D12Geometry = static_cast<CD3D12RayTracingGeometry*>(InInstances[i].Instance.Get());
-        CMemory::Memcpy(&InstanceDescs[i].Transform, &InInstances[i].Transform, sizeof(CMatrix3x4));
+        CD3D12RayTracingGeometry* D3D12Geometry = static_cast<CD3D12RayTracingGeometry*>(InInstances[Instance].Geometry);
+        CMemory::Memcpy(&InstanceDescs[Instance].Transform, &InInstances[Instance].Transform, sizeof(CMatrix3x4));
 
-        InstanceDescs[i].AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
-        InstanceDescs[i].InstanceID                          = InInstances[i].InstanceIndex;
-        InstanceDescs[i].Flags                               = ConvertRayTracingInstanceFlags(InInstances[i].Flags);
-        InstanceDescs[i].InstanceMask                        = InInstances[i].Mask;
-        InstanceDescs[i].InstanceContributionToHitGroupIndex = InInstances[i].HitGroupIndex;
+        InstanceDescs[Instance].AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
+        InstanceDescs[Instance].InstanceID                          = InInstances[Instance].InstanceIndex;
+        InstanceDescs[Instance].Flags                               = ConvertRayTracingInstanceFlags(InInstances[Instance].Flags);
+        InstanceDescs[Instance].InstanceMask                        = InInstances[Instance].Mask;
+        InstanceDescs[Instance].InstanceContributionToHitGroupIndex = InInstances[Instance].HitGroupIndex;
     }
 
     CurrentSize = InstanceBuffer ? InstanceBuffer->GetWidth() : 0;
@@ -317,9 +321,9 @@ bool CD3D12RayTracingScene::Build(CD3D12CommandContext& CmdContext, const SRayTr
     AccelerationStructureDesc.Inputs.InstanceDescs             = InstanceBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.DestAccelerationStructureData    = ResultBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
-    if (Update)
+    if (bUpdate)
     {
-        Assert(GetFlags() & RayTracingStructureBuildFlag_AllowUpdate);
+        Assert((GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None);
         AccelerationStructureDesc.SourceAccelerationStructureData = ResultBuffer->GetGPUVirtualAddress();
     }
 
@@ -330,8 +334,7 @@ bool CD3D12RayTracingScene::Build(CD3D12CommandContext& CmdContext, const SRayTr
 
     CmdContext.UnorderedAccessBarrier(ResultBuffer.Get());
 
-    // Copy the instances
-    Instances = TArray<SRayTracingGeometryInstance>(InInstances, NumInstances);
+    Instances.Reset(InInstances);
     return true;
 }
 

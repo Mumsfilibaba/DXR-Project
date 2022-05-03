@@ -7,7 +7,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Resources/TextureFactory.h"
 
-#include "RHI/RHICoreInstance.h"
+#include "RHI/RHICoreInterface.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShaderCompiler.h"
 
@@ -204,7 +204,9 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         return false;
     }
 
-    VertexBuffer = RHICreateVertexBuffer<ImDrawVert>(1024 * 1024, EBufferUsageFlags::Default, EResourceAccess::VertexAndConstantBuffer, nullptr);
+    CRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, 1024 * 1024, sizeof(ImDrawVert));
+
+    VertexBuffer = RHICreateVertexBuffer(VBInitializer);
     if (!VertexBuffer)
     {
         return false;
@@ -214,8 +216,11 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         VertexBuffer->SetName("ImGui VertexBuffer");
     }
 
-    const EIndexFormat IndexFormat = (sizeof(ImDrawIdx) == 2) ? EIndexFormat::uint16 : EIndexFormat::uint32;
-    IndexBuffer = RHICreateIndexBuffer(IndexFormat, 1024 * 1024, EBufferUsageFlags::Default, EResourceAccess::Common, nullptr);
+    CRHIIndexBufferInitializer IBInitializer( EBufferUsageFlags::Default
+                                            , (sizeof(ImDrawIdx) == 2) ? EIndexFormat::uint16 : EIndexFormat::uint32
+                                            , 1024 * 1024);
+
+    IndexBuffer = RHICreateIndexBuffer(IBInitializer);
     if (!IndexBuffer)
     {
         return false;
@@ -225,7 +230,7 @@ bool CInterfaceRenderer::InitContext(InterfaceContext Context)
         IndexBuffer->SetName("ImGui IndexBuffer");
     }
 
-    SRHISamplerStateInfo CreateInfo;
+    CRHISamplerStateInitializer CreateInfo;
     CreateInfo.AddressU = ESamplerMode::Clamp;
     CreateInfo.AddressV = ESamplerMode::Clamp;
     CreateInfo.AddressW = ESamplerMode::Clamp;
@@ -281,12 +286,12 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     CmdList.SetBlendFactor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
-    // TODO: Do not change to GenericRead, change to vertex/constantbuffer
+    // TODO: Do not change to GenericRead, change to Vertex/Constant-Buffer
     CmdList.TransitionBuffer(VertexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(IndexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
+    CmdList.TransitionBuffer(IndexBuffer.Get() , EResourceAccess::GenericRead, EResourceAccess::CopyDest);
 
     uint32 VertexOffset = 0;
-    uint32 IndexOffset = 0;
+    uint32 IndexOffset  = 0;
     for (int32 i = 0; i < DrawData->CmdListsCount; i++)
     {
         const ImDrawList* ImCmdList = DrawData->CmdLists[i];
@@ -298,7 +303,7 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
         CmdList.UpdateBuffer(IndexBuffer.Get(), IndexOffset, IndexSize, ImCmdList->IdxBuffer.Data);
 
         VertexOffset += VertexSize;
-        IndexOffset += IndexSize;
+        IndexOffset  += IndexSize;
     }
 
     CmdList.TransitionBuffer(VertexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
@@ -307,7 +312,7 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
     CmdList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
 
     int32  GlobalVertexOffset = 0;
-    int32  GlobalIndexOffset = 0;
+    int32  GlobalIndexOffset  = 0;
     ImVec2 ClipOff = DrawData->DisplayPos;
     for (int32 i = 0; i < DrawData->CmdListsCount; i++)
     {
@@ -348,7 +353,7 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
             CmdList.DrawIndexedInstanced(Cmd->ElemCount, 1, Cmd->IdxOffset + GlobalIndexOffset, Cmd->VtxOffset + GlobalVertexOffset, 0);
         }
 
-        GlobalIndexOffset += DrawCmdList->IdxBuffer.Size;
+        GlobalIndexOffset  += DrawCmdList->IdxBuffer.Size;
         GlobalVertexOffset += DrawCmdList->VtxBuffer.Size;
     }
 

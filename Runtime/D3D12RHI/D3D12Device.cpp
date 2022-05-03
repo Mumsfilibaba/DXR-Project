@@ -74,7 +74,7 @@ static const char* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // DeviceRemovedHandler
 
-void RHID3D12DeviceRemovedHandler(CD3D12Device* Device)
+void D3D12DeviceRemovedHandlerRHI(CD3D12Device* Device)
 {
     Assert(Device != nullptr);
 
