@@ -491,10 +491,20 @@ CRHISamplerState* CD3D12CoreInterface::RHICreateSamplerState(const CRHISamplerSt
     }
 }
 
-template<typename D3D12BufferType>
-bool CD3D12CoreInterface::CreateBuffer(D3D12BufferType* Buffer, uint32 Size, const CRHIBufferInitializer& Initializer)
+template<typename D3D12BufferType, typename InitializerType>
+D3D12BufferType* CD3D12CoreInterface::CreateBuffer(const InitializerType& Initializer)
 {
-    D3D12_ERROR(Buffer != nullptr, "Buffer cannot be nullptr");
+    TSharedRef<D3D12BufferType> NewBuffer;
+    if constexpr (TIsSame<D3D12BufferType, CD3D12ConstantBuffer>::Value)
+    {
+        NewBuffer = dbg_new D3D12BufferType(GetDevice(), GetResourceOfflineDescriptorHeap(), Initializer);
+    }
+    else
+    {
+        NewBuffer = dbg_new D3D12BufferType(GetDevice(), Initializer);
+    }
+    
+    const uint32 Size = GetBufferAlignedSize<D3D12BufferType>(NewBuffer->GetSize());
 
     D3D12_RESOURCE_DESC Desc;
     CMemory::Memzero(&Desc);
@@ -524,11 +534,11 @@ bool CD3D12CoreInterface::CreateBuffer(D3D12BufferType* Buffer, uint32 Size, con
         TSharedRef<CD3D12Resource> D3D12Resource = dbg_new CD3D12Resource(Device, Desc, D3D12HeapType);
         if (!D3D12Resource->Init(D3D12InitialState, nullptr))
         {
-            return false;
+            return nullptr;
         }
         else
         {
-            Buffer->SetResource(D3D12Resource.ReleaseOwnership());
+            NewBuffer->SetResource(D3D12Resource.ReleaseOwnership());
         }
     }
 
@@ -539,7 +549,7 @@ bool CD3D12CoreInterface::CreateBuffer(D3D12BufferType* Buffer, uint32 Size, con
 
         if (Initializer.IsDynamic())
         {
-            CD3D12Resource* D3D12Resource = Buffer->GetD3D12Resource();
+            CD3D12Resource* D3D12Resource = NewBuffer->GetD3D12Resource();
 
             void* BufferData = D3D12Resource->Map(0, 0);
             if (!BufferData)
@@ -559,11 +569,11 @@ bool CD3D12CoreInterface::CreateBuffer(D3D12BufferType* Buffer, uint32 Size, con
         {
             DirectCmdContext->StartContext();
 
-            DirectCmdContext->TransitionBuffer(Buffer, EResourceAccess::Common, EResourceAccess::CopyDest);
-            DirectCmdContext->UpdateBuffer(Buffer, 0, InitialData->Size, InitialData->BufferData);
+            DirectCmdContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
+            DirectCmdContext->UpdateBuffer(NewBuffer.Get(), 0, InitialData->Size, InitialData->BufferData);
 
             // NOTE: Transfer to the initial state
-            DirectCmdContext->TransitionBuffer(Buffer, EResourceAccess::CopyDest, Initializer.InitialAccess);
+            DirectCmdContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::CopyDest, Initializer.InitialAccess);
 
             DirectCmdContext->FinishContext();
         }
@@ -573,75 +583,33 @@ bool CD3D12CoreInterface::CreateBuffer(D3D12BufferType* Buffer, uint32 Size, con
         if (Initializer.InitialAccess != EResourceAccess::Common && Initializer.IsDynamic())
         {
             DirectCmdContext->StartContext();
-            DirectCmdContext->TransitionBuffer(Buffer, EResourceAccess::Common, Initializer.InitialAccess);
+            DirectCmdContext->TransitionBuffer(NewBuffer.Get(), EResourceAccess::Common, Initializer.InitialAccess);
             DirectCmdContext->FinishContext();
         }
     }
 
-    return true;
+    return NewBuffer.ReleaseOwnership();
 }
 
 CRHIVertexBuffer* CD3D12CoreInterface::RHICreateVertexBuffer(const CRHIVertexBufferInitializer& Initializer)
 {
-    TSharedRef<CD3D12VertexBuffer> NewBuffer = dbg_new CD3D12VertexBuffer(Device, Initializer);
-    if (!CreateBuffer(NewBuffer.Get(), Initializer.GetSize(), Initializer))
-    {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to create VertexBuffer");
-        return nullptr;
-    }
-    else
-    {
-        return NewBuffer.ReleaseOwnership();
-    }
+    return CreateBuffer<CD3D12VertexBuffer>(Initializer);
 }
 
 CRHIIndexBuffer* CD3D12CoreInterface::RHICreateIndexBuffer(const CRHIIndexBufferInitializer& Initializer)
 {
-    const uint32 SizeInBytes        = Initializer.GetSize();
-    const uint32 AlignedSizeInBytes = (Initializer.AllowSRV() || Initializer.AllowUAV()) ? NMath::AlignUp<uint32>(SizeInBytes, sizeof(uint32)) : SizeInBytes;
-
-    TSharedRef<CD3D12IndexBuffer> NewBuffer = dbg_new CD3D12IndexBuffer(Device, Initializer);
-    if (!CreateBuffer(NewBuffer.Get(), AlignedSizeInBytes, Initializer))
-    {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to create IndexBuffer");
-        return nullptr;
-    }
-    else
-    {
-        return NewBuffer.ReleaseOwnership();
-    }
+    return CreateBuffer<CD3D12IndexBuffer>(Initializer);
 }
 
 CRHIConstantBuffer* CD3D12CoreInterface::RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
 {
     Assert(!Initializer.AllowSRV() && Initializer.AllowUAV());
-
-    const uint32 AlignedSizeInBytes = NMath::AlignUp<uint32>(Initializer.Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
-
-    TSharedRef<CD3D12ConstantBuffer> NewBuffer = dbg_new CD3D12ConstantBuffer(Device, ResourceOfflineDescriptorHeap, Initializer);
-    if (!CreateBuffer(NewBuffer.Get(), AlignedSizeInBytes, Initializer))
-    {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to create ConstantBuffer");
-        return nullptr;
-    }
-    else
-    {
-        return NewBuffer.ReleaseOwnership();
-    }
+    return CreateBuffer<CD3D12ConstantBuffer>(Initializer);
 }
 
 CRHIGenericBuffer* CD3D12CoreInterface::RHICreateGenericBuffer(const CRHIGenericBufferInitializer& Initializer)
 {
-    TSharedRef<CD3D12GenericBuffer> NewBuffer = dbg_new CD3D12GenericBuffer(Device, Initializer);
-    if (!CreateBuffer(NewBuffer.Get(), Initializer.Size, Initializer))
-    {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to create StructuredBuffer");
-        return nullptr;
-    }
-    else
-    {
-        return NewBuffer.ReleaseOwnership();
-    }
+    return CreateBuffer<CD3D12GenericBuffer>(Initializer);
 }
 
 CRHIRayTracingGeometry* CD3D12CoreInterface::RHICreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer)

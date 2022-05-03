@@ -61,45 +61,45 @@ namespace NMath
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsInteger<T>::Value, T>::Type DivideByMultiple(T Value, uint32 Alignment)
+    constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type DivideByMultiple(T Value, uint32 Alignment)
     {
         return static_cast<T>((Value + Alignment - 1) / Alignment);
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignUp(T Value, T Alignment)
+    constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignUp(T Value, T Alignment)
     {
         const T Mask = Alignment - 1;
         return ((Value + Mask) & (~Mask));
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignDown(T Value, T Alignment)
+    constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignDown(T Value, T Alignment)
     {
         const T Mask = Alignment - 1;
         return ((Value) & (~Mask));
     }
 
     template<typename T>
-    FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, T>::Type Lerp(T First, T Second, T Factor)
+    constexpr typename TEnableIf<TIsFloatingPoint<T>::Value, T>::Type Lerp(T First, T Second, T Factor)
     {
         return (-Factor * Second) + ((First * Factor) + Second);
     }
 
     template<typename T>
-    FORCEINLINE T Min(T a, T b)
+    constexpr T Min(T a, T b)
     {
         return (a <= b) ? a : b;
     }
 
     template<typename T>
-    FORCEINLINE T Max(T a, T b)
+    constexpr T Max(T a, T b)
     {
         return (a >= b) ? a : b;
     }
 
     template<typename T>
-    FORCEINLINE T Clamp(T InMin, T InMax, T x)
+    constexpr T Clamp(T InMin, T InMax, T x)
     {
         return Min(InMax, Max(InMin, x));
     }
@@ -119,13 +119,13 @@ namespace NMath
     }
 
     template<typename T>
-    FORCEINLINE T ToRadians(T Degrees)
+    constexpr T ToRadians(T Degrees)
     {
         return static_cast<T>(static_cast<float>(Degrees) * (kPI_f / 180.0f));
     }
 
     template<typename T>
-    FORCEINLINE T ToDegrees(T Radians)
+    constexpr T ToDegrees(T Radians)
     {
         return static_cast<T>(static_cast<float>(Radians) * (180.0f / kPI_f));
     }
@@ -178,7 +178,7 @@ namespace NMath
         return isinf(Float);
     }
 
-    FORCEINLINE uint32 BytesToNum32BitConstants(uint32 Bytes)
+    constexpr uint32 BytesToNum32BitConstants(uint32 Bytes)
     {
         return Bytes / 4;
     }

@@ -105,6 +105,26 @@ constexpr uint16 GetDepthOrArraySize(uint32 DepthOrArraySize)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12 Buffer Helpers
+
+template<typename D3D12BufferType>
+constexpr uint32 GetBufferAlignedSize(uint32 Size)
+{
+    return Size;
+}
+
+template<>
+constexpr uint32 GetBufferAlignedSize<class CD3D12ConstantBuffer>(uint32 Size)
+{
+    return NMath::AlignUp<uint32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+}
+
+template<>
+constexpr uint32 GetBufferAlignedSize<class CD3D12IndexBuffer>(uint32 Size)
+{
+    return NMath::AlignUp<uint32>(Size, sizeof(uint32));
+}
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Heap helpers
 
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()

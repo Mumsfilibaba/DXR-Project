@@ -2,7 +2,7 @@
 #include "D3D12Device.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12Resource
+// CD3D12Resource
 
 CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource)
     : CRefCounted()
@@ -12,8 +12,7 @@ CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resou
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
     , Desc()
     , Address(0)
-{
-}
+{ }
 
 CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
     : CRefCounted()
@@ -23,8 +22,7 @@ CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const D3D12_RESOURCE_DESC
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
     , Desc(InDesc)
     , Address(0)
-{
-}
+{ }
 
 bool CD3D12Resource::Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue)
 {
@@ -48,12 +46,12 @@ bool CD3D12Resource::Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_
     }
     else if (Result == E_OUTOFMEMORY)
     {
-        LOG_ERROR("[D3D12Resource]: Failed to create resource since the device ran out of memory");
+        LOG_ERROR("[CD3D12Resource]: Failed to create resource since the device ran out of memory");
         return false;
     }
     else
     {
-        LOG_ERROR("[D3D12Resource]: Failed to create commited resource");
+        LOG_ERROR("[CD3D12Resource]: Failed to create commited resource");
         return false;
     }
 }
@@ -65,7 +63,7 @@ void* CD3D12Resource::Map(uint32 SubResource, const D3D12_RANGE* Range)
     HRESULT Result = Resource->Map(SubResource, Range, &MappedData);
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12Resource::Map] Failed");
+        LOG_ERROR("[CD3D12Resource::Map] Failed");
         return nullptr;
     }
     else

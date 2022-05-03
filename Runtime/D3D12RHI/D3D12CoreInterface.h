@@ -132,8 +132,8 @@ private:
     D3D12TextureType* CreateTexture(const InitializerType& Initializer);
 
     // TODO: Avoid template here
-    template<typename D3D12BufferType>
-    bool CreateBuffer(D3D12BufferType* Buffer, uint32 Size, const CRHIBufferInitializer& Initializer);
+    template<typename D3D12BufferType, typename InitializerType>
+    D3D12BufferType* CreateBuffer(const InitializerType& Initializer);
 
     CD3D12Device*                Device = nullptr;
     
