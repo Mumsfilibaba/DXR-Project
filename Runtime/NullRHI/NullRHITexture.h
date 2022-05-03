@@ -18,8 +18,8 @@ class CNullRHITexture2D : public CRHITexture2D
 {
 public:
 
-    CNullRHITexture2D(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InNumMips, uint32 InNumSamples, ETextureUsageFlags InFlags, const CTextureClearValue& InOptimalClearValue)
-        : CRHITexture2D(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InFlags, InOptimalClearValue)
+    CNullRHITexture2D(const CRHITexture2DInitializer& Initializer)
+        : CRHITexture2D(Initializer)
         , RenderTargetView(dbg_new CNullRHIRenderTargetView())
         , DepthStencilView(dbg_new CNullRHIDepthStencilView())
         , UnorderedAccessView(dbg_new CNullRHIUnorderedAccessView())
@@ -49,8 +49,8 @@ class CNullRHITexture2DArray : public CRHITexture2DArray
 {
 public:
 
-    CNullRHITexture2DArray(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, uint32 InNumSamples, ETextureUsageFlags InFlags, const CTextureClearValue& InOptimalClearValue)
-        : CRHITexture2DArray(InFormat, InSizeX, InSizeY, InNumMips, InNumSamples, InSizeZ, InFlags, InOptimalClearValue)
+    CNullRHITexture2DArray(const CRHITexture2DArrayInitializer& Initializer)
+        : CRHITexture2DArray(Initializer)
     { }
 };
 
@@ -61,8 +61,8 @@ class CNullRHITextureCube : public CRHITextureCube
 {
 public:
 
-    CNullRHITextureCube(EFormat InFormat, uint32 InSize, uint32 InNumMips, ETextureUsageFlags InFlags, const CTextureClearValue& InOptimalClearValue)
-        : CRHITextureCube(InFormat, InSize, InNumMips, InFlags, InOptimalClearValue)
+    CNullRHITextureCube(const CRHITextureCubeInitializer& Initializer)
+        : CRHITextureCube(Initializer)
     { }
 };
 
@@ -73,8 +73,8 @@ class CNullRHITextureCubeArray : public CRHITextureCubeArray
 {
 public:
     
-    CNullRHITextureCubeArray(EFormat InFormat, uint32 InSizeX, uint32 InSizeZ, uint32 InNumMips, ETextureUsageFlags InFlags, const CTextureClearValue& InOptimalClearValue)
-        : CRHITextureCubeArray(InFormat, InSizeX, InNumMips, InSizeZ, InFlags, InOptimalClearValue)
+    CNullRHITextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer)
+        : CRHITextureCubeArray(Initializer)
     { }
 };
 
@@ -85,8 +85,8 @@ class CNullRHITexture3D : public CRHITexture3D
 {
 public:
     
-    CNullRHITexture3D(EFormat InFormat, uint32 InSizeX, uint32 InSizeY, uint32 InSizeZ, uint32 InNumMips, ETextureUsageFlags InFlags, const CTextureClearValue& InOptimalClearValue)
-        : CRHITexture3D(InFormat, InSizeX, InSizeY, InSizeZ, InNumMips, InFlags, InOptimalClearValue)
+    CNullRHITexture3D(const CRHITexture3DInitializer& Initializer)
+        : CRHITexture3D(Initializer)
     { }
 };
 
@@ -98,9 +98,9 @@ class TNullRHITexture : public BaseTextureType
 {
 public:
 
-    template<typename... ArgTypes>
-    TNullRHITexture(ArgTypes&&... Args)
-        : BaseTextureType(Forward<ArgTypes>(Args)...)
+    template<typename BaseTextureInitializer>
+    TNullRHITexture(const BaseTextureInitializer& Initializer)
+        : BaseTextureType(Initializer)
         , ShaderResourceView(dbg_new CNullRHIShaderResourceView())
     { }
 
@@ -115,7 +115,7 @@ public:
 
     virtual class CRHIShaderResourceView* GetDefaultShaderResourceView() const override final { return ShaderResourceView.Get(); }
 
-    virtual CRHIDescriptorHandle GetDefaultBindlessHandle() const { return CRHIDescriptorHandle(); }
+    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const { return CRHIDescriptorHandle(); }
 
 private:
     TSharedRef<CNullRHIShaderResourceView> ShaderResourceView;

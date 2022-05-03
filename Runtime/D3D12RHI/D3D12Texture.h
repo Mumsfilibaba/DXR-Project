@@ -9,8 +9,6 @@
     #pragma warning(disable : 4100) // Disable unreferenced variable
 #endif
 
-#define TEXTURE_CUBE_FACE_COUNT (6)
-
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12Texture 
 
@@ -21,6 +19,7 @@ public:
     CD3D12Texture(CD3D12Device* InDevice)
         : CD3D12DeviceChild(InDevice)
         , Resource(nullptr)
+        , ShaderResourceView(nullptr)
     { }
 
     void SetResource(CD3D12Resource* InResource) { Resource = InResource; }
@@ -31,7 +30,7 @@ public:
 
     CD3D12ShaderResourceView* GetD3D12ShaderResourceView() const { return ShaderResourceView.Get(); }
 
-    DXGI_FORMAT GetDXGIFormat() const { return Resource->GetDesc().Format; }
+    DXGI_FORMAT GetDXGIFormat() const { return Resource ? Resource->GetDesc().Format : DXGI_FORMAT_UNKNOWN; }
 
 protected:
     TSharedRef<CD3D12Resource>           Resource;
@@ -39,27 +38,21 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RHIBaseTexture2D
+// CD3D12Texture2D
 
-class CD3D12RHIBaseTexture2D : public CRHITexture2D, public CD3D12Texture
+class CD3D12Texture2D : public CRHITexture2D, public CD3D12Texture
 {
 public:
     
-    CD3D12RHIBaseTexture2D( CD3D12Device* InDevice
-                          , EFormat InFormat
-                          , uint32 SizeX
-                          , uint32 SizeY
-                          , uint32 SizeZ
-                          , uint32 InNumMips
-                          , uint32 InNumSamples
-                          , ETextureUsageFlags InFlags
-                          , const CTextureClearValue& InClearValue)
-        : CRHITexture2D(InFormat, SizeX, SizeY, InNumMips, InNumSamples, InFlags, InClearValue)
+    CD3D12Texture2D(CD3D12Device* InDevice, const CRHITexture2DInitializer& Initializer)
+        : CRHITexture2D(Initializer)
         , CD3D12Texture(InDevice)
         , RenderTargetView(nullptr)
         , DepthStencilView(nullptr)
         , UnorderedAccessView(nullptr)
     { }
+
+public:
 
     void SetRenderTargetView(CD3D12RenderTargetView* InRenderTargetView) { RenderTargetView = InRenderTargetView; }
 
@@ -86,129 +79,14 @@ public:
     
     virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
 
-private:
-    TSharedRef<CD3D12RenderTargetView>    RenderTargetView;
-    TSharedRef<CD3D12DepthStencilView>    DepthStencilView;
-    TSharedRef<CD3D12UnorderedAccessView> UnorderedAccessView;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RHIBaseTexture2DArray
-
-class CD3D12RHIBaseTexture2DArray : public CRHITexture2DArray, public CD3D12Texture
-{
-public:
-
-    CD3D12RHIBaseTexture2DArray( CD3D12Device* InDevice
-                               , EFormat InFormat
-                               , uint32 SizeX
-                               , uint32 SizeY
-                               , uint32 SizeZ
-                               , uint32 InNumMips
-                               , uint32 InNumSamples
-                               , ETextureUsageFlags InFlags
-                               , const CTextureClearValue& InClearValue)
-        : CRHITexture2DArray(InFormat, SizeX, SizeY, InNumMips, InNumSamples, SizeZ, InFlags, InClearValue)
-        , CD3D12Texture(InDevice)
-    { }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RHIBaseTextureCube
-
-class CD3D12RHIBaseTextureCube : public CRHITextureCube, public CD3D12Texture
-{
-public:
-
-    CD3D12RHIBaseTextureCube( CD3D12Device* InDevice
-                             , EFormat InFormat
-                             , uint32 SizeX
-                             , uint32 SizeY
-                             , uint32 SizeZ
-                             , uint32 InNumMips
-                             , uint32 InNumSamples
-                             , ETextureUsageFlags InFlags
-                             , const CTextureClearValue& InClearValue)
-        : CRHITextureCube(InFormat, SizeX, InNumMips, InFlags, InClearValue)
-        , CD3D12Texture(InDevice)
-    { }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RHIBaseTextureCubeArray
-
-class CD3D12RHIBaseTextureCubeArray : public CRHITextureCubeArray, public CD3D12Texture
-{
-public:
-    
-    CD3D12RHIBaseTextureCubeArray( CD3D12Device* InDevice
-                                 , EFormat InFormat
-                                 , uint32 SizeX
-                                 , uint32 SizeY
-                                 , uint32 SizeZ
-                                 , uint32 InNumMips
-                                 , uint32 InNumSamples
-                                 , ETextureUsageFlags InFlags
-                                 , const CTextureClearValue& InClearValue)
-        : CRHITextureCubeArray(InFormat, SizeX, InNumMips, SizeZ, InFlags, InClearValue)
-        , CD3D12Texture(InDevice)
-    { }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RHIBaseTexture3D
-
-class CD3D12RHIBaseTexture3D : public CRHITexture3D, public CD3D12Texture
-{
-public:
-
-    CD3D12RHIBaseTexture3D( CD3D12Device* InDevice
-                          , EFormat InFormat
-                          , uint32 SizeX
-                          , uint32 SizeY
-                          , uint32 SizeZ
-                          , uint32 InNumMips
-                          , uint32 InNumSamples
-                          , ETextureUsageFlags InFlags
-                          , const CTextureClearValue& InClearValue)
-        : CRHITexture3D(InFormat, SizeX, SizeY, SizeZ, InNumMips, InFlags, InClearValue)
-        , CD3D12Texture(InDevice)
-    { }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TD3D12RHIBaseTexture
-
-template<typename BaseTextureType>
-class TD3D12RHIBaseTexture : public BaseTextureType
-{
-public:
-
-    TD3D12RHIBaseTexture( CD3D12Device* InDevice
-                        , EFormat InFormat
-                        , uint32 SizeX
-                        , uint32 SizeY
-                        , uint32 SizeZ
-                        , uint32 InNumMips
-                        , uint32 InNumSamples
-                        , ETextureUsageFlags InFlags
-                        , const CTextureClearValue& InClearValue)
-        : BaseTextureType(InDevice, InFormat, SizeX, SizeY, SizeZ, InNumMips, InNumSamples, InFlags, InClearValue)
-    { }
-
-public:
-    
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture Interface
-
-    virtual void* GetRHIBaseResource() const 
-    { 
+    virtual void* GetRHIBaseResource() const override final
+    {
         CD3D12Resource* D3D12Resource = GetD3D12Resource();
         return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
     }
 
-    virtual void* GetRHIBaseTexture()
-    { 
+    virtual void* GetRHIBaseTexture() override final
+    {
         CD3D12Texture* D3D12Texture = static_cast<CD3D12Texture*>(this);
         return reinterpret_cast<void*>(D3D12Texture);
     }
@@ -219,7 +97,65 @@ public:
         return static_cast<CRHIShaderResourceView*>(D3D12ShaderResourceView);
     }
 
-    virtual CRHIDescriptorHandle GetDefaultBindlessHandle() const { return CRHIDescriptorHandle(); }
+    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final 
+    { 
+        return CRHIDescriptorHandle();
+    }
+
+    virtual void SetName(const String& InName) override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        if (D3D12Resource)
+        {
+            D3D12Resource->SetName(InName);
+        }
+    }
+
+private:
+    TSharedRef<CD3D12RenderTargetView>    RenderTargetView;
+    TSharedRef<CD3D12DepthStencilView>    DepthStencilView;
+    TSharedRef<CD3D12UnorderedAccessView> UnorderedAccessView;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12Texture2DArray
+
+class CD3D12Texture2DArray : public CRHITexture2DArray, public CD3D12Texture
+{
+public:
+
+    CD3D12Texture2DArray(CD3D12Device* InDevice, const CRHITexture2DArrayInitializer& Initializer)
+        : CRHITexture2DArray(Initializer)
+        , CD3D12Texture(InDevice)
+    { }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHITexture Interface
+
+    virtual void* GetRHIBaseResource() const override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
+    }
+
+    virtual void* GetRHIBaseTexture() override final
+    {
+        CD3D12Texture* D3D12Texture = static_cast<CD3D12Texture*>(this);
+        return reinterpret_cast<void*>(D3D12Texture);
+    }
+
+    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final
+    {
+        CD3D12ShaderResourceView* D3D12ShaderResourceView = GetD3D12ShaderResourceView();
+        return static_cast<CRHIShaderResourceView*>(D3D12ShaderResourceView);
+    }
+
+    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final
+    { 
+        return CRHIDescriptorHandle();
+    }
 
     virtual void SetName(const String& InName) override final
     {
@@ -232,13 +168,154 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Texture types
+// CD3D12TextureCube
 
-using CD3D12RHITexture2D        = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2D>;
-using CD3D12RHITexture2DArray   = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture2DArray>;
-using CD3D12RHITextureCube      = TD3D12RHIBaseTexture<CD3D12RHIBaseTextureCube>;
-using CD3D12RHITextureCubeArray = TD3D12RHIBaseTexture<CD3D12RHIBaseTextureCubeArray>;
-using CD3D12RHITexture3D        = TD3D12RHIBaseTexture<CD3D12RHIBaseTexture3D>;
+class CD3D12TextureCube : public CRHITextureCube, public CD3D12Texture
+{
+public:
+
+    CD3D12TextureCube(CD3D12Device* InDevice, const CRHITextureCubeInitializer& Initializer)
+        : CRHITextureCube(Initializer)
+        , CD3D12Texture(InDevice)
+    { }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHITexture Interface
+
+    virtual void* GetRHIBaseResource() const override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
+    }
+
+    virtual void* GetRHIBaseTexture() override final
+    {
+        CD3D12Texture* D3D12Texture = static_cast<CD3D12Texture*>(this);
+        return reinterpret_cast<void*>(D3D12Texture);
+    }
+
+    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final
+    {
+        CD3D12ShaderResourceView* D3D12ShaderResourceView = GetD3D12ShaderResourceView();
+        return static_cast<CRHIShaderResourceView*>(D3D12ShaderResourceView);
+    }
+
+    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final 
+    { 
+        return CRHIDescriptorHandle(); 
+    }
+
+    virtual void SetName(const String& InName) override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        if (D3D12Resource)
+        {
+            D3D12Resource->SetName(InName);
+        }
+    }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12TextureCubeArray
+
+class CD3D12TextureCubeArray : public CRHITextureCubeArray, public CD3D12Texture
+{
+public:
+    
+    CD3D12TextureCubeArray(CD3D12Device* InDevice, const CRHITextureCubeArrayInitializer& Initializer)
+        : CRHITextureCubeArray(Initializer)
+        , CD3D12Texture(InDevice)
+    { }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHITexture Interface
+
+    virtual void* GetRHIBaseResource() const override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
+    }
+
+    virtual void* GetRHIBaseTexture() override final
+    {
+        CD3D12Texture* D3D12Texture = static_cast<CD3D12Texture*>(this);
+        return reinterpret_cast<void*>(D3D12Texture);
+    }
+
+    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final
+    {
+        CD3D12ShaderResourceView* D3D12ShaderResourceView = GetD3D12ShaderResourceView();
+        return static_cast<CRHIShaderResourceView*>(D3D12ShaderResourceView);
+    }
+
+    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final 
+    { 
+        return CRHIDescriptorHandle();
+    }
+
+    virtual void SetName(const String& InName) override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        if (D3D12Resource)
+        {
+            D3D12Resource->SetName(InName);
+        }
+    }
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CD3D12Texture3D
+
+class CD3D12Texture3D final : public CRHITexture3D, public CD3D12Texture
+{
+public:
+
+    CD3D12Texture3D(CD3D12Device* InDevice, const CRHITexture3DInitializer& Initializer)
+        : CRHITexture3D(Initializer)
+        , CD3D12Texture(InDevice)
+    { }
+
+public:
+
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHITexture Interface
+
+    virtual void* GetRHIBaseResource() const override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
+    }
+
+    virtual void* GetRHIBaseTexture() override final
+    {
+        CD3D12Texture* D3D12Texture = static_cast<CD3D12Texture*>(this);
+        return reinterpret_cast<void*>(D3D12Texture);
+    }
+
+    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final
+    {
+        CD3D12ShaderResourceView* D3D12ShaderResourceView = GetD3D12ShaderResourceView();
+        return static_cast<CRHIShaderResourceView*>(D3D12ShaderResourceView);
+    }
+
+    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final 
+    { 
+        return CRHIDescriptorHandle(); 
+    }
+
+    virtual void SetName(const String& InName) override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        if (D3D12Resource)
+        {
+            D3D12Resource->SetName(InName);
+        }
+    }
+};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12TextureCast

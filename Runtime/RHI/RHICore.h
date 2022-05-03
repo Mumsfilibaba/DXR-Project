@@ -33,4 +33,6 @@ enum : uint32
     // Other
     kRHIAllRemainingMipLevels   = uint32(~0),
     kRHIAllRemainingArraySlices = uint32(~0),
+
+    kRHINumCubeFaces            = 6,
 };

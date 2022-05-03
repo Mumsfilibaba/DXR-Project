@@ -38,6 +38,73 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// D3D12 Texture Helpers
+
+template<typename D3D12TextureType>
+constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
+
+template<>
+constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2D>()
+{
+    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2DArray>()
+{
+    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12TextureCube>()
+{
+    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12TextureCubeArray>()
+{
+    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+}
+
+template<>
+constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture3D>()
+{
+    return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+}
+
+template<typename D3D12TextureType>
+constexpr bool IsTextureCube()
+{
+    return false;
+}
+
+template<>
+constexpr bool IsTextureCube<class CD3D12TextureCube>()
+{
+    return true;
+}
+
+template<>
+constexpr bool IsTextureCube<class CD3D12TextureCubeArray>()
+{
+    return true;
+}
+
+template<typename D3D12TextureType>
+constexpr uint16 GetDepthOrArraySize(uint32 DepthOrArraySize)
+{
+    if constexpr (IsTextureCube<D3D12TextureType>())
+    {
+        return static_cast<uint16>(DepthOrArraySize * kRHINumCubeFaces);
+    }
+    else
+    {
+        return static_cast<uint16>(DepthOrArraySize);
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Heap helpers
 
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()

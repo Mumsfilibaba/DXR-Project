@@ -15,15 +15,6 @@
 class CD3D12CommandContext;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Texture Helpers
-
-template<typename D3D12TextureType>
-D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
-
-template<typename D3D12TextureType>
-bool IsTextureCube();
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12CoreInterface
 
 class CD3D12CoreInterface : public CRHICoreInterface
@@ -77,11 +68,11 @@ public:
 
     virtual bool Initialize(bool bEnableDebug) override final;
 
-    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final;
-    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMipLevels, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final;
-    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMipLevels, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final;
-    virtual CRHITextureCubeArray*CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMipLevels, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final;
-    virtual CRHITexture3D* CreateTexture3D(EFormat Format,uint32 Width,uint32 Height, uint32 Depth, uint32 NumMipLevels, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) override final;
+    virtual CRHITexture2D* RHICreateTexture2D(const CRHITexture2DInitializer& Initializer) override final;
+    virtual CRHITexture2DArray* RHICreateTexture2DArray(const CRHITexture2DArrayInitializer& Initializer) override final;
+    virtual CRHITextureCube* RHICreateTextureCube(const CRHITextureCubeInitializer& Initializer) override final;
+    virtual CRHITextureCubeArray*RHICreateTextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer) override final;
+    virtual CRHITexture3D* RHICreateTexture3D(const CRHITexture3DInitializer& Initializer) override final;
 
     virtual CRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer) override final;
 
@@ -137,27 +128,18 @@ public:
 
 private:
 
-    template<typename D3D12TextureType>
-    D3D12TextureType* CreateTexture( EFormat Format
-                                   , uint32 SizeX
-                                   , uint32 SizeY
-                                   , uint32 SizeZ
-                                   , uint32 NumMips
-                                   , uint32 NumSamples
-                                   , ETextureUsageFlags Flags
-                                   , EResourceAccess InitialState
-                                   , const SRHIResourceData* InitialData
-                                   , const CTextureClearValue& ClearValue);
+    template<typename D3D12TextureType, typename InitializerType>
+    D3D12TextureType* CreateTexture(const InitializerType& Initializer);
 
     // TODO: Avoid template here
     template<typename D3D12BufferType>
     bool CreateBuffer(D3D12BufferType* Buffer, uint32 Size, const CRHIBufferInitializer& Initializer);
 
-    CD3D12Device* Device = nullptr;
+    CD3D12Device*                Device = nullptr;
     
-    CD3D12CommandContext* DirectCmdContext;
+    CD3D12CommandContext*        DirectCmdContext;
     
-    CD3D12RootSignatureCache* RootSignatureCache = nullptr;
+    CD3D12RootSignatureCache*    RootSignatureCache = nullptr;
 
     CD3D12OfflineDescriptorHeap* ResourceOfflineDescriptorHeap     = nullptr;
     CD3D12OfflineDescriptorHeap* RenderTargetOfflineDescriptorHeap = nullptr;

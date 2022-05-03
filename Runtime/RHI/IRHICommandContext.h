@@ -10,14 +10,8 @@ class IRHICommandContext
 {
 public:
 
-    /**
-     * @brief: Start recording commands with this command context 
-     */
     virtual void StartContext() = 0;
-    
-    /**
-     * @brief: Stop recording commands with this command context
-     */
+
     virtual void FinishContext() = 0;
 
     /**
@@ -74,14 +68,8 @@ public:
      */
     virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) = 0;
 
-    /**
-     * @brief: Begin a RenderPass 
-     */
     virtual void BeginRenderPass() = 0;
 
-    /**
-     * @brief: Ends a RenderPass
-     */
     virtual void EndRenderPass() = 0;
 
     /**
@@ -384,95 +372,33 @@ public:
      */
     virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer) = 0;
 
-    /**
-     * @brief: Issue a draw-call
-     * 
-     * @param VertexCount: Number of vertices
-     * @param StartVertexLocation: Offset of the vertices
-     */
     virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) = 0;
 
-    /**
-     * @brief: Issue a draw-call for drawing with an IndexBuffer
-     *
-     * @param IndexCount: Number of indices
-     * @param StartIndexLocation: Offset in the index-buffer
-     * @param BaseVertexLocation: Index of the vertex that should be considered as index zero
-     */
     virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
 
-    /**
-     * @brief: Issue a draw-call for drawing instanced
-     *
-     * @param VertexCountPerInstance: Number of vertices per instance
-     * @param InstanceCount: Number of instances
-     * @param StartVertexLocation: Offset of the vertices
-     * @param StartInstanceLocation: Offset of the instances
-     */
     virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) = 0;
     
-    /**
-     * @brief: Issue a draw-call for drawing instanced with an IndexBuffer
-     *
-     * @param IndexCountPerInstance: Number of indices per instance
-     * @param InstanceCount: Number of instances
-     * @param StartIndexLocation: Offset of the index to start with
-     * @param BaseVertexLocation: Offset of the vertices
-     * @param StartInstanceLocation: Offset of the instances
-     */
     virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) = 0;
 
-    /**
-     * @brief: Issues a compute dispatch 
-     * 
-     * @param WorkGroupX: Number of work-groups in x-direction
-     * @param WorkGroupY: Number of work-groups in y-direction
-     * @param WorkGroupZ: Number of work-groups in z-direction
-     */
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
 
-    /**
-     * @brief: Issues a ray generation dispatch 
-     * 
-     * @param Scene: Scene to trace rays in
-     * @param PipelineState: PipelineState to use when tracing
-     * @param Width: Number of rays in x-direction
-     * @param Height: Number of rays in y-direction
-     * @param Depth: Number of rays in z-direction
-     */ 
     virtual void DispatchRays(CRHIRayTracingScene* Scene, CRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
 
-    /**
-     * @brief: Clears the state of the context, clearing all bound references currently bound
-     */
+    /** @brief: Clears the state of the context, clearing all bound references currently bound */
     virtual void ClearState() = 0;
 
-    /**
-     * @brief: Waits for all current execution on the GPU to finish 
-     */
+    /**  @brief: Waits for all current execution on the GPU to finish  */
     virtual void Flush() = 0;
 
-    /**
-     * @brief: Inserts a marker on the GPU timeline 
-     * 
-     * @param Message: Message for the marker
-     */
+    /** @brief: Inserts a marker on the GPU timeline */
     virtual void InsertMarker(const String& Message) = 0;
 
-    /**
-     * @brief:  Begins a PIX capture event, currently only available on D3D12 
-     */
+    /** @brief:  Begins a PIX capture event, currently only available on D3D12  */
     virtual void BeginExternalCapture() = 0;
     
-    /**
-     * @brief: Ends a PIX capture event, currently only available on D3D12 
-     */
+    /** @brief: Ends a PIX capture event, currently only available on D3D12  */
     virtual void EndExternalCapture() = 0;
 
-    /**
-     * @brief: Retrieve the native CommandList (D3D12 and Vulkan)
-     *
-     * @return: Returns the native CommandList
-     */
+    /** @return: Returns the native CommandList */
     virtual void* GetRHIBaseCommandList() = 0;
 };

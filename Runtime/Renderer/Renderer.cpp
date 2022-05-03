@@ -1216,7 +1216,9 @@ bool CRenderer::InitShadingImage()
 
     const uint32 Width  = Resources.MainWindowViewport->GetWidth() / Support.ShadingRateImageTileSize;
     const uint32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
-    ShadingImage = RHICreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::ShadingRateSource, nullptr);
+
+    CRHITexture2DInitializer Initializer(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::ShadingRateSource);
+    ShadingImage = RHICreateTexture2D(Initializer);
     if (!ShadingImage)
     {
         CDebug::DebugBreak();
@@ -1241,8 +1243,8 @@ bool CRenderer::InitShadingImage()
         return false;
     }
 
-    CRHIComputePipelineStateInitializer CreateInfo(ShadingRateShader.Get());
-    ShadingRatePipeline = RHICreateComputePipelineState(CreateInfo);
+    CRHIComputePipelineStateInitializer PSOInitializer(ShadingRateShader.Get());
+    ShadingRatePipeline = RHICreateComputePipelineState(PSOInitializer);
     if (!ShadingRatePipeline)
     {
         CDebug::DebugBreak();

@@ -226,7 +226,8 @@ bool CD3D12Viewport::RetriveBackBuffers()
             return false;
         }
 
-        BackBuffers[i] = dbg_new CD3D12RHITexture2D(GetDevice(), GetColorFormat(), Width, Height, 1, 1, 1, ETextureUsageFlags::AllowRTV, CTextureClearValue());
+        CRHITexture2DInitializer BackBufferInitializer(GetColorFormat(), Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
+        BackBuffers[i] = dbg_new CD3D12Texture2D(GetDevice(), BackBufferInitializer);
         BackBuffers[i]->SetResource(dbg_new CD3D12Resource(GetDevice(), BackBufferResource));
 
         D3D12_RENDER_TARGET_VIEW_DESC Desc;

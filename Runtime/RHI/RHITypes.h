@@ -5,7 +5,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EFormat
 
-enum class EFormat : uint32
+enum class EFormat : uint16
 {
     Unknown               = 0,
     
@@ -790,90 +790,6 @@ public:
 
         /** @brief: DepthStencil-value */
         CTextureDepthStencilValue DepthStencilValue;
-    };
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIResourceData
-
-struct SRHIResourceData
-{
-    FORCEINLINE SRHIResourceData()
-        : Data(nullptr)
-    { }
-
-    FORCEINLINE SRHIResourceData(const void* InData, uint32 InSizeInBytes)
-        : Data(InData)
-        , SizeInBytes(InSizeInBytes)
-    { }
-
-    FORCEINLINE SRHIResourceData(const void* InData, EFormat InFormat, uint32 InWidth)
-        : Data(InData)
-        , Format(InFormat)
-        , Width(InWidth)
-        , Height(0)
-    { }
-
-    FORCEINLINE SRHIResourceData(const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight)
-        : Data(InData)
-        , Format(InFormat)
-        , Width(InWidth)
-        , Height(InHeight)
-    { }
-
-    FORCEINLINE void Set(const void* InData, uint32 InSizeInBytes)
-    {
-        Data = InData;
-        SizeInBytes = InSizeInBytes;
-    }
-
-    FORCEINLINE void Set(const void* InData, EFormat InFormat, uint32 InWidth)
-    {
-        Data = InData;
-        Format = InFormat;
-        Width = InWidth;
-    }
-
-    FORCEINLINE void Set(const void* InData, EFormat InFormat, uint32 InWidth, uint32 InHeight)
-    {
-        Set(InData, InFormat, InWidth);
-        Height = InHeight;
-    }
-
-    FORCEINLINE const void* GetData() const
-    {
-        return Data;
-    }
-
-    FORCEINLINE uint32 GetSizeInBytes() const
-    {
-        return SizeInBytes;
-    }
-
-    FORCEINLINE uint32 GetPitch() const
-    {
-        return GetByteStrideFromFormat(Format) * Width;
-    }
-
-    FORCEINLINE uint32 GetSlicePitch() const
-    {
-        return GetByteStrideFromFormat(Format) * Width * Height;
-    }
-
-private:
-    const void* Data;
-    union
-    {
-        struct
-        {
-            uint32 SizeInBytes;
-        };
-        struct
-        {
-            EFormat Format;
-            uint32  Width;
-            uint32  Height;
-        };
     };
 };
 
