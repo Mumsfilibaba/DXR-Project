@@ -205,7 +205,9 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         return false;
     }
 
-    TSharedRef<CRHITexture2D> StagingTexture = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::AllowUAV, EResourceAccess::Common, nullptr);
+    CRHITexture2DInitializer LUTInitializer(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::AllowUAV, EResourceAccess::Common);
+
+    TSharedRef<CRHITexture2D> StagingTexture = RHICreateTexture2D(LUTInitializer);
     if (!StagingTexture)
     {
         CDebug::DebugBreak();
@@ -216,7 +218,9 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
         StagingTexture->SetName("Staging IntegrationLUT");
     }
 
-    FrameResources.IntegrationLUT = RHICreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::Common, nullptr);
+    LUTInitializer.UsageFlags = ETextureUsageFlags::AllowSRV;
+
+    FrameResources.IntegrationLUT = RHICreateTexture2D(LUTInitializer);
     if (!FrameResources.IntegrationLUT)
     {
         CDebug::DebugBreak();
@@ -704,7 +708,9 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
 
     // Albedo
-    FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = RHICreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage, EResourceAccess::Common, nullptr);
+    CRHITexture2DInitializer TextureInitializer(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage, EResourceAccess::Common, nullptr);
+
+    FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX] = RHICreateTexture2D(TextureInitializer);
     if (FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->SetName("GBuffer Albedo");
@@ -715,7 +721,9 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     }
 
     // Normal
-    FrameResources.GBuffer[GBUFFER_NORMAL_INDEX] = RHICreateTexture2D(FrameResources.NormalFormat, Width, Height, 1, 1, Usage, EResourceAccess::Common, nullptr);
+    TextureInitializer.Format = FrameResources.NormalFormat;
+
+    FrameResources.GBuffer[GBUFFER_NORMAL_INDEX] = RHICreateTexture2D(TextureInitializer);
     if (FrameResources.GBuffer[GBUFFER_NORMAL_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->SetName("GBuffer Normal");
@@ -726,7 +734,9 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     }
 
     // Material Properties
-    FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX] = RHICreateTexture2D(FrameResources.MaterialFormat, Width, Height, 1, 1, Usage, EResourceAccess::Common, nullptr);
+    TextureInitializer.Format = FrameResources.MaterialFormat;
+
+    FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX] = RHICreateTexture2D(TextureInitializer);
     if (FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->SetName("GBuffer Material");
@@ -736,10 +746,40 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
         return false;
     }
 
+    // View Normal
+    TextureInitializer.Format = FrameResources.ViewNormalFormat;
+
+    FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = RHICreateTexture2D(TextureInitializer);
+    if (FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX])
+    {
+        FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->SetName("GBuffer ViewNormal");
+    }
+    else
+    {
+        return false;
+    }
+
+    // Final Image
+    TextureInitializer.Format     = FrameResources.FinalTargetFormat;
+    TextureInitializer.UsageFlags = Usage | ETextureUsageFlags::AllowUAV;
+
+    FrameResources.FinalTarget = RHICreateTexture2D(TextureInitializer);
+    if (FrameResources.FinalTarget)
+    {
+        FrameResources.FinalTarget->SetName("Final Target");
+    }
+    else
+    {
+        return false;
+    }
+
     // DepthStencil
     const CTextureClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
+    TextureInitializer.Format     = FrameResources.DepthBufferFormat;
+    TextureInitializer.UsageFlags = ETextureUsageFlags::ShadowMap;
+    TextureInitializer.ClearValue = DepthClearValue;
 
-    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RHICreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, ETextureUsageFlags::ShadowMap, EResourceAccess::Common, nullptr, DepthClearValue);
+    FrameResources.GBuffer[GBUFFER_DEPTH_INDEX] = RHICreateTexture2D(TextureInitializer);
     if (FrameResources.GBuffer[GBUFFER_DEPTH_INDEX])
     {
         FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->SetName("GBuffer DepthStencil");
@@ -754,9 +794,15 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
     const uint32 ReducedWidth  = NMath::DivideByMultiple(Width, Alignment);
     const uint32 ReducedHeight = NMath::DivideByMultiple(Height, Alignment);
 
+    TextureInitializer.Format        = EFormat::R32G32_Float;
+    TextureInitializer.Width         = uint16(ReducedWidth);
+    TextureInitializer.Height        = uint16(ReducedHeight);
+    TextureInitializer.UsageFlags    = ETextureUsageFlags::RWTexture;
+    TextureInitializer.InitialAccess = EResourceAccess::NonPixelShaderResource;
+
     for (uint32 i = 0; i < 2; i++)
     {
-        FrameResources.ReducedDepthBuffer[i] = RHICreateTexture2D(EFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::NonPixelShaderResource, nullptr);
+        FrameResources.ReducedDepthBuffer[i] = RHICreateTexture2D(TextureInitializer);
         if (FrameResources.ReducedDepthBuffer[i])
         {
             FrameResources.ReducedDepthBuffer[i]->SetName("Reduced DepthStencil[" + ToString(i) + "]");
@@ -765,28 +811,6 @@ bool CDeferredRenderer::CreateGBuffer(SFrameResources& FrameResources)
         {
             return false;
         }
-    }
-
-    // View Normal
-    FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX] = RHICreateTexture2D(FrameResources.ViewNormalFormat, Width, Height, 1, 1, Usage, EResourceAccess::Common, nullptr);
-    if (FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX])
-    {
-        FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->SetName("GBuffer ViewNormal");
-    }
-    else
-    {
-        return false;
-    }
-
-    // Final Image
-    FrameResources.FinalTarget = RHICreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, Usage | ETextureUsageFlags::AllowUAV, EResourceAccess::Common, nullptr);
-    if (FrameResources.FinalTarget)
-    {
-        FrameResources.FinalTarget->SetName("Final Target");
-    }
-    else
-    {
-        return false;
     }
 
     return true;

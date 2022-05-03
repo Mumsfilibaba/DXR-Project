@@ -71,7 +71,9 @@ bool CRayTracer::Init(SFrameResources& Resources)
 
     uint32 Width  = Resources.MainWindowViewport->GetWidth();
     uint32 Height = Resources.MainWindowViewport->GetHeight();
-    Resources.RTOutput = RHICreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::UnorderedAccess, nullptr);
+
+    CRHITexture2DInitializer RTOutputInitializer(Resources.RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::UnorderedAccess);
+    Resources.RTOutput = RHICreateTexture2D(RTOutputInitializer);
     if (!Resources.RTOutput)
     {
         CDebug::DebugBreak();

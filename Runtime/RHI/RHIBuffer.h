@@ -16,7 +16,6 @@
 // Typedefs
 
 typedef TSharedRef<class CRHIBuffer>         RHIBufferRef;
-
 typedef TSharedRef<class CRHIVertexBuffer>   RHIVertexBufferRef;
 typedef TSharedRef<class CRHIIndexBuffer>    RHIIndexBufferRef;
 typedef TSharedRef<class CRHIGenericBuffer>  RHIGenericBufferRef;
@@ -118,13 +117,13 @@ public:
 
     CRHIBufferInitializer()
         : UsageFlags(EBufferUsageFlags::None)
-        , InitialState(EResourceAccess::Common)
+        , InitialAccess(EResourceAccess::Common)
         , InitialData(nullptr)
     { }
 
     CRHIBufferInitializer(EBufferUsageFlags InUsageFlags, EResourceAccess InInitialState, CRHIBufferDataInitializer* InInitialData = nullptr)
         : UsageFlags(InUsageFlags)
-        , InitialState(InInitialState)
+        , InitialAccess(InInitialState)
         , InitialData(InInitialData)
     { }
 
@@ -136,7 +135,7 @@ public:
 
     bool operator==(const CRHIBufferInitializer& RHS) const
     {
-        return (UsageFlags == RHS.UsageFlags) && (InitialState == RHS.InitialState);
+        return (UsageFlags == RHS.UsageFlags) && (InitialAccess == RHS.InitialAccess);
     }
 
     bool operator!=(const CRHIBufferInitializer& RHS) const
@@ -147,7 +146,7 @@ public:
     CRHIBufferDataInitializer* InitialData;
 
     EBufferUsageFlags          UsageFlags;
-    EResourceAccess            InitialState;
+    EResourceAccess            InitialAccess;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -346,40 +345,28 @@ protected:
 
 public:
 
-    /** @return: Returns a pointer to a VertexBuffer interface if implemented */
     virtual class CRHIVertexBuffer* GetVertexBuffer() { return nullptr; }
 
-    /** @return: Returns a pointer to a IndexBuffer interface if implemented */
     virtual class CRHIIndexBuffer* GetIndexBuffer() { return nullptr; }
 
-    /** @return: Returns a pointer to a ConstantBuffer interface if implemented */
     virtual class CRHIConstantBuffer* GetConstantBuffer() { return nullptr; }
 
-    /** @return: Returns a pointer to a GenericBuffer interface if implemented */
     virtual class CRHIGenericBuffer* GetGenericBuffer() { return nullptr; }
 
-    /** @return: Returns the native handle of the Buffer */
-    virtual void* GetRHIBaseResource() const { return nullptr; }
-
-    /** @return: Returns the RHI-backend buffer interface */
     virtual void* GetRHIBaseBuffer() { return nullptr; }
 
-    /** @return: Returns true if the buffer is structured or not */
+    virtual void* GetRHIBaseResource() const { return nullptr; }
+
     virtual bool IsStructured() const { return false; }
 
-    /** @return: Returns the Buffer Stride */
-    virtual uint32 GetStride() const { return 1; }
-
-    /** @return: Returns the Buffer Size */
     virtual uint32 GetSize() const { return 1; }
 
-    /** @brief: Set the debug-name of the Texture */
+    virtual uint32 GetStride() const { return 1; }
+
     virtual void SetName(const String& InName) { }
 
-    /** @return: Returns the name of the Texture */
     virtual String GetName() const { return ""; }
 
-    /** @return: Returns the flags that the buffer was created with */
     EBufferUsageFlags GetFlags() const { return Flags; }
 
 private:
@@ -408,9 +395,9 @@ public:
 
     virtual bool IsStructured() const override final { return true; }
 
-    virtual uint32 GetStride() const override final { return Stride; }
-
     virtual uint32 GetSize() const override final { return GetStride() * NumVertices; }
+
+    virtual uint32 GetStride() const override final { return Stride; }
 
 public:
 
@@ -442,16 +429,14 @@ public:
 
     virtual CRHIIndexBuffer* GetIndexBuffer() override final { return this; }
 
-    virtual uint32 GetStride() const override final { return GetStrideFromIndexFormat(Format); }
-
     virtual uint32 GetSize() const override final { return GetStride() * NumIndicies; }
+
+    virtual uint32 GetStride() const override final { return GetStrideFromIndexFormat(Format); }
 
 public:
 
-    /** @return: Returns the format that the IndexBuffer uses */
     EIndexFormat GetFormat() const { return Format; }
 
-    /** @return: Returns the number of indices in the IndexBuffer */
     uint32 GetNumIndicies() const { return NumIndicies; }
 
 private:
@@ -479,9 +464,9 @@ public:
 
     virtual CRHIGenericBuffer* GetGenericBuffer() override final { return this; }
 
-    virtual uint32 GetStride() const override final { return Stride; }
-
     virtual uint32 GetSize() const override final { return Size; }
+
+    virtual uint32 GetStride() const override final { return Stride; }
 
 private:
     uint32 Stride;
@@ -508,13 +493,12 @@ public:
 
     virtual CRHIConstantBuffer* GetConstantBuffer() override final { return this; }
 
-    virtual uint32 GetStride() const override final { return Stride; }
-
     virtual uint32 GetSize() const override final { return Size; }
+
+    virtual uint32 GetStride() const override final { return Stride; }
 
 public:
 
-    /** @return: Returns a Bindless descriptor-handle if the RHI supports it */
     virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 
 private:

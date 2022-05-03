@@ -186,7 +186,10 @@ public:
         return reinterpret_cast<void*>(D3D12Buffer);
     }
 
-    virtual CRHIDescriptorHandle GetBindlessHandle() const override final { return CRHIDescriptorHandle(); }
+    virtual CRHIDescriptorHandle GetBindlessHandle() const override final 
+    { 
+        return CRHIDescriptorHandle();
+    }
 
     virtual void SetName(const String& InName) override final
     {

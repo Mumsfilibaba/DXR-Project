@@ -627,7 +627,8 @@ void CShadowMapRenderer::Release()
 
 bool CShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, SLightSetup& LightSetup)
 {
-    LightSetup.DirectionalShadowMask = RHICreateTexture2D(LightSetup.ShadowMaskFormat, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::NonPixelShaderResource, nullptr);
+    CRHITexture2DInitializer CascadeInitializer(LightSetup.ShadowMaskFormat, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::NonPixelShaderResource);
+    LightSetup.DirectionalShadowMask = RHICreateTexture2D(CascadeInitializer);
     if (LightSetup.DirectionalShadowMask)
     {
         LightSetup.DirectionalShadowMask->SetName("Directional Shadow Mask 0");
@@ -652,14 +653,17 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
 
     const CTextureClearValue DepthClearValue(LightSetup.ShadowMapFormat, 1.0f, 0);
 
-    LightSetup.PointLightShadowMaps = RHICreateTextureCubeArray( LightSetup.ShadowMapFormat
-                                                               , LightSetup.PointLightShadowSize
-                                                               , 1
-                                                               , LightSetup.MaxPointLightShadows
-                                                               , ETextureUsageFlags::ShadowMap
-                                                               , EResourceAccess::PixelShaderResource
-                                                               , nullptr
-                                                               , DepthClearValue);
+    CRHITextureCubeArrayInitializer PointLightInitializer( LightSetup.ShadowMapFormat
+                                                         , LightSetup.PointLightShadowSize
+                                                         , LightSetup.MaxPointLightShadows
+                                                         , 1
+                                                         , 1
+                                                         , ETextureUsageFlags::ShadowMap
+                                                         , EResourceAccess::PixelShaderResource
+                                                         , nullptr
+                                                         , DepthClearValue);
+
+    LightSetup.PointLightShadowMaps = RHICreateTextureCubeArray(PointLightInitializer);
     if (LightSetup.PointLightShadowMaps)
     {
         LightSetup.PointLightShadowMaps->SetName("PointLight ShadowMaps");
@@ -667,7 +671,7 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
         LightSetup.PointLightShadowMapDSVs.Resize(LightSetup.MaxPointLightShadows);
         for (uint32 i = 0; i < LightSetup.MaxPointLightShadows; i++)
         {
-            for (uint32 Face = 0; Face < 6; Face++)
+            for (uint32 Face = 0; Face < 6; ++Face)
             {
                 DepthStencilViewCube& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
                 DepthCube[Face] = RHICreateDepthStencilView(LightSetup.PointLightShadowMaps.Get(), LightSetup.ShadowMapFormat, GetCubeFaceFromIndex(Face), 0, i);
@@ -684,22 +688,24 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
         return false;
     }
 
-    for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
-    {
-        const uint16 CascadeSize = LightSetup.CascadeSize;
+    const uint16 CascadeSize = LightSetup.CascadeSize;
+    
+    CRHITexture2DInitializer CascadeInitializer( LightSetup.ShadowMapFormat
+                                               , CascadeSize
+                                               , CascadeSize
+                                               , 1
+                                               , 1
+                                               , ETextureUsageFlags::ShadowMap
+                                               , EResourceAccess::NonPixelShaderResource
+                                               , nullptr
+                                               , DepthClearValue);
 
-        LightSetup.ShadowMapCascades[i] = RHICreateTexture2D( LightSetup.ShadowMapFormat
-                                                            , CascadeSize
-                                                            , CascadeSize
-                                                            , 1
-                                                            , 1
-                                                            , ETextureUsageFlags::ShadowMap
-                                                            , EResourceAccess::NonPixelShaderResource
-                                                            , nullptr
-                                                            , DepthClearValue);
-        if (LightSetup.ShadowMapCascades[i])
+    for (uint32 Cascade = 0; Cascade < NUM_SHADOW_CASCADES; ++Cascade)
+    {
+        LightSetup.ShadowMapCascades[Cascade] = RHICreateTexture2D(CascadeInitializer);
+        if (LightSetup.ShadowMapCascades[Cascade])
         {
-            LightSetup.ShadowMapCascades[i]->SetName("Shadow Map Cascade[" + ToString(i) + "]");
+            LightSetup.ShadowMapCascades[Cascade]->SetName("Shadow Map Cascade[" + ToString(Cascade) + "]");
         }
         else
         {

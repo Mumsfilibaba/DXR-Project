@@ -144,7 +144,8 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
 bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
 {
     // Generate global irradiance (From Skybox)
-    LightSetup.IrradianceMap = RHICreateTextureCube(LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, ETextureUsageFlags::RWTexture, EResourceAccess::Common, nullptr);
+    CRHITextureCubeInitializer LightProbeInitializer(LightSetup.LightProbeFormat, LightSetup.IrradianceSize, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::Common);
+    LightSetup.IrradianceMap = RHICreateTextureCube(LightProbeInitializer);
     if (!LightSetup.IrradianceMap)
     {
         CDebug::DebugBreak();
@@ -163,12 +164,10 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
     }
 
     const uint16 SpecularIrradianceMiplevels = NMath::Max<uint16>(NMath::Log2(LightSetup.SpecularIrradianceSize), 1u);
-    LightSetup.SpecularIrradianceMap = RHICreateTextureCube( LightSetup.LightProbeFormat
-                                                           , LightSetup.SpecularIrradianceSize
-                                                           , SpecularIrradianceMiplevels
-                                                           , ETextureUsageFlags::RWTexture
-                                                           , EResourceAccess::Common
-                                                           , nullptr);
+    LightProbeInitializer.Extent  = LightSetup.SpecularIrradianceSize;
+    LightProbeInitializer.NumMips = uint8(SpecularIrradianceMiplevels);
+
+    LightSetup.SpecularIrradianceMap = RHICreateTextureCube(LightProbeInitializer);
     if (!LightSetup.SpecularIrradianceMap)
     {
         CDebug::DebugBreak();

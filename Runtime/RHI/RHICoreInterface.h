@@ -6,6 +6,8 @@
 #include "RHIModule.h"
 #include "RHISamplerState.h"
 #include "RHIViewport.h"
+#include "RHIPipelineState.h"
+#include "RHITimestampQuery.h"
 #include "IRHICommandContext.h"
 
 #include "CoreApplication/Generic/GenericWindow.h"
@@ -154,75 +156,42 @@ public:
     /**
      * @brief: Creates a Texture2D
      * 
-     * @param Format: Format of the texture
-     * @param Width: Width of the texture
-     * @param Height: Height of the texture
-     * @param NumMips: Number of MipLevels of the texture
-     * @param NumSamples: Number of samples of the texture
-     * @param InitialState: Initial ResourceState of the texture
-     * @param InitialData: Initial data of the texture, can be nullptr
-     * @param OptizedClearValue: Optimal clear-value for the texture
+     * @param Initializer: Struct with information about the Texture2D
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2D* CreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2D* RHICreateTexture2D(const CRHITexture2DInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a Texture2DArray
      *
-     * @param Format: Format of the texture
-     * @param Width: Width of the texture
-     * @param Height: Height of the texture
-     * @param NumMips: Number of MipLevels of the texture
-     * @param NumSamples: Number of samples of the texture
-     * @param NumArraySlices: Number of slices in the texture-array
-     * @param InitialState: Initial ResourceState of the texture
-     * @param InitialData: Initial data of the texture, can be nullptr
-     * @param OptizedClearValue: Optimal clear-value for the texture
+     * @param Initializer: Struct with information about the Texture2DArray
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture2DArray* CreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture2DArray* RHICreateTexture2DArray(const CRHITexture2DArrayInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a TextureCube
      *
-     * @param Format: Format of the texture
-     * @param Size: Width and Height each side of the texture
-     * @param NumMips: Number of MipLevels of the texture
-     * @param InitialState: Initial ResourceState of the texture
-     * @param InitialData: Initial data of the texture, can be nullptr
-     * @param OptizedClearValue: Optimal clear-value for the texture
+     * @param Initializer: Struct with information about the TextureCube
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCube* CreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCube* RHICreateTextureCube(const CRHITextureCubeInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a TextureCubeArray
      *
-     * @param Format: Format of the texture
-     * @param Size: Width and Height each side of the texture
-     * @param NumMips: Number of MipLevels of the texture
-     * @param NumArraySlices: Number of elements in the array
-     * @param InitialState: Initial ResourceState of the texture
-     * @param InitialData: Initial data of the texture, can be nullptr
-     * @param OptizedClearValue: Optimal clear-value for the texture
+     * @param Initializer: Struct with information about the TextureCubeArray
      * @return: Returns the newly created texture
      */
-    virtual CRHITextureCubeArray* CreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
+    virtual CRHITextureCubeArray* RHICreateTextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer) = 0;
 
     /**
      * @brief: Creates a Texture3D
      *
-     * @param Format: Format of the texture
-     * @param Width: Width of the texture
-     * @param Height: Height of the texture
-     * @param Depth: Depth of the texture
-     * @param NumMips: Number of MipLevels of the texture
-     * @param InitialState: Initial ResourceState of the texture
-     * @param InitialData: Initial data of the texture, can be nullptr
-     * @param OptizedClearValue: Optimal clear-value for the texture
+     * @param Initializer: Struct with information about the Texture3D
      * @return: Returns the newly created texture
      */
-    virtual CRHITexture3D* CreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitalData, const CTextureClearValue& OptimizedClearValue) = 0;
+    virtual CRHITexture3D* RHICreateTexture3D(const CRHITexture3DInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a SamplerState
@@ -318,7 +287,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief: Creates a new Vertex Shader
@@ -326,7 +295,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Hull Shader
@@ -334,7 +303,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Domain Shader
@@ -342,7 +311,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Geometry Shader
@@ -350,7 +319,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Mesh Shader
@@ -358,7 +327,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Amplification Shader
@@ -366,7 +335,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Pixel Shader
@@ -374,7 +343,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief: Creates a new Ray-Generation Shader
@@ -382,7 +351,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIRayGenShader* RHICreateRayGenShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIRayGenShader* RHICreateRayGenShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Ray Any-Hit Shader
@@ -390,7 +359,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIRayAnyHitShader* RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIRayAnyHitShader* RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Ray-Closest-Hit Shader
@@ -398,7 +367,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIRayClosestHitShader* RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIRayClosestHitShader* RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode) = 0;
     
     /**
      * @brief: Creates a new Ray-Miss Shader
@@ -406,7 +375,7 @@ public:
      * @param ShaderCode: Shader byte-code to create the shader of
      * @return: Returns the newly created shader
      */
-    virtual class CRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode) = 0;
+    virtual CRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
      * @brief: Create a new DepthStencilState
@@ -414,7 +383,7 @@ public:
      * @param CreateInfo: Info about a DepthStencilState
      * @return: Returns the newly created DepthStencilState
      */
-    virtual class CRHIDepthStencilState* RHICreateDepthStencilState(const CRHIDepthStencilStateInitializer& Initializer) = 0;
+    virtual CRHIDepthStencilState* RHICreateDepthStencilState(const CRHIDepthStencilStateInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new RasterizerState
@@ -422,7 +391,7 @@ public:
      * @param CreateInfo: Info about a RasterizerState
      * @return: Returns the newly created RasterizerState
      */
-    virtual class CRHIRasterizerState* RHICreateRasterizerState(const CRHIRasterizerStateInitializer& Initializer) = 0;
+    virtual CRHIRasterizerState* RHICreateRasterizerState(const CRHIRasterizerStateInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new BlendState
@@ -430,7 +399,7 @@ public:
      * @param CreateInfo: Info about a BlendState
      * @return: Returns the newly created BlendState
      */
-    virtual class CRHIBlendState* RHICreateBlendState(const CRHIBlendStateInitializer& Initializer) = 0;
+    virtual CRHIBlendState* RHICreateBlendState(const CRHIBlendStateInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new InputLayoutState
@@ -438,7 +407,7 @@ public:
      * @param CreateInfo: Info about a InputLayoutState
      * @return: Returns the newly created InputLayoutState
      */
-    virtual class CRHIVertexInputLayout* RHICreateVertexInputLayout(const CRHIVertexInputLayoutInitializer& Initializer) = 0;
+    virtual CRHIVertexInputLayout* RHICreateVertexInputLayout(const CRHIVertexInputLayoutInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a Graphics PipelineState
@@ -446,7 +415,7 @@ public:
      * @param CreateInfo: Info about the Graphics PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const CRHIGraphicsPipelineStateInitializer& Initializer) = 0;
+    virtual CRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const CRHIGraphicsPipelineStateInitializer& Initializer) = 0;
     
     /**
      * @brief: Create a Compute PipelineState
@@ -454,7 +423,7 @@ public:
      * @param CreateInfo: Info about the Compute PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIComputePipelineState* RHICreateComputePipelineState(const CRHIComputePipelineStateInitializer& Initializer) = 0;
+    virtual CRHIComputePipelineState* RHICreateComputePipelineState(const CRHIComputePipelineStateInitializer& Initializer) = 0;
     
     /**
      * @brief: Create a Ray-Tracing PipelineState
@@ -462,14 +431,14 @@ public:
      * @param CreateInfo: Info about the Ray-Tracing PipelineState
      * @return: Returns the newly created PipelineState
      */
-    virtual class CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const CRHIRayTracingPipelineStateInitializer& Initializer) = 0;
+    virtual CRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const CRHIRayTracingPipelineStateInitializer& Initializer) = 0;
 
     /**
      * @brief: Create a new Timestamp Query
      * 
      * @return: Returns the newly created Timestamp Query
      */
-    virtual class CRHITimestampQuery* RHICreateTimestampQuery() = 0;
+    virtual CRHITimestampQuery* RHICreateTimestampQuery() = 0;
 
     /**
      * @brief: Create a new Viewport
@@ -477,14 +446,14 @@ public:
      * @param Initializer: Structure containing the information for the Viewport
      * @return: Returns the newly created viewport
      */
-    virtual class CRHIViewport* RHICreateViewport(const CRHIViewportInitializer& Initializer) = 0;
+    virtual CRHIViewport* RHICreateViewport(const CRHIViewportInitializer& Initializer) = 0;
 
     /**
      * @brief: Retrieve the default CommandContext
      * 
      * @return: Returns the default CommandContext
      */
-    virtual class IRHICommandContext* RHIGetDefaultCommandContext() = 0;
+    virtual IRHICommandContext* RHIGetDefaultCommandContext() = 0;
 
     /**
      * @brief: Check for Ray tracing support
@@ -529,29 +498,29 @@ protected:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper functions
 
-FORCEINLINE CRHITexture2D* RHICreateTexture2D(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
+FORCEINLINE CRHITexture2D* RHICreateTexture2D(const CRHITexture2DInitializer& Initializer)
 {
-    return GRHIInstance->CreateTexture2D(Format, Width, Height, NumMips, NumSamples, Flags, InitialState, InitialData, OptimizedClearValue);
+    return GRHIInstance->RHICreateTexture2D(Initializer);
 }
 
-FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(EFormat Format, uint32 Width, uint32 Height, uint32 NumMips, uint32 NumSamples, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
+FORCEINLINE CRHITexture2DArray* RHICreateTexture2DArray(const CRHITexture2DArrayInitializer& Initializer)
 {
-    return GRHIInstance->CreateTexture2DArray(Format, Width, Height, NumMips, NumSamples, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
+    return GRHIInstance->RHICreateTexture2DArray(Initializer);
 }
 
-FORCEINLINE CRHITextureCube* RHICreateTextureCube(EFormat Format, uint32 Size, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
+FORCEINLINE CRHITextureCube* RHICreateTextureCube(const CRHITextureCubeInitializer& Initializer)
 {
-    return GRHIInstance->CreateTextureCube(Format, Size, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
+    return GRHIInstance->RHICreateTextureCube(Initializer);
 }
 
-FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(EFormat Format, uint32 Size, uint32 NumMips, uint32 NumArraySlices, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
+FORCEINLINE CRHITextureCubeArray* RHICreateTextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer)
 {
-    return GRHIInstance->CreateTextureCubeArray(Format, Size, NumMips, NumArraySlices, Flags, InitialState, InitialData, OptimizedClearValue);
+    return GRHIInstance->RHICreateTextureCubeArray(Initializer);
 }
 
-FORCEINLINE CRHITexture3D* RHICreateTexture3D(EFormat Format, uint32 Width, uint32 Height, uint32 Depth, uint32 NumMips, ETextureUsageFlags Flags, EResourceAccess InitialState, const SRHIResourceData* InitialData = nullptr, const CTextureClearValue& OptimizedClearValue = CTextureClearValue())
+FORCEINLINE CRHITexture3D* RHICreateTexture3D(const CRHITexture3DInitializer& Initializer)
 {
-    return GRHIInstance->CreateTexture3D(Format, Width, Height, Depth, NumMips, Flags, InitialState, InitialData, OptimizedClearValue);
+    return GRHIInstance->RHICreateTexture3D(Initializer);
 }
 
 FORCEINLINE CRHISamplerState* RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer)

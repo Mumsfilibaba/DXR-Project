@@ -96,7 +96,8 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAONoise.Emplace(0.0f);
     }
 
-    SSAONoiseTex = RHICreateTexture2D(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::NonPixelShaderResource, nullptr);
+    CRHITexture2DInitializer SSAONoiseInitializer(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::NonPixelShaderResource);
+    SSAONoiseTex = RHICreateTexture2D(SSAONoiseInitializer);
     if (!SSAONoiseTex)
     {
         CDebug::DebugBreak();
@@ -301,7 +302,8 @@ bool CScreenSpaceOcclusionRenderer::CreateRenderTarget(SFrameResources& FrameRes
     const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
     const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
 
-    FrameResources.SSAOBuffer = RHICreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceAccess::Common, nullptr);
+    CRHITexture2DInitializer SSAOBufferInitializer(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceAccess::Common);
+    FrameResources.SSAOBuffer = RHICreateTexture2D(SSAOBufferInitializer);
     if (!FrameResources.SSAOBuffer)
     {
         CDebug::DebugBreak();
