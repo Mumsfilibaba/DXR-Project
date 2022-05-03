@@ -11,19 +11,22 @@
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Windows specific
+
 #if PLATFORM_WINDOWS
-#include <intrin.h>
-#include <smmintrin.h>
+    #include <intrin.h>
+    #include <smmintrin.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // MacOS specific
+
 #elif PLATFORM_MACOS
-#include <immintrin.h>
+    #include <immintrin.h>
 #else
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // No defined platform
-#error No platform defined
+
+    #error No platform defined
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -131,9 +134,9 @@ namespace NMath
     }
 
     template<typename T>
-    FORCEINLINE T Log2(T x)
+    FORCEINLINE T Log2(T Value)
     {
-        return static_cast<T>(std::log2((double)x));
+        return static_cast<T>(std::log2(static_cast<double>(Value)));
     }
 
     template<typename T>
