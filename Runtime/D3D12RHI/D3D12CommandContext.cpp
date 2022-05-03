@@ -730,7 +730,7 @@ void CD3D12CommandContext::UpdateBuffer(CRHIBuffer* Destination, uint64 OffsetIn
 {
     if (SizeInBytes > 0)
     {
-        CD3D12Buffer* D3D12Destination = D3D12BufferCast(Destination);
+        CD3D12Buffer* D3D12Destination = GetD3D12Buffer(Destination);
         UpdateBuffer(D3D12Destination->GetD3D12Resource(), OffsetInBytes, SizeInBytes, SourceData);
 
         CmdBatch->AddInUseResource(Destination);
@@ -797,8 +797,8 @@ void CD3D12CommandContext::CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Sourc
 
     FlushResourceBarriers();
 
-    CD3D12Buffer* D3D12Destination = D3D12BufferCast(Destination);
-    CD3D12Buffer* D3D12Source = D3D12BufferCast(Source);
+    CD3D12Buffer* D3D12Destination = GetD3D12Buffer(Destination);
+    CD3D12Buffer* D3D12Source = GetD3D12Buffer(Source);
     CommandList.CopyBufferRegion(D3D12Destination->GetD3D12Resource(), CopyInfo.DestinationOffset, D3D12Source->GetD3D12Resource(), CopyInfo.SourceOffset, CopyInfo.SizeInBytes);
 
     CmdBatch->AddInUseResource(Destination);
@@ -867,7 +867,7 @@ void CD3D12CommandContext::DiscardContents(CRHITexture* Texture)
 {
     // TODO: Enable regions to be discarded
 
-    CD3D12Resource* D3D12Resource = D3D12ResourceCast(Texture);
+    CD3D12Resource* D3D12Resource = GetD3D12Resource(Texture);
     if (D3D12Resource)
     {
         CommandList.DiscardResource(D3D12Resource->GetResource(), nullptr);
@@ -1220,7 +1220,7 @@ void CD3D12CommandContext::TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess 
     const D3D12_RESOURCE_STATES D3D12BeforeState = ConvertResourceState(BeforeState);
     const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(AfterState);
 
-    CD3D12Buffer* D3D12Buffer = D3D12BufferCast(Buffer);
+    CD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
     TransitionResource(D3D12Buffer->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
 
     CmdBatch->AddInUseResource(Buffer);
@@ -1236,7 +1236,7 @@ void CD3D12CommandContext::UnorderedAccessTextureBarrier(CRHITexture* Texture)
 
 void CD3D12CommandContext::UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)
 {
-    CD3D12Buffer* D3D12Buffer = D3D12BufferCast(Buffer);
+    CD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
     UnorderedAccessBarrier(D3D12Buffer->GetD3D12Resource());
 
     CmdBatch->AddInUseResource(Buffer);

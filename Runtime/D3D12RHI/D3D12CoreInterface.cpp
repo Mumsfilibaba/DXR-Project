@@ -754,7 +754,7 @@ CRHIShaderResourceView* CD3D12CoreInterface::CreateShaderResourceView(const SRHI
     else if (CreateInfo.Type == SRHIShaderResourceViewInfo::EType::VertexBuffer)
     {
         CRHIVertexBuffer* Buffer      = CreateInfo.VertexBuffer.Buffer;
-        CD3D12Buffer*     D3D12Buffer = D3D12BufferCast(Buffer);
+        CD3D12Buffer*     D3D12Buffer = GetD3D12Buffer(Buffer);
         Resource = D3D12Buffer->GetD3D12Resource();
 
         Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
@@ -769,7 +769,7 @@ CRHIShaderResourceView* CD3D12CoreInterface::CreateShaderResourceView(const SRHI
     else if (CreateInfo.Type == SRHIShaderResourceViewInfo::EType::IndexBuffer)
     {
         CRHIIndexBuffer* Buffer      = CreateInfo.IndexBuffer.Buffer;
-        CD3D12Buffer*    D3D12Buffer = D3D12BufferCast(Buffer);
+        CD3D12Buffer*    D3D12Buffer = GetD3D12Buffer(Buffer);
         Resource = D3D12Buffer->GetD3D12Resource();
 
         Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
@@ -785,7 +785,7 @@ CRHIShaderResourceView* CD3D12CoreInterface::CreateShaderResourceView(const SRHI
     else if (CreateInfo.Type == SRHIShaderResourceViewInfo::EType::GenericBuffer)
     {
         CRHIGenericBuffer* Buffer      = CreateInfo.StructuredBuffer.Buffer;
-        CD3D12Buffer*      D3D12Buffer = D3D12BufferCast(Buffer);
+        CD3D12Buffer*      D3D12Buffer = GetD3D12Buffer(Buffer);
         Resource = D3D12Buffer->GetD3D12Resource();
 
         Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
@@ -897,7 +897,7 @@ CRHIUnorderedAccessView* CD3D12CoreInterface::CreateUnorderedAccessView(const SR
     else if (CreateInfo.Type == SRHIUnorderedAccessViewInfo::EType::VertexBuffer)
     {
         CRHIVertexBuffer* Buffer      = CreateInfo.VertexBuffer.Buffer;
-        CD3D12Buffer*     D3D12Buffer = D3D12BufferCast(Buffer);
+        CD3D12Buffer*     D3D12Buffer = GetD3D12Buffer(Buffer);
         Resource = D3D12Buffer->GetD3D12Resource();
 
         Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowUAV) != EBufferUsageFlags::None));
@@ -912,7 +912,7 @@ CRHIUnorderedAccessView* CD3D12CoreInterface::CreateUnorderedAccessView(const SR
     else if (CreateInfo.Type == SRHIUnorderedAccessViewInfo::EType::IndexBuffer)
     {
         CRHIIndexBuffer* Buffer      = CreateInfo.IndexBuffer.Buffer;
-        CD3D12Buffer*    D3D12Buffer = D3D12BufferCast(Buffer);
+        CD3D12Buffer*    D3D12Buffer = GetD3D12Buffer(Buffer);
         Resource = D3D12Buffer->GetD3D12Resource();
 
         Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowUAV) != EBufferUsageFlags::None));
@@ -931,7 +931,7 @@ CRHIUnorderedAccessView* CD3D12CoreInterface::CreateUnorderedAccessView(const SR
     else if (CreateInfo.Type == SRHIUnorderedAccessViewInfo::EType::GenericBuffer)
     {
         CRHIGenericBuffer* Buffer      = CreateInfo.StructuredBuffer.Buffer;
-        CD3D12Buffer*      D3D12Buffer = D3D12BufferCast(Buffer);
+        CD3D12Buffer*      D3D12Buffer = GetD3D12Buffer(Buffer);
         Resource = D3D12Buffer->GetD3D12Resource();
 
         Assert(((Buffer->GetFlags() & EBufferUsageFlags::AllowUAV) != EBufferUsageFlags::None));
