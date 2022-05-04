@@ -27,14 +27,14 @@ public:
         HRESULT Result = GetDevice()->GetD3D12Device()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
         if (FAILED(Result))
         {
-            LOG_INFO("FAILED to create Fence");
+            D3D12_ERROR("FAILED to create Fence");
             return false;
         }
 
         Event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-        if (Event == NULL)
+        if (Event == 0)
         {
-            D3D12_ERROR_ALWAYS("FAILED to create Event for Fence");
+            D3D12_ERROR("FAILED to create Event for Fence");
             return false;
         }
 
@@ -51,6 +51,7 @@ public:
         }
         else
         {
+            D3D12_ERROR("Failed to wait for fencevalue");
             return false;
         }
     }
@@ -78,5 +79,5 @@ public:
 
 private:
     TComPtr<ID3D12Fence> Fence;
-    HANDLE               Event = 0;
+    HANDLE               Event;
 };

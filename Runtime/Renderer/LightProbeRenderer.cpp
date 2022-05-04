@@ -156,7 +156,8 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
         LightSetup.IrradianceMap->SetName("Irradiance Map");
     }
 
-    LightSetup.IrradianceMapUAV = RHICreateUnorderedAccessView(LightSetup.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0);
+    CRHITextureUAVInitializer UAVInitializer(LightSetup.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0, 0, 6);
+    LightSetup.IrradianceMapUAV = RHICreateUnorderedAccessView(UAVInitializer);
     if (!LightSetup.IrradianceMapUAV)
     {
         CDebug::DebugBreak();
@@ -180,7 +181,8 @@ bool CLightProbeRenderer::CreateSkyLightResources(SLightSetup& LightSetup)
 
     for (uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        TSharedRef<CRHIUnorderedAccessView> Uav = RHICreateUnorderedAccessView(LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel);
+        UAVInitializer = CRHITextureUAVInitializer(LightSetup.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel, 0, 6);
+        TSharedRef<CRHIUnorderedAccessView> Uav = RHICreateUnorderedAccessView(UAVInitializer);
         if (Uav)
         {
             LightSetup.SpecularIrradianceMapUAVs.Emplace(Uav);

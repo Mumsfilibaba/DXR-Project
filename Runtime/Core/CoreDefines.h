@@ -54,7 +54,7 @@
     #if ENABLE_ASSERTS
         #define Assert(Condition) assert(Condition)
     #else
-        #define Assert(Condition) (void)(0)
+        #define Assert(Condition) (void)(Condition)
     #endif
 #endif
 

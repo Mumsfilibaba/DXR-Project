@@ -237,13 +237,13 @@ public:
 
     FORCEINLINE void UnorderedAccessBarrier(CD3D12Resource* Resource)
     {
-        D3D12_ERROR(Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
+        D3D12_ERROR_COND(Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
         BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetResource());
     }
 
     FORCEINLINE void TransitionResource(CD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
     {
-        D3D12_ERROR(Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
+        D3D12_ERROR_COND(Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
         BarrierBatcher.AddTransitionBarrier(Resource->GetResource(), BeforeState, AfterState);
     }
 

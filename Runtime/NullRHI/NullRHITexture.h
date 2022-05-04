@@ -22,7 +22,7 @@ public:
         : CRHITexture2D(Initializer)
         , RenderTargetView(dbg_new CNullRHIRenderTargetView())
         , DepthStencilView(dbg_new CNullRHIDepthStencilView())
-        , UnorderedAccessView(dbg_new CNullRHIUnorderedAccessView())
+        , UnorderedAccessView(dbg_new CNullRHIUnorderedAccessView(this))
     { }
 
 public:
@@ -101,7 +101,7 @@ public:
     template<typename BaseTextureInitializer>
     TNullRHITexture(const BaseTextureInitializer& Initializer)
         : BaseTextureType(Initializer)
-        , ShaderResourceView(dbg_new CNullRHIShaderResourceView())
+        , ShaderResourceView(dbg_new CNullRHIShaderResourceView(this))
     { }
 
 public:

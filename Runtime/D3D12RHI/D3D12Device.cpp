@@ -240,7 +240,7 @@ bool CD3D12Device::Initialize()
         TComPtr<ID3D12Debug> DebugInterface;
         if (FAILED(ND3D12Functions::D3D12GetDebugInterface(IID_PPV_ARGS(&DebugInterface))))
         {
-            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to enable DebugLayer");
+            D3D12_ERROR("[CD3D12Device]: FAILED to enable DebugLayer");
             return false;
         }
         else
@@ -258,7 +258,7 @@ bool CD3D12Device::Initialize()
             }
             else
             {
-                D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to enable DRED");
+                D3D12_ERROR("[CD3D12Device]: FAILED to enable DRED");
             }
         }
 
@@ -267,7 +267,7 @@ bool CD3D12Device::Initialize()
             TComPtr<ID3D12Debug1> DebugInterface1;
             if (FAILED(DebugInterface.GetAs(&DebugInterface1)))
             {
-                D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to enable GPU- Validation");
+                D3D12_ERROR("[CD3D12Device]: FAILED to enable GPU- Validation");
                 return false;
             }
             else
@@ -282,7 +282,7 @@ bool CD3D12Device::Initialize()
             TComPtr<ID3D12Debug5> DebugInterface5;
             if (FAILED(DebugInterface.GetAs(&DebugInterface5)))
             {
-                D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to enable auto-naming of objects");
+                D3D12_ERROR("[CD3D12Device]: FAILED to enable auto-naming of objects");
             }
             else
             {
@@ -299,7 +299,7 @@ bool CD3D12Device::Initialize()
         }
         else
         {
-            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrieve InfoQueue");
+            D3D12_ERROR("[CD3D12Device]: FAILED to retrieve InfoQueue");
         }
 
         TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysisInterface;
@@ -309,14 +309,14 @@ bool CD3D12Device::Initialize()
         }
         else
         {
-            LOG_INFO("[CD3D12Device]: PIX is not connected to the application");
+            D3D12_INFO("[CD3D12Device]: PIX is not connected to the application");
         }
     }
 
     // Create factory
     if (FAILED(NDXGIFunctions::CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
     {
-        D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to create factory");
+        D3D12_ERROR("[CD3D12Device]: FAILED to create factory");
         return false;
     }
     else
@@ -324,7 +324,7 @@ bool CD3D12Device::Initialize()
         TComPtr<IDXGIFactory5> Factory5;
         if (FAILED(Factory.GetAs(&Factory5)))
         {
-            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrieve IDXGIFactory5");
+            D3D12_ERROR("[CD3D12Device]: FAILED to retrieve IDXGIFactory5");
             return false;
         }
         else
@@ -334,11 +334,11 @@ bool CD3D12Device::Initialize()
             {
                 if (bAllowTearing)
                 {
-                    LOG_INFO("[CD3D12Device]: Tearing is supported");
+                    D3D12_INFO("[CD3D12Device]: Tearing is supported");
                 }
                 else
                 {
-                    LOG_INFO("[CD3D12Device]: Tearing is NOT supported");
+                    D3D12_INFO("[CD3D12Device]: Tearing is NOT supported");
                 }
             }
         }
@@ -351,7 +351,7 @@ bool CD3D12Device::Initialize()
         DXGI_ADAPTER_DESC1 Desc;
         if (FAILED(TempAdapter->GetDesc1(&Desc)))
         {
-            D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrieve DXGI_ADAPTER_DESC1");
+            D3D12_ERROR("[CD3D12Device]: FAILED to retrieve DXGI_ADAPTER_DESC1");
             return false;
         }
 
@@ -364,9 +364,10 @@ bool CD3D12Device::Initialize()
         {
             AdapterID = ID;
 
-            char Buff[256] = {};
+            char Buff[256];
+            CMemory::Memzero(Buff, sizeof(Buff));
             sprintf_s(Buff, "[CD3D12Device]: Direct3D Adapter (%u): %ls", AdapterID, Desc.Description);
-            LOG_INFO(Buff);
+            D3D12_INFO(Buff);
 
             break;
         }
@@ -374,7 +375,7 @@ bool CD3D12Device::Initialize()
 
     if (!TempAdapter)
     {
-        D3D12_ERROR_ALWAYS("[CD3D12Device]: FAILED to retrieve adapter");
+        D3D12_ERROR("[CD3D12Device]: FAILED to retrieve adapter");
         return false;
     }
     else
@@ -390,7 +391,7 @@ bool CD3D12Device::Initialize()
     }
     else
     {
-        LOG_INFO("[CD3D12Device]: Created Device");
+        D3D12_INFO("[CD3D12Device]: Created Device");
     }
 
     // Configure debug device (if active).
@@ -419,7 +420,7 @@ bool CD3D12Device::Initialize()
 
     if (FAILED(Device.GetAs<ID3D12Device5>(&DXRDevice)))
     {
-        D3D12_ERROR_ALWAYS("[CD3D12Device]: Failed to retrieve DXR-Device");
+        D3D12_ERROR("[CD3D12Device]: Failed to retrieve DXR-Device");
         return false;
     }
 
@@ -499,7 +500,7 @@ int32 CD3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount
     HRESULT hr = Device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &Data, sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS));
     if (FAILED(hr))
     {
-        LOG_ERROR("[CD3D12Device] CheckFeatureSupport failed");
+        D3D12_ERROR("[CD3D12Device] CheckFeatureSupport failed");
         return 0;
     }
 

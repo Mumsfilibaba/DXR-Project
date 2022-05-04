@@ -54,6 +54,34 @@ public:
 
 public:
 
+    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    // CRHITexture2D Interface
+
+    virtual CRHIRenderTargetView* GetRenderTargetView() const override final { return RenderTargetView.Get(); }
+
+    virtual CRHIDepthStencilView* GetDepthStencilView() const override final { return DepthStencilView.Get(); }
+    
+    virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
+
+    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CD3D12Texture*>(this)); }
+
+    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
+
+    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
+
+    virtual void SetName(const String& InName) override final
+    {
+        CD3D12Resource* D3D12Resource = GetD3D12Resource();
+        if (D3D12Resource)
+        {
+            D3D12Resource->SetName(InName);
+        }
+    }
+
+public:
+
     void SetRenderTargetView(CD3D12RenderTargetView* InRenderTargetView) { RenderTargetView = InRenderTargetView; }
 
     void SetDepthStencilView(CD3D12DepthStencilView* InDepthStencilView) { DepthStencilView = InDepthStencilView; }
@@ -66,49 +94,6 @@ public:
     {
         Width  = InWidth;
         Height = InHeight;
-    }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHITexture2D Interface
-
-    virtual CRHIRenderTargetView* GetRenderTargetView() const override final { return RenderTargetView.Get(); }
-
-    virtual CRHIDepthStencilView* GetDepthStencilView() const override final { return DepthStencilView.Get(); }
-    
-    virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
-
-    virtual void* GetRHIBaseResource() const override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
-    }
-
-    virtual void* GetRHIBaseTexture() override final
-    {
-        CD3D12Texture* D3D12Texture = static_cast<CD3D12Texture*>(this);
-        return reinterpret_cast<void*>(D3D12Texture);
-    }
-
-    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final
-    {
-        CD3D12ShaderResourceView* D3D12ShaderResourceView = GetD3D12ShaderResourceView();
-        return static_cast<CRHIShaderResourceView*>(D3D12ShaderResourceView);
-    }
-
-    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final 
-    { 
-        return CRHIDescriptorHandle();
-    }
-
-    virtual void SetName(const String& InName) override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
     }
 
 private:
@@ -134,28 +119,13 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual void* GetRHIBaseResource() const override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
-    }
+    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void* GetRHIBaseTexture() override final
-    {
-        CD3D12Texture* D3D12Texture = static_cast<CD3D12Texture*>(this);
-        return reinterpret_cast<void*>(D3D12Texture);
-    }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CD3D12Texture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final
-    {
-        CD3D12ShaderResourceView* D3D12ShaderResourceView = GetD3D12ShaderResourceView();
-        return static_cast<CRHIShaderResourceView*>(D3D12ShaderResourceView);
-    }
+    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final
-    { 
-        return CRHIDescriptorHandle();
-    }
+    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
 
     virtual void SetName(const String& InName) override final
     {
@@ -184,28 +154,13 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual void* GetRHIBaseResource() const override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
-    }
+    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void* GetRHIBaseTexture() override final
-    {
-        CD3D12Texture* D3D12Texture = static_cast<CD3D12Texture*>(this);
-        return reinterpret_cast<void*>(D3D12Texture);
-    }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CD3D12Texture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final
-    {
-        CD3D12ShaderResourceView* D3D12ShaderResourceView = GetD3D12ShaderResourceView();
-        return static_cast<CRHIShaderResourceView*>(D3D12ShaderResourceView);
-    }
+    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final 
-    { 
-        return CRHIDescriptorHandle(); 
-    }
+    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
 
     virtual void SetName(const String& InName) override final
     {
@@ -234,28 +189,13 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual void* GetRHIBaseResource() const override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
-    }
+    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void* GetRHIBaseTexture() override final
-    {
-        CD3D12Texture* D3D12Texture = static_cast<CD3D12Texture*>(this);
-        return reinterpret_cast<void*>(D3D12Texture);
-    }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CD3D12Texture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final
-    {
-        CD3D12ShaderResourceView* D3D12ShaderResourceView = GetD3D12ShaderResourceView();
-        return static_cast<CRHIShaderResourceView*>(D3D12ShaderResourceView);
-    }
+    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final 
-    { 
-        return CRHIDescriptorHandle();
-    }
+    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
 
     virtual void SetName(const String& InName) override final
     {
@@ -284,28 +224,13 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual void* GetRHIBaseResource() const override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        return D3D12Resource ? reinterpret_cast<void*>(D3D12Resource->GetResource()) : nullptr;
-    }
+    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void* GetRHIBaseTexture() override final
-    {
-        CD3D12Texture* D3D12Texture = static_cast<CD3D12Texture*>(this);
-        return reinterpret_cast<void*>(D3D12Texture);
-    }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<CD3D12Texture*>(this)); }
 
-    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final
-    {
-        CD3D12ShaderResourceView* D3D12ShaderResourceView = GetD3D12ShaderResourceView();
-        return static_cast<CRHIShaderResourceView*>(D3D12ShaderResourceView);
-    }
+    virtual CRHIShaderResourceView* GetDefaultShaderResourceView() const override final { return GetD3D12ShaderResourceView(); }
 
-    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final 
-    { 
-        return CRHIDescriptorHandle(); 
-    }
+    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
 
     virtual void SetName(const String& InName) override final
     {
@@ -325,7 +250,7 @@ inline CD3D12Texture* D3D12TextureCast(CRHITexture* Texture)
     return Texture ? reinterpret_cast<CD3D12Texture*>(Texture->GetRHIBaseTexture()) : nullptr;
 }
 
-inline CD3D12Resource* D3D12ResourceCast(CRHITexture* Texture)
+inline CD3D12Resource* GetD3D12Resource(CRHITexture* Texture)
 {
     return Texture ? reinterpret_cast<CD3D12Resource*>(Texture->GetRHIBaseResource()) : nullptr;
 }

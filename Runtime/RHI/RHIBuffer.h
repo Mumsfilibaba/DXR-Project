@@ -357,8 +357,6 @@ public:
 
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    virtual bool IsStructured() const { return false; }
-
     virtual uint32 GetSize() const { return 1; }
 
     virtual uint32 GetStride() const { return 1; }
@@ -393,15 +391,12 @@ public:
 
     virtual CRHIVertexBuffer* GetVertexBuffer() override final { return this; }
 
-    virtual bool IsStructured() const override final { return true; }
-
     virtual uint32 GetSize() const override final { return GetStride() * NumVertices; }
 
     virtual uint32 GetStride() const override final { return Stride; }
 
 public:
 
-    /** @return: Returns the number of vertices in the VertexBuffer */
     uint32 GetNumVertices() const { return NumVertices; }
 
 private:

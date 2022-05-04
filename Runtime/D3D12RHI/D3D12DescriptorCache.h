@@ -36,7 +36,7 @@ public:
 
     FORCEINLINE void SetView(ViewType* DescriptorView, EShaderVisibility Visibility, uint32 ShaderRegister)
     {
-        D3D12_ERROR(DescriptorView != nullptr, "[D3D12]: Trying to bind a ResourceView that was nullptr, check input from DescriptorCache");
+        D3D12_ERROR_COND(DescriptorView != nullptr, "Trying to bind a ResourceView that was nullptr, check input from DescriptorCache");
 
         ViewType* CurrentDescriptorView = ResourceViews[Visibility][ShaderRegister];
         if (DescriptorView != CurrentDescriptorView)
@@ -154,8 +154,8 @@ public:
 
     FORCEINLINE void SetVertexBuffer(CD3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
-        D3D12_ERROR( Slot <= D3D12_MAX_VERTEX_BUFFER_SLOTS
-                   , "[D3D12]: Trying to bind a VertexBuffer to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxVertexBufferCount=" + ToString(D3D12_MAX_VERTEX_BUFFER_SLOTS) + ") ");
+        D3D12_ERROR_COND(Slot <= D3D12_MAX_VERTEX_BUFFER_SLOTS
+                        ,"Trying to bind a VertexBuffer to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxVertexBufferCount=" + ToString(D3D12_MAX_VERTEX_BUFFER_SLOTS) + ") ");
 
         if (VertexBuffers[Slot] != VertexBuffer)
         {
@@ -213,7 +213,8 @@ public:
 
     FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* RenderTargetView, uint32 Slot)
     {
-        D3D12_ERROR(Slot <= D3D12_MAX_RENDER_TARGET_COUNT, "[D3D12]: Trying to bind a RenderTarget to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxRenderTargetCount=" + ToString(D3D12_MAX_RENDER_TARGET_COUNT) + ") ");
+        D3D12_ERROR_COND(Slot <= D3D12_MAX_RENDER_TARGET_COUNT
+                        ,"Trying to bind a RenderTarget to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxRenderTargetCount=" + ToString(D3D12_MAX_RENDER_TARGET_COUNT) + ") ");
 
         if (RenderTargetView)
         {
@@ -397,10 +398,10 @@ private:
         }
     }
 
-    CD3D12ConstantBufferView*  NullCBV     = nullptr;
-    CD3D12ShaderResourceView*  NullSRV     = nullptr;
-    CD3D12UnorderedAccessView* NullUAV     = nullptr;
-    CD3D12SamplerState*        NullSampler = nullptr;
+    CD3D12ConstantBufferView*      NullCBV     = nullptr;
+    CD3D12ShaderResourceView*      NullSRV     = nullptr;
+    CD3D12UnorderedAccessView*     NullUAV     = nullptr;
+    CD3D12SamplerState*            NullSampler = nullptr;
 
     CD3D12VertexBufferCache        VertexBufferCache;
     CD3D12RenderTargetState        RenderTargetCache;
@@ -409,7 +410,7 @@ private:
     CD3D12ConstantBufferViewCache  ConstantBufferViewCache;
     CD3D12SamplerStateCache        SamplerStateCache;
 
-    ID3D12DescriptorHeap* PreviousDescriptorHeaps[2] = { nullptr, nullptr };
+    ID3D12DescriptorHeap*          PreviousDescriptorHeaps[2] = { nullptr, nullptr };
 
     UINT RangeSizes[D3D12_CACHED_DESCRIPTORS_COUNT];
 };
@@ -431,8 +432,8 @@ public:
 
     FORCEINLINE void Set32BitShaderConstants(const uint32* InConstants, uint32 InNumConstants)
     {
-        D3D12_ERROR( InNumConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT
-                   , "[D3D12]: Trying to set a number of shader-constants (NumConstants=" + ToString(InNumConstants) + ") higher than the maximum (MaxShaderConstants=" + ToString(D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT) + ") ");
+        D3D12_ERROR_COND(InNumConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT
+                        ,"Trying to set a number of shader-constants (NumConstants=" + ToString(InNumConstants) + ") higher than the maximum (MaxShaderConstants=" + ToString(D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT) + ") ");
 
         CMemory::Memcpy(Constants, InConstants, sizeof(uint32) * InNumConstants);
         NumConstants = InNumConstants;

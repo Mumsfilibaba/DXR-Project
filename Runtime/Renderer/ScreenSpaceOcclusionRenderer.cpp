@@ -137,7 +137,8 @@ bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
         SSAOSamples->SetName("SSAO Samples");
     }
 
-    SSAOSamplesSRV = RHICreateShaderResourceView(SSAOSamples.Get(), 0, SSAOKernel.Size());
+    CRHIBufferSRVInitializer SRVInitializer(SSAOSamples.Get(), 0, SSAOKernel.Size());
+    SSAOSamplesSRV = RHICreateShaderResourceView(SRVInitializer);
     if (!SSAOSamplesSRV)
     {
         CDebug::DebugBreak();

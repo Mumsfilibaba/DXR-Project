@@ -16,7 +16,10 @@ class CNullRHIShaderResourceView : public CRHIShaderResourceView
 {
 public:
 
-    CNullRHIShaderResourceView() = default;
+    explicit CNullRHIShaderResourceView(CRHIResource* InResource)
+        : CRHIShaderResourceView(InResource)
+    { }
+
     ~CNullRHIShaderResourceView() = default;
 };
 
@@ -27,7 +30,10 @@ class CNullRHIUnorderedAccessView : public CRHIUnorderedAccessView
 {
 public:
 
-    CNullRHIUnorderedAccessView() = default;
+    explicit CNullRHIUnorderedAccessView(CRHIResource* InResource)
+        : CRHIUnorderedAccessView(InResource)
+    { }
+
     ~CNullRHIUnorderedAccessView() = default;
 };
 

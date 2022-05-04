@@ -393,9 +393,9 @@ public:
 
     virtual class CRHITexture3D* GetTexture3D() { return nullptr; }
 
-    virtual void* GetRHIBaseResource() const { return nullptr; }
-
     virtual void* GetRHIBaseTexture() { return nullptr; }
+
+    virtual void* GetRHIBaseResource() const { return nullptr; }
 
     virtual class CRHIShaderResourceView* GetDefaultShaderResourceView() const { return nullptr; }
 
@@ -450,14 +450,6 @@ protected:
 
 public:
 
-    virtual class CRHIRenderTargetView* GetRenderTargetView() const { return nullptr; }
-
-    virtual class CRHIDepthStencilView* GetDepthStencilView() const { return nullptr; }
-
-    virtual class CRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
-
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
@@ -470,6 +462,14 @@ public:
     virtual CIntVector3 GetExtent() const override { return CIntVector3(Width, Height, 1); }
 
     virtual uint32 GetNumSamples() const override final { return NumSamples; }
+
+public:
+
+    virtual class CRHIRenderTargetView* GetRenderTargetView() const { return nullptr; }
+
+    virtual class CRHIDepthStencilView* GetDepthStencilView() const { return nullptr; }
+
+    virtual class CRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
 protected:
     uint8  NumSamples;
@@ -553,10 +553,6 @@ protected:
 
 public:
 
-    uint32 GetNumCubes() const { return ArraySize; }
-
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
@@ -567,6 +563,10 @@ public:
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(GetWidth(), GetHeight(), ArraySize); }
 
     virtual uint32 GetArraySize() const override final { return ArraySize; }
+
+public:
+
+    uint32 GetNumCubes() const { return ArraySize; }
 
 protected:
     uint16 ArraySize;

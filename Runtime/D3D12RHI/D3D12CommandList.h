@@ -32,7 +32,7 @@ public:
 
             if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList5>(&CmdList5)))
             {
-                D3D12_ERROR_ALWAYS("[CD3D12CommandList]: FAILED to retrieve DXR-CommandList");
+                D3D12_ERROR("[CD3D12CommandList]: FAILED to retrieve DXR-CommandList");
                 return false;
             }
             else
@@ -42,7 +42,7 @@ public:
         }
         else
         {
-            D3D12_ERROR_ALWAYS("[CD3D12CommandList]: FAILED to create CommandList");
+            D3D12_ERROR("[CD3D12CommandList]: FAILED to create CommandList");
             return false;
         }
     }
@@ -121,13 +121,13 @@ public:
 
     FORCEINLINE void BuildRaytracingAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* Desc)
     {
-        D3D12_ERROR(CmdList5 != nullptr, "Ray Tracing is not supported");
+        D3D12_ERROR_COND(CmdList5 != nullptr, "Ray Tracing is not supported");
         CmdList5->BuildRaytracingAccelerationStructure(Desc, 0, nullptr);
     }
 
     FORCEINLINE void DispatchRays(const D3D12_DISPATCH_RAYS_DESC* Desc)
     {
-        D3D12_ERROR(CmdList5 != nullptr, "Ray Tracing is not supported");
+        D3D12_ERROR_COND(CmdList5 != nullptr, "Ray Tracing is not supported");
         CmdList5->DispatchRays(Desc);
     }
 
@@ -153,7 +153,7 @@ public:
 
     FORCEINLINE void SetStateObject(ID3D12StateObject* StateObject)
     {
-        D3D12_ERROR(CmdList5 != nullptr, "StateObjects are not supported");
+        D3D12_ERROR_COND(CmdList5 != nullptr, "StateObjects are not supported");
         CmdList5->SetPipelineState1(StateObject);
     }
 
@@ -219,13 +219,13 @@ public:
 
     FORCEINLINE void RSSetShadingRate(D3D12_SHADING_RATE BaseShadingRate, const D3D12_SHADING_RATE_COMBINER* Combiners)
     {
-        D3D12_ERROR(CmdList5 != nullptr, "Shading-Rate is not supported");
+        D3D12_ERROR_COND(CmdList5 != nullptr, "Shading-Rate is not supported");
         CmdList5->RSSetShadingRate(BaseShadingRate, Combiners);
     }
 
     FORCEINLINE void RSSetShadingRateImage(ID3D12Resource* ShadingRateImage)
     {
-        D3D12_ERROR(CmdList5 != nullptr, "Shading-Rate is not supported");
+        D3D12_ERROR_COND(CmdList5 != nullptr, "Shading-Rate is not supported");
         CmdList5->RSSetShadingRateImage(ShadingRateImage);
     }
 
