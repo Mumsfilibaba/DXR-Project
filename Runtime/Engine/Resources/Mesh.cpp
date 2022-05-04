@@ -78,7 +78,7 @@ bool CMesh::Init(const SMeshData& Data)
             return false;
         }
 
-        SRVInitializer = CRHIBufferSRVInitializer(IndexBuffer.Get(), 0, IndexCount);
+        SRVInitializer = CRHIBufferSRVInitializer(IndexBuffer.Get(), 0, IndexCount, EBufferSRVFormat::Uint32);
         IndexBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!IndexBufferSRV)
         {

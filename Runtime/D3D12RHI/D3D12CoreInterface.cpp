@@ -601,7 +601,7 @@ CRHIIndexBuffer* CD3D12CoreInterface::RHICreateIndexBuffer(const CRHIIndexBuffer
 
 CRHIConstantBuffer* CD3D12CoreInterface::RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
 {
-    Assert(!Initializer.AllowSRV() && Initializer.AllowUAV());
+    Assert(!Initializer.AllowSRV() && !Initializer.AllowUAV());
     return CreateBuffer<CD3D12ConstantBuffer>(Initializer);
 }
 
@@ -753,8 +753,7 @@ CRHIShaderResourceView* CD3D12CoreInterface::RHICreateShaderResourceView(const C
     Desc.Buffer.FirstElement     = Initializer.FirstElement;
     Desc.Buffer.NumElements      = Initializer.NumElements;
 
-    const bool bIsStructured = Initializer.Buffer->IsStructured();
-    if (bIsStructured)
+    if (Initializer.Format == EBufferSRVFormat::None)
     {
         Desc.Format                     = DXGI_FORMAT_UNKNOWN;
         Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;

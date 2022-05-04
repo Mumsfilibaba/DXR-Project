@@ -203,6 +203,42 @@ struct SRHIDepthStencilViewInfo
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EBufferSRVFormat
+
+enum class EBufferSRVFormat : uint32
+{
+    None   = 0,
+    Uint32 = 1,
+};
+
+inline const char* ToString(EBufferSRVFormat BufferSRVFormat)
+{
+    switch (BufferSRVFormat)
+    {
+        case EBufferSRVFormat::Uint32: return "Uint32";
+        default:                       return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EBufferUAVFormat
+
+enum class EBufferUAVFormat : uint32
+{
+    None   = 0,
+    Uint32 = 1,
+};
+
+inline const char* ToString(EBufferUAVFormat BufferSRVFormat)
+{
+    switch (BufferSRVFormat)
+    {
+        case EBufferUAVFormat::Uint32: return "Uint32";
+        default:                       return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHITextureSRVInitializer
 
 class CRHITextureSRVInitializer
@@ -287,17 +323,23 @@ public:
         : Buffer(nullptr)
         , FirstElement(0)
         , NumElements(0)
+        , Format(EBufferSRVFormat::None)
     { }
 
-    CRHIBufferSRVInitializer(CRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements)
+    CRHIBufferSRVInitializer( CRHIBuffer* InBuffer
+                            , uint32 InFirstElement
+                            , uint32 InNumElements
+                            , EBufferSRVFormat InFormat = EBufferSRVFormat::None)
         : Buffer(InBuffer)
         , FirstElement(InFirstElement)
         , NumElements(InNumElements)
+        , Format(InFormat)
     { }
 
     uint64 GetHash() const
     {
         uint64 Hash = ToInteger(Buffer);
+        HashCombine(Hash, ToUnderlying(Format));
         HashCombine(Hash, FirstElement);
         HashCombine(Hash, NumElements);
         return Hash;
@@ -305,7 +347,10 @@ public:
 
     bool operator==(const CRHIBufferSRVInitializer& RHS) const
     {
-        return (Buffer == RHS.Buffer) && (FirstElement == RHS.FirstElement) && (NumElements == RHS.NumElements);
+        return (Buffer       == RHS.Buffer) 
+            && (Format       == RHS.Format)
+            && (FirstElement == RHS.FirstElement) 
+            && (NumElements  == RHS.NumElements);
     }
 
     bool operator!=(const CRHIBufferSRVInitializer& RHS) const
@@ -313,10 +358,12 @@ public:
         return !(*this == RHS);
     }
 
-    CRHIBuffer* Buffer;
+    CRHIBuffer*      Buffer;
 
-    uint32      FirstElement;
-    uint32      NumElements;
+    EBufferSRVFormat Format;
+
+    uint32           FirstElement;
+    uint32           NumElements;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -391,17 +438,23 @@ public:
         : Buffer(nullptr)
         , FirstElement(0)
         , NumElements(0)
+        , Format(EBufferUAVFormat::None)
     { }
 
-    CRHIBufferUAVInitializer(CRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements)
+    CRHIBufferUAVInitializer( CRHIBuffer* InBuffer
+                            , uint32 InFirstElement
+                            , uint32 InNumElements
+                            , EBufferUAVFormat InFormat = EBufferUAVFormat::None)
         : Buffer(InBuffer)
         , FirstElement(InFirstElement)
         , NumElements(InNumElements)
+        , Format(InFormat)
     { }
 
     uint64 GetHash() const
     {
         uint64 Hash = ToInteger(Buffer);
+        HashCombine(Hash, ToUnderlying(Format));
         HashCombine(Hash, FirstElement);
         HashCombine(Hash, NumElements);
         return Hash;
@@ -409,7 +462,10 @@ public:
 
     bool operator==(const CRHIBufferUAVInitializer& RHS) const
     {
-        return (Buffer == RHS.Buffer) && (FirstElement == RHS.FirstElement) && (NumElements == RHS.NumElements);
+        return (Buffer       == RHS.Buffer) 
+            && (Format       == RHS.Format)
+            && (FirstElement == RHS.FirstElement) 
+            && (NumElements  == RHS.NumElements);
     }
 
     bool operator!=(const CRHIBufferUAVInitializer& RHS) const
@@ -417,10 +473,12 @@ public:
         return !(*this == RHS);
     }
 
-    CRHIBuffer* Buffer;
+    CRHIBuffer*      Buffer;
 
-    uint32      FirstElement;
-    uint32      NumElements;
+    EBufferUAVFormat Format;
+
+    uint32           FirstElement;
+    uint32           NumElements;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

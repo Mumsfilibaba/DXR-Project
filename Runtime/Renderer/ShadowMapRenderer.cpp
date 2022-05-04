@@ -67,12 +67,12 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        CRHIDepthStencilStateInitializer DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
-        DepthStencilStateInfo.bDepthEnable   = true;
-        DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
+        CRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
+        DepthStencilStateInitializer.bDepthEnable   = true;
+        DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)
         {
             CDebug::DebugBreak();
@@ -98,22 +98,22 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        CRHIGraphicsPipelineStateInitializer PipelineStateInfo;
-        PipelineStateInfo.BlendState                         = BlendState.Get();
-        PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
-        PipelineStateInfo.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
-        PipelineStateInfo.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
-        PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
-        PipelineStateInfo.SampleCount                        = 1;
-        PipelineStateInfo.SampleQuality                      = 0;
-        PipelineStateInfo.SampleMask                         = 0xffffffff;
-        PipelineStateInfo.ShaderState.VertexShader           = PointLightVertexShader.Get();
-        PipelineStateInfo.ShaderState.PixelShader            = PointLightPixelShader.Get();
-        PipelineStateInfo.PipelineFormats.NumRenderTargets   = 0;
-        PipelineStateInfo.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
+        CRHIGraphicsPipelineStateInitializer PipelineStateInitializer;
+        PipelineStateInitializer.BlendState                         = BlendState.Get();
+        PipelineStateInitializer.DepthStencilState                  = DepthStencilState.Get();
+        PipelineStateInitializer.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
+        PipelineStateInitializer.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
+        PipelineStateInitializer.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
+        PipelineStateInitializer.RasterizerState                    = RasterizerState.Get();
+        PipelineStateInitializer.SampleCount                        = 1;
+        PipelineStateInitializer.SampleQuality                      = 0;
+        PipelineStateInitializer.SampleMask                         = 0xffffffff;
+        PipelineStateInitializer.ShaderState.VertexShader           = PointLightVertexShader.Get();
+        PipelineStateInitializer.ShaderState.PixelShader            = PointLightPixelShader.Get();
+        PipelineStateInitializer.PipelineFormats.NumRenderTargets   = 0;
+        PipelineStateInitializer.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
 
-        PointLightPipelineState = RHICreateGraphicsPipelineState(PipelineStateInfo);
+        PointLightPipelineState = RHICreateGraphicsPipelineState(PipelineStateInitializer);
         if (!PointLightPipelineState)
         {
             CDebug::DebugBreak();
@@ -153,12 +153,12 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        CRHIDepthStencilStateInitializer DepthStencilStateInfo;
-        DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
-        DepthStencilStateInfo.bDepthEnable   = true;
-        DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
+        CRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
+        DepthStencilStateInitializer.bDepthEnable   = true;
+        DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
 
-        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+        TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)
         {
             CDebug::DebugBreak();
@@ -183,22 +183,22 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        CRHIGraphicsPipelineStateInitializer PipelineStateInfo;
-        PipelineStateInfo.BlendState                         = BlendState.Get();
-        PipelineStateInfo.DepthStencilState                  = DepthStencilState.Get();
-        PipelineStateInfo.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
-        PipelineStateInfo.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
-        PipelineStateInfo.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
-        PipelineStateInfo.RasterizerState                    = RasterizerState.Get();
-        PipelineStateInfo.SampleCount                        = 1;
-        PipelineStateInfo.SampleQuality                      = 0;
-        PipelineStateInfo.SampleMask                         = 0xffffffff;
-        PipelineStateInfo.ShaderState.VertexShader           = DirectionalLightShader.Get();
-        PipelineStateInfo.ShaderState.PixelShader            = nullptr;
-        PipelineStateInfo.PipelineFormats.NumRenderTargets   = 0;
-        PipelineStateInfo.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
+        CRHIGraphicsPipelineStateInitializer PipelineStateInitializer;
+        PipelineStateInitializer.BlendState                         = BlendState.Get();
+        PipelineStateInitializer.DepthStencilState                  = DepthStencilState.Get();
+        PipelineStateInitializer.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
+        PipelineStateInitializer.VertexInputLayout                  = FrameResources.StdInputLayout.Get();
+        PipelineStateInitializer.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
+        PipelineStateInitializer.RasterizerState                    = RasterizerState.Get();
+        PipelineStateInitializer.SampleCount                        = 1;
+        PipelineStateInitializer.SampleQuality                      = 0;
+        PipelineStateInitializer.SampleMask                         = 0xffffffff;
+        PipelineStateInitializer.ShaderState.VertexShader           = DirectionalLightShader.Get();
+        PipelineStateInitializer.ShaderState.PixelShader            = nullptr;
+        PipelineStateInitializer.PipelineFormats.NumRenderTargets   = 0;
+        PipelineStateInitializer.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
 
-        DirectionalLightPSO = RHICreateGraphicsPipelineState(PipelineStateInfo);
+        DirectionalLightPSO = RHICreateGraphicsPipelineState(PipelineStateInitializer);
         if (!DirectionalLightPSO)
         {
             CDebug::DebugBreak();
