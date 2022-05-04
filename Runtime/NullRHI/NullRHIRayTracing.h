@@ -42,7 +42,7 @@ class CNullRHIRayTracingScene : public CRHIRayTracingScene
 public:
     CNullRHIRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
         : CRHIRayTracingScene(Initializer)
-        , View(dbg_new CNullRHIShaderResourceView())
+        , View(dbg_new CNullRHIShaderResourceView(this))
     { }
 
     ~CNullRHIRayTracingScene() = default;

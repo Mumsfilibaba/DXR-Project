@@ -1,7 +1,6 @@
 #pragma once 
 #include "WindowsWindow.h"
 #include "WindowsCursor.h"
-#include "IWindowsMessageListener.h"
 
 #include "Core/Input/InputCodes.h"
 #include "Core/Containers/Array.h"

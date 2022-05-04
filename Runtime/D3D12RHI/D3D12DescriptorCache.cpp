@@ -78,7 +78,7 @@ bool CD3D12DescriptorCache::Init()
     SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     SRVDesc.Texture2D.PlaneSlice          = 0;
 
-    NullSRV = dbg_new CD3D12ShaderResourceView(GetDevice(), GD3D12Instance->GetResourceOfflineDescriptorHeap());
+    NullSRV = dbg_new CD3D12ShaderResourceView(GetDevice(), GD3D12Instance->GetResourceOfflineDescriptorHeap(), nullptr);
     if (!NullSRV->AllocateHandle())
     {
         return false;
@@ -240,14 +240,13 @@ void CD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommand
     }
 
     SamplerStateCache.PrepareForCopy();
-
-    D3D12_ERROR( NumResourceDescriptors <= D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
-               , "[D3D12]: Trying to bind more Resource Descriptors (NumDescriptors=" + ToString(NumResourceDescriptors) + ") than the maximum (MaxResourceDescriptors=" + ToString(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT) + ") ");
+    
     uint32 ResourceDescriptorHandle = ResourceHeap->AllocateHandles(NumResourceDescriptors);
-
-    D3D12_ERROR( NumSamplerDescriptors <= D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT
-               , "[D3D12]: Trying to bind more Sampler Descriptors (NumDescriptors=" + ToString(NumSamplerDescriptors) + ") than the maximum (MaxSamplerDescriptors=" + ToString(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT) + ") ");
-    uint32 SamplerDescriptorHandle = SamplerHeap->AllocateHandles(NumSamplerDescriptors);
+    uint32 SamplerDescriptorHandle  = SamplerHeap->AllocateHandles(NumSamplerDescriptors);
+    D3D12_ERROR_COND(NumResourceDescriptors <= D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
+                    ,"Trying to bind more Resource Descriptors (NumDescriptors=" + ToString(NumResourceDescriptors) + ") than the maximum (MaxResourceDescriptors=" + ToString(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT) + ") ");
+    D3D12_ERROR_COND(NumSamplerDescriptors <= D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT
+                    ,"Trying to bind more Sampler Descriptors (NumDescriptors=" + ToString(NumSamplerDescriptors) + ") than the maximum (MaxSamplerDescriptors=" + ToString(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT) + ") ");
 
     ID3D12DescriptorHeap* DescriptorHeaps[] =
     {

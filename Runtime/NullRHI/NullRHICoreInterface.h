@@ -104,9 +104,14 @@ public:
         return dbg_new CNullRHIRayTracingGeometry(Initializer);
     }
 
-    virtual CRHIShaderResourceView* CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo) override final
+    virtual CRHIShaderResourceView* RHICreateShaderResourceView(const CRHITextureSRVInitializer& Initializer) override final
     {
-        return dbg_new CNullRHIShaderResourceView();
+        return dbg_new CNullRHIShaderResourceView(Initializer.Texture);
+    }
+
+    virtual CRHIShaderResourceView* RHICreateShaderResourceView(const CRHIBufferSRVInitializer& Initializer) override final
+    {
+        return dbg_new CNullRHIShaderResourceView(Initializer.Buffer);
     }
 
     virtual CRHIUnorderedAccessView* CreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo) override final

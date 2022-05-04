@@ -54,22 +54,6 @@ public:
 
 public:
 
-    void SetRenderTargetView(CD3D12RenderTargetView* InRenderTargetView) { RenderTargetView = InRenderTargetView; }
-
-    void SetDepthStencilView(CD3D12DepthStencilView* InDepthStencilView) { DepthStencilView = InDepthStencilView; }
-
-    void SetUnorderedAccessView(CD3D12UnorderedAccessView* InUnorderedAccessView) { UnorderedAccessView = InUnorderedAccessView; }
-
-    CD3D12RenderTargetView* GetD3D12RenderTargetView() const { return RenderTargetView.Get(); }
-
-    void SetSize(uint16 InWidth, uint16 InHeight)
-    {
-        Width  = InWidth;
-        Height = InHeight;
-    }
-
-public:
-
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture2D Interface
 
@@ -94,6 +78,22 @@ public:
         {
             D3D12Resource->SetName(InName);
         }
+    }
+
+public:
+
+    void SetRenderTargetView(CD3D12RenderTargetView* InRenderTargetView) { RenderTargetView = InRenderTargetView; }
+
+    void SetDepthStencilView(CD3D12DepthStencilView* InDepthStencilView) { DepthStencilView = InDepthStencilView; }
+
+    void SetUnorderedAccessView(CD3D12UnorderedAccessView* InUnorderedAccessView) { UnorderedAccessView = InUnorderedAccessView; }
+
+    CD3D12RenderTargetView* GetD3D12RenderTargetView() const { return RenderTargetView.Get(); }
+
+    void SetSize(uint16 InWidth, uint16 InHeight)
+    {
+        Width  = InWidth;
+        Height = InHeight;
     }
 
 private:

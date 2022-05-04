@@ -14,97 +14,6 @@ typedef TSharedRef<class CRHIRenderTargetView>    RHIRenderTargetViewRef;
 typedef TSharedRef<class CRHIDepthStencilView>    RHIDepthStencilViewRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIShaderResourceViewInfo
-
-struct SRHIShaderResourceViewInfo
-{
-    enum class EType
-    {
-        Texture2D        = 1,
-        Texture2DArray   = 2,
-        TextureCube      = 3,
-        TextureCubeArray = 4,
-        Texture3D        = 5,
-        VertexBuffer     = 6,
-        IndexBuffer      = 7,
-        GenericBuffer    = 8,
-    };
-
-    FORCEINLINE SRHIShaderResourceViewInfo(EType InType)
-        : Type(InType)
-    { }
-
-    EType Type;
-    union
-    {
-        struct
-        {
-            CRHITexture2D* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
-            uint32  Mip = 0;
-            uint32  NumMips = 0;
-            float   MinMipBias = 0.0f;
-        } Texture2D;
-        struct
-        {
-            CRHITexture2DArray* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
-            uint32  Mip = 0;
-            uint32  NumMips = 0;
-            uint32  ArraySlice = 0;
-            uint32  NumArraySlices = 0;
-            float   MinMipBias = 0.0f;
-        } Texture2DArray;
-        struct
-        {
-            CRHITextureCube* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
-            uint32  Mip = 0;
-            uint32  NumMips = 0;
-            float   MinMipBias = 0.0f;
-        } TextureCube;
-        struct
-        {
-            CRHITextureCubeArray* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
-            uint32  Mip = 0;
-            uint32  NumMips = 0;
-            uint32  ArraySlice = 0;
-            uint32  NumArraySlices = 0;
-            float   MinMipBias = 0.0f;
-        } TextureCubeArray;
-        struct
-        {
-            CRHITexture3D* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
-            uint32  Mip = 0;
-            uint32  NumMips = 0;
-            uint32  DepthSlice = 0;
-            uint32  NumDepthSlices = 0;
-            float   MinMipBias = 0.0f;
-        } Texture3D;
-        struct
-        {
-            CRHIVertexBuffer* Buffer = nullptr;
-            uint32 FirstVertex = 0;
-            uint32 NumVertices = 0;
-        } VertexBuffer;
-        struct
-        {
-            CRHIIndexBuffer* Buffer = nullptr;
-            uint32 FirstIndex = 0;
-            uint32 NumIndices = 0;
-        } IndexBuffer;
-        struct
-        {
-            CRHIGenericBuffer* Buffer = nullptr;
-            uint32 FirstElement = 0;
-            uint32 NumElements = 0;
-        } StructuredBuffer;
-    };
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // SRHIUnorderedAccessViewInfo
 
 struct SRHIUnorderedAccessViewInfo
@@ -302,6 +211,7 @@ public:
 
     CRHITextureSRVInitializer()
         : Texture(nullptr)
+        , MinLODClamp(0.0f)
         , Format(EFormat::Unknown)
         , FirstMipLevel(0)
         , NumMips(0)
@@ -310,12 +220,14 @@ public:
     { }
 
     CRHITextureSRVInitializer( CRHITexture* InTexture
+                             , float InMinLODClamp
                              , EFormat InFormat
                              , uint8 InFirstMipLevel
                              , uint8 InNumMips
                              , uint16 InFirstArraySlice
                              , uint16 InNumSlices)
         : Texture(InTexture)
+        , MinLODClamp(InMinLODClamp)
         , Format(InFormat)
         , FirstMipLevel(InFirstMipLevel)
         , NumMips(InNumMips)
@@ -326,6 +238,7 @@ public:
     uint64 GetHash() const
     {
         uint64 Hash = ToInteger(Texture);
+        HashCombine(Hash, MinLODClamp);
         HashCombine(Hash, ToUnderlying(Format));
         HashCombine(Hash, FirstMipLevel);
         HashCombine(Hash, NumMips);
@@ -337,6 +250,7 @@ public:
     bool operator==(const CRHITextureSRVInitializer& RHS) const
     {
         return (Texture         == RHS.Texture)
+            && (MinLODClamp     == RHS.MinLODClamp)
             && (Format          == RHS.Format)
             && (FirstMipLevel   == RHS.FirstMipLevel)
             && (NumMips         == RHS.NumMips)
@@ -350,6 +264,8 @@ public:
     }
 
     CRHITexture* Texture;
+
+    float        MinLODClamp;
 
     EFormat      Format;
 
@@ -508,128 +424,6 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITextureRTVInitializer
-
-class CRHITextureRTVInitializer
-{
-public:
-
-    CRHITextureRTVInitializer()
-        : Texture(nullptr)
-        , Format(EFormat::Unknown)
-        , MipLevel(0)
-        , FirstArraySlice(0)
-        , NumSlices(0)
-    { }
-
-    CRHITextureRTVInitializer( CRHITexture* InTexture
-                             , EFormat InFormat
-                             , uint32 InMipLevel
-                             , uint32 InFirstArraySlice
-                             , uint32 InNumSlices)
-        : Texture(InTexture)
-        , Format(InFormat)
-        , MipLevel(uint8(InMipLevel))
-        , FirstArraySlice(uint16(InFirstArraySlice))
-        , NumSlices(uint16(InNumSlices))
-    { }
-
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToInteger(Texture);
-        HashCombine(Hash, ToUnderlying(Format));
-        HashCombine(Hash, MipLevel);
-        HashCombine(Hash, FirstArraySlice);
-        HashCombine(Hash, NumSlices);
-        return Hash;
-    }
-
-    bool operator==(const CRHITextureRTVInitializer& RHS) const
-    {
-        return (Texture         == RHS.Texture)
-            && (Format          == RHS.Format)
-            && (MipLevel        == RHS.MipLevel)
-            && (FirstArraySlice == RHS.FirstArraySlice)
-            && (NumSlices       == RHS.NumSlices);
-    }
-
-    bool operator!=(const CRHITextureRTVInitializer& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    CRHITexture* Texture;
-
-    EFormat      Format;
-
-    uint8        MipLevel;
-
-    uint16       FirstArraySlice;
-    uint16       NumSlices;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHITextureDSVInitializer
-
-class CRHITextureDSVInitializer
-{
-public:
-
-    CRHITextureDSVInitializer()
-        : Texture(nullptr)
-        , Format(EFormat::Unknown)
-        , MipLevel(0)
-        , FirstArraySlice(0)
-        , NumSlices(0)
-    { }
-
-    CRHITextureDSVInitializer( CRHITexture* InTexture
-                             , EFormat InFormat
-                             , uint32 InMipLevel
-                             , uint32 InFirstArraySlice
-                             , uint32 InNumSlices)
-        : Texture(InTexture)
-        , Format(InFormat)
-        , MipLevel(uint8(InMipLevel))
-        , FirstArraySlice(uint16(InFirstArraySlice))
-        , NumSlices(uint16(InNumSlices))
-    { }
-
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToInteger(Texture);
-        HashCombine(Hash, ToUnderlying(Format));
-        HashCombine(Hash, MipLevel);
-        HashCombine(Hash, FirstArraySlice);
-        HashCombine(Hash, NumSlices);
-        return Hash;
-    }
-
-    bool operator==(const CRHITextureDSVInitializer& RHS) const
-    {
-        return (Texture         == RHS.Texture)
-            && (Format          == RHS.Format)
-            && (MipLevel        == RHS.MipLevel)
-            && (FirstArraySlice == RHS.FirstArraySlice)
-            && (NumSlices       == RHS.NumSlices);
-    }
-
-    bool operator!=(const CRHITextureDSVInitializer& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    CRHITexture* Texture;
-
-    EFormat      Format;
-
-    uint8        MipLevel;
-
-    uint16       FirstArraySlice;
-    uint16       NumSlices;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIResourceView
 
 class CRHIResourceView : public CRHIResource
@@ -645,7 +439,6 @@ protected:
 
 public:
 
-    /** @return: Returns the resource the View represents */
     CRHIResource* GetResource() const { return Resource; }
 
 protected:
@@ -659,15 +452,14 @@ class CRHIShaderResourceView : public CRHIResourceView
 {
 protected:
 
-    explicit CRHIShaderResourceView()
-        : CRHIResourceView(nullptr)
+    explicit CRHIShaderResourceView(CRHIResource* InResource)
+        : CRHIResourceView(InResource)
     { }
 
     ~CRHIShaderResourceView() = default;
 
 public:
 
-    /** @return: Returns the Bindless handle if the RHI-backend supports it */
     virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 };
 
@@ -686,7 +478,6 @@ protected:
 
 public:
 
-    /** @return: Returns the Bindless handle if the RHI-backend supports it */
     virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
 };
 

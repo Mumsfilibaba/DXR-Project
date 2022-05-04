@@ -401,7 +401,6 @@ public:
 
 public:
 
-    /** @return: Returns the number of vertices in the VertexBuffer */
     uint32 GetNumVertices() const { return NumVertices; }
 
 private:

@@ -12,29 +12,41 @@
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Error
+// D3D12 Log Macros
 
 #if !PRODUCTION_BUILD
-#define D3D12_ERROR(Condition, ErrorMessage) \
-    do                                       \
-    {                                        \
-        if (!(Condition))                    \
-        {                                    \
-            LOG_ERROR(ErrorMessage);         \
-            CDebug::DebugBreak();            \
-        }                                    \
-    } while (0)
-
-#define D3D12_ERROR_ALWAYS(ErrorMessage) \
-    do                                   \
-    {                                    \
-        LOG_ERROR(ErrorMessage);         \
-        CDebug::DebugBreak();            \
-    } while (0)
-
+    #define D3D12_ERROR(ErrorMessage)                                \
+        do                                                           \
+        {                                                            \
+            LOG_ERROR(String("[D3D12RHI] ") + String(ErrorMessage)); \
+            CDebug::DebugBreak();                                    \
+        } while (false)
+    
+    #define D3D12_ERROR_COND(bCondition, ErrorMessage)               \
+        do                                                           \
+        {                                                            \
+            if (!(bCondition))                                       \
+            {                                                        \
+                D3D12_ERROR(ErrorMessage);                           \
+            }                                                        \
+        } while (false)
+    
+    #define D3D12_WARNING(Message)                                   \
+        do                                                           \
+        {                                                            \
+            LOG_WARNING(String("[D3D12RHI] ") + String(Message));    \
+        } while (false)
+    
+    #define D3D12_INFO(Message)                                      \
+        do                                                           \
+        {                                                            \
+            LOG_INFO(String("[D3D12RHI] ") + String(Message));       \
+        } while (false)
 #else
-#define D3D12_ERROR(Condtion, ErrorString) do { } while(0)
-#define D3D12_ERROR_ALWAYS(ErrorString)    do { } while(0)
+    #define D3D12_ERROR(ErrorMessage)                  do { (void)(ErrorMessage); }                     while(false)
+    #define D3D12_ERROR_COND(bCondition, ErrorMessage) do { (void)(bCondition); (void)(ErrorMessage); } while(false)
+    #define D3D12_WARNING(Message)                     do { (void)(Message); }                          while(false)
+    #define D3D12_INFO(Message)                        do { (void)(Message); }                          while(false)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -124,6 +136,7 @@ constexpr uint32 GetBufferAlignedSize<class CD3D12IndexBuffer>(uint32 Size)
 {
     return NMath::AlignUp<uint32>(Size, sizeof(uint32));
 }
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Heap helpers
 

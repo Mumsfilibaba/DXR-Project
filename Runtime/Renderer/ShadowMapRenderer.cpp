@@ -268,7 +268,8 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             LightSetup.CascadeMatrixBuffer->SetName("Cascade MatrixBuffer");
         }
 
-        LightSetup.CascadeMatrixBufferSRV = RHICreateShaderResourceView(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        CRHIBufferSRVInitializer SRVInitializer(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        LightSetup.CascadeMatrixBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!LightSetup.CascadeMatrixBufferSRV)
         {
             CDebug::DebugBreak();
@@ -295,7 +296,8 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             LightSetup.CascadeSplitsBuffer->SetName("Cascade SplitBuffer");
         }
 
-        LightSetup.CascadeSplitsBufferSRV = RHICreateShaderResourceView(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        SRVInitializer = CRHIBufferSRVInitializer(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        LightSetup.CascadeSplitsBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!LightSetup.CascadeSplitsBufferSRV)
         {
             CDebug::DebugBreak();

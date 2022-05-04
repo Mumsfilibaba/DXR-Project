@@ -58,8 +58,8 @@ bool CD3D12Viewport::Init()
         Height = uint16(ClientRect.bottom - ClientRect.top);
     }
 
-    D3D12_ERROR(Width  != 0, "Viewport-width of zero is not supported");
-    D3D12_ERROR(Height != 0, "Viewport-height of zero is not supported");
+    D3D12_ERROR_COND(Width  != 0, "Viewport-width of zero is not supported");
+    D3D12_ERROR_COND(Height != 0, "Viewport-height of zero is not supported");
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
     CMemory::Memzero(&SwapChainDesc);
@@ -92,7 +92,7 @@ bool CD3D12Viewport::Init()
         Result = TempSwapChain.GetAs<IDXGISwapChain3>(&SwapChain);
         if (FAILED(Result))
         {
-            LOG_ERROR("[CD3D12Viewport]: FAILED to retrieve IDXGISwapChain3");
+            D3D12_ERROR("[CD3D12Viewport]: FAILED to retrieve IDXGISwapChain3");
             return false;
         }
 
@@ -107,7 +107,7 @@ bool CD3D12Viewport::Init()
     }
     else
     {
-        LOG_ERROR("[CD3D12Viewport]: FAILED to create SwapChain");
+        D3D12_ERROR("[CD3D12Viewport]: FAILED to create SwapChain");
         return false;
     }
 
@@ -118,7 +118,7 @@ bool CD3D12Viewport::Init()
         return false;
     }
 
-    LOG_INFO("[CD3D12Viewport]: Created SwapChain");
+    D3D12_INFO("[CD3D12Viewport]: Created SwapChain");
     return true;
 }
 
@@ -141,7 +141,7 @@ bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
         }
         else
         {
-            LOG_WARNING("[CD3D12Viewport]: Resize FAILED");
+            D3D12_WARNING("[CD3D12Viewport]: Resize FAILED");
             return false;
         }
 
@@ -222,7 +222,7 @@ bool CD3D12Viewport::RetriveBackBuffers()
         HRESULT Result = SwapChain->GetBuffer(i, IID_PPV_ARGS(&BackBufferResource));
         if (FAILED(Result))
         {
-            LOG_INFO("[CD3D12Viewport]: GetBuffer(" + ToString(i) + ") Failed");
+            D3D12_INFO("[CD3D12Viewport]: GetBuffer(" + ToString(i) + ") Failed");
             return false;
         }
 

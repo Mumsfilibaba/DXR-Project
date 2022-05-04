@@ -101,7 +101,7 @@ public:
     template<typename BaseTextureInitializer>
     TNullRHITexture(const BaseTextureInitializer& Initializer)
         : BaseTextureType(Initializer)
-        , ShaderResourceView(dbg_new CNullRHIShaderResourceView())
+        , ShaderResourceView(dbg_new CNullRHIShaderResourceView(this))
     { }
 
 public:

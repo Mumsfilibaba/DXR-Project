@@ -250,12 +250,20 @@ public:
     virtual CRHIRayTracingGeometry* RHICreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer) = 0;
 
     /**
-     * @brief: Create a new ShaderResourceView
+     * @brief: Create a new ShaderResourceView for a Texture
      * 
-     * @param CreateInfo: Info about the ShaderResourceView
+     * @param Initializer: Struct containing information about the ShaderResourceView
      * @return: Returns the newly created ShaderResourceView
      */
-    virtual CRHIShaderResourceView* CreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo) = 0;
+    virtual CRHIShaderResourceView* RHICreateShaderResourceView(const CRHITextureSRVInitializer& Initializer) = 0;
+
+    /**
+     * @brief: Create a new ShaderResourceView for a Buffer
+     *
+     * @param Initializer: Struct containing information about the ShaderResourceView
+     * @return: Returns the newly created ShaderResourceView
+     */
+    virtual CRHIShaderResourceView* RHICreateShaderResourceView(const CRHIBufferSRVInitializer& Initializer) = 0;
     
     /**
      * @brief: Create a new UnorderedAccessView
@@ -558,97 +566,14 @@ FORCEINLINE CRHIRayTracingGeometry* RHICreateRayTracingGeometry(const CRHIRayTra
     return GRHIInstance->RHICreateRayTracingGeometry(Initializer);
 }
 
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(const SRHIShaderResourceViewInfo& CreateInfo)
+FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(const CRHITextureSRVInitializer& Initializer)
 {
-    return GRHIInstance->CreateShaderResourceView(CreateInfo);
+    return GRHIInstance->RHICreateShaderResourceView(Initializer);
 }
 
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITexture2D* Texture, EFormat Format, uint32 Mip, uint32 NumMips, float MinMipBias)
+FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(const CRHIBufferSRVInitializer& Initializer)
 {
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::Texture2D);
-    CreateInfo.Texture2D.Texture = Texture;
-    CreateInfo.Texture2D.Format = Format;
-    CreateInfo.Texture2D.Mip = Mip;
-    CreateInfo.Texture2D.NumMips = NumMips;
-    CreateInfo.Texture2D.MinMipBias = MinMipBias;
-    return RHICreateShaderResourceView(CreateInfo);
-}
-
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITexture2DArray* Texture, EFormat Format, uint32 Mip, uint32 NumMips, uint32 ArraySlice, uint32 NumArraySlices, float MinMipBias)
-{
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::Texture2DArray);
-    CreateInfo.Texture2DArray.Texture = Texture;
-    CreateInfo.Texture2DArray.Format = Format;
-    CreateInfo.Texture2DArray.Mip = Mip;
-    CreateInfo.Texture2DArray.NumMips = NumMips;
-    CreateInfo.Texture2DArray.ArraySlice = ArraySlice;
-    CreateInfo.Texture2DArray.NumArraySlices = NumArraySlices;
-    CreateInfo.Texture2DArray.MinMipBias = MinMipBias;
-    return RHICreateShaderResourceView(CreateInfo);
-}
-
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITextureCube* Texture, EFormat Format, uint32 Mip, uint32 NumMips, float MinMipBias)
-{
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::TextureCube);
-    CreateInfo.TextureCube.Texture = Texture;
-    CreateInfo.TextureCube.Format = Format;
-    CreateInfo.TextureCube.Mip = Mip;
-    CreateInfo.TextureCube.NumMips = NumMips;
-    CreateInfo.TextureCube.MinMipBias = MinMipBias;
-    return RHICreateShaderResourceView(CreateInfo);
-}
-
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITextureCubeArray* Texture, EFormat Format, uint32 Mip, uint32 NumMips, uint32 ArraySlice, uint32 NumArraySlices, float MinMipBias)
-{
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::TextureCubeArray);
-    CreateInfo.TextureCubeArray.Texture = Texture;
-    CreateInfo.TextureCubeArray.Format = Format;
-    CreateInfo.TextureCubeArray.Mip = Mip;
-    CreateInfo.TextureCubeArray.NumMips = NumMips;
-    CreateInfo.TextureCubeArray.ArraySlice = ArraySlice;
-    CreateInfo.TextureCubeArray.NumArraySlices = NumArraySlices;
-    CreateInfo.TextureCubeArray.MinMipBias = MinMipBias;
-    return RHICreateShaderResourceView(CreateInfo);
-}
-
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHITexture3D* Texture, EFormat Format, uint32 Mip, uint32 NumMips, uint32 DepthSlice, uint32 NumDepthSlices, float MinMipBias)
-{
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::Texture3D);
-    CreateInfo.Texture3D.Texture = Texture;
-    CreateInfo.Texture3D.Format = Format;
-    CreateInfo.Texture3D.Mip = Mip;
-    CreateInfo.Texture3D.NumMips = NumMips;
-    CreateInfo.Texture3D.DepthSlice = DepthSlice;
-    CreateInfo.Texture3D.NumDepthSlices = NumDepthSlices;
-    CreateInfo.Texture3D.MinMipBias = MinMipBias;
-    return RHICreateShaderResourceView(CreateInfo);
-}
-
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHIVertexBuffer* Buffer, uint32 FirstVertex, uint32 NumVertices)
-{
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::VertexBuffer);
-    CreateInfo.VertexBuffer.Buffer = Buffer;
-    CreateInfo.VertexBuffer.FirstVertex = FirstVertex;
-    CreateInfo.VertexBuffer.NumVertices = NumVertices;
-    return RHICreateShaderResourceView(CreateInfo);
-}
-
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHIIndexBuffer* Buffer, uint32 FirstIndex, uint32 NumIndices)
-{
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::IndexBuffer);
-    CreateInfo.IndexBuffer.Buffer = Buffer;
-    CreateInfo.IndexBuffer.FirstIndex = FirstIndex;
-    CreateInfo.IndexBuffer.NumIndices = NumIndices;
-    return RHICreateShaderResourceView(CreateInfo);
-}
-
-FORCEINLINE CRHIShaderResourceView* RHICreateShaderResourceView(CRHIGenericBuffer* Buffer, uint32 FirstElement, uint32 NumElements)
-{
-    SRHIShaderResourceViewInfo CreateInfo(SRHIShaderResourceViewInfo::EType::GenericBuffer);
-    CreateInfo.StructuredBuffer.Buffer = Buffer;
-    CreateInfo.StructuredBuffer.FirstElement = FirstElement;
-    CreateInfo.StructuredBuffer.NumElements = NumElements;
-    return RHICreateShaderResourceView(CreateInfo);
+    return GRHIInstance->RHICreateShaderResourceView(Initializer);
 }
 
 FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo)

@@ -57,7 +57,7 @@ class CD3D12ShaderResourceView : public CRHIShaderResourceView, public CD3D12Vie
 {
 public:
 
-    CD3D12ShaderResourceView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    CD3D12ShaderResourceView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource);
     ~CD3D12ShaderResourceView() = default;
 
     bool CreateView(CD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);

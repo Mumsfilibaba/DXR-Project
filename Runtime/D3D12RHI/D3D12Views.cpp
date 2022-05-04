@@ -3,7 +3,7 @@
 #include "D3D12Views.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12View
+// CD3D12View
 
 CD3D12View::CD3D12View(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
     : CD3D12DeviceChild(InDevice)
@@ -16,7 +16,6 @@ CD3D12View::CD3D12View(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHe
 
 CD3D12View::~CD3D12View()
 {
-    // NOTE: Does not follow the rest of the engine's explicit alloc/dealloc, Ok for now
     InvalidateAndFreeHandle();
 }
 
@@ -34,13 +33,12 @@ void CD3D12View::InvalidateAndFreeHandle()
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIConstantBufferView
+// CD3D12ConstantBufferView
 
 CD3D12ConstantBufferView::CD3D12ConstantBufferView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
     : CD3D12View(InDevice, InHeap)
     , Desc()
-{
-}
+{ }
 
 bool CD3D12ConstantBufferView::CreateView(CD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
@@ -54,13 +52,13 @@ bool CD3D12ConstantBufferView::CreateView(CD3D12Resource* InResource, const D3D1
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseShaderResourceView
+// CD3D12ShaderResourceView
 
-CD3D12ShaderResourceView::CD3D12ShaderResourceView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
-    : CD3D12View(InDevice, InHeap)
+CD3D12ShaderResourceView::CD3D12ShaderResourceView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource)
+    : CRHIShaderResourceView(InResource)
+    , CD3D12View(InDevice, InHeap)
     , Desc()
-{
-}
+{ }
 
 bool CD3D12ShaderResourceView::CreateView(CD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
@@ -75,19 +73,18 @@ bool CD3D12ShaderResourceView::CreateView(CD3D12Resource* InResource, const D3D1
         NativeResource = CD3D12View::Resource->GetResource();
     }
 
-    GetDevice()->CreateShaderResourceView(NativeResource, &Desc, OfflineHandle);
+    GetDevice()->RHICreateShaderResourceView(NativeResource, &Desc, OfflineHandle);
     return true;
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseUnorderedAccessView
+// CD3D12UnorderedAccessView
 
 CD3D12UnorderedAccessView::CD3D12UnorderedAccessView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
     : CD3D12View(InDevice, InHeap)
     , Desc()
     , CounterResource(nullptr)
-{
-}
+{ }
 
 bool CD3D12UnorderedAccessView::CreateView(CD3D12Resource* InCounterResource, CD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
@@ -114,13 +111,12 @@ bool CD3D12UnorderedAccessView::CreateView(CD3D12Resource* InCounterResource, CD
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseRenderTargetView
+// CD3D12RenderTargetView
 
 CD3D12RenderTargetView::CD3D12RenderTargetView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
     : CD3D12View(InDevice, InHeap)
     , Desc()
-{
-}
+{ }
 
 bool CD3D12RenderTargetView::CreateView(CD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
@@ -136,13 +132,12 @@ bool CD3D12RenderTargetView::CreateView(CD3D12Resource* InResource, const D3D12_
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIBaseDepthStencilView
+// CD3D12DepthStencilView
 
 CD3D12DepthStencilView::CD3D12DepthStencilView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
     : CD3D12View(InDevice, InHeap)
     , Desc()
-{
-}
+{ }
 
 bool CD3D12DepthStencilView::CreateView(CD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
