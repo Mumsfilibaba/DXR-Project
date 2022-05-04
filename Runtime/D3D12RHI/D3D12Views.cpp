@@ -73,7 +73,7 @@ bool CD3D12ShaderResourceView::CreateView(CD3D12Resource* InResource, const D3D1
         NativeResource = CD3D12View::Resource->GetResource();
     }
 
-    GetDevice()->RHICreateShaderResourceView(NativeResource, &Desc, OfflineHandle);
+    GetDevice()->CreateShaderResourceView(NativeResource, &Desc, OfflineHandle);
     return true;
 }
 

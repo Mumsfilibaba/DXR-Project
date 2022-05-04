@@ -463,6 +463,8 @@ public:
 
     virtual CRHIGenericBuffer* GetGenericBuffer() override final { return this; }
 
+    virtual bool IsStructured() const override final { return true; }
+
     virtual uint32 GetSize() const override final { return Size; }
 
     virtual uint32 GetStride() const override final { return Stride; }

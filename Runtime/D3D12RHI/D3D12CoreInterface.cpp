@@ -722,10 +722,10 @@ CRHIShaderResourceView* CD3D12CoreInterface::RHICreateShaderResourceView(const C
         return nullptr;
     }
 
-    CD3D12Resource* D3D112Resource = GetD3D12Resource(Initializer.Texture);
-    Assert(D3D112Resource != nullptr);
+    CD3D12Resource* D3D12Resource = GetD3D12Resource(Initializer.Texture);
+    Assert(D3D12Resource != nullptr);
 
-    if (D3D12View->CreateView(D3D112Resource, Desc))
+    if (D3D12View->CreateView(D3D12Resource, Desc))
     {
         return D3D12View.ReleaseOwnership();
     }
@@ -773,10 +773,10 @@ CRHIShaderResourceView* CD3D12CoreInterface::RHICreateShaderResourceView(const C
         return nullptr;
     }
 
-    CD3D12Resource* D3D112Resource = D3D12Buffer->GetD3D12Resource();
-    Assert(D3D112Resource != nullptr);
+    CD3D12Resource* D3D12Resource = D3D12Buffer->GetD3D12Resource();
+    Assert(D3D12Resource != nullptr);
 
-    if (D3D12View->CreateView(D3D112Resource, Desc))
+    if (D3D12View->CreateView(D3D12Resource, Desc))
     {
         return D3D12View.ReleaseOwnership();
     }

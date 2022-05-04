@@ -121,7 +121,7 @@ public:
         Device->CreateDepthStencilView(Resource, Desc, DestDescriptor);
     }
 
-    FORCEINLINE void RHICreateShaderResourceView(ID3D12Resource* Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    FORCEINLINE void CreateShaderResourceView(ID3D12Resource* Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
         Device->CreateShaderResourceView(Resource, Desc, DestDescriptor);
     }

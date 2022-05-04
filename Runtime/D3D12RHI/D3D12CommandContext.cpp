@@ -1082,7 +1082,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     const uint32 StartDescriptorHandleIndex = ResourceHeap->AllocateHandles(UavDescriptorHandleCount + 1);
 
     const D3D12_CPU_DESCRIPTOR_HANDLE SrvHandle_CPU = ResourceHeap->GetCPUDescriptorHandleAt(StartDescriptorHandleIndex);
-    GetDevice()->RHICreateShaderResourceView(D3D12Texture->GetD3D12Resource()->GetResource(), &SrvDesc, SrvHandle_CPU);
+    GetDevice()->CreateShaderResourceView(D3D12Texture->GetD3D12Resource()->GetResource(), &SrvDesc, SrvHandle_CPU);
 
     const uint32 UavStartDescriptorHandleIndex = StartDescriptorHandleIndex + 1;
     for (uint32 i = 0; i < Desc.MipLevels; i++)

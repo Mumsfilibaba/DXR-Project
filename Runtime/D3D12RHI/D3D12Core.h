@@ -47,7 +47,6 @@
         do                                             \
         {                                              \
             (void)(bCondition);                        \
-            (void)(0);                                 \
         } while(false)
 
     #define D3D12_ERROR(ErrorMessage) do { (void)(0); } while(false)
