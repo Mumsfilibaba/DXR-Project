@@ -56,7 +56,7 @@ bool CD3D12DescriptorCache::Init()
     UAVDesc.Texture2D.MipSlice   = 0;
     UAVDesc.Texture2D.PlaneSlice = 0;
 
-    NullUAV = dbg_new CD3D12UnorderedAccessView(GetDevice(), GD3D12Instance->GetResourceOfflineDescriptorHeap());
+    NullUAV = dbg_new CD3D12UnorderedAccessView(GetDevice(), GD3D12Instance->GetResourceOfflineDescriptorHeap(), nullptr);
     if (!NullUAV->AllocateHandle())
     {
         return false;

@@ -276,7 +276,8 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        LightSetup.CascadeMatrixBufferUAV = RHICreateUnorderedAccessView(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        CRHIBufferUAVInitializer UAVInitializer(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        LightSetup.CascadeMatrixBufferUAV = RHICreateUnorderedAccessView(UAVInitializer);
         if (!LightSetup.CascadeMatrixBufferUAV)
         {
             CDebug::DebugBreak();
@@ -304,7 +305,8 @@ bool CShadowMapRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRes
             return false;
         }
 
-        LightSetup.CascadeSplitsBufferUAV = RHICreateUnorderedAccessView(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        UAVInitializer = CRHIBufferUAVInitializer(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+        LightSetup.CascadeSplitsBufferUAV = RHICreateUnorderedAccessView(UAVInitializer);
         if (!LightSetup.CascadeSplitsBufferUAV)
         {
             CDebug::DebugBreak();

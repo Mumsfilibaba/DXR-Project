@@ -38,7 +38,6 @@ protected:
 class CD3D12ConstantBufferView : public CD3D12View
 {
 public:
-
     CD3D12ConstantBufferView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
     ~CD3D12ConstantBufferView() = default;
 
@@ -56,7 +55,6 @@ private:
 class CD3D12ShaderResourceView : public CRHIShaderResourceView, public CD3D12View
 {
 public:
-
     CD3D12ShaderResourceView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource);
     ~CD3D12ShaderResourceView() = default;
 
@@ -74,8 +72,7 @@ private:
 class CD3D12UnorderedAccessView : public CRHIUnorderedAccessView, public CD3D12View
 {
 public:
-
-    CD3D12UnorderedAccessView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
+    CD3D12UnorderedAccessView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource);
     ~CD3D12UnorderedAccessView() = default;
 
     bool CreateView(CD3D12Resource* InCounterResource, CD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
@@ -95,7 +92,6 @@ private:
 class CD3D12RenderTargetView : public CRHIRenderTargetView, public CD3D12View
 {
 public:
-
     CD3D12RenderTargetView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
     ~CD3D12RenderTargetView() = default;
 
@@ -113,7 +109,6 @@ private:
 class CD3D12DepthStencilView : public CRHIDepthStencilView, public CD3D12View
 {
 public:
-
     CD3D12DepthStencilView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
     ~CD3D12DepthStencilView() = default;
 

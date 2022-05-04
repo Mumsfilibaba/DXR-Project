@@ -393,6 +393,14 @@ public:
         , NumSlices(uint16(InNumSlices))
     { }
 
+    CRHITextureUAVInitializer(CRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel)
+        : Texture(InTexture)
+        , Format(InFormat)
+        , MipLevel(uint8(InMipLevel))
+        , FirstArraySlice(0)
+        , NumSlices(1)
+    { }
+
     uint64 GetHash() const
     {
         uint64 Hash = ToInteger(Texture);
@@ -528,8 +536,8 @@ class CRHIUnorderedAccessView : public CRHIResourceView
 {
 protected:
 
-    explicit CRHIUnorderedAccessView()
-        : CRHIResourceView(nullptr)
+    explicit CRHIUnorderedAccessView(CRHIResource* InResource)
+        : CRHIResourceView(InResource)
     { }
 
     ~CRHIUnorderedAccessView() = default;

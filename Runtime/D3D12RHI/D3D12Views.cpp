@@ -80,8 +80,9 @@ bool CD3D12ShaderResourceView::CreateView(CD3D12Resource* InResource, const D3D1
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12UnorderedAccessView
 
-CD3D12UnorderedAccessView::CD3D12UnorderedAccessView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap)
-    : CD3D12View(InDevice, InHeap)
+CD3D12UnorderedAccessView::CD3D12UnorderedAccessView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap, CRHIResource* InResource)
+    : CRHIUnorderedAccessView(InResource)
+    , CD3D12View(InDevice, InHeap)
     , Desc()
     , CounterResource(nullptr)
 { }

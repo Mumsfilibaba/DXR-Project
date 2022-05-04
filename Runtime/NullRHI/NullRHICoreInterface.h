@@ -114,9 +114,14 @@ public:
         return dbg_new CNullRHIShaderResourceView(Initializer.Buffer);
     }
 
-    virtual CRHIUnorderedAccessView* CreateUnorderedAccessView(const SRHIUnorderedAccessViewInfo& CreateInfo) override final
+    virtual CRHIUnorderedAccessView* RHICreateUnorderedAccessView(const CRHITextureUAVInitializer& Initializer) override final
     {
-        return dbg_new CNullRHIUnorderedAccessView();
+        return dbg_new CNullRHIUnorderedAccessView(Initializer.Texture);
+    }
+
+    virtual CRHIUnorderedAccessView* RHICreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer) override final
+    {
+        return dbg_new CNullRHIUnorderedAccessView(Initializer.Buffer);
     }
 
     virtual CRHIRenderTargetView* CreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo) override final

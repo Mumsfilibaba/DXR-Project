@@ -82,8 +82,8 @@ CRHITexture2D* CTextureFactory::LoadFromImage2D(SImage2D* InImage, uint32 Create
 
 CRHITexture2D* CTextureFactory::LoadFromFile(const String& Filepath, uint32 CreateFlags, EFormat Format)
 {
-    int32 Width = 0;
-    int32 Height = 0;
+    int32 Width        = 0;
+    int32 Height       = 0;
     int32 ChannelCount = 0;
 
     // Load based on format
@@ -182,7 +182,8 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* Pa
         StagingTexture->SetName("TextureCube From Panorama StagingTexture");
     }
 
-    TSharedRef<CRHIUnorderedAccessView> StagingTextureUAV = RHICreateUnorderedAccessView(StagingTexture.Get(), Format, 0);
+    CRHITextureUAVInitializer UAVInitializer(StagingTexture.Get(), Format, 0, 0, 6);
+    TSharedRef<CRHIUnorderedAccessView> StagingTextureUAV = RHICreateUnorderedAccessView(UAVInitializer);
     if (!StagingTextureUAV)
     {
         return nullptr;

@@ -30,7 +30,10 @@ class CNullRHIUnorderedAccessView : public CRHIUnorderedAccessView
 {
 public:
 
-    CNullRHIUnorderedAccessView() = default;
+    explicit CNullRHIUnorderedAccessView(CRHIResource* InResource)
+        : CRHIUnorderedAccessView(InResource)
+    { }
+
     ~CNullRHIUnorderedAccessView() = default;
 };
 
