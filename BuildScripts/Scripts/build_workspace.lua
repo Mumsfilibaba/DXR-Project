@@ -83,7 +83,7 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
     filter {}
 
     filter 'configurations:Production'
-        symbols  'off'
+        symbols  'on'
         runtime  'Release'
         optimize 'Full'
         defines

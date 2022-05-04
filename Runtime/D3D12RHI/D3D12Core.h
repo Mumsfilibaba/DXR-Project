@@ -43,10 +43,16 @@
             LOG_INFO(String("[D3D12RHI] ") + String(Message));       \
         } while (false)
 #else
-    #define D3D12_ERROR(ErrorMessage)                  do { (void)(ErrorMessage); }                     while(false)
-    #define D3D12_ERROR_COND(bCondition, ErrorMessage) do { (void)(bCondition); (void)(ErrorMessage); } while(false)
-    #define D3D12_WARNING(Message)                     do { (void)(Message); }                          while(false)
-    #define D3D12_INFO(Message)                        do { (void)(Message); }                          while(false)
+    #define D3D12_ERROR_COND(bCondition, ErrorMessage) \
+        do                                             \
+        {                                              \
+            (void)(bCondition);                        \
+            (void)(0);                                 \
+        } while(false)
+
+    #define D3D12_ERROR(ErrorMessage) do { (void)(0); } while(false)
+    #define D3D12_WARNING(Message)    do { (void)(0); } while(false)
+    #define D3D12_INFO(Message)       do { (void)(0); } while(false)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
