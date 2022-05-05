@@ -272,7 +272,7 @@ void CD3D12CommandContext::UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetI
 
     if (SizeInBytes)
     {
-        D3D12_ERROR_COND(SourceData != nullptr, "SourceData cannot be nullptr ");
+        D3D12_ERROR_COND(SourceData != nullptr, "SourceData cannot be nullptr");
 
         FlushResourceBarriers();
 
@@ -533,7 +533,7 @@ void CD3D12CommandContext::SetRenderTargets(CRHIRenderTargetView* const* RenderT
 void CD3D12CommandContext::SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState)
 {
     // TODO: Maybe it should be supported to unbind pipelines by setting it to nullptr
-    D3D12_ERROR_COND(PipelineState != nullptr, "PipelineState cannot be nullptr ");
+    D3D12_ERROR_COND(PipelineState != nullptr, "PipelineState cannot be nullptr");
 
     CD3D12GraphicsPipelineState* D3D12PipelineState = static_cast<CD3D12GraphicsPipelineState*>(PipelineState);
     if (D3D12PipelineState != CurrentGraphicsPipelineState)
@@ -553,7 +553,7 @@ void CD3D12CommandContext::SetGraphicsPipelineState(class CRHIGraphicsPipelineSt
 void CD3D12CommandContext::SetComputePipelineState(class CRHIComputePipelineState* PipelineState)
 {
     // TODO: Maybe it should be supported to unbind pipelines by setting it to nullptr
-    D3D12_ERROR_COND(PipelineState != nullptr, "PipelineState cannot be nullptr ");
+    D3D12_ERROR_COND(PipelineState != nullptr, "PipelineState cannot be nullptr");
 
     CD3D12ComputePipelineState* D3D12PipelineState = static_cast<CD3D12ComputePipelineState*>(PipelineState);
     if (D3D12PipelineState != CurrentComputePipelineState.Get())
@@ -582,8 +582,8 @@ void CD3D12CommandContext::SetShaderResourceView(CRHIShader* Shader, CRHIShaderR
     D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace = 0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString(ParameterIndex));
+    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
 
     CD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<CD3D12ShaderResourceView*>(ShaderResourceView);
     DescriptorCache.SetShaderResourceView(D3D12ShaderResourceView, D3D12Shader->GetShaderVisibility(), ParameterInfo.Register);
@@ -595,8 +595,8 @@ void CD3D12CommandContext::SetShaderResourceViews(CRHIShader* Shader, CRHIShader
     D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace = 0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumShaderResourceViews, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString(ParameterIndex));
+    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumShaderResourceViews, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
 
     for (uint32 i = 0; i < NumShaderResourceViews; i++)
     {
@@ -611,8 +611,8 @@ void CD3D12CommandContext::SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorde
     D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace = 0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString(ParameterIndex));
+    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
 
     CD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<CD3D12UnorderedAccessView*>(UnorderedAccessView);
     DescriptorCache.SetUnorderedAccessView(D3D12UnorderedAccessView, D3D12Shader->GetShaderVisibility(), ParameterInfo.Register);
@@ -624,8 +624,8 @@ void CD3D12CommandContext::SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnord
     D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace = 0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumUnorderedAccessViews, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString(ParameterIndex));
+    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumUnorderedAccessViews, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
 
     for (uint32 i = 0; i < NumUnorderedAccessViews; i++)
     {
@@ -640,8 +640,8 @@ void CD3D12CommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuf
     D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace = 0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString(ParameterIndex));
+    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
 
     if (ConstantBuffer)
     {
@@ -660,8 +660,8 @@ void CD3D12CommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstantBu
     D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace = 0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumConstantBuffers, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString(ParameterIndex));
+    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumConstantBuffers, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
 
     for (uint32 i = 0; i < NumConstantBuffers; i++)
     {
@@ -683,8 +683,8 @@ void CD3D12CommandContext::SetSamplerState(CRHIShader* Shader, CRHISamplerState*
     D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace = 0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString(ParameterIndex));
+    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == 1, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
 
     CD3D12SamplerState* D3D12SamplerState = static_cast<CD3D12SamplerState*>(SamplerState);
     DescriptorCache.SetSamplerState(D3D12SamplerState, D3D12Shader->GetShaderVisibility(), ParameterInfo.Register);
@@ -696,8 +696,8 @@ void CD3D12CommandContext::SetSamplerStates(CRHIShader* Shader, CRHISamplerState
     D3D12_ERROR_COND(D3D12Shader != nullptr, "Cannot bind resources to a shader that is nullptr");
 
     SD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace = 0");
-    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumSamplerStates, "Trying to bind more descriptors than supported to ParameterIndex=" + ToString(ParameterIndex));
+    D3D12_ERROR_COND(ParameterInfo.Space          == 0, "Global variables must be bound to RegisterSpace=0");
+    D3D12_ERROR_COND(ParameterInfo.NumDescriptors == NumSamplerStates, "Trying to bind more descriptors than supported to ParameterIndex=%u", ParameterIndex);
 
     for (uint32 i = 0; i < NumSamplerStates; i++)
     {
@@ -943,7 +943,7 @@ void CD3D12CommandContext::SetRayTracingBindings( CRHIRayTracingScene* RayTracin
     }
 
     D3D12_ERROR_COND( NumDescriptorsNeeded < D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
-               , "NumDescriptorsNeeded=" + ToString(NumDescriptorsNeeded) + ", but the maximum is '" + ToString(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT) + "'");
+                    , "NumDescriptorsNeeded=%u, but the maximum is '%u'", NumDescriptorsNeeded, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
 
     CD3D12OnlineDescriptorHeap* ResourceHeap = CmdBatch->GetOnlineResourceDescriptorHeap();
     if (!ResourceHeap->HasSpace(NumDescriptorsNeeded))
@@ -952,7 +952,7 @@ void CD3D12CommandContext::SetRayTracingBindings( CRHIRayTracingScene* RayTracin
     }
 
     D3D12_ERROR_COND( NumSamplersNeeded < D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT
-               , "NumDescriptorsNeeded=" + ToString(NumSamplersNeeded) + ", but the maximum is '" + ToString(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT) + "'");
+                    , "NumDescriptorsNeeded=%u, but the maximum is '%u'", NumSamplersNeeded, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
 
     CD3D12OnlineDescriptorHeap* SamplerHeap = CmdBatch->GetOnlineSamplerDescriptorHeap();
     if (!SamplerHeap->HasSpace(NumSamplersNeeded))

@@ -12,7 +12,7 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
     IEngineModule* ExistingModule = GetEngineModule(ModuleName);
     if (ExistingModule)
     {
-        LOG_WARNING("Module '" + String(ModuleName) + "' is already loaded");
+        LOG_WARNING("Module '%s' is already loaded", ModuleName);
         return ExistingModule;
     }
 
@@ -26,13 +26,13 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
             NewModule.Interface = ModuleInitializer->Execute();
             if (!NewModule.Interface)
             {
-                LOG_ERROR("Failed to load static module '" + String(ModuleName) + "'");
+                LOG_ERROR("Failed to load static module '%s'", ModuleName);
                 return nullptr;
             }
         }
         else
         {
-            LOG_ERROR("No initializer bound when trying to load module '" + String(ModuleName) + "'");
+            LOG_ERROR("No initializer bound when trying to load module '%s'", ModuleName);
             return nullptr;
         }
     }
@@ -41,7 +41,7 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
         PlatformModule Module = PlatformLibrary::LoadDynamicLib(ModuleName);
         if (!Module)
         {
-            LOG_ERROR("Failed to find module '" + String(ModuleName) + "'");
+            LOG_ERROR("Failed to find module '%s'", ModuleName);
             return nullptr;
         }
 
@@ -55,7 +55,7 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
         NewModule.Interface = LoadEngineModule();
         if (!NewModule.Interface)
         {
-            LOG_ERROR("Failed to load module '" + String(ModuleName) + "', resulting interface was nullptr");
+            LOG_ERROR("Failed to load module '%s', resulting interface was nullptr", ModuleName);
             PlatformLibrary::FreeDynamicLib(Module);
 
             return nullptr;
@@ -68,7 +68,7 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
 
     if (NewModule.Interface->Load())
     {
-        LOG_INFO("Loaded module'" + String(ModuleName) + "'");
+        LOG_INFO("Loaded module '%s'", ModuleName);
 
         ModuleLoadedDelegate.Broadcast(ModuleName, NewModule.Interface);
 
@@ -78,7 +78,7 @@ IEngineModule* CModuleManager::LoadEngineModule(const char* ModuleName)
     }
     else
     {
-        LOG_ERROR("Failed to load module '" + String(ModuleName) + "'");
+        LOG_ERROR("Failed to load module '%s'", ModuleName);
         SafeDelete(NewModule.Interface);
 
         return nullptr;

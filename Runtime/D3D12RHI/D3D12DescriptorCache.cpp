@@ -244,9 +244,9 @@ void CD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommand
     uint32 ResourceDescriptorHandle = ResourceHeap->AllocateHandles(NumResourceDescriptors);
     uint32 SamplerDescriptorHandle  = SamplerHeap->AllocateHandles(NumSamplerDescriptors);
     D3D12_ERROR_COND(NumResourceDescriptors <= D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
-                    ,"Trying to bind more Resource Descriptors (NumDescriptors=" + ToString(NumResourceDescriptors) + ") than the maximum (MaxResourceDescriptors=" + ToString(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT) + ") ");
+                    ,"Trying to bind more Resource Descriptors (NumDescriptors=%u) than the maximum (MaxResourceDescriptors=%u)", NumResourceDescriptors, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
     D3D12_ERROR_COND(NumSamplerDescriptors <= D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT
-                    ,"Trying to bind more Sampler Descriptors (NumDescriptors=" + ToString(NumSamplerDescriptors) + ") than the maximum (MaxSamplerDescriptors=" + ToString(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT) + ") ");
+                    ,"Trying to bind more Sampler Descriptors (NumDescriptors=%u) than the maximum (MaxSamplerDescriptors=%u)", NumSamplerDescriptors, D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT);
 
     ID3D12DescriptorHeap* DescriptorHeaps[] =
     {

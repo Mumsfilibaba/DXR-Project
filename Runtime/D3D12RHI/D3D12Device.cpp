@@ -79,7 +79,7 @@ void D3D12DeviceRemovedHandlerRHI(CD3D12Device* Device)
     Check(Device != nullptr);
 
     String Message = "[D3D12] Device Removed";
-    LOG_ERROR(Message);
+    D3D12_ERROR("%s", Message.CStr());
 
     ID3D12Device* DxDevice = Device->GetD3D12Device();
 
@@ -119,11 +119,11 @@ void D3D12DeviceRemovedHandlerRHI(CD3D12Device* Device)
             fputc('\n', File);
         }
 
-        LOG_ERROR(Message);
+        D3D12_ERROR(Message);
         for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
             Message = "    " + String(ToString(CurrentNode->pCommandHistory[i]));
-            LOG_ERROR(Message);
+            D3D12_ERROR(Message);
             if (File)
             {
                 fwrite(Message.Data(), 1, Message.Size(), File);
@@ -132,7 +132,7 @@ void D3D12DeviceRemovedHandlerRHI(CD3D12Device* Device)
         }
 
         PreviousNode = CurrentNode;
-        CurrentNode = CurrentNode->pNext;
+        CurrentNode  = CurrentNode->pNext;
     }
 
     if (File)

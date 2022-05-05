@@ -91,7 +91,7 @@ void CD3D12TimestampQuery::ResolveQueries(class CD3D12CommandContext& CmdContext
     HRESULT Result = CmdQueue->GetTimestampFrequency(&Frequency);
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12TimestampQuery] FAILED to query ClockCalibration");
+        D3D12_ERROR("[CD3D12TimestampQuery] FAILED to query ClockCalibration");
     }
 }
 
@@ -112,7 +112,7 @@ CD3D12TimestampQuery* CD3D12TimestampQuery::Create(CD3D12Device* InDevice)
     HRESULT Result = DxDevice->CreateQueryHeap(&QueryHeap, IID_PPV_ARGS(&Heap));
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12GPUProfiler]: FAILED to create Query Heap");
+        D3D12_ERROR("[D3D12GPUProfiler]: FAILED to create Query Heap");
         return nullptr;
     }
 

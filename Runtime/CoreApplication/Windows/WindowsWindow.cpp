@@ -397,7 +397,7 @@ void CWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) cons
         String Error;
         PlatformDebugMisc::GetLastErrorString(Error);
 
-        LOG_ERROR("[CWindowsWindow]: Failed to retrieve monitorinfo. Reason: " + Error);
+        LOG_ERROR("[CWindowsWindow]: Failed to retrieve monitorinfo. Reason: %s", Error.CStr());
     }
 }
 

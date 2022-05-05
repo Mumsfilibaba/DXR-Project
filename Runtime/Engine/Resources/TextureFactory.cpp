@@ -109,12 +109,12 @@ CRHITexture2D* CTextureFactory::LoadFromFile(const String& Filepath, uint32 Crea
     // Check if succeeded
     if (!Pixels)
     {
-        LOG_ERROR("[CTextureFactory]: Failed to load image '" + Filepath + "'");
+        LOG_ERROR("[CTextureFactory]: Failed to load image '%s'", Filepath.CStr());
         return nullptr;
     }
     else
     {
-        LOG_INFO("[CTextureFactory]: Loaded image '" + Filepath + "'");
+        LOG_INFO("[CTextureFactory]: Loaded image '%s'", Filepath.CStr());
     }
 
     return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);

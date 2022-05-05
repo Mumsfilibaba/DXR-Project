@@ -766,7 +766,7 @@ public:
         }
         else
         {
-            LOG_WARNING("Texture '" + Texture->GetName() + "' Was transitioned with the same Before- and AfterState (=" + ToString(BeforeState) + ")");
+            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Texture->GetName().CStr(),  ToString(BeforeState));
         }
     }
 
@@ -787,7 +787,7 @@ public:
         }
         else
         {
-            LOG_WARNING("Buffer '" + Buffer->GetName() + "' Was transitioned with the same Before- and AfterState (=" + ToString(BeforeState) + ")");
+            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Buffer->GetName().CStr(),  ToString(BeforeState));
         }
     }
 

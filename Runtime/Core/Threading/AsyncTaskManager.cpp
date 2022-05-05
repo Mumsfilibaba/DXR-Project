@@ -45,7 +45,7 @@ void CAsyncTaskManager::KillWorkers()
 
 void CAsyncTaskManager::WorkThread()
 {
-    LOG_INFO("Starting Work thread: " + ToString(PlatformThreadMisc::GetThreadHandle()));
+    LOG_INFO("Starting Work thread: %llu", PlatformThreadMisc::GetThreadHandle());
 
     CAsyncTaskManager& AsyncTaskManager = CAsyncTaskManager::Get();
     while (AsyncTaskManager.bIsRunning)
@@ -64,12 +64,12 @@ void CAsyncTaskManager::WorkThread()
         }
     }
 
-    LOG_INFO("End Work thread: " + ToString(PlatformThreadMisc::GetThreadHandle()));
+    LOG_INFO("End Work thread: %llu", PlatformThreadMisc::GetThreadHandle());
 }
 
 bool CAsyncTaskManager::Initialize()
 {
-    uint32 ThreadCount = NMath::Max<int32>(PlatformThreadMisc::GetNumProcessors() - 1, 1);
+    const uint32 ThreadCount = NMath::Max<int32>(PlatformThreadMisc::GetNumProcessors() - 1, 1);
     WorkerThreads.Resize(ThreadCount);
 
     if (ThreadCount == 1)
@@ -79,7 +79,7 @@ bool CAsyncTaskManager::Initialize()
         return true;
     }
 
-    LOG_INFO("[CAsyncTaskManager]: Starting '" + ToString(ThreadCount) + "' Workers");
+    LOG_INFO("[CAsyncTaskManager]: Starting '%u' Workers", ThreadCount);
 
     // Start so that workers now that they should be running
     bIsRunning = true;

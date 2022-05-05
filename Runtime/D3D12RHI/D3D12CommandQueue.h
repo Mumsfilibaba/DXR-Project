@@ -29,12 +29,12 @@ public:
         HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandQueue(&QueueDesc, IID_PPV_ARGS(&Queue));
         if (SUCCEEDED(Result))
         {
-            LOG_INFO("[CD3D12CommandQueue]: Created CommandQueue");
+            D3D12_INFO("[CD3D12CommandQueue]: Created CommandQueue");
             return true;
         }
         else
         {
-            LOG_ERROR("[CD3D12CommandQueue]: FAILED to create CommandQueue");
+            D3D12_ERROR("[CD3D12CommandQueue]: FAILED to create CommandQueue");
             return false;
         }
     }

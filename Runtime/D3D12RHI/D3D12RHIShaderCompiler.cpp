@@ -199,7 +199,7 @@ bool CD3D12RHIShaderCompiler::CompileFromFile(
     HRESULT Result = DxLibrary->CreateBlobFromFile(WideFilePath.CStr(), nullptr, &SourceBlob);
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create Source Data");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create Source Data");
 
         CDebug::DebugBreak();
         return false;
@@ -222,7 +222,7 @@ bool CD3D12RHIShaderCompiler::CompileShader(
     HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(ShaderSource.CStr(), sizeof(char) * static_cast<uint32>(ShaderSource.Size()), CP_UTF8, &SourceBlob);
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create Source Data");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create Source Data");
 
         CDebug::DebugBreak();
         return false;
@@ -249,7 +249,7 @@ bool CD3D12RHIShaderCompiler::HasRootSignature(CD3D12Shader* Shader)
     HRESULT Result = DxcCreateInstanceFunc(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create IDxcContainerReflection");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create IDxcContainerReflection");
         return false;
     }
 
@@ -257,7 +257,7 @@ bool CD3D12RHIShaderCompiler::HasRootSignature(CD3D12Shader* Shader)
     Result = Reflection->Load(ShaderBlob.Get());
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: Reflection were not able to load shader");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: Reflection were not able to load shader");
         return false;
     }
 
@@ -283,42 +283,42 @@ bool CD3D12RHIShaderCompiler::Init()
     DxcCreateInstanceFunc = PlatformLibrary::LoadSymbolAddress<DxcCreateInstanceProc>("DxcCreateInstance", DxCompilerDLL);
     if (!DxcCreateInstanceFunc)
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to load DxcCreateInstance");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to load DxcCreateInstance");
         return false;
     }
 
     HRESULT Result = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&DxCompiler));
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create DxCompiler");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create DxCompiler");
         return false;
     }
 
     Result = DxcCreateInstanceFunc(CLSID_DxcLibrary, IID_PPV_ARGS(&DxLibrary));
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create DxLibrary");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create DxLibrary");
         return false;
     }
 
     Result = DxLibrary->CreateIncludeHandler(&DxIncludeHandler);
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create DxIncludeHandler");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create DxIncludeHandler");
         return false;
     }
 
     Result = DxcCreateInstanceFunc(CLSID_DxcLinker, IID_PPV_ARGS(&DxLinker));
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create DxLinker");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create DxLinker");
         return false;
     }
 
     Result = DxcCreateInstanceFunc(CLSID_DxcContainerReflection, IID_PPV_ARGS(&DxReflection));
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create DxReflection");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to create DxReflection");
         return false;
     }
 
@@ -378,7 +378,7 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
         DxIncludeHandler.Get(), &Result);
     if (FAILED(hResult))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to Compile");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to Compile");
 
         CDebug::DebugBreak();
         return false;
@@ -386,7 +386,7 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
 
         CDebug::DebugBreak();
         return false;
@@ -403,12 +403,11 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
     {
         if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
         {
-            LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to compile with the following error:");
-            LOG_ERROR(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+            D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
         }
         else
         {
-            LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to compile with. Unknown ERROR.");
+            D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to compile with. Unknown ERROR.");
         }
 
         return false;
@@ -417,25 +416,25 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
     String AsciiFilePath = (FilePath != nullptr) ? WideToChar(WString(FilePath)) : "";
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
-        LOG_INFO("[CD3D12RHIShaderCompiler]: Successfully compiled shader '" + AsciiFilePath + "' with the following output:");
-        LOG_INFO(String(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize())));
+        String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
+        D3D12_INFO("[CD3D12RHIShaderCompiler]: Successfully compiled shader '%s' with the following output:%s", AsciiFilePath.CStr(), Output.CStr());
     }
     else
     {
-        LOG_INFO("[CD3D12RHIShaderCompiler]: Successfully compiled shader '" + AsciiFilePath + "'.");
+        D3D12_INFO("[CD3D12RHIShaderCompiler]: Successfully compiled shader '%s'.", AsciiFilePath.CStr());
     }
 
     TComPtr<IDxcBlob> CompiledBlob;
     if (FAILED(Result->GetResult(&CompiledBlob)))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: FAILED to retrieve result");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: FAILED to retrieve result");
         return false;
     }
 
     const uint32 BlobSize = uint32(CompiledBlob->GetBufferSize());
     Code.Resize(BlobSize);
 
-    LOG_INFO("[CD3D12RHIShaderCompiler]: Compiled Size: " + ToString(BlobSize) + " Bytes");
+    D3D12_INFO("[CD3D12RHIShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
 
     CMemory::Memcpy(Code.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 
@@ -454,7 +453,7 @@ bool CD3D12RHIShaderCompiler::InternalGetReflection(const TComPtr<IDxcBlob>& Sha
     HRESULT Result = DxReflection->Load(ShaderBlob.Get());
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: Were not able to get reflect of shader");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: Were not able to get reflect of shader");
         return false;
     }
 
@@ -462,14 +461,14 @@ bool CD3D12RHIShaderCompiler::InternalGetReflection(const TComPtr<IDxcBlob>& Sha
     Result = DxReflection->FindFirstPartKind(DFCC_DXIL, &PartIndex);
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: Were not able to get reflect of shader");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: Were not able to get reflect of shader");
         return false;
     }
 
     Result = DxReflection->GetPartReflection(PartIndex, iid, ppvObject);
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: Were not able to get reflect of shader");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: Were not able to get reflect of shader");
         return false;
     }
 
@@ -490,7 +489,7 @@ bool CD3D12RHIShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& 
     HRESULT Result = LibaryReflection->GetDesc(&LibDesc);
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: Were not able to validate ray tracing shader");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: Were not able to validate ray tracing shader");
         return false;
     }
 
@@ -505,7 +504,7 @@ bool CD3D12RHIShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& 
     Result = Function->GetDesc(&FuncDesc);
     if (FAILED(Result))
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: Were not able to validate ray tracing shader");
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: Were not able to validate ray tracing shader");
         return false;
     }
 
@@ -519,7 +518,7 @@ bool CD3D12RHIShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& 
     auto result = FuncName.Find(Buffer);
     if (result == String::NPos)
     {
-        LOG_ERROR("[CD3D12RHIShaderCompiler]: First exported function does not have correct entrypoint '" + String(Buffer) + "'. Name=" + FuncName);
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: First exported function does not have correct entrypoint '%s'. Name=%s" + , Buffer, FuncName.CStr());
         return false;
     }
 

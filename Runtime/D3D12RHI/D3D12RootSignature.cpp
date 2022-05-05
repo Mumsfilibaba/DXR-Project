@@ -177,7 +177,7 @@ CD3D12RootSignatureDescHelper::CD3D12RootSignatureDescHelper(const SD3D12RootSig
     }
 
     Check(RootSignatureCost <= D3D12_MAX_ROOT_PARAMETER_COST);
-    LOG_INFO("[CD3D12RootSignatureDescHelper] RootSignatureCost=" + ToString(RootSignatureCost));
+    D3D12_INFO("[CD3D12RootSignatureDescHelper] RootSignatureCost=%u", RootSignatureCost);
 
     Desc.NumParameters = NumRootParameters;
     Desc.pParameters   = RootParameters;
@@ -314,9 +314,7 @@ bool CD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
     HRESULT Result = ND3D12Functions::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12RootSignature]: FAILED to Retrieve Root Signature Desc");
-
-        CDebug::DebugBreak();
+        D3D12_ERROR("[D3D12RootSignature]: FAILED to Retrieve Root Signature Desc");
         return false;
     }
 
@@ -335,9 +333,7 @@ bool CD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
     Result = GetDevice()->CreateRootSignature(1, Blob->GetBufferPointer(), Blob->GetBufferSize(), IID_PPV_ARGS(&RootSignature));
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
-
-        CDebug::DebugBreak();
+        D3D12_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
         return false;
     }
 
@@ -373,9 +369,7 @@ bool CD3D12RootSignature::InternalInit(const void* BlobWithRootSignature, uint64
     HRESULT Result = GetDevice()->CreateRootSignature(1, BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&RootSignature));
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
-
-        CDebug::DebugBreak();
+        D3D12_ERROR("[D3D12RootSignature]: FAILED to Create RootSignature");
         return false;
     }
 
@@ -389,10 +383,7 @@ bool CD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
     HRESULT Result = ND3D12Functions::D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob);
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12RootSignature]: FAILED to Serialize RootSignature");
-        LOG_ERROR(reinterpret_cast<const char*>(ErrorBlob->GetBufferPointer()));
-
-        CDebug::DebugBreak();
+        D3D12_ERROR("[D3D12RootSignature]: FAILED to Serialize RootSignature. Error=%s", reinterpret_cast<const char*>(ErrorBlob->GetBufferPointer()));
         return false;
     }
 
@@ -575,7 +566,7 @@ CD3D12RootSignature* CD3D12RootSignatureCache::CreateRootSignature(const SD3D12R
         return nullptr;
     }
 
-    LOG_INFO("Created new root signature");
+    D3D12_INFO("Created new root signature");
 
     RootSignatures.Emplace(NewRootSignature);
     ResourceCounts.Emplace(ResourceCount);

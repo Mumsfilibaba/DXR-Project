@@ -26,7 +26,7 @@ bool CConfigFile::SetString(const char* SectionName, const char* Name, const Str
     }
     else
     {
-        LOG_ERROR("Failed to set config value '" + String(Name) + "' in section '" + String(SectionName) + "'");
+        LOG_ERROR("Failed to set config value '%s' in section '%s'", Name, SectionName);
         return false;
     }
 }

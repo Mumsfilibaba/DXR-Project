@@ -1193,7 +1193,7 @@ CRHIRayGenShader* CD3D12CoreInterface::RHICreateRayGenShader(const TArray<uint8>
     TSharedRef<CD3D12RayGenShader> Shader = dbg_new CD3D12RayGenShader(Device, ShaderCode);
     if (!CD3D12RayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
+        D3D12_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
@@ -1207,7 +1207,7 @@ CRHIRayAnyHitShader* CD3D12CoreInterface::RHICreateRayAnyHitShader(const TArray<
     TSharedRef<CD3D12RayAnyHitShader> Shader = dbg_new CD3D12RayAnyHitShader(Device, ShaderCode);
     if (!CD3D12RayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
+        D3D12_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
@@ -1221,7 +1221,7 @@ CRHIRayClosestHitShader* CD3D12CoreInterface::RHICreateRayClosestHitShader(const
     TSharedRef<CD3D12RayClosestHitShader> Shader = dbg_new CD3D12RayClosestHitShader(Device, ShaderCode);
     if (!CD3D12RayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
+        D3D12_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
@@ -1235,7 +1235,7 @@ CRHIRayMissShader* CD3D12CoreInterface::RHICreateRayMissShader(const TArray<uint
     TSharedRef<CD3D12RayMissShader> Shader = dbg_new CD3D12RayMissShader(Device, ShaderCode);
     if (!CD3D12RayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
+        D3D12_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
