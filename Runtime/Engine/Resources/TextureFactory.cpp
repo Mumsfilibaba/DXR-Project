@@ -109,12 +109,12 @@ CRHITexture2D* CTextureFactory::LoadFromFile(const String& Filepath, uint32 Crea
     // Check if succeeded
     if (!Pixels)
     {
-        LOG_ERROR("[CTextureFactory]: Failed to load image '" + Filepath + "'");
+        LOG_ERROR("[CTextureFactory]: Failed to load image '%s'", Filepath.CStr());
         return nullptr;
     }
     else
     {
-        LOG_INFO("[CTextureFactory]: Loaded image '" + Filepath + "'");
+        LOG_INFO("[CTextureFactory]: Loaded image '%s'", Filepath.CStr());
     }
 
     return LoadFromMemory(Pixels.Get(), Width, Height, CreateFlags, Format);
@@ -128,17 +128,17 @@ CRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
         return nullptr;
     }
 
-    Assert(Pixels != nullptr);
+    Check(Pixels != nullptr);
 
     const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const uint32 NumMips = GenerateMips ? NMath::Max<uint32>(NMath::Log2(NMath::Max(Width, Height)), 1u) : 1;
 
-    Assert(NumMips != 0);
+    Check(NumMips != 0);
 
     const uint32 Stride   = GetByteStrideFromFormat(Format);
     const uint32 RowPitch = Width * Stride;
 
-    Assert(RowPitch > 0);
+    Check(RowPitch > 0);
 
     CRHITextureDataInitializer InitalData(Pixels, Format, Width, Height);
 
@@ -165,7 +165,7 @@ CRHITexture2D* CTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width
 
 CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format)
 {
-    Assert((PanoramaSource->GetFlags() & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None);
+    Check((PanoramaSource->GetFlags() & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None);
 
     const bool GenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     const uint32 NumMips = (GenerateNumMips) ? NMath::Max<uint32>(NMath::Log2(CubeMapSize), 1u) : 1u;

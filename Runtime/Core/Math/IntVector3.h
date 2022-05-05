@@ -307,7 +307,7 @@ public:
      */
     FORCEINLINE int16& operator[](int16 Index) noexcept
     {
-        Assert(Index < 3);
+        Check(Index < 3);
         return reinterpret_cast<int16*>(this)[Index];
     }
 
@@ -319,7 +319,7 @@ public:
      */
     FORCEINLINE int16 operator[](int16 Index) const noexcept
     {
-        Assert(Index < 3);
+        Check(Index < 3);
         return reinterpret_cast<const int16*>(this)[Index];
     }
 
@@ -641,7 +641,7 @@ public:
      */
     FORCEINLINE int32& operator[](int32 Index) noexcept
     {
-        Assert(Index < 3);
+        Check(Index < 3);
         return reinterpret_cast<int32*>(this)[Index];
     }
 
@@ -653,7 +653,7 @@ public:
      */
     FORCEINLINE int32 operator[](int32 Index) const noexcept
     {
-        Assert(Index < 3);
+        Check(Index < 3);
         return reinterpret_cast<const int32*>(this)[Index];
     }
 

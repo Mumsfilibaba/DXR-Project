@@ -220,7 +220,7 @@ public:
      */
     FORCEINLINE void Append(const CharType* InString, SizeType InLength) noexcept
     {
-        Assert(InString != nullptr);
+        Check(InString != nullptr);
 
         if (!Characters.IsEmpty())
         {
@@ -277,7 +277,7 @@ public:
      */
     FORCEINLINE void Copy(CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         if (Buffer && (BufferSize > 0))
         {
@@ -626,7 +626,7 @@ public:
      */
     FORCEINLINE int32 CompareNoCase(const CharType* InString, SizeType InLength) const noexcept
     {
-        Assert(InString != nullptr);
+        Check(InString != nullptr);
 
         SizeType Len = Length();
         if (Len != InLength)
@@ -685,7 +685,7 @@ public:
      */
     FORCEINLINE SizeType Find(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Length() == 0))
         {
@@ -713,7 +713,7 @@ public:
      */
     FORCEINLINE SizeType Find(CharType Char, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         if (StringUtils::IsTerminator(Char) || (Length() == 0))
         {
@@ -768,8 +768,8 @@ public:
      */
     FORCEINLINE SizeType ReverseFind(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
-        Assert(InString != nullptr);
+        Check((Position < Length()) || (Position == 0));
+        Check(InString != nullptr);
 
         SizeType Len = Length();
         if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
@@ -811,7 +811,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFind(CharType Char, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         SizeType Len = Length();
         if (StringUtils::IsTerminator(Char) || (Len == 0))
@@ -882,7 +882,7 @@ public:
      */
     FORCEINLINE SizeType FindOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         SizeType Len = Length();
         if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
@@ -937,7 +937,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFindOneOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
         if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (ThisLength == 0))
@@ -1007,7 +1007,7 @@ public:
      */
     FORCEINLINE SizeType FindOneNotOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         SizeType Len = Length();
         if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
@@ -1062,7 +1062,7 @@ public:
      */
     FORCEINLINE SizeType ReverseFindOneNotOf(const CharType* InString, SizeType InLength, SizeType Position = 0) const noexcept
     {
-        Assert((Position < Length()) || (Position == 0));
+        Check((Position < Length()) || (Position == 0));
 
         SizeType ThisLength = Length();
         if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (ThisLength == 0))
@@ -1196,7 +1196,7 @@ public:
      */
     FORCEINLINE void Remove(SizeType Position, SizeType Count) noexcept
     {
-        Assert((Position < Length()) && (Position + Count < Length()));
+        Check((Position < Length()) && (Position + Count < Length()));
         Characters.RemoveRangeAt(Position, Count);
     }
 
@@ -1232,7 +1232,7 @@ public:
      */
     FORCEINLINE void Insert(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
-        Assert((Position <= Length()));
+        Check((Position <= Length()));
 
         SizeType ThisLength = Length();
         if (Position == ThisLength || Characters.IsEmpty())
@@ -1288,7 +1288,7 @@ public:
      */
     FORCEINLINE void Replace(const CharType* InString, SizeType InLength, SizeType Position) noexcept
     {
-        Assert((Position < Length()) && (Position + InLength < Length()));
+        Check((Position < Length()) && (Position + InLength < Length()));
         StringUtils::Copy(Data() + Position, InString, InLength);
     }
 
@@ -1300,7 +1300,7 @@ public:
      */
     FORCEINLINE void Replace(CharType Char, SizeType Position = 0) noexcept
     {
-        Assert((Position < Length()));
+        Check((Position < Length()));
 
         CharType* PositionPtr = Characters.Data() + Position;
         *PositionPtr = Char;
@@ -1347,7 +1347,7 @@ public:
      */
     FORCEINLINE TString SubString(SizeType Offset, SizeType Count) const noexcept
     {
-        Assert((Offset < Length()) && (Offset + Count < Length()));
+        Check((Offset < Length()) && (Offset + Count < Length()));
         return TString(Characters.Data() + Offset, Count);
     }
 
@@ -1360,7 +1360,7 @@ public:
       */
     FORCEINLINE ViewType SubStringView(SizeType Offset, SizeType Count) const noexcept
     {
-        Assert((Offset < Length()) && (Offset + Count < Length()));
+        Check((Offset < Length()) && (Offset + Count < Length()));
         return TStringView<CharType>(Characters.Data() + Offset, Count);
     }
 
@@ -1372,7 +1372,7 @@ public:
      */
     FORCEINLINE CharType& At(SizeType Index) noexcept
     {
-        Assert(Index < Length());
+        Check(Index < Length());
         return Data()[Index];
     }
 
@@ -1384,7 +1384,7 @@ public:
      */
     FORCEINLINE const CharType& At(SizeType Index) const noexcept
     {
-        Assert(Index < Length());
+        Check(Index < Length());
         return Data()[Index];
     }
 
@@ -1497,7 +1497,7 @@ public:
      */
     FORCEINLINE ElementType& FirstElement() noexcept
     {
-        Assert(!IsEmpty());
+        Check(!IsEmpty());
         return Data()[0];
     }
 
@@ -1508,7 +1508,7 @@ public:
      */
     FORCEINLINE const ElementType& FirstElement() const noexcept
     {
-        Assert(!IsEmpty());
+        Check(!IsEmpty());
         return Data()[0];
     }
 
@@ -1519,7 +1519,7 @@ public:
      */
     FORCEINLINE ElementType& LastElement() noexcept
     {
-        Assert(!IsEmpty());
+        Check(!IsEmpty());
         return Data()[LastElementIndex()];
     }
 
@@ -1530,7 +1530,7 @@ public:
      */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
-        Assert(!IsEmpty());
+        Check(!IsEmpty());
         return Data()[LastElementIndex()];
     }
 

@@ -83,7 +83,7 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const String& Filename)
         FILE* File = fopen(Filename.CStr(), "rb");
         if (!File)
         {
-            LOG_ERROR(("[CStbImageLoader]: Failed to open '" + Filename + "'").CStr());
+            LOG_ERROR("[CStbImageLoader]: Failed to open '%s'", Filename.CStr());
             return;
         }
 
@@ -135,18 +135,18 @@ TSharedPtr<SImage2D> CStbImageLoader::LoadFile(const String& Filename)
         // Check if succeeded
         if (!Pixels)
         {
-            LOG_ERROR(("[CStbImageLoader]: Failed to load image '" + Filename + "'").CStr());
+            LOG_ERROR("[CStbImageLoader]: Failed to load image '%s'", Filename.CStr());
             return;
         }
         else
         {
-            LOG_INFO(("[CStbImageLoader]: Loaded image '" + Filename + "'").CStr());
+            LOG_INFO("[CStbImageLoader]: Loaded image '%s'", Filename.CStr());
         }
 
-        Image->Image = Move(Pixels);
-        Image->Format = Format;
-        Image->Width = (uint16)Width;
-        Image->Height = (uint16)Height;
+        Image->Image     = Move(Pixels);
+        Image->Format    = Format;
+        Image->Width     = (uint16)Width;
+        Image->Height    = (uint16)Height;
         Image->bIsLoaded = true;
     };
 

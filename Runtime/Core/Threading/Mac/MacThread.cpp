@@ -74,7 +74,7 @@ void* CMacThread::ThreadRoutine(void* ThreadParameter)
             pthread_setname_np(CurrentThread->Name.CStr());
         }
 
-        Assert(CurrentThread->Function);
+        Check(CurrentThread->Function);
         CurrentThread->Function();
 
 		CurrentThread->ThreadExitCode = 0;

@@ -61,7 +61,7 @@ bool CMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
 
 void CMemory::Memswap(void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size) noexcept
 {
-    Assert(LHS != nullptr && RHS != nullptr);
+    Check(LHS != nullptr && RHS != nullptr);
 
     // Move 8 bytes at a time 
     uint64* Left = reinterpret_cast<uint64*>(LHS);

@@ -11,7 +11,7 @@ CD3D12View::CD3D12View(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHe
     , Heap(InHeap)
     , OfflineHandle({ 0 })
 {
-    Assert(Heap != nullptr);
+    Check(Heap != nullptr);
 }
 
 CD3D12View::~CD3D12View()
@@ -42,7 +42,7 @@ CD3D12ConstantBufferView::CD3D12ConstantBufferView(CD3D12Device* InDevice, CD3D1
 
 bool CD3D12ConstantBufferView::CreateView(CD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
-    Assert(OfflineHandle != 0);
+    Check(OfflineHandle != 0);
 
     Resource = MakeSharedRef<CD3D12Resource>(InResource);
     Desc = InDesc;
@@ -62,7 +62,7 @@ CD3D12ShaderResourceView::CD3D12ShaderResourceView(CD3D12Device* InDevice, CD3D1
 
 bool CD3D12ShaderResourceView::CreateView(CD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
-    Assert(OfflineHandle != 0);
+    Check(OfflineHandle != 0);
 
     CD3D12View::Resource = MakeSharedRef<CD3D12Resource>(InResource);
     Desc = InDesc;
@@ -89,7 +89,7 @@ CD3D12UnorderedAccessView::CD3D12UnorderedAccessView(CD3D12Device* InDevice, CD3
 
 bool CD3D12UnorderedAccessView::CreateView(CD3D12Resource* InCounterResource, CD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
-    Assert(OfflineHandle != 0);
+    Check(OfflineHandle != 0);
 
     Desc = InDesc;
     CounterResource = InCounterResource;
@@ -121,8 +121,8 @@ CD3D12RenderTargetView::CD3D12RenderTargetView(CD3D12Device* InDevice, CD3D12Off
 
 bool CD3D12RenderTargetView::CreateView(CD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
-    Assert(InResource != nullptr);
-    Assert(OfflineHandle != 0);
+    Check(InResource != nullptr);
+    Check(OfflineHandle != 0);
 
     Desc = InDesc;
 
@@ -142,8 +142,8 @@ CD3D12DepthStencilView::CD3D12DepthStencilView(CD3D12Device* InDevice, CD3D12Off
 
 bool CD3D12DepthStencilView::CreateView(CD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
-    Assert(InResource != nullptr);
-    Assert(OfflineHandle != 0);
+    Check(InResource != nullptr);
+    Check(OfflineHandle != 0);
 
     Desc = InDesc;
 

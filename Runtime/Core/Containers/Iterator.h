@@ -35,7 +35,7 @@ public:
         : Array(InArray)
         , Index(StartIndex)
     {
-        Assert(IsValid());
+        Check(IsValid());
     }
 
     /**
@@ -77,7 +77,7 @@ public:
      */
     FORCEINLINE ElementType* Raw() const noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
         return Array.Get().Data() + GetIndex();
     }
 
@@ -122,7 +122,7 @@ public:
     {
         Index++;
 
-        Assert(IsValid());
+        Check(IsValid());
         return *this;
     }
 
@@ -136,7 +136,7 @@ public:
         TArrayIterator NewIterator(*this);
         Index++;
 
-        Assert(IsValid());
+        Check(IsValid());
         return NewIterator;
     }
 
@@ -149,7 +149,7 @@ public:
     {
         Index--;
 
-        Assert(IsValid());
+        Check(IsValid());
         return *this;
     }
 
@@ -163,7 +163,7 @@ public:
         TArrayIterator NewIterator(*this);
         Index--;
 
-        Assert(IsValid());
+        Check(IsValid());
         return NewIterator;
     }
 
@@ -201,7 +201,7 @@ public:
     {
         Index += RHS;
 
-        Assert(IsValid());
+        Check(IsValid());
         return *this;
     }
 
@@ -215,7 +215,7 @@ public:
     {
         Index -= RHS;
 
-        Assert(IsValid());
+        Check(IsValid());
         return *this;
     }
 
@@ -296,7 +296,7 @@ public:
         : Array(InArray)
         , Index(StartIndex)
     {
-        Assert(IsValid());
+        Check(IsValid());
     }
 
     /**
@@ -338,7 +338,7 @@ public:
      */
     FORCEINLINE ElementType* Raw() const noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
         return Array.Get().Data() + GetIndex();
     }
 
@@ -383,7 +383,7 @@ public:
     {
         Index--;
 
-        Assert(IsValid());
+        Check(IsValid());
         return *this;
     }
 
@@ -397,7 +397,7 @@ public:
         TReverseArrayIterator NewIterator(*this);
         Index--;
 
-        Assert(IsValid());
+        Check(IsValid());
         return NewIterator;
     }
 
@@ -410,7 +410,7 @@ public:
     {
         Index++;
 
-        Assert(IsValid());
+        Check(IsValid());
         return *this;
     }
 
@@ -424,7 +424,7 @@ public:
         TReverseArrayIterator NewIterator(*this);
         NewIterator++;
 
-        Assert(IsValid());
+        Check(IsValid());
         return NewIterator;
     }
 
@@ -462,7 +462,7 @@ public:
     {
         Index -= RHS;
 
-        Assert(IsValid());
+        Check(IsValid());
         return *this;
     }
 
@@ -476,7 +476,7 @@ public:
     {
         Index += RHS;
 
-        Assert(IsValid());
+        Check(IsValid());
         return *this;
     }
 
@@ -547,7 +547,7 @@ public:
     FORCEINLINE TTreeIterator(NodeType* InNode) noexcept
         : Node(InNode)
     {
-        Assert(IsValid());
+        Check(IsValid());
     }
 
     FORCEINLINE bool IsValid() const noexcept
@@ -557,7 +557,7 @@ public:
 
     FORCEINLINE ElementType* Raw() const noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
         return Node->GetPointer();
     }
 
@@ -573,7 +573,7 @@ public:
 
     FORCEINLINE TTreeIterator operator++() noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
 
         Node = Node->GetNext();
         return *this;
@@ -584,13 +584,13 @@ public:
         TTreeIterator NewIterator(*this);
         Node = Node->GetNext();
 
-        Assert(IsValid());
+        Check(IsValid());
         return NewIterator;
     }
 
     FORCEINLINE TTreeIterator operator--() noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
 
         Node = Node->GetPrevious();
         return *this;
@@ -601,7 +601,7 @@ public:
         TTreeIterator NewIterator(*this);
         Node = Node->GetPrevious();
 
-        Assert(IsValid());
+        Check(IsValid());
         return NewIterator;
     }
 

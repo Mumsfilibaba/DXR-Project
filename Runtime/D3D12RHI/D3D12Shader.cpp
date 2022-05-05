@@ -79,7 +79,7 @@ bool CD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
 
         if (!IsLegalRegisterSpace(ShaderBindDesc))
         {
-            LOG_ERROR("Shader Parameter '" + String(ShaderBindDesc.Name) + "' has register space '" + ToString(ShaderBindDesc.Space) + "' specified, which is invalid.");
+            D3D12_ERROR("Shader Parameter '%s' has register space '%u' specified, which is invalid.", ShaderBindDesc.Name, ShaderBindDesc.Space);
             return false;
         }
 
@@ -177,7 +177,7 @@ bool CD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
 
 bool CD3D12Shader::GetShaderReflection(CD3D12Shader* Shader)
 {
-    Assert(Shader != nullptr);
+    Check(Shader != nullptr);
 
     TComPtr<ID3D12ShaderReflection> Reflection;
     if (!GD3D12ShaderCompiler->GetReflection(Shader, &Reflection))
@@ -193,7 +193,7 @@ bool CD3D12Shader::GetShaderReflection(CD3D12Shader* Shader)
 
     if (!GetShaderResourceBindings(Reflection.Get(), Shader, ShaderDesc.BoundResources))
     {
-        LOG_ERROR("[D3D12BaseShader]: Error when analysing shader parameters");
+        D3D12_ERROR("[D3D12BaseShader]: Error when analysing shader parameters");
         return false;
     }
 
@@ -210,7 +210,7 @@ bool CD3D12Shader::GetShaderReflection(CD3D12Shader* Shader)
 
 bool CD3D12RayTracingShader::GetRayTracingShaderReflection(CD3D12RayTracingShader* Shader)
 {
-    Assert(Shader != nullptr);
+    Check(Shader != nullptr);
 
     TComPtr<ID3D12LibraryReflection> Reflection;
     if (!GD3D12ShaderCompiler->GetLibraryReflection(Shader, &Reflection))
@@ -227,7 +227,7 @@ bool CD3D12RayTracingShader::GetRayTracingShaderReflection(CD3D12RayTracingShade
         return false;
     }
 
-    Assert(LibDesc.FunctionCount > 0);
+    Check(LibDesc.FunctionCount > 0);
 
     // Make sure that the first shader is the one we wanted
     ID3D12FunctionReflection* Function = Reflection->GetFunctionByIndex(0);
@@ -243,7 +243,7 @@ bool CD3D12RayTracingShader::GetRayTracingShaderReflection(CD3D12RayTracingShade
 
     if (!GetShaderResourceBindings(Function, Shader, FuncDesc.BoundResources))
     {
-        LOG_ERROR("[CD3D12RayTracingShader]: Error when analysing shader parameters");
+        D3D12_ERROR("[CD3D12RayTracingShader]: Error when analysing shader parameters");
         return false;
     }
 
@@ -281,7 +281,7 @@ bool CD3D12ComputeShader::Init()
 
     if (!GetShaderResourceBindings(Reflection.Get(), this, ShaderDesc.BoundResources))
     {
-        LOG_ERROR("[D3D12BaseComputeShader]: Error when analysing shader parameters");
+        D3D12_ERROR("[D3D12BaseComputeShader]: Error when analysing shader parameters");
         return false;
     }
 

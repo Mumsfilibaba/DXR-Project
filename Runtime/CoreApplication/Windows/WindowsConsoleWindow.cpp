@@ -40,7 +40,12 @@ void CWindowsConsoleWindow::Print(const String& Message)
 
 void CWindowsConsoleWindow::PrintLine(const String& Message)
 {
-    UNREFERENCED_VARIABLE(Message);
+    if (ConsoleHandle)
+    {
+        TScopedLock<CCriticalSection> Lock(ConsoleMutex);
+        WriteConsoleA(ConsoleHandle, Message.CStr(), static_cast<DWORD>(Message.Length()), 0, NULL);
+        WriteConsoleA(ConsoleHandle, "\n", 1, 0, NULL);
+    }
 }
 
 void CWindowsConsoleWindow::Clear()

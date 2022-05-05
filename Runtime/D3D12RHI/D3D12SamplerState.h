@@ -18,7 +18,7 @@ public:
         , OfflineHandle({ 0 })
         , Desc()
     {
-        Assert(InOfflineHeap != nullptr);
+        Check(InOfflineHeap != nullptr);
     }
 
     ~CD3D12SamplerState()

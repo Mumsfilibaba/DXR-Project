@@ -922,7 +922,7 @@ public:
      */
     FORCEINLINE float& operator[](int32 Index) noexcept
     {
-        Assert(Index < 4);
+        Check(Index < 4);
         return reinterpret_cast<float*>(this)[Index];
     }
 
@@ -934,7 +934,7 @@ public:
      */
     FORCEINLINE float operator[](int32 Index) const noexcept
     {
-        Assert(Index < 4);
+        Check(Index < 4);
         return reinterpret_cast<const float*>(this)[Index];
     }
 

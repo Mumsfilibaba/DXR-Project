@@ -268,7 +268,7 @@ public:
      */
     FORCEINLINE CVector2 GetRow(int32 Row) const noexcept
     {
-        Assert(Row < 2);
+        Check(Row < 2);
         return CVector2(f[Row]);
     }
 
@@ -280,7 +280,7 @@ public:
      */
     FORCEINLINE CVector2 GetColumn(int32 Column) const noexcept
     {
-        Assert(Column < 2);
+        Check(Column < 2);
         return CVector2(f[0][Column], f[1][Column]);
     }
 

@@ -104,7 +104,7 @@ GenericThreadRef CThreadManager::GetNamedThread(const String& InName)
         }
     }
 
-    LOG_WARNING("No thread with the name '" + InName + "'");
+    LOG_WARNING("No thread with the name '%s'", InName.CStr());
     return nullptr;
 }
 
@@ -118,6 +118,6 @@ GenericThreadRef CThreadManager::GetThreadFromHandle(void* ThreadHandle)
         }
     }
 
-    LOG_WARNING("No thread with the handle '" + ToString(ThreadHandle) + "'");
+    LOG_WARNING("No thread with the handle '%llu'", ThreadHandle);
     return nullptr;
 }

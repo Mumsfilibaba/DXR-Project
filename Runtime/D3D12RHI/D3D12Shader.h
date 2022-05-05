@@ -109,7 +109,7 @@ public:
     FORCEINLINE SD3D12ShaderParameter GetConstantBufferParameter(uint32 ParameterIndex)
     {
         D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ConstantBufferParameters.Size())
-                        ,"Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(ConstantBufferParameters.Size()) + " slots");
+                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ConstantBufferParameters.Size());
         return ConstantBufferParameters[ParameterIndex];
     }
 
@@ -118,7 +118,7 @@ public:
     FORCEINLINE SD3D12ShaderParameter GetShaderResourceParameter(uint32 ParameterIndex)
     {
         D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(ShaderResourceParameters.Size())
-                        ,"Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(ShaderResourceParameters.Size()) + " slots");
+                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, ShaderResourceParameters.Size());
         return ShaderResourceParameters[ParameterIndex];
     }
 
@@ -127,7 +127,7 @@ public:
     FORCEINLINE SD3D12ShaderParameter GetUnorderedAccessParameter(uint32 ParameterIndex)
     {
         D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(UnorderedAccessParameters.Size())
-                        ,"Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(UnorderedAccessParameters.Size()) + " slots");
+                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, UnorderedAccessParameters.Size());
         return UnorderedAccessParameters[ParameterIndex];
     }
 
@@ -136,7 +136,7 @@ public:
     FORCEINLINE SD3D12ShaderParameter GetSamplerStateParameter(uint32 ParameterIndex)
     {
         D3D12_ERROR_COND(ParameterIndex < static_cast<uint32>(SamplerParameters.Size())
-                        ,"Trying to access ParameterIndex=" + ToString(ParameterIndex) + ", but the shader only has " + ToString(SamplerParameters.Size()) + " slots");
+                        ,"Trying to access ParameterIndex=%u, but the shader only has %u slots", ParameterIndex, SamplerParameters.Size());
         return SamplerParameters[ParameterIndex];
     }
 

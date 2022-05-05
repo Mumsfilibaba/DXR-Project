@@ -167,7 +167,7 @@ public:
 
     void AddUnorderedAccessBarrier(ID3D12Resource* Resource)
     {
-        Assert(Resource != nullptr);
+        Check(Resource != nullptr);
 
         D3D12_RESOURCE_BARRIER Barrier;
         CMemory::Memzero(&Barrier);

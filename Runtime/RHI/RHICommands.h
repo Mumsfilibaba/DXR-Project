@@ -1129,8 +1129,7 @@ public:
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
         CDebug::OutputDebugString(Marker + '\n');
-        LOG_INFO(Marker);
-
+        LOG_INFO("%s", Marker.CStr());
         CommandContext.InsertMarker(Marker);
     }
 

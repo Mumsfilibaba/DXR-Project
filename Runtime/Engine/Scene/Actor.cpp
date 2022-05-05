@@ -107,7 +107,7 @@ void CActor::Tick(CTimestamp DeltaTime)
 
 void CActor::AddComponent(CComponent* InComponent)
 {
-    Assert(InComponent != nullptr);
+    Check(InComponent != nullptr);
     Components.Emplace(InComponent);
 
     if (SceneOwner)

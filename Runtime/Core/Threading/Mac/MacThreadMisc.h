@@ -23,7 +23,7 @@ public:
 
     static FORCEINLINE bool Initialize() 
     { 
-        Assert(IsMainThread());
+        Check(IsMainThread());
 
         // Then init the mainthread runloop
 		return RegisterMainRunLoop();

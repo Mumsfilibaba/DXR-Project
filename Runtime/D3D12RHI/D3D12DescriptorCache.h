@@ -86,7 +86,7 @@ public:
                 for (uint32 Index = 0; Index < kDescriptorTableSize; Index++)
                 {
                     ViewType* View = ResourceViews[Stage][Index];
-                    Assert(View != nullptr);
+                    Check(View != nullptr);
 
                     CopyDescriptors[Stage][Index] = View->GetOfflineHandle();
                 }
@@ -155,8 +155,8 @@ public:
     FORCEINLINE void SetVertexBuffer(CD3D12VertexBuffer* VertexBuffer, uint32 Slot)
     {
         D3D12_ERROR_COND(Slot <= D3D12_MAX_VERTEX_BUFFER_SLOTS
-                        ,"Trying to bind a VertexBuffer to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxVertexBufferCount=" + ToString(D3D12_MAX_VERTEX_BUFFER_SLOTS) + ") ");
-
+                        ,"Trying to bind a VertexBuffer to a slot (Slot=%u) higher than the maximum (MaxVertexBufferCount=%u)", Slot, D3D12_MAX_VERTEX_BUFFER_SLOTS);
+                        
         if (VertexBuffers[Slot] != VertexBuffer)
         {
             VertexBuffers[Slot] = VertexBuffer;
@@ -214,7 +214,7 @@ public:
     FORCEINLINE void SetRenderTargetView(CD3D12RenderTargetView* RenderTargetView, uint32 Slot)
     {
         D3D12_ERROR_COND(Slot <= D3D12_MAX_RENDER_TARGET_COUNT
-                        ,"Trying to bind a RenderTarget to a slot (Slot=" + ToString(Slot) + ") higher than the maximum (MaxRenderTargetCount=" + ToString(D3D12_MAX_RENDER_TARGET_COUNT) + ") ");
+                        ,"Trying to bind a RenderTarget to a slot (Slot=%u) higher than the maximum (MaxRenderTargetCount=%u)", Slot, D3D12_MAX_RENDER_TARGET_COUNT);
 
         if (RenderTargetView)
         {
@@ -433,7 +433,7 @@ public:
     FORCEINLINE void Set32BitShaderConstants(const uint32* InConstants, uint32 InNumConstants)
     {
         D3D12_ERROR_COND(InNumConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT
-                        ,"Trying to set a number of shader-constants (NumConstants=" + ToString(InNumConstants) + ") higher than the maximum (MaxShaderConstants=" + ToString(D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT) + ") ");
+                        ,"Trying to set a number of shader-constants (NumConstants=%u higher than the maximum (MaxShaderConstants=%u", InNumConstants, D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
 
         CMemory::Memcpy(Constants, InConstants, sizeof(uint32) * InNumConstants);
         NumConstants = InNumConstants;

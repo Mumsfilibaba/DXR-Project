@@ -45,12 +45,12 @@ bool COBJLoader::LoadFile(const String& Filename, SSceneData& OutScene, bool Rev
     String MTLFiledir = String(Filename.CStr(), Filename.ReverseFind('/'));
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.CStr(), MTLFiledir.CStr(), true, false))
     {
-        LOG_WARNING(("[COBJLoader]: Failed to load '" + Filename + "'." + " Warning: " + Warning.c_str() + " Error: " + Error.c_str()).CStr());
+        LOG_WARNING("[COBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.CStr(), Warning.c_str(), Error.c_str());
         return false;
     }
     else
     {
-        LOG_INFO(("[COBJLoader]: Loaded '" + Filename + "'").CStr());
+        LOG_INFO("[COBJLoader]: Loaded '%s'", Filename.CStr());
     }
 
     // Create All Materials in scene
@@ -104,7 +104,7 @@ bool COBJLoader::LoadFile(const String& Filename, SSceneData& OutScene, bool Rev
                 SVertex TempVertex;
 
                 // Normals and texcoords are optional, Positions are required
-                Assert(Index.vertex_index >= 0);
+                Check(Index.vertex_index >= 0);
 
                 auto PositionIndex = 3 * Index.vertex_index;
                 TempVertex.Position = CVector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);

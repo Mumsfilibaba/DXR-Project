@@ -42,7 +42,7 @@ void CConsoleManager::RegisterCommand(const String& Name, IConsoleCommand* Comma
 {
     if (!RegisterObject(Name, Command))
     {
-        LOG_WARNING("ConsoleCommand '" + Name + "' is already registered");
+        LOG_WARNING("ConsoleCommand '%s' is already registered", Name.CStr());
     }
 }
 
@@ -50,7 +50,7 @@ void CConsoleManager::RegisterVariable(const String& Name, IConsoleVariable* Var
 {
     if (!RegisterObject(Name, Variable))
     {
-        LOG_WARNING("ConsoleVariable '" + Name + "' is already registered");
+        LOG_WARNING("ConsoleVariable '%s' is already registered", Name.CStr());
     }
 }
 
@@ -74,14 +74,14 @@ IConsoleCommand* CConsoleManager::FindCommand(const String& Name)
     IConsoleObject* Object = FindConsoleObject(Name);
     if (!Object)
     {
-        LOG_ERROR("Could not find ConsoleCommand '" + Name + '\'');
+        LOG_ERROR("Could not find ConsoleCommand '%s'", Name.CStr());
         return nullptr;
     }
 
     IConsoleCommand* Command = Object->AsCommand();
     if (!Command)
     {
-        LOG_ERROR('\'' + Name + "'Is not a ConsoleCommand'");
+        LOG_ERROR("'%s' is not a ConsoleCommand'", Name.CStr());
         return nullptr;
     }
     else
@@ -95,14 +95,14 @@ IConsoleVariable* CConsoleManager::FindVariable(const String& Name)
     IConsoleObject* Object = FindConsoleObject(Name);
     if (!Object)
     {
-        LOG_ERROR("Could not find ConsoleVariable '" + Name + '\'');
+        LOG_ERROR("Could not find ConsoleVariable '%s'", Name.CStr());
         return nullptr;
     }
 
     IConsoleVariable* Variable = Object->AsVariable();
     if (!Variable)
     {
-        LOG_ERROR('\'' + Name + "'Is not a ConsoleVariable'");
+        LOG_ERROR("'%s' is not a ConsoleVariable", Name.CStr());
         return nullptr;
     }
     else
@@ -220,7 +220,7 @@ bool CConsoleManager::RegisterObject(const String& Name, IConsoleObject* Object)
     auto ExistingObject = ConsoleObjects.find(Name);
     if (ExistingObject == ConsoleObjects.end())
     {
-        LOG_INFO("Registered ConsoleObject '" + Name + "'");
+        LOG_INFO("Registered ConsoleObject '%s'", Name.CStr());
 
         ConsoleObjects.insert(std::make_pair(Name, Object));
         return true;

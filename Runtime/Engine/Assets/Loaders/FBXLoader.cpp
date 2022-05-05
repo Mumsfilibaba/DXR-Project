@@ -99,7 +99,7 @@ bool CFBXLoader::LoadFile(const String& Filename, SSceneData& OutScene, uint32 F
     FILE* File = fopen(Filename.CStr(), "rb");
     if (!File)
     {
-        LOG_ERROR(("[CFBXLoader]: Failed to open '" + Filename + "'").CStr());
+        LOG_ERROR("[CFBXLoader]: Failed to open '%s'", Filename.CStr());
         return false;
     }
 
@@ -125,7 +125,7 @@ bool CFBXLoader::LoadFile(const String& Filename, SSceneData& OutScene, uint32 F
 
     if (NumBytesRead != FileSize)
     {
-        LOG_ERROR(("[CFBXLoader]: Failed to load '" + Filename + "'").CStr());
+        LOG_ERROR("[CFBXLoader]: Failed to load '%s'", Filename.CStr());
         return false;
     }
 
@@ -134,7 +134,7 @@ bool CFBXLoader::LoadFile(const String& Filename, SSceneData& OutScene, uint32 F
     ofbx::IScene* FBXScene = ofbx::load(Bytes, FileSize, (ofbx::u64)ofbx::LoadFlags::TRIANGULATE);
     if (!FBXScene)
     {
-        LOG_ERROR(("[CMeshFactory]: Failed to load content '" + Filename + "'").CStr());
+        LOG_ERROR("[CMeshFactory]: Failed to load content '%s'", Filename.CStr());
         return false;
     }
 
@@ -190,13 +190,13 @@ bool CFBXLoader::LoadFile(const String& Filename, SSceneData& OutScene, uint32 F
         const int* Materials = CurrentGeom->getMaterials();
 
         const ofbx::Vec3* Vertices = CurrentGeom->getVertices();
-        Assert(Vertices != nullptr);
+        Check(Vertices != nullptr);
 
         const ofbx::Vec3* Normals = CurrentGeom->getNormals();
-        Assert(Normals != nullptr);
+        Check(Normals != nullptr);
 
         const ofbx::Vec2* TexCoords = CurrentGeom->getUVs(0);
-        Assert(TexCoords != nullptr);
+        Check(TexCoords != nullptr);
 
         const ofbx::Vec3* Tangents = CurrentGeom->getTangents();
 

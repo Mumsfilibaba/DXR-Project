@@ -104,8 +104,8 @@ bool CEngineLoop::PreInitialize()
     }
 
 #if !PRODUCTION_BUILD
-    LOG_INFO("ProjectName=" + String(CProjectManager::GetProjectName()));
-    LOG_INFO("ProjectPath=" + String(CProjectManager::GetProjectPath()));
+    LOG_INFO("ProjectName=%s", CProjectManager::GetProjectName());
+    LOG_INFO("ProjectPath=%s", CProjectManager::GetProjectPath());
 #endif
 
     if (!CThreadManager::Initialize())

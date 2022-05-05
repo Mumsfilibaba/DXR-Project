@@ -53,11 +53,11 @@ bool CMacApplication::Initialize()
 {
     SCOPED_AUTORELEASE_POOL();
 
-    Assert(PlatformThreadMisc::IsMainThread()); 
+    Check(PlatformThreadMisc::IsMainThread()); 
 
     /* Init application singleton */
     [NSApplication sharedApplication];
-    Assert(NSApp != nullptr);
+    Check(NSApp != nullptr);
     
     [NSApp activateIgnoringOtherApps:YES];
     [NSApp setPresentationOptions:NSApplicationPresentationDefault];
@@ -84,7 +84,7 @@ bool CMacApplication::InitializeAppMenu()
     SCOPED_AUTORELEASE_POOL();
 
     // This should only be init from the main thread, but assert just to be sure.
-    Assert(PlatformThreadMisc::IsMainThread());
+    Check(PlatformThreadMisc::IsMainThread());
 
     // Init the default macOS menu
     NSMenu*     MenuBar     = [[NSMenu alloc] init];

@@ -49,7 +49,7 @@ public:
             String ErrorString;
             PlatformDebugMisc::GetLastErrorString(ErrorString);
 
-            LOG_ERROR(ErrorString);
+            LOG_ERROR("%s", ErrorString.CStr());
 
             return false;
         }

@@ -17,21 +17,18 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/IrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("Failed to compile IrradianceGen Shader");
-        CDebug::DebugBreak();
     }
 
     IrradianceGenShader = RHICreateComputeShader(Code);
     if (!IrradianceGenShader)
     {
         LOG_ERROR("Failed to create IrradianceGen Shader");
-        CDebug::DebugBreak();
     }
 
     IrradianceGenPSO = RHICreateComputePipelineState(CRHIComputePipelineStateInitializer(IrradianceGenShader.Get()));
     if (!IrradianceGenPSO)
     {
         LOG_ERROR("Failed to create IrradianceGen PipelineState");
-        CDebug::DebugBreak();
     }
     else
     {
@@ -41,21 +38,18 @@ bool CLightProbeRenderer::Init(SLightSetup& LightSetup, SFrameResources& FrameRe
     if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/SpecularIrradianceGen.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, Code))
     {
         LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
-        CDebug::DebugBreak();
     }
 
     SpecularIrradianceGenShader = RHICreateComputeShader(Code);
     if (!SpecularIrradianceGenShader)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen Shader");
-        CDebug::DebugBreak();
     }
 
     SpecularIrradianceGenPSO = RHICreateComputePipelineState(CRHIComputePipelineStateInitializer(SpecularIrradianceGenShader.Get()));
     if (!SpecularIrradianceGenPSO)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen PipelineState");
-        CDebug::DebugBreak();
     }
     else
     {

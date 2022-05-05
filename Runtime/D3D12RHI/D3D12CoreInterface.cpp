@@ -601,7 +601,7 @@ CRHIIndexBuffer* CD3D12CoreInterface::RHICreateIndexBuffer(const CRHIIndexBuffer
 
 CRHIConstantBuffer* CD3D12CoreInterface::RHICreateConstantBuffer(const CRHIConstantBufferInitializer& Initializer)
 {
-    Assert(!Initializer.AllowSRV() && !Initializer.AllowUAV());
+    Check(!Initializer.AllowSRV() && !Initializer.AllowUAV());
     return CreateBuffer<CD3D12ConstantBuffer>(Initializer);
 }
 
@@ -654,7 +654,7 @@ CRHIShaderResourceView* CD3D12CoreInterface::RHICreateShaderResourceView(const C
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     CMemory::Memzero(&Desc);
 
-    Assert(((Initializer.Texture->GetFlags() & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None) && Initializer.Format != EFormat::Unknown);
+    Check(((Initializer.Texture->GetFlags() & ETextureUsageFlags::AllowSRV) != ETextureUsageFlags::None) && Initializer.Format != EFormat::Unknown);
     Desc.Format                  = ConvertFormat(Initializer.Format);
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
@@ -723,7 +723,7 @@ CRHIShaderResourceView* CD3D12CoreInterface::RHICreateShaderResourceView(const C
     }
 
     CD3D12Resource* D3D12Resource = GetD3D12Resource(Initializer.Texture);
-    Assert(D3D12Resource != nullptr);
+    Check(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(D3D12Resource, Desc))
     {
@@ -747,7 +747,7 @@ CRHIShaderResourceView* CD3D12CoreInterface::RHICreateShaderResourceView(const C
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     CMemory::Memzero(&Desc);
 
-    Assert(((Initializer.Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
+    Check(((Initializer.Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
     Desc.ViewDimension           = D3D12_SRV_DIMENSION_BUFFER;
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     Desc.Buffer.FirstElement     = Initializer.FirstElement;
@@ -773,7 +773,7 @@ CRHIShaderResourceView* CD3D12CoreInterface::RHICreateShaderResourceView(const C
     }
 
     CD3D12Resource* D3D12Resource = D3D12Buffer->GetD3D12Resource();
-    Assert(D3D12Resource != nullptr);
+    Check(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(D3D12Resource, Desc))
     {
@@ -792,7 +792,7 @@ CRHIUnorderedAccessView* CD3D12CoreInterface::RHICreateUnorderedAccessView(const
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     CMemory::Memzero(&Desc);
 
-    Assert(((Initializer.Texture->GetFlags() & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None) && Initializer.Format != EFormat::Unknown);
+    Check(((Initializer.Texture->GetFlags() & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None) && Initializer.Format != EFormat::Unknown);
     Desc.Format = ConvertFormat(Initializer.Format);
 
     if (CD3D12Texture2D* Texture2D = static_cast<CD3D12Texture2D*>(Initializer.Texture->GetTexture2D()))
@@ -854,7 +854,7 @@ CRHIUnorderedAccessView* CD3D12CoreInterface::RHICreateUnorderedAccessView(const
     }
 
     CD3D12Resource* D3D12Resource = GetD3D12Resource(Initializer.Texture);
-    Assert(D3D12Resource != nullptr);
+    Check(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(nullptr, D3D12Resource, Desc))
     {
@@ -878,7 +878,7 @@ CRHIUnorderedAccessView* CD3D12CoreInterface::RHICreateUnorderedAccessView(const
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     CMemory::Memzero(&Desc);
 
-    Assert(((Initializer.Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
+    Check(((Initializer.Buffer->GetFlags() & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None));
     Desc.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
     Desc.Buffer.FirstElement = Initializer.FirstElement;
     Desc.Buffer.NumElements  = Initializer.NumElements;
@@ -903,7 +903,7 @@ CRHIUnorderedAccessView* CD3D12CoreInterface::RHICreateUnorderedAccessView(const
     }
 
     CD3D12Resource* D3D12Resource = D3D12Buffer->GetD3D12Resource();
-    Assert(D3D12Resource != nullptr);
+    Check(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(nullptr, D3D12Resource, Desc))
     {
@@ -923,7 +923,7 @@ CRHIRenderTargetView* CD3D12CoreInterface::CreateRenderTargetView(const SRHIRend
     CD3D12Resource* Resource = nullptr;
 
     Desc.Format = ConvertFormat(CreateInfo.Format);
-    Assert(CreateInfo.Format != EFormat::Unknown);
+    Check(CreateInfo.Format != EFormat::Unknown);
 
     if (CreateInfo.Type == SRHIRenderTargetViewInfo::EType::Texture2D)
     {
@@ -931,7 +931,7 @@ CRHIRenderTargetView* CD3D12CoreInterface::CreateRenderTargetView(const SRHIRend
         CD3D12Texture* D3D12Texture = D3D12TextureCast(Texture);
         Resource = D3D12Texture->GetD3D12Resource();
 
-        Assert(((Texture->GetFlags() & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None));
+        Check(((Texture->GetFlags() & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None));
 
         if (Texture->IsMultiSampled())
         {
@@ -950,7 +950,7 @@ CRHIRenderTargetView* CD3D12CoreInterface::CreateRenderTargetView(const SRHIRend
         CD3D12Texture*      D3D12Texture = D3D12TextureCast(Texture);
         Resource = D3D12Texture->GetD3D12Resource();
 
-        Assert(((Texture->GetFlags() & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None));
+        Check(((Texture->GetFlags() & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None));
 
         if (Texture->IsMultiSampled())
         {
@@ -973,7 +973,7 @@ CRHIRenderTargetView* CD3D12CoreInterface::CreateRenderTargetView(const SRHIRend
         CD3D12Texture*   D3D12Texture = D3D12TextureCast(Texture);
         Resource = D3D12Texture->GetD3D12Resource();
 
-        Assert(((Texture->GetFlags() & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None));
+        Check(((Texture->GetFlags() & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None));
 
         Desc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = CreateInfo.TextureCube.Mip;
@@ -987,7 +987,7 @@ CRHIRenderTargetView* CD3D12CoreInterface::CreateRenderTargetView(const SRHIRend
         CD3D12Texture*        D3D12Texture = D3D12TextureCast(Texture);
         Resource = D3D12Texture->GetD3D12Resource();
 
-        Assert(((Texture->GetFlags() & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None));
+        Check(((Texture->GetFlags() & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None));
 
         Desc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = CreateInfo.TextureCubeArray.Mip;
@@ -1001,7 +1001,7 @@ CRHIRenderTargetView* CD3D12CoreInterface::CreateRenderTargetView(const SRHIRend
         CD3D12Texture* D3D12Texture = D3D12TextureCast(Texture);
         Resource = D3D12Texture->GetD3D12Resource();
 
-        Assert(((Texture->GetFlags() & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None));
+        Check(((Texture->GetFlags() & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None));
 
         Desc.ViewDimension         = D3D12_RTV_DIMENSION_TEXTURE3D;
         Desc.Texture3D.MipSlice    = CreateInfo.Texture3D.Mip;
@@ -1015,7 +1015,7 @@ CRHIRenderTargetView* CD3D12CoreInterface::CreateRenderTargetView(const SRHIRend
         return nullptr;
     }
 
-    Assert(Resource != nullptr);
+    Check(Resource != nullptr);
 
     if (!DxView->CreateView(Resource, Desc))
     {
@@ -1035,7 +1035,7 @@ CRHIDepthStencilView* CD3D12CoreInterface::CreateDepthStencilView(const SRHIDept
     CD3D12Resource* Resource = nullptr;
 
     Desc.Format = ConvertFormat(CreateInfo.Format);
-    Assert(CreateInfo.Format != EFormat::Unknown);
+    Check(CreateInfo.Format != EFormat::Unknown);
 
     if (CreateInfo.Type == SRHIDepthStencilViewInfo::EType::Texture2D)
     {
@@ -1043,7 +1043,7 @@ CRHIDepthStencilView* CD3D12CoreInterface::CreateDepthStencilView(const SRHIDept
         CD3D12Texture* D3D12Texture = D3D12TextureCast(Texture);
         Resource = D3D12Texture->GetD3D12Resource();
 
-        Assert(((Texture->GetFlags() & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None));
+        Check(((Texture->GetFlags() & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None));
 
         if (Texture->IsMultiSampled())
         {
@@ -1061,7 +1061,7 @@ CRHIDepthStencilView* CD3D12CoreInterface::CreateDepthStencilView(const SRHIDept
         CD3D12Texture*      D3D12Texture = D3D12TextureCast(Texture);
         Resource = D3D12Texture->GetD3D12Resource();
 
-        Assert(((Texture->GetFlags() & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None));
+        Check(((Texture->GetFlags() & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None));
 
         if (Texture->IsMultiSampled())
         {
@@ -1083,7 +1083,7 @@ CRHIDepthStencilView* CD3D12CoreInterface::CreateDepthStencilView(const SRHIDept
         CD3D12Texture*   D3D12Texture = D3D12TextureCast(Texture);
         Resource = D3D12Texture->GetD3D12Resource();
 
-        Assert(((Texture->GetFlags() & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None));
+        Check(((Texture->GetFlags() & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None));
 
         Desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = CreateInfo.TextureCube.Mip;
@@ -1096,7 +1096,7 @@ CRHIDepthStencilView* CD3D12CoreInterface::CreateDepthStencilView(const SRHIDept
         CD3D12Texture*        D3D12Texture = D3D12TextureCast(Texture);
         Resource = D3D12Texture->GetD3D12Resource();
 
-        Assert(((Texture->GetFlags() & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None));
+        Check(((Texture->GetFlags() & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None));
 
         Desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = CreateInfo.TextureCubeArray.Mip;
@@ -1193,7 +1193,7 @@ CRHIRayGenShader* CD3D12CoreInterface::RHICreateRayGenShader(const TArray<uint8>
     TSharedRef<CD3D12RayGenShader> Shader = dbg_new CD3D12RayGenShader(Device, ShaderCode);
     if (!CD3D12RayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
+        D3D12_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
@@ -1207,7 +1207,7 @@ CRHIRayAnyHitShader* CD3D12CoreInterface::RHICreateRayAnyHitShader(const TArray<
     TSharedRef<CD3D12RayAnyHitShader> Shader = dbg_new CD3D12RayAnyHitShader(Device, ShaderCode);
     if (!CD3D12RayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
+        D3D12_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
@@ -1221,7 +1221,7 @@ CRHIRayClosestHitShader* CD3D12CoreInterface::RHICreateRayClosestHitShader(const
     TSharedRef<CD3D12RayClosestHitShader> Shader = dbg_new CD3D12RayClosestHitShader(Device, ShaderCode);
     if (!CD3D12RayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
+        D3D12_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
@@ -1235,7 +1235,7 @@ CRHIRayMissShader* CD3D12CoreInterface::RHICreateRayMissShader(const TArray<uint
     TSharedRef<CD3D12RayMissShader> Shader = dbg_new CD3D12RayMissShader(Device, ShaderCode);
     if (!CD3D12RayTracingShader::GetRayTracingShaderReflection(Shader.Get()))
     {
-        LOG_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
+        D3D12_ERROR("[CD3D12CoreInterface]: Failed to retrieve Shader Identifier");
         return nullptr;
     }
     else
@@ -1323,7 +1323,7 @@ CRHIGraphicsPipelineState* CD3D12CoreInterface::RHICreateGraphicsPipelineState(c
 
 CRHIComputePipelineState* CD3D12CoreInterface::RHICreateComputePipelineState(const CRHIComputePipelineStateInitializer& Initializer)
 {
-    Assert(Initializer.Shader != nullptr);
+    Check(Initializer.Shader != nullptr);
 
     TSharedRef<CD3D12ComputeShader>        Shader           = MakeSharedRef<CD3D12ComputeShader>(Initializer.Shader);
     TSharedRef<CD3D12ComputePipelineState> NewPipelineState = dbg_new CD3D12ComputePipelineState(Device, Shader);

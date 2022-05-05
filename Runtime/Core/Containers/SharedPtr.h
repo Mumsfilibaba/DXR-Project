@@ -122,7 +122,7 @@ public:
                 Counter = new CPointerReferenceCounter();
             }
 
-            Assert(Counter != nullptr);
+            Check(Counter != nullptr);
             Counter->AddStrongRef();
         }
         else
@@ -139,7 +139,7 @@ public:
         {
             // ...however, if we init a weak reference then there has to be a counter as well, since weak-refs require a strong
             Counter = NewCounter;
-            Assert(Counter != nullptr);
+            Check(Counter != nullptr);
             Counter->AddWeakRef();
         }
         else
@@ -156,7 +156,7 @@ public:
         {
             // ...However if the Ptr is valid then the counter also has to be, otherwise it is not a valid move
             Counter = NewCounter;
-            Assert(Counter != nullptr);
+            Check(Counter != nullptr);
         }
         else
         {
@@ -167,7 +167,7 @@ public:
     /** Releases a strong ref and deletes the pointer if the strong refcount is zero, if the weak refcount is also zero the counter is deleted */
     FORCEINLINE void ReleaseStrong() noexcept
     {
-        Assert(Counter != nullptr);
+        Check(Counter != nullptr);
         Counter->ReleaseStrongRef();
 
         CounterType StrongRefs = Counter->GetStrongRefCount();
@@ -187,7 +187,7 @@ public:
     /** Releases a weak reference and if all references are gone, then delete the counter */
     FORCEINLINE void ReleaseWeak() noexcept
     {
-        Assert(Counter != nullptr);
+        Check(Counter != nullptr);
         Counter->ReleaseWeakRef();
 
         CounterType NumStrongRefs = Counter->GetStrongRefCount();
@@ -234,13 +234,13 @@ public:
 
     FORCEINLINE CounterType GetWeakRefCount() const noexcept
     {
-        Assert(Counter != nullptr);
+        Check(Counter != nullptr);
         return Counter->GetWeakRefCount();
     }
 
     FORCEINLINE CounterType GetStrongRefCount() const noexcept
     {
-        Assert(Counter != nullptr);
+        Check(Counter != nullptr);
         return Counter->GetStrongRefCount();
     }
 
@@ -531,7 +531,7 @@ public:
      */
     FORCEINLINE ElementType& Dereference() const noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
         return *Get();
     }
 
@@ -571,7 +571,7 @@ public:
     FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[](SizeType Index) const noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
         return Get()[Index];
     }
 
@@ -978,7 +978,7 @@ public:
      */
     FORCEINLINE ElementType& Dereference() const noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
         return *Get();
     }
 
@@ -1024,7 +1024,7 @@ public:
     FORCEINLINE typename TEnableIf<TAnd<TIsSame<U, T>, TIsUnboundedArray<U>>::Value, typename TAddLValueReference<typename TRemoveExtent<U>::Type>::Type>::Type
         operator[](SizeType Index) const noexcept
     {
-        Assert(IsValid());
+        Check(IsValid());
         return Get()[Index];
     }
 

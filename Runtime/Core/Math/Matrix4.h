@@ -650,7 +650,7 @@ public:
      */
     FORCEINLINE CVector4 GetRow(int Row) const noexcept
     {
-        Assert(Row < 4);
+        Check(Row < 4);
         return CVector4(f[Row]);
     }
 
@@ -662,7 +662,7 @@ public:
      */
     FORCEINLINE CVector4 GetColumn(int Column) const noexcept
     {
-        Assert(Column < 4);
+        Check(Column < 4);
         return CVector4(f[0][Column], f[1][Column], f[2][Column], f[3][Column]);
     }
 

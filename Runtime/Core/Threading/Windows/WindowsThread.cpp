@@ -86,7 +86,7 @@ DWORD WINAPI CWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
             SetThreadDescription(CurrentThread->Thread, WideName.CStr());
         }
 
-        Assert(CurrentThread->Function);
+        Check(CurrentThread->Function);
         CurrentThread->Function();
 
         return 0;

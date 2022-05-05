@@ -15,43 +15,43 @@
 // D3D12 Log Macros
 
 #if !PRODUCTION_BUILD
-    #define D3D12_ERROR(ErrorMessage)                                \
-        do                                                           \
-        {                                                            \
-            LOG_ERROR(String("[D3D12RHI] ") + String(ErrorMessage)); \
-            CDebug::DebugBreak();                                    \
+    #define D3D12_ERROR(...)                     \
+        do                                       \
+        {                                        \
+            LOG_ERROR("[D3D12RHI] "__VA_ARGS__); \
+            CDebug::DebugBreak();                \
         } while (false)
     
-    #define D3D12_ERROR_COND(bCondition, ErrorMessage)               \
-        do                                                           \
-        {                                                            \
-            if (!(bCondition))                                       \
-            {                                                        \
-                D3D12_ERROR(ErrorMessage);                           \
-            }                                                        \
+    #define D3D12_ERROR_COND(bCondition, ...) \
+        do                                    \
+        {                                     \
+            if (!(bCondition))                \
+            {                                 \
+                D3D12_ERROR(__VA_ARGS__);     \
+            }                                 \
         } while (false)
     
-    #define D3D12_WARNING(Message)                                   \
-        do                                                           \
-        {                                                            \
-            LOG_WARNING(String("[D3D12RHI] ") + String(Message));    \
+    #define D3D12_WARNING(Message)                 \
+        do                                         \
+        {                                          \
+            LOG_WARNING("[D3D12RHI] "__VA_ARGS__); \
         } while (false)
     
-    #define D3D12_INFO(Message)                                      \
-        do                                                           \
-        {                                                            \
-            LOG_INFO(String("[D3D12RHI] ") + String(Message));       \
+    #define D3D12_INFO(Message)                 \
+        do                                      \
+        {                                       \
+            LOG_INFO("[D3D12RHI] "__VA_ARGS__); \
         } while (false)
 #else
-    #define D3D12_ERROR_COND(bCondition, ErrorMessage) \
-        do                                             \
-        {                                              \
-            (void)(bCondition);                        \
+    #define D3D12_ERROR_COND(bCondition, ...) \
+        do                                    \
+        {                                     \
+            (void)(bCondition);               \
         } while(false)
 
-    #define D3D12_ERROR(ErrorMessage) do { (void)(0); } while(false)
-    #define D3D12_WARNING(Message)    do { (void)(0); } while(false)
-    #define D3D12_INFO(Message)       do { (void)(0); } while(false)
+    #define D3D12_ERROR(...)   do { (void)(0); } while(false)
+    #define D3D12_WARNING(...) do { (void)(0); } while(false)
+    #define D3D12_INFO(...)    do { (void)(0); } while(false)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
