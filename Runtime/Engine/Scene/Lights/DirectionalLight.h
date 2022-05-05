@@ -62,19 +62,19 @@ public:
 
     FORCEINLINE const CMatrix4& GetMatrix(uint32 CascadeIndex) const
     {
-        Assert(CascadeIndex < NUM_SHADOW_CASCADES);
+        Check(CascadeIndex < NUM_SHADOW_CASCADES);
         return Matrices[CascadeIndex];
     }
 
     FORCEINLINE const CMatrix4& GetViewMatrix(uint32 CascadeIndex) const
     {
-        Assert(CascadeIndex < NUM_SHADOW_CASCADES);
+        Check(CascadeIndex < NUM_SHADOW_CASCADES);
         return ViewMatrices[CascadeIndex];
     }
 
     FORCEINLINE const CMatrix4& GetProjectionMatrix(uint32 CascadeIndex) const
     {
-        Assert(CascadeIndex < NUM_SHADOW_CASCADES);
+        Check(CascadeIndex < NUM_SHADOW_CASCADES);
         return ProjectionMatrices[CascadeIndex];
     }
 

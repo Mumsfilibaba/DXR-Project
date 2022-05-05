@@ -190,13 +190,13 @@ bool CFBXLoader::LoadFile(const String& Filename, SSceneData& OutScene, uint32 F
         const int* Materials = CurrentGeom->getMaterials();
 
         const ofbx::Vec3* Vertices = CurrentGeom->getVertices();
-        Assert(Vertices != nullptr);
+        Check(Vertices != nullptr);
 
         const ofbx::Vec3* Normals = CurrentGeom->getNormals();
-        Assert(Normals != nullptr);
+        Check(Normals != nullptr);
 
         const ofbx::Vec2* TexCoords = CurrentGeom->getUVs(0);
-        Assert(TexCoords != nullptr);
+        Check(TexCoords != nullptr);
 
         const ofbx::Vec3* Tangents = CurrentGeom->getTangents();
 

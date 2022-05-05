@@ -127,7 +127,7 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
     else
     {
         // Otherwise schedule Block on main thread
-        Assert(GMainThread != nullptr);
+        Check(GMainThread != nullptr);
 
         if (bWaitUntilFinished)
         {

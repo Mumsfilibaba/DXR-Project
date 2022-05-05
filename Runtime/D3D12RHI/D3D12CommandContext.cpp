@@ -23,7 +23,7 @@
 
 void CD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
 {
-    Assert(Resource != nullptr);
+    Check(Resource != nullptr);
 
     if (BeforeState != AfterState)
     {
@@ -289,7 +289,7 @@ void CD3D12CommandContext::UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetI
 
 void CD3D12CommandContext::StartContext()
 {
-    Assert(bIsReady == false);
+    Check(bIsReady == false);
 
     TRACE_FUNCTION_SCOPE();
 
@@ -319,7 +319,7 @@ void CD3D12CommandContext::StartContext()
 
 void CD3D12CommandContext::FinishContext()
 {
-    Assert(bIsReady == true);
+    Check(bIsReady == true);
 
     TRACE_FUNCTION_SCOPE();
 

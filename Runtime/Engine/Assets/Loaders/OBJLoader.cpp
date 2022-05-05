@@ -104,7 +104,7 @@ bool COBJLoader::LoadFile(const String& Filename, SSceneData& OutScene, bool Rev
                 SVertex TempVertex;
 
                 // Normals and texcoords are optional, Positions are required
-                Assert(Index.vertex_index >= 0);
+                Check(Index.vertex_index >= 0);
 
                 auto PositionIndex = 3 * Index.vertex_index;
                 TempVertex.Position = CVector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);

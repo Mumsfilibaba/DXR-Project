@@ -126,8 +126,8 @@ void CD3D12DescriptorCache::CommitGraphicsDescriptors(CD3D12CommandList& CmdList
 {
     // TRACE_FUNCTION_SCOPE();
 
-    Assert(CmdBatch      != nullptr);
-    Assert(RootSignature != nullptr);
+    Check(CmdBatch      != nullptr);
+    Check(RootSignature != nullptr);
 
     // Vertex and render-targets
     VertexBufferCache.CommitState(CmdList, CmdBatch);
@@ -165,8 +165,8 @@ void CD3D12DescriptorCache::CommitComputeDescriptors(CD3D12CommandList& CmdList,
 {
     // TRACE_FUNCTION_SCOPE();
 
-    Assert(CmdBatch      != nullptr);
-    Assert(RootSignature != nullptr);
+    Check(CmdBatch      != nullptr);
+    Check(RootSignature != nullptr);
 
     ID3D12Device*              DxDevice  = GetDevice()->GetD3D12Device();
     ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();

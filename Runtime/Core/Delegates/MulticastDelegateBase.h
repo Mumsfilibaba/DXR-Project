@@ -297,7 +297,7 @@ protected:
 
     FORCEINLINE void Unlock() const
     {
-        Assert(LockVariable > 0);
+        Check(LockVariable > 0);
         LockVariable--;
     }
 

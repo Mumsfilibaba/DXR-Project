@@ -102,7 +102,7 @@ class TVariant
         {
             static constexpr void(*Table[])(void*) = { &TVariantDestructor<Types>::Destruct... };
 
-            Assert(Index < ArrayCount(Table));
+            Check(Index < ArrayCount(Table));
             Table[Index](Memory);
         }
     };
@@ -125,7 +125,7 @@ class TVariant
         {
             static constexpr void(*Table[])(void*, void*) = { &TVariantCopyConstructor<Types>::Copy... };
 
-            Assert(Index < ArrayCount(Table));
+            Check(Index < ArrayCount(Table));
             Table[Index](Memory, Value);
         }
     };
@@ -148,7 +148,7 @@ class TVariant
         {
             static constexpr void(*Table[])(void*, void*) = { &TVariantMoveConstructor<Types>::Move... };
 
-            Assert(Index < ArrayCount(Table));
+            Check(Index < ArrayCount(Table));
             Table[Index](Memory, Value);
         }
     };
@@ -176,7 +176,7 @@ class TVariant
         {
             static constexpr bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsEqual... };
 
-            Assert(Index < ArrayCount(Table));
+            Check(Index < ArrayCount(Table));
             return Table[Index](LHS, RHS);
         }
 
@@ -184,7 +184,7 @@ class TVariant
         {
             static constexpr bool(*Table[])(const void*, const void*) = { &TVariantComparators<Types>::IsLessThan... };
 
-            Assert(Index < ArrayCount(Table));
+            Check(Index < ArrayCount(Table));
             return Table[Index](LHS, RHS);
         }
     };
@@ -381,7 +381,7 @@ public:
     template<typename T>
     FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, typename TRemoveReference<T>::Type&>::Type GetValue() noexcept
     {
-        Assert(IsValid() && IsType<T>());
+        Check(IsValid() && IsType<T>());
         return *Value.CastStorage<T>();
     }
 
@@ -393,7 +393,7 @@ public:
     template<typename T>
     FORCEINLINE typename TEnableIf<TIsValidType<T>::Value, const typename TRemoveReference<T>::Type&>::Type GetValue() const noexcept
     {
-        Assert(IsValid() && IsType<T>());
+        Check(IsValid() && IsType<T>());
         return *Value.CastStorage<T>();
     }
 

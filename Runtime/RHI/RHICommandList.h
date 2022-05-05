@@ -120,7 +120,7 @@ public:
      */
     FORCEINLINE IRHICommandContext& GetContext()
     {
-        Assert(CmdContext != nullptr);
+        Check(CmdContext != nullptr);
         return *CmdContext;
     }
 
@@ -238,7 +238,7 @@ public:
      */
     void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const TStaticArray<float, 4>& ClearColor)
     {
-        Assert(RenderTargetView != nullptr);
+        Check(RenderTargetView != nullptr);
         InsertCommand<CRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
 
@@ -250,7 +250,7 @@ public:
      */
     void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil)
     {
-        Assert(DepthStencilView != nullptr);
+        Check(DepthStencilView != nullptr);
         InsertCommand<CRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
     }
 
@@ -262,7 +262,7 @@ public:
      */
     void ClearUnorderedAccessView(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor)
     {
-        Assert(UnorderedAccessView != nullptr);
+        Check(UnorderedAccessView != nullptr);
         InsertCommand<CRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
 
@@ -711,7 +711,7 @@ public:
      */
     void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
     {
-        Assert((Geometry != nullptr) && (!bUpdate || (bUpdate && (Geometry->GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)));
+        Check((Geometry != nullptr) && (!bUpdate || (bUpdate && (Geometry->GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)));
         InsertCommand<CRHICommandBuildRayTracingGeometry>(Geometry, VertexBuffer, IndexBuffer, bUpdate);
     }
 
@@ -724,7 +724,7 @@ public:
      */
     void BuildRayTracingScene(CRHIRayTracingScene* Scene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
     {
-        Assert((Scene != nullptr) && (!bUpdate || (bUpdate && (Scene->GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)));
+        Check((Scene != nullptr) && (!bUpdate || (bUpdate && (Scene->GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)));
         InsertCommand<CRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);
     }
 
@@ -747,7 +747,7 @@ public:
      */
     void GenerateMips(CRHITexture* Texture)
     {
-        Assert(Texture != nullptr);
+        Check(Texture != nullptr);
         InsertCommand<CRHICommandGenerateMips>(Texture);
     }
 
@@ -779,7 +779,7 @@ public:
      */
     void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
     {
-        Assert(Buffer != nullptr);
+        Check(Buffer != nullptr);
 
         if (BeforeState != AfterState)
         {
@@ -798,7 +798,7 @@ public:
      */
     void UnorderedAccessTextureBarrier(CRHITexture* Texture)
     {
-        Assert(Texture != nullptr);
+        Check(Texture != nullptr);
         InsertCommand<CRHICommandUnorderedAccessTextureBarrier>(Texture);
     }
 
@@ -809,7 +809,7 @@ public:
      */
     void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)
     {
-        Assert(Buffer != nullptr);
+        Check(Buffer != nullptr);
         InsertCommand<CRHICommandUnorderedAccessBufferBarrier>(Buffer);
     }
 

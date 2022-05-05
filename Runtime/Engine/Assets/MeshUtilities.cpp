@@ -23,7 +23,7 @@ void CMeshUtilities::Subdivide(SMeshData& OutData, uint32 Subdivisions) noexcept
         OldVertexCount = uint32(OutData.Vertices.Size());
         IndexCount = uint32(OutData.Indices.Size());
 
-        Assert(IndexCount % 3 == 0);
+        Check(IndexCount % 3 == 0);
 
         for (uint32 j = 0; j < IndexCount; j += 3)
         {
@@ -161,7 +161,7 @@ void CMeshUtilities::Optimize(SMeshData& OutData, uint32 StartVertex) noexcept
 
 void CMeshUtilities::CalculateHardNormals(SMeshData& OutData) noexcept
 {
-    Assert(OutData.Indices.Size() % 3 == 0);
+    Check(OutData.Indices.Size() % 3 == 0);
 
     for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {
@@ -182,7 +182,7 @@ void CMeshUtilities::CalculateHardNormals(SMeshData& OutData) noexcept
 
 void CMeshUtilities::CalculateSoftNormals(SMeshData& OutData) noexcept
 {
-    Assert(OutData.Indices.Size() % 3 == 0);
+    Check(OutData.Indices.Size() % 3 == 0);
 
     // TODO: Write better version. For now calculate the hard normals and then average all of them
     CalculateHardNormals(OutData);
@@ -210,7 +210,7 @@ void CMeshUtilities::CalculateSoftNormals(SMeshData& OutData) noexcept
 
 void CMeshUtilities::CalculateTangents(SMeshData& OutData) noexcept
 {
-    Assert(OutData.Indices.Size() % 3 == 0);
+    Check(OutData.Indices.Size() % 3 == 0);
 
     auto CalculateTangentFromVectors = [](SVertex& Vertex1, const SVertex& Vertex2, const SVertex& Vertex3)
     {
@@ -242,7 +242,7 @@ void CMeshUtilities::CalculateTangents(SMeshData& OutData) noexcept
 
 void CMeshUtilities::ReverseHandedness(SMeshData& OutData) noexcept
 {
-    Assert(OutData.Indices.Size() % 3 == 0);
+    Check(OutData.Indices.Size() % 3 == 0);
 
     for (int32 i = 0; i < OutData.Indices.Size(); i += 3)
     {

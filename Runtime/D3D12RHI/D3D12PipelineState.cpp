@@ -100,7 +100,7 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
 
     // VertexShader
     CD3D12VertexShader* D3D12VertexShader = static_cast<CD3D12VertexShader*>(Initializer.ShaderState.VertexShader);
-    Assert(D3D12VertexShader != nullptr);
+    Check(D3D12VertexShader != nullptr);
 
     if (D3D12VertexShader->HasRootSignature())
     {
@@ -146,21 +146,21 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
 
     // RasterizerState
     CD3D12RasterizerState* D3D12RasterizerState = static_cast<CD3D12RasterizerState*>(Initializer.RasterizerState);
-    Assert(D3D12RasterizerState != nullptr);
+    Check(D3D12RasterizerState != nullptr);
 
     D3D12_RASTERIZER_DESC& RasterizerDesc = PipelineStream.RasterizerDesc;
     RasterizerDesc = D3D12RasterizerState->GetDesc();
 
     // DepthStencilState
     CD3D12DepthStencilState* D3D12DepthStencilState = static_cast<CD3D12DepthStencilState*>(Initializer.DepthStencilState);
-    Assert(D3D12DepthStencilState != nullptr);
+    Check(D3D12DepthStencilState != nullptr);
 
     D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc = PipelineStream.DepthStencilDesc;
     DepthStencilDesc = D3D12DepthStencilState->GetDesc();
 
     // BlendState
     CD3D12BlendState* D3D12BlendState = static_cast<CD3D12BlendState*>(Initializer.BlendState);
-    Assert(D3D12BlendState != nullptr);
+    Check(D3D12BlendState != nullptr);
 
     D3D12_BLEND_DESC& BlendStateDesc = PipelineStream.BlendStateDesc;
     BlendStateDesc = D3D12BlendState->GetDesc();
@@ -211,7 +211,7 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
         }
     }
 
-    Assert(RootSignature != nullptr);
+    Check(RootSignature != nullptr);
 
     PipelineStream.RootSignature = RootSignature->GetRootSignature();
 
@@ -288,7 +288,7 @@ bool CD3D12ComputePipelineState::Init()
         }
     }
 
-    Assert(RootSignature != nullptr);
+    Check(RootSignature != nullptr);
 
     PipelineStream.RootSignature = RootSignature->GetRootSignature();
 
@@ -555,14 +555,14 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
             if (HitGroupShader->GetShaderStage() == EShaderStage::RayClosestHit)
             {
                 // TODO: Not the greatest way to handle this
-                Assert(ClosestHitName.IsEmpty());
+                Check(ClosestHitName.IsEmpty());
                 ClosestHitName = CharToWide(D3D12HitGroupShader->GetIdentifier());
                 ClosestHitShaders.Emplace(static_cast<CRHIRayClosestHitShader*>(HitGroupShader));
             }
             else if (HitGroupShader->GetShaderStage() == EShaderStage::RayAnyHit)
             {
                 // TODO: Not the greatest way to handle this
-                Assert(AnyHitName.IsEmpty());
+                Check(AnyHitName.IsEmpty());
 
                 AnyHitName = CharToWide(D3D12HitGroupShader->GetIdentifier());
                 AnyHitShaders.Emplace(static_cast<CRHIRayAnyHitShader*>(HitGroupShader));
@@ -570,7 +570,7 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
             else if (HitGroupShader->GetShaderStage() == EShaderStage::RayIntersection)
             {
                 // TODO: Not the greatest way to handle this
-                Assert(IntersectionName.IsEmpty());
+                Check(IntersectionName.IsEmpty());
                 IntersectionName = CharToWide(D3D12HitGroupShader->GetIdentifier());
             }
         }
@@ -655,7 +655,7 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
     SShaderResourceCount CombinedResourceCount;
     for (CD3D12Shader* Shader : Shaders)
     {
-        Assert(Shader != nullptr);
+        Check(Shader != nullptr);
         CombinedResourceCount.Combine(Shader->GetResourceCount());
     }
 

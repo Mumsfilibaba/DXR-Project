@@ -86,7 +86,7 @@ public:
                 for (uint32 Index = 0; Index < kDescriptorTableSize; Index++)
                 {
                     ViewType* View = ResourceViews[Stage][Index];
-                    Assert(View != nullptr);
+                    Check(View != nullptr);
 
                     CopyDescriptors[Stage][Index] = View->GetOfflineHandle();
                 }

@@ -240,7 +240,7 @@ void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
                                 , TArray<float>& OutDistances
                                 , TArray<uint32>& OutCommands) -> void
     {
-        Assert(OutDistances.Size() == OutCommands.Size());
+        Check(OutDistances.Size() == OutCommands.Size());
 
         CVector3 CameraPosition = Camera->GetPosition();
         CVector3 DistanceVector = WorldPosition - CameraPosition;

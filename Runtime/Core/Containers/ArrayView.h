@@ -91,7 +91,7 @@ public:
      */
     FORCEINLINE ElementType& FirstElement() noexcept
     {
-        Assert(IsEmpty());
+        Check(IsEmpty());
         return Data()[0];
     }
 
@@ -102,7 +102,7 @@ public:
      */
     FORCEINLINE const ElementType& FirstElement() const noexcept
     {
-        Assert(IsEmpty());
+        Check(IsEmpty());
         return Data()[0];
     }
 
@@ -113,7 +113,7 @@ public:
      */
     FORCEINLINE ElementType& LastElement() noexcept
     {
-        Assert(IsEmpty());
+        Check(IsEmpty());
         return Data()[ViewSize - 1];
     }
 
@@ -124,7 +124,7 @@ public:
      */
     FORCEINLINE const ElementType& LastElement() const noexcept
     {
-        Assert(IsEmpty());
+        Check(IsEmpty());
         return Data()[ViewSize - 1];
     }
 
@@ -136,7 +136,7 @@ public:
      */
     FORCEINLINE ElementType& At(SizeType Index) noexcept
     {
-        Assert(Index < ViewSize);
+        Check(Index < ViewSize);
         return Data()[Index];
     }
 
@@ -148,7 +148,7 @@ public:
      */
     FORCEINLINE const ElementType& At(SizeType Index) const noexcept
     {
-        Assert(Index < ViewSize);
+        Check(Index < ViewSize);
         return Data()[Index];
     }
 
@@ -234,7 +234,7 @@ public:
      */
     FORCEINLINE TArrayView SubView(SizeType Offset, SizeType NumElements) const noexcept
     {
-        Assert((NumElements < ViewSize) && (Offset + NumElements < ViewSize));
+        Check((NumElements < ViewSize) && (Offset + NumElements < ViewSize));
         return TArrayView(View + Offset, NumElements);
     }
 

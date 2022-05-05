@@ -681,7 +681,7 @@ public:
         }
         else
         {
-            Assert(Other.IsDepthStencilValue());
+            Check(Other.IsDepthStencilValue());
             DepthStencilValue = Other.DepthStencilValue;
         }
     }
@@ -695,28 +695,28 @@ public:
     /** @return: Returns a FloatColor */
     CFloatColor& AsColor()
     {
-        Assert(IsColorValue());
+        Check(IsColorValue());
         return ColorValue;
     }
 
     /** @return: Returns a FloatColor */
     const CFloatColor& AsColor() const
     {
-        Assert(IsColorValue());
+        Check(IsColorValue());
         return ColorValue;
     }
 
     /** @return: Returns a DepthStencilClearValue */
     CTextureDepthStencilValue& AsDepthStencil()
     {
-        Assert(IsDepthStencilValue());
+        Check(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
     /** @return: Returns a DepthStencilClearValue */
     const CTextureDepthStencilValue& AsDepthStencil() const
     {
-        Assert(IsDepthStencilValue());
+        Check(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
@@ -737,7 +737,7 @@ public:
         }
         else
         {
-            Assert(RHS.IsDepthStencilValue());
+            Check(RHS.IsDepthStencilValue());
             DepthStencilValue = RHS.DepthStencilValue;
         }
 
@@ -762,7 +762,7 @@ public:
             return (ColorValue == RHS.ColorValue);
         }
 
-        Assert(IsDepthStencilValue());
+        Check(IsDepthStencilValue());
         return (DepthStencilValue == RHS.DepthStencilValue);
     }
 

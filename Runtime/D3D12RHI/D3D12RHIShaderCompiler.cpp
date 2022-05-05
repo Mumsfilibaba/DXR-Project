@@ -494,7 +494,7 @@ bool CD3D12RHIShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& 
         return false;
     }
 
-    Assert(LibDesc.FunctionCount > 0);
+    Check(LibDesc.FunctionCount > 0);
 
     // Make sure that the first shader is the one we wanted
     ID3D12FunctionReflection* Function = LibaryReflection->GetFunctionByIndex(0);

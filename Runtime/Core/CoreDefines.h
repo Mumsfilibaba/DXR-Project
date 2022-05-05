@@ -48,13 +48,13 @@
     #endif
 #endif
 
-#ifndef Assert
+#ifndef Check
     #include <cassert>
     
     #if ENABLE_ASSERTS
-        #define Assert(Condition) assert(Condition)
+        #define Check(Condition) assert(Condition)
     #else
-        #define Assert(Condition) (void)(Condition)
+        #define Check(Condition) (void)(Condition)
     #endif
 #endif
 

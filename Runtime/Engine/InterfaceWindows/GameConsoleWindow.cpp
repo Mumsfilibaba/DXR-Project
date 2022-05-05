@@ -463,7 +463,7 @@ int32 CGameConsoleWindow::TextCallback(ImGuiInputTextCallbackData* Data)
 
 void CGameConsoleWindow::HandleKeyPressedEvent(const SKeyEvent& Event)
 {
-    Assert(InputHandler.IsValid());
+    Check(InputHandler.IsValid());
 
     InputHandler->bConsoleToggled = false;
 

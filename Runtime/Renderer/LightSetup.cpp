@@ -97,7 +97,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
     TRACE_SCOPE("Update LightBuffers");
 
     CCamera* Camera = Scene.GetCamera();
-    Assert(Camera != nullptr);
+    Check(Camera != nullptr);
 
     for (CLight* Light : Scene.GetLights())
     {
@@ -108,7 +108,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
         if (IsSubClassOf<CPointLight>(Light))
         {
             CPointLight* CurrentLight = Cast<CPointLight>(Light);
-            Assert(CurrentLight != nullptr);
+            Check(CurrentLight != nullptr);
 
             constexpr float MinLuma = 0.005f;
             float Dot = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
@@ -152,7 +152,7 @@ void SLightSetup::BeginFrame(CRHICommandList& CmdList, const CScene& Scene)
         else if (IsSubClassOf<CDirectionalLight>(Light))
         {
             CDirectionalLight* CurrentLight = Cast<CDirectionalLight>(Light);
-            Assert(CurrentLight != nullptr);
+            Check(CurrentLight != nullptr);
 
             CurrentLight->UpdateCascades(*Camera);
 

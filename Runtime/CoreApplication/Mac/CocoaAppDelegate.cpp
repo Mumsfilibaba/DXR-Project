@@ -11,7 +11,7 @@
 
 - (id) init:(CMacApplication*) InApplication
 {
-    Assert(InApplication != nullptr);
+    Check(InApplication != nullptr);
     
     self = [super init];
     if (self)

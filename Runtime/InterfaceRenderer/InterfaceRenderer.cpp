@@ -359,7 +359,7 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
 
     for (SInterfaceImage* Image : RenderedImages)
     {
-        Assert(Image != nullptr);
+        Check(Image != nullptr);
 
         if (Image->AfterState != EResourceAccess::PixelShaderResource)
         {
