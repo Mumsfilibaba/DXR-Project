@@ -135,7 +135,6 @@ private:
     template<typename D3D12TextureType, typename InitializerType>
     D3D12TextureType* CreateTexture(const InitializerType& Initializer);
 
-    // TODO: Avoid template here
     template<typename D3D12BufferType, typename InitializerType>
     D3D12BufferType* CreateBuffer(const InitializerType& Initializer);
 
