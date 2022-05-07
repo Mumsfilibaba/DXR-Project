@@ -78,8 +78,8 @@ public:
     CD3D12Resource* GetD3D12ScratchBuffer() const { return ScratchBuffer.Get(); }
 
 protected:
-    TSharedRef<CD3D12Resource> ResultBuffer;
-    TSharedRef<CD3D12Resource> ScratchBuffer;
+    D3D12ResourceRef ResultBuffer;
+    D3D12ResourceRef ScratchBuffer;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -102,17 +102,9 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHIRayTracingGeometry
 
-    virtual void* GetRHIBaseBVHBuffer() override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        return reinterpret_cast<void*>(D3D12Resource);
-    }
+    virtual void* GetRHIBaseBVHBuffer() override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void* GetRHIBaseAccelerationStructure() override final
-    {
-        CD3D12AccelerationStructure* D3D12AccelerationStructure = static_cast<CD3D12AccelerationStructure*>(this);
-        return reinterpret_cast<void*>(D3D12AccelerationStructure);
-    }
+    virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<CD3D12AccelerationStructure*>(this)); }
 
     virtual void SetName(const String& InName) override final
     {
@@ -127,7 +119,6 @@ private:
     TSharedRef<CD3D12VertexBuffer> VertexBuffer;
     TSharedRef<CD3D12IndexBuffer>  IndexBuffer;
 };
-
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RayTracingScene
@@ -168,17 +159,9 @@ public:
 
     virtual CRHIDescriptorHandle GetBindlessHandle() const override final { return CRHIDescriptorHandle(); }
 
-    virtual void* GetRHIBaseBVHBuffer() override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        return reinterpret_cast<void*>(D3D12Resource);
-    }
+    virtual void* GetRHIBaseBVHBuffer() override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual void* GetRHIBaseAccelerationStructure() override final
-    { 
-        CD3D12AccelerationStructure* D3D12AccelerationStructure = static_cast<CD3D12AccelerationStructure*>(this);
-        return reinterpret_cast<void*>(D3D12AccelerationStructure);
-    }
+    virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<CD3D12AccelerationStructure*>(this)); }
 
     virtual void SetName(const String& InName) override final
     {
@@ -194,8 +177,8 @@ private:
 
     TSharedRef<CD3D12ShaderResourceView>   View;
 
-    TSharedRef<CD3D12Resource>             InstanceBuffer;
-    TSharedRef<CD3D12Resource>             BindingTable;
+    D3D12ResourceRef                       InstanceBuffer;
+    D3D12ResourceRef                       BindingTable;
 
     uint32 BindingTableStride = 0;
     uint32 NumHitGroups       = 0;

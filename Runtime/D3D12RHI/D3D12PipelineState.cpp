@@ -225,7 +225,7 @@ bool CD3D12GraphicsPipelineState::Init(const CRHIGraphicsPipelineStateInitialize
     HRESULT Result = GetDevice()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&NewPipelineState));
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12GraphicsPipelineState]: FAILED to Create GraphicsPipelineState");
+        D3D12_ERROR("[D3D12GraphicsPipelineState]: FAILED to Create GraphicsPipelineState");
         return false;
     }
 
@@ -302,7 +302,7 @@ bool CD3D12ComputePipelineState::Init()
     HRESULT Result = GetDevice()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12ComputePipelineState]: FAILED to Create ComputePipelineState");
+        D3D12_ERROR("[D3D12ComputePipelineState]: FAILED to Create ComputePipelineState");
         return false;
     }
 
@@ -682,7 +682,7 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
     RayTracingPipeline.NumSubobjects = PipelineStream.SubObjects.Size();
 
     TComPtr<ID3D12StateObject> TempStateObject;
-    HRESULT Result = GetDevice()->GetDXRDevice()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
+    HRESULT Result = GetDevice()->GeD3D12Device5()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
     if (FAILED(Result))
     {
         CDebug::DebugBreak();
@@ -693,7 +693,7 @@ bool CD3D12RayTracingPipelineState::Init(const CRHIRayTracingPipelineStateInitia
     Result = TempStateObject->QueryInterface(IID_PPV_ARGS(&TempStateObjectProperties));
     if (FAILED(Result))
     {
-        LOG_ERROR("[D3D12RayTracingPipelineState] Failed to retrieve ID3D12StateObjectProperties");
+        D3D12_ERROR("[D3D12RayTracingPipelineState] Failed to retrieve ID3D12StateObjectProperties");
         return false;
     }
 

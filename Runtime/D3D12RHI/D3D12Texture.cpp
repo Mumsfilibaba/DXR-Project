@@ -95,7 +95,9 @@ CD3D12RenderTargetView* CD3D12Texture::GetOrCreateRTV(const CRHIRenderTargetView
         D3D12_ERROR("ResourceDimension (=%s) does not support RenderTargetViews", ToString(ResourceDesc.Dimension));
     }
 
-    TSharedRef<CD3D12RenderTargetView> D3D12View = dbg_new CD3D12RenderTargetView(GetDevice(), GD3D12Instance->GetRenderTargetOfflineDescriptorHeap());
+    CD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
+
+    TSharedRef<CD3D12RenderTargetView> D3D12View = dbg_new CD3D12RenderTargetView(GetDevice(), D3D12CoreInterface->GetRenderTargetOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -188,7 +190,9 @@ CD3D12DepthStencilView* CD3D12Texture::GetOrCreateDSV(const CRHIDepthStencilView
         D3D12_ERROR("ResourceDimension (=%s) does not support DepthStencilViews", ToString(ResourceDesc.Dimension));
     }
 
-    TSharedRef<CD3D12DepthStencilView> D3D12View = dbg_new CD3D12DepthStencilView(GetDevice(), GD3D12Instance->GetDepthStencilOfflineDescriptorHeap());
+    CD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
+
+    TSharedRef<CD3D12DepthStencilView> D3D12View = dbg_new CD3D12DepthStencilView(GetDevice(), D3D12CoreInterface->GetDepthStencilOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;

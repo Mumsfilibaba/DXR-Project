@@ -108,7 +108,7 @@ void D3D12DeviceRemovedHandlerRHI(CD3D12Device* Device)
         fputc('\n', File);
     }
 
-    const D3D12_AUTO_BREADCRUMB_NODE* CurrentNode = DredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
+    const D3D12_AUTO_BREADCRUMB_NODE* CurrentNode  = DredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
     const D3D12_AUTO_BREADCRUMB_NODE* PreviousNode = nullptr;
     while (CurrentNode)
     {
@@ -144,18 +144,18 @@ void D3D12DeviceRemovedHandlerRHI(CD3D12Device* Device)
 }
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12Device
+// CD3D12Device
 
-CD3D12Device::CD3D12Device(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED)
-    : Factory(nullptr)
+CD3D12Device::CD3D12Device(CD3D12CoreInterface* InCoreInterface, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED)
+    : CoreInterface(InCoreInterface)
+    , Factory(nullptr)
     , Adapter(nullptr)
     , Device(nullptr)
     , DXRDevice(nullptr)
     , bEnableDebugLayer(bInEnableDebugLayer)
     , bEnableGPUValidation(bInEnableGPUValidation)
     , bEnableDRED(bInEnableDRED)
-{
-}
+{ }
 
 CD3D12Device::~CD3D12Device()
 {
@@ -198,7 +198,7 @@ bool CD3D12Device::Initialize()
     }
     else
     {
-        LOG_INFO("Loaded dxgi.dll");
+        D3D12_INFO("Loaded dxgi.dll");
     }
 
     D3D12Lib = LoadLibrary("d3d12.dll");
@@ -209,7 +209,7 @@ bool CD3D12Device::Initialize()
     }
     else
     {
-        LOG_INFO("Loaded d3d12.dll");
+        D3D12_INFO("Loaded d3d12.dll");
     }
 
     // Load DXGI functions 
@@ -229,12 +229,12 @@ bool CD3D12Device::Initialize()
         PIXLib = LoadLibrary("WinPixEventRuntime.dll");
         if (PIXLib != NULL)
         {
-            LOG_INFO("Loaded WinPixEventRuntime.dll");
+            D3D12_INFO("Loaded WinPixEventRuntime.dll");
             ND3D12Functions::SetMarkerOnCommandList = PlatformLibrary::LoadSymbolAddress<PFN_SetMarkerOnCommandList>("PIXSetMarkerOnCommandList", PIXLib);
         }
         else
         {
-            LOG_INFO("PIX Runtime NOT found");
+            D3D12_INFO("PIX Runtime NOT found");
         }
 
         TComPtr<ID3D12Debug> DebugInterface;

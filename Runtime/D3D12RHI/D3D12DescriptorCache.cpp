@@ -31,13 +31,15 @@ CD3D12DescriptorCache::~CD3D12DescriptorCache()
 
 bool CD3D12DescriptorCache::Init()
 {
+    CD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
+    
     D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
     CMemory::Memzero(&CBVDesc);
 
     CBVDesc.BufferLocation = 0;
     CBVDesc.SizeInBytes    = 0;
 
-    NullCBV = dbg_new CD3D12ConstantBufferView(GetDevice(), GD3D12Instance->GetResourceOfflineDescriptorHeap());
+    NullCBV = dbg_new CD3D12ConstantBufferView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap());
     if (!NullCBV->AllocateHandle())
     {
         return false;
@@ -56,7 +58,7 @@ bool CD3D12DescriptorCache::Init()
     UAVDesc.Texture2D.MipSlice   = 0;
     UAVDesc.Texture2D.PlaneSlice = 0;
 
-    NullUAV = dbg_new CD3D12UnorderedAccessView(GetDevice(), GD3D12Instance->GetResourceOfflineDescriptorHeap(), nullptr);
+    NullUAV = dbg_new CD3D12UnorderedAccessView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap(), nullptr);
     if (!NullUAV->AllocateHandle())
     {
         return false;
@@ -78,7 +80,7 @@ bool CD3D12DescriptorCache::Init()
     SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     SRVDesc.Texture2D.PlaneSlice          = 0;
 
-    NullSRV = dbg_new CD3D12ShaderResourceView(GetDevice(), GD3D12Instance->GetResourceOfflineDescriptorHeap(), nullptr);
+    NullSRV = dbg_new CD3D12ShaderResourceView(GetDevice(), D3D12CoreInterface->GetResourceOfflineDescriptorHeap(), nullptr);
     if (!NullSRV->AllocateHandle())
     {
         return false;
@@ -106,7 +108,7 @@ bool CD3D12DescriptorCache::Init()
     SamplerDesc.MinLOD         = -FLT_MAX;
     SamplerDesc.MipLODBias     = 0.0f;
 
-    NullSampler = dbg_new CD3D12SamplerState(GetDevice(), GD3D12Instance->GetSamplerOfflineDescriptorHeap());
+    NullSampler = dbg_new CD3D12SamplerState(GetDevice(), D3D12CoreInterface->GetSamplerOfflineDescriptorHeap());
     if (!NullSampler->CreateSampler(SamplerDesc))
     {
         return false;
@@ -242,11 +244,16 @@ void CD3D12DescriptorCache::AllocateDescriptorsAndSetHeaps(ID3D12GraphicsCommand
     SamplerStateCache.PrepareForCopy();
     
     uint32 ResourceDescriptorHandle = ResourceHeap->AllocateHandles(NumResourceDescriptors);
+    D3D12_ERROR_COND( NumResourceDescriptors <= D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
+                    ,"Trying to bind more Resource Descriptors (NumDescriptors=%u) than the maximum (MaxResourceDescriptors=%u)"
+                    , NumResourceDescriptors
+                    , D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
+
     uint32 SamplerDescriptorHandle  = SamplerHeap->AllocateHandles(NumSamplerDescriptors);
-    D3D12_ERROR_COND(NumResourceDescriptors <= D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT
-                    ,"Trying to bind more Resource Descriptors (NumDescriptors=%u) than the maximum (MaxResourceDescriptors=%u)", NumResourceDescriptors, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT);
-    D3D12_ERROR_COND(NumSamplerDescriptors <= D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT
-                    ,"Trying to bind more Sampler Descriptors (NumDescriptors=%u) than the maximum (MaxSamplerDescriptors=%u)", NumSamplerDescriptors, D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT);
+    D3D12_ERROR_COND( NumSamplerDescriptors <= D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT
+                    , "Trying to bind more Sampler Descriptors (NumDescriptors=%u) than the maximum (MaxSamplerDescriptors=%u)"
+                    , NumSamplerDescriptors
+                    , D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT);
 
     ID3D12DescriptorHeap* DescriptorHeaps[] =
     {
