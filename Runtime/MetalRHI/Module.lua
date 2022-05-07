@@ -14,5 +14,10 @@ if BuildWithXcode() then
         'RHI',
     })
 
+    MetalRHI.AddFrameWorks(
+    {
+        'Metal'
+    })
+
     MetalRHI.Generate()
 end

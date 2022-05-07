@@ -9,6 +9,7 @@
 #include "MetalTimestampQuery.h"
 #include "MetalPipelineState.h"
 #include "MetalRayTracing.h"
+#include "MetalDevice.h"
 
 #include "RHI/RHICoreInterface.h"
 
@@ -252,6 +253,7 @@ public:
     }
 
 private:
+	CMetalDevice*         Device;
     CMetalCommandContext* CommandContext;
 };
 

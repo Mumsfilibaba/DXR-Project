@@ -11,6 +11,7 @@ CMetalCoreInterface::CMetalCoreInterface()
 CMetalCoreInterface::~CMetalCoreInterface()
 {
 	SafeDelete(CommandContext);
+	SafeDelete(Device);
 }
 
 CMetalCoreInterface* CMetalCoreInterface::CreateMetalCoreInterface()
@@ -22,5 +23,13 @@ bool CMetalCoreInterface::Initialize(bool bEnableDebug)
 {
 	UNREFERENCED_VARIABLE(bEnableDebug);
 	
+	Device = CMetalDevice::CreateMetalDevice();
+	if (!Device)
+	{
+		LOG_ERROR("[MetalRHI]: Failed to Create Device");
+		return false;
+	}
+	
+	LOG_INFO("[MetalRHI]: Created Device");
 	return true;
 }

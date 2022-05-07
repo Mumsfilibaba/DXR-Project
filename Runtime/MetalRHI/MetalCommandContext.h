@@ -123,6 +123,9 @@ public:
     virtual void EndExternalCapture()   override final { }
 
     virtual void* GetRHIBaseCommandList() override final { return nullptr; }
+	
+private:
+	
 };
 
 #if defined(COMPILER_MSVC)
