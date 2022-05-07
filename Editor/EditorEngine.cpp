@@ -29,7 +29,7 @@ bool CEditorEngine::Init()
     }
 
     /* Create Editor windows */
-    CApplicationInstance& Application = CApplicationInstance::Get();
+    CCanvasApplication& Application = CCanvasApplication::Get();
 
     TSharedRef<CInspectorWindow> InspectorWindow = CInspectorWindow::Make();
     Application.AddWindow( InspectorWindow );

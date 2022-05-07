@@ -170,9 +170,9 @@ public:
 
     CRHIBufferSRVInitializer()
         : Buffer(nullptr)
-        , FirstElement(0)
-        , NumElements(0)
-        , Format(EBufferSRVFormat::None)
+	    , Format(EBufferSRVFormat::None)
+	    , FirstElement(0)
+	    , NumElements(0)
     { }
 
     CRHIBufferSRVInitializer( CRHIBuffer* InBuffer
@@ -180,9 +180,9 @@ public:
                             , uint32 InNumElements
                             , EBufferSRVFormat InFormat = EBufferSRVFormat::None)
         : Buffer(InBuffer)
-        , FirstElement(InFirstElement)
-        , NumElements(InNumElements)
-        , Format(InFormat)
+	    , Format(InFormat)
+	    , FirstElement(InFirstElement)
+	    , NumElements(InNumElements)
     { }
 
     uint64 GetHash() const
@@ -293,9 +293,9 @@ public:
 
     CRHIBufferUAVInitializer()
         : Buffer(nullptr)
-        , FirstElement(0)
+		, Format(EBufferUAVFormat::None)
+		, FirstElement(0)
         , NumElements(0)
-        , Format(EBufferUAVFormat::None)
     { }
 
     CRHIBufferUAVInitializer( CRHIBuffer* InBuffer
@@ -303,9 +303,9 @@ public:
                             , uint32 InNumElements
                             , EBufferUAVFormat InFormat = EBufferUAVFormat::None)
         : Buffer(InBuffer)
-        , FirstElement(InFirstElement)
+	    , Format(InFormat)
+	    , FirstElement(InFirstElement)
         , NumElements(InNumElements)
-        , Format(InFormat)
     { }
 
     uint64 GetHash() const

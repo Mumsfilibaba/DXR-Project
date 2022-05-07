@@ -1,9 +1,9 @@
 #pragma once
-#include "Interface/IWindow.h"
+#include "Interface/CCanvasWindow.h"
 
 #include <imgui.h>
 
-class CEditorMenuWidget : public IWindow
+class CEditorMenuWidget : public CCanvasWindow
 {
     INTERFACE_GENERATE_BODY();
 

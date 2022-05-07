@@ -58,18 +58,21 @@ inline const char* ToString(EShaderStage ShaderStage)
 {
     switch(ShaderStage)
     {
-        case EShaderStage::Vertex:        return "Vertex";
-        case EShaderStage::Hull:          return "Hull";
-        case EShaderStage::Domain:        return "Domain";
-        case EShaderStage::Geometry:      return "Geometry";
-        case EShaderStage::Mesh:          return "Mesh";
-        case EShaderStage::Amplification: return "Amplification";
-        case EShaderStage::Pixel:         return "Pixel";
-        case EShaderStage::Compute:       return "Compute";
-        case EShaderStage::RayGen:        return "RayGen";
-        case EShaderStage::RayAnyHit:     return "RayAnyHit";
-        case EShaderStage::RayClosestHit: return "RayClosestHit";
-        case EShaderStage::RayMiss:       return "RayMiss";
+        case EShaderStage::Vertex:          return "Vertex";
+        case EShaderStage::Hull:            return "Hull";
+        case EShaderStage::Domain:          return "Domain";
+        case EShaderStage::Geometry:        return "Geometry";
+        case EShaderStage::Mesh:            return "Mesh";
+        case EShaderStage::Amplification:   return "Amplification";
+        case EShaderStage::Pixel:           return "Pixel";
+        case EShaderStage::Compute:         return "Compute";
+        case EShaderStage::RayGen:          return "RayGen";
+        case EShaderStage::RayAnyHit:       return "RayAnyHit";
+        case EShaderStage::RayClosestHit:   return "RayClosestHit";
+        case EShaderStage::RayMiss:         return "RayMiss";
+		case EShaderStage::RayIntersection: return "RayIntersection";
+		case EShaderStage::RayCallable:     return "RayCallable";
+		default:                            return "Unknown";
     }
 }
 

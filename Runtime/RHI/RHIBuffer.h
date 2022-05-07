@@ -116,15 +116,15 @@ class CRHIBufferInitializer
 public:
 
     CRHIBufferInitializer()
-        : UsageFlags(EBufferUsageFlags::None)
+        : InitialData(nullptr)
+	    , UsageFlags(EBufferUsageFlags::None)
         , InitialAccess(EResourceAccess::Common)
-        , InitialData(nullptr)
     { }
 
     CRHIBufferInitializer(EBufferUsageFlags InUsageFlags, EResourceAccess InInitialState, CRHIBufferDataInitializer* InInitialData = nullptr)
-        : UsageFlags(InUsageFlags)
+        : InitialData(InInitialData)
+	    , UsageFlags(InUsageFlags)
         , InitialAccess(InInitialState)
-        , InitialData(InInitialData)
     { }
 
     bool AllowSRV() const { return ((UsageFlags & EBufferUsageFlags::AllowSRV) != EBufferUsageFlags::None); }

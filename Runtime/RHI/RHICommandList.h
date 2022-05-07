@@ -13,9 +13,9 @@ class CRHIShader;
 #define ENABLE_INSERT_DEBUG_CMDLIST_MARKER (0)
 
 #if ENABLE_INSERT_DEBUG_CMDLIST_MARKER
-#define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString) CmdList.InsertMarker(MarkerString);
+    #define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString) CmdList.InsertMarker(MarkerString);
 #else
-#define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString)
+    #define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString)
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -195,9 +195,9 @@ public:
         : CmdAllocator()
         , FirstCommand(nullptr)
         , LastCommand(nullptr)
-        , NumCommands(0)
-        , NumDispatchCalls(0)
-        , NumDrawCalls(0)
+	    , NumDrawCalls(0)
+	    , NumDispatchCalls(0)
+	    , NumCommands(0)
     { }
 
     /**

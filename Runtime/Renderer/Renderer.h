@@ -25,7 +25,7 @@
 #include "Debug/RendererInfoWindow.h"
 #include "Debug/GPUProfilerWindow.h"
 
-#include "Application/WindowMessageHandler.h"
+#include "Canvas/WindowMessageHandler.h"
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

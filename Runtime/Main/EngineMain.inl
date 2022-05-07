@@ -5,7 +5,8 @@
 
 #include "Main/EngineLoop.h"
 
-#include "Application/ApplicationInstance.h"
+#include "Canvas/CanvasApplication.h"
+
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 // Main function for all implementations
@@ -40,7 +41,7 @@ int32 EngineMain()
 
     // Run loop
     CTimer Timer;
-    while (CApplicationInstance::Get().IsRunning())
+    while (CCanvasApplication::Get().IsRunning())
     {
         Timer.Tick();
         CEngineLoop::Tick(Timer.GetDeltaTime());

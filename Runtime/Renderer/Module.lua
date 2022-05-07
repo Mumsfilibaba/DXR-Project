@@ -13,7 +13,7 @@ RendererModule.AddModuleDependencies(
 {
     'Core',
     'CoreApplication',
-    'Application',
+    'Canvas',
     'RHI',
     'Engine',
 })

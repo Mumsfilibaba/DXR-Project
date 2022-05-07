@@ -16,7 +16,7 @@ EngineModule.ModuleDependencies =
 {
     'Core',
     'CoreApplication',
-    'Application',
+    'Canvas',
     'RHI',
 }
 

@@ -38,6 +38,8 @@ bool CMacThread::Start()
 
 int32 CMacThread::WaitForCompletion(uint64 TimeoutInMs)
 {
+	UNREFERENCED_VARIABLE(TimeoutInMs);
+	
     // TODO: Investigate timeout
     const auto Result = pthread_join(Thread, nullptr);
     return Result ? ThreadExitCode : int32(-1);

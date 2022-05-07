@@ -14,7 +14,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CNullRHICommandContext
 
-class CNullRHICommandContext : public IRHICommandContext
+class CNullRHICommandContext final : public IRHICommandContext
 {
 private:
 

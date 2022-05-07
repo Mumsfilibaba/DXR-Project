@@ -29,13 +29,13 @@ public:                                                                     \
 private:
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// IWindow
+// CCanvasWindow
 
-class IWindow : public CRefCounted
+class CCanvasWindow : public CRefCounted
 {
 public:
 
-    virtual ~IWindow() = default;
+    virtual ~CCanvasWindow() = default;
 
     /**
      * @brief: Initializes the window's context

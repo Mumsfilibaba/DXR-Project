@@ -6,7 +6,7 @@ IMPLEMENT_ENGINE_MODULE(CInterfaceRendererModule, InterfaceRenderer);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CInterfaceRendererModule
 
-IInterfaceRenderer* CInterfaceRendererModule::CreateRenderer()
+ICanvasRenderer* CInterfaceRendererModule::CreateRenderer()
 {
     return CInterfaceRenderer::Make();;
 }

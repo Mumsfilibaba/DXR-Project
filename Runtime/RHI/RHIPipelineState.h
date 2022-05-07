@@ -3,7 +3,7 @@
 #include "RHIResourceBase.h"
 
 #include "Core/Templates/UnderlyingType.h"
-#include "core/Containers/StaticArray.h"
+#include "Core/Containers/StaticArray.h"
 
 #if defined(COMPILER_MSVC)
     #pragma warning(push)
@@ -262,14 +262,14 @@ public:
         : FillMode(EFillMode::Solid)
         , CullMode(ECullMode::Back)
         , bFrontCounterClockwise(false)
-        , DepthBias(0)
-        , DepthBiasClamp(0.0f)
-        , SlopeScaledDepthBias(0.0f)
-        , bDepthClipEnable(true)
-        , bMultisampleEnable(false)
-        , bAntialiasedLineEnable(false)
-        , ForcedSampleCount(0)
-        , bEnableConservativeRaster(false)
+	    , bDepthClipEnable(true)
+	    , bMultisampleEnable(false)
+	    , bAntialiasedLineEnable(false)
+	    , bEnableConservativeRaster(false)
+	    , ForcedSampleCount(0)
+	    , DepthBias(0)
+	    , DepthBiasClamp(0.0f)
+	    , SlopeScaledDepthBias(0.0f)
     { }
 
     CRHIRasterizerStateInitializer( EFillMode InFillMode
@@ -286,14 +286,14 @@ public:
         : FillMode(InFillMode)
         , CullMode(InCullMode)
         , bFrontCounterClockwise(bInFrontCounterClockwise)
-        , DepthBias(InDepthBias)
-        , DepthBiasClamp(InDepthBiasClamp)
-        , SlopeScaledDepthBias(InSlopeScaledDepthBias)
-        , bDepthClipEnable(bInDepthClipEnable)
-        , bMultisampleEnable(bInMultisampleEnable)
-        , bAntialiasedLineEnable(bInAntialiasedLineEnable)
-        , ForcedSampleCount(InForcedSampleCount)
-        , bEnableConservativeRaster(bInEnableConservativeRaster)
+	    , bDepthClipEnable(bInDepthClipEnable)
+	    , bMultisampleEnable(bInMultisampleEnable)
+	    , bAntialiasedLineEnable(bInAntialiasedLineEnable)
+	    , bEnableConservativeRaster(bInEnableConservativeRaster)
+	    , ForcedSampleCount(InForcedSampleCount)
+	    , DepthBias(InDepthBias)
+	    , DepthBiasClamp(InDepthBiasClamp)
+	    , SlopeScaledDepthBias(InSlopeScaledDepthBias)
     { }
 
     uint64 GetHash() const
@@ -1116,13 +1116,12 @@ public:
     CRHIRayTracingPipelineStateInitializer()
         : RayGenShaders()
         , CallableShaders()
-        , HitGroups()
-        , MissShaders()
+	    , MissShaders()
+	    , HitGroups()
         , MaxAttributeSizeInBytes(0)
         , MaxPayloadSizeInBytes(0)
         , MaxRecursionDepth(1)
-    {
-    }
+    { }
 
     CRHIRayTracingPipelineStateInitializer( const TArrayView<CRHIRayGenShader*>& InRayGenShaders
                                           , const TArrayView<CRHIRayCallableShader*>& InCallableShaders
@@ -1133,8 +1132,8 @@ public:
                                           , uint32 InMaxRecursionDepth)
         : RayGenShaders(InRayGenShaders)
         , CallableShaders(InCallableShaders)
+     	, MissShaders(InMissShaders)
         , HitGroups(InHitGroups)
-        , MissShaders(InMissShaders)
         , MaxAttributeSizeInBytes(InMaxAttributeSizeInBytes)
         , MaxPayloadSizeInBytes(InMaxPayloadSizeInBytes)
         , MaxRecursionDepth(InMaxRecursionDepth)

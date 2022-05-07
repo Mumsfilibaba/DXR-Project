@@ -1,8 +1,8 @@
 #pragma once
 #include "InputHandler.h"
 #include "WindowMessageHandler.h"
-#include "ApplicationUser.h"
-#include "IInterfaceRenderer.h"
+#include "CanvasUser.h"
+#include "ICanvasRenderer.h"
 
 #include "Core/Core.h"
 #include "Core/Containers/SharedPtr.h"
@@ -16,16 +16,16 @@
 #include "CoreApplication/Generic/GenericApplication.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CApplicationInstance
+// CCanvasApplication
 
-class APPLICATION_API CApplicationInstance : public CGenericApplicationMessageHandler
+class CANVAS_API CCanvasApplication : public CGenericApplicationMessageHandler
 {
 protected:
 
-    friend struct TDefaultDelete<CApplicationInstance>;
+    friend struct TDefaultDelete<CCanvasApplication>;
 
-    CApplicationInstance(const TSharedPtr<CGenericApplication>& InPlatformApplication);
-    virtual ~CApplicationInstance();
+    CCanvasApplication(const TSharedPtr<CGenericApplication>& InPlatformApplication);
+    virtual ~CCanvasApplication();
 
 public:
 
@@ -37,12 +37,12 @@ public:
     static bool CreateApplication();
 
     /**
-     * @brief: Initializes the singleton from an existing application - Used for classes inheriting from CApplicationInstance
+     * @brief: Initializes the singleton from an existing application - Used for classes inheriting from CCanvasApplication
      * 
      * @param InApplication: Existing application
      * @return: Returns true if the initialization was successful
      */
-    static bool CreateApplication(const TSharedPtr<CApplicationInstance>& InApplication);
+    static bool CreateApplication(const TSharedPtr<CCanvasApplication>& InApplication);
 
     /** 
      * @brief: Releases the global application instance 
@@ -50,9 +50,9 @@ public:
     static void Release();
 
     /** 
-     * @return: Returns a reference to the CApplicationInstance 
+     * @return: Returns a reference to the CCanvasApplication 
      */
-    static FORCEINLINE CApplicationInstance& Get() 
+    static FORCEINLINE CCanvasApplication& Get() 
     { 
         return *Instance; 
     }
@@ -70,13 +70,13 @@ public:
     /**
      * @brief: Delegate for when the application is about to exit 
      */
-    DECLARE_EVENT(CExitEvent, CApplicationInstance, int32);
+    DECLARE_EVENT(CExitEvent, CCanvasApplication, int32);
     CExitEvent GetExitEvent() const { return ExitEvent; }
 
     /** 
      * @brief: Delegate for when the application gets a new main-viewport 
      */
-    DECLARE_EVENT(CMainViewportChange, CApplicationInstance, const TSharedRef<CGenericWindow>&);
+    DECLARE_EVENT(CMainViewportChange, CCanvasApplication, const TSharedRef<CGenericWindow>&);
     CMainViewportChange GetMainViewportChange() const { return MainViewportChange; }
 
 public:
@@ -233,21 +233,21 @@ public:
      * 
      * @param NewRenderer: New renderer for the InterfaceApplication
      */
-    void SetRenderer(const TSharedRef<IInterfaceRenderer>& NewRenderer);
+    void SetRenderer(const TSharedRef<ICanvasRenderer>& NewRenderer);
 
     /**
      * @brief: Register a interface window 
      * 
      * @param NewWindow: Window to add that should be drawn the next frame
      */
-    void AddWindow(const TSharedRef<IWindow>& NewWindow);
+    void AddWindow(const TSharedRef<CCanvasWindow>& NewWindow);
 
     /**
      * @brief: Removes a interface window
      *
      * @param NewWindow: Window to remove
      */
-    void RemoveWindow(const TSharedRef<IWindow>& Window);
+    void RemoveWindow(const TSharedRef<CCanvasWindow>& Window);
 
     /**
      * @brief: Draws a string in the viewport during the current frame, the strings are reset every frame 
@@ -297,7 +297,7 @@ public:
      *
      * @return: Returns the renderer
      */
-    TSharedRef<IInterfaceRenderer> GetRenderer() const { return Renderer; }
+    TSharedRef<ICanvasRenderer> GetRenderer() const { return Renderer; }
 
     /**
      * @brief:  Retrieve the window registered as the main viewport
@@ -342,10 +342,10 @@ public:
     uint32 GetNumUsers() const { return static_cast<uint32>(RegisteredUsers.Size()); }
 
      /** @brief: Register a new user to the application */
-    void RegisterUser(const TSharedPtr<CApplicationUser>& NewUser) { RegisteredUsers.Push(NewUser); }
+    void RegisterUser(const TSharedPtr<CCanvasUser>& NewUser) { RegisteredUsers.Push(NewUser); }
 
      /** @brief: Retrieve the first user */
-    TSharedPtr<CApplicationUser> GetFirstUser() const
+    TSharedPtr<CCanvasUser> GetFirstUser() const
     {
         if (!RegisteredUsers.IsEmpty())
         {
@@ -358,7 +358,7 @@ public:
     }
 
      /** @brief: Retrieve a user from user index */
-    TSharedPtr<CApplicationUser> GetUserFromIndex(uint32 UserIndex) const
+    TSharedPtr<CCanvasUser> GetUserFromIndex(uint32 UserIndex) const
     {
         if (UserIndex < (uint32)RegisteredUsers.Size())
         {
@@ -388,11 +388,11 @@ protected:
     TSharedPtr<CGenericApplication>     PlatformApplication;
 
     TSharedRef<CGenericWindow>          MainViewport;
-    TSharedRef<IInterfaceRenderer>       Renderer;
+    TSharedRef<ICanvasRenderer>       Renderer;
 
     TArray<String>                       DebugStrings;
-    TArray<TSharedRef<IWindow>>          InterfaceWindows;
-    TArray<TSharedPtr<CApplicationUser>> RegisteredUsers;
+    TArray<TSharedRef<CCanvasWindow>>          InterfaceWindows;
+    TArray<TSharedPtr<CCanvasUser>> RegisteredUsers;
 
     CExitEvent                           ExitEvent;
     CMainViewportChange                  MainViewportChange;
@@ -405,6 +405,6 @@ protected:
 
     struct ImGuiContext* Context = nullptr;
 
-    static TSharedPtr<CApplicationInstance> Instance;
+    static TSharedPtr<CCanvasApplication> Instance;
 };
 

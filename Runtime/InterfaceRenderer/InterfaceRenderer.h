@@ -6,13 +6,13 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHIResourceViews.h"
 
-#include "Application/InputHandler.h"
-#include "Application/IInterfaceRenderer.h"
+#include "Canvas/InputHandler.h"
+#include "Canvas/ICanvasRenderer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CInterfaceRenderer
 
-class CInterfaceRenderer final : public IInterfaceRenderer
+class CInterfaceRenderer final : public ICanvasRenderer
 {
 public:
 
@@ -35,7 +35,7 @@ private:
     CInterfaceRenderer() = default;
     ~CInterfaceRenderer() = default;
 
-    TArray<SInterfaceImage*> RenderedImages;
+    TArray<SCanvasImage*> RenderedImages;
 
     TSharedRef<CRHITexture2D>             FontTexture;
     TSharedRef<CRHIGraphicsPipelineState> PipelineState;

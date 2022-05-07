@@ -1,5 +1,5 @@
 #pragma once
-#include "Application/IInterfaceRenderer.h"
+#include "Canvas/ICanvasRenderer.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CInterfaceRendererModule
@@ -12,5 +12,5 @@ public:
     ~CInterfaceRendererModule() = default;
 
      /** @brief: Create the renderer */
-    virtual IInterfaceRenderer* CreateRenderer() override final;
+    virtual ICanvasRenderer* CreateRenderer() override final;
 };
