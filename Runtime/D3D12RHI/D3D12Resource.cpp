@@ -10,7 +10,7 @@ CD3D12Resource::CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resou
     , Resource(InNativeResource)
     , HeapType(D3D12_HEAP_TYPE_DEFAULT)
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
-    , Desc()
+    , Desc(InNativeResource ? InNativeResource->GetDesc() : D3D12_RESOURCE_DESC())
     , Address(0)
 { }
 

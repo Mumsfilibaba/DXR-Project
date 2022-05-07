@@ -200,8 +200,6 @@ bool CDeferredRenderer::Init(SFrameResources& FrameResources)
     if (!RHIQueryUAVFormatSupport(LUTFormat))
     {
         LOG_ERROR("[CRenderer]: R16G16_Float is not supported for UAVs");
-
-        CDebug::DebugBreak();
         return false;
     }
 
@@ -457,7 +455,10 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
             CMatrix4 Matrix;
         } PerObjectBuffer;
 
-        CmdList.SetRenderTargets(nullptr, 0, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
+        CRHIRenderPassInitializer RenderPass;
+        RenderPass.DepthStencilView = CRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get());
+
+        CmdList.BeginRenderPass(RenderPass);
 
         CmdList.SetGraphicsPipelineState(PrePassPipelineState.Get());
 
@@ -478,6 +479,8 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
                 CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
             }
         }
+
+        CmdList.EndRenderPass();
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End PrePass");
@@ -507,7 +510,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
 
         CmdList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
 
-        CmdList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDefaultShaderResourceView(), 0);
+        CmdList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 0);
         CmdList.SetUnorderedAccessView(ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
         CmdList.Set32BitShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, NMath::BytesToNum32BitConstants(sizeof(ReductionConstants)));
@@ -522,7 +525,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
         // Perform the other reductions
         CmdList.SetComputePipelineState(ReduceDepthPSO.Get());
 
-        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetDefaultShaderResourceView(), 0);
+        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
         CmdList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetUnorderedAccessView(), 0);
 
         ThreadsX = NMath::DivideByMultiple(ThreadsX, 16);
@@ -532,7 +535,7 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
         CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
         CmdList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
 
-        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetDefaultShaderResourceView(), 0);
+        CmdList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetShaderResourceView(), 0);
         CmdList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
         ThreadsX = NMath::DivideByMultiple(ThreadsX, 16);
@@ -561,15 +564,15 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
-    CRHIRenderTargetView* RenderTargets[] =
-    {
-        FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetRenderTargetView(),
-        FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetRenderTargetView(),
-        FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetRenderTargetView(),
-        FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetRenderTargetView(),
-    };
+    CRHIRenderPassInitializer RenderPass;
+    RenderPass.RenderTargets[0] = CRHIRenderTargetView(FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX].Get());
+    RenderPass.RenderTargets[1] = CRHIRenderTargetView(FrameResources.GBuffer[GBUFFER_NORMAL_INDEX].Get());
+    RenderPass.RenderTargets[2] = CRHIRenderTargetView(FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX].Get());
+    RenderPass.RenderTargets[3] = CRHIRenderTargetView(FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get());
+    RenderPass.NumRenderTargets = 4;
+    RenderPass.DepthStencilView = CRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);
 
-    CmdList.SetRenderTargets(RenderTargets, 4, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
+    CmdList.BeginRenderPass(RenderPass);
 
     // Setup Pipeline
     CmdList.SetGraphicsPipelineState(PipelineState.Get());
@@ -617,6 +620,8 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
         CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
     }
 
+    CmdList.EndRenderPass();
+
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End GeometryPass");
 }
 
@@ -640,17 +645,17 @@ void CDeferredRenderer::RenderDeferredTiledLightPass(CRHICommandList& CmdList, c
         CmdList.SetComputePipelineState(TiledLightPassPSO.Get());
     }
 
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetDefaultShaderResourceView(), 0);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetDefaultShaderResourceView(), 1);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetDefaultShaderResourceView(), 2);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDefaultShaderResourceView(), 3);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 1);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView(), 2);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
     //CmdList.SetShaderResourceView(LightPassShader, nullptr, 4); // Reflection
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.IrradianceMap->GetDefaultShaderResourceView(), 4);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.SpecularIrradianceMap->GetDefaultShaderResourceView(), 5);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetDefaultShaderResourceView(), 6);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirectionalShadowMask->GetDefaultShaderResourceView(), 7);
-    CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetDefaultShaderResourceView(), 8);
-    CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetDefaultShaderResourceView(), 9);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.IrradianceMap->GetShaderResourceView(), 4);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 5);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 6);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.DirectionalShadowMask->GetShaderResourceView(), 7);
+    CmdList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 8);
+    CmdList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 9);
 
     //CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeMatrixBufferSRV.Get(), 13);
     //CmdList.SetShaderResourceView(LightPassShader, LightSetup.CascadeSplitsBufferSRV.Get(), 14);
@@ -680,10 +685,10 @@ void CDeferredRenderer::RenderDeferredTiledLightPass(CRHICommandList& CmdList, c
     } Settings;
 
     Settings.NumShadowCastingPointLights = LightSetup.ShadowCastingPointLightsData.Size();
-    Settings.NumPointLights = LightSetup.PointLightsData.Size();
-    Settings.NumSkyLightMips = LightSetup.SpecularIrradianceMap->GetNumMips();
-    Settings.ScreenWidth = FrameResources.FinalTarget->GetWidth();
-    Settings.ScreenHeight = FrameResources.FinalTarget->GetHeight();
+    Settings.NumPointLights              = LightSetup.PointLightsData.Size();
+    Settings.NumSkyLightMips             = LightSetup.SpecularIrradianceMap->GetNumMips();
+    Settings.ScreenWidth                 = FrameResources.FinalTarget->GetWidth();
+    Settings.ScreenHeight                = FrameResources.FinalTarget->GetHeight();
 
     CmdList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
 

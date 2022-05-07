@@ -31,8 +31,6 @@ public:
 
     virtual bool Present(bool VerticalSync) override final;
 
-    virtual CRHIRenderTargetView* GetRenderTargetView() const override final { return BackBufferViews[BackBufferIndex].Get(); }
-
     virtual CRHITexture2D* GetBackBuffer() const override final { return BackBuffers[BackBufferIndex].Get(); }
 
 private:
@@ -50,6 +48,5 @@ private:
 
     HANDLE                   SwapChainWaitableObject = 0;
 
-    TArray<TSharedRef<CD3D12Texture2D>>     BackBuffers;
-    TArray<TSharedRef<CD3D12RenderTargetView>> BackBufferViews;
+    TArray<TSharedRef<CD3D12Texture2D>> BackBuffers;
 };

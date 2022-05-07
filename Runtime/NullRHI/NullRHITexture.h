@@ -20,8 +20,6 @@ public:
 
     CNullRHITexture2D(const CRHITexture2DInitializer& Initializer)
         : CRHITexture2D(Initializer)
-        , RenderTargetView(dbg_new CNullRHIRenderTargetView())
-        , DepthStencilView(dbg_new CNullRHIDepthStencilView())
         , UnorderedAccessView(dbg_new CNullRHIUnorderedAccessView(this))
     { }
 
@@ -30,15 +28,9 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual CRHIRenderTargetView* GetRenderTargetView() const override { return RenderTargetView.Get(); }
-
-    virtual CRHIDepthStencilView* GetDepthStencilView() const override { return DepthStencilView.Get(); }
-
     virtual CRHIUnorderedAccessView* GetUnorderedAccessView() const override { return UnorderedAccessView.Get(); }
 
 private:
-    TSharedRef<CNullRHIRenderTargetView>    RenderTargetView;
-    TSharedRef<CNullRHIDepthStencilView>    DepthStencilView;
     TSharedRef<CNullRHIUnorderedAccessView> UnorderedAccessView;
 };
 
@@ -113,9 +105,9 @@ public:
 
     virtual void* GetRHIBaseTexture() { return reinterpret_cast<void*>(this); }
 
-    virtual class CRHIShaderResourceView* GetDefaultShaderResourceView() const override final { return ShaderResourceView.Get(); }
+    virtual class CRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
 
-    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const { return CRHIDescriptorHandle(); }
+    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const { return CRHIDescriptorHandle(); }
 
 private:
     TSharedRef<CNullRHIShaderResourceView> ShaderResourceView;

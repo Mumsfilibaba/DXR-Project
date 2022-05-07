@@ -171,14 +171,18 @@ void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& 
 
     TRACE_SCOPE("Render Skybox");
 
-    const float RenderWidth = float(FrameResources.FinalTarget->GetWidth());
+    const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
 
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
-    CRHIRenderTargetView* RenderTarget[] = { FrameResources.FinalTarget->GetRenderTargetView() };
-    CmdList.SetRenderTargets(RenderTarget, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
+    CRHIRenderPassInitializer RenderPass;
+    RenderPass.RenderTargets[0] = CRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPass.NumRenderTargets = 1;
+    RenderPass.DepthStencilView = CRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);
+
+    CmdList.BeginRenderPass(RenderPass);
 
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     CmdList.SetVertexBuffers(&SkyboxVertexBuffer, 1, 0);
@@ -194,12 +198,14 @@ void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& 
 
     CmdList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, 16);
 
-    CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetDefaultShaderResourceView();
+    CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
     CmdList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);
 
     CmdList.SetSamplerState(SkyboxPixelShader.Get(), SkyboxSampler.Get(), 0);
 
     CmdList.DrawIndexedInstanced(static_cast<uint32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
+
+    CmdList.EndRenderPass();
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
 }

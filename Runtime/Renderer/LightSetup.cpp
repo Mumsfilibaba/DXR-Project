@@ -273,14 +273,6 @@ void SLightSetup::Release()
 
     PointLightShadowMaps.Reset();
 
-    for (auto& DSVCube : PointLightShadowMapDSVs)
-    {
-        for (uint32 i = 0; i < 6; i++)
-        {
-            DSVCube[i].Reset();
-        }
-    }
-
     for (uint32 i = 0; i < 4; i++)
     {
         ShadowMapCascades[i].Reset();

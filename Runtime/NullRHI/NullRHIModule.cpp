@@ -9,7 +9,7 @@ IMPLEMENT_ENGINE_MODULE(CNullRHIModule, NullRHI);
 
 CRHICoreInterface* CNullRHIModule::CreateInterface()
 {
-    return dbg_new CNullRHICoreInterface();
+    return CNullRHICoreInterface::CreateNullRHICoreInterface();
 }
 
 IRHIShaderCompiler* CNullRHIModule::CreateCompiler()

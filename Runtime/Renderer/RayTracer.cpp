@@ -176,9 +176,9 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
     Resources.GlobalResources.AddSamplerState(Resources.GBufferSampler.Get());
     Resources.GlobalResources.AddSamplerState(Sampler);
     Resources.GlobalResources.AddShaderResourceView(Resources.RTScene->GetShaderResourceView());
-    Resources.GlobalResources.AddShaderResourceView(Resources.Skybox->GetDefaultShaderResourceView());
-    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetDefaultShaderResourceView());
-    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDefaultShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.Skybox->GetShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView());
+    Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView());
 
     for (uint32 i = 0; i < Resources.RTMaterialTextureCache.Size(); i++)
     {
@@ -206,7 +206,7 @@ void CRayTracer::PreRender(CRHICommandList& CmdList, SFrameResources& Resources,
 
     CmdList.UnorderedAccessTextureBarrier(Resources.RTOutput.Get());
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.RTOutput->GetDefaultShaderResourceView())
+    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView())
                    , Resources.RTOutput
                    , EResourceAccess::UnorderedAccess
                    , EResourceAccess::UnorderedAccess);

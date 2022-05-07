@@ -14,7 +14,6 @@ CD3D12Viewport::CD3D12Viewport(CD3D12Device* InDevice, CD3D12CommandContext* InC
     , SwapChain(nullptr)
     , CmdContext(InCmdContext)
     , BackBuffers()
-    , BackBufferViews()
 { }
 
 CD3D12Viewport::~CD3D12Viewport()
@@ -131,7 +130,6 @@ bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
         CmdContext->ClearState();
 
         BackBuffers.Clear();
-        BackBufferViews.Clear();
 
         HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
         if (SUCCEEDED(Result))
@@ -198,53 +196,19 @@ bool CD3D12Viewport::RetriveBackBuffers()
         BackBuffers.Resize(NumBackBuffers);
     }
 
-    if (BackBufferViews.Size() < (int32)NumBackBuffers)
-    {
-        CD3D12OfflineDescriptorHeap* RenderTargetOfflineHeap = GD3D12Instance->GetRenderTargetOfflineDescriptorHeap();
-        BackBufferViews.Resize(NumBackBuffers);
-
-        for (TSharedRef<CD3D12RenderTargetView>& View : BackBufferViews)
-        {
-            if (!View)
-            {
-                View = dbg_new CD3D12RenderTargetView(GetDevice(), RenderTargetOfflineHeap);
-                if (!View->AllocateHandle())
-                {
-                    return false;
-                }
-            }
-        }
-    }
-
     for (uint32 i = 0; i < NumBackBuffers; i++)
     {
         TComPtr<ID3D12Resource> BackBufferResource;
         HRESULT Result = SwapChain->GetBuffer(i, IID_PPV_ARGS(&BackBufferResource));
         if (FAILED(Result))
         {
-            D3D12_INFO("[CD3D12Viewport]: GetBuffer(" + ToString(i) + ") Failed");
+            D3D12_INFO("[CD3D12Viewport]: GetBuffer(%u) Failed", i);
             return false;
         }
 
         CRHITexture2DInitializer BackBufferInitializer(GetColorFormat(), Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
         BackBuffers[i] = dbg_new CD3D12Texture2D(GetDevice(), BackBufferInitializer);
         BackBuffers[i]->SetResource(dbg_new CD3D12Resource(GetDevice(), BackBufferResource));
-
-        D3D12_RENDER_TARGET_VIEW_DESC Desc;
-        CMemory::Memzero(&Desc);
-
-        Desc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
-        Desc.Format               = BackBuffers[i]->GetDXGIFormat();
-        Desc.Texture2D.MipSlice   = 0;
-        Desc.Texture2D.PlaneSlice = 0;
-
-        if (!BackBufferViews[i]->CreateView(BackBuffers[i]->GetD3D12Resource(), Desc))
-        {
-            return false;
-        }
-
-        BackBufferViews[i].AddRef();
-        BackBuffers[i]->SetRenderTargetView(BackBufferViews[i].Get());
     }
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();

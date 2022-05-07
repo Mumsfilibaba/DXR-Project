@@ -215,7 +215,7 @@ private:
 
 public:
 
-    static CD3D12CommandContext* Make(CD3D12Device* InDevice);
+    static CD3D12CommandContext* CreateD3D12CommandContext(CD3D12Device* InDevice);
 
     void UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
 
@@ -268,23 +268,17 @@ public:
     virtual void BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
     virtual void EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
 
-    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const TStaticArray<float, 4>& ClearColor) override final;
-    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) override final;
+    virtual void ClearRenderTargetView(const CRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor) override final;
+    virtual void ClearDepthStencilView(const CRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
     virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) override final;
 
-    virtual void SetShadingRate(EShadingRate ShadingRate) override final;
-    virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) override final;
-
-    // TODO: Implement RenderPasses (For Vulkan)
-    virtual void BeginRenderPass() override final;
+    virtual void BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer) override final;
     virtual void EndRenderPass() override final;
 
     virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final;
     virtual void SetScissorRect(float Width, float Height, float x, float y) override final;
 
     virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) override final;
-
-    virtual void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView) override final;
 
     virtual void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
     virtual void SetIndexBuffer(CRHIIndexBuffer* IndexBuffer) override final;
@@ -318,7 +312,7 @@ public:
     virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo) override final;
 
     virtual void DestroyResource(class IRHIResource* Resource) override final;
-    virtual void DiscardContents(class CRHITexture* Texture)   override final;
+    virtual void DiscardContents(class CRHITexture* Texture) override final;
 
     virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final;
     virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final;
@@ -388,6 +382,7 @@ private:
     CD3D12DescriptorCache        DescriptorCache;
     CD3D12ResourceBarrierBatcher BarrierBatcher;
 
-    bool bIsReady     = false;
-    bool bIsCapturing = false;
+    bool bIsReady            : 1;
+    bool bIsCapturing        : 1;
+    bool bIsRenderPassActive : 1;
 };

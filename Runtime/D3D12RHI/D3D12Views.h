@@ -1,6 +1,7 @@
 #pragma once
 #include "D3D12DeviceChild.h"
 #include "D3D12Resource.h"
+#include "D3D12RefCounted.h"
 
 #include "RHI/RHIResourceViews.h"
 
@@ -89,7 +90,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RenderTargetView
 
-class CD3D12RenderTargetView : public CRHIRenderTargetView, public CD3D12View
+class CD3D12RenderTargetView : public CD3D12RefCounted, public CD3D12View
 {
 public:
     CD3D12RenderTargetView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);
@@ -106,7 +107,7 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12DepthStencilView
 
-class CD3D12DepthStencilView : public CRHIDepthStencilView, public CD3D12View
+class CD3D12DepthStencilView : public CD3D12RefCounted, public CD3D12View
 {
 public:
     CD3D12DepthStencilView(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InHeap);

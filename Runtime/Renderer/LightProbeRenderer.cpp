@@ -88,7 +88,7 @@ void CLightProbeRenderer::RenderSkyLightProbe(CRHICommandList& CmdList, const SL
 
     CmdList.SetComputePipelineState(IrradianceGenPSO.Get());
 
-    CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetDefaultShaderResourceView();
+    CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
     CmdList.SetShaderResourceView(IrradianceGenShader.Get(), SkyboxSRV, 0);
     CmdList.SetUnorderedAccessView(IrradianceGenShader.Get(), LightSetup.IrradianceMapUAV.Get(), 0);
 

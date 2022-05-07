@@ -417,7 +417,7 @@ bool CD3D12RHIShaderCompiler::InternalCompileFromSource(
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
         String Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        D3D12_INFO("[CD3D12RHIShaderCompiler]: Successfully compiled shader '%s' with the following output:%s", AsciiFilePath.CStr(), Output.CStr());
+        D3D12_INFO("[CD3D12RHIShaderCompiler]: Successfully compiled shader '%s' with the following output: %s", AsciiFilePath.CStr(), Output.CStr());
     }
     else
     {
@@ -518,7 +518,7 @@ bool CD3D12RHIShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& 
     auto result = FuncName.Find(Buffer);
     if (result == String::NPos)
     {
-        D3D12_ERROR("[CD3D12RHIShaderCompiler]: First exported function does not have correct entrypoint '%s'. Name=%s" + , Buffer, FuncName.CStr());
+        D3D12_ERROR("[CD3D12RHIShaderCompiler]: First exported function does not have correct entrypoint '%s'. Name=%s", Buffer, FuncName.CStr());
         return false;
     }
 

@@ -344,7 +344,7 @@ void CInterfaceRenderer::Render(CRHICommandList& CmdList)
             }
             else
             {
-                CRHIShaderResourceView* View = FontTexture->GetDefaultShaderResourceView();
+                CRHIShaderResourceView* View = FontTexture->GetShaderResourceView();
                 CmdList.SetShaderResourceView(PShader.Get(), View, 0);
             }
 

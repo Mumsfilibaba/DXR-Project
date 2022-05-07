@@ -119,11 +119,11 @@ void D3D12DeviceRemovedHandlerRHI(CD3D12Device* Device)
             fputc('\n', File);
         }
 
-        D3D12_ERROR(Message);
+        D3D12_ERROR("%s", Message.CStr());
         for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
             Message = "    " + String(ToString(CurrentNode->pCommandHistory[i]));
-            D3D12_ERROR(Message);
+            D3D12_ERROR("%s", Message.CStr());
             if (File)
             {
                 fwrite(Message.Data(), 1, Message.Size(), File);
@@ -363,12 +363,7 @@ bool CD3D12Device::Initialize()
         if (SUCCEEDED(ND3D12Functions::D3D12CreateDevice(TempAdapter.Get(), MinFeatureLevel, _uuidof(ID3D12Device), nullptr)))
         {
             AdapterID = ID;
-
-            char Buff[256];
-            CMemory::Memzero(Buff, sizeof(Buff));
-            sprintf_s(Buff, "[CD3D12Device]: Direct3D Adapter (%u): %ls", AdapterID, Desc.Description);
-            D3D12_INFO(Buff);
-
+            D3D12_INFO("[CD3D12Device]: Direct3D Adapter (%u): %ls", AdapterID, Desc.Description);
             break;
         }
     }

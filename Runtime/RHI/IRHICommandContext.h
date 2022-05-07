@@ -4,6 +4,56 @@
 #include "RHIResourceViews.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHIRenderPassInitializer
+
+class CRHIRenderPassInitializer
+{
+public:
+    CRHIRenderPassInitializer()
+        : ShadingRateTexture(nullptr)
+        , DepthStencilView()
+        , StaticShadingRate(EShadingRate::VRS_1x1)
+        , NumRenderTargets(0)
+        , RenderTargets()
+    { }
+
+    CRHIRenderPassInitializer(const TStaticArray<CRHIRenderTargetView, kRHIMaxRenderTargetCount>& InRenderTargets
+                             , uint32 InNumRenderTargets
+                             , CRHIDepthStencilView InDepthStencilView
+                             , CRHITexture2D* InShadingRateTexture = nullptr
+                             , EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1)
+        : ShadingRateTexture(InShadingRateTexture)
+        , DepthStencilView(InDepthStencilView)
+        , StaticShadingRate(InStaticShadingRate)
+        , NumRenderTargets(InNumRenderTargets)
+        , RenderTargets(InRenderTargets)
+    { }
+
+    bool operator==(const CRHIRenderPassInitializer& RHS) const
+    {
+        return (NumRenderTargets   == RHS.NumRenderTargets)
+            && (RenderTargets      == RHS.RenderTargets)
+            && (DepthStencilView   == RHS.DepthStencilView)
+            && (ShadingRateTexture == RHS.ShadingRateTexture)
+            && (StaticShadingRate  == RHS.StaticShadingRate);
+    }
+
+    bool operator!=(const CRHIRenderPassInitializer& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHITexture2D*       ShadingRateTexture;
+
+    CRHIDepthStencilView DepthStencilView;
+    
+    EShadingRate         StaticShadingRate;
+    
+    uint32               NumRenderTargets;
+    TStaticArray<CRHIRenderTargetView, kRHIMaxRenderTargetCount> RenderTargets;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // IRHICommandContext 
 
 class IRHICommandContext
@@ -36,7 +86,7 @@ public:
      * @param RenderTargetView: RenderTargetView to clear
      * @param ClearColor: Color to set each pixel within the RenderTargetView to
      */
-    virtual void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const TStaticArray<float, 4>& ClearColor) = 0;
+    virtual void ClearRenderTargetView(const CRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor) = 0;
 
     /**
      * @brief: Clears a DepthStencilView with a specific value
@@ -44,7 +94,7 @@ public:
      * @param DepthStencilView: DepthStencilView to clear
      * @param ClearValue: Value to set each pixel within the DepthStencilView to
      */
-    virtual void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, const uint8 Stencil) = 0;
+    virtual void ClearDepthStencilView(const CRHIDepthStencilView& DepthStencilView, const float Depth, const uint8 Stencil) = 0;
     
     /**
      * @brief: Clears a UnorderedAccessView with a specific value
@@ -54,21 +104,7 @@ public:
      */
     virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) = 0;
 
-    /**
-     * @brief: Sets the Shading-Rate for the fullscreen
-     * 
-     * @param ShadingRate: New shading-rate for the upcoming draw-calls
-     */
-    virtual void SetShadingRate(EShadingRate ShadingRate) = 0;
-
-    /**
-     * @brief: Set the Shading-Rate image that should be used 
-     * 
-     * @param ShadingImage: Image containing the shading rate for the next upcoming draw-calls
-     */
-    virtual void SetShadingRateImage(CRHITexture2D* ShadingImage) = 0;
-
-    virtual void BeginRenderPass() = 0;
+    virtual void BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer) = 0;
 
     virtual void EndRenderPass() = 0;
 
@@ -100,15 +136,6 @@ public:
      * @param Color: New blend-factor to use
      */
     virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) = 0;
-
-    /**
-     * @brief: Set all the RenderTargetViews and the DepthStencilView that should be used, nullptr is valid if the slot should not be used
-     * 
-     * @param RenderTargetViews: Array of RenderTargetViews to use, each pointer in the array must be valid
-     * @param RenderTargetCount: Number of RenderTargetViews in the array
-     * @param DepthStencilView: DepthStencilView to set
-     */ 
-    virtual void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView) = 0;
 
     /**
      * @brief: Set the VertexBuffers to be used

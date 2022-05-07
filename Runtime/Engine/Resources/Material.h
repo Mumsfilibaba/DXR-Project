@@ -6,7 +6,7 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Containers/StaticArray.h"
 
-#define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetDefaultShaderResourceView() : nullptr)
+#define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetShaderResourceView() : nullptr)
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
 // SMaterialDesc

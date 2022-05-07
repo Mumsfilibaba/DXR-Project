@@ -90,9 +90,6 @@ public:
     virtual CRHIUnorderedAccessView* RHICreateUnorderedAccessView(const CRHITextureUAVInitializer& Initializer) override final;
     virtual CRHIUnorderedAccessView* RHICreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer) override final;
 
-    virtual CRHIRenderTargetView*    CreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo) override final;
-    virtual CRHIDepthStencilView*    CreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo) override final;
-
     virtual CRHIComputeShader*       RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final;
 
     virtual CRHIVertexShader*        RHICreateVertexShader(const TArray<uint8>& ShaderCode) override final;

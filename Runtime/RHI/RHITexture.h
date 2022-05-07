@@ -397,9 +397,9 @@ public:
 
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    virtual class CRHIShaderResourceView* GetDefaultShaderResourceView() const { return nullptr; }
+    virtual class CRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
 
-    virtual CRHIDescriptorHandle GetDefaultBindlessSRVHandle() const { return CRHIDescriptorHandle(); }
+    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const { return CRHIDescriptorHandle(); }
 
     virtual uint32 GetWidth() const { return 1; }
 
@@ -464,10 +464,6 @@ public:
     virtual uint32 GetNumSamples() const override final { return NumSamples; }
 
 public:
-
-    virtual class CRHIRenderTargetView* GetRenderTargetView() const { return nullptr; }
-
-    virtual class CRHIDepthStencilView* GetDepthStencilView() const { return nullptr; }
 
     virtual class CRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
@@ -563,10 +559,6 @@ public:
     virtual CIntVector3 GetExtent() const override final { return CIntVector3(GetWidth(), GetHeight(), ArraySize); }
 
     virtual uint32 GetArraySize() const override final { return ArraySize; }
-
-public:
-
-    uint32 GetNumCubes() const { return ArraySize; }
 
 protected:
     uint16 ArraySize;
