@@ -8,7 +8,7 @@ SandboxProject.AddModuleDependencies(
 {
 	'Core',
 	'CoreApplication',
-	'Application',
+	'Canvas',
 	'RHI',
 	'Engine',
 	'Renderer',

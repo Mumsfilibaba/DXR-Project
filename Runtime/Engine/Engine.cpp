@@ -4,7 +4,7 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
 
-#include "Application/ApplicationInstance.h"
+#include "Canvas/CanvasApplication.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -48,7 +48,7 @@ bool CEngine::Initialize()
         WindowStyleFlag_Maximizable |
         WindowStyleFlag_Resizeable;
 
-    CApplicationInstance& Application = CApplicationInstance::Get();
+    CCanvasApplication& Application = CCanvasApplication::Get();
 
     const uint32 WindowWidth  = 1920;
     const uint32 WindowHeight = 1080;
@@ -69,7 +69,7 @@ bool CEngine::Initialize()
     Application.RegisterMainViewport(MainWindow);
 
     TSharedPtr<ICursor> CursorDevice = Application.GetCursor();
-    User = CApplicationUser::Make(0, CursorDevice);
+    User = CCanvasUser::Make(0, CursorDevice);
     if (!User)
     {
         return false;

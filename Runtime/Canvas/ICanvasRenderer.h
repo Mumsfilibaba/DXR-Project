@@ -1,18 +1,18 @@
 #pragma once
-#include "InterfaceImage.h"
-#include "IWindow.h"
+#include "CanvasImage.h"
+#include "CanvasWindow.h"
 
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Containers/SharedRef.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// IInterfaceRenderer
+// ICanvasRenderer
 
-class IInterfaceRenderer : public CRefCounted
+class ICanvasRenderer : public CRefCounted
 {
 public:
 
-    virtual ~IInterfaceRenderer() = default;
+    virtual ~ICanvasRenderer() = default;
 
     /**
      * @brief: Init the context
@@ -49,5 +49,5 @@ public:
      * 
      * @return: Returns a newly created interface renderer
      */
-    virtual IInterfaceRenderer* CreateRenderer() = 0;
+    virtual ICanvasRenderer* CreateRenderer() = 0;
 };

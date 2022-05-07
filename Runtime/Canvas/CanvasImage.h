@@ -2,16 +2,16 @@
 #include "RHI/RHIResourceViews.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// SInterfaceImage
+// SCanvasImage
 
-struct SInterfaceImage
+struct SCanvasImage
 {
-    SInterfaceImage() = default;
+    SCanvasImage() = default;
 
-    SInterfaceImage( const TSharedRef<CRHIShaderResourceView>& InImageView
-                   , const TSharedRef<CRHITexture>& InImage
-                   , EResourceAccess InBefore
-                   , EResourceAccess InAfter)
+    SCanvasImage( const TSharedRef<CRHIShaderResourceView>& InImageView
+                , const TSharedRef<CRHITexture>& InImage
+                , EResourceAccess InBefore
+                , EResourceAccess InAfter)
         : ImageView(InImageView)
         , Image(InImage)
         , BeforeState(InBefore)

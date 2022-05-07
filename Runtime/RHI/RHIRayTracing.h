@@ -208,7 +208,7 @@ public:
 
     CRHIRayTracingSceneInitializer(const TArrayView<const CRHIRayTracingGeometryInstance>& InInstances, EAccelerationStructureBuildFlags InFlags)
         : CRHIAccelerationStructureInitializer(InFlags)
-        , Instances(Instances)
+        , Instances(InInstances)
     { }
 
     bool operator==(const CRHIRayTracingSceneInitializer& RHS) const

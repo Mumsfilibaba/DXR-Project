@@ -248,8 +248,8 @@ public:
 
     CRHITextureCubeInitializer()
         : CRHITextureInitializer()
-        , Extent(1)
-        , NumSamples(1)
+	    , NumSamples(1)
+	    , Extent(1)
     { }
 
     CRHITextureCubeInitializer( EFormat InFormat
@@ -261,8 +261,8 @@ public:
                               , CRHITextureDataInitializer* InInitialData = nullptr
                               , const CTextureClearValue& InClearValue = CTextureClearValue())
         : CRHITextureInitializer(InFormat, InUsageFlags, InInitialAccess, InNumMips, InInitialData, InClearValue)
-        , Extent(uint16(InExtent))
-        , NumSamples(uint8(InNumSamples))
+	    , NumSamples(uint8(InNumSamples))
+	    , Extent(uint16(InExtent))
     { }
 
     bool operator==(const CRHITextureCubeInitializer& RHS) const
@@ -511,8 +511,8 @@ protected:
 
     explicit CRHITextureCube(const CRHITextureCubeInitializer& Initializer)
         : CRHITexture(Initializer)
-        , Extent(Initializer.Extent)
         , NumSamples(Initializer.NumSamples)
+	    , Extent(Initializer.Extent)
     { }
 
 public:

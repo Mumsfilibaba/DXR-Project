@@ -101,13 +101,13 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CRHITexture Interface
 
-    virtual void* GetRHIBaseResource() const { return nullptr; }
+    virtual void* GetRHIBaseResource() const override final { return nullptr; }
 
-    virtual void* GetRHIBaseTexture() { return reinterpret_cast<void*>(this); }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(this); }
 
     virtual class CRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
 
-    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const { return CRHIDescriptorHandle(); }
+    virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
 
 private:
     TSharedRef<CNullRHIShaderResourceView> ShaderResourceView;

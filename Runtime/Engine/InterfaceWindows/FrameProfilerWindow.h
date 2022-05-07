@@ -1,13 +1,14 @@
 #pragma once
+#include "Canvas/CanvasWindow.h"
+
 #include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Application/IWindow.h"
 
 #include <imgui.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CFrameProfilerWindow
 
-class CFrameProfilerWindow : public IWindow
+class CFrameProfilerWindow : public CCanvasWindow
 {
     INTERFACE_GENERATE_BODY();
 

@@ -55,7 +55,6 @@ bool CMacApplication::Initialize()
 
     Check(PlatformThreadMisc::IsMainThread()); 
 
-    /* Init application singleton */
     [NSApplication sharedApplication];
     Check(NSApp != nullptr);
     

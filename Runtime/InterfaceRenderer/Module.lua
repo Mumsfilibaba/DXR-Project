@@ -15,7 +15,7 @@ InterfaceRendererModule.AddModuleDependencies(
 {
     'Core',
     'CoreApplication',
-    'Application',
+    'Canvas',
     'Engine',
     'RHI',
 })

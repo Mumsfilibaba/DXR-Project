@@ -3,9 +3,9 @@
 #include "Core/Input/InputCodes.h"
 #include "Core/Delegates/Event.h"
 
-#include "Application/Events.h"
-#include "Application/ApplicationUser.h"
-#include "Application/WindowMessageHandler.h"
+#include "Canvas/Events.h"
+#include "Canvas/CanvasUser.h"
+#include "Canvas/WindowMessageHandler.h"
 
 #include "RHI/RHIViewport.h"
 
@@ -67,7 +67,7 @@ public:
     TSharedRef<CRHIViewport> MainViewport;
 
     /** User */
-    TSharedPtr<CApplicationUser> User;
+    TSharedPtr<CCanvasUser> User;
 
     /** The current scene */
     TSharedPtr<CScene> Scene;

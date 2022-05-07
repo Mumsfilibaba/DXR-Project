@@ -2,27 +2,27 @@
 include '../../BuildScripts/Scripts/build_module.lua'
 
 ---------------------------------------------------------------------------------------------------
--- Application Module
+-- Canvas Module
 
-local ApplicationModule = CModuleBuildRules('Application')
-ApplicationModule.AddSystemIncludes( 
+local CanvasModule = CModuleBuildRules('Canvas')
+CanvasModule.AddSystemIncludes( 
 {
     MakeExternalDependencyPath('imgui'),
 })
 
-ApplicationModule.AddModuleDependencies( 
+CanvasModule.AddModuleDependencies( 
 {
     'Core',
     'CoreApplication',
 })
 
-ApplicationModule.AddLinkLibraries( 
+CanvasModule.AddLinkLibraries( 
 {
     'ImGui',
 })
 
 if BuildWithXcode() then
-    ApplicationModule.AddFrameWorks( 
+    CanvasModule.AddFrameWorks( 
     {
         'Cocoa',
         'AppKit',
@@ -30,4 +30,4 @@ if BuildWithXcode() then
     })
 end
 
-ApplicationModule.Generate()
+CanvasModule.Generate()

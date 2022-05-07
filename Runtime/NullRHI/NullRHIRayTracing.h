@@ -56,9 +56,9 @@ public:
 
     virtual CRHIDescriptorHandle GetBindlessHandle() const override final{ return CRHIDescriptorHandle(); }
 
-    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
+    virtual void* GetRHIBaseBVHBuffer() override final { return nullptr; }
 
-    virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
+    virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(this); }
 
 private:
     TSharedRef<CNullRHIShaderResourceView> View;

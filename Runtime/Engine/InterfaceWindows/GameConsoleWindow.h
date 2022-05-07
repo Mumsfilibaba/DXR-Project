@@ -1,7 +1,7 @@
 #pragma once
-#include "Application/IWindow.h"
-#include "Application/InputHandler.h"
-#include "Application/Events.h"
+#include "Canvas/CanvasWindow.h"
+#include "Canvas/InputHandler.h"
+#include "Canvas/Events.h"
 
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/SharedRef.h"
@@ -38,7 +38,7 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CGameConsoleWindow
 
-class CGameConsoleWindow final : public IWindow
+class CGameConsoleWindow final : public CCanvasWindow
 {
     INTERFACE_GENERATE_BODY();
 

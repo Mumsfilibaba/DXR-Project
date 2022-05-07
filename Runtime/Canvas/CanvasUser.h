@@ -1,6 +1,6 @@
 #pragma once
 #include "Events.h"
-#include "Application.h"
+#include "Canvas.h"
 
 #include "Core/Input/InputStates.h"
 #include "Core/Containers/Array.h"
@@ -11,20 +11,20 @@
 #include "CoreApplication/ICursor.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CApplicationUser
+// CCanvasUser
 
-class APPLICATION_API CApplicationUser
+class CANVAS_API CCanvasUser
 {
-    friend class CApplicationInstance;
+    friend class CCanvasApplication;
 
 public:
 
-    static FORCEINLINE TSharedPtr<CApplicationUser> Make(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
+    static FORCEINLINE TSharedPtr<CCanvasUser> Make(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
     {
-        return TSharedPtr<CApplicationUser>(dbg_new CApplicationUser(InUserIndex, InCursor));
+        return TSharedPtr<CCanvasUser>(dbg_new CCanvasUser(InUserIndex, InCursor));
     }
 
-    virtual ~CApplicationUser() = default;
+    virtual ~CCanvasUser() = default;
 
     virtual void Tick(CTimestamp DeltaTime);
 
@@ -114,7 +114,7 @@ public:
 
 private:
 
-    CApplicationUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
+    CCanvasUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor);
 
      /** @brief: Get the index in the key-state array */
     FORCEINLINE int32 GetKeyStateIndexFromKeyCode(EKey KeyCode) const

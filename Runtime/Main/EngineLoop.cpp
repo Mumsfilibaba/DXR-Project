@@ -17,7 +17,7 @@
 #include "Core/Debug/Profiler/FrameProfiler.h"
 #include "Core/Debug/Console/ConsoleManager.h"
 
-#include "Application/ApplicationInstance.h"
+#include "Canvas/CanvasApplication.h"
 
 #include "InterfaceRenderer/InterfaceRenderer.h"
 
@@ -42,8 +42,8 @@ bool CEngineLoop::LoadCoreModules()
         return false;
     }
 
-    IEngineModule* InterfaceModule = ModuleManager.LoadEngineModule("Application");
-    if (!InterfaceModule)
+    IEngineModule* CanvasModule = ModuleManager.LoadEngineModule("Canvas");
+    if (!CanvasModule)
     {
         return false;
     }
@@ -114,7 +114,7 @@ bool CEngineLoop::PreInitialize()
         return false;
     }
 
-    if (!CApplicationInstance::CreateApplication())
+    if (!CCanvasApplication::CreateApplication())
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return false;
@@ -199,14 +199,14 @@ bool CEngineLoop::Initialize()
         return false;
     }
 
-    TSharedRef<IInterfaceRenderer> InterfaceRenderer = InterfaceRendererModule->CreateRenderer();
+    TSharedRef<ICanvasRenderer> InterfaceRenderer = InterfaceRendererModule->CreateRenderer();
     if (!InterfaceRenderer)
     {
         PlatformApplicationMisc::MessageBox("ERROR", "FAILED to create InterfaceRenderer");
         return false;
     }
 
-    CApplicationInstance::Get().SetRenderer(InterfaceRenderer);
+    CCanvasApplication::Get().SetRenderer(InterfaceRenderer);
 
     // Final thing is to startup the engine
     if (!GEngine->Start())
@@ -224,7 +224,7 @@ void CEngineLoop::Tick(CTimestamp Deltatime)
 {
     TRACE_FUNCTION_SCOPE();
 
-    CApplicationInstance::Get().Tick(Deltatime);
+    CCanvasApplication::Get().Tick(Deltatime);
 
     CEngineLoopTicker::Get().Tick(Deltatime);
 
@@ -250,9 +250,9 @@ bool CEngineLoop::Release()
 
     GRenderer.Release();
 
-    if (CApplicationInstance::IsInitialized())
+    if (CCanvasApplication::IsInitialized())
     {
-        CApplicationInstance::Get().SetRenderer(nullptr);
+        CCanvasApplication::Get().SetRenderer(nullptr);
     }
 
     // Release the Engine. Protect against failed initialization where the global pointer was never initialized
@@ -270,7 +270,7 @@ bool CEngineLoop::Release()
 
     CAsyncTaskManager::Get().Release();
 
-    CApplicationInstance::Release();
+    CCanvasApplication::Release();
 
     CThreadManager::Release();
 

@@ -492,7 +492,8 @@ class CRHIDescriptorHandle
 {
     enum : uint32
     {
-        InvalidHandle = uint32(~0)
+		// Be specific in order to cancel warnings about truncation
+        InvalidHandle = ((1 << 24) - 1)
     };
 
 public:
@@ -501,8 +502,8 @@ public:
      * @brief: Default Constructor
      */
     CRHIDescriptorHandle()
-        : Type(EDescriptorType::Unknown)
-        , Index(InvalidHandle)
+        : Index(InvalidHandle)
+	    , Type(EDescriptorType::Unknown)
     { }
 
     /**
@@ -512,8 +513,8 @@ public:
      * @param InIndex: Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
      */
     CRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
-        : Type(InType)
-        , Index(InIndex)
+        : Index(InIndex)
+	    , Type(InType)
     { }
 
     /** @return: Returns true if the handle is valid */

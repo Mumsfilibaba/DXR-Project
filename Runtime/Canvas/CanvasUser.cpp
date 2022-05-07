@@ -1,18 +1,17 @@
-#include "ApplicationUser.h"
-#include "ApplicationInstance.h"
+#include "CanvasUser.h"
+#include "CanvasApplication.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ApplicationUser
+// CCanvasUser
 
-CApplicationUser::CApplicationUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
+CCanvasUser::CCanvasUser(uint32 InUserIndex, const TSharedPtr<ICursor>& InCursor)
     : UserIndex(InUserIndex)
     , Cursor(InCursor)
     , KeyStates()
     , MouseButtonStates()
-{
-}
+{ }
 
-void CApplicationUser::Tick(CTimestamp DeltaTime)
+void CCanvasUser::Tick(CTimestamp DeltaTime)
 {
     // Update all key-states 
     for (SKeyState& KeyState : KeyStates)
@@ -33,7 +32,7 @@ void CApplicationUser::Tick(CTimestamp DeltaTime)
     }
 }
 
-void CApplicationUser::HandleKeyEvent(const SKeyEvent& KeyEvent)
+void CCanvasUser::HandleKeyEvent(const SKeyEvent& KeyEvent)
 {
     int32 Index = GetKeyStateIndexFromKeyCode(KeyEvent.KeyCode);
     if (Index >= 0)
@@ -65,7 +64,7 @@ void CApplicationUser::HandleKeyEvent(const SKeyEvent& KeyEvent)
     }
 }
 
-void CApplicationUser::HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEvent)
+void CCanvasUser::HandleMouseButtonEvent(const SMouseButtonEvent& MouseButtonEvent)
 {
     int32 Index = GetMouseButtonStateIndexFromMouseButton(MouseButtonEvent.Button);
     if (Index >= 0)
@@ -91,19 +90,19 @@ void CApplicationUser::HandleMouseButtonEvent(const SMouseButtonEvent& MouseButt
     }
 }
 
-void CApplicationUser::HandleMouseMovedEvent(const SMouseMovedEvent& MouseMovedEvent)
+void CCanvasUser::HandleMouseMovedEvent(const SMouseMovedEvent& MouseMovedEvent)
 {
     UNREFERENCED_VARIABLE(MouseMovedEvent);
     // TODO: Call all attached player controllers 
 }
 
-void CApplicationUser::HandleMouseScrolledEvent(const SMouseScrolledEvent& MouseScolledEvent)
+void CCanvasUser::HandleMouseScrolledEvent(const SMouseScrolledEvent& MouseScolledEvent)
 {
     UNREFERENCED_VARIABLE(MouseScolledEvent);
     // TODO: Call all attached player controllers
 }
 
-void CApplicationUser::SetCursorPosition(const CIntVector2& Postion)
+void CCanvasUser::SetCursorPosition(const CIntVector2& Postion)
 {
     if (Cursor)
     {
@@ -112,7 +111,7 @@ void CApplicationUser::SetCursorPosition(const CIntVector2& Postion)
     }
 }
 
-CIntVector2 CApplicationUser::GetCursorPosition() const
+CIntVector2 CCanvasUser::GetCursorPosition() const
 {
     if (Cursor)
     {
