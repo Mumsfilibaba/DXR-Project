@@ -1145,23 +1145,26 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     // We assume the destination is in D3D12_RESOURCE_STATE_COPY_DEST
     TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
     TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+    
     FlushResourceBarriers();
 
     CommandList.CopyResource(StagingTexture.Get(), D3D12Texture->GetD3D12Resource());
 
     TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    
     FlushResourceBarriers();
 
+    CD3D12CoreInterface* D3D12CoreInterface = GetDevice()->GetCoreInterface();
     if (bIsTextureCube)
     {
-        TSharedRef<CD3D12ComputePipelineState> PipelineState = GD3D12Instance->GetGenerateMipsPipelineTexureCube();
+        TSharedRef<CD3D12ComputePipelineState> PipelineState = D3D12CoreInterface->GetGenerateMipsPipelineTexureCube();
         CommandList.SetPipelineState(PipelineState->GetPipeline());
         CommandList.SetComputeRootSignature(PipelineState->GetRootSignature());
     }
     else
     {
-        TSharedRef<CD3D12ComputePipelineState> PipelineState = GD3D12Instance->GetGenerateMipsPipelineTexure2D();
+        TSharedRef<CD3D12ComputePipelineState> PipelineState = D3D12CoreInterface->GetGenerateMipsPipelineTexure2D();
         CommandList.SetPipelineState(PipelineState->GetPipeline());
         CommandList.SetComputeRootSignature(PipelineState->GetRootSignature());
     }
@@ -1225,6 +1228,7 @@ void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
     }
 
     TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+
     FlushResourceBarriers();
 
     CmdBatch->AddInUseResource(Texture);

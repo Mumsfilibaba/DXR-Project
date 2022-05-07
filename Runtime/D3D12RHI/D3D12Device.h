@@ -1,5 +1,8 @@
 #pragma once
-#include "D3D12Core.h"
+#include "D3D12RefCounted.h"
+
+#include "Core/Containers/SharedRef.h"
+
 #include <dxgi1_6.h>
 
 #include <DXProgrammableCapture.h>
@@ -8,9 +11,15 @@ class CD3D12OfflineDescriptorHeap;
 class CD3D12OnlineDescriptorHeap;
 class CD3D12ComputePipelineState;
 class CD3D12RootSignature;
+class CD3D12CoreInterface;
 
 #define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
 #define D3D12_ENABLE_PIX_MARKERS              (1)
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Typedef
+
+typedef TSharedRef<class CD3D12Device> D3D12DeviceRef;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12DeviceRemovedHandlerRHI
@@ -20,10 +29,10 @@ void D3D12DeviceRemovedHandlerRHI(class CD3D12Device* Device);
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12Device
 
-class CD3D12Device
+class CD3D12Device : public CD3D12RefCounted
 {
 public:
-    CD3D12Device(bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
+    CD3D12Device(CD3D12CoreInterface* InCoreInterface, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
     ~CD3D12Device();
 
     bool Initialize();
@@ -32,17 +41,13 @@ public:
 
     String GetAdapterName() const;
 
+    FORCEINLINE CD3D12CoreInterface* GetCoreInterface() const { return CoreInterface; }
+
+    FORCEINLINE ID3D12Device* GetD3D12Device() const { return Device.Get(); }
+
+    FORCEINLINE ID3D12Device5* GeD3D12Device5() const { return DXRDevice.Get(); }
+
 public:
-
-    FORCEINLINE ID3D12Device* GetD3D12Device() const
-    {
-        return Device.Get();
-    }
-
-    FORCEINLINE ID3D12Device5* GetDXRDevice() const
-    {
-        return DXRDevice.Get();
-    }
 
     FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysisInterface() const
     {
@@ -157,8 +162,11 @@ public:
     }
 
 private:
+    class CD3D12CoreInterface*   CoreInterface;
+
     TComPtr<IDXGIFactory2>       Factory;
     TComPtr<IDXGIAdapter1>       Adapter;
+
     TComPtr<ID3D12Device>        Device;
     TComPtr<ID3D12Device5>       DXRDevice;
     TComPtr<IDXGraphicsAnalysis> GraphicsAnalysisInterface;

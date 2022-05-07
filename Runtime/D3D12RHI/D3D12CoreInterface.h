@@ -26,40 +26,19 @@ public:
 
     static CD3D12CoreInterface* CreateD3D12Instance();
 
-    FORCEINLINE CD3D12Device* GetDevice() const
-    {
-        return Device;
-    }
+    FORCEINLINE CD3D12Device* GetDevice() const { return Device.Get(); }
 
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap() const
-    {
-        return ResourceOfflineDescriptorHeap;
-    }
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap() const { return ResourceOfflineDescriptorHeap; }
 
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap() const
-    {
-        return RenderTargetOfflineDescriptorHeap;
-    }
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap() const { return RenderTargetOfflineDescriptorHeap; }
 
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap() const
-    {
-        return DepthStencilOfflineDescriptorHeap;
-    }
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap() const { return DepthStencilOfflineDescriptorHeap; }
 
-    FORCEINLINE CD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap() const
-    {
-        return SamplerOfflineDescriptorHeap;
-    }
+    FORCEINLINE CD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap() const { return SamplerOfflineDescriptorHeap; }
 
-    FORCEINLINE TSharedRef<CD3D12ComputePipelineState> GetGenerateMipsPipelineTexure2D() const
-    {
-        return GenerateMipsTex2D_PSO;
-    }
+    FORCEINLINE TSharedRef<CD3D12ComputePipelineState> GetGenerateMipsPipelineTexure2D() const { return GenerateMipsTex2D_PSO; }
 
-    FORCEINLINE TSharedRef<CD3D12ComputePipelineState> GetGenerateMipsPipelineTexureCube() const
-    {
-        return GenerateMipsTexCube_PSO;
-    }
+    FORCEINLINE TSharedRef<CD3D12ComputePipelineState> GetGenerateMipsPipelineTexureCube() const { return GenerateMipsTexCube_PSO; }
 
 public:
 
@@ -116,7 +95,7 @@ public:
 
     virtual CRHITimestampQuery* RHICreateTimestampQuery() override final;
 
-    virtual CRHIViewport* RHICreateViewport(const CRHIViewportInitializer& Initializer) override final;
+    virtual CRHIViewport*       RHICreateViewport(const CRHIViewportInitializer& Initializer) override final;
 
     virtual IRHICommandContext* RHIGetDefaultCommandContext() override final { return DirectCmdContext; }
 
@@ -135,7 +114,7 @@ private:
     template<typename D3D12BufferType, typename InitializerType>
     D3D12BufferType* CreateBuffer(const InitializerType& Initializer);
 
-    CD3D12Device*                Device = nullptr;
+    D3D12DeviceRef               Device;
     
     CD3D12CommandContext*        DirectCmdContext;
     
@@ -149,5 +128,3 @@ private:
     TSharedRef<CD3D12ComputePipelineState> GenerateMipsTex2D_PSO;
     TSharedRef<CD3D12ComputePipelineState> GenerateMipsTexCube_PSO;
 };
-
-extern CD3D12CoreInterface* GD3D12Instance;
