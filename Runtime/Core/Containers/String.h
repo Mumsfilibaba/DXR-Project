@@ -1426,6 +1426,25 @@ public:
         return (!Characters.IsEmpty()) ? Characters.Data() : StringUtils::Empty();
     }
 
+#if defined(__OBJC__)
+	/**
+	 * @brief: Retrieve a null-terminated string
+	 *
+	 * @return: Returns a pointer containing a null-terminated string
+	 */
+	FORCEINLINE NSString* GetNSString() const noexcept
+	{
+		if constexpr (TIsSame<CharType, char>::Value)
+		{
+			return [[[NSString alloc] initWithBytes:Characters.Data() length:Length() * sizeof(CharType) encoding:NSUTF8StringEncoding] autorelease];
+		}
+		else
+		{
+			return [[[NSString alloc] initWithBytes:Characters.Data() length:Length() * sizeof(CharType) encoding:NSUTF32LittleEndianStringEncoding] autorelease];
+		}
+	}
+#endif
+	
     /**
      * @brief: Returns the size of the container
      *
@@ -1651,6 +1670,153 @@ public:
         TString(Move(RHS)).Swap(*this);
         return *this;
     }
+	
+public:
+	
+    friend TString operator+(const TString& LHS, const TString& RHS) noexcept
+    {
+        const typename TString::SizeType CombinedSize = LHS.Length() + RHS.Length();
+
+        TString NewString;
+        NewString.Reserve(CombinedSize);
+        NewString.Append(LHS);
+        NewString.Append(RHS);
+        return NewString;
+    }
+
+    friend TString operator+(const CharType* LHS, const TString& RHS) noexcept
+    {
+        const typename TString::SizeType CombinedSize = StringUtils::Length(LHS) + RHS.Length();
+
+        TString NewString;
+        NewString.Reserve(CombinedSize);
+        NewString.Append(LHS);
+        NewString.Append(RHS);
+        return NewString;
+    }
+
+    friend TString operator+(const TString& LHS, const CharType* RHS) noexcept
+    {
+        const typename TString::SizeType CombinedSize = LHS.Length() + StringUtils::Length(RHS);
+
+        TString NewString;
+        NewString.Reserve(CombinedSize);
+        NewString.Append(LHS);
+        NewString.Append(RHS);
+        return NewString;
+    }
+
+    friend TString operator+(CharType LHS, const TString& RHS) noexcept
+    {
+        const typename TString::SizeType CombinedSize = RHS.Length() + 1;
+
+        TString NewString;
+        NewString.Reserve(CombinedSize);
+        NewString.Append(LHS);
+        NewString.Append(RHS);
+        return NewString;
+    }
+
+    friend TString operator+(const TString& LHS, CharType RHS) noexcept
+    {
+        const typename TString::SizeType CombinedSize = LHS.Length() + 1;
+
+        TString NewString;
+        NewString.Reserve(CombinedSize);
+        NewString.Append(LHS);
+        NewString.Append(RHS);
+        return NewString;
+    }
+    
+    friend bool operator==(const TString& LHS, const CharType* RHS) noexcept
+    {
+        return (LHS.Compare(RHS) == 0);
+    }
+
+    friend bool operator==(const CharType* LHS, const TString& RHS) noexcept
+    {
+        return (RHS.Compare(LHS) == 0);
+    }
+
+    friend bool operator==(const TString& LHS, const TString& RHS) noexcept
+    {
+        return (LHS.Compare(RHS) == 0);
+    }
+
+    friend bool operator!=(const TString& LHS, const CharType* RHS) noexcept
+    {
+        return !(LHS == RHS);
+    }
+
+    friend bool operator!=(const CharType* LHS, const TString& RHS) noexcept
+    {
+        return !(LHS == RHS);
+    }
+
+    friend bool operator!=(const TString& LHS, const TString& RHS) noexcept
+    {
+        return !(LHS == RHS);
+    }
+
+    friend bool operator<(const TString& LHS, const CharType* RHS) noexcept
+    {
+        return (LHS.Compare(RHS) < 0);
+    }
+
+    friend bool operator<(const CharType* LHS, const TString& RHS) noexcept
+    {
+        return (RHS.Compare(LHS) < 0);
+    }
+
+    friend bool operator<(const TString& LHS, const TString& RHS) noexcept
+    {
+        return (LHS.Compare(RHS) < 0);
+    }
+
+    friend bool operator<=(const TString& LHS, const CharType* RHS) noexcept
+    {
+        return (LHS.Compare(RHS) <= 0);
+    }
+
+    friend bool operator<=(const CharType* LHS, const TString& RHS) noexcept
+    {
+        return (RHS.Compare(LHS) <= 0);
+    }
+
+    friend bool operator<=(const TString& LHS, const TString& RHS) noexcept
+    {
+        return (LHS.Compare(RHS) <= 0);
+    }
+
+    friend bool operator>(const TString& LHS, const CharType* RHS) noexcept
+    {
+        return (LHS.Compare(RHS) > 0);
+    }
+
+    friend bool operator>(const CharType* LHS, const TString& RHS) noexcept
+    {
+        return (RHS.Compare(LHS) > 0);
+    }
+
+    friend bool operator>(const TString& LHS, const TString& RHS) noexcept
+    {
+        return (LHS.Compare(RHS) > 0);
+    }
+
+    friend bool operator>=(const TString& LHS, const CharType* RHS) noexcept
+    {
+        return (LHS.Compare(RHS) >= 0);
+    }
+
+    friend bool operator>=(const CharType* LHS, const TString& RHS) noexcept
+    {
+        return (RHS.Compare(LHS) >= 0);
+    }
+
+    friend bool operator>=(const TString& LHS, const TString& RHS) noexcept
+    {
+        return (LHS.Compare(RHS) >= 0);
+    }
 
 public:
 
@@ -1796,182 +1962,8 @@ private:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Predefined types
 
-using String = TString<char>;
+using String  = TString<char>;
 using WString = TString<wchar_t>;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TString Operators
-
-template<typename CharType>
-inline TString<CharType> operator+(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
-{
-    const typename TString<CharType>::SizeType CombinedSize = LHS.Length() + RHS.Length();
-
-    TString<CharType> NewString;
-    NewString.Reserve(CombinedSize);
-    NewString.Append(LHS);
-    NewString.Append(RHS);
-    return NewString;
-}
-
-template<typename CharType>
-inline TString<CharType> operator+(const CharType* LHS, const TString<CharType>& RHS) noexcept
-{
-    const typename TString<CharType>::SizeType CombinedSize = TStringUtils<CharType>::Length(LHS) + RHS.Length();
-
-    TString<CharType> NewString;
-    NewString.Reserve(CombinedSize);
-    NewString.Append(LHS);
-    NewString.Append(RHS);
-    return NewString;
-}
-
-template<typename CharType>
-inline TString<CharType> operator+(const TString<CharType>& LHS, const CharType* RHS) noexcept
-{
-    const typename TString<CharType>::SizeType CombinedSize = LHS.Length() + TStringUtils<CharType>::Length(RHS);
-
-    TString<CharType> NewString;
-    NewString.Reserve(CombinedSize);
-    NewString.Append(LHS);
-    NewString.Append(RHS);
-    return NewString;
-}
-
-template<typename CharType>
-inline TString<CharType> operator+(CharType LHS, const TString<CharType>& RHS) noexcept
-{
-    const typename TString<CharType>::SizeType CombinedSize = RHS.Length() + 1;
-
-    TString<CharType> NewString;
-    NewString.Reserve(CombinedSize);
-    NewString.Append(LHS);
-    NewString.Append(RHS);
-    return NewString;
-}
-
-template<typename CharType>
-inline TString<CharType> operator+(const TString<CharType>& LHS, CharType RHS) noexcept
-{
-    const typename TString<CharType>::SizeType CombinedSize = LHS.Length() + 1;
-
-    TString<CharType> NewString;
-    NewString.Reserve(CombinedSize);
-    NewString.Append(LHS);
-    NewString.Append(RHS);
-    return NewString;
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TString comparison operators
-
-template<typename CharType>
-inline bool operator==(const TString<CharType>& LHS, const CharType* RHS) noexcept
-{
-    return (LHS.Compare(RHS) == 0);
-}
-
-template<typename CharType>
-inline bool operator==(const CharType* LHS, const TString<CharType>& RHS) noexcept
-{
-    return (RHS.Compare(LHS) == 0);
-}
-
-template<typename CharType>
-inline bool operator==(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
-{
-    return (LHS.Compare(RHS) == 0);
-}
-
-template<typename CharType>
-inline bool operator!=(const TString<CharType>& LHS, const CharType* RHS) noexcept
-{
-    return !(LHS == RHS);
-}
-
-template<typename CharType>
-inline bool operator!=(const CharType* LHS, const TString<CharType>& RHS) noexcept
-{
-    return !(LHS == RHS);
-}
-
-template<typename CharType>
-inline bool operator!=(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
-{
-    return !(LHS == RHS);
-}
-
-template<typename CharType>
-inline bool operator<(const TString<CharType>& LHS, const CharType* RHS) noexcept
-{
-    return (LHS.Compare(RHS) < 0);
-}
-
-template<typename CharType>
-inline bool operator<(const CharType* LHS, const TString<CharType>& RHS) noexcept
-{
-    return (RHS.Compare(LHS) < 0);
-}
-
-template<typename CharType>
-inline bool operator<(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
-{
-    return (LHS.Compare(RHS) < 0);
-}
-
-template<typename CharType>
-inline bool operator<=(const TString<CharType>& LHS, const CharType* RHS) noexcept
-{
-    return (LHS.Compare(RHS) <= 0);
-}
-
-template<typename CharType>
-inline bool operator<=(const CharType* LHS, const TString<CharType>& RHS) noexcept
-{
-    return (RHS.Compare(LHS) <= 0);
-}
-
-template<typename CharType>
-inline bool operator<=(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
-{
-    return (LHS.Compare(RHS) <= 0);
-}
-
-template<typename CharType>
-inline bool operator>(const TString<CharType>& LHS, const CharType* RHS) noexcept
-{
-    return (LHS.Compare(RHS) > 0);
-}
-
-template<typename CharType>
-inline bool operator>(const CharType* LHS, const TString<CharType>& RHS) noexcept
-{
-    return (RHS.Compare(LHS) > 0);
-}
-
-template<typename CharType>
-inline bool operator>(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
-{
-    return (LHS.Compare(RHS) > 0);
-}
-
-template<typename CharType>
-inline bool operator>=(const TString<CharType>& LHS, const CharType* RHS) noexcept
-{
-    return (LHS.Compare(RHS) >= 0);
-}
-
-template<typename CharType>
-inline bool operator>=(const CharType* LHS, const TString<CharType>& RHS) noexcept
-{
-    return (RHS.Compare(LHS) >= 0);
-}
-
-template<typename CharType>
-inline bool operator>=(const TString<CharType>& LHS, const TString<CharType>& RHS) noexcept
-{
-    return (LHS.Compare(RHS) >= 0);
-}
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Add TString to be a string-type

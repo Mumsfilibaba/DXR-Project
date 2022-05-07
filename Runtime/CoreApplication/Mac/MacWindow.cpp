@@ -81,7 +81,7 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
         
         if (InStyle.IsTitled())
         {
-            NSString* Title = [NSString stringWithUTF8String:InTitle.CStr()];
+            NSString* Title = InTitle.GetNSString();
             [Window setTitle:Title];
         }
         
@@ -210,8 +210,7 @@ void CMacWindow::SetTitle(const String& InTitle)
 
 	if (StyleParams.IsTitled())
 	{
-		NSString* Title = [NSString stringWithUTF8String:InTitle.CStr()];
-
+		NSString* Title = InTitle.GetNSString();
 		MakeMainThreadCall(^
 		{
 			[Window setTitle:Title];

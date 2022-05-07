@@ -141,7 +141,7 @@ void CMacConsoleWindow::Print(const String& Message)
         {
             SCOPED_AUTORELEASE_POOL();
 
-            NSString* String = [NSString stringWithUTF8String:Message.CStr()];
+            NSString* String = Message.GetNSString();
 			AppendStringAndScroll(String);
 			
             PlatformApplicationMisc::PumpMessages(true);
@@ -157,7 +157,7 @@ void CMacConsoleWindow::PrintLine(const String& Message)
         {
             SCOPED_AUTORELEASE_POOL();
 
-            NSString* String      = [NSString stringWithUTF8String:Message.CStr()];
+            NSString* String      = Message.GetNSString();
             NSString* FinalString = [String stringByAppendingString:@"\n"];
         
             AppendStringAndScroll(FinalString);
@@ -187,7 +187,7 @@ void CMacConsoleWindow::SetTitle(const String& InTitle)
         {
             SCOPED_AUTORELEASE_POOL();
             
-            NSString* Title = [NSString stringWithUTF8String:InTitle.CStr()];
+            NSString* Title = InTitle.GetNSString();
             [Window setTitle:Title];
         }, true);
     }
