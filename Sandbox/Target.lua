@@ -6,14 +6,14 @@ include '../BuildScripts/Scripts/build_workspace.lua'
 local SandboxProject = CTargetBuildRules('Sandbox')
 SandboxProject.AddModuleDependencies(
 {
-	'Core',
-	'CoreApplication',
-	'Canvas',
-	'RHI',
-	'Engine',
-	'Renderer',
-	'InterfaceRenderer',
-	'NullRHI',
+    'Core',
+    'CoreApplication',
+    'Canvas',
+    'RHI',
+    'Engine',
+    'Renderer',
+    'InterfaceRenderer',
+    'NullRHI',
 })
 
 if BuildWithXcode() then
@@ -23,11 +23,16 @@ if BuildWithXcode() then
         'AppKit',
         'MetalKit'
     })
+
+    SandboxProject.AddModuleDependencies(
+    { 
+        'MetalRHI'
+    })
 else
-	SandboxProject.AddModuleDependencies(
-	{ 
-		'D3D12RHI'
-	})
+    SandboxProject.AddModuleDependencies(
+    { 
+        'D3D12RHI'
+    })
 end
 
 GenerateWorkspace('DXR-Engine Sandbox', { SandboxProject })

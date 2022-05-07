@@ -251,7 +251,7 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
             filter 'configurations:Production'
                 symbols  'off'
                 runtime  'Release'
-                optimize 'Full'	
+                optimize 'Full'    
             filter {}
         
         -- OpenFBX Project

@@ -3,13 +3,8 @@
 
 #include "CoreApplication/Generic/GenericWindow.h"
 
-#if defined(__OBJC__)
-    @class CCocoaWindow;
-    @class CCocoaContentView;
-#else
-    class CCocoaWindow;
-    class CCocoaContentView;
-#endif
+@class CCocoaWindow;
+@class CCocoaContentView;
 
 class CMacApplication;
 

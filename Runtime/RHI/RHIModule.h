@@ -11,6 +11,7 @@ enum class ERHIInstanceType : uint32
     Unknown = 0,
     Null    = 1,
     D3D12   = 2,
+	Metal   = 3,
 };
 
 inline const char* ToString(ERHIInstanceType RenderLayerApi)
@@ -18,7 +19,8 @@ inline const char* ToString(ERHIInstanceType RenderLayerApi)
     switch (RenderLayerApi)
     {
     case ERHIInstanceType::D3D12: return "D3D12";
-    case ERHIInstanceType::Null:  return "Null";
+	case ERHIInstanceType::Metal: return "Metal";
+	case ERHIInstanceType::Null:  return "Null";
     default:                      return "Unknown";
     }
 }
@@ -36,7 +38,7 @@ class RHI_API CRHIModule : public CDefaultEngineModule
 {
 protected:
 
-    CRHIModule() = default;
+    CRHIModule()  = default;
     ~CRHIModule() = default;
 
 public:
@@ -59,5 +61,5 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Global variables
 
-extern RHI_API class CRHICoreInterface*       GRHIInstance;
+extern RHI_API class CRHICoreInterface*  GRHIInstance;
 extern RHI_API class IRHIShaderCompiler* GShaderCompiler;

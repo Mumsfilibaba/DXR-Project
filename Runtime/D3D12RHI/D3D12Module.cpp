@@ -5,7 +5,7 @@
 IMPLEMENT_ENGINE_MODULE(CD3D12Module, D3D12RHI);
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHIModule
+// CD3D12Module
 
 CRHICoreInterface* CD3D12Module::CreateInterface()
 {

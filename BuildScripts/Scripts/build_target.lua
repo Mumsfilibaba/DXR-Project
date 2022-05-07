@@ -88,7 +88,7 @@ function CTargetBuildRules(InName)
                 {
                     (RuntimeFolderPath .. '/Main/EngineLoop.cpp'),
                     (RuntimeFolderPath .. '/Main/EngineMain.inl'),
-                    MainFile	
+                    MainFile    
                 })
 
                 -- Generate the project
@@ -128,7 +128,7 @@ function CTargetBuildRules(InName)
                 {
                     (RuntimeFolderPath .. '/Main/EngineLoop.cpp'),
                     (RuntimeFolderPath .. '/Main/EngineMain.inl'),
-                    MainFile	
+                    MainFile    
                 }
 
                 -- Defines

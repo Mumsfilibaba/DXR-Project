@@ -27,6 +27,10 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
     {
         RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>("D3D12RHI");
     }
+	else if (InRenderApi == ERHIInstanceType::Metal)
+	{
+		RHIModule = CModuleManager::Get().LoadEngineModule<CRHIModule>("MetalRHI");
+	}
     else if (InRenderApi == ERHIInstanceType::Null)
     {
         RHIModule = LoadNullRHI();
@@ -71,7 +75,7 @@ bool RHIInitialize(ERHIInstanceType InRenderApi)
     GShaderCompiler = Compiler;
 
     // Set the context to the command queue
-    IRHICommandContext* CmdContext = GRHIInstance->RHIGetDefaultCommandContext();
+    IRHICommandContext* CmdContext = RHIGetDefaultCommandContext();
     CRHICommandQueue::Get().SetContext(CmdContext);
 
     return true;

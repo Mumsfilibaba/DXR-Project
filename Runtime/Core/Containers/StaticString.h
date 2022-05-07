@@ -35,13 +35,13 @@ public:
      * @param Format: Formatted string
      * @return: Returns the formatted string based on the format string
      */
-    static NOINLINE TStaticString MakeFormated(const CharType* Format, ...) noexcept
+    static NOINLINE TStaticString CreateFormated(const CharType* Format, ...) noexcept
     {
         TStaticString NewString;
 
         va_list ArgsList;
         va_start(ArgsList, Format);
-        NewString.FormatV(Format, ArgsList);
+        NewString.FormatArgs(Format, ArgsList);
         va_end(ArgsList);
 
         return NewString;
@@ -54,10 +54,10 @@ public:
      * @param ArgsList: Argument-list to be formatted based on the format-string
      * @return: Returns the formatted string based on the format string
      */
-    static FORCEINLINE void MakeFormatedV(const CharType* Format, va_list ArgsList) noexcept
+    static FORCEINLINE void CreateFormatedArgs(const CharType* Format, va_list ArgsList) noexcept
     {
         TStaticString NewString;
-        NewString.FormatV(Format, ArgsList);
+        NewString.FormatArgs(Format, ArgsList);
         return NewString;
     }
 
@@ -258,7 +258,7 @@ public:
     {
         va_list ArgList;
         va_start(ArgList, Format);
-        FormatV(Format, ArgList);
+        FormatArgs(Format, ArgList);
         va_end(ArgList);
     }
 
@@ -268,7 +268,7 @@ public:
      * @param Format: Formatted string to replace the string with
      * @param ArgList: Argument list filled with arguments for the formatted string
      */
-    FORCEINLINE void FormatV(const CharType* Format, va_list ArgList) noexcept
+    FORCEINLINE void FormatArgs(const CharType* Format, va_list ArgList) noexcept
     {
         SizeType WrittenChars = StringUtils::FormatBufferV(Characters, CharCount - 1, Format, ArgList);
         if (WrittenChars < CharCount)
@@ -292,7 +292,7 @@ public:
     {
         va_list ArgList;
         va_start(ArgList, Format);
-        AppendFormatV(Format, ArgList);
+        AppendFormatArgs(Format, ArgList);
         va_end(ArgList);
     }
 
@@ -302,7 +302,7 @@ public:
      * @param Format: Formatted string to append
      * @param ArgList: Argument-list for the formatted string
      */
-    FORCEINLINE void AppendFormatV(const CharType* Format, va_list ArgList) noexcept
+    FORCEINLINE void AppendFormatArgs(const CharType* Format, va_list ArgList) noexcept
     {
         const SizeType WrittenChars = StringUtils::FormatBufferV(Characters + Len, CharCount, Format, ArgList);
         const SizeType NewLength = Len + WrittenChars;

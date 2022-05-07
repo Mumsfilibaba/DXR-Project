@@ -5,6 +5,10 @@
 #include "Core/Templates/Identity.h"
 #include "Core/Templates/AddReference.h"
 
+#if defined(__OBJC__)
+    #include <Foundation/Foundation.h>
+#endif
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Config
 
@@ -15,7 +19,7 @@
 // Allocator type
 
 #if STRING_USE_INLINE_ALLOCATOR 
-#define STRING_ALLOCATOR_INLINE_ELEMENTS (16)
+     #define STRING_ALLOCATOR_INLINE_ELEMENTS (16)
 
 // Use a small static buffer for small strings
 template<typename CharType>
@@ -53,19 +57,21 @@ public:
     typedef TReverseArrayIterator<TString, CharType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TString, const CharType> ReverseConstIteratorType;
 
+public:
+	
     /**
      * @brief: Create a string from a formatted string
      *
      * @param Format: Formatted string
      * @return: Returns the formatted string based on the format string
      */
-    static NOINLINE TString MakeFormated(const CharType* Format, ...) noexcept
+    static NOINLINE TString CreateFormated(const CharType* Format, ...) noexcept
     {
         TString NewString;
 
         va_list ArgsList;
         va_start(ArgsList, Format);
-        NewString.FormatV(Format, ArgsList);
+        NewString.FormatArgs(Format, ArgsList);
         va_end(ArgsList);
 
         return NewString;
@@ -78,13 +84,15 @@ public:
      * @param ArgsList: Argument-list to be formatted based on the format-string
      * @return: Returns the formatted string based on the format string
      */
-    static FORCEINLINE TString MakeFormatedV(const CharType* Format, va_list ArgsList) noexcept
+    static FORCEINLINE TString CreateFormatedArgs(const CharType* Format, va_list ArgsList) noexcept
     {
         TString NewString;
-        NewString.FormatV(Format, ArgsList);
+        NewString.FormatArgs(Format, ArgsList);
         return NewString;
     }
 
+public:
+	
     /**
      * @brief: Default constructor
      */
@@ -295,7 +303,7 @@ public:
     {
         va_list ArgList;
         va_start(ArgList, Format);
-        FormatV(Format, ArgList);
+        FormatArgs(Format, ArgList);
         va_end(ArgList);
     }
 
@@ -305,7 +313,7 @@ public:
      * @param Format: Formatted string to replace the string with
      * @param ArgList: Argument list filled with arguments for the formatted string
      */
-    FORCEINLINE void FormatV(const CharType* Format, va_list ArgsList) noexcept
+    FORCEINLINE void FormatArgs(const CharType* Format, va_list ArgsList) noexcept
     {
         CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
         SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
@@ -344,7 +352,7 @@ public:
     {
         va_list ArgList;
         va_start(ArgList, Format);
-        AppendFormatV(Format, ArgList);
+        AppendFormatArgs(Format, ArgList);
         va_end(ArgList);
     }
 
@@ -354,7 +362,7 @@ public:
      * @param Format: Formatted string to append
      * @param ArgList: Argument-list for the formatted string
      */
-    FORCEINLINE void AppendFormatV(const CharType* Format, va_list ArgsList) noexcept
+    FORCEINLINE void AppendFormatArgs(const CharType* Format, va_list ArgsList) noexcept
     {
         CharType Buffer[STRING_FORMAT_BUFFER_SIZE];
         SizeType BufferSize = STRING_FORMAT_BUFFER_SIZE;
@@ -2042,7 +2050,7 @@ using SWideStringHasher = TStringHasher<wchar_t>;
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, String>::Type ToString(T Element)
 {
-    return String::MakeFormated("%f", Element);
+    return String::CreateFormated("%f", Element);
 }
 
 template<typename T>
@@ -2051,31 +2059,31 @@ typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, String>::Type ToString(T El
 template<>
 inline String ToString<int32>(int32 Element)
 {
-    return String::MakeFormated("%d", Element);
+    return String::CreateFormated("%d", Element);
 }
 
 template<>
 inline String ToString<int64>(int64 Element)
 {
-    return String::MakeFormated("%lld", Element);
+    return String::CreateFormated("%lld", Element);
 }
 
 template<>
 inline String ToString<uint32>(uint32 Element)
 {
-    return String::MakeFormated("%u", Element);
+    return String::CreateFormated("%u", Element);
 }
 
 template<>
 inline String ToString<uint64>(uint64 Element)
 {
-    return String::MakeFormated("%llu", Element);
+    return String::CreateFormated("%llu", Element);
 }
 
 template<>
 inline String ToString<void*>(void* Element)
 {
-    return String::MakeFormated("%p", Element);
+    return String::CreateFormated("%p", Element);
 }
 
 template<>
@@ -2087,7 +2095,7 @@ inline String ToString<bool>(bool bElement)
 template<typename T>
 typename TEnableIf<TIsFloatingPoint<T>::Value, WString>::Type ToWideString(T Element)
 {
-    return WString::MakeFormated(L"%f", Element);
+    return WString::CreateFormated(L"%f", Element);
 }
 
 template<typename T>
@@ -2096,25 +2104,25 @@ typename TEnableIf<TNot<TIsFloatingPoint<T>>::Value, WString>::Type ToWideString
 template<>
 inline WString ToWideString<int32>(int32 Element)
 {
-    return WString::MakeFormated(L"%d", Element);
+    return WString::CreateFormated(L"%d", Element);
 }
 
 template<>
 inline WString ToWideString<int64>(int64 Element)
 {
-    return WString::MakeFormated(L"%lld", Element);
+    return WString::CreateFormated(L"%lld", Element);
 }
 
 template<>
 inline WString ToWideString<uint32>(uint32 Element)
 {
-    return WString::MakeFormated(L"%u", Element);
+    return WString::CreateFormated(L"%u", Element);
 }
 
 template<>
 inline WString ToWideString<uint64>(uint64 Element)
 {
-    return WString::MakeFormated(L"%llu", Element);
+    return WString::CreateFormated(L"%llu", Element);
 }
 
 template<>

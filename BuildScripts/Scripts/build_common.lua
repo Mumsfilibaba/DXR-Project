@@ -1,8 +1,8 @@
 -- Custom options 
 newoption 
 {
-	trigger     = "monolithic",
-	description = "Links all modules as static libraries instead of DLLs"
+    trigger     = "monolithic",
+    description = "Links all modules as static libraries instead of DLLs"
 }
 
 -- Check if the module should be built monolithicly
@@ -162,7 +162,7 @@ end
 
 -- Retrieve the workspace directory
 function FindWorkspaceDir()
-	return GEnginePath
+    return GEnginePath
 end
 
 -- Retrieve the path to the Runtime folder containing all the engine modules
