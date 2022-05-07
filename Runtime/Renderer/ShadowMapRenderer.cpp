@@ -388,7 +388,7 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
                 const uint32 ArrayIndex = (Cube * kRHINumCubeFaces) + Face;
 
                 CRHIRenderPassInitializer RenderPass;
-                RenderPass.DepthStencilView = CRHIDepthStencilView(LightSetup.PointLightShadowMaps.Get(), ArrayIndex, 0);
+                RenderPass.DepthStencilView = CRHIDepthStencilView(LightSetup.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
 
                 CmdList.BeginRenderPass(RenderPass);
 
