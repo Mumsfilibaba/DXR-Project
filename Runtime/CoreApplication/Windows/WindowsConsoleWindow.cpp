@@ -59,7 +59,7 @@ void CWindowsConsoleWindow::Clear()
 
         if (GetConsoleScreenBufferInfo(ConsoleHandle, &CSBI))
         {
-            COORD     Dest = { 0, -CSBI.dwSize.Y };
+            COORD     Dest     = { 0, -CSBI.dwSize.Y };
             CHAR_INFO FillInfo = { '\0', FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE };
             ScrollConsoleScreenBufferA(ConsoleHandle, &CSBI.srWindow, nullptr, Dest, &FillInfo);
 

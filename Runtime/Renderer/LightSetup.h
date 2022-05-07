@@ -103,7 +103,6 @@ struct RENDERER_API SLightSetup
     TSharedRef<CRHIConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
 
     TSharedRef<CRHITextureCubeArray> PointLightShadowMaps;
-    TArray<DepthStencilViewCube>     PointLightShadowMapDSVs;
 
     // NOTE: Only one directional light
     SDirectionalLightData DirectionalLightData;
@@ -116,11 +115,11 @@ struct RENDERER_API SLightSetup
     TSharedRef<CRHITexture2D> ShadowMapCascades[4];
     TSharedRef<CRHITexture2D> DirectionalShadowMask;
 
-    TSharedRef<CRHIGenericBuffer>    CascadeMatrixBuffer;
+    TSharedRef<CRHIGenericBuffer>       CascadeMatrixBuffer;
     TSharedRef<CRHIShaderResourceView>  CascadeMatrixBufferSRV;
     TSharedRef<CRHIUnorderedAccessView> CascadeMatrixBufferUAV;
 
-    TSharedRef<CRHIGenericBuffer>    CascadeSplitsBuffer;
+    TSharedRef<CRHIGenericBuffer>       CascadeSplitsBuffer;
     TSharedRef<CRHIShaderResourceView>  CascadeSplitsBufferSRV;
     TSharedRef<CRHIUnorderedAccessView> CascadeSplitsBufferUAV;
 

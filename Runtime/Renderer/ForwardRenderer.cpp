@@ -125,8 +125,11 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
     CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
-    CRHIRenderTargetView* FinalTargetRTV = FrameResources.FinalTarget->GetRenderTargetView();
-    CmdList.SetRenderTargets(&FinalTargetRTV, 1, FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDepthStencilView());
+    CRHIRenderPassInitializer RenderPass;
+    RenderPass.RenderTargets[0] = CRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPass.NumRenderTargets = 1;
+    RenderPass.DepthStencilView = CRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);
+    CmdList.BeginRenderPass(RenderPass);
 
     CmdList.SetConstantBuffer(PShader.Get(), FrameResources.CameraBuffer.Get(), 0);
     // TODO: Fix point-light count in shader
@@ -136,12 +139,12 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     CmdList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 2);
     CmdList.SetConstantBuffer(PShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 3);
 
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.IrradianceMap->GetDefaultShaderResourceView(), 0);
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.SpecularIrradianceMap->GetDefaultShaderResourceView(), 1);
-    CmdList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetDefaultShaderResourceView(), 2);
+    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.IrradianceMap->GetShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 1);
+    CmdList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
     //TODO: Fix directional-light shadows
-    //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetDefaultShaderResourceView(), 3);
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetDefaultShaderResourceView(), 3);
+    //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
+    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 3);
 
     CmdList.SetSamplerState(PShader.Get(), FrameResources.IntegrationLUTSampler.Get(), 1);
     CmdList.SetSamplerState(PShader.Get(), FrameResources.IrradianceSampler.Get(), 2);
@@ -191,6 +194,8 @@ void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& F
     }
 
     CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+
+    CmdList.EndRenderPass();
 
     INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End ForwardPass");
 }

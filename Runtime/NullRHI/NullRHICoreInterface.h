@@ -25,7 +25,7 @@
 
 class CNullRHICoreInterface final : public CRHICoreInterface
 {
-public:
+private:
 
     CNullRHICoreInterface()
         : CRHICoreInterface(ERHIInstanceType::Null)
@@ -36,6 +36,10 @@ public:
     {
         SafeDelete(CommandContext);
     }
+
+public:
+
+    static CNullRHICoreInterface* CreateNullRHICoreInterface() { return dbg_new CNullRHICoreInterface(); }
 
 public:
 
@@ -122,16 +126,6 @@ public:
     virtual CRHIUnorderedAccessView* RHICreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer) override final
     {
         return dbg_new CNullRHIUnorderedAccessView(Initializer.Buffer);
-    }
-
-    virtual CRHIRenderTargetView* CreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo) override final
-    {
-        return dbg_new CNullRHIRenderTargetView();
-    }
-
-    virtual CRHIDepthStencilView* CreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo) override final
-    {
-        return dbg_new CNullRHIDepthStencilView();
     }
 
     virtual class CRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final

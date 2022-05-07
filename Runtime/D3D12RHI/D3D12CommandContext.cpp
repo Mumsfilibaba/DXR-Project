@@ -197,7 +197,7 @@ bool CD3D12CommandBatch::Init()
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CD3D12RHICommandContext
 
-CD3D12CommandContext* CD3D12CommandContext::Make(CD3D12Device* InDevice)
+CD3D12CommandContext* CD3D12CommandContext::CreateD3D12CommandContext(CD3D12Device* InDevice)
 {
     CD3D12CommandContext* NewContext = dbg_new CD3D12CommandContext(InDevice);
     if (NewContext && NewContext->Initialize())
@@ -220,6 +220,9 @@ CD3D12CommandContext::CD3D12CommandContext(CD3D12Device* InDevice)
     , DescriptorCache(InDevice)
     , CmdBatches()
     , BarrierBatcher()
+    , bIsRenderPassActive(false)
+    , bIsReady(false)
+    , bIsCapturing(false)
 { }
 
 CD3D12CommandContext::~CD3D12CommandContext()
@@ -373,26 +376,28 @@ void CD3D12CommandContext::EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint
     D3D12TimestampQuery->EndQuery(D3D12CmdList, Index);
 }
 
-void CD3D12CommandContext::ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const TStaticArray<float, 4>& ClearColor)
+void CD3D12CommandContext::ClearRenderTargetView(const CRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
 {
-    D3D12_ERROR_COND(RenderTargetView != nullptr, "RenderTargetView cannot be nullptr when clearing the surface");
-
     FlushResourceBarriers();
 
-    CD3D12RenderTargetView* D3D12RenderTargetView = static_cast<CD3D12RenderTargetView*>(RenderTargetView);
-    CmdBatch->AddInUseResource(D3D12RenderTargetView);
+    CD3D12Texture* D3D12Texture = GetD3D12Texture(RenderTargetView.Texture);
+    D3D12_ERROR_COND(D3D12Texture != nullptr, "Texture cannot be nullptr when clearing the surface");
 
-    CommandList.ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.Elements, 0, nullptr);
+    CD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRTV(RenderTargetView);
+    D3D12_ERROR_COND(D3D12RenderTargetView != nullptr, "Failed to retrieve RenderTargetView");
+
+    CommandList.ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.Data(), 0, nullptr);
 }
 
-void CD3D12CommandContext::ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil)
+void CD3D12CommandContext::ClearDepthStencilView(const CRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
 {
-    D3D12_ERROR_COND(DepthStencilView != nullptr, "DepthStencilView cannot be nullptr when clearing the surface");
-
     FlushResourceBarriers();
 
-    CD3D12DepthStencilView* D3D12DepthStencilView = static_cast<CD3D12DepthStencilView*>(DepthStencilView);
-    CmdBatch->AddInUseResource(D3D12DepthStencilView);
+    CD3D12Texture* D3D12Texture = GetD3D12Texture(DepthStencilView.Texture);
+    D3D12_ERROR_COND(D3D12Texture != nullptr, "Texture cannot be nullptr when clearing the surface");
+
+    CD3D12DepthStencilView* D3D12DepthStencilView = D3D12Texture->GetOrCreateDSV(DepthStencilView);
+    D3D12_ERROR_COND(D3D12DepthStencilView != nullptr, "Failed to retrieve DepthStencilView");
 
     CommandList.ClearDepthStencilView(D3D12DepthStencilView->GetOfflineHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, Depth, Stencil);
 }
@@ -417,44 +422,83 @@ void CD3D12CommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView
     CommandList.ClearUnorderedAccessViewFloat(OnlineHandle_GPU, D3D12UnorderedAccessView, ClearColor.Elements);
 }
 
-void CD3D12CommandContext::SetShadingRate(EShadingRate ShadingRate)
+void CD3D12CommandContext::BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer)
 {
-    D3D12_SHADING_RATE D3D12ShadingRate = ConvertShadingRate(ShadingRate);
+    D3D12_ERROR_COND(bIsRenderPassActive == false, "A RenderPass is already active");
 
-    D3D12_SHADING_RATE_COMBINER Combiners[] =
-    {
-        D3D12_SHADING_RATE_COMBINER_OVERRIDE,
-        D3D12_SHADING_RATE_COMBINER_OVERRIDE,
-    };
-
-    CommandList.RSSetShadingRate(D3D12ShadingRate, Combiners);
-}
-
-void CD3D12CommandContext::SetShadingRateImage(CRHITexture2D* ShadingImage)
-{
     FlushResourceBarriers();
 
-    if (ShadingImage)
+    const uint32 NumRenderTargets = RenderPassInitializer.NumRenderTargets;
+    for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
     {
-        CD3D12Texture* D3D12Texture = D3D12TextureCast(ShadingImage);
+        const CRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[Index];
+
+        CD3D12Texture* D3D12Texture = GetD3D12Texture(RenderTargetView.Texture);
+        D3D12_ERROR_COND(D3D12Texture != nullptr, "Texture cannot be nullptr when clearing the surface");
+
+        CD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRTV(RenderTargetView);
+        D3D12_ERROR_COND(D3D12RenderTargetView != nullptr, "Failed to retrieve RenderTargetView");
+
+        if (RenderTargetView.LoadAction == EAttachmentLoadAction::Clear)
+        {
+            const CFloatColor& ClearColor = RenderTargetView.ClearValue;
+            CommandList.ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.Data(), 0, nullptr);
+        }
+        
+        DescriptorCache.SetRenderTargetView(D3D12RenderTargetView, Index);
+    }
+
+    const CRHIDepthStencilView& DepthStencilView = RenderPassInitializer.DepthStencilView;
+    if (DepthStencilView.Texture)
+    {
+        CD3D12Texture* D3D12Texture = GetD3D12Texture(DepthStencilView.Texture);
+        D3D12_ERROR_COND(D3D12Texture != nullptr, "Texture cannot be nullptr when clearing the surface");
+
+        CD3D12DepthStencilView* D3D12DepthStencilView = D3D12Texture->GetOrCreateDSV(DepthStencilView);
+        D3D12_ERROR_COND(D3D12DepthStencilView != nullptr, "Failed to retrieve DepthStencilView");
+
+        if (DepthStencilView.LoadAction == EAttachmentLoadAction::Clear)
+        {
+            const CTextureDepthStencilValue& ClearValue = DepthStencilView.ClearValue;
+            CommandList.ClearDepthStencilView( D3D12DepthStencilView->GetOfflineHandle()
+                                             , D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL
+                                             , ClearValue.Depth
+                                             , ClearValue.Stencil);
+        }
+
+        DescriptorCache.SetDepthStencilView(D3D12DepthStencilView);
+    }
+
+    CRHITexture2D* ShadingRateTexture = RenderPassInitializer.ShadingRateTexture;
+    if (ShadingRateTexture)
+    {
+        CD3D12Texture* D3D12Texture = GetD3D12Texture(ShadingRateTexture);
         CommandList.RSSetShadingRateImage(D3D12Texture->GetD3D12Resource()->GetResource());
 
-        CmdBatch->AddInUseResource(ShadingImage);
+        CmdBatch->AddInUseResource(ShadingRateTexture);
     }
     else
     {
         CommandList.RSSetShadingRateImage(nullptr);
-    }
-}
 
-void CD3D12CommandContext::BeginRenderPass()
-{
-    // Empty for now
+        D3D12_SHADING_RATE D3D12ShadingRate = ConvertShadingRate(RenderPassInitializer.StaticShadingRate);
+
+        D3D12_SHADING_RATE_COMBINER Combiners[] =
+        {
+            D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+            D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+        };
+
+        CommandList.RSSetShadingRate(D3D12ShadingRate, Combiners);
+    }
+
+    bIsRenderPassActive = true;
 }
 
 void CD3D12CommandContext::EndRenderPass()
 {
-    // Empty for now
+    D3D12_ERROR_COND(bIsRenderPassActive == true, "No RenderPass is active");
+    bIsRenderPassActive = false;
 }
 
 void CD3D12CommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
@@ -511,23 +555,6 @@ void CD3D12CommandContext::SetIndexBuffer(CRHIIndexBuffer* IndexBuffer)
 {
     CD3D12IndexBuffer* D3D12IndexBuffer = static_cast<CD3D12IndexBuffer*>(IndexBuffer);
     DescriptorCache.SetIndexBuffer(D3D12IndexBuffer);
-}
-
-void CD3D12CommandContext::SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 RenderTargetCount, CRHIDepthStencilView* DepthStencilView)
-{
-    for (uint32 Slot = 0; Slot < RenderTargetCount; Slot++)
-    {
-        CD3D12RenderTargetView* D3D12RenderTargetView = static_cast<CD3D12RenderTargetView*>(RenderTargetViews[Slot]);
-        DescriptorCache.SetRenderTargetView(D3D12RenderTargetView, Slot);
-
-        // TODO: Maybe this should be handled by the descriptor cache
-        CmdBatch->AddInUseResource(D3D12RenderTargetView);
-    }
-
-    CD3D12DepthStencilView* D3D12DepthStencilView = static_cast<CD3D12DepthStencilView*>(DepthStencilView);
-    DescriptorCache.SetDepthStencilView(D3D12DepthStencilView);
-
-    CmdBatch->AddInUseResource(D3D12DepthStencilView);
 }
 
 void CD3D12CommandContext::SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState)
@@ -712,8 +739,8 @@ void CD3D12CommandContext::ResolveTexture(CRHITexture* Destination, CRHITexture*
 
     FlushResourceBarriers();
 
-    CD3D12Texture* D3D12Destination = D3D12TextureCast(Destination);
-    CD3D12Texture* D3D12Source      = D3D12TextureCast(Source);
+    CD3D12Texture* D3D12Destination = GetD3D12Texture(Destination);
+    CD3D12Texture* D3D12Source      = GetD3D12Texture(Source);
     const DXGI_FORMAT DstFormat = D3D12Destination->GetDXGIFormat();
     const DXGI_FORMAT SrcFormat = D3D12Source->GetDXGIFormat();
 
@@ -747,7 +774,7 @@ void CD3D12CommandContext::UpdateTexture2D(CRHITexture2D* Destination, uint32 Wi
 
         FlushResourceBarriers();
 
-        CD3D12Texture* D3D12Destination = D3D12TextureCast(Destination);
+        CD3D12Texture* D3D12Destination = GetD3D12Texture(Destination);
 
         const DXGI_FORMAT NativeFormat = D3D12Destination->GetDXGIFormat();
         
@@ -811,8 +838,8 @@ void CD3D12CommandContext::CopyTexture(CRHITexture* Destination, CRHITexture* So
 
     FlushResourceBarriers();
 
-    CD3D12Texture* D3D12Destination = D3D12TextureCast(Destination);
-    CD3D12Texture* D3D12Source      = D3D12TextureCast(Source);
+    CD3D12Texture* D3D12Destination = GetD3D12Texture(Destination);
+    CD3D12Texture* D3D12Source      = GetD3D12Texture(Source);
     CommandList.CopyResource(D3D12Destination->GetD3D12Resource(), D3D12Source->GetD3D12Resource());
 
     CmdBatch->AddInUseResource(Destination);
@@ -823,8 +850,8 @@ void CD3D12CommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITextu
 {
     D3D12_ERROR_COND(Destination != nullptr && Source != nullptr, "Destination or Source cannot be nullptr");
 
-    CD3D12Texture* D3D12Destination = D3D12TextureCast(Destination);
-    CD3D12Texture* D3D12Source      = D3D12TextureCast(Source);
+    CD3D12Texture* D3D12Destination = GetD3D12Texture(Destination);
+    CD3D12Texture* D3D12Source      = GetD3D12Texture(Source);
 
     // Source
     D3D12_TEXTURE_COPY_LOCATION SourceLocation;
@@ -1013,7 +1040,7 @@ void CD3D12CommandContext::SetRayTracingBindings( CRHIRayTracingScene* RayTracin
 
 void CD3D12CommandContext::GenerateMips(CRHITexture* Texture)
 {
-    CD3D12Texture* D3D12Texture = D3D12TextureCast(Texture);
+    CD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
     D3D12_ERROR_COND(D3D12Texture != nullptr, "Texture cannot be nullptr");
 
     D3D12_RESOURCE_DESC Desc = D3D12Texture->GetD3D12Resource()->GetDesc();
@@ -1209,7 +1236,7 @@ void CD3D12CommandContext::TransitionTexture(CRHITexture* Texture, EResourceAcce
     const D3D12_RESOURCE_STATES D3D12BeforeState = ConvertResourceState(BeforeState);
     const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(AfterState);
 
-    CD3D12Texture* D3D12Texture = D3D12TextureCast(Texture);
+    CD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
     TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
 
     CmdBatch->AddInUseResource(Texture);
@@ -1228,7 +1255,7 @@ void CD3D12CommandContext::TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess 
 
 void CD3D12CommandContext::UnorderedAccessTextureBarrier(CRHITexture* Texture)
 {
-    CD3D12Texture* D3D12Texture = D3D12TextureCast(Texture);
+    CD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
     UnorderedAccessBarrier(D3D12Texture->GetD3D12Resource());
 
     CmdBatch->AddInUseResource(Texture);
@@ -1399,4 +1426,6 @@ void CD3D12CommandContext::InternalClearState()
     CurrentComputePipelineState.Reset();
 
     CurrentPrimitiveTolpology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+
+    bIsRenderPassActive = false;
 }

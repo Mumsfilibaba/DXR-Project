@@ -10,197 +10,6 @@
 
 typedef TSharedRef<class CRHIShaderResourceView>  RHIShaderResourceViewRef;
 typedef TSharedRef<class CRHIUnorderedAccessView> RHIUnorderedAccessViewRef;
-typedef TSharedRef<class CRHIRenderTargetView>    RHIRenderTargetViewRef;
-typedef TSharedRef<class CRHIDepthStencilView>    RHIDepthStencilViewRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIUnorderedAccessViewInfo
-
-struct SRHIUnorderedAccessViewInfo
-{
-    enum class EType
-    {
-        Texture2D        = 1,
-        Texture2DArray   = 2,
-        TextureCube      = 3,
-        TextureCubeArray = 4,
-        Texture3D        = 5,
-        VertexBuffer     = 6,
-        IndexBuffer      = 7,
-        GenericBuffer    = 8,
-    };
-
-    FORCEINLINE SRHIUnorderedAccessViewInfo(EType InType)
-        : Type(InType)
-    { }
-
-    EType Type;
-    union
-    {
-        struct
-        {
-            CRHITexture2D* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
-            uint32  Mip = 0;
-        } Texture2D;
-        struct
-        {
-            CRHITexture2DArray* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
-            uint32  Mip = 0;
-            uint32  ArraySlice = 0;
-            uint32  NumArraySlices = 0;
-        } Texture2DArray;
-        struct
-        {
-            CRHITextureCube* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
-            uint32  Mip = 0;
-        } TextureCube;
-        struct
-        {
-            CRHITextureCubeArray* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
-            uint32  Mip = 0;
-            uint32  ArraySlice = 0;
-            uint32  NumArraySlices = 0;
-        } TextureCubeArray;
-        struct
-        {
-            CRHITexture3D* Texture = nullptr;
-            EFormat Format = EFormat::Unknown;
-            uint32  Mip = 0;
-            uint32  DepthSlice = 0;
-            uint32  NumDepthSlices = 0;
-        } Texture3D;
-        struct
-        {
-            CRHIVertexBuffer* Buffer = nullptr;
-            uint32 FirstVertex = 0;
-            uint32 NumVertices = 0;
-        } VertexBuffer;
-        struct
-        {
-            CRHIIndexBuffer* Buffer = nullptr;
-            uint32 FirstIndex = 0;
-            uint32 NumIndices = 0;
-        } IndexBuffer;
-        struct
-        {
-            CRHIGenericBuffer* Buffer = nullptr;
-            uint32 FirstElement = 0;
-            uint32 NumElements = 0;
-        } StructuredBuffer;
-    };
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIRenderTargetViewInfo
-
-struct SRHIRenderTargetViewInfo
-{
-    // TODO: Add support for texel buffers?
-    enum class EType
-    {
-        Texture2D        = 1,
-        Texture2DArray   = 2,
-        TextureCube      = 3,
-        TextureCubeArray = 4,
-        Texture3D        = 5,
-    };
-
-    FORCEINLINE SRHIRenderTargetViewInfo(EType InType)
-        : Type(InType)
-    { }
-
-    EType   Type;
-    EFormat Format = EFormat::Unknown;
-    union
-    {
-        struct
-        {
-            CRHITexture2D* Texture = nullptr;
-            uint32 Mip = 0;
-        } Texture2D;
-        struct
-        {
-            CRHITexture2DArray* Texture = nullptr;
-            uint32 Mip = 0;
-            uint32 ArraySlice = 0;
-            uint32 NumArraySlices = 0;
-        } Texture2DArray;
-        struct
-        {
-            CRHITextureCube* Texture = nullptr;
-            ECubeFace CubeFace = ECubeFace::PosX;
-            uint32    Mip = 0;
-        } TextureCube;
-        struct
-        {
-            CRHITextureCubeArray* Texture = nullptr;
-            ECubeFace CubeFace = ECubeFace::PosX;
-            uint32    Mip = 0;
-            uint32    ArraySlice = 0;
-        } TextureCubeArray;
-        struct
-        {
-            CRHITexture3D* Texture = nullptr;
-            uint32 Mip = 0;
-            uint32 DepthSlice = 0;
-            uint32 NumDepthSlices = 0;
-        } Texture3D;
-    };
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHIDepthStencilViewInfo
-
-struct SRHIDepthStencilViewInfo
-{
-    enum class EType
-    {
-        Texture2D        = 1,
-        Texture2DArray   = 2,
-        TextureCube      = 3,
-        TextureCubeArray = 4,
-    };
-
-    FORCEINLINE SRHIDepthStencilViewInfo(EType InType)
-        : Type(InType)
-    { }
-
-    EType   Type;
-    EFormat Format = EFormat::Unknown;
-    union
-    {
-        struct
-        {
-            CRHITexture2D* Texture = nullptr;
-            uint32 Mip = 0;
-        } Texture2D;
-        struct
-        {
-            CRHITexture2DArray* Texture = nullptr;
-            uint32 Mip = 0;
-            uint32 ArraySlice = 0;
-            uint32 NumArraySlices = 0;
-        } Texture2DArray;
-        struct
-        {
-            CRHITextureCube* Texture = nullptr;
-            ECubeFace CubeFace = ECubeFace::PosX;
-            uint32    Mip = 0;
-        } TextureCube;
-
-        struct
-        {
-            CRHITextureCubeArray* Texture = nullptr;
-            ECubeFace CubeFace = ECubeFace::PosX;
-            uint32    Mip = 0;
-            uint32    ArraySlice = 0;
-        } TextureCubeArray;
-    };
-};
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // EBufferSRVFormat
@@ -235,6 +44,46 @@ inline const char* ToString(EBufferUAVFormat BufferSRVFormat)
     {
         case EBufferUAVFormat::Uint32: return "Uint32";
         default:                       return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EAttachmentLoadAction
+
+enum class EAttachmentLoadAction : uint8
+{
+    None  = 0, // Don't care 
+    Load  = 1, // Use the stored data when RenderPass begin
+    Clear = 2, // Clear data when RenderPass begin
+};
+
+inline const char* ToString(EAttachmentLoadAction LoadAction)
+{
+    switch (LoadAction)
+    {
+        case EAttachmentLoadAction::None:  return "None";
+        case EAttachmentLoadAction::Load:  return "Load";
+        case EAttachmentLoadAction::Clear: return "Clear";
+        default:                           return "Unknown";
+    }
+}
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// EAttachmentStoreAction
+
+enum class EAttachmentStoreAction : uint8
+{
+    None  = 0, // Don't care 
+    Store = 1, // Store the data after the RenderPass is finished
+};
+
+inline const char* ToString(EAttachmentStoreAction StoreAction)
+{
+    switch (StoreAction)
+    {
+        case EAttachmentStoreAction::None:  return "None";
+        case EAttachmentStoreAction::Store: return "Store";
+        default:                            return "Unknown";
     }
 }
 
@@ -550,29 +399,188 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIRenderTargetView
 
-class CRHIRenderTargetView : public CRHIResourceView
+class CRHIRenderTargetView
 {
-protected:
+public:
 
-    explicit CRHIRenderTargetView()
-        : CRHIResourceView(nullptr)
+    CRHIRenderTargetView()
+        : Texture(nullptr)
+        , Format(EFormat::Unknown)
+        , ArrayIndex(0)
+        , MipLevel(0)
+        , LoadAction(EAttachmentLoadAction::None)
+        , StoreAction(EAttachmentStoreAction::None)
+        , ClearValue()
+    { }
+    
+    explicit CRHIRenderTargetView( CRHITexture* InTexture
+                                 , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
+                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
+                                 , const CFloatColor& InClearValue = CFloatColor(0.0f, 0.0f, 0.0f, 1.0f))
+        : Texture(InTexture)
+        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
+        , ArrayIndex(0)
+        , MipLevel(0)
+        , LoadAction(InLoadAction)
+        , StoreAction(InStoreAction)
+        , ClearValue(InClearValue)
     { }
 
-    ~CRHIRenderTargetView() = default;
+    explicit CRHIRenderTargetView( CRHITexture* InTexture
+                                 , EFormat InFormat
+                                 , uint32 InArrayIndex
+                                 , uint32 InMipLevel
+                                 , EAttachmentLoadAction InLoadAction
+                                 , EAttachmentStoreAction InStoreAction
+                                 , const CFloatColor& InClearValue)
+        : Texture(InTexture)
+        , Format(InFormat)
+        , ArrayIndex(uint16(InArrayIndex))
+        , MipLevel(uint8(InMipLevel))
+        , LoadAction(InLoadAction)
+        , StoreAction(InStoreAction)
+        , ClearValue(InClearValue)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Texture);
+        HashCombine(Hash, ToUnderlying(Format));
+        HashCombine(Hash, ArrayIndex);
+        HashCombine(Hash, MipLevel);
+        HashCombine(Hash, ToUnderlying(LoadAction));
+        HashCombine(Hash, ToUnderlying(StoreAction));
+        HashCombine(Hash, ClearValue.GetHash());
+        return Hash;
+    }
+
+    bool operator==(const CRHIRenderTargetView& RHS) const
+    {
+        return (Texture     == RHS.Texture)
+            && (Format      == RHS.Format)
+            && (ArrayIndex  == RHS.ArrayIndex)
+            && (MipLevel    == RHS.MipLevel)
+            && (LoadAction  == RHS.LoadAction)
+            && (StoreAction == RHS.StoreAction)
+            && (ClearValue  == RHS.ClearValue);
+    }
+
+    bool operator!=(const CRHIRenderTargetView& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHITexture*           Texture;
+
+    EFormat                Format;
+
+    uint16                 ArrayIndex;
+    uint8                  MipLevel;
+
+    EAttachmentLoadAction  LoadAction;
+    EAttachmentStoreAction StoreAction;
+
+    CFloatColor            ClearValue;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHIDepthStencilView
 
-using DepthStencilViewCube = TStaticArray<TSharedRef<CRHIDepthStencilView>, 6>;
-
-class CRHIDepthStencilView : public CRHIResourceView
+class CRHIDepthStencilView
 {
-protected:
+public:
 
-    explicit CRHIDepthStencilView()
-        : CRHIResourceView(nullptr)
+    CRHIDepthStencilView()
+        : Texture(nullptr)
+        , Format(EFormat::Unknown)
+        , ArrayIndex(0)
+        , MipLevel(0)
+        , LoadAction(EAttachmentLoadAction::None)
+        , StoreAction(EAttachmentStoreAction::None)
+        , ClearValue()
     { }
 
-    ~CRHIDepthStencilView() = default;
+    explicit CRHIDepthStencilView( CRHITexture* InTexture
+                                 , EAttachmentLoadAction InLoadAction  = EAttachmentLoadAction::Clear
+                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
+                                 , const CTextureDepthStencilValue& InClearValue = CTextureDepthStencilValue(1.0f, 0))
+        : Texture(InTexture)
+        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
+        , ArrayIndex(0)
+        , MipLevel(0)
+        , LoadAction(InLoadAction)
+        , StoreAction(InStoreAction)
+        , ClearValue(InClearValue)
+    { }
+
+    explicit CRHIDepthStencilView( CRHITexture* InTexture
+                                 , uint16 InArrayIndex
+                                 , uint8 InMipLevel
+                                 , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
+                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
+                                 , const CTextureDepthStencilValue& InClearValue = CTextureDepthStencilValue(1.0f, 0))
+        : Texture(InTexture)
+        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
+        , ArrayIndex(uint16(InArrayIndex))
+        , MipLevel(uint8(InMipLevel))
+        , LoadAction(InLoadAction)
+        , StoreAction(InStoreAction)
+        , ClearValue(InClearValue)
+    { }
+
+    explicit CRHIDepthStencilView( CRHITexture* InTexture
+                                 , uint16 InArrayIndex
+                                 , uint8 InMipLevel
+                                 , EFormat InFormat
+                                 , EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear
+                                 , EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store
+                                 , const CTextureDepthStencilValue& InClearValue = CTextureDepthStencilValue(1.0f, 0))
+        : Texture(InTexture)
+        , Format(InFormat)
+        , ArrayIndex(uint16(InArrayIndex))
+        , MipLevel(uint8(InMipLevel))
+        , LoadAction(InLoadAction)
+        , StoreAction(InStoreAction)
+        , ClearValue(InClearValue)
+    { }
+
+    uint64 GetHash() const
+    {
+        uint64 Hash = ToInteger(Texture);
+        HashCombine(Hash, ToUnderlying(Format));
+        HashCombine(Hash, ArrayIndex);
+        HashCombine(Hash, MipLevel);
+        HashCombine(Hash, ToUnderlying(LoadAction));
+        HashCombine(Hash, ToUnderlying(StoreAction));
+        HashCombine(Hash, ClearValue.GetHash());
+        return Hash;
+    }
+
+    bool operator==(const CRHIDepthStencilView& RHS) const
+    {
+        return (Texture     == RHS.Texture)
+            && (Format      == RHS.Format)
+            && (ArrayIndex  == RHS.ArrayIndex)
+            && (MipLevel    == RHS.MipLevel)
+            && (LoadAction  == RHS.LoadAction)
+            && (StoreAction == RHS.StoreAction)
+            && (ClearValue  == RHS.ClearValue);
+    }
+
+    bool operator!=(const CRHIDepthStencilView& RHS) const
+    {
+        return !(*this == RHS);
+    }
+
+    CRHITexture*              Texture;
+
+    EFormat                   Format;
+
+    uint16                    ArrayIndex;
+    uint8                     MipLevel;
+
+    EAttachmentLoadAction     LoadAction;
+    EAttachmentStoreAction    StoreAction;
+
+    CTextureDepthStencilValue ClearValue;
 };

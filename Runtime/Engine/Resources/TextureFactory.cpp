@@ -217,7 +217,7 @@ CRHITextureCube* CTextureFactory::CreateTextureCubeFromPanorma(CRHITexture2D* Pa
     CmdList.Set32BitShaderConstants(GlobalFactoryData.ComputeShader.Get(), &CB0, 1);
     CmdList.SetUnorderedAccessView(GlobalFactoryData.ComputeShader.Get(), StagingTextureUAV.Get(), 0);
 
-    CRHIShaderResourceView* PanoramaSourceView = PanoramaSource->GetDefaultShaderResourceView();
+    CRHIShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
     CmdList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
 
     constexpr uint32 LocalWorkGroupCount = 16;

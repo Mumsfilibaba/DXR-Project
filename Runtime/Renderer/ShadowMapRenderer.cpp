@@ -381,16 +381,18 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
         } ShadowPerObjectBuffer;
 
         SPerShadowMap PerShadowMapData;
-        for (int32 i = 0; i < LightSetup.PointLightShadowMapsGenerationData.Size(); i++)
+        for (int32 Cube = 0; Cube < LightSetup.PointLightShadowMapsGenerationData.Size(); ++Cube)
         {
-            for (uint32 Face = 0; Face < 6; Face++)
+            for (uint32 Face = 0; Face < 6; ++Face)
             {
-                auto& Cube = LightSetup.PointLightShadowMapDSVs[i];
-                CmdList.ClearDepthStencilView(Cube[Face].Get(), 1.0f, 0);
+                const uint32 ArrayIndex = (Cube * kRHINumCubeFaces) + Face;
 
-                CmdList.SetRenderTargets(nullptr, 0, Cube[Face].Get());
+                CRHIRenderPassInitializer RenderPass;
+                RenderPass.DepthStencilView = CRHIDepthStencilView(LightSetup.PointLightShadowMaps.Get(), ArrayIndex, 0);
 
-                auto& Data = LightSetup.PointLightShadowMapsGenerationData[i];
+                CmdList.BeginRenderPass(RenderPass);
+
+                auto& Data = LightSetup.PointLightShadowMapsGenerationData[Cube];
                 PerShadowMapData.Matrix   = Data.Matrix[Face];
                 PerShadowMapData.Position = Data.Position;
                 PerShadowMapData.FarPlane = Data.FarPlane;
@@ -448,6 +450,8 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
                         CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
                     }
                 }
+
+                CmdList.EndRenderPass();
             }
         }
 
@@ -486,7 +490,7 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
         CmdList.SetUnorderedAccessView(CascadeGenShader.Get(), LightSetup.CascadeMatrixBufferUAV.Get(), 0);
         CmdList.SetUnorderedAccessView(CascadeGenShader.Get(), LightSetup.CascadeSplitsBufferUAV.Get(), 1);
 
-        CmdList.SetShaderResourceView(CascadeGenShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetDefaultShaderResourceView(), 0);
+        CmdList.SetShaderResourceView(CascadeGenShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
 
         CmdList.Dispatch(NUM_SHADOW_CASCADES, 1, 1);
 
@@ -519,10 +523,10 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
         SPerCascade PerCascadeData;
         for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
         {
-            CRHIDepthStencilView* CascadeDSV = LightSetup.ShadowMapCascades[i]->GetDepthStencilView();
-            CmdList.ClearDepthStencilView(CascadeDSV, 1.0f, 0);
+            CRHIRenderPassInitializer RenderPass;
+            RenderPass.DepthStencilView = CRHIDepthStencilView(LightSetup.ShadowMapCascades[i].Get());
 
-            CmdList.SetRenderTargets(nullptr, 0, CascadeDSV);
+            CmdList.BeginRenderPass(RenderPass);
 
             const uint16 CascadeSize = LightSetup.CascadeSize;
             CmdList.SetViewport(static_cast<float>(CascadeSize), static_cast<float>(CascadeSize), 0.0f, 1.0f, 0.0f, 0.0f);
@@ -552,6 +556,8 @@ void CShadowMapRenderer::RenderDirectionalLightShadows(CRHICommandList& CmdList,
 
                 CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
             }
+
+            CmdList.EndRenderPass();
         }
 
         CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
@@ -581,13 +587,13 @@ void CShadowMapRenderer::RenderShadowMasks(CRHICommandList& CmdList, const SLigh
         CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
         CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.CascadeSplitsBufferSRV.Get(), 1);
 
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetDefaultShaderResourceView(), 2);
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDefaultShaderResourceView(), 3);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView(), 2);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 3);
 
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[0]->GetDefaultShaderResourceView(), 4);
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[1]->GetDefaultShaderResourceView(), 5);
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[2]->GetDefaultShaderResourceView(), 6);
-        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[3]->GetDefaultShaderResourceView(), 7);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 4);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[1]->GetShaderResourceView(), 5);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[2]->GetShaderResourceView(), 6);
+        CmdList.SetShaderResourceView(DirectionalShadowMaskShader.Get(), LightSetup.ShadowMapCascades[3]->GetShaderResourceView(), 7);
 
         CmdList.SetUnorderedAccessView(DirectionalShadowMaskShader.Get(), LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), 0);
 
@@ -671,21 +677,6 @@ bool CShadowMapRenderer::CreateShadowMaps(SLightSetup& LightSetup, SFrameResourc
     if (LightSetup.PointLightShadowMaps)
     {
         LightSetup.PointLightShadowMaps->SetName("PointLight ShadowMaps");
-
-        LightSetup.PointLightShadowMapDSVs.Resize(LightSetup.MaxPointLightShadows);
-        for (uint32 i = 0; i < LightSetup.MaxPointLightShadows; i++)
-        {
-            for (uint32 Face = 0; Face < 6; ++Face)
-            {
-                DepthStencilViewCube& DepthCube = LightSetup.PointLightShadowMapDSVs[i];
-                DepthCube[Face] = RHICreateDepthStencilView(LightSetup.PointLightShadowMaps.Get(), LightSetup.ShadowMapFormat, GetCubeFaceFromIndex(Face), 0, i);
-                if (!DepthCube[Face])
-                {
-                    CDebug::DebugBreak();
-                    return false;
-                }
-            }
-        }
     }
     else
     {

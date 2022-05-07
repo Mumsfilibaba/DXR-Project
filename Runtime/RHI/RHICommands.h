@@ -87,7 +87,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandClearRenderTargetView)
 {
 public:
-    FORCEINLINE CRHICommandClearRenderTargetView(CRHIRenderTargetView* InRenderTargetView, const TStaticArray<float, 4>&InClearColor)
+    FORCEINLINE CRHICommandClearRenderTargetView(const CRHIRenderTargetView& InRenderTargetView, const TStaticArray<float, 4>&InClearColor)
         : RenderTargetView(InRenderTargetView)
         , ClearColor(InClearColor)
     { }
@@ -97,7 +97,7 @@ public:
         CommandContext.ClearRenderTargetView(RenderTargetView, ClearColor);
     }
 
-    CRHIRenderTargetView*  RenderTargetView;
+    CRHIRenderTargetView   RenderTargetView;
     TStaticArray<float, 4> ClearColor;
 };
 
@@ -107,7 +107,7 @@ public:
 DECLARE_RHICOMMAND_CLASS(CRHICommandClearDepthStencilView)
 {
 public:
-    FORCEINLINE CRHICommandClearDepthStencilView(CRHIDepthStencilView* InDepthStencilView, const float InDepth, const uint8 InStencil)
+    FORCEINLINE CRHICommandClearDepthStencilView(const CRHIDepthStencilView& InDepthStencilView, const float InDepth, const uint8 InStencil)
         : DepthStencilView(InDepthStencilView)
         , Depth(InDepth)
         , Stencil(InStencil)
@@ -118,9 +118,9 @@ public:
         CommandContext.ClearDepthStencilView(DepthStencilView, Depth, Stencil);
     }
 
-    CRHIDepthStencilView* DepthStencilView;
-    const float           Depth;
-    const uint8           Stencil;
+    CRHIDepthStencilView DepthStencilView;
+    const float          Depth;
+    const uint8          Stencil;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -144,54 +144,22 @@ public:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetShadingRate
-
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetShadingRate)
-{
-public:
-    FORCEINLINE CRHICommandSetShadingRate(EShadingRate InShadingRate)
-        : ShadingRate(InShadingRate)
-    { }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.SetShadingRate(ShadingRate);
-    }
-
-    EShadingRate ShadingRate;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetShadingRateImage
-
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetShadingRateImage)
-{
-public:
-    FORCEINLINE CRHICommandSetShadingRateImage(CRHITexture2D* InShadingRateImage)
-        : ShadingRateImage(InShadingRateImage)
-    { }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.SetShadingRateImage(ShadingRateImage);
-    }
-
-    CRHITexture2D* ShadingRateImage;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CRHICommandBeginRenderPass
 
 DECLARE_RHICOMMAND_CLASS(CRHICommandBeginRenderPass)
 {
 public:
 
-    CRHICommandBeginRenderPass() = default;
+    CRHICommandBeginRenderPass(const CRHIRenderPassInitializer& InRenderPassInitializer)
+        : RenderPassInitializer(InRenderPassInitializer)
+    { }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BeginRenderPass();
+        CommandContext.BeginRenderPass(RenderPassInitializer);
     }
+
+    CRHIRenderPassInitializer RenderPassInitializer;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -277,28 +245,6 @@ public:
     }
 
     TStaticArray<float, 4> Color;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHICommandSetRenderTargets
-
-DECLARE_RHICOMMAND_CLASS(CRHICommandSetRenderTargets)
-{
-public:
-    FORCEINLINE CRHICommandSetRenderTargets(CRHIRenderTargetView* const* InRenderTargetViews, uint32 InNumRenderTargetViews, CRHIDepthStencilView* InDepthStencilView)
-        : RenderTargetViews(InRenderTargetViews)
-        , NumRenderTargetViews(InNumRenderTargetViews)
-        , DepthStencilView(InDepthStencilView)
-    { }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.SetRenderTargets(RenderTargetViews, NumRenderTargetViews, DepthStencilView);
-    }
-
-    CRHIRenderTargetView* const* RenderTargetViews;
-    uint32                       NumRenderTargetViews;
-    CRHIDepthStencilView*        DepthStencilView;
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

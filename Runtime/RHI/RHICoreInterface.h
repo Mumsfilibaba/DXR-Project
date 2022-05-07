@@ -280,22 +280,6 @@ public:
      * @return: Returns the newly created UnorderedAccessView
      */
     virtual CRHIUnorderedAccessView* RHICreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer) = 0;
-    
-    /**
-     * @brief: Create a new RenderTargetView
-     *
-     * @param CreateInfo: Info about the RenderTargetView
-     * @return: Returns the newly created RenderTargetView
-     */
-    virtual CRHIRenderTargetView* CreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo) = 0;
-    
-    /**
-     * @brief: Create a new DepthStencilView
-     *
-     * @param CreateInfo: Info about the DepthStencilView
-     * @return: Returns the newly created DepthStencilView
-     */
-    virtual CRHIDepthStencilView* CreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo) = 0;
 
     /**
      * @brief: Creates a new Compute Shader
@@ -592,109 +576,6 @@ FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(const CRHIText
 FORCEINLINE CRHIUnorderedAccessView* RHICreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer)
 {
     return GRHIInstance->RHICreateUnorderedAccessView(Initializer);
-}
-
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(const SRHIRenderTargetViewInfo& CreateInfo)
-{
-    return GRHIInstance->CreateRenderTargetView(CreateInfo);
-}
-
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITexture2D* Texture, EFormat Format, uint32 Mip)
-{
-    SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::Texture2D);
-    CreateInfo.Format = Format;
-    CreateInfo.Texture2D.Texture = Texture;
-    CreateInfo.Texture2D.Mip = Mip;
-    return RHICreateRenderTargetView(CreateInfo);
-}
-
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITexture2DArray* Texture, EFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
-{
-    SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::Texture2DArray);
-    CreateInfo.Format = Format;
-    CreateInfo.Texture2DArray.Texture = Texture;
-    CreateInfo.Texture2DArray.Mip = Mip;
-    CreateInfo.Texture2DArray.ArraySlice = ArraySlice;
-    CreateInfo.Texture2DArray.NumArraySlices = NumArraySlices;
-    return RHICreateRenderTargetView(CreateInfo);
-}
-
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITextureCube* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip)
-{
-    SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::TextureCube);
-    CreateInfo.Format = Format;
-    CreateInfo.TextureCube.Texture = Texture;
-    CreateInfo.TextureCube.Mip = Mip;
-    CreateInfo.TextureCube.CubeFace = CubeFace;
-    return RHICreateRenderTargetView(CreateInfo);
-}
-
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITextureCubeArray* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
-{
-    SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::TextureCubeArray);
-    CreateInfo.Format = Format;
-    CreateInfo.TextureCubeArray.Texture = Texture;
-    CreateInfo.TextureCubeArray.Mip = Mip;
-    CreateInfo.TextureCubeArray.ArraySlice = ArraySlice;
-    CreateInfo.TextureCubeArray.CubeFace = CubeFace;
-    return RHICreateRenderTargetView(CreateInfo);
-}
-
-FORCEINLINE CRHIRenderTargetView* RHICreateRenderTargetView(CRHITexture3D* Texture, EFormat Format, uint32 Mip, uint32 DepthSlice, uint32 NumDepthSlices)
-{
-    SRHIRenderTargetViewInfo CreateInfo(SRHIRenderTargetViewInfo::EType::Texture3D);
-    CreateInfo.Format = Format;
-    CreateInfo.Texture3D.Texture = Texture;
-    CreateInfo.Texture3D.Mip = Mip;
-    CreateInfo.Texture3D.DepthSlice = DepthSlice;
-    CreateInfo.Texture3D.NumDepthSlices = NumDepthSlices;
-    return RHICreateRenderTargetView(CreateInfo);
-}
-
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(const SRHIDepthStencilViewInfo& CreateInfo)
-{
-    return GRHIInstance->CreateDepthStencilView(CreateInfo);
-}
-
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITexture2D* Texture, EFormat Format, uint32 Mip)
-{
-    SRHIDepthStencilViewInfo CreateInfo(SRHIDepthStencilViewInfo::EType::Texture2D);
-    CreateInfo.Format = Format;
-    CreateInfo.Texture2D.Texture = Texture;
-    CreateInfo.Texture2D.Mip = Mip;
-    return RHICreateDepthStencilView(CreateInfo);
-}
-
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITexture2DArray* Texture, EFormat Format, uint32 Mip, uint32 ArraySlice, uint32 NumArraySlices)
-{
-    SRHIDepthStencilViewInfo CreateInfo(SRHIDepthStencilViewInfo::EType::Texture2DArray);
-    CreateInfo.Format = Format;
-    CreateInfo.Texture2DArray.Texture = Texture;
-    CreateInfo.Texture2DArray.Mip = Mip;
-    CreateInfo.Texture2DArray.ArraySlice = ArraySlice;
-    CreateInfo.Texture2DArray.NumArraySlices = NumArraySlices;
-    return RHICreateDepthStencilView(CreateInfo);
-}
-
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCube* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip)
-{
-    SRHIDepthStencilViewInfo CreateInfo(SRHIDepthStencilViewInfo::EType::TextureCube);
-    CreateInfo.Format = Format;
-    CreateInfo.TextureCube.Texture = Texture;
-    CreateInfo.TextureCube.Mip = Mip;
-    CreateInfo.TextureCube.CubeFace = CubeFace;
-    return RHICreateDepthStencilView(CreateInfo);
-}
-
-FORCEINLINE CRHIDepthStencilView* RHICreateDepthStencilView(CRHITextureCubeArray* Texture, EFormat Format, ECubeFace CubeFace, uint32 Mip, uint32 ArraySlice)
-{
-    SRHIDepthStencilViewInfo CreateInfo(SRHIDepthStencilViewInfo::EType::TextureCubeArray);
-    CreateInfo.Format = Format;
-    CreateInfo.TextureCubeArray.Texture = Texture;
-    CreateInfo.TextureCubeArray.Mip = Mip;
-    CreateInfo.TextureCubeArray.ArraySlice = ArraySlice;
-    CreateInfo.TextureCubeArray.CubeFace = CubeFace;
-    return RHICreateDepthStencilView(CreateInfo);
 }
 
 FORCEINLINE CRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode)

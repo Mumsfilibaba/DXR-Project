@@ -37,28 +37,6 @@ public:
     ~CNullRHIUnorderedAccessView() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIRenderTargetView
-
-class CNullRHIRenderTargetView : public CRHIRenderTargetView
-{
-public:
-
-    CNullRHIRenderTargetView() = default;
-    ~CNullRHIRenderTargetView() = default;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIDepthStencilView
-
-class CNullRHIDepthStencilView : public CRHIDepthStencilView
-{
-public:
-
-    CNullRHIDepthStencilView() = default;
-    ~CNullRHIDepthStencilView() = default;
-};
-
 #if defined(COMPILER_MSVC)
     #pragma warning(pop)
 #elif defined(COMPILER_CLANG)

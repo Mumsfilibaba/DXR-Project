@@ -253,14 +253,14 @@ void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResou
 
     CmdList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(SSAONoiseTex->GetDefaultShaderResourceView())
+    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(SSAONoiseTex->GetShaderResourceView())
                    , SSAONoiseTex
                    , EResourceAccess::NonPixelShaderResource
                    , EResourceAccess::NonPixelShaderResource);
 
-    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetDefaultShaderResourceView(), 0);
-    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetDefaultShaderResourceView(), 1);
-    CmdList.SetShaderResourceView(SSAOShader.Get(), SSAONoiseTex->GetDefaultShaderResourceView(), 2);
+    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(), 0);
+    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 1);
+    CmdList.SetShaderResourceView(SSAOShader.Get(), SSAONoiseTex->GetShaderResourceView(), 2);
     CmdList.SetShaderResourceView(SSAOShader.Get(), SSAOSamplesSRV.Get(), 3);
 
     CmdList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 0);

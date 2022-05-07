@@ -83,31 +83,16 @@ protected:
 
 public:
 
-    /**
-     * @brief: Resize the viewport
-     * 
-     * @param InWidth: New width of the viewport
-     * @param InHeight: New height of the viewport
-     * @return: Returns true if the resize is successful
-     */
     virtual bool Resize(uint32 InWidth, uint32 InHeight) { return true; }
 
-    /** @param bVerticalSync: True if the swap should have VerticalSync enabled */
     virtual bool Present(bool bVerticalSync) { return true; }
-
-    /** @return: Returns the current RenderTargetView */
-    virtual CRHIRenderTargetView* GetRenderTargetView() const { return nullptr; };
     
-    /** @return: Returns the current Texture2D */
     virtual CRHITexture2D* GetBackBuffer() const { return nullptr; };
 
-    /** @return: Returns the Width of the Viewport */
     uint32 GetWidth() const { return Width; }
 
-    /** @return: Returns the Height of the Viewport */
     uint32 GetHeight() const { return Height; }
 
-    /** @return: Returns the ColorFormat of the Viewport */
     EFormat GetColorFormat() const { return Format; }
 
 protected:

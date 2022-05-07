@@ -10,7 +10,7 @@ class CRHIShaderResourceView;
 class CRHIUnorderedAccessView;
 class CRHIShader;
 
-#define ENABLE_INSERT_DEBUG_CMDLIST_MARKER 0
+#define ENABLE_INSERT_DEBUG_CMDLIST_MARKER (0)
 
 #if ENABLE_INSERT_DEBUG_CMDLIST_MARKER
 #define INSERT_DEBUG_CMDLIST_MARKER(CmdList, MarkerString) CmdList.InsertMarker(MarkerString);
@@ -236,9 +236,9 @@ public:
      * @param RenderTargetView: RenderTargetView to clear
      * @param ClearColor: Color to set each pixel within the RenderTargetView to
      */
-    void ClearRenderTargetView(CRHIRenderTargetView* RenderTargetView, const TStaticArray<float, 4>& ClearColor)
+    void ClearRenderTargetView(const CRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
     {
-        Check(RenderTargetView != nullptr);
+        Check(RenderTargetView.Texture != nullptr);
         InsertCommand<CRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
 
@@ -248,9 +248,9 @@ public:
      * @param DepthStencilView: DepthStencilView to clear
      * @param ClearValue: Value to set each pixel within the DepthStencilView to
      */
-    void ClearDepthStencilView(CRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil)
+    void ClearDepthStencilView(const CRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
     {
-        Check(DepthStencilView != nullptr);
+        Check(DepthStencilView.Texture != nullptr);
         InsertCommand<CRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
     }
 
@@ -267,31 +267,14 @@ public:
     }
 
     /**
-     * @brief: Sets the Shading-Rate for the fullscreen
-     *
-     * @param ShadingRate: New shading-rate for the upcoming draw-calls
-     */
-    void SetShadingRate(EShadingRate ShadingRate)
-    {
-        InsertCommand<CRHICommandSetShadingRate>(ShadingRate);
-    }
-
-    /**
-     * @brief: Set the Shading-Rate image that should be used
-     *
-     * @param ShadingImage: Image containing the shading rate for the next upcoming draw-calls
-     */
-    void SetShadingRateImage(CRHITexture2D* ShadingRateImage)
-    {
-        InsertCommand<CRHICommandSetShadingRateImage>(ShadingRateImage);
-    }
-
-    /**
      * @brief: Begin a RenderPass
      */
-    void BeginRenderPass()
+    void BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer)
     {
-        InsertCommand<CRHICommandBeginRenderPass>();
+        Check(bIsRenderPassActive == false);
+
+        InsertCommand<CRHICommandBeginRenderPass>(RenderPassInitializer);
+        bIsRenderPassActive = true;
     }
 
     /**
@@ -299,7 +282,10 @@ public:
      */
     void EndRenderPass()
     {
+        Check(bIsRenderPassActive == true);
+
         InsertCommand<CRHICommandEndRenderPass>();
+        bIsRenderPassActive = false;
     }
 
     /**
@@ -338,28 +324,6 @@ public:
     void SetBlendFactor(const TStaticArray<float, 4>& Color)
     {
         InsertCommand<CRHICommandSetBlendFactor>(Color);
-    }
-
-    /**
-     * @brief: Set all the RenderTargetViews and the DepthStencilView that should be used, nullptr is valid if the slot should not be used
-     *
-     * @param RenderTargetViews: Array of RenderTargetViews to use, each pointer in the array must be valid
-     * @param RenderTargetCount: Number of RenderTargetViews in the array
-     * @param DepthStencilView: DepthStencilView to set
-     */
-    void SetRenderTargets(CRHIRenderTargetView* const* RenderTargetViews, uint32 NumRenderTargetViews, CRHIDepthStencilView* DepthStencilView)
-    {
-        CRHIRenderTargetView** TempRenderTargetViews = CmdAllocator.Allocate<CRHIRenderTargetView*>(NumRenderTargetViews);
-        if (RenderTargetViews)
-        {
-            CMemory::MemcpyTyped(TempRenderTargetViews, RenderTargetViews, NumRenderTargetViews);
-        }
-        else
-        {
-            CMemory::Memzero(TempRenderTargetViews, NumRenderTargetViews);
-        }
-
-        InsertCommand<CRHICommandSetRenderTargets>(TempRenderTargetViews, NumRenderTargetViews, DepthStencilView);
     }
 
     /**
@@ -954,6 +918,8 @@ public:
         CmdAllocator.Reset();
 
         VertexBuffers.Memzero();
+
+        bIsRenderPassActive = false;
     }
 
     /**
@@ -1016,6 +982,8 @@ private:
     uint32            NumDrawCalls     = 0;
     uint32            NumDispatchCalls = 0;
     uint32            NumCommands      = 0;
+
+    bool              bIsRenderPassActive = false;
 
     TStaticArray<CRHIVertexBuffer*, kRHIMaxVertexBuffers> VertexBuffers;
 };
