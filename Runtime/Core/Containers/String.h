@@ -163,6 +163,23 @@ public:
         MoveFrom(Forward<TString>(Other));
     }
 
+#if defined(__OBJC__)
+    FORCEINLINE TString(NSString* InString) noexcept
+        : Characters()
+    {
+        const CharType* RawString = nullptr;
+        if constexpr (TIsSame<CharType, char>::Value)
+        {
+            RawString = reinterpret_cast<const CharType*>([InString cStringUsingEncoding:NSUTF8StringEncoding]);
+        }
+        else
+        {
+            RawString = reinterpret_cast<const CharType*>([InString cStringUsingEncoding:NSUTF32LittleEndianStringEncoding]);
+        }
+        
+        CopyFrom(RawString, [InString length]);
+    }
+#endif
     /**
      * @brief: Empties the storage 
      */

@@ -1,0 +1,273 @@
+#include "MetalCommandContext.h"
+#include "MetalDeviceContext.h"
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMetalCommandContext
+
+CMetalCommandContext::CMetalCommandContext(CMetalDeviceContext* InDeviceContext)
+    : CMetalObject(InDeviceContext)
+    , IRHICommandContext()
+    , CommandBuffer(nil)
+    , GraphicsEncoder(nil)
+    , RenderPassDescriptor(nil)
+{ }
+
+CMetalCommandContext* CMetalCommandContext::CreateMetalContext(CMetalDeviceContext* InDeviceContext)
+{ 
+    return dbg_new CMetalCommandContext(InDeviceContext);
+}
+
+void CMetalCommandContext::StartContext() 
+{
+    Check(CommandBuffer == nil);
+    
+    id<MTLCommandQueue> CommandQueue = GetDeviceContext()->GetMTLCommandQueue();
+    CommandBuffer = [CommandQueue commandBuffer];
+}
+
+void CMetalCommandContext::FinishContext()
+{
+    Check(CommandBuffer != nil);
+    
+    [CommandBuffer commit];
+    [CommandBuffer waitUntilCompleted];
+    [CommandBuffer release];
+    CommandBuffer = nil;
+}
+
+void CMetalCommandContext::BeginTimeStamp(CRHITimestampQuery* Profiler, uint32 Index)
+{
+}
+
+void CMetalCommandContext::EndTimeStamp(CRHITimestampQuery* Profiler, uint32 Index)
+{
+}
+
+void CMetalCommandContext::ClearRenderTargetView(const CRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor)
+{
+}
+
+void CMetalCommandContext::ClearDepthStencilView(const CRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
+{
+}
+
+void CMetalCommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor)
+{
+}
+
+void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer)
+{
+    /*Check(GraphicsEncoder      == nil);
+    Check(RenderPassDescriptor == nil);
+    
+    RenderPassDescriptor = [[MTLRenderPassDescriptor alloc] init];
+    RenderPassDescriptor.renderTargetWidth        = 1920;
+    RenderPassDescriptor.renderTargetHeight       = 1080;
+    RenderPassDescriptor.defaultRasterSampleCount = 1;
+    
+    GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];*/
+}
+
+void CMetalCommandContext::EndRenderPass()
+{
+    /*Check(GraphicsEncoder      != nil);
+    Check(RenderPassDescriptor != nil);
+        
+    [GraphicsEncoder endEncoding];
+    [GraphicsEncoder release];
+    GraphicsEncoder = nil;
+
+    [RenderPassDescriptor release];
+    RenderPassDescriptor = nil;*/
+}
+
+void CMetalCommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
+{
+}
+
+void CMetalCommandContext::SetScissorRect(float Width, float Height, float x, float y)
+{
+}
+
+void CMetalCommandContext::SetBlendFactor(const TStaticArray<float, 4>& Color)
+{
+}
+
+void CMetalCommandContext::SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot)
+{
+}
+
+void CMetalCommandContext::SetIndexBuffer(CRHIIndexBuffer* IndexBuffer)
+{
+}
+
+void CMetalCommandContext::SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
+{
+}
+
+void CMetalCommandContext::SetGraphicsPipelineState(CRHIGraphicsPipelineState* PipelineState)
+{
+}
+
+void CMetalCommandContext::SetComputePipelineState(CRHIComputePipelineState* PipelineState)
+{
+}
+
+void CMetalCommandContext::Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
+{
+}
+
+void CMetalCommandContext::SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
+{
+}
+
+void CMetalCommandContext::SetShaderResourceViews(CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex)
+{
+}
+
+void CMetalCommandContext::SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
+{
+}
+
+void CMetalCommandContext::SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex)
+{
+}
+
+void CMetalCommandContext::SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex)
+{
+}
+
+void CMetalCommandContext::SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex)
+{
+}
+
+void CMetalCommandContext::SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex)
+{
+}
+
+void CMetalCommandContext::SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex)
+{
+}
+
+void CMetalCommandContext::UpdateBuffer(CRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData)
+{
+}
+
+void CMetalCommandContext::UpdateTexture2D(CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData)
+{
+}
+
+void CMetalCommandContext::ResolveTexture(CRHITexture* Destination, CRHITexture* Source)
+{
+}
+
+void CMetalCommandContext::CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo)
+{
+}
+
+void CMetalCommandContext::CopyTexture(CRHITexture* Destination, CRHITexture* Source)
+{
+}
+
+void CMetalCommandContext::CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo)
+{
+}
+
+void CMetalCommandContext::DestroyResource(class IRHIResource* Resource)
+{
+}
+
+void CMetalCommandContext::DiscardContents(class CRHITexture* Texture)
+{
+}
+
+void CMetalCommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
+{
+}
+void CMetalCommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
+{
+}
+
+void CMetalCommandContext::SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
+                                                , CRHIRayTracingPipelineState* PipelineState
+                                                , const SRayTracingShaderResources* GlobalResource
+                                                , const SRayTracingShaderResources* RayGenLocalResources
+                                                , const SRayTracingShaderResources* MissLocalResources
+                                                , const SRayTracingShaderResources* HitGroupResources
+                                                , uint32 NumHitGroupResources)
+{
+}
+
+void CMetalCommandContext::GenerateMips(CRHITexture* Texture)
+{
+}
+
+void CMetalCommandContext::TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
+{
+}
+
+void CMetalCommandContext::TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
+{
+}
+
+void CMetalCommandContext::UnorderedAccessTextureBarrier(CRHITexture* Texture)
+{
+}
+
+void CMetalCommandContext::UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)
+{
+}
+
+void CMetalCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
+{
+}
+
+void CMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
+{
+}
+
+void CMetalCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
+{
+}
+
+void CMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
+{
+}
+
+void CMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
+{
+}
+
+void CMetalCommandContext::DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
+{
+}
+
+void CMetalCommandContext::ClearState()
+{
+}
+
+void CMetalCommandContext::Flush()
+{
+    [CommandBuffer waitUntilCompleted];
+}
+
+void CMetalCommandContext::InsertMarker(const String& Message)
+{
+    SCOPED_AUTORELEASE_POOL();
+    
+    id<MTLBlitCommandEncoder> Encoder = [CommandBuffer blitCommandEncoder];
+    [Encoder insertDebugSignpost:Message.GetNSString()];
+    [Encoder endEncoding];
+    [Encoder release];
+}
+
+void CMetalCommandContext::BeginExternalCapture()
+{
+}
+
+void CMetalCommandContext::EndExternalCapture()
+{
+}

@@ -1,5 +1,4 @@
 #include "MacWindow.h"
-#include "ScopedAutoreleasePool.h"
 #include "CocoaWindow.h"
 #include "CocoaContentView.h"
 

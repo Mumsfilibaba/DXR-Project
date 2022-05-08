@@ -1,7 +1,6 @@
 #include "MacApplication.h"
 #include "MacWindow.h"
 #include "MacCursor.h"
-#include "ScopedAutoreleasePool.h"
 #include "CocoaAppDelegate.h"
 #include "CocoaWindow.h"
 

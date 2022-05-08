@@ -1,15 +1,12 @@
 #pragma once
-#include "Core/Containers/ArrayView.h"
+#include "MetalDeviceContext.h"
 
 #include "RHI/RHIViewport.h"
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+#include "Core/Containers/ArrayView.h"
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalViewport
@@ -48,8 +45,4 @@ private:
     TSharedRef<CMetalTexture2D> BackBuffer;
 };
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+#pragma clang diagnostic pop

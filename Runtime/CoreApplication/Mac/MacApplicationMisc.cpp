@@ -1,8 +1,8 @@
 #include "MacApplicationMisc.h"
 #include "MacApplication.h"
 #include "MacConsoleWindow.h"
-#include "ScopedAutoreleasePool.h"
 
+#include "Core/Mac/Mac.h"
 #include "Core/Input/InputCodes.h"
 
 #include <Appkit/Appkit.h>

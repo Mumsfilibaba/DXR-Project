@@ -1,7 +1,7 @@
 #include "MacConsoleWindow.h"
 #include "CocoaConsoleWindow.h"
-#include "ScopedAutoreleasePool.h"
 
+#include "Core/Mac/Mac.h"
 #include "Core/Threading/Mac/MacRunLoop.h"
 
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"

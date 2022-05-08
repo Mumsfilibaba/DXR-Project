@@ -1,14 +1,13 @@
 #pragma once
 #include "MacCursor.h"
-#include "ScopedAutoreleasePool.h"
 
+#include "Core/Mac/Mac.h"
 #include "Core/Containers/Array.h"
 #include "Core/Threading/Platform/CriticalSection.h"
 
 #include "CoreApplication/Generic/GenericApplication.h"
 
 #include <AppKit/AppKit.h>
-#include <Foundation/Foundation.h>
 
 @class CCocoaAppDelegate;
 @class CCocoaWindow;

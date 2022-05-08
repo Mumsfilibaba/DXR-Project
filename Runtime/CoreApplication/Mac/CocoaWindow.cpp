@@ -1,6 +1,7 @@
 #include "CocoaWindow.h"
 #include "MacApplication.h"
-#include "ScopedAutoreleasePool.h"
+
+#include "Core/Mac/Mac.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CCocoaWindow

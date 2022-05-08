@@ -1,13 +1,8 @@
 #pragma once
 #include "RHI/RHIResourceViews.h"
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalShaderResourceView
@@ -37,8 +32,4 @@ public:
     ~CMetalUnorderedAccessView() = default;
 };
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+#pragma clang diagnostic pop

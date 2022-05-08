@@ -1,6 +1,7 @@
 #include "CocoaConsoleWindow.h"
 #include "MacConsoleWindow.h"
-#include "ScopedAutoreleasePool.h"
+
+#include "Core/Mac/Mac.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CCocoaConsoleWindow
