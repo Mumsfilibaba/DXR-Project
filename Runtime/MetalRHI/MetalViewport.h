@@ -4,6 +4,9 @@
 #include "RHI/RHIViewport.h"
 
 #include "Core/Containers/ArrayView.h"
+#include "Core/Threading/Mac/MacRunLoop.h"
+
+#include "CoreApplication/Mac/CocoaWindow.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -15,12 +18,12 @@ class CMetalViewport : public CRHIViewport
 {
 public:
     
-    CMetalViewport(const CRHIViewportInitializer& Initializer)
+    CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIViewportInitializer& Initializer)
         : CRHIViewport(Initializer)
         , BackBuffer(nullptr)
-    { 
+    {       
         CRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
-        BackBuffer = dbg_new TMetalTexture<CMetalTexture2D>(BackBufferInitializer);
+        BackBuffer = dbg_new CMetalTexture2D(InDeviceContext, BackBufferInitializer);
     }
 
     ~CMetalViewport() = default;

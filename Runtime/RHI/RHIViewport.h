@@ -77,7 +77,10 @@ protected:
         , Width(Initializer.Width)
         , Height(Initializer.Height)
         , Format(Initializer.ColorFormat)
-    { }
+    {
+        Check(Width  != 0);
+        Check(Height != 0);
+    }
 
     ~CRHIViewport() = default;
 

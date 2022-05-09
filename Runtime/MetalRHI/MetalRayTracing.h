@@ -35,9 +35,9 @@ public:
 class CMetalRayTracingScene : public CRHIRayTracingScene
 {
 public:
-    CMetalRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
+    CMetalRayTracingScene(CMetalDeviceContext* InDeviceContext, const CRHIRayTracingSceneInitializer& Initializer)
         : CRHIRayTracingScene(Initializer)
-        , View(dbg_new CMetalShaderResourceView(this))
+        , View(dbg_new CMetalShaderResourceView(InDeviceContext, this))
     { }
 
     ~CMetalRayTracingScene() = default;

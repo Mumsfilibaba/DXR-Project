@@ -771,7 +771,15 @@ void CRenderer::Tick(const CScene& Scene)
         }
 #endif
 
+        CRHIRenderPassInitializer RenderPass;
+        RenderPass.RenderTargets[0] = CRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
+        RenderPass.NumRenderTargets = 1;
+
+        MainCmdList.BeginRenderPass(RenderPass);
+        
         CCanvasApplication::Get().DrawWindows(MainCmdList);
+        
+        MainCmdList.EndRenderPass();
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "End UI Render");

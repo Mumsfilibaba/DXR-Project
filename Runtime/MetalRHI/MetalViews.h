@@ -1,4 +1,6 @@
 #pragma once
+#include "MetalObject.h"
+
 #include "RHI/RHIResourceViews.h"
 
 #pragma clang diagnostic push
@@ -7,12 +9,13 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalShaderResourceView
 
-class CMetalShaderResourceView : public CRHIShaderResourceView
+class CMetalShaderResourceView : public CMetalObject, public CRHIShaderResourceView
 {
 public:
 
-    explicit CMetalShaderResourceView(CRHIResource* InResource)
-        : CRHIShaderResourceView(InResource)
+    explicit CMetalShaderResourceView(CMetalDeviceContext* InDeviceContext, CRHIResource* InResource)
+        : CMetalObject(InDeviceContext)
+        , CRHIShaderResourceView(InResource)
     { }
 
     ~CMetalShaderResourceView() = default;
@@ -21,12 +24,13 @@ public:
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalUnorderedAccessView
 
-class CMetalUnorderedAccessView : public CRHIUnorderedAccessView
+class CMetalUnorderedAccessView : public CMetalObject, public CRHIUnorderedAccessView
 {
 public:
 
-    explicit CMetalUnorderedAccessView(CRHIResource* InResource)
-        : CRHIUnorderedAccessView(InResource)
+    explicit CMetalUnorderedAccessView(CMetalDeviceContext* InDeviceContext, CRHIResource* InResource)
+        : CMetalObject(InDeviceContext)
+        , CRHIUnorderedAccessView(InResource)
     { }
 
     ~CMetalUnorderedAccessView() = default;

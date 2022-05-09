@@ -11,6 +11,47 @@
 class CMetalDeviceContext;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CMetalCopyCommandContext
+
+class CMetalCopyCommandContext final
+{
+public:
+    CMetalCopyCommandContext()
+        : CopyEncoder(nil)
+    { }
+    
+    void StartContext(id<MTLCommandBuffer> CommandBuffer)
+    {
+        if (!CopyEncoder)
+        {
+            CopyEncoder = [CommandBuffer blitCommandEncoder];
+        }
+    }
+    
+    void FinishContext()
+    {
+        if (CopyEncoder)
+        {
+            [CopyEncoder endEncoding];
+            NSRelease(CopyEncoder);
+        }
+    }
+    
+    void FinishContextUnsafe()
+    {
+        Check(CopyEncoder != nil);
+        
+        [CopyEncoder endEncoding];
+        NSRelease(CopyEncoder);
+    }
+    
+    id<MTLBlitCommandEncoder> GetMTLCopyEncoder() const { return CopyEncoder; };
+    
+private:
+    id<MTLBlitCommandEncoder> CopyEncoder;
+};
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalCommandContext
 
 class CMetalCommandContext final : public CMetalObject, public IRHICommandContext
@@ -118,14 +159,16 @@ public:
 
     virtual void InsertMarker(const String& Message) override final;
 
-    virtual void BeginExternalCapture() override final;
-    virtual void EndExternalCapture()   override final;
+    // NOTE: Only supported in D3D12RHI for now
+    virtual void BeginExternalCapture() override final { }
+    virtual void EndExternalCapture()   override final { }
 
-    virtual void* GetRHIBaseCommandList() override final { return nullptr; }
+    virtual void* GetRHIBaseCommandList() override final { return reinterpret_cast<void*>(CommandBuffer); }
     
 private:
     id<MTLCommandBuffer>        CommandBuffer;
     id<MTLRenderCommandEncoder> GraphicsEncoder;
+    CMetalCopyCommandContext    CopyContext;
     
     MTLRenderPassDescriptor*    RenderPassDescriptor;
 };

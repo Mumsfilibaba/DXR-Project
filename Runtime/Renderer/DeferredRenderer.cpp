@@ -445,11 +445,6 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
 
         GPU_TRACE_SCOPE(CmdList, "Pre Pass");
 
-        CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-
-        CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-        CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
-
         struct SPerObject
         {
             CMatrix4 Matrix;
@@ -459,6 +454,12 @@ void CDeferredRenderer::RenderPrePass(CRHICommandList& CmdList, SFrameResources&
         RenderPass.DepthStencilView = CRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get());
 
         CmdList.BeginRenderPass(RenderPass);
+
+        CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+        
+        // NOTE: For now, MetalRHI require a renderpass to be started for these two to be valid
+        CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+        CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
         CmdList.SetGraphicsPipelineState(PrePassPipelineState.Get());
 
@@ -559,11 +560,6 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
     const float RenderWidth = float(FrameResources.MainWindowViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainWindowViewport->GetHeight());
 
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-
-    CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
-
     CRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0] = CRHIRenderTargetView(FrameResources.GBuffer[GBUFFER_ALBEDO_INDEX].Get());
     RenderPass.RenderTargets[1] = CRHIRenderTargetView(FrameResources.GBuffer[GBUFFER_NORMAL_INDEX].Get());
@@ -573,6 +569,12 @@ void CDeferredRenderer::RenderBasePass(CRHICommandList& CmdList, const SFrameRes
     RenderPass.DepthStencilView = CRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);
 
     CmdList.BeginRenderPass(RenderPass);
+
+    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    
+    // NOTE: For now, MetalRHI require a renderpass to be started for these two to be valid
+    CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
     // Setup Pipeline
     CmdList.SetGraphicsPipelineState(PipelineState.Get());

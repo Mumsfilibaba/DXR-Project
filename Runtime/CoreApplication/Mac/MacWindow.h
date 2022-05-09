@@ -22,7 +22,7 @@ public:
 
 	static CMacWindow* CreateMacWindow(CMacApplication* InApplication);
 
-    FORCEINLINE CCocoaWindow* GetCocoaWindow() const { return Window; }
+    FORCEINLINE CCocoaWindow* GetCocoaWindow() const { return WindowHandle; }
 
 public:
 
@@ -43,7 +43,7 @@ public:
 
     virtual void ToggleFullscreen() override final;
 
-    virtual bool IsValid() const override final { return (Window != nullptr); }
+    virtual bool IsValid() const override final { return (WindowHandle != nullptr); }
 
     virtual bool IsActiveWindow() const override final;
 
@@ -61,10 +61,10 @@ public:
 
     virtual void SetPlatformHandle(void* InPlatformHandle) override final;
 
-    virtual void* GetPlatformHandle() const override final { return reinterpret_cast<void*>(Window); }
+    virtual void* GetPlatformHandle() const override final { return reinterpret_cast<void*>(WindowHandle); }
 
 private:
     CMacApplication*   Application = nullptr;
-    CCocoaWindow*      Window      = nullptr;
+    CCocoaWindow*      WindowHandle      = nullptr;
     CCocoaContentView* View        = nullptr;
 };

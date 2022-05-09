@@ -446,7 +446,10 @@ protected:
         , NumSamples(Initializer.NumSamples)
         , Width(Initializer.Width)
         , Height(Initializer.Height)
-    { }
+    {
+        Check(Width  != 0);
+        Check(Height != 0);
+    }
 
 public:
 
@@ -483,7 +486,9 @@ protected:
     explicit CRHITexture2DArray(const CRHITexture2DArrayInitializer& Initializer)
         : CRHITexture2D(Initializer)
         , ArraySize(Initializer.ArraySize)
-    { }
+    {
+        Check(ArraySize != 0);
+    }
 
 public:
 
@@ -513,7 +518,9 @@ protected:
         : CRHITexture(Initializer)
         , NumSamples(Initializer.NumSamples)
 	    , Extent(Initializer.Extent)
-    { }
+    {
+        Check(Extent != 0);
+    }
 
 public:
 
@@ -545,7 +552,9 @@ protected:
     explicit CRHITextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer)
         : CRHITextureCube(Initializer)
         , ArraySize(Initializer.ArraySize)
-    { }
+    {
+        Check(ArraySize != 0);
+    }
 
 public:
 
@@ -565,6 +574,7 @@ protected:
 };
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// CRHITexture3D
 
 class CRHITexture3D : public CRHITexture
 {
@@ -575,7 +585,11 @@ protected:
         , Width(Initializer.Width)
         , Height(Initializer.Height)
         , Depth(Initializer.Depth)
-    { }
+    {
+        Check(Width  != 0);
+        Check(Height != 0);
+        Check(Depth  != 0);
+    }
 
 public:
 

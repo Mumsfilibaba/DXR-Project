@@ -32,6 +32,8 @@ void CMetalCommandContext::FinishContext()
 {
     Check(CommandBuffer != nil);
     
+    CopyContext.FinishContext();
+    
     [CommandBuffer commit];
     [CommandBuffer waitUntilCompleted];
     [CommandBuffer release];
@@ -60,20 +62,29 @@ void CMetalCommandContext::ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView
 
 void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer)
 {
-    /*Check(GraphicsEncoder      == nil);
+    Check(GraphicsEncoder      == nil);
     Check(RenderPassDescriptor == nil);
     
+    CopyContext.FinishContext();
+    
+    // All textures must have the same size
+    CRHITexture* RTVTexture = RenderPassInitializer.RenderTargets[0].Texture;
+    CRHITexture* DSVTexture = RenderPassInitializer.DepthStencilView.Texture;
+    METAL_ERROR_COND(RTVTexture != nullptr || DSVTexture != nullptr, "A RenderPass needs a valid RenderTargetView or DepthStencilView");
+    
+    const CIntVector3 Extent = RTVTexture ? RTVTexture->GetExtent() : DSVTexture->GetExtent();
+    
     RenderPassDescriptor = [[MTLRenderPassDescriptor alloc] init];
-    RenderPassDescriptor.renderTargetWidth        = 1920;
-    RenderPassDescriptor.renderTargetHeight       = 1080;
+    RenderPassDescriptor.renderTargetWidth        = Extent.x;
+    RenderPassDescriptor.renderTargetHeight       = Extent.y;
     RenderPassDescriptor.defaultRasterSampleCount = 1;
     
-    GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];*/
+    GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
 }
 
 void CMetalCommandContext::EndRenderPass()
 {
-    /*Check(GraphicsEncoder      != nil);
+    Check(GraphicsEncoder      != nil);
     Check(RenderPassDescriptor != nil);
         
     [GraphicsEncoder endEncoding];
@@ -81,15 +92,40 @@ void CMetalCommandContext::EndRenderPass()
     GraphicsEncoder = nil;
 
     [RenderPassDescriptor release];
-    RenderPassDescriptor = nil;*/
+    RenderPassDescriptor = nil;
 }
 
 void CMetalCommandContext::SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y)
 {
+    Check(GraphicsEncoder != nil);
+    
+    MTLViewport Viewport;
+    Viewport.width   = Width;
+    Viewport.height  = Height;
+    Viewport.originX = x;
+    Viewport.originY = y;
+    Viewport.znear   = MinDepth;
+    Viewport.zfar    = MaxDepth;
+    
+    [GraphicsEncoder setViewport:Viewport];
 }
 
 void CMetalCommandContext::SetScissorRect(float Width, float Height, float x, float y)
 {
+    // TODO: ImGui is screwing something up here
+    /*Check(GraphicsEncoder != nil);
+    
+    // Ensure that the size is correct;
+    Width  = Width - x;
+    Height = Height - y;
+    
+    MTLScissorRect ScissorRect;
+    ScissorRect.width  = Width;
+    ScissorRect.height = Height;
+    ScissorRect.x      = x;
+    ScissorRect.y      = y;
+    
+    [GraphicsEncoder setScissorRect:ScissorRect];*/
 }
 
 void CMetalCommandContext::SetBlendFactor(const TStaticArray<float, 4>& Color)
@@ -247,6 +283,7 @@ void CMetalCommandContext::DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTra
 
 void CMetalCommandContext::ClearState()
 {
+    Flush();
 }
 
 void CMetalCommandContext::Flush()
@@ -256,18 +293,16 @@ void CMetalCommandContext::Flush()
 
 void CMetalCommandContext::InsertMarker(const String& Message)
 {
-    SCOPED_AUTORELEASE_POOL();
-    
-    id<MTLBlitCommandEncoder> Encoder = [CommandBuffer blitCommandEncoder];
+    id<MTLCommandEncoder> Encoder = nil;
+    if (GraphicsEncoder)
+    {
+        Encoder = GraphicsEncoder;
+    }
+    else
+    {
+        CopyContext.StartContext(CommandBuffer);
+        Encoder = CopyContext.GetMTLCopyEncoder();
+    }
+
     [Encoder insertDebugSignpost:Message.GetNSString()];
-    [Encoder endEncoding];
-    [Encoder release];
-}
-
-void CMetalCommandContext::BeginExternalCapture()
-{
-}
-
-void CMetalCommandContext::EndExternalCapture()
-{
 }

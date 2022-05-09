@@ -368,9 +368,6 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
 
         TRACE_SCOPE("Render PointLight ShadowMaps");
 
-        const uint32 PointLightShadowSize = LightSetup.PointLightShadowSize;
-        CmdList.SetViewport(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0.0f, 1.0f, 0.0f, 0.0f);
-        CmdList.SetScissorRect(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
 
         CmdList.SetGraphicsPipelineState(PointLightPipelineState.Get());
 
@@ -391,6 +388,11 @@ void CShadowMapRenderer::RenderPointLightShadows(CRHICommandList& CmdList, const
                 RenderPass.DepthStencilView = CRHIDepthStencilView(LightSetup.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
 
                 CmdList.BeginRenderPass(RenderPass);
+
+                // NOTE: For now, MetalRHI require a renderpass to be started for these two to be valid
+                const uint32 PointLightShadowSize = LightSetup.PointLightShadowSize;
+                CmdList.SetViewport(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0.0f, 1.0f, 0.0f, 0.0f);
+                CmdList.SetScissorRect(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
 
                 auto& Data = LightSetup.PointLightShadowMapsGenerationData[Cube];
                 PerShadowMapData.Matrix   = Data.Matrix[Face];

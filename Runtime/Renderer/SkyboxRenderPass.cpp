@@ -174,8 +174,6 @@ void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& 
     const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
 
-    CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
     CRHIRenderPassInitializer RenderPass;
     RenderPass.RenderTargets[0] = CRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
@@ -183,6 +181,10 @@ void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& 
     RenderPass.DepthStencilView = CRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);
 
     CmdList.BeginRenderPass(RenderPass);
+
+    // NOTE: For now, MetalRHI require a renderpass to be started for these two to be valid
+    CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
+    CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
 
     CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     CmdList.SetVertexBuffers(&SkyboxVertexBuffer, 1, 0);

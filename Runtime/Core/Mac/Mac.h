@@ -13,7 +13,17 @@
             if ((OutObject))           \
             {                          \
                 [(OutObject) release]; \
+                (OutObject) = nil;     \
             }                          \
+        } while (false)
+#endif
+
+#ifndef NSRelease
+    #define NSRelease(OutObject)   \
+        do                         \
+        {                          \
+            [(OutObject) release]; \
+            (OutObject) = nil;     \
         } while (false)
 #endif
 

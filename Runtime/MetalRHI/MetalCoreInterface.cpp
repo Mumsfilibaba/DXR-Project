@@ -1,12 +1,7 @@
 #include "MetalCoreInterface.h"
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalCoreInterface
@@ -19,7 +14,7 @@ CMetalCoreInterface::CMetalCoreInterface()
 CMetalCoreInterface::~CMetalCoreInterface()
 {
 	SafeDelete(CommandContext);
-	SafeDelete(Device);
+	SafeDelete(DeviceContext);
 }
 
 CMetalCoreInterface* CMetalCoreInterface::CreateMetalCoreInterface()
@@ -31,8 +26,8 @@ bool CMetalCoreInterface::Initialize(bool bEnableDebug)
 {
 	UNREFERENCED_VARIABLE(bEnableDebug);
 	
-	Device = CMetalDeviceContext::CreateContext(this);
-	if (!Device)
+	DeviceContext = CMetalDeviceContext::CreateContext(this);
+	if (!DeviceContext)
 	{
 		METAL_ERROR("Failed to create DeviceContext");
 		return false;
@@ -40,7 +35,7 @@ bool CMetalCoreInterface::Initialize(bool bEnableDebug)
 	
 	METAL_INFO("Created DeviceContext");
 	
-    CommandContext = CMetalCommandContext::CreateMetalContext(Device);
+    CommandContext = CMetalCommandContext::CreateMetalContext(DeviceContext);
     if (!CommandContext)
     {
         METAL_ERROR("Failed to create CommandContext");
@@ -52,27 +47,27 @@ bool CMetalCoreInterface::Initialize(bool bEnableDebug)
 
 CRHITexture2D* CMetalCoreInterface::RHICreateTexture2D(const CRHITexture2DInitializer& Initializer)
 {
-    return dbg_new TMetalTexture<CMetalTexture2D>(Initializer);
+    return dbg_new CMetalTexture2D(DeviceContext, Initializer);
 }
 
 CRHITexture2DArray* CMetalCoreInterface::RHICreateTexture2DArray(const CRHITexture2DArrayInitializer& Initializer)
 {
-    return dbg_new TMetalTexture<CMetalTexture2DArray>(Initializer);
+    return dbg_new CMetalTexture2DArray(DeviceContext, Initializer);
 }
 
 CRHITextureCube* CMetalCoreInterface::RHICreateTextureCube(const CRHITextureCubeInitializer& Initializer)
 {
-    return dbg_new TMetalTexture<CMetalTextureCube>(Initializer);
+    return dbg_new CMetalTextureCube(DeviceContext, Initializer);
 }
 
 CRHITextureCubeArray* CMetalCoreInterface::RHICreateTextureCubeArray(const CRHITextureCubeArrayInitializer& Initializer)
 {
-    return dbg_new TMetalTexture<CMetalTextureCubeArray>(Initializer);
+    return dbg_new CMetalTextureCubeArray(DeviceContext, Initializer);
 }
 
 CRHITexture3D* CMetalCoreInterface::RHICreateTexture3D(const CRHITexture3DInitializer& Initializer)
 {
-    return dbg_new TMetalTexture<CMetalTexture3D>(Initializer);
+    return dbg_new CMetalTexture3D(DeviceContext, Initializer);
 }
 
 CRHISamplerState* CMetalCoreInterface::RHICreateSamplerState(const CRHISamplerStateInitializer& Initializer)
@@ -102,7 +97,7 @@ CRHIConstantBuffer* CMetalCoreInterface::RHICreateConstantBuffer(const CRHIConst
 
 CRHIRayTracingScene* CMetalCoreInterface::RHICreateRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
 {
-    return dbg_new CMetalRayTracingScene(Initializer);
+    return dbg_new CMetalRayTracingScene(DeviceContext, Initializer);
 }
 
 CRHIRayTracingGeometry* CMetalCoreInterface::RHICreateRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer)
@@ -112,22 +107,22 @@ CRHIRayTracingGeometry* CMetalCoreInterface::RHICreateRayTracingGeometry(const C
 
 CRHIShaderResourceView* CMetalCoreInterface::RHICreateShaderResourceView(const CRHITextureSRVInitializer& Initializer)
 {
-    return dbg_new CMetalShaderResourceView(Initializer.Texture);
+    return dbg_new CMetalShaderResourceView(DeviceContext, Initializer.Texture);
 }
 
 CRHIShaderResourceView* CMetalCoreInterface::RHICreateShaderResourceView(const CRHIBufferSRVInitializer& Initializer)
 {
-    return dbg_new CMetalShaderResourceView(Initializer.Buffer);
+    return dbg_new CMetalShaderResourceView(DeviceContext, Initializer.Buffer);
 }
 
 CRHIUnorderedAccessView* CMetalCoreInterface::RHICreateUnorderedAccessView(const CRHITextureUAVInitializer& Initializer)
 {
-    return dbg_new CMetalUnorderedAccessView(Initializer.Texture);
+    return dbg_new CMetalUnorderedAccessView(DeviceContext, Initializer.Texture);
 }
 
 CRHIUnorderedAccessView* CMetalCoreInterface::RHICreateUnorderedAccessView(const CRHIBufferUAVInitializer& Initializer)
 {
-    return dbg_new CMetalUnorderedAccessView(Initializer.Buffer);
+    return dbg_new CMetalUnorderedAccessView(DeviceContext, Initializer.Buffer);
 }
 
 CRHIComputeShader* CMetalCoreInterface::RHICreateComputeShader(const TArray<uint8>& ShaderCode)
@@ -232,7 +227,21 @@ CRHITimestampQuery* CMetalCoreInterface::RHICreateTimestampQuery()
 
 CRHIViewport* CMetalCoreInterface::RHICreateViewport(const CRHIViewportInitializer& Initializer)
 {
-    return dbg_new CMetalViewport(Initializer);
+    CCocoaWindow* Window = (CCocoaWindow*)Initializer.WindowHandle;
+    
+    __block NSRect Frame;
+    __block NSRect ContentRect;
+    MakeMainThreadCall(^
+    {
+        Frame       = [Window frame];
+        ContentRect = [Window contentRectForFrameRect:[Window frame]];
+    }, true);
+    
+    CRHIViewportInitializer NewInitializer(Initializer);
+    NewInitializer.Width  = ContentRect.size.width;
+    NewInitializer.Height = ContentRect.size.height;
+    
+    return dbg_new CMetalViewport(DeviceContext, NewInitializer);
 }
 
 IRHICommandContext* CMetalCoreInterface::RHIGetDefaultCommandContext()
@@ -260,8 +269,4 @@ bool CMetalCoreInterface::RHIQueryUAVFormatSupport(EFormat Format) const
     return true;
 }
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+#pragma clang diagnostic pop
