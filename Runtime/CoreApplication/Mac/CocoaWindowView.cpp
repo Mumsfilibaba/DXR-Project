@@ -6,14 +6,9 @@
 
 @implementation CCocoaWindowView
 
-- (instancetype) initWithApplication:(CMacApplication*) InApplication
+- (instancetype)initWithFrame:(NSRect)Frame
 {
-    self = [super init];
-    if (self)
-    {
-        Application = InApplication;
-    }
-    
+    self = [super initWithFrame:Frame];
     return self;
 }
 
@@ -57,67 +52,107 @@
 {
     // Interpret key Event and make sure we get a KeyTyped Event
     [self interpretKeyEvents:[NSArray arrayWithObject: Event]];
-    Application->DeferEvent(Event);
+    
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) keyUp:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) mouseDown:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) mouseDragged:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) mouseUp:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) mouseMoved:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) rightMouseDown:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) rightMouseDragged:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) rightMouseUp:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) otherMouseDown:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) otherMouseDragged:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) otherMouseUp:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) scrollWheel:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) insertText:(id) String replacementRange:(NSRange) ReplacementRange
@@ -136,7 +171,10 @@
         Characters = (NSString*)String;
     }
     
-    Application->DeferEvent(Characters);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Characters);
+    }
 }
 
 /* Necessary methods for NSTextInputClient */
@@ -186,12 +224,18 @@
 
 - (void) mouseExited:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 - (void) mouseEntered:(NSEvent*) Event
 {
-    Application->DeferEvent(Event);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
 }
 
 @end

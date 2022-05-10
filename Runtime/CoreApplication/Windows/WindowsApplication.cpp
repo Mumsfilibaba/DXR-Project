@@ -72,6 +72,7 @@ CWindowsApplication::CWindowsApplication(HINSTANCE InInstanceHandle)
 CWindowsApplication::~CWindowsApplication()
 {
     Windows.Clear();
+    WindowsApplication = nullptr;
 }
 
 bool CWindowsApplication::RegisterWindowClass()

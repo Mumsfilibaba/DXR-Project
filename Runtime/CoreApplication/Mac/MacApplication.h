@@ -120,3 +120,5 @@ private:
 
     bool                           bIsTerminating = false;
 };
+
+extern CMacApplication* MacApplication;

@@ -15,9 +15,12 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMacApplication
 
+CMacApplication* MacApplication = nullptr;
+
 CMacApplication* CMacApplication::CreateMacApplication()
 {
-	return dbg_new CMacApplication();
+    MacApplication = dbg_new CMacApplication();
+	return MacApplication;
 }
 
 CMacApplication::CMacApplication()
@@ -32,8 +35,17 @@ CMacApplication::CMacApplication()
 
 CMacApplication::~CMacApplication()
 {
-    SCOPED_AUTORELEASE_POOL();
-    [AppDelegate release];
+    @autoreleasepool
+    {
+        Windows.Clear();
+        
+        NSSafeRelease(AppDelegate);
+        
+        if (this == MacApplication)
+        {
+            MacApplication = nullptr;
+        }
+    }
 }
 
 TSharedRef<CGenericWindow> CMacApplication::MakeWindow()

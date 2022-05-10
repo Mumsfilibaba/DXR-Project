@@ -8,16 +8,12 @@
 
 @implementation CCocoaWindow
 
-- (instancetype) init:(CMacApplication*) InApplication ContentRect:(NSRect)ContentRect StyleMask:(NSWindowStyleMask)StyleMask Backing:(NSBackingStoreType)BackingStoreType Defer:(BOOL)Flag
+- (instancetype) initWithContentRect:(NSRect)ContentRect StyleMask:(NSWindowStyleMask)StyleMask Backing:(NSBackingStoreType)BackingStoreType Defer:(BOOL)Flag
 {
-    Check(InApplication != nullptr);
-
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:BackingStoreType defer:Flag];
     if (self)
     {
-        _Application  = InApplication;
         self.delegate = self;
-        
         [self setOpaque:YES];
     }
     
@@ -51,47 +47,74 @@
 
 - (void) windowWillClose:(NSNotification*) InNotification
 {
-    _Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(InNotification);
+    }
 }
 
 - (void) windowDidResize:(NSNotification*) InNotification
 {
-    _Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(InNotification);
+    }
 }
 
 - (void) windowDidMove:(NSNotification*) InNotification
 {
-    _Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(InNotification);
+    }
 }
 
 - (void) windowDidMiniaturize:(NSNotification*) InNotification
 {
-    _Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(InNotification);
+    }
 }
 
 - (void) windowDidDeminiaturize:(NSNotification*) InNotification
 {
-    _Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(InNotification);
+    }
 }
 
 - (void) windowDidEnterFullScreen:(NSNotification*) InNotification
 {
-    _Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(InNotification);
+    }
 }
 
 - (void) windowDidExitFullScreen:(NSNotification*) InNotification
 {
-    _Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(InNotification);
+    }
 }
 
 - (void) windowDidBecomeKey:(NSNotification*) InNotification
 {
-    _Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(InNotification);
+    }
 }
 
 - (void) windowDidResignKey:(NSNotification*) InNotification
 {
-    _Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(InNotification);
+    }
 }
 
 @end

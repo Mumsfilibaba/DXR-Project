@@ -37,7 +37,13 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIV
     {
         CCocoaWindow* WindowHandle = (CCocoaWindow*)(Initializer.WindowHandle);
         
-        CMetalWindowView* MetalView = [[CMetalWindowView alloc] init:WindowHandle.Application];
+        NSRect Frame;
+        Frame.size.width  = Initializer.Width;
+        Frame.size.height = Initializer.Height;
+        Frame.origin.x    = 0;
+        Frame.origin.y    = 0;
+        
+        CMetalWindowView* MetalView = [[CMetalWindowView alloc] initWithFrame:Frame];
         Check(MetalView != nil);
         
         WindowHandle.contentView = MetalView;

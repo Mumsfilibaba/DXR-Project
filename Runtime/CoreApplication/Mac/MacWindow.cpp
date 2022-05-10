@@ -60,7 +60,7 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
         }
         
         const NSRect WindowRect = NSMakeRect(CGFloat(x), CGFloat(y), CGFloat(InWidth), CGFloat(InHeight));
-        WindowHandle = [[CCocoaWindow alloc] init:Application ContentRect:WindowRect StyleMask:WindowStyle Backing:NSBackingStoreBuffered Defer:NO];
+        WindowHandle = [[CCocoaWindow alloc] initWithContentRect:WindowRect StyleMask:WindowStyle Backing:NSBackingStoreBuffered Defer:NO];
         if (!WindowHandle)
         {
             LOG_ERROR("[CMacWindow]: Failed to create NSWindow");
