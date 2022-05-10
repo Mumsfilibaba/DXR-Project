@@ -106,7 +106,7 @@ public:
 	virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
 
 private:
-    bool InitializeAppMenu();
+    bool InitializeMenuBar();
 
     void HandleEvent(const SMacApplicationEvent& Notification);
 

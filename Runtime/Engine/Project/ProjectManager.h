@@ -5,7 +5,7 @@
 #define MAX_PROJECT_PATH_LENGTH (512)
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CProjectManager - Class responsible for holding information about the project
+// CProjectManager
 
 class ENGINE_API CProjectManager
 {

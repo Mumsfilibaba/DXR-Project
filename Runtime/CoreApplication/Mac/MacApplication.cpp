@@ -78,7 +78,7 @@ bool CMacApplication::Initialize()
     
 	PlatformKeyMapping::Initialize();
 
-    if (!InitializeAppMenu())
+    if (!InitializeMenuBar())
     {
         LOG_ERROR("[CMacApplication]: Failed to initialize the application menu");
         return false;
@@ -89,7 +89,7 @@ bool CMacApplication::Initialize()
     return true;
 }
 
-bool CMacApplication::InitializeAppMenu()
+bool CMacApplication::InitializeMenuBar()
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -132,8 +132,8 @@ bool CMacApplication::InitializeAppMenu()
     SEL SetAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
     [NSApp performSelector:SetAppleMenuSelector withObject:AppMenu];
     
-    NSApp.mainMenu = MenuBar;
-    NSApp.windowsMenu = WindowMenu;
+    NSApp.mainMenu     = MenuBar;
+    NSApp.windowsMenu  = WindowMenu;
     NSApp.servicesMenu = ServiceMenu;
 
     return true;
