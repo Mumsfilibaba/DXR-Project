@@ -265,6 +265,9 @@ void CMacConsoleWindow::OnWindowDidClose()
 {
 	DestroyResources();
 	bIsVisible = false;
+    
+    // Exit the application, this gives the same behaviour as on Windows
+    PlatformApplicationMisc::RequestExit(0);
 }
 
 void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
