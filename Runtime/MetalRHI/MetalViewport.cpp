@@ -33,7 +33,6 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIV
     : CRHIViewport(Initializer)
     , BackBuffer(nullptr)
 {
-    // TODO: Move to cpp
     MakeMainThreadCall(^
     {
         CCocoaWindow* WindowHandle = (CCocoaWindow*)(Initializer.WindowHandle);

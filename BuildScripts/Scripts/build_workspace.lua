@@ -62,8 +62,10 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
     filter {}
 
     filter 'configurations:Debug'
-        symbols 'on'
-        runtime 'Debug'
+        symbols      'on'
+        runtime      'Debug'
+        optimize     'Off'
+        architecture 'x86_64'
         defines
         {
             '_DEBUG',
@@ -72,9 +74,10 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
     filter {}
 
     filter 'configurations:Release'
-        symbols  'on'
-        runtime  'Release'
-        optimize 'Full'
+        symbols      'on'
+        runtime      'Release'
+        optimize     'Full'
+        architecture 'x86_64'
         defines
         {
             'NDEBUG',
@@ -83,9 +86,10 @@ function GenerateWorkspace(WorkspaceName, TargetRules)
     filter {}
 
     filter 'configurations:Production'
-        symbols  'off'
-        runtime  'Release'
-        optimize 'Full'
+        symbols      'off'
+        runtime      'Release'
+        optimize     'Full'
+        architecture 'x86_64'
         defines
         {
             'NDEBUG',
