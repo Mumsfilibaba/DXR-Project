@@ -48,7 +48,7 @@ private:
 	
 	void AppendStringAndScroll(NSString* String);
 	
-    CCocoaConsoleWindow* Window;
+    CCocoaConsoleWindow* WindowHandle;
 	NSTextView*          TextView;
 	NSScrollView*        ScrollView;
 	NSDictionary*        ConsoleColor;

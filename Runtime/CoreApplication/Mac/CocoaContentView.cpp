@@ -2,11 +2,11 @@
 #include "MacApplication.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaContentView
+// CCocoaWindowView
 
-@implementation CCocoaContentView
+@implementation CCocoaWindowView
 
-- (id) init:(CMacApplication*) InApplication
+- (instancetype) init:(CMacApplication*) InApplication
 {
     self = [super init];
     if (self)
@@ -44,12 +44,12 @@
 
 - (NSArray*) validAttributesForMarkedText
 {
-    return [NSArray array];
+    return @[];
 }
 
 - (void) viewWillMoveToWindow:(NSWindow*) window
 {
-    NSTrackingArea* trackingArea = [[NSTrackingArea alloc] initWithRect:[self bounds] options: (NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways) owner:self userInfo:nil];
+    NSTrackingArea* trackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds options: (NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways) owner:self userInfo:nil];
     [self addTrackingArea:trackingArea];
 }
 
@@ -129,7 +129,7 @@
     if ([String isKindOfClass:[NSAttributedString class]])
     {
         NSAttributedString* AttributedString = (NSAttributedString*)String;
-        Characters = [AttributedString string];
+        Characters = AttributedString.string;
     }
     else
     {
@@ -156,7 +156,7 @@
 
 - (NSRect) firstRectForCharacterRange:(NSRange)Range actualRange:(nullable NSRangePointer)ActualRange
 {
-    const NSRect Frame = [self frame];
+    const NSRect Frame = self.frame;
     return NSMakeRect(Frame.origin.x, Frame.origin.y, 0.0f, 0.0f);
 }
 
@@ -180,8 +180,8 @@
 
 - (void) viewDidChangeBackingProperties
 {
-    CGFloat BackingScaleFactor = [[self window] backingScaleFactor];
-    [[self layer] setContentsScale:BackingScaleFactor];
+    CGFloat BackingScaleFactor = self.window.backingScaleFactor;
+    self.layer.contentsScale = BackingScaleFactor;
 }
 
 - (void) mouseExited:(NSEvent*) Event

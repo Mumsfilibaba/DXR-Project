@@ -36,7 +36,7 @@ public:
 
     static uint32 GetNumProcessors()
     {
-        NSUInteger NumProcessors = [[NSProcessInfo processInfo] processorCount];
+        NSUInteger NumProcessors = [NSProcessInfo processInfo].processorCount;
         return static_cast<uint32>(NumProcessors);
     }
 

@@ -44,7 +44,7 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
         NSUInteger WindowStyle = 0;
         if (InStyle.Style)
         {
-            WindowStyle = NSWindowStyleMaskTitled | NSWindowStyleMaskFullSizeContentView;
+            WindowStyle = NSWindowStyleMaskTitled | NSWindowStyleMaskFullSizeContentView;
             if (InStyle.IsClosable())
             {
                 WindowStyle |= NSWindowStyleMaskClosable;
@@ -72,10 +72,10 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
         }
         
         int32 WindowLevel = NSNormalWindowLevel;
-        [WindowHandle setLevel:WindowLevel];
+        WindowHandle.level = WindowLevel;
         
         // TODO: Move to the viewport
-        View = [[CCocoaContentView alloc] init:Application];
+        View = [[CCocoaWindowView alloc] init:Application];
         if (!View)
         {
             LOG_ERROR("[CMacWindow]: Failed to create CocoaContentView");
@@ -84,11 +84,11 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
         
         if (InStyle.IsTitled())
         {
-            [WindowHandle setTitle:InTitle.GetNSString()];
+            WindowHandle.title = InTitle.GetNSString();
         }
         
         [WindowHandle setAcceptsMouseMovedEvents:YES];
-        [WindowHandle setContentView:View];
+        WindowHandle.contentView = View;
         [WindowHandle setRestorable:NO];
         [WindowHandle makeFirstResponder:View];
         
@@ -107,7 +107,7 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
             Behavior |= NSWindowCollectionBehaviorFullScreenAuxiliary;
         }
         
-        [WindowHandle setCollectionBehavior:Behavior];
+        WindowHandle.collectionBehavior = Behavior;
         
         [NSApp addWindowsItem:WindowHandle title:InTitle.GetNSString() filename:NO];
         
@@ -165,7 +165,7 @@ void CMacWindow::Maximize()
 	{
 		MakeMainThreadCall(^
 		{
-			if ([WindowHandle isMiniaturized])
+			if (WindowHandle.miniaturized)
 			{
 				[WindowHandle deminiaturize:WindowHandle];
 			}
@@ -179,7 +179,7 @@ void CMacWindow::Maximize()
 
 bool CMacWindow::IsActiveWindow() const
 {
-   NSWindow* KeyWindow = [NSApp keyWindow];
+   NSWindow* KeyWindow = NSApp.keyWindow;
    return (KeyWindow == WindowHandle);
 }
 
@@ -187,12 +187,12 @@ void CMacWindow::Restore()
 {
     MakeMainThreadCall(^
     {
-        if ([WindowHandle isMiniaturized])
+        if (WindowHandle.miniaturized)
         {
             [WindowHandle deminiaturize:WindowHandle];
         }
        
-        if ([WindowHandle isZoomed])
+        if (WindowHandle.zoomed)
         {
             [WindowHandle zoom:WindowHandle];
         }
@@ -221,7 +221,7 @@ void CMacWindow::SetTitle(const String& InTitle)
 		NSString* Title = InTitle.GetNSString();
 		MakeMainThreadCall(^
 		{
-			[WindowHandle setTitle:Title];
+			WindowHandle.title = Title;
 		}, true);
 	}
 }
@@ -230,12 +230,8 @@ void CMacWindow::GetTitle(String& OutTitle)
 {
     if (StyleParams.IsTitled())
     {
-        NSString* Title  = [WindowHandle title];
-        NSInteger Length = [Title length];
-        OutTitle.Resize(static_cast<int32>(Length));
-        
-        const char* UTF8Title = [Title UTF8String];
-		CMemory::Memcpy(OutTitle.Data(), UTF8Title, sizeof(char) * Length);
+        NSString* Title = WindowHandle.title;
+        OutTitle.Reset(Title.UTF8String, Title.length);
     }
 }
 
@@ -245,7 +241,7 @@ void CMacWindow::SetWindowShape(const SWindowShape& Shape, bool bMove)
 	
 	MakeMainThreadCall(^
 	{
-		NSRect Frame = [WindowHandle frame];
+		NSRect Frame = WindowHandle.frame;
 		if (StyleParams.IsResizeable())
 		{
 			Frame.size.width  = Shape.Width;
@@ -271,8 +267,8 @@ void CMacWindow::GetWindowShape(SWindowShape& OutWindowShape) const
 	__block NSRect ContentRect;
 	MakeMainThreadCall(^
 	{
-		Frame       = [WindowHandle frame];
-		ContentRect = [WindowHandle contentRectForFrameRect:[WindowHandle frame]];
+		Frame       = WindowHandle.frame;
+		ContentRect = [WindowHandle contentRectForFrameRect:WindowHandle.frame];
 	}, true);
 
 	OutWindowShape.Width      = ContentRect.size.width;
@@ -288,7 +284,7 @@ uint32 CMacWindow::GetWidth() const
 	__block NSRect ContentRect;
 	MakeMainThreadCall(^
 	{
-		ContentRect = [WindowHandle contentRectForFrameRect:[WindowHandle frame]];
+		ContentRect = [WindowHandle contentRectForFrameRect:WindowHandle.frame];
 	}, true);
 
 	return uint32(ContentRect.size.width);
@@ -301,7 +297,7 @@ uint32 CMacWindow::GetHeight() const
 	__block NSRect ContentRect;
 	MakeMainThreadCall(^
 	{
-		ContentRect = [WindowHandle contentRectForFrameRect:[WindowHandle frame]];
+		ContentRect = [WindowHandle contentRectForFrameRect:WindowHandle.frame];
 	}, true);
 
 	return uint32(ContentRect.size.height);
@@ -318,7 +314,7 @@ void CMacWindow::SetPlatformHandle(void* InPlatformHandle)
 		if (NewWindow)
 		{
 			WindowHandle = NewWindow;
-			View   = [WindowHandle contentView];
+			View         = WindowHandle.contentView;
 		}
 	}
 }

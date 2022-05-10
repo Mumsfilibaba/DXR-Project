@@ -15,7 +15,7 @@ CMacConsoleWindow* CMacConsoleWindow::CreateMacConsole()
 }
 
 CMacConsoleWindow::CMacConsoleWindow()
-    : Window(nullptr)
+    : WindowHandle(nullptr)
 	, TextView(nullptr)
 	, ScrollView(nullptr)
 	, ConsoleColor(nullptr)
@@ -40,35 +40,50 @@ void CMacConsoleWindow::CreateConsole()
 		
 		NSRect ContentRect = NSMakeRect(0.0f, 0.0f, Width, Height);
 		
-		Window = [[CCocoaConsoleWindow alloc] init:this ContentRect:ContentRect StyleMask:StyleMask Backing:NSBackingStoreBuffered Defer:NO];
+		WindowHandle = [[CCocoaConsoleWindow alloc] init:this ContentRect:ContentRect StyleMask:StyleMask Backing:NSBackingStoreBuffered Defer:NO];
 		SetColor(EConsoleColor::White);
 		
-		NSRect ContentFrame = [[Window contentView] frame];
+        NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
+        
+		NSRect ContentFrame = WindowHandle.contentView.frame;
 		ScrollView = [[NSScrollView alloc] initWithFrame:ContentFrame];
-		[ScrollView setBorderType:NSNoBorder];
+		ScrollView.borderType = NSNoBorder;
 		[ScrollView setHasVerticalScroller:YES];
 		[ScrollView setHasHorizontalScroller:NO];
-		[ScrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+		ScrollView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        ScrollView.backgroundColor = BackGroundColor;
 		
 		TextView = [[NSTextView alloc] initWithFrame:ContentFrame];
 		[TextView setEditable:NO];
-		[TextView setMinSize:NSMakeSize(0.0f, Height)];
-		[TextView setMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
+		TextView.minSize = NSMakeSize(0.0f, Height);
+		TextView.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
 		[TextView setVerticallyResizable:YES];
 		[TextView setHorizontallyResizable:NO];
-		[TextView setAutoresizingMask:NSViewWidthSizable];
+		TextView.autoresizingMask = NSViewWidthSizable;
+        TextView.backgroundColor = BackGroundColor;
 		
-		NSTextContainer* Container = [TextView textContainer];
-		[Container setContainerSize:NSMakeSize(Width, FLT_MAX)];
+		NSTextContainer* Container = TextView.textContainer;
+		Container.containerSize = NSMakeSize(Width, FLT_MAX);
 		[Container setWidthTracksTextView:YES];
 		
-		[ScrollView setDocumentView:TextView];
+		ScrollView.documentView = TextView;
 		
-		[Window setTitle:@"Output Console"];
-		[Window setContentView:ScrollView];
-		[Window setInitialFirstResponder:TextView];
-		[Window setOpaque:YES];
-		[Window makeKeyAndOrderFront:Window];
+        NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorFullScreenAuxiliary
+                                            | NSWindowCollectionBehaviorDefault
+                                            | NSWindowCollectionBehaviorManaged
+                                            | NSWindowCollectionBehaviorParticipatesInCycle;
+        
+        WindowHandle.collectionBehavior = Behavior;
+        
+        NSString* Title = @"Output Console";
+        [NSApp addWindowsItem:WindowHandle title:Title filename:NO];
+        
+		WindowHandle.title = Title;
+		WindowHandle.contentView = ScrollView;
+		WindowHandle.initialFirstResponder = TextView;
+        WindowHandle.backgroundColor = BackGroundColor;
+		[WindowHandle setOpaque:YES];
+		[WindowHandle makeKeyAndOrderFront:WindowHandle];
 
 		PlatformApplicationMisc::PumpMessages(true);
 	}, true);
@@ -84,17 +99,8 @@ void CMacConsoleWindow::DestroyConsole()
 		
 			PlatformApplicationMisc::PumpMessages(true);
 			
-			if (Window)
-			{
-				[Window release];
-				Window = nullptr;
-			}
-			
-			if (ConsoleColor)
-			{
-				[ConsoleColor release];
-				ConsoleColor = nullptr;
-			}
+            NSSafeRelease(WindowHandle);
+            NSSafeRelease(ConsoleColor);
 			
 			DestroyResources();
 		}, true);
@@ -105,17 +111,8 @@ void CMacConsoleWindow::DestroyResources()
 {
 	SCOPED_AUTORELEASE_POOL();
 	
-	if (TextView)
-	{
-		[TextView release];
-		TextView = nullptr;
-	}
-	
-	if (ScrollView)
-	{
-		[ScrollView release];
-		ScrollView = nullptr;
-	}
+    NSSafeRelease(TextView);
+    NSSafeRelease(ScrollView);
 }
 
 void CMacConsoleWindow::Show(bool bShow)
@@ -135,7 +132,7 @@ void CMacConsoleWindow::Show(bool bShow)
 
 void CMacConsoleWindow::Print(const String& Message)
 {  
-    if (Window)
+    if (WindowHandle)
     {
         MakeMainThreadCall(^
         {
@@ -151,7 +148,7 @@ void CMacConsoleWindow::Print(const String& Message)
 
 void CMacConsoleWindow::PrintLine(const String& Message)
 {
-    if (Window)
+    if (WindowHandle)
     {
         MakeMainThreadCall(^
         {
@@ -169,33 +166,33 @@ void CMacConsoleWindow::PrintLine(const String& Message)
 
 void CMacConsoleWindow::Clear()
 {
-    if (Window)
+    if (WindowHandle)
     {
         MakeMainThreadCall(^
         {
 			SCOPED_AUTORELEASE_POOL();
-			[TextView setString:@""];
+			TextView.string = @"";
         }, true);
     }
 }
 
 void CMacConsoleWindow::SetTitle(const String& InTitle)
 {
-    if (Window)
+    if (WindowHandle)
     {
         MakeMainThreadCall(^
         {
             SCOPED_AUTORELEASE_POOL();
             
             NSString* Title = InTitle.GetNSString();
-            [Window setTitle:Title];
+            WindowHandle.title = Title;
         }, true);
     }
 }
 
 void CMacConsoleWindow::SetColor(EConsoleColor Color)
 {
-    if (Window)
+    if (WindowHandle)
     {
         MakeMainThreadCall(^
         {
@@ -214,23 +211,23 @@ void CMacConsoleWindow::SetColor(EConsoleColor Color)
 			// Add foreground Color
 			if (Color == EConsoleColor::White)
 			{
-				[Colors addObject:[NSColor colorWithSRGBRed:1.0f green:1.0f blue:1.0f alpha:1.0f]];
+				[Colors addObject:[NSColor colorWithSRGBRed:0.85f green:0.85f blue:0.85f alpha:1.0f]];
 			}
 			else if (Color == EConsoleColor::Red)
 			{
-				[Colors addObject:[NSColor colorWithSRGBRed:1.0f green:0.0f blue:0.0f alpha:1.0f]];
+				[Colors addObject:[NSColor colorWithSRGBRed:0.85f green:0.0f blue:0.0f alpha:1.0f]];
 			}
 			else if (Color == EConsoleColor::Green)
 			{
-				[Colors addObject:[NSColor colorWithSRGBRed:0.0f green:1.0f blue:0.0f alpha:1.0f]];
+				[Colors addObject:[NSColor colorWithSRGBRed:0.0f green:0.85f blue:0.0f alpha:1.0f]];
 			}
 			else if (Color == EConsoleColor::Yellow)
 			{
-				[Colors addObject:[NSColor colorWithSRGBRed:1.0f green:1.0f blue:0.0f alpha:1.0f]];
+				[Colors addObject:[NSColor colorWithSRGBRed:0.85f green:0.85f blue:0.0f alpha:1.0f]];
 			}
 			
 			// Add background Color
-			[Colors addObject:[NSColor colorWithSRGBRed:0.1f green:0.1f blue:0.1f alpha:0.1f]];
+			[Colors addObject:[NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f]];
 			
 			ConsoleColor = [[NSDictionary alloc] initWithObjects:Colors forKeys:Attributes];
 
@@ -242,14 +239,14 @@ void CMacConsoleWindow::SetColor(EConsoleColor Color)
 
 int32 CMacConsoleWindow::GetLineCount() const
 {
-	if (Window)
+	if (WindowHandle)
 	{
 		__block NSUInteger NumberOfLines = 0;
 		MakeMainThreadCall(^
 		{
-			NSString* String = [TextView string];
+			NSString* String = TextView.string;
 			
-			NSUInteger StringLength = [String length];
+			NSUInteger StringLength = String.length;
 			for (NSUInteger LineIndex = 0; LineIndex < StringLength; NumberOfLines++)
 			{
 				LineIndex = NSMaxRange([String lineRangeForRange:NSMakeRange(LineIndex, 0)]);
@@ -272,7 +269,7 @@ void CMacConsoleWindow::OnWindowDidClose()
 
 void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
 {
-	if (Window)
+	if (WindowHandle)
 	{
 		MakeMainThreadCall(^
 		{
@@ -283,17 +280,17 @@ void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
 			
 			NSAttributedString* AttributedString = [[NSAttributedString alloc] initWithString:String attributes:ConsoleColor];
 				
-			NSTextStorage* Storage = [TextView textStorage];
+			NSTextStorage* Storage = TextView.textStorage;
 			[Storage beginEditing];
 			
 			// Remove lines
 			NSUInteger LineCount  = GetLineCount();
-			NSString*  TextString = [TextView string];
+			NSString*  TextString = TextView.string;
 			if (LineCount >= MaxLineCount)
 			{
 				NSUInteger LineIndex;
 				NSUInteger NumberOfLines = 0;
-				NSUInteger StringLength  = [TextString length];
+				NSUInteger StringLength  = TextString.length;
 				for (LineIndex = 0; LineIndex < StringLength; NumberOfLines++)
 				{
 					LineIndex = NSMaxRange([TextString lineRangeForRange:NSMakeRange(LineIndex, 0)]);
@@ -309,7 +306,7 @@ void CMacConsoleWindow::AppendStringAndScroll(NSString* String)
 			
 			// Add the new String
 			[Storage appendAttributedString:AttributedString];
-			[Storage setFont:[NSFont fontWithName:@"Courier" size:12.0f]];
+			Storage.font = [NSFont fontWithName:@"Courier" size:12.0f];
 			
 			[Storage endEditing];
 			

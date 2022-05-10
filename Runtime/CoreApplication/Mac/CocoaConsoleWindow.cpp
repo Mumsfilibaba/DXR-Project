@@ -8,13 +8,13 @@
 
 @implementation CCocoaConsoleWindow
 
-- (id) init:(CMacConsoleWindow*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag
+- (instancetype) init:(CMacConsoleWindow*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag
 {
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:NSBackingStoreBuffered defer:NO];
     if (self)
     {
 		ConsoleWindow = InConsoleWindow;
-		[self setDelegate:self];
+		self.delegate = self;
     }
     
     return self;
@@ -40,7 +40,7 @@
 
 + (NSString*) convertStringWithArgs:(const char*) Format Args:(va_list)Args
 {
-    NSString* TempFormat = [NSString stringWithUTF8String:Format];
+    NSString* TempFormat = @(Format);
     return [[NSString alloc] initWithFormat:TempFormat arguments:Args];
 }
 

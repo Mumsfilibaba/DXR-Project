@@ -177,7 +177,7 @@ public:
             RawString = reinterpret_cast<const CharType*>([InString cStringUsingEncoding:NSUTF32LittleEndianStringEncoding]);
         }
         
-        CopyFrom(RawString, [InString length]);
+        CopyFrom(RawString, InString.length);
     }
 #endif
     /**
@@ -198,6 +198,63 @@ public:
             Characters.Resize(1);
             Characters[0] = StringUtils::Null;
         }
+    }
+    
+    /**
+     * @brief: Resets the container, but does not deallocate the memory. Takes an optional parameter to
+     * default construct a new amount of elements.
+     *
+     * @param NewSize: Number of elements to construct
+     */
+    FORCEINLINE void Reset(SizeType NewSize = 0) noexcept
+    {
+        Characters.Reset(NewSize);
+    }
+
+    /**
+     * Resets the container, but does not deallocate the memory. Takes an optional parameter to
+     * default construct a new amount of elements from a single element.
+     *
+     * @param NewSize: Number of elements to construct
+     * @param CharToFill: Character to fill the new String with
+     */
+    FORCEINLINE void Reset(SizeType NewSize, const CharType CharToFill) noexcept
+    {
+        Characters.Reset(NewSize, CharToFill);
+    }
+
+    /**
+     * Resets the container, but does not deallocate the memory. Takes in pointer to copy-construct elements from.
+     *
+     * @param InString: Raw string to copy from
+     * @param InLength: Length of the string
+     */
+    FORCEINLINE void Reset(const CharType* InString, SizeType InLength) noexcept
+    {
+        Check((InString != nullptr) && (InLength > 0));
+        Characters.Reset(InString, InLength);
+    }
+
+    /**
+     * Resets the container, but does not deallocate the memory. Creates a new array from
+     * another array which can be of another type of array.
+     *
+     * @param InputArray: Array to copy-construct from
+     */
+    template<typename ArrayType>
+    FORCEINLINE typename TEnableIf<TIsTArrayType<ArrayType>::Value>::Type Reset(const ArrayType& InputArray) noexcept
+    {
+        Reset(InputArray.Data(), InputArray.Size());
+    }
+
+    /**
+     * @brief: Resets the container by moving elements from another string to this one.
+     *
+     * @param InputArray: Array to copy-construct elements from
+     */
+    FORCEINLINE void Reset(TString&& InputArray) noexcept
+    {
+        MoveFrom(Forward<TString>(InputArray));
     }
 
     /**
@@ -653,14 +710,14 @@ public:
     {
         Check(InString != nullptr);
 
-        SizeType Len = Length();
-        if (Len != InLength)
+        SizeType nLength = Length();
+        if (nLength != InLength)
         {
             return -1;
         }
 
         const CharType* Start = Characters.Data();
-        const CharType* End = Start + Len;
+        const CharType* End = Start + nLength;
         while (Start != End)
         {
             const CharType TempChar0 = StringUtils::ToLower(*(Start++));
@@ -796,13 +853,13 @@ public:
         Check((Position < Length()) || (Position == 0));
         Check(InString != nullptr);
 
-        SizeType Len = Length();
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
+        SizeType nLength = Length();
+        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (nLength == 0))
         {
-            return Len;
+            return nLength;
         }
 
-        SizeType Length = (Position == 0) ? Len : NMath::Min(Position, Len);
+        SizeType Length = (Position == 0) ? nLength : NMath::Min(Position, nLength);
 
         const CharType* Start = CStr();
         const CharType* End = Start + Length;
@@ -838,10 +895,10 @@ public:
     {
         Check((Position < Length()) || (Position == 0));
 
-        SizeType Len = Length();
-        if (StringUtils::IsTerminator(Char) || (Len == 0))
+        SizeType nLength = Length();
+        if (StringUtils::IsTerminator(Char) || (nLength == 0))
         {
-            return Len;
+            return nLength;
         }
 
         const CharType* Result = nullptr;
@@ -909,8 +966,8 @@ public:
     {
         Check((Position < Length()) || (Position == 0));
 
-        SizeType Len = Length();
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
+        SizeType nLength = Length();
+        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (nLength == 0))
         {
             return 0;
         }
@@ -1034,15 +1091,15 @@ public:
     {
         Check((Position < Length()) || (Position == 0));
 
-        SizeType Len = Length();
-        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (Len == 0))
+        SizeType nLength = Length();
+        if ((InLength == 0) || StringUtils::IsTerminator(*InString) || (nLength == 0))
         {
             return 0;
         }
 
         SizeType Pos = static_cast<SizeType>(StringUtils::RangeLength(CStr() + Position, InString));
         SizeType Ret = Pos + Position;
-        if (Ret >= Len)
+        if (Ret >= nLength)
         {
             return NPos;
         }
@@ -1346,9 +1403,9 @@ public:
      */
     FORCEINLINE void Pop() noexcept
     {
-        SizeType Len = Length();
+        SizeType nLength = Length();
         Characters.Pop();
-        Characters[Len] = StringUtils::Null;
+        Characters[nLength] = StringUtils::Null;
     }
 
     /**
@@ -1469,8 +1526,8 @@ public:
      */
     FORCEINLINE SizeType Size() const noexcept
     {
-        SizeType Len = Characters.Size();
-        return (Len > 0) ? (Len - 1) : 0; // Characters contains null-terminator
+        const SizeType nLength = Characters.Size();
+        return (nLength > 0) ? (nLength - 1) : 0; // Characters contains null-terminator
     }
 
     /**
@@ -1480,8 +1537,8 @@ public:
      */
     FORCEINLINE SizeType LastElementIndex() const noexcept
     {
-        SizeType Len = Size();
-        return (Len > 0) ? (Len - 1) : 0;
+        const SizeType nLength = Size();
+        return (nLength > 0) ? (nLength - 1) : 0;
     }
 
     /**
@@ -1920,7 +1977,7 @@ public:
 public:
 
     /**
-     * @brief: STL start iterator, same as TArray::StartIterator
+     * @brief: STL start iterator
      *
      * @return: A iterator that points to the first element
      */
@@ -1930,7 +1987,7 @@ public:
     }
 
     /**
-     * @brief: STL end iterator, same as TArray::EndIterator
+     * @brief: STL end iterator
      *
      * @return: A iterator that points past the last element
      */
@@ -1940,7 +1997,7 @@ public:
     }
 
     /**
-     * @brief: STL start iterator, same as TArray::StartIterator
+     * @brief: STL start iterator
      *
      * @return: A iterator that points to the first element
      */
@@ -1950,7 +2007,7 @@ public:
     }
 
     /**
-     * @brief: STL end iterator, same as TArray::EndIterator
+     * @brief: STL end iterator
      *
      * @return: A iterator that points past the last element
      */
@@ -1964,7 +2021,9 @@ private:
     FORCEINLINE void CopyFrom(const CharType* InString, SizeType InLength) noexcept
     {
         Characters.Resize(InLength);
+        
         StringUtils::Copy(Characters.Data(), InString, InLength);
+        
         Characters.Emplace(StringUtils::Null);
     }
 
@@ -2020,19 +2079,19 @@ inline String WideToChar(const WString& WideString) noexcept
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Hashing for strings
 
-template<typename TChar>
+template<typename CharType>
 struct TStringHasher
 {
     // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
-    FORCEINLINE size_t operator()(const TString<TChar>& String) const
+    FORCEINLINE size_t operator()(const TString<CharType>& String) const
     {
         // TODO: Investigate how good is this for wide chars
 
-        const TChar* Key = String.CStr();
+        const CharType* Key = String.CStr();
         int32 Length = String.Length();
 
         int32  Index = 0;
-        uint64 Hash = 0;
+        uint64 Hash  = 0;
         while (Index != Length)
         {
             Hash += Key[Index++];

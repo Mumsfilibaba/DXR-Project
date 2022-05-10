@@ -5,13 +5,13 @@
 class CMacApplication;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaContentView
+// CCocoaWindowView
 
-@interface CCocoaContentView : MTKView<NSTextInputClient>
+@interface CCocoaWindowView : MTKView<NSTextInputClient>
 {
     CMacApplication* Application;
 }
 
-- (id)init : (CMacApplication*)InApplication;
+- (instancetype)init : (CMacApplication*)InApplication NS_DESIGNATED_INITIALIZER;
 
 @end

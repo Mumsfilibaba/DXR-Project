@@ -4,7 +4,7 @@
 #include "CoreApplication/Generic/GenericWindow.h"
 
 @class CCocoaWindow;
-@class CCocoaContentView;
+@class CCocoaWindowView;
 
 class CMacApplication;
 
@@ -22,7 +22,7 @@ public:
 
 	static CMacWindow* CreateMacWindow(CMacApplication* InApplication);
 
-    FORCEINLINE CCocoaWindow* GetCocoaWindow() const { return WindowHandle; }
+    CCocoaWindow* GetWindowHandle() const { return WindowHandle; }
 
 public:
 
@@ -64,7 +64,7 @@ public:
     virtual void* GetPlatformHandle() const override final { return reinterpret_cast<void*>(WindowHandle); }
 
 private:
-    CMacApplication*   Application = nullptr;
-    CCocoaWindow*      WindowHandle      = nullptr;
-    CCocoaContentView* View        = nullptr;
+    CMacApplication*   Application;
+    CCocoaWindow*      WindowHandle;
+    CCocoaWindowView* View;
 };

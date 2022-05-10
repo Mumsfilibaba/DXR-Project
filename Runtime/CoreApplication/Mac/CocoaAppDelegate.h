@@ -11,6 +11,6 @@ class CMacApplication;
     CMacApplication* Application;
 }
 
-- (id)init : (CMacApplication*)InApplication;
+- (instancetype)init : (CMacApplication*)InApplication NS_DESIGNATED_INITIALIZER;
 
 @end

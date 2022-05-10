@@ -8,7 +8,7 @@
 
 @implementation CCocoaWindow
 
-- (id) init:(CMacApplication*) InApplication ContentRect:(NSRect)ContentRect StyleMask:(NSWindowStyleMask)StyleMask Backing:(NSBackingStoreType)BackingStoreType Defer:(BOOL)Flag
+- (instancetype) init:(CMacApplication*) InApplication ContentRect:(NSRect)ContentRect StyleMask:(NSWindowStyleMask)StyleMask Backing:(NSBackingStoreType)BackingStoreType Defer:(BOOL)Flag
 {
     Check(InApplication != nullptr);
 
@@ -17,7 +17,7 @@
     {
         Application = InApplication;
 
-        [self setDelegate:self];
+        self.delegate = self;
         [self setOpaque:YES];
     }
     

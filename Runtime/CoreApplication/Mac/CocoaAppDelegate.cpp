@@ -9,7 +9,7 @@
 
 @implementation CCocoaAppDelegate
 
-- (id) init:(CMacApplication*) InApplication
+- (instancetype) init:(CMacApplication*) InApplication
 {
     Check(InApplication != nullptr);
     

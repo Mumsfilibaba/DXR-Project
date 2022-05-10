@@ -233,8 +233,8 @@ CRHIViewport* CMetalCoreInterface::RHICreateViewport(const CRHIViewportInitializ
     __block NSRect ContentRect;
     MakeMainThreadCall(^
     {
-        Frame       = [Window frame];
-        ContentRect = [Window contentRectForFrameRect:[Window frame]];
+        Frame       = Window.frame;
+        ContentRect = [Window contentRectForFrameRect:Window.frame];
     }, true);
     
     CRHIViewportInitializer NewInitializer(Initializer);

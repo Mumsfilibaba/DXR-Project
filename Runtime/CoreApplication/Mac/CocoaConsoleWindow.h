@@ -16,7 +16,7 @@ class CMacConsoleWindow;
 }
 
 // Instance
-- (id)init:(CMacConsoleWindow*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag;
+- (instancetype)init:(CMacConsoleWindow*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag;
 
 // Static
 +(NSString*)convertStringWithArgs:(const char*)Format Args : (va_list)Args;

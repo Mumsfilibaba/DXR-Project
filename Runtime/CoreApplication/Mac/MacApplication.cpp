@@ -58,11 +58,11 @@ bool CMacApplication::Initialize()
     Check(NSApp != nullptr);
     
     [NSApp activateIgnoringOtherApps:YES];
-    [NSApp setPresentationOptions:NSApplicationPresentationDefault];
+    NSApp.presentationOptions = NSApplicationPresentationDefault;
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     
     AppDelegate = [[CCocoaAppDelegate alloc] init:this];
-    [NSApp setDelegate:AppDelegate];
+    NSApp.delegate = AppDelegate;
     
 	PlatformKeyMapping::Initialize();
 
@@ -88,17 +88,17 @@ bool CMacApplication::InitializeAppMenu()
     NSMenu*     MenuBar     = [[NSMenu alloc] init];
     NSMenuItem* AppMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
     NSMenu*     AppMenu     = [[NSMenu alloc] init];
-    [AppMenuItem setSubmenu:AppMenu];
+    AppMenuItem.submenu = AppMenu;
     
     [AppMenu addItemWithTitle:@"DXR-Engine" action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
     [AppMenu addItem: [NSMenuItem separatorItem]];
     
     // Engine menu item
     NSMenu* ServiceMenu = [[NSMenu alloc] init];
-    [[AppMenu addItemWithTitle:@"Services" action:nil keyEquivalent:@""] setSubmenu:ServiceMenu];
+    [AppMenu addItemWithTitle:@"Services" action:nil keyEquivalent:@""].submenu = ServiceMenu;
     [AppMenu addItem:[NSMenuItem separatorItem]];
     [AppMenu addItemWithTitle:@"Hide DXR-Engine" action:@selector(hide:) keyEquivalent:@"h"];
-    [[AppMenu addItemWithTitle:@"Hide Other" action:@selector(hideOtherApplications:) keyEquivalent:@""] setKeyEquivalentModifierMask:NSEventModifierFlagOption | NSEventModifierFlagCommand];
+    [AppMenu addItemWithTitle:@"Hide Other" action:@selector(hideOtherApplications:) keyEquivalent:@""].keyEquivalentModifierMask = NSEventModifierFlagOption | NSEventModifierFlagCommand;
     [AppMenu addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
     [AppMenu addItem:[NSMenuItem separatorItem]];
     [AppMenu addItemWithTitle:@"Quit DXR-Engine" action:@selector(terminate:) keyEquivalent:@"q"];
@@ -106,7 +106,7 @@ bool CMacApplication::InitializeAppMenu()
     // Window menu
     NSMenuItem* WindowMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
     NSMenu*     WindowMenu     = [[NSMenu alloc] initWithTitle:@"Window"];
-    [WindowMenuItem setSubmenu:WindowMenu];
+    WindowMenuItem.submenu = WindowMenu;
     
     [WindowMenu addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];
     [WindowMenu addItemWithTitle:@"Zoom" action:@selector(performZoom:) keyEquivalent:@""];
@@ -115,14 +115,14 @@ bool CMacApplication::InitializeAppMenu()
     [WindowMenu addItemWithTitle:@"Bring All to Front" action:@selector(arrangeInFront:) keyEquivalent:@""];
     [WindowMenu addItem:[NSMenuItem separatorItem]];
     
-    [[WindowMenu addItemWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"] setKeyEquivalentModifierMask:NSEventModifierFlagControl | NSEventModifierFlagCommand];
+    [WindowMenu addItemWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"].keyEquivalentModifierMask = NSEventModifierFlagControl | NSEventModifierFlagCommand;
     
     SEL SetAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
     [NSApp performSelector:SetAppleMenuSelector withObject:AppMenu];
     
-    [NSApp setMainMenu:MenuBar];
-    [NSApp setWindowsMenu:WindowMenu];
-    [NSApp setServicesMenu:ServiceMenu];
+    NSApp.mainMenu = MenuBar;
+    NSApp.windowsMenu = WindowMenu;
+    NSApp.servicesMenu = ServiceMenu;
 
     return true;
 }
@@ -157,7 +157,7 @@ TSharedRef<CGenericWindow> CMacApplication::GetActiveWindow() const
 {
 	SCOPED_AUTORELEASE_POOL();
 
-    NSWindow* KeyWindow = [NSApp keyWindow];
+    NSWindow* KeyWindow = NSApp.keyWindow;
     return GetWindowFromNSWindow(KeyWindow);
 }
 
@@ -202,7 +202,7 @@ void CMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 			NSEvent* Event = reinterpret_cast<NSEvent*>(EventOrNotificationObject);
 			NewDeferredEvent.Event  = [Event retain];
 			
-			NSWindow* Window = [Event window];
+			NSWindow* Window = Event.window;
 			if ([Window isKindOfClass: [CCocoaWindow class]])
 			{
 				CCocoaWindow* EventWindow = reinterpret_cast<CCocoaWindow*>(Window);
@@ -212,15 +212,15 @@ void CMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 		else if ([EventOrNotificationObject isKindOfClass:[NSNotification class]])
 		{
 			NSNotification* Notification = reinterpret_cast<NSNotification*>(EventOrNotificationObject);
-			NewDeferredEvent.NotificationName = [[Notification name] retain];
+			NewDeferredEvent.NotificationName = [Notification.name retain];
 			
-			NSObject* NotificationObject = [Notification object];
+			NSObject* NotificationObject = Notification.object;
 			if ([NotificationObject isKindOfClass: [CCocoaWindow class]])
 			{
 				CCocoaWindow* EventWindow = reinterpret_cast<CCocoaWindow*>(NotificationObject);
 				NewDeferredEvent.Window   = [EventWindow retain];
 				
-				const NSRect ContentRect  = [[EventWindow contentView] frame];
+				const NSRect ContentRect  = EventWindow.contentView.frame;
 				NewDeferredEvent.Size     = ContentRect.size;
 				NewDeferredEvent.Position = ContentRect.origin;
 			}
@@ -229,7 +229,7 @@ void CMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
 		{
 			NSString* Characters = reinterpret_cast<NSString*>(EventOrNotificationObject);
 			
-			NSUInteger Count = [Characters length];
+			NSUInteger Count = Characters.length;
 			for (NSUInteger Index = 0; Index < Count; Index++)
 			{
 				const unichar Codepoint = [Characters characterAtIndex:Index];
@@ -290,13 +290,13 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 	{
 		NSEvent* CurrentEvent = Event.Event;
 		
-		NSEventType EventType = [CurrentEvent type];
+		NSEventType EventType = CurrentEvent.type;
 		switch(EventType)
 		{
 			case NSEventTypeKeyUp:
 			{
 				const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
-				const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode([CurrentEvent keyCode]);
+				const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode);
 				MessageListener->HandleKeyReleased(Key, ModiferKeyState);
 				break;
 			}
@@ -304,8 +304,8 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 			case NSEventTypeKeyDown:
 			{
 				const SModifierKeyState ModiferKeyState = PlatformApplicationMisc::GetModifierKeyState();
-				const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode([CurrentEvent keyCode]);
-				MessageListener->HandleKeyPressed(Key, [CurrentEvent isARepeat], ModiferKeyState);
+				const EKey Key = CMacKeyMapping::GetKeyCodeFromScanCode(CurrentEvent.keyCode);
+				MessageListener->HandleKeyPressed(Key, CurrentEvent.ARepeat, ModiferKeyState);
 				break;
 			}
 
@@ -313,7 +313,7 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 			case NSEventTypeRightMouseUp:
 			case NSEventTypeOtherMouseUp:
 			{
-				const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex(static_cast<int32>([CurrentEvent buttonNumber]));
+				const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber));
 				const SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
 				MessageListener->HandleMouseReleased(Button, KeyState);
 				break;
@@ -323,7 +323,7 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 			case NSEventTypeRightMouseDown:
 			case NSEventTypeOtherMouseDown:
 			{
-				const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex(static_cast<int32>([CurrentEvent buttonNumber]));
+				const EMouseButton      Button   = CMacKeyMapping::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber));
 				const SModifierKeyState KeyState = PlatformApplicationMisc::GetModifierKeyState();
 				MessageListener->HandleMousePressed(Button, KeyState);
 				break;
@@ -334,11 +334,11 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 			case NSEventTypeRightMouseDragged:
 			case NSEventTypeMouseMoved:
 			{
-				NSWindow* EventWindow = [CurrentEvent window];
+				NSWindow* EventWindow = CurrentEvent.window;
 				if (EventWindow)
 				{
-					const NSPoint MousePosition	= [CurrentEvent locationInWindow];
-					const NSRect  ContentRect 	= [[EventWindow contentView] frame];
+					const NSPoint MousePosition	= CurrentEvent.locationInWindow;
+					const NSRect  ContentRect 	= EventWindow.contentView.frame;
 					
 					const int32 x = int32(MousePosition.x);
 					const int32 y = int32(ContentRect.size.height - MousePosition.y);
@@ -350,9 +350,9 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 			   
 			case NSEventTypeScrollWheel:
 			{
-				CGFloat ScrollDeltaX = [CurrentEvent scrollingDeltaX];
-				CGFloat ScrollDeltaY = [CurrentEvent scrollingDeltaY];
-				if ([CurrentEvent hasPreciseScrollingDeltas])
+				CGFloat ScrollDeltaX = CurrentEvent.scrollingDeltaX;
+				CGFloat ScrollDeltaY = CurrentEvent.scrollingDeltaY;
+				if (CurrentEvent.hasPreciseScrollingDeltas)
 				{
 					ScrollDeltaX *= 0.1;
 					ScrollDeltaY *= 0.1;
@@ -364,7 +364,7 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 				
 			case NSEventTypeMouseEntered:
 			{
-				NSWindow* EventWindow = [CurrentEvent window];
+				NSWindow* EventWindow = CurrentEvent.window;
 				
 				TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(EventWindow);
 				if (Window)
@@ -377,7 +377,7 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 				
 			case NSEventTypeMouseExited:
 			{
-				NSWindow* EventWindow = [CurrentEvent window];
+				NSWindow* EventWindow = CurrentEvent.window;
 				
 				TSharedRef<CMacWindow> Window = GetWindowFromNSWindow(EventWindow);
 				if (Window)

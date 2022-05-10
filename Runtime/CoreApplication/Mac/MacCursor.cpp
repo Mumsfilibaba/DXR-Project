@@ -82,7 +82,7 @@ void CMacCursor::SetPosition(CGenericWindow* InRelativeWindow, int32 x, int32 y)
     if (InRelativeWindow)
     {
 		CCocoaWindow* RelativeWindow = reinterpret_cast<CCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
-        const NSRect ContentRect = [RelativeWindow frame];
+        const NSRect ContentRect = RelativeWindow.frame;
         const NSRect LocalRect   = NSMakeRect(x, ContentRect.size.height - y - 1, 0, 0);
         const NSRect GlobalRect  = [RelativeWindow convertRectToScreen:LocalRect];
         NewPosition = CGPointMake(GlobalRect.origin.x, GlobalRect.origin.y);
@@ -106,7 +106,7 @@ void CMacCursor::GetPosition(CGenericWindow* InRelativeWindow, int32& OutX, int3
     if (InRelativeWindow)
     {
         NSWindow* RelativeWindow = reinterpret_cast<CCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
-        CursorPosition = [RelativeWindow mouseLocationOutsideOfEventStream];
+        CursorPosition = RelativeWindow.mouseLocationOutsideOfEventStream;
     }
     else
     {
