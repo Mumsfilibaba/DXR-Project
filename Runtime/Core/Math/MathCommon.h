@@ -19,7 +19,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // MacOS specific
 
-#elif PLATFORM_MACOS
+#elif (PLATFORM_MACOS && ARCHITECTURE_X86_X64)
     #include <immintrin.h>
 #else
 

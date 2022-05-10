@@ -83,10 +83,10 @@ public:
         , w(InW)
     { }
 
-     /** @brief: Normalized this vector */
+     /** @brief: Normalize this vector */
     inline void Normalize() noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         const float fLengthSquared = LengthSquared();
         if (fLengthSquared != 0.0f)
         {
@@ -131,7 +131,7 @@ public:
      */
     inline bool IsEqual(const CVector4& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         Epsilon = NMath::Abs(Epsilon);
 
         for (int32 Index = 0; Index < 4; ++Index)
@@ -241,7 +241,7 @@ public:
      */
     FORCEINLINE float DotProduct(const CVector4& Other) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return (x * Other.x) + (y * Other.y) + (z * Other.z) + (w * Other.w);
 #else
         NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(this);
@@ -260,7 +260,7 @@ public:
      */
     inline CVector4 CrossProduct(const CVector4& Other) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4((y * Other.z) - (z * Other.y)
                        ,(z * Other.x) - (x * Other.z)
                        ,(x * Other.y) - (y * Other.x)
@@ -287,7 +287,7 @@ public:
      */
     inline CVector4 ProjectOn(const CVector4& Other) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         float AdotB = DotProduct(Other);
         float BdotB = Other.LengthSquared();
         return (AdotB / BdotB) * Other;
@@ -318,7 +318,7 @@ public:
      */
     inline CVector4 Reflect(const CVector4& Normal) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         float VdotN = DotProduct(Normal);
         float NdotN = Normal.LengthSquared();
         return *this - ((2.0f * (VdotN / NdotN)) * Normal);
@@ -376,7 +376,7 @@ public:
      */
     friend FORCEINLINE CVector4 Min(const CVector4& First, const CVector4& Second) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(NMath::Min(First.x, Second.x)
                        ,NMath::Min(First.y, Second.y)
                        ,NMath::Min(First.z, Second.z)
@@ -402,7 +402,7 @@ public:
      */
     friend FORCEINLINE CVector4 Max(const CVector4& First, const CVector4& Second) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(NMath::Max(First.x, Second.x)
                        ,NMath::Max(First.y, Second.y)
                        ,NMath::Max(First.z, Second.z)
@@ -429,7 +429,7 @@ public:
      */
     friend FORCEINLINE CVector4 Lerp(const CVector4& First, const CVector4& Second, float t) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4((1.0f - t) * First.x + t * Second.x
                        ,(1.0f - t) * First.y + t * Second.y
                        ,(1.0f - t) * First.z + t * Second.z
@@ -463,7 +463,7 @@ public:
      */
     friend FORCEINLINE CVector4 Clamp(const CVector4& Min, const CVector4& Max, const CVector4& Value) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(NMath::Min(NMath::Max(Value.x, Min.x), Max.x)
                        ,NMath::Min(NMath::Max(Value.y, Min.y), Max.y)
                        ,NMath::Min(NMath::Max(Value.z, Min.z), Max.z)
@@ -490,7 +490,7 @@ public:
      */
     friend FORCEINLINE CVector4 Saturate(const CVector4& Value) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(NMath::Min(NMath::Max(Value.x, 0.0f), 1.0f)
                        ,NMath::Min(NMath::Max(Value.y, 0.0f), 1.0f)
                        ,NMath::Min(NMath::Max(Value.z, 0.0f), 1.0f)
@@ -518,7 +518,7 @@ public:
      */
     FORCEINLINE CVector4 operator-() const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(-x, -y, -z, -w);
 #else
         CVector4 Result;
@@ -540,7 +540,7 @@ public:
      */
     FORCEINLINE CVector4 operator+(const CVector4& RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(x + RHS.x, y + RHS.y, z + RHS.z, w + RHS.w);
 #else
         CVector4 Result;
@@ -562,7 +562,7 @@ public:
      */
     FORCEINLINE CVector4& operator+=(const CVector4& RHS) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return *this = *this + RHS;
 #else
         NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
@@ -582,7 +582,7 @@ public:
      */
     FORCEINLINE CVector4 operator+(float RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(x + RHS, y + RHS, z + RHS, w + RHS);
 #else
         CVector4 Result;
@@ -604,7 +604,7 @@ public:
      */
     FORCEINLINE CVector4& operator+=(float RHS) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return *this = *this + RHS;
 #else
         NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
@@ -624,7 +624,7 @@ public:
      */
     FORCEINLINE CVector4 operator-(const CVector4& RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(x - RHS.x, y - RHS.y, z - RHS.z, w - RHS.w);
 #else
         CVector4 Result;
@@ -646,7 +646,7 @@ public:
      */
     FORCEINLINE CVector4& operator-=(const CVector4& RHS) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return *this = *this - RHS;
 #else
         NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
@@ -666,7 +666,7 @@ public:
      */
     FORCEINLINE CVector4 operator-(float RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(x - RHS, y - RHS, z - RHS, w - RHS);
 #else
         CVector4 Result;
@@ -688,7 +688,7 @@ public:
      */
     FORCEINLINE CVector4& operator-=(float RHS) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return *this = *this - RHS;
 #else
         NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
@@ -709,7 +709,7 @@ public:
      */
     FORCEINLINE CVector4 operator*(const CVector4& RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(x * RHS.x, y * RHS.y, z * RHS.z, w * RHS.w);
 #else
         CVector4 Result;
@@ -731,7 +731,7 @@ public:
      */
     FORCEINLINE CVector4& operator*=(const CVector4& RHS) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return *this = *this * RHS;
 #else
         NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
@@ -751,7 +751,7 @@ public:
      */
     FORCEINLINE CVector4 operator*(float RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(x * RHS, y * RHS, z * RHS, w * RHS);
 #else
         CVector4 Result;
@@ -774,7 +774,7 @@ public:
      */
     friend FORCEINLINE CVector4 operator*(float LHS, const CVector4& RHS) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(RHS.x * LHS, RHS.y * LHS, RHS.z * LHS, RHS.w * LHS);
 #else
         CVector4 Result;
@@ -796,7 +796,7 @@ public:
      */
     FORCEINLINE CVector4 operator*=(float RHS) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return *this = *this * RHS;
 #else
         NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
@@ -816,7 +816,7 @@ public:
      */
     FORCEINLINE CVector4 operator/(const CVector4& RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(x / RHS.x, y / RHS.y, z / RHS.z, w / RHS.w);
 #else
         CVector4 Result;
@@ -838,7 +838,7 @@ public:
      */
     FORCEINLINE CVector4& operator/=(const CVector4& RHS) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return *this = *this / RHS;
 #else
         NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
@@ -858,7 +858,7 @@ public:
      */
     FORCEINLINE CVector4 operator/(float RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return CVector4(x / RHS, y / RHS, z / RHS, w / RHS);
 #else
         CVector4 Result;
@@ -880,7 +880,7 @@ public:
      */
     FORCEINLINE CVector4& operator/=(float RHS) noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         return *this = *this / RHS;
 #else
         NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);

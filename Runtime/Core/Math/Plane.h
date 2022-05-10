@@ -68,7 +68,7 @@ public:
      */
     inline bool IsEqual(const CPlane& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         Epsilon = NMath::Abs(Epsilon);
 
         for (int32 Index = 0; Index < 4; ++Index)

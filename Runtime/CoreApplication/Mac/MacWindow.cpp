@@ -1,6 +1,5 @@
 #include "MacWindow.h"
 #include "CocoaWindow.h"
-#include "CocoaContentView.h"
 
 #include "Core/Mac/Mac.h"
 #include "Core/Logging/Log.h"
@@ -20,7 +19,6 @@ CMacWindow::CMacWindow(CMacApplication* InApplication)
     : CGenericWindow()
     , Application(InApplication)
     , WindowHandle(nullptr)
-    , View(nullptr)
 { }
 
 CMacWindow::~CMacWindow()
@@ -28,9 +26,7 @@ CMacWindow::~CMacWindow()
 	MakeMainThreadCall(^
 	{
 		SCOPED_AUTORELEASE_POOL();
-			
-		[WindowHandle release];
-		[View release];
+		NSSafeRelease(WindowHandle);
 	}, true);
 }
 
@@ -74,23 +70,13 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
         int32 WindowLevel = NSNormalWindowLevel;
         WindowHandle.level = WindowLevel;
         
-        // TODO: Move to the viewport
-        View = [[CCocoaWindowView alloc] init:Application];
-        if (!View)
-        {
-            LOG_ERROR("[CMacWindow]: Failed to create CocoaContentView");
-            return;
-        }
-        
         if (InStyle.IsTitled())
         {
             WindowHandle.title = InTitle.GetNSString();
         }
         
         [WindowHandle setAcceptsMouseMovedEvents:YES];
-        WindowHandle.contentView = View;
         [WindowHandle setRestorable:NO];
-        [WindowHandle makeFirstResponder:View];
         
         if (!InStyle.IsMaximizable())
         {
@@ -314,7 +300,6 @@ void CMacWindow::SetPlatformHandle(void* InPlatformHandle)
 		if (NewWindow)
 		{
 			WindowHandle = NewWindow;
-			View         = WindowHandle.contentView;
 		}
 	}
 }

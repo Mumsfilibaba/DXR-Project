@@ -9,11 +9,13 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Architecture
 
-#if defined(__x86_64__) || defined(__i386__)
-    #ifndef ARCHITECTURE_X86_X64
-	    #define ARCHITECTURE_X86_X64 (1)
+#ifndef ARCHITECTURE_X86_X64
+    #if defined(__x86_64__) || defined(__i386__)
+        #define ARCHITECTURE_X86_X64 (1)
+    #else
+        #define ARCHITECTURE_X86_X64 (0)
     #endif
-#endif // ARCHITECTURE_X86_X64
+#endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Use SSE intrinsics if we can

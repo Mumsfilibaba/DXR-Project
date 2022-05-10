@@ -68,7 +68,7 @@ public:
      */
     inline CMatrix2 Transpose() const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         CMatrix2 Transpose;
         Transpose.f[0][0] = f[0][0];
         Transpose.f[0][1] = f[1][0];
@@ -96,7 +96,7 @@ public:
     {
         const float fDeterminant = (m00 * m11) - (m01 * m10);
 
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         const float RecipDeterminant = 1.0f / fDeterminant;
 
         CMatrix2 Inverse;
@@ -132,7 +132,7 @@ public:
      */
     FORCEINLINE CMatrix2 Adjoint() const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         CMatrix2 Adjugate;
         Adjugate.m00 =  m11;
         Adjugate.m10 = -m10;
@@ -220,7 +220,7 @@ public:
      */
     inline bool IsEqual(const CMatrix2& Other, float Epsilon = NMath::kIsEqualEpsilon) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
 
         Epsilon = NMath::Abs(Epsilon);
 
@@ -248,7 +248,7 @@ public:
      /** @brief: @brief: Sets this matrix to an identity matrix */
     FORCEINLINE void SetIdentity() noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         m00 = 1.0f;
         m01 = 0.0f;
 
@@ -314,7 +314,7 @@ public:
      */
     FORCEINLINE CVector2 operator*(const CVector2& RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         CVector2 Result;
         Result.x = (RHS[0] * m00) + (RHS[1] * m10);
         Result.y = (RHS[0] * m01) + (RHS[1] * m11);
@@ -343,7 +343,7 @@ public:
      */
     FORCEINLINE CMatrix2 operator*(const CMatrix2& RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         CMatrix2 Result;
         Result.m00 = (m00 * RHS.m00) + (m01 * RHS.m10);
         Result.m01 = (m01 * RHS.m11) + (m00 * RHS.m01);
@@ -382,7 +382,7 @@ public:
      */
     FORCEINLINE CMatrix2 operator*(float RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         CMatrix2 Result;
         Result.m00 = m00 * RHS;
         Result.m01 = m01 * RHS;
@@ -420,7 +420,7 @@ public:
      */
     FORCEINLINE CMatrix2 operator+(const CMatrix2& RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         CMatrix2 Result;
         Result.m00 = m00 + RHS.m00;
         Result.m01 = m01 + RHS.m01;
@@ -455,7 +455,7 @@ public:
      */
     FORCEINLINE CMatrix2 operator+(float RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         CMatrix2 Result;
         Result.m00 = m00 + RHS;
         Result.m01 = m01 + RHS;
@@ -493,7 +493,7 @@ public:
      */
     FORCEINLINE CMatrix2 operator-(const CMatrix2& RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         CMatrix2 Result;
         Result.m00 = m00 - RHS.m00;
         Result.m01 = m01 - RHS.m01;
@@ -528,7 +528,7 @@ public:
      */
     FORCEINLINE CMatrix2 operator-(float RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         CMatrix2 Result;
         Result.m00 = m00 - RHS;
         Result.m01 = m01 - RHS;
@@ -566,7 +566,7 @@ public:
      */
     FORCEINLINE CMatrix2 operator/(float RHS) const noexcept
     {
-#if defined(DISABLE_SIMD)
+#if !USE_VECTOR_OP
         float Recip = 1.0f / RHS;
 
         CMatrix2 Result;

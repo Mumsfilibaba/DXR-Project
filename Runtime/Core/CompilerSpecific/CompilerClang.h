@@ -9,9 +9,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Architecture 
 
-#if defined(__x86_64__) || defined(__i386__)
-    #ifndef ARCHITECTURE_X86_X64
+#ifndef ARCHITECTURE_X86_X64
+    #if defined(__x86_64__) || defined(__i386__)
         #define ARCHITECTURE_X86_X64 (1)
+    #else
+        #define ARCHITECTURE_X86_X64 (0)
     #endif
 #endif
 
@@ -53,7 +55,11 @@
 // Vectorcall
 
 #ifndef VECTORCALL
-    #define VECTORCALL __vectorcall
+    #if ARCHITECTURE_X86_X64
+        #define VECTORCALL __vectorcall
+    #else
+        #define VECTORCALL
+    #endif
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

@@ -64,7 +64,6 @@ public:
     virtual void* GetPlatformHandle() const override final { return reinterpret_cast<void*>(WindowHandle); }
 
 private:
-    CMacApplication*   Application;
-    CCocoaWindow*      WindowHandle;
-    CCocoaWindowView* View;
+    CMacApplication* Application;
+    CCocoaWindow*    WindowHandle;
 };

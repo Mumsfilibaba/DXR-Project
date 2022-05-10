@@ -15,9 +15,9 @@
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:BackingStoreType defer:Flag];
     if (self)
     {
-        Application = InApplication;
-
+        _Application  = InApplication;
         self.delegate = self;
+        
         [self setOpaque:YES];
     }
     
@@ -51,47 +51,47 @@
 
 - (void) windowWillClose:(NSNotification*) InNotification
 {
-    Application->DeferEvent(InNotification);
+    _Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidResize:(NSNotification*) InNotification
 {
-    Application->DeferEvent(InNotification);
+    _Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidMove:(NSNotification*) InNotification
 {
-    Application->DeferEvent(InNotification);
+    _Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidMiniaturize:(NSNotification*) InNotification
 {
-    Application->DeferEvent(InNotification);
+    _Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidDeminiaturize:(NSNotification*) InNotification
 {
-    Application->DeferEvent(InNotification);
+    _Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidEnterFullScreen:(NSNotification*) InNotification
 {
-    Application->DeferEvent(InNotification);
+    _Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidExitFullScreen:(NSNotification*) InNotification
 {
-    Application->DeferEvent(InNotification);
+    _Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidBecomeKey:(NSNotification*) InNotification
 {
-    Application->DeferEvent(InNotification);
+    _Application->DeferEvent(InNotification);
 }
 
 - (void) windowDidResignKey:(NSNotification*) InNotification
 {
-    Application->DeferEvent(InNotification);
+    _Application->DeferEvent(InNotification);
 }
 
 @end

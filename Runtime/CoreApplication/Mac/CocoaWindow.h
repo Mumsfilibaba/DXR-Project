@@ -7,10 +7,9 @@ class CMacApplication;
 // CCocoaWindow
 
 @interface CCocoaWindow : NSWindow<NSWindowDelegate>
-{
-    CMacApplication* Application;
-}
 
 - (instancetype)init: (CMacApplication*)InApplication ContentRect: (NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag;
+
+@property (readonly, nonatomic) CMacApplication* Application;
 
 @end

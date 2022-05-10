@@ -1,4 +1,4 @@
-#include "CocoaContentView.h"
+#include "CocoaWindowView.h"
 #include "MacApplication.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -6,7 +6,7 @@
 
 @implementation CCocoaWindowView
 
-- (instancetype) init:(CMacApplication*) InApplication
+- (instancetype) initWithApplication:(CMacApplication*) InApplication
 {
     self = [super init];
     if (self)

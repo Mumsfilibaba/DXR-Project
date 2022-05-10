@@ -9,11 +9,13 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Architecture
 
-#if defined(_M_IX86) || defined(_M_X64)
-    #ifndef ARCHITECTURE_X86_X64
+#ifndef ARCHITECTURE_X86_X64
+    #if defined(_M_IX86) || defined(_M_X64)
         #define ARCHITECTURE_X86_X64 (1)
+    #else
+        #define ARCHITECTURE_X86_X64 (0)
     #endif
-#endif // ARCHITECTURE_X86_X64
+#endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Use SSE intrinsics if we can
@@ -53,7 +55,11 @@
 // Vector call
 
 #ifndef VECTORCALL
-    #define VECTORCALL __vectorcall
+    #if ARCHITECTURE_X86_X64
+        #define VECTORCALL __vectorcall
+    #else
+        #define VECTORCALL
+    #endif
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/

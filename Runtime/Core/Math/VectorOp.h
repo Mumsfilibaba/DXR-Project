@@ -1,26 +1,28 @@
 #pragma once
-#ifndef DISABLE_SIMD
 #include "MathCommon.h"
-
-/* Windows Specific */
-#if PLATFORM_WINDOWS
-#include <xmmintrin.h>
-#include <immintrin.h>
-
-/* MacOS Specific */
-#elif PLATFORM_MACOS
-#include <immintrin.h>
-
-/* No platform defined */
-#else
-#error No valid platform
-#endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Alignment for vector instructions
 
 #ifndef VECTOR_ALIGN
-#define VECTOR_ALIGN ALIGN_AS(16)
+    #define VECTOR_ALIGN ALIGN_AS(16)
+#endif
+
+#if (!defined(DISABLE_SIMD) && ARCHITECTURE_X86_X64)
+    #define USE_VECTOR_OP (1)
+
+/* Windows Specific */
+#if PLATFORM_WINDOWS
+    #include <xmmintrin.h>
+    #include <immintrin.h>
+
+/* MacOS Specific */
+#elif PLATFORM_MACOS
+    #include <immintrin.h>
+
+/* No platform defined */
+#else
+    #error No valid platform
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -641,5 +643,7 @@ namespace NVectorOp
         return Sub(Temp1, Temp2);
     }
 }
-
+#else
+    #define USE_VECTOR_OP (0)
+    #error No SIMD
 #endif

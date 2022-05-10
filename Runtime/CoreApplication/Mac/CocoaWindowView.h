@@ -7,7 +7,7 @@ class CMacApplication;
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CCocoaWindowView
 
-@interface CCocoaWindowView : MTKView<NSTextInputClient>
+@interface CCocoaWindowView : NSView<NSTextInputClient>
 {
     CMacApplication* Application;
 }
