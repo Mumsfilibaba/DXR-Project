@@ -50,7 +50,7 @@ public:
 
     virtual void Release() { delete this; }
 
-    bool IsVisible() const { return bIsVisible; }
+    virtual bool IsVisible() const { return bIsVisible; }
 
 protected:
     bool bIsVisible = false;

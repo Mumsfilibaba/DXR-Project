@@ -32,42 +32,42 @@ CMacWindow::~CMacWindow()
 
 bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle InStyle)
 {
+    NSUInteger WindowStyle = 0;
+    if (InStyle.Style)
+    {
+        WindowStyle = NSWindowStyleMaskTitled | NSWindowStyleMaskFullSizeContentView;
+        if (InStyle.IsClosable())
+        {
+            WindowStyle |= NSWindowStyleMaskClosable;
+        }
+        if (InStyle.IsResizeable())
+        {
+            WindowStyle |= NSWindowStyleMaskResizable;
+        }
+        if (InStyle.IsMinimizable())
+        {
+            WindowStyle |= NSWindowStyleMaskMiniaturizable;
+        }
+    }
+    else
+    {
+        WindowStyle = NSWindowStyleMaskBorderless;
+    }
+    
     __block bool bResult = false;
     MakeMainThreadCall(^
     {
         SCOPED_AUTORELEASE_POOL();
-            
-        NSUInteger WindowStyle = 0;
-        if (InStyle.Style)
-        {
-            WindowStyle = NSWindowStyleMaskTitled | NSWindowStyleMaskFullSizeContentView;
-            if (InStyle.IsClosable())
-            {
-                WindowStyle |= NSWindowStyleMaskClosable;
-            }
-            if (InStyle.IsResizeable())
-            {
-                WindowStyle |= NSWindowStyleMaskResizable;
-            }
-            if (InStyle.IsMinimizable())
-            {
-                WindowStyle |= NSWindowStyleMaskMiniaturizable;
-            }
-        }
-        else
-        {
-            WindowStyle = NSWindowStyleMaskBorderless;
-        }
         
         const NSRect WindowRect = NSMakeRect(CGFloat(x), CGFloat(y), CGFloat(InWidth), CGFloat(InHeight));
-        WindowHandle = [[CCocoaWindow alloc] initWithContentRect:WindowRect StyleMask:WindowStyle Backing:NSBackingStoreBuffered Defer:NO];
+        WindowHandle = [[CCocoaWindow alloc] initWithContentRect: WindowRect styleMask: WindowStyle backing: NSBackingStoreBuffered defer: NO];
         if (!WindowHandle)
         {
             LOG_ERROR("[CMacWindow]: Failed to create NSWindow");
             return;
         }
         
-        int32 WindowLevel = NSNormalWindowLevel;
+        const int32 WindowLevel = NSNormalWindowLevel;
         WindowHandle.level = WindowLevel;
         
         if (InStyle.IsTitled())
@@ -75,9 +75,17 @@ bool CMacWindow::Initialize(const String& InTitle, uint32 InWidth, uint32 InHeig
             WindowHandle.title = InTitle.GetNSString();
         }
         
+        // Setting this to no disables any notifications about the window closing. Not documented.
+        [WindowHandle setReleasedWhenClosed:NO];
         [WindowHandle setAcceptsMouseMovedEvents:YES];
         [WindowHandle setRestorable:NO];
+        [WindowHandle setHasShadow: YES];
+        [WindowHandle setDelegate:WindowHandle];
         
+        if (!InStyle.IsMinimizable())
+        {
+            [[WindowHandle standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
+        }
         if (!InStyle.IsMaximizable())
         {
             [[WindowHandle standardWindowButton:NSWindowZoomButton] setEnabled:NO];

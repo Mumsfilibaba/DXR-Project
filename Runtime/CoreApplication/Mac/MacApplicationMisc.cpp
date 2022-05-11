@@ -35,9 +35,9 @@ void CMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
     SCOPED_AUTORELEASE_POOL();
     
-    Check(NSApp != nullptr);
+    Check(NSApp != nil);
 	
-    NSEvent* Event = nullptr;
+    NSEvent* Event = nil;
     do
     {
         Event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];

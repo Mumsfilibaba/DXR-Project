@@ -13,16 +13,13 @@
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:BackingStoreType defer:Flag];
     if (self)
     {
-        self.delegate = self;
-        [self setOpaque:YES];
+        // NOTE: Setting self.delegate = self does not work in here
+        [super setOpaque:YES];
+        [super setRestorable:NO];
+        [super disableSnapshotRestoration];
     }
     
     return self;
-}
-
-- (void) dealloc
-{
-    [super dealloc];
 }
 
 - (BOOL) canBecomeKeyWindow
@@ -45,76 +42,109 @@
     return YES;
 }
 
-- (void) windowWillClose:(NSNotification*) InNotification
+- (void)performZoom:(id)Sender
 {
+}
+
+- (void)zoom:(id)Sender
+{
+    SCOPED_AUTORELEASE_POOL();
+    [super zoom:Sender];
+}
+
+- (void)keyDown:(NSEvent*)Event
+{
+}
+
+- (void)keyUp:(NSEvent*)Event
+{
+}
+
+- (void) performClose:(id)sender
+{
+}
+
+- (void) windowWillClose:(NSNotification*) Notification
+{
+    SCOPED_AUTORELEASE_POOL();
+    [self setDelegate:nil];
+    
     if (MacApplication)
     {
-        MacApplication->DeferEvent(InNotification);
+        MacApplication->DeferEvent(Notification);
     }
 }
 
-- (void) windowDidResize:(NSNotification*) InNotification
+- (void) windowDidResize:(NSNotification*) Notification
 {
     if (MacApplication)
     {
-        MacApplication->DeferEvent(InNotification);
+        MacApplication->DeferEvent(Notification);
     }
 }
 
-- (void) windowDidMove:(NSNotification*) InNotification
+- (void) windowDidMove:(NSNotification*) Notification
 {
     if (MacApplication)
     {
-        MacApplication->DeferEvent(InNotification);
+        MacApplication->DeferEvent(Notification);
     }
 }
 
-- (void) windowDidMiniaturize:(NSNotification*) InNotification
+- (void) windowDidMiniaturize:(NSNotification*) Notification
 {
     if (MacApplication)
     {
-        MacApplication->DeferEvent(InNotification);
+        MacApplication->DeferEvent(Notification);
     }
 }
 
-- (void) windowDidDeminiaturize:(NSNotification*) InNotification
+- (void) windowDidDeminiaturize:(NSNotification*) Notification
 {
     if (MacApplication)
     {
-        MacApplication->DeferEvent(InNotification);
+        MacApplication->DeferEvent(Notification);
     }
 }
 
-- (void) windowDidEnterFullScreen:(NSNotification*) InNotification
+- (void) windowDidEnterFullScreen:(NSNotification*) Notification
 {
     if (MacApplication)
     {
-        MacApplication->DeferEvent(InNotification);
+        MacApplication->DeferEvent(Notification);
     }
 }
 
-- (void) windowDidExitFullScreen:(NSNotification*) InNotification
+- (void) windowDidExitFullScreen:(NSNotification*) Notification
 {
     if (MacApplication)
     {
-        MacApplication->DeferEvent(InNotification);
+        MacApplication->DeferEvent(Notification);
     }
 }
 
-- (void) windowDidBecomeKey:(NSNotification*) InNotification
+- (void)windowDidBecomeMain:(NSNotification*) Notification
 {
+    SCOPED_AUTORELEASE_POOL();
+    
+    if ([NSApp isHidden] == NO)
+    {
+        [self orderFront:nil];
+    }
+ 
+    // TODO: Do we want to handle key as well?
     if (MacApplication)
     {
-        MacApplication->DeferEvent(InNotification);
+        MacApplication->DeferEvent(Notification);
     }
 }
 
-- (void) windowDidResignKey:(NSNotification*) InNotification
+- (void)windowDidResignMain:(NSNotification*)Notification
 {
-    if (MacApplication)
-    {
-        MacApplication->DeferEvent(InNotification);
-    }
+    SCOPED_AUTORELEASE_POOL();
+    
+    [self setMovable: YES];
+    [self setMovableByWindowBackground: NO];
 }
 
 @end

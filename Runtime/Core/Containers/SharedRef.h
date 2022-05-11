@@ -464,7 +464,7 @@ FORCEINLINE bool operator!=(NullptrType, const TSharedRef<T>& RHS) noexcept
 // TSharedRef casting functions
 
 template<typename T, typename U>
-FORCEINLINE TSharedRef<T> StaticCast(const TSharedRef<U>& Pointer)
+FORCEINLINE TSharedRef<T> StaticCastSharedRef(const TSharedRef<U>& Pointer)
 {
     T* RawPointer = static_cast<T*>(Pointer.Get());
     RawPointer->AddRef();
@@ -472,14 +472,14 @@ FORCEINLINE TSharedRef<T> StaticCast(const TSharedRef<U>& Pointer)
 }
 
 template<typename T, typename U>
-FORCEINLINE TSharedRef<T> StaticCast(TSharedRef<U>&& Pointer)
+FORCEINLINE TSharedRef<T> StaticCastSharedRef(TSharedRef<U>&& Pointer)
 {
     T* RawPointer = static_cast<T*>(Pointer.Get());
     return TSharedRef<T>(RawPointer);
 }
 
 template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ConstCast(const TSharedRef<U>& Pointer)
+FORCEINLINE TSharedRef<T> ConstCastSharedRef(const TSharedRef<U>& Pointer)
 {
     T* RawPointer = const_cast<T*>(Pointer.Get());
     RawPointer->AddRef();
@@ -487,14 +487,14 @@ FORCEINLINE TSharedRef<T> ConstCast(const TSharedRef<U>& Pointer)
 }
 
 template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ConstCast(TSharedRef<U>&& Pointer)
+FORCEINLINE TSharedRef<T> ConstCastSharedRef(TSharedRef<U>&& Pointer)
 {
     T* RawPointer = const_cast<T*>(Pointer.Get());
     return TSharedRef<T>(RawPointer);
 }
 
 template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ReinterpretCast(const TSharedRef<U>& Pointer)
+FORCEINLINE TSharedRef<T> ReinterpretCastSharedRef(const TSharedRef<U>& Pointer)
 {
     T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
     RawPointer->AddRef();
@@ -502,7 +502,7 @@ FORCEINLINE TSharedRef<T> ReinterpretCast(const TSharedRef<U>& Pointer)
 }
 
 template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ReinterpretCast(TSharedRef<U>&& Pointer)
+FORCEINLINE TSharedRef<T> ReinterpretCastSharedRef(TSharedRef<U>&& Pointer)
 {
     T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
     return TSharedRef<T>(RawPointer);

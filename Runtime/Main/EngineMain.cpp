@@ -1,13 +1,13 @@
 #pragma once
+#include "Main/EngineLoop.h"
+
 #include "Core/Core.h"
 
-#include "Engine/Engine.h"
-
-#include "Main/EngineLoop.h"
+#include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 #include "Canvas/CanvasApplication.h"
 
-#include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "Engine/Engine.h"
 
 // Main function for all implementations
 int32 EngineMain()

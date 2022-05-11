@@ -20,9 +20,9 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericDebugMisc
+// CGenericPlatformMisc
 
-class CGenericDebugMisc
+class CGenericPlatformMisc
 {
 public:
 

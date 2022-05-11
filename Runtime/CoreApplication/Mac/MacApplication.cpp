@@ -63,18 +63,6 @@ TSharedRef<CGenericWindow> CMacApplication::MakeWindow()
 bool CMacApplication::Initialize()
 {
     SCOPED_AUTORELEASE_POOL();
-
-    Check(PlatformThreadMisc::IsMainThread()); 
-
-    [NSApplication sharedApplication];
-    Check(NSApp != nullptr);
-    
-    [NSApp activateIgnoringOtherApps:YES];
-    NSApp.presentationOptions = NSApplicationPresentationDefault;
-    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-    
-    AppDelegate = [[CCocoaAppDelegate alloc] init:this];
-    NSApp.delegate = AppDelegate;
     
 	PlatformKeyMapping::Initialize();
 
@@ -83,8 +71,6 @@ bool CMacApplication::Initialize()
         LOG_ERROR("[CMacApplication]: Failed to initialize the application menu");
         return false;
     }
-
-    [NSApp finishLaunching];
     
     return true;
 }
@@ -285,14 +271,14 @@ void CMacApplication::HandleEvent(const SMacApplicationEvent& Event)
 		{
 			MessageListener->HandleWindowResized(Window, uint16(Event.Size.width), uint16(Event.Size.height));
 		}
-		else if (NotificationName == NSWindowDidBecomeKeyNotification)
-		{
-			MessageListener->HandleWindowFocusChanged(Window, true);
-		}
-		else if (NotificationName == NSWindowDidResignKeyNotification)
-		{
-			MessageListener->HandleWindowFocusChanged(Window, false);
-		}
+        else if (NotificationName == NSWindowDidBecomeMainNotification)
+        {
+            MessageListener->HandleWindowFocusChanged(Window, true);
+        }
+        else if (NotificationName == NSWindowDidResignMainNotification)
+        {
+            MessageListener->HandleWindowFocusChanged(Window, false);
+        }
 		else if (NotificationName == NSApplicationWillTerminateNotification)
 		{
 			bIsTerminating = true;

@@ -37,6 +37,8 @@ public:
 	virtual void SetTitle(const String& Title) override final;
 	
 	virtual void SetColor(EConsoleColor Color) override final;
+    
+    virtual bool IsVisible() const override final;
 	
 private:
 

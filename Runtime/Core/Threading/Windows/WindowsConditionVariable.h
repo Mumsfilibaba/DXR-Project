@@ -5,7 +5,7 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Generic/GenericConditionVariable.h"
 
-#include "CoreApplication/Platform/PlatformDebugMisc.h"
+#include "CoreApplication/Platform/PlatformMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CWindowsConditionVariable
@@ -47,7 +47,7 @@ public:
         if (!bResult)
         {
             String ErrorString;
-            PlatformDebugMisc::GetLastErrorString(ErrorString);
+            PlatformMisc::GetLastErrorString(ErrorString);
 
             LOG_ERROR("%s", ErrorString.CStr());
 

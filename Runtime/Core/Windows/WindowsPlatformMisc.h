@@ -3,8 +3,7 @@
 
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
-
-#include "CoreApplication/Generic/GenericDebugMisc.h"
+#include "Core/Generic/GenericPlatformMisc.h"
 
 #ifdef MessageBox
     #undef MessageBox
@@ -15,14 +14,14 @@
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsDebugMisc
+// CWindowsPlatformMisc
 
-class CWindowsDebugMisc final : public CGenericDebugMisc
+class CWindowsPlatformMisc final : public CGenericPlatformMisc
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericDebugMisc Interface
+    // CGenericPlatformMisc Interface
 
     static FORCEINLINE void DebugBreak()
     {

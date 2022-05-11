@@ -3,7 +3,7 @@
 #include "Core/Logging/Log.h"
 
 #include "CoreApplication/Platform/PlatformApplication.h"
-#include "CoreApplication/Platform/PlatformDebugMisc.h"
+#include "CoreApplication/Platform/PlatformMisc.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -395,7 +395,7 @@ void CWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) cons
     else
     {
         String Error;
-        PlatformDebugMisc::GetLastErrorString(Error);
+        PlatformMisc::GetLastErrorString(Error);
 
         LOG_ERROR("[CWindowsWindow]: Failed to retrieve monitorinfo. Reason: %s", Error.CStr());
     }

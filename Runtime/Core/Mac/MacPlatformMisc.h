@@ -1,15 +1,15 @@
 #pragma once
-#include "CoreApplication/Generic/GenericDebugMisc.h"
+#include "Core/Generic/GenericPlatformMisc.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacDebugMisc
+// CMacPlatformMisc
 
-class CMacDebugMisc final : public CGenericDebugMisc
+class CMacPlatformMisc final : public CGenericPlatformMisc
 {
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericDebugMisc Interface
+    // CGenericPlatformMisc Interface
 
     static FORCEINLINE void DebugBreak()
     {

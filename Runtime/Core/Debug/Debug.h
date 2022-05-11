@@ -1,8 +1,8 @@
 #pragma once
-#include "CoreApplication/Platform/PlatformDebugMisc.h"
+#include "Core/Platform/PlatformMisc.h"
 
 #ifdef OutputDebugString
-#undef OutputDebugString
+     #undef OutputDebugString
 #endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -13,16 +13,16 @@ class CDebug
 public:
     static FORCEINLINE void DebugBreak()
     {
-        PlatformDebugMisc::DebugBreak();
+        PlatformMisc::DebugBreak();
     }
 
     static FORCEINLINE void OutputDebugString(const String& Message)
     {
-        PlatformDebugMisc::OutputDebugString(Message);
+        PlatformMisc::OutputDebugString(Message);
     }
 
     static FORCEINLINE bool IsDebuggerPresent()
     {
-        return PlatformDebugMisc::IsDebuggerPresent();
+        return PlatformMisc::IsDebuggerPresent();
     }
 };

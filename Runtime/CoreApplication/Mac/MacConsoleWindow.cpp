@@ -1,4 +1,5 @@
 #include "MacConsoleWindow.h"
+#include "MacApplication.h"
 #include "CocoaConsoleWindow.h"
 
 #include "Core/Mac/Mac.h"
@@ -28,73 +29,86 @@ CMacConsoleWindow::~CMacConsoleWindow()
 
 void CMacConsoleWindow::CreateConsole()
 {
-	MakeMainThreadCall(^
-	{
-		SCOPED_AUTORELEASE_POOL();
-		
-		const NSUInteger StyleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskMiniaturizable;
-		
-		// TODO: Control with console vars?
-		const CGFloat Width  = 640.0f;
-		const CGFloat Height = 360.0f;
-		
-		NSRect ContentRect = NSMakeRect(0.0f, 0.0f, Width, Height);
-		
-		WindowHandle = [[CCocoaConsoleWindow alloc] init:this ContentRect:ContentRect StyleMask:StyleMask Backing:NSBackingStoreBuffered Defer:NO];
-		SetColor(EConsoleColor::White);
-		
-        NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
-        
-		NSRect ContentFrame = WindowHandle.contentView.frame;
-		ScrollView = [[NSScrollView alloc] initWithFrame:ContentFrame];
-		ScrollView.borderType = NSNoBorder;
-		[ScrollView setHasVerticalScroller:YES];
-		[ScrollView setHasHorizontalScroller:NO];
-		ScrollView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-        ScrollView.backgroundColor = BackGroundColor;
-		
-		TextView = [[NSTextView alloc] initWithFrame:ContentFrame];
-		[TextView setEditable:NO];
-		TextView.minSize = NSMakeSize(0.0f, Height);
-		TextView.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
-		[TextView setVerticallyResizable:YES];
-		[TextView setHorizontallyResizable:NO];
-		TextView.autoresizingMask = NSViewWidthSizable;
-        TextView.backgroundColor = BackGroundColor;
-		
-		NSTextContainer* Container = TextView.textContainer;
-		Container.containerSize = NSMakeSize(Width, FLT_MAX);
-		[Container setWidthTracksTextView:YES];
-		
-		ScrollView.documentView = TextView;
-		
-        NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorFullScreenAuxiliary
-                                            | NSWindowCollectionBehaviorDefault
-                                            | NSWindowCollectionBehaviorManaged
-                                            | NSWindowCollectionBehaviorParticipatesInCycle;
-        
-        WindowHandle.collectionBehavior = Behavior;
-        
-        NSString* Title = @"Output Console";
-        [NSApp addWindowsItem:WindowHandle title:Title filename:NO];
-        
-		WindowHandle.title = Title;
-		WindowHandle.contentView = ScrollView;
-		WindowHandle.initialFirstResponder = TextView;
-        WindowHandle.backgroundColor = BackGroundColor;
-		[WindowHandle setOpaque:YES];
-		[WindowHandle makeKeyAndOrderFront:WindowHandle];
+    if (!WindowHandle)
+    {
+        MakeMainThreadCall(^
+        {
+            SCOPED_AUTORELEASE_POOL();
+            
+            const NSUInteger StyleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskMiniaturizable;
+            
+            // TODO: Control with console vars?
+            const CGFloat Width  = 640.0f;
+            const CGFloat Height = 360.0f;
+            
+            NSRect ContentRect = NSMakeRect(0.0f, 0.0f, Width, Height);
+            
+            WindowHandle = [[CCocoaConsoleWindow alloc] init:this ContentRect:ContentRect StyleMask:StyleMask Backing:NSBackingStoreBuffered Defer:NO];
+            SetColor(EConsoleColor::White);
+            
+            NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
+            
+            NSRect ContentFrame = WindowHandle.contentView.frame;
+            ScrollView = [[NSScrollView alloc] initWithFrame:ContentFrame];
+            ScrollView.borderType = NSNoBorder;
+            [ScrollView setHasVerticalScroller:YES];
+            [ScrollView setHasHorizontalScroller:NO];
+            ScrollView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+            ScrollView.backgroundColor  = BackGroundColor;
+            
+            NSSize ContentSize = [ScrollView contentSize];
+            TextView = [[NSTextView alloc] initWithFrame:NSMakeRect(0.0, 0.0, ContentSize.width, ContentSize.height)];
+            [TextView setEditable:NO];
+            TextView.minSize = NSMakeSize(0.0f, ContentSize.height);
+            TextView.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
+            [TextView setVerticallyResizable:YES];
+            [TextView setHorizontallyResizable:NO];
+            TextView.autoresizingMask = NSViewWidthSizable;
+            TextView.backgroundColor  = BackGroundColor;
+            
+            NSTextContainer* Container = TextView.textContainer;
+            Container.containerSize = NSMakeSize(ContentSize.width, FLT_MAX);
+            [Container setWidthTracksTextView:YES];
+            
+            ScrollView.documentView = TextView;
+            
+            NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorFullScreenAuxiliary
+                                                | NSWindowCollectionBehaviorDefault
+                                                | NSWindowCollectionBehaviorManaged
+                                                | NSWindowCollectionBehaviorParticipatesInCycle;
+            
+            WindowHandle.collectionBehavior = Behavior;
+            
+            NSString* Title = @"Output Console";
+            [NSApp addWindowsItem:WindowHandle title:Title filename:NO];
+            
+            WindowHandle.title                 = Title;
+            WindowHandle.contentView           = ScrollView;
+            WindowHandle.initialFirstResponder = TextView;
+            WindowHandle.backgroundColor       = BackGroundColor;
+            [WindowHandle setOpaque:YES];
+            [WindowHandle makeKeyAndOrderFront:WindowHandle];
 
-		PlatformApplicationMisc::PumpMessages(true);
-	}, true);
+            
+            if(!MacApplication)
+            {
+                do
+                {
+                    PlatformApplicationMisc::PumpMessages(true);
+                } while(WindowHandle && ![WindowHandle isVisible]);
+            }
+            
+            
+        }, true);
+    }
 }
 
 void CMacConsoleWindow::DestroyConsole()
 {
-	if (IsVisible())
-	{
-		MakeMainThreadCall(^
-		{
+    if (IsVisible())
+    {
+        MakeMainThreadCall(^
+        {
 			SCOPED_AUTORELEASE_POOL();
 		
 			PlatformApplicationMisc::PumpMessages(true);
@@ -117,7 +131,7 @@ void CMacConsoleWindow::DestroyResources()
 
 void CMacConsoleWindow::Show(bool bShow)
 {
-	if (bIsVisible != bShow)
+	if (IsVisible() != bShow)
 	{
 		if (bShow)
 		{
@@ -235,6 +249,11 @@ void CMacConsoleWindow::SetColor(EConsoleColor Color)
 			[Attributes release];
         }, true);
     }
+}
+
+bool CMacConsoleWindow::IsVisible() const
+{
+    return (WindowHandle != nil);
 }
 
 int32 CMacConsoleWindow::GetLineCount() const

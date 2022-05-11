@@ -1,9 +1,7 @@
-#include "Main/EngineMain.inl"
-
-#if PLATFORM_WINDOWS
-
 #include "Core/Debug/Debug.h"
 #include "Core/Windows/Windows.h"
+
+extern int32 EngineMain();
 
 #pragma warning(push)
 #pragma warning(disable : 4100) // Disable unreferenced variable
@@ -26,5 +24,3 @@ int WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CmdLine, in
 }
 
 #pragma warning(pop)
-
-#endif

@@ -87,8 +87,8 @@ function CTargetBuildRules(InName)
                 self.AddFiles( 
                 {
                     (RuntimeFolderPath .. '/Main/EngineLoop.cpp'),
-                    (RuntimeFolderPath .. '/Main/EngineMain.inl'),
-                    MainFile    
+                    (RuntimeFolderPath .. '/Main/EngineMain.cpp'),
+                    MainFile
                 })
 
                 -- Generate the project
@@ -127,7 +127,7 @@ function CTargetBuildRules(InName)
                 Executeble.Files = 
                 {
                     (RuntimeFolderPath .. '/Main/EngineLoop.cpp'),
-                    (RuntimeFolderPath .. '/Main/EngineMain.inl'),
+                    (RuntimeFolderPath .. '/Main/EngineMain.cpp'),
                     MainFile    
                 }
 

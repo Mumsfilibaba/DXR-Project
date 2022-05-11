@@ -1,11 +1,11 @@
-#include "MacDebugMisc.h"
+#include "MacPlatformMisc.h"
 
 #include <Foundation/Foundation.h>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacDebugMisc
+// CMacPlatformMisc
 
-void CMacDebugMisc::OutputDebugString(const String& Message)
+void CMacPlatformMisc::OutputDebugString(const String& Message)
 { 
     NSLog(@"%s\n", Message.CStr());
 }
