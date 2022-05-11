@@ -1,12 +1,10 @@
 #pragma once
 #include "CoreApplication/Generic/GenericApplicationMisc.h"
 
-#if defined(COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
-
 #include <AppKit/AppKit.h>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMacApplicationMisc
@@ -34,6 +32,4 @@ public:
     static SModifierKeyState GetModifierKeyState();
 };
 
-#if defined(COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+#pragma clang diagnostic pop

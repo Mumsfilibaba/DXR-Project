@@ -1,6 +1,5 @@
 #include "Core/Core.h"
-
-#include "CoreApplication/Mac/MacApplication.h"
+#include "Core/Mac/Mac.h"
 
 #include <Appkit/Appkit.h>
 
@@ -31,10 +30,7 @@ static int32 GEngineMainResult = 0;
 
 - (void) applicationWillTerminate:(NSNotification*) Notification
 {
-    if (MacApplication)
-    {
-        MacApplication->DeferEvent(Notification);
-    }
+    NSLog(@"applicationWillTerminate");
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)Notification
