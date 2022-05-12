@@ -15,7 +15,7 @@ TSharedPtr<CCanvasApplication> CCanvasApplication::Instance;
 bool CCanvasApplication::CreateApplication()
 {
     TSharedPtr<CGenericApplication> Application = MakeSharedPtr(PlatformApplicationMisc::CreateApplication());
-    if (Application && !Application->Initialize())
+    if (!Application)
     {
         PlatformApplicationMisc::MessageBox("ERROR", "Failed to create PlatformApplication");
         return false;
@@ -242,9 +242,9 @@ CCanvasApplication::~CCanvasApplication()
     }
 }
 
-TSharedRef<CGenericWindow> CCanvasApplication::MakeWindow()
+TSharedRef<CGenericWindow> CCanvasApplication::CreateWindow()
 {
-    return PlatformApplication->MakeWindow();
+    return PlatformApplication->CreateWindow();
 }
 
 void CCanvasApplication::Tick(CTimestamp DeltaTime)
@@ -809,6 +809,8 @@ void CCanvasApplication::HandleWindowClosed(const TSharedRef<CGenericWindow>& Wi
             WindowClosedEvent.bIsConsumed = true;
         }
     }
+    
+    LOG_INFO("HandleWindowClosed");
 
     // TODO: Register a main viewport and when that closes, request exit for now just exit
     PlatformApplicationMisc::RequestExit(0);

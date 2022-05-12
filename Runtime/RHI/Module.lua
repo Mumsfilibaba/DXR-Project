@@ -9,13 +9,4 @@ RHIModule.AddModuleDependencies(
     'Core',
 })
 
-if BuildWithXcode() then
-    RHIModule.AddFrameWorks( 
-    {
-        'Cocoa',
-        'AppKit',
-        'MetalKit'
-    })
-end
-
 RHIModule.Generate()

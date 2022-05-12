@@ -95,7 +95,7 @@ private:
     NSString*          RunLoopMode = nullptr;
     
     // Blocks that are going to be executed
-    CSpinLock BlockLock;
+    CSpinLock                BlockLock;
     TArray<dispatch_block_t> Blocks;
 };
 
@@ -155,6 +155,7 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
             GMainThread->WakeUp();
         }
     }
+    
     
     Block_release(CopiedBlock);
 }

@@ -23,13 +23,4 @@ RendererModule.AddLinkLibraries(
     'ImGui',
 })
 
-if BuildWithXcode() then
-    RendererModule.AddFrameWorks( 
-    {
-        'Cocoa',
-        'AppKit',
-        'MetalKit'
-    })
-end
-
 RendererModule.Generate()

@@ -67,7 +67,16 @@ CWindowsApplication::CWindowsApplication(HINSTANCE InInstanceHandle)
     , WindowsMessageListeners()
     , bIsTrackingMouse(false)
     , InstanceHandle(InInstanceHandle)
-{ }
+{
+    const bool bResult = RegisterWindowClass();
+    Check(bResult == true);
+
+#if PLATFORM_WINDOWS_VISTA && ENABLE_DPI_AWARENESS
+    SetProcessDPIAware();
+#endif
+
+    CWindowsKeyMapping::Initialize();
+ }
 
 CWindowsApplication::~CWindowsApplication()
 {
@@ -152,27 +161,16 @@ bool CWindowsApplication::UnregisterRawInputDevices()
     }
 }
 
-TSharedRef<CGenericWindow> CWindowsApplication::MakeWindow()
+TSharedRef<CGenericWindow> CWindowsApplication::CreateWindow()
 {
     TSharedRef<CWindowsWindow> NewWindow = CWindowsWindow::CreateWindowsWindow(this);
-    Windows.Emplace(NewWindow);
-    return NewWindow;
-}
-
-bool CWindowsApplication::Initialize()
-{
-    if (!RegisterWindowClass())
+ 
     {
-        return false;
+        TScopedLock Lock(WindowsCS);
+        Windows.Emplace(NewWindow);
     }
 
-#if PLATFORM_WINDOWS_VISTA && ENABLE_DPI_AWARENESS
-    SetProcessDPIAware();
-#endif
-
-    CWindowsKeyMapping::Initialize();
-
-    return true;
+    return NewWindow;
 }
 
 void CWindowsApplication::Tick(float)
@@ -182,8 +180,9 @@ void CWindowsApplication::Tick(float)
 
     // TODO: Store the second TArray to save on allocations
     TArray<SWindowsMessage> ProcessableMessages;
+    if (!Messages.IsEmpty())
     {
-        TScopedLock<CCriticalSection> Lock(MessagesCriticalSection);
+        TScopedLock<CCriticalSection> Lock(MessagesCS);
         ProcessableMessages.Append(Messages);
         Messages.Clear();
     }
@@ -193,11 +192,22 @@ void CWindowsApplication::Tick(float)
     {
         HandleStoredMessage(Message.Window, Message.Message, Message.wParam, Message.lParam, Message.MouseDeltaX, Message.MouseDeltaY);
     }
-}
 
-bool CWindowsApplication::SupportsRawMouse() const
-{
-    return true;
+    if (!ClosedWindows.IsEmpty())
+    {
+        TScopedLock Lock(ClosedWindowsCS);
+
+        for (const TSharedRef<CWindowsWindow>& Window : ClosedWindows)
+        {
+            HWND WindowHandle = Window->GetWindowHandle();
+            
+            MessageListener->HandleWindowClosed(Window);
+
+            DestroyWindow(WindowHandle);
+        }
+
+        ClosedWindows.Clear();
+    }
 }
 
 bool CWindowsApplication::EnableRawMouse(const TSharedRef<CGenericWindow>& Window)
@@ -271,11 +281,13 @@ TSharedRef<CGenericWindow> CWindowsApplication::GetWindowUnderCursor() const
 
 TSharedRef<CWindowsWindow> CWindowsApplication::GetWindowsWindowFromHWND(HWND InWindow) const
 {
-    if (InWindow)
+    if (IsWindow(InWindow))
     {
+        TScopedLock Lock(WindowsCS);
+
         for (const TSharedRef<CWindowsWindow>& Window : Windows)
         {
-            if (Window->GetHandle() == InWindow)
+            if (Window->GetWindowHandle() == InWindow)
             {
                 return Window;
             }
@@ -287,8 +299,10 @@ TSharedRef<CWindowsWindow> CWindowsApplication::GetWindowsWindowFromHWND(HWND In
 
 void CWindowsApplication::AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener)
 {
+    TScopedLock Lock(WindowsMessageListenersCS);
+
     // We do not want to add a listener if it already exists
-    if (!IsWindowsMessageListener(NewWindowsMessageListener))
+    if (!WindowsMessageListeners.Contains(NewWindowsMessageListener))
     {
         WindowsMessageListeners.Emplace(NewWindowsMessageListener);
     }
@@ -300,12 +314,27 @@ void CWindowsApplication::AddWindowsMessageListener(const TSharedPtr<IWindowsMes
 
 void CWindowsApplication::RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& InWindowsMessageListener)
 {
+    TScopedLock Lock(WindowsMessageListenersCS);
     WindowsMessageListeners.Remove(InWindowsMessageListener);
 }
 
 bool CWindowsApplication::IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& InWindowsMessageListener) const
 {
+    TScopedLock Lock(WindowsMessageListenersCS);
     return WindowsMessageListeners.Contains(InWindowsMessageListener);
+}
+
+void CWindowsApplication::CloseWindow(const TSharedRef<CWindowsWindow>& Window)
+{
+    {
+        TScopedLock Lock(ClosedWindowsCS);
+        ClosedWindows.Emplace(Window);
+    }
+
+    {
+        TScopedLock Lock(WindowsCS);
+        Windows.Remove(Window);
+    }
 }
 
 LRESULT CWindowsApplication::StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -318,213 +347,202 @@ void CWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
     TSharedRef<CWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
     switch (Message)
     {
-    case WM_CLOSE:
-    {
-        if (MessageWindow)
+        case WM_SETFOCUS:
+        case WM_KILLFOCUS:
         {
-            MessageListener->HandleWindowClosed(MessageWindow);
-            DestroyWindow(Window);
+            if (MessageWindow)
+            {
+                const bool bHasFocus = (Message == WM_SETFOCUS);
+                MessageListener->HandleWindowFocusChanged(MessageWindow, bHasFocus);
+            }
+
+            break;
         }
 
-        break;
-    }
-
-    case WM_SETFOCUS:
-    case WM_KILLFOCUS:
-    {
-        if (MessageWindow)
+        case WM_MOUSELEAVE:
         {
-            const bool bHasFocus = (Message == WM_SETFOCUS);
-            MessageListener->HandleWindowFocusChanged(MessageWindow, bHasFocus);
+            if (MessageWindow)
+            {
+                MessageListener->HandleWindowMouseLeft(MessageWindow);
+            }
+
+            bIsTrackingMouse = false;
+            break;
         }
 
-        break;
-    }
-
-    case WM_MOUSELEAVE:
-    {
-        if (MessageWindow)
+        case WM_SIZE:
         {
-            MessageListener->HandleWindowMouseLeft(MessageWindow);
+            if (MessageWindow)
+            {
+                const SPointMessage Size(lParam);
+                MessageListener->HandleWindowResized(MessageWindow, Size.Width, Size.Height);
+            }
+
+            break;
         }
 
-        bIsTrackingMouse = false;
-        break;
-    }
-
-    case WM_SIZE:
-    {
-        if (MessageWindow)
+        case WM_MOVE:
         {
-            const SPointMessage Size(lParam);
-            MessageListener->HandleWindowResized(MessageWindow, Size.Width, Size.Height);
+            if (MessageWindow)
+            {
+                const SPointMessage Size(lParam);
+                MessageListener->HandleWindowMoved(MessageWindow, Size.x, Size.y);
+            }
+
+            break;
         }
 
-        break;
-    }
-
-    case WM_MOVE:
-    {
-        if (MessageWindow)
+        case WM_SYSKEYUP:
+        case WM_KEYUP:
         {
-            const SPointMessage Size(lParam);
-            MessageListener->HandleWindowMoved(MessageWindow, Size.x, Size.y);
+            const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & ScanCodeMask);
+            const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
+
+            MessageListener->HandleKeyReleased(Key, PlatformApplicationMisc::GetModifierKeyState());
+            break;
         }
 
-        break;
-    }
-
-    case WM_SYSKEYUP:
-    case WM_KEYUP:
-    {
-        const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & ScanCodeMask);
-        const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
-
-        MessageListener->HandleKeyReleased(Key, PlatformApplicationMisc::GetModifierKeyState());
-        break;
-    }
-
-    case WM_SYSKEYDOWN:
-    case WM_KEYDOWN:
-    {
-        const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & ScanCodeMask);
-        const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
-
-        const bool bIsRepeat = !!(lParam & KeyRepeatMask);
-        MessageListener->HandleKeyPressed(Key, bIsRepeat, PlatformApplicationMisc::GetModifierKeyState());
-        break;
-    }
-
-    case WM_SYSCHAR:
-    case WM_CHAR:
-    {
-        const uint32 Character = static_cast<uint32>(wParam);
-        MessageListener->HandleKeyChar(Character);
-        break;
-    }
-
-    case WM_MOUSEMOVE:
-    {
-        const int32 x = GET_X_LPARAM(lParam);
-        const int32 y = GET_Y_LPARAM(lParam);
-
-        if (!bIsTrackingMouse)
+        case WM_SYSKEYDOWN:
+        case WM_KEYDOWN:
         {
-            TRACKMOUSEEVENT TrackEvent;
-            CMemory::Memzero(&TrackEvent);
+            const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & ScanCodeMask);
+            const EKey Key = CWindowsKeyMapping::GetKeyCodeFromScanCode(ScanCode);
 
-            TrackEvent.cbSize    = sizeof(TRACKMOUSEEVENT);
-            TrackEvent.dwFlags   = TME_LEAVE;
-            TrackEvent.hwndTrack = Window;
-            TrackMouseEvent(&TrackEvent);
-
-            MessageListener->HandleWindowMouseEntered(MessageWindow);
-
-            bIsTrackingMouse = true;
+            const bool bIsRepeat = !!(lParam & KeyRepeatMask);
+            MessageListener->HandleKeyPressed(Key, bIsRepeat, PlatformApplicationMisc::GetModifierKeyState());
+            break;
         }
 
-        MessageListener->HandleMouseMove(x, y);
-        break;
-    }
-
-    case WM_INPUT:
-    {
-        MessageListener->HandleHighPrecisionMouseInput(MessageWindow, MouseDeltaX, MouseDeltaY);
-        break;
-    }
-
-    case WM_LBUTTONDOWN:
-    case WM_MBUTTONDOWN:
-    case WM_RBUTTONDOWN:
-    case WM_XBUTTONDOWN:
-    case WM_LBUTTONDBLCLK:
-    case WM_MBUTTONDBLCLK:
-    case WM_RBUTTONDBLCLK:
-    case WM_XBUTTONDBLCLK:
-    {
-        EMouseButton Button = EMouseButton::MouseButton_Unknown;
-        if (Message == WM_LBUTTONDOWN || Message == WM_LBUTTONDBLCLK)
+        case WM_SYSCHAR:
+        case WM_CHAR:
         {
-            Button = EMouseButton::MouseButton_Left;
-        }
-        else if (Message == WM_MBUTTONDOWN || Message == WM_MBUTTONDBLCLK)
-        {
-            Button = EMouseButton::MouseButton_Middle;
-        }
-        else if (Message == WM_RBUTTONDOWN || Message == WM_RBUTTONDBLCLK)
-        {
-            Button = EMouseButton::MouseButton_Right;
-        }
-        else if (GET_XBUTTON_WPARAM(wParam) == BackButtonMask)
-        {
-            Button = EMouseButton::MouseButton_Back;
-        }
-        else
-        {
-            Button = EMouseButton::MouseButton_Forward;
+            const uint32 Character = static_cast<uint32>(wParam);
+            MessageListener->HandleKeyChar(Character);
+            break;
         }
 
-        MessageListener->HandleMousePressed(Button, PlatformApplicationMisc::GetModifierKeyState());
-        break;
-    }
+        case WM_MOUSEMOVE:
+        {
+            const int32 x = GET_X_LPARAM(lParam);
+            const int32 y = GET_Y_LPARAM(lParam);
 
-    case WM_LBUTTONUP:
-    case WM_MBUTTONUP:
-    case WM_RBUTTONUP:
-    case WM_XBUTTONUP:
-    {
-        EMouseButton Button = EMouseButton::MouseButton_Unknown;
-        if (Message == WM_LBUTTONUP)
-        {
-            Button = EMouseButton::MouseButton_Left;
-        }
-        else if (Message == WM_MBUTTONUP)
-        {
-            Button = EMouseButton::MouseButton_Middle;
-        }
-        else if (Message == WM_RBUTTONUP)
-        {
-            Button = EMouseButton::MouseButton_Right;
-        }
-        else if (GET_XBUTTON_WPARAM(wParam) == BackButtonMask)
-        {
-            Button = EMouseButton::MouseButton_Back;
-        }
-        else
-        {
-            Button = EMouseButton::MouseButton_Forward;
+            if (!bIsTrackingMouse)
+            {
+                TRACKMOUSEEVENT TrackEvent;
+                CMemory::Memzero(&TrackEvent);
+
+                TrackEvent.cbSize    = sizeof(TRACKMOUSEEVENT);
+                TrackEvent.dwFlags   = TME_LEAVE;
+                TrackEvent.hwndTrack = Window;
+                TrackMouseEvent(&TrackEvent);
+
+                MessageListener->HandleWindowMouseEntered(MessageWindow);
+
+                bIsTrackingMouse = true;
+            }
+
+            MessageListener->HandleMouseMove(x, y);
+            break;
         }
 
-        MessageListener->HandleMouseReleased(Button, PlatformApplicationMisc::GetModifierKeyState());
-        break;
-    }
+        case WM_INPUT:
+        {
+            MessageListener->HandleHighPrecisionMouseInput(MessageWindow, MouseDeltaX, MouseDeltaY);
+            break;
+        }
 
-    case WM_MOUSEWHEEL:
-    {
-        const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
-        MessageListener->HandleMouseScrolled(0.0f, WheelDelta);
-        break;
-    }
+        case WM_LBUTTONDOWN:
+        case WM_MBUTTONDOWN:
+        case WM_RBUTTONDOWN:
+        case WM_XBUTTONDOWN:
+        case WM_LBUTTONDBLCLK:
+        case WM_MBUTTONDBLCLK:
+        case WM_RBUTTONDBLCLK:
+        case WM_XBUTTONDBLCLK:
+        {
+            EMouseButton Button = EMouseButton::MouseButton_Unknown;
+            if (Message == WM_LBUTTONDOWN || Message == WM_LBUTTONDBLCLK)
+            {
+                Button = EMouseButton::MouseButton_Left;
+            }
+            else if (Message == WM_MBUTTONDOWN || Message == WM_MBUTTONDBLCLK)
+            {
+                Button = EMouseButton::MouseButton_Middle;
+            }
+            else if (Message == WM_RBUTTONDOWN || Message == WM_RBUTTONDBLCLK)
+            {
+                Button = EMouseButton::MouseButton_Right;
+            }
+            else if (GET_XBUTTON_WPARAM(wParam) == BackButtonMask)
+            {
+                Button = EMouseButton::MouseButton_Back;
+            }
+            else
+            {
+                Button = EMouseButton::MouseButton_Forward;
+            }
 
-    case WM_MOUSEHWHEEL:
-    {
-        const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
-        MessageListener->HandleMouseScrolled(WheelDelta, 0.0f);
-        break;
-    }
+            MessageListener->HandleMousePressed(Button, PlatformApplicationMisc::GetModifierKeyState());
+            break;
+        }
 
-    case WM_QUIT:
-    {
-        int32 ExitCode = static_cast<int32>(wParam);
-        MessageListener->HandleApplicationExit(ExitCode);
-        break;
-    }
+        case WM_LBUTTONUP:
+        case WM_MBUTTONUP:
+        case WM_RBUTTONUP:
+        case WM_XBUTTONUP:
+        {
+            EMouseButton Button = EMouseButton::MouseButton_Unknown;
+            if (Message == WM_LBUTTONUP)
+            {
+                Button = EMouseButton::MouseButton_Left;
+            }
+            else if (Message == WM_MBUTTONUP)
+            {
+                Button = EMouseButton::MouseButton_Middle;
+            }
+            else if (Message == WM_RBUTTONUP)
+            {
+                Button = EMouseButton::MouseButton_Right;
+            }
+            else if (GET_XBUTTON_WPARAM(wParam) == BackButtonMask)
+            {
+                Button = EMouseButton::MouseButton_Back;
+            }
+            else
+            {
+                Button = EMouseButton::MouseButton_Forward;
+            }
 
-    default:
-    {
-        // Nothing for now
-        break;
-    }
+            MessageListener->HandleMouseReleased(Button, PlatformApplicationMisc::GetModifierKeyState());
+            break;
+        }
+
+        case WM_MOUSEWHEEL:
+        {
+            const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
+            MessageListener->HandleMouseScrolled(0.0f, WheelDelta);
+            break;
+        }
+
+        case WM_MOUSEHWHEEL:
+        {
+            const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
+            MessageListener->HandleMouseScrolled(WheelDelta, 0.0f);
+            break;
+        }
+
+        case WM_QUIT:
+        {
+            int32 ExitCode = static_cast<int32>(wParam);
+            MessageListener->HandleApplicationExit(ExitCode);
+            break;
+        }
+
+        default:
+        {
+            // Nothing for now
+            break;
+        }
     }
 }
 
@@ -547,42 +565,48 @@ LRESULT CWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
     // Store relevant messages 
     switch (Message)
     {
-    case WM_INPUT:
-    {
-        return ProcessRawInput(Window, Message, wParam, lParam);
-    }
+        case WM_INPUT:
+        {
+            return ProcessRawInput(Window, Message, wParam, lParam);
+        }
 
-    case WM_CLOSE:
-    case WM_MOVE:
-    case WM_MOUSELEAVE:
-    case WM_SETFOCUS:
-    case WM_KILLFOCUS:
-    case WM_SIZE:
-    case WM_SYSKEYUP:
-    case WM_KEYUP:
-    case WM_SYSKEYDOWN:
-    case WM_KEYDOWN:
-    case WM_SYSCHAR:
-    case WM_CHAR:
-    case WM_MOUSEMOVE:
-    case WM_LBUTTONDOWN:
-    case WM_MBUTTONDOWN:
-    case WM_RBUTTONDOWN:
-    case WM_XBUTTONDOWN:
-    case WM_LBUTTONDBLCLK:
-    case WM_MBUTTONDBLCLK:
-    case WM_RBUTTONDBLCLK:
-    case WM_XBUTTONDBLCLK:
-    case WM_LBUTTONUP:
-    case WM_MBUTTONUP:
-    case WM_RBUTTONUP:
-    case WM_XBUTTONUP:
-    case WM_MOUSEWHEEL:
-    case WM_MOUSEHWHEEL:
-    {
-        StoreMessage(Window, Message, wParam, lParam, 0, 0);
-        return ResultFromListeners;
-    }
+        case WM_CLOSE:
+        {
+            TSharedRef<CWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
+            CloseWindow(MessageWindow);
+            return ResultFromListeners;
+        }
+
+        case WM_MOVE:
+        case WM_MOUSELEAVE:
+        case WM_SETFOCUS:
+        case WM_KILLFOCUS:
+        case WM_SIZE:
+        case WM_SYSKEYUP:
+        case WM_KEYUP:
+        case WM_SYSKEYDOWN:
+        case WM_KEYDOWN:
+        case WM_SYSCHAR:
+        case WM_CHAR:
+        case WM_MOUSEMOVE:
+        case WM_LBUTTONDOWN:
+        case WM_MBUTTONDOWN:
+        case WM_RBUTTONDOWN:
+        case WM_XBUTTONDOWN:
+        case WM_LBUTTONDBLCLK:
+        case WM_MBUTTONDBLCLK:
+        case WM_RBUTTONDBLCLK:
+        case WM_XBUTTONDBLCLK:
+        case WM_LBUTTONUP:
+        case WM_MBUTTONUP:
+        case WM_RBUTTONUP:
+        case WM_XBUTTONUP:
+        case WM_MOUSEWHEEL:
+        case WM_MOUSEHWHEEL:
+        {
+            StoreMessage(Window, Message, wParam, lParam, 0, 0);
+            return ResultFromListeners;
+        }
     }
 
     return DefWindowProc(Window, Message, wParam, lParam);
@@ -590,7 +614,7 @@ LRESULT CWindowsApplication::MessageProc(HWND Window, UINT Message, WPARAM wPara
 
 void CWindowsApplication::StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY)
 {
-    TScopedLock<CCriticalSection> Lock(MessagesCriticalSection);
+    TScopedLock<CCriticalSection> Lock(MessagesCS);
     Messages.Emplace(Window, Message, wParam, lParam, MouseDeltaX, MouseDeltaY);
 }
 

@@ -34,9 +34,7 @@ protected:
 
 public:
 
-    virtual TSharedRef<CGenericWindow> MakeWindow() { return nullptr; }
-
-    virtual bool Initialize() { return true; }
+    virtual TSharedRef<CGenericWindow> CreateWindow() { return nullptr; }
 
     virtual void Tick(float Delta) { }
 

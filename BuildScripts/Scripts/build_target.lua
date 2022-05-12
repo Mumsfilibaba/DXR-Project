@@ -120,7 +120,7 @@ function CTargetBuildRules(InName)
                 {
                     self.Name
                 })
-                
+
                 Executeble.AddModuleDependencies(self.ModuleDependencies)
 
                 -- Files
@@ -128,8 +128,15 @@ function CTargetBuildRules(InName)
                 {
                     (RuntimeFolderPath .. '/Main/EngineLoop.cpp'),
                     (RuntimeFolderPath .. '/Main/EngineMain.cpp'),
-                    MainFile    
+                    MainFile
                 }
+
+                if BuildWithXcode() then
+                    Executeble.AddFrameWorks(
+                    {
+                        'AppKit',
+                    })
+                end
 
                 -- Defines
                 Executeble.AddDefines(

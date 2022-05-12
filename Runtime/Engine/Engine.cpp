@@ -53,7 +53,7 @@ bool CEngine::Initialize()
     const uint32 WindowWidth  = 1920;
     const uint32 WindowHeight = 1080;
 
-    MainWindow = Application.MakeWindow();
+    MainWindow = Application.CreateWindow();
     if (MainWindow && MainWindow->Initialize(CProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
     {
         MainWindow->Show(false);

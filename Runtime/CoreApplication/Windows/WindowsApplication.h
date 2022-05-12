@@ -78,25 +78,23 @@ public:
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CGenericApplication Interface
 
-    virtual TSharedRef<CGenericWindow> MakeWindow() override final;
-
-    virtual bool Initialize() override final;
+    virtual TSharedRef<CGenericWindow> CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
 
-    virtual bool SupportsRawMouse() const;
+    virtual bool SupportsRawMouse() const override final { return true; }
 
-    virtual bool EnableRawMouse(const TSharedRef<CGenericWindow>& Window);
+    virtual bool EnableRawMouse(const TSharedRef<CGenericWindow>& Window) override final;
 
     virtual void SetCapture(const TSharedRef<CGenericWindow>& Window) override final;
 
     virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) override final;
 
+    virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
+
     virtual TSharedRef<CGenericWindow> GetCapture() const override final;
 
     virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
-
-    virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
 
 public:
 
@@ -109,6 +107,8 @@ public:
     void RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener);
 
     bool IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener) const;
+
+    void CloseWindow(const TSharedRef<CWindowsWindow>& Window); 
 
     FORCEINLINE HINSTANCE GetInstance() const 
     { 
@@ -133,16 +133,21 @@ private:
 
 private:
 
-    TArray<SWindowsMessage> Messages;
-    CCriticalSection        MessagesCriticalSection;
+    TArray<SWindowsMessage>            Messages;
+    CCriticalSection                   MessagesCS;
 
-    bool bIsTrackingMouse;
+    TArray<TSharedRef<CWindowsWindow>> Windows;
+    CCriticalSection                   WindowsCS;
+
+    TArray<TSharedRef<CWindowsWindow>> ClosedWindows;
+    CCriticalSection                   ClosedWindowsCS;
+
+    bool      bIsTrackingMouse;
     
     HINSTANCE InstanceHandle;
-    
-    TArray<TSharedRef<CWindowsWindow>>          Windows;
 
     TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
+    CCriticalSection                            WindowsMessageListenersCS;
 };
 
 extern CWindowsApplication* WindowsApplication;

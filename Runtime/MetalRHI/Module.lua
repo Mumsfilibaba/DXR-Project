@@ -16,7 +16,9 @@ if BuildWithXcode() then
 
     MetalRHI.AddFrameWorks(
     {
-        'Metal'
+        'Metal',
+        'Cocoa',
+        'QuartzCore'
     })
 
     MetalRHI.Generate()

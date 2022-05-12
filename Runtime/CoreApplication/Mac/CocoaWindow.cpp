@@ -1,5 +1,6 @@
 #include "CocoaWindow.h"
 #include "MacApplication.h"
+#include "MacWindow.h"
 
 #include "Core/Mac/Mac.h"
 
@@ -66,12 +67,15 @@
 
 - (void) windowWillClose:(NSNotification*) Notification
 {
-    SCOPED_AUTORELEASE_POOL();
-    [self setDelegate:nil];
-    
-    if (MacApplication)
+    @autoreleasepool
     {
-        MacApplication->DeferEvent(Notification);
+        [self setDelegate:nil];
+        
+        if (MacApplication)
+        {
+            TSharedRef<CMacWindow> Window = MacApplication->GetWindowFromNSWindow(self);
+            MacApplication->CloseWindow(Window);
+        }
     }
 }
 
@@ -125,26 +129,28 @@
 
 - (void)windowDidBecomeMain:(NSNotification*) Notification
 {
-    SCOPED_AUTORELEASE_POOL();
-    
-    if ([NSApp isHidden] == NO)
+    @autoreleasepool
     {
-        [self orderFront:nil];
-    }
- 
-    // TODO: Do we want to handle key as well?
-    if (MacApplication)
-    {
-        MacApplication->DeferEvent(Notification);
+        if ([NSApp isHidden] == NO)
+        {
+            [self orderFront:nil];
+        }
+     
+        // TODO: Do we want to handle key as well?
+        if (MacApplication)
+        {
+            MacApplication->DeferEvent(Notification);
+        }
     }
 }
 
 - (void)windowDidResignMain:(NSNotification*)Notification
 {
-    SCOPED_AUTORELEASE_POOL();
-    
-    [self setMovable: YES];
-    [self setMovableByWindowBackground: NO];
+    @autoreleasepool
+    {
+        [self setMovable: YES];
+        [self setMovableByWindowBackground: NO];
+    }
 }
 
 @end

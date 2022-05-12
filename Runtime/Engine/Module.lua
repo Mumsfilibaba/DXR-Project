@@ -12,28 +12,26 @@ EngineModule.AddSystemIncludes(
     MakeExternalDependencyPath('OpenFBX/src'),
 })
 
-EngineModule.ModuleDependencies = 
+EngineModule.AddModuleDependencies( 
 {
     'Core',
     'CoreApplication',
     'Canvas',
     'RHI',
-}
+})
 
-EngineModule.LinkLibraries = 
+EngineModule.AddLinkLibraries( 
 {
     'ImGui',
     'tinyobjloader',
     'OpenFBX',
-}
+})
 
 if BuildWithXcode() then
-    EngineModule.FrameWorks = 
+    EngineModule.AddFrameWorks( 
     {
-        'Cocoa',
         'AppKit',
-        'MetalKit'
-    }
+    })
 end
 
 EngineModule.Generate()

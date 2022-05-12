@@ -24,9 +24,7 @@ CanvasModule.AddLinkLibraries(
 if BuildWithXcode() then
     CanvasModule.AddFrameWorks( 
     {
-        'Cocoa',
         'AppKit',
-        'MetalKit'
     })
 end
 

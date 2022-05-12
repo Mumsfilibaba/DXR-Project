@@ -12,13 +12,4 @@ NullRHIModule.AddModuleDependencies(
     'RHI',
 })
 
-if BuildWithXcode() then
-    NullRHIModule.AddFrameWorks( 
-    {
-        'Cocoa',
-        'AppKit',
-        'MetalKit'
-    })
-end
-
 NullRHIModule.Generate()

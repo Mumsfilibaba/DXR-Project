@@ -54,8 +54,7 @@ public:
 };
 
 #if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
+    #pragma warning(pop)
 #elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
+    #pragma clang diagnostic pop
 #endif

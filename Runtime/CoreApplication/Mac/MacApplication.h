@@ -15,46 +15,35 @@
 class CMacWindow;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMacApplicationEvent
+// SDeferredMacEvent
 
-// TODO: Finish
-struct SMacApplicationEvent
+struct SDeferredMacEvent
 {
-    FORCEINLINE SMacApplicationEvent()
-        : NotificationName(nullptr)
-        , Event(nullptr)
-        , Window(nullptr)
+    FORCEINLINE SDeferredMacEvent()
+        : NotificationName(nil)
+        , Event(nil)
+        , Window(nil)
 		, Size()
 		, Position()
 		, Character(uint32(-1))
     { }
 
-    FORCEINLINE SMacApplicationEvent(const SMacApplicationEvent& Other)
-        : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nullptr)
-        , Event(Other.Event ? [Other.Event retain] : nullptr)
-        , Window(Other.Window ? [Other.Window retain] : nullptr)
+    FORCEINLINE SDeferredMacEvent(const SDeferredMacEvent& Other)
+        : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nil)
+        , Event(Other.Event ? [Other.Event retain] : nil)
+        , Window(Other.Window ? [Other.Window retain] : nil)
 		, Size(Other.Size)
 		, Position(Other.Position)
 		, Character(Other.Character)
     { }
 
-    FORCEINLINE ~SMacApplicationEvent()
+    FORCEINLINE ~SDeferredMacEvent()
     {
-		SCOPED_AUTORELEASE_POOL();
-		
-        if (NotificationName)
+        @autoreleasepool
         {
-            [NotificationName release];
-        }
-
-        if (Event)
-        {
-            [Event release];
-        }
-
-        if (Window)
-        {
-            [Window release];
+            NSSafeRelease(NotificationName);
+            NSSafeRelease(Event);
+            NSSafeRelease(Window);
         }
     }
 
@@ -81,44 +70,41 @@ private:
 public:
 
 	static CMacApplication* CreateMacApplication();
-    
-    TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
-
-    void DeferEvent(NSObject* EventOrNotificationObject);
-	
-    FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const { return AppDelegate; }
 
 public:
 
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // CGenericApplication Interface
 
-    virtual TSharedRef<CGenericWindow> MakeWindow() override final;
+    virtual TSharedRef<CGenericWindow> CreateWindow() override final;
 
-    virtual bool Initialize()      override final;
-    
     virtual void Tick(float Delta) override final;
 
     virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) override final;
 
-    virtual TSharedRef<CGenericWindow> GetActiveWindow()      const override final;
+    virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
 
-	virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
+    virtual TSharedRef<CGenericWindow> GetActiveWindow() const override final;
+
+public:
+    
+    TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
+    
+    void CloseWindow(const TSharedRef<CMacWindow>& Window);
+    
+    void DeferEvent(NSObject* EventOrNotificationObject);
 
 private:
-    bool InitializeMenuBar();
-
-    void HandleEvent(const SMacApplicationEvent& Notification);
-
-    CCocoaAppDelegate*             AppDelegate = nullptr;
+    void ProcessDeferredEvent(const SDeferredMacEvent& Notification);
 
     TArray<TSharedRef<CMacWindow>> Windows;
-    mutable CCriticalSection       WindowsMutex;
+    mutable CCriticalSection       WindowsCS;
+    
+    TArray<TSharedRef<CMacWindow>> ClosedWindows;
+    CCriticalSection               ClosedWindowsCS;
 
-    TArray<SMacApplicationEvent>   DeferredEvents;
-    CCriticalSection               DeferredEventsMutex;
-
-    bool                           bIsTerminating = false;
+    TArray<SDeferredMacEvent>      DeferredEvents;
+    CCriticalSection               DeferredEventsCS;
 };
 
 extern CMacApplication* MacApplication;

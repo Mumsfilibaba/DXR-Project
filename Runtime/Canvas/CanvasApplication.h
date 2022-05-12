@@ -86,7 +86,7 @@ public:
      * 
      * @return: Returns the newly created window
      */
-    TSharedRef<CGenericWindow> MakeWindow();
+    TSharedRef<CGenericWindow> CreateWindow();
 
     /**
      * @brief: Tick and update the InterfaceApplication

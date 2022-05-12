@@ -14,7 +14,6 @@ if BuildWithXcode() then
     {
         'Cocoa',
         'AppKit',
-        'MetalKit'
     })
 end
 

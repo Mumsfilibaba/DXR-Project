@@ -28,7 +28,7 @@ public:
 
     static const char* GetClassName();
 
-    FORCEINLINE HWND GetHandle() const 
+    FORCEINLINE HWND GetWindowHandle() const 
     { 
         return Window;
     }

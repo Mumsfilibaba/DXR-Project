@@ -44,7 +44,27 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIV
         Frame.origin.y    = 0;
         
         CMetalWindowView* MetalView = [[CMetalWindowView alloc] initWithFrame:Frame];
-        Check(MetalView != nil);
+        [MetalView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        [MetalView setWantsLayer:YES];
+        
+        const CGFloat BackgroundColor[] = { 0.0, 0.0, 0.0, 0.0 };
+        
+        CAMetalLayer* MetalLayer = [CAMetalLayer new];
+        MetalLayer.edgeAntialiasingMask    = 0;
+        MetalLayer.masksToBounds           = YES;
+        MetalLayer.backgroundColor         = CGColorCreate(CGColorSpaceCreateDeviceRGB(), BackgroundColor);
+        MetalLayer.presentsWithTransaction = NO;
+        MetalLayer.anchorPoint             = CGPointMake(0.5, 0.5);
+        MetalLayer.frame                   = Frame;
+        MetalLayer.magnificationFilter     = kCAFilterNearest;
+        MetalLayer.minificationFilter      = kCAFilterNearest;
+
+        [MetalLayer setDevice:InDeviceContext->GetMTLDevice()];
+        
+        [MetalLayer setFramebufferOnly:NO];
+        [MetalLayer removeAllAnimations];
+
+        [MetalView setLayer:MetalLayer];
         
         WindowHandle.contentView = MetalView;
         [WindowHandle makeFirstResponder:MetalView];
