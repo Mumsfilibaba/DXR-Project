@@ -385,14 +385,14 @@ protected:
 
     void RenderStrings();
 
-    TSharedPtr<CGenericApplication>     PlatformApplication;
+    TSharedPtr<CGenericApplication>      PlatformApplication;
 
-    TSharedRef<CGenericWindow>          MainViewport;
-    TSharedRef<ICanvasRenderer>       Renderer;
+    TSharedRef<CGenericWindow>           MainViewport;
+    TSharedRef<ICanvasRenderer>          Renderer;
 
     TArray<String>                       DebugStrings;
-    TArray<TSharedRef<CCanvasWindow>>          InterfaceWindows;
-    TArray<TSharedPtr<CCanvasUser>> RegisteredUsers;
+    TArray<TSharedRef<CCanvasWindow>>    InterfaceWindows;
+    TArray<TSharedPtr<CCanvasUser>>      RegisteredUsers;
 
     CExitEvent                           ExitEvent;
     CMainViewportChange                  MainViewportChange;
