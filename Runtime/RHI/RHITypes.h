@@ -89,7 +89,7 @@ enum class EFormat : uint16
     R8_Sint               = 70,
 };
 
-constexpr const char* ToString(EFormat Format)
+CONSTEXPR const char* ToString(EFormat Format)
 {
     switch (Format)
     {
@@ -171,7 +171,7 @@ constexpr const char* ToString(EFormat Format)
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helpers
 
-constexpr uint32 GetByteStrideFromFormat(EFormat Format)
+CONSTEXPR uint32 GetByteStrideFromFormat(EFormat Format)
 {
     switch (Format)
     {
@@ -279,12 +279,12 @@ enum class ECubeFace
     NegZ = 5,
 };
 
-constexpr uint32 GetCubeFaceIndex(ECubeFace CubeFace)
+CONSTEXPR uint32 GetCubeFaceIndex(ECubeFace CubeFace)
 {
     return static_cast<uint32>(CubeFace);
 }
 
-constexpr ECubeFace GetCubeFaceFromIndex(uint32 Index)
+CONSTEXPR ECubeFace GetCubeFaceFromIndex(uint32 Index)
 {
     if (Index > GetCubeFaceIndex(ECubeFace::NegZ))
     {
@@ -312,7 +312,7 @@ enum class EComparisonFunc
     Always       = 8
 };
 
-constexpr const char* ToString(EComparisonFunc ComparisonFunc)
+CONSTEXPR const char* ToString(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -340,7 +340,7 @@ enum class EPrimitiveTopologyType
     Patch     = 4
 };
 
-constexpr const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
+CONSTEXPR const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
 {
     switch (PrimitveTopologyType)
     {
@@ -381,7 +381,7 @@ enum class EResourceAccess
 
 ENUM_CLASS_OPERATORS(EResourceAccess);
 
-constexpr const char* ToString(EResourceAccess ResourceState)
+CONSTEXPR const char* ToString(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
@@ -418,7 +418,7 @@ enum class EPrimitiveTopology
     TriangleStrip = 5,
 };
 
-constexpr const char* ToString(EPrimitiveTopology ResourceState)
+CONSTEXPR const char* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
@@ -446,7 +446,7 @@ enum class EShadingRate
     VRS_4x4 = 0xa,
 };
 
-constexpr const char* ToString(EShadingRate ShadingRate)
+CONSTEXPR const char* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
@@ -473,7 +473,7 @@ enum class EDescriptorType : uint32
     Sampler         = 4
 };
 
-constexpr const char* ToString(EDescriptorType DescriptorType)
+CONSTEXPR const char* ToString(EDescriptorType DescriptorType)
 {
     switch (DescriptorType)
     {

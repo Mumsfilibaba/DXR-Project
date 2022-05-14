@@ -169,7 +169,7 @@ public:
     }
 
 public:
-    constexpr SizeType GetSize() const noexcept
+    CONSTEXPR SizeType GetSize() const noexcept
     {
         return sizeof(InlineAllocation);
     }

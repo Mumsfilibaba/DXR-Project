@@ -52,19 +52,19 @@ inline const char* ToString(EBufferUAVFormat BufferSRVFormat)
 
 enum class EAttachmentLoadAction : uint8
 {
-    None  = 0, // Don't care 
-    Load  = 1, // Use the stored data when RenderPass begin
-    Clear = 2, // Clear data when RenderPass begin
+    DontCare = 0, // Don't care
+    Load     = 1, // Use the stored data when RenderPass begin
+    Clear    = 2, // Clear data when RenderPass begin
 };
 
 inline const char* ToString(EAttachmentLoadAction LoadAction)
 {
     switch (LoadAction)
     {
-        case EAttachmentLoadAction::None:  return "None";
-        case EAttachmentLoadAction::Load:  return "Load";
-        case EAttachmentLoadAction::Clear: return "Clear";
-        default:                           return "Unknown";
+        case EAttachmentLoadAction::DontCare: return "DontCare";
+        case EAttachmentLoadAction::Load:     return "Load";
+        case EAttachmentLoadAction::Clear:    return "Clear";
+        default:                              return "Unknown";
     }
 }
 
@@ -73,17 +73,17 @@ inline const char* ToString(EAttachmentLoadAction LoadAction)
 
 enum class EAttachmentStoreAction : uint8
 {
-    None  = 0, // Don't care 
-    Store = 1, // Store the data after the RenderPass is finished
+    DontCare = 0, // Don't care
+    Store    = 1, // Store the data after the RenderPass is finished
 };
 
 inline const char* ToString(EAttachmentStoreAction StoreAction)
 {
     switch (StoreAction)
     {
-        case EAttachmentStoreAction::None:  return "None";
-        case EAttachmentStoreAction::Store: return "Store";
-        default:                            return "Unknown";
+        case EAttachmentStoreAction::DontCare: return "DontCare";
+        case EAttachmentStoreAction::Store:    return "Store";
+        default:                               return "Unknown";
     }
 }
 
@@ -408,8 +408,8 @@ public:
         , Format(EFormat::Unknown)
         , ArrayIndex(0)
         , MipLevel(0)
-        , LoadAction(EAttachmentLoadAction::None)
-        , StoreAction(EAttachmentStoreAction::None)
+        , LoadAction(EAttachmentLoadAction::DontCare)
+        , StoreAction(EAttachmentStoreAction::DontCare)
         , ClearValue()
     { }
     
@@ -495,8 +495,8 @@ public:
         , Format(EFormat::Unknown)
         , ArrayIndex(0)
         , MipLevel(0)
-        , LoadAction(EAttachmentLoadAction::None)
-        , StoreAction(EAttachmentStoreAction::None)
+        , LoadAction(EAttachmentLoadAction::DontCare)
+        , StoreAction(EAttachmentStoreAction::DontCare)
         , ClearValue()
     { }
 

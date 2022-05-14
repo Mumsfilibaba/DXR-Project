@@ -1677,7 +1677,7 @@ public:
      *
      * @return: The capacity of the container
      */
-    constexpr SizeType Capacity() const noexcept
+    CONSTEXPR SizeType Capacity() const noexcept
     {
         return CharCount;
     }
@@ -1687,7 +1687,7 @@ public:
      *
      * @return: The capacity of the container in bytes
      */
-    constexpr SizeType CapacityInBytes() const noexcept
+    CONSTEXPR SizeType CapacityInBytes() const noexcept
     {
         return CharCount * sizeof(CharType);
     }

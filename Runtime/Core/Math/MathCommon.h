@@ -64,45 +64,45 @@ namespace NMath
     }
 
     template<typename T>
-    constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type DivideByMultiple(T Value, uint32 Alignment)
+    CONSTEXPR typename TEnableIf<TIsInteger<T>::Value, T>::Type DivideByMultiple(T Value, uint32 Alignment)
     {
         return static_cast<T>((Value + Alignment - 1) / Alignment);
     }
 
     template<typename T>
-    constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignUp(T Value, T Alignment)
+    CONSTEXPR typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignUp(T Value, T Alignment)
     {
         const T Mask = Alignment - 1;
         return ((Value + Mask) & (~Mask));
     }
 
     template<typename T>
-    constexpr typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignDown(T Value, T Alignment)
+    CONSTEXPR typename TEnableIf<TIsInteger<T>::Value, T>::Type AlignDown(T Value, T Alignment)
     {
         const T Mask = Alignment - 1;
         return ((Value) & (~Mask));
     }
 
     template<typename T>
-    constexpr typename TEnableIf<TIsFloatingPoint<T>::Value, T>::Type Lerp(T First, T Second, T Factor)
+    CONSTEXPR typename TEnableIf<TIsFloatingPoint<T>::Value, T>::Type Lerp(T First, T Second, T Factor)
     {
         return (-Factor * Second) + ((First * Factor) + Second);
     }
 
     template<typename T>
-    constexpr T Min(T a, T b)
+    CONSTEXPR T Min(T a, T b)
     {
         return (a <= b) ? a : b;
     }
 
     template<typename T>
-    constexpr T Max(T a, T b)
+    CONSTEXPR T Max(T a, T b)
     {
         return (a >= b) ? a : b;
     }
 
     template<typename T>
-    constexpr T Clamp(T InMin, T InMax, T x)
+    CONSTEXPR T Clamp(T InMin, T InMax, T x)
     {
         return Min(InMax, Max(InMin, x));
     }
@@ -122,13 +122,13 @@ namespace NMath
     }
 
     template<typename T>
-    constexpr T ToRadians(T Degrees)
+    CONSTEXPR T ToRadians(T Degrees)
     {
         return static_cast<T>(static_cast<float>(Degrees) * (kPI_f / 180.0f));
     }
 
     template<typename T>
-    constexpr T ToDegrees(T Radians)
+    CONSTEXPR T ToDegrees(T Radians)
     {
         return static_cast<T>(static_cast<float>(Radians) * (180.0f / kPI_f));
     }
@@ -181,13 +181,13 @@ namespace NMath
         return isinf(Float);
     }
 
-    constexpr uint32 BytesToNum32BitConstants(uint32 Bytes)
+    CONSTEXPR uint32 BytesToNum32BitConstants(uint32 Bytes)
     {
         return Bytes / 4;
     }
 
     template<const uint32 kBits>
-    constexpr uint32 MaxNum()
+    CONSTEXPR uint32 MaxNum()
     {
         return ((1 << kBits) - 1);
     }

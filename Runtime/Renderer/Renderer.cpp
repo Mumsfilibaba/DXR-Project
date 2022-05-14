@@ -381,8 +381,9 @@ void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
     Settings.Height = static_cast<float>(Resources.BackBuffer->GetHeight());
 
     CRHIRenderPassInitializer RenderPass;
-    RenderPass.RenderTargets[0] = CRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
-    RenderPass.NumRenderTargets = 1;
+    RenderPass.RenderTargets[0]            = CRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
+    RenderPass.RenderTargets[0].ClearValue = CFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPass.NumRenderTargets            = 1;
 
     InCmdList.BeginRenderPass(RenderPass);
 
@@ -416,8 +417,9 @@ void CRenderer::PerformBackBufferBlit(CRHICommandList& InCmdList)
     TRACE_SCOPE("Draw to BackBuffer");
 
     CRHIRenderPassInitializer RenderPass;
-    RenderPass.RenderTargets[0] = CRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
-    RenderPass.NumRenderTargets = 1;
+    RenderPass.RenderTargets[0]            = CRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
+    RenderPass.RenderTargets[0].ClearValue = CFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPass.NumRenderTargets            = 1;
 
     InCmdList.BeginRenderPass(RenderPass);
 

@@ -98,6 +98,9 @@ public:
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
 
 private:
+    
+    
+    
 	CMetalDeviceContext*  DeviceContext;
     CMetalCommandContext* CommandContext;
 };

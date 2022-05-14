@@ -350,12 +350,12 @@ public:
 
 public:
 
-    static constexpr uint32 Size()
+    static CONSTEXPR uint32 Size()
     {
         return NumBits;
     }
 
-    static constexpr uint32 Capacity()
+    static CONSTEXPR uint32 Capacity()
     {
         return NumBits;
     }
@@ -377,27 +377,27 @@ public:
 
 private:
 
-    static constexpr uint32 StorageIndexOfBit(uint32 BitIndex)
+    static CONSTEXPR uint32 StorageIndexOfBit(uint32 BitIndex)
     {
         return BitIndex / BitsPerStorage();
     }
 
-    static constexpr uint32 IndexOfBitInStorage(uint32 BitIndex)
+    static CONSTEXPR uint32 IndexOfBitInStorage(uint32 BitIndex)
     {
         return BitIndex % BitsPerStorage();
     }
 
-    static constexpr uint32 BitsPerStorage()
+    static CONSTEXPR uint32 BitsPerStorage()
     {
         return sizeof(StorageType) * 8;
     }
 
-    static constexpr StorageType MakeBitmaskForStorage(uint32 BitIndex)
+    static CONSTEXPR StorageType MakeBitmaskForStorage(uint32 BitIndex)
     {
         return StorageType(1) << IndexOfBitInStorage(BitIndex);
     }
 
-    static constexpr uint32 Elements()
+    static CONSTEXPR uint32 Elements()
     {
         return (NumBits + BitsPerStorage() - 1) / BitsPerStorage();
     }

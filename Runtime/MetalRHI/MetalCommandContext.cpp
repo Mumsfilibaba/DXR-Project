@@ -1,5 +1,7 @@
 #include "MetalCommandContext.h"
 #include "MetalDeviceContext.h"
+#include "MetalTexture.h"
+#include "MetalViewport.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -68,17 +70,36 @@ void CMetalCommandContext::BeginRenderPass(const CRHIRenderPassInitializer& Rend
     CopyContext.FinishContext();
     
     // All textures must have the same size
-    CRHITexture* RTVTexture = RenderPassInitializer.RenderTargets[0].Texture;
+    const CRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[0];
+    
+    CRHITexture* RTVTexture = RenderTargetView.Texture;
     CRHITexture* DSVTexture = RenderPassInitializer.DepthStencilView.Texture;
     METAL_ERROR_COND(RTVTexture != nullptr || DSVTexture != nullptr, "A RenderPass needs a valid RenderTargetView or DepthStencilView");
     
-    const CIntVector3 Extent = RTVTexture ? RTVTexture->GetExtent() : DSVTexture->GetExtent();
-    
     RenderPassDescriptor = [MTLRenderPassDescriptor new];
-    RenderPassDescriptor.renderTargetWidth        = Extent.x;
-    RenderPassDescriptor.renderTargetHeight       = Extent.y;
     RenderPassDescriptor.defaultRasterSampleCount = 1;
     
+    CMetalTexture*  Texture  = GetMetalTexture(RTVTexture);
+    CMetalViewport* Viewport = Texture ? Texture->GetViewport() : nullptr;
+    if (Viewport)
+    {
+        MTLRenderPassColorAttachmentDescriptor* Attachment = RenderPassDescriptor.colorAttachments[0];
+        Attachment.texture            = Viewport->GetDrawableTexture();
+        Attachment.loadAction         = ConvertAttachmentLoadAction(RenderTargetView.LoadAction);
+        Attachment.clearColor         = MTLClearColorMake(RenderTargetView.ClearValue.R, RenderTargetView.ClearValue.G, RenderTargetView.ClearValue.B, RenderTargetView.ClearValue.A);
+        Attachment.level              = RenderTargetView.MipLevel;
+        Attachment.slice              = RenderTargetView.ArrayIndex;
+        Attachment.storeActionOptions = MTLStoreActionOptionNone;
+        Attachment.storeAction        = ConvertAttachmentStoreAction(RenderTargetView.StoreAction);
+    }
+    else
+    {
+        const CIntVector3 Extent = RTVTexture ? RTVTexture->GetExtent() : DSVTexture->GetExtent();
+        RenderPassDescriptor.renderTargetWidth  = Extent.x;
+        RenderPassDescriptor.renderTargetHeight = Extent.y;
+    }
+
+    Check(RenderPassDescriptor != nil);
     GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
 }
 
@@ -223,6 +244,7 @@ void CMetalCommandContext::DiscardContents(class CRHITexture* Texture)
 void CMetalCommandContext::BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate)
 {
 }
+
 void CMetalCommandContext::BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
 {
 }
@@ -288,7 +310,11 @@ void CMetalCommandContext::ClearState()
 
 void CMetalCommandContext::Flush()
 {
-    [CommandBuffer waitUntilCompleted];
+    if (CommandBuffer)
+    {
+        [CommandBuffer commit];
+        [CommandBuffer waitUntilCompleted];
+    }
 }
 
 void CMetalCommandContext::InsertMarker(const String& Message)

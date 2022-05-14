@@ -85,52 +85,52 @@
 // D3D12 Texture Helpers
 
 template<typename D3D12TextureType>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
 
 template<>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2D>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2D>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2DArray>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2DArray>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12TextureCube>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12TextureCube>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12TextureCubeArray>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12TextureCubeArray>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 template<>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture3D>()
+CONSTEXPR D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture3D>()
 {
     return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
 }
 
 template<typename D3D12TextureType>
-constexpr bool IsTextureCube()
+CONSTEXPR bool IsTextureCube()
 {
     return false;
 }
 
 template<>
-constexpr bool IsTextureCube<class CD3D12TextureCube>()
+CONSTEXPR bool IsTextureCube<class CD3D12TextureCube>()
 {
     return true;
 }
 
 template<>
-constexpr bool IsTextureCube<class CD3D12TextureCubeArray>()
+CONSTEXPR bool IsTextureCube<class CD3D12TextureCubeArray>()
 {
     return true;
 }
@@ -152,19 +152,19 @@ constexpr uint16 GetDepthOrArraySize(uint32 DepthOrArraySize)
 // D3D12 Buffer Helpers
 
 template<typename D3D12BufferType>
-constexpr uint32 GetBufferAlignedSize(uint32 Size)
+CONSTEXPR uint32 GetBufferAlignedSize(uint32 Size)
 {
     return Size;
 }
 
 template<>
-constexpr uint32 GetBufferAlignedSize<class CD3D12ConstantBuffer>(uint32 Size)
+CONSTEXPR uint32 GetBufferAlignedSize<class CD3D12ConstantBuffer>(uint32 Size)
 {
     return NMath::AlignUp<uint32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 }
 
 template<>
-constexpr uint32 GetBufferAlignedSize<class CD3D12IndexBuffer>(uint32 Size)
+CONSTEXPR uint32 GetBufferAlignedSize<class CD3D12IndexBuffer>(uint32 Size)
 {
     return NMath::AlignUp<uint32>(Size, sizeof(uint32));
 }
@@ -658,7 +658,7 @@ inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(ERayTracin
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12 Helpers
 
-constexpr uint32 GetFormatStride(DXGI_FORMAT Format)
+CONSTEXPR uint32 GetFormatStride(DXGI_FORMAT Format)
 {
     switch (Format)
     {
@@ -758,7 +758,7 @@ constexpr uint32 GetFormatStride(DXGI_FORMAT Format)
     }
 }
 
-constexpr DXGI_FORMAT CastShaderResourceFormat(DXGI_FORMAT Format)
+CONSTEXPR DXGI_FORMAT CastShaderResourceFormat(DXGI_FORMAT Format)
 {
     switch (Format)
     {
@@ -980,7 +980,7 @@ struct SD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // D3D12 Helper Functions
 
-constexpr const char* ToString(D3D12_RESOURCE_DIMENSION Dimension)
+CONSTEXPR const char* ToString(D3D12_RESOURCE_DIMENSION Dimension)
 {
     switch(Dimension)
     {
@@ -992,7 +992,7 @@ constexpr const char* ToString(D3D12_RESOURCE_DIMENSION Dimension)
     }
 }
 
-constexpr uint32 D3D12CalcSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
+CONSTEXPR uint32 D3D12CalcSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
 {
     return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
 }

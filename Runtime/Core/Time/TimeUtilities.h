@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/CoreDefines.h"
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // NTime
@@ -6,20 +7,20 @@
 namespace NTime
 {
     template<typename T>
-    inline constexpr T ToMicroseconds(T Nanoseconds) { return Nanoseconds / T(1000); }
+    CONSTEXPR T ToMicroseconds(T Nanoseconds) { return Nanoseconds / T(1000); }
 
     template<typename T>
-    inline constexpr T ToMilliseconds(T Nanoseconds) { return Nanoseconds / T(1000 * 1000); }
+    CONSTEXPR T ToMilliseconds(T Nanoseconds) { return Nanoseconds / T(1000 * 1000); }
 
     template<typename T>
-    inline constexpr T ToSeconds(T Nanoseconds) { return Nanoseconds / T(1000 * 1000 * 1000); }
+    CONSTEXPR T ToSeconds(T Nanoseconds) { return Nanoseconds / T(1000 * 1000 * 1000); }
 
     template<typename T>
-    inline constexpr T FromMicroseconds(T Microseconds) { return Microseconds * T(1000); }
+    CONSTEXPR T FromMicroseconds(T Microseconds) { return Microseconds * T(1000); }
 
     template<typename T>
-    inline constexpr T FromMilliseconds(T Milliseconds) { return Milliseconds * T(1000 * 1000); }
+    CONSTEXPR T FromMilliseconds(T Milliseconds) { return Milliseconds * T(1000 * 1000); }
 
     template<typename T>
-    inline constexpr T FromSeconds(T Seconds) { return Seconds * T(1000 * 1000 * 1000); }
+    CONSTEXPR T FromSeconds(T Seconds) { return Seconds * T(1000 * 1000 * 1000); }
 }

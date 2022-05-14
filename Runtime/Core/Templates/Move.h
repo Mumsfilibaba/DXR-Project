@@ -12,7 +12,7 @@
 // Move
 
 template<typename T>
-constexpr typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
+CONSTEXPR typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
 {
     return static_cast<typename TRemoveReference<T>::Type&&>(Value);
 }
@@ -23,7 +23,7 @@ constexpr typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
 // Forward
 
 template<typename T>
-constexpr T&& Forward(typename TRemoveReference<T>::Type& Value) noexcept
+CONSTEXPR T&& Forward(typename TRemoveReference<T>::Type& Value) noexcept
 {
     return static_cast<T&&>(Value);
 }
@@ -31,7 +31,7 @@ constexpr T&& Forward(typename TRemoveReference<T>::Type& Value) noexcept
 /** Forward an object by converting it into a r-value from an r-value */
 
 template<typename T>
-constexpr T&& Forward(typename TRemoveReference<T>::Type&& Value) noexcept
+CONSTEXPR T&& Forward(typename TRemoveReference<T>::Type&& Value) noexcept
 {
     return static_cast<T&&>(Value);
 }

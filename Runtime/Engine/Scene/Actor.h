@@ -75,8 +75,6 @@ private:
     CVector3 Rotation;
 };
 
-// constexpr auto size = sizeof(CActorTransform);
-
 class CScene;
 class CComponent;
 

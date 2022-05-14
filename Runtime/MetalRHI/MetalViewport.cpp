@@ -33,6 +33,8 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIV
     : CMetalObject(InDeviceContext)
     , CRHIViewport(Initializer)
     , BackBuffer(nullptr)
+    , Drawable(nil)
+    , MetalView(nullptr)
 {
     MakeMainThreadCall(^
     {
@@ -75,6 +77,8 @@ CMetalViewport::CMetalViewport(CMetalDeviceContext* InDeviceContext, const CRHIV
     // Create BackBuffer
     CRHITexture2DInitializer BackBufferInitializer(Initializer.ColorFormat, Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
     BackBuffer = dbg_new CMetalTexture2D(InDeviceContext, BackBufferInitializer);
+    
+    BackBuffer->SetViewport(this);
 }
 
 CMetalViewport::~CMetalViewport()
@@ -106,22 +110,43 @@ bool CMetalViewport::Present(bool bVerticalSync)
     id<MTLCommandQueue>  Queue  = GetDeviceContext()->GetMTLCommandQueue();
     id<MTLCommandBuffer> Buffer = [Queue commandBuffer];
     
-    CAMetalLayer*   MetalLayer = (CAMetalLayer*)MetalView.layer;
-    id<MTLDrawable> CurrentDrawable = nil;
-    
+    CAMetalLayer* MetalLayer = GetMetalLayer();
     if (MetalLayer)
     {
         MetalLayer.displaySyncEnabled = bVerticalSync;
-        CurrentDrawable = [MetalLayer nextDrawable];
     }
     
+    id<MTLDrawable> CurrentDrawable = GetDrawable();
     if (CurrentDrawable)
     {
         [Buffer presentDrawable:CurrentDrawable];
+        NSSafeRelease(Drawable);
     }
        
     [Buffer commit];
     [Buffer waitUntilCompleted];
     
     return true;
+}
+
+id<CAMetalDrawable> CMetalViewport::GetDrawable()
+{
+    if (!Drawable)
+    {
+        CAMetalLayer* MetalLayer = GetMetalLayer();
+        Drawable = [MetalLayer nextDrawable];
+        
+        if (Drawable)
+        {
+            [Drawable retain];
+        }
+    }
+    
+    return Drawable;
+}
+
+id<MTLTexture> CMetalViewport::GetDrawableTexture()
+{
+    id<CAMetalDrawable> Drawable = GetDrawable();
+    return Drawable ? Drawable.texture : nil;
 }

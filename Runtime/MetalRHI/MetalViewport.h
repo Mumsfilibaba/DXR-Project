@@ -40,10 +40,24 @@ public:
     virtual bool Present(bool bVerticalSync) override final;
 
     virtual CRHITexture2D* GetBackBuffer() const override final { return BackBuffer.Get(); }
+    
+public:
 
+    // @return: Returns the current drawable, will relase it during next call to present
+    id<CAMetalDrawable> GetDrawable();
+    
+    id<MTLTexture> GetDrawableTexture();
+    
+    CAMetalLayer* GetMetalLayer() const { return MetalView ? (CAMetalLayer*)MetalView.layer : nil; }
+
+    CMetalWindowView* GetMetalView() const { return MetalView; }
+    
 private:
     TSharedRef<CMetalTexture2D> BackBuffer;
+    
     CMetalWindowView*           MetalView;
+    
+    id<CAMetalDrawable>         Drawable;
 };
 
 #pragma clang diagnostic pop

@@ -588,7 +588,7 @@ public:
      * 
      * @return: Returns the number of elements for the tuples
      */
-    constexpr uint32 Size() const
+    CONSTEXPR uint32 Size() const
     {
         return NumElements;
     }

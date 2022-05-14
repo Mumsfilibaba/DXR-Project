@@ -12,13 +12,13 @@
 namespace NMemoryUtils
 {
     template<typename T>
-    inline constexpr T BytesToMegaBytes(T Bytes)
+    CONSTEXPR T BytesToMegaBytes(T Bytes)
     {
         return Bytes / T(1024 * 1024);
     }
 
     template<typename T>
-    inline constexpr T MegaBytesToBytes(T MegaBytes)
+    CONSTEXPR T MegaBytesToBytes(T MegaBytes)
     {
         return MegaBytes * T(1024 * 1024);
     }

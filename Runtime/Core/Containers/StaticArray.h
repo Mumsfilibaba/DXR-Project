@@ -202,7 +202,7 @@ public:
      *
      * @return: Returns a the index to the last element of the array
      */
-    constexpr SizeType LastElementIndex() const noexcept
+    CONSTEXPR SizeType LastElementIndex() const noexcept
     {
         return NumElements - 1;
     }
@@ -212,7 +212,7 @@ public:
      *
      * @return: The current size of the container
      */
-    constexpr SizeType Size() const noexcept
+    CONSTEXPR SizeType Size() const noexcept
     {
         return NumElements;
     }
@@ -222,7 +222,7 @@ public:
      *
      * @return: The current size of the container in bytes
      */
-    constexpr SizeType SizeInBytes() const noexcept
+    CONSTEXPR SizeType SizeInBytes() const noexcept
     {
         return Size() * sizeof(ElementType);
     }
@@ -232,7 +232,7 @@ public:
      *
      * @return: The current capacity of the container
      */
-    constexpr SizeType Capacity() const noexcept
+    CONSTEXPR SizeType Capacity() const noexcept
     {
         return NumElements;
     }
@@ -242,7 +242,7 @@ public:
      *
      * @return: The current capacity of the container in bytes
      */
-    constexpr SizeType CapacityInBytes() const noexcept
+    CONSTEXPR SizeType CapacityInBytes() const noexcept
     {
         return Capacity() * sizeof(ElementType);
     }

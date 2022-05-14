@@ -3,6 +3,8 @@
 #include "Core/Logging/Log.h"
 #include "Core/Debug/Debug.h"
 
+#include "RHI/RHIResourceViews.h"
+
 #include <Metal/Metal.h>
 
 #if MONOLITHIC_BUILD
@@ -74,3 +76,24 @@
 
     #define METAL_INFO(...)    do { (void)(0); } while(false)
 #endif
+
+CONSTEXPR MTLLoadAction ConvertAttachmentLoadAction(EAttachmentLoadAction LoadAction)
+{
+    switch(LoadAction)
+    {
+        case EAttachmentLoadAction::Clear:    return MTLLoadActionClear;
+        case EAttachmentLoadAction::Load:     return MTLLoadActionLoad;
+        case EAttachmentLoadAction::DontCare: return MTLLoadActionDontCare;
+        default:                              return MTLLoadAction(-1);
+    }
+}
+
+CONSTEXPR MTLStoreAction ConvertAttachmentStoreAction(EAttachmentStoreAction StoreAction)
+{
+    switch(StoreAction)
+    {
+        case EAttachmentStoreAction::Store:    return MTLStoreActionStore;
+        case EAttachmentStoreAction::DontCare: return MTLStoreActionDontCare;
+        default:                               return MTLStoreActionUnknown;
+    }
+}

@@ -6,6 +6,8 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
+class CMetalViewport;
+
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // CMetalTexture
 
@@ -15,18 +17,26 @@ public:
      
     CMetalTexture(CMetalDeviceContext* InDeviceContext)
         : CMetalObject(InDeviceContext)
+        , Viewport(nullptr)
+        , ShaderResourceView(nullptr)
     { }
     
-    CMetalShaderResourceView* GetMetalShaderResourceView() const { return ShaderResourceView.Get(); }
+public:
     
     void SetMTLTexture(id<MTLTexture> InTexture) { Texture = InTexture; }
     
-    void SetMTLDrawable<
+    void SetViewport(CMetalViewport* InViewport) { Viewport = InViewport; }
     
     id<MTLTexture> GetMTLTexture() const { return Texture; }
     
+    CMetalViewport* GetViewport() const { return Viewport; }
+    
+    CMetalShaderResourceView* GetMetalShaderResourceView() const { return ShaderResourceView.Get(); }
+
 private:
     id<MTLTexture> Texture;
+    
+    CMetalViewport* Viewport;
     
     TSharedRef<CMetalShaderResourceView> ShaderResourceView;
 };
@@ -170,5 +180,13 @@ public:
 
     virtual CRHIDescriptorHandle GetBindlessSRVHandle() const override final { return CRHIDescriptorHandle(); }
 };
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// GetMetalTexture
+
+inline CMetalTexture* GetMetalTexture(CRHITexture* Texture)
+{
+    return Texture ? reinterpret_cast<CMetalTexture*>(Texture->GetRHIBaseTexture()) : nullptr;
+}
 
 #pragma clang diagnostic pop
