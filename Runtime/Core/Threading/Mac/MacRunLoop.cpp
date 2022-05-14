@@ -131,10 +131,8 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
         if (bWaitUntilFinished)
         {
             __block dispatch_semaphore_t WaitSemaphore = dispatch_semaphore_create(0);
-            
             dispatch_block_t WaitableBlock = Block_copy(^
             {
-                
                 CopiedBlock();
                 dispatch_semaphore_signal(WaitSemaphore);
             });
@@ -144,7 +142,7 @@ void MakeMainThreadCall(dispatch_block_t Block, bool bWaitUntilFinished)
             do
             {
                 GMainThread->WakeUp();
-                // GMainThread->RunInMode((CFStringRef)NSDefaultRunLoopMode);
+                GMainThread->RunInMode((CFStringRef)NSDefaultRunLoopMode);
             } while (dispatch_semaphore_wait(WaitSemaphore, dispatch_time(0, 100000ull)));
             
             Block_release(WaitableBlock);
